@@ -65,7 +65,7 @@ macosx_arm64_task:
 
   matrix:
     - env:
-        CIBW_BUILD: cp310-* cp311
+        CIBW_BUILD: cp310-* cp311-*
     - env:
         CIBW_BUILD: cp312-* cp313-*
     - env:
