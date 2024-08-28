@@ -1,9 +1,7 @@
 from datetime import datetime
 import os
-import shutil
 import subprocess
 import sys
-import time
 import pytest
 
 import numpy as np
@@ -72,7 +70,7 @@ def install_temp(tmpdir_factory):
         print("----------------")
         print("meson build failed when doing")
         print(f"'meson setup --native-file {native_file} {srcdir}'")
-        print(f"'meson compile -vv'")
+        print("'meson compile -vv'")
         print(f"in {build_dir}")
         print("----------------")
         raise

@@ -4,7 +4,6 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
 import functools
 import itertools
 import operator
-import warnings
 
 from . import numeric as _nx
 from . import overrides

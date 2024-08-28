@@ -4,7 +4,6 @@ Functions for changing global ufunc configuration
 This provides helpers which wrap `_get_extobj_dict` and `_make_extobj`, and
 `_extobj_contextvar` from umath.
 """
-import collections.abc
 import contextlib
 import contextvars
 import functools

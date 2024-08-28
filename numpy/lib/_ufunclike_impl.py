@@ -7,8 +7,6 @@ __all__ = ['fix', 'isneginf', 'isposinf']
 
 import numpy._core.numeric as nx
 from numpy._core.overrides import array_function_dispatch
-import warnings
-import functools
 
 
 def _dispatcher(x, out=None):

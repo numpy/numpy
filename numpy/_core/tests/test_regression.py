@@ -2313,9 +2313,9 @@ class TestRegression:
             try:
                 hash(val)
             except TypeError as e:
-                assert_equal(t.__hash__, None)
+                assert_(t.__hash__ is None)
             else:
-                assert_(t.__hash__ != None)
+                assert_(t.__hash__ is not None)
 
     def test_scalar_copy(self):
         scalar_types = set(np._core.sctypeDict.values())

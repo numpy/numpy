@@ -1,6 +1,5 @@
 """ Test functions for linalg module
 """
-import warnings
 
 import pytest
 

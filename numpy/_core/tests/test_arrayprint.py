@@ -19,7 +19,8 @@ class TestArrayRepr:
         assert_equal(repr(x), 'array([nan, inf])')
 
     def test_subclass(self):
-        class sub(np.ndarray): pass
+        class sub(np.ndarray):
+            pass
 
         # one dimensional
         x1d = np.array([1, 2]).view(sub)

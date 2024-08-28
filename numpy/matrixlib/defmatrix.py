@@ -137,8 +137,10 @@ class matrix(N.ndarray):
             new = data.view(subtype)
             if intype != data.dtype:
                 return new.astype(intype)
-            if copy: return new.copy()
-            else: return new
+            if copy:
+                return new.copy()
+            else:
+                return new
 
         if isinstance(data, str):
             data = _convert_from_string(data)
@@ -169,7 +171,8 @@ class matrix(N.ndarray):
 
     def __array_finalize__(self, obj):
         self._getitem = False
-        if (isinstance(obj, matrix) and obj._getitem): return
+        if (isinstance(obj, matrix) and obj._getitem):
+            return
         ndim = self.ndim
         if (ndim == 2):
             return

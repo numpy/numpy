@@ -23,8 +23,6 @@ TODO
       the same underlying python for egg install in venv and for bdist_mpkg
 """
 import os
-import sys
-import shutil
 import hashlib
 import textwrap
 

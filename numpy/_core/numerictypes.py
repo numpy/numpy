@@ -81,7 +81,7 @@ import warnings
 
 from . import multiarray as ma
 from .multiarray import (
-        ndarray, array, dtype, datetime_data, datetime_as_string,
+        ndarray, dtype, datetime_data, datetime_as_string,
         busday_offset, busday_count, is_busday, busdaycalendar
         )
 from .._utils import set_module
@@ -95,7 +95,7 @@ __all__ = [
 
 # we don't need all these imports, but we need to keep them for compatibility
 # for users using np._core.numerictypes.UPPER_TABLE
-from ._string_helpers import (
+from ._string_helpers import (  # noqa: F401
     english_lower, english_upper, english_capitalize, LOWER_TABLE, UPPER_TABLE
 )
 
@@ -106,7 +106,7 @@ from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-from builtins import bool, int, float, complex, object, str, bytes  # noqa: UP029
+from builtins import bool, int, float, complex, object, str, bytes  # noqa: F401, UP029
 
 
 # We use this later

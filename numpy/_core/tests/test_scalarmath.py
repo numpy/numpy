@@ -588,15 +588,15 @@ class TestConversion:
         # The comparisons are flagged by pep8, ignore that.
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', FutureWarning)
-            assert_(not np.float32(1) == None)
-            assert_(not np.str_('test') == None)
+            assert_(not np.float32(1) == None)  # noqa: E711
+            assert_(not np.str_('test') == None)  # noqa: E711
             # This is dubious (see below):
-            assert_(not np.datetime64('NaT') == None)
+            assert_(not np.datetime64('NaT') == None)  # noqa: E711
 
-            assert_(np.float32(1) != None)
-            assert_(np.str_('test') != None)
+            assert_(np.float32(1) != None)  # noqa: E711
+            assert_(np.str_('test') != None)  # noqa: E711
             # This is dubious (see below):
-            assert_(np.datetime64('NaT') != None)
+            assert_(np.datetime64('NaT') != None)  # noqa: E711
         assert_(len(w) == 0)
 
         # For documentation purposes, this is why the datetime is dubious.

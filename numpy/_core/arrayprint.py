@@ -69,7 +69,13 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if sign not in [None, '-', '+', ' ']:
         raise ValueError("sign option must be one of ' ', '+', or '-'")
 
-    if legacy == False:
+    if legacy is False:
+        options['legacy'] = sys.maxsize
+    elif legacy == False:  # noqa: E712
+        warnings.warn(
+            f"Passing `legacy={legacy!r}` is deprecated.",
+            FutureWarning, stacklevel=3
+        )
         options['legacy'] = sys.maxsize
     elif legacy == '1.13':
         options['legacy'] = 113

@@ -455,7 +455,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             elif strictf77:
                 if len(l) > 72:
                     l = l[:72]
-            if not (l[0] in spacedigits):
+            if l[0] not in spacedigits:
                 raise Exception('readfortrancode: Found non-(space,digit) char '
                                 'in the first column.\n\tAre you sure that '
                                 'this code is in fix form?\n\tline=%s' % repr(l))
@@ -2951,7 +2951,7 @@ def analyzevars(block):
                     else:
                         outmess(
                             'analyzevars: prefix (%s) were not used\n' % repr(block['prefix']))
-    if not block['block'] in ['module', 'pythonmodule', 'python module', 'block data']:
+    if block['block'] not in ['module', 'pythonmodule', 'python module', 'block data']:
         if 'commonvars' in block:
             neededvars = copy.copy(block['args'] + block['commonvars'])
         else:
@@ -3029,8 +3029,8 @@ def param_eval(v, g_params, params, dimspec=None):
             ubound = param_parse(dimrange[1], params)
             dimrange = range(int(lbound), int(ubound)+1)
     else:
-        raise ValueError(f'param_eval: multidimensional array parameters '
-                         '{dimspec} not supported')
+        raise ValueError('param_eval: multidimensional array parameters '
+                         f'{dimspec} not supported')
 
     # Parse parameter value
     v = (v[2:-2] if v.startswith('(/') else v).split(',')

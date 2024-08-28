@@ -26,7 +26,7 @@ from numpy._core import (
     array, asarray, zeros, empty, empty_like, intc, single, double,
     csingle, cdouble, inexact, complexfloating, newaxis, all, inf, dot,
     add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
-    amax, prod, abs, atleast_2d, intp, asanyarray, object_, matmul,
+    amax, prod, abs, atleast_2d, intp, asanyarray, object_,
     swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
     reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
     cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,

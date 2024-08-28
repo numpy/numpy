@@ -3,7 +3,7 @@ Check the numpy config is valid.
 """
 import numpy as np
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 pytestmark = pytest.mark.skipif(
     not hasattr(np.__config__, "_built_with_meson"),

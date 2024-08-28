@@ -1,8 +1,10 @@
 # NOTE: Please avoid the use of numpy.testing since NPYV intrinsics
 # may be involved in their functionality.
-import pytest, math, re
 import itertools
+import math
 import operator
+import re
+import pytest
 from numpy._core._simd import targets, clear_floatstatus, get_floatstatus
 from numpy._core._multiarray_umath import __cpu_baseline__
 
@@ -585,7 +587,7 @@ class _SIMD_FP(_Test_Utility):
             v = self.setall(d)
             clear_floatstatus()
             intrin(v)
-            assert check_floatstatus(invalid=True) == False
+            assert check_floatstatus(invalid=True) is False
 
     @pytest.mark.parametrize('py_comp,np_comp', [
         (operator.lt, "cmplt"),

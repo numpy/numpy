@@ -2,7 +2,6 @@ import os
 import sys
 import textwrap
 import types
-import re
 import warnings
 import functools
 import platform

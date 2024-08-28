@@ -6,7 +6,6 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_allclose,
     assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
-from numpy.testing._private.utils import requires_memory
 import pytest
 
 

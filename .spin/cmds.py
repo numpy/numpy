@@ -1,8 +1,6 @@
 import os
 import shutil
 import pathlib
-import shutil
-import pathlib
 import importlib
 import subprocess
 
@@ -263,7 +261,7 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
     if (n_jobs != "1") and ('-n' not in pytest_args):
         pytest_args = ('-n', str(n_jobs)) + pytest_args
 
-    if tests and not ('--pyargs' in pytest_args):
+    if tests and '--pyargs' not in pytest_args:
         pytest_args = ('--pyargs', tests) + pytest_args
 
     if verbose:
@@ -774,7 +772,7 @@ def notes(ctx, version_override):
     # Check if `towncrier` is installed
     if not shutil.which("towncrier"):
         raise click.ClickException(
-            f"please install `towncrier` to use this command"
+            "please install `towncrier` to use this command"
         )
 
     click.secho(

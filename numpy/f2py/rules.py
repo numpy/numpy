@@ -47,7 +47,8 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-import os, sys
+import os
+import sys
 import time
 import copy
 from pathlib import Path

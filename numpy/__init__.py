@@ -144,7 +144,7 @@ else:
         frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter,
         frompyfunc, fromstring, full, full_like, gcd, generic, geomspace,
         get_printoptions, getbufsize, geterr, geterrcall, greater,
-        greater_equal, half, heaviside, hstack, hypot, identity, iinfo, iinfo,
+        greater_equal, half, heaviside, hstack, hypot, identity, iinfo,
         indices, inexact, inf, inner, int16, int32, int64, int8, int_, intc,
         integer, intp, invert, is_busday, isclose, isdtype, isfinite,
         isfortran, isinf, isnan, isnat, isscalar, issubdtype, lcm, ldexp,

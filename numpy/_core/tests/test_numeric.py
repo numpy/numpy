@@ -2201,12 +2201,12 @@ class TestArrayComparisons:
 
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
-        assert_equal(a == None, [True, False, True])
-        assert_equal(a != None, [False, True, False])
+        assert_equal(a == None, [True, False, True])  # noqa: E711
+        assert_equal(a != None, [False, True, False])  # noqa: E711
 
         a = np.ones(3)
-        assert_equal(a == None, [False, False, False])
-        assert_equal(a != None, [True, True, True])
+        assert_equal(a == None, [False, False, False])  # noqa: E711
+        assert_equal(a != None, [True, True, True])  # noqa: E711
 
     def test_array_equiv(self):
         res = np.array_equiv(np.array([1, 2]), np.array([1, 2]))

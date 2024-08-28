@@ -34,7 +34,6 @@ From the bash command line with $GITHUB token::
 
 """
 import os
-import sys
 import re
 from git import Repo
 from github import Github

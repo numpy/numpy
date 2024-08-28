@@ -1,12 +1,10 @@
 from importlib.util import spec_from_file_location, module_from_spec
 import os
-import pathlib
 import pytest
 import shutil
 import subprocess
 import sys
 import sysconfig
-import textwrap
 import warnings
 
 import numpy as np
