@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from functools import partial
-from collections.abc import Callable
 
 import pytest
 import numpy as np
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 AR = np.array(0)
 AR.setflags(write=False)

@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from typing import (
     Any,
     TypeVar,
     Protocol,
     runtime_checkable,
+    TYPE_CHECKING,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 __all__ = ["_NestedSequence"]
 
