@@ -797,7 +797,7 @@ class matrix(N.ndarray):
         return N.ptp(self, axis, out)._align(axis)
 
     @property
-    def I(self):
+    def I(self):  # noqa: E743
         """
         Returns the (multiplicative) inverse of invertible `self`.
 
