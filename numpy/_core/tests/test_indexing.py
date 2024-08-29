@@ -673,7 +673,7 @@ class TestBroadcastedAssignments:
         arr = np.zeros((3, 4, 5, 6, 7))
         # We currently report without any spaces (could be changed)
         shape_str = str(arr[index].shape).replace(" ", "")
-        
+
         with pytest.raises(ValueError) as e:
             arr[index] = values
 

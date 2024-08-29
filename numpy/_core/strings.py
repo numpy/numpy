@@ -1192,7 +1192,7 @@ def replace(a, old, new, count=-1):
     See Also
     --------
     str.replace
-    
+
     Examples
     --------
     >>> import numpy as np

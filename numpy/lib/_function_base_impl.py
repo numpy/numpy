@@ -391,7 +391,7 @@ def iterable(y):
 
 def _weights_are_valid(weights, a, axis):
     """Validate weights array.
-    
+
     We assume, weights is not None.
     """
     wgt = np.asanyarray(weights)
@@ -451,7 +451,7 @@ def average(a, axis=None, weights=None, returned=False, *,
         The calculation is::
 
             avg = sum(a * weights) / sum(weights)
-        
+
         where the sum is over all included elements.
         The only constraint on the values of `weights` is that `sum(weights)`
         must not be 0.
@@ -3882,7 +3882,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         Axis or axes along which the medians are computed. The default,
         axis=None, will compute the median along a flattened version of
         the array.
-        
+
         .. versionadded:: 1.9.0
 
         If a sequence of axes, the array is first flattened along the

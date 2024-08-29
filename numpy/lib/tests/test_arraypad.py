@@ -867,12 +867,12 @@ class TestReflect:
         a = np.pad([1, 2, 3], 4, 'reflect')
         b = np.array([1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3])
         assert_array_equal(a, b)
-    
+
     def test_check_04(self):
         a = np.pad([1, 2, 3], [1, 10], 'reflect')
         b = np.array([2, 1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3, 2, 1])
         assert_array_equal(a, b)
-    
+
     def test_check_05(self):
         a = np.pad([1, 2, 3, 4], [45, 10], 'reflect')
         b = np.array(
@@ -883,7 +883,7 @@ class TestReflect:
              2, 3, 4, 3, 2, 1, 2, 3, 4, 3,
              2, 1, 2, 3, 4, 3, 2, 1, 2])
         assert_array_equal(a, b)
-    
+
     def test_check_06(self):
         a = np.pad([1, 2, 3, 4], [15, 2], 'symmetric')
         b = np.array(
@@ -1175,7 +1175,7 @@ class TestWrap:
         a = np.arange(5)
         b = np.pad(a, (0, 12), mode="wrap")
         assert_array_equal(np.r_[a, a, a, a][:-3], b)
-    
+
     def test_repeated_wrapping_multiple_origin(self):
         """
         Assert that 'wrap' pads only with multiples of the original area if

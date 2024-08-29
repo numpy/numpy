@@ -229,7 +229,7 @@ def issctype(rep):
             return False
     except Exception:
         return False
-        
+
 
 @set_module('numpy')
 def obj2sctype(rep, default=None):

@@ -464,7 +464,7 @@ class ABCPolyBase(abc.ABC):
             )
             needs_parens = True
         return term, needs_parens
-    
+
     def _repr_latex_(self):
         # get the scaled argument string to the basis functions
         off, scale = self.mapparms()

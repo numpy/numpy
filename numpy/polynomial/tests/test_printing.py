@@ -519,7 +519,7 @@ class TestPrintOptions:
             r'$x \mapsto \text{0.5} + \text{0.14285714}\,x + '
             r'\text{14285714.28571429}\,x^{2} + '
             r'\text{(1.42857143e+08)}\,x^{3}$')
-        
+
         with printoptions(precision=3):
             assert_equal(p._repr_latex_(),
                 r'$x \mapsto \text{0.5} + \text{0.143}\,x + '
@@ -528,10 +528,10 @@ class TestPrintOptions:
     def test_fixed(self):
         p = poly.Polynomial([1/2])
         assert_equal(str(p), '0.5')
-        
+
         with printoptions(floatmode='fixed'):
             assert_equal(str(p), '0.50000000')
-        
+
         with printoptions(floatmode='fixed', precision=4):
             assert_equal(str(p), '0.5000')
 
@@ -541,7 +541,7 @@ class TestPrintOptions:
                 p = poly.Polynomial([1.23456789*10**-i
                                      for i in range(i//2+3)])
                 assert str(p).replace('\n', ' ') == s
-    
+
     def test_non_finite(self):
         p = poly.Polynomial([nan, inf])
         assert str(p) == 'nan + inf x'

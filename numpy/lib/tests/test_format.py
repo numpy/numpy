@@ -718,7 +718,7 @@ def test_huge_header(tmpdir, mmap_mode):
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.save(f, arr)
-    
+
     with pytest.raises(ValueError, match="Header.*large"):
         np.load(f, mmap_mode=mmap_mode)
 
@@ -737,7 +737,7 @@ def test_huge_header_npz(tmpdir):
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.savez(f, arr=arr)
-    
+
     # Only getting the array from the file actually reads it
     with pytest.raises(ValueError, match="Header.*large"):
         np.load(f)["arr"]

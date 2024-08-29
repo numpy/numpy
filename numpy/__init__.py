@@ -395,7 +395,7 @@ else:
 
         if attr in __former_attrs__:
             raise AttributeError(__former_attrs__[attr], name=None)
-        
+
         if attr in __expired_attributes__:
             raise AttributeError(
                 f"`np.{attr}` was removed in the NumPy 2.0 release. "

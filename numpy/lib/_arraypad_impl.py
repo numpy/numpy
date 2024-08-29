@@ -220,7 +220,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
             end_value_pair, edge_pair, width_pair
         )
     )
-        
+
     # Reverse linear space in appropriate dimension
     right_ramp = right_ramp[_slice_at_axis(slice(None, None, -1), axis)]
 
@@ -323,7 +323,7 @@ def _set_reflect_both(padded, axis, width_pair, method,
     """
     left_pad, right_pad = width_pair
     old_length = padded.shape[axis] - right_pad - left_pad
-    
+
     if include_edge:
         # Avoid wrapping with only a subset of the original area
         # by ensuring period can only be a multiple of the original

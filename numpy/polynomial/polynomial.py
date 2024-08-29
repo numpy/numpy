@@ -1236,7 +1236,7 @@ def polyvander2d(x, y, deg):
     >>> P.polyvander2d(x=x, y=0*x, deg=(m, 0)) == P.polyvander(x=x, deg=m)
     array([[ True,  True],
            [ True,  True]])
-    
+
     """
     return pu._vander_nd_flat((polyvander, polyvander), (x, y), deg)
 
@@ -1308,7 +1308,7 @@ def polyvander3d(x, y, z, deg):
              -8.,   8.,  16.,   4.,   8.,  -8., -16.,  16.,  32.],
            [  1.,   5.,  -3., -15.,   9.,  45.,   1.,   5.,  -3.,
             -15.,   9.,  45.,   1.,   5.,  -3., -15.,   9.,  45.]])
-    
+
     We can verify the columns for any ``0 <= i <= l``, ``0 <= j <= m``,
     and ``0 <= k <= n``
 
