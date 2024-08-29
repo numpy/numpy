@@ -65,7 +65,7 @@ def test_cython(tmp_path):
     os.makedirs(target_dir, exist_ok=True)
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
-                               "--buildtype=release", 
+                               "--buildtype=release",
                                "--vsenv", str(build_dir)],
                               cwd=target_dir,
                               )

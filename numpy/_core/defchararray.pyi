@@ -3,7 +3,7 @@ from typing import (
     overload,
     TypeVar,
     Any,
-    SupportsIndex, 
+    SupportsIndex,
     SupportsInt,
 )
 
@@ -16,8 +16,8 @@ from numpy import (
     int_,
     object_,
     _OrderKACF,
-    _ShapeType_co, 
-    _CharDType, 
+    _ShapeType_co,
+    _CharDType,
     _SupportsBuffer,
 )
 

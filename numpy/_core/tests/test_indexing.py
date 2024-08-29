@@ -668,7 +668,7 @@ class TestBroadcastedAssignments:
             ([0, 1], ..., 0),
             (..., [1, 2], [1, 2])])
     def test_broadcast_error_reports_correct_shape(self, index):
-        values = np.zeros((100, 100))  # will never broadcast below  
+        values = np.zeros((100, 100))  # will never broadcast below
 
         arr = np.zeros((3, 4, 5, 6, 7))
         # We currently report without any spaces (could be changed)

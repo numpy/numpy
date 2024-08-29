@@ -11,7 +11,7 @@ __expired_attributes__ = {
     "lookfor":  "Search NumPy's documentation directly.",
     "who": "Use an IDE variable explorer or `locals()` instead.",
     "fastCopyAndTranspose": "Use `arr.T.copy()` instead.",
-    "set_numeric_ops": 
+    "set_numeric_ops":
         "For the general case, use `PyUFunc_ReplaceLoopBySignature`. "
         "For ndarray subclasses, define the ``__array_ufunc__`` method "
         "and override the relevant ufunc.",
@@ -19,11 +19,11 @@ __expired_attributes__ = {
     "PINF": "Use `np.inf` instead.",
     "NZERO": "Use `-0.0` instead.",
     "PZERO": "Use `0.0` instead.",
-    "add_newdoc": 
+    "add_newdoc":
         "It's still available as `np.lib.add_newdoc`.",
-    "add_docstring": 
+    "add_docstring":
         "It's still available as `np.lib.add_docstring`.",
-    "add_newdoc_ufunc": 
+    "add_newdoc_ufunc":
         "It's an internal function and doesn't have a replacement.",
     "compat": "There's no replacement, as Python 2 is no longer supported.",
     "safe_eval": "Use `ast.literal_eval` instead.",
@@ -49,7 +49,7 @@ __expired_attributes__ = {
     "sctype2char": "Use `np.dtype(obj).char` instead.",
     "sctypes": "Access dtypes explicitly instead.",
     "issubsctype": "Use `np.issubdtype` instead.",
-    "set_string_function": 
+    "set_string_function":
         "Use `np.set_printoptions` instead with a formatter for "
         "custom printing of NumPy objects.",
     "asfarray": "Use `np.asarray` with a proper dtype instead.",
@@ -63,16 +63,16 @@ __expired_attributes__ = {
     "deprecate_with_doc": "Emit `DeprecationWarning` with `warnings.warn` "
         "directly, or use `typing.deprecated`.",
     "disp": "Use your own printing function instead.",
-    "find_common_type": 
+    "find_common_type":
         "Use `numpy.promote_types` or `numpy.result_type` instead. "
         "To achieve semantics for the `scalar_types` argument, use "
         "`numpy.result_type` and pass the Python values `0`, `0.0`, or `0j`.",
     "round_": "Use `np.round` instead.",
     "get_array_wrap": "",
-    "DataSource": "It's still available as `np.lib.npyio.DataSource`.", 
-    "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",  
+    "DataSource": "It's still available as `np.lib.npyio.DataSource`.",
+    "nbytes": "Use `np.dtype(<dtype>).itemsize` instead.",
     "byte_bounds": "Now it's available under `np.lib.array_utils.byte_bounds`",
-    "compare_chararrays": 
+    "compare_chararrays":
         "It's still available as `np.char.compare_chararrays`.",
     "format_parser": "It's still available as `np.rec.format_parser`.",
     "alltrue": "Use `np.all` instead.",

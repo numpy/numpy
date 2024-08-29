@@ -39,7 +39,7 @@ class ABCPolyBase(abc.ABC):
         Window, see domain for its use. The default value is the
         derived class window.
     symbol : str, optional
-        Symbol used to represent the independent variable in string 
+        Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.
         The symbol must be a valid Python identifier. Default value is 'x'.
 
@@ -1043,7 +1043,7 @@ class ABCPolyBase(abc.ABC):
             domain = pu.getdomain(x)
             if domain[0] == domain[1]:
                 domain[0] -= 1
-                domain[1] += 1   
+                domain[1] += 1
         elif type(domain) is list and len(domain) == 0:
             domain = cls.domain
 

@@ -146,7 +146,7 @@ class TestFromrecords:
                       dtype=[('f0', '<i4'), ('f1', '<f8'), ('f2', '<M8[Y]')])"""))
 
         record = arr_0d[()]
-        assert_equal(repr(record), 
+        assert_equal(repr(record),
             "np.record((1, 2.0, '2003'), "
             "dtype=[('f0', '<i4'), ('f1', '<f8'), ('f2', '<M8[Y]')])")
         # 1.13 converted to python scalars before the repr

@@ -293,7 +293,7 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     return left_stat, right_stat
 
 
-def _set_reflect_both(padded, axis, width_pair, method, 
+def _set_reflect_both(padded, axis, width_pair, method,
                       original_period, include_edge=False):
     """
     Pad `axis` of `arr` with reflection.
@@ -325,15 +325,15 @@ def _set_reflect_both(padded, axis, width_pair, method,
     old_length = padded.shape[axis] - right_pad - left_pad
     
     if include_edge:
-        # Avoid wrapping with only a subset of the original area 
-        # by ensuring period can only be a multiple of the original 
+        # Avoid wrapping with only a subset of the original area
+        # by ensuring period can only be a multiple of the original
         # area's length.
         old_length = old_length // original_period * original_period
         # Edge is included, we need to offset the pad amount by 1
         edge_offset = 1
     else:
-        # Avoid wrapping with only a subset of the original area 
-        # by ensuring period can only be a multiple of the original 
+        # Avoid wrapping with only a subset of the original area
+        # by ensuring period can only be a multiple of the original
         # area's length.
         old_length = ((old_length - 1) // (original_period - 1)
             * (original_period - 1) + 1)

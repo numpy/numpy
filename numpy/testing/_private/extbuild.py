@@ -235,7 +235,7 @@ def build(cfile, outputfilename, compile_extra, link_extra,
         """))
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
-                               "--buildtype=release", 
+                               "--buildtype=release",
                                "--vsenv", ".."],
                               cwd=build_dir,
                               )

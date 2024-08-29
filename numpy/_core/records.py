@@ -127,7 +127,7 @@ class format_parser:
         if isinstance(formats, list):
             dtype = sb.dtype(
                 [
-                    ('f{}'.format(i), format_) 
+                    ('f{}'.format(i), format_)
                     for i, format_ in enumerate(formats)
                 ],
                 aligned,
@@ -403,7 +403,7 @@ class recarray(ndarray):
             )
         else:
             self = ndarray.__new__(
-                subtype, shape, (record, descr), buffer=buf, 
+                subtype, shape, (record, descr), buffer=buf,
                 offset=offset, strides=strides, order=order
             )
         return self
@@ -453,8 +453,8 @@ class recarray(ndarray):
         # Automatically convert (void) structured types to records
         # (but not non-void structures, subarrays, or non-structured voids)
         if (
-            attr == 'dtype' and 
-            issubclass(val.type, nt.void) and 
+            attr == 'dtype' and
+            issubclass(val.type, nt.void) and
             val.names is not None
         ):
             val = sb.dtype((record, val))
@@ -506,7 +506,7 @@ class recarray(ndarray):
 
         repr_dtype = self.dtype
         if (
-            self.dtype.type is record or 
+            self.dtype.type is record or
             not issubclass(self.dtype.type, nt.void)
         ):
             # If this is a full record array (has numpy.record dtype),

@@ -496,7 +496,7 @@ SWITCH_TO_EXP = (
 class TestPrintOptions:
     """
     Test the output is properly configured via printoptions.
-    The exponential notation is enabled automatically when the values 
+    The exponential notation is enabled automatically when the values
     are too small or too large.
     """
 
@@ -538,9 +538,9 @@ class TestPrintOptions:
     def test_switch_to_exp(self):
         for i, s in enumerate(SWITCH_TO_EXP):
             with printoptions(precision=i):
-                p = poly.Polynomial([1.23456789*10**-i 
+                p = poly.Polynomial([1.23456789*10**-i
                                      for i in range(i//2+3)])
-                assert str(p).replace('\n', ' ') == s 
+                assert str(p).replace('\n', ' ') == s
     
     def test_non_finite(self):
         p = poly.Polynomial([nan, inf])

@@ -3707,7 +3707,7 @@ add_newdoc('numpy._core.umath', 'sign',
     There is more than one definition of sign in common use for complex
     numbers.  The definition used here, :math:`x/|x|`, is the more common
     and useful one, but is different from the one used in numpy prior to
-    version 2.0, :math:`x/\\sqrt{x*x}`, which is equivalent to 
+    version 2.0, :math:`x/\\sqrt{x*x}`, which is equivalent to
     ``sign(x.real) + 0j if x.real != 0 else sign(x.imag) + 0j``.
 
     Examples
@@ -4650,7 +4650,7 @@ add_newdoc('numpy._core.umath', 'isupper',
     array(True)
     >>> a = np.array(["hello", "HELLO", "Hello"])
     >>> np.strings.isupper(a)
-    array([False,  True, False]) 
+    array([False,  True, False])
 
     """)
 
