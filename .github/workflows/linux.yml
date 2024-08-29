@@ -37,7 +37,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.10'
     - name: Install linter requirements
@@ -61,7 +61,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: ${{ matrix.version }}
     - uses: ./.github/meson_actions
@@ -75,7 +75,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: 'pypy3.10-v7.3.15'
     - name: Setup using scipy-openblas
@@ -122,7 +122,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.10'
     - name: Install build and test dependencies from PyPI
@@ -157,7 +157,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.10'
     - name: Install build and benchmarking dependencies
@@ -194,7 +194,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.11'
     - name: Install gfortran and setup OpenBLAS (sdist build)
@@ -236,7 +236,7 @@ jobs:
         submodules: 'true'
         path: 'array-api-tests'
     - name: Set up Python
-      uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI
@@ -264,7 +264,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI
