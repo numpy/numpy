@@ -77,7 +77,7 @@ jobs:
         fetch-tags: true
     - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
-        python-version: 'pypy3.10-v7.3.15'
+        python-version: 'pypy3.10-v7.3.17'
     - name: Setup using scipy-openblas
       run: |
         python -m pip install -r requirements/ci_requirements.txt
