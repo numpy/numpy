@@ -972,7 +972,7 @@ def tensordot(a, b, axes=2):
         * ``axes = 2`` : (default) tensor double contraction :math:`a:b`
 
     When `axes` is integer_like, the sequence of axes for evaluation
-    will be: from the -Nth axis to the -1th axis in `a`, 
+    will be: from the -Nth axis to the -1th axis in `a`,
     and from the 0th axis to (N-1)th axis in `b`.
     For example, ``axes = 2`` is the equal to
     ``axes = [[-2, -1], [0, 1]]``.
@@ -1000,13 +1000,13 @@ def tensordot(a, b, axes=2):
     >>> c_0
     array([[[[ 5,  6],
              [ 7,  8]],
-             
+
             [[10, 12],
              [14, 16]]],
-             
+
            [[[15, 18],
              [21, 24]],
-             
+
             [[20, 24],
              [28, 32]]]])
 
