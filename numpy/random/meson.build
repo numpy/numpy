@@ -46,7 +46,6 @@ _bounded_integers_pyx = custom_target('_bounded_integer_pyx',
 
 c_args_random = [
   cflags_large_file_support,
-  '-DNPY_NO_DEPRECATED_API=0',  # Cython still uses old NumPy C API
 ]
 if host_machine.system() == 'cygwin'
   c_args_random += ['-Wl,--export-all-symbols']

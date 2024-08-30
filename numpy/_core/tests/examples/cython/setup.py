@@ -12,7 +12,6 @@ from setuptools.extension import Extension
 import os
 
 macros = [
-    ("NPY_NO_DEPRECATED_API", 0),
     # Require 1.25+ to test datetime additions
     ("NPY_TARGET_VERSION", "NPY_2_0_API_VERSION"),
 ]

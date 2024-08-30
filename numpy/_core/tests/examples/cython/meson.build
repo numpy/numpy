@@ -34,7 +34,6 @@ py.extension_module(
     'checks.pyx',
     install: false,
     c_args: [
-      '-DNPY_NO_DEPRECATED_API=0',  # Cython still uses old NumPy C API
       # Require 1.25+ to test datetime additions
       '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
     ],
