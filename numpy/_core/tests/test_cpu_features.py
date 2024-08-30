@@ -138,7 +138,7 @@ class TestEnvPrivation:
     SCRIPT = """
 def main():
     from numpy._core._multiarray_umath import (
-        __cpu_features__, 
+        __cpu_features__,
         __cpu_dispatch__
     )
 

@@ -88,8 +88,8 @@ from .._utils import set_module
 
 # we add more at the bottom
 __all__ = [
-    'ScalarType', 'typecodes', 'issubdtype', 'datetime_data', 
-    'datetime_as_string', 'busday_offset', 'busday_count', 
+    'ScalarType', 'typecodes', 'issubdtype', 'datetime_data',
+    'datetime_as_string', 'busday_offset', 'busday_count',
     'is_busday', 'busdaycalendar', 'isdtype'
 ]
 
@@ -229,7 +229,7 @@ def issctype(rep):
             return False
     except Exception:
         return False
-        
+
 
 @set_module('numpy')
 def obj2sctype(rep, default=None):

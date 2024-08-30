@@ -216,7 +216,7 @@ def greater(x1, x2):
     See Also
     --------
     equal, not_equal, greater_equal, less_equal, less
-    
+
     Examples
     --------
     >>> import numpy as np

@@ -653,10 +653,10 @@ def transpose(a, axes=None):
         Input array.
     axes : tuple or list of ints, optional
         If specified, it must be a tuple or list which contains a permutation
-        of [0, 1, ..., N-1] where N is the number of axes of `a`. Negative 
-        indices can also be used to specify axes. The i-th axis of the returned 
-        array will correspond to the axis numbered ``axes[i]`` of the input. 
-        If not specified, defaults to ``range(a.ndim)[::-1]``, which reverses 
+        of [0, 1, ..., N-1] where N is the number of axes of `a`. Negative
+        indices can also be used to specify axes. The i-th axis of the returned
+        array will correspond to the axis numbered ``axes[i]`` of the input.
+        If not specified, defaults to ``range(a.ndim)[::-1]``, which reverses
         the order of the axes.
 
     Returns
@@ -3885,7 +3885,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
     0.55000000074505806 # may vary
 
     Computing the mean in timedelta64 is available:
-    
+
     >>> b = np.array([1, 3], dtype="timedelta64[D]")
     >>> np.mean(b)
     np.timedelta64(2,'D')

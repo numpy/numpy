@@ -1,7 +1,7 @@
 """
-Create the numpy._core.multiarray namespace for backward compatibility. 
-In v1.16 the multiarray and umath c-extension modules were merged into 
-a single _multiarray_umath extension module. So we replicate the old 
+Create the numpy._core.multiarray namespace for backward compatibility.
+In v1.16 the multiarray and umath c-extension modules were merged into
+a single _multiarray_umath extension module. So we replicate the old
 namespace by importing from the extension module.
 
 """
@@ -43,7 +43,7 @@ __all__ = [
     'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
     '_get_promotion_state', '_set_promotion_state']
 
-# For backward compatibility, make sure pickle imports 
+# For backward compatibility, make sure pickle imports
 # these functions from here
 _reconstruct.__module__ = 'numpy._core.multiarray'
 scalar.__module__ = 'numpy._core.multiarray'
@@ -162,10 +162,10 @@ def empty_like(
 def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     """
     concatenate(
-        (a1, a2, ...), 
-        axis=0, 
-        out=None, 
-        dtype=None, 
+        (a1, a2, ...),
+        axis=0,
+        out=None,
+        dtype=None,
         casting="same_kind"
     )
 
@@ -192,7 +192,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
         For a description of the options, please see :term:`casting`.
-        
+
         .. versionadded:: 1.20.0
 
     Returns
@@ -1465,10 +1465,10 @@ def may_share_memory(a, b, max_work=None):
 def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
     """
     is_busday(
-        dates, 
-        weekmask='1111100', 
-        holidays=None, 
-        busdaycal=None, 
+        dates,
+        weekmask='1111100',
+        holidays=None,
+        busdaycal=None,
         out=None
     )
 
@@ -1527,12 +1527,12 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
                   busdaycal=None, out=None):
     """
     busday_offset(
-        dates, 
-        offsets, 
-        roll='raise', 
-        weekmask='1111100', 
-        holidays=None, 
-        busdaycal=None, 
+        dates,
+        offsets,
+        roll='raise',
+        weekmask='1111100',
+        holidays=None,
+        busdaycal=None,
         out=None
     )
 
@@ -1631,11 +1631,11 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
                  busdaycal=None, out=None):
     """
     busday_count(
-        begindates, 
-        enddates, 
-        weekmask='1111100', 
-        holidays=[], 
-        busdaycal=None, 
+        begindates,
+        enddates,
+        weekmask='1111100',
+        holidays=[],
+        busdaycal=None,
         out=None
     )
 
@@ -1715,7 +1715,7 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     arr : array_like of datetime64
         The array of UTC timestamps to format.
     unit : str
-        One of None, 'auto', or 
+        One of None, 'auto', or
         a :ref:`datetime unit <arrays.dtypes.dateunits>`.
     timezone : {'naive', 'UTC', 'local'} or tzinfo
         Timezone information to use when displaying the datetime. If 'UTC',

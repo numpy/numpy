@@ -63,7 +63,7 @@ for k, v in _aliases.items():
 
 # extra aliases are added only to `sctypeDict`
 # to support dtype name access, such as`np.dtype("float")`
-_extra_aliases = {  
+_extra_aliases = {
     "float": "float64",
     "complex": "complex128",
     "object": "object_",
@@ -104,8 +104,8 @@ for type_info in typeinfo.values():
 
     # find proper group for each concrete type
     for type_group, abstract_type in [
-        ("int", ma.signedinteger), ("uint", ma.unsignedinteger), 
-        ("float", ma.floating), ("complex", ma.complexfloating), 
+        ("int", ma.signedinteger), ("uint", ma.unsignedinteger),
+        ("float", ma.floating), ("complex", ma.complexfloating),
         ("others", ma.generic)
     ]:
         if issubclass(concrete_type, abstract_type):

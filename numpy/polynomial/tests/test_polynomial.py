@@ -120,7 +120,7 @@ class TestArithmetic:
                 msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(poly.polymul, [c]*j, np.array([1]))
-                res = poly.polypow(c, j) 
+                res = poly.polypow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 class TestFraction:
@@ -131,7 +131,7 @@ class TestFraction:
         one = Fraction(1, 1)
         zero = Fraction(0, 1)
         p = poly.Polynomial([f, f], domain=[zero, one], window=[zero, one])
-        
+
         x = 2 * p + p ** 2
         assert_equal(x.coef, np.array([Fraction(16, 9), Fraction(20, 9),
                                        Fraction(4, 9)], dtype=object))

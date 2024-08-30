@@ -213,7 +213,7 @@ class TestMemmap:
 
         # ok now the file is not empty
         memmap(self.tmpfp, shape=(0,4), mode='w+')
-    
+
     def test_shape_type(self):
         memmap(self.tmpfp, shape=3, mode='w+')
         memmap(self.tmpfp, shape=self.shape, mode='w+')

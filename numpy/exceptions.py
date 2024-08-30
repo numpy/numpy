@@ -86,9 +86,9 @@ class VisibleDeprecationWarning(UserWarning):
 
 class RankWarning(RuntimeWarning):
     """Matrix rank warning.
-    
+
     Issued by polynomial functions when the design matrix is rank deficient.
-    
+
     """
     pass
 

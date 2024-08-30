@@ -334,7 +334,7 @@ class TestNonarrayArgs:
             tgt = np.array([1, 3, 3, 4], dtype=array_type)
             out = np.take(x, ind)
             assert_equal(out, tgt)
-            assert_equal(out.dtype, tgt.dtype)  
+            assert_equal(out.dtype, tgt.dtype)
 
     def test_trace(self):
         c = [[1, 2], [3, 4], [5, 6]]

@@ -597,7 +597,7 @@ class BinaryBenchInteger(Benchmark):
         N = 1000000
         self.a = np.random.randint(20, size=N).astype(dtype)
         self.b = np.random.randint(4, size=N).astype(dtype)
-        
+
     def time_pow(self, dtype):
         np.power(self.a, self.b)
 

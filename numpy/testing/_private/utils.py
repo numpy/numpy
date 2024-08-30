@@ -856,27 +856,27 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         remarks.append(
                             'Max absolute difference among violations: '
                             + array2string(max_abs_error))
-                        
+
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
                     nonzero = np.bool(y != 0)
                     nonzero_and_invalid = np.logical_and(invalids, nonzero)
-                    
+
                     if all(~nonzero_and_invalid):
                         max_rel_error = array(inf)
                     else:
                         nonzero_invalid_error = error[nonzero_and_invalid]
                         broadcasted_y = np.broadcast_to(y, error.shape)
                         nonzero_invalid_y = broadcasted_y[nonzero_and_invalid]
-                        max_rel_error = max(nonzero_invalid_error 
+                        max_rel_error = max(nonzero_invalid_error
                                             / abs(nonzero_invalid_y))
 
-                    if getattr(error, 'dtype', object_) == object_: 
+                    if getattr(error, 'dtype', object_) == object_:
                         remarks.append(
                             'Max relative difference among violations: '
                             + str(max_rel_error))
-                    else:               
+                    else:
                         remarks.append(
                             'Max relative difference among violations: '
                             + array2string(max_rel_error))
@@ -1384,7 +1384,7 @@ def check_support_sve():
     """
     gh-22982
     """
-    
+
     import subprocess
     cmd = 'lscpu'
     try:

@@ -235,7 +235,7 @@ def build(cfile, outputfilename, compile_extra, link_extra,
         """))
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
-                               "--buildtype=release", 
+                               "--buildtype=release",
                                "--vsenv", ".."],
                               cwd=build_dir,
                               )
@@ -245,7 +245,7 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                               )
     subprocess.check_call(["meson", "compile"], cwd=build_dir)
     os.rename(str(build_dir / so_name) + ".dummy", cfile.parent / so_name)
-        
+
 def get_so_suffix():
     ret = sysconfig.get_config_var('EXT_SUFFIX')
     assert ret
