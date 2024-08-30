@@ -12,7 +12,7 @@ from xml.sax.saxutils import quoteattr, escape
 try:
     import pygments
     if tuple([int(x) for x in pygments.__version__.split('.')]) < (0, 11):
-        raise ImportError()
+        raise ImportError
     from pygments import highlight
     from pygments.lexers import CLexer
     from pygments.formatters import HtmlFormatter

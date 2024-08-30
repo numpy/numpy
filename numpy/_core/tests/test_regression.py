@@ -2178,7 +2178,7 @@ class TestRegression:
             __array_priority__ = 1002
 
             def __array__(self, *args, **kwargs):
-                raise Exception()
+                raise Exception
 
         rhs = Foo()
         lhs = np.array(1)

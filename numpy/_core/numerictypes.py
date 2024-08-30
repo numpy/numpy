@@ -374,7 +374,7 @@ def _preprocess_dtype(dtype):
     if isinstance(dtype, ma.dtype):
         dtype = dtype.type
     if isinstance(dtype, ndarray) or dtype not in allTypes.values():
-        raise _PreprocessDTypeError()
+        raise _PreprocessDTypeError
     return dtype
 
 

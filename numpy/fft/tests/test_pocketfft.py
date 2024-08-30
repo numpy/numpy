@@ -494,7 +494,7 @@ def test_fft_with_order(dtype, order, fft):
             Y_res = fft(Y, axes=ax)
             assert_allclose(X_res, Y_res, atol=_tol, rtol=_tol)
     else:
-        raise ValueError()
+        raise ValueError
 
 
 @pytest.mark.parametrize("order", ["F", "C"])

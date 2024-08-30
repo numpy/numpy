@@ -1563,7 +1563,7 @@ class TestVectorize:
         try:
             vectorize(random.randrange)  # Should succeed
         except Exception:
-            raise AssertionError()
+            raise AssertionError
 
     def test_keywords2_ticket_2100(self):
         # Test kwarg support: enhancement ticket 2100
