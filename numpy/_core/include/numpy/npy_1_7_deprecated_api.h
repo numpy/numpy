@@ -5,20 +5,6 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
 
-/* Emit a warning if the user did not specifically request the old API */
-#ifndef NPY_NO_DEPRECATED_API
-#if defined(_WIN32)
-#define _WARN___STR2__(x) #x
-#define _WARN___STR1__(x) _WARN___STR2__(x)
-#define _WARN___LOC__ __FILE__ "(" _WARN___STR1__(__LINE__) ") : Warning Msg: "
-#pragma message(_WARN___LOC__"Using deprecated NumPy API, disable it with " \
-                         "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION")
-#else
-#warning "Using deprecated NumPy API, disable it with " \
-         "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
-#endif
-#endif
-
 /*
  * This header exists to collect all dangerous/deprecated NumPy API
  * as of NumPy 1.7.
