@@ -3789,9 +3789,9 @@ class TestMaskedArrayMethods:
         assert_equal(record['_mask'], data._mask)
 
         ndtype = [('i', int), ('s', '|S3'), ('f', float)]
-        data = array([(i, s, f) for (i, s, f) in zip(np.arange(10),
-                                                     'ABCDEFGHIJKLM',
-                                                     np.random.rand(10))],
+        data = array(list(zip(np.arange(10),
+                              'ABCDEFGHIJKLM',
+                              np.random.rand(10))),
                      dtype=ndtype)
         data[[0, 1, 2, -1]] = masked
         record = data.toflex()
@@ -3799,9 +3799,9 @@ class TestMaskedArrayMethods:
         assert_equal(record['_mask'], data._mask)
 
         ndtype = np.dtype("int, (2,3)float, float")
-        data = array([(i, f, ff) for (i, f, ff) in zip(np.arange(10),
-                                                       np.random.rand(10),
-                                                       np.random.rand(10))],
+        data = array(list(zip(np.arange(10),
+                              np.random.rand(10),
+                              np.random.rand(10))),
                      dtype=ndtype)
         data[[0, 1, 2, -1]] = masked
         record = data.toflex()

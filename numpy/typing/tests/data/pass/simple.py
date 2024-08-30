@@ -61,7 +61,7 @@ def iterable_func(x: Iterable[object]) -> Iterable[object]:
 
 
 iterable_func(array)
-[element for element in array]
+list(array)
 iter(array)
 zip(array, array)
 array[1]

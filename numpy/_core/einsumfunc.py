@@ -964,7 +964,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     # Build contraction tuple (positions, gemm, einsum_str, remaining)
     for cnum, contract_inds in enumerate(path):
         # Make sure we remove inds from right to left
-        contract_inds = tuple(sorted(list(contract_inds), reverse=True))
+        contract_inds = tuple(sorted(contract_inds, reverse=True))
 
         contract = _find_contraction(contract_inds, input_sets, output_set)
         out_inds, input_sets, idx_removed, idx_contract = contract

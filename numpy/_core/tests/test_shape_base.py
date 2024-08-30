@@ -156,7 +156,7 @@ class TestHstack:
         with pytest.raises(TypeError, match="arrays to stack must be"):
             hstack(np.arange(3) for _ in range(2))
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            hstack(map(lambda x: x, np.ones((3, 2))))
+            hstack((x for x in np.ones((3, 2))))
 
     def test_casting_and_dtype(self):
         a = np.array([1, 2, 3])
@@ -438,7 +438,7 @@ def test_stack():
     assert_array_equal(np.stack((a, b)), r1)
     assert_array_equal(np.stack((a, b), axis=1), r1.T)
     # all input types
-    assert_array_equal(np.stack(list([a, b])), r1)
+    assert_array_equal(np.stack([a, b]), r1)
     assert_array_equal(np.stack(array([a, b])), r1)
     # all shapes for 1d input
     arrays = [np.random.randn(3) for _ in range(10)]

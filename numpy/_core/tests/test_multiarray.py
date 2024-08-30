@@ -5478,7 +5478,7 @@ class TestIO:
 
     def test_roundtrip_repr(self, x):
         x = x.real.ravel()
-        s = "@".join(map(lambda x: repr(x)[11:-1], x))
+        s = "@".join((repr(x)[11:-1] for x in x))
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
