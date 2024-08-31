@@ -2,10 +2,10 @@ set -xe
 
 git config --global --add safe.directory /numpy
 cd /numpy
-/opt/python/cp39-cp39/bin/python -mvenv venv
+/opt/python/cp310-cp310/bin/python -mvenv venv
 source venv/bin/activate
-python3 -m pip install ninja scipy-openblas32 spin
-python3 -m pip install -r test_requirements.txt
+pip install -r requirements/ci32_requirements.txt
+python3 -m pip install -r requirements/test_requirements.txt
 echo CFLAGS \$CFLAGS
 spin config-openblas --with-scipy-openblas=32
 export PKG_CONFIG_PATH=/numpy/.openblas

@@ -1,4 +1,0 @@
-``f2py`` will no longer accept ambiguous ``-m`` and ``.pyf`` CLI combinations.
-When more than one ``.pyf`` file is passed, an error is raised. When both ``-m``
-and a ``.pyf`` is passed, a warning is emitted and the ``-m`` provided name is
-ignored.

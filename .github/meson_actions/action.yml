@@ -10,7 +10,7 @@ runs:
       PKG_CONFIG_PATH: ./.openblas
     run: |
       echo "::group::Installing Build Dependencies"
-      pip install -r build_requirements.txt
+      pip install -r requirements/build_requirements.txt
       echo "::endgroup::"
       echo "::group::Building NumPy"
       spin build --clean -- ${MESON_ARGS[@]}

@@ -34,7 +34,7 @@ using std::intptr_t;
 using std::complex;
 using std::uint_fast16_t;
 using std::uint_fast32_t;
-
+using SSize = Py_ssize_t;
 /** Guard for long double.
  *
  * The C implementation defines long double as double

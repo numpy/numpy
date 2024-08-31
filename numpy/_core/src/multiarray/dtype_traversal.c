@@ -32,7 +32,7 @@
 
 
 typedef int get_traverse_func_function(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        void *traverse_context, const PyArray_Descr *dtype, int aligned,
         npy_intp stride, NPY_traverse_info *clear_info,
         NPY_ARRAYMETHOD_FLAGS *flags);
 
@@ -42,7 +42,7 @@ typedef int get_traverse_func_function(
 
 static int
 get_clear_function(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        void *traverse_context, const PyArray_Descr *dtype, int aligned,
         npy_intp stride, NPY_traverse_info *clear_info,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -50,7 +50,7 @@ get_clear_function(
     /* not that cleanup code bothers to check e.g. for floating point flags */
     *flags = PyArrayMethod_MINIMAL_FLAGS;
 
-    get_traverse_loop_function *get_clear = NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_clear_loop;
+    PyArrayMethod_GetTraverseLoop *get_clear = NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_clear_loop;
     if (get_clear == NULL) {
         PyErr_Format(PyExc_RuntimeError,
                 "Internal error, `get_clear_loop` not set for the DType '%S'",
@@ -99,7 +99,7 @@ PyArray_GetClearFunction(
 
 static int
 get_zerofill_function(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
+        void *traverse_context, const PyArray_Descr *dtype, int aligned,
         npy_intp stride, NPY_traverse_info *zerofill_info,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -107,7 +107,7 @@ get_zerofill_function(
     /* not that filling code bothers to check e.g. for floating point flags */
     *flags = PyArrayMethod_MINIMAL_FLAGS;
 
-    get_traverse_loop_function *get_zerofill = NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_fill_zero_loop;
+    PyArrayMethod_GetTraverseLoop *get_zerofill = NPY_DT_SLOTS(NPY_DTYPE(dtype))->get_fill_zero_loop;
     if (get_zerofill == NULL) {
         /* Allowed to be NULL (and accept it here) */
         return 0;
@@ -136,7 +136,7 @@ get_zerofill_function(
 
 static int
 clear_object_strided_loop(
-        void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
+        void *NPY_UNUSED(traverse_context), const PyArray_Descr *NPY_UNUSED(descr),
         char *data, npy_intp size, npy_intp stride,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
@@ -156,9 +156,9 @@ clear_object_strided_loop(
 
 NPY_NO_EXPORT int
 npy_get_clear_object_strided_loop(
-        void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
+        void *NPY_UNUSED(traverse_context), const PyArray_Descr *NPY_UNUSED(descr),
         int NPY_UNUSED(aligned), npy_intp NPY_UNUSED(fixed_stride),
-        traverse_loop_function **out_loop, NpyAuxData **out_auxdata,
+        PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_auxdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
     *flags = NPY_METH_REQUIRES_PYAPI|NPY_METH_NO_FLOATINGPOINT_ERRORS;
@@ -171,7 +171,7 @@ npy_get_clear_object_strided_loop(
 
 static int
 fill_zero_object_strided_loop(
-        void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
+        void *NPY_UNUSED(traverse_context), const PyArray_Descr *NPY_UNUSED(descr),
         char *data, npy_intp size, npy_intp stride,
         NpyAuxData *NPY_UNUSED(auxdata))
 {
@@ -188,10 +188,10 @@ fill_zero_object_strided_loop(
 
 NPY_NO_EXPORT int
 npy_object_get_fill_zero_loop(void *NPY_UNUSED(traverse_context),
-                              PyArray_Descr *NPY_UNUSED(descr),
+                              const PyArray_Descr *NPY_UNUSED(descr),
                               int NPY_UNUSED(aligned),
                               npy_intp NPY_UNUSED(fixed_stride),
-                              traverse_loop_function **out_loop,
+                              PyArrayMethod_TraverseLoop **out_loop,
                               NpyAuxData **NPY_UNUSED(out_auxdata),
                               NPY_ARRAYMETHOD_FLAGS *flags)
 {
@@ -275,7 +275,7 @@ fields_traverse_data_clone(NpyAuxData *data)
 
 static int
 traverse_fields_function(
-        void *traverse_context, PyArray_Descr *NPY_UNUSED(descr),
+        void *traverse_context, const _PyArray_LegacyDescr *NPY_UNUSED(descr),
         char *data, npy_intp N, npy_intp stride,
         NpyAuxData *auxdata)
 {
@@ -315,8 +315,8 @@ traverse_fields_function(
 
 static int
 get_fields_traverse_function(
-        void *traverse_context, PyArray_Descr *dtype, int NPY_UNUSED(aligned),
-        npy_intp stride, traverse_loop_function **out_func,
+        void *traverse_context, const _PyArray_LegacyDescr *dtype, int NPY_UNUSED(aligned),
+        npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags,
         get_traverse_func_function *get_traverse_func)
 {
@@ -326,7 +326,7 @@ get_fields_traverse_function(
     Py_ssize_t field_count;
 
     names = dtype->names;
-    field_count = PyTuple_GET_SIZE(dtype->names);
+    field_count = PyTuple_GET_SIZE(names);
 
     /* Over-allocating here: less fields may be used */
     structsize = (sizeof(fields_traverse_data) +
@@ -373,7 +373,7 @@ get_fields_traverse_function(
         field++;
     }
 
-    *out_func = &traverse_fields_function;
+    *out_func = (PyArrayMethod_TraverseLoop *)&traverse_fields_function;
     *out_auxdata = (NpyAuxData *)data;
 
     return 0;
@@ -398,13 +398,6 @@ subarray_traverse_data_free(NpyAuxData *data)
 }
 
 
-/*
- * We seem to be neither using nor exposing this right now, so leave it NULL.
- * (The implementation below should be functional.)
- */
-#define subarray_traverse_data_clone NULL
-
-#ifndef subarray_traverse_data_clone
 /* traverse data copy function */
 static NpyAuxData *
 subarray_traverse_data_clone(NpyAuxData *data)
@@ -426,19 +419,18 @@ subarray_traverse_data_clone(NpyAuxData *data)
 
     return (NpyAuxData *)newdata;
 }
-#endif
 
 
 static int
 traverse_subarray_func(
-        void *traverse_context, PyArray_Descr *NPY_UNUSED(descr),
+        void *traverse_context, const PyArray_Descr *NPY_UNUSED(descr),
         char *data, npy_intp N, npy_intp stride,
         NpyAuxData *auxdata)
 {
     subarray_traverse_data *subarr_data = (subarray_traverse_data *)auxdata;
 
-    traverse_loop_function *func = subarr_data->info.func;
-    PyArray_Descr *sub_descr = subarr_data->info.descr;
+    PyArrayMethod_TraverseLoop *func = subarr_data->info.func;
+    const PyArray_Descr *sub_descr = subarr_data->info.descr;
     npy_intp sub_N = subarr_data->count;
     NpyAuxData *sub_auxdata = subarr_data->info.auxdata;
     npy_intp sub_stride = sub_descr->elsize;
@@ -456,8 +448,8 @@ traverse_subarray_func(
 
 static int
 get_subarray_traverse_func(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
-        npy_intp size, npy_intp stride, traverse_loop_function **out_func,
+        void *traverse_context, const PyArray_Descr *dtype, int aligned,
+        npy_intp size, npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags,
         get_traverse_func_function *get_traverse_func)
 {
@@ -469,7 +461,7 @@ get_subarray_traverse_func(
 
     auxdata->count = size;
     auxdata->base.free = &subarray_traverse_data_free;
-    auxdata->base.clone = subarray_traverse_data_clone;
+    auxdata->base.clone = &subarray_traverse_data_clone;
 
     if (get_traverse_func(
             traverse_context, dtype, aligned,
@@ -493,7 +485,7 @@ get_subarray_traverse_func(
 
 static int
 clear_no_op(
-        void *NPY_UNUSED(traverse_context), PyArray_Descr *NPY_UNUSED(descr),
+        void *NPY_UNUSED(traverse_context), const PyArray_Descr *NPY_UNUSED(descr),
         char *NPY_UNUSED(data), npy_intp NPY_UNUSED(size),
         npy_intp NPY_UNUSED(stride), NpyAuxData *NPY_UNUSED(auxdata))
 {
@@ -502,8 +494,8 @@ clear_no_op(
 
 NPY_NO_EXPORT int
 npy_get_clear_void_and_legacy_user_dtype_loop(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
-        npy_intp stride, traverse_loop_function **out_func,
+        void *traverse_context, const _PyArray_LegacyDescr *dtype, int aligned,
+        npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
     /*
@@ -511,12 +503,12 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
      * but structured dtypes are tricky when a dtype which included references
      * was sliced to not include any.
      */
-    if (!PyDataType_REFCHK(dtype)) {
+    if (!PyDataType_REFCHK((PyArray_Descr *)dtype)) {
         *out_func = &clear_no_op;
         return 0;
     }
 
-    if (PyDataType_HASSUBARRAY(dtype)) {
+    if (dtype->subarray != NULL) {
         PyArray_Dims shape = {NULL, -1};
         npy_intp size;
 
@@ -569,7 +561,7 @@ npy_get_clear_void_and_legacy_user_dtype_loop(
 
 static int
 zerofill_fields_function(
-        void *traverse_context, PyArray_Descr *descr,
+        void *traverse_context, const _PyArray_LegacyDescr *descr,
         char *data, npy_intp N, npy_intp stride,
         NpyAuxData *auxdata)
 {
@@ -598,11 +590,11 @@ zerofill_fields_function(
  */
 NPY_NO_EXPORT int
 npy_get_zerofill_void_and_legacy_user_dtype_loop(
-        void *traverse_context, PyArray_Descr *dtype, int aligned,
-        npy_intp stride, traverse_loop_function **out_func,
+        void *traverse_context, const _PyArray_LegacyDescr *dtype, int aligned,
+        npy_intp stride, PyArrayMethod_TraverseLoop **out_func,
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    if (PyDataType_HASSUBARRAY(dtype)) {
+    if (dtype->subarray != NULL) {
         PyArray_Dims shape = {NULL, -1};
         npy_intp size;
 
@@ -640,7 +632,7 @@ npy_get_zerofill_void_and_legacy_user_dtype_loop(
          * Traversal skips fields that have no custom zeroing, so we need
          * to take care of it.
          */
-        *out_func = &zerofill_fields_function;
+        *out_func = (PyArrayMethod_TraverseLoop *)&zerofill_fields_function;
         return 0;
     }
 

@@ -26,14 +26,13 @@ details are found in :ref:`reference`.
    :maxdepth: 1
 
    numpy-for-matlab-users
-   NumPy tutorials <https://numpy.org/numpy-tutorials/features.html>
+   NumPy tutorials <https://numpy.org/numpy-tutorials/>
    howtos_index
 
 .. toctree::
    :caption: Advanced usage and interoperability
    :maxdepth: 1
 
-   building
    c-info
    ../f2py/index
    ../dev/underthehood

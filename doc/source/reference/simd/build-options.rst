@@ -8,7 +8,7 @@ Description
 The following options are mainly used to change the default behavior of optimizations
 that target certain CPU features:
 
-- ``--cpu-baseline``: minimal set of required CPU features.
+- ``cpu-baseline``: minimal set of required CPU features.
    Default value is ``min`` which provides the minimum CPU features that can
    safely run on a wide range of platforms within the processor family.
 
@@ -17,7 +17,7 @@ that target certain CPU features:
      During the runtime, NumPy modules will fail to load if any of specified features
      are not supported by the target CPU (raises Python runtime error).
 
-- ``--cpu-dispatch``: dispatched set of additional CPU features.
+- ``cpu-dispatch``: dispatched set of additional CPU features.
    Default value is ``max -xop -fma4`` which enables all CPU
    features, except for AMD legacy features (in case of X86).
 
@@ -26,39 +26,16 @@ that target certain CPU features:
       During the runtime, NumPy modules will skip any specified features
       that are not available in the target CPU.
 
-These options are accessible through :py:mod:`distutils` commands
-`distutils.command.build`, `distutils.command.build_clib` and
-`distutils.command.build_ext`.
+These options are accessible at build time by passing setup arguments to meson-python
+via the build frontend (e.g., ``pip`` or ``build``).
 They accept a set of :ref:`CPU features <opt-supported-features>`
 or groups of features that gather several features or
 :ref:`special options <opt-special-options>` that
 perform a series of procedures.
 
-.. note::
+To customize CPU/build options::
 
-    If ``build_clib`` or ``build_ext`` are not specified by the user,
-    the arguments of ``build`` will be used instead, which also holds the default values.
-
-To customize both ``build_ext`` and ``build_clib``::
-
-    cd /path/to/numpy
-    python setup.py build --cpu-baseline="avx2 fma3" install --user
-
-To customize only ``build_ext``::
-
-    cd /path/to/numpy
-    python setup.py build_ext --cpu-baseline="avx2 fma3" install --user
-
-To customize only ``build_clib``::
-
-    cd /path/to/numpy
-    python setup.py build_clib --cpu-baseline="avx2 fma3" install --user
-
-You can also customize CPU/build options through PIP command::
-
-    pip install --no-use-pep517 --global-option=build \
-    --global-option="--cpu-baseline=avx2 fma3" \
-    --global-option="--cpu-dispatch=max" ./
+    pip install . -Csetup-args=-Dcpu-baseline="avx2 fma3" -Csetup-args=-Dcpu-dispatch="max"
 
 Quick start
 -----------
@@ -79,49 +56,49 @@ I am building NumPy for my local use
 And I do not intend to export the build to other users or target a
 different CPU than what the host has.
 
-Set `native` for baseline, or manually specify the CPU features in case of option
-`native` isn't supported by your platform::
+Set ``native`` for baseline, or manually specify the CPU features in case of option
+``native`` isn't supported by your platform::
 
-    python setup.py build --cpu-baseline="native" bdist
+    python -m build --wheel -Csetup-args=-Dcpu-baseline="native"
 
 Building NumPy with extra CPU features isn't necessary for this case,
 since all supported features are already defined within the baseline features::
 
-    python setup.py build --cpu-baseline=native --cpu-dispatch=none bdist
+    python -m build --wheel -Csetup-args=-Dcpu-baseline="native" \
+    -Csetup-args=-Dcpu-dispatch="none"
 
 .. note::
 
-    A fatal error will be raised if `native` isn't supported by the host platform.
+    A fatal error will be raised if ``native`` isn't supported by the host platform.
 
-I do not want to support the old processors of the `x86` architecture
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+I do not want to support the old processors of the x86 architecture
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since most of the CPUs nowadays support at least `AVX`, `F16C` features, you can use::
+Since most of the CPUs nowadays support at least ``AVX``, ``F16C`` features, you can use::
 
-    python setup.py build --cpu-baseline="avx f16c" bdist
+    python -m build --wheel -Csetup-args=-Dcpu-baseline="avx f16c"
 
 .. note::
 
-    ``--cpu-baseline`` force combine all implied features, so there's no need
+    ``cpu-baseline`` force combine all implied features, so there's no need
     to add SSE features.
 
 
-I'm facing the same case above but with `ppc64` architecture
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+I'm facing the same case above but with ppc64 architecture
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Then raise the ceiling of the baseline features to Power8::
 
-    python setup.py build --cpu-baseline="vsx2" bdist
+    python -m build --wheel -Csetup-args=-Dcpu-baseline="vsx2"
 
-Having issues with `AVX512` features?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Having issues with AVX512 features?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You may have some reservations about including of `AVX512` or
+You may have some reservations about including of ``AVX512`` or
 any other CPU feature and you want to exclude from the dispatched features::
 
-    python setup.py build --cpu-dispatch="max -avx512f -avx512cd \
-    -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl" \
-    bdist
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512f -avx512cd \
+    -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl"
 
 .. _opt-supported-features:
 
@@ -177,64 +154,64 @@ Behaviors
 
 - CPU features and other options are case-insensitive, for example::
 
-    python setup.py build --cpu-dispatch="SSE41 avx2 FMA3"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="SSE41 avx2 FMA3"
 
 - The order of the requested optimizations doesn't matter::
 
-    python setup.py build --cpu-dispatch="SSE41 AVX2 FMA3"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="SSE41 AVX2 FMA3"
     # equivalent to
-    python setup.py build --cpu-dispatch="FMA3 AVX2 SSE41"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="FMA3 AVX2 SSE41"
 
 - Either commas or spaces or '+' can be used as a separator,
   for example::
 
-    python setup.py build --cpu-dispatch="avx2 avx512f"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="avx2 avx512f"
     # or
-    python setup.py build --cpu-dispatch=avx2,avx512f
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch=avx2,avx512f
     # or
-    python setup.py build --cpu-dispatch="avx2+avx512f"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="avx2+avx512f"
 
   all works but arguments should be enclosed in quotes or escaped
   by backslash if any spaces are used.
 
-- ``--cpu-baseline`` combines all implied CPU features, for example::
+- ``cpu-baseline`` combines all implied CPU features, for example::
 
-    python setup.py build --cpu-baseline=sse42
+    python -m build --wheel -Csetup-args=-Dcpu-baseline=sse42
     # equivalent to
-    python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
+    python -m build --wheel -Csetup-args=-Dcpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
-- ``--cpu-baseline`` will be treated as "native" if compiler native flag
+- ``cpu-baseline`` will be treated as "native" if compiler native flag
   ``-march=native`` or ``-xHost`` or ``/QxHost`` is enabled through environment variable
-  `CFLAGS`::
+  ``CFLAGS``::
 
     export CFLAGS="-march=native"
-    python setup.py install --user
+    pip install .
     # is equivalent to
-    python setup.py build --cpu-baseline=native install --user
+    pip install . -Csetup-args=-Dcpu-baseline=native
 
-- ``--cpu-baseline`` escapes any specified features that aren't supported
+- ``cpu-baseline`` escapes any specified features that aren't supported
   by the target platform or compiler rather than raising fatal errors.
 
   .. note::
 
-       Since ``--cpu-baseline`` combines all implied features, the maximum
+       Since ``cpu-baseline`` combines all implied features, the maximum
        supported of implied features will be enabled rather than escape all of them.
        For example::
 
           # Requesting `AVX2,FMA3` but the compiler only support **SSE** features
-          python setup.py build --cpu-baseline="avx2 fma3"
+          python -m build --wheel -Csetup-args=-Dcpu-baseline="avx2 fma3"
           # is equivalent to
-          python setup.py build --cpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
+          python -m build --wheel -Csetup-args=-Dcpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
-- ``--cpu-dispatch`` does not combain any of implied CPU features,
+- ``cpu-dispatch`` does not combain any of implied CPU features,
   so you must add them unless you want to disable one or all of them::
 
     # Only dispatches AVX2 and FMA3
-    python setup.py build --cpu-dispatch=avx2,fma3
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch=avx2,fma3
     # Dispatches AVX and SSE features
-    python setup.py build --cpu-baseline=ssse3,sse41,sse42,avx,avx2,fma3
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch=ssse3,sse41,sse42,avx,avx2,fma3
 
-- ``--cpu-dispatch`` escapes any specified baseline features and also escapes
+- ``cpu-dispatch`` escapes any specified baseline features and also escapes
   any features not supported by the target platform or compiler without raising
   fatal errors.
 
@@ -265,9 +242,9 @@ For example::
 
     # On ARMv8/A64, specify NEON is going to enable Advanced SIMD
     # and all predecessor extensions
-    python setup.py build --cpu-baseline=neon
-    # which equivalent to
-    python setup.py build --cpu-baseline="neon neon_fp16 neon_vfpv4 asimd"
+    python -m build --wheel -Csetup-args=-Dcpu-baseline=neon
+    # which is equivalent to
+    python -m build --wheel -Csetup-args=-Dcpu-baseline="neon neon_fp16 neon_vfpv4 asimd"
 
 .. note::
 
@@ -284,9 +261,9 @@ but this approach is incompatible with other **x86** CPUs from **AMD** or **VIA*
 For example::
 
     # Specify AVX2 will force enables FMA3 on Intel compilers
-    python setup.py build --cpu-baseline=avx2
-    # which equivalent to
-    python setup.py build --cpu-baseline="avx2 fma3"
+    python -m build --wheel -Csetup-args=-Dcpu-baseline=avx2
+    # which is equivalent to
+    python -m build --wheel -Csetup-args=-Dcpu-baseline="avx2 fma3"
 
 
 The following tables only show the differences imposed by some compilers from the
@@ -346,9 +323,9 @@ that includes several sections, and each section has several values, representin
 
 **CPU baseline**:
 
-- :enabled:`Requested`: The specific features and options to ``--cpu-baseline`` as-is.
+- :enabled:`Requested`: The specific features and options to ``cpu-baseline`` as-is.
 - :enabled:`Enabled`: The final set of enabled CPU features.
-- :enabled:`Flags`: The compiler flags that were used to all NumPy `C/C++` sources
+- :enabled:`Flags`: The compiler flags that were used to all NumPy C/C++ sources
   during the compilation except for temporary sources that have been used for generating
   the binary objects of dispatched features.
 - :enabled:`Extra checks`: list of internal checks that activate certain functionality
@@ -357,7 +334,7 @@ that includes several sections, and each section has several values, representin
 
 **CPU dispatch**:
 
-- :enabled:`Requested`: The specific features and options to ``--cpu-dispatch`` as-is.
+- :enabled:`Requested`: The specific features and options to ``cpu-dispatch`` as-is.
 - :enabled:`Enabled`: The final set of enabled CPU features.
 - :enabled:`Generated`: At the beginning of the next row of this property,
   the features for which optimizations have been generated are shown in the

@@ -17,7 +17,7 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 
 #include "convert_datatype.h"
 #include "methods.h"
@@ -243,8 +243,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     }
 
     /* Check the casting rule */
-    if (!can_cast_scalar_to(src_dtype, src_data,
-                            PyArray_DESCR(dst), casting)) {
+    if (!PyArray_CanCastTypeTo(src_dtype, PyArray_DESCR(dst), casting)) {
         npy_set_invalid_cast_error(
                 src_dtype, PyArray_DESCR(dst), casting, NPY_TRUE);
         return -1;
@@ -267,11 +266,11 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
          * Use a static buffer to store the aligned/cast version,
          * or allocate some memory if more space is needed.
          */
-        if ((int)sizeof(scalarbuffer) >= PyArray_DESCR(dst)->elsize) {
+        if ((int)sizeof(scalarbuffer) >= PyArray_ITEMSIZE(dst)) {
             tmp_src_data = (char *)&scalarbuffer[0];
         }
         else {
-            tmp_src_data = PyArray_malloc(PyArray_DESCR(dst)->elsize);
+            tmp_src_data = PyArray_malloc(PyArray_ITEMSIZE(dst));
             if (tmp_src_data == NULL) {
                 PyErr_NoMemory();
                 goto fail;
@@ -280,7 +279,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
         }
 
         if (PyDataType_FLAGCHK(PyArray_DESCR(dst), NPY_NEEDS_INIT)) {
-            memset(tmp_src_data, 0, PyArray_DESCR(dst)->elsize);
+            memset(tmp_src_data, 0, PyArray_ITEMSIZE(dst));
         }
 
         if (PyArray_CastRawArrays(1, src_data, tmp_src_data, 0, 0,

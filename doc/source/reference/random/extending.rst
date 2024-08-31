@@ -4,15 +4,15 @@
 
 Extending
 =========
-The BitGenerators have been designed to be extendable using standard tools for
-high-performance Python -- numba and Cython.  The `~Generator` object can also
-be used with user-provided BitGenerators as long as these export a small set of
-required functions.
+The `BitGenerator`\ s have been designed to be extendable using standard tools
+for high-performance Python -- numba and Cython.  The `Generator` object can
+also be used with user-provided `BitGenerator`\ s as long as these export a
+small set of required functions.
 
 Numba
 -----
 Numba can be used with either CTypes or CFFI.  The current iteration of the
-BitGenerators all export a small set of functions through both interfaces.
+`BitGenerator`\ s all export a small set of functions through both interfaces.
 
 This example shows how numba can be used to produce gaussian samples using
 a pure Python implementation which is then compiled.  The random numbers are
@@ -32,7 +32,7 @@ the `Examples`_ section below.
 Cython
 ------
 
-Cython can be used to unpack the ``PyCapsule`` provided by a BitGenerator.
+Cython can be used to unpack the ``PyCapsule`` provided by a `BitGenerator`.
 This example uses `PCG64` and the example from above.  The usual caveats
 for writing high-performance code using Cython -- removing bounds checks and
 wrap around, providing array alignment information -- still apply.
@@ -41,7 +41,7 @@ wrap around, providing array alignment information -- still apply.
     :language: cython
     :end-before: example 2
 
-The BitGenerator can also be directly accessed using the members of the ``bitgen_t``
+The `BitGenerator` can also be directly accessed using the members of the ``bitgen_t``
 struct.
 
 .. literalinclude:: ../../../../numpy/random/_examples/cython/extending_distributions.pyx
@@ -81,9 +81,9 @@ directly from the ``_generator`` shared object, using the `BitGenerator.cffi` in
 
 New BitGenerators
 -----------------
-`~Generator` can be used with user-provided `~BitGenerator`\ s. The simplest
-way to write a new BitGenerator is to examine the pyx file of one of the
-existing BitGenerators. The key structure that must be provided is the
+`Generator` can be used with user-provided `BitGenerator`\ s. The simplest
+way to write a new `BitGenerator` is to examine the pyx file of one of the
+existing `BitGenerator`\ s. The key structure that must be provided is the
 ``capsule`` which contains a ``PyCapsule`` to a struct pointer of type
 ``bitgen_t``,
 
@@ -98,11 +98,11 @@ existing BitGenerators. The key structure that must be provided is the
   } bitgen_t;
 
 which provides 5 pointers. The first is an opaque pointer to the data structure
-used by the BitGenerators.  The next three are function pointers which return
-the next 64- and 32-bit unsigned integers, the next random double and the next
-raw value.  This final function is used for testing and so can be set to
-the next 64-bit unsigned integer function if not needed. Functions inside
-``Generator`` use this structure as in
+used by the `BitGenerator`\ s.  The next three are function pointers which
+return the next 64- and 32-bit unsigned integers, the next random double and
+the next raw value. This final function is used for testing and so can be set
+to the next 64-bit unsigned integer function if not needed. Functions inside
+`Generator` use this structure as in
 
 .. code-block:: c
 

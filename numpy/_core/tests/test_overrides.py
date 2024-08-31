@@ -540,7 +540,7 @@ class TestNumPyFunctions:
 
 class TestArrayLike:
     def setup_method(self):
-        class MyArray():
+        class MyArray:
             def __init__(self, function=None):
                 self.function = function
 
@@ -554,7 +554,7 @@ class TestArrayLike:
 
         self.MyArray = MyArray
 
-        class MyNoArrayFunctionArray():
+        class MyNoArrayFunctionArray:
             def __init__(self, function=None):
                 self.function = function
 
@@ -709,10 +709,10 @@ class TestArrayLike:
 
 def test_function_like():
     # We provide a `__get__` implementation, make sure it works
-    assert type(np.mean) is np._core._multiarray_umath._ArrayFunctionDispatcher 
+    assert type(np.mean) is np._core._multiarray_umath._ArrayFunctionDispatcher
 
     class MyClass:
-        def __array__(self):
+        def __array__(self, dtype=None, copy=None):
             # valid argument to mean:
             return np.arange(3)
 

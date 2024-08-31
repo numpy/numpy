@@ -10,17 +10,11 @@ steps:
 - script: python -m pip install --upgrade pip wheel
   displayName: 'Install tools'
 
-- script: python -m pip install -r test_requirements.txt
+- script: python -m pip install -r requirements/test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
 
 - powershell: |
-    # Note that rtools 42+ does not support 32 bits builds. We dropped testing
-    # those, but if there's a need to go back on that, use version 4.0.0.20220206
-    choco install --confirm --no-progress --allow-downgrade rtools --version=4.3.5550
-    choco install unzip -y
-    choco install -y --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
-    choco install ninja
-    echo "##vso[task.setvariable variable=RTOOLS43_HOME]c:\rtools43"
+    choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
   displayName: 'Install utilities'
 
 - powershell: |
@@ -30,14 +24,12 @@ steps:
         python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none" -Csetup-args="-Dallow-noblas=true"
     }
     elseif ( Test-Path env:_USE_BLAS_ILP64 ) {
-        python -m pip install scipy-openblas64 spin
+        pip install -r requirements/ci_requirements.txt
         spin config-openblas --with-scipy-openblas=64
         $env:PKG_CONFIG_PATH="$pwd/.openblas"
-        # use-ilp64 is no longer needed with scipy-openblas > 0.3.24.95.0
-        # python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Duse-ilp64=true"
         python -m pip install . -v -Csetup-args="--vsenv"
     } else {
-        python -m pip install scipy-openblas32 spin
+        pip install -r requirements/ci_requirements.txt
         spin config-openblas --with-scipy-openblas=32
         $env:PKG_CONFIG_PATH="$pwd/.openblas"
         python -m pip install . -v -Csetup-args="--vsenv" 
@@ -47,7 +39,7 @@ steps:
 - powershell: |
     cd tools  # avoid root dir to not pick up source tree
     # Get a gfortran onto the path for f2py tests
-    $env:PATH = "$env:RTOOLS43_HOME\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
+    $env:PATH = "c:\\rtools43\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
     If ( $env:TEST_MODE -eq "full" ) {
       pytest --pyargs numpy -rsx --junitxml=junit/test-results.xml
     } else {

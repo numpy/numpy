@@ -147,6 +147,11 @@ class TestSetState:
         # arguments without truncation.
         self.prng.negative_binomial(0.5, 0.5)
 
+    def test_set_invalid_state(self):
+        # gh-25402
+        with pytest.raises(IndexError):
+            self.prng.set_state(())
+
 
 class TestRandint:
 

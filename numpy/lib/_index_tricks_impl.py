@@ -65,6 +65,7 @@ def ix_(*args):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(10).reshape(2, 5)
     >>> a
     array([[0, 1, 2, 3, 4],
@@ -140,6 +141,7 @@ class nd_grid:
     Users should use these pre-defined instances instead of using `nd_grid`
     directly.
     """
+    __slots__ = ('sparse',)
 
     def __init__(self, sparse=False):
         self.sparse = sparse
@@ -189,7 +191,8 @@ class nd_grid:
                     slobj[k] = slice(None, None)
                     nn[k] = nn[k][tuple(slobj)]
                     slobj[k] = _nx.newaxis
-            return nn
+                return tuple(nn)  # ogrid -> tuple of arrays
+            return nn  # mgrid -> ndarray
         except (IndexError, TypeError):
             step = key.step
             stop = key.stop
@@ -225,8 +228,9 @@ class MGridClass(nd_grid):
 
     Returns
     -------
-    mesh-grid
-        `ndarray`\\ s all of the same dimensions
+    mesh-grid : ndarray
+        A single array, containing a set of `ndarray`\\ s all of the same
+        dimensions. stacked along the first axis.
 
     See Also
     --------
@@ -237,6 +241,7 @@ class MGridClass(nd_grid):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.mgrid[0:5, 0:5]
     array([[[0, 0, 0, 0, 0],
             [1, 1, 1, 1, 1],
@@ -251,7 +256,15 @@ class MGridClass(nd_grid):
     >>> np.mgrid[-1:1:5j]
     array([-1. , -0.5,  0. ,  0.5,  1. ])
 
+    >>> np.mgrid[0:4].shape
+    (4,)
+    >>> np.mgrid[0:4, 0:5].shape
+    (2, 4, 5)
+    >>> np.mgrid[0:4, 0:5, 0:6].shape
+    (3, 4, 5, 6)
+
     """
+    __slots__ = ()
 
     def __init__(self):
         super().__init__(sparse=False)
@@ -277,8 +290,10 @@ class OGridClass(nd_grid):
 
     Returns
     -------
-    mesh-grid
-        `ndarray`\\ s with only one dimension not equal to 1
+    mesh-grid : ndarray or tuple of ndarrays
+        If the input is a single slice, returns an array.
+        If the input is multiple slices, returns a tuple of arrays, with
+        only one dimension not equal to 1.
 
     See Also
     --------
@@ -292,14 +307,16 @@ class OGridClass(nd_grid):
     >>> from numpy import ogrid
     >>> ogrid[-1:1:5j]
     array([-1. , -0.5,  0. ,  0.5,  1. ])
-    >>> ogrid[0:5,0:5]
-    [array([[0],
+    >>> ogrid[0:5, 0:5]
+    (array([[0],
             [1],
             [2],
             [3],
-            [4]]), array([[0, 1, 2, 3, 4]])]
+            [4]]),
+     array([[0, 1, 2, 3, 4]]))
 
     """
+    __slots__ = ()
 
     def __init__(self):
         super().__init__(sparse=True)
@@ -314,6 +331,8 @@ class AxisConcatenator:
 
     For detailed documentation on usage, see `r_`.
     """
+    __slots__ = ('axis', 'matrix', 'trans1d', 'ndmin')
+
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)
     makemat = staticmethod(matrixlib.matrix)
@@ -360,7 +379,7 @@ class AxisConcatenator:
                 else:
                     newobj = _nx.arange(start, stop, step)
                 if ndmin > 1:
-                    newobj = array(newobj, copy=False, ndmin=ndmin)
+                    newobj = array(newobj, copy=None, ndmin=ndmin)
                     if trans1d != -1:
                         newobj = newobj.swapaxes(-1, trans1d)
             elif isinstance(item, str):
@@ -392,7 +411,7 @@ class AxisConcatenator:
                 newobj = item
             else:
                 item_ndim = np.ndim(item)
-                newobj = array(item, copy=False, subok=True, ndmin=ndmin)
+                newobj = array(item, copy=None, subok=True, ndmin=ndmin)
                 if trans1d != -1 and item_ndim < ndmin:
                     k2 = ndmin - item_ndim
                     k1 = trans1d
@@ -413,7 +432,7 @@ class AxisConcatenator:
         if len(result_type_objs) != 0:
             final_dtype = _nx.result_type(*result_type_objs)
             # concatenate could do cast, but that can be overridden:
-            objs = [array(obj, copy=False, subok=True,
+            objs = [array(obj, copy=None, subok=True,
                           ndmin=ndmin, dtype=final_dtype) for obj in objs]
 
         res = self.concatenate(tuple(objs), axis=axis)
@@ -493,6 +512,7 @@ class RClass(AxisConcatenator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.r_[np.array([1,2,3]), 0, 0, np.array([4,5,6])]
     array([1, 2, 3, ..., 4, 5, 6])
     >>> np.r_[-1:1:6j, [0]*3, 5, 6]
@@ -527,6 +547,7 @@ class RClass(AxisConcatenator):
     matrix([[1, 2, 3, 4, 5, 6]])
 
     """
+    __slots__ = ()
 
     def __init__(self):
         AxisConcatenator.__init__(self, 0)
@@ -551,6 +572,7 @@ class CClass(AxisConcatenator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.c_[np.array([1,2,3]), np.array([4,5,6])]
     array([[1, 4],
            [2, 5],
@@ -559,6 +581,7 @@ class CClass(AxisConcatenator):
     array([[1, 2, 3, ..., 4, 5, 6]])
 
     """
+    __slots__ = ()
 
     def __init__(self):
         AxisConcatenator.__init__(self, -1, ndmin=2, trans1d=0)
@@ -585,6 +608,7 @@ class ndenumerate:
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, 4]])
     >>> for index, x in np.ndenumerate(a):
     ...     print(index, x)
@@ -637,6 +661,8 @@ class ndindex:
 
     Examples
     --------
+    >>> import numpy as np
+
     Dimensions as individual arguments
 
     >>> for index in np.ndindex(3, 2, 1):
@@ -750,6 +776,7 @@ class IndexExpression:
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.s_[2::2]
     slice(2, None, 2)
     >>> np.index_exp[2::2]
@@ -759,6 +786,7 @@ class IndexExpression:
     array([2, 4])
 
     """
+    __slots__ = ('maketuple',)
 
     def __init__(self, maketuple):
         self.maketuple = maketuple
@@ -789,14 +817,13 @@ def fill_diagonal(a, val, wrap=False):
     """Fill the main diagonal of the given array of any dimensionality.
 
     For an array `a` with ``a.ndim >= 2``, the diagonal is the list of
-    locations with indices ``a[i, ..., i]`` all identical. This function
-    modifies the input array in-place, it does not return a value.
+    values ``a[i, ..., i]`` with indices ``i`` all identical.  This function
+    modifies the input array in-place without returning a value.
 
     Parameters
     ----------
     a : array, at least 2-D.
-      Array whose diagonal is to be filled, it gets modified in-place.
-
+      Array whose diagonal is to be filled in-place.
     val : scalar or array_like
       Value(s) to write on the diagonal. If `val` is scalar, the value is
       written along the diagonal. If array-like, the flattened `val` is
@@ -822,6 +849,7 @@ def fill_diagonal(a, val, wrap=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.zeros((3, 3), int)
     >>> np.fill_diagonal(a, 5)
     >>> a
@@ -948,6 +976,8 @@ def diag_indices(n, ndim=2):
 
     Examples
     --------
+    >>> import numpy as np
+
     Create a set of indices to access the diagonal of a (4, 4) array:
 
     >>> di = np.diag_indices(4)
@@ -1012,7 +1042,8 @@ def diag_indices_from(arr):
 
     Examples
     --------
-    
+    >>> import numpy as np
+
     Create a 4 by 4 array.
 
     >>> a = np.arange(16).reshape(4, 4)
@@ -1021,7 +1052,7 @@ def diag_indices_from(arr):
            [ 4,  5,  6,  7],
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
-    
+
     Get the indices of the diagonal elements.
 
     >>> di = np.diag_indices_from(a)

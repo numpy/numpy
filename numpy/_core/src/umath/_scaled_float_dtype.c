@@ -24,15 +24,8 @@
 #include "convert_datatype.h"
 #include "dtypemeta.h"
 #include "dispatching.h"
-
-
-/* TODO: from wrapping_array_method.c, use proper public header eventually  */
-NPY_NO_EXPORT int
-PyUFunc_AddWrappingLoop(PyObject *ufunc_obj,
-        PyArray_DTypeMeta *new_dtypes[], PyArray_DTypeMeta *wrapped_dtypes[],
-        translate_given_descrs_func *translate_given_descrs,
-        translate_loop_descrs_func *translate_loop_descrs);
-
+#include "gil_utils.h"
+#include "multiarraymodule.h"
 
 typedef struct {
     PyArray_Descr base;
@@ -150,7 +143,6 @@ static PyArray_SFloatDescr SFloatSingleton = {{
         .type_num = -1,
         .elsize = sizeof(double),
         .alignment = NPY_ALIGNOF(double),
-        .f = &sfloat_slots.f,
     },
     .scaling = 1,
 };
@@ -274,11 +266,8 @@ check_factor(double factor) {
     if (npy_isfinite(factor) && factor != 0.) {
         return 0;
     }
-    NPY_ALLOW_C_API_DEF;
-    NPY_ALLOW_C_API;
-    PyErr_SetString(PyExc_TypeError,
-            "error raised inside the core-loop: non-finite factor!");
-    NPY_DISABLE_C_API;
+    npy_gil_error(PyExc_TypeError,
+                  "error raised inside the core-loop: non-finite factor!");
     return -1;
 }
 
@@ -486,8 +475,7 @@ sfloat_init_casts(void)
     spec.name = "float_to_sfloat_cast";
     /* Technically, it is just a copy currently so this is fine: */
     spec.flags = NPY_METH_NO_FLOATINGPOINT_ERRORS;
-    PyArray_DTypeMeta *double_DType = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
-    Py_DECREF(double_DType);  /* immortal anyway */
+    PyArray_DTypeMeta *double_DType = &PyArray_DoubleDType;
     dtypes[0] = double_DType;
 
     slots[0].slot = NPY_METH_resolve_descriptors;
@@ -518,8 +506,7 @@ sfloat_init_casts(void)
 
     spec.name = "sfloat_to_bool_cast";
     dtypes[0] = &PyArray_SFloatDType;
-    dtypes[1] = PyArray_DTypeFromTypeNum(NPY_BOOL);
-    Py_DECREF(dtypes[1]);  /* immortal anyway */
+    dtypes[1] = &PyArray_BoolDType;
 
     if (PyArray_AddCastingImplementation_FromSpec(&spec, 0)) {
         return -1;
@@ -667,8 +654,8 @@ add_sfloats_resolve_descriptors(
  */
 static int
 translate_given_descrs_to_double(
-        int nin, int nout, PyArray_DTypeMeta *wrapped_dtypes[],
-        PyArray_Descr *given_descrs[], PyArray_Descr *new_descrs[])
+        int nin, int nout, PyArray_DTypeMeta *const wrapped_dtypes[],
+        PyArray_Descr *const given_descrs[], PyArray_Descr *new_descrs[])
 {
     assert(nin == 2 && nout == 1);
     for (int i = 0; i < 3; i++) {
@@ -685,8 +672,8 @@ translate_given_descrs_to_double(
 
 static int
 translate_loop_descrs(
-        int nin, int nout, PyArray_DTypeMeta *new_dtypes[],
-        PyArray_Descr *given_descrs[],
+        int nin, int nout, PyArray_DTypeMeta *const new_dtypes[],
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *NPY_UNUSED(original_descrs[]),
         PyArray_Descr *loop_descrs[])
 {
@@ -756,13 +743,12 @@ sfloat_add_wrapping_loop(const char *ufunc_name, PyArray_DTypeMeta *dtypes[3])
     if (ufunc == NULL) {
         return -1;
     }
-    PyArray_DTypeMeta *double_dt = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
+    PyArray_DTypeMeta *double_dt = &PyArray_DoubleDType;
     PyArray_DTypeMeta *wrapped_dtypes[3] = {double_dt, double_dt, double_dt};
     int res = PyUFunc_AddWrappingLoop(
         ufunc, dtypes, wrapped_dtypes, &translate_given_descrs_to_double,
         &translate_loop_descrs);
     Py_DECREF(ufunc);
-    Py_DECREF(double_dt);
 
     return res;
 }
@@ -848,8 +834,7 @@ sfloat_init_ufuncs(void) {
     /*
      * Add a promoter for both directions of multiply with double.
      */
-    PyArray_DTypeMeta *double_DType = PyArray_DTypeFromTypeNum(NPY_DOUBLE);
-    Py_DECREF(double_DType);  /* immortal anyway */
+    PyArray_DTypeMeta *double_DType = &PyArray_DoubleDType;
 
     PyArray_DTypeMeta *promoter_dtypes[3] = {
             &PyArray_SFloatDType, double_DType, NULL};
@@ -883,10 +868,7 @@ sfloat_init_ufuncs(void) {
 NPY_NO_EXPORT PyObject *
 get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
 {
-    /* Allow calling the function multiple times. */
-    static npy_bool initialized = NPY_FALSE;
-
-    if (initialized) {
+    if (npy_thread_unsafe_state.get_sfloat_dtype_initialized) {
         Py_INCREF(&PyArray_SFloatDType);
         return (PyObject *)&PyArray_SFloatDType;
     }
@@ -915,6 +897,6 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    initialized = NPY_TRUE;
+    npy_thread_unsafe_state.get_sfloat_dtype_initialized = NPY_TRUE;
     return (PyObject *)&PyArray_SFloatDType;
 }

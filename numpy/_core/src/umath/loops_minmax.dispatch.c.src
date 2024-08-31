@@ -225,7 +225,8 @@ simd_binary_ccc_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, const npyv_lanety
     }
 }
 // non-contiguous for float 32/64-bit memory access
-#if @is_fp@
+#if @is_fp@ && !defined(NPY_HAVE_NEON)
+// unroll scalars faster than non-contiguous vector load/store on Arm
 static inline void
 simd_binary_@intrin@_@sfx@(const npyv_lanetype_@sfx@ *ip1, npy_intp sip1,
                            const npyv_lanetype_@sfx@ *ip2, npy_intp sip2,
@@ -351,9 +352,9 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
         }
     // unroll scalars faster than non-contiguous vector load/store on Arm
     #if !defined(NPY_HAVE_NEON) && @is_fp@
-        if (TO_SIMD_SFX(npyv_loadable_stride)(is1/sizeof(STYPE)) &&
-            TO_SIMD_SFX(npyv_loadable_stride)(is2/sizeof(STYPE)) &&
-            TO_SIMD_SFX(npyv_storable_stride)(os1/sizeof(STYPE))
+        if (TO_SIMD_SFX(npyv_loadable_stride)(is1) &&
+            TO_SIMD_SFX(npyv_loadable_stride)(is2) &&
+            TO_SIMD_SFX(npyv_storable_stride)(os1)
         ) {
             TO_SIMD_SFX(simd_binary_@intrin@)(
                 (STYPE*)ip1, is1/sizeof(STYPE),

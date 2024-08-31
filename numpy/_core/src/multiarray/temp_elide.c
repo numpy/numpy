@@ -59,6 +59,9 @@
  */
 
 #if defined HAVE_BACKTRACE && defined HAVE_DLFCN_H && ! defined PYPY_VERSION
+
+#include <feature_detection_misc.h>
+
 /* 1 prints elided operations, 2 prints stacktraces */
 #define NPY_ELIDE_DEBUG 0
 #define NPY_MAX_STACKSIZE 10
@@ -121,22 +124,22 @@ check_callers(int * cannot)
      * TODO some calls go over scalarmath in umath but we cannot get the base
      * address of it from multiarraymodule as it is not linked against it
      */
-    static int init = 0;
+    NPY_TLS static int init = 0;
     /*
      * measured DSO object memory start and end, if an address is located
      * inside these bounds it is part of that library so we don't need to call
      * dladdr on it (assuming linear memory)
      */
-    static void * pos_python_start;
-    static void * pos_python_end;
-    static void * pos_ma_start;
-    static void * pos_ma_end;
+    NPY_TLS static void * pos_python_start;
+    NPY_TLS static void * pos_python_end;
+    NPY_TLS static void * pos_ma_start;
+    NPY_TLS static void * pos_ma_end;
 
     /* known address storage to save dladdr calls */
-    static void * py_addr[64];
-    static void * pyeval_addr[64];
-    static npy_intp n_py_addr = 0;
-    static npy_intp n_pyeval = 0;
+    NPY_TLS static void * py_addr[64];
+    NPY_TLS static void * pyeval_addr[64];
+    NPY_TLS static npy_intp n_py_addr = 0;
+    NPY_TLS static npy_intp n_pyeval = 0;
 
     void *buffer[NPY_MAX_STACKSIZE];
     int i, nptrs;

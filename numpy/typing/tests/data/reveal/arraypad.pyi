@@ -1,14 +1,10 @@
-import sys
 from collections.abc import Mapping
 from typing import Any, SupportsIndex
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 def mode_func(
     ar: npt.NDArray[np.number[Any]],

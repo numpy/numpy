@@ -1,2 +1,0 @@
-* ``NPY_INTPLTR`` has been removed to avoid confusion (see ``intp``
-  redefinition).

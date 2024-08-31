@@ -3,18 +3,15 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
-import datetime
-import operator
 import warnings
 import pytest
 import tempfile
 import re
-import sys
 
 import numpy as np
 from numpy.testing import (
     assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
-    KnownFailureException, break_cycles,
+    KnownFailureException, break_cycles, temppath
     )
 
 from numpy._core._multiarray_tests import fromstring_null_term_c_api
@@ -138,71 +135,6 @@ class _VisibleDeprecationTestCase(_DeprecationTestCase):
     warning_cls = np.exceptions.VisibleDeprecationWarning
 
 
-class TestDatetime64Timezone(_DeprecationTestCase):
-    """Parsing of datetime64 with timezones deprecated in 1.11.0, because
-    datetime64 is now timezone naive rather than UTC only.
-
-    It will be quite a while before we can remove this, because, at the very
-    least, a lot of existing code uses the 'Z' modifier to avoid conversion
-    from local time to UTC, even if otherwise it handles time in a timezone
-    naive fashion.
-    """
-    def test_string(self):
-        self.assert_deprecated(np.datetime64, args=('2000-01-01T00+01',))
-        self.assert_deprecated(np.datetime64, args=('2000-01-01T00Z',))
-
-    @pytest.mark.skipif(not _has_pytz,
-                        reason="The pytz module is not available.")
-    def test_datetime(self):
-        tz = pytz.timezone('US/Eastern')
-        dt = datetime.datetime(2000, 1, 1, 0, 0, tzinfo=tz)
-        self.assert_deprecated(np.datetime64, args=(dt,))
-
-
-class TestArrayDataAttributeAssignmentDeprecation(_DeprecationTestCase):
-    """Assigning the 'data' attribute of an ndarray is unsafe as pointed
-     out in gh-7093. Eventually, such assignment should NOT be allowed, but
-     in the interests of maintaining backwards compatibility, only a Deprecation-
-     Warning will be raised instead for the time being to give developers time to
-     refactor relevant code.
-    """
-
-    def test_data_attr_assignment(self):
-        a = np.arange(10)
-        b = np.linspace(0, 1, 10)
-
-        self.message = ("Assigning the 'data' attribute is an "
-                        "inherently unsafe operation and will "
-                        "be removed in the future.")
-        self.assert_deprecated(a.__setattr__, args=('data', b.data))
-
-
-class TestBinaryReprInsufficientWidthParameterForRepresentation(_DeprecationTestCase):
-    """
-    If a 'width' parameter is passed into ``binary_repr`` that is insufficient to
-    represent the number in base 2 (positive) or 2's complement (negative) form,
-    the function used to silently ignore the parameter and return a representation
-    using the minimal number of bits needed for the form in question. Such behavior
-    is now considered unsafe from a user perspective and will raise an error in the future.
-    """
-
-    def test_insufficient_width_positive(self):
-        args = (10,)
-        kwargs = {'width': 2}
-
-        self.message = ("Insufficient bit width provided. This behavior "
-                        "will raise an error in the future.")
-        self.assert_deprecated(np.binary_repr, args=args, kwargs=kwargs)
-
-    def test_insufficient_width_negative(self):
-        args = (-5,)
-        kwargs = {'width': 2}
-
-        self.message = ("Insufficient bit width provided. This behavior "
-                        "will raise an error in the future.")
-        self.assert_deprecated(np.binary_repr, args=args, kwargs=kwargs)
-
-
 class TestDTypeAttributeIsDTypeDeprecation(_DeprecationTestCase):
     # Deprecated 2021-01-05, NumPy 1.21
     message = r".*`.dtype` attribute"
@@ -248,14 +180,6 @@ class TestNonNumericConjugate(_DeprecationTestCase):
             self.assert_deprecated(a.conjugate)
 
 
-class TestNPY_CHAR(_DeprecationTestCase):
-    # 2017-05-03, 1.13.0
-    def test_npy_char_deprecation(self):
-        from numpy._core._multiarray_tests import npy_char_deprecation
-        self.assert_deprecated(npy_char_deprecation)
-        assert_(npy_char_deprecation() == 'S1')
-
-
 class TestDatetimeEvent(_DeprecationTestCase):
     # 2017-08-11, 1.14.0
     def test_3_tuple(self):
@@ -272,24 +196,16 @@ class TestDatetimeEvent(_DeprecationTestCase):
             self.assert_deprecated(cls, args=(1, ('ms', 2, 1, 63)))
 
 
-class TestTruthTestingEmptyArrays(_DeprecationTestCase):
-    # 2017-09-25, 1.14.0
-    message = '.*truth value of an empty array is ambiguous.*'
-
-    def test_1d(self):
-        self.assert_deprecated(bool, args=(np.array([]),))
-
-    def test_2d(self):
-        self.assert_deprecated(bool, args=(np.zeros((1, 0)),))
-        self.assert_deprecated(bool, args=(np.zeros((0, 1)),))
-        self.assert_deprecated(bool, args=(np.zeros((0, 0)),))
-
-
 class TestBincount(_DeprecationTestCase):
     # 2017-06-01, 1.14.0
     def test_bincount_minlength(self):
         self.assert_deprecated(lambda: np.bincount([1, 2, 3], minlength=None))
 
+    # 2024-07-29, 2.1.0
+    @pytest.mark.parametrize('badlist', [[0.5, 1.2, 1.5],
+                                         ['0', '1', '1']])
+    def test_bincount_bad_list(self, badlist):
+        self.assert_deprecated(lambda: np.bincount(badlist))
 
 
 class TestGeneratorSum(_DeprecationTestCase):
@@ -354,21 +270,6 @@ class TestFromStringAndFileInvalidData(_DeprecationTestCase):
             # Should not raise:
             res = np.fromstring(x_str, sep=",", count=4)
             assert_array_equal(res, x)
-
-
-class TestShape1Fields(_DeprecationTestCase):
-    warning_cls = FutureWarning
-
-    # 2019-05-20, 1.17.0
-    def test_shape_1_fields(self):
-        self.assert_deprecated(np.dtype, args=([('a', int, 1)],))
-
-
-class TestNonZero(_DeprecationTestCase):
-    # 2019-05-26, 1.17.0
-    def test_zerod(self):
-        self.assert_deprecated(lambda: np.nonzero(np.array(0)))
-        self.assert_deprecated(lambda: np.nonzero(np.array(1)))
 
 
 class TestToString(_DeprecationTestCase):
@@ -584,7 +485,7 @@ class TestMachAr(_DeprecationTestCase):
     warning_cls = DeprecationWarning
 
     def test_deprecated_module(self):
-        self.assert_deprecated(lambda: getattr(np._core, "MachAr"))
+        self.assert_deprecated(lambda: np._core.MachAr)
 
 
 class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
@@ -722,23 +623,6 @@ class TestDeprecatedFinfo(_DeprecationTestCase):
     def test_deprecated_none(self):
         self.assert_deprecated(np.finfo, args=(None,))
 
-class TestFromnumeric(_DeprecationTestCase):
-    # 2023-03-02, 1.25.0
-    def test_cumproduct(self):
-        self.assert_deprecated(lambda: np.cumproduct(np.array([1, 2, 3])))
-
-    # 2023-03-02, 1.25.0
-    def test_product(self):
-        self.assert_deprecated(lambda: np.product(np.array([1, 2, 3])))
-
-    # 2023-03-02, 1.25.0
-    def test_sometrue(self):
-        self.assert_deprecated(lambda: np.sometrue(np.array([True, False])))
-
-    # 2023-03-02, 1.25.0
-    def test_alltrue(self):
-        self.assert_deprecated(lambda: np.alltrue(np.array([True, False])))
-
 
 class TestMathAlias(_DeprecationTestCase):
     def test_deprecated_np_lib_math(self):
@@ -755,7 +639,7 @@ class TestLibImports(_DeprecationTestCase):
         from numpy._core.numerictypes import maximum_sctype
         from numpy.lib.tests.test_io import TextIO
         from numpy import in1d, row_stack, trapz
-        
+
         self.assert_deprecated(lambda: safe_eval("None"))
 
         data_gen = lambda: TextIO('A,B\n0,1\n2,3')
@@ -775,15 +659,76 @@ class TestLibImports(_DeprecationTestCase):
 
 class TestDeprecatedDTypeAliases(_DeprecationTestCase):
 
-    @staticmethod
-    def _check_for_warning(func):
+    def _check_for_warning(self, func):
         with warnings.catch_warnings(record=True) as caught_warnings:
             func()
         assert len(caught_warnings) == 1
         w = caught_warnings[0]
         assert w.category is DeprecationWarning
-        assert "alias `a` was removed in NumPy 2.0" in str(w.message)
+        assert "alias 'a' was deprecated in NumPy 2.0" in str(w.message)
 
     def test_a_dtype_alias(self):
-        self._check_for_warning(lambda: np.dtype("a"))
-        self._check_for_warning(lambda: np.dtype("a10"))
+        for dtype in ["a", "a10"]:
+            f = lambda: np.dtype(dtype)
+            self._check_for_warning(f)
+            self.assert_deprecated(f)
+            f = lambda: np.array(["hello", "world"]).astype("a10")
+            self._check_for_warning(f)
+            self.assert_deprecated(f)
+
+
+class TestDeprecatedArrayWrap(_DeprecationTestCase):
+    message = "__array_wrap__.*"
+
+    def test_deprecated(self):
+        class Test1:
+            def __array__(self, dtype=None, copy=None):
+                return np.arange(4)
+
+            def __array_wrap__(self, arr, context=None):
+                self.called = True
+                return 'pass context'
+
+        class Test2(Test1):
+            def __array_wrap__(self, arr):
+                self.called = True
+                return 'pass'
+
+        test1 = Test1()
+        test2 = Test2()
+        self.assert_deprecated(lambda: np.negative(test1))
+        assert test1.called
+        self.assert_deprecated(lambda: np.negative(test2))
+        assert test2.called
+
+
+
+class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
+    message = "Passing in a parenthesized single number"
+
+    @pytest.mark.parametrize("string", ["(2)i,", "(3)3S,", "f,(2)f"])
+    def test_parenthesized_repeat_count(self, string):
+        self.assert_deprecated(np.dtype, args=(string,))
+
+
+class TestDeprecatedSaveFixImports(_DeprecationTestCase):
+    # Deprecated in Numpy 2.1, 2024-05
+    message = "The 'fix_imports' flag is deprecated and has no effect."
+
+    def test_deprecated(self):
+        with temppath(suffix='.npy') as path:
+            sample_args = (path, np.array(np.zeros((1024, 10))))
+            self.assert_not_deprecated(np.save, args=sample_args)
+            self.assert_deprecated(np.save, args=sample_args,
+                                kwargs={'fix_imports': True})
+            self.assert_deprecated(np.save, args=sample_args,
+                                kwargs={'fix_imports': False})
+            for allow_pickle in [True, False]:
+                self.assert_not_deprecated(np.save, args=sample_args,
+                                        kwargs={'allow_pickle': allow_pickle})
+                self.assert_deprecated(np.save, args=sample_args,
+                                    kwargs={'allow_pickle': allow_pickle,
+                                            'fix_imports': True})
+                self.assert_deprecated(np.save, args=sample_args,
+                                    kwargs={'allow_pickle': allow_pickle,
+                                            'fix_imports': False})

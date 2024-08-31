@@ -10,7 +10,7 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 
 #include "common.h"
 #include "arraytypes.h"
@@ -18,6 +18,8 @@
 #include "conversion_utils.h"
 #include "alloc.h"
 #include "npy_buffer.h"
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
 
 static int
 PyArray_PyIntAsInt_ErrMsg(PyObject *o, const char * msg) NPY_GCC_NONNULL(2);
@@ -226,18 +228,15 @@ PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
 }
 
 NPY_NO_EXPORT int
-PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
+PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
     if (obj == Py_None) {
-        PyErr_SetString(PyExc_ValueError,
-                        "NoneType copy mode not allowed.");
-        return NPY_FAIL;
+        *copymode = NPY_COPY_IF_NEEDED;
+        return NPY_SUCCEED;
     }
 
     int int_copymode;
-    static PyObject* numpy_CopyMode = NULL;
-    npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
 
-    if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
+    if ((PyObject *)Py_TYPE(obj) == npy_static_pydata._CopyMode) {
         PyObject* mode_value = PyObject_GetAttrString(obj, "value");
         if (mode_value == NULL) {
             return NPY_FAIL;
@@ -249,6 +248,12 @@ PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
             return NPY_FAIL;
         }
     }
+    else if(PyUnicode_Check(obj)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "strings are not allowed for 'copy' keyword. "
+                        "Use True/False/None instead.");
+        return NPY_FAIL;
+    }
     else {
         npy_bool bool_copymode;
         if (!PyArray_BoolConverter(obj, &bool_copymode)) {
@@ -257,7 +262,30 @@ PyArray_CopyConverter(PyObject *obj, _PyArray_CopyMode *copymode) {
         int_copymode = (int)bool_copymode;
     }
 
-    *copymode = (_PyArray_CopyMode)int_copymode;
+    *copymode = (NPY_COPYMODE)int_copymode;
+    return NPY_SUCCEED;
+}
+
+NPY_NO_EXPORT int
+PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copymode)
+{
+    int int_copymode;
+
+    if ((PyObject *)Py_TYPE(obj) == npy_static_pydata._CopyMode) {
+        PyErr_SetString(PyExc_ValueError,
+                        "_CopyMode enum is not allowed for astype function. "
+                        "Use true/false instead.");
+        return NPY_FAIL;
+    }
+    else {
+        npy_bool bool_copymode;
+        if (!PyArray_BoolConverter(obj, &bool_copymode)) {
+            return NPY_FAIL;
+        }
+        int_copymode = (int)bool_copymode;
+    }
+
+    *copymode = (NPY_ASTYPECOPYMODE)int_copymode;
     return NPY_SUCCEED;
 }
 
@@ -424,6 +452,28 @@ PyArray_BoolConverter(PyObject *object, npy_bool *val)
     }
     else {
         *val = NPY_FALSE;
+    }
+    if (PyErr_Occurred()) {
+        return NPY_FAIL;
+    }
+    return NPY_SUCCEED;
+}
+
+/*
+ * Optionally convert an object to true / false
+ */
+NPY_NO_EXPORT int
+PyArray_OptionalBoolConverter(PyObject *object, int *val)
+{
+    /* Leave the desired default from the caller for Py_None */
+    if (object == Py_None) {
+        return NPY_SUCCEED;
+    }
+    if (PyObject_IsTrue(object)) {
+        *val = 1;
+    }
+    else {
+        *val = 0;
     }
     if (PyErr_Occurred()) {
         return NPY_FAIL;
@@ -1150,10 +1200,12 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
  * that it is in an unpickle context instead of a normal context without
  * evil global state like we create here.
  */
-NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag = 0;
+NPY_NO_EXPORT NPY_TLS int evil_global_disable_warn_O4O8_flag = 0;
 
-/*NUMPY_API
- * Typestr converter
+/*
+ * Convert a gentype (that is actually a generic kind character) and
+ * it's itemsize to a NUmPy typenumber, i.e. `itemsize=4` and `gentype='f'`
+ * becomes `NPY_FLOAT32`.
  */
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype)
@@ -1292,13 +1344,19 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_DEPRECATED_STRINGLTR2:
-            DEPRECATE(
-                "Data type alias `a` was removed in NumPy 2.0. "
-                "Use `S` alias instead."
-            );
-            newtype = NPY_STRING;
+        {
+            /*
+             * raise a deprecation warning, which might be an exception
+             * if warnings are errors, so leave newtype unset in that
+             * case
+             */
+            int ret = DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
+                                "Use the 'S' alias instead.");
+            if (ret == 0) {
+                newtype = NPY_STRING;
+            }
             break;
-
+        }
         case NPY_UNICODELTR:
             newtype = NPY_UNICODE;
             break;
@@ -1349,4 +1407,38 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
 
  fail:
     return intTuple;
+}
+
+NPY_NO_EXPORT int
+_not_NoValue(PyObject *obj, PyObject **out)
+{
+    if (obj == npy_static_pydata._NoValue) {
+        *out = NULL;
+    }
+    else {
+        *out = obj;
+    }
+    return 1;
+}
+
+/*
+ * Device string converter.
+ */
+NPY_NO_EXPORT int
+PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
+{
+    if (object == Py_None) {
+        return NPY_SUCCEED;
+    }
+
+    if (PyUnicode_Check(object) &&
+        PyUnicode_Compare(object, npy_interned_str.cpu) == 0) {
+        *device = NPY_DEVICE_CPU;
+        return NPY_SUCCEED;
+    }
+
+    PyErr_Format(PyExc_ValueError,
+            "Device not understood. Only \"cpu\" is allowed, "
+            "but received: %S", object);
+    return NPY_FAIL;
 }

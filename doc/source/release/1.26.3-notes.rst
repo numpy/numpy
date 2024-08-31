@@ -1,0 +1,101 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.26.3 Release Notes
+==========================
+
+NumPy 1.26.3 is a maintenance release that fixes bugs and regressions
+discovered after the 1.26.2 release. The most notable changes are the f2py bug
+fixes. The Python versions supported by this release are 3.9-3.12.
+
+
+Compatibility
+=============
+
+``f2py`` will no longer accept ambiguous ``-m`` and ``.pyf`` CLI combinations.
+When more than one ``.pyf`` file is passed, an error is raised. When both ``-m``
+and a ``.pyf`` is passed, a warning is emitted and the ``-m`` provided name is
+ignored.
+
+
+Improvements
+============
+
+``f2py`` now handles ``common`` blocks which have ``kind`` specifications from
+modules. This further expands the usability of intrinsics like
+``iso_fortran_env`` and ``iso_c_binding``.
+
+
+Contributors
+============
+
+A total of 18 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* @DWesl
+* @Illviljan
+* Alexander Grund
+* Andrea Bianchi +
+* Charles Harris
+* Daniel Vanzo
+* Johann Rohwer +
+* Matti Picus
+* Nathan Goldbaum
+* Peter Hawkins
+* Raghuveer Devulapalli
+* Ralf Gommers
+* Rohit Goswami
+* Sayed Adel
+* Sebastian Berg
+* Stefano Rivera +
+* Thomas A Caswell
+* matoro
+
+
+Pull requests merged
+====================
+A total of 42 pull requests were merged for this release.
+
+* `#25130 <https://github.com/numpy/numpy/pull/25130>`__: MAINT: prepare 1.26.x for further development
+* `#25188 <https://github.com/numpy/numpy/pull/25188>`__: TYP: add None to ``__getitem__`` in ``numpy.array_api``
+* `#25189 <https://github.com/numpy/numpy/pull/25189>`__: BLD,BUG: quadmath required where available [f2py]
+* `#25190 <https://github.com/numpy/numpy/pull/25190>`__: BUG: alpha doesn't use REAL(10)
+* `#25191 <https://github.com/numpy/numpy/pull/25191>`__: BUG: Fix FP overflow error in division when the divisor is scalar
+* `#25192 <https://github.com/numpy/numpy/pull/25192>`__: MAINT: Pin scipy-openblas version.
+* `#25201 <https://github.com/numpy/numpy/pull/25201>`__: BUG: Fix f2py to enable use of string optional inout argument
+* `#25202 <https://github.com/numpy/numpy/pull/25202>`__: BUG: Fix -fsanitize=alignment issue in numpy/_core/src/multiarray/arraytypes.c.src
+* `#25203 <https://github.com/numpy/numpy/pull/25203>`__: TST: Explicitly pass NumPy path to cython during tests (also...
+* `#25204 <https://github.com/numpy/numpy/pull/25204>`__: BUG: fix issues with ``newaxis`` and ``linalg.solve`` in ``numpy.array_api``
+* `#25205 <https://github.com/numpy/numpy/pull/25205>`__: BUG: Disallow shadowed modulenames
+* `#25217 <https://github.com/numpy/numpy/pull/25217>`__: BUG: Handle common blocks with kind specifications from modules
+* `#25218 <https://github.com/numpy/numpy/pull/25218>`__: BUG: Fix moving compiled executable to root with f2py -c on Windows
+* `#25219 <https://github.com/numpy/numpy/pull/25219>`__: BUG: Fix single to half-precision conversion on PPC64/VSX3
+* `#25227 <https://github.com/numpy/numpy/pull/25227>`__: TST: f2py: fix issue in test skip condition
+* `#25240 <https://github.com/numpy/numpy/pull/25240>`__: Revert "MAINT: Pin scipy-openblas version."
+* `#25249 <https://github.com/numpy/numpy/pull/25249>`__: MAINT: do not use ``long`` type
+* `#25377 <https://github.com/numpy/numpy/pull/25377>`__: TST: PyPy needs another gc.collect on latest versions
+* `#25378 <https://github.com/numpy/numpy/pull/25378>`__: CI: Install Lapack runtime on Cygwin.
+* `#25379 <https://github.com/numpy/numpy/pull/25379>`__: MAINT: Bump conda-incubator/setup-miniconda from 2.2.0 to 3.0.1
+* `#25380 <https://github.com/numpy/numpy/pull/25380>`__: BLD: update vendored Meson for AIX shared library fix
+* `#25419 <https://github.com/numpy/numpy/pull/25419>`__: MAINT: Init ``base`` in cpu_avx512_kn
+* `#25420 <https://github.com/numpy/numpy/pull/25420>`__: BUG: Fix failing test_features on SapphireRapids
+* `#25422 <https://github.com/numpy/numpy/pull/25422>`__: BUG: Fix non-contiguous memory load when ARM/Neon is enabled
+* `#25428 <https://github.com/numpy/numpy/pull/25428>`__: MAINT,BUG: Never import distutils above 3.12 [f2py]
+* `#25452 <https://github.com/numpy/numpy/pull/25452>`__: MAINT: make the import-time check for old Accelerate more specific
+* `#25458 <https://github.com/numpy/numpy/pull/25458>`__: BUG: fix macOS version checks for Accelerate support
+* `#25465 <https://github.com/numpy/numpy/pull/25465>`__: MAINT: Bump actions/setup-node and larsoner/circleci-artifacts-redirector-action
+* `#25466 <https://github.com/numpy/numpy/pull/25466>`__: BUG: avoid seg fault from OOB access in RandomState.set_state()
+* `#25467 <https://github.com/numpy/numpy/pull/25467>`__: BUG: Fix two errors related to not checking for failed allocations
+* `#25468 <https://github.com/numpy/numpy/pull/25468>`__: BUG: Fix regression with ``f2py`` wrappers when modules and subroutines...
+* `#25475 <https://github.com/numpy/numpy/pull/25475>`__: BUG: Fix build issues on SPR
+* `#25478 <https://github.com/numpy/numpy/pull/25478>`__: BLD: fix uninitialized variable warnings from simd/neon/memory.h
+* `#25480 <https://github.com/numpy/numpy/pull/25480>`__: BUG: Handle ``iso_c_type`` mappings more consistently
+* `#25481 <https://github.com/numpy/numpy/pull/25481>`__: BUG: Fix module name bug in signature files [urgent] [f2py]
+* `#25482 <https://github.com/numpy/numpy/pull/25482>`__: BUG: Handle .pyf.src and fix SciPy [urgent]
+* `#25483 <https://github.com/numpy/numpy/pull/25483>`__: DOC: ``f2py`` rewrite with ``meson`` details
+* `#25485 <https://github.com/numpy/numpy/pull/25485>`__: BUG: Add external library handling for meson [f2py]
+* `#25486 <https://github.com/numpy/numpy/pull/25486>`__: MAINT: Run f2py's meson backend with the same python that ran...
+* `#25489 <https://github.com/numpy/numpy/pull/25489>`__: MAINT: Update ``numpy/f2py/_backends`` from main.
+* `#25490 <https://github.com/numpy/numpy/pull/25490>`__: MAINT: Easy updates of ``f2py/*.py`` from main.
+* `#25491 <https://github.com/numpy/numpy/pull/25491>`__: MAINT: Update crackfortran.py and f2py2e.py from main
+

@@ -1,6 +1,0 @@
-AArch64 quicksort speed improved by using Highway's VQSort
-----------------------------------------------------------
-
-The first introduction of the Google Highway library, using VQSort on AArch64. 
-Execution time is improved by up to 16x in some cases, see the PR for benchmark
-results. Extensions to other platforms will be done in the future.

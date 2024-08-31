@@ -36,12 +36,20 @@
  *     q = TRUNC((n - (-dsign ) + (-nsign))/d) - (-qsign);
  ********************************************************************************/
 
+#if (defined(NPY_HAVE_VSX) && !defined(NPY_HAVE_VSX4)) || defined(NPY_HAVE_NEON)
+    // Due to integer 128-bit multiplication emulation, SIMD 64-bit division
+    // may not perform well on both neon and up to VSX3 compared to scalar
+    // division.
+    #define SIMD_DISABLE_DIV64_OPT
+#endif
+
 #if NPY_SIMD
 /**begin repeat
  * Signed types
  * #sfx    = s8, s16, s32, s64#
  * #len    = 8,  16,  32,  64#
  */
+#if @len@ < 64 || (@len@ == 64 && !defined(SIMD_DISABLE_DIV64_OPT))
 static inline void
 simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
 {
@@ -101,6 +109,7 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
     }
     npyv_cleanup();
 }
+#endif
 /**end repeat**/
 
 /**begin repeat
@@ -108,6 +117,7 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
  * #sfx    = u8, u16, u32, u64#
  * #len    = 8,  16,  32,  64#
  */
+#if @len@ < 64 || (@len@ == 64 && !defined(SIMD_DISABLE_DIV64_OPT))
 static inline void
 simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
 {
@@ -129,6 +139,7 @@ simd_divide_by_scalar_contig_@sfx@(char **args, npy_intp len)
     }
     npyv_cleanup();
 }
+#endif
 /**end repeat**/
 
 #if defined(NPY_HAVE_VSX4)
@@ -335,8 +346,7 @@ vsx4_simd_divide_contig_@sfx@(char **args, npy_intp len)
     #define TO_SIMD_SFX(X) X##_s@len@
 /**end repeat1**/
 #endif
-
-#if NPY_BITSOF_@TYPE@ == 64 && !defined(NPY_HAVE_VSX4) && (defined(NPY_HAVE_VSX) || defined(NPY_HAVE_NEON))
+#if NPY_BITSOF_@TYPE@ == 64 && defined(SIMD_DISABLE_DIV64_OPT)
     #undef TO_SIMD_SFX
 #endif
 

@@ -1,2 +1,0 @@
-Seven data type aliases have been removed from ``np.dtype(alias)`` search:
-``int0``, ``uint0``, ``void0``, ``object0``, ``str0``, ``bytes0`` and ``bool8``.

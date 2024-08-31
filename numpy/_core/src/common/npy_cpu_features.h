@@ -86,6 +86,8 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_ASIMDDP           = 306,
     // ARMv8.2 single&half-precision multiply
     NPY_CPU_FEATURE_ASIMDFHM          = 307,
+    // Scalable Vector Extensions (SVE)
+    NPY_CPU_FEATURE_SVE               = 308,
 
     // IBM/ZARCH
     NPY_CPU_FEATURE_VX                = 350,
@@ -95,6 +97,9 @@ enum npy_cpu_features
 
     // Vector-Enhancements Facility 2
     NPY_CPU_FEATURE_VXE2              = 352,
+
+    // RISC-V
+    NPY_CPU_FEATURE_RVV               = 400,
 
     NPY_CPU_FEATURE_MAX
 };

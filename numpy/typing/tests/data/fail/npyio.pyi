@@ -12,7 +12,9 @@ AR_i8: npt.NDArray[np.int64]
 
 np.load(str_file)  # E: incompatible type
 
-np.save(bytes_path, AR_i8)  # E: incompatible type
+np.save(bytes_path, AR_i8)  # E: No overload variant
+# https://github.com/python/mypy/issues/16111
+# np.save(str_path, AR_i8, fix_imports=True)  # W: deprecated
 
 np.savez(bytes_path, AR_i8)  # E: incompatible type
 

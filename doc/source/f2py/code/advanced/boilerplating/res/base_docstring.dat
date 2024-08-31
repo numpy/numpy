@@ -1,0 +1,17 @@
+c = zadd(a,b,[n])
+
+Wrapper for ``zadd``.
+
+Parameters
+----------
+a : input rank-1 array('D') with bounds (n)
+b : input rank-1 array('D') with bounds (n)
+
+Other Parameters
+----------------
+n : input int, optional
+    Default: shape(a, 0)
+
+Returns
+-------
+c : rank-1 array('D') with bounds (n)

@@ -1,3 +1,4 @@
+.. _routines.matlib:
 .. module:: numpy.matlib
 
 Matrix library (:mod:`numpy.matlib`)

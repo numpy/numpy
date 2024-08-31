@@ -106,7 +106,7 @@ class TestArithmetic:
                 msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(leg.legmul, [c]*j, np.array([1]))
-                res = leg.legpow(c, j) 
+                res = leg.legpow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 

@@ -51,8 +51,15 @@ ASIMDFHM = mod_features.new(
   args: {'val': '-march=armv8.2-a+fp16fml', 'match': '-march=.*', 'mfilter': '\+.*'},
   test_code: files(source_root + '/numpy/distutils/checks/cpu_asimdfhm.c')[0]
 )
+## Scalable Vector Extensions (SVE)
+SVE = mod_features.new(
+  'SVE', 8, implies: ASIMDHP,
+  args: {'val': '-march=armv8.2-a+sve', 'match': '-march=.*', 'mfilter': '\+.*'},
+  test_code: files(source_root + '/numpy/distutils/checks/cpu_sve.c')[0]
+)
 # TODO: Add support for MSVC
 ARM_FEATURES = {
   'NEON': NEON, 'NEON_FP16': NEON_FP16, 'NEON_VFPV4': NEON_VFPV4,
-  'ASIMD': ASIMD, 'ASIMDHP': ASIMDHP, 'ASIMDFHM': ASIMDFHM
+  'ASIMD': ASIMD, 'ASIMDHP': ASIMDHP, 'ASIMDFHM': ASIMDFHM,
+  'SVE': SVE
 }

@@ -59,13 +59,14 @@ FMA3 = mod_features.new(
   'FMA3', 24, implies: F16C, args: '-mfma',
   test_code: files(source_root + '/numpy/distutils/checks/cpu_fma3.c')[0]
 )
+# match this to HWY_AVX2
 AVX2 = mod_features.new(
-  'AVX2', 25, implies: F16C, args: '-mavx2',
+  'AVX2', 25, implies: FMA3, args: ['-mavx2', '-maes', '-mpclmul', '-mbmi', '-mbmi2'],
   test_code: files(source_root + '/numpy/distutils/checks/cpu_avx2.c')[0]
 )
 # 25-40 left as margin for any extra features
 AVX512F = mod_features.new(
-  'AVX512F', 40, implies: [FMA3, AVX2],
+  'AVX512F', 40, implies: [AVX2],
   # Disables mmx because of stack corruption that may happen during mask
   # conversions.
   # TODO (seiko2plus): provide more clarification
@@ -143,8 +144,8 @@ if compiler_id in ['intel', 'intel-cl']
   # Intel compilers don't support the following features independently
   FMA3.update(implies: [F16C, AVX2])
   AVX2.update(implies: [F16C, FMA3])
-  AVX512F.update(implies: [AVX2, AVX512CD, AVX512_SKX])
-  AVX512CD.update(implies: [AVX512F, AVX512_SKX])
+  AVX512F.update(implies: [AVX2, AVX512CD])
+  AVX512CD.update(implies: [AVX512F])
   XOP.update(disable: 'Intel Compiler does not support it')
   FMA4.update(disable: 'Intel Compiler does not support it')
 endif
@@ -170,10 +171,10 @@ endif
 if compiler_id == 'intel'
   clear_m = '^(-mcpu=|-march=)'
   clear_any = '^(-mcpu=|-march=|-x[A-Z0-9\-])'
-  FMA3.update(args: {'val': '-march=core-avx2', 'match': clear_m})
-  AVX2.update(args: {'val': '-march=core-avx2', 'match': clear_m})
-  AVX512F.update(args: {'val': '-march=common-avx512', 'match': clear_m})
-  AVX512CD.update(args: {'val': '-march=common-avx512', 'match': clear_m})
+  FMA3.update(args: {'val': '-xCORE-AVX2', 'match': clear_m})
+  AVX2.update(args: {'val': '-xCORE-AVX2', 'match': clear_m})
+  AVX512F.update(args: {'val': '-xCOMMON-AVX512', 'match': clear_m})
+  AVX512CD.update(args: {'val': '-xCOMMON-AVX512', 'match': clear_m})
   AVX512_KNL.update(args: {'val': '-xKNL', 'match': clear_any})
   AVX512_KNM.update(args: {'val': '-xKNM', 'match': clear_any})
   AVX512_SKX.update(args: {'val': '-xSKYLAKE-AVX512', 'match': clear_any})

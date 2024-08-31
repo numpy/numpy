@@ -9,23 +9,6 @@ extern "C" {
 
 extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 
-#define NPY_USE_LEGACY_PROMOTION 0
-#define NPY_USE_WEAK_PROMOTION 1
-#define NPY_USE_WEAK_PROMOTION_AND_WARN 2
-extern NPY_NO_EXPORT int npy_promotion_state;
-extern NPY_NO_EXPORT PyObject *NO_NEP50_WARNING_CTX;
-extern NPY_NO_EXPORT PyObject *npy_DTypePromotionError;
-extern NPY_NO_EXPORT PyObject *npy_UFuncNoLoopError;
-
-NPY_NO_EXPORT int
-npy_give_promotion_warnings(void);
-
-NPY_NO_EXPORT PyObject *
-npy__get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg));
-
-NPY_NO_EXPORT PyObject *
-npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg);
-
 NPY_NO_EXPORT PyObject *
 PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to);
 
@@ -41,6 +24,10 @@ PyArray_ObjectType(PyObject *op, int minimum_type);
 NPY_NO_EXPORT PyArrayObject **
 PyArray_ConvertToCommonType(PyObject *op, int *retn);
 
+NPY_NO_EXPORT PyArray_Descr *
+PyArray_CastToDTypeAndPromoteDescriptors(
+        npy_intp ndescr, PyArray_Descr *descrs[], PyArray_DTypeMeta *DType);
+
 NPY_NO_EXPORT int
 PyArray_CheckLegacyResultType(
         PyArray_Descr **new_result,
@@ -52,11 +39,6 @@ PyArray_ValidType(int type);
 
 NPY_NO_EXPORT int
 dtype_kind_to_ordering(char kind);
-
-/* Used by PyArray_CanCastArrayTo and in the legacy ufunc type resolution */
-NPY_NO_EXPORT npy_bool
-can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
-                   PyArray_Descr *to, NPY_CASTING casting);
 
 NPY_NO_EXPORT npy_bool
 can_cast_pyscalar_scalar_to(
@@ -98,6 +80,11 @@ PyArray_GetCastInfo(
         PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype,
         npy_intp *view_offset);
 
+NPY_NO_EXPORT npy_intp
+PyArray_SafeCast(PyArray_Descr *type1, PyArray_Descr *type2,
+                 npy_intp* view_offset, NPY_CASTING minimum_safety,
+                 npy_intp ignore_errors);
+
 NPY_NO_EXPORT int
 PyArray_CheckCastSafety(NPY_CASTING casting,
         PyArray_Descr *from, PyArray_Descr *to, PyArray_DTypeMeta *to_dtype);
@@ -105,8 +92,8 @@ PyArray_CheckCastSafety(NPY_CASTING casting,
 NPY_NO_EXPORT NPY_CASTING
 legacy_same_dtype_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *given_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const given_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset);
 
@@ -120,8 +107,8 @@ legacy_cast_get_strided_loop(
 NPY_NO_EXPORT NPY_CASTING
 simple_cast_resolve_descriptors(
         PyArrayMethodObject *self,
-        PyArray_DTypeMeta *dtypes[2],
-        PyArray_Descr *input_descrs[2],
+        PyArray_DTypeMeta *const dtypes[2],
+        PyArray_Descr *const input_descrs[2],
         PyArray_Descr *loop_descrs[2],
         npy_intp *view_offset);
 

@@ -75,6 +75,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(6).reshape(2,3)
     >>> x.flags
       C_CONTIGUOUS : True
@@ -123,7 +124,7 @@ def require(a, dtype=None, requirements=None, *, like=None):
         order = 'C'
         requirements.remove('C')
 
-    arr = array(a, dtype=dtype, order=order, copy=False, subok=subok)
+    arr = array(a, dtype=dtype, order=order, copy=None, subok=subok)
 
     for prop in requirements:
         if not arr.flags[prop]:

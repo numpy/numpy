@@ -1,4 +1,4 @@
-from typing import Any, TypeVar, overload
+from typing import Any, TypeVar, overload, Literal as L
 
 from numpy import generic, integer, floating, complexfloating
 from numpy._typing import (
@@ -28,20 +28,24 @@ def ifftshift(x: ArrayLike, axes: None | _ShapeLike = ...) -> NDArray[Any]: ...
 def fftfreq(
     n: int | integer[Any],
     d: _ArrayLikeFloat_co = ...,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def fftfreq(
     n: int | integer[Any],
     d: _ArrayLikeComplex_co = ...,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 
 @overload
 def rfftfreq(
     n: int | integer[Any],
     d: _ArrayLikeFloat_co = ...,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def rfftfreq(
     n: int | integer[Any],
     d: _ArrayLikeComplex_co = ...,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...

@@ -410,6 +410,8 @@ def _get_bin_edges(a, bins, range, weights):
             # Do not call selectors on empty arrays
             width = _hist_bin_selectors[bin_name](a, (first_edge, last_edge))
             if width:
+                if np.issubdtype(a.dtype, np.integer) and width < 1:
+                    width = 1
                 n_equal_bins = int(np.ceil(_unsigned_subtract(last_edge, first_edge) / width))
             else:
                 # Width can be zero for some estimators, e.g. FD when
@@ -448,6 +450,10 @@ def _get_bin_edges(a, bins, range, weights):
         bin_edges = np.linspace(
             first_edge, last_edge, n_equal_bins + 1,
             endpoint=True, dtype=bin_type)
+        if np.any(bin_edges[:-1] >= bin_edges[1:]):
+            raise ValueError(
+                f'Too many bins for data range. Cannot create {n_equal_bins} '
+                f'finite-sized bins.')
         return bin_edges, (first_edge, last_edge, n_equal_bins)
     else:
         return bin_edges, None
@@ -485,19 +491,19 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         sequence, it defines the bin edges, including the rightmost
         edge, allowing for non-uniform bin widths.
 
-        If `bins` is a string from the list below, `histogram_bin_edges` will use
-        the method chosen to calculate the optimal bin width and
-        consequently the number of bins (see `Notes` for more detail on
-        the estimators) from the data that falls within the requested
-        range. While the bin width will be optimal for the actual data
+        If `bins` is a string from the list below, `histogram_bin_edges` will
+        use the method chosen to calculate the optimal bin width and
+        consequently the number of bins (see the Notes section for more detail
+        on the estimators) from the data that falls within the requested range.
+        While the bin width will be optimal for the actual data
         in the range, the number of bins will be computed to fill the
         entire range, including the empty portions. For visualisation,
         using the 'auto' option is suggested. Weighted data is not
         supported for automated bin size selection.
 
         'auto'
-            Maximum of the 'sturges' and 'fd' estimators. Provides good
-            all around performance.
+            Minimum bin width between the 'sturges' and 'fd' estimators.
+            Provides good all-around performance.
 
         'fd' (Freedman Diaconis Estimator)
             Robust (resilient to outliers) estimator that takes into
@@ -567,7 +573,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
     ``np.round(np.ceil(range / h))``. The final bin width is often less
     than what is returned by the estimators below.
 
-    'auto' (maximum of the 'sturges' and 'fd' estimators)
+    'auto' (minimum bin width of the 'sturges' and 'fd' estimators)
         A compromise to get a good value. For small datasets the Sturges
         value will usually be chosen, while larger datasets will usually
         default to FD.  Avoids the overly conservative behaviour of FD
@@ -625,8 +631,12 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         The simplest and fastest estimator. Only takes into account the
         data size.
 
+    Additionally, if the data is of integer dtype, then the binwidth will never
+    be less than 1.
+
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([0, 0, 0, 1, 2, 3, 3, 4, 5])
     >>> np.histogram_bin_edges(arr, bins='auto', range=(0, 1))
     array([0.  , 0.25, 0.5 , 0.75, 1.  ])
@@ -711,6 +721,9 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         (instead of 1). If `density` is True, the weights are
         normalized, so that the integral of the density over the range
         remains 1.
+        Please note that the ``dtype`` of `weights` will also become the
+        ``dtype`` of the returned accumulator (`hist`), so it must be
+        large enough to hold accumulated values as well.
     density : bool, optional
         If ``False``, the result will contain the number of samples in
         each bin. If ``True``, the result is the value of the
@@ -723,7 +736,8 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     -------
     hist : array
         The values of the histogram. See `density` and `weights` for a
-        description of the possible semantics.
+        description of the possible semantics.  If `weights` are given,
+        ``hist.dtype`` will be taken from `weights`.
     bin_edges : array of dtype float
         Return the bin edges ``(length(hist)+1)``.
 
@@ -746,6 +760,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.histogram([1, 2, 1], bins=[0, 1, 2, 3])
     (array([0, 2, 1]), array([0, 1, 2, 3]))
     >>> np.histogram(np.arange(4), bins=np.arange(5), density=True)
@@ -953,8 +968,8 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
     H : ndarray
         The multidimensional histogram of sample x. See density and weights
         for the different possible semantics.
-    edges : list
-        A list of D arrays describing the bin edges for each dimension.
+    edges : tuple of ndarrays
+        A tuple of D arrays describing the bin edges for each dimension.
 
     See Also
     --------
@@ -963,7 +978,9 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
 
     Examples
     --------
-    >>> r = np.random.randn(100,3)
+    >>> import numpy as np
+    >>> rng = np.random.default_rng()
+    >>> r = rng.normal(size=(100,3))
     >>> H, edges = np.histogramdd(r, bins = (5, 8, 4))
     >>> H.shape, edges[0].size, edges[1].size, edges[2].size
     ((5, 8, 4), 6, 9, 5)

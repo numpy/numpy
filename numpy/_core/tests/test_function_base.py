@@ -222,6 +222,17 @@ class TestGeomspace:
         y = geomspace(-5, 3j, 2)
         assert_allclose(y, [-5, 3j])
 
+    def test_complex_shortest_path(self):
+        # test the shortest logarithmic spiral is used, see gh-25644
+        x = 1.2 + 3.4j
+        y = np.exp(1j*(np.pi-.1)) * x
+        z = np.geomspace(x, y, 5)
+        expected = np.array([1.2 + 3.4j, -1.47384 + 3.2905616j,
+                        -3.33577588 + 1.36842949j, -3.36011056 - 1.30753855j,
+                        -1.53343861 - 3.26321406j])
+        np.testing.assert_array_almost_equal(z, expected)
+
+
     def test_dtype(self):
         y = geomspace(1, 1e6, dtype='float32')
         assert_equal(y.dtype, dtype('float32'))
@@ -437,7 +448,7 @@ class TestLinspace:
         stop = array(2, dtype='O')
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([1., 1.5, 2.]))
-                    
+
     def test_round_negative(self):
         y = linspace(-1, 3, num=8, dtype=int)
         t = array([-1, -1, 0, 0, 1, 1, 2, 3], dtype=int)
@@ -449,7 +460,7 @@ class TestLinspace:
         stop = array([2.0, 1.0])
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([[0.0, 1.0], [1.0, 1.0], [2.0, 1.0]]))
-    
+
 
 class TestAdd_newdoc:
 

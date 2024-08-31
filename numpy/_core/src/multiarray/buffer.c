@@ -203,7 +203,9 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         offset = &_offset;
     }
 
-    if (descr->subarray) {
+    if (PyDataType_HASSUBARRAY(descr)) {
+        _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
+
         PyObject *item, *subarray_tuple;
         Py_ssize_t total_count = 1;
         Py_ssize_t dim_size;
@@ -211,12 +213,12 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         char buf[128];
         int ret;
 
-        if (PyTuple_Check(descr->subarray->shape)) {
-            subarray_tuple = descr->subarray->shape;
+        if (PyTuple_Check(ldescr->subarray->shape)) {
+            subarray_tuple = ldescr->subarray->shape;
             Py_INCREF(subarray_tuple);
         }
         else {
-            subarray_tuple = Py_BuildValue("(O)", descr->subarray->shape);
+            subarray_tuple = Py_BuildValue("(O)", ldescr->subarray->shape);
         }
 
         if (_append_char(str, '(') < 0) {
@@ -246,7 +248,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         }
 
         old_offset = *offset;
-        ret = _buffer_format_string(descr->subarray->base, str, obj, offset,
+        ret = _buffer_format_string(ldescr->subarray->base, str, obj, offset,
                                     active_byteorder);
         *offset = old_offset + (*offset - old_offset) * total_count;
 
@@ -255,17 +257,18 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         return ret;
     }
     else if (PyDataType_HASFIELDS(descr)) {
+        _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
         Py_ssize_t base_offset = *offset;
 
         if (_append_str(str, "T{") < 0) return -1;
-        for (k = 0; k < PyTuple_GET_SIZE(descr->names); ++k) {
+        for (k = 0; k < PyTuple_GET_SIZE(ldescr->names); ++k) {
             PyObject *name, *item, *offset_obj;
             PyArray_Descr *child;
             Py_ssize_t new_offset;
             int ret;
 
-            name = PyTuple_GET_ITEM(descr->names, k);
-            item = PyDict_GetItem(descr->fields, name);
+            name = PyTuple_GET_ITEM(ldescr->names, k);
+            item = PyDict_GetItem(ldescr->fields, name);
 
             child = (PyArray_Descr*)PyTuple_GetItem(item, 0);
             offset_obj = PyTuple_GetItem(item, 1);
@@ -398,7 +401,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
         case NPY_OBJECT:       if (_append_char(str, 'O') < 0) return -1; break;
         case NPY_STRING: {
             char buf[128];
-            PyOS_snprintf(buf, sizeof(buf), "%ds", descr->elsize);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "s", descr->elsize);
             if (_append_str(str, buf) < 0) return -1;
             break;
         }
@@ -406,19 +409,19 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             /* NumPy Unicode is always 4-byte */
             char buf[128];
             assert(descr->elsize % 4 == 0);
-            PyOS_snprintf(buf, sizeof(buf), "%dw", descr->elsize / 4);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "w", descr->elsize / 4);
             if (_append_str(str, buf) < 0) return -1;
             break;
         }
         case NPY_VOID: {
             /* Insert padding bytes */
             char buf[128];
-            PyOS_snprintf(buf, sizeof(buf), "%dx", descr->elsize);
+            PyOS_snprintf(buf, sizeof(buf), "%" NPY_INTP_FMT "x", descr->elsize);
             if (_append_str(str, buf) < 0) return -1;
             break;
         }
         default:
-            if (NPY_DT_is_legacy(NPY_DTYPE(descr))) {
+            if (PyDataType_ISLEGACY(descr)) {
                 PyErr_Format(PyExc_ValueError,
                              "cannot include dtype '%c' in a buffer",
                              descr->type);

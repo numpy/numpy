@@ -1,11 +1,13 @@
-import sys
 from collections.abc import Callable, Sequence
-from typing import TypeVar, Any, overload, SupportsIndex, Protocol
-
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec, Concatenate
-else:
-    from typing_extensions import ParamSpec, Concatenate
+from typing import (
+    TypeVar,
+    Any,
+    overload,
+    SupportsIndex,
+    Protocol,
+    ParamSpec,
+    Concatenate,
+)
 
 import numpy as np
 from numpy import (
@@ -43,6 +45,7 @@ class _ArrayWrap(Protocol):
         self,
         array: NDArray[Any],
         context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
+        return_scalar: bool = ...,
         /,
     ) -> Any: ...
 
@@ -52,8 +55,6 @@ class _SupportsArrayWrap(Protocol):
 
 
 __all__: list[str]
-
-row_stack = vstack
 
 def take_along_axis(
     arr: _SCT | NDArray[_SCT],

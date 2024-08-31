@@ -38,7 +38,7 @@ def arraylikes():
 
     yield subclass
 
-    class _SequenceLike():
+    class _SequenceLike:
         # Older NumPy versions, sometimes cared whether a protocol array was
         # also _SequenceLike.  This shouldn't matter, but keep it for now
         # for __array__ and not the others.
@@ -53,8 +53,10 @@ def arraylikes():
         def __init__(self, a):
             self.a = a
 
-        def __array__(self, dtype=None):
-            return self.a
+        def __array__(self, dtype=None, copy=None):
+            if dtype is None:
+                return self.a
+            return self.a.astype(dtype)
 
     yield param(ArrayDunder, id="__array__")
 
@@ -706,7 +708,7 @@ class TestArrayLikes:
             def __array_struct__(self):
                 pass
 
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 pass
 
         arr = np.array(ArrayLike)
@@ -759,6 +761,17 @@ class TestArrayLikes:
 
         with pytest.raises(error):
             np.array(BadSequence())
+
+    def test_array_interface_descr_optional(self):
+        # The descr should be optional regression test for gh-27249
+        arr = np.ones(10, dtype="V10")
+        iface = arr.__array_interface__
+        iface.pop("descr")
+
+        class MyClass:
+            __array_interface__ = iface
+
+        assert_array_equal(np.asarray(MyClass), arr)
 
 
 class TestAsArray:
@@ -832,7 +845,7 @@ class TestSpecialAttributeLookupFailure:
 
     class WeirdArrayLike:
         @property
-        def __array__(self):
+        def __array__(self, dtype=None, copy=None):
             raise RuntimeError("oops!")
 
     class WeirdArrayInterface:
@@ -851,14 +864,14 @@ def test_subarray_from_array_construction():
     # Arrays are more complex, since they "broadcast" on success:
     arr = np.array([1, 2])
 
-    res = arr.astype("(2)i,")
+    res = arr.astype("2i")
     assert_array_equal(res, [[1, 1], [2, 2]])
 
-    res = np.array(arr, dtype="(2)i,")
+    res = np.array(arr, dtype="(2,)i")
 
     assert_array_equal(res, [[1, 1], [2, 2]])
 
-    res = np.array([[(1,), (2,)], arr], dtype="(2)i,")
+    res = np.array([[(1,), (2,)], arr], dtype="2i")
     assert_array_equal(res, [[[1, 1], [2, 2]], [[1, 1], [2, 2]]])
 
     # Also try a multi-dimensional example:

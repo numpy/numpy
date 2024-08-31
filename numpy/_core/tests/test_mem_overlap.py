@@ -235,7 +235,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
     rng = np.random.RandomState(1234)
 
     if equal_size and same_steps:
-        raise ValueError()
+        raise ValueError
 
     def random_slice(n, step):
         start = rng.randint(0, n+1, dtype=np.intp)
@@ -553,7 +553,7 @@ def test_non_ndarray_inputs():
         def __init__(self, data):
             self.data = data
 
-        def __array__(self):
+        def __array__(self, dtype=None, copy=None):
             return self.data
 
     for cls in [MyArray, MyArray2]:

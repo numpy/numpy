@@ -6,8 +6,8 @@ Memory management in NumPy
 The `numpy.ndarray` is a python class. It requires additional memory allocations
 to hold `numpy.ndarray.strides`, `numpy.ndarray.shape` and
 `numpy.ndarray.data` attributes. These attributes are specially allocated
-after creating the python object in `__new__`. The ``strides`` and
-``shape`` are stored in a piece of memory allocated internally.
+after creating the python object in :meth:`~object.__new__`. The ``strides``
+and ``shape`` are stored in a piece of memory allocated internally.
 
 The ``data`` allocation used to store the actual array values (which could be
 pointers in the case of ``object`` arrays) can be very large, so NumPy has
@@ -137,7 +137,7 @@ Example of memory tracing with ``np.lib.tracemalloc_domain``
 Note that since Python 3.6 (or newer), the builtin ``tracemalloc`` module can be used to
 track allocations inside NumPy. NumPy places its CPU memory allocations into the 
 ``np.lib.tracemalloc_domain`` domain.
-For additional information, check: `https://docs.python.org/3/library/tracemalloc.html`.
+For additional information, check: https://docs.python.org/3/library/tracemalloc.html.
 
 Here is an example on how to use ``np.lib.tracemalloc_domain``:
 

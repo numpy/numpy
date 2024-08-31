@@ -1,13 +1,9 @@
-import sys
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 AR_U: npt.NDArray[np.str_]
 AR_S: npt.NDArray[np.bytes_]
@@ -116,7 +112,6 @@ assert_type(np.char.isalnum(AR_U), npt.NDArray[np.bool])
 assert_type(np.char.isalnum(AR_S), npt.NDArray[np.bool])
 
 assert_type(np.char.isdecimal(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.isdecimal(AR_S), npt.NDArray[np.bool])
 
 assert_type(np.char.isdigit(AR_U), npt.NDArray[np.bool])
 assert_type(np.char.isdigit(AR_S), npt.NDArray[np.bool])
@@ -125,7 +120,6 @@ assert_type(np.char.islower(AR_U), npt.NDArray[np.bool])
 assert_type(np.char.islower(AR_S), npt.NDArray[np.bool])
 
 assert_type(np.char.isnumeric(AR_U), npt.NDArray[np.bool])
-assert_type(np.char.isnumeric(AR_S), npt.NDArray[np.bool])
 
 assert_type(np.char.isspace(AR_U), npt.NDArray[np.bool])
 assert_type(np.char.isspace(AR_S), npt.NDArray[np.bool])

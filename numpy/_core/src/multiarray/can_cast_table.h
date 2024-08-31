@@ -63,7 +63,7 @@
      FITS(FROM, FLOAT), FITS(FROM, DOUBLE), FITS(FROM, LONGDOUBLE),  \
      1, 1, 1, 1, 0, 0, 0}
 
-static const npy_bool _npy_can_cast_safely_table[NPY_NTYPES][NPY_NTYPES] = {
+static const npy_bool _npy_can_cast_safely_table[NPY_NTYPES_LEGACY][NPY_NTYPES_LEGACY] = {
         /* Bool safely casts to anything except datetime (has no zero) */
         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
          1, 1, 1, 1, 1, 1,

@@ -23,7 +23,9 @@ Functions
 import functools
 import warnings
 import numpy as np
+import numpy._core.numeric as _nx
 from numpy.lib import _function_base_impl as fnb
+from numpy.lib._function_base_impl import _weights_are_valid
 from numpy._core import overrides
 
 
@@ -139,7 +141,7 @@ def _copyto(a, val, mask):
     return a
 
 
-def _remove_nan_1d(arr1d, overwrite_input=False):
+def _remove_nan_1d(arr1d, second_arr1d=None, overwrite_input=False):
     """
     Equivalent to arr1d[~arr1d.isnan()], but in a different order
 
@@ -149,6 +151,8 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
     ----------
     arr1d : ndarray
         Array to remove nans from
+    second_arr1d : ndarray or None
+        A second array which will have the same positions removed as arr1d.
     overwrite_input : bool
         True if `arr1d` can be modified in place
 
@@ -156,6 +160,8 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
     -------
     res : ndarray
         Array with nan elements removed
+    second_res : ndarray or None
+        Second array with nan element positions of first array removed.
     overwrite_input : bool
         True if `res` can be modified in place, given the constraint on the
         input
@@ -170,9 +176,12 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
     if s.size == arr1d.size:
         warnings.warn("All-NaN slice encountered", RuntimeWarning,
                       stacklevel=6)
-        return arr1d[:0], True
+        if second_arr1d is None:
+            return arr1d[:0], None, True
+        else:
+            return arr1d[:0], second_arr1d[:0], True
     elif s.size == 0:
-        return arr1d, overwrite_input
+        return arr1d, second_arr1d, overwrite_input
     else:
         if not overwrite_input:
             arr1d = arr1d.copy()
@@ -181,7 +190,15 @@ def _remove_nan_1d(arr1d, overwrite_input=False):
         # fill nans in beginning of array with non-nans of end
         arr1d[s[:enonan.size]] = enonan
 
-        return arr1d[:-s.size], True
+        if second_arr1d is None:
+            return arr1d[:-s.size], None, True
+        else:
+            if not overwrite_input:
+                second_arr1d = second_arr1d.copy()
+            enonan = second_arr1d[-s.size:][~c[-s.size:]]
+            second_arr1d[s[:enonan.size]] = enonan
+
+            return arr1d[:-s.size], second_arr1d[:-s.size], True
 
 
 def _divide_by_count(a, b, out=None):
@@ -313,6 +330,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, np.nan]])
     >>> np.nanmin(a)
     1.0
@@ -446,6 +464,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, 2], [3, np.nan]])
     >>> np.nanmax(a)
     3.0
@@ -534,6 +553,7 @@ def nanargmin(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[np.nan, 4], [2, 3]])
     >>> np.argmin(a)
     0
@@ -595,6 +615,7 @@ def nanargmax(a, axis=None, out=None, *, keepdims=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[np.nan, 4], [2, 3]])
     >>> np.argmax(a)
     0
@@ -697,6 +718,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nansum(1)
     1
     >>> np.nansum([1])
@@ -788,6 +810,7 @@ def nanprod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nanprod(1)
     1
     >>> np.nanprod([1])
@@ -855,6 +878,7 @@ def nancumsum(a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nancumsum(1)
     array([1])
     >>> np.nancumsum([1])
@@ -922,6 +946,7 @@ def nancumprod(a, axis=None, dtype=None, out=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nancumprod(1)
     array([1])
     >>> np.nancumprod([1])
@@ -977,8 +1002,8 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     out : ndarray, optional
         Alternate output array in which to place the result.  The default
         is ``None``; if provided, it must have the same shape as the
-        expected output, but the type will be cast if necessary. See
-        :ref:`ufuncs-output-type` for more details.
+        expected output, but the type will be cast if necessary.
+        See :ref:`ufuncs-output-type` for more details.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -1019,6 +1044,7 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, np.nan], [3, 4]])
     >>> np.nanmean(a)
     2.6666666666666665
@@ -1059,7 +1085,7 @@ def _nanmedian1d(arr1d, overwrite_input=False):
     Private function for rank 1 arrays. Compute the median ignoring NaNs.
     See nanmedian for parameter usage
     """
-    arr1d_parsed, overwrite_input = _remove_nan_1d(
+    arr1d_parsed, _, overwrite_input = _remove_nan_1d(
         arr1d, overwrite_input=overwrite_input,
     )
 
@@ -1184,6 +1210,7 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10.0, 7, 4], [3, 2, 1]])
     >>> a[0, 1] = np.nan
     >>> a
@@ -1220,8 +1247,8 @@ def nanmedian(a, axis=None, out=None, overwrite_input=False, keepdims=np._NoValu
 
 def _nanpercentile_dispatcher(
         a, q, axis=None, out=None, overwrite_input=None,
-        method=None, keepdims=None, *, interpolation=None):
-    return (a, q, out)
+        method=None, keepdims=None, *, weights=None, interpolation=None):
+    return (a, q, out, weights)
 
 
 @array_function_dispatch(_nanpercentile_dispatcher)
@@ -1234,6 +1261,7 @@ def nanpercentile(
         method="linear",
         keepdims=np._NoValue,
         *,
+        weights=None,
         interpolation=None,
 ):
     """
@@ -1304,6 +1332,17 @@ def nanpercentile(
         a sub-class and `mean` does not have the kwarg `keepdims` this
         will raise a RuntimeError.
 
+    weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the percentile according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        Only `method="inverted_cdf"` supports weights.
+
+        .. versionadded:: 2.0.0
+
     interpolation : str, optional
         Deprecated name for the method keyword argument.
 
@@ -1330,10 +1369,13 @@ def nanpercentile(
 
     Notes
     -----
-    For more information please see `numpy.percentile`
+    The behavior of `numpy.nanpercentile` with percentage `q` is that of
+    `numpy.quantile` with argument ``q/100`` (ignoring nan values).
+    For more information, please see `numpy.quantile`.
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10., 7., 4.], [3., 2., 1.]])
     >>> a[0][1] = np.nan
     >>> a
@@ -1380,13 +1422,26 @@ def nanpercentile(
     q = np.asanyarray(q)
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
+
+    if weights is not None:
+        if method != "inverted_cdf":
+            msg = ("Only method 'inverted_cdf' supports weights. "
+                   f"Got: {method}.")
+            raise ValueError(msg)
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
+        weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
+
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims, weights)
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
-                            method=None, keepdims=None, *, interpolation=None):
-    return (a, q, out)
+                            method=None, keepdims=None, *, weights=None,
+                            interpolation=None):
+    return (a, q, out, weights)
 
 
 @array_function_dispatch(_nanquantile_dispatcher)
@@ -1399,6 +1454,7 @@ def nanquantile(
         method="linear",
         keepdims=np._NoValue,
         *,
+        weights=None,
         interpolation=None,
 ):
     """
@@ -1467,6 +1523,17 @@ def nanquantile(
         a sub-class and `mean` does not have the kwarg `keepdims` this
         will raise a RuntimeError.
 
+    weights : array_like, optional
+        An array of weights associated with the values in `a`. Each value in
+        `a` contributes to the quantile according to its associated weight.
+        The weights array can either be 1-D (in which case its length must be
+        the size of `a` along the given axis) or of the same shape as `a`.
+        If `weights=None`, then all data in `a` are assumed to have a
+        weight equal to one.
+        Only `method="inverted_cdf"` supports weights.
+
+        .. versionadded:: 2.0.0
+
     interpolation : str, optional
         Deprecated name for the method keyword argument.
 
@@ -1493,10 +1560,13 @@ def nanquantile(
 
     Notes
     -----
-    For more information please see `numpy.quantile`
+    The behavior of `numpy.nanquantile` is the same as that of
+    `numpy.quantile` (ignoring nan values).
+    For more information, please see `numpy.quantile`.
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10., 7., 4.], [3., 2., 1.]])
     >>> a[0][1] = np.nan
     >>> a
@@ -1546,8 +1616,20 @@ def nanquantile(
 
     if not fnb._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
+
+    if weights is not None:
+        if method != "inverted_cdf":
+            msg = ("Only method 'inverted_cdf' supports weights. "
+                   f"Got: {method}.")
+            raise ValueError(msg)
+        if axis is not None:
+            axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
+        weights = _weights_are_valid(weights=weights, a=a, axis=axis)
+        if np.any(weights < 0):
+            raise ValueError("Weights must be non-negative.")
+
     return _nanquantile_unchecked(
-        a, q, axis, out, overwrite_input, method, keepdims)
+        a, q, axis, out, overwrite_input, method, keepdims, weights)
 
 
 def _nanquantile_unchecked(
@@ -1558,6 +1640,7 @@ def _nanquantile_unchecked(
         overwrite_input=False,
         method="linear",
         keepdims=np._NoValue,
+        weights=None,
 ):
     """Assumes that q is in [0, 1], and is an ndarray"""
     # apply_along_axis in _nanpercentile doesn't handle empty arrays well,
@@ -1567,6 +1650,7 @@ def _nanquantile_unchecked(
     return fnb._ureduce(a,
                         func=_nanquantile_ureduce_func,
                         q=q,
+                        weights=weights,
                         keepdims=keepdims,
                         axis=axis,
                         out=out,
@@ -1574,8 +1658,15 @@ def _nanquantile_unchecked(
                         method=method)
 
 
-def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
-                              method="linear"):
+def _nanquantile_ureduce_func(
+        a: np.array,
+        q: np.array,
+        weights: np.array,
+        axis: int | None = None,
+        out=None,
+        overwrite_input: bool = False,
+        method="linear",
+):
     """
     Private function that doesn't support extended axis or keepdims.
     These methods are extended to this function using _ureduce
@@ -1583,44 +1674,77 @@ def _nanquantile_ureduce_func(a, q, axis=None, out=None, overwrite_input=False,
     """
     if axis is None or a.ndim == 1:
         part = a.ravel()
-        result = _nanquantile_1d(part, q, overwrite_input, method)
+        wgt = None if weights is None else weights.ravel()
+        result = _nanquantile_1d(part, q, overwrite_input, method, weights=wgt)
     else:
-        result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
-                                     overwrite_input, method)
-        # apply_along_axis fills in collapsed axis with results.
-        # Move that axis to the beginning to match percentile's
-        # convention.
-        if q.ndim != 0:
-            result = np.moveaxis(result, axis, 0)
+        # Note that this code could try to fill in `out` right away
+        if weights is None:
+            result = np.apply_along_axis(_nanquantile_1d, axis, a, q,
+                                         overwrite_input, method, weights)
+            # apply_along_axis fills in collapsed axis with results.
+            # Move those axes to the beginning to match percentile's
+            # convention.
+            if q.ndim != 0:
+                from_ax = [axis + i for i in range(q.ndim)]
+                result = np.moveaxis(result, from_ax, list(range(q.ndim)))
+        else:
+            # We need to apply along axis over 2 arrays, a and weights.
+            # move operation axes to end for simplicity:
+            a = np.moveaxis(a, axis, -1)
+            if weights is not None:
+                weights = np.moveaxis(weights, axis, -1)
+            if out is not None:
+                result = out
+            else:
+                # weights are limited to `inverted_cdf` so the result dtype
+                # is known to be identical to that of `a` here:
+                result = np.empty_like(a, shape=q.shape + a.shape[:-1])
+
+            for ii in np.ndindex(a.shape[:-1]):
+                result[(...,) + ii] = _nanquantile_1d(
+                        a[ii], q, weights=weights[ii],
+                        overwrite_input=overwrite_input, method=method,
+                )
+            # This path dealt with `out` already...
+            return result
 
     if out is not None:
         out[...] = result
     return result
 
 
-def _nanquantile_1d(arr1d, q, overwrite_input=False, method="linear"):
+def _nanquantile_1d(
+    arr1d, q, overwrite_input=False, method="linear", weights=None,
+):
     """
     Private function for rank 1 arrays. Compute quantile ignoring NaNs.
     See nanpercentile for parameter usage
     """
-    arr1d, overwrite_input = _remove_nan_1d(arr1d,
-        overwrite_input=overwrite_input)
+    # TODO: What to do when arr1d = [1, np.nan] and weights = [0, 1]?
+    arr1d, weights, overwrite_input = _remove_nan_1d(arr1d,
+        second_arr1d=weights, overwrite_input=overwrite_input)
     if arr1d.size == 0:
         # convert to scalar
         return np.full(q.shape, np.nan, dtype=arr1d.dtype)[()]
 
     return fnb._quantile_unchecked(
-        arr1d, q, overwrite_input=overwrite_input, method=method)
+        arr1d,
+        q,
+        overwrite_input=overwrite_input,
+        method=method,
+        weights=weights,
+    )
 
 
 def _nanvar_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None, mean=None):
+                       keepdims=None, *, where=None, mean=None,
+                       correction=None):
     return (a, out)
 
 
 @array_function_dispatch(_nanvar_dispatcher)
 def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
-           *, where=np._NoValue, mean=np._NoValue):
+           *, where=np._NoValue, mean=np._NoValue, correction=np._NoValue):
     """
     Compute the variance along the specified axis, while ignoring NaNs.
 
@@ -1649,7 +1773,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         Alternate output array in which to place the result.  It must have
         the same shape as the expected output, but the type is cast if
         necessary.
-    ddof : int, optional
+    ddof : {int, float}, optional
         "Delta Degrees of Freedom": the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of non-NaN
         elements. By default `ddof` is zero.
@@ -1663,13 +1787,19 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
         .. versionadded:: 1.22.0
 
-    mean : array like, optional
+    mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
         The axis for the calculation of the mean should be the same as used in
         the call to this var function.
 
         .. versionadded:: 1.26.0
+
+    correction : {int, float}, optional
+        Array API compatible name for the ``ddof`` parameter. Only one of them
+        can be provided at the same time.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1713,6 +1843,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, np.nan], [3, 4]])
     >>> np.nanvar(a)
     1.5555555555555554
@@ -1725,7 +1856,8 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
     arr, mask = _replace_nan(a, 0)
     if mask is None:
         return np.var(arr, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                      keepdims=keepdims, where=where, mean=mean)
+                      keepdims=keepdims, where=where, mean=mean,
+                      correction=correction)
 
     if dtype is not None:
         dtype = np.dtype(dtype)
@@ -1733,6 +1865,14 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         raise TypeError("If a is inexact, then dtype must be inexact")
     if out is not None and not issubclass(out.dtype.type, np.inexact):
         raise TypeError("If a is inexact, then out must be inexact")
+
+    if correction != np._NoValue:
+        if ddof != 0:
+            raise ValueError(
+                "ddof and correction can't be provided simultaneously."
+            )
+        else:
+            ddof = correction
 
     # Compute mean
     if type(arr) is np.matrix:
@@ -1789,13 +1929,14 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
 
 def _nanstd_dispatcher(a, axis=None, dtype=None, out=None, ddof=None,
-                       keepdims=None, *, where=None, mean=None):
+                       keepdims=None, *, where=None, mean=None,
+                       correction=None):
     return (a, out)
 
 
 @array_function_dispatch(_nanstd_dispatcher)
 def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
-           *, where=np._NoValue, mean=np._NoValue):
+           *, where=np._NoValue, mean=np._NoValue, correction=np._NoValue):
     """
     Compute the standard deviation along the specified axis, while
     ignoring NaNs.
@@ -1825,7 +1966,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         Alternative output array in which to place the result. It must have
         the same shape as the expected output but the type (of the
         calculated values) will be cast if necessary.
-    ddof : int, optional
+    ddof : {int, float}, optional
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of non-NaN
         elements.  By default `ddof` is zero.
@@ -1845,13 +1986,19 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
         .. versionadded:: 1.22.0
 
-    mean : array like, optional
+    mean : array_like, optional
         Provide the mean to prevent its recalculation. The mean should have
         a shape as if it was calculated with ``keepdims=True``.
         The axis for the calculation of the mean should be the same as used in
         the call to this std function.
 
         .. versionadded:: 1.26.0
+
+    correction : {int, float}, optional
+        Array API compatible name for the ``ddof`` parameter. Only one of them
+        can be provided at the same time.
+
+        .. versionadded:: 2.0.0
 
     Returns
     -------
@@ -1893,6 +2040,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[1, np.nan], [3, 4]])
     >>> np.nanstd(a)
     1.247219128924647
@@ -1903,7 +2051,8 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
 
     """
     var = nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                 keepdims=keepdims, where=where, mean=mean)
+                 keepdims=keepdims, where=where, mean=mean,
+                 correction=correction)
     if isinstance(var, np.ndarray):
         std = np.sqrt(var, out=var)
     elif hasattr(var, 'dtype'):

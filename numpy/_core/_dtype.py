@@ -126,6 +126,9 @@ def _scalar_str(dtype, short):
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
 
+    elif dtype.type == str:
+        return "'T'"
+
     elif not type(dtype)._legacy:
         return f"'{byteorder}{type(dtype).__name__}{dtype.itemsize * 8}'"
 
@@ -274,9 +277,7 @@ def _is_packed(dtype):
     if align:
         total_offset = _aligned_offset(total_offset, max_alignment)
 
-    if total_offset != dtype.itemsize:
-        return False
-    return True
+    return total_offset == dtype.itemsize
 
 
 def _struct_list_str(dtype):

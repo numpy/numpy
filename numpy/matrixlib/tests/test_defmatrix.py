@@ -283,7 +283,7 @@ class TestMatrixReturn:
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
             'searchsorted', 'setflags', 'setfield', 'sort',
-            'partition', 'argpartition', 'newbyteorder',
+            'partition', 'argpartition', 'newbyteorder', 'to_device',
             'take', 'tofile', 'tolist', 'tostring', 'tobytes', 'all', 'any',
             'sum', 'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
             'prod', 'std', 'ctypes', 'itemset', 'bitwise_count',

@@ -15,6 +15,7 @@
 #include "datetime_strings.h"
 #include "can_cast_table.h"
 #include "convert_datatype.h"
+#include "dtypemeta.h"
 
 #include "legacy_dtype_implementation.h"
 
@@ -26,7 +27,7 @@
  * in the same order, 0 if not.
  */
 static int
-_equivalent_fields(PyArray_Descr *type1, PyArray_Descr *type2) {
+_equivalent_fields(_PyArray_LegacyDescr *type1, _PyArray_LegacyDescr *type2) {
 
     int val;
 
@@ -87,6 +88,9 @@ PyArray_LegacyEquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     if (type1 == type2) {
         return NPY_TRUE;
     }
+    if (!PyDataType_ISLEGACY(type1) || !PyDataType_ISLEGACY(type2)) {
+        return NPY_FALSE;
+    }
 
     type_num1 = type1->type_num;
     type_num2 = type2->type_num;
@@ -99,12 +103,13 @@ PyArray_LegacyEquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     if (PyArray_ISNBO(type1->byteorder) != PyArray_ISNBO(type2->byteorder)) {
         return NPY_FALSE;
     }
-    if (type1->subarray || type2->subarray) {
+    if (PyDataType_SUBARRAY(type1) || PyDataType_SUBARRAY(type2)) {
         return ((type_num1 == type_num2)
-                && _equivalent_subarrays(type1->subarray, type2->subarray));
+                && _equivalent_subarrays(PyDataType_SUBARRAY(type1), PyDataType_SUBARRAY(type2)));
     }
     if (type_num1 == NPY_VOID || type_num2 == NPY_VOID) {
-        return ((type_num1 == type_num2) && _equivalent_fields(type1, type2));
+        return ((type_num1 == type_num2) && _equivalent_fields(
+                    (_PyArray_LegacyDescr *)type1, (_PyArray_LegacyDescr *)type2));
     }
     if (type_num1 == NPY_DATETIME
         || type_num1 == NPY_TIMEDELTA
@@ -142,8 +147,8 @@ PyArray_LegacyCanCastSafely(int fromtype, int totype)
     PyArray_Descr *from;
 
     /* Fast table lookup for small type numbers */
-    if ((unsigned int)fromtype < NPY_NTYPES &&
-        (unsigned int)totype < NPY_NTYPES) {
+    if ((unsigned int)fromtype < NPY_NTYPES_LEGACY &&
+        (unsigned int)totype < NPY_NTYPES_LEGACY) {
         return _npy_can_cast_safely_table[fromtype][totype];
     }
 
@@ -157,8 +162,8 @@ PyArray_LegacyCanCastSafely(int fromtype, int totype)
      * cancastto is a NPY_NOTYPE terminated C-int-array of types that
      * the data-type can be cast to safely.
      */
-    if (from->f->cancastto) {
-        int *curtype = from->f->cancastto;
+    if (PyDataType_GetArrFuncs(from)->cancastto) {
+        int *curtype = PyDataType_GetArrFuncs(from)->cancastto;
 
         while (*curtype != NPY_NOTYPE) {
             if (*curtype++ == totype) {
@@ -336,6 +341,9 @@ NPY_NO_EXPORT npy_bool
 PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
         NPY_CASTING casting)
 {
+    _PyArray_LegacyDescr *lfrom = (_PyArray_LegacyDescr *)from;
+    _PyArray_LegacyDescr *lto = (_PyArray_LegacyDescr *)to;
+
     /*
      * Fast paths for equality and for basic types.
      */
@@ -345,6 +353,9 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
          NPY_LIKELY(from->type_num == to->type_num) &&
          NPY_LIKELY(from->byteorder == to->byteorder))) {
         return 1;
+    }
+    if (!PyDataType_ISLEGACY(from) || !PyDataType_ISLEGACY(to)) {
+        return 0;
     }
     /*
      * Cases with subarrays and fields need special treatment.
@@ -357,11 +368,11 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
          */
         if (!PyDataType_HASFIELDS(to) && !PyDataType_ISOBJECT(to)) {
             if (casting == NPY_UNSAFE_CASTING &&
-                    PyDict_Size(from->fields) == 1) {
+                    PyDict_Size(lfrom->fields) == 1) {
                 Py_ssize_t ppos = 0;
                 PyObject *tuple;
                 PyArray_Descr *field;
-                PyDict_Next(from->fields, &ppos, NULL, &tuple);
+                PyDict_Next(lfrom->fields, &ppos, NULL, &tuple);
                 field = (PyArray_Descr *)PyTuple_GET_ITEM(tuple, 0);
                 /*
                  * For a subarray, we need to get the underlying type;
@@ -369,7 +380,7 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                  * the shape.
                  */
                 if (PyDataType_HASSUBARRAY(field)) {
-                    field = field->subarray->base;
+                    field = PyDataType_SUBARRAY(field)->base;
                 }
                 return PyArray_LegacyCanCastTypeTo(field, to, casting);
             }
@@ -414,7 +425,7 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
     if (PyArray_LegacyEquivTypenums(from->type_num, to->type_num)) {
         /* For complicated case, use EquivTypes (for now) */
         if (PyTypeNum_ISUSERDEF(from->type_num) ||
-                        from->subarray != NULL) {
+                        PyDataType_SUBARRAY(from) != NULL) {
             int ret;
 
             /* Only NPY_NO_CASTING prevents byte order conversion */
@@ -450,7 +461,7 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                      * `from' and `to' must have the same fields, and
                      * corresponding fields must be (recursively) castable.
                      */
-                    return can_cast_fields(from->fields, to->fields, casting);
+                    return can_cast_fields(lfrom->fields, lto->fields, casting);
 
                 case NPY_NO_CASTING:
                 default:

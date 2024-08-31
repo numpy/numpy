@@ -16,7 +16,7 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 
 #include "numpy/arrayscalars.h"
 #include "convert_datatype.h"
@@ -638,15 +638,17 @@ parse_timezone:
     if (sublen == 0) {
         goto finish;
     }
+
     else {
         /* 2016-01-14, 1.11 */
         PyErr_Clear();
-        if (DEPRECATE(
-                "parsing timezone aware datetimes is deprecated; "
-                "this will raise an error in the future") < 0) {
-            return -1;
-        }
+        if (PyErr_WarnEx(PyExc_UserWarning,
+            "no explicit representation of timezones available for np.datetime64",
+            1) < 0) {
+                return -1;
+            }
     }
+
 
     /* UTC specifier */
     if (*substr == 'Z') {

@@ -11,7 +11,7 @@ Recommended development setup
 Since NumPy contains parts written in C and Cython that need to be
 compiled before use, make sure you have the necessary compilers and Python
 development headers installed - see :ref:`building-from-source`. Building
-NumPy as of version ``1.17`` requires a C99 compliant compiler.
+NumPy as of version ``2.0`` requires C11 and C++17 compliant compilers.
 
 Having compiled code also means that importing NumPy from the development
 sources needs some additional steps, which are explained below.  For the rest
@@ -58,9 +58,12 @@ once)::
 
 If you installed Python some other way than conda, first install
 `virtualenv`_ (optionally use `virtualenvwrapper`_), then create your
-virtualenv (named ``numpy-dev`` here) with::
+virtualenv (named ``numpy-dev`` here), activate it, and install all project 
+dependencies with::
 
     $ virtualenv numpy-dev
+    $ source numpy-dev/bin/activate # activate virtual environment
+    $ python -m pip install -r requirements/all_requirements.txt
 
 Now, whenever you want to switch to the virtual environment, you can use the
 command ``source numpy-dev/bin/activate``, and ``deactivate`` to exit from the
@@ -78,7 +81,7 @@ Testing builds
 
 Before running the tests, first install the test dependencies::
 
-    $ python -m pip install -r test_requirements.txt
+    $ python -m pip install -r requirements/test_requirements.txt
     $ python -m pip install asv # only for running benchmarks
 
 To build the development version of NumPy and run tests, spawn
@@ -110,6 +113,15 @@ You can also  `match test names using python operators`_ by passing the ``-k``
 argument to pytest::
 
     $ spin test -v -t numpy/_core/tests/test_multiarray.py -- -k "MatMul and not vector"
+
+To run "doctests" -- to check that the code examples in the documentation is correct --
+use the `check-docs` spin command. It relies on the `scipy-docs` package, which
+provides several additional features on top of the standard library ``doctest``
+package. Install ``scipy-doctest`` and run one of::
+
+  $ spin check-docs -v
+  $ spin check-docs numpy/linalg
+  $ spin check-docs -v -- -k 'det and not slogdet'
 
 .. note::
 
@@ -179,7 +191,7 @@ Lint checks can be performed on newly added lines of Python code.
 
 Install all dependent packages using pip::
 
-    $ python -m pip install -r linter_requirements.txt
+    $ python -m pip install -r requirements/linter_requirements.txt
 
 To run lint checks before committing new code, run::
 
@@ -202,7 +214,7 @@ since the linter runs as part of the CI pipeline.
 For more details on Style Guidelines:
 
 - `Python Style Guide`_
-- `C Style Guide`_
+- :ref:`NEP45`
 
 Rebuilding & cleaning the workspace
 -----------------------------------
@@ -244,7 +256,10 @@ of Python is encouraged, see :ref:`advanced_debugging`.
 
 In terms of debugging, NumPy also needs to be built in a debug mode. You need to use
 ``debug`` build type and disable optimizations to make sure ``-O0`` flag is used
-during object building. To generate source-level debug information within the build process run::
+during object building. Note that NumPy should NOT be installed in your environment
+before you build with the ``spin build`` command.
+
+To generate source-level debug information within the build process run::
 
     $ spin build --clean -- -Dbuildtype=debug -Ddisable-optimization=true
 
@@ -268,13 +283,14 @@ you want to debug. For instance ``mytest.py``::
     x = np.arange(5)
     np.empty_like(x)
 
-Now, you can run::
+Note that your test file needs to be outside the NumPy clone you have. Now, you can
+run::
 
-    $ spin gdb mytest.py
+    $ spin gdb /path/to/mytest.py
 
 In case you are using clang toolchain::
 
-    $ lldb python mytest.py
+    $ spin lldb /path/to/mytest.py
 
 And then in the debugger::
 
@@ -320,7 +336,6 @@ typically packaged as ``python-dbg``) is highly recommended.
 .. _Waf: https://code.google.com/p/waf/
 .. _`match test names using python operators`: https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests
 .. _`Python Style Guide`: https://www.python.org/dev/peps/pep-0008/
-.. _`C Style Guide`: https://numpy.org/neps/nep-0045-c_style_guide.html
 
 Understanding the code & getting started
 ----------------------------------------

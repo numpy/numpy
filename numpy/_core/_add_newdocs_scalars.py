@@ -293,12 +293,19 @@ add_newdoc_for_scalar_type('datetime64', [],
     If created from string, the string can be in ISO 8601 date
     or datetime format.
 
+    When parsing a string to create a datetime object, if the string contains
+    a trailing timezone (A 'Z' or a timezone offset), the timezone will be
+    dropped and a User Warning is given.
+
+    Datetime64 objects should be considered to be UTC and therefore have an
+    offset of +0000.
+
     >>> np.datetime64(10, 'Y')
-    numpy.datetime64('1980')
+    np.datetime64('1980')
     >>> np.datetime64('1980', 'Y')
-    numpy.datetime64('1980')
+    np.datetime64('1980')
     >>> np.datetime64(10, 'D')
-    numpy.datetime64('1970-01-11')
+    np.datetime64('1970-01-11')
 
     See :ref:`arrays.datetime` for more information.
     """)
@@ -320,6 +327,7 @@ add_newdoc('numpy._core.numerictypes', "integer", ('is_integer',
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.int64(-2).is_integer()
     True
     >>> np.uint32(5).is_integer()

@@ -28,7 +28,7 @@ npy_cast_raw_scalar_item(
         PyArray_Descr *to_descr, char *to_item);
 
 NPY_NO_EXPORT int
-PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value);
+PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value);
 
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_AdaptDescriptorToArray(
@@ -40,7 +40,7 @@ PyArray_DiscoverDTypeAndShape(
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
-        PyArray_Descr **out_descr, int never_copy);
+        PyArray_Descr **out_descr, int copy, int *was_copied_by__array__);
 
 NPY_NO_EXPORT PyObject *
 _discover_array_parameters(PyObject *NPY_UNUSED(self),

@@ -113,14 +113,18 @@
     #define NPY_NOINLINE static
 #endif
 
-#ifdef HAVE___THREAD
+#ifdef __cplusplus
+    #define NPY_TLS thread_local
+#elif defined(HAVE_THREAD_LOCAL)
+    #define NPY_TLS thread_local
+#elif defined(HAVE__THREAD_LOCAL)
+    #define NPY_TLS _Thread_local
+#elif defined(HAVE___THREAD)
     #define NPY_TLS __thread
+#elif defined(HAVE___DECLSPEC_THREAD_)
+    #define NPY_TLS __declspec(thread)
 #else
-    #ifdef HAVE___DECLSPEC_THREAD_
-        #define NPY_TLS __declspec(thread)
-    #else
-        #define NPY_TLS
-    #endif
+    #define NPY_TLS
 #endif
 
 #ifdef WITH_CPYCHECKER_RETURNS_BORROWED_REF_ATTRIBUTE
@@ -354,16 +358,9 @@ typedef double npy_double;
 typedef Py_hash_t npy_hash_t;
 #define NPY_SIZEOF_HASH_T NPY_SIZEOF_INTP
 
-#ifdef __cplusplus
-extern "C++" {
-#endif
-#include <complex.h>
-#ifdef __cplusplus
-}
-#endif
+#if defined(__cplusplus)
 
-#if defined(_MSC_VER) && !defined(__INTEL_COMPILER) && defined(__cplusplus)
-typedef struct 
+typedef struct
 {
     double _Val[2];
 } npy_cdouble;
@@ -377,7 +374,13 @@ typedef struct
 {
     long double _Val[2];
 } npy_clongdouble;
-#elif defined(_MSC_VER) && !defined(__INTEL_COMPILER) /* && !defined(__cplusplus) */
+
+#else
+
+#include <complex.h>
+
+
+#if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 typedef _Dcomplex npy_cdouble;
 typedef _Fcomplex npy_cfloat;
 typedef _Lcomplex npy_clongdouble;
@@ -385,6 +388,8 @@ typedef _Lcomplex npy_clongdouble;
 typedef double _Complex npy_cdouble;
 typedef float _Complex npy_cfloat;
 typedef longdouble_t _Complex npy_clongdouble;
+#endif
+
 #endif
 
 /*

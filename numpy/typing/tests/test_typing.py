@@ -5,7 +5,6 @@ import os
 import re
 import shutil
 from collections import defaultdict
-from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 import pytest
@@ -34,6 +33,7 @@ else:
     NO_MYPY = False
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     # We need this as annotation, but it's located in a private namespace.
     # As a compromise, do *not* import it during runtime
     from _pytest.mark.structures import ParameterSet
@@ -72,8 +72,6 @@ def strip_func(match: re.Match[str]) -> str:
     return match.groups()[1]
 
 
-@pytest.mark.slow
-@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
 @pytest.fixture(scope="module", autouse=True)
 def run_mypy() -> None:
     """Clears the cache and run mypy before running any of the typing tests.

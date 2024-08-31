@@ -105,7 +105,7 @@ class TestArithmetic:
                 msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(herm.hermmul, [c]*j, np.array([1]))
-                res = herm.hermpow(c, j) 
+                res = herm.hermpow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 

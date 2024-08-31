@@ -33,6 +33,7 @@ From existing data
    asanyarray
    ascontiguousarray
    asmatrix
+   astype
    copy
    frombuffer
    from_dlpack

@@ -63,7 +63,8 @@ def set_printoptions(
     sign: Literal[None, "-", "+", " "] = ...,
     floatmode: None | _FloatMode = ...,
     *,
-    legacy: Literal[None, False, "1.13", "1.21"] = ...
+    legacy: Literal[None, False, "1.13", "1.21"] = ...,
+    override_repr: None | Callable[[NDArray[Any]], str] = ...,
 ) -> None: ...
 def get_printoptions() -> _FormatOptions: ...
 def array2string(
@@ -118,9 +119,6 @@ def array_str(
     precision: None | SupportsIndex = ...,
     suppress_small: None | bool = ...,
 ) -> str: ...
-def set_string_function(
-    f: None | Callable[[NDArray[Any]], str], repr: bool = ...
-) -> None: ...
 def printoptions(
     precision: None | SupportsIndex = ...,
     threshold: None | int = ...,

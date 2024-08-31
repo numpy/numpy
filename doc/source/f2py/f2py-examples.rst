@@ -8,8 +8,9 @@ be used as a starting point when wrapping your own code.
 
 .. note::
 
-   The best place to look for examples is the `NumPy issue tracker`_, or the test
-   cases for ``f2py``
+   The best place to look for examples is the `NumPy issue tracker`_, or the
+   test cases for ``f2py``. Some more use cases are in
+   :ref:`f2py-boilerplating`.
 
 F2PY walkthrough: a basic extension module
 ------------------------------------------
@@ -218,7 +219,7 @@ multi-step extension module generation. In this case, after running
 
 .. code-block:: python
 
-	python -m numpy.f2py myroutine.f90 -h myroutine.pyf
+	python -m numpy.f2py myroutine.f90 -m myroutine -h myroutine.pyf
 
 the following signature file is generated:
 

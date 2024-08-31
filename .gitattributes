@@ -54,7 +54,6 @@ numpy/version.py linguist-generated
 # F2py
 ./doc/source/f2py/*.pyf text
 ./doc/source/f2py/*.dat text
-./numpy/f2py/tests/src/module_data/mod.mod binary
 
 # Documents
 *.md    text diff=markdown

@@ -1,13 +1,9 @@
-import sys
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 nd: npt.NDArray[np.int_]
 
@@ -35,6 +31,8 @@ assert_type(nd.astype(np.float64, "K"), npt.NDArray[np.float64])
 assert_type(nd.astype(np.float64, "K", "unsafe"), npt.NDArray[np.float64])
 assert_type(nd.astype(np.float64, "K", "unsafe", True), npt.NDArray[np.float64])
 assert_type(nd.astype(np.float64, "K", "unsafe", True, True), npt.NDArray[np.float64])
+
+assert_type(np.astype(nd, np.float64), npt.NDArray[np.float64])
 
 # byteswap
 assert_type(nd.byteswap(), npt.NDArray[np.int_])

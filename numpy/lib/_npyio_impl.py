@@ -1,3 +1,6 @@
+"""
+IO related functions.
+"""
 import os
 import re
 import functools
@@ -6,7 +9,7 @@ import warnings
 import weakref
 import contextlib
 import operator
-from operator import itemgetter, index as opindex, methodcaller
+from operator import itemgetter
 from collections.abc import Mapping
 import pickle
 
@@ -48,6 +51,7 @@ class BagObj:
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib._npyio_impl import BagObj as BO
     >>> class BagDemo:
     ...     def __getitem__(self, key): # An instance of BagObj(BagDemo)
@@ -154,6 +158,7 @@ class NpzFile(Mapping):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from tempfile import TemporaryFile
     >>> outfile = TemporaryFile()
     >>> x = np.arange(10)
@@ -165,7 +170,7 @@ class NpzFile(Mapping):
     >>> isinstance(npz, np.lib.npyio.NpzFile)
     True
     >>> npz
-    NpzFile 'object' with keys x, y
+    NpzFile 'object' with keys: x, y
     >>> sorted(npz.files)
     ['x', 'y']
     >>> npz['x']  # getitem access
@@ -275,6 +280,34 @@ class NpzFile(Mapping):
             array_names += "..."
         return f"NpzFile {filename!r} with keys: {array_names}"
 
+    # Work around problems with the docstrings in the Mapping methods
+    # They contain a `->`, which confuses the type annotation interpretations
+    # of sphinx-docs. See gh-25964
+
+    def get(self, key, default=None, /):
+        """
+        D.get(k,[,d]) returns D[k] if k in D, else d.  d defaults to None.
+        """
+        return Mapping.get(self, key, default)
+
+    def items(self):
+        """
+        D.items() returns a set-like object providing a view on the items
+        """
+        return Mapping.items(self)
+
+    def keys(self):
+        """
+        D.keys() returns a set-like object providing a view on the keys
+        """
+        return Mapping.keys(self)
+
+    def values(self):
+        """
+        D.values() returns a set-like object providing a view on the values
+        """
+        return Mapping.values(self)
+
 
 @set_module('numpy')
 def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
@@ -372,6 +405,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
 
     Examples
     --------
+    >>> import numpy as np
+
     Store data to disk, and load it again:
 
     >>> np.save('/tmp/123', np.array([[1, 2, 3], [4, 5, 6]]))
@@ -434,7 +469,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # If the file size is less than N, we need to make sure not
         # to seek past the beginning of the file
         fid.seek(-min(N, len(magic)), 1)  # back-up
-        if magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):
+        if magic.startswith((_ZIP_PREFIX, _ZIP_SUFFIX)):
             # zip-file (assume .npz)
             # Potentially transfer file ownership to NpzFile
             stack.pop_all()
@@ -470,7 +505,7 @@ def _save_dispatcher(file, arr, allow_pickle=None, fix_imports=None):
 
 
 @array_function_dispatch(_save_dispatcher)
-def save(file, arr, allow_pickle=True, fix_imports=True):
+def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
     """
     Save an array to a binary file in NumPy ``.npy`` format.
 
@@ -484,18 +519,19 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     arr : array_like
         Array data to be saved.
     allow_pickle : bool, optional
-        Allow saving object arrays using Python pickles. Reasons for 
+        Allow saving object arrays using Python pickles. Reasons for
         disallowing pickles include security (loading pickled data can execute
-        arbitrary code) and portability (pickled objects may not be loadable 
+        arbitrary code) and portability (pickled objects may not be loadable
         on different Python installations, for example if the stored objects
         require libraries that are not available, and not all pickled data is
-        compatible between Python 2 and Python 3).
+        compatible between different versions of Python).
         Default: True
     fix_imports : bool, optional
-        Only useful in forcing objects in object arrays on Python 3 to be
-        pickled in a Python 2 compatible way. If `fix_imports` is True, pickle
-        will try to map the new Python 3 names to the old module names used in
-        Python 2, so that the pickle data stream is readable with Python 2.
+        The `fix_imports` flag is deprecated and has no effect.
+
+        .. deprecated:: 2.1
+            This flag is ignored since NumPy 1.17 and was only needed to
+            support loading some files in Python 2 written in Python 3.
 
     See Also
     --------
@@ -510,6 +546,8 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
 
     Examples
     --------
+    >>> import numpy as np
+
     >>> from tempfile import TemporaryFile
     >>> outfile = TemporaryFile()
 
@@ -530,6 +568,12 @@ def save(file, arr, allow_pickle=True, fix_imports=True):
     >>> print(a, b)
     # [1 2] [1 3]
     """
+    if fix_imports is not np._NoValue:
+        # Deprecated 2024-05-16, NumPy 2.1
+        warnings.warn(
+            "The 'fix_imports' flag is deprecated and has no effect. "
+            "(Deprecated in NumPy 2.1)",
+            DeprecationWarning, stacklevel=2)
     if hasattr(file, 'write'):
         file_ctx = contextlib.nullcontext(file)
     else:
@@ -591,9 +635,9 @@ def savez(file, *args, **kwds):
     in the archive contains one variable in ``.npy`` format. For a
     description of the ``.npy`` format, see :py:mod:`numpy.lib.format`.
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Keys passed in `kwds` are used as filenames inside the ZIP archive.
@@ -606,6 +650,7 @@ def savez(file, *args, **kwds):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from tempfile import TemporaryFile
     >>> outfile = TemporaryFile()
     >>> x = np.arange(10)
@@ -687,13 +732,14 @@ def savez_compressed(file, *args, **kwds):
     :py:mod:`numpy.lib.format`.
 
 
-    When opening the saved ``.npz`` file with `load` a `NpzFile` object is
-    returned. This is a dictionary-like object which can be queried for
-    its list of arrays (with the ``.files`` attribute), and for the arrays
+    When opening the saved ``.npz`` file with `load` a `~lib.npyio.NpzFile`
+    object is returned. This is a dictionary-like object which can be queried
+    for its list of arrays (with the ``.files`` attribute), and for the arrays
     themselves.
 
     Examples
     --------
+    >>> import numpy as np
     >>> test_array = np.random.rand(3, 2)
     >>> test_vector = np.random.rand(4)
     >>> np.savez_compressed('/tmp/123', a=test_array, b=test_vector)
@@ -1002,6 +1048,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             # Due to chunking, certain error reports are less clear, currently.
             if filelike:
                 data = iter(data)  # cannot chunk when reading from file
+                filelike = False
 
             c_byte_converters = False
             if read_dtype_via_object_chunks == "S":
@@ -1017,7 +1064,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 next_arr = _load_from_filelike(
                     data, delimiter=delimiter, comment=comment, quote=quote,
                     imaginary_unit=imaginary_unit,
-                    usecols=usecols, skiplines=skiplines, max_rows=max_rows,
+                    usecols=usecols, skiplines=skiplines, max_rows=chunk_size,
                     converters=converters, dtype=dtype,
                     encoding=encoding, filelike=filelike,
                     byte_converters=byte_converters,
@@ -1204,6 +1251,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from io import StringIO   # StringIO behaves like a file object
     >>> c = StringIO("0 1\n2 3")
     >>> np.loadtxt(c)
@@ -1249,9 +1297,9 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     This example shows how `converters` can be used to convert a field
     with a trailing minus sign into a negative number.
 
-    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
+    >>> s = StringIO("10.01 31.25-\n19.22 64.31\n17.57- 63.94")
     >>> def conv(fld):
-    ...     return -float(fld[:-1]) if fld.endswith(b'-') else float(fld)
+    ...     return -float(fld[:-1]) if fld.endswith("-") else float(fld)
     ...
     >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
@@ -1279,8 +1327,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     Or a format where the ``-`` sign comes after the number:
 
-    >>> s = StringIO('10.01 31.25-\n19.22 64.31\n17.57- 63.94')
-    >>> conv = lambda x: -float(x[:-1]) if x.endswith('-') else float(x)
+    >>> s = StringIO("10.01 31.25-\n19.22 64.31\n17.57- 63.94")
+    >>> conv = lambda x: -float(x[:-1]) if x.endswith("-") else float(x)
     >>> np.loadtxt(s, converters=conv)
     array([[ 10.01, -31.25],
            [ 19.22,  64.31],
@@ -1383,13 +1431,13 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         case `delimiter` is ignored. For complex `X`, the legal options
         for `fmt` are:
 
-        * a single specifier, `fmt='%.4e'`, resulting in numbers formatted
-          like `' (%s+%sj)' % (fmt, fmt)`
+        * a single specifier, ``fmt='%.4e'``, resulting in numbers formatted
+          like ``' (%s+%sj)' % (fmt, fmt)``
         * a full string specifying every real and imaginary part, e.g.
-          `' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'` for 3 columns
+          ``' %.4e %+.4ej %.4e %+.4ej %.4e %+.4ej'`` for 3 columns
         * a list of specifiers, one per column - in this case, the real
           and imaginary part must have separate specifiers,
-          e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
+          e.g. ``['%.3e + %.3ej', '(%.15e%+.15ej)']`` for 2 columns
     delimiter : str, optional
         String or character separating columns.
     newline : str, optional
@@ -1479,6 +1527,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = y = z = np.arange(0.0,5.0,1.0)
     >>> np.savetxt('test.out', x, delimiter=',')   # X is an array
     >>> np.savetxt('test.out', (x,y,z))   # x,y,z equal sized 1D arrays
@@ -1655,6 +1704,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from io import StringIO
     >>> text = StringIO("1312 foo\n1534  bar\n444   qux")
 
@@ -1766,10 +1816,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     names : {None, True, str, sequence}, optional
         If `names` is True, the field names are read from the first line after
         the first `skip_header` lines. This line can optionally be preceded
-        by a comment delimiter. If `names` is a sequence or a single-string of
-        comma-separated names, the names will be used to define the field names
-        in a structured dtype. If `names` is None, the names of the dtype
-        fields will be used, if any.
+        by a comment delimiter. Any content before the comment delimiter is
+        discarded. If `names` is a sequence or a single-string of
+        comma-separated names, the names will be used to define the field
+        names in a structured dtype. If `names` is None, the names of the
+        dtype fields will be used, if any.
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended with an
@@ -1810,10 +1861,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         .. versionadded:: 1.10.0
     encoding : str, optional
         Encoding used to decode the inputfile. Does not apply when `fname`
-        is a file object. The special value 'bytes' enables backward 
+        is a file object. The special value 'bytes' enables backward
         compatibility workarounds that ensure that you receive byte arrays
-        when possible and passes latin1 encoded strings to converters. 
-        Override this value to receive unicode arrays and pass strings 
+        when possible and passes latin1 encoded strings to converters.
+        Override this value to receive unicode arrays and pass strings
         as input to converters.  If set to None the system default is used.
         The default value is 'bytes'.
 
@@ -1844,13 +1895,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     -----
     * When spaces are used as delimiters, or when no delimiter has been given
       as input, there should not be any missing data between two fields.
-    * When variables are named (either by a flexible dtype or with `names`),
-      there must not be any header in the file (else a ValueError
+    * When variables are named (either by a flexible dtype or with a `names`
+      sequence), there must not be any header in the file (else a ValueError
       exception is raised).
     * Individual values are not stripped of spaces by default.
       When using a custom converter, make sure the function does remove spaces.
     * Custom converters may receive unexpected values due to dtype
-      discovery. 
+      discovery.
 
     References
     ----------
@@ -1877,8 +1928,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=None,
     ... names = ['myint','myfloat','mystring'], delimiter=",")
     >>> data
-    array((1, 1.3, b'abcde'),
-          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', 'S5')])
+    array((1, 1.3, 'abcde'),
+          dtype=[('myint', '<i8'), ('myfloat', '<f8'), ('mystring', '<U5')])
 
     Specifying dtype and names
 
@@ -1895,8 +1946,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     >>> data = np.genfromtxt(s, dtype=None, names=['intvar','fltvar','strvar'],
     ...     delimiter=[1,3,5])
     >>> data
-    array((1, 1.3, b'abcde'),
-          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', 'S5')])
+    array((1, 1.3, 'abcde'),
+          dtype=[('intvar', '<i8'), ('fltvar', '<f8'), ('strvar', '<U5')])
 
     An example to show comments
 
@@ -2058,7 +2109,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             user_missing_values = user_missing_values.decode('latin1')
 
         # Define the list of missing_values (one column: one list)
-        missing_values = [list(['']) for _ in range(nbcols)]
+        missing_values = [[''] for _ in range(nbcols)]
 
         # We have a dictionary: process it field by field
         if isinstance(user_missing_values, dict):
@@ -2123,7 +2174,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     except ValueError:
                         # We couldn't find it: the name must have been dropped
                         continue
-                # Redefine the key if it's a column number 
+                # Redefine the key if it's a column number
                 # and usecols is defined
                 if usecols:
                     try:
@@ -2157,23 +2208,23 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if len(dtype_flat) > 1:
                 # Flexible type : get a converter from each dtype
                 zipit = zip(dtype_flat, missing_values, filling_values)
-                converters = [StringConverter(dt, 
+                converters = [StringConverter(dt,
                                               locked=True,
-                                              missing_values=miss, 
+                                              missing_values=miss,
                                               default=fill)
                               for (dt, miss, fill) in zipit]
             else:
                 # Set to a default converter (but w/ different missing values)
                 zipit = zip(missing_values, filling_values)
-                converters = [StringConverter(dtype, 
+                converters = [StringConverter(dtype,
                                               locked=True,
-                                              missing_values=miss, 
+                                              missing_values=miss,
                                               default=fill)
                               for (miss, fill) in zipit]
         # Update the converters to use the user-defined ones
         uc_update = []
         for (j, conv) in user_converters.items():
-            # If the converter is specified by column names, 
+            # If the converter is specified by column names,
             # use the index instead
             if _is_string_like(j):
                 try:
@@ -2197,8 +2248,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             if conv is bytes:
                 user_conv = asbytes
             elif byte_converters:
-                # Converters may use decode to workaround numpy's old 
-                # behavior, so encode the string again before passing 
+                # Converters may use decode to workaround numpy's old
+                # behavior, so encode the string again before passing
                 # to the user converter.
                 def tobytes_first(x, conv):
                     if type(x) is bytes:
@@ -2334,7 +2385,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 "argument is deprecated. Set the encoding, use None for the "
                 "system default.",
                 np.exceptions.VisibleDeprecationWarning, stacklevel=2)
-            
+
             def encode_unicode_cols(row_tup):
                 row = list(row_tup)
                 for i in strcolidx:

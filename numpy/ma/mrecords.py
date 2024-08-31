@@ -318,8 +318,8 @@ class MaskedRecords(MaskedArray):
             return obj
         # We want some elements.
         # First, the data.
-        obj = np.array(_data[indx], copy=False).view(mrecarray)
-        obj._mask = np.array(_mask[indx], copy=False).view(recarray)
+        obj = np.asarray(_data[indx]).view(mrecarray)
+        obj._mask = np.asarray(_mask[indx]).view(recarray)
         return obj
 
     def __setitem__(self, indx, value):
@@ -595,7 +595,7 @@ def fromrecords(reclist, dtype=None, shape=None, formats=None, names=None,
         mrec.fill_value = fill_value
     # Now, let's deal w/ the mask
     if mask is not nomask:
-        mask = np.array(mask, copy=False)
+        mask = np.asarray(mask)
         maskrecordlength = len(mask.dtype)
         if maskrecordlength:
             mrec._mask.flat = mask
@@ -733,7 +733,7 @@ def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
             vartypes = _guessvartypes(_variables[0])
 
     # Construct the descriptor.
-    mdescr = [(n, f) for (n, f) in zip(varnames, vartypes)]
+    mdescr = list(zip(varnames, vartypes))
     mfillv = [ma.default_fill_value(f) for f in vartypes]
 
     # Get the data and the mask.

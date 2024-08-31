@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-#include "numpy/_dtype_api.h"
+#include "numpy/dtype_api.h"
 
 
 /*
@@ -45,10 +45,13 @@ typedef struct PyArrayMethodObject_tag {
     NPY_CASTING casting;
     /* default flags. The get_strided_loop function can override these */
     NPY_ARRAYMETHOD_FLAGS flags;
-    resolve_descriptors_with_scalars_function *resolve_descriptors_with_scalars;
-    resolve_descriptors_function *resolve_descriptors;
-    get_loop_function *get_strided_loop;
-    get_reduction_initial_function  *get_reduction_initial;
+    /* pointer to possible data needed inside the loop (e.g., a function pointer) */
+    void *static_data;
+    /* functions to help decide which loop to call and how to prepare for it */
+    PyArrayMethod_ResolveDescriptorsWithScalar *resolve_descriptors_with_scalars;
+    PyArrayMethod_ResolveDescriptors *resolve_descriptors;
+    PyArrayMethod_GetLoop *get_strided_loop;
+    PyArrayMethod_GetReductionInitial  *get_reduction_initial;
     /* Typical loop functions (contiguous ones are used in current casts) */
     PyArrayMethod_StridedLoop *strided_loop;
     PyArrayMethod_StridedLoop *contiguous_loop;
@@ -58,8 +61,8 @@ typedef struct PyArrayMethodObject_tag {
     /* Chunk only used for wrapping array method defined in umath */
     struct PyArrayMethodObject_tag *wrapped_meth;
     PyArray_DTypeMeta **wrapped_dtypes;
-    translate_given_descrs_func *translate_given_descrs;
-    translate_loop_descrs_func *translate_loop_descrs;
+    PyArrayMethod_TranslateGivenDescriptors *translate_given_descrs;
+    PyArrayMethod_TranslateLoopDescriptors *translate_loop_descrs;
     /* Chunk reserved for use by the legacy fallback arraymethod */
     char legacy_initial[sizeof(npy_clongdouble)];  /* initial value storage */
 } PyArrayMethodObject;

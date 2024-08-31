@@ -68,7 +68,7 @@ class TestErrstate:
         def foo():
             a = -np.arange(3)
             a // 0
-            
+
         foo()
 
     def test_errstate_enter_once(self):

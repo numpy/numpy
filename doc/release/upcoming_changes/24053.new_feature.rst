@@ -1,5 +1,0 @@
-Support for the updated Accelerate BLAS/LAPACK library, including ILP64 (64-bit
-integer) support, in macOS 13.3 has been added. This brings arm64 support, and
-significant performance improvements of up to 10x for commonly used linear
-algebra operations. When Accelerate is selected at build time, the 13.3+
-version will automatically be used if available.

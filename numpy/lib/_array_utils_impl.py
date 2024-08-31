@@ -1,3 +1,6 @@
+"""
+Miscellaneous utils.
+"""
 from numpy._core import asarray
 from numpy._core.numeric import normalize_axis_tuple, normalize_axis_index
 from numpy._utils import set_module
@@ -26,6 +29,7 @@ def byte_bounds(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> I = np.eye(2, dtype='f'); I.dtype
     dtype('float32')
     >>> low, high = np.lib.array_utils.byte_bounds(I)

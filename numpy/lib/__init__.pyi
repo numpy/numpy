@@ -1,5 +1,4 @@
 import math as math
-from typing import Any
 
 from numpy._pytesttester import PytestTester
 
@@ -16,6 +15,7 @@ from numpy.lib import (
     scimath as scimath,
     stride_tricks as stride_tricks,
     npyio as npyio,
+    array_utils as array_utils,
 )
 
 from numpy.lib._version import (

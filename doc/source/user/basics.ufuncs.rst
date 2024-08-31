@@ -80,9 +80,8 @@ an integer (or Boolean) data-type and smaller than the size of the
    array([ 0., 28., 80.])
 
 Finally, the *out* keyword allows you to
-provide an output array (for single-output ufuncs, which are currently the only
-ones supported; for future extension, however, a tuple with a single argument
-can be passed in). If *out* is given, the *dtype* argument is ignored.
+provide an output array (or a tuple of output arrays for multi-output ufuncs).
+If *out* is given, the *dtype* argument is only used for the internal computations.
 Considering ``x`` from the previous example::
 
    >>> y = np.zeros(3, dtype=int)

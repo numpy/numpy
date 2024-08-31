@@ -1,7 +1,7 @@
 .. _distutils-user-guide:
 
-NumPy distutils - users guide
-=============================
+``numpy.distutils`` user guide
+==============================
 
 .. warning::
 

@@ -6,6 +6,7 @@
 #include <Python.h>
 
 #include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 #include "lowlevel_strided_loops.h"
 #include "numpy/arrayobject.h"
@@ -13,8 +14,8 @@
 
 #include "descriptor.h"
 #include "convert_datatype.h"
-#include "common_dtype.h"
 #include "dtypemeta.h"
+#include "stringdtype/dtype.h"
 
 #include "npy_argparse.h"
 #include "abstractdtypes.h"
@@ -99,6 +100,7 @@ enum _dtype_discovery_flags {
     DISCOVER_TUPLES_AS_ELEMENTS = 1 << 4,
     MAX_DIMS_WAS_REACHED = 1 << 5,
     DESCRIPTOR_WAS_SET = 1 << 6,
+    COPY_WAS_CREATED_BY__ARRAY__ = 1 << 7,
 };
 
 
@@ -194,6 +196,12 @@ _PyArray_MapPyTypeToDType(
     if (res < 0) {
         return -1;
     }
+    else if (DType == &PyArray_StringDType) {
+        // PyArray_StringDType's scalar is str which we allow because it doesn't
+        // participate in DType inference, so don't add it to the
+        // pytype to type mapping
+        return 0;
+    }
     else if (res) {
         PyErr_SetString(PyExc_RuntimeError,
                 "Can only map one python type to DType.");
@@ -217,24 +225,23 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
     PyObject *DType;
 
     if (pytype == &PyArray_Type) {
-        DType = Py_None;
+        DType = Py_NewRef(Py_None);
     }
     else if (pytype == &PyFloat_Type) {
-        DType = (PyObject *)&PyArray_PyFloatAbstractDType;
+        DType = Py_NewRef((PyObject *)&PyArray_PyFloatDType);
     }
     else if (pytype == &PyLong_Type) {
-        DType = (PyObject *)&PyArray_PyIntAbstractDType;
+        DType = Py_NewRef((PyObject *)&PyArray_PyLongDType);
     }
     else {
-        DType = PyDict_GetItem(_global_pytype_to_type_dict,
-                               (PyObject *)pytype);
+        int res = PyDict_GetItemRef(_global_pytype_to_type_dict,
+                                    (PyObject *)pytype, (PyObject **)&DType);
 
-        if (DType == NULL) {
-            /* the python type is not known */
+        if (res <= 0) {
+            /* the python type is not known or an error was set */
             return NULL;
         }
     }
-    Py_INCREF(DType);
     assert(DType == Py_None || PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     return (PyArray_DTypeMeta *)DType;
 }
@@ -425,7 +432,8 @@ npy_cast_raw_scalar_item(
 }
 
 
-/**
+/*NUMPY_API
+ **
  * Assign a single element in an array from a python value.
  *
  * The dtypes SETITEM should only be trusted to generally do the right
@@ -465,7 +473,7 @@ npy_cast_raw_scalar_item(
  * @return 0 on success -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
+PyArray_Pack(PyArray_Descr *descr, void *item, PyObject *value)
 {
     PyArrayObject_fields arr_fields = {
             .flags = NPY_ARRAY_WRITEABLE,  /* assume array is not behaved. */
@@ -480,7 +488,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
          * TODO: For a Categorical[object] this path may be necessary?
          */
         arr_fields.descr = descr;
-        return descr->f->setitem(value, item, &arr_fields);
+        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
     }
 
     /* discover_dtype_from_pyobject includes a check for is_known_scalar_type */
@@ -516,7 +524,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         /* We can set the element directly (or at least will try to) */
         Py_XDECREF(DType);
         arr_fields.descr = descr;
-        return descr->f->setitem(value, item, &arr_fields);
+        return PyDataType_GetArrFuncs(descr)->setitem(value, item, &arr_fields);
     }
     PyArray_Descr *tmp_descr;
     tmp_descr = NPY_DT_CALL_discover_descr_from_pyobject(DType, value);
@@ -535,7 +543,7 @@ PyArray_Pack(PyArray_Descr *descr, char *item, PyObject *value)
         memset(data, 0, tmp_descr->elsize);
     }
     arr_fields.descr = tmp_descr;
-    if (tmp_descr->f->setitem(value, data, &arr_fields) < 0) {
+    if (PyDataType_GetArrFuncs(tmp_descr)->setitem(value, data, &arr_fields) < 0) {
         PyObject_Free(data);
         Py_DECREF(tmp_descr);
         return -1;
@@ -607,10 +615,13 @@ update_shape(int curr_ndim, int *max_ndim,
     return success;
 }
 
-
+#ifndef Py_GIL_DISABLED
 #define COERCION_CACHE_CACHE_SIZE 5
 static int _coercion_cache_num = 0;
 static coercion_cache_obj *_coercion_cache_cache[COERCION_CACHE_CACHE_SIZE];
+#else
+#define COERCION_CACHE_CACHE_SIZE 0
+#endif
 
 /*
  * Steals a reference to the object.
@@ -621,11 +632,14 @@ npy_new_coercion_cache(
         coercion_cache_obj ***next_ptr, int ndim)
 {
     coercion_cache_obj *cache;
+#if COERCION_CACHE_CACHE_SIZE > 0
     if (_coercion_cache_num > 0) {
         _coercion_cache_num--;
         cache = _coercion_cache_cache[_coercion_cache_num];
     }
-    else {
+    else
+#endif
+    {
         cache = PyMem_Malloc(sizeof(coercion_cache_obj));
     }
     if (cache == NULL) {
@@ -654,11 +668,14 @@ npy_unlink_coercion_cache(coercion_cache_obj *current)
 {
     coercion_cache_obj *next = current->next;
     Py_DECREF(current->arr_or_sequence);
+#if COERCION_CACHE_CACHE_SIZE > 0
     if (_coercion_cache_num < COERCION_CACHE_CACHE_SIZE) {
         _coercion_cache_cache[_coercion_cache_num] = current;
         _coercion_cache_num++;
     }
-    else {
+    else
+#endif
+    {
         PyMem_Free(current);
     }
     return next;
@@ -952,7 +969,8 @@ PyArray_AdaptDescriptorToArray(
  *        (Initially it is a pointer to the user-provided head pointer).
  * @param fixed_DType User provided fixed DType class
  * @param flags Discovery flags (reporting and behaviour flags, see def.)
- * @param never_copy Specifies if a copy is allowed during array creation.
+ * @param copy Specifies the copy behavior. -1 is corresponds to copy=None,
+ *        0 to copy=False, and 1 to copy=True in the Python API.
  * @return The updated number of maximum dimensions (i.e. scalars will set
  *         this to the current dimensions).
  */
@@ -962,7 +980,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj ***coercion_cache_tail_ptr,
         PyArray_DTypeMeta *fixed_DType, enum _dtype_discovery_flags *flags,
-        int never_copy)
+        int copy)
 {
     PyArrayObject *arr = NULL;
     PyObject *seq;
@@ -1019,14 +1037,18 @@ PyArray_DiscoverDTypeAndShape_Recursive(
             /* __array__ may be passed the requested descriptor if provided */
             requested_descr = *out_descr;
         }
+        int was_copied_by__array__ = 0;
         arr = (PyArrayObject *)_array_from_array_like(obj,
-                requested_descr, 0, NULL, never_copy);
+                requested_descr, 0, NULL, copy, &was_copied_by__array__);
         if (arr == NULL) {
             return -1;
         }
         else if (arr == (PyArrayObject *)Py_NotImplemented) {
             Py_DECREF(arr);
             arr = NULL;
+        }
+        if (was_copied_by__array__ == 1) {
+            *flags |= COPY_WAS_CREATED_BY__ARRAY__;
         }
     }
     if (arr != NULL) {
@@ -1162,12 +1184,21 @@ PyArray_DiscoverDTypeAndShape_Recursive(
         return -1;
     }
 
+    /*
+     * For a sequence we need to make a copy of the final aggregate anyway.
+     * There's no need to pass explicit `copy=True`, so we switch
+     * to `copy=None` (copy if needed).
+     */
+    if (copy == 1) {
+        copy = -1;
+    }
+
     /* Recursive call for each sequence item */
     for (Py_ssize_t i = 0; i < size; i++) {
         max_dims = PyArray_DiscoverDTypeAndShape_Recursive(
                 objects[i], curr_dims + 1, max_dims,
                 out_descr, out_shape, coercion_cache_tail_ptr, fixed_DType,
-                flags, never_copy);
+                flags, copy);
 
         if (max_dims < 0) {
             return -1;
@@ -1207,7 +1238,10 @@ PyArray_DiscoverDTypeAndShape_Recursive(
  *        The result may be unchanged (remain NULL) when converting a
  *        sequence with no elements. In this case it is callers responsibility
  *        to choose a default.
- * @param never_copy Specifies that a copy is not allowed.
+ * @param copy Specifies the copy behavior. -1 is corresponds to copy=None,
+ *        0 to copy=False, and 1 to copy=True in the Python API.
+ * @param was_copied_by__array__ Set to 1 if it can be assumed that a copy was
+ *        made by implementor.
  * @return dimensions of the discovered object or -1 on error.
  *         WARNING: If (and only if) the output is a single array, the ndim
  *         returned _can_ exceed the maximum allowed number of dimensions.
@@ -1220,7 +1254,7 @@ PyArray_DiscoverDTypeAndShape(
         npy_intp out_shape[NPY_MAXDIMS],
         coercion_cache_obj **coercion_cache,
         PyArray_DTypeMeta *fixed_DType, PyArray_Descr *requested_descr,
-        PyArray_Descr **out_descr, int never_copy)
+        PyArray_Descr **out_descr, int copy, int *was_copied_by__array__)
 {
     coercion_cache_obj **coercion_cache_head = coercion_cache;
     *coercion_cache = NULL;
@@ -1259,7 +1293,8 @@ PyArray_DiscoverDTypeAndShape(
             flags |= DISCOVER_STRINGS_AS_SEQUENCES;
         }
         else if (requested_descr->type_num == NPY_VOID &&
-                    (requested_descr->names || requested_descr->subarray))  {
+                    (((_PyArray_LegacyDescr *)requested_descr)->names
+                     || ((_PyArray_LegacyDescr *)requested_descr)->subarray))  {
             /* Void is a chimera, in that it may or may not be structured... */
             flags |= DISCOVER_TUPLES_AS_ELEMENTS;
         }
@@ -1267,9 +1302,13 @@ PyArray_DiscoverDTypeAndShape(
 
     int ndim = PyArray_DiscoverDTypeAndShape_Recursive(
             obj, 0, max_dims, out_descr, out_shape, &coercion_cache,
-            fixed_DType, &flags, never_copy);
+            fixed_DType, &flags, copy);
     if (ndim < 0) {
         goto fail;
+    }
+
+    if (was_copied_by__array__ != NULL && flags & COPY_WAS_CREATED_BY__ARRAY__) {
+        *was_copied_by__array__ = 1;
     }
 
     if (NPY_UNLIKELY(flags & FOUND_RAGGED_ARRAY)) {
@@ -1386,7 +1425,7 @@ _discover_array_parameters(PyObject *NPY_UNUSED(self),
     int ndim = PyArray_DiscoverDTypeAndShape(
             obj, NPY_MAXDIMS, shape,
             &coercion_cache,
-            dt_info.dtype, dt_info.descr, (PyArray_Descr **)&out_dtype, 0);
+            dt_info.dtype, dt_info.descr, (PyArray_Descr **)&out_dtype, 0, NULL);
     Py_XDECREF(dt_info.dtype);
     Py_XDECREF(dt_info.descr);
     if (ndim < 0) {

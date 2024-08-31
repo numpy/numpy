@@ -120,54 +120,56 @@ else:
 
     from . import _core
     from ._core import (
-        False_, ScalarType, True_, _get_promotion_state, _no_nep50_warning,
-        _set_promotion_state, abs, absolute, add, all, allclose, alltrue,
-        amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh, arctan,
-        arctan2, arctanh, argmax, argmin, argpartition, argsort, argwhere,
-        around, array, array2string, array_equal, array_equiv, array_repr,
-        array_str, asanyarray, asarray, ascontiguousarray, asfortranarray,
-        atleast_1d, atleast_2d, atleast_3d, base_repr, binary_repr,
-        bitwise_and, bitwise_count, bitwise_not, bitwise_or, bitwise_xor,
-        block, bool, bool_, broadcast, busday_count, busday_offset,
-        busdaycalendar, byte, bytes_, can_cast, cbrt, cdouble, ceil,
-        character, choose, clip, clongdouble, complex128, complex64,
-        complexfloating, compress, concatenate, conj, conjugate, convolve,
-        copysign, copyto, correlate, cos, cosh, count_nonzero, cross, csingle,
-        cumprod, cumproduct, cumsum, datetime64, datetime_as_string,
-        datetime_data, deg2rad, degrees, diagonal, divide, divmod, dot,
-        double, dtype, e, einsum, einsum_path, empty, empty_like, equal,
-        errstate, euler_gamma, exp, exp2, expm1, fabs, finfo, flatiter,
-        flatnonzero, flexible, float16, float32, float64, float_power,
-        floating, floor, floor_divide, fmax, fmin, fmod,
-        format_float_positional, format_float_scientific, frexp, from_dlpack,
-        frombuffer, fromfile, fromfunction, fromiter, frompyfunc, fromstring,
-        full, full_like, gcd, generic, geomspace, get_printoptions,
-        getbufsize, geterr, geterrcall, greater, greater_equal, half,
-        heaviside, hstack, hypot, identity, iinfo, iinfo, indices, inexact,
-        inf, inner, int16, int32, int64, int8, int_, intc, integer, intp,
-        invert, is_busday, isclose, isfinite, isfortran, isinf, isnan, isnat,
-        isscalar, issubdtype, lcm, ldexp, left_shift, less, less_equal,
-        lexsort, linspace, little_endian, log, log10, log1p, log2, logaddexp,
-        logaddexp2, logical_and, logical_not, logical_or, logical_xor,
-        logspace, long, longdouble, longlong, matmul, max, maximum,
-        may_share_memory, mean, memmap, min, min_scalar_type, minimum, mod,
-        modf, moveaxis, multiply, nan, ndarray, ndim, nditer, negative,
-        nested_iters, newaxis, nextafter, nonzero, not_equal, number, object_,
-        ones, ones_like, outer, partition, pi, positive, power, printoptions,
-        prod, product, promote_types, ptp, put, putmask, rad2deg, radians,
-        ravel, recarray, reciprocal, record, remainder, repeat, require,
-        reshape, resize, result_type, right_shift, rint, roll, rollaxis,
-        round, sctypeDict, searchsorted, set_printoptions, setbufsize, seterr,
-        seterrcall, shape, shares_memory, short, sign, signbit, signedinteger,
-        sin, single, sinh, size, sometrue, sort, spacing, sqrt, square,
-        squeeze, stack, std, str_, subtract, sum, swapaxes, take, tan, tanh,
-        tensordot, timedelta64, trace, transpose, true_divide, trunc,
-        typecodes, ubyte, ufunc, uint, uint16, uint32, uint64, uint8, uintc,
-        uintp, ulong, ulonglong, unsignedinteger, ushort, var, vdot, void,
+        False_, ScalarType, True_,
+        abs, absolute, acos, acosh, add, all, allclose,
+        amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh,
+        arctan, arctan2, arctanh, argmax, argmin, argpartition, argsort,
+        argwhere, around, array, array2string, array_equal, array_equiv,
+        array_repr, array_str, asanyarray, asarray, ascontiguousarray,
+        asfortranarray, asin, asinh, atan, atanh, atan2, astype, atleast_1d,
+        atleast_2d, atleast_3d, base_repr, binary_repr, bitwise_and,
+        bitwise_count, bitwise_invert, bitwise_left_shift, bitwise_not,
+        bitwise_or, bitwise_right_shift, bitwise_xor, block, bool, bool_,
+        broadcast, busday_count, busday_offset, busdaycalendar, byte, bytes_,
+        can_cast, cbrt, cdouble, ceil, character, choose, clip, clongdouble,
+        complex128, complex64, complexfloating, compress, concat, concatenate,
+        conj, conjugate, convolve, copysign, copyto, correlate, cos, cosh,
+        count_nonzero, cross, csingle, cumprod, cumsum, cumulative_prod,
+        cumulative_sum, datetime64, datetime_as_string, datetime_data,
+        deg2rad, degrees, diagonal, divide, divmod, dot, double, dtype, e,
+        einsum, einsum_path, empty, empty_like, equal, errstate, euler_gamma,
+        exp, exp2, expm1, fabs, finfo, flatiter, flatnonzero, flexible,
+        float16, float32, float64, float_power, floating, floor, floor_divide,
+        fmax, fmin, fmod, format_float_positional, format_float_scientific,
+        frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter,
+        frompyfunc, fromstring, full, full_like, gcd, generic, geomspace,
+        get_printoptions, getbufsize, geterr, geterrcall, greater,
+        greater_equal, half, heaviside, hstack, hypot, identity, iinfo,
+        indices, inexact, inf, inner, int16, int32, int64, int8, int_, intc,
+        integer, intp, invert, is_busday, isclose, isdtype, isfinite,
+        isfortran, isinf, isnan, isnat, isscalar, issubdtype, lcm, ldexp,
+        left_shift, less, less_equal, lexsort, linspace, little_endian, log,
+        log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not,
+        logical_or, logical_xor, logspace, long, longdouble, longlong, matmul,
+        matrix_transpose, max, maximum, may_share_memory, mean, memmap, min,
+        min_scalar_type, minimum, mod, modf, moveaxis, multiply, nan, ndarray,
+        ndim, nditer, negative, nested_iters, newaxis, nextafter, nonzero,
+        not_equal, number, object_, ones, ones_like, outer, partition,
+        permute_dims, pi, positive, pow, power, printoptions, prod,
+        promote_types, ptp, put, putmask, rad2deg, radians, ravel, recarray,
+        reciprocal, record, remainder, repeat, require, reshape, resize,
+        result_type, right_shift, rint, roll, rollaxis, round, sctypeDict,
+        searchsorted, set_printoptions, setbufsize, seterr, seterrcall, shape,
+        shares_memory, short, sign, signbit, signedinteger, sin, single, sinh,
+        size, sort, spacing, sqrt, square, squeeze, stack, std,
+        str_, subtract, sum, swapaxes, take, tan, tanh, tensordot,
+        timedelta64, trace, transpose, true_divide, trunc, typecodes, ubyte,
+        ufunc, uint, uint16, uint32, uint64, uint8, uintc, uintp, ulong,
+        ulonglong, unsignedinteger, unstack, ushort, var, vdot, vecdot, void,
         vstack, where, zeros, zeros_like
     )
 
-    # NOTE: It's still under discussion whether these aliases 
+    # NOTE: It's still under discussion whether these aliases
     # should be removed.
     for ta in ["float96", "float128", "complex192", "complex256"]:
         try:
@@ -182,20 +184,21 @@ else:
         histogram, histogram_bin_edges, histogramdd
     )
     from .lib._nanfunctions_impl import (
-        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean, 
+        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean,
         nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
         nansum, nanvar
     )
     from .lib._function_base_impl import (
-        select, piecewise, trim_zeros, copy, iterable, percentile, diff, 
+        select, piecewise, trim_zeros, copy, iterable, percentile, diff,
         gradient, angle, unwrap, sort_complex, flip, rot90, extract, place,
         vectorize, asarray_chkfinite, average, bincount, digitize, cov,
         corrcoef, median, sinc, hamming, hanning, bartlett, blackman,
-        kaiser, trapz, i0, meshgrid, delete, insert, append, interp, quantile
+        kaiser, trapezoid, trapz, i0, meshgrid, delete, insert, append,
+        interp, quantile
     )
     from .lib._twodim_base_impl import (
-        diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander, 
-        histogram2d, mask_indices, tril_indices, tril_indices_from, 
+        diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander,
+        histogram2d, mask_indices, tril_indices, tril_indices_from,
         triu_indices, triu_indices_from
     )
     from .lib._shape_base_impl import (
@@ -204,11 +207,12 @@ else:
         take_along_axis, tile, vsplit
     )
     from .lib._type_check_impl import (
-        iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real, 
+        iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real,
         real_if_close, typename, mintypecode, common_type
     )
     from .lib._arraysetops_impl import (
-        ediff1d, in1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+        ediff1d, in1d, intersect1d, isin, setdiff1d, setxor1d, union1d,
+        unique, unique_all, unique_counts, unique_inverse, unique_values
     )
     from .lib._ufunclike_impl import fix, isneginf, isposinf
     from .lib._arraypad_impl import pad
@@ -228,9 +232,10 @@ else:
     )
     from .lib._index_tricks_impl import (
         diag_indices_from, diag_indices, fill_diagonal, ndindex, ndenumerate,
-        ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index, 
+        ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index,
         index_exp
     )
+
     from . import matrixlib as _mat
     from .matrixlib import (
         asmatrix, bmat, matrix
@@ -241,9 +246,9 @@ else:
     # (experimental label) are not added here, because `from numpy import *`
     # must not raise any warnings - that's too disruptive.
     __numpy_submodules__ = {
-        "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
+        "linalg", "fft", "dtypes", "random", "polynomial", "ma",
         "exceptions", "lib", "ctypeslib", "testing", "typing",
-        "f2py", "test", "rec", "char", "core"
+        "f2py", "test", "rec", "char", "core", "strings",
     }
 
     # We build warning messages for former attributes
@@ -285,7 +290,9 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"str", "bytes", "object"}
 
-    __array_api_version__ = "2022.12"
+    __array_api_version__ = "2023.12"
+
+    from ._array_api_info import __array_namespace_info__
 
     # now that numpy core module is imported, can initialize limits
     _core.getlimits._register_known_types()
@@ -308,7 +315,7 @@ else:
         set(lib._polynomial_impl.__all__) |
         set(lib._npyio_impl.__all__) |
         set(lib._index_tricks_impl.__all__) |
-        {"emath", "show_config", "__version__"}
+        {"emath", "show_config", "__version__", "__array_namespace_info__"}
     )
 
     # Filter out Cython harmless warnings
@@ -363,18 +370,21 @@ else:
             import numpy.char as char
             return char
         elif attr == "array_api":
-            import numpy.array_api as array_api
-            return array_api
+            raise AttributeError("`numpy.array_api` is not available from "
+                                 "numpy 2.0 onwards", name=None)
         elif attr == "core":
             import numpy.core as core
             return core
+        elif attr == "strings":
+            import numpy.strings as strings
+            return strings
         elif attr == "distutils":
             if 'distutils' in __numpy_submodules__:
                 import numpy.distutils as distutils
                 return distutils
             else:
                 raise AttributeError("`numpy.distutils` is not available from "
-                                     "Python 3.12 onwards")
+                                     "Python 3.12 onwards", name=None)
 
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
@@ -384,12 +394,13 @@ else:
                 "corresponding NumPy scalar.", FutureWarning, stacklevel=2)
 
         if attr in __former_attrs__:
-            raise AttributeError(__former_attrs__[attr])
-        
+            raise AttributeError(__former_attrs__[attr], name=None)
+
         if attr in __expired_attributes__:
             raise AttributeError(
                 f"`np.{attr}` was removed in the NumPy 2.0 release. "
-                f"{__expired_attributes__[attr]}"
+                f"{__expired_attributes__[attr]}",
+                name=None
             )
 
         if attr == "chararray":
@@ -408,7 +419,7 @@ else:
             globals().keys() | __numpy_submodules__
         )
         public_symbols -= {
-            "matrixlib", "matlib", "tests", "conftest", "version", 
+            "matrixlib", "matlib", "tests", "conftest", "version",
             "compat", "distutils", "array_api"
         }
         return list(public_symbols)
@@ -432,7 +443,7 @@ else:
         try:
             x = ones(2, dtype=float32)
             if not abs(x.dot(x) - float32(2.0)) < 1e-5:
-                raise AssertionError()
+                raise AssertionError
         except AssertionError:
             msg = ("The current Numpy installation ({!r}) fails to "
                    "pass simple sanity checks. This can be caused for example "
@@ -458,26 +469,33 @@ else:
             pass
 
     if sys.platform == "darwin":
+        from . import exceptions
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
             # Throw runtime error, if the test failed Check for warning and error_message
             if len(w) > 0:
-                error_message = "{}: {}".format(w[-1].category.__name__, str(w[-1].message))
-                msg = (
-                    "Polyfit sanity test emitted a warning, most likely due "
-                    "to using a buggy Accelerate backend."
-                    "\nIf you compiled yourself, more information is available at:"
-                    "\nhttps://numpy.org/doc/stable/user/building.html#accelerated-blas-lapack-libraries"
-                    "\nOtherwise report this to the vendor "
-                    "that provided NumPy.\n{}\n".format(error_message))
-                raise RuntimeError(msg)
-        del w
+                for _wn in w:
+                    if _wn.category is exceptions.RankWarning:
+                        # Ignore other warnings, they may not be relevant (see gh-25433).
+                        error_message = (
+                            f"{_wn.category.__name__}: {_wn.message}"
+                        )
+                        msg = (
+                            "Polyfit sanity test emitted a warning, most likely due "
+                            "to using a buggy Accelerate backend."
+                            "\nIf you compiled yourself, more information is available at:"
+                            "\nhttps://numpy.org/devdocs/building/index.html"
+                            "\nOtherwise report this to the vendor "
+                            "that provided NumPy.\n\n{}\n".format(error_message))
+                        raise RuntimeError(msg)
+                del _wn
+            del w
     del _mac_os_check
 
     def hugepage_setup():
         """
         We usually use madvise hugepages support, but on some old kernels it
-        is slow and thus better avoided. Specifically kernel version 4.6 
+        is slow and thus better avoided. Specifically kernel version 4.6
         had a bug fix which probably fixed this:
         https://github.com/torvalds/linux/commit/7cf91a98e607c2f935dbcc177d70011e95b8faff
         """
@@ -486,7 +504,7 @@ else:
             # If there is an issue with parsing the kernel version,
             # set use_hugepage to 0. Usage of LooseVersion will handle
             # the kernel version parsing better, but avoided since it
-            # will increase the import time. 
+            # will increase the import time.
             # See: #16679 for related discussion.
             try:
                 use_hugepage = 1
@@ -513,8 +531,11 @@ else:
     _core.multiarray._multiarray_umath._reload_guard()
 
     # TODO: Remove the environment variable entirely now that it is "weak"
-    _core._set_promotion_state(
-        os.environ.get("NPY_PROMOTION_STATE", "weak"))
+    if (os.environ.get("NPY_PROMOTION_STATE", "weak") != "weak"):
+        warnings.warn(
+            "NPY_PROMOTION_STATE was a temporary feature for NumPy 2.0 "
+            "transition and is ignored after NumPy 2.2.",
+            UserWarning, stacklevel=2)
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():

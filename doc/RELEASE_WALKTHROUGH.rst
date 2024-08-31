@@ -8,7 +8,7 @@ by the correct version. This should be read together with the
 Facility preparation
 ====================
 
-Before beginning to make a release, use the ``*_requirements.txt`` files to
+Before beginning to make a release, use the ``requirements/*_requirements.txt`` files to
 ensure that you have the needed software. Most software can be installed with
 pip, but some will require apt-get, dnf, or whatever your system uses for
 software. You will also need a GitHub personal access token (PAT) to push the
@@ -79,7 +79,7 @@ Generate the changelog
 
 The changelog is generated using the changelog tool::
 
-    $ python tools/changelog.py $GITHUB v1.20.0..maintenance/1.21.x > doc/changelog/1.21.0-changelog.rst
+    $ spin changelog $GITHUB v1.20.0..maintenance/1.21.x > doc/changelog/1.21.0-changelog.rst
 
 where ``GITHUB`` contains your GitHub access token. The text will need to be
 checked for non-standard contributor names and dependabot entries removed. It
@@ -94,18 +94,18 @@ needed information.
 Finish the release notes
 ------------------------
 
-If this is the first release in a series the release note is generated, see
-the release note in ``doc/release/upcoming_changes/README.rst`` to see how to
-do this. Generating the release notes will also delete all the news
-fragment files in ``doc/release/upcoming_changes/``.
+If there are any release notes snippets in ``doc/release/upcoming_changes/``,
+run ``spin docs`` to build the docs, incorporate the contents of the generated
+``doc/source/release/notes-towncrier.rst`` file into the release notes file
+(e.g., ``doc/source/release/2.3.4-notes.rst``), and delete the now-processed
+snippets in ``doc/release/upcoming_changes/``. This is safe to do multiple
+times during a release cycle.
 
 The generated release note will always need some fixups, the introduction will
 need to be written, and significant changes should be called out. For patch
 releases the changelog text may also be appended, but not for the initial
 release as it is too long. Check previous release notes to see how this is
-done. Note that the ``:orphan:`` markup at the top, if present, will need
-changing to ``.. currentmodule:: numpy`` and the ``doc/source/release.rst``
-index file will need updating.
+done.
 
 
 Set the release version
@@ -272,18 +272,17 @@ If the release series is a new one, you will need to add a new section to the
     $ gvim index.html +/'insert here'
 
 Further, update the version-switcher json file to add the new release and
-update the version marked `(stable)`::
+update the version marked ``(stable)`` and ``preferred``::
 
     $ gvim _static/versions.json
 
-Otherwise, only the ``zip`` link should be updated with the new tag name. Since
-we are no longer generating ``pdf`` files, remove the line for the ``pdf``
-files if present::
+Then run ``update.py`` to update the version in ``_static``::
 
-    $ gvim index.html +/'tag v1.21'
+    $ python3 update.py
 
 You can "test run" the new documentation in a browser to make sure the links
-work::
+work, although the version dropdown will not change, it pulls its information
+from ``numpy.org``::
 
     $ firefox index.html  # or google-chrome, etc.
 
@@ -294,9 +293,8 @@ Update the stable link and update::
 
 Once everything seems satisfactory, update, commit and upload the changes::
 
-    $ python3 update.py
     $ git commit -a -m"Add documentation for v1.21.0"
-    $ git push
+    $ git push git@github.com:numpy/doc
     $ popd
 
 

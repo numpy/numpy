@@ -15,7 +15,7 @@
 
 #include <numpy/ndarraytypes.h>
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 
 #include "shape.h"
 
@@ -145,7 +145,7 @@ IsUintAligned(PyArrayObject *ap)
 {
     return raw_array_is_aligned(PyArray_NDIM(ap), PyArray_DIMS(ap),
                                 PyArray_DATA(ap), PyArray_STRIDES(ap),
-                                npy_uint_alignment(PyArray_DESCR(ap)->elsize));
+                                npy_uint_alignment(PyArray_ITEMSIZE(ap)));
 }
 
 

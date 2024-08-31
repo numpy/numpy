@@ -158,21 +158,21 @@ __new__ documentation
 For example, consider the following Python code:
 
 >>> class C:
->>>     def __new__(cls, *args):
->>>         print('Cls in __new__:', cls)
->>>         print('Args in __new__:', args)
->>>         # The `object` type __new__ method takes a single argument.
->>>         return object.__new__(cls)
->>>     def __init__(self, *args):
->>>         print('type(self) in __init__:', type(self))
->>>         print('Args in __init__:', args)
+...     def __new__(cls, *args):
+...         print('Cls in __new__:', cls)
+...         print('Args in __new__:', args)
+...         # The `object` type __new__ method takes a single argument.
+...         return object.__new__(cls)
+...     def __init__(self, *args):
+...         print('type(self) in __init__:', type(self))
+...         print('Args in __init__:', args)
 
 meaning that we get:
 
 >>> c = C('hello')
-Cls in __new__: <class 'C'>
+Cls in __new__: <class '__main__.C'>
 Args in __new__: ('hello',)
-type(self) in __init__: <class 'C'>
+type(self) in __init__: <class '__main__.C'>
 Args in __init__: ('hello',)
 
 When we call ``C('hello')``, the ``__new__`` method gets its own class
@@ -633,12 +633,12 @@ some print statements:
           if obj is None: return
           self.info = getattr(obj, 'info', None)
 
-      def __array_wrap__(self, out_arr, context=None):
+      def __array_wrap__(self, out_arr, context=None, return_scalar=False):
           print('In __array_wrap__:')
           print('   self is %s' % repr(self))
           print('   arr is %s' % repr(out_arr))
           # then just call the parent
-          return super().__array_wrap__(self, out_arr, context)
+          return super().__array_wrap__(self, out_arr, context, return_scalar)
 
 We run a ufunc on an instance of our new array:
 
@@ -672,7 +672,7 @@ But, we could do anything we wanted:
 
   class SillySubClass(np.ndarray):
 
-      def __array_wrap__(self, arr, context=None):
+      def __array_wrap__(self, arr, context=None, return_scalar=False):
           return 'I lost your data'
 
 >>> arr1 = np.arange(5)

@@ -8,7 +8,7 @@ NEP 52 — Python API cleanup for NumPy 2.0
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
 :Author: Nathan Goldbaum <ngoldbaum@quansight.com>
 :Author: Mateusz Sokół <msokol@quansight.com>
-:Status: Accepted
+:Status: Final
 :Type: Standards Track
 :Created: 2023-03-28
 :Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/QLMPFTWA67DXE3JCUQT2RIRLQ44INS4F/
@@ -39,7 +39,7 @@ NumPy has a large API surface that evolved organically over many years:
    >>> len(modules)
    14
 
-The above doesn't even include items that are public but have been
+The above doesn't even include items that are public but have
 been hidden from ``__dir__``.
 A particularly problematic example of that is ``np.core``,
 which is technically private but heavily used in practice.

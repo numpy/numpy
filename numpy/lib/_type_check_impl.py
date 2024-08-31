@@ -56,6 +56,7 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.mintypecode(['d', 'f', 'S'])
     'd'
     >>> x = np.array([1.1, 2-3.j])
@@ -103,6 +104,7 @@ def real(val):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1+2j, 3+4j, 5+6j])
     >>> a.real
     array([1.,  3.,  5.])
@@ -149,6 +151,7 @@ def imag(val):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1+2j, 3+4j, 5+6j])
     >>> a.imag
     array([2.,  4.,  6.])
@@ -195,6 +198,7 @@ def iscomplex(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.iscomplex([1+1j, 1+0j, 4.5, 3, 2, 2j])
     array([ True, False, False, False, False,  True])
 
@@ -235,6 +239,7 @@ def isreal(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([1+1j, 1+0j, 4.5, 3, 2, 2j], dtype=complex)
     >>> np.isreal(a)
     array([False,  True,  True,  True,  True, False])
@@ -287,6 +292,7 @@ def iscomplexobj(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.iscomplexobj(1)
     False
     >>> np.iscomplexobj(1+0j)
@@ -341,6 +347,7 @@ def isrealobj(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.isrealobj(1)
     True
     >>> np.isrealobj(1+0j)
@@ -434,6 +441,7 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.nan_to_num(np.inf)
     1.7976931348623157e+308
     >>> np.nan_to_num(-np.inf)
@@ -525,6 +533,7 @@ def real_if_close(a, tol=100):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.finfo(float).eps
     2.2204460492503131e-16 # may vary
 
@@ -593,6 +602,7 @@ def typename(char):
 
     Examples
     --------
+    >>> import numpy as np
     >>> typechars = ['S1', '?', 'B', 'D', 'G', 'F', 'I', 'H', 'L', 'O', 'Q',
     ...              'S', 'U', 'V', 'b', 'd', 'g', 'f', 'i', 'h', 'l', 'q']
     >>> for typechar in typechars:
@@ -689,7 +699,7 @@ def common_type(*arrays):
         if issubclass(t, _nx.integer):
             p = 2  # array_precision[_nx.double]
         else:
-            p = array_precision.get(t, None)
+            p = array_precision.get(t)
             if p is None:
                 raise TypeError("can't get common type for non-numeric array")
         precision = max(precision, p)

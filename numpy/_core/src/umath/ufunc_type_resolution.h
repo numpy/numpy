@@ -134,7 +134,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
 NPY_NO_EXPORT int
 PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
-                                       PyArray_Descr **dtypes,
+                                       PyArray_Descr *const *dtypes,
                                        PyUFuncGenericFunction *out_innerloop,
                                        void **out_innerloopdata,
                                        int *out_needs_api);

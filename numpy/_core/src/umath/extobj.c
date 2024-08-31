@@ -6,7 +6,7 @@
 #include <Python.h>
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 #include "npy_argparse.h"
 
 #include "conversion_utils.h"
@@ -14,16 +14,7 @@
 #include "extobj.h"
 #include "numpy/ufuncobject.h"
 
-#include "ufunc_object.h"  /* for npy_um_str_pyvals_name */
 #include "common.h"
-
-
-/*
- * The global ContextVar to store the extobject. It is exposed to Python
- * as `_extobj_contextvar`.
- */
-static PyObject *default_extobj_capsule = NULL;
-NPY_NO_EXPORT PyObject *npy_extobj_contextvar = NULL;
 
 
 #define UFUNC_ERR_IGNORE 0
@@ -43,11 +34,6 @@ NPY_NO_EXPORT PyObject *npy_extobj_contextvar = NULL;
 #define UFUNC_SHIFT_OVERFLOW     3
 #define UFUNC_SHIFT_UNDERFLOW    6
 #define UFUNC_SHIFT_INVALID      9
-
-/* The python strings for the above error modes defined in extobj.h */
-const char *errmode_cstrings[] = {
-        "ignore", "warn", "raise", "call", "print", "log"};
-static PyObject *errmode_strings[6] = {NULL};
 
 /* Default user error mode (underflows are ignored, others warn) */
 #define UFUNC_ERR_DEFAULT                               \
@@ -131,7 +117,8 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 {
     PyObject *capsule;
     if (PyContextVar_Get(
-            npy_extobj_contextvar, default_extobj_capsule, &capsule) < 0) {
+            npy_static_pydata.npy_extobj_contextvar,
+            npy_static_pydata.default_extobj_capsule, &capsule) < 0) {
         return -1;
     }
     npy_extobj *obj = PyCapsule_GetPointer(capsule, "numpy.ufunc.extobj");
@@ -153,26 +140,15 @@ fetch_curr_extobj_state(npy_extobj *extobj)
 NPY_NO_EXPORT int
 init_extobj(void)
 {
-    /*
-     * First initialize the string constants we need to parse `errstate()`
-     * inputs.
-     */
-    for (int i = 0; i <= UFUNC_ERR_LOG; i++) {
-        errmode_strings[i] = PyUnicode_InternFromString(errmode_cstrings[i]);
-        if (errmode_strings[i] == NULL) {
-            return -1;
-        }
-    }
-
-    default_extobj_capsule = make_extobj_capsule(
+    npy_static_pydata.default_extobj_capsule = make_extobj_capsule(
             NPY_BUFSIZE, UFUNC_ERR_DEFAULT, Py_None);
-    if (default_extobj_capsule == NULL) {
+    if (npy_static_pydata.default_extobj_capsule == NULL) {
         return -1;
     }
-    npy_extobj_contextvar = PyContextVar_New(
-            "numpy.ufunc.extobj", default_extobj_capsule);
-    if (npy_extobj_contextvar == NULL) {
-        Py_CLEAR(default_extobj_capsule);
+    npy_static_pydata.npy_extobj_contextvar = PyContextVar_New(
+            "numpy.ufunc.extobj", npy_static_pydata.default_extobj_capsule);
+    if (npy_static_pydata.npy_extobj_contextvar == NULL) {
+        Py_CLEAR(npy_static_pydata.default_extobj_capsule);
         return -1;
     }
     return 0;
@@ -191,7 +167,8 @@ errmodeconverter(PyObject *obj, int *mode)
     }
     int i = 0;
     for (; i <= UFUNC_ERR_LOG; i++) {
-        int eq = PyObject_RichCompareBool(obj, errmode_strings[i], Py_EQ);
+        int eq = PyObject_RichCompareBool(
+                obj, npy_interned_str.errmode_strings[i], Py_EQ);
         if (eq == -1) {
             return 0;
         }
@@ -212,7 +189,7 @@ errmodeconverter(PyObject *obj, int *mode)
 /*
  * This function is currently exposed as `umath._seterrobj()`, it is private
  * and returns a capsule representing the errstate.  This capsule is then
- * assigned to the `npy_extobj_contextvar` in Python.
+ * assigned to the `_extobj_contextvar` in Python.
  */
 NPY_NO_EXPORT PyObject *
 extobj_make_extobj(PyObject *NPY_UNUSED(mod),
@@ -338,19 +315,23 @@ extobj_get_extobj_dict(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(noarg))
     }
     /* Set all error modes: */
     mode = (extobj.errmask & UFUNC_MASK_DIVIDEBYZERO) >> UFUNC_SHIFT_DIVIDEBYZERO;
-    if (PyDict_SetItemString(result, "divide", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "divide",
+                             npy_interned_str.errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_OVERFLOW) >> UFUNC_SHIFT_OVERFLOW;
-    if (PyDict_SetItemString(result, "over", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "over",
+                             npy_interned_str.errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_UNDERFLOW) >> UFUNC_SHIFT_UNDERFLOW;
-    if (PyDict_SetItemString(result, "under", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "under",
+                             npy_interned_str.errmode_strings[mode]) < 0) {
         goto fail;
     }
     mode = (extobj.errmask & UFUNC_MASK_INVALID) >> UFUNC_SHIFT_INVALID;
-    if (PyDict_SetItemString(result, "invalid", errmode_strings[mode]) < 0) {
+    if (PyDict_SetItemString(result, "invalid",
+                             npy_interned_str.errmode_strings[mode]) < 0) {
         goto fail;
     }
 
@@ -506,10 +487,12 @@ _extract_pyvals(int *bufsize, int *errmask, PyObject **pyfunc)
     return 0;
 }
 
-/*
- * Handler which uses the default `np.errstate` given that `fpe_errors` is
- * already set.  `fpe_errors` is typically the (nonzero) result of
- * `npy_get_floatstatus_barrier`.
+/*UFUNC_API
+ * Signal a floating point error respecting the error signaling setting in
+ * the NumPy errstate. Takes the name of the operation to use in the error
+ * message and an integer flag that is one of NPY_FPE_DIVIDEBYZERO,
+ * NPY_FPE_OVERFLOW, NPY_FPE_UNDERFLOW, NPY_FPE_INVALID to indicate
+ * which errors to check for.
  *
  * Returns -1 on failure (an error was raised) and 0 on success.
  */

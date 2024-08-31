@@ -1,4 +1,3 @@
-import os
 import sys
 import copy
 import platform
@@ -7,7 +6,6 @@ from pathlib import Path
 
 import numpy as np
 
-from numpy.testing import assert_, assert_equal
 from numpy._core._type_aliases import c_names_dict as _c_names_dict
 from . import util
 
@@ -90,10 +88,7 @@ class Intent:
         return "Intent(%r)" % (self.intent_list)
 
     def is_intent(self, *names):
-        for name in names:
-            if name not in self.intent_list:
-                return False
-        return True
+        return all(name in self.intent_list for name in names)
 
     def is_intent_exact(self, *names):
         return len(self.intent_list) == len(names) and self.is_intent(*names)
@@ -194,12 +189,12 @@ class Type:
 
         if self.NAME == 'CHARACTER':
             info = c_names_dict[self.NAME]
-            self.type_num = getattr(wrap, 'NPY_STRING')
+            self.type_num = wrap.NPY_STRING
             self.elsize = 1
             self.dtype = np.dtype('c')
         elif self.NAME.startswith('STRING'):
             info = c_names_dict[self.NAME[:6]]
-            self.type_num = getattr(wrap, 'NPY_STRING')
+            self.type_num = wrap.NPY_STRING
             self.elsize = int(self.NAME[6:] or 0)
             self.dtype = np.dtype(f'S{self.elsize}')
         else:
@@ -548,6 +543,10 @@ class TestSharedMemory:
                 # string elsize is 0, so skipping the test
                 continue
             if t.elsize >= self.type.elsize:
+                continue
+            is_int = np.issubdtype(t.dtype, np.integer)
+            if is_int and int(self.num2seq[0]) > np.iinfo(t.dtype).max:
+                # skip test if num2seq would trigger an overflow error
                 continue
             obj = np.array(self.num2seq, dtype=t.dtype)
             shape = (len(self.num2seq), )

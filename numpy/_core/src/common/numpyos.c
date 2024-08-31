@@ -9,7 +9,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #if defined(HAVE_STRTOLD_L) && !defined(_GNU_SOURCE)
 # define _GNU_SOURCE
@@ -381,10 +381,32 @@ NumPyOS_ascii_isdigit(char c)
  *
  * Same as isalnum under C locale
  */
-static int
+NPY_NO_EXPORT int
 NumPyOS_ascii_isalnum(char c)
 {
     return NumPyOS_ascii_isdigit(c) || NumPyOS_ascii_isalpha(c);
+}
+
+/*
+ * NumPyOS_ascii_islower:
+ *
+ * Same as islower under C locale
+ */
+NPY_NO_EXPORT int
+NumPyOS_ascii_islower(char c)
+{
+    return c >= 'a' && c <= 'z';
+}
+
+/*
+ * NumPyOS_ascii_isupper:
+ *
+ * Same as isupper under C locale
+ */
+NPY_NO_EXPORT int
+NumPyOS_ascii_isupper(char c)
+{
+    return c >= 'A' && c <= 'Z';
 }
 
 
@@ -393,7 +415,7 @@ NumPyOS_ascii_isalnum(char c)
  *
  * Same as tolower under C locale
  */
-static int
+NPY_NO_EXPORT int
 NumPyOS_ascii_tolower(int c)
 {
     if (c >= 'A' && c <= 'Z') {

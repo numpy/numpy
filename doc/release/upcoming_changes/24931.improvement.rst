@@ -1,8 +1,0 @@
-Consistent failure messages in `numpy.testing`
-----------------------------------------------
-
-Previously, some `numpy.testing` assertions printed messages that
-referred to the actual and desired results as ``x`` and ``y``.
-Now, these values are consistently referred to as ``ACTUAL`` and
-``DESIRED``.
-

@@ -1,1 +1,3 @@
-from ._npyio_impl import DataSource, NpzFile
+from ._npyio_impl import (
+    __doc__, DataSource, NpzFile
+)

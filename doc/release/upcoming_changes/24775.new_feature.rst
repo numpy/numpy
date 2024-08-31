@@ -1,5 +1,0 @@
-``strict`` option for `testing.assert_array_less`
--------------------------------------------------
-The ``strict`` option is now available for `testing.assert_array_less`.
-Setting ``strict=True`` will disable the broadcasting behaviour for scalars
-and ensure that input arrays have the same data type.

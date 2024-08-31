@@ -18,11 +18,8 @@ from typing import (
     TypeVar,
     Final,
     SupportsIndex,
+    ParamSpec
 )
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec
-else:
-    from typing_extensions import ParamSpec
 
 import numpy as np
 from numpy import number, object_, _FloatValue
@@ -166,7 +163,7 @@ def build_err_msg(
 def assert_equal(
     actual: object,
     desired: object,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
     *,
     strict: bool = ...
@@ -182,7 +179,7 @@ def assert_almost_equal(
     actual: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     desired: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     decimal: int = ...,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
 ) -> None: ...
 
@@ -191,7 +188,7 @@ def assert_approx_equal(
     actual: _FloatValue,
     desired: _FloatValue,
     significant: int = ...,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
 ) -> None: ...
 
@@ -199,7 +196,7 @@ def assert_array_compare(
     comparison: _ComparisonFunc,
     x: ArrayLike,
     y: ArrayLike,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
     header: str = ...,
     precision: SupportsIndex = ...,
@@ -212,7 +209,8 @@ def assert_array_compare(
 def assert_array_equal(
     x: ArrayLike,
     y: ArrayLike,
-    err_msg: str = ...,
+    /,
+    err_msg: object = ...,
     verbose: bool = ...,
     *,
     strict: bool = ...
@@ -221,8 +219,9 @@ def assert_array_equal(
 def assert_array_almost_equal(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
+    /,
     decimal: float = ...,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
 ) -> None: ...
 
@@ -230,7 +229,7 @@ def assert_array_almost_equal(
 def assert_array_less(
     x: _ArrayLikeNumber_co | _ArrayLikeObject_co,
     y: _ArrayLikeNumber_co | _ArrayLikeObject_co,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
     *,
     strict: bool = ...
@@ -239,7 +238,7 @@ def assert_array_less(
 def assert_array_less(
     x: _ArrayLikeTD64_co,
     y: _ArrayLikeTD64_co,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
     *,
     strict: bool = ...
@@ -248,7 +247,7 @@ def assert_array_less(
 def assert_array_less(
     x: _ArrayLikeDT64_co,
     y: _ArrayLikeDT64_co,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
     *,
     strict: bool = ...
@@ -319,7 +318,7 @@ def assert_allclose(
     rtol: float = ...,
     atol: float = ...,
     equal_nan: bool = ...,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
     *,
     strict: bool = ...
@@ -331,7 +330,7 @@ def assert_allclose(
     rtol: float = ...,
     atol: float = ...,
     equal_nan: bool = ...,
-    err_msg: str = ...,
+    err_msg: object = ...,
     verbose: bool = ...,
     *,
     strict: bool = ...

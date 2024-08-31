@@ -86,6 +86,13 @@ Here ``<fortran files>`` may also contain signature files. Among other options
   ``--wrap-functions`` is default because it ensures maximum portability and
   compiler independence.
 
+``--[no-]freethreading-compatible``
+  Create a module that declares it does or doesn't require the GIL. The default
+  is ``--no-freethreading-compatible`` for backwards compatibility. Inspect the
+  fortran code you are wrapping for thread safety issues before passing
+  ``--freethreading-compatible``, as ``f2py`` does not analyze fortran code for
+  thread safety issues.
+
 ``--include-paths "<path1>:<path2>..."``
   Search include files from given directories.
 
@@ -269,6 +276,8 @@ Other options
 
 Execute ``f2py`` without any options to get an up-to-date list of available
 options.
+
+.. _python-module-numpy.f2py:
 
 Python module ``numpy.f2py``
 ============================

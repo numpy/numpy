@@ -4,6 +4,7 @@
 import functools
 import operator
 
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core.numeric import (
     asanyarray, arange, zeros, greater_equal, multiply, ones,
     asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
@@ -78,6 +79,7 @@ def fliplr(m):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.diag([1.,2.,3.])
     >>> A
     array([[1.,  0.,  0.],
@@ -88,7 +90,8 @@ def fliplr(m):
            [0.,  2.,  0.],
            [3.,  0.,  0.]])
 
-    >>> A = np.random.randn(2,3,5)
+    >>> rng = np.random.default_rng()
+    >>> A = rng.normal(size=(2,3,5))
     >>> np.all(np.fliplr(A) == A[:,::-1,...])
     True
 
@@ -131,6 +134,7 @@ def flipud(m):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.diag([1.0, 2, 3])
     >>> A
     array([[1.,  0.,  0.],
@@ -141,7 +145,8 @@ def flipud(m):
            [0.,  2.,  0.],
            [1.,  0.,  0.]])
 
-    >>> A = np.random.randn(2,3,5)
+    >>> rng = np.random.default_rng()
+    >>> A = rng.normal(size=(2,3,5))
     >>> np.all(np.flipud(A) == A[::-1,...])
     True
 
@@ -157,7 +162,7 @@ def flipud(m):
 
 @set_array_function_like_doc
 @set_module('numpy')
-def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
+def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -178,6 +183,11 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
         column-major (Fortran-style) order in memory.
 
         .. versionadded:: 1.14.0
+    device : str, optional
+        The device on which to place the created array. Default: None.
+        For Array-API interoperability only, so must be ``"cpu"`` if passed.
+
+        .. versionadded:: 2.0.0
     ${ARRAY_FUNCTION_LIKE}
 
         .. versionadded:: 1.20.0
@@ -195,6 +205,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.eye(2, dtype=int)
     array([[1, 0],
            [0, 1]])
@@ -205,10 +216,12 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, like=None):
 
     """
     if like is not None:
-        return _eye_with_like(like, N, M=M, k=k, dtype=dtype, order=order)
+        return _eye_with_like(
+            like, N, M=M, k=k, dtype=dtype, order=order, device=device
+        )
     if M is None:
         M = N
-    m = zeros((N, M), dtype=dtype, order=order)
+    m = zeros((N, M), dtype=dtype, order=order, device=device)
     if k >= M:
         return m
     # Ensure M and k are integers, so we don't get any surprise casting
@@ -267,6 +280,7 @@ def diag(v, k=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(9).reshape((3,3))
     >>> x
     array([[0, 1, 2],
@@ -331,6 +345,7 @@ def diagflat(v, k=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.diagflat([[1,2], [3,4]])
     array([[1, 0, 0, 0],
            [0, 2, 0, 0],
@@ -343,11 +358,9 @@ def diagflat(v, k=0):
            [0, 0, 0]])
 
     """
-    try:
-        wrap = v.__array_wrap__
-    except AttributeError:
-        wrap = None
-    v = asarray(v).ravel()
+    conv = _array_converter(v)
+    v, = conv.as_arrays(subok=False)
+    v = v.ravel()
     s = len(v)
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
@@ -358,9 +371,8 @@ def diagflat(v, k=0):
         i = arange(0, n+k, dtype=intp)
         fi = i+(i-k)*n
     res.flat[fi] = v
-    if not wrap:
-        return res
-    return wrap(res)
+
+    return conv.wrap(res)
 
 
 @set_array_function_like_doc
@@ -394,6 +406,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.tri(3, 5, 2, dtype=int)
     array([[1, 1, 1, 0, 0],
            [1, 1, 1, 1, 0],
@@ -455,6 +468,7 @@ def tril(m, k=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.tril([[1,2,3],[4,5,6],[7,8,9],[10,11,12]], -1)
     array([[ 0,  0,  0],
            [ 4,  0,  0],
@@ -499,6 +513,7 @@ def triu(m, k=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.triu([[1,2,3],[4,5,6],[7,8,9],[10,11,12]], -1)
     array([[ 1,  2,  3],
            [ 4,  5,  6],
@@ -569,6 +584,7 @@ def vander(x, N=None, increasing=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3, 5])
     >>> N = 3
     >>> np.vander(x, N)
@@ -711,6 +727,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from matplotlib.image import NonUniformImage
     >>> import matplotlib.pyplot as plt
 
@@ -849,6 +866,8 @@ def mask_indices(n, mask_func, k=0):
 
     Examples
     --------
+    >>> import numpy as np
+
     These are the indices that would allow you to access the upper triangular
     part of any 3x3 array:
 
@@ -918,6 +937,8 @@ def tril_indices(n, k=0, m=None):
 
     Examples
     --------
+    >>> import numpy as np
+
     Compute two different sets of indices to access 4x4 arrays, one for the
     lower triangular part starting at the main diagonal, and one starting two
     diagonals further right:
@@ -985,8 +1006,9 @@ def tril_indices_from(arr, k=0):
 
     Examples
     --------
+    >>> import numpy as np
 
-    Create a 4 by 4 array.
+    Create a 4 by 4 array
 
     >>> a = np.arange(16).reshape(4, 4)
     >>> a
@@ -1069,6 +1091,8 @@ def triu_indices(n, k=0, m=None):
 
     Examples
     --------
+    >>> import numpy as np
+
     Compute two different sets of indices to access 4x4 arrays, one for the
     upper triangular part starting at the main diagonal, and one starting two
     diagonals further right:
@@ -1137,8 +1161,9 @@ def triu_indices_from(arr, k=0):
 
     Examples
     --------
+    >>> import numpy as np
 
-    Create a 4 by 4 array.
+    Create a 4 by 4 array
 
     >>> a = np.arange(16).reshape(4, 4)
     >>> a

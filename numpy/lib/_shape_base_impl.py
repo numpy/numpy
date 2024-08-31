@@ -5,6 +5,7 @@ import numpy._core.numeric as _nx
 from numpy._core.numeric import asarray, zeros, zeros_like, array, asanyarray
 from numpy._core.fromnumeric import reshape, transpose
 from numpy._core.multiarray import normalize_axis_index
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core import overrides
 from numpy._core import vstack, atleast_3d
 from numpy._core.numeric import normalize_axis_tuple
@@ -114,6 +115,7 @@ def take_along_axis(arr, indices, axis):
 
     Examples
     --------
+    >>> import numpy as np
 
     For this sample array
 
@@ -161,6 +163,9 @@ def take_along_axis(arr, indices, axis):
     """
     # normalize inputs
     if axis is None:
+        if indices.ndim != 1:
+            raise ValueError(
+                'when axis=None, `indices` must have a single dimension.')
         arr = arr.flat
         arr_shape = (len(arr),)  # flatiter has no .shape
         axis = 0
@@ -232,6 +237,7 @@ def put_along_axis(arr, indices, values, axis):
 
     Examples
     --------
+    >>> import numpy as np
 
     For this sample array
 
@@ -251,6 +257,9 @@ def put_along_axis(arr, indices, values, axis):
     """
     # normalize inputs
     if axis is None:
+        if indices.ndim != 1:
+            raise ValueError(
+                'when axis=None, `indices` must have a single dimension.')
         arr = arr.flat
         axis = 0
         arr_shape = (len(arr),)  # flatiter has no .shape
@@ -324,6 +333,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> def my_func(a):
     ...     \"\"\"Average first and last element of a 1-D array\"\"\"
     ...     return (a[0] + a[-1]) * 0.5
@@ -358,7 +368,9 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             [0, 0, 9]]])
     """
     # handle negative axes
-    arr = asanyarray(arr)
+    conv = _array_converter(arr)
+    arr = conv[0]
+
     nd = arr.ndim
     axis = normalize_axis_index(axis, nd)
 
@@ -403,17 +415,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     for ind in inds:
         buff[ind] = asanyarray(func1d(inarr_view[ind], *args, **kwargs))
 
-    if not isinstance(res, matrix):
-        # wrap the array, to preserve subclasses
-        buff = res.__array_wrap__(buff)
-
-        # finally, rotate the inserted axes back to where they belong
-        return transpose(buff, buff_permute)
-
-    else:
-        # matrices have to be transposed first, because they collapse dimensions!
-        out_arr = transpose(buff, buff_permute)
-        return res.__array_wrap__(out_arr)
+    res = transpose(buff, buff_permute)
+    return conv.wrap(res)
 
 
 def _apply_over_axes_dispatcher(func, a, axes):
@@ -461,6 +464,7 @@ def apply_over_axes(func, a, axes):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(24).reshape(2,3,4)
     >>> a
     array([[[ 0,  1,  2,  3],
@@ -549,6 +553,7 @@ def expand_dims(a, axis):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2])
     >>> x.shape
     (2,)
@@ -651,6 +656,7 @@ def column_stack(tup):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((1,2,3))
     >>> b = np.array((2,3,4))
     >>> np.column_stack((a,b))
@@ -663,7 +669,7 @@ def column_stack(tup):
     for v in tup:
         arr = asanyarray(v)
         if arr.ndim < 2:
-            arr = array(arr, copy=False, subok=True, ndmin=2).T
+            arr = array(arr, copy=None, subok=True, ndmin=2).T
         arrays.append(arr)
     return _nx.concatenate(arrays, 1)
 
@@ -710,6 +716,7 @@ def dstack(tup):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((1,2,3))
     >>> b = np.array((2,3,4))
     >>> np.dstack((a,b))
@@ -726,8 +733,8 @@ def dstack(tup):
 
     """
     arrs = atleast_3d(*tup)
-    if not isinstance(arrs, list):
-        arrs = [arrs]
+    if not isinstance(arrs, tuple):
+        arrs = (arrs,)
     return _nx.concatenate(arrs, 2)
 
 
@@ -762,6 +769,7 @@ def array_split(ary, indices_or_sections, axis=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
     [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
@@ -858,6 +866,7 @@ def split(ary, indices_or_sections, axis=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(9.0)
     >>> np.split(x, 3)
     [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.,  8.])]
@@ -901,6 +910,7 @@ def hsplit(ary, indices_or_sections):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(16.0).reshape(4, 4)
     >>> x
     array([[ 0.,   1.,   2.,   3.],
@@ -971,6 +981,7 @@ def vsplit(ary, indices_or_sections):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(16.0).reshape(4, 4)
     >>> x
     array([[ 0.,   1.,   2.,   3.],
@@ -979,12 +990,15 @@ def vsplit(ary, indices_or_sections):
            [12.,  13.,  14.,  15.]])
     >>> np.vsplit(x, 2)
     [array([[0., 1., 2., 3.],
-           [4., 5., 6., 7.]]), array([[ 8.,  9., 10., 11.],
-           [12., 13., 14., 15.]])]
+            [4., 5., 6., 7.]]),
+     array([[ 8.,  9., 10., 11.],
+            [12., 13., 14., 15.]])]
     >>> np.vsplit(x, np.array([3, 6]))
     [array([[ 0.,  1.,  2.,  3.],
-           [ 4.,  5.,  6.,  7.],
-           [ 8.,  9., 10., 11.]]), array([[12., 13., 14., 15.]]), array([], shape=(0, 4), dtype=float64)]
+            [ 4.,  5.,  6.,  7.],
+            [ 8.,  9., 10., 11.]]),
+     array([[12., 13., 14., 15.]]),
+     array([], shape=(0, 4), dtype=float64)]
 
     With a higher dimensional array the split is still along the first axis.
 
@@ -996,8 +1010,9 @@ def vsplit(ary, indices_or_sections):
             [6.,  7.]]])
     >>> np.vsplit(x, 2)
     [array([[[0., 1.],
-            [2., 3.]]]), array([[[4., 5.],
-            [6., 7.]]])]
+             [2., 3.]]]),
+     array([[[4., 5.],
+             [6., 7.]]])]
 
     """
     if _nx.ndim(ary) < 2:
@@ -1020,6 +1035,7 @@ def dsplit(ary, indices_or_sections):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(16.0).reshape(2, 2, 4)
     >>> x
     array([[[ 0.,   1.,   2.,   3.],
@@ -1122,6 +1138,7 @@ def kron(a, b):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.kron([1,10,100], [5,6,7])
     array([  5,   6,   7, ..., 500, 600, 700])
     >>> np.kron([5,6,7], [1,10,100])
@@ -1157,7 +1174,7 @@ def kron(a, b):
     # 5. Reshape the result to kron's shape, which is same as
     #    product of shapes of the two arrays.
     b = asanyarray(b)
-    a = array(a, copy=False, subok=True, ndmin=b.ndim)
+    a = array(a, copy=None, subok=True, ndmin=b.ndim)
     is_any_mat = isinstance(a, matrix) or isinstance(b, matrix)
     ndb, nda = b.ndim, a.ndim
     nd = max(ndb, nda)
@@ -1236,6 +1253,7 @@ def tile(A, reps):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([0, 1, 2])
     >>> np.tile(a, 2)
     array([0, 1, 2, 0, 1, 2])
@@ -1275,7 +1293,7 @@ def tile(A, reps):
     else:
         # Note that no copy of zero-sized arrays is made. However since they
         # have no data there is no risk of an inadvertent overwrite.
-        c = _nx.array(A, copy=False, subok=True, ndmin=d)
+        c = _nx.array(A, copy=None, subok=True, ndmin=d)
     if (d < c.ndim):
         tup = (1,)*(c.ndim-d) + tup
     shape_out = tuple(s*t for s, t in zip(c.shape, tup))

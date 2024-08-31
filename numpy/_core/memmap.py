@@ -84,7 +84,7 @@ class memmap(ndarray):
         .. versionchanged:: 2.0
          The shape parameter can now be any integer sequence type, previously
          types were limited to tuple and int.
-    
+
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
@@ -127,6 +127,7 @@ class memmap(ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> data = np.arange(12, dtype='float32')
     >>> data.resize((3,4))
 
@@ -327,7 +328,7 @@ class memmap(ndarray):
         if self.base is not None and hasattr(self.base, 'flush'):
             self.base.flush()
 
-    def __array_wrap__(self, arr, context=None):
+    def __array_wrap__(self, arr, context=None, return_scalar=False):
         arr = super().__array_wrap__(arr, context)
 
         # Return a memmap if a memmap was given as the output of the
@@ -335,10 +336,12 @@ class memmap(ndarray):
         # to keep original memmap subclasses behavior
         if self is arr or type(self) is not memmap:
             return arr
+
         # Return scalar instead of 0d memmap, e.g. for np.sum with
-        # axis=None
-        if arr.shape == ():
+        # axis=None (note that subclasses will not reach here)
+        if return_scalar:
             return arr[()]
+
         # Return ndarray otherwise
         return arr.view(np.ndarray)
 

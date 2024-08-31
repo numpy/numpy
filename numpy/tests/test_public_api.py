@@ -108,22 +108,20 @@ def test_NPY_NO_EXPORT():
 # current status is fine.  For others it may make sense to work on making them
 # private, to clean up our public API and avoid confusion.
 PUBLIC_MODULES = ['numpy.' + s for s in [
-    "array_api",
-    "array_api.linalg",
     "ctypeslib",
     "dtypes",
     "exceptions",
     "f2py",
     "fft",
     "lib",
-    "lib.format",  # was this meant to be public?
+    "lib.array_utils",
+    "lib.format",
+    "lib.introspect",
     "lib.mixins",
-    "lib.recfunctions",
+    "lib.npyio",
+    "lib.recfunctions",  # note: still needs cleaning, was forgotten for 2.0
     "lib.scimath",
     "lib.stride_tricks",
-    "lib.npyio",
-    "lib.introspect",
-    "lib.array_utils",
     "linalg",
     "ma",
     "ma.extras",
@@ -136,11 +134,12 @@ PUBLIC_MODULES = ['numpy.' + s for s in [
     "polynomial.legendre",
     "polynomial.polynomial",
     "random",
+    "strings",
     "testing",
     "testing.overrides",
     "typing",
     "typing.mypy_plugin",
-    "version"  # Should be removed for NumPy 2.0
+    "version",
 ]]
 if sys.version_info < (3, 12):
     PUBLIC_MODULES += [
@@ -319,8 +318,6 @@ def test_all_modules_are_expected():
 # Stuff that clearly shouldn't be in the API and is detected by the next test
 # below
 SKIP_LIST_2 = [
-    'numpy.math',
-    'numpy.lib.emath',
     'numpy.lib.math',
     'numpy.matlib.char',
     'numpy.matlib.rec',
@@ -452,7 +449,7 @@ def test_api_importable():
 def test_array_api_entry_point():
     """
     Entry point for Array API implementation can be found with importlib and
-    returns the numpy.array_api namespace.
+    returns the main numpy namespace.
     """
     # For a development install that did not go through meson-python,
     # the entrypoint will not have been installed. So ensure this test fails
@@ -482,12 +479,20 @@ def test_array_api_entry_point():
             raise AssertionError(msg) from None
         return
 
+    if ep.value == 'numpy.array_api':
+        # Looks like the entrypoint for the current numpy build isn't
+        # installed, but an older numpy is also installed and hence the
+        # entrypoint is pointing to the old (no longer existing) location.
+        # This isn't a problem except for when running tests with `spin` or an
+        # in-place build.
+        return
+
     xp = ep.load()
     msg = (
         f"numpy entry point value '{ep.value}' "
         "does not point to our Array API implementation"
     )
-    assert xp is numpy.array_api, msg
+    assert xp is numpy, msg
 
 
 def test_main_namespace_all_dir_coherence():
@@ -526,8 +531,13 @@ def test_core_shims_coherence():
     import numpy.core as core
 
     for member_name in dir(np._core):
-        # skip private and test members
-        if member_name.startswith("_") or member_name == "tests":
+        # Skip private and test members. Also if a module is aliased,
+        # no need to add it to np.core
+        if (
+            member_name.startswith("_")
+            or member_name in ["tests", "strings"]
+            or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES
+        ):
             continue
 
         member = getattr(np._core, member_name)
@@ -604,8 +614,7 @@ def test_functions_single_location():
             # else check if we got a function-like object
             elif (
                 inspect.isfunction(member) or
-                isinstance(member, dispatched_function) or
-                isinstance(member, np.ufunc)
+                isinstance(member, (dispatched_function, np.ufunc))
             ):
                 if member in visited_functions:
 
@@ -613,10 +622,22 @@ def test_functions_single_location():
                     if (
                         member.__name__ in [
                             "absolute",  # np.abs
+                            "arccos",  # np.acos
+                            "arccosh",  # np.acosh
+                            "arcsin",  # np.asin
+                            "arcsinh",  # np.asinh
+                            "arctan",  # np.atan
+                            "arctan2",  # np.atan2
+                            "arctanh",  # np.atanh
+                            "left_shift",  # np.bitwise_left_shift
+                            "right_shift",  # np.bitwise_right_shift
                             "conjugate",  # np.conj
-                            "invert",  # np.bitwise_not
+                            "invert",  # np.bitwise_not & np.bitwise_invert
                             "remainder",  # np.mod
                             "divide",  # np.true_divide
+                            "concatenate",  # np.concat
+                            "power",  # np.pow
+                            "transpose",  # np.permute_dims
                         ] and
                         module.__name__ == "numpy"
                     ):
@@ -627,6 +648,23 @@ def test_functions_single_location():
                         member.__name__ == "trimcoef" and
                         module.__name__.startswith("numpy.polynomial")
                     ):
+                        continue
+
+                    # skip ufuncs that are exported in np.strings as well
+                    if member.__name__ in (
+                        "add",
+                        "equal",
+                        "not_equal",
+                        "greater",
+                        "greater_equal",
+                        "less",
+                        "less_equal",
+                    ) and module.__name__ == "numpy.strings":
+                        continue
+
+                    # numpy.char reexports all numpy.strings functions for
+                    # backwards-compatibility
+                    if module.__name__ == "numpy.char":
                         continue
 
                     # function is present in more than one location!

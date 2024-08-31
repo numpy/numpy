@@ -928,7 +928,7 @@ class TestLoadTxt(LoadTxtBase):
         with pytest.raises(TypeError,
                 match="If a structured dtype .*. But 1 usecols were given and "
                       "the number of fields is 3."):
-            np.loadtxt(["1,1\n"], dtype="i,(2)i", usecols=[0], delimiter=",")
+            np.loadtxt(["1,1\n"], dtype="i,2i", usecols=[0], delimiter=",")
 
     def test_fancy_dtype(self):
         c = TextIO()
@@ -2760,12 +2760,16 @@ def test_npzfile_dict():
         assert_(f in ['x', 'y'])
         assert_equal(a.shape, (3, 3))
 
+    for a in z.values():
+        assert_equal(a.shape, (3, 3))
+
     assert_(len(z.items()) == 2)
 
     for f in z:
         assert_(f in ['x', 'y'])
 
     assert_('x' in z.keys())
+    assert (z.get('x') == z['x']).all()
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")

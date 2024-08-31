@@ -111,7 +111,7 @@ get_descr_from_type_and_elsize(const int type_num, const int elsize)  {
     if (descr == NULL) {
       return NULL;
     }
-    descr->elsize = elsize;
+    PyDataType_SET_ELSIZE(descr, elsize);
   }
   return descr;
 }
@@ -803,7 +803,7 @@ get_elsize(PyObject *obj) {
   */
 
   if (PyArray_Check(obj)) {
-    return PyArray_DESCR((PyArrayObject *)obj)->elsize;
+    return PyArray_ITEMSIZE((PyArrayObject *)obj);
   } else if (PyBytes_Check(obj)) {
     return PyBytes_GET_SIZE(obj);
   } else if (PyUnicode_Check(obj)) {
@@ -904,7 +904,7 @@ ndarray_from_pyobj(const int type_num,
     if (descr == NULL) {
       return NULL;
     }
-    elsize = descr->elsize;
+    elsize = PyDataType_ELSIZE(descr);
     if ((intent & F2PY_INTENT_HIDE)
         || ((intent & F2PY_INTENT_CACHE) && (obj == Py_None))
         || ((intent & F2PY_OPTIONAL) && (obj == Py_None))
@@ -1110,7 +1110,7 @@ array_from_pyobj(const int type_num,
     if possible. Provided for backward compatibility.
    */
   PyArray_Descr* descr = PyArray_DescrFromType(type_num);
-  int elsize = descr->elsize;
+  int elsize = PyDataType_ELSIZE(descr);
   Py_DECREF(descr);
   return ndarray_from_pyobj(type_num, elsize, dims, rank, intent, obj, NULL);
 }

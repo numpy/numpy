@@ -44,11 +44,11 @@ stages:
     steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.9'
+        versionSpec: '3.10'
         addToPath: true
         architecture: 'x64'
     - script: >-
-        python -m pip install -r linter_requirements.txt
+        python -m pip install -r requirements/linter_requirements.txt
       displayName: 'Install tools'
       # pip 21.1 emits a pile of garbage messages to annoy users :)
       #      failOnStderr: true
@@ -57,7 +57,7 @@ stages:
       displayName: 'Run Lint Checks'
       failOnStderr: true
 
-  - job: Linux_Python_39_32bit_full_with_asserts
+  - job: Linux_Python_310_32bit_full_with_asserts
     pool:
       vmImage: 'ubuntu-20.04'
     steps:
@@ -72,6 +72,7 @@ stages:
       displayName: 'Run 32-bit manylinux2014 Docker Build / Tests'
 
   - job: Windows
+    timeoutInMinutes: 120
     pool:
       vmImage: 'windows-2019'
     strategy:
@@ -88,8 +89,8 @@ stages:
             TEST_MODE: full
             BITS: 64
             _USE_BLAS_ILP64: '1'
-          PyPy39-64bit-fast:
-            PYTHON_VERSION: 'pypy3.9'
+          PyPy310-64bit-fast:
+            PYTHON_VERSION: 'pypy3.10'
             PYTHON_ARCH: 'x64'
             TEST_MODE: fast
             BITS: 64

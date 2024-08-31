@@ -42,7 +42,7 @@ A total of 26 pull requests were merged for this release.
 
 * `#19311 <https://github.com/numpy/numpy/pull/19311>`__: REV,BUG: Replace ``NotImplemented`` with ``typing.Any``
 * `#19324 <https://github.com/numpy/numpy/pull/19324>`__: MAINT: Fixed the return-dtype of ``ndarray.real`` and ``imag``
-* `#19330 <https://github.com/numpy/numpy/pull/19330>`__: MAINT: Replace ``"dtype[Any]"`` with ``dtype`` in the definiton of...
+* `#19330 <https://github.com/numpy/numpy/pull/19330>`__: MAINT: Replace ``"dtype[Any]"`` with ``dtype`` in the definition of...
 * `#19342 <https://github.com/numpy/numpy/pull/19342>`__: DOC: Fix some docstrings that crash pdf generation.
 * `#19343 <https://github.com/numpy/numpy/pull/19343>`__: MAINT: bump scipy-mathjax
 * `#19347 <https://github.com/numpy/numpy/pull/19347>`__: BUG: Fix arr.flat.index for large arrays and big-endian machines

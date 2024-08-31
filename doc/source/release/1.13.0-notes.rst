@@ -8,13 +8,13 @@ This release supports Python 2.7 and 3.4 - 3.6.
 Highlights
 ==========
 
- * Operations like ``a + b + c`` will reuse temporaries on some platforms,
-   resulting in less memory use and faster execution.
- * Inplace operations check if inputs overlap outputs and create temporaries
-   to avoid problems.
- * New ``__array_ufunc__`` attribute provides improved ability for classes to
-   override default ufunc behavior.
- * New ``np.block`` function for creating blocked arrays.
+* Operations like ``a + b + c`` will reuse temporaries on some platforms,
+  resulting in less memory use and faster execution.
+* Inplace operations check if inputs overlap outputs and create temporaries
+  to avoid problems.
+* New ``__array_ufunc__`` attribute provides improved ability for classes to
+  override default ufunc behavior.
+* New ``np.block`` function for creating blocked arrays.
 
 
 New functions

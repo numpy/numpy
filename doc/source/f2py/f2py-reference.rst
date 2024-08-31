@@ -9,5 +9,6 @@ F2PY reference manual
    signature-file
    python-usage
    buildtools/index
-   advanced
+   advanced/use_cases.rst
+   advanced/boilerplating.rst
    f2py-testing

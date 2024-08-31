@@ -1,13 +1,9 @@
-import sys
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 AR_f8: npt.NDArray[np.float64]
 AR_LIKE_f: list[float]
@@ -29,5 +25,5 @@ assert_type(np.broadcast_to(AR_f8, [4, 6], subok=True), npt.NDArray[np.float64])
 assert_type(np.broadcast_shapes((1, 2), [3, 1], (3, 2)), tuple[int, ...])
 assert_type(np.broadcast_shapes((6, 7), (5, 6, 1), 7, (5, 1, 7)), tuple[int, ...])
 
-assert_type(np.broadcast_arrays(AR_f8, AR_f8), list[npt.NDArray[Any]])
-assert_type(np.broadcast_arrays(AR_f8, AR_LIKE_f), list[npt.NDArray[Any]])
+assert_type(np.broadcast_arrays(AR_f8, AR_f8), tuple[npt.NDArray[Any], ...])
+assert_type(np.broadcast_arrays(AR_f8, AR_LIKE_f), tuple[npt.NDArray[Any], ...])

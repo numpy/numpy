@@ -38,6 +38,7 @@ maintainer email:  oliphant.travis@ieee.org
 
 #include "number.h"
 #include "usertypes.h"
+#include "arraywrap.h"
 #include "arraytypes.h"
 #include "scalartypes.h"
 #include "arrayobject.h"
@@ -61,9 +62,7 @@ maintainer email:  oliphant.travis@ieee.org
 
 #include "binop_override.h"
 #include "array_coercion.h"
-
-
-NPY_NO_EXPORT npy_bool numpy_warn_if_no_mem_policy = 0;
+#include "multiarraymodule.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -250,7 +249,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      */
     ndim = PyArray_DiscoverDTypeAndShape(src_object,
             PyArray_NDIM(dest), dims, &cache,
-            NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype, 0);
+            NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype, 1, NULL);
     if (ndim < 0) {
         return -1;
     }
@@ -317,41 +316,6 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
     return -1;
 }
 
-
-/* returns an Array-Scalar Object of the type of arr
-   from the given pointer to memory -- main Scalar creation function
-   default new method calls this.
-*/
-
-/* Ideally, here the descriptor would contain all the information needed.
-   So, that we simply need the data and the descriptor, and perhaps
-   a flag
-*/
-
-
-/*
-  Given a string return the type-number for
-  the data-type with that string as the type-object name.
-  Returns NPY_NOTYPE without setting an error if no type can be
-  found.  Only works for user-defined data-types.
-*/
-
-/*NUMPY_API
- */
-NPY_NO_EXPORT int
-PyArray_TypeNumFromName(char const *str)
-{
-    int i;
-    PyArray_Descr *descr;
-
-    for (i = 0; i < NPY_NUMUSERTYPES; i++) {
-        descr = userdescrs[i];
-        if (strcmp(descr->typeobj->tp_name, str) == 0) {
-            return descr->type_num;
-        }
-    }
-    return NPY_NOTYPE;
-}
 
 /*NUMPY_API
  *
@@ -463,7 +427,7 @@ array_dealloc(PyArrayObject *self)
             }
         }
         if (fa->mem_handler == NULL) {
-            if (numpy_warn_if_no_mem_policy) {
+            if (npy_thread_unsafe_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
@@ -551,50 +515,6 @@ PyArray_DebugPrint(PyArrayObject *obj)
 }
 
 
-/*NUMPY_API
- * This function is scheduled to be removed
- *
- * TO BE REMOVED - NOT USED INTERNALLY.
- */
-NPY_NO_EXPORT void
-PyArray_SetDatetimeParseFunction(PyObject *NPY_UNUSED(op))
-{
-}
-
-/*NUMPY_API
- */
-NPY_NO_EXPORT int
-PyArray_CompareUCS4(npy_ucs4 const *s1, npy_ucs4 const *s2, size_t len)
-{
-    npy_ucs4 c1, c2;
-    while(len-- > 0) {
-        c1 = *s1++;
-        c2 = *s2++;
-        if (c1 != c2) {
-            return (c1 < c2) ? -1 : 1;
-        }
-    }
-    return 0;
-}
-
-/*NUMPY_API
- */
-NPY_NO_EXPORT int
-PyArray_CompareString(const char *s1, const char *s2, size_t len)
-{
-    const unsigned char *c1 = (unsigned char *)s1;
-    const unsigned char *c2 = (unsigned char *)s2;
-    size_t i;
-
-    for(i = 0; i < len; ++i) {
-        if (c1[i] != c2[i]) {
-            return (c1[i] > c2[i]) ? 1 : -1;
-        }
-    }
-    return 0;
-}
-
-
 /* Call this from contexts where an array might be written to, but we have no
  * way to tell. (E.g., when converting to a read-write buffer.)
  */
@@ -676,11 +596,9 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         return NULL;
     }
     if (PyArray_HASFIELDS(self) && PyArray_HASFIELDS(other)) {
-        PyArray_Descr *self_descr = PyArray_DESCR(self);
-        PyArray_Descr *other_descr = PyArray_DESCR(other);
-
         /* Use promotion to decide whether the comparison is valid */
-        PyArray_Descr *promoted = PyArray_PromoteTypes(self_descr, other_descr);
+        PyArray_Descr *promoted = PyArray_PromoteTypes(
+                PyArray_DESCR(self), PyArray_DESCR(other));
         if (promoted == NULL) {
             PyErr_SetString(PyExc_TypeError,
                     "Cannot compare structured arrays unless they have a "
@@ -689,6 +607,9 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             return NULL;
         }
         Py_DECREF(promoted);
+
+        _PyArray_LegacyDescr *self_descr = (_PyArray_LegacyDescr *)PyArray_DESCR(self);
+        _PyArray_LegacyDescr *other_descr = (_PyArray_LegacyDescr *)PyArray_DESCR(other);
 
         npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
                             PyArray_NDIM(self) : PyArray_NDIM(other);
@@ -1004,7 +925,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
      */
     if (result == NULL
             && (cmp_op == Py_EQ || cmp_op == Py_NE)
-            && PyErr_ExceptionMatches(npy_UFuncNoLoopError)) {
+            && PyErr_ExceptionMatches(
+                    npy_static_pydata._UFuncNoLoopError)) {
         PyErr_Clear();
 
         PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);
@@ -1067,7 +989,9 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * already have deferred.  So use `self` for wrapping.  If users
              * need more, they need to override `==` and `!=`.
              */
-            Py_SETREF(res, PyArray_SubclassWrap(self, res));
+            PyObject *wrapped = npy_apply_wrap_simple(self, res);
+            Py_DECREF(res);
+            return wrapped;
         }
         return (PyObject *)res;
     }
@@ -1233,8 +1157,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         /* Logic shared by `empty`, `empty_like`, and `ndarray.__new__` */
         if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
             /* place Py_None in object positions */
-            PyArray_FillObjectArray(ret, Py_None);
-            if (PyErr_Occurred()) {
+            if (PyArray_SetObjectsToNone(ret) < 0) {
                 descr = NULL;
                 goto fail;
             }

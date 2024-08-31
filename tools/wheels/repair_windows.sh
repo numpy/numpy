@@ -5,6 +5,8 @@ DEST_DIR="$2"
 
 # create a temporary directory in the destination folder and unpack the wheel
 # into there
+cwd=$PWD
+
 pushd $DEST_DIR
 mkdir -p tmp
 pushd tmp
@@ -29,4 +31,4 @@ rm -rf tmp
 
 # the libopenblas.dll is placed into this directory in the cibw_before_build
 # script.
-delvewheel repair --add-path /c/opt/64/bin -w $DEST_DIR $WHEEL
+delvewheel repair --add-path $cwd/.openblas/lib -w $DEST_DIR $WHEEL

@@ -12,19 +12,21 @@
 #if defined(NPY_INTERNAL_BUILD)
 #undef NPY_INTERNAL_BUILD
 #endif
+// for add_INT32_negative_indexed
+#define NPY_TARGET_VERSION NPY_2_1_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/npy_math.h"
 
-#include "npy_pycompat.h"
+
 
 #include "npy_config.h"
 #include "npy_cpu_features.h"
 #include "npy_cpu_dispatch.h"
 #include "numpy/npy_cpu.h"
 #include "npy_import.h"
-#include "numpy/experimental_dtype_api.h"
-
+#include "numpy/dtype_api.h"
 
 /*
  *****************************************************************************
@@ -420,29 +422,29 @@ defdict = {
 */
 
 static PyUFuncGenericFunction always_error_functions[] = { always_error_loop };
-static void *always_error_data[] = { (void *)NULL };
-static char always_error_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const always_error_data[] = { (void *)NULL };
+static const char always_error_signatures[] = { NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction inner1d_functions[] = { INTP_inner1d, DOUBLE_inner1d };
-static void *inner1d_data[] = { (void *)NULL, (void *)NULL };
-static char inner1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const inner1d_data[] = { (void *)NULL, (void *)NULL };
+static const char inner1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction innerwt_functions[] = { INTP_innerwt, DOUBLE_innerwt };
-static void *innerwt_data[] = { (void *)NULL, (void *)NULL };
-static char innerwt_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const innerwt_data[] = { (void *)NULL, (void *)NULL };
+static const char innerwt_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction matrix_multiply_functions[] = { INTP_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
-static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
-static char matrix_multiply_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
+static const char matrix_multiply_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction cross1d_functions[] = { INTP_cross1d, DOUBLE_cross1d };
-static void *cross1d_data[] = { (void *)NULL, (void *)NULL };
-static char cross1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+static void *const cross1d_data[] = { (void *)NULL, (void *)NULL };
+static const char cross1d_signatures[] = { NPY_INTP, NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction euclidean_pdist_functions[] =
                             { FLOAT_euclidean_pdist, DOUBLE_euclidean_pdist };
-static void *eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
-static char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
+static void *const eucldiean_pdist_data[] = { (void *)NULL, (void *)NULL };
+static const char euclidean_pdist_signatures[] = { NPY_FLOAT, NPY_FLOAT,
                                              NPY_DOUBLE, NPY_DOUBLE };
 
 static PyUFuncGenericFunction cumsum_functions[] = { INTP_cumsum, DOUBLE_cumsum };
-static void *cumsum_data[] = { (void *)NULL, (void *)NULL };
-static char cumsum_signatures[] = { NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE };
+static void *const cumsum_data[] = { (void *)NULL, (void *)NULL };
+static const char cumsum_signatures[] = { NPY_INTP, NPY_INTP, NPY_DOUBLE, NPY_DOUBLE };
 
 
 static int
@@ -728,10 +730,6 @@ err:
 
 static int
 add_INT32_negative_indexed(PyObject *module, PyObject *dict) {
-    if (import_experimental_dtype_api(__EXPERIMENTAL_DTYPE_API_VERSION) < 0) {
-        return -1;
-    }
-
     PyObject * negative = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 1, 1,
                                     PyUFunc_Zero, "indexed_negative", NULL, 0);
     if (negative == NULL) {
@@ -762,6 +760,95 @@ add_INT32_negative_indexed(PyObject *module, PyObject *dict) {
     Py_DECREF(negative);
     return 0;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Define the gufunc 'conv1d_full'
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) < (b)) ? (b) : (a))
+
+int conv1d_full_process_core_dims(PyUFuncObject *ufunc,
+                                  npy_intp *core_dim_sizes)
+{
+    //
+    // core_dim_sizes will hold the core dimensions [m, n, p].
+    // p will be -1 if the caller did not provide the out argument.
+    //
+    npy_intp m = core_dim_sizes[0];
+    npy_intp n = core_dim_sizes[1];
+    npy_intp p = core_dim_sizes[2];
+    npy_intp required_p = m + n - 1;
+
+    if (m == 0 && n == 0) {
+        PyErr_SetString(PyExc_ValueError,
+            "conv1d_full: both inputs have core dimension 0; the function "
+            "requires that at least one input has positive size.");
+        return -1;
+    }
+    if (p == -1) {
+        core_dim_sizes[2] = required_p;
+        return 0;
+    }
+    if (p != required_p) {
+        PyErr_Format(PyExc_ValueError,
+                "conv1d_full: the core dimension p of the out parameter "
+                "does not equal m + n - 1, where m and n are the core "
+                "dimensions of the inputs x and y; got m=%zd and n=%zd so "
+                "p must be %zd, but got p=%zd.",
+                m, n, required_p, p);
+        return -1;
+    }
+    return 0;
+}
+
+static void
+conv1d_full_double_loop(char **args,
+                        npy_intp const *dimensions,
+                        npy_intp const *steps,
+                        void *NPY_UNUSED(func))
+{
+    // Input and output arrays
+    char *p_x = args[0];
+    char *p_y = args[1];
+    char *p_out = args[2];
+    // Number of loops of pdist calculations to execute.
+    npy_intp nloops = dimensions[0];
+    // Core dimensions
+    npy_intp m = dimensions[1];
+    npy_intp n = dimensions[2];
+    npy_intp p = dimensions[3]; // Must be m + n - 1.
+    // Core strides
+    npy_intp x_stride = steps[0];
+    npy_intp y_stride = steps[1];
+    npy_intp out_stride = steps[2];
+    // Inner strides
+    npy_intp x_inner_stride = steps[3];
+    npy_intp y_inner_stride = steps[4];
+    npy_intp out_inner_stride = steps[5];
+
+    for (npy_intp loop = 0; loop < nloops; ++loop, p_x += x_stride,
+                                                   p_y += y_stride,
+                                                   p_out += out_stride) {
+        // Basic implementation of 1d convolution
+        for (npy_intp k = 0; k < p; ++k) {
+            double sum = 0.0;
+            for (npy_intp i = MAX(0, k - n + 1); i < MIN(m, k + 1); ++i) {
+                double x_i = *(double *)(p_x + i*x_inner_stride);
+                double y_k_minus_i = *(double *)(p_y + (k - i)*y_inner_stride);
+                sum +=  x_i * y_k_minus_i;
+            }
+            *(double *)(p_out + k*out_inner_stride) = sum;
+        }
+    }
+}
+
+static PyUFuncGenericFunction conv1d_full_functions[] = {
+    (PyUFuncGenericFunction) &conv1d_full_double_loop
+};
+static void *const conv1d_full_data[] = {NULL};
+static const char conv1d_full_typecodes[] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
+
 
 static PyMethodDef UMath_TestsMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
@@ -802,12 +889,10 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
         return NULL;
     }
 
-    import_array();
-    if (PyErr_Occurred()) {
+    if (PyArray_ImportNumPyAPI() < 0) {
         return NULL;
     }
-    import_ufunc();
-    if (PyErr_Occurred()) {
+    if (PyUFunc_ImportUFuncAPI() < 0) {
         return NULL;
     }
 
@@ -833,5 +918,38 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
                         "cannot load _umath_tests module.");
         return NULL;
     }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    // Define the gufunc 'conv1d_full'
+    // Shape signature is (m),(n)->(p) where p must be m + n - 1.
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    PyUFuncObject *gufunc = (PyUFuncObject *) PyUFunc_FromFuncAndDataAndSignature(
+                                conv1d_full_functions,
+                                conv1d_full_data,
+                                conv1d_full_typecodes,
+                                1, 2, 1, PyUFunc_None, "conv1d_full",
+                                "convolution of x and y ('full' mode)",
+                                0, "(m),(n)->(p)");
+    if (gufunc == NULL) {
+        Py_DECREF(m);
+        return NULL;
+    }
+    gufunc->process_core_dims_func = &conv1d_full_process_core_dims;
+
+    int status = PyModule_AddObject(m, "conv1d_full", (PyObject *) gufunc);
+    if (status == -1) {
+        Py_DECREF(gufunc);
+        Py_DECREF(m);
+        return NULL;
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
+
     return m;
 }

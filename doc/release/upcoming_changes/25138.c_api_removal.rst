@@ -1,7 +1,0 @@
-* The advanced indexing ``MapIter`` and related API has been removed.
-  The (truly) public part of it was not well tested and had only one
-  known user (Theano).  Making it private will simplify improvements
-  to speed up ``ufunc.at`` and make advanced indexing more maintainable
-  and was important for allowing 64 dimensional arrays.
-  Please let us know if this API is important to you so we can find a
-  solution together.

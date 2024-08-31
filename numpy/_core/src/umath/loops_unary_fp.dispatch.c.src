@@ -212,15 +212,16 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     npy_intp len = dimensions[0];
 #if @VCHK@
     const int lsize = sizeof(npyv_lanetype_@sfx@);
-    assert(len <= 1 || (src_step % lsize == 0 && dst_step % lsize == 0));
+
     if (is_mem_overlap(src, src_step, dst, dst_step, len)) {
         goto no_unroll;
     }
-    const npy_intp ssrc = src_step / lsize;
-    const npy_intp sdst = dst_step / lsize;
-    if (!npyv_loadable_stride_@sfx@(ssrc) || !npyv_storable_stride_@sfx@(sdst)) {
+    if (!npyv_loadable_stride_@sfx@(src_step) || !npyv_storable_stride_@sfx@(dst_step)) {
         goto no_unroll;
     }
+
+    const npy_intp ssrc = src_step / lsize;
+    const npy_intp sdst = dst_step / lsize;
     if (ssrc == 1 && sdst == 1) {
         simd_@TYPE@_@kind@_CONTIG_CONTIG(src, 1, dst, 1, len);
     }

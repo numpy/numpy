@@ -7,9 +7,12 @@ NEP 37 — A dispatch protocol for NumPy-like modules
 :Author: Stephan Hoyer <shoyer@google.com>
 :Author: Hameer Abbasi
 :Author: Sebastian Berg
-:Status: Draft
+:Status: Superseded
+:Replaced-By: :ref:`NEP56`
 :Type: Standards Track
 :Created: 2019-12-29
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/
+
 
 Abstract
 --------
@@ -26,7 +29,7 @@ expect will make it easier to adopt.
 Why ``__array_function__`` hasn't been enough
 ---------------------------------------------
 
-There are two broad ways in which NEP-18 has fallen short of its goals:
+There are two broad ways in which :ref:`NEP-18 <NEP18>` has fallen short of its goals:
 
 1. **Backwards compatibility concerns**. `__array_function__` has significant
    implications for libraries that use it:
@@ -61,7 +64,7 @@ There are two broad ways in which NEP-18 has fallen short of its goals:
 
    - **Array creation** routines (e.g., ``np.arange`` and those in
      ``np.random``) need some other mechanism for indicating what type of
-     arrays to create. `NEP 35 <https://numpy.org/neps/nep-0035-array-creation-dispatch-with-array-function.html>`_
+     arrays to create. :ref:`NEP 35 <NEP35>`
      proposed adding optional ``like=`` arguments to functions without
      existing array arguments. However, we still lack any mechanism to
      override methods on objects, such as those needed by
@@ -69,8 +72,7 @@ There are two broad ways in which NEP-18 has fallen short of its goals:
    - **Array conversion** can't reuse the existing coercion functions like
      ``np.asarray``, because ``np.asarray`` sometimes means "convert to an
      exact ``np.ndarray``" and other times means "convert to something _like_
-     a NumPy array." This led to the `NEP 30
-     <https://numpy.org/neps/nep-0030-duck-array-protocol.html>`_ proposal for
+     a NumPy array." This led to the :ref:`NEP 30 <NEP30>` proposal for
      a separate ``np.duckarray`` function, but this still does not resolve how
      to cast one duck array into a type matching another duck array.
 
@@ -141,8 +143,8 @@ we can simply pull out the appropriate submodule:
         noise = module.random.randn(*array.shape)
         return array + noise
 
-We can also write the duck-array ``stack`` function from `NEP 30
-<https://numpy.org/neps/nep-0030-duck-array-protocol.html>`_, without the need
+We can also write the duck-array ``stack`` function from 
+:ref:`NEP 30 <NEP30>`, without the need
 for a new ``np.duckarray`` function:
 
 .. code:: python

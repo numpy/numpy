@@ -12,13 +12,16 @@
 #mesondefine NPY_SIZEOF_PY_INTPTR_T
 #mesondefine NPY_SIZEOF_INTP
 #mesondefine NPY_SIZEOF_UINTP
+#mesondefine NPY_SIZEOF_WCHAR_T
 #mesondefine NPY_SIZEOF_OFF_T
 #mesondefine NPY_SIZEOF_PY_LONG_LONG
 #mesondefine NPY_SIZEOF_LONGLONG
 
-#mesondefine NPY_USE_C99_FORMATS
-
-#mesondefine NPY_NO_SIGNAL
+/*
+ * Defined to 1 or 0. Note that Pyodide hardcodes NPY_NO_SMP (and other defines
+ * in this header) for better cross-compilation, so don't rename them without a
+ * good reason.
+ */
 #mesondefine NPY_NO_SMP
 
 #mesondefine NPY_VISIBILITY_HIDDEN

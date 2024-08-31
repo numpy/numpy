@@ -9,8 +9,13 @@
 
 #include <type_traits>
 #include <string.h>
+#include <cstdint>
+#include <cassert>
 
 namespace np {
+
+using std::uint32_t;
+using std::uint64_t;
 
 /** Create a value of type `To` from the bits of `from`.
  *
@@ -43,6 +48,68 @@ To BitCast(const From &from) noexcept
     To to;
     memcpy(&to, &from, sizeof(from));
     return to;
+#endif
+}
+
+/// Bit-scan reverse for non-zeros.
+/// Returns the index of the highest set bit. Equivalent to floor(log2(a))
+template <typename T>
+inline int BitScanReverse(uint32_t a)
+{
+#if NP_HAS_CPP20
+    return std::countl_one(a);
+#else
+    if (a == 0) {
+        // Due to use __builtin_clz which is undefined behavior
+        return 0;
+    }
+    int r;
+    #ifdef _MSC_VER
+    unsigned long rl;
+    (void)_BitScanReverse(&rl, (unsigned long)a);
+    r = static_cast<int>(rl);
+    #elif (defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER)) \
+        &&  (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
+    __asm__("bsr %1, %0" : "=r" (r) : "r"(a));
+    #elif defined(__GNUC__) || defined(__clang__)
+    r = 31 - __builtin_clz(a); // performs on arm -> clz, ppc -> cntlzw
+    #else
+    r = 0;
+    while (a >>= 1) {
+        r++;
+    }
+    #endif
+    return r;
+#endif
+}
+/// Bit-scan reverse for non-zeros.
+/// Returns the index of the highest set bit. Equivalent to floor(log2(a))
+inline int BitScanReverse(uint64_t a)
+{
+#if NP_HAS_CPP20
+    return std::countl_one(a);
+#else
+    if (a == 0) {
+        // Due to use __builtin_clzll which is undefined behavior
+        return 0;
+    }
+    #if defined(_M_AMD64) && defined(_MSC_VER)
+    unsigned long rl;
+    (void)_BitScanReverse64(&rl, a);
+    return static_cast<int>(rl);
+    #elif defined(__x86_64__) && (defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER))
+    uint64_t r;
+    __asm__("bsrq %1, %0" : "=r"(r) : "r"(a));
+    return static_cast<int>(r);
+    #elif defined(__GNUC__) || defined(__clang__)
+    return 63 - __builtin_clzll(a);
+    #else
+    uint64_t a_hi = a >> 32;
+    if (a_hi == 0) {
+        return BitScanReverse(static_cast<uint32_t>(a));
+    }
+    return 32 + BitScanReverse(static_cast<uint32_t>(a_hi));
+    #endif
 #endif
 }
 

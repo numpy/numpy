@@ -41,6 +41,7 @@ GTAGS
 *.o.d
 *.py[ocd]
 *.so
+*.mod
 
 # Packages #
 ############
@@ -96,6 +97,10 @@ pip-wheel-metadata
 *.patch
 *.diff
 
+# Do not ignore the following patches: #
+########################################
+!tools/ci/emscripten/0001-do-not-set-meson-environment-variable-pyodide-gh-4502.patch
+
 # OS generated files #
 ######################
 .DS_Store*
@@ -115,6 +120,7 @@ Thumbs.db
 #############################
 doc/source/savefig/
 doc/source/**/generated/
+doc/source/release/notes-towncrier.rst
 
 # Things specific to this project #
 ###################################

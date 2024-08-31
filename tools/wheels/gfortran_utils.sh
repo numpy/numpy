@@ -169,9 +169,6 @@ if [ "$(uname)" == "Darwin" ]; then
     function install_gfortran {
         download_and_unpack_gfortran $(uname -m) native
         check_gfortran
-        if [[ "${PLAT:-}" == "universal2" || "${PLAT:-}" == "arm64" ]]; then
-            install_arm64_cross_gfortran
-        fi
     }
 
     function get_gf_lib {

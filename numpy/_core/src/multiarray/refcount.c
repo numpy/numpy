@@ -18,10 +18,10 @@
 #include "iterators.h"
 #include "dtypemeta.h"
 #include "refcount.h"
-
 #include "npy_config.h"
+#include "templ_common.h" /* for npy_mul_sizes_with_overflow */
 
-#include "npy_pycompat.h"
+
 
 /*
  * Helper function to clear a strided memory (normally or always contiguous)
@@ -52,6 +52,53 @@ PyArray_ClearBuffer(
     int res = clear_info.func(
             NULL, clear_info.descr, data, size, stride, clear_info.auxdata);
     NPY_traverse_info_xfree(&clear_info);
+    return res;
+}
+
+
+/*
+ * Helper function to zero an array buffer.
+ *
+ * Here "zeroing" means an abstract zeroing operation, implementing the
+ * the behavior of `np.zeros`.  E.g. for an of references this is more
+ * complicated than zero-filling the buffer.
+ *
+ * Failure (returns -1) indicates some sort of programming or logical
+ * error and should not happen for a data type that has been set up
+ * correctly. In principle a sufficiently weird dtype might run out of
+ * memory but in practice this likely won't happen.
+ */
+NPY_NO_EXPORT int
+PyArray_ZeroContiguousBuffer(
+        PyArray_Descr *descr, char *data,
+        npy_intp stride, npy_intp size, int aligned)
+{
+    NPY_traverse_info zero_info;
+    NPY_traverse_info_init(&zero_info);
+    /* Flags unused: float errors do not matter and we do not release GIL */
+    NPY_ARRAYMETHOD_FLAGS flags_unused;
+    PyArrayMethod_GetTraverseLoop *get_fill_zero_loop =
+            NPY_DT_SLOTS(NPY_DTYPE(descr))->get_fill_zero_loop;
+    if (get_fill_zero_loop != NULL) {
+        if (get_fill_zero_loop(
+                    NULL, descr, aligned, descr->elsize, &(zero_info.func),
+                    &(zero_info.auxdata), &flags_unused) < 0) {
+            return -1;
+        }
+    }
+    else {
+        assert(zero_info.func == NULL);
+    }
+    if (zero_info.func == NULL) {
+        /* the multiply here should never overflow, since we already
+           checked if the new array size doesn't overflow */
+        memset(data, 0, size*stride);
+        return 0;
+    }
+
+    int res = zero_info.func(
+            NULL, descr, data, size, stride, zero_info.auxdata);
+    NPY_traverse_info_xfree(&zero_info);
     return res;
 }
 
@@ -137,7 +184,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
         int offset;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
@@ -151,7 +198,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
     else if (PyDataType_HASSUBARRAY(descr)) {
         int size, i, inner_elsize;
 
-        inner_elsize = descr->subarray->base->elsize;
+        inner_elsize = PyDataType_SUBARRAY(descr)->base->elsize;
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
             return;
@@ -162,7 +209,7 @@ PyArray_Item_INCREF(char *data, PyArray_Descr *descr)
         for (i = 0; i < size; i++){
             /* Recursively increment the reference count of subarray elements */
             PyArray_Item_INCREF(data + i * inner_elsize,
-                                descr->subarray->base);
+                                PyDataType_SUBARRAY(descr)->base);
         }
     }
     else {
@@ -199,7 +246,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
             int offset;
             Py_ssize_t pos = 0;
 
-            while (PyDict_Next(descr->fields, &pos, &key, &value)) {
+            while (PyDict_Next(PyDataType_FIELDS(descr), &pos, &key, &value)) {
                 if (NPY_TITLE_KEY(key, value)) {
                     continue;
                 }
@@ -213,7 +260,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
     else if (PyDataType_HASSUBARRAY(descr)) {
         int size, i, inner_elsize;
 
-        inner_elsize = descr->subarray->base->elsize;
+        inner_elsize = PyDataType_SUBARRAY(descr)->base->elsize;
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
             return;
@@ -224,7 +271,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
         for (i = 0; i < size; i++){
             /* Recursively decrement the reference count of subarray elements */
             PyArray_Item_XDECREF(data + i * inner_elsize,
-                                 descr->subarray->base);
+                                 PyDataType_SUBARRAY(descr)->base);
         }
     }
     else {
@@ -365,22 +412,30 @@ PyArray_XDECREF(PyArrayObject *mp)
 }
 
 
-static void
-_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype);
+static int
+_fill_with_none(char *optr, PyArray_Descr *dtype);
 
 
-/*NUMPY_API
+/*
+ * This function is solely used as an entry point to ensure that `np.empty()`
+ * fills dtype=object (including fields) with `None` rather than leaving it
+ * NULL, because it is easy to not explicitly support NULL (although cython
+ * does now and we never strictly guaranteed this).
+ *
  * Assumes contiguous
+ *
+ * TODO: This function is utterly ridiculous for structures, should use
+ *       a dtype_traversal function instead...
  */
-NPY_NO_EXPORT void
-PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
+NPY_NO_EXPORT int
+PyArray_SetObjectsToNone(PyArrayObject *arr)
 {
     PyArray_Descr* descr = PyArray_DESCR(arr);
 
     // non-legacy dtypes are responsible for initializing
     // their own internal references
     if (!NPY_DT_is_legacy(NPY_DTYPE(descr))) {
-        return;
+        return 0;
     }
 
     npy_intp i,n;
@@ -389,52 +444,35 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
         PyObject **optr;
         optr = (PyObject **)(PyArray_DATA(arr));
         n = PyArray_SIZE(arr);
-        if (obj == NULL) {
-            for (i = 0; i < n; i++) {
-                *optr++ = NULL;
-            }
-        }
-        else {
-            for (i = 0; i < n; i++) {
-                Py_INCREF(obj);
-                *optr++ = obj;
-            }
+        for (i = 0; i < n; i++) {
+            Py_INCREF(Py_None);
+            *optr++ = Py_None;
         }
     }
     else {
         char *optr;
         optr = PyArray_DATA(arr);
         for (i = 0; i < n; i++) {
-            _fillobject(optr, obj, descr);
+            if (_fill_with_none(optr, descr) < 0) {
+                return -1;
+            }
             optr += descr->elsize;
         }
     }
+    return 0;
 }
 
-static void
-_fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
+
+static int
+_fill_with_none(char *optr, PyArray_Descr *dtype)
 {
     if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
-        PyObject *arr;
-
-        if ((obj == Py_None) ||
-                (PyLong_Check(obj) && PyLong_AsLong(obj) == 0)) {
-            return;
-        }
-        /* Clear possible long conversion error */
-        PyErr_Clear();
-        Py_INCREF(dtype);
-        arr = PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                   0, NULL, NULL, NULL,
-                                   0, NULL);
-        if (arr!=NULL) {
-            dtype->f->setitem(obj, optr, arr);
-        }
-        Py_XDECREF(arr);
+        return 0;
     }
+    PyObject *None = Py_None;
     if (dtype->type_num == NPY_OBJECT) {
-        Py_XINCREF(obj);
-        memcpy(optr, &obj, sizeof(obj));
+        Py_XINCREF(Py_None);
+        memcpy(optr, &None, sizeof(PyObject *));
     }
     else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
@@ -442,30 +480,34 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         int offset;
         Py_ssize_t pos = 0;
 
-        while (PyDict_Next(dtype->fields, &pos, &key, &value)) {
+        while (PyDict_Next(PyDataType_FIELDS(dtype), &pos, &key, &value)) {
             if (NPY_TITLE_KEY(key, value)) {
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
-                return;
+                return -1;
             }
-            _fillobject(optr + offset, obj, new);
+            if (_fill_with_none(optr + offset, new) < 0) {
+                return -1;
+            }
         }
     }
     else if (PyDataType_HASSUBARRAY(dtype)) {
         int size, i, inner_elsize;
 
-        inner_elsize = dtype->subarray->base->elsize;
+        inner_elsize = PyDataType_SUBARRAY(dtype)->base->elsize;
         if (inner_elsize == 0) {
             /* There cannot be any elements, so return */
-            return;
+            return 0;
         }
         /* Subarrays are always contiguous in memory */
         size = dtype->elsize / inner_elsize;
 
         /* Call _fillobject on each item recursively. */
-        for (i = 0; i < size; i++){
-            _fillobject(optr, obj, dtype->subarray->base);
+        for (i = 0; i < size; i++) {
+            if (_fill_with_none(optr, PyDataType_SUBARRAY(dtype)->base) < 0) {
+                return -1;
+            }
             optr += inner_elsize;
         }
     }
@@ -473,5 +515,5 @@ _fillobject(char *optr, PyObject *obj, PyArray_Descr *dtype)
         /* This path should not be reachable. */
         assert(0);
     }
-    return;
+    return 0;
 }

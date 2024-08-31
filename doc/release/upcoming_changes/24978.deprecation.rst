@@ -1,5 +1,0 @@
-Use of keyword arguments ``x`` and ``y`` with functions
-`numpy.testing.assert_array_equal` and
-`numpy.testing.assert_array_almost_equal`
-has been deprecated. Pass the first two arguments as positional arguments,
-instead.

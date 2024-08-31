@@ -282,11 +282,11 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
 
     """
 
-    # normalize dtype to an Optional[dtype]
+    # normalize dtype to dtype | None
     if dtype is not None:
         dtype = _dtype(dtype)
 
-    # normalize flags to an Optional[int]
+    # normalize flags to int | None
     num = None
     if flags is not None:
         if isinstance(flags, str):
@@ -304,7 +304,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
                 raise TypeError("invalid flags specification") from e
             num = _num_fromflags(flags)
 
-    # normalize shape to an Optional[tuple]
+    # normalize shape to tuple | None
     if shape is not None:
         try:
             shape = tuple(shape)
@@ -498,6 +498,22 @@ if ctypes is not None:
         - convert single-element `ctypes.Union`\ s into single-element
           `ctypes.Structure`\ s
         - insert padding fields
+
+        Examples
+        --------
+        Converting a simple dtype:
+
+        >>> dt = np.dtype('int8')
+        >>> ctype = np.ctypeslib.as_ctypes_type(dt)
+        >>> ctype
+        <class 'ctypes.c_byte'>
+
+        Converting a structured dtype:
+
+        >>> dt = np.dtype([('x', 'i4'), ('y', 'f4')])
+        >>> ctype = np.ctypeslib.as_ctypes_type(dt)
+        >>> ctype
+        <class 'struct'>
 
         """
         return _ctype_from_dtype(_dtype(dtype))
