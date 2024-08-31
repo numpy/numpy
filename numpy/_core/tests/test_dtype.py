@@ -1451,8 +1451,7 @@ class TestPromotion:
              # Additionally use "nextafter" so the cast can't round down:
              (np.clongdouble(np.nextafter(1.7e308, np.inf)), np.clongdouble),
              ])
-    def test_complex_other_value_based(self,
-            other, expected):
+    def test_complex_other_value_based(self, other, expected):
         # This would change if we modify the value based promotion
         min_complex = np.dtype(np.complex64)
 
