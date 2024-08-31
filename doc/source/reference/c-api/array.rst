@@ -1089,13 +1089,12 @@ Converting data types
     returned when the value will not overflow or be truncated to
     an integer when converting to a smaller type.
 
-    This is almost the same as the result of
-    PyArray_CanCastTypeTo(PyArray_MinScalarType(arr), totype, casting),
-    but it also handles a special case arising because the set
-    of uint values is not a subset of the int values for types with the
-    same number of bits.
-
 .. c:function:: PyArray_Descr* PyArray_MinScalarType(PyArrayObject* arr)
+
+    .. note::
+        With the adoption of NEP 50 in NumPy 2, this function is not used
+        internally.  It is currently provided for backwards compatibility,
+        but expected to be eventually deprecated.
 
     .. versionadded:: 1.6
 
@@ -1134,8 +1133,7 @@ Converting data types
 
 .. c:function:: int PyArray_ObjectType(PyObject* op, int mintype)
 
-    This function is superseded by :c:func:`PyArray_MinScalarType` and/or
-    :c:func:`PyArray_ResultType`.
+    This function is superseded by :c:func:`PyArray_ResultType`.
 
     This function is useful for determining a common type that two or
     more arrays can be converted to. It only works for non-flexible
@@ -3250,30 +3248,18 @@ Array scalars
 .. c:function:: NPY_SCALARKIND PyArray_ScalarKind( \
         int typenum, PyArrayObject** arr)
 
-    See the function :c:func:`PyArray_MinScalarType` for an alternative
-    mechanism introduced in NumPy 1.6.0.
+    Legacy way to query special promotion for scalar values.  This is not
+    used in NumPy itself anymore and is expected to be deprecated eventually.
 
-    Return the kind of scalar represented by *typenum* and the array
-    in *\*arr* (if *arr* is not ``NULL`` ). The array is assumed to be
-    rank-0 and only used if *typenum* represents a signed integer. If
-    *arr* is not ``NULL`` and the first element is negative then
-    :c:data:`NPY_INTNEG_SCALAR` is returned, otherwise
-    :c:data:`NPY_INTPOS_SCALAR` is returned. The possible return values
-    are the enumerated values in :c:type:`NPY_SCALARKIND`.
+    New DTypes can define promotion rules specific to Python scalars.
 
 .. c:function:: int PyArray_CanCoerceScalar( \
         char thistype, char neededtype, NPY_SCALARKIND scalar)
 
-    See the function :c:func:`PyArray_ResultType` for details of
-    NumPy type promotion, updated in NumPy 1.6.0.
+    Legacy way to query special promotion for scalar values.  This is not
+    used in NumPy itself anymore and is expected to be deprecated eventually.
 
-    Implements the rules for scalar coercion. Scalars are only
-    silently coerced from thistype to neededtype if this function
-    returns nonzero.  If scalar is :c:data:`NPY_NOSCALAR`, then this
-    function is equivalent to :c:func:`PyArray_CanCastSafely`. The rule is
-    that scalars of the same KIND can be coerced into arrays of the
-    same KIND. This rule means that high-precision scalars will never
-    cause low-precision arrays of the same KIND to be upcast.
+    Use ``PyArray_ResultType`` for similar purposes.
 
 
 Data-type descriptors

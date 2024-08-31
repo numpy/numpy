@@ -275,41 +275,10 @@ static int
 #endif
             ) {
         PyArray_Descr *descr = PyArray_DescrFromType(NPY_@TYPE@);
-        int promotion_state = get_npy_promotion_state();
-        if (promotion_state == NPY_USE_LEGACY_PROMOTION || (
-                    promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
-                    && !npy_give_promotion_warnings())) {
-            /*
-             * This path will be taken both for the "promotion" case such as
-             * `uint8_arr + 123` as well as the assignment case.
-             * The "legacy" path should only ever be taken for assignment
-             * (legacy promotion will prevent overflows by promoting up)
-             * so a normal deprecation makes sense.
-             * When weak promotion is active, we use "future" behavior unless
-             * warnings were explicitly opt-in.
-             */
-            if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                    "NumPy will stop allowing conversion of out-of-bound "
-                    "Python integers to integer arrays.  The conversion "
-                    "of %.100R to %S will fail in the future.\n"
-                    "For the old behavior, usually:\n"
-                    "    np.array(value).astype(dtype)\n"
-                    "will give the desired result (the cast overflows).",
-                    obj, descr) < 0) {
-                Py_DECREF(descr);
-                return -1;
-            }
-            Py_DECREF(descr);
-            return 0;
-        }
-        else {
-            /* Live in the future, outright error: */
-            PyErr_Format(PyExc_OverflowError,
-                    "Python integer %R out of bounds for %S", obj, descr);
-            Py_DECREF(descr);
-            return -1;
-            }
-        assert(0);
+        PyErr_Format(PyExc_OverflowError,
+                "Python integer %R out of bounds for %S", obj, descr);
+        Py_DECREF(descr);
+        return -1;
     }
     return 0;
 }
