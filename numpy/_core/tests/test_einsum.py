@@ -308,7 +308,6 @@ class TestEinsum:
             assert_(b.base is a)
             assert_equal(b, a.swapaxes(0, 1))
 
-    @np._no_nep50_warning()
     def check_einsum_sums(self, dtype, do_opt=False):
         dtype = np.dtype(dtype)
         # Check various sums.  Does many sizes to exercise unrolled loops.

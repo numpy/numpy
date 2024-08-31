@@ -17,7 +17,6 @@ from ._multiarray_umath import (
     _flagdict, from_dlpack, _place, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
     _get_madvise_hugepage, _set_madvise_hugepage,
-    _get_promotion_state, _set_promotion_state
     )
 
 __all__ = [
@@ -40,8 +39,7 @@ __all__ = [
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
     'set_typeDict', 'shares_memory', 'typeinfo',
-    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
-    '_get_promotion_state', '_set_promotion_state']
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
 
 # For backward compatibility, make sure pickle imports 
 # these functions from here
@@ -67,8 +65,6 @@ may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
-_get_promotion_state.__module__ = 'numpy'
-_set_promotion_state.__module__ = 'numpy'
 normalize_axis_index.__module__ = 'numpy.lib.array_utils'
 
 

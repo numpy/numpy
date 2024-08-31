@@ -120,8 +120,8 @@ else:
 
     from . import _core
     from ._core import (
-        False_, ScalarType, True_, _get_promotion_state, _no_nep50_warning,
-        _set_promotion_state, abs, absolute, acos, acosh, add, all, allclose,
+        False_, ScalarType, True_,
+        abs, absolute, acos, acosh, add, all, allclose,
         amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh,
         arctan, arctan2, arctanh, argmax, argmin, argpartition, argsort,
         argwhere, around, array, array2string, array_equal, array_equiv,
@@ -529,8 +529,11 @@ else:
     _core.multiarray._multiarray_umath._reload_guard()
 
     # TODO: Remove the environment variable entirely now that it is "weak"
-    _core._set_promotion_state(
-        os.environ.get("NPY_PROMOTION_STATE", "weak"))
+    if (os.environ.get("NPY_PROMOTION_STATE", "weak") != "weak"):
+        warnings.warn(
+            "NPY_PROMOTION_STATE was a temporary feature for NumPy 2.0 "
+            "transition and is ignored after NumPy 2.2.",
+            UserWarning, stacklevel=2)
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():
