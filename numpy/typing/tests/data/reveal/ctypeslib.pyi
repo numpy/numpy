@@ -6,10 +6,7 @@ import numpy as np
 import numpy.typing as npt
 from numpy import ctypeslib
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 AR_bool: npt.NDArray[np.bool]
 AR_ubyte: npt.NDArray[np.ubyte]

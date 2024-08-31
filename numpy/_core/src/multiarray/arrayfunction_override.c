@@ -4,6 +4,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#include "numpy/ndarrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "get_attr_string.h"
 #include "npy_import.h"
@@ -25,8 +26,9 @@ get_array_function(PyObject *obj)
         return npy_static_pydata.ndarray_array_function;
     }
 
-    PyObject *array_function = PyArray_LookupSpecial(obj, npy_interned_str.array_function);
-    if (array_function == NULL && PyErr_Occurred()) {
+    PyObject *array_function;
+    if (PyArray_LookupSpecial(
+            obj, npy_interned_str.array_function, &array_function) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
@@ -232,12 +234,12 @@ static void
 set_no_matching_types_error(PyObject *public_api, PyObject *types)
 {
     /* No acceptable override found, raise TypeError. */
-    npy_cache_import("numpy._core._internal",
-                     "array_function_errmsg_formatter",
-                     &npy_thread_unsafe_state.array_function_errmsg_formatter);
-    if (npy_thread_unsafe_state.array_function_errmsg_formatter != NULL) {
+    if (npy_cache_import_runtime(
+            "numpy._core._internal",
+            "array_function_errmsg_formatter",
+            &npy_runtime_imports.array_function_errmsg_formatter) == 0) {
         PyObject *errmsg = PyObject_CallFunctionObjArgs(
-                npy_thread_unsafe_state.array_function_errmsg_formatter,
+                npy_runtime_imports.array_function_errmsg_formatter,
                 public_api, types, NULL);
         if (errmsg != NULL) {
             PyErr_SetObject(PyExc_TypeError, errmsg);

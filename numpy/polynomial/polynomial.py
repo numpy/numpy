@@ -407,7 +407,7 @@ def polydiv(c1, c2):
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
     if c2[-1] == 0:
-        raise ZeroDivisionError()
+        raise ZeroDivisionError  # FIXME: add message with details to exception
 
     # note: this is more efficient than `pu._div(polymul, c1, c2)`
     lc1 = len(c1)
@@ -729,6 +729,7 @@ def polyval(x, c, tensor=True):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.polynomial import polyval
     >>> polyval(1, [1,2,3])
     6.0
@@ -905,7 +906,7 @@ def polyval2d(x, y, c):
     --------
     >>> from numpy.polynomial import polynomial as P
     >>> c = ((1, 2, 3), (4, 5, 6))
-    >>> P.polyval2d(1, 1, c) 
+    >>> P.polyval2d(1, 1, c)
     21.0
 
     """
@@ -1135,7 +1136,7 @@ def polyvander(x, deg):
     Examples
     --------
     The Vandermonde matrix of degree ``deg = 5`` and sample points
-    ``x = [-1, 2, 3]`` contains the element-wise powers of `x` 
+    ``x = [-1, 2, 3]`` contains the element-wise powers of `x`
     from 0 to 5 as its columns.
 
     >>> from numpy.polynomial import polynomial as P
@@ -1208,6 +1209,8 @@ def polyvander2d(x, y, deg):
 
     Examples
     --------
+    >>> import numpy as np
+
     The 2-D pseudo-Vandermonde matrix of degree ``[1, 2]`` and sample
     points ``x = [-1, 2]`` and ``y = [1, 3]`` is as follows:
 
@@ -1234,7 +1237,7 @@ def polyvander2d(x, y, deg):
     >>> P.polyvander2d(x=x, y=0*x, deg=(m, 0)) == P.polyvander(x=x, deg=m)
     array([[ True,  True],
            [ True,  True]])
-    
+
     """
     return pu._vander_nd_flat((polyvander, polyvander), (x, y), deg)
 
@@ -1291,6 +1294,7 @@ def polyvander3d(x, y, z, deg):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.asarray([-1, 2, 1])
     >>> y = np.asarray([1, -2, -3])
@@ -1305,7 +1309,7 @@ def polyvander3d(x, y, z, deg):
              -8.,   8.,  16.,   4.,   8.,  -8., -16.,  16.,  32.],
            [  1.,   5.,  -3., -15.,   9.,  45.,   1.,   5.,  -3.,
             -15.,   9.,  45.,   1.,   5.,  -3., -15.,   9.,  45.]])
-    
+
     We can verify the columns for any ``0 <= i <= l``, ``0 <= j <= m``,
     and ``0 <= k <= n``
 
@@ -1442,6 +1446,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51)  # x "data": [-1, -0.96, ..., 0.96, 1]
     >>> rng = np.random.default_rng()
@@ -1464,7 +1469,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     array([-6.73496154e-17, -1.00000000e+00,  0.00000000e+00,  1.00000000e+00])
     >>> stats # note the minuscule SSR
     [array([8.79579319e-31]),
-     4,
+     np.int32(4),
      array([1.38446749, 1.32119158, 0.50443316, 0.28853036]),
      1.1324274851176597e-14]
 

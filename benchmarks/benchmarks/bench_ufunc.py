@@ -50,7 +50,7 @@ class ArrayFunctionDispatcher(Benchmark):
         try:
             self.afdn = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.args = []
         for _, aarg in get_squares_().items():
             arg = (aarg,) * 1  # no nin
@@ -97,7 +97,7 @@ class UFunc(Benchmark):
         try:
             self.ufn = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.args = []
         for _, aarg in get_squares_().items():
             arg = (aarg,) * self.ufn.nin
@@ -258,7 +258,7 @@ class NDArrayGetItem(Benchmark):
             mdat = self.xs
         elif msize == 'big':
             mdat = self.xl
-        getattr(mdat, '__getitem__')(margs)
+        mdat.__getitem__(margs)
 
 
 class NDArraySetItem(Benchmark):
@@ -332,7 +332,7 @@ class UFuncSmall(Benchmark):
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.array_5 = np.array([1., 2., 10., 3., 4.])
         self.array_int_3 = np.array([1, 2, 3])
         self.float64 = np.float64(1.1)
@@ -597,7 +597,7 @@ class BinaryBenchInteger(Benchmark):
         N = 1000000
         self.a = np.random.randint(20, size=N).astype(dtype)
         self.b = np.random.randint(4, size=N).astype(dtype)
-        
+
     def time_pow(self, dtype):
         np.power(self.a, self.b)
 

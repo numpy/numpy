@@ -24,7 +24,7 @@ jobs:
     container:
       # Use container used for building musllinux wheels
       # it has git installed, all the pythons, etc
-      image: quay.io/pypa/musllinux_1_1_x86_64
+      image: quay.io/pypa/musllinux_1_2_x86_64
 
     steps:
     - name: setup

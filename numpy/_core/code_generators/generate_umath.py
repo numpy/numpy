@@ -5,8 +5,6 @@ __umath_generated.c
 """
 import os
 import re
-import struct
-import sys
 import textwrap
 import argparse
 
@@ -249,6 +247,7 @@ def english_upper(s):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib.utils import english_upper
     >>> s = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'
     >>> english_upper(s)
@@ -953,6 +952,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.ceil'),
           None,
+          TD(bints),
           TD('e', f='ceil', astype={'e': 'f'}),
           TD(inexactvec, dispatch=[('loops_unary_fp', 'fd')]),
           TD('fdg', f='ceil'),
@@ -962,6 +962,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.trunc'),
           None,
+          TD(bints),
           TD('e', f='trunc', astype={'e': 'f'}),
           TD(inexactvec, dispatch=[('loops_unary_fp', 'fd')]),
           TD('fdg', f='trunc'),
@@ -978,6 +979,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.floor'),
           None,
+          TD(bints),
           TD('e', f='floor', astype={'e': 'f'}),
           TD(inexactvec, dispatch=[('loops_unary_fp', 'fd')]),
           TD('fdg', f='floor'),
@@ -1406,7 +1408,7 @@ def make_arrays(funcdict):
                     ) from None
 
                 astype = ''
-                if not t.astype is None:
+                if t.astype is not None:
                     astype = '_As_%s' % thedict[t.astype]
                 astr = ('%s_functions[%d] = PyUFunc_%s%s;' %
                            (name, k, thedict[t.type], astype))

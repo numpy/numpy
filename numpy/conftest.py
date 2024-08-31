@@ -2,6 +2,7 @@
 Pytest configuration and fixtures for the Numpy test suite.
 """
 import os
+import sys
 import tempfile
 from contextlib import contextmanager
 import warnings
@@ -11,6 +12,7 @@ import pytest
 import numpy
 
 from numpy._core._multiarray_tests import get_fpu_mode
+from numpy.testing._private.utils import NOGIL_BUILD
 
 try:
     from scipy_doctest.conftest import dt_config
@@ -30,7 +32,7 @@ hypothesis.configuration.set_hypothesis_home_dir(
 
 # We register two custom profiles for Numpy - for details see
 # https://hypothesis.readthedocs.io/en/latest/settings.html
-# The first is designed for our own CI runs; the latter also 
+# The first is designed for our own CI runs; the latter also
 # forces determinism and is designed for use via np.test()
 hypothesis.settings.register_profile(
     name="numpy-profile", deadline=None, print_blob=True,
@@ -40,8 +42,8 @@ hypothesis.settings.register_profile(
     deadline=None, print_blob=True, database=None, derandomize=True,
     suppress_health_check=list(hypothesis.HealthCheck),
 )
-# Note that the default profile is chosen based on the presence 
-# of pytest.ini, but can be overridden by passing the 
+# Note that the default profile is chosen based on the presence
+# of pytest.ini, but can be overridden by passing the
 # --hypothesis-profile=NAME argument to pytest.
 _pytest_ini = os.path.join(os.path.dirname(__file__), "..", "pytest.ini")
 hypothesis.settings.load_profile(
@@ -72,11 +74,30 @@ def pytest_addoption(parser):
                            "automatically."))
 
 
+gil_enabled_at_start = True
+if NOGIL_BUILD:
+    gil_enabled_at_start = sys._is_gil_enabled()
+
+
 def pytest_sessionstart(session):
     available_mem = session.config.getoption('available_memory')
     if available_mem is not None:
         os.environ['NPY_AVAILABLE_MEM'] = available_mem
 
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    if NOGIL_BUILD and not gil_enabled_at_start and sys._is_gil_enabled():
+        tr = terminalreporter
+        tr.ensure_newline()
+        tr.section("GIL re-enabled", sep="=", red=True, bold=True)
+        tr.line("The GIL was re-enabled at runtime during the tests.")
+        tr.line("This can happen with no test failures if the RuntimeWarning")
+        tr.line("raised by Python when this happens is filtered by a test.")
+        tr.line("")
+        tr.line("Please ensure all new C modules declare support for running")
+        tr.line("without the GIL. Any new tests that intentionally imports ")
+        tr.line("code that re-enables the GIL should do so in a subprocess.")
+        pytest.exit("GIL re-enabled during tests", returncode=1)
 
 #FIXME when yield tests are gone.
 @pytest.hookimpl()
@@ -129,23 +150,6 @@ def env_setup(monkeypatch):
     monkeypatch.setenv('PYTHONHASHSEED', '0')
 
 
-@pytest.fixture(params=[True, False])
-def weak_promotion(request):
-    """
-    Fixture to ensure "legacy" promotion state or change it to use the new
-    weak promotion (plus warning).  `old_promotion` should be used as a
-    parameter in the function.
-    """
-    state = numpy._get_promotion_state()
-    if request.param:
-        numpy._set_promotion_state("weak_and_warn")
-    else:
-        numpy._set_promotion_state("legacy")
-
-    yield request.param
-    numpy._set_promotion_state(state)
-
-
 if HAVE_SCPDT:
 
     @contextmanager
@@ -189,6 +193,9 @@ if HAVE_SCPDT:
     # numpy specific tweaks from refguide-check
     dt_config.rndm_markers.add('#uninitialized')
     dt_config.rndm_markers.add('# uninitialized')
+
+    # make the checker pick on mismatched dtypes
+    dt_config.strict_check = True
 
     import doctest
     dt_config.optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS

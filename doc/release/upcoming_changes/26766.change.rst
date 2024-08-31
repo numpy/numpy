@@ -1,0 +1,2 @@
+* `numpy.fix` now won't perform casting to a floating data-type for integer
+  and boolean data-type input arrays.

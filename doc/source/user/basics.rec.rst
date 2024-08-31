@@ -535,7 +535,7 @@ Similarly to tuples, structured scalars can also be indexed with an integer::
 
  >>> scalar = np.array([(1, 2., 3.)], dtype='i, f, f')[0]
  >>> scalar[0]
- 1
+ np.int32(1)
  >>> scalar[1] = 4
 
 Thus, tuples might be thought of as the native Python equivalent to numpy's
@@ -595,7 +595,7 @@ removed::
 
     >>> dt = np.dtype("i1,V3,i4,V1")[["f0", "f2"]]
     >>> dt
-    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':9})
+    dtype({'names': ['f0', 'f2'], 'formats': ['i1', '<i4'], 'offsets': [0, 4], 'itemsize': 9})
     >>> np.result_type(dt)
     dtype([('f0', 'i1'), ('f2', '<i4')])
 
@@ -606,7 +606,8 @@ If a structured dtype is created with ``align=True`` ensuring that
 
     >>> dt = np.dtype("i1,V3,i4,V1", align=True)[["f0", "f2"]]
     >>> dt
-    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':12}, align=True)
+    dtype({'names': ['f0', 'f2'], 'formats': ['i1', '<i4'], 'offsets': [0, 4], 'itemsize': 12}, align=True)
+
     >>> np.result_type(dt)
     dtype([('f0', 'i1'), ('f2', '<i4')], align=True)
     >>> np.result_type(dt).isalignedstruct

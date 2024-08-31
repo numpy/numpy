@@ -1,23 +1,13 @@
-import concurrent.futures
 import threading
 
 import numpy as np
 import pytest
 
 from numpy.testing import IS_WASM
+from numpy.testing._private.utils import run_threaded
 
 if IS_WASM:
     pytest.skip(allow_module_level=True, reason="no threading support in wasm")
-
-
-def run_threaded(func, iters, pass_count=False):
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
-        if pass_count:
-            futures = [tpe.submit(func, i) for i in range(iters)]
-        else:
-            futures = [tpe.submit(func) for _ in range(iters)]
-        for f in futures:
-            f.result()
 
 
 def test_parallel_randomstate_creation():
@@ -84,3 +74,49 @@ def test_eigvalsh_thread_safety():
 
     run_threaded(lambda i: np.linalg.eigvalsh(matrices[i]), 2,
                  pass_count=True)
+
+
+def test_printoptions_thread_safety():
+    # until NumPy 2.1 the printoptions state was stored in globals
+    # this verifies that they are now stored in a context variable
+    b = threading.Barrier(2)
+
+    def legacy_113():
+        np.set_printoptions(legacy='1.13', precision=12)
+        b.wait()
+        po = np.get_printoptions()
+        assert po['legacy'] == '1.13'
+        assert po['precision'] == 12
+        orig_linewidth = po['linewidth']
+        with np.printoptions(linewidth=34, legacy='1.21'):
+            po = np.get_printoptions()
+            assert po['legacy'] == '1.21'
+            assert po['precision'] == 12
+            assert po['linewidth'] == 34
+        po = np.get_printoptions()
+        assert po['linewidth'] == orig_linewidth
+        assert po['legacy'] == '1.13'
+        assert po['precision'] == 12
+
+    def legacy_125():
+        np.set_printoptions(legacy='1.25', precision=7)
+        b.wait()
+        po = np.get_printoptions()
+        assert po['legacy'] == '1.25'
+        assert po['precision'] == 7
+        orig_linewidth = po['linewidth']
+        with np.printoptions(linewidth=6, legacy='1.13'):
+            po = np.get_printoptions()
+            assert po['legacy'] == '1.13'
+            assert po['precision'] == 7
+            assert po['linewidth'] == 6
+        po = np.get_printoptions()
+        assert po['linewidth'] == orig_linewidth
+        assert po['legacy'] == '1.25'
+        assert po['precision'] == 7
+
+    task1 = threading.Thread(target=legacy_113)
+    task2 = threading.Thread(target=legacy_125)
+
+    task1.start()
+    task2.start()

@@ -1996,9 +1996,9 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             npy_intp itemsize = PyArray_ITEMSIZE(self);
             int is_aligned = IsUintAligned(self) && IsUintAligned(tmp_arr);
 
-            if (PyArray_GetDTypeTransferFunction(is_aligned,
-                    itemsize, itemsize,
-                    PyArray_DESCR(self), PyArray_DESCR(self),
+            if (PyArray_GetDTypeTransferFunction(
+                        is_aligned, itemsize, itemsize,
+                        PyArray_DESCR(tmp_arr), PyArray_DESCR(self),
                     0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto fail;
             }
@@ -2034,6 +2034,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         goto fail;
     }
 
+    int allocated_array = 0;
     if (tmp_arr == NULL) {
         /* Fill extra op, need to swap first */
         tmp_arr = mit->extra_op;
@@ -2047,6 +2048,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (PyArray_CopyObject(tmp_arr, op) < 0) {
              goto fail;
         }
+        allocated_array = 1;
     }
 
     if (PyArray_MapIterCheckIndices(mit) < 0) {
@@ -2090,10 +2092,12 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         /* May need a generic copy function (only for refs and odd sizes) */
         NPY_ARRAYMETHOD_FLAGS transfer_flags;
         npy_intp itemsize = PyArray_ITEMSIZE(self);
-
-        if (PyArray_GetDTypeTransferFunction(1,
-                itemsize, itemsize,
-                PyArray_DESCR(self), PyArray_DESCR(self),
+        // TODO: the heuristic used here to determine the src_dtype might be subtly wrong
+        // for non-REFCHK user DTypes. See gh-27057 for the prior discussion about this.
+        if (PyArray_GetDTypeTransferFunction(
+                1, itemsize, itemsize,
+                allocated_array ? PyArray_DESCR(mit->extra_op) : PyArray_DESCR(self),
+                PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto fail;
         }

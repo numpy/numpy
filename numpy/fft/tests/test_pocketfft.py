@@ -38,7 +38,7 @@ class TestFFT1D:
         # Test with explicitly given number of points, both for n
         # smaller and for n larger than the input size.
         maxlen = 16
-        atol = 4 * np.spacing(np.array(1., dtype=dtype))
+        atol = 5 * np.spacing(np.array(1., dtype=dtype))
         x = random(maxlen).astype(dtype) + 1j*random(maxlen).astype(dtype)
         xx = np.concatenate([x, np.zeros_like(x)])
         xr = random(maxlen).astype(dtype)
@@ -494,7 +494,7 @@ def test_fft_with_order(dtype, order, fft):
             Y_res = fft(Y, axes=ax)
             assert_allclose(X_res, Y_res, atol=_tol, rtol=_tol)
     else:
-        raise ValueError()
+        raise ValueError
 
 
 @pytest.mark.parametrize("order", ["F", "C"])

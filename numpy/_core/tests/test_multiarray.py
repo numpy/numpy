@@ -266,6 +266,17 @@ class TestFlags:
         a = np.zeros(4, dtype=np.dtype([("a", "i4"), ("b", "i4")]))
         assert_(a.flags.aligned)
 
+    @pytest.mark.parametrize("row_size", [5, 1 << 16])
+    @pytest.mark.parametrize("row_count", [1, 5])
+    @pytest.mark.parametrize("ndmin", [0, 1, 2])
+    def test_xcontiguous_load_txt(self, row_size, row_count, ndmin):
+        s = io.StringIO('\n'.join(['1.0 ' * row_size] * row_count))
+        a = np.loadtxt(s, ndmin=ndmin)
+
+        assert a.flags.c_contiguous
+        x = [i for i in a.shape if i != 1]
+        assert a.flags.f_contiguous == (len(x) <= 1)
+
 
 class TestHash:
     # see #3793
@@ -1086,14 +1097,14 @@ class TestCreation:
                 return 1
 
             def __getitem__(self, index):
-                raise ValueError()
+                raise ValueError
 
         class Map:
             def __len__(self):
                 return 1
 
             def __getitem__(self, index):
-                raise KeyError()
+                raise KeyError
 
         a = np.array([Map()])
         assert_(a.shape == (1,))
@@ -1110,7 +1121,7 @@ class TestCreation:
                 if ind in [0, 1]:
                     return ind
                 else:
-                    raise IndexError()
+                    raise IndexError
         d = np.array([Point2(), Point2(), Point2()])
         assert_equal(d.dtype, np.dtype(object))
 
@@ -4014,6 +4025,18 @@ class TestBinop:
         assert res.shape == (3,)
         assert res[0] == 'result'
 
+    @pytest.mark.parametrize("scalar", [
+            np.longdouble(1), np.timedelta64(120, 'm')])
+    @pytest.mark.parametrize("op", [operator.add, operator.xor])
+    def test_scalar_binop_guarantees_ufunc(self, scalar, op):
+        # Test that __array_ufunc__ will always cause ufunc use even when
+        # we have to protect some other calls from recursing (see gh-26904).
+        class SomeClass:
+            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
+                return "result"
+
+        assert SomeClass() + scalar == "result"
+        assert scalar + SomeClass() == "result"
 
     def test_ufunc_override_normalize_signature(self):
         # gh-5674
@@ -5091,16 +5114,24 @@ class TestClip:
                 'uint', 1024, 10, 100, inplace=inplace)
 
     @pytest.mark.parametrize("inplace", [False, True])
-    def test_int_range_error(self, inplace):
-        # E.g. clipping uint with negative integers fails to promote
-        # (changed with NEP 50 and may be adaptable)
-        # Similar to last check in `test_basic`
+    def test_int_out_of_range(self, inplace):
+        # Simple check for out-of-bound integers, also testing the in-place
+        # path.
         x = (np.random.random(1000) * 255).astype("uint8")
-        with pytest.raises(OverflowError):
-            x.clip(-1, 10, out=x if inplace else None)
+        out = np.empty_like(x)
+        res = x.clip(-1, 300, out=out if inplace else None)
+        assert res is out or not inplace
+        assert (res == x).all()
 
-        with pytest.raises(OverflowError):
-            x.clip(0, 256, out=x if inplace else None)
+        res = x.clip(-1, 50, out=out if inplace else None)
+        assert res is out or not inplace
+        assert (res <= 50).all()
+        assert (res[x <= 50] == x[x <= 50]).all()
+
+        res = x.clip(100, 1000, out=out if inplace else None)
+        assert res is out or not inplace
+        assert (res >= 100).all()
+        assert (res[x >= 100] == x[x >= 100]).all()
 
     def test_record_array(self):
         rec = np.array([(-5, 2.0, 3.0), (5.0, 4.0, 3.0)],
@@ -5447,7 +5478,7 @@ class TestIO:
 
     def test_roundtrip_repr(self, x):
         x = x.real.ravel()
-        s = "@".join(map(lambda x: repr(x)[11:-1], x))
+        s = "@".join((repr(x)[11:-1] for x in x))
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
@@ -8561,7 +8592,7 @@ class TestArrayCreationCopyArgument:
     def test__array__reference_leak(self):
         class NotAnArray:
             def __array__(self, dtype=None, copy=None):
-                raise NotImplementedError()
+                raise NotImplementedError
 
         x = NotAnArray()
 
@@ -8869,7 +8900,8 @@ class TestConversion:
         assert_equal(bool(np.array([False])), False)
         assert_equal(bool(np.array([True])), True)
         assert_equal(bool(np.array([[42]])), True)
-        assert_raises(ValueError, bool, np.array([1, 2]))
+
+    def test_to_bool_scalar_not_convertible(self):
 
         class NotConvertible:
             def __bool__(self):
@@ -8887,6 +8919,16 @@ class TestConversion:
 
         assert_raises(Error, bool, self_containing)  # previously stack overflow
         self_containing[0] = None  # resolve circular reference
+
+    def test_to_bool_scalar_size_errors(self):
+        with pytest.raises(ValueError, match=".*one element is ambiguous"):
+            bool(np.array([1, 2]))
+
+        with pytest.raises(ValueError, match=".*empty array is ambiguous"):
+            bool(np.empty((3, 0)))
+
+        with pytest.raises(ValueError, match=".*empty array is ambiguous"):
+            bool(np.empty((0,)))
 
     def test_to_int_scalar(self):
         # gh-9972 means that these aren't always the same
@@ -9142,6 +9184,12 @@ if not IS_PYPY:
             assert_(old > sys.getsizeof(d))
             d.resize(150)
             assert_(old < sys.getsizeof(d))
+
+        @pytest.mark.parametrize("dtype", ["u4,f4", "u4,O"])
+        def test_resize_structured(self, dtype):
+            a = np.array([(0, 0.0) for i in range(5)], dtype=dtype)
+            a.resize(1000)
+            assert_array_equal(a, np.zeros(1000, dtype=dtype))
 
         def test_error(self):
             d = np.ones(100)
@@ -9677,7 +9725,8 @@ class TestArrayFinalize:
                 raise Exception(self)
 
         # a plain object can't be weakref'd
-        class Dummy: pass
+        class Dummy:
+            pass
 
         # get a weak reference to an object within an array
         obj_arr = np.array(Dummy())
@@ -9944,7 +9993,7 @@ class TestAlignment:
         elif order is None:
             assert_(x.flags.c_contiguous, err_msg)
         else:
-            raise ValueError()
+            raise ValueError
 
     def test_various_alignments(self):
         for align in [1, 2, 3, 4, 8, 12, 16, 32, 64, None]:

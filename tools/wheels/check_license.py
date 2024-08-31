@@ -35,7 +35,7 @@ def main():
 
     # LICENSE.txt is installed in the .dist-info directory, so find it there
     sitepkgs = pathlib.Path(mod.__file__).parent.parent
-    distinfo_path = [s for s in sitepkgs.glob("numpy-*.dist-info")][0]
+    distinfo_path = list(sitepkgs.glob("numpy-*.dist-info"))[0]
 
     # Check license text
     license_txt = distinfo_path / "LICENSE.txt"

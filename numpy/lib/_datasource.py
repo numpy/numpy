@@ -420,7 +420,7 @@ class DataSource:
             last = path
             # Note: os.path.join treats '/' as os.sep on Windows
             path = path.lstrip(os.sep).lstrip('/')
-            path = path.lstrip(os.pardir).lstrip('..')
+            path = path.lstrip(os.pardir).removeprefix('..')
             drive, path = os.path.splitdrive(path)  # for Windows
         return path
 

@@ -822,6 +822,12 @@ PyArray_NewFromDescr_int(
 
 
     if (data == NULL) {
+        /* This closely follows PyArray_ZeroContiguousBuffer. We can't use
+         *  that because here we need to allocate after checking if there is
+         *  custom zeroing logic and that function accepts an already-allocated
+         *  array
+         */
+
         /* float errors do not matter and we do not release GIL */
         NPY_ARRAYMETHOD_FLAGS zero_flags;
         PyArrayMethod_GetTraverseLoop *get_fill_zero_loop =
@@ -2030,13 +2036,12 @@ PyArray_FromStructInterface(PyObject *input)
     PyObject *attr;
     char endian = NPY_NATBYTE;
 
-    attr = PyArray_LookupSpecial_OnInstance(input, npy_interned_str.array_struct);
-    if (attr == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        } else {
-            return Py_NotImplemented;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+            input, npy_interned_str.array_struct, &attr) < 0) {
+        return NULL;
+    }
+    else if (attr == NULL) {
+        return Py_NotImplemented;
     }
     if (!PyCapsule_CheckExact(attr)) {
         if (PyType_Check(input) && PyObject_HasAttrString(attr, "__get__")) {
@@ -2154,12 +2159,11 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_LookupSpecial_OnInstance(origin, npy_interned_str.array_interface);
-
-    if (iface == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+            origin, npy_interned_str.array_interface, &iface) < 0) {
+        return NULL;
+    }
+    else if (iface == NULL) {
         return Py_NotImplemented;
     }
     if (!PyDict_Check(iface)) {
@@ -2228,8 +2232,8 @@ PyArray_FromInterface(PyObject *origin)
                     Py_SETREF(dtype, new_dtype);
                 }
             }
+            Py_DECREF(descr);
         }
-        Py_DECREF(descr);
     }
     Py_CLEAR(attr);
 
@@ -2509,11 +2513,11 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyArray_LookupSpecial_OnInstance(op, npy_interned_str.array);
-    if (array_meth == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+                op, npy_interned_str.array, &array_meth) < 0) {
+        return NULL;
+    }
+    else if (array_meth == NULL) {
         return Py_NotImplemented;
     }
 

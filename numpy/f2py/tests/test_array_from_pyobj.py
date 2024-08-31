@@ -1,4 +1,3 @@
-import os
 import sys
 import copy
 import platform
@@ -7,7 +6,6 @@ from pathlib import Path
 
 import numpy as np
 
-from numpy.testing import assert_, assert_equal
 from numpy._core._type_aliases import c_names_dict as _c_names_dict
 from . import util
 
@@ -191,12 +189,12 @@ class Type:
 
         if self.NAME == 'CHARACTER':
             info = c_names_dict[self.NAME]
-            self.type_num = getattr(wrap, 'NPY_STRING')
+            self.type_num = wrap.NPY_STRING
             self.elsize = 1
             self.dtype = np.dtype('c')
         elif self.NAME.startswith('STRING'):
             info = c_names_dict[self.NAME[:6]]
-            self.type_num = getattr(wrap, 'NPY_STRING')
+            self.type_num = wrap.NPY_STRING
             self.elsize = int(self.NAME[6:] or 0)
             self.dtype = np.dtype(f'S{self.elsize}')
         else:

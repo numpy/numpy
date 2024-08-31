@@ -49,7 +49,7 @@ def _slice_at_axis(sl, axis):
 
     Examples
     --------
-    >>> _slice_at_axis(slice(None, 3, -1), 1)
+    >>> np._slice_at_axis(slice(None, 3, -1), 1)
     (slice(None, None, None), slice(None, 3, -1), (...,))
     """
     return (slice(None),) * axis + (sl,) + (...,)
@@ -220,7 +220,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
             end_value_pair, edge_pair, width_pair
         )
     )
-        
+
     # Reverse linear space in appropriate dimension
     right_ramp = right_ramp[_slice_at_axis(slice(None, None, -1), axis)]
 
@@ -293,7 +293,7 @@ def _get_stats(padded, axis, width_pair, length_pair, stat_func):
     return left_stat, right_stat
 
 
-def _set_reflect_both(padded, axis, width_pair, method, 
+def _set_reflect_both(padded, axis, width_pair, method,
                       original_period, include_edge=False):
     """
     Pad `axis` of `arr` with reflection.
@@ -323,17 +323,17 @@ def _set_reflect_both(padded, axis, width_pair, method,
     """
     left_pad, right_pad = width_pair
     old_length = padded.shape[axis] - right_pad - left_pad
-    
+
     if include_edge:
-        # Avoid wrapping with only a subset of the original area 
-        # by ensuring period can only be a multiple of the original 
+        # Avoid wrapping with only a subset of the original area
+        # by ensuring period can only be a multiple of the original
         # area's length.
         old_length = old_length // original_period * original_period
         # Edge is included, we need to offset the pad amount by 1
         edge_offset = 1
     else:
-        # Avoid wrapping with only a subset of the original area 
-        # by ensuring period can only be a multiple of the original 
+        # Avoid wrapping with only a subset of the original area
+        # by ensuring period can only be a multiple of the original
         # area's length.
         old_length = ((old_length - 1) // (original_period - 1)
             * (original_period - 1) + 1)
@@ -684,6 +684,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = [1, 2, 3, 4, 5]
     >>> np.pad(a, (2, 3), 'constant', constant_values=(4, 6))
     array([4, 4, 1, ..., 6, 6, 6])

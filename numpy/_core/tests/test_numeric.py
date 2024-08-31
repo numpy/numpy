@@ -184,6 +184,7 @@ class TestNonarrayArgs:
 
         assert_equal(np.reshape(arr, shape), expected)
         assert_equal(np.reshape(arr, shape, order="C"), expected)
+        assert_equal(np.reshape(arr, shape, "C"), expected)
         assert_equal(np.reshape(arr, shape=shape), expected)
         assert_equal(np.reshape(arr, shape=shape, order="C"), expected)
         with pytest.warns(DeprecationWarning):
@@ -333,7 +334,7 @@ class TestNonarrayArgs:
             tgt = np.array([1, 3, 3, 4], dtype=array_type)
             out = np.take(x, ind)
             assert_equal(out, tgt)
-            assert_equal(out.dtype, tgt.dtype)  
+            assert_equal(out.dtype, tgt.dtype)
 
     def test_trace(self):
         c = [[1, 2], [3, 4], [5, 6]]
@@ -343,6 +344,7 @@ class TestNonarrayArgs:
         arr = [[1, 2], [3, 4], [5, 6]]
         tgt = [[1, 3, 5], [2, 4, 6]]
         assert_equal(np.transpose(arr, (1, 0)), tgt)
+        assert_equal(np.transpose(arr, (-1, -2)), tgt)
         assert_equal(np.matrix_transpose(arr), tgt)
 
     def test_var(self):
@@ -1487,21 +1489,22 @@ class TestTypes:
         assert_(not np.can_cast([('f0', ('i4,i4'), (2,))], 'i4',
                                 casting='unsafe'))
 
-    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
-            reason="NEP 50: no python int/float/complex support (yet)")
     def test_can_cast_values(self):
-        # gh-5917
-        for dt in sctypes['int'] + sctypes['uint']:
-            ii = np.iinfo(dt)
-            assert_(np.can_cast(ii.min, dt))
-            assert_(np.can_cast(ii.max, dt))
-            assert_(not np.can_cast(ii.min - 1, dt))
-            assert_(not np.can_cast(ii.max + 1, dt))
+        # With NumPy 2 and NEP 50, can_cast errors on Python scalars.  We could
+        # define this as (usually safe) at some point, and already do so
+        # in `copyto` and ufuncs (but there an error is raised if the integer
+        # is out of bounds and a warning for out-of-bound floats).
+        # Raises even for unsafe, previously checked within range (for floats
+        # that was approximately whether it would overflow to inf).
+        with pytest.raises(TypeError):
+            np.can_cast(4, "int8", casting="unsafe")
 
-        for dt in sctypes['float']:
-            fi = np.finfo(dt)
-            assert_(np.can_cast(fi.min, dt))
-            assert_(np.can_cast(fi.max, dt))
+        with pytest.raises(TypeError):
+            np.can_cast(4.0, "float64", casting="unsafe")
+
+        with pytest.raises(TypeError):
+            np.can_cast(4j, "complex128", casting="unsafe")
+
 
     @pytest.mark.parametrize("dtype",
             list("?bhilqBHILQefdgFDG") + [rational])
@@ -2190,14 +2193,21 @@ class TestArrayComparisons:
         assert_(res is expected)
         assert_(type(res) is bool)
 
+    def test_array_equal_different_scalar_types(self):
+        # https://github.com/numpy/numpy/issues/27271
+        a = np.array("foo")
+        b = np.array(1)
+        assert not np.array_equal(a, b)
+        assert not np.array_equiv(a, b)
+
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
-        assert_equal(a == None, [True, False, True])
-        assert_equal(a != None, [False, True, False])
+        assert_equal(a == None, [True, False, True])  # noqa: E711
+        assert_equal(a != None, [False, True, False])  # noqa: E711
 
         a = np.ones(3)
-        assert_equal(a == None, [False, False, False])
-        assert_equal(a != None, [True, True, True])
+        assert_equal(a == None, [False, False, False])  # noqa: E711
+        assert_equal(a != None, [True, True, True])  # noqa: E711
 
     def test_array_equiv(self):
         res = np.array_equiv(np.array([1, 2]), np.array([1, 2]))
@@ -2880,6 +2890,24 @@ class TestClip:
         with assert_raises_regex(ValueError, msg):
             np.clip(arr, 2, 3, min=2)
 
+    @pytest.mark.parametrize("dtype,min,max", [
+        ("int32", -2**32-1, 2**32),
+        ("int32", -2**320, None),
+        ("int32", None, 2**300),
+        ("int32", -1000, 2**32),
+        ("int32", -2**32-1, 1000),
+        ("uint8", -1, 129),
+    ])
+    def test_out_of_bound_pyints(self, dtype, min, max):
+        a = np.arange(10000).astype(dtype)
+        # Check min only
+        c = np.clip(a, min=min, max=max)
+        assert not np.may_share_memory(a, c)
+        assert c.dtype == a.dtype
+        if min is not None:
+            assert (c >= min).all()
+        if max is not None:
+            assert (c <= max).all()
 
 class TestAllclose:
     rtol = 1e-5
@@ -3454,7 +3482,11 @@ class TestLikeFuncs:
     def test_filled_like(self):
         self.check_like_function(np.full_like, 0, True)
         self.check_like_function(np.full_like, 1, True)
-        self.check_like_function(np.full_like, 1000, True)
+        # Large integers may overflow, but using int64 is OK (casts)
+        # see also gh-27075
+        with pytest.raises(OverflowError):
+            np.full_like(np.ones(3, dtype=np.int8), 1000)
+        self.check_like_function(np.full_like, np.int64(1000), True)
         self.check_like_function(np.full_like, 123.456, True)
         # Inf to integer casts cause invalid-value errors: ignore them.
         with np.errstate(invalid="ignore"):
@@ -4139,6 +4171,11 @@ class TestAsType:
         assert np.shares_memory(
             actual, np.astype(actual, actual.dtype, copy=False)
         )
+
+        actual = np.astype(np.int64(10), np.float64)
+        expected = np.float64(10)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
 
         with pytest.raises(TypeError, match="Input should be a NumPy array"):
             np.astype(data, np.float64)

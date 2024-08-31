@@ -733,7 +733,7 @@ def fromtextfile(fname, delimiter=None, commentchar='#', missingchar='',
             vartypes = _guessvartypes(_variables[0])
 
     # Construct the descriptor.
-    mdescr = [(n, f) for (n, f) in zip(varnames, vartypes)]
+    mdescr = list(zip(varnames, vartypes))
     mfillv = [ma.default_fill_value(f) for f in vartypes]
 
     # Get the data and the mask.

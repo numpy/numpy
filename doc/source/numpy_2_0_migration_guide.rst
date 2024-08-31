@@ -220,6 +220,19 @@ using the NumPy types. You can still write cython code using the ``c.real`` and
 ``c.imag`` attributes (using the native typedefs), but you can no longer use
 in-place operators ``c.imag += 1`` in Cython's c++ mode.
 
+Because NumPy 2 now includes ``complex.h`` code that uses a variable named
+``I`` may see an error such as
+
+.. code-block::C
+   error: expected ‘)’ before ‘__extension__’
+                    double I,
+
+to use the name ``I`` requires an ``#undef I`` now.
+
+.. note::
+  NumPy 2.0.1 briefly included the ``#undef I`` to help users not already
+  including ``complex.h``.
+
 
 Changes to namespaces
 =====================
@@ -246,7 +259,7 @@ removed member          migration guideline
 add_docstring           It's still available as ``np.lib.add_docstring``.
 add_newdoc              It's still available as ``np.lib.add_newdoc``.
 add_newdoc_ufunc        It's an internal function and doesn't have a replacement.
-alltrue                 Use ``all`` instead.
+alltrue                 Use ``np.all`` instead.
 asfarray                Use ``np.asarray`` with a float dtype instead.
 byte_bounds             Now it's available under ``np.lib.array_utils.byte_bounds``
 cast                    Use ``np.asarray(arr, dtype=dtype)`` instead.
@@ -307,7 +320,7 @@ set_string_function     Use ``np.set_printoptions`` instead with a formatter
                         for custom printing of NumPy objects.
 singlecomplex           Use ``np.complex64`` instead.
 string\_                Use ``np.bytes_`` instead.
-sometrue                Use ``any`` instead.
+sometrue                Use ``np.any`` instead.
 source                  Use ``inspect.getsource`` instead.
 tracemalloc_domain      It's now available from ``np.lib``.
 unicode\_               Use ``np.str_`` instead.

@@ -54,6 +54,13 @@ class TestInherit:
         with pytest.raises(TypeError):
             B1(1.0, 2.0)
 
+    def test_int_repr(self):
+        # Test that integer repr works correctly for subclasses (gh-27106)
+        class my_int16(np.int16):
+            pass
+
+        s = repr(my_int16(3))
+        assert s == "my_int16(3)"
 
 class TestCharacter:
     def test_char_radd(self):

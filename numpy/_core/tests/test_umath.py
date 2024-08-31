@@ -4,7 +4,6 @@ import fnmatch
 import itertools
 import pytest
 import sys
-import os
 import operator
 from fractions import Fraction
 from functools import reduce
@@ -694,11 +693,11 @@ class TestDivision:
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in floor_divide")
             div = np.floor_divide(fnan, fone)
-            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            assert(np.isnan(div)), "div: %s" % div
             div = np.floor_divide(fone, fnan)
-            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            assert(np.isnan(div)), "div: %s" % div
             div = np.floor_divide(fnan, fzer)
-            assert(np.isnan(div)), "dt: %s, div: %s" % (dt, div)
+            assert(np.isnan(div)), "div: %s" % div
         # verify 1.0//0.0 computations return inf
         with np.errstate(divide='ignore'):
             z = np.floor_divide(y, x)
@@ -2807,10 +2806,6 @@ class TestBitwiseUFuncs:
     def test_bitwise_count(self, input_dtype_obj, bitsize):
         input_dtype = input_dtype_obj.type
 
-        # bitwise_count is only in-built in 3.10+
-        if sys.version_info < (3, 10) and input_dtype == np.object_:
-            pytest.skip("Required Python >=3.10")
-
         for i in range(1, bitsize):
             num = 2**i - 1
             msg = f"bitwise_count for {num}"
@@ -4138,6 +4133,14 @@ class TestRationalFunctions:
         assert_equal(np.gcd(a, b), [2**100,               2**50 * 3**5])
         assert_equal(np.lcm(a, b), [2**100 * 3**5 * 5**7, 2**100 * 3**10])
 
+    def test_inf_and_nan(self):
+        inf = np.array([np.inf], dtype=np.object_)
+        assert_raises(ValueError, np.gcd, inf, 1)
+        assert_raises(ValueError, np.gcd, 1, inf)
+        assert_raises(ValueError, np.gcd, np.nan, inf)
+        assert_raises(TypeError, np.gcd, 4, float(np.inf))
+
+
 
 class TestRoundingFunctions:
 
@@ -4173,6 +4176,15 @@ class TestRoundingFunctions:
         assert_equal(np.floor(f), -2)
         assert_equal(np.ceil(f), -1)
         assert_equal(np.trunc(f), -1)
+
+    @pytest.mark.parametrize('func', [np.floor, np.ceil, np.trunc])
+    @pytest.mark.parametrize('dtype', [np.bool, np.float64, np.float32,
+                                       np.int64, np.uint32])
+    def test_output_dtype(self, func, dtype):
+        arr = np.array([-2, 0, 4, 8]).astype(dtype)
+        result = func(arr)
+        assert_equal(arr, result)
+        assert result.dtype == dtype
 
 
 class TestComplexFunctions:
@@ -4748,7 +4760,8 @@ def test_signaling_nan_exceptions():
     ])
 def test_outer_subclass_preserve(arr):
     # for gh-8661
-    class foo(np.ndarray): pass
+    class foo(np.ndarray):
+        pass
     actual = np.multiply.outer(arr.view(foo), arr.view(foo))
     assert actual.__class__.__name__ == 'foo'
 

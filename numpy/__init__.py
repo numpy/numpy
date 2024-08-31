@@ -120,8 +120,8 @@ else:
 
     from . import _core
     from ._core import (
-        False_, ScalarType, True_, _get_promotion_state, _no_nep50_warning,
-        _set_promotion_state, abs, absolute, acos, acosh, add, all, allclose,
+        False_, ScalarType, True_,
+        abs, absolute, acos, acosh, add, all, allclose,
         amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh,
         arctan, arctan2, arctanh, argmax, argmin, argpartition, argsort,
         argwhere, around, array, array2string, array_equal, array_equiv,
@@ -144,7 +144,7 @@ else:
         frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter,
         frompyfunc, fromstring, full, full_like, gcd, generic, geomspace,
         get_printoptions, getbufsize, geterr, geterrcall, greater,
-        greater_equal, half, heaviside, hstack, hypot, identity, iinfo, iinfo,
+        greater_equal, half, heaviside, hstack, hypot, identity, iinfo,
         indices, inexact, inf, inner, int16, int32, int64, int8, int_, intc,
         integer, intp, invert, is_busday, isclose, isdtype, isfinite,
         isfortran, isinf, isnan, isnat, isscalar, issubdtype, lcm, ldexp,
@@ -169,7 +169,7 @@ else:
         vstack, where, zeros, zeros_like
     )
 
-    # NOTE: It's still under discussion whether these aliases 
+    # NOTE: It's still under discussion whether these aliases
     # should be removed.
     for ta in ["float96", "float128", "complex192", "complex256"]:
         try:
@@ -184,12 +184,12 @@ else:
         histogram, histogram_bin_edges, histogramdd
     )
     from .lib._nanfunctions_impl import (
-        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean, 
+        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean,
         nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
         nansum, nanvar
     )
     from .lib._function_base_impl import (
-        select, piecewise, trim_zeros, copy, iterable, percentile, diff, 
+        select, piecewise, trim_zeros, copy, iterable, percentile, diff,
         gradient, angle, unwrap, sort_complex, flip, rot90, extract, place,
         vectorize, asarray_chkfinite, average, bincount, digitize, cov,
         corrcoef, median, sinc, hamming, hanning, bartlett, blackman,
@@ -197,8 +197,8 @@ else:
         interp, quantile
     )
     from .lib._twodim_base_impl import (
-        diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander, 
-        histogram2d, mask_indices, tril_indices, tril_indices_from, 
+        diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander,
+        histogram2d, mask_indices, tril_indices, tril_indices_from,
         triu_indices, triu_indices_from
     )
     from .lib._shape_base_impl import (
@@ -207,7 +207,7 @@ else:
         take_along_axis, tile, vsplit
     )
     from .lib._type_check_impl import (
-        iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real, 
+        iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real,
         real_if_close, typename, mintypecode, common_type
     )
     from .lib._arraysetops_impl import (
@@ -232,7 +232,7 @@ else:
     )
     from .lib._index_tricks_impl import (
         diag_indices_from, diag_indices, fill_diagonal, ndindex, ndenumerate,
-        ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index, 
+        ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index,
         index_exp
     )
 
@@ -246,7 +246,7 @@ else:
     # (experimental label) are not added here, because `from numpy import *`
     # must not raise any warnings - that's too disruptive.
     __numpy_submodules__ = {
-        "linalg", "fft", "dtypes", "random", "polynomial", "ma", 
+        "linalg", "fft", "dtypes", "random", "polynomial", "ma",
         "exceptions", "lib", "ctypeslib", "testing", "typing",
         "f2py", "test", "rec", "char", "core", "strings",
     }
@@ -371,7 +371,7 @@ else:
             return char
         elif attr == "array_api":
             raise AttributeError("`numpy.array_api` is not available from "
-                                 "numpy 2.0 onwards")
+                                 "numpy 2.0 onwards", name=None)
         elif attr == "core":
             import numpy.core as core
             return core
@@ -384,7 +384,7 @@ else:
                 return distutils
             else:
                 raise AttributeError("`numpy.distutils` is not available from "
-                                     "Python 3.12 onwards")
+                                     "Python 3.12 onwards", name=None)
 
         if attr in __future_scalars__:
             # And future warnings for those that will change, but also give
@@ -394,12 +394,13 @@ else:
                 "corresponding NumPy scalar.", FutureWarning, stacklevel=2)
 
         if attr in __former_attrs__:
-            raise AttributeError(__former_attrs__[attr])
-        
+            raise AttributeError(__former_attrs__[attr], name=None)
+
         if attr in __expired_attributes__:
             raise AttributeError(
                 f"`np.{attr}` was removed in the NumPy 2.0 release. "
-                f"{__expired_attributes__[attr]}"
+                f"{__expired_attributes__[attr]}",
+                name=None
             )
 
         if attr == "chararray":
@@ -418,7 +419,7 @@ else:
             globals().keys() | __numpy_submodules__
         )
         public_symbols -= {
-            "matrixlib", "matlib", "tests", "conftest", "version", 
+            "matrixlib", "matlib", "tests", "conftest", "version",
             "compat", "distutils", "array_api"
         }
         return list(public_symbols)
@@ -442,7 +443,7 @@ else:
         try:
             x = ones(2, dtype=float32)
             if not abs(x.dot(x) - float32(2.0)) < 1e-5:
-                raise AssertionError()
+                raise AssertionError
         except AssertionError:
             msg = ("The current Numpy installation ({!r}) fails to "
                    "pass simple sanity checks. This can be caused for example "
@@ -476,7 +477,9 @@ else:
                 for _wn in w:
                     if _wn.category is exceptions.RankWarning:
                         # Ignore other warnings, they may not be relevant (see gh-25433).
-                        error_message = f"{_wn.category.__name__}: {str(_wn.message)}"
+                        error_message = (
+                            f"{_wn.category.__name__}: {_wn.message}"
+                        )
                         msg = (
                             "Polyfit sanity test emitted a warning, most likely due "
                             "to using a buggy Accelerate backend."
@@ -492,7 +495,7 @@ else:
     def hugepage_setup():
         """
         We usually use madvise hugepages support, but on some old kernels it
-        is slow and thus better avoided. Specifically kernel version 4.6 
+        is slow and thus better avoided. Specifically kernel version 4.6
         had a bug fix which probably fixed this:
         https://github.com/torvalds/linux/commit/7cf91a98e607c2f935dbcc177d70011e95b8faff
         """
@@ -501,7 +504,7 @@ else:
             # If there is an issue with parsing the kernel version,
             # set use_hugepage to 0. Usage of LooseVersion will handle
             # the kernel version parsing better, but avoided since it
-            # will increase the import time. 
+            # will increase the import time.
             # See: #16679 for related discussion.
             try:
                 use_hugepage = 1
@@ -528,8 +531,11 @@ else:
     _core.multiarray._multiarray_umath._reload_guard()
 
     # TODO: Remove the environment variable entirely now that it is "weak"
-    _core._set_promotion_state(
-        os.environ.get("NPY_PROMOTION_STATE", "weak"))
+    if (os.environ.get("NPY_PROMOTION_STATE", "weak") != "weak"):
+        warnings.warn(
+            "NPY_PROMOTION_STATE was a temporary feature for NumPy 2.0 "
+            "transition and is ignored after NumPy 2.2.",
+            UserWarning, stacklevel=2)
 
     # Tell PyInstaller where to find hook-numpy.py
     def _pyinstaller_hooks_dir():

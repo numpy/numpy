@@ -1563,7 +1563,7 @@ class TestVectorize:
         try:
             vectorize(random.randrange)  # Should succeed
         except Exception:
-            raise AssertionError()
+            raise AssertionError
 
     def test_keywords2_ticket_2100(self):
         # Test kwarg support: enhancement ticket 2100
@@ -1935,7 +1935,7 @@ class TestVectorize:
 
     def test_datetime_conversion(self):
         otype = "datetime64[ns]"
-        arr = np.array(['2024-01-01', '2024-01-02', '2024-01-03'], 
+        arr = np.array(['2024-01-01', '2024-01-02', '2024-01-03'],
                        dtype='datetime64[ns]')
         assert_array_equal(np.vectorize(lambda x: x, signature="(i)->(j)",
                                         otypes=[otype])(arr), arr)
@@ -2848,6 +2848,11 @@ class TestBincount:
         y = np.bincount(x, minlength=5)
         assert_array_equal(y, np.zeros(5, dtype=int))
 
+    @pytest.mark.parametrize('minlength', [0, 3])
+    def test_empty_list(self, minlength):
+        assert_array_equal(np.bincount([], minlength=minlength),
+                           np.zeros(minlength, dtype=int))
+
     def test_with_incorrect_minlength(self):
         x = np.array([], dtype=int)
         assert_raises_regex(TypeError,
@@ -3188,8 +3193,6 @@ class TestPercentile:
                                   input_dtype,
                                   expected_dtype):
         expected_dtype = np.dtype(expected_dtype)
-        if np._get_promotion_state() == "legacy":
-            expected_dtype = np.promote_types(expected_dtype, np.float64)
 
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0], dtype=input_dtype)
         weights = np.ones_like(arr) if weighted else None
@@ -4028,6 +4031,20 @@ class TestQuantile:
         assert_equal(quantile, np.array(Fraction(0, 1)))
         quantile = np.quantile(arr, [Fraction(1, 2)], method='weibull')
         assert_equal(quantile, np.array(Fraction(1, 20)))
+
+    def test_closest_observation(self):
+        # Round ties to nearest even order statistic (see #26656)
+        m = 'closest_observation'
+        q = 0.5
+        arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        assert_equal(2, np.quantile(arr[0:3], q, method=m))
+        assert_equal(2, np.quantile(arr[0:4], q, method=m))
+        assert_equal(2, np.quantile(arr[0:5], q, method=m))
+        assert_equal(3, np.quantile(arr[0:6], q, method=m))
+        assert_equal(4, np.quantile(arr[0:7], q, method=m))
+        assert_equal(4, np.quantile(arr[0:8], q, method=m))
+        assert_equal(4, np.quantile(arr[0:9], q, method=m))
+        assert_equal(5, np.quantile(arr, q, method=m))
 
 
 class TestLerp:

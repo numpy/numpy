@@ -755,13 +755,10 @@ _array_nonzero(PyArrayObject *mp)
         return res;
     }
     else if (n == 0) {
-        /* 2017-09-25, 1.14 */
-        if (DEPRECATE("The truth value of an empty array is ambiguous. "
-                      "Returning False, but in future this will result in an error. "
-                      "Use `array.size > 0` to check that an array is not empty.") < 0) {
-            return -1;
-        }
-        return 0;
+        PyErr_SetString(PyExc_ValueError,
+                "The truth value of an empty array is ambiguous. "
+                "Use `array.size > 0` to check that an array is not empty.");
+        return -1;
     }
     else {
         PyErr_SetString(PyExc_ValueError,

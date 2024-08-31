@@ -9,8 +9,7 @@ def get_module(tmp_path):
     """ Some codes to generate data and manage temporary buffers use when
     sharing with numpy via the array interface protocol.
     """
-
-    if not sys.platform.startswith('linux'):
+    if sys.platform.startswith('cygwin'):
         pytest.skip('link fails on cygwin')
     if IS_WASM:
         pytest.skip("Can't build module inside Wasm")

@@ -128,6 +128,7 @@ def poly2leg(pol):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy import polynomial as P
     >>> p = P.Polynomial(np.arange(4))
     >>> p

@@ -4,14 +4,6 @@
 NumPy 2.0.0 Release Notes
 =========================
 
-.. note::
-
-    The release of 2.0 is in progress and the current release overview and
-    highlights are still in a draft state. However, the highlights should
-    already list the most significant changes detailed in the full notes below,
-    and those full notes should be complete (if not copy-edited well enough
-    yet).
-
 NumPy 2.0.0 is the first major release since 2006. It is the result of 11
 months of development since the last feature release and is the work of 212
 contributors spread over 1078 pull requests. It contains a large number of
@@ -1495,6 +1487,12 @@ When multi-dimensional inputs are passed to ``np.unique`` with ``return_inverse=
 the ``unique_inverse`` output is now shaped such that the input can be reconstructed
 directly using ``np.take(unique, unique_inverse)`` when ``axis=None``, and
 ``np.take_along_axis(unique, unique_inverse, axis=axis)`` otherwise.
+
+.. note::
+    This change was reverted in 2.0.1 except for ``axis=None``.  The correct
+    reconstruction is always ``np.take(unique, unique_inverse, axis=axis)``.
+    When 2.0.0 needs to be supported, add ``unique_inverse.reshape(-1)``
+    to code.
 
 (`gh-25553 <https://github.com/numpy/numpy/pull/25553>`__,
 `gh-25570 <https://github.com/numpy/numpy/pull/25570>`__)

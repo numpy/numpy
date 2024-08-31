@@ -688,7 +688,7 @@ From other objects
     Encapsulate the functionality of functions and methods that take
     the axis= keyword and work properly with None as the axis
     argument. The input array is ``obj``, while ``*axis`` is a
-    converted integer (so that >=MAXDIMS is the None value), and
+    converted integer (so that ``*axis == NPY_RAVEL_AXIS`` is the None value), and
     ``requirements`` gives the needed properties of ``obj``. The
     output is a converted version of the input so that requirements
     are met and if needed a flattening has occurred. On output
@@ -1089,13 +1089,12 @@ Converting data types
     returned when the value will not overflow or be truncated to
     an integer when converting to a smaller type.
 
-    This is almost the same as the result of
-    PyArray_CanCastTypeTo(PyArray_MinScalarType(arr), totype, casting),
-    but it also handles a special case arising because the set
-    of uint values is not a subset of the int values for types with the
-    same number of bits.
-
 .. c:function:: PyArray_Descr* PyArray_MinScalarType(PyArrayObject* arr)
+
+    .. note::
+        With the adoption of NEP 50 in NumPy 2, this function is not used
+        internally.  It is currently provided for backwards compatibility,
+        but expected to be eventually deprecated.
 
     .. versionadded:: 1.6
 
@@ -1134,8 +1133,7 @@ Converting data types
 
 .. c:function:: int PyArray_ObjectType(PyObject* op, int mintype)
 
-    This function is superseded by :c:func:`PyArray_MinScalarType` and/or
-    :c:func:`PyArray_ResultType`.
+    This function is superseded by :c:func:`PyArray_ResultType`.
 
     This function is useful for determining a common type that two or
     more arrays can be converted to. It only works for non-flexible
@@ -1240,6 +1238,11 @@ User-defined data types
         With these two changes, the code should compile and work on both 1.x
         and 2.x or later.
 
+        In the unlikely case that you are heap allocating the dtype struct you
+        should free it again on NumPy 2, since a copy is made.
+        The struct is not a valid Python object, so do not use ``Py_DECREF``
+        on it.
+
     Register a data-type as a new user-defined data type for
     arrays. The type must have most of its entries filled in. This is
     not always checked and errors can produce segfaults. In
@@ -1258,6 +1261,13 @@ User-defined data types
     returned if an error occurs.  If this *dtype* has already been
     registered (checked only by the address of the pointer), then
     return the previously-assigned type-number.
+
+    The number of user DTypes known to numpy is stored in
+    ``NPY_NUMUSERTYPES``, a static global variable that is public in the
+    C API.  Accessing this symbol is inherently *not* thread-safe. If
+    for some reason you need to use this API in a multithreaded context,
+    you will need to add your own locking, NumPy does not ensure new
+    data types can be added in a thread-safe manner.
 
 .. c:function:: int PyArray_RegisterCastFunc( \
         PyArray_Descr* descr, int totype, PyArray_VectorUnaryFunc* castfunc)
@@ -3238,30 +3248,18 @@ Array scalars
 .. c:function:: NPY_SCALARKIND PyArray_ScalarKind( \
         int typenum, PyArrayObject** arr)
 
-    See the function :c:func:`PyArray_MinScalarType` for an alternative
-    mechanism introduced in NumPy 1.6.0.
+    Legacy way to query special promotion for scalar values.  This is not
+    used in NumPy itself anymore and is expected to be deprecated eventually.
 
-    Return the kind of scalar represented by *typenum* and the array
-    in *\*arr* (if *arr* is not ``NULL`` ). The array is assumed to be
-    rank-0 and only used if *typenum* represents a signed integer. If
-    *arr* is not ``NULL`` and the first element is negative then
-    :c:data:`NPY_INTNEG_SCALAR` is returned, otherwise
-    :c:data:`NPY_INTPOS_SCALAR` is returned. The possible return values
-    are the enumerated values in :c:type:`NPY_SCALARKIND`.
+    New DTypes can define promotion rules specific to Python scalars.
 
 .. c:function:: int PyArray_CanCoerceScalar( \
         char thistype, char neededtype, NPY_SCALARKIND scalar)
 
-    See the function :c:func:`PyArray_ResultType` for details of
-    NumPy type promotion, updated in NumPy 1.6.0.
+    Legacy way to query special promotion for scalar values.  This is not
+    used in NumPy itself anymore and is expected to be deprecated eventually.
 
-    Implements the rules for scalar coercion. Scalars are only
-    silently coerced from thistype to neededtype if this function
-    returns nonzero.  If scalar is :c:data:`NPY_NOSCALAR`, then this
-    function is equivalent to :c:func:`PyArray_CanCastSafely`. The rule is
-    that scalars of the same KIND can be coerced into arrays of the
-    same KIND. This rule means that high-precision scalars will never
-    cause low-precision arrays of the same KIND to be upcast.
+    Use ``PyArray_ResultType`` for similar purposes.
 
 
 Data-type descriptors

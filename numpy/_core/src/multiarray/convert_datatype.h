@@ -9,19 +9,6 @@ extern "C" {
 
 extern NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[];
 
-#define NPY_USE_LEGACY_PROMOTION 0
-#define NPY_USE_WEAK_PROMOTION 1
-#define NPY_USE_WEAK_PROMOTION_AND_WARN 2
-
-NPY_NO_EXPORT int
-npy_give_promotion_warnings(void);
-
-NPY_NO_EXPORT PyObject *
-npy__get_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg));
-
-NPY_NO_EXPORT PyObject *
-npy__set_promotion_state(PyObject *NPY_UNUSED(mod), PyObject *arg);
-
 NPY_NO_EXPORT PyObject *
 PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to);
 
@@ -52,11 +39,6 @@ PyArray_ValidType(int type);
 
 NPY_NO_EXPORT int
 dtype_kind_to_ordering(char kind);
-
-/* Used by PyArray_CanCastArrayTo and in the legacy ufunc type resolution */
-NPY_NO_EXPORT npy_bool
-can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
-                   PyArray_Descr *to, NPY_CASTING casting);
 
 NPY_NO_EXPORT npy_bool
 can_cast_pyscalar_scalar_to(
@@ -132,12 +114,6 @@ simple_cast_resolve_descriptors(
 
 NPY_NO_EXPORT int
 PyArray_InitializeCasts(void);
-
-NPY_NO_EXPORT int
-get_npy_promotion_state();
-
-NPY_NO_EXPORT void
-set_npy_promotion_state(int new_promotion_state);
 
 #ifdef __cplusplus
 }
