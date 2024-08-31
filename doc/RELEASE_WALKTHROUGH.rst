@@ -272,18 +272,17 @@ If the release series is a new one, you will need to add a new section to the
     $ gvim index.html +/'insert here'
 
 Further, update the version-switcher json file to add the new release and
-update the version marked `(stable)`::
+update the version marked ``(stable)`` and ``preferred``::
 
     $ gvim _static/versions.json
 
-Otherwise, only the ``zip`` link should be updated with the new tag name. Since
-we are no longer generating ``pdf`` files, remove the line for the ``pdf``
-files if present::
+Then run ``update.py`` to update the version in ``_static``::
 
-    $ gvim index.html +/'tag v1.21'
+    $ python3 update.py
 
 You can "test run" the new documentation in a browser to make sure the links
-work::
+work, although the version dropdown will not change, it pulls its information
+from ``numpy.org``::
 
     $ firefox index.html  # or google-chrome, etc.
 
@@ -294,9 +293,8 @@ Update the stable link and update::
 
 Once everything seems satisfactory, update, commit and upload the changes::
 
-    $ python3 update.py
     $ git commit -a -m"Add documentation for v1.21.0"
-    $ git push
+    $ git push git@github.com:numpy/doc
     $ popd
 
 

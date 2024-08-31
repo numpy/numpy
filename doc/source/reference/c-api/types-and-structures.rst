@@ -215,12 +215,11 @@ The :c:data:`PyArray_Type` can also be sub-typed.
 
 .. tip::
 
-    The ``tp_as_number`` methods use a generic approach to call whatever
-    function has been registered for handling the operation.  When the
-    ``_multiarray_umath module`` is imported, it sets the numeric operations
-    for all arrays to the corresponding ufuncs. This choice can be changed with
-    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
-    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
+    The :c:member:`tp_as_number <PyTypeObject.tp_as_number>` methods use
+    a generic approach to call whatever function has been registered for
+    handling the operation. When the ``_multiarray_umath`` module is imported,
+    it sets the numeric operations for all arrays to the corresponding ufuncs.
+    This choice can be changed with :c:func:`PyUFunc_ReplaceLoopBySignature`.
 
 PyGenericArrType_Type
 ---------------------
@@ -728,7 +727,7 @@ PyArrayMethod_Context and PyArrayMethod_Spec
       typedef struct {
           PyObject *caller;
           struct PyArrayMethodObject_tag *method;
-          PyArray_Descr **descriptors;
+          PyArray_Descr *const *descriptors;
       } PyArrayMethod_Context
 
    .. c:member:: PyObject *caller
@@ -905,6 +904,30 @@ PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
       A ``NULL``-terminated array of slot specifications for implementations
       of functions in the DType API. Slot IDs must be one of the
       DType slot IDs enumerated in :ref:`dtype-slots`.
+
+Exposed DTypes classes (``PyArray_DTypeMeta`` objects)
+------------------------------------------------------
+
+For use with promoters, NumPy exposes a number of Dtypes following the
+pattern ``PyArray_<Name>DType`` corresponding to those found in `np.dtypes`.
+
+Additionally, the three DTypes, ``PyArray_PyLongDType``,
+``PyArray_PyFloatDType``, ``PyArray_PyComplexDType`` correspond to the
+Python scalar values.  These cannot be used in all places, but do allow
+for example the common dtype operation and implementing promotion with them
+may be necessary.
+
+Further, the following abstract DTypes are defined which cover both the
+builtin NumPy ones and the python ones, and users can in principle subclass
+from them (this does not inherit any DType specific functionality):
+* ``PyArray_IntAbstractDType``
+* ``PyArray_FloatAbstractDType``
+* ``PyArray_ComplexAbstractDType``
+
+.. warning::
+    As of NumPy 2.0, the *only* valid use for these DTypes is registering a
+    promoter conveniently to e.g. match "any integers" (and subclass checks).
+    Because of this, they are not exposed to Python.
 
 
 PyUFunc_Type and PyUFuncObject
@@ -1286,7 +1309,7 @@ PyArrayMultiIter_Type and PyArrayMultiIterObject
           npy_intp index;
           int nd;
           npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
-          PyArrayIterObject *iters[NPY_MAXDIMS_LEGACY_ITERS];
+          PyArrayIterObject *iters[];
       } PyArrayMultiIterObject;
 
    .. c:macro: PyObject_HEAD
@@ -1588,3 +1611,29 @@ for completeness and assistance in understanding the code.
    ``arrayobject.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
+
+
+NumPy C-API and C complex
+=========================
+When you use the NumPy C-API, you will have access to complex real declarations
+``npy_cdouble`` and ``npy_cfloat``, which are declared in terms of the C
+standard types from ``complex.h``. Unfortunately, ``complex.h`` contains
+`#define I ...`` (where the actual definition depends on the compiler), which
+means that any downstream user that does ``#include <numpy/arrayobject.h>``
+could get ``I`` defined, and using something like declaring ``double I;`` in
+their code will result in an obscure compiler error like
+
+.. code-block::C
+    error: expected ‘)’ before ‘__extension__’
+                    double I,
+
+This error can be avoided  by adding::
+
+    #undef I
+
+to your code.
+
+.. versionchanged:: 2.0
+    The inclusion of ``complex.h`` was new in NumPy 2, so that code defining
+    a different ``I`` may not have required the ``#undef I`` on older versions.
+    NumPy 2.0.1 briefly included the ``#under I``

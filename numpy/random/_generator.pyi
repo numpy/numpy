@@ -68,9 +68,12 @@ class Generator:
     def __init__(self, bit_generator: BitGenerator) -> None: ...
     def __repr__(self) -> str: ...
     def __str__(self) -> str: ...
-    def __getstate__(self) -> dict[str, Any]: ...
-    def __setstate__(self, state: dict[str, Any]) -> None: ...
-    def __reduce__(self) -> tuple[Callable[[str], Generator], tuple[str], dict[str, Any]]: ...
+    def __getstate__(self) -> None: ...
+    def __setstate__(self, state: dict[str, Any] | None) -> None: ...
+    def __reduce__(self) -> tuple[
+        Callable[[BitGenerator], Generator],
+        tuple[BitGenerator],
+        None]: ...
     @property
     def bit_generator(self) -> BitGenerator: ...
     def spawn(self, n_children: int) -> list[Generator]: ...
@@ -210,6 +213,7 @@ class Generator:
         self,
         low: int,
         high: None | int = ...,
+        size: None = ...,
     ) -> int: ...
     @overload
     def integers(  # type: ignore[misc]
@@ -226,9 +230,108 @@ class Generator:
         low: int,
         high: None | int = ...,
         size: None = ...,
+        dtype: type[np.bool] = ...,
+        endpoint: bool = ...,
+    ) -> np.bool: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
         dtype: type[int] = ...,
         endpoint: bool = ...,
     ) -> int: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint8] | type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,
+        endpoint: bool = ...,
+    ) -> uint8: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint16] | type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,
+        endpoint: bool = ...,
+    ) -> uint16: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint32] | type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,
+        endpoint: bool = ...,
+    ) -> uint32: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint] | type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,
+        endpoint: bool = ...,
+    ) -> uint: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[uint64] | type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,
+        endpoint: bool = ...,
+    ) -> uint64: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int8] | type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,
+        endpoint: bool = ...,
+    ) -> int8: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int16] | type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,
+        endpoint: bool = ...,
+    ) -> int16: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int32] | type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,
+        endpoint: bool = ...,
+    ) -> int32: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int_] | type[int] | type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,
+        endpoint: bool = ...,
+    ) -> int_: ...
+    @overload
+    def integers(  # type: ignore[misc]
+        self,
+        low: int,
+        high: None | int = ...,
+        size: None = ...,
+        dtype: dtype[int64] | type[int64] | _Int64Codes | _SupportsDType[dtype[int64]] = ...,
+        endpoint: bool = ...,
+    ) -> int64: ...
     @overload
     def integers(  # type: ignore[misc]
         self,

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
-from numpy._typing import NDArray, ArrayLike, _SupportsArray
+
+if TYPE_CHECKING:
+    from numpy._typing import NDArray, ArrayLike, _SupportsArray
 
 x1: ArrayLike = True
 x2: ArrayLike = 5

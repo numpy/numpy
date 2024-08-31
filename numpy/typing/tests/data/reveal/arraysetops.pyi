@@ -1,4 +1,3 @@
-import sys
 from typing import Any
 
 import numpy as np
@@ -7,10 +6,7 @@ from numpy.lib._arraysetops_impl import (
     UniqueAllResult, UniqueCountsResult, UniqueInverseResult
 )
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 AR_b: npt.NDArray[np.bool]
 AR_i8: npt.NDArray[np.int64]

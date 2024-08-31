@@ -5,6 +5,25 @@ on:
     branches:
       - main
       - maintenance/**
+  # Note: this workflow gets triggered on the same schedule as the
+  # wheels.yml workflow to upload WASM wheels to Anaconda.org.
+  schedule:
+    #        ┌───────────── minute (0 - 59)
+    #        │  ┌───────────── hour (0 - 23)
+    #        │  │ ┌───────────── day of the month (1 - 31)
+    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+    #        │  │ │ │ │
+    - cron: "42 2 * * SUN,WED"
+  workflow_dispatch:
+    inputs:
+      push_wheels:
+        # Can be 'true' or 'false'. Default is 'false'.
+        # Warning: this will overwrite existing wheels.
+        description: >
+          Push wheels to Anaconda.org if the build succeeds
+        required: false
+        default: 'false'
 
 env:
   FORCE_COLOR: 3
@@ -14,7 +33,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read # to fetch code (actions/checkout)
+  contents: read  # to fetch code (actions/checkout)
 
 jobs:
   build-wasm-emscripten:
@@ -22,76 +41,31 @@ jobs:
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    env:
-      PYODIDE_VERSION: 0.25.0
-      # PYTHON_VERSION and EMSCRIPTEN_VERSION are determined by PYODIDE_VERSION.
-      # The appropriate versions can be found in the Pyodide repodata.json
-      # "info" field, or in Makefile.envs:
-      # https://github.com/pyodide/pyodide/blob/main/Makefile.envs#L2
-      PYTHON_VERSION: 3.11.3
-      EMSCRIPTEN_VERSION: 3.1.46
-      NODE_VERSION: 18
     steps:
       - name: Checkout NumPy
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
         with:
           submodules: recursive
-          # This input shall fetch tags without the need to fetch the
-          # entire VCS history, see https://github.com/actions/checkout#usage
           fetch-tags: true
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        id: setup-python
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      - uses: pypa/cibuildwheel@bd033a44476646b606efccdd5eed92d5ea1d77ad  # v2.20.0
+        env:
+          CIBW_PLATFORM: pyodide
+
+      - name: Upload wheel artifact(s)
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a  # v4.3.6
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          name: cp312-pyodide_wasm32
+          path: ./wheelhouse/*.whl
 
-      - name: Set up Emscripten toolchain
-        uses: mymindstorm/setup-emsdk@6ab9eb1bda2574c4ddb79809fc9247783eaf9021 # v14
+        # Push to https://anaconda.org/scientific-python-nightly-wheels/numpy
+        # WARNING: this job will overwrite any existing WASM wheels.
+      - name: Push to Anaconda PyPI index
+        if: >-
+          (github.repository == 'numpy/numpy') &&
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.push_wheels == 'true') ||
+          (github.event_name == 'schedule')
+        uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc  # v0.5.0
         with:
-          version: ${{ env.EMSCRIPTEN_VERSION }}
-          actions-cache-folder: emsdk-cache
-
-      - name: Install pyodide-build
-        run: pip install "pydantic<2" pyodide-build==${{ env.PYODIDE_VERSION }}
-
-      - name: Find installation for pyodide-build
-        shell: python
-        run: |
-          import os
-          import pyodide_build
-          from pathlib import Path
-
-          pyodide_build_path = Path(pyodide_build.__file__).parent
-
-          env_file = os.getenv('GITHUB_ENV')
-
-          with open(env_file, "a") as myfile:
-              myfile.write(f"PYODIDE_BUILD_PATH={pyodide_build_path}\n")
-
-      - name: Apply patch(es) for pyodide-build installation
-        run: |
-          ls -a ${{ env.PYODIDE_BUILD_PATH }}
-          patch -d "${{ env.PYODIDE_BUILD_PATH }}" -p1 < tools/ci/emscripten/0001-do-not-set-meson-environment-variable-pyodide-gh-4502.patch
-
-      - name: Build NumPy for Pyodide
-        run: |
-          pyodide build -Cbuild-dir=build -Csetup-args="--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Set up Pyodide virtual environment
-        run: |
-          pyodide venv .venv-pyodide
-          source .venv-pyodide/bin/activate
-          pip install dist/*.whl
-          pip install -r requirements/emscripten_test_requirements.txt
-
-      - name: Test NumPy for Pyodide
-        run: |
-          source .venv-pyodide/bin/activate
-          cd ..
-          pytest --pyargs numpy -m "not slow"
+          artifacts_path: wheelhouse/
+          anaconda_nightly_upload_token: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}

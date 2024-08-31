@@ -15,9 +15,7 @@ from numpy import (
     angle as angle
 )
 
-# TODO: Set the `bound` to something more suitable once we
-# have proper shape support
-_ShapeType = TypeVar("_ShapeType", bound=Any)
+_ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 
 __all__: list[str]
@@ -165,7 +163,7 @@ class MaskedIterator:
     def __setitem__(self, index, value): ...
     def __next__(self): ...
 
-class MaskedArray(ndarray[_ShapeType, _DType_co]):
+class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     __array_priority__: Any
     def __new__(cls, data=..., mask=..., dtype=..., copy=..., subok=..., ndmin=..., fill_value=..., keep_mask=..., hard_mask=..., shrink=..., order=...): ...
     def __array_finalize__(self, obj): ...
@@ -300,7 +298,7 @@ class MaskedArray(ndarray[_ShapeType, _DType_co]):
     def __reduce__(self): ...
     def __deepcopy__(self, memo=...): ...
 
-class mvoid(MaskedArray[_ShapeType, _DType_co]):
+class mvoid(MaskedArray[_ShapeType_co, _DType_co]):
     def __new__(
         self,
         data,

@@ -235,7 +235,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
     rng = np.random.RandomState(1234)
 
     if equal_size and same_steps:
-        raise ValueError()
+        raise ValueError
 
     def random_slice(n, step):
         start = rng.randint(0, n+1, dtype=np.intp)

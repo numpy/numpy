@@ -327,7 +327,7 @@ created with NumPy 1.26.
 Convert from a pandas DataFrame to a NumPy array
 ================================================
 
-See :meth:`pandas.DataFrame.to_numpy`.
+See :meth:`pandas.Series.to_numpy`.
 
 Save/restore using `~numpy.ndarray.tofile` and `~numpy.fromfile`
 ================================================================

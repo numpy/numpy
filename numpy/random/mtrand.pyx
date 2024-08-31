@@ -205,10 +205,13 @@ cdef class RandomState:
         self.set_state(state)
 
     def __reduce__(self):
-        ctor, name_tpl, _ = self._bit_generator.__reduce__()
-
         from ._pickle import __randomstate_ctor
-        return __randomstate_ctor, (name_tpl[0], ctor), self.get_state(legacy=False)
+        # The third argument containing the state is required here since
+        # RandomState contains state information in addition to the state
+        # contained in the bit generator that described the gaussian
+        # generator. This argument is passed to __setstate__ after the
+        # Generator is created.
+        return __randomstate_ctor, (self._bit_generator, ), self.get_state(legacy=False)
 
     cdef _initialize_bit_generator(self, bit_generator):
         self._bit_generator = bit_generator
@@ -1135,7 +1138,7 @@ cdef class RandomState:
 
         >>> x = np.float32(5*0.99999999)
         >>> x
-        5.0
+        np.float32(5.0)
 
 
         Examples

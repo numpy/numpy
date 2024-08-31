@@ -5,6 +5,7 @@ Some things are more easily handled Python.
 
 """
 import ast
+import math
 import re
 import sys
 import warnings
@@ -560,7 +561,7 @@ def _view_is_safe(oldtype, newtype):
         return
 
     if newtype.hasobject or oldtype.hasobject:
-        raise TypeError("Cannot change data-type for object array.")
+        raise TypeError("Cannot change data-type for array of references.")
     return
 
 
@@ -860,6 +861,9 @@ def _prod(a):
 
 def _gcd(a, b):
     """Calculate the greatest common divisor of a and b"""
+    if not (math.isfinite(a) and math.isfinite(b)):
+        raise ValueError('Can only find greatest common divisor of '
+                         f'finite arguments, found "{a}" and "{b}"')
     while b:
         a, b = b, a % b
     return a

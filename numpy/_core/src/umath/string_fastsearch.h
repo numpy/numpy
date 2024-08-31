@@ -60,13 +60,13 @@ struct CheckedIndexer {
     char_type *buffer;
     size_t length;
 
-    CheckedIndexer<char_type>()
+    CheckedIndexer()
     {
         buffer = NULL;
         length = 0;
     }
 
-    CheckedIndexer<char_type>(char_type *buf, size_t len)
+    CheckedIndexer(char_type *buf, size_t len)
     {
         buffer = buf;
         length = len;

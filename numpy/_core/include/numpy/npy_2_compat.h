@@ -46,14 +46,14 @@
   #error "The NumPy 2 compat header requires `import_array()` for which "  \
          "the `ndarraytypes.h` header include is not sufficient.  Please "  \
          "include it after `numpy/ndarrayobject.h` or similar.\n"  \
-         "To simplify includsion, you may use `PyArray_ImportNumPy()` " \
+         "To simplify inclusion, you may use `PyArray_ImportNumPy()` " \
          "which is defined in the compat header and is lightweight (can be)."
 #endif
 
 #if NPY_ABI_VERSION < 0x02000000
   /*
    * Define 2.0 feature version as it is needed below to decide whether we
-   * compile for both 1.x and 2.x (defining it gaurantees 1.x only).
+   * compile for both 1.x and 2.x (defining it guarantees 1.x only).
    */
   #define NPY_2_0_API_VERSION 0x00000012
   /*
@@ -74,7 +74,7 @@
 #ifdef import_array1
 
 static inline int
-PyArray_ImportNumPyAPI()
+PyArray_ImportNumPyAPI(void)
 {
     if (NPY_UNLIKELY(PyArray_API == NULL)) {
         import_array1(-1);
@@ -125,7 +125,7 @@ PyArray_ImportNumPyAPI()
     #define NPY_DEFAULT_INT  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_INTP : NPY_LONG)
     #define NPY_RAVEL_AXIS  \
-        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? -1 : 32)
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_MIN_INT : 32)
     #define NPY_MAXARGS  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 64 : 32)
 #endif
@@ -220,19 +220,19 @@ DESCR_ACCESSOR(C_METADATA, c_metadata, NpyAuxData *, 1)
 #if !(defined(NPY_INTERNAL_BUILD) && NPY_INTERNAL_BUILD)
 #if NPY_FEATURE_VERSION >= NPY_2_0_API_VERSION
     static inline PyArray_ArrFuncs *
-    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    PyDataType_GetArrFuncs(const PyArray_Descr *descr)
     {
         return _PyDataType_GetArrFuncs(descr);
     }
 #elif NPY_ABI_VERSION < 0x02000000
     static inline PyArray_ArrFuncs *
-    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    PyDataType_GetArrFuncs(const PyArray_Descr *descr)
     {
         return descr->f;
     }
 #else
     static inline PyArray_ArrFuncs *
-    PyDataType_GetArrFuncs(PyArray_Descr *descr)
+    PyDataType_GetArrFuncs(const PyArray_Descr *descr)
     {
         if (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION) {
             return _PyDataType_GetArrFuncs(descr);

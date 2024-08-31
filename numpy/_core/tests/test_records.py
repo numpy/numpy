@@ -114,9 +114,9 @@ class TestFromrecords:
 
         mine = np.rec.fromarrays([a, b, c], names='date,data1,data2')
         for i in range(len(a)):
-            assert_((mine.date[i] == list(range(1, 10))))
-            assert_((mine.data1[i] == 0.0))
-            assert_((mine.data2[i] == 0.0))
+            assert_(mine.date[i] == list(range(1, 10)))
+            assert_(mine.data1[i] == 0.0)
+            assert_(mine.data2[i] == 0.0)
 
     def test_recarray_repr(self):
         a = np.array([(1, 0.1), (2, 0.2)],
@@ -146,7 +146,7 @@ class TestFromrecords:
                       dtype=[('f0', '<i4'), ('f1', '<f8'), ('f2', '<M8[Y]')])"""))
 
         record = arr_0d[()]
-        assert_equal(repr(record), 
+        assert_equal(repr(record),
             "np.record((1, 2.0, '2003'), "
             "dtype=[('f0', '<i4'), ('f1', '<f8'), ('f2', '<M8[Y]')])")
         # 1.13 converted to python scalars before the repr

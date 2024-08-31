@@ -4,6 +4,8 @@
 
 #include "quicksort.hpp"
 
+#if VQSORT_ENABLED
+
 namespace np { namespace highway { namespace qsort_simd {
 
 template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, intptr_t size)
@@ -24,3 +26,5 @@ template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, intptr_t size)
 }
 
 } } } // np::highway::qsort_simd
+
+#endif // VQSORT_ENABLED

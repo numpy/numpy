@@ -1,7 +1,7 @@
 import warnings
 
 
-def _raise_warning(attr: str, submodule: str = None) -> None:
+def _raise_warning(attr: str, submodule: str | None = None) -> None:
     new_module = "numpy._core"
     old_module = "numpy.core"
     if submodule is not None:
@@ -16,6 +16,6 @@ def _raise_warning(attr: str, submodule: str = None) -> None:
         "use the public NumPy API. If not, you are using NumPy internals. "
         "If you would still like to access an internal attribute, "
         f"use {new_module}.{attr}.",
-        DeprecationWarning, 
+        DeprecationWarning,
         stacklevel=3
     )

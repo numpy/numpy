@@ -6,6 +6,7 @@ import numpy.typing as npt
 A = np.array(True, ndmin=2, dtype=bool)
 A.setflags(write=False)
 AR_U: npt.NDArray[np.str_]
+AR_M: npt.NDArray[np.datetime64]
 
 a = np.bool(True)
 
@@ -88,6 +89,8 @@ np.trace(A, axis2=[])  # E: No overload variant
 
 np.ravel(a, order="bob")  # E: No overload variant
 
+np.nonzero(0)  # E: No overload variant
+
 np.compress(  # E: No overload variant
     [True], A, axis=1.0
 )
@@ -147,6 +150,7 @@ np.mean(a, axis=1.0)  # E: No overload variant
 np.mean(a, out=False)  # E: No overload variant
 np.mean(a, keepdims=1.0)  # E: No overload variant
 np.mean(AR_U)  # E: incompatible type
+np.mean(AR_M)  # E: incompatible type
 
 np.std(a, axis=1.0)  # E: No overload variant
 np.std(a, out=False)  # E: No overload variant

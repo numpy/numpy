@@ -688,7 +688,7 @@ From other objects
     Encapsulate the functionality of functions and methods that take
     the axis= keyword and work properly with None as the axis
     argument. The input array is ``obj``, while ``*axis`` is a
-    converted integer (so that >=MAXDIMS is the None value), and
+    converted integer (so that ``*axis == NPY_RAVEL_AXIS`` is the None value), and
     ``requirements`` gives the needed properties of ``obj``. The
     output is a converted version of the input so that requirements
     are met and if needed a flattening has occurred. On output
@@ -823,7 +823,7 @@ cannot not be accessed directly.
 
 .. c:function:: PyArray_ArrayDescr *PyDataType_SUBARRAY(PyArray_Descr *descr)
 
-    Information about a subarray dtype eqivalent to the Python `np.dtype.base`
+    Information about a subarray dtype equivalent to the Python `np.dtype.base`
     and `np.dtype.shape`.
 
     If this is non- ``NULL``, then this data-type descriptor is a
@@ -1089,13 +1089,12 @@ Converting data types
     returned when the value will not overflow or be truncated to
     an integer when converting to a smaller type.
 
-    This is almost the same as the result of
-    PyArray_CanCastTypeTo(PyArray_MinScalarType(arr), totype, casting),
-    but it also handles a special case arising because the set
-    of uint values is not a subset of the int values for types with the
-    same number of bits.
-
 .. c:function:: PyArray_Descr* PyArray_MinScalarType(PyArrayObject* arr)
+
+    .. note::
+        With the adoption of NEP 50 in NumPy 2, this function is not used
+        internally.  It is currently provided for backwards compatibility,
+        but expected to be eventually deprecated.
 
     .. versionadded:: 1.6
 
@@ -1134,8 +1133,7 @@ Converting data types
 
 .. c:function:: int PyArray_ObjectType(PyObject* op, int mintype)
 
-    This function is superseded by :c:func:`PyArray_MinScalarType` and/or
-    :c:func:`PyArray_ResultType`.
+    This function is superseded by :c:func:`PyArray_ResultType`.
 
     This function is useful for determining a common type that two or
     more arrays can be converted to. It only works for non-flexible
@@ -1240,6 +1238,11 @@ User-defined data types
         With these two changes, the code should compile and work on both 1.x
         and 2.x or later.
 
+        In the unlikely case that you are heap allocating the dtype struct you
+        should free it again on NumPy 2, since a copy is made.
+        The struct is not a valid Python object, so do not use ``Py_DECREF``
+        on it.
+
     Register a data-type as a new user-defined data type for
     arrays. The type must have most of its entries filled in. This is
     not always checked and errors can produce segfaults. In
@@ -1258,6 +1261,13 @@ User-defined data types
     returned if an error occurs.  If this *dtype* has already been
     registered (checked only by the address of the pointer), then
     return the previously-assigned type-number.
+
+    The number of user DTypes known to numpy is stored in
+    ``NPY_NUMUSERTYPES``, a static global variable that is public in the
+    C API.  Accessing this symbol is inherently *not* thread-safe. If
+    for some reason you need to use this API in a multithreaded context,
+    you will need to add your own locking, NumPy does not ensure new
+    data types can be added in a thread-safe manner.
 
 .. c:function:: int PyArray_RegisterCastFunc( \
         PyArray_Descr* descr, int totype, PyArray_VectorUnaryFunc* castfunc)
@@ -1682,8 +1692,8 @@ the functions that must be implemented for each slot.
 
 .. c:type:: NPY_CASTING (PyArrayMethod_ResolveDescriptors)( \
                 struct PyArrayMethodObject_tag *method, \
-                PyArray_DTypeMeta **dtypes, \
-                PyArray_Descr **given_descrs, \
+                PyArray_DTypeMeta *const *dtypes, \
+                PyArray_Descr *const *given_descrs, \
                 PyArray_Descr **loop_descrs, \
                 npy_intp *view_offset)
 
@@ -1802,14 +1812,14 @@ the functions that must be implemented for each slot.
    "default" value that may differ from the "identity" value normally used.
    For example:
 
-       - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
-         identity otherwise as it preserves the sign for ``sum([-0.0])``.
-       - We use no identity for object, but return the default of ``0`` and
-         ``1`` for the empty ``sum([], dtype=object)`` and
-         ``prod([], dtype=object)``.
-         This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
-       - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
-         ``INT_MIN`` not a good *default* when there are no items.
+   - ``0.0`` is the default for ``sum([])``.  But ``-0.0`` is the correct
+     identity otherwise as it preserves the sign for ``sum([-0.0])``.
+   - We use no identity for object, but return the default of ``0`` and
+     ``1`` for the empty ``sum([], dtype=object)`` and
+     ``prod([], dtype=object)``.
+     This allows ``np.sum(np.array(["a", "b"], dtype=object))`` to work.
+   - ``-inf`` or ``INT_MIN`` for ``max`` is an identity, but at least
+     ``INT_MIN`` not a good *default* when there are no items.
 
    *initial* is a pointer to the data for the initial value, which should be
    filled in. Returns -1, 0, or 1 indicating error, no initial value, and the
@@ -1857,7 +1867,7 @@ Typedefs for functions that users of the ArrayMethod API can implement are
 described below.
 
 .. c:type:: int (PyArrayMethod_TraverseLoop)( \
-        void *traverse_context, PyArray_Descr *descr, char *data, \
+        void *traverse_context, const PyArray_Descr *descr, char *data, \
         npy_intp size, npy_intp stride, NpyAuxData *auxdata)
 
    A traverse loop working on a single array. This is similar to the general
@@ -1880,7 +1890,7 @@ described below.
    passed through in the future (for structured dtypes).
 
 .. c:type:: int (PyArrayMethod_GetTraverseLoop)( \
-                void *traverse_context, PyArray_Descr *descr, \
+                void *traverse_context, const PyArray_Descr *descr, \
                 int aligned, npy_intp fixed_stride, \
                 PyArrayMethod_TraverseLoop **out_loop, NpyAuxData **out_auxdata, \
                 NPY_ARRAYMETHOD_FLAGS *flags)
@@ -1920,7 +1930,8 @@ with the rest of the ArrayMethod API.
    attempt a new search for a matching loop/promoter.
 
 .. c:type:: int (PyArrayMethod_PromoterFunction)(PyObject *ufunc, \
-                PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[], \
+                PyArray_DTypeMeta *const op_dtypes[], \
+                PyArray_DTypeMeta *const signature[], \
                 PyArray_DTypeMeta *new_op_dtypes[])
 
    Type of the promoter function, which must be wrapped into a
@@ -3237,30 +3248,18 @@ Array scalars
 .. c:function:: NPY_SCALARKIND PyArray_ScalarKind( \
         int typenum, PyArrayObject** arr)
 
-    See the function :c:func:`PyArray_MinScalarType` for an alternative
-    mechanism introduced in NumPy 1.6.0.
+    Legacy way to query special promotion for scalar values.  This is not
+    used in NumPy itself anymore and is expected to be deprecated eventually.
 
-    Return the kind of scalar represented by *typenum* and the array
-    in *\*arr* (if *arr* is not ``NULL`` ). The array is assumed to be
-    rank-0 and only used if *typenum* represents a signed integer. If
-    *arr* is not ``NULL`` and the first element is negative then
-    :c:data:`NPY_INTNEG_SCALAR` is returned, otherwise
-    :c:data:`NPY_INTPOS_SCALAR` is returned. The possible return values
-    are the enumerated values in :c:type:`NPY_SCALARKIND`.
+    New DTypes can define promotion rules specific to Python scalars.
 
 .. c:function:: int PyArray_CanCoerceScalar( \
         char thistype, char neededtype, NPY_SCALARKIND scalar)
 
-    See the function :c:func:`PyArray_ResultType` for details of
-    NumPy type promotion, updated in NumPy 1.6.0.
+    Legacy way to query special promotion for scalar values.  This is not
+    used in NumPy itself anymore and is expected to be deprecated eventually.
 
-    Implements the rules for scalar coercion. Scalars are only
-    silently coerced from thistype to neededtype if this function
-    returns nonzero.  If scalar is :c:data:`NPY_NOSCALAR`, then this
-    function is equivalent to :c:func:`PyArray_CanCastSafely`. The rule is
-    that scalars of the same KIND can be coerced into arrays of the
-    same KIND. This rule means that high-precision scalars will never
-    cause low-precision arrays of the same KIND to be upcast.
+    Use ``PyArray_ResultType`` for similar purposes.
 
 
 Data-type descriptors
@@ -3370,13 +3369,13 @@ Data-type descriptors
     can also be used with the "O&" character in PyArg_ParseTuple
     processing.
 
-.. c:function:: int Pyarray_DescrAlignConverter( \
+.. c:function:: int PyArray_DescrAlignConverter( \
         PyObject* obj, PyArray_Descr** dtype)
 
     Like :c:func:`PyArray_DescrConverter` except it aligns C-struct-like
     objects on word-boundaries as the compiler would.
 
-.. c:function:: int Pyarray_DescrAlignConverter2( \
+.. c:function:: int PyArray_DescrAlignConverter2( \
         PyObject* obj, PyArray_Descr** dtype)
 
     Like :c:func:`PyArray_DescrConverter2` except it aligns C-struct-like
@@ -3386,7 +3385,7 @@ Data Type Promotion and Inspection
 ----------------------------------
 
 .. c:function:: PyArray_DTypeMeta *PyArray_CommonDType( \
-                    PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
+            const PyArray_DTypeMeta *dtype1, const PyArray_DTypeMeta *dtype2)
 
    This function defines the common DType operator. Note that the common DType
    will not be ``object`` (unless one of the DTypes is ``object``). Similar to
@@ -3413,7 +3412,7 @@ Data Type Promotion and Inspection
    For example promoting ``float16`` with any other float, integer, or unsigned
    integer again gives a floating point number.
 
-.. c:function:: PyArray_Descr *PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
+.. c:function:: PyArray_Descr *PyArray_GetDefaultDescr(const PyArray_DTypeMeta *DType)
 
    Given a DType class, returns the default instance (descriptor).  This checks
    for a ``singleton`` first and only calls the ``default_descr`` function if
@@ -3814,13 +3813,118 @@ Other conversions
     in the *vals* array. The sequence can be smaller then *maxvals* as
     the number of converted objects is returned.
 
+.. _including-the-c-api:
 
-Miscellaneous
--------------
+Including and importing the C API
+---------------------------------
+
+To use the NumPy C-API you typically need to include the
+``numpy/ndarrayobject.h`` header and ``numpy/ufuncobject.h`` for some ufunc
+related functionality (``arrayobject.h`` is an alias for ``ndarrayobject.h``).
+
+These two headers export most relevant functionality.  In general any project
+which uses the NumPy API must import NumPy using one of the functions
+``PyArray_ImportNumPyAPI()`` or ``import_array()``.
+In some places, functionality which requires ``import_array()`` is not
+needed, because you only need type definitions.  In this case, it is
+sufficient to include ``numpy/ndarratypes.h``.
+
+For the typical Python project, multiple C or C++ files will be compiled into
+a single shared object (the Python C-module) and ``PyArray_ImportNumPyAPI()``
+should be called inside it's module initialization.
+
+When you have a single C-file, this will consist of:
+
+.. code-block:: c
+
+    #include "numpy/ndarrayobject.h"
+
+    PyMODINIT_FUNC PyInit_my_module(void)
+    {
+        if (PyArray_ImportNumPyAPI() < 0) {
+            return NULL;
+        }
+        /* Other initialization code. */
+    }
+
+However, most projects will have additional C files which are all
+linked together into a single Python module.
+In this case, the helper C files typically do not have a canonical place
+where ``PyArray_ImportNumPyAPI`` should be called (although it is OK and
+fast to call it often).
+
+To solve this, NumPy provides the following pattern that the the main
+file is modified to define ``PY_ARRAY_UNIQUE_SYMBOL`` before the include:
+
+.. code-block:: c
+
+    /* Main module file */
+    #define PY_ARRAY_UNIQUE_SYMBOL MyModule
+    #include "numpy/ndarrayobject.h"
+
+    PyMODINIT_FUNC PyInit_my_module(void)
+    {
+        if (PyArray_ImportNumPyAPI() < 0) {
+            return NULL;
+        }
+        /* Other initialization code. */
+    }
+
+while the other files use:
+
+.. code-block:: C
+
+    /* Second file without any import */
+    #define NO_IMPORT_ARRAY
+    #define PY_ARRAY_UNIQUE_SYMBOL MyModule
+    #include "numpy/ndarrayobject.h"
+
+You can of course add the defines to a local header used throughout.
+You just have to make sure that the main file does _not_ define
+``NO_IMPORT_ARRAY``.
+
+For ``numpy/ufuncobject.h`` the same logic applies, but the unique symbol
+mechanism is ``#define PY_UFUNC_UNIQUE_SYMBOL`` (both can match).
+
+Additionally, you will probably wish to add a
+``#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION``
+to avoid warnings about possible use of old API.
+
+.. note::
+    If you are experiencing access violations make sure that the NumPy API
+    was properly imported and the symbol ``PyArray_API`` is not ``NULL``.
+    When in a debugger, this symbols actual name will be
+    ``PY_ARRAY_UNIQUE_SYMBOL``+``PyArray_API``, so for example
+    ``MyModulePyArray_API`` in the above.
+    (E.g. even a ``printf("%p\n", PyArray_API);`` just before the crash.)
 
 
-Importing the API
-~~~~~~~~~~~~~~~~~
+Mechanism details and dynamic linking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The main part of the mechanism is that without NumPy needs to define
+a ``void **PyArray_API`` table for you to look up all functions.
+Depending on your macro setup, this takes different routes depending on
+whether :c:macro:`NO_IMPORT_ARRAY` and  :c:macro:`PY_ARRAY_UNIQUE_SYMBOL`
+are defined:
+
+* If neither is defined, the C-API is declared to
+  ``static void **PyArray_API``, so it is only visible within the
+  compilation unit/file using ``#include <numpy/arrayobject.h>``.
+* If only ``PY_ARRAY_UNIQUE_SYMBOL`` is defined (it could be empty) then
+  the it is declared to a non-static ``void **`` allowing it to be used
+  by other files which are linked.
+* If ``NO_IMPORT_ARRAY`` is defined, the table is declared as
+  ``extern void **``, meaning that it must be linked to a file which does not
+  use ``NO_IMPORT_ARRAY``.
+
+The ``PY_ARRAY_UNIQUE_SYMBOL`` mechanism additionally mangles the names to
+avoid conflicts.
+
+.. versionchanged::
+    NumPy 2.1 changed the headers to avoid sharing the table outside of a
+    single shared object/dll (this was always the case on Windows).
+    Please see :c:macro:`NPY_API_SYMBOL_ATTRIBUTE` for details.
 
 In order to make use of the C-API from another extension module, the
 :c:func:`import_array` function must be called. If the extension module is
@@ -3844,31 +3948,46 @@ the C-API is needed then some additional steps must be taken.
     module that will make use of the C-API. It imports the module
     where the function-pointer table is stored and points the correct
     variable to it.
+    This macro includes a ``return NULL;`` on error, so that
+    ``PyArray_ImportNumPyAPI()`` is preferable for custom error checking.
+    You may also see use of ``_import_array()`` (a function, not
+    a macro, but you may want to raise a better error if it fails) and
+    the variations ``import_array1(ret)`` which customizes the return value.
 
 .. c:macro:: PY_ARRAY_UNIQUE_SYMBOL
 
+.. c:macro:: NPY_API_SYMBOL_ATTRIBUTE
+
+    .. versionadded:: 2.1
+
+    An additional symbol which can be used to share e.g. visibility beyond
+    shared object boundaries.
+    By default, NumPy adds the C visibility hidden attribute (if available):
+    ``void __attribute__((visibility("hidden"))) **PyArray_API;``.
+    You can change this by defining ``NPY_API_SYMBOL_ATTRIBUTE``, which will
+    make this:
+    ``void NPY_API_SYMBOL_ATTRIBUTE **PyArray_API;`` (with additional
+    name mangling via the unique symbol).
+
+    Adding an empty ``#define NPY_API_SYMBOL_ATTRIBUTE`` will have the same
+    behavior as NumPy 1.x.
+
+    .. note::
+        Windows never had shared visibility although you can use this macro
+        to achieve it.  We generally discourage sharing beyond shared boundary
+        lines since importing the array API includes NumPy version checks.
+
 .. c:macro:: NO_IMPORT_ARRAY
 
-    Using these #defines you can use the C-API in multiple files for a
-    single extension module. In each file you must define
-    :c:macro:`PY_ARRAY_UNIQUE_SYMBOL` to some name that will hold the
-    C-API (*e.g.* myextension_ARRAY_API). This must be done **before**
-    including the numpy/arrayobject.h file. In the module
-    initialization routine you call :c:func:`import_array`. In addition,
-    in the files that do not have the module initialization
-    sub_routine define :c:macro:`NO_IMPORT_ARRAY` prior to including
-    numpy/arrayobject.h.
-
-    Suppose I have two files coolmodule.c and coolhelper.c which need
-    to be compiled and linked into a single extension module. Suppose
-    coolmodule.c contains the required initcool module initialization
-    function (with the import_array() function called). Then,
-    coolmodule.c would have at the top:
+    Defining ``NO_IMPORT_ARRAY`` before the ``ndarrayobject.h`` include
+    indicates that the NumPy C API import is handled in a different file
+    and the include mechanism will not be added here.
+    You must have one file without ``NO_IMPORT_ARRAY`` defined.
 
     .. code-block:: c
 
         #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
-        #include numpy/arrayobject.h
+        #include <numpy/arrayobject.h>
 
     On the other hand, coolhelper.c would contain at the top:
 
@@ -3876,7 +3995,7 @@ the C-API is needed then some additional steps must be taken.
 
         #define NO_IMPORT_ARRAY
         #define PY_ARRAY_UNIQUE_SYMBOL cool_ARRAY_API
-        #include numpy/arrayobject.h
+        #include <numpy/arrayobject.h>
 
     You can also put the common two last lines into an extension-local
     header file as long as you make sure that NO_IMPORT_ARRAY is
@@ -3899,6 +4018,7 @@ the C-API is needed then some additional steps must be taken.
       also changes the name of the variable holding the C-API, which
       defaults to ``PyArray_API``, to whatever the macro is
       #defined to.
+
 
 Checking the API Version
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -3954,21 +4074,6 @@ extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
     This just returns the value :c:data:`NPY_FEATURE_VERSION`.
     :c:data:`NPY_FEATURE_VERSION` changes whenever the API changes (e.g. a
     function is added). A changed value does not always require a recompile.
-
-Internal Flexibility
-~~~~~~~~~~~~~~~~~~~~
-
-.. c:function:: void PyArray_SetStringFunction(PyObject* op, int repr)
-
-    This function allows you to alter the tp_str and tp_repr methods
-    of the array object to any Python function. Thus you can alter
-    what happens for all arrays when str(arr) or repr(arr) is called
-    from Python. The function to be called is passed in as *op*. If
-    *repr* is non-zero, then this function will be called in response
-    to repr(arr), otherwise the function will be called in response to
-    str(arr). No check on whether or not *op* is callable is
-    performed. The callable passed in to *op* should expect an array
-    argument and should return a string to be printed.
 
 
 Memory management
@@ -4032,14 +4137,11 @@ variables), the GIL should be released so that other Python threads
 can run while the time-consuming calculations are performed. This can
 be accomplished using two groups of macros. Typically, if one macro in
 a group is used in a code block, all of them must be used in the same
-code block. Currently, :c:data:`NPY_ALLOW_THREADS` is defined to the
-python-defined :c:data:`WITH_THREADS` constant unless the environment
-variable ``NPY_NOSMP`` is set in which case
-:c:data:`NPY_ALLOW_THREADS` is defined to be 0.
+code block. :c:data:`NPY_ALLOW_THREADS` is true (defined as ``1``) unless the
+build option ``-Ddisable-threading`` is set to ``true`` - in which case
+:c:data:`NPY_ALLOW_THREADS` is false (``0``).
 
 .. c:macro:: NPY_ALLOW_THREADS
-
-.. c:macro:: WITH_THREADS
 
 Group 1
 ^^^^^^^

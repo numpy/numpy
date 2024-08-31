@@ -7,7 +7,7 @@ requires = [
 
 [project]
 name = "numpy"
-version = "2.1.0.dev0"
+version = "2.2.0.dev0"
 # TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
 license = {file = "LICENSE.txt"}
 
@@ -16,7 +16,7 @@ authors = [{name = "Travis E. Oliphant et al."}]
 maintainers = [
     {name = "NumPy Developers", email="numpy-discussion@python.org"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -26,7 +26,6 @@ classifiers = [
     'Programming Language :: C',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
@@ -150,7 +149,10 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
-musllinux-x86_64-image = "musllinux_1_1"
+musllinux-x86_64-image = "musllinux_1_2"
+
+[tool.cibuildwheel.pyodide]
+config-settings = "build-dir=build setup-args=--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross setup-args=-Dblas=none setup-args=-Dlapack=none"
 
 [tool.cibuildwheel.linux.environment]
 # RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
@@ -181,8 +183,18 @@ select = "*-win32"
 config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=build"
 repair-wheel-command = ""
 
+[[tool.cibuildwheel.overrides]]
+select = "*pyodide*"
+before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
+# Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
+repair-wheel-command = ""
+test-command = "python -m pytest --pyargs numpy -m 'not slow'"
+
 [tool.meson-python]
 meson = 'vendored-meson/meson/meson.py'
+
+[tool.meson-python.args]
+install = ['--tags=runtime,python-runtime,tests,devel']
 
 [tool.spin]
 package = 'numpy'
@@ -199,13 +211,17 @@ cli = 'vendored-meson/meson/meson.py'
   ".spin/cmds.py:lint",
 ]
 "Environments" = [
-  "spin.cmds.meson.run", ".spin/cmds.py:ipython",
-  ".spin/cmds.py:python", "spin.cmds.meson.gdb",
+  "spin.cmds.meson.run",
+  ".spin/cmds.py:ipython",
+  ".spin/cmds.py:python",
+  "spin.cmds.meson.gdb",
   "spin.cmds.meson.lldb"
 ]
 "Documentation" = [
   ".spin/cmds.py:docs",
   ".spin/cmds.py:changelog",
   ".spin/cmds.py:notes",
+  ".spin/cmds.py:check_docs",
+  ".spin/cmds.py:check_tutorials",
 ]
 "Metrics" = [".spin/cmds.py:bench"]

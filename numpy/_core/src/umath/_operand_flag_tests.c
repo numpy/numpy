@@ -36,9 +36,9 @@ inplace_add(char **args, npy_intp const *dimensions, npy_intp const *steps, void
 PyUFuncGenericFunction funcs[1] = {&inplace_add};
 
 /* These are the input and return dtypes of logit.*/
-static char types[2] = {NPY_INTP, NPY_INTP};
+static const char types[2] = {NPY_INTP, NPY_INTP};
 
-static void *data[1] = {NULL};
+static void *const data[1] = {NULL};
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
@@ -76,6 +76,11 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
     ((PyUFuncObject*)ufunc)->op_flags[0] = NPY_ITER_READWRITE;
     ((PyUFuncObject*)ufunc)->iter_flags = NPY_ITER_REDUCE_OK;
     PyModule_AddObject(m, "inplace_add", (PyObject*)ufunc);
+
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
 
     return m;
 

@@ -2,7 +2,6 @@ import os
 import sys
 import textwrap
 import types
-import re
 import warnings
 import functools
 import platform
@@ -99,6 +98,11 @@ def get_include():
         $ pkg-config --cflags
         -I/path/to/site-packages/numpy/_core/include
 
+    Examples
+    --------
+    >>> np.get_include()
+    '.../site-packages/numpy/core/include'  # may vary
+
     """
     import numpy
     if numpy.show_config is None:
@@ -173,7 +177,7 @@ class _Deprecate:
                     skip += len(line) + 1
                 doc = doc[skip:]
             depdoc = textwrap.indent(depdoc, ' ' * indent)
-            doc = '\n\n'.join([depdoc, doc])
+            doc = f'{depdoc}\n\n{doc}'
         newfunc.__doc__ = doc
 
         return newfunc

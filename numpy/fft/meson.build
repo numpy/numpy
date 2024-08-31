@@ -34,5 +34,6 @@ py.install_sources(
     'tests/test_helper.py',
     'tests/test_pocketfft.py',
   ],
-  subdir: 'numpy/fft/tests'
+  subdir: 'numpy/fft/tests',
+  install_tag: 'tests'
 )

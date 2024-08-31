@@ -33,13 +33,18 @@ extern NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
         _NPY_VERSION_CONCAT_HELPER(PY_ARRAY_UNIQUE_SYMBOL)
 #endif
 
+/* By default do not export API in an .so (was never the case on windows) */
+#ifndef NPY_API_SYMBOL_ATTRIBUTE
+    #define NPY_API_SYMBOL_ATTRIBUTE NPY_VISIBILITY_HIDDEN
+#endif
+
 #if defined(NO_IMPORT) || defined(NO_IMPORT_ARRAY)
-extern void **PyArray_API;
-extern int PyArray_RUNTIME_VERSION;
+extern NPY_API_SYMBOL_ATTRIBUTE void **PyArray_API;
+extern NPY_API_SYMBOL_ATTRIBUTE int PyArray_RUNTIME_VERSION;
 #else
 #if defined(PY_ARRAY_UNIQUE_SYMBOL)
-void **PyArray_API;
-int PyArray_RUNTIME_VERSION;
+NPY_API_SYMBOL_ATTRIBUTE void **PyArray_API;
+NPY_API_SYMBOL_ATTRIBUTE int PyArray_RUNTIME_VERSION;
 #else
 static void **PyArray_API = NULL;
 static int PyArray_RUNTIME_VERSION = 0;
@@ -227,6 +232,7 @@ def do_generate_api(targets, sources):
 
     # Check multiarray api indexes
     multiarray_api_index = genapi.merge_api_dicts(multiarray_api)
+    unused_index_max = max(multiarray_api_index.get("__unused_indices__", 0))
     genapi.check_api_dict(multiarray_api_index)
 
     numpyapi_list = genapi.get_api_functions('NUMPY_API',
@@ -277,6 +283,10 @@ def do_generate_api(targets, sources):
         extension_list.append(api_item.define_from_array_api_string())
         init_list.append(api_item.array_api_define())
         module_list.append(api_item.internal_define())
+
+    # In case we end with a "hole", append more NULLs
+    while len(init_list) <= unused_index_max:
+        init_list.append("        NULL")
 
     # Write to header
     s = h_template % ('\n'.join(module_list), '\n'.join(extension_list))
