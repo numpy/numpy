@@ -290,7 +290,7 @@ class TestRegression:
         x = np.rec.array([(1, 1.1, '1.0'),
                          (2, 2.2, '2.0')], dtype=descr)
         x[0].tolist()
-        [i for i in x[0]]
+        list(x[0])
 
     def test_unicode_string_comparison(self):
         # Ticket #190
@@ -1028,7 +1028,7 @@ class TestRegression:
     def test_mem_fromiter_invalid_dtype_string(self):
         x = [1, 2, 3]
         assert_raises(ValueError,
-                              np.fromiter, [xi for xi in x], dtype='S')
+                              np.fromiter, list(x), dtype='S')
 
     def test_reduce_big_object_array(self):
         # Ticket #713
@@ -1071,8 +1071,8 @@ class TestRegression:
         with open(filename, 'rb') as f:
             xp = pickle.load(f, encoding='latin1')
         xpd = xp.astype(np.float64)
-        assert_((xp.__array_interface__['data'][0] !=
-                xpd.__array_interface__['data'][0]))
+        assert_(xp.__array_interface__['data'][0] !=
+                xpd.__array_interface__['data'][0])
 
     def test_compress_small_type(self):
         # Ticket #789, changeset 5217.
@@ -2178,7 +2178,7 @@ class TestRegression:
             __array_priority__ = 1002
 
             def __array__(self, *args, **kwargs):
-                raise Exception()
+                raise Exception
 
         rhs = Foo()
         lhs = np.array(1)
@@ -2313,9 +2313,9 @@ class TestRegression:
             try:
                 hash(val)
             except TypeError as e:
-                assert_equal(t.__hash__, None)
+                assert_(t.__hash__ is None)
             else:
-                assert_(t.__hash__ != None)
+                assert_(t.__hash__ is not None)
 
     def test_scalar_copy(self):
         scalar_types = set(np._core.sctypeDict.values())
@@ -2434,7 +2434,7 @@ class TestRegression:
 
     def test_2d__array__shape(self):
         class T:
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return np.ndarray(shape=(0,0))
 
             # Make sure __array__ is used instead of Sequence methods.
@@ -2567,15 +2567,17 @@ class TestRegression:
         assert xp is np
         xp = arr.__array_namespace__(api_version="2022.12")
         assert xp is np
+        xp = arr.__array_namespace__(api_version="2023.12")
+        assert xp is np
         xp = arr.__array_namespace__(api_version=None)
         assert xp is np
 
         with pytest.raises(
             ValueError,
-            match="Version \"2023.12\" of the Array API Standard "
+            match="Version \"2024.12\" of the Array API Standard "
                   "is not supported."
         ):
-            arr.__array_namespace__(api_version="2023.12")
+            arr.__array_namespace__(api_version="2024.12")
 
         with pytest.raises(
             ValueError,
@@ -2598,3 +2600,47 @@ class TestRegression:
         expected = np.char.chararray((2,), itemsize=25)
         expected[:] = [s.replace(b"E", b"D") for s in test_strings]
         assert_array_equal(out, expected)
+
+    def test_logspace_base_does_not_determine_dtype(self):
+        # gh-24957 and cupy/cupy/issues/7946
+        start = np.array([0, 2], dtype=np.float16)
+        stop = np.array([2, 0], dtype=np.float16)
+        out = np.logspace(start, stop, num=5, axis=1, dtype=np.float32)
+        expected = np.array([[1., 3.1621094, 10., 31.625, 100.],
+                             [100., 31.625, 10., 3.1621094, 1.]],
+                            dtype=np.float32)
+        assert_almost_equal(out, expected)
+        # Check test fails if the calculation is done in float64, as happened
+        # before when a python float base incorrectly influenced the dtype.
+        out2 = np.logspace(start, stop, num=5, axis=1, dtype=np.float32,
+                           base=np.array([10.0]))
+        with pytest.raises(AssertionError, match="not almost equal"):
+            assert_almost_equal(out2, expected)
+
+    def test_vectorize_fixed_width_string(self):
+        arr = np.array(["SOme wOrd Ǆ ß ᾛ ΣΣ ﬃ⁵Å Ç Ⅰ"]).astype(np.str_)
+        f = str.casefold
+        res = np.vectorize(f, otypes=[arr.dtype])(arr)
+        assert res.dtype == "U30"
+
+    def test_repeated_square_consistency(self):
+        # gh-26940
+        buf = np.array([-5.171866611150749e-07 + 2.5618634555957426e-07j,
+                        0, 0, 0, 0, 0])
+        # Test buffer with regular and reverse strides
+        for in_vec in [buf[:3], buf[:3][::-1]]:
+            expected_res = np.square(in_vec)
+            # Output vector immediately follows input vector
+            # to reproduce off-by-one in nomemoverlap check.
+            for res in [buf[3:], buf[3:][::-1]]:
+                res = buf[3:]
+                np.square(in_vec, out=res)
+                assert_equal(res, expected_res)
+
+    def test_sort_unique_crash(self):
+        # gh-27037
+        for _ in range(4):
+            vals = np.linspace(0, 1, num=128)
+            data = np.broadcast_to(vals, (128, 128, 128))
+            data = data.transpose(0, 2, 1).copy()
+            np.unique(data)

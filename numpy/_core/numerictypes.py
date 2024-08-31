@@ -81,21 +81,21 @@ import warnings
 
 from . import multiarray as ma
 from .multiarray import (
-        ndarray, array, dtype, datetime_data, datetime_as_string,
+        ndarray, dtype, datetime_data, datetime_as_string,
         busday_offset, busday_count, is_busday, busdaycalendar
         )
 from .._utils import set_module
 
 # we add more at the bottom
 __all__ = [
-    'ScalarType', 'typecodes', 'issubdtype', 'datetime_data', 
-    'datetime_as_string', 'busday_offset', 'busday_count', 
+    'ScalarType', 'typecodes', 'issubdtype', 'datetime_data',
+    'datetime_as_string', 'busday_offset', 'busday_count',
     'is_busday', 'busdaycalendar', 'isdtype'
 ]
 
 # we don't need all these imports, but we need to keep them for compatibility
 # for users using np._core.numerictypes.UPPER_TABLE
-from ._string_helpers import (
+from ._string_helpers import (  # noqa: F401
     english_lower, english_upper, english_capitalize, LOWER_TABLE, UPPER_TABLE
 )
 
@@ -106,7 +106,7 @@ from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-from builtins import bool, int, float, complex, object, str, bytes
+from builtins import bool, int, float, complex, object, str, bytes  # noqa: F401, UP029
 
 
 # We use this later
@@ -225,7 +225,8 @@ def issctype(rep):
         res = obj2sctype(rep)
         if res and res != object_:
             return True
-        return False
+        else:
+            return False
     except Exception:
         return False
 
@@ -360,7 +361,11 @@ def issubsctype(arg1, arg2):
     return issubclass(obj2sctype(arg1), obj2sctype(arg2))
 
 
-def _preprocess_dtype(dtype, err_msg):
+class _PreprocessDTypeError(Exception):
+    pass
+
+
+def _preprocess_dtype(dtype):
     """
     Preprocess dtype argument by:
       1. fetching type from a data type
@@ -369,7 +374,7 @@ def _preprocess_dtype(dtype, err_msg):
     if isinstance(dtype, ma.dtype):
         dtype = dtype.type
     if isinstance(dtype, ndarray) or dtype not in allTypes.values():
-        raise TypeError(f"{err_msg}, but it is a {type(dtype)}.")
+        raise _PreprocessDTypeError
     return dtype
 
 
@@ -414,9 +419,13 @@ def isdtype(dtype, kind):
     True
 
     """
-    dtype = _preprocess_dtype(
-        dtype, err_msg="dtype argument must be a NumPy dtype"
-    )
+    try:
+        dtype = _preprocess_dtype(dtype)
+    except _PreprocessDTypeError:
+        raise TypeError(
+            "dtype argument must be a NumPy dtype, "
+            f"but it is a {type(dtype)}."
+        ) from None
 
     input_kinds = kind if isinstance(kind, tuple) else (kind,)
 
@@ -440,12 +449,20 @@ def isdtype(dtype, kind):
                 sctypes["int"] + sctypes["uint"] +
                 sctypes["float"] + sctypes["complex"]
             )
-        else:
-            kind = _preprocess_dtype(
-                kind,
-                err_msg="kind argument must be comprised of "
-                        "NumPy dtypes or strings only"
+        elif isinstance(kind, str):
+            raise ValueError(
+                "kind argument is a string, but"
+                f" {kind!r} is not a known kind name."
             )
+        else:
+            try:
+                kind = _preprocess_dtype(kind)
+            except _PreprocessDTypeError:
+                raise TypeError(
+                    "kind argument must be comprised of "
+                    "NumPy dtypes or strings only, "
+                    f"but is a {type(kind)}."
+                ) from None
             processed_kinds.add(kind)
 
     return dtype in processed_kinds

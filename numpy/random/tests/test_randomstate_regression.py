@@ -143,7 +143,7 @@ class TestRegression:
         class M:
             a = np.arange(5)
 
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return self.a
 
         random.seed(1)

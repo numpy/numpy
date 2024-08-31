@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from types import EllipsisType
 from typing import (
     Any,
     TypeVar,
@@ -14,10 +15,10 @@ _DType = TypeVar("_DType", bound=dtype[Any])
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 
 _Index = (
-    ellipsis
+    EllipsisType
     | int
     | slice
-    | tuple[ellipsis | int | slice, ...]
+    | tuple[EllipsisType | int | slice, ...]
 )
 
 __all__: list[str]
@@ -41,8 +42,8 @@ class Arrayterator(ndarray[_Shape, _DType]):
         self, var: ndarray[_Shape, _DType], buf_size: None | int = ...
     ) -> None: ...
     @overload
-    def __array__(self, dtype: None = ...) -> ndarray[Any, _DType]: ...
+    def __array__(self, dtype: None = ..., copy: None | bool = ...) -> ndarray[Any, _DType]: ...
     @overload
-    def __array__(self, dtype: DTypeLike) -> NDArray[Any]: ...
+    def __array__(self, dtype: DTypeLike, copy: None | bool = ...) -> NDArray[Any]: ...
     def __getitem__(self, index: _Index) -> Arrayterator[Any, _DType]: ...
     def __iter__(self) -> Generator[ndarray[Any, _DType], None, None]: ...

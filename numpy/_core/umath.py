@@ -18,7 +18,9 @@ from ._multiarray_umath import (
 # These imports are needed for the strip & replace implementations
 from ._multiarray_umath import (
     _replace, _strip_whitespace, _lstrip_whitespace, _rstrip_whitespace,
-    _strip_chars, _lstrip_chars, _rstrip_chars)
+    _strip_chars, _lstrip_chars, _rstrip_chars, _expandtabs_length,
+    _expandtabs, _center, _ljust, _rjust, _zfill, _partition, _partition_index,
+    _rpartition, _rpartition_index)
 
 __all__ = [
     'absolute', 'add',
@@ -35,4 +37,4 @@ __all__ = [
     'multiply', 'negative', 'nextafter', 'not_equal', 'pi', 'positive',
     'power', 'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
     'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt', 'square',
-    'subtract', 'tan', 'tanh', 'true_divide', 'trunc', 'vecdot']
+    'subtract', 'tan', 'tanh', 'true_divide', 'trunc']

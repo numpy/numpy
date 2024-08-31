@@ -215,12 +215,11 @@ The :c:data:`PyArray_Type` can also be sub-typed.
 
 .. tip::
 
-    The ``tp_as_number`` methods use a generic approach to call whatever
-    function has been registered for handling the operation.  When the
-    ``_multiarray_umath module`` is imported, it sets the numeric operations
-    for all arrays to the corresponding ufuncs. This choice can be changed with
-    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
-    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
+    The :c:member:`tp_as_number <PyTypeObject.tp_as_number>` methods use
+    a generic approach to call whatever function has been registered for
+    handling the operation. When the ``_multiarray_umath`` module is imported,
+    it sets the numeric operations for all arrays to the corresponding ufuncs.
+    This choice can be changed with :c:func:`PyUFunc_ReplaceLoopBySignature`.
 
 PyGenericArrType_Type
 ---------------------
@@ -279,18 +278,23 @@ PyArrayDescr_Type and PyArray_Descr
           char kind;
           char type;
           char byteorder;
-          char flags;
+          char _former_flags;  // unused field
           int type_num;
-          int elsize;
-          int alignment;
-          PyArray_ArrayDescr *subarray;
-          PyObject *fields;
-          PyObject *names;
-          PyArray_ArrFuncs *f;
-          PyObject *metadata;
+          /* 
+           * Definitions after this one must be accessed through accessor
+           * functions (see below) when compiling with NumPy 1.x support.
+           */
+          npy_uint64 flags;
+          npy_intp elsize;
+          npy_intp alignment;
           NpyAuxData *c_metadata;
           npy_hash_t hash;
+          void *reserved_null[2];  // unused field, must be NULLed.
       } PyArray_Descr;
+
+   Some dtypes have additional members which are accessible through
+   `PyDataType_NAMES`, `PyDataType_FIELDS`, `PyDataType_SUBARRAY`, and
+   in some cases (times) `PyDataType_C_METADATA`.
 
    .. c:member:: PyTypeObject *typeobj
 
@@ -321,7 +325,7 @@ PyArrayDescr_Type and PyArray_Descr
        endian), '=' (native), '\|' (irrelevant, ignore). All builtin data-
        types have byteorder '='.
 
-   .. c:member:: char flags
+   .. c:member:: npy_uint64 flags
 
        A data-type bit-flag that determines if the data-type exhibits object-
        array like behavior. Each bit in this member is a flag which are named
@@ -343,14 +347,17 @@ PyArrayDescr_Type and PyArray_Descr
        A number that uniquely identifies the data type. For new data-types,
        this number is assigned when the data-type is registered.
 
-   .. c:member:: int elsize
+   .. c:member:: npy_intp elsize
 
        For data types that are always the same size (such as long), this
        holds the size of the data type. For flexible data types where
        different arrays can have a different elementsize, this should be
        0.
 
-   .. c:member:: int alignment
+       See `PyDataType_ELSIZE` and `PyDataType_SET_ELSIZE` for a way to access
+       this field in a NumPy 1.x compatible way.
+
+   .. c:member:: npy_intp alignment
 
        A number providing alignment information for this data type.
        Specifically, it shows how far from the start of a 2-element
@@ -358,59 +365,8 @@ PyArrayDescr_Type and PyArray_Descr
        places an item of this type: ``offsetof(struct {char c; type v;},
        v)``
 
-   .. c:member:: PyArray_ArrayDescr *subarray
-
-       If this is non- ``NULL``, then this data-type descriptor is a
-       C-style contiguous array of another data-type descriptor. In
-       other-words, each element that this descriptor describes is
-       actually an array of some other base descriptor. This is most
-       useful as the data-type descriptor for a field in another
-       data-type descriptor. The fields member should be ``NULL`` if this
-       is non- ``NULL`` (the fields member of the base descriptor can be
-       non- ``NULL`` however).
-
-       .. c:type:: PyArray_ArrayDescr
-
-           .. code-block:: c
-
-              typedef struct {
-                  PyArray_Descr *base;
-                  PyObject *shape;
-              } PyArray_ArrayDescr;
-
-           .. c:member:: PyArray_Descr *base
-
-               The data-type-descriptor object of the base-type.
-
-           .. c:member:: PyObject *shape
-
-               The shape (always C-style contiguous) of the sub-array as a Python
-               tuple.
-
-   .. c:member:: PyObject *fields
-
-       If this is non-NULL, then this data-type-descriptor has fields
-       described by a Python dictionary whose keys are names (and also
-       titles if given) and whose values are tuples that describe the
-       fields. Recall that a data-type-descriptor always describes a
-       fixed-length set of bytes. A field is a named sub-region of that
-       total, fixed-length collection. A field is described by a tuple
-       composed of another data- type-descriptor and a byte
-       offset. Optionally, the tuple may contain a title which is
-       normally a Python string. These tuples are placed in this
-       dictionary keyed by name (and also title if given).
-
-   .. c:member:: PyObject *names
-
-       An ordered tuple of field names. It is NULL if no field is
-       defined.
-
-   .. c:member:: PyArray_ArrFuncs *f
-
-       A pointer to a structure containing functions that the type needs
-       to implement internal features. These functions are not the same
-       thing as the universal functions (ufuncs) described later. Their
-       signatures can vary arbitrarily.
+       See `PyDataType_ALIGNMENT` for a way to access this field in a NumPy 1.x
+       compatible way.
 
    .. c:member:: PyObject *metadata
 
@@ -498,6 +454,18 @@ PyArrayDescr_Type and PyArray_Descr
 PyArray_ArrFuncs
 ----------------
 
+.. c:function:: PyArray_ArrFuncs *PyDataType_GetArrFuncs(PyArray_Descr *dtype)
+
+    Fetch the legacy `PyArray_ArrFuncs` of the datatype (cannot fail).
+
+    .. versionadded:: NumPy 2.0
+        This function was added in a backwards compatible and backportable
+        way in NumPy 2.0 (see ``npy_2_compat.h``).
+        Any code that previously accessed the ``->f`` slot of the
+        ``PyArray_Descr``, must now use this function and backport it to
+        compile with 1.x.
+        (The ``npy_2_compat.h`` header can be vendored for this purpose.)
+
 .. c:type:: PyArray_ArrFuncs
 
     Functions implementing internal features. Not all of these
@@ -544,6 +512,17 @@ PyArray_ArrFuncs
     ``copyswap``, ``copyswapn``, ``getitem``, and ``setitem``
     functions can (and must) deal with mis-behaved arrays. The other
     functions require behaved memory segments.
+
+    .. note::
+        The functions are largely legacy API, however, some are still used.
+        As of NumPy 2.x they are only available via `PyDataType_GetArrFuncs`
+        (see the function for more details).
+        Before using any function defined in the struct you should check
+        whether it is ``NULL``.  In general, the functions ``getitem``,
+        ``setitem``, ``copyswap``, and ``copyswapn`` can be expected to be
+        defined, but all functions are expected to be replaced with newer API.
+        For example, ``PyArray_Pack`` is a more powerful version of ``setitem``
+        that for example correctly deals with casts.
 
     .. c:member:: void cast( \
             void *from, void *to, npy_intp n, void *fromarr, void *toarr)
@@ -748,7 +727,7 @@ PyArrayMethod_Context and PyArrayMethod_Spec
       typedef struct {
           PyObject *caller;
           struct PyArrayMethodObject_tag *method;
-          PyArray_Descr **descriptors;
+          PyArray_Descr *const *descriptors;
       } PyArrayMethod_Context
 
    .. c:member:: PyObject *caller
@@ -925,6 +904,30 @@ PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
       A ``NULL``-terminated array of slot specifications for implementations
       of functions in the DType API. Slot IDs must be one of the
       DType slot IDs enumerated in :ref:`dtype-slots`.
+
+Exposed DTypes classes (``PyArray_DTypeMeta`` objects)
+------------------------------------------------------
+
+For use with promoters, NumPy exposes a number of Dtypes following the
+pattern ``PyArray_<Name>DType`` corresponding to those found in `np.dtypes`.
+
+Additionally, the three DTypes, ``PyArray_PyLongDType``,
+``PyArray_PyFloatDType``, ``PyArray_PyComplexDType`` correspond to the
+Python scalar values.  These cannot be used in all places, but do allow
+for example the common dtype operation and implementing promotion with them
+may be necessary.
+
+Further, the following abstract DTypes are defined which cover both the
+builtin NumPy ones and the python ones, and users can in principle subclass
+from them (this does not inherit any DType specific functionality):
+* ``PyArray_IntAbstractDType``
+* ``PyArray_FloatAbstractDType``
+* ``PyArray_ComplexAbstractDType``
+
+.. warning::
+    As of NumPy 2.0, the *only* valid use for these DTypes is registering a
+    promoter conveniently to e.g. match "any integers" (and subclass checks).
+    Because of this, they are not exposed to Python.
 
 
 PyUFunc_Type and PyUFuncObject
@@ -1306,7 +1309,7 @@ PyArrayMultiIter_Type and PyArrayMultiIterObject
           npy_intp index;
           int nd;
           npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
-          PyArrayIterObject *iters[NPY_MAXDIMS_LEGACY_ITERS];
+          PyArrayIterObject *iters[];
       } PyArrayMultiIterObject;
 
    .. c:macro: PyObject_HEAD
@@ -1608,3 +1611,29 @@ for completeness and assistance in understanding the code.
    ``arrayobject.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
+
+
+NumPy C-API and C complex
+=========================
+When you use the NumPy C-API, you will have access to complex real declarations
+``npy_cdouble`` and ``npy_cfloat``, which are declared in terms of the C
+standard types from ``complex.h``. Unfortunately, ``complex.h`` contains
+`#define I ...`` (where the actual definition depends on the compiler), which
+means that any downstream user that does ``#include <numpy/arrayobject.h>``
+could get ``I`` defined, and using something like declaring ``double I;`` in
+their code will result in an obscure compiler error like
+
+.. code-block::C
+    error: expected ‘)’ before ‘__extension__’
+                    double I,
+
+This error can be avoided  by adding::
+
+    #undef I
+
+to your code.
+
+.. versionchanged:: 2.0
+    The inclusion of ``complex.h`` was new in NumPy 2, so that code defining
+    a different ``I`` may not have required the ``#undef I`` on older versions.
+    NumPy 2.0.1 briefly included the ``#under I``

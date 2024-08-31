@@ -142,13 +142,6 @@ class PytestTester:
                 # so fetch module for suppression here.
                 from numpy.distutils import cpuinfo
 
-        with warnings.catch_warnings(record=True):
-            # Ignore the warning from importing the array_api submodule. This
-            # warning is done on import, so it would break pytest collection,
-            # but importing it early here prevents the warning from being
-            # issued when it imported again.
-            import numpy.array_api
-
         # Filter out annoying import messages. Want these in both develop and
         # release mode.
         pytest_args += [

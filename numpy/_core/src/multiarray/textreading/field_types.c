@@ -99,7 +99,7 @@ field_type_grow_recursive(PyArray_Descr *descr,
     if (PyDataType_HASSUBARRAY(descr)) {
         PyArray_Dims shape = {NULL, -1};
 
-        if (!(PyArray_IntpConverter(descr->subarray->shape, &shape))) {
+        if (!(PyArray_IntpConverter(PyDataType_SUBARRAY(descr)->shape, &shape))) {
              PyErr_SetString(PyExc_ValueError, "invalid subarray shape");
              field_types_xclear(num_field_types, *ft);
              return -1;
@@ -107,9 +107,9 @@ field_type_grow_recursive(PyArray_Descr *descr,
         npy_intp size = PyArray_MultiplyList(shape.ptr, shape.len);
         npy_free_cache_dim_obj(shape);
         for (npy_intp i = 0; i < size; i++) {
-            num_field_types = field_type_grow_recursive(descr->subarray->base,
+            num_field_types = field_type_grow_recursive(PyDataType_SUBARRAY(descr)->base,
                     num_field_types, ft, ft_size, field_offset);
-            field_offset += descr->subarray->base->elsize;
+            field_offset += PyDataType_SUBARRAY(descr)->base->elsize;
             if (num_field_types < 0) {
                 return -1;
             }
@@ -117,14 +117,14 @@ field_type_grow_recursive(PyArray_Descr *descr,
         return num_field_types;
     }
     else if (PyDataType_HASFIELDS(descr)) {
-        npy_int num_descr_fields = PyTuple_Size(descr->names);
+        npy_int num_descr_fields = PyTuple_Size(PyDataType_NAMES(descr));
         if (num_descr_fields < 0) {
             field_types_xclear(num_field_types, *ft);
             return -1;
         }
         for (npy_intp i = 0; i < num_descr_fields; i++) {
-            PyObject *key = PyTuple_GET_ITEM(descr->names, i);
-            PyObject *tup = PyObject_GetItem(descr->fields, key);
+            PyObject *key = PyTuple_GET_ITEM(PyDataType_NAMES(descr), i);
+            PyObject *tup = PyObject_GetItem(PyDataType_FIELDS(descr), key);
             if (tup == NULL) {
                 field_types_xclear(num_field_types, *ft);
                 return -1;
@@ -180,7 +180,7 @@ field_type_grow_recursive(PyArray_Descr *descr,
 NPY_NO_EXPORT npy_intp
 field_types_create(PyArray_Descr *descr, field_type **ft)
 {
-    if (descr->subarray != NULL) {
+    if (PyDataType_SUBARRAY(descr) != NULL) {
         /*
          * This could probably be allowed, but NumPy absorbs the dimensions
          * so it is an awkward corner case that probably never really worked.

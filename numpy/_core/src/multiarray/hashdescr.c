@@ -8,7 +8,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #include "hashdescr.h"
 
@@ -56,7 +56,7 @@ static char _normalize_byteorder(char byteorder)
  */
 static int _is_array_descr_builtin(PyArray_Descr* descr)
 {
-    if (descr->fields != NULL && descr->fields != Py_None) {
+    if (PyDataType_HASFIELDS(descr)) {
         return 0;
     }
     if (PyDataType_HASSUBARRAY(descr)) {
@@ -237,14 +237,15 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
         return _array_descr_builtin(descr, l);
     }
     else {
-        if(descr->fields != NULL && descr->fields != Py_None) {
-            st = _array_descr_walk_fields(descr->names, descr->fields, l);
+        _PyArray_LegacyDescr *ldescr = (_PyArray_LegacyDescr *)descr;
+        if(ldescr->fields != NULL && ldescr->fields != Py_None) {
+            st = _array_descr_walk_fields(ldescr->names, ldescr->fields, l);
             if (st) {
                 return -1;
             }
         }
-        if(PyDataType_HASSUBARRAY(descr)) {
-            st = _array_descr_walk_subarray(descr->subarray, l);
+        if(ldescr->subarray != NULL) {
+            st = _array_descr_walk_subarray(ldescr->subarray, l);
             if (st) {
                 return -1;
             }

@@ -3,7 +3,7 @@
 
 #include "array_method.h"
 
-extern NPY_NO_EXPORT PyArray_Descr **userdescrs;
+extern NPY_NO_EXPORT _PyArray_LegacyDescr **userdescrs;
 
 NPY_NO_EXPORT void
 PyArray_InitArrFuncs(PyArray_ArrFuncs *f);

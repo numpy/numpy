@@ -9,8 +9,6 @@
 extern "C" {
 #endif
 
-extern NPY_NO_EXPORT npy_bool numpy_warn_if_no_mem_policy;
-
 NPY_NO_EXPORT PyObject *
 _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
                      int rstrip);
@@ -54,6 +52,14 @@ static const int NPY_ARRAY_WAS_PYTHON_COMPLEX = (1 << 28);
  */
 static const int NPY_ARRAY_WAS_INT_AND_REPLACED = (1 << 27);
 static const int NPY_ARRAY_WAS_PYTHON_LITERAL = (1 << 30 | 1 << 29 | 1 << 28);
+
+/*
+ * This flag allows same kind casting, similar to NPY_ARRAY_FORCECAST.
+ *
+ * An array never has this flag set; they're only used as parameter
+ * flags to the various FromAny functions.
+ */
+static const int NPY_ARRAY_SAME_KIND_CASTING = (1 << 26);
 
 #ifdef __cplusplus
 }

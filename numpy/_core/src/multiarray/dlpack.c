@@ -8,9 +8,15 @@
 #include "numpy/arrayobject.h"
 #include "npy_argparse.h"
 #include "npy_dlpack.h"
+#include "npy_static_data.h"
+#include "conversion_utils.h"
 
+
+/*
+ * Deleter for a NumPy exported dlpack DLManagedTensor(Versioned).
+ */
 static void
-array_dlpack_deleter(DLManagedTensor *self)
+array_dlpack_deleter(DLManagedTensorVersioned *self)
 {
     /*
      * Leak the pyobj if not initialized.  This can happen if we are running
@@ -32,48 +38,86 @@ array_dlpack_deleter(DLManagedTensor *self)
     PyGILState_Release(state);
 }
 
-/* This is exactly as mandated by dlpack */
-static void dlpack_capsule_deleter(PyObject *self) {
+/* TODO: Basically same as above until dlpack v0 is removed: */
+static void
+array_dlpack_deleter_unversioned(DLManagedTensor *self)
+{
+    if (!Py_IsInitialized()) {
+        return;
+    }
+
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    PyArrayObject *array = (PyArrayObject *)self->manager_ctx;
+    PyMem_Free(self);
+    Py_XDECREF(array);
+
+    PyGILState_Release(state);
+}
+
+
+/*
+ * Deleter for a DLPack capsule wrapping a DLManagedTensor(Versioned).
+ *
+ * This is exactly as mandated by dlpack
+ */
+static void
+dlpack_capsule_deleter(PyObject *self) {
+    if (PyCapsule_IsValid(self, NPY_DLPACK_VERSIONED_USED_CAPSULE_NAME)) {
+        return;
+    }
+
+    DLManagedTensorVersioned *managed =
+        (DLManagedTensorVersioned *)PyCapsule_GetPointer(
+            self, NPY_DLPACK_VERSIONED_CAPSULE_NAME);
+    if (managed == NULL) {
+        PyErr_WriteUnraisable(NULL);
+        return;
+    }
+    /*
+     * The spec says the deleter can be NULL if there is no way for the caller
+     * to provide a reasonable destructor.
+     */
+    if (managed->deleter) {
+        managed->deleter(managed);
+    }
+}
+
+/* TODO: Basically same as above until dlpack v0 is removed: */
+static void
+dlpack_capsule_deleter_unversioned(PyObject *self) {
     if (PyCapsule_IsValid(self, NPY_DLPACK_USED_CAPSULE_NAME)) {
         return;
     }
 
-    /* an exception may be in-flight, we must save it in case we create another one */
-    PyObject *type, *value, *traceback;
-    PyErr_Fetch(&type, &value, &traceback);
-
     DLManagedTensor *managed =
         (DLManagedTensor *)PyCapsule_GetPointer(self, NPY_DLPACK_CAPSULE_NAME);
     if (managed == NULL) {
-        PyErr_WriteUnraisable(self);
-        goto done;
-    }
-    /*
-     *  the spec says the deleter can be NULL if there is no way for the caller
-     * to provide a reasonable destructor.
-     */
-    if (managed->deleter) {
-        managed->deleter(managed);
-        /* TODO: is the deleter allowed to set a python exception? */
-        assert(!PyErr_Occurred());
+        PyErr_WriteUnraisable(NULL);
+        return;
     }
 
-done:
-    PyErr_Restore(type, value, traceback);
+    if (managed->deleter) {
+        managed->deleter(managed);
+    }
 }
 
-/* used internally, almost identical to dlpack_capsule_deleter() */
-static void array_dlpack_internal_capsule_deleter(PyObject *self)
-{
-    /* an exception may be in-flight, we must save it in case we create another one */
-    PyObject *type, *value, *traceback;
-    PyErr_Fetch(&type, &value, &traceback);
 
-    DLManagedTensor *managed =
-        (DLManagedTensor *)PyCapsule_GetPointer(self, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
+/*
+ * Deleter for the capsule used as a `base` in `from_dlpack`.
+ *
+ * This is almost identical to the above used internally as the base for our array
+ * so that we can consume (rename) the original capsule.
+ */
+static void
+array_dlpack_internal_capsule_deleter(PyObject *self)
+{
+    DLManagedTensorVersioned *managed =
+        (DLManagedTensorVersioned *)PyCapsule_GetPointer(
+            self, NPY_DLPACK_VERSIONED_INTERNAL_CAPSULE_NAME);
     if (managed == NULL) {
-        PyErr_WriteUnraisable(self);
-        goto done;
+        PyErr_WriteUnraisable(NULL);
+        return;
     }
     /*
      *  the spec says the deleter can be NULL if there is no way for the caller
@@ -84,9 +128,24 @@ static void array_dlpack_internal_capsule_deleter(PyObject *self)
         /* TODO: is the deleter allowed to set a python exception? */
         assert(!PyErr_Occurred());
     }
+}
 
-done:
-    PyErr_Restore(type, value, traceback);
+/* TODO: Basically same as above until dlpack v0 is removed: */
+static void
+array_dlpack_internal_capsule_deleter_unversioned(PyObject *self)
+{
+    DLManagedTensor *managed =
+        (DLManagedTensor *)PyCapsule_GetPointer(
+            self, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
+    if (managed == NULL) {
+        PyErr_WriteUnraisable(NULL);
+        return;
+    }
+
+    if (managed->deleter) {
+        managed->deleter(managed);
+        assert(!PyErr_Occurred());
+    }
 }
 
 
@@ -108,8 +167,16 @@ array_get_dl_device(PyArrayObject *self) {
     // The outer if is due to the fact that NumPy arrays are on the CPU
     // by default (if not created from DLPack).
     if (PyCapsule_IsValid(base, NPY_DLPACK_INTERNAL_CAPSULE_NAME)) {
-        DLManagedTensor *managed = PyCapsule_GetPointer(
+        DLManagedTensor *managed = (DLManagedTensor *)PyCapsule_GetPointer(
                 base, NPY_DLPACK_INTERNAL_CAPSULE_NAME);
+        if (managed == NULL) {
+            return ret;
+        }
+        return managed->dl_tensor.device;
+    }
+    else if (PyCapsule_IsValid(base, NPY_DLPACK_VERSIONED_INTERNAL_CAPSULE_NAME)) {
+        DLManagedTensorVersioned *managed = (DLManagedTensorVersioned *)PyCapsule_GetPointer(
+                base, NPY_DLPACK_VERSIONED_INTERNAL_CAPSULE_NAME);
         if (managed == NULL) {
             return ret;
         }
@@ -119,30 +186,14 @@ array_get_dl_device(PyArrayObject *self) {
 }
 
 
-PyObject *
-array_dlpack(PyArrayObject *self,
-        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+/*
+ * Fill the dl_tensor struct from the `self` array.
+ * This struct could be versioned, but as of now is not.
+ */
+static int
+fill_dl_tensor_information(
+    DLTensor *dl_tensor, PyArrayObject *self, DLDevice *result_device)
 {
-    PyObject *stream = Py_None;
-    NPY_PREPARE_ARGPARSER;
-    if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
-            "$stream", NULL, &stream, NULL, NULL, NULL)) {
-        return NULL;
-    }
-
-    if (stream != Py_None) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "NumPy only supports stream=None.");
-        return NULL;
-    }
-
-    if ( !(PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE)) {
-        PyErr_SetString(PyExc_BufferError,
-            "Cannot export readonly array since signalling readonly "
-            "is unsupported by DLPack.");
-        return NULL;
-    }
-
     npy_intp itemsize = PyArray_ITEMSIZE(self);
     int ndim = PyArray_NDIM(self);
     npy_intp *strides = PyArray_STRIDES(self);
@@ -154,7 +205,7 @@ array_dlpack(PyArrayObject *self,
                 PyErr_SetString(PyExc_BufferError,
                         "DLPack only supports strides which are a multiple of "
                         "itemsize.");
-                return NULL;
+                return -1;
             }
         }
     }
@@ -165,7 +216,7 @@ array_dlpack(PyArrayObject *self,
     if (PyDataType_ISBYTESWAPPED(dtype)) {
         PyErr_SetString(PyExc_BufferError,
                 "DLPack only supports native byte order.");
-            return NULL;
+            return -1;
     }
 
     managed_dtype.bits = 8 * itemsize;
@@ -187,7 +238,7 @@ array_dlpack(PyArrayObject *self,
             PyErr_SetString(PyExc_BufferError,
                     "DLPack only supports IEEE floating point types "
                     "without padding (longdouble typically is not IEEE).");
-            return NULL;
+            return -1;
         }
         managed_dtype.code = kDLFloat;
     }
@@ -198,7 +249,7 @@ array_dlpack(PyArrayObject *self,
             PyErr_SetString(PyExc_BufferError,
                     "DLPack only supports IEEE floating point types "
                     "without padding (longdouble typically is not IEEE).");
-            return NULL;
+            return -1;
         }
         managed_dtype.code = kDLComplex;
     }
@@ -206,24 +257,8 @@ array_dlpack(PyArrayObject *self,
         PyErr_SetString(PyExc_BufferError,
                 "DLPack only supports signed/unsigned integers, float "
                 "and complex dtypes.");
-        return NULL;
+        return -1;
     }
-
-    DLDevice device = array_get_dl_device(self);
-    if (PyErr_Occurred()) {
-        return NULL;
-    }
-
-    // ensure alignment
-    int offset = sizeof(DLManagedTensor) % sizeof(void *);
-    void *ptr = PyMem_Malloc(sizeof(DLManagedTensor) + offset +
-        (sizeof(int64_t) * ndim * 2));
-    if (ptr == NULL) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    DLManagedTensor *managed = ptr;
 
     /*
      * Note: the `dlpack.h` header suggests/standardizes that `data` must be
@@ -238,34 +273,94 @@ array_dlpack(PyArrayObject *self,
      * that NumPy MUST use `byte_offset` to adhere to the standard (as
      * specified in the header)!
      */
-    managed->dl_tensor.data = PyArray_DATA(self);
-    managed->dl_tensor.byte_offset = 0;
-    managed->dl_tensor.device = device;
-    managed->dl_tensor.dtype = managed_dtype;
+    dl_tensor->data = PyArray_DATA(self);
+    dl_tensor->byte_offset = 0;
+    dl_tensor->device = *result_device;
+    dl_tensor->dtype = managed_dtype;
 
-    int64_t *managed_shape_strides = (int64_t *)((char *)ptr +
-        sizeof(DLManagedTensor) + offset);
-
-    int64_t *managed_shape = managed_shape_strides;
-    int64_t *managed_strides = managed_shape_strides + ndim;
     for (int i = 0; i < ndim; ++i) {
-        managed_shape[i] = shape[i];
+        dl_tensor->shape[i] = shape[i];
         // Strides in DLPack are items; in NumPy are bytes.
-        managed_strides[i] = strides[i] / itemsize;
+        dl_tensor->strides[i] = strides[i] / itemsize;
     }
 
-    managed->dl_tensor.ndim = ndim;
-    managed->dl_tensor.shape = managed_shape;
-    managed->dl_tensor.strides = NULL;
-    if (PyArray_SIZE(self) != 1 && !PyArray_IS_C_CONTIGUOUS(self)) {
-        managed->dl_tensor.strides = managed_strides;
+    dl_tensor->ndim = ndim;
+    if (PyArray_IS_C_CONTIGUOUS(self)) {
+        /* No need to pass strides, so just NULL it again */
+        dl_tensor->strides = NULL;
     }
-    managed->dl_tensor.byte_offset = 0;
-    managed->manager_ctx = self;
-    managed->deleter = array_dlpack_deleter;
+    dl_tensor->byte_offset = 0;
 
-    PyObject *capsule = PyCapsule_New(managed, NPY_DLPACK_CAPSULE_NAME,
-            dlpack_capsule_deleter);
+    return 0;
+}
+
+
+static PyObject *
+create_dlpack_capsule(
+        PyArrayObject *self, int versioned, DLDevice *result_device, int copied)
+{
+    int ndim = PyArray_NDIM(self);
+
+    /*
+     * We align shape and strides at the end but need to align them, offset
+     * gives the offset of the shape (and strides) including the struct size.
+     */
+    size_t align = sizeof(int64_t);
+    size_t struct_size = (
+        versioned ? sizeof(DLManagedTensorVersioned) : sizeof(DLManagedTensor));
+
+    size_t offset = (struct_size + align - 1) / align * align;
+    void *ptr = PyMem_Malloc(offset + (sizeof(int64_t) * ndim * 2));
+    if (ptr == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    DLTensor *dl_tensor;
+    PyCapsule_Destructor capsule_deleter;
+    const char *capsule_name;
+
+    if (versioned) {
+        DLManagedTensorVersioned *managed = (DLManagedTensorVersioned *)ptr;
+        capsule_name = NPY_DLPACK_VERSIONED_CAPSULE_NAME;
+        capsule_deleter = (PyCapsule_Destructor)dlpack_capsule_deleter;
+        managed->deleter = array_dlpack_deleter;
+        managed->manager_ctx = self;
+
+        dl_tensor = &managed->dl_tensor;
+
+        /* The versioned tensor has additional fields that we need to set */
+        managed->version.major = 1;
+        managed->version.minor = 0;
+
+        managed->flags = 0;
+        if (!PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
+            managed->flags |= DLPACK_FLAG_BITMASK_READ_ONLY;
+        }
+        if (copied) {
+            managed->flags |= DLPACK_FLAG_BITMASK_IS_COPIED;
+        }
+    }
+    else {
+        DLManagedTensor *managed = (DLManagedTensor *)ptr;
+        capsule_name = NPY_DLPACK_CAPSULE_NAME;
+        capsule_deleter = (PyCapsule_Destructor)dlpack_capsule_deleter_unversioned;
+        managed->deleter = array_dlpack_deleter_unversioned;
+        managed->manager_ctx = self;
+
+        dl_tensor = &managed->dl_tensor;
+    }
+
+    dl_tensor->shape = (int64_t *)((char *)ptr + offset);
+    /* Note that strides may be set to NULL later if C-contiguous */
+    dl_tensor->strides = dl_tensor->shape + ndim;
+
+    if (fill_dl_tensor_information(dl_tensor, self, result_device) < 0) {
+        PyMem_Free(ptr);
+        return NULL;
+    }
+
+    PyObject *capsule = PyCapsule_New(ptr, capsule_name, capsule_deleter);
     if (capsule == NULL) {
         PyMem_Free(ptr);
         return NULL;
@@ -273,10 +368,119 @@ array_dlpack(PyArrayObject *self,
 
     // the capsule holds a reference
     Py_INCREF(self);
+
     return capsule;
 }
 
-PyObject *
+
+static int
+device_converter(PyObject *obj, DLDevice *result_device)
+{
+    int type, id;
+    if (obj == Py_None) {
+        return NPY_SUCCEED;
+    }
+    if (!PyTuple_Check(obj)) {
+        PyErr_SetString(PyExc_TypeError, "dl_device must be a tuple");
+        return NPY_FAIL;
+    }
+    if (!PyArg_ParseTuple(obj, "ii", &type, &id)) {
+        return NPY_FAIL;
+    }
+    /* We can honor the request if matches the existing one or is CPU */
+    if (type == result_device->device_type && id == result_device->device_id) {
+        return NPY_SUCCEED;
+    }
+    if (type == kDLCPU && id == 0) {
+        result_device->device_type = type;
+        result_device->device_id = id;
+        return NPY_SUCCEED;
+    }
+
+    PyErr_SetString(PyExc_ValueError, "unsupported device requested");
+    return NPY_FAIL;
+}
+
+
+NPY_NO_EXPORT PyObject *
+array_dlpack(PyArrayObject *self,
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyObject *stream = Py_None;
+    PyObject *max_version = Py_None;
+    NPY_COPYMODE copy_mode = NPY_COPY_IF_NEEDED;
+    long major_version = 0;
+    /* We allow the user to request a result device in principle. */
+    DLDevice result_device = array_get_dl_device(self);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("__dlpack__", args, len_args, kwnames,
+            "$stream", NULL, &stream,
+            "$max_version", NULL, &max_version,
+            "$dl_device", &device_converter, &result_device,
+            "$copy", &PyArray_CopyConverter, &copy_mode,
+            NULL, NULL, NULL)) {
+        return NULL;
+    }
+
+    if (max_version != Py_None) {
+        if (!PyTuple_Check(max_version) || PyTuple_GET_SIZE(max_version) != 2) {
+            PyErr_SetString(PyExc_TypeError,
+                    "max_version must be None or a tuple with two elements.");
+            return NULL;
+        }
+        major_version = PyLong_AsLong(PyTuple_GET_ITEM(max_version, 0));
+        if (major_version == -1 && PyErr_Occurred()) {
+            return NULL;
+        }
+    }
+
+    if (stream != Py_None) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "NumPy only supports stream=None.");
+        return NULL;
+    }
+
+    /* If the user requested a copy be made, honor that here already */
+    if (copy_mode == NPY_COPY_ALWAYS) {
+        /* TODO: It may be good to check ability to export dtype first. */
+        self = (PyArrayObject *)PyArray_NewCopy(self, NPY_KEEPORDER);
+        if (self == NULL) {
+            return NULL;
+        }
+    }
+    else {
+        Py_INCREF(self);
+    }
+
+    if (major_version < 1 && !(PyArray_FLAGS(self) & NPY_ARRAY_WRITEABLE)) {
+        PyErr_SetString(PyExc_BufferError,
+            "Cannot export readonly array since signalling readonly "
+            "is unsupported by DLPack (supported by newer DLPack version).");
+        Py_DECREF(self);
+        return NULL;
+    }
+
+    /*
+     * TODO: The versioned and non-versioned structs of DLPack are very
+     * similar but not ABI compatible so that the function called here requires
+     * branching (templating didn't seem worthwhile).
+     *
+     * Version 0 support should be deprecated in NumPy 2.1 and the branches
+     * can then be removed again.
+     */
+    PyObject *res = create_dlpack_capsule(
+            self, major_version >= 1, &result_device,
+            copy_mode == NPY_COPY_ALWAYS);
+    Py_DECREF(self);
+
+    return res;
+}
+
+NPY_NO_EXPORT PyObject *
 array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 {
     DLDevice device = array_get_dl_device(self);
@@ -287,23 +491,120 @@ array_dlpack_device(PyArrayObject *self, PyObject *NPY_UNUSED(args))
 }
 
 NPY_NO_EXPORT PyObject *
-from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
-    PyObject *capsule = PyObject_CallMethod((PyObject *)obj->ob_type,
-            "__dlpack__", "O", obj);
+from_dlpack(PyObject *NPY_UNUSED(self),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    PyObject *obj, *copy = Py_None, *device = Py_None;
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("from_dlpack", args, len_args, kwnames,
+            "obj", NULL, &obj,
+            "$copy", NULL, &copy,
+            "$device", NULL, &device,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+
+    /* Prepare the arguments to call objects __dlpack__() method */
+    static PyObject *call_kwnames = NULL;
+    static PyObject *dl_cpu_device_tuple = NULL;
+    static PyObject *max_version = NULL;
+
+    if (call_kwnames == NULL) {
+        call_kwnames = Py_BuildValue("(sss)", "dl_device", "copy", "max_version");
+        if (call_kwnames == NULL) {
+            return NULL;
+        }
+    }
+    if (dl_cpu_device_tuple == NULL) {
+        dl_cpu_device_tuple = Py_BuildValue("(i,i)", 1, 0);
+        if (dl_cpu_device_tuple == NULL) {
+            return NULL;
+        }
+    }
+    if (max_version == NULL) {
+        max_version = Py_BuildValue("(i,i)", 1, 0);
+        if (max_version == NULL) {
+            return NULL;
+        }
+    }
+
+    /* 
+     * Prepare arguments for the full call. We always forward copy and pass
+     * our max_version. `device` is always passed as `None`, but if the user
+     * provided a device, we will replace it with the "cpu": (1, 0).
+     */
+    PyObject *call_args[] = {obj, Py_None, copy, max_version};
+    Py_ssize_t nargsf = 1 | PY_VECTORCALL_ARGUMENTS_OFFSET;
+
+    /* If device is passed it must be "cpu" and replace it with (1, 0) */
+    if (device != Py_None) {
+        /* test that device is actually CPU */
+        NPY_DEVICE device_request = NPY_DEVICE_CPU;
+        if (!PyArray_DeviceConverterOptional(device, &device_request)) {
+            return NULL;
+        }
+        assert(device_request == NPY_DEVICE_CPU);
+        call_args[1] = dl_cpu_device_tuple;
+    }
+
+
+    PyObject *capsule = PyObject_VectorcallMethod(
+            npy_interned_str.__dlpack__, call_args, nargsf, call_kwnames);
     if (capsule == NULL) {
-        return NULL;
+        /*
+         * TODO: This path should be deprecated in NumPy 2.1.  Once deprecated
+         * the below code can be simplified w.r.t. to versioned/unversioned.
+         *
+         * We try without any arguments if both device and copy are None,
+         * since the exporter may not support older versions of the protocol.
+         */
+        if (PyErr_ExceptionMatches(PyExc_TypeError)
+                && device == Py_None && copy == Py_None) {
+            /* max_version may be unsupported, try without kwargs */
+            PyErr_Clear();
+            capsule = PyObject_VectorcallMethod(
+                npy_interned_str.__dlpack__, call_args, nargsf, NULL);
+        }
+        if (capsule == NULL) {
+            return NULL;
+        }
     }
 
-    DLManagedTensor *managed =
-        (DLManagedTensor *)PyCapsule_GetPointer(capsule,
-        NPY_DLPACK_CAPSULE_NAME);
+    void *managed_ptr;
+    DLTensor dl_tensor;
+    int readonly;
+    int versioned = PyCapsule_IsValid(capsule, NPY_DLPACK_VERSIONED_CAPSULE_NAME);
+    if (versioned) {
+        managed_ptr = PyCapsule_GetPointer(capsule, NPY_DLPACK_VERSIONED_CAPSULE_NAME);
+        DLManagedTensorVersioned *managed = (DLManagedTensorVersioned *)managed_ptr;
+        if (managed == NULL) {
+            Py_DECREF(capsule);
+            return NULL;
+        }
 
-    if (managed == NULL) {
-        Py_DECREF(capsule);
-        return NULL;
+        if (managed->version.major > 1) {
+            PyErr_SetString(PyExc_BufferError,
+                "from_dlpack(): the exported DLPack major version is too "
+                "high to be imported by this version of NumPy.");
+            Py_DECREF(capsule);
+            return NULL;
+        }
+
+        dl_tensor = managed->dl_tensor;
+        readonly = (managed->flags & DLPACK_FLAG_BITMASK_READ_ONLY) != 0;
+    }
+    else {
+        managed_ptr = PyCapsule_GetPointer(capsule, NPY_DLPACK_CAPSULE_NAME);
+        DLManagedTensor *managed = (DLManagedTensor *)managed_ptr;
+        if (managed == NULL) {
+            Py_DECREF(capsule);
+            return NULL;
+        }
+        dl_tensor = managed->dl_tensor;
+        readonly = 0;
     }
 
-    const int ndim = managed->dl_tensor.ndim;
+    const int ndim = dl_tensor.ndim;
     if (ndim > NPY_MAXDIMS) {
         PyErr_SetString(PyExc_RuntimeError,
                 "maxdims of DLPack tensor is higher than the supported "
@@ -312,7 +613,7 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
         return NULL;
     }
 
-    DLDeviceType device_type = managed->dl_tensor.device.device_type;
+    DLDeviceType device_type = dl_tensor.device.device_type;
     if (device_type != kDLCPU &&
             device_type != kDLCUDAHost &&
             device_type != kDLROCMHost &&
@@ -323,7 +624,7 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
         return NULL;
     }
 
-    if (managed->dl_tensor.dtype.lanes != 1) {
+    if (dl_tensor.dtype.lanes != 1) {
         PyErr_SetString(PyExc_RuntimeError,
                 "Unsupported lanes in DLTensor dtype.");
         Py_DECREF(capsule);
@@ -331,9 +632,9 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     }
 
     int typenum = -1;
-    const uint8_t bits = managed->dl_tensor.dtype.bits;
+    const uint8_t bits = dl_tensor.dtype.bits;
     const npy_intp itemsize = bits / 8;
-    switch (managed->dl_tensor.dtype.code) {
+    switch (dl_tensor.dtype.code) {
     case kDLBool:
         if (bits == 8) {
             typenum = NPY_BOOL;
@@ -385,15 +686,14 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     npy_intp strides[NPY_MAXDIMS];
 
     for (int i = 0; i < ndim; ++i) {
-        shape[i] = managed->dl_tensor.shape[i];
+        shape[i] = dl_tensor.shape[i];
         // DLPack has elements as stride units, NumPy has bytes.
-        if (managed->dl_tensor.strides != NULL) {
-            strides[i] = managed->dl_tensor.strides[i] * itemsize;
+        if (dl_tensor.strides != NULL) {
+            strides[i] = dl_tensor.strides[i] * itemsize;
         }
     }
 
-    char *data = (char *)managed->dl_tensor.data +
-            managed->dl_tensor.byte_offset;
+    char *data = (char *)dl_tensor.data + dl_tensor.byte_offset;
 
     PyArray_Descr *descr = PyArray_DescrFromType(typenum);
     if (descr == NULL) {
@@ -402,15 +702,27 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
     }
 
     PyObject *ret = PyArray_NewFromDescr(&PyArray_Type, descr, ndim, shape,
-            managed->dl_tensor.strides != NULL ? strides : NULL, data, 0, NULL);
+            dl_tensor.strides != NULL ? strides : NULL, data, 0, NULL);
     if (ret == NULL) {
         Py_DECREF(capsule);
         return NULL;
     }
+    if (readonly) {
+        PyArray_CLEARFLAGS((PyArrayObject *)ret, NPY_ARRAY_WRITEABLE);
+    }
 
-    PyObject *new_capsule = PyCapsule_New(managed,
+    PyObject *new_capsule;
+    if (versioned) {
+        new_capsule = PyCapsule_New(managed_ptr,
+            NPY_DLPACK_VERSIONED_INTERNAL_CAPSULE_NAME,
+            (PyCapsule_Destructor)array_dlpack_internal_capsule_deleter);
+    }
+    else {
+        new_capsule = PyCapsule_New(managed_ptr,
             NPY_DLPACK_INTERNAL_CAPSULE_NAME,
-            array_dlpack_internal_capsule_deleter);
+            (PyCapsule_Destructor)array_dlpack_internal_capsule_deleter_unversioned);
+    }
+
     if (new_capsule == NULL) {
         Py_DECREF(capsule);
         Py_DECREF(ret);
@@ -423,7 +735,10 @@ from_dlpack(PyObject *NPY_UNUSED(self), PyObject *obj) {
         return NULL;
     }
 
-    if (PyCapsule_SetName(capsule, NPY_DLPACK_USED_CAPSULE_NAME) < 0) {
+    const char *new_name = (
+        versioned ? NPY_DLPACK_VERSIONED_USED_CAPSULE_NAME
+                  : NPY_DLPACK_USED_CAPSULE_NAME);
+    if (PyCapsule_SetName(capsule, new_name) < 0) {
         Py_DECREF(capsule);
         Py_DECREF(ret);
         return NULL;

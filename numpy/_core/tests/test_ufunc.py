@@ -22,19 +22,12 @@ from numpy.testing import (
 from numpy.testing._private.utils import requires_memory
 
 
-import cython
-from packaging.version import parse, Version
-
-# Remove this when cython fixes https://github.com/cython/cython/issues/5411
-cython_version = parse(cython.__version__)
-BUG_5411 = Version("3.0.0a7") <= cython_version <= Version("3.0.0b3")
-
 UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values()
                     if isinstance(obj, np.ufunc)]
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
 # Remove functions that do not support `floats`
-UNARY_OBJECT_UFUNCS.remove(getattr(np, 'bitwise_count'))
+UNARY_OBJECT_UFUNCS.remove(np.bitwise_count)
 
 
 class TestUfuncKwargs:
@@ -214,9 +207,6 @@ class TestUfunc:
                    b"(S'numpy._core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n.")
         assert_(pickle.loads(astring) is np.cos)
 
-    @pytest.mark.skipif(BUG_5411,
-        reason=("cython raises a AttributeError where it should raise a "
-                "ModuleNotFoundError"))
     @pytest.mark.skipif(IS_PYPY, reason="'is' check does not work on PyPy")
     def test_pickle_name_is_qualname(self):
         # This tests that a simplification of our ufunc pickle code will
@@ -496,8 +486,8 @@ class TestUfunc:
         np.add(3, 4, signature=(float_dtype, float_dtype, None))
 
     @pytest.mark.parametrize("get_kwarg", [
-            lambda dt: dict(dtype=x),
-            lambda dt: dict(signature=(x, None, None))])
+            lambda dt: dict(dtype=dt),
+            lambda dt: dict(signature=(dt, None, None))])
     def test_signature_dtype_instances_allowed(self, get_kwarg):
         # We allow certain dtype instances when there is a clear singleton
         # and the given one is equivalent; mainly for backcompat.
@@ -547,9 +537,6 @@ class TestUfunc:
         with pytest.raises(TypeError):
             np.add(np.float16(1), np.uint64(2), sig=("e", "d", None))
 
-    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
-            reason="NEP 50 impl breaks casting checks when `dtype=` is used "
-                   "together with python scalars.")
     def test_use_output_signature_for_all_arguments(self):
         # Test that providing only `dtype=` or `signature=(None, None, dtype)`
         # is sufficient if falling back to a homogeneous signature works.
@@ -625,6 +612,31 @@ class TestUfunc:
         res = call_ufunc(arr_bs, dtype=np.float64, casting="safe")
         expected = call_ufunc(arr.astype(np.float64))  # upcast
         assert_array_equal(expected, res)
+
+    @pytest.mark.parametrize("ufunc", [np.add, np.equal])
+    def test_cast_safety_scalar(self, ufunc):
+        # We test add and equal, because equal has special scalar handling
+        # Note that the "equiv" casting behavior should maybe be considered
+        # a current implementation detail.
+        with pytest.raises(TypeError):
+            # this picks an integer loop, which is not safe
+            ufunc(3., 4., dtype=int, casting="safe")
+
+        with pytest.raises(TypeError):
+            # We accept python float as float64 but not float32 for equiv.
+            ufunc(3., 4., dtype="float32", casting="equiv")
+
+        # Special case for object and equal (note that equiv implies safe)
+        ufunc(3, 4, dtype=object, casting="equiv")
+        # Picks a double loop for both, first is equiv, second safe:
+        ufunc(np.array([3.]), 3., casting="equiv")
+        ufunc(np.array([3.]), 3, casting="safe")
+        ufunc(np.array([3]), 3, casting="equiv")
+
+    def test_cast_safety_scalar_special(self):
+        # We allow this (and it succeeds) via object, although the equiv
+        # part may not be important.
+        np.equal(np.array([3]), 2**300, casting="equiv")
 
     def test_true_divide(self):
         a = np.array(10)
@@ -2662,8 +2674,51 @@ class TestUfunc:
             pass  # ok, just not implemented
 
 
+class TestGUFuncProcessCoreDims:
+
+    def test_conv1d_full_without_out(self):
+        x = np.arange(5.0)
+        y = np.arange(13.0)
+        w = umt.conv1d_full(x, y)
+        assert_equal(w, np.convolve(x, y, mode='full'))
+
+    def test_conv1d_full_with_out(self):
+        x = np.arange(5.0)
+        y = np.arange(13.0)
+        out = np.zeros(len(x) + len(y) - 1)
+        umt.conv1d_full(x, y, out=out)
+        assert_equal(out, np.convolve(x, y, mode='full'))
+
+    def test_conv1d_full_basic_broadcast(self):
+        # x.shape is (3, 6)
+        x = np.array([[1, 3, 0, -10, 2, 2],
+                      [0, -1, 2, 2, 10, 4],
+                      [8, 9, 10, 2, 23, 3]])
+        # y.shape is (2, 1, 7)
+        y = np.array([[[3, 4, 5, 20, 30, 40, 29]],
+                      [[5, 6, 7, 10, 11, 12, -5]]])
+        # result should have shape (2, 3, 12)
+        result = umt.conv1d_full(x, y)
+        assert result.shape == (2, 3, 12)
+        for i in range(2):
+            for j in range(3):
+                assert_equal(result[i, j], np.convolve(x[j], y[i, 0]))
+
+    def test_bad_out_shape(self):
+        x = np.ones((1, 2))
+        y = np.ones((2, 3))
+        out = np.zeros((2, 3))  # Not the correct shape.
+        with pytest.raises(ValueError, match=r'does not equal m \+ n - 1'):
+            umt.conv1d_full(x, y, out=out)
+
+    def test_bad_input_both_inputs_length_zero(self):
+        with pytest.raises(ValueError,
+                           match='both inputs have core dimension 0'):
+            umt.conv1d_full([], [])
+
+
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
-                                if isinstance(getattr(np, x), np.ufunc)])
+                                   if isinstance(getattr(np, x), np.ufunc)])
 def test_ufunc_types(ufunc):
     '''
     Check all ufuncs that the correct type is returned. Avoid
@@ -2691,7 +2746,6 @@ def test_ufunc_types(ufunc):
 
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])
-@np._no_nep50_warning()
 def test_ufunc_noncontiguous(ufunc):
     '''
     Check that contiguous and non-contiguous calls to ufuncs
@@ -2704,19 +2758,30 @@ def test_ufunc_noncontiguous(ufunc):
             continue
         inp, out = typ.split('->')
         args_c = [np.empty(6, t) for t in inp]
+        # non contiguous (3 step)
         args_n = [np.empty(18, t)[::3] for t in inp]
-        for a in args_c:
+        # alignment != itemsize is possible.  So create an array with such
+        # an odd step manually.
+        args_o = []
+        for t in inp:
+            orig_dt = np.dtype(t)
+            off_dt = f"S{orig_dt.alignment}"  # offset by alignment
+            dtype = np.dtype([("_", off_dt), ("t", orig_dt)], align=False)
+            args_o.append(np.empty(6, dtype=dtype)["t"])
+
+        for a in args_c + args_n + args_o:
             a.flat = range(1,7)
-        for a in args_n:
-            a.flat = range(1,7)
+
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
             res_c = ufunc(*args_c)
             res_n = ufunc(*args_n)
+            res_o = ufunc(*args_o)
         if len(out) == 1:
             res_c = (res_c,)
             res_n = (res_n,)
-        for c_ar, n_ar in zip(res_c, res_n):
+            res_o = (res_o,)
+        for c_ar, n_ar, o_ar in zip(res_c, res_n, res_o):
             dt = c_ar.dtype
             if np.issubdtype(dt, np.floating):
                 # for floating point results allow a small fuss in comparisons
@@ -2725,8 +2790,10 @@ def test_ufunc_noncontiguous(ufunc):
                 res_eps = np.finfo(dt).eps
                 tol = 2*res_eps
                 assert_allclose(res_c, res_n, atol=tol, rtol=tol)
+                assert_allclose(res_c, res_o, atol=tol, rtol=tol)
             else:
                 assert_equal(c_ar, n_ar)
+                assert_equal(c_ar, o_ar)
 
 
 @pytest.mark.parametrize('ufunc', [np.sign, np.equal])
@@ -2981,6 +3048,13 @@ class TestLowlevelAPIAccess:
 
         with pytest.raises(TypeError):
             np.add.resolve_dtypes((i4, f4, None), casting="no")
+
+    def test_resolve_dtypes_comparison(self):
+        i4 = np.dtype("i4")
+        i8 = np.dtype("i8")
+        b = np.dtype("?")
+        r = np.equal.resolve_dtypes((i4, i8, None))
+        assert r == (i8, i8, b)
 
     def test_weird_dtypes(self):
         S0 = np.dtype("S0")

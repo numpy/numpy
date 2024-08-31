@@ -37,7 +37,7 @@ NpyString_free_allocator(npy_string_allocator *allocator);
 // NPY_EMPTY_STRING into *to_init* is sufficient to initialize it. Does not
 // check if *to_init* is NULL or if the internal buffer is non-NULL, undefined
 // behavior or memory leaks are possible if this function is passed a pointer
-// to a an unintialized struct, a NULL pointer, or an existing heap-allocated
+// to a an uninitialized struct, a NULL pointer, or an existing heap-allocated
 // string.  Returns -1 if allocating the string would exceed the maximum
 // allowed string size or exhaust available memory. Returns 0 on success.
 NPY_NO_EXPORT int

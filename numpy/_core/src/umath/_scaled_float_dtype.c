@@ -25,6 +25,7 @@
 #include "dtypemeta.h"
 #include "dispatching.h"
 #include "gil_utils.h"
+#include "multiarraymodule.h"
 
 typedef struct {
     PyArray_Descr base;
@@ -142,7 +143,6 @@ static PyArray_SFloatDescr SFloatSingleton = {{
         .type_num = -1,
         .elsize = sizeof(double),
         .alignment = NPY_ALIGNOF(double),
-        .f = &sfloat_slots.f,
     },
     .scaling = 1,
 };
@@ -654,8 +654,8 @@ add_sfloats_resolve_descriptors(
  */
 static int
 translate_given_descrs_to_double(
-        int nin, int nout, PyArray_DTypeMeta *wrapped_dtypes[],
-        PyArray_Descr *given_descrs[], PyArray_Descr *new_descrs[])
+        int nin, int nout, PyArray_DTypeMeta *const wrapped_dtypes[],
+        PyArray_Descr *const given_descrs[], PyArray_Descr *new_descrs[])
 {
     assert(nin == 2 && nout == 1);
     for (int i = 0; i < 3; i++) {
@@ -672,8 +672,8 @@ translate_given_descrs_to_double(
 
 static int
 translate_loop_descrs(
-        int nin, int nout, PyArray_DTypeMeta *new_dtypes[],
-        PyArray_Descr *given_descrs[],
+        int nin, int nout, PyArray_DTypeMeta *const new_dtypes[],
+        PyArray_Descr *const given_descrs[],
         PyArray_Descr *NPY_UNUSED(original_descrs[]),
         PyArray_Descr *loop_descrs[])
 {
@@ -868,10 +868,7 @@ sfloat_init_ufuncs(void) {
 NPY_NO_EXPORT PyObject *
 get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
 {
-    /* Allow calling the function multiple times. */
-    static npy_bool initialized = NPY_FALSE;
-
-    if (initialized) {
+    if (npy_thread_unsafe_state.get_sfloat_dtype_initialized) {
         Py_INCREF(&PyArray_SFloatDType);
         return (PyObject *)&PyArray_SFloatDType;
     }
@@ -900,6 +897,6 @@ get_sfloat_dtype(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(args))
         return NULL;
     }
 
-    initialized = NPY_TRUE;
+    npy_thread_unsafe_state.get_sfloat_dtype_initialized = NPY_TRUE;
     return (PyObject *)&PyArray_SFloatDType;
 }

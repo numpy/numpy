@@ -11,7 +11,7 @@
 
 #include "npy_config.h"
 
-#include "npy_pycompat.h"
+
 
 #include "common.h"
 #include "number.h"
@@ -124,11 +124,11 @@ _PyArray_ArgMinMaxCommon(PyArrayObject *op,
 
     if (is_argmax) {
         func_name = "argmax";
-        arg_func = PyArray_DESCR(ap)->f->argmax;
+        arg_func = PyDataType_GetArrFuncs(PyArray_DESCR(ap))->argmax;
     }
     else {
         func_name = "argmin";
-        arg_func = PyArray_DESCR(ap)->f->argmin;
+        arg_func = PyDataType_GetArrFuncs(PyArray_DESCR(ap))->argmin;
     }
     if (arg_func == NULL) {
         PyErr_SetString(PyExc_TypeError,

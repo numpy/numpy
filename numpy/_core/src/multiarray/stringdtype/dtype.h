@@ -14,7 +14,7 @@ extern "C" {
 #define ALIGNOF_NPY_PACKED_STATIC_STRING _Alignof(size_t)
 
 NPY_NO_EXPORT PyObject *
-new_stringdtype_instance(PyObject *na_object, int coerce, npy_string_allocator *allocator);
+new_stringdtype_instance(PyObject *na_object, int coerce);
 
 NPY_NO_EXPORT int
 init_string_dtype(void);
@@ -48,6 +48,9 @@ stringdtype_finalize_descr(PyArray_Descr *dtype);
 
 NPY_NO_EXPORT int
 _eq_comparison(int scoerce, int ocoerce, PyObject *sna, PyObject *ona);
+
+NPY_NO_EXPORT int
+stringdtype_compatible_na(PyObject *na1, PyObject *na2, PyObject **out_na);
 
 #ifdef __cplusplus
 }

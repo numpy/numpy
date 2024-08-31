@@ -6,7 +6,7 @@
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
-#include "npy_pycompat.h"
+
 #include "numpyos.h"
 
 /*

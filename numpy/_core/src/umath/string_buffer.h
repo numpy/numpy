@@ -262,12 +262,12 @@ struct Buffer {
     char *buf;
     char *after;
 
-    inline Buffer<enc>()
+    inline Buffer()
     {
         buf = after = NULL;
     }
 
-    inline Buffer<enc>(char *buf_, npy_int64 elsize_)
+    inline Buffer(char *buf_, npy_int64 elsize_)
     {
         buf = buf_;
         after = buf_ + elsize_;
@@ -404,28 +404,36 @@ struct Buffer {
         }
     }
 
-    inline void
+    inline npy_intp
     buffer_memset(npy_ucs4 fill_char, size_t n_chars)
     {
         if (n_chars == 0) {
-            return;
+            return 0;
         }
         switch (enc) {
             case ENCODING::ASCII:
-                memset(buf, fill_char, n_chars);
-                break;
+                memset(this->buf, fill_char, n_chars);
+                return n_chars;
             case ENCODING::UTF32:
             {
-                char *tmp = buf;
+                char *tmp = this->buf;
                 for (size_t i = 0; i < n_chars; i++) {
                     *(npy_ucs4 *)tmp = fill_char;
                     tmp += sizeof(npy_ucs4);
                 }
-                break;
+                return n_chars;
             }
             case ENCODING::UTF8:
-                assert(false);  // buffer_memset not used by stringdtype
-                break;
+            {
+                char utf8_c[4] = {0};
+                char *tmp = this->buf;
+                size_t num_bytes = ucs4_code_to_utf8_char(fill_char, utf8_c);
+                for (size_t i = 0; i < n_chars; i++) {
+                    memcpy(tmp, utf8_c, num_bytes);
+                    tmp += num_bytes;
+                }
+                return num_bytes * n_chars;
+            }
         }
     }
 
@@ -1027,7 +1035,7 @@ string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end
 
 
 /*
- * Count the number of occurences of buf2 in buf1 between
+ * Count the number of occurrences of buf2 in buf1 between
  * start (inclusive) and end (exclusive)
  */
 template <ENCODING enc>
@@ -1141,49 +1149,54 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
         return 0;
     }
 
-    size_t i = 0;
+    size_t new_start = 0;
 
     size_t num_bytes = (buf.after - buf.buf);
     Buffer traverse_buf = Buffer<enc>(buf.buf, num_bytes);
 
     if (striptype != STRIPTYPE::RIGHTSTRIP) {
-        while (i < len) {
+        while (new_start < len) {
             if (!traverse_buf.first_character_isspace()) {
                 break;
             }
             num_bytes -= traverse_buf.num_bytes_next_character();
-            traverse_buf++;
-            i++;
+            new_start++;
+            traverse_buf++;  // may go one beyond buffer
         }
     }
 
-    npy_intp j = len - 1;  // Could also turn negative if we're stripping the whole string
+    size_t new_stop = len;  // New stop is a range (beyond last char)
     if (enc == ENCODING::UTF8) {
         traverse_buf = Buffer<enc>(buf.after, 0) - 1;
     }
     else {
-        traverse_buf = buf + j;
+        traverse_buf = buf + (new_stop - 1);
     }
 
     if (striptype != STRIPTYPE::LEFTSTRIP) {
-        while (j >= static_cast<npy_intp>(i)) {
+        while (new_stop > new_start) {
             if (*traverse_buf != 0 && !traverse_buf.first_character_isspace()) {
                 break;
             }
+
             num_bytes -= traverse_buf.num_bytes_next_character();
-            traverse_buf--;
-            j--;
+            new_stop--;
+
+            // Do not step to character -1: can't find it's start for utf-8.
+            if (new_stop > 0) {
+                traverse_buf--;
+            }
         }
     }
 
-    Buffer offset_buf = buf + i;
+    Buffer offset_buf = buf + new_start;
     if (enc == ENCODING::UTF8) {
         offset_buf.buffer_memcpy(out, num_bytes);
         return num_bytes;
     }
-    offset_buf.buffer_memcpy(out, j - i + 1);
-    out.buffer_fill_with_zeros_after_index(j - i + 1);
-    return j - i + 1;
+    offset_buf.buffer_memcpy(out, new_stop - new_start);
+    out.buffer_fill_with_zeros_after_index(new_stop - new_start);
+    return new_stop - new_start;
 }
 
 
@@ -1210,20 +1223,30 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
         return len1;
     }
 
-    size_t i = 0;
+    size_t new_start = 0;
 
     size_t num_bytes = (buf1.after - buf1.buf);
     Buffer traverse_buf = Buffer<enc>(buf1.buf, num_bytes);
 
     if (striptype != STRIPTYPE::RIGHTSTRIP) {
-        while (i < len1) {
+        for (; new_start < len1; traverse_buf++) {
             Py_ssize_t res;
+            size_t current_point_bytes = traverse_buf.num_bytes_next_character();
             switch (enc) {
                 case ENCODING::ASCII:
-                case ENCODING::UTF8:
                 {
                     CheckedIndexer<char> ind(buf2.buf, len2);
                     res = findchar<char>(ind, len2, *traverse_buf);
+                    break;
+                }
+                case ENCODING::UTF8:
+                {
+                    if (current_point_bytes == 1) {
+                        CheckedIndexer<char> ind(buf2.buf, len2);
+                        res = findchar<char>(ind, len2, *traverse_buf);
+                    } else {
+                        res = fastsearch(buf2.buf, buf2.after - buf2.buf,traverse_buf.buf, current_point_bytes, -1, FAST_SEARCH);
+                    }
                     break;
                 }
                 case ENCODING::UTF32:
@@ -1237,28 +1260,37 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 break;
             }
             num_bytes -= traverse_buf.num_bytes_next_character();
-            traverse_buf++;
-            i++;
+            new_start++;
         }
     }
 
-    npy_intp j = len1 - 1;
+    size_t new_stop = len1;  // New stop is a range (beyond last char)
     if (enc == ENCODING::UTF8) {
         traverse_buf = Buffer<enc>(buf1.after, 0) - 1;
     }
     else {
-        traverse_buf = buf1 + j;
+        traverse_buf = buf1 + (new_stop - 1);
     }
 
     if (striptype != STRIPTYPE::LEFTSTRIP) {
-        while (j >= static_cast<npy_intp>(i)) {
+        while (new_stop > new_start) {
+            size_t current_point_bytes = traverse_buf.num_bytes_next_character();
             Py_ssize_t res;
             switch (enc) {
                 case ENCODING::ASCII:
-                case ENCODING::UTF8:
                 {
                     CheckedIndexer<char> ind(buf2.buf, len2);
                     res = findchar<char>(ind, len2, *traverse_buf);
+                    break;
+                }
+                case ENCODING::UTF8:
+                {
+                    if (current_point_bytes == 1) {
+                        CheckedIndexer<char> ind(buf2.buf, len2);
+                        res = findchar<char>(ind, len2, *traverse_buf);
+                    } else {
+                        res = fastsearch(buf2.buf, buf2.after - buf2.buf, traverse_buf.buf, current_point_bytes, -1, FAST_RSEARCH);
+                    }
                     break;
                 }
                 case ENCODING::UTF32:
@@ -1271,22 +1303,23 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
             if (res < 0) {
                 break;
             }
-            num_bytes -= traverse_buf.num_bytes_next_character();
-            j--;
-            if (j > 0) {
+            num_bytes -= current_point_bytes;;
+            new_stop--;
+            // Do not step to character -1: can't find it's start for utf-8.
+            if (new_stop > 0) {
                 traverse_buf--;
             }
         }
     }
 
-    Buffer offset_buf = buf1 + i;
+    Buffer offset_buf = buf1 + new_start;
     if (enc == ENCODING::UTF8) {
         offset_buf.buffer_memcpy(out, num_bytes);
         return num_bytes;
     }
-    offset_buf.buffer_memcpy(out, j - i + 1);
-    out.buffer_fill_with_zeros_after_index(j - i + 1);
-    return j - i + 1;
+    offset_buf.buffer_memcpy(out, new_stop - new_start);
+    out.buffer_fill_with_zeros_after_index(new_stop - new_start);
+    return new_stop - new_start;
 }
 
 template <typename char_type>
@@ -1427,6 +1460,204 @@ copy_rest:
     return ret;
 }
 
+
+template <ENCODING enc>
+static inline npy_intp
+string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
+{
+    size_t len = buf.num_codepoints();
+
+    npy_intp new_len = 0, line_pos = 0;
+
+    Buffer<enc> tmp = buf;
+    for (size_t i = 0; i < len; i++) {
+        npy_ucs4 ch = *tmp;
+        if (ch == '\t') {
+            if (tabsize > 0) {
+                npy_intp incr = tabsize - (line_pos % tabsize);
+                line_pos += incr;
+                new_len += incr;
+            }
+        }
+        else {
+            line_pos += 1;
+            size_t n_bytes = tmp.num_bytes_next_character();
+            new_len += n_bytes;
+            if (ch == '\n' || ch == '\r') {
+                line_pos = 0;
+            }
+        }
+        if (new_len > INT_MAX  || new_len < 0) {
+            npy_gil_error(PyExc_OverflowError, "new string is too long");
+            return -1;
+        }
+        tmp++;
+    }
+    return new_len;
+}
+
+
+template <ENCODING enc>
+static inline npy_intp
+string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
+{
+    size_t len = buf.num_codepoints();
+
+    npy_intp new_len = 0, line_pos = 0;
+
+    Buffer<enc> tmp = buf;
+    for (size_t i = 0; i < len; i++) {
+        npy_ucs4 ch = *tmp;
+        if (ch == '\t') {
+            if (tabsize > 0) {
+                npy_intp incr = tabsize - (line_pos % tabsize);
+                line_pos += incr;
+                new_len += out.buffer_memset((npy_ucs4) ' ', incr);
+                out += incr;
+            }
+        }
+        else {
+            line_pos++;
+            new_len += out.buffer_memset(ch, 1);
+            out++;
+            if (ch == '\n' || ch == '\r') {
+                line_pos = 0;
+            }
+        }
+        tmp++;
+    }
+    return new_len;
+}
+
+
+enum class JUSTPOSITION {
+    CENTER, LEFT, RIGHT
+};
+
+template <ENCODING enc>
+static inline npy_intp
+string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Buffer<enc> out)
+{
+    size_t finalwidth = width > 0 ? width : 0;
+    if (finalwidth > PY_SSIZE_T_MAX) {
+        npy_gil_error(PyExc_OverflowError, "padded string is too long");
+        return -1;
+    }
+
+    size_t len_codepoints = buf.num_codepoints();
+    size_t len_bytes = buf.after - buf.buf;
+
+    size_t len;
+    if (enc == ENCODING::UTF8) {
+        len = len_bytes;
+    }
+    else {
+        len = len_codepoints;
+    }
+
+    if (len_codepoints >= finalwidth) {
+        buf.buffer_memcpy(out, len);
+        return (npy_intp) len;
+    }
+
+    size_t left, right;
+    if (pos == JUSTPOSITION::CENTER) {
+        size_t pad = finalwidth - len_codepoints;
+        left = pad / 2 + (pad & finalwidth & 1);
+        right = pad - left;
+    }
+    else if (pos == JUSTPOSITION::LEFT) {
+        left = 0;
+        right = finalwidth - len_codepoints;
+    }
+    else {
+        left = finalwidth - len_codepoints;
+        right = 0;
+    }
+
+    assert(left >= 0 || right >= 0);
+    assert(left <= PY_SSIZE_T_MAX - len && right <= PY_SSIZE_T_MAX - (left + len));
+
+    if (left > 0) {
+        out.advance_chars_or_bytes(out.buffer_memset(fill, left));
+    }
+
+    buf.buffer_memcpy(out, len);
+    out += len_codepoints;
+
+    if (right > 0) {
+        out.advance_chars_or_bytes(out.buffer_memset(fill, right));
+    }
+
+    return finalwidth;
+}
+
+
+template <ENCODING enc>
+static inline npy_intp
+string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
+{
+    size_t finalwidth = width > 0 ? width : 0;
+
+    npy_ucs4 fill = '0';
+    npy_intp new_len = string_pad(buf, width, fill, JUSTPOSITION::RIGHT, out);
+    if (new_len == -1) {
+        return -1;
+    }
+
+    size_t offset = finalwidth - buf.num_codepoints();
+    Buffer<enc> tmp = out + offset;
+
+    npy_ucs4 c = *tmp;
+    if (c == '+' || c == '-') {
+        tmp.buffer_memset(fill, 1);
+        out.buffer_memset(c, 1);
+    }
+
+    return new_len;
+}
+
+
+template <ENCODING enc>
+static inline void
+string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
+                 Buffer<enc> out1, Buffer<enc> out2, Buffer<enc> out3,
+                 npy_intp *final_len1, npy_intp *final_len2, npy_intp *final_len3,
+                 STARTPOSITION pos)
+{
+    // StringDType uses a ufunc that implements the find-part as well
+    assert(enc != ENCODING::UTF8);
+
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
+
+    if (len2 == 0) {
+        npy_gil_error(PyExc_ValueError, "empty separator");
+        *final_len1 = *final_len2 = *final_len3 = -1;
+        return;
+    }
+
+    if (idx < 0) {
+        if (pos == STARTPOSITION::FRONT) {
+            buf1.buffer_memcpy(out1, len1);
+            *final_len1 = len1;
+            *final_len2 = *final_len3 = 0;
+        }
+        else {
+            buf1.buffer_memcpy(out3, len1);
+            *final_len1 = *final_len2 = 0;
+            *final_len3 = len1;
+        }
+        return;
+    }
+
+    buf1.buffer_memcpy(out1, idx);
+    *final_len1 = idx;
+    buf2.buffer_memcpy(out2, len2);
+    *final_len2 = len2;
+    (buf1 + idx + len2).buffer_memcpy(out3, len1 - idx - len2);
+    *final_len3 = len1 - idx - len2;
+}
 
 
 #endif /* _NPY_CORE_SRC_UMATH_STRING_BUFFER_H_ */

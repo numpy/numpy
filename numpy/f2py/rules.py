@@ -47,7 +47,8 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-import os, sys
+import os
+import sys
 import time
 import copy
 from pathlib import Path
@@ -235,6 +236,11 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 #initf90modhooks#
 #initcommonhooks#
 #interface_usercode#
+
+#if Py_GIL_DISABLED
+    // signal whether this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m , #gil_used#);
+#endif
 
 #ifdef F2PY_REPORT_ATEXIT
     if (! PyErr_Occurred())

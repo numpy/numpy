@@ -334,8 +334,8 @@ cdef object _rand_{{nptype}}(object low, object high, object size,
         if (np.prod(size) == 0):
             return np.empty(size, dtype=np.{{otype}})
 
-    low_arr = <np.ndarray>np.array(low, copy=False)
-    high_arr = <np.ndarray>np.array(high, copy=False)
+    low_arr = <np.ndarray>np.asarray(low)
+    high_arr = <np.ndarray>np.asarray(high)
     low_ndim = np.PyArray_NDIM(low_arr)
     high_ndim = np.PyArray_NDIM(high_arr)
     if low_ndim == 0 and high_ndim == 0:

@@ -62,9 +62,7 @@ maintainer email:  oliphant.travis@ieee.org
 
 #include "binop_override.h"
 #include "array_coercion.h"
-
-
-NPY_NO_EXPORT npy_bool numpy_warn_if_no_mem_policy = 0;
+#include "multiarraymodule.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -251,7 +249,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      */
     ndim = PyArray_DiscoverDTypeAndShape(src_object,
             PyArray_NDIM(dest), dims, &cache,
-            NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype, 0);
+            NPY_DTYPE(PyArray_DESCR(dest)), PyArray_DESCR(dest), &dtype, 1, NULL);
     if (ndim < 0) {
         return -1;
     }
@@ -429,7 +427,7 @@ array_dealloc(PyArrayObject *self)
             }
         }
         if (fa->mem_handler == NULL) {
-            if (numpy_warn_if_no_mem_policy) {
+            if (npy_thread_unsafe_state.warn_if_no_mem_policy) {
                 char const *msg = "Trying to dealloc data, but a memory policy "
                     "is not set. If you take ownership of the data, you must "
                     "set a base owning the data (e.g. a PyCapsule).";
@@ -598,11 +596,9 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
         return NULL;
     }
     if (PyArray_HASFIELDS(self) && PyArray_HASFIELDS(other)) {
-        PyArray_Descr *self_descr = PyArray_DESCR(self);
-        PyArray_Descr *other_descr = PyArray_DESCR(other);
-
         /* Use promotion to decide whether the comparison is valid */
-        PyArray_Descr *promoted = PyArray_PromoteTypes(self_descr, other_descr);
+        PyArray_Descr *promoted = PyArray_PromoteTypes(
+                PyArray_DESCR(self), PyArray_DESCR(other));
         if (promoted == NULL) {
             PyErr_SetString(PyExc_TypeError,
                     "Cannot compare structured arrays unless they have a "
@@ -611,6 +607,9 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             return NULL;
         }
         Py_DECREF(promoted);
+
+        _PyArray_LegacyDescr *self_descr = (_PyArray_LegacyDescr *)PyArray_DESCR(self);
+        _PyArray_LegacyDescr *other_descr = (_PyArray_LegacyDescr *)PyArray_DESCR(other);
 
         npy_intp result_ndim = PyArray_NDIM(self) > PyArray_NDIM(other) ?
                             PyArray_NDIM(self) : PyArray_NDIM(other);
@@ -926,7 +925,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
      */
     if (result == NULL
             && (cmp_op == Py_EQ || cmp_op == Py_NE)
-            && PyErr_ExceptionMatches(npy_UFuncNoLoopError)) {
+            && PyErr_ExceptionMatches(
+                    npy_static_pydata._UFuncNoLoopError)) {
         PyErr_Clear();
 
         PyArrayObject *array_other = (PyArrayObject *)PyArray_FROM_O(other);

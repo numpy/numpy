@@ -50,6 +50,9 @@ NumPyOS_ascii_islower(char c);
 NPY_NO_EXPORT int
 NumPyOS_ascii_isupper(char c);
 
+NPY_NO_EXPORT int
+NumPyOS_ascii_tolower(char c);
+
 /* Convert a string to an int in an arbitrary base */
 NPY_NO_EXPORT npy_longlong
 NumPyOS_strtoll(const char *str, char **endptr, int base);

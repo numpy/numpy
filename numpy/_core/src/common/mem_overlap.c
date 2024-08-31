@@ -186,7 +186,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include "numpy/ndarraytypes.h"
+#include "numpy/ndarrayobject.h"
 #include "mem_overlap.h"
 #include "npy_extint128.h"
 

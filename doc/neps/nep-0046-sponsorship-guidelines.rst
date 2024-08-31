@@ -5,7 +5,7 @@ NEP 46 — NumPy sponsorship guidelines
 =====================================
 
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
-:Status: Accepted
+:Status: Active
 :Type: Process
 :Created: 2020-12-27
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2021-January/081424.html

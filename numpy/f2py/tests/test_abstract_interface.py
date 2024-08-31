@@ -1,6 +1,4 @@
-from pathlib import Path
 import pytest
-import textwrap
 from . import util
 from numpy.f2py import crackfortran
 from numpy.testing import IS_WASM

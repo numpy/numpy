@@ -164,7 +164,7 @@ class WrappedArray(NDArrayOperatorsMixin):
     def __repr__(self):
         return f"{self.__class__.__name__}(\n{self._array}\n{self.attrs}\n)"
 
-    def __array__(self):
+    def __array__(self, dtype=None, copy=None):
         return np.asarray(self._array)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
@@ -264,7 +264,7 @@ class TestSubclassing:
         # Checks that masked_array(...,subok=True) preserves the class.
         x = np.arange(5)
         m = [0, 0, 1, 0, 0]
-        xinfo = [(i, j) for (i, j) in zip(x, m)]
+        xinfo = list(zip(x, m))
         xsub = MSubArray(x, mask=m, info={'xsub':xinfo})
         #
         mxsub = masked_array(xsub, subok=False)

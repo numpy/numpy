@@ -5,7 +5,6 @@ import os
 import re
 import shutil
 from collections import defaultdict
-from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 import pytest
@@ -34,6 +33,7 @@ else:
     NO_MYPY = False
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     # We need this as annotation, but it's located in a private namespace.
     # As a compromise, do *not* import it during runtime
     from _pytest.mark.structures import ParameterSet

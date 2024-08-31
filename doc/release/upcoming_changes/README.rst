@@ -40,7 +40,7 @@ So for example: ``123.new_feature.rst`` would have the content::
     The ``my_new_feature`` option is now available for `my_favorite_function`.
     To use it, write ``np.my_favorite_function(..., my_new_feature=True)``.
 
-``highlight`` is usually formatted as bulled points making the fragment
+``highlight`` is usually formatted as bullet points making the fragment
 ``* This is a highlight``.
 
 Note the use of single-backticks to get an internal link (assuming
@@ -50,9 +50,10 @@ and double-backticks for code.
 If you are unsure what pull request type to use, don't hesitate to ask in your
 PR.
 
-You can install ``towncrier`` and run ``towncrier build --draft --version 1.18``
-if you want to get a preview of how your change will look in the final release
-notes.
+``towncrier`` is required to build the docs; it will be automatically run when
+you build the docs locally with ``spin docs``. You can also run ``towncrier
+build --draft --version 1.18`` if you want to get a preview of how your change
+will look in the final release notes.
 
 .. note::
 

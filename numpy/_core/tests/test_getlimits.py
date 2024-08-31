@@ -77,10 +77,10 @@ class TestFinfo:
         class NonHashableWithDtype:
             __hash__ = None
             dtype = np.dtype('float32')
-  
+
         x = NonHashableWithDtype()
         assert np.finfo(x) == np.finfo(x.dtype)
-        
+
 
 class TestIinfo:
     def test_basic(self):

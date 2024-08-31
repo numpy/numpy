@@ -1335,6 +1335,7 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
 NPY_NO_EXPORT int
 _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
 {
+    assert(PyDataType_ISLEGACY(PyArray_DESCR(arr)));
     *view = NULL;
 
     /* first check for a single field name */
@@ -1344,7 +1345,7 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         npy_intp offset;
 
         /* get the field offset and dtype */
-        tup = PyDict_GetItemWithError(PyArray_DESCR(arr)->fields, ind);
+        tup = PyDict_GetItemWithError(PyDataType_FIELDS(PyArray_DESCR(arr)), ind);
         if (tup == NULL && PyErr_Occurred()) {
             return 0;
         }
@@ -1408,7 +1409,8 @@ _get_field_view(PyArrayObject *arr, PyObject *ind, PyArrayObject **view)
         }
 
         /* Call into the dtype subscript */
-        view_dtype = arraydescr_field_subset_view(PyArray_DESCR(arr), ind);
+        view_dtype = arraydescr_field_subset_view(
+                (_PyArray_LegacyDescr *)PyArray_DESCR(arr), ind);
         if (view_dtype == NULL) {
             return 0;
         }
@@ -1578,7 +1580,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
             if (PyArray_GetDTypeTransferFunction(is_aligned,
                     itemsize, itemsize,
-                    PyArray_DESCR(self), PyArray_DESCR(self),
+                    PyArray_DESCR(self), PyArray_DESCR((PyArrayObject *)result),
                     0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto finish;
             }
@@ -1958,6 +1960,10 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         tmp_arr = (PyArrayObject *)op;
     }
 
+    if (tmp_arr && solve_may_share_memory(self, tmp_arr, 1) != 0) {
+        Py_SETREF(tmp_arr, (PyArrayObject *)PyArray_NewCopy(tmp_arr, NPY_ANYORDER));
+    }
+
     /*
      * Special case for very simple 1-d fancy indexing, which however
      * is quite common. This saves not only a lot of setup time in the
@@ -1990,9 +1996,9 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             npy_intp itemsize = PyArray_ITEMSIZE(self);
             int is_aligned = IsUintAligned(self) && IsUintAligned(tmp_arr);
 
-            if (PyArray_GetDTypeTransferFunction(is_aligned,
-                    itemsize, itemsize,
-                    PyArray_DESCR(self), PyArray_DESCR(self),
+            if (PyArray_GetDTypeTransferFunction(
+                        is_aligned, itemsize, itemsize,
+                        PyArray_DESCR(tmp_arr), PyArray_DESCR(self),
                     0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto fail;
             }
@@ -2028,6 +2034,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         goto fail;
     }
 
+    int allocated_array = 0;
     if (tmp_arr == NULL) {
         /* Fill extra op, need to swap first */
         tmp_arr = mit->extra_op;
@@ -2041,6 +2048,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (PyArray_CopyObject(tmp_arr, op) < 0) {
              goto fail;
         }
+        allocated_array = 1;
     }
 
     if (PyArray_MapIterCheckIndices(mit) < 0) {
@@ -2084,10 +2092,12 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         /* May need a generic copy function (only for refs and odd sizes) */
         NPY_ARRAYMETHOD_FLAGS transfer_flags;
         npy_intp itemsize = PyArray_ITEMSIZE(self);
-
-        if (PyArray_GetDTypeTransferFunction(1,
-                itemsize, itemsize,
-                PyArray_DESCR(self), PyArray_DESCR(self),
+        // TODO: the heuristic used here to determine the src_dtype might be subtly wrong
+        // for non-REFCHK user DTypes. See gh-27057 for the prior discussion about this.
+        if (PyArray_GetDTypeTransferFunction(
+                1, itemsize, itemsize,
+                allocated_array ? PyArray_DESCR(mit->extra_op) : PyArray_DESCR(self),
+                PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto fail;
         }

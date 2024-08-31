@@ -1,42 +1,87 @@
-from typing import Any
+from typing import Final, Literal as L
 
-from numpy import int_
-from numpy.typing import NDArray
-from numpy.polynomial._polybase import ABCPolyBase
-from numpy.polynomial.polyutils import trimcoef
+import numpy as np
+from ._polybase import ABCPolyBase
+from ._polytypes import (
+    _Array1,
+    _Array2,
+    _FuncVal2D,
+    _FuncVal3D,
+    _FuncBinOp,
+    _FuncCompanion,
+    _FuncDer,
+    _FuncFit,
+    _FuncFromRoots,
+    _FuncInteg,
+    _FuncLine,
+    _FuncPow,
+    _FuncRoots,
+    _FuncUnOp,
+    _FuncVal,
+    _FuncVander,
+    _FuncVander2D,
+    _FuncVander3D,
+    _FuncValFromRoots,
+)
+from .polyutils import trimcoef as polytrim
 
-__all__: list[str]
+__all__ = [
+    "polyzero",
+    "polyone",
+    "polyx",
+    "polydomain",
+    "polyline",
+    "polyadd",
+    "polysub",
+    "polymulx",
+    "polymul",
+    "polydiv",
+    "polypow",
+    "polyval",
+    "polyvalfromroots",
+    "polyder",
+    "polyint",
+    "polyfromroots",
+    "polyvander",
+    "polyfit",
+    "polytrim",
+    "polyroots",
+    "Polynomial",
+    "polyval2d",
+    "polyval3d",
+    "polygrid2d",
+    "polygrid3d",
+    "polyvander2d",
+    "polyvander3d",
+    "polycompanion",
+]
 
-polytrim = trimcoef
+polydomain: Final[_Array2[np.float64]]
+polyzero: Final[_Array1[np.int_]]
+polyone: Final[_Array1[np.int_]]
+polyx: Final[_Array2[np.int_]]
 
-polydomain: NDArray[int_]
-polyzero: NDArray[int_]
-polyone: NDArray[int_]
-polyx: NDArray[int_]
+polyline: _FuncLine[L["Polyline"]]
+polyfromroots: _FuncFromRoots[L["polyfromroots"]]
+polyadd: _FuncBinOp[L["polyadd"]]
+polysub: _FuncBinOp[L["polysub"]]
+polymulx: _FuncUnOp[L["polymulx"]]
+polymul: _FuncBinOp[L["polymul"]]
+polydiv: _FuncBinOp[L["polydiv"]]
+polypow: _FuncPow[L["polypow"]]
+polyder: _FuncDer[L["polyder"]]
+polyint: _FuncInteg[L["polyint"]]
+polyval: _FuncVal[L["polyval"]]
+polyval2d: _FuncVal2D[L["polyval2d"]]
+polyval3d: _FuncVal3D[L["polyval3d"]]
+polyvalfromroots: _FuncValFromRoots[L["polyvalfromroots"]]
+polygrid2d: _FuncVal2D[L["polygrid2d"]]
+polygrid3d: _FuncVal3D[L["polygrid3d"]]
+polyvander: _FuncVander[L["polyvander"]]
+polyvander2d: _FuncVander2D[L["polyvander2d"]]
+polyvander3d: _FuncVander3D[L["polyvander3d"]]
+polyfit: _FuncFit[L["polyfit"]]
+polycompanion: _FuncCompanion[L["polycompanion"]]
+polyroots: _FuncRoots[L["polyroots"]]
 
-def polyline(off, scl): ...
-def polyfromroots(roots): ...
-def polyadd(c1, c2): ...
-def polysub(c1, c2): ...
-def polymulx(c): ...
-def polymul(c1, c2): ...
-def polydiv(c1, c2): ...
-def polypow(c, pow, maxpower=...): ...
-def polyder(c, m=..., scl=..., axis=...): ...
-def polyint(c, m=..., k=..., lbnd=..., scl=..., axis=...): ...
-def polyval(x, c, tensor=...): ...
-def polyvalfromroots(x, r, tensor=...): ...
-def polyval2d(x, y, c): ...
-def polygrid2d(x, y, c): ...
-def polyval3d(x, y, z, c): ...
-def polygrid3d(x, y, z, c): ...
-def polyvander(x, deg): ...
-def polyvander2d(x, y, deg): ...
-def polyvander3d(x, y, z, deg): ...
-def polyfit(x, y, deg, rcond=..., full=..., w=...): ...
-def polyroots(c): ...
-
-class Polynomial(ABCPolyBase):
-    domain: Any
-    window: Any
-    basis_name: Any
+class Polynomial(ABCPolyBase[None]): ...

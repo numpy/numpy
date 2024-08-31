@@ -87,8 +87,10 @@ def test_array_array():
     assert_equal(bytes(np.array(o).data), bytes(a.data))
 
     # test array
-    o = type("o", (object,),
-             dict(__array__=lambda *x: np.array(100.0, dtype=np.float64)))()
+    def custom__array__(self, dtype=None, copy=None):
+        return np.array(100.0, dtype=dtype, copy=copy)
+
+    o = type("o", (object,), dict(__array__=custom__array__))()
     assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
 
     # test recursion
@@ -177,7 +179,7 @@ def test_array_astype():
     assert_equal(a, b)
     assert_(not (a is b))
 
-    # copy=False parameter can sometimes skip a copy
+    # copy=False parameter skips a copy
     b = a.astype('f4', copy=False)
     assert_(a is b)
 
@@ -300,8 +302,8 @@ def test_object_array_astype_to_void():
     assert arr.dtype == "V8"
 
 @pytest.mark.parametrize("t",
-    np._core.sctypes['uint'] + 
-    np._core.sctypes['int'] + 
+    np._core.sctypes['uint'] +
+    np._core.sctypes['int'] +
     np._core.sctypes['float']
 )
 def test_array_astype_warning(t):
@@ -403,6 +405,37 @@ def test_copyto():
 
     # 'dst' must be an array
     assert_raises(TypeError, np.copyto, [1, 2, 3], [2, 3, 4])
+
+
+def test_copyto_cast_safety():
+    with pytest.raises(TypeError):
+        np.copyto(np.arange(3), 3., casting="safe")
+
+    # Can put integer and float scalars safely (and equiv):
+    np.copyto(np.arange(3), 3, casting="equiv")
+    np.copyto(np.arange(3.), 3., casting="equiv")
+    # And also with less precision safely:
+    np.copyto(np.arange(3, dtype="uint8"), 3, casting="safe")
+    np.copyto(np.arange(3., dtype="float32"), 3., casting="safe")
+
+    # But not equiv:
+    with pytest.raises(TypeError):
+        np.copyto(np.arange(3, dtype="uint8"), 3, casting="equiv")
+
+    with pytest.raises(TypeError):
+        np.copyto(np.arange(3., dtype="float32"), 3., casting="equiv")
+
+    # As a special thing, object is equiv currently:
+    np.copyto(np.arange(3, dtype=object), 3, casting="equiv")
+
+    # The following raises an overflow error/gives a warning but not
+    # type error (due to casting), though:
+    with pytest.raises(OverflowError):
+        np.copyto(np.arange(3), 2**80, casting="safe")
+
+    with pytest.warns(RuntimeWarning):
+        np.copyto(np.arange(3, dtype=np.float32), 2e300, casting="safe")
+
 
 def test_copyto_permut():
     # test explicit overflow case
@@ -536,9 +569,9 @@ def test_contiguous_flags():
     check_contig(np.empty((2, 2), order='F'), False, True)
 
     # Check that np.array creates correct contiguous flags:
-    check_contig(np.array(a, copy=False), False, False)
-    check_contig(np.array(a, copy=False, order='C'), True, False)
-    check_contig(np.array(a, ndmin=4, copy=False, order='F'), False, True)
+    check_contig(np.array(a, copy=None), False, False)
+    check_contig(np.array(a, copy=None, order='C'), True, False)
+    check_contig(np.array(a, ndmin=4, copy=None, order='F'), False, True)
 
     # Check slicing update of flags and :
     check_contig(a[0], True, True)
@@ -570,25 +603,14 @@ def test_astype_copyflag():
     arr = np.arange(10, dtype=np.intp)
 
     res_true = arr.astype(np.intp, copy=True)
-    assert not np.may_share_memory(arr, res_true)
-    res_always = arr.astype(np.intp, copy=np._CopyMode.ALWAYS)
-    assert not np.may_share_memory(arr, res_always)
+    assert not np.shares_memory(arr, res_true)
 
     res_false = arr.astype(np.intp, copy=False)
-    # `res_false is arr` currently, but check `may_share_memory`.
-    assert np.may_share_memory(arr, res_false)
-    res_if_needed = arr.astype(np.intp, copy=np._CopyMode.IF_NEEDED)
-    # `res_if_needed is arr` currently, but check `may_share_memory`.
-    assert np.may_share_memory(arr, res_if_needed)
+    assert np.shares_memory(arr, res_false)
 
-    res_never = arr.astype(np.intp, copy=np._CopyMode.NEVER)
-    assert np.may_share_memory(arr, res_never)
+    res_false_float = arr.astype(np.float64, copy=False)
+    assert not np.shares_memory(arr, res_false_float)
 
-    # Simple tests for when a copy is necessary:
-    res_false = arr.astype(np.float64, copy=False)
-    assert_array_equal(res_false, arr)
-    res_if_needed = arr.astype(np.float64, 
-                               copy=np._CopyMode.IF_NEEDED)
-    assert_array_equal(res_if_needed, arr)
+    # _CopyMode enum isn't allowed
     assert_raises(ValueError, arr.astype, np.float64,
                   copy=np._CopyMode.NEVER)

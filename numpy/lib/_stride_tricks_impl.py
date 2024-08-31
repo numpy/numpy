@@ -101,7 +101,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     possible.
     """
     # first convert input to array, possibly keeping subclass
-    x = np.array(x, copy=False, subok=subok)
+    x = np.array(x, copy=None, subok=subok)
     interface = dict(x.__array_interface__)
     if shape is not None:
         interface['shape'] = tuple(shape)
@@ -137,7 +137,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
     Also known as rolling or moving window, the window slides across all
     dimensions of the array and extracts subsets of the array at all window
     positions.
-    
+
     .. versionadded:: 1.20.0
 
     Parameters
@@ -204,6 +204,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib.stride_tricks import sliding_window_view
     >>> x = np.arange(6)
     >>> x.shape
@@ -312,7 +313,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
                     if np.iterable(window_shape)
                     else (window_shape,))
     # first convert input to array, possibly keeping subclass
-    x = np.array(x, copy=False, subok=subok)
+    x = np.array(x, copy=None, subok=subok)
 
     window_shape_array = np.array(window_shape)
     if np.any(window_shape_array < 0):
@@ -348,7 +349,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
 def _broadcast_to(array, shape, subok, readonly):
     shape = tuple(shape) if np.iterable(shape) else (shape,)
-    array = np.array(array, copy=False, subok=subok)
+    array = np.array(array, copy=None, subok=subok)
     if not shape and array.shape:
         raise ValueError('cannot broadcast a non-scalar to a scalar array')
     if any(size < 0 for size in shape):
@@ -413,6 +414,7 @@ def broadcast_to(array, shape, subok=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> np.broadcast_to(x, (3, 3))
     array([[1, 2, 3],
@@ -437,6 +439,9 @@ def _broadcast_shape(*args):
         b = broadcast_to(0, b.shape)
         b = np.broadcast(b, *args[pos:(pos + 31)])
     return b.shape
+
+
+_size0_dtype = np.dtype([])
 
 
 @set_module('numpy')
@@ -472,13 +477,14 @@ def broadcast_shapes(*args):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.broadcast_shapes((1, 2), (3, 1), (3, 2))
     (3, 2)
 
     >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
     (5, 6, 7)
     """
-    arrays = [np.empty(x, dtype=[]) for x in args]
+    arrays = [np.empty(x, dtype=_size0_dtype) for x in args]
     return _broadcast_shape(*arrays)
 
 
@@ -523,6 +529,7 @@ def broadcast_arrays(*args, subok=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[1,2,3]])
     >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)
@@ -546,13 +553,11 @@ def broadcast_arrays(*args, subok=False):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    args = tuple(np.array(_m, copy=False, subok=subok) for _m in args)
+    args = [np.array(_m, copy=None, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)
 
-    if all(array.shape == shape for array in args):
-        # Common case where nothing needs to be broadcasted.
-        return args
-
-    return tuple(_broadcast_to(array, shape, subok=subok, readonly=False)
-                 for array in args)
+    result = [array if array.shape == shape
+              else _broadcast_to(array, shape, subok=subok, readonly=False)
+                              for array in args]
+    return tuple(result)

@@ -127,4 +127,4 @@ Some things to consider:
   you are benchmarking an algorithm, it is unlikely that a user will be
   executing said algorithm on a newly created empty/zero array. One can force
   pagefaults to occur in the setup phase either by calling ``np.ones`` or
-  ``arr.fill(value)`` after creating the array,
+  ``arr.fill(value)`` after creating the array.

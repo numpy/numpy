@@ -6,7 +6,7 @@ NEP 21 — Simplified and explicit advanced indexing
 
 :Author: Sebastian Berg
 :Author: Stephan Hoyer <shoyer@google.com>
-:Status: Draft
+:Status: Deferred
 :Type: Standards Track
 :Created: 2015-08-27
 

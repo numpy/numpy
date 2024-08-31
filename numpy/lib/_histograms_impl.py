@@ -410,6 +410,8 @@ def _get_bin_edges(a, bins, range, weights):
             # Do not call selectors on empty arrays
             width = _hist_bin_selectors[bin_name](a, (first_edge, last_edge))
             if width:
+                if np.issubdtype(a.dtype, np.integer) and width < 1:
+                    width = 1
                 n_equal_bins = int(np.ceil(_unsigned_subtract(last_edge, first_edge) / width))
             else:
                 # Width can be zero for some estimators, e.g. FD when
@@ -448,6 +450,10 @@ def _get_bin_edges(a, bins, range, weights):
         bin_edges = np.linspace(
             first_edge, last_edge, n_equal_bins + 1,
             endpoint=True, dtype=bin_type)
+        if np.any(bin_edges[:-1] >= bin_edges[1:]):
+            raise ValueError(
+                f'Too many bins for data range. Cannot create {n_equal_bins} '
+                f'finite-sized bins.')
         return bin_edges, (first_edge, last_edge, n_equal_bins)
     else:
         return bin_edges, None
@@ -496,7 +502,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         supported for automated bin size selection.
 
         'auto'
-            Minimum bin width between the 'sturges' and 'fd' estimators. 
+            Minimum bin width between the 'sturges' and 'fd' estimators.
             Provides good all-around performance.
 
         'fd' (Freedman Diaconis Estimator)
@@ -625,8 +631,12 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         The simplest and fastest estimator. Only takes into account the
         data size.
 
+    Additionally, if the data is of integer dtype, then the binwidth will never
+    be less than 1.
+
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([0, 0, 0, 1, 2, 3, 3, 4, 5])
     >>> np.histogram_bin_edges(arr, bins='auto', range=(0, 1))
     array([0.  , 0.25, 0.5 , 0.75, 1.  ])
@@ -750,6 +760,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.histogram([1, 2, 1], bins=[0, 1, 2, 3])
     (array([0, 2, 1]), array([0, 1, 2, 3]))
     >>> np.histogram(np.arange(4), bins=np.arange(5), density=True)
@@ -967,7 +978,9 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
 
     Examples
     --------
-    >>> r = np.random.randn(100,3)
+    >>> import numpy as np
+    >>> rng = np.random.default_rng()
+    >>> r = rng.normal(size=(100,3))
     >>> H, edges = np.histogramdd(r, bins = (5, 8, 4))
     >>> H.shape, edges[0].size, edges[1].size, edges[2].size
     ((5, 8, 4), 6, 9, 5)

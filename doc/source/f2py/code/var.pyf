@@ -5,7 +5,7 @@ python module var
   '''
   interface
     usercode '''
-      PyDict_SetItemString(d,"BAR",PyInt_FromLong(BAR));
+      PyDict_SetItemString(d,"BAR",PyLong_FromLong(BAR));
     '''
   end interface
 end python module

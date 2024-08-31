@@ -6,7 +6,6 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_allclose,
     assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
-from numpy.testing._private.utils import requires_memory
 import pytest
 
 
@@ -270,7 +269,7 @@ class TestHistogram:
             histogram, [np.array(0.4) for i in range(10)] + [np.inf])
 
         # these should not crash
-        np.histogram([np.array(0.5) for i in range(10)] + [.500000000000001])
+        np.histogram([np.array(0.5) for i in range(10)] + [.500000000000002])
         np.histogram([np.array(0.5) for i in range(10)] + [.5])
 
     def test_some_nan_values(self):
@@ -395,6 +394,11 @@ class TestHistogram:
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
 
+    def test_small_value_range(self):
+        arr = np.array([1, 1 + 2e-16] * 10)
+        with pytest.raises(ValueError, match="Too many bins for data range"):
+            histogram(arr, bins=10)
+
     # @requires_memory(free_bytes=1e10)
     # @pytest.mark.slow
     @pytest.mark.skip(reason="Bad memory reports lead to OOM in ci testing")
@@ -469,7 +473,7 @@ class TestHistogramOptimBinNums:
                          'doane': 3, 'sqrt': 2, 'stone': 1}}
 
         for testlen, expectedResults in small_dat.items():
-            testdat = np.arange(testlen)
+            testdat = np.arange(testlen).astype(float)
             for estimator, expbins in expectedResults.items():
                 a, b = np.histogram(testdat, estimator)
                 assert_equal(len(a), expbins, err_msg="For the {0} estimator "
@@ -591,6 +595,30 @@ class TestHistogramOptimBinNums:
         hist32, edges32 = np.histogram(a.astype(np.int32), bins=bins)
         assert_array_equal(hist, hist32)
         assert_array_equal(edges, edges32)
+
+    @pytest.mark.parametrize("bins", ['auto', 'fd', 'doane', 'scott',
+                                      'stone', 'rice', 'sturges'])
+    def test_integer(self, bins):
+        """
+        Test that bin width for integer data is at least 1.
+        """
+        with suppress_warnings() as sup:
+            if bins == 'stone':
+                sup.filter(RuntimeWarning)
+            assert_equal(
+                np.histogram_bin_edges(np.tile(np.arange(9), 1000), bins),
+                np.arange(9))
+
+    def test_integer_non_auto(self):
+        """
+        Test that the bin-width>=1 requirement *only* applies to auto binning.
+        """
+        assert_equal(
+            np.histogram_bin_edges(np.tile(np.arange(9), 1000), 16),
+            np.arange(17) / 2)
+        assert_equal(
+            np.histogram_bin_edges(np.tile(np.arange(9), 1000), [.1, .2]),
+            [.1, .2])
 
     def test_simple_weighted(self):
         """

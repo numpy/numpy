@@ -175,7 +175,7 @@ npy_binsearch(const char *arr, const char *key, char *ret, npy_intp arr_len,
               npy_intp ret_str, PyArrayObject *cmp)
 {
     using Cmp = typename side_to_generic_cmp<side>::type;
-    PyArray_CompareFunc *compare = PyArray_DESCR(cmp)->f->compare;
+    PyArray_CompareFunc *compare = PyDataType_GetArrFuncs(PyArray_DESCR(cmp))->compare;
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
     const char *last_key = key;
@@ -219,7 +219,7 @@ npy_argbinsearch(const char *arr, const char *key, const char *sort, char *ret,
                  PyArrayObject *cmp)
 {
     using Cmp = typename side_to_generic_cmp<side>::type;
-    PyArray_CompareFunc *compare = PyArray_DESCR(cmp)->f->compare;
+    PyArray_CompareFunc *compare = PyDataType_GetArrFuncs(PyArray_DESCR(cmp))->compare;
     npy_intp min_idx = 0;
     npy_intp max_idx = arr_len;
     const char *last_key = key;
@@ -376,7 +376,7 @@ _get_binsearch_func(PyArray_Descr *dtype, NPY_SEARCHSIDE side)
         return binsearch::map[min_idx].binsearch[side];
     }
 
-    if (dtype->f->compare) {
+    if (PyDataType_GetArrFuncs(dtype)->compare) {
         return binsearch::npy_map[side];
     }
 

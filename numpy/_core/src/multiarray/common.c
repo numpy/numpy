@@ -7,7 +7,7 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 #include "common.h"
 
 #include "abstractdtypes.h"
@@ -48,7 +48,7 @@ _array_find_python_scalar_type(PyObject *op)
     }
     else if (PyLong_Check(op)) {
         return NPY_DT_CALL_discover_descr_from_pyobject(
-                &PyArray_PyIntAbstractDType, op);
+                &PyArray_PyLongDType, op);
     }
     return NULL;
 }
@@ -119,7 +119,7 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
     int ndim;
 
     ndim = PyArray_DiscoverDTypeAndShape(
-            obj, maxdims, shape, &cache, NULL, NULL, out_dtype, 0);
+            obj, maxdims, shape, &cache, NULL, NULL, out_dtype, 1, NULL);
     if (ndim < 0) {
         return -1;
     }
@@ -297,7 +297,7 @@ end:
 }
 
 /**
- * unpack tuple of dtype->fields (descr, offset, title[not-needed])
+ * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
  *
  * @param "value" should be the tuple.
  *
@@ -338,7 +338,7 @@ _may_have_objects(PyArray_Descr *dtype)
 {
     PyArray_Descr *base = dtype;
     if (PyDataType_HASSUBARRAY(dtype)) {
-        base = dtype->subarray->base;
+        base = ((_PyArray_LegacyDescr *)dtype)->subarray->base;
     }
 
     return (PyDataType_HASFIELDS(base) ||

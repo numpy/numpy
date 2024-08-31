@@ -81,6 +81,7 @@
 #define NPY_1_24_API_VERSION 0x00000010
 #define NPY_1_25_API_VERSION 0x00000011
 #define NPY_2_0_API_VERSION 0x00000012
+#define NPY_2_1_API_VERSION 0x00000013
 
 
 /*
@@ -120,8 +121,8 @@
     /* user provided a target version, use it */
     #define NPY_FEATURE_VERSION NPY_TARGET_VERSION
 #else
-    /* Use the default (increase when dropping Python 3.9 support) */
-    #define NPY_FEATURE_VERSION NPY_1_19_API_VERSION
+    /* Use the default (increase when dropping Python 3.10 support) */
+    #define NPY_FEATURE_VERSION NPY_1_21_API_VERSION
 #endif
 
 /* Sanity check the (requested) feature version */
@@ -130,6 +131,40 @@
 #elif NPY_FEATURE_VERSION < NPY_1_15_API_VERSION
     /* No support for irrelevant old targets, no need for error, but warn. */
     #warning "Requested NumPy target lower than supported NumPy 1.15."
+#endif
+
+/*
+ * We define a human readable translation to the Python version of NumPy
+ * for error messages (and also to allow grepping the binaries for conda).
+ */
+#if NPY_FEATURE_VERSION == NPY_1_7_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "1.7"
+#elif NPY_FEATURE_VERSION == NPY_1_8_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "1.8"
+#elif NPY_FEATURE_VERSION == NPY_1_9_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "1.9"
+#elif NPY_FEATURE_VERSION == NPY_1_10_API_VERSION  /* also 1.11, 1.12 */
+    #define NPY_FEATURE_VERSION_STRING "1.10"
+#elif NPY_FEATURE_VERSION == NPY_1_13_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "1.13"
+#elif NPY_FEATURE_VERSION == NPY_1_14_API_VERSION  /* also 1.15 */
+    #define NPY_FEATURE_VERSION_STRING "1.14"
+#elif NPY_FEATURE_VERSION == NPY_1_16_API_VERSION  /* also 1.17, 1.18, 1.19 */
+    #define NPY_FEATURE_VERSION_STRING "1.16"
+#elif NPY_FEATURE_VERSION == NPY_1_20_API_VERSION  /* also 1.21 */
+    #define NPY_FEATURE_VERSION_STRING "1.20"
+#elif NPY_FEATURE_VERSION == NPY_1_22_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "1.22"
+#elif NPY_FEATURE_VERSION == NPY_1_23_API_VERSION  /* also 1.24 */
+    #define NPY_FEATURE_VERSION_STRING "1.23"
+#elif NPY_FEATURE_VERSION == NPY_1_25_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "1.25"
+#elif NPY_FEATURE_VERSION == NPY_2_0_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "2.0"
+#elif NPY_FEATURE_VERSION == NPY_2_1_API_VERSION
+    #define NPY_FEATURE_VERSION_STRING "2.1"
+#else
+    #error "Missing version string define for new NumPy version."
 #endif
 
 

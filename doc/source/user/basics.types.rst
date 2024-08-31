@@ -56,7 +56,7 @@ dtype objects also contain information about the type, such as its bit-width
 and its byte-order.  The data type can also be used indirectly to query
 properties of the type, such as whether it is an integer::
 
-    >>> d = np.dtype(int64)
+    >>> d = np.dtype(np.int64)
     >>> d
     dtype('int64')
 
@@ -140,8 +140,10 @@ use an unstructured void data type::
 Advanced types, not listed above, are explored in section
 :ref:`structured_arrays`.
 
-Relationship Between NumPy Data Types and C Data Data Types
-===========================================================
+.. _canonical-python-and-c-types:
+
+Relationship Between NumPy Data Types and C Data Types
+======================================================
 
 NumPy provides both bit sized type names and names based on the names of C types.
 Since the definition of C types are platform dependent, this means the explicitly
@@ -312,7 +314,7 @@ but gives -1486618624 (incorrect) for a 32-bit integer.
     >>> np.power(100, 9, dtype=np.int64)
     1000000000000000000
     >>> np.power(100, 9, dtype=np.int32)
-    -1486618624
+    np.int32(-1486618624)
 
 The behaviour of NumPy and Python integer types differs significantly for
 integer overflows and may confuse users expecting NumPy integers to behave
