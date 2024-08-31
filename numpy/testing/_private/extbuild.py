@@ -54,7 +54,11 @@ def build_and_import_extension(
     >>> assert mod.test_bytes(b'abc')
     """
     body = prologue + _make_methods(functions, modname)
-    init = """PyObject *mod = PyModule_Create(&moduledef);
+    init = """
+    PyObject *mod = PyModule_Create(&moduledef);
+    #ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(mod, Py_MOD_GIL_NOT_USED);
+    #endif
            """
     if not build_dir:
         build_dir = pathlib.Path('.')
@@ -231,7 +235,7 @@ def build(cfile, outputfilename, compile_extra, link_extra,
         """))
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
-                               "--buildtype=release", 
+                               "--buildtype=release",
                                "--vsenv", ".."],
                               cwd=build_dir,
                               )
@@ -241,7 +245,7 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                               )
     subprocess.check_call(["meson", "compile"], cwd=build_dir)
     os.rename(str(build_dir / so_name) + ".dummy", cfile.parent / so_name)
-        
+
 def get_so_suffix():
     ret = sysconfig.get_config_var('EXT_SUFFIX')
     assert ret

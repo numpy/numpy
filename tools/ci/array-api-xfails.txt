@@ -1,0 +1,23 @@
+# finfo return type misalignment
+array_api_tests/test_data_type_functions.py::test_finfo[float32]
+
+# 'shape' arg is present. 'newshape' is retained for backward compat.
+array_api_tests/test_signatures.py::test_func_signature[reshape]
+
+# 'min/max' args are present. 'a_min/a_max' are retained for backward compat.
+array_api_tests/test_signatures.py::test_func_signature[clip]
+
+# missing 'descending' keyword argument
+array_api_tests/test_signatures.py::test_func_signature[argsort]
+array_api_tests/test_signatures.py::test_func_signature[sort]
+
+# missing 'descending' keyword argument
+array_api_tests/test_sorting_functions.py::test_argsort
+array_api_tests/test_sorting_functions.py::test_sort
+
+# ufuncs signature on linux is always <Signature (*args, **kwargs)>
+# np.vecdot is the only ufunc with a keyword argument which causes a failure
+array_api_tests/test_signatures.py::test_func_signature[vecdot]
+
+# input is cast to min/max's dtype if they're different
+array_api_tests/test_operators_and_elementwise_functions.py::test_clip

@@ -170,14 +170,26 @@ Enumerated types
 
     .. c:enumerator:: NPY_INTP
 
-        The enumeration value for a signed integer type which is the same
-        size as a (void \*) pointer. This is the type used by all
+        The enumeration value for a signed integer of type ``Py_ssize_t``
+        (same as ``ssize_t`` if defined). This is the type used by all
         arrays of indices.
+
+        .. versionchanged:: 2.0
+            Previously, this was the same as ``intptr_t`` (same size as a
+            pointer).  In practice, this is identical except on very niche
+            platforms.
+            You can use the ``'p'`` character code for the pointer meaning.
 
     .. c:enumerator:: NPY_UINTP
 
-        The enumeration value for an unsigned integer type which is the
-        same size as a (void \*) pointer.
+        The enumeration value for an unsigned integer type that is identical
+        to a ``size_t``.
+
+        .. versionchanged:: 2.0
+            Previously, this was the same as ``uintptr_t`` (same size as a
+            pointer).  In practice, this is identical except on very niche
+            platforms.
+            You can use the ``'P'`` character code for the pointer meaning.
 
     .. c:enumerator:: NPY_MASK
 
@@ -287,14 +299,20 @@ all platforms for all the kinds of numeric types. Commonly 8-, 16-,
 types are available.
 
 
-Integer that can hold a pointer
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Further integer aliases
+~~~~~~~~~~~~~~~~~~~~~~~
 
-The constants **NPY_INTP** and **NPY_UINTP** refer to an
-enumerated integer type that is large enough to hold a pointer on the
-platform. Index arrays should always be converted to **NPY_INTP**
-, because the dimension of the array is of type npy_intp.
+The constants **NPY_INTP** and **NPY_UINTP** refer to an ``Py_ssize_t``
+and ``size_t``.
+Although in practice normally true, these types are strictly speaking not
+pointer sized and the character codes ``'p'`` and ``'P'`` can be used for
+pointer sized integers.
+(Before NumPy 2, ``intp`` was pointer size, but this almost never matched
+the actual use, which is the reason for the name.)
 
+Since NumPy 2, **NPY_DEFAULT_INT** is additionally defined.
+The value of the macro is runtime dependent:  Since NumPy 2, it maps to
+``NPY_INTP`` while on earlier versions it maps to ``NPY_LONG``.
 
 C-type names
 ------------

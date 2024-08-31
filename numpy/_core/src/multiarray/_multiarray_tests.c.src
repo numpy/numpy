@@ -42,6 +42,28 @@ argparse_example_function(PyObject *NPY_UNUSED(mod),
     Py_RETURN_NONE;
 }
 
+/*
+ *  Tests that argparse cache creation is thread-safe. *must* be called only
+ *  by the python-level test_thread_safe_argparse_cache function, otherwise
+ *  the cache might be created before the test to make sure cache creation is
+ *  thread-safe runs
+ */
+static PyObject *
+threaded_argparse_example_function(PyObject *NPY_UNUSED(mod),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    NPY_PREPARE_ARGPARSER;
+    int arg1;
+    PyObject *arg2;
+    if (npy_parse_arguments("thread_func", args, len_args, kwnames,
+            "$arg1", &PyArray_PythonPyIntFromInt, &arg1,
+            "$arg2", NULL, &arg2,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
 static PyObject *
 IsPythonScalar(PyObject * dummy, PyObject *args)
@@ -58,7 +80,7 @@ IsPythonScalar(PyObject * dummy, PyObject *args)
     }
 }
 
-#include "npy_pycompat.h"
+
 
 
 /** Function to test calling via ctypes */
@@ -1992,7 +2014,35 @@ PrintFloat_Printf_g(PyObject *obj, int precision)
     return PyUnicode_FromString(str);
 }
 
-
+/*
+ *  format_float_OSprintf_g(val, precision)
+ *
+ *  Print a floating point scalar using the system's printf function,
+ *  equivalent to:
+ *
+ *      printf("%.*g", precision, val);
+ *
+ *  for half/float/double, or replacing 'g' by 'Lg' for longdouble. This
+ *  method is designed to help cross-validate the format_float_* methods.
+ *
+ *  Parameters
+ *  ----------
+ *  val : python float or numpy floating scalar
+ *      Value to format.
+ *
+ *  precision : non-negative integer, optional
+ *      Precision given to printf.
+ *
+ *  Returns
+ *  -------
+ *  rep : string
+ *      The string representation of the floating point value
+ *
+ *  See Also
+ *  --------
+ *  format_float_scientific
+ *  format_float_positional
+ */
 static PyObject *
 printf_float_g(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
@@ -2176,6 +2226,9 @@ run_scalar_intp_from_sequence(PyObject *NPY_UNUSED(self), PyObject *obj)
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"argparse_example_function",
          (PyCFunction)argparse_example_function,
+         METH_KEYWORDS | METH_FASTCALL, NULL},
+    {"threaded_argparse_example_function",
+         (PyCFunction)threaded_argparse_example_function,
          METH_KEYWORDS | METH_FASTCALL, NULL},
     {"IsPythonScalar",
         IsPythonScalar,
@@ -2379,10 +2432,19 @@ PyMODINIT_FUNC PyInit__multiarray_tests(void)
         return m;
     }
     import_array();
+    if (init_argparse_mutex() < 0) {
+        return NULL;
+    }
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _multiarray_tests module.");
     }
+
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
+
     return m;
 }
 

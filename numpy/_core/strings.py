@@ -41,6 +41,10 @@ from numpy._core.umath import (
     _ljust,
     _rjust,
     _zfill,
+    _partition,
+    _partition_index,
+    _rpartition,
+    _rpartition_index,
 )
 
 
@@ -51,7 +55,7 @@ __all__ = [
     "isupper", "istitle", "isdecimal", "isnumeric", "str_len", "find",
     "rfind", "index", "rindex", "count", "startswith", "endswith", "lstrip",
     "rstrip", "strip", "replace", "expandtabs", "center", "ljust", "rjust",
-    "zfill",
+    "zfill", "partition", "rpartition",
 
     # _vec_string - Will gradually become ufuncs as well
     "upper", "lower", "swapcase", "capitalize", "title",
@@ -59,8 +63,8 @@ __all__ = [
     # _vec_string - Will probably not become ufuncs
     "mod", "decode", "encode", "translate",
 
-    # Removed from namespace until behavior has been crystalized
-    # "join", "split", "rsplit", "splitlines", "partition", "rpartition",
+    # Removed from namespace until behavior has been crystallized
+    # "join", "split", "rsplit", "splitlines",
 ]
 
 
@@ -134,6 +138,7 @@ def multiply(a, i):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["a", "b", "c"])
     >>> np.strings.multiply(a, 3)
     array(['aaa', 'bbb', 'ccc'], dtype='<U3')
@@ -192,7 +197,19 @@ def mod(a, values):
     out : ndarray
         Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
         depending on input types
-        
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array(["NumPy is a %s library"])
+    >>> np.strings.mod(a, values=["Python"])
+    array(['NumPy is a Python library'], dtype='<U25')
+
+    >>> a = np.array([b'%d bytes', b'%d bits'])
+    >>> values = np.array([8, 64])
+    >>> np.strings.mod(a, values)
+    array([b'8 bytes', b'64 bits'], dtype='|S7')
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, '__mod__', (values,)), a)
@@ -225,6 +242,7 @@ def find(a, sub, start=0, end=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["NumPy is a Python library"])
     >>> np.strings.find(a, "Python")
     array([11])
@@ -259,6 +277,18 @@ def rfind(a, sub, start=0, end=None):
     --------
     str.rfind
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array(["Computer Science"])
+    >>> np.strings.rfind(a, "Science", start=0, end=None)
+    array([9])
+    >>> np.strings.rfind(a, "Science", start=0, end=8)
+    array([-1])
+    >>> b = np.array(["Computer Science", "Science"])
+    >>> np.strings.rfind(b, "Science", start=0, end=None)
+    array([9, 0])
+
     """
     end = end if end is not None else MAX
     return _rfind_ufunc(a, sub, start, end)
@@ -287,6 +317,7 @@ def index(a, sub, start=0, end=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["Computer Science"])
     >>> np.strings.index(a, "Science", start=0, end=None)
     array([9])
@@ -323,7 +354,7 @@ def rindex(a, sub, start=0, end=None):
     >>> a = np.array(["Computer Science"])
     >>> np.strings.rindex(a, "Science", start=0, end=None)
     array([9])
-    
+
     """
     end = end if end is not None else MAX
     return _rindex_ufunc(a, sub, start, end)
@@ -355,6 +386,7 @@ def count(a, sub, start=0, end=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -396,6 +428,17 @@ def startswith(a, prefix, start=0, end=None):
     --------
     str.startswith
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> s = np.array(['foo', 'bar'])
+    >>> s
+    array(['foo', 'bar'], dtype='<U3')
+    >>> np.strings.startswith(s, 'fo')
+    array([True,  False])
+    >>> np.strings.startswith(s, 'o', start=1, end=2)
+    array([True,  False])
+
     """
     end = end if end is not None else MAX
     return _startswith_ufunc(a, prefix, start, end)
@@ -427,6 +470,7 @@ def endswith(a, suffix, start=0, end=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> s = np.array(['foo', 'bar'])
     >>> s
     array(['foo', 'bar'], dtype='<U3')
@@ -472,6 +516,7 @@ def decode(a, encoding=None, errors=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
     ...               b'\x81\x82\xc2\xc1\xc2\x82\x81'])
     >>> c
@@ -518,11 +563,12 @@ def encode(a, encoding=None, errors=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.encode(a, encoding='cp037')
     array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
        b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
-       
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, 'encode', _clean_args(encoding, errors)),
@@ -562,6 +608,7 @@ def expandtabs(a, tabsize=8):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['\t\tHello\tworld'])
     >>> np.strings.expandtabs(a, tabsize=4)  # doctest: +SKIP
     array(['        Hello   world'], dtype='<U21')  # doctest: +SKIP
@@ -611,6 +658,7 @@ def center(a, width, fillchar=' '):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['a1b2','1b2a','b2a1','2a1b']); c
     array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
     >>> np.strings.center(c, width=9)
@@ -622,7 +670,6 @@ def center(a, width, fillchar=' '):
 
     """
     a = np.asanyarray(a)
-    width = np.maximum(str_len(a), width)
     fillchar = np.asanyarray(fillchar, dtype=a.dtype)
 
     if np.any(str_len(fillchar) != 1):
@@ -632,6 +679,7 @@ def center(a, width, fillchar=' '):
     if a.dtype.char == "T":
         return _center(a, width, fillchar)
 
+    width = np.maximum(str_len(a), width)
     out_dtype = f"{a.dtype.char}{width.max()}"
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -670,6 +718,7 @@ def ljust(a, width, fillchar=' '):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.ljust(c, width=3)
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -678,7 +727,6 @@ def ljust(a, width, fillchar=' '):
 
     """
     a = np.asanyarray(a)
-    width = np.maximum(str_len(a), width)
     fillchar = np.asanyarray(fillchar, dtype=a.dtype)
 
     if np.any(str_len(fillchar) != 1):
@@ -688,6 +736,7 @@ def ljust(a, width, fillchar=' '):
     if a.dtype.char == "T":
         return _ljust(a, width, fillchar)
 
+    width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -726,6 +775,7 @@ def rjust(a, width, fillchar=' '):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rjust(a, width=3)
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -734,7 +784,6 @@ def rjust(a, width, fillchar=' '):
 
     """
     a = np.asanyarray(a)
-    width = np.maximum(str_len(a), width)
     fillchar = np.asanyarray(fillchar, dtype=a.dtype)
 
     if np.any(str_len(fillchar) != 1):
@@ -744,6 +793,7 @@ def rjust(a, width, fillchar=' '):
     if a.dtype.char == "T":
         return _rjust(a, width, fillchar)
 
+    width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -775,16 +825,17 @@ def zfill(a, width):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.zfill(['1', '-1', '+1'], 3)
     array(['001', '-01', '+01'], dtype='<U3')
 
     """
     a = np.asanyarray(a)
-    width = np.maximum(str_len(a), width)
 
     if a.dtype.char == "T":
         return _zfill(a, width)
 
+    width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
@@ -818,6 +869,7 @@ def lstrip(a, chars=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -864,6 +916,7 @@ def rstrip(a, chars=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', 'abBABba'])
     >>> c
     array(['aAaAaA', 'abBABba'], dtype='<U7')
@@ -905,6 +958,7 @@ def strip(a, chars=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -948,6 +1002,7 @@ def upper(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['a1b c', '1bca', 'bca1']); c
     array(['a1b c', '1bca', 'bca1'], dtype='<U5')
     >>> np.strings.upper(c)
@@ -983,6 +1038,7 @@ def lower(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['A1B C', '1BCA', 'BCA1']); c
     array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
     >>> np.strings.lower(c)
@@ -1019,6 +1075,7 @@ def swapcase(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c=np.array(['a1B c','1b Ca','b Ca1','cA1b'],'S5'); c
     array(['a1B c', '1b Ca', 'b Ca1', 'cA1b'],
         dtype='|S5')
@@ -1057,6 +1114,7 @@ def capitalize(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['a1b2','1b2a','b2a1','2a1b'],'S4'); c
     array(['a1b2', '1b2a', 'b2a1', '2a1b'],
         dtype='|S4')
@@ -1097,6 +1155,7 @@ def title(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c=np.array(['a1b c','1b ca','b ca1','ca1b'],'S5'); c
     array(['a1b c', '1b ca', 'b ca1', 'ca1b'],
         dtype='|S5')
@@ -1133,9 +1192,10 @@ def replace(a, old, new, count=-1):
     See Also
     --------
     str.replace
-    
+
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
     >>> np.strings.replace(a, 'mango', 'banana')
     array(['That is a banana', 'Monkeys eat bananas'], dtype='<U19')
@@ -1143,20 +1203,20 @@ def replace(a, old, new, count=-1):
     >>> a = np.array(["The dish is fresh", "This is it"])
     >>> np.strings.replace(a, 'is', 'was')
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
-    
+
     """
     arr = np.asanyarray(a)
     a_dt = arr.dtype
     old = np.asanyarray(old, dtype=getattr(old, 'dtype', a_dt))
     new = np.asanyarray(new, dtype=getattr(new, 'dtype', a_dt))
+    count = np.asanyarray(count)
+
+    if arr.dtype.char == "T":
+        return _replace(arr, old, new, count)
 
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
-    count = np.asanyarray(count)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
-
-    if arr.dtype.char == "T":
-        return _replace(arr, old, new, counts)
 
     buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
     out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
@@ -1188,6 +1248,7 @@ def _join(sep, seq):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.join('-', 'osd')  # doctest: +SKIP
     array('o-s-d', dtype='<U5')  # doctest: +SKIP
 
@@ -1224,6 +1285,7 @@ def _split(a, sep=None, maxsplit=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array("Numpy is nice!")
     >>> np.strings.split(x, " ")  # doctest: +SKIP
     array(list(['Numpy', 'is', 'nice!']), dtype=object)  # doctest: +SKIP
@@ -1274,11 +1336,12 @@ def _rsplit(a, sep=None, maxsplit=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', 'abBABba'])
     >>> np.strings.rsplit(a, 'A')  # doctest: +SKIP
     array([list(['a', 'a', 'a', '']),  # doctest: +SKIP
            list(['abB', 'Bba'])], dtype=object)  # doctest: +SKIP
-    
+
     """
     # This will return an array of lists of different sizes, so we
     # leave it as an object array
@@ -1315,72 +1378,99 @@ def _splitlines(a, keepends=None):
         a, np.object_, 'splitlines', _clean_args(keepends))
 
 
-def _partition(a, sep):
+def partition(a, sep):
     """
-    Partition each element in `a` around `sep`.
+    Partition each element in ``a`` around ``sep``.
 
-    Calls :meth:`str.partition` element-wise.
-
-    For each element in `a`, split the element as the first
-    occurrence of `sep`, and return 3 strings containing the part
+    For each element in ``a``, split the element at the first
+    occurrence of ``sep``, and return a 3-tuple containing the part
     before the separator, the separator itself, and the part after
-    the separator. If the separator is not found, return 3 strings
-    containing the string itself, followed by two empty strings.
+    the separator. If the separator is not found, the first item of
+    the tuple will contain the whole string, and the second and third
+    ones will be the empty string.
 
     Parameters
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array
-    sep : {str, unicode}
-        Separator to split each string element in `a`.
+    sep : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Separator to split each string element in ``a``.
 
     Returns
     -------
-    out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
-        depending on input types. The output array will have an extra
-        dimension with 3 elements per input element.
+    out : 3-tuple:
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part before the separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part after the separator
 
-    Examples
-    --------
-    >>> x = np.array(["Numpy is nice!"])
-    >>> np.strings.partition(x, " ")  # doctest: +SKIP
-    array([['Numpy', ' ', 'is nice!']], dtype='<U8')  # doctest: +SKIP
-    
     See Also
     --------
     str.partition
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> x = np.array(["Numpy is nice!"])
+    >>> np.strings.partition(x, " ")
+    (array(['Numpy'], dtype='<U5'),
+     array([' '], dtype='<U1'),
+     array(['is nice!'], dtype='<U8'))
+
     """
-    return _to_bytes_or_str_array(
-        _vec_string(a, np.object_, 'partition', (sep,)), a)
+    a = np.asanyarray(a)
+    # TODO switch to copy=False when issues around views are fixed
+    sep = np.array(sep, dtype=a.dtype, copy=True, subok=True)
+    if a.dtype.char == "T":
+        return _partition(a, sep)
+
+    pos = _find_ufunc(a, sep, 0, MAX)
+    a_len = str_len(a)
+    sep_len = str_len(sep)
+
+    not_found = pos < 0
+    buffersizes1 = np.where(not_found, a_len, pos)
+    buffersizes3 = np.where(not_found, 0, a_len - pos - sep_len)
+
+    out_dtype = ",".join([f"{a.dtype.char}{n}" for n in (
+        buffersizes1.max(),
+        1 if np.all(not_found) else sep_len.max(),
+        buffersizes3.max(),
+    )])
+    shape = np.broadcast_shapes(a.shape, sep.shape)
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
+    return _partition_index(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
-def _rpartition(a, sep):
+def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
 
-    Calls :meth:`str.rpartition` element-wise.
-
-    For each element in `a`, split the element as the last
-    occurrence of `sep`, and return 3 strings containing the part
+    For each element in ``a``, split the element at the last
+    occurrence of ``sep``, and return a 3-tuple containing the part
     before the separator, the separator itself, and the part after
-    the separator. If the separator is not found, return 3 strings
-    containing the string itself, followed by two empty strings.
+    the separator. If the separator is not found, the third item of
+    the tuple will contain the whole string, and the first and second
+    ones will be the empty string.
 
     Parameters
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
         Input array
-    sep : str or unicode
-        Right-most separator to split each element in array.
+    sep : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Separator to split each string element in ``a``.
 
     Returns
     -------
-    out : ndarray
-        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
-        depending on input types. The output array will have an extra
-        dimension with 3 elements per input element.
+    out : 3-tuple:
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part before the separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          separator
+        - array with ``StringDType``, ``bytes_`` or ``str_`` dtype with the
+          part after the separator
 
     See Also
     --------
@@ -1388,15 +1478,37 @@ def _rpartition(a, sep):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
-    >>> np.strings.rpartition(a, 'A')  # doctest: +SKIP
-    array([['aAaAa', 'A', ''],  # doctest: +SKIP
-       ['  a', 'A', '  '],  # doctest: +SKIP
-       ['abB', 'A', 'Bba']], dtype='<U5')  # doctest: +SKIP
+    >>> np.strings.rpartition(a, 'A')
+    (array(['aAaAa', '  a', 'abB'], dtype='<U5'),
+     array(['A', 'A', 'A'], dtype='<U1'),
+     array(['', '  ', 'Bba'], dtype='<U3'))
 
     """
-    return _to_bytes_or_str_array(
-        _vec_string(a, np.object_, 'rpartition', (sep,)), a)
+    a = np.asanyarray(a)
+    # TODO switch to copy=False when issues around views are fixed
+    sep = np.array(sep, dtype=a.dtype, copy=True, subok=True)
+    if a.dtype.char == "T":
+        return _rpartition(a, sep)
+
+    pos = _rfind_ufunc(a, sep, 0, MAX)
+    a_len = str_len(a)
+    sep_len = str_len(sep)
+
+    not_found = pos < 0
+    buffersizes1 = np.where(not_found, 0, pos)
+    buffersizes3 = np.where(not_found, a_len, a_len - pos - sep_len)
+
+    out_dtype = ",".join([f"{a.dtype.char}{n}" for n in (
+        buffersizes1.max(),
+        1 if np.all(not_found) else sep_len.max(),
+        buffersizes3.max(),
+    )])
+    shape = np.broadcast_shapes(a.shape, sep.shape)
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
+    return _rpartition_index(
+        a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
 def translate(a, table, deletechars=None):
@@ -1427,12 +1539,13 @@ def translate(a, table, deletechars=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['a1b c', '1bca', 'bca1'])
     >>> table = a[0].maketrans('abc', '123')
     >>> deletechars = ' '
     >>> np.char.translate(a, table, deletechars)
     array(['112 3', '1231', '2311'], dtype='<U5')
-    
+
     """
     a_arr = np.asarray(a)
     if issubclass(a_arr.dtype.type, np.str_):

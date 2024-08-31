@@ -68,15 +68,17 @@ Sub-arrays always have a C-contiguous memory layout.
    A simple data type containing a 32-bit big-endian integer:
    (see :ref:`arrays.dtypes.constructing` for details on construction)
 
-   >>> dt = np.dtype('>i4')
-   >>> dt.byteorder
-   '>'
-   >>> dt.itemsize
-   4
-   >>> dt.name
-   'int32'
-   >>> dt.type is np.int32
-   True
+      >>> import numpy as np
+
+      >>> dt = np.dtype('>i4')
+      >>> dt.byteorder
+      '>'
+      >>> dt.itemsize
+      4
+      >>> dt.name
+      'int32'
+      >>> dt.type is np.int32
+      True
 
    The corresponding array scalar type is :class:`int32`.
 
@@ -85,24 +87,28 @@ Sub-arrays always have a C-contiguous memory layout.
    A structured data type containing a 16-character string (in field 'name')
    and a sub-array of two 64-bit floating-point number (in field 'grades'):
 
-   >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
-   >>> dt['name']
-   dtype('<U16')
-   >>> dt['grades']
-   dtype(('<f8', (2,)))
+      >>> import numpy as np
+
+      >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
+      >>> dt['name']
+      dtype('<U16')
+      >>> dt['grades']
+      dtype(('<f8', (2,)))
 
    Items of an array of this data type are wrapped in an :ref:`array
    scalar <arrays.scalars>` type that also has two fields:
 
-   >>> x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
-   >>> x[1]
-   ('John', [6., 7.])
-   >>> x[1]['grades']
-   array([6.,  7.])
-   >>> type(x[1])
-   <class 'numpy.void'>
-   >>> type(x[1]['grades'])
-   <class 'numpy.ndarray'>
+      >>> import numpy as np
+
+      >>> x = np.array([('Sarah', (8.0, 7.0)), ('John', (6.0, 7.0))], dtype=dt)
+      >>> x[1]
+      ('John', [6., 7.])
+      >>> x[1]['grades']
+      array([6.,  7.])
+      >>> type(x[1])
+      <class 'numpy.void'>
+      >>> type(x[1]['grades'])
+      <class 'numpy.ndarray'>
 
 .. _arrays.dtypes.constructing:
 
@@ -148,8 +154,10 @@ Array-scalar types
 
     .. admonition:: Example
 
-       >>> dt = np.dtype(np.int32)      # 32-bit integer
-       >>> dt = np.dtype(np.complex128) # 128-bit complex floating-point number
+         >>> import numpy as np
+
+         >>> dt = np.dtype(np.int32)      # 32-bit integer
+         >>> dt = np.dtype(np.complex128) # 128-bit complex floating-point number
 
 Generic types
     The generic hierarchical type objects convert to corresponding
@@ -191,9 +199,11 @@ Built-in Python types
 
     .. admonition:: Example
 
-       >>> dt = np.dtype(float)   # Python-compatible floating-point number
-       >>> dt = np.dtype(int)     # Python-compatible integer
-       >>> dt = np.dtype(object)  # Python object
+         >>> import numpy as np
+
+         >>> dt = np.dtype(float)   # Python-compatible floating-point number
+         >>> dt = np.dtype(int)     # Python-compatible integer
+         >>> dt = np.dtype(object)  # Python object
 
     .. note::
 
@@ -219,10 +229,12 @@ One-character strings
 
     .. admonition:: Example
 
-       >>> dt = np.dtype('b')  # byte, native byte order
-       >>> dt = np.dtype('>H') # big-endian unsigned short
-       >>> dt = np.dtype('<f') # little-endian single-precision float
-       >>> dt = np.dtype('d')  # double-precision floating-point number
+         >>> import numpy as np
+
+         >>> dt = np.dtype('b')  # byte, native byte order
+         >>> dt = np.dtype('>H') # big-endian unsigned short
+         >>> dt = np.dtype('<f') # little-endian single-precision float
+         >>> dt = np.dtype('d')  # double-precision floating-point number
 
 Array-protocol type strings (see :ref:`arrays.interface`)
    The first character specifies the kind of data and the remaining
@@ -249,11 +261,13 @@ Array-protocol type strings (see :ref:`arrays.interface`)
 
    .. admonition:: Example
 
-      >>> dt = np.dtype('i4')   # 32-bit signed integer
-      >>> dt = np.dtype('f8')   # 64-bit floating-point number
-      >>> dt = np.dtype('c16')  # 128-bit complex floating-point number
-      >>> dt = np.dtype('S25')  # 25-length zero-terminated bytes
-      >>> dt = np.dtype('U25')  # 25-character string
+         >>> import numpy as np
+
+         >>> dt = np.dtype('i4')   # 32-bit signed integer
+         >>> dt = np.dtype('f8')   # 64-bit floating-point number
+         >>> dt = np.dtype('c16')  # 128-bit complex floating-point number
+         >>> dt = np.dtype('S25')  # 25-length zero-terminated bytes
+         >>> dt = np.dtype('U25')  # 25-character string
 
    .. _string-dtype-note:
 
@@ -285,7 +299,8 @@ String with comma-separated fields
         of 64-bit floating-point numbers
       - field named ``f2`` containing a 32-bit floating-point number
 
-      >>> dt = np.dtype("i4, (2,3)f8, f4")
+         >>> import numpy as np
+         >>> dt = np.dtype("i4, (2,3)f8, f4")
 
       - field named ``f0`` containing a 3-character string
       - field named ``f1`` containing a sub-array of shape (3,)
@@ -293,15 +308,18 @@ String with comma-separated fields
       - field named ``f2`` containing a 3 x 4 sub-array
         containing 10-character strings
 
-      >>> dt = np.dtype("S3, 3u8, (3,4)S10")
+         >>> import numpy as np
+         >>> dt = np.dtype("S3, 3u8, (3,4)S10")
 
 Type strings
    Any string name of a NumPy dtype, e.g.:
 
    .. admonition:: Example
 
-      >>> dt = np.dtype('uint32')   # 32-bit unsigned integer
-      >>> dt = np.dtype('float64')  # 64-bit floating-point number
+         >>> import numpy as np
+
+         >>> dt = np.dtype('uint32')   # 32-bit unsigned integer
+         >>> dt = np.dtype('float64')  # 64-bit floating-point number
 
 .. index::
    triple: dtype; construction; from tuple
@@ -313,8 +331,10 @@ Type strings
 
     .. admonition:: Example
 
-       >>> dt = np.dtype((np.void, 10))  # 10-byte wide data block
-       >>> dt = np.dtype(('U', 10))   # 10-character unicode string
+         >>> import numpy as np
+
+         >>> dt = np.dtype((np.void, 10))  # 10-byte wide data block
+         >>> dt = np.dtype(('U', 10))   # 10-character unicode string
 
 ``(fixed_dtype, shape)``
     .. index::
@@ -330,8 +350,10 @@ Type strings
 
     .. admonition:: Example
 
-       >>> dt = np.dtype((np.int32, (2,2)))          # 2 x 2 integer sub-array
-       >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3))) # 2 x 3 structured sub-array
+         >>> import numpy as np
+
+         >>> dt = np.dtype((np.int32, (2,2)))          # 2 x 2 integer sub-array
+         >>> dt = np.dtype(('i4, (2,3)f8, f4', (2,3))) # 2 x 3 structured sub-array
 
 .. index::
    triple: dtype; construction; from list
@@ -362,15 +384,17 @@ Type strings
 
    .. admonition:: Example
 
-      Data-type with fields ``big`` (big-endian 32-bit integer) and
-      ``little`` (little-endian 32-bit integer):
+         Data-type with fields ``big`` (big-endian 32-bit integer) and
+         ``little`` (little-endian 32-bit integer):
 
-      >>> dt = np.dtype([('big', '>i4'), ('little', '<i4')])
+         >>> import numpy as np
 
-      Data-type with fields ``R``, ``G``, ``B``, ``A``, each being an
-      unsigned 8-bit integer:
+         >>> dt = np.dtype([('big', '>i4'), ('little', '<i4')])
 
-      >>> dt = np.dtype([('R','u1'), ('G','u1'), ('B','u1'), ('A','u1')])
+         Data-type with fields ``R``, ``G``, ``B``, ``A``, each being an
+         unsigned 8-bit integer:
+
+         >>> dt = np.dtype([('R','u1'), ('G','u1'), ('B','u1'), ('A','u1')])
 
 .. index::
    triple: dtype; construction; from dict
@@ -401,19 +425,21 @@ Type strings
 
     .. admonition:: Example
 
-       Data type with fields ``r``, ``g``, ``b``, ``a``, each being
-       an 8-bit unsigned integer:
+         Data type with fields ``r``, ``g``, ``b``, ``a``, each being
+         an 8-bit unsigned integer:
 
-       >>> dt = np.dtype({'names': ['r','g','b','a'],
-       ...                'formats': [np.uint8, np.uint8, np.uint8, np.uint8]})
+         >>> import numpy as np
 
-       Data type with fields ``r`` and ``b`` (with the given titles),
-       both being 8-bit unsigned integers, the first at byte position
-       0 from the start of the field and the second at position 2:
+         >>> dt = np.dtype({'names': ['r','g','b','a'],
+         ...                'formats': [np.uint8, np.uint8, np.uint8, np.uint8]})
 
-       >>> dt = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
-       ...                'offsets': [0, 2],
-       ...                'titles': ['Red pixel', 'Blue pixel']})
+         Data type with fields ``r`` and ``b`` (with the given titles),
+         both being 8-bit unsigned integers, the first at byte position
+         0 from the start of the field and the second at position 2:
+
+         >>> dt = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
+         ...                'offsets': [0, 2],
+         ...                'titles': ['Red pixel', 'Blue pixel']})
 
 
 ``{'field1': ..., 'field2': ..., ...}``
@@ -430,12 +456,14 @@ Type strings
 
     .. admonition:: Example
 
-       Data type containing field ``col1`` (10-character string at
-       byte position 0), ``col2`` (32-bit float at byte position 10),
-       and ``col3`` (integers at byte position 14):
+         Data type containing field ``col1`` (10-character string at
+         byte position 0), ``col2`` (32-bit float at byte position 10),
+         and ``col3`` (integers at byte position 14):
 
-       >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (np.float32, 10),
-       ...                'col3': (int, 14)})
+         >>> import numpy as np
+
+         >>> dt = np.dtype({'col1': ('U10', 0), 'col2': (np.float32, 10),
+         ...                'col3': (int, 14)})
 
 ``(base_dtype, new_dtype)``
     In NumPy 1.7 and later, this form allows `base_dtype` to be interpreted as
@@ -453,20 +481,22 @@ Type strings
 
     .. admonition:: Example
 
-       32-bit integer, whose first two bytes are interpreted as an integer
-       via field ``real``, and the following two bytes via field ``imag``.
+         32-bit integer, whose first two bytes are interpreted as an integer
+         via field ``real``, and the following two bytes via field ``imag``.
 
-       >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)}))
+         >>> import numpy as np
 
-       32-bit integer, which is interpreted as consisting of a sub-array
-       of shape ``(4,)`` containing 8-bit integers:
+         >>> dt = np.dtype((np.int32,{'real':(np.int16, 0),'imag':(np.int16, 2)}))
 
-       >>> dt = np.dtype((np.int32, (np.int8, 4)))
+         32-bit integer, which is interpreted as consisting of a sub-array
+         of shape ``(4,)`` containing 8-bit integers:
 
-       32-bit integer, containing fields ``r``, ``g``, ``b``, ``a`` that
-       interpret the 4 bytes in the integer as four unsigned integers:
+         >>> dt = np.dtype((np.int32, (np.int8, 4)))
 
-       >>> dt = np.dtype(('i4', [('r','u1'),('g','u1'),('b','u1'),('a','u1')]))
+         32-bit integer, containing fields ``r``, ``g``, ``b``, ``a`` that
+         interpret the 4 bytes in the integer as four unsigned integers:
+
+         >>> dt = np.dtype(('i4', [('r','u1'),('g','u1'),('b','u1'),('a','u1')]))
 
 
 Checking the data type
@@ -475,11 +505,13 @@ When checking for a specific data type, use ``==`` comparison.
 
 .. admonition:: Example
 
-   >>> a = np.array([1, 2], dtype=np.float32)
-   >>> a.dtype == np.float32
-   True
+      >>> import numpy as np
 
-As opposed to python types, a comparison using ``is`` should not be used.
+      >>> a = np.array([1, 2], dtype=np.float32)
+      >>> a.dtype == np.float32
+      True
+
+As opposed to Python types, a comparison using ``is`` should not be used.
 
 First, NumPy treats data type specifications (everything that can be passed to
 the :class:`dtype` constructor) as equivalent to the data type object itself.
@@ -487,31 +519,35 @@ This equivalence can only be handled through ``==``, not through ``is``.
 
 .. admonition:: Example
 
-   A :class:`dtype` object is equal to all data type specifications that are
-   equivalent to it.
+      A :class:`dtype` object is equal to all data type specifications that are
+      equivalent to it.
 
-   >>> a = np.array([1, 2], dtype=float)
-   >>> a.dtype == np.dtype(np.float64)
-   True
-   >>> a.dtype == np.float64
-   True
-   >>> a.dtype == float
-   True
-   >>> a.dtype == "float64"
-   True
-   >>> a.dtype == "d"
-   True
+      >>> import numpy as np
+
+      >>> a = np.array([1, 2], dtype=float)
+      >>> a.dtype == np.dtype(np.float64)
+      True
+      >>> a.dtype == np.float64
+      True
+      >>> a.dtype == float
+      True
+      >>> a.dtype == "float64"
+      True
+      >>> a.dtype == "d"
+      True
 
 Second, there is no guarantee that data type objects are singletons.
 
 .. admonition:: Example
 
-   Do not use ``is`` because data type objects may or may not be singletons.
+      Do not use ``is`` because data type objects may or may not be singletons.
 
-   >>> np.dtype(float) is np.dtype(float)
-   True
-   >>> np.dtype([('a', float)]) is np.dtype([('a', float)])
-   False
+      >>> import numpy as np
+
+      >>> np.dtype(float) is np.dtype(float)
+      True
+      >>> np.dtype([('a', float)]) is np.dtype([('a', float)])
+      False
 
 :class:`dtype`
 ==============

@@ -79,7 +79,10 @@ string_to_string_resolve_descriptors(PyObject *NPY_UNUSED(self),
         return NPY_UNSAFE_CASTING;
     }
 
-    *view_offset = 0;
+    // views are only legal between descriptors that share allocators (e.g. the same object)
+    if (descr0->allocator == descr1->allocator) {
+        *view_offset = 0;
+    };
 
     return NPY_NO_CASTING;
 }
@@ -156,7 +159,7 @@ unicode_to_string(PyArrayMethod_Context *context, char *const data[],
                   npy_intp const dimensions[], npy_intp const strides[],
                   NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *sdescr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(sdescr);
@@ -392,6 +395,7 @@ string_to_bool(PyArrayMethod_Context *context, char *const data[],
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
     int has_null = descr->na_object != NULL;
     int has_string_na = descr->has_string_na;
+    int has_nan_na = descr->has_nan_na;
     const npy_static_string *default_string = &descr->default_string;
 
     npy_intp N = dimensions[0];
@@ -412,8 +416,13 @@ string_to_bool(PyArrayMethod_Context *context, char *const data[],
         }
         else if (is_null) {
             if (has_null && !has_string_na) {
-                // numpy treats NaN as truthy, following python
-                *out = NPY_TRUE;
+                if (has_nan_na) {
+                    // numpy treats NaN as truthy, following python
+                    *out = NPY_TRUE;
+                }
+                else {
+                    *out = NPY_FALSE;
+                }
             }
             else {
                 *out = (npy_bool)(default_string->size == 0);
@@ -885,6 +894,7 @@ string_to_pyfloat(char *in, int has_null,
                 goto fail;                                                    \
             }                                                                 \
             double dval = PyFloat_AS_DOUBLE(pyfloat_value);                   \
+            Py_DECREF(pyfloat_value);                                         \
             npy_##typename fval = (double_to_float)(dval);                    \
                                                                               \
             if (NPY_UNLIKELY(isinf_name(fval) && !(npy_isinf(dval)))) {       \
@@ -1672,7 +1682,7 @@ void_to_string(PyArrayMethod_Context *context, char *const data[],
                npy_intp const dimensions[], npy_intp const strides[],
                NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
@@ -1802,7 +1812,7 @@ bytes_to_string(PyArrayMethod_Context *context, char *const data[],
                 npy_intp const dimensions[], npy_intp const strides[],
                 NpyAuxData *NPY_UNUSED(auxdata))
 {
-    PyArray_Descr **descrs = context->descriptors;
+    PyArray_Descr *const *descrs = context->descriptors;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)descrs[1];
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);

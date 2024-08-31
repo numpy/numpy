@@ -7,15 +7,11 @@ from typing import (
     SupportsAbs,
     SupportsIndex,
     NoReturn,
+    TypeGuard,
 )
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
 
 import numpy as np
 from numpy import (
-    ComplexWarning as ComplexWarning,
     generic,
     unsignedinteger,
     signedinteger,
@@ -498,39 +494,6 @@ def tensordot(
 ) -> NDArray[object_]: ...
 
 @overload
-def vecdot(
-    x1: _ArrayLikeUnknown, x2: _ArrayLikeUnknown, axis: int = ...
-) -> NDArray[Any]: ...
-@overload
-def vecdot(
-    x1: _ArrayLikeBool_co, x2: _ArrayLikeBool_co, axis: int = ...
-) -> NDArray[np.bool]: ...
-@overload
-def vecdot(
-    x1: _ArrayLikeUInt_co, x2: _ArrayLikeUInt_co, axis: int = ...
-) -> NDArray[unsignedinteger[Any]]: ...
-@overload
-def vecdot(
-    x1: _ArrayLikeInt_co, x2: _ArrayLikeInt_co, axis: int = ...
-) -> NDArray[signedinteger[Any]]: ...
-@overload
-def vecdot(
-    x1: _ArrayLikeFloat_co, x2: _ArrayLikeFloat_co, axis: int = ...
-) -> NDArray[floating[Any]]: ...
-@overload
-def vecdot(
-    x1: _ArrayLikeComplex_co, x2: _ArrayLikeComplex_co, axis: int = ...
-) -> NDArray[complexfloating[Any, Any]]: ...
-@overload
-def vecdot(
-    x1: _ArrayLikeTD64_co, x2: _ArrayLikeTD64_co, axis: int = ...
-) -> NDArray[timedelta64]: ...
-@overload
-def vecdot(
-    x1: _ArrayLikeObject_co, x2: _ArrayLikeObject_co, axis: int = ...
-) -> NDArray[object_]: ...
-
-@overload
 def roll(
     a: _ArrayLike[_SCT],
     shift: _ShapeLike,
@@ -733,10 +696,12 @@ def astype(
     x: NDArray[Any],
     dtype: _DTypeLike[_SCT],
     copy: bool = ...,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
 @overload
 def astype(
     x: NDArray[Any],
     dtype: DTypeLike,
     copy: bool = ...,
+    device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...

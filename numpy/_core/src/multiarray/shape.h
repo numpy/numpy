@@ -1,6 +1,8 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_
 
+#include "conversion_utils.h"
+
 /*
  * Creates a sorted stride perm matching the KEEPORDER behavior
  * of the NpyIter object. Because this operates based on multiple
@@ -26,5 +28,9 @@ PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags);
  */
 NPY_NO_EXPORT PyObject *
 PyArray_MatrixTranspose(PyArrayObject *ap);
+
+NPY_NO_EXPORT PyObject *
+_reshape_with_copy_arg(PyArrayObject *array, PyArray_Dims *newdims,
+                       NPY_ORDER order, NPY_COPYMODE copy);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_SHAPE_H_ */

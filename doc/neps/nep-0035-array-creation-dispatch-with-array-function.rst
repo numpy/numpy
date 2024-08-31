@@ -430,17 +430,17 @@ Discussion
 References
 ----------
 
-.. [1] `NEP 18 - A dispatch mechanism for NumPy's high level array functions <https://numpy.org/neps/nep-0018-array-function-protocol.html>`_.
+.. [1] :ref:`NEP18`.
 
 .. [2] `PEP 3102 — Keyword-Only Arguments <https://www.python.org/dev/peps/pep-3102/>`_.
 
-.. [3] `NEP 30 — Duck Typing for NumPy Arrays - Implementation <https://numpy.org/neps/nep-0030-duck-array-protocol.html>`_.
+.. [3] :ref:`NEP30`.
 
-.. [4] `NEP 31 — Context-local and global overrides of the NumPy API <https://github.com/numpy/numpy/pull/14389>`_.
+.. [4] :ref:`NEP31`.
 
 .. [5] `Array creation routines <https://docs.scipy.org/doc/numpy-1.17.0/reference/routines.array-creation.html>`_.
 
-.. [6] `NEP 37 — A dispatch protocol for NumPy-like modules <https://numpy.org/neps/nep-0037-array-module.html>`_.
+.. [6] :ref:`NEP37`.
 
 .. [7] `Implementation's pull request on GitHub <https://github.com/numpy/numpy/pull/16935>`_
 

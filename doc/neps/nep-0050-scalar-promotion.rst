@@ -4,7 +4,7 @@
 NEP 50 — Promotion rules for Python scalars
 ===========================================
 :Author: Sebastian Berg
-:Status: Draft
+:Status: Final
 :Type: Standards Track
 :Created: 2021-05-25
 
@@ -191,7 +191,7 @@ arrays that are not 0-D, such as ``array([2])``.
    * - ``array([1], uint8) + int64(1)`` or
 
        ``array([1], uint8) + array(1, int64)``
-     - ``array([2], unit8)``
+     - ``array([2], uint8)``
      - ``array([2], int64)`` [T2]_
    * - ``array([1.], float32) + float64(1.)`` or
 

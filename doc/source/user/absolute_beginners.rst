@@ -235,7 +235,7 @@ only one "data type". The data type is recorded in the ``dtype`` attribute.
     >>> a.dtype
     dtype('int64')  # "int" for integer, "64" for 64-bit
 
-ref:`Read more about array attributes here <arrays.ndarray>` and learn about
+:ref:`Read more about array attributes here <arrays.ndarray>` and learn about
 :ref:`array objects here <arrays>`.
 
 How to create a basic array
@@ -301,7 +301,7 @@ Adding, removing, and sorting elements
 
 -----
 
-Sorting an element is simple with ``np.sort()``. You can specify the axis, kind,
+Sorting an array is simple with ``np.sort()``. You can specify the axis, kind,
 and order when you call the function.
 
 If you start with this array::
@@ -425,7 +425,7 @@ this array to an array with three rows and two columns::
 
 With ``np.reshape``, you can specify a few optional parameters::
 
-  >>> np.reshape(a, newshape=(1, 6), order='C')
+  >>> np.reshape(a, shape=(1, 6), order='C')
   array([[0, 1, 2, 3, 4, 5]])
 
 ``a`` is the array to be reshaped.
@@ -1525,7 +1525,7 @@ If you want to store a single ndarray object, store it as a .npy file using
 save it as a .npz file using ``np.savez``. You can also save several arrays
 into a single file in compressed npz format with `savez_compressed`.
 
-It's easy to save and load and array with ``np.save()``. Just make sure to
+It's easy to save and load an array with ``np.save()``. Just make sure to
 specify the array you want to save and a file name. For example, if you create
 this array::
 

@@ -1,0 +1,2 @@
+Bump the musllinux CI image and wheels to 1_2 from 1_1. This is because 1_1 is
+`end of life <https://github.com/pypa/manylinux/issues/1629>`_.

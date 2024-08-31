@@ -18,6 +18,7 @@ COMPARISONS = [
 
 MAX = np.iinfo(np.int64).max
 
+IS_PYPY_LT_7_3_16 = IS_PYPY and sys.implementation.version < (7, 3, 16)
 
 @pytest.mark.parametrize(["op", "ufunc", "sym"], COMPARISONS)
 def test_mixed_string_comparison_ufuncs_fail(op, ufunc, sym):
@@ -462,13 +463,16 @@ class TestMethods:
         ("xyxzx", "x", "yxzx"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["helloxyzzy", "hello"]),
+        (["ba", "ac", "baa", "bba"], "b", ["a", "ac", "aa", "a"]),
     ])
     def test_lstrip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
+        out = np.array(out, dtype=dt)
         if chars is not None:
             chars = np.array(chars, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.lstrip(a, chars), out)
+            assert_array_equal(np.strings.lstrip(a, chars), out)
+        else:
+            assert_array_equal(np.strings.lstrip(a), out)
 
     @pytest.mark.parametrize("a,chars,out", [
         ("", None, ""),
@@ -484,16 +488,20 @@ class TestMethods:
         ("xyzzyhelloxyzzy", "xyz", "xyzzyhello"),
         ("hello", "xyz", "hello"),
         ("xyxz", "xyxz", ""),
+        ("    ", None, ""),
         ("xyxzx", "x", "xyxz"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["xyzzyhello", "hello"]),
+        (["ab", "ac", "aab", "abb"], "b", ["a", "ac", "aa", "a"]),
     ])
     def test_rstrip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
+        out = np.array(out, dtype=dt)
         if chars is not None:
             chars = np.array(chars, dtype=dt)
-        out = np.array(out, dtype=dt)
-        assert_array_equal(np.strings.rstrip(a, chars), out)
+            assert_array_equal(np.strings.rstrip(a, chars), out)
+        else:
+            assert_array_equal(np.strings.rstrip(a), out)
 
     @pytest.mark.parametrize("a,chars,out", [
         ("", None, ""),
@@ -510,6 +518,7 @@ class TestMethods:
         ("xyxzx", "x", "yxz"),
         (["xyzzyhelloxyzzy", "hello"], ["xyz", "xyz"],
          ["hello", "hello"]),
+        (["bab", "ac", "baab", "bbabb"], "b", ["a", "ac", "aa", "a"]),
     ])
     def test_strip(self, a, chars, out, dt):
         a = np.array(a, dtype=dt)
@@ -715,6 +724,7 @@ class TestMethods:
     def test_expandtabs_raises_overflow(self, dt):
         with pytest.raises(OverflowError, match="new string is too long"):
             np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), sys.maxsize)
+            np.strings.expandtabs(np.array("\ta\n\tb", dtype=dt), 2**61)
 
     FILL_ERROR = "The fill character must be exactly one character long"
 
@@ -795,6 +805,60 @@ class TestMethods:
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.zfill(buf, width), res)
 
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("this is the partition method", "ti", "this is the par",
+            "ti", "tion method"),
+        ("http://www.python.org", "://", "http", "://", "www.python.org"),
+        ("http://www.python.org", "?", "http://www.python.org", "", ""),
+        ("http://www.python.org", "http://", "", "http://", "www.python.org"),
+        ("http://www.python.org", "org", "http://www.python.", "org", ""),
+        ("http://www.python.org", ["://", "?", "http://", "org"],
+            ["http", "http://www.python.org", "", "http://www.python."],
+            ["://", "", "http://", "org"],
+            ["www.python.org", "", "www.python.org", ""]),
+        ("mississippi", "ss", "mi", "ss", "issippi"),
+        ("mississippi", "i", "m", "i", "ssissippi"),
+        ("mississippi", "w", "mississippi", "", ""),
+    ])
+    def test_partition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res2 = np.array(res2, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        act1, act2, act3 = np.strings.partition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
+
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("this is the partition method", "ti", "this is the parti",
+            "ti", "on method"),
+        ("http://www.python.org", "://", "http", "://", "www.python.org"),
+        ("http://www.python.org", "?", "", "", "http://www.python.org"),
+        ("http://www.python.org", "http://", "", "http://", "www.python.org"),
+        ("http://www.python.org", "org", "http://www.python.", "org", ""),
+        ("http://www.python.org", ["://", "?", "http://", "org"],
+            ["http", "", "", "http://www.python."],
+            ["://", "", "http://", "org"],
+            ["www.python.org", "http://www.python.org", "www.python.org", ""]),
+        ("mississippi", "ss", "missi", "ss", "ippi"),
+        ("mississippi", "i", "mississipp", "i", ""),
+        ("mississippi", "w", "", "", "mississippi"),
+    ])
+    def test_rpartition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res2 = np.array(res2, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        act1, act2, act3 = np.strings.rpartition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
+
 
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
@@ -849,7 +913,7 @@ class TestMethodsWithUnicode:
         '\U00011066',
         '\U000104A0',
         pytest.param('\U0001F107', marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISALNUM",
             strict=True)),
     ])
@@ -866,7 +930,7 @@ class TestMethodsWithUnicode:
         ('\U0001F46F', False),
         ('\u2177', True),
         pytest.param('\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISLOWER",
             strict=True)),
         ('\U0001044E', True),
@@ -884,7 +948,7 @@ class TestMethodsWithUnicode:
         ('\U0001F46F', False),
         ('\u2177', False),
         pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISUPPER",
             strict=True)),
         ('\U0001044E', False),
@@ -897,12 +961,12 @@ class TestMethodsWithUnicode:
         ('\u1FFc', True),
         ('Greek \u1FFcitlecases ...', True),
         pytest.param('\U00010401\U00010429', True, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISISTITLE",
             strict=True)),
         ('\U00010427\U0001044E', True),
         pytest.param('\U00010429', False, marks=pytest.mark.xfail(
-            sys.platform == 'win32' and IS_PYPY,
+            sys.platform == 'win32' and IS_PYPY_LT_7_3_16,
             reason="PYPY bug in Py_UNICODE_ISISTITLE",
             strict=True)),
         ('\U0001044E', False),
@@ -967,6 +1031,70 @@ class TestMethodsWithUnicode:
         fillchar = np.array(fillchar, dtype=dt)
         res = np.array(res, dtype=dt)
         assert_array_equal(np.strings.rjust(buf, width, fillchar), res)
+
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("āāāāĀĀĀĀ", "Ă", "āāāāĀĀĀĀ", "", ""),
+        ("āāāāĂĀĀĀĀ", "Ă", "āāāā", "Ă", "ĀĀĀĀ"),
+        ("āāāāĂĂĀĀĀĀ", "ĂĂ", "āāāā", "ĂĂ", "ĀĀĀĀ"),
+        ("𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀", "𐌂", "𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀", "", ""),
+        ("𐌁𐌁𐌁𐌁𐌂𐌀𐌀𐌀𐌀", "𐌂", "𐌁𐌁𐌁𐌁", "𐌂", "𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌂𐌀𐌀𐌀𐌀", "𐌂𐌂", "𐌁𐌁𐌁𐌁", "𐌂𐌂", "𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌂𐌂𐌂𐌀𐌀𐌀𐌀", "𐌂𐌂𐌂𐌂", "𐌁𐌁𐌁𐌁", "𐌂𐌂𐌂𐌂", "𐌀𐌀𐌀𐌀"),
+    ])
+    def test_partition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res2 = np.array(res2, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        act1, act2, act3 = np.strings.partition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
+
+    @pytest.mark.parametrize("buf,sep,res1,res2,res3", [
+        ("āāāāĀĀĀĀ", "Ă", "", "", "āāāāĀĀĀĀ"),
+        ("āāāāĂĀĀĀĀ", "Ă", "āāāā", "Ă", "ĀĀĀĀ"),
+        ("āāāāĂĂĀĀĀĀ", "ĂĂ", "āāāā", "ĂĂ", "ĀĀĀĀ"),
+        ("𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀", "𐌂", "", "", "𐌁𐌁𐌁𐌁𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌀𐌀𐌀𐌀", "𐌂", "𐌁𐌁𐌁𐌁", "𐌂", "𐌀𐌀𐌀𐌀"),
+        ("𐌁𐌁𐌁𐌁𐌂𐌂𐌀𐌀𐌀𐌀", "𐌂𐌂", "𐌁𐌁𐌁𐌁", "𐌂𐌂", "𐌀𐌀𐌀𐌀"),
+    ])
+    def test_rpartition(self, buf, sep, res1, res2, res3, dt):
+        buf = np.array(buf, dtype=dt)
+        sep = np.array(sep, dtype=dt)
+        res1 = np.array(res1, dtype=dt)
+        res2 = np.array(res2, dtype=dt)
+        res3 = np.array(res3, dtype=dt)
+        act1, act2, act3 = np.strings.rpartition(buf, sep)
+        assert_array_equal(act1, res1)
+        assert_array_equal(act2, res2)
+        assert_array_equal(act3, res3)
+        assert_array_equal(act1 + act2 + act3, buf)
+
+    @pytest.mark.parametrize("method", ["strip", "lstrip", "rstrip"])
+    @pytest.mark.parametrize(
+        "source,strip",
+        [
+            ("λμ", "μ"),
+            ("λμ", "λ"),
+            ("λ"*5 + "μ"*2, "μ"),
+            ("λ" * 5 + "μ" * 2, "λ"),
+            ("λ" * 5 + "A" + "μ" * 2, "μλ"),
+            ("λμ" * 5, "μ"),
+            ("λμ" * 5, "λ"),
+    ])
+    def test_strip_functions_unicode(self, source, strip, method, dt):
+        src_array = np.array([source], dtype=dt)
+
+        npy_func = getattr(np.strings, method)
+        py_func = getattr(str, method)
+
+        expected = np.array([py_func(source, strip)], dtype=dt)
+        actual = npy_func(src_array, strip)
+
+        assert_array_equal(actual, expected)
 
 
 class TestMixedTypeMethods:

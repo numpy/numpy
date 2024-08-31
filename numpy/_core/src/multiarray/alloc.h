@@ -6,6 +6,7 @@
 #include "numpy/ndarraytypes.h"
 
 #define NPY_TRACE_DOMAIN 389047
+#define MEM_HANDLER_CAPSULE_NAME "mem_handler"
 
 NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args));

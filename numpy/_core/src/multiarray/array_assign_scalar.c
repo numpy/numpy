@@ -17,7 +17,7 @@
 #include "numpy/npy_math.h"
 
 #include "npy_config.h"
-#include "npy_pycompat.h"
+
 
 #include "convert_datatype.h"
 #include "methods.h"
@@ -243,8 +243,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     }
 
     /* Check the casting rule */
-    if (!can_cast_scalar_to(src_dtype, src_data,
-                            PyArray_DESCR(dst), casting)) {
+    if (!PyArray_CanCastTypeTo(src_dtype, PyArray_DESCR(dst), casting)) {
         npy_set_invalid_cast_error(
                 src_dtype, PyArray_DESCR(dst), casting, NPY_TRUE);
         return -1;

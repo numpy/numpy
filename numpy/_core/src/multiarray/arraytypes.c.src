@@ -18,6 +18,7 @@
 
 #include "npy_config.h"
 #include "npy_sort.h"
+#include "abstractdtypes.h"
 #include "common.h"
 #include "ctors.h"
 #include "convert_datatype.h"
@@ -41,6 +42,7 @@
 #include "arraytypes.h"
 
 #include "umathmodule.h"
+#include "npy_static_data.h"
 
 /*
  * Define a stack allocated dummy array with only the minimum information set:
@@ -273,41 +275,10 @@ static int
 #endif
             ) {
         PyArray_Descr *descr = PyArray_DescrFromType(NPY_@TYPE@);
-
-        if (npy_promotion_state == NPY_USE_LEGACY_PROMOTION || (
-                    npy_promotion_state == NPY_USE_WEAK_PROMOTION_AND_WARN
-                        && !npy_give_promotion_warnings())) {
-            /*
-             * This path will be taken both for the "promotion" case such as
-             * `uint8_arr + 123` as well as the assignment case.
-             * The "legacy" path should only ever be taken for assignment
-             * (legacy promotion will prevent overflows by promoting up)
-             * so a normal deprecation makes sense.
-             * When weak promotion is active, we use "future" behavior unless
-             * warnings were explicitly opt-in.
-             */
-            if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                    "NumPy will stop allowing conversion of out-of-bound "
-                    "Python integers to integer arrays.  The conversion "
-                    "of %.100R to %S will fail in the future.\n"
-                    "For the old behavior, usually:\n"
-                    "    np.array(value).astype(dtype)\n"
-                    "will give the desired result (the cast overflows).",
-                    obj, descr) < 0) {
-                Py_DECREF(descr);
-                return -1;
-            }
-            Py_DECREF(descr);
-            return 0;
-        }
-        else {
-            /* Live in the future, outright error: */
-            PyErr_Format(PyExc_OverflowError,
-                    "Python integer %R out of bounds for %S", obj, descr);
-            Py_DECREF(descr);
-            return -1;
-            }
-        assert(0);
+        PyErr_Format(PyExc_OverflowError,
+                "Python integer %R out of bounds for %S", obj, descr);
+        Py_DECREF(descr);
+        return -1;
     }
     return 0;
 }
@@ -4184,8 +4155,7 @@ NPY_NO_EXPORT _PyArray_LegacyDescr @from@_Descr = {
 
 /* The smallest type number is ?, the largest bounded by 'z'. */
 #define _MAX_LETTER ('z' + 1)
-static npy_int16 _letter_to_num[_MAX_LETTER - '?'];
-#define LETTER_TO_NUM(letter) _letter_to_num[letter - '?']
+#define LETTER_TO_NUM(letter) npy_static_cdata._letter_to_num[letter - '?']
 
 static _PyArray_LegacyDescr *_builtin_descrs[] = {
     &BOOL_Descr,
@@ -4221,6 +4191,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrFromType(int type)
 {
     PyArray_Descr *ret = NULL;
+    npy_bool is_stringdtype = (type == NPY_VSTRING || type == NPY_VSTRINGLTR);
 
     if (type < 0) {
         /*
@@ -4232,7 +4203,7 @@ PyArray_DescrFromType(int type)
          */
         ret = NULL;
     }
-    else if (type == NPY_VSTRING || type == NPY_VSTRINGLTR) {
+    else if  (is_stringdtype) {
         ret = (PyArray_Descr *)new_stringdtype_instance(NULL, 1);
     }
     // builtin legacy dtypes
@@ -4279,7 +4250,7 @@ PyArray_DescrFromType(int type)
         PyErr_SetString(PyExc_ValueError,
                 "Invalid data-type for array");
     }
-    else {
+    else if (!is_stringdtype) {
         Py_INCREF(ret);
     }
 
@@ -4351,10 +4322,16 @@ set_typeinfo(PyObject *dict)
      *         CFloat, CDouble, CLongDouble,
      *         Object, String, Unicode, Void,
      *         Datetime, Timedelta#
+     * #scls = PyArrayDescr_Type,
+     *         PyArray_IntAbstractDType*10,
+     *         PyArray_FloatAbstractDType*4,
+     *         PyArray_ComplexAbstractDType*3,
+     *         PyArrayDescr_Type*6 #
      */
     if (dtypemeta_wrap_legacy_descriptor(
             _builtin_descrs[NPY_@NAME@],
             &_Py@Name@_ArrFuncs,
+            (PyTypeObject *)&@scls@,
             "numpy.dtypes." NPY_@NAME@_Name "DType",
 #ifdef NPY_@NAME@_alias
             "numpy.dtypes." NPY_@NAME@_Alias "DType"

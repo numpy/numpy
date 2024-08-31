@@ -2052,8 +2052,8 @@ def test_randomstate_ctor_old_style_pickle():
     # Directly call reduce which is used in pickling
     ctor, args, state_a = rs.__reduce__()
     # Simulate unpickling an old pickle that only has the name
-    assert args[:1] == ("MT19937",)
-    b = ctor(*args[:1])
+    assert args[0].__class__.__name__ == "MT19937"
+    b = ctor(*("MT19937",))
     b.set_state(state_a)
     state_b = b.get_state(legacy=False)
 

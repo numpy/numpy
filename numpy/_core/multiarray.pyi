@@ -6,6 +6,7 @@ from collections.abc import Sequence, Callable, Iterable
 from typing import (
     Literal as L,
     Any,
+    TypeAlias,
     overload,
     TypeVar,
     SupportsIndex,
@@ -82,7 +83,15 @@ from numpy._typing import (
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
+_ArrayType_co = TypeVar(
+    "_ArrayType_co",
+    bound=ndarray[Any, Any],
+    covariant=True,
+)
+_SizeType = TypeVar("_SizeType", bound=int)
+
+_1DArray: TypeAlias = ndarray[tuple[_SizeType], dtype[_SCT]]
 
 # Valid time units
 _UnitKind = L[
@@ -112,6 +121,9 @@ _RollKind = L[  # `raise` is deliberately excluded
 class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
     def __len__(self) -> int: ...
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
+
+class _SupportsArray(Protocol[_ArrayType_co]):
+    def __array__(self, /) -> _ArrayType_co: ...
 
 __all__: list[str]
 
@@ -185,6 +197,17 @@ def array(
     order: _OrderKACF = ...,
     subok: L[True],
     ndmin: int = ...,
+    like: None | _SupportsArrayFunc = ...,
+) -> _ArrayType: ...
+@overload
+def array(
+    object: _SupportsArray[_ArrayType],
+    dtype: None = ...,
+    *,
+    copy: None | bool | _CopyMode = ...,
+    order: _OrderKACF = ...,
+    subok: L[True],
+    ndmin: L[0] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> _ArrayType: ...
 @overload
@@ -525,6 +548,8 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> _ArrayType: ...
 @overload
@@ -533,6 +558,8 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -541,6 +568,8 @@ def asanyarray(
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 @overload
@@ -549,6 +578,8 @@ def asanyarray(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[_SCT]: ...
 @overload
@@ -557,6 +588,8 @@ def asanyarray(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     *,
+    device: None | L["cpu"] = ...,
+    copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
@@ -740,7 +773,7 @@ def arange(  # type: ignore[misc]
     dtype: None = ...,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> _1DArray[int, signedinteger[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
     start: _IntLike_co,
@@ -750,7 +783,7 @@ def arange(  # type: ignore[misc]
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> _1DArray[int, signedinteger[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
     stop: _FloatLike_co,
@@ -758,7 +791,7 @@ def arange(  # type: ignore[misc]
     dtype: None = ...,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[floating[Any]]: ...
+) -> _1DArray[int, floating[Any]]: ...
 @overload
 def arange(  # type: ignore[misc]
     start: _FloatLike_co,
@@ -768,7 +801,7 @@ def arange(  # type: ignore[misc]
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[floating[Any]]: ...
+) -> _1DArray[int, floating[Any]]: ...
 @overload
 def arange(
     stop: _TD64Like_co,
@@ -776,7 +809,7 @@ def arange(
     dtype: None = ...,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[timedelta64]: ...
+) -> _1DArray[int, timedelta64]: ...
 @overload
 def arange(
     start: _TD64Like_co,
@@ -786,7 +819,7 @@ def arange(
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[timedelta64]: ...
+) -> _1DArray[int, timedelta64]: ...
 @overload
 def arange(  # both start and stop must always be specified for datetime64
     start: datetime64,
@@ -796,7 +829,7 @@ def arange(  # both start and stop must always be specified for datetime64
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[datetime64]: ...
+) -> _1DArray[int, datetime64]: ...
 @overload
 def arange(
     stop: Any,
@@ -804,7 +837,7 @@ def arange(
     dtype: _DTypeLike[_SCT],
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[_SCT]: ...
+) -> _1DArray[int, _SCT]: ...
 @overload
 def arange(
     start: Any,
@@ -814,7 +847,7 @@ def arange(
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[_SCT]: ...
+) -> _1DArray[int, _SCT]: ...
 @overload
 def arange(
     stop: Any, /,
@@ -822,7 +855,7 @@ def arange(
     dtype: DTypeLike,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
+) -> _1DArray[int, Any]: ...
 @overload
 def arange(
     start: Any,
@@ -832,7 +865,7 @@ def arange(
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
+) -> _1DArray[int, Any]: ...
 
 def datetime_data(
     dtype: str | _DTypeLike[datetime64] | _DTypeLike[timedelta64], /,

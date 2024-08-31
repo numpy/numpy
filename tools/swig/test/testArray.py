@@ -39,7 +39,8 @@ class Array1TestCase(unittest.TestCase):
 
     def testConstructor3(self):
         "Test Array1 copy constructor"
-        for i in range(self.array1.length()): self.array1[i] = i
+        for i in range(self.array1.length()):
+            self.array1[i] = i
         arrayCopy = Array.Array1(self.array1)
         self.assertTrue(arrayCopy == self.array1)
 
@@ -97,17 +98,20 @@ class Array1TestCase(unittest.TestCase):
 
     def testAsString(self):
         "Test Array1 asString method"
-        for i in range(self.array1.length()): self.array1[i] = i+1
+        for i in range(self.array1.length()):
+            self.array1[i] = i+1
         self.assertTrue(self.array1.asString() == "[ 1, 2, 3, 4, 5 ]")
 
     def testStr(self):
         "Test Array1 __str__ method"
-        for i in range(self.array1.length()): self.array1[i] = i-2
+        for i in range(self.array1.length()):
+            self.array1[i] = i-2
         self.assertTrue(str(self.array1) == "[ -2, -1, 0, 1, 2 ]")
 
     def testView(self):
         "Test Array1 view method"
-        for i in range(self.array1.length()): self.array1[i] = i+1
+        for i in range(self.array1.length()):
+            self.array1[i] = i+1
         a = self.array1.view()
         self.assertTrue(isinstance(a, np.ndarray))
         self.assertTrue(len(a) == self.length)
@@ -289,7 +293,8 @@ class ArrayZTestCase(unittest.TestCase):
 
     def testConstructor3(self):
         "Test ArrayZ copy constructor"
-        for i in range(self.array3.length()): self.array3[i] = complex(i,-i)
+        for i in range(self.array3.length()):
+            self.array3[i] = complex(i, -i)
         arrayCopy = Array.ArrayZ(self.array3)
         self.assertTrue(arrayCopy == self.array3)
 
@@ -347,17 +352,20 @@ class ArrayZTestCase(unittest.TestCase):
 
     def testAsString(self):
         "Test ArrayZ asString method"
-        for i in range(self.array3.length()): self.array3[i] = complex(i+1,-i-1)
+        for i in range(self.array3.length()):
+            self.array3[i] = complex(i+1, -i-1)
         self.assertTrue(self.array3.asString() == "[ (1,-1), (2,-2), (3,-3), (4,-4), (5,-5) ]")
 
     def testStr(self):
         "Test ArrayZ __str__ method"
-        for i in range(self.array3.length()): self.array3[i] = complex(i-2,(i-2)*2)
+        for i in range(self.array3.length()):
+            self.array3[i] = complex(i-2, (i-2)*2)
         self.assertTrue(str(self.array3) == "[ (-2,-4), (-1,-2), (0,0), (1,2), (2,4) ]")
 
     def testView(self):
         "Test ArrayZ view method"
-        for i in range(self.array3.length()): self.array3[i] = complex(i+1,i+2)
+        for i in range(self.array3.length()):
+            self.array3[i] = complex(i+1, i+2)
         a = self.array3.view()
         self.assertTrue(isinstance(a, np.ndarray))
         self.assertTrue(len(a) == self.length)

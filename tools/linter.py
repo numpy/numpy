@@ -4,10 +4,8 @@ import subprocess
 from argparse import ArgumentParser
 from git import Repo, exc
 
-CONFIG = os.path.join(
-         os.path.abspath(os.path.dirname(__file__)),
-         'lint_diff.ini',
-)
+CWD = os.path.abspath(os.path.dirname(__file__))
+CONFIG = os.path.join(CWD, 'lint_diff.ini')
 
 # NOTE: The `diff` and `exclude` options of pycodestyle seem to be
 # incompatible, so instead just exclude the necessary files when
@@ -23,7 +21,7 @@ EXCLUDE = (
 class DiffLinter:
     def __init__(self, branch):
         self.branch = branch
-        self.repo = Repo('.')
+        self.repo = Repo(os.path.join(CWD, '..'))
         self.head = self.repo.head.commit
 
     def get_branch_diff(self, uncommitted = False):

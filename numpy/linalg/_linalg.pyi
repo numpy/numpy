@@ -2,6 +2,7 @@ from collections.abc import Iterable
 from typing import (
     Literal as L,
     overload,
+    TypeAlias,
     TypeVar,
     Any,
     SupportsIndex,
@@ -45,8 +46,8 @@ _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 _SCT = TypeVar("_SCT", bound=generic, covariant=True)
 _SCT2 = TypeVar("_SCT2", bound=generic, covariant=True)
 
-_2Tuple = tuple[_T, _T]
-_ModeKind = L["reduced", "complete", "r", "raw"]
+_2Tuple: TypeAlias = tuple[_T, _T]
+_ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
 
 __all__: list[str]
 
