@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 from numpy import ndarray, dtype, float64, generic
 
 from numpy import (
@@ -14,13 +14,11 @@ from numpy import (
     zeros_like as zeros_like,
     angle as angle
 )
-from numpy._typing import _ArrayLike, _ScalarLike_co, _ShapeLike
+from numpy._typing import _ArrayLike, _ScalarLike_co, _ShapeLike, overload
 
-# TODO: Set the `bound` to something more suitable once we
-# have proper shape support
 _ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
-_ShapeType = TypeVar("_ShapeType", bound=Any)
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
+_ArrayType = TypeVar("_ArrayType", bound="MaskedArray[Any, Any]")
 _SCT = TypeVar("_SCT", bound=generic)
 
 __all__: list[str]
@@ -374,13 +372,33 @@ class _extrema_operation(_MaskedUFunc):
     def reduce(self, target, axis=...): ...
     def outer(self, a, b): ...
 
+@overload
+def min(
+    obj: MaskedArray[_ShapeLike, _SCT] | _ArrayLike[_SCT],
+    axis: None = ...,
+    out: None = ...,
+    fill_value: None | _ScalarLike_co = ...,
+    keepdims: Literal[False] = ...,
+) -> _SCT: ...
+
+@overload
 def min(
     obj: MaskedArray[_ShapeLike, _SCT] | _ArrayLike[_SCT],
     axis: None | _ShapeLike = ...,
     out: None = ...,
     fill_value: None | _ScalarLike_co = ...,
     keepdims: None | bool = ...,
-) -> _SCT: ...
+) -> Any: ...
+
+@overload
+def min(
+    obj: MaskedArray[_ShapeLike, _SCT] | _ArrayLike[_SCT],
+    axis: None | _ShapeLike = ...,
+    out: _ArrayType = ...,
+    fill_value: None | _ScalarLike_co = ...,
+    keepdims: None | bool = ...,
+) -> _ArrayType: ...
+
 def max(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
 def ptp(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
 
