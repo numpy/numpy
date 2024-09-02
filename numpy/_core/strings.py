@@ -63,7 +63,7 @@ __all__ = [
     # _vec_string - Will probably not become ufuncs
     "mod", "decode", "encode", "translate",
 
-    # Removed from namespace until behavior has been crystalized
+    # Removed from namespace until behavior has been crystallized
     # "join", "split", "rsplit", "splitlines",
 ]
 
@@ -138,6 +138,7 @@ def multiply(a, i):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["a", "b", "c"])
     >>> np.strings.multiply(a, 3)
     array(['aaa', 'bbb', 'ccc'], dtype='<U3')
@@ -199,10 +200,15 @@ def mod(a, values):
 
     Examples
     --------
-    >>> np.strings.mod("%.3f", [1, 2, 3])
-    array(['1.000', '2.000', '3.000'], dtype='<U5')
-    >>> np.strings.mod("0x%02x", [8, 9, 10, 11])
-    array(['0x08', '0x09', '0x0a', '0x0b'], dtype='<U4')
+    >>> import numpy as np
+    >>> a = np.array(["NumPy is a %s library"])
+    >>> np.strings.mod(a, values=["Python"])
+    array(['NumPy is a Python library'], dtype='<U25')
+
+    >>> a = np.array([b'%d bytes', b'%d bits'])
+    >>> values = np.array([8, 64])
+    >>> np.strings.mod(a, values)
+    array([b'8 bytes', b'64 bits'], dtype='|S7')
 
     """
     return _to_bytes_or_str_array(
@@ -236,6 +242,7 @@ def find(a, sub, start=0, end=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["NumPy is a Python library"])
     >>> np.strings.find(a, "Python")
     array([11])
@@ -272,17 +279,15 @@ def rfind(a, sub, start=0, end=None):
 
     Examples
     --------
-
-    While `string.find` returns the lowest index:
-
-    >>> a = np.array(["very repetitive very repetitive very"])
-    >>> np.strings.find(a, "very")
-    array([0])
-
-    `string.rfind` returns the highest index:
-
-    >>> np.strings.rfind(a, "very")
-    array([32])
+    >>> import numpy as np
+    >>> a = np.array(["Computer Science"])
+    >>> np.strings.rfind(a, "Science", start=0, end=None)
+    array([9])
+    >>> np.strings.rfind(a, "Science", start=0, end=8)
+    array([-1])
+    >>> b = np.array(["Computer Science", "Science"])
+    >>> np.strings.rfind(b, "Science", start=0, end=None)
+    array([9, 0])
 
     """
     end = end if end is not None else MAX
@@ -312,6 +317,7 @@ def index(a, sub, start=0, end=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["Computer Science"])
     >>> np.strings.index(a, "Science", start=0, end=None)
     array([9])
@@ -348,7 +354,7 @@ def rindex(a, sub, start=0, end=None):
     >>> a = np.array(["Computer Science"])
     >>> np.strings.rindex(a, "Science", start=0, end=None)
     array([9])
-    
+
     """
     end = end if end is not None else MAX
     return _rindex_ufunc(a, sub, start, end)
@@ -380,6 +386,7 @@ def count(a, sub, start=0, end=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -423,13 +430,14 @@ def startswith(a, prefix, start=0, end=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> s = np.array(['foo', 'bar'])
     >>> s
     array(['foo', 'bar'], dtype='<U3')
-    >>> np.strings.startswith(s, 'ba')
-    array([False,  True])
-    >>> np.strings.startswith(s, 'a', start=1, end=2)
-    array([False,  True])
+    >>> np.strings.startswith(s, 'fo')
+    array([True,  False])
+    >>> np.strings.startswith(s, 'o', start=1, end=2)
+    array([True,  False])
 
     """
     end = end if end is not None else MAX
@@ -462,6 +470,7 @@ def endswith(a, suffix, start=0, end=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> s = np.array(['foo', 'bar'])
     >>> s
     array(['foo', 'bar'], dtype='<U3')
@@ -507,6 +516,7 @@ def decode(a, encoding=None, errors=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
     ...               b'\x81\x82\xc2\xc1\xc2\x82\x81'])
     >>> c
@@ -553,11 +563,12 @@ def encode(a, encoding=None, errors=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.encode(a, encoding='cp037')
     array([b'\x81\xc1\x81\xc1\x81\xc1', b'@@\x81\xc1@@',
        b'\x81\x82\xc2\xc1\xc2\x82\x81'], dtype='|S7')
-       
+
     """
     return _to_bytes_or_str_array(
         _vec_string(a, np.object_, 'encode', _clean_args(encoding, errors)),
@@ -597,6 +608,7 @@ def expandtabs(a, tabsize=8):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['\t\tHello\tworld'])
     >>> np.strings.expandtabs(a, tabsize=4)  # doctest: +SKIP
     array(['        Hello   world'], dtype='<U21')  # doctest: +SKIP
@@ -646,6 +658,7 @@ def center(a, width, fillchar=' '):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['a1b2','1b2a','b2a1','2a1b']); c
     array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
     >>> np.strings.center(c, width=9)
@@ -705,6 +718,7 @@ def ljust(a, width, fillchar=' '):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.ljust(c, width=3)
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -761,6 +775,7 @@ def rjust(a, width, fillchar=' '):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rjust(a, width=3)
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -810,6 +825,7 @@ def zfill(a, width):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.zfill(['1', '-1', '+1'], 3)
     array(['001', '-01', '+01'], dtype='<U3')
 
@@ -853,6 +869,7 @@ def lstrip(a, chars=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -899,6 +916,7 @@ def rstrip(a, chars=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', 'abBABba'])
     >>> c
     array(['aAaAaA', 'abBABba'], dtype='<U7')
@@ -940,6 +958,7 @@ def strip(a, chars=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> c
     array(['aAaAaA', '  aA  ', 'abBABba'], dtype='<U7')
@@ -983,6 +1002,7 @@ def upper(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['a1b c', '1bca', 'bca1']); c
     array(['a1b c', '1bca', 'bca1'], dtype='<U5')
     >>> np.strings.upper(c)
@@ -1018,6 +1038,7 @@ def lower(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['A1B C', '1BCA', 'BCA1']); c
     array(['A1B C', '1BCA', 'BCA1'], dtype='<U5')
     >>> np.strings.lower(c)
@@ -1054,6 +1075,7 @@ def swapcase(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c=np.array(['a1B c','1b Ca','b Ca1','cA1b'],'S5'); c
     array(['a1B c', '1b Ca', 'b Ca1', 'cA1b'],
         dtype='|S5')
@@ -1092,6 +1114,7 @@ def capitalize(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c = np.array(['a1b2','1b2a','b2a1','2a1b'],'S4'); c
     array(['a1b2', '1b2a', 'b2a1', '2a1b'],
         dtype='|S4')
@@ -1132,6 +1155,7 @@ def title(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> c=np.array(['a1b c','1b ca','b ca1','ca1b'],'S5'); c
     array(['a1b c', '1b ca', 'b ca1', 'ca1b'],
         dtype='|S5')
@@ -1168,9 +1192,10 @@ def replace(a, old, new, count=-1):
     See Also
     --------
     str.replace
-    
+
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["That is a mango", "Monkeys eat mangos"])
     >>> np.strings.replace(a, 'mango', 'banana')
     array(['That is a banana', 'Monkeys eat bananas'], dtype='<U19')
@@ -1178,7 +1203,7 @@ def replace(a, old, new, count=-1):
     >>> a = np.array(["The dish is fresh", "This is it"])
     >>> np.strings.replace(a, 'is', 'was')
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
-    
+
     """
     arr = np.asanyarray(a)
     a_dt = arr.dtype
@@ -1223,6 +1248,7 @@ def _join(sep, seq):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.strings.join('-', 'osd')  # doctest: +SKIP
     array('o-s-d', dtype='<U5')  # doctest: +SKIP
 
@@ -1259,6 +1285,7 @@ def _split(a, sep=None, maxsplit=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array("Numpy is nice!")
     >>> np.strings.split(x, " ")  # doctest: +SKIP
     array(list(['Numpy', 'is', 'nice!']), dtype=object)  # doctest: +SKIP
@@ -1309,11 +1336,12 @@ def _rsplit(a, sep=None, maxsplit=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', 'abBABba'])
     >>> np.strings.rsplit(a, 'A')  # doctest: +SKIP
     array([list(['a', 'a', 'a', '']),  # doctest: +SKIP
            list(['abB', 'Bba'])], dtype=object)  # doctest: +SKIP
-    
+
     """
     # This will return an array of lists of different sizes, so we
     # leave it as an object array
@@ -1392,6 +1420,7 @@ def partition(a, sep):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array(["Numpy is nice!"])
     >>> np.strings.partition(x, " ")
     (array(['Numpy'], dtype='<U5'),
@@ -1457,6 +1486,7 @@ def rpartition(a, sep):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.strings.rpartition(a, 'A')
     (array(['aAaAa', '  a', 'abB'], dtype='<U5'),
@@ -1517,12 +1547,13 @@ def translate(a, table, deletechars=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['a1b c', '1bca', 'bca1'])
     >>> table = a[0].maketrans('abc', '123')
     >>> deletechars = ' '
     >>> np.char.translate(a, table, deletechars)
     array(['112 3', '1231', '2311'], dtype='<U5')
-    
+
     """
     a_arr = np.asarray(a)
     if issubclass(a_arr.dtype.type, np.str_):

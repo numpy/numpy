@@ -16,20 +16,20 @@ plain ``libblas``/``liblapack``. This may vary per platform or over releases.
 That order, and which libraries are tried, can be changed through the
 ``blas-order`` and ``lapack-order`` build options, for example::
 
-    $ python -m pip install . -C-Dblas-order=openblas,mkl,blis -C-Dlapack-order=openblas,mkl,lapack
+    $ python -m pip install . -Csetup-args=-Dblas-order=openblas,mkl,blis -Csetup-args=-Dlapack-order=openblas,mkl,lapack
 
 The first suitable library that is found will be used. In case no suitable
 library is found, the NumPy build will print a warning and then use (slow!)
 NumPy-internal fallback routines. In order to disallow use of those slow routines,
 the ``allow-noblas`` build option can be used::
 
-    $ python -m pip install . -C-Dallow-noblas=false
+    $ python -m pip install . -Csetup-args=-Dallow-noblas=false
 
 By default the LP64 (32-bit integer) interface to BLAS and LAPACK will be used.
 For building against the ILP64 (64-bit integer) interface, one must use the
 ``use-ilp64`` build option::
 
-    $ python -m pip install . -C-Duse-ilp64=true
+    $ python -m pip install . -Csetup-args=-Duse-ilp64=true
 
 
 .. _accelerated-blas-lapack-libraries:

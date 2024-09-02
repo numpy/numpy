@@ -58,6 +58,7 @@ Other topics
 
    array_api
    simd/index
+   thread_safety
    global_state
    security
    distutils_status_migration

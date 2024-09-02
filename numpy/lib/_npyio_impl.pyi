@@ -13,6 +13,7 @@ from typing import (
     overload,
     Protocol,
 )
+from typing_extensions import deprecated
 
 from numpy import (
     ndarray,
@@ -129,11 +130,29 @@ def load(
     encoding: L["ASCII", "latin1", "bytes"] = ...,
 ) -> Any: ...
 
+@overload
 def save(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     arr: ArrayLike,
     allow_pickle: bool = ...,
-    fix_imports: bool = ...,
+) -> None: ...
+@overload
+@deprecated("The 'fix_imports' flag is deprecated in NumPy 2.1.")
+def save(
+    file: str | os.PathLike[str] | _SupportsWrite[bytes],
+    arr: ArrayLike,
+    allow_pickle: bool = ...,
+    *,
+    fix_imports: bool,
+) -> None: ...
+@overload
+@deprecated("The 'fix_imports' flag is deprecated in NumPy 2.1.")
+def save(
+    file: str | os.PathLike[str] | _SupportsWrite[bytes],
+    arr: ArrayLike,
+    allow_pickle: bool,
+    fix_imports: bool,
+    /,
 ) -> None: ...
 
 def savez(
@@ -158,7 +177,7 @@ def loadtxt(
     delimiter: None | str = ...,
     converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
     skiprows: int = ...,
-    usecols: int | Sequence[int] = ...,
+    usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
     ndmin: L[0, 1, 2] = ...,
     encoding: None | str = ...,
@@ -175,7 +194,7 @@ def loadtxt(
     delimiter: None | str = ...,
     converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
     skiprows: int = ...,
-    usecols: int | Sequence[int] = ...,
+    usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
     ndmin: L[0, 1, 2] = ...,
     encoding: None | str = ...,
@@ -192,7 +211,7 @@ def loadtxt(
     delimiter: None | str = ...,
     converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
     skiprows: int = ...,
-    usecols: int | Sequence[int] = ...,
+    usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
     ndmin: L[0, 1, 2] = ...,
     encoding: None | str = ...,

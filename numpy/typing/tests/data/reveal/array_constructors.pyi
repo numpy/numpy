@@ -1,15 +1,12 @@
 import sys
-from typing import Any, TypeVar
+from typing import Any, Literal as L, TypeVar
 from pathlib import Path
 from collections import deque
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 _SCT = TypeVar("_SCT", bound=np.generic, covariant=True)
 
@@ -20,6 +17,7 @@ i8: np.int64
 A: npt.NDArray[np.float64]
 B: SubClass[np.float64]
 C: list[int]
+D: SubClass[np.float64 | np.int64]
 
 def func(i: int, j: int, **kwargs: Any) -> SubClass[np.float64]: ...
 
@@ -31,12 +29,16 @@ assert_type(np.empty_like(A, dtype='c16'), npt.NDArray[Any])
 
 assert_type(np.array(A), npt.NDArray[np.float64])
 assert_type(np.array(B), npt.NDArray[np.float64])
-assert_type(np.array(B, subok=True), SubClass[np.float64])
 assert_type(np.array([1, 1.0]), npt.NDArray[Any])
 assert_type(np.array(deque([1, 2, 3])), npt.NDArray[Any])
 assert_type(np.array(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.array(A, dtype='c16'), npt.NDArray[Any])
 assert_type(np.array(A, like=A), npt.NDArray[np.float64])
+assert_type(np.array(A, subok=True), npt.NDArray[np.float64])
+assert_type(np.array(B, subok=True), SubClass[np.float64])
+assert_type(np.array(B, subok=True, ndmin=0), SubClass[np.float64])
+assert_type(np.array(B, subok=True, ndmin=1), SubClass[np.float64])
+assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
 
 assert_type(np.zeros([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.zeros([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
@@ -103,18 +105,18 @@ assert_type(np.frombuffer(A), npt.NDArray[np.float64])
 assert_type(np.frombuffer(A, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.frombuffer(A, dtype="c16"), npt.NDArray[Any])
 
-assert_type(np.arange(False, True), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.arange(10), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.arange(0, 10, step=2), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.arange(10.0), npt.NDArray[np.floating[Any]])
-assert_type(np.arange(start=0, stop=10.0), npt.NDArray[np.floating[Any]])
-assert_type(np.arange(np.timedelta64(0)), npt.NDArray[np.timedelta64])
-assert_type(np.arange(0, np.timedelta64(10)), npt.NDArray[np.timedelta64])
-assert_type(np.arange(np.datetime64("0"), np.datetime64("10")), npt.NDArray[np.datetime64])
-assert_type(np.arange(10, dtype=np.float64), npt.NDArray[np.float64])
-assert_type(np.arange(0, 10, step=2, dtype=np.int16), npt.NDArray[np.int16])
-assert_type(np.arange(10, dtype=int), npt.NDArray[Any])
-assert_type(np.arange(0, 10, dtype="f8"), npt.NDArray[Any])
+assert_type(np.arange(False, True), np.ndarray[tuple[int], np.dtype[np.signedinteger[Any]]])
+assert_type(np.arange(10), np.ndarray[tuple[int], np.dtype[np.signedinteger[Any]]])
+assert_type(np.arange(0, 10, step=2), np.ndarray[tuple[int], np.dtype[np.signedinteger[Any]]])
+assert_type(np.arange(10.0), np.ndarray[tuple[int], np.dtype[np.floating[Any]]])
+assert_type(np.arange(start=0, stop=10.0), np.ndarray[tuple[int], np.dtype[np.floating[Any]]])
+assert_type(np.arange(np.timedelta64(0)), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.arange(0, np.timedelta64(10)), np.ndarray[tuple[int], np.dtype[np.timedelta64]])
+assert_type(np.arange(np.datetime64("0"), np.datetime64("10")), np.ndarray[tuple[int], np.dtype[np.datetime64]])
+assert_type(np.arange(10, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(np.arange(0, 10, step=2, dtype=np.int16), np.ndarray[tuple[int], np.dtype[np.int16]])
+assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.arange(0, 10, dtype="f8"), np.ndarray[tuple[int], np.dtype[Any]])
 
 assert_type(np.require(A), npt.NDArray[np.float64])
 assert_type(np.require(B), SubClass[np.float64])

@@ -30,30 +30,15 @@
 #endif
 
 #ifdef Py_GIL_DISABLED
-// TODO: replace with PyMutex when it is public
-#define LOCK_TABLE(tb)                                      \
-    if (!PyThread_acquire_lock(tb->mutex, NOWAIT_LOCK)) {   \
-        PyThread_acquire_lock(tb->mutex, WAIT_LOCK);        \
-    }
-#define UNLOCK_TABLE(tb) PyThread_release_lock(tb->mutex);
-#define INITIALIZE_LOCK(tb)                     \
-    tb->mutex = PyThread_allocate_lock();       \
-    if (tb->mutex == NULL) {                    \
-        PyErr_NoMemory();                       \
-        PyMem_Free(res);                        \
-        return NULL;                            \
-    }
-#define FREE_LOCK(tb)                           \
-    if (tb->mutex != NULL) {                    \
-        PyThread_free_lock(tb->mutex);          \
-    }
+#define LOCK_TABLE(tb) PyMutex_Lock(&tb->mutex)
+#define UNLOCK_TABLE(tb) PyMutex_Unlock(&tb->mutex)
+#define INITIALIZE_LOCK(tb) memset(&tb->mutex, 0, sizeof(PyMutex))
 #else
 // the GIL serializes access to the table so no need
 // for locking if it is enabled
 #define LOCK_TABLE(tb)
 #define UNLOCK_TABLE(tb)
 #define INITIALIZE_LOCK(tb)
-#define FREE_LOCK(tb)
 #endif
 
 /*
@@ -143,7 +128,6 @@ NPY_NO_EXPORT void
 PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 {
     PyMem_Free(tb->buckets);
-    FREE_LOCK(tb);
     PyMem_Free(tb);
 }
 
@@ -210,10 +194,13 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
  * @param value Normally a Python object, no reference counting is done.
  *        use NULL to clear an item.  If the item does not exist, no
  *        action is performed for NULL.
- * @param replace If 1, allow replacements.
+ * @param replace If 1, allow replacements. If replace is 0 an error is raised
+ *        if the stored value is different from the value to be cached. If the
+ *        value to be cached is identical to the stored value, the value to be
+ *        cached is ignored and no error is raised.
  * @returns 0 on success, -1 with a MemoryError or RuntimeError (if an item
- *        is added which is already in the cache).  The caller should avoid
- *        the RuntimeError.
+ *        is added which is already in the cache and replace is 0).  The
+ *        caller should avoid the RuntimeError.
  */
 NPY_NO_EXPORT int
 PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
@@ -228,10 +215,10 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
 
     PyObject **tb_item = find_item(tb, key);
     if (value != NULL) {
-        if (tb_item[0] != NULL && !replace) {
+        if (tb_item[0] != NULL && tb_item[0] != value && !replace) {
             UNLOCK_TABLE(tb);
             PyErr_SetString(PyExc_RuntimeError,
-                    "Identity cache already includes the item.");
+                    "Identity cache already includes an item with this key.");
             return -1;
         }
         tb_item[0] = value;
@@ -249,7 +236,7 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
 
 
 NPY_NO_EXPORT PyObject *
-PyArrayIdentityHash_GetItem(PyArrayIdentityHash const *tb, PyObject *const *key)
+PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
 {
     LOCK_TABLE(tb);
     PyObject *res = find_item(tb, key)[0];

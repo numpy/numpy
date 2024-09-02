@@ -52,6 +52,11 @@ if host_machine.system() == 'cygwin'
   c_args_random += ['-Wl,--export-all-symbols']
 endif
 
+cython_args = []
+if cy.version().version_compare('>=3.1.0')
+  cython_args += ['-Xfreethreading_compatible=True']
+endif
+
 # name, sources, extra c_args, extra static libs to link
 random_pyx_sources = [
   ['_bounded_integers', _bounded_integers_pyx, [], [npyrandom_lib, npymath_lib]],
@@ -83,6 +88,7 @@ foreach gen: random_pyx_sources
     link_with: gen[3],
     install: true,
     subdir: 'numpy/random',
+    cython_args: cython_args,
   )
 endforeach
 

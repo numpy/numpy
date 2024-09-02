@@ -30,11 +30,11 @@ def parse_distributions_h(ffi, inc_dir):
                 continue
             if line.strip().startswith('#ifdef __cplusplus'):
                 ignoring = True
-            
+
             # massage the include file
             if line.strip().startswith('#'):
                 continue
-    
+
             # skip any inlined function definition
             # which starts with 'static inline xxx(...) {'
             # and ends with a closing '}'
@@ -45,7 +45,7 @@ def parse_distributions_h(ffi, inc_dir):
                 in_skip += line.count('{')
                 in_skip -= line.count('}')
                 continue
-    
+
             # replace defines with their value or remove them
             line = line.replace('DECLDIR', '')
             line = line.replace('RAND_INT_TYPE', 'int64_t')

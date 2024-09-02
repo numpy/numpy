@@ -251,7 +251,7 @@ class TestMaskedArray:
 
         # The above only failed due a long chain of oddity, try also with
         # an object array that cannot be converted to bool always:
-        class NotBool():
+        class NotBool:
             def __bool__(self):
                 raise ValueError("not a bool!")
         masked_obj = np.ma.masked_array([NotBool(), 'b'], mask=[True, False])
@@ -1868,20 +1868,20 @@ class TestMaskedArrayArithmetic:
         with suppress_warnings() as sup:
             sup.filter(FutureWarning, "Comparison to `None`")
             a = array([None, 1], mask=[0, 1])
-            assert_equal(a == None, array([True, False], mask=[0, 1]))
-            assert_equal(a.data == None, [True, False])
-            assert_equal(a != None, array([False, True], mask=[0, 1]))
+            assert_equal(a == None, array([True, False], mask=[0, 1]))  # noqa: E711
+            assert_equal(a.data == None, [True, False])  # noqa: E711
+            assert_equal(a != None, array([False, True], mask=[0, 1]))  # noqa: E711
             # With nomask
             a = array([None, 1], mask=False)
-            assert_equal(a == None, [True, False])
-            assert_equal(a != None, [False, True])
+            assert_equal(a == None, [True, False])  # noqa: E711
+            assert_equal(a != None, [False, True])  # noqa: E711
             # With complete mask
             a = array([None, 2], mask=True)
-            assert_equal(a == None, array([False, True], mask=True))
-            assert_equal(a != None, array([True, False], mask=True))
+            assert_equal(a == None, array([False, True], mask=True))  # noqa: E711
+            assert_equal(a != None, array([True, False], mask=True))  # noqa: E711
             # Fully masked, even comparison to None should return "masked"
             a = masked
-            assert_equal(a == None, masked)
+            assert_equal(a == None, masked)  # noqa: E711
 
     def test_eq_with_scalar(self):
         a = array(1)
@@ -3789,9 +3789,9 @@ class TestMaskedArrayMethods:
         assert_equal(record['_mask'], data._mask)
 
         ndtype = [('i', int), ('s', '|S3'), ('f', float)]
-        data = array([(i, s, f) for (i, s, f) in zip(np.arange(10),
-                                                     'ABCDEFGHIJKLM',
-                                                     np.random.rand(10))],
+        data = array(list(zip(np.arange(10),
+                              'ABCDEFGHIJKLM',
+                              np.random.rand(10))),
                      dtype=ndtype)
         data[[0, 1, 2, -1]] = masked
         record = data.toflex()
@@ -3799,9 +3799,9 @@ class TestMaskedArrayMethods:
         assert_equal(record['_mask'], data._mask)
 
         ndtype = np.dtype("int, (2,3)float, float")
-        data = array([(i, f, ff) for (i, f, ff) in zip(np.arange(10),
-                                                       np.random.rand(10),
-                                                       np.random.rand(10))],
+        data = array(list(zip(np.arange(10),
+                              np.random.rand(10),
+                              np.random.rand(10))),
                      dtype=ndtype)
         data[[0, 1, 2, -1]] = masked
         record = data.toflex()
@@ -4631,7 +4631,7 @@ class TestMaskedArrayFunctions:
         # getdata() used to be bad for pandas series due to its _data
         # attribute.  This test is a regression test mainly and may be
         # removed if getdata() is adjusted.
-        class Series():
+        class Series:
             _data = "nonsense"
 
             def __array__(self, dtype=None, copy=None):
@@ -5435,7 +5435,8 @@ class TestMaskedConstant:
 
     def test_subclass(self):
         # https://github.com/astropy/astropy/issues/6645
-        class Sub(type(np.ma.masked)): pass
+        class Sub(type(np.ma.masked)):
+            pass
 
         a = Sub()
         assert_(a is Sub())

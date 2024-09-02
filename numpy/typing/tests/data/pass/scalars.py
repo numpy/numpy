@@ -1,4 +1,3 @@
-import sys
 import datetime as dt
 
 import pytest

@@ -16,7 +16,7 @@
 #include "npy_pycompat.h"
 #include "npy_ctypes.h"
 
-#include "multiarraymodule.h"
+#include "npy_static_data.h"
 
 #include "common.h"
 #include "ctors.h"
@@ -611,15 +611,6 @@ PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache) {
 static void
 raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
 {
-    static PyObject *exc_type = NULL;
-
-    npy_cache_import(
-        "numpy._core._exceptions", "_ArrayMemoryError",
-        &exc_type);
-    if (exc_type == NULL) {
-        goto fail;
-    }
-
     PyObject *shape = PyArray_IntTupleFromIntp(nd, dims);
     if (shape == NULL) {
         goto fail;
@@ -631,7 +622,7 @@ raise_memory_error(int nd, npy_intp const *dims, PyArray_Descr *descr)
     if (exc_value == NULL){
         goto fail;
     }
-    PyErr_SetObject(exc_type, exc_value);
+    PyErr_SetObject(npy_static_pydata._ArrayMemoryError, exc_value);
     Py_DECREF(exc_value);
     return;
 
@@ -831,6 +822,12 @@ PyArray_NewFromDescr_int(
 
 
     if (data == NULL) {
+        /* This closely follows PyArray_ZeroContiguousBuffer. We can't use
+         *  that because here we need to allocate after checking if there is
+         *  custom zeroing logic and that function accepts an already-allocated
+         *  array
+         */
+
         /* float errors do not matter and we do not release GIL */
         NPY_ARRAYMETHOD_FLAGS zero_flags;
         PyArrayMethod_GetTraverseLoop *get_fill_zero_loop =
@@ -937,17 +934,11 @@ PyArray_NewFromDescr_int(
      */
     if (subtype != &PyArray_Type) {
         PyObject *res, *func;
-        static PyObject *ndarray_array_finalize = NULL;
-        /* First time, cache ndarray's __array_finalize__ */
-        if (ndarray_array_finalize == NULL) {
-            ndarray_array_finalize = PyObject_GetAttr(
-                (PyObject *)&PyArray_Type, npy_ma_str_array_finalize);
-        }
-        func = PyObject_GetAttr((PyObject *)subtype, npy_ma_str_array_finalize);
+        func = PyObject_GetAttr((PyObject *)subtype, npy_interned_str.array_finalize);
         if (func == NULL) {
             goto fail;
         }
-        else if (func == ndarray_array_finalize) {
+        else if (func == npy_static_pydata.ndarray_array_finalize) {
             Py_DECREF(func);
         }
         else if (func == Py_None) {
@@ -2045,13 +2036,12 @@ PyArray_FromStructInterface(PyObject *input)
     PyObject *attr;
     char endian = NPY_NATBYTE;
 
-    attr = PyArray_LookupSpecial_OnInstance(input, npy_ma_str_array_struct);
-    if (attr == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        } else {
-            return Py_NotImplemented;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+            input, npy_interned_str.array_struct, &attr) < 0) {
+        return NULL;
+    }
+    else if (attr == NULL) {
+        return Py_NotImplemented;
     }
     if (!PyCapsule_CheckExact(attr)) {
         if (PyType_Check(input) && PyObject_HasAttrString(attr, "__get__")) {
@@ -2169,12 +2159,11 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_LookupSpecial_OnInstance(origin, npy_ma_str_array_interface);
-
-    if (iface == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+            origin, npy_interned_str.array_interface, &iface) < 0) {
+        return NULL;
+    }
+    else if (iface == NULL) {
         return Py_NotImplemented;
     }
     if (!PyDict_Check(iface)) {
@@ -2243,8 +2232,8 @@ PyArray_FromInterface(PyObject *origin)
                     Py_SETREF(dtype, new_dtype);
                 }
             }
+            Py_DECREF(descr);
         }
-        Py_DECREF(descr);
     }
     Py_CLEAR(attr);
 
@@ -2472,7 +2461,7 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         goto restore_error;
     }
     int copy_kwarg_unsupported = PyUnicode_Contains(
-            str_value, npy_ma_str_array_err_msg_substr);
+            str_value, npy_interned_str.array_err_msg_substr);
     Py_DECREF(str_value);
     if (copy_kwarg_unsupported == -1) {
         goto restore_error;
@@ -2524,11 +2513,11 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyArray_LookupSpecial_OnInstance(op, npy_ma_str_array);
-    if (array_meth == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+                op, npy_interned_str.array, &array_meth) < 0) {
+        return NULL;
+    }
+    else if (array_meth == NULL) {
         return Py_NotImplemented;
     }
 
@@ -2541,15 +2530,6 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
          */
         Py_DECREF(array_meth);
         return Py_NotImplemented;
-    }
-
-    static PyObject *kwnames_is_copy = NULL;
-    if (kwnames_is_copy == NULL) {
-        kwnames_is_copy = Py_BuildValue("(s)", "copy");
-        if (kwnames_is_copy == NULL) {
-            Py_DECREF(array_meth);
-            return NULL;
-        }
     }
 
     Py_ssize_t nargs = 0;
@@ -2567,7 +2547,7 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
      * signature of the __array__ method being called does not have `copy`.
      */
     if (copy != -1) {
-        kwnames = kwnames_is_copy;
+        kwnames = npy_static_pydata.kwnames_is_copy;
         arguments[nargs] = copy == 1 ? Py_True : Py_False;
     }
 

@@ -1138,7 +1138,7 @@ cdef class RandomState:
 
         >>> x = np.float32(5*0.99999999)
         >>> x
-        5.0
+        np.float32(5.0)
 
 
         Examples

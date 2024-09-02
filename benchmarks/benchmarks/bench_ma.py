@@ -213,7 +213,7 @@ class MAMethodGetItem(Benchmark):
             mdat = self.nmxs
         elif msize == 'big':
             mdat = self.nmxl
-        getattr(mdat, '__getitem__')(margs)
+        mdat.__getitem__(margs)
 
 
 class MAMethodSetItem(Benchmark):
@@ -235,7 +235,7 @@ class MAMethodSetItem(Benchmark):
             mdat = self.nmxs
         elif msize == 'big':
             mdat = self.nmxl
-        getattr(mdat, '__setitem__')(margs, mset)
+        mdat.__setitem__(margs, mset)
 
 
 class Where(Benchmark):
