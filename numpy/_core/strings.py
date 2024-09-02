@@ -279,7 +279,7 @@ def rfind(a, sub, start=0, end=None):
     >>> np.strings.find(a, "very")
     array([0])
 
-    `string.rfind` returns the highes index:
+    `string.rfind` returns the highest index:
 
     >>> np.strings.rfind(a, "very")
     array([32])
