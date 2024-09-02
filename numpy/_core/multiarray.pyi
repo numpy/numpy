@@ -79,6 +79,13 @@ from numpy._typing import (
     _FloatLike_co,
     _TD64Like_co,
 )
+from numpy._typing._ufunc import (
+    _2PTuple,
+    _PyFunc_Nin1_Nout1,
+    _PyFunc_Nin2_Nout1,
+    _PyFunc_Nin3P_Nout1,
+    _PyFunc_Nin1P_Nout2P,
+)
 
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
@@ -89,8 +96,12 @@ _ArrayType_co = TypeVar(
     bound=ndarray[Any, Any],
     covariant=True,
 )
-_SizeType = TypeVar("_SizeType", bound=int)
+_ReturnType = TypeVar("_ReturnType")
+_IDType = TypeVar("_IDType")
+_Nin = TypeVar("_Nin", bound=int)
+_Nout = TypeVar("_Nout", bound=int)
 
+_SizeType = TypeVar("_SizeType", bound=int)
 _1DArray: TypeAlias = ndarray[tuple[_SizeType], dtype[_SCT]]
 
 # Valid time units
@@ -682,12 +693,77 @@ def fromstring(
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
 
+@overload
+def frompyfunc(  # type: ignore[overload-overlap]
+    func: Callable[[Any], _ReturnType], /,
+    nin: L[1],
+    nout: L[1],
+    *,
+    identity: None = ...,
+) -> _PyFunc_Nin1_Nout1[_ReturnType, None]: ...
+@overload
+def frompyfunc(  # type: ignore[overload-overlap]
+    func: Callable[[Any], _ReturnType], /,
+    nin: L[1],
+    nout: L[1],
+    *,
+    identity: _IDType,
+) -> _PyFunc_Nin1_Nout1[_ReturnType, _IDType]: ...
+@overload
+def frompyfunc(  # type: ignore[overload-overlap]
+    func: Callable[[Any, Any], _ReturnType], /,
+    nin: L[2],
+    nout: L[1],
+    *,
+    identity: None = ...,
+) -> _PyFunc_Nin2_Nout1[_ReturnType, None]: ...
+@overload
+def frompyfunc(  # type: ignore[overload-overlap]
+    func: Callable[[Any, Any], _ReturnType], /,
+    nin: L[2],
+    nout: L[1],
+    *,
+    identity: _IDType,
+) -> _PyFunc_Nin2_Nout1[_ReturnType, _IDType]: ...
+@overload
+def frompyfunc(  # type: ignore[overload-overlap]
+    func: Callable[..., _ReturnType], /,
+    nin: _Nin,
+    nout: L[1],
+    *,
+    identity: None = ...,
+) -> _PyFunc_Nin3P_Nout1[_ReturnType, None, _Nin]: ...
+@overload
+def frompyfunc(  # type: ignore[overload-overlap]
+    func: Callable[..., _ReturnType], /,
+    nin: _Nin,
+    nout: L[1],
+    *,
+    identity: _IDType,
+) -> _PyFunc_Nin3P_Nout1[_ReturnType, _IDType, _Nin]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., _2PTuple[_ReturnType]], /,
+    nin: _Nin,
+    nout: _Nout,
+    *,
+    identity: None = ...,
+) -> _PyFunc_Nin1P_Nout2P[_ReturnType, None, _Nin, _Nout]: ...
+@overload
+def frompyfunc(
+    func: Callable[..., _2PTuple[_ReturnType]], /,
+    nin: _Nin,
+    nout: _Nout,
+    *,
+    identity: _IDType,
+) -> _PyFunc_Nin1P_Nout2P[_ReturnType, _IDType, _Nin, _Nout]: ...
+@overload
 def frompyfunc(
     func: Callable[..., Any], /,
     nin: SupportsIndex,
     nout: SupportsIndex,
     *,
-    identity: Any = ...,
+    identity: None | object = ...,
 ) -> ufunc: ...
 
 @overload
