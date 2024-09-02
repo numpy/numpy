@@ -45,7 +45,7 @@ assert_type(nd.copy("C"), npt.NDArray[np.int_])
 assert_type(nd.view(), npt.NDArray[np.int_])
 assert_type(nd.view(np.float64), npt.NDArray[np.float64])
 assert_type(nd.view(float), npt.NDArray[Any])
-assert_type(nd.view(np.float64, np.matrix), np.matrix[Any, Any])
+assert_type(nd.view(np.float64, np.matrix), np.matrix[tuple[int, int], Any])
 
 # getfield
 assert_type(nd.getfield("float"), npt.NDArray[Any])
