@@ -460,7 +460,9 @@ frombuffer: _convert2ma
 fromfunction: _convert2ma
 identity: _convert2ma
 ones: _convert2ma
+ones_like: _convert2ma
 zeros: _convert2ma
+zeros_like: _convert2ma
 
 def append(a, b, axis=...): ...
 def dot(a, b, strict=..., out=...): ...
