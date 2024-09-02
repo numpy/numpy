@@ -2,9 +2,9 @@
 
 .. _arrays.ndarray:
 
-******************************************
-The N-dimensional array (:class:`ndarray`)
-******************************************
+***********************
+The N-dimensional array
+***********************
 
 An :class:`ndarray` is a (usually fixed-size) multidimensional
 container of items of the same type and size. The number of dimensions

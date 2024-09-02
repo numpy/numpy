@@ -2,9 +2,9 @@
 
 .. _arrays.dtypes:
 
-**********************************
-Data type objects (:class:`dtype`)
-**********************************
+*****************
+Data type objects
+*****************
 
 A data type object (an instance of :class:`numpy.dtype` class)
 describes how the bytes in the fixed-size block of memory
