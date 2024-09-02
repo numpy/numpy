@@ -1020,9 +1020,7 @@ def tensordot(a, b, axes=2):
            [4664., 5018.],
            [4796., 5162.],
            [4928., 5306.]])
-
-    A slower but equivalent way of computing the same...
-
+    >>> # A slower but equivalent way of computing the same...
     >>> d = np.zeros((5,2))
     >>> for i in range(5):
     ...   for j in range(2):
