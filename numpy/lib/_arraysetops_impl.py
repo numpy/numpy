@@ -180,8 +180,7 @@ def unique(ar, return_index=False, return_inverse=False,
         .. versionadded:: 1.13.0
 
     equal_nan : bool, optional
-        If True, collapses multiple NaN values in the return array into one
-        and it is put to the end of the sorted unique values.      
+        If True, collapses multiple NaN values in the return array into one.
 
         .. versionadded:: 1.24
 
@@ -204,6 +203,7 @@ def unique(ar, return_index=False, return_inverse=False,
     See Also
     --------
     repeat : Repeat elements of an array.
+    sort : Return a sorted copy of an array.
 
     Notes
     -----
@@ -218,11 +218,12 @@ def unique(ar, return_index=False, return_inverse=False,
     first element.
 
     .. versionchanged:: 1.21
+        Like np.sort, NaN will sort to the end of the values.
         For complex arrays all NaN values are considered equivalent
         (no matter whether the NaN is in the real or imaginary part).
         As the representant for the returned array the smallest one in the
         lexicographical order is chosen - see np.sort for how the lexicographical
-        order is defined for complex arrays.   
+        order is defined for complex arrays.
 
     .. versionchanged:: 2.0
         For multi-dimensional inputs, ``unique_inverse`` is reshaped
