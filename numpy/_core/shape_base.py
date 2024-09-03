@@ -209,6 +209,10 @@ def _arrays_for_stack_dispatcher(arrays):
     if not hasattr(arrays, "__getitem__"):
         raise TypeError('arrays to stack must be passed as a "sequence" type '
                         'such as list or tuple.')
+    # Preventing `arrays` from being sliced into a tuple of scalars
+    # when `arrays` is a `np.array`
+    if hasattr(arrays, 'shape') and hasattr(arrays, 'dtype'):
+        arrays = (arrays,)
 
     return tuple(arrays)
 
@@ -284,6 +288,8 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
            [6]])
 
     """
+    if hasattr(tup, 'shape') and hasattr(tup, 'dtype'):
+        tup = (tup,)
     arrs = atleast_2d(*tup)
     if not isinstance(arrs, tuple):
         arrs = (arrs,)
@@ -353,6 +359,8 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
            [3, 6]])
 
     """
+    if hasattr(tup, 'shape') and hasattr(tup, 'dtype'):
+        tup = (tup,)
     arrs = atleast_1d(*tup)
     if not isinstance(arrs, tuple):
         arrs = (arrs,)
@@ -447,6 +455,8 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
            [3, 6]])
 
     """
+    if hasattr(arrays, 'shape') and hasattr(arrays, 'dtype'):
+        arrays = (arrays,)
     arrays = [asanyarray(arr) for arr in arrays]
     if not arrays:
         raise ValueError('need at least one array to stack')
