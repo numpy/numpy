@@ -20,7 +20,7 @@ For situations where no ``setuptools`` replacements are required or wanted (i.e.
 if ``wheels`` are not needed), it is recommended to instead use the vanilla
 ``cmake`` setup described in :ref:`f2py-cmake`.
 
-Fibonacci Walkthrough (F77)
+Fibonacci walkthrough (F77)
 ===========================
 
 We will consider the ``fib``  example from :ref:`f2py-getting-started` section.

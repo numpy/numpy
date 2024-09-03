@@ -1,9 +1,0 @@
-Most NumPy functions are wrapped into a C-callable
---------------------------------------------------
-To speed up the ``__array_function__`` dispatching, most NumPy functions
-are now wrapped into C-callables and are not proper Python functions or
-C methods.
-They still look and feel the same as before (like a Python function), and this
-should only improve performance and user experience (cleaner tracebacks).
-However, please inform the NumPy developers if this change confuses your
-program for some reason.

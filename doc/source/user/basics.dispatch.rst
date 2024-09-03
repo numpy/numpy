@@ -22,7 +22,11 @@ example that has rather narrow utility but illustrates the concepts involved.
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self, dtype=None):
+...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 
 Our custom array can be instantiated like:
@@ -84,7 +88,11 @@ For this example we will only handle the method ``__call__``
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self, dtype=None):
+...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
@@ -96,10 +104,10 @@ For this example we will only handle the method ``__call__``
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -135,7 +143,11 @@ conveniently by inheriting from the mixin
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self, dtype=None):
+...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
@@ -147,10 +159,10 @@ conveniently by inheriting from the mixin
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -173,7 +185,11 @@ functions to our custom variants.
 ...         self._i = value
 ...     def __repr__(self):
 ...         return f"{self.__class__.__name__}(N={self._N}, value={self._i})"
-...     def __array__(self, dtype=None):
+...     def __array__(self, dtype=None, copy=None):
+...         if copy is False:
+...             raise ValueError(
+...                 "`copy=False` isn't supported. A copy is always created."
+...             )
 ...         return self._i * np.eye(self._N, dtype=dtype)
 ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
 ...         if method == '__call__':
@@ -186,10 +202,10 @@ functions to our custom variants.
 ...                 elif isinstance(input, self.__class__):
 ...                     scalars.append(input._i)
 ...                     if N is not None:
-...                         if N != self._N:
+...                         if N != input._N:
 ...                             raise TypeError("inconsistent sizes")
 ...                     else:
-...                         N = self._N
+...                         N = input._N
 ...                 else:
 ...                     return NotImplemented
 ...             return self.__class__(N, ufunc(*scalars, **kwargs))
@@ -284,7 +300,7 @@ implement the ``__array_ufunc__`` and ``__array_function__`` protocols in the
 To check if a Numpy function can be overridden via ``__array_ufunc__``, you can
 use :func:`~numpy.testing.overrides.allows_array_ufunc_override`:
 
->>> from np.testing.overrides import allows_array_ufunc_override
+>>> from numpy.testing.overrides import allows_array_ufunc_override
 >>> allows_array_ufunc_override(np.add)
 True
 
@@ -306,4 +322,3 @@ Refer to the `dask source code <https://github.com/dask/dask>`_ and
 examples of custom array containers.
 
 See also :doc:`NEP 18<neps:nep-0018-array-function-protocol>`.
-

@@ -26,17 +26,19 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
     [mypy]
     plugins = numpy.typing.mypy_plugin
 
-.. _mypy: http://mypy-lang.org/
+.. _mypy: https://mypy-lang.org/
 .. _configuration file: https://mypy.readthedocs.io/en/stable/config_file.html
 
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from typing import Final, TYPE_CHECKING, Callable
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 try:
     import mypy.types
@@ -60,6 +62,7 @@ def _get_precision_dict() -> dict[str, str]:
         ("_NBitIntC", np.intc),
         ("_NBitIntP", np.intp),
         ("_NBitInt", np.int_),
+        ("_NBitLong", np.long),
         ("_NBitLongLong", np.longlong),
 
         ("_NBitHalf", np.half),
@@ -68,15 +71,15 @@ def _get_precision_dict() -> dict[str, str]:
         ("_NBitLongDouble", np.longdouble),
     ]
     ret = {}
+    module = "numpy._typing"
     for name, typ in names:
         n: int = 8 * typ().dtype.itemsize
-        ret[f'numpy._typing._nbit.{name}'] = f"numpy._{n}Bit"
+        ret[f'{module}._nbit.{name}'] = f"{module}._nbit_base._{n}Bit"
     return ret
 
 
 def _get_extended_precision_list() -> list[str]:
-    extended_types = [np.ulonglong, np.longlong, np.longdouble, np.clongdouble]
-    extended_names = {
+    extended_names = [
         "uint128",
         "uint256",
         "int128",
@@ -89,13 +92,12 @@ def _get_extended_precision_list() -> list[str]:
         "complex192",
         "complex256",
         "complex512",
-    }
-    return [i.__name__ for i in extended_types if i.__name__ in extended_names]
-
+    ]
+    return [i for i in extended_names if hasattr(np, i)]
 
 def _get_c_intp_name() -> str:
     # Adapted from `np.core._internal._getintp_ctype`
-    char = np.dtype('p').char
+    char = np.dtype('n').char
     if char == 'i':
         return "c_int"
     elif char == 'l':

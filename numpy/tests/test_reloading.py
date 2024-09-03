@@ -1,3 +1,12 @@
+import sys
+import subprocess
+import textwrap
+from importlib import reload
+import pickle
+
+import pytest
+
+import numpy.exceptions as ex
 from numpy.testing import (
     assert_raises,
     assert_warns,
@@ -5,13 +14,6 @@ from numpy.testing import (
     assert_equal,
     IS_WASM,
 )
-from numpy.compat import pickle
-
-import pytest
-import sys
-import subprocess
-import textwrap
-from importlib import reload
 
 
 def test_numpy_reloading():
@@ -20,21 +22,21 @@ def test_numpy_reloading():
     import numpy._globals
 
     _NoValue = np._NoValue
-    VisibleDeprecationWarning = np.VisibleDeprecationWarning
-    ModuleDeprecationWarning = np.ModuleDeprecationWarning
+    VisibleDeprecationWarning = ex.VisibleDeprecationWarning
+    ModuleDeprecationWarning = ex.ModuleDeprecationWarning
 
     with assert_warns(UserWarning):
         reload(np)
     assert_(_NoValue is np._NoValue)
-    assert_(ModuleDeprecationWarning is np.ModuleDeprecationWarning)
-    assert_(VisibleDeprecationWarning is np.VisibleDeprecationWarning)
+    assert_(ModuleDeprecationWarning is ex.ModuleDeprecationWarning)
+    assert_(VisibleDeprecationWarning is ex.VisibleDeprecationWarning)
 
     assert_raises(RuntimeError, reload, numpy._globals)
     with assert_warns(UserWarning):
         reload(np)
     assert_(_NoValue is np._NoValue)
-    assert_(ModuleDeprecationWarning is np.ModuleDeprecationWarning)
-    assert_(VisibleDeprecationWarning is np.VisibleDeprecationWarning)
+    assert_(ModuleDeprecationWarning is ex.ModuleDeprecationWarning)
+    assert_(VisibleDeprecationWarning is ex.VisibleDeprecationWarning)
 
 def test_novalue():
     import numpy as np

@@ -26,14 +26,13 @@ details are found in :ref:`reference`.
    :maxdepth: 1
 
    numpy-for-matlab-users
-   NumPy Tutorials <https://numpy.org/numpy-tutorials/features.html>
+   NumPy tutorials <https://numpy.org/numpy-tutorials/>
    howtos_index
 
 .. toctree::
    :caption: Advanced usage and interoperability
    :maxdepth: 1
 
-   building
    c-info
    ../f2py/index
    ../dev/underthehood
@@ -51,4 +50,5 @@ details are found in :ref:`reference`.
 
    ../glossary
    ../release
+   ../numpy_2_0_migration_guide
    ../license

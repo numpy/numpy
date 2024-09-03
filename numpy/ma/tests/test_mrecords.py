@@ -5,13 +5,14 @@
 :contact: pierregm_at_uga_dot_edu
 
 """
+import pickle
+
 import numpy as np
 import numpy.ma as ma
-from numpy import recarray
 from numpy.ma import masked, nomask
 from numpy.testing import temppath
-from numpy.core.records import (
-    fromrecords as recfromrecords, fromarrays as recfromarrays
+from numpy._core.records import (
+    recarray, fromrecords as recfromrecords, fromarrays as recfromarrays
     )
 from numpy.ma.mrecords import (
     MaskedRecords, mrecarray, fromarrays, fromtextfile, fromrecords,
@@ -21,7 +22,6 @@ from numpy.ma.testutils import (
     assert_, assert_equal,
     assert_equal_records,
     )
-from numpy.compat import pickle
 
 
 class TestMRecords:
@@ -70,7 +70,7 @@ class TestMRecords:
         assert_equal(mbase_last.recordmask, True)
         assert_equal(mbase_last._mask.item(), (True, True, True))
         assert_equal(mbase_last['a'], mbase['a'][-1])
-        assert_((mbase_last['a'] is masked))
+        assert_(mbase_last['a'] is masked)
         # as slice ..........
         mbase_sl = mbase[:2]
         assert_(isinstance(mbase_sl, mrecarray))

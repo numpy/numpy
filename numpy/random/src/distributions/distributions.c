@@ -403,11 +403,29 @@ float random_gamma_f(bitgen_t *bitgen_state, float shape, float scale) {
   return scale * random_standard_gamma_f(bitgen_state, shape);
 }
 
+#define BETA_TINY_THRESHOLD 3e-103
+
+/*
+ *  Note: random_beta assumes that a != 0 and b != 0.
+ */
 double random_beta(bitgen_t *bitgen_state, double a, double b) {
   double Ga, Gb;
 
   if ((a <= 1.0) && (b <= 1.0)) {
     double U, V, X, Y, XpY;
+
+    if (a < BETA_TINY_THRESHOLD && b < BETA_TINY_THRESHOLD) {
+      /*
+       * When a and b are this small, the probability that the
+       * sample would be a double precision float that is not
+       * 0 or 1 is less than approx. 1e-100.  So we use the
+       * proportion a/(a + b) and a single uniform sample to
+       * generate the result.
+       */
+      U = next_double(bitgen_state);
+      return (a + b)*U < a;
+    }
+
     /* Use Johnk's algorithm */
 
     while (1) {
@@ -417,17 +435,24 @@ double random_beta(bitgen_t *bitgen_state, double a, double b) {
       Y = pow(V, 1.0 / b);
       XpY = X + Y;
       /* Reject if both U and V are 0.0, which is approx 1 in 10^106 */
-      if ((XpY <= 1.0) && (XpY > 0.0)) {
-        if (X + Y > 0) {
+      if ((XpY <= 1.0) && (U + V > 0.0)) {
+        if ((X > 0) && (Y > 0)) {
           return X / XpY;
         } else {
-          double logX = log(U) / a;
-          double logY = log(V) / b;
-          double logM = logX > logY ? logX : logY;
-          logX -= logM;
-          logY -= logM;
-
-          return exp(logX - log(exp(logX) + exp(logY)));
+          /*
+           * Either X or Y underflowed to 0, so we lost information in
+           * U**(1/a) or V**(1/b). We still compute X/(X+Y) here, but we
+           * work with logarithms as much as we can to avoid the underflow.
+           */
+          double logX = log(U)/a;
+          double logY = log(V)/b;
+          double delta = logX - logY;
+          if (delta > 0) {
+            return exp(-log1p(exp(-delta)));
+          }
+          else {
+            return exp(delta - log1p(exp(delta)));
+          }
         }
       }
     }
@@ -960,7 +985,15 @@ RAND_INT_TYPE random_geometric_search(bitgen_t *bitgen_state, double p) {
 }
 
 int64_t random_geometric_inversion(bitgen_t *bitgen_state, double p) {
-  return (int64_t)ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  double z = ceil(-random_standard_exponential(bitgen_state) / npy_log1p(-p));
+  /*
+   * The constant 9.223372036854776e+18 is the smallest double that is
+   * larger than INT64_MAX.
+   */
+  if (z >= 9.223372036854776e+18) {
+    return INT64_MAX;
+  }
+  return (int64_t) z;
 }
 
 int64_t random_geometric(bitgen_t *bitgen_state, double p) {
@@ -972,14 +1005,34 @@ int64_t random_geometric(bitgen_t *bitgen_state, double p) {
 }
 
 RAND_INT_TYPE random_zipf(bitgen_t *bitgen_state, double a) {
-  double am1, b;
+  double am1, b, Umin;
 
+  if (a >= 1025) {
+    /*
+     * If a exceeds 1025, the calculation of b will overflow and the loop
+     * will not terminate.  It is safe to simply return 1 here, because the
+     * probability of generating a value greater than 1 in this case is
+     * less than 3e-309.
+     */
+    return (RAND_INT_TYPE) 1;
+  }
   am1 = a - 1.0;
   b = pow(2.0, am1);
+  /*
+   * In the while loop, X is generated from the uniform distribution (Umin, 1].
+   * Values below Umin would result in X being rejected because it is too
+   * large, so there is no point in including them in the distribution of U.
+   */
+  Umin = pow(RAND_INT_MAX, -am1);
   while (1) {
-    double T, U, V, X;
+    double U01, T, U, V, X;
 
-    U = 1.0 - next_double(bitgen_state);
+    /*
+     * U is sampled from (Umin, 1]. Note that Umin might be 0, and we don't
+     * want U to be 0.
+     */
+    U01 = next_double(bitgen_state);
+    U = U01*Umin + (1 - U01);
     V = next_double(bitgen_state);
     X = floor(pow(U, -1.0 / am1));
     /*

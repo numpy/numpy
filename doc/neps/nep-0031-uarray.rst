@@ -7,9 +7,11 @@ NEP 31 — Context-local and global overrides of the NumPy API
 :Author: Hameer Abbasi <habbasi@quansight.com>
 :Author: Ralf Gommers <rgommers@quansight.com>
 :Author: Peter Bell <pbell@quansight.com>
-:Status: Draft
+:Status: Superseded
+:Replaced-By: :ref:`NEP56`
 :Type: Standards Track
 :Created: 2019-08-22
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/
 
 
 Abstract
@@ -31,7 +33,7 @@ NumPy API. It is intended as a comprehensive resolution to NEP-22 [3]_, and
 obviates the need to add an ever-growing list of new protocols for each new
 type of function or object that needs to become overridable.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 The primary end-goal of this NEP is to make the following possible:
@@ -96,7 +98,7 @@ such as CuPy needing to coerce to a CuPy array, for example, instead of
 a NumPy array. In simpler words, one needs things like ``np.asarray(...)`` or
 an alternative to "just work" and return duck-arrays.
 
-Usage and Impact
+Usage and impact
 ----------------
 
 This NEP allows for global and context-local overrides, as well as
@@ -317,7 +319,7 @@ It has been formally realized (at least in part) that a backend system is
 needed for this, in the `NumPy roadmap <https://numpy.org/neps/roadmap.html#other-functionality>`_.
 
 For ``numpy.random``, it's still necessary to make the C-API fit the one
-proposed in `NEP-19 <https://numpy.org/neps/nep-0019-rng-policy.html>`_.
+proposed in :ref:`NEP-19 <NEP19>`.
 This is impossible for `mkl-random`, because then it would need to be
 rewritten to fit that framework. The guarantees on stream
 compatibility will be the same as before, but if there's a backend that affects
@@ -381,7 +383,7 @@ The benefits to end-users extend beyond just writing new code. Old code
 by a simple import switch and a line adding the preferred backend. This way,
 users may find it easier to port existing code to GPU or distributed computing.
 
-Related Work
+Related work
 ------------
 
 Other override mechanisms
@@ -618,8 +620,8 @@ Discussion
 ----------
 
 * ``uarray`` blogpost: https://labs.quansight.org/blog/2019/07/uarray-update-api-changes-overhead-and-comparison-to-__array_function__/
-* The discussion section of NEP-18: https://numpy.org/neps/nep-0018-array-function-protocol.html#discussion
-* NEP-22: https://numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html
+* The discussion section of :ref:`NEP18`
+* :ref:`NEP22`
 * Dask issue #4462: https://github.com/dask/dask/issues/4462
 * PR #13046: https://github.com/numpy/numpy/pull/13046
 * Dask issue #4883: https://github.com/dask/dask/issues/4883
@@ -629,16 +631,16 @@ Discussion
 * Discussion PR 3: https://github.com/numpy/numpy/pull/14389
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] uarray, A general dispatch mechanism for Python: https://uarray.readthedocs.io
 
-.. [2] NEP 18 — A dispatch mechanism for NumPy’s high level array functions: https://numpy.org/neps/nep-0018-array-function-protocol.html
+.. [2] :ref:`NEP18`
 
-.. [3] NEP 22 — Duck typing for NumPy arrays – high level overview: https://numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html
+.. [3] :ref:`NEP22`
 
-.. [4] NEP 13 — A Mechanism for Overriding Ufuncs: https://numpy.org/neps/nep-0013-ufunc-overrides.html
+.. [4] :ref:`NEP13`
 
 .. [5] Reply to Adding to the non-dispatched implementation of NumPy methods: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/5GUDMALWDIRHITG5YUOCV343J66QSX3U/#5GUDMALWDIRHITG5YUOCV343J66QSX3U
 
@@ -648,7 +650,7 @@ References and Footnotes
 
 .. [8] unumpy: NumPy, but implementation-independent: https://unumpy.readthedocs.io
 
-.. [9] NEP 30 — Duck Typing for NumPy Arrays - Implementation: https://www.numpy.org/neps/nep-0030-duck-array-protocol.html
+.. [9] :ref:`NEP30`
 
 .. [10] http://scipy.github.io/devdocs/fft.html#backend-control
 

@@ -1,5 +1,5 @@
 *****************
-Beyond the Basics
+Beyond the basics
 *****************
 
 |    The voyage of discovery is not in seeking new landscapes but in having
@@ -16,7 +16,7 @@ Iterating over elements in the array
 
 .. _`sec:array_iterator`:
 
-Basic Iteration
+Basic iteration
 ---------------
 
 One common algorithmic requirement is to be able to walk over all
@@ -220,7 +220,7 @@ which types your new data-type can be cast to and from.
 
 The NumPy source code includes an example of a custom data-type as part
 of its test suite. The file ``_rational_tests.c.src`` in the source code
-directory  ``numpy/numpy/core/src/umath/`` contains an implementation of
+directory  ``numpy/_core/src/umath/`` contains an implementation of
 a data-type that represents a rational number as the ratio of two 32 bit
 integers.
 
@@ -266,9 +266,10 @@ needed information and useful functions you call
 call is an integer providing you with a unique type_number that
 specifies your data-type. This type number should be stored and made
 available by your module so that other modules can use it to recognize
-your data-type (the other mechanism for finding a user-defined
-data-type number is to search based on the name of the type-object
-associated with the data-type using :c:func:`PyArray_TypeNumFromName` ).
+your data-type.
+
+Note that this API is inherently thread-unsafe. See `thread_safety` for more
+details about thread safety in NumPy.
 
 
 Registering a casting function

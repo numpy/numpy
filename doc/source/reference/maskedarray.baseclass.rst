@@ -18,6 +18,8 @@ defines several constants.
    specific entry of a masked array is masked, or to mask one or several
    entries of a masked array::
 
+      >>> import numpy as np
+
       >>> x = ma.array([1, 2, 3], mask=[0, 1, 0])
       >>> x[1] is ma.masked
       True
@@ -72,19 +74,19 @@ Attributes and properties of masked arrays
 
 .. seealso:: :ref:`Array Attributes <arrays.ndarray.attributes>`
 
-.. autoattribute:: MaskedArray.data
+.. autoattribute:: numpy::ma.MaskedArray.data
 
-.. autoattribute:: MaskedArray.mask
+.. autoattribute:: numpy::ma.MaskedArray.mask
 
-.. autoattribute:: MaskedArray.recordmask
+.. autoattribute:: numpy::ma.MaskedArray.recordmask
 
-.. autoattribute:: MaskedArray.fill_value
+.. autoattribute:: numpy::ma.MaskedArray.fill_value
 
-.. autoattribute:: MaskedArray.baseclass
+.. autoattribute:: numpy::ma.MaskedArray.baseclass
 
-.. autoattribute:: MaskedArray.sharedmask
+.. autoattribute:: numpy::ma.MaskedArray.sharedmask
 
-.. autoattribute:: MaskedArray.hardmask
+.. autoattribute:: numpy::ma.MaskedArray.hardmask
 
 As :class:`MaskedArray` is a subclass of :class:`~numpy.ndarray`, a masked array also inherits all the attributes and properties of a  :class:`~numpy.ndarray` instance.
 

@@ -21,7 +21,7 @@ physical units (astropy.units_, pint_, unyt_), among others that add additional
 functionality on top of the NumPy API.
 
 Yet, users still want to work with these arrays using the familiar NumPy API and
-re-use existing code with minimal (ideally zero) porting overhead. With this
+reuse existing code with minimal (ideally zero) porting overhead. With this
 goal in mind, various protocols are defined for implementations of
 multi-dimensional arrays with high-level APIs matching NumPy.
 
@@ -69,14 +69,14 @@ The array interface protocol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The :ref:`array interface protocol <arrays.interface>` defines a way for
-array-like objects to re-use each other's data buffers. Its implementation
+array-like objects to reuse each other's data buffers. Its implementation
 relies on the existence of the following attributes or methods:
 
 -  ``__array_interface__``: a Python dictionary containing the shape, the
    element type, and optionally, the data buffer address and the strides of an
    array-like object;
--  ``__array__()``: a method returning the NumPy ndarray view of an array-like
-   object;
+-  ``__array__()``: a method returning the NumPy ndarray copy or a view of an
+   array-like object;
 
 The ``__array_interface__`` attribute can be inspected directly:
 
@@ -113,6 +113,8 @@ We can check that ``arr`` and ``new_arr`` share the same data buffer:
  array([1000, 2, 3, 4])
 
 
+.. _dunder_array.interface:
+
 The ``__array__()`` method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -124,6 +126,16 @@ ndarray view of the array-like object. Otherwise, this copies the data into a
 new ndarray object. This is not optimal, as coercing arrays into ndarrays may
 cause performance problems or create the need for copies and loss of metadata,
 as the original object and any attributes/behavior it may have had, is lost.
+
+The signature of the method should be ``__array__(self, dtype=None, copy=None)``.
+If a passed ``dtype`` isn't ``None`` and different than the object's data type,
+a casting should happen to a specified type. If ``copy`` is ``None``, a copy
+should be made only if ``dtype`` argument enforces it. For ``copy=True``, a copy
+should always be made, where ``copy=False`` should raise an exception if a copy
+is needed.
+
+If a class implements the old signature ``__array__(self)``, for ``np.array(a)``
+a warning will be raised saying that ``dtype`` and ``copy`` arguments are missing.
 
 To see an example of a custom array implementation including the use of
 ``__array__()``, see :ref:`basics.dispatch`.
@@ -517,7 +529,7 @@ Further reading
 .. _Dask: https://docs.dask.org/
 .. _TensorFlow: https://www.tensorflow.org/
 .. _PyTorch: https://pytorch.org/
-.. _XArray: http://xarray.pydata.org/
+.. _XArray: https://xarray.dev/
 .. _JAX: https://jax.readthedocs.io/
 .. _astropy.units: https://docs.astropy.org/en/stable/units/
 .. _pint: https://pint.readthedocs.io/

@@ -7,7 +7,7 @@ Building the NumPy API and reference docs
 If you only want to get the documentation, note that pre-built
 versions can be found at
 
-    https://numpy.org/doc/
+https://numpy.org/doc/
 
 in several different formats.
 
@@ -53,7 +53,16 @@ Dependencies
 All of the necessary dependencies for building the NumPy docs except for
 Doxygen_ can be installed with::
 
-    pip install -r doc_requirements.txt
+    pip install -r requirements/doc_requirements.txt
+
+.. note::
+
+    It may be necessary to install development versions of the doc
+    dependencies to build the docs locally::
+
+        pip install --pre --force-reinstall --extra-index-url \
+        https://pypi.anaconda.org/scientific-python-nightly-wheels/simple \
+        -r requirements/doc_requirements.txt
 
 We currently use Sphinx_ along with Doxygen_ for generating the API and
 reference documentation for NumPy. In addition, building the documentation
@@ -80,7 +89,7 @@ additional parts required for building the documentation::
 
     git submodule update --init
 
-.. _Sphinx: http://www.sphinx-doc.org/
+.. _Sphinx: https://www.sphinx-doc.org/
 .. _numpydoc: https://numpydoc.readthedocs.io/en/latest/index.html
 .. _Doxygen: https://www.doxygen.nl/index.html
 
@@ -89,37 +98,11 @@ Instructions
 
 Now you are ready to generate the docs, so write::
 
-    cd doc
-    make html
+    spin docs
 
-If all goes well, this will generate a
-``build/html`` subdirectory in the ``/doc`` directory, containing the built documentation. If
-you get a message about ``installed numpy != current repo git version``, you must
-either override the check by setting ``GITVER`` or re-install NumPy.
-
-If you have built NumPy into a virtual environment and get an error
-that says ``numpy not found, cannot build documentation without...``,
-you need to override the makefile ``PYTHON`` variable at the command
-line, so instead of writing ``make  html`` write::
-
-    make PYTHON=python html
-
-To build the PDF documentation, do instead::
-
-   make latex
-   make -C build/latex all-pdf
-
-You will need to have LaTeX_ installed for this, inclusive of support for
-Greek letters.  For example, on Ubuntu xenial ``texlive-lang-greek`` and
-``cm-super`` are needed.  Also, ``latexmk`` is needed on non-Windows systems.
-
-Instead of the above, you can also do::
-
-   make dist
-
-which will rebuild NumPy, install it to a temporary location, and
-build the documentation in all formats. This will most likely again
-only work on Unix platforms.
+This will build NumPy from source if you haven't already, and run Sphinx to
+build the ``html`` docs. If all goes well, this will generate a ``build/html``
+subdirectory in the ``/doc`` directory, containing the built documentation.
 
 The documentation for NumPy distributed at https://numpy.org/doc in html and
 pdf format is also built with ``make dist``.  See `HOWTO RELEASE`_ for details

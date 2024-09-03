@@ -5,7 +5,7 @@
 The interface definition file (.pyf) is how you can fine-tune the interface
 between Python and Fortran. The syntax specification for signature files
 (``.pyf`` files) is modeled on the Fortran 90/95 language specification. Almost
-all Fortran 90/95 standard constructs are understood, both in free and fixed
+all Fortran standard constructs are understood, both in free and fixed
 format (recall that Fortran 77 is a subset of Fortran 90/95). F2PY introduces
 some extensions to the Fortran 90/95 language specification that help in the
 design of the Fortran to Python interface, making it more "Pythonic".
@@ -18,10 +18,10 @@ library is built.
 
 .. note::
 
-  Currently, F2PY may fail with valid Fortran constructs, such as intrinsic
-  modules. If this happens, you can check the
-  `NumPy GitHub issue tracker <https://github.com/numpy/numpy/issues>`_ for
-  possible workarounds or work-in-progress ideas.
+  Currently, F2PY may fail with some valid Fortran constructs. If this happens,
+  you can check the `NumPy GitHub issue tracker
+  <https://github.com/numpy/numpy/issues>`_ for possible workarounds or
+  work-in-progress ideas.
 
 In general, the contents of the signature files are case-sensitive. When
 scanning Fortran codes to generate a signature file, F2PY lowers all cases

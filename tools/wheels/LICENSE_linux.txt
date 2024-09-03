@@ -5,10 +5,10 @@ This binary distribution of NumPy also bundles the following software:
 
 
 Name: OpenBLAS
-Files: .libs/libopenb*.so
+Files: numpy.libs/libscipy_openblas*.so
 Description: bundled as a dynamically linked library
-Availability: https://github.com/xianyi/OpenBLAS/
-License: 3-clause BSD
+Availability: https://github.com/OpenMathLib/OpenBLAS/
+License: BSD-3-Clause
   Copyright (c) 2011-2014, The OpenBLAS Project
   All rights reserved.
 
@@ -41,10 +41,10 @@ License: 3-clause BSD
 
 
 Name: LAPACK
-Files: .libs/libopenb*.so
+Files: numpy.libs/libscipy_openblas*.so
 Description: bundled in OpenBLAS
-Availability: https://github.com/xianyi/OpenBLAS/
-License 3-clause BSD
+Availability: https://github.com/OpenMathLib/OpenBLAS/
+License: BSD-3-Clause-Attribution
   Copyright (c) 1992-2013 The University of Tennessee and The University
                           of Tennessee Research Foundation.  All rights
                           reserved.
@@ -96,10 +96,10 @@ License 3-clause BSD
 
 
 Name: GCC runtime library
-Files: .libs/libgfortran*.so
+Files: numpy.libs/libgfortran*.so
 Description: dynamically linked to files compiled with gcc
-Availability: https://gcc.gnu.org/viewcvs/gcc/
-License: GPLv3 + runtime exception
+Availability: https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libgfortran
+License: GPL-3.0-with-GCC-exception
   Copyright (C) 2002-2017 Free Software Foundation, Inc.
 
   Libgfortran is free software; you can redistribute it and/or modify
@@ -878,3 +878,25 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
+
+Name: libquadmath
+Files: numpy.libs/libquadmath*.so
+Description: dynamically linked to files compiled with gcc
+Availability: https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libquadmath
+License: LGPL-2.1-or-later
+
+    GCC Quad-Precision Math Library
+    Copyright (C) 2010-2019 Free Software Foundation, Inc.
+    Written by Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+    This file is part of the libquadmath library.
+    Libquadmath is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Library General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    Libquadmath is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+    https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html

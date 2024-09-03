@@ -539,8 +539,8 @@ class build_src(build_ext.build_ext):
             if (self.force or newer_group(depends, target_file, 'newer')) \
                    and not skip_f2py:
                 log.info("f2py: %s" % (source))
-                import numpy.f2py
-                numpy.f2py.run_main(f2py_options
+                from numpy.f2py import f2py2e
+                f2py2e.run_main(f2py_options
                                     + ['--build-dir', target_dir, source])
             else:
                 log.debug("  skipping '%s' f2py interface (up-to-date)" % (source))
@@ -558,8 +558,8 @@ class build_src(build_ext.build_ext):
                    and not skip_f2py:
                 log.info("f2py:> %s" % (target_file))
                 self.mkpath(target_dir)
-                import numpy.f2py
-                numpy.f2py.run_main(f2py_options + ['--lower',
+                from numpy.f2py import f2py2e
+                f2py2e.run_main(f2py_options + ['--lower',
                                                 '--build-dir', target_dir]+\
                                 ['-m', ext_name]+f_sources)
             else:
@@ -725,7 +725,7 @@ _has_c_header = re.compile(r'-\*-\s*c\s*-\*-', re.I).search
 _has_cpp_header = re.compile(r'-\*-\s*c\+\+\s*-\*-', re.I).search
 
 def get_swig_target(source):
-    with open(source, 'r') as f:
+    with open(source) as f:
         result = None
         line = f.readline()
         if _has_cpp_header(line):
@@ -735,7 +735,7 @@ def get_swig_target(source):
     return result
 
 def get_swig_modulename(source):
-    with open(source, 'r') as f:
+    with open(source) as f:
         name = None
         for line in f:
             m = _swig_module_name_match(line)

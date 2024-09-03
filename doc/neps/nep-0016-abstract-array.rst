@@ -318,7 +318,7 @@ Links to discussion
 * https://mail.python.org/pipermail/numpy-discussion/2018-March/077767.html
 
 
-Appendix: Benchmark script
+Appendix: benchmark script
 --------------------------
 
 .. literalinclude:: nep-0016-benchmark.py

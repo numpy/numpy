@@ -1,0 +1,166 @@
+# Meson's Python module doesn't support crosscompiling,
+# and python dependencies may be another potential hurdle.
+# There might also be a need to run runtime tests during configure time.
+#
+# The recommended practice is to rely on Docker to provide the x86_64 crosscompile toolchain,
+# enabling native execution via binfmt.
+#
+# In simpler terms, everything except the crosscompile toolchain will be emulated.
+
+name: Linux Qemu tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  linux_qemu:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        BUILD_PROP:
+          - [
+              "armhf",
+              "arm-linux-gnueabihf",
+              "arm32v7/ubuntu:22.04",
+              "-Dallow-noblas=true",
+              # test_unary_spurious_fpexception is currently skipped
+              # FIXME(@seiko2plus): Requires confirmation for the following issue:
+              # The presence of an FP invalid exception caused by sqrt. Unsure if this is a qemu bug or not.
+              "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_unary_spurious_fpexception"
+          ]
+          - [
+              "ppc64le",
+              "powerpc64le-linux-gnu",
+              "ppc64le/ubuntu:22.04",
+              "-Dallow-noblas=true",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+          ]
+          - [
+              "ppc64le - baseline(Power9)",
+              "powerpc64le-linux-gnu",
+              "ppc64le/ubuntu:22.04",
+              "-Dallow-noblas=true -Dcpu-baseline=vsx3",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+          ]
+          - [
+              "s390x",
+              "s390x-linux-gnu",
+              "s390x/ubuntu:22.04",
+              "-Dallow-noblas=true",
+              # Skipping TestRationalFunctions.test_gcd_overflow test
+              # because of a possible qemu bug that appears to be related to int64 overflow in absolute operation.
+              # TODO(@seiko2plus): Confirm the bug and provide a minimal reproducer, then report it to upstream.
+              "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_gcd_overflow"
+          ]
+          - [
+              "s390x - baseline(Z13)",
+              "s390x-linux-gnu",
+              "s390x/ubuntu:22.04",
+              "-Dallow-noblas=true -Dcpu-baseline=vx",
+              "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_gcd_overflow"
+          ]
+          - [
+              "riscv64",
+              "riscv64-linux-gnu",
+              "riscv64/ubuntu:22.04",
+              "-Dallow-noblas=true",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc"
+          ]
+    env:
+      TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
+      DOCKER_CONTAINER: ${{ matrix.BUILD_PROP[2] }}
+      MESON_OPTIONS: ${{ matrix.BUILD_PROP[3] }}
+      RUNTIME_TEST_FILTER: ${{ matrix.BUILD_PROP[4] }}
+      TERM: xterm-256color
+
+    name: "${{ matrix.BUILD_PROP[0] }}"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+
+    - name: Initialize binfmt_misc for qemu-user-static
+      run: |
+        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+    - name: Install GCC cross-compilers
+      run: |
+        sudo apt update
+        sudo apt install -y ninja-build gcc-${TOOLCHAIN_NAME} g++-${TOOLCHAIN_NAME} gfortran-${TOOLCHAIN_NAME}
+
+    - name: Cache docker container
+      uses: actions/cache@v4.0.2
+      id: container-cache
+      with:
+        path: ~/docker_${{ matrix.BUILD_PROP[1] }}
+        key: container-${{ runner.os }}-${{ matrix.BUILD_PROP[1] }}-${{ matrix.BUILD_PROP[2] }}-${{ hashFiles('requirements/build_requirements.txt') }}
+
+    - name: Creates new container
+      if: steps.container-cache.outputs.cache-hit != 'true'
+      run: |
+        docker run --name the_container --interactive -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
+          apt update &&
+          apt install -y cmake git python3 python-is-python3 python3-dev python3-pip &&
+          mkdir -p /lib64 && ln -s /host/lib64/ld-* /lib64/ &&
+          ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
+          rm -rf /usr/${TOOLCHAIN_NAME} && ln -s /host/usr/${TOOLCHAIN_NAME} /usr/${TOOLCHAIN_NAME} &&
+          rm -rf /usr/lib/gcc/${TOOLCHAIN_NAME} && ln -s /host/usr/lib/gcc-cross/${TOOLCHAIN_NAME} /usr/lib/gcc/${TOOLCHAIN_NAME} &&
+          rm -f /usr/bin/gcc && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gcc /usr/bin/gcc &&
+          rm -f /usr/bin/g++ && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-g++ /usr/bin/g++ &&
+          rm -f /usr/bin/gfortran && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gfortran /usr/bin/gfortran &&
+          rm -f /usr/bin/ar && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ar /usr/bin/ar &&
+          rm -f /usr/bin/as && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-as /usr/bin/as &&
+          rm -f /usr/bin/ld && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld /usr/bin/ld &&
+          rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
+          rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
+          git config --global --add safe.directory /numpy &&
+          python -m pip install -r /numpy/requirements/build_requirements.txt &&
+          python -m pip install pytest pytest-xdist hypothesis typing_extensions &&
+          rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
+        "
+        docker commit the_container the_container
+        mkdir -p "~/docker_${TOOLCHAIN_NAME}"
+        docker save -o "~/docker_${TOOLCHAIN_NAME}/the_container.tar" the_container
+
+    - name: Load container from cache
+      if: steps.container-cache.outputs.cache-hit == 'true'
+      run: docker load -i "~/docker_${TOOLCHAIN_NAME}/the_container.tar"
+
+    - name: Meson Build
+      run: |
+        docker run --rm -e "TERM=xterm-256color" -v $(pwd):/numpy -v /:/host the_container \
+        /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
+          cd /numpy && spin build --clean -- ${MESON_OPTIONS}
+        '"
+
+    - name: Meson Log
+      if: always()
+      run: 'cat build/meson-logs/meson-log.txt'
+
+    - name: Run Tests
+      run: |
+        docker run --rm -e "TERM=xterm-256color" -v $(pwd):/numpy -v /:/host the_container \
+        /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
+          export F90=/usr/bin/gfortran
+          cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
+        '"
+

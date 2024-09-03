@@ -1,1 +1,0 @@
-* The ``np.dual`` submodule has been removed.

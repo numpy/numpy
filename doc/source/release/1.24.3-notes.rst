@@ -1,0 +1,49 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.24.3 Release Notes
+==========================
+NumPy 1.24.3 is a maintenance release that fixes bugs and regressions discovered after the
+1.24.2 release. The Python versions supported by this release are 3.8-3.11.
+
+Contributors
+============
+
+A total of 12 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Aleksei Nikiforov +
+* Alexander Heger
+* Bas van Beek
+* Bob Eldering
+* Brock Mendel
+* Charles Harris
+* Kyle Sunden
+* Peter Hawkins
+* Rohit Goswami
+* Sebastian Berg
+* Warren Weckesser
+* dependabot[bot]
+
+Pull requests merged
+====================
+
+A total of 17 pull requests were merged for this release.
+
+* `#23206 <https://github.com/numpy/numpy/pull/23206>`__: BUG: fix for f2py string scalars (#23194)
+* `#23207 <https://github.com/numpy/numpy/pull/23207>`__: BUG: datetime64/timedelta64 comparisons return NotImplemented
+* `#23208 <https://github.com/numpy/numpy/pull/23208>`__: MAINT: Pin matplotlib to version 3.6.3 for refguide checks
+* `#23221 <https://github.com/numpy/numpy/pull/23221>`__: DOC: Fix matplotlib error in documentation
+* `#23226 <https://github.com/numpy/numpy/pull/23226>`__: CI: Ensure submodules are initialized in gitpod.
+* `#23341 <https://github.com/numpy/numpy/pull/23341>`__: TYP: Replace duplicate reduce in ufunc type signature with reduceat.
+* `#23342 <https://github.com/numpy/numpy/pull/23342>`__: TYP: Remove duplicate CLIP/WRAP/RAISE in ``__init__.pyi``.
+* `#23343 <https://github.com/numpy/numpy/pull/23343>`__: TYP: Mark ``d`` argument to fftfreq and rfftfreq as optional...
+* `#23344 <https://github.com/numpy/numpy/pull/23344>`__: TYP: Add type annotations for comparison operators to MaskedArray.
+* `#23345 <https://github.com/numpy/numpy/pull/23345>`__: TYP: Remove some stray type-check-only imports of ``msort``
+* `#23370 <https://github.com/numpy/numpy/pull/23370>`__: BUG: Ensure like is only stripped for ``like=`` dispatched functions
+* `#23543 <https://github.com/numpy/numpy/pull/23543>`__: BUG: fix loading and storing big arrays on s390x
+* `#23544 <https://github.com/numpy/numpy/pull/23544>`__: MAINT: Bump larsoner/circleci-artifacts-redirector-action
+* `#23634 <https://github.com/numpy/numpy/pull/23634>`__: BUG: Ignore invalid and overflow warnings in masked setitem
+* `#23635 <https://github.com/numpy/numpy/pull/23635>`__: BUG: Fix masked array raveling when ``order="A"`` or ``order="K"``
+* `#23636 <https://github.com/numpy/numpy/pull/23636>`__: MAINT: Update conftest for newer hypothesis versions
+* `#23637 <https://github.com/numpy/numpy/pull/23637>`__: BUG: Fix bug in parsing F77 style string arrays.

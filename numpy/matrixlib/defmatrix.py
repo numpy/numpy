@@ -1,12 +1,12 @@
-__all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
+__all__ = ['matrix', 'bmat', 'asmatrix']
 
 import sys
 import warnings
 import ast
 
 from .._utils import set_module
-import numpy.core.numeric as N
-from numpy.core.numeric import concatenate, isscalar
+import numpy._core.numeric as N
+from numpy._core.numeric import concatenate, isscalar
 # While not in __all__, matrix_power used to be defined here, so we import
 # it for backward compatibility.
 from numpy.linalg import matrix_power
@@ -18,8 +18,7 @@ def _convert_from_string(data):
 
     rows = data.split(';')
     newdata = []
-    count = 0
-    for row in rows:
+    for count, row in enumerate(rows):
         trow = row.split(',')
         newrow = []
         for col in trow:
@@ -29,7 +28,6 @@ def _convert_from_string(data):
             Ncols = len(newrow)
         elif len(newrow) != Ncols:
             raise ValueError("Rows not the same size.")
-        count += 1
         newdata.append(newrow)
     return newdata
 
@@ -56,6 +54,7 @@ def asmatrix(data, dtype=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[1, 2], [3, 4]])
 
     >>> m = np.asmatrix(x)
@@ -75,14 +74,15 @@ class matrix(N.ndarray):
     """
     matrix(data, dtype=None, copy=True)
 
-    .. note:: It is no longer recommended to use this class, even for linear
-              algebra. Instead use regular arrays. The class may be removed
-              in the future.
-
     Returns a matrix from an array-like object, or from a string of data.
+
     A matrix is a specialized 2-D array that retains its 2-D nature
     through operations.  It has certain special operators, such as ``*``
     (matrix multiplication) and ``**`` (matrix power).
+
+    .. note:: It is no longer recommended to use this class, even for linear
+              algebra. Instead use regular arrays. The class may be removed
+              in the future.
 
     Parameters
     ----------
@@ -102,6 +102,7 @@ class matrix(N.ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.matrix('1 2; 3 4')
     >>> a
     matrix([[1, 2],
@@ -136,13 +137,16 @@ class matrix(N.ndarray):
             new = data.view(subtype)
             if intype != data.dtype:
                 return new.astype(intype)
-            if copy: return new.copy()
-            else: return new
+            if copy:
+                return new.copy()
+            else:
+                return new
 
         if isinstance(data, str):
             data = _convert_from_string(data)
 
         # now convert data to an array
+        copy = None if not copy else True
         arr = N.array(data, dtype=dtype, copy=copy)
         ndim = arr.ndim
         shape = arr.shape
@@ -167,7 +171,8 @@ class matrix(N.ndarray):
 
     def __array_finalize__(self, obj):
         self._getitem = False
-        if (isinstance(obj, matrix) and obj._getitem): return
+        if (isinstance(obj, matrix) and obj._getitem):
+            return
         ndim = self.ndim
         if (ndim == 2):
             return
@@ -788,7 +793,7 @@ class matrix(N.ndarray):
                 [3]])
 
         """
-        return N.ndarray.ptp(self, axis, out)._align(axis)
+        return N.ptp(self, axis, out)._align(axis)
 
     @property
     def I(self):
@@ -1063,10 +1068,11 @@ def bmat(obj, ldict=None, gdict=None):
 
     Examples
     --------
-    >>> A = np.mat('1 1; 1 1')
-    >>> B = np.mat('2 2; 2 2')
-    >>> C = np.mat('3 4; 5 6')
-    >>> D = np.mat('7 8; 9 0')
+    >>> import numpy as np
+    >>> A = np.asmatrix('1 1; 1 1')
+    >>> B = np.asmatrix('2 2; 2 2')
+    >>> C = np.asmatrix('3 4; 5 6')
+    >>> D = np.asmatrix('7 8; 9 0')
 
     All the following expressions construct the same block matrix:
 
@@ -1110,5 +1116,3 @@ def bmat(obj, ldict=None, gdict=None):
         return matrix(concatenate(arr_rows, axis=0))
     if isinstance(obj, N.ndarray):
         return matrix(obj)
-
-mat = asmatrix

@@ -13,7 +13,7 @@ from numpy.polynomial import (
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
     )
-from numpy.polynomial.polyutils import RankWarning
+from numpy.exceptions import RankWarning
 
 #
 # fixtures
@@ -521,6 +521,13 @@ def test_call(Poly):
     tgt = 1 + x*(2 + 3*x)
     res = p(x)
     assert_almost_equal(res, tgt)
+
+
+def test_call_with_list(Poly):
+    p = Poly([1, 2, 3])
+    x = [-1, 0, 2]
+    res = p(x)
+    assert_equal(res, p(np.array(x)))
 
 
 def test_cutdeg(Poly):

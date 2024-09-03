@@ -21,10 +21,14 @@ on:
     #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
     #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
     #        │  │ │ │ │
-    - cron: "42 1 * * 4"
-  push:
+    - cron: "42 2 * * SUN,WED"
   pull_request:
-    types: [labeled, opened, synchronize, reopened]
+    branches:
+      - main
+      - maintenance/**
+  push:
+    tags:
+      - v*
   workflow_dispatch:
 
 concurrency:
@@ -38,12 +42,13 @@ jobs:
   get_commit_message:
     name: Get commit message
     runs-on: ubuntu-latest
-    if: "github.repository == 'numpy/numpy'"
+    # To enable this job and subsequent jobs on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
     outputs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -56,15 +61,12 @@ jobs:
           echo github.ref ${{ github.ref }}
 
   build_wheels:
-    name: Build wheel for ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+    name: Build wheel ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
     needs: get_commit_message
     if: >-
       contains(needs.get_commit_message.outputs.message, '[wheel build]') ||
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-      (contains(github.event.pull_request.labels.*.name, '36 - Build') ||
-      contains(github.event.pull_request.labels.*.name, '14 - Release'))) ||
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && ( ! endsWith(github.ref, 'dev0')))
     runs-on: ${{ matrix.buildplat[0] }}
     strategy:
@@ -74,64 +76,119 @@ jobs:
         # Github Actions doesn't support pairing matrix values together, let's improvise
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
-          - [ubuntu-20.04, manylinux_x86_64]
-          - [ubuntu-20.04, musllinux_x86_64]
-          - [macos-12, macosx_*]
-          - [windows-2019, win_amd64]
-          - [windows-2019, win32]
-        python: ["cp39", "cp310", "cp311", "pp39"]
+          - [ubuntu-22.04, manylinux_x86_64, ""]
+          - [ubuntu-22.04, musllinux_x86_64, ""]
+          - [macos-13, macosx_x86_64, openblas]
+
+          # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
+          - [macos-13, macosx_x86_64, accelerate]
+          - [macos-14, macosx_arm64, accelerate]  # always use accelerate
+          - [windows-2019, win_amd64, ""]
+          - [windows-2019, win32, ""]
+        python: ["cp310", "cp311", "cp312", "pp310", "cp313", "cp313t"]
         exclude:
           # Don't build PyPy 32-bit windows
-          - buildplat: [windows-2019, win32]
-            python: "pp39"
-          - buildplat: [ ubuntu-20.04, musllinux_x86_64 ]
-            python: "pp39"
+          - buildplat: [windows-2019, win32, ""]
+            python: "pp310"
+          - buildplat: [ ubuntu-22.04, musllinux_x86_64, "" ]
+            python: "pp310"
+          - buildplat: [ macos-14, macosx_arm64, accelerate ]
+            python: "pp310"
+          - buildplat: [ windows-2019, win_amd64, "" ]
+            python: "cp313t"
+          - buildplat: [ windows-2019, win32, "" ]
+            python: "cp313t"
+          - buildplat: [ macos13, macosx_x86_64, openblas ]
+            python: "cp313t"
+
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
       IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
       IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
-          # versioneer.py requires the latest tag to be reachable. Here we
-          # fetch the complete history to get access to the tags.
-          # A shallow clone can work when the following issue is resolved:
-          # https://github.com/actions/checkout/issues/338
-          fetch-depth: 0
+
+      - name: Setup MSVC (32-bit)
+        if: ${{ matrix.buildplat[1] == 'win32' }}
+        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
+        with:
+          architecture: 'x86'
+
+      - name: pkg-config-for-win
+        run: |
+          choco install -y --no-progress --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+          $CIBW = "${{ github.workspace }}/.openblas"
+          # pkgconfig needs a complete path, and not just "./openblas since the
+          # build is run in a tmp dir (?)
+          # It seems somewhere in the env passing, `\` is not
+          # passed through, so convert it to '/'
+          $CIBW = $CIBW.replace("\","/")
+          echo "CIBW_ENVIRONMENT_WINDOWS=PKG_CONFIG_PATH=$CIBW" >> $env:GITHUB_ENV
+        if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.x"
 
-      - name: setup rtools for 32-bit
+      - name: Setup macOS
+        if: matrix.buildplat[0] == 'macos-13' || matrix.buildplat[0] == 'macos-14'
         run: |
-          echo "PLAT=i686" >> $env:GITHUB_ENV
-          echo "PATH=$env:RTOOLS40_HOME\mingw32\bin;$env:PATH" >> $env:GITHUB_ENV
-          gfortran --version
-        if: ${{ matrix.buildplat[1] == 'win32' }}
+          # Needed due to https://github.com/actions/runner-images/issues/3371
+          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
+          echo "FC=gfortran-13" >> "$GITHUB_ENV"
+          echo "F77=gfortran-13" >> "$GITHUB_ENV"
+          echo "F90=gfortran-13" >> "$GITHUB_ENV"
+          if [[ ${{ matrix.buildplat[2] }} == 'accelerate' ]]; then
+            # macosx_arm64 and macosx_x86_64 with accelerate
+            # only target Sonoma onwards
+            CIBW="MACOSX_DEPLOYMENT_TARGET=14.0 INSTALL_OPENBLAS=false RUNNER_OS=macOS"
+            echo "CIBW_ENVIRONMENT_MACOS=$CIBW" >> "$GITHUB_ENV"
+
+            # the macos-13 image that's used for building the x86_64 wheel can't test
+            # a wheel with deployment target >= 14 without further work
+            echo "CIBW_TEST_SKIP=*-macosx_x86_64" >> "$GITHUB_ENV"
+          else
+            # macosx_x86_64 with OpenBLAS
+            # if INSTALL_OPENBLAS isn't specified then scipy-openblas is automatically installed
+            CIBW="RUNNER_OS=macOS"
+            PKG_CONFIG_PATH="$PWD/.openblas"
+            DYLD="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
+            echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"  
+          fi
+
+      - name: Set up free-threaded build
+        if: matrix.python == 'cp313t'
+        run: |
+          echo "CIBW_BUILD_FRONTEND=pip; args: --no-build-isolation" >> "$GITHUB_ENV"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@02ad79a31bf7aa0eee07f690509048d2fb9fd445 # v2.12.1
+        uses: pypa/cibuildwheel@bd033a44476646b606efccdd5eed92d5ea1d77ad  # v2.20.0
         env:
+          CIBW_PRERELEASE_PYTHONS: True
+          CIBW_FREE_THREADED_SUPPORT: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
-          name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
+          name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: mamba-org/setup-micromamba@f8b8a1e23a26f60a44c853292711bacfd3eac822
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
-          # default (and activated) environment name is test
           # Note that this step is *after* specific pythons have been used to
           # build and test the wheel
-          auto-update-conda: true
-          python-version: "3.10"
+          # for installation of anaconda-client, for upload to anaconda.org
+          # environment will be activated after creation, and in future bash steps
+          init-shell: bash
+          environment-name: upload-env
+          create-args: >-
+            anaconda-client
 
       - name: Upload wheels
         if: success()
@@ -142,11 +199,10 @@ jobs:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
           NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
         run: |
-          conda install -y anaconda-client
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy
@@ -171,28 +227,24 @@ jobs:
       # IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: true
-          # versioneer.py requires the latest tag to be reachable. Here we
-          # fetch the complete history to get access to the tags.
-          # A shallow clone can work when the following issue is resolved:
-          # https://github.com/actions/checkout/issues/338
-          fetch-depth: 0
       # Used to push the built wheels
-      - uses: actions/setup-python@d27e3f3d7c64b4bbf8e4abfb9b63b83e846e0435 # v4.5.0
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           # Build sdist on lowest supported Python
-          python-version: "3.9"
+          python-version: "3.10"
       - name: Build sdist
         run: |
-          python setup.py sdist
+          python -m pip install -U pip build
+          python -m build --sdist -Csetup-args=-Dallow-noblas=true
       - name: Test the sdist
         run: |
           # TODO: Don't run test suite, and instead build wheels from sdist
           # Depends on pypa/cibuildwheel#1020
-          python -m pip install dist/*.gz
-          pip install -r test_requirements.txt
+          python -m pip install dist/*.gz -Csetup-args=-Dallow-noblas=true
+          pip install -r requirements/test_requirements.txt
           cd .. # Can't import numpy within numpy src directory
           python -c "import numpy, sys; print(numpy.__version__); sys.exit(numpy.test() is False)"
 
@@ -201,12 +253,12 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
+      - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
           name: sdist
           path: ./dist/*
 
-      - uses: conda-incubator/setup-miniconda@3b0f2504dd76ef23b6d31f291f4913fb60ab5ff3 # v2.2.0
+      - uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -228,7 +280,7 @@ jobs:
           source tools/wheels/upload_wheels.sh
           set_upload_vars
           # trigger an upload to
-          # https://anaconda.org/scipy-wheels-nightly/numpy
+          # https://anaconda.org/scientific-python-nightly-wheels/numpy
           # for cron jobs or "Run workflow" (restricted to main branch).
           # Tags will upload to
           # https://anaconda.org/multibuild-wheels-staging/numpy

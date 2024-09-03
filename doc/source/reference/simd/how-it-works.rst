@@ -56,7 +56,7 @@ The compiler supports ``--cpu-baseline="sse sse2 sse3"`` and
 
 .. code:: c
 
-   // The header should be located at numpy/numpy/core/src/common/_cpu_dispatch.h
+   // The header should be located at numpy/numpy/_core/src/common/_cpu_dispatch.h
    /**NOTE
     ** C definitions prefixed with "NPY_HAVE_" represent
     ** the required optimizations.
@@ -237,7 +237,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
       // Macro 'CURRENT_TARGET' adding the current target as suffux to the exported symbols,
       // to avoid linking duplications, NumPy already has a macro called
       // 'NPY_CPU_DISPATCH_CURFX' similar to it, located at
-      // numpy/numpy/core/src/common/npy_cpu_dispatch.h
+      // numpy/numpy/_core/src/common/npy_cpu_dispatch.h
       // NOTE: we tend to not adding suffixes to the baseline exported symbols
       void CURRENT_TARGET(simd_whoami)(const char *extra_info)
       {
@@ -294,7 +294,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
 
       // NOTE: The following macros are only defined for demonstration purposes only.
       // NumPy already has a collections of macros located at
-      // numpy/numpy/core/src/common/npy_cpu_dispatch.h, that covers all dispatching
+      // numpy/numpy/_core/src/common/npy_cpu_dispatch.h, that covers all dispatching
       // and declarations scenarios.
 
       #include "numpy/npy_cpu_features.h" // NPY_CPU_HAVE

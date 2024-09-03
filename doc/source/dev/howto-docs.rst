@@ -61,7 +61,7 @@ which raises the bar. Test the waters by first presenting the fix as an issue.
 
 Some functions/objects like numpy.ndarray.transpose, numpy.array etc. defined in
 C-extension modules have their docstrings defined separately in `_add_newdocs.py
-<https://github.com/numpy/numpy/blob/main/numpy/core/_add_newdocs.py>`__
+<https://github.com/numpy/numpy/blob/main/numpy/_core/_add_newdocs.py>`__
 
 **********************
 Contributing new pages
@@ -79,7 +79,7 @@ ideas and feedback. If you want to alert us to a gap,
 
 If you're looking for subjects, our formal roadmap for documentation is a
 *NumPy Enhancement Proposal (NEP)*,
-`NEP 44 - Restructuring the NumPy Documentation <https://www.numpy.org/neps/nep-0044-restructuring-numpy-docs>`__.
+:ref:`NEP44`.
 It identifies areas where our docs need help and lists several
 additions we'd like to see, including :ref:`Jupyter notebooks <numpy_tutorials>`.
 
@@ -138,7 +138,7 @@ documentation, converts the rST into HTML and other formats. For more on
 rST, see the `Quick reStructuredText Guide
 <https://docutils.sourceforge.io/docs/user/rst/quickref.html>`__ or the
 `reStructuredText Primer
-<http://www.sphinx-doc.org/en/stable/usage/restructuredtext/basics.html>`__
+<https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`__
 
 
 ***********************
@@ -170,16 +170,16 @@ User documentation
 
 - NumPy style governs cases where:
 
-      - Google has no guidance, or
-      - We prefer not to use the Google style
+  - Google has no guidance, or
+  - We prefer not to use the Google style
 
   Our current rules:
 
-      - We pluralize *index* as *indices* rather than
-        `indexes <https://developers.google.com/style/word-list#letter-i>`_,
-        following the precedent of :func:`numpy.indices`.
+  - We pluralize *index* as *indices* rather than
+    `indexes <https://developers.google.com/style/word-list#letter-i>`_,
+    following the precedent of :func:`numpy.indices`.
 
-      - For consistency we also pluralize *matrix* as *matrices*.
+  - For consistency we also pluralize *matrix* as *matrices*.
 
 - Grammatical issues inadequately addressed by the NumPy or Google rules are
   decided by the section on "Grammar and Usage" in the most recent edition of
@@ -195,7 +195,7 @@ User documentation
 Docstrings
 ==========
 
-When using `Sphinx <http://www.sphinx-doc.org/>`_ in combination with the
+When using `Sphinx <https://www.sphinx-doc.org/>`_ in combination with the
 NumPy conventions, you should use the ``numpydoc`` extension so that your
 docstrings will be handled correctly. For example, Sphinx will extract the
 ``Parameters`` section from your docstring and convert it into a field
@@ -217,7 +217,7 @@ shown in their :ref:`example <numpydoc:example>`.
 
 .. _doc_c_code:
 
-Documenting C/C++ Code
+Documenting C/C++ code
 ======================
 
 NumPy uses Doxygen_ to parse specially-formatted C/C++ comment blocks. This generates
@@ -376,7 +376,7 @@ membergroups and members-only options:
        :outline:
        :no-link:
 
-Checkout the `doxygenclass documentation <https://breathe.readthedocs.io/en/latest/class.html#class-example>_`
+Checkout the `doxygenclass documentation <https://breathe.readthedocs.io/en/latest/class.html#class-example>`__
 for more details and to see it in action.
 
 ``doxygennamespace``
@@ -428,6 +428,42 @@ for more details and to see it in action.
 .. _`Doxygen`: https://www.doxygen.nl/index.html
 .. _`Breathe`: https://breathe.readthedocs.io/en/latest/
 
+
+Legacy directive
+================
+
+If a function, module or API is in *legacy* mode, meaning that it is kept around
+for backwards compatibility reasons, but is not recommended to use in new code,
+you can use the ``.. legacy::`` directive.
+
+By default, if used with no arguments, the legacy directive will generate the
+following output:
+
+.. legacy::
+
+
+We strongly recommend that you also add a custom message, such as a new API to
+replace the old one::
+
+   .. legacy::
+
+      For more details, see :ref:`distutils-status-migration`.
+
+This message will be appended to the default message and will create the
+following output:
+
+.. legacy::
+
+   For more details, see :ref:`distutils-status-migration`.
+
+Finally, if you want to mention a function, method (or any custom object)
+instead of a *submodule*, you can use an optional argument::
+
+    .. legacy:: function
+
+This will create the following output:
+
+.. legacy:: function
 
 *********************
 Documentation reading

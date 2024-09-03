@@ -5,9 +5,9 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_raises_regex,
     )
-from numpy.lib.index_tricks import (
+from numpy.lib._index_tricks_impl import (
     mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
-    index_exp, ndindex, r_, s_, ix_
+    index_exp, ndindex, c_, r_, s_, ix_
     )
 
 
@@ -245,8 +245,10 @@ class TestGrid:
         # regression test for #16466
         grid64 = mgrid[0.1:0.33:0.1, ]
         grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1), ]
-        assert_(grid32.dtype == np.float64)
         assert_array_almost_equal(grid64, grid32)
+        # At some point this was float64, but NEP 50 changed it:
+        assert grid32.dtype == np.float32
+        assert grid64.dtype == np.float64
 
         # different code path for single slice
         grid64 = mgrid[0.1:0.33:0.1]
@@ -405,7 +407,7 @@ class TestIx_:
 
 
 def test_c_():
-    a = np.c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]
+    a = c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]
     assert_equal(a, [[1, 2, 3, 0, 0, 4, 5, 6]])
 
 

@@ -85,7 +85,7 @@ class TestFFTShift:
 
     def test_equal_to_original(self):
         """ Test that the new (>=v1.15) implementation (see #10073) is equal to the original (<=v1.14) """
-        from numpy.core import asarray, concatenate, arange, take
+        from numpy._core import asarray, concatenate, arange, take
 
         def original_fftshift(x, axes=None):
             """ How fftshift was implemented in v1.14"""

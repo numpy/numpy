@@ -194,7 +194,7 @@ As detailed in `NEP 49`_, the function used for allocation of the data segment
 of a ndarray can be changed. The policy can be set globally or in a context.
 For more information see the NEP and the :ref:`data_memory` reference docs.
 Also add a ``NUMPY_WARN_IF_NO_MEM_POLICY`` override to warn on dangerous use
-of transfering ownership by setting ``NPY_ARRAY_OWNDATA``.
+of transferring ownership by setting ``NPY_ARRAY_OWNDATA``.
 
 .. _`NEP 49`: https://numpy.org/neps/nep-0049.html
 

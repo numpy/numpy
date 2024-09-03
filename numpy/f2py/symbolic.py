@@ -2,6 +2,13 @@
 
 References:
 - J3/21-007: Draft Fortran 202x. https://j3-fortran.org/doc/year/21/21-007.pdf
+
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
+Permission to use, modify, and distribute this software is given under the
+terms of the NumPy License.
+
+NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 
 # To analyze Fortran expressions to solve dimensions specifications,
@@ -1077,9 +1084,9 @@ def as_factors(obj):
                 if coeff == 1:
                     return Expr(Op.FACTORS, {term: 1})
                 return Expr(Op.FACTORS, {term: 1, Expr.number(coeff): 1})
-        if ((obj.op is Op.APPLY
+        if (obj.op is Op.APPLY
              and obj.data[0] is ArithOp.DIV
-             and not obj.data[2])):
+             and not obj.data[2]):
             return Expr(Op.FACTORS, {obj.data[1][0]: 1, obj.data[1][1]: -1})
         return Expr(Op.FACTORS, {obj: 1})
     raise OpError(f'cannot convert {type(obj)} to terms Expr')
@@ -1418,7 +1425,7 @@ class _FromStringWorker:
             return result
 
         # referencing/dereferencing
-        if r.startswith('*') or r.startswith('&'):
+        if r.startswith(('*', '&')):
             op = {'*': Op.DEREF, '&': Op.REF}[r[0]]
             operand = self.process(restore(r[1:]))
             return Expr(op, operand)

@@ -600,7 +600,7 @@ There is a new ufunc C-API call to set the data for a particular
 function pointer (for a particular set of data-types) to be the list of arrays
 passed in to the ufunc.
 
-Array Interface Extensions
+Array interface extensions
 --------------------------
 
 The array interface is extended to both handle datetime and timedelta

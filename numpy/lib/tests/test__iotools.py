@@ -159,7 +159,7 @@ class TestStringConverter:
 
         # On systems where long defaults to 32-bit, the statuses will be
         # offset by one, so we check for this here.
-        import numpy.core.numeric as nx
+        import numpy._core.numeric as nx
         status_offset = int(nx.dtype(nx.int_).itemsize < nx.dtype(nx.int64).itemsize)
 
         # test int > 2**32

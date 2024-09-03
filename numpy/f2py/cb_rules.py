@@ -1,17 +1,12 @@
-#!/usr/bin/env python3
 """
-
 Build call-back mechanism for f2py2e.
 
-Copyright 2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/07/20 11:27:58 $
-Pearu Peterson
-
 """
 from . import __version__
 from .auxfuncs import (
@@ -127,7 +122,7 @@ f2py_cb_start_clock();
 #setdims#
 #ifdef PYPY_VERSION
 #define CAPI_ARGLIST_SETITEM(idx, value) PyList_SetItem((PyObject *)capi_arglist_list, idx, value)
-    capi_arglist_list = PySequence_List(capi_arglist);
+    capi_arglist_list = PySequence_List((PyObject *)capi_arglist);
     if (capi_arglist_list == NULL) goto capi_fail;
 #else
 #define CAPI_ARGLIST_SETITEM(idx, value) PyTuple_SetItem((PyObject *)capi_arglist, idx, value)

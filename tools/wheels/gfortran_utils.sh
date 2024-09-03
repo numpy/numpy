@@ -123,7 +123,7 @@ if [ "$(uname)" == "Darwin" ]; then
         curl -L -O https://github.com/isuruf/gcc/releases/download/gcc-11.3.0-2/gfortran-darwin-${arch}-${type}.tar.gz
 	case ${arch}-${type} in
 	    arm64-native)
-	        export GFORTRAN_SHA=142290685240f4f86cdf359cb2030d586105d7e4
+	        export GFORTRAN_SHA=0d5c118e5966d0fb9e7ddb49321f63cac1397ce8
 		;;
 	    arm64-cross)
 		export GFORTRAN_SHA=527232845abc5af21f21ceacc46fb19c190fe804
@@ -148,10 +148,10 @@ if [ "$(uname)" == "Darwin" ]; then
 	if [[ "${type}" == "native" ]]; then
 	    # Link these into /usr/local so that there's no need to add rpath or -L
 	    for f in libgfortran.dylib libgfortran.5.dylib libgcc_s.1.dylib libgcc_s.1.1.dylib libquadmath.dylib libquadmath.0.dylib; do
-                ln -sf /opt/gfortran-darwin-${arch}-${type}/lib/$f /usr/local/lib/$f
+                sudo ln -sf /opt/gfortran-darwin-${arch}-${type}/lib/$f /usr/local/lib/$f
             done
 	    # Add it to PATH
-	    ln -sf /opt/gfortran-darwin-${arch}-${type}/bin/gfortran /usr/local/bin/gfortran
+	    sudo ln -sf /opt/gfortran-darwin-${arch}-${type}/bin/gfortran /usr/local/bin/gfortran
 	fi
     }
 
@@ -169,9 +169,6 @@ if [ "$(uname)" == "Darwin" ]; then
     function install_gfortran {
         download_and_unpack_gfortran $(uname -m) native
         check_gfortran
-        if [[ "${PLAT:-}" == "universal2" || "${PLAT:-}" == "arm64" ]]; then
-            install_arm64_cross_gfortran
-        fi
     }
 
     function get_gf_lib {

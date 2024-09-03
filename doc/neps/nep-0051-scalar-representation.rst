@@ -4,10 +4,10 @@
 NEP 51 — Changing the representation of NumPy scalars
 =====================================================
 :Author: Sebastian Berg
-:Status: Draft
+:Status: Accepted
 :Type: Standards Track
 :Created: 2022-09-13
-
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/U2A4RCJSXMK7GG23MA5QMRG4KQYFMO2S/
 
 Abstract
 ========
@@ -34,7 +34,7 @@ more important for users once :ref:`NEP 50 <NEP50>` is adopted.
 These changes do lead to smaller incompatible and infrastructure changes
 related to array printing.
 
-Motivation and Scope
+Motivation and scope
 ====================
 
 This NEP proposes to change the representation of the following
@@ -79,7 +79,7 @@ Not only do we expect the change to help users better understand and be
 reminded of the differences between NumPy and Python scalars, but we also
 believe that the awareness will greatly help debugging.
 
-Usage and Impact
+Usage and impact
 ================
 
 Most user code should not be impacted by the change, but users will now
@@ -164,7 +164,7 @@ information.
 To allow this, a new semi-public ``np.core.array_print.get_formatter()`` will
 be introduced to expand the current functionality (see Implementation).
 
-Effects on Masked Arrays and Records
+Effects on masked arrays and records
 ------------------------------------
 Some other parts of NumPy will indirectly be changed.  Masked arrays
 ``fill_value`` will be adapted to only include the full scalar information
@@ -220,7 +220,7 @@ This choice is made since ``int64`` is generally the more useful
 information for users, but the type name itself must be precise.
 
 
-Related Work
+Related work
 ============
 
 A PR to only change the representation of booleans was previously
@@ -231,6 +231,15 @@ found `here <https://github.com/numpy/numpy/pull/22449>`_
 
 Implementation
 ==============
+
+.. note::
+    This part has *not* been implemented in the
+    `initial PR <https://github.com/numpy/numpy/pull/22449>`_.
+    A similar change will be required to fix certain cases in printing and
+    allow fully correct printing e.g. of structured scalars which include
+    longdoubles.
+    A similar solution is also expected to be necessary in the future
+    to allow custom DTypes to correctly print.
 
 The new representations can be mostly implemented on the scalar types with
 the largest changes needed in the test suite.
@@ -318,14 +327,14 @@ strings like ``f"{arr:r}"`` are not in any way limited by using ``"r"`` or
 Discussion
 ==========
 
-* An initial discussion on this changed happened in the mailing list:
+* An discussion on this changed happened in the mailing list thread:
   https://mail.python.org/archives/list/numpy-discussion@python.org/thread/7GLGFHTZHJ6KQPOLMVY64OM6IC6KVMYI/
 * There was a previous issue [1]_ and PR [2]_ to change only the
   representation of the NumPy booleans.  The PR was later updated to change
   the representation of all (or at least most) NumPy scalars.
 
 
-References and Footnotes
+References and footnotes
 ========================
 
 .. [1] https://github.com/numpy/numpy/issues/12950

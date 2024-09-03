@@ -16,7 +16,7 @@ The abstract should be a short description of what the NEP will achieve.
 
 Note that the — in the title is an elongated dash, not -.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 This section describes the need for the proposed change. It should describe
@@ -24,7 +24,7 @@ the existing problem, who it affects, what it is trying to solve, and why.
 This section should explicitly address the scope of and key requirements for
 the proposed change.
 
-Usage and Impact
+Usage and impact
 ----------------
 
 This section describes how users of NumPy will use features described in this
@@ -53,7 +53,7 @@ It should include examples of how the new functionality would be used,
 intended use-cases and pseudo-code illustrating its use.
 
 
-Related Work
+Related work
 ------------
 
 This section should list relevant and/or similar technologies, possibly in other
@@ -90,7 +90,7 @@ regarding the NEP:
 - This includes links to mailing list threads or relevant GitHub issues.
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] Each NEP must either be explicitly labeled as placed in the public domain (see

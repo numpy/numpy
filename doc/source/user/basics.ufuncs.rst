@@ -80,9 +80,8 @@ an integer (or Boolean) data-type and smaller than the size of the
    array([ 0., 28., 80.])
 
 Finally, the *out* keyword allows you to
-provide an output array (for single-output ufuncs, which are currently the only
-ones supported; for future extension, however, a tuple with a single argument
-can be passed in). If *out* is given, the *dtype* argument is ignored.
+provide an output array (or a tuple of output arrays for multi-output ufuncs).
+If *out* is given, the *dtype* argument is only used for the internal computations.
 Considering ``x`` from the previous example::
 
    >>> y = np.zeros(3, dtype=int)
@@ -112,28 +111,19 @@ control will be passed completely to that function, i.e., the ufunc is
 :ref:`overridden <ufuncs.overrides>`.
 
 If none of the inputs overrides the ufunc, then
-all output arrays will be passed to the
-:obj:`~.class.__array_prepare__` and
-:obj:`~.class.__array_wrap__` methods of the input (besides
-:class:`ndarrays <.ndarray>`, and scalars) that defines it **and** has
-the highest :obj:`~.class.__array_priority__`
+all output arrays will be passed to the :obj:`~.class.__array_wrap__`
+method of the input (besides :class:`ndarrays <.ndarray>`, and scalars)
+that defines it **and** has the highest :obj:`~.class.__array_priority__`
 of any other input to the universal function. The default
 :obj:`~.class.__array_priority__` of the
 ndarray is 0.0, and the default :obj:`~.class.__array_priority__` of a subtype
 is 0.0. Matrices have :obj:`~.class.__array_priority__` equal to 10.0.
 
-All ufuncs can also take output arguments. If necessary, output will
-be cast to the data-type(s) of the provided output array(s). If a class
-with an :obj:`~.class.__array__` method is used for the output,
-results will be written to the object returned by :obj:`~.class.__array__`.
-Then, if the class also has an :obj:`~.class.__array_prepare__` method, it is
-called so metadata may be determined based on the context of the ufunc (the
-context consisting of the ufunc itself, the arguments passed to the ufunc, and
-the ufunc domain.) The array object returned by
-:obj:`~.class.__array_prepare__` is passed to the ufunc for computation.
-Finally, if the class also has an :obj:`~.class.__array_wrap__` method, the
-returned :class:`.ndarray` result will be passed to that method just before
-passing control back to the caller.
+All ufuncs can also take output arguments which must be arrays or subclasses.
+If necessary, the result will be cast to the data-type(s) of the provided
+output array(s).
+If the output has an :obj:`~.class.__array_wrap__` method it is called instead
+of the one found on the inputs.
 
 .. _ufuncs.broadcasting:
 
@@ -226,33 +216,35 @@ a different table.
 ...         print()
 ...
 >>> print_table(np.typecodes['All'])
-X ? b h i l q p B H I L Q P e f d g F D G S U V O M m
-? Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
-b - Y Y Y Y Y Y - - - - - - Y Y Y Y Y Y Y Y Y Y Y - Y
-h - - Y Y Y Y Y - - - - - - - Y Y Y Y Y Y Y Y Y Y - Y
-i - - - Y Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-l - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-q - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-p - - - - Y Y Y - - - - - - - - Y Y - Y Y Y Y Y Y - Y
-B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
-H - - - Y Y Y Y - Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
-I - - - - Y Y Y - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
-L - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-Q - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-P - - - - - - - - - - Y Y Y - - Y Y - Y Y Y Y Y Y - -
-e - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
-f - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
-d - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -
-g - - - - - - - - - - - - - - - - Y - - Y Y Y Y Y - -
-F - - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y - -
-D - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y - -
-G - - - - - - - - - - - - - - - - - - - Y Y Y Y Y - -
-S - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
-U - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
-V - - - - - - - - - - - - - - - - - - - - - - Y Y - -
-O - - - - - - - - - - - - - - - - - - - - - - - Y - -
-M - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
-m - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
+X ? b h i l q n p B H I L Q N P e f d g F D G S U V O M m
+? Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
+b - Y Y Y Y Y Y Y - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - Y
+h - - Y Y Y Y Y Y - - - - - - - - Y Y Y Y Y Y Y Y Y Y - Y
+i - - - Y Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+l - - - - Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+q - - - - Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+n - - - - Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+p - - - - Y Y Y Y - - - - - - - - - Y Y - Y Y Y Y Y Y - Y
+B - - Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y Y - Y
+H - - - Y Y Y Y Y - Y Y Y Y Y Y - Y Y Y Y Y Y Y Y Y Y - Y
+I - - - - Y Y Y Y - - Y Y Y Y Y - - Y Y - Y Y Y Y Y Y - Y
+L - - - - - - - - - - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - -
+Q - - - - - - - - - - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - -
+N - - - - - - - - - - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - -
+P - - - - - - - - - - - Y Y Y Y - - Y Y - Y Y Y Y Y Y - -
+e - - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y Y - -
+f - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y Y Y Y - -
+d - - - - - - - - - - - - - - - - - Y Y - Y Y Y Y Y Y - -
+g - - - - - - - - - - - - - - - - - - Y - - Y Y Y Y Y - -
+F - - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y Y - -
+D - - - - - - - - - - - - - - - - - - - - Y Y Y Y Y Y - -
+G - - - - - - - - - - - - - - - - - - - - - Y Y Y Y Y - -
+S - - - - - - - - - - - - - - - - - - - - - - Y Y Y Y - -
+U - - - - - - - - - - - - - - - - - - - - - - - Y Y Y - -
+V - - - - - - - - - - - - - - - - - - - - - - - - Y Y - -
+O - - - - - - - - - - - - - - - - - - - - - - - - - Y - -
+M - - - - - - - - - - - - - - - - - - - - - - - - Y Y Y -
+m - - - - - - - - - - - - - - - - - - - - - - - - Y Y - Y
 
 You should note that, while included in the table for completeness,
 the 'S', 'U', and 'V' types cannot be operated on by ufuncs. Also,

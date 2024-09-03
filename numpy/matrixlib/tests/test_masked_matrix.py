@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 from numpy.testing import assert_warns
 from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
@@ -6,7 +8,6 @@ from numpy.ma.core import (masked_array, masked_values, masked, allequal,
                            MaskType, getmask, MaskedArray, nomask,
                            log, add, hypot, divide)
 from numpy.ma.extras import mr_
-from numpy.compat import pickle
 
 
 class MMatrix(MaskedArray, np.matrix,):
@@ -124,7 +125,7 @@ class TestMaskedMatrix:
         X = np.matrix(x)
         m = np.array([[True, False, False],
                       [False, False, False],
-                      [True, True, False]], dtype=np.bool_)
+                      [True, True, False]], dtype=np.bool)
         mX = masked_array(X, mask=m)
         mXbig = (mX > 0.5)
         mXsmall = (mX < 0.5)

@@ -18,7 +18,7 @@ void set_coef(unsigned long *pf, unsigned int deg, unsigned long v);
  * 2**128 step polynomial produced using the file mt19937-generate-jump-poly.c
  * (randomgen) which is a modified version of minipoly_mt19937.c as distributed
  * in
- * http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/JUMP/jump_ahead_1.02.tar.gz
+ * http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/JUMP/jump_ahead_1.02.tar.gz
  *
  * These files are not part of NumPy.
  */

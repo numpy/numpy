@@ -37,14 +37,17 @@ def empty(shape, dtype=None, order='C'):
 
     See Also
     --------
-    empty_like, zeros
+    numpy.empty : Equivalent array function.
+    matlib.zeros : Return a matrix of zeros.
+    matlib.ones : Return a matrix of ones.
 
     Notes
     -----
-    `empty`, unlike `zeros`, does not set the matrix values to zero,
-    and may therefore be marginally faster.  On the other hand, it requires
-    the user to manually set all the values in the array, and should be
-    used with caution.
+    Unlike other matrix creation functions (e.g. `matlib.zeros`,
+    `matlib.ones`), `matlib.empty` does not initialize the values of the
+    matrix, and may therefore be marginally faster. However, the values
+    stored in the newly allocated matrix are arbitrary. For reproducible
+    behavior, be sure to set each element of the matrix before reading.
 
     Examples
     --------

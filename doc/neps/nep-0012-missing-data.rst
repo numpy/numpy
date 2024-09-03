@@ -11,7 +11,7 @@ NEP 12 — Missing data functionality in NumPy
 :Status: Deferred
 
 *****************
-Table of Contents
+Table of contents
 *****************
 
 .. contents::
@@ -53,7 +53,7 @@ solution, and with the requirement that a bit pattern to sacrifice be
 chosen in the case of the bitpattern solution.
 
 **************************
-Definition of Missing Data
+Definition of missing data
 **************************
 
 In order to be able to develop an intuition about what computation
@@ -77,7 +77,7 @@ proposed elsewhere for customizing subclass ufunc behavior with a
 _numpy_ufunc_ member function would allow a subclass with a different
 default to be created.
 
-Unknown Yet Existing Data (NA)
+Unknown yet existing data (NA)
 ==============================
 
 This is the approach taken in the R project, defining a missing element
@@ -98,7 +98,7 @@ such things to the theoretical limit is probably not worth it,
 and in many cases either raising an exception or returning all
 missing values may be preferred to doing precise calculations.
 
-Data That Doesn't Exist Or Is Being Skipped (IGNORE)
+Data that doesn't exist or is being skipped (IGNORE)
 ====================================================
 
 Another useful interpretation is that the missing elements should be
@@ -119,7 +119,7 @@ the data as if the NA values are not part of the data set. This proposal
 defines a standard parameter "skipna=True" for this same purpose.
 
 ********************************************
-Implementation Techniques For Missing Values
+Implementation techniques for missing values
 ********************************************
 
 In addition to there being two different interpretations of missing values,
@@ -136,7 +136,7 @@ not have to worry about whether the arrays it is using have taken one
 or the other approach, the missing value semantics will be identical
 for the two implementations.
 
-Bit Patterns Signalling Missing Values (bitpattern)
+Bit patterns signalling missing values (bitpattern)
 ===================================================
 
 One or more patterns of bits, for example a NaN with
@@ -149,7 +149,7 @@ holding the value, so that value is gone.
 Additionally, for some types such as integers, a good and proper value
 must be sacrificed to enable this functionality.
 
-Boolean Masks Signalling Missing Values (mask)
+Boolean masks signalling missing values (mask)
 ==============================================
 
 A mask is a parallel array of booleans, either one byte per element or
@@ -168,7 +168,7 @@ data type, it may take on any binary pattern without affecting the
 NA behavior.
 
 *****************
-Glossary of Terms
+Glossary of terms
 *****************
 
 Because the above discussions of the different concepts and their
@@ -215,10 +215,10 @@ C API
     is usually prioritizes flexibility and high performance.
 
 ********************************
-Missing Values as Seen in Python
+Missing values as seen in Python
 ********************************
 
-Working With Missing Values
+Working with missing values
 ===========================
 
 NumPy will gain a global singleton called numpy.NA, similar to None,
@@ -336,7 +336,7 @@ A manual loop through a masked array like::
 works even with masked values, because 'a[i]' returns an NA object
 with a data type associated, that can be treated properly by the ufuncs.
 
-Accessing a Boolean Mask
+Accessing a boolean mask
 ========================
 
 The mask used to implement missing data in the masked approach is not
@@ -353,7 +353,7 @@ instead of masked and unmasked values. The functions are
 'np.isna' and 'np.isavail', which test for NA or available values
 respectively.
 
-Creating NA-Masked Arrays
+Creating NA-masked arrays
 =========================
 
 The usual way to create an array with an NA mask is to pass the keyword
@@ -374,7 +374,7 @@ into the mask of another array. If this is set to True in a masked
 array, the array will create a copy of the mask so that further modifications
 to the mask will not affect the original mask from which the view was taken.
 
-NA-Masks When Constructing From Lists
+Na-masks when constructing from lists
 =====================================
 
 The initial design of NA-mask construction was to make all construction
@@ -390,7 +390,7 @@ NA-masks, and extending the NA-mask support more fully throughout NumPy seems
 much more reasonable than starting another system and ending up with two
 incomplete systems.
 
-Mask Implementation Details
+Mask implementation details
 ===========================
 
 The memory ordering of the mask will always match the ordering of
@@ -410,7 +410,7 @@ mask to that view. A data set can be viewed with multiple different
 masks simultaneously, by creating multiple views, and giving each view
 a mask.
 
-New ndarray Methods
+New ndarray methods
 ===================
 
 New functions added to the numpy namespace are::
@@ -455,7 +455,7 @@ New functions added to the ndarray are::
         >>> a.flags.maskna = True
         >>> a.flags.ownmaskna = True
 
-Element-wise UFuncs With Missing Values
+Element-wise ufuncs with missing values
 =======================================
 
 As part of the implementation, ufuncs and other operations will
@@ -491,7 +491,7 @@ like ufuncs, but deviate from their behavior. The functions logical_and
 and logical_or can be moved into standalone function objects which are
 backwards compatible with the current ufuncs.
 
-Reduction UFuncs With Missing Values
+Reduction ufuncs with missing values
 ====================================
 
 Reduction operations like 'sum', 'prod', 'min', and 'max' will operate
@@ -555,7 +555,7 @@ Since 'np.any' is the reduction for 'np.logical_or', and 'np.all'
 is the reduction for 'np.logical_and', it makes sense for them to
 have a 'skipna=' parameter like the other similar reduction functions.
 
-Parameterized NA Data Types
+Parameterized NA data types
 ===========================
 
 A masked array isn't the only way to deal with missing data, and
@@ -645,7 +645,7 @@ cannot hold values, but will conform to the input types in functions like
 maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
 of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
 
-Future Expansion to multi-NA Payloads
+Future expansion to multi-NA payloads
 =====================================
 
 The packages SAS and Stata both support multiple different "NA" values.
@@ -782,7 +782,7 @@ to be consistent with the result of np.sum([])::
     >>> np.sum([])
     0.0
 
-Boolean Indexing
+Boolean indexing
 ================
 
 Indexing using a boolean array containing NAs does not have a consistent
@@ -840,7 +840,7 @@ to do this will be to include it with supporting np.nditer, which
 is most likely going to have an enhancement to make writing missing
 value algorithms easier.
 
-Hard Masks
+Hard masks
 ==========
 
 The numpy.ma implementation has a "hardmask" feature,
@@ -854,7 +854,7 @@ arbitrary choice of C-ordering as it currently does. While this
 improves the abstraction of the array significantly, it is not
 a compatible change.
 
-Shared Masks
+Shared masks
 ============
 
 One feature of numpy.ma is called 'shared masks'.
@@ -876,7 +876,7 @@ both the mask and the data are taken simultaneously. The result
 is two views which share the same mask memory and the same data memory,
 which still preserves the missing value abstraction.
 
-Interaction With Pre-existing C API Usage
+Interaction with pre-existing C API usage
 =========================================
 
 Making sure existing code using the C API, whether it's written in C, C++,
@@ -887,7 +887,7 @@ a few different access patterns people use to get ahold of the numpy array data,
 here we examine a few of them to see what numpy can do. These examples are
 found from doing google searches of numpy C API array access.
 
-NumPy Documentation - How to extend NumPy
+NumPy documentation - how to extend NumPy
 -----------------------------------------
 
 https://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html#dealing-with-array-objects
@@ -907,7 +907,7 @@ it is an ndarray and checks some flags, will silently produce incorrect results.
 of code does not provide any opportunity for numpy to say "hey, this array is special",
 so also is not compatible with future ideas of lazy evaluation, derived dtypes, etc.
 
-Tutorial From Cython Website
+Tutorial from Cython website
 ----------------------------
 
 http://docs.cython.org/src/tutorial/numpy.html
@@ -954,7 +954,7 @@ gives numpy an opportunity to raise an exception when NA-masked arrays are used,
 so the later code will raise exceptions as desired.
 
 ************************
-C Implementation Details
+C implementation details
 ************************
 
 .. highlight:: c
@@ -1029,7 +1029,7 @@ int PyArray_AllocateMaskNA(PyArrayObject* arr, npy_bool ownmaskna, npy_bool mult
     Allocates an NA mask for the array, ensuring ownership if requested
     and using NPY_MASK instead of NPY_BOOL for the dtype if multina is True.
 
-Mask Binary Format
+Mask binary format
 ==================
 
 The format of the mask itself is designed to indicate whether an
@@ -1062,7 +1062,7 @@ The fact that this makes masks completely different from booleans, instead
 of a strict superset, is the primary reason this choice was discarded.
 
 ********************************************
-C Iterator API Changes: Iteration With Masks
+C iterator API changes: iteration with masks
 ********************************************
 
 For iteration and computation with masks, both in the context of missing
@@ -1077,7 +1077,7 @@ First we describe iteration designed for use of masks outside the
 context of missing values, then the features which include missing
 value support.
 
-Iterator Mask Features
+Iterator mask features
 ======================
 
 We add several new per-operand flags:
@@ -1116,7 +1116,7 @@ NPY_ITER_VIRTUAL
     allows for creating a "virtual mask", specifying which values
     are unmasked without ever creating a full mask array.
 
-Iterator NA-array Features
+Iterator NA-array features
 ==========================
 
 We add several new per-operand flags:
@@ -1137,10 +1137,10 @@ NPY_ITER_IGNORE_MASKNA
     dtype, showing a dtype that does not support NA.
 
 ********************
-Rejected Alternative
+Rejected alternative
 ********************
 
-Parameterized Data Type Which Adds Additional Memory for the NA Flag
+Parameterized data type which adds additional memory for the NA flag
 ====================================================================
 
 Another alternative to having a separate mask added to the array is

@@ -40,17 +40,15 @@ wrapper_function(args)
 
   return buildvalue
 
-Copyright 1999,2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/08/30 08:58:42 $
-Pearu Peterson
-
 """
-import os, sys
+import os
+import sys
 import time
 import copy
 from pathlib import Path
@@ -238,6 +236,11 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 #initf90modhooks#
 #initcommonhooks#
 #interface_usercode#
+
+#if Py_GIL_DISABLED
+    // signal whether this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m , #gil_used#);
+#endif
 
 #ifdef F2PY_REPORT_ATEXIT
     if (! PyErr_Occurred())

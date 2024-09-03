@@ -1,6 +1,6 @@
 .. _testing-guidelines:
 
-Testing Guidelines
+Testing guidelines
 ==================
 
 .. include:: ../../TESTS.rst

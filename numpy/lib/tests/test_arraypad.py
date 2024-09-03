@@ -5,14 +5,14 @@ import pytest
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose, assert_equal
-from numpy.lib.arraypad import _as_pairs
+from numpy.lib._arraypad_impl import _as_pairs
 
 
 _numeric_dtypes = (
-    np.sctypes["uint"]
-    + np.sctypes["int"]
-    + np.sctypes["float"]
-    + np.sctypes["complex"]
+    np._core.sctypes["uint"]
+    + np._core.sctypes["int"]
+    + np._core.sctypes["float"]
+    + np._core.sctypes["complex"]
 )
 _all_modes = {
     'constant': {'constant_values': 0},
@@ -628,7 +628,7 @@ class TestConstant:
 
     def test_check_constant_pad_2d(self):
         arr = np.arange(4).reshape(2, 2)
-        test = np.lib.pad(arr, ((1, 2), (1, 3)), mode='constant',
+        test = np.pad(arr, ((1, 2), (1, 3)), mode='constant',
                           constant_values=((1, 2), (3, 4)))
         expected = np.array(
             [[3, 1, 1, 4, 4, 4],
@@ -866,6 +866,42 @@ class TestReflect:
     def test_check_03(self):
         a = np.pad([1, 2, 3], 4, 'reflect')
         b = np.array([1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3])
+        assert_array_equal(a, b)
+
+    def test_check_04(self):
+        a = np.pad([1, 2, 3], [1, 10], 'reflect')
+        b = np.array([2, 1, 2, 3, 2, 1, 2, 3, 2, 1, 2, 3, 2, 1])
+        assert_array_equal(a, b)
+
+    def test_check_05(self):
+        a = np.pad([1, 2, 3, 4], [45, 10], 'reflect')
+        b = np.array(
+            [4, 3, 2, 1, 2, 3, 4, 3, 2, 1,
+             2, 3, 4, 3, 2, 1, 2, 3, 4, 3,
+             2, 1, 2, 3, 4, 3, 2, 1, 2, 3,
+             4, 3, 2, 1, 2, 3, 4, 3, 2, 1,
+             2, 3, 4, 3, 2, 1, 2, 3, 4, 3,
+             2, 1, 2, 3, 4, 3, 2, 1, 2])
+        assert_array_equal(a, b)
+
+    def test_check_06(self):
+        a = np.pad([1, 2, 3, 4], [15, 2], 'symmetric')
+        b = np.array(
+            [2, 3, 4, 4, 3, 2, 1, 1, 2, 3,
+             4, 4, 3, 2, 1, 1, 2, 3, 4, 4,
+             3]
+        )
+        assert_array_equal(a, b)
+
+    def test_check_07(self):
+        a = np.pad([1, 2, 3, 4, 5, 6], [45, 3], 'symmetric')
+        b = np.array(
+            [4, 5, 6, 6, 5, 4, 3, 2, 1, 1,
+             2, 3, 4, 5, 6, 6, 5, 4, 3, 2,
+             1, 1, 2, 3, 4, 5, 6, 6, 5, 4,
+             3, 2, 1, 1, 2, 3, 4, 5, 6, 6,
+             5, 4, 3, 2, 1, 1, 2, 3, 4, 5,
+             6, 6, 5, 4])
         assert_array_equal(a, b)
 
 
@@ -1139,7 +1175,7 @@ class TestWrap:
         a = np.arange(5)
         b = np.pad(a, (0, 12), mode="wrap")
         assert_array_equal(np.r_[a, a, a, a][:-3], b)
-    
+
     def test_repeated_wrapping_multiple_origin(self):
         """
         Assert that 'wrap' pads only with multiples of the original area if

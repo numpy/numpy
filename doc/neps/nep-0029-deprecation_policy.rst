@@ -11,6 +11,9 @@ NEP 29 — Recommend Python and NumPy version support as a community policy stan
 :Created: 2019-07-13
 :Resolution: https://mail.python.org/pipermail/numpy-discussion/2019-October/080128.html
 
+.. note::
+  This NEP is superseded by the scientific python ecosystem coordination guideline
+  `SPEC 0 — Minimum Supported Versions <https://scientific-python.org/specs/spec-0000/>`__.
 
 Abstract
 --------
@@ -266,7 +269,7 @@ Discussion
 ----------
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 Code to generate support and drop schedule tables ::

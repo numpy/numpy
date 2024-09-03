@@ -4,19 +4,24 @@
 Using via ``meson``
 ===================
 
+.. note::
+
+   Much of this document is now obsoleted, one can run ``f2py`` with
+   ``--build-dir`` to get a skeleton ``meson`` project with basic dependencies
+   setup.
+
+.. versionchanged:: 1.26.x
+
+   The default build system for ``f2py`` is now ``meson``, see
+   :ref:`distutils-status-migration` for some more details..
+
 The key advantage gained by leveraging ``meson`` over the techniques described
 in :ref:`f2py-distutils` is that this feeds into existing systems and larger
 projects with ease. ``meson`` has a rather pythonic syntax which makes it more
 comfortable and amenable to extension for ``python`` users.
 
-.. note::
-
-    Meson needs to be at-least ``0.46.0`` in order to resolve the ``python`` include directories.
-
-
-Fibonacci Walkthrough (F77)
+Fibonacci walkthrough (F77)
 ===========================
-
 
 We will need the generated ``C`` wrapper before we can use a general purpose
 build system like ``meson``. We will acquire this by:
@@ -109,9 +114,6 @@ Salient points
 ===============
 
 It is worth keeping in mind the following:
-
-* ``meson`` will default to passing ``-fimplicit-none`` under ``gfortran`` by
-  default, which differs from that of the standard ``np.distutils`` behaviour
 
 * It is not possible to use SCREAMCASE in this context, so either the contents
   of the ``.f`` file or the generated wrapper ``.c`` needs to be lowered to

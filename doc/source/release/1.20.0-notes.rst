@@ -822,9 +822,9 @@ Callback functions in f2py are now thread safe.
 
 (`gh-16519 <https://github.com/numpy/numpy/pull/16519>`__)
 
-`numpy.core.records.fromfile` now supports file-like objects
-------------------------------------------------------------
-`numpy.rec.fromfile` can now use file-like objects, for instance
+``numpy.core.records.fromfile`` now supports file-like objects
+--------------------------------------------------------------
+``numpy.core.records.fromfile`` can now use file-like objects, for instance
 :py:class:`io.BytesIO`
 
 (`gh-16675 <https://github.com/numpy/numpy/pull/16675>`__)
@@ -839,7 +839,7 @@ Use f90 compiler specified by the command line args
 ---------------------------------------------------
 
 The compiler command selection for Fortran Portland Group Compiler is changed
-in `numpy.distutils.fcompiler`.  This only affects the linking command.  This
+in ``numpy.distutils.fcompiler``.  This only affects the linking command.  This
 forces the use of the executable provided by the command line option (if
 provided) instead of the pgfortran executable.  If no executable is provided to
 the command line option it defaults to the pgf90 executable, which is an alias

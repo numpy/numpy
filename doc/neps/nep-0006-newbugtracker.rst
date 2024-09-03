@@ -15,7 +15,7 @@ current trac limitations, and what can be done about it.
 Scenario
 ========
 
-new release
+New release
 -----------
 
 The workflow for a release is roughly as follows:
@@ -47,7 +47,7 @@ better than the actually deployed version on scipy website. Finding issues with
 patches, old patches, etc... and making reports has to be much more streamlined
 that it is now.
 
-subcomponent maintainer
+Subcomponent maintainer
 -----------------------
 
 Say you are the maintainer of scipy.foo, then you are mostly interested in

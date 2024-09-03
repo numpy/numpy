@@ -6,7 +6,7 @@ from numpy.testing import (
 
 import pytest
 
-# `poly1d` has some support for `bool_` and `timedelta64`,
+# `poly1d` has some support for `np.bool` and `np.timedelta64`,
 # but it is limited and they are therefore excluded here
 TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O"
 
@@ -265,8 +265,8 @@ class TestPolynomial:
     def test_poly_eq(self):
         p = np.poly1d([1, 2, 3])
         p2 = np.poly1d([1, 2, 4])
-        assert_equal(p == None, False)
-        assert_equal(p != None, True)
+        assert_equal(p == None, False)  # noqa: E711
+        assert_equal(p != None, True)  # noqa: E711
         assert_equal(p == p, True)
         assert_equal(p == p2, False)
         assert_equal(p != p2, True)

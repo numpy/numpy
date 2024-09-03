@@ -1,4 +1,4 @@
-BUFFERED General Ufunc explanation
+Buffered general ufunc explanation
 ==================================
 
 .. note::

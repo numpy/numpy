@@ -15,16 +15,16 @@ information can be found in the docstring for the module of interest.
 This package provides *convenience classes* for each of six different kinds
 of polynomials:
 
-         ========================    ================
-         **Name**                    **Provides**
-         ========================    ================
-         `~polynomial.Polynomial`    Power series
-         `~chebyshev.Chebyshev`      Chebyshev series
-         `~legendre.Legendre`        Legendre series
-         `~laguerre.Laguerre`        Laguerre series
-         `~hermite.Hermite`          Hermite series
-         `~hermite_e.HermiteE`       HermiteE series
-         ========================    ================
+========================    ================
+**Name**                    **Provides**
+========================    ================
+`~polynomial.Polynomial`    Power series
+`~chebyshev.Chebyshev`      Chebyshev series
+`~legendre.Legendre`        Legendre series
+`~laguerre.Laguerre`        Laguerre series
+`~hermite.Hermite`          Hermite series
+`~hermite_e.HermiteE`       HermiteE series
+========================    ================
 
 These *convenience classes* provide a consistent interface for creating,
 manipulating, and fitting data with polynomials of different bases.
@@ -41,6 +41,8 @@ by arrays ``xdata`` and ``ydata``, the
 `~chebyshev.Chebyshev.fit` class method::
 
     >>> from numpy.polynomial import Chebyshev
+    >>> xdata = [1, 2, 3, 4]
+    >>> ydata = [1, 4, 9, 16]
     >>> c = Chebyshev.fit(xdata, ydata, deg=1)
 
 is preferred over the `chebyshev.chebfit` function from the
@@ -107,10 +109,10 @@ Misc
 - ``p.linspace()`` -- Return ``x, p(x)`` at equally-spaced points in ``domain``
 - ``p.mapparms()`` -- Return the parameters for the linear mapping between
   ``domain`` and ``window``.
-- ``p.roots()``    -- Return the roots of `p`.
+- ``p.roots()``    -- Return the roots of ``p``.
 - ``p.trim()``     -- Remove trailing coefficients.
-- ``p.cutdeg(degree)`` -- Truncate p to given degree
-- ``p.truncate(size)`` -- Truncate p to given size
+- ``p.cutdeg(degree)`` -- Truncate ``p`` to given degree
+- ``p.truncate(size)`` -- Truncate ``p`` to given size
 
 """
 from .polynomial import Polynomial

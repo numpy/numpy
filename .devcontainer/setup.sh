@@ -2,7 +2,7 @@
 
 set -e
 
-curl micro.mamba.pm/install.sh | bash
+"${SHELL}" <(curl -Ls micro.mamba.pm/install.sh) < /dev/null
 
 conda init --all
 micromamba shell init -s bash
@@ -11,3 +11,7 @@ micromamba env create -f environment.yml --yes
 # user (same applies to `conda activate`)
 
 git submodule update --init
+
+# Enables users to activate environment without having to specify the full path
+echo "envs_dirs:
+  - /home/codespace/micromamba/envs" > /opt/conda/.condarc

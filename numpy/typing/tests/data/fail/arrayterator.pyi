@@ -1,7 +1,7 @@
-from typing import Any
 import numpy as np
+import numpy.typing as npt
 
-AR_i8: np.ndarray[Any, np.dtype[np.int64]]
+AR_i8: npt.NDArray[np.int64]
 ar_iter = np.lib.Arrayterator(AR_i8)
 
 np.lib.Arrayterator(np.int64())  # E: incompatible type

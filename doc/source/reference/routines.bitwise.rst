@@ -1,5 +1,5 @@
-Binary operations
-=================
+Bit-wise operations
+===================
 
 .. currentmodule:: numpy
 
@@ -12,8 +12,11 @@ Elementwise bit operations
    bitwise_or
    bitwise_xor
    invert
+   bitwise_invert
    left_shift
+   bitwise_left_shift
    right_shift
+   bitwise_right_shift
 
 Bit packing
 -----------

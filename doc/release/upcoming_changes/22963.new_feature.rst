@@ -1,7 +1,0 @@
-String dtype instances can be created from the string abstract dtype classes
-----------------------------------------------------------------------------
-It is now possible to create a string dtype instance with a size without
-using the string name of the dtype. For example, ``type(np.dtype('U'))(8)``
-will create a dtype that is equivalent to ``np.dtype('U8')``. This feature
-is most useful when writing generic code dealing with string dtype
-classes.

@@ -1,0 +1,18 @@
+# doxygen required, use apt-get or dnf
+sphinx==7.2.6
+numpydoc==1.4
+pydata-sphinx-theme>=0.15.2
+sphinx-copybutton
+sphinx-design
+scipy
+matplotlib
+pandas
+breathe>4.33.0
+ipython!=8.1.0
+# Needed for ipython>=8.17
+# https://github.com/ipython/ipython/issues/14237
+pickleshare
+
+# needed to build release notes
+towncrier
+toml

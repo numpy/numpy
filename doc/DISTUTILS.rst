@@ -1,6 +1,6 @@
 .. -*- rest -*-
 
-NumPy Distutils - Users Guide
+NumPy distutils - users guide
 =============================
 
 .. contents::
@@ -14,7 +14,7 @@ Currently SciPy project consists of two packages:
 
   + numpy.distutils - extension to Python distutils
   + numpy.f2py - a tool to bind Fortran/C codes to Python
-  + numpy.core - future replacement of Numeric and numarray packages
+  + numpy._core - future replacement of Numeric and numarray packages
   + numpy.lib - extra utility functions
   + numpy.testing - numpy-style tools for unit testing
   + etc
@@ -37,9 +37,9 @@ SciPy packages should be kept minimal or zero.
 A SciPy package contains, in addition to its sources, the following
 files and directories:
 
-  + ``setup.py`` --- building script
-  + ``__init__.py`` --- package initializer
-  + ``tests/`` --- directory of unittests
++ ``setup.py`` --- building script
++ ``__init__.py`` --- package initializer
++ ``tests/`` --- directory of unittests
 
 Their contents are described below.
 
@@ -300,7 +300,7 @@ in writing setup scripts:
 
 .. _templating:
 
-Conversion of ``.src`` files using Templates
+Conversion of ``.src`` files using templates
 --------------------------------------------
 
 NumPy distutils supports automatic conversion of source files named
@@ -594,7 +594,7 @@ Specifying config_fc options for libraries in setup.py script
 -------------------------------------------------------------
 
 It is possible to specify config_fc options in setup.py scripts.
-For example, using
+For example, using::
 
   config.add_library('library',
                      sources=[...],

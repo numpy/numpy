@@ -20,7 +20,7 @@ arrays via ``np.array([<ragged_nested_sequence>])`` with no ``dtype`` keyword
 argument will today default to an ``object``-dtype array. Change the behaviour to
 raise a ``ValueError`` instead.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 Users who specify lists-of-lists when creating a `numpy.ndarray` via
@@ -33,7 +33,7 @@ level have the same length) will force users who actually wish to create
 ``object`` arrays to specify that explicitly. Note that ``lists``, ``tuples``,
 and ``nd.ndarrays`` are all sequences [0]_. See for instance `issue 5303`_.
 
-Usage and Impact
+Usage and impact
 ----------------
 
 After this change, array creation with ragged nested sequences must explicitly
@@ -70,7 +70,7 @@ all of these will be rejected:
     >>> arr = np.array([np.arange(10), [10]])
     >>> arr = np.array([[range(3), range(3), range(3)], [range(3), 0, 0]])
 
-Related Work
+Related work
 ------------
 
 `PR 14341`_ tried to raise an error when ragged nested sequences were specified
@@ -127,7 +127,7 @@ Comments to `issue 5303`_ indicate this is unintended behaviour as far back as
 have stuck. The WIP implementation in `PR 14794`_ seems to point to the
 viability of this approach.
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. _`issue 5303`: https://github.com/numpy/numpy/issues/5303

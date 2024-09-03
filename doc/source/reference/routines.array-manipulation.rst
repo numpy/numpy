@@ -9,7 +9,9 @@ Basic operations
    :toctree: generated/
 
     copyto
+    ndim
     shape
+    size
 
 Changing array shape
 ====================
@@ -32,6 +34,8 @@ Transpose-like operations
    swapaxes
    ndarray.T
    transpose
+   permute_dims
+   matrix_transpose (Array API compatible)
 
 Changing number of dimensions
 =============================
@@ -55,7 +59,6 @@ Changing kind of array
    asarray
    asanyarray
    asmatrix
-   asfarray
    asfortranarray
    ascontiguousarray
    asarray_chkfinite
@@ -67,13 +70,13 @@ Joining arrays
    :toctree: generated/
 
    concatenate
+   concat
    stack
    block
    vstack
    hstack
    dstack
    column_stack
-   row_stack
 
 Splitting arrays
 ================
@@ -85,6 +88,7 @@ Splitting arrays
    dsplit
    hsplit
    vsplit
+   unstack
 
 Tiling arrays
 =============
@@ -105,6 +109,7 @@ Adding and removing elements
    resize
    trim_zeros
    unique
+   pad
 
 Rearranging elements
 ====================

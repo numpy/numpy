@@ -1,3 +1,5 @@
+#cython: binding=True
+
 import operator
 
 import numpy as np
@@ -28,16 +30,16 @@ cdef extern from "src/mt19937/mt19937.h":
     enum:
         RK_STATE_LEN
 
-cdef uint64_t mt19937_uint64(void *st) nogil:
+cdef uint64_t mt19937_uint64(void *st) noexcept nogil:
     return mt19937_next64(<mt19937_state *> st)
 
-cdef uint32_t mt19937_uint32(void *st) nogil:
+cdef uint32_t mt19937_uint32(void *st) noexcept nogil:
     return mt19937_next32(<mt19937_state *> st)
 
-cdef double mt19937_double(void *st) nogil:
+cdef double mt19937_double(void *st) noexcept nogil:
     return mt19937_next_double(<mt19937_state *> st)
 
-cdef uint64_t mt19937_raw(void *st) nogil:
+cdef uint64_t mt19937_raw(void *st) noexcept nogil:
     return <uint64_t>mt19937_next32(<mt19937_state *> st)
 
 cdef class MT19937(BitGenerator):
@@ -65,9 +67,9 @@ cdef class MT19937(BitGenerator):
 
     Notes
     -----
-    ``MT19937`` provides a capsule containing function pointers that produce
+    `MT19937` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers [1]_. These are not
-    directly consumable in Python and must be consumed by a ``Generator``
+    directly consumable in Python and must be consumed by a `Generator`
     or similar object that supports low-level access.
 
     The Python stdlib module "random" also contains a Mersenne Twister
@@ -75,7 +77,7 @@ cdef class MT19937(BitGenerator):
 
     **State and Seeding**
 
-    The ``MT19937`` state vector consists of a 624-element array of
+    The `MT19937` state vector consists of a 624-element array of
     32-bit unsigned integers plus a single integer value between 0 and 624
     that indexes the current position within the main array.
 
@@ -109,7 +111,7 @@ cdef class MT19937(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``MT19937`` makes a guarantee that a fixed seed will always produce
+    `MT19937` makes a guarantee that a fixed seed will always produce
     the same random integer stream.
 
     References
@@ -238,7 +240,7 @@ cdef class MT19937(BitGenerator):
         ----------
         .. [1] Matsumoto, M, Generating multiple disjoint streams of
            pseudorandom number sequences.  Accessed on: May 6, 2020.
-           http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/JUMP/
+           http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/JUMP/
         .. [2] Hiroshi Haramoto, Makoto Matsumoto, Takuji Nishimura, François
            Panneton, Pierre L\'Ecuyer, "Efficient Jump Ahead for F2-Linear
            Random Number Generators", INFORMS JOURNAL ON COMPUTING, Vol. 20,

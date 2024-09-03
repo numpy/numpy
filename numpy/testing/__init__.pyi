@@ -46,5 +46,4 @@ from numpy.testing._private.utils import (
 )
 
 __all__: list[str]
-__path__: list[str]
 test: PytestTester

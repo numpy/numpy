@@ -1,7 +1,7 @@
 .. _NEP05:
 
 =======================================
-NEP 5 — Generalized Universal Functions
+NEP 5 — Generalized universal functions
 =======================================
 
 :Status: Final
@@ -86,7 +86,7 @@ Dimension Index
     occurrence of each name in the signature.
 
 
-Details of Signature
+Details of signature
 --------------------
 
 The signature defines "core" dimensionality of input and output
@@ -141,7 +141,7 @@ Here are some examples of signatures:
 |             |                        | and loop/broadcast over the rest. |
 +-------------+------------------------+-----------------------------------+
 
-C-API for implementing Elementary Functions
+C-API for implementing elementary functions
 -------------------------------------------
 
 The current interface remains unchanged, and ``PyUFunc_FromFuncAndData``

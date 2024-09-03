@@ -2,7 +2,7 @@
 """
 Post-processes HTML and Latex files output by Sphinx.
 """
-import io
+
 
 def main():
     import argparse
@@ -15,13 +15,13 @@ def main():
     mode = args.mode
 
     for fn in args.file:
-        with io.open(fn, 'r', encoding="utf-8") as f:
+        with open(fn, encoding="utf-8") as f:
             if mode == 'html':
                 lines = process_html(fn, f.readlines())
             elif mode == 'tex':
                 lines = process_tex(f.readlines())
 
-        with io.open(fn, 'w', encoding="utf-8") as f:
+        with open(fn, 'w', encoding="utf-8") as f:
             f.write("".join(lines))
 
 def process_html(fn, lines):
@@ -34,13 +34,13 @@ def process_tex(lines):
     """
     new_lines = []
     for line in lines:
-        if (line.startswith(r'\section{numpy.')
-            or line.startswith(r'\subsection{numpy.')
-            or line.startswith(r'\subsubsection{numpy.')
-            or line.startswith(r'\paragraph{numpy.')
-            or line.startswith(r'\subparagraph{numpy.')
-            ):
-            pass # skip!
+        if line.startswith(("\\section{numpy.",
+                            "\\subsection{numpy.",
+                            "\\subsubsection{numpy.",
+                            "\\paragraph{numpy.",
+                            "\\subparagraph{numpy.",
+                            )):
+            pass
         else:
             new_lines.append(line)
     return new_lines

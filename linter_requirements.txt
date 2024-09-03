@@ -1,2 +1,0 @@
-pycodestyle==2.8.0
-GitPython>=3.1.30

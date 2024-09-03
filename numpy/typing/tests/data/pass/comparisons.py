@@ -16,7 +16,7 @@ u4 = np.uint32()
 dt = np.datetime64(0, "D")
 td = np.timedelta64(0, "D")
 
-b_ = np.bool_()
+b_ = np.bool()
 
 b = bool()
 c = complex()
@@ -25,11 +25,11 @@ i = int()
 
 SEQ = (0, 1, 2, 3, 4)
 
-AR_b: np.ndarray[Any, np.dtype[np.bool_]] = np.array([True])
+AR_b: np.ndarray[Any, np.dtype[np.bool]] = np.array([True])
 AR_u: np.ndarray[Any, np.dtype[np.uint32]] = np.array([1], dtype=np.uint32)
 AR_i: np.ndarray[Any, np.dtype[np.int_]] = np.array([1])
-AR_f: np.ndarray[Any, np.dtype[np.float_]] = np.array([1.0])
-AR_c: np.ndarray[Any, np.dtype[np.complex_]] = np.array([1.0j])
+AR_f: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.0])
+AR_c: np.ndarray[Any, np.dtype[np.complex128]] = np.array([1.0j])
 AR_m: np.ndarray[Any, np.dtype[np.timedelta64]] = np.array([np.timedelta64("1")])
 AR_M: np.ndarray[Any, np.dtype[np.datetime64]] = np.array([np.datetime64("1")])
 AR_O: np.ndarray[Any, np.dtype[np.object_]] = np.array([1], dtype=object)

@@ -6,19 +6,30 @@ F2PY and Windows
 
 .. warning::
 
-	F2PY support for Windows is not at par with Linux support, and 
-	OS specific flags can be seen via ``python -m numpy.f2py``
+   F2PY support for Windows is not always at par with Linux support
+
+.. note::
+   `ScPy's documentation`_ has some information on system-level dependencies
+   which are well tested for Fortran as well.
 
 Broadly speaking, there are two issues working with F2PY on Windows:
 
--  the lack of actively developed FOSS Fortran compilers, and,
+- the lack of actively developed FOSS Fortran compilers, and,
 - the linking issues related to the C runtime library for building Python-C extensions.
 
 The focus of this section is to establish a guideline for developing and
-extending Fortran modules for Python natively, via F2PY on Windows. 
+extending Fortran modules for Python natively, via F2PY on Windows.
+
+Currently supported toolchains are:
+
+- Mingw-w64 C/C++/Fortran compilers
+- Intel compilers
+- Clang-cl + Flang
+- MSVC + Flang
 
 Overview
 ========
+
 From a user perspective, the most UNIX compatible Windows
 development environment is through emulation, either via the Windows Subsystem
 on Linux, or facilitated by Docker. In a similar vein, traditional
@@ -119,7 +130,7 @@ For an understanding of the key issues motivating the need for such a matrix
 excellent resource. An entertaining explanation of an application binary
 interface (ABI) can be found in this post by `JeanHeyd Meneide`_. 
 
-Powershell and MSVC
+PowerShell and MSVC
 ====================
 
 MSVC is installed either via the Visual Studio Bundle or the lighter (preferred)
@@ -169,8 +180,8 @@ It is also possible to check that the environment has been updated correctly
 with ``$ENV:PATH``.
 
 
-Windows Store Python Paths
-==========================
+Microsoft Store Python paths
+============================
 
 The MS Windows version of Python discussed here installs to a non-deterministic
 path using a hash. This needs to be added to the ``PATH`` variable.
@@ -206,3 +217,4 @@ path using a hash. This needs to be added to the ``PATH`` variable.
 .. _are outdated: https://github.com/conda-forge/conda-forge.github.io/issues/1044
 .. _now deprecated: https://github.com/numpy/numpy/pull/20875
 .. _LLVM Flang: https://releases.llvm.org/11.0.0/tools/flang/docs/ReleaseNotes.html
+.. _ScPy's documentation: http://scipy.github.io/devdocs/building/index.html#system-level-dependencies

@@ -22,7 +22,7 @@ if is_pure_conda:
 
 # Submodules PyInstaller cannot detect.  `_dtype_ctypes` is only imported
 # from C and `_multiarray_tests` is used in tests (which are not packed).
-hiddenimports = ['numpy.core._dtype_ctypes', 'numpy.core._multiarray_tests']
+hiddenimports = ['numpy._core._dtype_ctypes', 'numpy._core._multiarray_tests']
 
 # Remove testing and building code and packages that are referenced throughout
 # NumPy but are not really dependencies.
@@ -31,7 +31,6 @@ excludedimports = [
     "pytest",
     "f2py",
     "setuptools",
-    "numpy.f2py",
     "distutils",
     "numpy.distutils",
 ]

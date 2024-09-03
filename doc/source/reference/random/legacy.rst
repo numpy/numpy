@@ -2,7 +2,7 @@
 
 .. _legacy:
 
-Legacy Random Generation
+Legacy random generation
 ------------------------
 The `RandomState` provides access to
 legacy generators. This generator is considered frozen and will have
@@ -51,8 +51,8 @@ using the state of the `RandomState`:
     :members: __init__
     :exclude-members: __init__
 
-Seeding and State
------------------
+Seeding and state
+=================
 
 .. autosummary::
    :toctree: generated/
@@ -62,7 +62,7 @@ Seeding and State
    ~RandomState.seed
 
 Simple random data
-------------------
+==================
 .. autosummary::
    :toctree: generated/
 
@@ -75,7 +75,7 @@ Simple random data
    ~RandomState.bytes
 
 Permutations
-------------
+============
 .. autosummary::
    :toctree: generated/
 
@@ -83,7 +83,7 @@ Permutations
    ~RandomState.permutation
 
 Distributions
--------------
+==============
 .. autosummary::
    :toctree: generated/
 
@@ -123,8 +123,10 @@ Distributions
    ~RandomState.weibull
    ~RandomState.zipf
 
+.. _functions-in-numpy-random:
+
 Functions in `numpy.random`
----------------------------
+===========================
 Many of the RandomState methods above are exported as functions in
 `numpy.random` This usage is discouraged, as it is implemented via a global
 `RandomState` instance which is not advised on two counts:
@@ -133,8 +135,7 @@ Many of the RandomState methods above are exported as functions in
 
 - It uses a `RandomState` rather than the more modern `Generator`.
 
-For backward compatible legacy reasons, we cannot change this. See
-:ref:`random-quick-start`.
+For backward compatible legacy reasons, we will not change this.
 
 .. autosummary::
    :toctree: generated/

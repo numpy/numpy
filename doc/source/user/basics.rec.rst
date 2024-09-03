@@ -24,7 +24,7 @@ a 32-bit integer named 'age', and 3. a 32-bit float named 'weight'.
 If you index ``x`` at position 1 you get a structure::
 
  >>> x[1]
- ('Fido', 3, 27.)
+ np.void(('Fido', 3, 27.0), dtype=[('name', '<U10'), ('age', '<i4'), ('weight', '<f4')])
 
 You can access and modify individual fields of a structured array by indexing
 with the field name::
@@ -51,7 +51,7 @@ structured arrays in numpy can lead to poor cache behavior in comparison.
 
 .. _defining-structured-types:
 
-Structured Datatypes
+Structured datatypes
 ====================
 
 A structured datatype can be thought of as a sequence of bytes of a certain
@@ -63,7 +63,7 @@ behaves like an ndarray of a specified shape. The offsets of the fields are
 arbitrary, and fields may even overlap. These offsets are usually determined
 automatically by numpy, but can also be specified.
 
-Structured Datatype Creation
+Structured datatype creation
 ----------------------------
 
 Structured datatypes may be created using the function :func:`numpy.dtype`.
@@ -156,7 +156,7 @@ summary they are:
      in Python versions before Python 3.6. :ref:`Field Titles <titles>` may be
      specified by using a 3-tuple, see below.
 
-Manipulating and Displaying Structured Datatypes
+Manipulating and displaying structured datatypes
 ------------------------------------------------
 
 The list of field names of a structured datatype can be found in the ``names``
@@ -192,7 +192,7 @@ dictionary form.
 
 .. _offsets-and-alignment:
 
-Automatic Byte Offsets and Alignment
+Automatic byte offsets and alignment
 ------------------------------------
 
 Numpy uses one of two methods to automatically determine the field byte offsets
@@ -245,7 +245,7 @@ with or without padding bytes.
 
 .. _titles:
 
-Field Titles
+Field titles
 ------------
 
 In addition to field names, fields may also have an associated :term:`title`,
@@ -295,10 +295,10 @@ specification described in
 the desired underlying dtype, and fields and flags will be copied from
 ``dtype``. This dtype is similar to a 'union' in C.
 
-Indexing and Assignment to Structured arrays
+Indexing and assignment to structured arrays
 ============================================
 
-Assigning data to a Structured Array
+Assigning data to a structured array
 ------------------------------------
 
 There are a number of ways to assign values to a structured array: Using python
@@ -372,7 +372,7 @@ Assignment involving subarrays
 When assigning to fields which are subarrays, the assigned value will first be
 broadcast to the shape of the subarray.
 
-Indexing Structured Arrays
+Indexing structured arrays
 --------------------------
 
 Accessing Individual Fields
@@ -515,7 +515,7 @@ a structured scalar::
  >>> x = np.array([(1, 2., 3.)], dtype='i, f, f')
  >>> scalar = x[0]
  >>> scalar
- (1, 2., 3.)
+ np.void((1, 2.0, 3.0), dtype=[('f0', '<i4'), ('f1', '<f4'), ('f2', '<f4')])
  >>> type(scalar)
  <class 'numpy.void'>
 
@@ -535,7 +535,7 @@ Similarly to tuples, structured scalars can also be indexed with an integer::
 
  >>> scalar = np.array([(1, 2., 3.)], dtype='i, f, f')[0]
  >>> scalar[0]
- 1
+ np.int32(1)
  >>> scalar[1] = 4
 
 Thus, tuples might be thought of as the native Python equivalent to numpy's
@@ -546,7 +546,7 @@ calling `numpy.ndarray.item`::
  >>> scalar.item(), type(scalar.item())
  ((1, 4.0, 3.0), <class 'tuple'>)
 
-Viewing Structured Arrays Containing Objects
+Viewing structured arrays containing objects
 --------------------------------------------
 
 In order to prevent clobbering object pointers in fields of
@@ -555,7 +555,7 @@ arrays containing objects.
 
 .. _structured_dtype_comparison_and_promotion:
 
-Structure Comparison and Promotion
+Structure comparison and promotion
 ----------------------------------
 
 If the dtypes of two void structured arrays are equal, testing the equality of
@@ -576,7 +576,7 @@ So the following is also valid (note the ``'f4'`` dtype for the ``'a'`` field):
  array([True, False])
 
 To compare two structured arrays, it must be possible to promote them to a
-common dtype as returned by `numpy.result_type` and `np.promote_types`.
+common dtype as returned by `numpy.result_type` and `numpy.promote_types`.
 This enforces that the number of fields, the field names, and the field titles
 must match precisely.
 When promotion is not possible, for example due to mismatching field names,
@@ -595,7 +595,7 @@ removed::
 
     >>> dt = np.dtype("i1,V3,i4,V1")[["f0", "f2"]]
     >>> dt
-    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':9})
+    dtype({'names': ['f0', 'f2'], 'formats': ['i1', '<i4'], 'offsets': [0, 4], 'itemsize': 9})
     >>> np.result_type(dt)
     dtype([('f0', 'i1'), ('f2', '<i4')])
 
@@ -606,7 +606,8 @@ If a structured dtype is created with ``align=True`` ensuring that
 
     >>> dt = np.dtype("i1,V3,i4,V1", align=True)[["f0", "f2"]]
     >>> dt
-    dtype({'names':['f0','f2'], 'formats':['i1','<i4'], 'offsets':[0,4], 'itemsize':12}, align=True)
+    dtype({'names': ['f0', 'f2'], 'formats': ['i1', '<i4'], 'offsets': [0, 4], 'itemsize': 12}, align=True)
+
     >>> np.result_type(dt)
     dtype([('f0', 'i1'), ('f2', '<i4')], align=True)
     >>> np.result_type(dt).isalignedstruct
@@ -626,12 +627,12 @@ structured arrays, and arithmetic and bitwise operations are not supported.
     Further, promotion was much more restrictive: It would reject the mixed
     float/integer comparison example above.
 
-Record Arrays
+Record arrays
 =============
 
 As an optional convenience numpy provides an ndarray subclass,
-:class:`numpy.recarray` that allows access to fields of structured arrays by
-attribute instead of only by index.
+:class:`numpy.recarray` that allows access to fields of structured arrays
+by attribute instead of only by index.
 Record arrays use a special datatype, :class:`numpy.record`, that allows
 field access by attribute on the structured scalars obtained from the array.
 The ``numpy.rec`` module provides functions for creating recarrays from
@@ -640,7 +641,7 @@ Additional helper functions for creating and manipulating structured arrays
 can be found in :mod:`numpy.lib.recfunctions`.
 
 The simplest way to create a record array is with
-:func:`numpy.rec.array <numpy.core.records.array>`::
+:func:`numpy.rec.array <numpy.rec.array>`::
 
  >>> recordarr = np.rec.array([(1, 2., 'Hello'), (2, 3., "World")],
  ...                    dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
@@ -656,7 +657,7 @@ The simplest way to create a record array is with
  >>> recordarr[1].baz
  b'World'
 
-:func:`numpy.rec.array <numpy.core.records.array>` can convert a wide variety
+:func:`numpy.rec.array <numpy.rec.array>` can convert a wide variety
 of arguments into record arrays, including structured arrays::
 
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
@@ -668,10 +669,10 @@ creating record arrays, see :ref:`record array creation routines
 <routines.array-creation.rec>`.
 
 A record array representation of a structured array can be obtained using the
-appropriate `view <numpy-ndarray-view>`_::
+appropriate :meth:`view <numpy.ndarray.view>`::
 
  >>> arr = np.array([(1, 2., 'Hello'), (2, 3., "World")],
- ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'a10')])
+ ...                dtype=[('foo', 'i4'),('bar', 'f4'), ('baz', 'S10')])
  >>> recordarr = arr.view(dtype=np.dtype((np.record, arr.dtype)),
  ...                      type=np.recarray)
 
@@ -697,14 +698,14 @@ array if the field has a structured type but as a plain ndarray otherwise. ::
  >>> type(recordarr.foo)
  <class 'numpy.ndarray'>
  >>> type(recordarr.bar)
- <class 'numpy.recarray'>
+ <class 'numpy.rec.recarray'>
 
 Note that if a field has the same name as an ndarray attribute, the ndarray
 attribute takes precedence. Such fields will be inaccessible by attribute but
 will still be accessible by index.
 
 
-Recarray Helper Functions
+Recarray helper functions
 -------------------------
 
 .. automodule:: numpy.lib.recfunctions

@@ -194,17 +194,6 @@ although the long form is preferred.  Note that this should not be
 confused with the generalized ufunc :ref:`signature <details-of-signature>`
 that is stored in the **signature** attribute of the of the ufunc object.
 
-.. rubric:: *extobj*
-
-A list of length 3 specifying the ufunc buffer-size, the error
-mode integer, and the error call-back function. Normally, these
-values are looked up in a thread-specific dictionary. Passing them
-here circumvents that look up and uses the low-level specification
-provided for the error mode. This may be useful, for example, as
-an optimization for calculations requiring many ufunc calls on
-small arrays in a loop.
-
-
 
 Attributes
 ----------

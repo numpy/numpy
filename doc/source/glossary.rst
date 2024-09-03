@@ -258,7 +258,7 @@ Glossary
            >>> a + 3
            array([3, 4, 5])
 
-       Ordinarly, vector operands must all be the same size, because NumPy
+       Ordinarily, vector operands must all be the same size, because NumPy
        works element by element -- for instance, ``c = a * b`` is ::
 
            c[0,0,0] = a[0,0,0] * b[0,0,0]
@@ -274,6 +274,19 @@ Glossary
    C order
        Same as :term:`row-major`.
 
+   casting
+       The process of converting array data from one dtype to another. There
+       exist several casting modes, defined by the following casting rules:
+
+       - ``no``: The data types should not be cast at all.
+         Any mismatch in data types between the arrays will raise a
+         `TypeError`.
+       - ``equiv``: Only byte-order changes are allowed.
+       - ``safe``: Only casts that can preserve values are allowed. Upcasting
+         (e.g., from int to float) is allowed, but downcasting is not.
+       - ``same_kind``: The 'same_kind' casting option allows safe casts and
+         casts within a kind, like float64 to float32.
+       - ``unsafe``: any data conversions may be done.
 
    column-major
        See `Row- and column-major order <https://en.wikipedia.org/wiki/Row-_and_column-major_order>`_.
@@ -545,4 +558,3 @@ Glossary
          >>> x[0] = 3 # changing x changes y as well, since y is a view on x
          >>> y
          array([3, 2, 4])
-

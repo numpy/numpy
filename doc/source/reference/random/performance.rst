@@ -24,7 +24,7 @@ even on 32-bit processes, this is your choice.
 
 `MT19937` `fails some statistical tests`_ and is not especially
 fast compared to modern PRNGs. For these reasons, we mostly do not recommend
-using it on its own, only through the legacy `~.RandomState` for
+using it on its own, only through the legacy `RandomState` for
 reproducing old results. That said, it has a very long history as a default in
 many systems.
 
@@ -85,7 +85,7 @@ performance was computed using a geometric mean.
 
    All timings were taken using Linux on an AMD Ryzen 9 3900X processor.
 
-Performance on different Operating Systems
+Performance on different operating systems
 ------------------------------------------
 Performance differs across platforms due to compiler and hardware availability
 (e.g., register width) differences. The default bit generator has been chosen

@@ -50,7 +50,7 @@ A total of 22 pull requests were merged for this release.
 * `#21446 <https://github.com/numpy/numpy/pull/21446>`__: BUG: Make mmap handling safer in frombuffer
 * `#21447 <https://github.com/numpy/numpy/pull/21447>`__: BUG: Stop using PyBytesObject.ob_shash deprecated in Python 3.11.
 * `#21448 <https://github.com/numpy/numpy/pull/21448>`__: ENH: Introduce numpy.core.setup_common.NPY_CXX_FLAGS
-* `#21472 <https://github.com/numpy/numpy/pull/21472>`__: BUG: Ensure compile errors are raised correclty
+* `#21472 <https://github.com/numpy/numpy/pull/21472>`__: BUG: Ensure compile errors are raised correctly
 * `#21473 <https://github.com/numpy/numpy/pull/21473>`__: BUG: Fix segmentation fault
 * `#21474 <https://github.com/numpy/numpy/pull/21474>`__: MAINT: Update doc requirements
 * `#21475 <https://github.com/numpy/numpy/pull/21475>`__: MAINT: Mark ``npy_memchr`` with ``no_sanitize("alignment")`` on clang

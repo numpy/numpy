@@ -1,32 +1,28 @@
-#!/usr/bin/env python3
 """
-
 Auxiliary functions for f2py2e.
 
-Copyright 1999,2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy (BSD style) LICENSE.
 
-
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/07/24 19:01:55 $
-Pearu Peterson
-
 """
 import pprint
 import sys
+import re
 import types
 from functools import reduce
 
 from . import __version__
 from . import cfuncs
+from .cfuncs import errmess
 
 __all__ = [
     'applyrules', 'debugcapi', 'dictappend', 'errmess', 'gentitle',
     'getargs2', 'getcallprotoargument', 'getcallstatement',
     'getfortranname', 'getpymethoddef', 'getrestdoc', 'getusercode',
-    'getusercode1', 'hasbody', 'hascallstatement', 'hascommon',
+    'getusercode1', 'getdimension', 'hasbody', 'hascallstatement', 'hascommon',
     'hasexternals', 'hasinitvalue', 'hasnote', 'hasresultnote',
     'isallocatable', 'isarray', 'isarrayofstrings',
     'ischaracter', 'ischaracterarray', 'ischaracter_or_characterarray',
@@ -39,22 +35,21 @@ __all__ = [
     'isintent_nothide', 'isintent_out', 'isintent_overwrite', 'islogical',
     'islogicalfunction', 'islong_complex', 'islong_double',
     'islong_doublefunction', 'islong_long', 'islong_longfunction',
-    'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isrequired',
-    'isroutine', 'isscalar', 'issigned_long_longarray', 'isstring',
-    'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
-    'issubroutine',
-    'issubroutine_wrap', 'isthreadsafe', 'isunsigned', 'isunsigned_char',
-    'isunsigned_chararray', 'isunsigned_long_long',
-    'isunsigned_long_longarray', 'isunsigned_short',
-    'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
-    'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value'
+    'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isvariable',
+    'isrequired', 'isroutine', 'isscalar', 'issigned_long_longarray',
+    'isstring', 'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
+    'issubroutine', 'get_f2py_modulename', 'issubroutine_wrap', 'isthreadsafe',
+    'isunsigned', 'isunsigned_char', 'isunsigned_chararray',
+    'isunsigned_long_long', 'isunsigned_long_longarray', 'isunsigned_short',
+    'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess', 'replace',
+    'show', 'stripcomma', 'throw_error', 'isattr_value', 'getuseblocks',
+    'process_f2cmap_dict'
 ]
 
 
 f2py_version = __version__.version
 
 
-errmess = sys.stderr.write
 show = pprint.pprint
 
 options = {}
@@ -417,6 +412,13 @@ def isexternal(var):
     return 'attrspec' in var and 'external' in var['attrspec']
 
 
+def getdimension(var):
+    dimpattern = r"\((.*?)\)"
+    if 'attrspec' in var.keys():
+        if any('dimension' in s for s in var['attrspec']):
+            return [re.findall(dimpattern, v) for v in var['attrspec']][0]
+
+
 def isrequired(var):
     return not isoptional(var) and isintent_nothide(var)
 
@@ -513,6 +515,15 @@ isintent_dict = {isintent_in: 'INTENT_IN', isintent_inout: 'INTENT_INOUT',
 def isprivate(var):
     return 'attrspec' in var and 'private' in var['attrspec']
 
+
+def isvariable(var):
+    # heuristic to find public/private declarations of filtered subroutines
+    if len(var) == 1 and 'attrspec' in var and \
+            var['attrspec'][0] in ('public', 'private'):
+        is_var = False
+    else:
+        is_var = True
+    return is_var
 
 def hasinitvalue(var):
     return '=' in var
@@ -697,9 +708,9 @@ def getcallprotoargument(rout, cb_map={}):
             else:
                 if not isattr_value(var):
                     ctype = ctype + '*'
-            if ((isstring(var)
+            if (isstring(var)
                  or isarrayofstrings(var)  # obsolete?
-                 or isstringarray(var))):
+                 or isstringarray(var)):
                 arg_types2.append('size_t')
         arg_types.append(ctype)
 
@@ -888,3 +899,97 @@ def applyrules(rules, d, var={}):
             if ret[k] == []:
                 del ret[k]
     return ret
+
+_f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
+                                     re.I).match
+_f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
+                                          r'__user__[\w_]*)', re.I).match
+
+def get_f2py_modulename(source):
+    name = None
+    with open(source) as f:
+        for line in f:
+            m = _f2py_module_name_match(line)
+            if m:
+                if _f2py_user_module_name_match(line): # skip *__user__* names
+                    continue
+                name = m.group('name')
+                break
+    return name
+
+def getuseblocks(pymod):
+    all_uses = []
+    for inner in pymod['body']:
+        for modblock in inner['body']:
+            if modblock.get('use'):
+                all_uses.extend([x for x in modblock.get("use").keys() if "__" not in x])
+    return all_uses
+
+def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
+    """
+    Update the Fortran-to-C type mapping dictionary with new mappings and
+    return a list of successfully mapped C types.
+
+    This function integrates a new mapping dictionary into an existing
+    Fortran-to-C type mapping dictionary. It ensures that all keys are in
+    lowercase and validates new entries against a given C-to-Python mapping
+    dictionary. Redefinitions and invalid entries are reported with a warning.
+
+    Parameters
+    ----------
+    f2cmap_all : dict
+        The existing Fortran-to-C type mapping dictionary that will be updated.
+        It should be a dictionary of dictionaries where the main keys represent
+        Fortran types and the nested dictionaries map Fortran type specifiers
+        to corresponding C types.
+
+    new_map : dict
+        A dictionary containing new type mappings to be added to `f2cmap_all`.
+        The structure should be similar to `f2cmap_all`, with keys representing
+        Fortran types and values being dictionaries of type specifiers and their
+        C type equivalents.
+
+    c2py_map : dict
+        A dictionary used for validating the C types in `new_map`. It maps C
+        types to corresponding Python types and is used to ensure that the C
+        types specified in `new_map` are valid.
+
+    verbose : boolean
+        A flag used to provide information about the types mapped
+
+    Returns
+    -------
+    tuple of (dict, list)
+        The updated Fortran-to-C type mapping dictionary and a list of
+        successfully mapped C types.
+    """
+    f2cmap_mapped = []
+
+    new_map_lower = {}
+    for k, d1 in new_map.items():
+        d1_lower = {k1.lower(): v1 for k1, v1 in d1.items()}
+        new_map_lower[k.lower()] = d1_lower
+
+    for k, d1 in new_map_lower.items():
+        if k not in f2cmap_all:
+            f2cmap_all[k] = {}
+
+        for k1, v1 in d1.items():
+            if v1 in c2py_map:
+                if k1 in f2cmap_all[k]:
+                    outmess(
+                        "\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"
+                        % (k, k1, f2cmap_all[k][k1], v1)
+                    )
+                f2cmap_all[k][k1] = v1
+                if verbose:
+                    outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k, k1, v1))
+                f2cmap_mapped.append(v1)
+            else:
+                if verbose:
+                    errmess(
+                        "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
+                        % (k, k1, v1, v1, list(c2py_map.keys()))
+                    )
+
+    return f2cmap_all, f2cmap_mapped

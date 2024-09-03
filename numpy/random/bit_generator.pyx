@@ -1,3 +1,5 @@
+#cython: binding=True
+
 """
 BitGenerator base class and SeedSequence used to seed the BitGenerators.
 
@@ -5,7 +7,7 @@ SeedSequence is derived from Melissa E. O'Neill's C++11 `std::seed_seq`
 implementation, as it has a lot of nice properties that we want.
 
 https://gist.github.com/imneme/540829265469e673d045
-http://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
+https://www.pcg-random.org/posts/developing-a-seed_seq-alternative.html
 
 The MIT License (MIT)
 
@@ -190,7 +192,7 @@ class ISeedSequence(abc.ABC):
             The size of each word. This should only be either `uint32` or
             `uint64`. Strings (`'uint32'`, `'uint64'`) are fine. Note that
             requesting `uint64` will draw twice as many bits as `uint32` for
-            the same `n_words`. This is a convenience for `BitGenerator`s that
+            the same `n_words`. This is a convenience for `BitGenerator`\ s that
             express their states as `uint64` arrays.
 
         Returns
@@ -415,8 +417,8 @@ cdef class SeedSequence():
             The size of each word. This should only be either `uint32` or
             `uint64`. Strings (`'uint32'`, `'uint64'`) are fine. Note that
             requesting `uint64` will draw twice as many bits as `uint32` for
-            the same `n_words`. This is a convenience for `BitGenerator`s that
-            express their states as `uint64` arrays.
+            the same `n_words`. This is a convenience for `BitGenerator`\ s
+            that express their states as `uint64` arrays.
 
         Returns
         -------
@@ -535,14 +537,27 @@ cdef class BitGenerator():
 
     # Pickling support:
     def __getstate__(self):
-        return self.state
+        return self.state, self._seed_seq
 
-    def __setstate__(self, state):
-        self.state = state
+    def __setstate__(self, state_seed_seq):
+
+        if isinstance(state_seed_seq, dict):
+            # Legacy path
+            # Prior to 2.0.x only the state of the underlying bit generator
+            # was preserved and any seed sequence information was lost
+            self.state = state_seed_seq
+        else:
+            self._seed_seq = state_seed_seq[1]
+            self.state = state_seed_seq[0]
 
     def __reduce__(self):
         from ._pickle import __bit_generator_ctor
-        return __bit_generator_ctor, (self.state['bit_generator'],), self.state
+
+        return (
+            __bit_generator_ctor,
+            (type(self), ),
+            (self.state, self._seed_seq)
+        )
 
     @property
     def state(self):

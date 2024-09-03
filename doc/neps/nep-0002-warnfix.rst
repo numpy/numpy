@@ -44,7 +44,7 @@ the compilers do not generate warnings in those cases; the tag process has to
 be clean, readable, and be robust. In particular, it should not make the code
 more obscure or worse, break working code.
 
-unused parameter
+Unused parameter
 ----------------
 
 This one appears often: any python-callable C function takes two arguments,
@@ -78,12 +78,12 @@ expanded to::
 Thus avoiding any accidental use of the variable. The mangling is pure C, and
 thus portable. The per-variable warning disabling is compiler specific.
 
-signed/unsigned comparison
+Signed/unsigned comparison
 --------------------------
 
 More tricky: not always clear what to do
 
-half-initialized structures
+Half-initialized structures
 ---------------------------
 
 Just put the elements with NULL in it.

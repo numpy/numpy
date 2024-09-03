@@ -22,7 +22,7 @@ establishment of community consensus, for stewarding project resources,
 and -- in extreme cases -- for making project decisions if the normal
 community-based process breaks down.
 
-The Project
+The project
 ===========
 
 The NumPy Project (The Project) is an open source software project
@@ -50,7 +50,7 @@ larger Project Community and we strive to keep the barrier between
 Contributors and Users as low as possible.
 
 The Project is formally affiliated with the 501(c)3 NumFOCUS Foundation
-(http://numfocus.org), which serves as its fiscal sponsor, may hold
+(https://numfocus.org/), which serves as its fiscal sponsor, may hold
 project trademarks and other intellectual property, helps manage project
 donations and acts as a parent legal entity. NumFOCUS is the only legal
 entity that has a formal relationship with the project (see
@@ -82,10 +82,10 @@ The mechanism we use to accomplish this goal may be unfamiliar for those
 who are not experienced with the cultural norms around free/open-source
 software development. We provide a summary here, and highly recommend
 that all Contributors additionally read `Chapter 4: Social and Political
-Infrastructure <http://producingoss.com/en/producingoss.html#social-infrastructure>`_
+Infrastructure <https://producingoss.com/en/producingoss.html#social-infrastructure>`_
 of Karl Fogel's classic *Producing Open Source Software*, and in
 particular the section on `Consensus-based
-Democracy <http://producingoss.com/en/producingoss.html#consensus-democracy>`_,
+Democracy <https://producingoss.com/en/producingoss.html#consensus-democracy>`_,
 for a more detailed discussion.
 
 In this context, consensus does *not* require:
@@ -120,7 +120,7 @@ few days, then it's probably fine. And worst case, if a change is more
 controversial than expected, or a crucial critique is delayed because
 someone was on vacation, then it's no big deal: we apologize for
 misjudging the situation, `back up, and sort things
-out <http://producingoss.com/en/producingoss.html#version-control-relaxation>`_.
+out <https://producingoss.com/en/producingoss.html#version-control-relaxation>`_.
 
 If one does need to invoke a formal veto, then it should consist of:
 
@@ -137,7 +137,7 @@ an obstructive fashion to the detriment of the project, then they can be
 ejected from the project by consensus of the Steering Council -- see
 below.
 
-Steering Council
+Steering council
 ----------------
 
 The Project will have a Steering Council that consists of Project
@@ -310,7 +310,7 @@ The current membership of the NumFOCUS Subcommittee is listed at the
 page `About Us <https://numpy.org/about/>`_.
 
 
-Institutional Partners and Funding
+Institutional partners and funding
 ==================================
 
 The Steering Council are the primary leadership for the project. No

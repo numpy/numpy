@@ -1,4 +1,0 @@
-String functions in np.char are compatible with NEP 42 custom dtypes
---------------------------------------------------------------------
-Custom dtypes that represent unicode strings or byte strings can now be
-passed to the string functions in np.char.

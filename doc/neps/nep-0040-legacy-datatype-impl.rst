@@ -36,7 +36,7 @@ For more general information most readers should begin by reading :ref:`NEP 41 <
 and use this document only as a reference or for additional details.
 
 
-Detailed Description
+Detailed description
 --------------------
 
 This section describes some central concepts and provides a brief overview
@@ -46,7 +46,7 @@ current implementation and then follow with an "Issues and Discussion" section.
 
 .. _parametric-datatype-discussion:
 
-Parametric Datatypes
+Parametric datatypes
 ^^^^^^^^^^^^^^^^^^^^
 
 Some datatypes are inherently *parametric*. All ``np.flexible`` scalar
@@ -91,7 +91,7 @@ numerical ones, which is evident in the complicated output type discovery
 of universal functions.
 
 
-Value Based Casting
+Value based casting
 ^^^^^^^^^^^^^^^^^^^
 
 Casting is typically defined between two types:
@@ -128,7 +128,7 @@ Universal functions currently rely on safe casting semantics to decide which
 loop should be used, and thus what the output datatype will be.
 
 
-Issues and Discussion
+Issues and discussion
 """""""""""""""""""""
 
 There appears to be some agreement that the current method is
@@ -143,7 +143,7 @@ The result depends on the "minimal" representation in the context of the
 conversion (for ufuncs the context may depend on the loop order).
 
 
-The Object Datatype
+The object datatype
 ^^^^^^^^^^^^^^^^^^^
 
 The object datatype currently serves as a generic fallback for any value
@@ -189,7 +189,7 @@ These issues do not need to solved right away:
   for example a DType for ``decimal.Decimal``.
 
 
-Current ``dtype`` Implementation
+Current ``dtype`` implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Currently ``np.dtype`` is a Python class with its instances being the
@@ -220,7 +220,7 @@ datatype in the future.
 For example the ``np.clip`` function was previously implemented using
 ``PyArray_ArrFuncs`` and is now implemented as a ufunc.
 
-Discussion and Issues
+Discussion and issues
 """""""""""""""""""""
 
 A further issue with the current implementation of the functions on the dtype
@@ -246,7 +246,7 @@ However, in the long run access to these structures will probably have to
 be deprecated.
 
 
-NumPy Scalars and Type Hierarchy
+NumPy scalars and type hierarchy
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As a side note to the above datatype implementation: unlike the datatypes,
@@ -268,7 +268,7 @@ For the numerical (and unicode) datatypes, they are further limited to
 native byte order.
 
 
-Current Implementation of Casting
+Current implementation of casting
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 One of the main features which datatypes need to support is casting between one
@@ -317,7 +317,7 @@ This function is used multiple places and should probably be part of
 a redesigned casting API.
 
 
-DType handling in Universal functions
+DType handling in universal functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Universal functions are implemented as instances of the ``numpy.UFunc`` class
@@ -363,7 +363,7 @@ For user defined datatypes, the dispatching logic is similar,
 although separately implemented and limited (see discussion below).
 
 
-Issues and Discussion
+Issues and discussion
 """""""""""""""""""""
 
 It is currently only possible for user defined functions to be found/resolved
@@ -415,7 +415,7 @@ While option 2 may be less complex to reason about it remains to be seen
 whether it is sufficient for all (or most) use cases.
 
 
-Adjustment of Parametric output DTypes in UFuncs
+Adjustment of parametric output DTypes in UFuncs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A second step necessary for parametric dtypes is currently performed within
@@ -425,7 +425,7 @@ for the operation and output array.
 This step also needs to double check that all casts can be performed safely,
 which by default means that they are "same kind" casts.
 
-Issues and Discussion
+Issues and discussion
 """""""""""""""""""""
 
 Fixing the correct output dtype is currently part of the type resolution.
@@ -436,7 +436,7 @@ As such this step may move from the dispatching step (described above) to
 the implementation-specific code described below.
 
 
-DType-specific Implementation of the UFunc
+DType-specific implementation of the UFunc
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once the correct implementation/loop is found, UFuncs currently call
@@ -445,7 +445,7 @@ This may be called multiple times to do the full calculation and it has
 little or no information about the current context. It also has a void
 return value.
 
-Issues and Discussion
+Issues and discussion
 """""""""""""""""""""
 
 Parametric datatypes may require passing
@@ -498,7 +498,7 @@ In general it should be possible to provide a dtype-specific identity to the
 ufunc reduction.
 
 
-Datatype Discovery during Array Coercion
+Datatype discovery during array coercion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When calling ``np.array(...)`` to coerce a general Python object to a NumPy array,
@@ -540,7 +540,7 @@ That is:
 * Datetime64 is capable of coercing from strings and guessing the correct unit.
 
 
-Discussion and Issues
+Discussion and issues
 """""""""""""""""""""
 
 It seems probable that during normal discovery, the ``isinstance`` should rather
@@ -551,7 +551,7 @@ the normal discovery.
 
 
 
-Related Issues
+Related issues
 --------------
 
 ``np.save`` currently translates all user-defined dtypes to void dtypes.
@@ -572,7 +572,7 @@ interoperability they could be considered even if
 they are not used by NumPy itself.
 
 
-Related Work
+Related work
 ------------
 
 * Julia types are an interesting blueprint for a type hierarchy, and define

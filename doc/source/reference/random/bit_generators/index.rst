@@ -1,6 +1,8 @@
 .. currentmodule:: numpy.random
 
-Bit Generators
+.. _random-bit-generators:
+
+Bit generators
 ==============
 
 The random values produced by :class:`~Generator`
@@ -32,9 +34,9 @@ The included BitGenerators are:
   fastest generator of the four. See the `SFC author's page`_ for (a little)
   more detail.
 
-.. _`PCG author's page`: http://www.pcg-random.org/
+.. _`PCG author's page`: https://www.pcg-random.org/
 .. _`Random123`: https://www.deshawresearch.com/resources_random123.html
-.. _`SFC author's page`: http://pracrand.sourceforge.net/RNG_engines.txt
+.. _`SFC author's page`: https://pracrand.sourceforge.net/RNG_engines.txt
 
 .. autosummary::
     :toctree: generated/
@@ -52,7 +54,7 @@ The included BitGenerators are:
 
 .. _seeding_and_entropy:
 
-Seeding and Entropy
+Seeding and entropy
 ===================
 
 A BitGenerator provides a stream of random values. In order to generate

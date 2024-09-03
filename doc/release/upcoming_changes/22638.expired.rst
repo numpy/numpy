@@ -1,1 +1,0 @@
-* ``np.core.machar`` and ``np.finfo.machar`` have been removed.

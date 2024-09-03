@@ -1,19 +1,12 @@
-#!/usr/bin/env python3
 """
-
 Build 'use others module data' mechanism for f2py2e.
 
-Unfinished.
-
-Copyright 2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2000/09/10 12:35:43 $
-Pearu Peterson
-
 """
 __version__ = "$Revision: 1.3 $"[10:-1]
 
@@ -62,7 +55,7 @@ def buildusevars(m, r):
                     r['map'][k], k, revmap[r['map'][k]]))
             else:
                 revmap[r['map'][k]] = k
-    if 'only' in r and r['only']:
+    if r.get('only'):
         for v in r['map'].keys():
             if r['map'][v] in m['vars']:
 

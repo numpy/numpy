@@ -1,6 +1,6 @@
 
 *****************************
-Python Types and C-Structures
+Python types and C-structures
 *****************************
 
 .. sectionauthor:: Travis E. Oliphant
@@ -18,7 +18,7 @@ details after the :c:macro:`PyObject_HEAD` (but you have to cast to the
 correct type to access them --- or use accessor functions or macros).
 
 
-New Python Types Defined
+New Python types defined
 ========================
 
 Python types are the functional equivalent in C of classes in Python.
@@ -48,14 +48,17 @@ supportive role: the :c:data:`PyArrayIter_Type`, the
 . The :c:data:`PyArrayIter_Type` is the type for a flat iterator for an
 ndarray (the object that is returned when getting the flat
 attribute). The :c:data:`PyArrayMultiIter_Type` is the type of the
-object returned when calling ``broadcast`` (). It handles iteration
-and broadcasting over a collection of nested sequences. Also, the
+object returned when calling ``broadcast``. It handles iteration and
+broadcasting over a collection of nested sequences. Also, the
 :c:data:`PyArrayDescr_Type` is the data-type-descriptor type whose
-instances describe the data.  Finally, there are 21 new scalar-array
+instances describe the data and :c:data:`PyArray_DTypeMeta` is the
+metaclass for data-type descriptors.  There are also new scalar-array
 types which are new Python scalars corresponding to each of the
-fundamental data types available for arrays. An additional 10 other
-types are place holders that allow the array scalars to fit into a
-hierarchy of actual Python types.
+fundamental data types available for arrays. Additional types are
+placeholders that allow the array scalars to fit into a hierarchy of
+actual Python types. Finally, the :c:data:`PyArray_DTypeMeta` instances
+corresponding to the NumPy built-in data types are also publicly
+visible.
 
 
 PyArray_Type and PyArrayObject
@@ -97,8 +100,7 @@ PyArray_Type and PyArrayObject
           /* version dependent private members */
       } PyArrayObject;
 
-   .. c:macro:: PyObject_HEAD
-
+   :c:macro:`PyObject_HEAD`
        This is needed by all Python objects. It consists of (at least)
        a reference count member ( ``ob_refcnt`` ) and a pointer to the
        typeobject ( ``ob_type`` ). (Other elements may also be present
@@ -119,8 +121,12 @@ PyArray_Type and PyArrayObject
        array. When nd is 0, the array is sometimes called a rank-0
        array. Such arrays have undefined dimensions and strides and
        cannot be accessed. Macro :c:data:`PyArray_NDIM` defined in
-       ``ndarraytypes.h`` points to this data member. :c:data:`NPY_MAXDIMS`
-       is the largest number of dimensions for any array.
+       ``ndarraytypes.h`` points to this data member.
+       ``NPY_MAXDIMS`` is defined as a compile time constant limiting the
+       number of dimensions.  This number is 64 since NumPy 2 and was 32
+       before. However, we may wish to remove this limitations in the future
+       so that it is best to explicitly check dimensionality for code
+       that relies on such an upper bound.
 
    .. c:member:: npy_intp *dimensions
 
@@ -196,6 +202,33 @@ PyArray_Type and PyArrayObject
       A solution guaranteed to be compatible with any future NumPy version
       requires the use of a runtime calculate offset and allocation size.
 
+The :c:data:`PyArray_Type` typeobject implements many of the features of
+:c:type:`Python objects <PyTypeObject>` including the :c:member:`tp_as_number
+<PyTypeObject.tp_as_number>`, :c:member:`tp_as_sequence
+<PyTypeObject.tp_as_sequence>`, :c:member:`tp_as_mapping
+<PyTypeObject.tp_as_mapping>`, and :c:member:`tp_as_buffer
+<PyTypeObject.tp_as_buffer>` interfaces. The :c:type:`rich comparison
+<richcmpfunc>`) is also used along with new-style attribute lookup for
+member (:c:member:`tp_members <PyTypeObject.tp_members>`) and properties
+(:c:member:`tp_getset <PyTypeObject.tp_getset>`).
+The :c:data:`PyArray_Type` can also be sub-typed.
+
+.. tip::
+
+    The :c:member:`tp_as_number <PyTypeObject.tp_as_number>` methods use
+    a generic approach to call whatever function has been registered for
+    handling the operation. When the ``_multiarray_umath`` module is imported,
+    it sets the numeric operations for all arrays to the corresponding ufuncs.
+    This choice can be changed with :c:func:`PyUFunc_ReplaceLoopBySignature`.
+
+PyGenericArrType_Type
+---------------------
+
+.. c:var:: PyTypeObject PyGenericArrType_Type
+
+   The :c:data:`PyGenericArrType_Type` is the PyTypeObject definition which
+   create the `numpy.generic` python type.
+
 
 PyArrayDescr_Type and PyArray_Descr
 -----------------------------------
@@ -213,6 +246,14 @@ PyArrayDescr_Type and PyArray_Descr
    deallocated either. The function :c:func:`PyArray_DescrFromType` (...) can
    be used to retrieve a :c:type:`PyArray_Descr` object from an enumerated
    type-number (either built-in or user- defined).
+
+.. c:type:: PyArray_DescrProto
+
+   Identical structure to :c:type:`PyArray_Descr`. This struct is used
+   for static definition of a prototype for registering a new legacy
+   DType by :c:func:`PyArray_RegisterDataType`.
+
+   See the note in :c:func:`PyArray_RegisterDataType` for details.
 
 .. c:type:: PyArray_Descr
 
@@ -237,18 +278,23 @@ PyArrayDescr_Type and PyArray_Descr
           char kind;
           char type;
           char byteorder;
-          char flags;
+          char _former_flags;  // unused field
           int type_num;
-          int elsize;
-          int alignment;
-          PyArray_ArrayDescr *subarray;
-          PyObject *fields;
-          PyObject *names;
-          PyArray_ArrFuncs *f;
-          PyObject *metadata;
+          /* 
+           * Definitions after this one must be accessed through accessor
+           * functions (see below) when compiling with NumPy 1.x support.
+           */
+          npy_uint64 flags;
+          npy_intp elsize;
+          npy_intp alignment;
           NpyAuxData *c_metadata;
           npy_hash_t hash;
+          void *reserved_null[2];  // unused field, must be NULLed.
       } PyArray_Descr;
+
+   Some dtypes have additional members which are accessible through
+   `PyDataType_NAMES`, `PyDataType_FIELDS`, `PyDataType_SUBARRAY`, and
+   in some cases (times) `PyDataType_C_METADATA`.
 
    .. c:member:: PyTypeObject *typeobj
 
@@ -279,31 +325,71 @@ PyArrayDescr_Type and PyArray_Descr
        endian), '=' (native), '\|' (irrelevant, ignore). All builtin data-
        types have byteorder '='.
 
-   .. c:member:: char flags
+   .. c:member:: npy_uint64 flags
 
        A data-type bit-flag that determines if the data-type exhibits object-
        array like behavior. Each bit in this member is a flag which are named
        as:
 
-   .. c:member:: int alignment
+       * :c:macro:`NPY_ITEM_REFCOUNT`
+       * :c:macro:`NPY_ITEM_HASOBJECT`
+       * :c:macro:`NPY_LIST_PICKLE`
+       * :c:macro:`NPY_ITEM_IS_POINTER`
+       * :c:macro:`NPY_NEEDS_INIT`
+       * :c:macro:`NPY_NEEDS_PYAPI`
+       * :c:macro:`NPY_USE_GETITEM`
+       * :c:macro:`NPY_USE_SETITEM`
+       * :c:macro:`NPY_FROM_FIELDS`
+       * :c:macro:`NPY_OBJECT_DTYPE_FLAGS`
 
-       Non-NULL if this type is an array (C-contiguous) of some other type
+   .. c:member:: int type_num
 
+       A number that uniquely identifies the data type. For new data-types,
+       this number is assigned when the data-type is registered.
 
-..
-  dedented to allow internal linking, pending a refactoring
+   .. c:member:: npy_intp elsize
+
+       For data types that are always the same size (such as long), this
+       holds the size of the data type. For flexible data types where
+       different arrays can have a different elementsize, this should be
+       0.
+
+       See `PyDataType_ELSIZE` and `PyDataType_SET_ELSIZE` for a way to access
+       this field in a NumPy 1.x compatible way.
+
+   .. c:member:: npy_intp alignment
+
+       A number providing alignment information for this data type.
+       Specifically, it shows how far from the start of a 2-element
+       structure (whose first element is a ``char`` ), the compiler
+       places an item of this type: ``offsetof(struct {char c; type v;},
+       v)``
+
+       See `PyDataType_ALIGNMENT` for a way to access this field in a NumPy 1.x
+       compatible way.
+
+   .. c:member:: PyObject *metadata
+
+       Metadata about this dtype.
+
+   .. c:member:: NpyAuxData *c_metadata
+
+       Metadata specific to the C implementation
+       of the particular dtype. Added for NumPy 1.7.0.
+
+   .. c:type:: npy_hash_t
+   .. c:member:: npy_hash_t *hash
+
+       Used for caching hash values.
 
 .. c:macro:: NPY_ITEM_REFCOUNT
 
     Indicates that items of this data-type must be reference
     counted (using :c:func:`Py_INCREF` and :c:func:`Py_DECREF` ).
 
-       .. c:macro:: NPY_ITEM_HASOBJECT
+.. c:macro:: NPY_ITEM_HASOBJECT
 
-           Same as :c:data:`NPY_ITEM_REFCOUNT`.
-
-..
-  dedented to allow internal linking, pending a refactoring
+   Same as :c:data:`NPY_ITEM_REFCOUNT`.
 
 .. c:macro:: NPY_LIST_PICKLE
 
@@ -339,118 +425,46 @@ PyArrayDescr_Type and PyArray_Descr
     scalar. Must use if you don't define an array scalar to go
     along with the data-type.
 
-       .. c:macro:: NPY_FROM_FIELDS
+.. c:macro:: NPY_FROM_FIELDS
 
-           The bits that are inherited for the parent data-type if these
-           bits are set in any field of the data-type. Currently (
-           :c:data:`NPY_NEEDS_INIT` \| :c:data:`NPY_LIST_PICKLE` \|
-           :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_PYAPI` ).
+   The bits that are inherited for the parent data-type if these
+   bits are set in any field of the data-type. Currently (
+   :c:data:`NPY_NEEDS_INIT` \| :c:data:`NPY_LIST_PICKLE` \|
+   :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_PYAPI` ).
 
-       .. c:macro:: NPY_OBJECT_DTYPE_FLAGS
+.. c:macro:: NPY_OBJECT_DTYPE_FLAGS
 
-           Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
-           \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
-           :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
-           :c:data:`NPY_NEEDS_PYAPI`).
+   Bits set for the object data-type: ( :c:data:`NPY_LIST_PICKLE`
+   \| :c:data:`NPY_USE_GETITEM` \| :c:data:`NPY_ITEM_IS_POINTER` \|
+   :c:data:`NPY_ITEM_REFCOUNT` \| :c:data:`NPY_NEEDS_INIT` \|
+   :c:data:`NPY_NEEDS_PYAPI`).
 
-       .. c:function:: int PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
+.. c:function:: int PyDataType_FLAGCHK(PyArray_Descr *dtype, int flags)
 
-           Return true if all the given flags are set for the data-type
-           object.
+   Return true if all the given flags are set for the data-type
+   object.
 
-       .. c:function:: int PyDataType_REFCHK(PyArray_Descr *dtype)
+.. c:function:: int PyDataType_REFCHK(PyArray_Descr *dtype)
 
-           Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
-           :c:data:`NPY_ITEM_REFCOUNT`).
+   Equivalent to :c:func:`PyDataType_FLAGCHK` (*dtype*,
+   :c:data:`NPY_ITEM_REFCOUNT`).
 
-   .. c:member:: int type_num
+.. _arrfuncs-type:
 
-       A number that uniquely identifies the data type. For new data-types,
-       this number is assigned when the data-type is registered.
+PyArray_ArrFuncs
+----------------
 
-   .. c:member:: int elsize
+.. c:function:: PyArray_ArrFuncs *PyDataType_GetArrFuncs(PyArray_Descr *dtype)
 
-       For data types that are always the same size (such as long), this
-       holds the size of the data type. For flexible data types where
-       different arrays can have a different elementsize, this should be
-       0.
+    Fetch the legacy `PyArray_ArrFuncs` of the datatype (cannot fail).
 
-   .. c:member:: int alignment
-
-       A number providing alignment information for this data type.
-       Specifically, it shows how far from the start of a 2-element
-       structure (whose first element is a ``char`` ), the compiler
-       places an item of this type: ``offsetof(struct {char c; type v;},
-       v)``
-
-   .. c:member:: PyArray_ArrayDescr *subarray
-
-       If this is non- ``NULL``, then this data-type descriptor is a
-       C-style contiguous array of another data-type descriptor. In
-       other-words, each element that this descriptor describes is
-       actually an array of some other base descriptor. This is most
-       useful as the data-type descriptor for a field in another
-       data-type descriptor. The fields member should be ``NULL`` if this
-       is non- ``NULL`` (the fields member of the base descriptor can be
-       non- ``NULL`` however).
-
-       .. c:type:: PyArray_ArrayDescr
-
-           .. code-block:: c
-
-              typedef struct {
-                  PyArray_Descr *base;
-                  PyObject *shape;
-              } PyArray_ArrayDescr;
-
-           .. c:member:: PyArray_Descr *base
-
-               The data-type-descriptor object of the base-type.
-
-           .. c:member:: PyObject *shape
-
-               The shape (always C-style contiguous) of the sub-array as a Python
-               tuple.
-
-   .. c:member:: PyObject *fields
-
-       If this is non-NULL, then this data-type-descriptor has fields
-       described by a Python dictionary whose keys are names (and also
-       titles if given) and whose values are tuples that describe the
-       fields. Recall that a data-type-descriptor always describes a
-       fixed-length set of bytes. A field is a named sub-region of that
-       total, fixed-length collection. A field is described by a tuple
-       composed of another data- type-descriptor and a byte
-       offset. Optionally, the tuple may contain a title which is
-       normally a Python string. These tuples are placed in this
-       dictionary keyed by name (and also title if given).
-
-   .. c:member:: PyObject *names
-
-       An ordered tuple of field names. It is NULL if no field is
-       defined.
-
-   .. c:member:: PyArray_ArrFuncs *f
-
-       A pointer to a structure containing functions that the type needs
-       to implement internal features. These functions are not the same
-       thing as the universal functions (ufuncs) described later. Their
-       signatures can vary arbitrarily.
-
-   .. c:member:: PyObject *metadata
-
-       Metadata about this dtype.
-
-   .. c:member:: NpyAuxData *c_metadata
-
-       Metadata specific to the C implementation
-       of the particular dtype. Added for NumPy 1.7.0.
-
-   .. c:type:: npy_hash_t
-   .. c:member:: npy_hash_t *hash
-
-       Currently unused. Reserved for future use in caching
-       hash values.
+    .. versionadded:: NumPy 2.0
+        This function was added in a backwards compatible and backportable
+        way in NumPy 2.0 (see ``npy_2_compat.h``).
+        Any code that previously accessed the ``->f`` slot of the
+        ``PyArray_Descr``, must now use this function and backport it to
+        compile with 1.x.
+        (The ``npy_2_compat.h`` header can be vendored for this purpose.)
 
 .. c:type:: PyArray_ArrFuncs
 
@@ -467,7 +481,7 @@ PyArrayDescr_Type and PyArray_Descr
     .. code-block:: c
 
        typedef struct {
-           PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
+           PyArray_VectorUnaryFunc *cast[NPY_NTYPES_LEGACY];
            PyArray_GetItemFunc *getitem;
            PyArray_SetItemFunc *setitem;
            PyArray_CopySwapNFunc *copyswapn;
@@ -486,9 +500,9 @@ PyArrayDescr_Type and PyArray_Descr
            PyArray_ScalarKindFunc *scalarkind;
            int **cancastscalarkindto;
            int *cancastto;
-           PyArray_FastClipFunc *fastclip;  /* deprecated */
-           PyArray_FastPutmaskFunc *fastputmask;  /* deprecated */
-           PyArray_FastTakeFunc *fasttake;  /* deprecated */
+           void *_unused1;
+           void *_unused2;
+           void *_unused3;
            PyArray_ArgFunc *argmin;
        } PyArray_ArrFuncs;
 
@@ -498,6 +512,17 @@ PyArrayDescr_Type and PyArray_Descr
     ``copyswap``, ``copyswapn``, ``getitem``, and ``setitem``
     functions can (and must) deal with mis-behaved arrays. The other
     functions require behaved memory segments.
+
+    .. note::
+        The functions are largely legacy API, however, some are still used.
+        As of NumPy 2.x they are only available via `PyDataType_GetArrFuncs`
+        (see the function for more details).
+        Before using any function defined in the struct you should check
+        whether it is ``NULL``.  In general, the functions ``getitem``,
+        ``setitem``, ``copyswap``, and ``copyswapn`` can be expected to be
+        defined, but all functions are expected to be replaced with newer API.
+        For example, ``PyArray_Pack`` is a more powerful version of ``setitem``
+        that for example correctly deals with casts.
 
     .. c:member:: void cast( \
             void *from, void *to, npy_intp n, void *fromarr, void *toarr)
@@ -534,8 +559,8 @@ PyArrayDescr_Type and PyArray_Descr
 
         These members are both pointers to functions to copy data from
         *src* to *dest* and *swap* if indicated. The value of arr is
-        only used for flexible ( :c:data:`NPY_STRING`, :c:data:`NPY_UNICODE`,
-        and :c:data:`NPY_VOID` ) arrays (and is obtained from
+        only used for flexible ( :c:enumerator:`~NPY_TYPES.NPY_STRING`, :c:enumerator:`~NPY_TYPES.NPY_UNICODE`,
+        and :c:enumerator:`~NPY_TYPES.NPY_VOID` ) arrays (and is obtained from
         ``arr->descr->elsize`` ). The second function copies a single
         value, while the first loops over n values with the provided
         strides. These functions can deal with misbehaved *src*
@@ -581,11 +606,11 @@ PyArrayDescr_Type and PyArray_Descr
         A pointer to a function that scans (scanf style) one element
         of the corresponding type from the file descriptor ``fd`` into
         the array memory pointed to by ``ip``. The array is assumed
-        to be behaved. 
+        to be behaved.
         The last argument ``arr`` is the array to be scanned into.
         Returns number of receiving arguments successfully assigned (which
         may be zero in case a matching failure occurred before the first
-        receiving argument was assigned), or EOF if input failure occurs 
+        receiving argument was assigned), or EOF if input failure occurs
         before the first receiving argument was assigned.
         This function should be called without holding the Python GIL, and
         has to grab it for error reporting.
@@ -629,8 +654,8 @@ PyArrayDescr_Type and PyArray_Descr
 
         An array of function pointers to a particular sorting
         algorithms. A particular sorting algorithm is obtained using a
-        key (so far :c:data:`NPY_QUICKSORT`, :c:data:`NPY_HEAPSORT`,
-        and :c:data:`NPY_MERGESORT` are defined). These sorts are done
+        key (so far :c:enumerator:`~NPY_SORTKIND.NPY_QUICKSORT`, :c:enumerator:`~NPY_SORTKIND.NPY_HEAPSORT`,
+        and :c:enumerator:`~NPY_SORTKIND.NPY_MERGESORT` are defined). These sorts are done
         in-place assuming contiguous and aligned data.
 
     .. c:member:: int argsort( \
@@ -659,7 +684,7 @@ PyArrayDescr_Type and PyArray_Descr
 
     .. c:member:: int **cancastscalarkindto
 
-        Either ``NULL`` or an array of :c:type:`NPY_NSCALARKINDS`
+        Either ``NULL`` or an array of :c:enumerator:`~NPY_SCALARKIND.NPY_NSCALARKINDS`
         pointers. These pointers should each be either ``NULL`` or a
         pointer to an array of integers (terminated by
         :c:data:`NPY_NOTYPE`) indicating data-types that a scalar of
@@ -673,62 +698,6 @@ PyArrayDescr_Type and PyArray_Descr
         can be cast to safely (this usually means without losing
         precision).
 
-    .. c:member:: void fastclip( \
-            void *in, npy_intp n_in, void *min, void *max, void *out)
-
-        .. deprecated:: 1.17
-            The use of this function will give a deprecation warning when
-            ``np.clip``. Instead of this function, the datatype must
-            instead use ``PyUFunc_RegisterLoopForDescr`` to attach a custom
-            loop to ``np.core.umath.clip``, ``np.minimum``, and ``np.maximum``.
-
-        .. deprecated:: 1.19
-            Setting this function is deprecated and should always be ``NULL``,
-            if set, it will be ignored.
-
-        A function that reads ``n_in`` items from ``in``, and writes to
-        ``out`` the read value if it is within the limits pointed to by
-        ``min`` and ``max``, or the corresponding limit if outside. The
-        memory segments must be contiguous and behaved, and either
-        ``min`` or ``max`` may be ``NULL``, but not both.
-
-    .. c:member:: void fastputmask( \
-            void *in, void *mask, npy_intp n_in, void *values, npy_intp nv)
-
-        .. deprecated:: 1.19
-            Setting this function is deprecated and should always be ``NULL``,
-            if set, it will be ignored.
-
-        A function that takes a pointer ``in`` to an array of ``n_in``
-        items, a pointer ``mask`` to an array of ``n_in`` boolean
-        values, and a pointer ``vals`` to an array of ``nv`` items.
-        Items from ``vals`` are copied into ``in`` wherever the value
-        in ``mask`` is non-zero, tiling ``vals`` as needed if
-        ``nv < n_in``. All arrays must be contiguous and behaved.
-
-    .. c:member:: void fasttake( \
-            void *dest, void *src, npy_intp *indarray, npy_intp nindarray, \
-            npy_intp n_outer, npy_intp m_middle, npy_intp nelem, \
-            NPY_CLIPMODE clipmode)
-
-        .. deprecated:: 1.19
-            Setting this function is deprecated and should always be ``NULL``,
-            if set, it will be ignored.
-
-        A function that takes a pointer ``src`` to a C contiguous,
-        behaved segment, interpreted as a 3-dimensional array of shape
-        ``(n_outer, nindarray, nelem)``, a pointer ``indarray`` to a
-        contiguous, behaved segment of ``m_middle`` integer indices,
-        and a pointer ``dest`` to a C contiguous, behaved segment,
-        interpreted as a 3-dimensional array of shape
-        ``(n_outer, m_middle, nelem)``. The indices in ``indarray`` are
-        used to index ``src`` along the second dimension, and copy the
-        corresponding chunks of ``nelem`` items into ``dest``.
-        ``clipmode`` (which can take on the values :c:data:`NPY_RAISE`,
-        :c:data:`NPY_WRAP` or :c:data:`NPY_CLIP`) determines how will
-        indices smaller than 0 or larger than ``nindarray`` will be
-        handled.
-
     .. c:member:: int argmin( \
             void* data, npy_intp n, npy_intp* min_ind, void* arr)
 
@@ -739,26 +708,226 @@ PyArrayDescr_Type and PyArray_Descr
         always 0. The index of the smallest element is returned in
         ``min_ind``.
 
+.. _arraymethod-structs:
 
-The :c:data:`PyArray_Type` typeobject implements many of the features of
-:c:type:`Python objects <PyTypeObject>` including the :c:member:`tp_as_number
-<PyTypeObject.tp_as_number>`, :c:member:`tp_as_sequence
-<PyTypeObject.tp_as_sequence>`, :c:member:`tp_as_mapping
-<PyTypeObject.tp_as_mapping>`, and :c:member:`tp_as_buffer
-<PyTypeObject.tp_as_buffer>` interfaces. The :c:type:`rich comparison
-<richcmpfunc>`) is also used along with new-style attribute lookup for
-member (:c:member:`tp_members <PyTypeObject.tp_members>`) and properties
-(:c:member:`tp_getset <PyTypeObject.tp_getset>`).
-The :c:data:`PyArray_Type` can also be sub-typed.
+PyArrayMethod_Context and PyArrayMethod_Spec
+--------------------------------------------
 
-.. tip::
+.. c:type:: PyArrayMethodObject_tag
 
-    The ``tp_as_number`` methods use a generic approach to call whatever
-    function has been registered for handling the operation.  When the
-    ``_multiarray_umath module`` is imported, it sets the numeric operations
-    for all arrays to the corresponding ufuncs. This choice can be changed with
-    :c:func:`PyUFunc_ReplaceLoopBySignature` The ``tp_str`` and ``tp_repr``
-    methods can also be altered using :c:func:`PyArray_SetStringFunction`.
+   An opaque struct used to represent the method "self" in ArrayMethod loops.
+
+.. c:type:: PyArrayMethod_Context
+
+   A struct that is passed in to ArrayMethod loops to provide context for the
+   runtime usage of the loop.
+
+   .. code-block:: c
+
+      typedef struct {
+          PyObject *caller;
+          struct PyArrayMethodObject_tag *method;
+          PyArray_Descr *const *descriptors;
+      } PyArrayMethod_Context
+
+   .. c:member:: PyObject *caller
+
+      The caller, which is typically the ufunc that called the loop. May be
+      ``NULL`` when a call is not from a ufunc (e.g. casts).
+
+   .. c:member:: struct PyArrayMethodObject_tag *method
+
+      The method "self". Currently this object is an opaque pointer.
+
+   .. c:member:: PyArray_Descr **descriptors
+
+      An array of descriptors for the ufunc loop, filled in by
+      ``resolve_descriptors``. The length of the array is ``nin`` + ``nout``.
+
+.. c:type:: PyArrayMethod_Spec
+
+   A struct used to register an ArrayMethod with NumPy. We use the slots
+   mechanism used by the Python limited API. See below for the slot definitions.
+
+   .. code-block:: c
+
+       typedef struct {
+          const char *name;
+          int nin, nout;
+          NPY_CASTING casting;
+          NPY_ARRAYMETHOD_FLAGS flags;
+          PyArray_DTypeMeta **dtypes;
+          PyType_Slot *slots;
+       } PyArrayMethod_Spec;
+
+   .. c:member:: const char *name
+
+      The name of the loop.
+
+   .. c:member:: int nin
+
+      The number of input operands
+
+   .. c:member:: int nout
+
+      The number of output operands.
+
+   .. c:member:: NPY_CASTING casting
+
+      Used to indicate how minimally permissive a casting operation should
+      be. For example, if a cast operation might in some circumstances be safe,
+      but in others unsafe, then ``NPY_UNSAFE_CASTING`` should be set. Not used
+      for ufunc loops but must still be set.
+
+   .. c:member:: NPY_ARRAYMETHOD_FLAGS flags
+
+      The flags set for the method.
+
+   .. c:member:: PyArray_DTypeMeta **dtypes
+
+      The DTypes for the loop. Must be ``nin`` + ``nout`` in length.
+
+   .. c:member:: PyType_Slot *slots
+
+      An array of slots for the method. Slot IDs must be one of the values
+      below.
+
+.. _dtypemeta:
+
+PyArray_DTypeMeta and PyArrayDTypeMeta_Spec
+-------------------------------------------
+
+.. c:var:: PyTypeObject PyArrayDTypeMeta_Type
+
+   The python type object corresponding to :c:type:`PyArray_DTypeMeta`.
+
+.. c:type:: PyArray_DTypeMeta
+
+   A largely opaque struct representing DType classes. Each instance defines a
+   metaclass for a single NumPy data type. Data types can either be
+   non-parametric or parametric. For non-parametric types, the DType class has
+   a one-to-one correspondence with the descriptor instance created from the
+   DType class. Parametric types can correspond to many different dtype
+   instances depending on the chosen parameters. This type is available in the
+   public ``numpy/dtype_api.h`` header. Currently use of this struct is not
+   supported in the limited CPython API, so if ``Py_LIMITED_API`` is set, this
+   type is a typedef for ``PyTypeObject``.
+
+   .. code-block:: c
+
+      typedef struct {
+           PyHeapTypeObject super;
+           PyArray_Descr *singleton;
+           int type_num;
+           PyTypeObject *scalar_type;
+           npy_uint64 flags;
+           void *dt_slots;
+           void *reserved[3];
+      } PyArray_DTypeMeta
+
+   .. c:member:: PyHeapTypeObject super
+
+          The superclass, providing hooks into the python object
+          API. Set members of this struct to fill in the functions
+          implementing the ``PyTypeObject`` API (e.g. ``tp_new``).
+
+   .. c:member:: PyArray_Descr *singleton
+
+          A descriptor instance suitable for use as a singleton
+          descriptor for the data type. This is useful for
+          non-parametric types representing simple plain old data type
+          where there is only one logical descriptor instance for all
+          data of the type. Can be NULL if a singleton instance is not
+          appropriate.
+
+   .. c:member:: int type_num
+
+          Corresponds to the type number for legacy data types. Data
+          types defined outside of NumPy and possibly future data types
+          shipped with NumPy will have ``type_num`` set to -1, so this
+          should not be relied on to discriminate between data types.
+
+   .. c:member:: PyTypeObject *scalar_type
+
+          The type of scalar instances for this data type.
+
+   .. c:member:: npy_uint64 flags
+
+          Flags can be set to indicate to NumPy that this data type
+          has optional behavior. See :ref:`dtype-flags` for a listing of
+          allowed flag values.
+
+   .. c:member:: void* dt_slots
+
+          An opaque pointer to a private struct containing
+          implementations of functions in the DType API. This is filled
+          in from the ``slots`` member of the ``PyArrayDTypeMeta_Spec``
+          instance used to initialize the DType.
+
+.. c:type:: PyArrayDTypeMeta_Spec
+
+   A struct used to initialize a new DType with the
+   ``PyArrayInitDTypeMeta_FromSpec`` function.
+
+   .. code-block:: c
+
+      typedef struct {
+          PyTypeObject *typeobj;
+          int flags;
+          PyArrayMethod_Spec **casts;
+          PyType_Slot *slots;
+          PyTypeObject *baseclass;
+      }
+
+   .. c:member:: PyTypeObject *typeobj
+
+      Either ``NULL`` or the type of the python scalar associated with
+      the DType. Scalar indexing into an array returns an item with this
+      type.
+
+   .. c:member:: int flags
+
+      Static flags for the DType class, indicating whether the DType is
+      parametric, abstract, or represents numeric data. The latter is
+      optional but is useful to set to indicate to downstream code if
+      the DType represents data that are numbers (ints, floats, or other
+      numeric data type) or something else (e.g. a string, unit, or
+      date).
+
+   .. c:member:: PyArrayMethod_Spec **casts;
+
+      A ``NULL``-terminated array of ArrayMethod specifications for
+      casts defined by the DType.
+
+   .. c:member:: PyType_Slot *slots;
+
+      A ``NULL``-terminated array of slot specifications for implementations
+      of functions in the DType API. Slot IDs must be one of the
+      DType slot IDs enumerated in :ref:`dtype-slots`.
+
+Exposed DTypes classes (``PyArray_DTypeMeta`` objects)
+------------------------------------------------------
+
+For use with promoters, NumPy exposes a number of Dtypes following the
+pattern ``PyArray_<Name>DType`` corresponding to those found in `np.dtypes`.
+
+Additionally, the three DTypes, ``PyArray_PyLongDType``,
+``PyArray_PyFloatDType``, ``PyArray_PyComplexDType`` correspond to the
+Python scalar values.  These cannot be used in all places, but do allow
+for example the common dtype operation and implementing promotion with them
+may be necessary.
+
+Further, the following abstract DTypes are defined which cover both the
+builtin NumPy ones and the python ones, and users can in principle subclass
+from them (this does not inherit any DType specific functionality):
+* ``PyArray_IntAbstractDType``
+* ``PyArray_FloatAbstractDType``
+* ``PyArray_ComplexAbstractDType``
+
+.. warning::
+    As of NumPy 2.0, the *only* valid use for these DTypes is registering a
+    promoter conveniently to e.g. match "any integers" (and subclass checks).
+    Because of this, they are not exposed to Python.
 
 
 PyUFunc_Type and PyUFuncObject
@@ -820,8 +989,8 @@ PyUFunc_Type and PyUFuncObject
           int *core_offsets;
           char *core_signature;
           PyUFunc_TypeResolutionFunc *type_resolver;
-          PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
           void *reserved2;
+          void *reserved3;
           npy_uint32 *op_flags;
           npy_uint32 *iter_flags;
           /* new in API version 0x0000000D */
@@ -889,10 +1058,6 @@ PyUFunc_Type and PyUFuncObject
        The number of supported data types for the ufunc. This number
        specifies how many different 1-d loops (of the builtin data
        types) are available.
-
-   .. c:member:: int reserved1
-
-       Unused.
 
    .. c:member:: char *name
 
@@ -966,18 +1131,9 @@ PyUFunc_Type and PyUFuncObject
        A function which resolves the types and fills an array with the dtypes
        for the inputs and outputs
 
-   .. c:member:: PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector
+       .. c:type:: PyUFunc_TypeResolutionFunc
 
-       .. deprecated:: 1.22
-
-            Some fallback support for this slot exists, but will be removed
-            eventually.  A universal function that relied on this will
-            have to be ported eventually.
-            See ref:`NEP 41 <NEP41>` and ref:`NEP 43 <NEP43>`
-
-   .. c:member:: void *reserved2
-
-       For a possible future loop selector with a different signature.
+           The function pointer type for :c:member:`type_resolver`
 
    .. c:member:: npy_uint32 op_flags
 
@@ -997,10 +1153,14 @@ PyUFunc_Type and PyUFuncObject
 
    .. c:member:: npy_uint32 *core_dim_flags
 
-       For each distinct core dimension, a set of ``UFUNC_CORE_DIM*`` flags
+       For each distinct core dimension, a set of flags (
+       :c:macro:`UFUNC_CORE_DIM_CAN_IGNORE` and
+       :c:macro:`UFUNC_CORE_DIM_SIZE_INFERRED`)
 
-..
-  dedented to allow internal linking, pending a refactoring
+   .. c:member:: PyObject *identity_value
+
+       Identity for reduction, when :c:member:`PyUFuncObject.identity`
+       is equal to :c:data:`PyUFunc_IdentityValue`.
 
 .. c:macro:: UFUNC_CORE_DIM_CAN_IGNORE
 
@@ -1010,11 +1170,6 @@ PyUFunc_Type and PyUFuncObject
 
     if the dim size will be determined from the operands
     and not from a :ref:`frozen <frozen>` signature
-
-   .. c:member:: PyObject *identity_value
-
-       Identity for reduction, when :c:member:`PyUFuncObject.identity`
-       is equal to :c:data:`PyUFunc_IdentityValue`.
 
 PyArrayIter_Type and PyArrayIterObject
 --------------------------------------
@@ -1053,11 +1208,11 @@ PyArrayIter_Type and PyArrayIterObject
           int   nd_m1;
           npy_intp  index;
           npy_intp  size;
-          npy_intp  coordinates[NPY_MAXDIMS];
-          npy_intp  dims_m1[NPY_MAXDIMS];
-          npy_intp  strides[NPY_MAXDIMS];
-          npy_intp  backstrides[NPY_MAXDIMS];
-          npy_intp  factors[NPY_MAXDIMS];
+          npy_intp  coordinates[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  dims_m1[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  strides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  backstrides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp  factors[NPY_MAXDIMS_LEGACY_ITERS];
           PyArrayObject *ao;
           char  *dataptr;
           npy_bool  contiguous;
@@ -1153,8 +1308,8 @@ PyArrayMultiIter_Type and PyArrayMultiIterObject
           npy_intp size;
           npy_intp index;
           int nd;
-          npy_intp dimensions[NPY_MAXDIMS];
-          PyArrayIterObject *iters[NPY_MAXDIMS];
+          npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
+          PyArrayIterObject *iters[];
       } PyArrayMultiIterObject;
 
    .. c:macro: PyObject_HEAD
@@ -1208,45 +1363,24 @@ PyArrayNeighborhoodIter_Type and PyArrayNeighborhoodIterObject
           PyObject_HEAD
           int nd_m1;
           npy_intp index, size;
-          npy_intp coordinates[NPY_MAXDIMS]
-          npy_intp dims_m1[NPY_MAXDIMS];
-          npy_intp strides[NPY_MAXDIMS];
-          npy_intp backstrides[NPY_MAXDIMS];
-          npy_intp factors[NPY_MAXDIMS];
+          npy_intp coordinates[NPY_MAXDIMS_LEGACY_ITERS]
+          npy_intp dims_m1[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp strides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp backstrides[NPY_MAXDIMS_LEGACY_ITERS];
+          npy_intp factors[NPY_MAXDIMS_LEGACY_ITERS];
           PyArrayObject *ao;
           char *dataptr;
           npy_bool contiguous;
-          npy_intp bounds[NPY_MAXDIMS][2];
-          npy_intp limits[NPY_MAXDIMS][2];
-          npy_intp limits_sizes[NPY_MAXDIMS];
+          npy_intp bounds[NPY_MAXDIMS_LEGACY_ITERS][2];
+          npy_intp limits[NPY_MAXDIMS_LEGACY_ITERS][2];
+          npy_intp limits_sizes[NPY_MAXDIMS_LEGACY_ITERS];
           npy_iter_get_dataptr_t translate;
           npy_intp nd;
-          npy_intp dimensions[NPY_MAXDIMS];
+          npy_intp dimensions[NPY_MAXDIMS_LEGACY_ITERS];
           PyArrayIterObject* _internal_iter;
           char* constant;
           int mode;
       } PyArrayNeighborhoodIterObject;
-
-PyArrayFlags_Type and PyArrayFlagsObject
-----------------------------------------
-
-.. c:var:: PyTypeObject PyArrayFlags_Type
-
-   When the flags attribute is retrieved from Python, a special
-   builtin object of this type is constructed. This special type makes
-   it easier to work with the different flags by accessing them as
-   attributes or by accessing them as if the object were a dictionary
-   with the flag names as entries.
-
-.. c:type:: PyArrayFlagsObject
-
-   .. code-block:: c
-
-      typedef struct PyArrayFlagsObject {
-              PyObject_HEAD
-              PyObject *arr;
-              int flags;
-      } PyArrayFlagsObject;
 
 
 ScalarArrayTypes
@@ -1260,8 +1394,8 @@ are ``Py{TYPE}ArrType_Type`` where ``{TYPE}`` can be
     **Bool**, **Byte**, **Short**, **Int**, **Long**, **LongLong**,
     **UByte**, **UShort**, **UInt**, **ULong**, **ULongLong**,
     **Half**, **Float**, **Double**, **LongDouble**, **CFloat**,
-    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**, and
-    **Object**.
+    **CDouble**, **CLongDouble**, **String**, **Unicode**, **Void**,
+    **Datetime**, **Timedelta**, and **Object**.
 
 These type names are part of the C-API and can therefore be created in
 extension C-code. There is also a ``PyIntpArrType_Type`` and a
@@ -1273,7 +1407,7 @@ value from the array scalar and the function :c:func:`PyArray_Scalar`
 (...) can be used to construct an array scalar from a C-value.
 
 
-Other C-Structures
+Other C-structures
 ==================
 
 A few new C-structures were found to be useful in the development of
@@ -1457,22 +1591,6 @@ memory management. These types are not accessible directly from
 Python, and are not exposed to the C-API. They are included here only
 for completeness and assistance in understanding the code.
 
-
-.. c:type:: PyUFuncLoopObject
-
-   A loose wrapper for a C-structure that contains the information
-   needed for looping. This is useful if you are trying to understand
-   the ufunc looping code. The :c:type:`PyUFuncLoopObject` is the associated
-   C-structure. It is defined in the ``ufuncobject.h`` header.
-
-.. c:type:: PyUFuncReduceObject
-
-   A loose wrapper for the C-structure that contains the information
-   needed for reduce-like methods of ufuncs. This is useful if you are
-   trying to understand the reduce, accumulate, and reduce-at
-   code. The :c:type:`PyUFuncReduceObject` is the associated C-structure. It
-   is defined in the ``ufuncobject.h`` header.
-
 .. c:type:: PyUFunc_Loop1d
 
    A simple linked-list of C-structures containing the information needed
@@ -1483,9 +1601,39 @@ for completeness and assistance in understanding the code.
 
    Advanced indexing is handled with this Python type. It is simply a
    loose wrapper around the C-structure containing the variables
-   needed for advanced array indexing. The associated C-structure,
-   ``PyArrayMapIterObject``, is useful if you are trying to
+   needed for advanced array indexing.
+
+.. c:type:: PyArrayMapIterObject
+
+   The C-structure associated with :c:var:`PyArrayMapIter_Type`.
+   This structure is useful if you are trying to
    understand the advanced-index mapping code. It is defined in the
    ``arrayobject.h`` header. This type is not exposed to Python and
    could be replaced with a C-structure. As a Python type it takes
    advantage of reference- counted memory management.
+
+
+NumPy C-API and C complex
+=========================
+When you use the NumPy C-API, you will have access to complex real declarations
+``npy_cdouble`` and ``npy_cfloat``, which are declared in terms of the C
+standard types from ``complex.h``. Unfortunately, ``complex.h`` contains
+`#define I ...`` (where the actual definition depends on the compiler), which
+means that any downstream user that does ``#include <numpy/arrayobject.h>``
+could get ``I`` defined, and using something like declaring ``double I;`` in
+their code will result in an obscure compiler error like
+
+.. code-block::C
+    error: expected ‘)’ before ‘__extension__’
+                    double I,
+
+This error can be avoided  by adding::
+
+    #undef I
+
+to your code.
+
+.. versionchanged:: 2.0
+    The inclusion of ``complex.h`` was new in NumPy 2, so that code defining
+    a different ``I`` may not have required the ``#undef I`` on older versions.
+    NumPy 2.0.1 briefly included the ``#under I``

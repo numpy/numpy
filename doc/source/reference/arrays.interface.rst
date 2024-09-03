@@ -21,13 +21,13 @@ The array interface protocol
    backward-compatible implementation utilizing the array interface
    described here.
 
-__ http://cython.org/
+__ https://cython.org/
 __ https://github.com/cython/cython/wiki/tutorials-numpy
 
 :version: 3
 
 The array interface (sometimes called array protocol) was created in
-2005 as a means for array-like Python objects to re-use each other's
+2005 as a means for array-like Python objects to reuse each other's
 data buffers intelligently whenever possible. The homogeneous
 N-dimensional array interface is a default mechanism for objects to
 share N-dimensional array memory and information.  The interface
@@ -179,7 +179,7 @@ This approach to the interface consists of the object having an
 
    **offset** (optional)
        An integer offset into the array data region. This can only be
-       used when data is ``None`` or returns a :class:`buffer`
+       used when data is ``None`` or returns a :class:`memoryview`
        object.
 
        **Default**: ``0``.
@@ -220,8 +220,8 @@ as::
     int itemsize;         /* size of each element */
     int flags;            /* flags indicating how the data should be interpreted */
                           /*   must set ARR_HAS_DESCR bit to validate descr */
-    Py_intptr_t *shape;   /* A length-nd array of shape information */
-    Py_intptr_t *strides; /* A length-nd array of stride information */
+    Py_ssize_t *shape;    /* A length-nd array of shape information */
+    Py_ssize_t *strides;  /* A length-nd array of stride information */
     void *data;           /* A pointer to the first element of the array */
     PyObject *descr;      /* NULL or data-description (same as descr key
                                   of __array_interface__) -- must set ARR_HAS_DESCR
@@ -237,7 +237,7 @@ interpreted.  The data-bits are :c:macro:`NPY_ARRAY_C_CONTIGUOUS` (0x1),
 has the arrdescr field.  The field should not be accessed unless this
 flag is present.
 
-   .. c:macro:: NPY_ARR_HAS_DESCR
+.. c:macro:: NPY_ARR_HAS_DESCR
 
 .. admonition:: New since June 16, 2006:
 
@@ -252,7 +252,7 @@ flag is present.
 
 .. note::
 
-    :obj:`__array_struct__` is considered legacy and should not be used for new
+    :obj:`~object.__array_struct__` is considered legacy and should not be used for new
     code. Use the :doc:`buffer protocol <python:c-api/buffer>` or the DLPack protocol
     `numpy.from_dlpack` instead.
 
@@ -314,7 +314,7 @@ more information which may be important for various applications::
 It should be clear that any structured type could be described using this
 interface.
 
-Differences with Array interface (Version 2)
+Differences with array interface (version 2)
 ============================================
 
 The version 2 interface was very similar.  The differences were

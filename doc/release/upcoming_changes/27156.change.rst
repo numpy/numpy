@@ -1,0 +1,9 @@
+NEP 50 promotion state option removed
+-------------------------------------
+The NEP 50 promotion state settings are now removed. They were always
+meant as temporary means for testing.
+A warning will be given if the environment variable is set to anything
+but ``NPY_PROMOTION_STATE=weak`` wile ``_set_promotion_state``
+and ``_get_promotion_state`` are removed.
+In case code used ``_no_nep50_warning``, a ``contextlib.nullcontext``
+could be used to replace it when not available.

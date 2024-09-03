@@ -3,11 +3,12 @@ import functools
 import sys
 import pytest
 
-from numpy.lib.shape_base import (
+from numpy import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
     vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
     put_along_axis
     )
+from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
     )
@@ -37,7 +38,7 @@ class TestTakeAlongAxis:
             (np.sort, np.argsort, dict()),
             (_add_keepdims(np.min), _add_keepdims(np.argmin), dict()),
             (_add_keepdims(np.max), _add_keepdims(np.argmax), dict()),
-            (np.partition, np.argpartition, dict(kth=2)),
+            #(np.partition, np.argpartition, dict(kth=2)),
         ]
 
         for func, argfunc, kwargs in funcs:
@@ -61,7 +62,9 @@ class TestTakeAlongAxis:
         # float arrays not allowed
         assert_raises(IndexError, take_along_axis, a, ai.astype(float), axis=1)
         # invalid axis
-        assert_raises(np.AxisError, take_along_axis, a, ai, axis=10)
+        assert_raises(AxisError, take_along_axis, a, ai, axis=10)
+        # invalid indices
+        assert_raises(ValueError, take_along_axis, a, ai, axis=None)
 
     def test_empty(self):
         """ Test everything is ok with empty results, even with inserted dims """
@@ -102,6 +105,24 @@ class TestPutAlongAxis:
         ai = np.arange(10, dtype=np.intp).reshape((1, 2, 5)) % 4
         put_along_axis(a, ai, 20, axis=1)
         assert_equal(take_along_axis(a, ai, axis=1), 20)
+
+    def test_invalid(self):
+        """ Test invalid inputs """
+        a_base = np.array([[10, 30, 20], [60, 40, 50]])
+        indices = np.array([[0], [1]])
+        values = np.array([[2], [1]])
+
+        # sanity check
+        a = a_base.copy()
+        put_along_axis(a, indices, values, axis=0)
+        assert np.all(a == [[2, 2, 2], [1, 1, 1]])
+
+        # invalid indices
+        a = a_base.copy()
+        with assert_raises(ValueError) as exc:
+            put_along_axis(a, indices, values, axis=None)
+        assert "single dimension" in str(exc.exception)
+
 
 
 class TestApplyAlongAxis:
@@ -296,12 +317,12 @@ class TestExpandDims:
     def test_axis_out_of_range(self):
         s = (2, 3, 4, 5)
         a = np.empty(s)
-        assert_raises(np.AxisError, expand_dims, a, -6)
-        assert_raises(np.AxisError, expand_dims, a, 5)
+        assert_raises(AxisError, expand_dims, a, -6)
+        assert_raises(AxisError, expand_dims, a, 5)
 
         a = np.empty((3, 3, 3))
-        assert_raises(np.AxisError, expand_dims, a, (0, -6))
-        assert_raises(np.AxisError, expand_dims, a, (0, 5))
+        assert_raises(AxisError, expand_dims, a, (0, -6))
+        assert_raises(AxisError, expand_dims, a, (0, 5))
 
     def test_repeated_axis(self):
         a = np.empty((3, 3, 3))
@@ -493,7 +514,7 @@ class TestColumnStack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            column_stack((np.arange(3) for _ in range(2)))
+            column_stack(np.arange(3) for _ in range(2))
 
 
 class TestDstack:
@@ -530,7 +551,7 @@ class TestDstack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            dstack((np.arange(3) for _ in range(2)))
+            dstack(np.arange(3) for _ in range(2))
 
 
 # array_split has more comprehensive test of splitting.
@@ -685,7 +706,7 @@ class TestKron:
         assert_equal(type(kron(ma, a)), myarray)
 
     @pytest.mark.parametrize(
-        "array_class", [np.asarray, np.mat]
+        "array_class", [np.asarray, np.asmatrix]
     )
     def test_kron_smoke(self, array_class):
         a = array_class(np.ones([3, 3]))

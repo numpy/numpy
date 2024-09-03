@@ -86,7 +86,7 @@ report. To learn how to do that, visit
 
 
 ********************
-1. Reproduce the bug
+3. Reproduce the bug
 ********************
 
 The issue reported in `#16354 <https://github.com/numpy/numpy/issues/16354>`_ is

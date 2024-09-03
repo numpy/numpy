@@ -1,7 +1,9 @@
 import os
 import pytest
+import platform
 
 import numpy as np
+import numpy.testing as npt
 
 from . import util
 
@@ -64,3 +66,76 @@ def test_include_path():
     fnames_in_dir = os.listdir(incdir)
     for fname in ("fortranobject.c", "fortranobject.h"):
         assert fname in fnames_in_dir
+
+
+class TestIncludeFiles(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "regression", "incfile.f90")]
+    options = [f"-I{util.getpath('tests', 'src', 'regression')}",
+               f"--include-paths {util.getpath('tests', 'src', 'regression')}"]
+
+    @pytest.mark.slow
+    def test_gh25344(self):
+        exp = 7.0
+        res = self.module.add(3.0, 4.0)
+        assert  exp == res
+
+class TestF77Comments(util.F2PyTest):
+    # Check that comments are stripped from F77 continuation lines
+    sources = [util.getpath("tests", "src", "regression", "f77comments.f")]
+
+    @pytest.mark.slow
+    def test_gh26148(self):
+        x1 = np.array(3, dtype=np.int32)
+        x2 = np.array(5, dtype=np.int32)
+        res=self.module.testsub(x1, x2)
+        assert(res[0] == 8)
+        assert(res[1] == 15)
+
+    @pytest.mark.slow
+    def test_gh26466(self):
+        # Check that comments after PARAMETER directions are stripped
+        expected = np.arange(1, 11, dtype=np.float32)*2
+        res=self.module.testsub2()
+        npt.assert_allclose(expected, res)
+
+class TestF90Contiuation(util.F2PyTest):
+    # Check that comments are stripped from F90 continuation lines
+    sources = [util.getpath("tests", "src", "regression", "f90continuation.f90")]
+
+    @pytest.mark.slow
+    def test_gh26148b(self):
+        x1 = np.array(3, dtype=np.int32)
+        x2 = np.array(5, dtype=np.int32)
+        res=self.module.testsub(x1, x2)
+        assert(res[0] == 8)
+        assert(res[1] == 15)
+
+@pytest.mark.slow
+def test_gh26623():
+    # Including libraries with . should not generate an incorrect meson.build
+    try:
+        aa = util.build_module(
+            [util.getpath("tests", "src", "regression", "f90continuation.f90")],
+            ["-lfoo.bar"],
+            module_name="Blah",
+        )
+    except RuntimeError as rerr:
+        assert "lparen got assign" not in str(rerr)
+
+
+@pytest.mark.slow
+@pytest.mark.skipif(platform.system() not in ['Linux', 'Darwin'], reason='Unsupported on this platform for now')
+def test_gh25784():
+    # Compile dubious file using passed flags
+    try:
+        aa = util.build_module(
+            [util.getpath("tests", "src", "regression", "f77fixedform.f95")],
+            options=[
+                # Meson will collect and dedup these to pass to fortran_args:
+                "--f77flags='-ffixed-form -O2'",
+                "--f90flags=\"-ffixed-form -Og\"",
+            ],
+            module_name="Blah",
+        )
+    except ImportError as rerr:
+        assert "unknown_subroutine_" in str(rerr)

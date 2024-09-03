@@ -1,10 +1,10 @@
-from typing import Any
 import numpy as np
+import numpy.typing as npt
 
-AR_c: np.ndarray[Any, np.dtype[np.complex128]]
-AR_m: np.ndarray[Any, np.dtype[np.timedelta64]]
-AR_M: np.ndarray[Any, np.dtype[np.datetime64]]
-AR_O: np.ndarray[Any, np.dtype[np.object_]]
+AR_c: npt.NDArray[np.complex128]
+AR_m: npt.NDArray[np.timedelta64]
+AR_M: npt.NDArray[np.datetime64]
+AR_O: npt.NDArray[np.object_]
 
 np.fix(AR_c)  # E: incompatible type
 np.fix(AR_m)  # E: incompatible type

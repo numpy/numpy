@@ -2,6 +2,13 @@ from .common import Benchmark
 
 import numpy as np
 
+try:
+    # SkipNotImplemented is available since 6.0
+    from asv_runner.benchmarks.mark import SkipNotImplemented
+except ImportError:
+    SkipNotImplemented = NotImplementedError
+
+
 class Linspace(Benchmark):
     def setup(self):
         self.d = np.array([1, 2, 3])
@@ -132,7 +139,7 @@ def memoize(f):
     def wrapped(*args):
         if args not in _memoized:
             _memoized[args] = f(*args)
-        
+
         return _memoized[args].copy()
 
     return f
@@ -147,17 +154,19 @@ class SortGenerator:
 
     @staticmethod
     @memoize
-    def random(size, dtype):
+    def random(size, dtype, rnd):
         """
         Returns a randomly-shuffled array.
         """
         arr = np.arange(size, dtype=dtype)
+        rnd = np.random.RandomState(1792364059)
         np.random.shuffle(arr)
+        rnd.shuffle(arr)
         return arr
-    
+
     @staticmethod
     @memoize
-    def ordered(size, dtype):
+    def ordered(size, dtype, rnd):
         """
         Returns an ordered array.
         """
@@ -165,15 +174,22 @@ class SortGenerator:
 
     @staticmethod
     @memoize
-    def reversed(size, dtype):
+    def reversed(size, dtype, rnd):
         """
         Returns an array that's in descending order.
         """
+        dtype = np.dtype(dtype)
+        try:
+            with np.errstate(over="raise"):
+                res = dtype.type(size-1)
+        except (OverflowError, FloatingPointError):
+            raise SkipNotImplemented("Cannot construct arange for this size.")
+
         return np.arange(size-1, -1, -1, dtype=dtype)
 
     @staticmethod
     @memoize
-    def uniform(size, dtype):
+    def uniform(size, dtype, rnd):
         """
         Returns an array that has the same value everywhere.
         """
@@ -181,20 +197,7 @@ class SortGenerator:
 
     @staticmethod
     @memoize
-    def swapped_pair(size, dtype, swap_frac):
-        """
-        Returns an ordered array, but one that has ``swap_frac * size``
-        pairs swapped.
-        """
-        a = np.arange(size, dtype=dtype)
-        for _ in range(int(size * swap_frac)):
-            x, y = np.random.randint(0, size, 2)
-            a[x], a[y] = a[y], a[x]
-        return a
-
-    @staticmethod
-    @memoize
-    def sorted_block(size, dtype, block_size):
+    def sorted_block(size, dtype, block_size, rnd):
         """
         Returns an array with blocks that are all sorted.
         """
@@ -206,36 +209,6 @@ class SortGenerator:
         for i in range(block_num):
             b.extend(a[i::block_num])
         return np.array(b)
-
-    @classmethod
-    @memoize
-    def random_unsorted_area(cls, size, dtype, frac, area_size=None):
-        """
-        This type of array has random unsorted areas such that they
-        compose the fraction ``frac`` of the original array.
-        """
-        if area_size is None:
-            area_size = cls.AREA_SIZE
-
-        area_num = int(size * frac / area_size)
-        a = np.arange(size, dtype=dtype)
-        for _ in range(area_num):
-            start = np.random.randint(size-area_size)
-            end = start + area_size
-            np.random.shuffle(a[start:end])
-        return a
-
-    @classmethod
-    @memoize
-    def random_bubble(cls, size, dtype, bubble_num, bubble_size=None):
-        """
-        This type of array has ``bubble_num`` random unsorted areas.
-        """
-        if bubble_size is None:
-            bubble_size = cls.BUBBLE_SIZE
-        frac = bubble_size * bubble_num / size
-
-        return cls.random_unsorted_area(size, dtype, frac, bubble_size)
 
 
 class Sort(Benchmark):
@@ -257,15 +230,6 @@ class Sort(Benchmark):
             ('sorted_block', 10),
             ('sorted_block', 100),
             ('sorted_block', 1000),
-            # ('swapped_pair', 0.01),
-            # ('swapped_pair', 0.1),
-            # ('swapped_pair', 0.5),
-            # ('random_unsorted_area', 0.5),
-            # ('random_unsorted_area', 0.1),
-            # ('random_unsorted_area', 0.01),
-            # ('random_bubble', 1),
-            # ('random_bubble', 5),
-            # ('random_bubble', 10),
         ],
     ]
     param_names = ['kind', 'dtype', 'array_type']
@@ -274,9 +238,9 @@ class Sort(Benchmark):
     ARRAY_SIZE = 10000
 
     def setup(self, kind, dtype, array_type):
-        np.random.seed(1234)
+        rnd = np.random.RandomState(507582308)
         array_class = array_type[0]
-        self.arr = getattr(SortGenerator, array_class)(self.ARRAY_SIZE, dtype, *array_type[1:])
+        self.arr = getattr(SortGenerator, array_class)(self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
 
     def time_sort(self, kind, dtype, array_type):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.
@@ -287,6 +251,37 @@ class Sort(Benchmark):
     def time_argsort(self, kind, dtype, array_type):
         np.argsort(self.arr, kind=kind)
 
+
+class Partition(Benchmark):
+    params = [
+        ['float64', 'int64', 'float32', 'int32', 'int16', 'float16'],
+        [
+            ('random',),
+            ('ordered',),
+            ('reversed',),
+            ('uniform',),
+            ('sorted_block', 10),
+            ('sorted_block', 100),
+            ('sorted_block', 1000),
+        ],
+        [10, 100, 1000],
+    ]
+    param_names = ['dtype', 'array_type', 'k']
+
+    # The size of the benchmarked arrays.
+    ARRAY_SIZE = 100000
+
+    def setup(self, dtype, array_type, k):
+        rnd = np.random.seed(2136297818)
+        array_class = array_type[0]
+        self.arr = getattr(SortGenerator, array_class)(
+            self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
+
+    def time_partition(self, dtype, array_type, k):
+        temp = np.partition(self.arr, k)
+
+    def time_argpartition(self, dtype, array_type, k):
+        temp = np.argpartition(self.arr, k)
 
 class SortWorst(Benchmark):
     def setup(self):
@@ -308,7 +303,9 @@ class SortWorst(Benchmark):
 class Where(Benchmark):
     def setup(self):
         self.d = np.arange(20000)
+        self.d_o = self.d.astype(object)
         self.e = self.d.copy()
+        self.e_o = self.d_o.copy()
         self.cond = (self.d > 5000)
         size = 1024 * 1024 // 8
         rnd_array = np.random.rand(size)
@@ -331,6 +328,11 @@ class Where(Benchmark):
 
     def time_2(self):
         np.where(self.cond, self.d, self.e)
+
+    def time_2_object(self):
+        # object and byteswapped arrays have a
+        # special slow path in the where internals
+        np.where(self.cond, self.d_o, self.e_o)
 
     def time_2_broadcast(self):
         np.where(self.cond, self.d, 0)

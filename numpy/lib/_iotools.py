@@ -4,8 +4,8 @@
 __docformat__ = "restructuredtext en"
 
 import numpy as np
-import numpy.core.numeric as nx
-from numpy.compat import asbytes, asunicode
+import numpy._core.numeric as nx
+from numpy._utils import asbytes, asunicode
 
 
 def _decode_line(line, encoding=None):
@@ -72,15 +72,13 @@ def has_nested_fields(ndtype):
 
     Examples
     --------
+    >>> import numpy as np
     >>> dt = np.dtype([('name', 'S4'), ('x', float), ('y', float)])
     >>> np.lib._iotools.has_nested_fields(dt)
     False
 
     """
-    for name in ndtype.names or ():
-        if ndtype[name].names is not None:
-            return True
-    return False
+    return any(ndtype[name].names is not None for name in ndtype.names or ())
 
 
 def flatten_dtype(ndtype, flatten_base=False):
@@ -100,6 +98,7 @@ def flatten_dtype(ndtype, flatten_base=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
     ...                ('block', int, (2, 3))])
     >>> np.lib._iotools.flatten_dtype(dt)
@@ -266,6 +265,7 @@ class NameValidator:
 
     Examples
     --------
+    >>> import numpy as np
     >>> validator = np.lib._iotools.NameValidator()
     >>> validator(['file', 'field2', 'with space', 'CaSe'])
     ('file_', 'field2', 'with_space', 'CaSe')
@@ -403,6 +403,7 @@ def str2bool(value):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib._iotools.str2bool('TRUE')
     True
     >>> np.lib._iotools.str2bool('false')
@@ -495,7 +496,7 @@ class StringConverter:
         upgrade or not. Default is False.
 
     """
-    _mapper = [(nx.bool_, str2bool, False),
+    _mapper = [(nx.bool, str2bool, False),
                (nx.int_, int, -1),]
 
     # On 32-bit systems, we need to make sure that we explicitly include
@@ -564,7 +565,7 @@ class StringConverter:
         >>> StringConverter.upgrade_mapper(dateparser, default=defaultdate)
         """
         # Func is a single functions
-        if hasattr(func, '__call__'):
+        if callable(func):
             cls._mapper.insert(-1, (cls._getsubdtype(default), func, default))
             return
         elif hasattr(func, '__iter__'):
@@ -611,7 +612,7 @@ class StringConverter:
                 dtype = np.dtype(dtype_or_func)
             except TypeError:
                 # dtype_or_func must be a function, then
-                if not hasattr(dtype_or_func, '__call__'):
+                if not callable(dtype_or_func):
                     errmsg = ("The input argument `dtype` is neither a"
                               " function nor a dtype (got '%s' instead)")
                     raise TypeError(errmsg % type(dtype_or_func))
@@ -780,7 +781,7 @@ class StringConverter:
             value.
         missing_values : {sequence of str, None}, optional
             Sequence of strings indicating a missing value. If ``None``, then
-            the existing `missing_values` are cleared. The default is `''`.
+            the existing `missing_values` are cleared. The default is ``''``.
         locked : bool, optional
             Whether the StringConverter should be locked to prevent
             automatic upgrade or not. Default is False.
@@ -844,6 +845,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib._iotools.easy_dtype(float)
     dtype('float64')
     >>> np.lib._iotools.easy_dtype("i4, f8")

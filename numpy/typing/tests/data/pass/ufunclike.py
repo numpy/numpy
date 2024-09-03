@@ -13,7 +13,8 @@ class Object:
     def __ge__(self, value: object) -> bool:
         return True
 
-    def __array__(self) -> np.ndarray[Any, np.dtype[np.object_]]:
+    def __array__(self, dtype: np.typing.DTypeLike | None = None,
+                  copy: bool | None = None) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self
         return ret

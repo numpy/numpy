@@ -18,7 +18,7 @@ def test_multi_fortran_libs_link(tmp_path):
     # We need to make sure we actually have an f77 compiler.
     # This is nontrivial, so we'll borrow the utilities
     # from f2py tests:
-    from numpy.f2py.tests.util import has_f77_compiler
+    from numpy.distutils.tests.utilities import has_f77_compiler
     if not has_f77_compiler():
         pytest.skip('No F77 compiler found')
 

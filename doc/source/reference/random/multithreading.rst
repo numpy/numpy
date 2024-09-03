@@ -1,4 +1,4 @@
-Multithreaded Generation
+Multithreaded generation
 ========================
 
 The four core distributions (:meth:`~.Generator.random`,
@@ -104,8 +104,8 @@ that does not use an existing array due to array creation overhead.
 
     Out[6]: 125 ms ± 309 µs per loop (mean ± std. dev. of 7 runs, 10 loops each)
 
-Note that if `threads` is not set by the user, it will be determined by
-`multiprocessing.cpu_count()`.
+Note that if ``threads`` is not set by the user, it will be determined by
+``multiprocessing.cpu_count()``.
 
 .. code-block:: ipython
 

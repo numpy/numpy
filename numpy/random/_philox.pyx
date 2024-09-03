@@ -1,3 +1,5 @@
+#cython: binding=True
+
 from cpython.pycapsule cimport PyCapsule_New
 
 import numpy as np
@@ -11,7 +13,7 @@ __all__ = ['Philox']
 
 np.import_array()
 
-DEF PHILOX_BUFFER_SIZE=4
+cdef int PHILOX_BUFFER_SIZE=4
 
 cdef extern from 'src/philox/philox.h':
     struct s_r123array2x64:
@@ -30,25 +32,25 @@ cdef extern from 'src/philox/philox.h':
         philox4x64_ctr_t *ctr
         philox4x64_key_t *key
         int buffer_pos
-        uint64_t buffer[PHILOX_BUFFER_SIZE]
+        uint64_t *buffer
         int has_uint32
         uint32_t uinteger
 
     ctypedef s_philox_state philox_state
 
-    uint64_t philox_next64(philox_state *state)  nogil
-    uint32_t philox_next32(philox_state *state)  nogil
+    uint64_t philox_next64(philox_state *state)  noexcept nogil
+    uint32_t philox_next32(philox_state *state)  noexcept nogil
     void philox_jump(philox_state *state)
     void philox_advance(uint64_t *step, philox_state *state)
 
 
-cdef uint64_t philox_uint64(void*st) nogil:
+cdef uint64_t philox_uint64(void*st) noexcept nogil:
     return philox_next64(<philox_state *> st)
 
-cdef uint32_t philox_uint32(void *st) nogil:
+cdef uint32_t philox_uint32(void *st) noexcept nogil:
     return philox_next32(<philox_state *> st)
 
-cdef double philox_double(void*st) nogil:
+cdef double philox_double(void*st) noexcept nogil:
     return uint64_to_double(philox_next64(<philox_state *> st))
 
 cdef class Philox(BitGenerator):
@@ -91,14 +93,14 @@ cdef class Philox(BitGenerator):
     the sequence in increments of :math:`2^{128}`. These features allow
     multiple non-overlapping sequences to be generated.
 
-    ``Philox`` provides a capsule containing function pointers that produce
+    `Philox` provides a capsule containing function pointers that produce
     doubles, and unsigned 32 and 64- bit integers. These are not
-    directly consumable in Python and must be consumed by a ``Generator``
+    directly consumable in Python and must be consumed by a `Generator`
     or similar object that supports low-level access.
 
     **State and Seeding**
 
-    The ``Philox`` state vector consists of a 256-bit value encoded as
+    The `Philox` state vector consists of a 256-bit value encoded as
     a 4-element uint64 array and a 128-bit value encoded as a 2-element uint64
     array. The former is a counter which is incremented by 1 for every 4 64-bit
     randoms produced. The second is a key which determined the sequence
@@ -120,10 +122,10 @@ cdef class Philox(BitGenerator):
     >>> sg = SeedSequence(1234)
     >>> rg = [Generator(Philox(s)) for s in sg.spawn(10)]
 
-    ``Philox`` can be used in parallel applications by calling the ``jumped``
-    method  to advances the state as-if :math:`2^{128}` random numbers have
-    been generated. Alternatively, ``advance`` can be used to advance the
-    counter for any positive step in [0, 2**256). When using ``jumped``, all
+    `Philox` can be used in parallel applications by calling the :meth:`jumped`
+    method to advance the state as-if :math:`2^{128}` random numbers have
+    been generated. Alternatively, :meth:`advance` can be used to advance the
+    counter for any positive step in [0, 2**256). When using :meth:`jumped`, all
     generators should be chained to ensure that the segments come from the same
     sequence.
 
@@ -134,7 +136,7 @@ cdef class Philox(BitGenerator):
     ...    rg.append(Generator(bit_generator))
     ...    bit_generator = bit_generator.jumped()
 
-    Alternatively, ``Philox`` can be used in parallel applications by using
+    Alternatively, `Philox` can be used in parallel applications by using
     a sequence of distinct keys where each instance uses different key.
 
     >>> key = 2**96 + 2**33 + 2**17 + 2**9
@@ -142,7 +144,7 @@ cdef class Philox(BitGenerator):
 
     **Compatibility Guarantee**
 
-    ``Philox`` makes a guarantee that a fixed ``seed`` will always produce
+    `Philox` makes a guarantee that a fixed ``seed`` will always produce
     the same random integer stream.
 
     Examples
@@ -193,11 +195,13 @@ cdef class Philox(BitGenerator):
         self._bitgen.next_raw = &philox_uint64
 
     cdef _reset_state_variables(self):
-        self.rng_state.has_uint32 = 0
-        self.rng_state.uinteger = 0
-        self.rng_state.buffer_pos = PHILOX_BUFFER_SIZE
+        cdef philox_state *rng_state = &self.rng_state
+         
+        rng_state[0].has_uint32 = 0
+        rng_state[0].uinteger = 0
+        rng_state[0].buffer_pos = PHILOX_BUFFER_SIZE
         for i in range(PHILOX_BUFFER_SIZE):
-            self.rng_state.buffer[i] = 0
+            rng_state[0].buffer[i] = 0
 
     @property
     def state(self):
