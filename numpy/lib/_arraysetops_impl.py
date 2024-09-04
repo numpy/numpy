@@ -286,7 +286,7 @@ def unique(ar, return_index=False, return_inverse=False,
 
     """
     ar = np.asanyarray(ar)
-    if axis is None:
+    if axis is None or (ar.ndim == 1 and (axis == 0 or axis == -1)):
         ret = _unique1d(ar, return_index, return_inverse, return_counts,
                         equal_nan=equal_nan, inverse_shape=ar.shape, axis=None)
         return _unpack_tuple(ret)
@@ -345,6 +345,10 @@ def _unique1d(ar, return_index=False, return_inverse=False,
               axis=None):
     """
     Find the unique elements of an array, ignoring shape.
+    If ``equal_nan`` is ``True``, then the uniques are taken as if the following comparisons evaluated to true:
+     - ``np.nan == np.nan``
+     - ``np.nan == np.nan+1j == 3+np.nan*1j == np.nan+np.nan*1j``
+     - ``(1, np.nan) == (1, np.nan) != (np.nan, 1)`` in case the dtype has multiple fields
     """
     ar = np.asanyarray(ar).flatten()
 
@@ -358,7 +362,22 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         aux = ar
     mask = np.empty(aux.shape, dtype=np.bool)
     mask[:1] = True
-    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
+    if equal_nan and ar.dtype.names:
+        # Handle NaNs in arrays with multiple fields
+        first_column = True
+        for field in ar.dtype.names:
+            col = aux[field]
+            is_eq = (col[1:] == col[:-1])
+            if col.dtype.kind in "cfmM":
+                # Apply the isnan operation for supported types
+                is_nan = np.isnan(col)
+                is_eq |= (is_nan[1:] & is_nan[:-1])
+            if first_column:
+                first_column = False
+                mask[1:] = ~is_eq
+            else:
+                mask[1:] |= ~is_eq
+    elif (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
             np.isnan(aux[-1])):
         if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
