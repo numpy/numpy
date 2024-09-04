@@ -304,7 +304,7 @@ cdef class RandomState:
         st['gauss'] = self._aug_state.gauss
         if legacy and not isinstance(self._bit_generator, _MT19937):
             raise ValueError(
-                "legacy can only be True when the underlyign bitgenerator is "
+                "legacy can only be True when the underlying bitgenerator is "
                 "an instance of MT19937."
             )
         if legacy:

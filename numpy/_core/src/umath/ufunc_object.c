@@ -3005,7 +3005,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     char *opname = "reduceat";
 
-    /* These parameters comefrom a TLS global */
+    /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
     NPY_BEGIN_THREADS_DEF;

@@ -5741,7 +5741,7 @@ add_newdoc('numpy._core', 'ufunc', ('resolve_dtypes',
     >>> np.add.resolve_dtypes((float32, float, None))
     (dtype('float32'), dtype('float32'), dtype('float32'))
 
-    Where the Python ``float`` behaves samilar to a Python value ``0.0``
+    Where the Python ``float`` behaves similar to a Python value ``0.0``
     in a ufunc call.  (See :ref:`NEP 50 <NEP50>` for details.)
 
     """))

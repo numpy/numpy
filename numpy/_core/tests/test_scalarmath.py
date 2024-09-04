@@ -1159,7 +1159,7 @@ def test_scalar_matches_array_op_with_pyscalar(op, sctype, other_type, rop):
     assert res == expected
     if isinstance(val1, float) and other_type is complex and rop:
         # Python complex accepts float subclasses, so we don't get a chance
-        # and the result may be a Python complelx (thus, the `np.array()``)
+        # and the result may be a Python complex (thus, the `np.array()``)
         assert np.array(res).dtype == expected.dtype
     else:
         assert res.dtype == expected.dtype

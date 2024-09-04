@@ -194,7 +194,7 @@ Conversion functions
 
     Returns the string length to use for converting datetime
     objects with the given local time and unit settings to strings.
-    Use this when constructings strings to supply to
+    Use this when constructing strings to supply to
     ``NpyDatetime_MakeISO8601Datetime``.
 
 .. c:function:: int NpyDatetime_MakeISO8601Datetime(\
