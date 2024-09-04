@@ -345,10 +345,11 @@ def _unique1d(ar, return_index=False, return_inverse=False,
               axis=None):
     """
     Find the unique elements of an array, ignoring shape.
-    If ``equal_nan`` is ``True``, then the uniques are taken as if the following comparisons evaluated to true:
+    If ``equal_nan`` is ``True``, then the uniques are taken as if the following
+    comparisons evaluated to true:
      - ``np.nan == np.nan``
      - ``np.nan == np.nan+1j == 3+np.nan*1j == np.nan+np.nan*1j``
-     - ``(1, np.nan) == (1, np.nan) != (np.nan, 1)`` in case the dtype has multiple fields
+     - For structured arrays, ``(1, np.nan) == (1, np.nan) != (np.nan, 1)``
     """
     ar = np.asanyarray(ar).flatten()
 

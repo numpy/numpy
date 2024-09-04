@@ -999,7 +999,6 @@ class TestUnique:
             assert_array_equal(expected_inverse, result.inverse_indices)
             assert_array_equal(arr, result.values[result.inverse_indices])
 
-    
     def test_unique_nanequals_multidimensional_1(self):
         # issues gh-23286 and gh-20873
         nan = np.nan
@@ -1016,7 +1015,10 @@ class TestUnique:
         a = np.array([(0, nan), (0, nan)], dtype=[('a', int), ('b', float)])
         unq = unique(a, axis=0, equal_nan=True)
         ref = np.array([(0, nan)], dtype=[('a', int), ('b', float)])
-        # assert_array_equal(unq, ref) # This comparison fails here because array_equal does not treat (0, nan) and (0, nan) as the same value. We must replace nan with a number to compare them.
+
+        # Here, assert_array_equal(unq, ref) fails because array_equal does not
+        # treat (0, nan) and (0, nan) as the same value.
+        # We must replace nan with a number to compare them.
         unq['b'][np.isnan(unq['b'])] = -1 # type: ignore
         ref['b'][np.isnan(ref['b'])] = -1
         assert_array_equal(unq, ref)
@@ -1036,7 +1038,8 @@ class TestUnique:
 
         def replace_nan_trick(a, NAN=np.inf, **kw):
             # Use a large number not in the data as a replacement for NaN
-            # Since NaNs appear at the end after sorting, the value of NAN should be large enough
+            # Since NaNs appear at the end after sorting,
+            # the value of NAN should be large enough
             a_rep = np.where(np.isnan(a), NAN, a)
             unq_rep = unique(a_rep, **kw)
             return np.where(unq_rep == NAN, np.nan, unq_rep)
@@ -1044,7 +1047,6 @@ class TestUnique:
         unq = unique(a, axis=0, equal_nan=True)
         unq_rep = replace_nan_trick(a, axis=0, equal_nan=True)
         assert_array_equal(unq, unq_rep)
-
 
         dtype = [('f0', a.dtype), ('f1', a.dtype)]
         tup_a = a.view(dtype).ravel()
