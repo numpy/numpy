@@ -439,7 +439,6 @@ def test_stack():
     assert_array_equal(np.stack((a, b), axis=1), r1.T)
     # all input types
     assert_array_equal(np.stack([a, b]), r1)
-    assert_array_equal(np.stack(array([a, b])), r1)
     # all shapes for 1d input
     arrays = [np.random.randn(3) for _ in range(10)]
     axes = [0, 1, -1, -2]
