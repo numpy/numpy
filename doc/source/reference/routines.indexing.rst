@@ -63,6 +63,7 @@ Iterating over arrays
    nditer
    ndenumerate
    ndindex
+   ndrange
    nested_iters
    flatiter
    iterable
