@@ -1019,7 +1019,7 @@ class TestUnique:
         # Here, assert_array_equal(unq, ref) fails because array_equal does not
         # treat (0, nan) and (0, nan) as the same value.
         # We must replace nan with a number to compare them.
-        unq['b'][np.isnan(unq['b'])] = -1 # type: ignore
+        unq['b'][np.isnan(unq['b'])] = -1  # type: ignore
         ref['b'][np.isnan(ref['b'])] = -1
         assert_array_equal(unq, ref)
 
