@@ -1,5 +1,5 @@
 Enhancement of ``equal_nan`` option in ``np.unique`` for multi-dimensional data
------------------------------------------------------
+-------------------------------------------------------------------------------
 fixes gh-23286.
 fixes gh-20873.
 
