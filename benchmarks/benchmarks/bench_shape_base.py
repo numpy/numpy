@@ -168,3 +168,20 @@ class AtLeast1D(Benchmark):
 
     def time_atleast_1d_single_argument(self):
         np.atleast_1d(self.x)
+
+
+class Stack(Benchmark):
+    """Benchmarks for np.stack"""
+
+    def setup(self):
+        self.huge_arr = np.random.random((2*22))
+        self.arr_l = [np.arange(3), np.arange(3), np.arange(3)]
+
+    def time_stack_3arr_list(self):
+        np.stack(self.arr_l)
+
+    def time_stack_huge_arr_pure(self):
+        np.stack(self.huge_arr)
+
+    def time_stack_huge_arr_tuple(self):
+        np.stack((self.huge_arr,))
