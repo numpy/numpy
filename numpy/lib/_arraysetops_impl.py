@@ -365,21 +365,35 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     mask[:1] = True
     if equal_nan and ar.dtype.names:
         # Handle NaNs in arrays with multiple fields
-        first_column = True
-        for field in ar.dtype.names:
-            col = aux[field]
-            is_eq = (col[1:] == col[:-1])
-            if col.dtype.kind in "cfmM":
-                # Apply the isnan operation for supported types
-                is_nan = np.isnan(col)
-                is_eq |= (is_nan[1:] & is_nan[:-1])
-            if first_column:
-                first_column = False
-                mask[1:] = ~is_eq
-            else:
-                mask[1:] |= ~is_eq
+        dtypes = [ar.dtype[field] for field in ar.dtype.names]
+        if not any(dtype.kind in "cfmM" for dtype in dtypes):
+            # Optimization: No need to check for NaNs in this case
+            mask[1:] = aux[1:] != aux[:-1]
+        elif len(set(dtypes)) == 1:
+            # Optimization: homogeneous arrays
+            view = aux.view(dtypes[0]).reshape(len(aux), -1)
+            is_eq = view[1:] == view[:-1]
+            is_nan = np.isnan(view)
+            is_eq |= (is_nan[1:] & is_nan[:-1])
+            mask[1:] = ~np.all(is_eq, axis=1)
+        else:
+            # Optimization: General case
+            first_column = True
+            for field in ar.dtype.names:
+                col = aux[field]
+                is_eq = (col[1:] == col[:-1])
+                if col.dtype.kind in "cfmM":
+                    # Apply the isnan operation for supported types
+                    is_nan = np.isnan(col)
+                    is_eq |= (is_nan[1:] & is_nan[:-1])
+                if first_column:
+                    first_column = False
+                    mask[1:] = ~is_eq
+                else:
+                    mask[1:] |= ~is_eq
     elif (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
             np.isnan(aux[-1])):
+        # Optimization for NaNs in 1D real and complex arrays: nans are at the end
         if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
             aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
         else:
