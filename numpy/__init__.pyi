@@ -205,7 +205,6 @@ from typing import (
     SupportsComplex,
     SupportsFloat,
     SupportsInt,
-    TypeVar,
     Protocol,
     SupportsIndex,
     Final,
@@ -219,7 +218,7 @@ from typing import (
 # This is because the `typeshed` stubs for the standard library include
 # `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
-from typing_extensions import LiteralString, Self
+from typing_extensions import LiteralString, Self, TypeVar
 
 from numpy import (
     core,
@@ -4131,7 +4130,7 @@ class busdaycalendar:
     def holidays(self) -> NDArray[datetime64]: ...
 
 
-_FloatType_co = TypeVar('_FloatType_co', bound=floating[Any], covariant=True)
+_FloatType_co = TypeVar('_FloatType_co', bound=floating[Any], covariant=True, default=floating[NBitBase])
 
 class finfo(Generic[_FloatType_co]):
     dtype: Final[dtype[_FloatType_co]]
@@ -4167,7 +4166,7 @@ class finfo(Generic[_FloatType_co]):
         cls, dtype: str
     ) -> finfo[floating[Any]]: ...
 
-_IntType_co = TypeVar("_IntType_co", bound=integer[Any], covariant=True)
+_IntType_co = TypeVar("_IntType_co", bound=integer[Any], covariant=True, default=integer[NBitBase])
 
 class iinfo(Generic[_IntType_co]):
     dtype: Final[dtype[_IntType_co]]
