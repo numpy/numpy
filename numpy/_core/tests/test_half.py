@@ -49,7 +49,7 @@ class TestHalf:
         # Convert from float32 back to float16
         with np.errstate(invalid='ignore'):
             b = np.array(self.all_f32, dtype=float16)
-        # avoid testing NaNs due to differ bits wither Q/SNaNs
+        # avoid testing NaNs due to differ bits with Q/SNaNs
         b_nn = b == b
         assert_equal(self.all_f16[b_nn].view(dtype=uint16),
                      b[b_nn].view(dtype=uint16))

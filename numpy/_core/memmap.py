@@ -163,48 +163,48 @@ class memmap(ndarray):
 
     Load the memmap and verify data was stored:
 
-    >>> newfp = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
-    >>> newfp
+    >>> fp_new = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
+    >>> fp_new
     memmap([[  0.,   1.,   2.,   3.],
             [  4.,   5.,   6.,   7.],
             [  8.,   9.,  10.,  11.]], dtype=float32)
 
     Read-only memmap:
 
-    >>> fpr = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
-    >>> fpr.flags.writeable
+    >>> fp_ro = np.memmap(filename, dtype='float32', mode='r', shape=(3,4))
+    >>> fp_ro.flags.writeable
     False
 
     Copy-on-write memmap:
 
-    >>> fpc = np.memmap(filename, dtype='float32', mode='c', shape=(3,4))
-    >>> fpc.flags.writeable
+    >>> fp_cow = np.memmap(filename, dtype='float32', mode='c', shape=(3,4))
+    >>> fp_cow.flags.writeable
     True
 
     It's possible to assign to copy-on-write array, but values are only
     written into the memory copy of the array, and not written to disk:
 
-    >>> fpc
+    >>> fp_cow
     memmap([[  0.,   1.,   2.,   3.],
             [  4.,   5.,   6.,   7.],
             [  8.,   9.,  10.,  11.]], dtype=float32)
-    >>> fpc[0,:] = 0
-    >>> fpc
+    >>> fp_cow[0,:] = 0
+    >>> fp_cow
     memmap([[  0.,   0.,   0.,   0.],
             [  4.,   5.,   6.,   7.],
             [  8.,   9.,  10.,  11.]], dtype=float32)
 
     File on disk is unchanged:
 
-    >>> fpr
+    >>> fp_ro
     memmap([[  0.,   1.,   2.,   3.],
             [  4.,   5.,   6.,   7.],
             [  8.,   9.,  10.,  11.]], dtype=float32)
 
     Offset into a memmap:
 
-    >>> fpo = np.memmap(filename, dtype='float32', mode='r', offset=16)
-    >>> fpo
+    >>> fp_offset = np.memmap(filename, dtype='float32', mode='r', offset=16)
+    >>> fp_offset
     memmap([  4.,   5.,   6.,   7.,   8.,   9.,  10.,  11.], dtype=float32)
 
     """

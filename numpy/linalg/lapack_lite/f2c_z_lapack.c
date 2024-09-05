@@ -2781,10 +2781,10 @@ L50:
 
     The problem is solved in three steps:
     (1) Reduce the coefficient matrix A to bidiagonal form with
-        Householder tranformations, reducing the original problem
+        Householder transformations, reducing the original problem
         into a "bidiagonal least squares problem" (BLS)
     (2) Solve the BLS using a divide and conquer approach.
-    (3) Apply back all the Householder tranformations to solve
+    (3) Apply back all the Householder transformations to solve
         the original least squares problem.
 
     The effective rank of A is determined by treating as zero those
@@ -9826,7 +9826,7 @@ L80:
 
           The first stage consists of deflating the size of the problem
           when there are multiple eigenvalues or if there is a zero in
-          the Z vector.  For each such occurence the dimension of the
+          the Z vector.  For each such occurrence the dimension of the
           secular equation problem is reduced by one.  This stage is
           performed by the routine DLAED2.
 
@@ -10053,7 +10053,7 @@ L80:
 	    return 0;
 	}
 
-/*     Prepare the INDXQ sorting premutation. */
+/*     Prepare the INDXQ sorting permutation. */
 
 	n1 = k;
 	n2 = *n - k;
@@ -10619,12 +10619,12 @@ L100:
                     If INFO .GT. 0 and WANTT is .FALSE., then on exit,
                     the remaining unconverged eigenvalues are the
                     eigenvalues of the upper Hessenberg matrix
-                    rows and columns ILO thorugh INFO of the final,
+                    rows and columns ILO through INFO of the final,
                     output value of H.
 
                     If INFO .GT. 0 and WANTT is .TRUE., then on exit
             (*)       (initial value of H)*U  = U*(final value of H)
-                    where U is an orthognal matrix.    The final
+                    where U is an orthogonal matrix.    The final
                     value of H is upper Hessenberg and triangular in
                     rows and columns INFO+1 through IHI.
 
@@ -14582,7 +14582,7 @@ L60:
 		}
 
 /*
-                ==== Use up to NS of the smallest magnatiude
+                ==== Use up to NS of the smallest magnitude
                 .    shifts.  If there aren't NS shifts available,
                 .    then use them all, possibly dropping one to
                 .    make the number of shifts even. ====
@@ -16718,7 +16718,7 @@ L60:
 		}
 
 /*
-                ==== Use up to NS of the smallest magnatiude
+                ==== Use up to NS of the smallest magnitude
                 .    shifts.  If there aren't NS shifts available,
                 .    then use them all, possibly dropping one to
                 .    make the number of shifts even. ====

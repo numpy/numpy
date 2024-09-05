@@ -4853,8 +4853,8 @@ class TestArgmax:
         assert_equal(np.argmax(rarr), rpos, err_msg="%r" % rarr)
         assert_equal(rarr[np.argmax(rarr)], val, err_msg="%r" % rarr)
 
-        padd = np.repeat(np.min(arr), 513)
-        rarr = np.concatenate((arr, padd))
+        arr_ = np.repeat(np.min(arr), 513)
+        rarr = np.concatenate((arr, arr_))
         rpos = pos
         assert_equal(np.argmax(rarr), rpos, err_msg="%r" % rarr)
         assert_equal(rarr[np.argmax(rarr)], val, err_msg="%r" % rarr)
@@ -4996,8 +4996,8 @@ class TestArgmin:
         assert_equal(np.argmin(rarr), rpos, err_msg="%r" % rarr)
         assert_equal(rarr[np.argmin(rarr)], min_val, err_msg="%r" % rarr)
 
-        padd = np.repeat(np.max(arr), 513)
-        rarr = np.concatenate((arr, padd))
+        arr_ = np.repeat(np.max(arr), 513)
+        rarr = np.concatenate((arr, arr_))
         rpos = pos
         assert_equal(np.argmin(rarr), rpos, err_msg="%r" % rarr)
         assert_equal(rarr[np.argmin(rarr)], min_val, err_msg="%r" % rarr)

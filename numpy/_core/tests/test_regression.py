@@ -1931,7 +1931,7 @@ class TestRegression:
         # encoding='latin1' work correctly.
 
         # Python2 output for pickle.dumps(...)
-        datas = [
+        data_samples = [
             # (original, python2_pickle, koi8r_validity)
             (np.str_('\u6bd2'),
              b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\ntp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n.",  # noqa
@@ -1946,7 +1946,7 @@ class TestRegression:
              b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\ntp8\nRp9\n.",  # noqa
              'different'),
         ]
-        for original, data, koi8r_validity in datas:
+        for original, data, koi8r_validity in data_samples:
             result = pickle.loads(data, encoding='latin1')
             assert_equal(result, original)
 

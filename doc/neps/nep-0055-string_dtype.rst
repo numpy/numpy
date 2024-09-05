@@ -386,7 +386,7 @@ DTypes, and we think it would harm adoption to require users to refactor their
 DType-handling code if they want to use ``StringDType``.
 
 We also hope that in the future we might be able to add a new fixed-width text
-version of ``StringDType`` that can re-use the ``"T"`` character code with
+version of ``StringDType`` that can reuse the ``"T"`` character code with
 length or encoding modifiers. This will allow a migration to a more flexible
 text dtype for use with structured arrays and other use-cases with a fixed-width
 string is a better fit than a variable-width string.
@@ -994,7 +994,7 @@ uninitialized empty string and a string that has been mutated into the empty
 string.
 
 The size of the allocation is stored in the arena to allow reuse of the arena
-allocation if a string is mutated. In principle we could disallow re-use of the
+allocation if a string is mutated. In principle we could disallow reuse of the
 arena buffer and not store the sizes in the arena. This may or may not save
 memory or be more performant depending on the exact usage pattern. For now we
 are erring on the side of avoiding unnecessary heap allocations when a string is
@@ -1070,7 +1070,7 @@ by the ``StringDType`` instance attached to the array. In this example, the
 string contents are "Numpy is a very cool library", stored at offset ``0x94C``
 in the arena allocation. Note that the ``size`` is stored twice, once in the
 ``size_and_flags`` field, and once in the arena allocation. This facilitates
-re-use of the arena allocation if a string is mutated. Also note that because
+reuse of the arena allocation if a string is mutated. Also note that because
 the length of the string is small enough to fit in an ``unsigned char``, this is
 a "medium"-length string and the size requires only one byte in the arena
 allocation. An arena string larger than 255 bytes would need 8 bytes in the
