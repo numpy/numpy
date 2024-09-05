@@ -377,7 +377,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             is_eq |= (is_nan[1:] & is_nan[:-1])
             mask[1:] = ~np.all(is_eq, axis=1)
         else:
-            # Optimization: General case
+            # General case: iterate over fields
             first_column = True
             for field in ar.dtype.names:
                 col = aux[field]
