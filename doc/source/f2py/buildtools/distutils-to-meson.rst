@@ -1,8 +1,7 @@
 .. _f2py-meson-distutils:
 
-
-1 Migrating to ``meson``
-------------------------
+Migrating to ``meson``
+----------------------
 
 As per the timeline laid out in :ref:`distutils-status-migration`,
 ``distutils`` has ceased to be the default build backend for ``f2py``. This page
@@ -12,8 +11,8 @@ collects common workflows in both formats.
 
     This is a ****living**** document, `pull requests <https://numpy.org/doc/stable/dev/howto-docs.html>`_ are very welcome!
 
-1.1 Baseline
-~~~~~~~~~~~~
+Baseline
+~~~~~~~~
 
 We will start out with a slightly modern variation of the classic Fibonnaci
 series generator.
@@ -38,11 +37,11 @@ series generator.
 
 This will not win any awards, but can be a reasonable starting point.
 
-1.2 Compilation options
-~~~~~~~~~~~~~~~~~~~~~~~
+Compilation options
+~~~~~~~~~~~~~~~~~~~
 
-1.2.1 Basic Usage
-^^^^^^^^^^^^^^^^^
+Basic Usage
+^^^^^^^^^^^
 
 This is unchanged:
 
@@ -54,8 +53,8 @@ This is unchanged:
          55     89    144    233    377    610    987   1597   2584   4181
        6765  10946  17711  28657  46368  75025 121393 196418 317811 514229]
 
-1.2.2 Specify the backend
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Specify the backend
+^^^^^^^^^^^^^^^^^^^
 
 .. tab-set::
 
@@ -77,8 +76,8 @@ This is unchanged:
 
     This is the only option for Python versions after 3.12.
 
-1.2.3 Pass a compiler name
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Pass a compiler name
+^^^^^^^^^^^^^^^^^^^^
 
 .. tab-set::
 
@@ -134,10 +133,10 @@ sample is included below.
 .. note::
 
     For Windows, these may not work very reliably, so `native files <https://mesonbuild.com/Native-environments.html>`_ are likely the
-    best bet, or by direct `1.3 Customizing builds`_.
+    best bet, or by direct `Customizing builds`_.
 
-1.2.4 Dependencies
-^^^^^^^^^^^^^^^^^^
+Dependencies
+^^^^^^^^^^^^
 
 Here, ``meson`` can actually be used to set dependencies more robustly.
 
@@ -163,8 +162,8 @@ Here, ``meson`` can actually be used to set dependencies more robustly.
     of dependencies. They can be `customized further <https://mesonbuild.com/Dependencies.html>`_
     to use CMake or other systems to resolve dependencies.
 
-1.2.5 Libraries
-^^^^^^^^^^^^^^^
+Libraries
+^^^^^^^^^
 
 Both ``meson`` and ``distutils`` are capable of linking against libraries.
 
@@ -184,8 +183,8 @@ Both ``meson`` and ``distutils`` are capable of linking against libraries.
 
       python -m numpy.f2py -c fib.f90 -m fib --backend meson -lmylib -L/path/to/mylib
 
-1.3 Customizing builds
-~~~~~~~~~~~~~~~~~~~~~~
+Customizing builds
+~~~~~~~~~~~~~~~~~~
 
 .. tab-set::
 
