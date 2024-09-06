@@ -26,6 +26,7 @@ from numpy._typing import (
     ArrayLike,
     DTypeLike,
     NDArray,
+    _Shape,
     _ShapeLike,
     _ArrayLikeInt_co,
     _ArrayLikeVoid_co,
@@ -102,7 +103,7 @@ class recarray(ndarray[_ShapeType_co, _DType_co]):
         | SupportsIndex
         | _ArrayLikeInt_co
         | tuple[None | slice | EllipsisType | _ArrayLikeInt_co | SupportsIndex, ...]
-    )) -> recarray[Any, _DType_co]: ...
+    )) -> recarray[_Shape, _DType_co]: ...
     @overload
     def __getitem__(self, indx: (
         None
@@ -111,7 +112,7 @@ class recarray(ndarray[_ShapeType_co, _DType_co]):
         | SupportsIndex
         | _ArrayLikeInt_co
         | tuple[None | slice | EllipsisType | _ArrayLikeInt_co | SupportsIndex, ...]
-    )) -> ndarray[Any, _DType_co]: ...
+    )) -> ndarray[_Shape, _DType_co]: ...
     @overload
     def __getitem__(self, indx: str) -> NDArray[Any]: ...
     @overload

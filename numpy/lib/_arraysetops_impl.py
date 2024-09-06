@@ -203,6 +203,7 @@ def unique(ar, return_index=False, return_inverse=False,
     See Also
     --------
     repeat : Repeat elements of an array.
+    sort : Return a sorted copy of an array.
 
     Notes
     -----
@@ -216,17 +217,15 @@ def unique(ar, return_index=False, return_inverse=False,
     flattened subarrays are sorted in lexicographic order starting with the
     first element.
 
-    .. versionchanged: 1.21
-        If nan values are in the input array, a single nan is put
-        to the end of the sorted unique values.
-
-        Also for complex arrays all NaN values are considered equivalent
+    .. versionchanged:: 1.21
+        Like np.sort, NaN will sort to the end of the values.
+        For complex arrays all NaN values are considered equivalent
         (no matter whether the NaN is in the real or imaginary part).
         As the representant for the returned array the smallest one in the
         lexicographical order is chosen - see np.sort for how the lexicographical
         order is defined for complex arrays.
 
-    .. versionchanged: 2.0
+    .. versionchanged:: 2.0
         For multi-dimensional inputs, ``unique_inverse`` is reshaped
         such that the input can be reconstructed using
         ``np.take(unique, unique_inverse, axis=axis)``. The result is
