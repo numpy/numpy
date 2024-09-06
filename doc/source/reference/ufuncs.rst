@@ -4,9 +4,9 @@
 
 .. _ufuncs:
 
-*******************
-Universal functions
-*******************
+************************************
+Universal functions (:class:`ufunc`)
+************************************
 
 .. seealso:: :ref:`ufuncs-basics`
 
