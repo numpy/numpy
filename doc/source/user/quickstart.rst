@@ -929,6 +929,8 @@ a small fraction of ``a``, a deep copy should be made when constructing ``b`` wi
 If ``b = a[:100]`` is used instead, ``a`` is referenced by ``b`` and will persist in memory
 even if ``del a`` is executed.
 
+See also :ref:`basics.copies-and-views`.
+
 Functions and methods overview
 ------------------------------
 
