@@ -32,11 +32,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
-permissions:
-  contents: read  # to fetch code (actions/checkout)
 
 jobs:
   build-wasm-emscripten:
+    permissions:
+      contents: read  # to fetch code (actions/checkout)
     name: Build NumPy distribution for Pyodide
     runs-on: ubuntu-22.04
     # To enable this workflow on a fork, comment out:
@@ -57,14 +57,27 @@ jobs:
         with:
           name: cp312-pyodide_wasm32
           path: ./wheelhouse/*.whl
+          if-no-files-found: error
 
-        # Push to https://anaconda.org/scientific-python-nightly-wheels/numpy
-        # WARNING: this job will overwrite any existing WASM wheels.
+  # Push to https://anaconda.org/scientific-python-nightly-wheels/numpy
+  # WARNING: this job will overwrite any existing WASM wheels.
+  upload-wheels:
+    name: Upload NumPy WASM wheels to Anaconda.org
+    runs-on: ubuntu-22.04
+    permissions: {}
+    needs: [build-wasm-emscripten]
+    if: >-
+      (github.repository == 'numpy/numpy') &&
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.push_wheels == 'true') ||
+      (github.event_name == 'schedule')
+    steps:
+      - name: Download wheel artifact(s)
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          path: wheelhouse/
+          merge-multiple: true
+
       - name: Push to Anaconda PyPI index
-        if: >-
-          (github.repository == 'numpy/numpy') &&
-          (github.event_name == 'workflow_dispatch' && github.event.inputs.push_wheels == 'true') ||
-          (github.event_name == 'schedule')
         uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc  # v0.5.0
         with:
           artifacts_path: wheelhouse/
