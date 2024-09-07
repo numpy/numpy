@@ -1,8 +1,7 @@
 """
-Typing
-======
-
-.. currentmodule:: numpy.typing
+============================
+Typing (:mod:`numpy.typing`)
+============================
 
 .. versionadded:: 1.20
 
@@ -21,6 +20,8 @@ Mypy plugin
 .. versionadded:: 1.21
 
 .. automodule:: numpy.typing.mypy_plugin
+
+.. currentmodule:: numpy.typing
 
 Differences from the runtime NumPy API
 --------------------------------------
