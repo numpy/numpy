@@ -97,6 +97,7 @@ jobs:
             #  - validates ReST blocks (via validate_rst_syntax)
             #  - checks that all of a module's `__all__` is reflected in the
             #    module-level docstring autosummary
+            echo calling python tools/refguide_check.py -v
             python tools/refguide_check.py -v
 
       - persist_to_workspace:
