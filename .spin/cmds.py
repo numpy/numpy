@@ -367,14 +367,14 @@ def check_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
 def check_tutorials(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
     """🔧 Run doctests of user-facing rst tutorials.
 
-    To test all tutorials in the numpy/doc/source/user/ directory, use
+    To test all tutorials in the numpy doc/source/user/ directory, use
 
       spin check-tutorials
 
     To run tests on a specific RST file:
 
      \b
-     spin check-tutorials numpy/doc/source/user/absolute-beginners.rst
+     spin check-tutorials doc/source/user/absolute-beginners.rst
 
     \b
     Note:
@@ -391,11 +391,11 @@ def check_tutorials(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
     #   - `spin check-tutorials path/to/rst`, and
     #   - `spin check-tutorials path/to/rst -- --durations=3`
     if (not pytest_args) or all(arg.startswith('-') for arg in pytest_args):
-        pytest_args = ('numpy/doc/source/user',) + pytest_args
+        pytest_args = ('doc/source/user',) + pytest_args
 
     # make all paths relative to the numpy source folder
     pytest_args = tuple(
-        str(curdir / '..' / '..' / arg) if not arg.startswith('-') else arg
+        str(curdir / '..' / arg) if not arg.startswith('-') else arg
         for arg in pytest_args
    )
 

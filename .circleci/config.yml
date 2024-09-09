@@ -54,29 +54,22 @@ jobs:
           command: |
             python3.11 -m venv venv
             . venv/bin/activate
-            pip install --progress-bar=off -r requirements/test_requirements.txt
+            pip install --progress-bar=off -r requirements/test_requirements.txt \
+               -r requirements/build_requirements.txt \
+               -r requirements/ci_requirements.txt
             # get newer, pre-release versions of critical packages
             pip install --progress-bar=off --pre --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -r requirements/doc_requirements.txt
             # then install numpy HEAD, which will override the version installed above
-            pip install . --config-settings=setup-args="-Dallow-noblas=true"
-
-      - run:
-          name: create release notes
-          command: |
-            . venv/bin/activate
-            VERSION=$(pip show numpy | grep Version: | cut -d ' ' -f 2 | cut -c 1-5)
-            towncrier build --version $VERSION --yes
-            ./tools/ci/test_all_newsfragments_used.py
+            spin build --with-scipy-openblas=64
 
       - run:
           name: build devdocs w/ref warnings
           command: |
             . venv/bin/activate
-            cd doc
             # Don't use -q, show warning summary"
-            SPHINXOPTS="-W -n" make -e html
-            if [[ $(find build/html -type f | wc -l) -lt 1000 ]]; then
-                echo "doc build failed: build/html is empty"
+            SPHINXOPTS="-W -n" spin docs
+            if [[ $(find doc/build/html -type f | wc -l) -lt 1000 ]]; then
+                echo "doc build failed: doc/build/html is empty"
                 exit -1
             fi
 
@@ -95,9 +88,16 @@ jobs:
      #      destination: neps
 
       - run:
-          name: run refguide-check
+          name: check doctests
           command: |
             . venv/bin/activate
+            spin check-docs -v
+            spin check-tutorials -v
+            # Currently, this does two checks not done by check-docs:
+            #  - validates ReST blocks (via validate_rst_syntax)
+            #  - checks that all of a module's `__all__` is reflected in the
+            #    module-level docstring autosummary
+            echo calling python tools/refguide_check.py -v
             python tools/refguide_check.py -v
 
       - persist_to_workspace:
