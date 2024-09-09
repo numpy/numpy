@@ -296,16 +296,24 @@ def unique(ar, return_index=False, return_inverse=False,
         except np.exceptions.AxisError:
             # this removes the "axis1" or "axis2" prefix from the error message
             raise np.exceptions.AxisError(axis, ar.ndim) from None
+        
+        # Raise merely to comply with current docs, can be removed in the future:
+        names = ar.dtype.names
+        dtypes = [ar.dtype[field] for field in names] if names else [ar.dtype]
+        if any(dtype == object for dtype in dtypes):
+            raise TypeError("object type is not supported for axis != None")
 
     def consecutive_equal(ar, assume_1d_and_sorted=False):
-        if isinstance(ar, np.ma.MaskedArray):  # Handle masked arrays
-            is_eq = (ar[1:] == ar[:-1]).data
-            ma = ar.mask
-            is_eq |= ma[1:] & ma[:-1]
-        else:
+        not_masked = not isinstance(ar, np.ma.MaskedArray)
+        if not_masked:
             is_eq = (ar[1:] == ar[:-1])
+        else:  # Handle masked arrays
+            is_eq = (ar.data[1:] == ar.data[:-1])
+            ma = ar.mask
+            if ma is not np.ma.nomask:
+                is_eq = (ma[1:] == ma[:-1]) & (is_eq | ma[1:]) 
         if equal_nan and ar.dtype.kind in "cfmM":  # Handle NaNs
-            if assume_1d_and_sorted and not np.isnan(ar[-1]):
+            if assume_1d_and_sorted and not_masked and not np.isnan(ar[-1]):
                 pass  # Small optimization: nothing to do
             else:  # General case
                 is_nan = np.isnan(ar)
@@ -327,12 +335,13 @@ def unique(ar, return_index=False, return_inverse=False,
                 # Optimization: use np.view and process as normal case
                 names = None
                 ar = ar.view(dtypes[0])
+    
     if not_empty:
         # Reshape as 2D array, use lexsort and consecutive_equal
         ar = ar.reshape(n, -1)
         if not names:
             # Normal case: non-structured ndarrays
-            perm = np.lexsort(ar.T[::-1])
+            perm = ma_lexsort(ar.T[::-1])
             ar = ar[perm]
             if ar.size == n:
                 next_eq = consecutive_equal(ar[:, 0], True)
@@ -343,7 +352,7 @@ def unique(ar, return_index=False, return_inverse=False,
             # Handle NaNs in non-homogeneous structured arrays
             # Treat each row of tuples virtually as a single large tuple
             cols = [col for field in names for col in ar[field].T]
-            perm = np.lexsort(cols[::-1])
+            perm = ma_lexsort(cols[::-1])
             ar = ar[perm]
             next_eq = True
             first_col = True
@@ -351,6 +360,7 @@ def unique(ar, return_index=False, return_inverse=False,
                 next_eq &= consecutive_equal(ar[field], first_col)
                 first_col = False
             next_eq = np.all(next_eq, axis=-1)
+        
         # Uniques occur where consecutive_equal is False
         mask = np.concatenate(([True], ~next_eq))
     else:
@@ -363,10 +373,9 @@ def unique(ar, return_index=False, return_inverse=False,
         ar = ar[mask]
         ar = ar.view(orig_dtype)  # For homogeneus structured arrays                
         ar = ar.reshape(ar.shape[0], *more_shape)
-
     if axis is not None:
         ar = np.moveaxis(ar, 0, axis)
-    # Reconstruction of the output
+    # Reconstruction of inverse, index and counts
     out = (ar,)
     if return_index:
         out += (perm[mask],)
@@ -385,6 +394,23 @@ def unique(ar, return_index=False, return_inverse=False,
         out += (np.diff(idx),)
 
     return out[0] if len(out) == 1 else out
+
+
+def ma_lexsort(columns):
+    '''
+    mask-aware lexicographical sort:
+    like np.lexsort, but masked elements are sent to the end
+    '''
+    cols = []
+    for col in columns:
+        if isinstance(col, np.ma.MaskedArray):
+            cols.append(col.data)
+            if col.mask is not np.ma.nomask:
+                cols.append(col.mask)
+        else:
+            cols.append(col)
+    perm = np.lexsort(cols)
+    return perm
 
 # Array API set functions
 
