@@ -296,28 +296,26 @@ def unique(ar, return_index=False, return_inverse=False,
         except np.exceptions.AxisError:
             # this removes the "axis1" or "axis2" prefix from the error message
             raise np.exceptions.AxisError(axis, ar.ndim) from None
-        
-        # Raise merely to comply with current docs, can be removed in the future:
-        names = ar.dtype.names
-        dtypes = [ar.dtype[field] for field in names] if names else [ar.dtype]
-        if any(dtype == object for dtype in dtypes):
-            raise TypeError("object type is not supported for axis != None")
 
     def consecutive_equal(ar, assume_1d_and_sorted=False):
-        not_masked = not isinstance(ar, np.ma.MaskedArray)
-        if not_masked:
-            is_eq = (ar[1:] == ar[:-1])
-        else:  # Handle masked arrays
+        is_masked = isinstance(ar, np.ma.MaskedArray)
+        ar_data = ar.data if is_masked else ar
+
+        # General case: just compare consecutive elements with ==
+        is_eq = (ar_data[1:] == ar_data[:-1])
+        if equal_nan and ar.dtype.kind in "cfmM":
+            # Handle NaNs
+            if assume_1d_and_sorted and not is_masked and not np.isnan(ar[-1]):
+                pass  # Small optimization: nothing to do
+            else:  # General case
+                is_nan = np.isnan(ar_data)
+                is_eq |= is_nan[1:] & is_nan[:-1]
+        if is_masked:
+            # Handle masked arrays
             is_eq = (ar.data[1:] == ar.data[:-1])
             ma = ar.mask
             if ma is not np.ma.nomask:
                 is_eq = (ma[1:] == ma[:-1]) & (is_eq | ma[1:]) 
-        if equal_nan and ar.dtype.kind in "cfmM":  # Handle NaNs
-            if assume_1d_and_sorted and not_masked and not np.isnan(ar[-1]):
-                pass  # Small optimization: nothing to do
-            else:  # General case
-                is_nan = np.isnan(ar)
-                is_eq |= is_nan[1:] & is_nan[:-1]
         return is_eq
 
     # Reshape to a contiguous 2D array
