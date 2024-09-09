@@ -3416,7 +3416,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the binomial distribution is
+        The probability mass function (PMF) for the binomial distribution is
 
         .. math:: P(N) = \\binom{n}{N}p^N(1-p)^{n-N},
 
