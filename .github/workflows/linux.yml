@@ -302,7 +302,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
     # TODO: replace with setup-python when there is support
-    - uses: deadsnakes/action@6c8b9b82fe0b4344f4b98f2775fcc395df45e494 # v3.1.0
+    - uses: deadsnakes/action@e640ac8743173a67cca4d7d77cd837e514bf98e8 # v3.2.0
       with:
           python-version: '3.13-dev'
           nogil: true
