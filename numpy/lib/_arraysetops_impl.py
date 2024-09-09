@@ -286,139 +286,105 @@ def unique(ar, return_index=False, return_inverse=False,
 
     """
     ar = np.asanyarray(ar)
-    if axis is None or (ar.ndim == 1 and (axis == 0 or axis == -1)):
-        ret = _unique1d(ar, return_index, return_inverse, return_counts,
-                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None)
-        return _unpack_tuple(ret)
-
-    # axis was specified and not None
-    try:
-        ar = np.moveaxis(ar, axis, 0)
-    except np.exceptions.AxisError:
-        # this removes the "axis1" or "axis2" prefix from the error message
-        raise np.exceptions.AxisError(axis, ar.ndim) from None
-    inverse_shape = [1] * ar.ndim
-    inverse_shape[axis] = ar.shape[0]
-
-    # Must reshape to a contiguous 2D array for this to work...
-    orig_shape, orig_dtype = ar.shape, ar.dtype
-    ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
-    ar = np.ascontiguousarray(ar)
-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
-
-    # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
-    # data type with `m` fields where each field has the data type of `ar`.
-    # In the following, we create the array `consolidated`, which has
-    # shape `(n,)` with data type `dtype`.
-    try:
-        if ar.shape[1] > 0:
-            consolidated = ar.view(dtype)
-        else:
-            # If ar.shape[1] == 0, then dtype will be `np.dtype([])`, which is
-            # a data type with itemsize 0, and the call `ar.view(dtype)` will
-            # fail.  Instead, we'll use `np.empty` to explicitly create the
-            # array with shape `(len(ar),)`.  Because `dtype` in this case has
-            # itemsize 0, the total size of the result is still 0 bytes.
-            consolidated = np.empty(len(ar), dtype=dtype)
-    except TypeError as e:
-        # There's no good way to do this for object arrays, etc...
-        msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype)) from e
-
-    def reshape_uniq(uniq):
-        n = len(uniq)
-        uniq = uniq.view(orig_dtype)
-        uniq = uniq.reshape(n, *orig_shape[1:])
-        uniq = np.moveaxis(uniq, 0, axis)
-        return uniq
-
-    output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts,
-                       equal_nan=equal_nan, inverse_shape=inverse_shape,
-                       axis=axis)
-    output = (reshape_uniq(output[0]),) + output[1:]
-    return _unpack_tuple(output)
-
-
-def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False, *, equal_nan=True, inverse_shape=None,
-              axis=None):
-    """
-    Find the unique elements of an array, ignoring shape.
-    If ``equal_nan`` is ``True``, then the uniques are taken as if the following
-    comparisons evaluated to true:
-     - ``np.nan == np.nan``
-     - ``np.nan == np.nan+1j == 3+np.nan*1j == np.nan+np.nan*1j``
-     - For structured arrays, ``(1, np.nan) == (1, np.nan) != (np.nan, 1)``
-    """
-    ar = np.asanyarray(ar).flatten()
-
-    optional_indices = return_index or return_inverse
-
-    if optional_indices:
-        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
-        aux = ar[perm]
+    orig_ndim, orig_dtype, orig_shape = ar.ndim, ar.dtype, ar.shape
+    not_empty = (ar.size > 0)
+    if axis is None:
+        ar = ar.flatten()
     else:
-        ar.sort()
-        aux = ar
-    mask = np.empty(aux.shape, dtype=np.bool)
-    mask[:1] = True
-    if equal_nan and ar.dtype.names:
-        # Handle NaNs in arrays with multiple fields
-        dtypes = [ar.dtype[field] for field in ar.dtype.names]
-        if not any(dtype.kind in "cfmM" for dtype in dtypes):
-            # Optimization: No need to check for NaNs in this case
-            mask[1:] = aux[1:] != aux[:-1]
-        elif len(set(dtypes)) == 1:
-            # Optimization: homogeneous arrays
-            view = aux.view(dtypes[0]).reshape(len(aux), -1)
-            is_eq = view[1:] == view[:-1]
-            is_nan = np.isnan(view)
-            is_eq |= (is_nan[1:] & is_nan[:-1])
-            mask[1:] = ~np.all(is_eq, axis=1)
-        else:
-            # General case: iterate over fields
-            first_column = True
-            for field in ar.dtype.names:
-                col = aux[field]
-                is_eq = (col[1:] == col[:-1])
-                if col.dtype.kind in "cfmM":
-                    # Apply the isnan operation for supported types
-                    is_nan = np.isnan(col)
-                    is_eq |= (is_nan[1:] & is_nan[:-1])
-                if first_column:
-                    first_column = False
-                    mask[1:] = ~is_eq
-                else:
-                    mask[1:] |= ~is_eq
-    elif (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
-            np.isnan(aux[-1])):
-        # Optimization for NaNs in 1D real and complex arrays: nans are at the end
-        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
-            aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
-        else:
-            aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
-        if aux_firstnan > 0:
-            mask[1:aux_firstnan] = (
-                aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
-        mask[aux_firstnan] = True
-        mask[aux_firstnan + 1:] = False
-    else:
-        mask[1:] = aux[1:] != aux[:-1]
+        try:
+            ar = np.moveaxis(ar, axis, 0)
+        except np.exceptions.AxisError:
+            # this removes the "axis1" or "axis2" prefix from the error message
+            raise np.exceptions.AxisError(axis, ar.ndim) from None
 
-    ret = (aux[mask],)
+    def consecutive_equal(ar, assume_1d_and_sorted=False):
+        if isinstance(ar, np.ma.MaskedArray):  # Handle masked arrays
+            is_eq = (ar[1:] == ar[:-1]).data
+            ma = ar.mask
+            is_eq |= ma[1:] & ma[:-1]
+        else:
+            is_eq = (ar[1:] == ar[:-1])
+        if equal_nan and ar.dtype.kind in "cfmM":  # Handle NaNs
+            if assume_1d_and_sorted and not np.isnan(ar[-1]):
+                pass  # Small optimization: nothing to do
+            else:  # General case
+                is_nan = np.isnan(ar)
+                is_eq |= is_nan[1:] & is_nan[:-1]
+        return is_eq
+
+    # Reshape to a contiguous 2D array
+    # If the array is structured, destructure to handle NaNs
+    names = ar.dtype.names
+    (n, *more_shape) = ar.shape
+    if names and equal_nan and not_empty:
+        # Pre-checks for NaN handling in structured arrays
+        if not any(ar.dtype[field].kind in "cfmM" for field in names):
+            names = None  # No need to destructure. No NaNs in the array
+        else:
+            dtypes = [ar.dtype[field] for field in names]
+            if len(set(dtypes)) == 1:
+                # The array is structured but homogeneous
+                # Optimization: use np.view and process as normal case
+                names = None
+                ar = ar.view(dtypes[0])
+    if not_empty:
+        # Reshape as 2D array, use lexsort and consecutive_equal
+        ar = ar.reshape(n, -1)
+        if not names:
+            # Normal case: non-structured ndarrays
+            perm = np.lexsort(ar.T[::-1])
+            ar = ar[perm]
+            if ar.size == n:
+                next_eq = consecutive_equal(ar[:, 0], True)
+            else:
+                next_eq = consecutive_equal(ar, False)
+                next_eq = np.all(next_eq, axis=1)
+        else:
+            # Handle NaNs in non-homogeneous structured arrays
+            # Treat each row of tuples virtually as a single large tuple
+            cols = [col for field in names for col in ar[field].T]
+            perm = np.lexsort(cols[::-1])
+            ar = ar[perm]
+            next_eq = True
+            first_col = True
+            for field in names:
+                next_eq &= consecutive_equal(ar[field], first_col)
+                first_col = False
+            next_eq = np.all(next_eq, axis=-1)
+        # Uniques occur where consecutive_equal is False
+        mask = np.concatenate(([True], ~next_eq))
+    else:
+        # Special case for empty arrays
+        perm = np.arange(n)
+        mask = perm == 0  # True only for the first element (if any)
+    
+    # Filter unique values using the mask
+    if n > 0:
+        ar = ar[mask]
+        ar = ar.view(orig_dtype)  # For homogeneus structured arrays                
+        ar = ar.reshape(ar.shape[0], *more_shape)
+
+    if axis is not None:
+        ar = np.moveaxis(ar, 0, axis)
+    # Reconstruction of the output
+    out = (ar,)
     if return_index:
-        ret += (perm[mask],)
+        out += (perm[mask],)
     if return_inverse:
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
-        ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
+        if axis is None:
+            inverse_shape = orig_shape
+        else:
+            inverse_shape = [1] * orig_ndim
+            inverse_shape[axis] = n
+        out += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
     if return_counts:
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
-        ret += (np.diff(idx),)
-    return ret
+        out += (np.diff(idx),)
 
+    return out[0] if len(out) == 1 else out
 
 # Array API set functions
 

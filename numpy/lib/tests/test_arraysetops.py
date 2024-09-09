@@ -798,10 +798,6 @@ class TestUnique:
         assert_equal(np.unique(all_nans, return_counts=True), (ua, ua_cnt))
 
     def test_unique_axis_errors(self):
-        assert_raises(TypeError, self._run_axis_tests, object)
-        assert_raises(TypeError, self._run_axis_tests,
-                      [('a', int), ('b', object)])
-
         assert_raises(AxisError, unique, np.arange(10), axis=2)
         assert_raises(AxisError, unique, np.arange(10), axis=-2)
 
@@ -1048,9 +1044,9 @@ class TestUnique:
         unq_rep = replace_nan_trick(a, axis=0, equal_nan=True)
         assert_array_equal(unq, unq_rep)
 
+        # This test is ideal but is against the current docs
         dtype = [('f0', a.dtype), ('f1', a.dtype)]
         tup_a = a.view(dtype).ravel()
-        # tup_unq = _unique1d(tup_a, axis=0, equal_nan=True)[0]
         tup_unq = unique(tup_a, axis=0, equal_nan=True)
         assert_array_equal(tup_unq.view(a.dtype), unq.ravel())
 
