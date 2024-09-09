@@ -2804,13 +2804,16 @@ def test_load_multiple_arrays_until_eof():
 
 def test_savez_nopickle():
     obj_array = np.array([1, 'hello'], dtype=object)
-    with NamedTemporaryFile(suffix='.npz') as tmp:
-        np.savez(tmp.name, obj_array)
+    with temppath(suffix='.npz') as tmp:
+        np.savez(tmp, obj_array)
 
+    with temppath(suffix='.npz') as tmp:
         with pytest.raises(ValueError, match="Object arrays cannot be saved when.*"):
-            np.savez(tmp.name, obj_array, allow_pickle=False)
+            np.savez(tmp, obj_array, allow_pickle=False)
 
-        np.savez_compressed(tmp.name, obj_array)
+    with temppath(suffix='.npz') as tmp:
+        np.savez_compressed(tmp, obj_array)
 
+    with temppath(suffix='.npz') as tmp:
         with pytest.raises(ValueError, match="Object arrays cannot be saved when.*"):
-            np.savez_compressed(tmp.name, obj_array, allow_pickle=False)
+            np.savez_compressed(tmp, obj_array, allow_pickle=False)
