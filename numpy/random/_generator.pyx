@@ -3282,7 +3282,7 @@ cdef class Generator:
 
         Notes
         -----
-        The Poisson distribution
+        The probability mass function (PMF) of Poisson distribution is
 
         .. math:: f(k; \\lambda)=\\frac{\\lambda^k e^{-\\lambda}}{k!}
 
