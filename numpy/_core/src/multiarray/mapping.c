@@ -1797,7 +1797,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     PyArray_Descr *descr = PyArray_DESCR(self);
     PyArrayObject *view = NULL;
     PyArrayObject *tmp_arr = NULL;
-    PyObject *copy, *deepcopy;
     npy_index_info indices[NPY_MAXDIMS * 2 + 1];
 
     PyArrayMapIterObject *mit = NULL;
@@ -1971,20 +1970,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         Py_SETREF(tmp_arr, (PyArrayObject *)PyArray_NewCopy(tmp_arr, NPY_ANYORDER));
     }
     if (index_has_memory_overlap(self, index_type, indices, index_num, (PyObject *)tmp_arr) == 1) {
-        copy = PyImport_ImportModule("copy");
-        if (copy == NULL) {
-            goto fail;
-        }
-        deepcopy = PyObject_GetAttrString(copy, "deepcopy");
-        if (deepcopy == NULL) {
-            Py_DECREF(copy);
-            goto fail;
-        }
-        Py_DECREF(copy);
-        PyObject *args = PyTuple_Pack(1, indices->object);
-        Py_SETREF(indices->object, PyObject_CallObject(deepcopy, args));
-        Py_DECREF(deepcopy);
-        Py_DECREF(args);
+        Py_SETREF(indices->object, PyArray_NewCopy((PyArrayObject *)indices->object, NPY_KEEPORDER));
     }
 
     /*
