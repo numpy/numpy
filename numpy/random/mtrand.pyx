@@ -3908,7 +3908,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Hypergeometric distribution is
+        The probability mass function (PMF) for the Hypergeometric distribution is
 
         .. math:: P(x) = \\frac{\\binom{g}{x}\\binom{b}{n-x}}{\\binom{g+b}{n}},
 
