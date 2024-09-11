@@ -241,7 +241,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
     lastname : optional
         Last processed field name (used internally during recursion).
     parents : dictionary
-        Dictionary of parent fields (used interbally during recursion).
+        Dictionary of parent fields (used internally during recursion).
 
     Examples
     --------

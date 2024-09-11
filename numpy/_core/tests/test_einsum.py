@@ -1025,7 +1025,7 @@ class TestEinsum:
 
     def test_output_order(self):
         # Ensure output order is respected for optimize cases, the below
-        # conraction should yield a reshaped tensor view
+        # contraction should yield a reshaped tensor view
         # gh-16415
 
         a = np.ones((2, 3, 5), order='F')

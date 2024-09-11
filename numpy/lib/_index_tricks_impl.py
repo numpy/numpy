@@ -447,7 +447,7 @@ class AxisConcatenator:
     def __len__(self):
         return 0
 
-# separate classes are used here instead of just making r_ = concatentor(0),
+# separate classes are used here instead of just making r_ = concatenator(0),
 # etc. because otherwise we couldn't get the doc string to come out right
 # in help(r_)
 

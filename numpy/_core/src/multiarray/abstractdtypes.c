@@ -406,7 +406,7 @@ npy_update_operand_for_scalar(
     else if (NPY_UNLIKELY(casting == NPY_EQUIV_CASTING) &&
              descr->type_num != NPY_OBJECT) {
         /*
-         * increadibly niche, but users could pass equiv casting and we
+         * incredibly niche, but users could pass equiv casting and we
          * actually need to cast.  Let object pass (technically correct) but
          * in all other cases, we don't technically consider equivalent.
          * NOTE(seberg): I don't think we should be beholden to this logic.

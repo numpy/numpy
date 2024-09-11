@@ -508,7 +508,7 @@ def lint(ctx, branch, uncommitted):
     Examples:
 
     \b
-    For lint checks of your development brach with `main` or a custom branch:
+    For lint checks of your development branch with `main` or a custom branch:
 
     \b
     $ spin lint # defaults to main

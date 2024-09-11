@@ -129,7 +129,7 @@ DTypeLike: TypeAlias = (
 
 # NOTE: while it is possible to provide the dtype as a dict of
 # dtype-like objects (e.g. `{'field1': ..., 'field2': ..., ...}`),
-# this syntax is officially discourged and
+# this syntax is officially discouraged and
 # therefore not included in the type-union defining `DTypeLike`.
 #
 # See https://github.com/numpy/numpy/issues/16891 for more details.

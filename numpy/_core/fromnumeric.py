@@ -4027,7 +4027,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
         \sqrt{\frac{\sum_i{|a_i - \bar{a}|^2 }}{N - 1}}
 
-    In statistics, the resulting quantity is sometimed called the "sample
+    In statistics, the resulting quantity is sometimes called the "sample
     standard deviation" because if `a` is a random sample from a larger
     population, this calculation provides the square root of an unbiased
     estimate of the variance of the population. The use of :math:`N-1` in the
@@ -4232,7 +4232,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
         \frac{\sum_i{|a_i - \bar{a}|^2}}{N - 1}
 
-    In statistics, the resulting quantity is sometimed called the "sample
+    In statistics, the resulting quantity is sometimes called the "sample
     variance" because if `a` is a random sample from a larger population,
     this calculation provides an unbiased estimate of the variance of the
     population.  The use of :math:`N-1` in the denominator is often called

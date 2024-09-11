@@ -2920,7 +2920,7 @@ of this useful approach to looping over an array from C.
 
 .. c:function:: void PyArray_ITER_NEXT(PyObject* iterator)
 
-    Incremement the index and the dataptr members of the *iterator* to
+    Increment the index and the dataptr members of the *iterator* to
     point to the next element of the array. If the array is not
     (C-style) contiguous, also increment the N-dimensional coordinates
     array.

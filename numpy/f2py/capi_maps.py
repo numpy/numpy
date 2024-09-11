@@ -798,7 +798,7 @@ void
     return ret
 
 
-def common_sign2map(a, var):  # obsolute
+def common_sign2map(a, var):  # obsolete
     ret = {'varname': a, 'ctype': getctype(var)}
     if isstringarray(var):
         ret['ctype'] = 'char'

@@ -42,7 +42,7 @@ def test_comment_multiple_chars(comment):
 @pytest.fixture
 def mixed_types_structured():
     """
-    Fixture providing hetergeneous input data with a structured dtype, along
+    Fixture providing heterogeneous input data with a structured dtype, along
     with the associated structured array.
     """
     data = StringIO(

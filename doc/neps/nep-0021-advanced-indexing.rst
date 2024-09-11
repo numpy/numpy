@@ -649,7 +649,7 @@ eventualities.
 Copyright
 ---------
 
-This document is placed under the CC0 1.0 Universell (CC0 1.0) Public Domain Dedication [1]_.
+This document is placed under the CC0 1.0 Universal (CC0 1.0) Public Domain Dedication [1]_.
 
 
 References and footnotes

@@ -144,7 +144,7 @@ class TestArrayRepr:
         first[()] = 0  # resolve circular references for garbage collector
 
     def test_containing_list(self):
-        # printing square brackets directly would be ambiguuous
+        # printing square brackets directly would be ambiguous
         arr1d = np.array([None, None])
         arr1d[0] = [1, 2]
         arr1d[1] = [3]
@@ -1128,7 +1128,7 @@ class TestContextManager:
         assert_equal(s, '[0.67]')
 
     def test_ctx_mgr_restores(self):
-        # test that print options are actually restrored
+        # test that print options are actually restored
         opts = np.get_printoptions()
         with np.printoptions(precision=opts['precision'] - 1,
                              linewidth=opts['linewidth'] - 4):

@@ -957,7 +957,7 @@ class dtype(Generic[_DTypeScalar_co]):
         metadata: dict[str, Any] = ...,
     ) -> dtype[int_ | np.bool]: ...
     # NOTE: `_: type[float]` also accepts `type[float | int | bool]`
-    # NOTE: `float64` inheritcs from `float` at runtime; but this isn't
+    # NOTE: `float64` inherits from `float` at runtime; but this isn't
     # reflected in these stubs. So an explicit `float64` is required here.
     @overload
     def __new__(
