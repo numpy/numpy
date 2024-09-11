@@ -2179,9 +2179,9 @@ class TestArrayComparisons:
     )
     def test_array_equal_equal_nan(self, bx, by, equal_nan, expected):
         """
-        This test array_equal for a few combinaison:
+        This test array_equal for a few combinations:
 
-        - are the two inputs the same object or not (same object many not
+        - are the two inputs the same object or not (same object may not
           be equal if contains NaNs)
         - Whether we should consider or not, NaNs, being equal.
 

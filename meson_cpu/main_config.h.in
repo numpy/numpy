@@ -11,7 +11,7 @@
  */
 #ifndef @P@_CPU_DISPATCHER_CONF_H_
 #define @P@_CPU_DISPATCHER_CONF_H_
-/// This definition is required to provides comptablity with NumPy distutils
+/// This definition is required to provide comptibility with NumPy distutils
 #define @P@_CPU_MESON_BUILD
 /**
  * @def @P@WITH_CPU_BASELINE
