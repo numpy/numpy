@@ -17,7 +17,7 @@ name: Linux SIMD tests
 #
 # - native:
 #   Tests against the host CPU features set as the baseline without enabling any runtime dispatched features.
-#   Intended to assess the entire NumPy codebase against host flags, even for code sections lacking handwritten SIMD intrincis.
+#   Intended to assess the entire NumPy codebase against host flags, even for code sections lacking handwritten SIMD intrinsics.
 #
 # - without_avx512/avx2/fma3:
 #   Uses runtime SIMD dispatching but disables AVX2, FMA3, and AVX512.

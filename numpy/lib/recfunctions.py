@@ -1212,7 +1212,7 @@ def apply_along_fields(func, arr):
     Returns
     -------
     out : ndarray
-       Result of the recution operation
+       Result of the reduction operation
 
     Examples
     --------
