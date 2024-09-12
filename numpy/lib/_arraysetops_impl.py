@@ -414,12 +414,15 @@ def unique_all(x):
     """
     Find the unique elements of an array, and counts, inverse and indices.
 
-    This function is an Array API compatible alternative to:
+    This function is an Array API compatible alternative to `np.unique`, but
+    returns a namedtuple for easier access to each output.
 
+    Example
+    -------
     >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, return_index=True, return_inverse=True,
-    ...           return_counts=True, equal_nan=False)
-    (array([1, 2]), array([0, 2]), array([0, 0, 1]), array([2, 1]))
+    >>> np.unique_all(x)
+    UniqueAllResult(values=array([1, 2]), indices=array([0, 2]), 
+                    inverse_indices=array([0, 0, 1]), counts=array([2, 1]))
 
     Parameters
     ----------
@@ -440,15 +443,6 @@ def unique_all(x):
     See Also
     --------
     unique : Find the unique elements of an array.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> np.unique_all([1, 1, 2])
-    UniqueAllResult(values=array([1, 2]),
-                    indices=array([0, 2]),
-                    inverse_indices=array([0, 0, 1]),
-                    counts=array([2, 1]))
 
     """
     result = unique(
