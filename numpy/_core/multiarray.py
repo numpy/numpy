@@ -296,6 +296,7 @@ def inner(a, b):
     --------
     tensordot : Sum products over arbitrary axes.
     dot : Generalised matrix product, using second last dimension of `b`.
+    vecdot : Vector dot product of two arrays.
     einsum : Einstein summation convention.
 
     Notes
@@ -809,6 +810,7 @@ def dot(a, b, out=None):
     See Also
     --------
     vdot : Complex-conjugating dot product.
+    vecdot : Vector dot product of two arrays.
     tensordot : Sum products over arbitrary axes.
     einsum : Einstein summation convention.
     matmul : '@' operator as method with out parameter.
