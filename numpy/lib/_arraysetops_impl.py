@@ -464,11 +464,14 @@ def unique_counts(x):
     """
     Find the unique elements and counts of an input array `x`.
 
-    This function is an Array API compatible alternative to:
+    This function is an Array API compatible alternative to `np.unique`,
+    but returns a namedtuple for easier access to each output.
 
+    Example
+    -------
     >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, return_counts=True, equal_nan=False)
-    (array([1, 2]), array([2, 1]))
+    >>> np.unique_counts(x)
+    UniqueCountsResult(values=array([1, 2]), counts=array([2, 1]))
 
     Parameters
     ----------
@@ -486,12 +489,6 @@ def unique_counts(x):
     See Also
     --------
     unique : Find the unique elements of an array.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> np.unique_counts([1, 1, 2])
-    UniqueCountsResult(values=array([1, 2]), counts=array([2, 1]))
 
     """
     result = unique(
