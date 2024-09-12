@@ -4771,6 +4771,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
             return NULL;
         }
     }
+    ufunc->dict = PyDict_New();
     /*
      * TODO: I tried adding a default promoter here (either all object for
      *       some special cases, or all homogeneous).  Those are reasonable
@@ -6411,6 +6412,19 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     PyObject *doc;
 
+    // if there is a __doc__ in the instance __dict__, use that, but only if
+    // __doc__ is NULL
+    if (ufunc->doc == NULL) {
+        int result = PyDict_GetItemRef(ufunc->dict, npy_interned_str.__doc__, &doc);
+
+        if (result == -1) {
+            return NULL;
+        }
+        else if (result == 1) {
+            return doc;
+        }
+    }
+
     if (npy_cache_import_runtime(
             "numpy._core._internal", "_ufunc_doc_signature_formatter",
             &npy_runtime_imports._ufunc_doc_signature_formatter) == -1) {
@@ -6434,6 +6448,16 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
     return doc;
 }
 
+static int
+ufunc_set_doc(PyUFuncObject *ufunc, PyObject *doc, void *NPY_UNUSED(ignored))
+{
+    if (ufunc->doc != NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                        "attribute '__doc__' of 'numpy.ufunc' objects is not writable");
+        return -1;
+    }
+    return PyDict_SetItem(ufunc->dict, npy_interned_str.__doc__, doc);
+}
 
 static PyObject *
 ufunc_get_nin(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
@@ -6520,7 +6544,7 @@ ufunc_get_signature(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 static PyGetSetDef ufunc_getset[] = {
     {"__doc__",
         (getter)ufunc_get_doc,
-        NULL, NULL, NULL},
+         (setter)ufunc_set_doc, NULL, NULL},
     {"nin",
         (getter)ufunc_get_nin,
         NULL, NULL, NULL},
@@ -6550,6 +6574,16 @@ static PyGetSetDef ufunc_getset[] = {
 
 
 /******************************************************************************
+ ***                          UFUNC MEMBERS                                 ***
+ *****************************************************************************/
+
+static PyMemberDef ufunc_members[] = {
+    {"__dict__", T_OBJECT, offsetof(PyUFuncObject, dict),
+     READONLY},
+    {NULL},
+};
+
+/******************************************************************************
  ***                        UFUNC TYPE OBJECT                               ***
  *****************************************************************************/
 
@@ -6564,10 +6598,16 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_str = (reprfunc)ufunc_repr,
     .tp_flags = Py_TPFLAGS_DEFAULT |
         _Py_TPFLAGS_HAVE_VECTORCALL |
-        Py_TPFLAGS_HAVE_GC,
+        Py_TPFLAGS_HAVE_GC, 
     .tp_traverse = (traverseproc)ufunc_traverse,
     .tp_methods = ufunc_methods,
     .tp_getset = ufunc_getset,
+    .tp_getattro = PyObject_GenericGetAttr,
+    .tp_setattro = PyObject_GenericSetAttr,
+    // TODO when Python 3.12 is the minimum supported version,
+    // use Py_TPFLAGS_MANAGED_DICT
+    .tp_members = ufunc_members,
+    .tp_dictoffset = offsetof(PyUFuncObject, dict),
 };
 
 /* End of code for ufunc objects */

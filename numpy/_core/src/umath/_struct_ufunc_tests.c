@@ -134,7 +134,7 @@ PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
 
     add_triplet = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 2, 1,
                                     PyUFunc_None, "add_triplet",
-                                    "add_triplet_docstring", 0);
+                                    NULL, 0);
 
     dtype_dict = Py_BuildValue("[(s, s), (s, s), (s, s)]",
                                "f0", "u8", "f1", "u8", "f2", "u8");
