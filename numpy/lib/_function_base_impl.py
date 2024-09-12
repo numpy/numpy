@@ -62,7 +62,7 @@ __all__ = [
 # get_virtual_index : Callable
 #   The function used to compute the virtual_index.
 # fix_gamma : Callable
-#   A function used for discret methods to force the index to a specific value.
+#   A function used for discrete methods to force the index to a specific value.
 _QuantileMethods = dict(
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
@@ -4633,7 +4633,7 @@ def _get_gamma_mask(shape, default_value, conditioned_value, where):
     return out
 
 
-def _discret_interpolation_to_boundaries(index, gamma_condition_fun):
+def _discrete_interpolation_to_boundaries(index, gamma_condition_fun):
     previous = np.floor(index)
     next = previous + 1
     gamma = index - previous
@@ -4651,14 +4651,14 @@ def _closest_observation(n, quantiles):
     # "choose the nearest even order statistic at g=0" (H&F (1996) pp. 362).
     # Order is 1-based so for zero-based indexing round to nearest odd index.
     gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 1)
-    return _discret_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
-                                                gamma_fun)
+    return _discrete_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
+                                                 gamma_fun)
 
 
 def _inverted_cdf(n, quantiles):
     gamma_fun = lambda gamma, _: (gamma == 0)
-    return _discret_interpolation_to_boundaries((n * quantiles) - 1,
-                                                gamma_fun)
+    return _discrete_interpolation_to_boundaries((n * quantiles) - 1,
+                                                 gamma_fun)
 
 
 def _quantile_ureduce_func(

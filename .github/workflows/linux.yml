@@ -274,7 +274,7 @@ jobs:
         pip install vulture
     - name: Build and install NumPy
       run: |
-        # Install using the fastests way to build (no BLAS, no SIMD)
+        # Install using the fastest way to build (no BLAS, no SIMD)
         spin build -j2 -- -Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none
     - name: Check build-internal dependencies
       run: |
