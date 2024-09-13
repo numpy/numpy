@@ -1419,9 +1419,6 @@ class TestTrimZeros:
         res = trim_zeros(a, trim='b')
         assert_array_equal(res, [0, 1, 2])
 
-        res = trim_zeros(a, trim='')
-        assert_array_equal(res, [0, 1, 2, 0])
-
     @pytest.mark.parametrize("trim", ("front", ""))
     def test_unexpected_trim_value(self, trim):
         arr = self.a
