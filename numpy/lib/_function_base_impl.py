@@ -1905,7 +1905,7 @@ def _trim_zeros(filt, trim=None, axis=None):
 
 
 @array_function_dispatch(_trim_zeros)
-def trim_zeros(filt, trim='fb', axis=-1):
+def trim_zeros(filt, trim='fb', axis=None):
     """Remove values along a dimension which are zero along all other.
 
     Parameters
@@ -1916,7 +1916,7 @@ def trim_zeros(filt, trim='fb', axis=-1):
         A string with 'f' representing trim from front and 'b' to trim from
         back. By default, zeros are trimmed from the front and back.
     axis : int or sequence, optional
-        The axis to trim. If None all axes are trimmed.
+        The axis to trim. If None, the default, all axes are trimmed.
 
     Returns
     -------
