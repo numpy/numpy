@@ -6,6 +6,7 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 #include "alloc.h"
 
 #include <string.h>
@@ -59,9 +60,7 @@ create_conv_funcs(
     PyObject *key, *value;
     Py_ssize_t pos = 0;
     int error = 0;
-#if Py_GIL_DISABLED
     Py_BEGIN_CRITICAL_SECTION(converters);
-#endif
     while (PyDict_Next(converters, &pos, &key, &value)) {
         Py_ssize_t column = PyNumber_AsSsize_t(key, PyExc_IndexError);
         if (column == -1 && PyErr_Occurred()) {
@@ -114,9 +113,7 @@ create_conv_funcs(
         Py_INCREF(value);
         conv_funcs[column] = value;
     }
-#if Py_GIL_DISABLED
     Py_END_CRITICAL_SECTION();
-#endif
 
     if (error) {
         goto error;
