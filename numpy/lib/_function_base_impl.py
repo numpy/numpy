@@ -1868,11 +1868,6 @@ def sort_complex(a):
 
 
 def _arg_trim_zeros(filt):
-    return (filt, filt)
-
-
-@array_function_dispatch(_arg_trim_zeros)
-def arg_trim_zeros(filt):
     """Return indices of the first and last non-zero element.
 
     Parameters
@@ -1889,6 +1884,12 @@ def arg_trim_zeros(filt):
     See also
     --------
     trim_zeros
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> _arg_trim_zeros(np.array([0, 0, 1, 1, 0]))
+    (array([2]), array([3]))
     """
     nonzero = np.argwhere(filt)
     if nonzero.size == 0:
@@ -1922,14 +1923,9 @@ def trim_zeros(filt, trim='fb', axis=-1):
     trimmed : ndarray or sequence
         The result of trimming the input. The input data type is preserved.
 
-    See also
-    --------
-    arg_trim_zeros
-
     Notes
     -----
-    For all-zero arrays, the first axis is trimmed depending on the order in
-    `trim`.
+    For all-zero arrays, the first axis is trimmed first.
 
     Examples
     --------
@@ -1938,8 +1934,22 @@ def trim_zeros(filt, trim='fb', axis=-1):
     >>> np.trim_zeros(a)
     array([1, 2, 3, 0, 2, 1])
 
-    >>> np.trim_zeros(a, 'b')
+    >>> np.trim_zeros(a, trim='b')
     array([0, 0, 0, ..., 0, 2, 1])
+
+    Multiple dimensions are supported.
+
+    >>> b = np.array([[0, 0, 2, 3, 0, 0],
+    ...               [0, 1, 0, 3, 0, 0],
+    ...               [0, 0, 0, 0, 0, 0]])
+    >>> np.trim_zeros(b)
+    array([[0, 2, 3],
+           [1, 0, 3]])
+
+    >>> np.trim_zeros(b, axis=-1)
+    array([[0, 2, 3],
+           [1, 0, 3],
+           [0, 0, 0]])
 
     The input data type is preserved, list/tuple in means list/tuple out.
 
@@ -1948,7 +1958,12 @@ def trim_zeros(filt, trim='fb', axis=-1):
 
     """
     filt_ = np.asarray(filt)
-    start, stop = arg_trim_zeros(filt_)
+
+    trim = trim.lower()
+    if trim not in {"fb", "bf", "f", "b"}:
+        raise ValueError(f"unexpected character(s) in `trim`: {trim!r}")
+
+    start, stop = _arg_trim_zeros(filt_)
     stop += 1  # Adjust for slicing
 
     if start.size == 0:
@@ -1956,7 +1971,6 @@ def trim_zeros(filt, trim='fb', axis=-1):
         # resulting slice will be empty
         start = stop = np.zeros(filt_.ndim, dtype=np.intp)
     else:
-        trim = trim.lower()
         if 'f' not in trim:
             start = (None,) * filt_.ndim
         if 'b' not in trim:
@@ -1974,7 +1988,8 @@ def trim_zeros(filt, trim='fb', axis=-1):
         axis = normalize_axis_index(axis, filt_.ndim)
         sl = (slice(None),) * axis + (slice(start[axis], stop[axis]),) + (...,)
 
-    return filt[sl]
+    trimmed = filt[sl]
+    return trimmed
 
 
 

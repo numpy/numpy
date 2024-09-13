@@ -1422,6 +1422,12 @@ class TestTrimZeros:
         res = trim_zeros(a, trim='')
         assert_array_equal(res, [0, 1, 2, 0])
 
+    @pytest.mark.parametrize("trim", ("front", ""))
+    def test_unexpected_trim_value(self, trim):
+        arr = self.a
+        with pytest.raises(ValueError, match=r"unexpected character\(s\) in `trim`"):
+            trim_zeros(arr, trim=trim)
+
 
 class TestExtins:
 
