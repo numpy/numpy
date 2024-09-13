@@ -1911,7 +1911,7 @@ def trim_zeros(filt, trim='fb', axis=-1):
     ----------
     filt : array_like
         Input array.
-    trim : str, optional
+    trim : {"fb", "f", "b"}, optional
         A string with 'f' representing trim from front and 'b' to trim from
         back. By default, zeros are trimmed from the front and back.
     axis : int or sequence, optional
