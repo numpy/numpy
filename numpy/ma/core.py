@@ -1787,7 +1787,7 @@ def mask_or(m1, m2, copy=False, shrink=True):
         dtype = getattr(m1, 'dtype', MaskType)
         return make_mask(m1, copy=copy, shrink=shrink, dtype=dtype)
     if m1 is m2 and is_mask(m1):
-        return m1
+        return _shrink_mask(m1) if shrink else m1
     (dtype1, dtype2) = (getattr(m1, 'dtype', None), getattr(m2, 'dtype', None))
     if dtype1 != dtype2:
         raise ValueError("Incompatible dtypes '%s'<>'%s'" % (dtype1, dtype2))

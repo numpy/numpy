@@ -4849,6 +4849,26 @@ class TestMaskedArrayFunctions:
         cntrl = np.array([(1, (1, 1)), (0, (1, 0))], dtype=dtype)
         assert_equal(mask_or(amask, bmask), cntrl)
 
+        a = np.array([False, False])
+        assert mask_or(a, a) is nomask  # gh-27360
+
+    def test_allequal(self):
+        x = array([1, 2, 3], mask=[0, 0, 0])
+        y = array([1, 2, 3], mask=[1, 0, 0])
+        z = array([[1, 2, 3], [4, 5, 6]], mask=[[0, 0, 0], [1, 1, 1]])
+
+        assert allequal(x, y)
+        assert not allequal(x, y, fill_value=False)
+        assert allequal(x, z)
+
+        # test allequal for the same input, with mask=nomask, this test is for
+        # the scenario raised in https://github.com/numpy/numpy/issues/27201
+        assert allequal(x, x)
+        assert allequal(x, x, fill_value=False)
+
+        assert allequal(y, y)
+        assert not allequal(y, y, fill_value=False)
+
     def test_flatten_mask(self):
         # Tests flatten mask
         # Standard dtype
