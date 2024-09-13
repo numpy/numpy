@@ -1,41 +1,87 @@
-from __future__ import absolute_import, division, print_function
-
-from .common import Benchmark, get_squares_, get_indexes_, get_indexes_rand_
+from .common import (
+    Benchmark, get_square_, get_indexes_, get_indexes_rand_, TYPES1)
 
 from os.path import join as pjoin
 import shutil
-import sys
-import six
 from numpy import memmap, float32, array
 import numpy as np
 from tempfile import mkdtemp
 
 
 class Indexing(Benchmark):
-    params = [["indexes_", "indexes_rand_"],
+    params = [TYPES1 + ["object", "O,i"],
+              ["indexes_", "indexes_rand_"],
               ['I', ':,I', 'np.ix_(I, I)'],
               ['', '=1']]
-    param_names = ['indexes', 'sel', 'op']
+    param_names = ['dtype', 'indexes', 'sel', 'op']
 
-    def setup(self, indexes, sel, op):
+    def setup(self, dtype, indexes, sel, op):
         sel = sel.replace('I', indexes)
 
-        ns = {'squares_': get_squares_(),
+        ns = {'a': get_square_(dtype),
               'np': np,
               'indexes_': get_indexes_(),
               'indexes_rand_': get_indexes_rand_()}
 
-        if sys.version_info[0] >= 3:
-            code = "def run():\n    for a in squares_.values(): a[%s]%s"
-        else:
-            code = "def run():\n    for a in squares_.itervalues(): a[%s]%s"
+        code = "def run():\n    a[%s]%s"
         code = code % (sel, op)
 
-        six.exec_(code, ns)
+        exec(code, ns)
         self.func = ns['run']
 
-    def time_op(self, indexes, sel, op):
+    def time_op(self, dtype, indexes, sel, op):
         self.func()
+
+
+class IndexingWith1DArr(Benchmark):
+    # Benchmark similar to the take one
+    params = [
+        [(1000,), (1000, 1), (1000, 2), (2, 1000, 1), (1000, 3)],
+        TYPES1 + ["O", "i,O"]]
+    param_names = ["shape", "dtype"]
+
+    def setup(self, shape, dtype):
+        self.arr = np.ones(shape, dtype)
+        self.index = np.arange(1000)
+        # index the second dimension:
+        if len(shape) == 3:
+            self.index = (slice(None), self.index)
+
+    def time_getitem_ordered(self, shape, dtype):
+        self.arr[self.index]
+
+    def time_setitem_ordered(self, shape, dtype):
+        self.arr[self.index] = 0
+
+
+class ScalarIndexing(Benchmark):
+    params = [[0, 1, 2]]
+    param_names = ["ndim"]
+
+    def setup(self, ndim):
+        self.array = np.ones((5,) * ndim)
+
+    def time_index(self, ndim):
+        # time indexing.
+        arr = self.array
+        indx = (1,) * ndim
+        for i in range(100):
+            arr[indx]
+
+    def time_assign(self, ndim):
+        # time assignment from a python scalar
+        arr = self.array
+        indx = (1,) * ndim
+        for i in range(100):
+            arr[indx] = 5.
+
+    def time_assign_cast(self, ndim):
+        # time an assignment which may use a cast operation
+        arr = self.array
+        indx = (1,) * ndim
+        val = np.int16(43)
+        for i in range(100):
+            arr[indx] = val
 
 
 class IndexingSeparate(Benchmark):
@@ -79,3 +125,21 @@ class IndexingStructured0D(Benchmark):
 
     def time_scalar_all(self):
         self.b['a'] = self.a['a']
+
+
+class FlatIterIndexing(Benchmark):
+    def setup(self):
+        self.a = np.ones((200, 50000))
+        self.m_all = np.repeat(True, 200 * 50000)
+        self.m_half = np.copy(self.m_all)
+        self.m_half[::2] = False
+        self.m_none = np.repeat(False, 200 * 50000)
+
+    def time_flat_bool_index_none(self):
+        self.a.flat[self.m_none]
+
+    def time_flat_bool_index_half(self):
+        self.a.flat[self.m_half]
+
+    def time_flat_bool_index_all(self):
+        self.a.flat[self.m_all]

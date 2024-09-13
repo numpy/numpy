@@ -1,14 +1,15 @@
 """Test deprecation and future warnings.
 
 """
-from __future__ import division, absolute_import, print_function
-
+import pytest
 import numpy as np
 from numpy.testing import assert_warns
 from numpy.ma.testutils import assert_equal
 from numpy.ma.core import MaskedArrayFutureWarning
+import io
+import textwrap
 
-class TestArgsort(object):
+class TestArgsort:
     """ gh-8701 """
     def _test_base(self, argsort, cls):
         arr_0d = np.array(1).view(cls)
@@ -37,12 +38,7 @@ class TestArgsort(object):
         return self._test_base(np.ma.MaskedArray.argsort, np.ma.MaskedArray)
 
 
-class TestMinimumMaximum(object):
-    def test_minimum(self):
-        assert_warns(DeprecationWarning, np.ma.minimum, np.ma.array([1, 2]))
-
-    def test_maximum(self):
-        assert_warns(DeprecationWarning, np.ma.maximum, np.ma.array([1, 2]))
+class TestMinimumMaximum:
 
     def test_axis_default(self):
         # NumPy 1.13, 2017-05-06
@@ -68,3 +64,21 @@ class TestMinimumMaximum(object):
         result = ma_max(data1d)
         assert_equal(result, ma_max(data1d, axis=None))
         assert_equal(result, ma_max(data1d, axis=0))
+
+
+class TestFromtextfile:
+    def test_fromtextfile_delimitor(self):
+        # NumPy 1.22.0, 2021-09-23
+
+        textfile = io.StringIO(textwrap.dedent(
+            """
+            A,B,C,D
+            'string 1';1;1.0;'mixed column'
+            'string 2';2;2.0;
+            'string 3';3;3.0;123
+            'string 4';4;4.0;3.14
+            """
+        ))
+
+        with pytest.warns(DeprecationWarning):
+            result = np.ma.mrecords.fromtextfile(textfile, delimitor=';')

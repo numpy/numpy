@@ -17,6 +17,7 @@ BitGenerator Streams that work with Generator
 --------------------------------------------- ---
 MT19937
 PCG64
+PCG64DXSM
 Philox
 SFC64
 ============================================= ===
@@ -122,8 +123,6 @@ set_state            Set state of generator.
 
 
 """
-from __future__ import division, absolute_import, print_function
-
 __all__ = [
     'beta',
     'binomial',
@@ -183,15 +182,16 @@ from . import _common
 from . import _bounded_integers
 
 from ._generator import Generator, default_rng
-from ._bit_generator import SeedSequence, BitGenerator
+from .bit_generator import SeedSequence, BitGenerator
 from ._mt19937 import MT19937
-from ._pcg64 import PCG64
+from ._pcg64 import PCG64, PCG64DXSM
 from ._philox import Philox
 from ._sfc64 import SFC64
 from .mtrand import *
 
 __all__ += ['Generator', 'RandomState', 'SeedSequence', 'MT19937',
-            'Philox', 'PCG64', 'SFC64', 'default_rng', 'BitGenerator']
+            'Philox', 'PCG64', 'PCG64DXSM', 'SFC64', 'default_rng',
+            'BitGenerator']
 
 
 def __RandomState_ctor():

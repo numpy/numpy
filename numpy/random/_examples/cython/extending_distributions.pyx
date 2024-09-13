@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #cython: language_level=3
 """
 This file shows how the to use a BitGenerator to create a distribution.
@@ -10,6 +10,8 @@ from cpython.pycapsule cimport PyCapsule_IsValid, PyCapsule_GetPointer
 from libc.stdint cimport uint16_t, uint64_t
 from numpy.random cimport bitgen_t
 from numpy.random import PCG64
+from numpy.random.c_distributions cimport (
+      random_standard_uniform_fill, random_standard_uniform_fill_f)
 
 
 @cython.boundscheck(False)
@@ -40,7 +42,7 @@ def uniforms(Py_ssize_t n):
     randoms = np.asarray(random_values)
 
     return randoms
- 
+
 # cython example 2
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -70,5 +72,46 @@ def uint10_uniforms(Py_ssize_t n):
             buff >>= width
 
     randoms = np.asarray(random_values)
+    return randoms
+
+# cython example 3
+def uniforms_ex(bit_generator, Py_ssize_t n, dtype=np.float64):
+    """
+    Create an array of `n` uniformly distributed doubles via a "fill" function.
+
+    A 'real' distribution would want to process the values into
+    some non-uniform distribution
+
+    Parameters
+    ----------
+    bit_generator: BitGenerator instance
+    n: int
+        Output vector length
+    dtype: {str, dtype}, optional
+        Desired dtype, either 'd' (or 'float64') or 'f' (or 'float32'). The
+        default dtype value is 'd'
+    """
+    cdef Py_ssize_t i
+    cdef bitgen_t *rng
+    cdef const char *capsule_name = "BitGenerator"
+    cdef np.ndarray randoms
+
+    capsule = bit_generator.capsule
+    # Optional check that the capsule if from a BitGenerator
+    if not PyCapsule_IsValid(capsule, capsule_name):
+        raise ValueError("Invalid pointer to anon_func_state")
+    # Cast the pointer
+    rng = <bitgen_t *> PyCapsule_GetPointer(capsule, capsule_name)
+
+    _dtype = np.dtype(dtype)
+    randoms = np.empty(n, dtype=_dtype)
+    if _dtype == np.float32:
+        with bit_generator.lock:
+            random_standard_uniform_fill_f(rng, n, <float*>np.PyArray_DATA(randoms))
+    elif _dtype == np.float64:
+        with bit_generator.lock:
+            random_standard_uniform_fill(rng, n, <double*>np.PyArray_DATA(randoms))
+    else:
+        raise TypeError('Unsupported dtype %r for random' % _dtype)
     return randoms
 

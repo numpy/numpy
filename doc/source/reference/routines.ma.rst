@@ -1,13 +1,13 @@
 .. _routines.ma:
 
 Masked array operations
-***********************
+=======================
 
 .. currentmodule:: numpy
 
 
 Constants
-=========
+---------
 
 .. autosummary::
    :toctree: generated/
@@ -16,7 +16,7 @@ Constants
 
 
 Creation
-========
+--------
 
 From existing data
 ~~~~~~~~~~~~~~~~~~
@@ -31,6 +31,7 @@ From existing data
    ma.fromfunction
 
    ma.MaskedArray.copy
+   ma.diagflat
 
 
 Ones and zeros
@@ -44,13 +45,15 @@ Ones and zeros
    ma.masked_all
    ma.masked_all_like
    ma.ones
+   ma.ones_like
    ma.zeros
+   ma.zeros_like
 
 
 _____
 
 Inspecting the array
-====================
+--------------------
 
 .. autosummary::
    :toctree: generated/
@@ -67,6 +70,12 @@ Inspecting the array
    ma.size
    ma.is_masked
    ma.is_mask
+   ma.isMaskedArray
+   ma.isMA
+   ma.isarray
+   ma.isin
+   ma.in1d
+   ma.unique
 
 
    ma.MaskedArray.all
@@ -86,7 +95,7 @@ Inspecting the array
 _____
 
 Manipulating a MaskedArray
-==========================
+--------------------------
 
 Changing the shape
 ~~~~~~~~~~~~~~~~~~
@@ -136,7 +145,6 @@ Changing the number of dimensions
    ma.hstack
    ma.hsplit
    ma.mr_
-   ma.row_stack
    ma.vstack
 
 
@@ -145,19 +153,19 @@ Joining arrays
 .. autosummary::
    :toctree: generated/
 
-   ma.stack
-   ma.column_stack
    ma.concatenate
-   ma.append
-   ma.dstack
-   ma.hstack
+   ma.stack
    ma.vstack
+   ma.hstack
+   ma.dstack
+   ma.column_stack
+   ma.append
 
 
 _____
 
 Operations on masks
-===================
+-------------------
 
 Creating a mask
 ~~~~~~~~~~~~~~~
@@ -185,6 +193,7 @@ Finding masked data
 .. autosummary::
    :toctree: generated/
 
+   ma.ndenumerate
    ma.flatnotmasked_contiguous
    ma.flatnotmasked_edges
    ma.notmasked_contiguous
@@ -214,7 +223,7 @@ Modifying a mask
 _____
 
 Conversion operations
-======================
+----------------------
 
 > to a masked array
 ~~~~~~~~~~~~~~~~~~~
@@ -272,7 +281,7 @@ Filling a masked array
    ma.common_fill_value
    ma.default_fill_value
    ma.maximum_fill_value
-   ma.maximum_fill_value
+   ma.minimum_fill_value
    ma.set_fill_value
 
    ma.MaskedArray.get_fill_value
@@ -284,11 +293,11 @@ Filling a masked array
 
 _____
 
-Masked arrays arithmetics
-=========================
+Masked arrays arithmetic
+------------------------
 
-Arithmetics
-~~~~~~~~~~~
+Arithmetic
+~~~~~~~~~~
 .. autosummary::
    :toctree: generated/
 
@@ -328,6 +337,7 @@ Minimum/maximum
    ma.max
    ma.min
    ma.ptp
+   ma.diff
 
    ma.MaskedArray.argmax
    ma.MaskedArray.argmin
@@ -387,6 +397,17 @@ Clipping and rounding
    ma.MaskedArray.clip
    ma.MaskedArray.round
 
+Set operations
+~~~~~~~~~~~~~~
+.. autosummary::
+   :toctree: generated/
+
+
+   ma.intersect1d
+   ma.setdiff1d
+   ma.setxor1d
+   ma.union1d
+
 
 Miscellanea
 ~~~~~~~~~~~
@@ -395,9 +416,25 @@ Miscellanea
 
    ma.allequal
    ma.allclose
+   ma.amax
+   ma.amin
    ma.apply_along_axis
+   ma.apply_over_axes
    ma.arange
    ma.choose
+   ma.compress_nd
+   ma.convolve
+   ma.correlate
    ma.ediff1d
+   ma.flatten_mask
+   ma.flatten_structured_array
+   ma.fromflex
    ma.indices
+   ma.left_shift
+   ma.ndim
+   ma.put
+   ma.putmask
+   ma.right_shift
+   ma.round_
+   ma.take
    ma.where

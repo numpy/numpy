@@ -1,0 +1,23 @@
+
+Contributors
+============
+
+A total of 4 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Matti Picus
+* Sebastian Berg
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 6 pull requests were merged for this release.
+
+* `#16055 <https://github.com/numpy/numpy/pull/16055>`__: BLD: add i686 for 1.18 builds
+* `#16090 <https://github.com/numpy/numpy/pull/16090>`__: BUG: random: ``Generator.integers(2**32)`` always returned 0.
+* `#16091 <https://github.com/numpy/numpy/pull/16091>`__: BLD: fix path to libgfortran on macOS
+* `#16109 <https://github.com/numpy/numpy/pull/16109>`__: REV: Reverts side-effect changes to casting
+* `#16114 <https://github.com/numpy/numpy/pull/16114>`__: BLD: put openblas library in local directory on windows
+* `#16132 <https://github.com/numpy/numpy/pull/16132>`__: DOC: Change import error "howto" to link to new troubleshooting...

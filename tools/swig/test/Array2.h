@@ -31,9 +31,10 @@ public:
   int nrows() const;
   int ncols() const;
 
-  // Resize array
-  void resize(int nrows, int ncols, long* data=0);
-
+  // Resize array  
+  void resize(int nrows, int ncols, long* data);
+  void resize(int nrows, int ncols);
+  
   // Set item accessor
   Array1 & operator[](int i);
 

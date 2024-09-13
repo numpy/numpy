@@ -1,16 +1,14 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
-import warnings
 import functools
 import sys
 import pytest
 
-from numpy.lib.shape_base import (
+from numpy import (
     apply_along_axis, apply_over_axes, array_split, split, hsplit, dsplit,
     vsplit, dstack, column_stack, kron, tile, expand_dims, take_along_axis,
     put_along_axis
     )
+from numpy.exceptions import AxisError
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
     )
@@ -30,7 +28,7 @@ def _add_keepdims(func):
     return wrapped
 
 
-class TestTakeAlongAxis(object):
+class TestTakeAlongAxis:
     def test_argequivalent(self):
         """ Test it translates from arg<func> to <func> """
         from numpy.random import rand
@@ -40,7 +38,7 @@ class TestTakeAlongAxis(object):
             (np.sort, np.argsort, dict()),
             (_add_keepdims(np.min), _add_keepdims(np.argmin), dict()),
             (_add_keepdims(np.max), _add_keepdims(np.argmax), dict()),
-            (np.partition, np.argpartition, dict(kth=2)),
+            #(np.partition, np.argpartition, dict(kth=2)),
         ]
 
         for func, argfunc, kwargs in funcs:
@@ -64,7 +62,9 @@ class TestTakeAlongAxis(object):
         # float arrays not allowed
         assert_raises(IndexError, take_along_axis, a, ai.astype(float), axis=1)
         # invalid axis
-        assert_raises(np.AxisError, take_along_axis, a, ai, axis=10)
+        assert_raises(AxisError, take_along_axis, a, ai, axis=10)
+        # invalid indices
+        assert_raises(ValueError, take_along_axis, a, ai, axis=None)
 
     def test_empty(self):
         """ Test everything is ok with empty results, even with inserted dims """
@@ -82,7 +82,7 @@ class TestTakeAlongAxis(object):
         assert_equal(actual.shape, (3, 2, 5))
 
 
-class TestPutAlongAxis(object):
+class TestPutAlongAxis:
     def test_replace_max(self):
         a_base = np.array([[10, 30, 20], [60, 40, 50]])
 
@@ -106,8 +106,26 @@ class TestPutAlongAxis(object):
         put_along_axis(a, ai, 20, axis=1)
         assert_equal(take_along_axis(a, ai, axis=1), 20)
 
+    def test_invalid(self):
+        """ Test invalid inputs """
+        a_base = np.array([[10, 30, 20], [60, 40, 50]])
+        indices = np.array([[0], [1]])
+        values = np.array([[2], [1]])
 
-class TestApplyAlongAxis(object):
+        # sanity check
+        a = a_base.copy()
+        put_along_axis(a, indices, values, axis=0)
+        assert np.all(a == [[2, 2, 2], [1, 1, 1]])
+
+        # invalid indices
+        a = a_base.copy()
+        with assert_raises(ValueError) as exc:
+            put_along_axis(a, indices, values, axis=None)
+        assert "single dimension" in str(exc.exception)
+
+
+
+class TestApplyAlongAxis:
     def test_simple(self):
         a = np.ones((20, 10), 'd')
         assert_array_equal(
@@ -273,14 +291,14 @@ class TestApplyAlongAxis(object):
             assert_equal(type(actual[i]), type(expected[i]))
 
 
-class TestApplyOverAxes(object):
+class TestApplyOverAxes:
     def test_simple(self):
         a = np.arange(24).reshape(2, 3, 4)
         aoa_a = apply_over_axes(np.sum, a, [0, 2])
         assert_array_equal(aoa_a, np.array([[[60], [92], [124]]]))
 
 
-class TestExpandDims(object):
+class TestExpandDims:
     def test_functionality(self):
         s = (2, 3, 4, 5)
         a = np.empty(s)
@@ -299,12 +317,12 @@ class TestExpandDims(object):
     def test_axis_out_of_range(self):
         s = (2, 3, 4, 5)
         a = np.empty(s)
-        assert_raises(np.AxisError, expand_dims, a, -6)
-        assert_raises(np.AxisError, expand_dims, a, 5)
+        assert_raises(AxisError, expand_dims, a, -6)
+        assert_raises(AxisError, expand_dims, a, 5)
 
         a = np.empty((3, 3, 3))
-        assert_raises(np.AxisError, expand_dims, a, (0, -6))
-        assert_raises(np.AxisError, expand_dims, a, (0, 5))
+        assert_raises(AxisError, expand_dims, a, (0, -6))
+        assert_raises(AxisError, expand_dims, a, (0, 5))
 
     def test_repeated_axis(self):
         a = np.empty((3, 3, 3))
@@ -320,7 +338,7 @@ class TestExpandDims(object):
         assert_equal(expanded.mask.shape, (2, 1, 5))
 
 
-class TestArraySplit(object):
+class TestArraySplit:
     def test_integer_0_split(self):
         a = np.arange(10)
         assert_raises(ValueError, array_split, a, 0)
@@ -395,7 +413,7 @@ class TestArraySplit(object):
         assert_(a.dtype.type is res[-1].dtype.type)
 
         # Same thing for manual splits:
-        res = array_split(a, [0, 1, 2], axis=0)
+        res = array_split(a, [0, 1], axis=0)
         tgt = [np.zeros((0, 10)), np.array([np.arange(10)]),
                np.array([np.arange(10)])]
         compare_results(res, tgt)
@@ -454,7 +472,7 @@ class TestArraySplit(object):
         compare_results(res, desired)
 
 
-class TestSplit(object):
+class TestSplit:
     # The split function is essentially the same as array_split,
     # except that it test if splitting will result in an
     # equal split.  Only test for this case.
@@ -470,7 +488,7 @@ class TestSplit(object):
         assert_raises(ValueError, split, a, 3)
 
 
-class TestColumnStack(object):
+class TestColumnStack:
     def test_non_iterable(self):
         assert_raises(TypeError, column_stack, 1)
 
@@ -495,11 +513,11 @@ class TestColumnStack(object):
         assert_equal(actual, expected)
 
     def test_generator(self):
-        with assert_warns(FutureWarning):
-            column_stack((np.arange(3) for _ in range(2)))
+        with pytest.raises(TypeError, match="arrays to stack must be"):
+            column_stack(np.arange(3) for _ in range(2))
 
 
-class TestDstack(object):
+class TestDstack:
     def test_non_iterable(self):
         assert_raises(TypeError, dstack, 1)
 
@@ -532,13 +550,13 @@ class TestDstack(object):
         assert_array_equal(res, desired)
 
     def test_generator(self):
-        with assert_warns(FutureWarning):
-            dstack((np.arange(3) for _ in range(2)))
+        with pytest.raises(TypeError, match="arrays to stack must be"):
+            dstack(np.arange(3) for _ in range(2))
 
 
 # array_split has more comprehensive test of splitting.
 # only do simple test on hsplit, vsplit, and dsplit
-class TestHsplit(object):
+class TestHsplit:
     """Only testing for integer splits.
 
     """
@@ -567,7 +585,7 @@ class TestHsplit(object):
         compare_results(res, desired)
 
 
-class TestVsplit(object):
+class TestVsplit:
     """Only testing for integer splits.
 
     """
@@ -594,7 +612,7 @@ class TestVsplit(object):
         compare_results(res, desired)
 
 
-class TestDsplit(object):
+class TestDsplit:
     # Only testing for integer splits.
     def test_non_iterable(self):
         assert_raises(ValueError, dsplit, 1, 1)
@@ -627,7 +645,7 @@ class TestDsplit(object):
         compare_results(res, desired)
 
 
-class TestSqueeze(object):
+class TestSqueeze:
     def test_basic(self):
         from numpy.random import rand
 
@@ -646,20 +664,86 @@ class TestSqueeze(object):
         assert_equal(type(res), np.ndarray)
 
 
-class TestKron(object):
+class TestKron:
+    def test_basic(self):
+        # Using 0-dimensional ndarray
+        a = np.array(1)
+        b = np.array([[1, 2], [3, 4]])
+        k = np.array([[1, 2], [3, 4]])
+        assert_array_equal(np.kron(a, b), k)
+        a = np.array([[1, 2], [3, 4]])
+        b = np.array(1)
+        assert_array_equal(np.kron(a, b), k)
+
+        # Using 1-dimensional ndarray
+        a = np.array([3])
+        b = np.array([[1, 2], [3, 4]])
+        k = np.array([[3, 6], [9, 12]])
+        assert_array_equal(np.kron(a, b), k)
+        a = np.array([[1, 2], [3, 4]])
+        b = np.array([3])
+        assert_array_equal(np.kron(a, b), k)
+
+        # Using 3-dimensional ndarray
+        a = np.array([[[1]], [[2]]])
+        b = np.array([[1, 2], [3, 4]])
+        k = np.array([[[1, 2], [3, 4]], [[2, 4], [6, 8]]])
+        assert_array_equal(np.kron(a, b), k)
+        a = np.array([[1, 2], [3, 4]])
+        b = np.array([[[1]], [[2]]])
+        k = np.array([[[1, 2], [3, 4]], [[2, 4], [6, 8]]])
+        assert_array_equal(np.kron(a, b), k)
+
     def test_return_type(self):
         class myarray(np.ndarray):
-            __array_priority__ = 0.0
+            __array_priority__ = 1.0
 
         a = np.ones([2, 2])
         ma = myarray(a.shape, a.dtype, a.data)
         assert_equal(type(kron(a, a)), np.ndarray)
         assert_equal(type(kron(ma, ma)), myarray)
-        assert_equal(type(kron(a, ma)), np.ndarray)
+        assert_equal(type(kron(a, ma)), myarray)
         assert_equal(type(kron(ma, a)), myarray)
 
+    @pytest.mark.parametrize(
+        "array_class", [np.asarray, np.asmatrix]
+    )
+    def test_kron_smoke(self, array_class):
+        a = array_class(np.ones([3, 3]))
+        b = array_class(np.ones([3, 3]))
+        k = array_class(np.ones([9, 9]))
 
-class TestTile(object):
+        assert_array_equal(np.kron(a, b), k)
+
+    def test_kron_ma(self):
+        x = np.ma.array([[1, 2], [3, 4]], mask=[[0, 1], [1, 0]])
+        k = np.ma.array(np.diag([1, 4, 4, 16]),
+                mask=~np.array(np.identity(4), dtype=bool))
+
+        assert_array_equal(k, np.kron(x, x))
+
+    @pytest.mark.parametrize(
+        "shape_a,shape_b", [
+            ((1, 1), (1, 1)),
+            ((1, 2, 3), (4, 5, 6)),
+            ((2, 2), (2, 2, 2)),
+            ((1, 0), (1, 1)),
+            ((2, 0, 2), (2, 2)),
+            ((2, 0, 0, 2), (2, 0, 2)),
+        ])
+    def test_kron_shape(self, shape_a, shape_b):
+        a = np.ones(shape_a)
+        b = np.ones(shape_b)
+        normalised_shape_a = (1,) * max(0, len(shape_b)-len(shape_a)) + shape_a
+        normalised_shape_b = (1,) * max(0, len(shape_a)-len(shape_b)) + shape_b
+        expected_shape = np.multiply(normalised_shape_a, normalised_shape_b)
+
+        k = np.kron(a, b)
+        assert np.array_equal(
+                k.shape, expected_shape), "Unexpected shape from kron"
+
+
+class TestTile:
     def test_basic(self):
         a = np.array([0, 1, 2])
         b = [[1, 2], [3, 4]]
@@ -699,7 +783,7 @@ class TestTile(object):
                 assert_equal(large, klarge)
 
 
-class TestMayShareMemory(object):
+class TestMayShareMemory:
     def test_basic(self):
         d = np.ones((50, 60))
         d2 = np.ones((30, 60, 6))
@@ -716,5 +800,9 @@ class TestMayShareMemory(object):
 
 # Utility
 def compare_results(res, desired):
-    for i in range(len(desired)):
-        assert_array_equal(res[i], desired[i])
+    """Compare lists of arrays."""
+    if len(res) != len(desired):
+        raise ValueError("Iterables have different lengths")
+    # See also PEP 618 for Python 3.10
+    for x, y in zip(res, desired):
+        assert_array_equal(x, y)

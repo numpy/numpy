@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark
 
 import numpy as np
@@ -70,7 +68,7 @@ class Block(Benchmark):
 
 
 class Block2D(Benchmark):
-    params = [[(16, 16), (32, 32), (64, 64), (128, 128), (256, 256), (512, 512), (1024, 1024)],
+    params = [[(16, 16), (64, 64), (256, 256), (1024, 1024)],
               ['uint8', 'uint16', 'uint32', 'uint64'],
               [(2, 2), (4, 4)]]
     param_names = ['shape', 'dtype', 'n_chunks']
@@ -136,3 +134,37 @@ class Block3D(Benchmark):
 
     # Retain old benchmark name for backward compat
     time_3d.benchmark_name = "bench_shape_base.Block.time_3d"
+
+
+class Kron(Benchmark):
+    """Benchmarks for Kronecker product of two arrays"""
+
+    def setup(self):
+        self.large_arr = np.random.random((10,) * 4)
+        self.large_mat = np.asmatrix(np.random.random((100, 100)))
+        self.scalar = 7
+
+    def time_arr_kron(self):
+        np.kron(self.large_arr, self.large_arr)
+
+    def time_scalar_kron(self):
+        np.kron(self.large_arr, self.scalar)
+
+    def time_mat_kron(self):
+        np.kron(self.large_mat, self.large_mat)
+
+class AtLeast1D(Benchmark):
+    """Benchmarks for np.atleast_1d"""
+
+    def setup(self):
+        self.x = np.array([1, 2, 3])
+        self.zero_d = np.float64(1.)
+
+    def time_atleast_1d(self):
+        np.atleast_1d(self.x, self.x, self.x)
+
+    def time_atleast_1d_reshape(self):
+        np.atleast_1d(self.zero_d, self.zero_d, self.zero_d)
+
+    def time_atleast_1d_single_argument(self):
+        np.atleast_1d(self.x)

@@ -1,5 +1,7 @@
 .. currentmodule:: numpy.ma
 
+.. for doctests
+   >>> from numpy import ma
 
 .. _numpy.ma.constants:
 
@@ -16,30 +18,33 @@ defines several constants.
    specific entry of a masked array is masked, or to mask one or several
    entries of a masked array::
 
+      >>> import numpy as np
+
       >>> x = ma.array([1, 2, 3], mask=[0, 1, 0])
       >>> x[1] is ma.masked
       True
       >>> x[-1] = ma.masked
       >>> x
-      masked_array(data = [1 -- --],
-                   mask = [False  True  True],
-             fill_value = 999999)
+      masked_array(data=[1, --, --],
+                   mask=[False,  True,  True],
+             fill_value=999999)
 
 
 .. data:: nomask
 
    Value indicating that a masked array has no invalid entry.
    :attr:`nomask` is used internally to speed up computations when the mask
-   is not needed.
+   is not needed. It is represented internally as ``np.False_``.
 
 
-.. data:: masked_print_options
+.. data:: masked_print_option
 
    String used in lieu of missing data when a masked array is printed.
    By default, this string is ``'--'``.
 
-
-
+   Use ``set_display()`` to change the default string.
+   Example usage: ``numpy.ma.masked_print_option.set_display('X')`` 
+   replaces missing data with ``'X'``.
 
 .. _maskedarray.baseclass:
 
@@ -69,19 +74,19 @@ Attributes and properties of masked arrays
 
 .. seealso:: :ref:`Array Attributes <arrays.ndarray.attributes>`
 
-.. autoattribute:: MaskedArray.data
+.. autoattribute:: numpy::ma.MaskedArray.data
 
-.. autoattribute:: MaskedArray.mask
+.. autoattribute:: numpy::ma.MaskedArray.mask
 
-.. autoattribute:: MaskedArray.recordmask
+.. autoattribute:: numpy::ma.MaskedArray.recordmask
 
-.. autoattribute:: MaskedArray.fill_value
+.. autoattribute:: numpy::ma.MaskedArray.fill_value
 
-.. autoattribute:: MaskedArray.baseclass
+.. autoattribute:: numpy::ma.MaskedArray.baseclass
 
-.. autoattribute:: MaskedArray.sharedmask
+.. autoattribute:: numpy::ma.MaskedArray.sharedmask
 
-.. autoattribute:: MaskedArray.hardmask
+.. autoattribute:: numpy::ma.MaskedArray.hardmask
 
 As :class:`MaskedArray` is a subclass of :class:`~numpy.ndarray`, a masked array also inherits all the attributes and properties of a  :class:`~numpy.ndarray` instance.
 
@@ -122,7 +127,6 @@ Conversion
 
    MaskedArray.__float__
    MaskedArray.__int__
-   MaskedArray.__long__
 
    MaskedArray.view
    MaskedArray.astype
@@ -240,8 +244,8 @@ Comparison operators:
    MaskedArray.__eq__
    MaskedArray.__ne__
 
-Truth value of an array (:func:`bool()`):
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Truth value of an array (:class:`bool() <bool>`):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autosummary::
    :toctree: generated/

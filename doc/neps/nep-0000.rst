@@ -1,5 +1,7 @@
+.. _NEP00:
+
 ===========================
-NEP 0 — Purpose and Process
+NEP 0 — Purpose and process
 ===========================
 
 :Author: Jarrod Millman <millman@berkeley.edu>
@@ -52,7 +54,7 @@ There are three kinds of NEPs:
    Any meta-NEP is also considered a Process NEP.
 
 
-NEP Workflow
+NEP workflow
 ------------
 
 The NEP process begins with a new idea for NumPy.  It is highly
@@ -76,7 +78,7 @@ where ``<n>`` is an appropriately assigned four-digit number (e.g.,
 ``nep-0000.rst``). The draft must use the :doc:`nep-template` file.
 
 Once the PR for the NEP is in place, a post should be made to the
-mailing list containing the sections upto "Backward compatibility",
+mailing list containing the sections up to "Backward compatibility",
 with the purpose of limiting discussion there to usage and impact.
 Discussion on the pull request will have a broader scope, also including
 details of implementation.
@@ -95,7 +97,7 @@ to be made available as PR to the NumPy repo (making sure to appropriately
 mark the PR as a WIP).
 
 
-Review and Resolution
+Review and resolution
 ^^^^^^^^^^^^^^^^^^^^^
 
 NEPs are discussed on the mailing list.  The possible paths of the
@@ -144,13 +146,14 @@ thread in the mailing list archives.
 
 NEPs can also be ``Superseded`` by a different NEP, rendering the
 original obsolete.  The ``Replaced-By`` and ``Replaces`` headers
-should be added to the original and new NEPs respectively.
+containing references to the original and new NEPs, like
+``:ref:`NEP#number``` should be added respectively.
 
 Process NEPs may also have a status of ``Active`` if they are never
 meant to be completed, e.g. NEP 0 (this NEP).
 
 
-How a NEP becomes Accepted
+How a NEP becomes accepted
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A NEP is ``Accepted`` by consensus of all interested contributors. We
@@ -218,7 +221,7 @@ to development practices and other details. The precise process followed in
 these cases will depend on the nature and purpose of the NEP being updated.
 
 
-Format and Template
+Format and template
 -------------------
 
 NEPs are UTF-8 encoded text files using the reStructuredText_ format.  Please
@@ -232,7 +235,9 @@ Header Preamble
 
 Each NEP must begin with a header preamble.  The headers
 must appear in the following order.  Headers marked with ``*`` are
-optional.  All other headers are required. ::
+optional.  All other headers are required.
+
+.. code-block:: rst
 
     :Author: <list of authors' real names and optionally, email addresses>
     :Status: <Draft | Active | Accepted | Deferred | Rejected |
@@ -249,9 +254,13 @@ The Author header lists the names, and optionally the email addresses
 of all the authors of the NEP.  The format of the Author header
 value must be
 
+.. code-block:: rst
+
     Random J. User <address@dom.ain>
 
 if the email address is included, and just
+
+.. code-block:: rst
 
     Random J. User
 
@@ -265,12 +274,12 @@ Discussion
 - https://mail.python.org/pipermail/numpy-discussion/2017-December/077481.html
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] This historical record is available by the normal git commands
    for retrieving older revisions, and can also be browsed on
-   `GitHub <https://github.com/numpy/numpy/tree/master/doc/neps>`_.
+   `GitHub <https://github.com/numpy/numpy/tree/main/doc/neps>`_.
 
 .. [2] The URL for viewing NEPs on the web is
    https://www.numpy.org/neps/.

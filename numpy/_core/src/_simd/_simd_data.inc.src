@@ -1,0 +1,93 @@
+/**
+ * This file is included by `_simd.dispatch.c.src`. Its contents are affected by the simd configuration, and
+ * therefore must be built multiple times. Making it a standalone `.c` file with `NPY_VISIBILITY_HIDDEN`
+ * symbols would require judicious use of `NPY_CPU_DISPATCH_DECLARE` and `NPY_CPU_DISPATCH_CURFX`, which was
+ * deemed too harmful to readability.
+ */
+/************************************
+ ** Private Definitions
+ ************************************/
+static simd_data_info simd__data_registry[simd_data_end] =
+{
+    [simd_data_none] = {.pyname="none"},
+    /**begin repeat
+     * #sfx  = u8, u16, u32, u64, s8, s16, s32, s64, f32, f64#
+     * #sig  = 0*4, 1*4, 0*2#
+     * #fp   = 0*4, 0*4, 1*2#
+     * #name = int*8, float, float#
+     */
+    [simd_data_@sfx@] = {
+        .pyname="@name@", .is_unsigned=!@sig@&&!@fp@, .is_signed=@sig@, .is_float=@fp@,
+        .is_scalar=1, .to_scalar = simd_data_@sfx@, .to_vector = simd_data_v@sfx@,
+        .lane_size = sizeof(npyv_lanetype_@sfx@)
+    },
+    /**end repeat**/
+    // sequences
+    /**begin repeat
+     * #sfx = u8, u16, u32, u64, s8, s16, s32, s64, f32, f64#
+     * #sig = 0*4, 1*4, 0*2#
+     * #fp  = 0*4, 0*4, 1*2#
+     * #name = int*8, float, float#
+     */
+    [simd_data_q@sfx@] = {
+        .pyname="[@name@]", .is_unsigned=!@sig@&&!@fp@, .is_signed=@sig@, .is_float=@fp@,
+        .is_sequence=1, .to_scalar = simd_data_@sfx@, .to_vector = simd_data_v@sfx@,
+        .nlanes=npyv_nlanes_@sfx@, .lane_size = sizeof(npyv_lanetype_@sfx@)
+    },
+    /**end repeat**/
+    // vectors
+    /**begin repeat
+     * #sfx = u8, u16, u32, u64, s8, s16, s32, s64, f32, f64#
+     * #sig = 0*4, 1*4, 0*2#
+     * #fp  = 0*4, 0*4, 1*2#
+     */
+    [simd_data_v@sfx@] = {
+        .pyname="npyv_@sfx@", .is_unsigned=!@sig@&&!@fp@, .is_signed=@sig@, .is_float=@fp@,
+        .is_vector=1, .to_scalar = simd_data_@sfx@, .to_vector = simd_data_v@sfx@,
+        .nlanes=npyv_nlanes_@sfx@, .lane_size = sizeof(npyv_lanetype_@sfx@)
+    },
+    /**end repeat**/
+    // boolean vectors, treated as unsigned and converted internally
+    // to add compatibility among all SIMD extensions
+    /**begin repeat
+     * #sfx  = u8, u16, u32, u64#
+     * #bsfx = b8, b16, b32, b64#
+     */
+    [simd_data_v@bsfx@] = {
+        .pyname="npyv_@bsfx@", .is_bool=1, .is_vector=1,
+        .to_scalar = simd_data_@sfx@, .to_vector = simd_data_v@sfx@,
+        .nlanes=npyv_nlanes_@sfx@, .lane_size = sizeof(npyv_lanetype_@sfx@)
+    },
+    /**end repeat**/
+    // multi-vectors x2
+    /**begin repeat
+     * #sfx = u8, u16, u32, u64, s8, s16, s32, s64, f32, f64#
+     * #sig = 0*4, 1*4, 0*2#
+     * #fp  = 0*4, 0*4, 1*2#
+     */
+    [simd_data_v@sfx@x2] = {
+        .pyname="npyv_@sfx@x2", .is_unsigned=!@sig@&&!@fp@, .is_signed=@sig@, .is_float=@fp@,
+        .is_vectorx=2, .to_scalar = simd_data_@sfx@, .to_vector = simd_data_v@sfx@,
+        .nlanes=2, .lane_size = sizeof(npyv_lanetype_@sfx@)
+    },
+    /**end repeat**/
+    // multi-vectors x3
+    /**begin repeat
+     * #sfx = u8, u16, u32, u64, s8, s16, s32, s64, f32, f64#
+     * #sig = 0*4, 1*4, 0*2#
+     * #fp  = 0*4, 0*4, 1*2#
+     */
+    [simd_data_v@sfx@x3] = {
+        .pyname="npyv_@sfx@x3", .is_unsigned=!@sig@&&!@fp@, .is_signed=@sig@, .is_float=@fp@,
+        .is_vectorx=3, .to_scalar = simd_data_@sfx@, .to_vector = simd_data_v@sfx@,
+        .nlanes=3, .lane_size = sizeof(npyv_lanetype_@sfx@)
+    },
+    /**end repeat**/
+};
+
+/************************************
+ ** Protected Definitions
+ ************************************/
+static const simd_data_info *
+simd_data_getinfo(simd_data_type dtype)
+{ return &simd__data_registry[dtype]; }

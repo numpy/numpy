@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 from distutils.core import Command
 from numpy.distutils import log
 
@@ -59,7 +57,7 @@ class config_fc(Command):
         self.noarch = None
 
     def finalize_options(self):
-        log.info('unifing config_fc, config, build_clib, build_ext, build commands --fcompiler options')
+        log.info('unifying config_fc, config, build_clib, build_ext, build commands --fcompiler options')
         build_clib = self.get_finalized_command('build_clib')
         build_ext = self.get_finalized_command('build_ext')
         config = self.get_finalized_command('config')
@@ -100,7 +98,7 @@ class config_cc(Command):
         self.compiler = None
 
     def finalize_options(self):
-        log.info('unifing config_cc, config, build_clib, build_ext, build commands --compiler options')
+        log.info('unifying config_cc, config, build_clib, build_ext, build commands --compiler options')
         build_clib = self.get_finalized_command('build_clib')
         build_ext = self.get_finalized_command('build_ext')
         config = self.get_finalized_command('config')

@@ -5,22 +5,15 @@ Most of these functions were initially implemented by John Hunter for
 matplotlib.  They have been rewritten and extended for convenience.
 
 """
-from __future__ import division, absolute_import, print_function
-
-import sys
 import itertools
 import numpy as np
 import numpy.ma as ma
-from numpy import ndarray, recarray
+from numpy import ndarray
 from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
-from numpy.core.overrides import array_function_dispatch
+from numpy._core.overrides import array_function_dispatch
+from numpy._core.records import recarray
 from numpy.lib._iotools import _is_string_like
-from numpy.compat import basestring
-from numpy.testing import suppress_warnings
-
-if sys.version_info[0] < 3:
-    from future_builtins import zip
 
 _check_fill_value = np.ma.core._check_fill_value
 
@@ -59,6 +52,7 @@ def recursive_fill_fields(input, output):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
     >>> a = np.array([(1, 10.), (2, 20.)], dtype=[('A', np.int64), ('B', np.float64)])
     >>> b = np.zeros((3,), dtype=a.dtype)
@@ -91,6 +85,7 @@ def _get_fieldspec(dtype):
 
     Examples
     --------
+    >>> import numpy as np
     >>> dt = np.dtype([(('a', 'A'), np.int64), ('b', np.double, 3)])
     >>> dt.descr
     [(('a', 'A'), '<i8'), ('b', '<f8', (3,))]
@@ -112,7 +107,8 @@ def _get_fieldspec(dtype):
 
 def get_names(adtype):
     """
-    Returns the field names of the input datatype as a tuple.
+    Returns the field names of the input datatype as a tuple. Input datatype
+    must have fields otherwise error is raised.
 
     Parameters
     ----------
@@ -121,16 +117,12 @@ def get_names(adtype):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
-    >>> rfn.get_names(np.empty((1,), dtype=int))
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
-
-    >>> rfn.get_names(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
+    >>> rfn.get_names(np.empty((1,), dtype=[('A', int)]).dtype)
+    ('A',)
+    >>> rfn.get_names(np.empty((1,), dtype=[('A',int), ('B', float)]).dtype)
+    ('A', 'B')
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names(adtype)
     ('a', ('b', ('ba', 'bb')))
@@ -148,8 +140,9 @@ def get_names(adtype):
 
 def get_names_flat(adtype):
     """
-    Returns the field names of the input datatype as a tuple. Nested structure
-    are flattened beforehand.
+    Returns the field names of the input datatype as a tuple. Input datatype
+    must have fields otherwise error is raised.
+    Nested structure are flattened beforehand.
 
     Parameters
     ----------
@@ -158,15 +151,12 @@ def get_names_flat(adtype):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
-    >>> rfn.get_names_flat(np.empty((1,), dtype=int)) is None
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
-    >>> rfn.get_names_flat(np.empty((1,), dtype=[('A',int), ('B', float)]))
-    Traceback (most recent call last):
-        ...
-    AttributeError: 'numpy.ndarray' object has no attribute 'names'
+    >>> rfn.get_names_flat(np.empty((1,), dtype=[('A', int)]).dtype) is None
+    False
+    >>> rfn.get_names_flat(np.empty((1,), dtype=[('A',int), ('B', str)]).dtype)
+    ('A', 'B')
     >>> adtype = np.dtype([('a', int), ('b', [('ba', int), ('bb', int)])])
     >>> rfn.get_names_flat(adtype)
     ('a', 'b', 'ba', 'bb')
@@ -187,6 +177,7 @@ def flatten_descr(ndtype):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
     >>> ndtype = np.dtype([('a', '<i4'), ('b', [('ba', '<f8'), ('bb', '<i4')])])
     >>> rfn.flatten_descr(ndtype)
@@ -250,10 +241,11 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
     lastname : optional
         Last processed field name (used internally during recursion).
     parents : dictionary
-        Dictionary of parent fields (used interbally during recursion).
+        Dictionary of parent fields (used internally during recursion).
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
     >>> ndtype =  np.dtype([('A', int),
     ...                     ('B', [('BA', int),
@@ -275,7 +267,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
                 parents[name] = []
             parents.update(get_fieldstructure(current, name, parents))
         else:
-            lastparent = [_ for _ in (parents.get(lastname, []) or [])]
+            lastparent = list((parents.get(lastname, []) or []))
             if lastparent:
                 lastparent.append(lastname)
             elif lastname:
@@ -292,8 +284,7 @@ def _izip_fields_flat(iterable):
     """
     for element in iterable:
         if isinstance(element, np.void):
-            for f in _izip_fields_flat(tuple(element)):
-                yield f
+            yield from _izip_fields_flat(tuple(element))
         else:
             yield element
 
@@ -305,12 +296,11 @@ def _izip_fields(iterable):
     """
     for element in iterable:
         if (hasattr(element, '__iter__') and
-                not isinstance(element, basestring)):
-            for f in _izip_fields(element):
-                yield f
+                not isinstance(element, str)):
+            yield from _izip_fields(element)
         elif isinstance(element, np.void) and len(tuple(element)) == 1:
-            for f in _izip_fields(element):
-                yield f
+            # this statement is the same from the previous expression
+            yield from _izip_fields(element)
         else:
             yield element
 
@@ -335,12 +325,7 @@ def _izip_records(seqarrays, fill_value=None, flatten=True):
     else:
         zipfunc = _izip_fields
 
-    if sys.version_info[0] >= 3:
-        zip_longest = itertools.zip_longest
-    else:
-        zip_longest = itertools.izip_longest
-
-    for tup in zip_longest(*seqarrays, fillvalue=fill_value):
+    for tup in itertools.zip_longest(*seqarrays, fillvalue=fill_value):
         yield tuple(zipfunc(tup))
 
 
@@ -401,6 +386,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
     >>> rfn.merge_arrays((np.array([1, 2]), np.array([10., 20., 30.])))
     array([( 1, 10.), ( 2, 20.), (-1, 30.)],
@@ -438,7 +424,7 @@ def merge_arrays(seqarrays, fill_value=-1, flatten=False,
         if seqdtype.names is None:
             seqdtype = np.dtype([('', seqdtype)])
         if not flatten or _zip_dtype((seqarrays,), flatten=True) == seqdtype:
-            # Minimal processing needed: just make sure everythng's a-ok
+            # Minimal processing needed: just make sure everything's a-ok
             seqarrays = seqarrays.ravel()
             # Find what type of array we must return
             if usemask:
@@ -527,7 +513,7 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
 
     Nested fields are supported.
 
-    ..versionchanged: 1.18.0
+    .. versionchanged:: 1.18.0
         `drop_fields` returns an array with 0 fields if all fields are dropped,
         rather than returning ``None`` as it did previously.
 
@@ -547,6 +533,7 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
     >>> a = np.array([(1, (2, 3.0)), (4, (5, 6.0))],
     ...   dtype=[('a', np.int64), ('b', [('ba', np.double), ('bb', np.int64)])])
@@ -642,6 +629,7 @@ def rename_fields(base, namemapper):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
     >>> a = np.array([(1, (2, [3.0, 30.])), (4, (5, [6.0, 60.]))],
     ...   dtype=[('a', int),('b', [('ba', float), ('bb', (float, 2))])])
@@ -669,8 +657,7 @@ def rename_fields(base, namemapper):
 def _append_fields_dispatcher(base, names, data, dtypes=None,
                               fill_value=None, usemask=None, asrecarray=None):
     yield base
-    for d in data:
-        yield d
+    yield from data
 
 
 @array_function_dispatch(_append_fields_dispatcher)
@@ -709,12 +696,12 @@ def append_fields(base, names, data, dtypes=None,
         if len(names) != len(data):
             msg = "The number of arrays does not match the number of names"
             raise ValueError(msg)
-    elif isinstance(names, basestring):
+    elif isinstance(names, str):
         names = [names, ]
         data = [data, ]
     #
     if dtypes is None:
-        data = [np.array(a, copy=False, subok=True) for a in data]
+        data = [np.array(a, copy=None, subok=True) for a in data]
         data = [a.view([(name, a.dtype)]) for (name, a) in zip(names, data)]
     else:
         if not isinstance(dtypes, (tuple, list)):
@@ -725,7 +712,7 @@ def append_fields(base, names, data, dtypes=None,
             else:
                 msg = "The dtypes argument must be None, a dtype, or a list."
                 raise ValueError(msg)
-        data = [np.array(a, copy=False, subok=True, dtype=d).view([(n, d)])
+        data = [np.array(a, copy=None, subok=True, dtype=d).view([(n, d)])
                 for (a, n, d) in zip(data, names, dtypes)]
     #
     base = merge_arrays(base, usemask=usemask, fill_value=fill_value)
@@ -746,8 +733,7 @@ def append_fields(base, names, data, dtypes=None,
 
 def _rec_append_fields_dispatcher(base, names, data, dtypes=None):
     yield base
-    for d in data:
-        yield d
+    yield from data
 
 
 @array_function_dispatch(_rec_append_fields_dispatcher)
@@ -800,7 +786,8 @@ def repack_fields(a, align=False, recurse=False):
 
     This method removes any overlaps and reorders the fields in memory so they
     have increasing byte offsets, and adds or removes padding bytes depending
-    on the `align` option, which behaves like the `align` option to `np.dtype`.
+    on the `align` option, which behaves like the `align` option to
+    `numpy.dtype`.
 
     If `align=False`, this method produces a "packed" memory layout in which
     each field starts at the byte the previous field ended, and any padding
@@ -827,6 +814,7 @@ def repack_fields(a, align=False, recurse=False):
 
     Examples
     --------
+    >>> import numpy as np
 
     >>> from numpy.lib import recfunctions as rfn
     >>> def print_offsets(d):
@@ -835,7 +823,8 @@ def repack_fields(a, align=False, recurse=False):
     ...
     >>> dt = np.dtype('u1, <i8, <f8', align=True)
     >>> dt
-    dtype({'names':['f0','f1','f2'], 'formats':['u1','<i8','<f8'], 'offsets':[0,8,16], 'itemsize':24}, align=True)
+    dtype({'names': ['f0', 'f1', 'f2'], 'formats': ['u1', '<i8', '<f8'], \
+'offsets': [0, 8, 16], 'itemsize': 24}, align=True)
     >>> print_offsets(dt)
     offsets: [0, 8, 16]
     itemsize: 24
@@ -907,6 +896,50 @@ def _get_fields_and_offsets(dt, offset=0):
                     fields.extend([(d, c, o + i*size) for d, c, o in subfields])
     return fields
 
+def _common_stride(offsets, counts, itemsize):
+    """
+    Returns the stride between the fields, or None if the stride is not
+    constant. The values in "counts" designate the lengths of
+    subarrays. Subarrays are treated as many contiguous fields, with
+    always positive stride.
+    """
+    if len(offsets) <= 1:
+        return itemsize
+
+    negative = offsets[1] < offsets[0]  # negative stride
+    if negative:
+        # reverse, so offsets will be ascending
+        it = zip(reversed(offsets), reversed(counts))
+    else:
+        it = zip(offsets, counts)
+
+    prev_offset = None
+    stride = None
+    for offset, count in it:
+        if count != 1:  # subarray: always c-contiguous
+            if negative:
+                return None  # subarrays can never have a negative stride
+            if stride is None:
+                stride = itemsize
+            if stride != itemsize:
+                return None
+            end_offset = offset + (count - 1) * itemsize
+        else:
+            end_offset = offset
+
+        if prev_offset is not None:
+            new_stride = offset - prev_offset
+            if stride is None:
+                stride = new_stride
+            if stride != new_stride:
+                return None
+
+        prev_offset = end_offset
+
+    if negative:
+        return -stride
+    return stride
+
 
 def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
                                            casting=None):
@@ -915,7 +948,7 @@ def _structured_to_unstructured_dispatcher(arr, dtype=None, copy=None,
 @array_function_dispatch(_structured_to_unstructured_dispatcher)
 def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     """
-    Converts and n-D structured array into an (n+1)-D unstructured array.
+    Converts an n-D structured array into an (n+1)-D unstructured array.
 
     The new array will have a new last dimension equal in size to the
     number of field-elements of the input array. If not supplied, the output
@@ -932,11 +965,18 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     dtype : dtype, optional
        The dtype of the output unstructured array.
     copy : bool, optional
-        See copy argument to `ndarray.astype`. If true, always return a copy.
-        If false, and `dtype` requirements are satisfied, a view is returned.
+        If true, always return a copy. If false, a view is returned if
+        possible, such as when the `dtype` and strides of the fields are
+        suitable and the array subtype is one of `numpy.ndarray`,
+        `numpy.recarray` or `numpy.memmap`.
+
+        .. versionchanged:: 1.25.0
+            A view can now be returned if the fields are separated by a
+            uniform stride.
+
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        See casting argument of `ndarray.astype`. Controls what kind of data
-        casting may occur.
+        See casting argument of `numpy.ndarray.astype`. Controls what kind of
+        data casting may occur.
 
     Returns
     -------
@@ -945,6 +985,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
 
     Examples
     --------
+    >>> import numpy as np
 
     >>> from numpy.lib import recfunctions as rfn
     >>> a = np.zeros(4, dtype=[('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
@@ -981,7 +1022,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     if dtype is None:
         out_dtype = np.result_type(*[dt.base for dt in dts])
     else:
-        out_dtype = dtype
+        out_dtype = np.dtype(dtype)
 
     # Use a series of views and casts to convert to an unstructured array:
 
@@ -991,9 +1032,40 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
                                  'formats': dts,
                                  'offsets': offsets,
                                  'itemsize': arr.dtype.itemsize})
-    with suppress_warnings() as sup:  # until 1.16 (gh-12447)
-        sup.filter(FutureWarning, "Numpy has detected")
-        arr = arr.view(flattened_fields)
+    arr = arr.view(flattened_fields)
+
+    # we only allow a few types to be unstructured by manipulating the
+    # strides, because we know it won't work with, for example, np.matrix nor
+    # np.ma.MaskedArray.
+    can_view = type(arr) in (np.ndarray, np.recarray, np.memmap)
+    if (not copy) and can_view and all(dt.base == out_dtype for dt in dts):
+        # all elements have the right dtype already; if they have a common
+        # stride, we can just return a view
+        common_stride = _common_stride(offsets, counts, out_dtype.itemsize)
+        if common_stride is not None:
+            wrap = arr.__array_wrap__
+
+            new_shape = arr.shape + (sum(counts), out_dtype.itemsize)
+            new_strides = arr.strides + (abs(common_stride), 1)
+
+            arr = arr[..., np.newaxis].view(np.uint8)  # view as bytes
+            arr = arr[..., min(offsets):]  # remove the leading unused data
+            arr = np.lib.stride_tricks.as_strided(arr,
+                                                  new_shape,
+                                                  new_strides,
+                                                  subok=True)
+
+            # cast and drop the last dimension again
+            arr = arr.view(out_dtype)[..., 0]
+
+            if common_stride < 0:
+                arr = arr[..., ::-1]  # reverse, if the stride was negative
+            if type(arr) is not type(wrap.__self__):
+                # Some types (e.g. recarray) turn into an ndarray along the
+                # way, so we have to wrap it again in order to match the
+                # behavior with copy=True.
+                arr = wrap(arr)
+            return arr
 
     # next cast to a packed format with all fields converted to new dtype
     packed_fields = np.dtype({'names': names,
@@ -1012,7 +1084,7 @@ def _unstructured_to_structured_dispatcher(arr, dtype=None, names=None,
 def unstructured_to_structured(arr, dtype=None, names=None, align=False,
                                copy=False, casting='unsafe'):
     """
-    Converts and n-D unstructured array into an (n-1)-D structured array.
+    Converts an n-D unstructured array into an (n-1)-D structured array.
 
     The last dimension of the input array is converted into a structure, with
     number of field-elements equal to the size of the last dimension of the
@@ -1035,11 +1107,12 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
     align : boolean, optional
        Whether to create an aligned memory layout.
     copy : bool, optional
-        See copy argument to `ndarray.astype`. If true, always return a copy.
-        If false, and `dtype` requirements are satisfied, a view is returned.
+        See copy argument to `numpy.ndarray.astype`. If true, always return a
+        copy. If false, and `dtype` requirements are satisfied, a view is
+        returned.
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
-        See casting argument of `ndarray.astype`. Controls what kind of data
-        casting may occur.
+        See casting argument of `numpy.ndarray.astype`. Controls what kind of
+        data casting may occur.
 
     Returns
     -------
@@ -1048,6 +1121,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
 
     Examples
     --------
+    >>> import numpy as np
 
     >>> from numpy.lib import recfunctions as rfn
     >>> dt = np.dtype([('a', 'i4'), ('b', 'f4,u2'), ('c', 'f4', 2)])
@@ -1079,6 +1153,8 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
     else:
         if names is not None:
             raise ValueError("don't supply both dtype and names")
+        # if dtype is the args of np.dtype, construct it
+        dtype = np.dtype(dtype)
         # sanity check of the input dtype
         fields = _get_fields_and_offsets(dtype)
         if len(fields) == 0:
@@ -1120,7 +1196,7 @@ def apply_along_fields(func, arr):
     """
     Apply function 'func' as a reduction across fields of a structured array.
 
-    This is similar to `apply_along_axis`, but treats the fields of a
+    This is similar to `numpy.apply_along_axis`, but treats the fields of a
     structured array as an extra axis. The fields are all first cast to a
     common type following the type-promotion rules from `numpy.result_type`
     applied to the field's dtypes.
@@ -1129,17 +1205,18 @@ def apply_along_fields(func, arr):
     ----------
     func : function
        Function to apply on the "field" dimension. This function must
-       support an `axis` argument, like np.mean, np.sum, etc.
+       support an `axis` argument, like `numpy.mean`, `numpy.sum`, etc.
     arr : ndarray
        Structured array for which to apply func.
 
     Returns
     -------
     out : ndarray
-       Result of the recution operation
+       Result of the reduction operation
 
     Examples
     --------
+    >>> import numpy as np
 
     >>> from numpy.lib import recfunctions as rfn
     >>> b = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
@@ -1230,6 +1307,7 @@ def require_fields(array, required_dtype):
 
     Examples
     --------
+    >>> import numpy as np
 
     >>> from numpy.lib import recfunctions as rfn
     >>> a = np.ones(4, dtype=[('a', 'i4'), ('b', 'f8'), ('c', 'u1')])
@@ -1274,6 +1352,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
     >>> x = np.array([1, 2,])
     >>> rfn.stack_arrays(x) is x
@@ -1288,7 +1367,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                  mask=[(False, False,  True), (False, False,  True),
                        (False, False, False), (False, False, False),
                        (False, False, False)],
-           fill_value=(b'N/A', 1.e+20, 1.e+20),
+           fill_value=(b'N/A', 1e+20, 1e+20),
                 dtype=[('A', 'S3'), ('B', '<f8'), ('C', '<f8')])
 
     """
@@ -1363,6 +1442,7 @@ def find_duplicates(a, key=None, ignoremask=True, return_index=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib import recfunctions as rfn
     >>> ndtype = [('a', int)]
     >>> a = np.ma.array([1, 1, 1, 2, 2, 3, 3],
@@ -1466,7 +1546,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
                 "'outer' or 'leftouter' (got '%s' instead)" % jointype
                 )
     # If we have a single key, put it in a tuple
-    if isinstance(key, basestring):
+    if isinstance(key, str):
         key = (key,)
 
     # Check the keys

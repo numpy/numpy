@@ -75,7 +75,7 @@ The axis keyword can be used to specify different axes to reduce: ::
  >>> np.add.reduce(np.arange(10).reshape(2,5),axis=1)
  array([10, 35])
 
-**.accumulate(arr)** applies the binary operator and generates an an
+**.accumulate(arr)** applies the binary operator and generates an
 equivalently shaped array that includes the accumulated amount for each
 element of the array. A couple examples: ::
 
@@ -113,7 +113,8 @@ use more convenient operator notation in expressions). Note that when the
 output argument is used, the ufunc still returns a reference to the result.
 
  >>> x = np.arange(2)
- >>> np.add(np.arange(2),np.arange(2.),x)
+ >>> np.add(np.arange(2, dtype=float), np.arange(2, dtype=float), x,
+ ...        casting='unsafe')
  array([0, 2])
  >>> x
  array([0, 2])
@@ -135,4 +136,3 @@ results in an error. There are two alternatives:
     a convenient way to apply these operators.
 
 """
-from __future__ import division, absolute_import, print_function

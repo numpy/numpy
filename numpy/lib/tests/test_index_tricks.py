@@ -1,32 +1,19 @@
-from __future__ import division, absolute_import, print_function
-
 import pytest
 
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_raises_regex,
-    assert_warns
     )
-from numpy.lib.index_tricks import (
+from numpy.lib._index_tricks_impl import (
     mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
-    index_exp, ndindex, r_, s_, ix_
+    index_exp, ndindex, c_, r_, s_, ix_
     )
 
 
-class TestRavelUnravelIndex(object):
+class TestRavelUnravelIndex:
     def test_basic(self):
         assert_equal(np.unravel_index(2, (2, 2)), (1, 0))
-
-        # test backwards compatibility with older dims
-        # keyword argument; see Issue #10586
-        with assert_warns(DeprecationWarning):
-            # we should achieve the correct result
-            # AND raise the appropriate warning
-            # when using older "dims" kw argument
-            assert_equal(np.unravel_index(indices=2,
-                                          dims=(2, 2)),
-                                          (1, 0))
 
         # test that new shape argument works properly
         assert_equal(np.unravel_index(indices=2,
@@ -34,7 +21,7 @@ class TestRavelUnravelIndex(object):
                                       (1, 0))
 
         # test that an invalid second keyword argument
-        # is properly handled
+        # is properly handled, including the old name `dims`.
         with assert_raises(TypeError):
             np.unravel_index(indices=2, hape=(2, 2))
 
@@ -43,6 +30,9 @@ class TestRavelUnravelIndex(object):
 
         with assert_raises(TypeError):
             np.unravel_index(254, ims=(17, 94))
+
+        with assert_raises(TypeError):
+            np.unravel_index(254, dims=(17, 94))
 
         assert_equal(np.ravel_multi_index((1, 0), (2, 2)), 2)
         assert_equal(np.unravel_index(254, (17, 94)), (2, 66))
@@ -194,7 +184,7 @@ class TestRavelUnravelIndex(object):
         with assert_raises(ValueError):
             np.unravel_index([1], (2, 1, 0))
 
-class TestGrid(object):
+class TestGrid:
     def test_basic(self):
         a = mgrid[-1:1:10j]
         b = mgrid[-1:1:0.1]
@@ -251,8 +241,67 @@ class TestGrid(object):
         assert_equal(grid.size, expected[0])
         assert_equal(grid_small.size, expected[1])
 
+    def test_accepts_npfloating(self):
+        # regression test for #16466
+        grid64 = mgrid[0.1:0.33:0.1, ]
+        grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1), ]
+        assert_array_almost_equal(grid64, grid32)
+        # At some point this was float64, but NEP 50 changed it:
+        assert grid32.dtype == np.float32
+        assert grid64.dtype == np.float64
 
-class TestConcatenator(object):
+        # different code path for single slice
+        grid64 = mgrid[0.1:0.33:0.1]
+        grid32 = mgrid[np.float32(0.1):np.float32(0.33):np.float32(0.1)]
+        assert_(grid32.dtype == np.float64)
+        assert_array_almost_equal(grid64, grid32)
+
+    def test_accepts_longdouble(self):
+        # regression tests for #16945
+        grid64 = mgrid[0.1:0.33:0.1, ]
+        grid128 = mgrid[
+            np.longdouble(0.1):np.longdouble(0.33):np.longdouble(0.1),
+        ]
+        assert_(grid128.dtype == np.longdouble)
+        assert_array_almost_equal(grid64, grid128)
+
+        grid128c_a = mgrid[0:np.longdouble(1):3.4j]
+        grid128c_b = mgrid[0:np.longdouble(1):3.4j, ]
+        assert_(grid128c_a.dtype == grid128c_b.dtype == np.longdouble)
+        assert_array_equal(grid128c_a, grid128c_b[0])
+
+        # different code path for single slice
+        grid64 = mgrid[0.1:0.33:0.1]
+        grid128 = mgrid[
+            np.longdouble(0.1):np.longdouble(0.33):np.longdouble(0.1)
+        ]
+        assert_(grid128.dtype == np.longdouble)
+        assert_array_almost_equal(grid64, grid128)
+
+    def test_accepts_npcomplexfloating(self):
+        # Related to #16466
+        assert_array_almost_equal(
+            mgrid[0.1:0.3:3j, ], mgrid[0.1:0.3:np.complex64(3j), ]
+        )
+
+        # different code path for single slice
+        assert_array_almost_equal(
+            mgrid[0.1:0.3:3j], mgrid[0.1:0.3:np.complex64(3j)]
+        )
+
+        # Related to #16945
+        grid64_a = mgrid[0.1:0.3:3.3j]
+        grid64_b = mgrid[0.1:0.3:3.3j, ][0]
+        assert_(grid64_a.dtype == grid64_b.dtype == np.float64)
+        assert_array_equal(grid64_a, grid64_b)
+
+        grid128_a = mgrid[0.1:0.3:np.clongdouble(3.3j)]
+        grid128_b = mgrid[0.1:0.3:np.clongdouble(3.3j), ][0]
+        assert_(grid128_a.dtype == grid128_b.dtype == np.longdouble)
+        assert_array_equal(grid64_a, grid64_b)
+
+
+class TestConcatenator:
     def test_1d(self):
         assert_array_equal(r_[1, 2, 3, 4, 5, 6], np.array([1, 2, 3, 4, 5, 6]))
         b = np.ones(5)
@@ -270,6 +319,10 @@ class TestConcatenator(object):
     def test_complex_step(self):
         # Regression test for #12262
         g = r_[0:36:100j]
+        assert_(g.shape == (100,))
+
+        # Related to #16466
+        g = r_[0:36:np.complex64(100j)]
         assert_(g.shape == (100,))
 
     def test_2d(self):
@@ -290,14 +343,14 @@ class TestConcatenator(object):
         assert_equal(r_[np.array(0), [1, 2, 3]], [0, 1, 2, 3])
 
 
-class TestNdenumerate(object):
+class TestNdenumerate:
     def test_basic(self):
         a = np.array([[1, 2], [3, 4]])
         assert_equal(list(ndenumerate(a)),
                      [((0, 0), 1), ((0, 1), 2), ((1, 0), 3), ((1, 1), 4)])
 
 
-class TestIndexExpression(object):
+class TestIndexExpression:
     def test_regression_1(self):
         # ticket #1196
         a = np.arange(2)
@@ -311,7 +364,7 @@ class TestIndexExpression(object):
         assert_equal(a[:, :3, [1, 2]], a[s_[:, :3, [1, 2]]])
 
 
-class TestIx_(object):
+class TestIx_:
     def test_regression_1(self):
         # Test empty untyped inputs create outputs of indexing type, gh-5804
         a, = np.ix_(range(0))
@@ -354,11 +407,11 @@ class TestIx_(object):
 
 
 def test_c_():
-    a = np.c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]
+    a = c_[np.array([[1, 2, 3]]), 0, 0, np.array([[4, 5, 6]])]
     assert_equal(a, [[1, 2, 3, 0, 0, 4, 5, 6]])
 
 
-class TestFillDiagonal(object):
+class TestFillDiagonal:
     def test_basic(self):
         a = np.zeros((3, 3), int)
         fill_diagonal(a, 5)
@@ -457,7 +510,7 @@ def test_diag_indices():
         )
 
 
-class TestDiagIndicesFrom(object):
+class TestDiagIndicesFrom:
 
     def test_diag_indices_from(self):
         x = np.random.random((4, 4))

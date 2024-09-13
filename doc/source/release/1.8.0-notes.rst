@@ -33,7 +33,7 @@ Future Changes
 
 
 The Datetime64 type remains experimental in this release. In 1.9 there will
-probably be some changes to make it more useable.
+probably be some changes to make it more usable.
 
 The diagonal method currently returns a new array and raises a
 FutureWarning. In 1.9 it will return a readonly view.
@@ -52,7 +52,7 @@ Compatibility notes
 
 The doc/sphinxext content has been moved into its own github repository,
 and is included in numpy as a submodule. See the instructions in
-doc/HOWTO_BUILD_DOCS.rst.txt for how to access the content.
+doc/HOWTO_BUILD_DOCS.rst for how to access the content.
 
 .. _numpydoc: https://github.com/numpy/numpydoc
 
@@ -315,8 +315,8 @@ If used with the `overwrite_input` option the array will now only be partially
 sorted instead of fully sorted.
 
 
-Overrideable operand flags in ufunc C-API
------------------------------------------
+Overridable operand flags in ufunc C-API
+----------------------------------------
 When creating a ufunc, the default ufunc operand flags can be overridden
 via the new op_flags attribute of the ufunc object. For example, to set
 the operand flag for the first input to read/write:

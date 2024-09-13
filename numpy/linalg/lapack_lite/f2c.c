@@ -7,16 +7,20 @@
   it is available, and shipping a static library isn't portable.
 */
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "f2c.h"
 
 
-extern void s_wsfe(cilist *f) {;}
-extern void e_wsfe(void) {;}
-extern void do_fio(integer *c, char *s, ftnlen l) {;}
+extern int s_wsfe(cilist *f) {return 0;}
+extern int e_wsfe(void) {return 0;}
+extern int do_fio(integer *c, char *s, ftnlen l) {return 0;}
 
 /* You'll want this if you redo the f2c_*.c files with the -C option
  * to f2c for checking array subscripts. (It's not suggested you do that
@@ -89,9 +93,9 @@ return(temp);
 
  VOID
 #ifdef KR_headers
-r_cnjg(r, z) complex *r, *z;
+r_cnjg(r, z) singlecomplex *r, *z;
 #else
-r_cnjg(complex *r, complex *z)
+r_cnjg(singlecomplex *r, singlecomplex *z)
 #endif
 {
 r->r = z->r;
@@ -111,9 +115,9 @@ r->i = - z->i;
 
 
 #ifdef KR_headers
-float r_imag(z) complex *z;
+float r_imag(z) singlecomplex *z;
 #else
-float r_imag(complex *z)
+float r_imag(singlecomplex *z)
 #endif
 {
 return(z->i);
@@ -339,10 +343,10 @@ void pow_zi(doublecomplex *p, doublecomplex *a, integer *b) 	/* p = a**b  */
 
 #ifdef KR_headers
 VOID pow_ci(p, a, b) 	/* p = a**b  */
- complex *p, *a; integer *b;
+ singlecomplex *p, *a; integer *b;
 #else
 extern void pow_zi(doublecomplex*, doublecomplex*, integer*);
-void pow_ci(complex *p, complex *a, integer *b) 	/* p = a**b  */
+void pow_ci(singlecomplex *p, singlecomplex *a, integer *b) 	/* p = a**b  */
 #endif
 {
 doublecomplex p1, a1;
@@ -377,10 +381,11 @@ p->i = p1.i;
 
 #endif /* NO_OVERWRITE */
 
- VOID
 #ifdef KR_headers
+int
 s_cat(lp, rpp, rnp, np, ll) char *lp, *rpp[]; ftnlen rnp[], *np, ll;
 #else
+int
 s_cat(char *lp, char *rpp[], ftnlen rnp[], ftnlen *np, ftnlen ll)
 #endif
 {
@@ -429,7 +434,8 @@ s_cat(char *lp, char *rpp[], ftnlen rnp[], ftnlen *np, ftnlen ll)
 		free(lp1);
 		}
 #endif
-	}
+	return 0;
+}
 
 
 /* compare two strings */
@@ -485,9 +491,9 @@ return(0);
 /* assign strings:  a = b */
 
 #ifdef KR_headers
-VOID s_copy(a, b, la, lb) register char *a, *b; ftnlen la, lb;
+int s_copy(a, b, la, lb) register char *a, *b; ftnlen la, lb;
 #else
-void s_copy(register char *a, register char *b, ftnlen la, ftnlen lb)
+int s_copy(register char *a, register char *b, ftnlen la, ftnlen lb)
 #endif
 {
 	register char *aend, *bend;
@@ -524,15 +530,16 @@ void s_copy(register char *a, register char *b, ftnlen la, ftnlen lb)
 		while(a < aend)
 			*a++ = ' ';
 		}
+        return 0;
 	}
 
 
 #ifdef KR_headers
 double f__cabsf();
-double c_abs(z) complex *z;
+double c_abs(z) singlecomplex *z;
 #else
 double f__cabsf(float, float);
-double c_abs(complex *z)
+double c_abs(singlecomplex *z)
 #endif
 {
 return( f__cabsf( z->r, z->i ) );
@@ -552,10 +559,10 @@ return( f__cabs( z->r, z->i ) );
 
 #ifdef KR_headers
 extern void sig_die();
-VOID c_div(c, a, b) complex *a, *b, *c;
+VOID c_div(c, a, b) singlecomplex *a, *b, *c;
 #else
 extern void sig_die(char*, int);
-void c_div(complex *c, complex *a, complex *b)
+void c_div(singlecomplex *c, singlecomplex *a, singlecomplex *b)
 #endif
 {
 float ratio, den;
@@ -625,12 +632,12 @@ else
 
 #ifdef KR_headers
 float sqrtf(), f__cabsf();
-VOID c_sqrt(r, z) complex *r, *z;
+VOID c_sqrt(r, z) singlecomplex *r, *z;
 #else
 #undef abs
 
 extern double f__cabsf(float, float);
-void c_sqrt(complex *r, complex *z)
+void c_sqrt(singlecomplex *r, singlecomplex *z)
 #endif
 {
 float mag;

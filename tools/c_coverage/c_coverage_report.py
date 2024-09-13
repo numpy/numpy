@@ -1,12 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 A script to create C code-coverage reports based on the output of
 valgrind's callgrind tool.
 
 """
-from __future__ import division, absolute_import, print_function
-
-import optparse
 import os
 import re
 import sys
@@ -15,7 +12,7 @@ from xml.sax.saxutils import quoteattr, escape
 try:
     import pygments
     if tuple([int(x) for x in pygments.__version__.split('.')]) < (0, 11):
-        raise ImportError()
+        raise ImportError
     from pygments import highlight
     from pygments.lexers import CLexer
     from pygments.formatters import HtmlFormatter
@@ -57,25 +54,23 @@ class SourceFile:
             line.add(as_func)
 
     def write_text(self, fd):
-        source = open(self.path, "r")
-        for i, line in enumerate(source):
-            if i + 1 in self.lines:
-                fd.write("> ")
-            else:
-                fd.write("! ")
-            fd.write(line)
-        source.close()
+        with open(self.path, "r") as source:
+            for i, line in enumerate(source):
+                if i + 1 in self.lines:
+                    fd.write("> ")
+                else:
+                    fd.write("! ")
+                fd.write(line)
 
     def write_html(self, fd):
-        source = open(self.path, 'r')
-        code = source.read()
-        lexer = CLexer()
-        formatter = FunctionHtmlFormatter(
-            self.lines,
-            full=True,
-            linenos='inline')
-        fd.write(highlight(code, lexer, formatter))
-        source.close()
+        with open(self.path, 'r') as source:
+            code = source.read()
+            lexer = CLexer()
+            formatter = FunctionHtmlFormatter(
+                self.lines,
+                full=True,
+                linenos='inline')
+            fd.write(highlight(code, lexer, formatter))
 
 
 class SourceFiles:
@@ -98,24 +93,24 @@ class SourceFiles:
 
     def write_text(self, root):
         for path, source in self.files.items():
-            fd = open(os.path.join(root, self.clean_path(path)), "w")
-            source.write_text(fd)
-            fd.close()
+            with open(os.path.join(root, self.clean_path(path)), "w") as fd:
+                source.write_text(fd)
 
     def write_html(self, root):
         for path, source in self.files.items():
-            fd = open(os.path.join(root, self.clean_path(path) + ".html"), "w")
-            source.write_html(fd)
-            fd.close()
+            with open(
+                os.path.join(root, self.clean_path(path) + ".html"), "w"
+            ) as fd:
+                source.write_html(fd)
 
-        fd = open(os.path.join(root, 'index.html'), 'w')
-        fd.write("<html>")
-        paths = sorted(self.files.keys())
-        for path in paths:
-            fd.write('<p><a href="%s.html">%s</a></p>' %
-                     (self.clean_path(path), escape(path[len(self.prefix):])))
-        fd.write("</html>")
-        fd.close()
+        with open(os.path.join(root, 'index.html'), 'w') as fd:
+            fd.write("<html>")
+            paths = sorted(self.files.keys())
+            for path in paths:
+                fd.write('<p><a href="%s.html">%s</a></p>' %
+                         (self.clean_path(path),
+                          escape(path[len(self.prefix):])))
+            fd.write("</html>")
 
 
 def collect_stats(files, fd, pattern):
@@ -127,7 +122,7 @@ def collect_stats(files, fd, pattern):
 
     current_file = None
     current_function = None
-    for i, line in enumerate(fd):
+    for line in fd:
         if re.match("f[lie]=.+", line):
             path = line.split('=', 2)[1].strip()
             if os.path.exists(path) and re.search(pattern, path):
@@ -145,39 +140,42 @@ def collect_stats(files, fd, pattern):
 
 
 if __name__ == '__main__':
-    parser = optparse.OptionParser(
-        usage="[options] callgrind_file(s)")
-    parser.add_option(
-        '-d', '--directory', dest='directory',
-        default='coverage',
-        help='Destination directory for output [default: coverage]')
-    parser.add_option(
-        '-p', '--pattern', dest='pattern',
-        default='numpy',
-        help='Regex pattern to match against source file paths [default: numpy]')
-    parser.add_option(
-        '-f', '--format', dest='format', default=[],
-        action='append', type='choice', choices=('text', 'html'),
-        help="Output format(s) to generate, may be 'text' or 'html' [default: both]")
-    (options, args) = parser.parse_args()
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        'callgrind_file', nargs='+',
+        help='One or more callgrind files')
+    parser.add_argument(
+        '-d', '--directory', default='coverage',
+        help='Destination directory for output (default: %(default)s)')
+    parser.add_argument(
+        '-p', '--pattern', default='numpy',
+        help='Regex pattern to match against source file paths '
+             '(default: %(default)s)')
+    parser.add_argument(
+        '-f', '--format', action='append', default=[],
+        choices=['text', 'html'],
+        help="Output format(s) to generate. "
+             "If option not provided, both will be generated.")
+    args = parser.parse_args()
 
     files = SourceFiles()
-    for log_file in args:
-        log_fd = open(log_file, 'r')
-        collect_stats(files, log_fd, options.pattern)
-        log_fd.close()
+    for log_file in args.callgrind_file:
+        with open(log_file, 'r') as log_fd:
+            collect_stats(files, log_fd, args.pattern)
 
-    if not os.path.exists(options.directory):
-        os.makedirs(options.directory)
+    if not os.path.exists(args.directory):
+        os.makedirs(args.directory)
 
-    if options.format == []:
+    if args.format == []:
         formats = ['text', 'html']
     else:
-        formats = options.format
+        formats = args.format
     if 'text' in formats:
-        files.write_text(options.directory)
+        files.write_text(args.directory)
     if 'html' in formats:
         if not has_pygments:
             print("Pygments 0.11 or later is required to generate HTML")
             sys.exit(1)
-        files.write_html(options.directory)
+        files.write_html(args.directory)

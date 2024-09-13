@@ -1,0 +1,51 @@
+
+Contributors
+============
+
+A total of 13 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* @stefan6419846
+* @thalassemia +
+* Andrew Nelson
+* Charles Bousseau +
+* Charles Harris
+* Marcel Bargull +
+* Mark Mentovai +
+* Matti Picus
+* Nathan Goldbaum
+* Ralf Gommers
+* Sayed Adel
+* Sebastian Berg
+* William Ayd +
+
+Pull requests merged
+====================
+
+A total of 25 pull requests were merged for this release.
+
+* `#24814 <https://github.com/numpy/numpy/pull/24814>`__: MAINT: align test_dispatcher s390x targets with _umath_tests_mtargets
+* `#24929 <https://github.com/numpy/numpy/pull/24929>`__: MAINT: prepare 1.26.x for further development
+* `#24955 <https://github.com/numpy/numpy/pull/24955>`__: ENH: Add Cython enumeration for NPY_FR_GENERIC
+* `#24962 <https://github.com/numpy/numpy/pull/24962>`__: REL: Remove Python upper version from the release branch
+* `#24971 <https://github.com/numpy/numpy/pull/24971>`__: BLD: Use the correct Python interpreter when running tempita.py
+* `#24972 <https://github.com/numpy/numpy/pull/24972>`__: MAINT: Remove unhelpful error replacements from ``import_array()``
+* `#24977 <https://github.com/numpy/numpy/pull/24977>`__: BLD: use classic linker on macOS, the new one in XCode 15 has...
+* `#25003 <https://github.com/numpy/numpy/pull/25003>`__: BLD: musllinux_aarch64 [wheel build]
+* `#25043 <https://github.com/numpy/numpy/pull/25043>`__: MAINT: Update mailmap
+* `#25049 <https://github.com/numpy/numpy/pull/25049>`__: MAINT: Update meson build infrastructure.
+* `#25071 <https://github.com/numpy/numpy/pull/25071>`__: MAINT: Split up .github/workflows to match main
+* `#25083 <https://github.com/numpy/numpy/pull/25083>`__: BUG: Backport fix build on ppc64 when the baseline set to Power9...
+* `#25093 <https://github.com/numpy/numpy/pull/25093>`__: BLD: Fix features.h detection for Meson builds [1.26.x Backport]
+* `#25095 <https://github.com/numpy/numpy/pull/25095>`__: BUG: Avoid intp conversion regression in Cython 3 (backport)
+* `#25107 <https://github.com/numpy/numpy/pull/25107>`__: CI: remove obsolete jobs, and move macOS and conda Azure jobs...
+* `#25108 <https://github.com/numpy/numpy/pull/25108>`__: CI: Add linux_qemu action and remove travis testing.
+* `#25112 <https://github.com/numpy/numpy/pull/25112>`__: MAINT: Update .spin/cmds.py from main.
+* `#25113 <https://github.com/numpy/numpy/pull/25113>`__: DOC: Visually divide main license and bundled licenses in wheels
+* `#25115 <https://github.com/numpy/numpy/pull/25115>`__: MAINT: Add missing ``noexcept`` to shuffle helpers
+* `#25116 <https://github.com/numpy/numpy/pull/25116>`__: DOC: Fix license identifier for OpenBLAS
+* `#25117 <https://github.com/numpy/numpy/pull/25117>`__: BLD: improve detection of Netlib libblas/libcblas/liblapack
+* `#25118 <https://github.com/numpy/numpy/pull/25118>`__: MAINT: Make bitfield integers unsigned
+* `#25119 <https://github.com/numpy/numpy/pull/25119>`__: BUG: Make n a long int for np.random.multinomial
+* `#25120 <https://github.com/numpy/numpy/pull/25120>`__: BLD: change default of the ``allow-noblas`` option to true.
+* `#25121 <https://github.com/numpy/numpy/pull/25121>`__: BUG: ensure passing ``np.dtype`` to itself doesn't crash

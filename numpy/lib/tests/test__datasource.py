@@ -1,24 +1,14 @@
-from __future__ import division, absolute_import, print_function
-
 import os
-import sys
 import pytest
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
 
 import numpy.lib._datasource as datasource
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_warns
-    )
+from numpy.testing import assert_, assert_equal, assert_raises
 
-if sys.version_info[0] >= 3:
-    import urllib.request as urllib_request
-    from urllib.parse import urlparse
-    from urllib.error import URLError
-else:
-    import urllib2 as urllib_request
-    from urlparse import urlparse
-    from urllib2 import URLError
+import urllib.request as urllib_request
+from urllib.parse import urlparse
+from urllib.error import URLError
 
 
 def urlopen_stub(url, data=None):
@@ -96,12 +86,12 @@ def invalid_httpfile():
     return http_fakefile
 
 
-class TestDataSourceOpen(object):
-    def setup(self):
+class TestDataSourceOpen:
+    def setup_method(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.ds
 
@@ -112,10 +102,10 @@ class TestDataSourceOpen(object):
 
     def test_InvalidHTTP(self):
         url = invalid_httpurl()
-        assert_raises(IOError, self.ds.open, url)
+        assert_raises(OSError, self.ds.open, url)
         try:
             self.ds.open(url)
-        except IOError as e:
+        except OSError as e:
             # Regression test for bug fixed in r4342.
             assert_(e.errno is None)
 
@@ -130,7 +120,7 @@ class TestDataSourceOpen(object):
 
     def test_InvalidFile(self):
         invalid_file = invalid_textfile(self.tmpdir)
-        assert_raises(IOError, self.ds.open, invalid_file)
+        assert_raises(OSError, self.ds.open, invalid_file)
 
     def test_ValidGzipFile(self):
         try:
@@ -164,31 +154,13 @@ class TestDataSourceOpen(object):
         fp.close()
         assert_equal(magic_line, result)
 
-    @pytest.mark.skipif(sys.version_info[0] >= 3, reason="Python 2 only")
-    def test_Bz2File_text_mode_warning(self):
-        try:
-            import bz2
-        except ImportError:
-            # We don't have the bz2 capabilities to test.
-            pytest.skip()
-        # Test datasource's internal file_opener for BZip2 files.
-        filepath = os.path.join(self.tmpdir, 'foobar.txt.bz2')
-        fp = bz2.BZ2File(filepath, 'w')
-        fp.write(magic_line)
-        fp.close()
-        with assert_warns(RuntimeWarning):
-            fp = self.ds.open(filepath, 'rt')
-            result = fp.readline()
-            fp.close()
-        assert_equal(magic_line, result)
 
-
-class TestDataSourceExists(object):
-    def setup(self):
+class TestDataSourceExists:
+    def setup_method(self):
         self.tmpdir = mkdtemp()
         self.ds = datasource.DataSource(self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.ds
 
@@ -213,12 +185,12 @@ class TestDataSourceExists(object):
         assert_equal(self.ds.exists(tmpfile), False)
 
 
-class TestDataSourceAbspath(object):
-    def setup(self):
+class TestDataSourceAbspath:
+    def setup_method(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.ds = datasource.DataSource(self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.ds
 
@@ -278,12 +250,12 @@ class TestDataSourceAbspath(object):
             os.sep = orig_os_sep
 
 
-class TestRepositoryAbspath(object):
-    def setup(self):
+class TestRepositoryAbspath:
+    def setup_method(self):
         self.tmpdir = os.path.abspath(mkdtemp())
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.repos
 
@@ -311,12 +283,12 @@ class TestRepositoryAbspath(object):
             os.sep = orig_os_sep
 
 
-class TestRepositoryExists(object):
-    def setup(self):
+class TestRepositoryExists:
+    def setup_method(self):
         self.tmpdir = mkdtemp()
         self.repos = datasource.Repository(valid_baseurl(), self.tmpdir)
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
         del self.repos
 
@@ -344,11 +316,11 @@ class TestRepositoryExists(object):
         assert_(self.repos.exists(tmpfile))
 
 
-class TestOpenFunc(object):
-    def setup(self):
+class TestOpenFunc:
+    def setup_method(self):
         self.tmpdir = mkdtemp()
 
-    def teardown(self):
+    def teardown_method(self):
         rmtree(self.tmpdir)
 
     def test_DataSourceOpen(self):

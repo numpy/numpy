@@ -1,20 +1,15 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 import re
 import os
 
-if sys.version_info[0] < 3:
-    from ConfigParser import RawConfigParser
-else:
-    from configparser import RawConfigParser
+from configparser import RawConfigParser
 
 __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
         'read_config', 'parse_flags']
 
 _VAR = re.compile(r'\$\{([a-zA-Z0-9_-]+)\}')
 
-class FormatError(IOError):
+class FormatError(OSError):
     """
     Exception thrown when there is a problem parsing a configuration file.
 
@@ -25,7 +20,7 @@ class FormatError(IOError):
     def __str__(self):
         return self.msg
 
-class PkgNotFound(IOError):
+class PkgNotFound(OSError):
     """Exception raised when a package can not be located."""
     def __init__(self, msg):
         self.msg = msg
@@ -78,7 +73,7 @@ def parse_flags(line):
 def _escape_backslash(val):
     return val.replace('\\', '\\\\')
 
-class LibraryInfo(object):
+class LibraryInfo:
     """
     Object containing build information about a library.
 
@@ -150,7 +145,7 @@ class LibraryInfo(object):
 
         return "\n".join(m)
 
-class VariableSet(object):
+class VariableSet:
     """
     Container object for the variables defined in a config file.
 
@@ -380,7 +375,6 @@ def read_config(pkgname, dirs=None):
 # pkg-config simple emulator - useful for debugging, and maybe later to query
 # the system
 if __name__ == '__main__':
-    import sys
     from optparse import OptionParser
     import glob
 
@@ -414,9 +408,13 @@ if __name__ == '__main__':
     pkg_name = args[1]
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d:
-        info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.', d])
+        info = read_config(
+            pkg_name, ['numpy/_core/lib/npy-pkg-config', '.', d]
+        )
     else:
-        info = read_config(pkg_name, ['numpy/core/lib/npy-pkg-config', '.'])
+        info = read_config(
+            pkg_name, ['numpy/_core/lib/npy-pkg-config', '.']
+        )
 
     if options.section:
         section = options.section

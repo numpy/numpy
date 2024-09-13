@@ -1,9 +1,10 @@
 """ Functions for converting from DOS to UNIX line endings
 
 """
-from __future__ import division, absolute_import, print_function
+import os
+import re
+import sys
 
-import sys, re, os
 
 def dos2unix(file):
     "Replace CRLF with LF in argument files.  Print names of changed files."

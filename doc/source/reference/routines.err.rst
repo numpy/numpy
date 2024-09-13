@@ -1,5 +1,5 @@
 Floating point error handling
-*****************************
+=============================
 
 .. currentmodule:: numpy
 
@@ -14,12 +14,3 @@ Setting and getting error handling
    seterrcall
    geterrcall
    errstate
-
-Internal functions
-------------------
-
-.. autosummary::
-   :toctree: generated/
-
-   seterrobj
-   geterrobj

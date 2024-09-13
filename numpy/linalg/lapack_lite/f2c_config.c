@@ -1,7 +1,7 @@
 /*
-NOTE: This is generated code. Look in Misc/lapack_lite for information on
-      remaking this file.
-*/
+ * NOTE: This is generated code. Look in numpy/linalg/lapack_lite for
+ *       information on remaking this file.
+ */
 #include "f2c.h"
 
 #ifdef HAVE_CONFIG
@@ -689,7 +689,7 @@ L10:
 doublereal dlamc3_(doublereal *a, doublereal *b)
 {
     /* System generated locals */
-    doublereal ret_val;
+    volatile doublereal ret_val;
 
 
 /*
@@ -1759,7 +1759,7 @@ L10:
 doublereal slamc3_(real *a, real *b)
 {
     /* System generated locals */
-    real ret_val;
+    volatile real ret_val;
 
 
 /*

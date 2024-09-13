@@ -1,3 +1,5 @@
+.. _NEP31:
+
 ============================================================
 NEP 31 — Context-local and global overrides of the NumPy API
 ============================================================
@@ -5,9 +7,11 @@ NEP 31 — Context-local and global overrides of the NumPy API
 :Author: Hameer Abbasi <habbasi@quansight.com>
 :Author: Ralf Gommers <rgommers@quansight.com>
 :Author: Peter Bell <pbell@quansight.com>
-:Status: Draft
+:Status: Superseded
+:Replaced-By: :ref:`NEP56`
 :Type: Standards Track
 :Created: 2019-08-22
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/
 
 
 Abstract
@@ -29,7 +33,7 @@ NumPy API. It is intended as a comprehensive resolution to NEP-22 [3]_, and
 obviates the need to add an ever-growing list of new protocols for each new
 type of function or object that needs to become overridable.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 The primary end-goal of this NEP is to make the following possible:
@@ -94,13 +98,13 @@ such as CuPy needing to coerce to a CuPy array, for example, instead of
 a NumPy array. In simpler words, one needs things like ``np.asarray(...)`` or
 an alternative to "just work" and return duck-arrays.
 
-Usage and Impact
+Usage and impact
 ----------------
 
 This NEP allows for global and context-local overrides, as well as
 automatic overrides a-la ``__array_function__``.
 
-Here are some use-cases this NEP would enable, besides the 
+Here are some use-cases this NEP would enable, besides the
 first one stated in the motivation section:
 
 The first is allowing alternate dtypes to return their
@@ -112,7 +116,7 @@ respective arrays.
     x = unp.ones((5, 5), dtype=xnd_dtype) # Or torch dtype
 
 The second is allowing overrides for parts of the API.
-This is to allow alternate and/or optimised implementations
+This is to allow alternate and/or optimized implementations
 for ``np.linalg``, BLAS, and ``np.random``.
 
 .. code:: python
@@ -124,7 +128,7 @@ for ``np.linalg``, BLAS, and ``np.random``.
     np.set_global_backend(pyfftw)
 
     # Uses pyfftw without monkeypatching
-    np.fft.fft(numpy_array)    
+    np.fft.fft(numpy_array)
 
     with np.set_backend(pyfftw) # Or mkl_fft, or numpy
         # Uses the backend you specified
@@ -198,10 +202,10 @@ GitHub workflow. There are a few reasons for this:
   The reason for this is that there may exist functions in the in these
   submodules that need backends, even for ``numpy.ndarray`` inputs.
 
-Advantanges of ``unumpy`` over other solutions
+Advantages of ``unumpy`` over other solutions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``unumpy`` offers a number of advantanges over the approach of defining a new
+``unumpy`` offers a number of advantages over the approach of defining a new
 protocol for every problem encountered: Whenever there is something requiring
 an override, ``unumpy`` will be able to offer a unified API with very minor
 changes. For example:
@@ -300,7 +304,7 @@ This is different from monkeypatching in a few different ways:
   so there is at least the loose sense of an API contract. Monkeypatching
   does not provide this ability.
 * There is the ability of locally switching the backend.
-* It has been `suggested <http://numpy-discussion.10968.n7.nabble.com/NEP-31-Context-local-and-global-overrides-of-the-NumPy-API-tp47452p47472.html>`_
+* It has been `suggested <https://mail.python.org/archives/list/numpy-discussion@python.org/message/PS7EN3CRT6XERNTCN56MAYOXFFFEC55G/>`_
   that the reason that 1.17 hasn't landed in the Anaconda defaults channel is
   due to the incompatibility between monkeypatching and ``__array_function__``,
   as monkeypatching would bypass the protocol completely.
@@ -311,11 +315,11 @@ This is different from monkeypatching in a few different ways:
 All this isn't possible at all with ``__array_function__`` or
 ``__array_ufunc__``.
 
-It has been formally realised (at least in part) that a backend system is
+It has been formally realized (at least in part) that a backend system is
 needed for this, in the `NumPy roadmap <https://numpy.org/neps/roadmap.html#other-functionality>`_.
 
 For ``numpy.random``, it's still necessary to make the C-API fit the one
-proposed in `NEP-19 <https://numpy.org/neps/nep-0019-rng-policy.html>`_.
+proposed in :ref:`NEP-19 <NEP19>`.
 This is impossible for `mkl-random`, because then it would need to be
 rewritten to fit that framework. The guarantees on stream
 compatibility will be the same as before, but if there's a backend that affects
@@ -345,7 +349,7 @@ dispatchable.
 The need for an opt-in module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The need for an opt-in module is realised because of a few reasons:
+The need for an opt-in module is realized because of a few reasons:
 
 * There are parts of the API (like `numpy.asarray`) that simply cannot be
   overridden due to incompatibility concerns with C/Cython extensions, however,
@@ -354,10 +358,10 @@ The need for an opt-in module is realised because of a few reasons:
   as those mentioned above.
 
 NEP 18 notes that this may require maintenance of two separate APIs. However,
-this burden may be lessened by, for example, parametrizing all tests over
+this burden may be lessened by, for example, parameterizing all tests over
 ``numpy.overridable`` separately via a fixture. This also has the side-effect
 of thoroughly testing it, unlike ``__array_function__``. We also feel that it
-provides an oppurtunity to separate the NumPy API contract properly from the
+provides an opportunity to separate the NumPy API contract properly from the
 implementation.
 
 Benefits to end-users and mixing backends
@@ -379,7 +383,7 @@ The benefits to end-users extend beyond just writing new code. Old code
 by a simple import switch and a line adding the preferred backend. This way,
 users may find it easier to port existing code to GPU or distributed computing.
 
-Related Work
+Related work
 ------------
 
 Other override mechanisms
@@ -616,8 +620,8 @@ Discussion
 ----------
 
 * ``uarray`` blogpost: https://labs.quansight.org/blog/2019/07/uarray-update-api-changes-overhead-and-comparison-to-__array_function__/
-* The discussion section of NEP-18: https://numpy.org/neps/nep-0018-array-function-protocol.html#discussion
-* NEP-22: https://numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html
+* The discussion section of :ref:`NEP18`
+* :ref:`NEP22`
 * Dask issue #4462: https://github.com/dask/dask/issues/4462
 * PR #13046: https://github.com/numpy/numpy/pull/13046
 * Dask issue #4883: https://github.com/dask/dask/issues/4883
@@ -627,26 +631,26 @@ Discussion
 * Discussion PR 3: https://github.com/numpy/numpy/pull/14389
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] uarray, A general dispatch mechanism for Python: https://uarray.readthedocs.io
 
-.. [2] NEP 18 — A dispatch mechanism for NumPy’s high level array functions: https://numpy.org/neps/nep-0018-array-function-protocol.html
+.. [2] :ref:`NEP18`
 
-.. [3] NEP 22 — Duck typing for NumPy arrays – high level overview: https://numpy.org/neps/nep-0022-ndarray-duck-typing-overview.html
+.. [3] :ref:`NEP22`
 
-.. [4] NEP 13 — A Mechanism for Overriding Ufuncs: https://numpy.org/neps/nep-0013-ufunc-overrides.html
+.. [4] :ref:`NEP13`
 
-.. [5] Reply to Adding to the non-dispatched implementation of NumPy methods: http://numpy-discussion.10968.n7.nabble.com/Adding-to-the-non-dispatched-implementation-of-NumPy-methods-tp46816p46874.html
+.. [5] Reply to Adding to the non-dispatched implementation of NumPy methods: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/5GUDMALWDIRHITG5YUOCV343J66QSX3U/#5GUDMALWDIRHITG5YUOCV343J66QSX3U
 
-.. [6] Custom Dtype/Units discussion: http://numpy-discussion.10968.n7.nabble.com/Custom-Dtype-Units-discussion-td43262.html
+.. [6] Custom Dtype/Units discussion: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/RZYCVT6C3F7UDV6NA6FEV4MC5FKS6RDA/#RZYCVT6C3F7UDV6NA6FEV4MC5FKS6RDA
 
 .. [7] The epic dtype cleanup plan: https://github.com/numpy/numpy/issues/2899
 
 .. [8] unumpy: NumPy, but implementation-independent: https://unumpy.readthedocs.io
 
-.. [9] NEP 30 — Duck Typing for NumPy Arrays - Implementation: https://www.numpy.org/neps/nep-0030-duck-array-protocol.html
+.. [9] :ref:`NEP30`
 
 .. [10] http://scipy.github.io/devdocs/fft.html#backend-control
 

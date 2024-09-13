@@ -9,13 +9,14 @@ Basic operations
    :toctree: generated/
 
     copyto
+    ndim
     shape
+    size
 
 Changing array shape
 ====================
 .. autosummary::
    :toctree: generated/
-
 
    reshape
    ravel
@@ -32,6 +33,8 @@ Transpose-like operations
    swapaxes
    ndarray.T
    transpose
+   permute_dims
+   matrix_transpose (Array API compatible)
 
 Changing number of dimensions
 =============================
@@ -55,11 +58,9 @@ Changing kind of array
    asarray
    asanyarray
    asmatrix
-   asfarray
    asfortranarray
    ascontiguousarray
    asarray_chkfinite
-   asscalar
    require
 
 Joining arrays
@@ -68,12 +69,13 @@ Joining arrays
    :toctree: generated/
 
    concatenate
+   concat
    stack
-   column_stack
-   dstack
-   hstack
-   vstack
    block
+   vstack
+   hstack
+   dstack
+   column_stack
 
 Splitting arrays
 ================
@@ -85,6 +87,7 @@ Splitting arrays
    dsplit
    hsplit
    vsplit
+   unstack
 
 Tiling arrays
 =============
@@ -105,6 +108,7 @@ Adding and removing elements
    resize
    trim_zeros
    unique
+   pad
 
 Rearranging elements
 ====================
@@ -114,6 +118,5 @@ Rearranging elements
    flip
    fliplr
    flipud
-   reshape
    roll
    rot90

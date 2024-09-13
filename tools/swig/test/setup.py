@@ -1,9 +1,6 @@
-#! /usr/bin/env python
-from __future__ import division, print_function
-
+#!/usr/bin/env python3
 # System imports
-from distutils.core import *
-from distutils      import sysconfig
+from distutils.core import Extension, setup
 
 # Third-party modules - we depend on numpy for everything
 import numpy

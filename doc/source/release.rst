@@ -1,17 +1,70 @@
 *************
-Release Notes
+Release notes
 *************
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 2
 
+    2.2.0 <release/2.2.0-notes>
+    2.1.1 <release/2.1.1-notes>
+    2.1.0 <release/2.1.0-notes>
+    2.0.2 <release/2.0.2-notes>
+    2.0.1 <release/2.0.1-notes>
+    2.0.0 <release/2.0.0-notes>
+    1.26.4 <release/1.26.4-notes>
+    1.26.3 <release/1.26.3-notes>
+    1.26.2 <release/1.26.2-notes>
+    1.26.1 <release/1.26.1-notes>
+    1.26.0 <release/1.26.0-notes>
+    1.25.2 <release/1.25.2-notes>
+    1.25.1 <release/1.25.1-notes>
+    1.25.0 <release/1.25.0-notes>
+    1.24.4 <release/1.24.4-notes>
+    1.24.3 <release/1.24.3-notes>
+    1.24.2 <release/1.24.2-notes>
+    1.24.1 <release/1.24.1-notes>
+    1.24.0 <release/1.24.0-notes>
+    1.23.5 <release/1.23.5-notes>
+    1.23.4 <release/1.23.4-notes>
+    1.23.3 <release/1.23.3-notes>
+    1.23.2 <release/1.23.2-notes>
+    1.23.1 <release/1.23.1-notes>
+    1.23.0 <release/1.23.0-notes>
+    1.22.4 <release/1.22.4-notes>
+    1.22.3 <release/1.22.3-notes>
+    1.22.2 <release/1.22.2-notes>
+    1.22.1 <release/1.22.1-notes>
+    1.22.0 <release/1.22.0-notes>
+    1.21.6 <release/1.21.6-notes>
+    1.21.5 <release/1.21.5-notes>
+    1.21.4 <release/1.21.4-notes>
+    1.21.3 <release/1.21.3-notes>
+    1.21.2 <release/1.21.2-notes>
+    1.21.1 <release/1.21.1-notes>
+    1.21.0 <release/1.21.0-notes>
+    1.20.3 <release/1.20.3-notes>
+    1.20.2 <release/1.20.2-notes>
+    1.20.1 <release/1.20.1-notes>
+    1.20.0 <release/1.20.0-notes>
+    1.19.5 <release/1.19.5-notes>
+    1.19.4 <release/1.19.4-notes>
+    1.19.3 <release/1.19.3-notes>
+    1.19.2 <release/1.19.2-notes>
+    1.19.1 <release/1.19.1-notes>
     1.19.0 <release/1.19.0-notes>
+    1.18.5 <release/1.18.5-notes>
+    1.18.4 <release/1.18.4-notes>
+    1.18.3 <release/1.18.3-notes>
+    1.18.2 <release/1.18.2-notes>
+    1.18.1 <release/1.18.1-notes>
     1.18.0 <release/1.18.0-notes>
+    1.17.5 <release/1.17.5-notes>
     1.17.4 <release/1.17.4-notes>
     1.17.3 <release/1.17.3-notes>
     1.17.2 <release/1.17.2-notes>
     1.17.1 <release/1.17.1-notes>
     1.17.0 <release/1.17.0-notes>
+    1.16.6 <release/1.16.6-notes>
     1.16.5 <release/1.16.5-notes>
     1.16.4 <release/1.16.4-notes>
     1.16.3 <release/1.16.3-notes>

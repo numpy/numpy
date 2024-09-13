@@ -1,0 +1,49 @@
+# To use:
+#
+#   $ conda env create -f environment.yml  # `mamba` works too for this command
+#   $ conda activate numpy-dev
+#
+name: numpy-dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11 #need to pin to avoid issues with builds
+  - cython>=3.0
+  - compilers
+  - openblas
+  - nomkl
+  - setuptools
+  - ninja
+  - pkg-config
+  - meson-python
+  - pip
+  - spin=0.8 # Unpin when spin 0.9.1 is released
+  - ccache
+  # For testing
+  - pytest
+  - pytest-cov
+  - pytest-xdist
+  - hypothesis
+  # For type annotations
+  - typing_extensions>=4.2.0  # needed for python < 3.10
+  - mypy=1.11.1
+  # For building docs
+  - sphinx>=4.5.0
+  - sphinx-copybutton
+  - sphinx-design
+  - numpydoc=1.4.0
+  - ipython
+  - scipy
+  - pandas
+  - matplotlib
+  - pydata-sphinx-theme>=0.15.2
+  - doxygen
+  - towncrier
+  # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
+  - breathe>4.33.0
+  # For linting
+  - pycodestyle=2.12.1
+  - gitpython
+  # Used in some tests
+  - cffi
+  - pytz

@@ -1,0 +1,37 @@
+
+Contributors
+============
+
+A total of 9 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Alexander Grund +
+* Bas van Beek
+* Charles Harris
+* Jon Cusick +
+* Matti Picus
+* Michael Osthege +
+* Pal Barta +
+* Ross Barnowski
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 15 pull requests were merged for this release.
+
+* `#22030 <https://github.com/numpy/numpy/pull/22030>`__: ENH: Add ``__array_ufunc__`` typing support to the ``nin=1`` ufuncs
+* `#22031 <https://github.com/numpy/numpy/pull/22031>`__: MAINT, TYP: Fix ``np.angle`` dtype-overloads
+* `#22032 <https://github.com/numpy/numpy/pull/22032>`__: MAINT: Do not let ``_GenericAlias`` wrap the underlying classes'...
+* `#22033 <https://github.com/numpy/numpy/pull/22033>`__: TYP,MAINT: Allow ``einsum`` subscripts to be passed via integer...
+* `#22034 <https://github.com/numpy/numpy/pull/22034>`__: MAINT,TYP: Add object-overloads for the ``np.generic`` rich comparisons
+* `#22035 <https://github.com/numpy/numpy/pull/22035>`__: MAINT,TYP: Allow the ``squeeze`` and ``transpose`` method to...
+* `#22036 <https://github.com/numpy/numpy/pull/22036>`__: BUG: Fix subarray to object cast ownership details
+* `#22037 <https://github.com/numpy/numpy/pull/22037>`__: BUG: Use ``Popen`` to silently invoke f77 -v
+* `#22038 <https://github.com/numpy/numpy/pull/22038>`__: BUG: Avoid errors on NULL during deepcopy
+* `#22039 <https://github.com/numpy/numpy/pull/22039>`__: DOC: Add versionchanged for converter callable behavior.
+* `#22057 <https://github.com/numpy/numpy/pull/22057>`__: MAINT: Quiet the anaconda uploads.
+* `#22078 <https://github.com/numpy/numpy/pull/22078>`__: ENH: reorder includes for testing on top of system installations...
+* `#22106 <https://github.com/numpy/numpy/pull/22106>`__: TST: fix test_linear_interpolation_formula_symmetric
+* `#22107 <https://github.com/numpy/numpy/pull/22107>`__: BUG: Fix skip condition for test_loss_of_precision[complex256]
+* `#22115 <https://github.com/numpy/numpy/pull/22115>`__: BLD: Build python3.11.0rc1 wheels.

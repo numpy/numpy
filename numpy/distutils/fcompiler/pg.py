@@ -1,9 +1,7 @@
 # http://www.pgroup.com
-from __future__ import division, absolute_import, print_function
-
 import sys
 
-from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
+from numpy.distutils.fcompiler import FCompiler
 from sys import platform
 from os.path import join, dirname, normpath
 
@@ -33,7 +31,7 @@ class PGroupFCompiler(FCompiler):
             'compiler_f77': ["pgfortran"],
             'compiler_fix': ["pgfortran", "-Mfixed"],
             'compiler_f90': ["pgfortran"],
-            'linker_so': ["pgfortran"],
+            'linker_so': ["<F90>"],
             'archiver': ["ar", "-cr"],
             'ranlib': ["ranlib"]
         }
@@ -64,72 +62,60 @@ class PGroupFCompiler(FCompiler):
         return '-R%s' % dir
 
 
-if sys.version_info >= (3, 5):
-    import functools
+import functools
 
-    class PGroupFlangCompiler(FCompiler):
-        compiler_type = 'flang'
-        description = 'Portland Group Fortran LLVM Compiler'
-        version_pattern = r'\s*(flang|clang) version (?P<version>[\d.-]+).*'
+class PGroupFlangCompiler(FCompiler):
+    compiler_type = 'flang'
+    description = 'Portland Group Fortran LLVM Compiler'
+    version_pattern = r'\s*(flang|clang) version (?P<version>[\d.-]+).*'
 
-        ar_exe = 'lib.exe'
-        possible_executables = ['flang']
+    ar_exe = 'lib.exe'
+    possible_executables = ['flang']
 
-        executables = {
-            'version_cmd': ["<F77>", "--version"],
-            'compiler_f77': ["flang"],
-            'compiler_fix': ["flang"],
-            'compiler_f90': ["flang"],
-            'linker_so': [None],
-            'archiver': [ar_exe, "/verbose", "/OUT:"],
-            'ranlib': None
-        }
+    executables = {
+        'version_cmd': ["<F77>", "--version"],
+        'compiler_f77': ["flang"],
+        'compiler_fix': ["flang"],
+        'compiler_f90': ["flang"],
+        'linker_so': [None],
+        'archiver': [ar_exe, "/verbose", "/OUT:"],
+        'ranlib': None
+    }
 
-        library_switch = '/OUT:'  # No space after /OUT:!
-        module_dir_switch = '-module '  # Don't remove ending space!
+    library_switch = '/OUT:'  # No space after /OUT:!
+    module_dir_switch = '-module '  # Don't remove ending space!
 
-        def get_libraries(self):
-            opt = FCompiler.get_libraries(self)
-            opt.extend(['flang', 'flangrti', 'ompstub'])
-            return opt
+    def get_libraries(self):
+        opt = FCompiler.get_libraries(self)
+        opt.extend(['flang', 'flangrti', 'ompstub'])
+        return opt
 
-        @functools.lru_cache(maxsize=128)
-        def get_library_dirs(self):
-            """List of compiler library directories."""
-            opt = FCompiler.get_library_dirs(self)
-            flang_dir = dirname(self.executables['compiler_f77'][0])
-            opt.append(normpath(join(flang_dir, '..', 'lib')))
+    @functools.lru_cache(maxsize=128)
+    def get_library_dirs(self):
+        """List of compiler library directories."""
+        opt = FCompiler.get_library_dirs(self)
+        flang_dir = dirname(self.executables['compiler_f77'][0])
+        opt.append(normpath(join(flang_dir, '..', 'lib')))
 
-            return opt
+        return opt
 
-        def get_flags(self):
-            return []
+    def get_flags(self):
+        return []
 
-        def get_flags_free(self):
-            return []
+    def get_flags_free(self):
+        return []
 
-        def get_flags_debug(self):
-            return ['-g']
+    def get_flags_debug(self):
+        return ['-g']
 
-        def get_flags_opt(self):
-            return ['-O3']
+    def get_flags_opt(self):
+        return ['-O3']
 
-        def get_flags_arch(self):
-            return []
+    def get_flags_arch(self):
+        return []
 
-        def runtime_library_dir_option(self, dir):
-            raise NotImplementedError
-
-else:
-    from numpy.distutils.fcompiler import CompilerNotFound
-
-    # No point in supporting on older Pythons because not ABI compatible
-    class PGroupFlangCompiler(FCompiler):
-        compiler_type = 'flang'
-        description = 'Portland Group Fortran LLVM Compiler'
-
-        def get_version(self):
-            raise CompilerNotFound('Flang unsupported on Python < 3.5')
+    def runtime_library_dir_option(self, dir):
+        raise NotImplementedError
 
 
 if __name__ == '__main__':

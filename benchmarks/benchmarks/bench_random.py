@@ -1,10 +1,6 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark
 
 import numpy as np
-
-from numpy.random import RandomState
 
 try:
     from numpy.random import Generator
@@ -151,10 +147,11 @@ class Bounded(Benchmark):
              ]]
 
     def setup(self, bitgen, args):
+        seed = 707250673
         if bitgen == 'numpy':
-            self.rg = np.random.RandomState()
+            self.rg = np.random.RandomState(seed)
         else:
-            self.rg = Generator(getattr(np.random, bitgen)())
+            self.rg = Generator(getattr(np.random, bitgen)(seed))
         self.rg.random()
 
     def time_bounded(self, bitgen, args):

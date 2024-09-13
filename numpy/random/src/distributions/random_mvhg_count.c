@@ -1,8 +1,8 @@
+#include "numpy/random/distributions.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "numpy/random/distributions.h"
 
 /*
  *  random_multivariate_hypergeometric_count

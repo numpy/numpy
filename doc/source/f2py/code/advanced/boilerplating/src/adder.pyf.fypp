@@ -1,0 +1,26 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module adder ! in
+    interface  ! in :adder
+        module adder ! in :adder:adder_base.f90
+#:def add_subroutine(dtype_prefix, dtype)
+            subroutine ${dtype_prefix}$add(a,b,c,n) ! in :adder:adder_base.f90:adder
+                integer intent(hide),depend(a) :: n=len(a)
+                ${dtype}$ dimension(n),intent(in) :: a
+                ${dtype}$ dimension(n),intent(in),depend(n) :: b
+                ${dtype}$ dimension(n),intent(out),depend(n) :: c
+            end subroutine ${dtype_prefix}$add
+
+#:enddef
+
+#:for dtype_prefix, dtype in [('i', 'integer'), ('s', 'real'), ('d', 'real(kind=8)'), ('c', 'complex'), ('z', 'complex(kind=8)')]
+    @:add_subroutine(${dtype_prefix}$, ${dtype}$)
+#:endfor
+        end module adder
+    end interface
+end python module adder
+
+! This file was auto-generated with f2py (version:2.0.0.dev0+git20240101.bab7280).
+! See:
+! https://numpy.org/doc/stable/f2py/

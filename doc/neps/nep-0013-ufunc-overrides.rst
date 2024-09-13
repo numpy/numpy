@@ -1,5 +1,7 @@
+.. _NEP13:
+
 ==========================================
-NEP 13 — A Mechanism for Overriding Ufuncs
+NEP 13 — A mechanism for overriding Ufuncs
 ==========================================
 
 .. currentmodule:: numpy
@@ -18,6 +20,8 @@ NEP 13 — A Mechanism for Overriding Ufuncs
 :Date: 2017-03-31
 
 :Status: Final
+:Updated: 2023-02-19
+:Author: Roy Smart
 
 Executive summary
 =================
@@ -44,8 +48,8 @@ right behaviour, hence the change in name.)
 
 The ``__array_ufunc__`` as described below requires that any
 corresponding Python binary operations (``__mul__`` et al.) should be
-implemented in a specific way and be compatible with Numpy's ndarray
-semantics. Objects that do not satisfy this cannot override any Numpy
+implemented in a specific way and be compatible with NumPy's ndarray
+semantics. Objects that do not satisfy this cannot override any NumPy
 ufuncs.  We do not specify a future-compatible path by which this
 requirement can be relaxed --- any changes here require corresponding
 changes in 3rd party code.
@@ -100,7 +104,7 @@ Take this example of ufuncs interoperability with sparse matrices.::
                     [ 4,  1,  4]], dtype=int64)
 
     In [5]: np.multiply(a, bsp) # Returns NotImplemented to user, bad!
-    Out[5]: NotImplemted
+    Out[5]: NotImplemented
 
 Returning :obj:`NotImplemented` to user should not happen. Moreover::
 
@@ -130,7 +134,7 @@ However, this behavior is more confusing than useful, and having a
 :exc:`TypeError` would be preferable.
 
 This proposal will *not* resolve the issue with scipy.sparse matrices,
-which have multiplication semantics incompatible with numpy arrays.
+which have multiplication semantics incompatible with NumPy arrays.
 However, the aim is to enable writing other custom array types that have
 strictly ndarray compatible semantics.
 
@@ -171,12 +175,12 @@ where in all current cases only a single output makes sense).
 
 The function dispatch proceeds as follows:
 
-- If one of the input or output arguments implements
+- If one of the input, output, or ``where`` arguments implements
   ``__array_ufunc__``, it is executed instead of the ufunc.
 
 - If more than one of the arguments implements ``__array_ufunc__``,
   they are tried in the following order: subclasses before superclasses,
-  inputs before outputs, otherwise left to right.
+  inputs before outputs, outputs before ``where``, otherwise left to right.
 
 - The first ``__array_ufunc__`` method returning something else than
   :obj:`NotImplemented` determines the return value of the Ufunc.
@@ -244,7 +248,7 @@ three groups:
 - *Incompatible*: neither above nor below A; types for which no
   (indirect) upcasting is possible.
 
-Note that the legacy behaviour of numpy ufuncs is to try to convert
+Note that the legacy behaviour of NumPy ufuncs is to try to convert
 unknown objects to :class:`ndarray` via :func:`np.asarray`.  This is
 equivalent to placing :class:`ndarray` above these objects in the graph.
 Since we above defined :class:`ndarray` to return `NotImplemented` for
@@ -324,7 +328,10 @@ equivalent to::
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         # Cannot handle items that have __array_ufunc__ (other than our own).
         outputs = kwargs.get('out', ())
-        for item in inputs + outputs:
+        objs = inputs + outputs
+        if "where" in kwargs:
+            objs = objs + (kwargs["where"], )
+        for item in objs:
             if (hasattr(item, '__array_ufunc__') and
                     type(item).__array_ufunc__ is not ndarray.__array_ufunc__):
                 return NotImplemented
@@ -452,7 +459,7 @@ implements the following behavior:
 A class wishing to modify the interaction with :class:`ndarray` in
 binary operations therefore has two options:
 
-1. Implement ``__array_ufunc__`` and follow Numpy semantics for Python
+1. Implement ``__array_ufunc__`` and follow NumPy semantics for Python
    binary operations (see below).
 
 2. Set ``__array_ufunc__ = None``, and implement Python binary
@@ -476,7 +483,7 @@ are not compatible, i.e., implementations should be something like::
         except AttributeError:
             return False
 
-    class ArrayLike(object):
+    class ArrayLike:
         ...
         def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
             ...
@@ -514,7 +521,7 @@ does not know how to deal with arrays and ufuncs, and thus has set
 ``__array_ufunc__`` to :obj:`None`, but does know how to do
 multiplication::
 
-    class MyObject(object):
+    class MyObject:
         __array_ufunc__ = None
         def __init__(self, value):
             self.value = value
@@ -554,7 +561,7 @@ in turn immediately raises :exc:`TypeError`, because one of its operands
 ``arr.__array_ufunc__``, which will return :obj:`NotImplemented`, which
 we catch.
 
-.. note :: the reason for not allowing in-place operations to return
+.. note:: the reason for not allowing in-place operations to return
    :obj:`NotImplemented` is that these cannot generically be replaced by
    a simple reverse operation: most array operations assume the contents
    of the instance are changed in-place, and do not expect a new
@@ -676,7 +683,7 @@ NA     ``abs``      :func:`absolute`
 Future extensions to other functions
 ------------------------------------
 
-Some numpy functions could be implemented as (generalized) Ufunc, in
+Some NumPy functions could be implemented as (generalized) Ufunc, in
 which case it would be possible for them to be overridden by the
 ``__array_ufunc__`` method.  A prime candidate is :func:`~numpy.matmul`,
 which currently is not a Ufunc, but could be relatively easily be

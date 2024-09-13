@@ -1,3 +1,5 @@
+.. _devindex:
+
 #####################
 Contributing to NumPy
 #####################
@@ -10,24 +12,23 @@ we list them in alphabetical order):
 - Community coordination
 - DevOps
 - Developing educational content & narrative documentation
-- Writing technical documentation
 - Fundraising
-- Project management
 - Marketing
+- Project management
 - Translating content
 - Website design and development
+- Writing technical documentation
 
 The rest of this document discusses working on the NumPy code base and documentation.
 We're in the process of updating our descriptions of other activities and roles.
 If you are interested in these other activities, please contact us!
 You can do this via
-the `numpy-discussion mailing list <https://scipy.org/scipylib/mailing-lists.html>`__,
-or on GitHub (open an issue or comment on a relevant issue). These are our preferred
-communication channels (open source is open by nature!), however if you prefer
-to discuss in private first, please reach out to our community coordinators
-at `numpy-team@googlegroups.com` or `numpy-team.slack.com` (send an email to
-`numpy-team@googlegroups.com` for an invite the first time).
-
+the `numpy-discussion mailing list <https://mail.python.org/mailman/listinfo/numpy-discussion>`__,
+or on `GitHub <https://github.com/numpy/numpy>`__ (open an issue or comment on a
+relevant issue). These are our preferred communication channels (open source is open
+by nature!), however if you prefer to discuss in a more private space first,
+you can do so on Slack (see `numpy.org/contribute
+<https://numpy.org/contribute/>`__ for details).
 
 Development process - summary
 =============================
@@ -42,7 +43,7 @@ Here's the short summary, complete TOC links are below:
 
    * Clone the project to your local computer::
 
-      git clone https://github.com/your-username/numpy.git
+      git clone --recurse-submodules https://github.com/your-username/numpy.git
 
    * Change the directory::
 
@@ -52,17 +53,21 @@ Here's the short summary, complete TOC links are below:
 
       git remote add upstream https://github.com/numpy/numpy.git
 
-   * Now, `git remote -v` will show two remote repositories named:
+   * Now, ``git remote -v`` will show two remote repositories named:
 
      - ``upstream``, which refers to the ``numpy`` repository
      - ``origin``, which refers to your personal fork
 
+   * Pull the latest changes from upstream, including tags::
+
+      git checkout main
+      git pull upstream main --tags
+
+   * Initialize numpy's submodules::
+
+      git submodule update --init
+
 2. Develop your contribution:
-
-   * Pull the latest changes from upstream::
-
-      git checkout master
-      git pull upstream master
 
    * Create a branch for the feature you want to work on. Since the
      branch name will appear in the merge message, use a sensible name
@@ -83,10 +88,6 @@ Here's the short summary, complete TOC links are below:
 
       git push origin linspace-speedups
 
-   * Enter your GitHub username and password (repeat contributors or advanced
-     users can remove this step by connecting to GitHub with
-     :ref:`SSH<set-up-and-configure-a-github-account>` .
-
    * Go to GitHub. The new branch will show up with a green Pull Request
      button. Make sure the title and message are clear, concise, and self-
      explanatory. Then click the button to submit it.
@@ -106,7 +107,8 @@ Here's the short summary, complete TOC links are below:
      overall code quality benefits.  Therefore, please don't let the review
      discourage you from contributing: its only aim is to improve the quality
      of project, not to criticize (we are, after all, very grateful for the
-     time you're donating!).
+     time you're donating!). See our :ref:`Reviewer Guidelines
+     <reviewer-guidelines>` for more information.
 
    * To update your PR, make your changes on your local repository, commit,
      **run tests, and only if they succeed** push to your fork. As soon as
@@ -139,8 +141,7 @@ Here's the short summary, complete TOC links are below:
 
    If your change introduces a deprecation, make sure to discuss this first on
    GitHub or the mailing list first. If agreement on the deprecation is
-   reached, follow `NEP 23 deprecation policy <http://www.numpy.org/neps/
-   nep-0023-backwards-compatibility.html>`_  to add the deprecation.
+   reached, follow :ref:`NEP 23 deprecation policy <NEP23>`  to add the deprecation.
 
 6. Cross referencing issues
 
@@ -156,13 +157,7 @@ Here's the short summary, complete TOC links are below:
 For a more detailed discussion, read on and follow the links at the bottom of
 this page.
 
-Divergence between ``upstream/master`` and your feature branch
---------------------------------------------------------------
-
-If GitHub indicates that the branch of your Pull Request can no longer
-be merged automatically, you have to incorporate changes that have been made
-since you started into your branch. Our recommended way to do this is to
-:ref:`rebase on master<rebasing-on-master>`.
+.. _guidelines:
 
 Guidelines
 ----------
@@ -171,24 +166,26 @@ Guidelines
 * All code should be `documented <https://numpydoc.readthedocs.io/
   en/latest/format.html#docstring-standard>`_.
 * No changes are ever committed without review and approval by a core
-  team member.Please ask politely on the PR or on the `mailing list`_ if you
+  team member. Please ask politely on the PR or on the `mailing list`_ if you
   get no response to your pull request within a week.
 
-Stylistic Guidelines
+.. _stylistic-guidelines:
+
+Stylistic guidelines
 --------------------
 
 * Set up your editor to follow `PEP 8 <https://www.python.org/dev/peps/
   pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code with
   pyflakes / flake8.
 
-* Use numpy data types instead of strings (``np.uint8`` instead of
+* Use NumPy data types instead of strings (``np.uint8`` instead of
   ``"uint8"``).
 
 * Use the following import conventions::
 
    import numpy as np
 
-* For C code, see the :ref:`numpy-c-style-guide<style_guide>`
+* For C code, see :ref:`NEP 45 <NEP45>`.
 
 
 Test coverage
@@ -198,48 +195,39 @@ Pull requests (PRs) that modify code should either have new tests, or modify exi
 tests to fail before the PR and pass afterwards. You should :ref:`run the tests
 <development-environment>` before pushing a PR.
 
+Running NumPy's test suite locally requires some additional packages, such as
+``pytest`` and ``hypothesis``. The additional testing dependencies are listed
+in ``requirements/test_requirements.txt`` in the top-level directory, and can
+conveniently be installed with::
+
+    $ python -m pip install -r requirements/test_requirements.txt
+
 Tests for a module should ideally cover all code in that module,
 i.e., statement coverage should be at 100%.
 
-To measure the test coverage, install
-`pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`__
-and then run::
+To measure the test coverage, run::
 
-  $ python runtests.py --coverage
+  $ spin test --coverage
 
-This will create a report in ``build/coverage``, which can be viewed with::
+This will create a report in ``html`` format at ``build/coverage``, which can be
+viewed with your browser, e.g.::
 
   $ firefox build/coverage/index.html
+
+.. _building-docs:
 
 Building docs
 -------------
 
-To build docs, run ``make`` from the ``doc`` directory. ``make help`` lists
-all targets. For example, to build the HTML documentation, you can run:
+To build the HTML documentation, use::
 
-.. code:: sh
+  spin docs
 
-    make html
+You can also run ``make`` from the ``doc`` directory. ``make help`` lists
+all targets.
 
-Then, all the HTML files will be generated in ``doc/build/html/``.
-Since the documentation is based on docstrings, the appropriate version of
-numpy must be installed in the host python used to run sphinx.
-
-Requirements
-~~~~~~~~~~~~
-
-`Sphinx <http://www.sphinx-doc.org/en/stable/>`__ is needed to build
-the documentation. Matplotlib, SciPy, and IPython are also required.
-
-Fixing Warnings
-~~~~~~~~~~~~~~~
-
--  "citation not found: R###" There is probably an underscore after a
-   reference in the first line of a docstring (e.g. [1]\_). Use this
-   method to find the source file: $ cd doc/build; grep -rin R####
-
--  "Duplicate citation R###, other instance in..."" There is probably a
-   [2] without a [1] in one of the docstrings
+To get the appropriate dependencies and other requirements,
+see :ref:`howto-build-docs`.
 
 Development process - details
 =============================
@@ -249,16 +237,19 @@ The rest of the story
 .. toctree::
    :maxdepth: 2
 
-   conduct/code_of_conduct
-   Git Basics <gitwash/index>
    development_environment
+   howto_build_docs
    development_workflow
+   development_advanced_debugging
+   reviewer_guidelines
    ../benchmarking
-   style_guide
+   NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>
+   depending_on_numpy
    releasing
    governance/index
+   howto-docs
 
 NumPy-specific workflow is in :ref:`numpy-development-workflow
 <development-workflow>`.
 
-.. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-devel
+.. _`mailing list`: https://mail.python.org/mailman/listinfo/numpy-discussion

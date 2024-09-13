@@ -1,59 +1,55 @@
-#!/usr/bin/env python
 """
-
 Auxiliary functions for f2py2e.
 
-Copyright 1999,2000 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
+Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
+Copyright 2011 -- present NumPy Developers.
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy (BSD style) LICENSE.
 
-
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/07/24 19:01:55 $
-Pearu Peterson
-
 """
-from __future__ import division, absolute_import, print_function
-
 import pprint
 import sys
+import re
 import types
 from functools import reduce
 
 from . import __version__
 from . import cfuncs
+from .cfuncs import errmess
 
 __all__ = [
     'applyrules', 'debugcapi', 'dictappend', 'errmess', 'gentitle',
     'getargs2', 'getcallprotoargument', 'getcallstatement',
     'getfortranname', 'getpymethoddef', 'getrestdoc', 'getusercode',
-    'getusercode1', 'hasbody', 'hascallstatement', 'hascommon',
+    'getusercode1', 'getdimension', 'hasbody', 'hascallstatement', 'hascommon',
     'hasexternals', 'hasinitvalue', 'hasnote', 'hasresultnote',
-    'isallocatable', 'isarray', 'isarrayofstrings', 'iscomplex',
+    'isallocatable', 'isarray', 'isarrayofstrings',
+    'ischaracter', 'ischaracterarray', 'ischaracter_or_characterarray',
+    'iscomplex',
     'iscomplexarray', 'iscomplexfunction', 'iscomplexfunction_warn',
     'isdouble', 'isdummyroutine', 'isexternal', 'isfunction',
-    'isfunction_wrap', 'isint1array', 'isinteger', 'isintent_aux',
+    'isfunction_wrap', 'isint1', 'isint1array', 'isinteger', 'isintent_aux',
     'isintent_c', 'isintent_callback', 'isintent_copy', 'isintent_dict',
     'isintent_hide', 'isintent_in', 'isintent_inout', 'isintent_inplace',
     'isintent_nothide', 'isintent_out', 'isintent_overwrite', 'islogical',
     'islogicalfunction', 'islong_complex', 'islong_double',
     'islong_doublefunction', 'islong_long', 'islong_longfunction',
-    'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isrequired',
-    'isroutine', 'isscalar', 'issigned_long_longarray', 'isstring',
-    'isstringarray', 'isstringfunction', 'issubroutine',
-    'issubroutine_wrap', 'isthreadsafe', 'isunsigned', 'isunsigned_char',
-    'isunsigned_chararray', 'isunsigned_long_long',
-    'isunsigned_long_longarray', 'isunsigned_short',
-    'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
-    'replace', 'show', 'stripcomma', 'throw_error',
+    'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isvariable',
+    'isrequired', 'isroutine', 'isscalar', 'issigned_long_longarray',
+    'isstring', 'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
+    'issubroutine', 'get_f2py_modulename', 'issubroutine_wrap', 'isthreadsafe',
+    'isunsigned', 'isunsigned_char', 'isunsigned_chararray',
+    'isunsigned_long_long', 'isunsigned_long_longarray', 'isunsigned_short',
+    'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess', 'replace',
+    'show', 'stripcomma', 'throw_error', 'isattr_value', 'getuseblocks',
+    'process_f2cmap_dict'
 ]
 
 
 f2py_version = __version__.version
 
 
-errmess = sys.stderr.write
 show = pprint.pprint
 
 options = {}
@@ -70,24 +66,41 @@ def debugcapi(var):
     return 'capi' in debugoptions
 
 
+def _ischaracter(var):
+    return 'typespec' in var and var['typespec'] == 'character' and \
+           not isexternal(var)
+
+
 def _isstring(var):
     return 'typespec' in var and var['typespec'] == 'character' and \
            not isexternal(var)
 
 
-def isstring(var):
-    return _isstring(var) and not isarray(var)
+def ischaracter_or_characterarray(var):
+    return _ischaracter(var) and 'charselector' not in var
 
 
 def ischaracter(var):
-    return isstring(var) and 'charselector' not in var
+    return ischaracter_or_characterarray(var) and not isarray(var)
+
+
+def ischaracterarray(var):
+    return ischaracter_or_characterarray(var) and isarray(var)
+
+
+def isstring_or_stringarray(var):
+    return _ischaracter(var) and 'charselector' in var
+
+
+def isstring(var):
+    return isstring_or_stringarray(var) and not isarray(var)
 
 
 def isstringarray(var):
-    return isarray(var) and _isstring(var)
+    return isstring_or_stringarray(var) and isarray(var)
 
 
-def isarrayofstrings(var):
+def isarrayofstrings(var):  # obsolete?
     # leaving out '*' for now so that `character*(*) a(m)` and `character
     # a(m,*)` are treated differently. Luckily `character**` is illegal.
     return isstringarray(var) and var['dimension'][-1] == '(*)'
@@ -126,6 +139,11 @@ def get_kind(var):
             return var['kindselector']['kind']
         except KeyError:
             pass
+
+
+def isint1(var):
+    return var.get('typespec') == 'integer' \
+        and get_kind(var) == '1' and not isarray(var)
 
 
 def islong_long(var):
@@ -259,6 +277,7 @@ def ismodule(rout):
 def isfunction(rout):
     return 'block' in rout and 'function' == rout['block']
 
+
 def isfunction_wrap(rout):
     if isintent_c(rout):
         return 0
@@ -274,6 +293,9 @@ def issubroutine_wrap(rout):
         return 0
     return issubroutine(rout) and hasassumedshape(rout)
 
+def isattr_value(var):
+    return 'value' in var.get('attrspec', [])
+
 
 def hasassumedshape(rout):
     if rout.get('hasassumedshape'):
@@ -284,6 +306,10 @@ def hasassumedshape(rout):
                 rout['hasassumedshape'] = True
                 return True
     return False
+
+
+def requiresf90wrapper(rout):
+    return ismoduleroutine(rout) or hasassumedshape(rout)
 
 
 def isroutine(rout):
@@ -344,9 +370,9 @@ def iscomplexfunction_warn(rout):
     **************************************************************
         Warning: code with a function returning complex value
         may not work correctly with your Fortran compiler.
-        Run the following test before using it in your applications:
-        $(f2py install dir)/test-site/{b/runme_scalar,e/runme}
-        When using GNU gcc/g77 compilers, codes should work correctly.
+        When using GNU gcc/g77 compilers, codes should work
+        correctly for callbacks with:
+        f2py -c -DF2PY_CB_RETURNCOMPLEX
     **************************************************************\n""")
         return 1
     return 0
@@ -386,6 +412,13 @@ def isexternal(var):
     return 'attrspec' in var and 'external' in var['attrspec']
 
 
+def getdimension(var):
+    dimpattern = r"\((.*?)\)"
+    if 'attrspec' in var.keys():
+        if any('dimension' in s for s in var['attrspec']):
+            return [re.findall(dimpattern, v) for v in var['attrspec']][0]
+
+
 def isrequired(var):
     return not isoptional(var) and isintent_nothide(var)
 
@@ -422,6 +455,7 @@ def isintent_hide(var):
     return ('intent' in var and ('hide' in var['intent'] or
             ('out' in var['intent'] and 'in' not in var['intent'] and
                 (not l_or(isintent_inout, isintent_inplace)(var)))))
+
 
 def isintent_nothide(var):
     return not isintent_hide(var)
@@ -466,6 +500,7 @@ def isintent_aligned8(var):
 def isintent_aligned16(var):
     return 'aligned16' in var.get('intent', [])
 
+
 isintent_dict = {isintent_in: 'INTENT_IN', isintent_inout: 'INTENT_INOUT',
                  isintent_out: 'INTENT_OUT', isintent_hide: 'INTENT_HIDE',
                  isintent_cache: 'INTENT_CACHE',
@@ -480,6 +515,15 @@ isintent_dict = {isintent_in: 'INTENT_IN', isintent_inout: 'INTENT_INOUT',
 def isprivate(var):
     return 'attrspec' in var and 'private' in var['attrspec']
 
+
+def isvariable(var):
+    # heuristic to find public/private declarations of filtered subroutines
+    if len(var) == 1 and 'attrspec' in var and \
+            var['attrspec'][0] in ('public', 'private'):
+        is_var = False
+    else:
+        is_var = True
+    return is_var
 
 def hasinitvalue(var):
     return '=' in var
@@ -552,7 +596,7 @@ class F2PYError(Exception):
     pass
 
 
-class throw_error(object):
+class throw_error:
 
     def __init__(self, mess):
         self.mess = mess
@@ -563,19 +607,19 @@ class throw_error(object):
 
 
 def l_and(*f):
-    l, l2 = 'lambda v', []
+    l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l = '%s,f%d=f[%d]' % (l, i, i)
+        l1 = '%s,f%d=f[%d]' % (l1, i, i)
         l2.append('f%d(v)' % (i))
-    return eval('%s:%s' % (l, ' and '.join(l2)))
+    return eval('%s:%s' % (l1, ' and '.join(l2)))
 
 
 def l_or(*f):
-    l, l2 = 'lambda v', []
+    l1, l2 = 'lambda v', []
     for i in range(len(f)):
-        l = '%s,f%d=f[%d]' % (l, i, i)
+        l1 = '%s,f%d=f[%d]' % (l1, i, i)
         l2.append('f%d(v)' % (i))
-    return eval('%s:%s' % (l, ' or '.join(l2)))
+    return eval('%s:%s' % (l1, ' or '.join(l2)))
 
 
 def l_not(f):
@@ -662,8 +706,11 @@ def getcallprotoargument(rout, cb_map={}):
             elif isstring(var):
                 pass
             else:
-                ctype = ctype + '*'
-            if isstring(var) or isarrayofstrings(var):
+                if not isattr_value(var):
+                    ctype = ctype + '*'
+            if (isstring(var)
+                 or isarrayofstrings(var)  # obsolete?
+                 or isstringarray(var)):
                 arg_types2.append('size_t')
         arg_types.append(ctype)
 
@@ -728,14 +775,14 @@ def getrestdoc(rout):
 
 
 def gentitle(name):
-    l = (80 - len(name) - 6) // 2
-    return '/*%s %s %s*/' % (l * '*', name, l * '*')
+    ln = (80 - len(name) - 6) // 2
+    return '/*%s %s %s*/' % (ln * '*', name, ln * '*')
 
 
-def flatlist(l):
-    if isinstance(l, list):
-        return reduce(lambda x, y, f=flatlist: x + f(y), l, [])
-    return [l]
+def flatlist(lst):
+    if isinstance(lst, list):
+        return reduce(lambda x, y, f=flatlist: x + f(y), lst, [])
+    return [lst]
 
 
 def stripcomma(s):
@@ -852,3 +899,97 @@ def applyrules(rules, d, var={}):
             if ret[k] == []:
                 del ret[k]
     return ret
+
+_f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
+                                     re.I).match
+_f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
+                                          r'__user__[\w_]*)', re.I).match
+
+def get_f2py_modulename(source):
+    name = None
+    with open(source) as f:
+        for line in f:
+            m = _f2py_module_name_match(line)
+            if m:
+                if _f2py_user_module_name_match(line): # skip *__user__* names
+                    continue
+                name = m.group('name')
+                break
+    return name
+
+def getuseblocks(pymod):
+    all_uses = []
+    for inner in pymod['body']:
+        for modblock in inner['body']:
+            if modblock.get('use'):
+                all_uses.extend([x for x in modblock.get("use").keys() if "__" not in x])
+    return all_uses
+
+def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
+    """
+    Update the Fortran-to-C type mapping dictionary with new mappings and
+    return a list of successfully mapped C types.
+
+    This function integrates a new mapping dictionary into an existing
+    Fortran-to-C type mapping dictionary. It ensures that all keys are in
+    lowercase and validates new entries against a given C-to-Python mapping
+    dictionary. Redefinitions and invalid entries are reported with a warning.
+
+    Parameters
+    ----------
+    f2cmap_all : dict
+        The existing Fortran-to-C type mapping dictionary that will be updated.
+        It should be a dictionary of dictionaries where the main keys represent
+        Fortran types and the nested dictionaries map Fortran type specifiers
+        to corresponding C types.
+
+    new_map : dict
+        A dictionary containing new type mappings to be added to `f2cmap_all`.
+        The structure should be similar to `f2cmap_all`, with keys representing
+        Fortran types and values being dictionaries of type specifiers and their
+        C type equivalents.
+
+    c2py_map : dict
+        A dictionary used for validating the C types in `new_map`. It maps C
+        types to corresponding Python types and is used to ensure that the C
+        types specified in `new_map` are valid.
+
+    verbose : boolean
+        A flag used to provide information about the types mapped
+
+    Returns
+    -------
+    tuple of (dict, list)
+        The updated Fortran-to-C type mapping dictionary and a list of
+        successfully mapped C types.
+    """
+    f2cmap_mapped = []
+
+    new_map_lower = {}
+    for k, d1 in new_map.items():
+        d1_lower = {k1.lower(): v1 for k1, v1 in d1.items()}
+        new_map_lower[k.lower()] = d1_lower
+
+    for k, d1 in new_map_lower.items():
+        if k not in f2cmap_all:
+            f2cmap_all[k] = {}
+
+        for k1, v1 in d1.items():
+            if v1 in c2py_map:
+                if k1 in f2cmap_all[k]:
+                    outmess(
+                        "\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"
+                        % (k, k1, f2cmap_all[k][k1], v1)
+                    )
+                f2cmap_all[k][k1] = v1
+                if verbose:
+                    outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k, k1, v1))
+                f2cmap_mapped.append(v1)
+            else:
+                if verbose:
+                    errmess(
+                        "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
+                        % (k, k1, v1, v1, list(c2py_map.keys()))
+                    )
+
+    return f2cmap_all, f2cmap_mapped

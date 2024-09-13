@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 
 from numpy.distutils.npy_pkg_config import read_config, parse_flags
@@ -36,7 +34,7 @@ libs = -L${libdir}
 simple_variable_d = {'cflags': '-I/foo/bar/include', 'libflags': '-L/foo/bar/lib',
         'version': '0.1', 'name': 'foo'}
 
-class TestLibraryInfo(object):
+class TestLibraryInfo:
     def test_simple(self):
         with temppath('foo.ini') as path:
             with open(path,  'w') as f:
@@ -63,7 +61,7 @@ class TestLibraryInfo(object):
         out.vars['prefix'] = '/Users/david'
         assert_(out.cflags() == '-I/Users/david/include')
 
-class TestParseFlags(object):
+class TestParseFlags:
     def test_simple_cflags(self):
         d = parse_flags("-I/usr/include")
         assert_(d['include_dirs'] == ['/usr/include'])

@@ -1,0 +1,13 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.21.6 Release Notes
+==========================
+
+NumPy 1.21.6 is a very small release that achieves two things:
+
+- Backs out the mistaken backport of C++ code into 1.21.5.
+- Provides a 32 bit Windows wheel for Python 3.10.
+
+The provision of the 32 bit wheel is intended to make life easier
+for oldest-supported-numpy.

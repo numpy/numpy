@@ -1,0 +1,37 @@
+# A clang-format style that approximates Python's PEP 7
+# Useful for IDE integration
+#
+# Based on Paul Ganssle's version at
+# https://gist.github.com/pganssle/0e3a5f828b4d07d79447f6ced8e7e4db
+# and modified for NumPy
+BasedOnStyle: Google
+AlignAfterOpenBracket: Align
+AllowShortEnumsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AlwaysBreakAfterReturnType: TopLevel
+BreakBeforeBraces: Stroustrup
+ColumnLimit: 79
+ContinuationIndentWidth: 8
+DerivePointerAlignment: false
+IndentWidth: 4
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:           '^[<"](Python|structmember|pymem)\.h'
+    Priority:        -3
+    CaseSensitive:   true
+  - Regex:           '^"numpy/'
+    Priority:        -2
+  - Regex:           '^"(npy_pycompat|npy_config)'
+    Priority:        -1
+  - Regex:           '^"[[:alnum:]_.]+"'
+    Priority:        1
+  - Regex:           '^<[[:alnum:]_.]+"'
+    Priority:        2
+Language: Cpp
+PointerAlignment: Right
+ReflowComments: true
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+StatementMacros: [PyObject_HEAD, PyObject_VAR_HEAD, PyObject_HEAD_EXTRA]
+TabWidth: 4
+UseTab: Never

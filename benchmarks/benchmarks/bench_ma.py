@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark
 
 import numpy as np
@@ -18,6 +16,14 @@ class MA(Benchmark):
 
     def time_masked_array_l100_t100(self):
         np.ma.masked_array(self.l100, self.t100)
+
+class MACreation(Benchmark):
+    param_names = ['data', 'mask']
+    params = [[10, 100, 1000],
+              [True, False, None]]
+
+    def time_ma_creations(self, data, mask):
+        np.ma.array(data=np.zeros(int(data)), mask=mask)
 
 
 class Indexing(Benchmark):
@@ -113,3 +119,193 @@ class Concatenate(Benchmark):
 
     def time_it(self, mode, n):
         np.ma.concatenate(self.args)
+
+
+class MAFunctions1v(Benchmark):
+    param_names = ['mtype', 'func', 'msize']
+    params = [['np', 'np.ma'],
+              ['sin', 'log', 'sqrt'],
+              ['small', 'big']]
+
+    def setup(self, mtype, func, msize):
+        xs = 2.0 + np.random.uniform(-1, 1, 6).reshape(2, 3)
+        m1 = [[True, False, False], [False, False, True]]
+        xl = 2.0 + np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        maskx = xl > 2.8
+        self.nmxs = np.ma.array(xs, mask=m1)
+        self.nmxl = np.ma.array(xl, mask=maskx)
+
+    def time_functions_1v(self, mtype, func, msize):
+        # fun = {'np.ma.sin': np.ma.sin, 'np.sin': np.sin}[func]
+        fun = eval(f"{mtype}.{func}")
+        if msize == 'small':
+            fun(self.nmxs)
+        elif msize == 'big':
+            fun(self.nmxl)
+
+
+class MAMethod0v(Benchmark):
+    param_names = ['method', 'msize']
+    params = [['ravel', 'transpose', 'compressed', 'conjugate'],
+              ['small', 'big']]
+
+    def setup(self, method, msize):
+        xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        m1 = [[True, False, False], [False, False, True]]
+        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        maskx = xl > 0.8
+        self.nmxs = np.ma.array(xs, mask=m1)
+        self.nmxl = np.ma.array(xl, mask=maskx)
+
+    def time_methods_0v(self, method, msize):
+        if msize == 'small':
+            mdat = self.nmxs
+        elif msize == 'big':
+            mdat = self.nmxl
+        getattr(mdat, method)()
+
+
+class MAFunctions2v(Benchmark):
+    param_names = ['mtype', 'func', 'msize']
+    params = [['np', 'np.ma'],
+              ['multiply', 'divide', 'power'],
+              ['small', 'big']]
+
+    def setup(self, mtype, func, msize):
+        # Small arrays
+        xs = 2.0 + np.random.uniform(-1, 1, 6).reshape(2, 3)
+        ys = 2.0 + np.random.uniform(-1, 1, 6).reshape(2, 3)
+        m1 = [[True, False, False], [False, False, True]]
+        m2 = [[True, False, True], [False, False, True]]
+        self.nmxs = np.ma.array(xs, mask=m1)
+        self.nmys = np.ma.array(ys, mask=m2)
+        # Big arrays
+        xl = 2.0 + np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        yl = 2.0 + np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        maskx = xl > 2.8
+        masky = yl < 1.8
+        self.nmxl = np.ma.array(xl, mask=maskx)
+        self.nmyl = np.ma.array(yl, mask=masky)
+
+    def time_functions_2v(self, mtype, func, msize):
+        fun = eval(f"{mtype}.{func}")
+        if msize == 'small':
+            fun(self.nmxs, self.nmys)
+        elif msize == 'big':
+            fun(self.nmxl, self.nmyl)
+
+
+class MAMethodGetItem(Benchmark):
+    param_names = ['margs', 'msize']
+    params = [[0, (0, 0), [0, -1]],
+              ['small', 'big']]
+
+    def setup(self, margs, msize):
+        xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        m1 = [[True, False, False], [False, False, True]]
+        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        maskx = xl > 0.8
+        self.nmxs = np.ma.array(xs, mask=m1)
+        self.nmxl = np.ma.array(xl, mask=maskx)
+
+    def time_methods_getitem(self, margs, msize):
+        if msize == 'small':
+            mdat = self.nmxs
+        elif msize == 'big':
+            mdat = self.nmxl
+        mdat.__getitem__(margs)
+
+
+class MAMethodSetItem(Benchmark):
+    param_names = ['margs', 'mset', 'msize']
+    params = [[0, (0, 0), (-1, 0)],
+              [17, np.ma.masked],
+              ['small', 'big']]
+
+    def setup(self, margs, mset, msize):
+        xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        m1 = [[True, False, False], [False, False, True]]
+        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        maskx = xl > 0.8
+        self.nmxs = np.ma.array(xs, mask=m1)
+        self.nmxl = np.ma.array(xl, mask=maskx)
+
+    def time_methods_setitem(self, margs, mset, msize):
+        if msize == 'small':
+            mdat = self.nmxs
+        elif msize == 'big':
+            mdat = self.nmxl
+        mdat.__setitem__(margs, mset)
+
+
+class Where(Benchmark):
+    param_names = ['mtype', 'msize']
+    params = [['np', 'np.ma'],
+              ['small', 'big']]
+
+    def setup(self, mtype, msize):
+        # Small arrays
+        xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        ys = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        m1 = [[True, False, False], [False, False, True]]
+        m2 = [[True, False, True], [False, False, True]]
+        self.nmxs = np.ma.array(xs, mask=m1)
+        self.nmys = np.ma.array(ys, mask=m2)
+        # Big arrays
+        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        yl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        maskx = xl > 0.8
+        masky = yl < -0.8
+        self.nmxl = np.ma.array(xl, mask=maskx)
+        self.nmyl = np.ma.array(yl, mask=masky)
+
+    def time_where(self, mtype, msize):
+        fun = eval(f"{mtype}.where")
+        if msize == 'small':
+            fun(self.nmxs > 2, self.nmxs, self.nmys)
+        elif msize == 'big':
+            fun(self.nmxl > 2, self.nmxl, self.nmyl)
+
+
+class Cov(Benchmark):
+    param_names = ["size"]
+    params = [["small", "large"]]
+
+    def setup(self, size):
+        # Set the proportion of masked values.
+        prop_mask = 0.2
+        # Set up a "small" array with 10 vars and 10 obs.
+        rng = np.random.default_rng()
+        data = rng.random((10, 10), dtype=np.float32)
+        self.small = np.ma.array(data, mask=(data <= prop_mask))
+        # Set up a "large" array with 100 vars and 100 obs.
+        data = rng.random((100, 100), dtype=np.float32)
+        self.large = np.ma.array(data, mask=(data <= prop_mask))
+
+    def time_cov(self, size):
+        if size == "small":
+            np.ma.cov(self.small)
+        if size == "large":
+            np.ma.cov(self.large)
+
+
+class Corrcoef(Benchmark):
+    param_names = ["size"]
+    params = [["small", "large"]]
+
+    def setup(self, size):
+        # Set the proportion of masked values.
+        prop_mask = 0.2
+        # Set up a "small" array with 10 vars and 10 obs.
+        rng = np.random.default_rng()
+        data = rng.random((10, 10), dtype=np.float32)
+        self.small = np.ma.array(data, mask=(data <= prop_mask))
+        # Set up a "large" array with 100 vars and 100 obs.
+        data = rng.random((100, 100), dtype=np.float32)
+        self.large = np.ma.array(data, mask=(data <= prop_mask))
+
+    def time_corrcoef(self, size):
+        if size == "small":
+            np.ma.corrcoef(self.small)
+        if size == "large":
+            np.ma.corrcoef(self.large)

@@ -7,16 +7,23 @@
 #ifndef F2C_INCLUDE
 #define F2C_INCLUDE
 
-#include <math.h>
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
 
-typedef int integer;
+#include <math.h>
+#include "numpy/npy_common.h"
+#include "npy_cblas.h"
+
+#include "lapack_lite_names.h"
+
+typedef CBLAS_INT integer;
 typedef char *address;
 typedef short int shortint;
 typedef float real;
 typedef double doublereal;
-typedef struct { real r, i; } complex;
+typedef struct { real r, i; } singlecomplex;
 typedef struct { doublereal r, i; } doublecomplex;
-typedef int logical;
+typedef CBLAS_INT logical;
 typedef short int shortlogical;
 typedef char logical1;
 typedef char integer1;
@@ -37,9 +44,9 @@ typedef short flag;
 typedef short ftnlen;
 typedef short ftnint;
 #else
-typedef int flag;
-typedef int ftnlen;
-typedef int ftnint;
+typedef CBLAS_INT flag;
+typedef CBLAS_INT ftnlen;
+typedef CBLAS_INT ftnint;
 #endif
 
 /*external read, write*/
@@ -124,7 +131,7 @@ union Multitype {	/* for multiple entry points */
 	integer i;
 	real r;
 	doublereal d;
-	complex c;
+	singlecomplex c;
 	doublecomplex z;
 	};
 
@@ -227,13 +234,13 @@ extern "C" {
 #endif
 
 extern int abort_(void);
-extern double c_abs(complex *);
-extern void c_cos(complex *, complex *);
-extern void c_div(complex *, complex *, complex *);
-extern void c_exp(complex *, complex *);
-extern void c_log(complex *, complex *);
-extern void c_sin(complex *, complex *);
-extern void c_sqrt(complex *, complex *);
+extern double c_abs(singlecomplex *);
+extern void c_cos(singlecomplex *, singlecomplex *);
+extern void c_div(singlecomplex *, singlecomplex *, singlecomplex *);
+extern void c_exp(singlecomplex *, singlecomplex *);
+extern void c_log(singlecomplex *, singlecomplex *);
+extern void c_sin(singlecomplex *, singlecomplex *);
+extern void c_sqrt(singlecomplex *, singlecomplex *);
 extern double d_abs(double *);
 extern double d_acos(double *);
 extern double d_asin(double *);
@@ -259,7 +266,7 @@ extern double d_tan(double *);
 extern double d_tanh(double *);
 extern double derf_(double *);
 extern double derfc_(double *);
-extern void do_fio(ftnint *, char *, ftnlen);
+extern int do_fio(ftnint *, char *, ftnlen);
 extern integer do_lio(ftnint *, ftnint *, char *, ftnlen);
 extern integer do_uio(ftnint *, char *, ftnlen);
 extern integer e_rdfe(void);
@@ -271,7 +278,7 @@ extern integer e_rsli(void);
 extern integer e_rsue(void);
 extern integer e_wdfe(void);
 extern integer e_wdue(void);
-extern void e_wsfe(void);
+extern int e_wsfe(void);
 extern integer e_wsfi(void);
 extern integer e_wsle(void);
 extern integer e_wsli(void);
@@ -316,7 +323,7 @@ extern ftnlen l_ge(char *, char *, ftnlen, ftnlen);
 extern ftnlen l_gt(char *, char *, ftnlen, ftnlen);
 extern ftnlen l_le(char *, char *, ftnlen, ftnlen);
 extern ftnlen l_lt(char *, char *, ftnlen, ftnlen);
-extern void pow_ci(complex *, complex *, integer *);
+extern void pow_ci(singlecomplex *, singlecomplex *, integer *);
 extern double pow_dd(double *, double *);
 extern double pow_di(double *, integer *);
 extern short pow_hh(short *, shortint *);
@@ -329,12 +336,12 @@ extern double r_acos(float *);
 extern double r_asin(float *);
 extern double r_atan(float *);
 extern double r_atn2(float *, float *);
-extern void r_cnjg(complex *, complex *);
+extern void r_cnjg(singlecomplex *, singlecomplex *);
 extern double r_cos(float *);
 extern double r_cosh(float *);
 extern double r_dim(float *, float *);
 extern double r_exp(float *);
-extern float r_imag(complex *);
+extern float r_imag(singlecomplex *);
 extern double r_int(float *);
 extern float r_lg10(real *);
 extern double r_log(float *);
@@ -346,13 +353,13 @@ extern double r_sinh(float *);
 extern double r_sqrt(float *);
 extern double r_tan(float *);
 extern double r_tanh(float *);
-extern void s_cat(char *, char **, integer *, integer *, ftnlen);
+extern int s_cat(char *, char **, integer *, integer *, ftnlen);
 extern integer s_cmp(char *, char *, ftnlen, ftnlen);
-extern void s_copy(char *, char *, ftnlen, ftnlen);
+extern int s_copy(char *, char *, ftnlen, ftnlen);
 extern int s_paus(char *, ftnlen);
 extern integer s_rdfe(cilist *);
 extern integer s_rdue(cilist *);
-extern integer s_rnge(char *, integer, char *, integer);
+extern int s_rnge(char *, int, char *, int);
 extern integer s_rsfe(cilist *);
 extern integer s_rsfi(icilist *);
 extern integer s_rsle(cilist *);
@@ -363,7 +370,7 @@ extern integer s_rsue(cilist *);
 extern int s_stop(char *, ftnlen);
 extern integer s_wdfe(cilist *);
 extern integer s_wdue(cilist *);
-extern void s_wsfe(	cilist *);
+extern int s_wsfe(	cilist *);
 extern integer s_wsfi(icilist *);
 extern integer s_wsle(cilist *);
 extern integer s_wsli(icilist *);
@@ -380,6 +387,9 @@ extern void z_exp(doublecomplex *, doublecomplex *);
 extern void z_log(doublecomplex *, doublecomplex *);
 extern void z_sin(doublecomplex *, doublecomplex *);
 extern void z_sqrt(doublecomplex *, doublecomplex *);
+
+extern double f__cabs(double, double);
+extern double f__cabsf(float, float);
 
 #ifdef __cplusplus
 	}

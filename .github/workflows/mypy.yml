@@ -1,0 +1,69 @@
+name: Run MyPy
+
+# Mypy is too slow to run as part of regular CI. The purpose of the jobs in
+# this file is to cover running Mypy across:
+#
+#   - OSes: Linux, Windows and macOS
+#   - Python versions: lowest/highest supported versions, and an intermediate one
+#
+# The build matrix aims for sparse coverage across those two dimensions.
+# Use of BLAS/LAPACK and SIMD is disabled on purpose, because those things
+# don't matter for static typing and this speeds up the builds.
+#
+# This is a separate job file so it's easy to trigger by hand.
+
+on:
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+    paths-ignore:
+      - 'benchmarks/'
+      - '.circlecl/'
+      - 'docs/'
+      - 'meson_cpu/'
+      - 'tools/'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  mypy:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    name: "MyPy"
+    runs-on: ${{ matrix.os_python[0] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os_python:
+          - [ubuntu-latest, '3.12']
+          - [windows-latest, '3.11']
+          - [macos-latest, '3.10']
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      with:
+        python-version: ${{ matrix.os_python[1] }}
+    - name: Install dependencies
+      run: |
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/test_requirements.txt
+    - name: Build
+      run: |
+        spin build -j2 -- -Dallow-noblas=true -Ddisable-optimization=true --vsenv
+    - name: Run Mypy
+      run: |
+        spin mypy

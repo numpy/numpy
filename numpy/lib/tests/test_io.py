@@ -1,30 +1,35 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
+import gc
 import gzip
 import os
 import threading
 import time
 import warnings
-import io
 import re
 import pytest
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from io import BytesIO, StringIO
 from datetime import datetime
 import locale
+from multiprocessing import Value, get_context
+from ctypes import c_bool
 
 import numpy as np
 import numpy.ma as ma
+from numpy.exceptions import VisibleDeprecationWarning
 from numpy.lib._iotools import ConverterError, ConversionWarning
-from numpy.compat import asbytes, bytes, Path
+from numpy.lib import _npyio_impl
+from numpy.lib._npyio_impl import recfromcsv, recfromtxt
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
     assert_warns, assert_, assert_raises_regex, assert_raises,
     assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings
+    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings,
+    break_cycles, IS_WASM
     )
 from numpy.testing._private.utils import requires_memory
+from numpy._utils import asbytes
 
 
 class TextIO(BytesIO):
@@ -46,7 +51,6 @@ class TextIO(BytesIO):
         BytesIO.writelines(self, [asbytes(s) for s in lines])
 
 
-MAJVER, MINVER = sys.version_info[:2]
 IS_64BIT = sys.maxsize > 2**32
 try:
     import bz2
@@ -71,7 +75,7 @@ def strptime(s, fmt=None):
     return datetime(*time.strptime(s, fmt)[:3])
 
 
-class RoundtripTest(object):
+class RoundtripTest:
     def roundtrip(self, save_func, *args, **kwargs):
         """
         save_func : callable
@@ -201,6 +205,7 @@ class TestSavezLoad(RoundtripTest):
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
 
+    @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     @pytest.mark.slow
     def test_big_arrays(self):
@@ -229,6 +234,17 @@ class TestSavezLoad(RoundtripTest):
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
 
+
+    def test_tuple_getitem_raises(self):
+        # gh-23748
+        a = np.array([1, 2, 3])
+        f = BytesIO()
+        np.savez(f, a=a)
+        f.seek(0)
+        l = np.load(f)
+        with pytest.raises(KeyError, match="(1, 2)"):
+            l[1, 2]
+
     def test_BagObj(self):
         a = np.array([[1, 2], [3, 4]], float)
         b = np.array([[1 + 2j, 2 + 7j], [3 - 6j, 4 + 12j]], complex)
@@ -240,6 +256,7 @@ class TestSavezLoad(RoundtripTest):
         assert_equal(a, l.f.file_a)
         assert_equal(b, l.f.file_b)
 
+    @pytest.mark.skipif(IS_WASM, reason="Cannot start thread")
     def test_savez_filename_clashes(self):
         # Test that issue #852 is fixed
         # and savez functions in multithreaded environment
@@ -278,8 +295,7 @@ class TestSavezLoad(RoundtripTest):
                 fp.seek(0)
                 assert_(not fp.closed)
 
-    #FIXME: Is this still true?
-    @pytest.mark.skipif(IS_PYPY, reason="Missing context manager on PyPy")
+    @pytest.mark.slow_pypy
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
         # It might be a "weak" test since failed to get triggered on
@@ -292,17 +308,18 @@ class TestSavezLoad(RoundtripTest):
             # numpy npz file returned by np.load when their reference count
             # goes to zero.  Python 3 running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
-            # collector, so we catch the warnings.  Because ResourceWarning
-            # is unknown in Python < 3.x, we take the easy way out and
-            # catch all warnings.
+            # collector, so we catch the warnings.
             with suppress_warnings() as sup:
-                sup.filter(Warning)  # TODO: specify exact message
+                sup.filter(ResourceWarning)  # TODO: specify exact message
                 for i in range(1, 1025):
                     try:
                         np.load(tmp)["data"]
                     except Exception as e:
                         msg = "Failed to load data from a file: %s" % e
                         raise AssertionError(msg)
+                    finally:
+                        if IS_PYPY:
+                            gc.collect()
 
     def test_closing_zipfile_after_load(self):
         # Check that zipfile owns file and can close it.  This needs to
@@ -317,8 +334,23 @@ class TestSavezLoad(RoundtripTest):
             data.close()
             assert_(fp.closed)
 
+    @pytest.mark.parametrize("count, expected_repr", [
+        (1, "NpzFile {fname!r} with keys: arr_0"),
+        (5, "NpzFile {fname!r} with keys: arr_0, arr_1, arr_2, arr_3, arr_4"),
+        # _MAX_REPR_ARRAY_COUNT is 5, so files with more than 5 keys are
+        # expected to end in '...'
+        (6, "NpzFile {fname!r} with keys: arr_0, arr_1, arr_2, arr_3, arr_4..."),
+    ])
+    def test_repr_lists_keys(self, count, expected_repr):
+        a = np.array([[1, 2], [3, 4]], float)
+        with temppath(suffix='.npz') as tmp:
+            np.savez(tmp, *[a]*count)
+            l = np.load(tmp)
+            assert repr(l) == expected_repr.format(fname=tmp)
+            l.close()
 
-class TestSaveTxt(object):
+
+class TestSaveTxt:
     def test_array(self):
         a = np.array([[1, 2], [3, 4]], float)
         fmt = "%.18e"
@@ -365,7 +397,6 @@ class TestSaveTxt(object):
         c.seek(0)
         assert_equal(c.readlines(), [b'1 3\n', b'4 6\n'])
 
-    @pytest.mark.skipif(Path is None, reason="No pathlib.Path")
     def test_multifield_view(self):
         a = np.ones(1, dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'f4')])
         v = a[['x', 'z']]
@@ -442,11 +473,12 @@ class TestSaveTxt(object):
         assert_equal(c.read(),
                      asbytes('1 2\n3 4\n' + commentstr + test_header_footer + '\n'))
 
-    def test_file_roundtrip(self):
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_file_roundtrip(self, filename_type):
         with temppath() as name:
             a = np.array([(1, 2), (3, 4)])
-            np.savetxt(name, a)
-            b = np.loadtxt(name)
+            np.savetxt(filename_type(name), a)
+            b = np.loadtxt(filename_type(name))
             assert_array_equal(a, b)
 
     def test_complex_arrays(self):
@@ -519,7 +551,7 @@ class TestSaveTxt(object):
 
     def test_unicode(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode_)
+        a = np.array([utf8], dtype=np.str_)
         with tempdir() as tmpdir:
             # set encoding as on windows it may not be unicode even on py3
             np.savetxt(os.path.join(tmpdir, 'test.csv'), a, fmt=['%s'],
@@ -527,26 +559,24 @@ class TestSaveTxt(object):
 
     def test_unicode_roundtrip(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode_)
+        a = np.array([utf8], dtype=np.str_)
         # our gz wrapper support encoding
         suffixes = ['', '.gz']
-        # stdlib 2 versions do not support encoding
-        if MAJVER > 2:
-            if HAS_BZ2:
-                suffixes.append('.bz2')
-            if HAS_LZMA:
-                suffixes.extend(['.xz', '.lzma'])
+        if HAS_BZ2:
+            suffixes.append('.bz2')
+        if HAS_LZMA:
+            suffixes.extend(['.xz', '.lzma'])
         with tempdir() as tmpdir:
             for suffix in suffixes:
                 np.savetxt(os.path.join(tmpdir, 'test.csv' + suffix), a,
                            fmt=['%s'], encoding='UTF-16-LE')
                 b = np.loadtxt(os.path.join(tmpdir, 'test.csv' + suffix),
-                               encoding='UTF-16-LE', dtype=np.unicode_)
+                               encoding='UTF-16-LE', dtype=np.str_)
                 assert_array_equal(a, b)
 
     def test_unicode_bytestream(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode_)
+        a = np.array([utf8], dtype=np.str_)
         s = BytesIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
@@ -554,37 +584,62 @@ class TestSaveTxt(object):
 
     def test_unicode_stringstream(self):
         utf8 = b'\xcf\x96'.decode('UTF-8')
-        a = np.array([utf8], dtype=np.unicode_)
+        a = np.array([utf8], dtype=np.str_)
         s = StringIO()
         np.savetxt(s, a, fmt=['%s'], encoding='UTF-8')
         s.seek(0)
         assert_equal(s.read(), utf8 + '\n')
 
-    @pytest.mark.parametrize("fmt", [u"%f", b"%f"])
     @pytest.mark.parametrize("iotype", [StringIO, BytesIO])
-    def test_unicode_and_bytes_fmt(self, fmt, iotype):
+    def test_unicode_and_bytes_fmt(self, iotype):
         # string type of fmt should not matter, see also gh-4053
         a = np.array([1.])
         s = iotype()
-        np.savetxt(s, a, fmt=fmt)
+        np.savetxt(s, a, fmt="%f")
         s.seek(0)
         if iotype is StringIO:
-            assert_equal(s.read(), u"%f\n" % 1.)
+            assert_equal(s.read(), "%f\n" % 1.)
         else:
             assert_equal(s.read(), b"%f\n" % 1.)
 
-    @pytest.mark.skipif(sys.platform=='win32',
-                        reason="large files cause problems")
+    @pytest.mark.skipif(sys.platform=='win32', reason="files>4GB may not work")
     @pytest.mark.slow
     @requires_memory(free_bytes=7e9)
     def test_large_zip(self):
-        # The test takes at least 6GB of memory, writes a file larger than 4GB
-        test_data = np.asarray([np.random.rand(np.random.randint(50,100),4)
-                               for i in range(800000)])
-        with tempdir() as tmpdir:
-            np.savez(os.path.join(tmpdir, 'test.npz'), test_data=test_data)
+        def check_large_zip(memoryerror_raised):
+            memoryerror_raised.value = False
+            try:
+                # The test takes at least 6GB of memory, writes a file larger
+                # than 4GB. This tests the ``allowZip64`` kwarg to ``zipfile``
+                test_data = np.asarray([np.random.rand(
+                                        np.random.randint(50,100),4)
+                                        for i in range(800000)], dtype=object)
+                with tempdir() as tmpdir:
+                    np.savez(os.path.join(tmpdir, 'test.npz'),
+                             test_data=test_data)
+            except MemoryError:
+                memoryerror_raised.value = True
+                raise
+        # run in a subprocess to ensure memory is released on PyPy, see gh-15775
+        # Use an object in shared memory to re-raise the MemoryError exception
+        # in our process if needed, see gh-16889
+        memoryerror_raised = Value(c_bool)
 
-class LoadTxtBase(object):
+        # Since Python 3.8, the default start method for multiprocessing has
+        # been changed from 'fork' to 'spawn' on macOS, causing inconsistency
+        # on memory sharing model, lead to failed test for check_large_zip
+        ctx = get_context('fork')
+        p = ctx.Process(target=check_large_zip, args=(memoryerror_raised,))
+        p.start()
+        p.join()
+        if memoryerror_raised.value:
+            raise MemoryError("Child process raised a MemoryError exception")
+        # -9 indicates a SIGKILL, probably an OOM.
+        if p.exitcode == -9:
+            pytest.xfail("subprocess got a SIGKILL, apparently free memory was not sufficient")
+        assert p.exitcode == 0
+
+class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
         # Test that we can load data from a compressed file
         wanted = np.arange(6).reshape((2, 3))
@@ -601,18 +656,14 @@ class LoadTxtBase(object):
                         res = self.loadfunc(f)
                     assert_array_equal(res, wanted)
 
-    # Python2 .open does not support encoding
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_gzip(self):
         self.check_compressed(gzip.open, ('.gz',))
 
     @pytest.mark.skipif(not HAS_BZ2, reason="Needs bz2")
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_bz2(self):
         self.check_compressed(bz2.open, ('.bz2',))
 
     @pytest.mark.skipif(not HAS_LZMA, reason="Needs lzma")
-    @pytest.mark.skipif(MAJVER == 2, reason="Needs Python version >= 3")
     def test_compressed_lzma(self):
         self.check_compressed(lzma.open, ('.xz', '.lzma'))
 
@@ -629,12 +680,12 @@ class LoadTxtBase(object):
         with temppath() as path:
             with open(path, "wb") as f:
                 f.write(nonascii.encode("UTF-16"))
-            x = self.loadfunc(path, encoding="UTF-16", dtype=np.unicode_)
+            x = self.loadfunc(path, encoding="UTF-16", dtype=np.str_)
             assert_array_equal(x, nonascii)
 
     def test_binary_decode(self):
         utf16 = b'\xff\xfeh\x04 \x00i\x04 \x00j\x04'
-        v = self.loadfunc(BytesIO(utf16), dtype=np.unicode_, encoding='UTF-16')
+        v = self.loadfunc(BytesIO(utf16), dtype=np.str_, encoding='UTF-16')
         assert_array_equal(v, np.array(utf16.decode('UTF-16').split()))
 
     def test_converters_decode(self):
@@ -642,7 +693,7 @@ class LoadTxtBase(object):
         c = TextIO()
         c.write(b'\xcf\x96')
         c.seek(0)
-        x = self.loadfunc(c, dtype=np.unicode_,
+        x = self.loadfunc(c, dtype=np.str_, encoding="bytes",
                           converters={0: lambda x: x.decode('UTF-8')})
         a = np.array([b'\xcf\x96'.decode('UTF-8')])
         assert_array_equal(x, a)
@@ -651,9 +702,9 @@ class LoadTxtBase(object):
         # test native string converters enabled by setting an encoding
         utf8 = b'\xcf\x96'.decode('UTF-8')
         with temppath() as path:
-            with io.open(path, 'wt', encoding='UTF-8') as f:
+            with open(path, 'wt', encoding='UTF-8') as f:
                 f.write(utf8)
-            x = self.loadfunc(path, dtype=np.unicode_,
+            x = self.loadfunc(path, dtype=np.str_,
                               converters={0: lambda x: x + 't'},
                               encoding='UTF-8')
             a = np.array([utf8 + 't'])
@@ -663,12 +714,13 @@ class LoadTxtBase(object):
 class TestLoadTxt(LoadTxtBase):
     loadfunc = staticmethod(np.loadtxt)
 
-    def setup(self):
+    def setup_method(self):
         # lower chunksize for testing
-        self.orig_chunk = np.lib.npyio._loadtxt_chunksize
-        np.lib.npyio._loadtxt_chunksize = 1
-    def teardown(self):
-        np.lib.npyio._loadtxt_chunksize = self.orig_chunk
+        self.orig_chunk = _npyio_impl._loadtxt_chunksize
+        _npyio_impl._loadtxt_chunksize = 1
+
+    def teardown_method(self):
+        _npyio_impl._loadtxt_chunksize = self.orig_chunk
 
     def test_record(self):
         c = TextIO()
@@ -679,7 +731,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(x, a)
 
         d = TextIO()
-        d.write('M 64.0 75.0\nF 25.0 60.0')
+        d.write('M 64 75.0\nF 25 60.0')
         d.seek(0)
         mydescriptor = {'names': ('gender', 'age', 'weight'),
                         'formats': ('S1', 'i4', 'f4')}
@@ -741,7 +793,7 @@ class TestLoadTxt(LoadTxtBase):
         c.write('# comment\n1,2,3,5\n')
         c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',',
-                       comments=u'#')
+                       comments='#')
         a = np.array([1, 2, 3, 5], int)
         assert_array_equal(x, a)
 
@@ -763,6 +815,8 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3], [4, 5, 6]], int)
         assert_array_equal(x, a)
 
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                        reason="PyPy bug in error formatting")
     def test_comments_multi_chars(self):
         c = TextIO()
         c.write('/* comment\n1,2,3,5\n')
@@ -826,7 +880,7 @@ class TestLoadTxt(LoadTxtBase):
             assert_array_equal(x, a[:, 1])
 
         # Testing with some crazy custom integer type
-        class CrazyInt(object):
+        class CrazyInt:
             def __index__(self):
                 return 1
 
@@ -855,15 +909,26 @@ class TestLoadTxt(LoadTxtBase):
         bogus_idx = 1.5
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx),
+            '^usecols must be.*%s' % type(bogus_idx).__name__,
             np.loadtxt, c, usecols=bogus_idx
             )
 
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx),
+            '^usecols must be.*%s' % type(bogus_idx).__name__,
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
+
+    def test_bad_usecols(self):
+        with pytest.raises(OverflowError):
+            np.loadtxt(["1\n"], usecols=[2**64], delimiter=",")
+        with pytest.raises((ValueError, OverflowError)):
+            # Overflow error on 32bit platforms
+            np.loadtxt(["1\n"], usecols=[2**62], delimiter=",")
+        with pytest.raises(TypeError,
+                match="If a structured dtype .*. But 1 usecols were given and "
+                      "the number of fields is 3."):
+            np.loadtxt(["1,1\n"], dtype="i,2i", usecols=[0], delimiter=",")
 
     def test_fancy_dtype(self):
         c = TextIO()
@@ -903,8 +968,7 @@ class TestLoadTxt(LoadTxtBase):
             assert_array_equal(x, a)
 
     def test_empty_file(self):
-        with suppress_warnings() as sup:
-            sup.filter(message="loadtxt: Empty input file:")
+        with pytest.warns(UserWarning, match="input contained no data"):
             c = TextIO()
             x = np.loadtxt(c)
             assert_equal(x.shape, (0,))
@@ -965,8 +1029,33 @@ class TestLoadTxt(LoadTxtBase):
         c.write(inp)
         for dt in [float, np.float32]:
             c.seek(0)
-            res = np.loadtxt(c, dtype=dt)
+            res = np.loadtxt(
+                c, dtype=dt, converters=float.fromhex, encoding="latin1")
             assert_equal(res, tgt, err_msg="%s" % dt)
+
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                        reason="PyPy bug in error formatting")
+    def test_default_float_converter_no_default_hex_conversion(self):
+        """
+        Ensure that fromhex is only used for values with the correct prefix and
+        is not called by default. Regression test related to gh-19598.
+        """
+        c = TextIO("a b c")
+        with pytest.raises(ValueError,
+                match=".*convert string 'a' to float64 at row 0, column 1"):
+            np.loadtxt(c)
+
+    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
+                        reason="PyPy bug in error formatting")
+    def test_default_float_converter_exception(self):
+        """
+        Ensure that the exception message raised during failed floating point
+        conversion is correct. Regression test related to gh-19598.
+        """
+        c = TextIO("qrs tuv")  # Invalid values for default float converter
+        with pytest.raises(ValueError,
+                match="could not convert string 'qrs' to float64"):
+            np.loadtxt(c)
 
     def test_from_complex(self):
         tgt = (complex(1, 1), complex(1, -1))
@@ -1013,7 +1102,7 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([b'start ', b'  ', b''])
         assert_array_equal(x['comment'], a)
 
-    def test_structure_unpack(self):
+    def test_unpack_structured(self):
         txt = TextIO("M 21 72\nF 35 58")
         dt = {'names': ('a', 'b', 'c'), 'formats': ('|S1', '<i4', '<f4')}
         a, b, c = np.loadtxt(txt, dtype=dt, unpack=True)
@@ -1061,8 +1150,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_(x.shape == (3,))
 
         # Test ndmin kw with empty file.
-        with suppress_warnings() as sup:
-            sup.filter(message="loadtxt: Empty input file:")
+        with pytest.warns(UserWarning, match="input contained no data"):
             f = TextIO()
             assert_(np.loadtxt(f, ndmin=2).shape == (0, 1,))
             assert_(np.loadtxt(f, ndmin=1).shape == (0,))
@@ -1094,14 +1182,14 @@ class TestLoadTxt(LoadTxtBase):
     @pytest.mark.skipif(locale.getpreferredencoding() == 'ANSI_X3.4-1968',
                         reason="Wrong preferred encoding")
     def test_binary_load(self):
-        butf8 = b"5,6,7,\xc3\x95scarscar\n\r15,2,3,hello\n\r"\
-                b"20,2,3,\xc3\x95scar\n\r"
+        butf8 = b"5,6,7,\xc3\x95scarscar\r\n15,2,3,hello\r\n"\
+                b"20,2,3,\xc3\x95scar\r\n"
         sutf8 = butf8.decode("UTF-8").replace("\r", "").splitlines()
         with temppath() as path:
             with open(path, "wb") as f:
                 f.write(butf8)
             with open(path, "rb") as f:
-                x = np.loadtxt(f, encoding="UTF-8", dtype=np.unicode_)
+                x = np.loadtxt(f, encoding="UTF-8", dtype=np.str_)
             assert_array_equal(x, sutf8)
             # test broken latin1 conversion people now rely on
             with open(path, "rb") as f:
@@ -1158,7 +1246,32 @@ class TestLoadTxt(LoadTxtBase):
         a = np.array([[1, 2, 3, 5], [4, 5, 7, 8], [2, 1, 4, 5]], int)
         assert_array_equal(x, a)
 
-class Testfromregex(object):
+    @pytest.mark.parametrize(["skip", "data"], [
+            (1, ["ignored\n", "1,2\n", "\n", "3,4\n"]),
+            # "Bad" lines that do not end in newlines:
+            (1, ["ignored", "1,2", "", "3,4"]),
+            (1, StringIO("ignored\n1,2\n\n3,4")),
+            # Same as above, but do not skip any lines:
+            (0, ["-1,0\n", "1,2\n", "\n", "3,4\n"]),
+            (0, ["-1,0", "1,2", "", "3,4"]),
+            (0, StringIO("-1,0\n1,2\n\n3,4"))])
+    def test_max_rows_empty_lines(self, skip, data):
+        with pytest.warns(UserWarning,
+                    match=f"Input line 3.*max_rows={3-skip}"):
+            res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                             max_rows=3-skip)
+            assert_array_equal(res, [[-1, 0], [1, 2], [3, 4]][skip:])
+
+        if isinstance(data, StringIO):
+            data.seek(0)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            with pytest.raises(UserWarning):
+                np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
+                           max_rows=3-skip)
+
+class Testfromregex:
     def test_record(self):
         c = TextIO()
         c.write('1.312 foo\n1.534 bar\n4.444 qux')
@@ -1191,9 +1304,11 @@ class Testfromregex(object):
         a = np.array([(1312,), (1534,), (4444,)], dtype=dt)
         assert_array_equal(x, a)
 
-    def test_record_unicode(self):
+    @pytest.mark.parametrize("path_type", [str, Path])
+    def test_record_unicode(self, path_type):
         utf8 = b'\xcf\x96'
-        with temppath() as path:
+        with temppath() as str_path:
+            path = path_type(str_path)
             with open(path, 'wb') as f:
                 f.write(b'1.312 foo' + utf8 + b' \n1.534 bar\n4.444 qux')
 
@@ -1214,6 +1329,13 @@ class Testfromregex(object):
         a = np.array([1, 2, 3], dtype=dt)
         x = np.fromregex(c, regexp, dt)
         assert_array_equal(x, a)
+
+    def test_bad_dtype_not_structured(self):
+        regexp = re.compile(b'(\\d)')
+        c = BytesIO(b'123')
+        with pytest.raises(TypeError, match='structured datatype'):
+            np.fromregex(c, regexp, dtype=np.float64)
+
 
 #####--------------------------------------------------------------------------
 
@@ -1324,9 +1446,10 @@ class TestFromTxt(LoadTxtBase):
         # Test retrieving a header
         data = TextIO('gender age weight\nM 64.0 75.0\nF 25.0 60.0')
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            test = np.genfromtxt(data, dtype=None, names=True)
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
+            test = np.genfromtxt(data, dtype=None, names=True,
+                                 encoding='bytes')
+            assert_(w[0].category is VisibleDeprecationWarning)
         control = {'gender': np.array([b'M', b'F']),
                    'age': np.array([64.0, 25.0]),
                    'weight': np.array([75.0, 60.0])}
@@ -1338,9 +1461,9 @@ class TestFromTxt(LoadTxtBase):
         # Test the automatic definition of the output dtype
         data = TextIO('A 64 75.0 3+4j True\nBCD 25 60.0 5+6j False')
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            test = np.genfromtxt(data, dtype=None)
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
+            test = np.genfromtxt(data, dtype=None, encoding='bytes')
+            assert_(w[0].category is VisibleDeprecationWarning)
         control = [np.array([b'A', b'BCD']),
                    np.array([64, 25]),
                    np.array([75.0, 60.0]),
@@ -1377,6 +1500,10 @@ class TestFromTxt(LoadTxtBase):
                             ('F', 25.0, 60.0)], dtype=descriptor)
         assert_equal(test, control)
 
+    def test_bad_fname(self):
+        with pytest.raises(TypeError, match='fname must be a string,'):
+            np.genfromtxt(123)
+
     def test_commented_header(self):
         # Check that names can be retrieved even if the line is commented out.
         data = TextIO("""
@@ -1387,9 +1514,10 @@ M   33  21.99
         """)
         # The # is part of the first name and should be deleted automatically.
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            test = np.genfromtxt(data, names=True, dtype=None)
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
+            test = np.genfromtxt(data, names=True, dtype=None,
+                                 encoding="bytes")
+            assert_(w[0].category is VisibleDeprecationWarning)
         ctrl = np.array([('M', 21, 72.1), ('F', 35, 58.33), ('M', 33, 21.99)],
                         dtype=[('gender', '|S1'), ('age', int), ('weight', float)])
         assert_equal(test, ctrl)
@@ -1401,9 +1529,10 @@ F   35  58.330000
 M   33  21.99
         """)
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
-            test = np.genfromtxt(data, names=True, dtype=None)
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
+            test = np.genfromtxt(data, names=True, dtype=None,
+                                 encoding="bytes")
+            assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test, ctrl)
 
     def test_names_and_comments_none(self):
@@ -1418,7 +1547,7 @@ M   33  21.99
         with tempdir() as tmpdir:
             fpath = os.path.join(tmpdir, "test.csv")
             with open(fpath, "wb") as f:
-                f.write(u'\N{GREEK PI SYMBOL}'.encode('utf8'))
+                f.write('\N{GREEK PI SYMBOL}'.encode())
 
             # ResourceWarnings are emitted from a destructor, so won't be
             # detected by regular propagation to errors.
@@ -1430,10 +1559,10 @@ M   33  21.99
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(data, usecols=('A', 'C', 'D'),
-                                names=True, dtype=None)
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+                                names=True, dtype=None, encoding="bytes")
+            assert_(w[0].category is VisibleDeprecationWarning)
         control = np.array(('aaaa', 45, 9.1),
                            dtype=[('A', '|S4'), ('C', int), ('D', float)])
         assert_equal(test, control)
@@ -1451,11 +1580,11 @@ M   33  21.99
         # Tests names and usecols
         data = TextIO('A B C D\n aaaa 121 45 9.1')
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(data, usecols=('A', 'C', 'D'), names=True,
-                                dtype=None,
+                                dtype=None, encoding="bytes",
                                 converters={'C': lambda s: 2 * int(s)})
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+            assert_(w[0].category is VisibleDeprecationWarning)
         control = np.array(('aaaa', 90, 9.1),
                            dtype=[('A', '|S4'), ('C', int), ('D', float)])
         assert_equal(test, control)
@@ -1504,7 +1633,7 @@ M   33  21.99
                    "D02N03,10/10/2004,R 1,,7,145.55")
         kwargs = dict(
             converters={2: strip_per, 3: strip_rand}, delimiter=",",
-            dtype=None)
+            dtype=None, encoding="bytes")
         assert_raises(ConverterError, np.genfromtxt, s, **kwargs)
 
     def test_tricky_converter_bug1666(self):
@@ -1527,18 +1656,20 @@ M   33  21.99
         control = np.array([2009., 23., 46],)
         assert_equal(test, control)
 
+    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
     def test_dtype_with_converters_and_usecols(self):
         dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
         dmap = {'1:1':0, '1:n':1, 'm:1':2, 'm:n':3}
         dtyp = [('e1','i4'),('e2','i4'),('e3','i2'),('n', 'i1')]
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
-        test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                             names=None, converters=conv)
+        test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                          names=None, converters=conv, encoding="bytes")
         control = np.rec.array([(1,5,-1,0), (2,8,-1,1), (3,3,-2,3)], dtype=dtyp)
         assert_equal(test, control)
-        dtyp = [('e1','i4'),('e2','i4'),('n', 'i1')]
-        test = np.recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
-                             usecols=(0,1,3), names=None, converters=conv)
+        dtyp = [('e1', 'i4'), ('e2', 'i4'), ('n', 'i1')]
+        test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
+                          usecols=(0, 1, 3), names=None, converters=conv,
+                          encoding="bytes")
         control = np.rec.array([(1,5,0), (2,8,1), (3,3,3)], dtype=dtyp)
         assert_equal(test, control)
 
@@ -1569,6 +1700,13 @@ M   33  21.99
             test = np.genfromtxt(TextIO(data), delimiter=";",
                                  dtype=ndtype, converters=converters)
 
+    def test_dtype_with_object_no_converter(self):
+        # Object without a converter uses bytes:
+        parsed = np.genfromtxt(TextIO("1"), dtype=object)
+        assert parsed[()] == b"1"
+        parsed = np.genfromtxt(TextIO("string"), dtype=object)
+        assert parsed[()] == b"string"
+
     def test_userconverters_with_explicit_dtype(self):
         # Test user_converters w/ explicit (standard) dtype
         data = TextIO('skip,skip,2001-01-01,1.0,skip')
@@ -1584,7 +1722,7 @@ M   33  21.99
             with open(path, 'wb') as f:
                 f.write(b'skip,skip,2001-01-01' + utf8 + b',1.0,skip')
             test = np.genfromtxt(path, delimiter=",", names=None, dtype=float,
-                                 usecols=(2, 3), converters={2: np.compat.unicode},
+                                 usecols=(2, 3), converters={2: str},
                                  encoding='UTF-8')
         control = np.array([('2001-01-01' + utf8.decode('UTF-8'), 1.)],
                            dtype=[('', '|U11'), ('', float)])
@@ -1819,16 +1957,11 @@ M   33  21.99
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
-        #
-        kwargs = dict(delimiter=",", dtype=None, names=True)
-        # XXX: is there a better way to get the return value of the
-        # callable in assert_warns ?
-        ret = {}
 
-        def f(_ret={}):
-            _ret['mtest'] = np.genfromtxt(mdata, invalid_raise=False, **kwargs)
-        assert_warns(ConversionWarning, f, _ret=ret)
-        mtest = ret['mtest']
+        kwargs = dict(delimiter=",", dtype=None, names=True)
+        def f():
+            return np.genfromtxt(mdata, invalid_raise=False, **kwargs)
+        mtest = assert_warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'abcde']))
         #
@@ -1843,16 +1976,12 @@ M   33  21.99
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
+
         kwargs = dict(delimiter=",", dtype=None, names=True,
                       invalid_raise=False)
-        # XXX: is there a better way to get the return value of the
-        # callable in assert_warns ?
-        ret = {}
-
-        def f(_ret={}):
-            _ret['mtest'] = np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
-        assert_warns(ConversionWarning, f, _ret=ret)
-        mtest = ret['mtest']
+        def f():
+            return np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
+        mtest = assert_warns(ConversionWarning, f)
         assert_equal(len(mtest), 45)
         assert_equal(mtest, np.ones(45, dtype=[(_, int) for _ in 'ae']))
         #
@@ -1870,7 +1999,7 @@ M   33  21.99
 
         converters = {4: lambda x: "(%s)" % x.decode()}
         kwargs = dict(delimiter=",", converters=converters,
-                      dtype=[(_, int) for _ in 'abcde'],)
+                      dtype=[(_, int) for _ in 'abcde'], encoding="bytes")
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
 
     def test_default_field_format(self):
@@ -1920,18 +2049,18 @@ M   33  21.99
     def test_autostrip(self):
         # Test autostrip
         data = "01/01/2003  , 1.3,   abcde"
-        kwargs = dict(delimiter=",", dtype=None)
+        kwargs = dict(delimiter=",", dtype=None, encoding="bytes")
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             mtest = np.genfromtxt(TextIO(data), **kwargs)
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+            assert_(w[0].category is VisibleDeprecationWarning)
         ctrl = np.array([('01/01/2003  ', 1.3, '   abcde')],
                         dtype=[('f0', '|S12'), ('f1', float), ('f2', '|S8')])
         assert_equal(mtest, ctrl)
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             mtest = np.genfromtxt(TextIO(data), autostrip=True, **kwargs)
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+            assert_(w[0].category is VisibleDeprecationWarning)
         ctrl = np.array([('01/01/2003', 1.3, 'abcde')],
                         dtype=[('f0', '|S10'), ('f1', float), ('f2', '|S5')])
         assert_equal(mtest, ctrl)
@@ -2052,16 +2181,18 @@ M   33  21.99
     def test_comments_is_none(self):
         # Github issue 329 (None was previously being converted to 'None').
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO("test1,testNonetherestofthedata"),
-                                 dtype=None, comments=None, delimiter=',')
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
+            assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test[1], b'testNonetherestofthedata')
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO("test1, testNonetherestofthedata"),
-                                 dtype=None, comments=None, delimiter=',')
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
+            assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test[1], b' testNonetherestofthedata')
 
     def test_latin1(self):
@@ -2070,25 +2201,27 @@ M   33  21.99
         enc = b"test1,testNonethe" + latin1 + b",test3\n"
         s = norm + enc + norm
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO(s),
-                                 dtype=None, comments=None, delimiter=',')
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
+            assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test[1, 0], b"test1")
         assert_equal(test[1, 1], b"testNonethe" + latin1)
         assert_equal(test[1, 2], b"test3")
         test = np.genfromtxt(TextIO(s),
                              dtype=None, comments=None, delimiter=',',
                              encoding='latin1')
-        assert_equal(test[1, 0], u"test1")
-        assert_equal(test[1, 1], u"testNonethe" + latin1.decode('latin1'))
-        assert_equal(test[1, 2], u"test3")
+        assert_equal(test[1, 0], "test1")
+        assert_equal(test[1, 1], "testNonethe" + latin1.decode('latin1'))
+        assert_equal(test[1, 2], "test3")
 
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO(b"0,testNonethe" + latin1),
-                                 dtype=None, comments=None, delimiter=',')
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
+            assert_(w[0].category is VisibleDeprecationWarning)
         assert_equal(test['f0'], 0)
         assert_equal(test['f1'], b"testNonethe" + latin1)
 
@@ -2103,10 +2236,11 @@ M   33  21.99
         enc = b"test1,testNonethe" + utf8 + b",test3\n"
         s = norm + enc + norm
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', np.VisibleDeprecationWarning)
+            warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             test = np.genfromtxt(TextIO(s),
-                                 dtype=None, comments=None, delimiter=',')
-            assert_(w[0].category is np.VisibleDeprecationWarning)
+                                 dtype=None, comments=None, delimiter=',',
+                                 encoding="bytes")
+            assert_(w[0].category is VisibleDeprecationWarning)
         ctl = np.array([
                  [b'norm1', b'norm2', b'norm3'],
                  [b'test1', b'testNonethe' + utf8, b'test3'],
@@ -2123,7 +2257,7 @@ M   33  21.99
             ctl = np.array([
                      ["test1", "testNonethe" + utf8.decode("UTF-8"), "test3"],
                      ["test1", "testNonethe" + utf8.decode("UTF-8"), "test3"]],
-                     dtype=np.unicode_)
+                     dtype=np.str_)
             assert_array_equal(test, ctl)
 
             # test a mixed dtype
@@ -2136,12 +2270,12 @@ M   33  21.99
 
     def test_utf8_file_nodtype_unicode(self):
         # bytes encoding with non-latin1 -> unicode upcast
-        utf8 = u'\u03d6'
-        latin1 = u'\xf6\xfc\xf6'
+        utf8 = '\u03d6'
+        latin1 = '\xf6\xfc\xf6'
 
         # skip test if cannot encode utf8 test string with preferred
         # encoding. The preferred encoding is assumed to be the default
-        # encoding of io.open. Will need to change this for PyTest, maybe
+        # encoding of open. Will need to change this for PyTest, maybe
         # using pytest.mark.xfail(raises=***).
         try:
             encoding = locale.getpreferredencoding()
@@ -2151,36 +2285,37 @@ M   33  21.99
                         'unable to encode utf8 in preferred encoding')
 
         with temppath() as path:
-            with io.open(path, "wt") as f:
-                f.write(u"norm1,norm2,norm3\n")
-                f.write(u"norm1," + latin1 + u",norm3\n")
-                f.write(u"test1,testNonethe" + utf8 + u",test3\n")
+            with open(path, "wt") as f:
+                f.write("norm1,norm2,norm3\n")
+                f.write("norm1," + latin1 + ",norm3\n")
+                f.write("test1,testNonethe" + utf8 + ",test3\n")
             with warnings.catch_warnings(record=True) as w:
                 warnings.filterwarnings('always', '',
-                                        np.VisibleDeprecationWarning)
+                                        VisibleDeprecationWarning)
                 test = np.genfromtxt(path, dtype=None, comments=None,
-                                     delimiter=',')
+                                     delimiter=',', encoding="bytes")
                 # Check for warning when encoding not specified.
-                assert_(w[0].category is np.VisibleDeprecationWarning)
+                assert_(w[0].category is VisibleDeprecationWarning)
             ctl = np.array([
                      ["norm1", "norm2", "norm3"],
                      ["norm1", latin1, "norm3"],
                      ["test1", "testNonethe" + utf8, "test3"]],
-                     dtype=np.unicode_)
+                     dtype=np.str_)
             assert_array_equal(test, ctl)
 
+    @pytest.mark.filterwarnings("ignore:.*recfromtxt.*:DeprecationWarning")
     def test_recfromtxt(self):
         #
         data = TextIO('A,B\n0,1\n2,3')
         kwargs = dict(delimiter=",", missing_values="N/A", names=True)
-        test = np.recfromtxt(data, **kwargs)
+        test = recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
-        test = np.recfromtxt(data, dtype=None, usemask=True, **kwargs)
+        test = recfromtxt(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', int), ('B', int)])
@@ -2188,18 +2323,20 @@ M   33  21.99
         assert_equal(test.mask, control.mask)
         assert_equal(test.A, [0, 2])
 
+    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
     def test_recfromcsv(self):
         #
         data = TextIO('A,B\n0,1\n2,3')
-        kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
-        test = np.recfromcsv(data, dtype=None, **kwargs)
+        kwargs = dict(missing_values="N/A", names=True, case_sensitive=True,
+                      encoding="bytes")
+        test = recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
         #
         data = TextIO('A,B\n0,1\n2,N/A')
-        test = np.recfromcsv(data, dtype=None, usemask=True, **kwargs)
+        test = recfromcsv(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
                            dtype=[('A', int), ('B', int)])
@@ -2208,7 +2345,7 @@ M   33  21.99
         assert_equal(test.A, [0, 2])
         #
         data = TextIO('A,B\n0,1\n2,3')
-        test = np.recfromcsv(data, missing_values='N/A',)
+        test = recfromcsv(data, missing_values='N/A',)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('a', int), ('b', int)])
         assert_(isinstance(test, np.recarray))
@@ -2216,7 +2353,7 @@ M   33  21.99
         #
         data = TextIO('A,B\n0,1\n2,3')
         dtype = [('a', int), ('b', float)]
-        test = np.recfromcsv(data, missing_values='N/A', dtype=dtype)
+        test = recfromcsv(data, missing_values='N/A', dtype=dtype)
         control = np.array([(0, 1), (2, 3)],
                            dtype=dtype)
         assert_(isinstance(test, np.recarray))
@@ -2224,8 +2361,8 @@ M   33  21.99
 
         #gh-10394
         data = TextIO('color\n"red"\n"blue"')
-        test = np.recfromcsv(data, converters={0: lambda x: x.strip(b'\"')})
-        control = np.array([('red',), ('blue',)], dtype=[('color', (bytes, 4))])
+        test = recfromcsv(data, converters={0: lambda x: x.strip('\"')})
+        control = np.array([('red',), ('blue',)], dtype=[('color', (str, 4))])
         assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
 
@@ -2341,15 +2478,77 @@ M   33  21.99
 
         assert_(test.dtype['f0'] == float)
         assert_(test.dtype['f1'] == np.int64)
-        assert_(test.dtype['f2'] == np.integer)
+        assert_(test.dtype['f2'] == np.int_)
 
         assert_allclose(test['f0'], 73786976294838206464.)
         assert_equal(test['f1'], 17179869184)
         assert_equal(test['f2'], 1024)
 
+    def test_unpack_float_data(self):
+        txt = TextIO("1,2,3\n4,5,6\n7,8,9\n0.0,1.0,2.0")
+        a, b, c = np.loadtxt(txt, delimiter=",", unpack=True)
+        assert_array_equal(a, np.array([1.0, 4.0, 7.0, 0.0]))
+        assert_array_equal(b, np.array([2.0, 5.0, 8.0, 1.0]))
+        assert_array_equal(c, np.array([3.0, 6.0, 9.0, 2.0]))
 
-@pytest.mark.skipif(Path is None, reason="No pathlib.Path")
-class TestPathUsage(object):
+    def test_unpack_structured(self):
+        # Regression test for gh-4341
+        # Unpacking should work on structured arrays
+        txt = TextIO("M 21 72\nF 35 58")
+        dt = {'names': ('a', 'b', 'c'), 'formats': ('S1', 'i4', 'f4')}
+        a, b, c = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_equal(a.dtype, np.dtype('S1'))
+        assert_equal(b.dtype, np.dtype('i4'))
+        assert_equal(c.dtype, np.dtype('f4'))
+        assert_array_equal(a, np.array([b'M', b'F']))
+        assert_array_equal(b, np.array([21, 35]))
+        assert_array_equal(c, np.array([72.,  58.]))
+
+    def test_unpack_auto_dtype(self):
+        # Regression test for gh-4341
+        # Unpacking should work when dtype=None
+        txt = TextIO("M 21 72.\nF 35 58.")
+        expected = (np.array(["M", "F"]), np.array([21, 35]), np.array([72., 58.]))
+        test = np.genfromtxt(txt, dtype=None, unpack=True, encoding="utf-8")
+        for arr, result in zip(expected, test):
+            assert_array_equal(arr, result)
+            assert_equal(arr.dtype, result.dtype)
+
+    def test_unpack_single_name(self):
+        # Regression test for gh-4341
+        # Unpacking should work when structured dtype has only one field
+        txt = TextIO("21\n35")
+        dt = {'names': ('a',), 'formats': ('i4',)}
+        expected = np.array([21, 35], dtype=np.int32)
+        test = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_array_equal(expected, test)
+        assert_equal(expected.dtype, test.dtype)
+
+    def test_squeeze_scalar(self):
+        # Regression test for gh-4341
+        # Unpacking a scalar should give zero-dim output,
+        # even if dtype is structured
+        txt = TextIO("1")
+        dt = {'names': ('a',), 'formats': ('i4',)}
+        expected = np.array((1,), dtype=np.int32)
+        test = np.genfromtxt(txt, dtype=dt, unpack=True)
+        assert_array_equal(expected, test)
+        assert_equal((), test.shape)
+        assert_equal(expected.dtype, test.dtype)
+
+    @pytest.mark.parametrize("ndim", [0, 1, 2])
+    def test_ndmin_keyword(self, ndim: int):
+        # lets have the same behaviour of ndmin as loadtxt
+        # as they should be the same for non-missing values
+        txt = "42"
+
+        a = np.loadtxt(StringIO(txt), ndmin=ndim)
+        b = np.genfromtxt(StringIO(txt), ndmin=ndim)
+
+        assert_array_equal(a, b)
+
+
+class TestPathUsage:
     # Test that pathlib.Path can be used
     def test_loadtxt(self):
         with temppath(suffix='.txt') as path:
@@ -2378,88 +2577,80 @@ class TestPathUsage(object):
             assert_array_equal(data, a)
             # close the mem-mapped file
             del data
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
 
-    def test_save_load_memmap_readwrite(self):
-        # Test that pathlib.Path instances can be written mem-mapped.
+    @pytest.mark.xfail(IS_WASM, reason="memmap doesn't work correctly")
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_save_load_memmap_readwrite(self, filename_type):
         with temppath(suffix='.npy') as path:
-            path = Path(path)
+            path = filename_type(path)
             a = np.array([[1, 2], [3, 4]], int)
             np.save(path, a)
             b = np.load(path, mmap_mode='r+')
             a[0][0] = 5
             b[0][0] = 5
             del b  # closes the file
+            if IS_PYPY:
+                break_cycles()
+                break_cycles()
             data = np.load(path)
             assert_array_equal(data, a)
 
-    def test_savez_load(self):
-        # Test that pathlib.Path instances can be used with savez.
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_savez_load(self, filename_type):
         with temppath(suffix='.npz') as path:
-            path = Path(path)
+            path = filename_type(path)
             np.savez(path, lab='place holder')
             with np.load(path) as data:
                 assert_array_equal(data['lab'], 'place holder')
 
-    def test_savez_compressed_load(self):
-        # Test that pathlib.Path instances can be used with savez.
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_savez_compressed_load(self, filename_type):
         with temppath(suffix='.npz') as path:
-            path = Path(path)
+            path = filename_type(path)
             np.savez_compressed(path, lab='place holder')
             data = np.load(path)
             assert_array_equal(data['lab'], 'place holder')
             data.close()
 
-    def test_genfromtxt(self):
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    def test_genfromtxt(self, filename_type):
         with temppath(suffix='.txt') as path:
-            path = Path(path)
+            path = filename_type(path)
             a = np.array([(1, 2), (3, 4)])
             np.savetxt(path, a)
             data = np.genfromtxt(path)
             assert_array_equal(a, data)
 
-    def test_ndfromtxt(self):
-        # Test outputting a standard ndarray
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    @pytest.mark.filterwarnings("ignore:.*recfromtxt.*:DeprecationWarning")
+    def test_recfromtxt(self, filename_type):
         with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'1 2\n3 4')
-
-            control = np.array([[1, 2], [3, 4]], dtype=int)
-            test = np.genfromtxt(path, dtype=int)
-            assert_array_equal(test, control)
-
-    def test_mafromtxt(self):
-        # From `test_fancy_dtype_alt` above
-        with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'1,2,3.0\n4,5,6.0\n')
-
-            test = np.genfromtxt(path, delimiter=',', usemask=True)
-            control = ma.array([(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)])
-            assert_equal(test, control)
-
-    def test_recfromtxt(self):
-        with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'A,B\n0,1\n2,3')
+            path = filename_type(path)
+            with open(path, 'w') as f:
+                f.write('A,B\n0,1\n2,3')
 
             kwargs = dict(delimiter=",", missing_values="N/A", names=True)
-            test = np.recfromtxt(path, **kwargs)
+            test = recfromtxt(path, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])
             assert_(isinstance(test, np.recarray))
             assert_equal(test, control)
 
-    def test_recfromcsv(self):
+    @pytest.mark.parametrize("filename_type", [Path, str])
+    @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
+    def test_recfromcsv(self, filename_type):
         with temppath(suffix='.txt') as path:
-            path = Path(path)
-            with path.open('w') as f:
-                f.write(u'A,B\n0,1\n2,3')
+            path = filename_type(path)
+            with open(path, 'w') as f:
+                f.write('A,B\n0,1\n2,3')
 
-            kwargs = dict(missing_values="N/A", names=True, case_sensitive=True)
-            test = np.recfromcsv(path, dtype=None, **kwargs)
+            kwargs = dict(
+                missing_values="N/A", names=True, case_sensitive=True
+            )
+            test = recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])
             assert_(isinstance(test, np.recarray))
@@ -2482,7 +2673,7 @@ def test_gzip_load():
 
 # These next two classes encode the minimal API needed to save()/load() arrays.
 # The `test_ducktyping` ensures they work correctly
-class JustWriter(object):
+class JustWriter:
     def __init__(self, base):
         self.base = base
 
@@ -2492,7 +2683,7 @@ class JustWriter(object):
     def flush(self):
         return self.base.flush()
 
-class JustReader(object):
+class JustReader:
     def __init__(self, base):
         self.base = base
 
@@ -2569,12 +2760,16 @@ def test_npzfile_dict():
         assert_(f in ['x', 'y'])
         assert_equal(a.shape, (3, 3))
 
+    for a in z.values():
+        assert_equal(a.shape, (3, 3))
+
     assert_(len(z.items()) == 2)
 
     for f in z:
         assert_(f in ['x', 'y'])
 
     assert_('x' in z.keys())
+    assert (z.get('x') == z['x']).all()
 
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
@@ -2594,3 +2789,13 @@ def test_load_refcount():
     with assert_no_gc_cycles():
         x = np.loadtxt(TextIO("0 1 2 3"), dtype=dt)
         assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))
+
+def test_load_multiple_arrays_until_eof():
+    f = BytesIO()
+    np.save(f, 1)
+    np.save(f, 2)
+    f.seek(0)
+    assert np.load(f) == 1
+    assert np.load(f) == 2
+    with pytest.raises(EOFError):
+        np.load(f)

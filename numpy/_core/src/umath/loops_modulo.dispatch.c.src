@@ -1,0 +1,676 @@
+/*@targets
+ ** baseline vsx4
+ **/
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "lowlevel_strided_loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+
+
+#define DIVIDEBYZERO_OVERFLOW_CHECK(x, y, min_val, signed) \
+    (NPY_UNLIKELY(                                         \
+        (signed)                                    ?      \
+        ((y == 0) || ((x == min_val) && (y == -1))) :      \
+        (y == 0))                                          \
+    )
+
+#define FLAG_IF_DIVIDEBYZERO(x) do {     \
+    if (NPY_UNLIKELY(x == 0)) {          \
+        npy_set_floatstatus_divbyzero(); \
+    }                                    \
+} while (0)
+
+
+#if NPY_SIMD && defined(NPY_HAVE_VSX4)
+typedef struct {
+    npyv_u32x2 hi;
+    npyv_u32x2 lo;
+} vsx4_u32x4;
+
+typedef struct {
+    npyv_s32x2 hi;
+    npyv_s32x2 lo;
+} vsx4_s32x4;
+
+// Converts 1 8-bit vector into 2 16-bit vectors
+NPY_FINLINE npyv_s16x2
+vsx4_expand_s16_s8(npyv_s8 data)
+{
+    npyv_s16x2 r;
+    r.val[0] = vec_unpackh(data);
+    r.val[1] = vec_unpackl(data);
+    return r;
+}
+
+// Converts 1 16-bit vector into 2 32-bit vectors
+NPY_FINLINE npyv_s32x2
+vsx4_expand_s32_s16(npyv_s16 data)
+{
+    npyv_s32x2 r;
+    r.val[0] = vec_unpackh(data);
+    r.val[1] = vec_unpackl(data);
+    return r;
+}
+
+/**begin repeat
+ * #t = u, s#
+ * #expand = npyv_expand, vsx4_expand#
+ */
+// Converts 1 8-bit vector into 4 32-bit vectors
+NPY_FINLINE vsx4_@t@32x4
+vsx4_expand_@t@32_@t@8(npyv_@t@8 data)
+{
+    vsx4_@t@32x4 r;
+    npyv_@t@16x2 expand = @expand@_@t@16_@t@8(data);
+    r.hi = @expand@_@t@32_@t@16(expand.val[0]);
+    r.lo = @expand@_@t@32_@t@16(expand.val[1]);
+    return r;
+}
+
+/**begin repeat1
+ * #simd = div, mod##
+ */
+/*
+ * Computes division/modulo of 2 8-bit signed/unsigned integer vectors
+ *
+ * As Power10 only supports integer vector division/modulo for data of 32 bits
+ * or greater, we have to convert npyv_u8 into 4x npyv_u32, execute the integer
+ * vector division/modulo instruction, and then, convert the result back to
+ * npyv_u8.
+ */
+NPY_FINLINE npyv_@t@8
+vsx4_@simd@_@t@8(npyv_@t@8 a, npyv_@t@8 b)
+{
+    vsx4_@t@32x4 a_expand = vsx4_expand_@t@32_@t@8(a);
+    vsx4_@t@32x4 b_expand = vsx4_expand_@t@32_@t@8(b);
+    npyv_@t@32 v1 = vec_@simd@(a_expand.hi.val[0], b_expand.hi.val[0]);
+    npyv_@t@32 v2 = vec_@simd@(a_expand.hi.val[1], b_expand.hi.val[1]);
+    npyv_@t@32 v3 = vec_@simd@(a_expand.lo.val[0], b_expand.lo.val[0]);
+    npyv_@t@32 v4 = vec_@simd@(a_expand.lo.val[1], b_expand.lo.val[1]);
+    npyv_@t@16 hi = vec_pack(v1, v2);
+    npyv_@t@16 lo = vec_pack(v3, v4);
+    return vec_pack(hi, lo);
+}
+
+NPY_FINLINE npyv_@t@8
+vsx4_@simd@_scalar_@t@8(npyv_@t@8 a, const vsx4_@t@32x4 b_expand)
+{
+    vsx4_@t@32x4 a_expand = vsx4_expand_@t@32_@t@8(a);
+    npyv_@t@32 v1 = vec_@simd@(a_expand.hi.val[0], b_expand.hi.val[0]);
+    npyv_@t@32 v2 = vec_@simd@(a_expand.hi.val[1], b_expand.hi.val[1]);
+    npyv_@t@32 v3 = vec_@simd@(a_expand.lo.val[0], b_expand.lo.val[0]);
+    npyv_@t@32 v4 = vec_@simd@(a_expand.lo.val[1], b_expand.lo.val[1]);
+    npyv_@t@16 hi = vec_pack(v1, v2);
+    npyv_@t@16 lo = vec_pack(v3, v4);
+    return vec_pack(hi, lo);
+}
+
+NPY_FINLINE npyv_@t@16
+vsx4_@simd@_@t@16(npyv_@t@16 a, npyv_@t@16 b)
+{
+    npyv_@t@32x2 a_expand = @expand@_@t@32_@t@16(a);
+    npyv_@t@32x2 b_expand = @expand@_@t@32_@t@16(b);
+    npyv_@t@32 v1 = vec_@simd@(a_expand.val[0], b_expand.val[0]);
+    npyv_@t@32 v2 = vec_@simd@(a_expand.val[1], b_expand.val[1]);
+    return vec_pack(v1, v2);
+}
+
+NPY_FINLINE npyv_@t@16
+vsx4_@simd@_scalar_@t@16(npyv_@t@16 a, const npyv_@t@32x2 b_expand)
+{
+    npyv_@t@32x2 a_expand = @expand@_@t@32_@t@16(a);
+    npyv_@t@32 v1 = vec_@simd@(a_expand.val[0], b_expand.val[0]);
+    npyv_@t@32 v2 = vec_@simd@(a_expand.val[1], b_expand.val[1]);
+    return vec_pack(v1, v2);
+}
+
+#define vsx4_@simd@_@t@32 vec_@simd@
+#define vsx4_@simd@_@t@64 vec_@simd@
+#define vsx4_@simd@_scalar_@t@32 vec_@simd@
+#define vsx4_@simd@_scalar_@t@64 vec_@simd@
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * #sfx  = u8,  u16, s8,  s16#
+ * #osfx = u32, u32, s32, s32#
+ * #otype  = vsx4_u32x4,  npyv_u32x2,  vsx4_s32x4,  npyv_s32x2#
+ * #expand = vsx4_expand, npyv_expand, vsx4_expand, vsx4_expand#
+ */
+// Generates the divisor for the division/modulo operations
+NPY_FINLINE @otype@
+vsx4_divisor_@sfx@(const npyv_@sfx@ vscalar)
+{
+    return @expand@_@osfx@_@sfx@(vscalar);
+}
+/**end repeat**/
+
+/**begin repeat
+ * #sfx = u32, u64, s32, s64#
+ */
+NPY_FINLINE npyv_@sfx@
+vsx4_divisor_@sfx@(const npyv_@sfx@ vscalar)
+{
+    return vscalar;
+}
+/**end repeat**/
+
+/**begin repeat
+ * Unsigned types
+ * #sfx = u8, u16, u32, u64#
+ * #len = 8,  16,  32,  64#
+ * #divtype = vsx4_u32x4, npyv_u32x2,  npyv_u32,  npyv_u64#
+ */
+/**begin repeat1
+ * #func = fmod, remainder, divmod#
+ * #id = 0, 1, 2#
+ */
+static inline void
+vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
+{
+    npyv_lanetype_@sfx@ *src1 = (npyv_lanetype_@sfx@ *) args[0];
+    npyv_lanetype_@sfx@ *src2 = (npyv_lanetype_@sfx@ *) args[1];
+    npyv_lanetype_@sfx@ *dst1 = (npyv_lanetype_@sfx@ *) args[2];
+    const npyv_@sfx@ vzero    = npyv_zero_@sfx@();
+    const int vstep           = npyv_nlanes_@sfx@;
+#if @id@ == 2 /* divmod */
+    npyv_lanetype_@sfx@ *dst2 = (npyv_lanetype_@sfx@ *) args[3];
+    npyv_b@len@ warn          = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
+
+    for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep,
+         dst1 += vstep, dst2 += vstep) {
+        npyv_@sfx@ a        = npyv_load_@sfx@(src1);
+        npyv_@sfx@ b        = npyv_load_@sfx@(src2);
+        npyv_@sfx@ quo      = vsx4_div_@sfx@(a, b);
+        npyv_@sfx@ rem      = npyv_sub_@sfx@(a, vec_mul(b, quo));
+        npyv_b@len@ bzero   = npyv_cmpeq_@sfx@(b, vzero);
+        // when b is 0, forces the remainder to be 0 too
+                        rem = npyv_select_@sfx@(bzero, vzero, rem);
+                       warn = npyv_or_@sfx@(bzero, warn);
+        npyv_store_@sfx@(dst1, quo);
+        npyv_store_@sfx@(dst2, rem);
+    }
+
+    if (!vec_all_eq(warn, vzero)) {
+        npy_set_floatstatus_divbyzero();
+    }
+
+    for (; len > 0; --len, ++src1, ++src2, ++dst1, ++dst2) {
+        const npyv_lanetype_@sfx@ a = *src1;
+        const npyv_lanetype_@sfx@ b = *src2;
+        if (NPY_UNLIKELY(b == 0)) {
+            npy_set_floatstatus_divbyzero();
+            *dst1 = 0;
+            *dst2 = 0;
+        } else{
+            *dst1 = a / b;
+            *dst2 = a % b;
+        }
+    }
+#else /* fmod and remainder */
+    for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep,
+         dst1 += vstep) {
+        npyv_@sfx@ a = npyv_load_@sfx@(src1);
+        npyv_@sfx@ b = npyv_load_@sfx@(src2);
+        npyv_@sfx@ c = vsx4_mod_@sfx@(a, b);
+        npyv_store_@sfx@(dst1, c);
+        if (NPY_UNLIKELY(vec_any_eq(b, vzero))) {
+            npy_set_floatstatus_divbyzero();
+        }
+    }
+
+    for (; len > 0; --len, ++src1, ++src2, ++dst1) {
+        const npyv_lanetype_@sfx@ a = *src1;
+        const npyv_lanetype_@sfx@ b = *src2;
+        if (NPY_UNLIKELY(b == 0)) {
+            npy_set_floatstatus_divbyzero();
+            *dst1 = 0;
+        } else{
+            *dst1 = a % b;
+        }
+    }
+#endif
+    npyv_cleanup();
+}
+
+static inline void
+vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
+{
+    npyv_lanetype_@sfx@ *src1  = (npyv_lanetype_@sfx@ *) args[0];
+    npyv_lanetype_@sfx@ scalar = *(npyv_lanetype_@sfx@ *) args[1];
+    npyv_lanetype_@sfx@ *dst1  = (npyv_lanetype_@sfx@ *) args[2];
+    const int vstep            = npyv_nlanes_@sfx@;
+    const npyv_@sfx@ vscalar   = npyv_setall_@sfx@(scalar);
+    const @divtype@ divisor    = vsx4_divisor_@sfx@(vscalar);
+#if @id@ == 2 /* divmod */
+    npyv_lanetype_@sfx@ *dst2 = (npyv_lanetype_@sfx@ *) args[3];
+
+    for (; len >= vstep; len -= vstep, src1 += vstep, dst1 += vstep,
+         dst2 += vstep) {
+        npyv_@sfx@ a   = npyv_load_@sfx@(src1);
+        npyv_@sfx@ quo = vsx4_div_scalar_@sfx@(a, divisor);
+        npyv_@sfx@ rem = npyv_sub_@sfx@(a, vec_mul(vscalar, quo));
+        npyv_store_@sfx@(dst1, quo);
+        npyv_store_@sfx@(dst2, rem);
+    }
+
+    for (; len > 0; --len, ++src1, ++dst1, ++dst2) {
+        const npyv_lanetype_@sfx@ a = *src1;
+        *dst1 = a / scalar;
+        *dst2 = a % scalar;
+    }
+#else /* fmod and remainder */
+    for (; len >= vstep; len -= vstep, src1 += vstep, dst1 += vstep) {
+        npyv_@sfx@ a = npyv_load_@sfx@(src1);
+        npyv_@sfx@ c = vsx4_mod_scalar_@sfx@(a, divisor);
+        npyv_store_@sfx@(dst1, c);
+    }
+
+    for (; len > 0; --len, ++src1, ++dst1) {
+        const npyv_lanetype_@sfx@ a = *src1;
+        *dst1 = a % scalar;
+    }
+#endif
+    npyv_cleanup();
+}
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * Signed types
+ * #sfx = s8, s16, s32, s64#
+ * #len = 8,  16,  32,  64#
+ * #divtype = vsx4_s32x4, npyv_s32x2,  npyv_s32,  npyv_s64#
+ */
+/**begin repeat1
+ * #func = fmod, remainder, divmod#
+ * #id = 0, 1, 2#
+ */
+static inline void
+vsx4_simd_@func@_contig_@sfx@(char **args, npy_intp len)
+{
+    npyv_lanetype_@sfx@ *src1 = (npyv_lanetype_@sfx@ *) args[0];
+    npyv_lanetype_@sfx@ *src2 = (npyv_lanetype_@sfx@ *) args[1];
+    npyv_lanetype_@sfx@ *dst1 = (npyv_lanetype_@sfx@ *) args[2];
+    const npyv_@sfx@ vzero    = npyv_zero_@sfx@();
+    const int vstep           = npyv_nlanes_@sfx@;
+#if @id@ == 2 /* divmod */
+    npyv_lanetype_@sfx@ *dst2 = (npyv_lanetype_@sfx@ *) args[3];
+    const npyv_@sfx@ vneg_one = npyv_setall_@sfx@(-1);
+    const npyv_@sfx@ vmin     = npyv_setall_@sfx@(NPY_MIN_INT@len@);
+    npyv_b@len@ warn_zero     = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
+    npyv_b@len@ warn_overflow = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
+
+    for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep,
+         dst1 += vstep, dst2 += vstep) {
+#else /* fmod and remainder */
+    for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep,
+         dst1 += vstep) {
+#endif
+        npyv_@sfx@ a = npyv_load_@sfx@(src1);
+        npyv_@sfx@ b = npyv_load_@sfx@(src2);
+#if @id@ <= 1 /* fmod and remainder */
+        npyv_@sfx@ rem       = vsx4_mod_@sfx@(a, b);
+#else /* divmod */
+        npyv_@sfx@ quo       = vsx4_div_@sfx@(a, b);
+        npyv_@sfx@ rem       = npyv_sub_@sfx@(a, vec_mul(b, quo));
+        // (b == 0 || (a == NPY_MIN_INT@len@ && b == -1))
+        npyv_b@len@ bzero    = npyv_cmpeq_@sfx@(b, vzero);
+        npyv_b@len@ amin     = npyv_cmpeq_@sfx@(a, vmin);
+        npyv_b@len@ bneg_one = npyv_cmpeq_@sfx@(b, vneg_one);
+        npyv_b@len@ overflow = npyv_and_@sfx@(bneg_one, amin);
+                warn_zero = npyv_or_@sfx@(bzero, warn_zero);
+               warn_overflow = npyv_or_@sfx@(overflow, warn_overflow);
+#endif
+#if @id@ >= 1 /* remainder and divmod */
+        // handle mixed case the way Python does
+        // ((a > 0) == (b > 0) || rem == 0)
+        npyv_b@len@ a_gt_zero  = npyv_cmpgt_@sfx@(a, vzero);
+        npyv_b@len@ b_gt_zero  = npyv_cmpgt_@sfx@(b, vzero);
+        npyv_b@len@ ab_eq_cond = npyv_cmpeq_@sfx@(a_gt_zero, b_gt_zero);
+        npyv_b@len@ rem_zero   = npyv_cmpeq_@sfx@(rem, vzero);
+        npyv_b@len@ or         = npyv_or_@sfx@(ab_eq_cond, rem_zero);
+        npyv_@sfx@ to_add      = npyv_select_@sfx@(or, vzero, b);
+                           rem = npyv_add_@sfx@(rem, to_add);
+#endif
+#if @id@ == 2 /* divmod */
+        npyv_@sfx@ to_sub = npyv_select_@sfx@(or, vzero, vneg_one);
+                      quo = npyv_add_@sfx@(quo, to_sub);
+                      // Divide by zero
+                      quo = npyv_select_@sfx@(bzero, vzero, quo);
+                      rem = npyv_select_@sfx@(bzero, vzero, rem);
+                      // Overflow
+                      quo = npyv_select_@sfx@(overflow, vmin, quo);
+                      rem = npyv_select_@sfx@(overflow, vzero, rem);
+        npyv_store_@sfx@(dst1, quo);
+        npyv_store_@sfx@(dst2, rem);
+#else /* fmod and remainder */
+        npyv_store_@sfx@(dst1, rem);
+        if (NPY_UNLIKELY(vec_any_eq(b, vzero))) {
+            npy_set_floatstatus_divbyzero();
+        }
+#endif
+    }
+
+#if @id@ == 2 /* divmod */
+    if (!vec_all_eq(warn_zero, vzero)) {
+        npy_set_floatstatus_divbyzero();
+    }
+    if (!vec_all_eq(warn_overflow, vzero)) {
+        npy_set_floatstatus_overflow();
+    }
+
+    for (; len > 0; --len, ++src1, ++src2, ++dst1, ++dst2) {
+        const npyv_lanetype_@sfx@ a = *src1;
+        const npyv_lanetype_@sfx@ b = *src2;
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(a, b, NPY_MIN_INT@len@, NPY_TRUE)) {
+            if (b == 0) {
+                npy_set_floatstatus_divbyzero();
+                *dst1 = 0;
+                *dst2 = 0;
+            }
+            else {
+                npy_set_floatstatus_overflow();
+                *dst1 = NPY_MIN_INT@len@;
+                *dst2 = 0;
+            }
+        }
+        else {
+            *dst1 = a / b;
+            *dst2 = a % b;
+            if (!((a > 0) == (b > 0) || *dst2 == 0)) {
+                *dst1 -= 1;
+                *dst2 += b;
+            }
+        }
+    }
+#else /* fmod and remainder */
+    for (; len > 0; --len, ++src1, ++src2, ++dst1) {
+        const npyv_lanetype_@sfx@ a = *src1;
+        const npyv_lanetype_@sfx@ b = *src2;
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(a, b, NPY_MIN_INT@len@, NPY_TRUE)) {
+            FLAG_IF_DIVIDEBYZERO(b);
+            *dst1 = 0;
+        } else{
+            *dst1 = a % b;
+#if @id@ == 1 /* remainder */
+            if (!((a > 0) == (b > 0) || *dst1 == 0)) {
+                *dst1 += b;
+            }
+#endif
+        }
+    }
+#endif
+    npyv_cleanup();
+}
+
+static inline void
+vsx4_simd_@func@_by_scalar_contig_@sfx@(char **args, npy_intp len)
+{
+    npyv_lanetype_@sfx@ *src1  = (npyv_lanetype_@sfx@ *) args[0];
+    npyv_lanetype_@sfx@ scalar = *(npyv_lanetype_@sfx@ *) args[1];
+    npyv_lanetype_@sfx@ *dst1  = (npyv_lanetype_@sfx@ *) args[2];
+    const npyv_@sfx@ vscalar   = npyv_setall_@sfx@(scalar);
+    const @divtype@ divisor    = vsx4_divisor_@sfx@(vscalar);
+    const int vstep            = npyv_nlanes_@sfx@;
+#if @id@ >= 1 /* remainder and divmod */
+    const npyv_@sfx@ vzero     = npyv_zero_@sfx@();
+    npyv_b@len@ b_gt_zero      = npyv_cmpgt_@sfx@(vscalar, vzero);
+#endif
+#if @id@ == 2 /* divmod */
+    npyv_b@len@ warn          = npyv_cvt_b@len@_@sfx@(npyv_zero_@sfx@());
+    const npyv_@sfx@ vmin     = npyv_setall_@sfx@(NPY_MIN_INT@len@);
+    const npyv_@sfx@ vneg_one = npyv_setall_@sfx@(-1);
+    npyv_b@len@ bneg_one      = npyv_cmpeq_@sfx@(vscalar, vneg_one);
+    npyv_lanetype_@sfx@ *dst2 = (npyv_lanetype_@sfx@ *) args[3];
+
+    for (; len >= vstep; len -= vstep, src1 += vstep, dst1 += vstep,
+         dst2 += vstep) {
+#else /* fmod and remainder */
+    for (; len >= vstep; len -= vstep, src1 += vstep, dst1 += vstep) {
+#endif
+        npyv_@sfx@ a = npyv_load_@sfx@(src1);
+#if @id@ <= 1 /* fmod and remainder */
+        npyv_@sfx@ rem       = vsx4_mod_scalar_@sfx@(a, divisor);
+#else /* divmod */
+        npyv_@sfx@ quo       = vsx4_div_scalar_@sfx@(a, divisor);
+        npyv_@sfx@ rem       = npyv_sub_@sfx@(a, vec_mul(vscalar, quo));
+        // (a == NPY_MIN_INT@len@ && b == -1)
+        npyv_b@len@ amin     = npyv_cmpeq_@sfx@(a, vmin);
+        npyv_b@len@ overflow = npyv_and_@sfx@(bneg_one, amin);
+                        warn = npyv_or_@sfx@(overflow, warn);
+#endif
+#if @id@ >= 1 /* remainder and divmod */
+        // handle mixed case the way Python does
+        // ((a > 0) == (b > 0) || rem == 0)
+        npyv_b@len@ a_gt_zero  = npyv_cmpgt_@sfx@(a, vzero);
+        npyv_b@len@ ab_eq_cond = npyv_cmpeq_@sfx@(a_gt_zero, b_gt_zero);
+        npyv_b@len@ rem_zero   = npyv_cmpeq_@sfx@(rem, vzero);
+        npyv_b@len@ or         = npyv_or_@sfx@(ab_eq_cond, rem_zero);
+        npyv_@sfx@ to_add      = npyv_select_@sfx@(or, vzero, vscalar);
+                           rem = npyv_add_@sfx@(rem, to_add);
+#endif
+#if @id@ == 2 /* divmod */
+        npyv_@sfx@ to_sub = npyv_select_@sfx@(or, vzero, vneg_one);
+        quo               = npyv_add_@sfx@(quo, to_sub);
+        // Overflow: set quo to minimum and rem to 0
+        quo               = npyv_select_@sfx@(overflow, vmin, quo);
+        rem               = npyv_select_@sfx@(overflow, vzero, rem);
+        npyv_store_@sfx@(dst1, quo);
+        npyv_store_@sfx@(dst2, rem);
+#else /* fmod and remainder */
+        npyv_store_@sfx@(dst1, rem);
+#endif
+    }
+
+#if @id@ == 2 /* divmod */
+    if (!vec_all_eq(warn, vzero)) {
+        npy_set_floatstatus_overflow();
+    }
+
+    for (; len > 0; --len, ++src1, ++dst1, ++dst2) {
+        const npyv_lanetype_@sfx@ a = *src1;
+        if (NPY_UNLIKELY(a == NPY_MIN_INT@len@ && scalar == -1)) {
+            npy_set_floatstatus_overflow();
+            *dst1 = NPY_MIN_INT@len@;
+            *dst2 = 0;
+        }
+        else {
+            *dst1 = a / scalar;
+            *dst2 = a % scalar;
+            if (!((a > 0) == (scalar > 0) || *dst2 == 0)) {
+                *dst1 -= 1;
+                *dst2 += scalar;
+            }
+        }
+    }
+#else /* fmod and remainder */
+    for (; len > 0; --len, ++src1, ++dst1) {
+        const npyv_lanetype_@sfx@ a = *src1;
+        *dst1 = a % scalar;
+#if @id@ == 1 /* remainder */
+        if (!((a > 0) == (scalar > 0) || *dst1 == 0)) {
+            *dst1 += scalar;
+        }
+#endif
+    }
+#endif
+    npyv_cleanup();
+}
+/**end repeat1**/
+/**end repeat**/
+#endif // NPY_SIMD && defined(NPY_HAVE_VSX4)
+
+/*****************************************************************************
+ ** Defining ufunc inner functions
+ *****************************************************************************/
+
+/**begin repeat
+ * Signed and Unsigned types
+ *  #type  = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *           npy_byte,  npy_short,  npy_int,  npy_long,  npy_longlong#
+ *  #TYPE  = UBYTE,     USHORT,     UINT,     ULONG,     ULONGLONG,
+ *           BYTE,      SHORT,      INT,      LONG,      LONGLONG#
+ *  #STYPE = BYTE,      SHORT,      INT,      LONG,      LONGLONG,
+ *           BYTE,      SHORT,      INT,      LONG,      LONGLONG#
+ *  #signed = 0, 0, 0, 0, 0, 1, 1, 1, 1, 1#
+ */
+#undef TO_SIMD_SFX
+#if 0
+/**begin repeat1
+ * #len = 8, 16, 32, 64#
+ */
+#elif NPY_BITSOF_@STYPE@ == @len@
+    #if @signed@
+        #define TO_SIMD_SFX(X) X##_s@len@
+    #else
+        #define TO_SIMD_SFX(X) X##_u@len@
+    #endif
+/**end repeat1**/
+#endif
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_fmod)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+#if defined(NPY_HAVE_VSX4) && NPY_SIMD && defined(TO_SIMD_SFX)
+    // both arguments are arrays of the same size
+    if (IS_BLOCKABLE_BINARY(sizeof(@type@), NPY_SIMD_WIDTH)) {
+        TO_SIMD_SFX(vsx4_simd_fmod_contig)(args, dimensions[0]);
+        return;
+    }
+    // for contiguous block of memory, divisor is a scalar and not 0
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), NPY_SIMD_WIDTH) &&
+             (*(@type@ *)args[1]) != 0) {
+        TO_SIMD_SFX(vsx4_simd_fmod_by_scalar_contig)(args, dimensions[0]);
+        return ;
+    }
+#endif
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+#if @signed@
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, NPY_MIN_@TYPE@, NPY_TRUE)) {
+#else
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, 0, NPY_FALSE)) {
+#endif
+            FLAG_IF_DIVIDEBYZERO(in2);
+            *((@type@ *)op1) = 0;
+        } else{
+            *((@type@ *)op1)= in1 % in2;
+        }
+    }
+}
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_remainder)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+#if defined(NPY_HAVE_VSX4) && NPY_SIMD && defined(TO_SIMD_SFX)
+    // both arguments are arrays of the same size
+    if (IS_BLOCKABLE_BINARY(sizeof(@type@), NPY_SIMD_WIDTH)) {
+        TO_SIMD_SFX(vsx4_simd_remainder_contig)(args, dimensions[0]);
+        return;
+    }
+    // for contiguous block of memory, divisor is a scalar and not 0
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), NPY_SIMD_WIDTH) &&
+             (*(@type@ *)args[1]) != 0) {
+        TO_SIMD_SFX(vsx4_simd_remainder_by_scalar_contig)(args, dimensions[0]);
+        return ;
+    }
+#endif
+    BINARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+#if @signed@
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, NPY_MIN_@TYPE@, NPY_TRUE)) {
+#else
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, 0, NPY_FALSE)) {
+#endif
+            FLAG_IF_DIVIDEBYZERO(in2);
+            *((@type@ *)op1) = 0;
+        } else{
+#if @signed@
+            /* handle mixed case the way Python does */
+            const @type@ rem = in1 % in2;
+            if ((in1 > 0) == (in2 > 0) || rem == 0) {
+                *((@type@ *)op1) = rem;
+            }
+            else {
+                *((@type@ *)op1) = rem + in2;
+            }
+#else
+            *((@type@ *)op1)= in1 % in2;
+#endif
+        }
+    }
+}
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_divmod)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+#if defined(NPY_HAVE_VSX4) && NPY_SIMD && defined(TO_SIMD_SFX)
+    // both arguments are arrays of the same size
+    if (IS_BLOCKABLE_BINARY(sizeof(@type@), NPY_SIMD_WIDTH)) {
+        TO_SIMD_SFX(vsx4_simd_divmod_contig)(args, dimensions[0]);
+        return;
+    }
+    // for contiguous block of memory, divisor is a scalar and not 0
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(@type@), NPY_SIMD_WIDTH) &&
+             (*(@type@ *)args[1]) != 0) {
+        TO_SIMD_SFX(vsx4_simd_divmod_by_scalar_contig)(args, dimensions[0]);
+        return ;
+    }
+#endif
+#if @signed@
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        /* see FIXME note for divide above */
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, NPY_MIN_@TYPE@, NPY_TRUE)) {
+            if (in2 == 0) {
+                npy_set_floatstatus_divbyzero();
+                *((@type@ *)op1) = 0;
+                *((@type@ *)op2) = 0;
+            }
+            else {
+                npy_set_floatstatus_overflow();
+                *((@type@ *)op1) = NPY_MIN_@TYPE@;
+                *((@type@ *)op2) = 0;
+            }
+        }
+        else {
+            /* handle mixed case the way Python does */
+            const @type@ quo = in1 / in2;
+            const @type@ rem = in1 % in2;
+            if ((in1 > 0) == (in2 > 0) || rem == 0) {
+                *((@type@ *)op1) = quo;
+                *((@type@ *)op2) = rem;
+            }
+            else {
+                *((@type@ *)op1) = quo - 1;
+                *((@type@ *)op2) = rem + in2;
+            }
+        }
+    }
+#else
+    BINARY_LOOP_TWO_OUT {
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+        if (DIVIDEBYZERO_OVERFLOW_CHECK(in1, in2, 0, NPY_FALSE)) {
+            npy_set_floatstatus_divbyzero();
+            *((@type@ *)op1) = 0;
+            *((@type@ *)op2) = 0;
+        }
+        else {
+            *((@type@ *)op1)= in1/in2;
+            *((@type@ *)op2) = in1 % in2;
+        }
+    }
+#endif
+}
+/**end repeat**/

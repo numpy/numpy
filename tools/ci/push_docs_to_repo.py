@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import argparse
 import subprocess
@@ -19,6 +19,8 @@ parser.add_argument('--committer', default='numpy-commit-bot',
                     help='Name of the git committer')
 parser.add_argument('--email', default='numpy-commit-bot@nomail',
                     help='Email of the git committer')
+parser.add_argument('--count', default=1, type=int,
+                    help="minimum number of expected files, defaults to 1")
 
 parser.add_argument(
     '--force', action='store_true',
@@ -31,6 +33,11 @@ if not os.path.exists(args.dir):
     print('Content directory does not exist')
     sys.exit(1)
 
+count = len([name for name in os.listdir(args.dir) if os.path.isfile(os.path.join(args.dir, name))])
+
+if count < args.count:
+    print(f"Expected {args.count} top-directory files to upload, got {count}")
+    sys.exit(1)
 
 def run(cmd, stdout=True):
     pipe = None if stdout else subprocess.DEVNULL
@@ -45,6 +52,9 @@ workdir = tempfile.mkdtemp()
 os.chdir(workdir)
 
 run(['git', 'init'])
+# ensure the working branch is called "main"
+# (`--initial-branch=main` appeared to have failed on older git versions):
+run(['git', 'checkout', '-b', 'main'])
 run(['git', 'remote', 'add', 'origin',  args.remote])
 run(['git', 'config', '--local', 'user.name', args.committer])
 run(['git', 'config', '--local', 'user.email', args.email])
@@ -56,7 +66,7 @@ run(['git', 'commit', '--allow-empty', '-m', args.message], stdout=False)
 
 print('- uploading as %s <%s>' % (args.committer, args.email))
 if args.force:
-    run(['git', 'push', 'origin', 'master', '--force'])
+    run(['git', 'push', 'origin', 'main', '--force'])
 else:
     print('\n!! No `--force` argument specified; aborting')
     print('!! Before enabling that flag, make sure you know what it does\n')

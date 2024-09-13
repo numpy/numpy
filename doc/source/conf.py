@@ -1,10 +1,69 @@
-# -*- coding: utf-8 -*-
-from __future__ import division, absolute_import, print_function
-
-import sys, os, re
+import os
+import re
+import sys
+import importlib
+from docutils import nodes
+from docutils.parsers.rst import Directive
+from datetime import datetime
 
 # Minimum version, enforced by sphinx
-needs_sphinx = '2.2.0'
+needs_sphinx = '4.3'
+
+
+# This is a nasty hack to use platform-agnostic names for types in the
+# documentation.
+
+# must be kept alive to hold the patched names
+_name_cache = {}
+
+def replace_scalar_type_names():
+    """ Rename numpy types to use the canonical names to make sphinx behave """
+    import ctypes
+
+    Py_ssize_t = ctypes.c_int64 if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_int32
+
+    class PyObject(ctypes.Structure):
+        pass
+
+    class PyTypeObject(ctypes.Structure):
+        pass
+
+    PyObject._fields_ = [
+        ('ob_refcnt', Py_ssize_t),
+        ('ob_type', ctypes.POINTER(PyTypeObject)),
+    ]
+
+
+    PyTypeObject._fields_ = [
+        # varhead
+        ('ob_base', PyObject),
+        ('ob_size', Py_ssize_t),
+        # declaration
+        ('tp_name', ctypes.c_char_p),
+    ]
+
+    import numpy
+
+    # change the __name__ of the scalar types
+    for name in [
+        'byte', 'short', 'intc', 'int_', 'longlong',
+        'ubyte', 'ushort', 'uintc', 'uint', 'ulonglong',
+        'half', 'single', 'double', 'longdouble',
+        'half', 'csingle', 'cdouble', 'clongdouble',
+    ]:
+        typ = getattr(numpy, name)
+        c_typ = PyTypeObject.from_address(id(typ))
+        c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+
+
+replace_scalar_type_names()
+
+
+# As of NumPy 1.25, a deprecation of `str`/`bytes` attributes happens.
+# For some reasons, the doc build accesses these, so ignore them.
+import warnings
+warnings.filterwarnings("ignore", "In the future.*NumPy scalar", FutureWarning)
+
 
 # -----------------------------------------------------------------------------
 # General configuration
@@ -27,10 +86,20 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'IPython.sphinxext.ipython_console_highlighting',
     'IPython.sphinxext.ipython_directive',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
+    'sphinx_copybutton',
+    'sphinx_design',
 ]
 
-imgmath_image_format = 'svg'
+skippable_extensions = [
+    ('breathe', 'skip generating C/C++ API from comment blocks.'),
+]
+for ext, warn in skippable_extensions:
+    ext_exist = importlib.util.find_spec(ext) is not None
+    if ext_exist:
+        extensions.append(ext)
+    else:
+        print(f"Unable to find Sphinx extension '{ext}', {warn}.")
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -38,11 +107,10 @@ templates_path = ['_templates']
 # The suffix of source filenames.
 source_suffix = '.rst'
 
-master_doc = 'contents'
-
 # General substitutions.
 project = 'NumPy'
-copyright = '2008-2019, The SciPy community'
+year = datetime.now().year
+copyright = f'2008-{year}, NumPy Developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -71,6 +139,10 @@ default_role = "autolink"
 # for source files.
 exclude_dirs = []
 
+exclude_patterns = []
+if sys.version_info[:2] >= (3, 12):
+    exclude_patterns += ["reference/distutils.rst"]
+
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
 
@@ -82,55 +154,122 @@ add_function_parentheses = False
 # output. They are ignored by default.
 #show_authors = False
 
-# The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+class LegacyDirective(Directive):
+    """
+    Adapted from docutils/parsers/rst/directives/admonitions.py
+
+    Uses a default text if the directive does not have contents. If it does,
+    the default text is concatenated to the contents.
+
+    See also the same implementation in SciPy's conf.py.
+    """
+    has_content = True
+    node_class = nodes.admonition
+    optional_arguments = 1
+
+    def run(self):
+        try:
+            obj = self.arguments[0]
+        except IndexError:
+            # Argument is empty; use default text
+            obj = "submodule"
+        text = (f"This {obj} is considered legacy and will no longer receive "
+                "updates. This could also mean it will be removed in future "
+                "NumPy versions.")
+
+        try:
+            self.content[0] = text+" "+self.content[0]
+        except IndexError:
+            # Content is empty; use the default text
+            source, lineno = self.state_machine.get_source_and_line(
+                self.lineno
+            )
+            self.content.append(
+                text,
+                source=source,
+                offset=lineno
+            )
+        text = '\n'.join(self.content)
+        # Create the admonition node, to be populated by `nested_parse`
+        admonition_node = self.node_class(rawsource=text)
+        # Set custom title
+        title_text = "Legacy"
+        textnodes, _ = self.state.inline_text(title_text, self.lineno)
+        title = nodes.title(title_text, '', *textnodes)
+        # Set up admonition node
+        admonition_node += title
+        # Select custom class for CSS styling
+        admonition_node['classes'] = ['admonition-legacy']
+        # Parse the directive contents
+        self.state.nested_parse(self.content, self.content_offset,
+                                admonition_node)
+        return [admonition_node]
+
 
 def setup(app):
     # add a config value for `ifconfig` directives
     app.add_config_value('python_version_major', str(sys.version_info.major), 'env')
-    app.add_lexer('NumPyC', NumPyLexer(stripnl=False))
+    app.add_lexer('NumPyC', NumPyLexer)
+    app.add_directive("legacy", LegacyDirective)
+
+
+# While these objects do have type `module`, the names are aliases for modules
+# elsewhere. Sphinx does not support referring to modules by an aliases name,
+# so we make the alias look like a "real" module for it.
+# If we deemed it desirable, we could in future make these real modules, which
+# would make `from numpy.char import split` work.
+sys.modules['numpy.char'] = numpy.char
 
 # -----------------------------------------------------------------------------
 # HTML output
 # -----------------------------------------------------------------------------
 
-themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
-if not os.path.isdir(themedir):
-    raise RuntimeError("Get the scipy-sphinx-theme first, "
-                       "via git submodule init && git submodule update")
+html_theme = 'pydata_sphinx_theme'
 
-html_theme = 'scipy'
-html_theme_path = [themedir]
+html_favicon = '_static/favicon/favicon.ico'
 
-if 'scipyorg' in tags:
-    # Build for the scipy.org website
-    html_theme_options = {
-        "edit_link": True,
-        "sidebar": "right",
-        "scipy_org_logo": True,
-        "rootlinks": [("https://scipy.org/", "Scipy.org"),
-                      ("https://docs.scipy.org/", "Docs")]
-    }
+# Set up the version switcher.  The versions.json is stored in the doc repo.
+if os.environ.get('CIRCLE_JOB', False) and \
+        os.environ.get('CIRCLE_BRANCH', '') != 'main':
+    # For PR, name is set to its ref
+    switcher_version = os.environ['CIRCLE_BRANCH']
+elif ".dev" in version:
+    switcher_version = "devdocs"
 else:
-    # Default build
-    html_theme_options = {
-        "edit_link": False,
-        "sidebar": "left",
-        "scipy_org_logo": False,
-        "rootlinks": [("https://numpy.org/", "NumPy.org"),
-                      ("https://numpy.org/doc", "Docs"),
-                     ]
-    }
-    html_sidebars = {'index': ['indexsidebar.html', 'searchbox.html']}
+    switcher_version = f"{version}"
 
-html_additional_pages = {
-    'index': 'indexcontent.html',
+html_theme_options = {
+    "logo": {
+        "image_light": "_static/numpylogo.svg",
+        "image_dark": "_static/numpylogo_dark.svg",
+    },
+    "github_url": "https://github.com/numpy/numpy",
+    "collapse_navigation": True,
+    "external_links": [
+        {"name": "Learn", "url": "https://numpy.org/numpy-tutorials/"},
+        {"name": "NEPs", "url": "https://numpy.org/neps"},
+    ],
+    "header_links_before_dropdown": 6,
+    # Add light/dark mode and documentation version switcher:
+    "navbar_end": [
+        "search-button",
+        "theme-switcher",
+        "version-switcher",
+        "navbar-icon-links"
+    ],
+    "navbar_persistent": [],
+    "switcher": {
+        "version_match": switcher_version,
+        "json_url": "https://numpy.org/doc/_static/versions.json",
+    },
+    "show_version_warning_banner": True,
 }
 
 html_title = "%s v%s Manual" % (project, version)
 html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
-
+html_css_files = ["numpy.css"]
+html_context = {"default_mode": "light"}
 html_use_modindex = True
 html_copy_source = False
 html_domain_indices = False
@@ -142,9 +281,14 @@ if 'sphinx.ext.pngmath' in extensions:
     pngmath_use_preview = True
     pngmath_dvipng_args = ['-gamma', '1.5', '-D', '96', '-bg', 'Transparent']
 
+mathjax_path = "scipy-mathjax/MathJax.js?config=scipy-mathjax"
+
 plot_html_show_formats = False
 plot_html_show_source_link = False
 
+# sphinx-copybutton configurations
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
 # -----------------------------------------------------------------------------
 # LaTeX output
 # -----------------------------------------------------------------------------
@@ -154,6 +298,9 @@ plot_html_show_source_link = False
 
 # The font size ('10pt', '11pt' or '12pt').
 #latex_font_size = '10pt'
+
+# XeLaTeX for better support of unicode characters
+latex_engine = 'xelatex'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
@@ -174,24 +321,39 @@ latex_documents = [
 #latex_use_parts = False
 
 latex_elements = {
-    'fontenc': r'\usepackage[LGR,T1]{fontenc}'
 }
 
 # Additional stuff for the LaTeX preamble.
 latex_elements['preamble'] = r'''
+\newfontfamily\FontForChinese{FandolSong-Regular}[Extension=.otf]
+\catcode`琴\active\protected\def琴{{\FontForChinese\string琴}}
+\catcode`春\active\protected\def春{{\FontForChinese\string春}}
+\catcode`鈴\active\protected\def鈴{{\FontForChinese\string鈴}}
+\catcode`猫\active\protected\def猫{{\FontForChinese\string猫}}
+\catcode`傅\active\protected\def傅{{\FontForChinese\string傅}}
+\catcode`立\active\protected\def立{{\FontForChinese\string立}}
+\catcode`业\active\protected\def业{{\FontForChinese\string业}}
+\catcode`（\active\protected\def（{{\FontForChinese\string（}}
+\catcode`）\active\protected\def）{{\FontForChinese\string）}}
+
 % In the parameters section, place a newline after the Parameters
-% header
+% header.  This is default with Sphinx 5.0.0+, so no need for
+% the old hack then.
+% Unfortunately sphinx.sty 5.0.0 did not bump its version date
+% so we check rather sphinxpackagefootnote.sty (which exists
+% since Sphinx 4.0.0).
+\makeatletter
+\@ifpackagelater{sphinxpackagefootnote}{2022/02/12}
+    {}% Sphinx >= 5.0.0, nothing to do
+    {%
 \usepackage{expdlist}
 \let\latexdescription=\description
 \def\description{\latexdescription{}{} \breaklabel}
 % but expdlist old LaTeX package requires fixes:
 % 1) remove extra space
 \usepackage{etoolbox}
-\makeatletter
 \patchcmd\@item{{\@breaklabel} }{{\@breaklabel}}{}{}
-\makeatother
 % 2) fix bug in expdlist's way of breaking the line after long item label
-\makeatletter
 \def\breaklabel{%
     \def\@breaklabel{%
         \leavevmode\par
@@ -199,6 +361,7 @@ latex_elements['preamble'] = r'''
         \def\leavevmode{\def\leavevmode{\unhbox\voidb@x}}%
     }%
 }
+    }% Sphinx < 5.0.0 (and assumed >= 4.0.0)
 \makeatother
 
 % Make Examples/etc section headers smaller and more compact
@@ -225,7 +388,7 @@ latex_use_modindex = False
 # -----------------------------------------------------------------------------
 
 texinfo_documents = [
-  ("contents", 'numpy', 'NumPy Documentation', _stdauthor, 'NumPy',
+  ("index", 'numpy', 'NumPy Documentation', _stdauthor, 'NumPy',
    "NumPy: array processing for numbers, strings, records, and objects.",
    'Programming',
    1),
@@ -236,9 +399,18 @@ texinfo_documents = [
 # Intersphinx configuration
 # -----------------------------------------------------------------------------
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/dev', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
-    'matplotlib': ('https://matplotlib.org', None)
+    'neps': ('https://numpy.org/neps', None),
+    'python': ('https://docs.python.org/3', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy', None),
+    'matplotlib': ('https://matplotlib.org/stable', None),
+    'imageio': ('https://imageio.readthedocs.io/en/stable', None),
+    'skimage': ('https://scikit-image.org/docs/stable', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable', None),
+    'scipy-lecture-notes': ('https://scipy-lectures.org', None),
+    'pytest': ('https://docs.pytest.org/en/stable', None),
+    'numpy-tutorials': ('https://numpy.org/numpy-tutorials', None),
+    'numpydoc': ('https://numpydoc.readthedocs.io/en/latest', None),
+    'dlpack': ('https://dmlc.github.io/dlpack/latest', None)
 }
 
 
@@ -256,7 +428,6 @@ numpydoc_use_plots = True
 # Autosummary
 # -----------------------------------------------------------------------------
 
-import glob
 autosummary_generate = True
 
 # -----------------------------------------------------------------------------
@@ -323,6 +494,17 @@ for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
 else:
     print("NOTE: linkcode extension not found -- no links to source generated")
 
+
+def _get_c_source_file(obj):
+    if issubclass(obj, numpy.generic):
+        return r"_core/src/multiarray/scalartypes.c.src"
+    elif obj is numpy.ndarray:
+        return r"_core/src/multiarray/arrayobject.c"
+    else:
+        # todo: come up with a better way to generate these
+        return None
+
+
 def linkcode_resolve(domain, info):
     """
     Determine the URL corresponding to Python object
@@ -353,43 +535,72 @@ def linkcode_resolve(domain, info):
     else:
         obj = unwrap(obj)
 
-    try:
-        fn = inspect.getsourcefile(obj)
-    except Exception:
-        fn = None
-    if not fn:
-        return None
+    fn = None
+    lineno = None
 
-    try:
-        source, lineno = inspect.getsourcelines(obj)
-    except Exception:
-        lineno = None
+    # Make a poor effort at linking C extension types
+    if isinstance(obj, type) and obj.__module__ == 'numpy':
+        fn = _get_c_source_file(obj)
+
+    if fn is None:
+        try:
+            fn = inspect.getsourcefile(obj)
+        except Exception:
+            fn = None
+        if not fn:
+            return None
+
+        # Ignore re-exports as their source files are not within the numpy repo
+        module = inspect.getmodule(obj)
+        if module is not None and not module.__name__.startswith("numpy"):
+            return None
+
+        try:
+            source, lineno = inspect.getsourcelines(obj)
+        except Exception:
+            lineno = None
+
+        fn = relpath(fn, start=dirname(numpy.__file__))
 
     if lineno:
         linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
     else:
         linespec = ""
 
-    fn = relpath(fn, start=dirname(numpy.__file__))
-
     if 'dev' in numpy.__version__:
-        return "https://github.com/numpy/numpy/blob/master/numpy/%s%s" % (
+        return "https://github.com/numpy/numpy/blob/main/numpy/%s%s" % (
            fn, linespec)
     else:
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
 
 from pygments.lexers import CLexer
-from pygments import token
-import copy
+from pygments.lexer import inherit
+from pygments.token import Comment
 
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'
 
-    tokens = copy.deepcopy(CLexer.tokens)
-    # Extend the regex for valid identifiers with @
-    for k, val in tokens.items():
-        for i, v in enumerate(val):
-            if isinstance(v, tuple):
-                if isinstance(v[0], str):
-                    val[i] =  (v[0].replace('a-zA-Z', 'a-zA-Z@'),) + v[1:]
+    tokens = {
+        'statements': [
+            (r'@[a-zA-Z_]*@', Comment.Preproc, 'macro'),
+            inherit,
+        ],
+    }
+
+
+# -----------------------------------------------------------------------------
+# Breathe & Doxygen
+# -----------------------------------------------------------------------------
+breathe_projects = dict(numpy=os.path.join("..", "build", "doxygen", "xml"))
+breathe_default_project = "numpy"
+breathe_default_members = ("members", "undoc-members", "protected-members")
+
+# See https://github.com/breathe-doc/breathe/issues/696
+nitpick_ignore = [
+    ('c:identifier', 'FILE'),
+    ('c:identifier', 'size_t'),
+    ('c:identifier', 'PyHeapTypeObject'),
+]
+
+

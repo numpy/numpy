@@ -1,0 +1,45 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.23.1 Release Notes
+==========================
+
+NumPy 1.23.1 is a maintenance release that fixes bugs discovered after the
+1.23.0 release. Notable fixes are:
+
+- Fix searchsorted for float16 NaNs
+- Fix compilation on Apple M1
+- Fix KeyError in crackfortran operator support (Slycot)
+
+The Python version supported for this release are 3.8-3.10.
+
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Matthias Koeppe +
+* Pranab Das +
+* Rohit Goswami
+* Sebastian Berg
+* Serge Guelton
+* Srimukh Sripada +
+
+
+Pull requests merged
+====================
+
+A total of 8 pull requests were merged for this release.
+
+* `#21866 <https://github.com/numpy/numpy/pull/21866>`__: BUG: Fix discovered MachAr (still used within valgrind)
+* `#21867 <https://github.com/numpy/numpy/pull/21867>`__: BUG: Handle NaNs correctly for float16 during sorting
+* `#21868 <https://github.com/numpy/numpy/pull/21868>`__: BUG: Use ``keepdims`` during normalization in ``np.average`` and...
+* `#21869 <https://github.com/numpy/numpy/pull/21869>`__: DOC: mention changes to ``max_rows`` behaviour in ``np.loadtxt``
+* `#21870 <https://github.com/numpy/numpy/pull/21870>`__: BUG: Reject non integer array-likes with size 1 in delete
+* `#21949 <https://github.com/numpy/numpy/pull/21949>`__: BLD: Make can_link_svml return False for 32bit builds on x86_64
+* `#21951 <https://github.com/numpy/numpy/pull/21951>`__: BUG: Reorder extern "C" to only apply to function declarations...
+* `#21952 <https://github.com/numpy/numpy/pull/21952>`__: BUG: Fix KeyError in crackfortran operator support
+

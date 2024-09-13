@@ -1,10 +1,8 @@
-from __future__ import division, absolute_import, print_function
-
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
 
 
-class TestRegression(object):
+class TestRegression:
     def test_kron_matrix(self):
         # Ticket #71
         x = np.matrix('[1 0; 1 0]')
@@ -22,7 +20,7 @@ class TestRegression(object):
     def test_matrix_multiply_by_1d_vector(self):
         # Ticket #473
         def mul():
-            np.mat(np.eye(2))*np.ones(2)
+            np.asmatrix(np.eye(2))*np.ones(2)
 
         assert_raises(ValueError, mul)
 

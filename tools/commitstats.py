@@ -1,12 +1,10 @@
-from __future__ import division, absolute_import, print_function
-
 # Run svn log -l <some number>
 
 import re
 import numpy as np
 import os
 
-names = re.compile(r'r\d+\s[|]\s(.*)\s[|]\s200')
+names = re.compile(r'r\d+\s\|\s(.*)\s\|\s200')
 
 def get_count(filename, repo):
     mystr = open(filename).read()

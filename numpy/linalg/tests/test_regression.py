@@ -1,8 +1,7 @@
 """ Test functions for linalg module
 """
-from __future__ import division, absolute_import, print_function
 
-import warnings
+import pytest
 
 import numpy as np
 from numpy import linalg, arange, float64, array, dot, transpose
@@ -12,7 +11,7 @@ from numpy.testing import (
 )
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_eig_build(self):
         # Ticket #652
@@ -59,8 +58,8 @@ class TestRegression(object):
         assert_array_almost_equal(b, np.zeros((2, 2)))
 
     def test_norm_vector_badarg(self):
-        # Regression for #786: Froebenius norm for vectors raises
-        # TypeError.
+        # Regression for #786: Frobenius norm for vectors raises
+        # ValueError.
         assert_raises(ValueError, linalg.norm, array([1., 2., 3.]), 'fro')
 
     def test_lapack_endian(self):
@@ -89,6 +88,9 @@ class TestRegression(object):
                 assert_equal(np.linalg.matrix_rank(a), 1)
                 assert_array_less(1, np.linalg.norm(a, ord=2))
 
+                w_svdvals = linalg.svdvals(a)
+                assert_array_almost_equal(w, w_svdvals)
+
     def test_norm_object_array(self):
         # gh-7575
         testvector = np.array([np.array([0, 1]), 0, 0], dtype=object)
@@ -109,10 +111,7 @@ class TestRegression(object):
         assert_raises(ValueError, linalg.norm, testvector, ord='nuc')
         assert_raises(ValueError, linalg.norm, testvector, ord=np.inf)
         assert_raises(ValueError, linalg.norm, testvector, ord=-np.inf)
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", DeprecationWarning)
-            assert_raises((AttributeError, DeprecationWarning),
-                              linalg.norm, testvector, ord=0)
+        assert_raises(ValueError, linalg.norm, testvector, ord=0)
         assert_raises(ValueError, linalg.norm, testvector, ord=-1)
         assert_raises(ValueError, linalg.norm, testvector, ord=-2)
 
@@ -148,3 +147,31 @@ class TestRegression(object):
         u_lstsq, res, rank, sv = linalg.lstsq(G, b, rcond=None)
         # check results just in case
         assert_array_almost_equal(u_lstsq, u)
+
+    @pytest.mark.parametrize("upper", [True, False])
+    def test_cholesky_empty_array(self, upper):
+        # gh-25840 - upper=True hung before.
+        res = np.linalg.cholesky(np.zeros((0, 0)), upper=upper)
+        assert res.size == 0
+
+    @pytest.mark.parametrize("rtol", [0.0, [0.0] * 4, np.zeros((4,))])
+    def test_matrix_rank_rtol_argument(self, rtol):
+        # gh-25877
+        x = np.zeros((4, 3, 2))
+        res = np.linalg.matrix_rank(x, rtol=rtol)
+        assert res.shape == (4,)
+
+    def test_openblas_threading(self):
+        # gh-27036
+        # Test whether matrix multiplication involving a large matrix always
+        # gives the same (correct) answer
+        x = np.arange(500000, dtype=np.float64)
+        src = np.vstack((x, -10*x)).T
+        matrix = np.array([[0, 1], [1, 0]])
+        expected = np.vstack((-10*x, x)).T  # src @ matrix
+        for i in range(200):
+            result = src @ matrix
+            mismatches = (~np.isclose(result, expected)).sum()
+            if mismatches != 0:
+                assert False, ("unexpected result from matmul, "
+                    "probably due to OpenBLAS threading issues")

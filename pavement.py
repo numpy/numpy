@@ -22,14 +22,9 @@ TODO
     - fix bdist_mpkg: we build the same source twice -> how to make sure we use
       the same underlying python for egg install in venv and for bdist_mpkg
 """
-from __future__ import division, print_function
-
 import os
-import sys
-import shutil
-import subprocess
-import re
 import hashlib
+import textwrap
 
 # The paver package needs to be installed to run tasks
 import paver
@@ -41,7 +36,7 @@ from paver.easy import Bunch, options, task, sh
 #-----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/source/release/1.18.0-notes.rst'
+RELEASE_NOTES = 'doc/source/release/2.2.0-notes.rst'
 
 
 #-------------------------------------------------------
@@ -51,81 +46,6 @@ RELEASE_NOTES = 'doc/source/release/1.18.0-notes.rst'
 # Where to put the release installers
 options(installers=Bunch(releasedir="release",
                          installersdir=os.path.join("release", "installers")),)
-
-
-#-----------------------------
-# Generate the release version
-#-----------------------------
-
-sys.path.insert(0, os.path.dirname(__file__))
-try:
-    setup_py = __import__("setup")
-    FULLVERSION = setup_py.VERSION
-    # This is duplicated from setup.py
-    if os.path.exists('.git'):
-        GIT_REVISION = setup_py.git_version()
-    elif os.path.exists('numpy/version.py'):
-        # must be a source distribution, use existing version file
-        from numpy.version import git_revision as GIT_REVISION
-    else:
-        GIT_REVISION = "Unknown"
-
-    if not setup_py.ISRELEASED:
-        FULLVERSION += '.dev0+' + GIT_REVISION[:7]
-finally:
-    sys.path.pop(0)
-
-
-#--------------------------
-# Source distribution stuff
-#--------------------------
-def tarball_name(ftype='gztar'):
-    """Generate source distribution name
-
-    Parameters
-    ----------
-    ftype : {'zip', 'gztar'}
-        Type of archive, default is 'gztar'.
-
-    """
-    root = 'numpy-%s' % FULLVERSION
-    if ftype == 'gztar':
-        return root + '.tar.gz'
-    elif ftype == 'zip':
-        return root + '.zip'
-    raise ValueError("Unknown type %s" % type)
-
-@task
-def sdist(options):
-    """Make source distributions.
-
-    Parameters
-    ----------
-    options :
-        Set by ``task`` decorator.
-
-    """
-    # First clean the repo and update submodules (for up-to-date doc html theme
-    # and Sphinx extensions)
-    sh('git clean -xdf')
-    sh('git submodule init')
-    sh('git submodule update')
-
-    # To be sure to bypass paver when building sdist... paver + numpy.distutils
-    # do not play well together.
-    # Cython is run over all Cython files in setup.py, so generated C files
-    # will be included.
-    sh('python3 setup.py sdist --formats=gztar,zip')
-
-    # Copy the superpack into installers dir
-    idirs = options.installers.installersdir
-    if not os.path.exists(idirs):
-        os.makedirs(idirs)
-
-    for ftype in ['gztar', 'zip']:
-        source = os.path.join('dist', tarball_name(ftype))
-        target = os.path.join(idirs, tarball_name(ftype))
-        shutil.copy(source, target)
 
 
 #-------------
@@ -182,7 +102,7 @@ def compute_sha256(idirs):
 def write_release_task(options, filename='README'):
     """Append hashes of release files to release notes.
 
-    This appends file hashes to the release notes ane creates
+    This appends file hashes to the release notes and creates
     four README files of the result in various formats:
 
     - README.rst
@@ -198,7 +118,7 @@ def write_release_task(options, filename='README'):
     ----------
     options :
         Set by ``task`` decorator.
-    filename : string
+    filename : str
         Filename of the modified notes. The file is written
         in the release directory.
 
@@ -213,22 +133,25 @@ def write_release_task(options, filename='README'):
         with open(notes) as fnotes:
             freadme.write(fnotes.read())
 
-        freadme.writelines("""
-Checksums
-=========
+        freadme.writelines(textwrap.dedent(
+            """
+            Checksums
+            =========
 
-MD5
----
-::
+            MD5
+            ---
+            ::
 
-""")
+            """))
         freadme.writelines([f'    {c}\n' for c in compute_md5(idirs)])
-        freadme.writelines("""
-SHA256
-------
-::
 
-""")
+        freadme.writelines(textwrap.dedent(
+            """
+            SHA256
+            ------
+            ::
+
+            """))
         freadme.writelines([f'    {c}\n' for c in compute_sha256(idirs)])
 
     # generate md file using pandoc before signing

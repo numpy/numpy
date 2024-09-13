@@ -34,16 +34,9 @@ Example::
     >>> fp.close() # doctest: +SKIP
 
 """
-from __future__ import division, absolute_import, print_function
-
 import os
-import sys
-import warnings
-import shutil
-import io
-from contextlib import closing
 
-from numpy.core.overrides import set_module
+from .._utils import set_module
 
 
 _open = open
@@ -72,76 +65,12 @@ def _check_mode(mode, encoding, newline):
             raise ValueError("Argument 'newline' not supported in binary mode")
 
 
-def _python2_bz2open(fn, mode, encoding, newline):
-    """Wrapper to open bz2 in text mode.
-
-    Parameters
-    ----------
-    fn : str
-        File name
-    mode : {'r', 'w'}
-        File mode. Note that bz2 Text files are not supported.
-    encoding : str
-        Ignored, text bz2 files not supported in Python2.
-    newline : str
-        Ignored, text bz2 files not supported in Python2.
-    """
-    import bz2
-
-    _check_mode(mode, encoding, newline)
-
-    if "t" in mode:
-        # BZ2File is missing necessary functions for TextIOWrapper
-        warnings.warn("Assuming latin1 encoding for bz2 text file in Python2",
-                      RuntimeWarning, stacklevel=5)
-        mode = mode.replace("t", "")
-    return bz2.BZ2File(fn, mode)
-
-def _python2_gzipopen(fn, mode, encoding, newline):
-    """ Wrapper to open gzip in text mode.
-
-    Parameters
-    ----------
-    fn : str, bytes, file
-        File path or opened file.
-    mode : str
-        File mode. The actual files are opened as binary, but will decoded
-        using the specified `encoding` and `newline`.
-    encoding : str
-        Encoding to be used when reading/writing as text.
-    newline : str
-        Newline to be used when reading/writing as text.
-
-    """
-    import gzip
-    # gzip is lacking read1 needed for TextIOWrapper
-    class GzipWrap(gzip.GzipFile):
-        def read1(self, n):
-            return self.read(n)
-
-    _check_mode(mode, encoding, newline)
-
-    gz_mode = mode.replace("t", "")
-
-    if isinstance(fn, (str, bytes)):
-        binary_file = GzipWrap(fn, gz_mode)
-    elif hasattr(fn, "read") or hasattr(fn, "write"):
-        binary_file = GzipWrap(None, gz_mode, fileobj=fn)
-    else:
-        raise TypeError("filename must be a str or bytes object, or a file")
-
-    if "t" in mode:
-        return io.TextIOWrapper(binary_file, encoding, newline=newline)
-    else:
-        return binary_file
-
-
 # Using a class instead of a module-level dictionary
 # to reduce the initial 'import numpy' overhead by
 # deferring the import of lzma, bz2 and gzip until needed
 
 # TODO: .zip support, .tar support?
-class _FileOpeners(object):
+class _FileOpeners:
     """
     Container for different methods to open (un-)compressed files.
 
@@ -168,7 +97,7 @@ class _FileOpeners(object):
 
     def __init__(self):
         self._loaded = False
-        self._file_openers = {None: io.open}
+        self._file_openers = {None: open}
 
     def _load(self):
         if self._loaded:
@@ -176,19 +105,13 @@ class _FileOpeners(object):
 
         try:
             import bz2
-            if sys.version_info[0] >= 3:
-                self._file_openers[".bz2"] = bz2.open
-            else:
-                self._file_openers[".bz2"] = _python2_bz2open
+            self._file_openers[".bz2"] = bz2.open
         except ImportError:
             pass
 
         try:
             import gzip
-            if sys.version_info[0] >= 3:
-                self._file_openers[".gz"] = gzip.open
-            else:
-                self._file_openers[".gz"] = _python2_gzipopen
+            self._file_openers[".gz"] = gzip.open
         except ImportError:
             pass
 
@@ -237,7 +160,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
 
     Parameters
     ----------
-    path : str
+    path : str or pathlib.Path
         Local file path or URL to open.
     mode : str, optional
         Mode to open `path`. Mode 'r' for reading, 'w' for writing, 'a' to
@@ -249,7 +172,7 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
         The default path is the current directory.
     encoding : {None, str}, optional
         Open text file with given encoding. The default encoding will be
-        what `io.open` uses.
+        what `open` uses.
     newline : {None, str}, optional
         Newline to use when reading text file.
 
@@ -269,8 +192,8 @@ def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
     return ds.open(path, mode, encoding=encoding, newline=newline)
 
 
-@set_module('numpy')
-class DataSource(object):
+@set_module('numpy.lib.npyio')
+class DataSource:
     """
     DataSource(destpath='.')
 
@@ -293,7 +216,7 @@ class DataSource(object):
     URLs require a scheme string (``http://``) to be used, without it they
     will fail::
 
-        >>> repos = np.DataSource()
+        >>> repos = np.lib.npyio.DataSource()
         >>> repos.exists('www.google.com/index.html')
         False
         >>> repos.exists('http://www.google.com/index.html')
@@ -305,13 +228,13 @@ class DataSource(object):
     --------
     ::
 
-        >>> ds = np.DataSource('/home/guido')
+        >>> ds = np.lib.npyio.DataSource('/home/guido')
         >>> urlname = 'http://www.google.com/'
         >>> gfile = ds.open('http://www.google.com/')
         >>> ds.abspath(urlname)
         '/home/guido/www.google.com/index.html'
 
-        >>> ds = np.DataSource(None)  # use with temporary file
+        >>> ds = np.lib.npyio.DataSource(None)  # use with temporary file
         >>> ds.open('/home/guido/foobar.txt')
         <open file '/home/guido.foobar.txt', mode 'r' at 0x91d4430>
         >>> ds.abspath('/home/guido/foobar.txt')
@@ -332,6 +255,8 @@ class DataSource(object):
     def __del__(self):
         # Remove temp directories
         if hasattr(self, '_istmpdest') and self._istmpdest:
+            import shutil
+
             shutil.rmtree(self._destpath)
 
     def _iszip(self, filename):
@@ -346,16 +271,14 @@ class DataSource(object):
 
         # Currently only used to test the bz2 files.
         _writemodes = ("w", "+")
-        for c in mode:
-            if c in _writemodes:
-                return True
-        return False
+        return any(c in _writemodes for c in mode)
 
     def _splitzipext(self, filename):
         """Split zip extension from filename and return filename.
 
-        *Returns*:
-            base, zip_ext : {tuple}
+        Returns
+        -------
+        base, zip_ext : {tuple}
 
         """
 
@@ -377,10 +300,7 @@ class DataSource(object):
         """Test if path is a net location.  Tests the scheme and netloc."""
 
         # We do this here to reduce the 'import numpy' initial import time.
-        if sys.version_info[0] >= 3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
+        from urllib.parse import urlparse
 
         # BUG : URLs require a scheme string ('http://') to be used.
         #       www.google.com will fail.
@@ -397,14 +317,10 @@ class DataSource(object):
         Creates a copy of the file in the datasource cache.
 
         """
-        # We import these here because importing urllib2 is slow and
+        # We import these here because importing them is slow and
         # a significant fraction of numpy's total import time.
-        if sys.version_info[0] >= 3:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen
-            from urllib2 import URLError
+        import shutil
+        from urllib.request import urlopen
 
         upath = self.abspath(path)
 
@@ -414,12 +330,9 @@ class DataSource(object):
 
         # TODO: Doesn't handle compressed files!
         if self._isurl(path):
-            try:
-                with closing(urlopen(path)) as openedurl:
-                    with _open(upath, 'wb') as f:
-                        shutil.copyfileobj(openedurl, f)
-            except URLError:
-                raise URLError("URL not found: %s" % path)
+            with urlopen(path) as openedurl:
+                with _open(upath, 'wb') as f:
+                    shutil.copyfileobj(openedurl, f)
         else:
             shutil.copyfile(path, upath)
         return upath
@@ -465,7 +378,7 @@ class DataSource(object):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -479,10 +392,7 @@ class DataSource(object):
 
         """
         # We do this here to reduce the 'import numpy' initial import time.
-        if sys.version_info[0] >= 3:
-            from urllib.parse import urlparse
-        else:
-            from urlparse import urlparse
+        from urllib.parse import urlparse
 
         # TODO:  This should be more robust.  Handles case where path includes
         #        the destpath, but not other sub-paths. Failing case:
@@ -510,7 +420,7 @@ class DataSource(object):
             last = path
             # Note: os.path.join treats '/' as os.sep on Windows
             path = path.lstrip(os.sep).lstrip('/')
-            path = path.lstrip(os.pardir).lstrip('..')
+            path = path.lstrip(os.pardir).removeprefix('..')
             drive, path = os.path.splitdrive(path)  # for Windows
         return path
 
@@ -528,7 +438,7 @@ class DataSource(object):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL.
 
         Returns
@@ -549,14 +459,10 @@ class DataSource(object):
         if os.path.exists(path):
             return True
 
-        # We import this here because importing urllib2 is slow and
+        # We import this here because importing urllib is slow and
         # a significant fraction of numpy's total import time.
-        if sys.version_info[0] >= 3:
-            from urllib.request import urlopen
-            from urllib.error import URLError
-        else:
-            from urllib2 import urlopen
-            from urllib2 import URLError
+        from urllib.request import urlopen
+        from urllib.error import URLError
 
         # Test cached url
         upath = self.abspath(path)
@@ -583,7 +489,7 @@ class DataSource(object):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open.
         mode : {'r', 'w', 'a'}, optional
             Mode to open `path`.  Mode 'r' for reading, 'w' for writing,
@@ -591,7 +497,7 @@ class DataSource(object):
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
@@ -620,7 +526,7 @@ class DataSource(object):
             return _file_openers[ext](found, mode=mode,
                                       encoding=encoding, newline=newline)
         else:
-            raise IOError("%s not found." % path)
+            raise FileNotFoundError(f"{path} not found.")
 
 
 class Repository (DataSource):
@@ -694,7 +600,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -721,7 +627,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Can be a local file or a remote URL. This may, but does not
             have to, include the `baseurl` with which the `Repository` was
             initialized.
@@ -750,7 +656,7 @@ class Repository (DataSource):
 
         Parameters
         ----------
-        path : str
+        path : str or pathlib.Path
             Local file path or URL to open. This may, but does not have to,
             include the `baseurl` with which the `Repository` was
             initialized.
@@ -760,7 +666,7 @@ class Repository (DataSource):
             specified by `path`. Default is 'r'.
         encoding : {None, str}, optional
             Open text file with given encoding. The default encoding will be
-            what `io.open` uses.
+            what `open` uses.
         newline : {None, str}, optional
             Newline to use when reading text file.
 
@@ -779,7 +685,7 @@ class Repository (DataSource):
 
         Returns
         -------
-        files : list of str
+        files : list of str or pathlib.Path
             List of file names (not containing a directory part).
 
         Notes

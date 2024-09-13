@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
+#!/usr/bin/env python3
 import os
 import sys
 import tempfile
@@ -32,15 +30,15 @@ def run():
     try:
         import numpy
         has_newnumpy = 1
-    except ImportError:
-        print('Failed to import new numpy:', sys.exc_info()[1])
+    except ImportError as e:
+        print('Failed to import new numpy:', e)
         has_newnumpy = 0
 
     try:
         from numpy.f2py import f2py2e
         has_f2py2e = 1
-    except ImportError:
-        print('Failed to import f2py2e:', sys.exc_info()[1])
+    except ImportError as e:
+        print('Failed to import f2py2e:', e)
         has_f2py2e = 0
 
     try:
@@ -50,8 +48,8 @@ def run():
         try:
             import numpy_distutils
             has_numpy_distutils = 1
-        except ImportError:
-            print('Failed to import numpy_distutils:', sys.exc_info()[1])
+        except ImportError as e:
+            print('Failed to import numpy_distutils:', e)
             has_numpy_distutils = 0
 
     if has_newnumpy:
@@ -102,7 +100,7 @@ def run():
                     print('------')
         except Exception as msg:
             print(
-                'error:', msg, '(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)')
+                'error:', msg, '(ignore it, build_flib is obsolete for numpy.distutils 0.2.2 and up)')
             print('------')
         try:
             if has_numpy_distutils == 2:

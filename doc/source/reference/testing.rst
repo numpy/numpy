@@ -1,7 +1,7 @@
 .. _testing-guidelines:
 
-Testing Guidelines
+Testing guidelines
 ==================
 
-.. include:: ../../TESTS.rst.txt
+.. include:: ../../TESTS.rst
    :start-line: 6

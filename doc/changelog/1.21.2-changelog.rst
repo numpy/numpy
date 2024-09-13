@@ -1,0 +1,41 @@
+
+Contributors
+============
+
+A total of 10 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Bas van Beek
+* Carl Johnsen +
+* Charles Harris
+* Gwyn Ciesla +
+* Matthieu Dartiailh
+* Matti Picus
+* Niyas Sait +
+* Ralf Gommers
+* Sayed Adel
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 18 pull requests were merged for this release.
+
+* `#19497 <https://github.com/numpy/numpy/pull/19497>`__: MAINT: set Python version for 1.21.x to ``<3.11``
+* `#19533 <https://github.com/numpy/numpy/pull/19533>`__: BUG: Fix an issue wherein importing ``numpy.typing`` could raise
+* `#19646 <https://github.com/numpy/numpy/pull/19646>`__: MAINT: Update Cython version for Python 3.10.
+* `#19648 <https://github.com/numpy/numpy/pull/19648>`__: TST: Bump the python 3.10 test version from beta4 to rc1
+* `#19651 <https://github.com/numpy/numpy/pull/19651>`__: TST: avoid distutils.sysconfig in runtests.py
+* `#19652 <https://github.com/numpy/numpy/pull/19652>`__: MAINT: add missing dunder method to nditer type hints
+* `#19656 <https://github.com/numpy/numpy/pull/19656>`__: BLD, SIMD: Fix testing extra checks when ``-Werror`` isn't applicable...
+* `#19657 <https://github.com/numpy/numpy/pull/19657>`__: BUG: Remove logical object ufuncs with bool output
+* `#19658 <https://github.com/numpy/numpy/pull/19658>`__: MAINT: Include .coveragerc in source distributions to support...
+* `#19659 <https://github.com/numpy/numpy/pull/19659>`__: BUG: Fix bad write in masked iterator output copy paths
+* `#19660 <https://github.com/numpy/numpy/pull/19660>`__: ENH: Add support for windows on arm targets
+* `#19661 <https://github.com/numpy/numpy/pull/19661>`__: BUG: add base to templated arguments for platlib
+* `#19662 <https://github.com/numpy/numpy/pull/19662>`__: BUG,DEP: Non-default UFunc signature/dtype usage should be deprecated
+* `#19666 <https://github.com/numpy/numpy/pull/19666>`__: MAINT: Add Python 3.10 to supported versions.
+* `#19668 <https://github.com/numpy/numpy/pull/19668>`__: TST,BUG: Sanitize path-separators when running ``runtest.py``
+* `#19671 <https://github.com/numpy/numpy/pull/19671>`__: BLD: load extra flags when checking for libflame
+* `#19676 <https://github.com/numpy/numpy/pull/19676>`__: BLD: update circleCI docker image
+* `#19677 <https://github.com/numpy/numpy/pull/19677>`__: REL: Prepare for 1.21.2 release.

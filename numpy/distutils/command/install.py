@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
 if 'setuptools' in sys.modules:
     import setuptools.command.install as old_install_mod
@@ -64,7 +62,7 @@ class install(old_install):
             # bdist_rpm fails when INSTALLED_FILES contains
             # paths with spaces. Such paths must be enclosed
             # with double-quotes.
-            with open(self.record, 'r') as f:
+            with open(self.record) as f:
                 lines = []
                 need_rewrite = False
                 for l in f:

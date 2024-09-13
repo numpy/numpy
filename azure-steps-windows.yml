@@ -1,53 +1,52 @@
 steps:
+- script: git submodule update --init
+  displayName: 'Fetch submodules'
 - task: UsePythonVersion@0
   inputs:
     versionSpec: $(PYTHON_VERSION)
     addToPath: true
     architecture: $(PYTHON_ARCH)
-- script: python -m pip install --upgrade pip setuptools wheel
+
+- script: python -m pip install --upgrade pip wheel
   displayName: 'Install tools'
-- script: python -m pip install -r test_requirements.txt
+
+- script: python -m pip install -r requirements/test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
-- powershell: |
-    $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
-    Write-Host "Python Version: $pyversion"
-    $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
-    Write-Host "target path: $target"
-    $openblas = python tools/openblas_support.py
-    cp $openblas $target
-  displayName: 'Download / Install OpenBLAS'
 
 - powershell: |
-    choco install -y mingw --forcex86 --force --version=5.3.0
-  displayName: 'Install 32-bit mingw for 32-bit builds'
-  condition: eq(variables['BITS'], 32)
-# NOTE: for Windows builds it seems much more tractable to use runtests.py
-# vs. manual setup.py and then runtests.py for testing only
+    choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+  displayName: 'Install utilities'
+
 - powershell: |
-    If ($(BITS) -eq 32) {
-        $env:CFLAGS = "-m32"
-        $env:LDFLAGS = "-m32"
-        $env:PATH = "C:\\tools\\mingw32\\bin;" + $env:PATH
-        refreshenv
+    # Note: ensure the `pip install .` command remains the last one here,
+    # to avoid "green on failure" issues
+    If ( Test-Path env:DISABLE_BLAS ) {
+        python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dblas=none" -Csetup-args="-Dlapack=none" -Csetup-args="-Dallow-noblas=true"
     }
-    python -c "from tools import openblas_support; openblas_support.make_init('numpy')"
-    pip wheel -v -v -v --wheel-dir=dist .
-
-    ls dist -r | Foreach-Object {
-        pip install $_.FullName
+    elseif ( Test-Path env:_USE_BLAS_ILP64 ) {
+        pip install -r requirements/ci_requirements.txt
+        spin config-openblas --with-scipy-openblas=64
+        $env:PKG_CONFIG_PATH="$pwd/.openblas"
+        python -m pip install . -v -Csetup-args="--vsenv"
+    } else {
+        pip install -r requirements/ci_requirements.txt
+        spin config-openblas --with-scipy-openblas=32
+        $env:PKG_CONFIG_PATH="$pwd/.openblas"
+        python -m pip install . -v -Csetup-args="--vsenv" 
     }
   displayName: 'Build NumPy'
-- bash: |
-    pushd . && cd .. && target=$(python -c "import numpy, os; print(os.path.abspath(os.path.join(os.path.dirname(numpy.__file__), '.libs')))") && popd
-    pip download -d destination --only-binary --no-deps numpy==1.14
-    cd destination && unzip numpy*.whl && cp numpy/.libs/*.dll $target
-    ls $target
-  displayName: 'Add extraneous & older DLL to numpy/.libs to probe DLL handling robustness'
-  condition: eq(variables['PYTHON_VERSION'], '3.6')
-- script: pushd . && cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && popd
-  displayName: 'For gh-12667; Windows DLL resolution'
-- script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
+
+- powershell: |
+    cd tools  # avoid root dir to not pick up source tree
+    # Get a gfortran onto the path for f2py tests
+    $env:PATH = "c:\\rtools43\\x86_64-w64-mingw32.static.posix\\bin;$env:PATH"
+    If ( $env:TEST_MODE -eq "full" ) {
+      pytest --pyargs numpy -rsx --junitxml=junit/test-results.xml
+    } else {
+      pytest --pyargs numpy -m "not slow" -rsx --junitxml=junit/test-results.xml
+    }
   displayName: 'Run NumPy Test Suite'
+
 - task: PublishTestResults@2
   condition: succeededOrFailed()
   inputs:

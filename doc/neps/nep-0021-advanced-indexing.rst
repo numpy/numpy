@@ -1,10 +1,12 @@
+.. _NEP21:
+
 ==================================================
 NEP 21 — Simplified and explicit advanced indexing
 ==================================================
 
 :Author: Sebastian Berg
 :Author: Stephan Hoyer <shoyer@google.com>
-:Status: Draft
+:Status: Deferred
 :Type: Standards Track
 :Created: 2015-08-27
 
@@ -48,7 +50,7 @@ NumPy arrays currently support a flexible range of indexing operations:
 
 For clarity, we will refer to these existing rules as "legacy indexing".
 This is only a high-level summary; for more details, see NumPy's documentation
-and and `Examples` below.
+and `Examples` below.
 
 Outer indexing
 ~~~~~~~~~~~~~~
@@ -108,7 +110,7 @@ array ``arr`` with shape ``(X, Y, Z)``:
 3. ``arr[0, :, [0, 1]]`` has shape ``(2, Y)``, not ``(Y, 2)``!
 
 These first two cases are intuitive and consistent with outer indexing, but
-this last case is quite surprising, even to many higly experienced NumPy users.
+this last case is quite surprising, even to many highly experienced NumPy users.
 
 Mixed cases involving multiple array indices are also surprising, and only
 less problematic because the current behavior is so useless that it is rarely
@@ -141,7 +143,7 @@ exactly.
 
 Vectorized indexing in particular can be challenging to implement with array
 storage backends not based on NumPy. In contrast, indexing by 1D arrays along
-at least one dimension in the style of outer indexing is much more acheivable.
+at least one dimension in the style of outer indexing is much more achievable.
 This has led many libraries (including dask and h5py) to attempt to define a
 safe subset of NumPy-style indexing that is equivalent to outer indexing, e.g.,
 by only allowing indexing with an array along at most one dimension. However,
@@ -196,7 +198,7 @@ motivational use-cases for the general ideas and is likely a good start for
 anyone not intimately familiar with advanced indexing.
 
 
-Detailed Description
+Detailed description
 --------------------
 
 Proposed rules
@@ -240,7 +242,7 @@ be deduced:
 7. To ensure that existing subclasses of `ndarray` that override indexing
    do not inadvertently revert to default behavior for indexing attributes,
    these attribute should have explicit checks that disable them if
-   ``__getitem__`` or ``__setitem__`` has been overriden.
+   ``__getitem__`` or ``__setitem__`` has been overridden.
 
 Unlike plain indexing, the new indexing attributes are explicitly aimed
 at higher dimensional indexing, several additional changes should be implemented:
@@ -319,7 +321,7 @@ of ``__getitem__`` on these attributes should test
 subclass has special handling for indexing and ``NotImplementedError``
 should be raised, requiring that the indexing attributes is also explicitly
 overwritten. Likewise, implementations of ``__setitem__`` should check to see
-if ``__setitem__`` is overriden.
+if ``__setitem__`` is overridden.
 
 A further question is how to facilitate implementing the special attributes.
 Also there is the weird functionality where ``__setitem__`` calls
@@ -375,7 +377,7 @@ instead of ``arr.oindex[indices]``). Functionally, this would be equivalent,
 but indexing is such a common operation that we think it is important to
 minimize syntax and worth implementing it directly on `ndarray` objects
 themselves. Indexing attributes also define a clear interface that is easier
-for alternative array implementations to copy, nonwithstanding ongoing
+for alternative array implementations to copy, notwithstanding ongoing
 efforts to make it easier to override NumPy functions [2]_.
 
 Discussion
@@ -647,10 +649,10 @@ eventualities.
 Copyright
 ---------
 
-This document is placed under the CC0 1.0 Universell (CC0 1.0) Public Domain Dedication [1]_.
+This document is placed under the CC0 1.0 Universal (CC0 1.0) Public Domain Dedication [1]_.
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] To the extent possible under law, the person who associated CC0 

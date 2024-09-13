@@ -6,18 +6,12 @@ modules in setup scripts.
 Overridden to support f2py.
 
 """
-from __future__ import division, absolute_import, print_function
-
-import sys
 import re
 from distutils.extension import Extension as old_Extension
 
-if sys.version_info[0] >= 3:
-    basestring = str
 
-
-cxx_ext_re = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
-fortran_pyf_ext_re = re.compile(r'.*[.](f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
+cxx_ext_re = re.compile(r'.*\.(cpp|cxx|cc)\Z', re.I).match
+fortran_pyf_ext_re = re.compile(r'.*\.(f90|f95|f77|for|ftn|f|pyf)\Z', re.I).match
 
 
 class Extension(old_Extension):
@@ -53,6 +47,8 @@ class Extension(old_Extension):
             language=None,
             f2py_options=None,
             module_dirs=None,
+            extra_c_compile_args=None,
+            extra_cxx_compile_args=None,
             extra_f77_compile_args=None,
             extra_f90_compile_args=None,):
 
@@ -76,7 +72,7 @@ class Extension(old_Extension):
         self.swig_opts = swig_opts or []
         # swig_opts is assumed to be a list. Here we handle the case where it
         # is specified as a string instead.
-        if isinstance(self.swig_opts, basestring):
+        if isinstance(self.swig_opts, str):
             import warnings
             msg = "swig_opts is specified as a string instead of a list"
             warnings.warn(msg, SyntaxWarning, stacklevel=2)
@@ -89,21 +85,17 @@ class Extension(old_Extension):
         # numpy_distutils features
         self.f2py_options = f2py_options or []
         self.module_dirs = module_dirs or []
+        self.extra_c_compile_args = extra_c_compile_args or []
+        self.extra_cxx_compile_args = extra_cxx_compile_args or []
         self.extra_f77_compile_args = extra_f77_compile_args or []
         self.extra_f90_compile_args = extra_f90_compile_args or []
 
         return
 
     def has_cxx_sources(self):
-        for source in self.sources:
-            if cxx_ext_re(str(source)):
-                return True
-        return False
+        return any(cxx_ext_re(str(source)) for source in self.sources)
 
     def has_f2py_sources(self):
-        for source in self.sources:
-            if fortran_pyf_ext_re(source):
-                return True
-        return False
+        return any(fortran_pyf_ext_re(source) for source in self.sources)
 
 # class Extension

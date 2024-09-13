@@ -1,17 +1,17 @@
-from __future__ import division, absolute_import, print_function
-
 from os.path import join, sep, dirname
+
+import pytest
 
 from numpy.distutils.misc_util import (
     appendpath, minrelpath, gpaths, get_shared_lib_extension, get_info
     )
 from numpy.testing import (
-    assert_, assert_equal
+    assert_, assert_equal, IS_EDITABLE
     )
 
 ajoin = lambda *paths: join(*((sep,)+paths))
 
-class TestAppendpath(object):
+class TestAppendpath:
 
     def test_1(self):
         assert_equal(appendpath('prefix', 'name'), join('prefix', 'name'))
@@ -35,7 +35,7 @@ class TestAppendpath(object):
         assert_equal(appendpath('/prefix/sub/sub2', '/prefix/sub/sup/name'),
                      ajoin('prefix', 'sub', 'sub2', 'sup', 'name'))
 
-class TestMinrelpath(object):
+class TestMinrelpath:
 
     def test_1(self):
         n = lambda path: path.replace('/', sep)
@@ -49,7 +49,7 @@ class TestMinrelpath(object):
         assert_equal(minrelpath(n('.././..')), n('../..'))
         assert_equal(minrelpath(n('aa/bb/.././../dd')), n('dd'))
 
-class TestGpaths(object):
+class TestGpaths:
 
     def test_gpaths(self):
         local_path = minrelpath(join(dirname(__file__), '..'))
@@ -58,7 +58,7 @@ class TestGpaths(object):
         f = gpaths('system_info.py', local_path)
         assert_(join(local_path, 'system_info.py') == f[0], repr(f))
 
-class TestSharedExtension(object):
+class TestSharedExtension:
 
     def test_get_shared_lib_extension(self):
         import sys
@@ -75,6 +75,10 @@ class TestSharedExtension(object):
         assert_(get_shared_lib_extension(is_python_ext=True))
 
 
+@pytest.mark.skipif(
+    IS_EDITABLE,
+    reason="`get_info` .ini lookup method incompatible with editable install"
+)
 def test_installed_npymath_ini():
     # Regression test for gh-7707.  If npymath.ini wasn't installed, then this
     # will give an error.

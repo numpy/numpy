@@ -1,0 +1,456 @@
+/*@targets
+ ** $maxopt baseline
+ ** sse2 sse42 avx2 avx512f avx512_skx
+ ** vsx2 vsx3
+ ** neon
+ ** vx vxe
+ **/
+#define _UMATHMODULE
+#define _MULTIARRAYMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "simd/simd.h"
+#include "loops_utils.h"
+#include "loops.h"
+#include "lowlevel_strided_loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+
+/********************************************************************************
+ ** Defining the SIMD kernels
+ ********************************************************************************/
+/**begin repeat
+ * #sfx    = u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #len    =  8,  8,  16,  16,  32,  32,  64,  64,  32,  64#
+ * #signed =  0,  1,   0,   1,   0,   1,   0,   1,   0,   0#
+ * #VECTOR = NPY_SIMD*8, NPY_SIMD_F32, NPY_SIMD_F64#
+ */
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal#
+ * #eq = 1, 0, 0, 0#
+ * #neq = 0, 1, 0, 0#
+ * #OP = ==, !=, <, <=#
+ * #VOP = cmpeq, cmpneq, cmplt, cmple#
+ */
+#if @VECTOR@ && !((@eq@ || @neq@) && @signed@)
+static void simd_binary_@kind@_@sfx@(char **args, npy_intp len)
+{
+    npyv_lanetype_@sfx@ *src1 = (npyv_lanetype_@sfx@ *) args[0];
+    npyv_lanetype_@sfx@ *src2 = (npyv_lanetype_@sfx@ *) args[1];
+    npyv_lanetype_u8 *dst     = (npyv_lanetype_u8 *) args[2];
+    const npyv_u8 truemask    = npyv_setall_u8(0x1);
+    const int vstep           = npyv_nlanes_u8;
+
+    // Unroll the loop to get a resultant vector with 'vsteps' elements.
+    for (; len >= vstep;
+         len -= vstep, src1 += vstep, src2 += vstep, dst += vstep) {
+#if @len@ >= 8
+        npyv_@sfx@  a1 = npyv_load_@sfx@(src1 + npyv_nlanes_@sfx@ * 0);
+        npyv_@sfx@  b1 = npyv_load_@sfx@(src2 + npyv_nlanes_@sfx@ * 0);
+        npyv_b@len@ c1 = npyv_@VOP@_@sfx@(a1, b1);
+#if @len@ >= 16
+        npyv_@sfx@  a2 = npyv_load_@sfx@(src1 + npyv_nlanes_@sfx@ * 1);
+        npyv_@sfx@  b2 = npyv_load_@sfx@(src2 + npyv_nlanes_@sfx@ * 1);
+        npyv_b@len@ c2 = npyv_@VOP@_@sfx@(a2, b2);
+#if @len@ >= 32
+        npyv_@sfx@  a3 = npyv_load_@sfx@(src1 + npyv_nlanes_@sfx@ * 2);
+        npyv_@sfx@  b3 = npyv_load_@sfx@(src2 + npyv_nlanes_@sfx@ * 2);
+        npyv_@sfx@  a4 = npyv_load_@sfx@(src1 + npyv_nlanes_@sfx@ * 3);
+        npyv_@sfx@  b4 = npyv_load_@sfx@(src2 + npyv_nlanes_@sfx@ * 3);
+        npyv_b@len@ c3 = npyv_@VOP@_@sfx@(a3, b3);
+        npyv_b@len@ c4 = npyv_@VOP@_@sfx@(a4, b4);
+#if @len@ == 64
+        npyv_@sfx@  a5 = npyv_load_@sfx@(src1 + npyv_nlanes_@sfx@ * 4);
+        npyv_@sfx@  b5 = npyv_load_@sfx@(src2 + npyv_nlanes_@sfx@ * 4);
+        npyv_@sfx@  a6 = npyv_load_@sfx@(src1 + npyv_nlanes_@sfx@ * 5);
+        npyv_@sfx@  b6 = npyv_load_@sfx@(src2 + npyv_nlanes_@sfx@ * 5);
+        npyv_@sfx@  a7 = npyv_load_@sfx@(src1 + npyv_nlanes_@sfx@ * 6);
+        npyv_@sfx@  b7 = npyv_load_@sfx@(src2 + npyv_nlanes_@sfx@ * 6);
+        npyv_@sfx@  a8 = npyv_load_@sfx@(src1 + npyv_nlanes_@sfx@ * 7);
+        npyv_@sfx@  b8 = npyv_load_@sfx@(src2 + npyv_nlanes_@sfx@ * 7);
+        npyv_b@len@ c5 = npyv_@VOP@_@sfx@(a5, b5);
+        npyv_b@len@ c6 = npyv_@VOP@_@sfx@(a6, b6);
+        npyv_b@len@ c7 = npyv_@VOP@_@sfx@(a7, b7);
+        npyv_b@len@ c8 = npyv_@VOP@_@sfx@(a8, b8);
+#endif // @len@ >= 64
+#endif // @len@ >= 32
+#endif // @len@ >= 16
+#endif // @len@ >= 8
+
+        // Pack the 'c' vectors into a single vector 'r'
+#if @len@ == 8
+        npyv_u8 r = npyv_cvt_u8_b8(c1);
+#elif @len@ == 16
+        npyv_u8 r = npyv_cvt_u8_b8(npyv_pack_b8_b16(c1, c2));
+#elif @len@ == 32
+        npyv_u8 r = npyv_cvt_u8_b8(npyv_pack_b8_b32(c1, c2, c3, c4));
+#elif @len@ == 64
+        npyv_u8 r =
+            npyv_cvt_u8_b8(npyv_pack_b8_b64(c1, c2, c3, c4, c5, c6, c7, c8));
+#endif
+        npyv_store_u8(dst, npyv_and_u8(r, truemask));
+    }
+
+    for (; len > 0; --len, ++src1, ++src2, ++dst) {
+        const npyv_lanetype_@sfx@ a = *src1;
+        const npyv_lanetype_@sfx@ b = *src2;
+        *dst = a @OP@ b;
+    }
+}
+
+static void simd_binary_scalar1_@kind@_@sfx@(char **args, npy_intp len)
+{
+    npyv_lanetype_@sfx@ scalar = *(npyv_lanetype_@sfx@ *) args[0];
+    npyv_lanetype_@sfx@ *src   = (npyv_lanetype_@sfx@ *) args[1];
+    npyv_lanetype_u8 *dst      = (npyv_lanetype_u8 *) args[2];
+    const npyv_@sfx@ a         = npyv_setall_@sfx@(scalar);
+    const npyv_u8 truemask     = npyv_setall_u8(0x1);
+    const int vstep            = npyv_nlanes_u8;
+
+    for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
+#if @len@ >= 8
+        npyv_@sfx@  b1 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 0);
+        npyv_b@len@ c1 = npyv_@VOP@_@sfx@(a, b1);
+#if @len@ >= 16
+        npyv_@sfx@  b2 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 1);
+        npyv_b@len@ c2 = npyv_@VOP@_@sfx@(a, b2);
+#if @len@ >= 32
+        npyv_@sfx@  b3 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 2);
+        npyv_@sfx@  b4 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 3);
+        npyv_b@len@ c3 = npyv_@VOP@_@sfx@(a, b3);
+        npyv_b@len@ c4 = npyv_@VOP@_@sfx@(a, b4);
+#if @len@ == 64
+        npyv_@sfx@  b5 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 4);
+        npyv_@sfx@  b6 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 5);
+        npyv_@sfx@  b7 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 6);
+        npyv_@sfx@  b8 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 7);
+        npyv_b@len@ c5 = npyv_@VOP@_@sfx@(a, b5);
+        npyv_b@len@ c6 = npyv_@VOP@_@sfx@(a, b6);
+        npyv_b@len@ c7 = npyv_@VOP@_@sfx@(a, b7);
+        npyv_b@len@ c8 = npyv_@VOP@_@sfx@(a, b8);
+#endif // @len@ >= 64
+#endif // @len@ >= 32
+#endif // @len@ >= 16
+#endif // @len@ >= 8
+
+#if @len@ == 8
+        npyv_u8 r = npyv_cvt_u8_b8(c1);
+#elif @len@ == 16
+        npyv_u8 r = npyv_cvt_u8_b8(npyv_pack_b8_b16(c1, c2));
+#elif @len@ == 32
+        npyv_u8 r = npyv_cvt_u8_b8(npyv_pack_b8_b32(c1, c2, c3, c4));
+#elif @len@ == 64
+        npyv_u8 r =
+            npyv_cvt_u8_b8(npyv_pack_b8_b64(c1, c2, c3, c4, c5, c6, c7, c8));
+#endif
+        npyv_store_u8(dst, npyv_and_u8(r, truemask));
+    }
+
+    for (; len > 0; --len, ++src, ++dst) {
+        const npyv_lanetype_@sfx@ b = *src;
+        *dst = scalar @OP@ b;
+    }
+}
+
+static void simd_binary_scalar2_@kind@_@sfx@(char **args, npy_intp len)
+{
+    npyv_lanetype_@sfx@ *src   = (npyv_lanetype_@sfx@ *) args[0];
+    npyv_lanetype_@sfx@ scalar = *(npyv_lanetype_@sfx@ *) args[1];
+    npyv_lanetype_u8 *dst      = (npyv_lanetype_u8 *) args[2];
+    const npyv_@sfx@ b         = npyv_setall_@sfx@(scalar);
+    const npyv_u8 truemask     = npyv_setall_u8(0x1);
+    const int vstep            = npyv_nlanes_u8;
+
+    for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
+#if @len@ >= 8
+        npyv_@sfx@  a1 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 0);
+        npyv_b@len@ c1 = npyv_@VOP@_@sfx@(a1, b);
+#if @len@ >= 16
+        npyv_@sfx@  a2 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 1);
+        npyv_b@len@ c2 = npyv_@VOP@_@sfx@(a2, b);
+#if @len@ >= 32
+        npyv_@sfx@  a3 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 2);
+        npyv_@sfx@  a4 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 3);
+        npyv_b@len@ c3 = npyv_@VOP@_@sfx@(a3, b);
+        npyv_b@len@ c4 = npyv_@VOP@_@sfx@(a4, b);
+#if @len@ == 64
+        npyv_@sfx@  a5 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 4);
+        npyv_@sfx@  a6 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 5);
+        npyv_@sfx@  a7 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 6);
+        npyv_@sfx@  a8 = npyv_load_@sfx@(src + npyv_nlanes_@sfx@ * 7);
+        npyv_b@len@ c5 = npyv_@VOP@_@sfx@(a5, b);
+        npyv_b@len@ c6 = npyv_@VOP@_@sfx@(a6, b);
+        npyv_b@len@ c7 = npyv_@VOP@_@sfx@(a7, b);
+        npyv_b@len@ c8 = npyv_@VOP@_@sfx@(a8, b);
+#endif // @len@ >= 64
+#endif // @len@ >= 32
+#endif // @len@ >= 16
+#endif // @len@ >= 8
+
+#if @len@ == 8
+        npyv_u8 r = npyv_cvt_u8_b8(c1);
+#elif @len@ == 16
+        npyv_u8 r = npyv_cvt_u8_b8(npyv_pack_b8_b16(c1, c2));
+#elif @len@ == 32
+        npyv_u8 r = npyv_cvt_u8_b8(npyv_pack_b8_b32(c1, c2, c3, c4));
+#elif @len@ == 64
+        npyv_u8 r =
+            npyv_cvt_u8_b8(npyv_pack_b8_b64(c1, c2, c3, c4, c5, c6, c7, c8));
+#endif
+        npyv_store_u8(dst, npyv_and_u8(r, truemask));
+    }
+
+    for (; len > 0; --len, ++src, ++dst) {
+        const npyv_lanetype_@sfx@ a = *src;
+        *dst = a @OP@ scalar;
+    }
+}
+#endif
+
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * #kind = equal, not_equal, less, less_equal#
+ * #eq = 1, 0, 0, 0#
+ * #neq = 0, 1, 0, 0#
+ * #OP = ==, !=, <, <=#
+ * #VOP = xnor, xor, andc, orc#
+ */
+
+#if NPY_SIMD
+static void simd_binary_@kind@_b8(char **args, npy_intp len)
+{
+    npyv_lanetype_u8 *src1 = (npyv_lanetype_u8 *) args[0];
+    npyv_lanetype_u8 *src2 = (npyv_lanetype_u8 *) args[1];
+    npyv_lanetype_u8 *dst  = (npyv_lanetype_u8 *) args[2];
+    const npyv_u8 truemask = npyv_setall_u8(0x1);
+    const npyv_u8 vzero    = npyv_setall_u8(0x0);
+    const int vstep        = npyv_nlanes_u8;
+
+    for (; len >= vstep;
+         len -= vstep, src1 += vstep, src2 += vstep, dst += vstep) {
+        // Whatever element in src != 0x0 is converted to 0xFF
+        npyv_b8 a = npyv_cmpeq_u8(npyv_load_u8(src1), vzero);
+        npyv_b8 b = npyv_cmpeq_u8(npyv_load_u8(src2), vzero);
+        npyv_b8 c = npyv_@VOP@_b8(a, b);
+        npyv_store_u8(dst, npyv_and_u8(npyv_cvt_u8_b8(c), truemask));
+    }
+
+    for (; len > 0; --len, ++src1, ++src2, ++dst) {
+        const npyv_lanetype_u8 a = *src1 != 0;
+        const npyv_lanetype_u8 b = *src2 != 0;
+        *dst = a @OP@ b;
+    }
+}
+
+static void simd_binary_scalar1_@kind@_b8(char **args, npy_intp len)
+{
+    npyv_lanetype_u8 scalar = *(npyv_lanetype_u8 *) args[0];
+    npyv_lanetype_u8 *src   = (npyv_lanetype_u8 *) args[1];
+    npyv_lanetype_u8 *dst   = (npyv_lanetype_u8 *) args[2];
+    const npyv_u8 vzero     = npyv_setall_u8(0x0);
+    const npyv_u8 vscalar   = npyv_setall_u8(scalar);
+    const npyv_b8 a         = npyv_cmpeq_u8(vscalar, vzero);
+    const npyv_u8 truemask  = npyv_setall_u8(0x1);
+    const int vstep         = npyv_nlanes_u8;
+
+    for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
+        npyv_b8 b = npyv_cmpeq_u8(npyv_load_u8(src), vzero);
+        npyv_b8 c = npyv_@VOP@_b8(a, b);
+        npyv_store_u8(dst, npyv_and_u8(npyv_cvt_u8_b8(c), truemask));
+    }
+
+    for (; len > 0; --len, ++src, ++dst) {
+        const npyv_lanetype_u8 b = *src != 0;
+        *dst = scalar @OP@ b;
+    }
+}
+
+static void simd_binary_scalar2_@kind@_b8(char **args, npy_intp len)
+{
+    npyv_lanetype_u8 *src   = (npyv_lanetype_u8 *) args[0];
+    npyv_lanetype_u8 scalar = *(npyv_lanetype_u8 *) args[1];
+    npyv_lanetype_u8 *dst   = (npyv_lanetype_u8 *) args[2];
+    const npyv_u8 vzero     = npyv_setall_u8(0x0);
+    const npyv_u8 vscalar   = npyv_setall_u8(scalar);
+    const npyv_b8 b         = npyv_cmpeq_u8(vscalar, vzero);
+    const npyv_u8 truemask  = npyv_setall_u8(0x1);
+    const int vstep         = npyv_nlanes_u8;
+
+    for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
+        npyv_b8 a = npyv_cmpeq_u8(npyv_load_u8(src), vzero);
+        npyv_b8 c = npyv_@VOP@_b8(a, b);
+        npyv_store_u8(dst, npyv_and_u8(npyv_cvt_u8_b8(c), truemask));
+    }
+
+    for (; len > 0; --len, ++src, ++dst) {
+        const npyv_lanetype_u8 a = *src != 0;
+        *dst = a @OP@ scalar;
+    }
+}
+#endif
+/**end repeat**/
+
+/**begin repeat
+ * #type = npy_ubyte*2, npy_byte, npy_ushort, npy_short, npy_uint, npy_int,
+           npy_ulonglong, npy_longlong, npy_float, npy_double#
+ * #sfx = b8, u8, s8, u16, s16, u32, s32, u64, s64, f32, f64#
+ * #bool = 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0#
+ * #fp = 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1#
+ * #signed = 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0#
+ * #VECTOR = NPY_SIMD*9, NPY_SIMD_F32, NPY_SIMD_F64#
+ */
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal#
+ * #eq   = 1, 0, 0, 0#
+ * #neq  = 0, 1, 0, 0#
+ * #OP = ==, !=, <, <=#
+ */
+#if !((@eq@ || @neq@) && @signed@)
+static inline void
+run_binary_simd_@kind@_@sfx@(char **args, npy_intp const *dimensions, npy_intp const *steps)
+{
+#if @VECTOR@
+    if (!is_mem_overlap(args[0], steps[0], args[2], steps[2], dimensions[0]) &&
+        !is_mem_overlap(args[1], steps[1], args[2], steps[2], dimensions[0])
+    ) {
+        /* argument one scalar */
+        if (IS_BINARY_CONT_S1(@type@, npy_bool)) {
+            simd_binary_scalar1_@kind@_@sfx@(args, dimensions[0]);
+            return;
+        }
+        /* argument two scalar */
+        else if (IS_BINARY_CONT_S2(@type@, npy_bool)) {
+            simd_binary_scalar2_@kind@_@sfx@(args, dimensions[0]);
+            return;
+        }
+        else if (IS_BINARY_CONT(@type@, npy_bool)) {
+            simd_binary_@kind@_@sfx@(args, dimensions[0]);
+            return;
+        }
+    }
+#endif
+
+    BINARY_LOOP {
+#if @bool@
+        npy_bool in1 = *((npy_bool *)ip1) != 0;
+        npy_bool in2 = *((npy_bool *)ip2) != 0;
+#else
+        const @type@ in1 = *(@type@ *)ip1;
+        const @type@ in2 = *(@type@ *)ip2;
+#endif
+        *((npy_bool *)op1) = in1 @OP@ in2;
+    }
+}
+#endif
+/**end repeat1**/
+/**end repeat**/
+
+/********************************************************************************
+ ** Defining ufunc inner functions
+ ********************************************************************************/
+
+/*
+ * In order to reduce the size of the binary generated from this source, the
+ * following rules are applied: 1) each data type implements its function
+ * 'greater' as a call to the function 'less' but with the arguments swapped,
+ * the same applies to the function 'greater_equal', which is implemented
+ * with a call to the function 'less_equal', and 2) for the integer datatypes
+ * of the same size (eg 8-bit), a single kernel of the functions 'equal' and
+ * 'not_equal' is used to implement both signed and unsigned types.
+ */
+
+/**begin repeat
+ * Signed and Unsigned types
+ *  #TYPE  = UBYTE,     USHORT,     UINT,     ULONG,     ULONGLONG,
+ *           BYTE,      SHORT,      INT,      LONG,      LONGLONG#
+ *  #STYPE = BYTE,      SHORT,      INT,      LONG,      LONGLONG,
+ *           BYTE,      SHORT,      INT,      LONG,      LONGLONG#
+ *  #signed = 0, 0, 0, 0, 0, 1, 1, 1, 1, 1#
+ */
+#undef TO_SIMD_SFX
+#undef TO_SIMD_UTYPE
+#if 0
+/**begin repeat1
+ * #len = 8, 16, 32, 64#
+ */
+#elif NPY_BITSOF_@STYPE@ == @len@
+    #define TO_SIMD_UTYPE(X) X##_u@len@
+    #if @signed@
+        #define TO_SIMD_SFX(X) X##_s@len@
+    #else
+        #define TO_SIMD_SFX(X) X##_u@len@
+    #endif
+/**end repeat1**/
+#endif
+
+/**begin repeat1
+ * #kind = greater, greater_equal#
+ * #kind_to = less, less_equal#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    char *nargs[3] = {args[1], args[0], args[2]};
+    npy_intp nsteps[3] = {steps[1], steps[0], steps[2]};
+    TO_SIMD_SFX(run_binary_simd_@kind_to@)(nargs, dimensions, nsteps);
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = less, less_equal#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    TO_SIMD_SFX(run_binary_simd_@kind@)(args, dimensions, steps);
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = equal, not_equal#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    TO_SIMD_UTYPE(run_binary_simd_@kind@)(args, dimensions, steps);
+}
+/**end repeat1**/
+/**end repeat**/
+
+/**begin repeat
+ * Boolean & Float types
+ * #TYPE = BOOL, FLOAT, DOUBLE#
+ * #sfx = b8, f32, f64#
+ * #fp = 0, 1, 1#
+ */
+/**begin repeat1
+ * #kind = greater, greater_equal#
+ * #kind_to = less, less_equal#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    char *nargs[3] = {args[1], args[0], args[2]};
+    npy_intp nsteps[3] = {steps[1], steps[0], steps[2]};
+    run_binary_simd_@kind_to@_@sfx@(nargs, dimensions, nsteps);
+#if @fp@
+    npy_clear_floatstatus_barrier((char*)dimensions);
+#endif
+}
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    run_binary_simd_@kind@_@sfx@(args, dimensions, steps);
+#if @fp@
+    npy_clear_floatstatus_barrier((char*)dimensions);
+#endif
+}
+/**end repeat1**/
+/**end repeat**/

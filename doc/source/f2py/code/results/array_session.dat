@@ -1,0 +1,87 @@
+>>> import arr
+>>> from numpy import asfortranarray
+>>> print(arr.foo.__doc__)
+a = foo(a,[overwrite_a])
+
+Wrapper for ``foo``.
+
+Parameters
+----------
+a : input rank-2 array('d') with bounds (n,m)
+
+Other Parameters
+----------------
+overwrite_a : input int, optional
+    Default: 0
+
+Returns
+-------
+a : rank-2 array('d') with bounds (n,m)
+
+>>> a = arr.foo([[1, 2, 3],
+...              [4, 5, 6]])
+created an array from object
+>>> print(a)
+[[ 1.  3.  4.]
+ [ 3.  5.  6.]]
+>>> a.flags.c_contiguous
+False
+>>> a.flags.f_contiguous
+True
+# even if a is proper-contiguous and has proper type,
+# a copy is made forced by intent(copy) attribute
+# to preserve its original contents
+>>> b = arr.foo(a)
+copied an array: size=6, elsize=8
+>>> print(a)
+[[ 1.  3.  4.]
+ [ 3.  5.  6.]]
+>>> print(b)
+[[ 1.  4.  5.]
+ [ 2.  5.  6.]]
+>>> b = arr.foo(a, overwrite_a = 1) # a is passed directly to Fortran
+...                                 # routine and its contents is discarded
+... 
+>>> print(a)
+[[ 1.  4.  5.]
+ [ 2.  5.  6.]]
+>>> print(b)
+[[ 1.  4.  5.]
+ [ 2.  5.  6.]]
+>>> a is b                          # a and b are actually the same objects
+True
+>>> print(arr.foo([1, 2, 3]))       # different rank arrays are allowed
+created an array from object
+[ 1.  1.  2.]
+>>> print(arr.foo([[[1], [2], [3]]]))
+created an array from object
+[[[ 1.]
+  [ 1.]
+  [ 2.]]]
+>>>
+>>> # Creating arrays with column major data storage order:
+ ...
+>>> s = asfortranarray([[1, 2, 3], [4, 5, 6]])
+>>> s.flags.f_contiguous
+True
+>>> print(s)
+[[1 2 3]
+ [4 5 6]]
+>>> print(arr.foo(s))
+>>> s2 = asfortranarray(s)
+>>> s2 is s    # an array with column major storage order 
+               # is returned immediately
+True
+>>> # Note that arr.foo returns a column major data storage order array:
+ ...
+>>> s3 = ascontiguousarray(s)
+>>> s3.flags.f_contiguous
+False
+>>> s3.flags.c_contiguous
+True
+>>> s3 = arr.foo(s3)
+copied an array: size=6, elsize=8
+>>> s3.flags.f_contiguous
+True
+>>> s3.flags.c_contiguous
+False

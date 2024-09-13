@@ -1,9 +1,5 @@
-#! /usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
+#!/usr/bin/env python3
 # System imports
-from   distutils.util import get_platform
-import os
 import sys
 import unittest
 
@@ -12,8 +8,10 @@ import struct
 # Import NumPy
 import numpy as np
 major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
-if major == 0: BadListError = TypeError
-else:          BadListError = ValueError
+if major == 0:
+    BadListError = TypeError
+else:
+    BadListError = ValueError
 
 import Flat
 
@@ -31,7 +29,7 @@ class FlatTestCase(unittest.TestCase):
         "Test Process function 1D array"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         process = Flat.__dict__[self.typeStr + "Process"]
-        pack_output = ''
+        pack_output = b''
         for i in range(10):
             pack_output += struct.pack(self.typeCode,i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
@@ -43,7 +41,7 @@ class FlatTestCase(unittest.TestCase):
         "Test Process function 3D array"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         process = Flat.__dict__[self.typeStr + "Process"]
-        pack_output = ''
+        pack_output = b''
         for i in range(24):
             pack_output += struct.pack(self.typeCode,i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
@@ -56,7 +54,7 @@ class FlatTestCase(unittest.TestCase):
         "Test Process function 3D array, FORTRAN order"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         process = Flat.__dict__[self.typeStr + "Process"]
-        pack_output = ''
+        pack_output = b''
         for i in range(24):
             pack_output += struct.pack(self.typeCode,i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
@@ -69,7 +67,7 @@ class FlatTestCase(unittest.TestCase):
         "Test Process function with non-contiguous array, which should raise an error"
         print(self.typeStr, "... ", end=' ', file=sys.stderr)
         process = Flat.__dict__[self.typeStr + "Process"]
-        pack_output = ''
+        pack_output = b''
         for i in range(24):
             pack_output += struct.pack(self.typeCode,i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)

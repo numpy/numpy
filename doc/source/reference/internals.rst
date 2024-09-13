@@ -1,10 +1,10 @@
+:orphan:
+
 ***************
 NumPy internals
 ***************
 
-.. toctree::
+.. This document has been moved to ../dev/internals.rst.
 
-   internals.code-explanations
-   alignment
+This document has been moved to :ref:`numpy-internals`.
 
-.. automodule:: numpy.doc.internals

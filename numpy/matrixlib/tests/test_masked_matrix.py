@@ -1,13 +1,13 @@
-from __future__ import division, absolute_import, print_function
+import pickle
 
 import numpy as np
+from numpy.testing import assert_warns
 from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
                                 assert_array_equal)
 from numpy.ma.core import (masked_array, masked_values, masked, allequal,
                            MaskType, getmask, MaskedArray, nomask,
                            log, add, hypot, divide)
 from numpy.ma.extras import mr_
-from numpy.compat import pickle
 
 
 class MMatrix(MaskedArray, np.matrix,):
@@ -29,7 +29,7 @@ class MMatrix(MaskedArray, np.matrix,):
         return _view
 
 
-class TestMaskedMatrix(object):
+class TestMaskedMatrix:
     def test_matrix_indexing(self):
         # Tests conversions and indexing
         x1 = np.matrix([[1, 2, 3], [4, 3, 2]])
@@ -125,7 +125,7 @@ class TestMaskedMatrix(object):
         X = np.matrix(x)
         m = np.array([[True, False, False],
                       [False, False, False],
-                      [True, True, False]], dtype=np.bool_)
+                      [True, True, False]], dtype=np.bool)
         mX = masked_array(X, mask=m)
         mXbig = (mX > 0.5)
         mXsmall = (mX < 0.5)
@@ -171,10 +171,10 @@ class TestMaskedMatrix(object):
         assert_(not isinstance(test, MaskedArray))
 
 
-class TestSubclassing(object):
+class TestSubclassing:
     # Test suite for masked subclasses of ndarray.
 
-    def setup(self):
+    def setup_method(self):
         x = np.arange(5, dtype='float')
         mx = MMatrix(x, mask=[0, 1, 0, 0, 0])
         self.data = (x, mx)
@@ -200,7 +200,8 @@ class TestSubclassing(object):
         # Result should work
         assert_equal(add(mx, x), mx+x)
         assert_(isinstance(add(mx, mx)._data, np.matrix))
-        assert_(isinstance(add.outer(mx, mx), MMatrix))
+        with assert_warns(DeprecationWarning):
+            assert_(isinstance(add.outer(mx, mx), MMatrix))
         assert_(isinstance(hypot(mx, mx), MMatrix))
         assert_(isinstance(hypot(mx, x), MMatrix))
 
@@ -212,7 +213,7 @@ class TestSubclassing(object):
         assert_(isinstance(divide(mx, x), MMatrix))
         assert_equal(divide(mx, mx), divide(xmx, xmx))
 
-class TestConcatenator(object):
+class TestConcatenator:
     # Tests for mr_, the equivalent of r_ for masked arrays.
 
     def test_matrix_builder(self):

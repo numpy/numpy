@@ -1,10 +1,6 @@
-from __future__ import absolute_import, division, print_function
-
 from .common import Benchmark
 
 import numpy as np
-
-from six.moves import xrange
 
 
 class LaplaceInplace(Benchmark):
@@ -61,7 +57,7 @@ class MaxesOfDots(Benchmark):
         ntime = 200
 
         self.arrays = [np.random.normal(size=(ntime, nfeat))
-                       for i in xrange(nsubj)]
+                       for i in range(nsubj)]
 
     def maxes_of_dots(self, arrays):
         """
@@ -74,8 +70,8 @@ class MaxesOfDots(Benchmark):
 
         Arrays must agree only on the first dimension.
 
-        For numpy it a join benchmark of dot products and max()
-        on a set of arrays.
+        Numpy uses this as a simultaneous benchmark of 1) dot products
+        and 2) max(<array>, axis=<int>).
         """
         feature_scores = ([0] * len(arrays))
         for (i, sd) in enumerate(arrays):

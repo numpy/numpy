@@ -1,5 +1,3 @@
-from __future__ import division, absolute_import, print_function
-
 import os
 import re
 import sys
@@ -11,13 +9,12 @@ import subprocess
 import shutil
 import multiprocessing
 import textwrap
+import importlib.util
+from threading import local as tlocal
+from functools import reduce
 
 import distutils
 from distutils.errors import DistutilsError
-try:
-    from threading import local as tlocal
-except ImportError:
-    from dummy_threading import local as tlocal
 
 # stores temporary directory of each thread to only create one per thread
 _tdata = tlocal()
@@ -34,10 +31,6 @@ def clean_up_temporary_directory():
 
 atexit.register(clean_up_temporary_directory)
 
-from numpy.distutils.compat import get_exception
-from numpy.compat import basestring
-from numpy.compat import npy_load_module
-
 __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'dict_append', 'appendpath', 'generate_config_py',
            'get_cmd', 'allpath', 'get_mathlibs',
@@ -48,10 +41,11 @@ __all__ = ['Configuration', 'get_numpy_include_dirs', 'default_config_dict',
            'get_script_files', 'get_lib_source_files', 'get_data_files',
            'dot_join', 'get_frame', 'minrelpath', 'njoin',
            'is_sequence', 'is_string', 'as_list', 'gpaths', 'get_language',
-           'quote_args', 'get_build_architecture', 'get_info', 'get_pkg_info',
-           'get_num_build_jobs']
+           'get_build_architecture', 'get_info', 'get_pkg_info',
+           'get_num_build_jobs', 'sanitize_cxx_flags',
+           'exec_mod_from_location']
 
-class InstallableLib(object):
+class InstallableLib:
     """
     Container to hold information on an installable library.
 
@@ -116,6 +110,13 @@ def get_num_build_jobs():
         return max(x for x in cmdattr if x is not None)
 
 def quote_args(args):
+    """Quote list of arguments.
+
+    .. deprecated:: 1.22.
+    """
+    import warnings
+    warnings.warn('"quote_args" is deprecated.',
+                  DeprecationWarning, stacklevel=2)
     # don't used _nt_quote_args as it does not check if
     # args items already have quotes or not.
     args = list(args)
@@ -127,8 +128,8 @@ def quote_args(args):
 
 def allpath(name):
     "Convert a /-separated pathname to one using the OS's path separator."
-    splitted = name.split('/')
-    return os.path.join(*splitted)
+    split = name.split('/')
+    return os.path.join(*split)
 
 def rel_path(path, parent_path):
     """Return path relative to parent_path."""
@@ -168,7 +169,6 @@ def get_path_from_frame(frame, parent_path=None):
             # we're probably running setup.py as execfile("setup.py")
             # (likely we're building an egg)
             d = os.path.abspath('.')
-            # hmm, should we use sys.argv[0] like in __builtin__ case?
 
     if parent_path is not None:
         d = rel_path(d, parent_path)
@@ -358,7 +358,7 @@ if terminal_has_colors():
             fgcode = 30 + _colour_codes.get(fg.lower(), 0)
             seq.append(str(fgcode))
         if bg:
-            bgcode = 40 + _colour_codes.get(fg.lower(), 7)
+            bgcode = 40 + _colour_codes.get(bg.lower(), 7)
             seq.append(str(bgcode))
         if seq:
             return '\x1b[%sm%s\x1b[0m' % (';'.join(seq), s)
@@ -383,10 +383,42 @@ def blue_text(s):
 
 #########################
 
-def cyg2win32(path):
-    if sys.platform=='cygwin' and path.startswith('/cygdrive'):
-        path = path[10] + ':' + os.path.normcase(path[11:])
-    return path
+def cyg2win32(path: str) -> str:
+    """Convert a path from Cygwin-native to Windows-native.
+
+    Uses the cygpath utility (part of the Base install) to do the
+    actual conversion.  Falls back to returning the original path if
+    this fails.
+
+    Handles the default ``/cygdrive`` mount prefix as well as the
+    ``/proc/cygdrive`` portable prefix, custom cygdrive prefixes such
+    as ``/`` or ``/mnt``, and absolute paths such as ``/usr/src/`` or
+    ``/home/username``
+
+    Parameters
+    ----------
+    path : str
+       The path to convert
+
+    Returns
+    -------
+    converted_path : str
+        The converted path
+
+    Notes
+    -----
+    Documentation for cygpath utility:
+    https://cygwin.com/cygwin-ug-net/cygpath.html
+    Documentation for the C function it wraps:
+    https://cygwin.com/cygwin-api/func-cygwin-conv-path.html
+
+    """
+    if sys.platform != "cygwin":
+        return path
+    return subprocess.check_output(
+        ["/usr/bin/cygpath", "--windows", path], text=True
+    )
+
 
 def mingw32():
     """Return true when using mingw32 environment.
@@ -432,9 +464,9 @@ def msvc_runtime_major():
 #########################
 
 #XXX need support for .C that is also C++
-cxx_ext_match = re.compile(r'.*[.](cpp|cxx|cc)\Z', re.I).match
-fortran_ext_match = re.compile(r'.*[.](f90|f95|f77|for|ftn|f)\Z', re.I).match
-f90_ext_match = re.compile(r'.*[.](f90|f95)\Z', re.I).match
+cxx_ext_match = re.compile(r'.*\.(cpp|cxx|cc)\Z', re.I).match
+fortran_ext_match = re.compile(r'.*\.(f90|f95|f77|for|ftn|f)\Z', re.I).match
+f90_ext_match = re.compile(r'.*\.(f90|f95)\Z', re.I).match
 f90_module_name_match = re.compile(r'\s*module\s*(?P<name>[\w_]+)', re.I).match
 def _get_f90_modules(source):
     """Return a list of Fortran f90 module names that
@@ -443,7 +475,7 @@ def _get_f90_modules(source):
     if not f90_ext_match(source):
         return []
     modules = []
-    with open(source, 'r') as f:
+    with open(source) as f:
         for line in f:
             m = f90_module_name_match(line)
             if m:
@@ -453,14 +485,11 @@ def _get_f90_modules(source):
     return modules
 
 def is_string(s):
-    return isinstance(s, basestring)
+    return isinstance(s, str)
 
 def all_strings(lst):
     """Return True if all items in lst are string objects. """
-    for item in lst:
-        if not is_string(item):
-            return False
-    return True
+    return all(is_string(item) for item in lst)
 
 def is_sequence(seq):
     if is_string(seq):
@@ -495,17 +524,11 @@ def get_language(sources):
 
 def has_f_sources(sources):
     """Return True if sources contains Fortran files """
-    for source in sources:
-        if fortran_ext_match(source):
-            return True
-    return False
+    return any(fortran_ext_match(source) for source in sources)
 
 def has_cxx_sources(sources):
     """Return True if sources contains C++ files """
-    for source in sources:
-        if cxx_ext_match(source):
-            return True
-    return False
+    return any(cxx_ext_match(source) for source in sources)
 
 def filter_sources(sources):
     """Return four lists of filenames containing
@@ -662,15 +685,11 @@ def get_shared_lib_extension(is_python_ext=False):
     -----
     For Python shared libs, `so_ext` will typically be '.so' on Linux and OS X,
     and '.pyd' on Windows.  For Python >= 3.2 `so_ext` has a tag prepended on
-    POSIX systems according to PEP 3149.  For Python 3.2 this is implemented on
-    Linux, but not on OS X.
+    POSIX systems according to PEP 3149.
 
     """
     confvars = distutils.sysconfig.get_config_vars()
-    # SO is deprecated in 3.3.1, use EXT_SUFFIX instead
-    so_ext = confvars.get('EXT_SUFFIX', None)
-    if so_ext is None:
-        so_ext = confvars.get('SO', '')
+    so_ext = confvars.get('EXT_SUFFIX', '')
 
     if not is_python_ext:
         # hardcode known values, config vars (including SHLIB_SUFFIX) are
@@ -728,7 +747,7 @@ def get_frame(level=0):
 
 ######################
 
-class Configuration(object):
+class Configuration:
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
                   'libraries', 'headers', 'scripts', 'py_modules',
@@ -912,9 +931,8 @@ class Configuration(object):
         try:
             setup_name = os.path.splitext(os.path.basename(setup_py))[0]
             n = dot_join(self.name, subpackage_name, setup_name)
-            setup_module = npy_load_module('_'.join(n.split('.')),
-                                           setup_py,
-                                           ('.py', 'U', 1))
+            setup_module = exec_mod_from_location(
+                                '_'.join(n.split('.')), setup_py)
             if not hasattr(setup_module, 'configuration'):
                 if not self.options['assume_default_configuration']:
                     self.warn('Assuming default configuration '\
@@ -926,18 +944,8 @@ class Configuration(object):
             else:
                 pn = dot_join(*([parent_name] + subpackage_name.split('.')[:-1]))
                 args = (pn,)
-                def fix_args_py2(args):
-                    if setup_module.configuration.__code__.co_argcount > 1:
-                        args = args + (self.top_path,)
-                    return args
-                def fix_args_py3(args):
-                    if setup_module.configuration.__code__.co_argcount > 1:
-                        args = args + (self.top_path,)
-                    return args
-                if sys.version_info[0] < 3:
-                    args = fix_args_py2(args)
-                else:
-                    args = fix_args_py3(args)
+                if setup_module.configuration.__code__.co_argcount > 1:
+                    args = args + (self.top_path,)
                 config = setup_module.configuration(*args)
             if config.name!=dot_join(parent_name, subpackage_name):
                 self.warn('Subpackage %r configuration returned as %r' % \
@@ -1403,7 +1411,7 @@ class Configuration(object):
         """Apply glob to paths and prepend local_path if needed.
 
         Applies glob.glob(...) to each path in the sequence (if needed) and
-        pre-pends the local_path if needed. Because this is called on all
+        prepends the local_path if needed. Because this is called on all
         source lists, this allows wildcard characters to be specified in lists
         of sources for extension modules and libraries and scripts and allows
         path-names be relative to the source directory.
@@ -1581,7 +1589,7 @@ class Configuration(object):
         """
         Similar to add_library, but the specified library is installed.
 
-        Most C libraries used with `distutils` are only used to build python
+        Most C libraries used with ``distutils`` are only used to build python
         extensions, but libraries built through this method will be installed
         so that they can be reused by third-party packages.
 
@@ -1693,7 +1701,7 @@ class Configuration(object):
         cross-compilation you of-course need to link with target libraries,
         while using the host Python installation.
 
-        You can copy out the numpy/core/lib/npy-pkg-config directory, add a
+        You can copy out the numpy/_core/lib/npy-pkg-config directory, add a
         pkgdir value to the .ini files and set NPY_PKG_CONFIG_PATH environment
         variable to point to the directory with the modified npy-pkg-config
         files.
@@ -1706,8 +1714,8 @@ class Configuration(object):
             Version=0.1
 
             [variables]
-            pkgname=numpy.core
-            pkgdir=/build/arm-linux-gnueabi/sysroot/usr/lib/python3.7/site-packages/numpy/core
+            pkgname=numpy._core
+            pkgdir=/build/arm-linux-gnueabi/sysroot/usr/lib/python3.7/site-packages/numpy/_core
             prefix=${pkgdir}
             libdir=${prefix}/lib
             includedir=${prefix}/include
@@ -1868,8 +1876,7 @@ class Configuration(object):
         """Return path's SVN revision number.
         """
         try:
-            output = subprocess.check_output(
-                ['svnversion'], shell=True, cwd=path)
+            output = subprocess.check_output(['svnversion'], cwd=path)
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
@@ -1899,7 +1906,7 @@ class Configuration(object):
         """
         try:
             output = subprocess.check_output(
-                ['hg identify --num'], shell=True, cwd=path)
+                ['hg', 'identify', '--num'], cwd=path)
         except (subprocess.CalledProcessError, OSError):
             pass
         else:
@@ -1916,15 +1923,16 @@ class Configuration(object):
                 revision0 = f.read().strip()
 
             branch_map = {}
-            for line in file(branch_cache_fn, 'r'):
-                branch1, revision1  = line.split()[:2]
-                if revision1==revision0:
-                    branch0 = branch1
-                try:
-                    revision1 = int(revision1)
-                except ValueError:
-                    continue
-                branch_map[branch1] = revision1
+            with open(branch_cache_fn) as f:
+                for line in f:
+                    branch1, revision1  = line.split()[:2]
+                    if revision1==revision0:
+                        branch0 = branch1
+                    try:
+                        revision1 = int(revision1)
+                    except ValueError:
+                        continue
+                    branch_map[branch1] = revision1
 
             return branch_map.get(branch0)
 
@@ -1970,11 +1978,10 @@ class Configuration(object):
                 name = os.path.splitext(os.path.basename(fn))[0]
                 n = dot_join(self.name, name)
                 try:
-                    version_module = npy_load_module('_'.join(n.split('.')),
-                                                     fn, info)
-                except ImportError:
-                    msg = get_exception()
-                    self.warn(str(msg))
+                    version_module = exec_mod_from_location(
+                                        '_'.join(n.split('.')), fn)
+                except ImportError as e:
+                    self.warn(str(e))
                     version_module = None
                 if version_module is None:
                     continue
@@ -1983,6 +1990,13 @@ class Configuration(object):
                     version = getattr(version_module, a, None)
                     if version is not None:
                         break
+
+                # Try if versioneer module
+                try:
+                    version = version_module.get_versions()['version']
+                except AttributeError:
+                    pass
+
                 if version is not None:
                     break
 
@@ -2118,12 +2132,12 @@ def get_cmd(cmdname, _cache={}):
     return _cache[cmdname]
 
 def get_numpy_include_dirs():
-    # numpy_include_dirs are set by numpy/core/setup.py, otherwise []
+    # numpy_include_dirs are set by numpy/_core/setup.py, otherwise []
     include_dirs = Configuration.numpy_include_dirs[:]
     if not include_dirs:
         import numpy
         include_dirs = [ numpy.get_include() ]
-    # else running numpy/core/setup.py
+    # else running numpy/_core/setup.py
     return include_dirs
 
 def get_npy_pkg_dir():
@@ -2138,13 +2152,12 @@ def get_npy_pkg_dir():
     environment, and using them when cross-compiling.
 
     """
-    # XXX: import here for bootstrapping reasons
-    import numpy
     d = os.environ.get('NPY_PKG_CONFIG_PATH')
     if d is not None:
         return d
-    d = os.path.join(os.path.dirname(numpy.__file__),
-            'core', 'lib', 'npy-pkg-config')
+    spec = importlib.util.find_spec('numpy')
+    d = os.path.join(os.path.dirname(spec.origin),
+            '_core', 'lib', 'npy-pkg-config')
     return d
 
 def get_pkg_info(pkgname, dirs=None):
@@ -2223,7 +2236,7 @@ def get_info(pkgname, dirs=None):
     >>> npymath_info = np.distutils.misc_util.get_info('npymath')
     >>> npymath_info                                    #doctest: +SKIP
     {'define_macros': [], 'libraries': ['npymath'], 'library_dirs':
-    ['.../numpy/core/lib'], 'include_dirs': ['.../numpy/core/include']}
+    ['.../numpy/_core/lib'], 'include_dirs': ['.../numpy/_core/include']}
 
     This info dict can then be used as input to a `Configuration` instance::
 
@@ -2246,10 +2259,7 @@ def get_info(pkgname, dirs=None):
     return info
 
 def is_bootstrapping():
-    if sys.version_info[0] >= 3:
-        import builtins
-    else:
-        import __builtin__ as builtins
+    import builtins
 
     try:
         builtins.__NUMPY_SETUP__
@@ -2329,11 +2339,7 @@ def generate_config_py(target):
             extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
 
             if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
-                if sys.version_info >= (3, 8):
-                    os.add_dll_directory(extra_dll_dir)
-                else:
-                    os.environ.setdefault('PATH', '')
-                    os.environ['PATH'] += os.pathsep + extra_dll_dir
+                os.add_dll_directory(extra_dll_dir)
 
             """))
 
@@ -2345,6 +2351,75 @@ def generate_config_py(target):
                 return g.get(name, g.get(name + "_info", {}))
 
             def show():
+                """
+                Show libraries in the system on which NumPy was built.
+
+                Print information about various resources (libraries, library
+                directories, include directories, etc.) in the system on which
+                NumPy was built.
+
+                See Also
+                --------
+                get_include : Returns the directory containing NumPy C
+                              header files.
+
+                Notes
+                -----
+                1. Classes specifying the information to be printed are defined
+                   in the `numpy.distutils.system_info` module.
+
+                   Information may include:
+
+                   * ``language``: language used to write the libraries (mostly
+                     C or f77)
+                   * ``libraries``: names of libraries found in the system
+                   * ``library_dirs``: directories containing the libraries
+                   * ``include_dirs``: directories containing library header files
+                   * ``src_dirs``: directories containing library source files
+                   * ``define_macros``: preprocessor macros used by
+                     ``distutils.setup``
+                   * ``baseline``: minimum CPU features required
+                   * ``found``: dispatched features supported in the system
+                   * ``not found``: dispatched features that are not supported
+                     in the system
+
+                2. NumPy BLAS/LAPACK Installation Notes
+
+                   Installing a numpy wheel (``pip install numpy`` or force it
+                   via ``pip install numpy --only-binary :numpy: numpy``) includes
+                   an OpenBLAS implementation of the BLAS and LAPACK linear algebra
+                   APIs. In this case, ``library_dirs`` reports the original build
+                   time configuration as compiled with gcc/gfortran; at run time
+                   the OpenBLAS library is in
+                   ``site-packages/numpy.libs/`` (linux), or
+                   ``site-packages/numpy/.dylibs/`` (macOS), or
+                   ``site-packages/numpy/.libs/`` (windows).
+
+                   Installing numpy from source
+                   (``pip install numpy --no-binary numpy``) searches for BLAS and
+                   LAPACK dynamic link libraries at build time as influenced by
+                   environment variables NPY_BLAS_LIBS, NPY_CBLAS_LIBS, and
+                   NPY_LAPACK_LIBS; or NPY_BLAS_ORDER and NPY_LAPACK_ORDER;
+                   or the optional file ``~/.numpy-site.cfg``.
+                   NumPy remembers those locations and expects to load the same
+                   libraries at run-time.
+                   In NumPy 1.21+ on macOS, 'accelerate' (Apple's Accelerate BLAS
+                   library) is in the default build-time search order after
+                   'openblas'.
+
+                Examples
+                --------
+                >>> import numpy as np
+                >>> np.show_config()
+                blas_opt_info:
+                    language = c
+                    define_macros = [('HAVE_CBLAS', None)]
+                    libraries = ['openblas', 'openblas']
+                    library_dirs = ['/usr/local/lib']
+                """
+                from numpy._core._multiarray_umath import (
+                    __cpu_features__, __cpu_baseline__, __cpu_dispatch__
+                )
                 for name,info_dict in globals().items():
                     if name[0] == "_" or type(info_dict) is not type({}): continue
                     print(name + ":")
@@ -2355,6 +2430,19 @@ def generate_config_py(target):
                         if k == "sources" and len(v) > 200:
                             v = v[:60] + " ...\n... " + v[-60:]
                         print("    %s = %s" % (k,v))
+
+                features_found, features_not_found = [], []
+                for feature in __cpu_dispatch__:
+                    if __cpu_features__[feature]:
+                        features_found.append(feature)
+                    else:
+                        features_not_found.append(feature)
+
+                print("Supported SIMD extensions in this NumPy install:")
+                print("    baseline = %s" % (','.join(__cpu_baseline__)))
+                print("    found = %s" % (','.join(features_found)))
+                print("    not found = %s" % (','.join(features_not_found)))
+
                     '''))
 
     return target
@@ -2372,3 +2460,25 @@ def get_build_architecture():
     # systems, so delay the import to here.
     from distutils.msvccompiler import get_build_architecture
     return get_build_architecture()
+
+
+_cxx_ignore_flags = {'-Werror=implicit-function-declaration', '-std=c99'}
+
+
+def sanitize_cxx_flags(cxxflags):
+    '''
+    Some flags are valid for C but not C++. Prune them.
+    '''
+    return [flag for flag in cxxflags if flag not in _cxx_ignore_flags]
+
+
+def exec_mod_from_location(modname, modfile):
+    '''
+    Use importlib machinery to import a module `modname` from the file
+    `modfile`. Depending on the `spec.loader`, the module may not be
+    registered in sys.modules.
+    '''
+    spec = importlib.util.spec_from_file_location(modname, modfile)
+    foo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(foo)
+    return foo

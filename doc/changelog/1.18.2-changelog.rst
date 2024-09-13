@@ -1,0 +1,25 @@
+
+Contributors
+============
+
+A total of 5 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Ganesh Kathiresan +
+* Matti Picus
+* Sebastian Berg
+* przemb +
+
+Pull requests merged
+====================
+
+A total of 7 pull requests were merged for this release.
+
+* `#15675 <https://github.com/numpy/numpy/pull/15675>`__: TST: move _no_tracing to testing._private
+* `#15676 <https://github.com/numpy/numpy/pull/15676>`__: MAINT: Large overhead in some random functions
+* `#15677 <https://github.com/numpy/numpy/pull/15677>`__: TST: Do not create gfortran link in azure Mac testing.
+* `#15679 <https://github.com/numpy/numpy/pull/15679>`__: BUG: Added missing error check in `ndarray.__contains__`
+* `#15722 <https://github.com/numpy/numpy/pull/15722>`__: MAINT: use list-based APIs to call subprocesses
+* `#15729 <https://github.com/numpy/numpy/pull/15729>`__: REL: Prepare for 1.18.2 release.
+* `#15734 <https://github.com/numpy/numpy/pull/15734>`__: BUG: fix logic error when nm fails on 32-bit

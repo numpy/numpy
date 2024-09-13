@@ -1,7 +1,5 @@
-from __future__ import division, absolute_import, print_function
-
 import sys
-from distutils.core import *
+from distutils.core import Distribution
 
 if 'setuptools' in sys.modules:
     have_setuptools = True
@@ -21,13 +19,13 @@ import warnings
 import distutils.core
 import distutils.dist
 
-from numpy.distutils.extension import Extension
+from numpy.distutils.extension import Extension  # noqa: F401
 from numpy.distutils.numpy_distribution import NumpyDistribution
 from numpy.distutils.command import config, config_compiler, \
      build, build_py, build_ext, build_clib, build_src, build_scripts, \
      sdist, install_data, install_headers, install, bdist_rpm, \
      install_clib
-from numpy.distutils.misc_util import get_data_files, is_sequence, is_string
+from numpy.distutils.misc_util import is_sequence, is_string
 
 numpy_cmdclass = {'build':            build.build,
                   'build_src':        build_src.build_src,

@@ -1,0 +1,53 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 1.20.1 Release Notes
+==========================
+
+NumPy 1,20.1 is a rapid bugfix release fixing several bugs and regressions
+reported after the 1.20.0 release.
+
+
+Highlights
+==========
+
+- The distutils bug that caused problems with downstream projects is fixed.
+- The ``random.shuffle`` regression is fixed.
+
+
+Contributors
+============
+
+A total of 8 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Bas van Beek
+* Charles Harris
+* Nicholas McKibben +
+* Pearu Peterson
+* Ralf Gommers
+* Sebastian Berg
+* Tyler Reddy
+* @Aerysv +
+
+
+Pull requests merged
+====================
+
+A total of 15 pull requests were merged for this release.
+
+* `#18306 <https://github.com/numpy/numpy/pull/18306>`__: MAINT: Add missing placeholder annotations
+* `#18310 <https://github.com/numpy/numpy/pull/18310>`__: BUG: Fix typo in ``numpy.__init__.py``
+* `#18326 <https://github.com/numpy/numpy/pull/18326>`__: BUG: don't mutate list of fake libraries while iterating over...
+* `#18327 <https://github.com/numpy/numpy/pull/18327>`__: MAINT: gracefully shuffle memoryviews
+* `#18328 <https://github.com/numpy/numpy/pull/18328>`__: BUG: Use C linkage for random distributions
+* `#18336 <https://github.com/numpy/numpy/pull/18336>`__: CI: fix when GitHub Actions builds trigger, and allow ci skips
+* `#18337 <https://github.com/numpy/numpy/pull/18337>`__: BUG: Allow unmodified use of isclose, allclose, etc. with timedelta
+* `#18345 <https://github.com/numpy/numpy/pull/18345>`__: BUG: Allow pickling all relevant DType types/classes
+* `#18351 <https://github.com/numpy/numpy/pull/18351>`__: BUG: Fix missing signed_char dependency. Closes #18335.
+* `#18352 <https://github.com/numpy/numpy/pull/18352>`__: DOC: Change license date 2020 -> 2021
+* `#18353 <https://github.com/numpy/numpy/pull/18353>`__: CI: CircleCI seems to occasionally time out, increase the limit
+* `#18354 <https://github.com/numpy/numpy/pull/18354>`__: BUG: Fix f2py bugs when wrapping F90 subroutines.
+* `#18356 <https://github.com/numpy/numpy/pull/18356>`__: MAINT: crackfortran regex simplify
+* `#18357 <https://github.com/numpy/numpy/pull/18357>`__: BUG: threads.h existence test requires GLIBC > 2.12.
+* `#18359 <https://github.com/numpy/numpy/pull/18359>`__: REL: Prepare for the NumPy 1.20.1 release.

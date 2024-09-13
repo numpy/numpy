@@ -5,13 +5,12 @@ import pytest
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises,
     )
-from numpy.compat import long
 import numpy as np
 
 from numpy import random
 
 
-class TestRegression(object):
+class TestRegression:
 
     def test_VonMises_range(self):
         # Make sure generated random variables are in [-pi, pi].
@@ -44,20 +43,13 @@ class TestRegression(object):
         # these two frequency counts should be close to theoretical
         # numbers with this large sample
         # theoretical large N result is 0.49706795
-        freq = np.sum(rvsn == 1) / float(N)
-        msg = "Frequency was %f, should be > 0.45" % freq
+        freq = np.sum(rvsn == 1) / N
+        msg = f'Frequency was {freq:f}, should be > 0.45'
         assert_(freq > 0.45, msg)
         # theoretical large N result is 0.19882718
-        freq = np.sum(rvsn == 2) / float(N)
-        msg = "Frequency was %f, should be < 0.23" % freq
+        freq = np.sum(rvsn == 2) / N
+        msg = f'Frequency was {freq:f}, should be < 0.23'
         assert_(freq < 0.23, msg)
-
-    def test_permutation_longs(self):
-        random.seed(1234)
-        a = random.permutation(12)
-        random.seed(1234)
-        b = random.permutation(long(12))
-        assert_array_equal(a, b)
 
     def test_shuffle_mixed_dimension(self):
         # Test for trac ticket #2074
@@ -68,7 +60,8 @@ class TestRegression(object):
             random.seed(12345)
             shuffled = list(t)
             random.shuffle(shuffled)
-            assert_array_equal(shuffled, [t[0], t[3], t[1], t[2]])
+            expected = np.array([t[0], t[3], t[1], t[2]], dtype=object)
+            assert_array_equal(np.array(shuffled, dtype=object), expected)
 
     def test_call_within_randomstate(self):
         # Check that custom RandomState does not call into global state
@@ -128,7 +121,7 @@ class TestRegression(object):
         # a segfault on garbage collection.
         # See gh-7719
         random.seed(1234)
-        a = np.array([np.arange(1), np.arange(4)])
+        a = np.array([np.arange(1), np.arange(4)], dtype=object)
 
         for _ in range(1000):
             random.shuffle(a)
@@ -147,10 +140,10 @@ class TestRegression(object):
         assert_array_equal(perm, np.array([0, 2, 1]))
         assert_array_equal(orig, np.arange(3).view(N))
 
-        class M(object):
+        class M:
             a = np.arange(5)
 
-            def __array__(self):
+            def __array__(self, dtype=None, copy=None):
                 return self.a
 
         random.seed(1)
@@ -172,15 +165,15 @@ class TestRegression(object):
         assert rs1.randint(0, 100) == rs2.randint(0, 100)
 
     def test_choice_retun_dtype(self):
-        # GH 9867
+        # GH 9867, now long since the NumPy default changed.
         c = np.random.choice(10, p=[.1]*10, size=2)
-        assert c.dtype == np.dtype(int)
+        assert c.dtype == np.dtype(np.long)
         c = np.random.choice(10, p=[.1]*10, replace=False, size=2)
-        assert c.dtype == np.dtype(int)
+        assert c.dtype == np.dtype(np.long)
         c = np.random.choice(10, size=2)
-        assert c.dtype == np.dtype(int)
+        assert c.dtype == np.dtype(np.long)
         c = np.random.choice(10, replace=False, size=2)
-        assert c.dtype == np.dtype(int)
+        assert c.dtype == np.dtype(np.long)
 
     @pytest.mark.skipif(np.iinfo('l').max < 2**32,
                         reason='Cannot test with 32-bit C long')
@@ -208,3 +201,16 @@ class TestRegression(object):
                              [3, 4, 2, 3, 3, 1, 5, 3, 1, 3]])
         assert_array_equal(random.binomial([[0], [10]], 0.25, size=(2, 10)),
                            expected)
+
+
+def test_multinomial_empty():
+    # gh-20483
+    # Ensure that empty p-vals are correctly handled
+    assert random.multinomial(10, []).shape == (0,)
+    assert random.multinomial(3, [], size=(7, 5, 3)).shape == (7, 5, 3, 0)
+
+
+def test_multinomial_1d_pval():
+    # gh-20483
+    with pytest.raises(TypeError, match="pvals must be a 1-d"):
+        random.multinomial(10, 0.3)

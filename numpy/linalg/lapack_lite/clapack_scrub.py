@@ -1,17 +1,17 @@
-#!/usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
-import sys, os
+#!/usr/bin/env python2.7
+# WARNING! This a Python 2 script. Read README.rst for rationale.
+import os
 import re
+import sys
+
 from plex import Scanner, Str, Lexicon, Opt, Bol, State, AnyChar, TEXT, IGNORE
 from plex.traditional import re as Re
 
-PY2 = sys.version_info < (3, 0)
+try:
+    from io import BytesIO as UStringIO  # Python 2
+except ImportError:
+    from io import StringIO as UStringIO  # Python 3
 
-if PY2:
-    from io import BytesIO as UStringIO
-else:
-    from io import StringIO as UStringIO
 
 class MyScanner(Scanner):
     def __init__(self, info, name='<default>'):
@@ -106,7 +106,7 @@ def cleanSource(source):
     source = re.sub(r'\n\n\n\n+', r'\n\n\n', source)
     return source
 
-class LineQueue(object):
+class LineQueue:
     def __init__(self):
         object.__init__(self)
         self._queue = []
@@ -228,15 +228,18 @@ def removeHeader(source):
     return lines.getValue()
 
 def removeSubroutinePrototypes(source):
-    expression = re.compile(
-        r'/[*] Subroutine [*]/^\s*(?:(?:inline|static)\s+){0,2}(?!else|typedef|return)\w+\s+\*?\s*(\w+)\s*\([^0]+\)\s*;?'
-    )
-    lines = LineQueue()
-    for line in UStringIO(source):
-        if not expression.match(line):
-            lines.add(line)
-
-    return lines.getValue()
+    # This function has never worked as advertised by its name:
+    # - "/* Subroutine */" declarations may span multiple lines and
+    #   cannot be matched by a line by line approach.
+    # - The caret in the initial regex would prevent any match, even
+    #   of single line "/* Subroutine */" declarations.
+    #
+    # While we could "fix" this function to do what the name implies
+    # it should do, we have no hint of what it should really do.
+    #
+    # Therefore we keep the existing (non-)functionality, documenting
+    # this function as doing nothing at all.
+    return source
 
 def removeBuiltinFunctions(source):
     lines = LineQueue()
@@ -294,7 +297,7 @@ def scrubSource(source, nsteps=None, verbose=False):
 if __name__ == '__main__':
     filename = sys.argv[1]
     outfilename = os.path.join(sys.argv[2], os.path.basename(filename))
-    with open(filename, 'r') as fo:
+    with open(filename) as fo:
         source = fo.read()
 
     if len(sys.argv) > 3:
@@ -302,8 +305,7 @@ if __name__ == '__main__':
     else:
         nsteps = None
 
-    source = scrub_source(source, nsteps, verbose=True)
+    source = scrubSource(source, nsteps, verbose=True)
 
-    writefo = open(outfilename, 'w')
-    writefo.write(source)
-    writefo.close()
+    with open(outfilename, 'w') as writefo:
+        writefo.write(source)

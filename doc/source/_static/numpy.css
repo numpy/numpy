@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+
+.navbar-brand img {
+   height: 75px;
+}
+.navbar-brand {
+   height: 75px;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: medium;
+}
+
+/* Making sure the navbar shows correctly in one line
+   Reduces the space between the top-left logo and the navbar section titles */
+
+.col-lg-3 {
+  width: 15%;
+}
+
+/* Version switcher colors from PyData Sphinx Theme */
+
+.version-switcher__button[data-active-version-name*="devdocs"] {
+  background-color: var(--pst-color-warning);
+  border-color: var(--pst-color-warning);
+  opacity: 0.9;
+}
+
+.version-switcher__button:not([data-active-version-name*="stable"]):not([data-active-version-name*="dev"]):not([data-active-version-name*="pull"]) {
+  background-color: var(--pst-color-danger);
+  border-color: var(--pst-color-danger);
+  opacity: 0.9;
+}
+
+.version-switcher__menu a.list-group-item {
+  font-size: small;
+}
+
+button.btn.version-switcher__button,
+button.btn.version-switcher__button:hover {
+  color: black;
+  font-size: small;
+}
+
+/* Main index page overview cards */
+
+.sd-card .sd-card-img-top {
+  height: 60px;
+  width: 60px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
+}
+
+/* Main index page overview images */
+
+html[data-theme=dark] .sd-card img[src*='.svg'] {
+  filter: invert(0.82) brightness(0.8) contrast(1.2);
+}
+
+/* Legacy admonition */
+
+div.admonition-legacy {
+  border-color: var(--pst-color-warning);
+}
+
+div.admonition-legacy>.admonition-title::after {
+  color: var(--pst-color-warning);
+}
+
+div.admonition-legacy>.admonition-title {
+  background-color: var(--pst-color-warning-bg);
+}

@@ -1,9 +1,20 @@
-from __future__ import division, absolute_import, print_function
+import warnings
+
+# 2018-05-29, PendingDeprecationWarning added to matrix.__new__
+# 2020-01-23, numpy 1.19.0 PendingDeprecatonWarning
+warnings.warn("Importing from numpy.matlib is deprecated since 1.19.0. "
+              "The matrix subclass is not the recommended way to represent "
+              "matrices or deal with linear algebra (see "
+              "https://docs.scipy.org/doc/numpy/user/numpy-for-matlab-users.html). "
+              "Please adjust your code to use regular ndarray. ",
+              PendingDeprecationWarning, stacklevel=2)
 
 import numpy as np
 from numpy.matrixlib.defmatrix import matrix, asmatrix
-# need * as we're copying the numpy namespace (FIXME: this makes little sense)
-from numpy import *
+# Matlib.py contains all functions in the numpy namespace with a few
+# replacements. See doc/source/reference/routines.matlib.rst for details.
+# Need * as we're copying the numpy namespace.
+from numpy import *  # noqa: F403
 
 __version__ = np.__version__
 
@@ -26,14 +37,17 @@ def empty(shape, dtype=None, order='C'):
 
     See Also
     --------
-    empty_like, zeros
+    numpy.empty : Equivalent array function.
+    matlib.zeros : Return a matrix of zeros.
+    matlib.ones : Return a matrix of ones.
 
     Notes
     -----
-    `empty`, unlike `zeros`, does not set the matrix values to zero,
-    and may therefore be marginally faster.  On the other hand, it requires
-    the user to manually set all the values in the array, and should be
-    used with caution.
+    Unlike other matrix creation functions (e.g. `matlib.zeros`,
+    `matlib.ones`), `matlib.empty` does not initialize the values of the
+    matrix, and may therefore be marginally faster. However, the values
+    stored in the newly allocated matrix are arbitrary. For reproducible
+    behavior, be sure to set each element of the matrix before reading.
 
     Examples
     --------
@@ -289,9 +303,10 @@ def randn(*args):
 
     Notes
     -----
-    For random samples from :math:`N(\\mu, \\sigma^2)`, use:
+    For random samples from the normal distribution with mean ``mu`` and
+    standard deviation ``sigma``, use::
 
-    ``sigma * np.matlib.randn(...) + mu``
+        sigma * np.matlib.randn(...) + mu
 
     Examples
     --------
@@ -303,7 +318,8 @@ def randn(*args):
     matrix([[ 0.99734545,  0.2829785 , -1.50629471],
             [-0.57860025,  1.65143654, -2.42667924]])
 
-    Two-by-four matrix of samples from :math:`N(3, 6.25)`:
+    Two-by-four matrix of samples from the normal distribution with
+    mean 3 and standard deviation 2.5:
 
     >>> 2.5 * np.matlib.randn((2, 4)) + 3
     matrix([[1.92771843, 6.16484065, 0.83314899, 1.30278462],

@@ -1,0 +1,36 @@
+
+Contributors
+============
+
+A total of 10 people contributed to this release.
+
+* CakeWithSteak
+* Charles Harris
+* Chris Burr
+* Eric Wieser
+* Fernando Saravia
+* Lars Grueter
+* Matti Picus
+* Maxwell Aladago
+* Qiming Sun
+* Warren Weckesser
+
+Pull requests merged
+====================
+
+A total of 14 pull requests were merged for this release.
+
+* `#14211 <https://github.com/numpy/numpy/pull/14211>`__: BUG: Fix uint-overflow if padding with linear_ramp and negative...
+* `#14275 <https://github.com/numpy/numpy/pull/14275>`__: BUG: fixing to allow unpickling of PY3 pickles from PY2
+* `#14340 <https://github.com/numpy/numpy/pull/14340>`__: BUG: Fix misuse of .names and .fields in various places (backport...
+* `#14423 <https://github.com/numpy/numpy/pull/14423>`__: BUG: test, fix regression in converting to ctypes.
+* `#14434 <https://github.com/numpy/numpy/pull/14434>`__: BUG: Fixed maximum relative error reporting in assert_allclose
+* `#14509 <https://github.com/numpy/numpy/pull/14509>`__: BUG: Fix regression in boolean matmul.
+* `#14686 <https://github.com/numpy/numpy/pull/14686>`__: BUG: properly define PyArray_DescrCheck
+* `#14853 <https://github.com/numpy/numpy/pull/14853>`__: BLD: add 'apt update' to shippable
+* `#14854 <https://github.com/numpy/numpy/pull/14854>`__: BUG: Fix _ctypes class circular reference. (#13808)
+* `#14856 <https://github.com/numpy/numpy/pull/14856>`__: BUG: Fix `np.einsum` errors on Power9 Linux and z/Linux
+* `#14863 <https://github.com/numpy/numpy/pull/14863>`__: BLD: Prevent -flto from optimising long double representation...
+* `#14864 <https://github.com/numpy/numpy/pull/14864>`__: BUG: lib: Fix histogram problem with signed integer arrays.
+* `#15172 <https://github.com/numpy/numpy/pull/15172>`__: ENH: Backport improvements to testing functions.
+* `#15191 <https://github.com/numpy/numpy/pull/15191>`__: REL: Prepare for 1.16.6 release.

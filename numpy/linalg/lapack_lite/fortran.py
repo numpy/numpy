@@ -1,5 +1,4 @@
-from __future__ import division, absolute_import, print_function
-
+# WARNING! This a Python 2 script. Read README.rst for rationale.
 import re
 import itertools
 
@@ -26,7 +25,7 @@ def lineType(line):
     else:
         return STATEMENT
 
-class LineIterator(object):
+class LineIterator:
     """LineIterator(iterable)
 
     Return rstrip()'d lines from iterable, while keeping a count of the
@@ -49,7 +48,7 @@ class LineIterator(object):
     next = __next__
 
 
-class PushbackIterator(object):
+class PushbackIterator:
     """PushbackIterator(iterable)
 
     Return an iterator for which items can be pushed back into.
@@ -116,7 +115,7 @@ def getDependencies(filename):
         for lineno, line in fortranSourceLines(fo):
             m = external_pat.match(line)
             if m:
-                names = line = line[m.end():].strip().split(',')
+                names = line[m.end():].strip().split(',')
                 names = [n.strip().lower() for n in names]
                 names = [n for n in names if n]
                 routines.extend(names)

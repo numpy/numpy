@@ -1,17 +1,11 @@
-# Colored log, requires Python 2.3 or up.
-from __future__ import division, absolute_import, print_function
-
+# Colored log
 import sys
-from distutils.log import *
+from distutils.log import *  # noqa: F403
 from distutils.log import Log as old_Log
 from distutils.log import _global_log
 
-if sys.version_info[0] < 3:
-    from .misc_util import (red_text, default_text, cyan_text, green_text,
-            is_sequence, is_string)
-else:
-    from numpy.distutils.misc_util import (red_text, default_text, cyan_text,
-            green_text, is_sequence, is_string)
+from numpy.distutils.misc_util import (red_text, default_text, cyan_text,
+        green_text, is_sequence, is_string)
 
 
 def _fix_args(args,flag=1):
@@ -93,3 +87,25 @@ _global_color_map = {
 
 # don't use INFO,.. flags in set_verbosity, these flags are for set_threshold.
 set_verbosity(0, force=True)
+
+
+_error = error
+_warn = warn
+_info = info
+_debug = debug
+
+
+def error(msg, *a, **kw):
+    _error(f"ERROR: {msg}", *a, **kw)
+
+
+def warn(msg, *a, **kw):
+    _warn(f"WARN: {msg}", *a, **kw)
+
+
+def info(msg, *a, **kw):
+    _info(f"INFO: {msg}", *a, **kw)
+
+
+def debug(msg, *a, **kw):
+    _debug(f"DEBUG: {msg}", *a, **kw)

@@ -1,17 +1,15 @@
-#! /usr/bin/env python
-from __future__ import division, absolute_import, print_function
-
+#!/usr/bin/env python3
 # System imports
-from   distutils.util import get_platform
-import os
 import sys
 import unittest
 
 # Import NumPy
 import numpy as np
 major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
-if major == 0: BadListError = TypeError
-else:          BadListError = ValueError
+if major == 0:
+    BadListError = TypeError
+else:
+    BadListError = ValueError
 
 import Matrix
 

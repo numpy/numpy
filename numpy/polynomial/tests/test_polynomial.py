@@ -1,15 +1,16 @@
 """Tests for polynomial module.
 
 """
-from __future__ import division, absolute_import, print_function
-
 from functools import reduce
-
+from fractions import Fraction
 import numpy as np
 import numpy.polynomial.polynomial as poly
+import numpy.polynomial.polyutils as pu
+import pickle
+from copy import deepcopy
 from numpy.testing import (
     assert_almost_equal, assert_raises, assert_equal, assert_,
-    assert_warns, assert_array_equal)
+    assert_array_equal, assert_raises_regex, assert_warns)
 
 
 def trim(x):
@@ -29,7 +30,7 @@ T9 = [0, 9, 0, -120, 0, 432, 0, -576, 0, 256]
 Tlist = [T0, T1, T2, T3, T4, T5, T6, T7, T8, T9]
 
 
-class TestConstants(object):
+class TestConstants:
 
     def test_polydomain(self):
         assert_equal(poly.polydomain, [-1, 1])
@@ -43,13 +44,22 @@ class TestConstants(object):
     def test_polyx(self):
         assert_equal(poly.polyx, [0, 1])
 
+    def test_copy(self):
+        x = poly.Polynomial([1, 2, 3])
+        y = deepcopy(x)
+        assert_equal(x, y)
 
-class TestArithmetic(object):
+    def test_pickle(self):
+        x = poly.Polynomial([1, 2, 3])
+        y = pickle.loads(pickle.dumps(x))
+        assert_equal(x, y)
+
+class TestArithmetic:
 
     def test_polyadd(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
@@ -59,7 +69,7 @@ class TestArithmetic(object):
     def test_polysub(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
@@ -77,7 +87,7 @@ class TestArithmetic(object):
     def test_polymul(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 tgt = np.zeros(i + j + 1)
                 tgt[i + j] += 1
                 res = poly.polymul([0]*i + [1], [0]*j + [1])
@@ -96,7 +106,7 @@ class TestArithmetic(object):
         # check rest.
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 ci = [0]*i + [1, 2]
                 cj = [0]*j + [1, 2]
                 tgt = poly.polyadd(ci, cj)
@@ -107,14 +117,33 @@ class TestArithmetic(object):
     def test_polypow(self):
         for i in range(5):
             for j in range(5):
-                msg = "At i=%d, j=%d" % (i, j)
+                msg = f"At i={i}, j={j}"
                 c = np.arange(i + 1)
                 tgt = reduce(poly.polymul, [c]*j, np.array([1]))
-                res = poly.polypow(c, j) 
+                res = poly.polypow(c, j)
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
+class TestFraction:
 
-class TestEvaluation(object):
+    def test_Fraction(self):
+        # assert we can use Polynomials with coefficients of object dtype
+        f = Fraction(2, 3)
+        one = Fraction(1, 1)
+        zero = Fraction(0, 1)
+        p = poly.Polynomial([f, f], domain=[zero, one], window=[zero, one])
+
+        x = 2 * p + p ** 2
+        assert_equal(x.coef, np.array([Fraction(16, 9), Fraction(20, 9),
+                                       Fraction(4, 9)], dtype=object))
+        assert_equal(p.domain, [zero, one])
+        assert_equal(p.coef.dtype, np.dtypes.ObjectDType())
+        assert_(isinstance(p(f), Fraction))
+        assert_equal(p(f), Fraction(10, 9))
+        p_deriv = poly.Polynomial([Fraction(2, 3)], domain=[zero, one],
+                                  window=[zero, one])
+        assert_equal(p.deriv(), p_deriv)
+
+class TestEvaluation:
     # coefficients of 1 + 2*x + 3*x**2
     c1d = np.array([1., 2., 3.])
     c2d = np.einsum('i,j->ij', c1d, c1d)
@@ -229,7 +258,8 @@ class TestEvaluation(object):
         y1, y2, y3 = self.y
 
         #test exceptions
-        assert_raises(ValueError, poly.polyval2d, x1, x2[:2], self.c2d)
+        assert_raises_regex(ValueError, 'incompatible',
+                            poly.polyval2d, x1, x2[:2], self.c2d)
 
         #test values
         tgt = y1*y2
@@ -246,7 +276,8 @@ class TestEvaluation(object):
         y1, y2, y3 = self.y
 
         #test exceptions
-        assert_raises(ValueError, poly.polyval3d, x1, x2, x3[:2], self.c3d)
+        assert_raises_regex(ValueError, 'incompatible',
+                      poly.polyval3d, x1, x2, x3[:2], self.c3d)
 
         #test values
         tgt = y1*y2*y3
@@ -287,7 +318,7 @@ class TestEvaluation(object):
         assert_(res.shape == (2, 3)*3)
 
 
-class TestIntegral(object):
+class TestIntegral:
 
     def test_polyint(self):
         # check exceptions
@@ -297,8 +328,7 @@ class TestIntegral(object):
         assert_raises(ValueError, poly.polyint, [0], lbnd=[0])
         assert_raises(ValueError, poly.polyint, [0], scl=[0])
         assert_raises(TypeError, poly.polyint, [0], axis=.5)
-        with assert_warns(DeprecationWarning):
-            poly.polyint([1, 1], 1.)
+        assert_raises(TypeError, poly.polyint, [1, 1], 1.)
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -386,7 +416,7 @@ class TestIntegral(object):
         assert_almost_equal(res, tgt)
 
 
-class TestDerivative(object):
+class TestDerivative:
 
     def test_polyder(self):
         # check exceptions
@@ -426,7 +456,7 @@ class TestDerivative(object):
         assert_almost_equal(res, tgt)
 
 
-class TestVander(object):
+class TestVander:
     # some random values in [-1, 1)
     x = np.random.random((3, 5))*2 - 1
 
@@ -473,8 +503,12 @@ class TestVander(object):
         van = poly.polyvander3d([x1], [x2], [x3], [1, 2, 3])
         assert_(van.shape == (1, 5, 24))
 
+    def test_polyvandernegdeg(self):
+        x = np.arange(3)
+        assert_raises(ValueError, poly.polyvander, x, -1)
 
-class TestCompanion(object):
+
+class TestCompanion:
 
     def test_raises(self):
         assert_raises(ValueError, poly.polycompanion, [])
@@ -489,7 +523,7 @@ class TestCompanion(object):
         assert_(poly.polycompanion([1, 2])[0, 0] == -.5)
 
 
-class TestMisc(object):
+class TestMisc:
 
     def test_polyfromroots(self):
         res = poly.polyfromroots([])
@@ -591,3 +625,23 @@ class TestMisc(object):
 
     def test_polyline(self):
         assert_equal(poly.polyline(3, 4), [3, 4])
+
+    def test_polyline_zero(self):
+        assert_equal(poly.polyline(3, 0), [3])
+
+    def test_fit_degenerate_domain(self):
+        p = poly.Polynomial.fit([1], [2], deg=0)
+        assert_equal(p.coef, [2.])
+        p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=0)
+        assert_almost_equal(p.coef, [2.05])
+        with assert_warns(pu.RankWarning):
+            p = poly.Polynomial.fit([1, 1], [2, 2.1], deg=1)
+
+    def test_result_type(self):
+        w = np.array([-1, 1], dtype=np.float32)
+        p = np.polynomial.Polynomial(w, domain=w, window=w)
+        v = p(2)
+        assert_equal(v.dtype, np.float32)
+
+        arr = np.polydiv(1, np.float32(1))
+        assert_equal(arr[0].dtype, np.float64)

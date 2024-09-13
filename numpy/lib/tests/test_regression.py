@@ -1,17 +1,13 @@
-from __future__ import division, absolute_import, print_function
-
 import os
-import sys
 
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, _assert_valid_refcount,
     )
-from numpy.compat import unicode
 
 
-class TestRegression(object):
+class TestRegression:
     def test_poly1d(self):
         # Ticket #28
         assert_equal(np.poly1d([1]) - np.poly1d([1, 0]),
@@ -132,10 +128,6 @@ class TestRegression(object):
         # Shouldn't crash:
         list(np.ndenumerate(np.array([[]])))
 
-    def test_asfarray_none(self):
-        # Test for changeset r5065
-        assert_array_equal(np.array([np.nan]), np.asfarray([None]))
-
     def test_large_fancy_indexing(self):
         # Large enough to fail on 64-bit.
         nbits = np.dtype(np.intp).itemsize * 8
@@ -161,29 +153,13 @@ class TestRegression(object):
         x = np.zeros((1,), dt)
         assert_(np.r_[x, x].dtype == dt)
 
-    def test_who_with_0dim_array(self):
-        # ticket #1243
-        import os
-        import sys
-
-        oldstdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-        try:
-            try:
-                np.who({'foo': np.array(1)})
-            except Exception:
-                raise AssertionError("ticket #1243")
-        finally:
-            sys.stdout.close()
-            sys.stdout = oldstdout
-
     def test_include_dirs(self):
         # As a sanity check, just test that get_include
         # includes something reasonable.  Somewhat
         # related to ticket #1405.
         include_dirs = [np.get_include()]
         for path in include_dirs:
-            assert_(isinstance(path, (str, unicode)))
+            assert_(isinstance(path, str))
             assert_(path != '')
 
     def test_polyder_return_type(self):
@@ -204,14 +180,11 @@ class TestRegression(object):
         try:
             append_fields(base, names, data, dlist)
         except Exception:
-            raise AssertionError()
+            raise AssertionError
 
     def test_loadtxt_fields_subarrays(self):
         # For ticket #1936
-        if sys.version_info[0] >= 3:
-            from io import StringIO
-        else:
-            from StringIO import StringIO
+        from io import StringIO
 
         dt = [("a", 'u1', 2), ("b", 'u1', 2)]
         x = np.loadtxt(StringIO("0 1 2 3"), dtype=dt)
@@ -236,12 +209,12 @@ class TestRegression(object):
         try:
             np.nansum(a)
         except Exception:
-            raise AssertionError()
+            raise AssertionError
 
     def test_py3_compat(self):
         # gh-2561
         # Test if the oldstyle class test is bypassed in python3
-        class C():
+        class C:
             """Old-style class in python2, normal class in python3"""
             pass
 
@@ -249,6 +222,6 @@ class TestRegression(object):
         try:
             np.info(C(), output=out)
         except AttributeError:
-            raise AssertionError()
+            raise AssertionError
         finally:
             out.close()
