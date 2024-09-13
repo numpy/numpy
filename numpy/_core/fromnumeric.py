@@ -1540,7 +1540,7 @@ def searchsorted(a, v, side='left', sorter=None):
     >>> a = np.array([40, 10, 20, 30])
     >>> sorter = np.argsort(a)
     >>> sorter
-    array([1, 2, 3, 0])  # Indices that would sort the array
+    array([1, 2, 3, 0])  # Indices that would sort the array 'a'
     >>> np.searchsorted(a, 25, sorter=sorter)
     2
     >>> a[sorter[np.searchsorted(a, 25, sorter=sorter)]]
