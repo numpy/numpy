@@ -38,14 +38,27 @@ from numpy.lib._function_base_impl import _ureduce
 from numpy.lib._index_tricks_impl import AxisConcatenator
 
 def median_of_masked(masked_array) -> float:
-    # This Function returns the Median Of masked array in less time because It does not sort the full list 
+    """
+    This function returns the median of a 
+    masked array in less time by avoiding 
+    full sorting of the list. It handles 
+    both even and odd-length arrays.
+    
+    Parameters:
+    masked_array (list[int]): A list of integers (masked array) 
+    to find the median from.
+    Returns:
+    float: The median of the masked array.
+    """
     temp = []
     length = len(masked_array)
+    if length == 0:
+        raise ValueError("Cannot Find Median...")
     median = 0
     minimum = 0
     if length % 2 == 1:
         median = length // 2
-        for i in range(0,median + 1):
+        for i in range(0, median + 1):
             for j in masked_array:
                 if j >  minimum:
                     minimum = j
@@ -57,15 +70,15 @@ def median_of_masked(masked_array) -> float:
     else:
         ans = 0.0
         median = length // 2
-        for i in range(0,median + 1):
+        for i in range(0, median + 1):
             for j in masked_array:
-                if j >  minimum:
+               if j > minimum:
                     minimum = j
             temp.append(minimum)
             masked_array.remove(minimum)
             minimum = 0
         ans =  temp[-1]  + temp[-2]
-        return ans / 2 
+        return ans / 2.0  
 def issequence(seq):
     """
     Is seq a sequence (ndarray, list or tuple)?
