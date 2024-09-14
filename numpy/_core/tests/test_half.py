@@ -22,7 +22,7 @@ class TestHalf:
         self.all_f16 = np.arange(0x10000, dtype=uint16)
         self.all_f16.dtype = float16
 
-        # NaN value can cause an invalid FP exception if HW is been used
+        # NaN value can cause an invalid FP exception if HW is being used
         with np.errstate(invalid='ignore'):
             self.all_f32 = np.array(self.all_f16, dtype=float32)
             self.all_f64 = np.array(self.all_f16, dtype=float64)
@@ -49,7 +49,7 @@ class TestHalf:
         # Convert from float32 back to float16
         with np.errstate(invalid='ignore'):
             b = np.array(self.all_f32, dtype=float16)
-        # avoid testing NaNs due to differ bits wither Q/SNaNs
+        # avoid testing NaNs due to differing bit patterns in Q/S NaNs
         b_nn = b == b
         assert_equal(self.all_f16[b_nn].view(dtype=uint16),
                      b[b_nn].view(dtype=uint16))
@@ -119,8 +119,8 @@ class TestHalf:
         # Convert back to float16 and its bit pattern:
         res_patterns = f16s_float.astype(np.float16).view(np.uint16)
 
-        # The above calculations tries the original values, or the exact
-        # mid points between the float16 values. It then further offsets them
+        # The above calculation tries the original values, or the exact
+        # midpoints between the float16 values. It then further offsets them
         # by as little as possible. If no offset occurs, "round to even"
         # logic will be necessary, an arbitrarily small offset should cause
         # normal up/down rounding always.

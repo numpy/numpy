@@ -29,18 +29,6 @@
 #define _NpyHASH_XXROTATE(x) ((x << 13) | (x >> 19))  /* Rotate left 13 bits */
 #endif
 
-#ifdef Py_GIL_DISABLED
-#define LOCK_TABLE(tb) PyMutex_Lock(&tb->mutex)
-#define UNLOCK_TABLE(tb) PyMutex_Unlock(&tb->mutex)
-#define INITIALIZE_LOCK(tb) memset(&tb->mutex, 0, sizeof(PyMutex))
-#else
-// the GIL serializes access to the table so no need
-// for locking if it is enabled
-#define LOCK_TABLE(tb)
-#define UNLOCK_TABLE(tb)
-#define INITIALIZE_LOCK(tb)
-#endif
-
 /*
  * This hashing function is basically the Python tuple hash with the type
  * identity hash inlined. The tuple hash itself is a reduced version of xxHash.
@@ -111,8 +99,6 @@ PyArrayIdentityHash_New(int key_len)
     res->key_len = key_len;
     res->size = 4;  /* Start with a size of 4 */
     res->nelem = 0;
-
-    INITIALIZE_LOCK(res);
 
     res->buckets = PyMem_Calloc(4 * (key_len + 1), sizeof(PyObject *));
     if (res->buckets == NULL) {
@@ -206,17 +192,14 @@ NPY_NO_EXPORT int
 PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
         PyObject *const *key, PyObject *value, int replace)
 {
-    LOCK_TABLE(tb);
     if (value != NULL && _resize_if_necessary(tb) < 0) {
         /* Shrink, only if a new value is added. */
-        UNLOCK_TABLE(tb);
         return -1;
     }
 
     PyObject **tb_item = find_item(tb, key);
     if (value != NULL) {
         if (tb_item[0] != NULL && tb_item[0] != value && !replace) {
-            UNLOCK_TABLE(tb);
             PyErr_SetString(PyExc_RuntimeError,
                     "Identity cache already includes an item with this key.");
             return -1;
@@ -230,7 +213,6 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
         memset(tb_item, 0, (tb->key_len + 1) * sizeof(PyObject *));
     }
 
-    UNLOCK_TABLE(tb);
     return 0;
 }
 
@@ -238,8 +220,6 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
 NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
 {
-    LOCK_TABLE(tb);
     PyObject *res = find_item(tb, key)[0];
-    UNLOCK_TABLE(tb);
     return res;
 }

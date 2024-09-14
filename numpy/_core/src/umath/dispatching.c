@@ -976,8 +976,11 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-    PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
+    PyObject *info;
+    Py_BEGIN_CRITICAL_SECTION((PyObject *)ufunc);
+    info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
+    Py_END_CRITICAL_SECTION();
 
     if (info == NULL) {
         goto handle_error;
