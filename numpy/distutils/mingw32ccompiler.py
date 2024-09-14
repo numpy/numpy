@@ -184,7 +184,7 @@ def find_python_dll():
     # - find it in the virtualenv (sys.prefix)
     # - find it in python main dir (sys.base_prefix, if in a virtualenv)
     # - in system32,
-    # - ortherwise (Sxs), I don't know how to get it.
+    # - otherwise (Sxs), I don't know how to get it.
     stems = [sys.prefix]
     if sys.base_prefix != sys.prefix:
         stems.append(sys.base_prefix)

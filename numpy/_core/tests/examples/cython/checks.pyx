@@ -129,6 +129,10 @@ def get_default_integer():
         return cnp.dtype("intp")
     return None
 
+def get_ravel_axis():
+    return cnp.NPY_RAVEL_AXIS
+
+
 def conv_intp(cnp.intp_t val):
     return val
 

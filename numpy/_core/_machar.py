@@ -115,7 +115,7 @@ class MachAr:
 
         """
         # We ignore all errors here because we are purposely triggering
-        # underflow to detect the properties of the runninng arch.
+        # underflow to detect the properties of the running arch.
         with errstate(under='ignore'):
             self._do_init(float_conv, int_conv, float_to_float, float_to_str, title)
 

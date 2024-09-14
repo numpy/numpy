@@ -8,7 +8,7 @@ NEP 52 — Python API cleanup for NumPy 2.0
 :Author: Stéfan van der Walt <stefanv@berkeley.edu>
 :Author: Nathan Goldbaum <ngoldbaum@quansight.com>
 :Author: Mateusz Sokół <msokol@quansight.com>
-:Status: Accepted
+:Status: Final
 :Type: Standards Track
 :Created: 2023-03-28
 :Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/QLMPFTWA67DXE3JCUQT2RIRLQ44INS4F/

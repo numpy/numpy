@@ -12,6 +12,8 @@ build_and_store_wheels: &BUILD_AND_STORE_WHEELS
 
 linux_aarch64_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
+  env:
+    CIRRUS_CLONE_SUBMODULES: true
   compute_engine_instance:
     image_project: cirrus-images
     image: family/docker-builder-arm64
@@ -24,14 +26,17 @@ linux_aarch64_task:
     # single task takes longer than 60 mins (the default time limit for a
     # cirrus-ci task).
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp310-*
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp311-*
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
         CIBW_BUILD: cp312-*
+    - env:
+        CIBW_BUILD: cp313-*
+    - env:
+        CIBW_BUILD: cp313t-*
+        CIBW_FREE_THREADED_SUPPORT: 1
+        CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
 
   initial_setup_script: |
     apt update
@@ -52,17 +57,21 @@ linux_aarch64_task:
 
 macosx_arm64_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
+  env:
+      CIRRUS_CLONE_SUBMODULES: true
   macos_instance:
     matrix:
       image: ghcr.io/cirruslabs/macos-monterey-xcode
 
   matrix:
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp310-* cp311
+        CIBW_BUILD: cp310-* cp311-*
     - env:
-        CIRRUS_CLONE_SUBMODULES: true
-        CIBW_BUILD: cp312-*
+        CIBW_BUILD: cp312-* cp313-*
+    - env:
+        CIBW_BUILD: cp313t-*
+        CIBW_FREE_THREADED_SUPPORT: 1
+        CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
   env:
     PATH: /usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64
@@ -115,7 +124,7 @@ wheels_upload_task:
 
   env:
     NUMPY_STAGING_UPLOAD_TOKEN: ENCRYPTED[!5a69522ae0c2af9edb2bc1cdfeaca6292fb3666d9ecd82dca0615921834a6ce3b702352835d8bde4ea2a9ed5ef8424ac!]
-    NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[ef04347663cfcb58d121385707e55951dc8e03b009edeed988aa4a33ba8205c54ca9980ac4da88e1adfdebff8b9d7ed4]
+    NUMPY_NIGHTLY_UPLOAD_TOKEN: ENCRYPTED[4376691390321cd5e76613ec21de8456cc0af0164971dd9542f985a017dc30ccb4d40e60f59184618e2d55afd63e93b7]
 
   upload_script: |
     apt-get update

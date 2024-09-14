@@ -9,7 +9,6 @@ from decimal import Decimal
 import numpy as np
 from numpy._core import umath, sctypes
 from numpy._core.numerictypes import obj2sctype
-from numpy._core.arrayprint import set_string_function
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
@@ -165,6 +164,59 @@ class TestNonarrayArgs:
         tgt = [[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]]
         assert_equal(np.reshape(arr, (2, 6)), tgt)
 
+    def test_reshape_shape_arg(self):
+        arr = np.arange(12)
+        shape = (3, 4)
+        expected = arr.reshape(shape)
+
+        with pytest.raises(
+            TypeError,
+            match="You cannot specify 'newshape' and 'shape' "
+                  "arguments at the same time."
+        ):
+            np.reshape(arr, shape=shape, newshape=shape)
+        with pytest.raises(
+            TypeError,
+            match=r"reshape\(\) missing 1 required positional "
+                  "argument: 'shape'"
+        ):
+            np.reshape(arr)
+
+        assert_equal(np.reshape(arr, shape), expected)
+        assert_equal(np.reshape(arr, shape, order="C"), expected)
+        assert_equal(np.reshape(arr, shape, "C"), expected)
+        assert_equal(np.reshape(arr, shape=shape), expected)
+        assert_equal(np.reshape(arr, shape=shape, order="C"), expected)
+        with pytest.warns(DeprecationWarning):
+            actual = np.reshape(arr, newshape=shape)
+            assert_equal(actual, expected)
+
+    def test_reshape_copy_arg(self):
+        arr = np.arange(24).reshape(2, 3, 4)
+        arr_f_ord = np.array(arr, order="F")
+        shape = (12, 2)
+
+        assert np.shares_memory(np.reshape(arr, shape), arr)
+        assert np.shares_memory(np.reshape(arr, shape, order="C"), arr)
+        assert np.shares_memory(
+            np.reshape(arr_f_ord, shape, order="F"), arr_f_ord)
+        assert np.shares_memory(np.reshape(arr, shape, copy=None), arr)
+        assert np.shares_memory(np.reshape(arr, shape, copy=False), arr)
+        assert np.shares_memory(arr.reshape(shape, copy=False), arr)
+        assert not np.shares_memory(np.reshape(arr, shape, copy=True), arr)
+        assert not np.shares_memory(
+            np.reshape(arr, shape, order="C", copy=True), arr)
+        assert not np.shares_memory(
+            np.reshape(arr, shape, order="F", copy=True), arr)
+        assert not np.shares_memory(
+            np.reshape(arr, shape, order="F", copy=None), arr)
+
+        err_msg = "Unable to avoid creating a copy while reshaping."
+        with pytest.raises(ValueError, match=err_msg):
+            np.reshape(arr, shape, order="F", copy=False)
+        with pytest.raises(ValueError, match=err_msg):
+            np.reshape(arr_f_ord, shape, order="C", copy=False)
+
     def test_round(self):
         arr = [1.56, 72.54, 6.35, 3.25]
         tgt = [1.6, 72.5, 6.4, 3.2]
@@ -272,6 +324,18 @@ class TestNonarrayArgs:
         out = np.take(a, indices)
         assert_equal(out, tgt)
 
+        pairs = [
+            (np.int32, np.int32), (np.int32, np.int64),
+            (np.int64, np.int32), (np.int64, np.int64)
+        ]
+        for array_type, indices_type in pairs:
+            x = np.array([1, 2, 3, 4, 5], dtype=array_type)
+            ind = np.array([0, 2, 2, 3], dtype=indices_type)
+            tgt = np.array([1, 3, 3, 4], dtype=array_type)
+            out = np.take(x, ind)
+            assert_equal(out, tgt)
+            assert_equal(out.dtype, tgt.dtype)
+
     def test_trace(self):
         c = [[1, 2], [3, 4], [5, 6]]
         assert_equal(np.trace(c), 5)
@@ -280,6 +344,7 @@ class TestNonarrayArgs:
         arr = [[1, 2], [3, 4], [5, 6]]
         tgt = [[1, 3, 5], [2, 4, 6]]
         assert_equal(np.transpose(arr, (1, 0)), tgt)
+        assert_equal(np.transpose(arr, (-1, -2)), tgt)
         assert_equal(np.matrix_transpose(arr), tgt)
 
     def test_var(self):
@@ -1424,21 +1489,33 @@ class TestTypes:
         assert_(not np.can_cast([('f0', ('i4,i4'), (2,))], 'i4',
                                 casting='unsafe'))
 
-    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
-            reason="NEP 50: no python int/float/complex support (yet)")
     def test_can_cast_values(self):
-        # gh-5917
-        for dt in sctypes['int'] + sctypes['uint']:
-            ii = np.iinfo(dt)
-            assert_(np.can_cast(ii.min, dt))
-            assert_(np.can_cast(ii.max, dt))
-            assert_(not np.can_cast(ii.min - 1, dt))
-            assert_(not np.can_cast(ii.max + 1, dt))
+        # With NumPy 2 and NEP 50, can_cast errors on Python scalars.  We could
+        # define this as (usually safe) at some point, and already do so
+        # in `copyto` and ufuncs (but there an error is raised if the integer
+        # is out of bounds and a warning for out-of-bound floats).
+        # Raises even for unsafe, previously checked within range (for floats
+        # that was approximately whether it would overflow to inf).
+        with pytest.raises(TypeError):
+            np.can_cast(4, "int8", casting="unsafe")
 
-        for dt in sctypes['float']:
-            fi = np.finfo(dt)
-            assert_(np.can_cast(fi.min, dt))
-            assert_(np.can_cast(fi.max, dt))
+        with pytest.raises(TypeError):
+            np.can_cast(4.0, "float64", casting="unsafe")
+
+        with pytest.raises(TypeError):
+            np.can_cast(4j, "complex128", casting="unsafe")
+
+
+    @pytest.mark.parametrize("dtype",
+            list("?bhilqBHILQefdgFDG") + [rational])
+    def test_can_cast_scalars(self, dtype):
+        # Basic test to ensure that scalars are supported in can-cast
+        # (does not check behavior exhaustively).
+        dtype = np.dtype(dtype)
+        scalar = dtype.type(0)
+
+        assert np.can_cast(scalar, "int64") == np.can_cast(dtype, "int64")
+        assert np.can_cast(scalar, "float32", casting="unsafe")
 
 
 # Custom exception class to test exception propagation in fromiter
@@ -2102,9 +2179,9 @@ class TestArrayComparisons:
     )
     def test_array_equal_equal_nan(self, bx, by, equal_nan, expected):
         """
-        This test array_equal for a few combinaison:
+        This test array_equal for a few combinations:
 
-        - are the two inputs the same object or not (same object many not
+        - are the two inputs the same object or not (same object may not
           be equal if contains NaNs)
         - Whether we should consider or not, NaNs, being equal.
 
@@ -2116,14 +2193,21 @@ class TestArrayComparisons:
         assert_(res is expected)
         assert_(type(res) is bool)
 
+    def test_array_equal_different_scalar_types(self):
+        # https://github.com/numpy/numpy/issues/27271
+        a = np.array("foo")
+        b = np.array(1)
+        assert not np.array_equal(a, b)
+        assert not np.array_equiv(a, b)
+
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
-        assert_equal(a == None, [True, False, True])
-        assert_equal(a != None, [False, True, False])
+        assert_equal(a == None, [True, False, True])  # noqa: E711
+        assert_equal(a != None, [False, True, False])  # noqa: E711
 
         a = np.ones(3)
-        assert_equal(a == None, [False, False, False])
-        assert_equal(a != None, [True, True, True])
+        assert_equal(a == None, [False, False, False])  # noqa: E711
+        assert_equal(a != None, [True, True, True])  # noqa: E711
 
     def test_array_equiv(self):
         res = np.array_equiv(np.array([1, 2]), np.array([1, 2]))
@@ -2666,9 +2750,9 @@ class TestClip:
         assert actual.tolist() == expected.tolist()
 
     def test_clip_all_none(self):
-        a = np.arange(10, dtype=object)
-        with assert_raises_regex(ValueError, 'max or min'):
-            np.clip(a, None, None)
+        arr = np.arange(10, dtype=object)
+        assert_equal(np.clip(arr, None, None), arr)
+        assert_equal(np.clip(arr), arr)
 
     def test_clip_invalid_casting(self):
         a = np.arange(10, dtype=object)
@@ -2785,6 +2869,45 @@ class TestClip:
         assert result.dtype == t
         assert_array_equal(result, expected)
 
+    def test_clip_min_max_args(self):
+        arr = np.arange(5)
+
+        assert_array_equal(np.clip(arr), arr)
+        assert_array_equal(np.clip(arr, min=2, max=3), np.clip(arr, 2, 3))
+        assert_array_equal(np.clip(arr, min=None, max=2),
+                           np.clip(arr, None, 2))
+
+        with assert_raises_regex(TypeError, "missing 1 required positional "
+                                 "argument: 'a_max'"):
+            np.clip(arr, 2)
+        with assert_raises_regex(TypeError, "missing 1 required positional "
+                                 "argument: 'a_min'"):
+            np.clip(arr, a_max=2)
+        msg = ("Passing `min` or `max` keyword argument when `a_min` and "
+               "`a_max` are provided is forbidden.")
+        with assert_raises_regex(ValueError, msg):
+            np.clip(arr, 2, 3, max=3)
+        with assert_raises_regex(ValueError, msg):
+            np.clip(arr, 2, 3, min=2)
+
+    @pytest.mark.parametrize("dtype,min,max", [
+        ("int32", -2**32-1, 2**32),
+        ("int32", -2**320, None),
+        ("int32", None, 2**300),
+        ("int32", -1000, 2**32),
+        ("int32", -2**32-1, 1000),
+        ("uint8", -1, 129),
+    ])
+    def test_out_of_bound_pyints(self, dtype, min, max):
+        a = np.arange(10000).astype(dtype)
+        # Check min only
+        c = np.clip(a, min=min, max=max)
+        assert not np.may_share_memory(a, c)
+        assert c.dtype == a.dtype
+        if min is not None:
+            assert (c >= min).all()
+        if max is not None:
+            assert (c <= max).all()
 
 class TestAllclose:
     rtol = 1e-5
@@ -3359,7 +3482,11 @@ class TestLikeFuncs:
     def test_filled_like(self):
         self.check_like_function(np.full_like, 0, True)
         self.check_like_function(np.full_like, 1, True)
-        self.check_like_function(np.full_like, 1000, True)
+        # Large integers may overflow, but using int64 is OK (casts)
+        # see also gh-27075
+        with pytest.raises(OverflowError):
+            np.full_like(np.ones(3, dtype=np.int8), 1000)
+        self.check_like_function(np.full_like, np.int64(1000), True)
         self.check_like_function(np.full_like, 123.456, True)
         # Inf to integer casts cause invalid-value errors: ignore them.
         with np.errstate(invalid="ignore"):
@@ -3517,24 +3644,6 @@ class TestArgwhere:
 
     def test_list(self):
         assert_equal(np.argwhere([4, 0, 2, 1, 3]), [[0], [2], [3], [4]])
-
-
-@pytest.mark.filterwarnings(
-    "ignore:.*set_string_function.*:DeprecationWarning"
-)
-class TestStringFunction:
-
-    def test_set_string_function(self):
-        a = np.array([1])
-        set_string_function(lambda x: "FOO", repr=True)
-        assert_equal(repr(a), "FOO")
-        set_string_function(None, repr=True)
-        assert_equal(repr(a), "array([1])")
-
-        set_string_function(lambda x: "FOO", repr=False)
-        assert_equal(str(a), "FOO")
-        set_string_function(None, repr=False)
-        assert_equal(str(a), "[1]")
 
 
 class TestRoll:
@@ -4062,6 +4171,11 @@ class TestAsType:
         assert np.shares_memory(
             actual, np.astype(actual, actual.dtype, copy=False)
         )
+
+        actual = np.astype(np.int64(10), np.float64)
+        expected = np.float64(10)
+        assert_equal(actual, expected)
+        assert_equal(actual.dtype, expected.dtype)
 
         with pytest.raises(TypeError, match="Input should be a NumPy array"):
             np.astype(data, np.float64)

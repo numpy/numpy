@@ -125,7 +125,7 @@ a volunteer in a reasonable amount of time.
 There are also many tasks, activities, and projects outside of
 development work that are important and could enhance the project or community
 - think of, for example, user surveys, translations, outreach, dedicated
-mentoring of newcomers, community organizating, website improvements, and
+mentoring of newcomers, community organizing, website improvements, and
 administrative tasks.
 
 Time of people to perform tasks is also not the only thing that funds can be

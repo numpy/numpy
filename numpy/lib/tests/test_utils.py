@@ -43,7 +43,7 @@ def test_drop_metadata():
     assert dt_m.metadata is None
     assert dt_m['l1'].metadata is None
     assert dt_m['l1']['l2'].metadata is None
-    
+
     # alignment
     dt = np.dtype([('x', '<f8'), ('y', '<i4')],
                   align=True,

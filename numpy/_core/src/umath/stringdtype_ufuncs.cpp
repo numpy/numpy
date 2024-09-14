@@ -1028,6 +1028,25 @@ all_strings_promoter(PyObject *NPY_UNUSED(ufunc),
                      PyArray_DTypeMeta *const signature[],
                      PyArray_DTypeMeta *new_op_dtypes[])
 {
+    if ((op_dtypes[0] != &PyArray_StringDType &&
+         op_dtypes[1] != &PyArray_StringDType &&
+         op_dtypes[2] != &PyArray_StringDType)) {
+        /*
+         * This promoter was triggered with only unicode arguments, so use
+         * unicode.  This can happen due to `dtype=` support which sets the
+         * output DType/signature.
+         */
+        new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_UnicodeDType);
+        new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_UnicodeDType);
+        new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_UnicodeDType);
+        return 0;
+    }
+    if ((signature[0] == &PyArray_UnicodeDType &&
+         signature[1] == &PyArray_UnicodeDType &&
+         signature[2] == &PyArray_UnicodeDType)) {
+        /* Unicode forced, but didn't override a string input: invalid */
+        return -1;
+    }
     new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_StringDType);
     new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_StringDType);
@@ -1046,6 +1065,7 @@ string_lrstrip_chars_strided_loop(
     PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     int has_null = s1descr->na_object != NULL;
     int has_string_na = s1descr->has_string_na;
+    int has_nan_na = s1descr->has_nan_na;
 
     const npy_static_string *default_string = &s1descr->default_string;
     npy_intp N = dimensions[0];
@@ -1072,28 +1092,47 @@ string_lrstrip_chars_strided_loop(
                     s2 = *default_string;
                 }
             }
+            else if (has_nan_na) {
+                if (s2_isnull) {
+                    npy_gil_error(PyExc_ValueError,
+                                  "Cannot use a null string that is not a "
+                                  "string as the %s delimiter", ufunc_name);
+                }
+                if (s1_isnull) {
+                    if (NpyString_pack_null(oallocator, ops) < 0) {
+                        npy_gil_error(PyExc_MemoryError,
+                                      "Failed to deallocate string in %s",
+                                      ufunc_name);
+                        goto fail;
+                    }
+                    goto next_step;
+                }
+            }
             else {
                 npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
+                              "Can only strip null values that are strings "
+                              "or NaN-like values");
                 goto fail;
             }
         }
+        {
+            char *new_buf = (char *)PyMem_RawCalloc(s1.size, 1);
+            Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
+            Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
+            Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
+            size_t new_buf_size = string_lrstrip_chars
+                    (buf1, buf2, outbuf, striptype);
 
+            if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
+                npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
+                              ufunc_name);
+                PyMem_RawFree(new_buf);
+                goto fail;
+            }
 
-        char *new_buf = (char *)PyMem_RawCalloc(s1.size, 1);
-        Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
-        Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
-        size_t new_buf_size = string_lrstrip_chars
-                (buf1, buf2, outbuf, striptype);
-
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
-                          ufunc_name);
-            goto fail;
+            PyMem_RawFree(new_buf);
         }
-
-        PyMem_RawFree(new_buf);
+      next_step:
 
         in1 += strides[0];
         in2 += strides[1];
@@ -1150,8 +1189,9 @@ string_lrstrip_whitespace_strided_loop(
     const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
     STRIPTYPE striptype = *(STRIPTYPE *)context->method->static_data;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
-    int has_string_na = descr->has_string_na;
     int has_null = descr->na_object != NULL;
+    int has_string_na = descr->has_string_na;
+    int has_nan_na = descr->has_nan_na;
     const npy_static_string *default_string = &descr->default_string;
 
     npy_string_allocator *allocators[2] = {};
@@ -1181,26 +1221,39 @@ string_lrstrip_whitespace_strided_loop(
             if (has_string_na || !has_null) {
                 s = *default_string;
             }
+            else if (has_nan_na) {
+                if (NpyString_pack_null(oallocator, ops) < 0) {
+                    npy_gil_error(PyExc_MemoryError,
+                                  "Failed to deallocate string in %s",
+                                  ufunc_name);
+                    goto fail;
+                }
+                goto next_step;
+            }
             else {
                 npy_gil_error(PyExc_ValueError,
-                              "Cannot strip null values that are not strings");
+                              "Can only strip null values that are strings or "
+                              "NaN-like values");
                 goto fail;
             }
         }
+        {
+            char *new_buf = (char *)PyMem_RawCalloc(s.size, 1);
+            Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
+            Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
+            size_t new_buf_size = string_lrstrip_whitespace(
+                    buf, outbuf, striptype);
 
-        char *new_buf = (char *)PyMem_RawCalloc(s.size, 1);
-        Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
-        size_t new_buf_size = string_lrstrip_whitespace(
-                buf, outbuf, striptype);
+            if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
+                npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
+                              ufunc_name);
+                goto fail;
+            }
 
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in %s",
-                          ufunc_name);
-            goto fail;
+            PyMem_RawFree(new_buf);
         }
 
-        PyMem_RawFree(new_buf);
+      next_step:
 
         in += strides[0];
         out += strides[1];
@@ -1300,7 +1353,9 @@ string_replace_strided_loop(
 
     PyArray_StringDTypeObject *descr0 =
             (PyArray_StringDTypeObject *)context->descriptors[0];
+    int has_null = descr0->na_object != NULL;
     int has_string_na = descr0->has_string_na;
+    int has_nan_na = descr0->has_nan_na;
     const npy_static_string *default_string = &descr0->default_string;
 
 
@@ -1330,11 +1385,29 @@ string_replace_strided_loop(
             goto fail;
         }
         else if (i1_isnull || i2_isnull || i3_isnull) {
-            if (!has_string_na) {
-                npy_gil_error(PyExc_ValueError,
-                              "Null values are not supported as replacement arguments "
-                              "for replace");
-                goto fail;
+            if (has_null && !has_string_na) {
+                if (i2_isnull || i3_isnull) {
+                    npy_gil_error(PyExc_ValueError,
+                                  "Null values are not supported as search "
+                                  "patterns or replacement strings for "
+                                  "replace");
+                    goto fail;
+                }
+                else if (i1_isnull) {
+                    if (has_nan_na) {
+                        if (NpyString_pack_null(oallocator, ops) < 0) {
+                            npy_gil_error(PyExc_MemoryError,
+                                          "Failed to deallocate string in replace");
+                            goto fail;
+                        }
+                        goto next_step;
+                    }
+                    else {
+                        npy_gil_error(PyExc_ValueError,
+                                      "Only string or NaN-like null strings can "
+                                      "be used as search strings for replace");
+                    }
+                }
             }
             else {
                 if (i1_isnull) {
@@ -1349,32 +1422,51 @@ string_replace_strided_loop(
             }
         }
 
-        // conservatively overallocate
-        // TODO check overflow
-        size_t max_size;
-        if (i2s.size == 0) {
-            // interleaving
-            max_size = i1s.size + (i1s.size + 1)*(i3s.size);
-        }
-        else {
-            // replace i2 with i3
-            max_size = i1s.size * (i3s.size/i2s.size + 1);
-        }
-        char *new_buf = (char *)PyMem_RawCalloc(max_size, 1);
-        Buffer<ENCODING::UTF8> buf1((char *)i1s.buf, i1s.size);
-        Buffer<ENCODING::UTF8> buf2((char *)i2s.buf, i2s.size);
-        Buffer<ENCODING::UTF8> buf3((char *)i3s.buf, i3s.size);
-        Buffer<ENCODING::UTF8> outbuf(new_buf, max_size);
+        {
+            Buffer<ENCODING::UTF8> buf1((char *)i1s.buf, i1s.size);
+            Buffer<ENCODING::UTF8> buf2((char *)i2s.buf, i2s.size);
 
-        size_t new_buf_size = string_replace(
-                buf1, buf2, buf3, *(npy_int64 *)in4, outbuf);
+            npy_int64 in_count = *(npy_int64*)in4;
+            if (in_count == -1) {
+                in_count = NPY_MAX_INT64;
+            }
 
-        if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
-            npy_gil_error(PyExc_MemoryError, "Failed to pack string in replace");
-            goto fail;
+            npy_int64 found_count = string_count<ENCODING::UTF8>(
+                    buf1, buf2, 0, NPY_MAX_INT64);
+            if (found_count < 0) {
+                goto fail;
+            }
+
+            npy_intp count = Py_MIN(in_count, found_count);
+
+            Buffer<ENCODING::UTF8> buf3((char *)i3s.buf, i3s.size);
+
+            // conservatively overallocate
+            // TODO check overflow
+            size_t max_size;
+            if (i2s.size == 0) {
+                // interleaving
+                max_size = i1s.size + (i1s.size + 1)*(i3s.size);
+            }
+            else {
+                // replace i2 with i3
+                size_t change = i2s.size >= i3s.size ? 0 : i3s.size - i2s.size;
+                max_size = i1s.size + count * change;
+            }
+            char *new_buf = (char *)PyMem_RawCalloc(max_size, 1);
+            Buffer<ENCODING::UTF8> outbuf(new_buf, max_size);
+
+            size_t new_buf_size = string_replace(
+                    buf1, buf2, buf3, count, outbuf);
+
+            if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
+                npy_gil_error(PyExc_MemoryError, "Failed to pack string in replace");
+                goto fail;
+            }
+
+            PyMem_RawFree(new_buf);
         }
-
-        PyMem_RawFree(new_buf);
+      next_step:
 
         in1 += strides[0];
         in2 += strides[1];
@@ -1625,12 +1717,19 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
             Buffer<ENCODING::UTF8> inbuf((char *)s1.buf, s1.size);
             Buffer<ENCODING::UTF8> fill((char *)s2.buf, s2.size);
 
+            size_t num_codepoints = inbuf.num_codepoints();
+            npy_intp width = (npy_intp)*(npy_int64*)in2;
+
+            if (num_codepoints > (size_t)width) {
+                width = num_codepoints;
+            }
+
             char *buf = NULL;
             npy_intp newsize;
             int overflowed = npy_mul_sizes_with_overflow(
                     &(newsize),
                     (npy_intp)num_bytes_for_utf8_character((unsigned char *)s2.buf),
-                    (npy_intp)*(npy_int64*)in2 - inbuf.num_codepoints());
+                    width - num_codepoints);
             newsize += s1.size;
 
             if (overflowed) {
@@ -1752,6 +1851,9 @@ zfill_strided_loop(PyArrayMethod_Context *context,
             Buffer<ENCODING::UTF8> inbuf((char *)is.buf, is.size);
             size_t in_codepoints = inbuf.num_codepoints();
             size_t width = (size_t)*(npy_int64 *)in2;
+            if (in_codepoints > width) {
+                width = in_codepoints;
+            }
             // number of leading one-byte characters plus the size of the
             // original string
             size_t outsize = (width - in_codepoints) + is.size;
@@ -2445,6 +2547,17 @@ init_stringdtype_ufuncs(PyObject *umath)
     };
 
     if (add_promoter(umath, "add", lall_strings_promoter_dtypes, 3,
+                     all_strings_promoter) < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *out_strings_promoter_dtypes[] = {
+        &PyArray_UnicodeDType,
+        &PyArray_UnicodeDType,
+        &PyArray_StringDType,
+    };
+
+    if (add_promoter(umath, "add", out_strings_promoter_dtypes, 3,
                      all_strings_promoter) < 0) {
         return -1;
     }

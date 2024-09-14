@@ -116,7 +116,7 @@ class NDArrayOperatorsMixin:
         ...         else:
         ...             # one return value
         ...             return type(self)(result)
-        ... 
+        ...
         ...     def __repr__(self):
         ...         return '%s(%r)' % (type(self).__name__, self.value)
 

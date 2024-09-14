@@ -8,12 +8,12 @@ import pickle
 import warnings
 from contextlib import nullcontext
 
+import numpy as np
 from numpy._core import multiarray as mu
 from numpy._core import umath as um
 from numpy._core.multiarray import asanyarray
 from numpy._core import numerictypes as nt
 from numpy._core import _exceptions
-from numpy._core._ufunc_config import _no_nep50_warning
 from numpy._globals import _NoValue
 
 # save those O(100) nanoseconds!
@@ -97,10 +97,18 @@ def _count_reduce_items(arr, axis, keepdims=False, where=True):
     return items
 
 def _clip(a, min=None, max=None, out=None, **kwargs):
-    if min is None and max is None:
-        raise ValueError("One of max or min must be given")
+    if a.dtype.kind in "iu":
+        # If min/max is a Python integer, deal with out-of-bound values here.
+        # (This enforces NEP 50 rules as no value based promotion is done.)
+        if type(min) is int and min <= np.iinfo(a.dtype).min:
+            min = None
+        if type(max) is int and max >= np.iinfo(a.dtype).max:
+            max = None
 
-    if min is None:
+    if min is None and max is None:
+        # return identity
+        return um.positive(a, out=out, **kwargs)
+    elif min is None:
         return um.minimum(a, max, out=out, **kwargs)
     elif max is None:
         return um.maximum(a, min, out=out, **kwargs)
@@ -126,9 +134,8 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
 
     ret = umr_sum(arr, axis, dtype, out, keepdims, where=where)
     if isinstance(ret, mu.ndarray):
-        with _no_nep50_warning():
-            ret = um.true_divide(
-                    ret, rcount, out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
         if is_float16_result and out is None:
             ret = arr.dtype.type(ret)
     elif hasattr(ret, 'dtype'):
@@ -171,9 +178,8 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
             # matching rcount to arrmean when where is specified as array
             div = rcount.reshape(arrmean.shape)
         if isinstance(arrmean, mu.ndarray):
-            with _no_nep50_warning():
-                arrmean = um.true_divide(arrmean, div, out=arrmean,
-                                         casting='unsafe', subok=False)
+            arrmean = um.true_divide(arrmean, div, out=arrmean,
+                                     casting='unsafe', subok=False)
         elif hasattr(arrmean, "dtype"):
             arrmean = arrmean.dtype.type(arrmean / rcount)
         else:
@@ -203,9 +209,8 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False, *,
 
     # divide by degrees of freedom
     if isinstance(ret, mu.ndarray):
-        with _no_nep50_warning():
-            ret = um.true_divide(
-                    ret, rcount, out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
     elif hasattr(ret, 'dtype'):
         ret = ret.dtype.type(ret / rcount)
     else:

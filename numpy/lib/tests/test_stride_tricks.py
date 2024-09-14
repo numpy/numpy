@@ -341,7 +341,7 @@ def test_broadcast_shapes_raises():
         [(2, 3), (2,)],
         [(3,), (3,), (4,)],
         [(1, 3, 4), (2, 3, 3)],
-        [(1, 2), (3,1), (3,2), (10, 5)],
+        [(1, 2), (3, 1), (3, 2), (10, 5)],
         [2, (2, 3)],
     ]
     for input_shapes in data:
@@ -578,11 +578,12 @@ def test_writeable():
 
     # but the result of broadcast_arrays needs to be writeable, to
     # preserve backwards compatibility
-    for is_broadcast, results in [(False, broadcast_arrays(original,)),
-                                  (True, broadcast_arrays(0, original))]:
-        for result in results:
+    test_cases = [((False,), broadcast_arrays(original,)),
+                  ((True, False), broadcast_arrays(0, original))]
+    for is_broadcast, results in test_cases:
+        for array_is_broadcast, result in zip(is_broadcast, results):
             # This will change to False in a future version
-            if is_broadcast:
+            if array_is_broadcast:
                 with assert_warns(FutureWarning):
                     assert_equal(result.flags.writeable, True)
                 with assert_warns(DeprecationWarning):
@@ -623,11 +624,12 @@ def test_writeable_memoryview():
     # See gh-13929.
     original = np.array([1, 2, 3])
 
-    for is_broadcast, results in [(False, broadcast_arrays(original,)),
-                                  (True, broadcast_arrays(0, original))]:
-        for result in results:
+    test_cases = [((False, ), broadcast_arrays(original,)),
+                  ((True, False), broadcast_arrays(0, original))]
+    for is_broadcast, results in test_cases:
+        for array_is_broadcast, result in zip(is_broadcast, results):
             # This will change to False in a future version
-            if is_broadcast:
+            if array_is_broadcast:
                 # memoryview(result, writable=True) will give warning but cannot
                 # be tested using the python API.
                 assert memoryview(result).readonly

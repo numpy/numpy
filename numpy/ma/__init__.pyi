@@ -140,6 +140,7 @@ from numpy.ma.core import (
     nonzero as nonzero,
     not_equal as not_equal,
     ones as ones,
+    ones_like as ones_like,
     outer as outer,
     outerproduct as outerproduct,
     power as power,
@@ -178,6 +179,7 @@ from numpy.ma.core import (
     var as var,
     where as where,
     zeros as zeros,
+    zeros_like as zeros_like,
 )
 
 from numpy.ma.extras import (

@@ -8,7 +8,7 @@ NEP 56 — Array API standard support in NumPy's main namespace
 :Author: Mateusz Sokół <msokol@quansight.com>
 :Author: Nathan Goldbaum <ngoldbaum@quansight.com>
 :Status: Final
-:Replaces: 30, 31, 37, 47
+:Replaces: :ref:`NEP30`, :ref:`NEP31`, :ref:`NEP37`, :ref:`NEP47`
 :Type: Standards Track
 :Created: 2023-12-19
 :Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/
@@ -302,7 +302,7 @@ three types of behavior rather than two - ``copy=None`` means "copy if needed".
 an exception because they use* ``copy=False`` *explicitly in their copy but a
 copy was previously made anyway, they have to inspect their code and determine
 whether the intent of the code was the old or the new semantics (both seem
-rougly equally likely), and adapt the code as appropriate. We expect most cases
+roughly equally likely), and adapt the code as appropriate. We expect most cases
 to be* ``np.array(..., copy=False)``, *because until a few years ago that had
 lower overhead than* ``np.asarray(...)``. *This was solved though, and*
 ``np.asarray(...)`` *is idiomatic NumPy usage.*

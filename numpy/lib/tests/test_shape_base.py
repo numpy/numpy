@@ -63,6 +63,8 @@ class TestTakeAlongAxis:
         assert_raises(IndexError, take_along_axis, a, ai.astype(float), axis=1)
         # invalid axis
         assert_raises(AxisError, take_along_axis, a, ai, axis=10)
+        # invalid indices
+        assert_raises(ValueError, take_along_axis, a, ai, axis=None)
 
     def test_empty(self):
         """ Test everything is ok with empty results, even with inserted dims """
@@ -103,6 +105,24 @@ class TestPutAlongAxis:
         ai = np.arange(10, dtype=np.intp).reshape((1, 2, 5)) % 4
         put_along_axis(a, ai, 20, axis=1)
         assert_equal(take_along_axis(a, ai, axis=1), 20)
+
+    def test_invalid(self):
+        """ Test invalid inputs """
+        a_base = np.array([[10, 30, 20], [60, 40, 50]])
+        indices = np.array([[0], [1]])
+        values = np.array([[2], [1]])
+
+        # sanity check
+        a = a_base.copy()
+        put_along_axis(a, indices, values, axis=0)
+        assert np.all(a == [[2, 2, 2], [1, 1, 1]])
+
+        # invalid indices
+        a = a_base.copy()
+        with assert_raises(ValueError) as exc:
+            put_along_axis(a, indices, values, axis=None)
+        assert "single dimension" in str(exc.exception)
+
 
 
 class TestApplyAlongAxis:
@@ -494,7 +514,7 @@ class TestColumnStack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            column_stack((np.arange(3) for _ in range(2)))
+            column_stack(np.arange(3) for _ in range(2))
 
 
 class TestDstack:
@@ -531,7 +551,7 @@ class TestDstack:
 
     def test_generator(self):
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            dstack((np.arange(3) for _ in range(2)))
+            dstack(np.arange(3) for _ in range(2))
 
 
 # array_split has more comprehensive test of splitting.

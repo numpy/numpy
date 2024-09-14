@@ -409,24 +409,27 @@ alias for "matrix "in NumPy.
 
 Example 1: Matrix creation from a string
 
->>> a = np.asmatrix('1 2 3; 4 5 3')
->>> print((a*a.T).I)
+  >>> import numpy as np
+  >>> a = np.asmatrix('1 2 3; 4 5 3')
+  >>> print((a*a.T).I)
     [[ 0.29239766 -0.13450292]
      [-0.13450292  0.08187135]]
 
 
-Example 2: Matrix creation from nested sequence
+Example 2: Matrix creation from a nested sequence
 
->>> np.asmatrix([[1,5,10],[1.0,3,4j]])
-matrix([[  1.+0.j,   5.+0.j,  10.+0.j],
-        [  1.+0.j,   3.+0.j,   0.+4.j]])
+  >>> import numpy as np
+  >>> np.asmatrix([[1,5,10],[1.0,3,4j]])
+  matrix([[  1.+0.j,   5.+0.j,  10.+0.j],
+          [  1.+0.j,   3.+0.j,   0.+4.j]])
 
 Example 3: Matrix creation from an array
 
->>> np.asmatrix(np.random.rand(3,3)).T
-matrix([[4.17022005e-01, 3.02332573e-01, 1.86260211e-01],
-        [7.20324493e-01, 1.46755891e-01, 3.45560727e-01],
-        [1.14374817e-04, 9.23385948e-02, 3.96767474e-01]])
+  >>> import numpy as np
+  >>> np.asmatrix(np.random.rand(3,3)).T
+  matrix([[4.17022005e-01, 3.02332573e-01, 1.86260211e-01],
+          [7.20324493e-01, 1.46755891e-01, 3.45560727e-01],
+          [1.14374817e-04, 9.23385948e-02, 3.96767474e-01]])
 
 
 Memory-mapped file arrays
@@ -458,16 +461,20 @@ array actually get written to disk.
 
 Example:
 
->>> a = np.memmap('newfile.dat', dtype=float, mode='w+', shape=1000)
->>> a[10] = 10.0
->>> a[30] = 30.0
->>> del a
->>> b = np.fromfile('newfile.dat', dtype=float)
->>> print(b[10], b[30])
-10.0 30.0
->>> a = np.memmap('newfile.dat', dtype=float)
->>> print(a[10], a[30])
-10.0 30.0
+  >>> import numpy as np
+
+  >>> a = np.memmap('newfile.dat', dtype=float, mode='w+', shape=1000)
+  >>> a[10] = 10.0
+  >>> a[30] = 30.0
+  >>> del a
+
+  >>> b = np.fromfile('newfile.dat', dtype=float)
+  >>> print(b[10], b[30])
+  10.0 30.0
+
+  >>> a = np.memmap('newfile.dat', dtype=float)
+  >>> print(a[10], a[30])
+  10.0 30.0
 
 
 Character arrays (:mod:`numpy.char`)
@@ -602,15 +609,16 @@ This default iterator selects a sub-array of dimension :math:`N-1`
 from the array. This can be a useful construct for defining recursive
 algorithms. To loop over the entire array requires :math:`N` for-loops.
 
->>> a = np.arange(24).reshape(3,2,4)+10
->>> for val in a:
-...     print('item:', val)
-item: [[10 11 12 13]
- [14 15 16 17]]
-item: [[18 19 20 21]
- [22 23 24 25]]
-item: [[26 27 28 29]
- [30 31 32 33]]
+  >>> import numpy as np
+  >>> a = np.arange(24).reshape(3,2,4) + 10
+  >>> for val in a:
+  ...     print('item:', val)
+  item: [[10 11 12 13]
+  [14 15 16 17]]
+  item: [[18 19 20 21]
+  [22 23 24 25]]
+  item: [[26 27 28 29]
+  [30 31 32 33]]
 
 
 Flat iteration
@@ -625,13 +633,15 @@ As mentioned previously, the flat attribute of ndarray objects returns
 an iterator that will cycle over the entire array in C-style
 contiguous order.
 
->>> for i, val in enumerate(a.flat):
-...     if i%5 == 0: print(i, val)
-0 10
-5 15
-10 20
-15 25
-20 30
+  >>> import numpy as np
+  >>> a = np.arange(24).reshape(3,2,4) + 10
+  >>> for i, val in enumerate(a.flat):
+  ...     if i%5 == 0: print(i, val)
+  0 10
+  5 15
+  10 20
+  15 25
+  20 30
 
 Here, I've used the built-in enumerate iterator to return the iterator
 index as well as the value.
@@ -648,12 +658,13 @@ N-dimensional enumeration
 Sometimes it may be useful to get the N-dimensional index while
 iterating. The ndenumerate iterator can achieve this.
 
->>> for i, val in np.ndenumerate(a):
-...     if sum(i)%5 == 0: print(i, val)
-(0, 0, 0) 10
-(1, 1, 3) 25
-(2, 0, 3) 29
-(2, 1, 2) 32
+  >>> import numpy as np
+  >>> for i, val in np.ndenumerate(a):
+  ...     if sum(i)%5 == 0: print(i, val)
+  (0, 0, 0) 10
+  (1, 1, 3) 25
+  (2, 0, 3) 29
+  (2, 1, 2) 32
 
 
 Iterator for broadcasting
@@ -670,9 +681,10 @@ objects as inputs and returns an iterator that returns tuples
 providing each of the input sequence elements in the broadcasted
 result.
 
->>> for val in np.broadcast([[1, 0], [2, 3]], [0, 1]):
-...     print(val)
-(np.int64(1), np.int64(0))
-(np.int64(0), np.int64(1))
-(np.int64(2), np.int64(0))
-(np.int64(3), np.int64(1))
+  >>> import numpy as np
+  >>> for val in np.broadcast([[1, 0], [2, 3]], [0, 1]):
+  ...     print(val)
+  (np.int64(1), np.int64(0))
+  (np.int64(0), np.int64(1))
+  (np.int64(2), np.int64(0))
+  (np.int64(3), np.int64(1))

@@ -47,6 +47,7 @@ code.
    iterator
    ufunc
    generalized-ufuncs
+   strings
    coremath
    datetimes
    deprecations

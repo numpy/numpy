@@ -304,7 +304,7 @@ cdef class RandomState:
         st['gauss'] = self._aug_state.gauss
         if legacy and not isinstance(self._bit_generator, _MT19937):
             raise ValueError(
-                "legacy can only be True when the underlyign bitgenerator is "
+                "legacy can only be True when the underlying bitgenerator is "
                 "an instance of MT19937."
             )
         if legacy:
@@ -1138,7 +1138,7 @@ cdef class RandomState:
 
         >>> x = np.float32(5*0.99999999)
         >>> x
-        5.0
+        np.float32(5.0)
 
 
         Examples
@@ -3416,7 +3416,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the binomial distribution is
+        The probability mass function (PMF) for the binomial distribution is
 
         .. math:: P(N) = \\binom{n}{N}p^N(1-p)^{n-N},
 
@@ -3656,7 +3656,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The Poisson distribution
+        The probability mass function (PMF) of Poisson distribution is
 
         .. math:: f(k; \\lambda)=\\frac{\\lambda^k e^{-\\lambda}}{k!}
 
@@ -3744,7 +3744,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Zipf distribution is
+        The probability mass function (PMF) for the Zipf distribution is
 
         .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
@@ -3908,7 +3908,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Hypergeometric distribution is
+        The probability mass function (PMF) for the Hypergeometric distribution is
 
         .. math:: P(x) = \\frac{\\binom{g}{x}\\binom{b}{n-x}}{\\binom{g+b}{n}},
 
