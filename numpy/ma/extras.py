@@ -15,7 +15,7 @@ __all__ = [
     'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot', 'dstack', 'ediff1d',
     'flatnotmasked_contiguous', 'flatnotmasked_edges', 'hsplit', 'hstack',
     'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols', 'mask_rows',
-    'masked_all', 'masked_all_like', 'median', 'median_of_masked' , 'mr_', 'ndenumerate',
+    'masked_all', 'masked_all_like', 'median', 'median_of_masked', 'mr_', 'ndenumerate',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
     'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
     
