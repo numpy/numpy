@@ -15,9 +15,10 @@ __all__ = [
     'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot', 'dstack', 'ediff1d',
     'flatnotmasked_contiguous', 'flatnotmasked_edges', 'hsplit', 'hstack',
     'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols', 'mask_rows',
-    'masked_all', 'masked_all_like', 'median', 'mr_', 'ndenumerate',
+    'masked_all', 'masked_all_like', 'median', 'median_of_masked' , 'mr_', 'ndenumerate',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
     'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
+    
     ]
 
 import itertools
@@ -36,7 +37,35 @@ from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
 from numpy.lib._function_base_impl import _ureduce
 from numpy.lib._index_tricks_impl import AxisConcatenator
 
+def median_of_masked(masked_array) -> float:
+    # This Function returns the Median Of masked array in less time because It does not sort the full list 
+    temp = []
+    length = len(masked_array)
+    median = 0
+    minimum = 0
+    if length % 2 == 1:
+        median = length // 2
+        for i in range(0,median + 1):
+            for j in masked_array:
+                if j >  minimum:
+                    minimum = j
 
+            temp.append(minimum)
+            masked_array.remove(minimum)
+            minimum = 0
+        return temp[-1] + 0.0
+    else:
+        ans = 0.0
+        median = length // 2
+        for i in range(0,median + 1):
+            for j in masked_array:
+                if j >  minimum:
+                    minimum = j
+            temp.append(minimum)
+            masked_array.remove(minimum)
+            minimum = 0
+        ans =  temp[-1]  + temp[-2]
+        return ans / 2 
 def issequence(seq):
     """
     Is seq a sequence (ndarray, list or tuple)?
