@@ -11,7 +11,7 @@
  */
 #ifndef @P@_CPU_DISPATCHER_CONF_H_
 #define @P@_CPU_DISPATCHER_CONF_H_
-/// This definition is required to provide comptibility with NumPy distutils
+/// This definition is required to provide compatibility with NumPy distutils
 #define @P@_CPU_MESON_BUILD
 /**
  * @def @P@WITH_CPU_BASELINE
@@ -46,7 +46,7 @@
 /**
  * @def @P@WITH_CPU_BASELINE_CALL(EXEC_CB, ...)
  * Call each enabled baseline feature sorted by lowest interest
- * using preprocessor callback without testing whiher the
+ * using preprocessor callback without testing whether the
  * feature is supported by CPU or not.
  *
  * Required for logging purposes only, for example, generating
