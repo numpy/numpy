@@ -1536,7 +1536,7 @@ def searchsorted(a, v, side='left', sorter=None):
     array([0, 5, 1, 2])
 
     When `sorter` is used, the returned indices refer to the sorted
-    array of 'a' and not 'a' itself:
+    array of `a` and not `a` itself:
 
     >>> a = np.array([40, 10, 20, 30])
     >>> sorter = np.argsort(a)
