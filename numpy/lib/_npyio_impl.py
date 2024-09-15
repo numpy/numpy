@@ -793,17 +793,17 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         compression = zipfile.ZIP_STORED
 
     zipf = zipfile_factory(file, mode="w", compression=compression)
-
-    for key, val in namedict.items():
-        fname = key + '.npy'
-        val = np.asanyarray(val)
-        # always force zip64, gh-10776
-        with zipf.open(fname, 'w', force_zip64=True) as fid:
-            format.write_array(fid, val,
-                               allow_pickle=allow_pickle,
-                               pickle_kwargs=pickle_kwargs)
-
-    zipf.close()
+    try:
+        for key, val in namedict.items():
+            fname = key + '.npy'
+            val = np.asanyarray(val)
+            # always force zip64, gh-10776
+            with zipf.open(fname, 'w', force_zip64=True) as fid:
+                format.write_array(fid, val,
+                                   allow_pickle=allow_pickle,
+                                   pickle_kwargs=pickle_kwargs)
+    finally:
+        zipf.close()
 
 
 def _ensure_ndmin_ndarray_check_param(ndmin):
