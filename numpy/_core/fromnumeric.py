@@ -1542,9 +1542,10 @@ def searchsorted(a, v, side='left', sorter=None):
     >>> sorter = np.argsort(a)
     >>> sorter
     array([1, 2, 3, 0])  # Indices that would sort the array 'a'
-    >>> np.searchsorted(a, 25, sorter=sorter)
+    >>> result = np.searchsorted(a, 25, sorter=sorter)
+    >>> result 
     2
-    >>> a[sorter[np.searchsorted(a, 25, sorter=sorter)]]
+    >>> a[sorter[result]]
     30  # The element at index 2 of the sorted array is 30.
     """
     return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
