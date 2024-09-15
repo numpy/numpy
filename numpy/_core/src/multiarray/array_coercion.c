@@ -1147,10 +1147,25 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     seq = PySequence_Fast(obj, "Could not convert object to sequence");
     if (seq == NULL) {
         /*
-         * Specifically do not fail on things that look like a dictionary,
-         * instead treat them as scalar.
+         * Specifically do not fail on things that have __iter__ = None
+         * or look like a dictionary, instead treat them as scalar.
          */
-        if (PyErr_ExceptionMatches(PyExc_KeyError)) {
+        if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+            PyObject *type, *value, *traceback;
+            PyErr_Fetch(&type, &value, &traceback);
+            PyObject *it = PyObject_GetAttrString(obj, "__iter__");
+            if (it == Py_None) {
+                Py_DECREF(it);
+                PyErr_Clear();
+                max_dims = handle_scalar(
+                        obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
+                        flags, NULL);
+                return max_dims;
+             }
+             Py_XDECREF(it);
+             PyErr_Restore(type, value, traceback);
+        }
+        else if (PyErr_ExceptionMatches(PyExc_KeyError)) {
             PyErr_Clear();
             max_dims = handle_scalar(
                     obj, curr_dims, &max_dims, out_descr, out_shape, fixed_DType,
