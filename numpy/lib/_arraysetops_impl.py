@@ -557,10 +557,13 @@ def unique_values(x):
     """
     Returns the unique elements of an input array `x`.
 
-    This function is Array API compatible alternative to:
+    This function is an Array API compatible alternative to `np.unique`,
+    but returns only the unique values.
 
+    Example
+    -------
     >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, equal_nan=False)
+    >>> np.unique_values(x)
     array([1, 2])
 
     Parameters
@@ -577,12 +580,6 @@ def unique_values(x):
     --------
     unique : Find the unique elements of an array.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> np.unique_values([1, 1, 2])
-    array([1, 2])
-
     """
     return unique(
         x,
@@ -591,6 +588,7 @@ def unique_values(x):
         return_counts=False,
         equal_nan=False
     )
+
 
 
 def _intersect1d_dispatcher(
