@@ -510,11 +510,14 @@ def unique_inverse(x):
     """
     Find the unique elements of `x` and indices to reconstruct `x`.
 
-    This function is Array API compatible alternative to:
+    This function is an Array API compatible alternative to `np.unique`,
+    but returns a namedtuple for easier access to each output.
 
+    Example
+    -------
     >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, return_inverse=True, equal_nan=False)
-    (array([1, 2]), array([0, 0, 1]))
+    >>> np.unique_inverse(x)
+    UniqueInverseResult(values=array([1, 2]), inverse_indices=array([0, 0, 1]))
 
     Parameters
     ----------
@@ -533,12 +536,6 @@ def unique_inverse(x):
     See Also
     --------
     unique : Find the unique elements of an array.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> np.unique_inverse([1, 1, 2])
-    UniqueInverseResult(values=array([1, 2]), inverse_indices=array([0, 0, 1]))
 
     """
     result = unique(
