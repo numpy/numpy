@@ -17,6 +17,7 @@ Original author: Robert Cimrman
 import functools
 import warnings
 from typing import NamedTuple
+from collections import deque
 
 import numpy as np
 from numpy._core import overrides
@@ -286,8 +287,7 @@ def unique(ar, return_index=False, return_inverse=False,
 
     """
     ar = np.asanyarray(ar)
-    orig_ndim, orig_dtype, orig_shape = ar.ndim, ar.dtype, ar.shape
-    not_empty = (ar.size > 0)
+    orig_shape = ar.shape
     if axis is None:
         ar = ar.flatten()
     else:
@@ -296,119 +296,153 @@ def unique(ar, return_index=False, return_inverse=False,
         except np.exceptions.AxisError:
             # this removes the "axis1" or "axis2" prefix from the error message
             raise np.exceptions.AxisError(axis, ar.ndim) from None
-
-    def consecutive_equal(ar, assume_1d_and_sorted=False):
-        is_masked = isinstance(ar, np.ma.MaskedArray)
-        ar_data = ar.data if is_masked else ar
-
-        # General case: just compare consecutive elements with ==
-        is_eq = (ar_data[1:] == ar_data[:-1])
-        if equal_nan and ar.dtype.kind in "cfmM":
-            # Handle NaNs
-            if assume_1d_and_sorted and not is_masked and not np.isnan(ar[-1]):
-                pass  # Small optimization: nothing to do
-            else:  # General case
-                is_nan = np.isnan(ar_data)
-                is_eq |= is_nan[1:] & is_nan[:-1]
-        if is_masked:
-            # Handle masked arrays
-            is_eq = (ar.data[1:] == ar.data[:-1])
-            ma = ar.mask
-            if ma is not np.ma.nomask:
-                is_eq = (ma[1:] == ma[:-1]) & (is_eq | ma[1:]) 
-        return is_eq
-
-    # Reshape to a contiguous 2D array
-    # If the array is structured, destructure to handle NaNs
-    names = ar.dtype.names
-    (n, *more_shape) = ar.shape
-    if names and equal_nan and not_empty:
-        # Pre-checks for NaN handling in structured arrays
-        if not any(ar.dtype[field].kind in "cfmM" for field in names):
-            names = None  # No need to destructure. No NaNs in the array
-        else:
-            dtypes = [ar.dtype[field] for field in names]
-            if len(set(dtypes)) == 1:
-                # The array is structured but homogeneous
-                # Optimization: use np.view and process as normal case
-                names = None
-                ar = ar.view(dtypes[0])
     
-    if not_empty:
-        # Reshape as 2D array, use lexsort and consecutive_equal
-        ar = ar.reshape(n, -1)
-        if not names:
-            # Normal case: non-structured ndarrays
-            perm = ma_lexsort(ar.T[::-1])
-            ar = ar[perm]
-            if ar.size == n:
-                next_eq = consecutive_equal(ar[:, 0], True)
-            else:
-                next_eq = consecutive_equal(ar, False)
-                next_eq = np.all(next_eq, axis=1)
-        else:
-            # Handle NaNs in non-homogeneous structured arrays
-            # Treat each row of tuples virtually as a single large tuple
-            cols = [col for field in names for col in ar[field].T]
-            perm = ma_lexsort(cols[::-1])
-            ar = ar[perm]
-            next_eq = True
-            first_col = True
-            for field in names:
-                next_eq &= consecutive_equal(ar[field], first_col)
-                first_col = False
-            next_eq = np.all(next_eq, axis=-1)
-        
-        # Uniques occur where consecutive_equal is False
-        mask = np.concatenate(([True], ~next_eq))
+    if ar.size == 0:
+        perm = np.arange(len(ar))
+        mask = perm == 0  # True for the first (if any)
     else:
-        # Special case for empty arrays
-        perm = np.arange(n)
-        mask = perm == 0  # True only for the first element (if any)
-    
+        # Compute the permutation and mask
+        cols = [*ar.reshape(len(ar), -1).T] if ar.ndim > 1 else [ar]
+        perm, mask = proposed_lexsort(cols, equal_nan=equal_nan, return_diff=True)
+
+    ar = ar[perm]
     # Filter unique values using the mask
-    if n > 0:
+    if len(ar):
         ar = ar[mask]
-        ar = ar.view(orig_dtype)  # For homogeneus structured arrays                
-        ar = ar.reshape(ar.shape[0], *more_shape)
     if axis is not None:
         ar = np.moveaxis(ar, 0, axis)
-    # Reconstruction of inverse, index and counts
-    out = (ar,)
+
+    # Reconstruction of the output
+    ret = (ar,)
     if return_index:
-        out += (perm[mask],)
+        ret += (perm[mask],)
     if return_inverse:
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
-        if axis is None:
-            inverse_shape = orig_shape
-        else:
-            inverse_shape = [1] * orig_ndim
-            inverse_shape[axis] = n
-        out += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
+        ret += (inv_idx.reshape(orig_shape) if axis is None else inv_idx,)
     if return_counts:
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
-        out += (np.diff(idx),)
+        ret += (np.diff(idx),)
+    return ret[0] if len(ret) == 1 else ret
 
-    return out[0] if len(out) == 1 else out
 
+def proposed_lexsort(cols, equal_nan=True, objects="compare", return_diff=False):
+    """
+    Sorts lexicographically the rows of a table with columns given by cols.
 
-def ma_lexsort(columns):
-    '''
-    mask-aware lexicographical sort:
-    like np.lexsort, but masked elements are sent to the end
-    '''
-    cols = []
-    for col in columns:
-        if isinstance(col, np.ma.MaskedArray):
-            cols.append(col.data)
-            if col.mask is not np.ma.nomask:
-                cols.append(col.mask)
-        else:
-            cols.append(col)
-    perm = np.lexsort(cols)
-    return perm
+    This function is similar to the existing np.lexsort(cols[::-1]), but this one
+    - sets precedence from the first column to the last column
+    - supports masked arrays
+    - supports nans
+    - supports dtype=object
+    - supports columns with fields, possibly nested
+    - optionally returns a boolean diff mask that detects unique elements
+
+    Paramter equal_nan:
+    - If equal_nan = True:
+        All nan types are trated as equal, for instance 1+nanj=nan-3j.
+        In case of ties, the first occurrence is the leader.
+    - If equal_nan = False:
+        All nan types are treated as different elements.
+        In case of ties, their order follows the docs of np.sort.
+
+    Objects parameter:
+    - 'compare': (default)
+        Compare objects with == and < (__eq__ and __lt__)
+        If x != x, then x is treated as NaN
+    - 'compare-no-nan':
+        objects are compared with == and < (__eq__ and __lt__).
+    - 'different': all objects are treated as different
+    - 'equal': all objects are treated as equal
+    """
+    raw_cols = deque(cols)
+    assert raw_cols, "Expected at least one column. Can not detect the number of rows"
+    n = len(cols[0])
+    assert all(len(col) == n for col in cols), (
+        f"Columns have different lengths: {[len(col) for col in cols]}"
+    )
+
+    cols = deque([])
+
+    perm = np.arange(n)
+    blocks = [(0, n)] if n > 1 else []
+    
+    # Loop invariant
+    # C[perm] is sorted and all groups C[perm[start:stop]] of 2 or more equal
+    # consecutuve elements  appear as (start, stop) in the list blocks.
+    # C denotes the horizontal stack of columns consumed so far (popped from raw_cols)
+    while blocks:
+        # B = np.empty((len(arr), len(cols)+1), dtype=object)
+        # for i, col in enumerate(cols):
+        #     B[:, i] = col
+        # B[:, len(cols)] = ties
+        # display(B[perm[start:stop]])
+        # Get the next column
+        while not cols and raw_cols:
+            col = raw_cols.popleft()
+            if col.dtype.names:
+                raw_cols.extendleft([col[field] for field in col.dtype.names][::-1])
+            elif isinstance(col, np.ma.MaskedArray):
+                mask = col.mask
+                col = col.data
+                if mask.all():
+                    continue
+                if mask is not np.ma.nomask:
+                    raw_cols.append(mask)
+                col = np.where(mask, col[~mask][0], col)
+                raw_cols.append(col)
+            else:
+                if col.dtype.kind == "O":
+                    if objects == "compare":
+                        is_nan = col != col
+                        cols.append(is_nan)
+                        col = np.where(is_nan, 0 if equal_nan else np.nan, col)
+                    elif objects == "different":
+                        col = np.arange(len(col))
+                    elif objects == "equal":
+                        col = np.zeros(len(col), dtype=bool)
+                    elif objects == "compare-no-nan":
+                        pass
+                    else:
+                        raise Exception(f"Unkonwn argument objects='{objects}'")
+                elif col.dtype.kind in "cfmM":
+                    is_nan = np.isnan(col)
+                    if equal_nan and is_nan.all():
+                        continue
+                    cols.append(is_nan)
+                    if equal_nan:
+                        col = np.where(is_nan, col[~is_nan][0], col)
+                cols.append(col)
+        if not cols:
+            break
+        col = cols.popleft()
+
+        prev_blocks = blocks
+        blocks = []
+        for start, stop in prev_blocks:
+            idx = np.argsort(col[perm[start:stop]], kind="stable")
+            perm[start:stop] = perm[start:stop][idx]
+            # Find groups of equal elements
+            segment = col[perm[start:stop]]
+            where_diff = np.nonzero(segment[1:] != segment[:-1])[0]
+            where_diff = [start, *(where_diff + (1 + start)), stop]
+            for start, stop in zip(where_diff, where_diff[1:]):
+                if stop - start > 1:
+                    blocks.append((start, stop))
+    
+    for start, stop in blocks:
+        idx = np.argsort(perm[start:stop], kind="stable")
+        perm[start:stop] = perm[start:stop][idx]
+    
+    out = (perm,)
+    if return_diff:
+        prev_diff = np.ones(n, dtype=bool)
+        for start, stop in blocks:
+            prev_diff[start + 1:stop] = False
+        out += (prev_diff,)
+    
+    return out
 
 # Array API set functions
 
