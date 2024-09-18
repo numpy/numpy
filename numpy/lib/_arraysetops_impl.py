@@ -414,8 +414,12 @@ def unique_all(x):
     """
     Find the unique elements of an array, and counts, inverse, and indices.
 
-    This function is an Array API compatible alternative to `np.unique`, but
-    returns a namedtuple for easier access to each output.
+    This function is an Array API compatible alternative to::
+
+        np.unique(x, return_index=True, return_inverse=True,
+                  return_counts=True, equal_nan=False)
+
+    but returns a namedtuple for easier access to each output.
 
     Parameters
     ----------
@@ -426,6 +430,7 @@ def unique_all(x):
     -------
     out : namedtuple
         The result containing:
+
         * values - The unique elements of an input array.
         * indices - The first occurring indices for each unique element.
         * inverse_indices - The indices from the set of unique elements
@@ -438,10 +443,17 @@ def unique_all(x):
 
     Examples
     --------
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique_all(x)
-    UniqueAllResult(values=array([1, 2]), indices=array([0, 2]),
-                    inverse_indices=array([0, 0, 1]), counts=array([2, 1]))
+    >>> import numpy as np
+    >>> x = [1, 1, 2]
+    >>> uniq = np.unique_all(x)
+    >>> uniq.values
+    array([1, 2])
+    >>> uniq.indices
+    array([0, 2])
+    >>> uniq.inverse_indices
+    array([0, 0, 1])
+    >>> uniq.counts
+    array([2, 1])
     """
     result = unique(
         x,
@@ -462,7 +474,10 @@ def unique_counts(x):
     """
     Find the unique elements and counts of an input array `x`.
 
-    This function is an Array API compatible alternative to `np.unique`,
+    This function is an Array API compatible alternative to::
+
+        np.unique(x, return_counts=True, equal_nan=False)
+
     but returns a namedtuple for easier access to each output.
 
     Parameters
@@ -474,6 +489,7 @@ def unique_counts(x):
     -------
     out : namedtuple
         The result containing:
+
         * values - The unique elements of an input array.
         * counts - The corresponding counts for each unique element.
 
@@ -483,9 +499,13 @@ def unique_counts(x):
 
     Examples
     --------
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique_counts(x)
-    UniqueCountsResult(values=array([1, 2]), counts=array([2, 1]))
+    >>> import numpy as np
+    >>> x = [1, 1, 2]
+    >>> uniq = np.unique_counts(x)
+    >>> uniq.values
+    array([1, 2])
+    >>> uniq.counts
+    array([2, 1])
     """
     result = unique(
         x,
@@ -496,7 +516,6 @@ def unique_counts(x):
     )
     return UniqueCountsResult(*result)
 
-
 def _unique_inverse_dispatcher(x, /):
     return (x,)
 
@@ -506,7 +525,10 @@ def unique_inverse(x):
     """
     Find the unique elements of `x` and indices to reconstruct `x`.
 
-    This function is an Array API compatible alternative to `np.unique`,
+    This function is an Array API compatible alternative to::
+
+        np.unique(x, return_inverse=True, equal_nan=False)
+
     but returns a namedtuple for easier access to each output.
 
     Parameters
@@ -518,6 +540,7 @@ def unique_inverse(x):
     -------
     out : namedtuple
         The result containing:
+
         * values - The unique elements of an input array.
         * inverse_indices - The indices from the set of unique elements
           that reconstruct `x`.
@@ -528,9 +551,13 @@ def unique_inverse(x):
 
     Examples
     --------
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique_inverse(x)
-    UniqueInverseResult(values=array([1, 2]), inverse_indices=array([0, 0, 1]))
+    >>> import numpy as np
+    >>> x = [1, 1, 2]
+    >>> uniq = np.unique_inverse(x)
+    >>> uniq.values
+    array([1, 2])
+    >>> uniq.inverse_indices
+    array([0, 0, 1])
     """
     result = unique(
         x,
@@ -551,8 +578,9 @@ def unique_values(x):
     """
     Returns the unique elements of an input array `x`.
 
-    This function is an Array API compatible alternative to `np.unique`,
-    but returns only the unique values.
+    This function is an Array API compatible alternative to::
+
+        np.unique(x, equal_nan=False)
 
     Parameters
     ----------
@@ -570,7 +598,8 @@ def unique_values(x):
 
     Examples
     --------
-    >>> x = np.array([1, 1, 2])
+    >>> import numpy as np
+    >>> x = [1, 1, 2]
     >>> np.unique_values(x)
     array([1, 2])
     """
