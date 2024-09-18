@@ -7,7 +7,6 @@ from typing import (
     SupportsIndex,
     SupportsInt,
     TypeAlias,
-    TypeVar,
     final,
     overload,
 )
@@ -30,7 +29,7 @@ from numpy._typing import (
     _NumberLike_co,
 )
 
-from typing_extensions import LiteralString
+from typing_extensions import LiteralString, TypeVar
 
 
 _T = TypeVar("_T")
@@ -113,7 +112,7 @@ _ArrayLikeCoef_co: TypeAlias = (
     | _ArrayLikeCoefObject_co
 )
 
-_Name_co = TypeVar("_Name_co", bound=LiteralString, covariant=True)
+_Name_co = TypeVar("_Name_co", bound=LiteralString, covariant=True, default=LiteralString)
 
 class _Named(Protocol[_Name_co]):
     @property
