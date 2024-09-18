@@ -56,10 +56,10 @@ _2Tuple: TypeAlias = tuple[_T1, _T1]
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 
-_IntType = TypeVar("_IntType", bound=integer)
-_FloatType = TypeVar("_FloatType", bound=floating)
-_NumberType = TypeVar("_NumberType", bound=number)
-_NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number)
+_IntType = TypeVar("_IntType", bound=integer[Any])
+_FloatType = TypeVar("_FloatType", bound=floating[Any])
+_NumberType = TypeVar("_NumberType", bound=number[Any])
+_NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number[Any])
 _GenericType_co = TypeVar("_GenericType_co", covariant=True, bound=generic)
 
 class _BoolOp(Protocol[_GenericType_co]):

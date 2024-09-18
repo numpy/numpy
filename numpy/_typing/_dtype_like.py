@@ -144,9 +144,9 @@ _DTypeLikeBool: TypeAlias = (
     | _BoolCodes
 )
 _DTypeLikeUInt: TypeAlias = (
-    type[np.unsignedinteger]
-    | np.dtype[np.unsignedinteger]
-    | _SupportsDType[np.dtype[np.unsignedinteger]]
+    type[np.unsignedinteger[Any]]
+    | np.dtype[np.unsignedinteger[Any]]
+    | _SupportsDType[np.dtype[np.unsignedinteger[Any]]]
     | _UInt8Codes
     | _UInt16Codes
     | _UInt32Codes
@@ -161,9 +161,9 @@ _DTypeLikeUInt: TypeAlias = (
 )
 _DTypeLikeInt: TypeAlias = (
     type[int]
-    | type[np.signedinteger]
-    | np.dtype[np.signedinteger]
-    | _SupportsDType[np.dtype[np.signedinteger]]
+    | type[np.signedinteger[Any]]
+    | np.dtype[np.signedinteger[Any]]
+    | _SupportsDType[np.dtype[np.signedinteger[Any]]]
     | _Int8Codes
     | _Int16Codes
     | _Int32Codes
@@ -178,9 +178,9 @@ _DTypeLikeInt: TypeAlias = (
 )
 _DTypeLikeFloat: TypeAlias = (
     type[float]
-    | type[np.floating]
-    | np.dtype[np.floating]
-    | _SupportsDType[np.dtype[np.floating]]
+    | type[np.floating[Any]]
+    | np.dtype[np.floating[Any]]
+    | _SupportsDType[np.dtype[np.floating[Any]]]
     | _Float16Codes
     | _Float32Codes
     | _Float64Codes
@@ -191,9 +191,9 @@ _DTypeLikeFloat: TypeAlias = (
 )
 _DTypeLikeComplex: TypeAlias = (
     type[complex]
-    | type[np.complexfloating]
-    | np.dtype[np.complexfloating]
-    | _SupportsDType[np.dtype[np.complexfloating]]
+    | type[np.complexfloating[Any]]
+    | np.dtype[np.complexfloating[Any]]
+    | _SupportsDType[np.dtype[np.complexfloating[Any]]]
     | _Complex64Codes
     | _Complex128Codes
     | _CSingleCodes

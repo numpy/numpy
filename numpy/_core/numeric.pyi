@@ -183,7 +183,7 @@ def full(
 def full(
     shape: _SizeType,
     fill_value: Any,
-    dtype: _DType | _SupportsDType,
+    dtype: _DType | _SupportsDType[_DType],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
 ) -> np.ndarray[tuple[_SizeType], _DType]: ...
