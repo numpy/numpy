@@ -8,7 +8,7 @@ from typing import (
     TypeVar,
     final,
 )
-from typing_extensions import LiteralString
+from typing_extensions import LiteralString, Self
 
 import numpy as np
 
@@ -50,12 +50,11 @@ __all__ = [
 
 # Helper base classes (typing-only)
 
-_SelfT = TypeVar("_SelfT", bound=np.dtype[Any])
 _SCT_co = TypeVar("_SCT_co", bound=np.generic, covariant=True)
 
 class _SimpleDType(Generic[_SCT_co], np.dtype[_SCT_co]):  # type: ignore[misc]
     names: None  # pyright: ignore[reportIncompatibleVariableOverride]
-    def __new__(cls: type[_SelfT], /) -> _SelfT: ...
+    def __new__(cls, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> NoReturn: ...
     @property
     def base(self) -> np.dtype[_SCT_co]: ...
@@ -454,7 +453,7 @@ class VoidDType(
     # NOTE: `VoidDType(...)` raises a `TypeError` at the moment
     def __new__(cls, length: _ItemSize_co, /) -> NoReturn: ...
     @property
-    def base(self: _SelfT) -> _SelfT: ...
+    def base(self) -> Self: ...
     @property
     def isalignedstruct(self) -> L[False]: ...
     @property
