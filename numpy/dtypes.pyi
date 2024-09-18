@@ -7,6 +7,7 @@ from typing import (
     TypeAlias,
     TypeVar,
     final,
+    type_check_only,
 )
 from typing_extensions import LiteralString, Self
 
@@ -52,6 +53,7 @@ __all__ = [
 
 _SCT_co = TypeVar("_SCT_co", bound=np.generic, covariant=True)
 
+@type_check_only
 class _SimpleDType(Generic[_SCT_co], np.dtype[_SCT_co]):  # type: ignore[misc]
     names: None  # pyright: ignore[reportIncompatibleVariableOverride]
     def __new__(cls, /) -> Self: ...
@@ -71,6 +73,7 @@ class _SimpleDType(Generic[_SCT_co], np.dtype[_SCT_co]):  # type: ignore[misc]
     @property
     def subdtype(self) -> None: ...
 
+@type_check_only
 class _LiteralDType(Generic[_SCT_co], _SimpleDType[_SCT_co]):  # type: ignore[misc]
     @property
     def flags(self) -> L[0]: ...
@@ -83,6 +86,7 @@ _KindT_co = TypeVar("_KindT_co", bound=LiteralString, covariant=True)
 _CharT_co = TypeVar("_CharT_co", bound=LiteralString, covariant=True)
 _NumT_co = TypeVar("_NumT_co", bound=int, covariant=True)
 
+@type_check_only
 class _TypeCodes(Generic[_KindT_co, _CharT_co, _NumT_co]):
     @final
     @property
@@ -94,11 +98,13 @@ class _TypeCodes(Generic[_KindT_co, _CharT_co, _NumT_co]):
     @property
     def num(self) -> _NumT_co: ...
 
+@type_check_only
 class _NoOrder:
     @final
     @property
     def byteorder(self) -> L["|"]: ...
 
+@type_check_only
 class _NativeOrder:
     @final
     @property
@@ -107,6 +113,7 @@ class _NativeOrder:
 _DataSize_co = TypeVar("_DataSize_co", bound=int, covariant=True)
 _ItemSize_co = TypeVar("_ItemSize_co", bound=int, covariant=True)
 
+@type_check_only
 class _NBit(Generic[_DataSize_co, _ItemSize_co]):
     @final
     @property
@@ -115,6 +122,7 @@ class _NBit(Generic[_DataSize_co, _ItemSize_co]):
     @property
     def itemsize(self) -> _ItemSize_co: ...
 
+@type_check_only
 class _8Bit(_NoOrder, _NBit[L[1], L[1]]): ...
 
 # Boolean:
