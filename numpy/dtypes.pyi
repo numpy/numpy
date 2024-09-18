@@ -5,11 +5,10 @@ from typing import (
     Literal as L,
     NoReturn,
     TypeAlias,
-    TypeVar,
     final,
     type_check_only,
 )
-from typing_extensions import LiteralString, Self
+from typing_extensions import LiteralString, Self, TypeVar
 
 import numpy as np
 
@@ -111,7 +110,7 @@ class _NativeOrder:
     def byteorder(self) -> L["="]: ...
 
 _DataSize_co = TypeVar("_DataSize_co", bound=int, covariant=True)
-_ItemSize_co = TypeVar("_ItemSize_co", bound=int, covariant=True)
+_ItemSize_co = TypeVar("_ItemSize_co", bound=int, covariant=True, default=int)
 
 @type_check_only
 class _NBit(Generic[_DataSize_co, _ItemSize_co]):
