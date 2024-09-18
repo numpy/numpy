@@ -298,27 +298,6 @@ class _FloatDivMod(Protocol[_NBit1]):
         self, other: integer[_NBit2] | floating[_NBit2], /
     ) -> _2Tuple[floating[_NBit1]] | _2Tuple[floating[_NBit2]]: ...
 
-class _ComplexOp(Protocol[_NBit1]):
-    @overload
-    def __call__(self, other: bool, /) -> complexfloating[_NBit1, _NBit1]: ...
-    @overload
-    def __call__(
-        self, other: int, /
-    ) -> complexfloating[_NBit1, _NBit1] | complexfloating[_NBitInt, _NBitInt]: ...
-    @overload
-    def __call__(
-        self, other: complex, /,
-    ) -> complexfloating[_NBit1, _NBit1] | complex128: ...
-    @overload
-    def __call__(
-        self,
-        other: (
-            integer[_NBit2]
-            | floating[_NBit2]
-            | complexfloating[_NBit2, _NBit2]
-        ), /,
-    ) -> complexfloating[_NBit1, _NBit1] | complexfloating[_NBit2, _NBit2]: ...
-
 class _NumberOp(Protocol):
     def __call__(self, other: _NumberLike_co, /) -> Any: ...
 

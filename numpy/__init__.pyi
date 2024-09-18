@@ -161,7 +161,6 @@ from numpy._typing._callable import (
     _FloatOp,
     _FloatMod,
     _FloatDivMod,
-    _ComplexOp,
     _NumberOp,
     _ComparisonOpLT,
     _ComparisonOpLE,
@@ -199,13 +198,10 @@ from typing import (
     Literal as L,
     Any,
     Generator,
-    Generic,
     NoReturn,
-    overload,
     SupportsComplex,
     SupportsFloat,
     SupportsInt,
-    Protocol,
     SupportsIndex,
     Final,
     final,
@@ -218,7 +214,7 @@ from typing import (
 # This is because the `typeshed` stubs for the standard library include
 # `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
-from typing_extensions import LiteralString, Self, TypeVar
+from typing_extensions import Generic, LiteralString, Protocol, Self, TypeVar, overload
 
 from numpy import (
     core,
@@ -3086,8 +3082,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 
 _ScalarType = TypeVar("_ScalarType", bound=generic)
+_NBit = TypeVar("_NBit", bound=NBitBase)
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
-_NBit2 = TypeVar("_NBit2", bound=NBitBase)
+_NBit2 = TypeVar("_NBit2", bound=NBitBase, default=_NBit1)
 
 class generic(_ArrayOrScalarCommon):
     @abstractmethod
@@ -3585,7 +3582,6 @@ float32: TypeAlias = floating[_32Bit]
 
 # NOTE: `_64Bit` is equivalent to `_64Bit | _32Bit | _16Bit | _8Bit`
 _Float64_co: TypeAlias = float | floating[_64Bit] | integer[_64Bit] | np.bool
-_Complex128_co: TypeAlias = complex | complexfloating[_64Bit, _64Bit] | _Float64_co
 
 # either a C `double`, `float`, or `longdouble`
 class float64(floating[_64Bit], float):  # type: ignore[misc]
@@ -3714,6 +3710,9 @@ single: TypeAlias = floating[_NBitSingle]
 double: TypeAlias = floating[_NBitDouble]
 longdouble: TypeAlias = floating[_NBitLongDouble]
 
+_Complex64_co: TypeAlias = builtins.bool | np.bool | number[_32Bit]
+_Complex128_co: TypeAlias = complex | np.bool | number[_64Bit]
+
 # The main reason for `complexfloating` having two typevars is cosmetic.
 # It is used to clarify why `complex128`s precision is `_64Bit`, the latter
 # describing the two 64 bit floats representing its real and imaginary component
@@ -3726,19 +3725,73 @@ class complexfloating(inexact[_NBit1], Generic[_NBit1, _NBit2]):
     def real(self) -> floating[_NBit1]: ...  # type: ignore[override]
     @property
     def imag(self) -> floating[_NBit2]: ...  # type: ignore[override]
-    def __abs__(self) -> floating[_NBit1]: ...  # type: ignore[override]
+    def __abs__(self) -> floating[_NBit1 | _NBit2]: ...  # type: ignore[override]
     # NOTE: Deprecated
     # def __round__(self, ndigits=...): ...
-    __add__: _ComplexOp[_NBit1]
-    __radd__: _ComplexOp[_NBit1]
-    __sub__: _ComplexOp[_NBit1]
-    __rsub__: _ComplexOp[_NBit1]
-    __mul__: _ComplexOp[_NBit1]
-    __rmul__: _ComplexOp[_NBit1]
-    __truediv__: _ComplexOp[_NBit1]
-    __rtruediv__: _ComplexOp[_NBit1]
-    __pow__: _ComplexOp[_NBit1]
-    __rpow__: _ComplexOp[_NBit1]
+    @overload
+    def __add__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __add__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __add__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
+    @overload
+    def __radd__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __radd__(self, other: complex, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __radd__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
+
+    @overload
+    def __sub__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __sub__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __sub__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
+    @overload
+    def __rsub__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __rsub__(self, other: complex, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __rsub__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
+
+    @overload
+    def __mul__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __mul__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __mul__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
+    @overload
+    def __rmul__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __rmul__(self, other: complex, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __rmul__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
+
+    @overload
+    def __truediv__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __truediv__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __truediv__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
+    @overload
+    def __rtruediv__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __rtruediv__(self, other: complex, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __rtruediv__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
+
+    @overload
+    def __pow__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __pow__(self, other: complex | float64 | complex128, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __pow__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
+    @overload
+    def __rpow__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
+    @overload
+    def __rpow__(self, other: complex, /) -> complexfloating[_NBit1, _NBit2] | complex128: ...
+    @overload
+    def __rpow__(self, other: number[_NBit], /) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
 
 complex64: TypeAlias = complexfloating[_32Bit, _32Bit]
 
