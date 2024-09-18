@@ -3087,7 +3087,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
 
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
-_NBit2 = TypeVar("_NBit2", bound=NBitBase)
+_NBit2 = TypeVar("_NBit2", bound=NBitBase, default=_NBit1)
 
 class generic(_ArrayOrScalarCommon):
     @abstractmethod
