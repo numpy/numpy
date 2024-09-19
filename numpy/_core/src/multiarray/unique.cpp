@@ -2,12 +2,27 @@
 
 #include <Python.h>
 
-#include <unordered_map>
+#include <unordered_set>
 #include <functional>
 
 #include "numpy/arrayobject.h"
 #include "numpy/npy_common.h"
 
+
+// This is to use RAII pattern to handle cpp exceptions while avoiding memory leaks.
+// Adapted from https://stackoverflow.com/a/25510879/2536294
+template <typename F>
+struct FinalAction {
+    FinalAction(F f) : clean_{f} {}
+    ~FinalAction() { clean_(); }
+  private:
+    F clean_;
+};
+
+template <typename F>
+FinalAction<F> finally(F f) {
+    return FinalAction<F>(f);
+}
 
 template<typename T>
 PyObject* unique(PyArrayObject *self)
@@ -26,20 +41,22 @@ PyObject* unique(PyArrayObject *self)
     NpyIter_IterNextFunc *iternext;
     char** dataptr;
     npy_intp* strideptr,* innersizeptr;
-    std::unordered_map<T, char> hashmap;
+    std::unordered_set<T> hashset;
 
     iter = NpyIter_New(self, NPY_ITER_READONLY|
                              NPY_ITER_EXTERNAL_LOOP|
                              NPY_ITER_REFS_OK,
                         NPY_KEEPORDER, NPY_NO_CASTING,
                         NULL);
+    // Making sure the iterator is deallocated when the function returns, with
+    // or w/o an exception
+    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
     if (iter == NULL) {
         return Py_None;
     }
 
     iternext = NpyIter_GetIterNext(iter, NULL);
     if (iternext == NULL) {
-        NpyIter_Deallocate(iter);
         return Py_None;
     }
     dataptr = NpyIter_GetDataPtrArray(iter);
@@ -53,22 +70,21 @@ PyObject* unique(PyArrayObject *self)
         npy_intp count = *innersizeptr;
 
         while (count--) {
-            hashmap[*((T *) data)] = 0;
+            hashset.insert(*((T *) data));
             data += stride;
         }
     } while(iternext(iter));
-    NpyIter_Deallocate(iter);
 
     // then we iterate through the map's keys to get the unique values
-    T* res = new T[hashmap.size()];
-    auto it = hashmap.begin();
+    T* res = new T[hashset.size()];
+    auto it = hashset.begin();
     size_t i = 0;
-    for (; it != hashmap.end(); it++, i++) {
-        res[i] = it->first;
+    for (; it != hashset.end(); it++, i++) {
+        res[i] = *it;
     }
 
     // does this need to have the same lifetime as the array?
-    npy_intp dims[1] = {(npy_intp)hashmap.size()};
+    npy_intp dims[1] = {(npy_intp)hashset.size()};
     PyArray_Descr *descr = PyArray_DESCR(self);
     Py_INCREF(descr);
     return PyArray_NewFromDescr(
