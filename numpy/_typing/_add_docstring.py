@@ -120,8 +120,9 @@ add_newdoc('DTypeLike', 'typing.Union[...]',
 
 add_newdoc('NDArray', repr(NDArray),
     """
-    A `np.ndarray[Any, np.dtype[+ScalarType]] <numpy.ndarray>` type alias 
-    :term:`generic <generic type>` w.r.t. its `dtype.type <numpy.dtype.type>`.
+    A `np.ndarray[tuple[int, ...], np.dtype[+ScalarType]] <numpy.ndarray>`
+    type alias :term:`generic <generic type>` w.r.t. its
+    `dtype.type <numpy.dtype.type>`.
 
     Can be used during runtime for typing arrays with a given dtype
     and unspecified shape.
@@ -136,10 +137,10 @@ add_newdoc('NDArray', repr(NDArray),
         >>> import numpy.typing as npt
 
         >>> print(npt.NDArray)
-        numpy.ndarray[typing.Any, numpy.dtype[+ScalarType]]
+        numpy.ndarray[tuple[int, ...], numpy.dtype[+_ScalarType_co]]
 
         >>> print(npt.NDArray[np.float64])
-        numpy.ndarray[typing.Any, numpy.dtype[numpy.float64]]
+        numpy.ndarray[tuple[int, ...], numpy.dtype[numpy.float64]]
 
         >>> NDArrayInt = npt.NDArray[np.int_]
         >>> a: NDArrayInt = np.arange(10)

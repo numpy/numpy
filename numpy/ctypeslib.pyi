@@ -44,6 +44,7 @@ from numpy._typing import (
     _ArrayLike,
 
     # Shapes
+    _Shape,
     _ShapeLike,
 
     # DTypes
@@ -100,7 +101,7 @@ class _concrete_ndptr(_ndptr[_DType]):
     _dtype_: ClassVar[_DType]
     _shape_: ClassVar[tuple[int, ...]]
     @property
-    def contents(self) -> ndarray[Any, _DType]: ...
+    def contents(self) -> ndarray[_Shape, _DType]: ...
 
 def load_library(
     libname: str | bytes | os.PathLike[str] | os.PathLike[bytes],

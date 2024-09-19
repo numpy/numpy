@@ -379,6 +379,7 @@ typedef struct
 
 #include <complex.h>
 
+
 #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
 typedef _Dcomplex npy_cdouble;
 typedef _Fcomplex npy_cfloat;

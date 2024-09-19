@@ -3,6 +3,7 @@
 """
 __all__ = ['finfo', 'iinfo']
 
+import types
 import warnings
 
 from .._utils import set_module
@@ -477,6 +478,7 @@ class finfo:
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.finfo(np.float64).dtype
     dtype('float64')
     >>> np.finfo(np.complex64).dtype
@@ -485,6 +487,8 @@ class finfo:
     """
 
     _finfo_cache = {}
+
+    __class_getitem__ = classmethod(types.GenericAlias)
 
     def __new__(cls, dtype):
         try:
@@ -663,6 +667,7 @@ class iinfo:
     --------
     With types:
 
+    >>> import numpy as np
     >>> ii16 = np.iinfo(np.int16)
     >>> ii16.min
     -32768
@@ -686,6 +691,8 @@ class iinfo:
 
     _min_vals = {}
     _max_vals = {}
+
+    __class_getitem__ = classmethod(types.GenericAlias)
 
     def __init__(self, int_type):
         try:

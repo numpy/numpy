@@ -80,7 +80,7 @@ typedef struct {
     PyObject *castingimpls;
 
     /*
-     * Storage for `descr->f`, since we may need to allow some customizatoin
+     * Storage for `descr->f`, since we may need to allow some customization
      * here at least in a transition period and we need to set it on every
      * dtype instance for backward compatibility.  (Keep this at end)
      */

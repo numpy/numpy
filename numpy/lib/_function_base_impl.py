@@ -62,7 +62,7 @@ __all__ = [
 # get_virtual_index : Callable
 #   The function used to compute the virtual_index.
 # fix_gamma : Callable
-#   A function used for discret methods to force the index to a specific value.
+#   A function used for discrete methods to force the index to a specific value.
 _QuantileMethods = dict(
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
@@ -192,6 +192,7 @@ def rot90(m, k=1, axes=(0, 1)):
 
     Examples
     --------
+    >>> import numpy as np
     >>> m = np.array([[1,2],[3,4]], int)
     >>> m
     array([[1, 2],
@@ -297,6 +298,7 @@ def flip(m, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.arange(8).reshape((2,2,2))
     >>> A
     array([[[0, 1],
@@ -323,7 +325,8 @@ def flip(m, axis=None):
             [7, 6]],
            [[1, 0],
             [3, 2]]])
-    >>> A = np.random.randn(3,4,5)
+    >>> rng = np.random.default_rng()
+    >>> A = rng.normal(size=(3,4,5))
     >>> np.all(np.flip(A,2) == A[:,:,::-1,...])
     True
     """
@@ -359,6 +362,7 @@ def iterable(y):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.iterable([1, 2, 3])
     True
     >>> np.iterable(2)
@@ -387,7 +391,7 @@ def iterable(y):
 
 def _weights_are_valid(weights, a, axis):
     """Validate weights array.
-    
+
     We assume, weights is not None.
     """
     wgt = np.asanyarray(weights)
@@ -447,7 +451,7 @@ def average(a, axis=None, weights=None, returned=False, *,
         The calculation is::
 
             avg = sum(a * weights) / sum(weights)
-        
+
         where the sum is over all included elements.
         The only constraint on the values of `weights` is that `sum(weights)`
         must not be 0.
@@ -501,6 +505,7 @@ def average(a, axis=None, weights=None, returned=False, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> data = np.arange(1, 5)
     >>> data
     array([1, 2, 3, 4])
@@ -626,7 +631,9 @@ def asarray_chkfinite(a, dtype=None, order=None):
 
     Examples
     --------
-    Convert a list into an array.  If all elements are finite
+    >>> import numpy as np
+
+    Convert a list into an array. If all elements are finite, then
     ``asarray_chkfinite`` is identical to ``asarray``.
 
     >>> a = [1, 2]
@@ -727,6 +734,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Examples
     --------
+    >>> import numpy as np
+
     Define the signum function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
 
     >>> x = np.linspace(-2.5, 2.5, 6)
@@ -815,6 +824,8 @@ def select(condlist, choicelist, default=0):
 
     Examples
     --------
+    >>> import numpy as np
+
     Beginning with an array of integers from 0 to 5 (inclusive),
     elements less than ``3`` are negated, elements greater than ``3``
     are squared, and elements not meeting either of these conditions
@@ -937,6 +948,8 @@ def copy(a, order='K', subok=False):
 
     Examples
     --------
+    >>> import numpy as np
+
     Create an array x, with a reference y and a copy z:
 
     >>> x = np.array([1, 2, 3])
@@ -999,7 +1012,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         4. Any combination of N scalars/arrays with the meaning of 2. and 3.
 
         If `axis` is given, the number of varargs must equal the number of axes.
-        Default: 1.
+        Default: 1. (see Examples below).
 
     edge_order : {1, 2}, optional
         Gradient is calculated using N-th order accurate differences
@@ -1017,14 +1030,15 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     Returns
     -------
-    gradient : ndarray or list of ndarray
-        A list of ndarrays (or a single ndarray if there is only one dimension)
-        corresponding to the derivatives of f with respect to each dimension.
-        Each derivative has the same shape as f.
+    gradient : ndarray or tuple of ndarray
+        A tuple of ndarrays (or a single ndarray if there is only one
+        dimension) corresponding to the derivatives of f with respect
+        to each dimension. Each derivative has the same shape as f.
 
     Examples
     --------
-    >>> f = np.array([1, 2, 4, 7, 11, 16], dtype=float)
+    >>> import numpy as np
+    >>> f = np.array([1, 2, 4, 7, 11, 16])
     >>> np.gradient(f)
     array([1. , 1.5, 2.5, 3.5, 4.5, 5. ])
     >>> np.gradient(f, 2)
@@ -1040,7 +1054,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     Or a non uniform one:
 
-    >>> x = np.array([0., 1., 1.5, 3.5, 4., 6.], dtype=float)
+    >>> x = np.array([0., 1., 1.5, 3.5, 4., 6.])
     >>> np.gradient(f, x)
     array([1. ,  3. ,  3.5,  6.7,  6.9,  2.5])
 
@@ -1048,20 +1062,22 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     axis. In this example the first array stands for the gradient in
     rows and the second one in columns direction:
 
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float))
-    [array([[ 2.,  2., -1.],
-           [ 2.,  2., -1.]]), array([[1. , 2.5, 4. ],
-           [1. , 1. , 1. ]])]
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]]))
+    (array([[ 2.,  2., -1.],
+            [ 2.,  2., -1.]]),
+     array([[1. , 2.5, 4. ],
+            [1. , 1. , 1. ]]))
 
     In this example the spacing is also specified:
     uniform for axis=0 and non uniform for axis=1
 
     >>> dx = 2.
     >>> y = [1., 1.5, 3.5]
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float), dx, y)
-    [array([[ 1. ,  1. , -0.5],
-           [ 1. ,  1. , -0.5]]), array([[2. , 2. , 2. ],
-           [2. , 1.7, 0.5]])]
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]]), dx, y)
+    (array([[ 1. ,  1. , -0.5],
+            [ 1. ,  1. , -0.5]]),
+     array([[2. , 2. , 2. ],
+            [2. , 1.7, 0.5]]))
 
     It is possible to specify how boundaries are treated using `edge_order`
 
@@ -1075,9 +1091,55 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     The `axis` keyword can be used to specify a subset of axes of which the
     gradient is calculated
 
-    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]], dtype=float), axis=0)
+    >>> np.gradient(np.array([[1, 2, 6], [3, 4, 5]]), axis=0)
     array([[ 2.,  2., -1.],
            [ 2.,  2., -1.]])
+
+    The `varargs` argument defines the spacing between sample points in the
+    input array. It can take two forms:
+
+    1. An array, specifying coordinates, which may be unevenly spaced:
+
+    >>> x = np.array([0., 2., 3., 6., 8.])
+    >>> y = x ** 2
+    >>> np.gradient(y, x, edge_order=2)
+    array([ 0.,  4.,  6., 12., 16.])
+
+    2. A scalar, representing the fixed sample distance:
+
+    >>> dx = 2
+    >>> x = np.array([0., 2., 4., 6., 8.])
+    >>> y = x ** 2
+    >>> np.gradient(y, dx, edge_order=2)
+    array([ 0.,  4.,  8., 12., 16.])
+
+    It's possible to provide different data for spacing along each dimension.
+    The number of arguments must match the number of dimensions in the input
+    data.
+
+    >>> dx = 2
+    >>> dy = 3
+    >>> x = np.arange(0, 6, dx)
+    >>> y = np.arange(0, 9, dy)
+    >>> xs, ys = np.meshgrid(x, y)
+    >>> zs = xs + 2 * ys
+    >>> np.gradient(zs, dy, dx)  # Passing two scalars
+    (array([[2., 2., 2.],
+            [2., 2., 2.],
+            [2., 2., 2.]]),
+     array([[1., 1., 1.],
+            [1., 1., 1.],
+            [1., 1., 1.]]))
+
+    Mixing scalars and arrays is also allowed:
+
+    >>> np.gradient(zs, y, dx)  # Passing one array and one scalar
+    (array([[2., 2., 2.],
+            [2., 2., 2.],
+            [2., 2., 2.]]),
+     array([[1., 1., 1.],
+            [1., 1., 1.],
+            [1., 1., 1.]]))
 
     Notes
     -----
@@ -1377,7 +1439,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     >>> np.diff(u8_arr)
     array([255], dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
-    255
+    np.uint8(255)
 
     If this is not desirable, then the array should be cast to a larger
     integer type first:
@@ -1388,6 +1450,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 4, 7, 0])
     >>> np.diff(x)
     array([ 1,  2,  3, -7])
@@ -1522,6 +1585,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> xp = [1, 2, 3]
     >>> fp = [3, 2, 0]
     >>> np.interp(2.5, xp, fp)
@@ -1637,6 +1701,7 @@ def angle(z, deg=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.angle([1.0, 1.0j, 1+1j])               # in radians
     array([ 0.        ,  1.57079633,  0.78539816]) # may vary
     >>> np.angle(1+1j, deg=True)                  # in degrees
@@ -1711,6 +1776,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
 
     Examples
     --------
+    >>> import numpy as np
     >>> phase = np.linspace(0, np.pi, num=5)
     >>> phase[3:] += np.pi
     >>> phase
@@ -1780,6 +1846,7 @@ def sort_complex(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.sort_complex([5, 3, 6, 2, 1])
     array([1.+0.j, 2.+0.j, 3.+0.j, 5.+0.j, 6.+0.j])
 
@@ -1825,6 +1892,7 @@ def trim_zeros(filt, trim='fb'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((0, 0, 0, 1, 2, 3, 0, 2, 1, 0))
     >>> np.trim_zeros(a)
     array([1, 2, 3, 0, 2, 1])
@@ -1890,6 +1958,7 @@ def extract(condition, arr):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.arange(12).reshape((3, 4))
     >>> arr
     array([[ 0,  1,  2,  3],
@@ -1947,6 +2016,7 @@ def place(arr, mask, vals):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.arange(6).reshape(2, 3)
     >>> np.place(arr, arr>2, [44, 55])
     >>> arr
@@ -1982,6 +2052,8 @@ def disp(mesg, device=None, linefeed=True):
 
     Examples
     --------
+    >>> import numpy as np
+
     Besides ``sys.stdout``, a file-like object can also be used as it has
     both required methods:
 
@@ -2000,7 +2072,7 @@ def disp(mesg, device=None, linefeed=True):
         "(deprecated in NumPy 2.0)",
         DeprecationWarning,
         stacklevel=2
-    )    
+    )
 
     if device is None:
         device = sys.stdout
@@ -2221,6 +2293,7 @@ class vectorize:
 
     Examples
     --------
+    >>> import numpy as np
     >>> def myfunc(a, b):
     ...     "Return a-b if a>b, otherwise return a+b"
     ...     if a > b:
@@ -2642,6 +2715,8 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     Examples
     --------
+    >>> import numpy as np
+
     Consider two variables, :math:`x_0` and :math:`x_1`, which
     correlate perfectly, but in opposite directions:
 
@@ -2845,6 +2920,8 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
 
     Examples
     --------
+    >>> import numpy as np
+
     In this example we generate two random arrays, ``xarr`` and ``yarr``, and
     compute the row-wise and column-wise Pearson correlation coefficients,
     ``R``. Since ``rowvar`` is  true by  default, we first find the row-wise
@@ -2982,6 +3059,7 @@ def blackman(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.blackman(12)
     array([-1.38777878e-17,   3.26064346e-02,   1.59903635e-01, # may vary
@@ -3090,6 +3168,7 @@ def bartlett(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.bartlett(12)
     array([ 0.        ,  0.18181818,  0.36363636,  0.54545455,  0.72727273, # may vary
@@ -3191,6 +3270,7 @@ def hanning(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.hanning(12)
     array([0.        , 0.07937323, 0.29229249, 0.57115742, 0.82743037,
            0.97974649, 0.97974649, 0.82743037, 0.57115742, 0.29229249,
@@ -3290,6 +3370,7 @@ def hamming(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.hamming(12)
     array([ 0.08      ,  0.15302337,  0.34890909,  0.60546483,  0.84123594, # may vary
             0.98136677,  0.98136677,  0.84123594,  0.60546483,  0.34890909,
@@ -3469,6 +3550,7 @@ def i0(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.i0(0.)
     array(1.0)
     >>> np.i0([0, 1, 2, 3])
@@ -3565,6 +3647,7 @@ def kaiser(M, beta):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.kaiser(12, 14)
      array([7.72686684e-06, 3.46009194e-03, 4.65200189e-02, # may vary
@@ -3667,6 +3750,7 @@ def sinc(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> x = np.linspace(-4, 4, 41)
     >>> np.sinc(x)
@@ -3798,7 +3882,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         Axis or axes along which the medians are computed. The default,
         axis=None, will compute the median along a flattened version of
         the array.
-        
+
         .. versionadded:: 1.9.0
 
         If a sequence of axes, the array is first flattened along the
@@ -3845,6 +3929,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
@@ -4056,6 +4141,7 @@ def percentile(a,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
@@ -4306,12 +4392,14 @@ def quantile(a,
     The table above includes only the estimators from H&F that are continuous
     functions of probability `q` (estimators 4-9). NumPy also provides the
     three discontinuous estimators from H&F (estimators 1-3), where ``j`` is
-    defined as above and ``m`` and ``g`` are defined as follows.
+    defined as above, ``m`` is defined as follows, and ``g`` is a function
+    of the real-valued ``index = q*n + m - 1`` and ``j``.
 
-    1. ``inverted_cdf``: ``m = 0`` and ``g = int(q*n > 0)``
-    2. ``averaged_inverted_cdf``: ``m = 0`` and ``g = (1 + int(q*n > 0)) / 2``
+    1. ``inverted_cdf``: ``m = 0`` and ``g = int(index - j > 0)``
+    2. ``averaged_inverted_cdf``: ``m = 0`` and
+       ``g = (1 + int(index - j > 0)) / 2``
     3. ``closest_observation``: ``m = -1/2`` and
-       ``1 - int((g == 0) & (j%2 == 0))``
+       ``g = 1 - int((index == j) & (j%2 == 1))``
 
     For backward compatibility with previous versions of NumPy, `quantile`
     provides four additional discontinuous estimators. Like
@@ -4345,12 +4433,13 @@ def quantile(a,
 
     For weighted quantiles, the coverage conditions still hold. The
     empirical cumulative distribution is simply replaced by its weighted
-    version, i.e. 
+    version, i.e.
     :math:`P(Y \\leq t) = \\frac{1}{\\sum_i w_i} \\sum_i w_i 1_{x_i \\leq t}`.
     Only ``method="inverted_cdf"`` supports weights.
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
@@ -4544,7 +4633,7 @@ def _get_gamma_mask(shape, default_value, conditioned_value, where):
     return out
 
 
-def _discret_interpolation_to_boundaries(index, gamma_condition_fun):
+def _discrete_interpolation_to_boundaries(index, gamma_condition_fun):
     previous = np.floor(index)
     next = previous + 1
     gamma = index - previous
@@ -4559,22 +4648,24 @@ def _discret_interpolation_to_boundaries(index, gamma_condition_fun):
 
 
 def _closest_observation(n, quantiles):
-    gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 0)
-    return _discret_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
-                                                gamma_fun)
+    # "choose the nearest even order statistic at g=0" (H&F (1996) pp. 362).
+    # Order is 1-based so for zero-based indexing round to nearest odd index.
+    gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 1)
+    return _discrete_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
+                                                 gamma_fun)
 
 
 def _inverted_cdf(n, quantiles):
     gamma_fun = lambda gamma, _: (gamma == 0)
-    return _discret_interpolation_to_boundaries((n * quantiles) - 1,
-                                                gamma_fun)
+    return _discrete_interpolation_to_boundaries((n * quantiles) - 1,
+                                                 gamma_fun)
 
 
 def _quantile_ureduce_func(
         a: np.array,
         q: np.array,
         weights: np.array,
-        axis: int = None,
+        axis: int | None = None,
         out=None,
         overwrite_input: bool = False,
         method="linear",
@@ -4789,7 +4880,7 @@ def _quantile(
             return result
 
         r_shape = arr.shape[1:]
-        if quantiles.ndim > 0: 
+        if quantiles.ndim > 0:
             r_shape = quantiles.shape + r_shape
         if out is None:
             result = np.empty_like(arr, shape=r_shape)
@@ -4884,6 +4975,8 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
 
     Examples
     --------
+    >>> import numpy as np
+
     Use the trapezoidal rule on evenly spaced points:
 
     >>> np.trapezoid([1, 2, 3])
@@ -5064,6 +5157,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> nx, ny = (3, 2)
     >>> x = np.linspace(0, 1, nx)
     >>> y = np.linspace(0, 1, ny)
@@ -5191,6 +5285,7 @@ def delete(arr, obj, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([[1,2,3,4], [5,6,7,8], [9,10,11,12]])
     >>> arr
     array([[ 1,  2,  3,  4],
@@ -5370,43 +5465,50 @@ def insert(arr, obj, values, axis=None):
     -----
     Note that for higher dimensional inserts ``obj=0`` behaves very different
     from ``obj=[0]`` just like ``arr[:,0,:] = values`` is different from
-    ``arr[:,[0],:] = values``.
+    ``arr[:,[0],:] = values``. This is because of the difference between basic
+    and advanced :ref:`indexing <basics.indexing>`.
 
     Examples
     --------
-    >>> a = np.array([[1, 1], [2, 2], [3, 3]])
+    >>> import numpy as np
+    >>> a = np.arange(6).reshape(3, 2)
     >>> a
-    array([[1, 1],
-           [2, 2],
-           [3, 3]])
-    >>> np.insert(a, 1, 5)
-    array([1, 5, 1, ..., 2, 3, 3])
-    >>> np.insert(a, 1, 5, axis=1)
-    array([[1, 5, 1],
-           [2, 5, 2],
-           [3, 5, 3]])
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> np.insert(a, 1, 6)
+    array([0, 6, 1, 2, 3, 4, 5])
+    >>> np.insert(a, 1, 6, axis=1)
+    array([[0, 6, 1],
+           [2, 6, 3],
+           [4, 6, 5]])
 
-    Difference between sequence and scalars:
+    Difference between sequence and scalars,
+    showing how ``obj=[1]`` behaves different from ``obj=1``:
 
-    >>> np.insert(a, [1], [[1],[2],[3]], axis=1)
-    array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])
-    >>> np.array_equal(np.insert(a, 1, [1, 2, 3], axis=1),
-    ...                np.insert(a, [1], [[1],[2],[3]], axis=1))
+    >>> np.insert(a, [1], [[7],[8],[9]], axis=1)
+    array([[0, 7, 1],
+           [2, 8, 3],
+           [4, 9, 5]])
+    >>> np.insert(a, 1, [[7],[8],[9]], axis=1)
+    array([[0, 7, 8, 9, 1],
+           [2, 7, 8, 9, 3],
+           [4, 7, 8, 9, 5]])
+    >>> np.array_equal(np.insert(a, 1, [7, 8, 9], axis=1),
+    ...                np.insert(a, [1], [[7],[8],[9]], axis=1))
     True
 
     >>> b = a.flatten()
     >>> b
-    array([1, 1, 2, 2, 3, 3])
-    >>> np.insert(b, [2, 2], [5, 6])
-    array([1, 1, 5, ..., 2, 3, 3])
+    array([0, 1, 2, 3, 4, 5])
+    >>> np.insert(b, [2, 2], [6, 7])
+    array([0, 1, 6, 7, 2, 3, 4, 5])
 
-    >>> np.insert(b, slice(2, 4), [5, 6])
-    array([1, 1, 5, ..., 2, 3, 3])
+    >>> np.insert(b, slice(2, 4), [7, 8])
+    array([0, 1, 7, 2, 8, 3, 4, 5])
 
     >>> np.insert(b, [2, 2], [7.13, False]) # type casting
-    array([1, 1, 7, ..., 2, 3, 3])
+    array([0, 1, 7, 0, 2, 3, 4, 5])
 
     >>> x = np.arange(8).reshape(2, 4)
     >>> idx = (1, 3)
@@ -5545,6 +5647,7 @@ def append(arr, values, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.append([1, 2, 3], [[4, 5, 6], [7, 8, 9]])
     array([1, 2, 3, ..., 7, 8, 9])
 
@@ -5657,6 +5760,7 @@ def digitize(x, bins, right=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([0.2, 6.4, 3.0, 1.6])
     >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
     >>> inds = np.digitize(x, bins)

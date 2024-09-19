@@ -305,7 +305,7 @@ if __name__ == '__main__':
     else:
         nsteps = None
 
-    source = scrub_source(source, nsteps, verbose=True)
+    source = scrubSource(source, nsteps, verbose=True)
 
     with open(outfilename, 'w') as writefo:
         writefo.write(source)

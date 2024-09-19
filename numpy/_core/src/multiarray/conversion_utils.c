@@ -18,6 +18,7 @@
 #include "conversion_utils.h"
 #include "alloc.h"
 #include "npy_buffer.h"
+#include "npy_static_data.h"
 #include "multiarraymodule.h"
 
 static int
@@ -234,10 +235,8 @@ PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
     }
 
     int int_copymode;
-    static PyObject* numpy_CopyMode = NULL;
-    npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
 
-    if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
+    if ((PyObject *)Py_TYPE(obj) == npy_static_pydata._CopyMode) {
         PyObject* mode_value = PyObject_GetAttrString(obj, "value");
         if (mode_value == NULL) {
             return NPY_FAIL;
@@ -248,6 +247,12 @@ PyArray_CopyConverter(PyObject *obj, NPY_COPYMODE *copymode) {
         if (error_converting(int_copymode)) {
             return NPY_FAIL;
         }
+    }
+    else if(PyUnicode_Check(obj)) {
+        PyErr_SetString(PyExc_ValueError,
+                        "strings are not allowed for 'copy' keyword. "
+                        "Use True/False/None instead.");
+        return NPY_FAIL;
     }
     else {
         npy_bool bool_copymode;
@@ -265,10 +270,8 @@ NPY_NO_EXPORT int
 PyArray_AsTypeCopyConverter(PyObject *obj, NPY_ASTYPECOPYMODE *copymode)
 {
     int int_copymode;
-    static PyObject* numpy_CopyMode = NULL;
-    npy_cache_import("numpy", "_CopyMode", &numpy_CopyMode);
 
-    if (numpy_CopyMode != NULL && (PyObject *)Py_TYPE(obj) == numpy_CopyMode) {
+    if ((PyObject *)Py_TYPE(obj) == npy_static_pydata._CopyMode) {
         PyErr_SetString(PyExc_ValueError,
                         "_CopyMode enum is not allowed for astype function. "
                         "Use true/false instead.");
@@ -1197,7 +1200,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
  * that it is in an unpickle context instead of a normal context without
  * evil global state like we create here.
  */
-NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag = 0;
+NPY_NO_EXPORT NPY_TLS int evil_global_disable_warn_O4O8_flag = 0;
 
 /*
  * Convert a gentype (that is actually a generic kind character) and
@@ -1341,13 +1344,19 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_DEPRECATED_STRINGLTR2:
-            DEPRECATE(
-                "Data type alias `a` was removed in NumPy 2.0. "
-                "Use `S` alias instead."
-            );
-            newtype = NPY_STRING;
+        {
+            /*
+             * raise a deprecation warning, which might be an exception
+             * if warnings are errors, so leave newtype unset in that
+             * case
+             */
+            int ret = DEPRECATE("Data type alias 'a' was deprecated in NumPy 2.0. "
+                                "Use the 'S' alias instead.");
+            if (ret == 0) {
+                newtype = NPY_STRING;
+            }
             break;
-
+        }
         case NPY_UNICODELTR:
             newtype = NPY_UNICODE;
             break;
@@ -1403,12 +1412,7 @@ PyArray_IntTupleFromIntp(int len, npy_intp const *vals)
 NPY_NO_EXPORT int
 _not_NoValue(PyObject *obj, PyObject **out)
 {
-    static PyObject *NoValue = NULL;
-    npy_cache_import("numpy", "_NoValue", &NoValue);
-    if (NoValue == NULL) {
-        return 0;
-    }
-    if (obj == NoValue) {
+    if (obj == npy_static_pydata._NoValue) {
         *out = NULL;
     }
     else {
@@ -1428,7 +1432,7 @@ PyArray_DeviceConverterOptional(PyObject *object, NPY_DEVICE *device)
     }
 
     if (PyUnicode_Check(object) &&
-        PyUnicode_Compare(object, npy_ma_str_cpu) == 0) {
+        PyUnicode_Compare(object, npy_interned_str.cpu) == 0) {
         *device = NPY_DEVICE_CPU;
         return NPY_SUCCEED;
     }

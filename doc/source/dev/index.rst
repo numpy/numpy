@@ -88,9 +88,6 @@ Here's the short summary, complete TOC links are below:
 
       git push origin linspace-speedups
 
-   * Enter your GitHub username and password (repeat contributors or advanced
-     users can remove this step by connecting to GitHub with SSH).
-
    * Go to GitHub. The new branch will show up with a green Pull Request
      button. Make sure the title and message are clear, concise, and self-
      explanatory. Then click the button to submit it.

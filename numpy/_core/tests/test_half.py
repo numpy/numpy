@@ -3,7 +3,7 @@ import pytest
 
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal, _OLD_PROMOTION, IS_WASM
+from numpy.testing import assert_, assert_equal, IS_WASM
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -22,7 +22,7 @@ class TestHalf:
         self.all_f16 = np.arange(0x10000, dtype=uint16)
         self.all_f16.dtype = float16
 
-        # NaN value can cause an invalid FP exception if HW is been used
+        # NaN value can cause an invalid FP exception if HW is being used
         with np.errstate(invalid='ignore'):
             self.all_f32 = np.array(self.all_f16, dtype=float32)
             self.all_f64 = np.array(self.all_f16, dtype=float64)
@@ -49,7 +49,7 @@ class TestHalf:
         # Convert from float32 back to float16
         with np.errstate(invalid='ignore'):
             b = np.array(self.all_f32, dtype=float16)
-        # avoid testing NaNs due to differ bits wither Q/SNaNs
+        # avoid testing NaNs due to differing bit patterns in Q/S NaNs
         b_nn = b == b
         assert_equal(self.all_f16[b_nn].view(dtype=uint16),
                      b[b_nn].view(dtype=uint16))
@@ -93,7 +93,6 @@ class TestHalf:
     @pytest.mark.parametrize("offset", [None, "up", "down"])
     @pytest.mark.parametrize("shift", [None, "up", "down"])
     @pytest.mark.parametrize("float_t", [np.float32, np.float64])
-    @np._no_nep50_warning()
     def test_half_conversion_rounding(self, float_t, shift, offset):
         # Assumes that round to even is used during casting.
         max_pattern = np.float16(np.finfo(np.float16).max).view(np.uint16)
@@ -120,8 +119,8 @@ class TestHalf:
         # Convert back to float16 and its bit pattern:
         res_patterns = f16s_float.astype(np.float16).view(np.uint16)
 
-        # The above calculations tries the original values, or the exact
-        # mid points between the float16 values. It then further offsets them
+        # The above calculation tries the original values, or the exact
+        # midpoints between the float16 values. It then further offsets them
         # by as little as possible. If no offset occurs, "round to even"
         # logic will be necessary, an arbitrarily small offset should cause
         # normal up/down rounding always.
@@ -460,8 +459,7 @@ class TestHalf:
         assert_equal(np.frexp(b), ([-0.5, 0.625, 0.5, 0.5, 0.75], [2, 3, 1, 3, 2]))
         assert_equal(np.ldexp(b, [0, 1, 2, 4, 2]), [-2, 10, 4, 64, 12])
 
-    @np._no_nep50_warning()
-    def test_half_coercion(self, weak_promotion):
+    def test_half_coercion(self):
         """Test that half gets coerced properly with the other types"""
         a16 = np.array((1,), dtype=float16)
         a32 = np.array((1,), dtype=float32)
@@ -471,14 +469,12 @@ class TestHalf:
         assert np.power(a16, 2).dtype == float16
         assert np.power(a16, 2.0).dtype == float16
         assert np.power(a16, b16).dtype == float16
-        expected_dt = float32 if weak_promotion else float16
-        assert np.power(a16, b32).dtype == expected_dt
+        assert np.power(a16, b32).dtype == float32
         assert np.power(a16, a16).dtype == float16
         assert np.power(a16, a32).dtype == float32
 
-        expected_dt = float16 if weak_promotion else float64
-        assert np.power(b16, 2).dtype == expected_dt
-        assert np.power(b16, 2.0).dtype == expected_dt
+        assert np.power(b16, 2).dtype == float16
+        assert np.power(b16, 2.0).dtype == float16
         assert np.power(b16, b16).dtype, float16
         assert np.power(b16, b32).dtype, float32
         assert np.power(b16, a16).dtype, float16
@@ -486,8 +482,7 @@ class TestHalf:
 
         assert np.power(a32, a16).dtype == float32
         assert np.power(a32, b16).dtype == float32
-        expected_dt = float32 if weak_promotion else float16
-        assert np.power(b32, a16).dtype == expected_dt
+        assert np.power(b32, a16).dtype == float32
         assert np.power(b32, b16).dtype == float32
 
     @pytest.mark.skipif(platform.machine() == "armv5tel",

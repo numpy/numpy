@@ -3,16 +3,16 @@ Using the convenience classes
 
 The convenience classes provided by the polynomial package are:
 
-============    ================
-Name            Provides
-============    ================
-Polynomial      Power series
-Chebyshev       Chebyshev series
-Legendre        Legendre series
-Laguerre        Laguerre series
-Hermite         Hermite series
-HermiteE        HermiteE series
-============    ================
+================================================    ================
+Name                                                Provides
+================================================    ================
+:class:`~numpy.polynomial.polynomial.Polynomial`    Power series
+:class:`~numpy.polynomial.chebyshev.Chebyshev`      Chebyshev series
+:class:`~numpy.polynomial.legendre.Legendre`        Legendre series
+:class:`~numpy.polynomial.laguerre.Laguerre`        Laguerre series
+:class:`~numpy.polynomial.hermite.Hermite`          Hermite series
+:class:`~numpy.polynomial.hermite_e.HermiteE`       HermiteE series
+================================================    ================
 
 The series in this context are finite sums of the corresponding polynomial
 basis functions multiplied by coefficients. For instance, a power series

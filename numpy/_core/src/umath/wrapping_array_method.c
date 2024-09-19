@@ -96,6 +96,7 @@ wrapping_auxdata_free(wrapping_auxdata *wrapping_auxdata)
 
     if (wrapping_auxdata_freenum < WRAPPING_AUXDATA_FREELIST_SIZE) {
         wrapping_auxdata_freelist[wrapping_auxdata_freenum] = wrapping_auxdata;
+        wrapping_auxdata_freenum++;
     }
     else {
         PyMem_Free(wrapping_auxdata);

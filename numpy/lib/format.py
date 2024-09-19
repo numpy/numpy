@@ -271,6 +271,8 @@ def dtype_to_descr(dtype):
         warnings.warn("metadata on a dtype is not saved to an npy/npz. "
                       "Use another format (such as pickle) to store it.",
                       UserWarning, stacklevel=2)
+    dtype = new_dtype
+
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the
         # record array with an empty name, like padding bytes, still get
@@ -741,7 +743,7 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
                                  "when allow_pickle=False")
         if pickle_kwargs is None:
             pickle_kwargs = {}
-        pickle.dump(array, fp, protocol=3, **pickle_kwargs)
+        pickle.dump(array, fp, protocol=4, **pickle_kwargs)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
         if isfileobj(fp):
             array.T.tofile(fp)

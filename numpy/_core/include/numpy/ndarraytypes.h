@@ -1302,7 +1302,7 @@ typedef struct {
         PyArrayIterObject    *iters[64];
 #elif defined(__cplusplus)
         /*
-         * C++ doesn't stricly support flexible members and gives compilers
+         * C++ doesn't strictly support flexible members and gives compilers
          * warnings (pedantic only), so we lie.  We can't make it 64 because
          * then Cython is unhappy (larger struct at runtime is OK smaller not).
          */

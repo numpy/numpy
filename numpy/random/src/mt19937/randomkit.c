@@ -135,7 +135,7 @@
 #define RK_DEV_RANDOM "/dev/random"
 #endif
 
-char *rk_strerror[RK_ERR_MAX] = {"no error", "random device unvavailable"};
+char *rk_strerror[RK_ERR_MAX] = {"no error", "random device unavailable"};
 
 /* static functions */
 static unsigned long rk_hash(unsigned long key);

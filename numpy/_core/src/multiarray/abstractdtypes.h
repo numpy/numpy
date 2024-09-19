@@ -1,6 +1,7 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_ABSTRACTDTYPES_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_ABSTRACTDTYPES_H_
 
+#include "numpy/ndarraytypes.h"
 #include "arrayobject.h"
 #include "dtypemeta.h"
 
@@ -41,14 +42,7 @@ static inline int
 npy_mark_tmp_array_if_pyscalar(
         PyObject *obj, PyArrayObject *arr, PyArray_DTypeMeta **dtype)
 {
-    /*
-     * We check the array dtype for two reasons: First, booleans are
-     * integer subclasses.  Second, an int, float, or complex could have
-     * a custom DType registered, and then we should use that.
-     * Further, `np.float64` is a double subclass, so must reject it.
-     */
-    if (PyLong_Check(obj)
-            && (PyArray_ISINTEGER(arr) || PyArray_ISOBJECT(arr))) {
+    if (PyLong_CheckExact(obj)) {
         ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_INT;
         if (dtype != NULL) {
             Py_INCREF(&PyArray_PyLongDType);
@@ -56,8 +50,7 @@ npy_mark_tmp_array_if_pyscalar(
         }
         return 1;
     }
-    else if (PyFloat_Check(obj) && !PyArray_IsScalar(obj, Double)
-             && PyArray_TYPE(arr) == NPY_DOUBLE) {
+    else if (PyFloat_CheckExact(obj)) {
         ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_FLOAT;
         if (dtype != NULL) {
             Py_INCREF(&PyArray_PyFloatDType);
@@ -65,8 +58,7 @@ npy_mark_tmp_array_if_pyscalar(
         }
         return 1;
     }
-    else if (PyComplex_Check(obj) && !PyArray_IsScalar(obj, CDouble)
-             && PyArray_TYPE(arr) == NPY_CDOUBLE) {
+    else if (PyComplex_CheckExact(obj)) {
         ((PyArrayObject_fields *)arr)->flags |= NPY_ARRAY_WAS_PYTHON_COMPLEX;
         if (dtype != NULL) {
             Py_INCREF(&PyArray_PyComplexDType);
@@ -76,6 +68,19 @@ npy_mark_tmp_array_if_pyscalar(
     }
     return 0;
 }
+
+
+NPY_NO_EXPORT int
+npy_update_operand_for_scalar(
+    PyArrayObject **operand, PyObject *scalar, PyArray_Descr *descr,
+    NPY_CASTING casting);
+
+
+NPY_NO_EXPORT PyArray_Descr *
+npy_find_descr_for_scalar(
+    PyObject *scalar, PyArray_Descr *original_descr,
+    PyArray_DTypeMeta *in_DT, PyArray_DTypeMeta *op_DT);
+
 
 #ifdef __cplusplus
 }

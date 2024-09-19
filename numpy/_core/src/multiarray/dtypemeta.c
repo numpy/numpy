@@ -26,6 +26,8 @@
 #include "templ_common.h"
 #include "refcount.h"
 #include "dtype_traversal.h"
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
 
 #include <assert.h>
 
@@ -157,9 +159,8 @@ PyArray_ArrFuncs default_funcs = {
 /*
  * Internal version of PyArrayInitDTypeMeta_FromSpec.
  *
- * See the documentation of that function for more details.  Does not do any
- * error checking.
-
+ * See the documentation of that function for more details.
+ *
  * Setting priv to a nonzero value indicates that a dtypemeta is being
  * initialized from inside NumPy, otherwise this function is being called by
  * the public implementation.
@@ -444,12 +445,6 @@ string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
 
-    PyArray_Descr *res = PyArray_DescrNewFromType(self->type_num);
-
-    if (res == NULL) {
-        return NULL;
-    }
-
     if (self->type_num == NPY_UNICODE) {
         // unicode strings are 4 bytes per character
         if (npy_mul_sizes_with_overflow(&size, size, 4)) {
@@ -463,6 +458,12 @@ string_unicode_new(PyArray_DTypeMeta *self, PyObject *args, PyObject *kwargs)
     if (size > NPY_MAX_INT) {
         PyErr_SetString(PyExc_TypeError,
                         "Strings too large to store inside array.");
+        return NULL;
+    }
+
+    PyArray_Descr *res = PyArray_DescrNewFromType(self->type_num);
+
+    if (res == NULL) {
         return NULL;
     }
 
@@ -752,7 +753,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
     if (descr1->subarray == NULL && descr1->names == NULL &&
             descr2->subarray == NULL && descr2->names == NULL) {
         if (descr1->elsize != descr2->elsize) {
-            PyErr_SetString(npy_DTypePromotionError,
+            PyErr_SetString(npy_static_pydata.DTypePromotionError,
                     "Invalid type promotion with void datatypes of different "
                     "lengths. Use the `np.bytes_` datatype instead to pad the "
                     "shorter value with trailing zero bytes.");
@@ -764,13 +765,13 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
 
     if (descr1->names != NULL && descr2->names != NULL) {
         /* If both have fields promoting individual fields may be possible */
-        static PyObject *promote_fields_func = NULL;
-        npy_cache_import("numpy._core._internal", "_promote_fields",
-                &promote_fields_func);
-        if (promote_fields_func == NULL) {
+        if (npy_cache_import_runtime(
+                    "numpy._core._internal", "_promote_fields",
+                    &npy_runtime_imports._promote_fields) == -1) {
             return NULL;
         }
-        PyObject *result = PyObject_CallFunctionObjArgs(promote_fields_func,
+        PyObject *result = PyObject_CallFunctionObjArgs(
+                npy_runtime_imports._promote_fields,
                 descr1, descr2, NULL);
         if (result == NULL) {
             return NULL;
@@ -791,7 +792,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
             return NULL;
         }
         if (!cmp) {
-            PyErr_SetString(npy_DTypePromotionError,
+            PyErr_SetString(npy_static_pydata.DTypePromotionError,
                     "invalid type promotion with subarray datatypes "
                     "(shape mismatch).");
             return NULL;
@@ -821,7 +822,7 @@ void_common_instance(_PyArray_LegacyDescr *descr1, _PyArray_LegacyDescr *descr2)
         return new_descr;
     }
 
-    PyErr_SetString(npy_DTypePromotionError,
+    PyErr_SetString(npy_static_pydata.DTypePromotionError,
             "invalid type promotion with structured datatype(s).");
     return NULL;
 }
@@ -1238,14 +1239,13 @@ dtypemeta_wrap_legacy_descriptor(
 
     /* And it to the types submodule if it is a builtin dtype */
     if (!PyTypeNum_ISUSERDEF(descr->type_num)) {
-        static PyObject *add_dtype_helper = NULL;
-        npy_cache_import("numpy.dtypes", "_add_dtype_helper", &add_dtype_helper);
-        if (add_dtype_helper == NULL) {
+        if (npy_cache_import_runtime("numpy.dtypes", "_add_dtype_helper",
+                                     &npy_runtime_imports._add_dtype_helper) == -1) {
             return -1;
         }
 
         if (PyObject_CallFunction(
-                add_dtype_helper,
+                npy_runtime_imports._add_dtype_helper,
                 "Os", (PyObject *)dtype_class, alias) == NULL) {
             return -1;
         }
@@ -1401,7 +1401,7 @@ PyArray_DTypeMeta *_Void_dtype = NULL;
  * This function is exposed with an underscore "privately" because the
  * public version is a static inline function which only calls the function
  * on 2.x but directly accesses the `descr` struct on 1.x.
- * Once 1.x backwards compatibility is gone, it shoudl be exported without
+ * Once 1.x backwards compatibility is gone, it should be exported without
  * the underscore directly.
  * Internally, we define a private inline function `PyDataType_GetArrFuncs`
  * for convenience as we are allowed to access the `DType` slots directly.

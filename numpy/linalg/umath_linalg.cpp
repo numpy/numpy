@@ -8,6 +8,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#define NPY_TARGET_VERSION NPY_2_1_API_VERSION
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
@@ -26,6 +27,15 @@
 
 
 static const char* umath_linalg_version_string = "0.1.5";
+
+// global lock to serialize calls into lapack_lite
+#if !HAVE_EXTERNAL_LAPACK
+#if PY_VERSION_HEX < 0x30d00b3
+static PyThread_type_lock lapack_lite_lock;
+#else
+static PyMutex lapack_lite_lock = {0};
+#endif
+#endif
 
 /*
  ****************************************************************************
@@ -400,6 +410,18 @@ FNAME(zgemm)(char *transa, char *transb,
 #define LAPACK(FUNC)                            \
     FNAME(FUNC)
 
+#ifdef HAVE_EXTERNAL_LAPACK
+    #define LOCK_LAPACK_LITE
+    #define UNLOCK_LAPACK_LITE
+#else
+#if PY_VERSION_HEX < 0x30d00b3
+    #define LOCK_LAPACK_LITE PyThread_acquire_lock(lapack_lite_lock, WAIT_LOCK)
+    #define UNLOCK_LAPACK_LITE PyThread_release_lock(lapack_lite_lock)
+#else
+    #define LOCK_LAPACK_LITE PyMutex_Lock(&lapack_lite_lock)
+    #define UNLOCK_LAPACK_LITE PyMutex_Unlock(&lapack_lite_lock)
+#endif
+#endif
 
 /*
  *****************************************************************************
@@ -539,39 +561,33 @@ const f2c_doublecomplex numeric_limits<f2c_doublecomplex>::nan = {NPY_NAN, NPY_N
  * column_strides: the number of bytes between consecutive columns.
  * output_lead_dim: BLAS/LAPACK-side leading dimension, in elements
  */
-typedef struct linearize_data_struct
+struct linearize_data
 {
   npy_intp rows;
   npy_intp columns;
   npy_intp row_strides;
   npy_intp column_strides;
   npy_intp output_lead_dim;
-} LINEARIZE_DATA_t;
+};
 
-static inline void
-init_linearize_data_ex(LINEARIZE_DATA_t *lin_data,
-                       npy_intp rows,
+static inline
+linearize_data init_linearize_data_ex(npy_intp rows,
                        npy_intp columns,
                        npy_intp row_strides,
                        npy_intp column_strides,
                        npy_intp output_lead_dim)
 {
-    lin_data->rows = rows;
-    lin_data->columns = columns;
-    lin_data->row_strides = row_strides;
-    lin_data->column_strides = column_strides;
-    lin_data->output_lead_dim = output_lead_dim;
+    return {rows, columns, row_strides, column_strides, output_lead_dim};
 }
 
-static inline void
-init_linearize_data(LINEARIZE_DATA_t *lin_data,
-                    npy_intp rows,
+static inline
+linearize_data init_linearize_data(npy_intp rows,
                     npy_intp columns,
                     npy_intp row_strides,
                     npy_intp column_strides)
 {
-    init_linearize_data_ex(
-        lin_data, rows, columns, row_strides, column_strides, columns);
+    return init_linearize_data_ex(
+        rows, columns, row_strides, column_strides, columns);
 }
 
 #if _UMATH_LINALG_DEBUG
@@ -601,7 +617,7 @@ dump_ufunc_object(PyUFuncObject* ufunc)
 }
 
 static inline void
-dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
+dump_linearize_data(const char* name, const linearize_data* params)
 {
     TRACE_TXT("\n\t%s rows: %zd columns: %zd"\
               "\n\t\trow_strides: %td column_strides: %td"\
@@ -843,7 +859,7 @@ template<typename typ>
 static inline void *
 linearize_matrix(typ *dst,
                         typ *src,
-                        const LINEARIZE_DATA_t* data)
+                        const linearize_data* data)
 {
     using ftyp = fortran_type_t<typ>;
     if (dst) {
@@ -888,7 +904,7 @@ template<typename typ>
 static inline void *
 delinearize_matrix(typ *dst,
                           typ *src,
-                          const LINEARIZE_DATA_t* data)
+                          const linearize_data* data)
 {
 using ftyp = fortran_type_t<typ>;
 
@@ -935,7 +951,7 @@ using ftyp = fortran_type_t<typ>;
 
 template<typename typ>
 static inline void
-nan_matrix(typ *dst, const LINEARIZE_DATA_t* data)
+nan_matrix(typ *dst, const linearize_data* data)
 {
     int i, j;
     for (i = 0; i < data->rows; i++) {
@@ -951,7 +967,7 @@ nan_matrix(typ *dst, const LINEARIZE_DATA_t* data)
 
 template<typename typ>
 static inline void
-zero_matrix(typ *dst, const LINEARIZE_DATA_t* data)
+zero_matrix(typ *dst, const linearize_data* data)
 {
     int i, j;
     for (i = 0; i < data->rows; i++) {
@@ -1116,7 +1132,9 @@ using ftyp = fortran_type_t<typ>;
     fortran_int lda = fortran_int_max(m, 1);
     int i;
     /* note: done in place */
+    LOCK_LAPACK_LITE;
     getrf(&m, &m, (ftyp*)src, &lda, pivots, &info);
+    UNLOCK_LAPACK_LITE;
 
     if (info == 0) {
         int change_sign = 0;
@@ -1166,9 +1184,8 @@ slogdet(char **args,
     tmp_buff = (char *)malloc(matrix_size + pivot_size);
 
     if (tmp_buff) {
-        LINEARIZE_DATA_t lin_data;
         /* swapped steps to get matrix in FORTRAN order */
-        init_linearize_data(&lin_data, m, m, steps[1], steps[0]);
+        linearize_data lin_data = init_linearize_data(m, m, steps[1], steps[0]);
         BEGIN_OUTER_LOOP_3
             linearize_matrix((typ*)tmp_buff, (typ*)args[0], &lin_data);
             slogdet_single_element(m,
@@ -1218,11 +1235,11 @@ det(char **args,
     tmp_buff = (char *)malloc(matrix_size + pivot_size);
 
     if (tmp_buff) {
-        LINEARIZE_DATA_t lin_data;
+        /* swapped steps to get matrix in FORTRAN order */
+        linearize_data lin_data = init_linearize_data(m, m, steps[1], steps[0]);
+
         typ sign;
         basetyp logdet;
-        /* swapped steps to get matrix in FORTRAN order */
-        init_linearize_data(&lin_data, m, m, steps[1], steps[0]);
 
         BEGIN_OUTER_LOOP_2
             linearize_matrix((typ*)tmp_buff, (typ*)args[0], &lin_data);
@@ -1269,22 +1286,26 @@ static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_float> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(ssyevd)(&params->JOBZ, &params->UPLO, &params->N,
                           params->A, &params->LDA, params->W,
                           params->WORK, &params->LWORK,
                           params->IWORK, &params->LIWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_double> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dsyevd)(&params->JOBZ, &params->UPLO, &params->N,
                           params->A, &params->LDA, params->W,
                           params->WORK, &params->LWORK,
                           params->IWORK, &params->LIWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1371,12 +1392,14 @@ static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_cfloat> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cheevd)(&params->JOBZ, &params->UPLO, &params->N,
                           (fortran_type_t<npy_cfloat>*)params->A, &params->LDA, params->W,
                           (fortran_type_t<npy_cfloat>*)params->WORK, &params->LWORK,
                           params->RWORK, &params->LRWORK,
                           params->IWORK, &params->LIWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1384,12 +1407,14 @@ static inline fortran_int
 call_evd(EIGH_PARAMS_t<npy_cdouble> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zheevd)(&params->JOBZ, &params->UPLO, &params->N,
                           (fortran_type_t<npy_cdouble>*)params->A, &params->LDA, params->W,
                           (fortran_type_t<npy_cdouble>*)params->WORK, &params->LWORK,
                           params->RWORK, &params->LRWORK,
                           params->IWORK, &params->LIWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1522,20 +1547,11 @@ eigh_wrapper(char JOBZ,
                            JOBZ,
                            UPLO,
                            (fortran_int)dimensions[0], dispatch_scalar<typ>())) {
-        LINEARIZE_DATA_t matrix_in_ld;
-        LINEARIZE_DATA_t eigenvectors_out_ld;
-        LINEARIZE_DATA_t eigenvalues_out_ld;
-
-        init_linearize_data(&matrix_in_ld,
-                            eigh_params.N, eigh_params.N,
-                            steps[1], steps[0]);
-        init_linearize_data(&eigenvalues_out_ld,
-                            1, eigh_params.N,
-                            0, steps[2]);
+        linearize_data matrix_in_ld = init_linearize_data(eigh_params.N, eigh_params.N, steps[1], steps[0]);
+        linearize_data eigenvalues_out_ld = init_linearize_data(1, eigh_params.N, 0, steps[2]);
+        linearize_data eigenvectors_out_ld  = {}; /* silence uninitialized warning */
         if ('V' == eigh_params.JOBZ) {
-            init_linearize_data(&eigenvectors_out_ld,
-                                eigh_params.N, eigh_params.N,
-                                steps[4], steps[3]);
+            eigenvectors_out_ld = init_linearize_data(eigh_params.N, eigh_params.N, steps[4], steps[3]);
         }
 
         for (iter = 0; iter < outer_dim; ++iter) {
@@ -1632,11 +1648,13 @@ static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(sgesv)(&params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->IPIV,
                           params->B, &params->LDB,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1644,11 +1662,13 @@ static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgesv)(&params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->IPIV,
                           params->B, &params->LDB,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1656,11 +1676,13 @@ static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cgesv)(&params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->IPIV,
                           params->B, &params->LDB,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1668,11 +1690,13 @@ static inline fortran_int
 call_gesv(GESV_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zgesv)(&params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->IPIV,
                           params->B, &params->LDB,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1739,11 +1763,9 @@ using ftyp = fortran_type_t<typ>;
     n = (fortran_int)dimensions[0];
     nrhs = (fortran_int)dimensions[1];
     if (init_gesv(&params, n, nrhs)) {
-        LINEARIZE_DATA_t a_in, b_in, r_out;
-
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        init_linearize_data(&b_in, nrhs, n, steps[3], steps[2]);
-        init_linearize_data(&r_out, nrhs, n, steps[5], steps[4]);
+        linearize_data a_in = init_linearize_data(n, n, steps[1], steps[0]);
+        linearize_data b_in = init_linearize_data(nrhs, n, steps[3], steps[2]);
+        linearize_data r_out = init_linearize_data(nrhs, n, steps[5], steps[4]);
 
         BEGIN_OUTER_LOOP_3
             int not_ok;
@@ -1778,10 +1800,9 @@ using ftyp = fortran_type_t<typ>;
 
     n = (fortran_int)dimensions[0];
     if (init_gesv(&params, n, 1)) {
-        LINEARIZE_DATA_t a_in, b_in, r_out;
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        init_linearize_data(&b_in, 1, n, 1, steps[2]);
-        init_linearize_data(&r_out, 1, n, 1, steps[3]);
+        linearize_data a_in = init_linearize_data(n, n, steps[1], steps[0]);
+        linearize_data b_in = init_linearize_data(1, n, 1, steps[2]);
+        linearize_data r_out = init_linearize_data(1, n, 1, steps[3]);
 
         BEGIN_OUTER_LOOP_3
             int not_ok;
@@ -1815,9 +1836,8 @@ using ftyp = fortran_type_t<typ>;
 
     n = (fortran_int)dimensions[0];
     if (init_gesv(&params, n, n)) {
-        LINEARIZE_DATA_t a_in, r_out;
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        init_linearize_data(&r_out, n, n, steps[3], steps[2]);
+        linearize_data a_in = init_linearize_data(n, n, steps[1], steps[0]);
+        linearize_data r_out = init_linearize_data(n, n, steps[3], steps[2]);
 
         BEGIN_OUTER_LOOP_2
             int not_ok;
@@ -1890,9 +1910,11 @@ static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(spotrf)(&params->UPLO,
                           &params->N, params->A, &params->LDA,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1900,9 +1922,11 @@ static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dpotrf)(&params->UPLO,
                           &params->N, params->A, &params->LDA,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1910,9 +1934,11 @@ static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cpotrf)(&params->UPLO,
                           &params->N, params->A, &params->LDA,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1920,9 +1946,11 @@ static inline fortran_int
 call_potrf(POTR_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zpotrf)(&params->UPLO,
                           &params->N, params->A, &params->LDA,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -1976,9 +2004,8 @@ cholesky(char uplo, char **args, npy_intp const *dimensions, npy_intp const *ste
 
     n = (fortran_int)dimensions[0];
     if (init_potrf(&params, uplo, n)) {
-        LINEARIZE_DATA_t a_in, r_out;
-        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
-        init_linearize_data(&r_out, n, n, steps[3], steps[2]);
+        linearize_data a_in = init_linearize_data(n, n, steps[1], steps[0]);
+        linearize_data r_out = init_linearize_data(n, n, steps[3], steps[2]);
         BEGIN_OUTER_LOOP_2
             int not_ok;
             linearize_matrix(params.A, (ftyp*)args[0], &a_in);
@@ -2094,6 +2121,7 @@ static inline fortran_int
 call_geev(GEEV_PARAMS_t<float>* params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(sgeev)(&params->JOBVL, &params->JOBVR,
                           &params->N, params->A, &params->LDA,
                           params->WR, params->WI,
@@ -2101,6 +2129,7 @@ call_geev(GEEV_PARAMS_t<float>* params)
                           params->VRR, &params->LDVR,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2108,6 +2137,7 @@ static inline fortran_int
 call_geev(GEEV_PARAMS_t<double>* params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgeev)(&params->JOBVL, &params->JOBVR,
                           &params->N, params->A, &params->LDA,
                           params->WR, params->WI,
@@ -2115,6 +2145,7 @@ call_geev(GEEV_PARAMS_t<double>* params)
                           params->VRR, &params->LDVR,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2306,6 +2337,7 @@ call_geev(GEEV_PARAMS_t<fortran_complex>* params)
 {
     fortran_int rv;
 
+    LOCK_LAPACK_LITE;
     LAPACK(cgeev)(&params->JOBVL, &params->JOBVR,
                           &params->N, params->A, &params->LDA,
                           params->W,
@@ -2314,6 +2346,7 @@ call_geev(GEEV_PARAMS_t<fortran_complex>* params)
                           params->WORK, &params->LWORK,
                           params->WR, /* actually RWORK */
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 #endif
@@ -2323,6 +2356,7 @@ call_geev(GEEV_PARAMS_t<fortran_doublecomplex>* params)
 {
     fortran_int rv;
 
+    LOCK_LAPACK_LITE;
     LAPACK(zgeev)(&params->JOBVL, &params->JOBVR,
                           &params->N, params->A, &params->LDA,
                           params->W,
@@ -2331,6 +2365,7 @@ call_geev(GEEV_PARAMS_t<fortran_doublecomplex>* params)
                           params->WORK, &params->LWORK,
                           params->WR, /* actually RWORK */
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2463,27 +2498,25 @@ eig_wrapper(char JOBVL,
     if (init_geev(&geev_params,
                            JOBVL, JOBVR,
                            (fortran_int)dimensions[0], dispatch_scalar<ftype>())) {
-        LINEARIZE_DATA_t a_in;
-        LINEARIZE_DATA_t w_out;
-        LINEARIZE_DATA_t vl_out;
-        LINEARIZE_DATA_t vr_out;
+        linearize_data vl_out = {}; /* silence uninitialized warning */
+        linearize_data vr_out = {}; /* silence uninitialized warning */
 
-        init_linearize_data(&a_in,
+        linearize_data a_in = init_linearize_data(
                             geev_params.N, geev_params.N,
                             steps[1], steps[0]);
         steps += 2;
-        init_linearize_data(&w_out,
+        linearize_data w_out = init_linearize_data(
                             1, geev_params.N,
                             0, steps[0]);
         steps += 1;
         if ('V' == geev_params.JOBVL) {
-            init_linearize_data(&vl_out,
+            vl_out = init_linearize_data(
                                 geev_params.N, geev_params.N,
                                 steps[1], steps[0]);
             steps += 2;
         }
         if ('V' == geev_params.JOBVR) {
-            init_linearize_data(&vr_out,
+            vr_out = init_linearize_data(
                                 geev_params.N, geev_params.N,
                                 steps[1], steps[0]);
         }
@@ -2655,6 +2688,7 @@ static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(sgesdd)(&params->JOBZ, &params->M, &params->N,
                           params->A, &params->LDA,
                           params->S,
@@ -2663,12 +2697,14 @@ call_gesdd(GESDD_PARAMS_t<fortran_real> *params)
                           params->WORK, &params->LWORK,
                           (fortran_int*)params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgesdd)(&params->JOBZ, &params->M, &params->N,
                           params->A, &params->LDA,
                           params->S,
@@ -2677,6 +2713,7 @@ call_gesdd(GESDD_PARAMS_t<fortran_doublereal> *params)
                           params->WORK, &params->LWORK,
                           (fortran_int*)params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2783,6 +2820,7 @@ static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cgesdd)(&params->JOBZ, &params->M, &params->N,
                           params->A, &params->LDA,
                           params->S,
@@ -2792,12 +2830,14 @@ call_gesdd(GESDD_PARAMS_t<fortran_complex> *params)
                           params->RWORK,
                           params->IWORK,
                           &rv);
+    LOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_gesdd(GESDD_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zgesdd)(&params->JOBZ, &params->M, &params->N,
                           params->A, &params->LDA,
                           params->S,
@@ -2807,6 +2847,7 @@ call_gesdd(GESDD_PARAMS_t<fortran_doublecomplex> *params)
                           params->RWORK,
                           params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -2951,13 +2992,13 @@ using basetyp = basetype_t<typ>;
                    (fortran_int)dimensions[0],
                    (fortran_int)dimensions[1],
 dispatch_scalar<typ>())) {
-        LINEARIZE_DATA_t a_in, u_out = {}, s_out = {}, v_out = {};
+        linearize_data u_out = {}, s_out = {}, v_out = {};
         fortran_int min_m_n = params.M < params.N ? params.M : params.N;
 
-        init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
+        linearize_data a_in = init_linearize_data(params.N, params.M, steps[1], steps[0]);
         if ('N' == params.JOBZ) {
             /* only the singular values are wanted */
-            init_linearize_data(&s_out, 1, min_m_n, 0, steps[2]);
+            s_out = init_linearize_data(1, min_m_n, 0, steps[2]);
         } else {
             fortran_int u_columns, v_rows;
             if ('S' == params.JOBZ) {
@@ -2967,13 +3008,13 @@ dispatch_scalar<typ>())) {
                 u_columns = params.M;
                 v_rows = params.N;
             }
-            init_linearize_data(&u_out,
+            u_out = init_linearize_data(
                                 u_columns, params.M,
                                 steps[3], steps[2]);
-            init_linearize_data(&s_out,
+            s_out = init_linearize_data(
                                 1, min_m_n,
                                 0, steps[4]);
-            init_linearize_data(&v_out,
+            v_out = init_linearize_data(
                                 params.N, v_rows,
                                 steps[6], steps[5]);
         }
@@ -3097,22 +3138,26 @@ static inline fortran_int
 call_geqrf(GEQRF_PARAMS_t<double> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgeqrf)(&params->M, &params->N,
                           params->A, &params->LDA,
                           params->TAU,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_geqrf(GEQRF_PARAMS_t<f2c_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zgeqrf)(&params->M, &params->N,
                           params->A, &params->LDA,
                           params->TAU,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3294,10 +3339,9 @@ using ftyp = fortran_type_t<typ>;
     n = (fortran_int)dimensions[1];
 
     if (init_geqrf(&params, m, n)) {
-        LINEARIZE_DATA_t a_in, tau_out;
 
-        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
-        init_linearize_data(&tau_out, 1, fortran_int_min(m, n), 1, steps[2]);
+        linearize_data a_in = init_linearize_data(n, m, steps[1], steps[0]);
+        linearize_data tau_out = init_linearize_data(1, fortran_int_min(m, n), 1, steps[2]);
 
         BEGIN_OUTER_LOOP_2
             int not_ok;
@@ -3340,22 +3384,26 @@ static inline fortran_int
 call_gqr(GQR_PARAMS_t<double> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dorgqr)(&params->M, &params->MC, &params->MN,
                           params->Q, &params->LDA,
                           params->TAU,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 static inline fortran_int
 call_gqr(GQR_PARAMS_t<f2c_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zungqr)(&params->M, &params->MC, &params->MN,
                           params->Q, &params->LDA,
                           params->TAU,
                           params->WORK, &params->LWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3588,11 +3636,9 @@ using ftyp = fortran_type_t<typ>;
     n = (fortran_int)dimensions[1];
 
     if (init_gqr(&params, m, n)) {
-        LINEARIZE_DATA_t a_in, tau_in, q_out;
-
-        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
-        init_linearize_data(&tau_in, 1, fortran_int_min(m, n), 1, steps[2]);
-        init_linearize_data(&q_out, fortran_int_min(m, n), m, steps[4], steps[3]);
+        linearize_data a_in = init_linearize_data(n, m, steps[1], steps[0]);
+        linearize_data tau_in = init_linearize_data(1, fortran_int_min(m, n), 1, steps[2]);
+        linearize_data q_out = init_linearize_data(fortran_int_min(m, n), m, steps[4], steps[3]);
 
         BEGIN_OUTER_LOOP_3
             int not_ok;
@@ -3644,11 +3690,9 @@ using ftyp = fortran_type_t<typ>;
 
 
     if (init_gqr_complete(&params, m, n)) {
-        LINEARIZE_DATA_t a_in, tau_in, q_out;
-
-        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
-        init_linearize_data(&tau_in, 1, fortran_int_min(m, n), 1, steps[2]);
-        init_linearize_data(&q_out, m, m, steps[4], steps[3]);
+        linearize_data a_in = init_linearize_data(n, m, steps[1], steps[0]);
+        linearize_data tau_in = init_linearize_data(1, fortran_int_min(m, n), 1, steps[2]);
+        linearize_data q_out = init_linearize_data(m, m, steps[4], steps[3]);
 
         BEGIN_OUTER_LOOP_3
             int not_ok;
@@ -3740,6 +3784,7 @@ static inline fortran_int
 call_gelsd(GELSD_PARAMS_t<fortran_real> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(sgelsd)(&params->M, &params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->B, &params->LDB,
@@ -3748,6 +3793,7 @@ call_gelsd(GELSD_PARAMS_t<fortran_real> *params)
                           params->WORK, &params->LWORK,
                           params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3756,6 +3802,7 @@ static inline fortran_int
 call_gelsd(GELSD_PARAMS_t<fortran_doublereal> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(dgelsd)(&params->M, &params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->B, &params->LDB,
@@ -3764,6 +3811,7 @@ call_gelsd(GELSD_PARAMS_t<fortran_doublereal> *params)
                           params->WORK, &params->LWORK,
                           params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3867,6 +3915,7 @@ static inline fortran_int
 call_gelsd(GELSD_PARAMS_t<fortran_complex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(cgelsd)(&params->M, &params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->B, &params->LDB,
@@ -3875,6 +3924,7 @@ call_gelsd(GELSD_PARAMS_t<fortran_complex> *params)
                           params->WORK, &params->LWORK,
                           params->RWORK, (fortran_int*)params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -3882,6 +3932,7 @@ static inline fortran_int
 call_gelsd(GELSD_PARAMS_t<fortran_doublecomplex> *params)
 {
     fortran_int rv;
+    LOCK_LAPACK_LITE;
     LAPACK(zgelsd)(&params->M, &params->N, &params->NRHS,
                           params->A, &params->LDA,
                           params->B, &params->LDB,
@@ -3890,6 +3941,7 @@ call_gelsd(GELSD_PARAMS_t<fortran_doublecomplex> *params)
                           params->WORK, &params->LWORK,
                           params->RWORK, (fortran_int*)params->IWORK,
                           &rv);
+    UNLOCK_LAPACK_LITE;
     return rv;
 }
 
@@ -4051,13 +4103,11 @@ using basetyp = basetype_t<typ>;
     excess = m - n;
 
     if (init_gelsd(&params, m, n, nrhs, dispatch_scalar<ftyp>{})) {
-        LINEARIZE_DATA_t a_in, b_in, x_out, s_out, r_out;
-
-        init_linearize_data(&a_in, n, m, steps[1], steps[0]);
-        init_linearize_data_ex(&b_in, nrhs, m, steps[3], steps[2], fortran_int_max(n, m));
-        init_linearize_data_ex(&x_out, nrhs, n, steps[5], steps[4], fortran_int_max(n, m));
-        init_linearize_data(&r_out, 1, nrhs, 1, steps[6]);
-        init_linearize_data(&s_out, 1, fortran_int_min(n, m), 1, steps[7]);
+        linearize_data a_in = init_linearize_data(n, m, steps[1], steps[0]);
+        linearize_data b_in = init_linearize_data_ex(nrhs, m, steps[3], steps[2], fortran_int_max(n, m));
+        linearize_data x_out = init_linearize_data_ex(nrhs, n, steps[5], steps[4], fortran_int_max(n, m));
+        linearize_data r_out = init_linearize_data(1, nrhs, 1, steps[6]);
+        linearize_data s_out = init_linearize_data(1, fortran_int_min(n, m), 1, steps[7]);
 
         BEGIN_OUTER_LOOP_7
             int not_ok;
@@ -4303,6 +4353,60 @@ static const char lstsq_types[] = {
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
 };
 
+/*
+ *  Function to process core dimensions of a gufunc with two input core
+ *  dimensions m and n, and one output core dimension p which must be
+ *  min(m, n).  The parameters m_index, n_index and p_index indicate
+ *  the locations of the core dimensions in core_dims[].
+ */
+static int
+mnp_min_indexed_process_core_dims(PyUFuncObject *gufunc,
+                                  npy_intp core_dims[],
+                                  npy_intp m_index,
+                                  npy_intp n_index,
+                                  npy_intp p_index)
+{
+    npy_intp m = core_dims[m_index];
+    npy_intp n = core_dims[n_index];
+    npy_intp p = core_dims[p_index];
+    npy_intp required_p = m > n ? n : m;  /* min(m, n) */
+    if (p == -1) {
+        core_dims[p_index] = required_p;
+        return 0;
+    }
+    if (p != required_p) {
+        PyErr_Format(PyExc_ValueError,
+                     "core output dimension p must be min(m, n), where "
+                     "m and n are the core dimensions of the inputs.  Got "
+                     "m=%zd and n=%zd, so p must be %zd, but got p=%zd.",
+                     m, n, required_p, p);
+        return -1;
+    }
+    return 0;
+}
+
+/*
+ *  Function to process core dimensions of a gufunc with two input core
+ *  dimensions m and n, and one output core dimension p which must be
+ *  min(m, n).  There can be only those three core dimensions in the
+ *  gufunc shape signature.
+ */
+static int
+mnp_min_process_core_dims(PyUFuncObject *gufunc, npy_intp core_dims[])
+{
+    return mnp_min_indexed_process_core_dims(gufunc, core_dims, 0, 1, 2);
+}
+
+/*
+ *  Process the core dimensions for the lstsq gufunc.
+ */
+static int
+lstsq_process_core_dims(PyUFuncObject *gufunc, npy_intp core_dims[])
+{
+    return mnp_min_indexed_process_core_dims(gufunc, core_dims, 0, 1, 3);
+}
+
+
 typedef struct gufunc_descriptor_struct {
     const char *name;
     const char *signature;
@@ -4312,6 +4416,7 @@ typedef struct gufunc_descriptor_struct {
     int nout;
     PyUFuncGenericFunction *funcs;
     const char *types;
+    PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
 } GUFUNC_DESCRIPTOR_t;
 
 GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
@@ -4324,7 +4429,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(),()\" \n",
         4, 1, 2,
         FUNC_ARRAY_NAME(slogdet),
-        slogdet_types
+        slogdet_types,
+        nullptr
     },
     {
         "det",
@@ -4333,7 +4439,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->()\" \n",
         4, 1, 1,
         FUNC_ARRAY_NAME(det),
-        equal_2_types
+        equal_2_types,
+        nullptr
     },
     {
         "eigh_lo",
@@ -4345,7 +4452,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
         FUNC_ARRAY_NAME(eighlo),
-        eigh_types
+        eigh_types,
+        nullptr
     },
     {
         "eigh_up",
@@ -4357,7 +4465,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
         FUNC_ARRAY_NAME(eighup),
-        eigh_types
+        eigh_types,
+        nullptr
     },
     {
         "eigvalsh_lo",
@@ -4369,7 +4478,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m)\" \n",
         4, 1, 1,
         FUNC_ARRAY_NAME(eigvalshlo),
-        eighvals_types
+        eighvals_types,
+        nullptr
     },
     {
         "eigvalsh_up",
@@ -4381,7 +4491,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m)\" \n",
         4, 1, 1,
         FUNC_ARRAY_NAME(eigvalshup),
-        eighvals_types
+        eighvals_types,
+        nullptr
     },
     {
         "solve",
@@ -4392,7 +4503,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m),(m,n)->(m,n)\" \n",
         4, 2, 1,
         FUNC_ARRAY_NAME(solve),
-        equal_3_types
+        equal_3_types,
+        nullptr
     },
     {
         "solve1",
@@ -4403,7 +4515,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m),(m)->(m)\" \n",
         4, 2, 1,
         FUNC_ARRAY_NAME(solve1),
-        equal_3_types
+        equal_3_types,
+        nullptr
     },
     {
         "inv",
@@ -4414,7 +4527,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m,m)\" \n",
         4, 1, 1,
         FUNC_ARRAY_NAME(inv),
-        equal_2_types
+        equal_2_types,
+        nullptr
     },
     {
         "cholesky_lo",
@@ -4424,7 +4538,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m,m)\"\n",
         4, 1, 1,
         FUNC_ARRAY_NAME(cholesky_lo),
-        equal_2_types
+        equal_2_types,
+        nullptr
     },
     {
         "cholesky_up",
@@ -4434,55 +4549,36 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m,m)\"\n",
         4, 1, 1,
         FUNC_ARRAY_NAME(cholesky_up),
-        equal_2_types
+        equal_2_types,
+        nullptr
     },
     {
-        "svd_m",
-        "(m,n)->(m)",
-        "svd when n>=m. ",
+        "svd",
+        "(m,n)->(p)",
+        "Singular values of array with shape (m, n).\n"
+        "Return value is 1-d array with shape (min(m, n),).",
         4, 1, 1,
         FUNC_ARRAY_NAME(svd_N),
-        svd_1_1_types
+        svd_1_1_types,
+        mnp_min_process_core_dims
     },
     {
-        "svd_n",
-        "(m,n)->(n)",
-        "svd when n<=m",
-        4, 1, 1,
-        FUNC_ARRAY_NAME(svd_N),
-        svd_1_1_types
-    },
-    {
-        "svd_m_s",
-        "(m,n)->(m,m),(m),(m,n)",
-        "svd when m<=n",
+        "svd_s",
+        "(m,n)->(m,p),(p),(p,n)",
+        "svd (full_matrices=False)",
         4, 1, 3,
         FUNC_ARRAY_NAME(svd_S),
-        svd_1_3_types
+        svd_1_3_types,
+        mnp_min_process_core_dims
     },
     {
-        "svd_n_s",
-        "(m,n)->(m,n),(n),(n,n)",
-        "svd when m>=n",
-        4, 1, 3,
-        FUNC_ARRAY_NAME(svd_S),
-        svd_1_3_types
-    },
-    {
-        "svd_m_f",
-        "(m,n)->(m,m),(m),(n,n)",
-        "svd when m<=n",
+        "svd_f",
+        "(m,n)->(m,m),(p),(n,n)",
+        "svd (full_matrices=True)",
         4, 1, 3,
         FUNC_ARRAY_NAME(svd_A),
-        svd_1_3_types
-    },
-    {
-        "svd_n_f",
-        "(m,n)->(m,m),(n),(n,n)",
-        "svd when m>=n",
-        4, 1, 3,
-        FUNC_ARRAY_NAME(svd_A),
-        svd_1_3_types
+        svd_1_3_types,
+        mnp_min_process_core_dims
     },
     {
         "eig",
@@ -4493,7 +4589,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m),(m,m)\" \n",
         3, 1, 2,
         FUNC_ARRAY_NAME(eig),
-        eig_types
+        eig_types,
+        nullptr
     },
     {
         "eigvals",
@@ -4502,25 +4599,18 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "Results in a vector of eigenvalues. \n",
         3, 1, 1,
         FUNC_ARRAY_NAME(eigvals),
-        eigvals_types
+        eigvals_types,
+        nullptr
     },
     {
-        "qr_r_raw_m",
-        "(m,n)->(m)",
+        "qr_r_raw",
+        "(m,n)->(p)",
         "Compute TAU vector for the last two dimensions \n"\
-        "and broadcast to the rest. For m <= n. \n",
+        "and broadcast to the rest. \n",
         2, 1, 1,
         FUNC_ARRAY_NAME(qr_r_raw),
-        qr_r_raw_types
-    },
-    {
-        "qr_r_raw_n",
-        "(m,n)->(n)",
-        "Compute TAU vector for the last two dimensions \n"\
-        "and broadcast to the rest. For m > n. \n",
-        2, 1, 1,
-        FUNC_ARRAY_NAME(qr_r_raw),
-        qr_r_raw_types
+        qr_r_raw_types,
+        mnp_min_process_core_dims
     },
     {
         "qr_reduced",
@@ -4529,7 +4619,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "and broadcast to the rest. \n",
         2, 2, 1,
         FUNC_ARRAY_NAME(qr_reduced),
-        qr_reduced_types
+        qr_reduced_types,
+        nullptr
     },
     {
         "qr_complete",
@@ -4538,37 +4629,30 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "and broadcast to the rest. For m > n. \n",
         2, 2, 1,
         FUNC_ARRAY_NAME(qr_complete),
-        qr_complete_types
+        qr_complete_types,
+        nullptr
     },
     {
-        "lstsq_m",
-        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(m)",
-        "least squares on the last two dimensions and broadcast to the rest. \n"\
-        "For m <= n. \n",
+        "lstsq",
+        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(p)",
+        "least squares on the last two dimensions and broadcast to the rest.",
         4, 3, 4,
         FUNC_ARRAY_NAME(lstsq),
-        lstsq_types
-    },
-    {
-        "lstsq_n",
-        "(m,n),(m,nrhs),()->(n,nrhs),(nrhs),(),(n)",
-        "least squares on the last two dimensions and broadcast to the rest. \n"\
-        "For m >= n, meaning that residuals are produced. \n",
-        4, 3, 4,
-        FUNC_ARRAY_NAME(lstsq),
-        lstsq_types
+        lstsq_types,
+        lstsq_process_core_dims
     }
 };
 
 static int
 addUfuncs(PyObject *dictionary) {
-    PyObject *f;
+    PyUFuncObject *f;
     int i;
     const int gufunc_count = sizeof(gufunc_descriptors)/
         sizeof(gufunc_descriptors[0]);
     for (i = 0; i < gufunc_count; i++) {
         GUFUNC_DESCRIPTOR_t* d = &gufunc_descriptors[i];
-        f = PyUFunc_FromFuncAndDataAndSignature(d->funcs,
+        f = (PyUFuncObject *) PyUFunc_FromFuncAndDataAndSignature(
+                                                d->funcs,
                                                 array_of_nulls,
                                                 d->types,
                                                 d->ntypes,
@@ -4582,10 +4666,11 @@ addUfuncs(PyObject *dictionary) {
         if (f == NULL) {
             return -1;
         }
+        f->process_core_dims_func = d->process_core_dims_func;
 #if _UMATH_LINALG_DEBUG
         dump_ufunc_object((PyUFuncObject*) f);
 #endif
-        int ret = PyDict_SetItemString(dictionary, d->name, f);
+        int ret = PyDict_SetItemString(dictionary, d->name, (PyObject *)f);
         Py_DECREF(f);
         if (ret < 0) {
             return -1;
@@ -4597,7 +4682,7 @@ addUfuncs(PyObject *dictionary) {
 
 
 /* -------------------------------------------------------------------------- */
-                  /* Module initialization stuff  */
+                  /* Module initialization and state  */
 
 static PyMethodDef UMath_LinAlgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
@@ -4649,10 +4734,23 @@ PyMODINIT_FUNC PyInit__umath_linalg(void)
         return NULL;
     }
 
+#if PY_VERSION_HEX < 0x30d00b3 && !HAVE_EXTERNAL_LAPACK
+    lapack_lite_lock = PyThread_allocate_lock();
+    if (lapack_lite_lock == NULL) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+#endif
+
 #ifdef HAVE_BLAS_ILP64
     PyDict_SetItemString(d, "_ilp64", Py_True);
 #else
     PyDict_SetItemString(d, "_ilp64", Py_False);
+#endif
+
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif
 
     return m;

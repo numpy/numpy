@@ -1,12 +1,10 @@
 from importlib.util import spec_from_file_location, module_from_spec
 import os
-import pathlib
 import pytest
 import shutil
 import subprocess
 import sys
 import sysconfig
-import textwrap
 import warnings
 
 import numpy as np
@@ -67,7 +65,7 @@ def test_cython(tmp_path):
     os.makedirs(target_dir, exist_ok=True)
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
-                               "--buildtype=release", 
+                               "--buildtype=release",
                                "--vsenv", str(build_dir)],
                               cwd=target_dir,
                               )
@@ -83,7 +81,7 @@ def test_cython(tmp_path):
     g = glob.glob(str(target_dir / "*" / "extending.pyx.c"))
     with open(g[0]) as fid:
         txt_to_find = 'NumPy API declarations from "numpy/__init__'
-        for i, line in enumerate(fid):
+        for line in fid:
             if txt_to_find in line:
                 break
         else:

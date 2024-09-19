@@ -9,6 +9,7 @@
 #include <wchar.h>
 
 #include <type_traits>
+#include <cstddef>
 
 #include <numpy/npy_common.h>
 
