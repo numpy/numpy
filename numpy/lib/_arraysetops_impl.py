@@ -516,6 +516,7 @@ def unique_counts(x):
     )
     return UniqueCountsResult(*result)
 
+
 def _unique_inverse_dispatcher(x, /):
     return (x,)
 
@@ -599,9 +600,9 @@ def unique_values(x):
     Examples
     --------
     >>> import numpy as np
-    >>> x = [1, 1, 2]
-    >>> np.unique_values(x)
+    >>> np.unique_values([1, 1, 2])
     array([1, 2])
+
     """
     return unique(
         x,
@@ -610,7 +611,6 @@ def unique_values(x):
         return_counts=False,
         equal_nan=False
     )
-
 
 
 def _intersect1d_dispatcher(
