@@ -1449,62 +1449,6 @@ class _ArrayOrScalarCommon:
     # an `np.bool` is returned when `keepdims=True` and `self` is a 0d array
 
     @overload
-    def all(
-        self,
-        axis: None = ...,
-        out: None = ...,
-        keepdims: L[False] = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
-    ) -> np.bool: ...
-    @overload
-    def all(
-        self,
-        axis: None | _ShapeLike = ...,
-        out: None = ...,
-        keepdims: builtins.bool = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
-    ) -> Any: ...
-    @overload
-    def all(
-        self,
-        axis: None | _ShapeLike = ...,
-        out: _NdArraySubClass = ...,
-        keepdims: builtins.bool = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
-    ) -> _NdArraySubClass: ...
-
-    @overload
-    def any(
-        self,
-        axis: None = ...,
-        out: None = ...,
-        keepdims: L[False] = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
-    ) -> np.bool: ...
-    @overload
-    def any(
-        self,
-        axis: None | _ShapeLike = ...,
-        out: None = ...,
-        keepdims: builtins.bool = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
-    ) -> Any: ...
-    @overload
-    def any(
-        self,
-        axis: None | _ShapeLike = ...,
-        out: _NdArraySubClass = ...,
-        keepdims: builtins.bool = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
-    ) -> _NdArraySubClass: ...
-
-    @overload
     def argmax(
         self,
         axis: None = ...,
@@ -2026,6 +1970,80 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
     def transpose(self, axes: None | _ShapeLike, /) -> Self: ...
     @overload
     def transpose(self, *axes: SupportsIndex) -> Self: ...
+
+    @overload
+    def all(
+        self,
+        axis: None = None,
+        out: None = None,
+        keepdims: L[False, 0] = False,
+        *,
+        where: _ArrayLikeBool_co = True
+    ) -> np.bool: ...
+    @overload
+    def all(
+        self,
+        axis: None | int | tuple[int, ...] = None,
+        out: None = None,
+        keepdims: SupportsIndex = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.bool | NDArray[np.bool]: ...
+    @overload
+    def all(
+        self,
+        axis: None | int | tuple[int, ...],
+        out: _NdArraySubClass,
+        keepdims: SupportsIndex = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> _NdArraySubClass: ...
+    @overload
+    def all(
+        self,
+        axis: None | int | tuple[int, ...] = None,
+        *,
+        out: _NdArraySubClass,
+        keepdims: SupportsIndex = False,
+        where: _ArrayLikeBool_co = True,
+    ) -> _NdArraySubClass: ...
+
+    @overload
+    def any(
+        self,
+        axis: None = None,
+        out: None = None,
+        keepdims: L[False, 0] = False,
+        *,
+        where: _ArrayLikeBool_co = True
+    ) -> np.bool: ...
+    @overload
+    def any(
+        self,
+        axis: None | int | tuple[int, ...] = None,
+        out: None = None,
+        keepdims: SupportsIndex = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> np.bool | NDArray[np.bool]: ...
+    @overload
+    def any(
+        self,
+        axis: None | int | tuple[int, ...],
+        out: _NdArraySubClass,
+        keepdims: SupportsIndex = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> _NdArraySubClass: ...
+    @overload
+    def any(
+        self,
+        axis: None | int | tuple[int, ...] = None,
+        *,
+        out: _NdArraySubClass,
+        keepdims: SupportsIndex = False,
+        where: _ArrayLikeBool_co = True,
+    ) -> _NdArraySubClass: ...
 
     def argpartition(
         self,
@@ -3212,6 +3230,69 @@ class generic(_ArrayOrScalarCommon):
 
     def squeeze(self, axis: None | L[0] | tuple[()] = ...) -> Self: ...
     def transpose(self, axes: None | tuple[()] = ..., /) -> Self: ...
+
+    @overload
+    def all(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None = None,
+        out: None = None,
+        keepdims: SupportsIndex = False,
+        *,
+        where: builtins.bool | np.bool | ndarray[tuple[()], dtype[np.bool]] = True
+    ) -> np.bool: ...
+    @overload
+    def all(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None,
+        out: ndarray[tuple[()], dtype[_SCT]],
+        keepdims: SupportsIndex = False,
+        *,
+        where: builtins.bool | np.bool | ndarray[tuple[()], dtype[np.bool]] = True,
+    ) -> _SCT: ...
+    @overload
+    def all(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None = None,
+        *,
+        out: ndarray[tuple[()], dtype[_SCT]],
+        keepdims: SupportsIndex = False,
+        where: builtins.bool | np.bool | ndarray[tuple[()], dtype[np.bool]] = True,
+    ) -> _SCT: ...
+
+    @overload
+    def any(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None = None,
+        out: None = None,
+        keepdims: SupportsIndex = False,
+        *,
+        where: builtins.bool | np.bool | ndarray[tuple[()], dtype[np.bool]] = True
+    ) -> np.bool: ...
+    @overload
+    def any(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None,
+        out: ndarray[tuple[()], dtype[_SCT]],
+        keepdims: SupportsIndex = False,
+        *,
+        where: builtins.bool | np.bool | ndarray[tuple[()], dtype[np.bool]] = True,
+    ) -> _SCT: ...
+    @overload
+    def any(
+        self,
+        /,
+        axis: L[0, -1] | tuple[()] | None = None,
+        *,
+        out: ndarray[tuple[()], dtype[_SCT]],
+        keepdims: SupportsIndex = False,
+        where: builtins.bool | np.bool | ndarray[tuple[()], dtype[np.bool]] = True,
+    ) -> _SCT: ...
+
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property
     def dtype(self) -> _dtype[Self]: ...
