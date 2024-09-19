@@ -150,22 +150,22 @@ def save(
 def save(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     arr: ArrayLike,
-    allow_pickle: bool = ...,
+    allow_pickle: bool,
     fix_imports: bool,
     /,
 ) -> None: ...
 
 def savez(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
-    allow_pickle: bool = ...,
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
 def savez_compressed(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
-    allow_pickle: bool = ...,
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
