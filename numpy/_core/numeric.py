@@ -1293,7 +1293,7 @@ def roll(a, shift, axis=None):
                 "'shift' and 'axis' should be scalars or 1D sequences")
         shifts = {ax: 0 for ax in range(a.ndim)}
         for sh, ax in broadcasted:
-            shifts[ax] += sh
+            shifts[ax] += int(sh)
 
         rolls = [((slice(None), slice(None)),)] * a.ndim
         for ax, offset in shifts.items():
