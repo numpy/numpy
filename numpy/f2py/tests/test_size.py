@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from . import util
+from numpy.f2py.tests import util
 
 
 class TestSizeSumExample(util.F2PyTest):

@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 
 from numpy import array
-from . import util
+from numpy.f2py.tests import util
 
 
 @pytest.mark.slow

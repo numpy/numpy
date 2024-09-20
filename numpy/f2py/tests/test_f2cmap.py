@@ -1,4 +1,4 @@
-from . import util
+from numpy.f2py.tests import util
 import numpy as np
 
 class TestF2Cmap(util.F2PyTest):

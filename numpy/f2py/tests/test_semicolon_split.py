@@ -2,7 +2,7 @@ import platform
 import pytest
 import numpy as np
 
-from . import util
+from numpy.f2py.tests import util
 
 
 @pytest.mark.skipif(

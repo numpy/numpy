@@ -1,4 +1,4 @@
-from . import util
+from numpy.f2py.tests import util
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose

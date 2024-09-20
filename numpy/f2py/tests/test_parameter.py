@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 
-from . import util
+from numpy.f2py.tests import util
 
 
 class TestParameters(util.F2PyTest):

@@ -2,7 +2,7 @@ import textwrap
 import pytest
 
 from numpy.testing import IS_PYPY
-from . import util
+from numpy.f2py.tests import util
 
 
 class TestMixed(util.F2PyTest):

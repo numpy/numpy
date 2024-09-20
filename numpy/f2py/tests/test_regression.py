@@ -5,7 +5,7 @@ import platform
 import numpy as np
 import numpy.testing as npt
 
-from . import util
+from numpy.f2py.tests import util
 
 
 class TestIntentInOut(util.F2PyTest):
