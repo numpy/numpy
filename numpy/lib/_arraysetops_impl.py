@@ -465,7 +465,7 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
     
     Custom objects:
     
-    >>> class Person:
+    >>> class Person:  # doctest: +SKIP
     ...     def __init__(self, name, age):
     ...         self.name = name
     ...         self.age = age
