@@ -2339,7 +2339,8 @@ class vectorize:
     >>> vpolyval = np.vectorize(mypolyval, excluded={0, 'p'})
     >>> vpolyval(p=[1, 2, 3], x=[0, 1])
     array([3, 6])
-    Likewise exlusion with a positional variable:
+
+    Likewise exclusion with a positional input variable:
     >>> vpolyval([1, 2, 3], x=[0, 1])
     array([3, 6])
 
