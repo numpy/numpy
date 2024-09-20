@@ -12,7 +12,7 @@ dependencies:
   - compilers
   - openblas
   - nomkl
-  - setuptools
+  - setuptools==65.5.1
   - ninja
   - pkg-config
   - meson-python
