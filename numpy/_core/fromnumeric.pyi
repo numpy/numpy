@@ -575,57 +575,75 @@ def sum(
 @overload
 def all(
     a: ArrayLike,
-    axis: None = ...,
-    out: None = ...,
-    keepdims: Literal[False] = ...,
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False, 0] = False,
     *,
-    where: _ArrayLikeBool_co = ...,
+    where: _ArrayLikeBool_co = True,
 ) -> np.bool: ...
 @overload
 def all(
     a: ArrayLike,
-    axis: None | _ShapeLike = ...,
-    out: None = ...,
-    keepdims: bool = ...,
+    axis: None | int | tuple[int, ...] = None,
+    out: None = None,
+    keepdims: SupportsIndex = False,
     *,
-    where: _ArrayLikeBool_co = ...,
-) -> Any: ...
+    where: _ArrayLikeBool_co = True,
+) -> np.bool | NDArray[np.bool]: ...
 @overload
 def all(
     a: ArrayLike,
-    axis: None | _ShapeLike = ...,
-    out: _ArrayType = ...,
-    keepdims: bool = ...,
+    axis: None | int | tuple[int, ...],
+    out: _ArrayType,
+    keepdims: SupportsIndex = False,
     *,
-    where: _ArrayLikeBool_co = ...,
+    where: _ArrayLikeBool_co = True,
+) -> _ArrayType: ...
+@overload
+def all(
+    a: ArrayLike,
+    axis: None | int | tuple[int, ...] = None,
+    *,
+    out: _ArrayType,
+    keepdims: SupportsIndex = False,
+    where: _ArrayLikeBool_co = True,
 ) -> _ArrayType: ...
 
 @overload
 def any(
     a: ArrayLike,
-    axis: None = ...,
-    out: None = ...,
-    keepdims: Literal[False] = ...,
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False, 0] = False,
     *,
-    where: _ArrayLikeBool_co = ...,
+    where: _ArrayLikeBool_co = True,
 ) -> np.bool: ...
 @overload
 def any(
     a: ArrayLike,
-    axis: None | _ShapeLike = ...,
-    out: None = ...,
-    keepdims: bool = ...,
+    axis: None | int | tuple[int, ...] = None,
+    out: None = None,
+    keepdims: SupportsIndex = False,
     *,
-    where: _ArrayLikeBool_co = ...,
-) -> Any: ...
+    where: _ArrayLikeBool_co = True,
+) -> np.bool | NDArray[np.bool]: ...
 @overload
 def any(
     a: ArrayLike,
-    axis: None | _ShapeLike = ...,
-    out: _ArrayType = ...,
-    keepdims: bool = ...,
+    axis: None | int | tuple[int, ...],
+    out: _ArrayType,
+    keepdims: SupportsIndex = False,
     *,
-    where: _ArrayLikeBool_co = ...,
+    where: _ArrayLikeBool_co = True,
+) -> _ArrayType: ...
+@overload
+def any(
+    a: ArrayLike,
+    axis: None | int | tuple[int, ...] = None,
+    *,
+    out: _ArrayType,
+    keepdims: SupportsIndex = False,
+    where: _ArrayLikeBool_co = True,
 ) -> _ArrayType: ...
 
 @overload
