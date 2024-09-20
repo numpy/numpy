@@ -2189,14 +2189,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
         /,
         *,
         order: _OrderACF = ...,
-        copy: None | bool = ...,
+        copy: None | builtins.bool = ...,
     ) -> ndarray[_Shape, _DType_co]: ...
     @overload
     def reshape(
         self,
         *shape: SupportsIndex,
         order: _OrderACF = ...,
-        copy: None | bool = ...,
+        copy: None | builtins.bool = ...,
     ) -> ndarray[_Shape, _DType_co]: ...
 
     @overload
