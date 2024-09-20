@@ -466,13 +466,13 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
     Custom objects:
     
     >>> class Person:
-    >>>     def __init__(self, name, age):
-    >>>         self.name = name
-    >>>         self.age = age
-    >>>     def __eq__(self, other):
-    >>>         return self.age == other.age and self.name == other.name
-    >>>     def __lt__(self, other):
-    >>>         return (self.age, self.name) < (other.age, other.name)
+    ...     def __init__(self, name, age):
+    ...         self.name = name
+    ...         self.age = age
+    ...     def __eq__(self, other):
+    ...         return self.age == other.age and self.name == other.name
+    ...     def __lt__(self, other):
+    ...         return (self.age, self.name) < (other.age, other.name)
     >>> people = [Person('Lukas', 35), Person('Pierre', 25), Person('Laura', 35)]
     >>> lexargsort(people, objects='equal')
     array([0, 1, 2])
