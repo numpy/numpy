@@ -102,11 +102,25 @@ PyObject* unique(PyArrayObject *self)
 
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *)> function_type;
-std::unordered_map<size_t, function_type> unique_funcs = {
-    {sizeof(npy_uint8), unique<npy_uint8>},
-    {sizeof(npy_uint16), unique<npy_uint16>},
-    {sizeof(npy_uint32), unique<npy_uint32>},
-    {sizeof(npy_uint64), unique<npy_uint64>},
+std::unordered_map<int, function_type> unique_funcs = {
+    {NPY_BYTE, unique<npy_byte>},
+    {NPY_UBYTE, unique<npy_ubyte>},
+    {NPY_SHORT, unique<npy_short>},
+    {NPY_USHORT, unique<npy_ushort>},
+    {NPY_INT, unique<npy_int>},
+    {NPY_UINT, unique<npy_uint>},
+    {NPY_LONG, unique<npy_long>},
+    {NPY_ULONG, unique<npy_ulong>},
+    {NPY_LONGLONG, unique<npy_longlong>},
+    {NPY_ULONGLONG, unique<npy_ulonglong>},
+    {NPY_INT8, unique<npy_int8>},
+    {NPY_INT16, unique<npy_int16>},
+    {NPY_INT32, unique<npy_int32>},
+    {NPY_INT64, unique<npy_int64>},
+    {NPY_UINT8, unique<npy_uint8>},
+    {NPY_UINT16, unique<npy_uint16>},
+    {NPY_UINT32, unique<npy_uint32>},
+    {NPY_UINT64, unique<npy_uint64>},
 };
 
 
@@ -123,12 +137,14 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyObject *res = NULL;
     if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self))
         return NULL;
+    
+    // Making sure the DECREF is called when the function returns, with
+    // or w/o an exception
+    auto self_decref = finally([&]() { Py_XDECREF(self); });
 
-    npy_intp itemsize;
 
     /* Handle zero-sized arrays specially */
     if (PyArray_SIZE(self) == 0) {
-        Py_XDECREF(self);
         return PyArray_NewLikeArray(
             self,
             NPY_ANYORDER,
@@ -137,25 +153,13 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
         );
     }
 
-    itemsize = PyArray_ITEMSIZE(self);
-    PyArray_Descr *descr = PyArray_DESCR(self);
-    char kind = descr->kind;
-    // we only support booleans, integers, unsigned integers, and floats
-    // we also only support data sizes present in our unique_funcs map
-    if (
-        (kind != 'b' && kind != 'i' && kind != 'u' && kind !='f')
-        || (unique_funcs.find(itemsize) == unique_funcs.end())
-    ){
-        Py_XDECREF(self);
+    auto type = PyArray_TYPE(self);
+    // we only support data types present in our unique_funcs map
+    if (unique_funcs.find(type) == unique_funcs.end()) {
         return Py_None;
     }
 
-
-    /* for the purpose of finding unique values on dtypes that we support, we
-    don't really care what dtype it is, and we can look at the data as if they
-    were all uint values */
-    res = unique_funcs[itemsize](self);
-    Py_XDECREF(self);
+    res = unique_funcs[type](self);
     return res;
 }
 
