@@ -3701,6 +3701,18 @@ class TestRoll:
         x = np.array([])
         assert_equal(np.roll(x, 1), np.array([]))
 
+    def test_roll_unsigned_shift(self):
+        x = np.arange(4)
+        shift = np.uint16(2)
+        assert_equal(np.roll(x, shift), np.roll(x, 2))
+
+        shift = np.uint64(2**63+2)
+        assert_equal(np.roll(x, shift), np.roll(x, 2))
+
+    def test_roll_big_int(self):
+        x = np.arange(4)
+        assert_equal(np.roll(x, 2**100), x)
+
 
 class TestRollaxis:
 
