@@ -29,6 +29,7 @@
 #include "npy_buffer.h"
 #include "dtypemeta.h"
 #include "stringdtype/dtype.h"
+#include "array_coercion.h"
 
 #ifndef PyDictProxy_Check
 #define PyDictProxy_Check(obj) (Py_TYPE(obj) == &PyDictProxy_Type)
@@ -1556,6 +1557,14 @@ PyArray_GetDefaultDescr(PyArray_DTypeMeta *DType)
     return NPY_DT_CALL_default_descr(DType);
 }
 
+NPY_NO_EXPORT PyArray_Descr *
+default_descr_from_scalar_type(PyTypeObject *typ) {
+    PyObject *DType = PyArray_DiscoverDTypeFromScalarType(typ);
+    if (DType == NULL || DType == Py_None) {
+        return NULL;
+    }
+    return PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
+}
 
 /**
  * Get a dtype instance from a python type
@@ -1600,6 +1609,10 @@ _convert_from_type(PyObject *obj) {
         return PyArray_DescrFromType(NPY_OBJECT);
     }
     else {
+        PyArray_Descr *descr = default_descr_from_scalar_type(typ);
+        if (descr != NULL) {
+            return descr;
+        }
         PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
         if ((PyObject *)ret != Py_NotImplemented) {
             return ret;

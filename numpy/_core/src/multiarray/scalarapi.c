@@ -390,7 +390,10 @@ PyArray_DescrFromTypeObject(PyObject *type)
         Py_INCREF(type);
         return (PyArray_Descr *)new;
     }
-    return _descr_from_subtype(type);
+
+    PyArray_Descr *default_descr = default_descr_from_scalar_type((PyTypeObject *)type);
+
+    return default_descr != NULL ? default_descr : _descr_from_subtype(type);
 }
 
 

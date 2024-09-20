@@ -65,4 +65,7 @@ arraydescr_field_subset_view(_PyArray_LegacyDescr *self, PyObject *ind);
 
 extern NPY_NO_EXPORT char const *_datetime_strings[];
 
+NPY_NO_EXPORT PyArray_Descr *
+default_descr_from_scalar_type(PyTypeObject *typ);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_ */
