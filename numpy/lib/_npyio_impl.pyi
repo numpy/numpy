@@ -158,12 +158,14 @@ def save(
 def savez(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
 def savez_compressed(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
