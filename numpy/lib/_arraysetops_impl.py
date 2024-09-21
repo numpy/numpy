@@ -412,6 +412,7 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
     
     Examples
     --------
+
     >>> import numpy as np
     >>> a = np.array([('Simpson', 'Homer'), ('Bouvier', 'Marge'), ('Simpson', 'Bart')])
     >>> idx = lexargsort(a)
@@ -463,24 +464,25 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
             [False,  True]],
       fill_value=1e+20)
     
-    Custom objects:
+    Custom objects (doctest disabled because the function is not exposed to the user
+    and doctest generates a warning with __eq__ and __lt__ methods)
     
-    >>> class Person:  # doctest: +SKIP
-    ...     def __init__(self, name, age):
-    ...         self.name = name
-    ...         self.age = age
-    ...     def __eq__(self, other):
-    ...         return self.age == other.age and self.name == other.name
-    ...     def __lt__(self, other):
-    ...         return (self.age, self.name) < (other.age, other.name)
-    >>> people = [Person('Lukas', 35), Person('Pierre', 25), Person('Laura', 35)]
-    >>> lexargsort(people, objects='equal')
-    array([0, 1, 2])
-    >>> lexargsort(people, objects='compare')
-    array([1, 2, 0])
-    >>> num_children = [1, 2, 2]
-    >>> lexargsort(num_children, people)
-    array([0, 1, 2])
+    ##>>> class Person:  # doctest: +SKIP
+    ##...     def __init__(self, name, age):
+    ##...         self.name = name
+    ##...         self.age = age
+    ##...     def __eq__(self, other):
+    ##...         return self.age == other.age and self.name == other.name
+    ##...     def __lt__(self, other):
+    ##...         return (self.age, self.name) < (other.age, other.name)
+    ##>>> people = [Person('Lukas', 35), Person('Pierre', 25), Person('Laura', 35)]
+    ##>>> lexargsort(people, objects='equal')
+    ##array([0, 1, 2])
+    ##>>> lexargsort(people, objects='compare')
+    ##array([1, 2, 0])
+    ##>>> num_children = [1, 2, 2]
+    ##>>> lexargsort(num_children, people)
+    ##array([0, 1, 2])
     """
     # Parse input
     columns = [np.asanyarray(col) for col in columns]
