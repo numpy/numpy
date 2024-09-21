@@ -310,7 +310,7 @@ def unique(ar, return_index=False, return_inverse=False,
         mask = perm == 0  # True for the first (if any)
     else:
         # Compute the permutation and mask
-        perm, mask = lexargsort(ar, equal_nan=equal_nan, objects=objects,
+        perm, mask = _lexargsort(ar, equal_nan=equal_nan, objects=objects,
                                 return_is_unique=True)
 
     ar = ar[perm]
@@ -337,7 +337,7 @@ def unique(ar, return_index=False, return_inverse=False,
     return ret[0] if len(ret) == 1 else ret
 
 
-def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=False):
+def _lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=False):
     """
     Sort lexicographically the rows of a table with specified columns.
     
@@ -415,7 +415,7 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
 
     >>> import numpy as np
     >>> a = np.array([('Simpson', 'Homer'), ('Bouvier', 'Marge'), ('Simpson', 'Bart')])
-    >>> idx = lexargsort(a)
+    >>> idx = _lexargsort(a)
     >>> a[idx]
     array([['Bouvier', 'Marge'],
            ['Simpson', 'Bart'],
@@ -426,14 +426,14 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
     >>> country = ['Germany', 'France', 'Germany', 'Colombia']
     >>> name = ['Lukas', 'Pierre', 'Laura', 'Laura']
     >>> age = [35, 25, 35, 35]
-    >>> idx1 = lexargsort(country, name, age)
-    >>> idx2 = lexargsort(age, name, country)
+    >>> idx1 = _lexargsort(country, name, age)
+    >>> idx2 = _lexargsort(age, name, country)
     >>> (idx1, idx2)
     (array([3, 1, 2, 0]), array([1, 3, 2, 0]))
 
     >>> combined_dtype = [('country', 'U10'), ('name', 'U10'), ('age', int)]
     >>> structured = np.array([*zip(country, name, age)], dtype=combined_dtype)
-    >>> idx3 = lexargsort(structured)
+    >>> idx3 = _lexargsort(structured)
     >>> structured[idx3]
     array([('Colombia', 'Laura', 35), ('France', 'Pierre', 25),
            ('Germany', 'Laura', 35), ('Germany', 'Lukas', 35)],
@@ -442,17 +442,17 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
     Masked arrays and nan support:
     
     >>> a = np.array([complex(np.nan, -1), np.nan, complex(3, np.nan), np.nan])
-    >>> idx1, mask1 = lexargsort(a, equal_nan=True, return_is_unique=True)
-    >>> idx2, mask2 = lexargsort(a, equal_nan=False, return_is_unique=True)
+    >>> idx1, mask1 = _lexargsort(a, equal_nan=True, return_is_unique=True)
+    >>> idx2, mask2 = _lexargsort(a, equal_nan=False, return_is_unique=True)
     >>> (idx1[mask1], idx2[mask2])
     (array([0]), array([2, 0, 1, 3]))
     >>> a = np.array([(np.nan, 2), (np.nan, 1), (np.nan, 2), (2, 2)])
-    >>> idx1 = lexargsort(a, equal_nan=True)
-    >>> idx2 = lexargsort(a, equal_nan=False)
+    >>> idx1 = _lexargsort(a, equal_nan=True)
+    >>> idx2 = _lexargsort(a, equal_nan=False)
     >>> (idx1, idx2)
     (array([3, 1, 0, 2]), array([3, 0, 1, 2]))
     >>> a = np.ma.array(a, mask=[(0, 1), (0, 1), (0, 0), (0, 0)])
-    >>> idx, mask = lexargsort(a, equal_nan=True, return_is_unique=True)
+    >>> idx, mask = _lexargsort(a, equal_nan=True, return_is_unique=True)
     >>> a[idx[mask]]
     masked_array(
       data=[[2.0, 2.0],
@@ -475,12 +475,12 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
     ...     def __lt__(self, other):
     ...         return (self.age, self.name) < (other.age, other.name)
     >>> people = [Person('Lukas', 35), Person('Pierre', 25), Person('Laura', 35)]
-    >>> lexargsort(people, objects='equal')
+    >>> _lexargsort(people, objects='equal')
     array([0, 1, 2])
-    >>> lexargsort(people, objects='compare')
+    >>> _lexargsort(people, objects='compare')
     array([1, 2, 0])
     >>> num_children = [1, 2, 2]
-    >>> lexargsort(num_children, people)
+    >>> _lexargsort(num_children, people)
     array([0, 1, 2])
     """
     # Parse input
