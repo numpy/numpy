@@ -188,7 +188,7 @@ def unique(ar, return_index=False, return_inverse=False,
     objects : {'compare', 'different', 'equal', 'compare-no-nan'}, optional
         Rule for comparing objects. The possible options are to treat all objects
         as different ('different'), as equal ('equal'), or to compare them with
-        their own comparison implementations (`__eq__` and `__lt__`) ('compare').
+        their own comparison implementations (__eq__ and __lt__) ('compare').
         By default, 'compare' checks first if x != x, in which case x is treated as
         a nan object. To disable this check, use 'compare-no-nan'.
         The default is 'compare'.
@@ -363,7 +363,7 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
     objects : {'compare', 'different', 'equal', 'compare-no-nan'}, optional
         Rule for comparing objects. The possible options are to treat all objects
         as different ('different'), as equal ('equal'), or to compare them with
-        their own comparison implementations (`__eq__` and `__lt__`) ('compare').
+        their own comparison implementations (__eq__ and __lt__) ('compare').
         By default, 'compare' checks first if x != x, in which case x is treated as
         a nan object. To disable this check, use 'compare-no-nan'.
         The default is 'compare'.
@@ -417,12 +417,11 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
     >>> a = np.array([('Simpson', 'Homer'), ('Bouvier', 'Marge'), ('Simpson', 'Bart')])
     >>> idx = lexargsort(a)
     >>> a[idx]
-    **
-    >>> # array([['Bouvier', 'Marge'],
-    >>> #        ['Simpson', 'Bart'],
-    >>> #        ['Simpson', 'Homer']], dtype='<U7')
-    >>>     
-    >>> #    Mixed dtypes, strings and numbers:
+    array([['Bouvier', 'Marge'],
+           ['Simpson', 'Bart'],
+           ['Simpson', 'Homer']], dtype='<U7')
+         
+    Mixed dtypes, strings and numbers:
 
     >>> country = ['Germany', 'France', 'Germany', 'Colombia']
     >>> name = ['Lukas', 'Pierre', 'Laura', 'Laura']
@@ -467,22 +466,22 @@ def lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fal
     Custom objects (doctest disabled because the function is not exposed to the user
     and doctest generates a warning with __eq__ and __lt__ methods)
     
-    ##>>> class Person:  # doctest: +SKIP
-    ##...     def __init__(self, name, age):
-    ##...         self.name = name
-    ##...         self.age = age
-    ##...     def __eq__(self, other):
-    ##...         return self.age == other.age and self.name == other.name
-    ##...     def __lt__(self, other):
-    ##...         return (self.age, self.name) < (other.age, other.name)
-    ##>>> people = [Person('Lukas', 35), Person('Pierre', 25), Person('Laura', 35)]
-    ##>>> lexargsort(people, objects='equal')
-    ##array([0, 1, 2])
-    ##>>> lexargsort(people, objects='compare')
-    ##array([1, 2, 0])
-    ##>>> num_children = [1, 2, 2]
-    ##>>> lexargsort(num_children, people)
-    ##array([0, 1, 2])
+    >>> class Person:  # doctest: +SKIP
+    ...     def __init__(self, name, age):
+    ...         self.name = name
+    ...         self.age = age
+    ...     def __eq__(self, other):
+    ...         return self.age == other.age and self.name == other.name
+    ...     def __lt__(self, other):
+    ...         return (self.age, self.name) < (other.age, other.name)
+    >>> people = [Person('Lukas', 35), Person('Pierre', 25), Person('Laura', 35)]
+    >>> lexargsort(people, objects='equal')
+    array([0, 1, 2])
+    >>> lexargsort(people, objects='compare')
+    array([1, 2, 0])
+    >>> num_children = [1, 2, 2]
+    >>> lexargsort(num_children, people)
+    array([0, 1, 2])
     """
     # Parse input
     columns = [np.asanyarray(col) for col in columns]
