@@ -46,7 +46,8 @@ def install_temp(tmpdir_factory):
     native_file = str(build_dir / 'interpreter-native-file.ini')
     with open(native_file, 'w') as f:
         f.write("[binaries]\n")
-        f.write(f"python = '{sys.executable}'")
+        f.write(f"python = '{sys.executable}'\n")
+        f.write(f"python3 = '{sys.executable}'")
 
     try:
         subprocess.check_call(["meson", "--version"])
