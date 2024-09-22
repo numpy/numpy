@@ -77,6 +77,9 @@ speak to us in private first, contact our community coordinators at
 numpy-team@googlegroups.com or on Slack (write numpy-team@googlegroups.com for
 an invitation).
 
+
+GIOGIOGIOGIOGIOGIOGIO
+
 We also have a biweekly community call, details of which are announced on the
 mailing list. You are very welcome to join.
 
