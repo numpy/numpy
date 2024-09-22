@@ -139,7 +139,8 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None, *, equal_nan=None):
+                       return_counts=None, axis=None, *, equal_nan=None,
+                       objects="compare"):
     return (ar,)
 
 
@@ -216,15 +217,15 @@ def unique(ar, return_index=False, return_inverse=False,
 
     Notes
     -----
-    When an axis is specified the subarrays indexed by the axis are sorted.
-    This is done by making the specified axis the first dimension of the array
-    (move the axis to the first dimension to keep the order of the other axes)
-    and then flattening the subarrays in C order. The flattened subarrays are
-    then viewed as a structured type with each element given a label, with the
-    effect that we end up with a 1-D array of structured types that can be
-    treated in the same way as any other 1-D array. The result is that the
-    flattened subarrays are sorted in lexicographic order starting with the
-    first element.
+
+    When an axis is specified the subarrays indexed by the axis are sorted
+    lexicographically using the following rules after the given axis is moved
+    to the first position in the array:
+    For multi-dimensional arrays, the second to last axes are flattened,
+    producing a 2D table in which the first column is the most significant.
+    Then, for structured arrays, the first field is the most significant.
+    Then, for masked arrays, masked elements are considered equal and largest.
+    Finally, the usual order of elements in each non-structured 1D column is used.
 
     .. versionchanged:: 1.21
         Like np.sort, NaN will sort to the end of the values.
@@ -337,9 +338,10 @@ def unique(ar, return_index=False, return_inverse=False,
     return ret[0] if len(ret) == 1 else ret
 
 
-def _lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=False):
+def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=False):
     """
-    Sort lexicographically the rows of a table with specified columns.
+    Sort lexicographically the rows of the table that would be obtained by
+    concatenating the provided arrays horizontally.
     
     Returns the indices of the sorted rows and optionally a boolean mask indicating
     the indices that correspond to unique rows.
@@ -347,14 +349,16 @@ def _lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fa
     Parameters
     ----------
 
-    columns : (first-column, second-column, ...) array_like
-        One or more arrays of the same length. The first column is the most
-        significant for sorting, followed by the second, etc.
-        Typically, each column is a one-dimensional array, but it can be a
-        multi-dimensional array, a structured array with fields, a masked array,
-        an array with dtype=object, or a combination of these.
-        Structured and multidimensional arrays are treated as a stack of columns.
+    arrays : (first-array, second-array, ...) array_like
+        One or more arrays of the same length (first axis). The arrays can be
+        multi-dimensional, structured, masked, or have dtype=object.
         
+        The first array is the most significant for sorting.
+        Then, for multi-dimensional arrays, the second to last axes are flattened,
+        producing a 2D table in which the first column is the most significant.
+        Then, for structured arrays, the first field is the most significant.
+        Then, for masked arrays, masked elements are considered equal and largest.
+        Finally, the usual order of elements in each non-structured 1D column is used.
     
     equal_nan : bool, optional
         Whether to treat all nan types as equal or as different elements.
@@ -399,7 +403,7 @@ def _lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fa
     - supports columns with fields, possibly nested
     - optionally returns a boolean diff mask that detects unique elements
 
-    The parameter `equal_nan` matters for sorting and for detecting unique elements.
+    The parameter `equal_nan` matters for sorting and for detecting unique elements:
     - If ``equal_nan = False``:
         For sorting, the order of nan elements follows the documentation of np.sort,
         e.g. 100+1j < 1+nanj < 3-nanj < nan-3j < nan+nanj. In case of ties, the first
@@ -484,15 +488,16 @@ def _lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fa
     array([0, 1, 2])
     """
     # Parse input
-    columns = [np.asanyarray(col) for col in columns]
-    assert len(columns), "Expected at least one column to detect the number of rows"
-    n = len(columns[0])
-    assert all(len(col) == n for col in columns), (
-        f"Columns have different lengths: {[len(col) for col in columns]}"
+    arrays = [np.asanyarray(ar) for ar in arrays]
+    assert len(arrays), "Expected at least one column to detect the number of rows"
+    n = len(arrays[0])
+    assert all(len(ar) == n for ar in arrays), (
+        f"arrays have different lengths: {[len(ar) for ar in arrays]}"
     )
 
-    def column_provider(raw_columns):
-        for col in raw_columns:
+    def column_provider(arrays):
+        for col in arrays:
+            # col is a (1D) column in all cases except the first two
             if col.ndim > 1:
                 yield from column_provider(col.reshape(n, -1).T)
             elif col.dtype.names:
@@ -542,7 +547,7 @@ def _lexargsort(*columns, equal_nan=True, objects="compare", return_is_unique=Fa
     # consecutuve elements  appear as (start, stop) in the list blocks.
     # C denotes the horizontal stack of columns consumed so far:
     # C = np.empty((n, 0), dtype=object)
-    for col in column_provider(columns):
+    for col in column_provider(arrays):
         # Sort and partition all blocks using col
         # C = np.hstack([C, col.astype(object)[:, None]])  # Invariant
         prev_blocks = blocks
@@ -592,10 +597,6 @@ class UniqueCountsResult(NamedTuple):
 class UniqueInverseResult(NamedTuple):
     values: np.ndarray
     inverse_indices: np.ndarray
-
-class ProposedLexsortAllResult(NamedTuple):
-    values: np.ndarray
-    prev_diff: np.ndarray
 
 
 def _unique_all_dispatcher(x, /):
