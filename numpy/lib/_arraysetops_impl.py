@@ -364,12 +364,15 @@ def _unique1d(ar, return_index=False, return_inverse=False,
             "and `return_counts` are all False."
         )
 
-    from numpy._core.unique import unique_hash
-    hash_unique = unique_hash(ar)
-    if hash_unique is not None:
-        if sorted:
-            hash_unique.sort()
-        return (hash_unique,)
+    # masked arrays are not supported yet.
+    if not optional_indices and not return_counts and not np.ma.is_masked(ar):
+        # from numpy._core._multiarray_umath import unique_hash
+        from numpy._core.unique import unique_hash
+        hash_unique = unique_hash(ar)
+        if hash_unique is not None:
+            if sorted:
+                hash_unique.sort()
+            return (hash_unique,)
 
 
     if optional_indices:

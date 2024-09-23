@@ -124,7 +124,7 @@ std::unordered_map<int, function_type> unique_funcs = {
 };
 
 
-static PyObject *
+extern "C" PyObject *
 PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     /* This is called from Python space, and expects a single numpy array as input.
@@ -162,6 +162,7 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
     res = unique_funcs[type](self);
     return res;
 }
+
 
 
 // The following is to expose the unique function to Python
