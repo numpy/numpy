@@ -2476,7 +2476,10 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         Py_XDECREF(traceback);
         if (DEPRECATE("__array__ implementation doesn't accept a copy keyword, "
                       "so passing copy=False failed. __array__ must implement "
-                      "'dtype' and 'copy' keyword arguments.") < 0) {
+                      "'dtype' and 'copy' keyword arguments. "
+                      "To learn more, see the migration guide "
+                      "https://numpy.org/devdocs/numpy_2_0_migration_guide.html"
+                      "#adapting-to-changes-in-the-copy-keyword") < 0) {
             return -1;
         }
         return 0;
