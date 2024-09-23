@@ -30,6 +30,7 @@
 #include "dtype_transfer.h"
 #include "lowlevel_strided_loops.h"
 #include "npy_static_data.h"
+/* Have to include for due to older version of PyObject_GetOptionalAttr*/
 #include "npy_pycompat.h"
 
 #include <datetime.h>
@@ -2066,6 +2067,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     }
 
     /* Get the year */
+    /* Checking if Exception will be raised it would be -1 else + value */
     int res = PyObject_GetOptionalAttr(obj, npy_interned_str.year, &tmp);
     if (res != 1) {
         return -1;

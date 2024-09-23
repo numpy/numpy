@@ -74,8 +74,6 @@ intern_strings(void)
     INTERN_STRING(days, "days");
     INTERN_STRING(seconds, "seconds");
     INTERN_STRING(microseconds, "microseconds");
-
-
     return 0;
 }
 
