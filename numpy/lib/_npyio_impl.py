@@ -132,10 +132,6 @@ class NpzFile(Mapping):
         to getitem access on the `NpzFile` instance itself.
     allow_pickle : bool, optional
         Allow loading pickled data. Default: False
-
-        .. versionchanged:: 1.16.3
-            Made default False in response to CVE-2019-6446.
-
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass on to pickle.load.
         These are only useful when loading object arrays saved on
@@ -340,10 +336,6 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         disallowing pickles include security, as loading pickled data can
         execute arbitrary code. If pickles are disallowed, loading object
         arrays will fail. Default: False
-
-        .. versionchanged:: 1.16.3
-            Made default False in response to CVE-2019-6446.
-
     fix_imports : bool, optional
         Only useful when loading Python 2 generated pickled files on Python 3,
         which includes npy/npz files containing object arrays. If `fix_imports`
@@ -1183,11 +1175,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Which columns to read, with 0 being the first. For example,
         ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
-
-        .. versionchanged:: 1.11.0
-            When a single column has to be read it is possible to use
-            an integer instead of a tuple. E.g ``usecols = 3`` reads the
-            fourth column the same way as ``usecols = (3,)`` would.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a
@@ -1197,8 +1184,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The returned array will have at least `ndmin` dimensions.
         Otherwise mono-dimensional axes will be squeezed.
         Legal values: 0 (default), 1 or 2.
-
-        .. versionadded:: 1.6.0
     encoding : str, optional
         Encoding used to decode the inputfile. Does not apply to input streams.
         The special value 'bytes' enables backward compatibility workarounds
@@ -1207,7 +1192,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         unicode arrays and pass strings as input to converters.  If set to None
         the system default is used. The default value is 'bytes'.
 
-        .. versionadded:: 1.14.0
         .. versionchanged:: 2.0
             Before NumPy 2, the default was ``'bytes'`` for Python 2
             compatibility. The default is now ``None``.
@@ -1217,8 +1201,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         to read all the rows. Note that empty rows containing no data such as
         empty lines and comment lines are not counted towards `max_rows`,
         while such lines are counted in `skiprows`.
-
-        .. versionadded:: 1.16.0
 
         .. versionchanged:: 1.23.0
             Lines containing no data, including comment lines (e.g., lines
@@ -1259,8 +1241,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     able to read all values. If all rows do not have same number of values, a
     subset of up to n columns (where n is the least number of values present
     in all rows) can be read by specifying the columns via `usecols`.
-
-    .. versionadded:: 1.10.0
 
     The strings produced by the Python float.hex method can be used as
     input for floats.
@@ -1458,30 +1438,19 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         String or character separating columns.
     newline : str, optional
         String or character separating lines.
-
-        .. versionadded:: 1.5.0
     header : str, optional
         String that will be written at the beginning of the file.
-
-        .. versionadded:: 1.7.0
     footer : str, optional
         String that will be written at the end of the file.
-
-        .. versionadded:: 1.7.0
     comments : str, optional
         String that will be prepended to the ``header`` and ``footer`` strings,
         to mark them as comments. Default: '# ',  as expected by e.g.
         ``numpy.loadtxt``.
-
-        .. versionadded:: 1.7.0
     encoding : {None, str}, optional
         Encoding used to encode the outputfile. Does not apply to output
         streams. If the encoding is something other than 'bytes' or 'latin1'
         you will not be able to load the file in NumPy versions < 1.14. Default
         is 'latin1'.
-
-        .. versionadded:: 1.14.0
-
 
     See Also
     --------
@@ -1687,6 +1656,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 
         .. versionchanged:: 1.22.0
             Now accepts `os.PathLike` implementations.
+
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
@@ -1694,8 +1664,6 @@ def fromregex(file, regexp, dtype, encoding=None):
         Dtype for the structured array; must be a structured datatype.
     encoding : str, optional
         Encoding used to decode the inputfile. Does not apply to input streams.
-
-        .. versionadded:: 1.14.0
 
     Returns
     -------
@@ -1873,8 +1841,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The maximum number of rows to read. Must not be used with skip_footer
         at the same time.  If given, the value must be at least 1. Default is
         to read the entire file.
-
-        .. versionadded:: 1.10.0
     encoding : str, optional
         Encoding used to decode the inputfile. Does not apply when `fname`
         is a file object. The special value 'bytes' enables backward
@@ -1884,7 +1850,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         as input to converters.  If set to None the system default is used.
         The default value is 'bytes'.
 
-        .. versionadded:: 1.14.0
         .. versionchanged:: 2.0
             Before NumPy 2, the default was ``'bytes'`` for Python 2
             compatibility. The default is now ``None``.

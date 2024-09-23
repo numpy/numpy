@@ -207,8 +207,6 @@ def eye(n,M=None, k=0, dtype=float, order='C'):
         Whether the output should be stored in row-major (C-style) or
         column-major (Fortran-style) order in memory.
 
-        .. versionadded:: 1.14.0
-
     Returns
     -------
     I : matrix

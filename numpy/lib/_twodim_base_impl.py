@@ -181,8 +181,6 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     order : {'C', 'F'}, optional
         Whether the output should be stored in row-major (C-style) or
         column-major (Fortran-style) order in memory.
-
-        .. versionadded:: 1.14.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -569,8 +567,6 @@ def vander(x, N=None, increasing=False):
         Order of the powers of the columns.  If True, the powers increase
         from left to right, if False (the default) they are reversed.
 
-        .. versionadded:: 1.9.0
-
     Returns
     -------
     out : ndarray
@@ -862,7 +858,6 @@ def mask_indices(n, mask_func, k=0):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -912,8 +907,6 @@ def tril_indices(n, k=0, m=None):
     k : int, optional
         Diagonal offset (see `tril` for details).
     m : int, optional
-        .. versionadded:: 1.9.0
-
         The column dimension of the arrays for which the returned
         arrays will be valid.
         By default `m` is taken equal to `n`.
@@ -934,7 +927,6 @@ def tril_indices(n, k=0, m=None):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -1049,7 +1041,6 @@ def tril_indices_from(arr, k=0):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     """
     if arr.ndim != 2:
@@ -1070,8 +1061,6 @@ def triu_indices(n, k=0, m=None):
     k : int, optional
         Diagonal offset (see `triu` for details).
     m : int, optional
-        .. versionadded:: 1.9.0
-
         The column dimension of the arrays for which the returned
         arrays will be valid.
         By default `m` is taken equal to `n`.
@@ -1092,7 +1081,6 @@ def triu_indices(n, k=0, m=None):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -1210,7 +1198,6 @@ def triu_indices_from(arr, k=0):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     """
     if arr.ndim != 2:

@@ -841,8 +841,6 @@ def fill_diagonal(a, val, wrap=False):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
-
     This functionality can be obtained via `diag_indices`, but internally
     this version uses a much faster implementation that never constructs the
     indices and uses simple slicing.
@@ -972,7 +970,6 @@ def diag_indices(n, ndim=2):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -1038,7 +1035,6 @@ def diag_indices_from(arr):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------

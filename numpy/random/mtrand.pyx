@@ -718,8 +718,6 @@ cdef class RandomState:
             Desired dtype of the result. Byteorder must be native.
             The default value is long.
 
-            .. versionadded:: 1.11.0
-
             .. warning::
               This function defaults to the C-long dtype, which is 32bit on windows
               and otherwise 64bit on 64bit platforms (and 32bit on 32bit ones).
@@ -860,8 +858,6 @@ cdef class RandomState:
         choice(a, size=None, replace=True, p=None)
 
         Generates a random sample from a given 1-D array
-
-        .. versionadded:: 1.7.0
 
         .. note::
             New code should use the `~numpy.random.Generator.choice`
@@ -1864,9 +1860,6 @@ cdef class RandomState:
         ----------
         dfnum : float or array_like of floats
             Numerator degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.14.0
-               Earlier NumPy versions required dfnum > 1.
         dfden : float or array_like of floats
             Denominator degrees of freedom, must be > 0.
         nonc : float or array_like of floats
@@ -2025,9 +2018,6 @@ cdef class RandomState:
         ----------
         df : float or array_like of floats
             Degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.10.0
-               Earlier NumPy versions required dfnum > 1.
         nonc : float or array_like of floats
             Non-centrality, must be non-negative.
         size : int or tuple of ints, optional

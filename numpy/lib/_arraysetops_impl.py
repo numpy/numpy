@@ -177,8 +177,6 @@ def unique(ar, return_index=False, return_inverse=False,
         that contain objects are not supported if the `axis` kwarg is used. The
         default is None.
 
-        .. versionadded:: 1.13.0
-
     equal_nan : bool, optional
         If True, collapses multiple NaN values in the return array into one.
 
@@ -197,8 +195,6 @@ def unique(ar, return_index=False, return_inverse=False,
     unique_counts : ndarray, optional
         The number of times each of the unique values comes up in the
         original array. Only provided if `return_counts` is True.
-
-        .. versionadded:: 1.9.0
 
     See Also
     --------
@@ -639,8 +635,6 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         arrays are returned. The first instance of a value is used if there are
         multiple. Default is False.
 
-        .. versionadded:: 1.15.0
-
     Returns
     -------
     intersect1d : ndarray
@@ -811,8 +805,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
           'table' may be faster in most cases. If 'table' is chosen,
           `assume_unique` will have no effect.
 
-        .. versionadded:: 1.8.0
-
     Returns
     -------
     in1d : (M,) ndarray, bool
@@ -839,8 +831,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     but may use greater memory. The default value for `kind` will
     be automatically selected based only on memory usage, so one may
     manually set ``kind='table'`` if memory constraints can be relaxed.
-
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -1095,8 +1085,6 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
     but may use greater memory. The default value for `kind` will
     be automatically selected based only on memory usage, so one may
     manually set ``kind='table'`` if memory constraints can be relaxed.
-
-    .. versionadded:: 1.13.0
 
     Examples
     --------
