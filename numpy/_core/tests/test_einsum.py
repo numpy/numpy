@@ -1,6 +1,4 @@
 import itertools
-import sys
-import platform
 
 import pytest
 
@@ -9,12 +7,6 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_raises, suppress_warnings, assert_raises_regex, assert_allclose
     )
-
-try:
-    COMPILERS = np.show_config(mode="dicts")["Compilers"]
-    USING_CLANG_CL = COMPILERS["c"]["name"] == "clang-cl"
-except TypeError:
-    USING_CLANG_CL = False
 
 # Setup for optimize einsum
 chars = 'abcdefghij'
@@ -314,7 +306,6 @@ class TestEinsum:
             assert_(b.base is a)
             assert_equal(b, a.swapaxes(0, 1))
 
-    @np._no_nep50_warning()
     def check_einsum_sums(self, dtype, do_opt=False):
         dtype = np.dtype(dtype)
         # Check various sums.  Does many sizes to exercise unrolled loops.
@@ -621,23 +612,9 @@ class TestEinsum:
                            [2.])  # contig_stride0_outstride0_two
 
     def test_einsum_sums_int8(self):
-        if (
-                (sys.platform == 'darwin' and platform.machine() == 'x86_64')
-                or
-                USING_CLANG_CL
-        ):
-            pytest.xfail('Fails on macOS x86-64 and when using clang-cl '
-                         'with Meson, see gh-23838')
         self.check_einsum_sums('i1')
 
     def test_einsum_sums_uint8(self):
-        if (
-                (sys.platform == 'darwin' and platform.machine() == 'x86_64')
-                or
-                USING_CLANG_CL
-        ):
-            pytest.xfail('Fails on macOS x86-64 and when using clang-cl '
-                         'with Meson, see gh-23838')
         self.check_einsum_sums('u1')
 
     def test_einsum_sums_int16(self):
@@ -1048,7 +1025,7 @@ class TestEinsum:
 
     def test_output_order(self):
         # Ensure output order is respected for optimize cases, the below
-        # conraction should yield a reshaped tensor view
+        # contraction should yield a reshaped tensor view
         # gh-16415
 
         a = np.ones((2, 3, 5), order='F')

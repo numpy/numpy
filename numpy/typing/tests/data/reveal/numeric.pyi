@@ -5,16 +5,12 @@ Does not include tests which fall under ``array_constructors``.
 
 """
 
-import sys
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 class SubClass(npt.NDArray[np.int64]):
     ...

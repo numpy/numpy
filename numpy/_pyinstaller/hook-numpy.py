@@ -31,7 +31,6 @@ excludedimports = [
     "pytest",
     "f2py",
     "setuptools",
-    "numpy.f2py",
     "distutils",
     "numpy.distutils",
 ]

@@ -32,6 +32,9 @@ from numpy._typing import (
     # DTypes
     DTypeLike,
     _SupportsDType,
+
+    # Shapes
+    _Shape,
 )
 
 from numpy._core.multiarray import (
@@ -48,7 +51,7 @@ _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 __all__: list[str]
 
 @overload
-def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DType]]) -> tuple[ndarray[Any, _DType], ...]: ...
+def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DType]]) -> tuple[ndarray[_Shape, _DType], ...]: ...
 @overload
 def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[str_], ...]: ...
 @overload

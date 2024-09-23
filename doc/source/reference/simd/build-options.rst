@@ -203,7 +203,7 @@ Behaviors
           # is equivalent to
           python -m build --wheel -Csetup-args=-Dcpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
 
-- ``cpu-dispatch`` does not combain any of implied CPU features,
+- ``cpu-dispatch`` does not combine any of implied CPU features,
   so you must add them unless you want to disable one or all of them::
 
     # Only dispatches AVX2 and FMA3

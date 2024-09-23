@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Optional
+from typing import Any
 import numpy as np
 
 
@@ -13,8 +13,8 @@ class Object:
     def __ge__(self, value: object) -> bool:
         return True
 
-    def __array__(self, dtype: Optional[np.typing.DTypeLike] = None,
-                  copy: Optional[bool] = None) -> np.ndarray[Any, np.dtype[np.object_]]:
+    def __array__(self, dtype: np.typing.DTypeLike | None = None,
+                  copy: bool | None = None) -> np.ndarray[Any, np.dtype[np.object_]]:
         ret = np.empty((), dtype=object)
         ret[()] = self
         return ret

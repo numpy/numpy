@@ -38,7 +38,7 @@ def arraylikes():
 
     yield subclass
 
-    class _SequenceLike():
+    class _SequenceLike:
         # Older NumPy versions, sometimes cared whether a protocol array was
         # also _SequenceLike.  This shouldn't matter, but keep it for now
         # for __array__ and not the others.
@@ -761,6 +761,17 @@ class TestArrayLikes:
 
         with pytest.raises(error):
             np.array(BadSequence())
+
+    def test_array_interface_descr_optional(self):
+        # The descr should be optional regression test for gh-27249
+        arr = np.ones(10, dtype="V10")
+        iface = arr.__array_interface__
+        iface.pop("descr")
+
+        class MyClass:
+            __array_interface__ = iface
+
+        assert_array_equal(np.asarray(MyClass), arr)
 
 
 class TestAsArray:

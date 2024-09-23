@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from functools import partial
-from collections.abc import Callable
 
 import pytest
 import numpy as np
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 AR = np.array(0)
 AR.setflags(write=False)
@@ -23,15 +25,16 @@ order_list: list[tuple[frozenset[str | None], Callable[..., Any]]] = [
     (KACF, AR.flatten),
     (KACF, AR.ravel),
     (KACF, partial(np.array, 1)),
-    (CF, partial(np.zeros, 1)),
-    (CF, partial(np.ones, 1)),
-    (CF, partial(np.empty, 1)),
+    # NOTE: __call__ is needed due to mypy 1.11 bugs (#17620, #17631)
+    (CF, partial(np.zeros.__call__, 1)),
+    (CF, partial(np.ones.__call__, 1)),
+    (CF, partial(np.empty.__call__, 1)),
     (CF, partial(np.full, 1, 1)),
     (KACF, partial(np.zeros_like, AR)),
     (KACF, partial(np.ones_like, AR)),
     (KACF, partial(np.empty_like, AR)),
     (KACF, partial(np.full_like, AR, 1)),
-    (KACF, partial(np.add, 1, 1)),  # i.e. np.ufunc.__call__
+    (KACF, partial(np.add.__call__, 1, 1)),  # i.e. np.ufunc.__call__
     (ACF, partial(np.reshape, AR, 1)),
     (KACF, partial(np.ravel, AR)),
     (KACF, partial(np.asarray, 1)),

@@ -894,6 +894,7 @@ string_to_pyfloat(char *in, int has_null,
                 goto fail;                                                    \
             }                                                                 \
             double dval = PyFloat_AS_DOUBLE(pyfloat_value);                   \
+            Py_DECREF(pyfloat_value);                                         \
             npy_##typename fval = (double_to_float)(dval);                    \
                                                                               \
             if (NPY_UNLIKELY(isinf_name(fval) && !(npy_isinf(dval)))) {       \

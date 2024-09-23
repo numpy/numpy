@@ -4,7 +4,7 @@
 This binary distribution of NumPy also bundles the following software:
 
 Name: OpenBLAS
-Files: numpy/.dylibs/libopenblas*.so
+Files: numpy/.dylibs/libscipy_openblas*.so
 Description: bundled as a dynamically linked library
 Availability: https://github.com/OpenMathLib/OpenBLAS/
 License: BSD-3-Clause
@@ -40,7 +40,7 @@ License: BSD-3-Clause
 
 
 Name: LAPACK
-Files: numpy/.dylibs/libopenblas*.so
+Files: numpy/.dylibs/libscipy_openblas*.so
 Description: bundled in OpenBLAS
 Availability: https://github.com/OpenMathLib/OpenBLAS/
 License: BSD-3-Clause-Attribution

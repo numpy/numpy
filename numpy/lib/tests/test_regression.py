@@ -5,7 +5,6 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
     assert_raises, _assert_valid_refcount,
     )
-import pytest
 
 
 class TestRegression:
@@ -181,7 +180,7 @@ class TestRegression:
         try:
             append_fields(base, names, data, dlist)
         except Exception:
-            raise AssertionError()
+            raise AssertionError
 
     def test_loadtxt_fields_subarrays(self):
         # For ticket #1936
@@ -210,12 +209,12 @@ class TestRegression:
         try:
             np.nansum(a)
         except Exception:
-            raise AssertionError()
+            raise AssertionError
 
     def test_py3_compat(self):
         # gh-2561
         # Test if the oldstyle class test is bypassed in python3
-        class C():
+        class C:
             """Old-style class in python2, normal class in python3"""
             pass
 
@@ -223,6 +222,6 @@ class TestRegression:
         try:
             np.info(C(), output=out)
         except AttributeError:
-            raise AssertionError()
+            raise AssertionError
         finally:
             out.close()

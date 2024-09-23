@@ -8,6 +8,7 @@
 #include "npy_cpu_dispatch.h"
 #include "numpy/npy_cpu.h"
 
+#include "npy_static_data.h"
 #include "npy_import.h"
 #include <limits.h>
 
@@ -139,25 +140,14 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
 {
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
-        /*
-         * Load the exception type, if we don't already have it. Unfortunately
-         * we don't have access to npy_cache_import here
-         */
-        static PyObject *AxisError_cls = NULL;
-        PyObject *exc;
-
-        npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
-        if (AxisError_cls == NULL) {
-            return -1;
-        }
-
         /* Invoke the AxisError constructor */
-        exc = PyObject_CallFunction(AxisError_cls, "iiO",
-                                    *axis, ndim, msg_prefix);
+        PyObject *exc = PyObject_CallFunction(
+                npy_static_pydata.AxisError, "iiO", *axis, ndim,
+                msg_prefix);
         if (exc == NULL) {
             return -1;
         }
-        PyErr_SetObject(AxisError_cls, exc);
+        PyErr_SetObject(npy_static_pydata.AxisError, exc);
         Py_DECREF(exc);
 
         return -1;

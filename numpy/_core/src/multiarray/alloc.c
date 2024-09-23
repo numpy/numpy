@@ -11,6 +11,8 @@
 #include "numpy/npy_common.h"
 #include "npy_config.h"
 #include "alloc.h"
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
 
 #include <assert.h>
 #ifdef NPY_OS_LINUX
@@ -35,13 +37,11 @@ typedef struct {
 static cache_bucket datacache[NBUCKETS];
 static cache_bucket dimcache[NBUCKETS_DIM];
 
-static int _madvise_hugepage = 1;
-
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
  * `MADV_HUGEPAGE`.  `madvise` is only ever used on linux, so the value
- * of `_madvise_hugepage` may be ignored.
+ * of `madvise_hugepage` may be ignored.
  *
  * It is exposed to Python as `np._core.multiarray._get_madvise_hugepage`.
  */
@@ -49,7 +49,7 @@ NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
 #ifdef NPY_OS_LINUX
-    if (_madvise_hugepage) {
+    if (npy_thread_unsafe_state.madvise_hugepage) {
         Py_RETURN_TRUE;
     }
 #endif
@@ -59,20 +59,20 @@ _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 
 /*
  * This function enables or disables the use of `MADV_HUGEPAGE` on Linux
- * by modifying the global static `_madvise_hugepage`.
- * It returns the previous value of `_madvise_hugepage`.
+ * by modifying the global static `madvise_hugepage`.
+ * It returns the previous value of `madvise_hugepage`.
  *
  * It is exposed to Python as `np._core.multiarray._set_madvise_hugepage`.
  */
 NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
 {
-    int was_enabled = _madvise_hugepage;
+    int was_enabled = npy_thread_unsafe_state.madvise_hugepage;
     int enabled = PyObject_IsTrue(enabled_obj);
     if (enabled < 0) {
         return NULL;
     }
-    _madvise_hugepage = enabled;
+    npy_thread_unsafe_state.madvise_hugepage = enabled;
     if (was_enabled) {
         Py_RETURN_TRUE;
     }
@@ -110,7 +110,8 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
 #endif
 #ifdef NPY_OS_LINUX
         /* allow kernel allocating huge pages for large arrays */
-        if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u))) && _madvise_hugepage) {
+        if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u))) &&
+            npy_thread_unsafe_state.madvise_hugepage) {
             npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
             npy_uintp length = nelem * esz - offset;
             /**
@@ -354,7 +355,8 @@ NPY_NO_EXPORT void *
 PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
 {
     void *result;
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         return NULL;
     }
@@ -368,7 +370,8 @@ NPY_NO_EXPORT void *
 PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
 {
     void *result;
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         return NULL;
     }
@@ -381,7 +384,8 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
 NPY_NO_EXPORT void
 PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
 {
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         WARN_NO_RETURN(PyExc_RuntimeWarning,
                      "Could not get pointer to 'mem_handler' from PyCapsule");
@@ -395,7 +399,8 @@ NPY_NO_EXPORT void *
 PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
 {
     void *result;
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         return NULL;
     }
@@ -426,6 +431,10 @@ PyDataMem_SetHandler(PyObject *handler)
     }
     if (handler == NULL) {
         handler = PyDataMem_DefaultHandler;
+    }
+    if (!PyCapsule_IsValid(handler, MEM_HANDLER_CAPSULE_NAME)) {
+        PyErr_SetString(PyExc_ValueError, "Capsule must be named 'mem_handler'");
+        return NULL;
     }
     token = PyContextVar_Set(current_handler, handler);
     if (token == NULL) {
@@ -477,7 +486,8 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
             return NULL;
         }
     }
-    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         Py_DECREF(mem_handler);
         return NULL;
@@ -514,7 +524,8 @@ get_handler_version(PyObject *NPY_UNUSED(self), PyObject *args)
             return NULL;
         }
     }
-    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         Py_DECREF(mem_handler);
         return NULL;

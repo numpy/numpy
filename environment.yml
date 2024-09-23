@@ -26,21 +26,23 @@ dependencies:
   - hypothesis
   # For type annotations
   - typing_extensions>=4.2.0  # needed for python < 3.10
-  - mypy=1.10.0
+  - mypy=1.11.1
   # For building docs
   - sphinx>=4.5.0
+  - sphinx-copybutton
   - sphinx-design
   - numpydoc=1.4.0
   - ipython
   - scipy
   - pandas
   - matplotlib
-  - pydata-sphinx-theme=0.15.2
+  - pydata-sphinx-theme>=0.15.2
   - doxygen
+  - towncrier
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0
   # For linting
-  - pycodestyle=2.8.0
+  - pycodestyle=2.12.1
   - gitpython
   # Used in some tests
   - cffi
