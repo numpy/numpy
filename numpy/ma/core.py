@@ -6276,7 +6276,8 @@ class MaskedArray(ndarray):
                     mask=[[False, False],
                         [ True, False]],
             fill_value=999999)
-        """        (_data, _mask) = (self._data, self._mask)
+        """ 
+        (_data, _mask) = (self._data, self._mask)
         cls = type(self)
         # Make sure the indices are not masked
         maskindices = getmask(indices)
