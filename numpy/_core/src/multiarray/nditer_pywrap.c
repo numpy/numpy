@@ -105,7 +105,7 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
     int iflags, nflags;
 
     PyObject *f;
-    char *str = NULL;
+    const char *str = NULL;
     Py_ssize_t length = 0;
     npy_uint32 flag;
 
@@ -251,7 +251,7 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
     *op_flags = 0;
     for (iflags = 0; iflags < nflags; ++iflags) {
         PyObject *f;
-        char *str = NULL;
+        const char *str = NULL;
         Py_ssize_t length = 0;
 
         f = PySequence_GetItem(op_flags_in, iflags);
