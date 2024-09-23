@@ -40,13 +40,9 @@ advanced usage and will not typically be used.
 
 .. rubric:: *out*
 
-.. versionadded:: 1.6
-
 The first output can be provided as either a positional or a keyword
 parameter. Keyword 'out' arguments are incompatible with positional
 ones.
-
-.. versionadded:: 1.10
 
 The 'out' keyword argument is expected to be a tuple with one entry per
 output (which can be None for arrays to be allocated by the ufunc).
@@ -64,8 +60,6 @@ default), then this corresponds to the entire output being filled.
 Note that outputs not explicitly filled are left with their
 uninitialized values.
 
-.. versionadded:: 1.13
-
 Operations where ufunc input and output operands have memory overlap are
 defined to be the same as for equivalent operations where there
 is no memory overlap.  Operations affected make temporary copies
@@ -79,8 +73,6 @@ can be deduced copies are not necessary.  As an example,
 
 .. rubric:: *where*
 
-.. versionadded:: 1.7
-
 Accepts a boolean array which is broadcast together with the operands.
 Values of True indicate to calculate the ufunc at that position, values
 of False indicate to leave the value in the output alone. This argument
@@ -90,8 +82,6 @@ Note that if an uninitialized return array is created, values of False
 will leave those values **uninitialized**.
 
 .. rubric:: *axes*
-
-.. versionadded:: 1.15
 
 A list of tuples with indices of axes a generalized ufunc should operate
 on. For instance, for a signature of ``(i,j),(j,k)->(i,k)`` appropriate
@@ -105,8 +95,6 @@ tuples can be omitted.
 
 .. rubric:: *axis*
 
-.. versionadded:: 1.15
-
 A single axis over which a generalized ufunc should operate. This is a
 short-cut for ufuncs that operate over a single, shared core dimension,
 equivalent to passing in ``axes`` with entries of ``(axis,)`` for each
@@ -115,8 +103,6 @@ for a signature ``(i),(i)->()``, it is equivalent to passing in
 ``axes=[(axis,), (axis,), ()]``.
 
 .. rubric:: *keepdims*
-
-.. versionadded:: 1.15
 
 If this is set to `True`, axes which are reduced over will be left in the
 result as a dimension with size one, so that the result will broadcast
@@ -127,8 +113,6 @@ signatures like ``(i),(i)->()`` or ``(m,m)->()``. If used, the location of
 the dimensions in the output can be controlled with ``axes`` and ``axis``.
 
 .. rubric:: *casting*
-
-.. versionadded:: 1.6
 
 May be 'no', 'equiv', 'safe', 'same_kind', or 'unsafe'.
 See :func:`can_cast` for explanations of the parameter values.
@@ -142,8 +126,6 @@ onwards, the default is 'same_kind'.
 
 .. rubric:: *order*
 
-.. versionadded:: 1.6
-
 Specifies the calculation iteration order/memory layout of the output array.
 Defaults to 'K'. 'C' means the output should be C-contiguous, 'F' means
 F-contiguous, 'A' means F-contiguous if the inputs are F-contiguous and
@@ -152,16 +134,12 @@ the element ordering of the inputs as closely as possible.
 
 .. rubric:: *dtype*
 
-.. versionadded:: 1.6
-
 Overrides the DType of the output arrays the same way as the *signature*.
 This should ensure a matching precision of the calculation.  The exact
 calculation DTypes chosen may depend on the ufunc and the inputs may be
 cast to this DType to perform the calculation.
 
 .. rubric:: *subok*
-
-.. versionadded:: 1.6
 
 Defaults to true. If set to false, the output will always be a strict
 array, not a subtype.
