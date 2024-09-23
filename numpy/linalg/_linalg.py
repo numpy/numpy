@@ -351,8 +351,6 @@ def solve(a, b):
     Notes
     -----
 
-    .. versionadded:: 1.8.0
-
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -527,8 +525,6 @@ def inv(a):
 
     Notes
     -----
-
-    .. versionadded:: 1.8.0
 
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
@@ -789,8 +785,6 @@ def cholesky(a, /, *, upper=False):
 
     Notes
     -----
-
-    .. versionadded:: 1.8.0
 
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
@@ -1176,8 +1170,6 @@ def eigvals(a):
     Notes
     -----
 
-    .. versionadded:: 1.8.0
-
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1280,8 +1272,6 @@ def eigvalsh(a, UPLO='L'):
 
     Notes
     -----
-
-    .. versionadded:: 1.8.0
 
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
@@ -1390,8 +1380,6 @@ def eig(a):
 
     Notes
     -----
-
-    .. versionadded:: 1.8.0
 
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
@@ -1552,8 +1540,6 @@ def eigh(a, UPLO='L'):
     Notes
     -----
 
-    .. versionadded:: 1.8.0
-
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
 
@@ -1686,8 +1672,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         enabling a more efficient method for finding singular values.
         Defaults to False.
 
-        .. versionadded:: 1.17.0
-
     Returns
     -------
     When `compute_uv` is True, the result is a namedtuple with the following
@@ -1720,10 +1704,6 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
 
     Notes
     -----
-
-    .. versionchanged:: 1.8.0
-       Broadcasting rules apply, see the `numpy.linalg` documentation for
-       details.
 
     The decomposition is performed using LAPACK routine ``_gesdd``.
 
@@ -2043,9 +2023,6 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
     Rank of the array is the number of singular values of the array that are
     greater than `tol`.
 
-    .. versionchanged:: 1.14
-       Can now operate on stacks of matrices
-
     Parameters
     ----------
     A : {(M,), (..., M, N)} array_like
@@ -2056,14 +2033,11 @@ def matrix_rank(A, tol=None, hermitian=False, *, rtol=None):
         ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
         set to ``S.max() * max(M, N) * eps``.
 
-        .. versionchanged:: 1.14
-           Broadcasted against the stack of matrices
     hermitian : bool, optional
         If True, `A` is assumed to be Hermitian (symmetric if real-valued),
         enabling a more efficient method for finding singular values.
         Defaults to False.
 
-        .. versionadded:: 1.14
     rtol : (...) array_like, float, optional
         Parameter for the relative tolerance component. Only ``tol`` or
         ``rtol`` can be set at a time. Defaults to ``max(M, N) * eps``.
@@ -2170,9 +2144,6 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
     singular-value decomposition (SVD) and including all
     *large* singular values.
 
-    .. versionchanged:: 1.14
-       Can now operate on stacks of matrices
-
     Parameters
     ----------
     a : (..., M, N) array_like
@@ -2187,7 +2158,6 @@ def pinv(a, rcond=None, hermitian=False, *, rtol=_NoValue):
         enabling a more efficient method for finding singular values.
         Defaults to False.
 
-        .. versionadded:: 1.17.0
     rtol : (...) array_like of float, optional
         Same as `rcond`, but it's an Array API compatible parameter name.
         Only `rcond` or `rtol` can be set at a time. If none of them are
@@ -2321,12 +2291,8 @@ def slogdet(a):
     Notes
     -----
 
-    .. versionadded:: 1.8.0
-
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
-
-    .. versionadded:: 1.6.0
 
     The determinant is computed via LU factorization using the LAPACK
     routine ``z/dgetrf``.
@@ -2398,8 +2364,6 @@ def det(a):
 
     Notes
     -----
-
-    .. versionadded:: 1.8.0
 
     Broadcasting rules apply, see the `numpy.linalg` documentation for
     details.
@@ -2648,14 +2612,10 @@ def norm(x, ord=None, axis=None, keepdims=False):
         is 1-D) or a matrix norm (when `x` is 2-D) is returned. The default
         is None.
 
-        .. versionadded:: 1.8.0
-
     keepdims : bool, optional
         If this is set to True, the axes which are normed over are left in the
         result as dimensions with size one.  With this option the result will
         broadcast correctly against the original `x`.
-
-        .. versionadded:: 1.10.0
 
     Returns
     -------
@@ -2923,8 +2883,6 @@ def multi_dot(arrays, *, out=None):
         for `dot(a, b)`. This is a performance feature. Therefore, if these
         conditions are not met, an exception is raised, instead of attempting
         to be flexible.
-
-        .. versionadded:: 1.19.0
 
     Returns
     -------

@@ -1589,8 +1589,6 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     that ``allclose`` has different default values). It compares the difference
     between `actual` and `desired` to ``atol + rtol * abs(desired)``.
 
-    .. versionadded:: 1.5.0
-
     Parameters
     ----------
     actual : array_like
@@ -1918,8 +1916,6 @@ def assert_warns(warning_class, *args, **kwargs):
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
 
-    .. versionadded:: 1.4.0
-
     Parameters
     ----------
     warning_class : class
@@ -1984,8 +1980,6 @@ def assert_no_warnings(*args, **kwargs):
             do_something()
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -2525,8 +2519,6 @@ def assert_no_gc_cycles(*args, **kwargs):
 
         with assert_no_gc_cycles():
             do_something()
-
-    .. versionadded:: 1.15.0
 
     Parameters
     ----------
