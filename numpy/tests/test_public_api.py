@@ -547,7 +547,7 @@ def test_core_shims_coherence():
         # that are available in the "real" modules in np._core, except
         # the following list, which are what's added after the depreaction
         # of np.core
-        skip_list = ["numpy.core.unique"]
+        skip_list = ["numpy._core.unique"]
         if inspect.ismodule(member):
             submodule = member
             submodule_name = member_name
@@ -557,7 +557,7 @@ def test_core_shims_coherence():
                     continue
                 submodule_member = getattr(submodule, submodule_member_name)
 
-                if submodule_name in skip_list:
+                if member in skip_list:
                     continue
 
                 core_submodule = __import__(
