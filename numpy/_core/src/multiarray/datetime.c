@@ -2645,7 +2645,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         int seconds = 0, useconds = 0;
 
         /* Get the days */
-        res = PyObject_GetOptionalAttr(obj, npy_interned_str.days, &tmp);
+        int res = PyObject_GetOptionalAttr(obj, npy_interned_str.days, &tmp);
         if (res != 1) {
             return -1;
         }
