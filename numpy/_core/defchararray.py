@@ -525,7 +525,6 @@ class chararray(ndarray):
 
     Examples
     --------
-
     >>> import numpy as np
     >>> charar = np.char.chararray((3, 3))
     >>> charar[:] = 'a'
