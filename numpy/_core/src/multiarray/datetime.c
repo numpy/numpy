@@ -29,6 +29,8 @@
 
 #include "dtype_transfer.h"
 #include "lowlevel_strided_loops.h"
+#include "npy_static_data.h"
+#include "npy_pycompat.h"
 
 #include <datetime.h>
 #include <time.h>
@@ -2064,8 +2066,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     }
 
     /* Get the year */
-    tmp = PyObject_GetAttrString(obj, "year");
-    if (tmp == NULL) {
+    int res = PyObject_GetOptionalAttr(obj, npy_interned_str.year, &tmp);
+    if (res != 1) {
         return -1;
     }
     out->year = PyLong_AsLong(tmp);
@@ -2076,8 +2078,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the month */
-    tmp = PyObject_GetAttrString(obj, "month");
-    if (tmp == NULL) {
+    res = PyObject_GetOptionalAttr(obj, npy_interned_str.month, &tmp);
+    if (res != 1) {
         return -1;
     }
     out->month = PyLong_AsLong(tmp);
@@ -2088,8 +2090,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the day */
-    tmp = PyObject_GetAttrString(obj, "day");
-    if (tmp == NULL) {
+    res = PyObject_GetOptionalAttr(obj, npy_interned_str.day, &tmp);
+    if (res != 1) {
         return -1;
     }
     out->day = PyLong_AsLong(tmp);
@@ -2122,8 +2124,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     }
 
     /* Get the hour */
-    tmp = PyObject_GetAttrString(obj, "hour");
-    if (tmp == NULL) {
+    res = PyObject_GetOptionalAttr(obj, npy_interned_str.hour, &tmp);
+    if (res != 1) {
         return -1;
     }
     out->hour = PyLong_AsLong(tmp);
@@ -2134,8 +2136,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the minute */
-    tmp = PyObject_GetAttrString(obj, "minute");
-    if (tmp == NULL) {
+    res = PyObject_GetOptionalAttr(obj, npy_interned_str.minute, &tmp);
+    if (res != 1) {
         return -1;
     }
     out->min = PyLong_AsLong(tmp);
@@ -2146,8 +2148,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the second */
-    tmp = PyObject_GetAttrString(obj, "second");
-    if (tmp == NULL) {
+    res = PyObject_GetOptionalAttr(obj, npy_interned_str.second, &tmp);
+    if (res != 1) {
         return -1;
     }
     out->sec = PyLong_AsLong(tmp);
@@ -2158,8 +2160,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the microsecond */
-    tmp = PyObject_GetAttrString(obj, "microsecond");
-    if (tmp == NULL) {
+    res = PyObject_GetOptionalAttr(obj, npy_interned_str.microsecond, &tmp);
+    if (res != 1) {
         return -1;
     }
     out->us = PyLong_AsLong(tmp);
@@ -2178,8 +2180,8 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
 
     /* Apply the time zone offset if it exists */
     if (apply_tzinfo && PyObject_HasAttrString(obj, "tzinfo")) {
-        tmp = PyObject_GetAttrString(obj, "tzinfo");
-        if (tmp == NULL) {
+        int res = PyObject_GetOptionalAttr(obj, npy_interned_str.tzinfo, &tmp);
+        if (res != 1) {
             return -1;
         }
         if (tmp == Py_None) {
@@ -2641,8 +2643,8 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         int seconds = 0, useconds = 0;
 
         /* Get the days */
-        tmp = PyObject_GetAttrString(obj, "days");
-        if (tmp == NULL) {
+        res = PyObject_GetOptionalAttr(obj, npy_interned_str.days, &tmp);
+        if (res != 1) {
             return -1;
         }
         days = PyLong_AsLongLong(tmp);
@@ -2653,8 +2655,8 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         Py_DECREF(tmp);
 
         /* Get the seconds */
-        tmp = PyObject_GetAttrString(obj, "seconds");
-        if (tmp == NULL) {
+        res = PyObject_GetOptionalAttr(obj, npy_interned_str.seconds, &tmp);
+        if (res != 1) {
             return -1;
         }
         seconds = PyLong_AsLong(tmp);
@@ -2665,8 +2667,8 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         Py_DECREF(tmp);
 
         /* Get the microseconds */
-        tmp = PyObject_GetAttrString(obj, "microseconds");
-        if (tmp == NULL) {
+        res = PyObject_GetOptionalAttr(obj, npy_interned_str.microseconds, &tmp);
+        if (res != 1) {
             return -1;
         }
         useconds = PyLong_AsLong(tmp);

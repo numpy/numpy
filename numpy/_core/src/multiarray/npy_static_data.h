@@ -38,6 +38,17 @@ typedef struct npy_interned_str_struct {
     PyObject *__dlpack__;
     PyObject *pyvals_name;
     PyObject *legacy;
+    PyObject *year;
+    PyObject *month;
+    PyObject *day;
+    PyObject *hour;
+    PyObject *minute;
+    PyObject *second;
+    PyObject *microsecond;
+    PyObject *tzinfo;
+    PyObject *days;
+    PyObject *seconds;
+    PyObject *microseconds;
 } npy_interned_str_struct;
 
 /*
