@@ -309,9 +309,29 @@ class TestPolynomial:
         v = np.polyval(np.array([5.], dtype=np.float16), 5.0)
         assert_equal(v.dtype, np.float16)
 
+        v = np.polyval(np.array([5.], dtype=np.float16), 1)
+        assert_equal(v.dtype, np.float16)
+
+        v = np.polyval(np.array([5.], dtype=np.float16), np.float64(1))
+        assert_equal(v.dtype, np.float64)
+
         v = np.polyval([5.], np.float16(5.0))
         assert_equal(v.dtype, np.float64)
 
         v = np.polyval(np.array([], dtype=np.float32), 5.0)
         assert_equal(v.dtype, np.float32)
         assert np.isscalar(v)
+
+        v = np.polyval([], [1, 2])
+        assert_equal(v.dtype, np.int32)
+
+        v = np.polyval([], [1, 2])
+        assert_equal(v.dtype, np.int32)
+
+        p = np.array([], dtype=np.float16)
+        v = np.polyval(p, 1)
+        assert v.dtype == p.dtype
+
+        p = np.array([1, 2], dtype=np.float16)
+        v = np.polyval(p, 1)
+        assert v.dtype == p.dtype
