@@ -386,7 +386,7 @@ def rpartition(a, sep):
 
     Examples
     --------
-    
+
     >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.char.rpartition(a, 'A')
