@@ -52,7 +52,6 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array_ufunc__(ufunc, method, *inputs, **kwargs)
 
-   .. versionadded:: 1.13
 
    Any class, ndarray subclass or not, can define this method or set it to
    None in order to override the behavior of NumPy's ufuncs. This works
