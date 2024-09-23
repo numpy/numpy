@@ -386,6 +386,7 @@ def rpartition(a, sep):
 
     Examples
     --------
+    
     >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.char.rpartition(a, 'A')
@@ -524,6 +525,14 @@ class chararray(ndarray):
 
     Examples
     --------
+
+    >>> import numpy as np
+    >>> char_array = np.char.array(['hello', 'world', 'numpy','array'])
+
+    >>> char_array
+    chararray(['hello', 'world', 'numpy', 'array'], dtype='<U5')
+
+
     >>> import numpy as np
     >>> charar = np.char.chararray((3, 3))
     >>> charar[:] = 'a'
