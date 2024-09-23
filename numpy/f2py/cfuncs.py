@@ -711,7 +711,7 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
             Py_INCREF(tmp);
         }
         else if (PyUnicode_Check(obj)) {
-            tmp = PyBytes_Check(obj);
+            tmp = PyUnicode_AsASCIIString(obj);
         }
         else {
             PyObject *tmp2;
