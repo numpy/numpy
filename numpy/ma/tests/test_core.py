@@ -1015,6 +1015,13 @@ class TestMaskedArray:
         mx[1].data[0] = 0.
         assert_(mx2[0] == 0.)
 
+    def test_maskedarray_tofile_raises_notimplementederror(self):
+        xm = masked_array([1, 2, 3], mask=[False, True, False])
+        # Test case to check the NotImplementedError. 
+        # It is not implemented at this point of time. We can change this in future 
+        with pytest.raises(NotImplementedError):
+            np.save('xm.np', xm)
+
 
 class TestMaskedArrayArithmetic:
     # Base test class for MaskedArrays.
