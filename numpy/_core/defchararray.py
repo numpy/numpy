@@ -1276,7 +1276,6 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
 
     >>> import numpy as np
     >>> char_array = np.char.array(['hello', 'world', 'numpy','array'])
-
     >>> char_array
     chararray(['hello', 'world', 'numpy', 'array'], dtype='<U5')
 
