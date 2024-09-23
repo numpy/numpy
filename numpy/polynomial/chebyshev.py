@@ -1980,6 +1980,11 @@ class Chebyshev(ABCPolyBase):
     window : (2,) array_like, optional
         Window, see `domain` for its use. The default value is [-1., 1.].
 
+    symbol : str, optional
+        Symbol used to represent the independent variable in string
+        representations of the polynomial expression, e.g. for printing.
+        The symbol must be a valid Python identifier. Default value is 'x'.
+
     """
     # Virtual Functions
     _add = staticmethod(chebadd)

@@ -991,6 +991,13 @@ class ABCPolyBase(abc.ABC):
             the same variance.  When using inverse-variance weighting, use
             ``w[i] = 1/sigma(y[i])``.  The default value is None.
 
+        window : {[beg, end]}, optional
+            Window to use for the returned series. The default
+            value is the default class domain
+
+        symbol : str, optional
+            Symbol representing the independent variable. Default is 'x'.
+
         Returns
         -------
         new_series : series
