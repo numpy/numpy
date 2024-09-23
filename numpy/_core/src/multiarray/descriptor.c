@@ -854,7 +854,7 @@ _try_convert_from_inherit_tuple(PyArray_Descr *type, PyObject *newobj)
         return (PyArray_Descr *)Py_NotImplemented;
     }
     if (!PyDataType_ISLEGACY(type) || !PyDataType_ISLEGACY(conv)) {
-        /* 
+        /*
          * This specification should probably be never supported, but
          * certainly not for new-style DTypes.
          */
@@ -1972,7 +1972,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base_descr)
 {
     if (!PyDataType_ISLEGACY(base_descr)) {
-        /* 
+        /*
          * The main use of this function is mutating strings, so probably
          * disallowing this is fine in practice.
          */
@@ -2972,18 +2972,19 @@ arraydescr_setstate(_PyArray_LegacyDescr *self, PyObject *args)
     /* Parse endian */
     if (PyUnicode_Check(endian_obj) || PyBytes_Check(endian_obj)) {
         PyObject *tmp = NULL;
-        char *str;
+        const char *str;
         Py_ssize_t len;
 
-        if (PyUnicode_Check(endian_obj)) {
-            tmp = PyUnicode_AsASCIIString(endian_obj);
+        if (PyBytes_Check(endian_obj)) {
+            tmp = PyUnicode_FromEncodedObject(endian_obj, NULL, NULL);
             if (tmp == NULL) {
                 return NULL;
             }
             endian_obj = tmp;
         }
 
-        if (PyBytes_AsStringAndSize(endian_obj, &str, &len) < 0) {
+        str = PyUnicode_AsUTF8AndSize(endian_obj, &len);
+        if (str == NULL) {
             Py_XDECREF(tmp);
             return NULL;
         }
