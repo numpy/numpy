@@ -124,7 +124,7 @@ std::unordered_map<int, function_type> unique_funcs = {
 };
 
 
-extern "C" PyObject *
+extern "C" NPY_NO_EXPORT PyObject *
 PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     /* This is called from Python space, and expects a single numpy array as input.
@@ -182,7 +182,7 @@ static struct PyModuleDef uniquemodule = {
 };
 
 PyMODINIT_FUNC
-PyInit_unique(void)
+PyInit__unique(void)
 {
     PyArray_ImportNumPyAPI();
     return PyModule_Create(&uniquemodule);

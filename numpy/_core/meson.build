@@ -1285,7 +1285,7 @@ py.extension_module('_simd',
   install_tag: 'tests',
 )
 
-py.extension_module('unique',
+py.extension_module('_unique',
   [
     'src/multiarray/unique.cpp',
   ],
