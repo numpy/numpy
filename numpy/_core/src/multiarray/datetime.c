@@ -2061,7 +2061,10 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
 
     /* Get the year */
     /* Checking if Exception will be raised it would be -1 else + value */
-    if (PyObject_GetOptionalAttr(obj, npy_interned_str.year, &tmp) != 1) {
+    int res = PyObject_GetOptionalAttr(obj, npy_interned_str.year, &tmp);
+    if (res == -1) {
+        return -1;
+    } else if (res == 0) {
         return 1;
     }
     out->year = PyLong_AsLong(tmp);
@@ -2072,7 +2075,10 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the month */
-    if (PyObject_GetOptionalAttr(obj, npy_interned_str.month, &tmp) != 1) {
+    res = PyObject_GetOptionalAttr(obj, npy_interned_str.month, &tmp);
+    if (res == -1) {
+        return -1;
+    } else if (res == 0) {
         return 1;
     }
     out->month = PyLong_AsLong(tmp);
@@ -2083,7 +2089,10 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the day */
-    if (PyObject_GetOptionalAttr(obj, npy_interned_str.day, &tmp) != 1) {
+    res = PyObject_GetOptionalAttr(obj, npy_interned_str.day, &tmp);
+    if (res == -1) {
+        return -1;
+    } else if (res == 0) {
         return 1;
     }
     out->day = PyLong_AsLong(tmp);
