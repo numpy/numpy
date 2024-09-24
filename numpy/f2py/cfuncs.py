@@ -711,13 +711,13 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
             Py_INCREF(tmp);
         }
         else if (PyUnicode_Check(obj)) {
-            tmp = PyUnicode_AsASCIIString(obj);
+            tmp = PyUnicode_AsUTF8String(obj);
         }
         else {
             PyObject *tmp2;
             tmp2 = PyObject_Str(obj);
             if (tmp2) {
-                tmp = PyUnicode_FromEncodedObject(tmp2);
+                tmp = PyUnicode_AsUTF8String(tmp2);
                 Py_DECREF(tmp2);
             }
             else {
