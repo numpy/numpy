@@ -1579,9 +1579,6 @@ cdef class Generator:
         ----------
         dfnum : float or array_like of floats
             Numerator degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.14.0
-               Earlier NumPy versions required dfnum > 1.
         dfden : float or array_like of floats
             Denominator degrees of freedom, must be > 0.
         nonc : float or array_like of floats
@@ -1736,9 +1733,6 @@ cdef class Generator:
         ----------
         df : float or array_like of floats
             Degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.10.0
-               Earlier NumPy versions required dfnum > 1.
         nonc : float or array_like of floats
             Non-centrality, must be non-negative.
         size : int or tuple of ints, optional
@@ -3759,8 +3753,6 @@ cdef class Generator:
             the slowest method. The method `eigh` uses eigen decomposition to
             compute A and is faster than svd but slower than cholesky.
 
-            .. versionadded:: 1.18.0
-
         Returns
         -------
         out : ndarray
@@ -4008,9 +4000,6 @@ cdef class Generator:
 
             Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
             from the distribution.
-
-            .. versionchanged:: 1.22.0
-                Added support for broadcasting `pvals` against `n`
 
         Examples
         --------
@@ -4304,8 +4293,6 @@ cdef class Generator:
         can be significantly faster than the "marginals" method.  If
         performance of the algorithm is important, test the two methods
         with typical inputs to decide which works best.
-
-        .. versionadded:: 1.18.0
 
         Examples
         --------

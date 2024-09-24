@@ -31,8 +31,6 @@ class NumpyVersion:
     `NumpyVersion` instance. Note that all development versions of the same
     (pre-)release compare equal.
 
-    .. versionadded:: 1.9.0
-
     Parameters
     ----------
     vstring : str

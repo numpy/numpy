@@ -66,14 +66,10 @@ and its sub-types).
 
 .. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
 
-    .. versionadded:: 1.7
-
     Enables the specified array flags. This function does no validation,
     and assumes that you know what you're doing.
 
 .. c:function:: void PyArray_CLEARFLAGS(PyArrayObject* arr, int flags)
-
-    .. versionadded:: 1.7
 
     Clears the specified array flags. This function does no validation,
     and assumes that you know what you're doing.
@@ -96,8 +92,6 @@ and its sub-types).
     of the array. Can return ``NULL`` for 0-dimensional arrays.
 
 .. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
-
-    .. versionadded:: 1.7
 
     A synonym for :c:func:`PyArray_DIMS`, named to be consistent with the
     `shape <numpy.ndarray.shape>` usage within Python.
@@ -156,8 +150,6 @@ and its sub-types).
     Returns a borrowed reference to the dtype property of the array.
 
 .. c:function:: PyArray_Descr *PyArray_DTYPE(PyArrayObject* arr)
-
-    .. versionadded:: 1.7
 
     A synonym for PyArray_DESCR, named to be consistent with the
     'dtype' usage within Python.
@@ -274,8 +266,6 @@ From scratch
 .. c:function:: PyObject* PyArray_NewLikeArray( \
         PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, \
         int subok)
-
-    .. versionadded:: 1.6
 
     This function steals a reference to *descr* if it is not NULL.
     This array creation routine allows for the convenient creation of
@@ -405,8 +395,6 @@ From scratch
     ``stop``, ``step``, ``typenum`` ).
 
 .. c:function:: int PyArray_SetBaseObject(PyArrayObject* arr, PyObject* obj)
-
-    .. versionadded:: 1.7
 
     This function **steals a reference** to ``obj`` and sets it as the
     base property of ``arr``.
@@ -934,8 +922,6 @@ argument must be a :c:expr:`PyObject *` that can be directly interpreted as a
     called on flexible dtypes. Types that are attached to an array will always
     be sized, hence the array form of this macro not existing.
 
-    .. versionchanged:: 1.18
-
     For structured datatypes with no fields this function now returns False.
 
 .. c:function:: int PyTypeNum_ISUSERDEF(int num)
@@ -1065,8 +1051,6 @@ Converting data types
 .. c:function:: int PyArray_CanCastTypeTo( \
         PyArray_Descr* fromtype, PyArray_Descr* totype, NPY_CASTING casting)
 
-    .. versionadded:: 1.6
-
     Returns non-zero if an array of data type *fromtype* (which can
     include flexible types) can be cast safely to an array of data
     type *totype* (which can include flexible types) according to
@@ -1081,8 +1065,6 @@ Converting data types
 .. c:function:: int PyArray_CanCastArrayTo( \
         PyArrayObject* arr, PyArray_Descr* totype, NPY_CASTING casting)
 
-    .. versionadded:: 1.6
-
     Returns non-zero if *arr* can be cast to *totype* according
     to the casting rule given in *casting*.  If *arr* is an array
     scalar, its value is taken into account, and non-zero is also
@@ -1096,8 +1078,6 @@ Converting data types
         internally.  It is currently provided for backwards compatibility,
         but expected to be eventually deprecated.
 
-    .. versionadded:: 1.6
-
     If *arr* is an array, returns its data type descriptor, but if
     *arr* is an array scalar (has 0 dimensions), it finds the data type
     of smallest size to which the value may be converted
@@ -1110,8 +1090,6 @@ Converting data types
 .. c:function:: PyArray_Descr* PyArray_PromoteTypes( \
         PyArray_Descr* type1, PyArray_Descr* type2)
 
-    .. versionadded:: 1.6
-
     Finds the data type of smallest size and kind to which *type1* and
     *type2* may be safely converted. This function is symmetric and
     associative. A string or unicode result will be the proper size for
@@ -1120,8 +1098,6 @@ Converting data types
 .. c:function:: PyArray_Descr* PyArray_ResultType( \
         npy_intp narrs, PyArrayObject **arrs, npy_intp ndtypes, \
         PyArray_Descr **dtypes)
-
-    .. versionadded:: 1.6
 
     This applies type promotion to all the input arrays and dtype
     objects, using the NumPy rules for combining scalars and arrays, to
@@ -1160,11 +1136,6 @@ Converting data types
     (using :c:func:`PyDataMem_FREE` ) and all the array objects in it
     ``DECREF`` 'd or a memory-leak will occur. The example template-code
     below shows a typical usage:
-
-    .. versionchanged:: 1.18.0
-       A mix of scalars and zero-dimensional arrays now produces a type
-       capable of holding the scalar value.
-       Previously priority was given to the dtype of the arrays.
 
     .. code-block:: c
 
@@ -2421,8 +2392,6 @@ Item selection and manipulation
 
 .. c:function:: npy_intp PyArray_CountNonzero(PyArrayObject* self)
 
-    .. versionadded:: 1.6
-
     Counts the number of non-zero elements in the array object *self*.
 
 .. c:function:: PyObject* PyArray_Nonzero(PyArrayObject* self)
@@ -2682,8 +2651,6 @@ Array Functions
 .. c:function:: PyObject* PyArray_MatrixProduct2( \
         PyObject* obj1, PyObject* obj, PyArrayObject* out)
 
-    .. versionadded:: 1.6
-
     Same as PyArray_MatrixProduct, but store the result in *out*.  The
     output array must have the correct shape, type, and be
     C-contiguous, or an exception is raised.
@@ -2692,8 +2659,6 @@ Array Functions
         char* subscripts, npy_intp nop, PyArrayObject** op_in, \
         PyArray_Descr* dtype, NPY_ORDER order, NPY_CASTING casting, \
         PyArrayObject* out)
-
-    .. versionadded:: 1.6
 
     Applies the Einstein summation convention to the array operands
     provided, returning a new array or placing the result in *out*.
@@ -2785,8 +2750,6 @@ Other functions
 
 Auxiliary data with object semantics
 ------------------------------------
-
-.. versionadded:: 1.7.0
 
 .. c:type:: NpyAuxData
 
@@ -3068,8 +3031,6 @@ Broadcasting (multi-iterators)
 
 Neighborhood iterator
 ---------------------
-
-.. versionadded:: 1.4.0
 
 Neighborhood iterators are subclasses of the iterator object, and can be used
 to iter over a neighborhood of a point. For example, you may want to iterate
@@ -4069,8 +4030,6 @@ extension with the lowest :c:data:`NPY_FEATURE_VERSION` as possible.
 
 .. c:function:: unsigned int PyArray_GetNDArrayCFeatureVersion(void)
 
-    .. versionadded:: 1.4.0
-
     This just returns the value :c:data:`NPY_FEATURE_VERSION`.
     :c:data:`NPY_FEATURE_VERSION` changes whenever the API changes (e.g. a
     function is added). A changed value does not always require a recompile.
@@ -4466,8 +4425,6 @@ Enumerated Types
     .. c:enumerator:: NPY_INTROSELECT
 
 .. c:enum:: NPY_CASTING
-
-    .. versionadded:: 1.6
 
     An enumeration type indicating how permissive data conversions should
     be. This is used by the iterator added in NumPy 1.6, and is intended

@@ -4626,9 +4626,6 @@ class MaskedArray(ndarray):
             The default, None, performs the count over all
             the dimensions of the input array. `axis` may be negative, in
             which case it counts from the last to the first axis.
-
-            .. versionadded:: 1.10.0
-
             If this is a tuple of ints, the count is performed on multiple
             axes, instead of a single axis or all the axes as before.
         keepdims : bool, optional
@@ -5198,8 +5195,6 @@ class MaskedArray(ndarray):
         recommended that the optional arguments be treated as keyword only.
         At some point that may be mandatory.
 
-        .. versionadded:: 1.10.0
-
         Parameters
         ----------
         b : masked_array_like
@@ -5217,8 +5212,6 @@ class MaskedArray(ndarray):
             for the computation. Default is False.  Propagating the mask
             means that if a masked value appears in a row or column, the
             whole row or column is considered masked.
-
-            .. versionadded:: 1.10.2
 
         See Also
         --------
@@ -5911,7 +5904,6 @@ class MaskedArray(ndarray):
         axis : None or int or tuple of ints, optional
             Axis along which to operate.  By default, ``axis`` is None and the
             flattened input is used.
-            .. versionadded:: 1.7.0
             If this is a tuple of ints, the minimum is selected over multiple
             axes, instead of a single axis or all the axes as before.
         out : array_like, optional
@@ -6010,7 +6002,6 @@ class MaskedArray(ndarray):
         axis : None or int or tuple of ints, optional
             Axis along which to operate.  By default, ``axis`` is None and the
             flattened input is used.
-            .. versionadded:: 1.7.0
             If this is a tuple of ints, the maximum is selected over multiple
             axes, instead of a single axis or all the axes as before.
         out : array_like, optional
@@ -6352,8 +6343,6 @@ class MaskedArray(ndarray):
         Return the array data as a string containing the raw bytes in the array.
 
         The array is filled with a fill value before the string conversion.
-
-        .. versionadded:: 1.9.0
 
         Parameters
         ----------
@@ -8163,8 +8152,6 @@ def dot(a, b, strict=False, out=None):
         conditions are not met, an exception is raised, instead of attempting
         to be flexible.
 
-        .. versionadded:: 1.10.2
-
     See Also
     --------
     numpy.dot : Equivalent function for ndarrays.
@@ -8857,8 +8844,6 @@ zeros_like = _convert2ma(
 
 def append(a, b, axis=None):
     """Append values to the end of an array.
-
-    .. versionadded:: 1.9.0
 
     Parameters
     ----------

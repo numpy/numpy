@@ -169,8 +169,6 @@ def rot90(m, k=1, axes=(0, 1)):
         The array is rotated in the plane defined by the axes.
         Axes must be different.
 
-        .. versionadded:: 1.12.0
-
     Returns
     -------
     y : ndarray
@@ -254,8 +252,6 @@ def flip(m, axis=None):
 
     The shape of the array is preserved, but the elements are reordered.
 
-    .. versionadded:: 1.12.0
-
     Parameters
     ----------
     m : array_like
@@ -267,9 +263,6 @@ def flip(m, axis=None):
 
          If axis is a tuple of ints, flipping is performed on all of the axes
          specified in the tuple.
-
-         .. versionchanged:: 1.15.0
-            None and tuples of axes are supported
 
     Returns
     -------
@@ -434,9 +427,6 @@ def average(a, axis=None, weights=None, returned=False, *,
         Axis or axes along which to average `a`.  The default,
         `axis=None`, will average over all of the elements of the input array.
         If axis is negative it counts from the last to the first axis.
-
-        .. versionadded:: 1.7.0
-
         If axis is a tuple of ints, averaging is performed on all of the axes
         specified in the tuple instead of a single axis or all the axes as
         before.
@@ -925,8 +915,6 @@ def copy(a, order='K', subok=False):
         If True, then sub-classes will be passed-through, otherwise the
         returned array will be forced to be a base-class array (defaults to False).
 
-        .. versionadded:: 1.19.0
-
     Returns
     -------
     arr : ndarray
@@ -1017,16 +1005,11 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     edge_order : {1, 2}, optional
         Gradient is calculated using N-th order accurate differences
         at the boundaries. Default: 1.
-
-        .. versionadded:: 1.9.1
-
     axis : None or int or tuple of ints, optional
         Gradient is calculated only along the given axis or axes
         The default (axis = None) is to calculate the gradient for all the axes
         of the input array. axis may be negative, in which case it counts from
         the last to the first axis.
-
-        .. versionadded:: 1.11.0
 
     Returns
     -------
@@ -1409,8 +1392,6 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         of the input array in along all other axes.  Otherwise the
         dimension and shape must match `a` except along axis.
 
-        .. versionadded:: 1.16.0
-
     Returns
     -------
     diff : ndarray
@@ -1553,8 +1534,6 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         interpolation of angular x-coordinates. Parameters `left` and `right`
         are ignored if `period` is specified.
 
-        .. versionadded:: 1.10.0
-
     Returns
     -------
     y : float or complex (corresponding to fp) or ndarray
@@ -1684,9 +1663,6 @@ def angle(z, deg=False):
     angle : ndarray or scalar
         The counterclockwise angle from the positive real axis on the complex
         plane in the range ``(-pi, pi]``, with dtype as numpy.float64.
-
-        .. versionchanged:: 1.16.0
-            This function works on subclasses of ndarray like `ma.array`.
 
     See Also
     --------
@@ -2245,13 +2221,9 @@ class vectorize:
         arguments for which the function will not be vectorized.  These will be
         passed directly to `pyfunc` unmodified.
 
-        .. versionadded:: 1.7.0
-
     cache : bool, optional
         If `True`, then cache the first function call that determines the number
         of outputs if `otypes` is not provided.
-
-        .. versionadded:: 1.7.0
 
     signature : string, optional
         Generalized universal function signature, e.g., ``(m,n),(n)->(m)`` for
@@ -2259,8 +2231,6 @@ class vectorize:
         be called with (and expected to return) arrays with shapes given by the
         size of corresponding core dimensions. By default, ``pyfunc`` is
         assumed to take scalars as input and output.
-
-        .. versionadded:: 1.12.0
 
     Returns
     -------
@@ -2664,20 +2634,14 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         `fweights` and `aweights` are specified, and ``ddof=0`` will return
         the simple average. See the notes for the details. The default value
         is ``None``.
-
-        .. versionadded:: 1.5
     fweights : array_like, int, optional
         1-D array of integer frequency weights; the number of times each
         observation vector should be repeated.
-
-        .. versionadded:: 1.10
     aweights : array_like, optional
         1-D array of observation vector weights. These relative weights are
         typically large for observations considered "important" and smaller for
         observations considered less "important". If ``ddof=0`` the array of
         weights can be used to assign probabilities to observation vectors.
-
-        .. versionadded:: 1.10
     dtype : data-type, optional
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
@@ -3881,13 +3845,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     axis : {int, sequence of int, None}, optional
         Axis or axes along which the medians are computed. The default,
         axis=None, will compute the median along a flattened version of
-        the array.
-
-        .. versionadded:: 1.9.0
-
-        If a sequence of axes, the array is first flattened along the
-        given axes, then the median is computed along the resulting
-        flattened axis.
+        the array. If a sequence of axes, the array is first flattened
+        along the given axes, then the median is computed along the
+        resulting flattened axis.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -3904,8 +3864,6 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
-
-        .. versionadded:: 1.9.0
 
     Returns
     -------
@@ -4051,9 +4009,6 @@ def percentile(a,
         Axis or axes along which the percentiles are computed. The
         default is to compute the percentile(s) along a flattened
         version of the array.
-
-        .. versionchanged:: 1.9.0
-            A tuple of axes is supported
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -4094,8 +4049,6 @@ def percentile(a,
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
-
-        .. versionadded:: 1.9.0
 
      weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
@@ -4258,8 +4211,6 @@ def quantile(a,
              interpolation=None):
     """
     Compute the q-th quantile of the data along the specified axis.
-
-    .. versionadded:: 1.15.0
 
     Parameters
     ----------
@@ -5083,9 +5034,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     N-D scalar/vector fields over N-D grids, given
     one-dimensional coordinate arrays x1, x2,..., xn.
 
-    .. versionchanged:: 1.9
-       1-D and 0-D cases are allowed.
-
     Parameters
     ----------
     x1, x2,..., xn : array_like
@@ -5093,8 +5041,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     indexing : {'xy', 'ij'}, optional
         Cartesian ('xy', default) or matrix ('ij') indexing of output.
         See Notes for more details.
-
-        .. versionadded:: 1.7.0
     sparse : bool, optional
         If True the shape of the returned coordinate array for dimension *i*
         is reduced from ``(N1, ..., Ni, ... Nn)`` to
@@ -5105,7 +5051,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
         Default is False.
 
-        .. versionadded:: 1.7.0
     copy : bool, optional
         If False, a view into the original arrays are returned in order to
         conserve memory.  Default is True.  Please note that
@@ -5113,8 +5058,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         arrays.  Furthermore, more than one element of a broadcast array
         may refer to a single memory location.  If you need to write to the
         arrays, make copies first.
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
