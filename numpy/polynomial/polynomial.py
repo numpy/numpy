@@ -1320,7 +1320,15 @@ def polyvander3d(x, y, z, deg):
     return pu._vander_nd_flat((polyvander, polyvander, polyvander), (x, y, z), deg)
 
 
-def polyfit(x, y, deg, rcond=None, full=False, w=None):
+def polyfit(
+        x,
+        y,
+        deg,
+        rcond=None,
+        full=False,
+        w=None,
+        cov=False,
+        absolute_w=True):
     """
     Least-squares fit of a polynomial to data.
 
@@ -1361,13 +1369,26 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         diagnostic information from the singular value decomposition (used
         to solve the fit's matrix equation) is also returned.
     w : array_like, shape (`M`,), optional
-        Weights. If not None, the weight ``w[i]`` applies to the unsquared
-        residual ``y[i] - y_hat[i]`` at ``x[i]``. Ideally the weights are
-        chosen so that the errors of the products ``w[i]*y[i]`` all have the
-        same variance.  When using inverse-variance weighting, use
-        ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
+        Weights to apply to the unsquared residual of each point.  When 
+        these correspond to weighting by Gaussian uncertainties,
+        use w = 1/sigma.  
+        Note that w here is the sqrt of the more typical definition 
+        of the weights in weighted least squares, which generally 
+        uses W = w**2 = 1/sigma**2 (or more generally 1/var) to weight the 
+        squared residual of each point.
         .. versionadded:: 1.5.0
+    cov : bool, optional
+        If True, return the covariance matrix.
+        .. versionadded:: 1.25.2
+    absolute_w: bool, optional
+        If False, the covariance are scaled by chi2/dof, where 
+        dof = M - (deg + 1), i.e., the weights are presumed to be unreliable 
+        except in a relative sense and everything is scaled such that the 
+        reduced chi2 (read as chi-squared) is unity. This scaling is omitted 
+        if absolute_w=True, as is relevant for the case that the weights are 
+        are w**2 = 1/sigma**2, with sigma known to be a reliable estimate of 
+        the uncertainty.
+        .. versionadded:: 1.25.2
 
     Returns
     -------
@@ -1385,6 +1406,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         - rcond -- value of `rcond`.
 
         For more details, see `numpy.linalg.lstsq`.
+
+    covariance_matrix : ndarray
+        This ndarray is only returned if ``cov == True``
+        It is the covariance matrix which is used to estimate uncertainties
+        in the fitted polynomial coefficients.
 
     Raises
     ------
@@ -1473,7 +1499,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
      1.1324274851176597e-14]
 
     """
-    return pu._fit(polyvander, x, y, deg, rcond, full, w)
+    return pu._fit(polyvander, x, y, deg, rcond, full, w, cov, absolute_w)
 
 
 def polycompanion(c):

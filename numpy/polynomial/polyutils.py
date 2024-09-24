@@ -23,6 +23,7 @@ import functools
 import warnings
 
 import numpy as np
+from numpy.linalg import svd
 
 from numpy._core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.exceptions import RankWarning
@@ -579,7 +580,16 @@ def _sub(c1, c2):
     return trimseq(ret)
 
 
-def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
+def _fit(
+        vander_f,
+        x,
+        y,
+        deg,
+        rcond=None,
+        full=False,
+        w=None,
+        cov=False,
+        absolute_w=True):
     """
     Helper function used to implement the ``<type>fit`` functions.
 
@@ -621,6 +631,7 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
     # set up the least squares matrices in transposed form
     lhs = van.T
     rhs = y.T
+
     if w is not None:
         w = np.asarray(w) + 0.0
         if w.ndim != 1:
@@ -661,10 +672,48 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
         msg = "The fit may be poorly conditioned"
         warnings.warn(msg, RankWarning, stacklevel=2)
 
-    if full:
-        return c, [resids, rank, s, rcond]
-    else:
+    if not full and not cov:
         return c
+ 
+    return_tuple = [c]
+
+    if full:
+        return_tuple.append([resids, rank, s, rcond])
+    if cov:
+        """
+        Calculate the Moore-Penrose inverse using 
+        SVD while discarding small singular values for 
+        numerical stability.
+
+        Reference: 
+        Press et. al., 
+        "Numerical Recipes 3rd Edition: The Art of Scientific Computing", 
+        sec. 15.4.2 p. 794-795
+        """
+
+        U, s, _ = svd(lhs, full_matrices=False)
+
+        threshold = np.finfo(float).eps * max(lhs.shape) * s[0]
+        mask_array = s > threshold
+        s = s[mask_array]
+        U = U[:, mask_array]
+        v_base = np.dot(U / s**2, U.T)
+
+        if absolute_w:
+            fac = 1
+        else:
+            if len(x) <= order:
+                raise ValueError("the number of data points must exceed order "
+                                 "to scale the covariance matrix")
+            fac = resids / (len(x) - order)
+        if y.ndim == 1:
+            covariance_matrix = v_base * fac
+        else:
+            covariance_matrix = v_base[:, :, np.newaxis] * fac
+
+        return_tuple.append(covariance_matrix)
+
+    return tuple(return_tuple)
 
 
 def _pow(mul_f, c, pow, maxpower):
