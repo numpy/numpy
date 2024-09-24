@@ -773,7 +773,10 @@ cfuncs['character_from_pyobj'] = """
 static int
 character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
     if (PyBytes_Check(obj)) {
-        PyObject* tmp = PyUnicode_FromEncodedObject(obj);
+        *v = PyBytes_AS_STRING(obj)[0];
+        return 1;
+    } else if (PyUnicode_Check(obj)) {
+        PyObject* tmp = PyUnicode_AsUTF8String(obj);
         if (tmp != NULL) {
             *v = PyBytes_AS_STRING(tmp)[0];
             Py_DECREF(tmp);
