@@ -773,6 +773,7 @@ cfuncs['character_from_pyobj'] = """
 static int
 character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
     if (PyBytes_Check(obj)) {
+        /* empty bytes has trailing null, so dereferencing is always safe */
         *v = PyBytes_AS_STRING(obj)[0];
         return 1;
     } else if (PyUnicode_Check(obj)) {
