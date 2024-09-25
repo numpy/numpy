@@ -6202,7 +6202,72 @@ class MaskedArray(ndarray):
 
     def take(self, indices, axis=None, out=None, mode='raise'):
         """
-        """
+        Take elements from a masked array along an axis.
+
+        This function does the same thing as "fancy" indexing (indexing arrays
+        using arrays) for masked arrays. It can be easier to use if you need
+        elements along a given axis.
+
+        Parameters
+        ----------
+        a : masked_array
+            The source masked array.
+        indices : array_like
+            The indices of the values to extract. Also allow scalars for indices.
+        axis : int, optional
+            The axis over which to select values. By default, the flattened
+            input array is used.
+        out : MaskedArray, optional
+            If provided, the result will be placed in this array. It should
+            be of the appropriate shape and dtype. Note that `out` is always
+            buffered if `mode='raise'`; use other modes for better performance.
+        mode : {'raise', 'wrap', 'clip'}, optional
+            Specifies how out-of-bounds indices will behave.
+
+            * 'raise' -- raise an error (default)
+            * 'wrap' -- wrap around
+            * 'clip' -- clip to the range
+
+            'clip' mode means that all indices that are too large are replaced
+            by the index that addresses the last element along that axis. Note
+            that this disables indexing with negative numbers.
+
+        Returns
+        -------
+        out : MaskedArray
+            The returned array has the same type as `a`.
+
+        See Also
+        --------
+        numpy.take : Equivalent function for ndarrays.
+        compress : Take elements using a boolean mask.
+        take_along_axis : Take elements by matching the array and the index arrays.
+
+        Notes
+        -----
+        This function behaves similarly to `numpy.take`, but it handles masked
+        values. The mask is retained in the output array, and masked values
+        in the input array remain masked in the output.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> a = np.ma.array([4, 3, 5, 7, 6, 8], mask=[0, 0, 1, 0, 1, 0])
+        >>> indices = [0, 1, 4]
+        >>> np.ma.take(a, indices)
+        masked_array(data=[4, 3, --],
+                    mask=[False, False,  True],
+            fill_value=999999)
+
+        When `indices` is not one-dimensional, the output also has these dimensions:
+
+        >>> np.ma.take(a, [[0, 1], [2, 3]])
+        masked_array(data=[[4, 3],
+                        [--, 7]],
+                    mask=[[False, False],
+                        [ True, False]],
+            fill_value=999999)
+        """ 
         (_data, _mask) = (self._data, self._mask)
         cls = type(self)
         # Make sure the indices are not masked
@@ -7086,6 +7151,7 @@ count = _frommethod('count')
 
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
+
     """
     a = masked_array(a)
     return a.take(indices, axis=axis, out=out, mode=mode)
