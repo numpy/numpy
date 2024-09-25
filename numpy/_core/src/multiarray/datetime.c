@@ -2125,7 +2125,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     }
 
     /* Get the hour */
-    if (PyObject_GetOptionalAttr(obj, npy_interned_str.hour, &tmp) != 1) {
+    if (PyObject_GetOptionalAttr(obj, npy_interned_str.hour, &tmp) == -1) {
         return -1;
     }
     out->hour = PyLong_AsLong(tmp);
@@ -2136,7 +2136,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the minute */
-    if (PyObject_GetOptionalAttr(obj, npy_interned_str.minute, &tmp) != 1) {
+    if (PyObject_GetOptionalAttr(obj, npy_interned_str.minute, &tmp) == -1) {
         return -1;
     }
     out->min = PyLong_AsLong(tmp);
@@ -2147,7 +2147,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the second */
-    if (PyObject_GetOptionalAttr(obj, npy_interned_str.second, &tmp) != 1) {
+    if (PyObject_GetOptionalAttr(obj, npy_interned_str.second, &tmp) == -1) {
         return -1;
     }
     out->sec = PyLong_AsLong(tmp);
@@ -2158,7 +2158,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
     Py_DECREF(tmp);
 
     /* Get the microsecond */
-    if (PyObject_GetOptionalAttr(obj, npy_interned_str.microsecond, &tmp) != 1) {
+    if (PyObject_GetOptionalAttr(obj, npy_interned_str.microsecond, &tmp) == -1) {
         return -1;
     }
     out->us = PyLong_AsLong(tmp);
@@ -2177,7 +2177,7 @@ NpyDatetime_ConvertPyDateTimeToDatetimeStruct(
 
     /* Apply the time zone offset if it exists */
     if (apply_tzinfo && PyObject_HasAttrString(obj, "tzinfo")) {
-        if (PyObject_GetOptionalAttr(obj, npy_interned_str.tzinfo, &tmp) != 1) {
+        if (PyObject_GetOptionalAttr(obj, npy_interned_str.tzinfo, &tmp) == -1) {
             return -1;
         }
         if (tmp == Py_None) {
@@ -2639,7 +2639,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         int seconds = 0, useconds = 0;
 
         /* Get the days */
-        if (PyObject_GetOptionalAttr(obj, npy_interned_str.days, &tmp) != 1) {
+        if (PyObject_GetOptionalAttr(obj, npy_interned_str.days, &tmp) == -1) {
             return -1;
         }
         days = PyLong_AsLongLong(tmp);
@@ -2650,7 +2650,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         Py_DECREF(tmp);
 
         /* Get the seconds */
-        if (PyObject_GetOptionalAttr(obj, npy_interned_str.seconds, &tmp) != 1) {
+        if (PyObject_GetOptionalAttr(obj, npy_interned_str.seconds, &tmp) == -1) {
             return -1;
         }
         seconds = PyLong_AsLong(tmp);
@@ -2661,7 +2661,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         Py_DECREF(tmp);
 
         /* Get the microseconds */
-        if (PyObject_GetOptionalAttr(obj, npy_interned_str.microseconds, &tmp) != 1) {
+        if (PyObject_GetOptionalAttr(obj, npy_interned_str.microseconds, &tmp) == -1) {
             return -1;
         }
         useconds = PyLong_AsLong(tmp);
