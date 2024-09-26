@@ -338,10 +338,9 @@ def choose(a, choices, out=None, mode='raise'):
 
     First of all, if confused or uncertain, definitely look at the Examples -
     in its full generality, this function is less simple than it might
-    seem from the following code description (below ndi =
-    `numpy.lib.index_tricks`):
+    seem from the following code description::
 
-    ``np.choose(a,c) == np.array([c[a[I]][I] for I in ndi.ndindex(a.shape)])``.
+        np.choose(a,c) == np.array([c[a[I]][I] for I in np.ndindex(a.shape)])
 
     But this omits some subtleties.  Here is a fully general summary:
 
