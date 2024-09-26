@@ -41,8 +41,6 @@ class ABCPolyBase(abc.ABC):
         representations of the polynomial expression, e.g. for printing.
         The symbol must be a valid Python identifier. Default value is 'x'.
 
-        .. versionadded:: 1.24
-
     Attributes
     ----------
     coef : (N,) ndarray
@@ -992,11 +990,6 @@ class ABCPolyBase(abc.ABC):
             chosen so that the errors of the products ``w[i]*y[i]`` all have
             the same variance.  When using inverse-variance weighting, use
             ``w[i] = 1/sigma(y[i])``.  The default value is None.
-        window : {[beg, end]}, optional
-            Window to use for the returned series. The default
-            value is the default class domain
-        symbol : str, optional
-            Symbol representing the independent variable. Default is 'x'.
 
         Returns
         -------

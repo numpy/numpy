@@ -1590,8 +1590,6 @@ class Polynomial(ABCPolyBase):
         representations of the polynomial expression, e.g. for printing.
         The symbol must be a valid Python identifier. Default value is 'x'.
 
-        .. versionadded:: 1.24
-
     """
     # Virtual Functions
     _add = staticmethod(polyadd)
