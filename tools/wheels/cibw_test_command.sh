@@ -1,11 +1,12 @@
 # This script is used by .github/workflows/wheels.yml to run the full test
-# suite, checks for lincense inclusion and that the openblas version is correct.
+# suite, checks for license inclusion and that the openblas version is correct.
 set -xe
 
 PROJECT_DIR="$1"
 
 python -m pip install threadpoolctl
 python -c "import numpy; numpy.show_config()"
+
 if [[ $RUNNER_OS == "Windows" ]]; then
     # GH 20391
     PY_DIR=$(python -c "import sys; print(sys.prefix)")
@@ -26,6 +27,23 @@ fi
 # Set available memory value to avoid OOM problems on aarch64.
 # See gh-22418.
 export NPY_AVAILABLE_MEM="4 GB"
+
+FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
+if [[ $FREE_THREADED_BUILD == "True" ]]; then
+    # TODO: delete when numpy is buildable under free-threaded python
+    # with a released version of cython
+    python -m pip uninstall -y cython
+    python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+
+    # Manually check that importing NumPy does not re-enable the GIL.
+    # In principle the tests should catch this but it seems harmless to leave it
+    # here as a final sanity check before uploading broken wheels
+    if [[ $(python -c "import numpy" 2>&1) == "*The global interpreter lock (GIL) has been enabled*" ]]; then
+        echo "Error: Importing NumPy re-enables the GIL in the free-threaded build"
+        exit 1
+    fi
+fi
+
 # Run full tests with -n=auto. This makes pytest-xdist distribute tests across
 # the available N CPU cores: 2 by default for Linux instances and 4 for macOS arm64
 python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto']))"

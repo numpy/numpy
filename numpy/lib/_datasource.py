@@ -271,10 +271,7 @@ class DataSource:
 
         # Currently only used to test the bz2 files.
         _writemodes = ("w", "+")
-        for c in mode:
-            if c in _writemodes:
-                return True
-        return False
+        return any(c in _writemodes for c in mode)
 
     def _splitzipext(self, filename):
         """Split zip extension from filename and return filename.
@@ -423,7 +420,7 @@ class DataSource:
             last = path
             # Note: os.path.join treats '/' as os.sep on Windows
             path = path.lstrip(os.sep).lstrip('/')
-            path = path.lstrip(os.pardir).lstrip('..')
+            path = path.lstrip(os.pardir).removeprefix('..')
             drive, path = os.path.splitdrive(path)  # for Windows
         return path
 

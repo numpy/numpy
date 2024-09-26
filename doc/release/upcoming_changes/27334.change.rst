@@ -1,0 +1,9 @@
+* The type annotations of ``numpy.float64`` and ``numpy.complex128`` now
+  reflect that they are also subtypes of the built-in ``float`` and ``complex``
+  types, respectively. This update prevents static type-checkers from reporting
+  errors in cases such as:
+
+  .. code-block:: python
+
+     x: float = numpy.float64(6.28)  # valid
+     z: complex = numpy.complex128(-1j)  # valid

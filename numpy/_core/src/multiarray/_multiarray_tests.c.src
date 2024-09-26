@@ -42,6 +42,28 @@ argparse_example_function(PyObject *NPY_UNUSED(mod),
     Py_RETURN_NONE;
 }
 
+/*
+ *  Tests that argparse cache creation is thread-safe. *must* be called only
+ *  by the python-level test_thread_safe_argparse_cache function, otherwise
+ *  the cache might be created before the test to make sure cache creation is
+ *  thread-safe runs
+ */
+static PyObject *
+threaded_argparse_example_function(PyObject *NPY_UNUSED(mod),
+        PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
+{
+    NPY_PREPARE_ARGPARSER;
+    int arg1;
+    PyObject *arg2;
+    if (npy_parse_arguments("thread_func", args, len_args, kwnames,
+            "$arg1", &PyArray_PythonPyIntFromInt, &arg1,
+            "$arg2", NULL, &arg2,
+            NULL, NULL, NULL) < 0) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
+
 /* test PyArray_IsPythonScalar, before including private py3 compat header */
 static PyObject *
 IsPythonScalar(PyObject * dummy, PyObject *args)
@@ -2205,6 +2227,9 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"argparse_example_function",
          (PyCFunction)argparse_example_function,
          METH_KEYWORDS | METH_FASTCALL, NULL},
+    {"threaded_argparse_example_function",
+         (PyCFunction)threaded_argparse_example_function,
+         METH_KEYWORDS | METH_FASTCALL, NULL},
     {"IsPythonScalar",
         IsPythonScalar,
         METH_VARARGS, NULL},
@@ -2407,10 +2432,19 @@ PyMODINIT_FUNC PyInit__multiarray_tests(void)
         return m;
     }
     import_array();
+    if (init_argparse_mutex() < 0) {
+        return NULL;
+    }
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _multiarray_tests module.");
     }
+
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
+
     return m;
 }
 

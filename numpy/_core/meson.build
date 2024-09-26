@@ -47,7 +47,8 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000010 - 1.24.x
 # 0x00000011 - 1.25.x
 # 0x00000012 - 2.0.x
-C_API_VERSION = '0x00000012'
+# 0x00000013 - 2.1.x
+C_API_VERSION = '0x00000013'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -506,6 +507,10 @@ if cc.has_function_attribute('visibility:hidden') and host_machine.system() != '
 endif
 cdata.set('NPY_VISIBILITY_HIDDEN', visibility_hidden)
 
+# if not set, we're using lapack_lite
+if have_lapack
+  cdata.set10('HAVE_EXTERNAL_LAPACK', have_lapack)
+endif
 
 config_h = configure_file(
   input: 'config.h.in',
@@ -944,12 +949,10 @@ foreach gen_mtargets : [
   ],
   [
     'loops_trigonometric.dispatch.h',
-    src_file.process('src/umath/loops_trigonometric.dispatch.c.src'),
+    'src/umath/loops_trigonometric.dispatch.cpp',
     [
-      AVX512F, [AVX2, FMA3],
-      VSX4, VSX3, VSX2,
+      AVX512_SKX, [AVX2, FMA3],
       NEON_VFPV4,
-      VXE2, VXE
     ]
   ],
   [
@@ -1020,7 +1023,8 @@ foreach gen_mtargets : [
       'src/common',
       'src/multiarray',
       'src/npymath',
-      'src/umath'
+      'src/umath',
+      'src/highway',
     ]
   )
   if not is_variable('multiarray_umath_mtargets')
@@ -1038,6 +1042,7 @@ src_multiarray_umath_common = [
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
   'src/common/npy_hashtable.c',
+  'src/common/npy_import.c',
   'src/common/npy_longdouble.c',
   'src/common/ucsnarrow.c',
   'src/common/ufunc_override.c',
@@ -1060,6 +1065,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/array_coercion.c',
   'src/multiarray/array_converter.c',
   'src/multiarray/array_method.c',
+  'src/multiarray/array_api_standard.c',
   'src/multiarray/array_assign_scalar.c',
   'src/multiarray/array_assign_array.c',
   'src/multiarray/arrayfunction_override.c',
@@ -1101,6 +1107,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/nditer_constr.c',
   'src/multiarray/nditer_pywrap.c',
   src_file.process('src/multiarray/nditer_templ.c.src'),
+  'src/multiarray/npy_static_data.c',
   'src/multiarray/number.c',
   'src/multiarray/refcount.c',
   src_file.process('src/multiarray/scalartypes.c.src'),
@@ -1215,6 +1222,7 @@ py.extension_module('_multiarray_umath',
     'src/multiarray',
     'src/npymath',
     'src/umath',
+    'src/highway'
   ],
   dependencies: [blas_dep],
   link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')] + highway_lib,
@@ -1273,6 +1281,7 @@ py.extension_module('_simd',
   link_with: [npymath_lib, _simd_mtargets.static_lib('_simd_mtargets')],
   install: true,
   subdir: 'numpy/_core',
+  install_tag: 'tests',
 )
 
 python_sources = [
@@ -1316,6 +1325,7 @@ python_sources = [
   'numerictypes.py',
   'numerictypes.pyi',
   'overrides.py',
+  'printoptions.py',
   'records.py',
   'records.pyi',
   'shape_base.py',

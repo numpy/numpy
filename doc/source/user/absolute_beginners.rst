@@ -430,7 +430,7 @@ With ``np.reshape``, you can specify a few optional parameters::
 
 ``a`` is the array to be reshaped.
 
-``newshape`` is the new shape you want. You can specify an integer or a tuple of
+``shape`` is the new shape you want. You can specify an integer or a tuple of
 integers. If you specify an integer, the result will be an array of that length.
 The shape should be compatible with the original shape.
 

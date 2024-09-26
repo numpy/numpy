@@ -22,7 +22,7 @@
  *    current one kinda slow and it can be optimized by
  *    at least avoiding the division and keep sqrt.
  *  - Vectorize reductions
- *  - Add support for ASIMD/VCMLA through universal intrinics.
+ *  - Add support for ASIMD/VCMLA through universal intrinsics.
  */
 
 //###############################################################################
@@ -346,14 +346,17 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             && __apple_build_version__ < 14030000
         goto loop_scalar;
     #endif  // end affected Apple clang.
+
     if (is_mem_overlap(b_src0, b_ssrc0, b_dst, b_sdst, len) ||
         is_mem_overlap(b_src1, b_ssrc1, b_dst, b_sdst, len) ||
-        b_sdst  % sizeof(@ftype@) != 0 || b_sdst == 0 ||
-        b_ssrc0 % sizeof(@ftype@) != 0 ||
-        b_ssrc1 % sizeof(@ftype@) != 0
+        !npyv_loadable_stride_@sfx@(b_ssrc0) ||
+        !npyv_loadable_stride_@sfx@(b_ssrc1) ||
+        !npyv_storable_stride_@sfx@(b_sdst)  ||
+        b_sdst == 0
     ) {
         goto loop_scalar;
     }
+
     const @ftype@ *src0 = (@ftype@*)b_src0;
     const @ftype@ *src1 = (@ftype@*)b_src1;
           @ftype@ *dst  = (@ftype@*)b_dst;
@@ -365,10 +368,6 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     const int vstep = npyv_nlanes_@sfx@;
     const int wstep = vstep * 2;
     const int hstep = vstep / 2;
-
-    const int loadable0 = npyv_loadable_stride_s64(ssrc0);
-    const int loadable1 = npyv_loadable_stride_s64(ssrc1);
-    const int storable = npyv_storable_stride_s64(sdst);
 
     // lots**lots of specializations, to squeeze out max performance
     // contig
@@ -414,7 +413,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             }
         }
         // non-contig
-        else if (loadable1 && storable) {
+        else {
             for (; len >= vstep; len -= vstep, src1 += ssrc1*vstep, dst += sdst*vstep) {
                 npyv_@sfx@ b0 = npyv_loadn2_@sfx@(src1, ssrc1);
                 npyv_@sfx@ b1 = npyv_loadn2_@sfx@(src1 + ssrc1*hstep, ssrc1);
@@ -432,9 +431,6 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_@sfx@ r = @vectorf@_@sfx@(a.val[0], b);
                 npyv_storen2_till_@sfx@(dst, sdst, len, r);
             }
-        }
-        else {
-            goto loop_scalar;
         }
     }
     // scalar 1
@@ -460,7 +456,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             }
         }
         // non-contig
-        else if (loadable0 && storable) {
+        else {
             for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep, dst += sdst*vstep) {
                 npyv_@sfx@ a0 = npyv_loadn2_@sfx@(src0, ssrc0);
                 npyv_@sfx@ a1 = npyv_loadn2_@sfx@(src0 + ssrc0*hstep, ssrc0);
@@ -479,13 +475,10 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
                 npyv_storen2_till_@sfx@(dst, sdst, len, r);
             }
         }
-        else {
-            goto loop_scalar;
-        }
     }
     #if @is_mul@
     // non-contig
-    else if (loadable0 && loadable1 && storable) {
+    else {
         for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep,
                             src1 += ssrc1*vstep, dst += sdst*vstep
         ) {
@@ -512,12 +505,16 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             npyv_storen2_till_@sfx@(dst, sdst, len, r);
         }
     }
-    #endif
+    #else  /* @is_mul@ */
     else {
+        // Only multiply is vectorized for the generic non-contig case.
         goto loop_scalar;
     }
+    #endif  /* @is_mul@ */
+
     npyv_cleanup();
     return;
+
 loop_scalar:
 #endif
     for (; len > 0; --len, b_src0 += b_ssrc0, b_src1 += b_ssrc1, b_dst += b_sdst) {
@@ -580,8 +577,8 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
     npy_intp b_ssrc = steps[0], b_sdst = steps[1];
 #if @VECTOR@
     if (is_mem_overlap(b_src, b_ssrc, b_dst, b_sdst, len) ||
-        b_sdst % sizeof(@ftype@) != 0 ||
-        b_ssrc % sizeof(@ftype@) != 0
+        !npyv_loadable_stride_@sfx@(b_ssrc) ||
+        !npyv_storable_stride_@sfx@(b_sdst)
     ) {
         goto loop_scalar;
     }
@@ -609,7 +606,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             npyv_store2_till_@sfx@(dst, len, r);
         }
     }
-    else if (ssrc == 2 && npyv_storable_stride_s64(sdst)) {
+    else if (ssrc == 2) {
         for (; len >= vstep; len -= vstep, src += wstep, dst += sdst*vstep) {
             npyv_@sfx@ a0 = npyv_load_@sfx@(src);
             npyv_@sfx@ a1 = npyv_load_@sfx@(src + vstep);
@@ -624,7 +621,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
             npyv_storen2_till_@sfx@(dst, sdst, len, r);
         }
     }
-    else if (sdst == 2 && npyv_loadable_stride_s64(ssrc)) {
+    else if (sdst == 2) {
         for (; len >= vstep; len -= vstep, src += ssrc*vstep, dst += wstep) {
             npyv_@sfx@ a0 = npyv_loadn2_@sfx@(src, ssrc);
             npyv_@sfx@ a1 = npyv_loadn2_@sfx@(src + ssrc*hstep, ssrc);

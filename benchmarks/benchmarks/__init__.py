@@ -42,7 +42,7 @@ def dirty_lock(lock_name, lock_on_count=1):
                 count = 0
             f.seek(0)
             f.truncate()
-            f.write(f"{str(count)} {str(ppid)}")
+            f.write(f"{count} {ppid}")
     except OSError:
         pass
     return False

@@ -12,7 +12,7 @@ from xml.sax.saxutils import quoteattr, escape
 try:
     import pygments
     if tuple([int(x) for x in pygments.__version__.split('.')]) < (0, 11):
-        raise ImportError()
+        raise ImportError
     from pygments import highlight
     from pygments.lexers import CLexer
     from pygments.formatters import HtmlFormatter
@@ -54,25 +54,23 @@ class SourceFile:
             line.add(as_func)
 
     def write_text(self, fd):
-        source = open(self.path, "r")
-        for i, line in enumerate(source):
-            if i + 1 in self.lines:
-                fd.write("> ")
-            else:
-                fd.write("! ")
-            fd.write(line)
-        source.close()
+        with open(self.path, "r") as source:
+            for i, line in enumerate(source):
+                if i + 1 in self.lines:
+                    fd.write("> ")
+                else:
+                    fd.write("! ")
+                fd.write(line)
 
     def write_html(self, fd):
-        source = open(self.path, 'r')
-        code = source.read()
-        lexer = CLexer()
-        formatter = FunctionHtmlFormatter(
-            self.lines,
-            full=True,
-            linenos='inline')
-        fd.write(highlight(code, lexer, formatter))
-        source.close()
+        with open(self.path, 'r') as source:
+            code = source.read()
+            lexer = CLexer()
+            formatter = FunctionHtmlFormatter(
+                self.lines,
+                full=True,
+                linenos='inline')
+            fd.write(highlight(code, lexer, formatter))
 
 
 class SourceFiles:
@@ -95,24 +93,24 @@ class SourceFiles:
 
     def write_text(self, root):
         for path, source in self.files.items():
-            fd = open(os.path.join(root, self.clean_path(path)), "w")
-            source.write_text(fd)
-            fd.close()
+            with open(os.path.join(root, self.clean_path(path)), "w") as fd:
+                source.write_text(fd)
 
     def write_html(self, root):
         for path, source in self.files.items():
-            fd = open(os.path.join(root, self.clean_path(path) + ".html"), "w")
-            source.write_html(fd)
-            fd.close()
+            with open(
+                os.path.join(root, self.clean_path(path) + ".html"), "w"
+            ) as fd:
+                source.write_html(fd)
 
-        fd = open(os.path.join(root, 'index.html'), 'w')
-        fd.write("<html>")
-        paths = sorted(self.files.keys())
-        for path in paths:
-            fd.write('<p><a href="%s.html">%s</a></p>' %
-                     (self.clean_path(path), escape(path[len(self.prefix):])))
-        fd.write("</html>")
-        fd.close()
+        with open(os.path.join(root, 'index.html'), 'w') as fd:
+            fd.write("<html>")
+            paths = sorted(self.files.keys())
+            for path in paths:
+                fd.write('<p><a href="%s.html">%s</a></p>' %
+                         (self.clean_path(path),
+                          escape(path[len(self.prefix):])))
+            fd.write("</html>")
 
 
 def collect_stats(files, fd, pattern):
@@ -124,7 +122,7 @@ def collect_stats(files, fd, pattern):
 
     current_file = None
     current_function = None
-    for i, line in enumerate(fd):
+    for line in fd:
         if re.match("f[lie]=.+", line):
             path = line.split('=', 2)[1].strip()
             if os.path.exists(path) and re.search(pattern, path):
@@ -164,9 +162,8 @@ if __name__ == '__main__':
 
     files = SourceFiles()
     for log_file in args.callgrind_file:
-        log_fd = open(log_file, 'r')
-        collect_stats(files, log_fd, args.pattern)
-        log_fd.close()
+        with open(log_file, 'r') as log_fd:
+            collect_stats(files, log_fd, args.pattern)
 
     if not os.path.exists(args.directory):
         os.makedirs(args.directory)

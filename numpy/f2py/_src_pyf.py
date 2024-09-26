@@ -1,3 +1,4 @@
+import os
 import re
 
 # START OF CODE VENDORED FROM `numpy.distutils.from_template`

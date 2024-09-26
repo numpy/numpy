@@ -163,28 +163,7 @@ typedef struct {
     char repr[16384];
 } Dragon4_Scratch;
 
-static int _bigint_static_in_use = 0;
-static Dragon4_Scratch _bigint_static;
-
-static Dragon4_Scratch*
-get_dragon4_bigint_scratch(void) {
-    /* this test+set is not threadsafe, but no matter because we have GIL */
-    if (_bigint_static_in_use) {
-        PyErr_SetString(PyExc_RuntimeError,
-            "numpy float printing code is not re-entrant. "
-            "Ping the devs to fix it.");
-        return NULL;
-    }
-    _bigint_static_in_use = 1;
-
-    /* in this dummy implementation we only return the static allocation */
-    return &_bigint_static;
-}
-
-static void
-free_dragon4_bigint_scratch(Dragon4_Scratch *mem){
-    _bigint_static_in_use = 0;
-}
+static NPY_TLS Dragon4_Scratch _bigint_static;
 
 /* Copy integer */
 static void
@@ -2210,11 +2189,11 @@ Format_floatbits(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
  */
 static npy_uint32
 Dragon4_PrintFloat_IEEE_binary16(
-        Dragon4_Scratch *scratch, npy_half *value, Dragon4_Options *opt)
+        npy_half *value, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     npy_uint16 val = *value;
     npy_uint32 floatExponent, floatMantissa, floatSign;
@@ -2297,12 +2276,12 @@ Dragon4_PrintFloat_IEEE_binary16(
  */
 static npy_uint32
 Dragon4_PrintFloat_IEEE_binary32(
-        Dragon4_Scratch *scratch, npy_float32 *value,
+        npy_float32 *value,
         Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     union
     {
@@ -2390,11 +2369,11 @@ Dragon4_PrintFloat_IEEE_binary32(
  */
 static npy_uint32
 Dragon4_PrintFloat_IEEE_binary64(
-        Dragon4_Scratch *scratch, npy_float64 *value, Dragon4_Options *opt)
+        npy_float64 *value, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     union
     {
@@ -2505,11 +2484,11 @@ typedef struct FloatVal128 {
  */
 static npy_uint32
 Dragon4_PrintFloat_Intel_extended(
-    Dragon4_Scratch *scratch, FloatVal128 value, Dragon4_Options *opt)
+    FloatVal128 value, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     npy_uint32 floatExponent, floatSign;
     npy_uint64 floatMantissa;
@@ -2603,7 +2582,7 @@ Dragon4_PrintFloat_Intel_extended(
  */
 static npy_uint32
 Dragon4_PrintFloat_Intel_extended80(
-    Dragon4_Scratch *scratch, npy_float80 *value, Dragon4_Options *opt)
+    npy_float80 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     union {
@@ -2619,7 +2598,7 @@ Dragon4_PrintFloat_Intel_extended80(
     val128.lo = buf80.integer.a;
     val128.hi = buf80.integer.b;
 
-    return Dragon4_PrintFloat_Intel_extended(scratch, val128, opt);
+    return Dragon4_PrintFloat_Intel_extended(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_INTEL_EXTENDED_10_BYTES_LE */
 
@@ -2627,7 +2606,7 @@ Dragon4_PrintFloat_Intel_extended80(
 /* Intel's 80-bit IEEE extended precision format, 96-bit storage */
 static npy_uint32
 Dragon4_PrintFloat_Intel_extended96(
-    Dragon4_Scratch *scratch, npy_float96 *value, Dragon4_Options *opt)
+    npy_float96 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     union {
@@ -2643,7 +2622,7 @@ Dragon4_PrintFloat_Intel_extended96(
     val128.lo = buf96.integer.a;
     val128.hi = buf96.integer.b;
 
-    return Dragon4_PrintFloat_Intel_extended(scratch, val128, opt);
+    return Dragon4_PrintFloat_Intel_extended(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE */
 
@@ -2651,7 +2630,7 @@ Dragon4_PrintFloat_Intel_extended96(
 /* Motorola Big-endian equivalent of the Intel-extended 96 fp format */
 static npy_uint32
 Dragon4_PrintFloat_Motorola_extended96(
-    Dragon4_Scratch *scratch, npy_float96 *value, Dragon4_Options *opt)
+    npy_float96 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     union {
@@ -2668,7 +2647,7 @@ Dragon4_PrintFloat_Motorola_extended96(
     val128.hi = buf96.integer.a >> 16;
     /* once again we assume the int has same endianness as the float */
 
-    return Dragon4_PrintFloat_Intel_extended(scratch, val128, opt);
+    return Dragon4_PrintFloat_Intel_extended(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE */
 
@@ -2688,7 +2667,7 @@ typedef union FloatUnion128
 /* Intel's 80-bit IEEE extended precision format, 128-bit storage */
 static npy_uint32
 Dragon4_PrintFloat_Intel_extended128(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+    npy_float128 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     FloatUnion128 buf128;
@@ -2698,7 +2677,7 @@ Dragon4_PrintFloat_Intel_extended128(
     val128.lo = buf128.integer.a;
     val128.hi = buf128.integer.b;
 
-    return Dragon4_PrintFloat_Intel_extended(scratch, val128, opt);
+    return Dragon4_PrintFloat_Intel_extended(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE */
 
@@ -2717,11 +2696,11 @@ Dragon4_PrintFloat_Intel_extended128(
  */
 static npy_uint32
 Dragon4_PrintFloat_IEEE_binary128(
-    Dragon4_Scratch *scratch, FloatVal128 val128, Dragon4_Options *opt)
+    FloatVal128 val128, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     npy_uint32 floatExponent, floatSign;
 
@@ -2802,7 +2781,7 @@ Dragon4_PrintFloat_IEEE_binary128(
 #if defined(HAVE_LDOUBLE_IEEE_QUAD_LE)
 static npy_uint32
 Dragon4_PrintFloat_IEEE_binary128_le(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+    npy_float128 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     FloatUnion128 buf128;
@@ -2811,7 +2790,7 @@ Dragon4_PrintFloat_IEEE_binary128_le(
     val128.lo = buf128.integer.a;
     val128.hi = buf128.integer.b;
 
-    return Dragon4_PrintFloat_IEEE_binary128(scratch, val128, opt);
+    return Dragon4_PrintFloat_IEEE_binary128(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_IEEE_QUAD_LE */
 
@@ -2822,7 +2801,7 @@ Dragon4_PrintFloat_IEEE_binary128_le(
  */
 static npy_uint32
 Dragon4_PrintFloat_IEEE_binary128_be(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+    npy_float128 *value, Dragon4_Options *opt)
 {
     FloatVal128 val128;
     FloatUnion128 buf128;
@@ -2831,7 +2810,7 @@ Dragon4_PrintFloat_IEEE_binary128_be(
     val128.lo = buf128.integer.b;
     val128.hi = buf128.integer.a;
 
-    return Dragon4_PrintFloat_IEEE_binary128(scratch, val128, opt);
+    return Dragon4_PrintFloat_IEEE_binary128(val128, opt);
 }
 #endif /* HAVE_LDOUBLE_IEEE_QUAD_BE */
 
@@ -2877,11 +2856,11 @@ Dragon4_PrintFloat_IEEE_binary128_be(
  */
 static npy_uint32
 Dragon4_PrintFloat_IBM_double_double(
-    Dragon4_Scratch *scratch, npy_float128 *value, Dragon4_Options *opt)
+    npy_float128 *value, Dragon4_Options *opt)
 {
-    char *buffer = scratch->repr;
-    const npy_uint32 bufferSize = sizeof(scratch->repr);
-    BigInt *bigints = scratch->bigints;
+    char *buffer = _bigint_static.repr;
+    const npy_uint32 bufferSize = sizeof(_bigint_static.repr);
+    BigInt *bigints = _bigint_static.bigints;
 
     FloatVal128 val128;
     FloatUnion128 buf128;
@@ -3068,16 +3047,10 @@ PyObject *\
 Dragon4_Positional_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
 {\
     PyObject *ret;\
-    Dragon4_Scratch *scratch = get_dragon4_bigint_scratch();\
-    if (scratch == NULL) {\
+    if (Dragon4_PrintFloat_##format(val, opt) < 0) {\
         return NULL;\
     }\
-    if (Dragon4_PrintFloat_##format(scratch, val, opt) < 0) {\
-        free_dragon4_bigint_scratch(scratch);\
-        return NULL;\
-    }\
-    ret = PyUnicode_FromString(scratch->repr);\
-    free_dragon4_bigint_scratch(scratch);\
+    ret = PyUnicode_FromString(_bigint_static.repr);\
     return ret;\
 }\
 \
@@ -3106,16 +3079,10 @@ PyObject *\
 Dragon4_Scientific_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
 {\
     PyObject *ret;\
-    Dragon4_Scratch *scratch = get_dragon4_bigint_scratch();\
-    if (scratch == NULL) {\
+    if (Dragon4_PrintFloat_##format(val, opt) < 0) {    \
         return NULL;\
     }\
-    if (Dragon4_PrintFloat_##format(scratch, val, opt) < 0) {\
-        free_dragon4_bigint_scratch(scratch);\
-        return NULL;\
-    }\
-    ret = PyUnicode_FromString(scratch->repr);\
-    free_dragon4_bigint_scratch(scratch);\
+    ret = PyUnicode_FromString(_bigint_static.repr);\
     return ret;\
 }\
 PyObject *\

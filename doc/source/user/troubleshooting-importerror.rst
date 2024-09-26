@@ -148,44 +148,8 @@ This may mainly help you if you are not running the python and/or NumPy
 version you are expecting to run.
 
 
-C-API incompatibility
----------------------------
-
-If you see an error like:
-
-
-    RuntimeError: module compiled against API version v1 but this version of numpy is v2
-
-
-You may have:
-
-* A bad extension "wheel" (binary install) that should use
-  `oldest-support-numpy <https://pypi.org/project/oldest-supported-numpy/>`_ (
-  with manual constraints if necessary) to build their binary packages.
-
-* An environment issue messing with package versions.
-
-* Incompatible package versions somehow enforced manually.
-
-* An extension module compiled locally against a very recent version
-  followed by a NumPy downgrade.
-
-* A compiled extension copied to a different computer with an
-  older NumPy version.
-
-The best thing to do if you see this error is to contact
-the maintainers of the package that is causing problem
-so that they can solve the problem properly.
-
-However, while you wait for a solution, a work around
-that usually works is to upgrade the NumPy version::
-
-
-    pip install numpy --upgrade
-
-
-Downstream ImportError or AttributeError
-========================================
+Downstream ImportError, AttributeError or C-API/ABI incompatibility
+===================================================================
 
 If you see a message such as::
 
@@ -194,21 +158,64 @@ If you see a message such as::
     versions of NumPy, modules must be compiled with NumPy 2.0.
     Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
 
-Either as an ``ImportError`` or with::
+either as an ``ImportError`` or with::
 
     AttributeError: _ARRAY_API not found
 
-Then you are using NumPy 2 together with a module that was build with NumPy 1.
-NumPy 2 made some changes that require rebuilding such modules to avoid
-possibly incorrect results or crashes.
+or other errors such as::
 
-As the error message suggests, the easiest solution is likely to downgrade
-NumPy to `numpy<2`.
-Alternatively, you can search the traceback (from the back) to find the first
-line that isn't inside NumPy to see which module needs to be updated.
+    RuntimeError: module compiled against API version v1 but this version of numpy is v2
 
-NumPy 2 was released in the first half of 2024 and especially smaller
-modules downstream are expected need time to adapt and publish a new version.
+or when a package implemented with Cython::
+
+    ValueError: numpy.dtype size changed, may indicate binary incompatibility. Expected 96 from C header, got 88 from PyObject
+
+This means that a package depending on NumPy was build in a way that is not
+compatible with the NumPy version found.
+If this error is due to a recent upgrade to NumPy 2, the easiest solution may
+be to simply downgrade NumPy to ``'numpy<2'``.
+
+To understand the cause, search the traceback (from the back) to find the first
+line that isn't inside NumPy to see which package has the incompatibility.
+Note your NumPy version and the version of the incompatible package to
+help you find the best solution.
+
+There can be various reason for the incompatibility:
+
+* You have recently upgraded NumPy, most likely to NumPy 2, and the other
+  module now also needs to be upgraded.  (NumPy 2 was released in June 2024.)
+
+* You have version constraints and ``pip`` may
+  have installed a combination of incompatible packages.
+
+* You have compiled locally or have copied a compiled extension from
+  elsewhere (which is, in general, a bad idea).
+
+The best solution will usually be to upgrade the failing package:
+
+* If you installed it for example through ``pip``, try upgrading it with
+  ``pip install package_name --upgrade``.
+
+* If it is your own package or it is build locally, you need recompiled
+  for the new NumPy version (for details see :ref:`depending_on_numpy`).
+  It may be that a reinstall of the package is sufficient to fix it.
+
+When these steps fail, you should inform the package maintainers since they
+probably need to make a new, compatible, release.
+
+However, upgrading may not always be possible because a compatible version does
+not yet exist or cannot be installed for other reasons.  In that case:
+
+* Install a compatible NumPy version:
+
+  * Try downgrading NumPy with ``pip install 'numpy<2'``
+    (NumPy 2 was released in June 2024).
+  * If your NumPy version is old, you can try upgrading it for
+    example with ``pip install numpy --upgrade``.
+
+* Add additional version pins to the failing package to help ``pip``
+  resolve compatible versions of NumPy and the package.
+
 
 
 Segfaults or crashes

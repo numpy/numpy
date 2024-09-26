@@ -11,8 +11,8 @@ class ClipFloat(Benchmark):
     ]
 
     def setup(self, dtype, size):
-        rng = np.random.default_rng()
-        self.array = rng.random(size=size).astype(dtype)
+        rnd = np.random.RandomState(994584855)
+        self.array = rnd.random(size=size).astype(dtype)
         self.dataout = np.full_like(self.array, 0.5)
 
     def time_clip(self, dtype, size):
@@ -27,8 +27,8 @@ class ClipInteger(Benchmark):
     ]
 
     def setup(self, dtype, size):
-        rng = np.random.default_rng()
-        self.array = rng.integers(256, size=size, dtype=dtype)
+        rnd = np.random.RandomState(1301109903)
+        self.array = rnd.randint(256, size=size, dtype=dtype)
         self.dataout = np.full_like(self.array, 128)
 
     def time_clip(self, dtype, size):

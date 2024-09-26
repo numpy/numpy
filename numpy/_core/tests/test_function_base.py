@@ -223,7 +223,7 @@ class TestGeomspace:
         assert_allclose(y, [-5, 3j])
 
     def test_complex_shortest_path(self):
-        # test the shortest logorithmic spiral is used, see gh-25644
+        # test the shortest logarithmic spiral is used, see gh-25644
         x = 1.2 + 3.4j
         y = np.exp(1j*(np.pi-.1)) * x
         z = np.geomspace(x, y, 5)
@@ -448,7 +448,7 @@ class TestLinspace:
         stop = array(2, dtype='O')
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([1., 1.5, 2.]))
-                    
+
     def test_round_negative(self):
         y = linspace(-1, 3, num=8, dtype=int)
         t = array([-1, -1, 0, 0, 1, 1, 2, 3], dtype=int)
@@ -460,7 +460,7 @@ class TestLinspace:
         stop = array([2.0, 1.0])
         y = linspace(start, stop, 3)
         assert_array_equal(y, array([[0.0, 1.0], [1.0, 1.0], [2.0, 1.0]]))
-    
+
 
 class TestAdd_newdoc:
 

@@ -11,7 +11,7 @@ import re
 __all__ = ['NumpyVersion']
 
 
-class NumpyVersion():
+class NumpyVersion:
     """Parse and compare numpy version strings.
 
     NumPy has the following versioning scheme (numbers given are examples; they

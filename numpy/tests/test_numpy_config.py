@@ -3,7 +3,7 @@ Check the numpy config is valid.
 """
 import numpy as np
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 pytestmark = pytest.mark.skipif(
     not hasattr(np.__config__, "_built_with_meson"),
@@ -28,7 +28,7 @@ class TestNumPyConfigs:
         config = np.show_config(mode="dicts")
 
         assert isinstance(config, dict)
-        assert all([key in config for key in self.REQUIRED_CONFIG_KEYS]), (
+        assert all(key in config for key in self.REQUIRED_CONFIG_KEYS), (
             "Required key missing,"
             " see index of `False` with `REQUIRED_CONFIG_KEYS`"
         )

@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -41,7 +40,7 @@ CACHE_ROOT = Path(__file__).resolve().parent.parent / 'env' / 'numpy_benchdata'
 
 @lru_cache(typed=True)
 def get_values():
-    rnd = np.random.RandomState(1)
+    rnd = np.random.RandomState(1804169117)
     values = np.tile(rnd.uniform(0, 100, size=nx*ny//10), 10)
     return values
 
@@ -60,7 +59,7 @@ def get_square(dtype):
 
 @lru_cache(typed=True)
 def get_squares():
-    return {t: get_square(t) for t in TYPES1}
+    return {t: get_square(t) for t in sorted(TYPES1)}
 
 
 @lru_cache(typed=True)
@@ -72,14 +71,7 @@ def get_square_(dtype):
 @lru_cache(typed=True)
 def get_squares_():
     # smaller squares
-    return {t: get_square_(t) for t in TYPES1}
-
-
-@lru_cache(typed=True)
-def get_vectors():
-    # vectors
-    vectors = {t: s[0] for t, s in get_squares().items()}
-    return vectors
+    return {t: get_square_(t) for t in sorted(TYPES1)}
 
 
 @lru_cache(typed=True)

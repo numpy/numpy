@@ -37,7 +37,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.10'
     - name: Install linter requirements
@@ -61,7 +61,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: ${{ matrix.version }}
     - uses: ./.github/meson_actions
@@ -75,9 +75,9 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
-        python-version: 'pypy3.10-v7.3.15'
+        python-version: 'pypy3.10-v7.3.17'
     - name: Setup using scipy-openblas
       run: |
         python -m pip install -r requirements/ci_requirements.txt
@@ -114,7 +114,7 @@ jobs:
         pytest --pyargs numpy -m "not slow"
 
   full:
-    # Build a wheel, install it, then run the full test suite with code coverage
+    # Install as editable, then run the full test suite with code coverage
     needs: [smoke_test]
     runs-on: ubuntu-22.04
     steps:
@@ -122,7 +122,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.10'
     - name: Install build and test dependencies from PyPI
@@ -138,16 +138,14 @@ jobs:
         mkdir -p ./.openblas
         python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
 
-    - name: Build a wheel
+    - name: Install as editable
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
-        python -m build --wheel --no-isolation --skip-dependency-check
-        pip install dist/numpy*.whl
+        pip install -e . --no-build-isolation
     - name: Run full test suite
       run: |
-        cd tools
-        pytest --pyargs numpy --cov-report=html:build/coverage
+        pytest numpy --cov-report=html:build/coverage
         # TODO: gcov
 
   benchmark:
@@ -159,14 +157,14 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.10'
     - name: Install build and benchmarking dependencies
       run: |
         sudo apt-get update
         sudo apt-get install libopenblas-dev ninja-build
-        pip install spin cython asv virtualenv packaging
+        pip install asv virtualenv packaging -r requirements/build_requirements.txt
     - name: Install NumPy
       run: |
         spin build -- -Dcpu-dispatch=none
@@ -180,6 +178,12 @@ jobs:
       shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       run: |
         spin bench --quick
+    - name: Check docstests
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+      run: |
+        pip install scipy-doctest hypothesis matplotlib scipy pytz pandas
+        spin check-docs -v
+        spin check-tutorials -v
 
   sdist:
     needs: [smoke_test]
@@ -190,7 +194,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.11'
     - name: Install gfortran and setup OpenBLAS (sdist build)
@@ -228,11 +232,11 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: data-apis/array-api-tests
-        ref: '3cf8ef654c456d9fd1633d64e67b4470465940e9'  # Latest commit as of 2024-04-09
+        ref: '827edd804bcace9d64176b8115138d29ae3e8dec'  # Latest commit as of 2024-07-30
         submodules: 'true'
         path: 'array-api-tests'
     - name: Set up Python
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI
@@ -249,7 +253,7 @@ jobs:
         PYTHONWARNINGS: 'ignore::UserWarning::,ignore::DeprecationWarning::,ignore::RuntimeWarning::'
       run: |
         cd ${GITHUB_WORKSPACE}/array-api-tests
-        pytest array_api_tests -v -c pytest.ini --ci --max-examples=2 --derandomize --disable-deadline --skips-file ${GITHUB_WORKSPACE}/tools/ci/array-api-skips.txt
+        pytest array_api_tests -v -c pytest.ini --ci --max-examples=100 --derandomize --disable-deadline --xfails-file ${GITHUB_WORKSPACE}/tools/ci/array-api-xfails.txt
 
   custom_checks:
     needs: [smoke_test]
@@ -260,7 +264,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI
@@ -270,7 +274,7 @@ jobs:
         pip install vulture
     - name: Build and install NumPy
       run: |
-        # Install using the fastests way to build (no BLAS, no SIMD)
+        # Install using the fastest way to build (no BLAS, no SIMD)
         spin build -j2 -- -Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none
     - name: Check build-internal dependencies
       run: |
@@ -298,14 +302,12 @@ jobs:
         submodules: recursive
         fetch-tags: true
     # TODO: replace with setup-python when there is support
-    - uses: deadsnakes/action@6c8b9b82fe0b4344f4b98f2775fcc395df45e494 # v3.1.0
+    - uses: deadsnakes/action@e640ac8743173a67cca4d7d77cd837e514bf98e8 # v3.2.0
       with:
           python-version: '3.13-dev'
           nogil: true
     # TODO: remove cython nightly install when cython does a release
     - name: Install nightly Cython
       run: |
-        pip install git+https://github.com/cython/cython
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
     - uses: ./.github/meson_actions
-      env:
-        PYTHON_GIL: 0

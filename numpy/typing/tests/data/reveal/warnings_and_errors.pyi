@@ -1,11 +1,6 @@
-import sys
-
 import numpy.exceptions as ex
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 assert_type(ex.ModuleDeprecationWarning(), ex.ModuleDeprecationWarning)
 assert_type(ex.VisibleDeprecationWarning(), ex.VisibleDeprecationWarning)

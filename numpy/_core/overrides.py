@@ -1,7 +1,6 @@
 """Implementation of __array_function__ overrides from NEP-18."""
 import collections
 import functools
-import os
 
 from .._utils import set_module
 from .._utils._inspect import getargspec

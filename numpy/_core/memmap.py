@@ -84,7 +84,7 @@ class memmap(ndarray):
         .. versionchanged:: 2.0
          The shape parameter can now be any integer sequence type, previously
          types were limited to tuple and int.
-    
+
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
@@ -127,6 +127,7 @@ class memmap(ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> data = np.arange(12, dtype='float32')
     >>> data.resize((3,4))
 

@@ -271,6 +271,8 @@ def dtype_to_descr(dtype):
         warnings.warn("metadata on a dtype is not saved to an npy/npz. "
                       "Use another format (such as pickle) to store it.",
                       UserWarning, stacklevel=2)
+    dtype = new_dtype
+
     if dtype.names is not None:
         # This is a record array. The .descr is fine.  XXX: parts of the
         # record array with an empty name, like padding bytes, still get

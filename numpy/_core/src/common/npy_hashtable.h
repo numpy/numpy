@@ -13,9 +13,6 @@ typedef struct {
     PyObject **buckets;
     npy_intp size;  /* current size */
     npy_intp nelem;  /* number of elements */
-#ifdef Py_GIL_DISABLED
-    PyThread_type_lock *mutex;
-#endif
 } PyArrayIdentityHash;
 
 
@@ -24,7 +21,7 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
         PyObject *const *key, PyObject *value, int replace);
 
 NPY_NO_EXPORT PyObject *
-PyArrayIdentityHash_GetItem(PyArrayIdentityHash const *tb, PyObject *const *key);
+PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key);
 
 NPY_NO_EXPORT PyArrayIdentityHash *
 PyArrayIdentityHash_New(int key_len);
