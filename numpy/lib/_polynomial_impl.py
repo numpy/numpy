@@ -769,7 +769,7 @@ def polyval(p, x):
 
     """
     p = NX.asarray(p)
-    y=NX.zeros_like(x).astype(p.dtype)
+    y = NX.zeros_like(x).astype(p.dtype)
 
     if not isinstance(x, (poly1d, float, int, complex)):
         x = NX.asanyarray(x)
