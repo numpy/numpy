@@ -2817,7 +2817,7 @@ def cumulative_sum(x, /, *, axis=None, dtype=None, out=None,
         but the type will be cast if necessary. See :ref:`ufuncs-output-type`
         for more details.
     include_initial : bool, optional
-        Boolean indicating whether to include the initial value (ones) as
+        Boolean indicating whether to include the initial value (zeros) as
         the first value in the output. With ``include_initial=True``
         the shape of the output is different than the shape of the input.
         Default: ``False``.
