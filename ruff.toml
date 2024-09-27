@@ -28,4 +28,4 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
-"test*.py" = ["E201"]
+"test*.py" = ["E201", "E714"]
