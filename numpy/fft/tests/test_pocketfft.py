@@ -311,7 +311,8 @@ class TestFFT1D:
         x = np.ones((2, 3))
         result = np.fft.rfftn(x, axes=(0, 0, 1), s=(10, 20, 40))
         assert result.shape == (10, 21)
-        expected = np.fft.fft(np.fft.fft(np.fft.rfft(x, axis=1, n=40), axis=0, n=20), axis=0, n=10)
+        expected = np.fft.fft(np.fft.fft(np.fft.rfft(x, axis=1, n=40),
+                            axis=0, n=20), axis=0, n=10)
         assert expected.shape == (10, 21)
         assert_allclose(result, expected, atol=1e-6)
 
