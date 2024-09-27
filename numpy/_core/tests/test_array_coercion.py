@@ -755,6 +755,7 @@ class TestArrayLikes:
         class BadSequence:
             def __len__(self):
                 raise error
+
             def __getitem__(self):
                 # must have getitem to be a Sequence
                 return 1

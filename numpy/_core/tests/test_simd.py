@@ -1032,6 +1032,7 @@ class _SIMD_ALL(_Test_Utility):
         intrin = getattr(self, intrin)
 
         mask_true = self._true_mask()
+
         def to_bool(vector):
             return [lane == mask_true for lane in vector]
 
@@ -1187,6 +1188,7 @@ class _SIMD_ALL(_Test_Utility):
             return
 
         int_min = self._int_min()
+
         def trunc_div(a, d):
             """
             Divide towards zero works with large integers > 2^53,

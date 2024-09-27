@@ -123,6 +123,7 @@ class TestSelectkindConverter(StringConverterTestCase):
 class TestSearchsideConverter(StringConverterTestCase):
     """ Tests of PyArray_SearchsideConverter """
     conv = mt.run_searchside_converter
+
     def test_valid(self):
         self._check('left', 'NPY_SEARCHLEFT')
         self._check('right', 'NPY_SEARCHRIGHT')
@@ -151,6 +152,7 @@ class TestOrderConverter(StringConverterTestCase):
 class TestClipmodeConverter(StringConverterTestCase):
     """ Tests of PyArray_ClipmodeConverter """
     conv = mt.run_clipmode_converter
+
     def test_valid(self):
         self._check('clip', 'NPY_CLIP')
         self._check('wrap', 'NPY_WRAP')

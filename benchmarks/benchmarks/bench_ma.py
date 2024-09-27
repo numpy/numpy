@@ -31,6 +31,7 @@ class Indexing(Benchmark):
     params = [[True, False],
               [1, 2],
               [10, 100, 1000]]
+
     def setup(self, masked, ndim, size):
         x = np.arange(size**ndim).reshape(ndim * (size,))
 

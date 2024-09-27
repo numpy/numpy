@@ -707,6 +707,7 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_allclose(a, matmul(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
                         rtol=get_rtol(u.dtype))
+
         def hermitian(mat):
             axes = list(range(mat.ndim))
             axes[-1], axes[-2] = axes[-2], axes[-1]

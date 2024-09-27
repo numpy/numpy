@@ -1277,6 +1277,7 @@ class TestDateTime:
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in multiply")
             nat = np.timedelta64('NaT')
+
             def check(a, b, res):
                 assert_equal(a * b, res)
                 assert_equal(b * a, res)

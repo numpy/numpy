@@ -526,8 +526,10 @@ class TestNumPyFunctions:
         class ArrayProxy:
             def __init__(self, value):
                 self.value = value
+
             def __array_function__(self, *args, **kwargs):
                 return self.value.__array_function__(*args, **kwargs)
+
             def __array__(self, *args, **kwargs):
                 return self.value.__array__(*args, **kwargs)
 

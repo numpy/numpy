@@ -114,6 +114,7 @@ class matrix(N.ndarray):
 
     """
     __array_priority__ = 10.0
+
     def __new__(subtype, data, dtype=None, copy=True):
         warnings.warn('the matrix subclass is not the recommended way to '
                       'represent matrices or deal with linear algebra (see '

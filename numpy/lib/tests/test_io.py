@@ -1959,6 +1959,7 @@ M   33  21.99
         mdata = TextIO("\n".join(data))
 
         kwargs = dict(delimiter=",", dtype=None, names=True)
+
         def f():
             return np.genfromtxt(mdata, invalid_raise=False, **kwargs)
         mtest = assert_warns(ConversionWarning, f)
@@ -1979,6 +1980,7 @@ M   33  21.99
 
         kwargs = dict(delimiter=",", dtype=None, names=True,
                       invalid_raise=False)
+
         def f():
             return np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
         mtest = assert_warns(ConversionWarning, f)

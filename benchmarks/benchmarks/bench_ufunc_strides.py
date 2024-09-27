@@ -203,6 +203,7 @@ class LogisticRegression(Benchmark):
     params = [np.float32, np.float64]
 
     timeout = 1000
+
     def train(self, max_epoch):
         for epoch in range(max_epoch):
             z = np.matmul(self.X_train, self.W)

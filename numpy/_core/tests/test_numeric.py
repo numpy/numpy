@@ -1883,6 +1883,7 @@ class TestNonzero:
         # gh-13631
         class FalseThenTrue:
             _val = False
+
             def __bool__(self):
                 try:
                     return self._val
@@ -1891,6 +1892,7 @@ class TestNonzero:
 
         class TrueThenFalse:
             _val = True
+
             def __bool__(self):
                 try:
                     return self._val
@@ -1968,6 +1970,7 @@ class TestNonzero:
         dt = np.dtype([("", dt)] * 2)
         # The array should be large enough to likely run into threading issues
         arr = np.random.uniform(size=(5000, 4)).view(dt)[:, 0]
+
         def func(arr):
             arr.nonzero()
 

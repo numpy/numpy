@@ -1130,6 +1130,7 @@ class TestCreation:
         class C:
             def __getitem__(self, i):
                 raise IndexError
+
             def __len__(self):
                 return 42
 
@@ -1141,8 +1142,10 @@ class TestCreation:
         class C:
             def __getitem__(self, x):
                 raise Exception
+
             def __iter__(self):
                 return iter(())
+
             def __len__(self):
                 return 2
 
@@ -1157,8 +1160,10 @@ class TestCreation:
         class A:
             def __init__(self, data):
                 self._data = data
+
             def __getitem__(self, item):
                 return type(self)(self._data[item])
+
             def __len__(self):
                 return len(self._data)
 
@@ -7229,6 +7234,7 @@ class TestMatmul(MatmulCommon):
     vc = np.arange(10.)
     vr = np.arange(6.)
     m0 = np.zeros((3, 0))
+
     @pytest.mark.parametrize('args', (
             # matrix-matrix
             (m1, m2), (m2.T, m1.T), (m2.T.copy(), m1.T), (m2.T, m1.T.copy()),
@@ -7260,6 +7266,7 @@ class TestMatmul(MatmulCommon):
         import fractions
 
         f = np.vectorize(fractions.Fraction)
+
         def random_ints():
             return np.random.randint(1, 1000, size=(10, 3, 3))
         M1 = f(random_ints(), random_ints())

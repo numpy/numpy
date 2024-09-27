@@ -604,6 +604,7 @@ class TestIndexing:
         arr = np.random.uniform(size=(6000, 8)).view(dt)[:, 0]
 
         rng = np.random.default_rng()
+
         def func(arr):
             indx = rng.integers(0, len(arr), size=6000, dtype=np.intp)
             arr[indx]

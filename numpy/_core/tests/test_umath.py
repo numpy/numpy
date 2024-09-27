@@ -4174,8 +4174,10 @@ class TestRoundingFunctions:
         class C:
             def __floor__(self):
                 return 1
+
             def __ceil__(self):
                 return 2
+
             def __trunc__(self):
                 return 3
 

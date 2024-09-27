@@ -310,6 +310,7 @@ class TestUfunc:
     # from include/numpy/ufuncobject.h
     size_inferred = 2
     can_ignore = 4
+
     def test_signature0(self):
         # the arguments to test_signature are: nin, nout, core_signature
         enabled, num_dims, ixs, flags, sizes = umt.test_signature(

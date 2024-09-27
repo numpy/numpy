@@ -72,6 +72,7 @@ class AbstractTest:
     def load_flags(self):
         # a hook
         pass
+
     def test_features(self):
         self.load_flags()
         for gname, features in self.features_groups.items():
@@ -365,6 +366,7 @@ class Test_X86_Features(AbstractTest):
         AVX5124FMAPS="AVX512_4FMAPS", AVX5124VNNIW="AVX512_4VNNIW", AVX512VPOPCNTDQ="AVX512_VPOPCNTDQ",
         AVX512FP16="AVX512_FP16",
     )
+
     def load_flags(self):
         self.load_flags_cpuinfo("flags")
 
@@ -398,6 +400,7 @@ class Test_ARM_Features(AbstractTest):
         NEON_FP16 = ["NEON", "HALF"],
         NEON_VFPV4 = ["NEON", "VFPV4"],
     )
+
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
         arch = self.get_cpuinfo_item("CPU architecture")

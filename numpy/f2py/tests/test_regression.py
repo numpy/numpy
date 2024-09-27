@@ -45,6 +45,7 @@ class TestNegativeBounds(util.F2PyTest):
         xvec = np.arange(12)
         xlow = -6
         xhigh = 4
+
         # Calculate the upper bound,
         # Keeping the 1 index in mind
         def ubound(xl, xh):

@@ -1220,6 +1220,7 @@ class poly1d:
     @property
     def _coeffs(self):
         return self.__dict__['coeffs']
+
     @_coeffs.setter
     def _coeffs(self, coeffs):
         self.__dict__['coeffs'] = coeffs

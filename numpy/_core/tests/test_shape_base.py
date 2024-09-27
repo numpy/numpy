@@ -768,6 +768,7 @@ class TestBlock:
         to_block = [[np.ones((2, 3)), np.ones((2, 2))],
                     [np.ones((2, 2)), np.ones((2, 2))]]
         assert_raises(ValueError, block, to_block)
+
     def test_no_lists(self, block):
         assert_equal(block(1),         np.array(1))
         assert_equal(block(np.eye(3)), np.eye(3))
