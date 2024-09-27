@@ -354,7 +354,8 @@ class ArrayZTestCase(unittest.TestCase):
         "Test ArrayZ asString method"
         for i in range(self.array3.length()):
             self.array3[i] = complex(i + 1, -i - 1)
-        self.assertTrue(self.array3.asString() == "[ (1,-1), (2,-2), (3,-3), (4,-4), (5,-5) ]")
+        self.assertTrue(self.array3.asString() ==
+                        "[ (1,-1), (2,-2), (3,-3), (4,-4), (5,-5) ]")
 
     def testStr(self):
         "Test ArrayZ __str__ method"

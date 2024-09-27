@@ -2147,7 +2147,7 @@ def notmasked_contiguous(a, axis=None):
     >>> np.ma.notmasked_contiguous(ma, axis=1)
     [[slice(0, 1, None), slice(2, 4, None)], [slice(3, 4, None)], [slice(0, 1, None), slice(3, 4, None)]]
 
-    """
+    """  # noqa: E501
     a = asarray(a)
     nd = a.ndim
     if nd > 2:

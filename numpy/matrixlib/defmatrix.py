@@ -481,7 +481,8 @@ class matrix(N.ndarray):
                 [ 1.11803399]])
 
         """
-        return N.ndarray.std(self, axis, dtype, out, ddof, keepdims=True)._collapse(axis)
+        return N.ndarray.std(self, axis, dtype, out, ddof,
+                             keepdims=True)._collapse(axis)
 
     def var(self, axis=None, dtype=None, out=None, ddof=0):
         """
@@ -515,7 +516,8 @@ class matrix(N.ndarray):
                 [1.25]])
 
         """
-        return N.ndarray.var(self, axis, dtype, out, ddof, keepdims=True)._collapse(axis)
+        return N.ndarray.var(self, axis, dtype, out, ddof,
+                             keepdims=True)._collapse(axis)
 
     def prod(self, axis=None, dtype=None, out=None):
         """

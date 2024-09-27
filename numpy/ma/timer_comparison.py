@@ -398,12 +398,18 @@ class ModuleTester:
         self.assert_array_equal(self.average(x, axis=0), 2.5)
         self.assert_array_equal(self.average(x, axis=0, weights=w1), 2.5)
         y = self.array([self.arange(6), 2.0 * self.arange(6)])
-        self.assert_array_equal(self.average(y, None), np.add.reduce(np.arange(6)) * 3. / 12.)
+        self.assert_array_equal(self.average(y, None),
+                                np.add.reduce(np.arange(6)) * 3. / 12.)
         self.assert_array_equal(self.average(y, axis=0), np.arange(6) * 3. / 2.)
-        self.assert_array_equal(self.average(y, axis=1), [self.average(x, axis=0), self.average(x, axis=0) * 2.0])
+        self.assert_array_equal(self.average(y, axis=1),
+                                [self.average(x, axis=0),
+                                 self.average(x, axis=0) * 2.0])
         self.assert_array_equal(self.average(y, None, weights=w2), 20. / 6.)
-        self.assert_array_equal(self.average(y, axis=0, weights=w2), [0., 1., 2., 3., 4., 10.])
-        self.assert_array_equal(self.average(y, axis=1), [self.average(x, axis=0), self.average(x, axis=0) * 2.0])
+        self.assert_array_equal(self.average(y, axis=0, weights=w2),
+                                [0., 1., 2., 3., 4., 10.])
+        self.assert_array_equal(self.average(y, axis=1),
+                                [self.average(x, axis=0),
+                                 self.average(x, axis=0) * 2.0])
         m1 = self.zeros(6)
         m2 = [0, 0, 1, 1, 0, 0]
         m3 = [[0, 0, 1, 1, 0, 0], [0, 1, 1, 1, 1, 0]]
@@ -412,12 +418,14 @@ class ModuleTester:
         self.assert_array_equal(self.average(self.masked_array(x, m1), axis=0), 2.5)
         self.assert_array_equal(self.average(self.masked_array(x, m2), axis=0), 2.5)
         self.assert_array_equal(self.average(self.masked_array(x, m5), axis=0), 0.0)
-        self.assert_array_equal(self.count(self.average(self.masked_array(x, m4), axis=0)), 0)
+        self.assert_array_equal(self.count(self.average(self.masked_array(x, m4),
+                                                        axis=0)), 0)
         z = self.masked_array(y, m3)
         self.assert_array_equal(self.average(z, None), 20. / 6.)
         self.assert_array_equal(self.average(z, axis=0), [0., 1., 99., 99., 4.0, 7.5])
         self.assert_array_equal(self.average(z, axis=1), [2.5, 5.0])
-        self.assert_array_equal(self.average(z, axis=0, weights=w2), [0., 1., 99., 99., 4.0, 10.0])
+        self.assert_array_equal(self.average(z, axis=0, weights=w2),
+                                [0., 1., 99., 99., 4.0, 10.0])
 
     @np.errstate(all='ignore')
     def test_A(self):

@@ -106,7 +106,7 @@ References
   Polynomials," *Journal of Statistical Planning and Inference 14*, 2008
   (https://web.archive.org/web/20080221202153/https://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
 
-"""
+"""  # noqa: E501
 import numpy as np
 import numpy.linalg as la
 from numpy.lib.array_utils import normalize_axis_index

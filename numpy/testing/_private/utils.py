@@ -100,7 +100,8 @@ if os.name == 'nt':
         # thread's CPU usage is either 0 or 100).  To read counters like this,
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
-        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp (dead link)
+        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
+        #(dead link)
         # My older explanation for this was that the "AddCounter" process
         # forced the CPU to 100%, but the above makes more sense :)
         import win32pdh
@@ -2604,7 +2605,9 @@ def check_free_memory(free_bytes):
                    "the test.")
             mem_free = -1
         else:
-            msg = f'{free_bytes / 1e9} GB memory required, but {mem_free / 1e9} GB available'
+            free_bytes_gb = free_bytes / 1e9
+            mem_free_gb = mem_free / 1e9
+            msg = f'{free_bytes_gb} GB memory required, but {mem_free_gb} GB available'
 
     return msg if mem_free < free_bytes else None
 

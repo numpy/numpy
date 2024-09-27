@@ -5705,7 +5705,7 @@ def test_mask_shape_assignment_does_not_break_masked():
     assert_equal(a.mask.shape, ())
 
 @pytest.mark.skipif(sys.flags.optimize > 1,
-                    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
+                    reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")  # noqa: E501
 def test_doc_note():
     def method(self):
         """This docstring

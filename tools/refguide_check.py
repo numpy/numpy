@@ -172,7 +172,8 @@ def find_names(module, names_dict):
     module_name = module.__name__
 
     for line in module.__doc__.splitlines():
-        res = re.search(r"^\s*\.\. (?:currentmodule|module):: ([a-z0-9A-Z_.]+)\s*$", line)
+        res = re.search(r"^\s*\.\. (?:currentmodule|module):: ([a-z0-9A-Z_.]+)\s*$",
+                        line)
         if res:
             module_name = res.group(1)
             continue
@@ -233,7 +234,7 @@ def get_all_dict(module):
         else:
             not_deprecated.append(name)
 
-    others = set(dir(module)).difference(set(deprecated)).difference(set(not_deprecated))
+    others = set(dir(module)).difference(set(deprecated)).difference(set(not_deprecated))  # noqa: E501
 
     return not_deprecated, deprecated, others
 
@@ -358,7 +359,7 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
         return [(None, True, output)]
     else:
         if len(only_all) > 0:
-            output += "ERROR: objects in %s.__all__ but not in refguide::\n\n" % module_name
+            output += "ERROR: objects in %s.__all__ but not in refguide::\n\n" % module_name  # noqa: E501
             for name in sorted(only_all):
                 output += "    " + name + "\n"
 
@@ -366,7 +367,7 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
             output += "the function listing in __init__.py for this module\n"
 
         if len(only_ref) > 0:
-            output += "ERROR: objects in refguide but not in %s.__all__::\n\n" % module_name
+            output += "ERROR: objects in refguide but not in %s.__all__::\n\n" % module_name  # noqa: E501
             for name in sorted(only_ref):
                 output += "    " + name + "\n"
 
@@ -444,16 +445,16 @@ def validate_rst_syntax(text, name, dots=True):
         if not lines:
             continue
 
-        m = re.match(r'.*Unknown (?:interpreted text role|directive type) "(.*)".*$', lines[0])
+        m = re.match(r'.*Unknown (?:interpreted text role|directive type) "(.*)".*$', lines[0])  # noqa: E501
         if m:
             if m.group(1) in ok_unknown_items:
                 continue
 
-        m = re.match(r'.*Error in "math" directive:.*unknown option: "label"', " ".join(lines), re.S)
+        m = re.match(r'.*Error in "math" directive:.*unknown option: "label"', " ".join(lines), re.S)  # noqa: E501
         if m:
             continue
 
-        output += name + lines[0] + "::\n    " + "\n    ".join(lines[1:]).rstrip() + "\n"
+        output += name + lines[0] + "::\n    " + "\n    ".join(lines[1:]).rstrip() + "\n"  # noqa: E501
         success = False
 
     if not success:
@@ -540,7 +541,8 @@ def check_rest(module, names, dots=True):
         else:
             file_full_name = full_name
 
-        results.append((full_name,) + validate_rst_syntax(text, file_full_name, dots=dots))
+        results.append((full_name,) +
+                       validate_rst_syntax(text, file_full_name, dots=dots))
 
     return results
 

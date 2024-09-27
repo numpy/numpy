@@ -408,7 +408,7 @@ def _vander_nd(vander_fs, points, degrees):
     -------
     vander_nd : ndarray
         An array of shape ``points[0].shape + tuple(d + 1 for d in degrees)``.
-    """
+    """  # noqa: E501
     n_dims = len(vander_fs)
     if n_dims != len(points):
         raise ValueError(
