@@ -1387,7 +1387,7 @@ def make_arrays(funcdict):
     # later
     code1list = []
     code2list = []
-    dispdict  = {}
+    dispdict = {}
     names = sorted(funcdict.keys())
     for name in names:
         uf = funcdict[name]

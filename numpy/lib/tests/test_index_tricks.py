@@ -217,7 +217,7 @@ class TestGrid:
                                   0.2*np.ones(20, 'd'), 11)
 
     def test_sparse(self):
-        grid_full   = mgrid[-1:1:10j, -2:2:10j]
+        grid_full = mgrid[-1:1:10j, -2:2:10j]
         grid_sparse = ogrid[-1:1:10j, -2:2:10j]
 
         # sparse grids can be made dense by broadcasting

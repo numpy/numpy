@@ -65,7 +65,7 @@ class TestAccuracy:
                     npfunc = getattr(np, npname)
                     for datatype in np.unique(data['type']):
                         data_subset = data[data['type'] == datatype]
-                        inval  = np.array(str_to_float(data_subset['input'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
+                        inval = np.array(str_to_float(data_subset['input'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
                         outval = np.array(str_to_float(data_subset['output'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
                         perm = np.random.permutation(len(inval))
                         inval = inval[perm]

@@ -19,7 +19,7 @@ class SuperTensorTestCase(unittest.TestCase):
 
     def __init__(self, methodName="runTests"):
         unittest.TestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
     # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
@@ -257,7 +257,7 @@ class SuperTensorTestCase(unittest.TestCase):
 class scharTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "schar"
+        self.typeStr = "schar"
         self.typeCode = "b"
         #self.result   = int(self.result)
 
@@ -266,7 +266,7 @@ class scharTestCase(SuperTensorTestCase):
 class ucharTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "uchar"
+        self.typeStr = "uchar"
         self.typeCode = "B"
         #self.result   = int(self.result)
 
@@ -275,7 +275,7 @@ class ucharTestCase(SuperTensorTestCase):
 class shortTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "short"
+        self.typeStr = "short"
         self.typeCode = "h"
         #self.result   = int(self.result)
 
@@ -284,7 +284,7 @@ class shortTestCase(SuperTensorTestCase):
 class ushortTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "ushort"
+        self.typeStr = "ushort"
         self.typeCode = "H"
         #self.result   = int(self.result)
 
@@ -293,7 +293,7 @@ class ushortTestCase(SuperTensorTestCase):
 class intTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "int"
+        self.typeStr = "int"
         self.typeCode = "i"
         #self.result   = int(self.result)
 
@@ -302,7 +302,7 @@ class intTestCase(SuperTensorTestCase):
 class uintTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "uint"
+        self.typeStr = "uint"
         self.typeCode = "I"
         #self.result   = int(self.result)
 
@@ -311,7 +311,7 @@ class uintTestCase(SuperTensorTestCase):
 class longTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "long"
+        self.typeStr = "long"
         self.typeCode = "l"
         #self.result   = int(self.result)
 
@@ -320,7 +320,7 @@ class longTestCase(SuperTensorTestCase):
 class ulongTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "ulong"
+        self.typeStr = "ulong"
         self.typeCode = "L"
         #self.result   = int(self.result)
 
@@ -329,7 +329,7 @@ class ulongTestCase(SuperTensorTestCase):
 class longLongTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "longLong"
+        self.typeStr = "longLong"
         self.typeCode = "q"
         #self.result   = int(self.result)
 
@@ -338,7 +338,7 @@ class longLongTestCase(SuperTensorTestCase):
 class ulongLongTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "ulongLong"
+        self.typeStr = "ulongLong"
         self.typeCode = "Q"
         #self.result   = int(self.result)
 
@@ -347,7 +347,7 @@ class ulongLongTestCase(SuperTensorTestCase):
 class floatTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "float"
+        self.typeStr = "float"
         self.typeCode = "f"
 
 ######################################################################
@@ -355,7 +355,7 @@ class floatTestCase(SuperTensorTestCase):
 class doubleTestCase(SuperTensorTestCase):
     def __init__(self, methodName="runTest"):
         SuperTensorTestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
 ######################################################################

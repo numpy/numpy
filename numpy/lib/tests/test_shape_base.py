@@ -68,7 +68,7 @@ class TestTakeAlongAxis:
 
     def test_empty(self):
         """ Test everything is ok with empty results, even with inserted dims """
-        a  = np.ones((3, 4, 5))
+        a = np.ones((3, 4, 5))
         ai = np.ones((3, 0, 5), dtype=np.intp)
 
         actual = take_along_axis(a, ai, axis=1)
@@ -76,7 +76,7 @@ class TestTakeAlongAxis:
 
     def test_broadcast(self):
         """ Test that non-indexing dimensions are broadcast in both directions """
-        a  = np.ones((3, 4, 1))
+        a = np.ones((3, 4, 1))
         ai = np.ones((1, 2, 5), dtype=np.intp)
         actual = take_along_axis(a, ai, axis=1)
         assert_equal(actual.shape, (3, 2, 5))
@@ -101,7 +101,7 @@ class TestPutAlongAxis:
 
     def test_broadcast(self):
         """ Test that non-indexing dimensions are broadcast in both directions """
-        a  = np.ones((3, 4, 1))
+        a = np.ones((3, 4, 1))
         ai = np.arange(10, dtype=np.intp).reshape((1, 2, 5)) % 4
         put_along_axis(a, ai, 20, axis=1)
         assert_equal(take_along_axis(a, ai, axis=1), 20)

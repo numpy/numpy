@@ -1336,8 +1336,8 @@ class TestLogAddExp2(_FilterInvalids):
 
     def test_inf(self):
         inf = np.inf
-        x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
-        y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
+        x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]    # noqa: E221
+        y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]  # noqa: E221
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
         with np.errstate(invalid='raise'):
             for dt in ['f', 'd', 'g']:
@@ -1889,10 +1889,10 @@ class TestFPClass:
     def test_fpclass(self, stride):
         arr_f64 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 2.2251e-308, -2.2251e-308], dtype='d')
         arr_f32 = np.array([np.nan, -np.nan, np.inf, -np.inf, -1.0, 1.0, -0.0, 0.0, 1.4013e-045, -1.4013e-045], dtype='f')
-        nan     = np.array([True, True, False, False, False, False, False, False, False, False])
-        inf     = np.array([False, False, True, True, False, False, False, False, False, False])
-        sign    = np.array([False, True, False, True, True, False, True, False, False, True])
-        finite  = np.array([False, False, False, False, True, True, True, True, True, True])
+        nan     = np.array([True, True, False, False, False, False, False, False, False, False])  # noqa: E221
+        inf     = np.array([False, False, True, True, False, False, False, False, False, False])  # noqa: E221
+        sign    = np.array([False, True, False, True, True, False, True, False, False, True])     # noqa: E221
+        finite  = np.array([False, False, False, False, True, True, True, True, True, True])      # noqa: E221
         assert_equal(np.isnan(arr_f32[::stride]), nan[::stride])
         assert_equal(np.isnan(arr_f64[::stride]), nan[::stride])
         assert_equal(np.isinf(arr_f32[::stride]), inf[::stride])
@@ -1985,8 +1985,8 @@ class TestLDExp:
     @pytest.mark.parametrize("dtype", ['f', 'd'])
     def test_ldexp(self, dtype, stride):
         mant = np.array([0.125, 0.25, 0.5, 1., 1., 2., 4., 8.], dtype=dtype)
-        exp  = np.array([3, 2, 1, 0, 0, -1, -2, -3], dtype='i')
-        out  = np.zeros(8, dtype=dtype)
+        exp = np.array([3, 2, 1, 0, 0, -1, -2, -3], dtype='i')
+        out = np.zeros(8, dtype=dtype)
         assert_equal(np.ldexp(mant[::stride], exp[::stride], out=out[::stride]), np.ones(8, dtype=dtype)[::stride])
         assert_equal(out[::stride], np.ones(8, dtype=dtype)[::stride])
 
@@ -1999,9 +1999,9 @@ class TestFRExp:
     def test_frexp(self, dtype, stride):
         arr = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 1.0, -1.0], dtype=dtype)
         mant_true = np.array([np.nan, np.nan, np.inf, -np.inf, 0.0, -0.0, 0.5, -0.5], dtype=dtype)
-        exp_true  = np.array([0, 0, 0, 0, 0, 0, 1, 1], dtype='i')
-        out_mant  = np.ones(8, dtype=dtype)
-        out_exp   = 2*np.ones(8, dtype='i')
+        exp_true = np.array([0, 0, 0, 0, 0, 0, 1, 1], dtype='i')
+        out_mant = np.ones(8, dtype=dtype)
+        out_exp = 2*np.ones(8, dtype='i')
         mant, exp = np.frexp(arr[::stride], out=(out_mant[::stride], out_exp[::stride]))
         assert_equal(mant_true[::stride], mant)
         assert_equal(exp_true[::stride], exp)
@@ -2124,8 +2124,8 @@ class TestLogAddExp(_FilterInvalids):
 
     def test_inf(self):
         inf = np.inf
-        x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]
-        y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]
+        x = [inf, -inf,  inf, -inf, inf, 1,  -inf,  1]    # noqa: E221
+        y = [inf,  inf, -inf, -inf, 1,   inf, 1,   -inf]  # noqa: E221
         z = [inf,  inf,  inf, -inf, inf, inf, 1,    1]
         with np.errstate(invalid='raise'):
             for dt in ['f', 'd', 'g']:
@@ -2396,8 +2396,8 @@ class TestMaximum(_FilterInvalids):
 
     def test_strided_array(self):
         arr1 = np.array([-4.0, 1.0, 10.0,  0.0, np.nan, -np.nan, np.inf, -np.inf])
-        arr2 = np.array([-2.0,-1.0, np.nan, 1.0, 0.0,    np.nan, 1.0,    -3.0])
-        maxtrue  = np.array([-2.0, 1.0, np.nan, 1.0, np.nan, np.nan, np.inf, -3.0])
+        arr2 = np.array([-2.0,-1.0, np.nan, 1.0, 0.0,    np.nan, 1.0,    -3.0])  # noqa: E221
+        maxtrue = np.array([-2.0, 1.0, np.nan, 1.0, np.nan, np.nan, np.inf, -3.0])
         out = np.ones(8)
         out_maxtrue = np.array([-2.0, 1.0, 1.0, 10.0, 1.0, 1.0, np.nan, 1.0])
         assert_equal(np.maximum(arr1,arr2), maxtrue)
@@ -2488,8 +2488,8 @@ class TestMinimum(_FilterInvalids):
 
     def test_strided_array(self):
         arr1 = np.array([-4.0, 1.0, 10.0,  0.0, np.nan, -np.nan, np.inf, -np.inf])
-        arr2 = np.array([-2.0,-1.0, np.nan, 1.0, 0.0,    np.nan, 1.0,    -3.0])
-        mintrue  = np.array([-4.0, -1.0, np.nan, 0.0, np.nan, np.nan, 1.0, -np.inf])
+        arr2 = np.array([-2.0,-1.0, np.nan, 1.0, 0.0,    np.nan, 1.0, -3.0])
+        mintrue = np.array([-4.0, -1.0, np.nan, 0.0, np.nan, np.nan, 1.0, -np.inf])
         out = np.ones(8)
         out_mintrue = np.array([-4.0, 1.0, 1.0, 1.0, 1.0, 1.0, np.nan, 1.0])
         assert_equal(np.minimum(arr1,arr2), mintrue)
@@ -4242,11 +4242,11 @@ class TestComplexFunctions:
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts(self):
         # check branch cuts and continuity on them
-        _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True)
-        _check_branch_cut(np.log2,  -0.5, 1j, 1, -1, True)
+        _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True)  # noqa: E221
+        _check_branch_cut(np.log2,  -0.5, 1j, 1, -1, True)  # noqa: E221
         _check_branch_cut(np.log10, -0.5, 1j, 1, -1, True)
         _check_branch_cut(np.log1p, -1.5, 1j, 1, -1, True)
-        _check_branch_cut(np.sqrt,  -0.5, 1j, 1, -1, True)
+        _check_branch_cut(np.sqrt,  -0.5, 1j, 1, -1, True)  # noqa: E221
 
         _check_branch_cut(np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True)
         _check_branch_cut(np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True)
@@ -4268,11 +4268,11 @@ class TestComplexFunctions:
     @pytest.mark.xfail(IS_WASM, reason="doesn't work")
     def test_branch_cuts_complex64(self):
         # check branch cuts and continuity on them
-        _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True, np.complex64)
-        _check_branch_cut(np.log2,  -0.5, 1j, 1, -1, True, np.complex64)
+        _check_branch_cut(np.log,   -0.5, 1j, 1, -1, True, np.complex64)  # noqa: E221
+        _check_branch_cut(np.log2,  -0.5, 1j, 1, -1, True, np.complex64)  # noqa: E221
         _check_branch_cut(np.log10, -0.5, 1j, 1, -1, True, np.complex64)
         _check_branch_cut(np.log1p, -1.5, 1j, 1, -1, True, np.complex64)
-        _check_branch_cut(np.sqrt,  -0.5, 1j, 1, -1, True, np.complex64)
+        _check_branch_cut(np.sqrt,  -0.5, 1j, 1, -1, True, np.complex64)  # noqa: E221
 
         _check_branch_cut(np.arcsin, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64)
         _check_branch_cut(np.arccos, [ -2, 2],   [1j, 1j], 1, -1, True, np.complex64)

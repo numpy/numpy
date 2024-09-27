@@ -61,8 +61,8 @@ class TestCexp:
         check(f,  np.inf, 0, np.inf, 0)
 
         # cexp(-inf + yi) is +0 * (cos(y) + i sin(y)) for finite y
-        check(f,  -np.inf, 1, ncu.PZERO, ncu.PZERO)
-        check(f,  -np.inf, 0.75 * np.pi, ncu.NZERO, ncu.PZERO)
+        check(f, -np.inf, 1, ncu.PZERO, ncu.PZERO)
+        check(f, -np.inf, 0.75 * np.pi, ncu.NZERO, ncu.PZERO)
 
         # cexp(inf + yi) is +inf * (cos(y) + i sin(y)) for finite y
         check(f,  np.inf, 1, np.inf, np.inf)
@@ -315,9 +315,9 @@ class TestCsqrt:
 
         check(f, ncu.PZERO, np.inf, np.inf, np.inf)
         check(f, ncu.NZERO, np.inf, np.inf, np.inf)
-        check(f,   np.inf, np.inf, np.inf, np.inf)
-        check(f,  -np.inf, np.inf, np.inf, np.inf)
-        check(f,  -np.nan, np.inf, np.inf, np.inf)
+        check(f,    np.inf, np.inf, np.inf, np.inf)
+        check(f,   -np.inf, np.inf, np.inf, np.inf)  # noqa: E221
+        check(f,   -np.nan, np.inf, np.inf, np.inf)  # noqa: E221
 
         # csqrt(x + nani) is nan + nani for any finite x
         check(f,  1, np.nan, np.nan, np.nan)

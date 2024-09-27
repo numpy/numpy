@@ -26,7 +26,7 @@ class _Test_Utility:
     # submodule of the desired SIMD extension, e.g. targets["AVX512F"]
     npyv = None
     # the current data type suffix e.g. 's8'
-    sfx  = None
+    sfx = None
     # target name can be 'baseline' or one or more of CPU features
     target_name = None
 
@@ -413,7 +413,7 @@ class _SIMD_FP(_Test_Utility):
         sqrt_cases = ((-0.0, -0.0), (0.0, 0.0), (-1.0, nan), (ninf, nan), (pinf, pinf))
         for case, desired in sqrt_cases:
             data_sqrt = [desired]*self.nlanes
-            sqrt  = self.sqrt(self.setall(case))
+            sqrt = self.sqrt(self.setall(case))
             assert sqrt == pytest.approx(data_sqrt, nan_ok=True)
 
         data_sqrt = self.load([math.sqrt(x) for x in data]) # load to truncate precision
@@ -428,7 +428,7 @@ class _SIMD_FP(_Test_Utility):
         square_cases = ((nan, nan), (pinf, pinf), (ninf, pinf))
         for case, desired in square_cases:
             data_square = [desired]*self.nlanes
-            square  = self.square(self.setall(case))
+            square = self.square(self.setall(case))
             assert square == pytest.approx(data_square, nan_ok=True)
 
         data_square = [x*x for x in data]
@@ -944,7 +944,7 @@ class _SIMD_ALL(_Test_Utility):
         self.npyv.cleanup()
 
     def test_reorder(self):
-        data_a, data_b  = self._data(), self._data(reverse=True)
+        data_a, data_b = self._data(), self._data(reverse=True)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
         # lower half part
         data_a_lo = data_a[:self.nlanes//2]
@@ -1059,8 +1059,8 @@ class _SIMD_ALL(_Test_Utility):
         vxor = cast(self.xor(vdata_a, vdata_b))
         assert vxor == data_xor
 
-        data_or  = cast_data([a | b for a, b in zip(data_cast_a, data_cast_b)])
-        vor  = cast(getattr(self, "or")(vdata_a, vdata_b))
+        data_or = cast_data([a | b for a, b in zip(data_cast_a, data_cast_b)])
+        vor = cast(getattr(self, "or")(vdata_a, vdata_b))
         assert vor == data_or
 
         data_and = cast_data([a & b for a, b in zip(data_cast_a, data_cast_b)])
@@ -1107,7 +1107,7 @@ class _SIMD_ALL(_Test_Utility):
         from_boolean = getattr(self.npyv, "cvt_%s_%s" % (self.sfx, bsfx))
 
         false_vb = to_boolean(self.setall(0))
-        true_vb  = self.cmpeq(self.setall(0), self.setall(0))
+        true_vb = self.cmpeq(self.setall(0), self.setall(0))
         assert false_vb != true_vb
 
         false_vsfx = from_boolean(false_vb)
@@ -1125,7 +1125,7 @@ class _SIMD_ALL(_Test_Utility):
         totype = self.sfx[0]+str(int(self.sfx[1:])*2)
         expand = getattr(self.npyv, f"expand_{totype}_{self.sfx}")
         # close enough from the edge to detect any deviation
-        data  = self._data(self._int_max() - self.nlanes)
+        data = self._data(self._int_max() - self.nlanes)
         vdata = self.load(data)
         edata = expand(vdata)
         # lower half part
@@ -1144,10 +1144,10 @@ class _SIMD_ALL(_Test_Utility):
 
         # non-saturated
         data_add = self.load([a + b for a, b in zip(data_a, data_b)]) # load to cast
-        add  = self.add(vdata_a, vdata_b)
+        add = self.add(vdata_a, vdata_b)
         assert add == data_add
-        data_sub  = self.load([a - b for a, b in zip(data_a, data_b)])
-        sub  = self.sub(vdata_a, vdata_b)
+        data_sub = self.load([a - b for a, b in zip(data_a, data_b)])
+        sub = self.sub(vdata_a, vdata_b)
         assert sub == data_sub
 
     def test_arithmetic_mul(self):
@@ -1262,7 +1262,7 @@ class _SIMD_ALL(_Test_Utility):
         """
         vdata_a = self.load(self._data())
         vdata_b = self.load(self._data(reverse=True))
-        true_mask  = self.cmpeq(self.zero(), self.zero())
+        true_mask = self.cmpeq(self.zero(), self.zero())
         false_mask = self.cmpneq(self.zero(), self.zero())
 
         data_sub = self.sub(vdata_b, vdata_a)
@@ -1291,7 +1291,7 @@ class _SIMD_ALL(_Test_Utility):
 
 bool_sfx = ("b8", "b16", "b32", "b64")
 int_sfx = ("u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64")
-fp_sfx  = ("f32", "f64")
+fp_sfx = ("f32", "f64")
 all_sfx = int_sfx + fp_sfx
 tests_registry = {
     bool_sfx: _SIMD_BOOL,

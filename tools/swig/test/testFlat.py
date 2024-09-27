@@ -21,7 +21,7 @@ class FlatTestCase(unittest.TestCase):
 
     def __init__(self, methodName="runTest"):
         unittest.TestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
     # Test the (type* INPLACE_ARRAY_FLAT, int DIM_FLAT) typemap
@@ -80,7 +80,7 @@ class FlatTestCase(unittest.TestCase):
 class scharTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "schar"
+        self.typeStr = "schar"
         self.typeCode = "b"
 
 ######################################################################
@@ -88,7 +88,7 @@ class scharTestCase(FlatTestCase):
 class ucharTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "uchar"
+        self.typeStr = "uchar"
         self.typeCode = "B"
 
 ######################################################################
@@ -96,7 +96,7 @@ class ucharTestCase(FlatTestCase):
 class shortTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "short"
+        self.typeStr = "short"
         self.typeCode = "h"
 
 ######################################################################
@@ -104,7 +104,7 @@ class shortTestCase(FlatTestCase):
 class ushortTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "ushort"
+        self.typeStr = "ushort"
         self.typeCode = "H"
 
 ######################################################################
@@ -112,7 +112,7 @@ class ushortTestCase(FlatTestCase):
 class intTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "int"
+        self.typeStr = "int"
         self.typeCode = "i"
 
 ######################################################################
@@ -120,7 +120,7 @@ class intTestCase(FlatTestCase):
 class uintTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "uint"
+        self.typeStr = "uint"
         self.typeCode = "I"
 
 ######################################################################
@@ -128,7 +128,7 @@ class uintTestCase(FlatTestCase):
 class longTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "long"
+        self.typeStr = "long"
         self.typeCode = "l"
 
 ######################################################################
@@ -136,7 +136,7 @@ class longTestCase(FlatTestCase):
 class ulongTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "ulong"
+        self.typeStr = "ulong"
         self.typeCode = "L"
 
 ######################################################################
@@ -144,7 +144,7 @@ class ulongTestCase(FlatTestCase):
 class longLongTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "longLong"
+        self.typeStr = "longLong"
         self.typeCode = "q"
 
 ######################################################################
@@ -152,7 +152,7 @@ class longLongTestCase(FlatTestCase):
 class ulongLongTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "ulongLong"
+        self.typeStr = "ulongLong"
         self.typeCode = "Q"
 
 ######################################################################
@@ -160,7 +160,7 @@ class ulongLongTestCase(FlatTestCase):
 class floatTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "float"
+        self.typeStr = "float"
         self.typeCode = "f"
 
 ######################################################################
@@ -168,7 +168,7 @@ class floatTestCase(FlatTestCase):
 class doubleTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
 ######################################################################

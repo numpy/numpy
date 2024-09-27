@@ -331,8 +331,8 @@ if __name__ == "__main__":
 
 is_linux = sys.platform.startswith('linux')
 is_cygwin = sys.platform.startswith('cygwin')
-machine  = platform.machine()
-is_x86   = re.match("^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
+machine = platform.machine()
+is_x86 = re.match("^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
 @pytest.mark.skipif(
     not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
 )
@@ -395,7 +395,7 @@ class Test_ARM_Features(AbstractTest):
         "SVE", "NEON", "ASIMD", "FPHP", "ASIMDHP", "ASIMDDP", "ASIMDFHM"
     ]
     features_groups = dict(
-        NEON_FP16  = ["NEON", "HALF"],
+        NEON_FP16 = ["NEON", "HALF"],
         NEON_VFPV4 = ["NEON", "VFPV4"],
     )
     def load_flags(self):
