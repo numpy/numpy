@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # System imports
-from   distutils.util import get_platform
+from distutils.util import get_platform
 import os
 import sys
 import unittest

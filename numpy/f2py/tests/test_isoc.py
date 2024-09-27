@@ -13,19 +13,19 @@ class TestISOC(util.F2PyTest):
     def test_c_double(self):
         out = self.module.coddity.c_add(1, 2)
         exp_out = 3
-        assert  out == exp_out
+        assert out == exp_out
 
     # gh-9693
     def test_bindc_function(self):
         out = self.module.coddity.wat(1, 20)
         exp_out = 8
-        assert  out == exp_out
+        assert out == exp_out
 
     # gh-25207
     def test_bindc_kinds(self):
         out = self.module.coddity.c_add_int64(1, 20)
         exp_out = 21
-        assert  out == exp_out
+        assert out == exp_out
 
     # gh-25207
     def test_bindc_add_arr(self):

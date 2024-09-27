@@ -89,7 +89,7 @@ class TestIncludeFiles(util.F2PyTest):
     def test_gh25344(self):
         exp = 7.0
         res = self.module.add(3.0, 4.0)
-        assert  exp == res
+        assert exp == res
 
 class TestF77Comments(util.F2PyTest):
     # Check that comments are stripped from F77 continuation lines

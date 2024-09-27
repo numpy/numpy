@@ -403,7 +403,7 @@ class Test_ARM_Features(AbstractTest):
         arch = self.get_cpuinfo_item("CPU architecture")
         # in case of mounting virtual filesystem of aarch64 kernel
         is_rootfs_v8 = int('0' + next(iter(arch))) > 7 if arch else 0
-        if  re.match("^(aarch64|AARCH64)", machine) or is_rootfs_v8:
+        if re.match("^(aarch64|AARCH64)", machine) or is_rootfs_v8:
             self.features_map = dict(
                 NEON="ASIMD", HALF="ASIMD", VFPV4="ASIMD"
             )

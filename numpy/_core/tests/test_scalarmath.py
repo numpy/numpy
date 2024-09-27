@@ -330,7 +330,7 @@ class TestModulus:
                 fa = a.astype(dt)
                 fb = b.astype(dt)
                 # use list comprehension so a_ and b_ are scalars
-                div, rem = zip(*[op(a_, b_) for  a_, b_ in zip(fa, fb)])
+                div, rem = zip(*[op(a_, b_) for a_, b_ in zip(fa, fb)])
                 assert_equal(div, tgtdiv, err_msg=msg)
                 assert_equal(rem, tgtrem, err_msg=msg)
 
