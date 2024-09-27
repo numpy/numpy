@@ -258,9 +258,9 @@ class TestIndexing:
         a = np.array([[1, 2, 3],
                       [4, 5, 6],
                       [7, 8, 9]])
-        b = np.array([[ True, False,  True],
-                      [False,  True, False],
-                      [ True, False,  True]])
+        b = np.array([[ True, False, True],
+                      [False, True, False],
+                      [ True, False, True]])
         assert_equal(a[b], [1, 3, 5, 7, 9])
         assert_equal(a[b[1]], [[4, 5, 6]])
         assert_equal(a[b[0]], a[b[2]])
@@ -415,7 +415,7 @@ class TestIndexing:
                          dtype=[('target', 'S20'), ('V_mag', '>f4')])
         d.flags.writeable = writeable
         # Advanced indexing results are always writeable:
-        ind = np.array([False,  True,  True], dtype=bool)
+        ind = np.array([False, True, True], dtype=bool)
         assert d[ind].flags.writeable
         ind = np.array([0, 1])
         assert d[ind].flags.writeable

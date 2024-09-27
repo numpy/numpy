@@ -760,7 +760,7 @@ class TestPrintOptions:
         assert_equal(repr(z), 'array([       inf,  1.12e+000, -1.00e+120])')
 
     def test_bool_spacing(self):
-        assert_equal(repr(np.array([True,  True])),
+        assert_equal(repr(np.array([True, True])),
                      'array([ True,  True])')
         assert_equal(repr(np.array([True, False])),
                      'array([ True, False])')

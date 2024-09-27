@@ -2493,9 +2493,9 @@ class TestDateTime:
         '''
         arr_val = [123, -321, "NaT"]
         arr = np.array(arr_val,  dtype= dstr % unit)
-        pos = np.array([True, True,  False])
-        neg = np.array([False, False,  True])
-        false = np.array([False, False,  False])
+        pos = np.array([True, True, False])
+        neg = np.array([False, False, True])
+        false = np.array([False, False, False])
         assert_equal(np.isfinite(arr), pos)
         assert_equal(np.isinf(arr), false)
         assert_equal(np.isnan(arr), neg)

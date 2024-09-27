@@ -3123,15 +3123,15 @@ class TestSpecialMethods:
                 ]))
 
         # method not on the out argument
-        do_test(lambda a: np.add(a, 0),              lambda a: (a, 0))
-        do_test(lambda a: np.add(a, 0, None),        lambda a: (a, 0))
-        do_test(lambda a: np.add(a, 0, out=None),    lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0), lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, None), lambda a: (a, 0))
+        do_test(lambda a: np.add(a, 0, out=None), lambda a: (a, 0))
         do_test(lambda a: np.add(a, 0, out=(None,)), lambda a: (a, 0))
 
         # method on the out argument
-        do_test(lambda a: np.add(0, 0, a),           lambda a: (0, 0, a))
-        do_test(lambda a: np.add(0, 0, out=a),       lambda a: (0, 0, a))
-        do_test(lambda a: np.add(0, 0, out=(a,)),    lambda a: (0, 0, a))
+        do_test(lambda a: np.add(0, 0, a), lambda a: (0, 0, a))
+        do_test(lambda a: np.add(0, 0, out=a), lambda a: (0, 0, a))
+        do_test(lambda a: np.add(0, 0, out=(a,)), lambda a: (0, 0, a))
 
         # Also check the where mask handling:
         do_test(lambda a: np.add(a, 0, where=False), lambda a: (a, 0))

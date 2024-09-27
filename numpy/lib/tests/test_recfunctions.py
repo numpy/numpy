@@ -778,8 +778,8 @@ class TestStackArrays:
                 (b'b', [20.0], 200.0),
                 (b'c', [30.0], 300.0)],
             mask=[
-                (False, [False],  True),
-                (False, [False],  True),
+                (False, [False], True),
+                (False, [False], True),
                 (False, [False], False),
                 (False, [False], False),
                 (False, [False], False)
