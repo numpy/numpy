@@ -211,7 +211,7 @@ class TestHistogram:
         assert_array_equal(a, np.array([0]))
         assert_array_equal(b, np.array([0, 1]))
 
-    def test_error_binnum_type (self):
+    def test_error_binnum_type(self):
         # Tests if right Error is raised if bins argument is float
         vals = np.linspace(0.0, 1.0, num=100)
         histogram(vals, 5)
