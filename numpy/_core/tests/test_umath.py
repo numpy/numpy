@@ -4408,7 +4408,7 @@ class TestComplexFunctions:
             assert_(np.all(good), (func, z0[~good]))
 
         for func in (np.arcsinh, np.arcsinh, np.arcsin, np.arctanh, np.arctan):
-            pts = [rp+1j*ip for rp in (-1e-3, 0, 1e-3) for ip in(-1e-3, 0, 1e-3)
+            pts = [rp+1j*ip for rp in (-1e-3, 0, 1e-3) for ip in (-1e-3, 0, 1e-3)
                    if rp != 0 or ip != 0]
             check(func, pts, 1)
             check(func, pts, 1j)

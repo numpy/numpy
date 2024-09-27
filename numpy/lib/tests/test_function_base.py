@@ -2854,7 +2854,7 @@ class TestPiecewise:
         class subclass(np.ndarray):
             pass
         x = np.arange(5.).view(subclass)
-        r = piecewise(x, [x<2., x>=4], [-1., 1., 0.])
+        r = piecewise(x, [x < 2., x >= 4], [-1., 1., 0.])
         assert_equal(type(r), subclass)
         assert_equal(r, [-1., -1., 0., 0., 1.])
 

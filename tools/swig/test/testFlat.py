@@ -35,7 +35,7 @@ class FlatTestCase(unittest.TestCase):
         x = np.frombuffer(pack_output, dtype=self.typeCode)
         y = x.copy()
         process(y)
-        self.assertEqual(np.all((x+1)==y),True)
+        self.assertEqual(np.all((x+1) == y),True)
 
     def testProcess3D(self):
         "Test Process function 3D array"
@@ -48,7 +48,7 @@ class FlatTestCase(unittest.TestCase):
         x.shape = (2,3,4)
         y = x.copy()
         process(y)
-        self.assertEqual(np.all((x+1)==y),True)
+        self.assertEqual(np.all((x+1) == y),True)
 
     def testProcess3DTranspose(self):
         "Test Process function 3D array, FORTRAN order"
@@ -61,7 +61,7 @@ class FlatTestCase(unittest.TestCase):
         x.shape = (2,3,4)
         y = x.copy()
         process(y.T)
-        self.assertEqual(np.all((x.T+1)==y.T),True)
+        self.assertEqual(np.all((x.T+1) == y.T),True)
 
     def testProcessNoncontiguous(self):
         "Test Process function with non-contiguous array, which should raise an error"

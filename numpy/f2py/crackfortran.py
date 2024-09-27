@@ -1198,7 +1198,7 @@ def analyzeline(m, case, line):
             groupcounter = groupcounter - 1  # end interface
 
     elif case == 'entry':
-        name, args, result, _= _resolvenameargspattern(m.group('after'))
+        name, args, result, _ = _resolvenameargspattern(m.group('after'))
         if name is not None:
             if args:
                 args = rmbadname([x.strip()

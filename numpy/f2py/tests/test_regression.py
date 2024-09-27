@@ -99,7 +99,7 @@ class TestF77Comments(util.F2PyTest):
     def test_gh26148(self):
         x1 = np.array(3, dtype=np.int32)
         x2 = np.array(5, dtype=np.int32)
-        res=self.module.testsub(x1, x2)
+        res = self.module.testsub(x1, x2)
         assert(res[0] == 8)
         assert(res[1] == 15)
 
@@ -107,7 +107,7 @@ class TestF77Comments(util.F2PyTest):
     def test_gh26466(self):
         # Check that comments after PARAMETER directions are stripped
         expected = np.arange(1, 11, dtype=np.float32)*2
-        res=self.module.testsub2()
+        res = self.module.testsub2()
         npt.assert_allclose(expected, res)
 
 class TestF90Contiuation(util.F2PyTest):
@@ -118,7 +118,7 @@ class TestF90Contiuation(util.F2PyTest):
     def test_gh26148b(self):
         x1 = np.array(3, dtype=np.int32)
         x2 = np.array(5, dtype=np.int32)
-        res=self.module.testsub(x1, x2)
+        res = self.module.testsub(x1, x2)
         assert(res[0] == 8)
         assert(res[1] == 15)
 

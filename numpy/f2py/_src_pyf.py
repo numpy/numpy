@@ -68,10 +68,10 @@ def parse_structure(astr):
         if function_start_re.match(astr, start, m.end()):
             while True:
                 i = astr.rfind('\n', ind, start)
-                if i==-1:
+                if i == -1:
                     break
                 start = i
-                if astr[i:i+7]!='\n     $':
+                if astr[i:i+7] != '\n     $':
                     break
         start += 1
         m = routine_end_re.search(astr, m.end())

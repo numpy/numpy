@@ -79,7 +79,7 @@ xplat = rel.reindex(rows, axis=0)
 xplat = 100 * (xplat / xplat.MT19937.values[:,None])
 overall = np.exp(np.log(xplat).mean(0))
 xplat = xplat.T.copy()
-xplat['Overall']=overall
+xplat['Overall'] = overall
 print(xplat.T.round(1))
 
 

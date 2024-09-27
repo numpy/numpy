@@ -9492,10 +9492,10 @@ class TestWritebackIfCopy:
     def test_insert_noncontiguous(self):
         a = np.arange(6).reshape(2, 3).T  # force non-c-contiguous
         # uses arr_insert
-        np.place(a, a>2, [44, 55])
+        np.place(a, a > 2, [44, 55])
         assert_equal(a, np.array([[0, 44], [1, 55], [2, 44]]))
         # hit one of the failing paths
-        assert_raises(ValueError, np.place, a, a>20, [])
+        assert_raises(ValueError, np.place, a, a > 20, [])
 
     def test_put_noncontiguous(self):
         a = np.arange(6).reshape(2, 3).T  # force non-c-contiguous
@@ -9505,7 +9505,7 @@ class TestWritebackIfCopy:
     def test_putmask_noncontiguous(self):
         a = np.arange(6).reshape(2, 3).T  # force non-c-contiguous
         # uses arr_putmask
-        np.putmask(a, a>2, a**2)
+        np.putmask(a, a > 2, a**2)
         assert_equal(a, np.array([[0, 9], [1, 16], [2, 25]]))
 
     def test_take_mode_raise(self):

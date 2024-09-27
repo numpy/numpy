@@ -117,7 +117,7 @@ for nepcat in (
     "open", "rejected",
 ):
     infile = f"{nepcat}.rst.tmpl"
-    outfile =f"{nepcat}.rst"
+    outfile = f"{nepcat}.rst"
 
     print(f'Compiling {infile} -> {outfile}')
     genf = render(infile, meta)

@@ -249,9 +249,9 @@ class matrix(N.ndarray):
         """
         if axis is None:
             return self[0, 0]
-        elif axis==0:
+        elif axis == 0:
             return self
-        elif axis==1:
+        elif axis == 1:
             return self.transpose()
         else:
             raise ValueError("unsupported axis")
