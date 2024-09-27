@@ -307,7 +307,7 @@ class TestScalarDiscovery:
             scalar = scalar.values[0]
 
             if dtype.type == np.void:
-               if scalar.dtype.fields is not None and dtype.fields is None:
+                if scalar.dtype.fields is not None and dtype.fields is None:
                     # Here, coercion to "V6" works, but the cast fails.
                     # Since the types are identical, SETITEM takes care of
                     # this, but has different rules than the cast.
