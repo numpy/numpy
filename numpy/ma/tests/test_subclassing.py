@@ -69,6 +69,7 @@ class MSubArray(SubArray, MaskedArray):
         _view._sharedmask = False
         return _view
 
+
 msubarray = MSubArray
 
 

@@ -330,6 +330,7 @@ if __name__ == "__main__":
             )
             self._expect_error(msg, err_type)
 
+
 is_linux = sys.platform.startswith('linux')
 is_cygwin = sys.platform.startswith('cygwin')
 machine = platform.machine()
@@ -369,6 +370,7 @@ class Test_X86_Features(AbstractTest):
 
     def load_flags(self):
         self.load_flags_cpuinfo("flags")
+
 
 is_power = re.match("^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")

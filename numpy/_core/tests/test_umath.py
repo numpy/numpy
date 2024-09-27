@@ -2008,6 +2008,7 @@ class TestFRExp:
         assert_equal(out_mant[::stride], mant_true[::stride])
         assert_equal(out_exp[::stride], exp_true[::stride])
 
+
 # func : [maxulperror, low, high]
 avx_ufuncs = {'sqrt'        : [1,  0.,   100.],   # noqa: E203
               'absolute'    : [0, -100., 100.],   # noqa: E203

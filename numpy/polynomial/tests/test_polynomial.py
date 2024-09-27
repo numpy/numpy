@@ -16,6 +16,7 @@ from numpy.testing import (
 def trim(x):
     return poly.polytrim(x, tol=1e-6)
 
+
 T0 = [1]
 T1 = [0, 1]
 T2 = [-1, 0, 2]

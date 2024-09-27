@@ -268,6 +268,7 @@ def _hist_bin_auto(x, range):
         # limited variance, so we return a len dependent bw estimator
         return sturges_bw
 
+
 # Private dict initialized at module load time
 _hist_bin_selectors = {'stone': _hist_bin_stone,
                        'auto': _hist_bin_auto,

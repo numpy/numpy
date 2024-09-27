@@ -331,6 +331,7 @@ def _split_line(name, arguments, width):
             newstr = newstr + addstr + argument
     return newstr
 
+
 _namedict = None
 _dictlist = None
 

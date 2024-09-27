@@ -573,6 +573,7 @@ def linkcode_resolve(domain, info):
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
 
+
 from pygments.lexers import CLexer
 from pygments.lexer import inherit
 from pygments.token import Comment

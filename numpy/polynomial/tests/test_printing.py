@@ -480,6 +480,7 @@ class TestLatexRepr:
         p = poly.Polynomial(coefs)
         assert_equal(self.as_latex(p), '$x \\mapsto 1/2 + 1\\,x$')
 
+
 SWITCH_TO_EXP = (
     '1.0 + (1.0e-01) x + (1.0e-02) x**2',
     '1.2 + (1.2e-01) x + (1.2e-02) x**2',

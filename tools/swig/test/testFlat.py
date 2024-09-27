@@ -173,6 +173,7 @@ class doubleTestCase(FlatTestCase):
 
 ######################################################################
 
+
 if __name__ == "__main__":
 
     # Build the test suite

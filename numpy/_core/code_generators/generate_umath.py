@@ -1347,6 +1347,7 @@ def indent(st, spaces):
     indented = re.sub(r' +$', r'', indented)
     return indented
 
+
 # maps [nin, nout][type] to a suffix
 arity_lookup = {
     (1, 1): {

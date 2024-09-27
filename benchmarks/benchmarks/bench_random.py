@@ -84,6 +84,7 @@ class Permutation(Benchmark):
     def time_permutation_int(self):
         np.random.permutation(self.n)
 
+
 nom_size = 100000
 
 class RNG(Benchmark):

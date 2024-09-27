@@ -13,6 +13,7 @@ import numpy.typing as npt
 
 class SubClass(npt.NDArray[np.float64]): ...
 
+
 i8 = np.int64(1)
 
 A = cast(

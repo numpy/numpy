@@ -537,6 +537,7 @@ def fullapi_hash(api_dicts):
         ''.join(a).encode('ascii'), usedforsecurity=False
     ).hexdigest()
 
+
 # To parse strings like 'hex = checksum' where hex is e.g. 0x1234567F and
 # checksum a 128 bits md5 checksum (hex format as well)
 VERRE = re.compile(r'(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
@@ -564,6 +565,7 @@ def main():
         m.update(ah)
         print(hex(int(ah, 16)))
     print(hex(int(m.hexdigest()[:8], 16)))
+
 
 if __name__ == '__main__':
     main()

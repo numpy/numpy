@@ -41,6 +41,7 @@ def convert(s, datatype="np.float32"):
 
     return fp.contents.value         # dereference the pointer, get the float
 
+
 str_to_float = np.vectorize(convert)
 
 class TestAccuracy:

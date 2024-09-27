@@ -538,6 +538,7 @@ def unstack(x, /, *, axis=0):
         raise ValueError("Input array must be at least 1-d.")
     return tuple(_nx.moveaxis(x, axis, 0))
 
+
 # Internal functions to eliminate the overhead of repeated dispatch in one of
 # the two possible paths inside np.block.
 # Use getattr to protect against __array_function__ being disabled.

@@ -79,6 +79,7 @@ def parse_structure(astr):
         spanlist.append((start, end))
     return spanlist
 
+
 template_re = re.compile(r"<\s*(\w[\w\d]*)\s*>")
 named_re = re.compile(r"<\s*(\w[\w\d]*)\s*=\s*(.*?)\s*>")
 list_re = re.compile(r"<\s*((.*?))\s*>")
@@ -97,6 +98,7 @@ def find_and_remove_repl_patterns(astr):
     names = find_repl_patterns(astr)
     astr = re.subn(named_re, '', astr)[0]
     return astr, names
+
 
 item_re = re.compile(r"\A\\(?P<index>\d+)\Z")
 def conv(astr):
@@ -203,6 +205,7 @@ def process_str(allstr):
 
     return writestr
 
+
 include_src_re = re.compile(r"(\n|\A)\s*include\s*['\"](?P<name>[\w\d./\\]+\.src)['\"]", re.I)
 
 def resolve_includes(source):
@@ -226,6 +229,7 @@ def resolve_includes(source):
 def process_file(source):
     lines = resolve_includes(source)
     return process_str(''.join(lines))
+
 
 _special_names = find_repl_patterns('''
 <_c=s,d,c,z>

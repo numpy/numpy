@@ -121,6 +121,7 @@ def _get_cancast_table():
 
     return cancast
 
+
 CAST_TABLE = _get_cancast_table()
 
 

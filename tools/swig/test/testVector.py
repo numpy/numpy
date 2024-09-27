@@ -354,6 +354,7 @@ class doubleTestCase(VectorTestCase):
 
 ######################################################################
 
+
 if __name__ == "__main__":
 
     # Build the test suite

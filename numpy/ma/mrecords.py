@@ -484,6 +484,7 @@ def _mrreconstruct(subtype, baseclass, baseshape, basetype,):
     _mask = np.ndarray.__new__(np.ndarray, baseshape, 'b1')
     return subtype.__new__(subtype, _data, mask=_mask, dtype=basetype,)
 
+
 mrecarray = MaskedRecords
 
 

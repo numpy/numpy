@@ -335,6 +335,7 @@ class doubleTestCase(MatrixTestCase):
 
 ######################################################################
 
+
 if __name__ == "__main__":
 
     # Build the test suite

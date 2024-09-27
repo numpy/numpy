@@ -294,6 +294,7 @@ def scrubSource(source, nsteps=None, verbose=False):
 
     return source
 
+
 if __name__ == '__main__':
     filename = sys.argv[1]
     outfilename = os.path.join(sys.argv[2], os.path.basename(filename))

@@ -1049,6 +1049,7 @@ def polydiv(u, v):
         return poly1d(q), poly1d(r)
     return q, r
 
+
 _poly_mat = re.compile(r"\*\*([0-9]*)")
 def _raise_power(astr, wrap=70):
     n = 0
@@ -1454,5 +1455,6 @@ class poly1d:
         return poly1d(polyder(self.coeffs, m=m))
 
 # Stuff to do on module import
+
 
 warnings.simplefilter('always', RankWarning)

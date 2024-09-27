@@ -1291,6 +1291,7 @@ class _SIMD_ALL(_Test_Utility):
         ifdivz = self.ifdivz(false_mask, vdata_a, vdata_b)
         assert ifdivz == self.zero()
 
+
 bool_sfx = ("b8", "b16", "b32", "b64")
 int_sfx = ("u8", "s8", "u16", "s16", "u32", "s32", "u64", "s64")
 fp_sfx = ("f32", "f64")

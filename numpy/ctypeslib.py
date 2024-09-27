@@ -165,6 +165,7 @@ def _num_fromflags(flaglist):
         num += _flagdict[val]
     return num
 
+
 _flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
               'OWNDATA', 'WRITEBACKIFCOPY']
 def _flags_fromnum(num):

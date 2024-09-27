@@ -102,6 +102,7 @@ class CompilerChecker:
 
             self.compilers_checked = True
 
+
 if not IS_WASM:
     checker = CompilerChecker()
     checker.check_compilers()

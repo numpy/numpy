@@ -19,6 +19,7 @@ def urlopen_stub(url, data=None):
     else:
         raise URLError('Name or service not known')
 
+
 # setup and teardown
 old_urlopen = None
 
@@ -32,6 +33,7 @@ def setup_module():
 
 def teardown_module():
     urllib_request.urlopen = old_urlopen
+
 
 # A valid website for more robust testing
 http_path = 'http://www.google.com/'
