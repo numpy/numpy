@@ -5,7 +5,7 @@ import unittest
 
 # Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
+major, minor = [int(d) for d in np.__version__.split(".")[:2] ]
 if major == 0:
     BadListError = TypeError
 else:
@@ -195,7 +195,7 @@ class Array2TestCase(unittest.TestCase):
         "Test Array2 __setitem__, __getitem__ methods"
         m = self.nrows
         n = self.ncols
-        array1 = [ ]
+        array1 = []
         a = np.arange(n, dtype="l")
         for i in range(m):
             array1.append(Array.Array1(i*a))

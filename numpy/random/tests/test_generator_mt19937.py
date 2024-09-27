@@ -733,7 +733,7 @@ class TestRandomDist:
     def test_integers_closed(self):
         random = Generator(MT19937(self.seed))
         actual = random.integers(-99, 99, size=(3, 2), endpoint=True)
-        desired = np.array([[-80, -56], [ 41, 38], [-83, -15]])
+        desired = np.array([[-80, -56], [41, 38], [-83, -15]])
         assert_array_equal(actual, desired)
 
     def test_integers_max_int(self):

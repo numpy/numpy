@@ -235,9 +235,9 @@ class TestRecFunctions:
         b = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
         out = np.mean(structured_to_unstructured(b[['x', 'z']]), axis=-1)
-        assert_equal(out, np.array([ 3. ,  5.5,  9. , 11. ]))
+        assert_equal(out, np.array([3. ,  5.5,  9. , 11.]))
         out = np.mean(structured_to_unstructured(b[['x']]), axis=-1)
-        assert_equal(out, np.array([ 1. ,  4. ,  7. , 10. ]))
+        assert_equal(out, np.array([1. ,  4. ,  7. , 10.]))
 
         c = np.arange(20).reshape((4,5))
         out = unstructured_to_structured(c, a.dtype)

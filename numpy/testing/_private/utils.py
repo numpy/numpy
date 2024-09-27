@@ -106,8 +106,8 @@ if os.name == 'nt':
         import win32pdh
         if format is None:
             format = win32pdh.PDH_FMT_LONG
-        path = win32pdh.MakeCounterPath( (machine, object, instance, None,
-                                          inum, counter))
+        path = win32pdh.MakeCounterPath((machine, object, instance, None,
+                                         inum, counter))
         hq = win32pdh.OpenQuery()
         try:
             hc = win32pdh.AddCounter(hq, path)

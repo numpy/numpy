@@ -140,7 +140,7 @@ class TestFlags:
         data = b'\x00' * 100
         vals = np.frombuffer(data, 'B')
         assert_raises(ValueError, vals.setflags, write=True)
-        types = np.dtype( [('vals', 'u1'), ('res3', 'S4')] )
+        types = np.dtype([('vals', 'u1'), ('res3', 'S4')] )
         values = np._core.records.fromstring(data, types)
         vals = values['vals']
         assert_raises(ValueError, vals.setflags, write=True)
@@ -153,7 +153,7 @@ class TestFlags:
         assert_(vals.flags.writeable is False)
         vals.setflags(write=True)
         assert_(vals.flags.writeable)
-        types = np.dtype( [('vals', 'u1'), ('res3', 'S4')] )
+        types = np.dtype([('vals', 'u1'), ('res3', 'S4')] )
         values = np._core.records.fromstring(data, types)
         vals = values['vals']
         assert_(vals.flags.writeable)
@@ -6686,7 +6686,7 @@ class TestDot:
     def test_dotvecvecinner(self):
         b1, b3 = self.b1, self.b3
         res = np.dot(b3, b1)
-        tgt = np.array([[ 0.23129668]])
+        tgt = np.array([[0.23129668]])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_dotcolumnvect1(self):
@@ -6716,7 +6716,7 @@ class TestDot:
         b1 = np.random.rand(4, 1)
         b2 = np.random.rand(1, 1)
         res = np.dot(b1, b2)
-        tgt = np.array([[0.00256425],[0.00131359],[0.00200324],[ 0.00398638]])
+        tgt = np.array([[0.00256425],[0.00131359],[0.00200324],[0.00398638]])
         assert_almost_equal(res, tgt, decimal=self.N)
 
     def test_all(self):

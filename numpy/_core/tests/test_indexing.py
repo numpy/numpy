@@ -219,8 +219,8 @@ class TestIndexing:
     def test_boolean_indexing_onedim(self):
         # Indexing a 2-dimensional array with
         # boolean array of length one
-        a = np.array([[ 0.,  0.,  0.]])
-        b = np.array([ True], dtype=bool)
+        a = np.array([[0.,  0.,  0.]])
+        b = np.array([True], dtype=bool)
         assert_equal(a[b], a)
         # boolean assignment
         a[b] = 1.

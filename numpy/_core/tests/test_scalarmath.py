@@ -466,7 +466,7 @@ class TestComplexDivision:
                 # is performed in test_zero_division(), so this is skipped
 
                 # trigger else if branch: real(fabs(denom)) < imag(fabs(denom))
-                data.append((( 1.0, 2.0), ( 1.0, 2.0), (1.0, 0.0)))
+                data.append(((1.0, 2.0), (1.0, 2.0), (1.0, 0.0)))
 
                 for cases in data:
                     n = cases[0]

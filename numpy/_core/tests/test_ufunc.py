@@ -2466,7 +2466,7 @@ class TestUfunc:
         ra = a.view(dtype=('f8,f8,f8')).squeeze()
         mra = ra.view(MyA)
 
-        target = np.array([ True, False, False, False], dtype=bool)
+        target = np.array([True, False, False, False], dtype=bool)
         assert_equal(np.all(target == (mra == ra[0])), True)
 
     def test_scalar_equal(self):
