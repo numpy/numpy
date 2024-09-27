@@ -647,7 +647,6 @@ def test_pickle_disallow(tmpdir):
         )))
         ]),
     ])
-
 def test_descr_to_dtype(dt):
     dt1 = format.descr_to_dtype(dt.descr)
     assert_equal_(dt1, dt)

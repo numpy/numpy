@@ -594,7 +594,6 @@ class TestComplexAbsoluteMixedDTypes:
     @pytest.mark.parametrize("stride", [-4, -3, -2, -1, 1, 2, 3, 4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     @pytest.mark.parametrize("func", ['abs', 'square', 'conjugate'])
-
     def test_array(self, stride, astype, func):
         dtype = [('template_id', '<i8'), ('bank_chisq', '<f4'),
                  ('bank_chisq_dof', '<i8'), ('chisq', '<f4'), ('chisq_dof', '<i8'),
