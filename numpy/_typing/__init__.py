@@ -137,6 +137,7 @@ from ._array_like import (
     _ArrayLikeVoid_co as _ArrayLikeVoid_co,
     _ArrayLikeStr_co as _ArrayLikeStr_co,
     _ArrayLikeBytes_co as _ArrayLikeBytes_co,
+    _ArrayLikeString_co as _ArrayLikeString_co,
     _ArrayLikeUnknown as _ArrayLikeUnknown,
     _UnknownType as _UnknownType,
 )

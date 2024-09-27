@@ -21,6 +21,7 @@ from numpy import (
     str_,
     bytes_,
 )
+from numpy.dtypes import StringDType
 from ._nested_sequence import _NestedSequence
 from ._shape import _Shape
 
@@ -148,6 +149,7 @@ _ArrayLikeBytes_co: TypeAlias = _DualArrayLike[
     dtype[bytes_],
     bytes,
 ]
+_ArrayLikeString_co: TypeAlias = _SupportsArray[StringDType]
 
 # NOTE: This includes `builtins.bool`, but not `numpy.bool`.
 _ArrayLikeInt: TypeAlias = _DualArrayLike[
