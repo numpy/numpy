@@ -140,7 +140,7 @@ class TestFlags:
         data = b'\x00' * 100
         vals = np.frombuffer(data, 'B')
         assert_raises(ValueError, vals.setflags, write=True)
-        types = np.dtype([('vals', 'u1'), ('res3', 'S4')] )
+        types = np.dtype([('vals', 'u1'), ('res3', 'S4')])
         values = np._core.records.fromstring(data, types)
         vals = values['vals']
         assert_raises(ValueError, vals.setflags, write=True)
@@ -153,7 +153,7 @@ class TestFlags:
         assert_(vals.flags.writeable is False)
         vals.setflags(write=True)
         assert_(vals.flags.writeable)
-        types = np.dtype([('vals', 'u1'), ('res3', 'S4')] )
+        types = np.dtype([('vals', 'u1'), ('res3', 'S4')])
         values = np._core.records.fromstring(data, types)
         vals = values['vals']
         assert_(vals.flags.writeable)

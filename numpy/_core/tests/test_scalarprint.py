@@ -15,13 +15,13 @@ class TestRealScalars:
         svals = [0.0, -0.0, 1, -1, np.inf, -np.inf, np.nan]
         styps = [np.float16, np.float32, np.float64, np.longdouble]
         wanted = [
-             ['0.0',  '0.0',  '0.0',  '0.0' ],
+             ['0.0',  '0.0',  '0.0',  '0.0' ],  # noqa: E202
              ['-0.0', '-0.0', '-0.0', '-0.0'],
-             ['1.0',  '1.0',  '1.0',  '1.0' ],
+             ['1.0',  '1.0',  '1.0',  '1.0' ],  # noqa: E202
              ['-1.0', '-1.0', '-1.0', '-1.0'],
-             ['inf',  'inf',  'inf',  'inf' ],
+             ['inf',  'inf',  'inf',  'inf' ],  # noqa: E202
              ['-inf', '-inf', '-inf', '-inf'],
-             ['nan',  'nan',  'nan',  'nan']]
+             ['nan',  'nan',  'nan',  'nan' ]]  # noqa: E202
 
         for wants, val in zip(wanted, svals):
             for want, styp in zip(wants, styps):

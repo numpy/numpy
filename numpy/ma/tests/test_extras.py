@@ -1005,7 +1005,7 @@ class TestMedian:
 
     def test_1d_shape_consistency(self):
         assert_equal(np.ma.median(array([1,2,3],mask=[0,0,0])).shape,
-                     np.ma.median(array([1,2,3],mask=[0,1,0])).shape )
+                     np.ma.median(array([1,2,3],mask=[0,1,0])).shape)
 
     def test_2d(self):
         # Tests median w/ 2D

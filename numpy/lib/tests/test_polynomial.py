@@ -152,7 +152,7 @@ class TestPolynomial:
         assert_almost_equal(est, m, decimal=4)
         val0 = [[ 1.4694, -2.9388,  0.8163],
                 [-2.9388,  6.3673, -2.1224],
-                [ 0.8163, -2.1224,  1.161 ]]
+                [ 0.8163, -2.1224,  1.161 ]]  # noqa: E202
         assert_almost_equal(val0, cov, decimal=4)
 
         m2, cov2 = np.polyfit(x, y+err, 2, w=weights, cov=True)

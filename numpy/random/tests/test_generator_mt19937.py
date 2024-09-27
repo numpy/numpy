@@ -1179,10 +1179,10 @@ class TestRandomDist:
         alpha = np.array([51.72840233779265162, 39.74494232180943953])
         actual = random.dirichlet(alpha, size=(3, 2))
         desired = np.array([[[0.5439892869558927,  0.45601071304410745],
-                             [0.5588917345860708,  0.4411082654139292 ]],
+                             [0.5588917345860708,  0.4411082654139292 ]],  # noqa: E202
                             [[0.5632074165063435,  0.43679258349365657],
                              [0.54862581112627,    0.45137418887373015]],
-                            [[0.49961831357047226, 0.5003816864295278 ],
+                            [[0.49961831357047226, 0.5003816864295278 ],  # noqa: E202
                              [0.52374806183482,    0.47625193816517997]]])
         assert_array_almost_equal(actual, desired, decimal=15)
         bad_alpha = np.array([5.4e-01, -1.0e-16])
@@ -1275,7 +1275,7 @@ class TestRandomDist:
         actual = random.exponential(1.1234, size=(3, 2))
         desired = np.array([[0.098845481066258, 1.560752510746964],
                             [0.075730916041636, 1.769098974710777],
-                            [1.488602544592235, 2.49684815275751 ]])
+                            [1.488602544592235, 2.49684815275751 ]])  # noqa: E202
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_exponential_0(self):
@@ -1286,14 +1286,14 @@ class TestRandomDist:
         random = Generator(MT19937(self.seed))
         actual = random.f(12, 77, size=(3, 2))
         desired = np.array([[0.461720027077085, 1.100441958872451],
-                            [1.100337455217484, 0.91421736740018 ],
+                            [1.100337455217484, 0.91421736740018 ],  # noqa: E202
                             [0.500811891303113, 0.826802454552058]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_gamma(self):
         random = Generator(MT19937(self.seed))
         actual = random.gamma(5, 3, size=(3, 2))
-        desired = np.array([[ 5.03850858902096,  7.9228656732049 ],
+        desired = np.array([[ 5.03850858902096,  7.9228656732049 ],  # noqa: E202
                             [18.73983605132985, 19.57961681699238],
                             [18.17897755150825, 18.17653912505234]])
         assert_array_almost_equal(actual, desired, decimal=14)
@@ -1433,12 +1433,12 @@ class TestRandomDist:
         cov = [[1, 0], [0, 1]]
         size = (3, 2)
         actual = random.multivariate_normal(mean, cov, size, method=method)
-        desired = np.array([[[-1.747478062846581,  11.25613495182354  ],
-                             [-0.9967333370066214, 10.342002097029821 ]],
-                            [[ 0.7850019631242964, 11.181113712443013 ],
-                             [ 0.8901349653255224,  8.873825399642492 ]],
-                            [[ 0.7130260107430003,  9.551628690083056 ],
-                             [ 0.7127098726541128, 11.991709234143173 ]]])
+        desired = np.array([[[-1.747478062846581,  11.25613495182354 ],  # noqa: E202
+                             [-0.9967333370066214, 10.342002097029821]],
+                            [[ 0.7850019631242964, 11.181113712443013],
+                             [ 0.8901349653255224,  8.873825399642492]],
+                            [[ 0.7130260107430003,  9.551628690083056],
+                             [ 0.7127098726541128, 11.991709234143173]]])
 
         assert_array_almost_equal(actual, desired, decimal=15)
 
@@ -1571,7 +1571,7 @@ class TestRandomDist:
         actual = random.noncentral_f(dfnum=5, dfden=2, nonc=1,
                                      size=(3, 2))
         desired = np.array([[0.060310671139  , 0.23866058175939],
-                            [0.86860246709073, 0.2668510459738 ],
+                            [0.86860246709073, 0.2668510459738 ],  # noqa: E202
                             [0.23375780078364, 1.88922102885943]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
@@ -1681,8 +1681,8 @@ class TestRandomDist:
     def test_standard_gamma_float(self):
         random = Generator(MT19937(self.seed))
         actual = random.standard_gamma(shape=3, size=(3, 2))
-        desired = np.array([[0.62971, 1.2238 ],
-                            [3.89941, 4.1248 ],
+        desired = np.array([[0.62971, 1.2238],
+                            [3.89941, 4.1248],
                             [3.74994, 3.74929]])
         assert_array_almost_equal(actual, desired, decimal=5)
 
@@ -1717,7 +1717,7 @@ class TestRandomDist:
     def test_standard_normal(self):
         random = Generator(MT19937(self.seed))
         actual = random.standard_normal(size=(3, 2))
-        desired = np.array([[-1.870934851846581,  1.25613495182354 ],
+        desired = np.array([[-1.870934851846581,  1.25613495182354 ],  # noqa: E202
                             [-1.120190126006621,  0.342002097029821],
                             [ 0.661545174124296,  1.181113712443012]])
         assert_array_almost_equal(actual, desired, decimal=15)
@@ -1728,7 +1728,7 @@ class TestRandomDist:
     def test_standard_t(self):
         random = Generator(MT19937(self.seed))
         actual = random.standard_t(df=10, size=(3, 2))
-        desired = np.array([[-1.484666193042647,  0.30597891831161 ],
+        desired = np.array([[-1.484666193042647,  0.30597891831161],
                             [ 1.056684299648085, -0.407312602088507],
                             [ 0.130704414281157, -2.038053410490321]])
         assert_array_almost_equal(actual, desired, decimal=15)
@@ -1737,7 +1737,7 @@ class TestRandomDist:
         random = Generator(MT19937(self.seed))
         actual = random.triangular(left=5.12, mode=10.23, right=20.34,
                                    size=(3, 2))
-        desired = np.array([[ 7.86664070590917, 13.6313848513185 ],
+        desired = np.array([[ 7.86664070590917, 13.6313848513185 ],  # noqa: E202
                             [ 7.68152445215983, 14.36169131136546],
                             [13.16105603911429, 13.72341621856971]])
         assert_array_almost_equal(actual, desired, decimal=14)
@@ -1846,7 +1846,7 @@ class TestRandomDist:
     def test_wald(self):
         random = Generator(MT19937(self.seed))
         actual = random.wald(mean=1.23, scale=1.54, size=(3, 2))
-        desired = np.array([[0.26871721804551, 3.2233942732115 ],
+        desired = np.array([[0.26871721804551, 3.2233942732115 ],  # noqa: E202
                             [2.20328374987066, 2.40958405189353],
                             [2.07093587449261, 0.73073890064369]])
         assert_array_almost_equal(actual, desired, decimal=14)

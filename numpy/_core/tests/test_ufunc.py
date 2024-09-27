@@ -664,7 +664,7 @@ class TestUfunc:
                 if tc in 'bhilqBHILQ':
                     assert_(res.dtype.name == 'float64')
                 else:
-                    assert_(res.dtype.name == dt.name )
+                    assert_(res.dtype.name == dt.name)
 
                 # Check with output type specified.  This also checks for the
                 # incorrect casts in issue gh-3484 because the unary '-' does

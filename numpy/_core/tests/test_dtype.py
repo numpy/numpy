@@ -1813,7 +1813,7 @@ class TestFromCTypes:
                 ('g', ctypes.c_uint8)
                 ]
         expected = np.dtype(dict(
-            formats=[np.uint8, np.uint16, np.uint8, np.uint16, np.uint32, np.uint32, np.uint8 ],
+            formats=[np.uint8, np.uint16, np.uint8, np.uint16, np.uint32, np.uint32, np.uint8],
             offsets=[0, 2, 4, 6, 8, 12, 16],
             names=['a', 'b', 'c', 'd', 'e', 'f', 'g'],
             itemsize=18))

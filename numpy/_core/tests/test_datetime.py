@@ -377,7 +377,7 @@ class TestDateTime:
     # "generic" to select generic unit
     ("Y"), ("M"), ("W"), ("D"), ("h"), ("m"),
     ("s"), ("ms"), ("us"), ("ns"), ("ps"),
-    ("fs"), ("as"), ("generic") ])
+    ("fs"), ("as"), ("generic")])
     def test_timedelta_np_int_construction(self, unit):
         # regression test for gh-7617
         if unit != "generic":
