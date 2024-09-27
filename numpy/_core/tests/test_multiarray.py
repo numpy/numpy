@@ -1596,9 +1596,9 @@ class TestStructured:
 
     def test_multiindex_titles(self):
         a = np.zeros(4, dtype=[(('a', 'b'), 'i'), ('c', 'i'), ('d', 'i')])
-        assert_raises(KeyError, lambda : a[['a','c']])
-        assert_raises(KeyError, lambda : a[['a','a']])
-        assert_raises(ValueError, lambda : a[['b','b']])  # field exists, but repeated
+        assert_raises(KeyError, lambda: a[['a','c']])
+        assert_raises(KeyError, lambda: a[['a','a']])
+        assert_raises(ValueError, lambda: a[['b','b']])  # field exists, but repeated
         a[['b','c']]  # no exception
 
     def test_structured_cast_promotion_fieldorder(self):
@@ -6521,7 +6521,7 @@ class TestStats:
             (0, True, 7.07106781*np.ones(5)),
             (1, True, 1.41421356*np.ones(5)),
             (0, whf,
-             np.array([4.0824829 , 8.16496581, 5., 7.39509973, 8.49836586])),
+             np.array([4.0824829, 8.16496581, 5., 7.39509973, 8.49836586])),
             (0, whp, 2.5*np.ones(5))
         ]
         for _ax, _wh, _res in _cases:

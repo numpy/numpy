@@ -2009,14 +2009,14 @@ class TestFRExp:
         assert_equal(out_exp[::stride], exp_true[::stride])
 
 # func : [maxulperror, low, high]
-avx_ufuncs = {'sqrt'        :[1,  0.,   100.],
-              'absolute'    :[0, -100., 100.],
-              'reciprocal'  :[1,  1.,   100.],
-              'square'      :[1, -100., 100.],
-              'rint'        :[0, -100., 100.],
-              'floor'       :[0, -100., 100.],
-              'ceil'        :[0, -100., 100.],
-              'trunc'       :[0, -100., 100.]}
+avx_ufuncs = {'sqrt'        :[1,  0.,   100.],   # noqa: E203
+              'absolute'    :[0, -100., 100.],   # noqa: E203
+              'reciprocal'  :[1,  1.,   100.],   # noqa: E203
+              'square'      :[1, -100., 100.],   # noqa: E203
+              'rint'        :[0, -100., 100.],   # noqa: E203
+              'floor'       :[0, -100., 100.],   # noqa: E203
+              'ceil'        :[0, -100., 100.],   # noqa: E203
+              'trunc'       :[0, -100., 100.]}   # noqa: E203
 
 class TestAVXUfuncs:
     def test_avx_based_ufunc(self):

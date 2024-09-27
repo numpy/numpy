@@ -1295,11 +1295,11 @@ fp_sfx  = ("f32", "f64")
 all_sfx = int_sfx + fp_sfx
 tests_registry = {
     bool_sfx: _SIMD_BOOL,
-    int_sfx : _SIMD_INT,
-    fp_sfx  : _SIMD_FP,
+    int_sfx:  _SIMD_INT,
+    fp_sfx:   _SIMD_FP,
     ("f32",): _SIMD_FP32,
     ("f64",): _SIMD_FP64,
-    all_sfx : _SIMD_ALL
+    all_sfx:  _SIMD_ALL
 }
 for target_name, npyv in targets.items():
     simd_width = npyv.simd if npyv else ''

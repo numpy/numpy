@@ -26,3 +26,6 @@ ignore = [
     "W293",
     "W391",
 ]
+
+[lint.per-file-ignores]
+"test*.py" = ["E201"]

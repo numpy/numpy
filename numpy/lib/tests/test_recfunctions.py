@@ -232,12 +232,12 @@ class TestRecFunctions:
         out = structured_to_unstructured(a)
         assert_equal(out, np.zeros((4,5), dtype='f8'))
 
-        b = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+        b = np.array([(1, 2, 5), (4, 5, 7), (7, 8,11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
         out = np.mean(structured_to_unstructured(b[['x', 'z']]), axis=-1)
-        assert_equal(out, np.array([3. ,  5.5,  9. , 11.]))
+        assert_equal(out, np.array([3.,  5.5,  9., 11.]))
         out = np.mean(structured_to_unstructured(b[['x']]), axis=-1)
-        assert_equal(out, np.array([1. ,  4. ,  7. , 10.]))
+        assert_equal(out, np.array([1.,  4. ,  7., 10.]))  # noqa: E203
 
         c = np.arange(20).reshape((4,5))
         out = unstructured_to_structured(c, a.dtype)
@@ -250,15 +250,15 @@ class TestRecFunctions:
                             ('c', 'f4', (2,))])
         assert_equal(out, want)
 
-        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8,11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
         assert_equal(apply_along_fields(np.mean, d),
                      np.array([ 8.0/3,  16.0/3,  26.0/3, 11.]))
         assert_equal(apply_along_fields(np.mean, d[['x', 'z']]),
-                     np.array([ 3. ,  5.5,  9. , 11.]))
+                     np.array([ 3.,  5.5,  9., 11.]))
 
         # check that for uniform field dtypes we get a view, not a copy:
-        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8 ,11), (10, 11, 12)],
+        d = np.array([(1, 2, 5), (4, 5, 7), (7, 8, 11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'i4'), ('z', 'i4')])
         dd = structured_to_unstructured(d)
         ddd = unstructured_to_structured(dd, d.dtype)

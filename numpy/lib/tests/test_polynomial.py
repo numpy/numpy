@@ -165,7 +165,7 @@ class TestPolynomial:
         m3, cov3 = np.polyfit(x, y+err, 2, w=weights, cov="unscaled")
         assert_almost_equal([4.8927, -1.0177, 1.7768], m3, decimal=4)
         val = [[ 0.1473, -0.1677,  0.0163],
-               [-0.1677,  0.228 , -0.0304],
+               [-0.1677,  0.228 , -0.0304],  # noqa: E203
                [ 0.0163, -0.0304,  0.0112]]
         assert_almost_equal(val, cov3, decimal=4)
 

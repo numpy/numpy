@@ -219,10 +219,10 @@ class matrix(N.ndarray):
         return out
 
     def __mul__(self, other):
-        if isinstance(other, (N.ndarray, list, tuple)) :
+        if isinstance(other, (N.ndarray, list, tuple)):
             # This promotes 1-D vectors to row vectors
             return N.dot(self, asmatrix(other))
-        if isscalar(other) or not hasattr(other, '__rmul__') :
+        if isscalar(other) or not hasattr(other, '__rmul__'):
             return N.dot(self, other)
         return NotImplemented
 

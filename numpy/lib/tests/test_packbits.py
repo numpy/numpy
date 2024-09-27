@@ -345,9 +345,9 @@ class TestCount:
 
     @pytest.mark.parametrize('kwargs', [
                     {}, {'count': None},
-                    {'bitorder' : 'little'},
+                    {'bitorder': 'little'},
                     {'bitorder': 'little', 'count': None},
-                    {'bitorder' : 'big'},
+                    {'bitorder': 'big'},
                     {'bitorder': 'big', 'count': None},
                     ])
     def test_axis_count(self, kwargs):

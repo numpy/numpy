@@ -1161,7 +1161,7 @@ def analyzeline(m, case, line):
             if bindcline:
                 bindcdat = re.search(crackline_bindlang, bindcline)
                 if bindcdat:
-                    groupcache[groupcounter]['bindlang'] = {name : {}}
+                    groupcache[groupcounter]['bindlang'] = {name: {}}
                     groupcache[groupcounter]['bindlang'][name]["lang"] = bindcdat.group('lang')
                     if bindcdat.group('lang_name'):
                         groupcache[groupcounter]['bindlang'][name]["name"] = bindcdat.group('lang_name')

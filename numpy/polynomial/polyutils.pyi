@@ -409,7 +409,7 @@ def _fit(
     y: _SeriesLikeCoef_co,
     deg: _SeriesLikeInt_co,
     domain: None | _SeriesLikeCoef_co,
-    rcond: None | _FloatLike_co ,
+    rcond: None | _FloatLike_co,
     full: Literal[True],
     /,
     w: None | _SeriesLikeCoef_co = ...,

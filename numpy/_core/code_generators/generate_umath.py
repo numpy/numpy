@@ -1091,7 +1091,7 @@ defdict = {
           None,
           TD(flts),
           ),
-'ldexp' :
+'ldexp':
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.ldexp'),
           None,
@@ -1105,7 +1105,7 @@ defdict = {
           TypeDescription('g', FuncNameSuffix('int64'), 'g'+int64, 'g'),
           ],
           ),
-'frexp' :
+'frexp':
     Ufunc(1, 2, None,
           docstrings.get('numpy._core.umath.frexp'),
           None,
@@ -1115,14 +1115,14 @@ defdict = {
           TypeDescription('g', None, 'g', 'gi'),
           ],
           ),
-'gcd' :
+'gcd':
     Ufunc(2, 1, Zero,
           docstrings.get('numpy._core.umath.gcd'),
           "PyUFunc_SimpleUniformOperationTypeResolver",
           TD(ints),
           TD('O', f='npy_ObjectGCD'),
           ),
-'lcm' :
+'lcm':
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.lcm'),
           "PyUFunc_SimpleUniformOperationTypeResolver",
@@ -1136,7 +1136,7 @@ defdict = {
           TD(ints, dispatch=[('loops_autovec', ints)], out='B'),
           TD(P, f='bit_count'),
           ),
-'matmul' :
+'matmul':
     Ufunc(2, 1, None,
           docstrings.get('numpy._core.umath.matmul'),
           "PyUFunc_SimpleUniformOperationTypeResolver",

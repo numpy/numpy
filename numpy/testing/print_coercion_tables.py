@@ -96,7 +96,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
         4: ".",  # unsafe casting
     }
     flags_table = {
-        0 : "▗", 7: "█",
+        0: "▗", 7: "█",
         1: "▚", 2: "▐", 4: "▄",
                 3: "▜", 5: "▙",
                         6: "▟",

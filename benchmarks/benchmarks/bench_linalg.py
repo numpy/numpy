@@ -143,7 +143,7 @@ class Einsum(Benchmark):
 
     # multiply(a, b):trigger sum_of_products_contig_two
     def time_einsum_multiply(self, dtype):
-        np.einsum("..., ...", self.two_dim_small, self.three_dim , optimize=True)
+        np.einsum("..., ...", self.two_dim_small, self.three_dim, optimize=True)
 
     # sum and multiply:trigger sum_of_products_contig_stride0_outstride0_two
     def time_einsum_sum_mul(self, dtype):

@@ -28,7 +28,7 @@ ct_number: type[ct.c_uint8 | ct.c_float]
 ct_generic: type[ct.c_bool | ct.c_char]
 
 cs_integer: Literal["u1", "<i2", "L"]
-cs_number: Literal["=L" ,"i", "c16"]
+cs_number: Literal["=L","i", "c16"]
 cs_flex: Literal[">V", "S"]
 cs_generic: Literal["H", "U", "h", "|M8[Y]", "?"]
 

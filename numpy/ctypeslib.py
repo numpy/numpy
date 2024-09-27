@@ -338,9 +338,9 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
 
     klass = type("ndpointer_%s"%name, (base,),
                  {"_dtype_": dtype,
-                  "_shape_" : shape,
-                  "_ndim_" : ndim,
-                  "_flags_" : num})
+                  "_shape_": shape,
+                  "_ndim_": ndim,
+                  "_flags_": num})
     _pointer_type_cache[cache_key] = klass
     return klass
 
