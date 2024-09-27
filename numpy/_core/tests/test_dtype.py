@@ -1770,6 +1770,7 @@ class TestFromCTypes:
                 ('two', ctypes.c_uint32)
             ]
             _pack_ = 1
+
         class Union(ctypes.Union):
             _pack_ = 1
             _fields_ = [

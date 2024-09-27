@@ -136,6 +136,7 @@ class Select(Benchmark):
 
 def memoize(f):
     _memoized = {}
+
     def wrapped(*args):
         if args not in _memoized:
             _memoized[args] = f(*args)

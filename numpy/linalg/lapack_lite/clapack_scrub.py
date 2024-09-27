@@ -155,10 +155,12 @@ class CommentQueue(LineQueue):
 def cleanComments(source):
     lines = LineQueue()
     comments = CommentQueue()
+
     def isCommentLine(line):
         return line.startswith('/*') and line.endswith('*/\n')
 
     blanks = LineQueue()
+
     def isBlank(line):
         return line.strip() == ''
 
@@ -169,6 +171,7 @@ def cleanComments(source):
         else:
             lines.add(line)
             return SourceLines
+
     def HaveCommentLines(line):
         if isBlank(line):
             blanks.add('\n')
@@ -180,6 +183,7 @@ def cleanComments(source):
             comments.flushTo(lines)
             lines.add(line)
             return SourceLines
+
     def HaveBlankLines(line):
         if isBlank(line):
             blanks.add('\n')
@@ -210,11 +214,13 @@ def removeHeader(source):
         else:
             lines.add(line)
             return LookingForHeader
+
     def InHeader(line):
         if line.startswith('*/'):
             return OutOfHeader
         else:
             return InHeader
+
     def OutOfHeader(line):
         if line.startswith('#include "f2c.h"'):
             pass
@@ -243,6 +249,7 @@ def removeSubroutinePrototypes(source):
 
 def removeBuiltinFunctions(source):
     lines = LineQueue()
+
     def LookingForBuiltinFunctions(line):
         if line.strip() == '/* Builtin functions */':
             return InBuiltInFunctions

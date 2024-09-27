@@ -48,6 +48,7 @@ class TestNegativeBounds(util.F2PyTest):
 
         # Calculate the upper bound,
         # Keeping the 1 index in mind
+
         def ubound(xl, xh):
             return xh - xl + 1
         rval = self.module.foo(is_=xlow, ie_=xhigh,

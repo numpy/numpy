@@ -132,6 +132,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     # The np.dtype(x.type) is a bit strange, because dtype classes do
     # not expose much yet.
     types = np.typecodes["All"]
+
     def sorter(x):
         # This is a bit weird hack, to get a table as close as possible to
         # the one printing all typecodes (but expecting user-dtypes).

@@ -194,6 +194,7 @@ def split_arguments(argstr):
     arguments = []
     current_argument = []
     i = 0
+
     def finish_arg():
         if current_argument:
             argstr = ''.join(current_argument).strip()
@@ -461,6 +462,7 @@ NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (annstr, self.return_type,
 def order_dict(d):
     """Order dict by its values."""
     o = list(d.items())
+
     def _key(x):
         return x[1] + (x[0],)
     return sorted(o, key=_key)

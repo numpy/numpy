@@ -205,6 +205,7 @@ class TestIscomplexobj:
         # (pandas.core.dtypes)
         class PdComplex(np.complex128):
             pass
+
         class PdDtype:
             name = 'category'
             names = None
@@ -212,6 +213,7 @@ class TestIscomplexobj:
             kind = 'c'
             str = '<c16'
             base = np.dtype('complex128')
+
         class DummyPd:
             @property
             def dtype(self):
