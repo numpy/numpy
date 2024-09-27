@@ -237,7 +237,7 @@ def test_pack_unpack_order():
     b_big = np.unpackbits(a, axis=1, bitorder='big')
     assert_array_equal(b, b_big)
     assert_array_equal(a, np.packbits(b_little, axis=1, bitorder='little'))
-    assert_array_equal(b[:,::-1], b_little)
+    assert_array_equal(b[:, ::-1], b_little)
     assert_array_equal(a, np.packbits(b_big, axis=1, bitorder='big'))
     assert_raises(ValueError, np.unpackbits, a, bitorder='r')
     assert_raises(TypeError, np.unpackbits, a, bitorder=10)

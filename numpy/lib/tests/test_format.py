@@ -605,10 +605,10 @@ def test_pickle_disallow(tmpdir):
                        ('c', np.int32),
                       ], align=True),
              (3,)),
-    np.dtype([('x', np.dtype({'names':['a','b'],
-                              'formats':['i1','i1'],
-                              'offsets':[0,4],
-                              'itemsize':8,
+    np.dtype([('x', np.dtype({'names': ['a', 'b'],
+                              'formats': ['i1', 'i1'],
+                              'offsets': [0, 4],
+                              'itemsize': 8,
                              },
                     (3,)),
                (4,),
@@ -619,10 +619,10 @@ def test_pickle_disallow(tmpdir):
                )]),
     np.dtype([('x', np.dtype((
         np.dtype((
-            np.dtype({'names':['a','b'],
-                      'formats':['i1','i1'],
-                      'offsets':[0,4],
-                      'itemsize':8}),
+            np.dtype({'names': ['a', 'b'],
+                      'formats': ['i1', 'i1'],
+                      'offsets': [0, 4],
+                      'itemsize': 8}),
             (3,)
             )),
         (4,)
@@ -634,10 +634,10 @@ def test_pickle_disallow(tmpdir):
                 np.dtype((
                     np.dtype([
                         ('a', int),
-                        ('b', np.dtype({'names':['a','b'],
-                                        'formats':['i1','i1'],
-                                        'offsets':[0,4],
-                                        'itemsize':8})),
+                        ('b', np.dtype({'names': ['a', 'b'],
+                                        'formats': ['i1', 'i1'],
+                                        'offsets': [0, 4],
+                                        'itemsize': 8})),
                     ]),
                     (3,),
                 )),

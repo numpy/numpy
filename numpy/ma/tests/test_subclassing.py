@@ -23,7 +23,7 @@ def assert_startswith(a, b):
 class SubArray(np.ndarray):
     # Defines a generic np.ndarray subclass, that stores some metadata
     # in the  dictionary `info`.
-    def __new__(cls,arr,info={}):
+    def __new__(cls, arr, info={}):
         x = np.asanyarray(arr).view(cls)
         x.info = info.copy()
         return x
@@ -255,7 +255,7 @@ class TestSubclassing:
         ym._series._set_mask([0, 0, 0, 0, 1])
         assert_equal(ym._mask, [0, 0, 0, 0, 1])
         #
-        xsub = subarray(x, info={'name':'x'})
+        xsub = subarray(x, info={'name': 'x'})
         mxsub = masked_array(xsub)
         assert_(hasattr(mxsub, 'info'))
         assert_equal(mxsub.info, xsub.info)
@@ -265,7 +265,7 @@ class TestSubclassing:
         x = np.arange(5)
         m = [0, 0, 1, 0, 0]
         xinfo = list(zip(x, m))
-        xsub = MSubArray(x, mask=m, info={'xsub':xinfo})
+        xsub = MSubArray(x, mask=m, info={'xsub': xinfo})
         #
         mxsub = masked_array(xsub, subok=False)
         assert_(not isinstance(mxsub, MSubArray))
@@ -295,14 +295,14 @@ class TestSubclassing:
         # getter should  return a ComplicatedSubArray, even for single item
         # first check we wrote ComplicatedSubArray correctly
         assert_(isinstance(xcsub[1], ComplicatedSubArray))
-        assert_(isinstance(xcsub[1,...], ComplicatedSubArray))
+        assert_(isinstance(xcsub[1, ...], ComplicatedSubArray))
         assert_(isinstance(xcsub[1:4], ComplicatedSubArray))
 
         # now that it propagates inside the MaskedArray
         assert_(isinstance(mxcsub[1], ComplicatedSubArray))
-        assert_(isinstance(mxcsub[1,...].data, ComplicatedSubArray))
+        assert_(isinstance(mxcsub[1, ...].data, ComplicatedSubArray))
         assert_(mxcsub[0] is masked)
-        assert_(isinstance(mxcsub[0,...].data, ComplicatedSubArray))
+        assert_(isinstance(mxcsub[0, ...].data, ComplicatedSubArray))
         assert_(isinstance(mxcsub[1:4].data, ComplicatedSubArray))
 
         # also for flattened version (which goes via MaskedIterator)
@@ -329,8 +329,8 @@ class TestSubclassing:
         xcsub = ComplicatedSubArray(x)
         mxcsub_nomask = masked_array(xcsub)
 
-        assert_(isinstance(mxcsub_nomask[1,...].data, ComplicatedSubArray))
-        assert_(isinstance(mxcsub_nomask[0,...].data, ComplicatedSubArray))
+        assert_(isinstance(mxcsub_nomask[1, ...].data, ComplicatedSubArray))
+        assert_(isinstance(mxcsub_nomask[0, ...].data, ComplicatedSubArray))
 
         assert_(isinstance(mxcsub_nomask[1], ComplicatedSubArray))
         assert_(isinstance(mxcsub_nomask[0], ComplicatedSubArray))
@@ -363,8 +363,8 @@ class TestSubclassing:
     def test_pure_subclass_info_preservation(self):
         # Test that ufuncs and methods conserve extra information consistently;
         # see gh-7122.
-        arr1 = SubMaskedArray('test', data=[1,2,3,4,5,6])
-        arr2 = SubMaskedArray(data=[0,1,2,3,4,5])
+        arr1 = SubMaskedArray('test', data=[1, 2, 3, 4, 5, 6])
+        arr2 = SubMaskedArray(data=[0, 1, 2, 3, 4, 5])
         diff1 = np.subtract(arr1, arr2)
         assert_('info' in diff1._optinfo)
         assert_(diff1._optinfo['info'] == 'test')

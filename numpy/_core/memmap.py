@@ -11,10 +11,10 @@ valid_filemodes = ["r", "c", "r+", "w+"]
 writeable_filemodes = ["r+", "w+"]
 
 mode_equivalents = {
-    "readonly":"r",
-    "copyonwrite":"c",
-    "readwrite":"r+",
-    "write":"w+"
+    "readonly": "r",
+    "copyonwrite": "c",
+    "readwrite": "r+",
+    "write": "w+"
     }
 
 

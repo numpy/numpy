@@ -1018,7 +1018,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
             if bins[i] < 1:
                 raise ValueError(
                     '`bins[{}]` must be positive, when an integer'.format(i))
-            smin, smax = _get_outer_edges(sample[:,i], range[i])
+            smin, smax = _get_outer_edges(sample[:, i], range[i])
             try:
                 n = operator.index(bins[i])
 

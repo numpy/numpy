@@ -1028,7 +1028,7 @@ _MemMapModeKind: TypeAlias = L[
 
 _DT64Date: TypeAlias = _HasDateAttributes | L["TODAY", "today", b"TODAY", b"today"]
 _DT64Now: TypeAlias = L["NOW", "now", b"NOW", b"now"]
-_NaTValue: TypeAlias = L["NAT","NaT", "nat",b"NAT", b"NaT", b"nat"]
+_NaTValue: TypeAlias = L["NAT", "NaT", "nat", b"NAT", b"NaT", b"nat"]
 
 _MonthUnit: TypeAlias = L["Y", "M", b"Y", b"M"]
 _DayUnit: TypeAlias = L["W", "D", b"W", b"D"]

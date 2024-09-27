@@ -47,11 +47,11 @@ class TestCtor:
                               [5, 6, 1, 2],
                               [7, 8, 3, 4]])
         assert_(np.all(bmat("A,A;A,A") == Aresult))
-        assert_(np.all(bmat("A,A;A,A", ldict={'A':B}) == Aresult))
-        assert_raises(TypeError, bmat, "A,A;A,A", gdict={'A':B})
+        assert_(np.all(bmat("A,A;A,A", ldict={'A': B}) == Aresult))
+        assert_raises(TypeError, bmat, "A,A;A,A", gdict={'A': B})
         assert_(
-            np.all(bmat("A,A;A,A", ldict={'A':A}, gdict={'A':B}) == Aresult))
-        b2 = bmat("A,B;C,D", ldict={'A':A,'B':B}, gdict={'C':B,'D':A})
+            np.all(bmat("A,A;A,A", ldict={'A': A}, gdict={'A': B}) == Aresult))
+        b2 = bmat("A,B;C,D", ldict={'A': A, 'B': B}, gdict={'C': B, 'D': A})
         assert_(np.all(b2 == mixresult))
 
 
@@ -365,8 +365,8 @@ class TestNewScalarIndexing:
 
     def test_row_column_indexing(self):
         x = asmatrix(np.eye(2))
-        assert_array_equal(x[0,:], [[1, 0]])
-        assert_array_equal(x[1,:], [[0, 1]])
+        assert_array_equal(x[0, :], [[1, 0]])
+        assert_array_equal(x[1, :], [[0, 1]])
         assert_array_equal(x[:, 0], [[1], [0]])
         assert_array_equal(x[:, 1], [[0], [1]])
 
@@ -375,14 +375,14 @@ class TestNewScalarIndexing:
         A.shape = (3, 2)
         x = asmatrix(A)
         assert_array_equal(x[:, np.array([True, False])], x[:, 0])
-        assert_array_equal(x[np.array([True, False, False]),:], x[0,:])
+        assert_array_equal(x[np.array([True, False, False]), :], x[0, :])
 
     def test_list_indexing(self):
         A = np.arange(6)
         A.shape = (3, 2)
         x = asmatrix(A)
         assert_array_equal(x[:, [1, 0]], x[:, ::-1])
-        assert_array_equal(x[[2, 1, 0],:], x[::-1,:])
+        assert_array_equal(x[[2, 1, 0], :], x[::-1, :])
 
 
 class TestPower:

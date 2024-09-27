@@ -252,7 +252,7 @@ class TestSavezLoad(RoundtripTest):
         np.savez(c, file_a=a, file_b=b)
         c.seek(0)
         l = np.load(c)
-        assert_equal(sorted(dir(l.f)), ['file_a','file_b'])
+        assert_equal(sorted(dir(l.f)), ['file_a', 'file_b'])
         assert_equal(a, l.f.file_a)
         assert_equal(b, l.f.file_b)
 
@@ -389,7 +389,7 @@ class TestSaveTxt:
 
     def test_structured_padded(self):
         # gh-13297
-        a = np.array([(1, 2, 3),(4, 5, 6)], dtype=[
+        a = np.array([(1, 2, 3), (4, 5, 6)], dtype=[
             ('foo', 'i4'), ('bar', 'i4'), ('baz', 'i4')
         ])
         c = BytesIO()
@@ -612,7 +612,7 @@ class TestSaveTxt:
                 # The test takes at least 6GB of memory, writes a file larger
                 # than 4GB. This tests the ``allowZip64`` kwarg to ``zipfile``
                 test_data = np.asarray([np.random.rand(
-                                        np.random.randint(50,100),4)
+                                        np.random.randint(50, 100), 4)
                                         for i in range(800000)], dtype=object)
                 with tempdir() as tmpdir:
                     np.savez(os.path.join(tmpdir, 'test.npz'),
@@ -1233,7 +1233,7 @@ class TestLoadTxt(LoadTxtBase):
         assert_array_equal(x, a)
         # test continuation
         x = np.loadtxt(c, dtype=int, delimiter=',')
-        a = np.array([2,1,4,5], int)
+        a = np.array([2, 1, 4, 5], int)
         assert_array_equal(x, a)
 
     def test_max_rows_larger(self):
@@ -1659,18 +1659,18 @@ M   33  21.99
     @pytest.mark.filterwarnings("ignore:.*recfromcsv.*:DeprecationWarning")
     def test_dtype_with_converters_and_usecols(self):
         dstr = "1,5,-1,1:1\n2,8,-1,1:n\n3,3,-2,m:n\n"
-        dmap = {'1:1':0, '1:n':1, 'm:1':2, 'm:n':3}
-        dtyp = [('e1','i4'),('e2','i4'),('e3','i2'),('n', 'i1')]
+        dmap = {'1:1': 0, '1:n': 1, 'm:1': 2, 'm:n': 3}
+        dtyp = [('e1', 'i4'), ('e2', 'i4'), ('e3', 'i2'), ('n', 'i1')]
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
         test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                           names=None, converters=conv, encoding="bytes")
-        control = np.rec.array([(1,5,-1,0), (2,8,-1,1), (3,3,-2,3)], dtype=dtyp)
+        control = np.rec.array([(1, 5, -1, 0), (2, 8, -1, 1), (3, 3, -2, 3)], dtype=dtyp)
         assert_equal(test, control)
         dtyp = [('e1', 'i4'), ('e2', 'i4'), ('n', 'i1')]
         test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                           usecols=(0, 1, 3), names=None, converters=conv,
                           encoding="bytes")
-        control = np.rec.array([(1,5,0), (2,8,1), (3,3,3)], dtype=dtyp)
+        control = np.rec.array([(1, 5, 0), (2, 8, 1), (3, 3, 3)], dtype=dtyp)
         assert_equal(test, control)
 
     def test_dtype_with_object(self):

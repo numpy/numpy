@@ -1543,7 +1543,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     # Check the keys
     if len(set(key)) != len(key):
-        dup = next(x for n,x in enumerate(key) if x in key[n + 1:])
+        dup = next(x for n, x in enumerate(key) if x in key[n + 1:])
         raise ValueError("duplicate join key %r" % dup)
     for name in key:
         if name not in r1.dtype.names:

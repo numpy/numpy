@@ -22,25 +22,25 @@ class TestIndexing:
         assert_raises(IndexError, lambda: a[0.0])
         assert_raises(IndexError, lambda: a[0, 0.0])
         assert_raises(IndexError, lambda: a[0.0, 0])
-        assert_raises(IndexError, lambda: a[0.0,:])
+        assert_raises(IndexError, lambda: a[0.0, :])
         assert_raises(IndexError, lambda: a[:, 0.0])
-        assert_raises(IndexError, lambda: a[:, 0.0,:])
-        assert_raises(IndexError, lambda: a[0.0,:,:])
+        assert_raises(IndexError, lambda: a[:, 0.0, :])
+        assert_raises(IndexError, lambda: a[0.0, :, :])
         assert_raises(IndexError, lambda: a[0, 0, 0.0])
         assert_raises(IndexError, lambda: a[0.0, 0, 0])
         assert_raises(IndexError, lambda: a[0, 0.0, 0])
         assert_raises(IndexError, lambda: a[-1.4])
         assert_raises(IndexError, lambda: a[0, -1.4])
         assert_raises(IndexError, lambda: a[-1.4, 0])
-        assert_raises(IndexError, lambda: a[-1.4,:])
+        assert_raises(IndexError, lambda: a[-1.4, :])
         assert_raises(IndexError, lambda: a[:, -1.4])
-        assert_raises(IndexError, lambda: a[:, -1.4,:])
-        assert_raises(IndexError, lambda: a[-1.4,:,:])
+        assert_raises(IndexError, lambda: a[:, -1.4, :])
+        assert_raises(IndexError, lambda: a[-1.4, :, :])
         assert_raises(IndexError, lambda: a[0, 0, -1.4])
         assert_raises(IndexError, lambda: a[-1.4, 0, 0])
         assert_raises(IndexError, lambda: a[0, -1.4, 0])
         assert_raises(IndexError, lambda: a[0.0:, 0.0])
-        assert_raises(IndexError, lambda: a[0.0:, 0.0,:])
+        assert_raises(IndexError, lambda: a[0.0:, 0.0, :])
 
     def test_slicing_no_floats(self):
         a = np.array([[5]])
@@ -49,26 +49,26 @@ class TestIndexing:
         assert_raises(TypeError, lambda: a[0.0:])
         assert_raises(TypeError, lambda: a[0:, 0.0:2])
         assert_raises(TypeError, lambda: a[0.0::2, :0])
-        assert_raises(TypeError, lambda: a[0.0:1:2,:])
+        assert_raises(TypeError, lambda: a[0.0:1:2, :])
         assert_raises(TypeError, lambda: a[:, 0.0:])
         # stop as float.
         assert_raises(TypeError, lambda: a[:0.0])
         assert_raises(TypeError, lambda: a[:0, 1:2.0])
         assert_raises(TypeError, lambda: a[:0.0:2, :0])
-        assert_raises(TypeError, lambda: a[:0.0,:])
+        assert_raises(TypeError, lambda: a[:0.0, :])
         assert_raises(TypeError, lambda: a[:, 0:4.0:2])
         # step as float.
         assert_raises(TypeError, lambda: a[::1.0])
         assert_raises(TypeError, lambda: a[0:, :2:2.0])
         assert_raises(TypeError, lambda: a[1::4.0, :0])
-        assert_raises(TypeError, lambda: a[::5.0,:])
+        assert_raises(TypeError, lambda: a[::5.0, :])
         assert_raises(TypeError, lambda: a[:, 0:4:2.0])
         # mixed.
         assert_raises(TypeError, lambda: a[1.0:2:2.0])
         assert_raises(TypeError, lambda: a[1.0::2.0])
         assert_raises(TypeError, lambda: a[0:, :2.0:2.0])
         assert_raises(TypeError, lambda: a[1.0:1:4.0, :0])
-        assert_raises(TypeError, lambda: a[1.0:5.0:5.0,:])
+        assert_raises(TypeError, lambda: a[1.0:5.0:5.0, :])
         assert_raises(TypeError, lambda: a[:, 0.4:4.0:2.0])
         # should still get the DeprecationWarning if step = 0.
         assert_raises(TypeError, lambda: a[::0.0])
@@ -113,8 +113,8 @@ class TestIndexing:
         arr = np.arange(10).reshape(5, 2)
         assert_array_equal(arr[index], arr[u_index])
 
-        arr[u_index] = np.arange(5)[:,None]
-        assert_array_equal(arr, np.arange(5)[:,None].repeat(2, axis=1))
+        arr[u_index] = np.arange(5)[:, None]
+        assert_array_equal(arr, np.arange(5)[:, None].repeat(2, axis=1))
 
         arr = np.arange(25).reshape(5, 5)
         assert_array_equal(arr[u_index, u_index], arr[index, index])
@@ -167,7 +167,7 @@ class TestIndexing:
         # Slicing with ellipsis can skip an
         # arbitrary number of dimensions
         assert_equal(a[0, ...], a[0])
-        assert_equal(a[0, ...], a[0,:])
+        assert_equal(a[0, ...], a[0, :])
         assert_equal(a[..., 0], a[:, 0])
 
         # Slicing with ellipsis always results
@@ -427,7 +427,7 @@ class TestIndexing:
         # This is not necessary to preserve. Memory layouts for
         # more complex indices are not as simple.
         a = np.arange(10)
-        b = np.arange(10).reshape(5,2).T
+        b = np.arange(10).reshape(5, 2).T
         assert_(a[b].flags.f_contiguous)
 
         # Takes a different implementation branch:
@@ -626,7 +626,7 @@ class TestFieldIndexing:
     def test_scalar_return_type(self):
         # Field access on an array should return an array, even if it
         # is 0-d.
-        a = np.zeros((), [('a','f8')])
+        a = np.zeros((), [('a', 'f8')])
         assert_(isinstance(a['a'], np.ndarray))
         assert_(isinstance(a[['a']], np.ndarray))
 
@@ -654,7 +654,7 @@ class TestBroadcastedAssignments:
         # Too large and not only ones.
         assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
         assert_raises(ValueError, assign, a, s_[[1, 2, 3],], np.ones((2, 1)))
-        assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2,2,1)))
+        assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2, 2, 1)))
 
     def test_simple_broadcasting_errors(self):
         assign = self.assign
@@ -692,7 +692,7 @@ class TestBroadcastedAssignments:
 
     def test_broadcast_subspace(self):
         a = np.zeros((100, 100))
-        v = np.arange(100)[:,None]
+        v = np.arange(100)[:, None]
         b = np.arange(100)[::-1]
         a[b] = v
         assert_((a[::-1] == v).all())
@@ -753,7 +753,7 @@ class TestSubclasses:
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-        new_s = s[[0,1,2,3]]
+        new_s = s[[0, 1, 2, 3]]
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
@@ -790,20 +790,20 @@ class TestFancyIndexingEquivalence:
         # The right hand side cannot be converted to an array here.
         a = np.arange(5, dtype=object)
         b = a.copy()
-        a[:3] = [1, (1,2), 3]
-        b[[0, 1, 2]] = [1, (1,2), 3]
+        a[:3] = [1, (1, 2), 3]
+        b[[0, 1, 2]] = [1, (1, 2), 3]
         assert_array_equal(a, b)
 
         # test same for subspace fancy indexing
         b = np.arange(5, dtype=object)[None, :]
-        b[[0], :3] = [[1, (1,2), 3]]
+        b[[0], :3] = [[1, (1, 2), 3]]
         assert_array_equal(a, b[0])
 
         # Check that swapping of axes works.
         # There was a bug that made the later assignment throw a ValueError
         # do to an incorrectly transposed temporary right hand side (gh-5714)
         b = b.T
-        b[:3, [0]] = [[1], [(1,2)], [3]]
+        b[:3, [0]] = [[1], [(1, 2)], [3]]
         assert_array_equal(a, b[:, 0])
 
         # Another test for the memory order of the subspace
@@ -1268,8 +1268,8 @@ class TestFloatNonIntegerArgument:
         a[np.array([0])]
         a[[0, 0]]
         a[:, [0, 0]]
-        a[:, 0,:]
-        a[:,:,:]
+        a[:, 0, :]
+        a[:, :, :]
 
     def test_valid_slicing(self):
         # These should raise no errors.
@@ -1302,7 +1302,7 @@ class TestFloatNonIntegerArgument:
         mult([1], np.int_(3))
 
     def test_reduce_axis_float_index(self):
-        d = np.zeros((3,3,3))
+        d = np.zeros((3, 3, 3))
         assert_raises(TypeError, np.min, d, 0.5)
         assert_raises(TypeError, np.min, d, (0.5, 1))
         assert_raises(TypeError, np.min, d, (1, 2.2))

@@ -111,7 +111,7 @@ class TestAtleast3d:
         a = array([[1, 2], [1, 2]])
         b = array([[2, 3], [2, 3]])
         res = [atleast_3d(a), atleast_3d(b)]
-        desired = [a[:,:, newaxis], b[:,:, newaxis]]
+        desired = [a[:, :, newaxis], b[:, :, newaxis]]
         assert_array_equal(res, desired)
 
     def test_3D_array(self):
@@ -354,7 +354,7 @@ class TestConcatenate:
         import operator
         a = array([1, 2])
         b = array([3, 4])
-        n = [1,2]
+        n = [1, 2]
         res = array([1, 2, 3, 4])
         assert_raises(TypeError, operator.concat, a, b)
         assert_raises(TypeError, operator.concat, a, n)
@@ -367,8 +367,8 @@ class TestConcatenate:
         b = array([3, 4])
 
         assert_raises(ValueError, concatenate, (a, b), out=np.empty(5))
-        assert_raises(ValueError, concatenate, (a, b), out=np.empty((4,1)))
-        assert_raises(ValueError, concatenate, (a, b), out=np.empty((1,4)))
+        assert_raises(ValueError, concatenate, (a, b), out=np.empty((4, 1)))
+        assert_raises(ValueError, concatenate, (a, b), out=np.empty((1, 4)))
         concatenate((a, b), out=np.empty(4))
 
     @pytest.mark.parametrize("axis", [None, 0])
@@ -765,8 +765,8 @@ class TestBlock:
         assert_raises(ValueError, block, [a, b])
         assert_raises(ValueError, block, [b, a])
 
-        to_block = [[np.ones((2,3)), np.ones((2,2))],
-                    [np.ones((2,2)), np.ones((2,2))]]
+        to_block = [[np.ones((2, 3)), np.ones((2, 2))],
+                    [np.ones((2, 2)), np.ones((2, 2))]]
         assert_raises(ValueError, block, to_block)
     def test_no_lists(self, block):
         assert_equal(block(1),         np.array(1))

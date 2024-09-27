@@ -35,7 +35,7 @@ class Histogram1D(Benchmark):
 
 class Histogram2D(Benchmark):
     def setup(self):
-        self.d = np.linspace(0, 100, 200000).reshape((-1,2))
+        self.d = np.linspace(0, 100, 200000).reshape((-1, 2))
 
     def time_full_coverage(self):
         np.histogramdd(self.d, (200, 200), ((0, 100), (0, 100)))

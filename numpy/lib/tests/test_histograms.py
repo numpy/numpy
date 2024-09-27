@@ -220,9 +220,9 @@ class TestHistogram:
     def test_finite_range(self):
         # Normal ranges should be fine
         vals = np.linspace(0.0, 1.0, num=100)
-        histogram(vals, range=[0.25,0.75])
-        assert_raises(ValueError, histogram, vals, range=[np.nan,0.75])
-        assert_raises(ValueError, histogram, vals, range=[0.25,np.inf])
+        histogram(vals, range=[0.25, 0.75])
+        assert_raises(ValueError, histogram, vals, range=[np.nan, 0.75])
+        assert_raises(ValueError, histogram, vals, range=[0.25, np.inf])
 
     def test_invalid_range(self):
         # start of range must be < end of range

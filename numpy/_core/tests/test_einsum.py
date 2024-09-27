@@ -630,8 +630,8 @@ class TestEinsum:
         assert_equal(np.einsum('z,mz,zm->', p, q, r), 253)
 
         # singleton dimensions broadcast (gh-10343)
-        p = np.ones((10,2))
-        q = np.ones((1,2))
+        p = np.ones((10, 2))
+        q = np.ones((1, 2))
         assert_array_equal(np.einsum('ij,ij->j', p, q, optimize=True),
                            np.einsum('ij,ij->j', p, q, optimize=False))
         assert_array_equal(np.einsum('ij,ij->j', p, q, optimize=True),

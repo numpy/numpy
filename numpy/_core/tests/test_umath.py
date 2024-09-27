@@ -585,19 +585,19 @@ class TestDivision:
 
     @pytest.mark.parametrize(
             "dividend,divisor,quotient",
-            [(np.timedelta64(2,'Y'), np.timedelta64(2,'M'), 12),
-             (np.timedelta64(2,'Y'), np.timedelta64(-2,'M'), -12),
-             (np.timedelta64(-2,'Y'), np.timedelta64(2,'M'), -12),
-             (np.timedelta64(-2,'Y'), np.timedelta64(-2,'M'), 12),
-             (np.timedelta64(2,'M'), np.timedelta64(-2,'Y'), -1),
-             (np.timedelta64(2,'Y'), np.timedelta64(0,'M'), 0),
-             (np.timedelta64(2,'Y'), 2, np.timedelta64(1,'Y')),
-             (np.timedelta64(2,'Y'), -2, np.timedelta64(-1,'Y')),
-             (np.timedelta64(-2,'Y'), 2, np.timedelta64(-1,'Y')),
-             (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
-             (np.timedelta64(-2,'Y'), -2, np.timedelta64(1,'Y')),
-             (np.timedelta64(-2,'Y'), -3, np.timedelta64(0,'Y')),
-             (np.timedelta64(-2,'Y'), 0, np.timedelta64('Nat','Y')),
+            [(np.timedelta64(2, 'Y'), np.timedelta64(2, 'M'), 12),
+             (np.timedelta64(2, 'Y'), np.timedelta64(-2, 'M'), -12),
+             (np.timedelta64(-2, 'Y'), np.timedelta64(2, 'M'), -12),
+             (np.timedelta64(-2, 'Y'), np.timedelta64(-2, 'M'), 12),
+             (np.timedelta64(2, 'M'), np.timedelta64(-2, 'Y'), -1),
+             (np.timedelta64(2, 'Y'), np.timedelta64(0, 'M'), 0),
+             (np.timedelta64(2, 'Y'), 2, np.timedelta64(1, 'Y')),
+             (np.timedelta64(2, 'Y'), -2, np.timedelta64(-1, 'Y')),
+             (np.timedelta64(-2, 'Y'), 2, np.timedelta64(-1, 'Y')),
+             (np.timedelta64(-2, 'Y'), -2, np.timedelta64(1, 'Y')),
+             (np.timedelta64(-2, 'Y'), -2, np.timedelta64(1, 'Y')),
+             (np.timedelta64(-2, 'Y'), -3, np.timedelta64(0, 'Y')),
+             (np.timedelta64(-2, 'Y'), 0, np.timedelta64('Nat', 'Y')),
             ])
     def test_division_int_timedelta(self, dividend, divisor, quotient):
         # If either divisor is 0 or quotient is Nat, check for division by 0
@@ -1391,10 +1391,10 @@ class TestLog:
 
     def test_log_strides(self):
         np.random.seed(42)
-        strides = np.array([-4,-3,-2,-1,1,2,3,4])
-        sizes = np.arange(2,100)
+        strides = np.array([-4, -3, -2, -1, 1, 2, 3, 4])
+        sizes = np.arange(2, 100)
         for ii in sizes:
-            x_f64 = np.float64(np.random.uniform(low=0.01, high=100.0,size=ii))
+            x_f64 = np.float64(np.random.uniform(low=0.01, high=100.0, size=ii))
             x_special = x_f64.copy()
             x_special[3:-1:4] = 1.0
             y_true = np.log(x_f64)
@@ -1445,10 +1445,10 @@ class TestExp:
 
     def test_exp_strides(self):
         np.random.seed(42)
-        strides = np.array([-4,-3,-2,-1,1,2,3,4])
-        sizes = np.arange(2,100)
+        strides = np.array([-4, -3, -2, -1, 1, 2, 3, 4])
+        sizes = np.arange(2, 100)
         for ii in sizes:
-            x_f64 = np.float64(np.random.uniform(low=0.01, high=709.1,size=ii))
+            x_f64 = np.float64(np.random.uniform(low=0.01, high=709.1, size=ii))
             y_true = np.exp(x_f64)
             for jj in strides:
                 assert_array_almost_equal_nulp(np.exp(x_f64[::jj]), y_true[::jj], nulp=2)
@@ -1981,7 +1981,7 @@ class TestFPClass:
         assert_equal(np.isfinite(data_split), finite_split)
 
 class TestLDExp:
-    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("stride", [-4, -2, -1, 1, 2, 4])
     @pytest.mark.parametrize("dtype", ['f', 'd'])
     def test_ldexp(self, dtype, stride):
         mant = np.array([0.125, 0.25, 0.5, 1., 1., 2., 4., 8.], dtype=dtype)
@@ -1991,7 +1991,7 @@ class TestLDExp:
         assert_equal(out[::stride], np.ones(8, dtype=dtype)[::stride])
 
 class TestFRExp:
-    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("stride", [-4, -2, -1, 1, 2, 4])
     @pytest.mark.parametrize("dtype", ['f', 'd'])
     @pytest.mark.skipif(not sys.platform.startswith('linux'),
                         reason="np.frexp gives different answers for NAN/INF on windows and linux")
@@ -2009,25 +2009,25 @@ class TestFRExp:
         assert_equal(out_exp[::stride], exp_true[::stride])
 
 # func : [maxulperror, low, high]
-avx_ufuncs = {'sqrt'        :[1,  0.,   100.],   # noqa: E203
-              'absolute'    :[0, -100., 100.],   # noqa: E203
-              'reciprocal'  :[1,  1.,   100.],   # noqa: E203
-              'square'      :[1, -100., 100.],   # noqa: E203
-              'rint'        :[0, -100., 100.],   # noqa: E203
-              'floor'       :[0, -100., 100.],   # noqa: E203
-              'ceil'        :[0, -100., 100.],   # noqa: E203
-              'trunc'       :[0, -100., 100.]}   # noqa: E203
+avx_ufuncs = {'sqrt'        : [1,  0.,   100.],   # noqa: E203
+              'absolute'    : [0, -100., 100.],   # noqa: E203
+              'reciprocal'  : [1,  1.,   100.],   # noqa: E203
+              'square'      : [1, -100., 100.],   # noqa: E203
+              'rint'        : [0, -100., 100.],   # noqa: E203
+              'floor'       : [0, -100., 100.],   # noqa: E203
+              'ceil'        : [0, -100., 100.],   # noqa: E203
+              'trunc'       : [0, -100., 100.]}   # noqa: E203
 
 class TestAVXUfuncs:
     def test_avx_based_ufunc(self):
-        strides = np.array([-4,-3,-2,-1,1,2,3,4])
+        strides = np.array([-4, -3, -2, -1, 1, 2, 3, 4])
         np.random.seed(42)
         for func, prop in avx_ufuncs.items():
             maxulperr = prop[0]
             minval = prop[1]
             maxval = prop[2]
             # various array sizes to ensure masking in AVX is tested
-            for size in range(1,32):
+            for size in range(1, 32):
                 myfunc = getattr(np, func)
                 x_f32 = np.random.uniform(low=minval, high=maxval,
                                           size=size).astype(np.float32)
@@ -2055,13 +2055,13 @@ class TestAVXUfuncs:
 class TestAVXFloat32Transcendental:
     def test_exp_float32(self):
         np.random.seed(42)
-        x_f32 = np.float32(np.random.uniform(low=0.0,high=88.1,size=1000000))
+        x_f32 = np.float32(np.random.uniform(low=0.0, high=88.1, size=1000000))
         x_f64 = np.float64(x_f32)
         assert_array_max_ulp(np.exp(x_f32), np.float32(np.exp(x_f64)), maxulp=3)
 
     def test_log_float32(self):
         np.random.seed(42)
-        x_f32 = np.float32(np.random.uniform(low=0.0,high=1000,size=1000000))
+        x_f32 = np.float32(np.random.uniform(low=0.0, high=1000, size=1000000))
         x_f64 = np.float64(x_f32)
         assert_array_max_ulp(np.log(x_f32), np.float32(np.log(x_f64)), maxulp=4)
 
@@ -2070,7 +2070,7 @@ class TestAVXFloat32Transcendental:
         N = 1000000
         M = np.int_(N / 20)
         index = np.random.randint(low=0, high=N, size=M)
-        x_f32 = np.float32(np.random.uniform(low=-100.,high=100.,size=N))
+        x_f32 = np.float32(np.random.uniform(low=-100., high=100., size=N))
         if not _glibc_older_than("2.17"):
             # test coverage for elements > 117435.992f for which glibc is used
             # this is known to be problematic on old glibc, so skip it there
@@ -2085,10 +2085,10 @@ class TestAVXFloat32Transcendental:
 
     def test_strided_float32(self):
         np.random.seed(42)
-        strides = np.array([-4,-3,-2,-1,1,2,3,4])
-        sizes = np.arange(2,100)
+        strides = np.array([-4, -3, -2, -1, 1, 2, 3, 4])
+        sizes = np.arange(2, 100)
         for ii in sizes:
-            x_f32 = np.float32(np.random.uniform(low=0.01,high=88.1,size=ii))
+            x_f32 = np.float32(np.random.uniform(low=0.01, high=88.1, size=ii))
             x_f32_large = x_f32.copy()
             x_f32_large[3:-1:4] = 120000.0
             exp_true = np.exp(x_f32)
@@ -2395,13 +2395,13 @@ class TestMaximum(_FilterInvalids):
         assert_equal(np.maximum(arg1, arg2), arg2)
 
     def test_strided_array(self):
-        arr1 = np.array([-4.0, 1.0, 10.0,  0.0, np.nan, -np.nan, np.inf, -np.inf])
-        arr2 = np.array([-2.0,-1.0, np.nan, 1.0, 0.0,    np.nan, 1.0,    -3.0])  # noqa: E221
+        arr1 = np.array([-4.0,  1.0, 10.0,   0.0, np.nan, -np.nan, np.inf, -np.inf])
+        arr2 = np.array([-2.0, -1.0, np.nan, 1.0, 0.0,     np.nan, 1.0,    -3.0])  # noqa: E221
         maxtrue = np.array([-2.0, 1.0, np.nan, 1.0, np.nan, np.nan, np.inf, -3.0])
         out = np.ones(8)
         out_maxtrue = np.array([-2.0, 1.0, 1.0, 10.0, 1.0, 1.0, np.nan, 1.0])
-        assert_equal(np.maximum(arr1,arr2), maxtrue)
-        assert_equal(np.maximum(arr1[::2],arr2[::2]), maxtrue[::2])
+        assert_equal(np.maximum(arr1, arr2), maxtrue)
+        assert_equal(np.maximum(arr1[::2], arr2[::2]), maxtrue[::2])
         assert_equal(np.maximum(arr1[:4:], arr2[::2]), np.array([-2.0, np.nan, 10.0, 1.0]))
         assert_equal(np.maximum(arr1[::3], arr2[:3:]), np.array([-2.0, 0.0, np.nan]))
         assert_equal(np.maximum(arr1[:6:2], arr2[::3], out=out[::3]), np.array([-2.0, 10., np.nan]))
@@ -2488,12 +2488,12 @@ class TestMinimum(_FilterInvalids):
 
     def test_strided_array(self):
         arr1 = np.array([-4.0, 1.0, 10.0,  0.0, np.nan, -np.nan, np.inf, -np.inf])
-        arr2 = np.array([-2.0,-1.0, np.nan, 1.0, 0.0,    np.nan, 1.0, -3.0])
+        arr2 = np.array([-2.0, -1.0, np.nan, 1.0, 0.0,    np.nan, 1.0, -3.0])
         mintrue = np.array([-4.0, -1.0, np.nan, 0.0, np.nan, np.nan, 1.0, -np.inf])
         out = np.ones(8)
         out_mintrue = np.array([-4.0, 1.0, 1.0, 1.0, 1.0, 1.0, np.nan, 1.0])
-        assert_equal(np.minimum(arr1,arr2), mintrue)
-        assert_equal(np.minimum(arr1[::2],arr2[::2]), mintrue[::2])
+        assert_equal(np.minimum(arr1, arr2), mintrue)
+        assert_equal(np.minimum(arr1[::2], arr2[::2]), mintrue[::2])
         assert_equal(np.minimum(arr1[:4:], arr2[::2]), np.array([-4.0, np.nan, 0.0, 0.0]))
         assert_equal(np.minimum(arr1[::3], arr2[:3:]), np.array([-4.0, -1.0, np.nan]))
         assert_equal(np.minimum(arr1[:6:2], arr2[::3], out=out[::3]), np.array([-4.0, 1.0, np.nan]))
@@ -3470,7 +3470,7 @@ class TestSpecialMethods:
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduce')
         assert_equal(res[3], (a,))
-        assert_equal(res[4], {'dtype':'dtype0',
+        assert_equal(res[4], {'dtype': 'dtype0',
                               'out': ('out0',),
                               'keepdims': 'keep0',
                               'axis': 'axis0'})
@@ -3483,7 +3483,7 @@ class TestSpecialMethods:
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduce')
         assert_equal(res[3], (a,))
-        assert_equal(res[4], {'dtype':'dtype0',
+        assert_equal(res[4], {'dtype': 'dtype0',
                               'out': ('out0',),
                               'keepdims': 'keep0',
                               'axis': 'axis0',
@@ -3522,7 +3522,7 @@ class TestSpecialMethods:
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'accumulate')
         assert_equal(res[3], (a,))
-        assert_equal(res[4], {'dtype':'dtype0',
+        assert_equal(res[4], {'dtype': 'dtype0',
                               'out': ('out0',),
                               'axis': 'axis0'})
 
@@ -3533,7 +3533,7 @@ class TestSpecialMethods:
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'accumulate')
         assert_equal(res[3], (a,))
-        assert_equal(res[4], {'dtype':'dtype0',
+        assert_equal(res[4], {'dtype': 'dtype0',
                               'out': ('out0',),
                               'axis': 'axis0'})
 
@@ -3558,7 +3558,7 @@ class TestSpecialMethods:
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduceat')
         assert_equal(res[3], (a, [4, 2]))
-        assert_equal(res[4], {'dtype':'dtype0',
+        assert_equal(res[4], {'dtype': 'dtype0',
                               'out': ('out0',),
                               'axis': 'axis0'})
 
@@ -3569,7 +3569,7 @@ class TestSpecialMethods:
         assert_equal(res[1], np.multiply)
         assert_equal(res[2], 'reduceat')
         assert_equal(res[3], (a, [4, 2]))
-        assert_equal(res[4], {'dtype':'dtype0',
+        assert_equal(res[4], {'dtype': 'dtype0',
                               'out': ('out0',),
                               'axis': 'axis0'})
 

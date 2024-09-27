@@ -847,7 +847,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     odd = counts % 2 == 1
     l = np.where(odd, h, h - 1)
 
-    lh = np.concatenate([l,h], axis=axis)
+    lh = np.concatenate([l, h], axis=axis)
 
     # get low and high median
     low_high = np.take_along_axis(asorted, lh, axis=axis)

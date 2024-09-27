@@ -450,8 +450,8 @@ class TestConcatenator:
         assert_array_equal(d.mask, np.r_['1', m_1, m_2])
         d = mr_[b_1, b_2]
         assert_(d.shape == (10, 5))
-        assert_array_equal(d[:5,:], b_1)
-        assert_array_equal(d[5:,:], b_2)
+        assert_array_equal(d[:5, :], b_1)
+        assert_array_equal(d[5:, :], b_2)
         assert_array_equal(d.mask, np.r_[m_1, m_2])
 
     def test_masked_constant(self):
@@ -539,8 +539,8 @@ class TestCompressFunctions:
     def test_compress_nd(self):
         # Tests compress_nd
         x = np.array(list(range(3 * 4 * 5))).reshape(3, 4, 5)
-        m = np.zeros((3,4,5)).astype(bool)
-        m[1,1,1] = True
+        m = np.zeros((3, 4, 5)).astype(bool)
+        m[1, 1, 1] = True
         x = array(x, mask=m)
 
         # axis=None
@@ -974,38 +974,38 @@ class TestMedian:
         assert_equal(np.ma.median(x), 2.)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
-        x = array(np.arange(5), mask=[0,1,0,0,0])
+        x = array(np.arange(5), mask=[0, 1, 0, 0, 0])
         assert_equal(np.ma.median(x), 2.5)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
-        x = array(np.arange(5), mask=[0,1,1,1,1])
+        x = array(np.arange(5), mask=[0, 1, 1, 1, 1])
         assert_equal(np.ma.median(x), 0.)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
         # integer
-        x = array(np.arange(5), mask=[0,1,1,0,0])
+        x = array(np.arange(5), mask=[0, 1, 1, 0, 0])
         assert_equal(np.ma.median(x), 3.)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
         # float
-        x = array(np.arange(5.), mask=[0,1,1,0,0])
+        x = array(np.arange(5.), mask=[0, 1, 1, 0, 0])
         assert_equal(np.ma.median(x), 3.)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
         # integer
-        x = array(np.arange(6), mask=[0,1,1,1,1,0])
+        x = array(np.arange(6), mask=[0, 1, 1, 1, 1, 0])
         assert_equal(np.ma.median(x), 2.5)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
         # float
-        x = array(np.arange(6.), mask=[0,1,1,1,1,0])
+        x = array(np.arange(6.), mask=[0, 1, 1, 1, 1, 0])
         assert_equal(np.ma.median(x), 2.5)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
 
     def test_1d_shape_consistency(self):
-        assert_equal(np.ma.median(array([1,2,3],mask=[0,0,0])).shape,
-                     np.ma.median(array([1,2,3],mask=[0,1,0])).shape)
+        assert_equal(np.ma.median(array([1, 2, 3], mask=[0, 0, 0])).shape,
+                     np.ma.median(array([1, 2, 3], mask=[0, 1, 0])).shape)
 
     def test_2d(self):
         # Tests median w/ 2D
@@ -1502,7 +1502,7 @@ class TestPolynomial:
             assert_almost_equal(a, a_)
         #
         (C, R, K, S, D) = polyfit(x, y, 3, full=True)
-        (c, r, k, s, d) = np.polyfit(x[1:-1], y[1:-1,:], 3, full=True)
+        (c, r, k, s, d) = np.polyfit(x[1:-1], y[1:-1, :], 3, full=True)
         for (a, a_) in zip((C, R, K, S, D), (c, r, k, s, d)):
             assert_almost_equal(a, a_)
         #
@@ -1522,14 +1522,14 @@ class TestPolynomial:
         y = np.random.rand(20).reshape(-1, 2)
 
         x[0] = np.nan
-        y[-1,-1] = np.nan
+        y[-1, -1] = np.nan
         x = x.view(MaskedArray)
         y = y.view(MaskedArray)
         x[0] = masked
-        y[-1,-1] = masked
+        y[-1, -1] = masked
 
         (C, R, K, S, D) = polyfit(x, y, 3, full=True)
-        (c, r, k, s, d) = np.polyfit(x[1:-1], y[1:-1,:], 3, full=True)
+        (c, r, k, s, d) = np.polyfit(x[1:-1], y[1:-1, :], 3, full=True)
         for (a, a_) in zip((C, R, K, S, D), (c, r, k, s, d)):
             assert_almost_equal(a, a_)
 

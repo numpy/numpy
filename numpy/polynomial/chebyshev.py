@@ -1720,7 +1720,7 @@ def chebroots(c):
         return np.array([-c[0] / c[1]])
 
     # rotated companion matrix reduces error
-    m = chebcompanion(c)[::-1,::-1]
+    m = chebcompanion(c)[::-1, ::-1]
     r = la.eigvals(m)
     r.sort()
     return r

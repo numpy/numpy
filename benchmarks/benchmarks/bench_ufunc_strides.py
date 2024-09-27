@@ -172,10 +172,10 @@ class UnaryIntContig(_AbstractUnary):
     ]
 
 class Mandelbrot(Benchmark):
-    def f(self,z):
+    def f(self, z):
         return np.abs(z) < 4.0
 
-    def g(self,z,c):
+    def g(self, z, c):
         return np.sum(np.multiply(z, z) + c)
 
     def mandelbrot_numpy(self, c, maxiter):
@@ -184,19 +184,19 @@ class Mandelbrot(Benchmark):
         for it in range(maxiter):
             notdone = self.f(z)
             output[notdone] = it
-            z[notdone] = self.g(z[notdone],c[notdone])
+            z[notdone] = self.g(z[notdone], c[notdone])
         output[output == maxiter - 1] = 0
         return output
 
-    def mandelbrot_set(self,xmin,xmax,ymin,ymax,width,height,maxiter):
+    def mandelbrot_set(self, xmin, xmax, ymin, ymax, width, height, maxiter):
         r1 = np.linspace(xmin, xmax, width, dtype=np.float32)
         r2 = np.linspace(ymin, ymax, height, dtype=np.float32)
-        c = r1 + r2[:,None] * 1j
-        n3 = self.mandelbrot_numpy(c,maxiter)
-        return (r1,r2,n3.T)
+        c = r1 + r2[:, None] * 1j
+        n3 = self.mandelbrot_numpy(c, maxiter)
+        return (r1, r2, n3.T)
 
     def time_mandel(self):
-        self.mandelbrot_set(-0.74877,-0.74872,0.06505,0.06510,1000,1000,2048)
+        self.mandelbrot_set(-0.74877, -0.74872, 0.06505, 0.06510, 1000, 1000, 2048)
 
 class LogisticRegression(Benchmark):
     param_names = ['dtype']
@@ -216,11 +216,11 @@ class LogisticRegression(Benchmark):
         np.random.seed(42)
         self.size = 250
         features = 16
-        self.X_train = np.random.rand(self.size,features).astype(dtype)
-        self.Y_train = np.random.choice(2,self.size).astype(dtype)
+        self.X_train = np.random.rand(self.size, features).astype(dtype)
+        self.Y_train = np.random.choice(2, self.size).astype(dtype)
         # Initialize weights
-        self.W = np.zeros((features,1), dtype=dtype)
-        self.b = np.zeros((1,1), dtype=dtype)
+        self.W = np.zeros((features, 1), dtype=dtype)
+        self.b = np.zeros((1, 1), dtype=dtype)
         self.alpha = 0.1
 
     def time_train(self, dtype):

@@ -679,7 +679,7 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
             tgt = np.cumprod(_ndat_ones, axis=axis)
             res = np.nancumprod(_ndat, axis=axis)
             assert_almost_equal(res, tgt)
-            tgt = np.cumsum(_ndat_zeros,axis=axis)
+            tgt = np.cumsum(_ndat_zeros, axis=axis)
             res = np.nancumsum(_ndat, axis=axis)
             assert_almost_equal(res, tgt)
 
@@ -923,7 +923,7 @@ class TestNanFunctions_Median:
             # Randomly set some elements to NaN:
             w = np.random.randint(0, d.size, size=d.size // 5)
             d.ravel()[w] = np.nan
-            d[:,0] = 1.  # ensure at least one good value
+            d[:, 0] = 1.  # ensure at least one good value
             # use normal median without nans to compare
             tgt = []
             for x in d:

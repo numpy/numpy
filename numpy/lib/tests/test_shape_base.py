@@ -196,14 +196,14 @@ class TestApplyAlongAxis:
         def f1to2(x):
             """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
-            return (x[::-1] * x[1:,None]).view(cls)
+            return (x[::-1] * x[1:, None]).view(cls)
 
         a2d = np.arange(6 * 3).reshape((6, 3))
 
         # 2d insertion along first axis
         actual = apply_along_axis(f1to2, 0, a2d)
         expected = np.stack([
-            f1to2(a2d[:,i]) for i in range(a2d.shape[1])
+            f1to2(a2d[:, i]) for i in range(a2d.shape[1])
         ], axis=-1).view(cls)
         assert_equal(type(actual), type(expected))
         assert_equal(actual, expected)
@@ -211,7 +211,7 @@ class TestApplyAlongAxis:
         # 2d insertion along last axis
         actual = apply_along_axis(f1to2, 1, a2d)
         expected = np.stack([
-            f1to2(a2d[i,:]) for i in range(a2d.shape[0])
+            f1to2(a2d[i, :]) for i in range(a2d.shape[0])
         ], axis=0).view(cls)
         assert_equal(type(actual), type(expected))
         assert_equal(actual, expected)
@@ -222,7 +222,7 @@ class TestApplyAlongAxis:
         actual = apply_along_axis(f1to2, 1, a3d)
         expected = np.stack([
             np.stack([
-                f1to2(a3d[i,:,j]) for i in range(a3d.shape[0])
+                f1to2(a3d[i, :, j]) for i in range(a3d.shape[0])
             ], axis=0)
             for j in range(a3d.shape[2])
         ], axis=-1).view(cls)
@@ -240,15 +240,15 @@ class TestApplyAlongAxis:
         def f1to2(x):
             """produces an asymmetric non-square matrix from x"""
             assert_equal(x.ndim, 1)
-            res = x[::-1] * x[1:,None]
-            return np.ma.masked_where(res%5 == 0, res)
+            res = x[::-1] * x[1:, None]
+            return np.ma.masked_where(res % 5 == 0, res)
         a = np.arange(6 * 3).reshape((6, 3))
         res = apply_along_axis(f1to2, 0, a)
         assert_(isinstance(res, np.ma.masked_array))
         assert_equal(res.ndim, 3)
-        assert_array_equal(res[:,:,0].mask, f1to2(a[:,0]).mask)
-        assert_array_equal(res[:,:,1].mask, f1to2(a[:,1]).mask)
-        assert_array_equal(res[:,:,2].mask, f1to2(a[:,2]).mask)
+        assert_array_equal(res[:, :, 0].mask, f1to2(a[:, 0]).mask)
+        assert_array_equal(res[:, :, 1].mask, f1to2(a[:, 1]).mask)
+        assert_array_equal(res[:, :, 2].mask, f1to2(a[:, 2]).mask)
 
     def test_tuple_func1d(self):
         def sample_1d(x):
@@ -330,7 +330,7 @@ class TestExpandDims:
 
     def test_subclasses(self):
         a = np.arange(10).reshape((2, 5))
-        a = np.ma.array(a, mask=a%3 == 0)
+        a = np.ma.array(a, mask=a % 3 == 0)
 
         expanded = np.expand_dims(a, axis=1)
         assert_(isinstance(expanded, np.ma.MaskedArray))

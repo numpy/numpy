@@ -338,7 +338,7 @@ _dictlist = None
 # to see if something is defined
 def _makenamedict(module='numpy'):
     module = __import__(module, globals(), locals(), [])
-    thedict = {module.__name__:module.__dict__}
+    thedict = {module.__name__: module.__dict__}
     dictlist = [module.__name__]
     totraverse = [module.__dict__]
     while True:

@@ -336,7 +336,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     else:
         base = _ndptr
 
-    klass = type("ndpointer_%s"%name, (base,),
+    klass = type("ndpointer_%s" % name, (base,),
                  {"_dtype_": dtype,
                   "_shape_": shape,
                   "_ndim_": ndim,

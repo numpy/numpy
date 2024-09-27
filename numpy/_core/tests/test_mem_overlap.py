@@ -186,7 +186,7 @@ def test_may_share_memory_manual():
     # Base arrays
     xs0 = [
         np.zeros([13, 21, 23, 22], dtype=np.int8),
-        np.zeros([13, 21, 23 * 2, 22], dtype=np.int8)[:,:,::2,:]
+        np.zeros([13, 21, 23 * 2, 22], dtype=np.int8)[:, :, ::2, :]
     ]
 
     # Generate all negative stride combinations
@@ -198,12 +198,12 @@ def test_may_share_memory_manual():
 
     for x in xs:
         # The default is a simple extent check
-        assert_(np.may_share_memory(x[:,0,:], x[:,1,:]))
-        assert_(np.may_share_memory(x[:,0,:], x[:,1,:], max_work=None))
+        assert_(np.may_share_memory(x[:, 0, :], x[:, 1, :]))
+        assert_(np.may_share_memory(x[:, 0, :], x[:, 1, :], max_work=None))
 
         # Exact checks
-        check_may_share_memory_exact(x[:,0,:], x[:,1,:])
-        check_may_share_memory_exact(x[:,::7], x[:,3::3])
+        check_may_share_memory_exact(x[:, 0, :], x[:, 1, :])
+        check_may_share_memory_exact(x[:, ::7], x[:, 3::3])
 
         try:
             xp = x.ravel()
@@ -215,15 +215,15 @@ def test_may_share_memory_manual():
 
         # 0-size arrays cannot overlap
         check_may_share_memory_exact(x.ravel()[6:6],
-                                     xp.reshape(13, 21, 23, 11)[:,::7])
+                                     xp.reshape(13, 21, 23, 11)[:, ::7])
 
         # Test itemsize is dealt with
-        check_may_share_memory_exact(x[:,::7],
+        check_may_share_memory_exact(x[:, ::7],
                                      xp.reshape(13, 21, 23, 11))
-        check_may_share_memory_exact(x[:,::7],
-                                     xp.reshape(13, 21, 23, 11)[:,3::3])
+        check_may_share_memory_exact(x[:, ::7],
+                                     xp.reshape(13, 21, 23, 11)[:, 3::3])
         check_may_share_memory_exact(x.ravel()[6:7],
-                                     xp.reshape(13, 21, 23, 11)[:,::7])
+                                     xp.reshape(13, 21, 23, 11)[:, ::7])
 
     # Check unit size
     x = np.zeros([1], dtype=np.int8)
@@ -259,7 +259,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
     yield x, x
     for j in range(1, 7, 3):
         yield x[j:], x[:-j]
-        yield x[...,j:], x[...,:-j]
+        yield x[..., j:], x[..., :-j]
 
     # An array with zero stride internal overlap
     strides = list(x.strides)
@@ -322,7 +322,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
 def check_may_share_memory_easy_fuzz(get_max_work, same_steps, min_count):
     # Check that overlap problems with common strides are solved with
     # little work.
-    x = np.zeros([17,34,71,97], dtype=np.int16)
+    x = np.zeros([17, 34, 71, 97], dtype=np.int16)
 
     feasible = 0
     infeasible = 0
@@ -381,8 +381,8 @@ def test_shares_memory_api():
     assert_equal(np.shares_memory(x, x), True)
     assert_equal(np.shares_memory(x, x.copy()), False)
 
-    a = x[:,::2,::3]
-    b = x[:,::3,::2]
+    a = x[:, ::2, ::3]
+    b = x[:, ::3, ::2]
     assert_equal(np.shares_memory(a, b), True)
     assert_equal(np.shares_memory(a, b, max_work=None), True)
     assert_raises(
@@ -421,7 +421,7 @@ def test_internal_overlap_diophantine():
 def test_internal_overlap_slices():
     # Slicing an array never generates internal overlap
 
-    x = np.zeros([17,34,71,97], dtype=np.int16)
+    x = np.zeros([17, 34, 71, 97], dtype=np.int16)
 
     rng = np.random.RandomState(1234)
 
@@ -753,19 +753,19 @@ class TestUFunc:
 
                 # Ensure the shapes are so that euclidean_pdist is happy
                 if b.shape[-1] > b.shape[-2]:
-                    b = b[...,0,:]
+                    b = b[..., 0, :]
                 else:
-                    b = b[...,:,0]
+                    b = b[..., :, 0]
 
                 n = a.shape[-2]
                 p = n * (n - 1) // 2
                 if p <= b.shape[-1] and p > 0:
-                    b = b[...,:p]
+                    b = b[..., :p]
                 else:
                     n = max(2, int(np.sqrt(b.shape[-1])) // 2)
                     p = n * (n - 1) // 2
-                    a = a[...,:n,:]
-                    b = b[...,:p]
+                    a = a[..., :n, :]
+                    b = b[..., :p]
 
                 # Call
                 if np.shares_memory(a, b):

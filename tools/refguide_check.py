@@ -302,7 +302,7 @@ def is_deprecated(f):
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("error")
         try:
-            f(**{"not a kwarg":None})
+            f(**{"not a kwarg": None})
         except DeprecationWarning:
             return True
         except Exception:

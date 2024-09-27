@@ -497,37 +497,37 @@ class TestHalf:
             by16 = float16(1e4)
 
             # Underflow errors
-            assert_raises_fpe('underflow', lambda a, b:a * b, sx16, sx16)
-            assert_raises_fpe('underflow', lambda a, b:a * b, sx16, sy16)
-            assert_raises_fpe('underflow', lambda a, b:a * b, sy16, sx16)
-            assert_raises_fpe('underflow', lambda a, b:a * b, sy16, sy16)
-            assert_raises_fpe('underflow', lambda a, b:a / b, sx16, bx16)
-            assert_raises_fpe('underflow', lambda a, b:a / b, sx16, by16)
-            assert_raises_fpe('underflow', lambda a, b:a / b, sy16, bx16)
-            assert_raises_fpe('underflow', lambda a, b:a / b, sy16, by16)
-            assert_raises_fpe('underflow', lambda a, b:a / b,
+            assert_raises_fpe('underflow', lambda a, b: a * b, sx16, sx16)
+            assert_raises_fpe('underflow', lambda a, b: a * b, sx16, sy16)
+            assert_raises_fpe('underflow', lambda a, b: a * b, sy16, sx16)
+            assert_raises_fpe('underflow', lambda a, b: a * b, sy16, sy16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sx16, bx16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sx16, by16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sy16, bx16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sy16, by16)
+            assert_raises_fpe('underflow', lambda a, b: a / b,
                                              float16(2.**-14), float16(2**11))
-            assert_raises_fpe('underflow', lambda a, b:a / b,
+            assert_raises_fpe('underflow', lambda a, b: a / b,
                                              float16(-2.**-14), float16(2**11))
-            assert_raises_fpe('underflow', lambda a, b:a / b,
+            assert_raises_fpe('underflow', lambda a, b: a / b,
                                              float16(2.**-14 + 2**-24), float16(2))
-            assert_raises_fpe('underflow', lambda a, b:a / b,
+            assert_raises_fpe('underflow', lambda a, b: a / b,
                                              float16(-2.**-14 - 2**-24), float16(2))
-            assert_raises_fpe('underflow', lambda a, b:a / b,
+            assert_raises_fpe('underflow', lambda a, b: a / b,
                                              float16(2.**-14 + 2**-23), float16(4))
 
             # Overflow errors
-            assert_raises_fpe('overflow', lambda a, b:a * b, bx16, bx16)
-            assert_raises_fpe('overflow', lambda a, b:a * b, bx16, by16)
-            assert_raises_fpe('overflow', lambda a, b:a * b, by16, bx16)
-            assert_raises_fpe('overflow', lambda a, b:a * b, by16, by16)
-            assert_raises_fpe('overflow', lambda a, b:a / b, bx16, sx16)
-            assert_raises_fpe('overflow', lambda a, b:a / b, bx16, sy16)
-            assert_raises_fpe('overflow', lambda a, b:a / b, by16, sx16)
-            assert_raises_fpe('overflow', lambda a, b:a / b, by16, sy16)
-            assert_raises_fpe('overflow', lambda a, b:a + b,
+            assert_raises_fpe('overflow', lambda a, b: a * b, bx16, bx16)
+            assert_raises_fpe('overflow', lambda a, b: a * b, bx16, by16)
+            assert_raises_fpe('overflow', lambda a, b: a * b, by16, bx16)
+            assert_raises_fpe('overflow', lambda a, b: a * b, by16, by16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, bx16, sx16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, bx16, sy16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, by16, sx16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, by16, sy16)
+            assert_raises_fpe('overflow', lambda a, b: a + b,
                                              float16(65504), float16(17))
-            assert_raises_fpe('overflow', lambda a, b:a - b,
+            assert_raises_fpe('overflow', lambda a, b: a - b,
                                              float16(-65504), float16(17))
             assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
             assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))

@@ -57,8 +57,8 @@ class TestAccuracy:
                         r for r in fid if r[0] not in ('$', '#')
                     )
                     data = np.genfromtxt(file_without_comments,
-                                         dtype=('|S39','|S39','|S39',int),
-                                         names=('type','input','output','ulperr'),
+                                         dtype=('|S39', '|S39', '|S39', int),
+                                         names=('type', 'input', 'output', 'ulperr'),
                                          delimiter=',',
                                          skip_header=1)
                     npname = path.splitext(filename)[0].split('-')[3]

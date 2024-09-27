@@ -31,11 +31,11 @@ class FlatTestCase(unittest.TestCase):
         process = Flat.__dict__[self.typeStr + "Process"]
         pack_output = b''
         for i in range(10):
-            pack_output += struct.pack(self.typeCode,i)
+            pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
         y = x.copy()
         process(y)
-        self.assertEqual(np.all((x + 1) == y),True)
+        self.assertEqual(np.all((x + 1) == y), True)
 
     def testProcess3D(self):
         "Test Process function 3D array"
@@ -43,12 +43,12 @@ class FlatTestCase(unittest.TestCase):
         process = Flat.__dict__[self.typeStr + "Process"]
         pack_output = b''
         for i in range(24):
-            pack_output += struct.pack(self.typeCode,i)
+            pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2,3,4)
+        x.shape = (2, 3, 4)
         y = x.copy()
         process(y)
-        self.assertEqual(np.all((x + 1) == y),True)
+        self.assertEqual(np.all((x + 1) == y), True)
 
     def testProcess3DTranspose(self):
         "Test Process function 3D array, FORTRAN order"
@@ -56,12 +56,12 @@ class FlatTestCase(unittest.TestCase):
         process = Flat.__dict__[self.typeStr + "Process"]
         pack_output = b''
         for i in range(24):
-            pack_output += struct.pack(self.typeCode,i)
+            pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2,3,4)
+        x.shape = (2, 3, 4)
         y = x.copy()
         process(y.T)
-        self.assertEqual(np.all((x.T + 1) == y.T),True)
+        self.assertEqual(np.all((x.T + 1) == y.T), True)
 
     def testProcessNoncontiguous(self):
         "Test Process function with non-contiguous array, which should raise an error"
@@ -69,10 +69,10 @@ class FlatTestCase(unittest.TestCase):
         process = Flat.__dict__[self.typeStr + "Process"]
         pack_output = b''
         for i in range(24):
-            pack_output += struct.pack(self.typeCode,i)
+            pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2,3,4)
-        self.assertRaises(TypeError, process, x[:,:,0])
+        x.shape = (2, 3, 4)
+        self.assertRaises(TypeError, process, x[:, :, 0])
 
 
 ######################################################################

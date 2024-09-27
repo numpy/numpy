@@ -148,7 +148,7 @@ class TestRegression:
     def test_mem_dtype_align(self):
         # Ticket #93
         assert_raises(TypeError, np.dtype,
-                              {'names':['a'], 'formats':['foo']}, align=1)
+                              {'names': ['a'], 'formats': ['foo']}, align=1)
 
     def test_endian_bool_indexing(self):
         # Ticket #105
@@ -1725,17 +1725,17 @@ class TestRegression:
             def squeeze(self):
                 return super().squeeze()
 
-        oldsqueeze = OldSqueeze(np.array([[1],[2],[3]]))
+        oldsqueeze = OldSqueeze(np.array([[1], [2], [3]]))
 
         # if no axis argument is specified the old API
         # expectation should give the correct result
         assert_equal(np.squeeze(oldsqueeze),
-                     np.array([1,2,3]))
+                     np.array([1, 2, 3]))
 
         # likewise, axis=None should work perfectly well
         # with the old API expectation
         assert_equal(np.squeeze(oldsqueeze, axis=None),
-                     np.array([1,2,3]))
+                     np.array([1, 2, 3]))
 
         # however, specification of any particular axis
         # should raise a TypeError in the context of the
@@ -1761,7 +1761,7 @@ class TestRegression:
         # attempting to squeeze an axis that is not
         # of length 1
         with assert_raises(ValueError):
-            np.squeeze(np.array([[1],[2],[3]]), axis=0)
+            np.squeeze(np.array([[1], [2], [3]]), axis=0)
 
     def test_reduce_contiguous(self):
         # GitHub issue #387
@@ -2438,7 +2438,7 @@ class TestRegression:
     def test_2d__array__shape(self):
         class T:
             def __array__(self, dtype=None, copy=None):
-                return np.ndarray(shape=(0,0))
+                return np.ndarray(shape=(0, 0))
 
             # Make sure __array__ is used instead of Sequence methods.
             def __iter__(self):

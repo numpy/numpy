@@ -24,8 +24,8 @@ JUMP_TEST_DATA = [
         "jumped": {"key_sha256": "ff682ac12bb140f2d72fba8d3506cf4e46817a0db27aae1683867629031d8d55", "pos": 598},
     },
     {
-        "seed":384908324,
-        "steps":312,
+        "seed": 384908324,
+        "steps": 312,
         "initial": {"key_sha256": "16b791a1e04886ccbbb4d448d6ff791267dc458ae599475d08d5cced29d11614", "pos": 311},
         "jumped": {"key_sha256": "a0110a2cf23b56be0feaed8f787a7fc84bef0cb5623003d75b26bdfa1c18002c", "pos": 276},
     },
@@ -1779,7 +1779,7 @@ class TestRandomDist:
         func = random.uniform
         assert_raises(ValueError, func, 2, 1)
         assert_raises(ValueError, func,  [1, 2], [1, 1])
-        assert_raises(ValueError, func,  [[0, 1],[2, 3]], 2)
+        assert_raises(ValueError, func,  [[0, 1], [2, 3]], 2)
 
     def test_scalar_exception_propagation(self):
         # Tests that exceptions are correctly propagated in distributions

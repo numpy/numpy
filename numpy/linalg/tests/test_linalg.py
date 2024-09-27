@@ -802,14 +802,14 @@ class TestCond(CondCases):
         p_pos = [None, 1, 2, 'fro']
 
         A = np.ones((2, 2))
-        A[0,1] = np.nan
+        A[0, 1] = np.nan
         for p in ps:
             c = linalg.cond(A, p)
             assert_(isinstance(c, np.float64))
             assert_(np.isnan(c))
 
         A = np.ones((3, 2, 2))
-        A[1,0,1] = np.nan
+        A[1, 0, 1] = np.nan
         for p in ps:
             c = linalg.cond(A, p)
             assert_(np.isnan(c[1]))
@@ -825,15 +825,15 @@ class TestCond(CondCases):
         # singular
         np.random.seed(1234)
         A = np.random.rand(2, 2, 2, 2)
-        A[0,0] = 0
-        A[1,1] = 0
+        A[0, 0] = 0
+        A[1, 1] = 0
 
         for p in (None, 1, 2, 'fro', -1, -2):
             c = linalg.cond(A, p)
-            assert_equal(c[0,0], np.inf)
-            assert_equal(c[1,1], np.inf)
-            assert_(np.isfinite(c[0,1]))
-            assert_(np.isfinite(c[1,0]))
+            assert_equal(c[0, 0], np.inf)
+            assert_equal(c[1, 1], np.inf)
+            assert_(np.isfinite(c[0, 1]))
+            assert_(np.isfinite(c[1, 0]))
 
 
 class PinvCases(LinalgSquareTestCase,
@@ -1627,7 +1627,7 @@ class TestMatrixRank:
         # accepts array-like
         assert_equal(matrix_rank([1]), 1)
         # greater than 2 dimensions treated as stacked matrices
-        ms = np.array([I, np.eye(4), np.zeros((4,4))])
+        ms = np.array([I, np.eye(4), np.zeros((4, 4))])
         assert_equal(matrix_rank(ms), np.array([3, 4, 0]))
         # works on scalar
         assert_equal(matrix_rank(1), 1)
@@ -2243,9 +2243,9 @@ def test_blas64_dot():
     n = 2**32
     a = np.zeros([1, n], dtype=np.float32)
     b = np.ones([1, 1], dtype=np.float32)
-    a[0,-1] = 1
+    a[0, -1] = 1
     c = np.dot(b, a)
-    assert_equal(c[0,-1], 1)
+    assert_equal(c[0, -1], 1)
 
 
 @pytest.mark.xfail(not HAS_LAPACK64,

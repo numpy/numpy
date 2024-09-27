@@ -3377,7 +3377,7 @@ class TestLikeFuncs:
                 (np.arange(24).reshape(2, 3, 4).swapaxes(0, 1), None),
                 (np.arange(24).reshape(4, 3, 2).swapaxes(0, 1), '?'),
                      ]
-        self.shapes = [(), (5,), (5,6,), (5,6,7,)]
+        self.shapes = [(), (5,), (5, 6,), (5, 6, 7,)]
 
     def compare_array_value(self, dz, value, fill_value):
         if value is not None:
@@ -3766,7 +3766,7 @@ class TestRollaxis:
             res = np.rollaxis(a, axis=i, start=j)
             i0, i1, i2, i3 = aind[np.array(res.shape) - 1]
             assert_(np.all(res[i0, i1, i2, i3] == a))
-            assert_(res.shape == self.tgtshape[(i, j)], str((i,j)))
+            assert_(res.shape == self.tgtshape[(i, j)], str((i, j)))
             assert_(not res.flags['OWNDATA'])
 
             # negative axis, positive start
@@ -3977,7 +3977,7 @@ def test_outer_out_param():
     arr1 = np.ones((5,))
     arr2 = np.ones((2,))
     arr3 = np.linspace(-2, 2, 5)
-    out1 = np.ndarray(shape=(5,5))
+    out1 = np.ndarray(shape=(5, 5))
     out2 = np.ndarray(shape=(2, 5))
     res1 = np.outer(arr1, arr3, out1)
     assert_equal(res1, out1)
@@ -4011,7 +4011,7 @@ class TestIndices:
         assert_array_equal([[]], np.indices((0,), sparse=True))
 
     def test_sparse(self):
-        [x, y] = np.indices((4,3), sparse=True)
+        [x, y] = np.indices((4, 3), sparse=True)
         assert_array_equal(x, np.array([[0], [1], [2], [3]]))
         assert_array_equal(y, np.array([[0, 1, 2]]))
 
@@ -4172,8 +4172,8 @@ class TestTensordot:
 
     def test_zero_dimension(self):
         # Test resolution to issue #5663
-        a = np.ndarray((3,0))
-        b = np.ndarray((0,4))
+        a = np.ndarray((3, 0))
+        b = np.ndarray((0, 4))
         td = np.tensordot(a, b, (1, 0))
         assert_array_equal(td, np.dot(a, b))
         assert_array_equal(td, np.einsum('ij,jk', a, b))

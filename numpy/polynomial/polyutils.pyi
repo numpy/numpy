@@ -262,7 +262,7 @@ def mapdomain(
 @overload
 def mapdomain(
     x: _SeriesLikeCoef_co,
-    old:_SeriesLikeCoef_co,
+    old: _SeriesLikeCoef_co,
     new: _SeriesLikeCoef_co,
 ) -> _ObjectSeries: ...
 @overload

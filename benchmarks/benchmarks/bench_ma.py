@@ -35,7 +35,7 @@ class Indexing(Benchmark):
         x = np.arange(size**ndim).reshape(ndim * (size,))
 
         if masked:
-            self.m = np.ma.array(x, mask=x%2 == 0)
+            self.m = np.ma.array(x, mask=x % 2 == 0)
         else:
             self.m = np.ma.array(x)
 
@@ -65,8 +65,8 @@ class UFunc(Benchmark):
         self.a_scalar = np.ma.masked if a_masked else 5
         self.b_scalar = np.ma.masked if b_masked else 3
 
-        self.a_1d = np.ma.array(x, mask=x%2 == 0 if a_masked else np.ma.nomask)
-        self.b_1d = np.ma.array(x, mask=x%3 == 0 if b_masked else np.ma.nomask)
+        self.a_1d = np.ma.array(x, mask=x % 2 == 0 if a_masked else np.ma.nomask)
+        self.b_1d = np.ma.array(x, mask=x % 3 == 0 if b_masked else np.ma.nomask)
 
         self.a_2d = self.a_1d.reshape(1, -1)
         self.b_2d = self.a_1d.reshape(-1, 1)

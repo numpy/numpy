@@ -151,7 +151,7 @@ def zeros(shape, dtype=None, order='C'):
     a.fill(0)
     return a
 
-def identity(n,dtype=None):
+def identity(n, dtype=None):
     """
     Returns the square identity matrix of given size.
 
@@ -187,7 +187,7 @@ def identity(n,dtype=None):
     b.flat = a
     return b
 
-def eye(n,M=None, k=0, dtype=float, order='C'):
+def eye(n, M=None, k=0, dtype=float, order='C'):
     """
     Return a matrix with ones on the diagonal and zeros elsewhere.
 

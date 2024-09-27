@@ -74,7 +74,7 @@ class TestRavelUnravelIndex:
         assert_raises_regex(TypeError, msg1, np.unravel_index, (), (10, 3, 5))
         assert_raises_regex(TypeError, msg2, np.unravel_index, np.array([]),
                             (10, 3, 5))
-        assert_equal(np.unravel_index(np.array([],dtype=int), (10, 3, 5)),
+        assert_equal(np.unravel_index(np.array([], dtype=int), (10, 3, 5)),
                      [[], [], []])
         assert_raises_regex(TypeError, msg1, np.ravel_multi_index, ([], []),
                             (10, 3))
@@ -100,7 +100,7 @@ class TestRavelUnravelIndex:
         assert_raises(ValueError, np.unravel_index, 1, (2**32 - 1, 2**31 + 1))
 
         # test overflow checking for too big array (issue #7546)
-        dummy_arr = ([0],[0])
+        dummy_arr = ([0], [0])
         half_max = np.iinfo(np.intp).max // 2
         assert_equal(
             np.ravel_multi_index(dummy_arr, (half_max, 2)), [0])
@@ -477,7 +477,7 @@ class TestFillDiagonal:
     def test_hetero_shape_handling(self):
         # raise error with high dimensionality and
         # shape mismatch
-        a = np.zeros((3,3,7,3), int)
+        a = np.zeros((3, 3, 7, 3), int)
         with assert_raises_regex(ValueError, "equal length"):
             fill_diagonal(a, 2)
 

@@ -305,7 +305,7 @@ def test_floordiv(Poly):
 def test_truediv(Poly):
     # true division is valid only if the denominator is a Number and
     # not a python bool.
-    p1 = Poly([1,2,3])
+    p1 = Poly([1, 2, 3])
     p2 = p1 * 5
 
     for stype in np.ScalarType:

@@ -87,7 +87,7 @@ class TestRegression:
         assert_array_equal(ma[[]], ma[:0])
 
     def test_masked_array_tobytes_fortran(self):
-        ma = np.ma.arange(4).reshape((2,2))
+        ma = np.ma.arange(4).reshape((2, 2))
         assert_array_equal(ma.tobytes(order='F'), ma.T.tobytes())
 
     def test_structured_array(self):

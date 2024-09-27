@@ -552,7 +552,7 @@ def test_copy_order():
     check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
 
 def test_contiguous_flags():
-    a = np.ones((4, 4, 1))[::2,:,:]
+    a = np.ones((4, 4, 1))[::2, :, :]
     a.strides = a.strides[:2] + (-123,)
     b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 

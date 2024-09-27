@@ -554,7 +554,7 @@ def check_complex_value(f, x1, y1, x2, y2, exact=True):
             assert_almost_equal(f(z1), z2)
 
 class TestSpecialComplexAVX:
-    @pytest.mark.parametrize("stride", [-4,-2,-1,1,2,4])
+    @pytest.mark.parametrize("stride", [-4, -2, -1, 1, 2, 4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     def test_array(self, stride, astype):
         arr = np.array([complex(np.nan, np.nan),
@@ -581,8 +581,8 @@ class TestSpecialComplexAVX:
             assert_equal(np.square(arr[::stride]), sq_true[::stride])
 
 class TestComplexAbsoluteAVX:
-    @pytest.mark.parametrize("arraysize", [1,2,3,4,5,6,7,8,9,10,11,13,15,17,18,19])
-    @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
+    @pytest.mark.parametrize("arraysize", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 18, 19])
+    @pytest.mark.parametrize("stride", [-4, -3, -2, -1, 1, 2, 3, 4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     # test to ensure masking and strides work as intended in the AVX implementation
     def test_array(self, arraysize, stride, astype):
@@ -592,14 +592,14 @@ class TestComplexAbsoluteAVX:
 
 # Testcase taken as is from https://github.com/numpy/numpy/issues/16660
 class TestComplexAbsoluteMixedDTypes:
-    @pytest.mark.parametrize("stride", [-4,-3,-2,-1,1,2,3,4])
+    @pytest.mark.parametrize("stride", [-4, -3, -2, -1, 1, 2, 3, 4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     @pytest.mark.parametrize("func", ['abs', 'square', 'conjugate'])
 
     def test_array(self, stride, astype, func):
-        dtype = [('template_id', '<i8'), ('bank_chisq','<f4'),
-                 ('bank_chisq_dof','<i8'), ('chisq', '<f4'), ('chisq_dof','<i8'),
-                 ('cont_chisq', '<f4'), ('psd_var_val', '<f4'), ('sg_chisq','<f4'),
+        dtype = [('template_id', '<i8'), ('bank_chisq', '<f4'),
+                 ('bank_chisq_dof', '<i8'), ('chisq', '<f4'), ('chisq_dof', '<i8'),
+                 ('cont_chisq', '<f4'), ('psd_var_val', '<f4'), ('sg_chisq', '<f4'),
                  ('mycomplex', astype), ('time_index', '<i8')]
         vec = np.array([
                 (0, 0., 0, -31.666483, 200, 0., 0.,  1.      ,  3.0 + 4.0j  ,  613090),   # noqa: E203,E501
