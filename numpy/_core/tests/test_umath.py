@@ -693,11 +693,11 @@ class TestDivision:
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in floor_divide")
             div = np.floor_divide(fnan, fone)
-            assert(np.isnan(div)), "div: %s" % div
+            assert np.isnan(div), "div: %s" % div
             div = np.floor_divide(fone, fnan)
-            assert(np.isnan(div)), "div: %s" % div
+            assert np.isnan(div), "div: %s" % div
             div = np.floor_divide(fnan, fzer)
-            assert(np.isnan(div)), "div: %s" % div
+            assert np.isnan(div), "div: %s" % div
         # verify 1.0//0.0 computations return inf
         with np.errstate(divide='ignore'):
             z = np.floor_divide(y, x)
@@ -850,26 +850,26 @@ class TestRemainder:
                 sup.filter(RuntimeWarning, "invalid value encountered in divmod")
                 sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
                 div, rem = np.divmod(fone, fzer)
-                assert(np.isinf(div)), 'dt: %s, div: %s' % (dt, rem)
-                assert(np.isnan(rem)), 'dt: %s, rem: %s' % (dt, rem)
+                assert np.isinf(div), 'dt: %s, div: %s' % (dt, rem)
+                assert np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem)
                 div, rem = np.divmod(fzer, fzer)
-                assert(np.isnan(rem)), 'dt: %s, rem: %s' % (dt, rem)
+                assert np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem)
                 assert_(np.isnan(div)), 'dt: %s, rem: %s' % (dt, rem)
                 div, rem = np.divmod(finf, finf)
-                assert(np.isnan(div)), 'dt: %s, rem: %s' % (dt, rem)
-                assert(np.isnan(rem)), 'dt: %s, rem: %s' % (dt, rem)
+                assert np.isnan(div), 'dt: %s, rem: %s' % (dt, rem)
+                assert np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem)
                 div, rem = np.divmod(finf, fzer)
-                assert(np.isinf(div)), 'dt: %s, rem: %s' % (dt, rem)
-                assert(np.isnan(rem)), 'dt: %s, rem: %s' % (dt, rem)
+                assert np.isinf(div), 'dt: %s, rem: %s' % (dt, rem)
+                assert np.isnan(rem), 'dt: %s, rem: %s' % (dt, rem)
                 div, rem = np.divmod(fnan, fone)
-                assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
-                assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
+                assert np.isnan(rem), "dt: %s, rem: %s" % (dt, rem)
+                assert np.isnan(div), "dt: %s, rem: %s" % (dt, rem)
                 div, rem = np.divmod(fone, fnan)
-                assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
-                assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
+                assert np.isnan(rem), "dt: %s, rem: %s" % (dt, rem)
+                assert np.isnan(div), "dt: %s, rem: %s" % (dt, rem)
                 div, rem = np.divmod(fnan, fzer)
-                assert(np.isnan(rem)), "dt: %s, rem: %s" % (dt, rem)
-                assert(np.isnan(div)), "dt: %s, rem: %s" % (dt, rem)
+                assert np.isnan(rem), "dt: %s, rem: %s" % (dt, rem)
+                assert np.isnan(div), "dt: %s, rem: %s" % (dt, rem)
 
     def test_float_remainder_corner_cases(self):
         # Check remainder magnitude.

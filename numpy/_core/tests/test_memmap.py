@@ -167,9 +167,9 @@ class TestMemmap:
             assert_(binary_op(fp, fp).__class__ is ndarray)
 
         fp += 1
-        assert(fp.__class__ is memmap)
+        assert fp.__class__ is memmap
         add(fp, 1, out=fp)
-        assert(fp.__class__ is memmap)
+        assert fp.__class__ is memmap
 
     def test_getitem(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
@@ -191,7 +191,7 @@ class TestMemmap:
         assert_(sum(fp, axis=0).__class__ is MemmapSubClass)
         assert_(sum(fp).__class__ is MemmapSubClass)
         assert_(fp[1:, :-1].__class__ is MemmapSubClass)
-        assert(fp[[0, 1]].__class__ is MemmapSubClass)
+        assert fp[[0, 1]].__class__ is MemmapSubClass
 
     def test_mmap_offset_greater_than_allocation_granularity(self):
         size = 5 * mmap.ALLOCATIONGRANULARITY

@@ -1022,7 +1022,7 @@ class TestCreation:
             # This test can fail on 32-bit systems due to insufficient
             # contiguous memory. Deallocating the previous array increases the
             # chance of success.
-            del(d)
+            del d
 
     def test_zeros_obj(self):
         # test initialization from PyLong(0)
@@ -7525,7 +7525,7 @@ class TestChoose:
          (1., np.array([3], dtype=np.float32))],)
     def test_output_dtype(self, ops):
         expected_dt = np.result_type(*ops)
-        assert(np.choose([0], ops).dtype == expected_dt)
+        assert np.choose([0], ops).dtype == expected_dt
 
     def test_dimension_and_args_limit(self):
         # Maxdims for the legacy iterator is 32, but the maximum number

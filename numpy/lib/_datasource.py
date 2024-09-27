@@ -474,7 +474,7 @@ class DataSource:
             try:
                 netfile = urlopen(path)
                 netfile.close()
-                del(netfile)
+                del netfile
                 return True
             except URLError:
                 return False

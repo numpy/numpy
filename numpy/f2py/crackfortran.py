@@ -2650,7 +2650,7 @@ def analyzevars(block):
         if n[0] in list(attrrules.keys()):
             vars[n] = setattrspec(vars[n], attrrules[n[0]])
         if 'typespec' not in vars[n]:
-            if not('attrspec' in vars[n] and 'external' in vars[n]['attrspec']):
+            if not ('attrspec' in vars[n] and 'external' in vars[n]['attrspec']):
                 if implicitrules:
                     ln0 = n[0].lower()
                     for k in list(implicitrules[ln0].keys()):

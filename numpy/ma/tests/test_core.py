@@ -4099,7 +4099,7 @@ class TestMaskedArrayMathMethods:
         bar = array([1, 2, 3, 4], dtype='f8')
         assert_equal(type(foo.mean()), np.float64)
         assert_equal(type(foo.var()), np.float64)
-        assert((foo.mean() == bar.mean()) is np.bool(True))
+        assert (foo.mean() == bar.mean()) is np.bool(True)
 
         # check array type is preserved and out works
         foo = array(np.arange(16).reshape((4, 4)), dtype='f8')
