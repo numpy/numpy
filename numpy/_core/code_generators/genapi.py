@@ -129,7 +129,7 @@ class MinVersion:
 
 class StealRef:
     def __init__(self, arg):
-        self.arg = arg # counting from 1
+        self.arg = arg  # counting from 1
 
     def __str__(self):
         try:

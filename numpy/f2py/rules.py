@@ -1325,7 +1325,7 @@ def buildmodule(m, um):
 
     needs = cfuncs.get_needs()
     # Add mapped definitions
-    needs['typedefs'] += [cvar for cvar in capi_maps.f2cmap_mapped #
+    needs['typedefs'] += [cvar for cvar in capi_maps.f2cmap_mapped  #
                           if cvar in typedef_need_dict.values()]
     code = {}
     for n in needs.keys():

@@ -472,7 +472,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             else:
                 r = cont1.match(l)
                 if r:
-                    l = r.group('line') # Continuation follows ..
+                    l = r.group('line')  # Continuation follows ..
                 if cont:
                     ll = ll + cont2.match(l).group('line')
                     finalline = ''
@@ -1473,7 +1473,7 @@ def analyzeline(m, case, line):
                                 try:
                                     multiplier, value = match.split("*")
                                     expanded_list.extend([value.strip()] * int(multiplier))
-                                except ValueError: # if int(multiplier) fails
+                                except ValueError:  # if int(multiplier) fails
                                     expanded_list.append(match.strip())
                             else:
                                 expanded_list.append(match.strip())

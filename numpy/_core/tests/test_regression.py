@@ -424,10 +424,10 @@ class TestRegression:
     def test_lexsort_zerolen_custom_strides(self):
         # Ticket #14228
         xs = np.array([], dtype='i8')
-        assert np.lexsort((xs,)).shape[0] == 0 # Works
+        assert np.lexsort((xs,)).shape[0] == 0  # Works
 
         xs.strides = (16,)
-        assert np.lexsort((xs,)).shape[0] == 0 # Was: MemoryError
+        assert np.lexsort((xs,)).shape[0] == 0  # Was: MemoryError
 
     def test_lexsort_zerolen_custom_strides_2d(self):
         xs = np.array([], dtype='i8')

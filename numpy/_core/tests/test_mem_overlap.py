@@ -482,8 +482,8 @@ def test_internal_overlap_manual():
 
     # Check low-dimensional special cases
 
-    check_internal_overlap(x, False) # 1-dim
-    check_internal_overlap(x.reshape([]), False) # 0-dim
+    check_internal_overlap(x, False)  # 1-dim
+    check_internal_overlap(x.reshape([]), False)  # 0-dim
 
     a = as_strided(x, strides=(3, 4), shape=(4, 4))
     check_internal_overlap(a, False)

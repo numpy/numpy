@@ -1133,7 +1133,7 @@ class TestCreation:
             def __len__(self):
                 return 42
 
-        a = np.array(C()) # segfault?
+        a = np.array(C())  # segfault?
         assert_equal(len(a), 0)
 
     def test_false_len_iterable(self):
@@ -1555,7 +1555,7 @@ class TestStructured:
         def testassign(arr, v):
             c = arr.copy()
             c[0] = v  # assign using setitem
-            c[1:] = v # assign using "dtype_transfer" code paths
+            c[1:] = v  # assign using "dtype_transfer" code paths
             return c
 
         dt = np.dtype([('foo', 'i8'), ('bar', 'i8')])
@@ -5381,7 +5381,7 @@ class TestLexsort:
             assert_array_equal(np.lexsort((first_names, surnames)), [1, 2, 0])
 
 
-    def test_invalid_axis(self): # gh-7528
+    def test_invalid_axis(self):  # gh-7528
         x = np.linspace(0., 1., 42 * 3).reshape(42, 3)
         assert_raises(AxisError, np.lexsort, x, axis=2)
 

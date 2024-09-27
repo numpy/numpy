@@ -118,7 +118,7 @@ class _Test_Utility:
         if target == "baseline":
             target = __cpu_baseline__
         else:
-            target = target.split('__') # multi-target separator
+            target = target.split('__')  # multi-target separator
         return ' '.join(target)
 
 class _SIMD_BOOL(_Test_Utility):
@@ -416,7 +416,7 @@ class _SIMD_FP(_Test_Utility):
             sqrt = self.sqrt(self.setall(case))
             assert sqrt == pytest.approx(data_sqrt, nan_ok=True)
 
-        data_sqrt = self.load([math.sqrt(x) for x in data]) # load to truncate precision
+        data_sqrt = self.load([math.sqrt(x) for x in data])  # load to truncate precision
         sqrt = self.sqrt(vdata)
         assert sqrt == data_sqrt
 
@@ -566,7 +566,7 @@ class _SIMD_FP(_Test_Utility):
             recip = self.recip(self.setall(case))
             assert recip == pytest.approx(data_recip, nan_ok=True)
 
-        data_recip = self.load([1 / x for x in data]) # load to truncate precision
+        data_recip = self.load([1 / x for x in data])  # load to truncate precision
         recip = self.recip(vdata)
         assert recip == data_recip
 
@@ -660,7 +660,7 @@ class _SIMD_ALL(_Test_Utility):
         loadl_half = list(loadl)[:self.nlanes // 2]
         data_half = data[:self.nlanes // 2]
         assert loadl_half == data_half
-        assert loadl != data # detect overflow
+        assert loadl != data  # detect overflow
 
     def test_memory_store(self):
         data = self._data()
@@ -681,7 +681,7 @@ class _SIMD_ALL(_Test_Utility):
         store_l = [0] * self.nlanes
         self.storel(store_l, vdata)
         assert store_l[:self.nlanes // 2] == data[:self.nlanes // 2]
-        assert store_l != vdata # detect overflow
+        assert store_l != vdata  # detect overflow
         # store higher part
         store_h = [0] * self.nlanes
         self.storeh(store_h, vdata)
@@ -698,7 +698,7 @@ class _SIMD_ALL(_Test_Utility):
         npyv_load_tillz, npyv_load_till = eval(intrin)
         data = self._data()
         lanes = list(range(1, self.nlanes + 1))
-        lanes += [self.nlanes**2, self.nlanes**4] # test out of range
+        lanes += [self.nlanes**2, self.nlanes**4]  # test out of range
         for n in lanes:
             load_till = npyv_load_till(data, n, *fill)
             load_tillz = npyv_load_tillz(data, n)
@@ -1143,7 +1143,7 @@ class _SIMD_ALL(_Test_Utility):
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
 
         # non-saturated
-        data_add = self.load([a + b for a, b in zip(data_a, data_b)]) # load to cast
+        data_add = self.load([a + b for a, b in zip(data_a, data_b)])  # load to cast
         add = self.add(vdata_a, vdata_b)
         assert add == data_add
         data_sub = self.load([a - b for a, b in zip(data_a, data_b)])
@@ -1303,7 +1303,7 @@ tests_registry = {
 }
 for target_name, npyv in targets.items():
     simd_width = npyv.simd if npyv else ''
-    pretty_name = target_name.split('__') # multi-target separator
+    pretty_name = target_name.split('__')  # multi-target separator
     if len(pretty_name) > 1:
         # multi-target
         pretty_name = f"({' '.join(pretty_name)})"

@@ -3135,8 +3135,8 @@ def test_writebacks():
         assert_(x.flags.writebackifcopy)
     assert_equal(au, 6)
     assert_(not x.flags.writebackifcopy)
-    x[:] = 123 # x.data still valid
-    assert_equal(au, 6) # but not connected to au
+    x[:] = 123  # x.data still valid
+    assert_equal(au, 6)  # but not connected to au
 
     it = nditer(au, [],
                  [['readwrite', 'updateifcopy']],

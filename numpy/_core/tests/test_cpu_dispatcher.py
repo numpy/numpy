@@ -14,7 +14,7 @@ def test_dispatcher():
         "NEON", "ASIMD", "ASIMDHP",
         "VX", "VXE"
     )
-    highest_sfx = "" # no suffix for the baseline
+    highest_sfx = ""  # no suffix for the baseline
     all_sfx = []
     for feature in reversed(targets):
         # skip baseline features, by the default `CCompilerOpt` do not generate separated objects
@@ -41,5 +41,5 @@ def test_dispatcher():
         assert_equal(test["func_xb"], "nobase")
         assert_equal(test["var_xb"], "nobase")
 
-    all_sfx.append("func") # add the baseline
+    all_sfx.append("func")  # add the baseline
     assert_equal(test["all"], all_sfx)

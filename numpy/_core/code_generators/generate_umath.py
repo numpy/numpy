@@ -328,7 +328,7 @@ noint = inexact + O
 nointP = inexact + P
 allP = bints + times + flts + cmplxP
 nobool_or_obj = noobj[1:]
-nobool_or_datetime = noobj[1:-1] + O # includes m - timedelta64
+nobool_or_datetime = noobj[1:-1] + O  # includes m - timedelta64
 intflt = ints + flts
 intfltcmplx = ints + flts + cmplx
 nocmplx = bints + times + flts
@@ -364,7 +364,7 @@ defdict = {
           indexed=intfltcmplx
           ),
 'subtract':
-    Ufunc(2, 1, None, # Zero is only a unit to the right, not the left
+    Ufunc(2, 1, None,  # Zero is only a unit to the right, not the left
           docstrings.get('numpy._core.umath.subtract'),
           'PyUFunc_SubtractionTypeResolver',
           TD(no_bool_times_obj, dispatch=[
@@ -398,7 +398,7 @@ defdict = {
           ),
 #'true_divide' : aliased to divide in umathmodule.c:initumath
 'floor_divide':
-    Ufunc(2, 1, None, # One is only a unit to the right, not the left
+    Ufunc(2, 1, None,  # One is only a unit to the right, not the left
           docstrings.get('numpy._core.umath.floor_divide'),
           'PyUFunc_DivisionTypeResolver',
           TD(ints, cfunc_alias='divide',
@@ -412,7 +412,7 @@ defdict = {
           indexed=flts + ints
           ),
 'divide':
-    Ufunc(2, 1, None, # One is only a unit to the right, not the left
+    Ufunc(2, 1, None,  # One is only a unit to the right, not the left
           docstrings.get('numpy._core.umath.divide'),
           'PyUFunc_TrueDivisionTypeResolver',
           TD(flts + cmplx, cfunc_alias='divide', dispatch=[('loops_arithm_fp', 'fd')]),

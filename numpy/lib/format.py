@@ -177,7 +177,7 @@ drop_metadata.__module__ = "numpy.lib.format"
 EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
-ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
+ARRAY_ALIGN = 64  # plausible values are powers of 2 between 16 and 4096
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 # allow growth within the address space of a 64 bit machine along one axis
 GROWTH_AXIS_MAX_DIGITS = 21  # = len(str(8*2**64-1)) hypothetical int1 dtype

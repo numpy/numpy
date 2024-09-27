@@ -18,7 +18,7 @@ from numpy import *  # noqa: F403
 
 __version__ = np.__version__
 
-__all__ = np.__all__[:] # copy numpy namespace
+__all__ = np.__all__[:]  # copy numpy namespace
 __all__ += ['rand', 'randn', 'repmat']
 
 def empty(shape, dtype=None, order='C'):
