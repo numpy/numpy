@@ -25,7 +25,8 @@ from numpy._typing import (
     _Shape,
     _ShapeLike,
     _ArrayLikeStr_co as U_co,
-    _ArrayLikeBytes_co as S_co,
+    _ArrayLikeBytes_co as B_co,
+    _ArrayLikeString_co as S_co,
     _ArrayLikeInt_co as i_co,
     _ArrayLikeBool_co as b_co,
 )
@@ -132,7 +133,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def __eq__(
         self: _CharArray[bytes_],
-        other: S_co,
+        other: B_co,
     ) -> NDArray[np.bool]: ...
 
     @overload
@@ -143,7 +144,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def __ne__(
         self: _CharArray[bytes_],
-        other: S_co,
+        other: B_co,
     ) -> NDArray[np.bool]: ...
 
     @overload
@@ -154,7 +155,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def __ge__(
         self: _CharArray[bytes_],
-        other: S_co,
+        other: B_co,
     ) -> NDArray[np.bool]: ...
 
     @overload
@@ -165,7 +166,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def __le__(
         self: _CharArray[bytes_],
-        other: S_co,
+        other: B_co,
     ) -> NDArray[np.bool]: ...
 
     @overload
@@ -176,7 +177,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def __gt__(
         self: _CharArray[bytes_],
-        other: S_co,
+        other: B_co,
     ) -> NDArray[np.bool]: ...
 
     @overload
@@ -187,7 +188,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def __lt__(
         self: _CharArray[bytes_],
-        other: S_co,
+        other: B_co,
     ) -> NDArray[np.bool]: ...
 
     @overload
@@ -198,7 +199,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def __add__(
         self: _CharArray[bytes_],
-        other: S_co,
+        other: B_co,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -209,7 +210,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def __radd__(
         self: _CharArray[bytes_],
-        other: S_co,
+        other: B_co,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -222,7 +223,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     def center(
         self: _CharArray[bytes_],
         width: i_co,
-        fillchar: S_co = ...,
+        fillchar: B_co = ...,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -235,7 +236,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def count(
         self: _CharArray[bytes_],
-        sub: S_co,
+        sub: B_co,
         start: i_co = ...,
         end: None | i_co = ...,
     ) -> NDArray[int_]: ...
@@ -262,7 +263,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def endswith(
         self: _CharArray[bytes_],
-        suffix: S_co,
+        suffix: B_co,
         start: i_co = ...,
         end: None | i_co = ...,
     ) -> NDArray[np.bool]: ...
@@ -282,7 +283,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def find(
         self: _CharArray[bytes_],
-        sub: S_co,
+        sub: B_co,
         start: i_co = ...,
         end: None | i_co = ...,
     ) -> NDArray[int_]: ...
@@ -297,7 +298,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def index(
         self: _CharArray[bytes_],
-        sub: S_co,
+        sub: B_co,
         start: i_co = ...,
         end: None | i_co = ...,
     ) -> NDArray[int_]: ...
@@ -310,7 +311,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def join(
         self: _CharArray[bytes_],
-        seq: S_co,
+        seq: B_co,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -323,7 +324,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     def ljust(
         self: _CharArray[bytes_],
         width: i_co,
-        fillchar: S_co = ...,
+        fillchar: B_co = ...,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -334,7 +335,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def lstrip(
         self: _CharArray[bytes_],
-        chars: None | S_co = ...,
+        chars: None | B_co = ...,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -345,7 +346,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def partition(
         self: _CharArray[bytes_],
-        sep: S_co,
+        sep: B_co,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -358,8 +359,8 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def replace(
         self: _CharArray[bytes_],
-        old: S_co,
-        new: S_co,
+        old: B_co,
+        new: B_co,
         count: None | i_co = ...,
     ) -> _CharArray[bytes_]: ...
 
@@ -373,7 +374,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def rfind(
         self: _CharArray[bytes_],
-        sub: S_co,
+        sub: B_co,
         start: i_co = ...,
         end: None | i_co = ...,
     ) -> NDArray[int_]: ...
@@ -388,7 +389,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def rindex(
         self: _CharArray[bytes_],
-        sub: S_co,
+        sub: B_co,
         start: i_co = ...,
         end: None | i_co = ...,
     ) -> NDArray[int_]: ...
@@ -403,7 +404,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     def rjust(
         self: _CharArray[bytes_],
         width: i_co,
-        fillchar: S_co = ...,
+        fillchar: B_co = ...,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -414,7 +415,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def rpartition(
         self: _CharArray[bytes_],
-        sep: S_co,
+        sep: B_co,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -426,7 +427,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def rsplit(
         self: _CharArray[bytes_],
-        sep: None | S_co = ...,
+        sep: None | B_co = ...,
         maxsplit: None | i_co = ...,
     ) -> NDArray[object_]: ...
 
@@ -438,7 +439,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def rstrip(
         self: _CharArray[bytes_],
-        chars: None | S_co = ...,
+        chars: None | B_co = ...,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -450,7 +451,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def split(
         self: _CharArray[bytes_],
-        sep: None | S_co = ...,
+        sep: None | B_co = ...,
         maxsplit: None | i_co = ...,
     ) -> NDArray[object_]: ...
 
@@ -466,7 +467,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def startswith(
         self: _CharArray[bytes_],
-        prefix: S_co,
+        prefix: B_co,
         start: i_co = ...,
         end: None | i_co = ...,
     ) -> NDArray[np.bool]: ...
@@ -479,7 +480,7 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def strip(
         self: _CharArray[bytes_],
-        chars: None | S_co = ...,
+        chars: None | B_co = ...,
     ) -> _CharArray[bytes_]: ...
 
     @overload
@@ -491,11 +492,11 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def translate(
         self: _CharArray[bytes_],
-        table: S_co,
-        deletechars: None | S_co = ...,
+        table: B_co,
+        deletechars: None | B_co = ...,
     ) -> _CharArray[bytes_]: ...
 
-    def zfill(self, width: _ArrayLikeInt_co) -> chararray[_Shape, _CharDType_co]: ...
+    def zfill(self, width: i_co) -> chararray[_Shape, _CharDType_co]: ...
     def capitalize(self) -> chararray[_ShapeType_co, _CharDType_co]: ...
     def title(self) -> chararray[_ShapeType_co, _CharDType_co]: ...
     def swapcase(self) -> chararray[_ShapeType_co, _CharDType_co]: ...
@@ -516,67 +517,87 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
 @overload
 def equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
 @overload
+def equal(x1: B_co, x2: B_co) -> NDArray[np.bool]: ...
+@overload
 def equal(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
 
 @overload
 def not_equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
+@overload
+def not_equal(x1: B_co, x2: B_co) -> NDArray[np.bool]: ...
 @overload
 def not_equal(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
 
 @overload
 def greater_equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
 @overload
+def greater_equal(x1: B_co, x2: B_co) -> NDArray[np.bool]: ...
+@overload
 def greater_equal(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
 
 @overload
 def less_equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
+@overload
+def less_equal(x1: B_co, x2: B_co) -> NDArray[np.bool]: ...
 @overload
 def less_equal(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
 
 @overload
 def greater(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
 @overload
+def greater(x1: B_co, x2: B_co) -> NDArray[np.bool]: ...
+@overload
 def greater(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
 
 @overload
 def less(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
 @overload
+def less(x1: B_co, x2: B_co) -> NDArray[np.bool]: ...
+@overload
 def less(x1: S_co, x2: S_co) -> NDArray[np.bool]: ...
 
-# String operations
 @overload
-def add(x1: U_co, x2: U_co) -> NDArray[str_]: ...
+def add(x1: U_co, x2: U_co) -> NDArray[np.str_]: ...
 @overload
-def add(x1: S_co, x2: S_co) -> NDArray[bytes_]: ...
+def add(x1: B_co, x2: B_co) -> NDArray[np.bytes_]: ...
+@overload
+def add(x1: S_co, x2: S_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
-def multiply(a: U_co, i: i_co) -> NDArray[str_]: ...
+def multiply(a: U_co, i: i_co) -> NDArray[np.str_]: ...
 @overload
-def multiply(a: S_co, i: i_co) -> NDArray[bytes_]: ...
+def multiply(a: B_co, i: i_co) -> NDArray[np.bytes_]: ...
+@overload
+def multiply(a: S_co, i: i_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
-def mod(a: U_co, value: Any) -> NDArray[str_]: ...
+def mod(a: U_co, value: Any) -> NDArray[np.str_]: ...
 @overload
-def mod(a: S_co, value: Any) -> NDArray[bytes_]: ...
+def mod(a: B_co, value: Any) -> NDArray[np.bytes_]: ...
+@overload
+def mod(a: S_co, value: Any) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def capitalize(a: U_co) -> NDArray[str_]: ...
 @overload
-def capitalize(a: S_co) -> NDArray[bytes_]: ...
+def capitalize(a: B_co) -> NDArray[bytes_]: ...
+@overload
+def capitalize(a: S_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def center(a: U_co, width: i_co, fillchar: U_co = ...) -> NDArray[str_]: ...
 @overload
-def center(a: S_co, width: i_co, fillchar: S_co = ...) -> NDArray[bytes_]: ...
+def center(a: B_co, width: i_co, fillchar: B_co = ...) -> NDArray[bytes_]: ...
+@overload
+def center(a: S_co, width: i_co, fillchar: S_co = ...) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 def decode(
-    a: S_co,
+    a: B_co,
     encoding: None | str = ...,
     errors: None | str = ...,
 ) -> NDArray[str_]: ...
-
 def encode(
-    a: U_co,
+    a: U_co | S_co,
     encoding: None | str = ...,
     errors: None | str = ...,
 ) -> NDArray[bytes_]: ...
@@ -584,32 +605,44 @@ def encode(
 @overload
 def expandtabs(a: U_co, tabsize: i_co = ...) -> NDArray[str_]: ...
 @overload
-def expandtabs(a: S_co, tabsize: i_co = ...) -> NDArray[bytes_]: ...
+def expandtabs(a: B_co, tabsize: i_co = ...) -> NDArray[bytes_]: ...
+@overload
+def expandtabs(a: S_co, tabsize: i_co = ...) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def join(sep: U_co, seq: U_co) -> NDArray[str_]: ...
 @overload
-def join(sep: S_co, seq: S_co) -> NDArray[bytes_]: ...
+def join(sep: B_co, seq: B_co) -> NDArray[bytes_]: ...
+@overload
+def join(sep: S_co, seq: S_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def ljust(a: U_co, width: i_co, fillchar: U_co = ...) -> NDArray[str_]: ...
 @overload
-def ljust(a: S_co, width: i_co, fillchar: S_co = ...) -> NDArray[bytes_]: ...
+def ljust(a: B_co, width: i_co, fillchar: B_co = ...) -> NDArray[bytes_]: ...
+@overload
+def ljust(a: S_co, width: i_co, fillchar: S_co = ...) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def lower(a: U_co) -> NDArray[str_]: ...
 @overload
-def lower(a: S_co) -> NDArray[bytes_]: ...
+def lower(a: B_co) -> NDArray[bytes_]: ...
+@overload
+def lower(a: S_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def lstrip(a: U_co, chars: None | U_co = ...) -> NDArray[str_]: ...
 @overload
-def lstrip(a: S_co, chars: None | S_co = ...) -> NDArray[bytes_]: ...
+def lstrip(a: B_co, chars: None | B_co = ...) -> NDArray[bytes_]: ...
+@overload
+def lstrip(a: S_co, chars: None | S_co = ...) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def partition(a: U_co, sep: U_co) -> NDArray[str_]: ...
 @overload
-def partition(a: S_co, sep: S_co) -> NDArray[bytes_]: ...
+def partition(a: B_co, sep: B_co) -> NDArray[bytes_]: ...
+@overload
+def partition(a: S_co, sep: S_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def replace(
@@ -620,11 +653,18 @@ def replace(
 ) -> NDArray[str_]: ...
 @overload
 def replace(
+    a: B_co,
+    old: B_co,
+    new: B_co,
+    count: None | i_co = ...,
+) -> NDArray[bytes_]: ...
+@overload
+def replace(
     a: S_co,
     old: S_co,
     new: S_co,
-    count: None | i_co = ...,
-) -> NDArray[bytes_]: ...
+    count: i_co = ...,
+) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def rjust(
@@ -634,15 +674,23 @@ def rjust(
 ) -> NDArray[str_]: ...
 @overload
 def rjust(
+    a: B_co,
+    width: i_co,
+    fillchar: B_co = ...,
+) -> NDArray[bytes_]: ...
+@overload
+def rjust(
     a: S_co,
     width: i_co,
     fillchar: S_co = ...,
-) -> NDArray[bytes_]: ...
+) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def rpartition(a: U_co, sep: U_co) -> NDArray[str_]: ...
 @overload
-def rpartition(a: S_co, sep: S_co) -> NDArray[bytes_]: ...
+def rpartition(a: B_co, sep: B_co) -> NDArray[bytes_]: ...
+@overload
+def rpartition(a: S_co, sep: S_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def rsplit(
@@ -652,15 +700,23 @@ def rsplit(
 ) -> NDArray[object_]: ...
 @overload
 def rsplit(
+    a: B_co,
+    sep: None | B_co = ...,
+    maxsplit: None | i_co = ...,
+) -> NDArray[object_]: ...
+@overload
+def rsplit(
     a: S_co,
     sep: None | S_co = ...,
     maxsplit: None | i_co = ...,
-) -> NDArray[object_]: ...
+) -> NDArray[np.object_]: ...
 
 @overload
 def rstrip(a: U_co, chars: None | U_co = ...) -> NDArray[str_]: ...
 @overload
-def rstrip(a: S_co, chars: None | S_co = ...) -> NDArray[bytes_]: ...
+def rstrip(a: B_co, chars: None | B_co = ...) -> NDArray[bytes_]: ...
+@overload
+def rstrip(a: S_co, chars: None | S_co = ...) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def split(
@@ -670,30 +726,40 @@ def split(
 ) -> NDArray[object_]: ...
 @overload
 def split(
+    a: B_co,
+    sep: None | B_co = ...,
+    maxsplit: None | i_co = ...,
+) -> NDArray[object_]: ...
+@overload
+def split(
     a: S_co,
     sep: None | S_co = ...,
     maxsplit: None | i_co = ...,
-) -> NDArray[object_]: ...
+) -> NDArray[np.object_]: ...
 
 @overload
-def splitlines(a: U_co, keepends: None | b_co = ...) -> NDArray[object_]: ...
-@overload
-def splitlines(a: S_co, keepends: None | b_co = ...) -> NDArray[object_]: ...
+def splitlines(a: U_co | B_co | S_co, keepends: None | b_co = ...) -> NDArray[np.object_]: ...
 
 @overload
 def strip(a: U_co, chars: None | U_co = ...) -> NDArray[str_]: ...
 @overload
-def strip(a: S_co, chars: None | S_co = ...) -> NDArray[bytes_]: ...
+def strip(a: B_co, chars: None | B_co = ...) -> NDArray[bytes_]: ...
+@overload
+def strip(a: S_co, chars: None | S_co = ...) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def swapcase(a: U_co) -> NDArray[str_]: ...
 @overload
-def swapcase(a: S_co) -> NDArray[bytes_]: ...
+def swapcase(a: B_co) -> NDArray[bytes_]: ...
+@overload
+def swapcase(a: S_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def title(a: U_co) -> NDArray[str_]: ...
 @overload
-def title(a: S_co) -> NDArray[bytes_]: ...
+def title(a: B_co) -> NDArray[bytes_]: ...
+@overload
+def title(a: S_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def translate(
@@ -703,20 +769,30 @@ def translate(
 ) -> NDArray[str_]: ...
 @overload
 def translate(
+    a: B_co,
+    table: B_co,
+    deletechars: None | B_co = ...,
+) -> NDArray[bytes_]: ...
+@overload
+def translate(
     a: S_co,
     table: S_co,
     deletechars: None | S_co = ...,
-) -> NDArray[bytes_]: ...
+) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def upper(a: U_co) -> NDArray[str_]: ...
 @overload
-def upper(a: S_co) -> NDArray[bytes_]: ...
+def upper(a: B_co) -> NDArray[bytes_]: ...
+@overload
+def upper(a: S_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 @overload
 def zfill(a: U_co, width: i_co) -> NDArray[str_]: ...
 @overload
-def zfill(a: S_co, width: i_co) -> NDArray[bytes_]: ...
+def zfill(a: B_co, width: i_co) -> NDArray[bytes_]: ...
+@overload
+def zfill(a: S_co, width: i_co) -> np.ndarray[_Shape, np.dtypes.StringDType]: ...
 
 # String information
 @overload
@@ -728,11 +804,18 @@ def count(
 ) -> NDArray[int_]: ...
 @overload
 def count(
-    a: S_co,
-    sub: S_co,
+    a: B_co,
+    sub: B_co,
     start: i_co = ...,
     end: None | i_co = ...,
 ) -> NDArray[int_]: ...
+@overload
+def count(
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
+) -> NDArray[np.int_]: ...
 
 @overload
 def endswith(
@@ -743,10 +826,17 @@ def endswith(
 ) -> NDArray[np.bool]: ...
 @overload
 def endswith(
+    a: B_co,
+    suffix: B_co,
+    start: i_co = ...,
+    end: None | i_co = ...,
+) -> NDArray[np.bool]: ...
+@overload
+def endswith(
     a: S_co,
     suffix: S_co,
     start: i_co = ...,
-    end: None | i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
 
 @overload
@@ -758,11 +848,18 @@ def find(
 ) -> NDArray[int_]: ...
 @overload
 def find(
-    a: S_co,
-    sub: S_co,
+    a: B_co,
+    sub: B_co,
     start: i_co = ...,
     end: None | i_co = ...,
 ) -> NDArray[int_]: ...
+@overload
+def find(
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
+) -> NDArray[np.int_]: ...
 
 @overload
 def index(
@@ -773,21 +870,28 @@ def index(
 ) -> NDArray[int_]: ...
 @overload
 def index(
-    a: S_co,
-    sub: S_co,
+    a: B_co,
+    sub: B_co,
     start: i_co = ...,
     end: None | i_co = ...,
 ) -> NDArray[int_]: ...
+@overload
+def index(
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
+) -> NDArray[np.int_]: ...
 
-def isalpha(a: U_co | S_co) -> NDArray[np.bool]: ...
-def isalnum(a: U_co | S_co) -> NDArray[np.bool]: ...
-def isdecimal(a: U_co) -> NDArray[np.bool]: ...
-def isdigit(a: U_co | S_co) -> NDArray[np.bool]: ...
-def islower(a: U_co | S_co) -> NDArray[np.bool]: ...
-def isnumeric(a: U_co) -> NDArray[np.bool]: ...
-def isspace(a: U_co | S_co) -> NDArray[np.bool]: ...
-def istitle(a: U_co | S_co) -> NDArray[np.bool]: ...
-def isupper(a: U_co | S_co) -> NDArray[np.bool]: ...
+def isalpha(a: U_co | B_co | S_co) -> NDArray[np.bool]: ...
+def isalnum(a: U_co | B_co | S_co) -> NDArray[np.bool]: ...
+def isdecimal(a: U_co | S_co) -> NDArray[np.bool]: ...
+def isdigit(a: U_co | B_co | S_co) -> NDArray[np.bool]: ...
+def islower(a: U_co | B_co | S_co) -> NDArray[np.bool]: ...
+def isnumeric(a: U_co | S_co) -> NDArray[np.bool]: ...
+def isspace(a: U_co | B_co | S_co) -> NDArray[np.bool]: ...
+def istitle(a: U_co | B_co | S_co) -> NDArray[np.bool]: ...
+def isupper(a: U_co | B_co | S_co) -> NDArray[np.bool]: ...
 
 @overload
 def rfind(
@@ -798,11 +902,18 @@ def rfind(
 ) -> NDArray[int_]: ...
 @overload
 def rfind(
-    a: S_co,
-    sub: S_co,
+    a: B_co,
+    sub: B_co,
     start: i_co = ...,
     end: None | i_co = ...,
 ) -> NDArray[int_]: ...
+@overload
+def rfind(
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
+) -> NDArray[np.int_]: ...
 
 @overload
 def rindex(
@@ -813,11 +924,18 @@ def rindex(
 ) -> NDArray[int_]: ...
 @overload
 def rindex(
-    a: S_co,
-    sub: S_co,
+    a: B_co,
+    sub: B_co,
     start: i_co = ...,
     end: None | i_co = ...,
 ) -> NDArray[int_]: ...
+@overload
+def rindex(
+    a: S_co,
+    sub: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
+) -> NDArray[np.int_]: ...
 
 @overload
 def startswith(
@@ -828,13 +946,20 @@ def startswith(
 ) -> NDArray[np.bool]: ...
 @overload
 def startswith(
-    a: S_co,
-    prefix: S_co,
+    a: B_co,
+    prefix: B_co,
     start: i_co = ...,
     end: None | i_co = ...,
 ) -> NDArray[np.bool]: ...
+@overload
+def startswith(
+    a: S_co,
+    suffix: S_co,
+    start: i_co = ...,
+    end: i_co | None = ...,
+) -> NDArray[np.bool]: ...
 
-def str_len(A: U_co | S_co) -> NDArray[int_]: ...
+def str_len(A: U_co | B_co | S_co) -> NDArray[int_]: ...
 
 # Overload 1 and 2: str- or bytes-based array-likes
 # overload 3: arbitrary object with unicode=False  (-> bytes_)
@@ -849,7 +974,7 @@ def array(
 ) -> _CharArray[str_]: ...
 @overload
 def array(
-    obj: S_co,
+    obj: B_co,
     itemsize: None | int = ...,
     copy: bool = ...,
     unicode: L[False] = ...,
@@ -881,7 +1006,7 @@ def asarray(
 ) -> _CharArray[str_]: ...
 @overload
 def asarray(
-    obj: S_co,
+    obj: B_co,
     itemsize: None | int = ...,
     unicode: L[False] = ...,
     order: _OrderKACF = ...,
