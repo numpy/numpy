@@ -143,8 +143,9 @@ def expand_sub(substr, names):
             lnames[name] = thelist
         return "<%s>" % name
 
-    substr = list_re.sub(listrepl, substr) # convert all lists to named templates
-                                           # newnames are constructed as needed
+    # convert all lists to named templates
+    # new names are constructed as needed
+    substr = list_re.sub(listrepl, substr) 
 
     numsubs = None
     base_rule = None
