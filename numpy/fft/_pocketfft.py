@@ -1401,7 +1401,7 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1], norm, out=out)
-    for ii in range(len(axes)-1):
+    for ii in range(len(axes)-2, -1, -1):
         a = fft(a, s[ii], axes[ii], norm, out=out)
     return a
 

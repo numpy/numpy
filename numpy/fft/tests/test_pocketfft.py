@@ -307,6 +307,8 @@ class TestFFT1D:
                         np.fft.rfftn(x, norm="ortho"), atol=1e-6)
         assert_allclose(np.fft.rfftn(x) / (30. * 20. * 10.),
                         np.fft.rfftn(x, norm="forward"), atol=1e-6)
+        x = np.ones((2,3))
+        assert_allclose(np.fft.rfftn(x, axes=(0, 0, 1), s=(10, 20, 40)), np.fft.fft(np.fft.fft(np.fft.rfft(x, axis=1, n=40), axis=0, n=20), axis=0, n=10), atol=1e-6)
 
     def test_irfftn(self):
         x = random((30, 20, 10))
