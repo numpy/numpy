@@ -978,7 +978,7 @@ _SortKind: TypeAlias = L[
 _SortSide: TypeAlias = L["left", "right"]
 
 _ConvertibleToInt: TypeAlias = SupportsInt | SupportsIndex | _CharLike_co
-_ConvertibleToFloat: TypeAlias =  SupportsFloat | SupportsIndex | _CharLike_co
+_ConvertibleToFloat: TypeAlias = SupportsFloat | SupportsIndex | _CharLike_co
 if sys.version_info >= (3, 11):
     _ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsIndex | _CharLike_co
 else:

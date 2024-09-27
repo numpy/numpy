@@ -198,7 +198,7 @@ def process_str(allstr):
         writestr += cleanedstr
         names.update(defs)
         writestr += expand_sub(newstr[sub[0]:sub[1]], names)
-        oldend =  sub[1]
+        oldend = sub[1]
     writestr += newstr[oldend:]
 
     return writestr
