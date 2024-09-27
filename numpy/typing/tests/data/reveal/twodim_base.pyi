@@ -7,12 +7,9 @@ from typing_extensions import assert_type
 
 _SCT = TypeVar("_SCT", bound=np.generic)
 
-
 def func1(ar: npt.NDArray[_SCT], a: int) -> npt.NDArray[_SCT]: ...
 
-
 def func2(ar: npt.NDArray[np.number[Any]], a: str) -> npt.NDArray[np.float64]: ...
-
 
 AR_b: npt.NDArray[np.bool]
 AR_u: npt.NDArray[np.uint64]

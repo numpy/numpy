@@ -42,7 +42,6 @@ from numpy._typing import (
     _ULongCodes,
 )
 
-
 class RandomState:
     _bit_generator: BitGenerator
     def __init__(self, seed: None | _ArrayLikeInt_co | BitGenerator = ...) -> None: ...

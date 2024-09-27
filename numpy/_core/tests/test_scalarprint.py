@@ -124,7 +124,6 @@ class TestRealScalars:
         assert_equal(fsci64('9.9999999999999694e-311', **preckwd(16)),
                             '9.9999999999999694e-311')
 
-
         # test rounding
         # 3.1415927410 is closest float32 to np.pi
         assert_equal(fpos32('3.14159265358979323846', **preckwd(10)),
@@ -146,7 +145,6 @@ class TestRealScalars:
         assert_equal(fpos64('3.14159265358979323846', **preckwd(50)),
                          "3.14159265358979311599796346854418516159057617187500")
         assert_equal(fpos64('3.14159265358979323846'), "3.141592653589793")
-
 
         # smallest numbers
         assert_equal(fpos32(0.5**(126 + 23), unique=False, precision=149),

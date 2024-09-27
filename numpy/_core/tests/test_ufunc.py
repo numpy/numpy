@@ -2391,7 +2391,6 @@ class TestUfunc:
         with pytest.raises(ValueError):
             np.add.at(arr, [0, 1], [1, 2, 3])
 
-
     def test_reduce_arguments(self):
         f = np.add.reduce
         d = np.ones((5, 2), dtype=int)

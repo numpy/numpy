@@ -706,7 +706,6 @@ def percentile(
 # (that we can reuse)
 quantile = percentile
 
-
 _SCT_fm = TypeVar(
     "_SCT_fm",
     bound=floating[Any] | complexfloating[Any, Any] | timedelta64,

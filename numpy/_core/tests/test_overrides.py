@@ -482,7 +482,6 @@ class TestArrayFunctionImplementation:
             func(*objs)
 
 
-
 class TestNDArrayMethods:
 
     def test_repr(self):
@@ -628,7 +627,6 @@ class TestArrayLike:
                                   dtype=[('int', 'i8'), ('float', 'f8')],
                                   delimiter=',')),
     ]
-
 
     def test_nep35_functions_as_array_functions(self,):
         all_array_functions = get_overridable_numpy_array_functions()

@@ -32,7 +32,6 @@ count.extend(get_count('output.txt', 'SciKits'))
 count.sort()
 
 
-
 print("** SciPy and NumPy **")
 print("=====================")
 for val in count:

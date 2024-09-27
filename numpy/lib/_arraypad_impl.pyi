@@ -46,7 +46,6 @@ _ModeKind: TypeAlias = L[
     "empty",
 ]
 
-
 # TODO: In practice each keyword argument is exclusive to one or more
 # specific modes. Consider adding more overloads to express this in the future.
 

@@ -182,7 +182,6 @@ def vander(
     increasing: bool = ...,
 ) -> NDArray[object_]: ...
 
-
 _Int_co: TypeAlias = np.integer[Any] | np.bool
 _Float_co: TypeAlias = np.floating[Any] | _Int_co
 _Number_co: TypeAlias = np.number[Any] | np.bool

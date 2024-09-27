@@ -124,7 +124,6 @@ class TestPutAlongAxis:
         assert "single dimension" in str(exc.exception)
 
 
-
 class TestApplyAlongAxis:
     def test_simple(self):
         a = np.ones((20, 10), 'd')

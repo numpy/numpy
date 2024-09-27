@@ -1166,7 +1166,6 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         return masked_result
 
 
-
 class _DomainedBinaryOperation(_MaskedUFunc):
     """
     Define binary operations that have a domain, like divide.
@@ -3018,7 +3017,6 @@ class MaskedArray(ndarray):
         _data._baseclass = _baseclass
         return _data
 
-
     def _update_from(self, obj):
         """
         Copies some attributes of obj to self.
@@ -4095,7 +4093,6 @@ class MaskedArray(ndarray):
         else:
             name = self._baseclass.__name__
 
-
         # 2016-11-19: Demoted to legacy format
         if np._core.arrayprint._get_legacy_print_mode() <= 113:
             is_long = self.ndim > 1
@@ -4785,7 +4782,6 @@ class MaskedArray(ndarray):
         else:
             r._mask = nomask
         return r
-
 
     def reshape(self, *s, **kwargs):
         """
@@ -6340,7 +6336,6 @@ class MaskedArray(ndarray):
             return masked_array(data=self._data.mT)
         else:
             return masked_array(data=self.data.mT, mask=self.mask.mT)
-
 
     def tolist(self, fill_value=None):
         """

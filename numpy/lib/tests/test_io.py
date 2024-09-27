@@ -234,7 +234,6 @@ class TestSavezLoad(RoundtripTest):
         assert_equal(a, l['file_a'])
         assert_equal(b, l['file_b'])
 
-
     def test_tuple_getitem_raises(self):
         # gh-23748
         a = np.array([1, 2, 3])
@@ -535,7 +534,6 @@ class TestSaveTxt:
             lines,
             [b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n',
              b' (3.142e+00-2.718e+00j)  (3.142e+00-2.718e+00j)\n'])
-
 
     def test_custom_writer(self):
 
@@ -2708,7 +2706,6 @@ def test_ducktyping():
 
     f = JustReader(s)
     assert_array_equal(np.load(f), a)
-
 
 
 def test_gzip_loadtxt():

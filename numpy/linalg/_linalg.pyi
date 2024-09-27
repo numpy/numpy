@@ -86,7 +86,6 @@ _SCT2 = TypeVar("_SCT2", bound=generic, covariant=True)
 _2Tuple: TypeAlias = tuple[_T, _T]
 _ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
 
-
 class EigResult(NamedTuple):
     eigenvalues: NDArray[Any]
     eigenvectors: NDArray[Any]

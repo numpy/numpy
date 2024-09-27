@@ -28,7 +28,6 @@ class DiffLinter:
         )
         return res.returncode, res.stdout
 
-
     def run_lint(self):
         retcode, errors = self.run_ruff()
 

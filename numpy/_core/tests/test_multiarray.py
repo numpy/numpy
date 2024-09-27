@@ -967,7 +967,6 @@ class TestCreation:
                 [np.array(1, dtype="i,i")[idx], np.array(2, dtype='i,i,i')[idx]],
                 dtype="V")
 
-
     def test_too_big_error(self):
         # 45341 is the smallest integer greater than sqrt(2**31 - 1).
         # 3037000500 is the smallest integer greater than sqrt(2**63 - 1).
@@ -3218,7 +3217,6 @@ class TestMethods:
         assert_equal(x1.flatten('F'), y1f)
         assert_equal(x1.flatten('F'), x1.T.flatten())
 
-
     @pytest.mark.parametrize('func', (np.dot, np.matmul))
     def test_arr_mult(self, func):
         a = np.array([[1, 0], [0, 1]])
@@ -3239,7 +3237,6 @@ class TestMethods:
              [648, 700, 752, 804, 856, 908],
              [684, 740, 796, 852, 908, 964]]
         )
-
 
         # gemm vs syrk optimizations
         for et in [np.float32, np.float64, np.complex64, np.complex128]:
@@ -3547,7 +3544,6 @@ class TestMethods:
         with pytest.raises(IndexError,
                             match="cannot replace elements of an empty array"):
             np.put(empty_array, 1, 1, mode="clip")
-
 
     def test_ravel(self):
         a = np.array([[0, 1], [2, 3]])
@@ -4864,7 +4860,6 @@ class TestArgmax:
         assert_equal(np.argmax(rarr), rpos, err_msg="%r" % rarr)
         assert_equal(rarr[np.argmax(rarr)], val, err_msg="%r" % rarr)
 
-
     def test_maximum_signed_integers(self):
 
         a = np.array([1, 2**7 - 1, -2**7], dtype=np.int8)
@@ -5384,7 +5379,6 @@ class TestLexsort:
             surnames = np.array(['Hertz',    'Galilei', 'Hertz'], dtype=dtype)
             first_names = np.array(['Heinrich', 'Galileo', 'Gustav'], dtype=dtype)
             assert_array_equal(np.lexsort((first_names, surnames)), [1, 2, 0])
-
 
     def test_invalid_axis(self):  # gh-7528
         x = np.linspace(0., 1., 42 * 3).reshape(42, 3)
@@ -8735,7 +8729,6 @@ class TestArrayInterface:
         def __array_interface__(self):
             return self.iface
 
-
     f = Foo(0.5)
 
     @pytest.mark.parametrize('val, iface, expected', [
@@ -8815,7 +8808,6 @@ def test_array_interface_offset():
     interface['data'] = memoryview(arr)
     interface['shape'] = (2,)
     interface['offset'] = 4
-
 
     class DummyArray:
         __array_interface__ = interface

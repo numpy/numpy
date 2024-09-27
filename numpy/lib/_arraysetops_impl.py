@@ -963,7 +963,6 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             "Please select 'sort' or None for kind."
         )
 
-
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
 

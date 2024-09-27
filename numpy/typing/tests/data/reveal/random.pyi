@@ -79,7 +79,6 @@ assert_type(seed_seq.spawn(1), list[np.random.SeedSequence])
 assert_type(seed_seq.generate_state(8, "uint32"), npt.NDArray[np.uint32 | np.uint64])
 assert_type(seed_seq.generate_state(8, "uint64"), npt.NDArray[np.uint32 | np.uint64])
 
-
 def_gen: np.random.Generator = np.random.default_rng()
 
 D_arr_0p1: npt.NDArray[np.float64] = np.array([0.1])
@@ -637,7 +636,6 @@ assert_type(def_gen.integers(I_u4_high_closed, dtype=np.int_, endpoint=True), np
 assert_type(def_gen.integers(I_u4_low, I_u4_high_closed, dtype=np.int_, endpoint=True), npt.NDArray[np.int_])
 assert_type(def_gen.integers(0, I_u4_high_closed, dtype=np.int_, endpoint=True), npt.NDArray[np.int_])
 
-
 assert_type(def_gen.integers(4294967296, dtype="u4"), np.uint32)
 assert_type(def_gen.integers(0, 4294967296, dtype="u4"), np.uint32)
 assert_type(def_gen.integers(4294967295, dtype="u4", endpoint=True), np.uint32)
@@ -890,7 +888,6 @@ assert_type(def_gen.integers(-9223372036854775808, I_i8_high_open, dtype=np.int6
 assert_type(def_gen.integers(I_i8_high_closed, dtype=np.int64, endpoint=True), npt.NDArray[np.int64])
 assert_type(def_gen.integers(I_i8_low, I_i8_high_closed, dtype=np.int64, endpoint=True), npt.NDArray[np.int64])
 assert_type(def_gen.integers(-9223372036854775808, I_i8_high_closed, dtype=np.int64, endpoint=True), npt.NDArray[np.int64])
-
 
 assert_type(def_gen.bit_generator, np.random.BitGenerator)
 

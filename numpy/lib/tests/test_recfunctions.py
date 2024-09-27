@@ -309,7 +309,6 @@ class TestRecFunctions:
         res = structured_to_unstructured(arr, dtype=int)
         assert_equal(res, np.zeros((10, 6), dtype=int))
 
-
         # test nested combinations of subarrays and structured arrays, gh-13333
         def subarray(dt, shape):
             return np.dtype((dt, shape))

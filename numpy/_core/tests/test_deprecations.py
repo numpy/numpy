@@ -703,7 +703,6 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
         assert test2.called
 
 
-
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     message = "Passing in a parenthesized single number"
 

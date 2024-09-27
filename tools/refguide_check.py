@@ -494,7 +494,6 @@ def check_rest(module, names, dots=True):
         # python 3
         skip_types = (dict, str, float, int)
 
-
     results = []
 
     if module.__name__[6:] not in OTHER_MODULE_DOCS:
@@ -546,7 +545,6 @@ def check_rest(module, names, dots=True):
     return results
 
 
-
 def main(argv):
     """
     Validates the docstrings of all the pre decided set of
@@ -575,7 +573,6 @@ def main(argv):
     success = True
     results = []
     errormsgs = []
-
 
     for submodule_name in module_names:
         prefix = BASE_MODULE + '.'
@@ -620,7 +617,6 @@ def main(argv):
             if dots:
                 sys.stderr.write('\n')
                 sys.stderr.flush()
-
 
     # Report results
     for module, mod_results in results:

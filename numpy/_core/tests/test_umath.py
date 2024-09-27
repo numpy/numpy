@@ -4166,7 +4166,6 @@ class TestRationalFunctions:
         assert_raises(TypeError, np.gcd, 4, float(np.inf))
 
 
-
 class TestRoundingFunctions:
 
     def test_object_direct(self):

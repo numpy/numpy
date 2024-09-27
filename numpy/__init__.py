@@ -282,7 +282,6 @@ else:
          for n, extended_msg in _type_info
      }
 
-
     # Some of these could be defined right away, but most were aliases to
     # the Python objects and only removed in NumPy 1.24.  Defining them should
     # probably wait for NumPy 1.26 or 2.0.

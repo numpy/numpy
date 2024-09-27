@@ -1982,7 +1982,6 @@ def trim_zeros(filt, trim='fb', axis=None):
     return trimmed
 
 
-
 def _extract_dispatcher(condition, arr):
     return (condition, arr)
 

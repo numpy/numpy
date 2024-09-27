@@ -358,7 +358,6 @@ class TestNanFunctions_ArgminArgmax:
             assert ret == reference
 
 
-
 _TEST_ARRAYS = {
     "0d": np.array(5),
     "1d": np.array([127, 39, 93, 87, 46])

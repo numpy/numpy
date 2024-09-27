@@ -33,7 +33,6 @@ def replace_scalar_type_names():
         ('ob_type', ctypes.POINTER(PyTypeObject)),
     ]
 
-
     PyTypeObject._fields_ = [
         # varhead
         ('ob_base', PyObject),

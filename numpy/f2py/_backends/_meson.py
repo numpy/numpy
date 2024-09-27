@@ -13,7 +13,6 @@ from string import Template
 from itertools import chain
 
 
-
 class MesonTemplate:
     """Template meson build file generation class."""
 

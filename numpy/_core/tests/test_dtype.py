@@ -21,7 +21,6 @@ import hypothesis
 from hypothesis.extra import numpy as hynp
 
 
-
 def assert_dtype_equal(a, b):
     assert_equal(a, b)
     assert_equal(hash(a), hash(b),

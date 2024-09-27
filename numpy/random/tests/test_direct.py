@@ -432,7 +432,6 @@ class TestPCG64(Base):
         assert state["state"] == advanced_state
 
 
-
 class TestPCG64DXSM(Base):
     @classmethod
     def setup_class(cls):

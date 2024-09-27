@@ -100,7 +100,6 @@ class TestHistogram:
         with assert_raises_regex(ValueError, "same shape as"):
             h, b = histogram(a, range=[1, 9], weights=w, density=True)
 
-
     def test_type(self):
         # Check the type of the returned histogram
         a = np.arange(10) + .5

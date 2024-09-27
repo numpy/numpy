@@ -1113,7 +1113,6 @@ class _HasDateAttributes(Protocol):
     @property
     def year(self) -> int: ...
 
-
 ### Mixins (for internal use only)
 
 @type_check_only
@@ -1581,7 +1580,6 @@ class dtype(Generic[_SCT_co]):
     def str(self) -> LiteralString: ...
     @property
     def type(self) -> type[_SCT_co]: ...
-
 
 @final
 class flatiter(Generic[_ArrayT_co]):
@@ -4004,7 +4002,6 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     def __divmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[override]
     def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[override]
 
-
 half: TypeAlias = floating[_NBitHalf]
 single: TypeAlias = floating[_NBitSingle]
 double: TypeAlias = floating[_NBitDouble]
@@ -4720,7 +4717,6 @@ class finfo(Generic[_FloatingT_co]):
         cls, dtype: str
     ) -> finfo[floating[Any]]: ...
 
-
 class iinfo(Generic[_IntegerT_co]):
     dtype: Final[dtype[_IntegerT_co]]
     kind: Final[LiteralString]
@@ -4953,7 +4949,6 @@ class poly1d:
         k: None | _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
     ) -> poly1d: ...
 
-
 class matrix(ndarray[_2DShapeT_co, _DType_co]):
     __array_priority__: ClassVar[float]
     def __new__(
@@ -5102,7 +5097,6 @@ class matrix(ndarray[_2DShapeT_co, _DType_co]):
     def getA(self) -> ndarray[_2DShapeT_co, _DType_co]: ...
     def getA1(self) -> ndarray[_Shape, _DType_co]: ...
     def getH(self) -> matrix[_2D, _DType_co]: ...
-
 
 def from_dlpack(
     x: _SupportsDLPack[None],

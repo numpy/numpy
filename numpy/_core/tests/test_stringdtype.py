@@ -440,7 +440,6 @@ def test_sort(dtype, strings):
         if argsorted is not None:
             assert np.array_equal(argsorted, np.argsort(strings))
 
-
     # make a copy so we don't mutate the lists in the fixture
     strings = strings.copy()
     arr_sorted = np.array(sorted(strings), dtype=dtype)

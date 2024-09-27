@@ -1405,7 +1405,6 @@ class poly1d:
             return NotImplemented
         return not self.__eq__(other)
 
-
     def __getitem__(self, val):
         ind = self.order - val
         if val > self.order:

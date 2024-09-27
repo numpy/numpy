@@ -232,7 +232,6 @@ class TestGeomspace:
                         -1.53343861 - 3.26321406j])
         np.testing.assert_array_almost_equal(z, expected)
 
-
     def test_dtype(self):
         y = geomspace(1, 1e6, dtype='float32')
         assert_equal(y.dtype, dtype('float32'))

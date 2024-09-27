@@ -234,8 +234,6 @@ class TestFileBased:
                     res = np.fromfile(path, dtype=ctype, sep=",")
             assert_equal(res, np.array([1.j]))
 
-
-
     @pytest.mark.skipif(string_to_longdouble_inaccurate,
                         reason="Need strtold_l")
     def test_fromfile(self):

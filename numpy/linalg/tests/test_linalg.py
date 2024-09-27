@@ -1708,7 +1708,6 @@ class TestQR:
         assert_(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
-
     @pytest.mark.parametrize(["m", "n"], [
         (3, 0),
         (0, 3),

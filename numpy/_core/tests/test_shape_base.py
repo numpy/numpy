@@ -225,7 +225,6 @@ class TestVstack:
             vstack((a, b), casting="safe", dtype=np.int64)
 
 
-
 class TestConcatenate:
     def test_returns_copy(self):
         a = np.eye(3)

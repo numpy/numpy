@@ -1135,7 +1135,6 @@ class TestTypes:
         assert_equal(promote_func(np.array([i8]), f64), np.dtype(np.float64))
         assert_equal(promote_func(np.array([u16]), f64), np.dtype(np.float64))
 
-
     def test_coercion(self):
         def res_type(a, b):
             return np.add(a, b).dtype
@@ -1504,7 +1503,6 @@ class TestTypes:
 
         with pytest.raises(TypeError):
             np.can_cast(4j, "complex128", casting="unsafe")
-
 
     @pytest.mark.parametrize("dtype",
             list("?bhilqBHILQefdgFDG") + [rational])

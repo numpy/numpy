@@ -199,7 +199,6 @@ __all__ = [
 _ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 
-
 MaskType = bool
 nomask: bool
 

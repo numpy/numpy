@@ -741,7 +741,6 @@ class TestSubclasses:
         s_fancy = s[[0, 1, 2]]
         assert_(s_fancy.flags.writeable)
 
-
     def test_finalize_gets_full_info(self):
         # Array finalize should be called on the filled array.
         class SubClass(np.ndarray):

@@ -90,7 +90,6 @@ def test_packbits_large(bitorder):
         assert_array_equal(b, [128, 128, 128, 31, 30, 28, 24, 16, 0, 0, 0, 199,
                                198, 196, 192])
 
-
         arr = arr.reshape(36, 25)
         b = np.packbits(arr, axis=0)
         assert_equal(b.dtype, np.uint8)
@@ -196,7 +195,6 @@ def test_packbits_large(bitorder):
                                [ 74,  90, 131, 170, 192],
                                [ 88,  18, 163, 168, 128]])
 
-
     # result is the same if input is multiplied with a nonzero value
     for dtype in 'bBhHiIlLqQ':
         arr = np.array(a, dtype=dtype)
@@ -241,7 +239,6 @@ def test_pack_unpack_order():
     assert_array_equal(a, np.packbits(b_big, axis=1, bitorder='big'))
     assert_raises(ValueError, np.unpackbits, a, bitorder='r')
     assert_raises(TypeError, np.unpackbits, a, bitorder=10)
-
 
 
 def test_unpackbits_empty():

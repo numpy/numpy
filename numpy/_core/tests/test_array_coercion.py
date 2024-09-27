@@ -469,7 +469,6 @@ class TestTimeScalars:
             # the explicit cast fails:
             np.array(scalar).astype(dtype)
 
-
     @pytest.mark.parametrize(["val", "unit"],
             [param(123, "s", id="[s]"), param(123, "D", id="[D]")])
     def test_coercion_assignment_timedelta(self, val, unit):

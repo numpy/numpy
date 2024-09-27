@@ -35,7 +35,6 @@ cs_generic: Literal["H", "U", "h", "|M8[Y]", "?"]
 dt_inexact: np.dtype[np.inexact[Any]]
 dt_string: StringDType
 
-
 assert_type(np.dtype(np.float64), np.dtype[np.float64])
 assert_type(np.dtype(np.float64, metadata={"test": "test"}), np.dtype[np.float64])
 assert_type(np.dtype(np.int64), np.dtype[np.int64])
@@ -106,7 +105,6 @@ assert_type(np.dtype(dt_string), StringDType)
 assert_type(np.dtype("T"), StringDType)
 assert_type(np.dtype("=T"), StringDType)
 assert_type(np.dtype("|T"), StringDType)
-
 
 # Methods and attributes
 assert_type(dtype_U.base, np.dtype[Any])

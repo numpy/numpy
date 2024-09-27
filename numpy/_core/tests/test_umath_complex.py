@@ -28,7 +28,6 @@ platform_skip = pytest.mark.skipif(xfail_complex_tests,
                                    reason="Inadequate C99 complex support")
 
 
-
 class TestCexp:
     def test_simple(self):
         check = check_complex_value
