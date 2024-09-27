@@ -22,7 +22,7 @@ class TensorTestCase(unittest.TestCase):
         unittest.TestCase.__init__(self, methodName)
         self.typeStr = "double"
         self.typeCode = "d"
-        self.result = sqrt(28.0/8)
+        self.result = sqrt(28.0 / 8)
 
     # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
     def testNorm(self):

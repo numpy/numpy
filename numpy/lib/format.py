@@ -405,7 +405,7 @@ def _wrap_header(header, version):
     # ARRAY_ALIGN byte boundary.  This supports memory mapping of dtypes
     # aligned up to ARRAY_ALIGN on systems like Linux where mmap()
     # offset must be page-aligned (i.e. the beginning of the file).
-    return header_prefix + header + b' '*padlen + b'\n'
+    return header_prefix + header + b' ' * padlen + b'\n'
 
 
 def _wrap_header_guess_version(header):
@@ -849,7 +849,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
                     read_count = min(max_read_count, count - i)
                     read_size = int(read_count * dtype.itemsize)
                     data = _read_bytes(fp, read_size, "array data")
-                    array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
+                    array[i:i + read_count] = numpy.frombuffer(data, dtype=dtype,
                                                              count=read_count)
 
         if fortran_order:
@@ -936,7 +936,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        with open(os.fspath(filename), mode+'b') as fp:
+        with open(os.fspath(filename), mode + 'b') as fp:
             _write_array_header(fp, d, version)
             offset = fp.tell()
     else:

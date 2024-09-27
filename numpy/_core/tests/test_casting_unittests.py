@@ -433,7 +433,7 @@ class TestCasting:
             to_dt = np.dtype(to_dt)
 
         # Test a few values for casting (results generated with NumPy 1.19)
-        values = np.array([-2**63, 1, 2**63-1, 10000, -10000, 2**32])
+        values = np.array([-2**63, 1, 2**63 - 1, 10000, -10000, 2**32])
         values = values.astype(np.dtype("int64").newbyteorder(from_dt.byteorder))
         assert values.dtype.byteorder == from_dt.byteorder
         assert np.isnat(values.view(from_dt)[0])

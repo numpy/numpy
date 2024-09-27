@@ -3024,7 +3024,7 @@ def param_eval(v, g_params, params, dimspec=None):
 
     # This is an array parameter.
     # First, we parse the dimension information
-    if len(dimspec) < 2 or dimspec[::len(dimspec)-1] != "()":
+    if len(dimspec) < 2 or dimspec[::len(dimspec) - 1] != "()":
         raise ValueError(f'param_eval: dimension {dimspec} can\'t be parsed')
     dimrange = dimspec[1:-1].split(',')
     if len(dimrange) == 1:
@@ -3033,11 +3033,11 @@ def param_eval(v, g_params, params, dimspec=None):
         # now, dimrange is a list of 1 or 2 elements
         if len(dimrange) == 1:
             bound = param_parse(dimrange[0], params)
-            dimrange = range(1, int(bound)+1)
+            dimrange = range(1, int(bound) + 1)
         else:
             lbound = param_parse(dimrange[0], params)
             ubound = param_parse(dimrange[1], params)
-            dimrange = range(int(lbound), int(ubound)+1)
+            dimrange = range(int(lbound), int(ubound) + 1)
     else:
         raise ValueError('param_eval: multidimensional array parameters '
                          f'{dimspec} not supported')
@@ -3117,7 +3117,7 @@ def param_parse(d, params):
     if "(" in d:
         # this dimension expression is an array
         dname = d[:d.find("(")]
-        ddims = d[d.find("(")+1:d.rfind(")")]
+        ddims = d[d.find("(") + 1:d.rfind(")")]
         # this dimension expression is also a parameter;
         # parse it recursively
         index = int(param_parse(ddims, params))

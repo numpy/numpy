@@ -208,8 +208,8 @@ class LinAlgTransposeVdot(Benchmark):
         self.x2arg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
         self.x2arg = self.x2arg.astype(npdtypes)
         if npdtypes.startswith('complex'):
-            self.xarg += self.xarg.T*1j
-            self.x2arg += self.x2arg.T*1j
+            self.xarg += self.xarg.T * 1j
+            self.x2arg += self.x2arg.T * 1j
 
     def time_transpose(self, shape, npdtypes):
         np.transpose(self.xarg)

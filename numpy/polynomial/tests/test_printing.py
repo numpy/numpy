@@ -259,7 +259,7 @@ def test_set_default_printoptions():
 
 def test_complex_coefficients():
     """Test both numpy and built-in complex."""
-    coefs = [0+1j, 1+1j, -2+2j, 3+0j]
+    coefs = [0 + 1j, 1 + 1j, -2 + 2j, 3 + 0j]
     # numpy complex
     p1 = poly.Polynomial(coefs)
     # Python complex
@@ -505,7 +505,7 @@ class TestPrintOptions:
         poly.set_default_printstyle('ascii')
 
     def test_str(self):
-        p = poly.Polynomial([1/2, 1/7, 1/7*10**8, 1/7*10**9])
+        p = poly.Polynomial([1 / 2, 1 / 7, 1 / 7 * 10**8, 1 / 7 * 10**9])
         assert_equal(str(p), '0.5 + 0.14285714 x + 14285714.28571429 x**2 '
                              '+ (1.42857143e+08) x**3')
 
@@ -514,7 +514,7 @@ class TestPrintOptions:
                                  '+ (1.429e+08) x**3')
 
     def test_latex(self):
-        p = poly.Polynomial([1/2, 1/7, 1/7*10**8, 1/7*10**9])
+        p = poly.Polynomial([1 / 2, 1 / 7, 1 / 7 * 10**8, 1 / 7 * 10**9])
         assert_equal(p._repr_latex_(),
             r'$x \mapsto \text{0.5} + \text{0.14285714}\,x + '
             r'\text{14285714.28571429}\,x^{2} + '
@@ -526,7 +526,7 @@ class TestPrintOptions:
                 r'\text{14285714.286}\,x^{2} + \text{(1.429e+08)}\,x^{3}$')
 
     def test_fixed(self):
-        p = poly.Polynomial([1/2])
+        p = poly.Polynomial([1 / 2])
         assert_equal(str(p), '0.5')
 
         with printoptions(floatmode='fixed'):
@@ -538,8 +538,8 @@ class TestPrintOptions:
     def test_switch_to_exp(self):
         for i, s in enumerate(SWITCH_TO_EXP):
             with printoptions(precision=i):
-                p = poly.Polynomial([1.23456789*10**-i
-                                     for i in range(i//2+3)])
+                p = poly.Polynomial([1.23456789 * 10**-i
+                                     for i in range(i // 2 + 3)])
                 assert str(p).replace('\n', ' ') == s
 
     def test_non_finite(self):

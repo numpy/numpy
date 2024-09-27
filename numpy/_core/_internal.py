@@ -158,7 +158,7 @@ def _commastring(astr):
             (order1, repeats, order2, dtype) = mo.groups()
         except (TypeError, AttributeError):
             raise ValueError(
-                f'format number {len(result)+1} of "{astr}" is not recognized'
+                f'format number {len(result) + 1} of "{astr}" is not recognized'
                 ) from None
         startindex = mo.end()
         # Separator or ending padding
@@ -170,7 +170,7 @@ def _commastring(astr):
                 if not mo:
                     raise ValueError(
                         'format number %d of "%s" is not recognized' %
-                        (len(result)+1, astr))
+                        (len(result) + 1, astr))
                 startindex = mo.end()
                 islist = True
 
@@ -302,7 +302,7 @@ class _ctypes:
         """
         if self._zerod:
             return None
-        return (obj*self._arr.ndim)(*self._arr.shape)
+        return (obj * self._arr.ndim)(*self._arr.shape)
 
     def strides_as(self, obj):
         """
@@ -311,7 +311,7 @@ class _ctypes:
         """
         if self._zerod:
             return None
-        return (obj*self._arr.ndim)(*self._arr.strides)
+        return (obj * self._arr.ndim)(*self._arr.strides)
 
     @property
     def data(self):
@@ -901,7 +901,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     if ufunc.nin == 1:
         in_args = 'x'
     else:
-        in_args = ', '.join(f'x{i+1}' for i in range(ufunc.nin))
+        in_args = ', '.join(f'x{i + 1}' for i in range(ufunc.nin))
 
     # output arguments are both keyword or positional
     if ufunc.nout == 0:
@@ -911,8 +911,8 @@ def _ufunc_doc_signature_formatter(ufunc):
     else:
         out_args = '[, {positional}], / [, out={default}]'.format(
             positional=', '.join(
-                'out{}'.format(i+1) for i in range(ufunc.nout)),
-            default=repr((None,)*ufunc.nout)
+                'out{}'.format(i + 1) for i in range(ufunc.nout)),
+            default=repr((None,) * ufunc.nout)
         )
 
     # keyword only args depend on whether this is a gufunc

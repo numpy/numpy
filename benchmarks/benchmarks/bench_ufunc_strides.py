@@ -17,7 +17,7 @@ class _AbstractBinary(Benchmark):
 
     def setup(self, ufunc, stride_in0, stride_in1, stride_out, dtype):
         ufunc_insig = f'{dtype}{dtype}->'
-        if ufunc_insig+dtype not in ufunc.types:
+        if ufunc_insig + dtype not in ufunc.types:
             for st_sig in (ufunc_insig, dtype):
                 test = [sig for sig in ufunc.types if sig.startswith(st_sig)]
                 if test:
@@ -35,14 +35,14 @@ class _AbstractBinary(Benchmark):
         self.ufunc_args = []
         for i, (dt, stride) in enumerate(zip(tin, (stride_in0, stride_in1))):
             self.ufunc_args += [get_data(
-                self.arrlen*stride, dt, i,
+                self.arrlen * stride, dt, i,
                 zeros=self.data_zeros,
                 finite=self.data_finite,
                 denormal=self.data_denormal,
             )[::stride]]
         for dt in tout:
             self.ufunc_args += [
-                np.empty(stride_out*self.arrlen, dt)[::stride_out]
+                np.empty(stride_out * self.arrlen, dt)[::stride_out]
             ]
 
         np.seterr(all='ignore')
@@ -70,7 +70,7 @@ class _AbstractUnary(Benchmark):
 
     def setup(self, ufunc, stride_in, stride_out, dtype):
         arr_in = get_data(
-            stride_in*self.arrlen, dtype,
+            stride_in * self.arrlen, dtype,
             zeros=self.data_zeros,
             finite=self.data_finite,
             denormal=self.data_denormal,
@@ -78,7 +78,7 @@ class _AbstractUnary(Benchmark):
         self.ufunc_args = [arr_in[::stride_in]]
 
         ufunc_insig = f'{dtype}->'
-        if ufunc_insig+dtype not in ufunc.types:
+        if ufunc_insig + dtype not in ufunc.types:
             test = [sig for sig in ufunc.types if sig.startswith(ufunc_insig)]
             if not test:
                 raise NotImplementedError(
@@ -91,7 +91,7 @@ class _AbstractUnary(Benchmark):
 
         for dt in tout:
             self.ufunc_args += [
-                np.empty(stride_out*self.arrlen, dt)[::stride_out]
+                np.empty(stride_out * self.arrlen, dt)[::stride_out]
             ]
 
         np.seterr(all='ignore')
@@ -185,13 +185,13 @@ class Mandelbrot(Benchmark):
             notdone = self.f(z)
             output[notdone] = it
             z[notdone] = self.g(z[notdone],c[notdone])
-        output[output == maxiter-1] = 0
+        output[output == maxiter - 1] = 0
         return output
 
     def mandelbrot_set(self,xmin,xmax,ymin,ymax,width,height,maxiter):
         r1 = np.linspace(xmin, xmax, width, dtype=np.float32)
         r2 = np.linspace(ymin, ymax, height, dtype=np.float32)
-        c = r1 + r2[:,None]*1j
+        c = r1 + r2[:,None] * 1j
         n3 = self.mandelbrot_numpy(c,maxiter)
         return (r1,r2,n3.T)
 
@@ -207,10 +207,10 @@ class LogisticRegression(Benchmark):
         for epoch in range(max_epoch):
             z = np.matmul(self.X_train, self.W)
             A = 1 / (1 + np.exp(-z)) # sigmoid(z)
-            loss = -np.mean(self.Y_train * np.log(A) + (1-self.Y_train) * np.log(1-A))
+            loss = -np.mean(self.Y_train * np.log(A) + (1 - self.Y_train) * np.log(1 - A))
             dz = A - self.Y_train
-            dw = (1/self.size) * np.matmul(self.X_train.T, dz)
-            self.W = self.W - self.alpha*dw
+            dw = (1 / self.size) * np.matmul(self.X_train.T, dz)
+            self.W = self.W - self.alpha * dw
 
     def setup(self, dtype):
         np.random.seed(42)

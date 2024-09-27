@@ -293,7 +293,7 @@ class DataSource:
         if not self._iszip(filename):
             for zipext in _file_openers.keys():
                 if zipext:
-                    names.append(filename+zipext)
+                    names.append(filename + zipext)
         return names
 
     def _isurl(self, path):

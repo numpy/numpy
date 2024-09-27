@@ -212,8 +212,8 @@ def split_arguments(argstr):
             finish_arg()
         elif c == '(':
             p = skip_brackets(argstr[i:], '(', ')')
-            current_argument += argstr[i:i+p]
-            i += p-1
+            current_argument += argstr[i:i + p]
+            i += p - 1
         else:
             current_argument += c
         i += 1
@@ -283,7 +283,7 @@ def find_functions(filename, tag='API'):
                 if m:
                     function_name = m.group(1)
                 else:
-                    raise ParseError(filename, lineno+1,
+                    raise ParseError(filename, lineno + 1,
                                      'could not find function name')
                 function_args.append(line[m.end():])
                 state = STATE_ARGS

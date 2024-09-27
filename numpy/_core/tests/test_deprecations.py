@@ -218,7 +218,7 @@ class TestGeneratorSum(_DeprecationTestCase):
 class TestFromstring(_DeprecationTestCase):
     # 2017-10-19, 1.14
     def test_fromstring(self):
-        self.assert_deprecated(np.fromstring, args=('\x00'*80,))
+        self.assert_deprecated(np.fromstring, args=('\x00' * 80,))
 
 
 class TestFromStringAndFileInvalidData(_DeprecationTestCase):

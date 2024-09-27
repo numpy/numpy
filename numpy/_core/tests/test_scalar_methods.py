@@ -190,7 +190,7 @@ class TestClassGetItem:
 class TestBitCount:
     # derived in part from the cpython test "test_bit_count"
 
-    @pytest.mark.parametrize("itype", sctypes['int']+sctypes['uint'])
+    @pytest.mark.parametrize("itype", sctypes['int'] + sctypes['uint'])
     def test_small(self, itype):
         for a in range(max(np.iinfo(itype).min, 0), 128):
             msg = f"Smoke test for {itype}({a}).bit_count()"
@@ -210,7 +210,7 @@ class TestDevice:
     Test scalar.device attribute and scalar.to_device() method.
     """
     scalars = [np.bool(True), np.int64(1), np.uint64(1), np.float64(1.0),
-               np.complex128(1+1j)]
+               np.complex128(1 + 1j)]
 
     @pytest.mark.parametrize("scalar", scalars)
     def test_device(self, scalar):

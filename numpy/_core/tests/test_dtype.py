@@ -218,7 +218,7 @@ class TestBuiltin:
 
         dtype = dtype_class(8)
         assert dtype.type is scalar_type
-        assert dtype.itemsize == 8*char_size
+        assert dtype.itemsize == 8 * char_size
 
     def test_create_invalid_string_errors(self):
         one_too_big = np.iinfo(np.intc).max + 1
@@ -407,7 +407,7 @@ class TestRecord:
         a = np.array([3], dtype='<u4').view(dt)
         a['f1'] = 10
         a['f2'] = 36
-        assert_equal(a['f0'], 10 + 36*256*256)
+        assert_equal(a['f0'], 10 + 36 * 256 * 256)
         # Should be able to specify fields out of order
         dt = np.dtype({'names':['f0', 'f1', 'f2'], 'formats':['<u4', '<u2', '<u2'],
                         'offsets':[4, 0, 2]}, align=True)
@@ -416,8 +416,8 @@ class TestRecord:
         dt2 = np.dtype({'names':['f2', 'f0', 'f1'],
                         'formats':['<u4', '<u2', '<u2'],
                         'offsets':[4, 0, 2]}, align=True)
-        vals = [(0, 1, 2), (3, 2**15-1, 4)]
-        vals2 = [(0, 1, 2), (3, 2**15-1, 4)]
+        vals = [(0, 1, 2), (3, 2**15 - 1, 4)]
+        vals2 = [(0, 1, 2), (3, 2**15 - 1, 4)]
         a = np.array(vals, dt)
         b = np.array(vals2, dt2)
         assert_equal(a.astype(dt2), b)
@@ -1284,7 +1284,7 @@ class TestDTypeMakeCanonical:
         # dtype with empty space:
         struct_dt = np.dtype(">i4,<i1,i8,V3")[["f0", "f2"]]
         canonical = np.result_type(struct_dt)
-        assert canonical.itemsize == 4+8
+        assert canonical.itemsize == 4 + 8
         assert canonical.isnative
 
         # aligned struct dtype with empty space:
@@ -1434,8 +1434,8 @@ class TestPromotion:
     tests are defined in `test_numeric.py`
     """
     @pytest.mark.parametrize(["other", "expected"],
-            [(2**16-1, np.complex64),
-             (2**32-1, np.complex64),
+            [(2**16 - 1, np.complex64),
+             (2**32 - 1, np.complex64),
              (np.float16(2), np.complex64),
              (np.float32(2), np.complex64),
              (np.longdouble(2), np.clongdouble),
@@ -1491,7 +1491,7 @@ class TestPromotion:
                 match=r".* no common DType exists for the given inputs"):
             np.result_type(1j, rational(1, 2))
 
-    @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2*100])
+    @pytest.mark.parametrize("val", [2, 2**32, 2**63, 2**64, 2 * 100])
     def test_python_integer_promotion(self, val):
         # If we only pass scalars (mainly python ones!), NEP 50 means
         # that we get the default integer

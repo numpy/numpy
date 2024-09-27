@@ -875,7 +875,7 @@ class TestMultiIndexingAutomated:
             np.array([[2], [0], [1]]),
             np.array([[0, -1], [0, 1]], dtype=np.dtype('intp').newbyteorder()),
             np.array([2, -1], dtype=np.int8),
-            np.zeros([1]*31, dtype=int),  # trigger too large array.
+            np.zeros([1] * 31, dtype=int),  # trigger too large array.
             np.array([0., 1.])]  # invalid datatype
         # Some simpler indices that still cover a bit more
         self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]),
@@ -975,7 +975,7 @@ class TestMultiIndexingAutomated:
             return arr.copy(), no_copy
 
         if ellipsis_pos is not None:
-            in_indices[ellipsis_pos:ellipsis_pos+1] = ([slice(None, None)] *
+            in_indices[ellipsis_pos:ellipsis_pos + 1] = ([slice(None, None)] *
                                                        (arr.ndim - ndim))
 
         for ax, indx in enumerate(in_indices):
@@ -990,21 +990,21 @@ class TestMultiIndexingAutomated:
                 arr = arr.reshape(arr.shape[:ax] + (1,) + arr.shape[ax:])
                 continue
             if isinstance(indx, np.ndarray) and indx.dtype == bool:
-                if indx.shape != arr.shape[ax:ax+indx.ndim]:
+                if indx.shape != arr.shape[ax:ax + indx.ndim]:
                     raise IndexError
 
                 try:
                     flat_indx = np.ravel_multi_index(np.nonzero(indx),
-                                    arr.shape[ax:ax+indx.ndim], mode='raise')
+                                    arr.shape[ax:ax + indx.ndim], mode='raise')
                 except Exception:
                     error_unless_broadcast_to_empty = True
                     # fill with 0s instead, and raise error later
-                    flat_indx = np.array([0]*indx.sum(), dtype=np.intp)
+                    flat_indx = np.array([0] * indx.sum(), dtype=np.intp)
                 # concatenate axis into a single one:
                 if indx.ndim != 0:
                     arr = arr.reshape(arr.shape[:ax]
-                                  + (np.prod(arr.shape[ax:ax+indx.ndim]),)
-                                  + arr.shape[ax+indx.ndim:])
+                                  + (np.prod(arr.shape[ax:ax + indx.ndim]),)
+                                  + arr.shape[ax + indx.ndim:])
                     indx = flat_indx
                 else:
                     # This could be changed, a 0-d boolean index can
@@ -1109,7 +1109,7 @@ class TestMultiIndexingAutomated:
                 try:
                     arr = arr.reshape(arr.shape[:ax]
                                         + mi.shape
-                                        + arr.shape[ax+1:])
+                                        + arr.shape[ax + 1:])
                 except ValueError:
                     # too many dimensions, probably
                     raise IndexError
@@ -1335,21 +1335,21 @@ class TestBooleanIndexing:
         a = np.ones((3, 3))
 
         # This used to incorrectly work (and give an array of shape (0,))
-        idx1 = np.array([[False]*9])
+        idx1 = np.array([[False] * 9])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along axis 0; "
             "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx1])
 
         # This used to incorrectly give a ValueError: operands could not be broadcast together
-        idx2 = np.array([[False]*8 + [True]])
+        idx2 = np.array([[False] * 8 + [True]])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along axis 0; "
             "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx2])
 
         # This is the same as it used to be. The above two should work like this.
-        idx3 = np.array([[False]*10])
+        idx3 = np.array([[False] * 10])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along axis 0; "
             "size of axis is 3 but size of corresponding boolean axis is 1",

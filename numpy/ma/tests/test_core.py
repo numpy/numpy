@@ -70,7 +70,7 @@ class TestMaskedArray:
 
     def setup_method(self):
         # Base data definition.
-        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
@@ -1029,7 +1029,7 @@ class TestMaskedArrayArithmetic:
 
     def setup_method(self):
         # Base data definition.
-        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
@@ -1176,8 +1176,8 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.arctan(z), arctan(zm))
         assert_equal(np.arctan2(x, y), arctan2(xm, ym))
         assert_equal(np.absolute(x), absolute(xm))
-        assert_equal(np.angle(x + 1j*y), angle(xm + 1j*ym))
-        assert_equal(np.angle(x + 1j*y, deg=True), angle(xm + 1j*ym, deg=True))
+        assert_equal(np.angle(x + 1j * y), angle(xm + 1j * ym))
+        assert_equal(np.angle(x + 1j * y, deg=True), angle(xm + 1j * ym, deg=True))
         assert_equal(np.equal(x, y), equal(xm, ym))
         assert_equal(np.not_equal(x, y), not_equal(xm, ym))
         assert_equal(np.less(x, y), less(xm, ym))
@@ -1316,7 +1316,7 @@ class TestMaskedArrayArithmetic:
 
     def test_minmax_dtypes(self):
         # Additional tests on max/min for non-standard float and complex dtypes
-        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
         a10 = 10.
         an10 = -10.0
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
@@ -1342,15 +1342,15 @@ class TestMaskedArrayArithmetic:
 
         # Complex types only test
         for float_dtype in float_dtypes[-3:]:
-            ym = masked_array([1e20+1j, 1e20-2j, 1e20-1j], mask=[0, 1, 0],
+            ym = masked_array([1e20 + 1j, 1e20 - 2j, 1e20 - 1j], mask=[0, 1, 0],
                           dtype=float_dtype)
-            assert_equal(ym.min(), float_dtype(1e20-1j))
-            assert_equal(ym.max(), float_dtype(1e20+1j))
+            assert_equal(ym.min(), float_dtype(1e20 - 1j))
+            assert_equal(ym.max(), float_dtype(1e20 + 1j))
 
-            zm = masked_array([np.inf+2j, np.inf+3j, -np.inf-1j], mask=[0, 1, 0],
+            zm = masked_array([np.inf + 2j, np.inf + 3j, -np.inf - 1j], mask=[0, 1, 0],
                               dtype=float_dtype)
-            assert_equal(zm.min(), float_dtype(-np.inf-1j))
-            assert_equal(zm.max(), float_dtype(np.inf+2j))
+            assert_equal(zm.min(), float_dtype(-np.inf - 1j))
+            assert_equal(zm.max(), float_dtype(np.inf + 2j))
 
             cmax = np.inf - 1j * np.finfo(np.float64).max
             assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
@@ -1384,7 +1384,7 @@ class TestMaskedArrayArithmetic:
             assert_array_equal(masked_arr.max(), expected_max)
 
         # Additional tests on max/min for time dtypes
-        x1 = np.array([1, 1, -2, 4, 5, -10, 10, 1, 2, -2**63+1], dtype=time_type)
+        x1 = np.array([1, 1, -2, 4, 5, -10, 10, 1, 2, -2**63 + 1], dtype=time_type)
         x2 = np.array(['NaT', 1, -2, 4, 5, -10, 10, 1, 2, 3], dtype=time_type)
         x3 = np.array(['NaT', 'NaT', -2, 4, 5, -10, 10, 1, 2, 3], dtype=time_type)
         x_test = [x1, x2, x3]
@@ -2634,8 +2634,8 @@ class TestUfuncs:
         x = np.arange(0, 3, 0.1)
         X = np.ma.array(x)
         with np.errstate(under="raise"):
-            X2 = X/2.0
-            np.testing.assert_array_equal(X2, x/2)
+            X2 = X / 2.0
+            np.testing.assert_array_equal(X2, x / 2)
 
 class TestMaskedArrayInPlaceArithmetic:
     # Test MaskedArray Arithmetic
@@ -4056,7 +4056,7 @@ class TestMaskedArrayMathMethods:
         assert_equal(np.trace(mX), mX.trace())
 
         # gh-5560
-        arr = np.arange(2*4*4).reshape(2,4,4)
+        arr = np.arange(2 * 4 * 4).reshape(2,4,4)
         m_arr = np.ma.masked_array(arr, False)
         assert_equal(arr.trace(axis1=1, axis2=2), m_arr.trace(axis1=1, axis2=2))
 
@@ -4317,7 +4317,7 @@ class TestMaskedArrayFunctions:
     # Test class for miscellaneous functions.
 
     def setup_method(self):
-        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
@@ -4539,7 +4539,7 @@ class TestMaskedArrayFunctions:
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     def test_where(self):
         # Test the where function
-        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
@@ -5374,12 +5374,12 @@ class TestOptionalArgs:
         a = np.ma.array(d, mask=m)
 
         assert_equal(count(a), 16)
-        assert_equal(count(a, axis=1), 2*ones((2,4)))
-        assert_equal(count(a, axis=(0,1)), 4*ones((4,)))
-        assert_equal(count(a, keepdims=True), 16*ones((1,1,1)))
-        assert_equal(count(a, axis=1, keepdims=True), 2*ones((2,1,4)))
-        assert_equal(count(a, axis=(0,1), keepdims=True), 4*ones((1,1,4)))
-        assert_equal(count(a, axis=-2), 2*ones((2,4)))
+        assert_equal(count(a, axis=1), 2 * ones((2,4)))
+        assert_equal(count(a, axis=(0,1)), 4 * ones((4,)))
+        assert_equal(count(a, keepdims=True), 16 * ones((1,1,1)))
+        assert_equal(count(a, axis=1, keepdims=True), 2 * ones((2,1,4)))
+        assert_equal(count(a, axis=(0,1), keepdims=True), 4 * ones((1,1,4)))
+        assert_equal(count(a, axis=-2), 2 * ones((2,4)))
         assert_raises(ValueError, count, a, axis=(1,1))
         assert_raises(AxisError, count, a, axis=3)
 
@@ -5387,13 +5387,13 @@ class TestOptionalArgs:
         a = np.ma.array(d, mask=nomask)
 
         assert_equal(count(a), 24)
-        assert_equal(count(a, axis=1), 3*ones((2,4)))
-        assert_equal(count(a, axis=(0,1)), 6*ones((4,)))
-        assert_equal(count(a, keepdims=True), 24*ones((1,1,1)))
+        assert_equal(count(a, axis=1), 3 * ones((2,4)))
+        assert_equal(count(a, axis=(0,1)), 6 * ones((4,)))
+        assert_equal(count(a, keepdims=True), 24 * ones((1,1,1)))
         assert_equal(np.ndim(count(a, keepdims=True)), 3)
-        assert_equal(count(a, axis=1, keepdims=True), 3*ones((2,1,4)))
-        assert_equal(count(a, axis=(0,1), keepdims=True), 6*ones((1,1,4)))
-        assert_equal(count(a, axis=-2), 3*ones((2,4)))
+        assert_equal(count(a, axis=1, keepdims=True), 3 * ones((2,1,4)))
+        assert_equal(count(a, axis=(0,1), keepdims=True), 6 * ones((1,1,4)))
+        assert_equal(count(a, axis=-2), 3 * ones((2,4)))
         assert_raises(ValueError, count, a, axis=(1,1))
         assert_raises(AxisError, count, a, axis=3)
 

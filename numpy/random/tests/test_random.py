@@ -184,7 +184,7 @@ class TestRandint:
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
-            tgt = (lbnd + ubnd)//2
+            tgt = (lbnd + ubnd) // 2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
     def test_full_range(self):
@@ -756,7 +756,7 @@ class TestRandomDist:
 
     def test_multinomial(self):
         np.random.seed(self.seed)
-        actual = np.random.multinomial(20, [1/6.]*6, size=(3, 2))
+        actual = np.random.multinomial(20, [1 / 6.] * 6, size=(3, 2))
         desired = np.array([[[4, 3, 5, 4, 2, 2],
                              [5, 2, 8, 2, 2, 1]],
                             [[3, 4, 3, 6, 0, 4],
@@ -882,9 +882,9 @@ class TestRandomDist:
         lambig = np.iinfo('l').max
         lamneg = -1
         assert_raises(ValueError, np.random.poisson, lamneg)
-        assert_raises(ValueError, np.random.poisson, [lamneg]*10)
+        assert_raises(ValueError, np.random.poisson, [lamneg] * 10)
         assert_raises(ValueError, np.random.poisson, lambig)
-        assert_raises(ValueError, np.random.poisson, [lambig]*10)
+        assert_raises(ValueError, np.random.poisson, [lambig] * 10)
 
     def test_power(self):
         np.random.seed(self.seed)
@@ -1661,7 +1661,7 @@ class TestThread:
 
     def test_multinomial(self):
         def gen_random(state, out):
-            out[...] = state.multinomial(10, [1/6.]*6, size=10000)
+            out[...] = state.multinomial(10, [1 / 6.] * 6, size=10000)
         self.check_function(gen_random, sz=(10000, 6))
 
 

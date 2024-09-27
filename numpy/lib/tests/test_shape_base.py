@@ -129,12 +129,12 @@ class TestApplyAlongAxis:
     def test_simple(self):
         a = np.ones((20, 10), 'd')
         assert_array_equal(
-            apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
+            apply_along_axis(len, 0, a), len(a) * np.ones(a.shape[1]))
 
     def test_simple101(self):
         a = np.ones((10, 101), 'd')
         assert_array_equal(
-            apply_along_axis(len, 0, a), len(a)*np.ones(a.shape[1]))
+            apply_along_axis(len, 0, a), len(a) * np.ones(a.shape[1]))
 
     def test_3d(self):
         a = np.arange(27).reshape((3, 3, 3))
@@ -198,7 +198,7 @@ class TestApplyAlongAxis:
             assert_equal(x.ndim, 1)
             return (x[::-1] * x[1:,None]).view(cls)
 
-        a2d = np.arange(6*3).reshape((6, 3))
+        a2d = np.arange(6 * 3).reshape((6, 3))
 
         # 2d insertion along first axis
         actual = apply_along_axis(f1to2, 0, a2d)
@@ -217,7 +217,7 @@ class TestApplyAlongAxis:
         assert_equal(actual, expected)
 
         # 3d insertion along middle axis
-        a3d = np.arange(6*5*3).reshape((6, 5, 3))
+        a3d = np.arange(6 * 5 * 3).reshape((6, 5, 3))
 
         actual = apply_along_axis(f1to2, 1, a3d)
         expected = np.stack([
@@ -242,7 +242,7 @@ class TestApplyAlongAxis:
             assert_equal(x.ndim, 1)
             res = x[::-1] * x[1:,None]
             return np.ma.masked_where(res%5 == 0, res)
-        a = np.arange(6*3).reshape((6, 3))
+        a = np.arange(6 * 3).reshape((6, 3))
         res = apply_along_axis(f1to2, 0, a)
         assert_(isinstance(res, np.ma.masked_array))
         assert_equal(res.ndim, 3)
@@ -734,8 +734,8 @@ class TestKron:
     def test_kron_shape(self, shape_a, shape_b):
         a = np.ones(shape_a)
         b = np.ones(shape_b)
-        normalised_shape_a = (1,) * max(0, len(shape_b)-len(shape_a)) + shape_a
-        normalised_shape_b = (1,) * max(0, len(shape_a)-len(shape_b)) + shape_b
+        normalised_shape_a = (1,) * max(0, len(shape_b) - len(shape_a)) + shape_a
+        normalised_shape_b = (1,) * max(0, len(shape_a) - len(shape_b)) + shape_b
         expected_shape = np.multiply(normalised_shape_a, normalised_shape_b)
 
         k = np.kron(a, b)

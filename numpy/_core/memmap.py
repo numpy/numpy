@@ -233,7 +233,7 @@ class memmap(ndarray):
         else:
             f_ctx = open(
                 os.fspath(filename),
-                ('r' if mode == 'c' else mode)+'b'
+                ('r' if mode == 'c' else mode) + 'b'
             )
 
         with f_ctx as fid:
@@ -260,7 +260,7 @@ class memmap(ndarray):
                 for k in shape:
                     size *= k
 
-            bytes = int(offset + size*_dbytes)
+            bytes = int(offset + size * _dbytes)
 
             if mode in ('w+', 'r+'):
                 # gh-27723

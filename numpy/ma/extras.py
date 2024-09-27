@@ -698,7 +698,7 @@ def average(a, axis=None, weights=None, returned=False, *,
                                     for ax, s in enumerate(a.shape)))
 
         if m is not nomask:
-            wgt = wgt*(~a.mask)
+            wgt = wgt * (~a.mask)
             wgt.mask |= a.mask
 
         scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
@@ -845,7 +845,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     # duplicate high if odd number of elements so mean does nothing
     odd = counts % 2 == 1
-    l = np.where(odd, h, h-1)
+    l = np.where(odd, h, h - 1)
 
     lh = np.concatenate([l,h], axis=axis)
 
@@ -930,7 +930,7 @@ def compress_nd(x, axis=None):
     data = x._data
     for ax in axis:
         axes = tuple(list(range(ax)) + list(range(ax + 1, x.ndim)))
-        data = data[(slice(None),)*ax + (~m.any(axis=axes),)]
+        data = data[(slice(None),) * ax + (~m.any(axis=axes),)]
     return data
 
 

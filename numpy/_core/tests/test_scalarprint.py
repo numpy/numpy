@@ -316,7 +316,7 @@ class TestRealScalars:
         # which happens when the first double is normal and the second is
         # subnormal.
         x = np.float128('2.123123123123123123123123123123123e-286')
-        got = [str(x/np.float128('2e' + str(i))) for i in range(40)]
+        got = [str(x / np.float128('2e' + str(i))) for i in range(40)]
         expected = [
             "1.06156156156156156156156156156157e-286",
             "1.06156156156156156156156156156158e-287",
@@ -363,7 +363,7 @@ class TestRealScalars:
         # Note: we follow glibc behavior, but it (or gcc) might not be right.
         # In particular we can get two values that print the same but are not
         # equal:
-        a = np.float128('2')/np.float128('3')
+        a = np.float128('2') / np.float128('3')
         b = np.float128(str(a))
         assert_equal(str(a), str(b))
         assert_(a != b)

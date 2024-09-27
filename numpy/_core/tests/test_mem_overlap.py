@@ -89,7 +89,7 @@ def test_diophantine_fuzz():
         feasible_count = 0
         infeasible_count = 0
 
-        min_count = 500//(ndim + 1)
+        min_count = 500 // (ndim + 1)
 
         while min(feasible_count, infeasible_count) < min_count:
             # Ensure big and small integer problems
@@ -97,15 +97,15 @@ def test_diophantine_fuzz():
             U_max = rng.randint(0, 11, dtype=np.intp)**6
 
             A_max = min(max_int, A_max)
-            U_max = min(max_int-1, U_max)
+            U_max = min(max_int - 1, U_max)
 
-            A = tuple(int(rng.randint(1, A_max+1, dtype=np.intp))
+            A = tuple(int(rng.randint(1, A_max + 1, dtype=np.intp))
                       for j in range(ndim))
-            U = tuple(int(rng.randint(0, U_max+2, dtype=np.intp))
+            U = tuple(int(rng.randint(0, U_max + 2, dtype=np.intp))
                       for j in range(ndim))
 
-            b_ub = min(max_int-2, sum(a*ub for a, ub in zip(A, U)))
-            b = int(rng.randint(-1, b_ub+2, dtype=np.intp))
+            b_ub = min(max_int - 2, sum(a * ub for a, ub in zip(A, U)))
+            b = int(rng.randint(-1, b_ub + 2, dtype=np.intp))
 
             if ndim == 0 and feasible_count < min_count:
                 b = 0
@@ -120,7 +120,7 @@ def test_diophantine_fuzz():
                 # Check no solution exists (provided the problem is
                 # small enough so that brute force checking doesn't
                 # take too long)
-                ranges = tuple(range(0, a*ub+1, a) for a, ub in zip(A, U))
+                ranges = tuple(range(0, a * ub + 1, a) for a, ub in zip(A, U))
 
                 size = 1
                 for r in ranges:
@@ -134,7 +134,7 @@ def test_diophantine_fuzz():
                 assert_(X_simplified is not None, (A, U, b, X_simplified))
 
                 # Check validity
-                assert_(sum(a*x for a, x in zip(A, X)) == b)
+                assert_(sum(a * x for a, x in zip(A, X)) == b)
                 assert_(all(0 <= x <= ub for x, ub in zip(X, U)))
                 feasible_count += 1
 
@@ -147,9 +147,9 @@ def test_diophantine_overflow():
     if max_int64 <= max_intp:
         # Check that the algorithm works internally in 128-bit;
         # solving this problem requires large intermediate numbers
-        A = (max_int64//2, max_int64//2 - 10)
-        U = (max_int64//2, max_int64//2 - 10)
-        b = 2*(max_int64//2) - 10
+        A = (max_int64 // 2, max_int64 // 2 - 10)
+        U = (max_int64 // 2, max_int64 // 2 - 10)
+        b = 2 * (max_int64 // 2) - 10
 
         assert_equal(solve_diophantine(A, U, b), (1, 1))
 
@@ -186,13 +186,13 @@ def test_may_share_memory_manual():
     # Base arrays
     xs0 = [
         np.zeros([13, 21, 23, 22], dtype=np.int8),
-        np.zeros([13, 21, 23*2, 22], dtype=np.int8)[:,:,::2,:]
+        np.zeros([13, 21, 23 * 2, 22], dtype=np.int8)[:,:,::2,:]
     ]
 
     # Generate all negative stride combinations
     xs = []
     for x in xs0:
-        for ss in itertools.product(*(([slice(None), slice(None, None, -1)],)*4)):
+        for ss in itertools.product(*(([slice(None), slice(None, None, -1)],) * 4)):
             xp = x[ss]
             xs.append(xp)
 
@@ -238,18 +238,18 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
         raise ValueError
 
     def random_slice(n, step):
-        start = rng.randint(0, n+1, dtype=np.intp)
-        stop = rng.randint(start, n+1, dtype=np.intp)
+        start = rng.randint(0, n + 1, dtype=np.intp)
+        stop = rng.randint(start, n + 1, dtype=np.intp)
         if rng.randint(0, 2, dtype=np.intp) == 0:
             stop, start = start, stop
             step *= -1
         return slice(start, stop, step)
 
     def random_slice_fixed_size(n, step, size):
-        start = rng.randint(0, n+1 - size*step)
-        stop = start + (size-1)*step + 1
+        start = rng.randint(0, n + 1 - size * step)
+        stop = start + (size - 1) * step + 1
         if rng.randint(0, 2) == 0:
-            stop, start = start-1, stop-1
+            stop, start = start - 1, stop - 1
             if stop < 0:
                 stop = None
             step *= -1
@@ -298,7 +298,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
             if a.size == 0:
                 continue
 
-            steps2 = tuple(rng.randint(1, max(2, p//(1+pa)))
+            steps2 = tuple(rng.randint(1, max(2, p // (1 + pa)))
                            if rng.randint(0, 5) == 0 else 1
                            for p, s, pa in zip(x.shape, s1, a.shape))
             s2 = tuple(random_slice_fixed_size(p, s, pa)
@@ -370,7 +370,7 @@ def test_may_share_memory_harder_fuzz():
     # also exist but not be detected here, as the set of problems
     # comes from RNG.
 
-    check_may_share_memory_easy_fuzz(get_max_work=lambda a, b: max(a.size, b.size)//2,
+    check_may_share_memory_easy_fuzz(get_max_work=lambda a, b: max(a.size, b.size) // 2,
                                      same_steps=False,
                                      min_count=2000)
 
@@ -404,9 +404,9 @@ def test_internal_overlap_diophantine():
             exists = (X is not None)
 
         if X is not None:
-            assert_(sum(a*x for a, x in zip(A, X)) == sum(a*u//2 for a, u in zip(A, U)))
+            assert_(sum(a * x for a, x in zip(A, X)) == sum(a * u // 2 for a, u in zip(A, U)))
             assert_(all(0 <= x <= u for x, u in zip(X, U)))
-            assert_(any(x != u//2 for x, u in zip(X, U)))
+            assert_(any(x != u // 2 for x, u in zip(X, U)))
 
         if exists:
             assert_(X is not None, repr(X))
@@ -414,8 +414,8 @@ def test_internal_overlap_diophantine():
             assert_(X is None, repr(X))
 
     # Smoke tests
-    check((3, 2), (2*2, 3*2), exists=True)
-    check((3*2, 2), (15*2, (3-1)*2), exists=False)
+    check((3, 2), (2 * 2, 3 * 2), exists=True)
+    check((3 * 2, 2), (15 * 2, (3 - 1) * 2), exists=False)
 
 
 def test_internal_overlap_slices():
@@ -426,8 +426,8 @@ def test_internal_overlap_slices():
     rng = np.random.RandomState(1234)
 
     def random_slice(n, step):
-        start = rng.randint(0, n+1, dtype=np.intp)
-        stop = rng.randint(start, n+1, dtype=np.intp)
+        start = rng.randint(0, n + 1, dtype=np.intp)
+        stop = rng.randint(start, n + 1, dtype=np.intp)
         if rng.randint(0, 2, dtype=np.intp) == 0:
             stop, start = start, stop
             step *= -1
@@ -456,7 +456,7 @@ def check_internal_overlap(a, manual_expected=None):
     m = set()
     ranges = tuple(range(n) for n in a.shape)
     for v in itertools.product(*ranges):
-        offset = sum(s*w for s, w in zip(a.strides, v))
+        offset = sum(s * w for s, w in zip(a.strides, v))
         if offset in m:
             expected = True
             break
@@ -640,12 +640,12 @@ class TestUFunc:
                         sl = [slice(None)] * ndim
                         if axis is None:
                             if outsize is None:
-                                sl = [slice(0, 1)] + [0]*(ndim - 1)
+                                sl = [slice(0, 1)] + [0] * (ndim - 1)
                             else:
-                                sl = [slice(0, outsize)] + [0]*(ndim - 1)
+                                sl = [slice(0, outsize)] + [0] * (ndim - 1)
                         else:
                             if outsize is None:
-                                k = b.shape[axis]//2
+                                k = b.shape[axis] // 2
                                 if ndim == 1:
                                     sl[axis] = slice(k, k + 1)
                                 else:
@@ -706,7 +706,7 @@ class TestUFunc:
         def do_reduceat(a, out, axis):
             if axis is None:
                 size = len(a)
-                step = size//len(out)
+                step = size // len(out)
             else:
                 size = a.shape[axis]
                 step = a.shape[axis] // out.shape[axis]
@@ -762,7 +762,7 @@ class TestUFunc:
                 if p <= b.shape[-1] and p > 0:
                     b = b[...,:p]
                 else:
-                    n = max(2, int(np.sqrt(b.shape[-1]))//2)
+                    n = max(2, int(np.sqrt(b.shape[-1])) // 2)
                     p = n * (n - 1) // 2
                     a = a[...,:n,:]
                     b = b[...,:p]
@@ -843,17 +843,17 @@ class TestUFunc:
             k = 10
             indices = [
                 np.index_exp[:n],
-                np.index_exp[k:k+n],
-                np.index_exp[n-1::-1],
-                np.index_exp[k+n-1:k-1:-1],
-                np.index_exp[:2*n:2],
-                np.index_exp[k:k+2*n:2],
-                np.index_exp[2*n-1::-2],
-                np.index_exp[k+2*n-1:k-1:-2],
+                np.index_exp[k:k + n],
+                np.index_exp[n - 1::-1],
+                np.index_exp[k + n - 1:k - 1:-1],
+                np.index_exp[:2 * n:2],
+                np.index_exp[k:k + 2 * n:2],
+                np.index_exp[2 * n - 1::-2],
+                np.index_exp[k + 2 * n - 1:k - 1:-2],
             ]
 
             for xi, yi in itertools.product(indices, indices):
-                v = np.arange(1, 1 + n*2 + k, dtype=dtype)
+                v = np.arange(1, 1 + n * 2 + k, dtype=dtype)
                 x = v[xi]
                 y = v[yi]
 
@@ -901,14 +901,14 @@ class TestUFunc:
             indices = []
             for p in [1, 2]:
                 indices.extend([
-                    np.index_exp[:p*n:p],
-                    np.index_exp[k:k+p*n:p],
-                    np.index_exp[p*n-1::-p],
-                    np.index_exp[k+p*n-1:k-1:-p],
+                    np.index_exp[:p * n:p],
+                    np.index_exp[k:k + p * n:p],
+                    np.index_exp[p * n - 1::-p],
+                    np.index_exp[k + p * n - 1:k - 1:-p],
                 ])
 
             for x, y, z in itertools.product(indices, indices, indices):
-                v = np.arange(6*n).astype(dtype)
+                v = np.arange(6 * n).astype(dtype)
                 x = v[x]
                 y = v[y]
                 z = v[z]

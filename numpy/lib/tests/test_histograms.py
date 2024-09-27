@@ -820,8 +820,8 @@ class TestHistogramdd:
             [1, 3]])
 
         # ensure the number of points in each region is proportional to its area
-        x = np.array([1] + [1]*3 + [7]*3 + [7]*9)
-        y = np.array([7] + [1]*3 + [7]*3 + [1]*9)
+        x = np.array([1] + [1] * 3 + [7] * 3 + [7] * 9)
+        y = np.array([7] + [1] * 3 + [7] * 3 + [1] * 9)
 
         # sanity check that the above worked as intended
         hist, edges = histogramdd((y, x), bins=(y_edges, x_edges))
@@ -829,7 +829,7 @@ class TestHistogramdd:
 
         # resulting histogram should be uniform, since counts and areas are proportional
         hist, edges = histogramdd((y, x), bins=(y_edges, x_edges), density=True)
-        assert_equal(hist, 1 / (8*8))
+        assert_equal(hist, 1 / (8 * 8))
 
     def test_density_non_uniform_1d(self):
         # compare to histogram to show the results are the same

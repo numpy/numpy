@@ -215,7 +215,7 @@ class TestMultivariateHypergeometric:
 
         x = random.multivariate_hypergeometric([3, 4, 5], 12, size=3,
                                                method=method)
-        assert_array_equal(x, [[3, 4, 5]]*3)
+        assert_array_equal(x, [[3, 4, 5]] * 3)
 
     # Cases for nsample:
     #     nsample < 10
@@ -349,7 +349,7 @@ class TestIntegers:
                           endpoint=endpoint, dtype=dt)
             assert_raises(ValueError, self.rfunc, 1, [0],
                           endpoint=endpoint, dtype=dt)
-            assert_raises(ValueError, self.rfunc, [ubnd+1], [ubnd],
+            assert_raises(ValueError, self.rfunc, [ubnd + 1], [ubnd],
                           endpoint=endpoint, dtype=dt)
 
     def test_bounds_checking_array(self, endpoint):
@@ -589,12 +589,12 @@ class TestIntegers:
     def test_int64_uint64_broadcast_exceptions(self, endpoint):
         configs = {np.uint64: ((0, 2**65), (-1, 2**62), (10, 9), (0, 0)),
                    np.int64: ((0, 2**64), (-(2**64), 2**62), (10, 9), (0, 0),
-                              (-2**63-1, -2**63-1))}
+                              (-2**63 - 1, -2**63 - 1))}
         for dtype in configs:
             for config in configs[dtype]:
                 low, high = config
                 high = high - endpoint
-                low_a = np.array([[low]*10])
+                low_a = np.array([[low] * 10])
                 high_a = np.array([high] * 10)
                 assert_raises(ValueError, random.integers, low, high,
                               endpoint=endpoint, dtype=dtype)
@@ -605,7 +605,7 @@ class TestIntegers:
                 assert_raises(ValueError, random.integers, low_a, high_a,
                               endpoint=endpoint, dtype=dtype)
 
-                low_o = np.array([[low]*10], dtype=object)
+                low_o = np.array([[low] * 10], dtype=object)
                 high_o = np.array([high] * 10, dtype=object)
                 assert_raises(ValueError, random.integers, low_o, high,
                               endpoint=endpoint, dtype=dtype)
@@ -1500,7 +1500,7 @@ class TestRandomDist:
         assert_raises(ValueError, random.multivariate_normal,
                       mu, np.eye(3))
 
-    @pytest.mark.parametrize('mean, cov', [([0], [[1+1j]]), ([0j], [[1]])])
+    @pytest.mark.parametrize('mean, cov', [([0], [[1 + 1j]]), ([0j], [[1]])])
     def test_multivariate_normal_disallow_complex(self, mean, cov):
         random = Generator(MT19937(self.seed))
         with pytest.raises(TypeError, match="must not be complex"):

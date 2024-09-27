@@ -90,10 +90,10 @@ def scalar_instances(times=True, extended_precision=True, user_dtype=True):
         yield param(np.sqrt(np.longdouble(5)), id="longdouble")
 
     # Complex:
-    yield param(np.sqrt(np.complex64(2+3j)), id="complex64")
-    yield param(np.sqrt(np.complex128(2+3j)), id="complex128")
+    yield param(np.sqrt(np.complex64(2 + 3j)), id="complex64")
+    yield param(np.sqrt(np.complex128(2 + 3j)), id="complex128")
     if extended_precision:
-        yield param(np.sqrt(np.clongdouble(2+3j)), id="clongdouble")
+        yield param(np.sqrt(np.clongdouble(2 + 3j)), id="clongdouble")
 
     # Bool:
     # XFAIL: Bool should be added, but has some bad properties when it

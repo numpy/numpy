@@ -305,7 +305,7 @@ class TestRandint:
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
-            tgt = (lbnd + ubnd)//2
+            tgt = (lbnd + ubnd) // 2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
     def test_full_range(self):

@@ -182,7 +182,7 @@ def identity(n,dtype=None):
             [0, 0, 1]])
 
     """
-    a = array([1]+n*[0], dtype=dtype)
+    a = array([1] + n * [0], dtype=dtype)
     b = empty((n, n), dtype=dtype)
     b.flat = a
     return b

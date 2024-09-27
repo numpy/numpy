@@ -257,7 +257,7 @@ class TestArray2String:
                 "[0.00 1.00 2.00]")
 
         s = np.array(['abc', 'def'])
-        assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
+        assert_(np.array2string(s, formatter={'numpystr':lambda s: s * 2}) ==
                 '[abcabc defdef]')
 
     def test_structure_format_mixed(self):
@@ -667,28 +667,28 @@ class TestPrintOptions:
 
     def test_formatter(self):
         x = np.arange(3)
-        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'all':lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1, 0, 1])")
 
     def test_formatter_reset(self):
         x = np.arange(3)
-        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'all':lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1, 0, 1])")
         np.set_printoptions(formatter={'int':None})
         assert_equal(repr(x), "array([0, 1, 2])")
 
-        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'all':lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1, 0, 1])")
         np.set_printoptions(formatter={'all':None})
         assert_equal(repr(x), "array([0, 1, 2])")
 
-        np.set_printoptions(formatter={'int':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'int':lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1, 0, 1])")
         np.set_printoptions(formatter={'int_kind':None})
         assert_equal(repr(x), "array([0, 1, 2])")
 
         x = np.arange(3.)
-        np.set_printoptions(formatter={'float':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'float':lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1.0, 0.0, 1.0])")
         np.set_printoptions(formatter={'float_kind':None})
         assert_equal(repr(x), "array([0., 1., 2.])")
@@ -832,7 +832,7 @@ class TestPrintOptions:
                       0.7326538397312751, 0.3459503329096204,
                       0.0862072768214508, 0.39112753029631175],
                       dtype=np.float64)
-        z = np.arange(6, dtype=np.float16)/10
+        z = np.arange(6, dtype=np.float16) / 10
         c = np.array([1.0 + 1.0j, 1.123456789 + 1.123456789j], dtype='c16')
 
         # also make sure 1e23 is right (is between two fp numbers)
@@ -1118,7 +1118,7 @@ class TestPrintOptions:
 
     def test_edgeitems_structured(self):
         np.set_printoptions(edgeitems=1, threshold=1)
-        A = np.arange(5*2*3, dtype="<i8").view([('i', "<i8", (5, 2, 3))])
+        A = np.arange(5 * 2 * 3, dtype="<i8").view([('i', "<i8", (5, 2, 3))])
         reprA = (
             "array([([[[ 0, ...,  2], [ 3, ...,  5]], ..., "
             "[[24, ..., 26], [27, ..., 29]]],)],\n"

@@ -253,7 +253,7 @@ class TestRecFunctions:
         d = np.array([(1, 2, 5), (4, 5, 7), (7, 8,11), (10, 11, 12)],
                      dtype=[('x', 'i4'), ('y', 'f4'), ('z', 'f8')])
         assert_equal(apply_along_fields(np.mean, d),
-                     np.array([ 8.0/3,  16.0/3,  26.0/3, 11.]))
+                     np.array([ 8.0 / 3,  16.0 / 3,  26.0 / 3, 11.]))
         assert_equal(apply_along_fields(np.mean, d[['x', 'z']]),
                      np.array([ 3.,  5.5,  9., 11.]))
 

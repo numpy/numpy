@@ -831,7 +831,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         # is 2x as fast) and it results in a memory footprint 3x lower in the
         # limit of large arrays.
         for i in _range(0, len(a), BLOCK):
-            tmp_a = a[i:i+BLOCK]
+            tmp_a = a[i:i + BLOCK]
             if weights is None:
                 tmp_w = None
             else:
@@ -880,13 +880,13 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         cum_n = np.zeros(bin_edges.shape, ntype)
         if weights is None:
             for i in _range(0, len(a), BLOCK):
-                sa = np.sort(a[i:i+BLOCK])
+                sa = np.sort(a[i:i + BLOCK])
                 cum_n += _search_sorted_inclusive(sa, bin_edges)
         else:
             zero = np.zeros(1, dtype=ntype)
             for i in _range(0, len(a), BLOCK):
-                tmp_a = a[i:i+BLOCK]
-                tmp_w = weights[i:i+BLOCK]
+                tmp_a = a[i:i + BLOCK]
+                tmp_w = weights[i:i + BLOCK]
                 sorting_index = np.argsort(tmp_a)
                 sa = tmp_a[sorting_index]
                 sw = tmp_w[sorting_index]
@@ -898,7 +898,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
 
     if density:
         db = np.array(np.diff(bin_edges), float)
-        return n/db/n.sum(), bin_edges
+        return n / db / n.sum(), bin_edges
 
     return n, bin_edges
 
@@ -991,8 +991,8 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         N, D = sample.shape
 
     nbin = np.empty(D, np.intp)
-    edges = D*[None]
-    dedges = D*[None]
+    edges = D * [None]
+    dedges = D * [None]
     if weights is not None:
         weights = np.asarray(weights)
 
@@ -1004,7 +1004,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
                 'sample x.')
     except TypeError:
         # bins is an integer
-        bins = D*[bins]
+        bins = D * [bins]
 
     # normalize the range argument
     if range is None:
@@ -1072,7 +1072,7 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
     hist = hist.astype(float, casting='safe')
 
     # Remove outliers (indices 0 and -1 for each dimension).
-    core = D*(slice(1, -1),)
+    core = D * (slice(1, -1),)
     hist = hist[core]
 
     if density:

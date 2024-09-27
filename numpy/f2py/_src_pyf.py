@@ -71,11 +71,11 @@ def parse_structure(astr):
                 if i == -1:
                     break
                 start = i
-                if astr[i:i+7] != '\n     $':
+                if astr[i:i + 7] != '\n     $':
                     break
         start += 1
         m = routine_end_re.search(astr, m.end())
-        ind = end = m and m.end()-1 or len(astr)
+        ind = end = m and m.end() - 1 or len(astr)
         spanlist.append((start, end))
     return spanlist
 
@@ -174,7 +174,7 @@ def expand_sub(substr, names):
 
     def namerepl(mobj):
         name = mobj.group(1)
-        return rules.get(name, (k+1)*[name])[k]
+        return rules.get(name, (k + 1) * [name])[k]
 
     newstr = ''
     for k in range(numsubs):

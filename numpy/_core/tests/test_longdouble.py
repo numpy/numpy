@@ -83,8 +83,8 @@ def test_bogus_string():
 @pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
 def test_fromstring():
     o = 1 + LD_INFO.eps
-    s = (" " + str(o))*5
-    a = np.array([o]*5)
+    s = (" " + str(o)) * 5
+    a = np.array([o] * 5)
     assert_equal(np.fromstring(s, sep=" ", dtype=np.longdouble), a,
                  err_msg="reading '%s'" % s)
 
@@ -142,7 +142,7 @@ def test_fromstring_missing():
 class TestFileBased:
 
     ldbl = 1 + LD_INFO.eps
-    tgt = np.array([ldbl]*5)
+    tgt = np.array([ldbl] * 5)
     out = ''.join([str(t) + '\n' for t in tgt])
 
     def test_fromfile_bogus(self):

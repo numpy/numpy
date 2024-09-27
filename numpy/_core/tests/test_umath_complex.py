@@ -131,7 +131,7 @@ class TestCexp:
 
 class TestClog:
     def test_simple(self):
-        x = np.array([1+0j, 1+2j])
+        x = np.array([1 + 0j, 1 + 2j])
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
         y = np.log(x)
         assert_almost_equal(y, y_r)
@@ -280,7 +280,7 @@ class TestCsqrt:
         check_complex_value(np.sqrt, 1, 0, 1, 0)
 
         # sqrt(1i)
-        rres = 0.5*np.sqrt(2)
+        rres = 0.5 * np.sqrt(2)
         ires = rres
         check_complex_value(np.sqrt, 0, 1, rres, ires, False)
 
@@ -361,23 +361,23 @@ class TestCpow:
         np.seterr(**self.olderr)
 
     def test_simple(self):
-        x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
+        x = np.array([1 + 1j, 0 + 2j, 1 + 2j, np.inf, np.nan])
         y_r = x ** 2
         y = np.power(x, 2)
         assert_almost_equal(y, y_r)
 
     def test_scalar(self):
-        x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
-        y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
+        x = np.array([1, 1j,         2,  2.5 + .37j, np.inf, np.nan])
+        y = np.array([1, 1j, -0.5 + 1.5j, -0.5 + 1.5j,      2,      3])
         lx = list(range(len(x)))
 
         # Hardcode the expected `builtins.complex` values,
         # as complex exponentiation is broken as of bpo-44698
         p_r = [
-            1+0j,
-            0.20787957635076193+0j,
-            0.35812203996480685+0.6097119028618724j,
-            0.12659112128185032+0.48847676699581527j,
+            1 + 0j,
+            0.20787957635076193 + 0j,
+            0.35812203996480685 + 0.6097119028618724j,
+            0.12659112128185032 + 0.48847676699581527j,
             complex(np.inf, np.nan),
             complex(np.nan, np.nan),
         ]
@@ -387,17 +387,17 @@ class TestCpow:
             assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
     def test_array(self):
-        x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
-        y = np.array([1, 1j, -0.5+1.5j, -0.5+1.5j,      2,      3])
+        x = np.array([1, 1j,         2,  2.5 + .37j, np.inf, np.nan])
+        y = np.array([1, 1j, -0.5 + 1.5j, -0.5 + 1.5j,      2,      3])
         lx = list(range(len(x)))
 
         # Hardcode the expected `builtins.complex` values,
         # as complex exponentiation is broken as of bpo-44698
         p_r = [
-            1+0j,
-            0.20787957635076193+0j,
-            0.35812203996480685+0.6097119028618724j,
-            0.12659112128185032+0.48847676699581527j,
+            1 + 0j,
+            0.20787957635076193 + 0j,
+            0.35812203996480685 + 0.6097119028618724j,
+            0.12659112128185032 + 0.48847676699581527j,
             complex(np.inf, np.nan),
             complex(np.nan, np.nan),
         ]
@@ -414,14 +414,14 @@ class TestCabs:
         np.seterr(**self.olderr)
 
     def test_simple(self):
-        x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
+        x = np.array([1 + 1j, 0 + 2j, 1 + 2j, np.inf, np.nan])
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])
         y = np.abs(x)
         assert_almost_equal(y, y_r)
 
     def test_fabs(self):
         # Test that np.abs(x +- 0j) == np.abs(x) (as mandated by C99 for cabs)
-        x = np.array([1+0j], dtype=complex)
+        x = np.array([1 + 0j], dtype=complex)
         assert_array_equal(np.abs(x), np.real(x))
 
         x = np.array([complex(1, ncu.NZERO)], dtype=complex)
@@ -471,9 +471,9 @@ class TestCabs:
 class TestCarg:
     def test_simple(self):
         check_real_value(ncu._arg, 1, 0, 0, False)
-        check_real_value(ncu._arg, 0, 1, 0.5*np.pi, False)
+        check_real_value(ncu._arg, 0, 1, 0.5 * np.pi, False)
 
-        check_real_value(ncu._arg, 1, 1, 0.25*np.pi, False)
+        check_real_value(ncu._arg, 1, 1, 0.25 * np.pi, False)
         check_real_value(ncu._arg, ncu.PZERO, ncu.PZERO, ncu.PZERO)
 
     # TODO This can be xfail when the generator functions are got rid of.
@@ -602,15 +602,15 @@ class TestComplexAbsoluteMixedDTypes:
                  ('cont_chisq', '<f4'), ('psd_var_val', '<f4'), ('sg_chisq','<f4'),
                  ('mycomplex', astype), ('time_index', '<i8')]
         vec = np.array([
-                (0, 0., 0, -31.666483, 200, 0., 0.,  1.      ,  3.0+4.0j  ,  613090),   # noqa: E203,E501
-                (1, 0., 0, 260.91525 ,  42, 0., 0.,  1.      ,  5.0+12.0j ,  787315),   # noqa: E203,E501
-                (1, 0., 0,  52.15155 ,  42, 0., 0.,  1.      ,  8.0+15.0j ,  806641),   # noqa: E203,E501
-                (1, 0., 0,  52.430195,  42, 0., 0.,  1.      ,  7.0+24.0j , 1363540),   # noqa: E203,E501
-                (2, 0., 0, 304.43646 ,  58, 0., 0.,  1.      ,  20.0+21.0j,  787323),   # noqa: E203,E501
-                (3, 0., 0, 299.42108 ,  52, 0., 0.,  1.      ,  12.0+35.0j,  787332),   # noqa: E203,E501
-                (4, 0., 0,  39.4836  ,  28, 0., 0.,  9.182192,  9.0+40.0j ,  787304),   # noqa: E203,E501
-                (4, 0., 0,  76.83787 ,  28, 0., 0.,  1.      ,  28.0+45.0j, 1321869),   # noqa: E203,E501
-                (5, 0., 0, 143.26366 ,  24, 0., 0., 10.996129,  11.0+60.0j,  787299)],  # noqa: E203,E501
+                (0, 0., 0, -31.666483, 200, 0., 0.,  1.      ,  3.0 + 4.0j  ,  613090),   # noqa: E203,E501
+                (1, 0., 0, 260.91525 ,  42, 0., 0.,  1.      ,  5.0 + 12.0j ,  787315),   # noqa: E203,E501
+                (1, 0., 0,  52.15155 ,  42, 0., 0.,  1.      ,  8.0 + 15.0j ,  806641),   # noqa: E203,E501
+                (1, 0., 0,  52.430195,  42, 0., 0.,  1.      ,  7.0 + 24.0j , 1363540),   # noqa: E203,E501
+                (2, 0., 0, 304.43646 ,  58, 0., 0.,  1.      ,  20.0 + 21.0j,  787323),   # noqa: E203,E501
+                (3, 0., 0, 299.42108 ,  52, 0., 0.,  1.      ,  12.0 + 35.0j,  787332),   # noqa: E203,E501
+                (4, 0., 0,  39.4836  ,  28, 0., 0.,  9.182192,  9.0 + 40.0j ,  787304),   # noqa: E203,E501
+                (4, 0., 0,  76.83787 ,  28, 0., 0.,  1.      ,  28.0 + 45.0j, 1321869),   # noqa: E203,E501
+                (5, 0., 0, 143.26366 ,  24, 0., 0., 10.996129,  11.0 + 60.0j,  787299)],  # noqa: E203,E501
             dtype=dtype)
         myfunc = getattr(np, func)
         a = vec['mycomplex']

@@ -326,7 +326,7 @@ def _split_line(name, arguments, width):
         k = k + len(argument) + len(addstr)
         if k > width:
             k = firstwidth + 1 + len(argument)
-            newstr = newstr + ",\n" + " "*(firstwidth+2) + argument
+            newstr = newstr + ",\n" + " " * (firstwidth + 2) + argument
         else:
             newstr = newstr + addstr + argument
     return newstr
@@ -509,7 +509,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
                     objlist.append(id(obj))
                     print("     *** Found in %s ***" % namestr, file=output)
                     info(obj)
-                    print("-"*maxwidth, file=output)
+                    print("-" * maxwidth, file=output)
                 numfound += 1
             except KeyError:
                 pass
@@ -528,7 +528,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -543,7 +543,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments

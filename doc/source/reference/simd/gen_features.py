@@ -120,7 +120,7 @@ class Features:
         cls_len = [max(len(c[i]) for c in rows) for i in range(fld_len)]
         del rows[-1]
         cformat = ' '.join('{:<%d}' % i for i in cls_len)
-        border = cformat.format(*['='*i for i in cls_len])
+        border = cformat.format(*['=' * i for i in cls_len])
 
         rows = [cformat.format(*row) for row in rows]
         # header
@@ -132,17 +132,17 @@ class Features:
         return '\n'.join(rows)
 
 def wrapper_section(title, content, tab_size=4):
-    tab = ' '*tab_size
+    tab = ' ' * tab_size
     if content:
         return (
-            f"{title}\n{'~'*len(title)}"
+            f"{title}\n{'~' * len(title)}"
             f"\n.. table::\n{tab}:align: left\n\n"
             f"{content}\n\n"
         )
     return ''
 
 def wrapper_tab(title, table, tab_size=4):
-    tab = ' '*tab_size
+    tab = ' ' * tab_size
     if table:
         ('\n' + tab).join((
             '.. tab:: ' + title,

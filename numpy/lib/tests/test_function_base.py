@@ -111,7 +111,7 @@ class TestRot90:
 
         for k in range(1,5):
             assert_equal(rot90(a, k=k, axes=(2, 0)),
-                         rot90(a_rot90_20, k=k-1, axes=(2, 0)))
+                         rot90(a_rot90_20, k=k - 1, axes=(2, 0)))
 
 
 class TestFlip:
@@ -563,7 +563,7 @@ class TestInsert:
         b = np.array([0, 1], dtype=np.float64)
         assert_equal(insert(b, 0, b[0]), [0., 0., 1.])
         assert_equal(insert(b, [], []), b)
-        assert_equal(insert(a, np.array([True]*4), 9), [9, 1, 9, 2, 9, 3, 9])
+        assert_equal(insert(a, np.array([True] * 4), 9), [9, 1, 9, 2, 9, 3, 9])
         assert_equal(insert(a, np.array([True, False, True, False]), 9),
                      [9, 1, 2, 9, 3])
 
@@ -979,7 +979,7 @@ class TestDelete:
 
         # not enough items
         with pytest.raises(ValueError):
-            delete(self.a, [False]*4)
+            delete(self.a, [False] * 4)
 
     def test_single(self):
         self._check_inverse_of_slicing(0)
@@ -1086,7 +1086,7 @@ class TestGradient:
 
         # 2d coordinate arguments are not yet allowed
         assert_raises_regex(ValueError, '.*scalars or 1d',
-            gradient, f_2d, np.stack([dx]*2, axis=-1), 1)
+            gradient, f_2d, np.stack([dx] * 2, axis=-1), 1)
 
     def test_badargs(self):
         f_2d = np.arange(25).reshape(5, 5)
@@ -1233,7 +1233,7 @@ class TestGradient:
 
         # test vararg order
         assert_array_equal(gradient(x, 2, 3, axis=(1, 0)),
-                           [dx[1]/2.0, dx[0]/3.0])
+                           [dx[1] / 2.0, dx[0] / 3.0])
         # test maximal number of varargs
         assert_raises(TypeError, gradient, x, 1, 2, axis=1)
 
@@ -1275,7 +1275,7 @@ class TestGradient:
     def test_f_decreasing_unsigned_int(self, f_dtype):
         f = np.array([5, 4, 3, 2, 1], dtype=f_dtype)
         g = gradient(f)
-        assert_array_equal(g, [-1]*len(f))
+        assert_array_equal(g, [-1] * len(f))
 
     @pytest.mark.parametrize('f_dtype', [np.int8, np.int16,
                                          np.int32, np.int64])
@@ -1284,7 +1284,7 @@ class TestGradient:
         x = np.array([1, 3])
         f = np.array([-1, maxint], dtype=f_dtype)
         dfdx = gradient(f, x)
-        assert_array_equal(dfdx, [(maxint + 1) // 2]*2)
+        assert_array_equal(dfdx, [(maxint + 1) // 2] * 2)
 
     @pytest.mark.parametrize('x_dtype', [np.uint8, np.uint16,
                                          np.uint32, np.uint64])
@@ -1292,7 +1292,7 @@ class TestGradient:
         x = np.array([3, 2, 1], dtype=x_dtype)
         f = np.array([0, 2, 4])
         dfdx = gradient(f, x)
-        assert_array_equal(dfdx, [-2]*len(x))
+        assert_array_equal(dfdx, [-2] * len(x))
 
     @pytest.mark.parametrize('x_dtype', [np.int8, np.int16,
                                          np.int32, np.int64])
@@ -1325,7 +1325,7 @@ class TestAngle:
         assert_array_almost_equal(z, zo, 11)
 
     def test_subclass(self):
-        x = np.ma.array([1 + 3j, 1, np.sqrt(2)/2 * (1 + 1j)])
+        x = np.ma.array([1 + 3j, 1, np.sqrt(2) / 2 * (1 + 1j)])
         x[1] = np.ma.masked
         expected = np.ma.array([np.arctan(3.0 / 1.0), 0, np.arctan(1.0)])
         expected[1] = np.ma.masked
@@ -1470,11 +1470,11 @@ class TestExtins:
 # _foo1 and _foo2 are used in some tests in TestVectorize.
 
 def _foo1(x, y=1.0):
-    return y*math.floor(x)
+    return y * math.floor(x)
 
 
 def _foo2(x, y=1.0, z=0.0):
-    return y*math.floor(x) + z
+    return y * math.floor(x) + z
 
 
 class TestVectorize:
@@ -1894,7 +1894,7 @@ class TestVectorize:
         assert_equal(r, [[1., 3., 2.], [4., 6., 5.], [7., 9., 8.]])
 
         # element-wise (ufunc)
-        mult = np.vectorize(lambda x, y: x*y)
+        mult = np.vectorize(lambda x, y: x * y)
         r = mult(m, v)
         assert_equal(type(r), subclass)
         assert_equal(r, m * v)
@@ -3096,9 +3096,9 @@ class TestInterp:
     def test_complex_interp(self):
         # test complex interpolation
         x = np.linspace(0, 1, 5)
-        y = np.linspace(0, 1, 5) + (1 + np.linspace(0, 1, 5))*1.0j
+        y = np.linspace(0, 1, 5) + (1 + np.linspace(0, 1, 5)) * 1.0j
         x0 = 0.3
-        y0 = x0 + (1+x0)*1.0j
+        y0 = x0 + (1 + x0) * 1.0j
         assert_almost_equal(np.interp(x0, x, y), y0)
         # test complex left and right
         x0 = -1
@@ -3110,15 +3110,15 @@ class TestInterp:
         # test complex non finite
         x = [1, 2, 2.5, 3, 4]
         xp = [1, 2, 3, 4]
-        fp = [1, 2+1j, np.inf, 4]
-        y = [1, 2+1j, np.inf+0.5j, np.inf, 4]
+        fp = [1, 2 + 1j, np.inf, 4]
+        y = [1, 2 + 1j, np.inf + 0.5j, np.inf, 4]
         assert_almost_equal(np.interp(x, xp, fp), y)
         # test complex periodic
         x = [-180, -170, -185, 185, -10, -5, 0, 365]
         xp = [190, -190, 350, -350]
-        fp = [5+1.0j, 10+2j, 3+3j, 4+4j]
-        y = [7.5+1.5j, 5.+1.0j, 8.75+1.75j, 6.25+1.25j, 3.+3j, 3.25+3.25j,
-             3.5+3.5j, 3.75+3.75j]
+        fp = [5 + 1.0j, 10 + 2j, 3 + 3j, 4 + 4j]
+        y = [7.5 + 1.5j, 5. + 1.0j, 8.75 + 1.75j, 6.25 + 1.25j, 3. + 3j, 3.25 + 3.25j,
+             3.5 + 3.5j, 3.75 + 3.75j]
         assert_almost_equal(np.interp(x, xp, fp, period=360), y)
 
     def test_zero_dimensional_interpolation_point(self):
@@ -3198,11 +3198,11 @@ class TestPercentile:
         np.percentile(d, 5, None, o, False, 'linear')
 
     def test_complex(self):
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.percentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='D')
         assert_raises(TypeError, np.percentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='F')
         assert_raises(TypeError, np.percentile, arr_c, 0.5)
 
     def test_2D(self):
@@ -3742,7 +3742,7 @@ class TestPercentile:
         assert res.dtype == dtype
         assert np.isnat(res).all()
 
-        a = np.arange(0, 24*3, dtype=dtype).reshape(-1, 3)
+        a = np.arange(0, 24 * 3, dtype=dtype).reshape(-1, 3)
         a[pos, 1] = "NaT"
         res = np.percentile(a, 30, axis=0)
         assert_array_equal(np.isnat(res), [False, True, False])
@@ -3822,11 +3822,11 @@ class TestQuantile:
 
     def test_complex(self):
         #See gh-22652
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.quantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='D')
         assert_raises(TypeError, np.quantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='F')
         assert_raises(TypeError, np.quantile, arr_c, 0.5)
 
     def test_no_p_overwrite(self):
@@ -3970,14 +3970,14 @@ class TestQuantile:
                 assert_allclose(q, np.quantile(y, alpha, method="higher"))
             elif np.round(n * alpha) == int(n * alpha) + 1:
                 assert_allclose(
-                    q, np.quantile(y, alpha + 1/n, method="higher"))
+                    q, np.quantile(y, alpha + 1 / n, method="higher"))
             else:
                 assert_allclose(q, np.quantile(y, alpha, method="lower"))
         elif method == "interpolated_inverted_cdf":
-            assert_allclose(q, np.quantile(y, alpha + 1/n, method=method))
+            assert_allclose(q, np.quantile(y, alpha + 1 / n, method=method))
         elif method == "nearest":
             if n * alpha == int(n * alpha):
-                assert_allclose(q, np.quantile(y, alpha + 1/n, method=method))
+                assert_allclose(q, np.quantile(y, alpha + 1 / n, method=method))
             else:
                 assert_allclose(q, np.quantile(y, alpha, method=method))
         elif method == "lower":
@@ -4458,7 +4458,7 @@ class TestMedian:
         assert res.dtype == dtype
         assert np.isnat(res).all()
 
-        a = np.arange(0, 24*3, dtype=dtype).reshape(-1, 3)
+        a = np.arange(0, 24 * 3, dtype=dtype).reshape(-1, 3)
         a[pos, 1] = "NaT"
         res = np.median(a, axis=0)
         assert_array_equal(np.isnat(res), [False, True, False])

@@ -45,7 +45,7 @@ def nep_metadata():
             else:
                 raise RuntimeError("Unable to find NEP title.")
 
-            tags['Title'] = lines[i+1].strip()
+            tags['Title'] = lines[i + 1].strip()
             tags['Filename'] = source
 
         if not tags['Title'].startswith(f'NEP {nr} — '):

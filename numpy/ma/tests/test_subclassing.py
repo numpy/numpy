@@ -213,7 +213,7 @@ class TestSubclassing:
         assert_(isinstance(add(mx, mx), msubarray))
         assert_(isinstance(add(mx, x), msubarray))
         # Result should work
-        assert_equal(add(mx, x), mx+x)
+        assert_equal(add(mx, x), mx + x)
         assert_(isinstance(add(mx, mx)._data, subarray))
         assert_(isinstance(add.outer(mx, mx), msubarray))
         assert_(isinstance(hypot(mx, mx), msubarray))
@@ -228,17 +228,17 @@ class TestSubclassing:
         assert_equal(divide(mx, mx), divide(xmx, xmx))
 
     def test_attributepropagation(self):
-        x = array(arange(5), mask=[0]+[1]*4)
+        x = array(arange(5), mask=[0] + [1] * 4)
         my = masked_array(subarray(x))
         ym = msubarray(x)
         #
-        z = (my+1)
+        z = (my + 1)
         assert_(isinstance(z, MaskedArray))
         assert_(not isinstance(z, MSubArray))
         assert_(isinstance(z._data, SubArray))
         assert_equal(z._data.info, {})
         #
-        z = (ym+1)
+        z = (ym + 1)
         assert_(isinstance(z, MaskedArray))
         assert_(isinstance(z, MSubArray))
         assert_(isinstance(z._data, SubArray))

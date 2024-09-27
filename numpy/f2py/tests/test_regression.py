@@ -106,7 +106,7 @@ class TestF77Comments(util.F2PyTest):
     @pytest.mark.slow
     def test_gh26466(self):
         # Check that comments after PARAMETER directions are stripped
-        expected = np.arange(1, 11, dtype=np.float32)*2
+        expected = np.arange(1, 11, dtype=np.float32) * 2
         res = self.module.testsub2()
         npt.assert_allclose(expected, res)
 

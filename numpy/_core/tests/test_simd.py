@@ -216,10 +216,10 @@ class _SIMD_BOOL(_Test_Utility):
             spack = [(i & 0xFF) for i in (list(rdata) + list(data))]
             vpack = pack_simd(vrdata, vdata)
         elif self.sfx == "b32":
-            spack = [(i & 0xFF) for i in (2*list(rdata) + 2*list(data))]
+            spack = [(i & 0xFF) for i in (2 * list(rdata) + 2 * list(data))]
             vpack = pack_simd(vrdata, vrdata, vdata, vdata)
         elif self.sfx == "b64":
-            spack = [(i & 0xFF) for i in (4*list(rdata) + 4*list(data))]
+            spack = [(i & 0xFF) for i in (4 * list(rdata) + 4 * list(data))]
             vpack = pack_simd(vrdata, vrdata, vrdata, vrdata,
                                vdata,  vdata,  vdata,  vdata)
         assert vpack == spack
@@ -367,7 +367,7 @@ class _SIMD_FP(_Test_Utility):
     To test all float vector types at once
     """
     def test_arithmetic_fused(self):
-        vdata_a, vdata_b, vdata_c = [self.load(self._data())]*3
+        vdata_a, vdata_b, vdata_c = [self.load(self._data())] * 3
         vdata_cx2 = self.add(vdata_c, vdata_c)
         # multiply and add, a*b + c
         data_fma = self.load([a * b + c for a, b, c in zip(vdata_a, vdata_b, vdata_c)])
@@ -398,7 +398,7 @@ class _SIMD_FP(_Test_Utility):
 
         abs_cases = ((-0, 0), (ninf, pinf), (pinf, pinf), (nan, nan))
         for case, desired in abs_cases:
-            data_abs = [desired]*self.nlanes
+            data_abs = [desired] * self.nlanes
             vabs = self.abs(self.setall(case))
             assert vabs == pytest.approx(data_abs, nan_ok=True)
 
@@ -412,7 +412,7 @@ class _SIMD_FP(_Test_Utility):
 
         sqrt_cases = ((-0.0, -0.0), (0.0, 0.0), (-1.0, nan), (ninf, nan), (pinf, pinf))
         for case, desired in sqrt_cases:
-            data_sqrt = [desired]*self.nlanes
+            data_sqrt = [desired] * self.nlanes
             sqrt = self.sqrt(self.setall(case))
             assert sqrt == pytest.approx(data_sqrt, nan_ok=True)
 
@@ -427,11 +427,11 @@ class _SIMD_FP(_Test_Utility):
         # square
         square_cases = ((nan, nan), (pinf, pinf), (ninf, pinf))
         for case, desired in square_cases:
-            data_square = [desired]*self.nlanes
+            data_square = [desired] * self.nlanes
             square = self.square(self.setall(case))
             assert square == pytest.approx(data_square, nan_ok=True)
 
-        data_square = [x*x for x in data]
+        data_square = [x * x for x in data]
         square = self.square(vdata)
         assert square == data_square
 
@@ -451,13 +451,13 @@ class _SIMD_FP(_Test_Utility):
         # special cases
         round_cases = ((nan, nan), (pinf, pinf), (ninf, ninf))
         for case, desired in round_cases:
-            data_round = [desired]*self.nlanes
+            data_round = [desired] * self.nlanes
             _round = intrin(self.setall(case))
             assert _round == pytest.approx(data_round, nan_ok=True)
 
         for x in range(0, 2**20, 256**2):
             for w in (-1.05, -1.10, -1.15, 1.05, 1.10, 1.15):
-                data = self.load([(x+a)*w for a in range(self.nlanes)])
+                data = self.load([(x + a) * w for a in range(self.nlanes)])
                 data_round = [func(x) for x in data]
                 _round = intrin(data)
                 assert _round == data_round
@@ -507,7 +507,7 @@ class _SIMD_FP(_Test_Utility):
         func = eval(intrin[:3])
         reduce_intrin = getattr(self, "reduce_" + intrin)
         intrin = getattr(self, intrin)
-        hf_nlanes = self.nlanes//2
+        hf_nlanes = self.nlanes // 2
 
         cases = (
             ([0.0, -0.0], [-0.0, 0.0]),
@@ -518,8 +518,8 @@ class _SIMD_FP(_Test_Utility):
             ([-10, 10], [-10, 10])
         )
         for op1, op2 in cases:
-            vdata_a = self.load(op1*hf_nlanes)
-            vdata_b = self.load(op2*hf_nlanes)
+            vdata_a = self.load(op1 * hf_nlanes)
+            vdata_b = self.load(op2 * hf_nlanes)
             data = func(vdata_a, vdata_b)
             simd = intrin(vdata_a, vdata_b)
             assert simd == data
@@ -545,7 +545,7 @@ class _SIMD_FP(_Test_Utility):
             (nan, nan)
         )
         for op1, op2 in cases:
-            vdata_ab = self.load([op1, op2]*hf_nlanes)
+            vdata_ab = self.load([op1, op2] * hf_nlanes)
             data = test_nan(op1, op2)
             simd = reduce_intrin(vdata_ab)
             assert simd == pytest.approx(data, nan_ok=True)
@@ -562,11 +562,11 @@ class _SIMD_FP(_Test_Utility):
 
         recip_cases = ((nan, nan), (pinf, 0.0), (ninf, -0.0), (0.0, pinf), (-0.0, ninf))
         for case, desired in recip_cases:
-            data_recip = [desired]*self.nlanes
+            data_recip = [desired] * self.nlanes
             recip = self.recip(self.setall(case))
             assert recip == pytest.approx(data_recip, nan_ok=True)
 
-        data_recip = self.load([1/x for x in data]) # load to truncate precision
+        data_recip = self.load([1 / x for x in data]) # load to truncate precision
         recip = self.recip(vdata)
         assert recip == data_recip
 
@@ -576,7 +576,7 @@ class _SIMD_FP(_Test_Utility):
             npyv_notnan_##SFX
         """
         nnan = self.notnan(self.setall(self._nan()))
-        assert nnan == [0]*self.nlanes
+        assert nnan == [0] * self.nlanes
 
     @pytest.mark.parametrize("intrin_name", [
         "rint", "trunc", "ceil", "floor"
@@ -608,8 +608,8 @@ class _SIMD_FP(_Test_Utility):
         cmp_cases = ((0, nan), (nan, 0), (nan, nan), (pinf, nan),
                      (ninf, nan), (-0.0, +0.0))
         for case_operand1, case_operand2 in cmp_cases:
-            data_a = [case_operand1]*self.nlanes
-            data_b = [case_operand2]*self.nlanes
+            data_a = [case_operand1] * self.nlanes
+            data_b = [case_operand2] * self.nlanes
             vdata_a = self.setall(case_operand1)
             vdata_b = self.setall(case_operand2)
             vcmp = to_bool(intrin(vdata_a, vdata_b))
@@ -657,8 +657,8 @@ class _SIMD_ALL(_Test_Utility):
         assert loads_data == data
         # load lower part
         loadl = self.loadl(data)
-        loadl_half = list(loadl)[:self.nlanes//2]
-        data_half = data[:self.nlanes//2]
+        loadl_half = list(loadl)[:self.nlanes // 2]
+        data_half = data[:self.nlanes // 2]
         assert loadl_half == data_half
         assert loadl != data # detect overflow
 
@@ -680,12 +680,12 @@ class _SIMD_ALL(_Test_Utility):
         # store lower part
         store_l = [0] * self.nlanes
         self.storel(store_l, vdata)
-        assert store_l[:self.nlanes//2] == data[:self.nlanes//2]
+        assert store_l[:self.nlanes // 2] == data[:self.nlanes // 2]
         assert store_l != vdata # detect overflow
         # store higher part
         store_h = [0] * self.nlanes
         self.storeh(store_h, vdata)
-        assert store_h[:self.nlanes//2] == data[self.nlanes//2:]
+        assert store_h[:self.nlanes // 2] == data[self.nlanes // 2:]
         assert store_h != vdata  # detect overflow
 
     @pytest.mark.parametrize("intrin, elsizes, scale, fill", [
@@ -703,9 +703,9 @@ class _SIMD_ALL(_Test_Utility):
             load_till = npyv_load_till(data, n, *fill)
             load_tillz = npyv_load_tillz(data, n)
             n *= scale
-            data_till = data[:n] + fill * ((self.nlanes-n) // scale)
+            data_till = data[:n] + fill * ((self.nlanes - n) // scale)
             assert load_till == data_till
-            data_tillz = data[:n] + [0] * (self.nlanes-n)
+            data_tillz = data[:n] + [0] * (self.nlanes - n)
             assert load_tillz == data_tillz
 
     @pytest.mark.parametrize("intrin, elsizes, scale", [
@@ -723,7 +723,7 @@ class _SIMD_ALL(_Test_Utility):
         lanes += [self.nlanes**2, self.nlanes**4]
         for n in lanes:
             data_till = data_rev.copy()
-            data_till[:n*scale] = data[:n*scale]
+            data_till[:n * scale] = data[:n * scale]
             store_till = self._data(reverse=True)
             npyv_store_till(store_till, n, vdata)
             assert store_till == data_till
@@ -738,15 +738,15 @@ class _SIMD_ALL(_Test_Utility):
         npyv_loadn = eval(intrin)
         for stride in range(-64, 64):
             if stride < 0:
-                data = self._data(stride, -stride*self.nlanes)
+                data = self._data(stride, -stride * self.nlanes)
                 data_stride = list(itertools.chain(
                     *zip(*[data[-i::stride] for i in range(scale, 0, -1)])
                 ))
             elif stride == 0:
                 data = self._data()
-                data_stride = data[0:scale] * (self.nlanes//scale)
+                data_stride = data[0:scale] * (self.nlanes // scale)
             else:
-                data = self._data(count=stride*self.nlanes)
+                data = self._data(count=stride * self.nlanes)
                 data_stride = list(itertools.chain(
                     *zip(*[data[i::stride] for i in range(scale)]))
                 )
@@ -766,15 +766,15 @@ class _SIMD_ALL(_Test_Utility):
         lanes += [self.nlanes**2, self.nlanes**4]
         for stride in range(-64, 64):
             if stride < 0:
-                data = self._data(stride, -stride*self.nlanes)
+                data = self._data(stride, -stride * self.nlanes)
                 data_stride = list(itertools.chain(
                     *zip(*[data[-i::stride] for i in range(scale, 0, -1)])
                 ))
             elif stride == 0:
                 data = self._data()
-                data_stride = data[0:scale] * (self.nlanes//scale)
+                data_stride = data[0:scale] * (self.nlanes // scale)
             else:
-                data = self._data(count=stride*self.nlanes)
+                data = self._data(count=stride * self.nlanes)
                 data_stride = list(itertools.chain(
                     *zip(*[data[i::stride] for i in range(scale)])
                 ))
@@ -783,7 +783,7 @@ class _SIMD_ALL(_Test_Utility):
                 nscale = n * scale
                 llanes = self.nlanes - nscale
                 data_stride_till = (
-                    data_stride[:nscale] + fill * (llanes//scale)
+                    data_stride[:nscale] + fill * (llanes // scale)
                 )
                 loadn_till = npyv_loadn_till(data, stride, n, *fill)
                 assert loadn_till == data_stride_till
@@ -804,25 +804,25 @@ class _SIMD_ALL(_Test_Utility):
         hlanes = self.nlanes // scale
         for stride in range(1, 64):
             data_storen = [0xff] * stride * self.nlanes
-            for s in range(0, hlanes*stride, stride):
-                i = (s//stride)*scale
-                data_storen[s:s+scale] = data[i:i+scale]
+            for s in range(0, hlanes * stride, stride):
+                i = (s // stride) * scale
+                data_storen[s:s + scale] = data[i:i + scale]
             storen = [0xff] * stride * self.nlanes
-            storen += [0x7f]*64
+            storen += [0x7f] * 64
             npyv_storen(storen, stride, vdata)
             assert storen[:-64] == data_storen
-            assert storen[-64:] == [0x7f]*64  # detect overflow
+            assert storen[-64:] == [0x7f] * 64  # detect overflow
 
         for stride in range(-64, 0):
             data_storen = [0xff] * -stride * self.nlanes
-            for s in range(0, hlanes*stride, stride):
-                i = (s//stride)*scale
-                data_storen[s-scale:s or None] = data[i:i+scale]
-            storen = [0x7f]*64
+            for s in range(0, hlanes * stride, stride):
+                i = (s // stride) * scale
+                data_storen[s - scale:s or None] = data[i:i + scale]
+            storen = [0x7f] * 64
             storen += [0xff] * -stride * self.nlanes
             npyv_storen(storen, stride, vdata)
             assert storen[64:] == data_storen
-            assert storen[:64] == [0x7f]*64  # detect overflow
+            assert storen[:64] == [0x7f] * 64  # detect overflow
         # stride 0
         data_storen = [0x7f] * self.nlanes
         storen = data_storen.copy()
@@ -846,34 +846,34 @@ class _SIMD_ALL(_Test_Utility):
         for stride in range(1, 64):
             for n in lanes:
                 data_till = [0xff] * stride * self.nlanes
-                tdata = data[:n*scale] + [0xff] * (self.nlanes-n*scale)
-                for s in range(0, hlanes*stride, stride)[:n]:
-                    i = (s//stride)*scale
-                    data_till[s:s+scale] = tdata[i:i+scale]
+                tdata = data[:n * scale] + [0xff] * (self.nlanes - n * scale)
+                for s in range(0, hlanes * stride, stride)[:n]:
+                    i = (s // stride) * scale
+                    data_till[s:s + scale] = tdata[i:i + scale]
                 storen_till = [0xff] * stride * self.nlanes
-                storen_till += [0x7f]*64
+                storen_till += [0x7f] * 64
                 npyv_storen_till(storen_till, stride, n, vdata)
                 assert storen_till[:-64] == data_till
-                assert storen_till[-64:] == [0x7f]*64  # detect overflow
+                assert storen_till[-64:] == [0x7f] * 64  # detect overflow
 
         for stride in range(-64, 0):
             for n in lanes:
                 data_till = [0xff] * -stride * self.nlanes
-                tdata = data[:n*scale] + [0xff] * (self.nlanes-n*scale)
-                for s in range(0, hlanes*stride, stride)[:n]:
-                    i = (s//stride)*scale
-                    data_till[s-scale:s or None] = tdata[i:i+scale]
-                storen_till = [0x7f]*64
+                tdata = data[:n * scale] + [0xff] * (self.nlanes - n * scale)
+                for s in range(0, hlanes * stride, stride)[:n]:
+                    i = (s // stride) * scale
+                    data_till[s - scale:s or None] = tdata[i:i + scale]
+                storen_till = [0x7f] * 64
                 storen_till += [0xff] * -stride * self.nlanes
                 npyv_storen_till(storen_till, stride, n, vdata)
                 assert storen_till[64:] == data_till
-                assert storen_till[:64] == [0x7f]*64  # detect overflow
+                assert storen_till[:64] == [0x7f] * 64  # detect overflow
 
         # stride 0
         for n in lanes:
             data_till = [0x7f] * self.nlanes
             storen_till = data_till.copy()
-            data_till[0:scale] = data[:n*scale][-scale:]
+            data_till[0:scale] = data[:n * scale][-scale:]
             npyv_storen_till(storen_till, 0, n, vdata)
             assert storen_till == data_till
 
@@ -947,11 +947,11 @@ class _SIMD_ALL(_Test_Utility):
         data_a, data_b = self._data(), self._data(reverse=True)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
         # lower half part
-        data_a_lo = data_a[:self.nlanes//2]
-        data_b_lo = data_b[:self.nlanes//2]
+        data_a_lo = data_a[:self.nlanes // 2]
+        data_b_lo = data_b[:self.nlanes // 2]
         # higher half part
-        data_a_hi = data_a[self.nlanes//2:]
-        data_b_hi = data_b[self.nlanes//2:]
+        data_a_hi = data_a[self.nlanes // 2:]
+        data_b_hi = data_b[self.nlanes // 2:]
         # combine two lower parts
         combinel = self.combinel(vdata_a, vdata_b)
         assert combinel == data_a_lo + data_b_lo
@@ -971,7 +971,7 @@ class _SIMD_ALL(_Test_Utility):
         ])
         vzip = self.zip(vdata_a, vdata_b)
         assert vzip == (data_zipl, data_ziph)
-        vzip = [0]*self.nlanes*2
+        vzip = [0] * self.nlanes * 2
         self._x2("store")(vzip, (vdata_a, vdata_b))
         assert vzip == list(data_zipl) + list(data_ziph)
 
@@ -987,8 +987,8 @@ class _SIMD_ALL(_Test_Utility):
         if ssize == 64:
             return
         data_rev64 = [
-            y for x in range(0, self.nlanes, 64//ssize)
-              for y in reversed(range(x, x + 64//ssize))
+            y for x in range(0, self.nlanes, 64 // ssize)
+              for y in reversed(range(x, x + 64 // ssize))
         ]
         rev64 = self.rev64(self.load(range(self.nlanes)))
         assert rev64 == data_rev64
@@ -1002,16 +1002,16 @@ class _SIMD_ALL(_Test_Utility):
         if ssize < 32:
             return
         data = self.load(self._data())
-        permn = 128//ssize
-        permd = permn-1
-        nlane128 = self.nlanes//permn
+        permn = 128 // ssize
+        permd = permn - 1
+        nlane128 = self.nlanes // permn
         shfl = [0, 1] if ssize == 64 else [0, 2, 4, 6]
         for i in range(permn):
             indices = [(i >> shf) & permd for shf in shfl]
             vperm = self.permi128(data, *indices)
             data_vperm = [
                 data[j + (e & -permn)]
-                for e, j in enumerate(indices*nlane128)
+                for e, j in enumerate(indices * nlane128)
             ]
             assert vperm == data_vperm
 
@@ -1122,16 +1122,16 @@ class _SIMD_ALL(_Test_Utility):
         """
         if self.sfx not in ("u8", "u16"):
             return
-        totype = self.sfx[0]+str(int(self.sfx[1:])*2)
+        totype = self.sfx[0] + str(int(self.sfx[1:]) * 2)
         expand = getattr(self.npyv, f"expand_{totype}_{self.sfx}")
         # close enough from the edge to detect any deviation
         data = self._data(self._int_max() - self.nlanes)
         vdata = self.load(data)
         edata = expand(vdata)
         # lower half part
-        data_lo = data[:self.nlanes//2]
+        data_lo = data[:self.nlanes // 2]
         # higher half part
-        data_hi = data[self.nlanes//2:]
+        data_hi = data[self.nlanes // 2:]
         assert edata == (data_lo, data_hi)
 
     def test_arithmetic_subadd(self):
@@ -1201,17 +1201,17 @@ class _SIMD_ALL(_Test_Utility):
 
         data = [1, -int_min]  # to test overflow
         data += range(0, 2**8, 2**5)
-        data += range(0, 2**8, 2**5-1)
+        data += range(0, 2**8, 2**5 - 1)
         bsize = self._scalar_size()
         if bsize > 8:
             data += range(2**8, 2**16, 2**13)
-            data += range(2**8, 2**16, 2**13-1)
+            data += range(2**8, 2**16, 2**13 - 1)
         if bsize > 16:
             data += range(2**16, 2**32, 2**29)
-            data += range(2**16, 2**32, 2**29-1)
+            data += range(2**16, 2**32, 2**29 - 1)
         if bsize > 32:
             data += range(2**32, 2**64, 2**61)
-            data += range(2**32, 2**64, 2**61-1)
+            data += range(2**32, 2**64, 2**61 - 1)
         # negate
         data += [-x for x in data]
         for dividend, divisor in itertools.product(data, data):
@@ -1246,7 +1246,7 @@ class _SIMD_ALL(_Test_Utility):
         """
         if self.sfx not in ("u8", "u16"):
             return
-        rdata = (0, self.nlanes, self._int_min(), self._int_max()-self.nlanes)
+        rdata = (0, self.nlanes, self._int_min(), self._int_max() - self.nlanes)
         for r in rdata:
             data = self._data(r)
             vdata = self.load(data)

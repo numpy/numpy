@@ -64,7 +64,7 @@ class Mean(Benchmark):
     params = [[1, 10, 100_000]]
 
     def setup(self, size):
-        self.array = np.arange(2*size).reshape(2, size)
+        self.array = np.arange(2 * size).reshape(2, size)
 
     def time_mean(self, size):
         np.mean(self.array)
@@ -181,11 +181,11 @@ class SortGenerator:
         dtype = np.dtype(dtype)
         try:
             with np.errstate(over="raise"):
-                res = dtype.type(size-1)
+                res = dtype.type(size - 1)
         except (OverflowError, FloatingPointError):
             raise SkipNotImplemented("Cannot construct arange for this size.")
 
-        return np.arange(size-1, -1, -1, dtype=dtype)
+        return np.arange(size - 1, -1, -1, dtype=dtype)
 
     @staticmethod
     @memoize

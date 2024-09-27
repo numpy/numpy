@@ -85,7 +85,7 @@ def _raw_fft(a, n, axis, is_real, is_forward, norm, out=None):
             out_dtype = real_dtype
         else:  # Others, complex output.
             out_dtype = result_type(a.dtype, 1j)
-        out = empty_like(a, shape=a.shape[:axis] + (n_out,) + a.shape[axis+1:],
+        out = empty_like(a, shape=a.shape[:axis] + (n_out,) + a.shape[axis + 1:],
                          dtype=out_dtype)
     elif ((shape := getattr(out, "shape", None)) is not None
           and (len(shape) != a.ndim or shape[axis] != n_out)):
@@ -1379,7 +1379,7 @@ def rfftn(a, s=None, axes=None, norm=None, out=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1], norm, out=out)
-    for ii in range(len(axes)-2, -1, -1):
+    for ii in range(len(axes) - 2, -1, -1):
         a = fft(a, s[ii], axes[ii], norm, out=out)
     return a
 
@@ -1597,7 +1597,7 @@ def irfftn(a, s=None, axes=None, norm=None, out=None):
     """
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
-    for ii in range(len(axes)-1):
+    for ii in range(len(axes) - 1):
         a = ifft(a, s[ii], axes[ii], norm)
     a = irfft(a, s[-1], axes[-1], norm, out=out)
     return a

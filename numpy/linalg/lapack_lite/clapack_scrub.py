@@ -66,7 +66,7 @@ class LenSubsScanner(MyScanner):
 
     digits = Re('[0-9]+')
     iofun = Re(r'\([^;]*;')
-    decl = Re(r'\([^)]*\)[,;'+'\n]')
+    decl = Re(r'\([^)]*\)[,;' + '\n]')
     any = Re('[.]*')
     S = Re('[ \t\n]*')
     cS = Str(',') + S
@@ -86,11 +86,11 @@ class LenSubsScanner(MyScanner):
             (Str('('),   beginArgs),
             (AnyChar,    TEXT),
         ]),
-        (cS+Re(r'[1-9][0-9]*L'),                IGNORE),
-        (cS+Str('ftnlen')+Opt(S+len_),          IGNORE),
-        (cS+sep_seq(['(', 'ftnlen', ')'], S)+S+digits,      IGNORE),
-        (Bol+Str('ftnlen ')+len_+Str(';\n'),    IGNORE),
-        (cS+len_,                               TEXT),
+        (cS + Re(r'[1-9][0-9]*L'),                IGNORE),
+        (cS + Str('ftnlen') + Opt(S + len_),          IGNORE),
+        (cS + sep_seq(['(', 'ftnlen', ')'], S) + S + digits,      IGNORE),
+        (Bol + Str('ftnlen ') + len_ + Str(';\n'),    IGNORE),
+        (cS + len_,                               TEXT),
         (AnyChar,                               TEXT),
     ])
 

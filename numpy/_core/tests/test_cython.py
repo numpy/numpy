@@ -292,7 +292,7 @@ def test_fillwithbytes(install_temp):
 def test_complex(install_temp):
     from checks import inc2_cfloat_struct
 
-    arr = np.array([0, 10+10j], dtype="F")
+    arr = np.array([0, 10 + 10j], dtype="F")
     inc2_cfloat_struct(arr)
     assert arr[1] == (12 + 12j)
 

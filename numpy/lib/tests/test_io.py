@@ -344,7 +344,7 @@ class TestSavezLoad(RoundtripTest):
     def test_repr_lists_keys(self, count, expected_repr):
         a = np.array([[1, 2], [3, 4]], float)
         with temppath(suffix='.npz') as tmp:
-            np.savez(tmp, *[a]*count)
+            np.savez(tmp, *[a] * count)
             l = np.load(tmp)
             assert repr(l) == expected_repr.format(fname=tmp)
             l.close()
@@ -1257,9 +1257,9 @@ class TestLoadTxt(LoadTxtBase):
             (0, StringIO("-1,0\n1,2\n\n3,4"))])
     def test_max_rows_empty_lines(self, skip, data):
         with pytest.warns(UserWarning,
-                    match=f"Input line 3.*max_rows={3-skip}"):
+                    match=f"Input line 3.*max_rows={3 - skip}"):
             res = np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
-                             max_rows=3-skip)
+                             max_rows=3 - skip)
             assert_array_equal(res, [[-1, 0], [1, 2], [3, 4]][skip:])
 
         if isinstance(data, StringIO):
@@ -1269,7 +1269,7 @@ class TestLoadTxt(LoadTxtBase):
             warnings.simplefilter("error", UserWarning)
             with pytest.raises(UserWarning):
                 np.loadtxt(data, dtype=int, skiprows=skip, delimiter=",",
-                           max_rows=3-skip)
+                           max_rows=3 - skip)
 
 class Testfromregex:
     def test_record(self):

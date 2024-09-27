@@ -327,9 +327,9 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     if ndim is not None:
         name += "_%dd" % ndim
     if shape is not None:
-        name += "_"+"x".join(str(x) for x in shape)
+        name += "_" + "x".join(str(x) for x in shape)
     if flags is not None:
-        name += "_"+"_".join(flags)
+        name += "_" + "_".join(flags)
 
     if dtype is not None and shape is not None:
         base = _concrete_ndptr

@@ -586,7 +586,7 @@ class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
     def test_empty(self):
         for f, tgt_value in zip([np.nansum, np.nanprod], [0, 1]):
             mat = np.zeros((0, 3))
-            tgt = [tgt_value]*3
+            tgt = [tgt_value] * 3
             res = f(mat, axis=0)
             assert_equal(res, tgt)
             tgt = []
@@ -645,7 +645,7 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
     def test_empty(self):
         for f, tgt_value in zip(self.nanfuncs, [0, 1]):
             mat = np.zeros((0, 3))
-            tgt = tgt_value*np.ones((0, 3))
+            tgt = tgt_value * np.ones((0, 3))
             res = f(mat, axis=0)
             assert_equal(res, tgt)
             tgt = mat
@@ -1136,11 +1136,11 @@ class TestNanFunctions_Percentile:
         assert_almost_equal(res, tgt)
 
     def test_complex(self):
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='D')
         assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='F')
         assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
 
     @pytest.mark.parametrize("weighted", [False, True])
@@ -1329,11 +1329,11 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 0.5), 1.75)
 
     def test_complex(self):
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='D')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='F')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
 
     def test_no_p_overwrite(self):

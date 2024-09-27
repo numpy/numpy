@@ -236,7 +236,7 @@ class TestConcatenate:
     def test_exceptions(self):
         # test axis must be in bounds
         for ndim in [1, 2, 3]:
-            a = np.ones((1,)*ndim)
+            a = np.ones((1,) * ndim)
             np.concatenate((a, a), axis=0)  # OK
             assert_raises(AxisError, np.concatenate, (a, a), axis=ndim)
             assert_raises(AxisError, np.concatenate, (a, a), axis=-(ndim + 1))
@@ -817,8 +817,8 @@ class TestBlock:
 
     def test_block_memory_order(self, block):
         # 3D
-        arr_c = np.zeros((3,)*3, order='C')
-        arr_f = np.zeros((3,)*3, order='F')
+        arr_c = np.zeros((3,) * 3, order='C')
+        arr_f = np.zeros((3,) * 3, order='F')
 
         b_c = [[[arr_c, arr_c],
                 [arr_c, arr_c]],

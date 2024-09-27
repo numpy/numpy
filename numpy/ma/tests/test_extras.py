@@ -314,8 +314,8 @@ class TestAverage:
         # (Regression test for https://github.com/numpy/numpy/issues/2684)
         mask = np.array([[0, 0, 0, 1, 0],
                          [0, 1, 0, 0, 0]], dtype=bool)
-        a = masked_array([[0, 1+2j, 3+4j, 5+6j, 7+8j],
-                          [9j, 0+1j, 2+3j, 4+5j, 7+7j]],
+        a = masked_array([[0, 1 + 2j, 3 + 4j, 5 + 6j, 7 + 8j],
+                          [9j, 0 + 1j, 2 + 3j, 4 + 5j, 7 + 7j]],
                          mask=mask)
 
         av = average(a)
@@ -324,12 +324,12 @@ class TestAverage:
         assert_almost_equal(av.imag, expected.imag)
 
         av0 = average(a, axis=0)
-        expected0 = average(a.real, axis=0) + average(a.imag, axis=0)*1j
+        expected0 = average(a.real, axis=0) + average(a.imag, axis=0) * 1j
         assert_almost_equal(av0.real, expected0.real)
         assert_almost_equal(av0.imag, expected0.imag)
 
         av1 = average(a, axis=1)
-        expected1 = average(a.real, axis=1) + average(a.imag, axis=1)*1j
+        expected1 = average(a.real, axis=1) + average(a.imag, axis=1) * 1j
         assert_almost_equal(av1.real, expected1.real)
         assert_almost_equal(av1.imag, expected1.imag)
 
@@ -343,13 +343,13 @@ class TestAverage:
 
         wav0 = average(a, weights=wts, axis=0)
         expected0 = (average(a.real, weights=wts, axis=0) +
-                     average(a.imag, weights=wts, axis=0)*1j)
+                     average(a.imag, weights=wts, axis=0) * 1j)
         assert_almost_equal(wav0.real, expected0.real)
         assert_almost_equal(wav0.imag, expected0.imag)
 
         wav1 = average(a, weights=wts, axis=1)
         expected1 = (average(a.real, weights=wts, axis=1) +
-                     average(a.imag, weights=wts, axis=1)*1j)
+                     average(a.imag, weights=wts, axis=1) * 1j)
         assert_almost_equal(wav1.real, expected1.real)
         assert_almost_equal(wav1.imag, expected1.imag)
 
@@ -538,7 +538,7 @@ class TestCompressFunctions:
 
     def test_compress_nd(self):
         # Tests compress_nd
-        x = np.array(list(range(3*4*5))).reshape(3, 4, 5)
+        x = np.array(list(range(3 * 4 * 5))).reshape(3, 4, 5)
         m = np.zeros((3,4,5)).astype(bool)
         m[1,1,1] = True
         x = array(x, mask=m)
@@ -856,7 +856,7 @@ class TestApplyAlongAxis:
         a = arange(12).reshape(2, 2, 3)
 
         def myfunc(b, offset=0):
-            return b[1+offset]
+            return b[1 + offset]
 
         xa = apply_along_axis(myfunc, 2, a, offset=1)
         assert_equal(xa, [[2, 5], [8, 11]])
@@ -921,11 +921,11 @@ class TestMedian:
 
     def test_docstring_examples(self):
         "test the examples given in the docstring of ma.median"
-        x = array(np.arange(8), mask=[0]*4 + [1]*4)
+        x = array(np.arange(8), mask=[0] * 4 + [1] * 4)
         assert_equal(np.ma.median(x), 1.5)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
-        x = array(np.arange(10).reshape(2, 5), mask=[0]*6 + [1]*4)
+        x = array(np.arange(10).reshape(2, 5), mask=[0] * 6 + [1] * 4)
         assert_equal(np.ma.median(x), 2.5)
         assert_equal(np.ma.median(x).shape, (), "shape mismatch")
         assert_(type(np.ma.median(x)) is not MaskedArray)
@@ -1073,11 +1073,11 @@ class TestMedian:
             out = masked_array(np.ones(10))
             r = median(x, axis=1, out=out)
             if v == 30:
-                e = masked_array([0.]*3 + [10, 13, 16, 19] + [0.]*3,
+                e = masked_array([0.] * 3 + [10, 13, 16, 19] + [0.] * 3,
                                  mask=[True] * 3 + [False] * 4 + [True] * 3)
             else:
-                e = masked_array([0.]*3 + [13.5, 17.5, 21.5, 25.5] + [0.]*3,
-                                 mask=[True]*3 + [False]*4 + [True]*3)
+                e = masked_array([0.] * 3 + [13.5, 17.5, 21.5, 25.5] + [0.] * 3,
+                                 mask=[True] * 3 + [False] * 4 + [True] * 3)
             assert_equal(r, e)
             assert_(r is out)
             assert_(type(r) is MaskedArray)

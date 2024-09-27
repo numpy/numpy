@@ -21,15 +21,15 @@ class TestRegression:
         a = np.zeros((1, 1))
         b = np.zeros(a.shape, MaskType)
         c = masked_where(b, a)
-        a-c
+        a - c
 
     def test_masked_array_multiply(self):
         # Ticket #254
         a = np.ma.zeros((4, 1))
         a[2, 0] = np.ma.masked
         b = np.zeros((4, 2))
-        a*b
-        b*a
+        a * b
+        b * a
 
     def test_masked_array_repeat(self):
         # Ticket #271

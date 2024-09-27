@@ -36,7 +36,7 @@ class Test_SIMD_MODULE:
         assert vector.__name__ == "npyv_" + sfx
 
     def test_raises(self):
-        a, b = [npyv.setall_u32(1)]*2
+        a, b = [npyv.setall_u32(1)] * 2
         for sfx in all_sfx:
             vcb = lambda intrin: getattr(npyv, f"{intrin}_{sfx}")
             pytest.raises(TypeError, vcb("add"), a)
