@@ -21,7 +21,7 @@ from numpy import (
     str_,
     bytes_,
 )
-from numpy.dtypes import StringDType
+from numpy._core.multiarray import StringDType
 from ._nested_sequence import _NestedSequence
 from ._shape import _Shape
 
