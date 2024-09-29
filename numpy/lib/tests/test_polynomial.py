@@ -343,6 +343,14 @@ class TestPolynomial:
         v = np.polyval(p, q)
         assert v.dtype == np.int8
 
+        p = np.array([1, 2])
+        v = np.polyval(p, 1+2j)
+        assert v.dtype == np.complex128
+
+        p = np.array([1, 1+2j])
+        v = np.polyval(p, 1)
+        assert v.dtype == np.complex128
+
         p = np.poly1d([1, 2])
         q = np.poly1d([1, 2])
         v = np.polyval(p, q)
