@@ -773,6 +773,14 @@ def polyval(p, x):
 
     if not isinstance(x, (poly1d, float, int, complex)):
         x = NX.asanyarray(x)
+    else:
+        # Special case for scalar or poly1d `x`
+        y = NX.int32(0).astype(p.dtype)
+
+    # Special case for multiplying two polynomials
+    if isinstance(x, poly1d):
+        y = poly1d(y)
+
     for pv in p:
         y = y * x + pv
     return y
