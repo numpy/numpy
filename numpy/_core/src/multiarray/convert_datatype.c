@@ -49,7 +49,7 @@
  */
 NPY_NO_EXPORT npy_intp REQUIRED_STR_LEN[] = {0, 3, 5, 10, 10, 20, 20, 20, 20};
 
-static NPY_TLS int npy_promotion_state = NPY_USE_LEGACY_PROMOTION;
+static NPY_TLS int npy_promotion_state = NPY_USE_WEAK_PROMOTION;
 
 NPY_NO_EXPORT int
 get_npy_promotion_state() {
