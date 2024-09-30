@@ -346,7 +346,13 @@ class TestArray2String:
         assert_equal(str(A), strA)
 
         reprA = 'array([   0,    1,    2, ...,  998,  999, 1000])'
-        assert_equal(repr(A), reprA)
+        try:
+            np.set_printoptions(legacy='2.1')
+            assert_equal(repr(A), reprA)
+        finally:
+            np.set_printoptions(legacy=False)
+
+        assert_equal(repr(A), reprA.replace(')', ', shape=(1001,))'))
 
     def test_summarize_2d(self):
         A = np.arange(1002).reshape(2, 501)
@@ -356,6 +362,23 @@ class TestArray2String:
 
         reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
                 '       [ 501,  502,  503, ...,  999, 1000, 1001]])'
+        try:
+            np.set_printoptions(legacy='2.1')
+            assert_equal(repr(A), reprA)
+        finally:
+            np.set_printoptions(legacy=False)
+
+        assert_equal(repr(A), reprA.replace(')', ', shape=(2, 501))'))
+
+    def test_summarize_2d_dtype(self):
+        A = np.arange(1002, dtype='i2').reshape(2, 501)
+        strA = '[[   0    1    2 ...  498  499  500]\n' \
+               ' [ 501  502  503 ...  999 1000 1001]]'
+        assert_equal(str(A), strA)
+
+        reprA = ('array([[   0,    1,    2, ...,  498,  499,  500],\n'
+                 '       [ 501,  502,  503, ...,  999, 1000, 1001]],\n'
+                 '      shape=(2, 501), dtype=int16)')
         assert_equal(repr(A), reprA)
 
     def test_summarize_structure(self):
@@ -1040,7 +1063,7 @@ class TestPrintOptions:
 
                    [[18, ..., 20],
                     ...,
-                    [24, ..., 26]]])""")
+                    [24, ..., 26]]], shape=(3, 3, 3))""")
         )
 
         b = np.zeros((3, 3, 1, 1))
@@ -1061,40 +1084,37 @@ class TestPrintOptions:
 
                     ...,
 
-                    [[0.]]]])""")
+                    [[0.]]]], shape=(3, 3, 1, 1))""")
         )
 
         # 1.13 had extra trailing spaces, and was missing newlines
-        np.set_printoptions(legacy='1.13')
-
-        assert_equal(
-            repr(a),
-            textwrap.dedent("""\
-            array([[[ 0, ...,  2],
-                    ..., 
-                    [ 6, ...,  8]],
-
-                   ..., 
-                   [[18, ..., 20],
-                    ..., 
-                    [24, ..., 26]]])""")
-        )
-
-        assert_equal(
-            repr(b),
-            textwrap.dedent("""\
-            array([[[[ 0.]],
-
-                    ..., 
-                    [[ 0.]]],
-
-
-                   ..., 
-                   [[[ 0.]],
-
-                    ..., 
-                    [[ 0.]]]])""")
-        )
+        try:
+            np.set_printoptions(legacy='1.13')
+            assert_equal(repr(a), (
+                "array([[[ 0, ...,  2],\n"
+                "        ..., \n"
+                "        [ 6, ...,  8]],\n"
+                "\n"
+                "       ..., \n"
+                "       [[18, ..., 20],\n"
+                "        ..., \n"
+                "        [24, ..., 26]]])")
+            )
+            assert_equal(repr(b), (
+                "array([[[[ 0.]],\n"
+                "\n"
+                "        ..., \n"
+                "        [[ 0.]]],\n"
+                "\n"
+                "\n"
+                "       ..., \n"
+                "       [[[ 0.]],\n"
+                "\n"
+                "        ..., \n"
+                "        [[ 0.]]]])")
+            )
+        finally:
+            np.set_printoptions(legacy=False)
 
     def test_edgeitems_structured(self):
         np.set_printoptions(edgeitems=1, threshold=1)

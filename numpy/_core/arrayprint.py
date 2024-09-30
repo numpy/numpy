@@ -83,12 +83,14 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         options['legacy'] = 121
     elif legacy == '1.25':
         options['legacy'] = 125
+    elif legacy == '2.1':
+        options['legacy'] = 201
     elif legacy is None:
         pass  # OK, do nothing.
     else:
         warnings.warn(
             "legacy printing option can currently only be '1.13', '1.21', "
-            "'1.25', or `False`", stacklevel=3)
+            "'1.25', '2.1, or `False`", stacklevel=3)
 
     if threshold is not None:
         # forbid the bad threshold arg suggested by stack overflow, gh-12351
@@ -214,13 +216,16 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         that numeric scalars are printed without their type information, e.g.
         as ``3.0`` rather than ``np.float64(3.0)``.
 
+        If set to ``'2.1'``, shape information is not given when arrays are
+        summarized (i.e., multiple elements replaced with ``...``).
+
         If set to `False`, disables legacy mode.
 
         Unrecognized strings will be ignored with a warning for forward
         compatibility.
 
         .. versionchanged:: 1.22.0
-        .. versionchanged:: 2.0
+        .. versionchanged:: 2.2
 
     override_repr: callable, optional
         If set a passed function will be used for generating arrays' repr.
@@ -249,7 +254,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     >>> np.set_printoptions(threshold=5)
     >>> np.arange(10)
-    array([0, 1, 2, ..., 7, 8, 9])
+    array([0, 1, 2, ..., 7, 8, 9], shape=(10,))
 
     Small results can be suppressed:
 
@@ -282,7 +287,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     >>> with np.printoptions(precision=2, suppress=True, threshold=5):
     ...     np.linspace(0, 10, 10)
-    array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
+    array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ], shape=(10,))
 
     """
     _set_printoptions(precision, threshold, edgeitems, linewidth, suppress,
@@ -1586,11 +1591,15 @@ def _array_repr_implementation(
         lst = array2string(arr, max_line_width, precision, suppress_small,
                            ', ', prefix, suffix=")")
 
+    # Add dtype and shape information if these cannot be inferred from
+    # the array string.
     extras = []
+    if (arr.size == 0 and arr.shape != (0,)
+            or current_options['legacy'] > 210
+            and arr.size > current_options['threshold']):
+        extras.append(f"shape={arr.shape}")
     if not dtype_is_implied(arr.dtype) or arr.size == 0:
         extras.append(f"dtype={dtype_short_repr(arr.dtype)}")
-    if arr.size == 0 and arr.shape != (0,):
-        extras.append(f"{shape=}")
 
     if not extras:
         return prefix + lst + ")"
