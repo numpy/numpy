@@ -58,7 +58,7 @@ jobs:
                -r requirements/build_requirements.txt \
                -r requirements/ci_requirements.txt
             # get newer, pre-release versions of critical packages
-            pip install --progress-bar=off --pre --extra-index-url https://pypi.anaconda.org/scientific-python-nightly-wheels/simple -r requirements/doc_requirements.txt
+            pip install --progress-bar=off --pre -r requirements/doc_requirements.txt
             # then install numpy HEAD, which will override the version installed above
             spin build --with-scipy-openblas=64
 
