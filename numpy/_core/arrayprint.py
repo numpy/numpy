@@ -1578,39 +1578,37 @@ def _array_repr_implementation(
     else:
         class_name = "array"
 
-    skipdtype = dtype_is_implied(arr.dtype) and arr.size > 0
-
     prefix = class_name + "("
-    suffix = ")" if skipdtype else ","
-
     if (current_options['legacy'] <= 113 and
             arr.shape == () and not arr.dtype.names):
         lst = repr(arr.item())
-    elif arr.size > 0 or arr.shape == (0,):
+    else:
         lst = array2string(arr, max_line_width, precision, suppress_small,
-                           ', ', prefix, suffix=suffix)
-    else:  # show zero-length shape unless it is (0,)
-        lst = "[], shape=%s" % (repr(arr.shape),)
+                           ', ', prefix, suffix=")")
 
-    arr_str = prefix + lst + suffix
+    extras = []
+    if not dtype_is_implied(arr.dtype) or arr.size == 0:
+        extras.append(f"dtype={dtype_short_repr(arr.dtype)}")
+    if arr.size == 0 and arr.shape != (0,):
+        extras.append(f"{shape=}")
 
-    if skipdtype:
-        return arr_str
+    if not extras:
+        return prefix + lst + ")"
 
-    dtype_str = "dtype={})".format(dtype_short_repr(arr.dtype))
-
-    # compute whether we should put dtype on a new line: Do so if adding the
-    # dtype would extend the last line past max_line_width.
+    arr_str = prefix + lst + ","
+    extra_str = ", ".join(extras) + ")"
+    # compute whether we should put extras on a new line: Do so if adding the
+    # extras would extend the last line past max_line_width.
     # Note: This line gives the correct result even when rfind returns -1.
     last_line_len = len(arr_str) - (arr_str.rfind('\n') + 1)
     spacer = " "
     if current_options['legacy'] <= 113:
         if issubclass(arr.dtype.type, flexible):
-            spacer = '\n' + ' '*len(class_name + "(")
-    elif last_line_len + len(dtype_str) + 1 > max_line_width:
-        spacer = '\n' + ' '*len(class_name + "(")
+            spacer = '\n' + ' '*len(prefix)
+    elif last_line_len + len(extra_str) + 1 > max_line_width:
+        spacer = '\n' + ' '*len(prefix)
 
-    return arr_str + spacer + dtype_str
+    return arr_str + spacer + extra_str
 
 
 def _array_repr_dispatcher(
