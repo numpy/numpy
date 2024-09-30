@@ -1963,6 +1963,9 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
     if (tmp_arr && solve_may_share_memory(self, tmp_arr, 1) != 0) {
         Py_SETREF(tmp_arr, (PyArrayObject *)PyArray_NewCopy(tmp_arr, NPY_ANYORDER));
     }
+    if (index_has_memory_overlap(self, index_type, indices, index_num, (PyObject *)tmp_arr) == 1) {
+        Py_SETREF(indices->object, PyArray_NewCopy((PyArrayObject *)indices->object, NPY_KEEPORDER));
+    }
 
     /*
      * Special case for very simple 1-d fancy indexing, which however
