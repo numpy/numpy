@@ -2790,6 +2790,7 @@ def test_load_refcount():
         x = np.loadtxt(TextIO("0 1 2 3"), dtype=dt)
         assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))
 
+
 def test_load_multiple_arrays_until_eof():
     f = BytesIO()
     np.save(f, 1)
@@ -2799,3 +2800,20 @@ def test_load_multiple_arrays_until_eof():
     assert np.load(f) == 2
     with pytest.raises(EOFError):
         np.load(f)
+
+
+def test_savez_nopickle():
+    obj_array = np.array([1, 'hello'], dtype=object)
+    with temppath(suffix='.npz') as tmp:
+        np.savez(tmp, obj_array)
+
+    with temppath(suffix='.npz') as tmp:
+        with pytest.raises(ValueError, match="Object arrays cannot be saved when.*"):
+            np.savez(tmp, obj_array, allow_pickle=False)
+
+    with temppath(suffix='.npz') as tmp:
+        np.savez_compressed(tmp, obj_array)
+
+    with temppath(suffix='.npz') as tmp:
+        with pytest.raises(ValueError, match="Object arrays cannot be saved when.*"):
+            np.savez_compressed(tmp, obj_array, allow_pickle=False)

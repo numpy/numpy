@@ -69,7 +69,13 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
     if sign not in [None, '-', '+', ' ']:
         raise ValueError("sign option must be one of ' ', '+', or '-'")
 
-    if legacy == False:
+    if legacy is False:
+        options['legacy'] = sys.maxsize
+    elif legacy == False:  # noqa: E712
+        warnings.warn(
+            f"Passing `legacy={legacy!r}` is deprecated.",
+            FutureWarning, stacklevel=3
+        )
         options['legacy'] = sys.maxsize
     elif legacy == '1.13':
         options['legacy'] = 113
@@ -213,7 +219,6 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         Unrecognized strings will be ignored with a warning for forward
         compatibility.
 
-        .. versionadded:: 1.14.0
         .. versionchanged:: 1.22.0
         .. versionchanged:: 2.0
 
@@ -704,8 +709,6 @@ def array2string(a, max_line_width=None, precision=None,
         position of floats and different behavior for 0d arrays. If set to
         `False`, disables legacy mode. Unrecognized strings will be ignored
         with a warning for forward compatibility.
-
-        .. versionadded:: 1.14.0
 
     Returns
     -------

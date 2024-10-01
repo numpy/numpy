@@ -307,6 +307,14 @@ class TestFFT1D:
                         np.fft.rfftn(x, norm="ortho"), atol=1e-6)
         assert_allclose(np.fft.rfftn(x) / (30. * 20. * 10.),
                         np.fft.rfftn(x, norm="forward"), atol=1e-6)
+        # Regression test for gh-27159
+        x = np.ones((2, 3))
+        result = np.fft.rfftn(x, axes=(0, 0, 1), s=(10, 20, 40))
+        assert result.shape == (10, 21)
+        expected = np.fft.fft(np.fft.fft(np.fft.rfft(x, axis=1, n=40),
+                            axis=0, n=20), axis=0, n=10)
+        assert expected.shape == (10, 21)
+        assert_allclose(result, expected, atol=1e-6)
 
     def test_irfftn(self):
         x = random((30, 20, 10))
@@ -494,7 +502,7 @@ def test_fft_with_order(dtype, order, fft):
             Y_res = fft(Y, axes=ax)
             assert_allclose(X_res, Y_res, atol=_tol, rtol=_tol)
     else:
-        raise ValueError()
+        raise ValueError
 
 
 @pytest.mark.parametrize("order", ["F", "C"])

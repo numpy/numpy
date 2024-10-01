@@ -44,14 +44,14 @@ assert_type(ctypes_obj.strides_as(ct.c_ubyte), ct.Array[ct.c_ubyte])
 
 assert_type(f8.all(), np.bool)
 assert_type(AR_f8.all(), np.bool)
-assert_type(AR_f8.all(axis=0), Any)
-assert_type(AR_f8.all(keepdims=True), Any)
+assert_type(AR_f8.all(axis=0), np.bool | npt.NDArray[np.bool])
+assert_type(AR_f8.all(keepdims=True), np.bool | npt.NDArray[np.bool])
 assert_type(AR_f8.all(out=B), SubClass)
 
 assert_type(f8.any(), np.bool)
 assert_type(AR_f8.any(), np.bool)
-assert_type(AR_f8.any(axis=0), Any)
-assert_type(AR_f8.any(keepdims=True), Any)
+assert_type(AR_f8.any(axis=0), np.bool | npt.NDArray[np.bool])
+assert_type(AR_f8.any(keepdims=True), np.bool | npt.NDArray[np.bool])
 assert_type(AR_f8.any(out=B), SubClass)
 
 assert_type(f8.argmax(), np.intp)

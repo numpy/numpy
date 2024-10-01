@@ -3504,30 +3504,18 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self),
          * TODO: `PyArray_IsScalar` should not be required for new dtypes.
          *       weak-promotion branch is in practice identical to dtype one.
          */
-        if (get_npy_promotion_state() == NPY_USE_WEAK_PROMOTION) {
-            PyObject *descr = PyObject_GetAttr(from_obj, npy_interned_str.dtype);
-            if (descr == NULL) {
-                goto finish;
-            }
-            if (!PyArray_DescrCheck(descr)) {
-                Py_DECREF(descr);
-                PyErr_SetString(PyExc_TypeError,
-                    "numpy_scalar.dtype did not return a dtype instance.");
-                goto finish;
-            }
-            ret = PyArray_CanCastTypeTo((PyArray_Descr *)descr, d2, casting);
+        PyObject *descr = PyObject_GetAttr(from_obj, npy_interned_str.dtype);
+        if (descr == NULL) {
+            goto finish;
+        }
+        if (!PyArray_DescrCheck(descr)) {
             Py_DECREF(descr);
+            PyErr_SetString(PyExc_TypeError,
+                "numpy_scalar.dtype did not return a dtype instance.");
+            goto finish;
         }
-        else {
-            /* need to convert to object to consider old value-based logic */
-            PyArrayObject *arr;
-            arr = (PyArrayObject *)PyArray_FROM_O(from_obj);
-            if (arr == NULL) {
-                goto finish;
-            }
-            ret = PyArray_CanCastArrayTo(arr, d2, casting);
-            Py_DECREF(arr);
-        }
+        ret = PyArray_CanCastTypeTo((PyArray_Descr *)descr, d2, casting);
+        Py_DECREF(descr);
     }
     else if (PyArray_IsPythonNumber(from_obj)) {
         PyErr_SetString(PyExc_TypeError,
@@ -4582,14 +4570,6 @@ static struct PyMethodDef array_module_methods[] = {
     {"get_handler_version",
         (PyCFunction) get_handler_version,
         METH_VARARGS, NULL},
-    {"_get_promotion_state",
-        (PyCFunction)npy__get_promotion_state,
-        METH_NOARGS, "Get the current NEP 50 promotion state."},
-    {"_set_promotion_state",
-         (PyCFunction)npy__set_promotion_state,
-         METH_O, "Set the NEP 50 promotion state.  This is not thread-safe.\n"
-                 "The optional warnings can be safely silenced using the \n"
-                 "`np._no_nep50_warning()` context manager."},
     {"_set_numpy_warn_if_no_mem_policy",
          (PyCFunction)_set_numpy_warn_if_no_mem_policy,
          METH_O, "Change the warn if no mem policy flag for testing."},

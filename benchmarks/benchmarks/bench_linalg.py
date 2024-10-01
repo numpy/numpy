@@ -72,7 +72,7 @@ class Eindot(Benchmark):
 
 
 class Linalg(Benchmark):
-    params = sorted(list(set(TYPES1) - set(['float16'])))
+    params = sorted(set(TYPES1) - set(['float16']))
     param_names = ['dtype']
 
     def setup(self, typename):
@@ -111,7 +111,7 @@ class LinalgSmallArrays(Benchmark):
 
     def time_det_small_array(self):
         np.linalg.det(self.array_5_5)
-        
+
 class Lstsq(Benchmark):
     def setup(self):
         self.a = get_squares_()['float64']

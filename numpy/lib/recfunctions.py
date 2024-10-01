@@ -241,7 +241,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
     lastname : optional
         Last processed field name (used internally during recursion).
     parents : dictionary
-        Dictionary of parent fields (used interbally during recursion).
+        Dictionary of parent fields (used internally during recursion).
 
     Examples
     --------
@@ -267,7 +267,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
                 parents[name] = []
             parents.update(get_fieldstructure(current, name, parents))
         else:
-            lastparent = [_ for _ in (parents.get(lastname, []) or [])]
+            lastparent = list((parents.get(lastname, []) or []))
             if lastparent:
                 lastparent.append(lastname)
             elif lastname:
@@ -512,10 +512,6 @@ def drop_fields(base, drop_names, usemask=True, asrecarray=False):
     Return a new array with fields in `drop_names` dropped.
 
     Nested fields are supported.
-
-    .. versionchanged:: 1.18.0
-        `drop_fields` returns an array with 0 fields if all fields are dropped,
-        rather than returning ``None`` as it did previously.
 
     Parameters
     ----------
@@ -1212,7 +1208,7 @@ def apply_along_fields(func, arr):
     Returns
     -------
     out : ndarray
-       Result of the recution operation
+       Result of the reduction operation
 
     Examples
     --------

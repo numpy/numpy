@@ -139,3 +139,72 @@ _TD64Codes = Literal[
     "m8[fs]", "|m8[fs]", "=m8[fs]", "<m8[fs]", ">m8[fs]",
     "m8[as]", "|m8[as]", "=m8[as]", "<m8[as]", ">m8[as]",
 ]
+
+# NOTE: `StringDType' has no scalar type, and therefore has no name that can
+# be passed to the `dtype` constructor
+_StringCodes = Literal["T", "|T", "=T", "<T", ">T"]
+
+# NOTE: Nested literals get flattened and de-duplicated at runtime, which isn't
+# the case for a `Union` of `Literal`s.
+# So even though they're equivalent when type-checking, they differ at runtime.
+# Another advantage of nesting, is that they always have a "flat"
+# `Literal.__args__`, which is a tuple of *literally* all its literal values.
+
+_UnsignedIntegerCodes = Literal[
+    _UInt8Codes,
+    _UInt16Codes,
+    _UInt32Codes,
+    _UInt64Codes,
+    _UIntCodes,
+    _UByteCodes,
+    _UShortCodes,
+    _UIntCCodes,
+    _ULongCodes,
+    _ULongLongCodes,
+]
+_SignedIntegerCodes = Literal[
+    _Int8Codes,
+    _Int16Codes,
+    _Int32Codes,
+    _Int64Codes,
+    _IntCodes,
+    _ByteCodes,
+    _ShortCodes,
+    _IntCCodes,
+    _LongCodes,
+    _LongLongCodes,
+]
+_FloatingCodes = Literal[
+    _Float16Codes,
+    _Float32Codes,
+    _Float64Codes,
+    _LongDoubleCodes,
+    _HalfCodes,
+    _SingleCodes,
+    _DoubleCodes,
+    _LongDoubleCodes
+]
+_ComplexFloatingCodes = Literal[
+    _Complex64Codes,
+    _Complex128Codes,
+    _CSingleCodes,
+    _CDoubleCodes,
+    _CLongDoubleCodes,
+]
+_IntegerCodes = Literal[_UnsignedIntegerCodes, _SignedIntegerCodes]
+_InexactCodes = Literal[_FloatingCodes, _ComplexFloatingCodes]
+_NumberCodes = Literal[_IntegerCodes, _InexactCodes]
+
+_CharacterCodes = Literal[_StrCodes, _BytesCodes]
+_FlexibleCodes = Literal[_VoidCodes, _CharacterCodes]
+
+_GenericCodes = Literal[
+    _BoolCodes,
+    _NumberCodes,
+    _FlexibleCodes,
+    _DT64Codes,
+    _TD64Codes,
+    _ObjectCodes,
+    # TODO: add `_StringCodes` once it has a scalar type
+    # _StringCodes,
+]

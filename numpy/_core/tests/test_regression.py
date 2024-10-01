@@ -290,7 +290,7 @@ class TestRegression:
         x = np.rec.array([(1, 1.1, '1.0'),
                          (2, 2.2, '2.0')], dtype=descr)
         x[0].tolist()
-        [i for i in x[0]]
+        list(x[0])
 
     def test_unicode_string_comparison(self):
         # Ticket #190
@@ -1028,7 +1028,7 @@ class TestRegression:
     def test_mem_fromiter_invalid_dtype_string(self):
         x = [1, 2, 3]
         assert_raises(ValueError,
-                              np.fromiter, [xi for xi in x], dtype='S')
+                              np.fromiter, list(x), dtype='S')
 
     def test_reduce_big_object_array(self):
         # Ticket #713
@@ -2178,7 +2178,7 @@ class TestRegression:
             __array_priority__ = 1002
 
             def __array__(self, *args, **kwargs):
-                raise Exception()
+                raise Exception
 
         rhs = Foo()
         lhs = np.array(1)
@@ -2313,9 +2313,9 @@ class TestRegression:
             try:
                 hash(val)
             except TypeError as e:
-                assert_equal(t.__hash__, None)
+                assert_(t.__hash__ is None)
             else:
-                assert_(t.__hash__ != None)
+                assert_(t.__hash__ is not None)
 
     def test_scalar_copy(self):
         scalar_types = set(np._core.sctypeDict.values())
@@ -2644,3 +2644,10 @@ class TestRegression:
             data = np.broadcast_to(vals, (128, 128, 128))
             data = data.transpose(0, 2, 1).copy()
             np.unique(data)
+
+    def test_sort_overlap(self):
+        # gh-27273
+        size = 100
+        inp = np.linspace(0, size, num=size, dtype=np.intc)
+        out = np.sort(inp)
+        assert_equal(inp, out)

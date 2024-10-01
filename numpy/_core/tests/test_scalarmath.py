@@ -16,7 +16,7 @@ from numpy._core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
-    assert_warns, _SUPPORTS_SVE,
+    assert_warns, check_support_sve,
     )
 
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -151,7 +151,7 @@ def test_int_float_promotion_truediv(fscalar):
 
 
 class TestBaseMath:
-    @pytest.mark.xfail(_SUPPORTS_SVE, reason="gh-22982")
+    @pytest.mark.xfail(check_support_sve(), reason="gh-22982")
     def test_blocked(self):
         # test alignments offsets for simd instructions
         # alignments for vz + 2 * (vs - 1) + 1
@@ -597,15 +597,15 @@ class TestConversion:
         # The comparisons are flagged by pep8, ignore that.
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', FutureWarning)
-            assert_(not np.float32(1) == None)
-            assert_(not np.str_('test') == None)
+            assert_(not np.float32(1) == None)  # noqa: E711
+            assert_(not np.str_('test') == None)  # noqa: E711
             # This is dubious (see below):
-            assert_(not np.datetime64('NaT') == None)
+            assert_(not np.datetime64('NaT') == None)  # noqa: E711
 
-            assert_(np.float32(1) != None)
-            assert_(np.str_('test') != None)
+            assert_(np.float32(1) != None)  # noqa: E711
+            assert_(np.str_('test') != None)  # noqa: E711
             # This is dubious (see below):
-            assert_(np.datetime64('NaT') != None)
+            assert_(np.datetime64('NaT') != None)  # noqa: E711
         assert_(len(w) == 0)
 
         # For documentation purposes, this is why the datetime is dubious.
@@ -1080,7 +1080,6 @@ def test_longdouble_complex():
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
 @pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
-@np._no_nep50_warning()
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     # This tests that python scalar subclasses behave like a float64 (if they
     # don't override it).
@@ -1169,7 +1168,7 @@ def test_scalar_matches_array_op_with_pyscalar(op, sctype, other_type, rop):
     assert res == expected
     if isinstance(val1, float) and other_type is complex and rop:
         # Python complex accepts float subclasses, so we don't get a chance
-        # and the result may be a Python complelx (thus, the `np.array()``)
+        # and the result may be a Python complex (thus, the `np.array()``)
         assert np.array(res).dtype == expected.dtype
     else:
         assert res.dtype == expected.dtype

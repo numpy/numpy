@@ -1,0 +1,41 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.1.1 Release Notes
+==========================
+
+NumPy 2.1.1 is a maintenance release that fixes bugs and regressions
+discovered after the 2.1.0 release.
+
+The Python versions supported by this release are 3.10-3.13.
+
+Contributors
+============
+
+A total of 7 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Andrew Nelson
+* Charles Harris
+* Mateusz Sokół
+* Maximilian Weigand +
+* Nathan Goldbaum
+* Pieter Eendebak
+* Sebastian Berg
+
+Pull requests merged
+====================
+
+A total of 10 pull requests were merged for this release.
+
+* `#27236 <https://github.com/numpy/numpy/pull/27236>`__: REL: Prepare for the NumPy 2.1.0 release [wheel build]
+* `#27252 <https://github.com/numpy/numpy/pull/27252>`__: MAINT: prepare 2.1.x for further development
+* `#27259 <https://github.com/numpy/numpy/pull/27259>`__: BUG: revert unintended change in the return value of set_printoptions
+* `#27266 <https://github.com/numpy/numpy/pull/27266>`__: BUG: fix reference counting bug in __array_interface__ implementation…
+* `#27267 <https://github.com/numpy/numpy/pull/27267>`__: TST: Add regression test for missing descr in array-interface
+* `#27276 <https://github.com/numpy/numpy/pull/27276>`__: BUG: Fix #27256 and #27257
+* `#27278 <https://github.com/numpy/numpy/pull/27278>`__: BUG: Fix array_equal for numeric and non-numeric scalar types
+* `#27287 <https://github.com/numpy/numpy/pull/27287>`__: MAINT: Update maintenance/2.1.x after the 2.0.2 release
+* `#27303 <https://github.com/numpy/numpy/pull/27303>`__: BLD: cp311- macosx_arm64 wheels [wheel build]
+* `#27304 <https://github.com/numpy/numpy/pull/27304>`__: BUG: f2py: better handle filtering of public/private subroutines
+

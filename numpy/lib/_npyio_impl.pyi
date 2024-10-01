@@ -158,12 +158,14 @@ def save(
 def savez(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
 def savez_compressed(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
@@ -175,7 +177,7 @@ def loadtxt(
     dtype: None = ...,
     comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
-    converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
+    converters: None | Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any] = ...,
     skiprows: int = ...,
     usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
@@ -192,7 +194,7 @@ def loadtxt(
     dtype: _DTypeLike[_SCT],
     comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
-    converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
+    converters: None | Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any]  = ...,
     skiprows: int = ...,
     usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
@@ -209,7 +211,7 @@ def loadtxt(
     dtype: DTypeLike,
     comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
-    converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
+    converters: None | Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any]  = ...,
     skiprows: int = ...,
     usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,

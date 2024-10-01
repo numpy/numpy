@@ -12,7 +12,6 @@ from ._backend import Backend
 from string import Template
 from itertools import chain
 
-import warnings
 
 
 class MesonTemplate:
@@ -118,7 +117,7 @@ class MesonTemplate:
     def fortran_args_substitution(self) -> None:
         if self.fortran_args:
             self.substitutions["fortran_args"] = (
-                f"{self.indent}fortran_args: [{', '.join([arg for arg in self.fortran_args])}],"
+                f"{self.indent}fortran_args: [{', '.join(list(self.fortran_args))}],"
             )
         else:
             self.substitutions["fortran_args"] = ""

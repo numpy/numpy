@@ -253,7 +253,7 @@ find_binary_operation_path(
      *
      * However, NumPy (historically) made this often work magically because
      * ufuncs for object dtype end up casting to object with `.item()`. This in
-     * turn ofthen returns a Python type (e.g. float for float32, float64)!
+     * turn often returns a Python type (e.g. float for float32, float64)!
      * Retrying then succeeds. So if (and only if) `self.item()` returns a new
      * type, we can safely attempt the operation (again) with that.
      */

@@ -367,7 +367,7 @@ class TestIndexing:
         assert_array_equal(a[idx], idx)
 
         # this case must not go into the fast path, note that idx is
-        # a non-contiuguous none 1D array here.
+        # a non-contiguous none 1D array here.
         a[idx] = -1
         res = np.arange(6)
         res[0] = -1
@@ -668,12 +668,12 @@ class TestBroadcastedAssignments:
             ([0, 1], ..., 0),
             (..., [1, 2], [1, 2])])
     def test_broadcast_error_reports_correct_shape(self, index):
-        values = np.zeros((100, 100))  # will never broadcast below  
+        values = np.zeros((100, 100))  # will never broadcast below
 
         arr = np.zeros((3, 4, 5, 6, 7))
         # We currently report without any spaces (could be changed)
         shape_str = str(arr[index].shape).replace(" ", "")
-        
+
         with pytest.raises(ValueError) as e:
             arr[index] = values
 

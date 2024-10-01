@@ -1,6 +1,7 @@
 from typing import Any
 
 import numpy as np
+from numpy._typing import _64Bit
 
 from typing_extensions import assert_type, LiteralString
 
@@ -15,8 +16,8 @@ u4: np.uint32
 finfo_f8: np.finfo[np.float64]
 iinfo_i8: np.iinfo[np.int64]
 
-assert_type(np.finfo(f), np.finfo[np.double])
-assert_type(np.finfo(f8), np.finfo[np.float64])
+assert_type(np.finfo(f), np.finfo[np.float64])
+assert_type(np.finfo(f8), np.finfo[np.floating[_64Bit]])
 assert_type(np.finfo(c8), np.finfo[np.float32])
 assert_type(np.finfo('f2'), np.finfo[np.floating[Any]])
 

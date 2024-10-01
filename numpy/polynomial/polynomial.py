@@ -311,8 +311,6 @@ def polymulx(c):
     Notes
     -----
 
-    .. versionadded:: 1.5.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -407,7 +405,7 @@ def polydiv(c1, c2):
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
     if c2[-1] == 0:
-        raise ZeroDivisionError()
+        raise ZeroDivisionError  # FIXME: add message with details to exception
 
     # note: this is more efficient than `pu._div(polymul, c1, c2)`
     lc1 = len(c1)
@@ -494,8 +492,6 @@ def polyder(c, m=1, scl=1, axis=0):
         of variable. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -585,8 +581,6 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -712,8 +706,6 @@ def polyval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, compatible object
@@ -786,8 +778,6 @@ def polyvalfromroots(x, r, tensor=True):
     ``False``, the shape will be r.shape[1:]; that is, each polynomial is
     evaluated only for the corresponding broadcast value of `x`. Note that
     scalars have shape (,).
-
-    .. versionadded:: 1.12
 
     Parameters
     ----------
@@ -899,13 +889,11 @@ def polyval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
     >>> c = ((1, 2, 3), (4, 5, 6))
-    >>> P.polyval2d(1, 1, c) 
+    >>> P.polyval2d(1, 1, c)
     21.0
 
     """
@@ -958,8 +946,6 @@ def polygrid2d(x, y, c):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1017,8 +1003,6 @@ def polyval3d(x, y, z, c):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1081,8 +1065,6 @@ def polygrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -1135,7 +1117,7 @@ def polyvander(x, deg):
     Examples
     --------
     The Vandermonde matrix of degree ``deg = 5`` and sample points
-    ``x = [-1, 2, 3]`` contains the element-wise powers of `x` 
+    ``x = [-1, 2, 3]`` contains the element-wise powers of `x`
     from 0 to 5 as its columns.
 
     >>> from numpy.polynomial import polynomial as P
@@ -1236,7 +1218,7 @@ def polyvander2d(x, y, deg):
     >>> P.polyvander2d(x=x, y=0*x, deg=(m, 0)) == P.polyvander(x=x, deg=m)
     array([[ True,  True],
            [ True,  True]])
-    
+
     """
     return pu._vander_nd_flat((polyvander, polyvander), (x, y), deg)
 
@@ -1289,8 +1271,6 @@ def polyvander3d(x, y, z, deg):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> import numpy as np
@@ -1308,7 +1288,7 @@ def polyvander3d(x, y, z, deg):
              -8.,   8.,  16.,   4.,   8.,  -8., -16.,  16.,  32.],
            [  1.,   5.,  -3., -15.,   9.,  45.,   1.,   5.,  -3.,
             -15.,   9.,  45.,   1.,   5.,  -3., -15.,   9.,  45.]])
-    
+
     We can verify the columns for any ``0 <= i <= l``, ``0 <= j <= m``,
     and ``0 <= k <= n``
 
@@ -1366,8 +1346,6 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         chosen so that the errors of the products ``w[i]*y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
-        .. versionadded:: 1.5.0
 
     Returns
     -------
@@ -1498,8 +1476,6 @@ def polycompanion(c):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -1609,8 +1585,6 @@ class Polynomial(ABCPolyBase):
         The default value is [-1., 1.].
     window : (2,) array_like, optional
         Window, see `domain` for its use. The default value is [-1., 1.].
-
-        .. versionadded:: 1.6.0
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.

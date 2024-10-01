@@ -102,7 +102,7 @@ class TestCharacterString(util.F2PyTest):
                       {'1': 'A', '3': 'ABC', 'star': 'ABCDE' * 3}[length],
                       ], dtype='S')
 
-        expected = np.array([[c for c in s] for s in a], dtype='u1')
+        expected = np.array([list(s) for s in a], dtype='u1')
         assert_array_equal(f(a), expected)
 
     @pytest.mark.parametrize("length", length_list)
@@ -114,7 +114,7 @@ class TestCharacterString(util.F2PyTest):
             [{'1': 'a', '3': 'abc', 'star': 'abcde' * 3}[length],
              {'1': 'A', '3': 'ABC', 'star': 'ABCDE' * 3}[length]], dtype='S')
 
-        a = np.array([[c for c in s] for s in expected], dtype='u1')
+        a = np.array([list(s) for s in expected], dtype='u1')
         assert_array_equal(f(a), expected)
 
     @pytest.mark.parametrize("length", length_list)
@@ -127,7 +127,7 @@ class TestCharacterString(util.F2PyTest):
                       [{'1': 'f', '3': 'fgh', 'star': 'fghij' * 3}[length],
                        {'1': 'F', '3': 'FGH', 'star': 'FGHIJ' * 3}[length]]],
                      dtype='S')
-        expected = np.array([[[c for c in item] for item in row] for row in a],
+        expected = np.array([[list(item) for item in row] for row in a],
                             dtype='u1', order='F')
         assert_array_equal(f(a), expected)
 

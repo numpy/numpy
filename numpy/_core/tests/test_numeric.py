@@ -334,7 +334,7 @@ class TestNonarrayArgs:
             tgt = np.array([1, 3, 3, 4], dtype=array_type)
             out = np.take(x, ind)
             assert_equal(out, tgt)
-            assert_equal(out.dtype, tgt.dtype)  
+            assert_equal(out.dtype, tgt.dtype)
 
     def test_trace(self):
         c = [[1, 2], [3, 4], [5, 6]]
@@ -1489,21 +1489,22 @@ class TestTypes:
         assert_(not np.can_cast([('f0', ('i4,i4'), (2,))], 'i4',
                                 casting='unsafe'))
 
-    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
-            reason="NEP 50: no python int/float/complex support (yet)")
     def test_can_cast_values(self):
-        # gh-5917
-        for dt in sctypes['int'] + sctypes['uint']:
-            ii = np.iinfo(dt)
-            assert_(np.can_cast(ii.min, dt))
-            assert_(np.can_cast(ii.max, dt))
-            assert_(not np.can_cast(ii.min - 1, dt))
-            assert_(not np.can_cast(ii.max + 1, dt))
+        # With NumPy 2 and NEP 50, can_cast errors on Python scalars.  We could
+        # define this as (usually safe) at some point, and already do so
+        # in `copyto` and ufuncs (but there an error is raised if the integer
+        # is out of bounds and a warning for out-of-bound floats).
+        # Raises even for unsafe, previously checked within range (for floats
+        # that was approximately whether it would overflow to inf).
+        with pytest.raises(TypeError):
+            np.can_cast(4, "int8", casting="unsafe")
 
-        for dt in sctypes['float']:
-            fi = np.finfo(dt)
-            assert_(np.can_cast(fi.min, dt))
-            assert_(np.can_cast(fi.max, dt))
+        with pytest.raises(TypeError):
+            np.can_cast(4.0, "float64", casting="unsafe")
+
+        with pytest.raises(TypeError):
+            np.can_cast(4j, "complex128", casting="unsafe")
+
 
     @pytest.mark.parametrize("dtype",
             list("?bhilqBHILQefdgFDG") + [rational])
@@ -2178,9 +2179,9 @@ class TestArrayComparisons:
     )
     def test_array_equal_equal_nan(self, bx, by, equal_nan, expected):
         """
-        This test array_equal for a few combinaison:
+        This test array_equal for a few combinations:
 
-        - are the two inputs the same object or not (same object many not
+        - are the two inputs the same object or not (same object may not
           be equal if contains NaNs)
         - Whether we should consider or not, NaNs, being equal.
 
@@ -2201,12 +2202,12 @@ class TestArrayComparisons:
 
     def test_none_compares_elementwise(self):
         a = np.array([None, 1, None], dtype=object)
-        assert_equal(a == None, [True, False, True])
-        assert_equal(a != None, [False, True, False])
+        assert_equal(a == None, [True, False, True])  # noqa: E711
+        assert_equal(a != None, [False, True, False])  # noqa: E711
 
         a = np.ones(3)
-        assert_equal(a == None, [False, False, False])
-        assert_equal(a != None, [True, True, True])
+        assert_equal(a == None, [False, False, False])  # noqa: E711
+        assert_equal(a != None, [True, True, True])  # noqa: E711
 
     def test_array_equiv(self):
         res = np.array_equiv(np.array([1, 2]), np.array([1, 2]))
@@ -3701,6 +3702,18 @@ class TestRoll:
     def test_roll_empty(self):
         x = np.array([])
         assert_equal(np.roll(x, 1), np.array([]))
+
+    def test_roll_unsigned_shift(self):
+        x = np.arange(4)
+        shift = np.uint16(2)
+        assert_equal(np.roll(x, shift), np.roll(x, 2))
+
+        shift = np.uint64(2**63+2)
+        assert_equal(np.roll(x, shift), np.roll(x, 2))
+
+    def test_roll_big_int(self):
+        x = np.arange(4)
+        assert_equal(np.roll(x, 2**100), x)
 
 
 class TestRollaxis:

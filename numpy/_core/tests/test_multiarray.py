@@ -30,7 +30,7 @@ from numpy.testing import (
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, IS_WASM, IS_PYSTON, HAS_REFCOUNT,
     assert_array_less, runstring, temppath, suppress_warnings, break_cycles,
-    _SUPPORTS_SVE, assert_array_compare,
+    check_support_sve, assert_array_compare,
     )
 from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy._core.tests._locales import CommaDecimalPointLocale
@@ -1097,14 +1097,14 @@ class TestCreation:
                 return 1
 
             def __getitem__(self, index):
-                raise ValueError()
+                raise ValueError
 
         class Map:
             def __len__(self):
                 return 1
 
             def __getitem__(self, index):
-                raise KeyError()
+                raise KeyError
 
         a = np.array([Map()])
         assert_(a.shape == (1,))
@@ -1121,7 +1121,7 @@ class TestCreation:
                 if ind in [0, 1]:
                     return ind
                 else:
-                    raise IndexError()
+                    raise IndexError
         d = np.array([Point2(), Point2(), Point2()])
         assert_equal(d.dtype, np.dtype(object))
 
@@ -4767,7 +4767,7 @@ class TestArgmax:
             ([np.nan, 0, 1, 2, 3], 0),
             ([np.nan, 0, np.nan, 2, 3], 0),
             # To hit the tail of SIMD multi-level(x4, x1) inner loops
-            # on variant SIMD widthes
+            # on variant SIMD widths
             ([1] * (2*5-1) + [np.nan], 2*5-1),
             ([1] * (4*5-1) + [np.nan], 4*5-1),
             ([1] * (8*5-1) + [np.nan], 8*5-1),
@@ -4910,7 +4910,7 @@ class TestArgmin:
             ([np.nan, 0, 1, 2, 3], 0),
             ([np.nan, 0, np.nan, 2, 3], 0),
             # To hit the tail of SIMD multi-level(x4, x1) inner loops
-            # on variant SIMD widthes
+            # on variant SIMD widths
             ([1] * (2*5-1) + [np.nan], 2*5-1),
             ([1] * (4*5-1) + [np.nan], 4*5-1),
             ([1] * (8*5-1) + [np.nan], 8*5-1),
@@ -5478,7 +5478,7 @@ class TestIO:
 
     def test_roundtrip_repr(self, x):
         x = x.real.ravel()
-        s = "@".join(map(lambda x: repr(x)[11:-1], x))
+        s = "@".join((repr(x)[11:-1] for x in x))
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
@@ -8592,7 +8592,7 @@ class TestArrayCreationCopyArgument:
     def test__array__reference_leak(self):
         class NotAnArray:
             def __array__(self, dtype=None, copy=None):
-                raise NotImplementedError()
+                raise NotImplementedError
 
         x = NotAnArray()
 
@@ -9725,7 +9725,8 @@ class TestArrayFinalize:
                 raise Exception(self)
 
         # a plain object can't be weakref'd
-        class Dummy: pass
+        class Dummy:
+            pass
 
         # get a weak reference to an object within an array
         obj_arr = np.array(Dummy())
@@ -9991,7 +9992,7 @@ class TestAlignment:
         elif order is None:
             assert_(x.flags.c_contiguous, err_msg)
         else:
-            raise ValueError()
+            raise ValueError
 
     def test_various_alignments(self):
         for align in [1, 2, 3, 4, 8, 12, 16, 32, 64, None]:
@@ -10117,7 +10118,7 @@ class TestViewDtype:
         assert_array_equal(x.view('<i2'), expected)
 
 
-@pytest.mark.xfail(_SUPPORTS_SVE, reason="gh-22982")
+@pytest.mark.xfail(check_support_sve(), reason="gh-22982")
 # Test various array sizes that hit different code paths in quicksort-avx512
 @pytest.mark.parametrize("N", np.arange(1, 512))
 @pytest.mark.parametrize("dtype", ['e', 'f', 'd'])

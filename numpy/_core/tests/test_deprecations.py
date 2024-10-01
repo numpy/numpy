@@ -3,13 +3,10 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
-import datetime
-import operator
 import warnings
 import pytest
 import tempfile
 import re
-import sys
 
 import numpy as np
 from numpy.testing import (
@@ -488,7 +485,7 @@ class TestMachAr(_DeprecationTestCase):
     warning_cls = DeprecationWarning
 
     def test_deprecated_module(self):
-        self.assert_deprecated(lambda: getattr(np._core, "MachAr"))
+        self.assert_deprecated(lambda: np._core.MachAr)
 
 
 class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
@@ -717,7 +714,7 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
 class TestDeprecatedSaveFixImports(_DeprecationTestCase):
     # Deprecated in Numpy 2.1, 2024-05
     message = "The 'fix_imports' flag is deprecated and has no effect."
-    
+
     def test_deprecated(self):
         with temppath(suffix='.npy') as path:
             sample_args = (path, np.array(np.zeros((1024, 10))))

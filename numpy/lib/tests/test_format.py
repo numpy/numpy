@@ -685,8 +685,8 @@ def test_version_2_0_memmap(tmpdir):
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
     d = np.ones(1000, dtype=dt)
-    tf1 = os.path.join(tmpdir, f'version2_01.npy')
-    tf2 = os.path.join(tmpdir, f'version2_02.npy')
+    tf1 = os.path.join(tmpdir, 'version2_01.npy')
+    tf2 = os.path.join(tmpdir, 'version2_02.npy')
 
     # 1.0 requested but data cannot be saved this way
     assert_raises(ValueError, format.open_memmap, tf1, mode='w+', dtype=d.dtype,
@@ -713,12 +713,12 @@ def test_version_2_0_memmap(tmpdir):
 
 @pytest.mark.parametrize("mmap_mode", ["r", None])
 def test_huge_header(tmpdir, mmap_mode):
-    f = os.path.join(tmpdir, f'large_header.npy')
+    f = os.path.join(tmpdir, 'large_header.npy')
     arr = np.array(1, dtype="i,"*10000+"i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.save(f, arr)
-    
+
     with pytest.raises(ValueError, match="Header.*large"):
         np.load(f, mmap_mode=mmap_mode)
 
@@ -732,12 +732,12 @@ def test_huge_header(tmpdir, mmap_mode):
     assert_array_equal(res, arr)
 
 def test_huge_header_npz(tmpdir):
-    f = os.path.join(tmpdir, f'large_header.npz')
+    f = os.path.join(tmpdir, 'large_header.npz')
     arr = np.array(1, dtype="i,"*10000+"i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.savez(f, arr=arr)
-    
+
     # Only getting the array from the file actually reads it
     with pytest.raises(ValueError, match="Header.*large"):
         np.load(f)["arr"]

@@ -575,7 +575,7 @@ def linkcode_resolve(domain, info):
            numpy.__version__, fn, linespec)
 
 from pygments.lexers import CLexer
-from pygments.lexer import inherit, bygroups
+from pygments.lexer import inherit
 from pygments.token import Comment
 
 class NumPyLexer(CLexer):

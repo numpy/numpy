@@ -116,13 +116,13 @@ def test_dtype_repr(dtype):
     if not hasattr(dtype, "na_object") and dtype.coerce:
         assert repr(dtype) == "StringDType()"
     elif dtype.coerce:
-        assert repr(dtype) == f"StringDType(na_object={repr(dtype.na_object)})"
+        assert repr(dtype) == f"StringDType(na_object={dtype.na_object!r})"
     elif not hasattr(dtype, "na_object"):
         assert repr(dtype) == "StringDType(coerce=False)"
     else:
         assert (
             repr(dtype)
-            == f"StringDType(na_object={repr(dtype.na_object)}, coerce=False)"
+            == f"StringDType(na_object={dtype.na_object!r}, coerce=False)"
         )
 
 

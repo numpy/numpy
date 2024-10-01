@@ -185,8 +185,6 @@ Those can be useful for precise floating point comparison.
     * NPY_FPE_UNDERFLOW
     * NPY_FPE_INVALID
 
-    .. versionadded:: 1.15.0
-
 .. c:function:: int npy_clear_floatstatus()
 
     Clears the floating point status. Returns the previous status mask.
@@ -200,8 +198,6 @@ Those can be useful for precise floating point comparison.
     Clears the floating point status. A pointer to a local variable is passed in to
     prevent aggressive compiler optimizations from reordering this function call.
     Returns the previous status mask.
-
-    .. versionadded:: 1.15.0
 
 .. _complex-numbers:
 

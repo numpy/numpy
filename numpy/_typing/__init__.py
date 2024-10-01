@@ -71,6 +71,17 @@ from ._char_codes import (
     _BytesCodes as _BytesCodes,
     _VoidCodes as _VoidCodes,
     _ObjectCodes as _ObjectCodes,
+    _StringCodes as _StringCodes,
+    _UnsignedIntegerCodes as _UnsignedIntegerCodes,
+    _SignedIntegerCodes as _SignedIntegerCodes,
+    _IntegerCodes as _IntegerCodes,
+    _FloatingCodes as _FloatingCodes,
+    _ComplexFloatingCodes as _ComplexFloatingCodes,
+    _InexactCodes as _InexactCodes,
+    _NumberCodes as _NumberCodes,
+    _CharacterCodes as _CharacterCodes,
+    _FlexibleCodes as _FlexibleCodes,
+    _GenericCodes as _GenericCodes,
 )
 from ._scalars import (
     _CharLike_co as _CharLike_co,
