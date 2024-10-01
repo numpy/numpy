@@ -909,3 +909,63 @@ def test_empty_string():
     assert_array_equal(res, b"")
     assert res.shape == (2, 10)
     assert res.dtype == "S1"
+
+
+def test_dict():
+    # even list works on dicts, it is not unpacked in an array
+    obj = {0: "a", 1: "b", 2: "c"}
+    res = np.array([obj], dtype=object)
+    assert res.shape == (1,)
+    assert res[0] is obj
+
+    # dict like objects are not unpacked either
+    class DictLike:
+        def __getitem__(self, key):
+            if key < 5:
+                return key**2
+            raise KeyError()
+
+        def __len__(self):
+            return 5
+
+    obj = DictLike()
+    res = np.array([obj], dtype=object)
+    assert res.shape == (1,)
+    assert res[0] is obj
+
+
+def test_sequence():
+    # range is converted to array items
+    res = np.array([range(3), range(2, 5)], dtype=int)
+    assert_array_equal(res, [[0, 1, 2], [2, 3, 4]])
+
+    # same for user defined sequences
+    class Sequence:
+        def __getitem__(self, key):
+            if key < 5:
+                return key**2
+            raise IndexError()
+
+        def __len__(self):
+            return 5
+
+    obj = Sequence()
+    res = np.array([obj], dtype=int)
+    assert_array_equal(res, [[0, 1, 4, 9, 16]])
+
+    # objects with __iter__ = None are not iterable
+    class NonSequence:
+        __iter__ = None
+
+        def __getitem__(self, key):
+            if key < 5:
+                return key**2
+            raise IndexError()
+
+        def __len__(self):
+            return 5
+
+    obj = NonSequence()
+    res = np.array([obj], dtype=object)
+    assert res.shape == (1,)
+    assert res[0] is obj
