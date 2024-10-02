@@ -6,7 +6,6 @@ from numpy._typing import (
     _ArrayLikeStr_co as U_co,
     _ArrayLikeBytes_co as S_co,
     _ArrayLikeInt_co as i_co,
-    _ArrayLikeBool_co as b_co,
     _ArrayLikeString_co as T_co,
     _ArrayLikeAnyString_co as UST_co,
     _Shape,
