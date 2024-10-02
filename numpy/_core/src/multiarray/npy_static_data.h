@@ -38,6 +38,7 @@ typedef struct npy_interned_str_struct {
     PyObject *__dlpack__;
     PyObject *pyvals_name;
     PyObject *legacy;
+    PyObject *__doc__;
 } npy_interned_str_struct;
 
 /*

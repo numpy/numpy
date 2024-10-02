@@ -9,6 +9,7 @@ from fractions import Fraction
 from functools import reduce
 from collections import namedtuple
 
+import numpy._core._struct_ufunc_tests as struct_ufunc
 import numpy._core.umath as ncu
 from numpy._core import _umath_tests as ncu_tests, sctypes
 import numpy as np
@@ -4015,6 +4016,21 @@ class TestSpecialMethods:
         # And the same with a valid call:
         res = a.__array_ufunc__(np.add, "__call__", a, a)
         assert_array_equal(res, a + a)
+
+    def test_ufunc_docstring(self):
+
+        struct_ufunc.add_triplet.__doc__ = "hello"
+
+        assert struct_ufunc.add_triplet.__doc__ == "hello"
+
+        msg = "attribute '__doc__' of 'numpy.ufunc' objects is not writable"
+        with pytest.raises(AttributeError, match=msg):
+            np.add.__doc__ = "hello"
+
+        # you can add a "__doc__" key to __dict__ but it doesn't do anything
+        orig_doc = np.add.__doc__
+        np.add.__dict__["__doc__"] = "hello"
+        assert np.add.__doc__ == orig_doc
 
 class TestChoose:
     def test_mixed(self):
