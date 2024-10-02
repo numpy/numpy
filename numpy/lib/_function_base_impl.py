@@ -1914,14 +1914,22 @@ def trim_zeros(filt, trim='fb', axis=None):
         Input array.
     trim : {"fb", "f", "b"}, optional
         A string with 'f' representing trim from front and 'b' to trim from
-        back. By default, zeros are trimmed from the front and back.
+        back. By default, zeros are trimmed on both sides.
+        Front and back refer to the edges of a dimension, with "front" refering
+        to the side with the lowest index 0, and "back" refering to the highest
+        index (or index -1).
     axis : int or sequence, optional
-        The axis to trim. If None, the default, all axes are trimmed.
+        If None, `filt` is cropped such, that the smallest bounding box is
+        returned that still contains all values which are not zero.
+        If an axis is specified, `filt` will be sliced in that dimension only
+        on the sides specified by `trim`. The remaining area will be the
+        smallest that still contains all values wich are not zero.
 
     Returns
     -------
     trimmed : ndarray or sequence
-        The result of trimming the input. The input data type is preserved.
+        The result of trimming the input. The number of dimensions and the
+        input data type are preserved.
 
     Notes
     -----
