@@ -4193,7 +4193,7 @@ resolve_descriptors(int nop,
  * None --- array-object passed in don't call PyArray_Return
  * method --- the __array_wrap__ method to call.
  *
- * @param ufunc
+ * @param ufunc The universal function to be wrapped
  * @param full_args Original inputs and outputs
  * @param subok Whether subclasses are allowed
  * @param result_arrays The ufunc result(s).  REFERENCES ARE STOLEN!

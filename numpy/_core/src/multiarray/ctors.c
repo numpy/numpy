@@ -1416,7 +1416,7 @@ fail:
  * * an object with an __array__ function.
  *
  * @param op The object to convert to an array
- * @param requested_type a requested dtype instance, may be NULL; The result
+ * @param requested_dtype a requested dtype instance, may be NULL; The result
  *                       DType may be used, but is not enforced.
  * @param writeable whether the result must be writeable.
  * @param context Unused parameter, must be NULL (should be removed later).

@@ -188,9 +188,9 @@ _IsWriteable(PyArrayObject *ap)
 /**
  * Convert an array shape to a string such as "(1, 2)".
  *
- * @param Dimensionality of the shape
- * @param npy_intp pointer to shape array
- * @param String to append after the shape `(1, 2)%s`.
+ * @param n Dimensionality of the shape
+ * @param vals npy_intp pointer to shape array
+ * @param ending String to append after the shape `(1, 2)%s`.
  *
  * @return Python unicode string
  */
@@ -299,12 +299,11 @@ end:
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
  *
- * @param "value" should be the tuple.
+ * @param value should be the tuple.
+ * @param descr will be set to the field's dtype
+ * @param offset will be set to the field's offset
  *
- * @return "descr" will be set to the field's dtype
- * @return "offset" will be set to the field's offset
- *
- * returns -1 on failure, 0 on success.
+ * @return -1 on failure, 0 on success.
  */
 NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)

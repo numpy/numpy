@@ -154,8 +154,6 @@ create_conv_funcs(
  * @param out_descr The dtype used for allocating a new array.  This is not
  *        used if `data_array` is provided.  Note that the actual dtype of the
  *        returned array can differ for strings.
- * @param num_cols Pointer in which the actual (discovered) number of columns
- *        is returned.  This is only relevant if `homogeneous` is true.
  * @param homogeneous Whether the datatype of the array is not homogeneous,
  *        i.e. not structured.  In this case the number of columns has to be
  *        discovered an the returned array will be 2-dimensional rather than

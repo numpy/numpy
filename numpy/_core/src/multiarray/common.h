@@ -71,13 +71,6 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
- *
- * @param "value" should be the tuple.
- *
- * @return "descr" will be set to the field's dtype
- * @return "offset" will be set to the field's offset
- *
- * returns -1 on failure, 0 on success.
  */
 NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset);

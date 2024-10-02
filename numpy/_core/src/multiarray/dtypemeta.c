@@ -374,7 +374,7 @@ dtypemeta_initialize_struct_from_spec(
  * if the Py_TPFLAGS_HEAPTYPE flag is set (they are created from Python).
  * They are not for legacy DTypes or np.dtype itself.
  *
- * @param self
+ * @param dtype_class Pointer to the Python type object
  * @return nonzero if the object is garbage collected
  */
 static inline int
