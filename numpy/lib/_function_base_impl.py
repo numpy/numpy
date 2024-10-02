@@ -1891,7 +1891,13 @@ def _arg_trim_zeros(filt):
     >>> _arg_trim_zeros(np.array([0, 0, 1, 1, 0]))
     (array([2]), array([3]))
     """
-    nonzero = np.argwhere(filt != 0)
+    nonzero = (
+        np.argwhere(filt)
+        if filt.dtype != np.object_
+        # Historically, `trim_zeros` treats `None` in an object array
+        # as non-zero while argwhere doesn't, account for that
+        else np.argwhere(filt != 0)
+    )
     if nonzero.size == 0:
         start = stop = np.array([], dtype=np.intp)
     else:
