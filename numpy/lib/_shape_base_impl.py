@@ -923,7 +923,7 @@ def hsplit(ary, indices_or_sections):
            [ 7.],
            [11.],
            [15.]]),
-     array([], shape=(4, 0), dtype=float64)]
+     array([], dtype=float64)  # shape=(4, 0)]
 
     With a higher dimensional array the split is still along the second axis.
 
@@ -986,7 +986,7 @@ def vsplit(ary, indices_or_sections):
             [ 4.,  5.,  6.,  7.],
             [ 8.,  9., 10., 11.]]),
      array([[12., 13., 14., 15.]]),
-     array([], shape=(0, 4), dtype=float64)]
+     array([], dtype=float64)  # shape=(0, 4)]
 
     With a higher dimensional array the split is still along the first axis.
 
@@ -1047,7 +1047,7 @@ def dsplit(ary, indices_or_sections):
             [ 7.]],
            [[11.],
             [15.]]]),
-    array([], shape=(2, 2, 0), dtype=float64)]
+    array([], dtype=float64)  # shape=(2, 2, 0)]
     """
     if _nx.ndim(ary) < 3:
         raise ValueError('dsplit only works on arrays of 3 or more dimensions')

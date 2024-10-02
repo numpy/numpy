@@ -352,7 +352,7 @@ class TestArray2String:
         finally:
             np.set_printoptions(legacy=False)
 
-        assert_equal(repr(A), reprA.replace(')', ', shape=(1001,))'))
+        assert_equal(repr(A), reprA + '  # shape=(1001,)')
 
     def test_summarize_2d(self):
         A = np.arange(1002).reshape(2, 501)
@@ -368,7 +368,7 @@ class TestArray2String:
         finally:
             np.set_printoptions(legacy=False)
 
-        assert_equal(repr(A), reprA.replace(')', ', shape=(2, 501))'))
+        assert_equal(repr(A), reprA + '  # shape=(2, 501)')
 
     def test_summarize_2d_dtype(self):
         A = np.arange(1002, dtype='i2').reshape(2, 501)
@@ -378,7 +378,7 @@ class TestArray2String:
 
         reprA = ('array([[   0,    1,    2, ...,  498,  499,  500],\n'
                  '       [ 501,  502,  503, ...,  999, 1000, 1001]],\n'
-                 '      shape=(2, 501), dtype=int16)')
+                 '      dtype=int16)  # shape=(2, 501)')
         assert_equal(repr(A), reprA)
 
     def test_summarize_structure(self):
@@ -1063,7 +1063,7 @@ class TestPrintOptions:
 
                    [[18, ..., 20],
                     ...,
-                    [24, ..., 26]]], shape=(3, 3, 3))""")
+                    [24, ..., 26]]])  # shape=(3, 3, 3)""")
         )
 
         b = np.zeros((3, 3, 1, 1))
@@ -1084,7 +1084,7 @@ class TestPrintOptions:
 
                     ...,
 
-                    [[0.]]]], shape=(3, 3, 1, 1))""")
+                    [[0.]]]])  # shape=(3, 3, 1, 1)""")
         )
 
         # 1.13 had extra trailing spaces, and was missing newlines

@@ -254,7 +254,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     >>> np.set_printoptions(threshold=5)
     >>> np.arange(10)
-    array([0, 1, 2, ..., 7, 8, 9], shape=(10,))
+    array([0, 1, 2, ..., 7, 8, 9])  # shape=(10,)
 
     Small results can be suppressed:
 
@@ -287,7 +287,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     >>> with np.printoptions(precision=2, suppress=True, threshold=5):
     ...     np.linspace(0, 10, 10)
-    array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ], shape=(10,))
+    array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])  # shape=(10,)
 
     """
     _set_printoptions(precision, threshold, edgeitems, linewidth, suppress,
@@ -1583,41 +1583,42 @@ def _array_repr_implementation(
     else:
         class_name = "array"
 
+    # Add dtype and shape information if these cannot be inferred from
+    # the array string.
+    suffix = ")"
+    extra_str = ""
+    if not dtype_is_implied(arr.dtype) or arr.size == 0:
+        extra_str = f" dtype={dtype_short_repr(arr.dtype)})"
+        suffix = ","
+    if ((arr.size == 0 and arr.shape != (0,))
+        or (current_options['legacy'] > 210
+            and arr.size > current_options['threshold'])):
+        extra_str += f"  # shape={arr.shape}"
+
     prefix = class_name + "("
     if (current_options['legacy'] <= 113 and
             arr.shape == () and not arr.dtype.names):
         lst = repr(arr.item())
     else:
         lst = array2string(arr, max_line_width, precision, suppress_small,
-                           ', ', prefix, suffix=")")
+                           ', ', prefix, suffix=suffix)
 
-    # Add dtype and shape information if these cannot be inferred from
-    # the array string.
-    extras = []
-    if (arr.size == 0 and arr.shape != (0,)
-            or current_options['legacy'] > 210
-            and arr.size > current_options['threshold']):
-        extras.append(f"shape={arr.shape}")
-    if not dtype_is_implied(arr.dtype) or arr.size == 0:
-        extras.append(f"dtype={dtype_short_repr(arr.dtype)}")
+    arr_str = prefix + lst + suffix
 
-    if not extras:
-        return prefix + lst + ")"
+    if not extra_str:
+        return arr_str
 
-    arr_str = prefix + lst + ","
-    extra_str = ", ".join(extras) + ")"
-    # compute whether we should put extras on a new line: Do so if adding the
-    # extras would extend the last line past max_line_width.
+    # compute whether we should put extra_str on a new line: Do so if adding
+    # extra_str would extend the last line past max_line_width.
     # Note: This line gives the correct result even when rfind returns -1.
     last_line_len = len(arr_str) - (arr_str.rfind('\n') + 1)
-    spacer = " "
-    if current_options['legacy'] <= 113:
-        if issubclass(arr.dtype.type, flexible):
-            spacer = '\n' + ' '*len(prefix)
-    elif last_line_len + len(extra_str) + 1 > max_line_width:
-        spacer = '\n' + ' '*len(prefix)
+    if (((legacy_113 := current_options['legacy'] <= 113)
+         and issubclass(arr.dtype.type, flexible))
+        or (not legacy_113
+            and last_line_len + len(extra_str) + 1 > max_line_width)):
+        extra_str = '\n' + ' '*len(prefix) + extra_str.lstrip(" ")
 
-    return arr_str + spacer + extra_str
+    return arr_str + extra_str
 
 
 def _array_repr_dispatcher(
