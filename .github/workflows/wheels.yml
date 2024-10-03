@@ -177,7 +177,7 @@ jobs:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
 
-      - uses: mamba-org/setup-micromamba@f8b8a1e23a26f60a44c853292711bacfd3eac822
+      - uses: mamba-org/setup-micromamba@59b11321ffd9186cd5165633a02c5bba47de6d13
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
