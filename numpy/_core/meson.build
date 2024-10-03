@@ -1139,6 +1139,7 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/textreading/stream_pyobject.c',
   'src/multiarray/textreading/str_to_int.c',
   'src/multiarray/textreading/tokenize.cpp',
+  'src/multiarray/unique.cpp',
   # Remove this `arm64_exports.c` file once scipy macos arm64 build correctly
   # links to the arm64 npymath library, see gh-22673
   'src/npymath/arm64_exports.c',
@@ -1282,6 +1283,16 @@ py.extension_module('_simd',
   install: true,
   subdir: 'numpy/_core',
   install_tag: 'tests',
+)
+
+py.extension_module('_unique',
+  [
+    'src/multiarray/unique.cpp',
+  ],
+  cpp_args: cpp_args_common,
+  dependencies: np_core_dep,
+  install: true,
+  subdir: 'numpy/_core',
 )
 
 python_sources = [
