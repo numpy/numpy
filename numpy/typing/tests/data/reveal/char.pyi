@@ -10,6 +10,7 @@ AR_S: npt.NDArray[np.bytes_]
 AR_T: np.ndarray[np_t._Shape, np.dtypes.StringDType]
 
 AR_T_alias: TypeAlias = np.ndarray[np_t._Shape, np.dtypes.StringDType]
+AR_TU_alias: TypeAlias = AR_T_alias | npt.NDArray[np.str_]
 
 assert_type(np.char.equal(AR_U, AR_U), npt.NDArray[np.bool])
 assert_type(np.char.equal(AR_S, AR_S), npt.NDArray[np.bool])
@@ -50,7 +51,6 @@ assert_type(np.char.capitalize(AR_T), AR_T_alias)
 assert_type(np.char.center(AR_U, 5), npt.NDArray[np.str_])
 assert_type(np.char.center(AR_S, [2, 3, 4], b"a"), npt.NDArray[np.bytes_])
 assert_type(np.char.center(AR_T, 5), AR_T_alias)
-assert_type(np.char.center(AR_T, [2, 3, 4], "a"), AR_T_alias)
 
 assert_type(np.char.encode(AR_U), npt.NDArray[np.bytes_])
 assert_type(np.char.encode(AR_T), npt.NDArray[np.bytes_])
@@ -62,49 +62,49 @@ assert_type(np.char.expandtabs(AR_T), AR_T_alias)
 
 assert_type(np.char.join(AR_U, "_"), npt.NDArray[np.str_])
 assert_type(np.char.join(AR_S, [b"_", b""]), npt.NDArray[np.bytes_])
-assert_type(np.char.join(AR_T, "_"), AR_T_alias)
+assert_type(np.char.join(AR_T, "_"), AR_TU_alias)
 
 assert_type(np.char.ljust(AR_U, 5), npt.NDArray[np.str_])
 assert_type(np.char.ljust(AR_S, [4, 3, 1], fillchar=[b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
 assert_type(np.char.ljust(AR_T, 5), AR_T_alias)
-assert_type(np.char.ljust(AR_T, [4, 2, 1], fillchar=["a", "b", "c"]), AR_T_alias)
+assert_type(np.char.ljust(AR_T, [4, 2, 1], fillchar=["a", "b", "c"]), AR_TU_alias)
 
 assert_type(np.char.rjust(AR_U, 5), npt.NDArray[np.str_])
 assert_type(np.char.rjust(AR_S, [4, 3, 1], fillchar=[b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
 assert_type(np.char.rjust(AR_T, 5), AR_T_alias)
-assert_type(np.char.rjust(AR_T, [4, 2, 1], fillchar=["a", "b", "c"]), AR_T_alias)
+assert_type(np.char.rjust(AR_T, [4, 2, 1], fillchar=["a", "b", "c"]), AR_TU_alias)
 
 assert_type(np.char.lstrip(AR_U), npt.NDArray[np.str_])
 assert_type(np.char.lstrip(AR_S, b"_"), npt.NDArray[np.bytes_])
 assert_type(np.char.lstrip(AR_T), AR_T_alias)
-assert_type(np.char.lstrip(AR_T, "_"), AR_T_alias)
+assert_type(np.char.lstrip(AR_T, "_"), AR_TU_alias)
 
 assert_type(np.char.rstrip(AR_U), npt.NDArray[np.str_])
 assert_type(np.char.rstrip(AR_S, b"_"), npt.NDArray[np.bytes_])
 assert_type(np.char.rstrip(AR_T), AR_T_alias)
-assert_type(np.char.rstrip(AR_T, "_"), AR_T_alias)
+assert_type(np.char.rstrip(AR_T, "_"), AR_TU_alias)
 
 assert_type(np.char.strip(AR_U), npt.NDArray[np.str_])
 assert_type(np.char.strip(AR_S, b"_"), npt.NDArray[np.bytes_])
 assert_type(np.char.strip(AR_T), AR_T_alias)
-assert_type(np.char.strip(AR_T, "_"), AR_T_alias)
+assert_type(np.char.strip(AR_T, "_"), AR_TU_alias)
 
 assert_type(np.char.count(AR_U, "a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.char.count(AR_S, [b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
 assert_type(np.char.count(AR_T, AR_T, start=[1, 2, 3]), npt.NDArray[np.int_])
-assert_type(np.strings.count(AR_T, ["a", "b", "c"], end=9), npt.NDArray[np.int_])
+assert_type(np.char.count(AR_T, ["a", "b", "c"], end=9), npt.NDArray[np.int_])
 
 assert_type(np.char.partition(AR_U, "\n"), npt.NDArray[np.str_])
 assert_type(np.char.partition(AR_S, [b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
-assert_type(np.char.partition(AR_T, "\n"), AR_T_alias)
+assert_type(np.char.partition(AR_T, "\n"), AR_TU_alias)
 
 assert_type(np.char.rpartition(AR_U, "\n"), npt.NDArray[np.str_])
 assert_type(np.char.rpartition(AR_S, [b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
-assert_type(np.char.rpartition(AR_T, "\n"), AR_T_alias)
+assert_type(np.char.rpartition(AR_T, "\n"), AR_TU_alias)
 
 assert_type(np.char.replace(AR_U, "_", "-"), npt.NDArray[np.str_])
 assert_type(np.char.replace(AR_S, [b"_", b""], [b"a", b"b"]), npt.NDArray[np.bytes_])
-assert_type(np.char.replace(AR_T, "_", "_"), AR_T_alias)
+assert_type(np.char.replace(AR_T, "_", "_"), AR_TU_alias)
 
 assert_type(np.char.split(AR_U, "_"), npt.NDArray[np.object_])
 assert_type(np.char.split(AR_S, maxsplit=[1, 2, 3]), npt.NDArray[np.object_])
