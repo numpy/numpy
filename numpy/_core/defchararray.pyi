@@ -19,6 +19,7 @@ from numpy import (
     _OrderKACF,
     _ShapeType_co,
     _SupportsBuffer,
+    _SupportsArray
 )
 from numpy._typing import (
     NDArray,
@@ -98,6 +99,8 @@ _CharDType_co = TypeVar(
 _CharArray: TypeAlias = chararray[tuple[int, ...], dtype[_SCT]]
 
 _StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
+_StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
+_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_Shape, np.dtype[np.str_] | np.dtypes.StringDType]
 
 class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
@@ -564,14 +567,19 @@ def add(x1: U_co, x2: U_co) -> NDArray[np.str_]: ...
 @overload
 def add(x1: S_co, x2: S_co) -> NDArray[np.bytes_]: ...
 @overload
-def add(x1: T_co, x2: T_co) -> _StringDTypeArray: ...
+def add(x1: _StringDTypeSupportsArray, x2: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
+@overload
+def add(x1: T_co, T_co) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
 def multiply(a: U_co, i: i_co) -> NDArray[np.str_]: ...
 @overload
 def multiply(a: S_co, i: i_co) -> NDArray[np.bytes_]: ...
 @overload
-def multiply(a: T_co, i: i_co) -> _StringDTypeArray: ...
+def multiply(a: _StringDTypeSupportsArray, i: i_co) -> _StringDTypeArray: ...
+@overload
+def multiply(a: T_co, i: i_co) -> _StringDTypeOrUnicodeArray: ...
+
 
 @overload
 def mod(a: U_co, value: Any) -> NDArray[np.str_]: ...

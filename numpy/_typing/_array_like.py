@@ -21,7 +21,6 @@ from numpy import (
     str_,
     bytes_,
 )
-from numpy._core.multiarray import StringDType
 from ._nested_sequence import _NestedSequence
 from ._shape import _Shape
 
@@ -150,7 +149,7 @@ _ArrayLikeBytes_co: TypeAlias = _DualArrayLike[
     bytes,
 ]
 _ArrayLikeString_co: TypeAlias = _DualArrayLike[
-    StringDType,
+    np.dtypes.StringDType,
     str
 ]
 _ArrayLikeAnyString_co: TypeAlias = _ArrayLikeStr_co | _ArrayLikeBytes_co | _ArrayLikeString_co
