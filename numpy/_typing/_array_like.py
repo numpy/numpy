@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Collection, Callable, Sequence
-from typing import Any, Protocol, TypeAlias, TypeVar, runtime_checkable
+from typing import Any, Protocol, TypeAlias, TypeVar, runtime_checkable, TYPE_CHECKING
 
 import numpy as np
 from numpy import (
@@ -23,6 +23,13 @@ from numpy import (
 )
 from ._nested_sequence import _NestedSequence
 from ._shape import _Shape
+
+if TYPE_CHECKING:
+    StringDType = np.dtypes.StringDType
+else:
+    # at runtime outside of type checking importing this from numpy.dtypes
+    # would lead to a circular import
+    from numpy._core.multiarray import StringDType
 
 _T = TypeVar("_T")
 _ScalarType = TypeVar("_ScalarType", bound=generic)
@@ -149,7 +156,7 @@ _ArrayLikeBytes_co: TypeAlias = _DualArrayLike[
     bytes,
 ]
 _ArrayLikeString_co: TypeAlias = _DualArrayLike[
-    np.dtypes.StringDType,
+    StringDType,
     str
 ]
 _ArrayLikeAnyString_co: TypeAlias = _ArrayLikeStr_co | _ArrayLikeBytes_co | _ArrayLikeString_co
