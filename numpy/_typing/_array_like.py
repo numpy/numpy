@@ -159,7 +159,11 @@ _ArrayLikeString_co: TypeAlias = _DualArrayLike[
     StringDType,
     str
 ]
-_ArrayLikeAnyString_co: TypeAlias = _ArrayLikeStr_co | _ArrayLikeBytes_co | _ArrayLikeString_co
+_ArrayLikeAnyString_co: TypeAlias = (
+    _ArrayLikeStr_co |
+    _ArrayLikeBytes_co |
+    _ArrayLikeString_co
+)
 
 # NOTE: This includes `builtins.bool`, but not `numpy.bool`.
 _ArrayLikeInt: TypeAlias = _DualArrayLike[
