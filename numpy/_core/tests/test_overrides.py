@@ -203,6 +203,14 @@ class TestNDArrayArrayFunction:
             array.__array_function__(func=func, types=(np.ndarray,),
                                      args=(array,), kwargs={})
 
+    def test_wrong_arguments(self):
+        # Check our implementation guards against wrong arguments.
+        a = np.array([1, 2])
+        with pytest.raises(TypeError, match="args must be a tuple"):
+            a.__array_function__(np.reshape, (np.ndarray,), a, (2, 1))
+        with pytest.raises(TypeError, match="kwargs must be a dict"):
+            a.__array_function__(np.reshape, (np.ndarray,), (a,), (2, 1))
+
 
 class TestArrayFunctionDispatch:
 
