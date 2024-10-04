@@ -6,7 +6,6 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-import sys
 import operator
 import ctypes as ct
 from typing import Any, Literal
@@ -14,10 +13,7 @@ from typing import Any, Literal
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 class SubClass(npt.NDArray[np.object_]): ...
 
@@ -48,14 +44,14 @@ assert_type(ctypes_obj.strides_as(ct.c_ubyte), ct.Array[ct.c_ubyte])
 
 assert_type(f8.all(), np.bool)
 assert_type(AR_f8.all(), np.bool)
-assert_type(AR_f8.all(axis=0), Any)
-assert_type(AR_f8.all(keepdims=True), Any)
+assert_type(AR_f8.all(axis=0), np.bool | npt.NDArray[np.bool])
+assert_type(AR_f8.all(keepdims=True), np.bool | npt.NDArray[np.bool])
 assert_type(AR_f8.all(out=B), SubClass)
 
 assert_type(f8.any(), np.bool)
 assert_type(AR_f8.any(), np.bool)
-assert_type(AR_f8.any(axis=0), Any)
-assert_type(AR_f8.any(keepdims=True), Any)
+assert_type(AR_f8.any(axis=0), np.bool | npt.NDArray[np.bool])
+assert_type(AR_f8.any(keepdims=True), np.bool | npt.NDArray[np.bool])
 assert_type(AR_f8.any(out=B), SubClass)
 
 assert_type(f8.argmax(), np.intp)

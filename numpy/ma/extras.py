@@ -35,7 +35,6 @@ from numpy import ndarray, array as nxarray
 from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
 from numpy.lib._function_base_impl import _ureduce
 from numpy.lib._index_tricks_impl import AxisConcatenator
-from numpy._core.numeric import normalize_axis_tuple
 
 
 def issequence(seq):
@@ -743,8 +742,6 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the input array.
 
-        .. versionadded:: 1.10.0
-
     Returns
     -------
     median : ndarray
@@ -1440,7 +1437,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -1491,7 +1487,6 @@ def isin(element, test_elements, assume_unique=False, invert=False):
 
     Notes
     -----
-    .. versionadded:: 1.13.0
 
     Examples
     --------
@@ -1666,8 +1661,6 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         If not ``None`` normalization is by ``(N - ddof)``, where ``N`` is
         the number of observations; this overrides the value implied by
         ``bias``. The default value is ``None``.
-
-        .. versionadded:: 1.5
 
     Raises
     ------
@@ -2057,9 +2050,6 @@ def flatnotmasked_contiguous(a):
     slice_list : list
         A sorted sequence of `slice` objects (start index, end index).
 
-        .. versionchanged:: 1.15.0
-            Now returns an empty list instead of None for a fully masked array
-
     See Also
     --------
     flatnotmasked_edges, notmasked_contiguous, notmasked_edges
@@ -2226,7 +2216,6 @@ def clump_unmasked(a):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     See Also
     --------
@@ -2266,7 +2255,6 @@ def clump_masked(a):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     See Also
     --------

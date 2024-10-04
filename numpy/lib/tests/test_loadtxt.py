@@ -18,12 +18,12 @@ from numpy.testing import assert_array_equal, HAS_REFCOUNT, IS_PYPY
 def test_scientific_notation():
     """Test that both 'e' and 'E' are parsed correctly."""
     data = StringIO(
-        
+
             "1.0e-1,2.0E1,3.0\n"
             "4.0e-2,5.0E-1,6.0\n"
             "7.0e-3,8.0E1,9.0\n"
             "0.0e-4,1.0E-1,2.0"
-        
+
     )
     expected = np.array(
         [[0.1, 20., 3.0], [0.04, 0.5, 6], [0.007, 80., 9], [0, 0.1, 2]]
@@ -42,18 +42,18 @@ def test_comment_multiple_chars(comment):
 @pytest.fixture
 def mixed_types_structured():
     """
-    Fixture providing hetergeneous input data with a structured dtype, along
+    Fixture providing heterogeneous input data with a structured dtype, along
     with the associated structured array.
     """
     data = StringIO(
-        
+
             "1000;2.4;alpha;-34\n"
             "2000;3.1;beta;29\n"
             "3500;9.9;gamma;120\n"
             "4090;8.1;delta;0\n"
             "5001;4.4;epsilon;-99\n"
             "6543;7.8;omega;-1\n"
-        
+
     )
     dtype = np.dtype(
         [('f0', np.uint16), ('f1', np.float64), ('f2', 'S7'), ('f3', np.int8)]
@@ -597,14 +597,14 @@ def test_comment_multichar_error_with_quote():
 
 def test_structured_dtype_with_quotes():
     data = StringIO(
-        
+
             "1000;2.4;'alpha';-34\n"
             "2000;3.1;'beta';29\n"
             "3500;9.9;'gamma';120\n"
             "4090;8.1;'delta';0\n"
             "5001;4.4;'epsilon';-99\n"
             "6543;7.8;'omega';-1\n"
-        
+
     )
     dtype = np.dtype(
         [('f0', np.uint16), ('f1', np.float64), ('f2', 'S7'), ('f3', np.int8)]

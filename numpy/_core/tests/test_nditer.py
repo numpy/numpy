@@ -97,14 +97,14 @@ def test_iter_best_order():
             aview = a.reshape(shape)[dirs_index]
             # C-order
             i = nditer(aview, [], [['readonly']])
-            assert_equal([x for x in i], a)
+            assert_equal(list(i), a)
             # Fortran-order
             i = nditer(aview.T, [], [['readonly']])
-            assert_equal([x for x in i], a)
+            assert_equal(list(i), a)
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), [], [['readonly']])
-                assert_equal([x for x in i], a)
+                assert_equal(list(i), a)
 
 def test_iter_c_order():
     # Test forcing C order
@@ -123,14 +123,14 @@ def test_iter_c_order():
             aview = a.reshape(shape)[dirs_index]
             # C-order
             i = nditer(aview, order='C')
-            assert_equal([x for x in i], aview.ravel(order='C'))
+            assert_equal(list(i), aview.ravel(order='C'))
             # Fortran-order
             i = nditer(aview.T, order='C')
-            assert_equal([x for x in i], aview.T.ravel(order='C'))
+            assert_equal(list(i), aview.T.ravel(order='C'))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), order='C')
-                assert_equal([x for x in i],
+                assert_equal(list(i),
                                     aview.swapaxes(0, 1).ravel(order='C'))
 
 def test_iter_f_order():
@@ -150,14 +150,14 @@ def test_iter_f_order():
             aview = a.reshape(shape)[dirs_index]
             # C-order
             i = nditer(aview, order='F')
-            assert_equal([x for x in i], aview.ravel(order='F'))
+            assert_equal(list(i), aview.ravel(order='F'))
             # Fortran-order
             i = nditer(aview.T, order='F')
-            assert_equal([x for x in i], aview.T.ravel(order='F'))
+            assert_equal(list(i), aview.T.ravel(order='F'))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), order='F')
-                assert_equal([x for x in i],
+                assert_equal(list(i),
                                     aview.swapaxes(0, 1).ravel(order='F'))
 
 def test_iter_c_or_f_order():
@@ -177,14 +177,14 @@ def test_iter_c_or_f_order():
             aview = a.reshape(shape)[dirs_index]
             # C-order
             i = nditer(aview, order='A')
-            assert_equal([x for x in i], aview.ravel(order='A'))
+            assert_equal(list(i), aview.ravel(order='A'))
             # Fortran-order
             i = nditer(aview.T, order='A')
-            assert_equal([x for x in i], aview.T.ravel(order='A'))
+            assert_equal(list(i), aview.T.ravel(order='A'))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), order='A')
-                assert_equal([x for x in i],
+                assert_equal(list(i),
                                     aview.swapaxes(0, 1).ravel(order='A'))
 
 def test_nditer_multi_index_set():
@@ -195,7 +195,7 @@ def test_nditer_multi_index_set():
     # Removes the iteration on two first elements of a[0]
     it.multi_index = (0, 2,)
 
-    assert_equal([i for i in it], [2, 3, 4, 5])
+    assert_equal(list(it), [2, 3, 4, 5])
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_nditer_multi_index_set_refcount():
@@ -271,7 +271,7 @@ def test_iter_best_order_multi_index_3d():
     assert_equal(iter_multi_index(i),
                             [(0, 2, 0), (0, 2, 1), (0, 1, 0), (0, 1, 1), (0, 0, 0), (0, 0, 1),
                              (1, 2, 0), (1, 2, 1), (1, 1, 0), (1, 1, 1), (1, 0, 0), (1, 0, 1)])
-    i = nditer(a.reshape(2, 3, 2)[:,:, ::-1], ['multi_index'], [['readonly']])
+    i = nditer(a.reshape(2, 3, 2)[:, :, ::-1], ['multi_index'], [['readonly']])
     assert_equal(iter_multi_index(i),
                             [(0, 0, 1), (0, 0, 0), (0, 1, 1), (0, 1, 0), (0, 2, 1), (0, 2, 0),
                              (1, 0, 1), (1, 0, 0), (1, 1, 1), (1, 1, 0), (1, 2, 1), (1, 2, 0)])
@@ -286,7 +286,7 @@ def test_iter_best_order_multi_index_3d():
     assert_equal(iter_multi_index(i),
                             [(0, 2, 0), (1, 2, 0), (0, 1, 0), (1, 1, 0), (0, 0, 0), (1, 0, 0),
                              (0, 2, 1), (1, 2, 1), (0, 1, 1), (1, 1, 1), (0, 0, 1), (1, 0, 1)])
-    i = nditer(a.reshape(2, 3, 2).copy(order='F')[:,:, ::-1],
+    i = nditer(a.reshape(2, 3, 2).copy(order='F')[:, :, ::-1],
                                                     ['multi_index'], [['readonly']])
     assert_equal(iter_multi_index(i),
                             [(0, 0, 1), (1, 0, 1), (0, 1, 1), (1, 1, 1), (0, 2, 1), (1, 2, 1),
@@ -352,7 +352,7 @@ def test_iter_best_order_c_index_3d():
     i = nditer(a.reshape(2, 3, 2)[:, ::-1], ['c_index'], [['readonly']])
     assert_equal(iter_indices(i),
                             [4, 5, 2, 3, 0, 1, 10, 11, 8, 9, 6, 7])
-    i = nditer(a.reshape(2, 3, 2)[:,:, ::-1], ['c_index'], [['readonly']])
+    i = nditer(a.reshape(2, 3, 2)[:, :, ::-1], ['c_index'], [['readonly']])
     assert_equal(iter_indices(i),
                             [1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10])
     # 3D reversed Fortran-order
@@ -364,7 +364,7 @@ def test_iter_best_order_c_index_3d():
                                     ['c_index'], [['readonly']])
     assert_equal(iter_indices(i),
                             [4, 10, 2, 8, 0, 6, 5, 11, 3, 9, 1, 7])
-    i = nditer(a.reshape(2, 3, 2).copy(order='F')[:,:, ::-1],
+    i = nditer(a.reshape(2, 3, 2).copy(order='F')[:, :, ::-1],
                                     ['c_index'], [['readonly']])
     assert_equal(iter_indices(i),
                             [1, 7, 3, 9, 5, 11, 0, 6, 2, 8, 4, 10])
@@ -429,7 +429,7 @@ def test_iter_best_order_f_index_3d():
     i = nditer(a.reshape(2, 3, 2)[:, ::-1], ['f_index'], [['readonly']])
     assert_equal(iter_indices(i),
                             [4, 10, 2, 8, 0, 6, 5, 11, 3, 9, 1, 7])
-    i = nditer(a.reshape(2, 3, 2)[:,:, ::-1], ['f_index'], [['readonly']])
+    i = nditer(a.reshape(2, 3, 2)[:, :, ::-1], ['f_index'], [['readonly']])
     assert_equal(iter_indices(i),
                             [6, 0, 8, 2, 10, 4, 7, 1, 9, 3, 11, 5])
     # 3D reversed Fortran-order
@@ -441,7 +441,7 @@ def test_iter_best_order_f_index_3d():
                                     ['f_index'], [['readonly']])
     assert_equal(iter_indices(i),
                             [4, 5, 2, 3, 0, 1, 10, 11, 8, 9, 6, 7])
-    i = nditer(a.reshape(2, 3, 2).copy(order='F')[:,:, ::-1],
+    i = nditer(a.reshape(2, 3, 2).copy(order='F')[:, :, ::-1],
                                     ['f_index'], [['readonly']])
     assert_equal(iter_indices(i),
                             [6, 7, 8, 9, 10, 11, 0, 1, 2, 3, 4, 5])
@@ -481,15 +481,15 @@ def test_iter_no_inner_dim_coalescing():
 
     # Skipping the last element in a dimension prevents coalescing
     # with the next-bigger dimension
-    a = arange(24).reshape(2, 3, 4)[:,:, :-1]
+    a = arange(24).reshape(2, 3, 4)[:, :, :-1]
     i = nditer(a, ['external_loop'], [['readonly']])
     assert_equal(i.ndim, 2)
     assert_equal(i[0].shape, (3,))
-    a = arange(24).reshape(2, 3, 4)[:, :-1,:]
+    a = arange(24).reshape(2, 3, 4)[:, :-1, :]
     i = nditer(a, ['external_loop'], [['readonly']])
     assert_equal(i.ndim, 2)
     assert_equal(i[0].shape, (8,))
-    a = arange(24).reshape(2, 3, 4)[:-1,:,:]
+    a = arange(24).reshape(2, 3, 4)[:-1, :, :]
     i = nditer(a, ['external_loop'], [['readonly']])
     assert_equal(i.ndim, 1)
     assert_equal(i[0].shape, (12,))
@@ -761,9 +761,9 @@ def test_iter_flags_errors():
     a.flags.writeable = True
     # Multi-indices available only with the multi_index flag
     i = nditer(arange(6), [], [['readonly']])
-    assert_raises(ValueError, lambda i:i.multi_index, i)
+    assert_raises(ValueError, lambda i: i.multi_index, i)
     # Index available only with an index flag
-    assert_raises(ValueError, lambda i:i.index, i)
+    assert_raises(ValueError, lambda i: i.index, i)
     # GotoCoords and GotoIndex incompatible with buffering or no_inner
 
     def assign_multi_index(i):
@@ -911,7 +911,7 @@ def test_iter_array_cast():
     # The memory layout of the temporary should match a (a is (48,4,16))
     # except negative strides get flipped to positive strides.
     assert_equal(i.operands[0].strides, (96, 8, 32))
-    a = a[::-1,:, ::-1]
+    a = a[::-1, :, ::-1]
     i = nditer(a, [], [['readonly', 'copy']],
             casting='safe',
             op_dtypes=[np.dtype('f8')])
@@ -1049,7 +1049,7 @@ def test_iter_scalar_cast_errors():
 def test_iter_object_arrays_basic():
     # Check that object arrays work
 
-    obj = {'a':3,'b':'d'}
+    obj = {'a': 3, 'b': 'd'}
     a = np.array([[1, 2, 3], None, obj, None], dtype='O')
     if HAS_REFCOUNT:
         rc = sys.getrefcount(obj)
@@ -1677,12 +1677,12 @@ def test_iter_remove_axis():
 
     i = nditer(a, ['multi_index'])
     i.remove_axis(1)
-    assert_equal([x for x in i], a[:, 0,:].ravel())
+    assert_equal(list(i), a[:, 0, :].ravel())
 
-    a = a[::-1,:,:]
+    a = a[::-1, :, :]
     i = nditer(a, ['multi_index'])
     i.remove_axis(0)
-    assert_equal([x for x in i], a[0,:,:].ravel())
+    assert_equal(list(i), a[0, :, :].ravel())
 
 def test_iter_remove_multi_index_inner_loop():
     # Check that removing multi-index support works
@@ -1695,13 +1695,13 @@ def test_iter_remove_multi_index_inner_loop():
     assert_equal(i.itviews[0].shape, (2, 3, 4))
 
     # Removing the multi-index tracking causes all dimensions to coalesce
-    before = [x for x in i]
+    before = list(i)
     i.remove_multi_index()
-    after = [x for x in i]
+    after = list(i)
 
     assert_equal(before, after)
     assert_equal(i.ndim, 1)
-    assert_raises(ValueError, lambda i:i.shape, i)
+    assert_raises(ValueError, lambda i: i.shape, i)
     assert_equal(i.itviews[0].shape, (24,))
 
     # Removing the inner loop means there's just one iteration
@@ -1847,9 +1847,9 @@ def test_iter_buffering_delayed_alloc():
                     casting='unsafe',
                     op_dtypes='f4')
     assert_(i.has_delayed_bufalloc)
-    assert_raises(ValueError, lambda i:i.multi_index, i)
-    assert_raises(ValueError, lambda i:i[0], i)
-    assert_raises(ValueError, lambda i:i[0:2], i)
+    assert_raises(ValueError, lambda i: i.multi_index, i)
+    assert_raises(ValueError, lambda i: i[0], i)
+    assert_raises(ValueError, lambda i: i[0:2], i)
 
     def assign_iter(i):
         i[0] = 0
@@ -2240,7 +2240,7 @@ def test_iter_buffered_cast_subarray():
     for x in i:
         assert_equal(x['a'][:2, 0], a[count]['a'][:, 0])
         assert_equal(x['a'][:2, 1], a[count]['a'][:, 0])
-        assert_equal(x['a'][2,:], [0, 0])
+        assert_equal(x['a'][2, :], [0, 0])
         count += 1
 
     # matrix -> matrix (truncates and zero-pads)
@@ -2256,7 +2256,7 @@ def test_iter_buffered_cast_subarray():
     for x in i:
         assert_equal(x['a'][:2, 0], a[count]['a'][:, 0])
         assert_equal(x['a'][:2, 1], a[count]['a'][:, 1])
-        assert_equal(x['a'][2,:], [0, 0])
+        assert_equal(x['a'][2, :], [0, 0])
         count += 1
 
 def test_iter_buffering_badwriteback():
@@ -2549,7 +2549,7 @@ class TestIterNested:
         vals = []
         for x in i:
             for y in j:
-                vals.append([z for z in k])
+                vals.append(list(k))
         assert_equal(vals, [[0, 2, 4], [1, 3, 5], [6, 8, 10], [7, 9, 11]])
 
     def test_iter_nested_iters_dtype_buffered(self):
@@ -2689,11 +2689,11 @@ def test_iter_buffering_reduction():
         assert_equal(it[0], [1, 2, 1, 2])
 
     # Iterator inner loop should take argument contiguity into account
-    x = np.ones((7, 13, 8), np.int8)[4:6,1:11:6,1:5].transpose(1, 2, 0)
+    x = np.ones((7, 13, 8), np.int8)[4:6, 1:11:6, 1:5].transpose(1, 2, 0)
     x[...] = np.arange(x.size).reshape(x.shape)
     y_base = np.arange(4*4, dtype=np.int8).reshape(4, 4)
     y_base_copy = y_base.copy()
-    y = y_base[::2,:,None]
+    y = y_base[::2, :, None]
 
     it = np.nditer([y, x],
                    ['buffered', 'external_loop', 'reduce_ok'],
@@ -3120,7 +3120,7 @@ def test_writebacks():
             assert_equal(au.flags.writeable, False)
             it.operands[0][:] = 0
             raise ValueError('exit context manager on exception')
-    except:
+    except Exception:
         pass
     assert_equal(au, 0)
     assert_equal(au.flags.writeable, True)
@@ -3174,7 +3174,7 @@ def test_close_equivalent():
     def add_close(x, y, out=None):
         addop = np.add
         it = np.nditer([x, y, out], [],
-                    [['readonly'], ['readonly'], ['writeonly','allocate']])
+                    [['readonly'], ['readonly'], ['writeonly', 'allocate']])
         for (a, b, c) in it:
             addop(a, b, out=c)
         ret = it.operands[2]
@@ -3184,7 +3184,7 @@ def test_close_equivalent():
     def add_context(x, y, out=None):
         addop = np.add
         it = np.nditer([x, y, out], [],
-                    [['readonly'], ['readonly'], ['writeonly','allocate']])
+                    [['readonly'], ['readonly'], ['writeonly', 'allocate']])
         with it:
             for (a, b, c) in it:
                 addop(a, b, out=c)

@@ -34,7 +34,6 @@ From the bash command line with $GITHUB token::
 
 """
 import os
-import sys
 import re
 from git import Repo
 from github import Github
@@ -75,7 +74,7 @@ def get_authors(revision_range):
 
     # Append '+' to new authors.
     authors_new = [s + ' +' for s in authors_cur - authors_pre]
-    authors_old = [s for s in authors_cur & authors_pre]
+    authors_old = list(authors_cur & authors_pre)
     authors = authors_new + authors_old
     authors.sort()
     return authors

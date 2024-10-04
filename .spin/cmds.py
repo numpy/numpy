@@ -1,8 +1,6 @@
 import os
 import shutil
 import pathlib
-import shutil
-import pathlib
 import importlib
 import subprocess
 
@@ -263,7 +261,7 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
     if (n_jobs != "1") and ('-n' not in pytest_args):
         pytest_args = ('-n', str(n_jobs)) + pytest_args
 
-    if tests and not ('--pyargs' in pytest_args):
+    if tests and '--pyargs' not in pytest_args:
         pytest_args = ('--pyargs', tests) + pytest_args
 
     if verbose:
@@ -369,14 +367,14 @@ def check_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
 def check_tutorials(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
     """🔧 Run doctests of user-facing rst tutorials.
 
-    To test all tutorials in the numpy/doc/source/user/ directory, use
+    To test all tutorials in the numpy doc/source/user/ directory, use
 
       spin check-tutorials
 
     To run tests on a specific RST file:
 
      \b
-     spin check-tutorials numpy/doc/source/user/absolute-beginners.rst
+     spin check-tutorials doc/source/user/absolute-beginners.rst
 
     \b
     Note:
@@ -393,11 +391,11 @@ def check_tutorials(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
     #   - `spin check-tutorials path/to/rst`, and
     #   - `spin check-tutorials path/to/rst -- --durations=3`
     if (not pytest_args) or all(arg.startswith('-') for arg in pytest_args):
-        pytest_args = ('numpy/doc/source/user',) + pytest_args
+        pytest_args = ('doc/source/user',) + pytest_args
 
     # make all paths relative to the numpy source folder
     pytest_args = tuple(
-        str(curdir / '..' / '..' / arg) if not arg.startswith('-') else arg
+        str(curdir / '..' / arg) if not arg.startswith('-') else arg
         for arg in pytest_args
    )
 
@@ -510,7 +508,7 @@ def lint(ctx, branch, uncommitted):
     Examples:
 
     \b
-    For lint checks of your development brach with `main` or a custom branch:
+    For lint checks of your development branch with `main` or a custom branch:
 
     \b
     $ spin lint # defaults to main
@@ -774,7 +772,7 @@ def notes(ctx, version_override):
     # Check if `towncrier` is installed
     if not shutil.which("towncrier"):
         raise click.ClickException(
-            f"please install `towncrier` to use this command"
+            "please install `towncrier` to use this command"
         )
 
     click.secho(

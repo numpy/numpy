@@ -81,21 +81,21 @@ import warnings
 
 from . import multiarray as ma
 from .multiarray import (
-        ndarray, array, dtype, datetime_data, datetime_as_string,
+        ndarray, dtype, datetime_data, datetime_as_string,
         busday_offset, busday_count, is_busday, busdaycalendar
         )
 from .._utils import set_module
 
 # we add more at the bottom
 __all__ = [
-    'ScalarType', 'typecodes', 'issubdtype', 'datetime_data', 
-    'datetime_as_string', 'busday_offset', 'busday_count', 
+    'ScalarType', 'typecodes', 'issubdtype', 'datetime_data',
+    'datetime_as_string', 'busday_offset', 'busday_count',
     'is_busday', 'busdaycalendar', 'isdtype'
 ]
 
 # we don't need all these imports, but we need to keep them for compatibility
 # for users using np._core.numerictypes.UPPER_TABLE
-from ._string_helpers import (
+from ._string_helpers import (  # noqa: F401
     english_lower, english_upper, english_capitalize, LOWER_TABLE, UPPER_TABLE
 )
 
@@ -106,7 +106,7 @@ from ._dtype import _kind_name
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-from builtins import bool, int, float, complex, object, str, bytes
+from builtins import bool, int, float, complex, object, str, bytes  # noqa: F401, UP029
 
 
 # We use this later
@@ -229,7 +229,7 @@ def issctype(rep):
             return False
     except Exception:
         return False
-        
+
 
 @set_module('numpy')
 def obj2sctype(rep, default=None):
@@ -374,7 +374,7 @@ def _preprocess_dtype(dtype):
     if isinstance(dtype, ma.dtype):
         dtype = dtype.type
     if isinstance(dtype, ndarray) or dtype not in allTypes.values():
-        raise _PreprocessDTypeError()
+        raise _PreprocessDTypeError
     return dtype
 
 
@@ -452,7 +452,7 @@ def isdtype(dtype, kind):
         elif isinstance(kind, str):
             raise ValueError(
                 "kind argument is a string, but"
-                f" {repr(kind)} is not a known kind name."
+                f" {kind!r} is not a known kind name."
             )
         else:
             try:

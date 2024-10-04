@@ -83,14 +83,16 @@ PyArray_ZeroContiguousBuffer(
         if (get_fill_zero_loop(
                     NULL, descr, aligned, descr->elsize, &(zero_info.func),
                     &(zero_info.auxdata), &flags_unused) < 0) {
-            goto fail;
+            return -1;
         }
     }
     else {
+        assert(zero_info.func == NULL);
+    }
+    if (zero_info.func == NULL) {
         /* the multiply here should never overflow, since we already
            checked if the new array size doesn't overflow */
         memset(data, 0, size*stride);
-        NPY_traverse_info_xfree(&zero_info);
         return 0;
     }
 
@@ -98,10 +100,6 @@ PyArray_ZeroContiguousBuffer(
             NULL, descr, data, size, stride, zero_info.auxdata);
     NPY_traverse_info_xfree(&zero_info);
     return res;
-
-  fail:
-    NPY_traverse_info_xfree(&zero_info);
-    return -1;
 }
 
 

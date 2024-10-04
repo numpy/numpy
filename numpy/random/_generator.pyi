@@ -214,6 +214,8 @@ class Generator:
         low: int,
         high: None | int = ...,
         size: None = ...,
+        *,
+        endpoint: bool = ...,
     ) -> int: ...
     @overload
     def integers(  # type: ignore[misc]
@@ -338,6 +340,8 @@ class Generator:
         low: _ArrayLikeInt_co,
         high: None | _ArrayLikeInt_co = ...,
         size: None | _ShapeLike = ...,
+        *,
+        endpoint: bool = ...
     ) -> NDArray[int64]: ...
     @overload
     def integers(  # type: ignore[misc]

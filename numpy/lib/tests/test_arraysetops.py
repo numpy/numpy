@@ -270,7 +270,7 @@ class TestSetOps:
             assert_isin_equal(empty_array, empty_array)
 
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
-    def test_isin(self, kind):
+    def test_isin_additional(self, kind):
         # we use two different sizes for the b array here to test the
         # two different paths in isin().
         for mult in (1, 10):

@@ -31,18 +31,13 @@ import inspect
 import io
 import os
 import re
-import shutil
 import sys
-import tempfile
 import warnings
 import docutils.core
 from argparse import ArgumentParser
-from contextlib import contextmanager, redirect_stderr
 
 from docutils.parsers.rst import directives
 
-import sphinx
-import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
 from numpydoc.docscrape_sphinx import get_doc_object
@@ -186,7 +181,7 @@ def find_names(module, names_dict):
             res = re.match(pattern, line)
             if res is not None:
                 name = res.group(1)
-                entry = '.'.join([module_name, name])
+                entry = f'{module_name}.{name}'
                 names_dict.setdefault(module_name, set()).add(name)
                 break
 

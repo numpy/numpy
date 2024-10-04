@@ -536,7 +536,7 @@ def test_core_shims_coherence():
         if (
             member_name.startswith("_")
             or member_name in ["tests", "strings"]
-            or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES 
+            or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES
         ):
             continue
 

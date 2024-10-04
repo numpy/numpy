@@ -19,7 +19,7 @@ def render(tpl_path, context):
 def nep_metadata():
     ignore = ('nep-template.rst')
     sources = sorted(glob.glob(r'nep-*.rst'))
-    sources = [s for s in sources if not s in ignore]
+    sources = [s for s in sources if s not in ignore]
 
     meta_re = r':([a-zA-Z\-]*): (.*)'
 
@@ -55,7 +55,7 @@ def nep_metadata():
                 f'    {tags["Title"]!r}')
 
         if tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn'):
-            if not 'Resolution' in tags:
+            if 'Resolution' not in tags:
                 raise RuntimeError(
                     f'NEP {nr} is Accepted/Rejected/Withdrawn but '
                     'has no Resolution tag'
@@ -70,7 +70,7 @@ def nep_metadata():
 
     for nr, tags in neps.items():
         if tags['Status'] == 'Superseded':
-            if not 'Replaced-By' in tags:
+            if 'Replaced-By' not in tags:
                 raise RuntimeError(
                     f'NEP {nr} has been Superseded, but has no Replaced-By tag'
                 )
@@ -78,7 +78,7 @@ def nep_metadata():
             replaced_by = int(re.findall(r'\d+', tags['Replaced-By'])[0])
             replacement_nep = neps[replaced_by]
 
-            if not 'Replaces' in replacement_nep:
+            if 'Replaces' not in replacement_nep:
                 raise RuntimeError(
                     f'NEP {nr} is superseded by {replaced_by}, but that NEP has '
                     f"no Replaces tag."

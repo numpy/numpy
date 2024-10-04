@@ -2036,13 +2036,12 @@ PyArray_FromStructInterface(PyObject *input)
     PyObject *attr;
     char endian = NPY_NATBYTE;
 
-    attr = PyArray_LookupSpecial_OnInstance(input, npy_interned_str.array_struct);
-    if (attr == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        } else {
-            return Py_NotImplemented;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+            input, npy_interned_str.array_struct, &attr) < 0) {
+        return NULL;
+    }
+    else if (attr == NULL) {
+        return Py_NotImplemented;
     }
     if (!PyCapsule_CheckExact(attr)) {
         if (PyType_Check(input) && PyObject_HasAttrString(attr, "__get__")) {
@@ -2160,12 +2159,11 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_LookupSpecial_OnInstance(origin, npy_interned_str.array_interface);
-
-    if (iface == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+            origin, npy_interned_str.array_interface, &iface) < 0) {
+        return NULL;
+    }
+    else if (iface == NULL) {
         return Py_NotImplemented;
     }
     if (!PyDict_Check(iface)) {
@@ -2234,8 +2232,8 @@ PyArray_FromInterface(PyObject *origin)
                     Py_SETREF(dtype, new_dtype);
                 }
             }
+            Py_DECREF(descr);
         }
-        Py_DECREF(descr);
     }
     Py_CLEAR(attr);
 
@@ -2478,7 +2476,10 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         Py_XDECREF(traceback);
         if (DEPRECATE("__array__ implementation doesn't accept a copy keyword, "
                       "so passing copy=False failed. __array__ must implement "
-                      "'dtype' and 'copy' keyword arguments.") < 0) {
+                      "'dtype' and 'copy' keyword arguments. "
+                      "To learn more, see the migration guide "
+                      "https://numpy.org/devdocs/numpy_2_0_migration_guide.html"
+                      "#adapting-to-changes-in-the-copy-keyword") < 0) {
             return -1;
         }
         return 0;
@@ -2515,11 +2516,11 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyArray_LookupSpecial_OnInstance(op, npy_interned_str.array);
-    if (array_meth == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+                op, npy_interned_str.array, &array_meth) < 0) {
+        return NULL;
+    }
+    else if (array_meth == NULL) {
         return Py_NotImplemented;
     }
 

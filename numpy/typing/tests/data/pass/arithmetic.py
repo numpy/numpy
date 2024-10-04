@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 c16 = np.complex128(1)
@@ -57,14 +58,14 @@ class Object:
         return self
 
 
-AR_b: np.ndarray[Any, np.dtype[np.bool]] = np.array([True])
-AR_u: np.ndarray[Any, np.dtype[np.uint32]] = np.array([1], dtype=np.uint32)
-AR_i: np.ndarray[Any, np.dtype[np.int64]] = np.array([1])
-AR_f: np.ndarray[Any, np.dtype[np.float64]] = np.array([1.0])
-AR_c: np.ndarray[Any, np.dtype[np.complex128]] = np.array([1j])
-AR_m: np.ndarray[Any, np.dtype[np.timedelta64]] = np.array([np.timedelta64(1, "D")])
-AR_M: np.ndarray[Any, np.dtype[np.datetime64]] = np.array([np.datetime64(1, "D")])
-AR_O: np.ndarray[Any, np.dtype[np.object_]] = np.array([Object()])
+AR_b: npt.NDArray[np.bool] = np.array([True])
+AR_u: npt.NDArray[np.uint32] = np.array([1], dtype=np.uint32)
+AR_i: npt.NDArray[np.int64] = np.array([1])
+AR_f: npt.NDArray[np.float64] = np.array([1.0])
+AR_c: npt.NDArray[np.complex128] = np.array([1j])
+AR_m: npt.NDArray[np.timedelta64] = np.array([np.timedelta64(1, "D")])
+AR_M: npt.NDArray[np.datetime64] = np.array([np.datetime64(1, "D")])
+AR_O: npt.NDArray[np.object_] = np.array([Object()])
 
 AR_LIKE_b = [True]
 AR_LIKE_u = [np.uint32(1)]

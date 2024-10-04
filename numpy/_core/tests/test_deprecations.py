@@ -3,13 +3,10 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
-import datetime
-import operator
 import warnings
 import pytest
 import tempfile
 import re
-import sys
 
 import numpy as np
 from numpy.testing import (
@@ -197,19 +194,6 @@ class TestDatetimeEvent(_DeprecationTestCase):
             self.assert_deprecated(cls, args=(1, ('ms', 2, 63)))
             self.assert_deprecated(cls, args=(1, ('ms', 2, 1, 'event')))
             self.assert_deprecated(cls, args=(1, ('ms', 2, 1, 63)))
-
-
-class TestTruthTestingEmptyArrays(_DeprecationTestCase):
-    # 2017-09-25, 1.14.0
-    message = '.*truth value of an empty array is ambiguous.*'
-
-    def test_1d(self):
-        self.assert_deprecated(bool, args=(np.array([]),))
-
-    def test_2d(self):
-        self.assert_deprecated(bool, args=(np.zeros((1, 0)),))
-        self.assert_deprecated(bool, args=(np.zeros((0, 1)),))
-        self.assert_deprecated(bool, args=(np.zeros((0, 0)),))
 
 
 class TestBincount(_DeprecationTestCase):
@@ -501,7 +485,7 @@ class TestMachAr(_DeprecationTestCase):
     warning_cls = DeprecationWarning
 
     def test_deprecated_module(self):
-        self.assert_deprecated(lambda: getattr(np._core, "MachAr"))
+        self.assert_deprecated(lambda: np._core.MachAr)
 
 
 class TestQuantileInterpolationDeprecation(_DeprecationTestCase):
@@ -730,7 +714,7 @@ class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
 class TestDeprecatedSaveFixImports(_DeprecationTestCase):
     # Deprecated in Numpy 2.1, 2024-05
     message = "The 'fix_imports' flag is deprecated and has no effect."
-    
+
     def test_deprecated(self):
         with temppath(suffix='.npy') as path:
             sample_args = (path, np.array(np.zeros((1024, 10))))

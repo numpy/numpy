@@ -142,7 +142,7 @@ class TestNanFunctions_MinMax:
     ], ids=["0d", "2d"])
     def test_allnans(self, axis, dtype, array):
         if axis is not None and array.ndim == 0:
-            pytest.skip(f"`axis != None` not supported for 0d arrays")
+            pytest.skip("`axis != None` not supported for 0d arrays")
 
         array = array.astype(dtype)
         match = "All-NaN slice encountered"
@@ -294,7 +294,7 @@ class TestNanFunctions_ArgminArgmax:
     ], ids=["0d", "2d"])
     def test_allnans(self, axis, dtype, array):
         if axis is not None and array.ndim == 0:
-            pytest.skip(f"`axis != None` not supported for 0d arrays")
+            pytest.skip("`axis != None` not supported for 0d arrays")
 
         array = array.astype(dtype)
         for func in self.nanfuncs:
@@ -575,7 +575,7 @@ class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
     ], ids=["0d", "2d"])
     def test_allnans(self, axis, dtype, array):
         if axis is not None and array.ndim == 0:
-            pytest.skip(f"`axis != None` not supported for 0d arrays")
+            pytest.skip("`axis != None` not supported for 0d arrays")
 
         array = array.astype(dtype)
         for func, identity in zip(self.nanfuncs, [0, 1]):
@@ -634,7 +634,7 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
     ], ids=["0d", "2d"])
     def test_allnans(self, axis, dtype, array):
         if axis is not None and array.ndim == 0:
-            pytest.skip(f"`axis != None` not supported for 0d arrays")
+            pytest.skip("`axis != None` not supported for 0d arrays")
 
         array = array.astype(dtype)
         for func, identity in zip(self.nanfuncs, [0, 1]):
@@ -744,7 +744,7 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
     ], ids=["0d", "2d"])
     def test_allnans(self, axis, dtype, array):
         if axis is not None and array.ndim == 0:
-            pytest.skip(f"`axis != None` not supported for 0d arrays")
+            pytest.skip("`axis != None` not supported for 0d arrays")
 
         array = array.astype(dtype)
         match = "(Degrees of freedom <= 0 for slice.)|(Mean of empty slice)"
@@ -1181,7 +1181,7 @@ class TestNanFunctions_Percentile:
     ], ids=["0d", "2d"])
     def test_allnans(self, axis, dtype, array):
         if axis is not None and array.ndim == 0:
-            pytest.skip(f"`axis != None` not supported for 0d arrays")
+            pytest.skip("`axis != None` not supported for 0d arrays")
 
         array = array.astype(dtype)
         with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
@@ -1356,7 +1356,7 @@ class TestNanFunctions_Quantile:
     ], ids=["0d", "2d"])
     def test_allnans(self, axis, dtype, array):
         if axis is not None and array.ndim == 0:
-            pytest.skip(f"`axis != None` not supported for 0d arrays")
+            pytest.skip("`axis != None` not supported for 0d arrays")
 
         array = array.astype(dtype)
         with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):

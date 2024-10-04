@@ -13,6 +13,7 @@ from typing import (
     overload,
     Protocol,
 )
+from typing_extensions import deprecated
 
 from numpy import (
     ndarray,
@@ -129,22 +130,42 @@ def load(
     encoding: L["ASCII", "latin1", "bytes"] = ...,
 ) -> Any: ...
 
+@overload
 def save(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     arr: ArrayLike,
     allow_pickle: bool = ...,
-    fix_imports: bool = ...,
+) -> None: ...
+@overload
+@deprecated("The 'fix_imports' flag is deprecated in NumPy 2.1.")
+def save(
+    file: str | os.PathLike[str] | _SupportsWrite[bytes],
+    arr: ArrayLike,
+    allow_pickle: bool = ...,
+    *,
+    fix_imports: bool,
+) -> None: ...
+@overload
+@deprecated("The 'fix_imports' flag is deprecated in NumPy 2.1.")
+def save(
+    file: str | os.PathLike[str] | _SupportsWrite[bytes],
+    arr: ArrayLike,
+    allow_pickle: bool,
+    fix_imports: bool,
+    /,
 ) -> None: ...
 
 def savez(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
 def savez_compressed(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
@@ -156,7 +177,7 @@ def loadtxt(
     dtype: None = ...,
     comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
-    converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
+    converters: None | Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any] = ...,
     skiprows: int = ...,
     usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
@@ -173,7 +194,7 @@ def loadtxt(
     dtype: _DTypeLike[_SCT],
     comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
-    converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
+    converters: None | Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any]  = ...,
     skiprows: int = ...,
     usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
@@ -190,7 +211,7 @@ def loadtxt(
     dtype: DTypeLike,
     comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
-    converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
+    converters: None | Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any]  = ...,
     skiprows: int = ...,
     usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,

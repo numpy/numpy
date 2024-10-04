@@ -55,7 +55,7 @@ def buildusevars(m, r):
                     r['map'][k], k, revmap[r['map'][k]]))
             else:
                 revmap[r['map'][k]] = k
-    if 'only' in r and r['only']:
+    if r.get('only'):
         for v in r['map'].keys():
             if r['map'][v] in m['vars']:
 

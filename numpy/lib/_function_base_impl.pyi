@@ -1,7 +1,9 @@
 from collections.abc import Sequence, Iterator, Callable, Iterable
 from typing import (
+    Concatenate,
     Literal as L,
     Any,
+    ParamSpec,
     TypeVar,
     overload,
     Protocol,
@@ -34,6 +36,7 @@ from numpy._typing import (
     _ScalarLike_co,
     _DTypeLike,
     _ArrayLike,
+    _ArrayLikeBool_co,
     _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
@@ -50,6 +53,8 @@ from numpy._core.multiarray import (
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
+# The `{}ss` suffix refers to the Python 3.12 syntax: `**P`
+_Pss = ParamSpec("_Pss")
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
@@ -180,23 +185,29 @@ def asarray_chkfinite(
     order: _OrderKACF = ...,
 ) -> NDArray[Any]: ...
 
-# TODO: Use PEP 612 `ParamSpec` once mypy supports `Concatenate`
-# xref python/mypy#8645
 @overload
 def piecewise(
     x: _ArrayLike[_SCT],
-    condlist: ArrayLike,
-    funclist: Sequence[Any | Callable[..., Any]],
-    *args: Any,
-    **kw: Any,
+    condlist: _ArrayLike[bool_] | Sequence[_ArrayLikeBool_co],
+    funclist: Sequence[
+        Callable[Concatenate[NDArray[_SCT], _Pss], NDArray[_SCT | Any]]
+        | _SCT | object
+    ],
+    /,
+    *args: _Pss.args,
+    **kw: _Pss.kwargs,
 ) -> NDArray[_SCT]: ...
 @overload
 def piecewise(
     x: ArrayLike,
-    condlist: ArrayLike,
-    funclist: Sequence[Any | Callable[..., Any]],
-    *args: Any,
-    **kw: Any,
+    condlist: _ArrayLike[bool_] | Sequence[_ArrayLikeBool_co],
+    funclist: Sequence[
+        Callable[Concatenate[NDArray[Any], _Pss], NDArray[Any]]
+        | object
+    ],
+    /,
+    *args: _Pss.args,
+    **kw: _Pss.kwargs,
 ) -> NDArray[Any]: ...
 
 def select(

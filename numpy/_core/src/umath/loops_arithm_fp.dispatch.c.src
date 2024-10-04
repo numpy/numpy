@@ -22,7 +22,7 @@
  *    current one kinda slow and it can be optimized by
  *    at least avoiding the division and keep sqrt.
  *  - Vectorize reductions
- *  - Add support for ASIMD/VCMLA through universal intrinics.
+ *  - Add support for ASIMD/VCMLA through universal intrinsics.
  */
 
 //###############################################################################

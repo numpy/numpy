@@ -1,5 +1,4 @@
 import os
-import shutil
 import subprocess
 import sys
 import sysconfig
@@ -41,6 +40,14 @@ def install_temp(tmpdir_factory):
     srcdir = os.path.join(os.path.dirname(__file__), 'examples', 'limited_api')
     build_dir = tmpdir_factory.mktemp("limited_api") / "build"
     os.makedirs(build_dir, exist_ok=True)
+    # Ensure we use the correct Python interpreter even when `meson` is
+    # installed in a different Python environment (see gh-24956)
+    native_file = str(build_dir / 'interpreter-native-file.ini')
+    with open(native_file, 'w') as f:
+        f.write("[binaries]\n")
+        f.write(f"python = '{sys.executable}'\n")
+        f.write(f"python3 = '{sys.executable}'")
+
     try:
         subprocess.check_call(["meson", "--version"])
     except FileNotFoundError:
@@ -49,11 +56,13 @@ def install_temp(tmpdir_factory):
         subprocess.check_call(["meson", "setup",
                                "--werror",
                                "--buildtype=release",
-                               "--vsenv", str(srcdir)],
+                               "--vsenv", "--native-file", native_file,
+                               str(srcdir)],
                               cwd=build_dir,
                               )
     else:
-        subprocess.check_call(["meson", "setup", "--werror", str(srcdir)],
+        subprocess.check_call(["meson", "setup", "--werror",
+                               "--native-file", native_file, str(srcdir)],
                               cwd=build_dir
                               )
     try:

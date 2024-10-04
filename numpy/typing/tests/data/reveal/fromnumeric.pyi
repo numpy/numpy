@@ -1,15 +1,11 @@
 """Tests for :mod:`_core.fromnumeric`."""
 
-import sys
-from typing import Any
+from typing import Any, NoReturn
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 class NDArraySubclass(npt.NDArray[np.complex128]):
     ...
@@ -21,6 +17,10 @@ AR_u8: npt.NDArray[np.uint64]
 AR_i8: npt.NDArray[np.int64]
 AR_O: npt.NDArray[np.object_]
 AR_subclass: NDArraySubclass
+AR_m: npt.NDArray[np.timedelta64]
+AR_0d: np.ndarray[tuple[()], np.dtype[Any]]
+AR_1d: np.ndarray[tuple[int], np.dtype[Any]]
+AR_nd: np.ndarray[tuple[int, ...], np.dtype[Any]]
 
 b: np.bool
 f4: np.float32
@@ -127,17 +127,25 @@ assert_type(np.ravel(f), npt.NDArray[Any])
 assert_type(np.ravel(AR_b), npt.NDArray[np.bool])
 assert_type(np.ravel(AR_f4), npt.NDArray[np.float32])
 
-assert_type(np.nonzero(b), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.nonzero(f4), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.nonzero(f), tuple[npt.NDArray[np.intp], ...])
+assert_type(np.nonzero(b), NoReturn)
+assert_type(np.nonzero(f4), NoReturn)
 assert_type(np.nonzero(AR_b), tuple[npt.NDArray[np.intp], ...])
 assert_type(np.nonzero(AR_f4), tuple[npt.NDArray[np.intp], ...])
+assert_type(np.nonzero(AR_0d), NoReturn)
+assert_type(np.nonzero(AR_1d), tuple[npt.NDArray[np.intp], ...])
+assert_type(np.nonzero(AR_nd), tuple[npt.NDArray[np.intp], ...])
 
-assert_type(np.shape(b), tuple[int, ...])
-assert_type(np.shape(f4), tuple[int, ...])
-assert_type(np.shape(f), tuple[int, ...])
+assert_type(np.shape(b), tuple[()])
+assert_type(np.shape(f), tuple[()])
+assert_type(np.shape([1]), tuple[int])
+assert_type(np.shape([[2]]), tuple[int, int])
+assert_type(np.shape([[[3]]]), tuple[int, ...])
 assert_type(np.shape(AR_b), tuple[int, ...])
-assert_type(np.shape(AR_f4), tuple[int, ...])
+assert_type(np.shape(AR_nd), tuple[int, ...])
+# these fail on mypy, but it works as expected with pyright/pylance
+# assert_type(np.shape(AR_0d), tuple[()])
+# assert_type(np.shape(AR_1d), tuple[int])
+# assert_type(np.shape(AR_2d), tuple[int, int])
 
 assert_type(np.compress([True], b), npt.NDArray[np.bool])
 assert_type(np.compress([True], f4), npt.NDArray[np.float32])
@@ -294,6 +302,7 @@ assert_type(np.around(AR_f4, out=AR_subclass), NDArraySubclass)
 assert_type(np.mean(AR_b), np.floating[Any])
 assert_type(np.mean(AR_i8), np.floating[Any])
 assert_type(np.mean(AR_f4), np.floating[Any])
+assert_type(np.mean(AR_m), np.timedelta64)
 assert_type(np.mean(AR_c16), np.complexfloating[Any, Any])
 assert_type(np.mean(AR_O), Any)
 assert_type(np.mean(AR_f4, axis=0), Any)

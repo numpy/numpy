@@ -533,7 +533,7 @@ def _div(mul_f, c1, c2):
     # c1, c2 are trimmed copies
     [c1, c2] = as_series([c1, c2])
     if c2[-1] == 0:
-        raise ZeroDivisionError()
+        raise ZeroDivisionError  # FIXME: add message with details to exception
 
     lc1 = len(c1)
     lc2 = len(c2)
@@ -702,7 +702,7 @@ def _pow(mul_f, c, pow, maxpower):
 
 def _as_int(x, desc):
     """
-    Like `operator.index`, but emits a custom exception when passed an 
+    Like `operator.index`, but emits a custom exception when passed an
     incorrect type
 
     Parameters
@@ -745,7 +745,7 @@ def format_float(x, parens=False):
 
     if exp_format:
         s = dragon4_scientific(x, precision=opts['precision'],
-                               unique=unique, trim=trim, 
+                               unique=unique, trim=trim,
                                sign=opts['sign'] == '+')
         if parens:
             s = '(' + s + ')'

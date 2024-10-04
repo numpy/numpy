@@ -1,2 +1,2 @@
-* `numpy.floor`, `numpy.ceil`, and `numpy.trunc` now won't perform casting
-  to a floating dtype for integer and boolean dtype input arrays.
+* `numpy.fix` now won't perform casting to a floating data-type for integer
+  and boolean data-type input arrays.

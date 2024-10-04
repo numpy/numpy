@@ -94,7 +94,7 @@ class TestF77Callback(util.F2PyTest):
             else:
                 return 1
 
-        f = getattr(self.module, "string_callback")
+        f = self.module.string_callback
         r = f(callback)
         assert r == 0
 
@@ -115,7 +115,7 @@ class TestF77Callback(util.F2PyTest):
                 return 3
             return 0
 
-        f = getattr(self.module, "string_callback_array")
+        f = self.module.string_callback_array
         for cu in [cu1, cu2, cu3]:
             res = f(callback, cu, cu.size)
             assert res == 0

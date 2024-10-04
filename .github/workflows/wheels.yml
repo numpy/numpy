@@ -76,8 +76,8 @@ jobs:
         # Github Actions doesn't support pairing matrix values together, let's improvise
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
-          - [ubuntu-20.04, manylinux_x86_64, ""]
-          - [ubuntu-20.04, musllinux_x86_64, ""]
+          - [ubuntu-22.04, manylinux_x86_64, ""]
+          - [ubuntu-22.04, musllinux_x86_64, ""]
           - [macos-13, macosx_x86_64, openblas]
 
           # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
@@ -90,7 +90,7 @@ jobs:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32, ""]
             python: "pp310"
-          - buildplat: [ ubuntu-20.04, musllinux_x86_64, "" ]
+          - buildplat: [ ubuntu-22.04, musllinux_x86_64, "" ]
             python: "pp310"
           - buildplat: [ macos-14, macosx_arm64, accelerate ]
             python: "pp310"
@@ -130,7 +130,7 @@ jobs:
         if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.x"
 
@@ -166,18 +166,18 @@ jobs:
           echo "CIBW_BUILD_FRONTEND=pip; args: --no-build-isolation" >> "$GITHUB_ENV"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@bd033a44476646b606efccdd5eed92d5ea1d77ad  # v2.20.0
+        uses: pypa/cibuildwheel@f1859528322d7b29d4493ee241a167807661dfb4  # v2.21.2
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_FREE_THREADED_SUPPORT: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4.3.5
+      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
 
-      - uses: mamba-org/setup-micromamba@f8b8a1e23a26f60a44c853292711bacfd3eac822
+      - uses: mamba-org/setup-micromamba@617811f69075e3fd3ae68ca64220ad065877f246
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -231,7 +231,7 @@ jobs:
         with:
           submodules: true
       # Used to push the built wheels
-      - uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           # Build sdist on lowest supported Python
           python-version: "3.10"
@@ -253,7 +253,7 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # v4.3.5
+      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
         with:
           name: sdist
           path: ./dist/*

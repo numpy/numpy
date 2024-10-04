@@ -282,7 +282,7 @@ fix_ascii_format(char* buf, size_t buflen, int decimal)
  *      - format: The printf()-style format to use for the code to use for
  *      converting.
  *      - value: The value to convert
- *      - decimal: if != 0, always has a decimal, and at leasat one digit after
+ *      - decimal: if != 0, always has a decimal, and at least one digit after
  *      the decimal. This has the same effect as passing 'Z' in the original
  *      PyOS_ascii_formatd
  *

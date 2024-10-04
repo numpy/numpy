@@ -1689,7 +1689,7 @@ def test_suppress_warnings_decorate_no_record():
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        warn(UserWarning)  # should be supppressed
+        warn(UserWarning)  # should be suppressed
         warn(RuntimeWarning)
         assert_equal(len(w), 1)
 
@@ -1791,7 +1791,7 @@ def test_tempdir():
     raised = False
     try:
         with tempdir() as tdir:
-            raise ValueError()
+            raise ValueError
     except ValueError:
         raised = True
     assert_(raised)
@@ -1807,7 +1807,7 @@ def test_temppath():
     raised = False
     try:
         with temppath() as fpath:
-            raise ValueError()
+            raise ValueError
     except ValueError:
         raised = True
     assert_(raised)

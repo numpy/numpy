@@ -125,7 +125,7 @@ PyArray_ImportNumPyAPI(void)
     #define NPY_DEFAULT_INT  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_INTP : NPY_LONG)
     #define NPY_RAVEL_AXIS  \
-        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? -1 : 32)
+        (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? NPY_MIN_INT : 32)
     #define NPY_MAXARGS  \
         (PyArray_RUNTIME_VERSION >= NPY_2_0_API_VERSION ? 64 : 32)
 #endif

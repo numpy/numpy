@@ -181,8 +181,6 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     order : {'C', 'F'}, optional
         Whether the output should be stored in row-major (C-style) or
         column-major (Fortran-style) order in memory.
-
-        .. versionadded:: 1.14.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -569,8 +567,6 @@ def vander(x, N=None, increasing=False):
         Order of the powers of the columns.  If True, the powers increase
         from left to right, if False (the default) they are reversed.
 
-        .. versionadded:: 1.9.0
-
     Returns
     -------
     out : ndarray
@@ -862,7 +858,6 @@ def mask_indices(n, mask_func, k=0):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -912,8 +907,6 @@ def tril_indices(n, k=0, m=None):
     k : int, optional
         Diagonal offset (see `tril` for details).
     m : int, optional
-        .. versionadded:: 1.9.0
-
         The column dimension of the arrays for which the returned
         arrays will be valid.
         By default `m` is taken equal to `n`.
@@ -922,8 +915,9 @@ def tril_indices(n, k=0, m=None):
     Returns
     -------
     inds : tuple of arrays
-        The indices for the triangle. The returned tuple contains two arrays,
-        each with the indices along one dimension of the array.
+        The row and column indices, respectively. The row indices are sorted
+        in non-decreasing order, and the correspdonding column indices are
+        strictly increasing for each row.
 
     See also
     --------
@@ -933,7 +927,6 @@ def tril_indices(n, k=0, m=None):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -944,8 +937,11 @@ def tril_indices(n, k=0, m=None):
     diagonals further right:
 
     >>> il1 = np.tril_indices(4)
-    >>> il2 = np.tril_indices(4, 2)
+    >>> il1
+    (array([0, 1, 1, 2, 2, 2, 3, 3, 3, 3]), array([0, 0, 1, 0, 1, 2, 0, 1, 2, 3]))
 
+    Note that row indices (first array) are non-decreasing, and the corresponding
+    column indices (second array) are strictly increasing for each row.
     Here is how they can be used with a sample array:
 
     >>> a = np.arange(16).reshape(4, 4)
@@ -971,6 +967,7 @@ def tril_indices(n, k=0, m=None):
 
     These cover almost the whole array (two diagonals right of the main one):
 
+    >>> il2 = np.tril_indices(4, 2)
     >>> a[il2] = -10
     >>> a
     array([[-10, -10, -10,   3],
@@ -1044,7 +1041,6 @@ def tril_indices_from(arr, k=0):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     """
     if arr.ndim != 2:
@@ -1065,8 +1061,6 @@ def triu_indices(n, k=0, m=None):
     k : int, optional
         Diagonal offset (see `triu` for details).
     m : int, optional
-        .. versionadded:: 1.9.0
-
         The column dimension of the arrays for which the returned
         arrays will be valid.
         By default `m` is taken equal to `n`.
@@ -1075,9 +1069,9 @@ def triu_indices(n, k=0, m=None):
     Returns
     -------
     inds : tuple, shape(2) of ndarrays, shape(`n`)
-        The indices for the triangle. The returned tuple contains two arrays,
-        each with the indices along one dimension of the array.  Can be used
-        to slice a ndarray of shape(`n`, `n`).
+        The row and column indices, respectively. The row indices are sorted
+        in non-decreasing order, and the correspdonding column indices are
+        strictly increasing for each row.
 
     See also
     --------
@@ -1087,7 +1081,6 @@ def triu_indices(n, k=0, m=None):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -1098,7 +1091,11 @@ def triu_indices(n, k=0, m=None):
     diagonals further right:
 
     >>> iu1 = np.triu_indices(4)
-    >>> iu2 = np.triu_indices(4, 2)
+    >>> iu1
+    (array([0, 0, 0, 0, 1, 1, 1, 2, 2, 3]), array([0, 1, 2, 3, 1, 2, 3, 2, 3, 3]))
+
+    Note that row indices (first array) are non-decreasing, and the corresponding
+    column indices (second array) are strictly increasing for each row.
 
     Here is how they can be used with a sample array:
 
@@ -1126,6 +1123,7 @@ def triu_indices(n, k=0, m=None):
     These cover only a small part of the whole array (two diagonals right
     of the main one):
 
+    >>> iu2 = np.triu_indices(4, 2)
     >>> a[iu2] = -10
     >>> a
     array([[ -1,  -1, -10, -10],
@@ -1200,7 +1198,6 @@ def triu_indices_from(arr, k=0):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
 
     """
     if arr.ndim != 2:

@@ -4,7 +4,6 @@ __all__ = ['atleast_1d', 'atleast_2d', 'atleast_3d', 'block', 'hstack',
 import functools
 import itertools
 import operator
-import warnings
 
 from . import numeric as _nx
 from . import overrides
@@ -382,8 +381,6 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
     The ``axis`` parameter specifies the index of the new axis in the
     dimensions of the result. For example, if ``axis=0`` it will be the first
     dimension and if ``axis=-1`` it will be the last dimension.
-
-    .. versionadded:: 1.10.0
 
     Parameters
     ----------
@@ -795,8 +792,6 @@ def block(arrays):
 
     When the nested list is two levels deep, this allows block matrices to be
     constructed from their components.
-
-    .. versionadded:: 1.13.0
 
     Parameters
     ----------

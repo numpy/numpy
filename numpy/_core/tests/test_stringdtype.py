@@ -116,13 +116,13 @@ def test_dtype_repr(dtype):
     if not hasattr(dtype, "na_object") and dtype.coerce:
         assert repr(dtype) == "StringDType()"
     elif dtype.coerce:
-        assert repr(dtype) == f"StringDType(na_object={repr(dtype.na_object)})"
+        assert repr(dtype) == f"StringDType(na_object={dtype.na_object!r})"
     elif not hasattr(dtype, "na_object"):
         assert repr(dtype) == "StringDType(coerce=False)"
     else:
         assert (
             repr(dtype)
-            == f"StringDType(na_object={repr(dtype.na_object)}, coerce=False)"
+            == f"StringDType(na_object={dtype.na_object!r}, coerce=False)"
         )
 
 
@@ -495,13 +495,15 @@ def test_fancy_indexing(string_list):
     sarr = np.array(string_list, dtype="T")
     assert_array_equal(sarr, sarr[np.arange(sarr.shape[0])])
 
-    # see gh-27003
-    for ind in [[0, 1], ...]:
-        a = np.array(['a'*16, 'b'*16], dtype="T")
-        b = np.array(['d'*16, 'e'*16], dtype="T")
-        a[ind] = b
-        assert_array_equal(a, b)
-        assert a[0] == 'd'*16
+    # see gh-27003 and gh-27053
+    for ind in [[True, True], [0, 1], ...]:
+        for lop in [['a'*16, 'b'*16], ['', '']]:
+            a = np.array(lop, dtype="T")
+            rop = ['d'*16, 'e'*16]
+            for b in [rop, np.array(rop, dtype="T")]:
+                a[ind] = b
+                assert_array_equal(a, b)
+                assert a[0] == 'd'*16
 
 
 def test_creation_functions():

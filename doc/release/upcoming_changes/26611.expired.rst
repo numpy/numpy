@@ -1,2 +1,0 @@
-* ``set_string_function`` internal function was removed and ``PyArray_SetStringFunction``
-  was stubbed out.

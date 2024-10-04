@@ -19,7 +19,8 @@ class TestArrayRepr:
         assert_equal(repr(x), 'array([nan, inf])')
 
     def test_subclass(self):
-        class sub(np.ndarray): pass
+        class sub(np.ndarray):
+            pass
 
         # one dimensional
         x1d = np.array([1, 2]).view(sub)
@@ -143,7 +144,7 @@ class TestArrayRepr:
         first[()] = 0  # resolve circular references for garbage collector
 
     def test_containing_list(self):
-        # printing square brackets directly would be ambiguuous
+        # printing square brackets directly would be ambiguous
         arr1d = np.array([None, None])
         arr1d[0] = [1, 2]
         arr1d[1] = [3]
@@ -627,8 +628,9 @@ class TestPrintOptions:
     def test_basic(self):
         x = np.array([1.5, 0, 1.234567890])
         assert_equal(repr(x), "array([1.5       , 0.        , 1.23456789])")
-        np.set_printoptions(precision=4)
+        ret = np.set_printoptions(precision=4)
         assert_equal(repr(x), "array([1.5   , 0.    , 1.2346])")
+        assert ret is None
 
     def test_precision_zero(self):
         np.set_printoptions(precision=0)
@@ -1126,7 +1128,7 @@ class TestContextManager:
         assert_equal(s, '[0.67]')
 
     def test_ctx_mgr_restores(self):
-        # test that print options are actually restrored
+        # test that print options are actually restored
         opts = np.get_printoptions()
         with np.printoptions(precision=opts['precision'] - 1,
                              linewidth=opts['linewidth'] - 4):

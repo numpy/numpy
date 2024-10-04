@@ -27,7 +27,7 @@ UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values()
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
 # Remove functions that do not support `floats`
-UNARY_OBJECT_UFUNCS.remove(getattr(np, 'bitwise_count'))
+UNARY_OBJECT_UFUNCS.remove(np.bitwise_count)
 
 
 class TestUfuncKwargs:
@@ -486,8 +486,8 @@ class TestUfunc:
         np.add(3, 4, signature=(float_dtype, float_dtype, None))
 
     @pytest.mark.parametrize("get_kwarg", [
-            lambda dt: dict(dtype=x),
-            lambda dt: dict(signature=(x, None, None))])
+            lambda dt: dict(dtype=dt),
+            lambda dt: dict(signature=(dt, None, None))])
     def test_signature_dtype_instances_allowed(self, get_kwarg):
         # We allow certain dtype instances when there is a clear singleton
         # and the given one is equivalent; mainly for backcompat.
@@ -537,9 +537,6 @@ class TestUfunc:
         with pytest.raises(TypeError):
             np.add(np.float16(1), np.uint64(2), sig=("e", "d", None))
 
-    @pytest.mark.xfail(np._get_promotion_state() != "legacy",
-            reason="NEP 50 impl breaks casting checks when `dtype=` is used "
-                   "together with python scalars.")
     def test_use_output_signature_for_all_arguments(self):
         # Test that providing only `dtype=` or `signature=(None, None, dtype)`
         # is sufficient if falling back to a homogeneous signature works.
@@ -2547,8 +2544,8 @@ class TestUfunc:
         assert single_res != res
 
     def test_reducelike_output_needs_identical_cast(self):
-        # Checks the case where the we have a simple byte-swap works, maily
-        # tests that this is not rejected directly.
+        # Checks the case where a simple byte-swap works, mainly tests that
+        # this is not rejected directly.
         # (interesting because we require descriptor identity in reducelikes).
         arr = np.ones(20, dtype="f8")
         out = np.empty((), dtype=arr.dtype.newbyteorder())
@@ -2749,7 +2746,6 @@ def test_ufunc_types(ufunc):
 
 @pytest.mark.parametrize('ufunc', [getattr(np, x) for x in dir(np)
                                 if isinstance(getattr(np, x), np.ufunc)])
-@np._no_nep50_warning()
 def test_ufunc_noncontiguous(ufunc):
     '''
     Check that contiguous and non-contiguous calls to ufuncs

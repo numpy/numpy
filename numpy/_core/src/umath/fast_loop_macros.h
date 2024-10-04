@@ -315,41 +315,13 @@ abs_ptrdiff(char *a, char *b)
 /*
  * stride is equal to element size and input and destination are equal or
  * don't overlap within one register. The check of the steps against
- * esize also quarantees that steps are >= 0.
+ * esize also guarantees that steps are >= 0.
  */
 #define IS_BLOCKABLE_UNARY(esize, vsize) \
     (steps[0] == (esize) && steps[0] == steps[1] && \
      (npy_is_aligned(args[0], esize) && npy_is_aligned(args[1], esize)) && \
      ((abs_ptrdiff(args[1], args[0]) >= (vsize)) || \
       ((abs_ptrdiff(args[1], args[0]) == 0))))
-
-/*
- * Avoid using SIMD for very large step sizes for several reasons:
- * 1) Supporting large step sizes requires use of i64gather/scatter_ps instructions,
- *    in which case we need two i64gather instructions and an additional vinsertf32x8
- *    instruction to load a single zmm register (since one i64gather instruction
- *    loads into a ymm register). This is not ideal for performance.
- * 2) Gather and scatter instructions can be slow when the loads/stores
- *    cross page boundaries.
- *
- * We instead rely on i32gather/scatter_ps instructions which use a 32-bit index
- * element. The index needs to be < INT_MAX to avoid overflow. MAX_STEP_SIZE
- * ensures this. The condition also requires that the input and output arrays
- * should have no overlap in memory.
- */
-#define IS_BINARY_SMALL_STEPS_AND_NOMEMOVERLAP \
-    ((labs(steps[0]) < MAX_STEP_SIZE)  && \
-     (labs(steps[1]) < MAX_STEP_SIZE)  && \
-     (labs(steps[2]) < MAX_STEP_SIZE)  && \
-     (nomemoverlap(args[0], steps[0], args[2], steps[2], dimensions[0])) && \
-     (nomemoverlap(args[1], steps[1], args[2], steps[2], dimensions[0])))
-
-#define IS_UNARY_TWO_OUT_SMALL_STEPS_AND_NOMEMOVERLAP \
-    ((labs(steps[0]) < MAX_STEP_SIZE)  && \
-     (labs(steps[1]) < MAX_STEP_SIZE)  && \
-     (labs(steps[2]) < MAX_STEP_SIZE)  && \
-     (nomemoverlap(args[0], steps[0], args[2], steps[2], dimensions[0])) && \
-     (nomemoverlap(args[0], steps[0], args[1], steps[1], dimensions[0])))
 
 /*
  * 1) Output should be contiguous, can handle strided input data
