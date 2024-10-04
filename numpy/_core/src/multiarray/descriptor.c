@@ -1410,7 +1410,7 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
  *       be removed.
  *
  * @param descr descriptor to be checked
- * @param DType pointer to the Dtype of the descriptor
+ * @param DType pointer to the DType of the descriptor
  * @return 1 if this is not a concrete dtype instance 0 otherwise
  */
 static int
@@ -1444,7 +1444,7 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
  *
  * @param dtype Input descriptor to be converted
  * @param out_descr Output descriptor
- * @param out_DType Dtype of the output descriptor
+ * @param out_DType DType of the output descriptor
  * @return 0 on success -1 on failure
  */
 NPY_NO_EXPORT int

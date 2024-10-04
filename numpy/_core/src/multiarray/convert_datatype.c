@@ -413,8 +413,9 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
  * @param to The descriptor to cast to (may be NULL)
  * @param to_dtype If `to` is NULL, must pass the to_dtype (otherwise this
  *        is ignored).
- * @param view_offset The byte offset, if any, between the original 
- *        view/type and the view/type that would be cast to.
+ * @param view_offset If set, the cast can be described by a view with
+ *        this byte offset.  For example, casting "i8" to "i8,"
+ *        (the structured dtype) can be described with `*view_offset = 0`.
  * @return NPY_CASTING or -1 on error or if the cast is not possible.
  */
 NPY_NO_EXPORT NPY_CASTING
@@ -795,10 +796,9 @@ npy_casting_to_string(NPY_CASTING casting)
  * Helper function to set a useful error when casting is not possible.
  *
  * @param src_dtype The source descriptor to cast from
- * @param dst_dtype The destination type trying to be cast to
+ * @param dst_dtype The destination descriptor trying to cast to
  * @param casting The casting rule that was violated
- * @param scalar Boolean flag indicating if this was a "scalar" cast (includes 0-D 
- *               array withPyArray_CanCastArrayTo result).
+ * @param scalar Boolean flag indicating if this was a "scalar" cast.
  */
 NPY_NO_EXPORT void
 npy_set_invalid_cast_error(

@@ -818,7 +818,7 @@ get_item_pointer(PyArrayObject *self, char **ptr,
  * @param view Resulting array (new reference)
  * @param indices parsed index information
  * @param index_num number of indices
- * @param ensure_array true if result should have type PArray, 
+ * @param ensure_array true if result should be a base class array, 
  *        false if result should inherit type from self
  *
  * @return 0 on success -1 on failure
