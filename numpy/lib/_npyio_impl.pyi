@@ -12,6 +12,7 @@ from typing import (
     IO,
     overload,
     Protocol,
+    type_check_only,
 )
 from typing_extensions import deprecated
 
@@ -46,16 +47,20 @@ _SCT = TypeVar("_SCT", bound=generic)
 _CharType_co = TypeVar("_CharType_co", str, bytes, covariant=True)
 _CharType_contra = TypeVar("_CharType_contra", str, bytes, contravariant=True)
 
+@type_check_only
 class _SupportsGetItem(Protocol[_T_contra, _T_co]):
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
 
+@type_check_only
 class _SupportsRead(Protocol[_CharType_co]):
     def read(self) -> _CharType_co: ...
 
+@type_check_only
 class _SupportsReadSeek(Protocol[_CharType_co]):
     def read(self, n: int, /) -> _CharType_co: ...
     def seek(self, offset: int, whence: int, /) -> object: ...
 
+@type_check_only
 class _SupportsWrite(Protocol[_CharType_contra]):
     def write(self, s: _CharType_contra, /) -> object: ...
 

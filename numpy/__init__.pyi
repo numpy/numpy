@@ -8,7 +8,6 @@ import datetime as dt
 import enum
 from abc import abstractmethod
 from types import EllipsisType, TracebackType, MappingProxyType, GenericAlias
-from contextlib import contextmanager
 from decimal import Decimal
 from fractions import Fraction
 from uuid import UUID
@@ -25,7 +24,6 @@ from numpy._typing import (
     _SupportsArray,
     _NestedSequence,
     _FiniteNestedSequence,
-    _SupportsArray,
     _ArrayLikeBool_co,
     _ArrayLikeUInt_co,
     _ArrayLikeInt_co,
@@ -207,6 +205,7 @@ from typing import (
     final,
     ClassVar,
     TypeAlias,
+    type_check_only,
 )
 
 # NOTE: `typing_extensions` is always available in `.pyi` stubs or when
@@ -744,6 +743,7 @@ _AnyStr_contra = TypeVar("_AnyStr_contra", LiteralString, builtins.str, bytes, c
 
 # Protocol for representing file-like-objects accepted
 # by `ndarray.tofile` and `fromfile`
+@type_check_only
 class _IOProtocol(Protocol):
     def flush(self) -> object: ...
     def fileno(self) -> int: ...
@@ -752,6 +752,7 @@ class _IOProtocol(Protocol):
 
 # NOTE: `seek`, `write` and `flush` are technically only required
 # for `readwrite`/`write` modes
+@type_check_only
 class _MemMapIOProtocol(Protocol):
     def flush(self) -> object: ...
     def fileno(self) -> SupportsIndex: ...
@@ -761,19 +762,14 @@ class _MemMapIOProtocol(Protocol):
     @property
     def read(self) -> object: ...
 
+@type_check_only
 class _SupportsWrite(Protocol[_AnyStr_contra]):
     def write(self, s: _AnyStr_contra, /) -> object: ...
-
-def __dir__() -> Sequence[str]: ...
 
 __version__: LiteralString
 __array_api_version__: LiteralString
 test: PytestTester
 
-# TODO: Move placeholders to their respective module once
-# their annotations are properly implemented
-#
-# Placeholders for classes
 
 def show_config() -> None: ...
 
@@ -1390,6 +1386,7 @@ _SortKind: TypeAlias = L[
 ]
 _SortSide: TypeAlias = L["left", "right"]
 
+@type_check_only
 class _ArrayOrScalarCommon:
     @property
     def T(self) -> Self: ...
@@ -1812,13 +1809,16 @@ else:
 
 _ArrayAPIVersion: TypeAlias = L["2021.12", "2022.12", "2023.12"]
 
+@type_check_only
 class _SupportsItem(Protocol[_T_co]):
     def item(self, args: Any, /) -> _T_co: ...
 
+@type_check_only
 class _SupportsReal(Protocol[_T_co]):
     @property
     def real(self) -> _T_co: ...
 
+@type_check_only
 class _SupportsImag(Protocol[_T_co]):
     @property
     def imag(self) -> _T_co: ...
@@ -3376,11 +3376,12 @@ class bool(generic):
 bool_: TypeAlias = bool
 
 _StringType = TypeVar("_StringType", bound=str | bytes)
-_ShapeType = TypeVar("_ShapeType", bound=Any)
+_ShapeType = TypeVar("_ShapeType", bound=_Shape)
 _ObjectType = TypeVar("_ObjectType", bound=object)
 
 # A sequence-like interface like `collections.abc.Sequence`, but without the
 # irrelevant methods.
+@type_check_only
 class _SimpleSequence(Protocol):
     def __len__(self, /) -> int: ...
     def __getitem__(self, index: int, /) -> Any: ...
@@ -3421,6 +3422,7 @@ class object_(generic):
 
 # The `datetime64` constructors requires an object with the three attributes below,
 # and thus supports datetime duck typing
+@type_check_only
 class _DatetimeScalar(Protocol):
     @property
     def day(self) -> int: ...
@@ -4727,6 +4729,7 @@ class matrix(ndarray[_Shape2DType_co, _DType_co]):
     def getH(self) -> matrix[_Shape2D, _DType_co]: ...
 
 
+@type_check_only
 class _SupportsDLPack(Protocol[_T_contra]):
     def __dlpack__(self, *, stream: None | _T_contra = ...) -> _PyCapsule: ...
 

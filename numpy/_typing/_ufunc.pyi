@@ -18,7 +18,6 @@ from typing import (
     Literal,
     SupportsIndex,
     Protocol,
-    NoReturn,
     type_check_only,
 )
 from typing_extensions import LiteralString, Unpack
@@ -52,6 +51,7 @@ _ReturnType_co = TypeVar("_ReturnType_co", covariant=True)
 _ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
 
 
+@type_check_only
 class _SupportsArrayUFunc(Protocol):
     def __array_ufunc__(
         self,
@@ -72,6 +72,7 @@ class _SupportsArrayUFunc(Protocol):
 # NOTE: If 2 output types are returned then `out` must be a
 # 2-tuple of arrays. Otherwise `None` or a plain array are also acceptable
 
+@type_check_only
 class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
@@ -140,7 +141,7 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def reduceat(self, *args, **kwargs) -> NoReturn: ...
     def outer(self, *args, **kwargs) -> NoReturn: ...
 
-
+@type_check_only
 class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
@@ -252,6 +253,7 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         signature: str | _3Tuple[None | str] = ...,
     ) -> NDArray[Any]: ...
 
+@type_check_only
 class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
@@ -319,6 +321,7 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def reduceat(self, *args, **kwargs) -> NoReturn: ...
     def outer(self, *args, **kwargs) -> NoReturn: ...
 
+@type_check_only
 class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
@@ -373,6 +376,7 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def reduceat(self, *args, **kwargs) -> NoReturn: ...
     def outer(self, *args, **kwargs) -> NoReturn: ...
 
+@type_check_only
 class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType, _Signature]):  # type: ignore[misc]
     @property
     def __name__(self) -> _NameType: ...
@@ -460,7 +464,6 @@ class _PyFunc_Kwargs_Nargs4P(TypedDict, total=False):
     dtype: DTypeLike
     subok: bool
     signature: str | _4PTuple[DTypeLike]
-
 
 @type_check_only
 class _PyFunc_Nin1_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: ignore[misc]

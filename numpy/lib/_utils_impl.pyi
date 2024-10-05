@@ -2,6 +2,7 @@ from typing import (
     Any,
     TypeVar,
     Protocol,
+    type_check_only,
 )
 
 from numpy._core.numerictypes import (
@@ -11,6 +12,7 @@ from numpy._core.numerictypes import (
 _T_contra = TypeVar("_T_contra", contravariant=True)
 
 # A file-like object opened in `w` mode
+@type_check_only
 class _SupportsWrite(Protocol[_T_contra]):
     def write(self, s: _T_contra, /) -> Any: ...
 

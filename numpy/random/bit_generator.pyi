@@ -9,6 +9,7 @@ from typing import (
     TypeVar,
     overload,
     Literal,
+    type_check_only,
 )
 
 from numpy import dtype, uint32, uint64
@@ -36,12 +37,14 @@ _DTypeLikeUint64: TypeAlias = (
     | _UInt64Codes
 )
 
+@type_check_only
 class _SeedSeqState(TypedDict):
     entropy: None | int | Sequence[int]
     spawn_key: tuple[int, ...]
     pool_size: int
     n_children_spawned: int
 
+@type_check_only
 class _Interface(NamedTuple):
     state_address: Any
     state: Any
