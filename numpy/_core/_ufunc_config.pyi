@@ -1,10 +1,10 @@
 from collections.abc import Callable
-from typing import Any, Literal, TypedDict
+from typing import Any, Literal, TypeAlias, TypedDict
 
 from numpy import _SupportsWrite
 
-_ErrKind = Literal["ignore", "warn", "raise", "call", "print", "log"]
-_ErrFunc = Callable[[str, int], Any]
+_ErrKind: TypeAlias = Literal["ignore", "warn", "raise", "call", "print", "log"]
+_ErrFunc: TypeAlias = Callable[[str, int], Any]
 
 class _ErrDict(TypedDict):
     divide: _ErrKind

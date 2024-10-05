@@ -1,6 +1,7 @@
 from typing import (
     Literal as L,
     Any,
+    TypeAlias,
     overload,
     TypeVar,
     Protocol,
@@ -27,7 +28,7 @@ class _ModeFunc(Protocol):
         /,
     ) -> None: ...
 
-_ModeKind = L[
+_ModeKind: TypeAlias = L[
     "constant",
     "edge",
     "linear_ramp",

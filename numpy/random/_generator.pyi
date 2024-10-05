@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, overload, TypeVar, Literal
+from typing import Any, TypeAlias, overload, TypeVar, Literal
 
 import numpy as np
 from numpy import (
@@ -47,7 +47,7 @@ from numpy._typing import (
 
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_DTypeLikeFloat32 = (
+_DTypeLikeFloat32: TypeAlias = (
     dtype[float32]
     | _SupportsDType[dtype[float32]]
     | type[float32]
@@ -55,7 +55,7 @@ _DTypeLikeFloat32 = (
     | _SingleCodes
 )
 
-_DTypeLikeFloat64 = (
+_DTypeLikeFloat64: TypeAlias = (
     dtype[float64]
     | _SupportsDType[dtype[float64]]
     | type[float]

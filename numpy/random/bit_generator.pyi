@@ -4,6 +4,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import (
     Any,
     NamedTuple,
+    TypeAlias,
     TypedDict,
     TypeVar,
     overload,
@@ -22,13 +23,13 @@ from numpy._typing import (
 
 _T = TypeVar("_T")
 
-_DTypeLikeUint32 = (
+_DTypeLikeUint32: TypeAlias = (
     dtype[uint32]
     | _SupportsDType[dtype[uint32]]
     | type[uint32]
     | _UInt32Codes
 )
-_DTypeLikeUint64 = (
+_DTypeLikeUint64: TypeAlias = (
     dtype[uint64]
     | _SupportsDType[dtype[uint64]]
     | type[uint64]

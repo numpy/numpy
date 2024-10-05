@@ -4,6 +4,7 @@ from typing import (
     Literal as L,
     Any,
     ParamSpec,
+    TypeAlias,
     TypeVar,
     overload,
     Protocol,
@@ -58,7 +59,7 @@ _Pss = ParamSpec("_Pss")
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_2Tuple = tuple[_T, _T]
+_2Tuple: TypeAlias = tuple[_T, _T]
 
 class _TrimZerosSequence(Protocol[_T_co]):
     def __len__(self) -> int: ...

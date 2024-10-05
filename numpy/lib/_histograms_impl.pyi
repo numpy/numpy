@@ -3,6 +3,7 @@ from typing import (
     Literal as L,
     Any,
     SupportsIndex,
+    TypeAlias,
 )
 
 from numpy._typing import (
@@ -10,7 +11,7 @@ from numpy._typing import (
     ArrayLike,
 )
 
-_BinKind = L[
+_BinKind: TypeAlias = L[
     "stone",
     "auto",
     "doane",

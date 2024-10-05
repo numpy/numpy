@@ -6,6 +6,7 @@ from .legendre import Legendre
 from .hermite import Hermite
 from .hermite_e import HermiteE
 from .laguerre import Laguerre
+from . import polynomial, chebyshev, legendre, hermite, hermite_e, laguerre
 
 __all__ = [
     "set_default_printstyle",
