@@ -1120,7 +1120,14 @@ array_function(PyArrayObject *NPY_UNUSED(self), PyObject *c_args, PyObject *c_kw
             &func, &types, &args, &kwargs)) {
         return NULL;
     }
-
+    if (!PyTuple_CheckExact(args)) {
+        PyErr_SetString(PyExc_TypeError, "args must be a tuple.");
+        return NULL;
+    }
+    if (!PyDict_CheckExact(kwargs)) {
+        PyErr_SetString(PyExc_TypeError, "kwargs must be a dict.");
+        return NULL;
+    }
     types = PySequence_Fast(
         types,
         "types argument to ndarray.__array_function__ must be iterable");

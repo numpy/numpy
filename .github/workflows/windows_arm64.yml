@@ -173,7 +173,7 @@ jobs:
           path: ./*.whl
 
     - name: Setup Mamba
-      uses: mamba-org/setup-micromamba@59b11321ffd9186cd5165633a02c5bba47de6d13
+      uses: mamba-org/setup-micromamba@617811f69075e3fd3ae68ca64220ad065877f246
       with:
         # for installation of anaconda-client, required for upload to
         # anaconda.org
