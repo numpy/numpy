@@ -169,6 +169,28 @@ class CountNonzero(Benchmark):
             np.count_nonzero(self.x, axis=(
                 self.x.ndim - 1, self.x.ndim - 2))
 
+class Nonzero(Benchmark):
+    params = [
+    [bool, np.uint8, np.uint64, np.int64, np.float32, np.float64],
+    [(1_000_000,), (1000, 1000), (100, ), (2, )]
+    ]
+    param_names = ["dtype", "shape"]
+
+    def setup(self, dtype, size):
+        self.x = np.random.randint(0, 3, size=size).astype(dtype)
+        self.x_sparse = np.zeros(size=size).astype(dtype)
+        self.x_sparse[1] =  1
+        self.x_sparse[-1] =  1
+        self.x_dense = np.ones(size=size).astype(dtype)
+
+    def time_nonzero(self, dtype, size):
+        np.nonzero(self.x)
+
+    def time_nonzero_sparse(self, dtype, size):
+        np.nonzero(self.x_sparse)
+
+    def time_nonzero_dense(self, dtype, size):
+        np.nonzero(self.x_dense)
 
 class PackBits(Benchmark):
     param_names = ['dtype']
