@@ -1,0 +1,18 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.1.3 Release Notes
+==========================
+
+NumPy 2.1.3 is a maintenance release that fixes bugs and regressions
+discovered after the 2.1.2 release.
+
+The Python versions supported by this release are 3.10-3.13.
+
+Contributors
+============
+
+
+Pull requests merged
+====================
+
