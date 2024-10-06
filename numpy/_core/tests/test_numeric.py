@@ -1715,7 +1715,7 @@ class TestNonzero:
         zero_indices = np.arange(50)
 
         # test for different dtypes
-        types = [bool, np.int8, np.int16, np.int32, np.int64, np.float32, np.float64]
+        types = [bool, np.float32, np.float64]
         sample = ((2**33)*rng.normal(size=100))
         for dtype in types:
             x = sample.astype(dtype)
@@ -1724,9 +1724,9 @@ class TestNonzero:
             idxs = np.nonzero(x)[0]
             assert_equal(np.array_equal(np.where(x != 0)[0], idxs), True)
 
-        unsigned_types = [np.uint8, np.uint16, np.uint32, np.uint64]
+        integer_types = [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64]
         sample = rng.integers(0, 255, size=100)
-        for dtype in unsigned_types:
+        for dtype in integer_types:
             x = sample.astype(dtype)
             rng.shuffle(zero_indices)
             x[zero_indices] = 0
