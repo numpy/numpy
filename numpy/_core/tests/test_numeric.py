@@ -1710,6 +1710,30 @@ class TestNonzero:
             assert_equal(np.nonzero(c)[0],
                          np.concatenate((np.arange(10 + i, 20 + i), [20 + i*2])))
 
+    def test_nonzero_dtypes(self):
+        rng = np.random.default_rng(seed = 10)
+        zero_indices = np.arange(50)
+        sample = ((2**33)*rng.normal(size=100))
+
+        # test for different dtypes
+        types = [bool, np.int8, np.int16, np.int32, np.int64, np.float32, np.float64]
+        for dtype in types:
+            x = sample.astype(dtype)
+            rng.shuffle(zero_indices)
+            x[zero_indices] = 0
+            idxs = np.nonzero(x)[0]
+            assert_equal(np.array_equal(np.where(x != 0)[0], idxs), True)
+
+        unsigned_types = [np.uint8, np.uint16, np.uint32, np.uint64]
+        sample = rng.integers(0, 255, size=100)
+        for dtype in unsigned_types:
+            x = sample.astype(dtype)
+            rng.shuffle(zero_indices)
+            x[zero_indices] = 0
+            idxs = np.nonzero(x)[0]
+            assert_equal(np.array_equal(np.where(x != 0)[0], idxs), True)
+
+
     def test_return_type(self):
         class C(np.ndarray):
             pass
