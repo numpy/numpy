@@ -179,10 +179,10 @@ class Nonzero(Benchmark):
 
     def setup(self, dtype, size):
         self.x = np.random.randint(0, 3, size=size).astype(dtype)
-        self.x_sparse = np.zeros(size=size).astype(dtype)
+        self.x_sparse = np.zeros(size).astype(dtype)
         self.x_sparse[1] = 1
         self.x_sparse[-1] = 1
-        self.x_dense = np.ones(size=size).astype(dtype)
+        self.x_dense = np.ones(size).astype(dtype)
 
     def time_nonzero(self, dtype, size):
         np.nonzero(self.x)
