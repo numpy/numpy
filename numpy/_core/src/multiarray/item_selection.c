@@ -398,7 +398,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     }
     ni = PyArray_SIZE(indices);
     if ((ni > 0) && (PyArray_Size((PyObject *)self) == 0)) {
-        PyErr_SetString(PyExc_IndexError, 
+        PyErr_SetString(PyExc_IndexError,
                         "cannot replace elements of an empty array");
         goto fail;
     }
@@ -2857,6 +2857,45 @@ PyArray_Nonzero(PyArrayObject *self)
     if (ret == NULL) {
         return NULL;
     }
+    /* nothing to do */
+    if (nonzero_count == 0) {
+        goto finish;
+    }
+
+    int can_be_optimized = 0;
+    // do not add dtype->kind == 'b', since we have another fast path for it
+    if ( dtype->kind == 'i' || dtype->kind == 'u' || dtype->kind == 'f') {
+        if (PyArray_TRIVIALLY_ITERABLE(self)) {
+            can_be_optimized = ndim == 1;
+        }
+    }
+    //printf("PyArray_Nonzero: can_be_optimized %d\n", can_be_optimized);
+
+    PyArrayObject* original_array = self;
+
+    if (PyArray_BASE(self) != NULL) {
+        original_array = (PyArrayObject*) PyArray_BASE(self);
+    }
+
+    if (can_be_optimized && PyArray_ISNOTSWAPPED(self) && PyArray_ISNOTSWAPPED(original_array) ) {
+        // byteorder is not swapped check needed?
+        npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
+        char * data = PyArray_BYTES(self);
+
+        const npy_intp* M_shape = PyArray_SHAPE(self);
+        const npy_intp* M_strides = PyArray_STRIDES(self);
+        int M_type_num = dtype->type_num;
+
+        bool to_jmp = nonzero_idxs_trivial_dispatcher((void*)data, multi_index, M_shape, M_strides, M_type_num,
+                                                      nonzero_count);
+
+        //printf("PyArray_Nonzero: to_jmp %d nonzero_count %d\n", to_jmp, nonzero_count);
+
+        if (to_jmp) {
+            added_count = nonzero_count;
+            goto finish;
+        }
+    }
 
     /* If it's a one-dimensional result, don't use an iterator */
     if (ndim == 1) {
@@ -2865,11 +2904,6 @@ PyArray_Nonzero(PyArrayObject *self)
         npy_intp stride = PyArray_STRIDE(self, 0);
         npy_intp count = PyArray_DIM(self, 0);
         NPY_BEGIN_THREADS_DEF;
-
-        /* nothing to do */
-        if (nonzero_count == 0) {
-            goto finish;
-        }
 
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(count);
