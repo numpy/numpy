@@ -1724,7 +1724,8 @@ class TestNonzero:
             idxs = np.nonzero(x)[0]
             assert_equal(np.array_equal(np.where(x != 0)[0], idxs), True)
 
-        integer_types = [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64]
+        integer_types = [np.int8, np.int16, np.int32, np.int64,
+                         np.uint8, np.uint16, np.uint32, np.uint64]
         sample = rng.integers(0, 255, size=100)
         for dtype in integer_types:
             x = sample.astype(dtype)
