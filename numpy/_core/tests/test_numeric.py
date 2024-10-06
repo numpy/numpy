@@ -1713,10 +1713,10 @@ class TestNonzero:
     def test_nonzero_dtypes(self):
         rng = np.random.default_rng(seed = 10)
         zero_indices = np.arange(50)
-        sample = ((2**33)*rng.normal(size=100))
 
         # test for different dtypes
         types = [bool, np.int8, np.int16, np.int32, np.int64, np.float32, np.float64]
+        sample = ((2**33)*rng.normal(size=100))
         for dtype in types:
             x = sample.astype(dtype)
             rng.shuffle(zero_indices)
