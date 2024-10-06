@@ -13,6 +13,7 @@ from typing import (
     AnyStr,
     ClassVar,
     NoReturn,
+    TypeAlias,
     overload,
     type_check_only,
     TypeVar,
@@ -44,7 +45,7 @@ _FT = TypeVar("_FT", bound=Callable[..., Any])
 
 # Must return a bool or an ndarray/generic type
 # that is supported by `np.logical_and.reduce`
-_ComparisonFunc = Callable[
+_ComparisonFunc: TypeAlias = Callable[
     [NDArray[Any], NDArray[Any]],
     (
         bool
@@ -59,7 +60,7 @@ __all__: list[str]
 class KnownFailureException(Exception): ...
 class IgnoreException(Exception): ...
 
-class clear_and_catch_warnings(warnings.catch_warnings):
+class clear_and_catch_warnings(warnings.catch_warnings[list[warnings.WarningMessage]]):
     class_modules: ClassVar[tuple[types.ModuleType, ...]]
     modules: set[types.ModuleType]
     @overload

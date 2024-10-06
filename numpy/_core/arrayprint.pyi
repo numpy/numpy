@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, Literal, TypedDict, SupportsIndex
+from typing import Any, Literal, TypeAlias, TypedDict, SupportsIndex
 
 # Using a private class is by no means ideal, but it is simply a consequence
 # of a `contextlib.context` returning an instance of aforementioned class
@@ -18,7 +18,7 @@ from numpy import (
 )
 from numpy._typing import NDArray, _CharLike_co, _FloatLike_co
 
-_FloatMode = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
+_FloatMode: TypeAlias = Literal["fixed", "unique", "maxprec", "maxprec_equal"]
 
 class _FormatDict(TypedDict, total=False):
     bool: Callable[[np.bool], str]

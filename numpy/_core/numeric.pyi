@@ -2,6 +2,7 @@ from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Final,
+    TypeAlias,
     overload,
     TypeVar,
     Literal as L,
@@ -61,7 +62,7 @@ _ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
 _SizeType = TypeVar("_SizeType", bound=int)
 _ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 
-_CorrelateMode = L["valid", "same", "full"]
+_CorrelateMode: TypeAlias = L["valid", "same", "full"]
 
 __all__: list[str]
 

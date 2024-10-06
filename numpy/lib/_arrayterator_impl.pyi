@@ -2,6 +2,7 @@ from collections.abc import Generator
 from types import EllipsisType
 from typing import (
     Any,
+    TypeAlias,
     TypeVar,
     overload,
 )
@@ -14,7 +15,7 @@ _Shape = TypeVar("_Shape", bound=_AnyShape)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 
-_Index = (
+_Index: TypeAlias = (
     EllipsisType
     | int
     | slice

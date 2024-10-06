@@ -1,5 +1,6 @@
 from typing import (
     Literal as L,
+    TypeAlias,
     overload,
     Any,
     SupportsInt,
@@ -35,8 +36,8 @@ from numpy._typing import (
 
 _T = TypeVar("_T")
 
-_2Tup = tuple[_T, _T]
-_5Tup = tuple[
+_2Tup: TypeAlias = tuple[_T, _T]
+_5Tup: TypeAlias = tuple[
     _T,
     NDArray[float64],
     NDArray[int32],

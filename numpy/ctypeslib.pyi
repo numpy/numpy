@@ -8,6 +8,7 @@ from collections.abc import Iterable, Sequence
 from typing import (
     Literal as L,
     Any,
+    TypeAlias,
     TypeVar,
     Generic,
     overload,
@@ -72,7 +73,7 @@ _DType = TypeVar("_DType", bound=dtype[Any])
 _DTypeOptional = TypeVar("_DTypeOptional", bound=None | dtype[Any])
 _SCT = TypeVar("_SCT", bound=generic)
 
-_FlagsKind = L[
+_FlagsKind: TypeAlias = L[
     'C_CONTIGUOUS', 'CONTIGUOUS', 'C',
     'F_CONTIGUOUS', 'FORTRAN', 'F',
     'ALIGNED', 'A',

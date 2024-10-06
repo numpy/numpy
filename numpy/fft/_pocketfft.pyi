@@ -1,10 +1,10 @@
 from collections.abc import Sequence
-from typing import Literal as L
+from typing import Literal as L, TypeAlias
 
 from numpy import complex128, float64
 from numpy._typing import ArrayLike, NDArray, _ArrayLikeNumber_co
 
-_NormKind = L[None, "backward", "ortho", "forward"]
+_NormKind: TypeAlias = L[None, "backward", "ortho", "forward"]
 
 __all__: list[str]
 
