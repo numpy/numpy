@@ -13,21 +13,18 @@ from numpy import (
     dtype,
     generic,
     floating,
-    float64,
     complexfloating,
     integer,
 )
 
 from numpy._typing import (
     ArrayLike,
-    DTypeLike,
     NBitBase,
     NDArray,
     _64Bit,
     _SupportsDType,
     _ScalarLike_co,
     _ArrayLike,
-    _DTypeLikeComplex,
 )
 
 __all__ = [

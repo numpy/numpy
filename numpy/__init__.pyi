@@ -20,7 +20,6 @@ from numpy._typing import (
     # Arrays
     ArrayLike,
     NDArray,
-    _ArrayLike,
     _SupportsArray,
     _NestedSequence,
     _FiniteNestedSequence,
@@ -40,7 +39,6 @@ from numpy._typing import (
     DTypeLike,
     _DTypeLike,
     _DTypeLikeVoid,
-    _SupportsDType,
     _VoidDTypeLike,
 
     # Shapes
@@ -195,7 +193,6 @@ from collections.abc import (
 from typing import (
     Literal as L,
     Any,
-    Generator,
     NoReturn,
     SupportsComplex,
     SupportsFloat,
@@ -229,7 +226,6 @@ from numpy import (
     testing,
     typing,
     version,
-    exceptions,
     dtypes,
     rec,
     char,
