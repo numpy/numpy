@@ -8,7 +8,6 @@ from typing import (
     SupportsIndex,
     SupportsInt,
     NamedTuple,
-    Generic,
 )
 
 import numpy as np
@@ -82,7 +81,6 @@ __all__ = [
 
 _T = TypeVar("_T")
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
-_SCT = TypeVar("_SCT", bound=generic, covariant=True)
 _SCT2 = TypeVar("_SCT2", bound=generic, covariant=True)
 
 _2Tuple: TypeAlias = tuple[_T, _T]

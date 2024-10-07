@@ -1,5 +1,4 @@
 import os
-import sys
 import zipfile
 import types
 from re import Pattern
@@ -17,7 +16,6 @@ from typing import (
 from typing_extensions import deprecated
 
 from numpy import (
-    ndarray,
     recarray,
     dtype,
     generic,
