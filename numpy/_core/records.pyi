@@ -35,6 +35,19 @@ from numpy._typing import (
     _NestedSequence,
 )
 
+__all__ = [
+    "record",
+    "recarray",
+    "format_parser",
+    "fromarrays",
+    "fromrecords",
+    "fromstring",
+    "fromfile",
+    "array",
+    "find_duplicate",
+]
+
+_T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 
 _RecArray: TypeAlias = recarray[Any, dtype[_SCT]]
@@ -135,8 +148,6 @@ class format_parser:
         aligned: bool = ...,
         byteorder: None | _ByteOrder = ...,
     ) -> None: ...
-
-__all__: list[str]
 
 @overload
 def fromarrays(
@@ -332,3 +343,5 @@ def array(
     byteorder: None | _ByteOrder = ...,
     copy: bool = ...,
 ) -> _RecArray[record]: ...
+
+def find_duplicate(list: Iterable[_T]) -> list[_T]: ...

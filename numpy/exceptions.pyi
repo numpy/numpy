@@ -1,6 +1,13 @@
 from typing import overload
 
-__all__: list[str]
+__all__ = [
+    "ComplexWarning",
+    "VisibleDeprecationWarning",
+    "ModuleDeprecationWarning",
+    "TooHardError",
+    "AxisError",
+    "DTypePromotionError",
+]
 
 class ComplexWarning(RuntimeWarning): ...
 class ModuleDeprecationWarning(DeprecationWarning): ...
@@ -16,4 +23,3 @@ class AxisError(ValueError, IndexError):
     def __init__(self, axis: str, ndim: None = ..., msg_prefix: None = ...) -> None: ...
     @overload
     def __init__(self, axis: int, ndim: int, msg_prefix: None | str = ...) -> None: ...
-    def __str__(self) -> str: ...

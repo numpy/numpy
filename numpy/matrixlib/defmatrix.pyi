@@ -1,9 +1,10 @@
 from collections.abc import Sequence, Mapping
 from typing import Any
-from numpy import matrix as matrix
+
+from numpy import matrix
 from numpy._typing import ArrayLike, DTypeLike, NDArray
 
-__all__: list[str]
+__all__ = ["matrix", "bmat", "asmatrix"]
 
 def bmat(
     obj: str | Sequence[ArrayLike] | NDArray[Any],

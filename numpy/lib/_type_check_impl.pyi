@@ -30,6 +30,20 @@ from numpy._typing import (
     _DTypeLikeComplex,
 )
 
+__all__ = [
+    "iscomplexobj",
+    "isrealobj",
+    "imag",
+    "iscomplex",
+    "isreal",
+    "nan_to_num",
+    "real",
+    "real_if_close",
+    "typename",
+    "mintypecode",
+    "common_type",
+]
+
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
@@ -45,8 +59,6 @@ class _SupportsReal(Protocol[_T_co]):
 class _SupportsImag(Protocol[_T_co]):
     @property
     def imag(self) -> _T_co: ...
-
-__all__: list[str]
 
 def mintypecode(
     typechars: Iterable[str | ArrayLike],

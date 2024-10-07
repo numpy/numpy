@@ -3,7 +3,7 @@ import subprocess
 from collections.abc import Iterable
 from typing import Literal as L, Any, overload, TypedDict, type_check_only
 
-from numpy._pytesttester import PytestTester
+__all__ = ["run_main", "get_include"]
 
 @type_check_only
 class _F2PyDictBase(TypedDict):
@@ -14,9 +14,6 @@ class _F2PyDictBase(TypedDict):
 class _F2PyDict(_F2PyDictBase, total=False):
     fsrc: list[str]
     ltx: list[str]
-
-__all__: list[str]
-test: PytestTester
 
 def run_main(comline_list: Iterable[str]) -> dict[str, _F2PyDict]: ...
 
