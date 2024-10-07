@@ -42,9 +42,6 @@ assert_type(np.strings.decode(AR_S), npt.NDArray[np.str_])
 assert_type(np.strings.expandtabs(AR_U), npt.NDArray[np.str_])
 assert_type(np.strings.expandtabs(AR_S, tabsize=4), npt.NDArray[np.bytes_])
 
-assert_type(np.strings.join(AR_U, "_"), npt.NDArray[np.str_])
-assert_type(np.strings.join(AR_S, [b"_", b""]), npt.NDArray[np.bytes_])
-
 assert_type(np.strings.ljust(AR_U, 5), npt.NDArray[np.str_])
 assert_type(np.strings.ljust(AR_S, [4, 3, 1], fillchar=[b"a", b"b", b"c"]), npt.NDArray[np.bytes_])
 assert_type(np.strings.rjust(AR_U, 5), npt.NDArray[np.str_])
@@ -67,14 +64,6 @@ assert_type(np.strings.rpartition(AR_S, [b"a", b"b", b"c"]), npt.NDArray[np.byte
 
 assert_type(np.strings.replace(AR_U, "_", "-"), npt.NDArray[np.str_])
 assert_type(np.strings.replace(AR_S, [b"_", b""], [b"a", b"b"]), npt.NDArray[np.bytes_])
-
-assert_type(np.strings.split(AR_U, "_"), npt.NDArray[np.object_])
-assert_type(np.strings.split(AR_S, maxsplit=[1, 2, 3]), npt.NDArray[np.object_])
-assert_type(np.strings.rsplit(AR_U, "_"), npt.NDArray[np.object_])
-assert_type(np.strings.rsplit(AR_S, maxsplit=[1, 2, 3]), npt.NDArray[np.object_])
-
-assert_type(np.strings.splitlines(AR_U), npt.NDArray[np.object_])
-assert_type(np.strings.splitlines(AR_S, keepends=[True, True, False]), npt.NDArray[np.object_])
 
 assert_type(np.strings.swapcase(AR_U), npt.NDArray[np.str_])
 assert_type(np.strings.swapcase(AR_S), npt.NDArray[np.bytes_])

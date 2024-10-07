@@ -13,6 +13,7 @@ from typing import (
     TypeGuard,
     type_check_only
 )
+from typing_extensions import deprecated
 
 from numpy import (
     vectorize as vectorize,
@@ -26,10 +27,10 @@ from numpy import (
     timedelta64,
     datetime64,
     object_,
-    bool as bool_,
+    bool_,
     _OrderKACF,
 )
-
+from numpy._core.multiarray import bincount
 from numpy._typing import (
     NDArray,
     ArrayLike,
@@ -49,9 +50,46 @@ from numpy._typing import (
     _ComplexLike_co,
 )
 
-from numpy._core.multiarray import (
-    bincount as bincount,
-)
+__all__ = [
+    "select",
+    "piecewise",
+    "trim_zeros",
+    "copy",
+    "iterable",
+    "percentile",
+    "diff",
+    "gradient",
+    "angle",
+    "unwrap",
+    "sort_complex",
+    "flip",
+    "rot90",
+    "extract",
+    "place",
+    "vectorize",
+    "asarray_chkfinite",
+    "average",
+    "bincount",
+    "digitize",
+    "cov",
+    "corrcoef",
+    "median",
+    "sinc",
+    "hamming",
+    "hanning",
+    "bartlett",
+    "blackman",
+    "kaiser",
+    "trapezoid",
+    "trapz",
+    "i0",
+    "meshgrid",
+    "delete",
+    "insert",
+    "append",
+    "interp",
+    "quantile",
+]
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -72,8 +110,6 @@ class _TrimZerosSequence(Protocol[_T_co]):
 class _SupportsWriteFlush(Protocol):
     def write(self, s: str, /) -> object: ...
     def flush(self) -> object: ...
-
-__all__: list[str]
 
 @overload
 def rot90(
@@ -734,6 +770,9 @@ def trapezoid(
     floating[Any] | complexfloating[Any, Any] | timedelta64
     | NDArray[floating[Any] | complexfloating[Any, Any] | timedelta64 | object_]
 ): ...
+
+@deprecated("Use 'trapezoid' instead")
+def trapz(y: ArrayLike, x: ArrayLike | None = None, dx: float = 1.0, axis: int = -1) -> generic | NDArray[generic]: ...
 
 def meshgrid(
     *xi: ArrayLike,

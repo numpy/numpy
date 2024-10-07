@@ -20,7 +20,6 @@ from numpy import (
     _ShapeType_co,
     _SupportsBuffer,
 )
-
 from numpy._typing import (
     NDArray,
     _Shape,
@@ -30,8 +29,63 @@ from numpy._typing import (
     _ArrayLikeInt_co as i_co,
     _ArrayLikeBool_co as b_co,
 )
+from numpy._core.multiarray import compare_chararrays
 
-from numpy._core.multiarray import compare_chararrays as compare_chararrays
+__all__ = [
+    "equal",
+    "not_equal",
+    "greater_equal",
+    "less_equal",
+    "greater",
+    "less",
+    "str_len",
+    "add",
+    "multiply",
+    "mod",
+    "capitalize",
+    "center",
+    "count",
+    "decode",
+    "encode",
+    "endswith",
+    "expandtabs",
+    "find",
+    "index",
+    "isalnum",
+    "isalpha",
+    "isdigit",
+    "islower",
+    "isspace",
+    "istitle",
+    "isupper",
+    "join",
+    "ljust",
+    "lower",
+    "lstrip",
+    "partition",
+    "replace",
+    "rfind",
+    "rindex",
+    "rjust",
+    "rpartition",
+    "rsplit",
+    "rstrip",
+    "split",
+    "splitlines",
+    "startswith",
+    "strip",
+    "swapcase",
+    "title",
+    "translate",
+    "upper",
+    "zfill",
+    "isnumeric",
+    "isdecimal",
+    "array",
+    "asarray",
+    "compare_chararrays",
+    "chararray",
+]
 
 _SCT = TypeVar("_SCT", bound=str_ | bytes_)
 _CharDType_co = TypeVar(
@@ -457,7 +511,6 @@ class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     def isnumeric(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
     def isdecimal(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
 
-__all__: list[str]
 
 # Comparison
 @overload

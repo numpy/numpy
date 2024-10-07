@@ -21,7 +21,7 @@ from numpy import (
     complexfloating,
     object_,
 )
-
+from numpy._core.shape_base import vstack as row_stack
 from numpy._typing import (
     ArrayLike,
     NDArray,
@@ -35,7 +35,23 @@ from numpy._typing import (
     _ArrayLikeObject_co,
 )
 
-from numpy._core.shape_base import vstack
+__all__ = [
+    "column_stack",
+    "row_stack",
+    "dstack",
+    "array_split",
+    "split",
+    "hsplit",
+    "vsplit",
+    "dsplit",
+    "apply_over_axes",
+    "expand_dims",
+    "apply_along_axis",
+    "kron",
+    "tile",
+    "take_along_axis",
+    "put_along_axis",
+]
 
 _P = ParamSpec("_P")
 _SCT = TypeVar("_SCT", bound=generic)
@@ -55,9 +71,6 @@ class _ArrayWrap(Protocol):
 class _SupportsArrayWrap(Protocol):
     @property
     def __array_wrap__(self) -> _ArrayWrap: ...
-
-
-__all__: list[str]
 
 def take_along_axis(
     arr: _SCT | NDArray[_SCT],
