@@ -10,9 +10,9 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
 )
 
-_SCT = TypeVar("_SCT", bound=generic)
+__all__ = ["fftshift", "ifftshift", "fftfreq", "rfftfreq"]
 
-__all__: list[str]
+_SCT = TypeVar("_SCT", bound=generic)
 
 @overload
 def fftshift(x: _ArrayLike[_SCT], axes: None | _ShapeLike = ...) -> NDArray[_SCT]: ...

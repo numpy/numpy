@@ -17,6 +17,8 @@ from numpy._typing import (
     _ArrayLike,
 )
 
+__all__ = ["pad"]
+
 _SCT = TypeVar("_SCT", bound=generic)
 
 @type_check_only
@@ -44,7 +46,6 @@ _ModeKind: TypeAlias = L[
     "empty",
 ]
 
-__all__: list[str]
 
 # TODO: In practice each keyword argument is exclusive to one or more
 # specific modes. Consider adding more overloads to express this in the future.

@@ -1,6 +1,6 @@
-from typing import Any, Literal, Final
+from typing import Literal, Final
 
-__all__: list[str]
+__all__: list[str] = []
 
 EXPECTED_KEYS: Final[set[str]]
 MAGIC_PREFIX: Final[bytes]

@@ -10,7 +10,7 @@ from numpy._typing import (
     _FloatLike_co,
 )
 
-__all__: list[str]
+__all__ = ["sqrt", "log", "log2", "logn", "log10", "power", "arccos", "arcsin", "arctanh"]
 
 @overload
 def sqrt(x: _FloatLike_co) -> Any: ...
