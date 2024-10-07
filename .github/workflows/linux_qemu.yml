@@ -108,7 +108,7 @@ jobs:
         sudo apt install -y ninja-build gcc-${TOOLCHAIN_NAME} g++-${TOOLCHAIN_NAME} gfortran-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@v4.0.2
+      uses: actions/cache@v4.1.0
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
