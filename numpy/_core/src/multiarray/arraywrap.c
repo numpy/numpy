@@ -46,7 +46,7 @@ npy_find_array_wrap(
         if (PyArray_CheckExact(obj)) {
             if (priority < NPY_PRIORITY) {
                 Py_XSETREF(wrap, Py_None);
-                priority = 0;
+                priority = NPY_PRIORITY;
             }
         }
         else if (PyArray_IsAnyScalar(obj)) {
@@ -65,9 +65,9 @@ npy_find_array_wrap(
                 continue;
             }
             double curr_priority = PyArray_GetPriority(obj, 0);
-            if (priority < curr_priority
+            if (wrap_type == NULL || priority < curr_priority
                     /* Prefer subclasses `__array_wrap__`: */
-                    || (curr_priority == 0 && wrap == Py_None)) {
+                    || (curr_priority == NPY_PRIORITY && wrap == Py_None)) {
                 Py_XSETREF(wrap, new_wrap);
                 Py_XSETREF(wrap_type, Py_NewRef(Py_TYPE(obj)));
                 priority = curr_priority;
