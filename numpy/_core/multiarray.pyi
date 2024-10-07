@@ -136,10 +136,12 @@ _RollKind: TypeAlias = L[  # `raise` is deliberately excluded
     "modifiedpreceding",
 ]
 
+@type_check_only
 class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
     def __len__(self) -> int: ...
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
 
+@type_check_only
 class _SupportsArray(Protocol[_ArrayType_co]):
     def __array__(self, /) -> _ArrayType_co: ...
 

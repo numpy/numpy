@@ -3,6 +3,7 @@ from typing import (
     Any,
     TypeVar,
     TypedDict,
+    type_check_only,
 )
 
 import numpy as np
@@ -43,6 +44,7 @@ from numpy._typing import DTypeLike
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 
+@type_check_only
 class _TypeCodes(TypedDict):
     Character: L['c']
     Integer: L['bhilqnp']

@@ -8,7 +8,8 @@ from typing import (
     overload,
     Protocol,
     SupportsIndex,
-    Literal
+    Literal,
+    type_check_only
 )
 
 from numpy import (
@@ -38,6 +39,7 @@ _SCT = TypeVar("_SCT", bound=generic)
 
 _RecArray: TypeAlias = recarray[Any, dtype[_SCT]]
 
+@type_check_only
 class _SupportsReadInto(Protocol):
     def seek(self, offset: int, whence: int, /) -> object: ...
     def tell(self, /) -> int: ...

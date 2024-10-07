@@ -1,14 +1,16 @@
 import os
 import subprocess
 from collections.abc import Iterable
-from typing import Literal as L, Any, overload, TypedDict
+from typing import Literal as L, Any, overload, TypedDict, type_check_only
 
 from numpy._pytesttester import PytestTester
 
+@type_check_only
 class _F2PyDictBase(TypedDict):
     csrc: list[str]
     h: list[str]
 
+@type_check_only
 class _F2PyDict(_F2PyDictBase, total=False):
     fsrc: list[str]
     ltx: list[str]

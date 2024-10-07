@@ -7,6 +7,7 @@ from typing import (
     Protocol,
     ParamSpec,
     Concatenate,
+    type_check_only,
 )
 
 import numpy as np
@@ -40,6 +41,7 @@ _P = ParamSpec("_P")
 _SCT = TypeVar("_SCT", bound=generic)
 
 # Signature of `__array_wrap__`
+@type_check_only
 class _ArrayWrap(Protocol):
     def __call__(
         self,
@@ -49,6 +51,7 @@ class _ArrayWrap(Protocol):
         /,
     ) -> Any: ...
 
+@type_check_only
 class _SupportsArrayWrap(Protocol):
     @property
     def __array_wrap__(self) -> _ArrayWrap: ...

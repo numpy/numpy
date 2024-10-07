@@ -5,6 +5,7 @@ from typing import (
     overload,
     TypeVar,
     Protocol,
+    type_check_only,
 )
 
 from numpy import generic
@@ -18,6 +19,7 @@ from numpy._typing import (
 
 _SCT = TypeVar("_SCT", bound=generic)
 
+@type_check_only
 class _ModeFunc(Protocol):
     def __call__(
         self,
