@@ -233,9 +233,11 @@ def vstack(tup, *, dtype=None, casting="same_kind"):
 
     Parameters
     ----------
-    tup : sequence of ndarrays
+    tup : ndarray or sequence of ndarrays
         The arrays must have the same shape along all but the first axis.
-        1-D arrays must have the same length.
+        1-D arrays must have the same length. In the case of a single
+        array_like input, it will be treated a` a sequence of `shape[0]`
+        arrays, each of shape `shape[1:]`.
 
     dtype : str or dtype
         If provided, the destination array will have this dtype. Cannot be
@@ -306,9 +308,11 @@ def hstack(tup, *, dtype=None, casting="same_kind"):
 
     Parameters
     ----------
-    tup : sequence of ndarrays
+    tup : ndarray or sequence of ndarrays
         The arrays must have the same shape along all but the second axis,
-        except 1-D arrays which can be any length.
+        except 1-D arrays which can be any length. In the case of a single
+        array_like input, it will be treated as a sequence of `shape[0]`
+        arrays, each of shape `shape[1:]`.
 
     dtype : str or dtype
         If provided, the destination array will have this dtype. Cannot be
@@ -384,8 +388,10 @@ def stack(arrays, axis=0, out=None, *, dtype=None, casting="same_kind"):
 
     Parameters
     ----------
-    arrays : sequence of array_like
-        Each array must have the same shape.
+    arrays : ndarray or sequence of ndarrays
+        Each array must have the same shape. In the case of a single ndarray
+        input, it will be treated as a sequence of `shape[0]` arrays, each of
+        shape `shape[1:]`.
 
     axis : int, optional
         The axis in the result array along which the input arrays are stacked.
