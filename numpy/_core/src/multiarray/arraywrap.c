@@ -5,6 +5,7 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
+#include <float.h>
 #include <Python.h>
 
 #include "numpy/arrayobject.h"
@@ -30,10 +31,10 @@ npy_find_array_wrap(
         int nin, PyObject *const *inputs,
         PyObject **out_wrap, PyObject **out_wrap_type)
 {
-    PyObject *wrap = NULL;
+    PyObject *wrap = Py_None;
     PyObject *wrap_type = NULL;
 
-    double priority = 0;  /* silence uninitialized warning */
+    double priority = -DBL_MAX;  /* silence uninitialized warning */
 
     /*
      * Iterate through all inputs taking the first one with an __array_wrap__
@@ -43,15 +44,13 @@ npy_find_array_wrap(
     for (int i = 0; i < nin; i++) {
         PyObject *obj = inputs[i];
         if (PyArray_CheckExact(obj)) {
-            if (wrap == NULL || priority < NPY_PRIORITY) {
-                Py_INCREF(Py_None);
+            if (priority < NPY_PRIORITY) {
                 Py_XSETREF(wrap, Py_None);
                 priority = 0;
             }
         }
         else if (PyArray_IsAnyScalar(obj)) {
-            if (wrap == NULL || priority < NPY_SCALAR_PRIORITY) {
-                Py_INCREF(Py_None);
+            if (priority < NPY_SCALAR_PRIORITY) {
                 Py_XSETREF(wrap, Py_None);
                 priority = NPY_SCALAR_PRIORITY;
             }
@@ -66,12 +65,11 @@ npy_find_array_wrap(
                 continue;
             }
             double curr_priority = PyArray_GetPriority(obj, 0);
-            if (wrap == NULL || priority < curr_priority
+            if (priority < curr_priority
                     /* Prefer subclasses `__array_wrap__`: */
                     || (curr_priority == 0 && wrap == Py_None)) {
                 Py_XSETREF(wrap, new_wrap);
-                Py_INCREF(Py_TYPE(obj));
-                Py_XSETREF(wrap_type, (PyObject *)Py_TYPE(obj));
+                Py_XSETREF(wrap_type, Py_NewRef(Py_TYPE(obj)));
                 priority = curr_priority;
             }
             else {
@@ -80,13 +78,8 @@ npy_find_array_wrap(
         }
     }
 
-    if (wrap == NULL) {
-        Py_INCREF(Py_None);
-        wrap = Py_None;
-    }
     if (wrap_type == NULL) {
-        Py_INCREF(&PyArray_Type);
-        wrap_type = (PyObject *)&PyArray_Type;
+        wrap_type = Py_NewRef(&PyArray_Type);
     }
 
     *out_wrap = wrap;
@@ -146,7 +139,7 @@ npy_apply_wrap(
 
     /* If provided, we prefer the actual out objects wrap: */
     if (original_out != NULL && original_out != Py_None) {
-        /* 
+        /*
          * If an original output object was passed, wrapping shouldn't
          * change it.  In particular, it doesn't make sense to convert to
          * scalar.  So replace the passed in wrap and wrap_type.
@@ -186,7 +179,7 @@ npy_apply_wrap(
         Py_XDECREF(new_wrap);
         Py_INCREF(obj);
         if (return_scalar) {
-            /* 
+            /*
              * Use PyArray_Return to convert to scalar when necessary
              * (PyArray_Return actually checks for non-arrays).
              */
@@ -267,7 +260,7 @@ npy_apply_wrap(
         }
     }
 
-    /* 
+    /*
      * Retry without passing context and return_scalar parameters.
      * If that succeeds, we give a DeprecationWarning.
      */
