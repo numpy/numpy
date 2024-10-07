@@ -10,6 +10,8 @@ from typing import (
 from numpy import ndarray, dtype, generic
 from numpy._typing import DTypeLike, NDArray, _Shape as _AnyShape
 
+__all__ = ["Arrayterator"]
+
 # TODO: Rename to ``_ShapeType``
 _Shape = TypeVar("_Shape", bound=_AnyShape)
 _DType = TypeVar("_DType", bound=dtype[Any])
@@ -22,7 +24,6 @@ _Index: TypeAlias = (
     | tuple[EllipsisType | int | slice, ...]
 )
 
-__all__: list[str]
 
 # NOTE: In reality `Arrayterator` does not actually inherit from `ndarray`,
 # but its ``__getattr__` method does wrap around the former and thus has
