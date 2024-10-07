@@ -213,7 +213,7 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
  *       both are `(f4, f4, f8)`.  The cache would need to store also which
  *       output was provided by `dtype=`/`signature=`.
  *
- * @param ufunc
+ * @param ufunc The universal function to be resolved
  * @param op_dtypes The DTypes that are either passed in (defined by an
  *        operand) or defined by the `signature` as also passed in as
  *        `fixed_DTypes`.

@@ -65,8 +65,8 @@ PyArray_GetObjectToGenericCastingImpl(void);
 /**
  * Fetch the casting implementation from one DType to another.
  *
- * @params from
- * @params to
+ * @param from The implementation to cast from
+ * @param to The implementation to cast to
  *
  * @returns A castingimpl (PyArrayDTypeMethod *), None or NULL with an
  *          error set.
@@ -167,8 +167,8 @@ PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 /**
  * Fetch the (bound) casting implementation from one DType to another.
  *
- * @params from
- * @params to
+ * @params from source DType
+ * @params to destination DType
  *
  * @returns A bound casting implementation or None (or NULL for error).
  */
@@ -219,8 +219,8 @@ _get_castingimpl(PyObject *NPY_UNUSED(module), PyObject *args)
  * extending cast-levels if necessary.
  * It is not valid for one of the arguments to be -1 to indicate an error.
  *
- * @param casting1
- * @param casting2
+ * @param casting1 First (left-hand) casting level to compare
+ * @param casting2 Second (right-hand) casting level to compare
  * @return The minimal casting error (can be -1).
  */
 NPY_NO_EXPORT NPY_CASTING
@@ -409,11 +409,13 @@ _get_cast_safety_from_castingimpl(PyArrayMethodObject *castingimpl,
  * implementations fully to have them available for doing the actual cast
  * later.
  *
- * @param from
+ * @param from The descriptor to cast from 
  * @param to The descriptor to cast to (may be NULL)
  * @param to_dtype If `to` is NULL, must pass the to_dtype (otherwise this
  *        is ignored).
- * @param[out] view_offset
+ * @param view_offset If set, the cast can be described by a view with
+ *        this byte offset.  For example, casting "i8" to "i8,"
+ *        (the structured dtype) can be described with `*view_offset = 0`.
  * @return NPY_CASTING or -1 on error or if the cast is not possible.
  */
 NPY_NO_EXPORT NPY_CASTING
@@ -458,7 +460,7 @@ PyArray_GetCastInfo(
  * user would have to guess the string length.)
  *
  * @param casting the requested casting safety.
- * @param from
+ * @param from The descriptor to cast from
  * @param to The descriptor to cast to (may be NULL)
  * @param to_dtype If `to` is NULL, must pass the to_dtype (otherwise this
  *        is ignored).
@@ -793,11 +795,10 @@ npy_casting_to_string(NPY_CASTING casting)
 /**
  * Helper function to set a useful error when casting is not possible.
  *
- * @param src_dtype
- * @param dst_dtype
- * @param casting
- * @param scalar Whether this was a "scalar" cast (includes 0-D array with
- *               PyArray_CanCastArrayTo result).
+ * @param src_dtype The source descriptor to cast from
+ * @param dst_dtype The destination descriptor trying to cast to
+ * @param casting The casting rule that was violated
+ * @param scalar Boolean flag indicating if this was a "scalar" cast.
  */
 NPY_NO_EXPORT void
 npy_set_invalid_cast_error(
@@ -1662,7 +1663,7 @@ PyArray_ResultType(
  * I.e. the given DType could be a string, which then finds the correct
  * string length, given all `descrs`.
  *
- * @param ndescrs number of descriptors to cast and find the common instance.
+ * @param ndescr number of descriptors to cast and find the common instance.
  *        At least one must be passed in.
  * @param descrs The descriptors to work with.
  * @param DType The DType of the desired output descriptor.
@@ -1967,7 +1968,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
  * Private function to add a casting implementation by unwrapping a bound
  * array method.
  *
- * @param meth
+ * @param meth The array method to be unwrapped
  * @return 0 on success -1 on failure.
  */
 NPY_NO_EXPORT int
@@ -2019,7 +2020,7 @@ PyArray_AddCastingImplementation(PyBoundArrayMethodObject *meth)
 /**
  * Add a new casting implementation using a PyArrayMethod_Spec.
  *
- * @param spec
+ * @param spec The specification to use as a source
  * @param private If private, allow slots not publicly exposed.
  * @return 0 on success -1 on failure
  */

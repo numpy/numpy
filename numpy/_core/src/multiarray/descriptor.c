@@ -1409,7 +1409,8 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
  * TODO: This function should eventually receive a deprecation warning and
  *       be removed.
  *
- * @param descr
+ * @param descr descriptor to be checked
+ * @param DType pointer to the DType of the descriptor
  * @return 1 if this is not a concrete dtype instance 0 otherwise
  */
 static int
@@ -1441,9 +1442,9 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
  * both results can be NULL (if the input is).  But it always sets the DType
  * when a descriptor is set.
  *
- * @param dtype
- * @param out_descr
- * @param out_DType
+ * @param dtype Input descriptor to be converted
+ * @param out_descr Output descriptor
+ * @param out_DType DType of the output descriptor
  * @return 0 on success -1 on failure
  */
 NPY_NO_EXPORT int
@@ -1470,7 +1471,7 @@ PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
  * Converter function filling in an npy_dtype_info struct on success.
  *
  * @param obj representing a dtype instance (descriptor) or DType class.
- * @param[out] npy_dtype_info filled with the DType class and dtype/descriptor
+ * @param[out] dt_info npy_dtype_info filled with the DType class and dtype/descriptor
  *         instance.  The class is always set while the instance may be NULL.
  *         On error, both will be NULL.
  * @return 0 on failure and 1 on success (as a converter)
@@ -1522,7 +1523,7 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
  * NULL anyway).
  *
  * @param obj None or obj representing a dtype instance (descr) or DType class.
- * @param[out] npy_dtype_info filled with the DType class and dtype/descriptor
+ * @param[out] dt_info filled with the DType class and dtype/descriptor
  *         instance.  If `obj` is None, is not modified.  Otherwise the class
  *         is always set while the instance may be NULL.
  *         On error, both will be NULL.
