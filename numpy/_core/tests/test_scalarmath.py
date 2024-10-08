@@ -469,6 +469,46 @@ class TestComplexDivision:
                     assert_equal(result.real, ex[0])
                     assert_equal(result.imag, ex[1])
 
+    def test_corner_cases(self):
+        with np.errstate(all="ignore"):
+            num = ['inf+1j']
+            den = ['0.0+1j']
+            res = ['nan-infj']
+
+            # test recover of infs if numerator has infs and denominator
+            # is finite
+            num += ['inf-infj', 'inf+infj', 'nan+infj', 'inf+nanj']
+            den += ['1+0j', '0.0+1j', complex(2**1000, 2**-1000),
+                    complex(2**1000, 2**-1000)]
+            res += ['inf-infj', 'inf-infj', 'inf+infj', 'inf-infj']
+            # test recover of zeros if denominator is infinite
+            num += ['1+1j', '1+1j', '1+1j', '1+1j', 'inf+1j', '1+infj',
+                    'inf+1j']
+            den += ['inf+infj', 'inf-infj', '-inf+infj', '-inf-infj',
+                    'inf+infj', 'inf+infj', '1+infj']
+            res += ['0.0+0j', '0.0+0j', '0.0-0j', '-0.0+0j', 'nan+nanj',
+                    'nan+nanj', 'nan+nanj']
+
+            def assert_strict_equal(x, y):
+                assert_equal(x, y)
+                assert_equal(np.copysign(1., x), np.copysign(1., y))
+
+            for n, d, r1 in zip(num, den, res):
+                n, d, r1 = map(np.complex128, [n, d, r1])
+                r0 = n/d
+                if np.isnan(r1.real):
+                    assert_(np.isnan(r0.real))
+                    if np.isnan(r1.imag):
+                        assert_(np.isnan(r0.imag))
+                    else:
+                        assert_strict_equal(r0.imag, r1.imag)
+                elif np.isnan(r1.imag):
+                    assert_(np.isnan(r0.imag))
+                    assert_strict_equal(r0.real, r1.real)
+                else:
+                    assert_strict_equal(r0.real, r1.real)
+                    assert_strict_equal(r0.imag, r1.imag)
+
 
 class TestConversion:
     def test_int_from_long(self):
