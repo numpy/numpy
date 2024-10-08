@@ -31,10 +31,10 @@ npy_find_array_wrap(
         int nin, PyObject *const *inputs,
         PyObject **out_wrap, PyObject **out_wrap_type)
 {
-    PyObject *wrap = Py_None;
+    PyObject *wrap = NULL;
     PyObject *wrap_type = NULL;
 
-    double priority = -DBL_MAX;  /* silence uninitialized warning */
+    double priority = NPY_PRIORITY;  /* silence uninitialized warning */
 
     /*
      * Iterate through all inputs taking the first one with an __array_wrap__
@@ -65,7 +65,7 @@ npy_find_array_wrap(
                 continue;
             }
             double curr_priority = PyArray_GetPriority(obj, 0);
-            if (wrap_type == NULL || priority < curr_priority
+            if (wrap == NULL || priority < curr_priority
                     /* Prefer subclasses `__array_wrap__`: */
                     || (curr_priority == NPY_PRIORITY && wrap == Py_None)) {
                 Py_XSETREF(wrap, new_wrap);
@@ -78,6 +78,9 @@ npy_find_array_wrap(
         }
     }
 
+    if (wrap == NULL) {
+        wrap = Py_None;
+    }
     if (wrap_type == NULL) {
         wrap_type = Py_NewRef(&PyArray_Type);
     }
