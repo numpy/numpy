@@ -45,13 +45,13 @@ npy_find_array_wrap(
         PyObject *obj = inputs[i];
         if (PyArray_CheckExact(obj)) {
             if (priority < NPY_PRIORITY) {
-                Py_XSETREF(wrap, Py_None);
+                Py_XSETREF(wrap, Py_NewRef(Py_None));
                 priority = NPY_PRIORITY;
             }
         }
         else if (PyArray_IsAnyScalar(obj)) {
             if (priority < NPY_SCALAR_PRIORITY) {
-                Py_XSETREF(wrap, Py_None);
+                Py_XSETREF(wrap, Py_NewRef(Py_None));
                 priority = NPY_SCALAR_PRIORITY;
             }
         }
@@ -79,7 +79,7 @@ npy_find_array_wrap(
     }
 
     if (wrap == NULL) {
-        wrap = Py_None;
+        wrap = Py_NewRef(Py_None);
     }
     if (wrap_type == NULL) {
         wrap_type = Py_NewRef(&PyArray_Type);
