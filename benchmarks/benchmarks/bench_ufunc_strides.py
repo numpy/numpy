@@ -207,7 +207,6 @@ class LogisticRegression(Benchmark):
         for epoch in range(max_epoch):
             z = np.matmul(self.X_train, self.W)
             A = 1 / (1 + np.exp(-z)) # sigmoid(z)
-            loss = -np.mean(self.Y_train * np.log(A) + (1-self.Y_train) * np.log(1-A))
             dz = A - self.Y_train
             dw = (1/self.size) * np.matmul(self.X_train.T, dz)
             self.W = self.W - self.alpha*dw

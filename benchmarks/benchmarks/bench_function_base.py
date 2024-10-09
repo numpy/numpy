@@ -181,7 +181,7 @@ class SortGenerator:
         dtype = np.dtype(dtype)
         try:
             with np.errstate(over="raise"):
-                res = dtype.type(size-1)
+                _res = dtype.type(size-1)
         except (OverflowError, FloatingPointError):
             raise SkipNotImplemented("Cannot construct arange for this size.")
 
@@ -278,10 +278,10 @@ class Partition(Benchmark):
             self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
 
     def time_partition(self, dtype, array_type, k):
-        temp = np.partition(self.arr, k)
+        np.partition(self.arr, k)
 
     def time_argpartition(self, dtype, array_type, k):
-        temp = np.argpartition(self.arr, k)
+        np.argpartition(self.arr, k)
 
 class SortWorst(Benchmark):
     def setup(self):

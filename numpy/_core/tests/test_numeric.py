@@ -2093,7 +2093,7 @@ def _test_array_equal_parametrizations():
     aS1 = np.array(["a"], dtype="S1")
     aS1b = aS1.copy()
     aS1u4 = np.array([("a", 1)], dtype="S1,u4")
-    aS1u4b = aS1u4.copy()
+    _aS1u4b = aS1u4.copy()
 
     yield (a12, a12b, None, True)
     yield (a12, a12, None, True)

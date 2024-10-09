@@ -254,7 +254,7 @@ class _SIMD_INT(_Test_Utility):
 
         data_a = self._data(self._int_max() - self.nlanes)
         data_b = self._data(self._int_min(), reverse=True)
-        vdata_a, vdata_b = self.load(data_a), self.load(data_b)
+        vdata_a, _vdata_b = self.load(data_a), self.load(data_b)
 
         for count in range(self._scalar_size()):
             # load to cast

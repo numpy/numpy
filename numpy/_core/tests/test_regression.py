@@ -2312,7 +2312,7 @@ class TestRegression:
 
             try:
                 hash(val)
-            except TypeError as e:
+            except TypeError:
                 assert_(t.__hash__ is None)
             else:
                 assert_(t.__hash__ is not None)

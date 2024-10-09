@@ -349,7 +349,7 @@ class TestF77CommonBlockReader:
     def test_gh22648(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "gh22648.pyf")
         with contextlib.redirect_stdout(io.StringIO()) as stdout_f2py:
-            mod = crackfortran.crackfortran([str(fpath)])
+            crackfortran.crackfortran([str(fpath)])
         assert "Mismatch" not in stdout_f2py.getvalue()
 
 class TestParamEval:

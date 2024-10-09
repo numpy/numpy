@@ -81,4 +81,4 @@ class TestFromtextfile:
         ))
 
         with pytest.warns(DeprecationWarning):
-            result = np.ma.mrecords.fromtextfile(textfile, delimitor=';')
+            _result = np.ma.mrecords.fromtextfile(textfile, delimitor=';')

@@ -20,12 +20,12 @@ class StringConverterTestCase:
 
     def _check_value_error(self, val):
         pattern = r'\(got {}\)'.format(re.escape(repr(val)))
-        with pytest.raises(ValueError, match=pattern) as exc:
+        with pytest.raises(ValueError, match=pattern):
             self.conv(val)
 
     def _check_conv_assert_warn(self, val, expected):
         if self.warn:
-            with assert_warns(DeprecationWarning) as exc:
+            with assert_warns(DeprecationWarning):
                 assert self.conv(val) == expected
         else:
             assert self.conv(val) == expected

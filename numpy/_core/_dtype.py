@@ -24,7 +24,7 @@ _kind_to_stem = {
 def _kind_name(dtype):
     try:
         return _kind_to_stem[dtype.kind]
-    except KeyError as e:
+    except KeyError:
         raise RuntimeError(
             "internal dtype error, unknown kind {!r}"
             .format(dtype.kind)

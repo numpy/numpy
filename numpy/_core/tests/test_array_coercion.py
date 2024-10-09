@@ -256,7 +256,7 @@ class TestScalarDiscovery:
                 dt1, dt2 = sc1.dtype, sc2.dtype
                 expected_dtype = np.promote_types(dt1, dt2)
                 assert arr.dtype == expected_dtype
-            except TypeError as e:
+            except TypeError:
                 # Will currently always go to object dtype
                 assert arr.dtype == np.dtype("O")
 

@@ -355,7 +355,6 @@ class TestConcatenate:
         a = array([1, 2])
         b = array([3, 4])
         n = [1,2]
-        res = array([1, 2, 3, 4])
         assert_raises(TypeError, operator.concat, a, b)
         assert_raises(TypeError, operator.concat, a, n)
         assert_raises(TypeError, operator.concat, n, a)
