@@ -17,6 +17,7 @@ Original author: Robert Cimrman
 import functools
 import warnings
 from typing import NamedTuple
+from collections import deque
 
 import numpy as np
 from numpy._core import overrides
@@ -138,13 +139,14 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None, *, equal_nan=None):
+                       return_counts=None, axis=None, *, equal_nan=None,
+                       objects="compare"):
     return (ar,)
 
 
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None, *, equal_nan=True):
+           return_counts=False, axis=None, *, equal_nan=True, objects="compare"):
     """
     Find the unique elements of an array.
 
@@ -182,6 +184,14 @@ def unique(ar, return_index=False, return_inverse=False,
 
         .. versionadded:: 1.24
 
+    objects : {'compare', 'different', 'equal', 'compare-no-nan'}, optional
+        Rule for comparing objects. The possible options are to treat all objects
+        as different ('different'), as equal ('equal'), or to compare them with
+        their own comparison implementations (__eq__ and __lt__) ('compare').
+        By default, 'compare' checks first if x != x, in which case x is treated as
+        a nan object. To disable this check, use 'compare-no-nan'.
+        The default is 'compare'.
+
     Returns
     -------
     unique : ndarray
@@ -203,15 +213,15 @@ def unique(ar, return_index=False, return_inverse=False,
 
     Notes
     -----
-    When an axis is specified the subarrays indexed by the axis are sorted.
-    This is done by making the specified axis the first dimension of the array
-    (move the axis to the first dimension to keep the order of the other axes)
-    and then flattening the subarrays in C order. The flattened subarrays are
-    then viewed as a structured type with each element given a label, with the
-    effect that we end up with a 1-D array of structured types that can be
-    treated in the same way as any other 1-D array. The result is that the
-    flattened subarrays are sorted in lexicographic order starting with the
-    first element.
+
+    When an axis is specified the subarrays indexed by the axis are sorted
+    lexicographically using the following rules after the given axis is moved
+    to the first position in the array:
+    For multi-dimensional arrays, the second to last axes are flattened,
+    producing a 2D table in which the first column is the most significant.
+    Then, for structured arrays, the first field is the most significant.
+    Then, for masked arrays, masked elements are considered equal and largest.
+    Finally, the usual order of elements in each non-structured 1D column is used.
 
     .. versionchanged:: 1.21
         Like np.sort, NaN will sort to the end of the values.
@@ -282,104 +292,288 @@ def unique(ar, return_index=False, return_inverse=False,
 
     """
     ar = np.asanyarray(ar)
+    orig_shape = ar.shape
     if axis is None:
-        ret = _unique1d(ar, return_index, return_inverse, return_counts,
-                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None)
-        return _unpack_tuple(ret)
-
-    # axis was specified and not None
-    try:
-        ar = np.moveaxis(ar, axis, 0)
-    except np.exceptions.AxisError:
-        # this removes the "axis1" or "axis2" prefix from the error message
-        raise np.exceptions.AxisError(axis, ar.ndim) from None
-    inverse_shape = [1] * ar.ndim
-    inverse_shape[axis] = ar.shape[0]
-
-    # Must reshape to a contiguous 2D array for this to work...
-    orig_shape, orig_dtype = ar.shape, ar.dtype
-    ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
-    ar = np.ascontiguousarray(ar)
-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
-
-    # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
-    # data type with `m` fields where each field has the data type of `ar`.
-    # In the following, we create the array `consolidated`, which has
-    # shape `(n,)` with data type `dtype`.
-    try:
-        if ar.shape[1] > 0:
-            consolidated = ar.view(dtype)
-        else:
-            # If ar.shape[1] == 0, then dtype will be `np.dtype([])`, which is
-            # a data type with itemsize 0, and the call `ar.view(dtype)` will
-            # fail.  Instead, we'll use `np.empty` to explicitly create the
-            # array with shape `(len(ar),)`.  Because `dtype` in this case has
-            # itemsize 0, the total size of the result is still 0 bytes.
-            consolidated = np.empty(len(ar), dtype=dtype)
-    except TypeError as e:
-        # There's no good way to do this for object arrays, etc...
-        msg = 'The axis argument to unique is not supported for dtype {dt}'
-        raise TypeError(msg.format(dt=ar.dtype)) from e
-
-    def reshape_uniq(uniq):
-        n = len(uniq)
-        uniq = uniq.view(orig_dtype)
-        uniq = uniq.reshape(n, *orig_shape[1:])
-        uniq = np.moveaxis(uniq, 0, axis)
-        return uniq
-
-    output = _unique1d(consolidated, return_index,
-                       return_inverse, return_counts,
-                       equal_nan=equal_nan, inverse_shape=inverse_shape,
-                       axis=axis)
-    output = (reshape_uniq(output[0]),) + output[1:]
-    return _unpack_tuple(output)
-
-
-def _unique1d(ar, return_index=False, return_inverse=False,
-              return_counts=False, *, equal_nan=True, inverse_shape=None,
-              axis=None):
-    """
-    Find the unique elements of an array, ignoring shape.
-    """
-    ar = np.asanyarray(ar).flatten()
-
-    optional_indices = return_index or return_inverse
-
-    if optional_indices:
-        perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
-        aux = ar[perm]
+        ar = ar.flatten()
     else:
-        ar.sort()
-        aux = ar
-    mask = np.empty(aux.shape, dtype=np.bool)
-    mask[:1] = True
-    if (equal_nan and aux.shape[0] > 0 and aux.dtype.kind in "cfmM" and
-            np.isnan(aux[-1])):
-        if aux.dtype.kind == "c":  # for complex all NaNs are considered equivalent
-            aux_firstnan = np.searchsorted(np.isnan(aux), True, side='left')
-        else:
-            aux_firstnan = np.searchsorted(aux, aux[-1], side='left')
-        if aux_firstnan > 0:
-            mask[1:aux_firstnan] = (
-                aux[1:aux_firstnan] != aux[:aux_firstnan - 1])
-        mask[aux_firstnan] = True
-        mask[aux_firstnan + 1:] = False
+        try:
+            ar = np.moveaxis(ar, axis, 0)
+        except np.exceptions.AxisError:
+            # this removes the "axis1" or "axis2" prefix from the error message
+            raise np.exceptions.AxisError(axis, ar.ndim) from None
+    
+    if ar.size == 0:
+        perm = np.arange(len(ar))
+        mask = perm == 0  # True for the first (if any)
     else:
-        mask[1:] = aux[1:] != aux[:-1]
+        # Compute the permutation and mask
+        perm, mask = _lexargsort(ar, equal_nan=equal_nan, objects=objects,
+                                return_is_unique=True)
 
-    ret = (aux[mask],)
+    ar = ar[perm]
+    # Filter unique values using the mask
+    if len(ar):
+        ar = ar[mask]
+    if axis is not None:
+        ar = np.moveaxis(ar, 0, axis)
+
+    # Reconstruction of the output
+    ret = (ar,)
     if return_index:
         ret += (perm[mask],)
     if return_inverse:
         imask = np.cumsum(mask) - 1
         inv_idx = np.empty(mask.shape, dtype=np.intp)
         inv_idx[perm] = imask
-        ret += (inv_idx.reshape(inverse_shape) if axis is None else inv_idx,)
+        if axis is None:
+            inv_idx = inv_idx.reshape(orig_shape)
+        ret += (inv_idx,)
     if return_counts:
         idx = np.concatenate(np.nonzero(mask) + ([mask.size],))
         ret += (np.diff(idx),)
-    return ret
+    return ret[0] if len(ret) == 1 else ret
+
+
+def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=False):
+    """
+    Sort lexicographically the rows of the table that would be obtained by
+    concatenating the provided arrays horizontally.
+    
+    Returns the indices of the sorted rows and optionally a boolean mask indicating
+    the indices that correspond to unique rows.
+    
+    Parameters
+    ----------
+
+    arrays : (first-array, second-array, ...) array_like
+        One or more arrays of the same length (first axis). The arrays can be
+        multi-dimensional, structured, masked, or have dtype=object.
+        
+        The first array is the most significant for sorting.
+        Then, for multi-dimensional arrays, the second to last axes are flattened,
+        producing a 2D table in which the first column is the most significant.
+        Then, for structured arrays, the first field is the most significant.
+        Then, for masked arrays, masked elements are considered equal and largest.
+        Finally, the usual order of elements in each non-structured 1D column is used.
+    
+    equal_nan : bool, optional
+        Whether to treat all nan types as equal or as different elements.
+        This parameter matters both for sorting and for detecting unique elements.
+    
+    objects : {'compare', 'different', 'equal', 'compare-no-nan'}, optional
+        Rule for comparing objects. The possible options are to treat all objects
+        as different ('different'), as equal ('equal'), or to compare them with
+        their own comparison implementations (__eq__ and __lt__) ('compare').
+        By default, 'compare' checks first if x != x, in which case x is treated as
+        a nan object. To disable this check, use 'compare-no-nan'.
+        The default is 'compare'.
+        This parameter matters both for sorting and for detecting unique elements.
+    
+    Returns
+    -------
+    index_array : ndarray of ints
+        Array of indices that sort lexicographically the rows of table.
+        If ``cols = table.T`` where ``table`` is two-dimensional array, then
+        ``table[index_array]`` is sorted lexicographically.
+    
+    is_unique : boolean ndarray, optional
+        Boolean mask with the same shape as `index_array` that indicates what indices
+        correspond to unique rows. Only the first occurrence is marked as `True`.
+        If ``table[index_array]`` is sorted lexicographically, then
+        ``table[index_array[is_unique]]`` contains unique rows.        
+
+    See Also
+    --------
+    unique : Find the unique elements of an array.
+    argsort : Indirect sort.
+    lexsort : Indirect stable sort on multiple keys.
+
+    Notes
+    -----
+
+    This function is similar to the existing np.lexsort(columns[::-1]), but this one
+    - sets precedence from the first column to the last column
+    - supports nans
+    - supports masked arrays (masked elements are considered equal)
+    - supports dtype=object
+    - supports columns with fields, possibly nested
+    - optionally returns a boolean diff mask that detects unique elements
+
+    The parameter `equal_nan` matters for sorting and for detecting unique elements:
+    - If ``equal_nan = False``:
+        For sorting, the order of nan elements follows the documentation of np.sort,
+        e.g. 100+1j < 1+nanj < 3-nanj < nan-3j < nan+nanj. In case of ties, the first
+        occurrence is the leader.
+        Since all nans are treated as different elements, they are all marked as unique.
+    - If ``equal_nan = True``:
+        For sorting, all nan values are considered equal, e.g. 1+nanj=nan-3j, and their
+        order is given by the order in which they appear in the input.
+        Since all nan values are equal, only the first occurrence is marked as unique.
+    
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> a = np.array([('Simpson', 'Homer'), ('Bouvier', 'Marge'), ('Simpson', 'Bart')])
+    >>> idx = _lexargsort(a)
+    >>> a[idx]
+    array([['Bouvier', 'Marge'],
+           ['Simpson', 'Bart'],
+           ['Simpson', 'Homer']], dtype='<U7')
+         
+    Mixed dtypes, strings and numbers:
+
+    >>> country = ['Germany', 'France', 'Germany', 'Colombia']
+    >>> name = ['Lukas', 'Pierre', 'Laura', 'Laura']
+    >>> age = [35, 25, 35, 35]
+    >>> idx1 = _lexargsort(country, name, age)
+    >>> idx2 = _lexargsort(age, name, country)
+    >>> (idx1, idx2)
+    (array([3, 1, 2, 0]), array([1, 3, 2, 0]))
+
+    >>> combined_dtype = [('country', 'U10'), ('name', 'U10'), ('age', int)]
+    >>> structured = np.array([*zip(country, name, age)], dtype=combined_dtype)
+    >>> idx3 = _lexargsort(structured)
+    >>> structured[idx3]
+    array([('Colombia', 'Laura', 35), ('France', 'Pierre', 25),
+           ('Germany', 'Laura', 35), ('Germany', 'Lukas', 35)],
+          dtype=[('country', '<U10'), ('name', '<U10'), ('age', '<i8')])
+       
+    Masked arrays and nan support:
+    
+    >>> a = np.array([complex(np.nan, -1), np.nan, complex(3, np.nan), np.nan])
+    >>> idx1, mask1 = _lexargsort(a, equal_nan=True, return_is_unique=True)
+    >>> idx2, mask2 = _lexargsort(a, equal_nan=False, return_is_unique=True)
+    >>> (idx1[mask1], idx2[mask2])
+    (array([0]), array([2, 0, 1, 3]))
+    >>> a = np.array([(np.nan, 2), (np.nan, 1), (np.nan, 2), (2, 2)])
+    >>> idx1 = _lexargsort(a, equal_nan=True)
+    >>> idx2 = _lexargsort(a, equal_nan=False)
+    >>> (idx1, idx2)
+    (array([3, 1, 0, 2]), array([3, 0, 1, 2]))
+    >>> a = np.ma.array(a, mask=[(0, 1), (0, 1), (0, 0), (0, 0)])
+    >>> idx, mask = _lexargsort(a, equal_nan=True, return_is_unique=True)
+    >>> a[idx[mask]]
+    masked_array(
+      data=[[2.0, 2.0],
+            [nan, 2.0],
+            [nan, --]],
+      mask=[[False, False],
+            [False, False],
+            [False,  True]],
+      fill_value=1e+20)
+    
+    Custom objects (doctest disabled because the function is not exposed to the user
+    and doctest generates a warning with __eq__ and __lt__ methods)
+    
+    >>> class Person:  # doctest: +SKIP
+    ...     def __init__(self, name, age):
+    ...         self.name = name
+    ...         self.age = age
+    ...     def __eq__(self, other):
+    ...         return self.age == other.age and self.name == other.name
+    ...     def __lt__(self, other):
+    ...         return (self.age, self.name) < (other.age, other.name)
+    >>> people = [Person('Lukas', 35), Person('Pierre', 25), Person('Laura', 35)]
+    >>> _lexargsort(people, objects='equal')
+    array([0, 1, 2])
+    >>> _lexargsort(people, objects='compare')
+    array([1, 2, 0])
+    >>> num_children = [1, 2, 2]
+    >>> _lexargsort(num_children, people)
+    array([0, 1, 2])
+    """
+    # Parse input
+    arrays = [np.asanyarray(ar) for ar in arrays]
+    assert len(arrays), "Expected at least one column to detect the number of rows"
+    n = len(arrays[0])
+    assert all(len(ar) == n for ar in arrays), (
+        f"arrays have different lengths: {[len(ar) for ar in arrays]}"
+    )
+
+    def column_provider(arrays):
+        for col in arrays:
+            # col is a (1D) column in all cases except the first two
+            if col.ndim > 1:
+                yield from column_provider(col.reshape(n, -1).T)
+            elif col.dtype.names:
+                yield from column_provider([col[f] for f in col.dtype.names])
+            elif isinstance(col, np.ma.MaskedArray):
+                mask = col.mask
+                col = col.data
+                if mask.all():
+                    continue
+                if mask is not np.ma.nomask:
+                    yield from column_provider([mask])
+                if col.dtype.kind in "cfmMO":
+                    col = np.where(mask, 0, col)
+                else:
+                    col = np.where(mask, col[~mask][0], col)
+                yield from column_provider([col])
+            elif col.dtype.kind in "cfmM":
+                is_nan = np.isnan(col)
+                if equal_nan:
+                    if is_nan.all():
+                        continue
+                    col = np.where(is_nan, col[~is_nan][0], col)
+                yield is_nan
+                yield col
+            elif col.dtype.kind == "O":
+                if objects == "compare":
+                    is_nan = col != col
+                    yield is_nan
+                    yield np.where(is_nan, 0 if equal_nan else np.nan, col)
+                elif objects == "different":
+                    yield np.arange(n)
+                elif objects == "equal":
+                    yield np.zeros(n, dtype=bool)  # needed??
+                elif objects == "compare-no-nan":
+                    yield col
+                else:
+                    raise Exception(f"Unkonwn argument objects='{objects}'")
+            else:
+                yield col
+        return
+
+    perm = np.arange(n)
+    blocks = [(0, n)] if n > 1 else []
+    
+    # Loop invariant: (Conceptual explanation)
+    # C[perm] is sorted and all groups C[perm[start:stop]] of 2 or more equal
+    # consecutuve elements  appear as (start, stop) in the list blocks.
+    # C denotes the horizontal stack of columns consumed so far:
+    # C = np.empty((n, 0), dtype=object)
+    for col in column_provider(arrays):
+        # Sort and partition all blocks using col
+        # C = np.hstack([C, col.astype(object)[:, None]])  # Invariant
+        prev_blocks = blocks
+        blocks = []
+        for start, stop in prev_blocks:
+            idx = np.argsort(col[perm[start:stop]], kind="stable")
+            perm[start:stop] = perm[start:stop][idx]
+            # Find groups of equal elements
+            segment = col[perm[start:stop]]
+            where_diff = np.nonzero(segment[1:] != segment[:-1])[0]
+            where_diff = [start, *(where_diff + (1 + start)), stop]
+            for start, stop in zip(where_diff, where_diff[1:]):
+                if stop - start > 1:
+                    blocks.append((start, stop))
+        # display(C[perm[start:stop]])  # Invariant
+        if not blocks:
+            break
+    
+    for start, stop in blocks:
+        idx = np.argsort(perm[start:stop], kind="stable")
+        perm[start:stop] = perm[start:stop][idx]
+    
+    out = (perm,)
+    if return_is_unique:
+        is_unique = np.ones(n, dtype=bool)
+        for start, stop in blocks:
+            is_unique[start + 1:stop] = False
+        out += (is_unique,)
+    
+    return out[0] if len(out) == 1 else out
 
 
 # Array API set functions

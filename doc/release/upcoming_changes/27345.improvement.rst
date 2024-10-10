@@ -1,0 +1,15 @@
+Enhancement of ``equal_nan`` option in ``np.unique`` for multi-dimensional data
+-------------------------------------------------------------------------------
+fixes gh-23286.
+fixes gh-20873.
+
+This PR affects the ``np.unique`` function when ``equal_nan`` is set to true and when the input is either a multi-dimensional array with given axis (not None) or a structured 1-dimensional array.
+
+Before this PR, the results of the following two expressions are the same:
+```
+np.unique([[0, np.nan], [0, np.nan], [np.nan, 1]], equal_nan=True, axis=0) # Expression 1
+np.unique([[0, np.nan], [0, np.nan], [np.nan, 1]], equal_nan=False, axis=0) # Expression 2
+```
+Their result is ``[[0, np.nan], [0, np.nan], [np.nan, 1]]``, which is the result one would expect only when ``equal_nan`` is ``False``. In other words,  ``equal_nan`` is basically ignored and assumed as ``False`` (but not explicitly in the code) for multi-dimensional arrays and 1-dimensional structured arrays. The same behavior is observed if the arrays are 1-dimensional with structured dtype instead of 2-dimensional.
+
+After this PR, the first expression returns ``[[0, np.nan], [np.nan, 1]]`` while the second returns the old result, which is more meaningful and resolves some exisiting github issues. This behavior matches the semantics of "nans being equal", in the sense that the function is essentially treating the comparison ``(1, np.nan) == (1, np.nan)`` as if it was true. The same good behavior is observed after this PR if the arrays are 1-dimensional with structured dtype instead of 2-dimensional.
