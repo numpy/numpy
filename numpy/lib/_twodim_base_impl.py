@@ -10,7 +10,7 @@ from numpy._core.numeric import (
     asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
     diagonal, nonzero, indices
     )
-from numpy._core.overrides import set_array_function_like_doc, set_module
+from numpy._core.overrides import finalize_array_function_like, set_module
 from numpy._core import overrides
 from numpy._core import iinfo
 from numpy.lib._stride_tricks_impl import broadcast_to
@@ -160,7 +160,7 @@ def flipud(m):
     return m[::-1, ...]
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     """
@@ -373,7 +373,7 @@ def diagflat(v, k=0):
     return conv.wrap(res)
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
