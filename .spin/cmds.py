@@ -92,8 +92,9 @@ def changelog(ctx, token, revision_range):
     help="Build with pre-installed scipy-openblas32 or scipy-openblas64 wheel"
 )
 @click.argument("meson_args", nargs=-1)
+@meson.build_dir_option
 @click.pass_context
-def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=False, quiet=False, *args, **kwargs):
+def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=False, quiet=False, build_dir=None, *args, **kwargs):
     """🔧 Build package with Meson/ninja and install
 
     MESON_ARGS are passed through e.g.:
@@ -135,8 +136,9 @@ def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=
     help=("Number of parallel build jobs."
           "Can be set to `auto` to use all cores.")
 )
+@meson.build_dir_option
 @click.pass_context
-def docs(ctx, sphinx_target, clean, first_build, jobs, *args, **kwargs):
+def docs(ctx, sphinx_target, clean, first_build, jobs, clean_dirs=None, build_dir=None, *args, **kwargs):
     """📖 Build Sphinx documentation
 
     By default, SPHINXOPTS="-W", raising errors on warnings.
@@ -219,8 +221,15 @@ Which tests to run. Can be a module, function, class, or method:
 @click.option(
     '--verbose', '-v', is_flag=True, default=False
 )
+@click.option(
+    "-c",
+    "--coverage",
+    is_flag=True,
+    help="Generate a Python coverage report of executed tests. An HTML copy of the report is written to `build/coverage`.",
+)
+@meson.build_dir_option
 @click.pass_context
-def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
+def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, coverage=False, *args, build_dir=None, **kwargs):
     """🔧 Run tests
 
     PYTEST_ARGS are passed through directly to pytest, e.g.:
@@ -233,6 +242,10 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
      spin test numpy/linalg
      spin test numpy/linalg/tests/test_linalg.py
 
+    To run test modules, functions, classes, or methods:
+
+      spin -t numpy.random
+
     To report the durations of the N slowest tests:
 
       spin test -- --durations=N
@@ -244,9 +257,14 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
      spin test -- -k "geometric and not rgeometric"
 
     By default, spin will run `-m 'not slow'`. To run the full test suite, use
-    `spin test -m full`
+    `spin test -m full`.
 
-    For more, see `pytest --help`.
+    If python-xdist is installed, you can run tests in parallel:
+
+      spin test -j auto
+
+
+    For more pytest options, see `pytest --help`.
     """  # noqa: E501
     if (not pytest_args) and (not tests):
         pytest_args = ('numpy',)
@@ -287,8 +305,9 @@ def test(ctx, pytest_args, markexpr, n_jobs, tests, verbose, *args, **kwargs):
 @click.option(
     '--verbose', '-v', is_flag=True, default=False
 )
+@meson.build_dir_option
 @click.pass_context
-def check_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
+def check_docs(ctx, pytest_args, n_jobs, verbose, *args, build_dir=None, **kwargs):
     """🔧 Run doctests of objects in the public API.
 
     PYTEST_ARGS are passed through directly to pytest, e.g.:
@@ -363,8 +382,9 @@ def check_docs(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
 @click.option(
     '--verbose', '-v', is_flag=True, default=False
 )
+@meson.build_dir_option
 @click.pass_context
-def check_tutorials(ctx, pytest_args, n_jobs, verbose, *args, **kwargs):
+def check_tutorials(ctx, pytest_args, n_jobs, verbose, *args, build_dir=None, **kwargs):
     """🔧 Run doctests of user-facing rst tutorials.
 
     To test all tutorials in the numpy doc/source/user/ directory, use
@@ -556,8 +576,9 @@ def lint(ctx, branch, uncommitted):
     required=False,
     nargs=-1
 )
+@meson.build_dir_option
 @click.pass_context
-def bench(ctx, tests, compare, verbose, quick, commits):
+def bench(ctx, tests, compare, verbose, quick, commits, build_dir=None):
     """🏋 Run benchmarks.
 
     \b
@@ -607,9 +628,9 @@ def bench(ctx, tests, compare, verbose, quick, commits):
             "Invoking `build` prior to running benchmarks:",
             bold=True, fg="bright_green"
         )
-        ctx.invoke(build)
+        ctx.invoke(build, build_dir=build_dir)
 
-        meson._set_pythonpath()
+        meson._set_pythonpath(build_dir)
 
         p = util.run(
             ['python', '-c', 'import numpy as np; print(np.__version__)'],
@@ -649,8 +670,9 @@ def bench(ctx, tests, compare, verbose, quick, commits):
     'ignore_unknown_options': True
 })
 @click.argument("python_args", metavar='', nargs=-1)
+@meson.build_dir_option
 @click.pass_context
-def python(ctx, python_args, *args, **kwargs):
+def python(ctx, python_args, *args, build_dir=None, **kwargs):
     """🐍 Launch Python shell with PYTHONPATH set
 
     OPTIONS are passed through directly to Python, e.g.:
@@ -666,8 +688,9 @@ def python(ctx, python_args, *args, **kwargs):
     'ignore_unknown_options': True
 })
 @click.argument("ipython_args", metavar='', nargs=-1)
+@meson.build_dir_option
 @click.pass_context
-def ipython(ctx, ipython_args):
+def ipython(ctx, ipython_args, build_dir=None):
     """💻 Launch IPython shell with PYTHONPATH set
 
     OPTIONS are passed through directly to IPython, e.g.:
@@ -677,9 +700,9 @@ def ipython(ctx, ipython_args):
     env = os.environ
     env['PYTHONWARNINGS'] = env.get('PYTHONWARNINGS', 'all')
 
-    ctx.invoke(build)
+    ctx.invoke(build, build_dir=build_dir)
 
-    ppath = meson._set_pythonpath()
+    ppath = meson._set_pythonpath(build_dir)
 
     print(f'💻 Launching IPython with PYTHONPATH="{ppath}"')
     preimport = (r"import numpy as np; "
@@ -690,8 +713,9 @@ def ipython(ctx, ipython_args):
 
 
 @click.command(context_settings={"ignore_unknown_options": True})
+@meson.build_dir_option
 @click.pass_context
-def mypy(ctx):
+def mypy(ctx, build_dir=None):
     """🦆 Run Mypy tests for NumPy
     """
     env = os.environ

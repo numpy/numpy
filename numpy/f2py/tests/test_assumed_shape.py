@@ -2,7 +2,7 @@ import os
 import pytest
 import tempfile
 
-from . import util
+from numpy.f2py.tests import util
 
 
 class TestAssumedShapeSumExample(util.F2PyTest):

@@ -3,7 +3,7 @@ import time
 import pytest
 import numpy as np
 from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
-from . import util
+from numpy.f2py.tests import util
 from numpy.f2py import crackfortran
 import textwrap
 import contextlib
