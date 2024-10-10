@@ -6,7 +6,7 @@ import numpy as np
 from setuptools import setup, Extension
 import os
 
-macros = [("NPY_NO_DEPRECATED_API", 0), ("Py_LIMITED_API", "0x03060000")]
+macros = [("Py_LIMITED_API", "0x03070000")]
 
 limited_api = Extension(
     "limited_api",
