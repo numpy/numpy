@@ -9,11 +9,11 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
+#include "numpy/npy_math.h"
 #include "get_attr_string.h"
 
 #include "arraywrap.h"
 #include "npy_static_data.h"
-
 
 /*
  * Find the array wrap or array prepare method that applies to the inputs.
