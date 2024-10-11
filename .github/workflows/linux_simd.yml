@@ -280,7 +280,11 @@ jobs:
         sudo apt --allow-unauthenticated -y install intel-oneapi-compiler-dpcpp-cpp
 
     - name: Build
-      run: CC=icx CXX=icpx spin build -- -Dallow-noblas=true
+      run: |
+        source /opt/intel/oneapi/setvars.sh
+        CFLAGS=-fp-model=strict
+        CXXFLAGS=-fp-model=strict
+        CC=icx CXX=icpx spin build -- -Dallow-noblas=true
 
     - name: Meson Log
       if: always()
