@@ -2037,8 +2037,7 @@ class TestUfunc:
         class ArrayPriorityBase(np.ndarray):
             @classmethod
             def __array_wrap__(cls, array, context=None, return_scalar = False):
-                array.wrap = cls
-                return array
+                return cls
 
         class ArrayPriorityMinus0(ArrayPriorityBase):
             __array_priority__ = 0
@@ -2056,11 +2055,11 @@ class TestUfunc:
         xb = ArrayPriorityMinus1000b(2)
         y = ArrayPriorityMinus2000(2)
 
-        assert np.add(x, y).wrap is ArrayPriorityMinus1000
-        assert np.add(y, x).wrap is ArrayPriorityMinus1000
-        assert np.add(x, xb).wrap is ArrayPriorityMinus1000
-        assert np.add(xb, x).wrap is ArrayPriorityMinus1000b
-        assert np.add(np.zeros(2), ArrayPriorityMinus0(2)).wrap is ArrayPriorityMinus0
+        assert np.add(x, y) is ArrayPriorityMinus1000
+        assert np.add(y, x) is ArrayPriorityMinus1000
+        assert np.add(x, xb) is ArrayPriorityMinus1000
+        assert np.add(xb, x) is ArrayPriorityMinus1000b
+        assert np.add(np.zeros(2), ArrayPriorityMinus0(2)) is ArrayPriorityMinus0
         assert type(np.add(xb, x, np.zeros(2))) is np.ndarray
 
     @pytest.mark.parametrize("a", (
