@@ -660,8 +660,8 @@ npy_new_coercion_cache(
 /**
  * Unlink coercion cache item.
  *
- * @param current
- * @return next coercion cache object (or NULL)
+ * @param current This coercion cache object
+ * @return next Next coercion cache object (or NULL)
  */
 NPY_NO_EXPORT coercion_cache_obj *
 npy_unlink_coercion_cache(coercion_cache_obj *current)
@@ -905,7 +905,7 @@ find_descriptor_from_array(
  * it supports inspecting the elements when the array has object dtype
  * (and the given datatype describes a parametric DType class).
  *
- * @param arr
+ * @param arr The array object.
  * @param dtype NULL or a dtype class
  * @param descr A dtype instance, if the dtype is NULL the dtype class is
  *              found and e.g. "S0" is converted to denote only String.

@@ -263,13 +263,13 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
  *
  * Checks everything but the bounds.
  *
- * @param the array being indexed
- * @param the index object
- * @param index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
- * @param number of indices found
- * @param dimension of the indexing result
- * @param dimension of the fancy/advanced indices part
- * @param whether to allow the boolean special case
+ * @param self the array being indexed
+ * @param index the index object
+ * @param indices index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
+ * @param num number of indices found
+ * @param ndim dimension of the indexing result
+ * @param out_fancy_ndim dimension of the fancy/advanced indices part
+ * @param allow_boolean whether to allow the boolean special case
  *
  * @returns the index_type or -1 on failure and fills the number of indices.
  */
@@ -782,10 +782,10 @@ index_has_memory_overlap(PyArrayObject *self,
  * The caller must ensure that the index is a full integer
  * one.
  *
- * @param Array being indexed
- * @param result pointer
- * @param parsed index information
- * @param number of indices
+ * @param self Array being indexed
+ * @param ptr result pointer
+ * @param indices parsed index information
+ * @param index_num number of indices
  *
  * @return 0 on success -1 on failure
  */
@@ -814,11 +814,12 @@ get_item_pointer(PyArrayObject *self, char **ptr,
  * Ensure_array allows to fetch a safe subspace view for advanced
  * indexing.
  *
- * @param Array being indexed
- * @param resulting array (new reference)
- * @param parsed index information
- * @param number of indices
- * @param Whether result should inherit the type from self
+ * @param self Array being indexed
+ * @param view Resulting array (new reference)
+ * @param indices parsed index information
+ * @param index_num number of indices
+ * @param ensure_array true if result should be a base class array, 
+ *        false if result should inherit type from self
  *
  * @return 0 on success -1 on failure
  */
@@ -2412,10 +2413,10 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
  *    * mit->dimensions: Broadcast dimension of the fancy indices and
  *          the subspace iteration dimension.
  *
- * @param MapIterObject
- * @param The parsed indices object
- * @param Number of indices
- * @param The array that is being iterated
+ * @param mit pointer to the MapIterObject
+ * @param indices The parsed indices object
+ * @param index_num Number of indices
+ * @param arr The array that is being iterated
  *
  * @return 0 on success -1 on failure (broadcasting or too many fancy indices)
  */

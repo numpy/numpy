@@ -1,5 +1,4 @@
-import sys
-from typing import Final, TypeAlias
+from typing import Final
 
 from typing_extensions import LiteralString
 

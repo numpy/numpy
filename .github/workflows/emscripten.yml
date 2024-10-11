@@ -48,12 +48,12 @@ jobs:
           submodules: recursive
           fetch-tags: true
 
-      - uses: pypa/cibuildwheel@f1859528322d7b29d4493ee241a167807661dfb4  # v2.21.2
+      - uses: pypa/cibuildwheel@7940a4c0e76eb2030e473a5f864f291f63ee879b  # v2.21.3
         env:
           CIBW_PLATFORM: pyodide
 
       - name: Upload wheel artifact(s)
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4.4.3
         with:
           name: cp312-pyodide_wasm32
           path: ./wheelhouse/*.whl

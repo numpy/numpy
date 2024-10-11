@@ -1029,7 +1029,7 @@ add_newdoc('numpy._core.multiarray', 'asarray',
 
 add_newdoc('numpy._core.multiarray', 'asanyarray',
     """
-    asanyarray(a, dtype=None, order=None, *, like=None)
+    asanyarray(a, dtype=None, order=None, *, device=None, copy=None, like=None)
 
     Convert the input to an ndarray, but pass ndarray subclasses through.
 

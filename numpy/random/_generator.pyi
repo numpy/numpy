@@ -25,8 +25,6 @@ from numpy._typing import (
     _ArrayLikeInt_co,
     _DoubleCodes,
     _DTypeLikeBool,
-    _DTypeLikeInt,
-    _DTypeLikeUInt,
     _Float32Codes,
     _Float64Codes,
     _FloatLike_co,

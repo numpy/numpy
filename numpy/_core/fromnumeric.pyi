@@ -54,6 +54,53 @@ from numpy._typing import (
     _ScalarLike_co,
 )
 
+__all__ = [
+    "all",
+    "amax",
+    "amin",
+    "any",
+    "argmax",
+    "argmin",
+    "argpartition",
+    "argsort",
+    "around",
+    "choose",
+    "clip",
+    "compress",
+    "cumprod",
+    "cumsum",
+    "cumulative_prod",
+    "cumulative_sum",
+    "diagonal",
+    "mean",
+    "max",
+    "min",
+    "matrix_transpose",
+    "ndim",
+    "nonzero",
+    "partition",
+    "prod",
+    "ptp",
+    "put",
+    "ravel",
+    "repeat",
+    "reshape",
+    "resize",
+    "round",
+    "searchsorted",
+    "shape",
+    "size",
+    "sort",
+    "squeeze",
+    "std",
+    "sum",
+    "swapaxes",
+    "take",
+    "trace",
+    "transpose",
+    "var",
+]
+
 _SCT = TypeVar("_SCT", bound=generic)
 _SCT_uifcO = TypeVar("_SCT_uifcO", bound=number[Any] | object_)
 _ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
@@ -71,8 +118,6 @@ _T = TypeVar("_T")
 _PyArray: TypeAlias = list[_T] | tuple[_T, ...]
 # `int` also covers `bool`
 _PyScalar: TypeAlias = int | float | complex | bytes | str
-
-__all__: list[str]
 
 @overload
 def take(

@@ -7,7 +7,6 @@ from typing import (
     Any,
     TypeAlias,
     overload,
-    TypeAlias,
     TypeVar,
     TypedDict,
     SupportsIndex,
@@ -17,16 +16,24 @@ from typing import (
     ClassVar,
     type_check_only,
 )
-from typing_extensions import Unpack
+from typing_extensions import CapsuleType, Unpack
 
 import numpy as np
 from numpy import (  # type: ignore[attr-defined]
     # Re-exports
-    busdaycalendar as busdaycalendar,
-    broadcast as broadcast,
-    dtype as dtype,
-    ndarray as ndarray,
-    nditer as nditer,
+    busdaycalendar,
+    broadcast,
+    correlate,
+    count_nonzero,
+    dtype,
+    einsum as c_einsum,
+    flatiter,
+    from_dlpack,
+    interp,
+    matmul,
+    ndarray,
+    nditer,
+    vecdot,
 
     # The rest
     ufunc,
@@ -52,6 +59,7 @@ from numpy import (  # type: ignore[attr-defined]
     _NDIterFlagsKind,
     _NDIterOpFlagsKind,
 )
+from numpy.lib._array_utils_impl import normalize_axis_index
 
 from numpy._typing import (
     # Shapes
@@ -90,6 +98,98 @@ from numpy._typing._ufunc import (
     _PyFunc_Nin3P_Nout1,
     _PyFunc_Nin1P_Nout2P,
 )
+
+__all__ = [
+    "_ARRAY_API",
+    "ALLOW_THREADS",
+    "BUFSIZE",
+    "CLIP",
+    "DATETIMEUNITS",
+    "ITEM_HASOBJECT",
+    "ITEM_IS_POINTER",
+    "LIST_PICKLE",
+    "MAXDIMS",
+    "MAY_SHARE_BOUNDS",
+    "MAY_SHARE_EXACT",
+    "NEEDS_INIT",
+    "NEEDS_PYAPI",
+    "RAISE",
+    "USE_GETITEM",
+    "USE_SETITEM",
+    "WRAP",
+    "_flagdict",
+    "from_dlpack",
+    "_place",
+    "_reconstruct",
+    "_vec_string",
+    "_monotonicity",
+    "add_docstring",
+    "arange",
+    "array",
+    "asarray",
+    "asanyarray",
+    "ascontiguousarray",
+    "asfortranarray",
+    "bincount",
+    "broadcast",
+    "busday_count",
+    "busday_offset",
+    "busdaycalendar",
+    "can_cast",
+    "compare_chararrays",
+    "concatenate",
+    "copyto",
+    "correlate",
+    "correlate2",
+    "count_nonzero",
+    "c_einsum",
+    "datetime_as_string",
+    "datetime_data",
+    "dot",
+    "dragon4_positional",
+    "dragon4_scientific",
+    "dtype",
+    "empty",
+    "empty_like",
+    "error",
+    "flagsobj",
+    "flatiter",
+    "format_longfloat",
+    "frombuffer",
+    "fromfile",
+    "fromiter",
+    "fromstring",
+    "get_handler_name",
+    "get_handler_version",
+    "inner",
+    "interp",
+    "interp_complex",
+    "is_busday",
+    "lexsort",
+    "matmul",
+    "vecdot",
+    "may_share_memory",
+    "min_scalar_type",
+    "ndarray",
+    "nditer",
+    "nested_iters",
+    "normalize_axis_index",
+    "packbits",
+    "promote_types",
+    "putmask",
+    "ravel_multi_index",
+    "result_type",
+    "scalar",
+    "set_datetimeparse_function",
+    "set_typeDict",
+    "shares_memory",
+    "typeinfo",
+    "unpackbits",
+    "unravel_index",
+    "vdot",
+    "where",
+    "zeros",
+]
 
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
@@ -136,10 +236,12 @@ _RollKind: TypeAlias = L[  # `raise` is deliberately excluded
     "modifiedpreceding",
 ]
 
+@type_check_only
 class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
     def __len__(self) -> int: ...
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
 
+@type_check_only
 class _SupportsArray(Protocol[_ArrayType_co]):
     def __array__(self, /) -> _ArrayType_co: ...
 
@@ -255,8 +357,34 @@ class _ConstructorEmpty(Protocol):
         **kwargs: Unpack[_KwargsEmpty],
     ) -> NDArray[Any]: ...
 
+error: Final = Exception
 
-__all__: list[str]
+# from ._multiarray_umath
+ITEM_HASOBJECT: Final[L[1]]
+LIST_PICKLE: Final[L[2]]
+ITEM_IS_POINTER: Final[L[4]]
+NEEDS_INIT: Final[L[8]]
+NEEDS_PYAPI: Final[L[16]]
+USE_GETITEM: Final[L[32]]
+USE_SETITEM: Final[L[64]]
+DATETIMEUNITS: Final[CapsuleType]
+_ARRAY_API: Final[CapsuleType]
+_flagdict: Final[dict[str, int]]
+_monotonicity: Final[Callable[..., object]]
+_place: Final[Callable[..., object]]
+_reconstruct: Final[Callable[..., object]]
+_vec_string: Final[Callable[..., object]]
+correlate2: Final[Callable[..., object]]
+dragon4_positional: Final[Callable[..., object]]
+dragon4_scientific: Final[Callable[..., object]]
+interp_complex: Final[Callable[..., object]]
+set_datetimeparse_function: Final[Callable[..., object]]
+def get_handler_name(a: NDArray[Any] = ..., /) -> str | None: ...
+def get_handler_version(a: NDArray[Any] = ..., /) -> int | None: ...
+def format_longfloat(x: np.longdouble, precision: int) -> str: ...
+def scalar(dtype: _DType, object: bytes | object = ...) -> ndarray[tuple[()], _DType]: ...
+def set_typeDict(dict_: dict[str, np.dtype[Any]], /) -> None: ...
+typeinfo: Final[dict[str, np.dtype[np.generic]]]
 
 ALLOW_THREADS: Final[int]  # 0 or 1 (system-specific)
 BUFSIZE: L[8192]

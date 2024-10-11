@@ -1123,7 +1123,7 @@ PyArray_IntpFromPyIntConverter(PyObject *o, npy_intp *val)
  * @param  seq      A sequence created using `PySequence_Fast`.
  * @param  vals     Array used to store dimensions (must be large enough to
  *                      hold `maxvals` values).
- * @param  max_vals Maximum number of dimensions that can be written into `vals`.
+ * @param  maxvals  Maximum number of dimensions that can be written into `vals`.
  * @return          Number of dimensions or -1 if an error occurred.
  *
  * .. note::
