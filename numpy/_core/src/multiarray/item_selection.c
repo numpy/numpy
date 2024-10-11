@@ -2790,6 +2790,57 @@ finish:
     return nonzero_count;
 }
 
+static inline void nonzero_idxs_1D_bool(npy_intp count, npy_intp nonzero_count, char *data, npy_intp stride, npy_intp* multi_index)
+{
+    /*
+    * use fast memchr variant for sparse data, see gh-4370
+    * the fast bool count is followed by this sparse path is faster
+    * than combining the two loops, even for larger arrays
+    */
+    if (((double)nonzero_count / count) <= 0.1) {
+        npy_intp subsize;
+        npy_intp j = 0;
+        while (1) {
+            npy_memchr(data + j * stride, 0, stride, count - j,
+                        &subsize, 1);
+            j += subsize;
+            if (j >= count) {
+                break;
+            }
+            *multi_index++ = j++;
+        }
+    }
+    /*
+        * Fallback to a branchless strategy to avoid branch misprediction
+        * stalls that are very expensive on most modern processors.
+        */
+    else {
+        npy_intp *multi_index_end = multi_index + nonzero_count;
+        npy_intp j = 0;
+
+        /* Manually unroll for GCC and maybe other compilers */
+        while (multi_index + 4 < multi_index_end) {
+            *multi_index = j;
+            multi_index += data[0] != 0;
+            *multi_index = j + 1;
+            multi_index += data[stride] != 0;
+            *multi_index = j + 2;
+            multi_index += data[stride * 2] != 0;
+            *multi_index = j + 3;
+            multi_index += data[stride * 3] != 0;
+            data += stride * 4;
+            j += 4;
+        }
+
+        while (multi_index < multi_index_end) {
+            *multi_index = j;
+            multi_index += *data != 0;
+            data += stride;
+            ++j;
+        }
+    }
+}
+
 /*NUMPY_API
  * Nonzero
  *
@@ -2798,10 +2849,11 @@ finish:
 NPY_NO_EXPORT PyObject *
 PyArray_Nonzero(PyArrayObject *self)
 {
-    int i, ndim = PyArray_NDIM(self);
+    int ndim = PyArray_NDIM(self);
+    int is_bool = PyArray_ISBOOL(self);
     if (ndim == 0) {
         char const* msg;
-        if (PyArray_ISBOOL(self)) {
+        if (is_bool) {
             msg =
                 "Calling nonzero on 0d arrays is not allowed. "
                 "Use np.atleast_1d(scalar).nonzero() instead. "
@@ -2817,16 +2869,13 @@ PyArray_Nonzero(PyArrayObject *self)
     }
 
     PyArrayObject *ret = NULL;
-    PyObject *ret_tuple;
     npy_intp ret_dims[2];
 
     PyArray_NonzeroFunc *nonzero;
     PyArray_Descr *dtype;
 
-    npy_intp nonzero_count;
     npy_intp added_count = 0;
     int needs_api;
-    int is_bool;
 
     NpyIter *iter;
     NpyIter_IterNextFunc *iternext;
@@ -2840,12 +2889,10 @@ PyArray_Nonzero(PyArrayObject *self)
     /*
      * First count the number of non-zeros in 'self'.
      */
-    nonzero_count = PyArray_CountNonzero(self);
+    npy_intp nonzero_count = PyArray_CountNonzero(self);
     if (nonzero_count < 0) {
         return NULL;
     }
-
-    is_bool = PyArray_ISBOOL(self);
 
     /* Allocate the result as a 2D array */
     ret_dims[0] = nonzero_count;
@@ -2862,36 +2909,28 @@ PyArray_Nonzero(PyArrayObject *self)
         goto finish;
     }
 
-    int can_be_optimized = 0;
-    // do not add dtype->kind == 'b', since we have another fast path for it
-    if ( dtype->kind == 'i' || dtype->kind == 'u' || dtype->kind == 'f') {
-        if (PyArray_TRIVIALLY_ITERABLE(self)) {
-            can_be_optimized = ndim == 1;
-        }
-    }
-    //printf("PyArray_Nonzero: can_be_optimized %d\n", can_be_optimized);
-
     PyArrayObject* original_array = self;
-
     if (PyArray_BASE(self) != NULL) {
         original_array = (PyArrayObject*) PyArray_BASE(self);
     }
+    int bytes_not_swapped = PyArray_ISNOTSWAPPED(self) && PyArray_ISNOTSWAPPED(original_array);
 
-    if (can_be_optimized && PyArray_ISNOTSWAPPED(self) && PyArray_ISNOTSWAPPED(original_array) ) {
-        // byteorder is not swapped check needed?
+    // do not add ndim=1, dtype->kind == 'b', since we have a separate fast path for it
+    int optimized_count = PyArray_TRIVIALLY_ITERABLE(self) && ! (ndim == 1 && dtype->kind=='b') && bytes_not_swapped;
+    if (optimized_count ) {
         npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
         char * data = PyArray_BYTES(self);
-
+        const npy_intp M_dim = PyArray_NDIM(self);
         const npy_intp* M_shape = PyArray_SHAPE(self);
         const npy_intp* M_strides = PyArray_STRIDES(self);
         int M_type_num = dtype->type_num;
 
-        bool to_jmp = nonzero_idxs_trivial_dispatcher((void*)data, multi_index, M_shape, M_strides, M_type_num,
-                                                      nonzero_count);
+        bool executed = nonzero_idxs_dispatcher((void*)data, multi_index, M_dim,
+                                        M_shape, M_strides, M_type_num, nonzero_count);
 
-        //printf("PyArray_Nonzero: to_jmp %d nonzero_count %d\n", to_jmp, nonzero_count);
+        printf("PyArray_Nonzero: optimized_count executed %d nonzero_count %d\n", executed, nonzero_count);
 
-        if (to_jmp) {
+        if (executed) {
             added_count = nonzero_count;
             goto finish;
         }
@@ -2911,53 +2950,7 @@ PyArray_Nonzero(PyArrayObject *self)
 
         /* avoid function call for bool */
         if (is_bool) {
-            /*
-             * use fast memchr variant for sparse data, see gh-4370
-             * the fast bool count is followed by this sparse path is faster
-             * than combining the two loops, even for larger arrays
-             */
-            if (((double)nonzero_count / count) <= 0.1) {
-                npy_intp subsize;
-                npy_intp j = 0;
-                while (1) {
-                    npy_memchr(data + j * stride, 0, stride, count - j,
-                               &subsize, 1);
-                    j += subsize;
-                    if (j >= count) {
-                        break;
-                    }
-                    *multi_index++ = j++;
-                }
-            }
-            /*
-             * Fallback to a branchless strategy to avoid branch misprediction
-             * stalls that are very expensive on most modern processors.
-             */
-            else {
-                npy_intp *multi_index_end = multi_index + nonzero_count;
-                npy_intp j = 0;
-
-                /* Manually unroll for GCC and maybe other compilers */
-                while (multi_index + 4 < multi_index_end) {
-                    *multi_index = j;
-                    multi_index += data[0] != 0;
-                    *multi_index = j + 1;
-                    multi_index += data[stride] != 0;
-                    *multi_index = j + 2;
-                    multi_index += data[stride * 2] != 0;
-                    *multi_index = j + 3;
-                    multi_index += data[stride * 3] != 0;
-                    data += stride * 4;
-                    j += 4;
-                }
-
-                while (multi_index < multi_index_end) {
-                    *multi_index = j;
-                    multi_index += *data != 0;
-                    data += stride;
-                    ++j;
-                }
-            }
+            nonzero_idxs_1D_bool(count, nonzero_count, data, stride, multi_index);
         }
         else {
             npy_intp j;
@@ -3065,14 +3058,14 @@ finish:
         return NULL;
     }
 
-    ret_tuple = PyTuple_New(ndim);
+    PyObject *ret_tuple = PyTuple_New(ndim);
     if (ret_tuple == NULL) {
         Py_DECREF(ret);
         return NULL;
     }
 
     /* Create views into ret, one for each dimension */
-    for (i = 0; i < ndim; ++i) {
+    for (int i = 0; i < ndim; ++i) {
         npy_intp stride = ndim * NPY_SIZEOF_INTP;
         /* the result is an empty array, the view must point to valid memory */
         npy_intp data_offset = nonzero_count == 0 ? 0 : i * NPY_SIZEOF_INTP;

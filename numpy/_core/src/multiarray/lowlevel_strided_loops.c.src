@@ -12,6 +12,7 @@
 #include <Python.h>
 
 #include <stdbool.h>
+#include <assert.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -1901,30 +1902,86 @@ void nonzero_idxs_trivial_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp*
         ++a;
     }
     //printf("nonzero_idxs_trivial_@name@: added_count %d, nonzero_count %d stride %d\n", added_count, nonzero_count, stride);
+}
+#define ptr_assignment1(ptr1, val1, stride1) *ptr1 = val1; ptr1 += stride1; 
 
+#define loop_ptr_assignment(start, end, ptr_assignment) \
+    for (npy_intp i=start; i<end; ++i) { \
+        ptr_assignment \
+    }
+void nonzero_idxs_2D_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) { 
+    npy_intp idxs_stride = 2; 
+    npy_intp size_1 = shape[1]; 
+    npy_intp stride_1 = strides[1]; 
+    npy_intp* idxs_0 = idxs;
+    npy_intp* idxs_1 = idxs + 1;    
+    npy_intp added_count = 0; 
+    npy_intp a = 0; 
+    while (added_count < nonzero_count) { 
+        npy_intp old_added_count = added_count; 
+        npy_intp b = 0;
+        while (added_count < nonzero_count && b<size_1) { 
+            *idxs_1 = b; 
+            npy_uintp to_increment = (npy_uintp) ((bool) *data); 
+            idxs_1 += (idxs_stride & (-to_increment)); 
+            added_count += to_increment; 
+            data = (@dtype@ *) (((char *) data) + stride_1); 
+            ++b;
+        } 
+        for (npy_intp i=0; i<added_count - old_added_count; ++i) {
+            *idxs_0 = a;
+            idxs_0 += idxs_stride;
+        }
+        ++a;
+    }
 }
 
 /**end repeat**/
 
-bool nonzero_idxs_trivial_dispatcher(void * data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, int dtype, npy_intp nonzero_count) { 
+bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int dim, const npy_intp* shape, const npy_intp* strides, int dtype, npy_intp nonzero_count)
+{ 
 
-    switch(dtype) {
-        /**begin repeat
-         *
-         * #dtype = npy_bool, npy_byte, npy_byte, npy_uint16, npy_int16, npy_uint32, npy_int32, npy_uint64, npy_int64, npy_float, npy_double#
-         * #dtypeID = NPY_BOOL, NPY_UINT8, NPY_INT8, NPY_UINT16, NPY_INT16, NPY_UINT32, NPY_INT32, NPY_UINT64, NPY_INT64, NPY_FLOAT32, NPY_FLOAT64#
-         * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
-         */
+    assert(dim==1 || dim == 2);
+    if (dim==1) {
+        switch(dtype) {
+            /**begin repeat
+            *
+            * #dtype = npy_bool, npy_byte, npy_byte, npy_uint16, npy_int16, npy_uint32, npy_int32, npy_uint64, npy_int64, npy_float, npy_double#
+            * #dtypeID = NPY_BOOL, NPY_UINT8, NPY_INT8, NPY_UINT16, NPY_INT16, NPY_UINT32, NPY_INT32, NPY_UINT64, NPY_INT64, NPY_FLOAT32, NPY_FLOAT64#
+            * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
+            */
 
-        case @dtypeID@:
-        {
-            @dtype@ * data_ptr = (@dtype@ *) data;
-            nonzero_idxs_trivial_@name@(data_ptr, idxs, shape, strides, nonzero_count);
-            return true;
+            case @dtypeID@:
+            {
+                @dtype@ * data_ptr = (@dtype@ *) data;
+                nonzero_idxs_trivial_@name@(data_ptr, idxs, shape, strides, nonzero_count);
+                return true;
+            }
+
+            /**end repeat**/
         }
-
-        /**end repeat**/
     }
+    if (dim==2) {
+        switch(dtype) {
+            /**begin repeat
+            *
+            * #dtype = npy_bool, npy_byte, npy_byte, npy_uint16, npy_int16, npy_uint32, npy_int32, npy_uint64, npy_int64, npy_float, npy_double#
+            * #dtypeID = NPY_BOOL, NPY_UINT8, NPY_INT8, NPY_UINT16, NPY_INT16, NPY_UINT32, NPY_INT32, NPY_UINT64, NPY_INT64, NPY_FLOAT32, NPY_FLOAT64#
+            * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
+            */
+
+            case @dtypeID@:
+            {
+                @dtype@ * data_ptr = (@dtype@ *) data;
+                nonzero_idxs_2D_@name@(data_ptr, idxs, shape, strides, nonzero_count);
+                return true;
+            }
+
+            /**end repeat**/
+        }
+    }
+    printf("nonzero_idxs_dispatcher: return false %d\n");
+
     return false;
 }
 

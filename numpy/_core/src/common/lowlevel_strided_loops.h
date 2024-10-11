@@ -788,7 +788,7 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
                     stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2); \
                 }
 
-bool nonzero_idxs_trivial_dispatcher(void * data, npy_intp* idxs, const npy_intp* shape,
+bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int dim, const npy_intp* shape,
                         const npy_intp* strides, int dtype, npy_intp nonzero_count);
 
 
