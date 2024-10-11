@@ -5,7 +5,6 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
-#include <float.h>
 #include <Python.h>
 
 #include "numpy/arrayobject.h"
@@ -34,7 +33,7 @@ npy_find_array_wrap(
     PyObject *wrap = NULL;
     PyObject *wrap_type = NULL;
 
-    double priority = -DBL_MAX;  /* silence uninitialized warning */
+    double priority = -NPY_INFINITY;  /* silence uninitialized warning */
 
     /*
      * Iterate through all inputs taking the first one with an __array_wrap__
