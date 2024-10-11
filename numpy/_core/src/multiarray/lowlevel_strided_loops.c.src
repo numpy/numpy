@@ -1901,14 +1901,8 @@ void nonzero_idxs_trivial_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp*
         data = (@dtype@ *) (((char*) data) + stride);
         ++a;
     }
-    //printf("nonzero_idxs_trivial_@name@: added_count %d, nonzero_count %d stride %d\n", added_count, nonzero_count, stride);
 }
-#define ptr_assignment1(ptr1, val1, stride1) *ptr1 = val1; ptr1 += stride1; 
 
-#define loop_ptr_assignment(start, end, ptr_assignment) \
-    for (npy_intp i=start; i<end; ++i) { \
-        ptr_assignment \
-    }
 void nonzero_idxs_2D_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) { 
     npy_intp idxs_stride = 2; 
     npy_intp size_1 = shape[1]; 

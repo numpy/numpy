@@ -2868,23 +2868,11 @@ PyArray_Nonzero(PyArrayObject *self)
         return NULL;
     }
 
-    PyArrayObject *ret = NULL;
-    npy_intp ret_dims[2];
-
-    PyArray_NonzeroFunc *nonzero;
-    PyArray_Descr *dtype;
-
     npy_intp added_count = 0;
-    int needs_api;
 
-    NpyIter *iter;
-    NpyIter_IterNextFunc *iternext;
-    NpyIter_GetMultiIndexFunc *get_multi_index;
-    char **dataptr;
-
-    dtype = PyArray_DESCR(self);
-    nonzero = PyDataType_GetArrFuncs(dtype)->nonzero;
-    needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
+    PyArray_Descr *dtype = PyArray_DESCR(self);
+    PyArray_NonzeroFunc *nonzero = PyDataType_GetArrFuncs(dtype)->nonzero;
+    int needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
 
     /*
      * First count the number of non-zeros in 'self'.
@@ -2895,6 +2883,8 @@ PyArray_Nonzero(PyArrayObject *self)
     }
 
     /* Allocate the result as a 2D array */
+    PyArrayObject *ret = NULL;
+    npy_intp ret_dims[2];
     ret_dims[0] = nonzero_count;
     ret_dims[1] = ndim;
     ret = (PyArrayObject *)PyArray_NewFromDescr(
@@ -2927,8 +2917,6 @@ PyArray_Nonzero(PyArrayObject *self)
 
         bool executed = nonzero_idxs_dispatcher((void*)data, multi_index, M_dim,
                                         M_shape, M_strides, M_type_num, nonzero_count);
-
-        //printf("PyArray_Nonzero: optimized_count executed %d nonzero_count %d\n", executed, nonzero_count);
 
         if (executed) {
             added_count = nonzero_count;
@@ -2976,7 +2964,7 @@ PyArray_Nonzero(PyArrayObject *self)
     /*
      * Build an iterator tracking a multi-index, in C order.
      */
-    iter = NpyIter_New(self, NPY_ITER_READONLY |
+    NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
                              NPY_ITER_MULTI_INDEX |
                              NPY_ITER_ZEROSIZE_OK |
                              NPY_ITER_REFS_OK,
@@ -2992,13 +2980,13 @@ PyArray_Nonzero(PyArrayObject *self)
         npy_intp * multi_index;
         NPY_BEGIN_THREADS_DEF;
         /* Get the pointers for inner loop iteration */
-        iternext = NpyIter_GetIterNext(iter, NULL);
+        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
             NpyIter_Deallocate(iter);
             Py_DECREF(ret);
             return NULL;
         }
-        get_multi_index = NpyIter_GetGetMultiIndex(iter, NULL);
+        NpyIter_GetMultiIndexFunc *get_multi_index = NpyIter_GetGetMultiIndex(iter, NULL);
         if (get_multi_index == NULL) {
             NpyIter_Deallocate(iter);
             Py_DECREF(ret);
@@ -3009,7 +2997,7 @@ PyArray_Nonzero(PyArrayObject *self)
 
         NPY_BEGIN_THREADS_NDITER(iter);
 
-        dataptr = NpyIter_GetDataPtrArray(iter);
+        char **dataptr = NpyIter_GetDataPtrArray(iter);
 
         multi_index = (npy_intp *)PyArray_DATA(ret);
 
