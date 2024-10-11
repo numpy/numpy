@@ -2033,6 +2033,36 @@ class TestUfunc:
         assert_(MyThing.rmul_count == 1, MyThing.rmul_count)
         assert_(MyThing.getitem_count <= 2, MyThing.getitem_count)
 
+    def test_array_wrap_array_priority(self):
+        class ArrayPriorityBase(np.ndarray):
+            @classmethod
+            def __array_wrap__(cls, array, context=None, return_scalar = False):
+                array.wrap = cls
+                return array
+
+        class ArrayPriorityMinus0(ArrayPriorityBase):
+            __array_priority__ = 0
+
+        class ArrayPriorityMinus1000(ArrayPriorityBase):
+            __array_priority__ = -1000
+
+        class ArrayPriorityMinus1000b(ArrayPriorityBase):
+            __array_priority__ = -1000
+
+        class ArrayPriorityMinus2000(ArrayPriorityBase):
+            __array_priority__ = -2000
+
+        x = ArrayPriorityMinus1000(2)
+        xb = ArrayPriorityMinus1000b(2)
+        y = ArrayPriorityMinus2000(2)
+
+        assert np.add(x, y).wrap is ArrayPriorityMinus1000
+        assert np.add(y, x).wrap is ArrayPriorityMinus1000
+        assert np.add(x, xb).wrap is ArrayPriorityMinus1000
+        assert np.add(xb, x).wrap is ArrayPriorityMinus1000b
+        assert np.add(np.zeros(2), ArrayPriorityMinus0(2)).wrap is ArrayPriorityMinus0
+        assert type(np.add(xb, x, np.zeros(2))) is np.ndarray
+
     @pytest.mark.parametrize("a", (
                              np.arange(10, dtype=int),
                              np.arange(10, dtype=_rational_tests.rational),
