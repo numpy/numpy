@@ -1938,11 +1938,10 @@ void nonzero_idxs_2D_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shap
 
 /**end repeat**/
 
-bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int dim, const npy_intp* shape, const npy_intp* strides, int dtype, npy_intp nonzero_count)
+bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int ndim, const npy_intp* shape, const npy_intp* strides, int dtype, npy_intp nonzero_count)
 { 
 
-    assert(dim==1 || dim == 2);
-    if (dim==1) {
+    if (ndim==1) {
         switch(dtype) {
             /**begin repeat
             *
@@ -1961,7 +1960,7 @@ bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int dim, const npy_int
             /**end repeat**/
         }
     }
-    if (dim==2) {
+    if (ndim==2) {
         switch(dtype) {
             /**begin repeat
             *
@@ -1980,7 +1979,6 @@ bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int dim, const npy_int
             /**end repeat**/
         }
     }
-    printf("nonzero_idxs_dispatcher: return false %d\n");
 
     return false;
 }

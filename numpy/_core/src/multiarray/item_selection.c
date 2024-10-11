@@ -2928,7 +2928,7 @@ PyArray_Nonzero(PyArrayObject *self)
         bool executed = nonzero_idxs_dispatcher((void*)data, multi_index, M_dim,
                                         M_shape, M_strides, M_type_num, nonzero_count);
 
-        printf("PyArray_Nonzero: optimized_count executed %d nonzero_count %d\n", executed, nonzero_count);
+        //printf("PyArray_Nonzero: optimized_count executed %d nonzero_count %d\n", executed, nonzero_count);
 
         if (executed) {
             added_count = nonzero_count;
