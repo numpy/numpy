@@ -1301,7 +1301,8 @@ def ediff1d(arr, to_end=None, to_begin=None):
     return ed
 
 
-def unique(ar1, return_index=False, return_inverse=False):
+def unique(ar, return_index=False, return_inverse=False,
+           return_counts=False, axis=None, *, equal_nan=True):
     """
     Finds the unique elements of an array.
 
@@ -1339,16 +1340,22 @@ def unique(ar1, return_index=False, return_inverse=False):
                 mask=[False, False, False,  True],
         fill_value=999999), array([0, 1, 4, 2]), array([0, 1, 3, 1, 2]))
     """
-    output = np.unique(ar1,
-                       return_index=return_index,
-                       return_inverse=return_inverse)
-    if isinstance(output, tuple):
-        output = list(output)
-        output[0] = output[0].view(MaskedArray)
-        output = tuple(output)
-    else:
-        output = output.view(MaskedArray)
-    return output
+    ar = np.asanyarray(ar).view(ma.MaskedArray)
+    return np.unique(
+        ar,
+        return_index=return_index,
+        return_inverse=return_inverse,
+        return_counts=return_counts,
+        axis=axis,
+        equal_nan=equal_nan,
+    )
+    # if isinstance(output, tuple):
+    #     output = list(output)
+    #     output[0] = output[0].view(MaskedArray)
+    #     output = tuple(output)
+    # else:
+    #     output = output.view(MaskedArray)
+    # return output
 
 
 def intersect1d(ar1, ar2, assume_unique=False):
