@@ -2796,6 +2796,11 @@ class TestMethods:
         assert_(not isinstance(a.searchsorted(b, 'left', s), A))
         assert_(not isinstance(a.searchsorted(b, 'right', s), A))
 
+    def test_searchsorted_incompatible_inputs(self):
+        assert_raises(TypeError, np.searchsorted, [1, 2, 3], ["1"])
+        assert_raises(TypeError, np.searchsorted, ["1", "2", "3"], [2])
+        assert_raises(TypeError, np.searchsorted, [b"1", b"2", b"3"], 1)
+
     @pytest.mark.parametrize("dtype", np.typecodes["All"])
     def test_argpartition_out_of_range(self, dtype):
         # Test out of range values in kth raise an error, gh-5469
