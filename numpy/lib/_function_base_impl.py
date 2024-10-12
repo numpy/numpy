@@ -2218,7 +2218,7 @@ class vectorize:
         ``pyfunc.__doc__``.
     excluded : set, optional
         Set of strings or integers representing the positional or keyword
-        arguments for which the function will not be vectorized.  These will be
+        arguments for which the function will not be vectorized. These will be
         passed directly to `pyfunc` unmodified.
 
     cache : bool, optional
@@ -2305,14 +2305,14 @@ class vectorize:
     ...     while _p:
     ...         res = res*x + _p.pop(0)
     ...     return res
-    >>> vpolyval = np.vectorize(mypolyval, excluded=['p'])
-    >>> vpolyval(p=[1, 2, 3], x=[0, 1])
-    array([3, 6])
 
-    Positional arguments may also be excluded by specifying their position:
+    Here, we exclude the zeroth argument from vectorization whether it is
+    passed by position or keyword.
 
-    >>> vpolyval.excluded.add(0)
+    >>> vpolyval = np.vectorize(mypolyval, excluded={0, 'p'})
     >>> vpolyval([1, 2, 3], x=[0, 1])
+    array([3, 6])
+    >>> vpolyval(p=[1, 2, 3], x=[0, 1])
     array([3, 6])
 
     The `signature` argument allows for vectorizing functions that act on
