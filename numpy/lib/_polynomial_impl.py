@@ -103,6 +103,8 @@ def poly(seq_of_zeros):
     --------
     Given a sequence of a polynomial's zeros:
 
+    >>> import numpy as np
+
     >>> np.poly((0, 0, 0)) # Multiple root example
     array([1., 0., 0., 0.])
 
@@ -209,6 +211,7 @@ def roots(p):
 
     Examples
     --------
+    >>> import numpy as np
     >>> coeff = [3.2, 2, 1]
     >>> np.roots(coeff)
     array([-0.3125+0.46351241j, -0.3125-0.46351241j])
@@ -296,6 +299,8 @@ def polyint(p, m=1, k=None):
     Examples
     --------
     The defining property of the antiderivative:
+
+    >>> import numpy as np
 
     >>> p = np.poly1d([1,1,1])
     >>> P = np.polyint(p)
@@ -391,6 +396,8 @@ def polyder(p, m=1):
     Examples
     --------
     The derivative of the polynomial :math:`x^3 + x^2 + x^1 + 1` is:
+
+    >>> import numpy as np
 
     >>> p = np.poly1d([1,1,1,1])
     >>> p2 = np.polyder(p)
@@ -575,6 +582,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import warnings
     >>> x = np.array([0.0, 1.0, 2.0, 3.0,  4.0,  5.0])
     >>> y = np.array([0.0, 0.8, 0.9, 0.1, -0.8, -1.0])
@@ -675,7 +683,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
                 raise ValueError("the number of data points must exceed order "
                                  "to scale the covariance matrix")
             # note, this used to be: fac = resids / (len(x) - order - 2.0)
-            # it was deciced that the "- 2" (originally justified by "Bayesian
+            # it was decided that the "- 2" (originally justified by "Bayesian
             # uncertainty analysis") is not what the user expects
             # (see gh-11196 and gh-11197)
             fac = resids / (len(x) - order)
@@ -749,6 +757,7 @@ def polyval(p, x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.polyval([3,0,1], 5)  # 3 * 5**2 + 0 * 5**1 + 1
     76
     >>> np.polyval([3,0,1], np.poly1d(5))
@@ -808,6 +817,7 @@ def polyadd(a1, a2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.polyadd([1, 2], [9, 5, 4])
     array([9, 6, 6])
 
@@ -875,6 +885,8 @@ def polysub(a1, a2):
     --------
     .. math:: (2 x^2 + 10 x - 2) - (3 x^2 + 10 x -4) = (-x^2 + 2)
 
+    >>> import numpy as np
+
     >>> np.polysub([2, 10, -2], [3, 10, -4])
     array([-1,  0,  2])
 
@@ -933,6 +945,7 @@ def polymul(a1, a2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.polymul([1, 2, 3], [9, 5, 1])
     array([ 9, 23, 38, 17,  3])
 
@@ -1009,6 +1022,7 @@ def polydiv(u, v):
     --------
     .. math:: \\frac{3x^2 + 5x + 2}{2x + 1} = 1.5x + 1.75, remainder 0.25
 
+    >>> import numpy as np
     >>> x = np.array([3.0, 5.0, 2.0])
     >>> y = np.array([2.0, 1.0])
     >>> np.polydiv(x, y)
@@ -1097,6 +1111,8 @@ class poly1d:
     Examples
     --------
     Construct the polynomial :math:`x^2 + 2x + 3`:
+
+    >>> import numpy as np
 
     >>> p = np.poly1d([1, 2, 3])
     >>> print(np.poly1d(p))

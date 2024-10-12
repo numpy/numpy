@@ -2,16 +2,20 @@ from collections.abc import Iterable
 from typing import (
     Literal as L,
     overload,
+    TypeAlias,
     TypeVar,
     Any,
     SupportsIndex,
     SupportsInt,
     NamedTuple,
-    Generic,
 )
 
 import numpy as np
 from numpy import (
+    # re-exports
+    vecdot,
+
+    # other
     generic,
     floating,
     complexfloating,
@@ -23,12 +27,13 @@ from numpy import (
     float64,
     complex128,
 )
-
-from numpy.linalg import LinAlgError as LinAlgError
-
+from numpy.linalg import LinAlgError
+from numpy._core.fromnumeric import matrix_transpose
+from numpy._core.numeric import tensordot
 from numpy._typing import (
     NDArray,
     ArrayLike,
+    DTypeLike,
     _ArrayLikeUnknown,
     _ArrayLikeBool_co,
     _ArrayLikeInt_co,
@@ -37,18 +42,50 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
-    DTypeLike,
 )
+
+__all__ = [
+    "matrix_power",
+    "solve",
+    "tensorsolve",
+    "tensorinv",
+    "inv",
+    "cholesky",
+    "eigvals",
+    "eigvalsh",
+    "pinv",
+    "slogdet",
+    "det",
+    "svd",
+    "svdvals",
+    "eig",
+    "eigh",
+    "lstsq",
+    "norm",
+    "qr",
+    "cond",
+    "matrix_rank",
+    "LinAlgError",
+    "multi_dot",
+    "trace",
+    "diagonal",
+    "cross",
+    "outer",
+    "tensordot",
+    "matmul",
+    "matrix_transpose",
+    "matrix_norm",
+    "vector_norm",
+    "vecdot",
+]
 
 _T = TypeVar("_T")
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
-_SCT = TypeVar("_SCT", bound=generic, covariant=True)
 _SCT2 = TypeVar("_SCT2", bound=generic, covariant=True)
 
-_2Tuple = tuple[_T, _T]
-_ModeKind = L["reduced", "complete", "r", "raw"]
+_2Tuple: TypeAlias = tuple[_T, _T]
+_ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
 
-__all__: list[str]
 
 class EigResult(NamedTuple):
     eigenvalues: NDArray[Any]

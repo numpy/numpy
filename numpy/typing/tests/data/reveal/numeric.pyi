@@ -5,16 +5,12 @@ Does not include tests which fall under ``array_constructors``.
 
 """
 
-import sys
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 class SubClass(npt.NDArray[np.int64]):
     ...
@@ -90,12 +86,6 @@ assert_type(np.tensordot(AR_i8, AR_f8), npt.NDArray[np.floating[Any]])
 assert_type(np.tensordot(AR_i8, AR_c16), npt.NDArray[np.complexfloating[Any, Any]])
 assert_type(np.tensordot(AR_i8, AR_m), npt.NDArray[np.timedelta64])
 assert_type(np.tensordot(AR_O, AR_O), npt.NDArray[np.object_])
-
-assert_type(np.vecdot(AR_i8, AR_i8), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.vecdot(AR_b, AR_b), npt.NDArray[np.bool])
-assert_type(np.vecdot(AR_b, AR_u8), npt.NDArray[np.unsignedinteger[Any]])
-assert_type(np.vecdot(AR_i8, AR_b), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.vecdot(AR_i8, AR_f8), npt.NDArray[np.floating[Any]])
 
 assert_type(np.isscalar(i8), bool)
 assert_type(np.isscalar(AR_i8), bool)

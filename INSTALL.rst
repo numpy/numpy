@@ -44,7 +44,7 @@ Hypothesis__ https://hypothesis.readthedocs.io/en/latest/
 .. note::
 
    More extensive information on building NumPy is maintained at
-   https://numpy.org/devdocs/user/building.html#building-from-source
+   https://numpy.org/devdocs/building/#building-numpy-from-source
 
 
 Basic installation

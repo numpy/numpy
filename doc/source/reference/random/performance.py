@@ -59,7 +59,7 @@ order = np.log(table).mean().sort_values().index
 table = table.T
 table = table.reindex(columns)
 table = table.T
-table = table.reindex([k for k in funcs], axis=0)
+table = table.reindex(list(funcs), axis=0)
 print(table.to_csv(float_format='%0.1f'))
 
 

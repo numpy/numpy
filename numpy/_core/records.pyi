@@ -1,12 +1,15 @@
 import os
 from collections.abc import Sequence, Iterable
+from types import EllipsisType
 from typing import (
     Any,
+    TypeAlias,
     TypeVar,
     overload,
     Protocol,
     SupportsIndex,
-    Literal
+    Literal,
+    type_check_only
 )
 
 from numpy import (
@@ -16,7 +19,7 @@ from numpy import (
     void,
     _ByteOrder,
     _SupportsBuffer,
-    _ShapeType,
+    _ShapeType_co,
     _DType_co,
     _OrderKACF,
 )
@@ -25,16 +28,31 @@ from numpy._typing import (
     ArrayLike,
     DTypeLike,
     NDArray,
+    _Shape,
     _ShapeLike,
     _ArrayLikeInt_co,
     _ArrayLikeVoid_co,
     _NestedSequence,
 )
 
+__all__ = [
+    "record",
+    "recarray",
+    "format_parser",
+    "fromarrays",
+    "fromrecords",
+    "fromstring",
+    "fromfile",
+    "array",
+    "find_duplicate",
+]
+
+_T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 
-_RecArray = recarray[Any, dtype[_SCT]]
+_RecArray: TypeAlias = recarray[Any, dtype[_SCT]]
 
+@type_check_only
 class _SupportsReadInto(Protocol):
     def seek(self, offset: int, whence: int, /) -> object: ...
     def tell(self, /) -> int: ...
@@ -49,7 +67,7 @@ class record(void):
     @overload
     def __getitem__(self, key: list[str]) -> record: ...
 
-class recarray(ndarray[_ShapeType, _DType_co]):
+class recarray(ndarray[_ShapeType_co, _DType_co]):
     # NOTE: While not strictly mandatory, we're demanding here that arguments
     # for the `format_parser`- and `dtype`-based dtype constructors are
     # mutually exclusive
@@ -97,24 +115,24 @@ class recarray(ndarray[_ShapeType, _DType_co]):
     def __getitem__(self: recarray[Any, dtype[void]], indx: (
         None
         | slice
-        | ellipsis
+        | EllipsisType
         | SupportsIndex
         | _ArrayLikeInt_co
-        | tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
-    )) -> recarray[Any, _DType_co]: ...
+        | tuple[None | slice | EllipsisType | _ArrayLikeInt_co | SupportsIndex, ...]
+    )) -> recarray[_Shape, _DType_co]: ...
     @overload
     def __getitem__(self, indx: (
         None
         | slice
-        | ellipsis
+        | EllipsisType
         | SupportsIndex
         | _ArrayLikeInt_co
-        | tuple[None | slice | ellipsis | _ArrayLikeInt_co | SupportsIndex, ...]
-    )) -> ndarray[Any, _DType_co]: ...
+        | tuple[None | slice | EllipsisType | _ArrayLikeInt_co | SupportsIndex, ...]
+    )) -> ndarray[_Shape, _DType_co]: ...
     @overload
     def __getitem__(self, indx: str) -> NDArray[Any]: ...
     @overload
-    def __getitem__(self, indx: list[str]) -> recarray[_ShapeType, dtype[record]]: ...
+    def __getitem__(self, indx: list[str]) -> recarray[_ShapeType_co, dtype[record]]: ...
     @overload
     def field(self, attr: int | str, val: None = ...) -> Any: ...
     @overload
@@ -130,8 +148,6 @@ class format_parser:
         aligned: bool = ...,
         byteorder: None | _ByteOrder = ...,
     ) -> None: ...
-
-__all__: list[str]
 
 @overload
 def fromarrays(
@@ -174,7 +190,7 @@ def fromrecords(
     dtype: None = ...,
     shape: None | _ShapeLike = ...,
     *,
-    formats: DTypeLike,
+    formats: DTypeLike = ...,
     names: None | str | Sequence[str] = ...,
     titles: None | str | Sequence[str] = ...,
     aligned: bool = ...,
@@ -327,3 +343,5 @@ def array(
     byteorder: None | _ByteOrder = ...,
     copy: bool = ...,
 ) -> _RecArray[record]: ...
+
+def find_duplicate(list: Iterable[_T]) -> list[_T]: ...

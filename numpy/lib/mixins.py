@@ -116,7 +116,7 @@ class NDArrayOperatorsMixin:
         ...         else:
         ...             # one return value
         ...             return type(self)(result)
-        ... 
+        ...
         ...     def __repr__(self):
         ...         return '%s(%r)' % (type(self).__name__, self.value)
 
@@ -137,7 +137,6 @@ class NDArrayOperatorsMixin:
     with arbitrary, unrecognized types. This ensures that interactions with
     ArrayLike preserve a well-defined casting hierarchy.
 
-    .. versionadded:: 1.13
     """
     __slots__ = ()
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc

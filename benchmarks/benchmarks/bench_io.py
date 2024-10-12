@@ -88,7 +88,7 @@ class LoadtxtCSVComments(Benchmark):
         # unfortunately, timeit will only run setup()
         # between repeat events, but not for iterations
         # within repeats, so the StringIO object
-        # will have to be rewinded in the benchmark proper
+        # will have to be rewound in the benchmark proper
         self.data_comments = StringIO('\n'.join(data))
 
     def time_comment_loadtxt_csv(self, num_lines):

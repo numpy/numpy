@@ -1,26 +1,204 @@
 from collections.abc import Callable
 from typing import Any, TypeVar
-from numpy import ndarray, dtype, float64
 
 from numpy import (
-    amax as amax,
-    amin as amin,
-    bool as bool,
-    expand_dims as expand_dims,
-    clip as clip,
-    indices as indices,
-    ones_like as ones_like,
-    squeeze as squeeze,
-    zeros_like as zeros_like,
-    angle as angle
+    amax,
+    amin,
+    bool_,
+    expand_dims,
+    clip,
+    indices,
+    squeeze,
+    angle,
+    ndarray,
+    dtype,
+    float64,
 )
 
-# TODO: Set the `bound` to something more suitable once we
-# have proper shape support
-_ShapeType = TypeVar("_ShapeType", bound=Any)
+__all__ = [
+    "MAError",
+    "MaskError",
+    "MaskType",
+    "MaskedArray",
+    "abs",
+    "absolute",
+    "add",
+    "all",
+    "allclose",
+    "allequal",
+    "alltrue",
+    "amax",
+    "amin",
+    "angle",
+    "anom",
+    "anomalies",
+    "any",
+    "append",
+    "arange",
+    "arccos",
+    "arccosh",
+    "arcsin",
+    "arcsinh",
+    "arctan",
+    "arctan2",
+    "arctanh",
+    "argmax",
+    "argmin",
+    "argsort",
+    "around",
+    "array",
+    "asanyarray",
+    "asarray",
+    "bitwise_and",
+    "bitwise_or",
+    "bitwise_xor",
+    "bool_",
+    "ceil",
+    "choose",
+    "clip",
+    "common_fill_value",
+    "compress",
+    "compressed",
+    "concatenate",
+    "conjugate",
+    "convolve",
+    "copy",
+    "correlate",
+    "cos",
+    "cosh",
+    "count",
+    "cumprod",
+    "cumsum",
+    "default_fill_value",
+    "diag",
+    "diagonal",
+    "diff",
+    "divide",
+    "empty",
+    "empty_like",
+    "equal",
+    "exp",
+    "expand_dims",
+    "fabs",
+    "filled",
+    "fix_invalid",
+    "flatten_mask",
+    "flatten_structured_array",
+    "floor",
+    "floor_divide",
+    "fmod",
+    "frombuffer",
+    "fromflex",
+    "fromfunction",
+    "getdata",
+    "getmask",
+    "getmaskarray",
+    "greater",
+    "greater_equal",
+    "harden_mask",
+    "hypot",
+    "identity",
+    "ids",
+    "indices",
+    "inner",
+    "innerproduct",
+    "isMA",
+    "isMaskedArray",
+    "is_mask",
+    "is_masked",
+    "isarray",
+    "left_shift",
+    "less",
+    "less_equal",
+    "log",
+    "log10",
+    "log2",
+    "logical_and",
+    "logical_not",
+    "logical_or",
+    "logical_xor",
+    "make_mask",
+    "make_mask_descr",
+    "make_mask_none",
+    "mask_or",
+    "masked",
+    "masked_array",
+    "masked_equal",
+    "masked_greater",
+    "masked_greater_equal",
+    "masked_inside",
+    "masked_invalid",
+    "masked_less",
+    "masked_less_equal",
+    "masked_not_equal",
+    "masked_object",
+    "masked_outside",
+    "masked_print_option",
+    "masked_singleton",
+    "masked_values",
+    "masked_where",
+    "max",
+    "maximum",
+    "maximum_fill_value",
+    "mean",
+    "min",
+    "minimum",
+    "minimum_fill_value",
+    "mod",
+    "multiply",
+    "mvoid",
+    "ndim",
+    "negative",
+    "nomask",
+    "nonzero",
+    "not_equal",
+    "ones",
+    "ones_like",
+    "outer",
+    "outerproduct",
+    "power",
+    "prod",
+    "product",
+    "ptp",
+    "put",
+    "putmask",
+    "ravel",
+    "remainder",
+    "repeat",
+    "reshape",
+    "resize",
+    "right_shift",
+    "round",
+    "round_",
+    "set_fill_value",
+    "shape",
+    "sin",
+    "sinh",
+    "size",
+    "soften_mask",
+    "sometrue",
+    "sort",
+    "sqrt",
+    "squeeze",
+    "std",
+    "subtract",
+    "sum",
+    "swapaxes",
+    "take",
+    "tan",
+    "tanh",
+    "trace",
+    "transpose",
+    "true_divide",
+    "var",
+    "where",
+    "zeros",
+    "zeros_like",
+]
+
+_ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 
-__all__: list[str]
 
 MaskType = bool
 nomask: bool
@@ -165,7 +343,7 @@ class MaskedIterator:
     def __setitem__(self, index, value): ...
     def __next__(self): ...
 
-class MaskedArray(ndarray[_ShapeType, _DType_co]):
+class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     __array_priority__: Any
     def __new__(cls, data=..., mask=..., dtype=..., copy=..., subok=..., ndmin=..., fill_value=..., keep_mask=..., hard_mask=..., shrink=..., order=...): ...
     def __array_finalize__(self, obj): ...
@@ -300,7 +478,7 @@ class MaskedArray(ndarray[_ShapeType, _DType_co]):
     def __reduce__(self): ...
     def __deepcopy__(self, memo=...): ...
 
-class mvoid(MaskedArray[_ShapeType, _DType_co]):
+class mvoid(MaskedArray[_ShapeType_co, _DType_co]):
     def __new__(
         self,
         data,
@@ -433,7 +611,8 @@ def size(obj, axis=...): ...
 def diff(a, /, n=..., axis=..., prepend=..., append=...): ...
 def where(condition, x=..., y=...): ...
 def choose(indices, choices, out=..., mode=...): ...
-def round(a, decimals=..., out=...): ...
+def round_(a, decimals=..., out=...): ...
+round = round_
 
 def inner(a, b): ...
 innerproduct = inner
@@ -462,7 +641,9 @@ frombuffer: _convert2ma
 fromfunction: _convert2ma
 identity: _convert2ma
 ones: _convert2ma
+ones_like: _convert2ma
 zeros: _convert2ma
+zeros_like: _convert2ma
 
 def append(a, b, axis=...): ...
 def dot(a, b, strict=..., out=...): ...

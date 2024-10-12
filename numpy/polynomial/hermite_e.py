@@ -127,6 +127,7 @@ def poly2herme(pol):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite_e import poly2herme
     >>> poly2herme(np.arange(4))
     array([  2.,  10.,   2.,   3.])
@@ -408,6 +409,10 @@ def hermemulx(c):
     out : ndarray
         Array representing the result of the multiplication.
 
+    See Also
+    --------
+    hermeadd, hermesub, hermemul, hermediv, hermepow
+
     Notes
     -----
     The multiplication uses the recursion relationship for Hermite
@@ -616,8 +621,6 @@ def hermeder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     der : ndarray
@@ -708,8 +711,6 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -836,8 +837,6 @@ def hermeval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, algebra_like
@@ -931,8 +930,6 @@ def hermeval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(hermeval, c, x, y)
 
@@ -984,8 +981,6 @@ def hermegrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(hermeval, c, x, y)
 
@@ -1034,8 +1029,6 @@ def hermeval3d(x, y, z, c):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
 
     """
     return pu._valnd(hermeval, c, x, y, z)
@@ -1091,8 +1084,6 @@ def hermegrid3d(x, y, z, c):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(hermeval, c, x, y, z)
 
@@ -1133,6 +1124,7 @@ def hermevander(x, deg):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite_e import hermevander
     >>> x = np.array([-1, 0, 1])
     >>> hermevander(x, 3)
@@ -1204,8 +1196,6 @@ def hermevander2d(x, y, deg):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((hermevander, hermevander), (x, y), deg)
 
@@ -1257,8 +1247,6 @@ def hermevander3d(x, y, z, deg):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
 
     """
     return pu._vander_nd_flat((hermevander, hermevander, hermevander), (x, y, z), deg)
@@ -1385,13 +1373,14 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite_e import hermefit, hermeval
     >>> x = np.linspace(-10, 10)
-    >>> np.random.seed(123)
-    >>> err = np.random.randn(len(x))/10
+    >>> rng = np.random.default_rng()
+    >>> err = rng.normal(scale=1./10, size=len(x))
     >>> y = hermeval(x, [1, 2, 3]) + err
     >>> hermefit(x, y, 2)
-    array([ 1.01690445,  1.99951418,  2.99948696]) # may vary
+    array([1.02284196, 2.00032805, 2.99978457]) # may vary
 
     """
     return pu._fit(hermevander, x, y, deg, rcond, full, w)
@@ -1420,8 +1409,6 @@ def hermecompanion(c):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
 
     """
     # c is a trimmed copy
@@ -1529,8 +1516,6 @@ def _normed_hermite_e_n(x, n):
 
     Notes
     -----
-    .. versionadded:: 1.10.0
-
     This function is needed for finding the Gauss points and integration
     weights for high degrees. The values of the standard HermiteE functions
     overflow when n >= 207.
@@ -1573,9 +1558,6 @@ def hermegauss(deg):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
-
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
@@ -1637,8 +1619,6 @@ def hermeweight(x):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     w = np.exp(-.5*x**2)
     return w
@@ -1663,11 +1643,9 @@ class HermiteE(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [-1, 1].
+        The default value is [-1., 1.].
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [-1, 1].
-
-        .. versionadded:: 1.6.0
+        Window, see `domain` for its use. The default value is [-1., 1.].
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.

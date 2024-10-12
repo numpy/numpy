@@ -66,8 +66,6 @@ def take_along_axis(arr, indices, axis):
     Functions returning an index along an axis, like `argsort` and
     `argpartition`, produce suitable indices for this function.
 
-    .. versionadded:: 1.15.0
-
     Parameters
     ----------
     arr : ndarray (Ni..., M, Nk...)
@@ -115,6 +113,7 @@ def take_along_axis(arr, indices, axis):
 
     Examples
     --------
+    >>> import numpy as np
 
     For this sample array
 
@@ -162,6 +161,9 @@ def take_along_axis(arr, indices, axis):
     """
     # normalize inputs
     if axis is None:
+        if indices.ndim != 1:
+            raise ValueError(
+                'when axis=None, `indices` must have a single dimension.')
         arr = arr.flat
         arr_shape = (len(arr),)  # flatiter has no .shape
         axis = 0
@@ -188,8 +190,6 @@ def put_along_axis(arr, indices, values, axis):
 
     Functions returning an index along an axis, like `argsort` and
     `argpartition`, produce suitable indices for this function.
-
-    .. versionadded:: 1.15.0
 
     Parameters
     ----------
@@ -233,6 +233,7 @@ def put_along_axis(arr, indices, values, axis):
 
     Examples
     --------
+    >>> import numpy as np
 
     For this sample array
 
@@ -252,6 +253,9 @@ def put_along_axis(arr, indices, values, axis):
     """
     # normalize inputs
     if axis is None:
+        if indices.ndim != 1:
+            raise ValueError(
+                'when axis=None, `indices` must have a single dimension.')
         arr = arr.flat
         axis = 0
         arr_shape = (len(arr),)  # flatiter has no .shape
@@ -307,9 +311,6 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     kwargs : any
         Additional named arguments to `func1d`.
 
-        .. versionadded:: 1.9.0
-
-
     Returns
     -------
     out : ndarray  (Ni..., Nj..., Nk...)
@@ -325,6 +326,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 
     Examples
     --------
+    >>> import numpy as np
     >>> def my_func(a):
     ...     \"\"\"Average first and last element of a 1-D array\"\"\"
     ...     return (a[0] + a[-1]) * 0.5
@@ -455,6 +457,7 @@ def apply_over_axes(func, a, axes):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.arange(24).reshape(2,3,4)
     >>> a
     array([[[ 0,  1,  2,  3],
@@ -525,11 +528,6 @@ def expand_dims(a, axis):
             ``axis == a.ndim``, and passing ``axis < -a.ndim - 1`` will
             be treated as ``axis == 0``. This behavior is deprecated.
 
-        .. versionchanged:: 1.18.0
-            A tuple of axes is now supported.  Out of range axes as
-            described above are now forbidden and raise an
-            `~exceptions.AxisError`.
-
     Returns
     -------
     result : ndarray
@@ -543,6 +541,7 @@ def expand_dims(a, axis):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2])
     >>> x.shape
     (2,)
@@ -645,6 +644,7 @@ def column_stack(tup):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((1,2,3))
     >>> b = np.array((2,3,4))
     >>> np.column_stack((a,b))
@@ -704,6 +704,7 @@ def dstack(tup):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((1,2,3))
     >>> b = np.array((2,3,4))
     >>> np.dstack((a,b))
@@ -756,6 +757,7 @@ def array_split(ary, indices_or_sections, axis=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(8.0)
     >>> np.array_split(x, 3)
     [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
@@ -852,6 +854,7 @@ def split(ary, indices_or_sections, axis=0):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(9.0)
     >>> np.split(x, 3)
     [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.,  8.])]
@@ -895,6 +898,7 @@ def hsplit(ary, indices_or_sections):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(16.0).reshape(4, 4)
     >>> x
     array([[ 0.,   1.,   2.,   3.],
@@ -965,6 +969,7 @@ def vsplit(ary, indices_or_sections):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(16.0).reshape(4, 4)
     >>> x
     array([[ 0.,   1.,   2.,   3.],
@@ -1018,6 +1023,7 @@ def dsplit(ary, indices_or_sections):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.arange(16.0).reshape(2, 2, 4)
     >>> x
     array([[[ 0.,   1.,   2.,   3.],
@@ -1120,6 +1126,7 @@ def kron(a, b):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.kron([1,10,100], [5,6,7])
     array([  5,   6,   7, ..., 500, 600, 700])
     >>> np.kron([5,6,7], [1,10,100])
@@ -1234,6 +1241,7 @@ def tile(A, reps):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([0, 1, 2])
     >>> np.tile(a, 2)
     array([0, 1, 2, 0, 1, 2])

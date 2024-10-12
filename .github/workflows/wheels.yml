@@ -76,8 +76,8 @@ jobs:
         # Github Actions doesn't support pairing matrix values together, let's improvise
         # https://github.com/github/feedback/discussions/7835#discussioncomment-1769026
         buildplat:
-          - [ubuntu-20.04, manylinux_x86_64, ""]
-          - [ubuntu-20.04, musllinux_x86_64, ""]
+          - [ubuntu-22.04, manylinux_x86_64, ""]
+          - [ubuntu-22.04, musllinux_x86_64, ""]
           - [macos-13, macosx_x86_64, openblas]
 
           # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
@@ -85,15 +85,22 @@ jobs:
           - [macos-14, macosx_arm64, accelerate]  # always use accelerate
           - [windows-2019, win_amd64, ""]
           - [windows-2019, win32, ""]
-        python: ["cp310", "cp311", "cp312", "pp310"]
+        python: ["cp310", "cp311", "cp312", "pp310", "cp313", "cp313t"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32, ""]
             python: "pp310"
-          - buildplat: [ ubuntu-20.04, musllinux_x86_64, "" ]
+          - buildplat: [ ubuntu-22.04, musllinux_x86_64, "" ]
             python: "pp310"
           - buildplat: [ macos-14, macosx_arm64, accelerate ]
             python: "pp310"
+          - buildplat: [ windows-2019, win_amd64, "" ]
+            python: "cp313t"
+          - buildplat: [ windows-2019, win32, "" ]
+            python: "cp313t"
+          - buildplat: [ macos13, macosx_x86_64, openblas ]
+            python: "cp313t"
+
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
       IS_PUSH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
@@ -123,13 +130,18 @@ jobs:
         if: runner.os == 'windows'
 
       # Used to push the built wheels
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           python-version: "3.x"
 
       - name: Setup macOS
         if: matrix.buildplat[0] == 'macos-13' || matrix.buildplat[0] == 'macos-14'
         run: |
+          # Needed due to https://github.com/actions/runner-images/issues/3371
+          # Supported versions: https://github.com/actions/runner-images/blob/main/images/macos/macos-14-arm64-Readme.md
+          echo "FC=gfortran-13" >> "$GITHUB_ENV"
+          echo "F77=gfortran-13" >> "$GITHUB_ENV"
+          echo "F90=gfortran-13" >> "$GITHUB_ENV"
           if [[ ${{ matrix.buildplat[2] }} == 'accelerate' ]]; then
             # macosx_arm64 and macosx_x86_64 with accelerate
             # only target Sonoma onwards
@@ -148,18 +160,24 @@ jobs:
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"  
           fi
 
+      - name: Set up free-threaded build
+        if: matrix.python == 'cp313t'
+        run: |
+          echo "CIBW_BUILD_FRONTEND=pip; args: --no-build-isolation" >> "$GITHUB_ENV"
+
       - name: Build wheels
-        uses: pypa/cibuildwheel@8d945475ac4b1aac4ae08b2fd27db9917158b6ce  # v2.17.0
+        uses: pypa/cibuildwheel@7940a4c0e76eb2030e473a5f864f291f63ee879b  # v2.21.3
         env:
           CIBW_PRERELEASE_PYTHONS: True
+          CIBW_FREE_THREADED_SUPPORT: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
 
-      - uses: mamba-org/setup-micromamba@422500192359a097648154e8db4e39bdb6c6eed7
+      - uses: mamba-org/setup-micromamba@617811f69075e3fd3ae68ca64220ad065877f246
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -213,7 +231,7 @@ jobs:
         with:
           submodules: true
       # Used to push the built wheels
-      - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
         with:
           # Build sdist on lowest supported Python
           python-version: "3.10"
@@ -235,7 +253,7 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: sdist
           path: ./dist/*

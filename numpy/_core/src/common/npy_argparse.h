@@ -20,7 +20,6 @@
 NPY_NO_EXPORT int
 PyArray_PythonPyIntFromInt(PyObject *obj, int *value);
 
-
 #define _NPY_MAX_KWARGS 15
 
 typedef struct {
@@ -28,16 +27,18 @@ typedef struct {
     int nargs;
     int npositional_only;
     int nrequired;
+    npy_uint8 initialized;
     /* Null terminated list of keyword argument name strings */
     PyObject *kw_strings[_NPY_MAX_KWARGS+1];
 } _NpyArgParserCache;
 
+NPY_NO_EXPORT int init_argparse_mutex(void);
 
 /*
  * The sole purpose of this macro is to hide the argument parsing cache.
  * Since this cache must be static, this also removes a source of error.
  */
-#define NPY_PREPARE_ARGPARSER static _NpyArgParserCache __argparse_cache = {-1}
+#define NPY_PREPARE_ARGPARSER static _NpyArgParserCache __argparse_cache;
 
 /**
  * Macro to help with argument parsing.
@@ -68,7 +69,7 @@ typedef struct {
  * used in cunjunction with the macro defined in the same scope.
  * (No two `npy_parse_arguments` may share a single `NPY_PREPARE_ARGPARSER`.)
  *
- * @param funcname
+ * @param funcname Function name
  * @param args Python passed args (METH_FASTCALL)
  * @param len_args Number of arguments (not flagged)
  * @param kwnames Tuple as passed by METH_FASTCALL or NULL.

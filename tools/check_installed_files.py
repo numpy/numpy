@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
     for key in targets.keys():
         for values in list(targets[key].values()):
-            if not values['tag'] in all_tags:
+            if values['tag'] not in all_tags:
                 all_tags.add(values['tag'])
 
     if all_tags != set(['runtime', 'python-runtime', 'devel', 'tests']):

@@ -169,9 +169,10 @@ cdef class Generator:
 
     Notes
     -----
-    The Python stdlib module `random` contains pseudo-random number generator
-    with a number of methods that are similar to the ones available in
-    `Generator`. It uses Mersenne Twister, and this bit generator can
+    The Python stdlib module :external+python:mod:`random` contains
+    pseudo-random number generator with a number of methods that are similar
+    to the ones available in `Generator`.
+    It uses Mersenne Twister, and this bit generator can
     be accessed using `MT19937`. `Generator`, besides being
     NumPy-aware, has the advantage that it provides a much larger number
     of probability distributions to choose from.
@@ -992,7 +993,7 @@ cdef class Generator:
         if a.ndim == 0:
             return idx
 
-        if not is_scalar and idx.ndim == 0:
+        if not is_scalar and idx.ndim == 0 and a.ndim == 1:
             # If size == () then the user requested a 0-d array as opposed to
             # a scalar object when size is None. However a[idx] is always a
             # scalar and not an array. So this makes sure the result is an
@@ -1548,7 +1549,7 @@ cdef class Generator:
         and ``m = 20`` is:
         
         >>> import matplotlib.pyplot as plt
-        >>> from scipy import stats  # doctest: +SKIP
+        >>> from scipy import stats
         >>> dfnum, dfden, size = 20, 20, 10000
         >>> s = rng.f(dfnum=dfnum, dfden=dfden, size=size)
         >>> bins, density, _ = plt.hist(s, 30, density=True)
@@ -1578,9 +1579,6 @@ cdef class Generator:
         ----------
         dfnum : float or array_like of floats
             Numerator degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.14.0
-               Earlier NumPy versions required dfnum > 1.
         dfden : float or array_like of floats
             Denominator degrees of freedom, must be > 0.
         nonc : float or array_like of floats
@@ -1735,9 +1733,6 @@ cdef class Generator:
         ----------
         df : float or array_like of floats
             Degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.10.0
-               Earlier NumPy versions required dfnum > 1.
         nonc : float or array_like of floats
             Non-centrality, must be non-negative.
         size : int or tuple of ints, optional
@@ -3009,7 +3004,7 @@ cdef class Generator:
 
         Notes
         -----
-        The probability density for the binomial distribution is
+        The probability mass function (PMF) for the binomial distribution is
 
         .. math:: P(N) = \\binom{n}{N}p^N(1-p)^{n-N},
 
@@ -3281,7 +3276,7 @@ cdef class Generator:
 
         Notes
         -----
-        The Poisson distribution
+        The probability mass function (PMF) of Poisson distribution is
 
         .. math:: f(k; \\lambda)=\\frac{\\lambda^k e^{-\\lambda}}{k!}
 
@@ -3371,7 +3366,7 @@ cdef class Generator:
 
         Notes
         -----
-        The probability density for the Zipf distribution is
+        The probability mass function (PMF) for the Zipf distribution is
 
         .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
@@ -3536,7 +3531,7 @@ cdef class Generator:
 
         Notes
         -----
-        The probability density for the Hypergeometric distribution is
+        The probability mass function (PMF) for the Hypergeometric distribution is
 
         .. math:: P(x) = \\frac{\\binom{g}{x}\\binom{b}{n-x}}{\\binom{g+b}{n}},
 
@@ -3757,8 +3752,6 @@ cdef class Generator:
             the slowest, while 'cholesky' is the fastest but less robust than
             the slowest method. The method `eigh` uses eigen decomposition to
             compute A and is faster than svd but slower than cholesky.
-
-            .. versionadded:: 1.18.0
 
         Returns
         -------
@@ -4007,9 +4000,6 @@ cdef class Generator:
 
             Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
             from the distribution.
-
-            .. versionchanged:: 1.22.0
-                Added support for broadcasting `pvals` against `n`
 
         Examples
         --------
@@ -4303,8 +4293,6 @@ cdef class Generator:
         can be significantly faster than the "marginals" method.  If
         performance of the algorithm is important, test the two methods
         with typical inputs to decide which works best.
-
-        .. versionadded:: 1.18.0
 
         Examples
         --------
@@ -5022,13 +5010,13 @@ def default_rng(seed=None):
     is instantiated. This function does not manage a default global instance.
 
     See :ref:`seeding_and_entropy` for more information about seeding.
-    
+
     Examples
     --------
     `default_rng` is the recommended constructor for the random number class
     `Generator`. Here are several ways we can construct a random 
     number generator using `default_rng` and the `Generator` class. 
-    
+
     Here we use `default_rng` to generate a random float:
  
     >>> import numpy as np

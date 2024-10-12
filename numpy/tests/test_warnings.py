@@ -67,6 +67,8 @@ def test_warning_calls():
             continue
         if path == base / "random" / "__init__.py":
             continue
+        if path == base / "conftest.py":
+            continue
         # use tokenize to auto-detect encoding on systems where no
         # default encoding is defined (e.g. LANG='C')
         with tokenize.open(str(path)) as file:

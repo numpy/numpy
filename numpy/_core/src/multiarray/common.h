@@ -8,6 +8,7 @@
 #include "npy_cpu_dispatch.h"
 #include "numpy/npy_cpu.h"
 
+#include "npy_static_data.h"
 #include "npy_import.h"
 #include <limits.h>
 
@@ -70,13 +71,6 @@ dot_alignment_error(PyArrayObject *a, int i, PyArrayObject *b, int j);
 
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
- *
- * @param "value" should be the tuple.
- *
- * @return "descr" will be set to the field's dtype
- * @return "offset" will be set to the field's offset
- *
- * returns -1 on failure, 0 on success.
  */
 NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset);
@@ -139,25 +133,14 @@ check_and_adjust_axis_msg(int *axis, int ndim, PyObject *msg_prefix)
 {
     /* Check that index is valid, taking into account negative indices */
     if (NPY_UNLIKELY((*axis < -ndim) || (*axis >= ndim))) {
-        /*
-         * Load the exception type, if we don't already have it. Unfortunately
-         * we don't have access to npy_cache_import here
-         */
-        static PyObject *AxisError_cls = NULL;
-        PyObject *exc;
-
-        npy_cache_import("numpy.exceptions", "AxisError", &AxisError_cls);
-        if (AxisError_cls == NULL) {
-            return -1;
-        }
-
         /* Invoke the AxisError constructor */
-        exc = PyObject_CallFunction(AxisError_cls, "iiO",
-                                    *axis, ndim, msg_prefix);
+        PyObject *exc = PyObject_CallFunction(
+                npy_static_pydata.AxisError, "iiO", *axis, ndim,
+                msg_prefix);
         if (exc == NULL) {
             return -1;
         }
-        PyErr_SetObject(AxisError_cls, exc);
+        PyErr_SetObject(npy_static_pydata.AxisError, exc);
         Py_DECREF(exc);
 
         return -1;

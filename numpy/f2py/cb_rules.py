@@ -122,7 +122,7 @@ f2py_cb_start_clock();
 #setdims#
 #ifdef PYPY_VERSION
 #define CAPI_ARGLIST_SETITEM(idx, value) PyList_SetItem((PyObject *)capi_arglist_list, idx, value)
-    capi_arglist_list = PySequence_List(capi_arglist);
+    capi_arglist_list = PySequence_List((PyObject *)capi_arglist);
     if (capi_arglist_list == NULL) goto capi_fail;
 #else
 #define CAPI_ARGLIST_SETITEM(idx, value) PyTuple_SetItem((PyObject *)capi_arglist, idx, value)

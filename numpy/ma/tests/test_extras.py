@@ -29,7 +29,7 @@ from numpy.ma.extras import (
     ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
     mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
     notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
-    diagflat, ndenumerate, stack, vstack
+    diagflat, ndenumerate, stack, vstack, _covhelper
     )
 
 
@@ -1287,6 +1287,26 @@ class TestCov:
     def setup_method(self):
         self.data = array(np.random.rand(12))
 
+    def test_covhelper(self):
+        x = self.data
+        # Test not mask output type is a float.
+        assert_(_covhelper(x, rowvar=True)[1].dtype, np.float32)
+        assert_(_covhelper(x, y=x, rowvar=False)[1].dtype, np.float32)
+        # Test not mask output is equal after casting to float.
+        mask = x > 0.5
+        assert_array_equal(
+            _covhelper(
+                np.ma.masked_array(x, mask), rowvar=True
+            )[1].astype(bool),
+            ~mask.reshape(1, -1),
+        )
+        assert_array_equal(
+            _covhelper(
+                np.ma.masked_array(x, mask), y=x, rowvar=False
+            )[1].astype(bool),
+            np.vstack((~mask, ~mask)),
+        )
+
     def test_1d_without_missing(self):
         # Test cov on 1D variable w/o missing values
         x = self.data
@@ -1660,6 +1680,25 @@ class TestArraySetOps:
         assert_equal(test, [1, 2, 3, 4, 5, 6])
         #
         assert_array_equal([], setxor1d([], []))
+
+    def test_setxor1d_unique(self):
+        # Test setxor1d with assume_unique=True
+        a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
+        b = [1, 2, 3, 4, 5]
+        test = setxor1d(a, b, assume_unique=True)
+        assert_equal(test, array([3, 4, 7, -1], mask=[0, 0, 0, 1]))
+        #
+        a = array([1, 8, 2, 3], mask=[0, 1, 0, 0])
+        b = array([6, 5, 4, 8], mask=[0, 0, 0, 1])
+        test = setxor1d(a, b, assume_unique=True)
+        assert_(isinstance(test, MaskedArray))
+        assert_equal(test, [1, 2, 3, 4, 5, 6])
+        #
+        a = array([[1], [8], [2], [3]])
+        b = array([[6, 5], [4, 8]])
+        test = setxor1d(a, b, assume_unique=True)
+        assert_(isinstance(test, MaskedArray))
+        assert_equal(test, [1, 2, 3, 4, 5, 6])
 
     def test_isin(self):
         # the tests for in1d cover most of isin's behavior

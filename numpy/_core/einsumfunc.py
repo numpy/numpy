@@ -219,7 +219,7 @@ def _optimal_path(input_sets, output_set, idx_dict, memory_limit):
     return path
 
 def _parse_possible_contraction(
-        positions, input_sets, output_set, idx_dict, 
+        positions, input_sets, output_set, idx_dict,
         memory_limit, path_cost, naive_cost
     ):
     """Compute the cost (removed size + flops) and resultant indices for
@@ -290,7 +290,7 @@ def _update_other_results(results, best):
     Parameters
     ----------
     results : list
-        List of contraction results produced by 
+        List of contraction results produced by
         ``_parse_possible_contraction``.
     best : list
         The best contraction of ``results`` i.e. the one that
@@ -833,7 +833,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
 
     >>> print(path_info[0])
     ['einsum_path', (0, 2), (0, 3), (0, 2), (0, 1)]
-    >>> print(path_info[1]) 
+    >>> print(path_info[1])
       Complete contraction:  ea,fb,abcd,gc,hd->efgh # may vary
              Naive scaling:  8
          Optimized scaling:  5
@@ -964,7 +964,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
     # Build contraction tuple (positions, gemm, einsum_str, remaining)
     for cnum, contract_inds in enumerate(path):
         # Make sure we remove inds from right to left
-        contract_inds = tuple(sorted(list(contract_inds), reverse=True))
+        contract_inds = tuple(sorted(contract_inds, reverse=True))
 
         contract = _find_contraction(contract_inds, input_sets, output_set)
         out_inds, input_sets, idx_removed, idx_contract = contract
@@ -1132,8 +1132,6 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
 
     Notes
     -----
-    .. versionadded:: 1.6.0
-
     The Einstein summation convention can be used to compute
     many multi-dimensional, linear algebraic array operations. `einsum`
     provides a succinct way of representing these.
@@ -1183,7 +1181,7 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     ``np.einsum('i->', a)`` is like :py:func:`np.sum(a) <numpy.sum>`
     if ``a`` is a 1-D array, and ``np.einsum('ii->i', a)``
     is like :py:func:`np.diag(a) <numpy.diag>` if ``a`` is a square 2-D array.
-    The difference is that `einsum` does not allow broadcasting by default. 
+    The difference is that `einsum` does not allow broadcasting by default.
     Additionally ``np.einsum('ij,jh->ih', a, b)`` directly specifies the
     order of the output subscript labels and therefore returns matrix
     multiplication, unlike the example above in implicit mode.
@@ -1191,7 +1189,7 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     To enable and control broadcasting, use an ellipsis.  Default
     NumPy-style broadcasting is done by adding an ellipsis
     to the left of each term, like ``np.einsum('...ii->...i', a)``.
-    ``np.einsum('...i->...', a)`` is like 
+    ``np.einsum('...i->...', a)`` is like
     :py:func:`np.sum(a, axis=-1) <numpy.sum>` for array ``a`` of any shape.
     To take the trace along the first and last axes,
     you can do ``np.einsum('i...i', a)``, or to do a matrix-matrix
@@ -1210,15 +1208,11 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     The examples below have corresponding `einsum` calls with the two
     parameter methods.
 
-    .. versionadded:: 1.10.0
-
     Views returned from einsum are now writeable whenever the input array
     is writeable. For example, ``np.einsum('ijk...->kji...', a)`` will now
     have the same effect as :py:func:`np.swapaxes(a, 0, 2) <numpy.swapaxes>`
     and ``np.einsum('ii->i', a)`` will return a writeable view of the diagonal
     of a 2D array.
-
-    .. versionadded:: 1.12.0
 
     Added the ``optimize`` argument which will optimize the contraction order
     of an einsum expression. For a contraction with three or more operands
@@ -1413,7 +1407,7 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
 
     Optimal `einsum` (best usage pattern in some use cases): ~110ms
 
-    >>> path = np.einsum_path('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, 
+    >>> path = np.einsum_path('ijk,ilm,njm,nlk,abc->',a,a,a,a,a,
     ...     optimize='optimal')[0]
     >>> for iteration in range(500):
     ...     _ = np.einsum('ijk,ilm,njm,nlk,abc->',a,a,a,a,a, optimize=path)

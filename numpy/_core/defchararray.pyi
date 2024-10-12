@@ -1,9 +1,10 @@
 from typing import (
     Literal as L,
     overload,
+    TypeAlias,
     TypeVar,
     Any,
-    SupportsIndex, 
+    SupportsIndex,
     SupportsInt,
 )
 
@@ -16,26 +17,85 @@ from numpy import (
     int_,
     object_,
     _OrderKACF,
-    _ShapeType, 
-    _CharDType, 
+    _ShapeType_co,
     _SupportsBuffer,
 )
-
 from numpy._typing import (
     NDArray,
+    _Shape,
     _ShapeLike,
     _ArrayLikeStr_co as U_co,
     _ArrayLikeBytes_co as S_co,
     _ArrayLikeInt_co as i_co,
     _ArrayLikeBool_co as b_co,
 )
+from numpy._core.multiarray import compare_chararrays
 
-from numpy._core.multiarray import compare_chararrays as compare_chararrays
+__all__ = [
+    "equal",
+    "not_equal",
+    "greater_equal",
+    "less_equal",
+    "greater",
+    "less",
+    "str_len",
+    "add",
+    "multiply",
+    "mod",
+    "capitalize",
+    "center",
+    "count",
+    "decode",
+    "encode",
+    "endswith",
+    "expandtabs",
+    "find",
+    "index",
+    "isalnum",
+    "isalpha",
+    "isdigit",
+    "islower",
+    "isspace",
+    "istitle",
+    "isupper",
+    "join",
+    "ljust",
+    "lower",
+    "lstrip",
+    "partition",
+    "replace",
+    "rfind",
+    "rindex",
+    "rjust",
+    "rpartition",
+    "rsplit",
+    "rstrip",
+    "split",
+    "splitlines",
+    "startswith",
+    "strip",
+    "swapcase",
+    "title",
+    "translate",
+    "upper",
+    "zfill",
+    "isnumeric",
+    "isdecimal",
+    "array",
+    "asarray",
+    "compare_chararrays",
+    "chararray",
+]
 
-_SCT = TypeVar("_SCT", str_, bytes_)
-_CharArray = chararray[Any, dtype[_SCT]]
+_SCT = TypeVar("_SCT", bound=str_ | bytes_)
+_CharDType_co = TypeVar(
+    "_CharDType_co",
+    bound=dtype[str_ | bytes_],
+    covariant=True,
+)
+_CharArray: TypeAlias = chararray[tuple[int, ...], dtype[_SCT]]
 
-class chararray(ndarray[_ShapeType, _CharDType]):
+class chararray(ndarray[_ShapeType_co, _CharDType_co]):
     @overload
     def __new__(
         subtype,
@@ -46,7 +106,7 @@ class chararray(ndarray[_ShapeType, _CharDType]):
         offset: SupportsIndex = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
-    ) -> chararray[Any, dtype[bytes_]]: ...
+    ) -> chararray[_Shape, dtype[bytes_]]: ...
     @overload
     def __new__(
         subtype,
@@ -57,12 +117,12 @@ class chararray(ndarray[_ShapeType, _CharDType]):
         offset: SupportsIndex = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
-    ) -> chararray[Any, dtype[str_]]: ...
+    ) -> chararray[_Shape, dtype[str_]]: ...
 
     def __array_finalize__(self, obj: object) -> None: ...
-    def __mul__(self, other: i_co) -> chararray[Any, _CharDType]: ...
-    def __rmul__(self, other: i_co) -> chararray[Any, _CharDType]: ...
-    def __mod__(self, i: Any) -> chararray[Any, _CharDType]: ...
+    def __mul__(self, other: i_co) -> chararray[_Shape, _CharDType_co]: ...
+    def __rmul__(self, other: i_co) -> chararray[_Shape, _CharDType_co]: ...
+    def __mod__(self, i: Any) -> chararray[_Shape, _CharDType_co]: ...
 
     @overload
     def __eq__(
@@ -210,7 +270,7 @@ class chararray(ndarray[_ShapeType, _CharDType]):
     def expandtabs(
         self,
         tabsize: i_co = ...,
-    ) -> chararray[Any, _CharDType]: ...
+    ) -> chararray[_Shape, _CharDType_co]: ...
 
     @overload
     def find(
@@ -435,23 +495,22 @@ class chararray(ndarray[_ShapeType, _CharDType]):
         deletechars: None | S_co = ...,
     ) -> _CharArray[bytes_]: ...
 
-    def zfill(self, width: _ArrayLikeInt_co) -> chararray[Any, _CharDType]: ...
-    def capitalize(self) -> chararray[_ShapeType, _CharDType]: ...
-    def title(self) -> chararray[_ShapeType, _CharDType]: ...
-    def swapcase(self) -> chararray[_ShapeType, _CharDType]: ...
-    def lower(self) -> chararray[_ShapeType, _CharDType]: ...
-    def upper(self) -> chararray[_ShapeType, _CharDType]: ...
-    def isalnum(self) -> ndarray[_ShapeType, dtype[np.bool]]: ...
-    def isalpha(self) -> ndarray[_ShapeType, dtype[np.bool]]: ...
-    def isdigit(self) -> ndarray[_ShapeType, dtype[np.bool]]: ...
-    def islower(self) -> ndarray[_ShapeType, dtype[np.bool]]: ...
-    def isspace(self) -> ndarray[_ShapeType, dtype[np.bool]]: ...
-    def istitle(self) -> ndarray[_ShapeType, dtype[np.bool]]: ...
-    def isupper(self) -> ndarray[_ShapeType, dtype[np.bool]]: ...
-    def isnumeric(self) -> ndarray[_ShapeType, dtype[np.bool]]: ...
-    def isdecimal(self) -> ndarray[_ShapeType, dtype[np.bool]]: ...
+    def zfill(self, width: _ArrayLikeInt_co) -> chararray[_Shape, _CharDType_co]: ...
+    def capitalize(self) -> chararray[_ShapeType_co, _CharDType_co]: ...
+    def title(self) -> chararray[_ShapeType_co, _CharDType_co]: ...
+    def swapcase(self) -> chararray[_ShapeType_co, _CharDType_co]: ...
+    def lower(self) -> chararray[_ShapeType_co, _CharDType_co]: ...
+    def upper(self) -> chararray[_ShapeType_co, _CharDType_co]: ...
+    def isalnum(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
+    def isalpha(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
+    def isdigit(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
+    def islower(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
+    def isspace(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
+    def istitle(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
+    def isupper(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
+    def isnumeric(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
+    def isdecimal(self) -> ndarray[_ShapeType_co, dtype[np.bool]]: ...
 
-__all__: list[str]
 
 # Comparison
 @overload

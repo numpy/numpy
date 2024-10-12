@@ -8,6 +8,8 @@
 #mesondefine HAVE_FSEEKO
 #mesondefine HAVE_FALLOCATE
 #mesondefine HAVE_STRTOLD_L
+#mesondefine HAVE_THREAD_LOCAL
+#mesondefine HAVE__THREAD_LOCAL
 #mesondefine HAVE__THREAD
 #mesondefine HAVE___DECLSPEC_THREAD_
 
@@ -105,6 +107,8 @@
 #mesondefine HAVE_LDOUBLE_IEEE_QUAD_BE
 #mesondefine HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_LE
 #mesondefine HAVE_LDOUBLE_IBM_DOUBLE_DOUBLE_BE
+
+#mesondefine HAVE_EXTERNAL_LAPACK
 
 #ifndef __cplusplus
 /* #undef inline */

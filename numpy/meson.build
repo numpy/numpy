@@ -214,6 +214,51 @@ else
   lapack_dep = declare_dependency(dependencies: [lapack, blas_dep])
 endif
 
+# Determine whether it is necessary to link libatomic with gcc. This
+# could be the case on 32-bit platforms when atomic operations are used
+# on 64-bit types or on RISC-V using 8-bit atomics, so we explicitly
+# check for both 64 bit and 8 bit operations.  The check is adapted from
+# SciPy, who copied it from Mesa.
+null_dep = dependency('', required : false)
+atomic_dep = null_dep
+code_non_lockfree = '''
+  #include <stdint.h>
+  int main() {
+   struct {
+     void *p;
+     uint8_t u8v;
+   } x;
+   x.p = NULL;
+   x.u8v = 0;
+   uint8_t res = __atomic_load_n(x.u8v, __ATOMIC_SEQ_CST);
+   __atomic_store_n(x.u8v, 1, ATOMIC_SEQ_CST);
+   void *p = __atomic_load_n(x.p, __ATOMIC_SEQ_CST);
+   __atomic_store_n((void **)x.p, NULL, __ATOMIC_SEQ_CST)
+   return 0;
+   }
+'''
+if cc.get_id() != 'msvc'
+  if not cc.links(
+      code_non_lockfree,
+      name : 'Check atomic builtins without -latomic'
+    )
+    atomic_dep = cc.find_library('atomic', required: false)
+    if atomic_dep.found()
+      # We're not sure that with `-latomic` things will work for all compilers,
+      # so verify and only keep libatomic as a dependency if this works. It is
+      # possible the build will fail later otherwise - unclear under what
+      # circumstances (compilers, runtimes, etc.) exactly and this may need to
+      # be extended when support is added for new CPUs
+      if not cc.links(
+          code_non_lockfree,
+          dependencies: atomic_dep,
+          name : 'Check atomic builtins with -latomic'
+        )
+        atomic_dep = null_dep
+      endif
+    endif
+  endif
+endif
 
 # Copy the main __init__.py|pxd files to the build dir (needed for Cython)
 __init__py = fs.copyfile('__init__.py')
@@ -226,6 +271,8 @@ python_sources = [
   '__init__.pxd',
   '__init__.py',
   '__init__.pyi',
+  '_array_api_info.py',
+  '_array_api_info.pyi',
   '_configtool.py',
   '_distributor_init.py',
   '_globals.py',
@@ -322,7 +369,7 @@ install_subdir('tests', install_dir: np_dir, install_tag: 'tests')
 compilers = {
   'C': cc,
   'CPP': cpp,
-  'CYTHON': meson.get_compiler('cython')
+  'CYTHON': cy,
 }
 
 machines = {
@@ -366,7 +413,7 @@ conf_data.set('PYTHON_VERSION', py.language_version())
 # `np.show_config()`; needs some special handling for the case BLAS was found
 # but CBLAS not (and hence BLAS was also disabled)
 dependency_map = {
-  'LAPACK': lapack_dep,
+  'LAPACK': lapack,
 }
 if have_blas
   dependency_map += {'BLAS': blas}

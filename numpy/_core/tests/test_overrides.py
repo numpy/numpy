@@ -203,6 +203,14 @@ class TestNDArrayArrayFunction:
             array.__array_function__(func=func, types=(np.ndarray,),
                                      args=(array,), kwargs={})
 
+    def test_wrong_arguments(self):
+        # Check our implementation guards against wrong arguments.
+        a = np.array([1, 2])
+        with pytest.raises(TypeError, match="args must be a tuple"):
+            a.__array_function__(np.reshape, (np.ndarray,), a, (2, 1))
+        with pytest.raises(TypeError, match="kwargs must be a dict"):
+            a.__array_function__(np.reshape, (np.ndarray,), (a,), (2, 1))
+
 
 class TestArrayFunctionDispatch:
 
@@ -540,7 +548,7 @@ class TestNumPyFunctions:
 
 class TestArrayLike:
     def setup_method(self):
-        class MyArray():
+        class MyArray:
             def __init__(self, function=None):
                 self.function = function
 
@@ -554,7 +562,7 @@ class TestArrayLike:
 
         self.MyArray = MyArray
 
-        class MyNoArrayFunctionArray():
+        class MyNoArrayFunctionArray:
             def __init__(self, function=None):
                 self.function = function
 
@@ -709,7 +717,7 @@ class TestArrayLike:
 
 def test_function_like():
     # We provide a `__get__` implementation, make sure it works
-    assert type(np.mean) is np._core._multiarray_umath._ArrayFunctionDispatcher 
+    assert type(np.mean) is np._core._multiarray_umath._ArrayFunctionDispatcher
 
     class MyClass:
         def __array__(self, dtype=None, copy=None):

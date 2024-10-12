@@ -1,5 +1,6 @@
 // Taken from:
-// https://github.com/dmlc/dlpack/blob/ca4d00ad3e2e0f410eeab3264d21b8a39397f362/include/dlpack/dlpack.h
+// https://github.com/dmlc/dlpack/blob/bbd2f4d32427e548797929af08cfe2a9cbb3cf12/include/dlpack/dlpack.h
+// but added typedef to DLManagedTensorVersioned
 /*!
  *  Copyright (c) 2017 by Contributors
  * \file dlpack.h
@@ -108,7 +109,7 @@ typedef enum {
    */
   kDLCUDAManaged = 13,
   /*!
-   * \brief Unified shared memory allocated on a oneAPI non-partititioned
+   * \brief Unified shared memory allocated on a oneAPI non-partitioned
    * device. Call to oneAPI runtime is required to determine the device
    * type, the USM allocation type and the sycl context it is bound to.
    *
@@ -118,6 +119,8 @@ typedef enum {
   kDLWebGPU = 15,
   /*! \brief Qualcomm Hexagon DSP */
   kDLHexagon = 16,
+  /*! \brief Microsoft MAIA devices */
+  kDLMAIA = 17,
 } DLDeviceType;
 
 /*!
@@ -215,6 +218,9 @@ typedef struct {
    *   return size;
    * }
    * \endcode
+   *
+   * Note that if the tensor is of size zero, then the data pointer should be
+   * set to `NULL`.
    */
   void* data;
   /*! \brief The device of the tensor */
@@ -259,7 +265,7 @@ typedef struct DLManagedTensor {
    * \brief Destructor - this should be called
    * to destruct the manager_ctx  which backs the DLManagedTensor. It can be
    * NULL if there is no way for the caller to provide a reasonable destructor.
-   * The destructors deletes the argument self as well.
+   * The destructor deletes the argument self as well.
    */
   void (*deleter)(struct DLManagedTensor * self);
 } DLManagedTensor;
@@ -268,6 +274,14 @@ typedef struct DLManagedTensor {
 
 /*! \brief bit mask to indicate that the tensor is read only. */
 #define DLPACK_FLAG_BITMASK_READ_ONLY (1UL << 0UL)
+
+/*!
+ * \brief bit mask to indicate that the tensor is a copy made by the producer.
+ *
+ * If set, the tensor is considered solely owned throughout its lifetime by the
+ * consumer, until the producer-provided deleter is invoked.
+ */
+#define DLPACK_FLAG_BITMASK_IS_COPIED (1UL << 1UL)
 
 /*!
  * \brief A versioned and managed C Tensor object, manage memory of DLTensor.
@@ -279,7 +293,7 @@ typedef struct DLManagedTensor {
  *
  * \note This is the current standard DLPack exchange data structure.
  */
-struct DLManagedTensorVersioned {
+typedef struct DLManagedTensorVersioned {
   /*!
    * \brief The API and ABI version of the current managed Tensor
    */
@@ -296,7 +310,7 @@ struct DLManagedTensorVersioned {
    *
    * This should be called to destruct manager_ctx which holds the DLManagedTensorVersioned.
    * It can be NULL if there is no way for the caller to provide a reasonable
-   * destructor. The destructors deletes the argument self as well.
+   * destructor. The destructor deletes the argument self as well.
    */
   void (*deleter)(struct DLManagedTensorVersioned *self);
   /*!
@@ -308,11 +322,12 @@ struct DLManagedTensorVersioned {
    *       stable, to ensure that deleter can be correctly called.
    *
    * \sa DLPACK_FLAG_BITMASK_READ_ONLY
+   * \sa DLPACK_FLAG_BITMASK_IS_COPIED
    */
   uint64_t flags;
   /*! \brief DLTensor which is being memory managed */
   DLTensor dl_tensor;
-};
+} DLManagedTensorVersioned;
 
 #ifdef __cplusplus
 }  // DLPACK_EXTERN_C

@@ -1,5 +1,4 @@
 import os
-import sys
 import zipfile
 import types
 from re import Pattern
@@ -12,10 +11,11 @@ from typing import (
     IO,
     overload,
     Protocol,
+    type_check_only,
 )
+from typing_extensions import deprecated
 
 from numpy import (
-    ndarray,
     recarray,
     dtype,
     generic,
@@ -23,8 +23,8 @@ from numpy import (
     void,
     record,
 )
-
 from numpy.ma.mrecords import MaskedRecords
+from numpy._core.multiarray import packbits, unpackbits
 from numpy._typing import (
     ArrayLike,
     DTypeLike,
@@ -33,10 +33,18 @@ from numpy._typing import (
     _SupportsArrayFunc,
 )
 
-from numpy._core.multiarray import (
-    packbits as packbits,
-    unpackbits as unpackbits,
-)
+__all__ = [
+    "savetxt",
+    "loadtxt",
+    "genfromtxt",
+    "load",
+    "save",
+    "savez",
+    "savez_compressed",
+    "packbits",
+    "unpackbits",
+    "fromregex",
+]
 
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)
@@ -45,20 +53,22 @@ _SCT = TypeVar("_SCT", bound=generic)
 _CharType_co = TypeVar("_CharType_co", str, bytes, covariant=True)
 _CharType_contra = TypeVar("_CharType_contra", str, bytes, contravariant=True)
 
+@type_check_only
 class _SupportsGetItem(Protocol[_T_contra, _T_co]):
     def __getitem__(self, key: _T_contra, /) -> _T_co: ...
 
+@type_check_only
 class _SupportsRead(Protocol[_CharType_co]):
     def read(self) -> _CharType_co: ...
 
+@type_check_only
 class _SupportsReadSeek(Protocol[_CharType_co]):
     def read(self, n: int, /) -> _CharType_co: ...
     def seek(self, offset: int, whence: int, /) -> object: ...
 
+@type_check_only
 class _SupportsWrite(Protocol[_CharType_contra]):
     def write(self, s: _CharType_contra, /) -> object: ...
-
-__all__: list[str]
 
 class BagObj(Generic[_T_co]):
     def __init__(self, obj: _SupportsGetItem[str, _T_co]) -> None: ...
@@ -129,22 +139,42 @@ def load(
     encoding: L["ASCII", "latin1", "bytes"] = ...,
 ) -> Any: ...
 
+@overload
 def save(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     arr: ArrayLike,
     allow_pickle: bool = ...,
-    fix_imports: bool = ...,
+) -> None: ...
+@overload
+@deprecated("The 'fix_imports' flag is deprecated in NumPy 2.1.")
+def save(
+    file: str | os.PathLike[str] | _SupportsWrite[bytes],
+    arr: ArrayLike,
+    allow_pickle: bool = ...,
+    *,
+    fix_imports: bool,
+) -> None: ...
+@overload
+@deprecated("The 'fix_imports' flag is deprecated in NumPy 2.1.")
+def save(
+    file: str | os.PathLike[str] | _SupportsWrite[bytes],
+    arr: ArrayLike,
+    allow_pickle: bool,
+    fix_imports: bool,
+    /,
 ) -> None: ...
 
 def savez(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
 def savez_compressed(
     file: str | os.PathLike[str] | _SupportsWrite[bytes],
     *args: ArrayLike,
+    allow_pickle: bool = ...,
     **kwds: ArrayLike,
 ) -> None: ...
 
@@ -156,9 +186,9 @@ def loadtxt(
     dtype: None = ...,
     comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
-    converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
+    converters: None | Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any] = ...,
     skiprows: int = ...,
-    usecols: int | Sequence[int] = ...,
+    usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
     ndmin: L[0, 1, 2] = ...,
     encoding: None | str = ...,
@@ -173,9 +203,9 @@ def loadtxt(
     dtype: _DTypeLike[_SCT],
     comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
-    converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
+    converters: None | Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any]  = ...,
     skiprows: int = ...,
-    usecols: int | Sequence[int] = ...,
+    usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
     ndmin: L[0, 1, 2] = ...,
     encoding: None | str = ...,
@@ -190,9 +220,9 @@ def loadtxt(
     dtype: DTypeLike,
     comments: None | str | Sequence[str] = ...,
     delimiter: None | str = ...,
-    converters: None | Mapping[int | str, Callable[[str], Any]] = ...,
+    converters: None | Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any]  = ...,
     skiprows: int = ...,
-    usecols: int | Sequence[int] = ...,
+    usecols: int | Sequence[int] | None = ...,
     unpack: bool = ...,
     ndmin: L[0, 1, 2] = ...,
     encoding: None | str = ...,

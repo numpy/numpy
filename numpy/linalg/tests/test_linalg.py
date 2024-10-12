@@ -4,6 +4,7 @@
 import os
 import sys
 import itertools
+import threading
 import traceback
 import textwrap
 import subprocess
@@ -1854,8 +1855,8 @@ class TestCholesky:
             b = np.matmul(c.transpose(t).conj(), c)
         else:
             b = np.matmul(c, c.transpose(t).conj())
-        with np._no_nep50_warning():
-            atol = 500 * a.shape[0] * np.finfo(dtype).eps
+
+        atol = 500 * a.shape[0] * np.finfo(dtype).eps
         assert_allclose(b, a, atol=atol, err_msg=f'{shape} {dtype}\n{a}\n{c}')
 
         # Check diag(L or U) is real and positive
@@ -1943,7 +1944,9 @@ def test_generalized_raise_multiloop():
 
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
 
-
+@pytest.mark.skipif(
+    threading.active_count() > 1,
+    reason="skipping test that uses fork because there are multiple threads")
 def test_xerbla_override():
     # Check that our xerbla has been successfully linked in. If it is not,
     # the default xerbla routine is called, which prints a message to stdout
@@ -2304,6 +2307,14 @@ def test_cross():
         [-1, 2, -1],
         [-1, 2, -1],
     ])
+
+    assert_equal(actual, expected)
+
+    # We test that lists are converted to arrays.
+    u = [1, 2, 3]
+    v = [4, 5, 6]
+    actual = np.linalg.cross(u, v)
+    expected = array([-3,  6, -3])
 
     assert_equal(actual, expected)
 

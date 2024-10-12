@@ -263,13 +263,13 @@ unpack_indices(PyObject *index, PyObject **result, npy_intp result_n)
  *
  * Checks everything but the bounds.
  *
- * @param the array being indexed
- * @param the index object
- * @param index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
- * @param number of indices found
- * @param dimension of the indexing result
- * @param dimension of the fancy/advanced indices part
- * @param whether to allow the boolean special case
+ * @param self the array being indexed
+ * @param index the index object
+ * @param indices index info struct being filled (size of NPY_MAXDIMS * 2 + 1)
+ * @param num number of indices found
+ * @param ndim dimension of the indexing result
+ * @param out_fancy_ndim dimension of the fancy/advanced indices part
+ * @param allow_boolean whether to allow the boolean special case
  *
  * @returns the index_type or -1 on failure and fills the number of indices.
  */
@@ -782,10 +782,10 @@ index_has_memory_overlap(PyArrayObject *self,
  * The caller must ensure that the index is a full integer
  * one.
  *
- * @param Array being indexed
- * @param result pointer
- * @param parsed index information
- * @param number of indices
+ * @param self Array being indexed
+ * @param ptr result pointer
+ * @param indices parsed index information
+ * @param index_num number of indices
  *
  * @return 0 on success -1 on failure
  */
@@ -814,11 +814,12 @@ get_item_pointer(PyArrayObject *self, char **ptr,
  * Ensure_array allows to fetch a safe subspace view for advanced
  * indexing.
  *
- * @param Array being indexed
- * @param resulting array (new reference)
- * @param parsed index information
- * @param number of indices
- * @param Whether result should inherit the type from self
+ * @param self Array being indexed
+ * @param view Resulting array (new reference)
+ * @param indices parsed index information
+ * @param index_num number of indices
+ * @param ensure_array true if result should be a base class array, 
+ *        false if result should inherit type from self
  *
  * @return 0 on success -1 on failure
  */
@@ -1580,7 +1581,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
             if (PyArray_GetDTypeTransferFunction(is_aligned,
                     itemsize, itemsize,
-                    PyArray_DESCR(self), PyArray_DESCR(self),
+                    PyArray_DESCR(self), PyArray_DESCR((PyArrayObject *)result),
                     0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto finish;
             }
@@ -1960,6 +1961,10 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         tmp_arr = (PyArrayObject *)op;
     }
 
+    if (tmp_arr && solve_may_share_memory(self, tmp_arr, 1) != 0) {
+        Py_SETREF(tmp_arr, (PyArrayObject *)PyArray_NewCopy(tmp_arr, NPY_ANYORDER));
+    }
+
     /*
      * Special case for very simple 1-d fancy indexing, which however
      * is quite common. This saves not only a lot of setup time in the
@@ -1992,9 +1997,9 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
             npy_intp itemsize = PyArray_ITEMSIZE(self);
             int is_aligned = IsUintAligned(self) && IsUintAligned(tmp_arr);
 
-            if (PyArray_GetDTypeTransferFunction(is_aligned,
-                    itemsize, itemsize,
-                    PyArray_DESCR(self), PyArray_DESCR(self),
+            if (PyArray_GetDTypeTransferFunction(
+                        is_aligned, itemsize, itemsize,
+                        PyArray_DESCR(tmp_arr), PyArray_DESCR(self),
                     0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
                 goto fail;
             }
@@ -2030,6 +2035,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         goto fail;
     }
 
+    int allocated_array = 0;
     if (tmp_arr == NULL) {
         /* Fill extra op, need to swap first */
         tmp_arr = mit->extra_op;
@@ -2043,6 +2049,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (PyArray_CopyObject(tmp_arr, op) < 0) {
              goto fail;
         }
+        allocated_array = 1;
     }
 
     if (PyArray_MapIterCheckIndices(mit) < 0) {
@@ -2086,10 +2093,12 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         /* May need a generic copy function (only for refs and odd sizes) */
         NPY_ARRAYMETHOD_FLAGS transfer_flags;
         npy_intp itemsize = PyArray_ITEMSIZE(self);
-
-        if (PyArray_GetDTypeTransferFunction(1,
-                itemsize, itemsize,
-                PyArray_DESCR(self), PyArray_DESCR(self),
+        // TODO: the heuristic used here to determine the src_dtype might be subtly wrong
+        // for non-REFCHK user DTypes. See gh-27057 for the prior discussion about this.
+        if (PyArray_GetDTypeTransferFunction(
+                1, itemsize, itemsize,
+                allocated_array ? PyArray_DESCR(mit->extra_op) : PyArray_DESCR(self),
+                PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto fail;
         }
@@ -2404,10 +2413,10 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
  *    * mit->dimensions: Broadcast dimension of the fancy indices and
  *          the subspace iteration dimension.
  *
- * @param MapIterObject
- * @param The parsed indices object
- * @param Number of indices
- * @param The array that is being iterated
+ * @param mit pointer to the MapIterObject
+ * @param indices The parsed indices object
+ * @param index_num Number of indices
+ * @param arr The array that is being iterated
  *
  * @return 0 on success -1 on failure (broadcasting or too many fancy indices)
  */
