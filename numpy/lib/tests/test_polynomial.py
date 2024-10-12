@@ -301,3 +301,62 @@ class TestPolynomial:
         # this never used to be allowed - let's not add features to deprecated
         # APIs
         assert_raises(AttributeError, setattr, p, 'coeffs', np.array(1))
+
+    def test_polyval_return_types(self):
+        v = np.polyval(np.array([5.], dtype=np.float32), 5.0)
+        assert_equal(v.dtype, np.float32)
+
+        v = np.polyval(np.array([5.], dtype=np.float16), 5.0)
+        assert_equal(v.dtype, np.float16)
+
+        v = np.polyval(np.array([5.], dtype=np.float16), 1)
+        assert_equal(v.dtype, np.float16)
+
+        v = np.polyval(np.array([5.], dtype=np.float16), np.float64(1))
+        assert_equal(v.dtype, np.float64)
+
+        v = np.polyval([5.], np.float16(5.0))
+        assert_equal(v.dtype, np.float64)
+
+        v = np.polyval(np.array([], dtype=np.float32), 5.0)
+        assert_equal(v.dtype, np.float32)
+        assert np.isscalar(v)
+
+        v = np.polyval([], [1, 2])
+        assert_equal(v.dtype, np.float64)
+
+        p = np.array([], dtype=np.float16)
+        v = np.polyval(p, 1)
+        assert v.dtype == p.dtype
+
+        p = np.array([1, 2], dtype=np.float16)
+        v = np.polyval(p, 1)
+        assert v.dtype == p.dtype
+
+        p = np.array([1, 2], dtype=np.int16)
+        q = np.array([1, 2], dtype=np.float32)
+        v = np.polyval(p, q)
+        assert v.dtype == np.float32
+
+        p = np.array([1, 2], dtype=np.int8)
+        q = np.array([1, 2], dtype=np.int8)
+        v = np.polyval(p, q)
+        assert v.dtype == np.int8
+
+        p = np.array([1, 2])
+        v = np.polyval(p, 1+2j)
+        assert v.dtype == np.complex128
+
+        p = np.array([1, 1+2j])
+        v = np.polyval(p, 1)
+        assert v.dtype == np.complex128
+
+        p = np.poly1d([1, 2])
+        q = np.poly1d([1, 2])
+        v = np.polyval(p, q)
+        assert isinstance(v, np.poly1d)
+
+        p = np.array([1, 2])
+        q = np.poly1d([1, 2])
+        v = np.polyval(p, q)
+        assert isinstance(v, np.poly1d)
