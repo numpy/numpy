@@ -22,6 +22,7 @@ from numpy import (
     bytes_,
 )
 from ._nested_sequence import _NestedSequence
+from ._shape import _Shape
 
 _T = TypeVar("_T")
 _ScalarType = TypeVar("_ScalarType", bound=generic)
@@ -29,7 +30,7 @@ _ScalarType_co = TypeVar("_ScalarType_co", bound=generic, covariant=True)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 
-NDArray: TypeAlias = ndarray[Any, dtype[_ScalarType_co]]
+NDArray: TypeAlias = ndarray[_Shape, dtype[_ScalarType_co]]
 
 # The `_SupportsArray` protocol only cares about the default dtype
 # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned

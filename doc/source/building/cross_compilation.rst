@@ -24,7 +24,7 @@ may need to pass to Meson to successfully cross compile.
 
 One possible hiccup is that the build requires running a compiled executable in
 order to determine the ``long double`` format for the host platform. This may be
-an obstable, since it requires ``crossenv`` or QEMU to run the host (cross)
+an obstacle, since it requires ``crossenv`` or QEMU to run the host (cross)
 Python. To avoid this problem, specify the paths to the relevant directories in
 your *cross file*:
 

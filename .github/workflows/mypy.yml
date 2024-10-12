@@ -47,8 +47,8 @@ jobs:
       matrix:
         os_python:
           - [ubuntu-latest, '3.12']
-          - [windows-2019, '3.11']
-          - [macos-12, '3.10']
+          - [windows-latest, '3.11']
+          - [macos-latest, '3.10']
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:

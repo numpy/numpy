@@ -130,7 +130,14 @@
     #error "NPY_TARGET_VERSION higher than NumPy headers!"
 #elif NPY_FEATURE_VERSION < NPY_1_15_API_VERSION
     /* No support for irrelevant old targets, no need for error, but warn. */
-    #warning "Requested NumPy target lower than supported NumPy 1.15."
+    #ifndef _MSC_VER
+        #warning "Requested NumPy target lower than supported NumPy 1.15."
+    #else
+        #define _WARN___STR2__(x) #x
+        #define _WARN___STR1__(x) _WARN___STR2__(x)
+        #define _WARN___LOC__ __FILE__ "(" _WARN___STR1__(__LINE__) ") : Warning Msg: "
+        #pragma message(_WARN___LOC__"Requested NumPy target lower than supported NumPy 1.15.")
+    #endif
 #endif
 
 /*

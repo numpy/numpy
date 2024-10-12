@@ -17,7 +17,7 @@ i4: np.int32
 f8: np.float64
 f4: np.float32
 
-assert_type(add(f8, i8), np.float64)
+assert_type(add(f8, i8), np.floating[_64Bit])
 assert_type(add(f4, i8), np.floating[_32Bit | _64Bit])
 assert_type(add(f8, i4), np.floating[_32Bit | _64Bit])
-assert_type(add(f4, i4), np.float32)
+assert_type(add(f4, i4), np.floating[_32Bit])

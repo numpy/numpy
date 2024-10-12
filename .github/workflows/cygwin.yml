@@ -62,7 +62,7 @@ jobs:
           cd tools
           /usr/bin/python3.9 -m pytest --pyargs numpy -n2 -m "not slow"
       - name: Upload wheel if tests fail
-        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         if: failure()
         with:
           name: numpy-cygwin-wheel

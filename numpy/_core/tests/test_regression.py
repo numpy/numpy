@@ -2644,3 +2644,10 @@ class TestRegression:
             data = np.broadcast_to(vals, (128, 128, 128))
             data = data.transpose(0, 2, 1).copy()
             np.unique(data)
+
+    def test_sort_overlap(self):
+        # gh-27273
+        size = 100
+        inp = np.linspace(0, size, num=size, dtype=np.intc)
+        out = np.sort(inp)
+        assert_equal(inp, out)

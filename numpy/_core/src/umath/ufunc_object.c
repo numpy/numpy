@@ -3005,7 +3005,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     char *opname = "reduceat";
 
-    /* These parameters comefrom a TLS global */
+    /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
 
     NPY_BEGIN_THREADS_DEF;
@@ -4193,7 +4193,7 @@ resolve_descriptors(int nop,
  * None --- array-object passed in don't call PyArray_Return
  * method --- the __array_wrap__ method to call.
  *
- * @param ufunc
+ * @param ufunc The universal function to be wrapped
  * @param full_args Original inputs and outputs
  * @param subok Whether subclasses are allowed
  * @param result_arrays The ufunc result(s).  REFERENCES ARE STOLEN!

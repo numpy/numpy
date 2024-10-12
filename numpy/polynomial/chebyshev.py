@@ -677,8 +677,6 @@ def chebmulx(c):
     Notes
     -----
 
-    .. versionadded:: 1.5.0
-
     Examples
     --------
     >>> from numpy.polynomial import chebyshev as C
@@ -904,8 +902,6 @@ def chebder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     der : ndarray
@@ -1005,8 +1001,6 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -1138,8 +1132,6 @@ def chebval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, algebra_like
@@ -1222,8 +1214,6 @@ def chebval2d(x, y, c):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(chebval, c, x, y)
 
@@ -1275,8 +1265,6 @@ def chebgrid2d(x, y, c):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(chebval, c, x, y)
 
@@ -1325,8 +1313,6 @@ def chebval3d(x, y, z, c):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
 
     """
     return pu._valnd(chebval, c, x, y, z)
@@ -1381,8 +1367,6 @@ def chebgrid3d(x, y, z, c):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
 
     """
     return pu._gridnd(chebval, c, x, y, z)
@@ -1488,8 +1472,6 @@ def chebvander2d(x, y, deg):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((chebvander, chebvander), (x, y), deg)
 
@@ -1542,8 +1524,6 @@ def chebvander3d(x, y, z, deg):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((chebvander, chebvander, chebvander), (x, y, z), deg)
 
@@ -1591,8 +1571,6 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         chosen so that the errors of the products ``w[i]*y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
-        .. versionadded:: 1.5.0
 
     Returns
     -------
@@ -1698,8 +1676,6 @@ def chebcompanion(c):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1789,8 +1765,6 @@ def chebinterpolate(func, deg, args=()):
     series tends to a minmax approximation to `func` with increasing `deg`
     if the function is continuous in the interval.
 
-    .. versionadded:: 1.14.0
-
     Parameters
     ----------
     func : function
@@ -1871,9 +1845,6 @@ def chebgauss(deg):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
-
     The results have only been tested up to degree 100, higher degrees may
     be problematic. For Gauss-Chebyshev there are closed form solutions for
     the sample points and weights. If n = `deg`, then
@@ -1914,8 +1885,6 @@ def chebweight(x):
     Notes
     -----
 
-    .. versionadded:: 1.7.0
-
     """
     w = 1./(np.sqrt(1. + x) * np.sqrt(1. - x))
     return w
@@ -1944,8 +1913,6 @@ def chebpts1(npts):
 
     Notes
     -----
-
-    .. versionadded:: 1.5.0
 
     """
     _npts = int(npts)
@@ -1978,8 +1945,6 @@ def chebpts2(npts):
 
     Notes
     -----
-
-    .. versionadded:: 1.5.0
 
     """
     _npts = int(npts)
@@ -2014,8 +1979,6 @@ class Chebyshev(ABCPolyBase):
         The default value is [-1., 1.].
     window : (2,) array_like, optional
         Window, see `domain` for its use. The default value is [-1., 1.].
-
-        .. versionadded:: 1.6.0
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.
@@ -2046,8 +2009,6 @@ class Chebyshev(ABCPolyBase):
         the first kind scaled and shifted to the `domain`. The resulting series
         tends to a minmax approximation of `func` when the function is
         continuous in the domain.
-
-        .. versionadded:: 1.14.0
 
         Parameters
         ----------

@@ -1,9 +1,11 @@
 from typing import (
     Literal as L,
     Any,
+    TypeAlias,
     overload,
     TypeVar,
     Protocol,
+    type_check_only,
 )
 
 from numpy import generic
@@ -15,8 +17,11 @@ from numpy._typing import (
     _ArrayLike,
 )
 
+__all__ = ["pad"]
+
 _SCT = TypeVar("_SCT", bound=generic)
 
+@type_check_only
 class _ModeFunc(Protocol):
     def __call__(
         self,
@@ -27,7 +32,7 @@ class _ModeFunc(Protocol):
         /,
     ) -> None: ...
 
-_ModeKind = L[
+_ModeKind: TypeAlias = L[
     "constant",
     "edge",
     "linear_ramp",
@@ -41,7 +46,6 @@ _ModeKind = L[
     "empty",
 ]
 
-__all__: list[str]
 
 # TODO: In practice each keyword argument is exclusive to one or more
 # specific modes. Consider adding more overloads to express this in the future.

@@ -595,8 +595,6 @@ def pad(array, pad_width, mode='constant', **kwargs):
         'empty'
             Pads with undefined values.
 
-            .. versionadded:: 1.17
-
         <function>
             Padding function, see Notes.
     stat_length : sequence or int, optional
@@ -655,8 +653,6 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     Notes
     -----
-    .. versionadded:: 1.7.0
-
     For an array with rank greater than 1, some of the padding of later
     axes is calculated from padding of previous axes.  This is easiest to
     think about with a rank 2 array where the corners of the padded array

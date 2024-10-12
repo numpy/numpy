@@ -139,8 +139,6 @@ Exceptions
 Linear algebra on several matrices at once
 ------------------------------------------
 
-.. versionadded:: 1.8.0
-
 Several of the linear algebra routines listed above are able to
 compute results for several matrices at once, if they are stacked into
 the same array.

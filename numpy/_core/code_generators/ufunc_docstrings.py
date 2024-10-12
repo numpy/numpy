@@ -838,7 +838,6 @@ add_newdoc('numpy._core.umath', 'trunc',
 
     Notes
     -----
-    .. versionadded:: 1.3.0
 
     Examples
     --------
@@ -1029,7 +1028,6 @@ add_newdoc('numpy._core.umath', 'rad2deg',
 
     Notes
     -----
-    .. versionadded:: 1.3.0
 
     rad2deg(x) is ``180 * x / pi``.
 
@@ -1070,7 +1068,6 @@ add_newdoc('numpy._core.umath', 'heaviside',
 
     Notes
     -----
-    .. versionadded:: 1.13.0
 
     References
     ----------
@@ -1274,9 +1271,6 @@ add_newdoc('numpy._core.umath', 'exp2',
 
     Notes
     -----
-    .. versionadded:: 1.3.0
-
-
 
     Examples
     --------
@@ -1867,8 +1861,6 @@ add_newdoc('numpy._core.umath', 'isnat',
     """
     Test element-wise for NaT (not a time) and return result as a boolean array.
 
-    .. versionadded:: 1.13.0
-
     Parameters
     ----------
     x : array_like
@@ -2170,8 +2162,6 @@ add_newdoc('numpy._core.umath', 'log2',
 
     Notes
     -----
-    .. versionadded:: 1.3.0
-
     Logarithm is a multivalued function: for each `x` there is an infinite
     number of `z` such that `2**z = x`. The convention is to return the `z`
     whose imaginary part lies in `(-pi, pi]`.
@@ -2231,7 +2221,6 @@ add_newdoc('numpy._core.umath', 'logaddexp',
 
     Notes
     -----
-    .. versionadded:: 1.3.0
 
     Examples
     --------
@@ -2275,7 +2264,6 @@ add_newdoc('numpy._core.umath', 'logaddexp2',
 
     Notes
     -----
-    .. versionadded:: 1.3.0
 
     Examples
     --------
@@ -2674,7 +2662,6 @@ add_newdoc('numpy._core.umath', 'fmax',
 
     Notes
     -----
-    .. versionadded:: 1.3.0
 
     The fmax is equivalent to ``np.where(x1 >= x2, x1, x2)`` when neither
     x1 nor x2 are NaNs, but it is faster and does proper broadcasting.
@@ -2733,7 +2720,6 @@ add_newdoc('numpy._core.umath', 'fmin',
 
     Notes
     -----
-    .. versionadded:: 1.3.0
 
     The fmin is equivalent to ``np.where(x1 <= x2, x1, x2)`` when neither
     x1 nor x2 are NaNs, but it is faster and does proper broadcasting.
@@ -2808,9 +2794,6 @@ add_newdoc('numpy._core.umath', 'matmul',
     **kwargs
         For other keyword-only arguments, see the
         :ref:`ufunc docs <ufuncs.kwargs>`.
-
-        .. versionadded:: 1.16
-           Now handles ufunc kwargs
 
     Returns
     -------
@@ -2924,8 +2907,6 @@ add_newdoc('numpy._core.umath', 'matmul',
     >>> x2 = np.array([2j, 3j])
     >>> x1 @ x2
     (-13+0j)
-
-    .. versionadded:: 1.10.0
     """)
 
 add_newdoc('numpy._core.umath', 'vecdot',
@@ -3108,8 +3089,6 @@ add_newdoc('numpy._core.umath', 'negative',
 add_newdoc('numpy._core.umath', 'positive',
     """
     Numerical positive, element-wise.
-
-    .. versionadded:: 1.13.0
 
     Parameters
     ----------
@@ -3299,8 +3278,6 @@ add_newdoc('numpy._core.umath', 'float_power',
     To get complex results, cast the input to complex, or specify the
     ``dtype`` to be ``complex`` (see the example below).
 
-    .. versionadded:: 1.12.0
-
     Parameters
     ----------
     x1 : array_like
@@ -3427,8 +3404,6 @@ add_newdoc('numpy._core.umath', 'deg2rad',
 
     Notes
     -----
-    .. versionadded:: 1.3.0
-
     ``deg2rad(x)`` is ``x * pi / 180``.
 
     Examples
@@ -3543,8 +3518,6 @@ add_newdoc('numpy._core.umath', 'remainder',
 add_newdoc('numpy._core.umath', 'divmod',
     """
     Return element-wise quotient and remainder simultaneously.
-
-    .. versionadded:: 1.13.0
 
     ``np.divmod(x, y)`` is equivalent to ``(x // y, x % y)``, but faster
     because it avoids redundant work. It is used to implement the Python
@@ -4014,8 +3987,6 @@ add_newdoc('numpy._core.umath', 'sqrt',
 add_newdoc('numpy._core.umath', 'cbrt',
     """
     Return the cube-root of an array, element-wise.
-
-    .. versionadded:: 1.10.0
 
     Parameters
     ----------

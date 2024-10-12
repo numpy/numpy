@@ -12,8 +12,8 @@ import numpy as np
 from numpy import (
     # Circumvent a naming conflict with `AxisConcatenator.matrix`
     matrix as _Matrix,
-    ndenumerate as ndenumerate,
-    ndindex as ndindex,
+    ndenumerate,
+    ndindex,
     ndarray,
     dtype,
     str_,
@@ -32,12 +32,29 @@ from numpy._typing import (
     # DTypes
     DTypeLike,
     _SupportsDType,
+
+    # Shapes
+    _Shape,
 )
 
-from numpy._core.multiarray import (
-    unravel_index as unravel_index,
-    ravel_multi_index as ravel_multi_index,
-)
+from numpy._core.multiarray import unravel_index, ravel_multi_index
+
+__all__ = [
+    "ravel_multi_index",
+    "unravel_index",
+    "mgrid",
+    "ogrid",
+    "r_",
+    "c_",
+    "s_",
+    "index_exp",
+    "ix_",
+    "ndenumerate",
+    "ndindex",
+    "fill_diagonal",
+    "diag_indices",
+    "diag_indices_from",
+]
 
 _T = TypeVar("_T")
 _DType = TypeVar("_DType", bound=dtype[Any])
@@ -45,10 +62,8 @@ _BoolType = TypeVar("_BoolType", Literal[True], Literal[False])
 _TupType = TypeVar("_TupType", bound=tuple[Any, ...])
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-__all__: list[str]
-
 @overload
-def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DType]]) -> tuple[ndarray[Any, _DType], ...]: ...
+def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DType]]) -> tuple[ndarray[_Shape, _DType], ...]: ...
 @overload
 def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[str_], ...]: ...
 @overload

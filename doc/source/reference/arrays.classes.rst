@@ -52,8 +52,6 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array_ufunc__(ufunc, method, *inputs, **kwargs)
 
-   .. versionadded:: 1.13
-
    Any class, ndarray subclass or not, can define this method or set it to
    None in order to override the behavior of NumPy's ufuncs. This works
    quite similarly to Python's ``__mul__`` and other binary operation routines.
@@ -155,8 +153,6 @@ NumPy provides several hooks that classes can customize:
         :ref:`Subclassing ndarray <basics.subclassing>` for details.
 
 .. py:method:: class.__array_function__(func, types, args, kwargs)
-
-   .. versionadded:: 1.16
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.

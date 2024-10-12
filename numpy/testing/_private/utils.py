@@ -40,7 +40,7 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        'IS_MUSL', '_SUPPORTS_SVE', 'NOGIL_BUILD',
+        'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
         'IS_EDITABLE', 'run_threaded',
         ]
 
@@ -1374,21 +1374,24 @@ def rundocs(filename=None, raise_on_error=True):
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
-def check_support_sve():
+def check_support_sve(__cache=[]):
     """
     gh-22982
     """
-
+    
+    if __cache:
+        return __cache[0]
+    
     import subprocess
     cmd = 'lscpu'
     try:
         output = subprocess.run(cmd, capture_output=True, text=True)
-        return 'sve' in output.stdout
-    except OSError:
-        return False
+        result = 'sve' in output.stdout
+    except (OSError, subprocess.SubprocessError):
+        result = False
+    __cache.append(result)
+    return __cache[0]
 
-
-_SUPPORTS_SVE = check_support_sve()
 
 #
 # assert_raises and assert_raises_regex are taken from unittest.
@@ -1447,7 +1450,6 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
 
     Notes
     -----
-    .. versionadded:: 1.9.0
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -1588,8 +1590,6 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
     that ``allclose`` has different default values). It compares the difference
     between `actual` and `desired` to ``atol + rtol * abs(desired)``.
-
-    .. versionadded:: 1.5.0
 
     Parameters
     ----------
@@ -1918,8 +1918,6 @@ def assert_warns(warning_class, *args, **kwargs):
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
 
-    .. versionadded:: 1.4.0
-
     Parameters
     ----------
     warning_class : class
@@ -1984,8 +1982,6 @@ def assert_no_warnings(*args, **kwargs):
             do_something()
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -2525,8 +2521,6 @@ def assert_no_gc_cycles(*args, **kwargs):
 
         with assert_no_gc_cycles():
             do_something()
-
-    .. versionadded:: 1.15.0
 
     Parameters
     ----------

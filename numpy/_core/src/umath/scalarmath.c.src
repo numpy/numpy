@@ -937,7 +937,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
     if (PyArray_IsScalar(value, @Name@)) {
         *result = PyArrayScalar_VAL(value, @Name@);
         /*
-         * In principle special, assyemetric, handling could be possible for
+         * In principle special, asymmetric, handling could be possible for
          * explicit subclasses.
          * In practice, we just check the normal deferring logic.
          */

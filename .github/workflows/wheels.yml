@@ -166,18 +166,18 @@ jobs:
           echo "CIBW_BUILD_FRONTEND=pip; args: --no-build-isolation" >> "$GITHUB_ENV"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@bd033a44476646b606efccdd5eed92d5ea1d77ad  # v2.20.0
+        uses: pypa/cibuildwheel@7940a4c0e76eb2030e473a5f864f291f63ee879b  # v2.21.3
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_FREE_THREADED_SUPPORT: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
 
-      - uses: mamba-org/setup-micromamba@f8b8a1e23a26f60a44c853292711bacfd3eac822
+      - uses: mamba-org/setup-micromamba@617811f69075e3fd3ae68ca64220ad065877f246
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -253,7 +253,7 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: sdist
           path: ./dist/*

@@ -219,7 +219,6 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         Unrecognized strings will be ignored with a warning for forward
         compatibility.
 
-        .. versionadded:: 1.14.0
         .. versionchanged:: 1.22.0
         .. versionchanged:: 2.0
 
@@ -710,8 +709,6 @@ def array2string(a, max_line_width=None, precision=None,
         position of floats and different behavior for 0d arrays. If set to
         `False`, disables legacy mode. Unrecognized strings will be ignored
         with a warning for forward compatibility.
-
-        .. versionadded:: 1.14.0
 
     Returns
     -------

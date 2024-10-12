@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from typing import Literal as L
 
-__all__: list[str]
+__all__ = ["PytestTester"]
 
 class PytestTester:
     module_name: str
