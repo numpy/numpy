@@ -843,7 +843,7 @@ def vdot(a, b):
 
     Consequently, when the arguments are 2-D arrays of the same shape, this
     function effectively returns their
-    `Frobenius inner product <https://en.wikipedia.org/wiki/Frobenius_inner_product>`_.
+    `Frobenius inner product <https://en.wikipedia.org/wiki/Frobenius_inner_product>`_
     (also known as the *trace inner product* or the *standard inner product*
     on a vector space of matrices).
 
