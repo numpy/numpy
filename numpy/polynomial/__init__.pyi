@@ -10,12 +10,12 @@ from . import polynomial, chebyshev, legendre, hermite, hermite_e, laguerre
 
 __all__ = [
     "set_default_printstyle",
-    "polynomial", "Polynomial",
-    "chebyshev", "Chebyshev",
-    "legendre", "Legendre",
-    "hermite", "Hermite",
-    "hermite_e", "HermiteE",
-    "laguerre", "Laguerre",
+    "polynomial", "Polynomial",  # noqa: F822
+    "chebyshev", "Chebyshev",  # noqa: F822
+    "legendre", "Legendre",  # noqa: F822
+    "hermite", "Hermite",  # noqa: F822
+    "hermite_e", "HermiteE",  # noqa: F822
+    "laguerre", "Laguerre",  # noqa: F822
 ]
 
 def set_default_printstyle(style: Literal["ascii", "unicode"]) -> None: ...

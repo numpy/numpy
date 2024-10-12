@@ -36,9 +36,9 @@ class TestDateTime:
         msg = "no explicit representation of timezones available for " \
               "np.datetime64"
         with pytest.warns(UserWarning, match=msg):
-            t0 = np.datetime64('2023-06-09T12:18:40Z', 'ns')
+            np.datetime64('2023-06-09T12:18:40Z', 'ns')
 
-        t0 = np.datetime64('2023-06-09T12:18:40', 'ns')
+        np.datetime64('2023-06-09T12:18:40', 'ns')
 
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',

@@ -455,7 +455,7 @@ class TestIntegers:
 
     def test_in_bounds_fuzz(self, endpoint):
         # Don't use fixed seed
-        random = Generator(MT19937())
+        _random = Generator(MT19937())
 
         for dt in self.itype[1:]:
             for ubnd in [4, 8, 16]:
@@ -1536,7 +1536,7 @@ class TestRandomDist:
     def test_negative_binomial_p0_exception(self):
         # Verify that p=0 raises an exception.
         with assert_raises(ValueError):
-            x = random.negative_binomial(1, 0)
+            _x = random.negative_binomial(1, 0)
 
     def test_negative_binomial_invalid_p_n_combination(self):
         # Verify that values of p and n that would result in an overflow
@@ -1883,7 +1883,6 @@ class TestBroadcast:
         random = Generator(MT19937(self.seed))
         low = [0]
         high = [1]
-        uniform = random.uniform
         desired = np.array([0.16693771389729, 0.19635129550675, 0.75563050964095])
 
         random = Generator(MT19937(self.seed))
@@ -1898,7 +1897,6 @@ class TestBroadcast:
         loc = [0]
         scale = [1]
         bad_scale = [-1]
-        random = Generator(MT19937(self.seed))
         desired = np.array([-0.38736406738527,  0.79594375042255,  0.0197076236097])
 
         random = Generator(MT19937(self.seed))

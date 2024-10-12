@@ -2768,7 +2768,7 @@ def analyzevars(block):
 
                                     all_symbols = set(a.symbols())
                                     all_symbols.update(b.symbols())
-                                except RuntimeError as msg:
+                                except RuntimeError:
                                     # d is not a linear function of v,
                                     # however, if v can be determined
                                     # from d using other means,

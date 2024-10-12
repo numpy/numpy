@@ -918,7 +918,7 @@ class TestStructuredObjectRefcounting:
         res = arr.take(indices)
         after = sys.getrefcount(singleton)
         assert after - before == count * 2
-        new = res.repeat(10)
+        _new = res.repeat(10)
         gc.collect()
         after_repeat = sys.getrefcount(singleton)
         assert after_repeat - after == count * 2 * 10

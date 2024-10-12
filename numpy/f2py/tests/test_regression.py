@@ -114,7 +114,7 @@ class TestF90Contiuation(util.F2PyTest):
 def test_gh26623():
     # Including libraries with . should not generate an incorrect meson.build
     try:
-        aa = util.build_module(
+        _aa = util.build_module(
             [util.getpath("tests", "src", "regression", "f90continuation.f90")],
             ["-lfoo.bar"],
             module_name="Blah",
@@ -128,7 +128,7 @@ def test_gh26623():
 def test_gh25784():
     # Compile dubious file using passed flags
     try:
-        aa = util.build_module(
+        _aa = util.build_module(
             [util.getpath("tests", "src", "regression", "f77fixedform.f95")],
             options=[
                 # Meson will collect and dedup these to pass to fortran_args:

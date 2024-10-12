@@ -1184,7 +1184,7 @@ class TestCreation:
     def _ragged_creation(self, seq):
         # without dtype=object, the ragged object raises
         with pytest.raises(ValueError, match=".*detected shape was"):
-            a = np.array(seq)
+            _a = np.array(seq)
 
         return np.array(seq, dtype=object)
 
@@ -1231,9 +1231,9 @@ class TestCreation:
 
     def test_deep_nonragged_object(self):
         # None of these should raise, even though they are missing dtype=object
-        a = np.array([[[Decimal(1)]]])
-        a = np.array([1, Decimal(1)])
-        a = np.array([[1], [Decimal(1)]])
+        _a = np.array([[[Decimal(1)]]])
+        _a = np.array([1, Decimal(1)])
+        _a = np.array([[1], [Decimal(1)]])
 
     @pytest.mark.parametrize("dtype", [object, "O,O", "O,(3,)O", "(2,3)O"])
     @pytest.mark.parametrize("function", [
@@ -2695,7 +2695,7 @@ class TestMethods:
 
     def test_searchsorted_with_invalid_sorter(self):
         a = np.array([5, 2, 1, 3, 4])
-        s = np.argsort(a)
+        _s = np.argsort(a)
         assert_raises(TypeError, np.searchsorted, a, 0,
                       sorter=np.array((1, (2, 3)), dtype=object))
         assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1.1])
@@ -3218,7 +3218,6 @@ class TestMethods:
     def test_arr_mult(self, func):
         a = np.array([[1, 0], [0, 1]])
         b = np.array([[0, 1], [1, 0]])
-        c = np.array([[9, 1], [1, -9]])
         d = np.arange(24).reshape(4, 6)
         ddt = np.array(
             [[  55,  145,  235,  325],
@@ -4347,7 +4346,7 @@ class TestPickling:
                         reason=('this tests the error messages when trying to'
                                 'protocol 5 although it is not available'))
     def test_correct_protocol5_error_message(self):
-        array = np.arange(10)
+        _array = np.arange(10)
 
     def test_record_array_with_object_dtype(self):
         my_object = object()
@@ -5429,13 +5428,13 @@ class TestIO:
         assert d.shape == (0,)
 
     def test_empty_files_text(self, tmp_filename):
-        with open(tmp_filename, 'w') as f:
+        with open(tmp_filename, 'w'):
             pass
         y = np.fromfile(tmp_filename)
         assert_(y.size == 0, "Array not empty")
 
     def test_empty_files_binary(self, tmp_filename):
-        with open(tmp_filename, 'wb') as f:
+        with open(tmp_filename, 'wb'):
             pass
         y = np.fromfile(tmp_filename, sep=" ")
         assert_(y.size == 0, "Array not empty")
@@ -5801,7 +5800,7 @@ class TestIO:
         # We currently do not support parsing subarray dtypes
         data = "12,42,13," * 50
         with pytest.raises(ValueError):
-            expected = np.fromstring(data, dtype="(3,)i", sep=",")
+            _expected = np.fromstring(data, dtype="(3,)i", sep=",")
 
         with open(tmp_filename, "w") as f:
             f.write(data)
@@ -6398,12 +6397,12 @@ class TestStats:
         assert_allclose(np.mean(a3d, axis=2, where=_wh_partial),
                         np.array(_res))
 
-        with pytest.warns(RuntimeWarning) as w:
+        with pytest.warns(RuntimeWarning):
             assert_allclose(a.mean(axis=1, where=wh_partial),
                             np.array([np.nan, 5.5, 9.5, np.nan]))
-        with pytest.warns(RuntimeWarning) as w:
+        with pytest.warns(RuntimeWarning):
             assert_equal(a.mean(where=False), np.nan)
-        with pytest.warns(RuntimeWarning) as w:
+        with pytest.warns(RuntimeWarning):
             assert_equal(np.mean(a, where=False), np.nan)
 
     def test_var_values(self):
@@ -6486,9 +6485,9 @@ class TestStats:
                         np.var(a[wh_full].reshape((5, 3)), axis=1))
         assert_allclose(np.var(a, axis=0, where=wh_partial),
                         np.var(a[wh_partial[:,0]], axis=0))
-        with pytest.warns(RuntimeWarning) as w:
+        with pytest.warns(RuntimeWarning):
             assert_equal(a.var(where=False), np.nan)
-        with pytest.warns(RuntimeWarning) as w:
+        with pytest.warns(RuntimeWarning):
             assert_equal(np.var(a, where=False), np.nan)
 
     def test_std_values(self):
@@ -6537,9 +6536,9 @@ class TestStats:
                         np.std(a[whp[:,0]], axis=0))
         assert_allclose(np.std(a, axis=0, where=whp),
                         (a[whp[:,0]]).std(axis=0))
-        with pytest.warns(RuntimeWarning) as w:
+        with pytest.warns(RuntimeWarning):
             assert_equal(a.std(where=False), np.nan)
-        with pytest.warns(RuntimeWarning) as w:
+        with pytest.warns(RuntimeWarning):
             assert_equal(np.std(a, where=False), np.nan)
 
     def test_subclass(self):
@@ -7283,7 +7282,7 @@ class TestMatmul(MatmulCommon):
                 return self
         a = np.full((3,3), add_not_multiply())
         with assert_raises(TypeError):
-            b = np.matmul(a, a)
+            _b = np.matmul(a, a)
 
     def test_matmul_exception_add(self):
         # test that matmul fails if `__add__` is missing
@@ -7292,7 +7291,7 @@ class TestMatmul(MatmulCommon):
                 return self
         a = np.full((3,3), multiply_not_add())
         with assert_raises(TypeError):
-            b = np.matmul(a, a)
+            _b = np.matmul(a, a)
 
     def test_matmul_bool(self):
         # gh-14439
@@ -10021,13 +10020,13 @@ class TestAlignment:
                 sup.filter(ComplexWarning, "Casting complex values")
                 xc64.astype('f8')
             xf64.astype(np.complex64)
-            test = xc64 + xf64
+            _test = xc64 + xf64
 
             xf128.astype('f8')
             xf64.astype(np.longdouble)
-            test = xf128 + xf64
+            _test = xf128 + xf64
 
-            test = xf128 + xc64
+            _test = xf128 + xc64
 
             # test copy, both to and from misaligned
             # contig copy

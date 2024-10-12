@@ -1401,7 +1401,7 @@ def make_arrays(funcdict):
             else:
                 try:
                     thedict = arity_lookup[uf.nin, uf.nout]
-                except KeyError as e:
+                except KeyError:
                     raise ValueError(
                         f"Could not handle {name}[{t.type}] "
                         f"with nin={uf.nin}, nout={uf.nout}"
