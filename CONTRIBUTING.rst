@@ -9,7 +9,7 @@ help us grow.
 Pull requests (PRs) are always welcome, but making a PR is just the
 start. Please respond to comments and requests for changes to help
 move the process forward. Please follow our
-[Code of Conduct](https://numpy.org/code-of-conduct/), which applies
+`Code of Conduct <https://numpy.org/code-of-conduct/>`__, which applies
 to all interactions, including issues and PRs.
 
 For more, please read https://www.numpy.org/devdocs/dev/index.html

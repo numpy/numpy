@@ -23,7 +23,7 @@ We understand that everyone has a different level of experience,
 also NumPy is a pretty well-established project, so it's hard to
 make assumptions about an ideal "first-time-contributor". 
 So, that's why we don't mark issues with the "good-first-issue"
-label. Instead, you'll find [issues labeled "Sprintable."](https://github.com/numpy/numpy/labels/sprintable).
+label. Instead, you'll find `issues labeled "Sprintable" <https://github.com/numpy/numpy/labels/sprintable>`__.
 These issues can either be:
 
 - **Easily fixed** when you have guidance from an experienced
