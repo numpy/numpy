@@ -1373,6 +1373,14 @@ def _splitlines(a, keepends=None):
     --------
     str.splitlines
 
+    Examples
+    --------
+    >>> np.char.splitlines("first line\\nsecond line")
+    array(list(['first line', 'second line']), dtype=object)
+    >>> a = np.array(["first\\nsecond", "third\\nfourth"])
+    >>> np.char.splitlines(a)
+    array([list(['first', 'second']), list(['third', 'fourth'])], dtype=object)
+
     """
     return _vec_string(
         a, np.object_, 'splitlines', _clean_args(keepends))

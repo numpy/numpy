@@ -4531,6 +4531,15 @@ add_newdoc('numpy._core.umath', 'isspace',
     --------
     str.isspace
 
+    Examples
+    --------
+    >>> np.char.isspace(list("a b c"))
+    array([False,  True, False,  True, False])
+    >>> np.char.isspace(b'\x0a \x0b \x0c')
+    np.True_
+    >>> np.char.isspace(b'\x0a \x0b \x0c N')
+    np.False_
+
     """)
 
 add_newdoc('numpy._core.umath', 'isalnum',
