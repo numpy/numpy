@@ -13,7 +13,6 @@ from numpy._typing import (
 )
 
 
-AR_T: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
 _StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
 _StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
 _StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_Shape, np.dtype[np.str_]] | np.ndarray[_Shape, np.dtypes.StringDType]
