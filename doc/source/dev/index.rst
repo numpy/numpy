@@ -27,9 +27,9 @@ label. Instead, you'll find [issues labeled "Sprintable."](https://github.com/nu
 These issues can either be:
 
 - **Easily fixed** when you have guidance from an experienced
-contributor (perfect for working in a sprint).
+  contributor (perfect for working in a sprint).
 - **A learning opportunity** for those ready to dive deeper,
-even if you're not in a sprint. 
+  even if you're not in a sprint. 
 
 Additionally, depending on your prior experience, some "Sprintable"
 issues might be easy, while others could be more challenging for you.
