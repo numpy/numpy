@@ -28,6 +28,8 @@ option('cpu-baseline', type: 'string', value: 'min',
         description: 'Minimal set of required CPU features')
 option('cpu-dispatch', type: 'string', value: 'max -xop -fma4',
         description: 'Dispatched set of additional CPU features')
+option('cpu-dispatch-default', type: 'string', value: 'none',
+        description: 'Dispatched CPU features to enable by default if available')
 option('test-simd', type: 'array',
         value: [
           'BASELINE', 'SSE2', 'SSE42', 'XOP', 'FMA4',

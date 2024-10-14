@@ -33,6 +33,12 @@ npy__cpu_check_env(int disable, const char *env);
 static int
 npy__cpu_validate_baseline(void);
 
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_DEFAULT_N > 0
+/* Used to enable a dispatched feature which should be enabled by default */
+static int
+npy__cpu_enable_dispatched_default_feature(enum npy_cpu_features feature_id);
+#endif
+
 /******************** Public Definitions *********************/
 
 NPY_VISIBILITY_HIDDEN int
@@ -61,11 +67,35 @@ npy_cpu_init(void)
         );
         return -1;
     }
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_DEFAULT_N > 0
+    // If we are just using the default dispatched features or are
+    // explicitly enabling CPU features in addition to the default set,
+    // then we mark the default set as enabled.
+#define NPY__CPU_ENABLE_DISPATCHED_DEFAULT_FEATURE_CB(FEATURE, DUMMY) \
+    if (npy__cpu_enable_dispatched_default_feature(NPY_CAT(NPY_CPU_FEATURE_, FEATURE)) < 0) { \
+        return -1; \
+    } \
+
+    NPY_WITH_CPU_DISPATCH_DEFAULT_CALL(NPY__CPU_ENABLE_DISPATCHED_DEFAULT_FEATURE_CB, DUMMY); // extra arg for msvc
+#endif
     if (is_enable | is_disable) {
         if (npy__cpu_check_env(is_disable, is_disable ? disable_env : enable_env) < 0) {
             return -1;
         }
     }
+
+#if !defined(NPY_DISABLE_OPTIMIZATION)
+    if (NPY_WITH_CPU_DISPATCH_DEFAULT_N > 0 || is_enable) {
+        // If features are enabled, either by default or explicitly,
+        // disables any unmarked dispatched feature.
+        #define NPY__CPU_DISABLE_DISPATCH_CB(FEATURE, DUMMY) \
+            if(npy__cpu_have[NPY_CAT(NPY_CPU_FEATURE_, FEATURE)] != 0)\
+            {npy__cpu_have[NPY_CAT(NPY_CPU_FEATURE_, FEATURE)]--;}\
+
+        NPY_WITH_CPU_DISPATCH_CALL(NPY__CPU_DISABLE_DISPATCH_CB, DUMMY) // extra arg for msvc
+    }
+#endif
+
     return 0;
 }
 
@@ -312,14 +342,6 @@ npy__cpu_check_env(int disable, const char *env) {
     next:
         feature = strtok(NULL, delim);
     }
-    if (!disable){
-        // Disables any unmarked dispatched feature.
-        #define NPY__CPU_DISABLE_DISPATCH_CB(FEATURE, DUMMY) \
-            if(npy__cpu_have[NPY_CAT(NPY_CPU_FEATURE_, FEATURE)] != 0)\
-            {npy__cpu_have[NPY_CAT(NPY_CPU_FEATURE_, FEATURE)]--;}\
-
-        NPY_WITH_CPU_DISPATCH_CALL(NPY__CPU_DISABLE_DISPATCH_CB, DUMMY) // extra arg for msvc
-    }
 
     *nexist_cur = '\0';
     if (nexist[0] != '\0') {
@@ -364,6 +386,40 @@ npy__cpu_check_env(int disable, const char *env) {
 #endif
     return 0;
 }
+
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_DEFAULT_N > 0
+static int
+npy__cpu_enable_dispatched_default_feature(enum npy_cpu_features feature_id)
+{
+    // check if feature is dispatched
+    int is_dispatched = 0;
+
+#define NPY__CPU_IS_DISPATCHED_CB(FEATURE, DUMMY) \
+            if(NPY_CAT(NPY_CPU_FEATURE_, FEATURE) == feature_id) {is_dispatched = 1;} \
+
+    NPY_WITH_CPU_DISPATCH_CALL(NPY__CPU_IS_DISPATCHED_CB, DUMMY) // extra arg for msvc
+
+    if (!is_dispatched) {
+        PyErr_Format(PyExc_ImportError,
+                     "Feature %d is not a dispatched feature",
+                     feature_id
+        );
+        return -1;
+    }
+
+    // check if the feature is supported by the current computer
+    if (npy__cpu_have[feature_id]) {
+        // Mark for enabling by setting to 2. This is used in the logic in
+        // npy_cpu_init which will use the decrement operator on all
+        // supported features to disable features which are supported
+        // by the current computer (npy__cpu_have[feature_id] == 1) but
+        // are not supposed to be enabled.
+        npy__cpu_have[feature_id] = 2;
+    }
+
+    return 0;
+}
+#endif
 
 /****************************************************************
  * This section is reserved to defining @npy__cpu_init_features
