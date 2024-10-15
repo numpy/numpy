@@ -4870,6 +4870,13 @@ def _quantile(
         # returns 2 instead of 1 because 0.4 is not binary representable.
         if quantiles.dtype.kind == "f":
             cdf = cdf.astype(quantiles.dtype)
+        # Weights must be non-negative, so we might have zero weights at the
+        # beginning leading to some leading zeros in cdf. The call to
+        # np.searchsorted for quantiles=0 will then pick the first element,
+        # but should pick the first one larger than zero. We
+        # therefore simply set 0 values in cdf to -1.
+        if np.any(cdf[0, ...] == 0):
+            cdf[cdf == 0] = -1
 
         def find_cdf_1d(arr, cdf):
             indices = np.searchsorted(cdf, quantiles, side="left")

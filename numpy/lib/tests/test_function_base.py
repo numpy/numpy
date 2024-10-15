@@ -4010,6 +4010,17 @@ class TestQuantile:
                 )
         assert_allclose(q, q_res)
 
+    @pytest.mark.parametrize("method", methods_supporting_weights)
+    def test_quantile_weights_min_max(self, method):
+        # Test weighted quantile at 0 and 1 with leading and trailing zero
+        # weights.
+        w = [0, 0, 1, 2, 3, 0]
+        y = np.arange(6)
+        y_min = np.quantile(y, 0, weights=w, method="inverted_cdf")
+        y_max = np.quantile(y, 1, weights=w, method="inverted_cdf")
+        assert y_min == y[2]  # == 2
+        assert y_max == y[4]  # == 4
+
     def test_quantile_weights_raises_negative_weights(self):
         y = [1, 2]
         w = [-0.5, 1]
