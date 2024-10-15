@@ -105,21 +105,10 @@ class Template:
         default_inherit=None,
         line_offset=0,
         delimiters=None,
-        delimeters=None,
     ):
         self.content = content
 
         # set delimiters
-        if delimeters:
-            import warnings
-
-            warnings.warn(
-                "'delimeters' kwarg is being deprecated in favor of correctly"
-                " spelled 'delimiters'. Please adjust your code.",
-                DeprecationWarning,
-            )
-            if delimiters is None:
-                delimiters = delimeters
         if delimiters is None:
             delimiters = (
                 self.default_namespace["start_braces"],
@@ -131,9 +120,7 @@ class Template:
             self.default_namespace = self.__class__.default_namespace.copy()
             self.default_namespace["start_braces"] = delimiters[0]
             self.default_namespace["end_braces"] = delimiters[1]
-        self.delimiters = self.delimeters = (
-            delimiters  # Keep a legacy read-only copy, but don't use it.
-        )
+        self.delimiters = delimiters
 
         self._unicode = isinstance(content, str)
         if name is None and stacklevel is not None:
@@ -412,8 +399,7 @@ class Template:
 
 def sub(content, delimiters=None, **kw):
     name = kw.get("__name")
-    delimeters = kw.pop("delimeters") if "delimeters" in kw else None  # for legacy code
-    tmpl = Template(content, name=name, delimiters=delimiters, delimeters=delimeters)
+    tmpl = Template(content, name=name, delimiters=delimiters)
     return tmpl.substitute(kw)
 
 
