@@ -424,7 +424,7 @@ PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
     }
 
     assert(size != 0);
-    int ret = PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     result = handler->allocator.realloc(handler->allocator.ctx, ptr, size);
     int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     if (ret == -1) {
