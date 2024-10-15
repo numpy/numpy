@@ -94,10 +94,6 @@ jobs:
             python: "pp310"
           - buildplat: [ macos-14, macosx_arm64, accelerate ]
             python: "pp310"
-          - buildplat: [ windows-2019, win_amd64, "" ]
-            python: "cp313t"
-          - buildplat: [ windows-2019, win32, "" ]
-            python: "cp313t"
           - buildplat: [ macos13, macosx_x86_64, openblas ]
             python: "cp313t"
 
@@ -162,6 +158,7 @@ jobs:
 
       - name: Set up free-threaded build
         if: matrix.python == 'cp313t'
+        shell: bash -el {0}
         run: |
           echo "CIBW_BUILD_FRONTEND=pip; args: --no-build-isolation" >> "$GITHUB_ENV"
 
