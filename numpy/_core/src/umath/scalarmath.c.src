@@ -1354,7 +1354,7 @@ static PyObject *
      */
     PyObject *ret;
     npy_float64 arg1, arg2, other_val;
-    @type@ other_val_conv;
+    @type@ other_val_conv = 0;
 
     int is_forward;
     if (Py_TYPE(a) == &Py@Name@ArrType_Type) {
