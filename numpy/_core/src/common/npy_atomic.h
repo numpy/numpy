@@ -37,7 +37,7 @@ npy_atomic_load_uint8(const npy_uint8 *obj) {
     return (npy_uint8)atomic_load((const _Atomic(uint8_t)*)obj);
 #elif defined(MSC_ATOMICS)
 #if defined(_M_X64) || defined(_M_IX86)
-    return *(volatile npy_uint8 *)obj;
+    return (void *)(uintptr_t)*(volatile uint64_t *)obj;
 #else // defined(_M_ARM64)
     return (npy_uint8)__ldar8((unsigned __int8 volatile *)obj);
 #endif
