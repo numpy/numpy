@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from numpy._core._type_aliases import c_names_dict as _c_names_dict
-from . import util
+from numpy.f2py.tests import util
 
 wrap = None
 
