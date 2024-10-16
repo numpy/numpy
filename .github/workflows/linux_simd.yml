@@ -282,8 +282,8 @@ jobs:
     - name: Build
       run: |
         source /opt/intel/oneapi/setvars.sh
-        CFLAGS=-fp-model=strict
-        CXXFLAGS=-fp-model=strict
+        CFLAGS="-fp-model=strict -fveclib=none"
+        CXXFLAGS="-fp-model=strict -fveclib=none"
         CC=icx CXX=icpx spin build -- -Dallow-noblas=true
 
     - name: Meson Log
