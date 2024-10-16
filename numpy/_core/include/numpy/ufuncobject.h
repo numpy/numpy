@@ -230,6 +230,9 @@ typedef struct _tagPyUFuncObject {
          */
         PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
+    #if NPY_FEATURE_VERSION >= NPY_2_2_API_VERSION
+        PyObject *dict;
+    #endif
 } PyUFuncObject;
 
 #include "arrayobject.h"
