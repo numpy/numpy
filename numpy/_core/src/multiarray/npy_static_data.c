@@ -63,6 +63,17 @@ intern_strings(void)
     INTERN_STRING(__dlpack__, "__dlpack__");
     INTERN_STRING(pyvals_name, "UFUNC_PYVALS_NAME");
     INTERN_STRING(legacy, "legacy");
+    INTERN_STRING(year, "year");
+    INTERN_STRING(month, "month");
+    INTERN_STRING(day, "day");
+    INTERN_STRING(hour, "hour");
+    INTERN_STRING(minute, "minute");
+    INTERN_STRING(second, "second");
+    INTERN_STRING(microsecond, "microsecond");
+    INTERN_STRING(tzinfo, "tzinfo");
+    INTERN_STRING(days, "days");
+    INTERN_STRING(seconds, "seconds");
+    INTERN_STRING(microseconds, "microseconds");
     return 0;
 }
 
