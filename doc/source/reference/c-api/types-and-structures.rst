@@ -205,7 +205,7 @@ PyArray_Type and PyArrayObject
 .. c:type:: PyArrayObject
 
    .. deprecated:: 1.7
-      Use :c:type:`NPY_AO` for a shorter name.
+      Use ``NPY_AO`` for a shorter name.
 
    Represents a NumPy array object in the C API.
 
@@ -563,7 +563,7 @@ PyArray_ArrFuncs
 
         An array of function pointers to cast from the current type to
         most of the other builtin types. The types
-        :c:type:`NPY_DATETIME`, :c:type:`NPY_TIMEDELTA`, and :c:type:`HALF`
+        :c:type:`NPY_DATETIME`, :c:type:`NPY_TIMEDELTA`, and :c:type:`NPY_HALF`
         go into the castdict even though they are built-in. Each function
         casts a contiguous, aligned, and notswapped buffer pointed at by
         *from* to a contiguous, aligned, and notswapped buffer pointed
