@@ -55,7 +55,7 @@ npy_atomic_load_ptr(const void *obj) {
 #if defined(_M_X64) || defined(_M_IX86)
     return (void *)*(volatile uint64_t *)obj;
 #elif defined(_M_ARM64)
-    return (void *)(uintptr_t)__ldar64((unsigned __int64 volatile *)obj);
+    return (void *)__ldar64((unsigned __int64 volatile *)obj);
 #endif
 #else
 #if defined(_M_X64) || defined(_M_IX86)
