@@ -1547,7 +1547,7 @@ cdef class RandomState:
         >>> mu, sigma = 0, 0.1 # mean and standard deviation
         >>> s = np.random.normal(mu, sigma, 1000)
 
-        Verify the mean and the variance:
+        Verify the mean and the standard deviation:
 
         >>> abs(mu - np.mean(s))
         0.0  # may vary
