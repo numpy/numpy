@@ -421,6 +421,11 @@ to the front of the integer name.
 
     The C ``size_t``/``Py_size_t``.
 
+.. c:type:: npy_hash_t
+
+   The C ``Py_hash_t`` (a signed integer type used for hashing).
+   This type is utilized in NumPy to represent hash values for objects.
+
 
 (Complex) Floating point
 ~~~~~~~~~~~~~~~~~~~~~~~~
