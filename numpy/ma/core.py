@@ -171,7 +171,7 @@ default_filler = {'b': True,
                   'i': 999999,
                   'O': '?',
                   'S': b'N/A',
-                  'u': np.uint64(999999),
+                  'u': 999999,
                   'V': b'???',
                   'U': 'N/A'
                   }
@@ -5974,7 +5974,7 @@ class MaskedArray(ndarray):
                 result.__setmask__(newmask)
                 # Get rid of Infs
                 if newmask.ndim:
-                    np.copyto(result, result.fill_value, where=newmask)
+                    np.copyto(result, result.fill_value, casting= 'unsafe', where=newmask)
             elif newmask:
                 result = masked
             return result
@@ -6079,7 +6079,7 @@ class MaskedArray(ndarray):
                 result.__setmask__(newmask)
                 # Get rid of Infs
                 if newmask.ndim:
-                    np.copyto(result, result.fill_value, where=newmask)
+                    np.copyto(result, result.fill_value, casting= 'unsafe', where=newmask)
             elif newmask:
                 result = masked
             return result
@@ -6163,7 +6163,7 @@ class MaskedArray(ndarray):
         >>> y.ptp(axis=1)
         masked_array(data=[ 126,  127, -128, -127],
                      mask=False,
-               fill_value=np.uint64(999999),
+               fill_value=np.int64(999999),
                     dtype=int8)
 
         A work-around is to use the `view()` method to view the result as
@@ -6172,7 +6172,7 @@ class MaskedArray(ndarray):
         >>> y.ptp(axis=1).view(np.uint8)
         masked_array(data=[126, 127, 128, 129],
                      mask=False,
-               fill_value=np.uint64(999999),
+               fill_value=np.int64(999999),
                     dtype=uint8)
         """
         if out is None:
@@ -7860,7 +7860,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     >>> np.ma.diff(u8_arr)
     masked_array(data=[255],
                  mask=False,
-           fill_value=np.uint64(999999),
+           fill_value=np.int64(999999),
                 dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
     np.uint8(255)
