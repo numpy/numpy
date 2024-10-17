@@ -171,7 +171,7 @@ default_filler = {'b': True,
                   'i': 999999,
                   'O': '?',
                   'S': b'N/A',
-                  'u': 999999,
+                  'u': np.uint64(999999),
                   'V': b'???',
                   'U': 'N/A'
                   }
@@ -5974,6 +5974,9 @@ class MaskedArray(ndarray):
                 result.__setmask__(newmask)
                 # Get rid of Infs
                 if newmask.ndim:
+                    test = result.fill_value
+                    print(f'{result=}')
+                    print(f'{test=}')
                     np.copyto(result, result.fill_value, where=newmask)
             elif newmask:
                 result = masked
