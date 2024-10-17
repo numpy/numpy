@@ -162,9 +162,12 @@ check_and_adjust_axis(int *axis, int ndim)
  * GCC releases before GCC 4.9 had a bug in _Alignof.  See GCC bug 52023
  * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
  * clang versions < 8.0.0 have the same bug.
+ * MSVC uses __alignof instead of __alignof__ or _Alignof.
  */
-#if (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
-     || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
+#if defined(_MSC_VER)
+#define NPY_ALIGNOF(type) __alignof(type)
+#elif (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
+     || (defined __GNUC__ && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 9)) \
      && !defined __clang__) \
      || (defined __clang__ && __clang_major__ < 8))
 #define NPY_ALIGNOF(type) __alignof__(type)
