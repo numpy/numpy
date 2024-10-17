@@ -7872,7 +7872,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     >>> np.ma.diff(i16_arr)
     masked_array(data=[-1],
                  mask=False,
-           fill_value=np.uint64(999999),
+           fill_value=np.int64(999999),
                 dtype=int16)
 
     Examples
