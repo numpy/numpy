@@ -98,8 +98,8 @@ PyArray_CopyInitialReduceValues(
         if (axis_flags[idim]) {
             if (NPY_UNLIKELY(shape_orig[idim] == 0)) {
                 PyErr_Format(PyExc_ValueError,
-                        "zero-size array to reduction operation %s "
-                        "which has no identity", funcname);
+                        "attempt to apply a reduction operation (\"%s\") "
+                        "with no identity to a zero-sized array", funcname);
                 return -1;
             }
             if (keepdims) {
