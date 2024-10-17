@@ -165,10 +165,11 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: astral-sh/setup-uv@v3
+    - uses: astral-sh/setup-uv@f3bcaebff5eace81a1c062af9f9011aae482ca9d
     - run: |
         uv python install 3.13t
         uv venv --python 3.13t
+        uv pip install pip
         . .venv/bin/activate
         echo PATH=$PATH >> $GITHUB_ENV
     # TODO: remove cython nightly install when cython does a release

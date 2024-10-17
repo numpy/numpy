@@ -55,23 +55,15 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.10", "3.11", "3.12", "3.13", "3.13t"]
+        version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: astral-sh/setup-uv@v3
-    - run: |
-        uv python install ${{ matrix.version }}
-        uv venv --python ${{ matrix.version }}
-        . .venv/bin/activate
-        echo PATH=$PATH >> $GITHUB_ENV
-    # TODO: remove cython nightly install when cython does a release
-    - name: Install nightly Cython
-      if: ${{ matrix.version == '3.13t' }}
-      run: |
-        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      with:
+        python-version: ${{ matrix.version }}
     - uses: ./.github/meson_actions
 
   pypy:
@@ -299,3 +291,24 @@ jobs:
         rm -rf build-install
         ./vendored-meson/meson/meson.py install -C build --destdir ../build-install --tags=runtime,python-runtime,devel
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests
+
+  free-threaded:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: astral-sh/setup-uv@f3bcaebff5eace81a1c062af9f9011aae482ca9d
+    - run: |
+        uv python install 3.13t
+        uv venv --python 3.13t
+        uv pip install pip
+        . .venv/bin/activate
+        echo PATH=$PATH >> $GITHUB_ENV
+    # TODO: remove cython nightly install when cython does a release
+    - name: Install nightly Cython
+      run: |
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+    - uses: ./.github/meson_actions
