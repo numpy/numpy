@@ -293,6 +293,7 @@ jobs:
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests
 
   free-threaded:
+    needs: [smoke_test]
     runs-on: ubuntu-latest
     if: github.event_name != 'push'
     steps:
