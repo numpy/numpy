@@ -106,7 +106,10 @@ def compile_extension_module(
     dirname = builddir / name
     dirname.mkdir(exist_ok=True)
     cfile = _convert_str_to_file(source_string, dirname)
-    include_dirs = include_dirs + [sysconfig.get_config_var('INCLUDEPY')]
+    include_dirs = include_dirs + [
+        sysconfig.get_config_var('INCLUDEPY'),
+        sysconfig.get_path('include')
+    ]
 
     return _c_compile(
         cfile, outputfilename=dirname / modname,

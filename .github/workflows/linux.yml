@@ -55,7 +55,7 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.10", "3.11", "3.12", "3.13-dev"]
+        version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
@@ -301,11 +301,13 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    # TODO: replace with setup-python when there is support
-    - uses: deadsnakes/action@e640ac8743173a67cca4d7d77cd837e514bf98e8 # v3.2.0
-      with:
-          python-version: '3.13-dev'
-          nogil: true
+    - uses: astral-sh/setup-uv@f3bcaebff5eace81a1c062af9f9011aae482ca9d
+    - run: |
+        uv python install 3.13t
+        uv venv --python 3.13t
+        uv pip install pip
+        . .venv/bin/activate
+        echo PATH=$PATH >> $GITHUB_ENV
     # TODO: remove cython nightly install when cython does a release
     - name: Install nightly Cython
       run: |
