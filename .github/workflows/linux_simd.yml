@@ -290,6 +290,7 @@ jobs:
 
     - name: linalg/ufunc/umath tests on Intel TGL
       run: |
+        source /opt/intel/oneapi/setvars.sh # need this to locate libsvml.so
         export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
         export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
         cd build-install &&
