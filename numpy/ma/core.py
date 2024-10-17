@@ -5974,9 +5974,6 @@ class MaskedArray(ndarray):
                 result.__setmask__(newmask)
                 # Get rid of Infs
                 if newmask.ndim:
-                    test = result.fill_value
-                    print(f'{result=}')
-                    print(f'{test=}')
                     np.copyto(result, result.fill_value, where=newmask)
             elif newmask:
                 result = masked
