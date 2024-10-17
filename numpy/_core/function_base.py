@@ -533,6 +533,8 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     """
     new = getattr(__import__(place, globals(), {}, [obj]), obj)
     if isinstance(doc, str):
+        if "${ARRAY_FUNCTION_LIKE}" in doc:
+            doc = overrides.get_array_function_like_doc(new, doc)
         _add_docstring(new, doc.strip(), warn_on_python)
     elif isinstance(doc, tuple):
         attr, docstring = doc
