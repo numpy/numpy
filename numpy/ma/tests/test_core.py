@@ -1353,7 +1353,7 @@ class TestMaskedArrayArithmetic:
 
     def test_minmax_with_axis_input(self):
         # Test all kinds of number types (min/max),
-        # due to maybe some error raise with some types.
+        # due to there maybe some error raise.
         # See issue 27580
         # https://github.com/numpy/numpy/issues/27580
         types = [np.int8, np.uint8, np.complex64]
@@ -1371,6 +1371,19 @@ class TestMaskedArrayArithmetic:
                                   mask=[0,0])
         test_1_max = masked_array(np.array([5,6]),
                                   mask=[0,0])
+
+        # Test
+        for type in types:
+            amask = test.astype(type)
+            assert_equal(amask.min(axis=0),
+                         test_0_min.astype(type))
+            assert_equal(amask.max(axis=0),
+                         test_0_max.astype(type))
+            assert_equal(amask.min(axis=1),
+                         test_1_min.astype(type))
+            assert_equal(amask.max(axis=1),
+                         test_1_max.astype(type))
+            print(amask.min(axis=0).data)
 
     def test_addsumprod(self):
         # Tests add, sum, product.
