@@ -15,23 +15,6 @@
 
 using namespace hwy::HWY_NAMESPACE;
 
-#ifndef NPY_CPU_DISPATCH_CURFX
-    #define NPY_CPU_DISPATCH_CURFX(FN) FN##_AVX2, FN##_SSE41, FN##_SSE2, FN##_NEON, FN##_BASELINE
-#endif
-
-
-// Macro to map SIMD suffix to Google Highway functions
-#if NPY_BITSOF_TYPE == 32
-    #define TO_SIMD_SFX(X) X##_int32
-#elif NPY_BITSOF_TYPE == 64
-    #define TO_SIMD_SFX(X) X##_int64
-#endif
-
-// Handle 64-bit division disabling for specific architectures
-#if (defined(NPY_HAVE_VSX) && !defined(NPY_HAVE_VSX4)) || defined(NPY_HAVE_NEON)
-    #define SIMD_DISABLE_DIV64_OPT
-#endif
-
 HWY_BEFORE_NAMESPACE();
 namespace HWY_NAMESPACE {
 
