@@ -29,7 +29,7 @@ from numpy.f2py.symbolic import (
     as_le,
     as_ge,
 )
-from . import util
+from numpy.f2py.tests import util
 
 
 class TestSymbolic(util.F2PyTest):

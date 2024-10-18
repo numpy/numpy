@@ -10,7 +10,7 @@ import platform
 
 import pytest
 
-from . import util
+from numpy.f2py.tests import util
 from numpy.f2py.f2py2e import main as f2pycli
 from numpy.testing._private.utils import NOGIL_BUILD
 

@@ -8,7 +8,7 @@ import time
 
 import numpy as np
 from numpy.testing import IS_PYPY
-from . import util
+from numpy.f2py.tests import util
 
 
 class TestF77Callback(util.F2PyTest):
