@@ -23,7 +23,7 @@ from .multiarray import (
 from . import overrides
 from . import umath
 from . import shape_base
-from .overrides import set_array_function_like_doc, set_module
+from .overrides import finalize_array_function_like, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from ..exceptions import AxisError
@@ -134,7 +134,7 @@ def zeros_like(
     return res
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def ones(shape, dtype=None, order='C', *, device=None, like=None):
     """
@@ -287,7 +287,7 @@ def _full_dispatcher(
     return(like,)
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def full(shape, fill_value, dtype=None, order='C', *, device=None, like=None):
     """
@@ -1844,7 +1844,7 @@ def indices(dimensions, dtype=int, sparse=False):
     return res
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
@@ -2192,7 +2192,7 @@ def _maketup(descr, val):
         return tuple(res)
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def identity(n, dtype=None, *, like=None):
     """
