@@ -1353,10 +1353,10 @@ class TestMaskedArrayArithmetic:
 
     def test_minmax_with_axis_input(self):
         # Test all kinds of number types (min/max),
-        # due to there maybe some error raise.
+        # due to maybe some error raise.
         # See issue 27580
         # https://github.com/numpy/numpy/issues/27580
-        types = [np.int8, np.uint8, np.complex64]
+        types = [np.int8, np.uint8, np.float16, np.complex64]
 
         # Test data and respected result
         # axis = 0 with output with mask
