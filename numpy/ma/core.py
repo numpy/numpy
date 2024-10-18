@@ -3914,6 +3914,7 @@ class MaskedArray(ndarray):
         else:
             result = self._data.copy('K')
             try:
+                fill_value = _check_fill_value(fill_value,result.dtype)
                 np.copyto(result, fill_value, where=m)
             except (TypeError, AttributeError):
                 fill_value = narray(fill_value, dtype=object)
