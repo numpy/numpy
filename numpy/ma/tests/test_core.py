@@ -1383,7 +1383,6 @@ class TestMaskedArrayArithmetic:
                          test_1_min.astype(type))
             assert_equal(amask.max(axis=1),
                          test_1_max.astype(type))
-            print(amask.min(axis=0).data)
 
     def test_addsumprod(self):
         # Tests add, sum, product.
