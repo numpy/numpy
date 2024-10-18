@@ -73,19 +73,27 @@ PyArray_Type and PyArrayObject
 
 .. c:type:: PyArrayObject_fields
 
-   The :c:type:`PyArrayObject_fields` C-structure contains all of the
-   required information for an array. All instances of an ndarray (and
-   its subclasses) will have this structure. For future compatibility,
-   these structure members should normally be accessed using the provided
-   functions and macros. Direct access to the members of :c:type:`PyArrayObject_fields`
-   should be avoided. Instead, users should interact with :c:type:`PyArrayObject`,
-   which provides a stable interface for accessing array data and metadata.
-   This struct may be moved to a private header in a future release,
-   further emphasizing the importance of using the defined macros for access.
+   An implementation detail for accessing the :c:data:`PyArrayObject` struct.
+   You should use :c:data:`PyArrayObject` to ensure code compatibility and stability.
+
+.. c:type:: PyArrayObject
+
+   .. deprecated:: 1.7
+      Use ``NPY_AO`` for a shorter name.
+
+   Represents a NumPy array object in the C API, contains all of the required
+   information for an array.
+
+   To hide the implementation details, only the Python struct HEAD is exposed.
+   Direct access to the struct fields is deprecated;
+   instead, use the ``PyArray_*(*arr)`` functions (such as :c:func:`PyArray_NDIM`).
+
+   As of NumPy 1.20, the size of this struct is not considered part of the NumPy ABI
+   (see the note below).
 
    .. code-block:: c
 
-      typedef struct PyArrayObject {
+      typedef struct{
           PyObject_HEAD
           char *data;
           int nd;
@@ -95,8 +103,8 @@ PyArray_Type and PyArrayObject
           PyArray_Descr *descr;
           int flags;
           PyObject *weakreflist;
-          void *_buffer_info;
           PyObject *mem_handler;
+          /* version dependent private members */
       } PyArrayObject;
 
    :c:macro:`PyObject_HEAD`
@@ -179,13 +187,6 @@ PyArray_Type and PyArrayObject
        This member allows array objects to have weak references (using the
        weakref module).
 
-   .. c:member:: void *_buffer_info
-
-   .. versionadded:: 1.20
-
-   Private buffer information, tagged for warning purposes. Direct
-   access is discouraged to ensure API stability.
-
    .. c:member:: PyObject *mem_handler
 
    .. versionadded:: 1.22
@@ -196,25 +197,8 @@ PyArray_Type and PyArrayObject
    instead of the standard `malloc`, `calloc`, `realloc`, and `free` functions.
 
    Accessed through the macro :c:data:`PyArray_HANDLER`.
-
-   .. note::
-
-      For setting or retrieving the current memory management policy,
-      see the `PyDataMem_SetHandler` and `PyDataMem_GetHandler` functions.
-
-.. c:type:: PyArrayObject
-
-   .. deprecated:: 1.7
-      Use ``NPY_AO`` for a shorter name.
-
-   Represents a NumPy array object in the C API.
-
-   To hide the implementation details, only the Python struct HEAD is exposed.
-   Direct access to the struct fields is deprecated;
-   instead, use the ``PyArray_*(*arr)`` functions (such as :c:func:`PyArray_NDIM`).
-
-   As of NumPy 1.20, the size of this struct is not considered part of the NumPy ABI
-   (see the note below).
+   For setting or retrieving the current memory management policy,
+   see the `PyDataMem_SetHandler` and `PyDataMem_GetHandler` functions.
 
    .. note::
 
