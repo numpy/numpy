@@ -1,4 +1,4 @@
-#define Py_LIMITED_API 0x03060000
+#define Py_LIMITED_API 0x03070000
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
