@@ -423,7 +423,7 @@ to the front of the integer name.
 
 .. c:type:: npy_hash_t
 
-   An alias for ``Py_hash_t`` (a signed integer type used for hashing).
+   An alias for ``Py_hash_t`` (used for hashing).
    This type is utilized in NumPy to represent hash values for objects.
 
 
