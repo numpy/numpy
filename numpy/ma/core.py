@@ -1288,14 +1288,30 @@ less.reduce = None
 greater = _MaskedBinaryOperation(umath.greater)
 greater.reduce = None
 logical_and = _MaskedBinaryOperation(umath.logical_and)
-alltrue = _MaskedBinaryOperation(umath.logical_and, 1, 1).reduce
 logical_or = _MaskedBinaryOperation(umath.logical_or)
-sometrue = logical_or.reduce
 logical_xor = _MaskedBinaryOperation(umath.logical_xor)
 bitwise_and = _MaskedBinaryOperation(umath.bitwise_and)
 bitwise_or = _MaskedBinaryOperation(umath.bitwise_or)
 bitwise_xor = _MaskedBinaryOperation(umath.bitwise_xor)
 hypot = _MaskedBinaryOperation(umath.hypot)
+
+def alltrue(target, axis=0, dtype=None):
+    """
+    Compute the truth value of x1 AND x2 element-wise.
+    """
+    return np.logical_and.reduce(target, axis=axis, dtype=dtype)
+
+alltrue.__name__ = "alltrue"
+alltrue.__doc__ = np.logical_and.__doc__
+
+def sometrue(target, axis=0, dtype=None):
+    """
+    Compute the truth value of x1 OR x2 element-wise.
+    """
+    return np.logical_or.reduce(target, axis=axis, dtype=dtype)
+
+sometrue.__name__ = "sometrue"
+sometrue.__doc__ = np.logical_or.__doc__
 
 # Domained binary ufuncs
 divide = _DomainedBinaryOperation(umath.divide, _DomainSafeDivide(), 0, 1)
