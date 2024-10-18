@@ -763,12 +763,12 @@ class TestMaskedArray:
         # Function may change dtype of array with
         # some basic type, see issue 27269
         # https://github.com/numpy/numpy/issues/27269
-        types = [np.int8,np.uint8,np.complex64]
+        types = [np.int8, np.uint8, np.complex64]
 
         # Test is the filled array has the same type
         for type in types:
-            a = np.arange(1,7).reshape(2,3).astype(type)
-            assert masked_where(a<=3,a).filled().dtype == type
+            a = np.arange(1, 7).reshape(2, 3).astype(type)
+            assert masked_where(a<=3, a).filled().dtype == type
 
     def test_filled_with_object_dtype(self):
         a = np.ma.masked_all(1, dtype='O')
