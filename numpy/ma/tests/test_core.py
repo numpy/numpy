@@ -1356,7 +1356,7 @@ class TestMaskedArrayArithmetic:
         # due to maybe some error raise with some types.
         # See issue 27580
         # https://github.com/numpy/numpy/issues/27580
-        types = [np.int8,np.uint8,np.complex64]
+        types = [np.int8, np.uint8, np.complex64]
 
         # Test data and respected result
         # axis = 0 with output with mask
