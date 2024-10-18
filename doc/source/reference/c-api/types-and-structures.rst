@@ -73,19 +73,18 @@ PyArray_Type and PyArrayObject
 
 .. c:type:: PyArrayObject_fields
 
-   The :c:type:`PyArrayObject_fields` C-structure contains all of the
-   required information for an array. All instances of an ndarray (and
-   its subclasses) will have this structure. For future compatibility,
-   these structure members should normally be accessed using the provided
-   functions and macros. Direct access to the members of :c:type:`PyArrayObject_fields`
-   should be avoided. Instead, users should interact with :c:type:`PyArrayObject`,
-   which provides a stable interface for accessing array data and metadata.
-   This struct may be moved to a private header in a future release,
-   further emphasizing the importance of using the defined macros for access.
+   The :c:type:`PyArrayObject_fields` C-structure contains all necessary
+   information for an array, used by ndarray instances and subclasses.
+   Direct access to its members should be avoided for compatibility. Instead,
+   interact with :c:type:`PyArrayObject` via provided functions and macros,
+   which offer a stable interface for array data and metadata. This structure
+   may be moved to a private header in the future, emphasizing the use of
+   macros for access.
+
 
    .. code-block:: c
 
-      typedef struct PyArrayObject {
+      typedef struct{
           PyObject_HEAD
           char *data;
           int nd;
@@ -97,7 +96,7 @@ PyArray_Type and PyArrayObject
           PyObject *weakreflist;
           void *_buffer_info;
           PyObject *mem_handler;
-      } PyArrayObject;
+      } PyArrayObject_fields;
 
    :c:macro:`PyObject_HEAD`
        This is needed by all Python objects. It consists of (at least)
