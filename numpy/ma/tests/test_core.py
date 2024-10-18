@@ -1362,15 +1362,15 @@ class TestMaskedArrayArithmetic:
         # axis = 0 with output with mask
         # axis = 1 with output with no mask
         test = masked_array(np.array([[1, 0, 5], [2, 0, 6]]),
-                            mask=[[0,1,0],[1,1,0]])
-        test_0_min = masked_array(np.array([1,0,5]),
-                                  mask=[0,1,0])
-        test_0_max = masked_array(np.array([1,0,6]),
-                                  mask=[0,1,0])
-        test_1_min = masked_array(np.array([1,6]),
-                                  mask=[0,0])
-        test_1_max = masked_array(np.array([5,6]),
-                                  mask=[0,0])
+                            mask=[[0, 1, 0], [1, 1, 0]])
+        test_0_min = masked_array(np.array([1, 0, 5]),
+                                  mask=[0, 1, 0])
+        test_0_max = masked_array(np.array([1, 0, 6]),
+                                  mask=[0, 1, 0])
+        test_1_min = masked_array(np.array([1, 6]),
+                                  mask=[0, 0])
+        test_1_max = masked_array(np.array([5, 6]),
+                                  mask=[0, 0])
 
         # Test
         for type in types:
