@@ -8412,6 +8412,17 @@ def convolve(a, v, mode='full', propagate_mask=True):
     See Also
     --------
     numpy.convolve : Equivalent function in the top-level NumPy module.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from numpy.ma import masked_equal, convolve
+    >>> a = masked_equal(np.arange(5), 2)
+    >>> b = np.array([1, 1])
+    >>> convolve(a, b)
+    masked_array(data=[0, 1, --, --, 7, 4],
+                 mask=[False, False,  True,  True, False, False],
+           fill_value=999999)
     """
     return _convolve_or_correlate(np.convolve, a, v, mode, propagate_mask)
 
