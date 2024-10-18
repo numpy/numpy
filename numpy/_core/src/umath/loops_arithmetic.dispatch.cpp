@@ -40,18 +40,26 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
     bool raise_divbyzero = false;
 
     if (scalar == 0) {
-        for (npy_intp i = 0; i < len; i += N) {
-            const size_t num = HWY_MIN(static_cast<size_t>(len - i), N);
-            StoreN(Zero(d), d, dst + i, num);
-        }
+        // Handle division by zero
+        std::fill(dst, dst + len, static_cast<T>(0));
         raise_divbyzero = true;
     } else if (scalar == 1) {
         // Special case for division by 1
         memcpy(dst, src, len * sizeof(T));
     } else if (scalar == static_cast<T>(-1)) {
         const auto vec_min_val = Set(d, std::numeric_limits<T>::min());
-        for (npy_intp i = 0; i < len; i += N) {
-            const size_t num = HWY_MIN(static_cast<size_t>(len - i), N);
+        size_t i = 0;
+        for (; i + N <= static_cast<size_t>(len); i += N) {
+            const auto vec_src = LoadU(d, src + i);
+            const auto is_min_val = Eq(vec_src, vec_min_val);
+            const auto vec_res = IfThenElse(is_min_val, vec_min_val, Neg(vec_src));
+            StoreU(vec_res, d, dst + i);
+            if (!AllFalse(d, is_min_val)) {
+                raise_overflow = true;
+            }
+        }
+        if (i < static_cast<size_t>(len)) {
+            const size_t num = len - i;
             const auto vec_src = LoadN(d, src + i, num);
             const auto is_min_val = Eq(vec_src, vec_min_val);
             const auto vec_res = IfThenElse(is_min_val, vec_min_val, Neg(vec_src));
@@ -63,8 +71,20 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
     } else {
         const auto vec_scalar = Set(d, scalar);
         const auto zero = Zero(d);
-        for (npy_intp i = 0; i < len; i += N) {
-            const size_t num = HWY_MIN(static_cast<size_t>(len - i), N);
+        size_t i = 0;
+        for (; i + N <= static_cast<size_t>(len); i += N) {
+            const auto vec_src = LoadU(d, src + i);
+            auto vec_res = Div(vec_src, vec_scalar);
+            const auto vec_mul = Mul(vec_res, vec_scalar);
+            const auto remainder_check = Ne(vec_src, vec_mul);
+            const auto vec_nsign_src = Lt(vec_src, zero);
+            const auto vec_nsign_scalar = Lt(vec_scalar, zero);
+            const auto diff_sign = Xor(vec_nsign_src, vec_nsign_scalar);
+            vec_res = IfThenElse(And(remainder_check, diff_sign), Sub(vec_res, Set(d, 1)), vec_res);
+            StoreU(vec_res, d, dst + i);
+        }
+        if (i < static_cast<size_t>(len)) {
+            const size_t num = len - i;
             const auto vec_src = LoadN(d, src + i, num);
             auto vec_res = Div(vec_src, vec_scalar);
             const auto vec_mul = Mul(vec_res, vec_scalar);
@@ -80,6 +100,7 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
     set_float_status(raise_overflow, raise_divbyzero);
 }
 
+
 // Unsigned integer division
 template <typename T>
 void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp len) {
@@ -90,18 +111,22 @@ void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp le
     bool raise_divbyzero = false;
 
     if (scalar == 0) {
-        for (npy_intp i = 0; i < len; i += N) {
-            const size_t num = HWY_MIN(static_cast<size_t>(len - i), N);
-            StoreN(Zero(d), d, dst + i, num);
-        }
+        // Handle division by zero
+        std::fill(dst, dst + len, static_cast<T>(0));
         raise_divbyzero = true;
     } else if (scalar == 1) {
         // Special case for division by 1
         memcpy(dst, src, len * sizeof(T));
     } else {
         const auto vec_scalar = Set(d, scalar);
-        for (npy_intp i = 0; i < len; i += N) {
-            const size_t num = HWY_MIN(static_cast<size_t>(len - i), N);
+        size_t i = 0;
+        for (; i + N <= static_cast<size_t>(len); i += N) {
+            const auto vec_src = LoadU(d, src + i);
+            const auto vec_res = Div(vec_src, vec_scalar);
+            StoreU(vec_res, d, dst + i);
+        }
+        if (i < static_cast<size_t>(len)) {
+            const size_t num = len - i;
             const auto vec_src = LoadN(d, src + i, num);
             const auto vec_res = Div(vec_src, vec_scalar);
             StoreN(vec_res, d, dst + i, num);
@@ -110,6 +135,7 @@ void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp le
 
     set_float_status(false, raise_divbyzero);
 }
+
 
 // Floor division for signed integers
 template <typename T>
