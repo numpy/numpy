@@ -201,6 +201,25 @@ This leads to what may appear as "exceptions" to the rules:
 In principle, some of these exceptions may make sense for other functions.
 Please raise an issue if you feel this is the case.
 
+Notable behavior with Python builtin type classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When combining Python's builtin scalar *types* (i.e., ``float``, ``int``,
+or ``complex``, not scalar *values*), the promotion rules can appear
+surprising:
+
+  >>> np.result_type(7, np.array([1], np.float32))
+  dtype('float32')  # The scalar value '7' does not impact type promotion
+  >>> np.result_type(type(7), np.array([1], np.float32))
+  dtype('float64')  # The *type* of the scalar value '7' does impact promotion
+  # Similar situations happen with Python's float and complex types
+
+The reason for this behavior is that NumPy converts ``int`` to its default
+integer type, and uses that type for promotion:
+
+  >>> np.result_type(int)
+  dtype('int64')
+
 Promotion of non-numerical datatypes
 ------------------------------------
 
