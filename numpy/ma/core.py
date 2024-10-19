@@ -7216,9 +7216,12 @@ def power(a, b, third=None):
     ma = getmask(a)
     mb = getmask(b)
     m = mask_or(ma, mb)
-    # Get the rawdata
-    fa = getdata(a)
-    fb = getdata(b)
+    # Get the data
+    (fa, fb) = (a, b)
+    if not np.isscalar(fa):
+        fa = getdata(fa)
+    if not np.isscalar(fb):
+        fb = getdata(fb)
     # Get the type of the result (so that we preserve subclasses)
     if isinstance(a, MaskedArray):
         basetype = type(a)

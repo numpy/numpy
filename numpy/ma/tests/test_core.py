@@ -1492,6 +1492,7 @@ class TestMaskedArrayArithmetic:
             ma_op_result = (operations[i]
                             (masked_where(None, b, True), a))
             assert_equal(op_result, ma_op_result)
+            assert_equal(op_result.dtype, ma_op_result.dtype)
 
             if i not in (4, 5):
                 op_result = operations[i](b, c)
@@ -1499,6 +1500,7 @@ class TestMaskedArrayArithmetic:
                     masked_where(None, b, True),
                     masked_where(None, c, True))
                 assert_equal(op_result, ma_op_result)
+                assert_equal(op_result.dtype, ma_op_result.dtype)
 
     def test_noshink_on_creation(self):
         # Check that the mask is not shrunk on array creation when not wanted
