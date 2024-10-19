@@ -493,9 +493,9 @@ class TestDivision:
     ))
     def test_division_int_boundary(self, dtype, ex_val):
         fo = np.iinfo(dtype)
-        neg = -1 if fo.min < 0 else 1
+        neg = -1 if fo.min < 0 else 1    # noqa: F841
         # Large enough to test SIMD loops and remainder elements
-        lsize = 512 + 7
+        lsize = 512 + 7  # noqa: F841
         a, b, divisors = eval(ex_val)
         a_lst, b_lst = a.tolist(), b.tolist()
 
@@ -667,7 +667,7 @@ class TestDivision:
         fnan = np.array(np.nan, dtype=dtype)
         fone = np.array(1.0, dtype=dtype)
         fzer = np.array(0.0, dtype=dtype)
-        finf = np.array(np.inf, dtype=dtype)
+        _finf = np.array(np.inf, dtype=dtype)
         # divide by zero error check
         with np.errstate(divide='raise', invalid='ignore'):
             assert_raises(FloatingPointError, np.floor_divide, fone, fzer)
@@ -689,7 +689,7 @@ class TestDivision:
         fnan = np.array(np.nan, dtype=dtype)
         fone = np.array(1.0, dtype=dtype)
         fzer = np.array(0.0, dtype=dtype)
-        finf = np.array(np.inf, dtype=dtype)
+        _finf = np.array(np.inf, dtype=dtype)
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in floor_divide")
             div = np.floor_divide(fnan, fone)
@@ -786,7 +786,7 @@ class TestRemainder:
         fzero = np.array(0.0, dtype=dtype)
         fone = np.array(1.0, dtype=dtype)
         finf = np.array(np.inf, dtype=dtype)
-        fnan = np.array(np.nan, dtype=dtype)
+        _fnan = np.array(np.nan, dtype=dtype)
         # since divmod is combination of both remainder and divide
         # ops it will set both dividebyzero and invalid flags
         with np.errstate(divide='raise', invalid='ignore'):
@@ -814,7 +814,7 @@ class TestRemainder:
     def test_float_remainder_errors(self, dtype, fn):
         fzero = np.array(0.0, dtype=dtype)
         fone = np.array(1.0, dtype=dtype)
-        finf = np.array(np.inf, dtype=dtype)
+        _finf = np.array(np.inf, dtype=dtype)
         fnan = np.array(np.nan, dtype=dtype)
 
         # The following already contain a NaN and should not warn.
@@ -2749,7 +2749,7 @@ class TestBitwiseUFuncs:
     def test_types(self):
         for dt in self.bitwise_types:
             zeros = np.array([0], dtype=dt)
-            ones = np.array([-1]).astype(dt)
+            _ones = np.array([-1]).astype(dt)
             msg = "dt = '%s'" % dt.char
 
             assert_(np.bitwise_not(zeros).dtype == dt, msg)
@@ -2921,7 +2921,7 @@ class TestSign:
         def test_nan():
             foo = np.array([np.nan])
             # FIXME: a not used
-            a = np.sign(foo.astype(object))
+            a = np.sign(foo.astype(object))  # noqa: F841
 
         assert_raises(TypeError, test_nan)
 
@@ -3114,7 +3114,7 @@ class TestSpecialMethods:
             expected = f_expected(a)
             try:
                 assert w == expected
-            except AssertionError as e:
+            except AssertionError:
                 # assert_equal produces truly useless error messages
                 raise AssertionError("\n".join([
                     "Bad arguments passed in ufunc call",
@@ -4781,7 +4781,7 @@ def test_outer_bad_subclass():
 
     for cls in [BadArr1, BadArr2]:
         arr = np.ones((2, 3)).view(cls)
-        with assert_raises(TypeError) as a:
+        with assert_raises(TypeError):
             # The first array gets reshaped (not the second one)
             np.add.outer(arr, [1, 2])
 

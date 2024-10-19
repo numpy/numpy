@@ -380,7 +380,7 @@ if ctypes is not None:
         dtype_native = dtype.newbyteorder('=')
         try:
             ctype = _scalar_type_map[dtype_native]
-        except KeyError as e:
+        except KeyError:
             raise NotImplementedError(
                 "Converting {!r} to a ctypes type".format(dtype)
             ) from None

@@ -43,7 +43,7 @@ def main(root):
         with tokenize.open(str(path)) as f:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter('always')
-                tree = ast.parse(f.read())
+                _tree = ast.parse(f.read())
             if w:
                 print("file: ", str(path))
                 for e in w:

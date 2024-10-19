@@ -516,7 +516,7 @@ def test_creation_functions():
 
 def test_concatenate(string_list):
     sarr = np.array(string_list, dtype="T")
-    sarr_cat = np.array(string_list + string_list, dtype="T")
+    _sarr_cat = np.array(string_list + string_list, dtype="T")
 
     assert_array_equal(np.concatenate([sarr], axis=0), sarr)
 

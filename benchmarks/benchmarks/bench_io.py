@@ -246,8 +246,8 @@ class LoadtxtCSVDateTime(Benchmark):
     def time_loadtxt_csv_datetime(self, num_lines):
         # rewind StringIO object -- the timing iterations
         # are state-dependent
-        X = np.loadtxt(self.csv_data,
-                       delimiter=',',
-                       dtype=([('dates', 'M8[us]'),
-                               ('values', 'float64')]))
+        _X = np.loadtxt(self.csv_data,
+                        delimiter=',',
+                        dtype=([('dates', 'M8[us]'),
+                                ('values', 'float64')]))
         self.csv_data.seek(0)

@@ -15,23 +15,23 @@ class ScalarMath(Benchmark):
 
     def time_addition(self, typename):
         n = self.num
-        res = n + n + n + n + n + n + n + n + n + n
+        _res = n + n + n + n + n + n + n + n + n + n
 
     def time_addition_pyint(self, typename):
         n = self.num
-        res = n + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1
+        _res = n + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1
 
     def time_multiplication(self, typename):
         n = self.num
-        res = n * n * n * n * n * n * n * n * n * n
+        _res = n * n * n * n * n * n * n * n * n * n
 
     def time_power_of_two(self, typename):
         n = self.num
-        res = n**2, n**2, n**2, n**2, n**2, n**2, n**2, n**2, n**2, n**2
+        _res = n**2, n**2, n**2, n**2, n**2, n**2, n**2, n**2, n**2, n**2
 
     def time_abs(self, typename):
         n = self.num
-        res = abs(abs(abs(abs(abs(abs(abs(abs(abs(abs(n))))))))))
+        _res = abs(abs(abs(abs(abs(abs(abs(abs(abs(abs(n))))))))))
 
     def time_add_int32_other(self, typename):
         # Some mixed cases are fast, some are slow, this documents these
@@ -76,4 +76,4 @@ class ScalarStr(Benchmark):
         self.a = np.array([100] * 100, dtype=typename)
 
     def time_str_repr(self, typename):
-        res = [str(x) for x in self.a]
+        _res = [str(x) for x in self.a]

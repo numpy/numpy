@@ -312,7 +312,7 @@ class TestCasting:
                 # each of which should is tested individually.
                 return
 
-            safe = casting <= Casting.safe
+            _safe = casting <= Casting.safe
             del from_res, to_res, casting
 
             arr1, arr2, values = self.get_data(from_dt, to_dt)

@@ -429,7 +429,7 @@ def test_switch_owner(get_module, policy):
         # The policy should be NULL, so we have to assume we can call
         # "free".  A warning is given if the policy == "1"
         if policy:
-            with assert_warns(RuntimeWarning) as w:
+            with assert_warns(RuntimeWarning):
                 del a
                 gc.collect()
         else:

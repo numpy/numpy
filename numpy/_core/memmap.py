@@ -218,7 +218,7 @@ class memmap(ndarray):
         import os.path
         try:
             mode = mode_equivalents[mode]
-        except KeyError as e:
+        except KeyError:
             if mode not in valid_filemodes:
                 raise ValueError(
                     "mode must be one of {!r} (got {!r})"

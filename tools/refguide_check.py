@@ -181,7 +181,6 @@ def find_names(module, names_dict):
             res = re.match(pattern, line)
             if res is not None:
                 name = res.group(1)
-                entry = f'{module_name}.{name}'
                 names_dict.setdefault(module_name, set()).add(name)
                 break
 
@@ -299,7 +298,7 @@ def is_deprecated(f):
     -------
     bool
     """
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True):
         warnings.simplefilter("error")
         try:
             f(**{"not a kwarg":None})

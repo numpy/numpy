@@ -56,7 +56,7 @@ class TestRegression:
         # Check that custom BitGenerator does not call into global state
         res = np.array([1, 8, 0, 1, 5, 3, 3, 8, 1, 4])
         for i in range(3):
-            mt19937 = Generator(MT19937(i))
+            _mt19937 = Generator(MT19937(i))
             m = Generator(MT19937(4321))
             # If m.state is not honored, the result will change
             assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)

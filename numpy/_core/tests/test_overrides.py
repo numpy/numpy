@@ -588,7 +588,7 @@ class TestArrayLike:
         ref = self.MyArray.array()
 
         with assert_raises_regex(TypeError, 'no implementation found'):
-            array_like = np.asarray(1, like=ref)
+            _array_like = np.asarray(1, like=ref)
 
     _array_tests = [
         ('array', *func_args((1,))),

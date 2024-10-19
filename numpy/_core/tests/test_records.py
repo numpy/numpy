@@ -481,7 +481,7 @@ class TestRecord:
             np.arange(10),
             np.ones(10, dtype=[('a', '<u2'), ('b', '<f4')]),
         ]
-        arr = np.rec.fromarrays(arrays)  # ValueError?
+        _arr = np.rec.fromarrays(arrays)  # ValueError?
 
     @pytest.mark.parametrize('nfields', [0, 1, 2])
     def test_assign_dtype_attribute(self, nfields):

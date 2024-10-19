@@ -1917,7 +1917,7 @@ class TestVectorize:
 
     def test_bad_input(self):
         with assert_raises(TypeError):
-            A = np.vectorize(pyfunc = 3)
+            _A = np.vectorize(pyfunc = 3)
 
     def test_no_keywords(self):
         with assert_raises(TypeError):
@@ -1974,7 +1974,7 @@ class TestLeaks:
             for i in range(self.A.iters):
                 a = self.A()
                 a.f = np.frompyfunc(getattr(a, name), 1, 1)
-                out = a.f(np.arange(10))
+                _out = a.f(np.arange(10))
             a = None
             # A.func is part of a reference cycle if incr is non-zero
             assert_equal(sys.getrefcount(A_func), refcount + incr)
@@ -2563,7 +2563,7 @@ class Test_I0:
     def test_complex(self):
         a = np.array([0, 1 + 2j])
         with pytest.raises(TypeError, match="i0 not supported for complex values"):
-            res = i0(a)
+            _res = i0(a)
 
 
 class TestKaiser:
