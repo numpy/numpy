@@ -5203,7 +5203,6 @@ def delete(arr, obj, axis=None):
     Can be a single integer, a slice, an array of integers, a boolean array,
     or any object that can be cast to an array of integers or booleans.
 
-
         .. versionchanged:: 1.19.0
             Boolean indices are now treated as a mask of elements to remove,
             rather than being cast to the integers 0 and 1.
