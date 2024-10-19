@@ -3900,8 +3900,7 @@ class MaskedArray(ndarray):
 
         if fill_value is None:
             fill_value = self.fill_value
-        else:
-            fill_value = _check_fill_value(fill_value, self.dtype)
+        fill_value = _check_fill_value(fill_value, self.dtype)
 
         if self is masked_singleton:
             return np.asanyarray(fill_value)
@@ -3914,7 +3913,6 @@ class MaskedArray(ndarray):
         else:
             result = self._data.copy('K')
             try:
-                fill_value = _check_fill_value(fill_value, result.dtype)
                 np.copyto(result, fill_value, where=m)
             except (TypeError, AttributeError):
                 fill_value = narray(fill_value, dtype=object)
