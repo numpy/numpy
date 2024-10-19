@@ -1046,7 +1046,6 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         Execute the call behavior.
 
         """
-        # Get the data, as ndarray
         # Get the data
         (da, db) = (a, b)
         if not np.isscalar(da):
