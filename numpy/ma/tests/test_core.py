@@ -1477,7 +1477,7 @@ class TestMaskedArrayArithmetic:
         b = np.array([floating_data+i for i in range(6)],
                      dtype=np.float32).reshape(2, 3)
         c = np.array([complex(floating_data+i, floating_data-i)
-                      for i in range(6)], dtype=np.complex64).reshape(2,3)
+                      for i in range(6)], dtype=np.complex64).reshape(2, 3)
 
         operations = [lambda arr1, arr2: arr1 + arr2,
                       lambda arr1, arr2: arr1 - arr2,
