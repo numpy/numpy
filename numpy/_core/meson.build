@@ -734,7 +734,7 @@ _umath_tests_mtargets = mod_features.multi_targets(
     AVX2, SSE41, SSE2,
     ASIMDHP, ASIMD, NEON,
     VSX3, VSX2, VSX,
-    VXE, VX,
+    VXE, VX, RVV,
   ],
   baseline: CPU_BASELINE,
   prefix: 'NPY_',
