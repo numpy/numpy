@@ -754,7 +754,7 @@ class TestUnique:
         # test for ticket 2111 - complex
         a = [2.0-1j, np.nan, 1.0+1j, complex(0.0, np.nan), complex(1.0, np.nan)]
         ua = [1.0+1j, 2.0-1j, complex(0.0, np.nan)]
-        ua_idx = [2, 0, 3]
+        ua_idx = [2, 0, 1]
         ua_inv = [1, 2, 0, 2, 2]
         ua_cnt = [1, 1, 3]
         assert_equal(np.unique(a), ua)
@@ -798,10 +798,6 @@ class TestUnique:
         assert_equal(np.unique(all_nans, return_counts=True), (ua, ua_cnt))
 
     def test_unique_axis_errors(self):
-        assert_raises(TypeError, self._run_axis_tests, object)
-        assert_raises(TypeError, self._run_axis_tests,
-                      [('a', int), ('b', object)])
-
         assert_raises(AxisError, unique, np.arange(10), axis=2)
         assert_raises(AxisError, unique, np.arange(10), axis=-2)
 
@@ -998,3 +994,64 @@ class TestUnique:
             assert_array_equal(expected_values, result.values)
             assert_array_equal(expected_inverse, result.inverse_indices)
             assert_array_equal(arr, result.values[result.inverse_indices])
+
+    def test_unique_nanequals_multidimensional_1(self):
+        # issues gh-23286 and gh-20873
+        nan = np.nan
+
+        a = np.array([(0, nan), (0, nan)])
+        unq = unique(a, axis=0, equal_nan=True)
+        ref = np.array([(0, nan)])
+        assert_array_equal(unq, ref)
+
+        unq = unique(a, axis=0, equal_nan=False)
+        ref = np.array([(0, nan), (0, nan)])
+        assert_array_equal(unq, ref)
+
+        a = np.array([(0, nan), (0, nan)], dtype=[('a', int), ('b', float)])
+        unq = unique(a, axis=0, equal_nan=True)
+        ref = np.array([(0, nan)], dtype=[('a', int), ('b', float)])
+
+        # Here, assert_array_equal(unq, ref) fails because array_equal does not
+        # treat (0, nan) and (0, nan) as the same value.
+        # We must replace nan with a number to compare them.
+        unq['b'][np.isnan(unq['b'])] = -1  # type: ignore
+        ref['b'][np.isnan(ref['b'])] = -1
+        assert_array_equal(unq, ref)
+
+        a = np.array([(0, 2), (0, nan), (0, nan), (1, nan)]*2)
+        unq = unique(a, axis=0, equal_nan=True)
+        ref = np.array([(0, 2), (0, nan), (1, nan)])
+        assert_array_equal(unq, ref)
+        unq = unique(a.T, axis=1, equal_nan=True)
+        assert_array_equal(unq, ref.T)
+
+    def test_unique_nanequals_multidimensional_2(self):
+        # issues gh-23286 and gh-20873
+        a = 0.0 + np.stack([np.arange(200) % 3, (3+np.arange(200)) % 7], axis=-1)
+        a[:6, 0] = np.nan
+        a[4:10, 1] = np.nan
+
+        def replace_nan_trick(a, NAN=np.inf, **kw):
+            # Use a large number not in the data as a replacement for NaN
+            # Since NaNs appear at the end after sorting,
+            # the value of NAN should be large enough
+            a_rep = np.where(np.isnan(a), NAN, a)
+            unq_rep = unique(a_rep, **kw)
+            return np.where(unq_rep == NAN, np.nan, unq_rep)
+
+        unq = unique(a, axis=0, equal_nan=True)
+        unq_rep = replace_nan_trick(a, axis=0, equal_nan=True)
+        assert_array_equal(unq, unq_rep)
+
+        # This test is ideal but is against the current docs
+        dtype = [('f0', a.dtype), ('f1', a.dtype)]
+        tup_a = a.view(dtype).ravel()
+        tup_unq = unique(tup_a, axis=0, equal_nan=True)
+        assert_array_equal(tup_unq.view(a.dtype), unq.ravel())
+
+        a = np.stack([*a.T, *(1j+a.T)], axis=-1)
+        unq = unique(a, axis=0, equal_nan=True)
+        unq_rep = replace_nan_trick(a, axis=0, equal_nan=True)
+        assert_array_equal(unq, unq_rep)
+
