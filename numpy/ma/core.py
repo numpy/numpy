@@ -1192,7 +1192,7 @@ class _DomainedBinaryOperation(_MaskedUFunc):
     def __call__(self, a, b, *args, **kwargs):
         "Execute the call behavior."
         # Get the data
-        da,db = a,b
+        da, db = a, b
         if not np.isscalar(da):
             da = getdata(da)
         if not np.isscalar(db):
