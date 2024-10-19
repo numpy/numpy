@@ -571,15 +571,19 @@ if ctypes is not None:
 
         >>> inferred_int_array = np.array([1, 2, 3])
         >>> c_int_array = np.ctypeslib.as_ctypes(inferred_int_array)
-        >>> c_int_array
-        <c_long_Array_3 at 0x1071fbed0>
+        >>> type(c_int_array)
+        <class 'c_long_Array_3'>
+        >>> c_int_array[:]
+        [1, 2, 3]
 
         Create ctypes object from explicit 8 bit unsigned int ``np.array`` :
 
         >>> exp_int_array = np.array([1, 2, 3], dtype=np.uint8)
         >>> c_int_array = np.ctypeslib.as_ctypes(exp_int_array)
-        >>> c_int_array
-        <c_ubyte_Array_3 at 0x10755a950>
+        >>> type(c_int_array)
+        <class 'c_ubyte_Array_3'>
+        >>> c_int_array[:]
+        [1, 2, 3]
 
         """
         ai = obj.__array_interface__
