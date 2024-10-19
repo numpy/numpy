@@ -30,57 +30,6 @@ and its sub-types).
 
     The number of dimensions in the array.
 
-.. c:function:: void *PyArray_DATA(PyArrayObject *arr)
-
-    The pointer to the first element of the array.
-
-.. c:function:: char *PyArray_BYTES(PyArrayObject *arr)
-
-    These two macros are similar and obtain the pointer to the
-    data-buffer for the array. The first macro can (and should be)
-    assigned to a particular pointer where the second is for generic
-    processing. If you have not guaranteed a contiguous and/or aligned
-    array then be sure you understand how to access the data in the
-    array to avoid memory and/or alignment problems.
-
-.. c:function:: npy_intp *PyArray_DIMS(PyArrayObject *arr)
-
-    Returns a pointer to the dimensions/shape of the array. The
-    number of elements matches the number of dimensions
-    of the array. Can return ``NULL`` for 0-dimensional arrays.
-
-.. c:function:: npy_intp *PyArray_STRIDES(PyArrayObject* arr)
-
-    Returns a pointer to the strides of the array. The
-    number of elements matches the number of dimensions
-    of the array.
-
-.. c:function:: npy_intp PyArray_DIM(PyArrayObject* arr, int n)
-
-    Return the shape in the *n* :math:`^{\textrm{th}}` dimension.
-
-.. c:function:: npy_intp PyArray_STRIDE(PyArrayObject* arr, int n)
-
-    Return the stride in the *n* :math:`^{\textrm{th}}` dimension.
-
-.. c:function:: PyObject *PyArray_BASE(PyArrayObject* arr)
-
-    This returns the base object of the array. In most cases, this
-    means the object which owns the memory the array is pointing at.
-
-    If you are constructing an array using the C API, and specifying
-    your own memory, you should use the function :c:func:`PyArray_SetBaseObject`
-    to set the base to an object which owns the memory.
-
-    If the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag is set, it has a different
-    meaning, namely base is the array into which the current array will
-    be copied upon copy resolution. This overloading of the base property
-    for two functions is likely to change in a future version of NumPy.
-
-.. c:function:: PyArray_Descr *PyArray_DESCR(PyArrayObject* arr)
-
-    Returns a borrowed reference to the dtype property of the array.
-
 .. c:function:: int PyArray_FLAGS(PyArrayObject* arr)
 
     Returns an integer representing the :ref:`array-flags<array-flags>`.
@@ -88,32 +37,6 @@ and its sub-types).
 .. c:function:: int PyArray_TYPE(PyArrayObject* arr)
 
     Return the (builtin) typenumber for the elements of this array.
-
-.. c:function:: PyArray_Descr *PyArray_DTYPE(PyArrayObject* arr)
-
-    A synonym for PyArray_DESCR, named to be consistent with the
-    'dtype' usage within Python.
-
-.. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
-
-    A synonym for :c:func:`PyArray_DIMS`, named to be consistent with the
-    `shape <numpy.ndarray.shape>` usage within Python.
-
-.. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
-
-    Enables the specified array flags. This function does no validation,
-    and assumes that you know what you're doing.
-
-.. c:function:: void PyArray_CLEARFLAGS(PyArrayObject* arr, int flags)
-
-    Clears the specified array flags. This function does no validation,
-    and assumes that you know what you're doing.
-
-.. c:function:: int PyArray_HANDLER(PyArrayObject *arr)
-
-    .. versionadded:: 1.22
-
-    Returns the memory handler associated with the given array.
 
 .. c:function:: int PyArray_Pack(  \
         const PyArray_Descr *descr, void *item, const PyObject *value)
@@ -141,6 +64,52 @@ and its sub-types).
         handling arbitrary Python objects.  Setitem is for example not able
         to handle arbitrary casts between different dtypes.
 
+.. c:function:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
+
+    Enables the specified array flags. This function does no validation,
+    and assumes that you know what you're doing.
+
+.. c:function:: void PyArray_CLEARFLAGS(PyArrayObject* arr, int flags)
+
+    Clears the specified array flags. This function does no validation,
+    and assumes that you know what you're doing.
+
+.. c:function:: void *PyArray_DATA(PyArrayObject *arr)
+
+.. c:function:: char *PyArray_BYTES(PyArrayObject *arr)
+
+    These two macros are similar and obtain the pointer to the
+    data-buffer for the array. The first macro can (and should be)
+    assigned to a particular pointer where the second is for generic
+    processing. If you have not guaranteed a contiguous and/or aligned
+    array then be sure you understand how to access the data in the
+    array to avoid memory and/or alignment problems.
+
+.. c:function:: npy_intp *PyArray_DIMS(PyArrayObject *arr)
+
+    Returns a pointer to the dimensions/shape of the array. The
+    number of elements matches the number of dimensions
+    of the array. Can return ``NULL`` for 0-dimensional arrays.
+
+.. c:function:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
+
+    A synonym for :c:func:`PyArray_DIMS`, named to be consistent with the
+    `shape <numpy.ndarray.shape>` usage within Python.
+
+.. c:function:: npy_intp *PyArray_STRIDES(PyArrayObject* arr)
+
+    Returns a pointer to the strides of the array. The
+    number of elements matches the number of dimensions
+    of the array.
+
+.. c:function:: npy_intp PyArray_DIM(PyArrayObject* arr, int n)
+
+    Return the shape in the *n* :math:`^{\textrm{th}}` dimension.
+
+.. c:function:: npy_intp PyArray_STRIDE(PyArrayObject* arr, int n)
+
+    Return the stride in the *n* :math:`^{\textrm{th}}` dimension.
+
 .. c:function:: npy_intp PyArray_ITEMSIZE(PyArrayObject* arr)
 
     Return the itemsize for the elements of this array.
@@ -161,6 +130,29 @@ and its sub-types).
 .. c:function:: npy_intp PyArray_NBYTES(PyArrayObject* arr)
 
     Returns the total number of bytes consumed by the array.
+
+.. c:function:: PyObject *PyArray_BASE(PyArrayObject* arr)
+
+    This returns the base object of the array. In most cases, this
+    means the object which owns the memory the array is pointing at.
+
+    If you are constructing an array using the C API, and specifying
+    your own memory, you should use the function :c:func:`PyArray_SetBaseObject`
+    to set the base to an object which owns the memory.
+
+    If the :c:data:`NPY_ARRAY_WRITEBACKIFCOPY` flag is set, it has a different
+    meaning, namely base is the array into which the current array will
+    be copied upon copy resolution. This overloading of the base property
+    for two functions is likely to change in a future version of NumPy.
+
+.. c:function:: PyArray_Descr *PyArray_DESCR(PyArrayObject* arr)
+
+    Returns a borrowed reference to the dtype property of the array.
+
+.. c:function:: PyArray_Descr *PyArray_DTYPE(PyArrayObject* arr)
+
+    A synonym for PyArray_DESCR, named to be consistent with the
+    'dtype' usage within Python.
 
 .. c:function:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
