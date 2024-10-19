@@ -694,7 +694,6 @@ def get_masked_subclass(*arrays):
         for cls in arrcls[1:]:
             if issubclass(cls, rcls):
                 rcls = cls
-    test = rcls
     # Don't return MaskedConstant as result: revert to MaskedArray
     if rcls.__name__ == 'MaskedConstant':
         return MaskedArray
