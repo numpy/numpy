@@ -22,6 +22,7 @@ import numpy.ma.core
 import numpy._core.fromnumeric as fromnumeric
 import numpy._core.umath as umath
 from numpy.exceptions import AxisError
+from numpy.lib.tests.test_format import scalar
 from numpy.testing import (
     assert_raises, assert_warns, suppress_warnings, IS_WASM
     )
@@ -1466,6 +1467,32 @@ class TestMaskedArrayArithmetic:
         m = np.ma.array([1])
         # check we don't get array([False], dtype=bool)
         assert_equal(np.true_divide(m, 5).mask.shape, ())
+
+    def test_binary_ufunc_nomask(self):
+        # Check masked array methods have same bihaviours as ndarray when nomask
+        floating_data = 0.123456789_123456789_123456789
+
+        a = 1.0
+        b = np.array([floating_data+i for i in range(6)],dtype=np.float32).reshape(2,3)
+        c = np.array([complex(floating_data+i,floating_data-i) for i in range(6)],
+                     dtype=np.complex64).reshape(2,3)
+
+        operations = [lambda arr1 ,arr2: arr1 + arr2, lambda arr1 ,arr2: arr1 - arr2,
+                      lambda arr1 ,arr2: arr1 * arr2, lambda arr1 ,arr2: arr1 / arr2,
+                      lambda arr1 ,arr2: arr1 // arr2, lambda arr1 ,arr2: arr1 % arr2,
+                      lambda arr1 ,arr2: arr1 ** arr2]
+
+        for i in range(len(operations)):
+            scalar_op_result = operations[i](b,a)
+            scalar_ma_op_result = operations[i](masked_where(None,b,True),a)
+            assert_equal(scalar_op_result,scalar_ma_op_result)
+
+            if i not in (4,5):
+                scalar_op_result = operations[i](b,c)
+                scalar_ma_op_result = operations[i](
+                    masked_where(None,b,True),
+                    masked_where(None,c,True))
+                assert_equal(scalar_op_result,scalar_ma_op_result)
 
     def test_noshink_on_creation(self):
         # Check that the mask is not shrunk on array creation when not wanted

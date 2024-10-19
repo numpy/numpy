@@ -1047,7 +1047,12 @@ class _MaskedBinaryOperation(_MaskedUFunc):
 
         """
         # Get the data, as ndarray
-        (da, db) = (getdata(a), getdata(b))
+        # Get the data
+        (da, db) = (a, b)
+        if not np.isscalar(da):
+            da = getdata(da)
+        if not np.isscalar(db):
+            db = getdata(db)
         # Get the result
         with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
@@ -1191,7 +1196,7 @@ class _DomainedBinaryOperation(_MaskedUFunc):
     def __call__(self, a, b, *args, **kwargs):
         "Execute the call behavior."
         # Get the data
-        da, db = a, b
+        (da, db) = (a, b)
         if not np.isscalar(da):
             da = getdata(da)
         if not np.isscalar(db):
