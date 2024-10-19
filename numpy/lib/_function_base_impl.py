@@ -5199,7 +5199,7 @@ def delete(arr, obj, axis=None):
     arr : array_like
         Input array.
     obj : slice, int, array-like of ints or bools
-        Indices specifying which sub-arrays to remove along the specified axis.
+        Indicate indices of sub-arrays to remove along the specified axis.
         Can be a single integer, a slice, an array of integers, a boolean array,
         or any object that can be cast to an array of integers or booleans.
 
