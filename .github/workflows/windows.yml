@@ -41,7 +41,7 @@ jobs:
 
     - name: Install pkg-config
       run: |
-        choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+        python -m pip install pkgconf
         echo "PKG_CONFIG_PATH=${{ github.workspace }}/.openblas" >> $env:GITHUB_ENV
         
 
@@ -57,14 +57,14 @@ jobs:
       if: matrix.compiler == 'MSVC'
       run: |
         pip install -r requirements/ci_requirements.txt
-        spin build --with-scipy-openblas=32 -j2 -- --vsenv
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv -Dallow-noblas=false
 
     - name: Install NumPy (Clang-cl)
       if: matrix.compiler == 'Clang-cl'
       run: |
         "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
         pip install -r requirements/ci_requirements.txt
-        spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini -Dallow-noblas=false
 
     - name: Meson Log
       shell: bash

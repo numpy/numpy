@@ -7,15 +7,11 @@ steps:
     addToPath: true
     architecture: $(PYTHON_ARCH)
 
-- script: python -m pip install --upgrade pip wheel
+- script: python -m pip install --upgrade pip wheel pkgconf
   displayName: 'Install tools'
 
 - script: python -m pip install -r requirements/test_requirements.txt
   displayName: 'Install dependencies; some are optional to avoid test skips'
-
-- powershell: |
-    choco install -y --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
-  displayName: 'Install utilities'
 
 - powershell: |
     # Note: ensure the `pip install .` command remains the last one here,
@@ -27,12 +23,16 @@ steps:
         pip install -r requirements/ci_requirements.txt
         spin config-openblas --with-scipy-openblas=64
         $env:PKG_CONFIG_PATH="$pwd/.openblas"
-        python -m pip install . -v -Csetup-args="--vsenv"
+        get-command pkg-config | out-string -Width 300
+        pkg-config scipy-openblas --modversion
+        python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
     } else {
         pip install -r requirements/ci_requirements.txt
         spin config-openblas --with-scipy-openblas=32
         $env:PKG_CONFIG_PATH="$pwd/.openblas"
-        python -m pip install . -v -Csetup-args="--vsenv" 
+        get-command pkg-config
+        pkg-config scipy-openblas --modversion
+        python -m pip install . -v -Csetup-args="--vsenv" -Csetup-args="-Dallow-noblas=false"
     }
   displayName: 'Build NumPy'
 
