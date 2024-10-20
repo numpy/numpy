@@ -348,7 +348,8 @@ range of possible values.
 
     >>> import numpy as np
     >>> a = np.array([[5, 5, 6], [7, 7, 5], [4, 4, 8]])
-    >>> print(np.linalg.det(a))  # Expected: 0
+    >>> print(np.linalg.det(a))  # # Result is close to 0 due to floating-point precision
+    -3.1974423109204565e-14
     
 
     One may receive a result like ``-3.1974423109204565e-14`` instead of ``0``. This is a known behavior of floating-point operations in numerical         
@@ -356,8 +357,8 @@ range of possible values.
 
     To handle such cases, it's advisable to set a threshold for comparison when checking if a determinant is effectively zero. For example:
 
-    >>> if np.isclose(det, 0, atol=1e-10):  # Absolute tolerance
-    >>>     print("The determinant is effectively zero.")
+    >>> np.isclose(np.linalg.det(a), 0)  # Check for closeness to 0
+    True
 
     This method allows you to account for the small inaccuracies that can occur in floating-point calculations.
 
