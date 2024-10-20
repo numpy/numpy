@@ -879,6 +879,255 @@ short_from_pyobj(short* v, PyObject *obj, const char *errmess) {
 }
 """
 
+needs['int64_t_from_pyobj'] = ['long_from_pyobj']
+cfuncs['int64_t_from_pyobj'] = """
+static int
+int64_t_from_pyobj(int64_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (int64_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['short_int_from_pyobj'] = ['int_from_pyobj']
+cfuncs['short_int_from_pyobj'] = """
+static int
+short_int_from_pyobj(short_int* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
+        *v = (short_int)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['long_int_from_pyobj'] = ['int_from_pyobj']
+cfuncs['long_int_from_pyobj'] = """
+static int
+long_int_from_pyobj(long_int* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
+        *v = (long_int)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['long_long_int_from_pyobj'] = ['long_from_pyobj']
+cfuncs['long_long_int_from_pyobj'] = """
+static int
+long_long_int_from_pyobj(long_long_int* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (long_long_int)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['size_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['size_t_from_pyobj'] = """
+static int
+size_t_from_pyobj(size_t* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
+        *v = (size_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int8_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['int8_t_from_pyobj'] = """
+static int
+int8_t_from_pyobj(int8_t* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
+        *v = (int8_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int16_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['int16_t_from_pyobj'] = """
+static int
+int16_t_from_pyobj(int16_t* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
+        *v = (int16_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int32_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['int32_t_from_pyobj'] = """
+static int
+int32_t_from_pyobj(int32_t* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
+        *v = (int32_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int_least8_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['int_least8_t_from_pyobj'] = """
+static int
+int_least8_t_from_pyobj(int_least8_t* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
+        *v = (int_least8_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int_least16_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['int_least16_t_from_pyobj'] = """
+static int
+int_least16_t_from_pyobj(int_least16_t* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
+        *v = (int_least16_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int_least32_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['int_least32_t_from_pyobj'] = """
+static int
+int_least32_t_from_pyobj(int_least32_t* v, PyObject *obj, const char *errmess) {
+    int i = 0;
+    if (int_from_pyobj(&i, obj, errmess)) {
+        *v = (int_least32_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int_least64_t_from_pyobj'] = ['long_from_pyobj']
+cfuncs['int_least64_t_from_pyobj'] = """
+static int
+int_least64_t_from_pyobj(int_least64_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (int_least64_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int_fast8_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['int_fast8_t_from_pyobj'] = """
+static int
+int_fast8_t_from_pyobj(int_fast8_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (int_fast8_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int_fast16_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['int_fast16_t_from_pyobj'] = """
+static int
+int_fast16_t_from_pyobj(int_fast16_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (int_fast16_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int_fast32_t_from_pyobj'] = ['int_from_pyobj']
+cfuncs['int_fast32_t_from_pyobj'] = """
+static int
+int_fast32_t_from_pyobj(int_fast32_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (int_fast32_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['int_fast64_t_from_pyobj'] = ['long_from_pyobj']
+cfuncs['int_fast64_t_from_pyobj'] = """
+static int
+int_fast64_t_from_pyobj(int_fast64_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (int_fast64_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['intmax_t_from_pyobj'] = ['long_from_pyobj']
+cfuncs['intmax_t_from_pyobj'] = """
+static int
+intmax_t_from_pyobj(intmax_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (intmax_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['intptr_t_from_pyobj'] = ['long_from_pyobj']
+cfuncs['intptr_t_from_pyobj'] = """
+static int
+intptr_t_from_pyobj(intptr_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (intptr_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+needs['ptrdiff_t_from_pyobj'] = ['long_from_pyobj']
+cfuncs['ptrdiff_t_from_pyobj'] = """
+static int
+ptrdiff_t_from_pyobj(ptrdiff_t* v, PyObject *obj, const char *errmess) {
+    long i = 0;
+    if (long_from_pyobj(&i, obj, errmess)) {
+        *v = (ptrdiff_t)i;
+        return 1;
+    }
+    return 0;
+}
+"""
+
+
+
 
 cfuncs['int_from_pyobj'] = """
 static int
