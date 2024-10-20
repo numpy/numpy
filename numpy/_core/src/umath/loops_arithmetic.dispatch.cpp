@@ -137,23 +137,23 @@ void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp le
 }
 
 
-// Floor division for signed integers
+// Helper function for floor division
 template <typename T>
-T floor_div(T n, T d) {
-    if (HWY_UNLIKELY(d == 0 || (n == std::numeric_limits<T>::min() && d == -1))) {
-        if (d == 0) {
-            npy_set_floatstatus_divbyzero();
-            return 0;
-        } else {
-            npy_set_floatstatus_overflow();
-            return std::numeric_limits<T>::min();
-        }
+T floor_div(T a, T b) {
+    if (HWY_UNLIKELY(b == 0)) {
+        npy_set_floatstatus_divbyzero();
+        return 0;
     }
-    T r = n / d;
-    if (((n > 0) != (d > 0)) && ((r * d) != n)) {
-        r--;
+    if (HWY_UNLIKELY(std::is_signed<T>::value && a == std::numeric_limits<T>::min() && b == -1)) {
+        npy_set_floatstatus_overflow();
+        return std::numeric_limits<T>::min();
     }
-    return r;
+    T q = a / b;
+    T r = a % b;
+    if ((r != 0) && ((a < 0) != (b < 0))) {
+        q -= 1;
+    }
+    return q;
 }
 
 // Dispatch functions for signed integer division
