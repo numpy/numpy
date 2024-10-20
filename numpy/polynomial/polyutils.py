@@ -26,6 +26,9 @@ import numpy as np
 
 from numpy._core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.exceptions import RankWarning
+from numpy.dtypes import ObjectDType
+
+_object_dtype = ObjectDType()
 
 __all__ = [
     'as_series', 'trimseq', 'trimcoef', 'getdomain', 'mapdomain', 'mapparms',
@@ -63,7 +66,7 @@ def trimseq(seq):
         return seq[:i+1]
 
 
-def as_series(alist, trim=True):
+def as_series(alist, trim=True, _validate_input=True, copy=True):
     """
     Return argument as a list of 1-d arrays.
 
@@ -114,20 +117,24 @@ def as_series(alist, trim=True):
     [array([2.]), array([1.1, 0. ])]
 
     """
-    arrays = [np.array(a, ndmin=1, copy=None) for a in alist]
-    for a in arrays:
-        if a.size == 0:
-            raise ValueError("Coefficient array is empty")
-    if any(a.ndim != 1 for a in arrays):
-        raise ValueError("Coefficient array is not 1-d")
+    if _validate_input:
+        arrays = [np.array(a, ndmin=1, copy=None) for a in alist]
+        for a in arrays:
+            if a.size == 0:
+                raise ValueError("Coefficient array is empty")
+        if any(a.ndim != 1 for a in arrays):
+            raise ValueError("Coefficient array is not 1-d")
+    else:
+        arrays = alist
+
     if trim:
         arrays = [trimseq(a) for a in arrays]
 
-    if any(a.dtype == np.dtype(object) for a in arrays):
+    if any(a.dtype == _object_dtype for a in arrays):
         ret = []
         for a in arrays:
-            if a.dtype != np.dtype(object):
-                tmp = np.empty(len(a), dtype=np.dtype(object))
+            if a.dtype != _object_dtype:
+                tmp = np.empty(len(a), dtype=_object_dtype)
                 tmp[:] = a[:]
                 ret.append(tmp)
             else:
@@ -137,7 +144,7 @@ def as_series(alist, trim=True):
             dtype = np.common_type(*arrays)
         except Exception as e:
             raise ValueError("Coefficient arrays have no common type") from e
-        ret = [np.array(a, copy=True, dtype=dtype) for a in arrays]
+        ret = [np.array(a, copy=copy, dtype=dtype) for a in arrays]
     return ret
 
 
