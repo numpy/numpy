@@ -79,6 +79,26 @@ static const npy_cfloat oneF = 1.0f, zeroF = 0.0f;
  * #step1 = 1.F, 1., &oneF, &oneD#
  * #step0 = 0.F, 0., &zeroF, &zeroD#
  */
+
+static inline void
+@name@_matrix_copy(void *_ip, npy_intp is_m, npy_intp is_n,
+                   void *_op, npy_intp os_m, npy_intp os_n,
+                   npy_intp dm, npy_intp dn)
+{
+    npy_intp m, n, ib_n = is_n*dn, ob_n = os_n*dn;
+    char *ip = (char *)_ip, *op = (char *)_op;
+    
+    for (m = 0; m < dm; m++) {
+        for (n = 0; n < dn; n++) {
+            *(@ctype@ *)op = *(@ctype@ *)ip;
+            ip += is_n;
+            op += os_n;
+        }
+        ip += is_m - ib_n;
+        op += os_m - ob_n;
+    }
+}
+
 NPY_NO_EXPORT void
 @name@_gemv(void *ip1, npy_intp is1_m, npy_intp is1_n,
             void *ip2, npy_intp is2_n, npy_intp NPY_UNUSED(is2_p),
@@ -433,6 +453,11 @@ NPY_NO_EXPORT void
                               is_blasable2d(is1_n, sz, dn, 1, sz));
     npy_bool matrix_vector = ((dp == 1)  && i1blasable &&
                               is_blasable2d(is2_n, sz, dn, 1, sz));
+    
+    void *tmp_ip1 = NULL;
+    void *tmp_ip2 = NULL;
+    void *tmp_op = NULL;
+
 #endif
 
     for (iOuter = 0; iOuter < dOuter; iOuter++,
@@ -500,9 +525,46 @@ NPY_NO_EXPORT void
                  * non-blasable (or non-ccontiguous output)
                  * we could still use BLAS, see gh-12365.
                  */
+                                 if(tmp_ip1 == NULL) {
+                    tmp_ip1 = malloc(sz * dm * dn);
+                }
+
+                if(tmp_ip2 == NULL) {
+                    tmp_ip2 = malloc(sz * dn * dp);
+                }
+
+                if(tmp_op == NULL) {
+                    tmp_op = malloc(sz * dm * dp);
+                }
+
+                /* Not enough memory */
+                if(
+                    tmp_ip1 == NULL || tmp_ip2 == NULL || tmp_op == NULL
+                ) {
                 @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
                                            ip2, is2_n, is2_p,
                                            op, os_m, os_p, dm, dn, dp);
+                }
+                else {
+                    @TYPE@_matrix_copy(
+                        ip1, is1_m, is1_n, tmp_ip1, sz*dn, sz, dm, dn
+                    );
+                    
+                    @TYPE@_matrix_copy(
+                        ip2, is2_n, is2_p, tmp_ip2, sz*dp, sz, dn, dp
+                    );
+
+                    @TYPE@_matmul_matrixmatrix(
+                        tmp_ip1, sz*dn, sz,
+                        tmp_ip2, sz*dp, sz,
+                        tmp_op, sz*dp, sz,
+                        dm, dn, dp
+                    );
+
+                    @TYPE@_matrix_copy(
+                        tmp_op, sz*dp, sz, op, os_m, os_p, dm, dp
+                    );
+                }
             }
         }
 #else
@@ -512,6 +574,11 @@ NPY_NO_EXPORT void
 
 #endif
     }
+#if @USEBLAS@ && defined(HAVE_CBLAS)
+    if(tmp_ip1 != NULL) free(tmp_ip1);
+    if(tmp_ip2 != NULL) free(tmp_ip2);
+    if(tmp_op != NULL) free(tmp_op);
+#endif
 }
 
 /**end repeat**/
