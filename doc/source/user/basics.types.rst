@@ -342,12 +342,13 @@ range of possible values.
     >>> np.power(100, 100, dtype=np.float64)
     1e+200
 
-.. note::
+Floating point precision
+========================
 
-    Many functions in NumPy, especially those in `numpy.linalg`, involve floating-point
-    arithmetic, which can introduce small inaccuracies due to the way computers 
-    represent decimal numbers. For instance, when computing the determinant of the 
-    following matrix:
+Many functions in NumPy, especially those in `numpy.linalg`, involve floating-point
+arithmetic, which can introduce small inaccuracies due to the way computers 
+represent decimal numbers. For instance, when computing the determinant of the 
+following matrix:
 
     >>> import numpy as np
     >>> a = np.array([[5, 5, 6], [7, 7, 5], [4, 4, 8]])
@@ -355,19 +356,19 @@ range of possible values.
     -3.1974423109204565e-14
     
 
-    One may receive a result like ``-3.1974423109204565e-14`` instead of ``0``. This is
-    a known behavior of floating-point operations in numerical libraries.
+One may receive a result like ``-3.1974423109204565e-14`` instead of ``0``. This is
+a known behavior of floating-point operations in numerical libraries.
 
-    To handle such cases, it's advisable to set a threshold for comparison when checking
-    if a determinant is effectively zero. For example:
+To handle such cases, it's advisable to set a threshold for comparison when checking
+if a determinant is effectively zero. For example:
 
     >>> np.isclose(np.linalg.det(a), 0)  # Check for closeness to 0
     True
 
-    This method allows you to account for the small inaccuracies that can occur in 
-    floating-point calculations.
+This method allows you to account for the small inaccuracies that can occur in 
+floating-point calculations.
 
-    For information about precision in calculations, see `Floating-Point Arithmetic <https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html>`_.
+For information about precision in calculations, see `Floating-Point Arithmetic <https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html>`_.
 
 
 Extended precision
