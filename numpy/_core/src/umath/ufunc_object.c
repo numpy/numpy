@@ -2981,7 +2981,8 @@ fail:
  */
 static PyObject *
 PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
-                 PyArrayObject *out, int axis, PyArray_DTypeMeta *signature[3])
+                 PyArrayObject *out, int axis, PyArray_DTypeMeta *signature[3],
+                 PyObject* initial)
 {
     PyArrayObject *op[3];
     int op_axes_arrays[3][NPY_MAXDIMS];
@@ -3001,6 +3002,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     /* The reduceat indices - ind must be validated outside this call */
     npy_intp *reduceat_ind;
     npy_intp i, ind_size, red_axis_size;
+    npy_bool start_stop;
+
+    /* Buffer to use when we need an initial value */
+    char *initial_buf = NULL;
 
     const char *ufunc_name = ufunc_get_name_cstr(ufunc);
     char *opname = "reduceat";
@@ -3011,16 +3016,27 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     NPY_BEGIN_THREADS_DEF;
 
     reduceat_ind = (npy_intp *)PyArray_DATA(ind);
-    ind_size = PyArray_DIM(ind, 0);
+    ind_size = PyArray_DIM(ind, PyArray_NDIM(ind)-1);
+    start_stop = PyArray_NDIM(ind) == 2;
     red_axis_size = PyArray_DIM(arr, axis);
 
-    /* Check for out-of-bounds values in indices array */
-    for (i = 0; i < ind_size; ++i) {
-        if (reduceat_ind[i] < 0 || reduceat_ind[i] >= red_axis_size) {
-            PyErr_Format(PyExc_IndexError,
-                "index %" NPY_INTP_FMT " out-of-bounds in %s.%s [0, %" NPY_INTP_FMT ")",
-                reduceat_ind[i], ufunc_name, opname, red_axis_size);
-            return NULL;
+    if (start_stop) {
+        /* Check that values in start and stop arrays are within range */
+        for (i = 0; i < ind_size * 2; ++i) {
+            if (check_and_adjust_index(&reduceat_ind[i], red_axis_size, axis, NULL) < 0) {
+                return NULL;
+            }
+        }
+    }
+    else {
+        /* Check for out-of-bounds values in indices array */
+        for (i = 0; i < ind_size; ++i) {
+            if (reduceat_ind[i] < 0 || reduceat_ind[i] >= red_axis_size) {
+                PyErr_Format(PyExc_IndexError,
+                    "index %" NPY_INTP_FMT " out-of-bounds in %s.%s [0, %" NPY_INTP_FMT ")",
+                    reduceat_ind[i], ufunc_name, opname, red_axis_size);
+                return NULL;
+            }
         }
     }
 
@@ -3195,6 +3211,16 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
     /*
+     * Get the initial value if we are in new start_stop mode
+     */
+    if (start_stop) {
+        if (get_initial_buf(&context, PyArray_SIZE(op[0]) == 0, descrs[0], initial,
+                            &initial_buf) < 0) {
+            goto fail;
+        }
+    }
+
+    /*
      * If the output has zero elements, return now.
      */
     if (PyArray_SIZE(op[0]) == 0) {
@@ -3207,7 +3233,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
-        npy_intp count_m1;
         npy_intp stride0, stride1;
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
 
@@ -3222,7 +3247,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         dataptr = NpyIter_GetDataPtrArray(iter);
 
         /* Execute the loop with just the outer iterator */
-        count_m1 = PyArray_DIM(op[1], axis)-1;
         stride0 = 0;
         stride1 = PyArray_STRIDE(op[1], axis);
 
@@ -3238,18 +3262,33 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
         do {
             for (i = 0; i < ind_size; ++i) {
-                npy_intp start = reduceat_ind[i],
-                        end = (i == ind_size-1) ? count_m1+1 :
-                                                  reduceat_ind[i+1];
+                npy_intp start = reduceat_ind[i];
+                npy_intp end = start_stop? reduceat_ind[i + ind_size] :
+                    ((i == ind_size-1) ? PyArray_DIM(arr,axis) :
+                                         reduceat_ind[i+1]);
                 npy_intp count = end - start;
 
                 dataptr_copy[0] = dataptr[0] + stride0_ind*i;
                 dataptr_copy[1] = dataptr[1] + stride1*start;
                 dataptr_copy[2] = dataptr[0] + stride0_ind*i;
+                char *first_element;
 
                 /*
-                 * Copy the first element to start the reduction.
-                 *
+                 * Copy the initial value or the first element to start the reduction.
+                 */
+                if (start_stop && (count <= 0 || initial_buf != NULL)) {
+                    if (initial_buf == NULL) {
+                        res = -2;
+                        break;
+                    }
+                    first_element = initial_buf;
+                }
+                else {
+                    first_element = dataptr_copy[1];
+                    --count;
+                    dataptr_copy[1] += stride1;
+                }
+                /*
                  * Output (dataptr[0]) and input (dataptr[1]) may point
                  * to the same memory, e.g.
                  * np.add.reduceat(a, np.arange(len(a)), out=a).
@@ -3259,19 +3298,16 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                      * Incref before decref to avoid the possibility of
                      * the reference count being zero temporarily.
                      */
-                    Py_XINCREF(*(PyObject **)dataptr_copy[1]);
+                    Py_XINCREF(*(PyObject **)first_element);
                     Py_XDECREF(*(PyObject **)dataptr_copy[0]);
-                    *(PyObject **)dataptr_copy[0] =
-                                        *(PyObject **)dataptr_copy[1];
+                    *(PyObject **)dataptr_copy[0] = *(PyObject **)first_element;
                 }
                 else {
-                    memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
+                    memmove(dataptr_copy[0], first_element, itemsize);
                 }
 
                 if (count > 1) {
                     /* Inner loop like REDUCE */
-                    --count;
-                    dataptr_copy[1] += stride1;
                     NPY_UF_DBG_PRINT1("iterator loop count %d\n",
                                                     (int)count);
                     res = strided_loop(&context,
@@ -3297,20 +3333,35 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         }
 
         for (i = 0; i < ind_size; ++i) {
-            npy_intp start = reduceat_ind[i],
-                    end = (i == ind_size-1) ? PyArray_DIM(arr,axis) :
-                                              reduceat_ind[i+1];
+            npy_intp start = reduceat_ind[i];
+            npy_intp end = start_stop? reduceat_ind[i + ind_size] :
+                ((i == ind_size-1) ? PyArray_DIM(arr,axis) :
+                                     reduceat_ind[i+1]);
             npy_intp count = end - start;
+            char *first_element;
 
             dataptr_copy[0] = PyArray_BYTES(op[0]) + stride0_ind*i;
             dataptr_copy[1] = PyArray_BYTES(op[1]) + stride1*start;
             dataptr_copy[2] = PyArray_BYTES(op[0]) + stride0_ind*i;
 
             /*
-             * Copy the first element to start the reduction.
-             *
-             * Output (dataptr[0]) and input (dataptr[1]) may point to
-             * the same memory, e.g.
+             * Copy the initial value or the first element to start the reduction.
+             */
+            if (start_stop && (count <= 0 || initial_buf != NULL)) {
+                if (initial_buf == NULL) {
+                    res = -2;
+                    break;
+                }
+                first_element = initial_buf;
+            }
+            else {
+                first_element = dataptr_copy[1];
+                --count;
+                dataptr_copy[1] += stride1;
+            }
+            /*
+             * Output (dataptr[0]) and input (dataptr[1]) may point
+             * to the same memory, e.g.
              * np.add.reduceat(a, np.arange(len(a)), out=a).
              */
             if (descrs[2]->type_num == NPY_OBJECT) {
@@ -3318,19 +3369,16 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                  * Incref before decref to avoid the possibility of the
                  * reference count being zero temporarily.
                  */
-                Py_XINCREF(*(PyObject **)dataptr_copy[1]);
+                Py_XINCREF(*(PyObject **)first_element);
                 Py_XDECREF(*(PyObject **)dataptr_copy[0]);
-                *(PyObject **)dataptr_copy[0] =
-                                    *(PyObject **)dataptr_copy[1];
+                *(PyObject **)dataptr_copy[0] = *(PyObject **)first_element;
             }
             else {
-                memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
+                memmove(dataptr_copy[0], first_element, itemsize);
             }
 
-            if (count > 1) {
+            if (count > 0) {
                 /* Inner loop like REDUCE */
-                --count;
-                dataptr_copy[1] += stride1;
                 NPY_UF_DBG_PRINT1("iterator loop count %d\n",
                                                 (int)count);
                 res = strided_loop(&context,
@@ -3345,6 +3393,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     }
 
 finish:
+    if (initial_buf != NULL && PyDataType_REFCHK(PyArray_DESCR(out))) {
+        PyArray_Item_XDECREF(initial_buf, PyArray_DESCR(out));
+    }
+    PyMem_FREE(initial_buf);
     NPY_AUXDATA_FREE(auxdata);
     Py_DECREF(descrs[0]);
     Py_DECREF(descrs[1]);
@@ -3360,6 +3412,12 @@ finish:
     }
 
     if (res < 0) {
+        if (res == -2) {
+            PyErr_Format(PyExc_ValueError,
+                    "empty slice encountered with reduceat operation for '%s', "
+                    "which does not have an identity. Specify 'initial'.",
+                    ufunc_name);
+        }
         Py_DECREF(out);
         return NULL;
     }
@@ -3367,6 +3425,9 @@ finish:
     return (PyObject *)out;
 
 fail:
+    if (initial_buf != NULL && PyDataType_REFCHK(PyArray_DESCR(out))) {
+        PyArray_Item_XDECREF(initial_buf, PyArray_DESCR(out));
+    }
     Py_XDECREF(out);
 
     NPY_AUXDATA_FREE(auxdata);
@@ -3500,6 +3561,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
                 "|axis", NULL, &axes_obj,
                 "|dtype", NULL, &otype_obj,
                 "|out", NULL, &out_obj,
+                "|initial", &_not_NoValue, &initial,
                 NULL, NULL, NULL) < 0) {
             goto fail;
         }
@@ -3588,8 +3650,14 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
 
         indices = (PyArrayObject *)PyArray_FromAny(indices_obj,
-                indtype, 1, 1, NPY_ARRAY_CARRAY, NULL);
+                indtype, 1, 2, NPY_ARRAY_CARRAY, NULL);
         if (indices == NULL) {
+            goto fail;
+        }
+        if (PyArray_NDIM(indices) == 2 && PyArray_DIM(indices, 0) != 2) {
+            PyErr_SetString(PyExc_ValueError,
+                            "indices should either be one-dimensional or "
+                            "two-dimensional with two rows.");
             goto fail;
         }
     }
@@ -3709,7 +3777,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
         ret = (PyArrayObject *)PyUFunc_Reduceat(ufunc,
-                mp, indices, out, axes[0], signature);
+                mp, indices, out, axes[0], signature, initial);
         Py_SETREF(indices, NULL);
         break;
     }
