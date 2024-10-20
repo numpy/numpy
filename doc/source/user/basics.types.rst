@@ -342,7 +342,7 @@ range of possible values.
     >>> np.power(100, 100, dtype=np.float64)
     1e+200
 
-.. note:::
+.. note::
 
     Many functions in NumPy, especially those in `numpy.linalg`, involve floating-point arithmetic, which can introduce small inaccuracies due to the way       computers represent decimal numbers. For instance, when computing the determinant of the following matrix:
 
