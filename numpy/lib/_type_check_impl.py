@@ -410,10 +410,6 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
         passed then negative infinity values will be replaced with a very
         small (or negative) number.
 
-        .. versionadded:: 1.17
-
-
-
     Returns
     -------
     out : ndarray
