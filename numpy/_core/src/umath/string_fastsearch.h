@@ -33,21 +33,25 @@
    detailed explanation. */
 
 /**
+ * @internal
  * @brief Mode for counting the number of occurrences of a substring
  */
 #define FAST_COUNT 0
 
 /**
+ * @internal
  * @brief Mode for performing a forward search for a substring
  */
 #define FAST_SEARCH 1
 
 /**
+ * @internal
  * @brief Mode for performing a reverse (backward) search for a substring
  */
 #define FAST_RSEARCH 2
 
 /**
+ * @file_internal
  * @brief Defines the bloom filter width based on the size of LONG_BIT.
  *
  * This macro sets the value of `STRINGLIB_BLOOM_WIDTH` depending on the
@@ -67,6 +71,7 @@
 #endif
 
 /**
+ * @file_internal
  * @brief Adds a character to the bloom filter mask.
  *
  * This macro sets the bit in the bloom filter `mask` corresponding to the
@@ -80,6 +85,7 @@
     ((mask |= (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
 
 /**
+ * @file_internal
  * @brief Checks if a character is present in the bloom filter mask.
  *
  * This macro checks if the bit corresponding to the character `ch` is set
@@ -92,10 +98,8 @@
 #define STRINGLIB_BLOOM(mask, ch)     \
     ((mask &  (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
 
-#define FORWARD_DIRECTION 1     ///< Defines the forward search direction
-#define BACKWARD_DIRECTION (-1) ///< Defines the backward search direction
-
 /**
+ * @file_internal
  * @brief Threshold for using memchr or wmemchr in character search.
  *
  * If the search length exceeds this value, memchr/wmemchr is used.
@@ -104,9 +108,12 @@
 
 
 /**
+ * @internal
  * @brief A checked indexer for buffers of a specified character type.
  *
  * This structure provides safe indexing into a buffer with boundary checks.
+ *
+ * @internal
  *
  * @tparam char_type The type of characters stored in the buffer.
  */
@@ -335,6 +342,7 @@ struct CheckedIndexer {
 
 
 /**
+ * @internal
  * @brief Finds the first occurrence of a specified character in a
  *        given range of a buffer.
  *
@@ -387,6 +395,7 @@ find_char(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
 }
 
 /**
+ * @internal
  * @brief Finds the last occurrence of a specified character in a
  *        given range of a buffer.
  *
@@ -418,6 +427,7 @@ rfind_char(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
 
 
 /**
+ * @file_internal
  * @brief Conditional logging for string fast search.
  *
  * Set to 1 to enable logging macros.
@@ -445,11 +455,15 @@ rfind_char(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
 #endif
 
 /**
+ * @file_internal
  * @brief Perform a lexicographic search for the maximal suffix in
  * a given string.
  *
  * This function searches through the `needle` string to find the
  * maximal suffix, which is essentially the largest lexicographic suffix.
+ * Essentially this:
+ * - max(needle[i:] for i in range(len(needle)+1))
+ *
  * Additionally, it computes the period of the right half of the string.
  *
  * @param needle The string to search in.
@@ -513,6 +527,7 @@ lex_search(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
 }
 
 /**
+ * @file_internal
  * @brief Perform a critical factorization on a string.
  *
  * This function splits the input string into two parts where the local
@@ -575,32 +590,38 @@ factorize(CheckedIndexer<char_type> needle,
 
 
 /**
+ * @file_internal
  * @brief Internal macro to define the shift type used in the table.
  */
 #define SHIFT_TYPE uint8_t
 
 /**
+ * @file_internal
  * @brief Internal macro to define the maximum shift value.
  */
 #define MAX_SHIFT UINT8_MAX
 
 
 /**
+ * @file_internal
  * @brief Internal macro to define the number of bits for the table size.
  */
 #define TABLE_SIZE_BITS 6u
 
 /**
+ * @file_internal
  * @brief Internal macro to define the table size based on TABLE_SIZE_BITS.
  */
 #define TABLE_SIZE (1U << TABLE_SIZE_BITS)
 
 /**
+ * @file_internal
  * @brief Internal macro to define the table mask used for bitwise operations.
  */
 #define TABLE_MASK (TABLE_SIZE - 1U)
 
 /**
+ * @file_internal
  * @brief Struct to store precomputed data for string search algorithms.
  *
  * This structure holds all the necessary precomputed values needed
@@ -621,6 +642,7 @@ struct search_prep_data {
 
 
 /**
+ * @file_internal
  * @brief Preprocesses the needle (substring) for optimized string search.
  *
  * This function performs preprocessing on the given needle (substring)
@@ -695,6 +717,7 @@ preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
 }
 
 /**
+ * @file_internal
  * @brief Searches for a needle (substring) within a haystack (string)
  * using the Two-Way string matching algorithm.
  *
@@ -858,6 +881,7 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
 
 
 /**
+ * @file_internal
  * @brief Finds the first occurrence of a needle (substring) within a haystack (string).
  *
  * This function applies the two-way string matching algorithm to efficiently
@@ -884,6 +908,7 @@ two_way_find(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
 
 
 /**
+ * @file_internal
  * @brief Counts the occurrences of a needle (substring) within a haystack (string).
  *
  * This function applies the two-way string matching algorithm to count how many
@@ -937,6 +962,7 @@ two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
 #undef LOG_LINEUP
 
 /**
+ * @internal
  * @brief A function that searches for a substring `p` in the
  * string `s` using a bloom filter to optimize character matching.
  *
@@ -1022,6 +1048,7 @@ default_find(CheckedIndexer<char_type> s, Py_ssize_t n,
 
 
 /**
+ * @internal
  * @brief Performs an adaptive string search using a bloom filter and fallback
  * to two-way search for large data.
  *
@@ -1109,6 +1136,7 @@ adaptive_find(CheckedIndexer<char_type> s, Py_ssize_t n,
 
 
 /**
+ * @internal
  * @brief Performs a reverse Boyer-Moore string search.
  *
  * This function searches for the last occurrence of a pattern in a string,
@@ -1176,6 +1204,7 @@ default_rfind(CheckedIndexer<char_type> s, Py_ssize_t n,
 
 
 /**
+ * @internal
  * @brief Counts occurrences of a specified character in a given string.
  *
  * This function iterates through the string `s` and counts how many times
@@ -1208,6 +1237,7 @@ countchar(CheckedIndexer<char_type> s, Py_ssize_t n,
 
 
 /**
+ * @internal
  * @brief Searches for occurrences of a substring `p` in the string `s`
  *        using various optimized search algorithms.
  *
