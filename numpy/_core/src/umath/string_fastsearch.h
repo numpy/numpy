@@ -104,8 +104,8 @@
 #define STRINGLIB_BLOOM(mask, ch)     \
 ((mask &  (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
 
-#define FORWARD_DIRECTION 1   ///< Defines the forward search direction
-#define BACKWARD_DIRECTION -1 ///< Defines the backward search direction
+#define FORWARD_DIRECTION 1     ///< Defines the forward search direction
+#define BACKWARD_DIRECTION (-1) ///< Defines the backward search direction
 
 /**
  * @brief Threshold for using memchr or wmemchr in character search.
@@ -351,7 +351,7 @@ struct CheckedIndexer {
  */
 template <typename char_type>
 inline Py_ssize_t
-findchar(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
+find_char(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
 {
     char_type *p = s.buffer, *e = (s + n).buffer;
 
@@ -403,7 +403,7 @@ findchar(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
  */
 template <typename char_type>
 inline Py_ssize_t
-rfindchar(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
+rfind_char(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
 {
     CheckedIndexer<char_type> p = s + n;
     while (p > s) {
@@ -599,7 +599,7 @@ factorize(CheckedIndexer<char_type> needle,
 #define TABLE_MASK (TABLE_SIZE - 1U)
 
 /**
- * @brief Struct to store computed data for string search algorithms.
+ * @brief Struct to store precomputed data for string search algorithms.
  *
  * This structure holds all the necessary precomputed values needed
  * to perform efficient string search operations on the given `needle` string.
@@ -607,7 +607,7 @@ factorize(CheckedIndexer<char_type> needle,
  * @tparam char_type Type of the characters in the string.
  */
 template <typename char_type>
-struct prework {
+struct search_prep_data {
     CheckedIndexer<char_type> needle; ///< Indexer for the needle (substring).
     Py_ssize_t len_needle;    ///< Length of the needle.
     Py_ssize_t cut;           ///< Critical factorization cut point.
@@ -618,23 +618,46 @@ struct prework {
 };
 
 
+/**
+ * @brief Preprocesses the needle (substring) for optimized string search.
+ *
+ * This function performs preprocessing on the given needle (substring)
+ * to prepare auxiliary data that will be used to optimize the string
+ * search algorithm. The preprocessing involves factorization of the
+ * substring, periodicity detection, gap computation, and the generation
+ * of a Boyer-Moore "Bad Character" shift table.
+ *
+ * @tparam char_type The character type of the string.
+ * @param needle The substring to be searched.
+ * @param len_needle The length of the substring.
+ * @param p A pointer to the search_prep_data structure where the preprocessing
+ *           results will be stored.
+ */
 template <typename char_type>
 static void
 preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
-            prework<char_type> *p)
+            search_prep_data<char_type> *p)
 {
+    // Store the needle and its length, find the cut point and period.
     p->needle = needle;
     p->len_needle = len_needle;
     p->cut = factorize(needle, len_needle, &(p->period));
     assert(p->period + p->cut <= len_needle);
+
+    // Compare parts of the needle to check for periodicity.
     int cmp;
     if (std::is_same<char_type, npy_ucs4>::value) {
-        cmp = memcmp(needle.buffer, needle.buffer + (p->period * sizeof(npy_ucs4)), (size_t) p->cut);
+        cmp = memcmp(needle.buffer,
+                needle.buffer + (p->period * sizeof(npy_ucs4)),
+                (size_t) p->cut);
     }
     else {
-        cmp = memcmp(needle.buffer, needle.buffer + p->period, (size_t) p->cut);
+        cmp = memcmp(needle.buffer, needle.buffer + p->period,
+                (size_t) p->cut);
     }
     p->is_periodic = (0 == cmp);
+
+    // If periodic, gap is unused; otherwise, calculate period and gap.
     if (p->is_periodic) {
         assert(p->cut <= len_needle/2);
         assert(p->cut < p->period);
@@ -655,6 +678,7 @@ preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
             }
         }
     }
+
     // Fill up a compressed Boyer-Moore "Bad Character" table
     Py_ssize_t not_found_shift = Py_MIN(len_needle, MAX_SHIFT);
     for (Py_ssize_t i = 0; i < (Py_ssize_t)TABLE_SIZE; i++) {
@@ -668,13 +692,35 @@ preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
     }
 }
 
+/**
+ * @brief Searches for a needle (substring) within a haystack (string)
+ * using the Two-Way string matching algorithm.
+ *
+ * This function efficiently searches for a needle within a haystack using
+ * preprocessed data. It handles both periodic and non-periodic needles
+ * and optimizes the search process with a bad character shift table. The
+ * function iterates through the haystack in windows, skipping over sections
+ * that do not match, improving performance and reducing comparisons.
+ *
+ * For more details, refer to the following resources:
+ * - Crochemore and Perrin's (1991) Two-Way algorithm:
+ *   [Two-Way Algorithm](http://www-igm.univ-mlv.fr/~lecroq/string/node26.html#SECTION00260).
+ *
+ * @tparam char_type The type of the characters in the needle and haystack
+ * (e.g., npy_ucs4).
+ * @param haystack The string to search within, wrapped in CheckedIndexer.
+ * @param len_haystack The length of the haystack.
+ * @param p A pointer to the search_prep_data structure containing
+ *          preprocessed data for the needle.
+ * @return The starting index of the first occurrence of the needle
+ *         within the haystack, or -1 if the needle is not found.
+ */
 template <typename char_type>
 static Py_ssize_t
 two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
-         prework<char_type> *p)
+         search_prep_data<char_type> *p)
 {
-    // Crochemore and Perrin's (1991) Two-Way algorithm.
-    // See http://www-igm.univ-mlv.fr/~lecroq/string/node26.html#SECTION00260
+    // Initialize key variables for search.
     const Py_ssize_t len_needle = p->len_needle;
     const Py_ssize_t cut = p->cut;
     Py_ssize_t period = p->period;
@@ -686,10 +732,13 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
     LOG("===== Two-way: \"%s\" in \"%s\". =====\n", needle, haystack);
 
     if (p->is_periodic) {
+        // Handle the case where the needle is periodic.
+        // Memory optimization is used to skip over already checked segments.
         LOG("Needle is periodic.\n");
         Py_ssize_t memory = 0;
       periodicwindowloop:
         while (window_last < haystack_end) {
+            // Bad-character shift loop to skip parts of the haystack.
             assert(memory == 0);
             for (;;) {
                 LOG_LINEUP();
@@ -707,6 +756,7 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
             window = window_last - len_needle + 1;
             assert((window[len_needle - 1] & TABLE_MASK) ==
                    (needle[len_needle - 1] & TABLE_MASK));
+            // Check if the right half of the pattern matches the haystack.
             Py_ssize_t i = Py_MAX(cut, memory);
             for (; i < len_needle; i++) {
                 if (needle[i] != window[i]) {
@@ -716,6 +766,7 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
                     goto periodicwindowloop;
                 }
             }
+            // Check if the left half of the pattern matches the haystack.
             for (i = memory; i < cut; i++) {
                 if (needle[i] != window[i]) {
                     LOG("Left half does not match.\n");
@@ -724,6 +775,7 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
                     if (window_last >= haystack_end) {
                         return -1;
                     }
+                    // Apply memory adjustments and shifts if mismatches occur.
                     Py_ssize_t shift = table[window_last[0] & TABLE_MASK];
                     if (shift) {
                         // A mismatch has been identified to the right
@@ -744,12 +796,15 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
         }
     }
     else {
+        // Handle the case where the needle is non-periodic.
+        // General shift logic based on a gap is used to improve performance.
         Py_ssize_t gap = p->gap;
         period = Py_MAX(gap, period);
         LOG("Needle is not periodic.\n");
         Py_ssize_t gap_jump_end = Py_MIN(len_needle, cut + gap);
       windowloop:
         while (window_last < haystack_end) {
+            // Bad-character shift loop for non-periodic patterns.
             for (;;) {
                 LOG_LINEUP();
                 Py_ssize_t shift = table[window_last[0] & TABLE_MASK];
@@ -765,6 +820,7 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
             window = window_last - len_needle + 1;
             assert((window[len_needle - 1] & TABLE_MASK) ==
                    (needle[len_needle - 1] & TABLE_MASK));
+            // Check the right half of the pattern for a match.
             for (Py_ssize_t i = cut; i < gap_jump_end; i++) {
                 if (needle[i] != window[i]) {
                     LOG("Early right half mismatch: jump by gap.\n");
@@ -773,6 +829,7 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
                     goto windowloop;
                 }
             }
+            // Continue checking the remaining right half of the pattern.
             for (Py_ssize_t i = gap_jump_end; i < len_needle; i++) {
                 if (needle[i] != window[i]) {
                     LOG("Late right half mismatch.\n");
@@ -781,6 +838,7 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
                     goto windowloop;
                 }
             }
+            // Check the left half of the pattern for a match.
             for (Py_ssize_t i = 0; i < cut; i++) {
                 if (needle[i] != window[i]) {
                     LOG("Left half does not match.\n");
@@ -797,18 +855,48 @@ two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
 }
 
 
+/**
+ * @brief Finds the first occurrence of a needle (substring) within a haystack (string).
+ *
+ * This function applies the two-way string matching algorithm to efficiently
+ * search for a needle (substring) within a haystack (main string).
+ *
+ * @tparam char_type The character type of the strings.
+ * @param haystack The string in which to search for the needle.
+ * @param len_haystack The length of the haystack string.
+ * @param needle The substring to search for in the haystack.
+ * @param len_needle The length of the needle substring.
+ * @return The position of the first occurrence of the needle in the haystack,
+ *         or -1 if the needle is not found.
+ */
 template <typename char_type>
 static inline Py_ssize_t
 two_way_find(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
               CheckedIndexer<char_type> needle, Py_ssize_t len_needle)
 {
     LOG("###### Finding \"%s\" in \"%s\".\n", needle, haystack);
-    prework<char_type> p;
+    search_prep_data<char_type> p;
     preprocess(needle, len_needle, &p);
     return two_way(haystack, len_haystack, &p);
 }
 
 
+/**
+ * @brief Counts the occurrences of a needle (substring) within a haystack (string).
+ *
+ * This function applies the two-way string matching algorithm to count how many
+ * times a needle (substring) appears within a haystack (main string). It stops
+ * counting when the maximum number of occurrences (`max_count`) is reached.
+ *
+ * @tparam char_type The character type of the strings.
+ * @param haystack The string in which to search for occurrences of the needle.
+ * @param len_haystack The length of the haystack string.
+ * @param needle The substring to search for in the haystack.
+ * @param len_needle The length of the needle substring.
+ * @param max_count The maximum number of occurrences to count before returning.
+ * @return The number of occurrences of the needle in the haystack.
+ *         If the maximum count is reached, it returns `max_count`.
+ */
 template <typename char_type>
 static inline Py_ssize_t
 two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
@@ -816,13 +904,13 @@ two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
                Py_ssize_t max_count)
 {
     LOG("###### Counting \"%s\" in \"%s\".\n", needle, haystack);
-    prework<char_type> p;
+    search_prep_data<char_type> p;
     preprocess(needle, len_needle, &p);
     Py_ssize_t index = 0, count = 0;
     while (1) {
         Py_ssize_t result;
         result = two_way(haystack + index,
-                                     len_haystack - index, &p);
+            len_haystack - index, &p);
         if (result == -1) {
             return count;
         }
@@ -846,6 +934,29 @@ two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
 #undef LOG_STRING
 #undef LOG_LINEUP
 
+/**
+ * @brief A function that searches for a substring `p` in the
+ * string `s` using a bloom filter to optimize character matching.
+ *
+ * This function searches for occurrences of a pattern `p` in
+ * the given string `s`. It uses a bloom filter for fast rejection
+ * of non-matching characters and performs character-by-character
+ * comparison for potential matches. The algorithm is based on the
+ * Boyer-Moore string search technique.
+ *
+ * @tparam char_type The type of characters in the strings.
+ * @param s The haystack (string) to search in.
+ * @param n The length of the haystack string `s`.
+ * @param p The needle (substring) to search for.
+ * @param m The length of the needle substring `p`.
+ * @param max_count The maximum number of matches to return.
+ * @param mode The search mode.
+ *             If mode is `FAST_COUNT`, the function counts occurrences of the
+ *             pattern, otherwise it returns the index of the first match.
+ * @return If mode is not `FAST_COUNT`, returns the index of the first
+ *         occurrence, or `-1` if no match is found. If `FAST_COUNT`,
+ *         returns the number of occurrences found up to `max_count`.
+ */
 template <typename char_type>
 static inline Py_ssize_t
 default_find(CheckedIndexer<char_type> s, Py_ssize_t n,
@@ -858,6 +969,7 @@ default_find(CheckedIndexer<char_type> s, Py_ssize_t n,
     const char_type last = p[mlast];
     CheckedIndexer<char_type> ss = s + mlast;
 
+    // Add pattern to bloom filter and calculate the gap.
     unsigned long mask = 0;
     for (Py_ssize_t i = 0; i < mlast; i++) {
         STRINGLIB_BLOOM_ADD(mask, p[i]);
@@ -907,6 +1019,20 @@ default_find(CheckedIndexer<char_type> s, Py_ssize_t n,
 }
 
 
+/**
+ * @brief Performs an adaptive string search using a bloom filter and fallback
+ * to two-way search for large data.
+ *
+ * @tparam char_type The type of characters in the string.
+ * @param s The haystack to search in.
+ * @param n Length of the haystack.
+ * @param p The needle to search for.
+ * @param m Length of the needle.
+ * @param max_count Maximum number of matches to count.
+ * @param mode Search mode.
+ * @return The index of the first occurrence of the needle, or -1 if not found.
+ *         If in FAST_COUNT mode, returns the number of matches found up to max_count.
+ */
 template <typename char_type>
 static Py_ssize_t
 adaptive_find(CheckedIndexer<char_type> s, Py_ssize_t n,
@@ -980,6 +1106,22 @@ adaptive_find(CheckedIndexer<char_type> s, Py_ssize_t n,
 }
 
 
+/**
+ * @brief Performs a reverse Boyer-Moore string search.
+ *
+ * This function searches for the last occurrence of a pattern in a string,
+ * utilizing the Boyer-Moore algorithm with a bloom filter for fast skipping
+ * of mismatches.
+ *
+ * @tparam char_type The type of characters in the string (e.g., char, wchar_t).
+ * @param s The haystack to search in.
+ * @param n Length of the haystack.
+ * @param p The needle (pattern) to search for.
+ * @param m Length of the needle (pattern).
+ * @param max_count Maximum number of matches to count (not used in this version).
+ * @param mode Search mode (not used, only support right find mode).
+ * @return The index of the last occurrence of the needle, or -1 if not found.
+ */
 template <typename char_type>
 static Py_ssize_t
 default_rfind(CheckedIndexer<char_type> s, Py_ssize_t n,
@@ -1031,17 +1173,31 @@ default_rfind(CheckedIndexer<char_type> s, Py_ssize_t n,
 }
 
 
+/**
+ * @brief Counts occurrences of a specified character in a given string.
+ *
+ * This function iterates through the string `s` and counts how many times
+ * the character `p0` appears, stopping when the count reaches `max_count`.
+ *
+ * @tparam char_type The type of characters in the string.
+ * @param s The string in which to count occurrences of the character.
+ * @param n The length of the string `s`.
+ * @param p0 The character to count in the string.
+ * @param max_count The maximum number of occurrences to count before stopping.
+ * @return The total count of occurrences of `p0` in `s`, or `max_count`
+ *         if that many occurrences were found.
+ */
 template <typename char_type>
 static inline Py_ssize_t
 countchar(CheckedIndexer<char_type> s, Py_ssize_t n,
-          const char_type p0, Py_ssize_t maxcount)
+          const char_type p0, Py_ssize_t max_count)
 {
     Py_ssize_t i, count = 0;
     for (i = 0; i < n; i++) {
         if (s[i] == p0) {
             count++;
-            if (count == maxcount) {
-                return maxcount;
+            if (count == max_count) {
+                return max_count;
             }
         }
     }
@@ -1049,16 +1205,39 @@ countchar(CheckedIndexer<char_type> s, Py_ssize_t n,
 }
 
 
+/**
+ * @brief Searches for occurrences of a substring `p` in the string `s`
+ *        using various optimized search algorithms.
+ *
+ * This function determines the most appropriate searching method based on
+ * the lengths of the input string `s` and the pattern `p`, as well as the
+ * specified search mode. It handles special cases for patterns of length 0 or 1
+ * and selects between default, two-way, adaptive, or reverse search algorithms.
+ *
+ * @tparam char_type The type of characters in the strings.
+ * @param s The haystack (string) to search in.
+ * @param n The length of the haystack string `s`.
+ * @param p The needle (substring) to search for.
+ * @param m The length of the needle substring `p`.
+ * @param max_count The maximum number of matches to return.
+ * @param mode The search mode, which can be:
+ *             - `FAST_SEARCH`: Searches for the first occurrence.
+ *             - `FAST_RSEARCH`: Searches for the last occurrence.
+ *             - `FAST_COUNT`: Counts occurrences of the pattern.
+ * @return If `mode` is not `FAST_COUNT`, returns the index of the first occurrence
+ *         of `p` in `s`, or `-1` if no match is found. If `FAST_COUNT`, returns
+ *         the number of occurrences found up to `max_count`.
+ */
 template <typename char_type>
 inline Py_ssize_t
 fastsearch(char_type* s, Py_ssize_t n,
            char_type* p, Py_ssize_t m,
-           Py_ssize_t maxcount, int mode)
+           Py_ssize_t max_count, int mode)
 {
     CheckedIndexer<char_type> s_(s, n);
     CheckedIndexer<char_type> p_(p, m);
 
-    if (n < m || (mode == FAST_COUNT && maxcount == 0)) {
+    if (n < m || (mode == FAST_COUNT && max_count == 0)) {
         return -1;
     }
 
@@ -1069,17 +1248,17 @@ fastsearch(char_type* s, Py_ssize_t n,
         }
         /* use special case for 1-character strings */
         if (mode == FAST_SEARCH)
-            return findchar(s_, n, p_[0]);
+            return find_char(s_, n, p_[0]);
         else if (mode == FAST_RSEARCH)
-            return rfindchar(s_, n, p_[0]);
+            return rfind_char(s_, n, p_[0]);
         else {
-            return countchar(s_, n, p_[0], maxcount);
+            return countchar(s_, n, p_[0], max_count);
         }
     }
 
     if (mode != FAST_RSEARCH) {
         if (n < 2500 || (m < 100 && n < 30000) || m < 6) {
-            return default_find(s_, n, p_, m, maxcount, mode);
+            return default_find(s_, n, p_, m, max_count, mode);
         }
         else if ((m >> 2) * 3 < (n >> 2)) {
             /* 33% threshold, but don't overflow. */
@@ -1091,21 +1270,22 @@ fastsearch(char_type* s, Py_ssize_t n,
                 return two_way_find(s_, n, p_, m);
             }
             else {
-                return two_way_count(s_, n, p_, m, maxcount);
+                return two_way_count(s_, n, p_, m, max_count);
             }
         }
         else {
+            // ReSharper restore CppRedundantElseKeyword
             /* To ensure that we have good worst-case behavior,
                here's an adaptive version of the algorithm, where if
                we match O(m) characters without any matches of the
                entire needle, then we predict that the startup cost of
                the two-way algorithm will probably be worth it. */
-            return adaptive_find(s_, n, p_, m, maxcount, mode);
+            return adaptive_find(s_, n, p_, m, max_count, mode);
         }
     }
     else {
         /* FAST_RSEARCH */
-        return default_rfind(s_, n, p_, m, maxcount, mode);
+        return default_rfind(s_, n, p_, m, max_count, mode);
     }
 }
 
