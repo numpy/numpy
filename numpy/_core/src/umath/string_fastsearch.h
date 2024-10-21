@@ -956,7 +956,7 @@ two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
 #undef TABLE_SIZE_BITS
 #undef TABLE_SIZE
 #undef TABLE_MASK
-
+int a = 1+1;
 #undef LOG
 #undef LOG_STRING
 #undef LOG_LINEUP
