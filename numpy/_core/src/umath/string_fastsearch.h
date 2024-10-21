@@ -50,31 +50,19 @@
 /**
  * @brief Defines the bloom filter width based on the size of LONG_BIT.
  *
- * This macro sets the value of STRINGLIB_BLOOM_WIDTH depending on the
+ * This macro sets the value of `STRINGLIB_BLOOM_WIDTH` depending on the
  * size of the system's LONG_BIT. It ensures that the bloom filter
  * width is at least 32 bits.
  *
  * @error If LONG_BIT is smaller than 32, a compilation error will occur.
  */
 #if LONG_BIT >= 128
-    /**
-     * @brief Bloom filter width is set to 128 bits.
-     */
     #define STRINGLIB_BLOOM_WIDTH 128
 #elif LONG_BIT >= 64
-    /**
-     * @brief Bloom filter width is set to 64 bits.
-     */
     #define STRINGLIB_BLOOM_WIDTH 64
 #elif LONG_BIT >= 32
-    /**
-     * @brief Bloom filter width is set to 32 bits.
-     */
     #define STRINGLIB_BLOOM_WIDTH 32
 #else
-    /**
-     * @brief Compilation error for unsupported LONG_BIT sizes.
-     */
     #error "LONG_BIT is smaller than 32"
 #endif
 
@@ -153,7 +141,8 @@ struct CheckedIndexer {
      *
      * @return The first character in the buffer.
      */
-    char_type operator*()
+    char_type
+    operator*()
     {
         return *(this->buffer);
     }
@@ -166,7 +155,8 @@ struct CheckedIndexer {
      * @param index Index to access in the buffer.
      * @return The character at the specified index or 0 if out of bounds.
      */
-    char_type operator[](size_t index)
+    char_type
+    operator[](size_t index)
     {
         if (index >= this->length) {
             return (char_type) 0;
@@ -183,7 +173,8 @@ struct CheckedIndexer {
      * @note If the specified number of elements to move exceeds the length of the buffer,
      *       the indexer will be moved to the end of the buffer, and the length will be set to 0.
      */
-    CheckedIndexer<char_type> operator+(size_t rhs)
+    CheckedIndexer<char_type>
+    operator+(size_t rhs)
     {
         if (rhs > this->length) {
             rhs = this->length;
@@ -200,7 +191,8 @@ struct CheckedIndexer {
      * @note If the specified number of elements to move exceeds the length of the buffer,
      *       the indexer will be moved to the end of the buffer, and the length will be set to 0.
      */
-    CheckedIndexer<char_type>& operator+=(size_t rhs)
+    CheckedIndexer<char_type>&
+    operator+=(size_t rhs)
     {
         if (rhs > this->length) {
             rhs = this->length;
@@ -217,7 +209,8 @@ struct CheckedIndexer {
      *
      * @note If the indexer is at the end of the buffer, this operation has no effect.
      */
-    CheckedIndexer<char_type> operator++(int)
+    CheckedIndexer<char_type>
+    operator++(int)
     {
         *this += 1;
         return *this;
@@ -231,7 +224,8 @@ struct CheckedIndexer {
      *
      * @note If the indexer moves backward past the start of the buffer, the behavior is undefined.
      */
-    CheckedIndexer<char_type>& operator-=(size_t rhs)
+    CheckedIndexer<char_type>&
+    operator-=(size_t rhs)
     {
         this->buffer -= rhs;
         this->length += rhs;
@@ -245,7 +239,8 @@ struct CheckedIndexer {
      *
      * @note If the indexer moves backward past the start of the buffer, the behavior is undefined.
      */
-    CheckedIndexer<char_type> operator--(int)
+    CheckedIndexer<char_type>
+    operator--(int)
     {
         *this -= 1;
         return *this;
@@ -257,7 +252,8 @@ struct CheckedIndexer {
      * @param rhs Another CheckedIndexer instance to compare.
      * @return The difference in pointers between the two indexers.
      */
-    std::ptrdiff_t operator-(CheckedIndexer<char_type> rhs)
+    std::ptrdiff_t
+    operator-(CheckedIndexer<char_type> rhs)
     {
         return this->buffer - rhs.buffer;
     }
@@ -270,7 +266,8 @@ struct CheckedIndexer {
      *
      * @note If the indexer moves backward past the start of the buffer, the behavior is undefined.
      */
-    CheckedIndexer<char_type> operator-(size_t rhs)
+    CheckedIndexer<char_type>
+    operator-(size_t rhs)
     {
         return CheckedIndexer(this->buffer - rhs, this->length + rhs);
     }
@@ -281,7 +278,8 @@ struct CheckedIndexer {
      * @param rhs Another CheckedIndexer instance to compare.
      * @return True if this indexer is greater than the right-hand side, otherwise false.
      */
-    int operator>(CheckedIndexer<char_type> rhs)
+    int
+    operator>(CheckedIndexer<char_type> rhs)
     {
         return this->buffer > rhs.buffer;
     }
@@ -292,7 +290,8 @@ struct CheckedIndexer {
      * @param rhs Another CheckedIndexer instance to compare.
      * @return True if this indexer is greater than or equal to the right-hand side, otherwise false.
      */
-    int operator>=(CheckedIndexer<char_type> rhs)
+    int
+    operator>=(CheckedIndexer<char_type> rhs)
     {
         return this->buffer >= rhs.buffer;
     }
@@ -303,7 +302,8 @@ struct CheckedIndexer {
      * @param rhs Another CheckedIndexer instance to compare.
      * @return True if this indexer is less than the right-hand side, otherwise false.
      */
-    int operator<(CheckedIndexer<char_type> rhs)
+    int
+    operator<(CheckedIndexer<char_type> rhs)
     {
         return this->buffer < rhs.buffer;
     }
@@ -314,7 +314,8 @@ struct CheckedIndexer {
      * @param rhs Another CheckedIndexer instance to compare.
      * @return True if this indexer is less than or equal to the right-hand side, otherwise false.
      */
-    int operator<=(CheckedIndexer<char_type> rhs)
+    int
+    operator<=(CheckedIndexer<char_type> rhs)
     {
         return this->buffer <= rhs.buffer;
     }
@@ -325,7 +326,8 @@ struct CheckedIndexer {
      * @param rhs Another CheckedIndexer instance to compare.
      * @return True if both indexers point to the same buffer, otherwise false.
      */
-    int operator==(CheckedIndexer<char_type> rhs)
+    int
+    operator==(CheckedIndexer<char_type> rhs)
     {
         return this->buffer == rhs.buffer;
     }
