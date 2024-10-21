@@ -5380,7 +5380,7 @@ def insert(arr, obj, values, axis=None):
     ----------
     arr : array_like
         Input array.
-    obj : slice, int, array-like of ints or bools
+    obj : int, slice or sequence of ints
         Object that defines the index or indices before which `values` is
         inserted.
 
