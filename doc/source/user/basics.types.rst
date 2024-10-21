@@ -359,14 +359,15 @@ following matrix:
 One may receive a result like ``-3.1974423109204565e-14`` instead of ``0``. This is
 a behavior common to all frameworks that use floating point arithmetic.
 
-To handle such cases, it's advisable to set a threshold for comparison when checking
-if a determinant is effectively zero. For example:
+To handle such cases, it's advisable to use the condition number of the matrix, 
+which provides information about the matrix's sensitivity to numerical errors. 
+For example:
 
-    >>> np.isclose(np.linalg.det(a), 0)  # Check for closeness to 0
-    True
+    >>> np.linalg.cond(a)  # Compute condition number to assess matrix stability
+    inf
 
-This method allows you to account for the small inaccuracies that can occur in 
-floating-point calculations.
+A high condition number indicates that the matrix is close to singular, meaning 
+small changes or inaccuracies in floating-point arithmetic can lead to large errors.
 
 For information about precision in calculations, see `Floating-Point Arithmetic <https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html>`_.
 
