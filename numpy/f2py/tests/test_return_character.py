@@ -1,7 +1,7 @@
 import pytest
 
 from numpy import array
-from . import util
+from numpy.f2py.tests import util
 import platform
 
 IS_S390X = platform.machine() == "s390x"
