@@ -104,6 +104,7 @@ jobs:
 
   accelerate:
     name: Accelerate (LP64, ILP64) - ${{ matrix.build_runner[1] }}
+    # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
     strategy:
@@ -146,3 +147,38 @@ jobs:
 
     - name: Test (fast tests)
       run: spin test -j2
+
+  free-threaded:
+    name: MacOS Free-threaded - ${{ matrix.build_runner[1] }}
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ${{ matrix.build_runner[0] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build_runner:
+          - [ macos-13, "macos_x86_64" ]
+          - [ macos-14, "macos_arm64" ]
+
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: astral-sh/setup-uv@f3bcaebff5eace81a1c062af9f9011aae482ca9d
+    - run: |
+        uv python install 3.13t
+        uv venv --python 3.13t
+        uv pip install pip
+        . .venv/bin/activate
+        echo PATH=$PATH >> $GITHUB_ENV
+    # TODO: remove cython nightly install when cython does a release
+    - name: Install nightly Cython
+      run: |
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+    - name: Install dependencies
+      run: |
+        pip install -r requirements/build_requirements.txt
+        pip install pytest pytest-xdist hypothesis
+    - name: Build and test
+      run: spin test
