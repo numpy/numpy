@@ -32,55 +32,141 @@
    deduce. See stringlib_find_two_way_notes.txt in this folder for a
    detailed explanation. */
 
+/**
+ * @brief Mode for counting the number of occurrences of a substring
+ */
 #define FAST_COUNT 0
+
+/**
+ * @brief Mode for performing a forward search for a substring
+ */
 #define FAST_SEARCH 1
+
+/**
+ * @brief Mode for performing a reverse (backward) search for a substring
+ */
 #define FAST_RSEARCH 2
 
+/**
+ * @brief Defines the bloom filter width based on the size of LONG_BIT.
+ *
+ * This macro sets the value of STRINGLIB_BLOOM_WIDTH depending on the
+ * size of the system's LONG_BIT. It ensures that the bloom filter
+ * width is at least 32 bits.
+ *
+ * @error If LONG_BIT is smaller than 32, a compilation error will occur.
+ */
 #if LONG_BIT >= 128
-#define STRINGLIB_BLOOM_WIDTH 128
+    /**
+     * @brief Bloom filter width is set to 128 bits.
+     */
+    #define STRINGLIB_BLOOM_WIDTH 128
 #elif LONG_BIT >= 64
-#define STRINGLIB_BLOOM_WIDTH 64
+    /**
+     * @brief Bloom filter width is set to 64 bits.
+     */
+    #define STRINGLIB_BLOOM_WIDTH 64
 #elif LONG_BIT >= 32
-#define STRINGLIB_BLOOM_WIDTH 32
+    /**
+     * @brief Bloom filter width is set to 32 bits.
+     */
+    #define STRINGLIB_BLOOM_WIDTH 32
 #else
-#error "LONG_BIT is smaller than 32"
+    /**
+     * @brief Compilation error for unsupported LONG_BIT sizes.
+     */
+    #error "LONG_BIT is smaller than 32"
 #endif
 
+/**
+ * @brief Adds a character to the bloom filter mask.
+ *
+ * This macro sets the bit in the bloom filter `mask` corresponding to the
+ * character `ch`. It uses the `STRINGLIB_BLOOM_WIDTH` to ensure the bit is
+ * within range.
+ *
+ * @param mask The bloom filter mask where the character will be added.
+ * @param ch   The character to add to the bloom filter mask.
+ */
 #define STRINGLIB_BLOOM_ADD(mask, ch) \
-    ((mask |= (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
-#define STRINGLIB_BLOOM(mask, ch)     \
-    ((mask &  (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
+((mask |= (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
 
-#define FORWARD_DIRECTION 1
-#define BACKWARD_DIRECTION -1
+/**
+ * @brief Checks if a character is present in the bloom filter mask.
+ *
+ * This macro checks if the bit corresponding to the character `ch` is set
+ * in the bloom filter `mask`.
+ *
+ * @param mask The bloom filter mask to check.
+ * @param ch   The character to check in the bloom filter mask.
+ * @return 1 if the character is present, 0 otherwise.
+ */
+#define STRINGLIB_BLOOM(mask, ch)     \
+((mask &  (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
+
+#define FORWARD_DIRECTION 1   ///< Defines the forward search direction
+#define BACKWARD_DIRECTION -1 ///< Defines the backward search direction
+
+/**
+ * @brief Threshold for using memchr or wmemchr in character search.
+ *
+ * If the search length exceeds this value, memchr/wmemchr is used.
+ */
 #define MEMCHR_CUT_OFF 15
 
 
+/**
+ * @brief A checked indexer for buffers of a specified character type.
+ *
+ * This structure provides safe indexing into a buffer with boundary checks.
+ *
+ * @tparam char_type The type of characters stored in the buffer.
+ */
 template <typename char_type>
 struct CheckedIndexer {
-    char_type *buffer;
-    size_t length;
+    char_type *buffer; ///< Pointer to the buffer.
+    size_t length;     ///< Length of the buffer.
 
+    /**
+     * @brief Default constructor that initializes the buffer to NULL and length to 0.
+     */
     CheckedIndexer()
     {
         buffer = NULL;
         length = 0;
     }
 
+    /**
+     * @brief Constructor that initializes the indexer with a given buffer and length.
+     *
+     * @param buf Pointer to the character buffer.
+     * @param len Length of the buffer.
+     */
     CheckedIndexer(char_type *buf, size_t len)
     {
         buffer = buf;
         length = len;
     }
 
-    char_type
-    operator*()
+    /**
+     * @brief Dereference operator that returns the first character in the buffer.
+     *
+     * @return The first character in the buffer.
+     */
+    char_type operator*()
     {
         return *(this->buffer);
     }
 
-    char_type
-    operator[](size_t index)
+    /**
+     * @brief Subscript operator for safe indexing into the buffer.
+     *
+     * If the index is out of bounds, it returns 0.
+     *
+     * @param index Index to access in the buffer.
+     * @return The character at the specified index or 0 if out of bounds.
+     */
+    char_type operator[](size_t index)
     {
         if (index >= this->length) {
             return (char_type) 0;
@@ -88,8 +174,16 @@ struct CheckedIndexer {
         return this->buffer[index];
     }
 
-    CheckedIndexer<char_type>
-    operator+(size_t rhs)
+    /**
+     * @brief Addition operator to move the indexer forward by a specified number of elements.
+     *
+     * @param rhs Number of elements to move forward.
+     * @return A new CheckedIndexer instance with updated buffer and length.
+     *
+     * @note If the specified number of elements to move exceeds the length of the buffer,
+     *       the indexer will be moved to the end of the buffer, and the length will be set to 0.
+     */
+    CheckedIndexer<char_type> operator+(size_t rhs)
     {
         if (rhs > this->length) {
             rhs = this->length;
@@ -97,8 +191,16 @@ struct CheckedIndexer {
         return CheckedIndexer<char_type>(this->buffer + rhs, this->length - rhs);
     }
 
-    CheckedIndexer<char_type>&
-    operator+=(size_t rhs)
+    /**
+     * @brief Addition assignment operator to move the indexer forward.
+     *
+     * @param rhs Number of elements to move forward.
+     * @return Reference to the current CheckedIndexer instance.
+     *
+     * @note If the specified number of elements to move exceeds the length of the buffer,
+     *       the indexer will be moved to the end of the buffer, and the length will be set to 0.
+     */
+    CheckedIndexer<char_type>& operator+=(size_t rhs)
     {
         if (rhs > this->length) {
             rhs = this->length;
@@ -108,72 +210,145 @@ struct CheckedIndexer {
         return *this;
     }
 
-    CheckedIndexer<char_type>
-    operator++(int)
+    /**
+     * @brief Postfix increment operator.
+     *
+     * @return A CheckedIndexer instance before incrementing.
+     *
+     * @note If the indexer is at the end of the buffer, this operation has no effect.
+     */
+    CheckedIndexer<char_type> operator++(int)
     {
         *this += 1;
         return *this;
     }
 
-    CheckedIndexer<char_type>&
-    operator-=(size_t rhs)
+    /**
+     * @brief Subtraction assignment operator to move the indexer backward.
+     *
+     * @param rhs Number of elements to move backward.
+     * @return Reference to the current CheckedIndexer instance.
+     *
+     * @note If the indexer moves backward past the start of the buffer, the behavior is undefined.
+     */
+    CheckedIndexer<char_type>& operator-=(size_t rhs)
     {
         this->buffer -= rhs;
         this->length += rhs;
         return *this;
     }
 
-    CheckedIndexer<char_type>
-    operator--(int)
+    /**
+     * @brief Postfix decrement operator.
+     *
+     * @return A CheckedIndexer instance before decrementing.
+     *
+     * @note If the indexer moves backward past the start of the buffer, the behavior is undefined.
+     */
+    CheckedIndexer<char_type> operator--(int)
     {
         *this -= 1;
         return *this;
     }
 
-    std::ptrdiff_t
-    operator-(CheckedIndexer<char_type> rhs)
+    /**
+     * @brief Subtraction operator to calculate the difference between two indexers.
+     *
+     * @param rhs Another CheckedIndexer instance to compare.
+     * @return The difference in pointers between the two indexers.
+     */
+    std::ptrdiff_t operator-(CheckedIndexer<char_type> rhs)
     {
         return this->buffer - rhs.buffer;
     }
 
-    CheckedIndexer<char_type>
-    operator-(size_t rhs)
+    /**
+     * @brief Subtraction operator to move the indexer backward by a specified number of elements.
+     *
+     * @param rhs Number of elements to move backward.
+     * @return A new CheckedIndexer instance with updated buffer and length.
+     *
+     * @note If the indexer moves backward past the start of the buffer, the behavior is undefined.
+     */
+    CheckedIndexer<char_type> operator-(size_t rhs)
     {
         return CheckedIndexer(this->buffer - rhs, this->length + rhs);
     }
 
-    int
-    operator>(CheckedIndexer<char_type> rhs)
+    /**
+     * @brief Greater-than comparison operator.
+     *
+     * @param rhs Another CheckedIndexer instance to compare.
+     * @return True if this indexer is greater than the right-hand side, otherwise false.
+     */
+    int operator>(CheckedIndexer<char_type> rhs)
     {
         return this->buffer > rhs.buffer;
     }
 
-    int
-    operator>=(CheckedIndexer<char_type> rhs)
+    /**
+     * @brief Greater-than-or-equal comparison operator.
+     *
+     * @param rhs Another CheckedIndexer instance to compare.
+     * @return True if this indexer is greater than or equal to the right-hand side, otherwise false.
+     */
+    int operator>=(CheckedIndexer<char_type> rhs)
     {
         return this->buffer >= rhs.buffer;
     }
 
-    int
-    operator<(CheckedIndexer<char_type> rhs)
+    /**
+     * @brief Less-than comparison operator.
+     *
+     * @param rhs Another CheckedIndexer instance to compare.
+     * @return True if this indexer is less than the right-hand side, otherwise false.
+     */
+    int operator<(CheckedIndexer<char_type> rhs)
     {
         return this->buffer < rhs.buffer;
     }
 
-    int
-    operator<=(CheckedIndexer<char_type> rhs)
+    /**
+     * @brief Less-than-or-equal comparison operator.
+     *
+     * @param rhs Another CheckedIndexer instance to compare.
+     * @return True if this indexer is less than or equal to the right-hand side, otherwise false.
+     */
+    int operator<=(CheckedIndexer<char_type> rhs)
     {
         return this->buffer <= rhs.buffer;
     }
 
-    int
-    operator==(CheckedIndexer<char_type> rhs)
+    /**
+     * @brief Equality comparison operator.
+     *
+     * @param rhs Another CheckedIndexer instance to compare.
+     * @return True if both indexers point to the same buffer, otherwise false.
+     */
+    int operator==(CheckedIndexer<char_type> rhs)
     {
         return this->buffer == rhs.buffer;
     }
 };
 
 
+/**
+ * @brief Finds the first occurrence of a specified character in a
+ *        given range of a buffer.
+ *
+ * This function searches for the character `ch` in the buffer represented
+ * by the `CheckedIndexer`. It uses different methods depending on the size
+ * of the range `n`. If `n` exceeds the `MEMCHR_CUT_OFF`, it utilizes
+ * `memchr` or `wmemchr` for more efficient searching.
+ *
+ * @tparam char_type The type of characters in the buffer.
+ * @param s The `CheckedIndexer` instance representing the buffer to
+ *          search within.
+ * @param n The number of characters to search through in the buffer.
+ * @param ch The character to search for.
+ * @return The index of the first occurrence of `ch` within the range,
+ *         or -1 if the character is not found or the range is invalid.
+ */
 template <typename char_type>
 inline Py_ssize_t
 findchar(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
@@ -209,6 +384,23 @@ findchar(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
     return -1;
 }
 
+/**
+ * @brief Finds the last occurrence of a specified character in a
+ *        given range of a buffer.
+ *
+ * This function searches for the character `ch` in the buffer represented
+ * by the `CheckedIndexer`. It scans the buffer from the end towards the
+ * beginning, returning the index of the last occurrence of the specified
+ * character.
+ *
+ * @tparam char_type The type of characters in the buffer.
+ * @param s The `CheckedIndexer` instance representing the buffer to
+ *          search within.
+ * @param n The number of characters to search through in the buffer.
+ * @param ch The character to search for.
+ * @return The index of the last occurrence of `ch` within the range,
+ *         or -1 if the character is not found or the range is invalid.
+ */
 template <typename char_type>
 inline Py_ssize_t
 rfindchar(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
@@ -223,34 +415,60 @@ rfindchar(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
 }
 
 
-/* Change to a 1 to see logging comments walk through the algorithm. */
+/**
+ * @brief Conditional logging for string fast search.
+ *
+ * Set to 1 to enable logging macros.
+ *
+ * @note These macros are used internally for debugging purposes
+ * and will be undefined later in the code.
+ */
 #if 0 && STRINGLIB_SIZEOF_CHAR == 1
-# define LOG(...) printf(__VA_ARGS__)
-# define LOG_STRING(s, n) printf("\"%.*s\"", (int)(n), s)
-# define LOG_LINEUP() do {                                         \
+/** Logs formatted output. */
+#define LOG(...) printf(__VA_ARGS__)
+
+/** Logs a string with a given length. */
+#define LOG_STRING(s, n) printf("\"%.*s\"", (int)(n), s)
+
+/** Logs the current state of the algorithm. */
+#define LOG_LINEUP() do {                                          \
     LOG("> "); LOG_STRING(haystack, len_haystack); LOG("\n> ");    \
     LOG("%*s",(int)(window_last - haystack + 1 - len_needle), ""); \
     LOG_STRING(needle, len_needle); LOG("\n");                     \
 } while(0)
 #else
-# define LOG(...)
-# define LOG_STRING(s, n)
-# define LOG_LINEUP()
+#define LOG(...)
+#define LOG_STRING(s, n)
+#define LOG_LINEUP()
 #endif
 
+/**
+ * @brief Perform a lexicographic search for the maximal suffix in
+ * a given string.
+ *
+ * This function searches through the `needle` string to find the
+ * maximal suffix, which is essentially the largest lexicographic suffix.
+ * Additionally, it computes the period of the right half of the string.
+ *
+ * @param needle The string to search in.
+ * @param len_needle The length of the needle string.
+ * @param return_period Pointer to store the period of the found suffix.
+ * @param invert_alphabet Flag to invert the comparison logic.
+ * @return The index of the maximal suffix found in the needle string.
+ *
+ * @note If `invert_alphabet` is non-zero, character comparisons are reversed,
+ * treating smaller characters as larger.
+ *
+ */
 template <typename char_type>
 static inline Py_ssize_t
-_lex_search(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
+lex_search(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
             Py_ssize_t *return_period, int invert_alphabet)
 {
-    /* Do a lexicographic search. Essentially this:
-           >>> max(needle[i:] for i in range(len(needle)+1))
-       Also find the period of the right half.   */
-    Py_ssize_t max_suffix = 0;
-    Py_ssize_t candidate = 1;
-    Py_ssize_t k = 0;
-    // The period of the right half.
-    Py_ssize_t period = 1;
+    Py_ssize_t max_suffix = 0; // Index of the current maximal suffix found.
+    Py_ssize_t candidate = 1; // Candidate index for potential maximal suffix.
+    Py_ssize_t k = 0; // Offset for comparing characters.
+    Py_ssize_t period = 1; // Period of the right half.
 
     while (candidate + k < len_needle) {
         // each loop increases candidate + k + max_suffix
@@ -287,51 +505,53 @@ _lex_search(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
             period = 1;
         }
     }
+
     *return_period = period;
     return max_suffix;
 }
 
+/**
+ * @brief Perform a critical factorization on a string.
+ *
+ * This function splits the input string into two parts where the local
+ * period is maximal.
+ *
+ * The function divides the input string as follows:
+ * - needle = (left := needle[:cut]) + (right := needle[cut:])
+ *
+ * The local period is the minimal length of a string `w` such that:
+ * - left ends with `w` or `w` ends with left.
+ * - right starts with `w` or `w` starts with right.
+ *
+ * According to the Critical Factorization Theorem, this maximal local
+ * period is the global period of the string. The algorithm finds the
+ * cut using lexicographical order and its reverse to compute the maximal
+ * period, as shown by Crochemore and Perrin (1991).
+ *
+ * Example:
+ * For the string "GCAGAGAG", the split position (cut) is at 2, resulting in:
+ * - left = "GC"
+ * - right = "AGAGAG"
+ * The period of the right half is 2,  and the repeated substring
+ * pattern "AG" verifies that this is the correct factorization.
+ *
+ * @param needle The input string as a CheckedIndexer<char_type>.
+ * @param len_needle Length of the input string.
+ * @param return_period Pointer to store the computed period of the right half.
+ * @return The cut position where the string is factorized.
+ */
 template <typename char_type>
 static inline Py_ssize_t
-_factorize(CheckedIndexer<char_type> needle,
+factorize(CheckedIndexer<char_type> needle,
            Py_ssize_t len_needle,
            Py_ssize_t *return_period)
 {
-    /* Do a "critical factorization", making it so that:
-       >>> needle = (left := needle[:cut]) + (right := needle[cut:])
-       where the "local period" of the cut is maximal.
-
-       The local period of the cut is the minimal length of a string w
-       such that (left endswith w or w endswith left)
-       and (right startswith w or w startswith left).
-
-       The Critical Factorization Theorem says that this maximal local
-       period is the global period of the string.
-
-       Crochemore and Perrin (1991) show that this cut can be computed
-       as the later of two cuts: one that gives a lexicographically
-       maximal right half, and one that gives the same with the
-       with respect to a reversed alphabet-ordering.
-
-       This is what we want to happen:
-           >>> x = "GCAGAGAG"
-           >>> cut, period = factorize(x)
-           >>> x[:cut], (right := x[cut:])
-           ('GC', 'AGAGAG')
-           >>> period  # right half period
-           2
-           >>> right[period:] == right[:-period]
-           True
-
-       This is how the local period lines up in the above example:
-                GC | AGAGAG
-           AGAGAGC = AGAGAGC
-       The length of this minimal repetition is 7, which is indeed the
-       period of the original string. */
-
     Py_ssize_t cut1, period1, cut2, period2, cut, period;
-    cut1 = _lex_search<char_type>(needle, len_needle, &period1, 0);
-    cut2 = _lex_search<char_type>(needle, len_needle, &period2, 1);
+
+    // Perform lexicographical search to find the first cut (normal order)
+    cut1 = lex_search<char_type>(needle, len_needle, &period1, 0);
+    // Perform lexicographical search to find the second cut (reversed alphabet order)
+    cut2 = lex_search<char_type>(needle, len_needle, &period2, 1);
 
     // Take the later cut.
     if (cut1 > cut2) {
@@ -352,33 +572,60 @@ _factorize(CheckedIndexer<char_type> needle,
 }
 
 
+/**
+ * @brief Internal macro to define the shift type used in the table.
+ */
 #define SHIFT_TYPE uint8_t
+
+/**
+ * @brief Internal macro to define the maximum shift value.
+ */
 #define MAX_SHIFT UINT8_MAX
 
+
+/**
+ * @brief Internal macro to define the number of bits for the table size.
+ */
 #define TABLE_SIZE_BITS 6u
+
+/**
+ * @brief Internal macro to define the table size based on TABLE_SIZE_BITS.
+ */
 #define TABLE_SIZE (1U << TABLE_SIZE_BITS)
+
+/**
+ * @brief Internal macro to define the table mask used for bitwise operations.
+ */
 #define TABLE_MASK (TABLE_SIZE - 1U)
 
+/**
+ * @brief Struct to store computed data for string search algorithms.
+ *
+ * This structure holds all the necessary precomputed values needed
+ * to perform efficient string search operations on the given `needle` string.
+ *
+ * @tparam char_type Type of the characters in the string.
+ */
 template <typename char_type>
 struct prework {
-    CheckedIndexer<char_type> needle;
-    Py_ssize_t len_needle;
-    Py_ssize_t cut;
-    Py_ssize_t period;
-    Py_ssize_t gap;
-    int is_periodic;
-    SHIFT_TYPE table[TABLE_SIZE];
+    CheckedIndexer<char_type> needle; ///< Indexer for the needle (substring).
+    Py_ssize_t len_needle;    ///< Length of the needle.
+    Py_ssize_t cut;           ///< Critical factorization cut point.
+    Py_ssize_t period;        ///< Period of the right half of the needle.
+    Py_ssize_t gap;           ///< Gap value for skipping during search.
+    int is_periodic;          ///< Non-zero if the needle is periodic.
+    SHIFT_TYPE table[TABLE_SIZE];     ///< Shift table for optimizing search.
 };
 
 
 template <typename char_type>
 static void
-_preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
+preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
             prework<char_type> *p)
 {
     p->needle = needle;
     p->len_needle = len_needle;
-    p->cut = _factorize(needle, len_needle, &(p->period));
+    p->cut = factorize(needle, len_needle, &(p->period));
     assert(p->period + p->cut <= len_needle);
     int cmp;
     if (std::is_same<char_type, npy_ucs4>::value) {
@@ -423,7 +670,7 @@ _preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
 
 template <typename char_type>
 static Py_ssize_t
-_two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
+two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
          prework<char_type> *p)
 {
     // Crochemore and Perrin's (1991) Two-Way algorithm.
@@ -552,36 +799,36 @@ _two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
 
 template <typename char_type>
 static inline Py_ssize_t
-_two_way_find(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
+two_way_find(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
               CheckedIndexer<char_type> needle, Py_ssize_t len_needle)
 {
     LOG("###### Finding \"%s\" in \"%s\".\n", needle, haystack);
     prework<char_type> p;
-    _preprocess(needle, len_needle, &p);
-    return _two_way(haystack, len_haystack, &p);
+    preprocess(needle, len_needle, &p);
+    return two_way(haystack, len_haystack, &p);
 }
 
 
 template <typename char_type>
 static inline Py_ssize_t
-_two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
+two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
                CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
-               Py_ssize_t maxcount)
+               Py_ssize_t max_count)
 {
     LOG("###### Counting \"%s\" in \"%s\".\n", needle, haystack);
     prework<char_type> p;
-    _preprocess(needle, len_needle, &p);
+    preprocess(needle, len_needle, &p);
     Py_ssize_t index = 0, count = 0;
     while (1) {
         Py_ssize_t result;
-        result = _two_way(haystack + index,
+        result = two_way(haystack + index,
                                      len_haystack - index, &p);
         if (result == -1) {
             return count;
         }
         count++;
-        if (count == maxcount) {
-            return maxcount;
+        if (count == max_count) {
+            return max_count;
         }
         index += result + len_needle;
     }
@@ -589,8 +836,8 @@ _two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
 }
 
 #undef SHIFT_TYPE
-#undef NOT_FOUND
-#undef SHIFT_OVERFLOW
+#undef MAX_SHIFT
+
 #undef TABLE_SIZE_BITS
 #undef TABLE_SIZE
 #undef TABLE_MASK
@@ -603,7 +850,7 @@ template <typename char_type>
 static inline Py_ssize_t
 default_find(CheckedIndexer<char_type> s, Py_ssize_t n,
              CheckedIndexer<char_type> p, Py_ssize_t m,
-             Py_ssize_t maxcount, int mode)
+             Py_ssize_t max_count, int mode)
 {
     const Py_ssize_t w = n - m;
     Py_ssize_t mlast = m - 1, count = 0;
@@ -635,8 +882,8 @@ default_find(CheckedIndexer<char_type> s, Py_ssize_t n,
                     return i;
                 }
                 count++;
-                if (count == maxcount) {
-                    return maxcount;
+                if (count == max_count) {
+                    return max_count;
                 }
                 i = i + mlast;
                 continue;
@@ -664,7 +911,7 @@ template <typename char_type>
 static Py_ssize_t
 adaptive_find(CheckedIndexer<char_type> s, Py_ssize_t n,
               CheckedIndexer<char_type> p, Py_ssize_t m,
-              Py_ssize_t maxcount, int mode)
+              Py_ssize_t max_count, int mode)
 {
     const Py_ssize_t w = n - m;
     Py_ssize_t mlast = m - 1, count = 0;
@@ -697,8 +944,8 @@ adaptive_find(CheckedIndexer<char_type> s, Py_ssize_t n,
                     return i;
                 }
                 count++;
-                if (count == maxcount) {
-                    return maxcount;
+                if (count == max_count) {
+                    return max_count;
                 }
                 i = i + mlast;
                 continue;
@@ -706,11 +953,11 @@ adaptive_find(CheckedIndexer<char_type> s, Py_ssize_t n,
             hits += j + 1;
             if (hits > m / 4 && w - i > 2000) {
                 if (mode == FAST_SEARCH) {
-                    res = _two_way_find(s + i, n - i, p, m);
+                    res = two_way_find(s + i, n - i, p, m);
                     return res == -1 ? -1 : res + i;
                 }
                 else {
-                    res = _two_way_count(s + i, n - i, p, m, maxcount - count);
+                    res = two_way_count(s + i, n - i, p, m, max_count - count);
                     return res + count;
                 }
             }
@@ -737,7 +984,7 @@ template <typename char_type>
 static Py_ssize_t
 default_rfind(CheckedIndexer<char_type> s, Py_ssize_t n,
               CheckedIndexer<char_type> p, Py_ssize_t m,
-              Py_ssize_t maxcount, int mode)
+              Py_ssize_t max_count, int mode)
 {
     /* create compressed boyer-moore delta 1 table */
     unsigned long mask = 0;
@@ -841,10 +1088,10 @@ fastsearch(char_type* s, Py_ssize_t n,
                expensive O(m) startup cost of the two-way algorithm
                will surely pay off. */
             if (mode == FAST_SEARCH) {
-                return _two_way_find(s_, n, p_, m);
+                return two_way_find(s_, n, p_, m);
             }
             else {
-                return _two_way_count(s_, n, p_, m, maxcount);
+                return two_way_count(s_, n, p_, m, maxcount);
             }
         }
         else {
