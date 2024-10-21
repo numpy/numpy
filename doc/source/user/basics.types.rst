@@ -347,27 +347,21 @@ Floating point precision
 
 Many functions in NumPy, especially those in `numpy.linalg`, involve floating-point
 arithmetic, which can introduce small inaccuracies due to the way computers 
-represent decimal numbers. For instance, when computing the determinant of the 
-following matrix:
+represent decimal numbers. For instance, when performing basic arithmetic operations 
+involving floating-point numbers:
 
-    >>> import numpy as np
-    >>> a = np.array([[5, 5, 6], [7, 7, 5], [4, 4, 8]])
-    >>> print(np.linalg.det(a)) # Result is close to 0 due to floating-point precision
-    -3.1974423109204565e-14
-    
+    >>> 0.3 - 0.2 - 0.1  # This does not equal 0 due to floating-point precision
+    -2.7755575615628914e-17
 
-One may receive a result like ``-3.1974423109204565e-14`` instead of ``0``. This is
-a behavior common to all frameworks that use floating point arithmetic.
+To handle such cases, it's advisable to use functions like `np.isclose` to compare 
+values, rather than checking for exact equality:
 
-To handle such cases, it's advisable to use the condition number of the matrix, 
-which provides information about the matrix's sensitivity to numerical errors. 
-For example:
+    >>> np.isclose(0.3 - 0.2 - 0.1, 0, rtol=1e-05)  # Check for closeness to 0
+    True
 
-    >>> np.linalg.cond(a)  # Compute condition number to assess matrix stability
-    inf  
-
-A high condition number indicates that the matrix is close to singular, meaning 
-small changes or inaccuracies in floating-point arithmetic can lead to large errors.
+In this example, `np.isclose` accounts for the minor inaccuracies that occur in 
+floating-point calculations by applying a relative tolerance, ensuring that results
+within a small threshold are considered close.
 
 For information about precision in calculations, see `Floating-Point Arithmetic <https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html>`_.
 
