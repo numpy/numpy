@@ -364,7 +364,7 @@ which provides information about the matrix's sensitivity to numerical errors.
 For example:
 
     >>> np.linalg.cond(a)  # Compute condition number to assess matrix stability
-    inf
+    inf  
 
 A high condition number indicates that the matrix is close to singular, meaning 
 small changes or inaccuracies in floating-point arithmetic can lead to large errors.
