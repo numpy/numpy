@@ -8,6 +8,8 @@ import click
 from spin import util
 from spin.cmds import meson
 
+from pathlib import Path
+
 
 # Check that the meson git submodule is present
 curdir = pathlib.Path(__file__).parent
@@ -111,6 +113,16 @@ def build(ctx, meson_args, with_scipy_openblas, jobs=None, clean=False, verbose=
     if with_scipy_openblas:
         _config_openblas(with_scipy_openblas)
     ctx.params.pop("with_scipy_openblas", None)
+
+    meson_args = ctx.params["meson_args"]
+    meson_args_ = {}
+    meson_args_["setup"] = meson_args
+    meson_args_["compile"] = tuple()
+    meson_args_["install"] = tuple()
+    meson_args = meson_args_
+    meson_args["root"] = Path(__file__).parent.parent.absolute()
+    ctx.params["meson_args"] = meson_args
+
     ctx.forward(meson.build)
 
 
