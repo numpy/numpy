@@ -3124,7 +3124,10 @@ class MaskedArray(ndarray):
 
         # Finalize the fill_value
         if self._fill_value is not None:
-            self._fill_value = _check_fill_value(self._fill_value, self.dtype)
+            try:
+                self._fill_value = _check_fill_value(self._fill_value, self.dtype)
+            except TypeError:
+                self._fill_value = _check_fill_value(None, self.dtype)
         elif self.dtype.names is not None:
             # Finalize the default fill_value for structured arrays
             self._fill_value = _check_fill_value(None, self.dtype)
