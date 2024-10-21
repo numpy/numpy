@@ -104,13 +104,13 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
         /* Try to be as clear as possible about what went wrong. */
         if (axis >= 0) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for axis %d with size %"NPY_INTP_FMT,
+                         "index %" NPY_INTP_FMT " is out of bounds "
+                         "for axis %d with size %" NPY_INTP_FMT,
                          *index, axis, max_item);
         } else {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for size %"NPY_INTP_FMT, *index, max_item);
+                         "index %" NPY_INTP_FMT " is out of bounds "
+                         "for size %" NPY_INTP_FMT, *index, max_item);
         }
         return -1;
     }
@@ -162,16 +162,19 @@ check_and_adjust_axis(int *axis, int ndim)
  * GCC releases before GCC 4.9 had a bug in _Alignof.  See GCC bug 52023
  * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
  * clang versions < 8.0.0 have the same bug.
+ * MSVC uses __alignof instead of __alignof__ or _Alignof.
  */
-#if (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
-     || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
-  && !defined __clang__) \
+#if defined(_MSC_VER)
+#define NPY_ALIGNOF(type) __alignof(type)
+#elif (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
+     || (defined __GNUC__ && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 9)) \
+     && !defined __clang__) \
      || (defined __clang__ && __clang_major__ < 8))
-# define NPY_ALIGNOF(type) offsetof(struct {char c; type v;}, v)
+#define NPY_ALIGNOF(type) __alignof__(type)
 #else
-# define NPY_ALIGNOF(type) _Alignof(type)
+#define NPY_ALIGNOF(type) _Alignof(type)
 #endif
-#define  NPY_ALIGNOF_UINT(type) npy_uint_alignment(sizeof(type))
+#define NPY_ALIGNOF_UINT(type) NPY_ALIGNOF(type)
 /*
  * Disable harmless compiler warning "4116: unnamed type definition in
  * parentheses" which is caused by the _ALIGN macro.
