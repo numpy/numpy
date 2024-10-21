@@ -7,6 +7,7 @@ import warnings
 
 import numpy as np
 from .._utils import set_module
+from ._exceptions import UFuncTypeError
 from . import multiarray as mu
 from . import overrides
 from . import umath as um
@@ -1525,6 +1526,16 @@ def searchsorted(a, v, side='left', sorter=None):
     >>> a[sorter[result]]
     30  # The element at index 2 of the sorted array is 30.
     """
+    a = np.asanyarray(a)
+    v = np.asanyarray(v)
+    dtype_a = a.dtype
+    dtype_v = v.dtype
+    try:
+        np.less.resolve_dtypes((dtype_a, dtype_v, None))
+    except UFuncTypeError:
+        raise TypeError(
+                f"Incompatible types for searching: a ({dtype_a}) and v"
+                f" ({dtype_v})")
     return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
 
 
