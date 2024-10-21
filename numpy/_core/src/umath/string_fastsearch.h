@@ -57,13 +57,13 @@
  * @error If LONG_BIT is smaller than 32, a compilation error will occur.
  */
 #if LONG_BIT >= 128
-    #define STRINGLIB_BLOOM_WIDTH 128
+#define STRINGLIB_BLOOM_WIDTH 128
 #elif LONG_BIT >= 64
-    #define STRINGLIB_BLOOM_WIDTH 64
+#define STRINGLIB_BLOOM_WIDTH 64
 #elif LONG_BIT >= 32
-    #define STRINGLIB_BLOOM_WIDTH 32
+#define STRINGLIB_BLOOM_WIDTH 32
 #else
-    #error "LONG_BIT is smaller than 32"
+#error "LONG_BIT is smaller than 32"
 #endif
 
 /**
@@ -77,7 +77,7 @@
  * @param ch   The character to add to the bloom filter mask.
  */
 #define STRINGLIB_BLOOM_ADD(mask, ch) \
-((mask |= (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
+    ((mask |= (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
 
 /**
  * @brief Checks if a character is present in the bloom filter mask.
@@ -90,7 +90,7 @@
  * @return 1 if the character is present, 0 otherwise.
  */
 #define STRINGLIB_BLOOM(mask, ch)     \
-((mask &  (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
+    ((mask &  (1UL << ((ch) & (STRINGLIB_BLOOM_WIDTH -1)))))
 
 #define FORWARD_DIRECTION 1     ///< Defines the forward search direction
 #define BACKWARD_DIRECTION (-1) ///< Defines the backward search direction
