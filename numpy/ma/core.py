@@ -3182,7 +3182,8 @@ class MaskedArray(ndarray):
             else:
                 result._mask = m
                 result._sharedmask = False
-
+        else:
+            result._mask = self._mask.copy()
         return result
 
     def view(self, dtype=None, type=None, fill_value=None):
