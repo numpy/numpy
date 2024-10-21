@@ -357,7 +357,7 @@ following matrix:
     
 
 One may receive a result like ``-3.1974423109204565e-14`` instead of ``0``. This is
-a known behavior of floating-point operations in numerical libraries.
+a behavior common to all frameworks that use floating point arithmetic.
 
 To handle such cases, it's advisable to set a threshold for comparison when checking
 if a determinant is effectively zero. For example:
