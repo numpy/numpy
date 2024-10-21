@@ -407,6 +407,7 @@ half_ctype_divmod(npy_half a, npy_half b, npy_half *out1, npy_half *out2)
  * #rname = float, double, longdouble#
  * #rtype = npy_float, npy_double, npy_longdouble#
  * #c = f,,l#
+ * #fma = fmaf, fma, fmal#
  */
 static inline int
 @name@_ctype_add(@type@ a, @type@ b, @type@ *out)
@@ -432,8 +433,8 @@ static inline int
 static inline int
 @name@_ctype_multiply( @type@ a, @type@ b, @type@ *out)
 {
-    npy_csetreal@c@(out, npy_creal@c@(a) * npy_creal@c@(b) - npy_cimag@c@(a) * npy_cimag@c@(b));
-    npy_csetimag@c@(out, npy_creal@c@(a) * npy_cimag@c@(b) + npy_cimag@c@(a) * npy_creal@c@(b));
+    npy_csetreal@c@(out, @fma@(npy_creal@c@(a), npy_creal@c@(b), -npy_cimag@c@(a) * npy_cimag@c@(b)));
+    npy_csetimag@c@(out, @fma@(npy_creal@c@(a), npy_cimag@c@(b), npy_cimag@c@(a) * npy_creal@c@(b)));
     return 0;
 }
 
