@@ -155,10 +155,21 @@ array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
             return Py_NotImplemented;
         }
     }
-
-    PyObject *implementation = PyObject_GetAttr(func, npy_interned_str.implementation);
-    if (implementation == NULL) {
+    /*
+     * Python functions are wrapped, and we should now call their
+     * implementation, so that we do not dispatch a second time
+     * on possible subclasses.
+     * C functions that can be overridden with "like" are not wrapped and
+     * thus do not have an _implementation attribute, but since the like
+     * keyword has been removed, we can safely call those directly.
+     */
+    PyObject *implementation;
+    if (PyObject_GetOptionalAttr(
+            func, npy_interned_str.implementation, &implementation) < 0) {
         return NULL;
+    }
+    else if (implementation == NULL) {
+        return PyObject_Call(func, args, kwargs);
     }
     PyObject *result = PyObject_Call(implementation, args, kwargs);
     Py_DECREF(implementation);
