@@ -3837,7 +3837,7 @@ class MaskedArray(ndarray):
                 DeprecationWarning, stacklevel=2)
 
         _fill_value = self._fill_value
-        if _fill_value is None:
+        if _fill_value is None or np.isscalar(target):
             # Create the attribute if it was undefined
             self._fill_value = target
         else:
