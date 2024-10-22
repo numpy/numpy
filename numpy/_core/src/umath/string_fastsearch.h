@@ -29,8 +29,7 @@
    algorithm, which has worst-case O(n) runtime and best-case O(n/k).
    Also compute a table of shifts to achieve O(n/k) in more cases,
    and often (data dependent) deduce larger shifts than pure C&P can
-   deduce. See stringlib_find_two_way_notes.txt in this folder for a
-   detailed explanation. */
+   deduce.*/
 
 /**
  * @internal
@@ -425,6 +424,7 @@ rfind_char(CheckedIndexer<char_type> s, Py_ssize_t n, char_type ch)
     return -1;
 }
 
+#undef MEMCHR_CUT_OFF
 
 /**
  * @file_internal
