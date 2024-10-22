@@ -31,7 +31,7 @@ py.extension_module(
       '-DNPY_NO_DEPRECATED_API=NPY_1_21_API_VERSION',
     ],
     include_directories: [npy_include_path],
-    limited_api: '3.6',
+    limited_api: '3.7',
 )
 
 py.extension_module(
@@ -49,11 +49,10 @@ py.extension_module(
     'limited_api2.pyx',
     install: false,
     c_args: [
-      '-DNPY_NO_DEPRECATED_API=0',
       # Require 1.25+ to test datetime additions
       '-DNPY_TARGET_VERSION=NPY_2_0_API_VERSION',
       '-DCYTHON_LIMITED_API=1',
     ],
     include_directories: [npy_include_path],
-    limited_api: '3.7',
+    limited_api: '3.9',
 )
