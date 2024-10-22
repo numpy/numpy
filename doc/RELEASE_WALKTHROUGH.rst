@@ -191,7 +191,7 @@ If a wheel build fails for unrelated reasons, you can rerun it individually:
   the build you want to rerun. On the left there is a list of wheel builds,
   select the one you want to rerun and on the resulting page hit the
   counterclockwise arrows button.
-- On cirrus, log into cirrisci, look for the v2.1.0 tag and rerun the failed jobs.
+- On cirrus, log into cirrusci, look for the v2.1.0 tag and rerun the failed jobs.
 
 .. _`staging repository`: https://anaconda.org/multibuild-wheels-staging/numpy/files
 .. _`Wheel builder`: https://github.com/numpy/numpy/actions/workflows/wheels.yml
