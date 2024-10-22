@@ -10,7 +10,6 @@
 // this file are shared by the _simd, _umath_tests, and
 // _multiarray_umath modules
 
-
 // Hold all CPU features boolean values
 static unsigned char npy__cpu_have[NPY_CPU_FEATURE_MAX];
 
