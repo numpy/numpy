@@ -5385,7 +5385,7 @@ def insert(arr, obj, values, axis=None):
         inserted.
 
         .. versionchanged:: 2.1.2
-            Boolean indices are now treated as a mask of elements to remove,
+            Boolean indices are now treated as a mask of elements to insert,
             rather than being cast to the integers 0 and 1.
 
         Support for multiple insertions when `obj` is a single scalar or a
