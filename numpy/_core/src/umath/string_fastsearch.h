@@ -630,7 +630,7 @@ factorize(CheckedIndexer<char_type> needle,
  * @tparam char_type Type of the characters in the string.
  */
 template <typename char_type>
-struct search_prep_data {
+struct prework {
     CheckedIndexer<char_type> needle; ///< Indexer for the needle (substring).
     Py_ssize_t len_needle;    ///< Length of the needle.
     Py_ssize_t cut;           ///< Critical factorization cut point.
@@ -660,7 +660,7 @@ struct search_prep_data {
 template <typename char_type>
 static void
 preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
-            search_prep_data<char_type> *p)
+            prework<char_type> *p)
 {
     // Store the needle and its length, find the cut point and period.
     p->needle = needle;
@@ -743,7 +743,7 @@ preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
 template <typename char_type>
 static Py_ssize_t
 two_way(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
-         search_prep_data<char_type> *p)
+         prework<char_type> *p)
 {
     // Initialize key variables for search.
     const Py_ssize_t len_needle = p->len_needle;
@@ -901,7 +901,7 @@ two_way_find(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
               CheckedIndexer<char_type> needle, Py_ssize_t len_needle)
 {
     LOG("###### Finding \"%s\" in \"%s\".\n", needle, haystack);
-    search_prep_data<char_type> p;
+    prework<char_type> p;
     preprocess(needle, len_needle, &p);
     return two_way(haystack, len_haystack, &p);
 }
@@ -931,7 +931,7 @@ two_way_count(CheckedIndexer<char_type> haystack, Py_ssize_t len_haystack,
                Py_ssize_t max_count)
 {
     LOG("###### Counting \"%s\" in \"%s\".\n", needle, haystack);
-    search_prep_data<char_type> p;
+    prework<char_type> p;
     preprocess(needle, len_needle, &p);
     Py_ssize_t index = 0, count = 0;
     while (1) {
