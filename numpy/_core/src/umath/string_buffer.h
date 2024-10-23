@@ -1283,7 +1283,6 @@ adjust_offsets(npy_int64 *start, npy_int64 *end, size_t len)
         }
     }
 
-
     if (*start < 0) {
         *start += temp_len;
         if (*start < 0) {
