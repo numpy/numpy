@@ -28,7 +28,6 @@ import textwrap
 import re
 from functools import reduce
 from typing import Dict
-
 import numpy as np
 import numpy._core.umath as umath
 import numpy._core.numerictypes as ntypes
@@ -868,7 +867,7 @@ class _DomainTan:
     def __call__(self, x):
         "Executes the call behavior."
         with np.errstate(invalid='ignore'):
-            return umath.less(umath.absolute(umath.cos(x)), self.eps)
+            return umath.less(umath.absolute(umath.cos(x)), self.eps).astype(np.bool)
 
 
 class _DomainSafeDivide:
@@ -905,7 +904,7 @@ class _DomainGreater:
     def __call__(self, x):
         "Executes the call behavior."
         with np.errstate(invalid='ignore'):
-            return umath.less_equal(x, self.critical_value)
+            return umath.less_equal(x, self.critical_value).astype(np.bool)
 
 
 class _DomainGreaterEqual:
@@ -921,7 +920,7 @@ class _DomainGreaterEqual:
     def __call__(self, x):
         "Executes the call behavior."
         with np.errstate(invalid='ignore'):
-            return umath.less(x, self.critical_value)
+            return umath.less(x, self.critical_value).astype(np.bool)
 
 
 class _MaskedUFunc:
@@ -3167,7 +3166,7 @@ class MaskedArray(ndarray):
                         # Domain not recognized, use fill_value instead
                         fill_value = self.fill_value
 
-                    np.copyto(result, fill_value, where=d)
+                    np.copyto(result,fill_value,where=d)
 
                     # Update the mask
                     if m is nomask:
