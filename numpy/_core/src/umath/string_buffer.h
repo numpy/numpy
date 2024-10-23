@@ -31,7 +31,6 @@ enum class ENCODING {
  */
 enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISALPHA,    ///< Checks if a character is alphabetic
-    ISDECIMAL,  ///< Checks if a character is decimal
     ISDIGIT,    ///< Checks if a character is a digit
     ISSPACE,    ///< Checks if a character is whitespace
     ISALNUM,    ///< Checks if a character is alphanumeric
@@ -39,6 +38,7 @@ enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISUPPER,    ///< Checks if a character is uppercase
     ISTITLE,    ///< Checks if a string is titlecase
     ISNUMERIC,  ///< Checks if a character is numeric
+    ISDECIMAL,  ///< Checks if a character is decimal
     STR_LEN     ///< Returns the length of a string
 };
 
@@ -88,6 +88,7 @@ getchar<ENCODING::UTF8>(const unsigned char *buf, int *bytes)
 
 
 /**
+ * @file_internal
  * @brief Checks if a Unicode codepoint is an alphabetic character.
  *
  * @tparam enc The encoding type for the codepoint.
@@ -122,6 +123,7 @@ codepoint_isalpha<ENCODING::UTF8>(npy_ucs4 code)
 
 
 /**
+ * @file_internal
  * @brief Checks if a Unicode codepoint is a digit.
  *
  * @tparam enc The encoding type for the codepoint.
@@ -156,6 +158,7 @@ codepoint_isdigit<ENCODING::UTF8>(npy_ucs4 code)
 
 
 /**
+ * @file_internal
  * @brief Checks if the given Unicode codepoint is a whitespace character.
  *
  * @tparam enc The encoding type for the codepoint.
@@ -190,6 +193,7 @@ codepoint_isspace<ENCODING::UTF8>(npy_ucs4 code)
 
 
 /**
+ * @file_internal
  * @brief Checks if the given Unicode codepoint is alphanumeric.
  *
  * This function is a template that specializes its behavior based on the specified encoding.
@@ -226,6 +230,7 @@ codepoint_isalnum<ENCODING::UTF8>(npy_ucs4 code)
 
 
 /**
+ * @file_internal
  * @brief Checks if the given Unicode codepoint is a lowercase letter.
  *
  * @tparam enc The encoding type for the codepoint.
@@ -260,6 +265,7 @@ codepoint_islower<ENCODING::UTF8>(npy_ucs4 code)
 
 
 /**
+ * @file_internal
  * @brief Checks if the given Unicode codepoint is an uppercase letter.
  *
  * @tparam enc The encoding type for the codepoint.
@@ -294,6 +300,7 @@ codepoint_isupper<ENCODING::UTF8>(npy_ucs4 code)
 
 
 /**
+ * @file_internal
  * @brief Checks if the given Unicode codepoint is in title case.
  *
  * @tparam enc The character encoding to use for the check.
@@ -335,6 +342,7 @@ codepoint_istitle<ENCODING::UTF8>(npy_ucs4 code)
 
 
 /**
+ * @file_internal
  * @brief Checks if the given Unicode codepoint is numeric.
  *
  * @param code The Unicode codepoint to check.
@@ -348,6 +356,7 @@ codepoint_isnumeric(npy_ucs4 code)
 }
 
 /**
+ * @file_internal
  * @brief Checks if the given Unicode codepoint is a decimal character.
  *
  * @param code The Unicode codepoint to check.
@@ -366,6 +375,7 @@ struct call_buffer_member_function;
 
 
 /**
+ * @internal
  * @brief A template struct representing a buffer for handling
  *        different character encodings.
  *
@@ -385,11 +395,14 @@ struct Buffer {
     }
 
     /**
-     * @brief Constructor initializing the buffer with a given pointer
-     *        and element size.
+     * @brief Constructs a Buffer with a specified pointer and element size.
      *
-     * @param buf_ Pointer to the buffer.
-     * @param elsize_ Size of the buffer.
+     * This constructor initializes the buffer, setting the starting
+     * pointer and calculating the endpoint based on the given
+     * element size.
+     *
+     * @param buf_ Pointer to the start of the buffer.
+     * @param elsize_ Size in bytes of the buffer elements.
      */
     inline Buffer(char *buf_, npy_int64 elsize_)
     {
@@ -535,6 +548,17 @@ struct Buffer {
         return getchar<enc>((unsigned char *) buf, &bytes);
     }
 
+    /**
+     * @brief Compare memory of two buffers.
+     *
+     * @param other The buffer to compare with.
+     * @param len The number of bytes to compare:
+     *            - For ASCII and UTF8, this is the number of bytes.
+     *            - For UTF32, this is the number of characters.
+     * @return A negative value if the first buffer is less than the second,
+     *         zero if they are equal, or a positive value if the first
+     *         buffer is greater.
+     */
     inline int
     buffer_memcmp(Buffer<enc> other, size_t len)
     {
@@ -552,24 +576,39 @@ struct Buffer {
         }
     }
 
+    /**
+     * @brief Copy memory from self to another buffer.
+     *
+     * @param other The destination buffer.
+     * @param len The number of characters to copy:
+     *            - For ASCII and UTF8, this is the number of bytes.
+     *            - For UTF32, this is the number of characters.
+     */
     inline void
-    buffer_memcpy(Buffer<enc> out, size_t n_chars)
+    buffer_memcpy(Buffer<enc> other, size_t len)
     {
-        if (n_chars == 0) {
+        if (len == 0) {
             return;
         }
         switch (enc) {
             case ENCODING::ASCII:
             case ENCODING::UTF8:
                 // for UTF8 we treat n_chars as number of bytes
-                memcpy(out.buf, buf, n_chars);
+                memcpy(other.buf, buf, len);
                 break;
             case ENCODING::UTF32:
-                memcpy(out.buf, buf, n_chars * sizeof(npy_ucs4));
+                memcpy(other.buf, buf, len * sizeof(npy_ucs4));
                 break;
         }
     }
 
+    /**
+     * @brief Set a range of memory in the buffer to a specific character.
+     *
+     * @param fill_char The character to fill the buffer with.
+     * @param n_chars The number of characters to set.
+     * @return The number of characters set in the buffer.
+     */
     inline npy_intp
     buffer_memset(npy_ucs4 fill_char, size_t n_chars)
     {
@@ -578,8 +617,8 @@ struct Buffer {
         }
         switch (enc) {
             case ENCODING::ASCII:
-                memset(this->buf, fill_char, n_chars);
-                return n_chars;
+                memset(this->buf, (char)fill_char, n_chars);
+                return (npy_intp) n_chars;
             case ENCODING::UTF32:
             {
                 char *tmp = this->buf;
@@ -587,7 +626,7 @@ struct Buffer {
                     *(npy_ucs4 *)tmp = fill_char;
                     tmp += sizeof(npy_ucs4);
                 }
-                return n_chars;
+                return (npy_intp) n_chars;
             }
             case ENCODING::UTF8:
             {
@@ -598,11 +637,19 @@ struct Buffer {
                     memcpy(tmp, utf8_c, num_bytes);
                     tmp += num_bytes;
                 }
-                return num_bytes * n_chars;
+                return (npy_intp) (num_bytes * n_chars);
             }
         }
     }
 
+    /**
+     * @brief Fill the buffer with zeros starting from a specified index.
+     *
+     * This method fills the buffer with zero bytes starting from the specified
+     * index (`start_index`) to the end of the buffer.
+     *
+     * @param start_index The index from which to start filling with zeros.
+     */
     inline void
     buffer_fill_with_zeros_after_index(size_t start_index)
     {
@@ -612,6 +659,15 @@ struct Buffer {
         }
     }
 
+    /**
+     * @brief Advance the buffer pointer by a specified number of characters or bytes.
+     *
+     * This method adjusts the buffer pointer based on the encoding:
+     * - For ASCII and UTF32, it advances by `n` characters.
+     * - For UTF8, it advances by `n` bytes.
+     *
+     * @param n The number of characters (or bytes) to advance.
+     */
     inline void
     advance_chars_or_bytes(size_t n) {
         switch (enc) {
@@ -625,6 +681,14 @@ struct Buffer {
         }
     }
 
+    /**
+     * @brief Get the number of bytes for the next character in the buffer.
+     *
+     * This function determines the number of bytes required to represent
+     * the next character based on the current encoding.
+     *
+     * @return The number of bytes for the next character.
+     */
     inline size_t
     num_bytes_next_character() {
         switch (enc) {
@@ -637,6 +701,16 @@ struct Buffer {
         }
     }
 
+    /**
+     * @brief Apply a unary function to each codepoint in the buffer.
+     *
+     * This function iterates over each codepoint in the buffer and applies
+     * the specified unary function. If the function fails for any codepoint,
+     * the iteration stops and returns false.
+     *
+     * @tparam f The unary function to be applied to each codepoint.
+     * @return true if the function succeeds for all codepoints, false otherwise.
+     */
     template<IMPLEMENTED_UNARY_FUNCTIONS f>
     inline bool
     unary_loop()
@@ -663,12 +737,33 @@ struct Buffer {
         return true;
     }
 
+    /**
+     * @brief Check if all characters in the buffer are alphabetic.
+     *
+     * @return true if all characters are alphabetic, false otherwise.
+     */
     inline bool
     isalpha()
     {
         return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA>();
     }
 
+    /**
+     * @brief Check if all characters in the buffer are digits.
+     *
+     * @return true if all characters are digits, false otherwise.
+     */
+    inline bool
+    isdigit()
+    {
+        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT>();
+    }
+
+    /**
+     * @brief Check if the first character in the buffer is a whitespace.
+     *
+     * @return true if the first character is whitespace, false otherwise.
+     */
     inline bool
     first_character_isspace()
     {
@@ -681,24 +776,39 @@ struct Buffer {
         }
     }
 
+    /**
+     * @brief Check if all characters in the buffer are whitespace.
+     *
+     * @return true if all characters are whitespace, false otherwise.
+     */
     inline bool
     isspace()
     {
         return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE>();
     }
 
-    inline bool
-    isdigit()
-    {
-        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT>();
-    }
-
+    /**
+     * @brief Check if all characters in the buffer are alphanumeric.
+     *
+     * @return true if all characters are alphanumeric, false otherwise.
+     */
     inline bool
     isalnum()
     {
         return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM>();
     }
 
+    /**
+     * @brief Check if the buffer contains only lowercase letters.
+     *
+     * This function iterates through the characters in the buffer
+     * and determines whether they are all lowercase letters. It
+     * returns true if at least one lowercase letter is present and
+     * no uppercase or title case letters are found.
+     *
+     * @return True if the buffer contains only lowercase letters;
+     *         otherwise, false.
+     */
     inline bool
     islower()
     {
@@ -708,7 +818,7 @@ struct Buffer {
         }
 
         Buffer<enc> tmp = *this;
-        bool cased = 0;
+        bool cased = false;
         for (size_t i = 0; i < len; i++) {
             if (codepoint_isupper<enc>(*tmp) || codepoint_istitle<enc>(*tmp)) {
                 return false;
@@ -721,6 +831,17 @@ struct Buffer {
         return cased;
     }
 
+    /**
+     * @brief Check if the buffer contains only uppercase letters.
+     *
+     * This function iterates through the characters in the buffer
+     * and determines whether they are all uppercase letters. It
+     * returns true if at least one uppercase letter is present and
+     * no lowercase or title case letters are found.
+     *
+     * @return True if the buffer contains only uppercase letters;
+     *         otherwise, false.
+     */
     inline bool
     isupper()
     {
@@ -730,7 +851,7 @@ struct Buffer {
         }
 
         Buffer<enc> tmp = *this;
-        bool cased = 0;
+        bool cased = false;
         for (size_t i = 0; i < len; i++) {
             if (codepoint_islower<enc>(*tmp) || codepoint_istitle<enc>(*tmp)) {
                 return false;
@@ -743,6 +864,17 @@ struct Buffer {
         return cased;
     }
 
+    /**
+     * @brief Check if the buffer follows title case conventions.
+     *
+     * This function checks if the characters in the buffer are
+     * formatted as title case. A title case string has each word's
+     * first character capitalized, while other characters in the
+     * word are lowercase. This function returns true if the buffer
+     * adheres to this rule, and false otherwise.
+     *
+     * @return True if the buffer is in title case; otherwise, false.
+     */
     inline bool
     istitle()
     {
@@ -776,22 +908,41 @@ struct Buffer {
         return cased;
     }
 
+    /**
+     * @brief Check if all characters in the buffer are numeric.
+     *
+     * @return True if all characters are numeric; otherwise, false.
+     */
     inline bool
     isnumeric()
     {
         return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC>();
     }
 
+    /**
+     * @brief Check if all characters in the buffer are decimal digits.
+     *
+     * @return true if all characters are decimal digits, false otherwise.
+     */
     inline bool
     isdecimal()
     {
         return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL>();
     }
 
+    /**
+     * @brief Remove trailing whitespace and null characters from the buffer.
+     *
+     * This function modifies the buffer by removing any trailing whitespace
+     * (spaces, tabs, ...) and null characters ('\0').
+     *
+     * @return The modified buffer with trailing whitespace removed.
+     */
     inline Buffer<enc>
     rstrip()
     {
         Buffer<enc> tmp(after, 0);
+
         tmp--;
         while (tmp >= *this && (*tmp == '\0' || NumPyOS_ascii_isspace(*tmp))) {
             tmp--;
@@ -802,6 +953,20 @@ struct Buffer {
         return *this;
     }
 
+    /**
+     * @brief Compare two buffers for equality or ordering.
+     *
+     * This function compares the current buffer with another buffer (`other`),
+     * optionally removing trailing whitespace from both buffers if `rstrip` is true.
+     *
+     * @param other The buffer to compare against.
+     * @param rstrip If true, trailing whitespace will be removed from both buffers
+     *               before comparison.
+     * @return
+     *   - A negative integer if the current buffer is less than `other`.
+     *   - A positive integer if the current buffer is greater than `other`.
+     *   - Zero if both buffers are equal.
+     */
     inline int
     strcmp(Buffer<enc> other, bool rstrip)
     {
@@ -833,6 +998,19 @@ struct Buffer {
         return 0;
     }
 
+    /**
+     * @brief Compare two buffers for equality or ordering
+     *        without trimming whitespace.
+     *
+     * This function compares the current buffer with another buffer (`other`)
+     * to determine their relative order. It does not modify the buffers
+     * by trimming whitespace.
+     *
+     * @param other The buffer to compare with.
+     * @return An integer less than, equal to, or greater than zero if the
+     *         current buffer is found to be less than, to match, or
+     *         be greater than the `other` buffer, respectively.
+     */
     inline int
     strcmp(Buffer<enc> other)
     {
@@ -842,11 +1020,31 @@ struct Buffer {
 
 
 /**
- * 111
+ * @file_internal
+ * @brief Functor to apply a specified unary function.
+ *
+ * @tparam f The unary function to apply.
+ * @tparam enc The encoding type of the buffer.
+ * @tparam T The return type of the unary function.
  */
 template <IMPLEMENTED_UNARY_FUNCTIONS f, ENCODING enc, typename T>
 struct call_buffer_member_function {
+    /**
+     * @brief Applies the specified unary function to the given buffer.
+     *
+     * @param buf The buffer to process.
+     * @return The result of the unary function.
+     */
     T operator()(Buffer<enc> buf) {
+        static_assert(f == IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL,
+                      "Invalid IMPLEMENTED_UNARY_FUNCTIONS value "
+                      "in call_buffer_member_function.");
+
         switch (f) {
             case IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA:
                 return codepoint_isalpha<enc>(*buf);
@@ -864,6 +1062,16 @@ struct call_buffer_member_function {
     }
 };
 
+/**
+ * @internal
+ * @brief Moves the buffer forward by a specified number of elements.
+ *
+ * @tparam enc The buffer's encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param lhs The original buffer.
+ * @param rhs The number of elements to move forward.
+ * @return A new `Buffer<enc>` at the updated position.
+ */
 template <ENCODING enc>
 inline Buffer<enc>
 operator+(Buffer<enc> lhs, npy_int64 rhs)
@@ -883,7 +1091,19 @@ operator+(Buffer<enc> lhs, npy_int64 rhs)
     }
 }
 
-
+/**
+ * @internal
+ * @brief Computes the difference between two buffers.
+ *
+ * Returns the difference in elements or bytes based on encoding.
+ * Valid for UTF8 only if both buffers are from the same string.
+ *
+ * @tparam enc The buffer's encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param lhs The first buffer.
+ * @param rhs The second buffer.
+ * @return The difference between the buffers.
+ */
 template <ENCODING enc>
 inline std::ptrdiff_t
 operator-(Buffer<enc> lhs, Buffer<enc> rhs)
@@ -899,7 +1119,16 @@ operator-(Buffer<enc> lhs, Buffer<enc> rhs)
     }
 }
 
-
+/**
+ * @internal
+ * @brief Moves the buffer backward by a specified number of elements.
+ *
+ * @tparam enc The buffer's encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param lhs The original buffer.
+ * @param rhs The number of elements to move backward.
+ * @return A new `Buffer<enc>` at the updated position.
+ */
 template <ENCODING enc>
 inline Buffer<enc>
 operator-(Buffer<enc> lhs, npy_int64 rhs)
@@ -918,7 +1147,15 @@ operator-(Buffer<enc> lhs, npy_int64 rhs)
 
 }
 
-
+/**
+ * @internal
+ * @brief Compares two buffers for equality.
+ *
+ * @tparam enc The buffer's encoding type.
+ * @param lhs The first buffer.
+ * @param rhs The second buffer.
+ * @return `true` if the buffers are equal, `false` otherwise.
+ */
 template <ENCODING enc>
 inline bool
 operator==(Buffer<enc> lhs, Buffer<enc> rhs)
@@ -926,7 +1163,15 @@ operator==(Buffer<enc> lhs, Buffer<enc> rhs)
     return lhs.buf == rhs.buf;
 }
 
-
+/**
+ * @internal
+ * @brief Compares two buffers for inequality.
+ *
+ * @tparam enc The buffer's encoding type.
+ * @param lhs The first buffer.
+ * @param rhs The second buffer.
+ * @return `true` if the buffers are not equal, `false` otherwise.
+ */
 template <ENCODING enc>
 inline bool
 operator!=(Buffer<enc> lhs, Buffer<enc> rhs)
@@ -934,7 +1179,16 @@ operator!=(Buffer<enc> lhs, Buffer<enc> rhs)
     return !(rhs == lhs);
 }
 
-
+/**
+ * @internal
+ * @brief Checks if the first buffer is less than the second.
+ *
+ * @tparam enc The buffer's encoding type.
+ * @param lhs The first buffer.
+ * @param rhs The second buffer.
+ * @return `true` if the first buffer is less than the second,
+ *         `false` otherwise.
+ */
 template <ENCODING enc>
 inline bool
 operator<(Buffer<enc> lhs, Buffer<enc> rhs)
@@ -942,7 +1196,16 @@ operator<(Buffer<enc> lhs, Buffer<enc> rhs)
     return lhs.buf < rhs.buf;
 }
 
-
+/**
+ * @internal
+ * @brief Checks if the first buffer is greater than the second.
+ *
+ * @tparam enc The buffer's encoding type.
+ * @param lhs The first buffer.
+ * @param rhs The second buffer.
+ * @return `true` if the first buffer is greater than the second,
+ *         `false` otherwise.
+ */
 template <ENCODING enc>
 inline bool
 operator>(Buffer<enc> lhs, Buffer<enc> rhs)
@@ -950,7 +1213,16 @@ operator>(Buffer<enc> lhs, Buffer<enc> rhs)
     return rhs < lhs;
 }
 
-
+/**
+ * @internal
+ * @brief Checks if the first buffer is less than or equal to the second.
+ *
+ * @tparam enc The buffer's encoding type.
+ * @param lhs The first buffer.
+ * @param rhs The second buffer.
+ * @return `true` if the first buffer is less than or equal to the second,
+ *         `false` otherwise.
+ */
 template <ENCODING enc>
 inline bool
 operator<=(Buffer<enc> lhs, Buffer<enc> rhs)
@@ -958,7 +1230,16 @@ operator<=(Buffer<enc> lhs, Buffer<enc> rhs)
     return !(lhs > rhs);
 }
 
-
+/**
+ * @internal
+ * @brief Checks if the first buffer is greater than or equal to the second.
+ *
+ * @tparam enc The buffer's encoding type.
+ * @param lhs The first buffer.
+ * @param rhs The second buffer.
+ * @return `true` if the first buffer is greater than or equal to the second,
+ *         `false` otherwise.
+ */
 template <ENCODING enc>
 inline bool
 operator>=(Buffer<enc> lhs, Buffer<enc> rhs)
@@ -969,26 +1250,42 @@ operator>=(Buffer<enc> lhs, Buffer<enc> rhs)
 /*
  * Helper to fixup start/end slice values.
  *
- * This function is taken from CPython's unicode module
+ * This function is taken from CPython's Unicode module
  * (https://github.com/python/cpython/blob/0b718e6407da65b838576a2459d630824ca62155/Objects/bytes_methods.c#L495)
  * in order to remain compatible with how CPython handles
  * start/end arguments to str function like find/rfind etc.
  */
+
+/**
+ * @brief Adjusts the start and end offsets for slicing based on the buffer length.
+ *
+ * This function modifies the provided start and end indices to ensure they
+ * are within the valid range for a buffer of the specified length. It handles
+ * negative indices by wrapping them around and ensures that the end index
+ * does not exceed the buffer length.
+ *
+ * @param start Pointer to the starting index to adjust.
+ * @param end Pointer to the ending index to adjust.
+ * @param len Length of the buffer.
+ */
 static inline void
 adjust_offsets(npy_int64 *start, npy_int64 *end, size_t len)
 {
-    if (*end > static_cast<npy_int64>(len)) {
-        *end = len;
+    npy_int64 temp_len = static_cast<npy_int64>(len);
+
+    if (*end > temp_len) {
+        *end = temp_len;
     }
     else if (*end < 0) {
-        *end += len;
+        *end += temp_len;
         if (*end < 0) {
             *end = 0;
         }
     }
 
+
     if (*start < 0) {
-        *start += len;
+        *start += temp_len;
         if (*start < 0) {
             *start = 0;
         }
@@ -999,11 +1296,11 @@ template <ENCODING enc>
 static inline npy_intp
 string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
+    npy_int64 len1 = static_cast<npy_int64>(buf1.num_codepoints());
+    npy_int64 len2 = static_cast<npy_int64>(buf2.num_codepoints());
 
     adjust_offsets(&start, &end, len1);
-    if (end - start < static_cast<npy_int64>(len2)) {
+    if (end - start < len2) {
         return (npy_intp) -1;
     }
     if (len2 == 0) {
@@ -1064,10 +1361,12 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     npy_intp pos;
     switch(enc) {
         case ENCODING::UTF8:
-            pos = fastsearch(start_loc, end_loc - start_loc, buf2.buf, buf2.after - buf2.buf, -1, FAST_SEARCH);
+            pos = fastsearch(start_loc, end_loc - start_loc, buf2.buf,
+                    buf2.after - buf2.buf, -1, FAST_SEARCH);
             // pos is the byte index, but we need the character index
             if (pos > 0) {
-                pos = utf8_character_index(start_loc, start_loc - buf1.buf, start, pos, buf1.after - start_loc);
+                pos = utf8_character_index(start_loc, start_loc - buf1.buf,
+                        start, pos, buf1.after - start_loc);
             }
             break;
         case ENCODING::ASCII:
