@@ -3141,9 +3141,9 @@ class MaskedArray(ndarray):
         else:
             result = obj.view(type(self))
             result._update_from(self)
+            result._mask = self._mask.copy()
 
         if context is not None:
-            result._mask = result._mask.copy()
             func, args, out_i = context
             # args sometimes contains outputs (gh-10459), which we don't want
             input_args = args[:func.nin]
@@ -3182,8 +3182,6 @@ class MaskedArray(ndarray):
             else:
                 result._mask = m
                 result._sharedmask = False
-        else:
-            result._mask = self._mask.copy()
         return result
 
     def view(self, dtype=None, type=None, fill_value=None):
