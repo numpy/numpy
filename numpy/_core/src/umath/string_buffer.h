@@ -14,31 +14,52 @@
 #include "string_fastsearch.h"
 #include "gil_utils.h"
 
-#define CHECK_OVERFLOW(index) if (buf + (index) >= after) return 0
-#define MSB(val) ((val) >> 7 & 1)
 
-
+/**
+ * @internal
+ * @brief Enumeration for different text encodings.
+ */
 enum class ENCODING {
-    ASCII, UTF32, UTF8
+    ASCII,  ///< ASCII encoding
+    UTF32,  ///< UTF-32 encoding
+    UTF8    ///< UTF-8 encoding
 };
 
+/**
+ * @file_internal
+ * @brief Enumeration for implemented unary functions.
+ */
 enum class IMPLEMENTED_UNARY_FUNCTIONS {
-    ISALPHA,
-    ISDECIMAL,
-    ISDIGIT,
-    ISSPACE,
-    ISALNUM,
-    ISLOWER,
-    ISUPPER,
-    ISTITLE,
-    ISNUMERIC,
-    STR_LEN,
+    ISALPHA,    ///< Checks if a character is alphabetic
+    ISDECIMAL,  ///< Checks if a character is decimal
+    ISDIGIT,    ///< Checks if a character is a digit
+    ISSPACE,    ///< Checks if a character is whitespace
+    ISALNUM,    ///< Checks if a character is alphanumeric
+    ISLOWER,    ///< Checks if a character is lowercase
+    ISUPPER,    ///< Checks if a character is uppercase
+    ISTITLE,    ///< Checks if a string is titlecase
+    ISNUMERIC,  ///< Checks if a character is numeric
+    STR_LEN     ///< Returns the length of a string
 };
 
+
+/**
+ * @file_internal
+ * @brief Retrieves a Unicode character from a buffer based on
+ * the specified encoding.
+ *
+ * This function reads a character from the given byte buffer and returns its
+ * corresponding Unicode codepoint. The number of bytes consumed is also updated.
+ *
+ * @tparam enc The encoding type, supported encodings are ASCII, UTF32, and UTF8.
+ *
+ * @param buf Pointer to the byte buffer containing the encoded character.
+ * @param bytes Pointer to an integer that will be updated with the number of bytes read.
+ * @return The Unicode codepoint as a npy_ucs4 value.
+ */
 template <ENCODING enc>
 inline npy_ucs4
 getchar(const unsigned char *buf, int *bytes);
-
 
 template <>
 inline npy_ucs4
@@ -47,7 +68,6 @@ getchar<ENCODING::ASCII>(const unsigned char *buf, int *bytes)
     *bytes = 1;
     return (npy_ucs4) *buf;
 }
-
 
 template <>
 inline npy_ucs4
@@ -66,6 +86,15 @@ getchar<ENCODING::UTF8>(const unsigned char *buf, int *bytes)
     return (npy_ucs4)codepoint;
 }
 
+
+/**
+ * @brief Checks if a Unicode codepoint is an alphabetic character.
+ *
+ * @tparam enc The encoding type for the codepoint.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param code The Unicode codepoint to check.
+ * @return True if the codepoint is an alphabetic character; otherwise, false.
+ */
 template<ENCODING enc>
 inline bool
 codepoint_isalpha(npy_ucs4 code);
@@ -74,7 +103,7 @@ template<>
 inline bool
 codepoint_isalpha<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isalpha(code);
+    return NumPyOS_ascii_isalpha((char)code);
 }
 
 template<>
@@ -91,6 +120,15 @@ codepoint_isalpha<ENCODING::UTF8>(npy_ucs4 code)
     return Py_UNICODE_ISALPHA(code);
 }
 
+
+/**
+ * @brief Checks if a Unicode codepoint is a digit.
+ *
+ * @tparam enc The encoding type for the codepoint.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param code The Unicode codepoint to check.
+ * @return True if the codepoint is a digit; otherwise, false.
+ */
 template<ENCODING enc>
 inline bool
 codepoint_isdigit(npy_ucs4 code);
@@ -99,7 +137,7 @@ template<>
 inline bool
 codepoint_isdigit<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isdigit(code);
+    return NumPyOS_ascii_isdigit((char)code);
 }
 
 template<>
@@ -116,6 +154,15 @@ codepoint_isdigit<ENCODING::UTF8>(npy_ucs4 code)
     return Py_UNICODE_ISDIGIT(code);
 }
 
+
+/**
+ * @brief Checks if the given Unicode codepoint is a whitespace character.
+ *
+ * @tparam enc The encoding type for the codepoint.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param code The Unicode codepoint to check.
+ * @return True if the codepoint is a whitespace character, false otherwise.
+ */
 template<ENCODING enc>
 inline bool
 codepoint_isspace(npy_ucs4 code);
@@ -124,7 +171,7 @@ template<>
 inline bool
 codepoint_isspace<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isspace(code);
+    return NumPyOS_ascii_isspace((char)code);
 }
 
 template<>
@@ -141,6 +188,17 @@ codepoint_isspace<ENCODING::UTF8>(npy_ucs4 code)
     return Py_UNICODE_ISSPACE(code);
 }
 
+
+/**
+ * @brief Checks if the given Unicode codepoint is alphanumeric.
+ *
+ * This function is a template that specializes its behavior based on the specified encoding.
+ *
+ * @tparam enc The encoding type for the codepoint.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param code The Unicode codepoint to check.
+ * @return True if the codepoint is alphanumeric, false otherwise.
+ */
 template<ENCODING enc>
 inline bool
 codepoint_isalnum(npy_ucs4 code);
@@ -149,7 +207,7 @@ template<>
 inline bool
 codepoint_isalnum<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isalnum(code);
+    return NumPyOS_ascii_isalnum((char)code);
 }
 
 template<>
@@ -166,6 +224,15 @@ codepoint_isalnum<ENCODING::UTF8>(npy_ucs4 code)
     return Py_UNICODE_ISALNUM(code);
 }
 
+
+/**
+ * @brief Checks if the given Unicode codepoint is a lowercase letter.
+ *
+ * @tparam enc The encoding type for the codepoint.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param code The Unicode codepoint to check.
+ * @return True if the codepoint is a lowercase letter, false otherwise.
+ */
 template<ENCODING enc>
 inline bool
 codepoint_islower(npy_ucs4 code);
@@ -174,7 +241,7 @@ template<>
 inline bool
 codepoint_islower<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_islower(code);
+    return NumPyOS_ascii_islower((char)code);
 }
 
 template<>
@@ -191,6 +258,15 @@ codepoint_islower<ENCODING::UTF8>(npy_ucs4 code)
     return Py_UNICODE_ISLOWER(code);
 }
 
+
+/**
+ * @brief Checks if the given Unicode codepoint is an uppercase letter.
+ *
+ * @tparam enc The encoding type for the codepoint.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param code The Unicode codepoint to check.
+ * @return True if the codepoint is an uppercase letter, false otherwise.
+ */
 template<ENCODING enc>
 inline bool
 codepoint_isupper(npy_ucs4 code);
@@ -199,7 +275,7 @@ template<>
 inline bool
 codepoint_isupper<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isupper(code);
+    return NumPyOS_ascii_isupper((char)code);
 }
 
 template<>
@@ -216,9 +292,25 @@ codepoint_isupper<ENCODING::UTF8>(npy_ucs4 code)
     return Py_UNICODE_ISUPPER(code);
 }
 
+
+/**
+ * @brief Checks if the given Unicode codepoint is in title case.
+ *
+ * @tparam enc The character encoding to use for the check.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ *
+ * @param code The Unicode codepoint to check.
+ *
+ * @return
+ * - For `ENCODING::ASCII`: Always returns false, as ASCII
+ *   characters do not have a concept of title case.
+ * - For `ENCODING::UTF32` and `ENCODING::UTF8`: Returns
+ *   the result of `Py_UNICODE_ISTITLE(code)`, which determines
+ *   if the codepoint is in title case based on Unicode rules.
+ */
 template<ENCODING enc>
 inline bool
-codepoint_istitle(npy_ucs4);
+codepoint_istitle(npy_ucs4 code);
 
 template<>
 inline bool
@@ -241,12 +333,27 @@ codepoint_istitle<ENCODING::UTF8>(npy_ucs4 code)
     return Py_UNICODE_ISTITLE(code);
 }
 
+
+/**
+ * @brief Checks if the given Unicode codepoint is numeric.
+ *
+ * @param code The Unicode codepoint to check.
+ *
+ * @return true if the codepoint is a numeric character, false otherwise.
+ */
 inline bool
 codepoint_isnumeric(npy_ucs4 code)
 {
     return Py_UNICODE_ISNUMERIC(code);
 }
 
+/**
+ * @brief Checks if the given Unicode codepoint is a decimal character.
+ *
+ * @param code The Unicode codepoint to check.
+ *
+ * @return true if the codepoint is a decimal digit, false otherwise.
+ */
 inline bool
 codepoint_isdecimal(npy_ucs4 code)
 {
@@ -257,22 +364,44 @@ codepoint_isdecimal(npy_ucs4 code)
 template <IMPLEMENTED_UNARY_FUNCTIONS f, ENCODING enc, typename T>
 struct call_buffer_member_function;
 
+
+/**
+ * @brief A template struct representing a buffer for handling
+ *        different character encodings.
+ *
+ * @tparam enc The encoding type (ASCII, UTF32, or UTF8).
+ */
 template <ENCODING enc>
 struct Buffer {
-    char *buf;
-    char *after;
+    char *buf;    ///< Pointer to the start of the buffer.
+    char *after;  ///< Pointer to the end of the buffer.
 
+    /**
+     * @brief Default constructor initializing the buffer pointers to NULL.
+     */
     inline Buffer()
     {
         buf = after = NULL;
     }
 
+    /**
+     * @brief Constructor initializing the buffer with a given pointer
+     *        and element size.
+     *
+     * @param buf_ Pointer to the buffer.
+     * @param elsize_ Size of the buffer.
+     */
     inline Buffer(char *buf_, npy_int64 elsize_)
     {
         buf = buf_;
         after = buf_ + elsize_;
     }
 
+    /**
+     * @brief Count the number of codepoints in the buffer.
+     *
+     * @return The number of codepoints.
+     */
     inline size_t
     num_codepoints()
     {
@@ -297,6 +426,12 @@ struct Buffer {
         return num_codepoints;
     }
 
+    /**
+     * @brief Increment the buffer pointer by a specified number of positions.
+     *
+     * @param rhs The number of positions to move.
+     * @return A reference to the updated Buffer object.
+     */
     inline Buffer<enc>&
     operator+=(npy_int64 rhs)
     {
@@ -316,6 +451,12 @@ struct Buffer {
         return *this;
     }
 
+    /**
+     * @brief Decrement the buffer pointer by a specified number of positions.
+     *
+     * @param rhs The number of positions to move back.
+     * @return A reference to the updated Buffer object.
+     */
     inline Buffer<enc>&
     operator-=(npy_int64 rhs)
     {
@@ -332,6 +473,11 @@ struct Buffer {
         return *this;
     }
 
+    /**
+     * @brief Pre-increment the buffer pointer by one position.
+     *
+     * @return A reference to the updated Buffer object.
+     */
     inline Buffer<enc>&
     operator++()
     {
@@ -339,6 +485,11 @@ struct Buffer {
         return *this;
     }
 
+    /**
+     * @brief Post-increment the buffer pointer by one position.
+     *
+     * @return A copy of the Buffer object before incrementing.
+     */
     inline Buffer<enc>
     operator++(int)
     {
@@ -347,6 +498,11 @@ struct Buffer {
         return old;
     }
 
+    /**
+     * @brief Pre-decrement the buffer pointer by one position.
+     *
+     * @return A reference to the updated Buffer object.
+     */
     inline Buffer<enc>&
     operator--()
     {
@@ -354,6 +510,11 @@ struct Buffer {
         return *this;
     }
 
+    /**
+     * @brief Post-decrement the buffer pointer by one position.
+     *
+     * @return A copy of the Buffer object before decrementing.
+     */
     inline Buffer<enc>
     operator--(int)
     {
@@ -362,6 +523,11 @@ struct Buffer {
         return old;
     }
 
+    /**
+     * @brief Dereference the buffer to access the current codepoint.
+     *
+     * @return The current codepoint.
+     */
     inline npy_ucs4
     operator*()
     {
@@ -460,7 +626,7 @@ struct Buffer {
     }
 
     inline size_t
-    num_bytes_next_character(void) {
+    num_bytes_next_character() {
         switch (enc) {
             case ENCODING::ASCII:
                 return 1;
@@ -675,6 +841,9 @@ struct Buffer {
 };
 
 
+/**
+ * 111
+ */
 template <IMPLEMENTED_UNARY_FUNCTIONS f, ENCODING enc, typename T>
 struct call_buffer_member_function {
     T operator()(Buffer<enc> buf) {
