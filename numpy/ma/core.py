@@ -3166,7 +3166,7 @@ class MaskedArray(ndarray):
                         # Domain not recognized, use fill_value instead
                         fill_value = self.fill_value
 
-                    np.copyto(result,fill_value,where=d)
+                    np.copyto(result, fill_value, where=d)
 
                     # Update the mask
                     if m is nomask:
