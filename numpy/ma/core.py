@@ -19,6 +19,7 @@ Released for unlimited redistribution.
 .. moduleauthor:: Pierre Gerard-Marchant
 
 """
+
 # pylint: disable-msg=E1002
 import builtins
 import inspect
