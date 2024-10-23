@@ -29,7 +29,8 @@
    algorithm, which has worst-case O(n) runtime and best-case O(n/k).
    Also compute a table of shifts to achieve O(n/k) in more cases,
    and often (data dependent) deduce larger shifts than pure C&P can
-   deduce.*/
+   deduce. See https://github.com/python/cpython/blob/main/Objects/stringlib/stringlib_find_two_way_notes.txt
+   in the CPython repository for a detailed explanation.*/
 
 /**
  * @internal
