@@ -4,7 +4,7 @@
 import sys
 import pytest
 
-from . import util
+from numpy.f2py.tests import util
 
 
 class TestQuotedCharacter(util.F2PyTest):
