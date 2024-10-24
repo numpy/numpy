@@ -5,6 +5,7 @@ on:
 
 env:
   python_version: 3.12
+  open_blas_link: "https://woastorage.blob.core.windows.net/packages/openblas/openblas_v0.3.27.zip"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -35,6 +36,7 @@ jobs:
     - name: Install build dependencies from PyPI
       run: |
         python -m pip install -r requirements/build_requirements.txt
+        python -m pip install delvewheel
 
     - name: Prepare python
       shell: powershell
@@ -60,6 +62,45 @@ jobs:
 
         if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
 
+    - name: Download Openblas
+      shell: powershell
+      run: |
+        # Using Linaro OpenBlas as currently there is no apropriate flang cross compiler,
+        # or other regular OpenBlas binary resource
+        $ErrorActionPreference = "Stop"
+
+        # Using Linaro OpenBlas as currently there is no apropriate flang cross compiler,
+        # or other regular OpenBlas binary resource
+        $CurrentDir = (get-location).Path
+
+        #Downloading the openBlas package
+        $OpenBlasZip = "openblasZip.zip"
+        $OpenBlasDir = "$CurrentDir/.github/.openblas"
+        $OpenblasPc = "$OpenBlasDir/openblas.pc"
+        Invoke-WebRequest  ${{ env.open_blas_link }} -OutFile $OpenBlasZip
+
+        if (Test-Path $OpenBlasDir) {
+            Remove-Item -LiteralPath $OpenBlasDir -Force -Recurse
+        }
+        Expand-Archive $OpenBlasZip $OpenBlasDir
+
+        $OpenBlasPcFileContent = @(
+            "libdir= $($CurrentDir.Replace('\','/'))/.github/.openblas/lib"
+            "includedir=  $($CurrentDir.Replace('\','/'))/.github/.openblas/include/openblas"
+
+            'openblas_config=USE_64BITINT= NO_CBLAS= NO_LAPACK= NO_LAPACKE= DYNAMIC_ARCH=OFF DYNAMIC_OLDER=OFF NO_AFFINITY=1 USE_OPENMP= ARMV8 MAX_THREADS=8'
+            'Name: OpenBLAS'
+            'Description: OpenBLAS is an optimized BLAS library based on GotoBLAS2 1.13 BSD version'
+            'Version: 0.3.27.dev'
+            'URL: https://github.com/OpenMathLib/OpenBLAS'
+            'Libs: -L${libdir} -lopenblas'
+            'Cflags: -I${includedir}'
+        )
+
+        Set-Content $OpenblasPc $OpenBlasPcFileContent
+
+        if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
+
     - name: Prepare Licence
       shell: powershell
       run: |
@@ -75,14 +116,20 @@ jobs:
 
         if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
 
+    - name: pkg-config-for-win
+      run:
+        choco install -y --no-progress --stoponfirstfailure --checksum 6004DF17818F5A6DBF19CB335CC92702 pkgconfiglite
+
     - name: Wheel build
       shell: powershell
       run: |
         $ErrorActionPreference = "Stop"
 
         #Creating cross compile script for messon subsystem
-        $CurrentDir = (get-location)
+        $CurrentDir = (get-location).Path
         $CrossScript = "$CurrentDir\arm64_w64.txt"
+        $OpenblasPkg = "$CurrentDir\.github\.openblas"
+
         $CrossScriptContent =
         {
             [host_machine]
@@ -96,6 +143,7 @@ jobs:
             [binaries]
             c='cl.exe'
             cpp = 'cl.exe'
+            pkg-config='pkg-config.exe'
 
             [properties]
             sizeof_short = 2
@@ -128,8 +176,25 @@ jobs:
             }
         }
 
+        $env:PKG_CONFIG_PATH=$OpenblasPkg
+
         #Building the wheel
-        pip wheel . --config-settings=setup-args="--cross-file=$CrossScript"
+        pip wheel .  --config-settings=setup-args="--cross-file=$CrossScript" --config-settings=setup-args="-Dallow-noblas=false"
+
+        #Included openblas build requires msvcp140.dll to be able to run
+        #This library should be present in the path that is populated with
+        #vcvarsamd64_arm64.bat script. When found it is copied to openblas
+        #lib folder so it can be packed in the wheel in the following job
+        ((Get-ChildItem -Path $VsInstallPath -Recurse -Filter "msvcp140.dll").FullName)|
+        ForEach-Object {
+            if ($_ -match "arm64" -and $_ -match "Redist") {
+                $msvcp_machine = (dumpbin /headers $_ |  Select-String -Pattern Machine)
+                if ($msvcp_machine -match ("arm64")) {
+                    Copy-Item -Path $_ "$OpenblasPkg\bin"
+                    break
+                }
+            }
+        }
 
         if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
 
@@ -139,16 +204,20 @@ jobs:
         $ErrorActionPreference = "Stop"
 
         #Finding whl file
-        $CurrentDir = (get-location)
+        $CurrentDir = (get-location).Path
         $WhlName = ((Get-ChildItem -Filter "*.whl").FullName)
         $ZipWhlName = "$CurrentDir\ZipWhlName.zip"
         $UnzippedWhl = "$CurrentDir\unzipedWhl"
+        $OpenblasBin = "$CurrentDir\.github\.openblas\bin"
 
         #Expanding whl file
-        Rename-Item -Path $WhlName $ZipWhlName
+        if (Test-Path $ZipWhlName) {
+            Remove-Item -Force -Recurse $ZipWhlName
+        }
         if (Test-Path $UnzippedWhl) {
             Remove-Item -Force -Recurse $UnzippedWhl
         }
+        Rename-Item -Path $WhlName $ZipWhlName
         Expand-Archive -Force -Path $ZipWhlName $UnzippedWhl
 
         #Renaming all files to show that their arch is arm64
@@ -163,6 +232,8 @@ jobs:
         Compress-Archive -Path $UnzippedWhl\* -DestinationPath $ZipWhlName -Force
         $WhlName = $WhlName.Replace("win_amd64", "win_arm64")
         Rename-Item -Path $ZipWhlName $WhlName
+
+        delvewheel repair --add-path $OpenblasBin -w . "$WhlName"
 
         if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
 
