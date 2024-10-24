@@ -2174,7 +2174,7 @@ class TestUnwrap:
 
     def test_unwrap_int_array(self, TestUnwrapExact, TestUnwrapInexact, seed=1337):
         randState = np.random.RandomState(seed=seed)
-        arr = randState.randint(-1<<5, 1<<5, 1<<20).reshape(16, -1, 16)
+        arr = randState.randint(-32, 32, 1 << 20).reshape(16, -1, 16)
         # check normal functionality
         period, discont, axis = 4, 3, 1
         unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
@@ -2210,7 +2210,7 @@ class TestUnwrap:
         reason="gh-27609: np.lib.unwrap accumulates rounding errors")
     def test_unwrap_float_array(self, TestUnwrapInexact, seed=1337):
         randState = np.random.RandomState(seed=seed)
-        arr = randState.uniform(-1e9, 1e9, 1<<20).reshape(16, -1, 16)
+        arr = randState.uniform(-1e9, 1e9, 1 << 20).reshape(16, -1, 16)
         # check normal functionality
         period, discont, axis = 2 * np.pi, 1e7, 1
         unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
