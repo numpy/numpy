@@ -28,7 +28,6 @@ import textwrap
 import re
 from functools import reduce
 from typing import Dict
-
 import numpy as np
 import numpy._core.umath as umath
 import numpy._core.numerictypes as ntypes
@@ -868,7 +867,7 @@ class _DomainTan:
     def __call__(self, x):
         "Executes the call behavior."
         with np.errstate(invalid='ignore'):
-            return umath.less(umath.absolute(umath.cos(x)), self.eps)
+            return umath.less(umath.absolute(umath.cos(x)), self.eps).astype(np.bool)
 
 
 class _DomainSafeDivide:
@@ -905,7 +904,7 @@ class _DomainGreater:
     def __call__(self, x):
         "Executes the call behavior."
         with np.errstate(invalid='ignore'):
-            return umath.less_equal(x, self.critical_value)
+            return umath.less_equal(x, self.critical_value).astype(np.bool)
 
 
 class _DomainGreaterEqual:
@@ -921,7 +920,7 @@ class _DomainGreaterEqual:
     def __call__(self, x):
         "Executes the call behavior."
         with np.errstate(invalid='ignore'):
-            return umath.less(x, self.critical_value)
+            return umath.less(x, self.critical_value).astype(np.bool)
 
 
 class _MaskedUFunc:
@@ -3141,9 +3140,9 @@ class MaskedArray(ndarray):
         else:
             result = obj.view(type(self))
             result._update_from(self)
+            result._mask = self._mask.copy()
 
         if context is not None:
-            result._mask = result._mask.copy()
             func, args, out_i = context
             # args sometimes contains outputs (gh-10459), which we don't want
             input_args = args[:func.nin]
@@ -3182,7 +3181,6 @@ class MaskedArray(ndarray):
             else:
                 result._mask = m
                 result._sharedmask = False
-
         return result
 
     def view(self, dtype=None, type=None, fill_value=None):
