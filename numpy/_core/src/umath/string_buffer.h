@@ -17,6 +17,7 @@
 
 /**
  * @internal
+ * @enum ENCODING
  * @brief Enumeration for different text encodings.
  */
 enum class ENCODING {
@@ -27,6 +28,7 @@ enum class ENCODING {
 
 /**
  * @file_internal
+ * @enum IMPLEMENTED_UNARY_FUNCTIONS
  * @brief Enumeration for implemented unary functions.
  */
 enum class IMPLEMENTED_UNARY_FUNCTIONS {
@@ -1152,6 +1154,7 @@ operator-(Buffer<enc> lhs, npy_int64 rhs)
  * @brief Compares two buffers for equality.
  *
  * @tparam enc The buffer's encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
  * @param lhs The first buffer.
  * @param rhs The second buffer.
  * @return `true` if the buffers are equal, `false` otherwise.
@@ -1168,6 +1171,7 @@ operator==(Buffer<enc> lhs, Buffer<enc> rhs)
  * @brief Compares two buffers for inequality.
  *
  * @tparam enc The buffer's encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
  * @param lhs The first buffer.
  * @param rhs The second buffer.
  * @return `true` if the buffers are not equal, `false` otherwise.
@@ -1184,6 +1188,7 @@ operator!=(Buffer<enc> lhs, Buffer<enc> rhs)
  * @brief Checks if the first buffer is less than the second.
  *
  * @tparam enc The buffer's encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
  * @param lhs The first buffer.
  * @param rhs The second buffer.
  * @return `true` if the first buffer is less than the second,
@@ -1201,6 +1206,7 @@ operator<(Buffer<enc> lhs, Buffer<enc> rhs)
  * @brief Checks if the first buffer is greater than the second.
  *
  * @tparam enc The buffer's encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
  * @param lhs The first buffer.
  * @param rhs The second buffer.
  * @return `true` if the first buffer is greater than the second,
@@ -1218,6 +1224,7 @@ operator>(Buffer<enc> lhs, Buffer<enc> rhs)
  * @brief Checks if the first buffer is less than or equal to the second.
  *
  * @tparam enc The buffer's encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
  * @param lhs The first buffer.
  * @param rhs The second buffer.
  * @return `true` if the first buffer is less than or equal to the second,
@@ -1235,6 +1242,7 @@ operator<=(Buffer<enc> lhs, Buffer<enc> rhs)
  * @brief Checks if the first buffer is greater than or equal to the second.
  *
  * @tparam enc The buffer's encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
  * @param lhs The first buffer.
  * @param rhs The second buffer.
  * @return `true` if the first buffer is greater than or equal to the second,
@@ -1291,12 +1299,34 @@ adjust_offsets(npy_int64 *start, npy_int64 *end, size_t len)
     }
 }
 
+/**
+ * @brief Searches for the substring `buf2` within the string
+ *        `buf1` in the specified range.
+ *
+ * - This function adjusts the start and end indices to ensure they are
+ * within valid ranges.
+ * - If the length of `buf2` exceeds the search range in `buf1`, the
+ * function returns -1.
+ * - If `buf2` is empty, the function returns the start index.
+ *
+ * @tparam enc The encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param buf1 The main buffer containing the string to search in.
+ * @param buf2 The buffer containing the substring to search for.
+ * @param start The starting index for the search in `buf1`.
+ * @param end The ending index for the search in `buf1`.
+ *
+ * @return The index of the first occurrence of `buf2` in `buf1`,
+ *         or -1 if not found.
+ * @note The search starts from the index specified by `start` (inclusive)
+ *       and ends before the index specified by `end` (exclusive).
+ */
 template <ENCODING enc>
 static inline npy_intp
 string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    npy_int64 len1 = static_cast<npy_int64>(buf1.num_codepoints());
-    npy_int64 len2 = static_cast<npy_int64>(buf2.num_codepoints());
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
     if (end - start < len2) {
@@ -1383,7 +1413,31 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     return pos;
 }
 
-/* string_index returns -2 to signify a raised exception */
+/**
+ * @brief Finds the starting position of a substring within a string.
+ *
+ * This function attempts to find the position of the substring
+ * represented by `buf2` within the string represented by `buf1`,
+ * between the `start` and `end` positions. If the substring is
+ * not found, it raises a Python `ValueError` and returns -2 to
+ * indicate an exception. Otherwise, it returns the index of the
+ * substring.
+ *
+ * @tparam enc The encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param buf1 The buffer containing the string to search in.
+ * @param buf2 The buffer containing the substring to search for.
+ * @param start The starting position within `buf1` to begin searching.
+ * @param end The ending position within `buf1` to stop searching.
+ *
+ * @return The starting position of the substring within the string,
+ *         or -2 if not found.
+ * @throws PyExc_ValueError If the substring is not found within the
+ *         specified range, this function raises a `ValueError` with
+ *         the error message: "substring not found".
+ * @note The search starts from the index specified by `start` (inclusive)
+ *       and ends before the index specified by `end` (exclusive).
+ */
 template <ENCODING enc>
 static inline npy_intp
 string_index(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
@@ -1396,15 +1450,37 @@ string_index(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     return pos;
 }
 
+/**
+ * @brief Searches for the substring `buf2` within the string
+ *        `buf1` in the specified range, searching backwards.
+ *
+ * - This function adjusts the start and end indices to ensure they are
+ * within valid ranges.
+ * - If the length of `buf2` exceeds the search range in `buf1`, the
+ * function returns -1.
+ * - If `buf2` is empty, the function returns the end index.
+ *
+ * @tparam enc The encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param buf1 The main buffer containing the string to search in.
+ * @param buf2 The buffer containing the substring to search for.
+ * @param start The starting index for the search in `buf1`.
+ * @param end The ending index for the search in `buf1`.
+ *
+ * @return The index of the last occurrence of `buf2` in `buf1`,
+ *         or -1 if not found.
+ * @note The search starts from the index specified by `start` (inclusive)
+ *       and ends before the index specified by `end` (exclusive).
+ */
 template <ENCODING enc>
 static inline npy_intp
 string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
-    if (end - start < static_cast<npy_int64>(len2)) {
+    if (end - start < len2) {
         return (npy_intp) -1;
     }
 
@@ -1466,10 +1542,12 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     npy_intp pos;
     switch (enc) {
         case ENCODING::UTF8:
-            pos = fastsearch(start_loc, end_loc - start_loc, buf2.buf, buf2.after - buf2.buf, -1, FAST_RSEARCH);
+            pos = fastsearch(start_loc, end_loc - start_loc,
+                    buf2.buf, buf2.after - buf2.buf, -1, FAST_RSEARCH);
             // pos is the byte index, but we need the character index
             if (pos > 0) {
-                pos = utf8_character_index(start_loc, start_loc - buf1.buf, start, pos, buf1.after - start_loc);
+                pos = utf8_character_index(start_loc, start_loc - buf1.buf,
+                        start, pos, buf1.after - start_loc);
             }
             break;
         case ENCODING::ASCII:
@@ -1486,8 +1564,30 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     return pos;
 }
 
-
-/* string_rindex returns -2 to signify a raised exception */
+/**
+ * @brief Finds the last occurrence of a substring within a specified range.
+ *
+ * This function searches for the last occurrence of the substring `buf2`
+ * within the buffer `buf1` starting from the specified `start` position
+ * and ending at the `end` position. If the substring is not found, it
+ * raises a Python `ValueError` and returns -2 to indicate an exception.
+ * Otherwise, it returns the index of the substring.
+ *
+ * @tparam enc The encoding type.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param buf1 The buffer containing the string to search in.
+ * @param buf2 The buffer containing the substring to search for.
+ * @param start The starting position within `buf1` to begin searching.
+ * @param end The ending position within `buf1` to stop searching.
+ *
+ * @return The index of the last occurrence of the substring,
+ *         or -2 if not found.
+ * @throws PyExc_ValueError If the substring is not found within the
+ *         specified range, this function raises a `ValueError` with
+ *         the error message: "substring not found".
+ * @note The search starts from the index specified by `start` (inclusive)
+ *       and ends before the index specified by `end` (exclusive).
+ */
 template <ENCODING enc>
 static inline npy_intp
 string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
@@ -1500,20 +1600,34 @@ string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end
     return pos;
 }
 
-
-/*
- * Count the number of occurrences of buf2 in buf1 between
- * start (inclusive) and end (exclusive)
+/**
+ * @brief Count the occurrences of a substring within a specified range.
+ *
+ * This function counts how many times the substring `buf2` appears
+ * within the buffer `buf1` between the specified `start` and `end`
+ * indices. This function adjusts the start and end indices to ensure
+ * they are within valid ranges.
+ *
+ * @tparam enc The encoding type of the buffers.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param buf1 The buffer to search within.
+ * @param buf2 The substring to search for.
+ * @param start The starting index for the search (inclusive).
+ * @param end The ending index for the search (exclusive).
+ *
+ * @return The number of occurrences of the substring.
+ * @note The search starts from the index specified by `start` (inclusive)
+ *       and ends before the index specified by `end` (exclusive).
  */
 template <ENCODING enc>
 static inline npy_intp
 string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
-    if (end < start || end - start < static_cast<npy_int64>(len2)) {
+    if (end < start || end - start < len2) {
         return (npy_intp) 0;
     }
 
@@ -1531,7 +1645,8 @@ string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
         start_loc = (buf1 + start).buf;
         end_loc = (buf1 + end).buf;
     }
-    npy_intp count;
+
+    npy_intp count = 0;
     switch (enc) {
         case ENCODING::UTF8:
             count = fastsearch(start_loc, end_loc - start_loc, buf2.buf,
@@ -1548,23 +1663,51 @@ string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
                                           PY_SSIZE_T_MAX, FAST_COUNT);
             break;
     }
+
     if (count < 0) {
         return 0;
     }
     return count;
 }
 
-enum class STARTPOSITION {
-    FRONT, BACK
+
+/**
+ * @enum START_POSITION
+ * @brief Enumeration for the starting position of the search.
+ */
+enum class START_POSITION {
+    FRONT, ///< Start from the front of the buffer.
+    BACK   ///< Start from the back of the buffer.
 };
 
+/**
+ * @brief Check if the specified buffer ends with the given substring.
+ *
+ * This function adjusts the start and end indices to ensure they are
+ * within valid ranges. The search can be performed from either the
+ * front or the back of the buffer depending on the specified direction.
+ * This function adjusts the start and end indices to ensure they are
+ * within valid ranges. If `buf2` is empty, the function returns `1`.
+ *
+ * @tparam enc The encoding type of the buffers.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param buf1 The buffer to check against.
+ * @param buf2 The substring to check for.
+ * @param start The starting index for the search (inclusive).
+ * @param end The ending index for the search (exclusive).
+ * @param direction The direction to search from (either front or back).
+ *
+ * @return `npy_bool` indicating whether `buf1` ends with `buf2`.
+ * @note The search starts from the index specified by `start` (inclusive)
+ *       and ends before the index specified by `end` (exclusive).
+ */
 template <ENCODING enc>
 inline npy_bool
-tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
-          STARTPOSITION direction)
+tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
+          START_POSITION direction)
 {
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
 
     adjust_offsets(&start, &end, len1);
     end -= len2;
@@ -1578,7 +1721,8 @@ tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 
     size_t offset;
     size_t end_sub = len2 - 1;
-    if (direction == STARTPOSITION::BACK) {
+    if (direction == START_POSITION::BACK) {
+        // The end index has been adjusted by subtracting the length of buf2.
         offset = end;
     }
     else {
@@ -1599,14 +1743,14 @@ tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
     return 0;
 }
 
-enum class STRIPTYPE {
-    LEFTSTRIP, RIGHTSTRIP, BOTHSTRIP
-};
 
+enum class STRIP_TYPE {
+    LEFT_STRIP, RIGHT_STRIP, BOTH_STRIP
+};
 
 template <ENCODING enc>
 static inline size_t
-string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
+string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_type)
 {
     size_t len = buf.num_codepoints();
     if (len == 0) {
@@ -1621,7 +1765,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
     size_t num_bytes = (buf.after - buf.buf);
     Buffer traverse_buf = Buffer<enc>(buf.buf, num_bytes);
 
-    if (striptype != STRIPTYPE::RIGHTSTRIP) {
+    if (strip_type != STRIP_TYPE::RIGHT_STRIP) {
         while (new_start < len) {
             if (!traverse_buf.first_character_isspace()) {
                 break;
@@ -1640,7 +1784,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
         traverse_buf = buf + (new_stop - 1);
     }
 
-    if (striptype != STRIPTYPE::LEFTSTRIP) {
+    if (strip_type != STRIP_TYPE::LEFT_STRIP) {
         while (new_stop > new_start) {
             if (*traverse_buf != 0 && !traverse_buf.first_character_isspace()) {
                 break;
@@ -1669,7 +1813,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
 
 template <ENCODING enc>
 static inline size_t
-string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPTYPE striptype)
+string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_TYPE strip_type)
 {
     size_t len1 = buf1.num_codepoints();
     if (len1 == 0) {
@@ -1695,7 +1839,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
     size_t num_bytes = (buf1.after - buf1.buf);
     Buffer traverse_buf = Buffer<enc>(buf1.buf, num_bytes);
 
-    if (striptype != STRIPTYPE::RIGHTSTRIP) {
+    if (strip_type != STRIP_TYPE::RIGHT_STRIP) {
         for (; new_start < len1; traverse_buf++) {
             Py_ssize_t res;
             size_t current_point_bytes = traverse_buf.num_bytes_next_character();
@@ -1739,7 +1883,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
         traverse_buf = buf1 + (new_stop - 1);
     }
 
-    if (striptype != STRIPTYPE::LEFTSTRIP) {
+    if (strip_type != STRIP_TYPE::LEFT_STRIP) {
         while (new_stop > new_start) {
             size_t current_point_bytes = traverse_buf.num_bytes_next_character();
             Py_ssize_t res;
@@ -2090,7 +2234,7 @@ static inline void
 string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
                  Buffer<enc> out1, Buffer<enc> out2, Buffer<enc> out3,
                  npy_intp *final_len1, npy_intp *final_len2, npy_intp *final_len3,
-                 STARTPOSITION pos)
+                 START_POSITION pos)
 {
     // StringDType uses a ufunc that implements the find-part as well
     assert(enc != ENCODING::UTF8);
@@ -2105,7 +2249,7 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
     }
 
     if (idx < 0) {
-        if (pos == STARTPOSITION::FRONT) {
+        if (pos == START_POSITION::FRONT) {
             buf1.buffer_memcpy(out1, len1);
             *final_len1 = len1;
             *final_len2 = *final_len3 = 0;

@@ -361,7 +361,7 @@ string_startswith_endswith_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    STARTPOSITION startposition = *(STARTPOSITION *)(context->method->static_data);
+    START_POSITION startposition = *(START_POSITION *)(context->method->static_data);
     int elsize1 = context->descriptors[0]->elsize;
     int elsize2 = context->descriptors[1]->elsize;
 
@@ -376,7 +376,7 @@ string_startswith_endswith_loop(PyArrayMethod_Context *context,
     while (N--) {
         Buffer<enc> buf1(in1, elsize1);
         Buffer<enc> buf2(in2, elsize2);
-        npy_bool match = tailmatch<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4,
+        npy_bool match = tail_match<enc>(buf1, buf2, *(npy_int64 *)in3, *(npy_int64 *)in4,
                                         startposition);
         *(npy_bool *)out = match;
 
@@ -396,7 +396,7 @@ string_lrstrip_whitespace_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    STRIPTYPE striptype = *(STRIPTYPE *)(context->method->static_data);
+    STRIP_TYPE striptype = *(STRIP_TYPE *)(context->method->static_data);
     int elsize = context->descriptors[0]->elsize;
     int outsize = context->descriptors[1]->elsize;
 
@@ -424,7 +424,7 @@ string_lrstrip_chars_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    STRIPTYPE striptype = *(STRIPTYPE *)(context->method->static_data);
+    STRIP_TYPE striptype = *(STRIP_TYPE *)(context->method->static_data);
     int elsize1 = context->descriptors[0]->elsize;
     int elsize2 = context->descriptors[1]->elsize;
     int outsize = context->descriptors[2]->elsize;
@@ -588,7 +588,7 @@ string_partition_index_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    STARTPOSITION startposition = *(STARTPOSITION *)(context->method->static_data);
+    START_POSITION startposition = *(START_POSITION *)(context->method->static_data);
     int elsize1 = context->descriptors[0]->elsize;
     int elsize2 = context->descriptors[1]->elsize;
     int outsize1 = context->descriptors[3]->elsize;
@@ -1514,8 +1514,8 @@ init_string_ufuncs(PyObject *umath)
         "startswith", "endswith"
     };
 
-    static STARTPOSITION startpositions[] = {
-        STARTPOSITION::FRONT, STARTPOSITION::BACK
+    static START_POSITION startpositions[] = {
+        START_POSITION::FRONT, START_POSITION::BACK
     };
 
     for (int i = 0; i < 2; i++) {
@@ -1543,8 +1543,8 @@ init_string_ufuncs(PyObject *umath)
         "_lstrip_whitespace", "_rstrip_whitespace", "_strip_whitespace"
     };
 
-    static STRIPTYPE striptypes[] = {
-        STRIPTYPE::LEFTSTRIP, STRIPTYPE::RIGHTSTRIP, STRIPTYPE::BOTHSTRIP
+    static STRIP_TYPE striptypes[] = {
+        STRIP_TYPE::LEFT_STRIP, STRIP_TYPE::RIGHT_STRIP, STRIP_TYPE::BOTH_STRIP
     };
 
     for (int i = 0; i < 3; i++) {
@@ -1704,8 +1704,8 @@ init_string_ufuncs(PyObject *umath)
 
     const char *partition_names[] = {"_partition_index", "_rpartition_index"};
 
-    static STARTPOSITION partition_startpositions[] = {
-        STARTPOSITION::FRONT, STARTPOSITION::BACK
+    static START_POSITION partition_startpositions[] = {
+        START_POSITION::FRONT, START_POSITION::BACK
     };
 
     for (int i = 0; i < 2; i++) {

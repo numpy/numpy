@@ -945,7 +945,7 @@ string_startswith_endswith_strided_loop(PyArrayMethod_Context *context,
                                NpyAuxData *auxdata)
 {
     const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
-    STARTPOSITION startposition = *(STARTPOSITION *)context->method->static_data;
+    START_POSITION startposition = *(START_POSITION *)context->method->static_data;
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
 
     int has_null = descr1->na_object != NULL;
@@ -998,7 +998,7 @@ string_startswith_endswith_strided_loop(PyArrayMethod_Context *context,
             Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
             Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
 
-            npy_bool match = tailmatch<ENCODING::UTF8>(buf1, buf2, start, end,
+            npy_bool match = tail_match<ENCODING::UTF8>(buf1, buf2, start, end,
                                                        startposition);
             *(npy_bool *)out = match;
         }
@@ -1061,7 +1061,7 @@ string_lrstrip_chars_strided_loop(
         NpyAuxData *auxdata)
 {
     const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
-    STRIPTYPE striptype = *(STRIPTYPE *)context->method->static_data;
+    STRIP_TYPE striptype = *(STRIP_TYPE *)context->method->static_data;
     PyArray_StringDTypeObject *s1descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     int has_null = s1descr->na_object != NULL;
     int has_string_na = s1descr->has_string_na;
@@ -1187,7 +1187,7 @@ string_lrstrip_whitespace_strided_loop(
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
     const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
-    STRIPTYPE striptype = *(STRIPTYPE *)context->method->static_data;
+    STRIP_TYPE striptype = *(STRIP_TYPE *)context->method->static_data;
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
     int has_null = descr->na_object != NULL;
     int has_string_na = descr->has_string_na;
@@ -1957,9 +1957,9 @@ string_partition_strided_loop(
         npy_intp const strides[],
         NpyAuxData *NPY_UNUSED(auxdata))
 {
-    STARTPOSITION startposition = *(STARTPOSITION *)(context->method->static_data);
+    START_POSITION startposition = *(START_POSITION *)(context->method->static_data);
     int fastsearch_direction =
-            startposition == STARTPOSITION::FRONT ? FAST_SEARCH : FAST_RSEARCH;
+            startposition == START_POSITION::FRONT ? FAST_SEARCH : FAST_RSEARCH;
 
     npy_intp N = dimensions[0];
 
@@ -2030,7 +2030,7 @@ string_partition_strided_loop(
         npy_intp out1_size, out2_size, out3_size;
 
         if (idx == -1) {
-            if (startposition == STARTPOSITION::FRONT) {
+            if (startposition == START_POSITION::FRONT) {
                 out1_size = i1s.size;
                 out2_size = out3_size = 0;
             }
@@ -2066,7 +2066,7 @@ string_partition_strided_loop(
         }
 
         if (idx == -1) {
-            if (startposition == STARTPOSITION::FRONT) {
+            if (startposition == START_POSITION::FRONT) {
                 memcpy((char *)o1s.buf, i1s.buf, out1_size);
             }
             else {
@@ -2642,9 +2642,9 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_BoolDType,
     };
 
-    static STARTPOSITION startswith_endswith_startposition[] = {
-        STARTPOSITION::FRONT,
-        STARTPOSITION::BACK,
+    static START_POSITION startswith_endswith_startposition[] = {
+        START_POSITION::FRONT,
+        START_POSITION::BACK,
     };
 
     for (int i=0; i<2; i++) {
@@ -2672,10 +2672,10 @@ init_stringdtype_ufuncs(PyObject *umath)
         "_lstrip_whitespace", "_rstrip_whitespace", "_strip_whitespace",
     };
 
-    static STRIPTYPE strip_types[] = {
-        STRIPTYPE::LEFTSTRIP,
-        STRIPTYPE::RIGHTSTRIP,
-        STRIPTYPE::BOTHSTRIP,
+    static STRIP_TYPE strip_types[] = {
+        STRIP_TYPE::LEFT_STRIP,
+        STRIP_TYPE::RIGHT_STRIP,
+        STRIP_TYPE::BOTH_STRIP,
     };
 
     for (int i=0; i<3; i++) {
@@ -2861,8 +2861,8 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     const char *partition_names[] = {"_partition", "_rpartition"};
 
-    static STARTPOSITION partition_startpositions[] = {
-        STARTPOSITION::FRONT, STARTPOSITION::BACK
+    static START_POSITION partition_startpositions[] = {
+        START_POSITION::FRONT, START_POSITION::BACK
     };
 
     for (int i=0; i<2; i++) {
