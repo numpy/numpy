@@ -1258,7 +1258,7 @@ cdef class Generator:
         >>> rng = np.random.default_rng()
         >>> s = rng.normal(mu, sigma, 1000)
 
-        Verify the mean and the variance:
+        Verify the mean and the standard deviation:
 
         >>> abs(mu - np.mean(s))
         0.0  # may vary
