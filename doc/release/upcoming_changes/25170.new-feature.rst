@@ -1,0 +1,7 @@
+``fill`` option for `numpy.atleast_2d` and `numpy.atleast_3d`
+-------------------------------------------------------------
+The ``fill`` option is now available for `numpy.atleast_2d` and
+`numpy.atleast_3d`, to specify where the lacking dimensions should be added.
+Previous default behaviours remain unchanged, they respectively correspond to
+``fill='left'`` for `numpy.atleast_2d` and ``fill='both'`` for
+`numpy.atleast_3d`.
