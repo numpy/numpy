@@ -194,14 +194,22 @@ class TestNDArrayArrayFunction:
         assert_equal(result, expected.view(OverrideSub))
 
     def test_no_wrapper(self):
-        # This shouldn't happen unless a user intentionally calls
-        # __array_function__ with invalid arguments, but check that we raise
-        # an appropriate error all the same.
+        # Regular numpy functions have wrappers, but do not presume
+        # all functions do (array creation ones do not): check that
+        # we just call the function in that case.
         array = np.array(1)
-        func = lambda x: x
-        with assert_raises_regex(AttributeError, '_implementation'):
-            array.__array_function__(func=func, types=(np.ndarray,),
-                                     args=(array,), kwargs={})
+        func = lambda x: x * 2
+        result = array.__array_function__(func=func, types=(np.ndarray,),
+                                          args=(array,), kwargs={})
+        assert_equal(result, array * 2)
+
+    def test_wrong_arguments(self):
+        # Check our implementation guards against wrong arguments.
+        a = np.array([1, 2])
+        with pytest.raises(TypeError, match="args must be a tuple"):
+            a.__array_function__(np.reshape, (np.ndarray,), a, (2, 1))
+        with pytest.raises(TypeError, match="kwargs must be a dict"):
+            a.__array_function__(np.reshape, (np.ndarray,), (a,), (2, 1))
 
     def test_wrong_arguments(self):
         # Check our implementation guards against wrong arguments.
@@ -568,6 +576,13 @@ class TestArrayLike:
 
         self.MyNoArrayFunctionArray = MyNoArrayFunctionArray
 
+        class MySubclass(np.ndarray):
+            def __array_function__(self, func, types, args, kwargs):
+                result = super().__array_function__(func, types, args, kwargs)
+                return result.view(self.__class__)
+
+        self.MySubclass = MySubclass
+
     def add_method(self, name, arr_class, enable_value_error=False):
         def _definition(*args, **kwargs):
             # Check that `like=` isn't propagated downstream
@@ -660,6 +675,19 @@ class TestArrayLike:
         with assert_raises_regex(TypeError,
                 'The `like` argument must be an array-like that implements'):
             np_func(*like_args, **kwargs, like=ref)
+
+    @pytest.mark.parametrize('function, args, kwargs', _array_tests)
+    def test_subclass(self, function, args, kwargs):
+        ref = np.array(1).view(self.MySubclass)
+        np_func = getattr(np, function)
+        like_args = tuple(a() if callable(a) else a for a in args)
+        array_like = np_func(*like_args, **kwargs, like=ref)
+        assert type(array_like) is self.MySubclass
+        if np_func is np.empty:
+            return
+        np_args = tuple(a() if callable(a) else a for a in args)
+        np_arr = np_func(*np_args, **kwargs)
+        assert_equal(array_like.view(np.ndarray), np_arr)
 
     @pytest.mark.parametrize('numpy_ref', [True, False])
     def test_array_like_fromfile(self, numpy_ref):
