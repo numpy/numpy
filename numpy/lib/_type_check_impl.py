@@ -409,9 +409,6 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
         Value to be used to fill negative infinity values. If no value is
         passed then negative infinity values will be replaced with a very
         small (or negative) number.
-        .. versionadded:: 1.17
-
-
 
     Returns
     -------
