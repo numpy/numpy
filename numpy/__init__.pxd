@@ -266,6 +266,23 @@ cdef extern from "numpy/arrayobject.h":
         NPY_MAXDIMS  # 64 on NumPy 2.x and 32 on NumPy 1.x
         NPY_RAVEL_AXIS  # Used for functions like PyArray_Mean
 
+    # The memory handler functions require the NumPy 1.22 API
+    # and may require defining NPY_TARGET_VERSION
+    ctypedef struct PyDataMemAllocator:
+        void *ctx
+        void* (*malloc) (void *ctx, size_t size)
+        void* (*calloc) (void *ctx, size_t nelem, size_t elsize)
+        void* (*realloc) (void *ctx, void *ptr, size_t new_size)
+        void (*free) (void *ctx, void *ptr, size_t size)
+
+    ctypedef struct PyDataMem_Handler:
+        char* name
+        npy_uint8 version
+        PyDataMemAllocator allocator
+
+    object PyDataMem_SetHandler(object handler)
+    object PyDataMem_GetHandler()
+
     ctypedef void (*PyArray_VectorUnaryFunc)(void *, void *, npy_intp, void *,  void *)
 
     ctypedef struct PyArray_ArrayDescr:
