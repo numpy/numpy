@@ -2104,6 +2104,48 @@ def TestUnwrapExact():
             ), where=relevant_inds))
     return _test_unwrap_exact
 
+@pytest.fixture
+def TestUnwrapInexact():
+    def _test_unwrap_inexact(arr, out_arr, *, period, discont, axis):
+        half_period = period / 2
+        if discont is None:
+            discont = half_period
+        implies = lambda cond1, cond2: (~cond1) | cond2
+        iff = lambda cond1, cond2: \
+            implies(cond1, cond2) & implies(cond2, cond1)
+        tol = 1e-6
+        slices = [slice(None, None)] * arr.ndim
+        slices[axis] = slice(0, 1)
+        slices = tuple(slices)
+
+        assert_allclose(arr[slices], out_arr[slices])
+        assert_allclose(
+            np.mod(arr - out_arr + half_period, period), half_period)
+        assert_(np.all(implies(
+            np.abs(np.diff(arr, axis=axis)) < discont,
+            np.isclose(
+                np.diff(out_arr, axis=axis),
+                np.diff(arr, axis=axis))
+        )))
+        assert_(np.all(implies(
+            np.abs(np.diff(arr, axis=axis)) >= discont - tol,
+            np.abs(np.diff(out_arr, axis=axis)) <= abs(half_period) + tol
+        )))
+        relevant_inds = \
+            (np.mod(np.diff(arr, axis=axis), period) == half_period) & \
+            (np.abs(np.diff(arr, axis=axis)) >= discont + tol)
+        if period > 0:
+            assert_(np.all(iff(
+                np.diff(out_arr, axis=axis) > 0,
+                np.diff(arr, axis=axis) > 0
+            ), where=relevant_inds))
+        else:
+            assert_(np.all(iff(
+                np.diff(out_arr, axis=axis) > 0,
+                np.diff(arr, axis=axis) < 0
+            ), where=relevant_inds))
+    return _test_unwrap_inexact
+
 class TestUnwrap:
 
     def test_simple(self):
