@@ -1782,6 +1782,9 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
         half_period = period / 2
         boundary_ambiguous = True
 
+    if discont is not None:
+        dd[abs(dd) < discont] = 0
+
     dd_mod_2period = mod(dd, 2 * period)
     dd_periods = (dd / period).round().astype(int)
 
@@ -1790,9 +1793,6 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
         pos_corrections = (dd_mod_2period == half_period) & (dd < 0)
         dd_periods[neg_corrections] -= 1
         dd_periods[pos_corrections] += 1
-
-    if discont is not None and discont > half_period:
-        dd_periods[abs(dd) < discont] = 0
 
     phase_shifts = dd_periods.cumsum(axis=axis)
 
