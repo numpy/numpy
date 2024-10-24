@@ -1717,13 +1717,12 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
 
      1. ``q[0] == p[0]``.
      2. :math:`\forall i`. ``(p[i] - q[i]) % period == 0``.
-     3. :math:`\forall i>0`. ``abs(p[i] - p[i-1]) < discont`` ->
-     ``q[i] - q[i-1] == p[i] - p[i-1]``.
+     3. :math:`\forall i>0`. ``abs(p[i] - p[i-1]) < discont`` -> ``q[i] - q[i-1] == p[i] - p[i-1]``.
      4. :math:`\forall i>0`. ``abs(p[i] - p[i-1]) >= discont`` ->
-       1. ``abs(q[i] - q[i-1]) <= abs(period/2)``.
-       2. ``(p[i] - p[i-1]) % period == (period/2)`` ->
-        a. ``period > 0`` -> ``q[i] > q[i-1]`` iff ``p[i] > p[i-1]``.
-        b. ``period < 0`` -< ``q[i] < q[i-1]`` iff ``p[i] > p[i-1]``.
+       a. ``abs(q[i] - q[i-1]) <= abs(period/2)``.
+       b. ``(p[i] - p[i-1]) % period == (period/2)`` ->
+        1. ``period > 0`` -> ``q[i] > q[i-1]`` iff ``p[i] > p[i-1]``.
+        2. ``period < 0`` -< ``q[i] < q[i-1]`` iff ``p[i] > p[i-1]``.
 
     (everything should be understood w.r.t. axis, and
     comparisons are only approximately true in non-integral case)
