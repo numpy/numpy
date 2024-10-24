@@ -711,13 +711,13 @@ fprintf(stderr,\"string_from_pyobj(str='%s',len=%d,inistr='%s',obj=%p)\\n\",
             Py_INCREF(tmp);
         }
         else if (PyUnicode_Check(obj)) {
-            tmp = PyUnicode_AsASCIIString(obj);
+            tmp = PyUnicode_AsUTF8String(obj);
         }
         else {
             PyObject *tmp2;
             tmp2 = PyObject_Str(obj);
             if (tmp2) {
-                tmp = PyUnicode_AsASCIIString(tmp2);
+                tmp = PyUnicode_AsUTF8String(tmp2);
                 Py_DECREF(tmp2);
             }
             else {
@@ -777,7 +777,7 @@ character_from_pyobj(character* v, PyObject *obj, const char *errmess) {
         *v = PyBytes_AS_STRING(obj)[0];
         return 1;
     } else if (PyUnicode_Check(obj)) {
-        PyObject* tmp = PyUnicode_AsASCIIString(obj);
+        PyObject* tmp = PyUnicode_AsUTF8String(obj);
         if (tmp != NULL) {
             *v = PyBytes_AS_STRING(tmp)[0];
             Py_DECREF(tmp);
