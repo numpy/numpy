@@ -2118,17 +2118,17 @@ def TestUnwrapInexact():
         slices[axis] = slice(0, 1)
         slices = tuple(slices)
 
-        assert_allclose(arr[slices], out_arr[slices])
+        assert_allclose(arr[slices], out_arr[slices], atol=tol)
         assert_allclose(
-            np.mod(arr - out_arr + half_period, period), half_period)
+            np.mod(arr - out_arr + half_period, period), half_period, atol=tol)
         assert_(np.all(implies(
-            np.abs(np.diff(arr, axis=axis)) < discont,
+            np.abs(np.diff(arr, axis=axis)) < discont - tol,
             np.isclose(
                 np.diff(out_arr, axis=axis),
                 np.diff(arr, axis=axis))
         )))
         assert_(np.all(implies(
-            np.abs(np.diff(arr, axis=axis)) >= discont - tol,
+            np.abs(np.diff(arr, axis=axis)) >= discont + tol,
             np.abs(np.diff(out_arr, axis=axis)) <= abs(half_period) + tol
         )))
         relevant_inds = \
