@@ -5198,7 +5198,7 @@ def delete(arr, obj, axis=None):
     ----------
     arr : array_like
         Input array.
-    obj : slice, int or array of ints
+    obj : slice, int, array-like of ints or bools
         Indicate indices of sub-arrays to remove along the specified axis.
 
         .. versionchanged:: 1.19.0
@@ -5380,11 +5380,13 @@ def insert(arr, obj, values, axis=None):
     ----------
     arr : array_like
         Input array.
-    obj : int, slice or sequence of ints
+    obj : slice, int, array-like of ints or bools
         Object that defines the index or indices before which `values` is
         inserted.
 
-        .. versionadded:: 1.8.0
+        .. versionchanged:: 2.1.2
+            Boolean indices are now treated as a mask of elements to insert,
+            rather than being cast to the integers 0 and 1.
 
         Support for multiple insertions when `obj` is a single scalar or a
         sequence with one element (similar to calling insert multiple
@@ -5491,18 +5493,10 @@ def insert(arr, obj, values, axis=None):
         # need to copy obj, because indices will be changed in-place
         indices = np.array(obj)
         if indices.dtype == bool:
-            # See also delete
-            # 2012-10-11, NumPy 1.8
-            warnings.warn(
-                "in the future insert will treat boolean arrays and "
-                "array-likes as a boolean index instead of casting it to "
-                "integer", FutureWarning, stacklevel=2)
-            indices = indices.astype(intp)
-            # Code after warning period:
-            #if obj.ndim != 1:
-            #    raise ValueError('boolean array argument obj to insert '
-            #                     'must be one dimensional')
-            #indices = np.flatnonzero(obj)
+            if obj.ndim != 1:
+                raise ValueError('boolean array argument obj to insert '
+                                'must be one dimensional')
+            indices = np.flatnonzero(obj)
         elif indices.ndim > 1:
             raise ValueError(
                 "index array argument obj to insert must be one dimensional "
