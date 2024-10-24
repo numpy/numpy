@@ -248,3 +248,54 @@ jobs:
                                      $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
                                      $NUMPY_SITE/numpy/_core/tests/test_multiarray.py \
                                      $NUMPY_SITE/numpy/linalg/tests/test_*
+
+  intel_compiler:
+    needs: [baseline_only]
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      with:
+        python-version: '3.11'
+
+    - name: Install Intel SDE
+      run: |
+        curl -o /tmp/sde.tar.xz https://downloadmirror.intel.com/788820/sde-external-9.27.0-2023-09-13-lin.tar.xz
+        mkdir /tmp/sde && tar -xvf /tmp/sde.tar.xz -C /tmp/sde/
+        sudo mv /tmp/sde/* /opt/sde && sudo ln -s /opt/sde/sde64 /usr/bin/sde
+
+    - name: Install dependencies
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install pytest pytest-xdist hypothesis typing_extensions
+
+    - name: Install Intel compilers
+      run: |
+        echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo add-apt-repository -y "deb https://apt.repos.intel.com/oneapi all main"
+        sudo apt update --allow-insecure-repositories
+        sudo apt --allow-unauthenticated -y install intel-oneapi-compiler-dpcpp-cpp
+
+    - name: Build
+      run: |
+        source /opt/intel/oneapi/setvars.sh
+        CFLAGS='-fp-model=strict -fveclib=none' CXXFLAGS='-fp-model=strict -fveclib=none' CC=icx CXX=icpx spin build -- -Dallow-noblas=true
+
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
+
+    - name: linalg/ufunc/umath tests on Intel TGL
+      run: |
+        source /opt/intel/oneapi/setvars.sh # need this to locate libsvml.so
+        export NUMPY_SITE=$(realpath build-install/usr/lib/python*/site-packages/)
+        export PYTHONPATH="$PYTHONPATH:$NUMPY_SITE"
+        cd build-install &&
+        sde -tgl -- python -c "import numpy; numpy.show_config()" &&
+        sde -tgl -- python -m pytest $NUMPY_SITE/numpy/_core/tests/test_umath* \
+                                     $NUMPY_SITE/numpy/_core/tests/test_ufunc.py \
+                                     $NUMPY_SITE/numpy/_core/tests/test_multiarray.py \
+                                     $NUMPY_SITE/numpy/linalg/tests/test_*
