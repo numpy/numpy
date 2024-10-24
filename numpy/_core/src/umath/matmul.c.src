@@ -81,9 +81,9 @@ static const npy_cfloat oneF = 1.0f, zeroF = 0.0f;
  */
 NPY_NO_EXPORT void
 @name@_gemv(void *ip1, npy_intp is1_m, npy_intp is1_n,
-            void *ip2, npy_intp is2_n, npy_intp NPY_UNUSED(is2_p),
-            void *op, npy_intp op_m, npy_intp NPY_UNUSED(op_p),
-            npy_intp m, npy_intp n, npy_intp NPY_UNUSED(p))
+            void *ip2, npy_intp is2_n,
+            void *op, npy_intp op_m,
+            npy_intp m, npy_intp n)
 {
     /*
      * Vector matrix multiplication -- Level 2 BLAS
@@ -465,13 +465,12 @@ NPY_NO_EXPORT void
                                            op, os_m, os_p, dm, dn, dp);
             } else if (vector_matrix) {
                 /* vector @ matrix, switch ip1, ip2, p and m */
-                @TYPE@_gemv(ip2, is2_p, is2_n, ip1, is1_n, is1_m,
-                            op, os_p, os_m, dp, dn, dm);
+                @TYPE@_gemv(ip2, is2_p, is2_n, ip1, is1_n,
+                            op, os_p, dp, dn);
             } else if  (matrix_vector) {
                 /* matrix @ vector */
-                @TYPE@_gemv(ip1, is1_m, is1_n, ip2, is2_n, is2_p,
-
-                            op, os_m, os_p, dm, dn, dp);
+                @TYPE@_gemv(ip1, is1_m, is1_n, ip2, is2_n,
+                            op, os_m, dm, dn);
             } else {
                 /* column @ row, 2d output, no blas needed or non-blas-able input */
                 @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n,
@@ -652,6 +651,88 @@ NPY_NO_EXPORT void
             return;
         }
 #endif
+    }
+}
+/**end repeat**/
+
+/*
+ * matvec loops, using noblas matmul loops internally.
+ * signature is (n,m),(n)->(m)
+ */
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BOOL, OBJECT#
+ *  #typ = npy_float,npy_double,npy_longdouble, npy_half,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_bool, npy_object#
+ * #USEBLAS = 1, 1, 0, 0, 1, 1, 0*13#
+ */
+NPY_NO_EXPORT void
+@TYPE@_matvec(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    npy_intp dOuter = *dimensions++;
+    npy_intp iOuter;
+    npy_intp s0 = *steps++;
+    npy_intp s1 = *steps++;
+    npy_intp s2 = *steps++;
+    npy_intp dm = dimensions[0];
+    npy_intp dn = dimensions[1];
+    npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], os_m=steps[3];
+#if @USEBLAS@ && defined(HAVE_CBLAS)
+    npy_intp sz = sizeof(@typ@);
+    npy_bool too_big_for_blas = (dm > BLAS_MAXSIZE || dn > BLAS_MAXSIZE);
+    npy_bool i1_c_blasable = is_blasable2d(is1_m, is1_n, dm, dn, sz);
+    npy_bool i1_f_blasable = is_blasable2d(is1_n, is1_m, dn, dm, sz);
+    npy_bool i1blasable = i1_c_blasable || i1_f_blasable;
+#endif
+    for (iOuter = 0; iOuter < dOuter; iOuter++,
+                         args[0] += s0, args[1] += s1, args[2] += s2) {
+        void *ip1=args[0], *ip2=args[1], *op=args[2];
+#if @USEBLAS@ && defined(HAVE_CBLAS)
+        if (i1blasable && !too_big_for_blas && dn > 1 && dm > 1) {
+            @TYPE@_gemv(ip1, is1_m, is1_n, ip2, is2_n,
+                        op, os_m, dm, dn);
+            continue;
+        }
+#endif
+        @TYPE@_matmul_inner_noblas(ip1, is1_m, is1_n, ip2, is2_n, 0,
+                                   op, os_m, 0, dm, dn, 1);
+    }
+}
+/**end repeat**/
+
+/*
+ * vecmat: use vecdot to do the work, letting it loop over the matrix.
+ * signature is (n),(n,m)->(m)
+ */
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE, HALF,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE,
+ *          UBYTE, USHORT, UINT, ULONG, ULONGLONG,
+ *          BYTE, SHORT, INT, LONG, LONGLONG,
+ *          BOOL, OBJECT#
+ */
+NPY_NO_EXPORT void
+@TYPE@_vecmat(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    npy_intp n_outer = *dimensions++;
+    npy_intp s0 = *steps++;
+    npy_intp s1 = *steps++;
+    npy_intp s2 = *steps++;
+    npy_intp dn = dimensions[0];
+    npy_intp dm = dimensions[1];
+    npy_intp is1_n=steps[0], is2_n=steps[1], is2_m=steps[2], os_m=steps[3];
+    /* Arguments for vecdot, to let it loop over the matrix. */
+    npy_intp vecdot_dims[2] = {dm, dn};
+    npy_intp vecdot_steps[5] = {0, is2_m, os_m, is1_n, is2_n};
+    for (npy_intp i = 0; i < n_outer; i++, args[0] += s0, args[1] += s1, args[2] += s2) {
+        char *vecdot_args[3] = {args[0], args[1], args[2]};
+        @TYPE@_vecdot(vecdot_args, vecdot_dims, vecdot_steps, NULL);
     }
 }
 /**end repeat**/
