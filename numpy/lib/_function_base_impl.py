@@ -1772,33 +1772,37 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
             540.])
     """
     p = asarray(p)
-    nd = p.ndim
     dd = diff(p, axis=axis)
-    if discont is None:
-        discont = period/2
-    slice1 = [slice(None, None)]*nd     # full slices
-    slice1[axis] = slice(1, None)
-    slice1 = tuple(slice1)
-    dtype = np.result_type(dd, period)
+    dtype = _nx.result_type(dd, period)
+    
     if _nx.issubdtype(dtype, _nx.integer):
-        interval_high, rem = divmod(period, 2)
+        half_period, rem = divmod(period, 2)
         boundary_ambiguous = rem == 0
     else:
-        interval_high = period / 2
+        half_period = period / 2
         boundary_ambiguous = True
-    interval_low = -interval_high
-    ddmod = mod(dd - interval_low, period) + interval_low
+
+    if discont is not None:
+        dd[abs(dd) < discont] = 0
+
+    dd_mod_2period = mod(dd, 2 * period)
+    dd_periods = (dd / period).round().astype(int)
+
     if boundary_ambiguous:
-        # for `mask = (abs(dd) == period/2)`, the above line made
-        # `ddmod[mask] == -period/2`. correct these such that
-        # `ddmod[mask] == sign(dd[mask])*period/2`.
-        _nx.copyto(ddmod, interval_high,
-                   where=(ddmod == interval_low) & (dd > 0))
-    ph_correct = ddmod - dd
-    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    up = array(p, copy=True, dtype=dtype)
-    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
-    return up
+        neg_corrections = (dd_mod_2period == half_period + period) & (dd > 0)
+        pos_corrections = (dd_mod_2period == half_period) & (dd < 0)
+        dd_periods[neg_corrections] -= 1
+        dd_periods[pos_corrections] += 1
+
+    phase_shifts = dd_periods.cumsum(axis=axis)
+
+    slices = [slice(None)] * p.ndim
+    slices[axis] = slice(1, None)
+    indices = tuple(slices)
+    p_unwrapped = array(p, copy=True, dtype=dtype)
+    p_unwrapped[indices] -= phase_shifts * period
+
+    return p_unwrapped
 
 
 def _sort_complex(a):
