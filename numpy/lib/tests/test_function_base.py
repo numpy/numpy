@@ -2206,6 +2206,41 @@ class TestUnwrap:
             arr, unwrapped_arr, period=period, discont=discont, axis=axis
         )
 
+    @pytest.mark.xfail(
+        reason="gh-27609: np.lib.unwrap accumulates rounding errors")
+    def test_unwrap_float_array(self, TestUnwrapInexact, seed=1337):
+        randState = np.random.RandomState(seed=seed)
+        arr = randState.uniform(-1e9, 1e9, 1<<20).reshape(16, -1, 16)
+        # check normal functionality
+        period, discont, axis = 2 * np.pi, 1e7, 1
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapInexact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
+        # check discont None
+        period, discont, axis = 2 * np.pi, None, 1
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapInexact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
+        # check negative period
+        period, discont, axis = -2 * np.pi, 1e7, 1
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapInexact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
+        # check normal with rational period
+        period, discont, axis = 0.5, 1e7, 1
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapInexact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
+        # check normal with negative rational period
+        period, discont, axis = -0.5, 1e7, 1
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapInexact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
 
 @pytest.mark.parametrize(
     "dtype", "O" + np.typecodes["AllInteger"] + np.typecodes["Float"]
