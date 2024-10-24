@@ -2066,6 +2066,44 @@ class TestDigitize:
         assert_equal(np.digitize(x, [x + 1, x - 1]), 1)
 
 
+@pytest.fixture
+def TestUnwrapExact():
+    def _test_unwrap_exact(arr, out_arr, *, period, discont, axis):
+        half_period = np.divmod(period, 2)[0]
+        if discont is None:
+            discont = half_period
+        implies = lambda cond1, cond2: (~cond1) | cond2
+        iff = lambda cond1, cond2: \
+            implies(cond1, cond2) & implies(cond2, cond1)
+        slices = [slice(None, None)] * arr.ndim
+        slices[axis] = slice(0, 1)
+        slices = tuple(slices)
+
+        assert_array_equal(arr[slices], out_arr[slices])
+        assert_(np.all(np.mod(arr - out_arr, period) == 0))
+        assert_(np.all(implies(
+            np.abs(np.diff(arr, axis=axis)) < discont,
+            np.diff(out_arr, axis=axis) == np.diff(arr, axis=axis)
+        )))
+        assert_(np.all(implies(
+            np.abs(np.diff(arr, axis=axis)) >= discont,
+            np.abs(np.diff(out_arr, axis=axis)) <= abs(half_period)
+        )))
+        relevant_inds = \
+            (np.mod(np.diff(arr, axis=axis), period) == half_period) & \
+            (np.abs(np.diff(arr, axis=axis)) >= discont)
+        if period > 0:
+            assert_(np.all(iff(
+                np.diff(out_arr, axis=axis) > 0,
+                np.diff(arr, axis=axis) > 0
+            ), where=relevant_inds))
+        else:
+            assert_(np.all(iff(
+                np.diff(out_arr, axis=axis) > 0,
+                np.diff(arr, axis=axis) < 0
+            ), where=relevant_inds))
+    return _test_unwrap_exact
+
 class TestUnwrap:
 
     def test_simple(self):
