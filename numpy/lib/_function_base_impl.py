@@ -1799,7 +1799,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
     slices = [slice(None)] * p.ndim
     slices[axis] = slice(1, None)
     indices = tuple(slices)
-    p_unwrapped = p.copy()
+    p_unwrapped = array(p, copy=True, dtype=dtype)
     p_unwrapped[indices] -= phase_shifts * period
 
     return p_unwrapped
