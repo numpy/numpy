@@ -2172,6 +2172,40 @@ class TestUnwrap:
         assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 430])
         assert sm_discont.dtype == wrap_uneven.dtype
 
+    def test_unwrap_int_array(self, TestUnwrapExact, TestUnwrapInexact, seed=1337):
+        randState = np.random.RandomState(seed=seed)
+        arr = randState.randint(-1<<5, 1<<5, 1<<20).reshape(16, -1, 16)
+        # check normal functionality
+        period, discont, axis = 4, 3, 1
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapExact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
+        # check axis works
+        period, discont, axis = 4, 3, 0
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapExact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
+        # check discont None
+        period, discont, axis = 4, None, 1
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapExact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
+        # check negative period
+        period, discont, axis = -4, 3, 1
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapExact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
+        # check non-integer period with integer array
+        period, discont, axis = 2 * np.pi, 3, 1
+        unwrapped_arr = np.unwrap(arr, period=period, discont=discont, axis=axis)
+        TestUnwrapInexact(
+            arr, unwrapped_arr, period=period, discont=discont, axis=axis
+        )
+
 
 @pytest.mark.parametrize(
     "dtype", "O" + np.typecodes["AllInteger"] + np.typecodes["Float"]
