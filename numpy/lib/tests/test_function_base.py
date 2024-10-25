@@ -2067,86 +2067,16 @@ class TestDigitize:
 
 
 @pytest.fixture
-def TestUnwrapExact():
-    def _test_unwrap_exact(arr, out_arr, *, period, discont, axis):
-        half_period = np.divmod(period, 2)[0]
-        if discont is None:
-            discont = half_period
-        implies = lambda cond1, cond2: (~cond1) | cond2
-        iff = lambda cond1, cond2: \
-            implies(cond1, cond2) & implies(cond2, cond1)
-        slices = [slice(None, None)] * arr.ndim
-        slices[axis] = slice(0, 1)
-        slices = tuple(slices)
-
-        assert_array_equal(arr[slices], out_arr[slices])
-        assert_(np.all(np.mod(arr - out_arr, period) == 0))
-        assert_(np.all(implies(
-            np.abs(np.diff(arr, axis=axis)) < discont,
-            np.diff(out_arr, axis=axis) == np.diff(arr, axis=axis)
-        )))
-        assert_(np.all(implies(
-            np.abs(np.diff(arr, axis=axis)) >= discont,
-            np.abs(np.diff(out_arr, axis=axis)) <= abs(half_period)
-        )))
-        relevant_inds = \
-            (np.mod(np.diff(arr, axis=axis), period) == half_period) & \
-            (np.abs(np.diff(arr, axis=axis)) >= discont)
-        if period > 0:
-            assert_(np.all(iff(
-                np.diff(out_arr, axis=axis) > 0,
-                np.diff(arr, axis=axis) > 0
-            ), where=relevant_inds))
-        else:
-            assert_(np.all(iff(
-                np.diff(out_arr, axis=axis) > 0,
-                np.diff(arr, axis=axis) < 0
-            ), where=relevant_inds))
-    return _test_unwrap_exact
+def int_array():
+    seed = 1337
+    randState = np.random.RandomState(seed=seed)
+    return randState.randint(-32, 32, 1 << 20).reshape(16, -1, 16)
 
 @pytest.fixture
-def TestUnwrapInexact():
-    def _test_unwrap_inexact(arr, out_arr, *, period, discont, axis):
-        half_period = period / 2
-        if discont is None:
-            discont = half_period
-        implies = lambda cond1, cond2: (~cond1) | cond2
-        iff = lambda cond1, cond2: \
-            implies(cond1, cond2) & implies(cond2, cond1)
-        tol = 1e-6
-        slices = [slice(None, None)] * arr.ndim
-        slices[axis] = slice(0, 1)
-        slices = tuple(slices)
-
-        assert_allclose(arr[slices], out_arr[slices], atol=tol)
-        assert_allclose(
-            np.mod(arr - out_arr + half_period, period),
-            half_period, atol=tol
-        )
-        assert_(np.all(implies(
-            np.abs(np.diff(arr, axis=axis)) < discont - tol,
-            np.isclose(
-                np.diff(out_arr, axis=axis),
-                np.diff(arr, axis=axis))
-        )))
-        assert_(np.all(implies(
-            np.abs(np.diff(arr, axis=axis)) >= discont + tol,
-            np.abs(np.diff(out_arr, axis=axis)) <= abs(half_period) + tol
-        )))
-        relevant_inds = \
-            (np.mod(np.diff(arr, axis=axis), period) == half_period) & \
-            (np.abs(np.diff(arr, axis=axis)) >= discont + tol)
-        if period > 0:
-            assert_(np.all(iff(
-                np.diff(out_arr, axis=axis) > 0,
-                np.diff(arr, axis=axis) > 0
-            ), where=relevant_inds))
-        else:
-            assert_(np.all(iff(
-                np.diff(out_arr, axis=axis) > 0,
-                np.diff(arr, axis=axis) < 0
-            ), where=relevant_inds))
-    return _test_unwrap_inexact
+def float_array():
+    seed = 1337
+    randState = np.random.RandomState(seed=seed)
+    return randState.uniform(-1e9, 1e9, 1 << 20).reshape(16, -1, 16)
 
 class TestUnwrap:
 
@@ -2174,96 +2104,103 @@ class TestUnwrap:
         assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 430])
         assert sm_discont.dtype == wrap_uneven.dtype
 
-    def test_unwrap_int_array(self,
-                    TestUnwrapExact, TestUnwrapInexact, seed=1337):
-        randState = np.random.RandomState(seed=seed)
-        arr = randState.randint(-32, 32, 1 << 20).reshape(16, -1, 16)
-        # check normal functionality
-        period, discont, axis = 4, 3, 1
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
+    @pytest.mark.parametrize("int_array, period, discont, axis", (
+        ("int_array", 4, 3, 1),
+        ("int_array", 4, 3, 0),
+        ("int_array", 4, None, 1),
+        ("int_array", -4, 3, 1),
+    ), indirect=("int_array", ))
+    def test_unwrap_exact(self, int_array, *, period, discont, axis):
+        out_arr = np.unwrap(
+            int_array, period=period, discont=discont, axis=axis
         )
-        TestUnwrapExact(
-            arr, result, period=period, discont=discont, axis=axis
-        )
-        # check axis works
-        period, discont, axis = 4, 3, 0
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
-        )
-        TestUnwrapExact(
-            arr, result, period=period, discont=discont, axis=axis
-        )
-        # check discont None
-        period, discont, axis = 4, None, 1
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
-        )
-        TestUnwrapExact(
-            arr, result, period=period, discont=discont, axis=axis
-        )
-        # check negative period
-        period, discont, axis = -4, 3, 1
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
-        )
-        TestUnwrapExact(
-            arr, result, period=period, discont=discont, axis=axis
-        )
-        # check non-integer period with integer array
-        period, discont, axis = 2 * np.pi, 3, 1
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
-        )
-        TestUnwrapInexact(
-            arr, result, period=period, discont=discont, axis=axis
-        )
+        half_period = np.divmod(period, 2)[0]
+        if discont is None:
+            discont = half_period
+        implies = lambda cond1, cond2: (~cond1) | cond2
+        iff = lambda cond1, cond2: \
+            implies(cond1, cond2) & implies(cond2, cond1)
+        slices = [slice(None, None)] * int_array.ndim
+        slices[axis] = slice(0, 1)
+        slices = tuple(slices)
+
+        assert_array_equal(int_array[slices], out_arr[slices])
+        assert_(np.all(np.mod(int_array - out_arr, period) == 0))
+        assert_(np.all(implies(
+            np.abs(np.diff(int_array, axis=axis)) < discont,
+            np.diff(out_arr, axis=axis) == np.diff(int_array, axis=axis)
+        )))
+        assert_(np.all(implies(
+            np.abs(np.diff(int_array, axis=axis)) >= discont,
+            np.abs(np.diff(out_arr, axis=axis)) <= abs(half_period)
+        )))
+        relevant_inds = \
+            (np.mod(np.diff(int_array, axis=axis), period) == half_period) & \
+            (np.abs(np.diff(int_array, axis=axis)) >= discont)
+        if period > 0:
+            assert_(np.all(iff(
+                np.diff(out_arr, axis=axis) > 0,
+                np.diff(int_array, axis=axis) > 0
+            ), where=relevant_inds))
+        else:
+            assert_(np.all(iff(
+                np.diff(out_arr, axis=axis) > 0,
+                np.diff(int_array, axis=axis) < 0
+            ), where=relevant_inds))
 
     @pytest.mark.xfail(
         reason="gh-27609: np.lib.unwrap accumulates rounding errors")
-    def test_unwrap_float_array(self, TestUnwrapInexact, seed=1337):
-        randState = np.random.RandomState(seed=seed)
-        arr = randState.uniform(-1e9, 1e9, 1 << 20).reshape(16, -1, 16)
-        # check normal functionality
-        period, discont, axis = 2 * np.pi, 1e7, 1
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
+    @pytest.mark.parametrize("float_array, period, discont, axis", (
+        ("float_array", 2 * np.pi, 1e7, 1),
+        ("float_array", 2 * np.pi, None, 1),
+        ("float_array", -2 * np.pi, 1e7, 1),
+        ("float_array", 0.5, 1e7, 1),
+        ("float_array", -0.5, 1e7, 1)
+    ), indirect=("float_array", ))
+    def test_unwrap_inexact(self, float_array, *, period, discont, axis):
+        out_arr = np.unwrap(
+            float_array, period=period, discont=discont, axis=axis
         )
-        TestUnwrapInexact(
-            arr, result, period=period, discont=discont, axis=axis
+        half_period = period / 2
+        if discont is None:
+            discont = half_period
+        implies = lambda cond1, cond2: (~cond1) | cond2
+        iff = lambda cond1, cond2: \
+            implies(cond1, cond2) & implies(cond2, cond1)
+        tol = 1e-6
+        slices = [slice(None, None)] * float_array.ndim
+        slices[axis] = slice(0, 1)
+        slices = tuple(slices)
+
+        assert_allclose(float_array[slices], out_arr[slices], atol=tol)
+        assert_allclose(
+            np.mod(float_array - out_arr + half_period, period),
+            half_period, atol=tol
         )
-        # check discont None
-        period, discont, axis = 2 * np.pi, None, 1
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
-        )
-        TestUnwrapInexact(
-            arr, result, period=period, discont=discont, axis=axis
-        )
-        # check negative period
-        period, discont, axis = -2 * np.pi, 1e7, 1
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
-        )
-        TestUnwrapInexact(
-            arr, result, period=period, discont=discont, axis=axis
-        )
-        # check normal with rational period
-        period, discont, axis = 0.5, 1e7, 1
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
-        )
-        TestUnwrapInexact(
-            arr, result, period=period, discont=discont, axis=axis
-        )
-        # check normal with negative rational period
-        period, discont, axis = -0.5, 1e7, 1
-        result = np.unwrap(
-            arr, period=period, discont=discont, axis=axis
-        )
-        TestUnwrapInexact(
-            arr, result, period=period, discont=discont, axis=axis
-        )
+        assert_(np.all(implies(
+            np.abs(np.diff(float_array, axis=axis)) < discont - tol,
+            np.isclose(
+                np.diff(out_arr, axis=axis),
+                np.diff(float_array, axis=axis))
+        )))
+        assert_(np.all(implies(
+            np.abs(np.diff(float_array, axis=axis)) >= discont + tol,
+            np.abs(np.diff(out_arr, axis=axis)) <= abs(half_period) + tol
+        )))
+        relevant_inds = \
+            (np.mod(np.diff(float_array, axis=axis), period) == half_period) & \
+            (np.abs(np.diff(float_array, axis=axis)) >= discont + tol)
+        if period > 0:
+            assert_(np.all(iff(
+                np.diff(out_arr, axis=axis) > 0,
+                np.diff(float_array, axis=axis) > 0
+            ), where=relevant_inds))
+        else:
+            assert_(np.all(iff(
+                np.diff(out_arr, axis=axis) > 0,
+                np.diff(float_array, axis=axis) < 0
+            ), where=relevant_inds))
+
 
 @pytest.mark.parametrize(
     "dtype", "O" + np.typecodes["AllInteger"] + np.typecodes["Float"]
