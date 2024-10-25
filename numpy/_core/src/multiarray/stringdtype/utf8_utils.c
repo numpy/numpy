@@ -11,7 +11,7 @@
 // codepoint for the next character, returning the size of the character in
 // bytes. Does not do any validation or error checking: assumes *c* is valid
 // utf-8
-NPY_NO_EXPORT int
+NPY_NO_EXPORT size_t
 utf8_char_to_ucs4_code(const unsigned char *c, Py_UCS4 *code)
 {
     if (c[0] <= 0x7F) {

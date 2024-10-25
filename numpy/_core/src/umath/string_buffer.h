@@ -84,7 +84,7 @@ inline npy_ucs4
 getchar<ENCODING::UTF8>(const unsigned char *buf, int *bytes)
 {
     Py_UCS4 codepoint;
-    *bytes = utf8_char_to_ucs4_code(buf, &codepoint);
+    *bytes = static_cast<int>(utf8_char_to_ucs4_code(buf, &codepoint));
     return (npy_ucs4)codepoint;
 }
 

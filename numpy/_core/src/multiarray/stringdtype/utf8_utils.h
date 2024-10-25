@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-NPY_NO_EXPORT int
+NPY_NO_EXPORT size_t
 utf8_char_to_ucs4_code(const unsigned char *c, Py_UCS4 *code);
 
 NPY_NO_EXPORT int
