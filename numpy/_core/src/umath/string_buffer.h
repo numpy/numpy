@@ -1026,6 +1026,8 @@ struct Buffer {
  * @brief Functor to apply a specified unary function.
  *
  * @tparam f The unary function to apply.
+ *           Support `ISALPHA`, `ISDIGIT`, `ISSPACE`,
+ *           `ISALNUM`, `ISNUMERIC`, `ISDECIMAL`.
  * @tparam enc The encoding type of the buffer.
  * @tparam T The return type of the unary function.
  */
