@@ -91,6 +91,7 @@ PyArray_Type and PyArrayObject
    As of NumPy 1.20, the size of this struct is not considered part of the NumPy ABI
    (see the note below).
 
+
    .. code-block:: c
 
       typedef struct{
@@ -111,9 +112,10 @@ PyArray_Type and PyArrayObject
        This is needed by all Python objects. It consists of (at least)
        a reference count member ( ``ob_refcnt`` ) and a pointer to the
        typeobject ( ``ob_type`` ). (Other elements may also be present
-       if Python was compiled with special options see Include/object.h
-       in the Python source tree for more information). The ``ob_type``
-       member points to a Python type object.
+       if Python was compiled with special options see
+       Include/object.h in the Python source tree for more
+       information). The ob_type member points to a Python type
+       object.
 
    .. c:member:: char *data
 
@@ -128,7 +130,7 @@ PyArray_Type and PyArrayObject
        array. Such arrays have undefined dimensions and strides and
        cannot be accessed. Macro :c:data:`PyArray_NDIM` defined in
        ``ndarraytypes.h`` points to this data member.
-       :c:macro:`NPY_MAXDIMS` is defined as a compile time constant limiting the
+       ``NPY_MAXDIMS`` is defined as a compile time constant limiting the
        number of dimensions.  This number is 64 since NumPy 2 and was 32
        before. However, we may wish to remove this limitations in the future
        so that it is best to explicitly check dimensionality for code
@@ -306,7 +308,7 @@ PyArrayDescr_Type and PyArray_Descr
           npy_uint64 flags;
           npy_intp elsize;
           npy_intp alignment;
-          PyObject *metadata;
+          NpyAuxData *c_metadata;
           npy_hash_t hash;
           void *reserved_null[2];  // unused field, must be NULLed.
       } PyArray_Descr;
@@ -396,6 +398,7 @@ PyArrayDescr_Type and PyArray_Descr
        Metadata specific to the C implementation
        of the particular dtype. Added for NumPy 1.7.0.
 
+   .. c:type:: npy_hash_t
    .. c:member:: npy_hash_t *hash
 
        Used for caching hash values.
@@ -499,7 +502,7 @@ PyArray_ArrFuncs
     .. code-block:: c
 
        typedef struct {
-           PyArray_VectorUnaryFunc *cast[NPY_NTYPES_ABI_COMPATIBLE];
+           PyArray_VectorUnaryFunc *cast[NPY_NTYPES_LEGACY];
            PyArray_GetItemFunc *getitem;
            PyArray_SetItemFunc *setitem;
            PyArray_CopySwapNFunc *copyswapn;
@@ -546,10 +549,8 @@ PyArray_ArrFuncs
             void *from, void *to, npy_intp n, void *fromarr, void *toarr)
 
         An array of function pointers to cast from the current type to
-        most of the other builtin types. The types
-        :c:type:`NPY_DATETIME`, :c:type:`NPY_TIMEDELTA`, and :c:type:`NPY_HALF`
-        go into the castdict even though they are built-in. Each function
-        casts a contiguous, aligned, and notswapped buffer pointed at by
+        all of the other builtin types. Each function casts a
+        contiguous, aligned, and notswapped buffer pointed at by
         *from* to a contiguous, aligned, and notswapped buffer pointed
         at by *to* The number of items to cast is given by *n*, and
         the arguments *fromarr* and *toarr* are interpreted as
@@ -993,11 +994,11 @@ PyUFunc_Type and PyUFuncObject
           int nargs;
           int identity;
           PyUFuncGenericFunction *functions;
-          void *const *data;
+          void **data;
           int ntypes;
           int reserved1;
           const char *name;
-          const char *types;
+          char *types;
           const char *doc;
           void *ptr;
           PyObject *obj;

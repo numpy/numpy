@@ -426,7 +426,6 @@ to the front of the integer name.
    An alias for ``Py_hash_t`` (used for hashing).
    This type is utilized in NumPy to represent hash values for objects.
 
-
 (Complex) Floating point
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
