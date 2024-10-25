@@ -193,7 +193,7 @@ for sctype in ntypes.sctypeDict.values():
 
     if scalar_dtype.kind in "Mm":
         info = np.iinfo(np.int64)
-        min_val, max_val = info.min, info.max
+        min_val, max_val = info.min + 1, info.max
     elif np.issubdtype(scalar_dtype, np.integer):
         info = np.iinfo(sctype)
         min_val, max_val = info.min, info.max
@@ -5979,7 +5979,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        result = self.filled(fill_value).min(axis=axis, out=out, **kwargs)
+        self.filled(fill_value).min(axis=axis, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
@@ -6084,7 +6084,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        result = self.filled(fill_value).max(axis=axis, out=out, **kwargs)
+        self.filled(fill_value).max(axis=axis, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
