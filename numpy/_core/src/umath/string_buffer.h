@@ -2298,9 +2298,9 @@ string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
  * @brief Defines alignment positions.
  */
 enum class ALIGN_POSITION {
-    CENTER,
-    LEFT,
-    RIGHT
+    CENTER,  ///< Center alignment
+    LEFT,    ///< Left alignment
+    RIGHT    ///< Right alignment
 };
 
 /**
