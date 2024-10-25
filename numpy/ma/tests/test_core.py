@@ -1351,6 +1351,17 @@ class TestMaskedArrayArithmetic:
             assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
             assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
 
+    @pytest.mark.parametrize("time_type",[np.datetime64("NaT", 's'),
+                                         np.timedelta64("NaT", 's')])
+    def test_minmax_time_dtypes(self, time_type):
+        # Additional tests on max/min for time dtypes
+        x = np.array([1, 1, -2, 4, 5, -10, 10, 1, 2, 3], dtype= time_type)
+        m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+        xm = masked_array(x, mask= m1)
+
+        assert_equal(np.int64(xm.min()), -10)
+        assert_equal(np.int64(xm.max()), 5)
+
     def test_addsumprod(self):
         # Tests add, sum, product.
         (x, y, a10, m1, m2, xm, ym, z, zm, xf) = self.d
