@@ -2078,6 +2078,13 @@ def float_array():
     randState = np.random.RandomState(seed=seed)
     return randState.uniform(-1e9, 1e9, 1 << 20).reshape(16, -1, 16)
 
+@pytest.fixture
+def big_int_array():
+    seed = 1337
+    randState = np.random.RandomState(seed=seed)
+    rand_arr = randState.randint(-32, 32, 1 << 20).reshape(16, -1, 16)
+    return rand_arr.astype(np.object_) + (1 << 100)
+
 class TestUnwrap:
 
     def test_simple(self):
@@ -2200,6 +2207,21 @@ class TestUnwrap:
                 np.diff(out_arr, axis=axis) > 0,
                 np.diff(float_array, axis=axis) < 0
             ), where=relevant_inds))
+
+    @pytest.mark.xfail(
+        reason="np.lib.unwrap doesn't handle big_int arrays well")
+    @pytest.mark.parametrize("big_int_array, period, discont, axis", (
+        ("big_int_array", 4, 7, 1),
+    ), indirect=("big_int_array", ))
+    def test_unwrap_big_int(self, big_int_array, *, period, discont, axis):
+        real_out_arr = np.unwrap(
+            big_int_array, period=period, discont=discont, axis=axis
+        )
+        helper_out_arr = np.unwrap(
+            big_int_array - big_int_array[0],
+            period=period, discont=discont, axis=axis
+        )
+        np.assert_allclose(real_out_arr - big_int_array[0], helper_out_arr)
 
 
 @pytest.mark.parametrize(
