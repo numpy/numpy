@@ -361,7 +361,7 @@ string_startswith_endswith_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    START_POSITION startposition = *(START_POSITION *)(context->method->static_data);
+    STRING_SIDE startposition = *(STRING_SIDE *)(context->method->static_data);
     int elsize1 = context->descriptors[0]->elsize;
     int elsize2 = context->descriptors[1]->elsize;
 
@@ -408,7 +408,7 @@ string_lrstrip_whitespace_loop(PyArrayMethod_Context *context,
     while (N--) {
         Buffer<enc> buf(in, elsize);
         Buffer<enc> outbuf(out, outsize);
-        string_lrstrip_whitespace(buf, outbuf, striptype);
+        string_strip_whitespace(buf, outbuf, striptype);
 
         in += strides[0];
         out += strides[1];
@@ -439,7 +439,7 @@ string_lrstrip_chars_loop(PyArrayMethod_Context *context,
         Buffer<enc> buf1(in1, elsize1);
         Buffer<enc> buf2(in2, elsize2);
         Buffer<enc> outbuf(out, outsize);
-        string_lrstrip_chars(buf1, buf2, outbuf, striptype);
+        string_strip_chars(buf1, buf2, outbuf, striptype);
 
         in1 += strides[0];
         in2 += strides[1];
@@ -513,7 +513,7 @@ string_center_ljust_rjust_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    JUSTPOSITION pos = *(JUSTPOSITION *)(context->method->static_data);
+    ALIGN_POSITION pos = *(ALIGN_POSITION *)(context->method->static_data);
     int elsize1 = context->descriptors[0]->elsize;
     int elsize3 = context->descriptors[2]->elsize;
     int outsize = context->descriptors[3]->elsize;
@@ -588,7 +588,7 @@ string_partition_index_loop(PyArrayMethod_Context *context,
         char *const data[], npy_intp const dimensions[],
         npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
 {
-    START_POSITION startposition = *(START_POSITION *)(context->method->static_data);
+    STRING_SIDE startposition = *(STRING_SIDE *)(context->method->static_data);
     int elsize1 = context->descriptors[0]->elsize;
     int elsize2 = context->descriptors[1]->elsize;
     int outsize1 = context->descriptors[3]->elsize;
@@ -1514,8 +1514,8 @@ init_string_ufuncs(PyObject *umath)
         "startswith", "endswith"
     };
 
-    static START_POSITION startpositions[] = {
-        START_POSITION::FRONT, START_POSITION::BACK
+    static STRING_SIDE startpositions[] = {
+        STRING_SIDE::FRONT, STRING_SIDE::BACK
     };
 
     for (int i = 0; i < 2; i++) {
@@ -1629,8 +1629,8 @@ init_string_ufuncs(PyObject *umath)
         "_center", "_ljust", "_rjust"
     };
 
-    static JUSTPOSITION padpositions[] = {
-        JUSTPOSITION::CENTER, JUSTPOSITION::LEFT, JUSTPOSITION::RIGHT
+    static ALIGN_POSITION padpositions[] = {
+        ALIGN_POSITION::CENTER, ALIGN_POSITION::LEFT, ALIGN_POSITION::RIGHT
     };
 
     for (int i = 0; i < 3; i++) {
@@ -1704,8 +1704,8 @@ init_string_ufuncs(PyObject *umath)
 
     const char *partition_names[] = {"_partition_index", "_rpartition_index"};
 
-    static START_POSITION partition_startpositions[] = {
-        START_POSITION::FRONT, START_POSITION::BACK
+    static STRING_SIDE partition_startpositions[] = {
+        STRING_SIDE::FRONT, STRING_SIDE::BACK
     };
 
     for (int i = 0; i < 2; i++) {

@@ -1097,14 +1097,20 @@ operator+(Buffer<enc> lhs, npy_int64 rhs)
  * @internal
  * @brief Computes the difference between two buffers.
  *
- * Returns the difference in elements or bytes based on encoding.
- * Valid for UTF8 only if both buffers are from the same string.
+ * This function returns the difference in bytes for UTF-8
+ * buffers, and the difference in characters for ASCII and UTF-32
+ * buffers. It is valid for UTF-8 only if both buffers point to
+ * the same string.
  *
  * @tparam enc The buffer's encoding type.
  *             Supported encodings are ASCII, UTF32, and UTF8.
- * @param lhs The first buffer.
- * @param rhs The second buffer.
- * @return The difference between the buffers.
+ * @param lhs The first buffer to compare.
+ * @param rhs The second buffer to compare.
+ *
+ * @return The difference between the two buffers in bytes for
+ *         UTF-8 and in characters for ASCII and UTF-32.
+ * @note For UTF-8 strings, the result is only meaningful if
+ *       both buffers originate from the same string.
  */
 template <ENCODING enc>
 inline std::ptrdiff_t
@@ -1672,10 +1678,10 @@ string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 
 
 /**
- * @enum START_POSITION
+ * @enum STRING_SIDE
  * @brief Enumeration for the starting position of the search.
  */
-enum class START_POSITION {
+enum class STRING_SIDE {
     FRONT, ///< Start from the front of the buffer.
     BACK   ///< Start from the back of the buffer.
 };
@@ -1704,7 +1710,7 @@ enum class START_POSITION {
 template <ENCODING enc>
 inline npy_bool
 tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
-          START_POSITION direction)
+          STRING_SIDE direction)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
@@ -1721,7 +1727,7 @@ tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 
     size_t offset;
     size_t end_sub = len2 - 1;
-    if (direction == START_POSITION::BACK) {
+    if (direction == STRING_SIDE::BACK) {
         // The end index has been adjusted by subtracting the length of buf2.
         offset = end;
     }
@@ -1744,13 +1750,44 @@ tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 }
 
 
+/**
+ * @enum STRIP_TYPE
+ * @brief Enumeration for string strip operations.
+ *
+ * This enum class specifies the type of string stripping to be
+ * performed.
+ */
 enum class STRIP_TYPE {
-    LEFT_STRIP, RIGHT_STRIP, BOTH_STRIP
+    LEFT_STRIP,  ///< Remove whitespace or specified characters
+                 ///< from the left side of the string.
+    RIGHT_STRIP, ///< Remove whitespace or specified characters
+                 ///< from the right side of the string.
+    BOTH_STRIP   ///< Remove whitespace or specified characters
+                 ///< from both sides of the string.
 };
 
+/**
+ * @brief Strip whitespace characters from the given buffer.
+ *
+ * This function removes whitespace characters from the specified
+ * buffer based on the defined strip type. It can remove
+ * characters from the left, right, or both sides of the buffer.
+ *
+ * @tparam enc The encoding type of the buffer.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param buf The input buffer from which whitespace will be stripped.
+ * @param out The output buffer to hold the result.
+ * @param strip_type The type of strip operation to perform (left, right,
+ *                   or both).
+ *
+ * @return The number of bytes written to the output buffer for UTF-8,
+ *         and of characters for ASCII and UTF32.
+ * @note If the input buffer is empty, the output buffer will be filled
+ *       with zeros (if not UTF8), and the function will return 0.
+ */
 template <ENCODING enc>
 static inline size_t
-string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_type)
+string_strip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_type)
 {
     size_t len = buf.num_codepoints();
     if (len == 0) {
@@ -1777,14 +1814,14 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_typ
     }
 
     size_t new_stop = len;  // New stop is a range (beyond last char)
-    if (enc == ENCODING::UTF8) {
-        traverse_buf = Buffer<enc>(buf.after, 0) - 1;
-    }
-    else {
-        traverse_buf = buf + (new_stop - 1);
-    }
 
     if (strip_type != STRIP_TYPE::LEFT_STRIP) {
+        if (enc == ENCODING::UTF8) {
+            traverse_buf = Buffer<enc>(buf.after, 0) - 1;
+        }
+        else {
+            traverse_buf = buf + (new_stop - 1);
+        }
         while (new_stop > new_start) {
             if (*traverse_buf != 0 && !traverse_buf.first_character_isspace()) {
                 break;
@@ -1793,7 +1830,7 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_typ
             num_bytes -= traverse_buf.num_bytes_next_character();
             new_stop--;
 
-            // Do not step to character -1: can't find it's start for utf-8.
+            // Do not step to character -1: can't find its start for utf-8.
             if (new_stop > 0) {
                 traverse_buf--;
             }
@@ -1810,10 +1847,28 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_typ
     return new_stop - new_start;
 }
 
-
+/**
+ * @brief Strips characters from the given buffer.
+ *
+ * This function removes characters specified in the `buf2` from the
+ * `buf1` based on the provided `strip_type`. The result is written
+ * to the `out` buffer. It can remove characters from the left, right,
+ * or both sides of the buffer.
+ *
+ * @tparam enc The encoding type of the buffer.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param buf1 The input buffer from which characters will be stripped.
+ * @param buf2 The buffer containing characters to be stripped from `buf1`.
+ * @param out The output buffer where the result will be stored.
+ * @param strip_type The type of stripping to be performed (left, right, or both).
+ *
+ * @return The length of the resulting string in the output buffer.
+ * @note If the encoding is not UTF8, the output buffer will be filled
+ * with zeros after the index of the resulting string.
+ */
 template <ENCODING enc>
 static inline size_t
-string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_TYPE strip_type)
+string_strip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_TYPE strip_type)
 {
     size_t len1 = buf1.num_codepoints();
     if (len1 == 0) {
@@ -1841,7 +1896,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_
 
     if (strip_type != STRIP_TYPE::RIGHT_STRIP) {
         for (; new_start < len1; traverse_buf++) {
-            Py_ssize_t res;
+            Py_ssize_t res = 0;
             size_t current_point_bytes = traverse_buf.num_bytes_next_character();
             switch (enc) {
                 case ENCODING::ASCII:
@@ -1856,7 +1911,9 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_
                         CheckedIndexer<char> ind(buf2.buf, len2);
                         res = find_char<char>(ind, len2, *traverse_buf);
                     } else {
-                        res = fastsearch(buf2.buf, buf2.after - buf2.buf,traverse_buf.buf, current_point_bytes, -1, FAST_SEARCH);
+                        res = fastsearch(buf2.buf, buf2.after - buf2.buf,
+                                traverse_buf.buf, current_point_bytes,
+                                -1, FAST_SEARCH);
                     }
                     break;
                 }
@@ -1876,17 +1933,17 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_
     }
 
     size_t new_stop = len1;  // New stop is a range (beyond last char)
-    if (enc == ENCODING::UTF8) {
-        traverse_buf = Buffer<enc>(buf1.after, 0) - 1;
-    }
-    else {
-        traverse_buf = buf1 + (new_stop - 1);
-    }
 
     if (strip_type != STRIP_TYPE::LEFT_STRIP) {
+        if (enc == ENCODING::UTF8) {
+            traverse_buf = Buffer<enc>(buf1.after, 0) - 1;
+        }
+        else {
+            traverse_buf = buf1 + (new_stop - 1);
+        }
         while (new_stop > new_start) {
             size_t current_point_bytes = traverse_buf.num_bytes_next_character();
-            Py_ssize_t res;
+            Py_ssize_t res = 0;
             switch (enc) {
                 case ENCODING::ASCII:
                 {
@@ -1900,7 +1957,9 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_
                         CheckedIndexer<char> ind(buf2.buf, len2);
                         res = find_char<char>(ind, len2, *traverse_buf);
                     } else {
-                        res = fastsearch(buf2.buf, buf2.after - buf2.buf, traverse_buf.buf, current_point_bytes, -1, FAST_RSEARCH);
+                        res = fastsearch(buf2.buf, buf2.after - buf2.buf,
+                                traverse_buf.buf, current_point_bytes,
+                                -1, FAST_RSEARCH);
                     }
                     break;
                 }
@@ -1933,10 +1992,27 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_
     return new_stop - new_start;
 }
 
+
+/**
+ * @brief Finds the index of the first occurrence of a slice to be replaced.
+ *
+ * This function searches for a slice (specified by `buf2`) in another buffer
+ * (specified by `buf1`). It returns the index of the first occurrence of the
+ * slice in the buffer.
+ *
+ * @tparam char_type The character type of the buffers.
+ * @param buf1 The input buffer where the search will be performed.
+ * @param len1 The length of the input buffer.
+ * @param buf2 The buffer containing the slice to be found.
+ * @param len2 The length of the slice buffer.
+ *
+ * @return The index of the first occurrence of the slice in the input buffer,
+ *         or 0 if the slice buffer is empty.
+ */
 template <typename char_type>
 static inline npy_intp
-findslice_for_replace(CheckedIndexer<char_type> buf1, npy_intp len1,
-                      CheckedIndexer<char_type> buf2, npy_intp len2)
+find_slice_for_replace(CheckedIndexer<char_type> buf1, npy_intp len1,
+                       CheckedIndexer<char_type> buf2, npy_intp len2)
 {
     if (len2 == 0) {
         return 0;
@@ -1944,10 +2020,27 @@ findslice_for_replace(CheckedIndexer<char_type> buf1, npy_intp len1,
     if (len2 == 1) {
         return (npy_intp) find_char(buf1, len1, *buf2);
     }
-    return (npy_intp) fastsearch(buf1.buffer, len1, buf2.buffer, len2, -1, FAST_SEARCH);
+    return (npy_intp) fastsearch(buf1.buffer, len1, buf2.buffer, len2,
+            -1, FAST_SEARCH);
 }
 
-
+/**
+ * @brief Replaces occurrences of a substring in a buffer with another substring.
+ *
+ * This function searches for a specified substring (buf2) in an input buffer
+ * (buf1) and replaces it with another substring (buf3). The number of
+ * replacements is limited by the count parameter.
+ *
+ * @tparam enc The encoding type of the buffer.
+ *             Supported encodings are ASCII, UTF32, and UTF8.
+ * @param buf1 The input buffer where replacements will occur.
+ * @param buf2 The buffer containing the substring to be replaced.
+ * @param buf3 The buffer containing the substring to replace with.
+ * @param count The maximum number of replacements to perform.
+ * @param out The output buffer where the result will be stored.
+ *
+ * @return The total length of the resulting string in the output buffer.
+ */
 template <ENCODING enc>
 static inline size_t
 string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 count,
@@ -1956,11 +2049,10 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     size_t len1 = buf1.num_codepoints();
     size_t len2 = buf2.num_codepoints();
     size_t len3 = buf3.num_codepoints();
+
     char *start;
-    size_t length = len1;
     if (enc == ENCODING::UTF8) {
         start = buf1.after;
-        length = 0;
     }
     else if (enc == ENCODING::UTF32) {
         start = buf1.buf + sizeof(npy_ucs4) * len1;
@@ -1968,8 +2060,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     else {
         start = buf1.buf + len1;
     }
-
-    Buffer<enc> end1(start, length);
+    Buffer<enc> end1(start, 0);
     size_t span2, span3;
 
     switch(enc) {
@@ -2008,14 +2099,14 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
                 {
                     CheckedIndexer<char> ind1(buf1.buf, end1 - buf1);
                     CheckedIndexer<char> ind2(buf2.buf, span2);
-                    pos = findslice_for_replace(ind1, end1 - buf1, ind2, span2);
+                    pos = find_slice_for_replace(ind1, end1 - buf1, ind2, span2);
                     break;
                 }
                 case ENCODING::UTF32:
                 {
                     CheckedIndexer<npy_ucs4> ind1((npy_ucs4 *)buf1.buf, end1 - buf1);
                     CheckedIndexer<npy_ucs4> ind2((npy_ucs4 *)buf2.buf, span2);
-                    pos = findslice_for_replace(ind1, end1 - buf1, ind2, span2);
+                    pos = find_slice_for_replace(ind1, end1 - buf1, ind2, span2);
                     break;
                 }
             }
@@ -2072,6 +2163,28 @@ copy_rest:
 }
 
 
+/**
+ * @brief Computes the length of a string after expanding tabs into spaces.
+ *
+ * This function calculates the length of a string represented
+ * by a `Buffer<enc>`, after replacing tab characters ('\t') with
+ * spaces.
+ *
+ * @tparam enc The encoding of the input string,
+ *             which is specified by the `Buffer<enc>` type.
+ * @param buf A buffer containing the input string, represented as a
+ *            `Buffer<enc>`, where `enc` indicates the string encoding.
+ * @param tabsize The number of spaces used to replace a tab character
+ *                ('\t'). If `tabsize` is zero or less, tabs are not expanded.
+ *
+ * @return The length of the string after expanding tabs into spaces.
+ *         If the computed length exceeds, the function raises a
+ *         `PyExc_OverflowError` and returns -1.
+ *
+ * @throws PyExc_OverflowError If the resulting string length exceeds,
+ *                             the function will raise `PyExc_OverflowError`
+ *                             with error message: "new string is too long".
+ */
 template <ENCODING enc>
 static inline npy_intp
 string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
@@ -2107,7 +2220,31 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
     return new_len;
 }
 
-
+/**
+ * @brief Expands tab characters ('\t') in a string buffer to
+ *        spaces and writes the result to an output buffer.
+ *
+ * This function replaces each tab character ('\t') in the input
+ * buffer (`buf`) with spaces, as determined by the `tabsize` parameter,
+ * and writes the expanded string into the output buffer (`out`).
+ *
+ * @tparam enc The encoding of the input and output string,
+ *             specified by the `Buffer<enc>` type.
+ *
+ * @param buf The input string buffer,
+ *            containing the string with tabs to expand.
+ * @param tabsize The number of spaces used to replace a tab character ('\t').
+ *                If `tabsize` is zero or less, tabs are not expanded.
+ * @param out The output string buffer, where the expanded string will
+ *            be written. The buffer must be pre-allocated to have sufficient
+ *            space to hold the expanded string.
+ *
+ * @return The total length of the expanded string written into the output buffer.
+ *
+ * @note If the output buffer does not have enough space for the expanded string,
+ *       this function may result in an overflow, and it is the caller's
+ *       responsibility to ensure that the buffer is large enough.
+ */
 template <ENCODING enc>
 static inline npy_intp
 string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
@@ -2140,17 +2277,55 @@ string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
     return new_len;
 }
 
-
-enum class JUSTPOSITION {
-    CENTER, LEFT, RIGHT
+/**
+ * @enum ALIGN_POSITION
+ * @brief Defines alignment positions.
+ */
+enum class ALIGN_POSITION {
+    CENTER,
+    LEFT,
+    RIGHT
 };
+
+/**
+ * @brief Pads a string with a specified character to a given width,
+ *        aligning it according to the specified position.
+ *
+ * This function pads the input string (`buf`) with the specified `fill`
+ * character to achieve the desired `width`. The padding can be applied to the
+ * left, right, or equally to both sides depending on the alignment `pos`.
+ * The result is written to the output buffer (`out`).
+ *
+ * @tparam enc The encoding of the input and output buffers,
+ *             specified by `Buffer<enc>`.
+ * @param buf The input string buffer to be padded.
+ * @param width The target width for the padded string.
+ *              If the input string is already wider than `width`,
+ *              no padding is added.
+ * @param fill The character used for padding.
+ * @param pos The position where the padding should be applied
+ *            (`LEFT`, `RIGHT`, or `CENTER`).
+ * @param out The output buffer where the padded string is written.
+ *            The buffer should be large enough to hold the padded result.
+ *
+ * @return The width of the final padded string. Returns -1 and raises
+ * `PyExc_OverflowError` if the final string exceeds the maximum allowed size.
+ * @throws PyExc_OverflowError If the padded string length exceeds the
+ *                             allowed maximum, the function will raise
+ *                             `PyExc_OverflowError` with error message:
+ *                             "padded string is too long".
+ *
+ * @note If the output buffer does not have enough space for the expanded string,
+ *       this function may result in an overflow, and it is the caller's
+ *       responsibility to ensure that the buffer is large enough.
+ */
 
 template <ENCODING enc>
 static inline npy_intp
-string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Buffer<enc> out)
+string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, ALIGN_POSITION pos, Buffer<enc> out)
 {
-    size_t finalwidth = width > 0 ? width : 0;
-    if (finalwidth > PY_SSIZE_T_MAX) {
+    size_t final_width = width > 0 ? width : 0;
+    if (final_width > PY_SSIZE_T_MAX) {
         npy_gil_error(PyExc_OverflowError, "padded string is too long");
         return -1;
     }
@@ -2166,27 +2341,26 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Bu
         len = len_codepoints;
     }
 
-    if (len_codepoints >= finalwidth) {
+    if (len_codepoints >= final_width) {
         buf.buffer_memcpy(out, len);
         return (npy_intp) len;
     }
 
     size_t left, right;
-    if (pos == JUSTPOSITION::CENTER) {
-        size_t pad = finalwidth - len_codepoints;
-        left = pad / 2 + (pad & finalwidth & 1);
+    if (pos == ALIGN_POSITION::CENTER) {
+        size_t pad = final_width - len_codepoints;
+        left = pad / 2 + (pad & final_width & 1);
         right = pad - left;
     }
-    else if (pos == JUSTPOSITION::LEFT) {
+    else if (pos == ALIGN_POSITION::LEFT) {
         left = 0;
-        right = finalwidth - len_codepoints;
+        right = final_width - len_codepoints;
     }
     else {
-        left = finalwidth - len_codepoints;
+        left = final_width - len_codepoints;
         right = 0;
     }
 
-    assert(left >= 0 || right >= 0);
     assert(left <= PY_SSIZE_T_MAX - len && right <= PY_SSIZE_T_MAX - (left + len));
 
     if (left > 0) {
@@ -2200,23 +2374,47 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Bu
         out.advance_chars_or_bytes(out.buffer_memset(fill, right));
     }
 
-    return finalwidth;
+    return final_width;
 }
 
-
+/**
+ * @brief Pads the input string with leading zeros ('0')
+ *        to achieve a specified width, while ensuring
+ *        any leading sign ('+' or '-') remains at the start.
+ *
+ * This function expands the input string (`buf`) to the specified `width` by
+ * adding leading zeros if necessary. If the string contains a leading sign
+ * ('+' or '-'), the zeros are inserted after the sign. The padded result is
+ * written to the output buffer (`out`).
+ *
+ * @tparam enc The encoding of the input and output buffers,
+ *             specified by `Buffer<enc>`.
+ * @param buf The input string buffer to be zero-filled.
+ * @param width The target width of the padded string.
+ *              If the input string is already wider than `width`,
+ *              no padding is added.
+ * @param out The output buffer where the zero-filled string is written.
+ *            The buffer should have enough space for the padded result.
+ *
+ * @return The total length of the padded string, or -1 if an error occurs.
+ * @throws PyExc_OverflowError If the padded string length exceeds the
+ *                             allowed maximum, the function will raise
+ *                             `PyExc_OverflowError` with error message:
+ *                             "padded string is too long".
+ */
 template <ENCODING enc>
 static inline npy_intp
 string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
 {
-    size_t finalwidth = width > 0 ? width : 0;
+    size_t final_width = width > 0 ? width : 0;
 
     npy_ucs4 fill = '0';
-    npy_intp new_len = string_pad(buf, width, fill, JUSTPOSITION::RIGHT, out);
+    npy_intp new_len = string_pad(buf, width, fill, ALIGN_POSITION::RIGHT, out);
     if (new_len == -1) {
         return -1;
     }
 
-    size_t offset = finalwidth - buf.num_codepoints();
+    size_t offset = final_width - buf.num_codepoints();
     Buffer<enc> tmp = out + offset;
 
     npy_ucs4 c = *tmp;
@@ -2228,15 +2426,51 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
     return new_len;
 }
 
-
+/**
+ * @brief Partitions an input string into three parts based on a separator and
+ * an index.
+ *
+ * This function partitions the input string (`buf1`) into three parts: the
+ * substring before the separator (`out1`), the separator itself (`out2`), and
+ * the substring after the separator (`out3`). The separator is provided as
+ * `buf2`. If the separator is not found, the partitioning depends on the
+ * specified starting position (`pos`).
+ *
+ * @tparam enc The encoding of the input and output buffers,
+ *             specified by `Buffer<enc>`.
+ *             This function does not support `ENCODING::UTF8`
+ * @param buf1 The input string buffer to be partitioned.
+ * @param buf2 The separator string buffer.
+ * @param idx The index where the separator is found in `buf1`.
+ *            If negative, the partition is based on `pos`.
+ * @param out1 Output buffer for the part of the string before the separator.
+ * @param out2 Output buffer for the separator.
+ * @param out3 Output buffer for the part of the string after the separator.
+ * @param final_len1 Pointer to store the length of the string
+ *                   before the separator.
+ * @param final_len2 Pointer to store the length of the separator.
+ * @param final_len3 Pointer to store the length of the string
+ *                   after the separator.
+ * @param pos Specifies the behavior when the separator is not found:
+ *            `FRONT` fills `out1` or `END` fills `out3`.
+ *
+ * @throws PyExc_ValueError If the separator is an empty string, the function
+ *                          will raise `PyExc_ValueError` with error message:
+ *                          "empty separator".
+ * @note This function does not perform any comparison between
+ *       `buf1` and `buf2` to check if the content at `idx` matches
+ *       the separator. It simply skips over a substring of the same
+ *       length as `buf2` at position `idx` in `buf1` and assigns
+ *       `buf2` to `out2`.
+ */
 template <ENCODING enc>
 static inline void
 string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
                  Buffer<enc> out1, Buffer<enc> out2, Buffer<enc> out3,
                  npy_intp *final_len1, npy_intp *final_len2, npy_intp *final_len3,
-                 START_POSITION pos)
+                 STRING_SIDE pos)
 {
-    // StringDType uses a ufunc that implements the find-part as well
+    // StringDType uses an ufunc that implements the find-part as well
     assert(enc != ENCODING::UTF8);
 
     size_t len1 = buf1.num_codepoints();
@@ -2249,7 +2483,7 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
     }
 
     if (idx < 0) {
-        if (pos == START_POSITION::FRONT) {
+        if (pos == STRING_SIDE::FRONT) {
             buf1.buffer_memcpy(out1, len1);
             *final_len1 = len1;
             *final_len2 = *final_len3 = 0;

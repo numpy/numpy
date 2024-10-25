@@ -945,7 +945,7 @@ string_startswith_endswith_strided_loop(PyArrayMethod_Context *context,
                                NpyAuxData *auxdata)
 {
     const char *ufunc_name = ((PyUFuncObject *)context->caller)->name;
-    START_POSITION startposition = *(START_POSITION *)context->method->static_data;
+    STRING_SIDE startposition = *(STRING_SIDE *)context->method->static_data;
     PyArray_StringDTypeObject *descr1 = (PyArray_StringDTypeObject *)context->descriptors[0];
 
     int has_null = descr1->na_object != NULL;
@@ -1120,7 +1120,7 @@ string_lrstrip_chars_strided_loop(
             Buffer<ENCODING::UTF8> buf1((char *)s1.buf, s1.size);
             Buffer<ENCODING::UTF8> buf2((char *)s2.buf, s2.size);
             Buffer<ENCODING::UTF8> outbuf(new_buf, s1.size);
-            size_t new_buf_size = string_lrstrip_chars
+            size_t new_buf_size = string_strip_chars
                     (buf1, buf2, outbuf, striptype);
 
             if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
@@ -1241,7 +1241,7 @@ string_lrstrip_whitespace_strided_loop(
             char *new_buf = (char *)PyMem_RawCalloc(s.size, 1);
             Buffer<ENCODING::UTF8> buf((char *)s.buf, s.size);
             Buffer<ENCODING::UTF8> outbuf(new_buf, s.size);
-            size_t new_buf_size = string_lrstrip_whitespace(
+            size_t new_buf_size = string_strip_whitespace(
                     buf, outbuf, striptype);
 
             if (NpyString_pack(oallocator, ops, new_buf, new_buf_size) < 0) {
@@ -1671,7 +1671,7 @@ center_ljust_rjust_strided_loop(PyArrayMethod_Context *context,
     npy_string_allocator *s2allocator = allocators[2];
     npy_string_allocator *oallocator = allocators[3];
 
-    JUSTPOSITION pos = *(JUSTPOSITION *)(context->method->static_data);
+    ALIGN_POSITION pos = *(ALIGN_POSITION *)(context->method->static_data);
     const char* ufunc_name = ((PyUFuncObject *)context->caller)->name;
 
     while (N--) {
@@ -1957,9 +1957,9 @@ string_partition_strided_loop(
         npy_intp const strides[],
         NpyAuxData *NPY_UNUSED(auxdata))
 {
-    START_POSITION startposition = *(START_POSITION *)(context->method->static_data);
+    STRING_SIDE startposition = *(STRING_SIDE *)(context->method->static_data);
     int fastsearch_direction =
-            startposition == START_POSITION::FRONT ? FAST_SEARCH : FAST_RSEARCH;
+            startposition == STRING_SIDE::FRONT ? FAST_SEARCH : FAST_RSEARCH;
 
     npy_intp N = dimensions[0];
 
@@ -2030,7 +2030,7 @@ string_partition_strided_loop(
         npy_intp out1_size, out2_size, out3_size;
 
         if (idx == -1) {
-            if (startposition == START_POSITION::FRONT) {
+            if (startposition == STRING_SIDE::FRONT) {
                 out1_size = i1s.size;
                 out2_size = out3_size = 0;
             }
@@ -2066,7 +2066,7 @@ string_partition_strided_loop(
         }
 
         if (idx == -1) {
-            if (startposition == START_POSITION::FRONT) {
+            if (startposition == STRING_SIDE::FRONT) {
                 memcpy((char *)o1s.buf, i1s.buf, out1_size);
             }
             else {
@@ -2642,9 +2642,9 @@ init_stringdtype_ufuncs(PyObject *umath)
         &PyArray_BoolDType,
     };
 
-    static START_POSITION startswith_endswith_startposition[] = {
-        START_POSITION::FRONT,
-        START_POSITION::BACK,
+    static STRING_SIDE startswith_endswith_startposition[] = {
+        STRING_SIDE::FRONT,
+        STRING_SIDE::BACK,
     };
 
     for (int i=0; i<2; i++) {
@@ -2788,8 +2788,8 @@ init_stringdtype_ufuncs(PyObject *umath)
         "_center", "_ljust", "_rjust"
     };
 
-    static JUSTPOSITION positions[3] = {
-        JUSTPOSITION::CENTER, JUSTPOSITION::LEFT, JUSTPOSITION::RIGHT
+    static ALIGN_POSITION positions[3] = {
+        ALIGN_POSITION::CENTER, ALIGN_POSITION::LEFT, ALIGN_POSITION::RIGHT
     };
 
     for (int i=0; i<3; i++) {
@@ -2861,8 +2861,8 @@ init_stringdtype_ufuncs(PyObject *umath)
 
     const char *partition_names[] = {"_partition", "_rpartition"};
 
-    static START_POSITION partition_startpositions[] = {
-        START_POSITION::FRONT, START_POSITION::BACK
+    static STRING_SIDE partition_startpositions[] = {
+        STRING_SIDE::FRONT, STRING_SIDE::BACK
     };
 
     for (int i=0; i<2; i++) {
