@@ -760,7 +760,7 @@ class TestMaskedArray:
         assert_equal(atest, [20])
 
     @pytest.mark.parametrize("dtype", [np.int8, np.uint8, np.complex64])
-    def test_filled_with_basic_dtype(self,dtype):
+    def test_filled_with_basic_dtype(self, dtype):
         # Function may change dtype of array with
         # some basic type, see issue 27269
         # https://github.com/numpy/numpy/issues/27269
