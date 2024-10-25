@@ -1319,7 +1319,7 @@ arccosh = _MaskedUnaryOperation(umath.arccosh, 1.0,
                                 _DomainGreaterEqual(1.0))
 arctanh = _MaskedUnaryOperation(umath.arctanh, 0.0,
                                 _DomainCheckInterval(-1.0 + 1e-15, 1.0 - 1e-15),
-                                _DomainNotIn((1.0,-1.0)))
+                                _DomainNotIn((1.0, -1.0)))
 
 # Binary ufuncs
 add = _MaskedBinaryOperation(umath.add)
