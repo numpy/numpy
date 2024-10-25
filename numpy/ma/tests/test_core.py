@@ -1352,7 +1352,7 @@ class TestMaskedArrayArithmetic:
             assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
 
     @pytest.mark.parametrize("dtype",[np.int8, np.uint8, np.float16, np.complex64])
-    def test_minmax_with_axis_input(self,dtype):
+    def test_minmax_with_axis_input(self, dtype):
         # Test all kinds of number types (min/max),
         # due to maybe some error raise.
         # See issue 27580
