@@ -1012,13 +1012,16 @@ def test_findlike_promoters():
 
 
 def test_strip_promoter():
-    arg = "Hello!!!!"
+    arg = ["Hello!!!!", "Hello??!!"]
     strip_char = "!"
-    answer = "Hello"
+    answer = ["Hello", "Hello??"]
     for dtypes in [("T", "U"), ("U", "T")]:
-        assert answer == np.strings.strip(
-            np.array(arg, dtype=dtypes[0]), np.array(strip_char, dtype=dtypes[1])
+        result = np.strings.strip(
+            np.array(arg, dtype=dtypes[0]),
+            np.array(strip_char, dtype=dtypes[1])
         )
+        assert_array_equal(result, answer)
+        assert result.dtype.char == "T"
 
 
 def test_replace_promoter():
@@ -1035,15 +1038,18 @@ def test_replace_promoter():
             np.array(new, dtype=dtypes[2]),
         )
         assert_array_equal(answer_arr, answer)
+        assert answer_arr.dtype.char == "T"
 
 
 def test_center_promoter():
-    arg = "Hello, planet!"
+    arg = ["Hello", "planet!"]
     fillchar = "/"
     for dtypes in [("T", "U"), ("U", "T")]:
-        assert "/Hello, planet!/" == np.strings.center(
-            np.array(arg, dtype=dtypes[0]), 16, np.array(fillchar, dtype=dtypes[1])
+        answer = np.strings.center(
+            np.array(arg, dtype=dtypes[0]), 9, np.array(fillchar, dtype=dtypes[1])
         )
+        assert_array_equal(answer, ["//Hello//", "/planet!/"])
+        assert answer.dtype.char == "T"
 
 
 DATETIME_INPUT = [
