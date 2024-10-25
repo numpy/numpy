@@ -766,8 +766,8 @@ class TestMaskedArray:
         # https://github.com/numpy/numpy/issues/27269
 
         # Test is the filled array has the same type
-        a = np.arange(1, 7).reshape(2, 3).astype(type)
-        assert masked_where(a <= 3, a).filled().dtype == type
+        a = np.arange(1, 7).reshape(2, 3).astype(dtype)
+        assert masked_where(a <= 3, a).filled().dtype == dtype
 
     def test_filled_with_object_dtype(self):
         a = np.ma.masked_all(1, dtype='O')
