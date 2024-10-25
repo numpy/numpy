@@ -27,9 +27,7 @@ import warnings
 import textwrap
 import re
 from functools import reduce
-from typing import Dict, Callable
-
-from Cython.Compiler.Naming import args_cname
+from typing import Dict
 
 import numpy as np
 import numpy._core.umath as umath
