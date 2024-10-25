@@ -1271,6 +1271,7 @@ operator>=(Buffer<enc> lhs, Buffer<enc> rhs)
  */
 
 /**
+ * @internal
  * @brief Adjusts the start and end offsets for slicing based on the buffer length.
  *
  * This function modifies the provided start and end indices to ensure they
@@ -1306,6 +1307,7 @@ adjust_offsets(npy_int64 *start, npy_int64 *end, size_t len)
 }
 
 /**
+ * @internal
  * @brief Searches for the substring `buf2` within the string
  *        `buf1` in the specified range.
  *
@@ -1420,6 +1422,7 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 }
 
 /**
+ * @internal
  * @brief Finds the starting position of a substring within a string.
  *
  * This function attempts to find the position of the substring
@@ -1457,6 +1460,7 @@ string_index(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 }
 
 /**
+ * @internal
  * @brief Searches for the substring `buf2` within the string
  *        `buf1` in the specified range, searching backwards.
  *
@@ -1571,6 +1575,7 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 }
 
 /**
+ * @internal
  * @brief Finds the last occurrence of a substring within a specified range.
  *
  * This function searches for the last occurrence of the substring `buf2`
@@ -1607,6 +1612,7 @@ string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end
 }
 
 /**
+ * @internal
  * @brief Count the occurrences of a substring within a specified range.
  *
  * This function counts how many times the substring `buf2` appears
@@ -1678,6 +1684,7 @@ string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 
 
 /**
+ * @internal
  * @enum STRING_SIDE
  * @brief Enumeration for the starting position of the search.
  */
@@ -1687,6 +1694,7 @@ enum class STRING_SIDE {
 };
 
 /**
+ * @internal
  * @brief Check if the specified buffer ends with the given substring.
  *
  * This function adjusts the start and end indices to ensure they are
@@ -1751,6 +1759,7 @@ tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 
 
 /**
+ * @internal
  * @enum STRIP_TYPE
  * @brief Enumeration for string strip operations.
  *
@@ -1767,6 +1776,7 @@ enum class STRIP_TYPE {
 };
 
 /**
+ * @internal
  * @brief Strip whitespace characters from the given buffer.
  *
  * This function removes whitespace characters from the specified
@@ -1848,6 +1858,7 @@ string_strip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_type)
 }
 
 /**
+ * @internal
  * @brief Strips characters from the given buffer.
  *
  * This function removes characters specified in the `buf2` from the
@@ -1994,6 +2005,7 @@ string_strip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_TY
 
 
 /**
+ * @file_internal
  * @brief Finds the index of the first occurrence of a slice to be replaced.
  *
  * This function searches for a slice (specified by `buf2`) in another buffer
@@ -2025,6 +2037,7 @@ find_slice_for_replace(CheckedIndexer<char_type> buf1, npy_intp len1,
 }
 
 /**
+ * @internal
  * @brief Replaces occurrences of a substring in a buffer with another substring.
  *
  * This function searches for a specified substring (buf2) in an input buffer
@@ -2164,6 +2177,7 @@ copy_rest:
 
 
 /**
+ * @internal
  * @brief Computes the length of a string after expanding tabs into spaces.
  *
  * This function calculates the length of a string represented
@@ -2221,6 +2235,7 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
 }
 
 /**
+ * @internal
  * @brief Expands tab characters ('\t') in a string buffer to
  *        spaces and writes the result to an output buffer.
  *
@@ -2278,6 +2293,7 @@ string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
 }
 
 /**
+ * @internal
  * @enum ALIGN_POSITION
  * @brief Defines alignment positions.
  */
@@ -2288,6 +2304,7 @@ enum class ALIGN_POSITION {
 };
 
 /**
+ * @internal
  * @brief Pads a string with a specified character to a given width,
  *        aligning it according to the specified position.
  *
@@ -2378,6 +2395,7 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, ALIGN_POSITION pos, 
 }
 
 /**
+ * @internal
  * @brief Pads the input string with leading zeros ('0')
  *        to achieve a specified width, while ensuring
  *        any leading sign ('+' or '-') remains at the start.
@@ -2427,6 +2445,7 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
 }
 
 /**
+ * @internal
  * @brief Partitions an input string into three parts based on a separator and
  * an index.
  *
