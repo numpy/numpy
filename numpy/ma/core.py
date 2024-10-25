@@ -27,7 +27,9 @@ import warnings
 import textwrap
 import re
 from functools import reduce
-from typing import Dict
+from typing import Dict, Callable
+
+from Cython.Compiler.Naming import args_cname
 
 import numpy as np
 import numpy._core.umath as umath
@@ -827,7 +829,6 @@ def is_string_or_list_of_strings(val):
 ufunc_domain = {}
 ufunc_fills = {}
 
-
 class _DomainCheckInterval:
     """
     Define a valid interval, so that :
@@ -923,6 +924,21 @@ class _DomainGreaterEqual:
         with np.errstate(invalid='ignore'):
             return umath.less(x, self.critical_value)
 
+
+class _DomainNotEqual:
+    """
+    DomainGreaterEqual(v)(x) is True where x == v.
+
+    """
+
+    def __init__(self, critical_value):
+        "DomainGreaterEqual(v)(x) = true where x == v"
+        self.critical_value = critical_value
+
+    def __call__(self, x):
+        "Executes the call behavior."
+        with np.errstate(invalid='ignore'):
+            return umath.equal(x, self.critical_value).astype(np.bool)
 
 class _MaskedUFunc:
     def __init__(self, ufunc):
