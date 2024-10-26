@@ -24,7 +24,6 @@ enum class ENCODING {
 
 enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISALPHA,
-    ISDECIMAL,
     ISDIGIT,
     ISSPACE,
     ISALNUM,
@@ -32,6 +31,7 @@ enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISUPPER,
     ISTITLE,
     ISNUMERIC,
+    ISDECIMAL,
     STR_LEN,
 };
 
@@ -504,6 +504,12 @@ struct Buffer {
     }
 
     inline bool
+    isdigit()
+    {
+        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT>();
+    }
+
+    inline bool
     first_character_isspace()
     {
         switch (enc) {
@@ -519,12 +525,6 @@ struct Buffer {
     isspace()
     {
         return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE>();
-    }
-
-    inline bool
-    isdigit()
-    {
-        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT>();
     }
 
     inline bool
@@ -895,10 +895,12 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     npy_intp pos;
     switch(enc) {
         case ENCODING::UTF8:
-            pos = fastsearch(start_loc, end_loc - start_loc, buf2.buf, buf2.after - buf2.buf, -1, FAST_SEARCH);
+            pos = fastsearch(start_loc, end_loc - start_loc, buf2.buf,
+                    buf2.after - buf2.buf, -1, FAST_SEARCH);
             // pos is the byte index, but we need the character index
             if (pos > 0) {
-                pos = utf8_character_index(start_loc, start_loc - buf1.buf, start, pos, buf1.after - start_loc);
+                pos = utf8_character_index(start_loc, start_loc - buf1.buf,
+                        start, pos, buf1.after - start_loc);
             }
             break;
         case ENCODING::ASCII:
@@ -999,10 +1001,12 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     npy_intp pos;
     switch (enc) {
         case ENCODING::UTF8:
-            pos = fastsearch(start_loc, end_loc - start_loc, buf2.buf, buf2.after - buf2.buf, -1, FAST_RSEARCH);
+            pos = fastsearch(start_loc, end_loc - start_loc,
+                    buf2.buf, buf2.after - buf2.buf, -1, FAST_RSEARCH);
             // pos is the byte index, but we need the character index
             if (pos > 0) {
-                pos = utf8_character_index(start_loc, start_loc - buf1.buf, start, pos, buf1.after - start_loc);
+                pos = utf8_character_index(start_loc, start_loc - buf1.buf,
+                        start, pos, buf1.after - start_loc);
             }
             break;
         case ENCODING::ASCII:
