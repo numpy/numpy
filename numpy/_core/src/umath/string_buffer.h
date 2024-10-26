@@ -1349,7 +1349,7 @@ adjust_offsets(npy_int64 *start, npy_int64 *end, size_t len)
  * @param end The ending index for the search in `buf1`.
  *
  * @return The index of the first occurrence of `buf2` in `buf1`,
- *         -1 if not found, or -2 if error raised.
+ *         -1 if not found, or -2 if an error is raised.
  * @throws PyExc_ValueError If the string to search in exceeds the
  *         allowed maximum, the function will raise `PyExc_ValueError`
  *         with error message: "target string is too long".
@@ -1366,11 +1366,11 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
-    if (len1 < 0) {
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
         npy_gil_error(PyExc_ValueError, "target string is too long");
         return (npy_intp) -2;
     }
-    if (len2 < 0) {
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
         npy_gil_error(PyExc_ValueError, "pattern string is too long");
         return (npy_intp) -2;
     }
@@ -1479,7 +1479,7 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
  * @param end The ending position within `buf1` to stop searching.
  *
  * @return The starting position of the substring within the string,
- *         or -2 if not found or error raised.
+ *         or -2 if not found or an error is raised.
  * @throws PyExc_ValueError If the substring is not found within the
  *         specified range, this function raises a `ValueError` with
  *         the error message: "substring not found".
@@ -1524,7 +1524,7 @@ string_index(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
  * @param end The ending index for the search in `buf1`.
  *
  * @return The index of the last occurrence of `buf2` in `buf1`,
- *         -1 if not found, or -2 if error raised.
+ *         -1 if not found, or -2 if an error is raised.
  * @throws PyExc_ValueError If the string to search in exceeds the
  *         allowed maximum, the function will raise `PyExc_ValueError`
  *         with error message: "target string is too long".
@@ -1541,11 +1541,11 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
-    if (len1 < 0) {
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
         npy_gil_error(PyExc_ValueError, "target string is too long");
         return (npy_intp) -2;
     }
-    if (len2 < 0) {
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
         npy_gil_error(PyExc_ValueError, "pattern string is too long");
         return (npy_intp) -2;
     }
@@ -1712,11 +1712,11 @@ string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
-    if (len1 < 0) {
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
         npy_gil_error(PyExc_ValueError, "target string is too long");
         return (npy_intp) -2;
     }
-    if (len2 < 0) {
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
         npy_gil_error(PyExc_ValueError, "pattern string is too long");
         return (npy_intp) -2;
     }
@@ -1795,7 +1795,7 @@ enum class STRING_SIDE {
  * @param direction The direction to search from (either front or back).
  *
  * @return `npy_bool` indicating whether `buf1` ends with `buf2`.
- *         It will return `NPY_FALSE` if error raised.
+ *         It will return `NPY_FALSE` if an error is raised.
  * @throws PyExc_ValueError If the string to search in exceeds the
  *         allowed maximum, the function will raise `PyExc_ValueError`
  *         with error message: "target string is too long".
@@ -1813,11 +1813,11 @@ tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
-    if (len1 < 0) {
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
         npy_gil_error(PyExc_ValueError, "target string is too long");
         return NPY_FALSE;
     }
-    if (len2 < 0) {
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
         npy_gil_error(PyExc_ValueError, "pattern string is too long");
         return NPY_FALSE;
     }
@@ -2325,7 +2325,7 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
                 line_pos = 0;
             }
         }
-        if (new_len > INT_MAX || new_len < 0) {
+        if (new_len < 0) {
             npy_gil_error(PyExc_OverflowError, "new string is too long");
             return -1;
         }
@@ -2577,8 +2577,7 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
  *       `buf1` and `buf2` to check if the content at `idx` matches
  *       the separator. It simply skips over a substring of the same
  *       length as `buf2` at position `idx` in `buf1` and assigns
- *       `buf2` to `out2`. `final_len` could be less than 0 if buffer
- *       is too long.
+ *       `buf2` to `out2`. `final_len*` is less than `0` if an error is raised.
  */
 template <ENCODING enc>
 static inline void
@@ -2592,6 +2591,22 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
 
     size_t len1 = buf1.num_codepoints();
     size_t len2 = buf2.num_codepoints();
+
+    if (len1 > PY_SSIZE_T_MAX) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        *final_len1 = *final_len2 = *final_len3 = -1;
+        return;
+    }
+    if (len2 > len1) {
+        npy_gil_error(PyExc_ValueError, "separator string is too long");
+        *final_len1 = *final_len2 = *final_len3 = -1;
+        return;
+    }
+    if (idx >= 0 && idx > len1 - len2) {
+        npy_gil_error(PyExc_ValueError, "input index is too large");
+        *final_len1 = *final_len2 = *final_len3 = -1;
+        return;
+    }
 
     if (len2 == 0) {
         npy_gil_error(PyExc_ValueError, "empty separator");
