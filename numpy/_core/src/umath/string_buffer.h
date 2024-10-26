@@ -806,22 +806,21 @@ operator>=(Buffer<enc> lhs, Buffer<enc> rhs)
  * start/end arguments to str function like find/rfind etc.
  */
 static inline void
-adjust_offsets(npy_int64 *start, npy_int64 *end, size_t len)
+adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
 {
-    npy_int64 temp_len = static_cast<npy_int64>(len);
-
-    if (*end > temp_len) {
-        *end = temp_len;
+    assert(len >= 0, "negative length");
+    if (*end > len) {
+        *end = len;
     }
     else if (*end < 0) {
-        *end += temp_len;
+        *end += len;
         if (*end < 0) {
             *end = 0;
         }
     }
 
     if (*start < 0) {
-        *start += temp_len;
+        *start += len;
         if (*start < 0) {
             *start = 0;
         }
@@ -834,6 +833,14 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
+    if (len1 < 0) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        return (npy_intp) -2;
+    }
+    if (len2 < 0) {
+        npy_gil_error(PyExc_ValueError, "pattern string is too long");
+        return (npy_intp) -2;
+    }
 
     adjust_offsets(&start, &end, len1);
     if (end - start < len2) {
@@ -937,6 +944,14 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
+    if (len1 < 0) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        return (npy_intp) -2;
+    }
+    if (len2 < 0) {
+        npy_gil_error(PyExc_ValueError, "pattern string is too long");
+        return (npy_intp) -2;
+    }
 
     adjust_offsets(&start, &end, len1);
     if (end - start < len2) {
@@ -1046,6 +1061,14 @@ string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
+    if (len1 < 0) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        return (npy_intp) -2;
+    }
+    if (len2 < 0) {
+        npy_gil_error(PyExc_ValueError, "pattern string is too long");
+        return (npy_intp) -2;
+    }
 
     adjust_offsets(&start, &end, len1);
     if (end < start || end - start < len2) {
@@ -1100,15 +1123,23 @@ tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
+    if (len1 < 0) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        return NPY_FALSE;
+    }
+    if (len2 < 0) {
+        npy_gil_error(PyExc_ValueError, "pattern string is too long");
+        return NPY_FALSE;
+    }
 
     adjust_offsets(&start, &end, len1);
     end -= len2;
     if (end < start) {
-        return 0;
+        return NPY_FALSE;
     }
 
     if (len2 == 0) {
-        return 1;
+        return NPY_TRUE;
     }
 
     size_t offset;
@@ -1131,7 +1162,7 @@ tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
         return !start_buf.buffer_memcmp(buf2, size2);
     }
 
-    return 0;
+    return NPY_FALSE;
 }
 
 enum class STRIPTYPE {
@@ -1483,8 +1514,8 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
         }
         else {
             line_pos += 1;
-            npy_intp n_bytes = tmp.num_bytes_next_character();
-            new_len += n_bytes;
+            size_t n_bytes = tmp.num_bytes_next_character();
+            new_len += (npy_intp)n_bytes;
             if (ch == '\n' || ch == '\r') {
                 line_pos = 0;
             }
@@ -1591,7 +1622,7 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Bu
         out.advance_chars_or_bytes(out.buffer_memset(fill, right));
     }
 
-    return finalwidth;
+    return (npy_intp)finalwidth;
 }
 
 
