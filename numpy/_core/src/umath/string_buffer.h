@@ -1354,11 +1354,10 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     size_t len1 = buf1.num_codepoints();
     size_t len2 = buf2.num_codepoints();
     size_t len3 = buf3.num_codepoints();
+
     char *start;
-    size_t length = len1;
     if (enc == ENCODING::UTF8) {
         start = buf1.after;
-        length = 0;
     }
     else if (enc == ENCODING::UTF32) {
         start = buf1.buf + sizeof(npy_ucs4) * len1;
@@ -1366,8 +1365,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     else {
         start = buf1.buf + len1;
     }
-
-    Buffer<enc> end1(start, length);
+    Buffer<enc> end1(start, 0);
     size_t span2, span3;
 
     switch(enc) {
