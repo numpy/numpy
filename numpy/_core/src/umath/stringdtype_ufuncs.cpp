@@ -1598,6 +1598,20 @@ string_expandtabs_strided_loop(PyArrayMethod_Context *context,
     return -1;
 }
 
+static int
+string_center_ljust_rjust_promoter(
+        PyObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *const op_dtypes[],
+        PyArray_DTypeMeta *const signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    new_op_dtypes[0] = NPY_DT_NewRef(&PyArray_StringDType);
+    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_Int64DType);
+    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_StringDType);
+    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_StringDType);
+    return 0;
+}
+
 static NPY_CASTING
 center_ljust_rjust_resolve_descriptors(
         struct PyArrayMethodObject_tag *NPY_UNUSED(method),
@@ -2831,20 +2845,13 @@ init_stringdtype_ufuncs(PyObject *umath)
             return -1;
         }
 
-        PyArray_DTypeMeta *int_promoter_dtypes[] = {
-            &PyArray_StringDType,
-            &PyArray_IntAbstractDType,
-            &PyArray_StringDType,
-            &PyArray_StringDType,
-        };
-
-        if (add_promoter(umath, center_ljust_rjust_names[i],
-                         int_promoter_dtypes, 4,
-                         string_multiply_promoter) < 0) {
-            return -1;
-        }
-
-        PyArray_DTypeMeta *unicode_promoter_dtypes[2][4] = {
+        PyArray_DTypeMeta *promoter_dtypes[3][4] = {
+            {
+                &PyArray_StringDType,
+                &PyArray_IntAbstractDType,
+                &PyArray_StringDType,
+                &PyArray_StringDType,
+            },
             {
                 &PyArray_StringDType,
                 &PyArray_IntAbstractDType,
@@ -2859,10 +2866,10 @@ init_stringdtype_ufuncs(PyObject *umath)
             },
         };
 
-        for (int j=0; j<2; j++) {
+        for (int j=0; j<3; j++) {
             if (add_promoter(umath, center_ljust_rjust_names[i],
-                             unicode_promoter_dtypes[j], 4,
-                             string_multiply_promoter) < 0) {
+                             promoter_dtypes[j], 4,
+                             string_center_ljust_rjust_promoter) < 0) {
                 return -1;
             }
         }
