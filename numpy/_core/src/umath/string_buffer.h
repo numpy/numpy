@@ -2587,15 +2587,17 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
         *final_len1 = *final_len2 = *final_len3 = -1;
         return;
     }
-    if (len2 > len1) {
-        npy_gil_error(PyExc_ValueError, "separator string is too long");
-        *final_len1 = *final_len2 = *final_len3 = -1;
-        return;
-    }
-    if (idx >= 0 && (size_t)idx > len1 - len2) {
-        npy_gil_error(PyExc_ValueError, "input index is too large");
-        *final_len1 = *final_len2 = *final_len3 = -1;
-        return;
+    if (idx >= 0) {
+        if (len2 > len1) {
+            npy_gil_error(PyExc_ValueError, "separator string is too long");
+            *final_len1 = *final_len2 = *final_len3 = -1;
+            return;
+        }
+        if ((size_t)idx > len1 - len2) {
+            npy_gil_error(PyExc_ValueError, "input index is too large");
+            *final_len1 = *final_len2 = *final_len3 = -1;
+            return;
+        }
     }
 
     if (len2 == 0) {
