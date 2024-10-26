@@ -833,11 +833,11 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
-    if (len1 < 0) {
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
         npy_gil_error(PyExc_ValueError, "target string is too long");
         return (npy_intp) -2;
     }
-    if (len2 < 0) {
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
         npy_gil_error(PyExc_ValueError, "pattern string is too long");
         return (npy_intp) -2;
     }
@@ -944,11 +944,11 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
-    if (len1 < 0) {
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
         npy_gil_error(PyExc_ValueError, "target string is too long");
         return (npy_intp) -2;
     }
-    if (len2 < 0) {
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
         npy_gil_error(PyExc_ValueError, "pattern string is too long");
         return (npy_intp) -2;
     }
@@ -1061,11 +1061,11 @@ string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
-    if (len1 < 0) {
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
         npy_gil_error(PyExc_ValueError, "target string is too long");
         return (npy_intp) -2;
     }
-    if (len2 < 0) {
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
         npy_gil_error(PyExc_ValueError, "pattern string is too long");
         return (npy_intp) -2;
     }
@@ -1123,11 +1123,11 @@ tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 {
     npy_int64 len1 = buf1.num_codepoints();
     npy_int64 len2 = buf2.num_codepoints();
-    if (len1 < 0) {
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
         npy_gil_error(PyExc_ValueError, "target string is too long");
         return NPY_FALSE;
     }
-    if (len2 < 0) {
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
         npy_gil_error(PyExc_ValueError, "pattern string is too long");
         return NPY_FALSE;
     }
@@ -1515,12 +1515,12 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
         else {
             line_pos += 1;
             size_t n_bytes = tmp.num_bytes_next_character();
-            new_len += (npy_intp)n_bytes;
+            new_len += n_bytes;
             if (ch == '\n' || ch == '\r') {
                 line_pos = 0;
             }
         }
-        if (new_len > INT_MAX  || new_len < 0) {
+        if (new_len < 0) {
             npy_gil_error(PyExc_OverflowError, "new string is too long");
             return -1;
         }
@@ -1663,6 +1663,24 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
 
     size_t len1 = buf1.num_codepoints();
     size_t len2 = buf2.num_codepoints();
+
+    if (len1 > PY_SSIZE_T_MAX) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        *final_len1 = *final_len2 = *final_len3 = -1;
+        return;
+    }
+    if (idx >= 0) {
+        if (len2 > len1) {
+            npy_gil_error(PyExc_ValueError, "separator string is too long");
+            *final_len1 = *final_len2 = *final_len3 = -1;
+            return;
+        }
+        if ((size_t)idx > len1 - len2) {
+            npy_gil_error(PyExc_ValueError, "input index is too large");
+            *final_len1 = *final_len2 = *final_len3 = -1;
+            return;
+        }
+    }
 
     if (len2 == 0) {
         npy_gil_error(PyExc_ValueError, "empty separator");
