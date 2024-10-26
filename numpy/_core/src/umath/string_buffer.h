@@ -1483,7 +1483,7 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
         }
         else {
             line_pos += 1;
-            size_t n_bytes = tmp.num_bytes_next_character();
+            npy_intp n_bytes = tmp.num_bytes_next_character();
             new_len += n_bytes;
             if (ch == '\n' || ch == '\r') {
                 line_pos = 0;
@@ -1630,8 +1630,8 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
     // StringDType uses a ufunc that implements the find-part as well
     assert(enc != ENCODING::UTF8);
 
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
+    npy_intp len1 = buf1.num_codepoints();
+    npy_intp len2 = buf2.num_codepoints();
 
     if (len2 == 0) {
         npy_gil_error(PyExc_ValueError, "empty separator");
