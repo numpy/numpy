@@ -2320,12 +2320,12 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
         else {
             line_pos += 1;
             size_t n_bytes = tmp.num_bytes_next_character();
-            new_len += (npy_intp)n_bytes;
+            new_len += n_bytes;
             if (ch == '\n' || ch == '\r') {
                 line_pos = 0;
             }
         }
-        if (new_len > PY_SSIZE_T_MAX || new_len < 0) {
+        if (new_len > INT_MAX || new_len < 0) {
             npy_gil_error(PyExc_OverflowError, "new string is too long");
             return -1;
         }
