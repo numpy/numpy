@@ -1350,12 +1350,9 @@ adjust_offsets(npy_int64 *start, npy_int64 *end, size_t len)
  *
  * @return The index of the first occurrence of `buf2` in `buf1`,
  *         -1 if not found, or -2 if an error is raised.
- * @throws PyExc_ValueError If the string to search in exceeds the
+ * @throws PyExc_ValueError If the string to search (in/for) exceeds the
  *         allowed maximum, the function will raise `PyExc_ValueError`
- *         with error message: "target string is too long".
- *         If the string to search for exceeds the allowed maximum,
- *         the function will raise `PyExc_ValueError` with error
- *         message: "pattern string is too long".
+ *         with error message: "(target/pattern) string is too long".
  *
  * @note The search starts from the index specified by `start` (inclusive)
  *       and ends before the index specified by `end` (exclusive).
@@ -1483,12 +1480,9 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
  * @throws PyExc_ValueError If the substring is not found within the
  *         specified range, this function raises a `ValueError` with
  *         the error message: "substring not found".
- * @throws PyExc_ValueError If the string to search in exceeds the
+ * @throws PyExc_ValueError If the string to search (in/for) exceeds the
  *         allowed maximum, the function will raise `PyExc_ValueError`
- *         with error message: "target string is too long".
- *         If the string to search for exceeds the allowed maximum,
- *         the function will raise `PyExc_ValueError` with error
- *         message: "pattern string is too long".
+ *         with error message: "(target/pattern) string is too long".
  *
  * @note The search starts from the index specified by `start` (inclusive)
  *       and ends before the index specified by `end` (exclusive).
@@ -1525,12 +1519,9 @@ string_index(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
  *
  * @return The index of the last occurrence of `buf2` in `buf1`,
  *         -1 if not found, or -2 if an error is raised.
- * @throws PyExc_ValueError If the string to search in exceeds the
+ * @throws PyExc_ValueError If the string to search (in/for) exceeds the
  *         allowed maximum, the function will raise `PyExc_ValueError`
- *         with error message: "target string is too long".
- *         If the string to search for exceeds the allowed maximum,
- *         the function will raise `PyExc_ValueError` with error
- *         message: "pattern string is too long".
+ *         with error message: "(target/pattern) string is too long".
  *
  * @note The search starts from the index specified by `start` (inclusive)
  *       and ends before the index specified by `end` (exclusive).
@@ -1657,12 +1648,9 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
  * @throws PyExc_ValueError If the substring is not found within the
  *         specified range, this function raises a `ValueError` with
  *         the error message: "substring not found".
- * @throws PyExc_ValueError If the string to search in exceeds the
+ * @throws PyExc_ValueError If the string to search (in/for) exceeds the
  *         allowed maximum, the function will raise `PyExc_ValueError`
- *         with error message: "target string is too long".
- *         If the string to search for exceeds the allowed maximum,
- *         the function will raise `PyExc_ValueError` with error
- *         message: "pattern string is too long".
+ *         with error message: "(target/pattern) string is too long".
  *
  * @note The search starts from the index specified by `start` (inclusive)
  *       and ends before the index specified by `end` (exclusive).
@@ -1696,12 +1684,9 @@ string_rindex(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end
  * @param end The ending index for the search (exclusive).
  *
  * @return The number of occurrences of the substring, or -2
- * @throws PyExc_ValueError If the string to search in exceeds the
+ * @throws PyExc_ValueError If the string to search (in/for) exceeds the
  *         allowed maximum, the function will raise `PyExc_ValueError`
- *         with error message: "target string is too long".
- *         If the string to search for exceeds the allowed maximum,
- *         the function will raise `PyExc_ValueError` with error
- *         message: "pattern string is too long".
+ *         with error message: "(target/pattern) string is too long".
  *
  * @note The search starts from the index specified by `start` (inclusive)
  *       and ends before the index specified by `end` (exclusive).
@@ -1796,12 +1781,9 @@ enum class STRING_SIDE {
  *
  * @return `npy_bool` indicating whether `buf1` ends with `buf2`.
  *         It will return `NPY_FALSE` if an error is raised.
- * @throws PyExc_ValueError If the string to search in exceeds the
+ * @throws PyExc_ValueError If the string to search (in/for) exceeds the
  *         allowed maximum, the function will raise `PyExc_ValueError`
- *         with error message: "target string is too long".
- *         If the string to search for exceeds the allowed maximum,
- *         the function will raise `PyExc_ValueError` with error
- *         message: "pattern string is too long".
+ *         with error message: "(target/pattern) string is too long".
  *
  * @note The search starts from the index specified by `start` (inclusive)
  *       and ends before the index specified by `end` (exclusive).
@@ -2573,6 +2555,14 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
  *
  * @throws PyExc_ValueError If the separator is an empty string, the function
  *         will raise `PyExc_ValueError` with error message: "empty separator".
+ * @throws PyExc_ValueError If buf1 (target string) and buf2 (separator string)
+ *         length exceeds the allowed maximum, the function will raise
+ *         `PyExc_ValueError` with error message:
+ *         "(target/separator) string is too long".
+ * @throws PyExc_ValueError If idx is non-negative and exceeds the valid
+ *         range for splitting, the function will raise `PyExc_ValueError`
+ *         with error message: "input index is too large".
+ *
  * @note This function does not perform any comparison between
  *       `buf1` and `buf2` to check if the content at `idx` matches
  *       the separator. It simply skips over a substring of the same
@@ -2602,7 +2592,7 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
         *final_len1 = *final_len2 = *final_len3 = -1;
         return;
     }
-    if (idx >= 0 && idx > len1 - len2) {
+    if (idx >= 0 && (size_t)idx > len1 - len2) {
         npy_gil_error(PyExc_ValueError, "input index is too large");
         *final_len1 = *final_len2 = *final_len3 = -1;
         return;
