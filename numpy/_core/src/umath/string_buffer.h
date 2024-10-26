@@ -1807,11 +1807,11 @@ tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
     adjust_offsets(&start, &end, len1);
     end -= len2;
     if (end < start) {
-        return 0;
+        return NPY_FALSE;
     }
 
     if (len2 == 0) {
-        return 1;
+        return NPY_TRUE;
     }
 
     size_t offset;
@@ -1835,7 +1835,7 @@ tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
         return !start_buf.buffer_memcmp(buf2, size2);
     }
 
-    return 0;
+    return NPY_FALSE;
 }
 
 
