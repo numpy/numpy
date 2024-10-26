@@ -670,27 +670,25 @@ def center(a, width, fillchar=' '):
 
     """
     width = np.asanyarray(width)
+
     if not np.issubdtype(width.dtype, np.integer):
         raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
 
     a = np.asanyarray(a)
     fillchar = np.asanyarray(fillchar)
 
-    try_out_dt = np.result_type(a, fillchar)
-    if try_out_dt.char == "T":
-        a = a.astype(try_out_dt, copy=False)
-        fillchar = fillchar.astype(try_out_dt, copy=False)
-        out = None
-    else:
-        fillchar = fillchar.astype(a.dtype, copy=False)
-        width = np.maximum(str_len(a), width)
-        out_dtype = f"{a.dtype.char}{width.max()}"
-        shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
-        out = np.empty_like(a, shape=shape, dtype=out_dtype)
-
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
             "The fill character must be exactly one character long")
+
+    if np.result_type(a, fillchar).char == "T":
+        return _center(a, width, fillchar)
+
+    fillchar = fillchar.astype(a.dtype, copy=False)
+    width = np.maximum(str_len(a), width)
+    out_dtype = f"{a.dtype.char}{width.max()}"
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
 
     return _center(a, width, fillchar, out=out)
 
@@ -742,21 +740,18 @@ def ljust(a, width, fillchar=' '):
     a = np.asanyarray(a)
     fillchar = np.asanyarray(fillchar)
 
-    try_out_dt = np.result_type(a, fillchar)
-    if try_out_dt.char == "T":
-        a = a.astype(try_out_dt, copy=False)
-        fillchar = fillchar.astype(try_out_dt, copy=False)
-        out = None
-    else:
-        fillchar = fillchar.astype(a.dtype, copy=False)
-        width = np.maximum(str_len(a), width)
-        shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
-        out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=shape, dtype=out_dtype)
-
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
             "The fill character must be exactly one character long")
+
+    if np.result_type(a, fillchar).char == "T":
+        return _ljust(a, width, fillchar)
+
+    fillchar = fillchar.astype(a.dtype, copy=False)
+    width = np.maximum(str_len(a), width)
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
+    out_dtype = f"{a.dtype.char}{width.max()}"
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
 
     return _ljust(a, width, fillchar, out=out)
 
@@ -808,21 +803,18 @@ def rjust(a, width, fillchar=' '):
     a = np.asanyarray(a)
     fillchar = np.asanyarray(fillchar)
 
-    try_out_dt = np.result_type(a, fillchar)
-    if try_out_dt.char == "T":
-        a = a.astype(try_out_dt, copy=False)
-        fillchar = fillchar.astype(try_out_dt, copy=False)
-        out = None
-    else:
-        fillchar = fillchar.astype(a.dtype, copy=False)
-        width = np.maximum(str_len(a), width)
-        shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
-        out_dtype = f"{a.dtype.char}{width.max()}"
-        out = np.empty_like(a, shape=shape, dtype=out_dtype)
-
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
             "The fill character must be exactly one character long")
+
+    if np.result_type(a, fillchar).char == "T":
+        return _rjust(a, width, fillchar)
+
+    fillchar = fillchar.astype(a.dtype, copy=False)
+    width = np.maximum(str_len(a), width)
+    shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
+    out_dtype = f"{a.dtype.char}{width.max()}"
+    out = np.empty_like(a, shape=shape, dtype=out_dtype)
 
     return _rjust(a, width, fillchar, out=out)
 
@@ -1246,23 +1238,19 @@ def replace(a, old, new, count=-1):
     new_dtype = getattr(new, 'dtype', None)
     new = np.asanyarray(new)
 
-    try_out_dt = np.result_type(arr, old, new)
-    if try_out_dt.char == "T":
-        arr = a.astype(try_out_dt, copy=False)
-        old = old.astype(try_out_dt, copy=False)
-        new = new.astype(try_out_dt, copy=False)
-        counts = count
-        out = None
-    else:
-        a_dt = arr.dtype
-        old = old.astype(old_dtype if old_dtype else a_dt, copy=False)
-        new = new.astype(new_dtype if new_dtype else a_dt, copy=False)
-        max_int64 = np.iinfo(np.int64).max
-        counts = _count_ufunc(arr, old, 0, max_int64)
-        counts = np.where(count < 0, counts, np.minimum(counts, count))
-        buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
-        out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
-        out = np.empty_like(arr, shape=buffersizes.shape, dtype=out_dtype)
+    if np.result_type(arr, old, new).char == "T":
+        return _replace(arr, old, new, count)
+
+    a_dt = arr.dtype
+    old = old.astype(old_dtype if old_dtype else a_dt, copy=False)
+    new = new.astype(new_dtype if new_dtype else a_dt, copy=False)
+    max_int64 = np.iinfo(np.int64).max
+    counts = _count_ufunc(arr, old, 0, max_int64)
+    counts = np.where(count < 0, counts, np.minimum(counts, count))
+    buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
+    out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
+    out = np.empty_like(arr, shape=buffersizes.shape, dtype=out_dtype)
+
     return _replace(arr, old, new, counts, out=out)
 
 
@@ -1473,10 +1461,7 @@ def partition(a, sep):
     a = np.asanyarray(a)
     sep = np.asanyarray(sep)
 
-    try_out_dt = np.result_type(a, sep)
-    if try_out_dt.char == "T":
-        a = a.astype(try_out_dt, copy=False)
-        sep = sep.astype(try_out_dt, copy=False)
+    if np.result_type(a, sep).char == "T":
         return _partition(a, sep)
 
     sep = sep.astype(a.dtype, copy=False)
@@ -1543,10 +1528,7 @@ def rpartition(a, sep):
     a = np.asanyarray(a)
     sep = np.asanyarray(sep)
 
-    try_out_dt = np.result_type(a, sep)
-    if try_out_dt.char == "T":
-        a = a.astype(try_out_dt, copy=False)
-        sep = sep.astype(try_out_dt, copy=False)
+    if np.result_type(a, sep).char == "T":
         return _rpartition(a, sep)
 
     sep = sep.astype(a.dtype, copy=False)
