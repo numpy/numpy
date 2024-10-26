@@ -1602,7 +1602,7 @@ template <ENCODING enc>
 static inline npy_intp
 string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
 {
-    size_t finalwidth = width > 0 ? width : 0;
+    size_t final_width = width > 0 ? width : 0;
 
     npy_ucs4 fill = '0';
     npy_intp new_len = string_pad(buf, width, fill, ALIGN_POSITION::RIGHT, out);
@@ -1610,7 +1610,7 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
         return -1;
     }
 
-    size_t offset = finalwidth - buf.num_codepoints();
+    size_t offset = final_width - buf.num_codepoints();
     Buffer<enc> tmp = out + offset;
 
     npy_ucs4 c = *tmp;
