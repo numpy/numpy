@@ -808,7 +808,7 @@ operator>=(Buffer<enc> lhs, Buffer<enc> rhs)
 static inline void
 adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
 {
-    assert(len >= 0, "negative length");
+    assert(len >= 0);
     if (*end > len) {
         *end = len;
     }
