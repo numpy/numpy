@@ -2482,7 +2482,8 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
  *       `buf1` and `buf2` to check if the content at `idx` matches
  *       the separator. It simply skips over a substring of the same
  *       length as `buf2` at position `idx` in `buf1` and assigns
- *       `buf2` to `out2`.
+ *       `buf2` to `out2`. `final_len` could be less than 0 if buffer
+ *       is too long.
  */
 template <ENCODING enc>
 static inline void
@@ -2494,8 +2495,8 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
     // StringDType uses an ufunc that implements the find-part as well
     assert(enc != ENCODING::UTF8);
 
-    npy_intp len1 = buf1.num_codepoints();
-    npy_intp len2 = buf2.num_codepoints();
+    size_t len1 = buf1.num_codepoints();
+    size_t len2 = buf2.num_codepoints();
 
     if (len2 == 0) {
         npy_gil_error(PyExc_ValueError, "empty separator");
