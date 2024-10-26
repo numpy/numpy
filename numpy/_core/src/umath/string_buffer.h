@@ -14,9 +14,6 @@
 #include "string_fastsearch.h"
 #include "gil_utils.h"
 
-#define CHECK_OVERFLOW(index) if (buf + (index) >= after) return 0
-#define MSB(val) ((val) >> 7 & 1)
-
 
 enum class ENCODING {
     ASCII, UTF32, UTF8
