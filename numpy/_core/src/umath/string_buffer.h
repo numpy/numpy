@@ -24,6 +24,7 @@ enum class ENCODING {
 
 enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISALPHA,
+    ISDECIMAL,
     ISDIGIT,
     ISSPACE,
     ISALNUM,
@@ -31,7 +32,6 @@ enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISUPPER,
     ISTITLE,
     ISNUMERIC,
-    ISDECIMAL,
     STR_LEN,
 };
 
@@ -504,6 +504,12 @@ struct Buffer {
     }
 
     inline bool
+    isdecimal()
+    {
+        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL>();
+    }
+
+    inline bool
     isdigit()
     {
         return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT>();
@@ -614,12 +620,6 @@ struct Buffer {
     isnumeric()
     {
         return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC>();
-    }
-
-    inline bool
-    isdecimal()
-    {
-        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL>();
     }
 
     inline Buffer<enc>
