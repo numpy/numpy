@@ -33,6 +33,7 @@ enum class ENCODING {
  */
 enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISALPHA,    ///< Checks if a character is alphabetic
+    ISDECIMAL,  ///< Checks if a character is decimal
     ISDIGIT,    ///< Checks if a character is a digit
     ISSPACE,    ///< Checks if a character is whitespace
     ISALNUM,    ///< Checks if a character is alphanumeric
@@ -40,7 +41,6 @@ enum class IMPLEMENTED_UNARY_FUNCTIONS {
     ISUPPER,    ///< Checks if a character is uppercase
     ISTITLE,    ///< Checks if a string is titlecase
     ISNUMERIC,  ///< Checks if a character is numeric
-    ISDECIMAL,  ///< Checks if a character is decimal
     STR_LEN     ///< Returns the length of a string
 };
 
@@ -762,6 +762,17 @@ struct Buffer {
     }
 
     /**
+     * @brief Check if all characters in the buffer are decimal digits.
+     *
+     * @return true if all characters are decimal digits, false otherwise.
+     */
+    inline bool
+    isdecimal()
+    {
+        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL>();
+    }
+
+    /**
      * @brief Check if all characters in the buffer are digits.
      *
      * @return true if all characters are digits, false otherwise.
@@ -933,17 +944,6 @@ struct Buffer {
     }
 
     /**
-     * @brief Check if all characters in the buffer are decimal digits.
-     *
-     * @return true if all characters are decimal digits, false otherwise.
-     */
-    inline bool
-    isdecimal()
-    {
-        return unary_loop<IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL>();
-    }
-
-    /**
      * @brief Remove trailing whitespace and null characters from the buffer.
      *
      * This function modifies the buffer by removing any trailing whitespace
@@ -1039,8 +1039,8 @@ struct Buffer {
  * @brief Functor to apply a specified unary function.
  *
  * @tparam f The unary function to apply.
- *           Support `ISALPHA`, `ISDIGIT`, `ISSPACE`,
- *           `ISALNUM`, `ISNUMERIC`, `ISDECIMAL`.
+ *           Support `ISALPHA`, `ISDECIMAL`, `ISDIGIT`,
+ *           `ISSPACE`, `ISALNUM`, `ISNUMERIC`.
  * @tparam enc The encoding type of the buffer.
  * @tparam T The return type of the unary function.
  */
@@ -1054,17 +1054,19 @@ struct call_buffer_member_function {
      */
     T operator()(Buffer<enc> buf) {
         static_assert(f == IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL ||
                       f == IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT ||
                       f == IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE ||
                       f == IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM ||
-                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC ||
-                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL,
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC,
                       "Invalid IMPLEMENTED_UNARY_FUNCTIONS value "
                       "in call_buffer_member_function.");
 
         switch (f) {
             case IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA:
                 return codepoint_isalpha<enc>(*buf);
+            case IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL:
+                return codepoint_isdecimal(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT:
                 return codepoint_isdigit<enc>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE:
@@ -1073,8 +1075,6 @@ struct call_buffer_member_function {
                 return codepoint_isalnum<enc>(*buf);
             case IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC:
                 return codepoint_isnumeric(*buf);
-            case IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL:
-                return codepoint_isdecimal(*buf);
         }
     }
 };
