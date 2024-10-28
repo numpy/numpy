@@ -1760,11 +1760,15 @@ _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 _FlexDType = TypeVar("_FlexDType", bound=dtype[flexible])
 
+_IntegralArrayT = TypeVar("_IntegralArrayT", bound=NDArray[integer[Any] | np.bool | object_])
+_RealArrayT = TypeVar("_RealArrayT", bound=NDArray[floating[Any] | integer[Any] | timedelta64 | np.bool | object_])
+_NumericArrayT = TypeVar("_NumericArrayT", bound=NDArray[number[Any] | timedelta64 | object_])
+
 _Shape1D: TypeAlias = tuple[int]
 _Shape2D: TypeAlias = tuple[int, int]
 
+_ShapeType = TypeVar("_ShapeType", bound=_Shape)
 _ShapeType_co = TypeVar("_ShapeType_co", covariant=True, bound=_Shape)
-_ShapeType2 = TypeVar("_ShapeType2", bound=_Shape)
 _Shape2DType_co = TypeVar("_Shape2DType_co", covariant=True, bound=_Shape2D)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
@@ -1881,11 +1885,11 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
 
     def __array_wrap__(
         self,
-        array: ndarray[_ShapeType2, _DType],
+        array: ndarray[_ShapeType, _DType],
         context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
         return_scalar: builtins.bool = ...,
         /,
-    ) -> ndarray[_ShapeType2, _DType]: ...
+    ) -> ndarray[_ShapeType, _DType]: ...
 
     @overload
     def __getitem__(self, key: (
@@ -2311,40 +2315,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
 
     # Unary ops
     @overload
-    def __abs__(self: NDArray[_UnknownType]) -> NDArray[Any]: ...
+    def __abs__(self: _RealArrayT, /) -> _RealArrayT: ...
     @overload
-    def __abs__(self: NDArray[np.bool]) -> NDArray[np.bool]: ...
+    def __abs__(self: ndarray[_ShapeType, dtype[complex128]], /) -> ndarray[_ShapeType, dtype[float64]]: ...
     @overload
-    def __abs__(self: NDArray[complexfloating[_NBit1, _NBit1]]) -> NDArray[floating[_NBit1]]: ...
-    @overload
-    def __abs__(self: NDArray[_NumberType]) -> NDArray[_NumberType]: ...
-    @overload
-    def __abs__(self: NDArray[timedelta64]) -> NDArray[timedelta64]: ...
-    @overload
-    def __abs__(self: NDArray[object_]) -> Any: ...
-
-    @overload
-    def __invert__(self: NDArray[_UnknownType]) -> NDArray[Any]: ...
-    @overload
-    def __invert__(self: NDArray[np.bool]) -> NDArray[np.bool]: ...
-    @overload
-    def __invert__(self: NDArray[_IntType]) -> NDArray[_IntType]: ...
-    @overload
-    def __invert__(self: NDArray[object_]) -> Any: ...
-
-    @overload
-    def __pos__(self: NDArray[_NumberType]) -> NDArray[_NumberType]: ...
-    @overload
-    def __pos__(self: NDArray[timedelta64]) -> NDArray[timedelta64]: ...
-    @overload
-    def __pos__(self: NDArray[object_]) -> Any: ...
-
-    @overload
-    def __neg__(self: NDArray[_NumberType]) -> NDArray[_NumberType]: ...
-    @overload
-    def __neg__(self: NDArray[timedelta64]) -> NDArray[timedelta64]: ...
-    @overload
-    def __neg__(self: NDArray[object_]) -> Any: ...
+    def __abs__(self: ndarray[_ShapeType, dtype[complexfloating[_NBit1]]], /) -> ndarray[_ShapeType, dtype[floating[_NBit1]]]: ...
+    def __invert__(self: _IntegralArrayT, /) -> _IntegralArrayT: ...  # noqa: PYI019
+    def __neg__(self: _NumericArrayT, /) -> _NumericArrayT: ...  # noqa: PYI019
+    def __pos__(self: _NumericArrayT, /) -> _NumericArrayT: ...  # noqa: PYI019
 
     # Binary ops
     @overload
