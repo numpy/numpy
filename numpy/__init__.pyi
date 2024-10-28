@@ -7,7 +7,7 @@ import array as _array
 import datetime as dt
 import enum
 from abc import abstractmethod
-from types import EllipsisType, TracebackType, MappingProxyType, GenericAlias
+from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
 from decimal import Decimal
 from fractions import Fraction
 from uuid import UUID
@@ -210,7 +210,7 @@ from typing import (
 # This is because the `typeshed` stubs for the standard library include
 # `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
-from typing_extensions import Generic, LiteralString, Protocol, Self, TypeVar, overload
+from typing_extensions import CapsuleType, Generic, LiteralString, Protocol, Self, TypeVar, overload
 
 from numpy import (
     core,
@@ -763,7 +763,7 @@ class _SupportsWrite(Protocol[_AnyStr_contra]):
     def write(self, s: _AnyStr_contra, /) -> object: ...
 
 __version__: LiteralString
-__array_api_version__: LiteralString
+__array_api_version__: Final = "2023.12"
 test: PytestTester
 
 
@@ -1431,7 +1431,7 @@ class _ArrayOrScalarCommon:
     def __array_priority__(self) -> float: ...
     @property
     def __array_struct__(self) -> Any: ...  # builtins.PyCapsule
-    def __array_namespace__(self, *, api_version: None | _ArrayAPIVersion = ...) -> Any: ...
+    def __array_namespace__(self, /, *, api_version: _ArrayAPIVersion | None = None) -> ModuleType: ...
     def __setstate__(self, state: tuple[
         SupportsIndex,  # version
         _ShapeLike,  # Shape
@@ -1797,11 +1797,6 @@ _ArrayTD64_co: TypeAlias = NDArray[np.bool | integer[Any] | timedelta64]
 
 # Introduce an alias for `dtype` to avoid naming conflicts.
 _dtype: TypeAlias = dtype[_ScalarType]
-
-if sys.version_info >= (3, 13):
-    from types import CapsuleType as _PyCapsule
-else:
-    _PyCapsule: TypeAlias = Any
 
 _ArrayAPIVersion: TypeAlias = L["2021.12", "2022.12", "2023.12"]
 
@@ -3063,14 +3058,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
 
     def __dlpack__(
         self: NDArray[number[Any]],
+        /,
         *,
-        stream: int | Any | None = ...,
-        max_version: tuple[int, int] | None = ...,
-        dl_device: tuple[int, L[0]] | None = ...,
-        copy: bool | None = ...,
-    ) -> _PyCapsule: ...
-
-    def __dlpack_device__(self) -> tuple[int, L[0]]: ...
+        stream: int | Any | None = None,
+        max_version: tuple[int, int] | None = None,
+        dl_device: tuple[int, int] | None = None,
+        copy: builtins.bool | None = None,
+    ) -> CapsuleType: ...
+    def __dlpack_device__(self, /) -> tuple[L[1], L[0]]: ...
 
     def bitwise_count(
         self,
@@ -4727,12 +4722,12 @@ class matrix(ndarray[_Shape2DType_co, _DType_co]):
 
 @type_check_only
 class _SupportsDLPack(Protocol[_T_contra]):
-    def __dlpack__(self, *, stream: None | _T_contra = ...) -> _PyCapsule: ...
+    def __dlpack__(self, /, *, stream: _T_contra | None = None) -> CapsuleType: ...
 
 def from_dlpack(
-    obj: _SupportsDLPack[None],
+    x: _SupportsDLPack[None],
     /,
     *,
-    device: L["cpu"] | None = ...,
-    copy: bool | None = ...,
-) -> NDArray[Any]: ...
+    device: L["cpu"] | None = None,
+    copy: builtins.bool | None = None,
+) -> NDArray[number[Any] | np.bool]: ...
