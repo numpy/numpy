@@ -2302,12 +2302,22 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
     def __ge__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> NDArray[np.bool]: ...
 
     # Unary ops
+
+    # TODO: Uncomment once https://github.com/python/mypy/issues/14070 is fixed
+    # @overload
+    # def __abs__(self: ndarray[_ShapeType, dtypes.Complex64DType], /) -> ndarray[_ShapeType, dtypes.Float32DType]: ...
+    # @overload
+    # def __abs__(self: ndarray[_ShapeType, dtypes.Complex128DType], /) -> ndarray[_ShapeType, dtypes.Float64DType]: ...
+    # @overload
+    # def __abs__(self: ndarray[_ShapeType, dtypes.CLongDoubleDType], /) -> ndarray[_ShapeType, dtypes.LongDoubleDType]: ...
+    # @overload
+    # def __abs__(self: ndarray[_ShapeType, dtype[complex128]], /) -> ndarray[_ShapeType, dtype[float64]]: ...
+    @overload
+    def __abs__(
+        self: ndarray[_ShapeType, dtype[complexfloating[_NBit_fc]]], /
+    ) -> ndarray[_ShapeType, dtype[floating[_NBit_fc]]]: ...
     @overload
     def __abs__(self: _RealArrayT, /) -> _RealArrayT: ...
-    @overload
-    def __abs__(self: ndarray[_ShapeType, dtype[complex128]], /) -> ndarray[_ShapeType, dtype[float64]]: ...
-    @overload
-    def __abs__(self: ndarray[_ShapeType, dtype[complexfloating[_NBit1]]], /) -> ndarray[_ShapeType, dtype[floating[_NBit1]]]: ...
     def __invert__(self: _IntegralArrayT, /) -> _IntegralArrayT: ...  # noqa: PYI019
     def __neg__(self: _NumericArrayT, /) -> _NumericArrayT: ...  # noqa: PYI019
     def __pos__(self: _NumericArrayT, /) -> _NumericArrayT: ...  # noqa: PYI019
@@ -3060,6 +3070,7 @@ _ScalarType = TypeVar("_ScalarType", bound=generic)
 _NBit = TypeVar("_NBit", bound=NBitBase)
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase, default=_NBit1)
+_NBit_fc = TypeVar("_NBit_fc", _NBitHalf, _NBitSingle, _NBitDouble, _NBitLongDouble)
 
 class generic(_ArrayOrScalarCommon):
     @abstractmethod
