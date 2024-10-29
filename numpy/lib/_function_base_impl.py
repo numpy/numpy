@@ -2736,7 +2736,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
             dtype = np.result_type(m, y, np.float64)
 
     X = array(m, ndmin=2, dtype=dtype)
-    if not rowvar and X.shape[0] != 1:
+    if not rowvar and m.ndim != 1:
         X = X.T
     if X.shape[0] == 0:
         return np.array([]).reshape(0, 0)

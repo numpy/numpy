@@ -1,0 +1,5 @@
+* `numpy.cov` now properly transposes single-row (2d array) design matrices
+  when ``rowvar=False``. Previously, single-row design matrices would
+  return a scalar in this scenario, which is not correct, so this
+  is a behavior change and an array of the appropriate shape will
+  now be returned.
