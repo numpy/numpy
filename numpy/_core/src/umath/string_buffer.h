@@ -1091,14 +1091,14 @@ string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
     return count;
 }
 
-enum class STRING_SIDE {
+enum class STARTPOSITION {
     FRONT, BACK
 };
 
 template <ENCODING enc>
 inline npy_bool
-tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
-          STRING_SIDE direction)
+tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
+          STARTPOSITION direction)
 {
     size_t len1 = buf1.num_codepoints();
     size_t len2 = buf2.num_codepoints();
@@ -1115,7 +1115,7 @@ tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
 
     size_t offset;
     size_t end_sub = len2 - 1;
-    if (direction == STRING_SIDE::BACK) {
+    if (direction == STARTPOSITION::BACK) {
         offset = end;
     }
     else {
@@ -1136,14 +1136,14 @@ tail_match(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
     return 0;
 }
 
-enum class STRIP_TYPE {
-    LEFT_STRIP, RIGHT_STRIP, BOTH_STRIP
+enum class STRIPTYPE {
+    LEFTSTRIP, RIGHTSTRIP, BOTHSTRIP
 };
 
 
 template <ENCODING enc>
 static inline size_t
-string_strip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_type)
+string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE strip_type)
 {
     size_t len = buf.num_codepoints();
     if (len == 0) {
@@ -1158,7 +1158,7 @@ string_strip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_type)
     size_t num_bytes = (buf.after - buf.buf);
     Buffer traverse_buf = Buffer<enc>(buf.buf, num_bytes);
 
-    if (strip_type != STRIP_TYPE::RIGHT_STRIP) {
+    if (strip_type != STRIPTYPE::RIGHTSTRIP) {
         while (new_start < len) {
             if (!traverse_buf.first_character_isspace()) {
                 break;
@@ -1177,7 +1177,7 @@ string_strip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_type)
         traverse_buf = buf + (new_stop - 1);
     }
 
-    if (strip_type != STRIP_TYPE::LEFT_STRIP) {
+    if (strip_type != STRIPTYPE::LEFTSTRIP) {
         while (new_stop > new_start) {
             if (*traverse_buf != 0 && !traverse_buf.first_character_isspace()) {
                 break;
@@ -1206,7 +1206,7 @@ string_strip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIP_TYPE strip_type)
 
 template <ENCODING enc>
 static inline size_t
-string_strip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_TYPE strip_type)
+string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPTYPE strip_type)
 {
     size_t len1 = buf1.num_codepoints();
     if (len1 == 0) {
@@ -1232,7 +1232,7 @@ string_strip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_TY
     size_t num_bytes = (buf1.after - buf1.buf);
     Buffer traverse_buf = Buffer<enc>(buf1.buf, num_bytes);
 
-    if (strip_type != STRIP_TYPE::RIGHT_STRIP) {
+    if (strip_type != STRIPTYPE::RIGHTSTRIP) {
         for (; new_start < len1; traverse_buf++) {
             Py_ssize_t res = 0;
             size_t current_point_bytes = traverse_buf.num_bytes_next_character();
@@ -1278,7 +1278,7 @@ string_strip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_TY
         traverse_buf = buf1 + (new_stop - 1);
     }
 
-    if (strip_type != STRIP_TYPE::LEFT_STRIP) {
+    if (strip_type != STRIPTYPE::LEFTSTRIP) {
         while (new_stop > new_start) {
             size_t current_point_bytes = traverse_buf.num_bytes_next_character();
             Py_ssize_t res = 0;
@@ -1332,7 +1332,7 @@ string_strip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIP_TY
 
 template <typename char_type>
 static inline npy_intp
-find_slice_for_replace(CheckedIndexer<char_type> buf1, npy_intp len1,
+findslice_for_replace(CheckedIndexer<char_type> buf1, npy_intp len1,
                        CheckedIndexer<char_type> buf2, npy_intp len2)
 {
     if (len2 == 0) {
@@ -1406,14 +1406,14 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
                 {
                     CheckedIndexer<char> ind1(buf1.buf, end1 - buf1);
                     CheckedIndexer<char> ind2(buf2.buf, span2);
-                    pos = find_slice_for_replace(ind1, end1 - buf1, ind2, span2);
+                    pos = findslice_for_replace(ind1, end1 - buf1, ind2, span2);
                     break;
                 }
                 case ENCODING::UTF32:
                 {
                     CheckedIndexer<npy_ucs4> ind1((npy_ucs4 *)buf1.buf, end1 - buf1);
                     CheckedIndexer<npy_ucs4> ind2((npy_ucs4 *)buf2.buf, span2);
-                    pos = find_slice_for_replace(ind1, end1 - buf1, ind2, span2);
+                    pos = findslice_for_replace(ind1, end1 - buf1, ind2, span2);
                     break;
                 }
             }
@@ -1539,13 +1539,13 @@ string_expandtabs(Buffer<enc> buf, npy_int64 tabsize, Buffer<enc> out)
 }
 
 
-enum class ALIGN_POSITION {
+enum class JUSTPOSITION {
     CENTER, LEFT, RIGHT
 };
 
 template <ENCODING enc>
 static inline npy_intp
-string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, ALIGN_POSITION pos, Buffer<enc> out)
+string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Buffer<enc> out)
 {
     size_t final_width = width > 0 ? width : 0;
     if (final_width > PY_SSIZE_T_MAX) {
@@ -1570,12 +1570,12 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, ALIGN_POSITION pos, 
     }
 
     size_t left, right;
-    if (pos == ALIGN_POSITION::CENTER) {
+    if (pos == JUSTPOSITION::CENTER) {
         size_t pad = final_width - len_codepoints;
         left = pad / 2 + (pad & final_width & 1);
         right = pad - left;
     }
-    else if (pos == ALIGN_POSITION::LEFT) {
+    else if (pos == JUSTPOSITION::LEFT) {
         left = 0;
         right = final_width - len_codepoints;
     }
@@ -1609,7 +1609,7 @@ string_zfill(Buffer<enc> buf, npy_int64 width, Buffer<enc> out)
     size_t final_width = width > 0 ? width : 0;
 
     npy_ucs4 fill = '0';
-    npy_intp new_len = string_pad(buf, width, fill, ALIGN_POSITION::RIGHT, out);
+    npy_intp new_len = string_pad(buf, width, fill, JUSTPOSITION::RIGHT, out);
     if (new_len == -1) {
         return -1;
     }
@@ -1632,7 +1632,7 @@ static inline void
 string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
                  Buffer<enc> out1, Buffer<enc> out2, Buffer<enc> out3,
                  npy_intp *final_len1, npy_intp *final_len2, npy_intp *final_len3,
-                 STRING_SIDE pos)
+                 STARTPOSITION pos)
 {
     // StringDType uses a ufunc that implements the find-part as well
     assert(enc != ENCODING::UTF8);
@@ -1647,7 +1647,7 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
     }
 
     if (idx < 0) {
-        if (pos == STRING_SIDE::FRONT) {
+        if (pos == STARTPOSITION::FRONT) {
             buf1.buffer_memcpy(out1, len1);
             *final_len1 = len1;
             *final_len2 = *final_len3 = 0;
