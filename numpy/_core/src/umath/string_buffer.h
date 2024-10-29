@@ -404,6 +404,7 @@ struct Buffer {
         }
     }
 
+
     inline npy_intp
     buffer_memset(npy_ucs4 fill_char, size_t n_chars)
     {
