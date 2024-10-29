@@ -2509,6 +2509,12 @@ class TestCov:
         res = cov(cast_x1, dtype=test_type)
         assert test_type == res.dtype
 
+    def test_gh_27658(self):
+        x = np.ones((3, 1))
+        expected = np.cov(x, ddof=0, rowvar=True)
+        actual = np.cov(x.T, ddof=0, rowvar=False)
+        assert_allclose(actual, expected, strict=True)
+
 
 class Test_I0:
 
