@@ -220,6 +220,8 @@ integer type, and uses that type for promotion:
   >>> np.result_type(int)
   dtype('int64')
 
+See also :ref:`dtype-constructing-from-python-types` for more details.
+
 Promotion of non-numerical datatypes
 ------------------------------------
 
