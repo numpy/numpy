@@ -1520,7 +1520,7 @@ def searchsorted(a, v, side='left', sorter=None):
     >>> sorter
     array([1, 2, 3, 0])  # Indices that would sort the array 'a'
     >>> result = np.searchsorted(a, 25, sorter=sorter)
-    >>> result 
+    >>> result
     2
     >>> a[sorter[result]]
     30  # The element at index 2 of the sorted array is 30.
@@ -3921,7 +3921,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         The axis for the calculation of the mean should be the same as used in
         the call to this std function.
 
-        .. versionadded:: 1.26.0
+        .. versionadded:: 2.0.0
 
     correction : {int, float}, optional
         Array API compatible name for the ``ddof`` parameter. Only one of them
@@ -4268,4 +4268,3 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                          **kwargs)
-
