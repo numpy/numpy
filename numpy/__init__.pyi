@@ -1423,7 +1423,7 @@ class _ArrayOrScalarCommon:
     @property
     def __array_priority__(self) -> float: ...
     @property
-    def __array_struct__(self) -> Any: ...  # builtins.PyCapsule
+    def __array_struct__(self) -> CapsuleType: ...  # builtins.PyCapsule
     def __array_namespace__(self, /, *, api_version: _ArrayAPIVersion | None = None) -> ModuleType: ...
     def __setstate__(self, state: tuple[
         SupportsIndex,  # version
