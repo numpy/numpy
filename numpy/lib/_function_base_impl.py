@@ -1843,28 +1843,79 @@ def sort_complex(a):
         return b
 
 
-def _trim_zeros(filt, trim=None):
+def _arg_trim_zeros(filt):
+    """Return indices of the first and last non-zero element.
+
+    Parameters
+    ----------
+    filt : array_like
+        Input array.
+
+    Returns
+    -------
+    start, stop : ndarray
+        Two arrays containing the indices of the first and last non-zero
+        element in each dimension.
+
+    See also
+    --------
+    trim_zeros
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> _arg_trim_zeros(np.array([0, 0, 1, 1, 0]))
+    (array([2]), array([3]))
+    """
+    nonzero = (
+        np.argwhere(filt)
+        if filt.dtype != np.object_
+        # Historically, `trim_zeros` treats `None` in an object array
+        # as non-zero while argwhere doesn't, account for that
+        else np.argwhere(filt != 0)
+    )
+    if nonzero.size == 0:
+        start = stop = np.array([], dtype=np.intp)
+    else:
+        start = nonzero.min(axis=0)
+        stop = nonzero.max(axis=0)
+    return start, stop
+
+
+def _trim_zeros(filt, trim=None, axis=None):
     return (filt,)
 
 
 @array_function_dispatch(_trim_zeros)
-def trim_zeros(filt, trim='fb'):
-    """
-    Trim the leading and/or trailing zeros from a 1-D array or sequence.
+def trim_zeros(filt, trim='fb', axis=None):
+    """Remove values along a dimension which are zero along all other.
 
     Parameters
     ----------
-    filt : 1-D array or sequence
+    filt : array_like
         Input array.
-    trim : str, optional
+    trim : {"fb", "f", "b"}, optional
         A string with 'f' representing trim from front and 'b' to trim from
-        back. Default is 'fb', trim zeros from both front and back of the
-        array.
+        back. By default, zeros are trimmed on both sides.
+        Front and back refer to the edges of a dimension, with "front" refering
+        to the side with the lowest index 0, and "back" refering to the highest
+        index (or index -1).
+    axis : int or sequence, optional
+        If None, `filt` is cropped such, that the smallest bounding box is
+        returned that still contains all values which are not zero.
+        If an axis is specified, `filt` will be sliced in that dimension only
+        on the sides specified by `trim`. The remaining area will be the
+        smallest that still contains all values wich are not zero.
 
     Returns
     -------
-    trimmed : 1-D array or sequence
-        The result of trimming the input. The input data type is preserved.
+    trimmed : ndarray or sequence
+        The result of trimming the input. The number of dimensions and the
+        input data type are preserved.
+
+    Notes
+    -----
+    For all-zero arrays, the first axis is trimmed first.
 
     Examples
     --------
@@ -1873,8 +1924,22 @@ def trim_zeros(filt, trim='fb'):
     >>> np.trim_zeros(a)
     array([1, 2, 3, 0, 2, 1])
 
-    >>> np.trim_zeros(a, 'b')
+    >>> np.trim_zeros(a, trim='b')
     array([0, 0, 0, ..., 0, 2, 1])
+
+    Multiple dimensions are supported.
+
+    >>> b = np.array([[0, 0, 2, 3, 0, 0],
+    ...               [0, 1, 0, 3, 0, 0],
+    ...               [0, 0, 0, 0, 0, 0]])
+    >>> np.trim_zeros(b)
+    array([[0, 2, 3],
+           [1, 0, 3]])
+
+    >>> np.trim_zeros(b, axis=-1)
+    array([[0, 2, 3],
+           [1, 0, 3],
+           [0, 0, 0]])
 
     The input data type is preserved, list/tuple in means list/tuple out.
 
@@ -1882,23 +1947,40 @@ def trim_zeros(filt, trim='fb'):
     [1, 2]
 
     """
+    filt_ = np.asarray(filt)
 
-    first = 0
-    trim = trim.upper()
-    if 'F' in trim:
-        for i in filt:
-            if i != 0.:
-                break
-            else:
-                first = first + 1
-    last = len(filt)
-    if 'B' in trim:
-        for i in filt[::-1]:
-            if i != 0.:
-                break
-            else:
-                last = last - 1
-    return filt[first:last]
+    trim = trim.lower()
+    if trim not in {"fb", "bf", "f", "b"}:
+        raise ValueError(f"unexpected character(s) in `trim`: {trim!r}")
+
+    start, stop = _arg_trim_zeros(filt_)
+    stop += 1  # Adjust for slicing
+
+    if start.size == 0:
+        # filt is all-zero -> assign same values to start and stop so that
+        # resulting slice will be empty
+        start = stop = np.zeros(filt_.ndim, dtype=np.intp)
+    else:
+        if 'f' not in trim:
+            start = (None,) * filt_.ndim
+        if 'b' not in trim:
+            stop = (None,) * filt_.ndim
+
+    if len(start) == 1:
+        # filt is 1D -> don't use multi-dimensional slicing to preserve
+        # non-array input types
+        sl = slice(start[0], stop[0])
+    elif axis is None:
+        # trim all axes
+        sl = tuple(slice(*x) for x in zip(start, stop))
+    else:
+        # only trim single axis
+        axis = normalize_axis_index(axis, filt_.ndim)
+        sl = (slice(None),) * axis + (slice(start[axis], stop[axis]),) + (...,)
+
+    trimmed = filt[sl]
+    return trimmed
+
 
 
 def _extract_dispatcher(condition, arr):
