@@ -60,6 +60,9 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
+        # orjson makes mypy faster but the default requirements.txt
+        # can't install it because orjson doesn't support 32 bit Linux
+        pip install orjson
         pip install -r requirements/test_requirements.txt
     - name: Build
       run: |
