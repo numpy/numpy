@@ -996,6 +996,62 @@ def test_ufunc_multiply(dtype, string_list, other, other_dtype, use_out):
             other * arr
 
 
+def test_findlike_promoters():
+    r = "Wally"
+    l = "Where's Wally?"
+    s = np.int32(3)
+    e = np.int8(13)
+    for dtypes in [("T", "U"), ("U", "T")]:
+        for function, answer in [
+            (np.strings.index, 8),
+            (np.strings.endswith, True),
+        ]:
+            assert answer == function(
+                np.array(l, dtype=dtypes[0]), np.array(r, dtype=dtypes[1]), s, e
+            )
+
+
+def test_strip_promoter():
+    arg = ["Hello!!!!", "Hello??!!"]
+    strip_char = "!"
+    answer = ["Hello", "Hello??"]
+    for dtypes in [("T", "U"), ("U", "T")]:
+        result = np.strings.strip(
+            np.array(arg, dtype=dtypes[0]),
+            np.array(strip_char, dtype=dtypes[1])
+        )
+        assert_array_equal(result, answer)
+        assert result.dtype.char == "T"
+
+
+def test_replace_promoter():
+    arg = ["Hello, planet!", "planet, Hello!"]
+    old = "planet"
+    new = "world"
+    answer = ["Hello, world!", "world, Hello!"]
+    for dtypes in itertools.product("TU", repeat=3):
+        if dtypes == ("U", "U", "U"):
+            continue
+        answer_arr = np.strings.replace(
+            np.array(arg, dtype=dtypes[0]),
+            np.array(old, dtype=dtypes[1]),
+            np.array(new, dtype=dtypes[2]),
+        )
+        assert_array_equal(answer_arr, answer)
+        assert answer_arr.dtype.char == "T"
+
+
+def test_center_promoter():
+    arg = ["Hello", "planet!"]
+    fillchar = "/"
+    for dtypes in [("T", "U"), ("U", "T")]:
+        answer = np.strings.center(
+            np.array(arg, dtype=dtypes[0]), 9, np.array(fillchar, dtype=dtypes[1])
+        )
+        assert_array_equal(answer, ["//Hello//", "/planet!/"])
+        assert answer.dtype.char == "T"
+
+
 DATETIME_INPUT = [
     np.datetime64("1923-04-14T12:43:12"),
     np.datetime64("1994-06-21T14:43:15"),
