@@ -1710,6 +1710,23 @@ class TestNonzero:
             assert_equal(np.nonzero(c)[0],
                          np.concatenate((np.arange(10 + i, 20 + i), [20 + i*2])))
 
+    @pytest.mark.parametrize('dtype', [np.float32, np.float64])
+    def test_nonzero_float_dtypes(self, dtype):
+        rng = np.random.default_rng(seed=10)
+        x = ((2**33)*rng.normal(size=100)).astype(dtype)
+        x[rng.choice(50, size=100)] = 0
+        idxs = np.nonzero(x)[0]
+        assert_equal(np.array_equal(np.where(x != 0)[0], idxs), True)
+
+    @pytest.mark.parametrize('dtype', [bool, np.int8, np.int16, np.int32, np.int64,
+                                       np.uint8, np.uint16, np.uint32, np.uint64])
+    def test_nonzero_integer_dtypes(self, dtype):
+        rng = np.random.default_rng(seed=10)
+        x = rng.integers(0, 255, size=100).astype(dtype)
+        x[rng.choice(50, size=100)] = 0
+        idxs = np.nonzero(x)[0]
+        assert_equal(np.array_equal(np.where(x != 0)[0], idxs), True)
+
     def test_return_type(self):
         class C(np.ndarray):
             pass
@@ -3702,6 +3719,18 @@ class TestRoll:
     def test_roll_empty(self):
         x = np.array([])
         assert_equal(np.roll(x, 1), np.array([]))
+
+    def test_roll_unsigned_shift(self):
+        x = np.arange(4)
+        shift = np.uint16(2)
+        assert_equal(np.roll(x, shift), np.roll(x, 2))
+
+        shift = np.uint64(2**63+2)
+        assert_equal(np.roll(x, shift), np.roll(x, 2))
+
+    def test_roll_big_int(self):
+        x = np.arange(4)
+        assert_equal(np.roll(x, 2**100), x)
 
 
 class TestRollaxis:

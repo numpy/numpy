@@ -2,19 +2,17 @@ from typing import (
     Any,
     TypeVar,
     Protocol,
+    type_check_only,
 )
 
-from numpy._core.numerictypes import (
-    issubdtype as issubdtype,
-)
+__all__ = ["get_include", "info", "show_runtime"]
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 
 # A file-like object opened in `w` mode
+@type_check_only
 class _SupportsWrite(Protocol[_T_contra]):
     def write(self, s: _T_contra, /) -> Any: ...
-
-__all__: list[str]
 
 def get_include() -> str: ...
 

@@ -461,8 +461,6 @@ So:
 ``__array_ufunc__`` for ufuncs
 ==============================
 
-.. versionadded:: 1.13
-
 A subclass can override what happens when executing numpy ufuncs on it by
 overriding the default ``ndarray.__array_ufunc__`` method. This method is
 executed *instead* of the ufunc and should return either the result of the

@@ -54,6 +54,53 @@ from numpy._typing import (
     _ScalarLike_co,
 )
 
+__all__ = [
+    "all",
+    "amax",
+    "amin",
+    "any",
+    "argmax",
+    "argmin",
+    "argpartition",
+    "argsort",
+    "around",
+    "choose",
+    "clip",
+    "compress",
+    "cumprod",
+    "cumsum",
+    "cumulative_prod",
+    "cumulative_sum",
+    "diagonal",
+    "mean",
+    "max",
+    "min",
+    "matrix_transpose",
+    "ndim",
+    "nonzero",
+    "partition",
+    "prod",
+    "ptp",
+    "put",
+    "ravel",
+    "repeat",
+    "reshape",
+    "resize",
+    "round",
+    "searchsorted",
+    "shape",
+    "size",
+    "sort",
+    "squeeze",
+    "std",
+    "sum",
+    "swapaxes",
+    "take",
+    "trace",
+    "transpose",
+    "var",
+]
+
 _SCT = TypeVar("_SCT", bound=generic)
 _SCT_uifcO = TypeVar("_SCT_uifcO", bound=number[Any] | object_)
 _ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
@@ -71,8 +118,6 @@ _T = TypeVar("_T")
 _PyArray: TypeAlias = list[_T] | tuple[_T, ...]
 # `int` also covers `bool`
 _PyScalar: TypeAlias = int | float | complex | bytes | str
-
-__all__: list[str]
 
 @overload
 def take(
@@ -575,57 +620,75 @@ def sum(
 @overload
 def all(
     a: ArrayLike,
-    axis: None = ...,
-    out: None = ...,
-    keepdims: Literal[False] = ...,
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False, 0] = False,
     *,
-    where: _ArrayLikeBool_co = ...,
+    where: _ArrayLikeBool_co = True,
 ) -> np.bool: ...
 @overload
 def all(
     a: ArrayLike,
-    axis: None | _ShapeLike = ...,
-    out: None = ...,
-    keepdims: bool = ...,
+    axis: None | int | tuple[int, ...] = None,
+    out: None = None,
+    keepdims: SupportsIndex = False,
     *,
-    where: _ArrayLikeBool_co = ...,
-) -> Any: ...
+    where: _ArrayLikeBool_co = True,
+) -> np.bool | NDArray[np.bool]: ...
 @overload
 def all(
     a: ArrayLike,
-    axis: None | _ShapeLike = ...,
-    out: _ArrayType = ...,
-    keepdims: bool = ...,
+    axis: None | int | tuple[int, ...],
+    out: _ArrayType,
+    keepdims: SupportsIndex = False,
     *,
-    where: _ArrayLikeBool_co = ...,
+    where: _ArrayLikeBool_co = True,
+) -> _ArrayType: ...
+@overload
+def all(
+    a: ArrayLike,
+    axis: None | int | tuple[int, ...] = None,
+    *,
+    out: _ArrayType,
+    keepdims: SupportsIndex = False,
+    where: _ArrayLikeBool_co = True,
 ) -> _ArrayType: ...
 
 @overload
 def any(
     a: ArrayLike,
-    axis: None = ...,
-    out: None = ...,
-    keepdims: Literal[False] = ...,
+    axis: None = None,
+    out: None = None,
+    keepdims: Literal[False, 0] = False,
     *,
-    where: _ArrayLikeBool_co = ...,
+    where: _ArrayLikeBool_co = True,
 ) -> np.bool: ...
 @overload
 def any(
     a: ArrayLike,
-    axis: None | _ShapeLike = ...,
-    out: None = ...,
-    keepdims: bool = ...,
+    axis: None | int | tuple[int, ...] = None,
+    out: None = None,
+    keepdims: SupportsIndex = False,
     *,
-    where: _ArrayLikeBool_co = ...,
-) -> Any: ...
+    where: _ArrayLikeBool_co = True,
+) -> np.bool | NDArray[np.bool]: ...
 @overload
 def any(
     a: ArrayLike,
-    axis: None | _ShapeLike = ...,
-    out: _ArrayType = ...,
-    keepdims: bool = ...,
+    axis: None | int | tuple[int, ...],
+    out: _ArrayType,
+    keepdims: SupportsIndex = False,
     *,
-    where: _ArrayLikeBool_co = ...,
+    where: _ArrayLikeBool_co = True,
+) -> _ArrayType: ...
+@overload
+def any(
+    a: ArrayLike,
+    axis: None | int | tuple[int, ...] = None,
+    *,
+    out: _ArrayType,
+    keepdims: SupportsIndex = False,
+    where: _ArrayLikeBool_co = True,
 ) -> _ArrayType: ...
 
 @overload

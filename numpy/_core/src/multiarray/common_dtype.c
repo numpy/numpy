@@ -106,7 +106,7 @@ PyArray_CommonDType(PyArray_DTypeMeta *dtype1, PyArray_DTypeMeta *dtype2)
  * default_builtin_common_dtype
  *
  * @param length Number of DTypes
- * @param dtypes
+ * @param dtypes List of DTypes to be reduced
  */
 static PyArray_DTypeMeta *
 reduce_dtypes_to_most_knowledgeable(

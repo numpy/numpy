@@ -1,0 +1,3 @@
+* Fixed a number of issues around promotion for string ufuncs with StringDType
+  arguments. Mixing StringDType and the fixed-width DTypes using the string
+  ufuncs should now generate much more uniform results.

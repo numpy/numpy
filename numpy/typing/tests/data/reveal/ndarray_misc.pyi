@@ -8,12 +8,13 @@ function-based counterpart in `../from_numeric.py`.
 
 import operator
 import ctypes as ct
+from types import ModuleType
 from typing import Any, Literal
 
 import numpy as np
 import numpy.typing as npt
 
-from typing_extensions import assert_type
+from typing_extensions import CapsuleType, assert_type
 
 class SubClass(npt.NDArray[np.object_]): ...
 
@@ -30,8 +31,8 @@ AR_V: npt.NDArray[np.void]
 
 ctypes_obj = AR_f8.ctypes
 
-assert_type(AR_f8.__dlpack__(), Any)
-assert_type(AR_f8.__dlpack_device__(), tuple[int, Literal[0]])
+assert_type(AR_f8.__dlpack__(), CapsuleType)
+assert_type(AR_f8.__dlpack_device__(), tuple[Literal[1], Literal[0]])
 
 assert_type(ctypes_obj.data, int)
 assert_type(ctypes_obj.shape, ct.Array[np.ctypeslib.c_intp])
@@ -44,14 +45,14 @@ assert_type(ctypes_obj.strides_as(ct.c_ubyte), ct.Array[ct.c_ubyte])
 
 assert_type(f8.all(), np.bool)
 assert_type(AR_f8.all(), np.bool)
-assert_type(AR_f8.all(axis=0), Any)
-assert_type(AR_f8.all(keepdims=True), Any)
+assert_type(AR_f8.all(axis=0), np.bool | npt.NDArray[np.bool])
+assert_type(AR_f8.all(keepdims=True), np.bool | npt.NDArray[np.bool])
 assert_type(AR_f8.all(out=B), SubClass)
 
 assert_type(f8.any(), np.bool)
 assert_type(AR_f8.any(), np.bool)
-assert_type(AR_f8.any(axis=0), Any)
-assert_type(AR_f8.any(keepdims=True), Any)
+assert_type(AR_f8.any(axis=0), np.bool | npt.NDArray[np.bool])
+assert_type(AR_f8.any(keepdims=True), np.bool | npt.NDArray[np.bool])
 assert_type(AR_f8.any(out=B), SubClass)
 
 assert_type(f8.argmax(), np.intp)
@@ -225,5 +226,5 @@ assert_type(AR_u1.to_device("cpu"), npt.NDArray[np.uint8])
 assert_type(AR_c8.to_device("cpu"), npt.NDArray[np.complex64])
 assert_type(AR_m.to_device("cpu"), npt.NDArray[np.timedelta64])
 
-assert_type(f8.__array_namespace__(), Any)
-assert_type(AR_f8.__array_namespace__(), Any)
+assert_type(f8.__array_namespace__(), ModuleType)
+assert_type(AR_f8.__array_namespace__(), ModuleType)

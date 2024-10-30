@@ -557,13 +557,9 @@ class TestInsert:
         b = np.array([0, 1], dtype=np.float64)
         assert_equal(insert(b, 0, b[0]), [0., 0., 1.])
         assert_equal(insert(b, [], []), b)
-        # Bools will be treated differently in the future:
-        # assert_equal(insert(a, np.array([True]*4), 9), [9, 1, 9, 2, 9, 3, 9])
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', FutureWarning)
-            assert_equal(
-                insert(a, np.array([True] * 4), 9), [1, 9, 9, 9, 9, 2, 3])
-            assert_(w[0].category is FutureWarning)
+        assert_equal(insert(a, np.array([True]*4), 9), [9, 1, 9, 2, 9, 3, 9])
+        assert_equal(insert(a, np.array([True, False, True, False]), 9),
+                     [9, 1, 2, 9, 3])
 
     def test_multidim(self):
         a = [[1, 1, 1]]
@@ -2513,6 +2509,12 @@ class TestCov:
         res = cov(cast_x1, dtype=test_type)
         assert test_type == res.dtype
 
+    def test_gh_27658(self):
+        x = np.ones((3, 1))
+        expected = np.cov(x, ddof=0, rowvar=True)
+        actual = np.cov(x.T, ddof=0, rowvar=False)
+        assert_allclose(actual, expected, strict=True)
+
 
 class Test_I0:
 
@@ -4007,6 +4009,17 @@ class TestQuantile:
                     y[i, :, j], alpha, method=method, weights=w[i, :, j]
                 )
         assert_allclose(q, q_res)
+
+    @pytest.mark.parametrize("method", methods_supporting_weights)
+    def test_quantile_weights_min_max(self, method):
+        # Test weighted quantile at 0 and 1 with leading and trailing zero
+        # weights.
+        w = [0, 0, 1, 2, 3, 0]
+        y = np.arange(6)
+        y_min = np.quantile(y, 0, weights=w, method="inverted_cdf")
+        y_max = np.quantile(y, 1, weights=w, method="inverted_cdf")
+        assert y_min == y[2]  # == 2
+        assert y_max == y[4]  # == 4
 
     def test_quantile_weights_raises_negative_weights(self):
         y = [1, 2]

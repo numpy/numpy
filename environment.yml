@@ -7,12 +7,12 @@ name: numpy-dev
 channels:
   - conda-forge
 dependencies:
-  - python=3.11 #need to pin to avoid issues with builds
+  - python=3.12  # need to pin to avoid issues with builds
   - cython>=3.0
   - compilers
   - openblas
   - nomkl
-  - setuptools
+  - setuptools==65.5.1
   - ninja
   - pkg-config
   - meson-python
@@ -26,7 +26,8 @@ dependencies:
   - hypothesis
   # For type annotations
   - typing_extensions>=4.2.0  # needed for python < 3.10
-  - mypy=1.11.1
+  - mypy=1.13.0
+  - orjson  # makes mypy faster
   # For building docs
   - sphinx>=4.5.0
   - sphinx-copybutton

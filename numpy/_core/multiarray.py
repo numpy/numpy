@@ -92,15 +92,11 @@ def empty_like(
         of the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
-
-        .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `prototype` is Fortran
         contiguous, 'C' otherwise. 'K' means match the layout of `prototype`
         as closely as possible.
-
-        .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
         type of `prototype`, otherwise it will be a base-class array. Defaults
@@ -109,8 +105,6 @@ def empty_like(
         Overrides the shape of the result. If order='K' and the number of
         dimensions is unchanged, will try to keep order, otherwise,
         order='C' is implied.
-
-        .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -585,16 +579,6 @@ def can_cast(from_, to, casting=None):
 
     Notes
     -----
-    .. versionchanged:: 1.17.0
-       Casting between a simple data type and a structured one is possible only
-       for "unsafe" casting.  Casting to multiple fields is allowed, but
-       casting from multiple fields is not.
-
-    .. versionchanged:: 1.9.0
-       Casting from numeric to string types in 'safe' casting mode requires
-       that the string dtype length is long enough to store the maximum
-       integer/float value converted.
-
     .. versionchanged:: 2.0
        This function does not support Python scalars anymore and does not
        apply any value-based logic for 0-D arrays and NumPy scalars.
@@ -650,7 +634,6 @@ def min_scalar_type(a):
 
     Notes
     -----
-    .. versionadded:: 1.6.0
 
     See Also
     --------
@@ -714,7 +697,6 @@ def result_type(*arrays_and_dtypes):
 
     Notes
     -----
-    .. versionadded:: 1.6.0
 
     The specific algorithm used is as follows.
 
@@ -848,18 +830,22 @@ def dot(a, b, out=None):
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
 def vdot(a, b):
-    """
+    r"""
     vdot(a, b, /)
 
     Return the dot product of two vectors.
 
-    The vdot(`a`, `b`) function handles complex numbers differently than
-    dot(`a`, `b`).  If the first argument is complex the complex conjugate
-    of the first argument is used for the calculation of the dot product.
+    The `vdot` function handles complex numbers differently than `dot`:
+    if the first argument is complex, it is replaced by its complex conjugate
+    in the dot product calculation. `vdot` also handles multidimensional
+    arrays differently than `dot`: it does not perform a matrix product, but
+    flattens the arguments to 1-D arrays before taking a vector dot product.
 
-    Note that `vdot` handles multidimensional arrays differently than `dot`:
-    it does *not* perform a matrix product, but flattens input arguments
-    to 1-D vectors first. Consequently, it should only be used for vectors.
+    Consequently, when the arguments are 2-D arrays of the same shape, this
+    function effectively returns their
+    `Frobenius inner product <https://en.wikipedia.org/wiki/Frobenius_inner_product>`_
+    (also known as the *trace inner product* or the *standard inner product*
+    on a vector space of matrices).
 
     Parameters
     ----------
@@ -901,7 +887,7 @@ def vdot(a, b):
     >>> 1*4 + 4*1 + 5*2 + 6*2
     30
 
-    """
+    """  # noqa: E501
     return (a, b)
 
 
@@ -929,8 +915,6 @@ def bincount(x, weights=None, minlength=None):
         Weights, array of the same shape as `x`.
     minlength : int, optional
         A minimum number of bins for the output array.
-
-        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -1024,7 +1008,6 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
 
     Notes
     -----
-    .. versionadded:: 1.6.0
 
     Examples
     --------
@@ -1061,15 +1044,9 @@ def unravel_index(indices, shape=None, order=None):
         this function accepted just one index value.
     shape : tuple of ints
         The shape of the array to use for unraveling ``indices``.
-
-        .. versionchanged:: 1.16.0
-            Renamed from ``dims`` to ``shape``.
-
     order : {'C', 'F'}, optional
         Determines whether the indices should be viewed as indexing in
         row-major (C-style) or column-major (Fortran-style) order.
-
-        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -1105,8 +1082,6 @@ def copyto(dst, src, casting=None, where=None):
 
     Raises a TypeError if the `casting` rule is violated, and if
     `where` is provided, it selects which elements to copy.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1217,8 +1192,6 @@ def packbits(a, axis=None, bitorder='big'):
         reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
         Defaults to 'big'.
 
-        .. versionadded:: 1.17.0
-
     Returns
     -------
     packed : ndarray
@@ -1281,16 +1254,11 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
         default). Counts larger than the available number of bits will
         add zero padding to the output. Negative counts must not
         exceed the available number of bits.
-
-        .. versionadded:: 1.17.0
-
     bitorder : {'big', 'little'}, optional
         The order of the returned bits. 'big' will mimic bin(val),
         ``3 = 0b00000011 => [0, 0, 0, 0, 0, 0, 1, 1]``, 'little' will reverse
         the order to ``[1, 1, 0, 0, 0, 0, 0, 0]``.
         Defaults to 'big'.
-
-        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1472,8 +1440,6 @@ def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
 
     Calculates which of the given dates are valid days, and which are not.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     dates : array_like of datetime64[D]
@@ -1537,8 +1503,6 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
     First adjusts the date to fall on a valid day according to
     the ``roll`` rule, then applies offsets to the given dates
     counted in valid days.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1642,8 +1606,6 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
 
     If ``enddates`` specifies a date value that is earlier than the
     corresponding ``begindates`` date value, the count will be negative.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------

@@ -527,6 +527,26 @@ if ctypes is not None:
 
         The shape parameter must be given if converting from a ctypes POINTER.
         The shape parameter is ignored if converting from a ctypes array
+
+        Examples
+        --------
+        Converting a ctypes integer array:
+
+        >>> import ctypes
+        >>> ctypes_array = (ctypes.c_int * 5)(0, 1, 2, 3, 4)
+        >>> np_array = np.ctypeslib.as_array(ctypes_array)
+        >>> np_array
+        array([0, 1, 2, 3, 4], dtype=int32)
+
+        Converting a ctypes POINTER:
+
+        >>> import ctypes
+        >>> buffer = (ctypes.c_int * 5)(0, 1, 2, 3, 4)
+        >>> pointer = ctypes.cast(buffer, ctypes.POINTER(ctypes.c_int))
+        >>> np_array = np.ctypeslib.as_array(pointer, (5,))
+        >>> np_array
+        array([0, 1, 2, 3, 4], dtype=int32)
+
         """
         if isinstance(obj, ctypes._Pointer):
             # convert pointers to an array of the desired shape
@@ -541,8 +561,31 @@ if ctypes is not None:
 
 
     def as_ctypes(obj):
-        """Create and return a ctypes object from a numpy array.  Actually
-        anything that exposes the __array_interface__ is accepted."""
+        """
+        Create and return a ctypes object from a numpy array.  Actually
+        anything that exposes the __array_interface__ is accepted.
+
+        Examples
+        --------
+        Create ctypes object from inferred int ``np.array``:
+
+        >>> inferred_int_array = np.array([1, 2, 3])
+        >>> c_int_array = np.ctypeslib.as_ctypes(inferred_int_array)
+        >>> type(c_int_array)
+        <class 'c_long_Array_3'>
+        >>> c_int_array[:]
+        [1, 2, 3]
+
+        Create ctypes object from explicit 8 bit unsigned int ``np.array`` :
+
+        >>> exp_int_array = np.array([1, 2, 3], dtype=np.uint8)
+        >>> c_int_array = np.ctypeslib.as_ctypes(exp_int_array)
+        >>> type(c_int_array)
+        <class 'c_ubyte_Array_3'>
+        >>> c_int_array[:]
+        [1, 2, 3]
+
+        """
         ai = obj.__array_interface__
         if ai["strides"]:
             raise TypeError("strided arrays not supported")

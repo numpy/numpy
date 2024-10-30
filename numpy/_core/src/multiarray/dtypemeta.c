@@ -374,7 +374,7 @@ dtypemeta_initialize_struct_from_spec(
  * if the Py_TPFLAGS_HEAPTYPE flag is set (they are created from Python).
  * They are not for legacy DTypes or np.dtype itself.
  *
- * @param self
+ * @param dtype_class Pointer to the Python type object
  * @return nonzero if the object is garbage collected
  */
 static inline int
@@ -1256,22 +1256,22 @@ dtypemeta_wrap_legacy_descriptor(
 
 
 static PyObject *
-dtypemeta_get_abstract(PyArray_DTypeMeta *self) {
+dtypemeta_get_abstract(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_abstract(self));
 }
 
 static PyObject *
-dtypemeta_get_legacy(PyArray_DTypeMeta *self) {
+dtypemeta_get_legacy(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_legacy(self));
 }
 
 static PyObject *
-dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
+dtypemeta_get_parametric(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_parametric(self));
 }
 
 static PyObject *
-dtypemeta_get_is_numeric(PyArray_DTypeMeta *self) {
+dtypemeta_get_is_numeric(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_numeric(self));
 }
 

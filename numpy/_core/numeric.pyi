@@ -2,6 +2,7 @@ from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Final,
+    TypeAlias,
     overload,
     TypeVar,
     Literal as L,
@@ -14,6 +15,25 @@ from typing_extensions import Unpack
 
 import numpy as np
 from numpy import (
+    # re-exports
+    bitwise_not,
+    False_,
+    True_,
+    broadcast,
+    dtype,
+    flatiter,
+    from_dlpack,
+    inf,
+    little_endian,
+    matmul,
+    vecdot,
+    nan,
+    ndarray,
+    nditer,
+    newaxis,
+    ufunc,
+
+    # other
     generic,
     unsignedinteger,
     signedinteger,
@@ -26,6 +46,42 @@ from numpy import (
     object_,
     _OrderKACF,
     _OrderCF,
+)
+from .multiarray import (
+    # re-exports
+    arange,
+    array,
+    asarray,
+    asanyarray,
+    ascontiguousarray,
+    asfortranarray,
+    can_cast,
+    concatenate,
+    copyto,
+    dot,
+    empty,
+    empty_like,
+    frombuffer,
+    fromfile,
+    fromiter,
+    fromstring,
+    inner,
+    lexsort,
+    may_share_memory,
+    min_scalar_type,
+    nested_iters,
+    putmask,
+    promote_types,
+    result_type,
+    shares_memory,
+    vdot,
+    where,
+    zeros,
+
+    # other
+    _Array,
+    _ConstructorEmpty,
+    _KwargsEmpty,
 )
 
 from numpy._typing import (
@@ -48,11 +104,80 @@ from numpy._typing import (
     _ArrayLikeUnknown,
 )
 
-from .multiarray import (
-    _Array,
-    _ConstructorEmpty,
-    _KwargsEmpty,
-)
+__all__ = [
+    "newaxis",
+    "ndarray",
+    "flatiter",
+    "nditer",
+    "nested_iters",
+    "ufunc",
+    "arange",
+    "array",
+    "asarray",
+    "asanyarray",
+    "ascontiguousarray",
+    "asfortranarray",
+    "zeros",
+    "count_nonzero",
+    "empty",
+    "broadcast",
+    "dtype",
+    "fromstring",
+    "fromfile",
+    "frombuffer",
+    "from_dlpack",
+    "where",
+    "argwhere",
+    "copyto",
+    "concatenate",
+    "lexsort",
+    "astype",
+    "can_cast",
+    "promote_types",
+    "min_scalar_type",
+    "result_type",
+    "isfortran",
+    "empty_like",
+    "zeros_like",
+    "ones_like",
+    "correlate",
+    "convolve",
+    "inner",
+    "dot",
+    "outer",
+    "vdot",
+    "roll",
+    "rollaxis",
+    "moveaxis",
+    "cross",
+    "tensordot",
+    "little_endian",
+    "fromiter",
+    "array_equal",
+    "array_equiv",
+    "indices",
+    "fromfunction",
+    "isclose",
+    "isscalar",
+    "binary_repr",
+    "base_repr",
+    "ones",
+    "identity",
+    "allclose",
+    "putmask",
+    "flatnonzero",
+    "inf",
+    "nan",
+    "False_",
+    "True_",
+    "bitwise_not",
+    "full",
+    "full_like",
+    "matmul",
+    "vecdot",
+    "shares_memory",
+    "may_share_memory",
+]
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
@@ -61,9 +186,7 @@ _ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
 _SizeType = TypeVar("_SizeType", bound=int)
 _ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 
-_CorrelateMode = L["valid", "same", "full"]
-
-__all__: list[str]
+_CorrelateMode: TypeAlias = L["valid", "same", "full"]
 
 @overload
 def zeros_like(
@@ -183,7 +306,7 @@ def full(
 def full(
     shape: _SizeType,
     fill_value: Any,
-    dtype: _DType | _SupportsDType,
+    dtype: _DType | _SupportsDType[_DType],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
 ) -> np.ndarray[tuple[_SizeType], _DType]: ...

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import TypeVar, Any, overload, Literal
+from typing import TypeAlias, TypeVar, Any, overload, Literal
 
 import numpy as np
 from numpy import number, _OrderKACF
@@ -20,16 +20,17 @@ from numpy._typing import (
     _DTypeLikeObject,
 )
 
+__all__ = ["einsum", "einsum_path"]
+
 _ArrayType = TypeVar(
     "_ArrayType",
     bound=NDArray[np.bool | number[Any]],
 )
 
-_OptimizeKind = None | bool | Literal["greedy", "optimal"] | Sequence[Any]
-_CastingSafe = Literal["no", "equiv", "safe", "same_kind"]
-_CastingUnsafe = Literal["unsafe"]
+_OptimizeKind: TypeAlias = bool | Literal["greedy", "optimal"] | Sequence[Any] | None
+_CastingSafe: TypeAlias = Literal["no", "equiv", "safe", "same_kind"]
+_CastingUnsafe: TypeAlias = Literal["unsafe"]
 
-__all__: list[str]
 
 # TODO: Properly handle the `casting`-based combinatorics
 # TODO: We need to evaluate the content `__subscripts` in order

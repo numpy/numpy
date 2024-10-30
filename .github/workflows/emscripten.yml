@@ -48,12 +48,12 @@ jobs:
           submodules: recursive
           fetch-tags: true
 
-      - uses: pypa/cibuildwheel@79b0dd328794e1180a7268444d46cdf12e1abd01  # v2.21.0
+      - uses: pypa/cibuildwheel@7940a4c0e76eb2030e473a5f864f291f63ee879b  # v2.21.3
         env:
           CIBW_PLATFORM: pyodide
 
       - name: Upload wheel artifact(s)
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4.4.3
         with:
           name: cp312-pyodide_wasm32
           path: ./wheelhouse/*.whl
@@ -78,7 +78,7 @@ jobs:
           merge-multiple: true
 
       - name: Push to Anaconda PyPI index
-        uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc  # v0.5.0
+        uses: scientific-python/upload-nightly-action@82396a2ed4269ba06c6b2988bb4fd568ef3c3d6b  # v0.6.1
         with:
           artifacts_path: wheelhouse/
           anaconda_nightly_upload_token: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
