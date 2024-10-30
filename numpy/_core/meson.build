@@ -681,7 +681,6 @@ c_args_common = [
 
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [
-  '-D__STDC_VERSION__=0',  # for compatibility with C headers
 ]
 if cc.get_argument_syntax() != 'msvc'
   cpp_args_common += [
