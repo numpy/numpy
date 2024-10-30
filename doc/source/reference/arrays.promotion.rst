@@ -277,4 +277,4 @@ could drastically slow down evaluation.
    precision of NumPy scalars or 0-D arrays for promotion purposes.
 
 .. [#default-int] The default integer is marked as ``int64`` in the schema
-   but is ``int32`` on 32bit platforms.  However, normal PCs are 64bit.
+   but is ``int32`` on 32bit platforms.  However, most modern systems are 64bit.
