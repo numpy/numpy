@@ -476,7 +476,6 @@ npy_find_descr_for_scalar(
             /* If the DType doesn't know the scalar type, guess at default. */
             !NPY_DT_CALL_is_known_scalar_type(common, Py_TYPE(scalar))) {
         if (common->singleton != NULL) {
-            Py_INCREF(common->singleton);
             res = common->singleton;
             Py_INCREF(res);
         }
