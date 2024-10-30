@@ -1378,6 +1378,10 @@ _SortSide: TypeAlias = L["left", "right"]
 @type_check_only
 class _ArrayOrScalarCommon:
     @property
+    def real(self, /) -> Any: ...
+    @property
+    def imag(self, /) -> Any: ...
+    @property
     def T(self) -> Self: ...
     @property
     def mT(self) -> Self: ...
@@ -3258,10 +3262,6 @@ class generic(_ArrayOrScalarCommon):
     def dtype(self) -> _dtype[Self]: ...
 
 class number(generic, Generic[_NBit1]):  # type: ignore
-    @property
-    def real(self) -> Self: ...
-    @property
-    def imag(self) -> Self: ...
     def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
     def __neg__(self) -> Self: ...
     def __pos__(self) -> Self: ...
@@ -3284,16 +3284,18 @@ class number(generic, Generic[_NBit1]):  # type: ignore
     __gt__: _ComparisonOpGT[_NumberLike_co, _ArrayLikeNumber_co]
     __ge__: _ComparisonOpGE[_NumberLike_co, _ArrayLikeNumber_co]
 
-class bool(generic):
-    def __init__(self, value: object = ..., /) -> None: ...
-    def item(
-        self, args: L[0] | tuple[()] | tuple[L[0]] = ..., /,
-    ) -> builtins.bool: ...
-    def tolist(self) -> builtins.bool: ...
+@type_check_only
+class _RealMixin:
     @property
     def real(self) -> Self: ...
     @property
     def imag(self) -> Self: ...
+
+class bool(_RealMixin, generic):
+    def __init__(self, value: object = ..., /) -> None: ...
+    def item(self, args: L[0] | tuple[()] | tuple[L[0]] = ..., /) -> builtins.bool: ...
+    def tolist(self) -> builtins.bool: ...
+
     def __abs__(self) -> Self: ...
     __add__: _BoolOp[np.bool]
     __radd__: _BoolOp[np.bool]
@@ -3330,13 +3332,12 @@ class bool(generic):
 bool_: TypeAlias = bool
 
 _StringType = TypeVar("_StringType", bound=str | bytes)
-_ShapeType = TypeVar("_ShapeType", bound=_Shape)
 _ObjectType = TypeVar("_ObjectType", bound=object)
 
 # The `object_` constructor returns the passed object, so instances with type
 # `object_` cannot exists (at runtime).
 @final
-class object_(generic):
+class object_(_RealMixin, generic):
     @overload
     def __new__(cls, nothing_to_see_here: None = ..., /) -> None: ...
     @overload
@@ -3350,11 +3351,6 @@ class object_(generic):
     # catch-all
     @overload
     def __new__(cls, value: Any = ..., /) -> object | NDArray[object_]: ...
-
-    @property
-    def real(self) -> Self: ...
-    @property
-    def imag(self) -> Self: ...
 
     if sys.version_info >= (3, 12):
         def __release_buffer__(self, buffer: memoryview, /) -> None: ...
@@ -3372,7 +3368,7 @@ class _DatetimeScalar(Protocol):
 
 # TODO: `item`/`tolist` returns either `dt.date`, `dt.datetime` or `int`
 # depending on the unit
-class datetime64(generic):
+class datetime64(_RealMixin, generic):
     @overload
     def __init__(
         self,
@@ -3411,19 +3407,21 @@ _ComplexValue: TypeAlias = (
 )
 
 @type_check_only
-class _Roundable:
+class _RoundMixin:
     @overload
     def __round__(self, /, ndigits: None = None) -> int: ...
     @overload
     def __round__(self, /, ndigits: SupportsIndex) -> Self: ...
 
-class integer(_Roundable, number[_NBit1]):  # type: ignore
+@type_check_only
+class _IntegralMixin(_RealMixin):
     @property
     def numerator(self) -> Self: ...
     @property
     def denominator(self) -> L[1]: ...
-    def is_integer(self, /) -> L[True]: ...
 
+class integer(_IntegralMixin, _RoundMixin, number[_NBit1]):  # type: ignore
+    def is_integer(self, /) -> L[True]: ...
     def item(self, args: L[0] | tuple[()] | tuple[L[0]] = ..., /) -> int: ...
     def tolist(self) -> int: ...
 
@@ -3490,17 +3488,13 @@ longlong = signedinteger[_NBitLongLong]
 
 # TODO: `item`/`tolist` returns either `dt.timedelta` or `int`
 # depending on the unit
-class timedelta64(generic):
+class timedelta64(_IntegralMixin, generic):
     def __init__(
         self,
         value: None | int | _CharLike_co | dt.timedelta | timedelta64 = ...,
         format: _CharLike_co | tuple[_CharLike_co, _IntLike_co] = ...,
         /,
     ) -> None: ...
-    @property
-    def numerator(self) -> Self: ...
-    @property
-    def denominator(self) -> L[1]: ...
 
     # NOTE: Only a limited number of units support conversion
     # to builtin scalar types: `Y`, `M`, `ns`, `ps`, `fs`, `as`
@@ -3569,9 +3563,7 @@ ulonglong: TypeAlias = unsignedinteger[_NBitLongLong]
 
 class inexact(number[_NBit1]): ...  # type: ignore[misc]
 
-_IntType = TypeVar("_IntType", bound=integer[Any])
-
-class floating(_Roundable, inexact[_NBit1]):
+class floating(_RealMixin, _RoundMixin, inexact[_NBit1]):
     def __init__(self, value: _FloatValue = ..., /) -> None: ...
     def item(self, args: L[0] | tuple[()] | tuple[L[0]] = ..., /) -> float: ...
     def tolist(self) -> float: ...
@@ -3608,7 +3600,7 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     def __getformat__(self, typestr: L["double", "float"], /) -> str: ...
     def __getnewargs__(self, /) -> tuple[float]: ...
 
-    # overrides for `floating` and `builtins.float` compatibility
+    # overrides for `floating` and `builtins.float` compatibility (`_RealMixin` doesn't work)
     @property
     def real(self) -> Self: ...
     @property
@@ -3869,7 +3861,7 @@ csingle: TypeAlias = complexfloating[_NBitSingle, _NBitSingle]
 cdouble: TypeAlias = complexfloating[_NBitDouble, _NBitDouble]
 clongdouble: TypeAlias = complexfloating[_NBitLongDouble, _NBitLongDouble]
 
-class flexible(generic): ...  # type: ignore
+class flexible(_RealMixin, generic): ...  # type: ignore
 
 # TODO: `item`/`tolist` returns either `bytes` or `tuple`
 # depending on whether or not it's used as an opaque bytes sequence
@@ -3879,13 +3871,7 @@ class void(flexible):
     def __init__(self, value: _IntLike_co | bytes, /, dtype : None = ...) -> None: ...
     @overload
     def __init__(self, value: Any, /, dtype: _DTypeLikeVoid) -> None: ...
-    @property
-    def real(self) -> Self: ...
-    @property
-    def imag(self) -> Self: ...
-    def setfield(
-        self, val: ArrayLike, dtype: DTypeLike, offset: int = ...
-    ) -> None: ...
+    def setfield(self, val: ArrayLike, dtype: DTypeLike, offset: int = ...) -> None: ...
     @overload
     def __getitem__(self, key: str | SupportsIndex, /) -> Any: ...
     @overload
