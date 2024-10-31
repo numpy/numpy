@@ -1,33 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 2.1.3 Release Notes
-==========================
-
-NumPy 2.1.3 is a maintenance release that fixes bugs and regressions
-discovered after the 2.1.2 release.
-
-The Python versions supported by this release are 3.10-3.13.
-
-
-Improvements
-============
-
-* Fixed a number of issues around promotion for string ufuncs with StringDType
-  arguments. Mixing StringDType and the fixed-width DTypes using the string
-  ufuncs should now generate much more uniform results.
-
-  (`gh-27636 <https://github.com/numpy/numpy/pull/27636>`__)
-
-
-Changes
-=======
-
-* `numpy.fix` now won't perform casting to a floating data-type for integer
-  and boolean data-type input arrays.
-
-  (`gh-26766 <https://github.com/numpy/numpy/pull/26766>`__)
-
 
 Contributors
 ============
@@ -50,7 +20,6 @@ names contributed a patch for the first time.
 * Sebastian Berg
 * dependabot[bot]
 * kp2pml30 +
-
 
 Pull requests merged
 ====================
@@ -78,4 +47,3 @@ A total of 21 pull requests were merged for this release.
 * `#27669 <https://github.com/numpy/numpy/pull/27669>`__: ENH: fix wasm32 runtime type error in numpy._core
 * `#27672 <https://github.com/numpy/numpy/pull/27672>`__: BUG: Fix a reference count leak in npy_find_descr_for_scalar.
 * `#27673 <https://github.com/numpy/numpy/pull/27673>`__: BUG: fixes for StringDType/unicode promoters
-
