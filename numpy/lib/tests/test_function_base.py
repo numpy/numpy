@@ -2209,7 +2209,7 @@ class TestUnwrap:
             ), where=relevant_inds))
 
     @pytest.mark.xfail(
-        reason="np.lib.unwrap doesn't handle big_int arrays well")
+        reason="gh-27686: np.unwrap returns incorrect values for bigints")
     @pytest.mark.parametrize("big_int_array, period, discont, axis", (
         ("big_int_array", 4, 7, 1),
     ), indirect=("big_int_array", ))
