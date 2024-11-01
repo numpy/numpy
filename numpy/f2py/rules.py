@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 
 Rules for building C/API module with f2py2e.
