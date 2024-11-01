@@ -391,9 +391,12 @@ PyArray_DescrFromTypeObject(PyObject *type)
         return (PyArray_Descr *)new;
     }
 
-    PyArray_Descr *default_descr = default_descr_from_scalar_type((PyTypeObject *)type);
+    PyObject *DType = PyArray_DiscoverDTypeFromScalarType((PyTypeObject *)type);
+    if (DType != NULL) {
+        return PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
+    }
 
-    return default_descr != NULL ? default_descr : _descr_from_subtype(type);
+    return _descr_from_subtype(type);
 }
 
 
