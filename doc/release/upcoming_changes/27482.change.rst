@@ -1,8 +1,0 @@
-* The ``repr`` of arrays large enough to be summarized (i.e., where elements
-  are replaced with ``...``) now includes the ``shape`` of the array, similar
-  to what already was the case for arrays with zero size and non-obvious
-  shape. With this change, the shape is always given when it cannot be
-  inferred from the values.  Note that while written as ``shape=...``, this
-  argument cannot actually be passed in to the ``np.array`` constructor. If
-  you encounter problems, e.g., due to failing doctests, you can use the print
-  option ``legacy=2.1`` to get the old behaviour.
