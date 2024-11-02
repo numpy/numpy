@@ -205,11 +205,11 @@ from typing import (
     type_check_only,
 )
 
-# NOTE: `typing_extensions` is always available in `.pyi` stubs or when
-# `TYPE_CHECKING` - even if not available at runtime.
-# This is because the `typeshed` stubs for the standard library include
-# `typing_extensions` stubs:
+# NOTE: `typing_extensions` and `_typeshed` are always available in `.pyi` stubs, even
+# if not available at runtime. This is because the `typeshed` stubs for the standard
+# library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
+from _typeshed import StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
 from typing_extensions import CapsuleType, Generic, LiteralString, Protocol, Self, TypeVar, overload
 
 from numpy import (
@@ -306,7 +306,7 @@ from numpy._core._ufunc_config import (
     seterrcall,
     geterrcall,
     _ErrKind,
-    _ErrFunc,
+    _ErrCall,
 )
 
 from numpy._core.arrayprint import (
@@ -740,8 +740,7 @@ _AnyStr_contra = TypeVar("_AnyStr_contra", LiteralString, builtins.str, bytes, c
 # Protocol for representing file-like-objects accepted
 # by `ndarray.tofile` and `fromfile`
 @type_check_only
-class _IOProtocol(Protocol):
-    def flush(self) -> object: ...
+class _IOProtocol(SupportsFlush, Protocol):
     def fileno(self) -> int: ...
     def tell(self) -> SupportsIndex: ...
     def seek(self, offset: int, whence: int, /) -> object: ...
@@ -749,18 +748,12 @@ class _IOProtocol(Protocol):
 # NOTE: `seek`, `write` and `flush` are technically only required
 # for `readwrite`/`write` modes
 @type_check_only
-class _MemMapIOProtocol(Protocol):
-    def flush(self) -> object: ...
+class _MemMapIOProtocol(SupportsWrite[bytes], SupportsFlush, Protocol):
     def fileno(self) -> SupportsIndex: ...
     def tell(self) -> int: ...
     def seek(self, offset: int, whence: int, /) -> object: ...
-    def write(self, s: bytes, /) -> object: ...
     @property
     def read(self) -> object: ...
-
-@type_check_only
-class _SupportsWrite(Protocol[_AnyStr_contra]):
-    def write(self, s: _AnyStr_contra, /) -> object: ...
 
 __version__: LiteralString
 __array_api_version__: Final = "2023.12"
@@ -1410,17 +1403,12 @@ class _ArrayOrScalarCommon:
     def __eq__(self, other: Any, /) -> Any: ...
     def __ne__(self, other: Any, /) -> Any: ...
     def copy(self, order: _OrderKACF = ...) -> Self: ...
-    def dump(self, file: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _SupportsWrite[bytes]) -> None: ...
+    def dump(self, file: StrOrBytesPath | SupportsWrite[bytes]) -> None: ...
     def dumps(self) -> bytes: ...
     def tobytes(self, order: _OrderKACF = ...) -> bytes: ...
     # NOTE: `tostring()` is deprecated and therefore excluded
     # def tostring(self, order=...): ...
-    def tofile(
-        self,
-        fid: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _IOProtocol,
-        sep: str = ...,
-        format: str = ...,
-    ) -> None: ...
+    def tofile(self, fid: StrOrBytesPath | _IOProtocol, sep: str = ..., format: str = ...) -> None: ...
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...
     def to_device(self, device: L["cpu"], /, *, stream: None | int | Any = ...) -> Self: ...
@@ -3347,13 +3335,6 @@ _StringType = TypeVar("_StringType", bound=str | bytes)
 _ShapeType = TypeVar("_ShapeType", bound=_Shape)
 _ObjectType = TypeVar("_ObjectType", bound=object)
 
-# A sequence-like interface like `collections.abc.Sequence`, but without the
-# irrelevant methods.
-@type_check_only
-class _SimpleSequence(Protocol):
-    def __len__(self, /) -> int: ...
-    def __getitem__(self, index: int, /) -> Any: ...
-
 # The `object_` constructor returns the passed object, so instances with type
 # `object_` cannot exists (at runtime).
 @final
@@ -3363,12 +3344,9 @@ class object_(generic):
     @overload
     def __new__(cls, stringy: _StringType, /) -> _StringType: ...
     @overload
-    def __new__(
-        cls,
-        array: ndarray[_ShapeType, Any], /,
-    ) -> ndarray[_ShapeType, dtype[object_]]: ...
+    def __new__(cls, array: ndarray[_ShapeType, Any], /) -> ndarray[_ShapeType, dtype[object_]]: ...
     @overload
-    def __new__(cls, sequence: _SimpleSequence, /) -> NDArray[object_]: ...
+    def __new__(cls, sequence: SupportsLenAndGetItem[object], /) -> NDArray[object_]: ...
     @overload
     def __new__(cls, value: _ObjectType, /) -> _ObjectType: ...
     # catch-all
@@ -4134,7 +4112,7 @@ class errstate:
     def __init__(
         self,
         *,
-        call: _ErrFunc | _SupportsWrite[str] = ...,
+        call: _ErrCall = ...,
         all: None | _ErrKind = ...,
         divide: None | _ErrKind = ...,
         over: None | _ErrKind = ...,
@@ -4413,7 +4391,7 @@ class memmap(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def __new__(
         subtype,
-        filename: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _MemMapIOProtocol,
+        filename: StrOrBytesPath | _MemMapIOProtocol,
         dtype: type[uint8] = ...,
         mode: _MemMapModeKind = ...,
         offset: int = ...,
@@ -4423,7 +4401,7 @@ class memmap(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def __new__(
         subtype,
-        filename: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _MemMapIOProtocol,
+        filename: StrOrBytesPath | _MemMapIOProtocol,
         dtype: _DTypeLike[_ScalarType],
         mode: _MemMapModeKind = ...,
         offset: int = ...,
@@ -4433,7 +4411,7 @@ class memmap(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def __new__(
         subtype,
-        filename: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _MemMapIOProtocol,
+        filename: StrOrBytesPath | _MemMapIOProtocol,
         dtype: DTypeLike,
         mode: _MemMapModeKind = ...,
         offset: int = ...,
