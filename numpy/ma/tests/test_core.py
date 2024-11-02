@@ -2523,15 +2523,14 @@ class TestUfuncs:
         f = np.vectorize(lambda c: ord(c) if c else -1, otypes=[int])
 
         a = np.ma.masked_all(1, str)
-        x = a.fill_value # Assign default fill_value
+        x = a.fill_value  # Assign default fill_value
         assert_equal(f(a), np.ma.masked_all(1, np.int64))
 
         a = np.ma.masked_array([""], True)
-        x = a.fill_value # Assign default fill_value
+        x = a.fill_value  # Assign default fill_value
         assert_equal(f(a), np.ma.masked_all(1, np.int64))
         a = np.ma.masked_array([""], True, fill_value="?")
         assert_equal(f(a), np.ma.masked_all(1, np.int64))
-
 
     def test_treatment_of_NotImplemented(self):
         # Check that NotImplemented is returned at appropriate places
