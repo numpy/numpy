@@ -1368,7 +1368,7 @@ class TestMaskedArrayArithmetic:
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0]
 
         for x in x_test:
-            minmax_with_mask(x,m)
+            minmax_with_mask(x, m)
 
     def test_addsumprod(self):
         # Tests add, sum, product.
