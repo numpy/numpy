@@ -592,10 +592,62 @@ def sum(
     axis: None = ...,
     dtype: None = ...,
     out: None  = ...,
-    keepdims: bool = ...,
+    keepdims: Literal[False] = ...,
     initial: _NumberLike_co = ...,
     where: _ArrayLikeBool_co = ...,
 ) -> _SCT: ...
+@overload
+def sum(
+    a: _ArrayLike[_SCT],
+    axis: None = ...,
+    dtype: None = ...,
+    out: None  = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT | NDArray[_SCT]: ...
+@overload
+def sum(
+    a: ArrayLike,
+    axis: None,
+    dtype: _DTypeLike[_SCT],
+    out: None = ...,
+    keepdims: Literal[False] = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT: ...
+@overload
+def sum(
+    a: ArrayLike,
+    axis: None = ...,
+    *,
+    dtype: _DTypeLike[_SCT],
+    out: None = ...,
+    keepdims: Literal[False] = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT: ...
+@overload
+def sum(
+    a: ArrayLike,
+    axis: None | _ShapeLike,
+    dtype: _DTypeLike[_SCT],
+    out: None  = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT | NDArray[_SCT]: ...
+@overload
+def sum(
+    a: ArrayLike,
+    axis: None | _ShapeLike = ...,
+    *,
+    dtype: _DTypeLike[_SCT],
+    out: None  = ...,
+    keepdims: bool = ...,
+    initial: _NumberLike_co = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT | NDArray[_SCT]: ...
 @overload
 def sum(
     a: ArrayLike,
@@ -1206,6 +1258,26 @@ def mean(
     *,
     where: _ArrayLikeBool_co = ...,
 ) -> _SCT: ...
+@overload
+def mean(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: None,
+    dtype: _DTypeLike[_SCT],
+    out: None = ...,
+    keepdims: bool = ...,
+    *,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT | NDArray[_SCT]: ...
+@overload
+def mean(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: None = ...,
+    *,
+    dtype: _DTypeLike[_SCT],
+    out: None = ...,
+    keepdims: bool = ...,
+    where: _ArrayLikeBool_co = ...,
+) -> _SCT | NDArray[_SCT]: ...
 @overload
 def mean(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
