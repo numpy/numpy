@@ -1,9 +1,9 @@
 # NOTE: Numpy's mypy plugin is used for importing the correct
 # platform-specific `ctypes._SimpleCData[int]` sub-type
+import ctypes
 from ctypes import c_int64 as _c_intp
 
-import os
-import ctypes
+from _typeshed import StrOrBytesPath
 from collections.abc import Iterable, Sequence
 from typing import (
     Literal as L,
@@ -104,10 +104,7 @@ class _concrete_ndptr(_ndptr[_DType]):
     @property
     def contents(self) -> ndarray[_Shape, _DType]: ...
 
-def load_library(
-    libname: str | bytes | os.PathLike[str] | os.PathLike[bytes],
-    loader_path: str | bytes | os.PathLike[str] | os.PathLike[bytes],
-) -> ctypes.CDLL: ...
+def load_library(libname: StrOrBytesPath, loader_path: StrOrBytesPath) -> ctypes.CDLL: ...
 
 c_intp = _c_intp
 

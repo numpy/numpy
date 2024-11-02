@@ -1,4 +1,4 @@
-import os
+from _typeshed import StrOrBytesPath
 from collections.abc import Sequence, Iterable
 from types import EllipsisType
 from typing import (
@@ -225,7 +225,7 @@ def fromstring(
 
 @overload
 def fromfile(
-    fd: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _SupportsReadInto,
+    fd: StrOrBytesPath | _SupportsReadInto,
     dtype: DTypeLike,
     shape: None | _ShapeLike = ...,
     offset: int = ...,
@@ -237,7 +237,7 @@ def fromfile(
 ) -> _RecArray[Any]: ...
 @overload
 def fromfile(
-    fd: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _SupportsReadInto,
+    fd: StrOrBytesPath | _SupportsReadInto,
     dtype: None = ...,
     shape: None | _ShapeLike = ...,
     offset: int = ...,

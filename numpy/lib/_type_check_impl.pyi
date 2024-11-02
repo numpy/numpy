@@ -1,15 +1,10 @@
 from collections.abc import Container, Iterable
-from typing import (
-    Literal as L,
-    Any,
-    overload,
-    TypeVar,
-    Protocol,
-    type_check_only,
-)
+from typing import Literal as L, Any, overload, TypeVar
 
 import numpy as np
 from numpy import (
+    _SupportsImag,
+    _SupportsReal,
     dtype,
     generic,
     floating,
@@ -47,15 +42,6 @@ _SCT = TypeVar("_SCT", bound=generic)
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 
-@type_check_only
-class _SupportsReal(Protocol[_T_co]):
-    @property
-    def real(self) -> _T_co: ...
-
-@type_check_only
-class _SupportsImag(Protocol[_T_co]):
-    @property
-    def imag(self) -> _T_co: ...
 
 def mintypecode(
     typechars: Iterable[str | ArrayLike],
