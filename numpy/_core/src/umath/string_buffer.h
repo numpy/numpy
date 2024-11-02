@@ -254,6 +254,7 @@ codepoint_isdecimal(npy_ucs4 code)
 }
 
 
+
 template <IMPLEMENTED_UNARY_FUNCTIONS f, ENCODING enc, typename T>
 struct call_buffer_member_function;
 
