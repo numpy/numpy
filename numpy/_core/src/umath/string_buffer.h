@@ -1333,7 +1333,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
 template <typename char_type>
 static inline npy_intp
 findslice_for_replace(CheckedIndexer<char_type> buf1, npy_intp len1,
-                       CheckedIndexer<char_type> buf2, npy_intp len2)
+                      CheckedIndexer<char_type> buf2, npy_intp len2)
 {
     if (len2 == 0) {
         return 0;
