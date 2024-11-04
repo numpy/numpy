@@ -29,13 +29,13 @@ Add/drop Python versions
 When adding or dropping Python versions, three files need to be edited:
 
 - .github/workflows/wheels.yml  # for github cibuildwheel
-- .travis.yml  # for cibuildwheel aarch64 builds
-- setup.py  # for classifier and minimum version check.
+- tools/ci/cirrus_wheels.yml  # for cibuildwheel aarch64/arm64 builds
+- pyproject.toml  # for classifier and minimum version check.
 
 Make these changes in an ordinary PR against main and backport if necessary.
-Using the `BLD:` prefix (build label) for the commit summary will cause the
-wheel builds to be run so that the changes will be tested, We currently release
-wheels for new Python versions after the first Python rc once manylinux and
+Add ``[wheel build]`` at the end of the title line of the commit summary so
+that wheel builds will be run to test the changes. We currently release wheels
+for new Python versions after the first Python rc once manylinux and
 cibuildwheel support it. For Python 3.11 we were able to release within a week
 of the rc1 announcement.
 
@@ -50,7 +50,7 @@ Update 2.1.0 milestones
 -----------------------
 
 Look at the issues/prs with 2.1.0 milestones and either push them off to a
-later version, or maybe remove the milestone.
+later version, or maybe remove the milestone. You may need to add a milestone.
 
 
 Make a release PR
@@ -59,7 +59,7 @@ Make a release PR
 Four documents usually need to be updated or created for the release PR:
 
 - The changelog
-- The release-notes
+- The release notes
 - The ``.mailmap`` file
 - The ``pyproject.toml`` file
 
@@ -115,20 +115,18 @@ Finish the release notes
 ------------------------
 
 If there are any release notes snippets in ``doc/release/upcoming_changes/``,
-run ``towncrier``, which will incorporate the snippets into the 
-``doc/source/release/notes-towncrier.rst`` file, add it to the index, and
-delete the snippets::
+run ``spin notes``, which will incorporate the snippets into the
+``doc/source/release/notes-towncrier.rst`` file and delete the snippets::
 
-    $ towncrier
+    $ spin notes
     $ gvim doc/source/release/notes-towncrier.rst doc/source/release/2.1.0-notes.rst
     
-Once the ``notes-towncrier`` contents has been incorporated into 
-the release note it should be cleared and the
-``.. include:: notes-towncrier.rst`` directive removed from the ``2.1.0-notes.rst``.
-The notes will always need some fixups, the introduction will need to be
-written, and significant changes should be called out. For patch releases the
-changelog text may also be appended, but not for the initial release as it is
-too long. Check previous release notes to see how this is done.
+Once the ``notes-towncrier`` contents has been incorporated into release note
+the ``.. include:: notes-towncrier.rst`` directive can be removed.  The notes
+will always need some fixups, the introduction will need to be written, and
+significant changes should be called out. For patch releases the changelog text
+may also be appended, but not for the initial release as it is too long. Check
+previous release notes to see how this is done.
 
 
 Release walkthrough
@@ -309,6 +307,7 @@ Once everything seems satisfactory, update, commit and upload the changes::
 Create release notes for next release and edit them to set the version. These
 notes will be a skeleton and have little content::
 
+    $ git checkout -b begin-2.1.1 maintenance/2.1.x
     $ cp doc/source/release/template.rst doc/source/release/2.1.1-notes.rst
     $ gvim doc/source/release/2.1.1-notes.rst
     $ git add doc/source/release/2.1.1-notes.rst
@@ -324,7 +323,7 @@ Update the ``version`` in ``pyproject.toml``::
 
 Commit the result::
 
-    $ git commit -a -m"MAINT: prepare 2.1.x for further development"
+    $ git commit -a -m"MAINT: Prepare 2.1.x for further development"
     $ git push origin HEAD
 
 Go to GitHub and make a PR. It should be merged quickly.
@@ -367,9 +366,10 @@ BCC so that replies will not be sent to that list.
 11. Post-release update main (skip for prereleases)
 ---------------------------------------------------
 
-Checkout main and forward port the documentation changes::
+Checkout main and forward port the documentation changes. You may also want
+to update these notes if procedures have changed or improved::
 
-    $ git checkout -b post-2.1.0-release-update
+    $ git checkout -b post-2.1.0-release-update main
     $ git checkout maintenance/2.1.x doc/source/release/2.1.0-notes.rst
     $ git checkout maintenance/2.1.x doc/changelog/2.1.0-changelog.rst
     $ git checkout maintenance/2.1.x .mailmap  # only if updated for release.
@@ -379,14 +379,4 @@ Checkout main and forward port the documentation changes::
     $ git push origin HEAD
 
 Go to GitHub and make a PR.
-
-
-12. Update oldest-supported-numpy
----------------------------------
-
-If this release is the first one to support a new Python version, or the first
-to provide wheels for a new platform or PyPy version, the version pinnings
-in https://github.com/scipy/oldest-supported-numpy should be updated.
-Either submit a PR with changes to ``setup.cfg`` there, or open an issue with
-info on needed changes.
 
