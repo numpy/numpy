@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 crackfortran --- read fortran (77,90) code and extract declaration information.
 
