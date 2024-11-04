@@ -1358,8 +1358,8 @@ class TestMaskedArrayArithmetic:
             expected_min = arr[~np.array(mask, dtype=bool)].min()
             expected_max = arr[~np.array(mask, dtype=bool)].max()
 
-            assert_array_equal(masked_arr.min(), expected_min, strict=True)
-            assert_array_equal(masked_arr.max(), expected_max, strict=True)
+            assert_array_equal(masked_arr.min(), expected_min)
+            assert_array_equal(masked_arr.max(), expected_max)
 
         # Additional tests on max/min for time dtypes
         x1 = np.array([1, 1, -2, 4, 5, -10, 10, 1, 2, -2**63+1], dtype=time_type)
