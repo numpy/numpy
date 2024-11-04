@@ -24,6 +24,18 @@ class TestIntentInOut(util.F2PyTest):
         assert np.allclose(x, [3, 1, 2])
 
 
+class TestDataOnlyMultiModule(util.F2PyTest):
+    # Check that modules without subroutines work
+    sources = [util.getpath("tests", "src", "regression", "datonly.f90")]
+
+    @pytest.mark.slow
+    def test_mdat(self):
+        assert self.module.datonly.max_value == 100
+        assert self.module.dat.max_ == 1009
+        int_in = 5
+        assert self.module.simple_subroutine(5) == 1014
+
+
 class TestNegativeBounds(util.F2PyTest):
     # Check that negative bounds work correctly
     sources = [util.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
