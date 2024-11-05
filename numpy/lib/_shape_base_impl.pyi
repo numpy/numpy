@@ -95,7 +95,7 @@ def apply_along_axis(
 ) -> NDArray[_SCT]: ...
 @overload
 def apply_along_axis(
-    func1d: Callable[Concatenate[NDArray[Any], _P], ArrayLike],
+    func1d: Callable[Concatenate[NDArray[Any], _P], Any],
     axis: SupportsIndex,
     arr: ArrayLike,
     *args: _P.args,

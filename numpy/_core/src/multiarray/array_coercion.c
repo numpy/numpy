@@ -247,13 +247,17 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 }
 
 /*
- * Note: This function never fails, but will return `NULL` for unknown scalars
- *       and `None` for known array-likes (e.g. tuple, list, ndarray).
+ * Note: This function never fails, but will return `NULL` for unknown scalars or
+ *       known array-likes (e.g. tuple, list, ndarray).
  */
 NPY_NO_EXPORT PyObject *
 PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype)
 {
-    return (PyObject *)npy_discover_dtype_from_pytype(pytype);
+    PyObject *DType = (PyObject *)npy_discover_dtype_from_pytype(pytype);
+    if (DType == NULL || DType == Py_None) {
+        return NULL;
+    }
+    return DType;
 }
 
 

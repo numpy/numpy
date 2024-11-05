@@ -681,7 +681,6 @@ c_args_common = [
 
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [
-  '-D__STDC_VERSION__=0',  # for compatibility with C headers
 ]
 if cc.get_argument_syntax() != 'msvc'
   cpp_args_common += [
@@ -952,6 +951,7 @@ foreach gen_mtargets : [
     'src/umath/loops_trigonometric.dispatch.cpp',
     [
       AVX512_SKX, [AVX2, FMA3],
+      VSX4, VSX3, VSX2,
       NEON_VFPV4,
     ]
   ],

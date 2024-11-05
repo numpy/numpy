@@ -9,7 +9,8 @@
 
 #include "numpy/npy_common.h"
 
-#if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
+    && !defined(__STDC_NO_ATOMICS__)
 // TODO: support C++ atomics as well if this header is ever needed in C++
     #include <stdatomic.h>
     #include <stdint.h>

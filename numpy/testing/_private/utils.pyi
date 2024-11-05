@@ -1,12 +1,12 @@
-import os
 import sys
 import ast
 import types
 import warnings
 import unittest
-import contextlib
-from re import Pattern
+from _typeshed import GenericPath, StrOrBytesPath, StrPath
 from collections.abc import Callable, Iterable, Sequence
+from contextlib import _GeneratorContextManager
+from re import Pattern
 from typing import (
     Literal as L,
     Any,
@@ -187,13 +187,13 @@ def assert_(val: object, msg: str | Callable[[], str] = ...) -> None: ...
 if sys.platform == "win32" or sys.platform == "cygwin":
     def memusage(processName: str = ..., instance: int = ...) -> int: ...
 elif sys.platform == "linux":
-    def memusage(_proc_pid_stat: str | bytes | os.PathLike[Any] = ...) -> None | int: ...
+    def memusage(_proc_pid_stat: StrOrBytesPath = ...) -> None | int: ...
 else:
     def memusage() -> NoReturn: ...
 
 if sys.platform == "linux":
     def jiffies(
-        _proc_pid_stat: str | bytes | os.PathLike[Any] = ...,
+        _proc_pid_stat: StrOrBytesPath = ...,
         _load_time: list[float] = ...,
     ) -> int: ...
 else:
@@ -309,7 +309,7 @@ def runstring(
 def assert_string_equal(actual: str, desired: str) -> None: ...
 
 def rundocs(
-    filename: None | str | os.PathLike[str] = ...,
+    filename: StrPath | None = ...,
     raise_on_error: bool = ...,
 ) -> None: ...
 
@@ -400,9 +400,7 @@ def assert_array_max_ulp(
 ) -> NDArray[Any]: ...
 
 @overload
-def assert_warns(
-    warning_class: type[Warning],
-) -> contextlib._GeneratorContextManager[None]: ...
+def assert_warns(warning_class: type[Warning]) -> _GeneratorContextManager[None]: ...
 @overload
 def assert_warns(
     warning_class: type[Warning],
@@ -413,7 +411,7 @@ def assert_warns(
 ) -> _T: ...
 
 @overload
-def assert_no_warnings() -> contextlib._GeneratorContextManager[None]: ...
+def assert_no_warnings() -> _GeneratorContextManager[None]: ...
 @overload
 def assert_no_warnings(
     func: Callable[_P, _T],
@@ -427,13 +425,13 @@ def tempdir(
     suffix: None = ...,
     prefix: None = ...,
     dir: None = ...,
-) -> contextlib._GeneratorContextManager[str]: ...
+) -> _GeneratorContextManager[str]: ...
 @overload
 def tempdir(
-    suffix: None | AnyStr = ...,
-    prefix: None | AnyStr = ...,
-    dir: None | AnyStr | os.PathLike[AnyStr] = ...,
-) -> contextlib._GeneratorContextManager[AnyStr]: ...
+    suffix: AnyStr | None = ...,
+    prefix: AnyStr | None = ...,
+    dir: GenericPath[AnyStr] | None = ...,
+) -> _GeneratorContextManager[AnyStr]: ...
 
 @overload
 def temppath(
@@ -441,17 +439,17 @@ def temppath(
     prefix: None = ...,
     dir: None = ...,
     text: bool = ...,
-) -> contextlib._GeneratorContextManager[str]: ...
+) -> _GeneratorContextManager[str]: ...
 @overload
 def temppath(
-    suffix: None | AnyStr = ...,
-    prefix: None | AnyStr = ...,
-    dir: None | AnyStr | os.PathLike[AnyStr] = ...,
+    suffix: AnyStr | None = ...,
+    prefix: AnyStr | None = ...,
+    dir: GenericPath[AnyStr] | None = ...,
     text: bool = ...,
-) -> contextlib._GeneratorContextManager[AnyStr]: ...
+) -> _GeneratorContextManager[AnyStr]: ...
 
 @overload
-def assert_no_gc_cycles() -> contextlib._GeneratorContextManager[None]: ...
+def assert_no_gc_cycles() -> _GeneratorContextManager[None]: ...
 @overload
 def assert_no_gc_cycles(
     func: Callable[_P, Any],

@@ -3310,7 +3310,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('byteswap',
     ``A.view(A.dtype.newbyteorder()).byteswap()`` produces an array with
     the same values but different representation in memory
 
-    >>> A = np.array([1, 2, 3])
+    >>> A = np.array([1, 2, 3],dtype=np.int64)
     >>> A.view(np.uint8)
     array([1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0,
            0, 0], dtype=uint8)
