@@ -632,7 +632,6 @@ def min_scalar_type(a):
     out : dtype
         The minimal data type.
 
-
     See Also
     --------
     result_type, promote_types, dtype, can_cast
