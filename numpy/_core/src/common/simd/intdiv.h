@@ -217,7 +217,7 @@ NPY_FINLINE npyv_u8x3 npyv_divisor_u8(npy_uint8 d)
     divisor.val[1] = npyv_reinterpret_u8_s8(npyv_setall_s8(-sh1));
     divisor.val[2] = npyv_reinterpret_u8_s8(npyv_setall_s8(-sh2));
 #elif defined(NPY_HAVE_LSX)
-    divisor.val[0] = npyv_setall_u16(m);
+    divisor.val[0] = npyv_setall_u8(m);
     divisor.val[1] = npyv_setall_u8(sh1);
     divisor.val[2] = npyv_setall_u8(sh2);
 #else
@@ -229,7 +229,7 @@ NPY_FINLINE npyv_u8x3 npyv_divisor_u8(npy_uint8 d)
 NPY_FINLINE npyv_s16x3 npyv_divisor_s16(npy_int16 d);
 NPY_FINLINE npyv_s8x3 npyv_divisor_s8(npy_int8 d)
 {
-#if defined(NPY_HAVE_SSE2) || defined(NPY_HAVE_LSX) // SSE/AVX2/AVX512
+#if defined(NPY_HAVE_SSE2) // SSE/AVX2/AVX512
     npyv_s16x3 p = npyv_divisor_s16(d);
     npyv_s8x3 r;
     r.val[0] = npyv_reinterpret_s8_s16(p.val[0]);
@@ -253,7 +253,7 @@ NPY_FINLINE npyv_s8x3 npyv_divisor_s8(npy_int8 d)
     npyv_s8x3 divisor;
     divisor.val[0] = npyv_setall_s8(m);
     divisor.val[2] = npyv_setall_s8(d < 0 ? -1 : 0);
-    #if defined(NPY_HAVE_VSX2) || defined(NPY_HAVE_VX)
+    #if defined(NPY_HAVE_VSX2) || defined(NPY_HAVE_VX) || defined(NPY_HAVE_LSX)
         divisor.val[1] = npyv_setall_s8(sh);
     #elif defined(NPY_HAVE_NEON)
         divisor.val[1] = npyv_setall_s8(-sh);
