@@ -308,9 +308,6 @@ def polymulx(c):
     --------
     polyadd, polysub, polymul, polydiv, polypow
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -886,9 +883,6 @@ def polyval2d(x, y, c):
     --------
     polyval, polygrid2d, polyval3d, polygrid3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -944,9 +938,6 @@ def polygrid2d(x, y, c):
     --------
     polyval, polyval2d, polyval3d, polygrid3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -1000,9 +991,6 @@ def polyval3d(x, y, z, c):
     See Also
     --------
     polyval, polyval2d, polygrid2d, polygrid3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1061,9 +1049,6 @@ def polygrid3d(x, y, z, c):
     See Also
     --------
     polyval, polyval2d, polygrid2d, polyval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1268,9 +1253,6 @@ def polyvander3d(x, y, z, deg):
     --------
     polyvander, polyvander3d, polyval2d, polyval3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -1472,9 +1454,6 @@ def polycompanion(c):
     -------
     mat : ndarray
         Companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
 
     Examples
     --------

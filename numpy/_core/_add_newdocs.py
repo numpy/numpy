@@ -3246,9 +3246,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
         is a new array of the same shape as the input array, with dtype, order
         given by `dtype`, `order`.
 
-    Notes
-    -----
-
     Raises
     ------
     ComplexWarning

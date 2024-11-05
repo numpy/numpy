@@ -928,9 +928,6 @@ def lagval2d(x, y, c):
     --------
     lagval, laggrid2d, lagval3d, laggrid3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial.laguerre import lagval2d
@@ -985,9 +982,6 @@ def laggrid2d(x, y, c):
     --------
     lagval, lagval2d, lagval3d, laggrid3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial.laguerre import laggrid2d
@@ -1041,9 +1035,6 @@ def lagval3d(x, y, z, c):
     See Also
     --------
     lagval, lagval2d, laggrid2d, laggrid3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1102,9 +1093,6 @@ def laggrid3d(x, y, z, c):
     See Also
     --------
     lagval, lagval2d, laggrid2d, lagval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1225,9 +1213,6 @@ def lagvander2d(x, y, deg):
     --------
     lagvander, lagvander3d, lagval2d, lagval3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -1285,9 +1270,6 @@ def lagvander3d(x, y, z, deg):
     See Also
     --------
     lagvander, lagvander3d, lagval2d, lagval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1456,9 +1438,6 @@ def lagcompanion(c):
     -------
     mat : ndarray
         Companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1634,9 +1613,6 @@ def lagweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
 
     Examples
     --------

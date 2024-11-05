@@ -632,8 +632,6 @@ def min_scalar_type(a):
     out : dtype
         The minimal data type.
 
-    Notes
-    -----
 
     See Also
     --------
@@ -697,7 +695,6 @@ def result_type(*arrays_and_dtypes):
 
     Notes
     -----
-
     The specific algorithm used is as follows.
 
     Categories are determined by first checking which of boolean,
@@ -1005,9 +1002,6 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
     See Also
     --------
     unravel_index
-
-    Notes
-    -----
 
     Examples
     --------

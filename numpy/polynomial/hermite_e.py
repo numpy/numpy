@@ -926,10 +926,6 @@ def hermeval2d(x, y, c):
     See Also
     --------
     hermeval, hermegrid2d, hermeval3d, hermegrid3d
-
-    Notes
-    -----
-
     """
     return pu._valnd(hermeval, c, x, y)
 
@@ -977,10 +973,6 @@ def hermegrid2d(x, y, c):
     See Also
     --------
     hermeval, hermeval2d, hermeval3d, hermegrid3d
-
-    Notes
-    -----
-
     """
     return pu._gridnd(hermeval, c, x, y)
 
@@ -1026,10 +1018,6 @@ def hermeval3d(x, y, z, c):
     See Also
     --------
     hermeval, hermeval2d, hermegrid2d, hermegrid3d
-
-    Notes
-    -----
-
     """
     return pu._valnd(hermeval, c, x, y, z)
 
@@ -1080,10 +1068,6 @@ def hermegrid3d(x, y, z, c):
     See Also
     --------
     hermeval, hermeval2d, hermegrid2d, hermeval3d
-
-    Notes
-    -----
-
     """
     return pu._gridnd(hermeval, c, x, y, z)
 
@@ -1192,10 +1176,6 @@ def hermevander2d(x, y, deg):
     See Also
     --------
     hermevander, hermevander3d, hermeval2d, hermeval3d
-
-    Notes
-    -----
-
     """
     return pu._vander_nd_flat((hermevander, hermevander), (x, y), deg)
 
@@ -1244,10 +1224,6 @@ def hermevander3d(x, y, z, deg):
     See Also
     --------
     hermevander, hermevander3d, hermeval2d, hermeval3d
-
-    Notes
-    -----
-
     """
     return pu._vander_nd_flat((hermevander, hermevander, hermevander), (x, y, z), deg)
 
@@ -1406,10 +1382,6 @@ def hermecompanion(c):
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
-
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1615,10 +1587,6 @@ def hermeweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
-
     """
     w = np.exp(-.5*x**2)
     return w
