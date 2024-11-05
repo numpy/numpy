@@ -166,7 +166,6 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
     Notes
     -----
-
     By eliminating the inner loop in the description above, and using `s_` to
     build simple slice objects, `take` can be expressed  in terms of applying
     fancy indexing to each 1-d slice::

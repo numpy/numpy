@@ -836,9 +836,6 @@ add_newdoc('numpy._core.umath', 'trunc',
     --------
     ceil, floor, rint, fix
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -1028,7 +1025,6 @@ add_newdoc('numpy._core.umath', 'rad2deg',
 
     Notes
     -----
-
     rad2deg(x) is ``180 * x / pi``.
 
     Examples
@@ -1065,9 +1061,6 @@ add_newdoc('numpy._core.umath', 'heaviside',
     out : ndarray or scalar
         The output array, element-wise Heaviside step function of `x1`.
         $OUT_SCALAR_2
-
-    Notes
-    -----
 
     References
     ----------
@@ -1268,9 +1261,6 @@ add_newdoc('numpy._core.umath', 'exp2',
     See Also
     --------
     power
-
-    Notes
-    -----
 
     Examples
     --------
@@ -2219,9 +2209,6 @@ add_newdoc('numpy._core.umath', 'logaddexp',
     --------
     logaddexp2: Logarithm of the sum of exponentiations of inputs in base 2.
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -2261,9 +2248,6 @@ add_newdoc('numpy._core.umath', 'logaddexp2',
     See Also
     --------
     logaddexp: Logarithm of the sum of exponentiations of the inputs.
-
-    Notes
-    -----
 
     Examples
     --------
@@ -2662,7 +2646,6 @@ add_newdoc('numpy._core.umath', 'fmax',
 
     Notes
     -----
-
     The fmax is equivalent to ``np.where(x1 >= x2, x1, x2)`` when neither
     x1 nor x2 are NaNs, but it is faster and does proper broadcasting.
 
@@ -2720,7 +2703,6 @@ add_newdoc('numpy._core.umath', 'fmin',
 
     Notes
     -----
-
     The fmin is equivalent to ``np.where(x1 <= x2, x1, x2)`` when neither
     x1 nor x2 are NaNs, but it is faster and does proper broadcasting.
 
@@ -2818,7 +2800,6 @@ add_newdoc('numpy._core.umath', 'matmul',
 
     Notes
     -----
-
     The behavior depends on the arguments in the following way.
 
     - If both arguments are 2-D they are multiplied like conventional

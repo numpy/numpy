@@ -968,9 +968,6 @@ def diag_indices(n, ndim=2):
     --------
     diag_indices_from
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -1032,9 +1029,6 @@ def diag_indices_from(arr):
     See Also
     --------
     diag_indices
-
-    Notes
-    -----
 
     Examples
     --------

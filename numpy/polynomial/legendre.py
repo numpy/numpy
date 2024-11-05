@@ -949,10 +949,6 @@ def legval2d(x, y, c):
     See Also
     --------
     legval, leggrid2d, legval3d, leggrid3d
-
-    Notes
-    -----
-
     """
     return pu._valnd(legval, c, x, y)
 
@@ -1000,10 +996,6 @@ def leggrid2d(x, y, c):
     See Also
     --------
     legval, legval2d, legval3d, leggrid3d
-
-    Notes
-    -----
-
     """
     return pu._gridnd(legval, c, x, y)
 
@@ -1049,10 +1041,6 @@ def legval3d(x, y, z, c):
     See Also
     --------
     legval, legval2d, leggrid2d, leggrid3d
-
-    Notes
-    -----
-
     """
     return pu._valnd(legval, c, x, y, z)
 
@@ -1103,10 +1091,6 @@ def leggrid3d(x, y, z, c):
     See Also
     --------
     legval, legval2d, leggrid2d, legval3d
-
-    Notes
-    -----
-
     """
     return pu._gridnd(legval, c, x, y, z)
 
@@ -1207,10 +1191,6 @@ def legvander2d(x, y, deg):
     See Also
     --------
     legvander, legvander3d, legval2d, legval3d
-
-    Notes
-    -----
-
     """
     return pu._vander_nd_flat((legvander, legvander), (x, y), deg)
 
@@ -1259,10 +1239,6 @@ def legvander3d(x, y, z, deg):
     See Also
     --------
     legvander, legvander3d, legval2d, legval3d
-
-    Notes
-    -----
-
     """
     return pu._vander_nd_flat((legvander, legvander, legvander), (x, y, z), deg)
 
@@ -1413,10 +1389,6 @@ def legcompanion(c):
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
-
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1579,10 +1551,6 @@ def legweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
-
     """
     w = x*0.0 + 1.0
     return w

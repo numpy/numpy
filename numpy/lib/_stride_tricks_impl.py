@@ -404,9 +404,6 @@ def broadcast_to(array, shape, subok=False):
     broadcast_arrays
     broadcast_shapes
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
