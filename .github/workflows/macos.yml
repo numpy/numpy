@@ -103,7 +103,7 @@ jobs:
 
 
   accelerate:
-    name: Accelerate (LP64, ILP64) - ${{ matrix.build_runner[1] }} - ${{ matrix.version }}
+    name: Accelerate - ${{ matrix.build_runner[1] }} - ${{ matrix.version }}
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
