@@ -1,4 +1,4 @@
-name: macOS tests (meson)
+name: macOS tests
 
 on:
   pull_request:
