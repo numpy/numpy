@@ -178,3 +178,99 @@ jobs:
           '"
 
 
+  linux_loongarch64_qemu:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        BUILD_PROP:
+          - [
+              "loongarch64",
+              "loongarch64-linux-gnu",
+              "cnclarechen/numpy-loong64-debian:v1",
+              "-Dallow-noblas=true",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+              "loong64"
+            ]
+    env:
+      TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
+      DOCKER_CONTAINER: ${{ matrix.BUILD_PROP[2] }}
+      MESON_OPTIONS: ${{ matrix.BUILD_PROP[3] }}
+      RUNTIME_TEST_FILTER: ${{ matrix.BUILD_PROP[4] }}
+      ARCH: ${{ matrix.BUILD_PROP[5] }}
+      TERM: xterm-256color
+
+    name: "${{ matrix.BUILD_PROP[0] }}"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+
+    - name: Initialize binfmt_misc for qemu-user-static
+      run: |
+          docker run --rm --privileged loongcr.lcpu.dev/multiarch/archlinux --reset -p yes
+
+    - name: Install GCC cross-compilers
+      run: |
+        sudo apt update
+        sudo apt install -y ninja-build gcc-14-${TOOLCHAIN_NAME} g++-14-${TOOLCHAIN_NAME} gfortran-14-${TOOLCHAIN_NAME}
+
+    - name: Cache docker container
+      uses: actions/cache@v4.1.2
+      id: container-cache
+      with:
+        path: ~/docker_${{ matrix.BUILD_PROP[1] }}
+        key: container-${{ runner.os }}-${{ matrix.BUILD_PROP[1] }}-${{ matrix.BUILD_PROP[2] }}-${{ hashFiles('requirements/build_requirements.txt') }}
+
+    - name: Creates new container
+      if: steps.container-cache.outputs.cache-hit != 'true'
+      run: |
+        docker run --platform=linux/${ARCH} --name the_container --interactive \
+          -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
+          mkdir -p /lib64 && ln -s /host/lib64/ld-* /lib64/ &&
+          ln -s /host/lib/x86_64-linux-gnu /lib/x86_64-linux-gnu &&
+          ln -s /host/usr/${TOOLCHAIN_NAME} /usr/${TOOLCHAIN_NAME} &&
+          ln -s /host/usr/lib/gcc-cross/${TOOLCHAIN_NAME} /usr/lib/gcc/${TOOLCHAIN_NAME} &&
+          rm -f /usr/bin/gcc && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gcc-14 /usr/bin/gcc &&
+          rm -f /usr/bin/g++ && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-g++-14 /usr/bin/g++ &&
+          rm -f /usr/bin/gfortran && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-gfortran-14 /usr/bin/gfortran &&
+          rm -f /usr/bin/ar && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ar /usr/bin/ar &&
+          rm -f /usr/bin/as && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-as /usr/bin/as &&
+          rm -f /usr/bin/ld && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld /usr/bin/ld &&
+          rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
+          rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
+          git config --global --add safe.directory /numpy &&
+          python -m pip install --break-system-packages -r /numpy/requirements/build_requirements.txt &&
+          python -m pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions
+        "
+        docker commit the_container the_container
+        mkdir -p "~/docker_${TOOLCHAIN_NAME}"
+        docker save -o "~/docker_${TOOLCHAIN_NAME}/the_container.tar" the_container
+
+    - name: Load container from cache
+      if: steps.container-cache.outputs.cache-hit == 'true'
+      run: docker load -i "~/docker_${TOOLCHAIN_NAME}/the_container.tar"
+
+    - name: Meson Build
+      run: |
+        docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
+          -v $(pwd):/numpy -v /:/host the_container \
+          /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
+            cd /numpy/ && spin build --clean -- ${MESON_OPTIONS}
+          '"
+
+    - name: Meson Log
+      if: always()
+      run: 'cat build/meson-logs/meson-log.txt'
+
+    - name: Run Tests
+      run: |
+        docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
+        -v $(pwd):/numpy -v /:/host the_container \
+        /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
+          cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
+        '"
