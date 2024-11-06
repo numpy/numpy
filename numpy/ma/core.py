@@ -5641,13 +5641,6 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort. If None, the default, the flattened array
             is used.
-
-            ..  versionchanged:: 1.13.0
-                Previously, the default was documented to be -1, but that was
-                in error. At some future date, the default will change to -1, as
-                originally intended.
-                Until then, the axis should be given explicitly when
-                ``arr.ndim > 1``, to avoid a FutureWarning.
         kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             The sorting algorithm used.
         order : list, optional
