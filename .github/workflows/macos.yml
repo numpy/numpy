@@ -1,4 +1,4 @@
-name: macOS tests (meson)
+name: macOS tests
 
 on:
   pull_request:
@@ -103,7 +103,8 @@ jobs:
 
 
   accelerate:
-    name: Accelerate (LP64, ILP64) - ${{ matrix.build_runner[1] }}
+    name: Accelerate - ${{ matrix.build_runner[1] }} - ${{ matrix.version }}
+    # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
     strategy:
@@ -112,6 +113,7 @@ jobs:
         build_runner:
           - [ macos-13, "macos_x86_64" ]
           - [ macos-14, "macos_arm64" ]
+        version: ["3.10", "3.13t"]
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -119,14 +121,20 @@ jobs:
         submodules: recursive
         fetch-tags: true
 
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: quansight-labs/setup-python@b9ab292c751a42bcd2bb465b7fa202ea2c3f5796 # v5.3.1
       with:
-        python-version: '3.10'
+        python-version: ${{ matrix.version }}
 
     - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
       if: ${{ matrix.build_runner[0] == 'macos-13' }}
       with:
         xcode-version: '14.3'
+
+    # TODO: remove cython nightly install when cython does a release
+    - name: Install nightly Cython
+      if: matrix.version == '3.13t'
+      run: |
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
 
     - name: Install dependencies
       run: |
