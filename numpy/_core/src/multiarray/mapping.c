@@ -1667,7 +1667,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
         if (PyArray_GetDTypeTransferFunction(1,
                 itemsize, itemsize,
-                PyArray_DESCR(self), PyArray_DESCR(self),
+                PyArray_DESCR(self), PyArray_DESCR(mit->extra_op),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto finish;
         }
