@@ -3498,7 +3498,7 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     keepdims : bool, optional
         If this is set to True, the axes which are normed over are left in
         the result as dimensions with size one. Default: False.
-    ord : {1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
+    ord : {int, inf, -inf}, optional
         The order of the norm. For details see the table under ``Notes``
         in `numpy.linalg.norm`.
 
