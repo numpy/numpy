@@ -3525,6 +3525,8 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     >>> LA.vector_norm(b, ord=-np.inf)
     1.0
 
+    >>> LA.vector_norm(b, ord=0)
+    9.0
     >>> LA.vector_norm(b, ord=1)
     45.0
     >>> LA.vector_norm(b, ord=-1)
