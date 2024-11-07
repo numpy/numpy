@@ -496,14 +496,15 @@ def test_fancy_indexing(string_list):
     assert_array_equal(sarr, sarr[np.arange(sarr.shape[0])])
 
     # see gh-27003 and gh-27053
-    for ind in [[True, True], [0, 1], ...]:
-        for lop in [['a'*16, 'b'*16], ['', '']]:
+    for ind in [[True, True], [0, 1], ..., np.array([0, 1], dtype='uint8')]:
+        for lop in [['a'*25, 'b'*25], ['', '']]:
             a = np.array(lop, dtype="T")
-            rop = ['d'*16, 'e'*16]
+            assert_array_equal(a[ind], a)
+            rop = ['d'*25, 'e'*25]
             for b in [rop, np.array(rop, dtype="T")]:
                 a[ind] = b
                 assert_array_equal(a, b)
-                assert a[0] == 'd'*16
+                assert a[0] == 'd'*25
 
 
 def test_creation_functions():
