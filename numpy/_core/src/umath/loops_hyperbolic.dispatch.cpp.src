@@ -3,7 +3,7 @@
  ** (avx2 fma3) AVX512_SKX
  ** vsx2 vsx4
  ** neon_vfpv4
- ** vx vxe
+ ** vxe
  **/
 
 #include "numpy/npy_math.h"
@@ -13,9 +13,10 @@
 
 // Provides the various *_LOOP macros
 #include "fast_loop_macros.h"
+#include <hwy/highway.h>
+namespace hn = hwy::HWY_NAMESPACE;
 
 #if NPY_SIMD_FMA3 // native support
-#include <hwy/highway.h>
 
 /*
  * NOTE: The following implementation of tanh(f32, f64) have been converted from
@@ -79,8 +80,6 @@
  *         achieve wider than target precision.
  *
  */
-
-namespace hn = hwy::HWY_NAMESPACE;
 
 const hn::ScalableTag<float> f32;
 const hn::ScalableTag<int32_t> s32;
