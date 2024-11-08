@@ -1977,7 +1977,7 @@ cdef class Generator:
         Draw samples from a von Mises distribution.
 
         Samples are drawn from a von Mises distribution with specified mode
-        (mu) and dispersion (kappa), on the interval [-pi, pi].
+        (mu) and concentration (kappa), on the interval [-pi, pi].
 
         The von Mises distribution (also known as the circular normal
         distribution) is a continuous probability distribution on the unit
@@ -1989,7 +1989,7 @@ cdef class Generator:
         mu : float or array_like of floats
             Mode ("center") of the distribution.
         kappa : float or array_like of floats
-            Dispersion of the distribution, has to be >=0.
+            Concentration of the distribution, has to be >=0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2012,7 +2012,7 @@ cdef class Generator:
 
         .. math:: p(x) = \\frac{e^{\\kappa cos(x-\\mu)}}{2\\pi I_0(\\kappa)},
 
-        where :math:`\\mu` is the mode and :math:`\\kappa` the dispersion,
+        where :math:`\\mu` is the mode and :math:`\\kappa` the concentration,
         and :math:`I_0(\\kappa)` is the modified Bessel function of order 0.
 
         The von Mises is named for Richard Edler von Mises, who was born in
@@ -2033,7 +2033,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> mu, kappa = 0.0, 4.0 # mean and dispersion
+        >>> mu, kappa = 0.0, 4.0 # mean and concentration
         >>> rng = np.random.default_rng()
         >>> s = rng.vonmises(mu, kappa, 1000)
 
