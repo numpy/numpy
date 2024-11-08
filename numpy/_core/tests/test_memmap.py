@@ -199,6 +199,12 @@ class TestMemmap:
         fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
         assert_(fp.offset == offset)
 
+    def test_empty_array_with_offset_multiple_of_allocation_granularity(self):
+        self.tmpfp.write(b'a'*mmap.ALLOCATIONGRANULARITY)
+        size = 0
+        offset = mmap.ALLOCATIONGRANULARITY
+        fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
+
     def test_no_shape(self):
         self.tmpfp.write(b'a'*16)
         mm = memmap(self.tmpfp, dtype='float64')

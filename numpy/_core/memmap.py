@@ -276,6 +276,9 @@ class memmap(ndarray):
 
             start = offset - offset % mmap.ALLOCATIONGRANULARITY
             bytes -= start
+            if bytes == 0 and start > 0:
+                bytes += mmap.ALLOCATIONGRANULARITY
+                start -= mmap.ALLOCATIONGRANULARITY
             array_offset = offset - start
             mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 
