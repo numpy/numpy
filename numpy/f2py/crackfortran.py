@@ -455,6 +455,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                     is_f2py_directive = True
                 else:  # Skip comment line
                     cont = False
+                    is_f2py_directive = False
                     continue
             elif strictf77:
                 if len(l) > 72:
@@ -480,7 +481,8 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 else:
                     # clean up line beginning from possible digits.
                     l = '     ' + l[5:]
-                    if localdolowercase and not is_f2py_directive:
+                    # f2py directives are already by this point
+                    if localdolowercase:
                         finalline = ll.lower()
                     else:
                         finalline = ll
@@ -541,7 +543,8 @@ def readfortrancode(ffile, dowithline=show, istop=1):
         else:
             dowithline(finalline)
         l1 = ll
-    if localdolowercase and not is_f2py_directive:
+    # Last line should never have an f2py directive anyway
+    if localdolowercase:
         finalline = ll.lower()
     else:
         finalline = ll
