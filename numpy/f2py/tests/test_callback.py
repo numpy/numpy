@@ -244,3 +244,14 @@ class TestGH25211(util.F2PyTest):
 
         res = self.module.foo(bar)
         assert res == 110
+
+
+@pytest.mark.slow
+class TestCBFortranCallstatement(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "callback", "gh26681.f90")]
+    options = ['--lower']
+
+    def test_callstatement_fortran(self):
+        with pytest.raises(ValueError, match='helpme') as exc:
+            self.module.mypy_abort = self.module.utils.my_abort
+            self.module.utils.do_something('helpme')
