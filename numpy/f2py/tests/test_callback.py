@@ -5,6 +5,7 @@ import pytest
 import threading
 import traceback
 import time
+import platform
 
 import numpy as np
 from numpy.testing import IS_PYPY
@@ -247,6 +248,9 @@ class TestGH25211(util.F2PyTest):
 
 
 @pytest.mark.slow
+@pytest.mark.xfail(condition=(platform.system().lower() == 'darwin'),
+                   run=False,
+                   reason="Callback aborts cause CI failures on macOS")
 class TestCBFortranCallstatement(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "gh26681.f90")]
     options = ['--lower']
