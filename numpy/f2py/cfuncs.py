@@ -552,7 +552,7 @@ cppmacros['OLDPYNUM'] = """
 # Defining the correct value to indicate thread-local storage in C without
 # running a compile-time check (which we have no control over in generated
 # code used outside of NumPy) is hard. Therefore we support overriding this
-# via an external define - the f2py-using package can them use the same
+# via an external define - the f2py-using package can then use the same
 # compile-time checks as we use for `NPY_TLS` when building NumPy.
 #
 # __STDC_NO_THREADS__ should not be coupled to the availability of _Thread_local.
