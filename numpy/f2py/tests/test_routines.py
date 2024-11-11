@@ -10,7 +10,7 @@ class TestRenamedFunc(util.F2PyTest):
     ]
     module_name = "funcfortranname"
 
-    def test_renamed_function(self):
+    def test_gh25799(self):
         assert dir(self.module)
         assert self.module.funcfortranname_default(200, 12) == 212
 
