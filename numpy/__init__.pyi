@@ -3060,8 +3060,8 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
 # See https://github.com/numpy/numpy-stubs/pull/80 for more details.
 
 _ScalarType = TypeVar("_ScalarType", bound=generic)
-_NBit = TypeVar("_NBit", bound=NBitBase)
-_NBit1 = TypeVar("_NBit1", bound=NBitBase)
+_NBit = TypeVar("_NBit", bound=NBitBase, default=Any)
+_NBit1 = TypeVar("_NBit1", bound=NBitBase, default=Any)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase, default=_NBit1)
 _NBit_fc = TypeVar("_NBit_fc", _NBitHalf, _NBitSingle, _NBitDouble, _NBitLongDouble)
 
