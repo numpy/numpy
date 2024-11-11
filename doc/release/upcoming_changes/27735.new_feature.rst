@@ -1,0 +1,2 @@
+* UFuncs new support `__dict__` attribute and allow overriding
+  `__doc__` (either directly or via `ufunc.__dict__["__doc__"]`).

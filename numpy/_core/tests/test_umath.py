@@ -4016,6 +4016,26 @@ class TestSpecialMethods:
         res = a.__array_ufunc__(np.add, "__call__", a, a)
         assert_array_equal(res, a + a)
 
+    def test_ufunc_docstring(self):
+        original_doc = np.add.__doc__
+        new_doc = "new docs"
+
+        np.add.__doc__ = new_doc
+        assert np.add.__doc__ == new_doc
+        assert np.add.__dict__["__doc__"] == new_doc
+
+        del np.add.__doc__
+        assert np.add.__doc__ == original_doc
+        assert np.add.__dict__ == {}
+
+        np.add.__dict__["other"] = 1
+        np.add.__dict__["__doc__"] = new_doc
+        assert np.add.__doc__ == new_doc
+
+        del np.add.__dict__["__doc__"]
+        assert np.add.__doc__ == original_doc
+
+
 class TestChoose:
     def test_mixed(self):
         c = np.array([True, True])
