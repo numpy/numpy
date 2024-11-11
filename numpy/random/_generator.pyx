@@ -1676,7 +1676,7 @@ cdef class Generator:
         The variable obtained by summing the squares of `df` independent,
         standard normally distributed random variables:
 
-        .. math:: Q = \\sum_{i=0}^{\\mathtt{df}} X^2_i
+        .. math:: Q = \\sum_{i=1}^{\\mathtt{df}} X^2_i
 
         is chi-square distributed, denoted
 
