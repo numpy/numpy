@@ -1899,31 +1899,3 @@ class TestAssertNoGcCycles:
         finally:
             # make sure that we stop creating reference cycles
             ReferenceCycleInDel.make_cycle = False
-
-
-@pytest.mark.parametrize('assert_func', [assert_array_equal,
-                                         assert_array_almost_equal])
-def test_xy_rename(assert_func):
-    # Test that keywords `x` and `y` have been renamed to `actual` and
-    # `desired`, respectively. These tests and use of `_rename_parameter`
-    # decorator can be removed before the release of NumPy 2.2.0.
-    assert_func(1, 1)
-    assert_func(actual=1, desired=1)
-
-    assert_message = "Arrays are not..."
-    with pytest.raises(AssertionError, match=assert_message):
-        assert_func(1, 2)
-    with pytest.raises(AssertionError, match=assert_message):
-        assert_func(actual=1, desired=2)
-
-    dep_message = 'Use of keyword argument...'
-    with pytest.warns(DeprecationWarning, match=dep_message):
-        assert_func(x=1, desired=1)
-    with pytest.warns(DeprecationWarning, match=dep_message):
-        assert_func(1, y=1)
-
-    type_message = '...got multiple values for argument'
-    with (pytest.warns(DeprecationWarning, match=dep_message),
-          pytest.raises(TypeError, match=type_message)):
-        assert_func(1, x=1)
-        assert_func(1, 2, y=2)
