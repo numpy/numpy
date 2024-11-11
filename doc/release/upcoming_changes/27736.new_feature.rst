@@ -1,0 +1,3 @@
+* The "nbit" type parameter of ``np.number`` and its subtypes now defaults
+  to ``typing.Any``. This way, type-checkers will infer annotations such as
+  ``x: np.floating``  as ``x: np.floating[Any]``, even in strict mode.
