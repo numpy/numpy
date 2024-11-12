@@ -42,7 +42,7 @@ This can result in surprising behavior if you use NumPy methods or
 functions you have not explicitly tested.
 
 On the other hand, compared to other interoperability approaches,
-subclassing can be useful because many thing will "just work".
+subclassing can be useful because many things will "just work".
 
 This means that subclassing can be a convenient approach and for a long time
 it was also often the only available approach.
