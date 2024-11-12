@@ -16,7 +16,7 @@
 #include <hwy/highway.h>
 namespace hn = hwy::HWY_NAMESPACE;
 
-#if NPY_SIMD_FMA3 // native support
+#if HWY_NATIVE_FMA // native support
 
 /*
  * NOTE: The following implementation of tanh(f32, f64) have been converted from
@@ -720,14 +720,14 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
 #undef TANHF_TRANSPOSED_LUT
 
 #endif // NPY_SIMD_F32
-#endif // NPY_SIMD_FMA3 && (NPY_SIMD_F32 || NPY_SIMD_F64)
+#endif // HWY_NATIVE_FMA
 
 /**begin repeat
  * #TYPE = FLOAT, DOUBLE#
  * #type = float, double#
  * #sfx  = f32,   f64#
  * #ssfx = f,     #
- * #simd = NPY_SIMD_FMA3 && NPY_SIMD_F32, NPY_SIMD_FMA3 && NPY_SIMD_F64#
+ * #simd = HWY_NATIVE_FMA && NPY_SIMD_F32, HWY_NATIVE_FMA && NPY_SIMD_F64#
  */
 /**begin repeat1
  *  #func = tanh#
