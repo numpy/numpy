@@ -4884,9 +4884,11 @@ class TestAddDocstring:
 
 
 class TestAdd_newdoc_ufunc:
+    @pytest.mark.filterwarnings("ignore:_add_newdoc_ufunc:DeprecationWarning")
     def test_ufunc_arg(self):
         assert_raises(TypeError, ncu._add_newdoc_ufunc, 2, "blah")
         assert_raises(ValueError, ncu._add_newdoc_ufunc, np.add, "blah")
 
+    @pytest.mark.filterwarnings("ignore:_add_newdoc_ufunc:DeprecationWarning")
     def test_string_arg(self):
         assert_raises(TypeError, ncu._add_newdoc_ufunc, np.add, 3)
