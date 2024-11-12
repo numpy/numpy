@@ -5178,6 +5178,7 @@ ufunc_dealloc(PyUFuncObject *ufunc)
         Py_DECREF(ufunc->identity_value);
     }
     Py_XDECREF(ufunc->obj);
+    Py_XDECREF(ufunc->dict);
     Py_XDECREF(ufunc->_loops);
     if (ufunc->_dispatch_cache != NULL) {
         PyArrayIdentityHash_Dealloc(ufunc->_dispatch_cache);
@@ -5198,6 +5199,7 @@ ufunc_traverse(PyUFuncObject *self, visitproc visit, void *arg)
     if (self->identity == PyUFunc_IdentityValue) {
         Py_VISIT(self->identity_value);
     }
+    Py_VISIT(self->dict);
     return 0;
 }
 
