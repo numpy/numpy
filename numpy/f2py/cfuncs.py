@@ -553,7 +553,8 @@ cppmacros['OLDPYNUM'] = """
 # running a compile-time check (which we have no control over in generated
 # code used outside of NumPy) is hard. Therefore we support overriding this
 # via an external define - the f2py-using package can then use the same
-# compile-time checks as we use for `NPY_TLS` when building NumPy.
+# compile-time checks as we use for `NPY_TLS` when building NumPy (see
+# scipy#21860 for an example of that).
 #
 # __STDC_NO_THREADS__ should not be coupled to the availability of _Thread_local.
 # In case we get a bug report, guard it with __STDC_NO_THREADS__ after all.
