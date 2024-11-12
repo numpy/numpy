@@ -4034,6 +4034,8 @@ class TestSpecialMethods:
 
         del np.add.__dict__["__doc__"]
         assert np.add.__doc__ == original_doc
+        del np.add.__dict__["other"]
+        assert np.add.__dict__ == {}
 
 
 class TestChoose:

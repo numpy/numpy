@@ -6448,12 +6448,7 @@ static int
 ufunc_set_doc(PyUFuncObject *ufunc, PyObject *doc, void *NPY_UNUSED(ignored))
 {
     if (doc == NULL) {
-        int result = PyDict_Contains(ufunc->dict, npy_interned_str.__doc__);
-        if (result == 1) {
-            return PyDict_DelItem(ufunc->dict, npy_interned_str.__doc__);
-        } else {
-            return result;
-        }
+        return PyDict_DelItem(ufunc->dict, npy_interned_str.__doc__);
     } else {
         return PyDict_SetItem(ufunc->dict, npy_interned_str.__doc__, doc);
     }
