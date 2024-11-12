@@ -4687,6 +4687,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->core_signature = NULL;
     ufunc->core_enabled = 0;
     ufunc->obj = NULL;
+    ufunc->dict = NULL;
     ufunc->core_num_dims = NULL;
     ufunc->core_num_dim_ix = 0;
     ufunc->core_offsets = NULL;
@@ -4772,6 +4773,10 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
         }
     }
     ufunc->dict = PyDict_New();
+    if (ufunc->dict == NULL) {
+        Py_DECREF(ufunc);
+        return NULL;
+    }
     /*
      * TODO: I tried adding a default promoter here (either all object for
      *       some special cases, or all homogeneous).  Those are reasonable
