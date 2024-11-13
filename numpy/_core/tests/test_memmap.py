@@ -204,6 +204,7 @@ class TestMemmap:
         size = 0
         offset = mmap.ALLOCATIONGRANULARITY
         fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
+        assert_equal(fp.offset, offset)
 
     def test_no_shape(self):
         self.tmpfp.write(b'a'*16)
