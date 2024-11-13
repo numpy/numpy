@@ -173,11 +173,11 @@ assert_type(AR_f8.trace(out=B), SubClass)
 assert_type(AR_f8.item(), float)
 assert_type(AR_U.item(), str)
 
-assert_type(AR_f8.ravel(), npt.NDArray[np.float64])
-assert_type(AR_U.ravel(), npt.NDArray[np.str_])
+assert_type(AR_f8.ravel(), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_U.ravel(), np.ndarray[tuple[int], np.dtype[np.str_]])
 
-assert_type(AR_f8.flatten(), npt.NDArray[np.float64])
-assert_type(AR_U.flatten(), npt.NDArray[np.str_])
+assert_type(AR_f8.flatten(), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_U.flatten(), np.ndarray[tuple[int], np.dtype[np.str_]])
 
 assert_type(AR_f8.reshape(1), npt.NDArray[np.float64])
 assert_type(AR_U.reshape(1), npt.NDArray[np.str_])

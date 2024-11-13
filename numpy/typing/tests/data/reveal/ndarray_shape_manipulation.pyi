@@ -25,12 +25,12 @@ assert_type(nd.transpose((1, 0)), npt.NDArray[np.int64])
 assert_type(nd.swapaxes(0, 1), npt.NDArray[np.int64])
 
 # flatten
-assert_type(nd.flatten(), npt.NDArray[np.int64])
-assert_type(nd.flatten("C"), npt.NDArray[np.int64])
+assert_type(nd.flatten(), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(nd.flatten("C"), np.ndarray[tuple[int], np.dtype[np.int64]])
 
 # ravel
-assert_type(nd.ravel(), npt.NDArray[np.int64])
-assert_type(nd.ravel("C"), npt.NDArray[np.int64])
+assert_type(nd.ravel(), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(nd.ravel("C"), np.ndarray[tuple[int], np.dtype[np.int64]])
 
 # squeeze
 assert_type(nd.squeeze(), npt.NDArray[np.int64])
