@@ -6,6 +6,7 @@ Does not include tests which fall under ``array_constructors``.
 """
 
 from __future__ import annotations
+from typing import cast
 
 import numpy as np
 import numpy.typing as npt
@@ -15,7 +16,10 @@ class SubClass(npt.NDArray[np.float64]):
 
 i8 = np.int64(1)
 
-A = np.arange(27).reshape(3, 3, 3)
+A = cast(
+    np.ndarray[tuple[int, int, int], np.dtype[np.intp]],
+    np.arange(27).reshape(3, 3, 3),
+)
 B: list[list[list[int]]] = A.tolist()
 C = np.empty((27, 27)).view(SubClass)
 
