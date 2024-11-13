@@ -262,10 +262,14 @@ class memmap(ndarray):
 
             bytes = int(offset + size*_dbytes)
 
-            if mode in ('w+', 'r+') and flen < bytes:
-                fid.seek(bytes - 1, 0)
-                fid.write(b'\0')
-                fid.flush()
+            if mode in ('w+', 'r+'):
+                # gh-27723
+                # if bytes == 0, we write out 1 byte to allow empty memmap.
+                bytes = max(bytes, 1)
+                if flen < bytes:
+                    fid.seek(bytes - 1, 0)
+                    fid.write(b'\0')
+                    fid.flush()
 
             if mode == 'c':
                 acc = mmap.ACCESS_COPY
