@@ -1782,6 +1782,9 @@ else:
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
+_RealT_co = TypeVar("_RealT_co", covariant=True)
+_ImagT_co = TypeVar("_ImagT_co", covariant=True)
+
 _2Tuple: TypeAlias = tuple[_T, _T]
 _CastingKind: TypeAlias = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
@@ -1802,17 +1805,24 @@ class _SupportsItem(Protocol[_T_co]):
     def item(self, args: Any, /) -> _T_co: ...
 
 @type_check_only
-class _SupportsReal(Protocol[_T_co]):
+class _HasRealAndImag(Protocol[_RealT_co, _ImagT_co]):
     @property
-    def real(self) -> _T_co: ...
+    def real(self, /) -> _RealT_co: ...
+    @property
+    def imag(self, /) -> _ImagT_co: ...
 
 @type_check_only
-class _SupportsImag(Protocol[_T_co]):
+class _HasTypeWithRealAndImag(Protocol[_RealT_co, _ImagT_co]):
     @property
-    def imag(self) -> _T_co: ...
+    def type(self, /) -> type[_HasRealAndImag[_RealT_co, _ImagT_co]]: ...
+
+@type_check_only
+class _HasDTypeWithRealAndImag(Protocol[_RealT_co, _ImagT_co]):
+    @property
+    def dtype(self, /) -> _HasTypeWithRealAndImag[_RealT_co, _ImagT_co]: ...
 
 class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
-    __hash__: ClassVar[None]
+    __hash__: ClassVar[None]  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
     @property
     def base(self) -> None | NDArray[Any]: ...
     @property
@@ -1820,17 +1830,14 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
     @property
     def size(self) -> int: ...
     @property
-    def real(
-        self: ndarray[_ShapeType_co, dtype[_SupportsReal[_ScalarType]]],  # type: ignore[type-var]
-    ) -> ndarray[_ShapeType_co, _dtype[_ScalarType]]: ...
+    def real(self: _HasDTypeWithRealAndImag[_SCT, object], /) -> ndarray[_ShapeType_co, dtype[_SCT]]: ...
     @real.setter
-    def real(self, value: ArrayLike) -> None: ...
+    def real(self, value: ArrayLike, /) -> None: ...
     @property
-    def imag(
-        self: ndarray[_ShapeType_co, dtype[_SupportsImag[_ScalarType]]],  # type: ignore[type-var]
-    ) -> ndarray[_ShapeType_co, _dtype[_ScalarType]]: ...
+    def imag(self: _HasDTypeWithRealAndImag[object, _SCT], /) -> ndarray[_ShapeType_co, dtype[_SCT]]: ...
     @imag.setter
-    def imag(self, value: ArrayLike) -> None: ...
+    def imag(self, value: ArrayLike, /) -> None: ...
+
     def __new__(
         cls,
         shape: _ShapeLike,

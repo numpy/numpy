@@ -3,8 +3,7 @@ from typing import Literal as L, Any, overload, TypeVar
 
 import numpy as np
 from numpy import (
-    _SupportsImag,
-    _SupportsReal,
+    _HasRealAndImag,
     dtype,
     generic,
     floating,
@@ -50,12 +49,12 @@ def mintypecode(
 ) -> str: ...
 
 @overload
-def real(val: _SupportsReal[_T]) -> _T: ...
+def real(val: _HasRealAndImag[_T, Any]) -> _T: ...
 @overload
 def real(val: ArrayLike) -> NDArray[Any]: ...
 
 @overload
-def imag(val: _SupportsImag[_T]) -> _T: ...
+def imag(val: _HasRealAndImag[Any, _T]) -> _T: ...
 @overload
 def imag(val: ArrayLike) -> NDArray[Any]: ...
 
