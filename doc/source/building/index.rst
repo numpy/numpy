@@ -161,7 +161,8 @@ your system.
     This is needed even if you use the MinGW-w64 or Intel compilers, in order
     to ensure you have the Windows Universal C Runtime (the other components of
     Visual Studio are not needed when using Mingw-w64, and can be deselected if
-    desired, to save disk space).
+    desired, to save disk space). The recommended version of the UCRT is
+    10.0.22621.0.
 
     .. tab-set::
 
@@ -173,6 +174,12 @@ your system.
         C/C++ compilers available inside the shell you are using, you need to
         run a ``.bat`` file for the correct bitness and architecture (e.g., for
         64-bit Intel CPUs, use ``vcvars64.bat``).
+
+        If using a Conda environment while a version of Visual Studio 2019+ is
+        installed that includes the MSVC v142 package (VS 2019 C++ x86/x64
+        build tools), activating the conda environment should cause Visual
+        Studio to be found and the appropriate .bat file executed to set
+        these variables.
 
         For detailed guidance, see `Use the Microsoft C++ toolset from the command line
         <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170>`__.
@@ -362,6 +369,14 @@ drop into IPython (``spin ipython``), or take other development steps
 like build the html documentation or running benchmarks. The ``spin``
 interface is self-documenting, so please see ``spin --help`` and
 ``spin <subcommand> --help`` for detailed guidance.
+
+.. warning::
+
+    When building in Windows, `a bug in meson <https://github.com/mesonbuild/meson/issues/10022>`_ may cause the wrong build
+    tools to be selected, which manifests as a LNK1107 fatal error being
+    emitted by link.exe. To workaround, set environment variables CC_LD
+    and CXX_LD to lld-link.
+	
 
 .. _meson-editable-installs:
 
