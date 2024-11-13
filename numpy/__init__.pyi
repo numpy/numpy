@@ -3068,17 +3068,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
     ) -> CapsuleType: ...
     def __dlpack_device__(self, /) -> tuple[L[1], L[0]]: ...
 
-    def bitwise_count(
-        self,
-        out: None | NDArray[Any] = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
-        casting: _CastingKind = ...,
-        order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
-        subok: builtins.bool = ...,
-    ) -> NDArray[Any]: ...
-
     # Keep `dtype` at the bottom to avoid name conflicts with `np.dtype`
     @property
     def dtype(self) -> _DType_co: ...
@@ -3209,17 +3198,6 @@ class generic(_ArrayOrScalarCommon):
     def reshape(self, shape: _ShapeLike, /, *, order: _OrderACF = ...) -> NDArray[Self]: ...
     @overload
     def reshape(self, *shape: SupportsIndex, order: _OrderACF = ...) -> NDArray[Self]: ...
-
-    def bitwise_count(
-        self,
-        out: None | NDArray[Any] = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
-        casting: _CastingKind = ...,
-        order: _OrderKACF = ...,
-        dtype: DTypeLike = ...,
-        subok: builtins.bool = ...,
-    ) -> Any: ...
 
     def squeeze(self, axis: None | L[0] | tuple[()] = ...) -> Self: ...
     def transpose(self, axes: None | tuple[()] = ..., /) -> Self: ...
