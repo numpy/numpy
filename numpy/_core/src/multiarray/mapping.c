@@ -1668,7 +1668,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
         if (PyArray_GetDTypeTransferFunction(1,
                 itemsize, itemsize,
-                PyArray_DESCR(self), PyArray_DESCR(self),
+                PyArray_DESCR(self), PyArray_DESCR(mit->extra_op),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto finish;
         }
@@ -2035,7 +2035,6 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         goto fail;
     }
 
-    int allocated_array = 0;
     if (tmp_arr == NULL) {
         /* Fill extra op, need to swap first */
         tmp_arr = mit->extra_op;
@@ -2049,7 +2048,11 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (PyArray_CopyObject(tmp_arr, op) < 0) {
              goto fail;
         }
-        allocated_array = 1;
+        /*
+         * In this branch we copy directly from a newly allocated array which
+         * may have a new descr:
+         */
+        descr = PyArray_DESCR(tmp_arr);
     }
 
     if (PyArray_MapIterCheckIndices(mit) < 0) {
@@ -2097,8 +2100,7 @@ array_assign_subscript(PyArrayObject *self, PyObject *ind, PyObject *op)
         // for non-REFCHK user DTypes. See gh-27057 for the prior discussion about this.
         if (PyArray_GetDTypeTransferFunction(
                 1, itemsize, itemsize,
-                allocated_array ? PyArray_DESCR(mit->extra_op) : PyArray_DESCR(self),
-                PyArray_DESCR(self),
+                descr, PyArray_DESCR(self),
                 0, &cast_info, &transfer_flags) != NPY_SUCCEED) {
             goto fail;
         }
