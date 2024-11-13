@@ -276,6 +276,8 @@ class memmap(ndarray):
 
             start = offset - offset % mmap.ALLOCATIONGRANULARITY
             bytes -= start
+            # bytes == 0 is problematic as in mmap length=0 maps the full file.
+            # See PR gh-27723 for a more detailed explanation.
             if bytes == 0 and start > 0:
                 bytes += mmap.ALLOCATIONGRANULARITY
                 start -= mmap.ALLOCATIONGRANULARITY
