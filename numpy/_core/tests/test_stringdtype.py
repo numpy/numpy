@@ -495,9 +495,23 @@ def test_fancy_indexing(string_list):
     sarr = np.array(string_list, dtype="T")
     assert_array_equal(sarr, sarr[np.arange(sarr.shape[0])])
 
+    inds = [
+        [True, True],
+        [0, 1],
+        ...,
+        np.array([0, 1], dtype='uint8'),
+    ]
+
+    lops = [
+        ['a'*25, 'b'*25],
+        ['', ''],
+        ['hello', 'world'],
+        ['hello', 'world'*25],
+    ]
+
     # see gh-27003 and gh-27053
-    for ind in [[True, True], [0, 1], ..., np.array([0, 1], dtype='uint8')]:
-        for lop in [['a'*25, 'b'*25], ['', '']]:
+    for ind in inds:
+        for lop in lops:
             a = np.array(lop, dtype="T")
             assert_array_equal(a[ind], a)
             rop = ['d'*25, 'e'*25]
