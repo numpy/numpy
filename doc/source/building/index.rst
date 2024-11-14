@@ -162,7 +162,7 @@ your system.
     to ensure you have the Windows Universal C Runtime (the other components of
     Visual Studio are not needed when using Mingw-w64, and can be deselected if
     desired, to save disk space). The recommended version of the UCRT is
-    10.0.22621.0.
+    >= 10.0.22621.0.
 
     .. tab-set::
 
@@ -262,6 +262,12 @@ Building from source to use NumPy
       cd numpy
       git submodule update --init
       pip install . --no-build-isolation
+
+    .. warning::
+
+        On Windows, the AR, LD, and LDFLAGS environment variables may be set,
+        which will cause the pip install command to fail. These variables are only
+        needed for flang and can be safely unset prior to running pip install.
 
   .. tab-item:: Virtual env or system Python
     :sync: pip
@@ -372,11 +378,10 @@ interface is self-documenting, so please see ``spin --help`` and
 
 .. warning::
 
-    When building in Windows, `a bug in meson <https://github.com/mesonbuild/meson/issues/10022>`_ may cause the wrong build
-    tools to be selected, which manifests as a LNK1107 fatal error being
-    emitted by link.exe. To workaround, set environment variables CC_LD
-    and CXX_LD to lld-link.
-	
+    In an activated conda enviroment on Windows, the AR, LD, and LDFLAGS
+    environment variables may be set, which will cause the build to fail.
+    These variables are only needed for flang and can be safely unset
+    for build.
 
 .. _meson-editable-installs:
 
