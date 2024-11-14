@@ -559,3 +559,23 @@ class TestDefaultRNG:
         rg2 = default_rng(rg)
         assert rg2 is rg
         assert rg2.bit_generator is bg
+
+    def test_coercion_RandomState_Generator(self):
+        # use default_rng to coerce RandomState to Generator
+        rs = RandomState(1234)
+        rg = default_rng(rs)
+        assert isinstance(rg.bit_generator, MT19937)
+
+        assert_allclose(rg.random(), rs.rand())
+
+        # RandomState with a non MT19937 bit generator
+        _original = np.random.get_bit_generator()
+        bg = PCG64(12342298)
+        np.random.set_bit_generator(bg)
+        rs = np.random.mtrand._rand
+        rg = default_rng(rs)
+        assert_allclose(rg.random(), rs.rand())
+
+        # vital to get global state back to original, otherwise
+        # other tests start to fail.
+        np.random.set_bit_generator(_original)
