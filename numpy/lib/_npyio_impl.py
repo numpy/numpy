@@ -483,8 +483,10 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         else:
             # Try a pickle
             if not allow_pickle:
-                raise ValueError("Cannot load file containing pickled data "
-                                 "when allow_pickle=False")
+                raise ValueError(
+                    "This file contains pickled (object) data. If you trust "
+                    "the file you can load it unsafely using the "
+                    "`allow_pickle=` keyword argument or `pickle.load()`.")
             try:
                 return pickle.load(fid, **pickle_kwargs)
             except Exception as e:
