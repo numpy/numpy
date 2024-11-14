@@ -1,6 +1,5 @@
 import builtins
 import sys
-import os
 import mmap
 import ctypes as ct
 import array as _array
@@ -210,7 +209,7 @@ from typing import (
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
 from _typeshed import StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, Generic, LiteralString, Protocol, Self, TypeVar, Unpack, deprecated, overload
+from typing_extensions import CapsuleType, Generic, LiteralString, Never, Protocol, Self, TypeVar, Unpack, deprecated, overload
 
 from numpy import (
     core,
@@ -1757,11 +1756,11 @@ _IntegralArrayT = TypeVar("_IntegralArrayT", bound=NDArray[integer[Any] | np.boo
 _RealArrayT = TypeVar("_RealArrayT", bound=NDArray[floating[Any] | integer[Any] | timedelta64 | np.bool | object_])
 _NumericArrayT = TypeVar("_NumericArrayT", bound=NDArray[number[Any] | timedelta64 | object_])
 
-_Shape1D: TypeAlias = tuple[int]
 _Shape2D: TypeAlias = tuple[int, int]
 
 _ShapeType = TypeVar("_ShapeType", bound=_Shape)
 _ShapeType_co = TypeVar("_ShapeType_co", covariant=True, bound=_Shape)
+_Shape1NType = TypeVar("_Shape1NType", bound=tuple[L[1], Unpack[tuple[L[1], ...]]])  # (1,) | (1, 1) | (1, 1, 1) | ...
 _Shape2DType_co = TypeVar("_Shape2DType_co", covariant=True, bound=_Shape2D)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
@@ -3204,10 +3203,88 @@ class generic(_ArrayOrScalarCommon):
     def flatten(self, order: _OrderKACF = ...) -> NDArray[Self]: ...
     def ravel(self, order: _OrderKACF = ...) -> NDArray[Self]: ...
 
-    @overload
-    def reshape(self, shape: _ShapeLike, /, *, order: _OrderACF = ...) -> NDArray[Self]: ...
-    @overload
-    def reshape(self, *shape: SupportsIndex, order: _OrderACF = ...) -> NDArray[Self]: ...
+    @overload  # (() | [])
+    def reshape(
+        self,
+        shape: tuple[()] | list[Never],
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> Self: ...
+    @overload  # ((1, *(1, ...))@_ShapeType)
+    def reshape(
+        self,
+        shape: _Shape1NType,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[_Shape1NType, dtype[Self]]: ...
+    @overload  # (Sequence[index, ...])  # not recommended
+    def reshape(
+        self,
+        shape: Sequence[SupportsIndex],
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> Self | ndarray[tuple[L[1], ...], dtype[Self]]: ...
+    @overload  # _(index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[L[1]], dtype[Self]]: ...
+    @overload  # _(index, index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[L[1], L[1]], dtype[Self]]: ...
+    @overload  # _(index, index, index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        size3: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[L[1], L[1], L[1]], dtype[Self]]: ...
+    @overload  # _(index, index, index, index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        size3: SupportsIndex,
+        size4: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[L[1], L[1], L[1], L[1]], dtype[Self]]: ...
+    @overload  # _(index, index, index, index, index, *index)  # ndim >= 5
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        size3: SupportsIndex,
+        size4: SupportsIndex,
+        size5: SupportsIndex,
+        /,
+        *sizes6_: SupportsIndex,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[L[1], L[1], L[1], L[1], L[1], Unpack[tuple[L[1], ...]]], dtype[Self]]: ...
 
     def squeeze(self, axis: None | L[0] | tuple[()] = ...) -> Self: ...
     def transpose(self, axes: None | tuple[()] = ..., /) -> Self: ...
