@@ -10,7 +10,7 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import Never
+from typing_extensions import Never, deprecated
 
 import numpy as np
 from numpy import (
@@ -25,6 +25,7 @@ from numpy import (
     timedelta64,
     object_,
     generic,
+    _AnyShapeType,
     _OrderKACF,
     _OrderACF,
     _ModeKind,
@@ -105,6 +106,7 @@ __all__ = [
 _SCT = TypeVar("_SCT", bound=generic)
 _SCT_uifcO = TypeVar("_SCT_uifcO", bound=number[Any] | object_)
 _ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
+_SizeType = TypeVar("_SizeType", bound=int)
 _ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 _ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
 
@@ -162,24 +164,73 @@ def take(
 ) -> _ArrayType: ...
 
 @overload
+def reshape(  # shape: index
+    a: _ArrayLike[_SCT],
+    /,
+    shape: SupportsIndex,
+    order: _OrderACF = "C",
+    *,
+    copy: bool | None = None,
+) -> np.ndarray[tuple[int], np.dtype[_SCT]]: ...
+@overload
+def reshape(  # shape: (int, ...) @ _AnyShapeType
+    a: _ArrayLike[_SCT],
+    /,
+    shape: _AnyShapeType,
+    order: _OrderACF = "C",
+    *,
+    copy: bool | None = None,
+) -> np.ndarray[_AnyShapeType, np.dtype[_SCT]]: ...
+@overload  # shape: Sequence[index]
 def reshape(
     a: _ArrayLike[_SCT],
     /,
-    shape: _ShapeLike = ...,
-    order: _OrderACF = ...,
+    shape: Sequence[SupportsIndex],
+    order: _OrderACF = "C",
     *,
-    newshape: _ShapeLike = ...,
-    copy: None | bool = ...,
+    copy: bool | None = None,
 ) -> NDArray[_SCT]: ...
-@overload
+@overload  # shape: index
 def reshape(
     a: ArrayLike,
     /,
-    shape: _ShapeLike = ...,
-    order: _OrderACF = ...,
+    shape: SupportsIndex,
+    order: _OrderACF = "C",
     *,
-    newshape: _ShapeLike = ...,
-    copy: None | bool = ...,
+    copy: bool | None = None,
+) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+@overload
+def reshape(  # shape: (int, ...) @ _AnyShapeType
+    a: ArrayLike,
+    /,
+    shape: _AnyShapeType,
+    order: _OrderACF = "C",
+    *,
+    copy: bool | None = None,
+) -> np.ndarray[_AnyShapeType, np.dtype[Any]]: ...
+@overload  # shape: Sequence[index]
+def reshape(
+    a: ArrayLike,
+    /,
+    shape: Sequence[SupportsIndex],
+    order: _OrderACF = "C",
+    *,
+    copy: bool | None = None,
+) -> NDArray[Any]: ...
+@overload
+@deprecated(
+    "`newshape` keyword argument is deprecated, "
+    "use `shape=...` or pass shape positionally instead. "
+    "(deprecated in NumPy 2.1)",
+)
+def reshape(
+    a: ArrayLike,
+    /,
+    shape: None = None,
+    order: _OrderACF = "C",
+    *,
+    newshape: _ShapeLike,
+    copy: bool | None = None,
 ) -> NDArray[Any]: ...
 
 @overload
@@ -378,16 +429,23 @@ def searchsorted(
     sorter: None | _ArrayLikeInt_co = ...,  # 1D int array
 ) -> NDArray[intp]: ...
 
+# unlike `reshape`, `resize` only accepts positive integers, so literal ints can be used
 @overload
-def resize(
-    a: _ArrayLike[_SCT],
-    new_shape: _ShapeLike,
-) -> NDArray[_SCT]: ...
+def resize(a: _ArrayLike[_SCT], new_shape: _SizeType) -> np.ndarray[tuple[_SizeType], np.dtype[_SCT]]: ...
 @overload
-def resize(
-    a: ArrayLike,
-    new_shape: _ShapeLike,
-) -> NDArray[Any]: ...
+def resize(a: _ArrayLike[_SCT], new_shape: SupportsIndex) -> np.ndarray[tuple[int], np.dtype[_SCT]]: ...
+@overload
+def resize(a: _ArrayLike[_SCT], new_shape: _ShapeType) -> np.ndarray[_ShapeType, np.dtype[_SCT]]: ...
+@overload
+def resize(a: _ArrayLike[_SCT], new_shape: Sequence[SupportsIndex]) -> NDArray[_SCT]: ...
+@overload
+def resize(a: ArrayLike, new_shape: _SizeType) -> np.ndarray[tuple[_SizeType], np.dtype[Any]]: ...
+@overload
+def resize(a: ArrayLike, new_shape: SupportsIndex) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+@overload
+def resize(a: ArrayLike, new_shape: _ShapeType) -> np.ndarray[_ShapeType, np.dtype[Any]]: ...
+@overload
+def resize(a: ArrayLike, new_shape: Sequence[SupportsIndex]) -> NDArray[Any]: ...
 
 @overload
 def squeeze(

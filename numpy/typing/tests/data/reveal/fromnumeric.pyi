@@ -1,6 +1,6 @@
 """Tests for :mod:`_core.fromnumeric`."""
 
-from typing import Any, NoReturn
+from typing import Any, Literal as L, NoReturn
 
 import numpy as np
 import numpy.typing as npt
@@ -37,11 +37,11 @@ assert_type(np.take(AR_f4, [0]), npt.NDArray[np.float32])
 assert_type(np.take([1], [0]), npt.NDArray[Any])
 assert_type(np.take(AR_f4, [0], out=AR_subclass), NDArraySubclass)
 
-assert_type(np.reshape(b, 1), npt.NDArray[np.bool])
-assert_type(np.reshape(f4, 1), npt.NDArray[np.float32])
-assert_type(np.reshape(f, 1), npt.NDArray[Any])
-assert_type(np.reshape(AR_b, 1), npt.NDArray[np.bool])
-assert_type(np.reshape(AR_f4, 1), npt.NDArray[np.float32])
+assert_type(np.reshape(b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.reshape(f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.reshape(f, 1), np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.reshape(AR_b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.reshape(AR_f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
 
 assert_type(np.choose(1, [True, True]), Any)
 assert_type(np.choose([1], [True, True]), npt.NDArray[Any])
@@ -102,11 +102,11 @@ assert_type(np.searchsorted(AR_f4[0], 0), np.intp)
 assert_type(np.searchsorted(AR_b[0], [0]), npt.NDArray[np.intp])
 assert_type(np.searchsorted(AR_f4[0], [0]), npt.NDArray[np.intp])
 
-assert_type(np.resize(b, (5, 5)), npt.NDArray[np.bool])
-assert_type(np.resize(f4, (5, 5)), npt.NDArray[np.float32])
-assert_type(np.resize(f, (5, 5)), npt.NDArray[Any])
-assert_type(np.resize(AR_b, (5, 5)), npt.NDArray[np.bool])
-assert_type(np.resize(AR_f4, (5, 5)), npt.NDArray[np.float32])
+assert_type(np.resize(b, (5, 5)), np.ndarray[tuple[L[5], L[5]], np.dtype[np.bool]])
+assert_type(np.resize(f4, (5, 5)), np.ndarray[tuple[L[5], L[5]], np.dtype[np.float32]])
+assert_type(np.resize(f, (5, 5)), np.ndarray[tuple[L[5], L[5]], np.dtype[Any]])
+assert_type(np.resize(AR_b, (5, 5)), np.ndarray[tuple[L[5], L[5]], np.dtype[np.bool]])
+assert_type(np.resize(AR_f4, (5, 5)), np.ndarray[tuple[L[5], L[5]], np.dtype[np.float32]])
 
 assert_type(np.squeeze(b), np.bool)
 assert_type(np.squeeze(f4), np.float32)
