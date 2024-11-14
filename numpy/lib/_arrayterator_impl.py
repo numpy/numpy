@@ -83,6 +83,8 @@ class Arrayterator:
 
     """
 
+    __module__ = "numpy.lib"
+
     def __init__(self, var, buf_size=None):
         self.var = var
         self.buf_size = buf_size

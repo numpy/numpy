@@ -48,6 +48,8 @@ __all__ = [
     "stride_tricks", "tracemalloc_domain"
 ]
 
+add_newdoc.__module__ = "numpy.lib"
+
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
 del PytestTester
