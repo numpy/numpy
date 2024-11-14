@@ -1756,12 +1756,25 @@ _IntegralArrayT = TypeVar("_IntegralArrayT", bound=NDArray[integer[Any] | np.boo
 _RealArrayT = TypeVar("_RealArrayT", bound=NDArray[floating[Any] | integer[Any] | timedelta64 | np.bool | object_])
 _NumericArrayT = TypeVar("_NumericArrayT", bound=NDArray[number[Any] | timedelta64 | object_])
 
-_Shape2D: TypeAlias = tuple[int, int]
-
+_AnyShapeType = TypeVar(
+    "_AnyShapeType",
+    tuple[()],  # 0-d
+    tuple[int],  # 1-d
+    tuple[int, int],  # 2-d
+    tuple[int, int, int],  # 3-d
+    tuple[int, int, int, int],  # 4-d
+    tuple[int, int, int, int, int],  # 5-d
+    tuple[int, int, int, int, int, int],  # 6-d
+    tuple[int, int, int, int, int, int, int],  # 7-d
+    tuple[int, int, int, int, int, int, int, int],  # 8-d
+    tuple[int, ...],  # N-d
+)
 _ShapeType = TypeVar("_ShapeType", bound=_Shape)
 _ShapeType_co = TypeVar("_ShapeType_co", covariant=True, bound=_Shape)
-_Shape1NType = TypeVar("_Shape1NType", bound=tuple[L[1], Unpack[tuple[L[1], ...]]])  # (1,) | (1, 1) | (1, 1, 1) | ...
+_Shape2D: TypeAlias = tuple[int, int]
 _Shape2DType_co = TypeVar("_Shape2DType_co", covariant=True, bound=_Shape2D)
+_Shape1NType = TypeVar("_Shape1NType", bound=tuple[L[1], Unpack[tuple[L[1], ...]]])  # (1,) | (1, 1) | (1, 1, 1) | ...
+
 _NumberType = TypeVar("_NumberType", bound=number[Any])
 
 
@@ -2204,21 +2217,86 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeType_co, _DType_co]):
         order: _OrderKACF = ...,
     ) -> ndarray[_Shape, _DType_co]: ...
 
-    @overload
-    def reshape(
+    # NOTE: reshape also accepts negative integers, so we can't use integer literals
+    @overload  # (None)
+    def reshape(self, shape: None, /, *, order: _OrderACF = "C", copy: builtins.bool | None = None) -> Self: ...
+    @overload  # (empty_sequence)
+    def reshape(  # type: ignore[overload-overlap]  # mypy false positive
         self,
-        shape: _ShapeLike,
+        shape: Sequence[Never],
         /,
         *,
-        order: _OrderACF = ...,
-        copy: None | builtins.bool = ...,
-    ) -> ndarray[_Shape, _DType_co]: ...
-    @overload
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[()], _DType_co]: ...
+    @overload  # (() | (int) | (int, int) | ....)  # up to 8-d
     def reshape(
         self,
+        shape: _AnyShapeType,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[_AnyShapeType, _DType_co]: ...
+    @overload  # (index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[int], _DType_co]: ...
+    @overload  # (index, index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[int, int], _DType_co]: ...
+    @overload  # (index, index, index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        size3: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[int, int, int], _DType_co]: ...
+    @overload  # (index, index, index, index)
+    def reshape(
+        self,
+        size1: SupportsIndex,
+        size2: SupportsIndex,
+        size3: SupportsIndex,
+        size4: SupportsIndex,
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[tuple[int, int, int, int], _DType_co]: ...
+    @overload  # (int, *(index, ...))
+    def reshape(
+        self,
+        size0: SupportsIndex,
+        /,
         *shape: SupportsIndex,
-        order: _OrderACF = ...,
-        copy: None | builtins.bool = ...,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
+    ) -> ndarray[_Shape, _DType_co]: ...
+    @overload  # (sequence[index])
+    def reshape(
+        self,
+        shape: Sequence[SupportsIndex],
+        /,
+        *,
+        order: _OrderACF = "C",
+        copy: builtins.bool | None = None,
     ) -> ndarray[_Shape, _DType_co]: ...
 
     @overload

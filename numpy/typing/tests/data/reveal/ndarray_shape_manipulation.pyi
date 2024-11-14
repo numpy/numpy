@@ -6,13 +6,14 @@ from typing_extensions import assert_type
 nd: npt.NDArray[np.int64]
 
 # reshape
-assert_type(nd.reshape(), npt.NDArray[np.int64])
-assert_type(nd.reshape(4), npt.NDArray[np.int64])
-assert_type(nd.reshape(2, 2), npt.NDArray[np.int64])
-assert_type(nd.reshape((2, 2)), npt.NDArray[np.int64])
+assert_type(nd.reshape(None), npt.NDArray[np.int64])
+assert_type(nd.reshape(4), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(nd.reshape((4,)), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(nd.reshape(2, 2), np.ndarray[tuple[int, int], np.dtype[np.int64]])
+assert_type(nd.reshape((2, 2)), np.ndarray[tuple[int, int], np.dtype[np.int64]])
 
-assert_type(nd.reshape((2, 2), order="C"), npt.NDArray[np.int64])
-assert_type(nd.reshape(4, order="C"), npt.NDArray[np.int64])
+assert_type(nd.reshape((2, 2), order="C"),  np.ndarray[tuple[int, int], np.dtype[np.int64]])
+assert_type(nd.reshape(4, order="C"),  np.ndarray[tuple[int], np.dtype[np.int64]])
 
 # resize does not return a value
 
