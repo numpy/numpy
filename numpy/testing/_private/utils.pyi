@@ -23,7 +23,7 @@ from typing import (
 )
 
 import numpy as np
-from numpy import number, object_, _FloatValue
+from numpy import number, object_, _ConvertibleToFloat
 from numpy._typing import (
     NDArray,
     ArrayLike,
@@ -233,8 +233,8 @@ def assert_almost_equal(
 
 # Anything that can be coerced into `builtins.float`
 def assert_approx_equal(
-    actual: _FloatValue,
-    desired: _FloatValue,
+    actual: _ConvertibleToFloat,
+    desired: _ConvertibleToFloat,
     significant: int = ...,
     err_msg: object = ...,
     verbose: bool = ...,
