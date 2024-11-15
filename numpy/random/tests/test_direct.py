@@ -565,8 +565,7 @@ class TestDefaultRNG:
         rs = RandomState(1234)
         rg = default_rng(rs)
         assert isinstance(rg.bit_generator, MT19937)
-
-        assert_allclose(rg.random(), rs.rand())
+        assert rg.bit_generator is rs._bit_generator
 
         # RandomState with a non MT19937 bit generator
         _original = np.random.get_bit_generator()
@@ -574,7 +573,7 @@ class TestDefaultRNG:
         np.random.set_bit_generator(bg)
         rs = np.random.mtrand._rand
         rg = default_rng(rs)
-        assert_allclose(rg.random(), rs.rand())
+        assert rg.bit_generator is bg
 
         # vital to get global state back to original, otherwise
         # other tests start to fail.

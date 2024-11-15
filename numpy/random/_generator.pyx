@@ -5073,11 +5073,7 @@ def default_rng(seed=None):
         # Pass through a Generator.
         return seed
     elif isinstance(seed, np.random.RandomState):
-        rs_state = seed.get_state(legacy=False)
-        klass = getattr(np.random, rs_state['bit_generator'])
-        bg = klass()
-        bg.state = rs_state
-        gen = np.random.Generator(bg)
+        gen = np.random.Generator(seed._bit_generator)
         return gen
 
     # Otherwise we need to instantiate a new BitGenerator and Generator as
