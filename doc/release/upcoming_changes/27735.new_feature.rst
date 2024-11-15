@@ -1,0 +1,4 @@
+* UFuncs now support ``__dict__`` attribute and allow overriding ``__doc__``
+  (either directly or via ``ufunc.__dict__["__doc__"]``). ``__dict__`` can be
+  used to also override other properties, such as ``__module__`` or
+  ``__qualname__``.

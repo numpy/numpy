@@ -4687,6 +4687,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
     ufunc->core_signature = NULL;
     ufunc->core_enabled = 0;
     ufunc->obj = NULL;
+    ufunc->dict = NULL;
     ufunc->core_num_dims = NULL;
     ufunc->core_num_dim_ix = 0;
     ufunc->core_offsets = NULL;
@@ -4770,6 +4771,11 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
             Py_DECREF(ufunc);
             return NULL;
         }
+    }
+    ufunc->dict = PyDict_New();
+    if (ufunc->dict == NULL) {
+        Py_DECREF(ufunc);
+        return NULL;
     }
     /*
      * TODO: I tried adding a default promoter here (either all object for
@@ -5177,6 +5183,7 @@ ufunc_dealloc(PyUFuncObject *ufunc)
         Py_DECREF(ufunc->identity_value);
     }
     Py_XDECREF(ufunc->obj);
+    Py_XDECREF(ufunc->dict);
     Py_XDECREF(ufunc->_loops);
     if (ufunc->_dispatch_cache != NULL) {
         PyArrayIdentityHash_Dealloc(ufunc->_dispatch_cache);
@@ -5197,6 +5204,7 @@ ufunc_traverse(PyUFuncObject *self, visitproc visit, void *arg)
     if (self->identity == PyUFunc_IdentityValue) {
         Py_VISIT(self->identity_value);
     }
+    Py_VISIT(self->dict);
     return 0;
 }
 
@@ -6411,6 +6419,15 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 {
     PyObject *doc;
 
+    // If there is a __doc__ in the instance __dict__, use it.
+    int result = PyDict_GetItemRef(ufunc->dict, npy_interned_str.__doc__, &doc);
+    if (result == -1) {
+        return NULL;
+    }
+    else if (result == 1) {
+        return doc;
+    }
+
     if (npy_cache_import_runtime(
             "numpy._core._internal", "_ufunc_doc_signature_formatter",
             &npy_runtime_imports._ufunc_doc_signature_formatter) == -1) {
@@ -6434,6 +6451,15 @@ ufunc_get_doc(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
     return doc;
 }
 
+static int
+ufunc_set_doc(PyUFuncObject *ufunc, PyObject *doc, void *NPY_UNUSED(ignored))
+{
+    if (doc == NULL) {
+        return PyDict_DelItem(ufunc->dict, npy_interned_str.__doc__);
+    } else {
+        return PyDict_SetItem(ufunc->dict, npy_interned_str.__doc__, doc);
+    }
+}
 
 static PyObject *
 ufunc_get_nin(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
@@ -6519,8 +6545,8 @@ ufunc_get_signature(PyUFuncObject *ufunc, void *NPY_UNUSED(ignored))
 
 static PyGetSetDef ufunc_getset[] = {
     {"__doc__",
-        (getter)ufunc_get_doc,
-        NULL, NULL, NULL},
+        (getter)ufunc_get_doc, (setter)ufunc_set_doc,
+        NULL, NULL},
     {"nin",
         (getter)ufunc_get_nin,
         NULL, NULL, NULL},
@@ -6550,6 +6576,17 @@ static PyGetSetDef ufunc_getset[] = {
 
 
 /******************************************************************************
+ ***                          UFUNC MEMBERS                                 ***
+ *****************************************************************************/
+
+static PyMemberDef ufunc_members[] = {
+    {"__dict__", T_OBJECT, offsetof(PyUFuncObject, dict),
+     READONLY},
+    {NULL},
+};
+
+
+/******************************************************************************
  ***                        UFUNC TYPE OBJECT                               ***
  *****************************************************************************/
 
@@ -6568,6 +6605,12 @@ NPY_NO_EXPORT PyTypeObject PyUFunc_Type = {
     .tp_traverse = (traverseproc)ufunc_traverse,
     .tp_methods = ufunc_methods,
     .tp_getset = ufunc_getset,
+    .tp_getattro = PyObject_GenericGetAttr,
+    .tp_setattro = PyObject_GenericSetAttr,
+    // TODO when Python 3.12 is the minimum supported version,
+    // use Py_TPFLAGS_MANAGED_DICT
+    .tp_members = ufunc_members,
+    .tp_dictoffset = offsetof(PyUFuncObject, dict),
 };
 
 /* End of code for ufunc objects */

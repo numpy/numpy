@@ -1315,8 +1315,10 @@ npyiter_check_casting(int nop, PyArrayObject **op,
         printf("\n");
 #endif
         /* If the types aren't equivalent, a cast is necessary */
-        if (op[iop] != NULL && !PyArray_EquivTypes(PyArray_DESCR(op[iop]),
-                                                     op_dtype[iop])) {
+        npy_intp view_offset = NPY_MIN_INTP;
+        if (op[iop] != NULL && !(PyArray_SafeCast(
+                    PyArray_DESCR(op[iop]), op_dtype[iop], &view_offset,
+                    NPY_NO_CASTING, 1) && view_offset == 0)) {
             /* Check read (op -> temp) casting */
             if ((op_itflags[iop] & NPY_OP_ITFLAG_READ) &&
                         !PyArray_CanCastArrayTo(op[iop],

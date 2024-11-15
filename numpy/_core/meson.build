@@ -245,8 +245,8 @@ endforeach
 
 # variable attributes tested via "int %s a" % attribute
 optional_variable_attributes = [
-  ['thread_local', 'HAVE_THREAD_LOCAL'],
-  ['_Thread_local', 'HAVE__THREAD_LOCAL'],
+  ['thread_local', 'HAVE_THREAD_LOCAL'],    # C23
+  ['_Thread_local', 'HAVE__THREAD_LOCAL'],  # C11/C17
   ['__thread', 'HAVE__THREAD'],
   ['__declspec(thread)', 'HAVE___DECLSPEC_THREAD_']
 ]
