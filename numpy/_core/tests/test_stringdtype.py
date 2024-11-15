@@ -1574,6 +1574,40 @@ def test_unset_na_coercion():
             arr == op
 
 
+def test_repeat(string_array):
+    res = string_array.repeat(1000)
+    # Create an empty array with expanded dimension, and fill it.  Then,
+    # reshape it to the expected result.
+    expected = np.empty_like(string_array, shape=string_array.shape + (1000,))
+    expected[...] = string_array[:, np.newaxis]
+    expected = expected.reshape(-1)
+
+    assert_array_equal(res, expected, strict=True)
+
+
+@pytest.mark.parametrize("tile", [1, 6, (2, 5)])
+def test_accumulation(string_array, tile):
+    """Accumulation is odd for StringDType but tests dtypes with references.
+    """
+    # Fill with mostly empty strings to not create absurdly big strings
+    arr = np.zeros_like(string_array, shape=(100,))
+    arr[:len(string_array)] = string_array
+    arr[-len(string_array):] = string_array
+
+    # Bloat size a bit (get above thresholds and test >1 ndim).
+    arr = np.tile(string_array, tile)
+
+    res = np.add.accumulate(arr, axis=0)
+    res_obj = np.add.accumulate(arr.astype(object), axis=0)
+    assert_array_equal(res, res_obj.astype(arr.dtype), strict=True)
+
+    if arr.ndim > 1:
+        res = np.add.accumulate(arr, axis=-1)
+        res_obj = np.add.accumulate(arr.astype(object), axis=-1)
+
+        assert_array_equal(res, res_obj.astype(arr.dtype), strict=True)
+
+
 class TestImplementation:
     """Check that strings are stored in the arena when possible.
 
