@@ -2587,8 +2587,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
         Input array.  If `axis` is None, `x` must be 1-D or 2-D, unless `ord`
         is None. If both `axis` and `ord` are None, the 2-norm of
         ``x.ravel`` will be returned.
-    ord : {non-zero int, inf, -inf, 'fro', 'nuc'}, optional
-        Order of the norm (see table under ``Notes``). inf means numpy's
+    ord : {int, float, inf, -inf, 'fro', 'nuc'}, optional
+        Order of the norm (see table under ``Notes`` for what values are
+        supported for matrices and vectors respectively). inf means numpy's
         `inf` object. The default is None.
     axis : {None, int, 2-tuple of ints}, optional.
         If `axis` is an integer, it specifies the axis of `x` along which to
@@ -3498,7 +3499,7 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     keepdims : bool, optional
         If this is set to True, the axes which are normed over are left in
         the result as dimensions with size one. Default: False.
-    ord : {1, -1, 2, -2, inf, -inf, 'fro', 'nuc'}, optional
+    ord : {int, float, inf, -inf}, optional
         The order of the norm. For details see the table under ``Notes``
         in `numpy.linalg.norm`.
 
@@ -3525,6 +3526,8 @@ def vector_norm(x, /, *, axis=None, keepdims=False, ord=2):
     >>> LA.vector_norm(b, ord=-np.inf)
     1.0
 
+    >>> LA.vector_norm(b, ord=0)
+    9.0
     >>> LA.vector_norm(b, ord=1)
     45.0
     >>> LA.vector_norm(b, ord=-1)
