@@ -54,10 +54,10 @@ from numpy import (  # type: ignore[attr-defined]
     _CastingKind,
     _ModeKind,
     _SupportsBuffer,
-    _IOProtocol,
+    _SupportsFileMethods,
     _CopyMode,
     _NDIterFlagsKind,
-    _NDIterOpFlagsKind,
+    _NDIterFlagsOp,
 )
 from numpy.lib._array_utils_impl import normalize_axis_index
 
@@ -955,7 +955,7 @@ def frompyfunc(
 
 @overload
 def fromfile(
-    file: StrOrBytesPath | _IOProtocol,
+    file: StrOrBytesPath | _SupportsFileMethods,
     dtype: None = ...,
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -965,7 +965,7 @@ def fromfile(
 ) -> NDArray[float64]: ...
 @overload
 def fromfile(
-    file: StrOrBytesPath | _IOProtocol,
+    file: StrOrBytesPath | _SupportsFileMethods,
     dtype: _DTypeLike[_SCT],
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -975,7 +975,7 @@ def fromfile(
 ) -> NDArray[_SCT]: ...
 @overload
 def fromfile(
-    file: StrOrBytesPath | _IOProtocol,
+    file: StrOrBytesPath | _SupportsFileMethods,
     dtype: DTypeLike,
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -1340,7 +1340,7 @@ def nested_iters(
     op: ArrayLike | Sequence[ArrayLike],
     axes: Sequence[Sequence[SupportsIndex]],
     flags: None | Sequence[_NDIterFlagsKind] = ...,
-    op_flags: None | Sequence[Sequence[_NDIterOpFlagsKind]] = ...,
+    op_flags: None | Sequence[Sequence[_NDIterFlagsOp]] = ...,
     op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
     order: _OrderKACF = ...,
     casting: _CastingKind = ...,
