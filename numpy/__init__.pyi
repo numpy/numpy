@@ -188,6 +188,20 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
+
+if sys.version_info >= (3, 12):
+    from collections.abc import Buffer as _SupportsBuffer
+else:
+    _SupportsBuffer: TypeAlias = (
+        bytes
+        | bytearray
+        | memoryview
+        | _array.array[Any]
+        | mmap.mmap
+        | NDArray[Any]
+        | generic
+    )
+
 from typing import (
     Literal as L,
     Any,
@@ -1622,57 +1636,9 @@ class _ArrayOrScalarCommon:
         np.bool,  # F-continuous
         bytes | list[Any],  # Data
     ], /) -> None: ...
-    # an `np.bool` is returned when `keepdims=True` and `self` is a 0d array
 
-    @overload
-    def argmax(
-        self,
-        axis: None = ...,
-        out: None = ...,
-        *,
-        keepdims: L[False] = ...,
-    ) -> intp: ...
-    @overload
-    def argmax(
-        self,
-        axis: SupportsIndex = ...,
-        out: None = ...,
-        *,
-        keepdims: builtins.bool = ...,
-    ) -> Any: ...
-    @overload
-    def argmax(
-        self,
-        axis: None | SupportsIndex = ...,
-        out: _ArrayT = ...,
-        *,
-        keepdims: builtins.bool = ...,
-    ) -> _ArrayT: ...
-
-    @overload
-    def argmin(
-        self,
-        axis: None = ...,
-        out: None = ...,
-        *,
-        keepdims: L[False] = ...,
-    ) -> intp: ...
-    @overload
-    def argmin(
-        self,
-        axis: SupportsIndex = ...,
-        out: None = ...,
-        *,
-        keepdims: builtins.bool = ...,
-    ) -> Any: ...
-    @overload
-    def argmin(
-        self,
-        axis: None | SupportsIndex = ...,
-        out: _ArrayT = ...,
-        *,
-        keepdims: builtins.bool = ...,
-    ) -> _ArrayT: ...
+    def conj(self) -> Self: ...
+    def conjugate(self) -> Self: ...
 
     def argsort(
         self,
@@ -1683,276 +1649,320 @@ class _ArrayOrScalarCommon:
         stable: None | bool = ...,
     ) -> NDArray[Any]: ...
 
+    @overload  # axis=None (default), out=None (default), keepdims=False (default)
+    def argmax(self, /, axis: None = None, out: None = None, *, keepdims: L[False] = False) -> intp: ...
+    @overload  # axis=index, out=None (default)
+    def argmax(self, /, axis: SupportsIndex, out: None = None, *, keepdims: builtins.bool = False) -> Any: ...
+    @overload  # axis=index, out=ndarray
+    def argmax(self, /, axis: SupportsIndex | None, out: _ArrayT, *, keepdims: builtins.bool = False) -> _ArrayT: ...
     @overload
-    def choose(
-        self,
-        choices: ArrayLike,
-        out: None = ...,
-        mode: _ModeKind = ...,
-    ) -> NDArray[Any]: ...
+    def argmax(self, /, axis: SupportsIndex | None = None, *, out: _ArrayT, keepdims: builtins.bool = False) -> _ArrayT: ...
+
+    @overload  # axis=None (default), out=None (default), keepdims=False (default)
+    def argmin(self, /, axis: None = None, out: None = None, *, keepdims: L[False] = False) -> intp: ...
+    @overload  # axis=index, out=None (default)
+    def argmin(self, /, axis: SupportsIndex, out: None = None, *, keepdims: builtins.bool = False) -> Any: ...
+    @overload  # axis=index, out=ndarray
+    def argmin(self, /, axis: SupportsIndex | None, out: _ArrayT, *, keepdims: builtins.bool = False) -> _ArrayT: ...
     @overload
-    def choose(
-        self,
-        choices: ArrayLike,
-        out: _ArrayT = ...,
-        mode: _ModeKind = ...,
-    ) -> _ArrayT: ...
+    def argmin(self, /, axis: SupportsIndex | None = None, *, out: _ArrayT, keepdims: builtins.bool = False) -> _ArrayT: ...
+
+    @overload  # out=None (default)
+    def round(self, /, decimals: SupportsIndex = 0, out: None = None) -> Self: ...
+    @overload  # out=ndarray
+    def round(self, /, decimals: SupportsIndex, out: _ArrayT) -> _ArrayT: ...
+    @overload
+    def round(self, /, decimals: SupportsIndex = 0, *, out: _ArrayT) -> _ArrayT: ...
+
+    @overload  # out=None (default)
+    def choose(self, /, choices: ArrayLike, out: None = None, mode: _ModeKind = "raise") -> NDArray[Any]: ...
+    @overload  # out=ndarray
+    def choose(self, /, choices: ArrayLike, out: _ArrayT, mode: _ModeKind = "raise") -> _ArrayT: ...
+
+    # TODO: Annotate kwargs with an unpacked `TypedDict`
+    @overload  # out: None (default)
+    def clip(self, /, min: ArrayLike, max: ArrayLike | None = None, out: None = None, **kwargs: Any) -> NDArray[Any]: ...
+    @overload
+    def clip(self, /, min: None, max: ArrayLike, out: None = None, **kwargs: Any) -> NDArray[Any]: ...
+    @overload
+    def clip(self, /, min: None = None, *, max: ArrayLike, out: None = None, **kwargs: Any) -> NDArray[Any]: ...
+    @overload  # out: ndarray
+    def clip(self, /, min: ArrayLike, max: ArrayLike | None, out: _ArrayT, **kwargs: Any) -> _ArrayT: ...
+    @overload
+    def clip(self, /, min: ArrayLike, max: ArrayLike | None = None, *, out: _ArrayT, **kwargs: Any) -> _ArrayT: ...
+    @overload
+    def clip(self, /, min: None, max: ArrayLike, out: _ArrayT, **kwargs: Any) -> _ArrayT: ...
+    @overload
+    def clip(self, /, min: None = None, *, max: ArrayLike, out: _ArrayT, **kwargs: Any) -> _ArrayT: ...
 
     @overload
-    def clip(
-        self,
-        min: ArrayLike = ...,
-        max: None | ArrayLike = ...,
-        out: None = ...,
-        **kwargs: Any,
-    ) -> NDArray[Any]: ...
+    def compress(self, /, condition: _ArrayLikeInt_co, axis: SupportsIndex | None = None, out: None = None) -> NDArray[Any]: ...
     @overload
-    def clip(
-        self,
-        min: None = ...,
-        max: ArrayLike = ...,
-        out: None = ...,
-        **kwargs: Any,
-    ) -> NDArray[Any]: ...
+    def compress(self, /, condition: _ArrayLikeInt_co, axis: SupportsIndex | None, out: _ArrayT) -> _ArrayT: ...
     @overload
-    def clip(
-        self,
-        min: ArrayLike = ...,
-        max: None | ArrayLike = ...,
-        out: _ArrayT = ...,
-        **kwargs: Any,
-    ) -> _ArrayT: ...
-    @overload
-    def clip(
-        self,
-        min: None = ...,
-        max: ArrayLike = ...,
-        out: _ArrayT = ...,
-        **kwargs: Any,
-    ) -> _ArrayT: ...
+    def compress(self, /, condition: _ArrayLikeInt_co, axis: SupportsIndex | None = None, *, out: _ArrayT) -> _ArrayT: ...
 
+    @overload  # out: None (default)
+    def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> NDArray[Any]: ...
+    @overload  # out: ndarray
+    def cumprod(self, /, axis: SupportsIndex | None, dtype: DTypeLike | None, out: _ArrayT) -> _ArrayT: ...
     @overload
-    def compress(
-        self,
-        a: ArrayLike,
-        axis: None | SupportsIndex = ...,
-        out: None = ...,
-    ) -> NDArray[Any]: ...
-    @overload
-    def compress(
-        self,
-        a: ArrayLike,
-        axis: None | SupportsIndex = ...,
-        out: _ArrayT = ...,
-    ) -> _ArrayT: ...
+    def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...
 
-    def conj(self) -> Self: ...
-    def conjugate(self) -> Self: ...
-
+    @overload  # out: None (default)
+    def cumsum(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> NDArray[Any]: ...
+    @overload  # out: ndarray
+    def cumsum(self, /, axis: SupportsIndex | None, dtype: DTypeLike | None, out: _ArrayT) -> _ArrayT: ...
     @overload
-    def cumprod(
-        self,
-        axis: None | SupportsIndex = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-    ) -> NDArray[Any]: ...
-    @overload
-    def cumprod(
-        self,
-        axis: None | SupportsIndex = ...,
-        dtype: DTypeLike = ...,
-        out: _ArrayT = ...,
-    ) -> _ArrayT: ...
-
-    @overload
-    def cumsum(
-        self,
-        axis: None | SupportsIndex = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-    ) -> NDArray[Any]: ...
-    @overload
-    def cumsum(
-        self,
-        axis: None | SupportsIndex = ...,
-        dtype: DTypeLike = ...,
-        out: _ArrayT = ...,
-    ) -> _ArrayT: ...
+    def cumsum(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...
 
     @overload
     def max(
         self,
-        axis: None | _ShapeLike = ...,
-        out: None = ...,
-        keepdims: builtins.bool = ...,
+        /,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        keepdims: builtins.bool = False,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co = True,
     ) -> Any: ...
     @overload
     def max(
         self,
-        axis: None | _ShapeLike = ...,
-        out: _ArrayT = ...,
-        keepdims: builtins.bool = ...,
+        /,
+        axis: _ShapeLike | None,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co = True,
     ) -> _ArrayT: ...
-
     @overload
-    def mean(
+    def max(
         self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-        keepdims: builtins.bool = ...,
+        /,
+        axis: _ShapeLike | None = None,
         *,
-        where: _ArrayLikeBool_co = ...,
-    ) -> Any: ...
-    @overload
-    def mean(
-        self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: _ArrayT = ...,
-        keepdims: builtins.bool = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
     ) -> _ArrayT: ...
 
     @overload
     def min(
         self,
-        axis: None | _ShapeLike = ...,
-        out: None = ...,
-        keepdims: builtins.bool = ...,
+        /,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        keepdims: builtins.bool = False,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co = True,
     ) -> Any: ...
     @overload
     def min(
         self,
-        axis: None | _ShapeLike = ...,
-        out: _ArrayT = ...,
-        keepdims: builtins.bool = ...,
+        /,
+        axis: _ShapeLike | None,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
         initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co = True,
     ) -> _ArrayT: ...
-
     @overload
-    def prod(
+    def min(
         self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-        keepdims: builtins.bool = ...,
-        initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool_co = ...,
-    ) -> Any: ...
-    @overload
-    def prod(
-        self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: _ArrayT = ...,
-        keepdims: builtins.bool = ...,
-        initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool_co = ...,
-    ) -> _ArrayT: ...
-
-    @overload
-    def round(
-        self,
-        decimals: SupportsIndex = ...,
-        out: None = ...,
-    ) -> Self: ...
-    @overload
-    def round(
-        self,
-        decimals: SupportsIndex = ...,
-        out: _ArrayT = ...,
-    ) -> _ArrayT: ...
-
-    @overload
-    def std(
-        self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-        ddof: float = ...,
-        keepdims: builtins.bool = ...,
+        /,
+        axis: _ShapeLike | None = None,
         *,
-        where: _ArrayLikeBool_co = ...,
-    ) -> Any: ...
-    @overload
-    def std(
-        self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: _ArrayT = ...,
-        ddof: float = ...,
-        keepdims: builtins.bool = ...,
-        *,
-        where: _ArrayLikeBool_co = ...,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
+        initial: _NumberLike_co = ...,
+        where: _ArrayLikeBool_co = True,
     ) -> _ArrayT: ...
 
     @overload
     def sum(
         self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-        keepdims: builtins.bool = ...,
-        initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool_co = ...,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        keepdims: builtins.bool = False,
+        initial: _NumberLike_co = 0,
+        where: _ArrayLikeBool_co = True,
     ) -> Any: ...
     @overload
     def sum(
         self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: _ArrayT = ...,
-        keepdims: builtins.bool = ...,
-        initial: _NumberLike_co = ...,
-        where: _ArrayLikeBool_co = ...,
+        /,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
+        initial: _NumberLike_co = 0,
+        where: _ArrayLikeBool_co = True,
+    ) -> _ArrayT: ...
+    @overload
+    def sum(
+        self,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
+        initial: _NumberLike_co = 0,
+        where: _ArrayLikeBool_co = True,
+    ) -> _ArrayT: ...
+
+    @overload
+    def prod(
+        self,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        keepdims: builtins.bool = False,
+        initial: _NumberLike_co = 1,
+        where: _ArrayLikeBool_co = True,
+    ) -> Any: ...
+    @overload
+    def prod(
+        self,
+        /,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
+        initial: _NumberLike_co = 1,
+        where: _ArrayLikeBool_co = True,
+    ) -> _ArrayT: ...
+    @overload
+    def prod(
+        self,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
+        initial: _NumberLike_co = 1,
+        where: _ArrayLikeBool_co = True,
+    ) -> _ArrayT: ...
+
+    @overload
+    def mean(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        keepdims: builtins.bool = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> Any: ...
+    @overload
+    def mean(
+        self,
+        /,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+    ) -> _ArrayT: ...
+    @overload
+    def mean(
+        self,
+        /,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: builtins.bool = False,
+        where: _ArrayLikeBool_co = True,
+    ) -> _ArrayT: ...
+
+    @overload
+    def std(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        ddof: float = 0,
+        keepdims: builtins.bool = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+        mean: _ArrayLikeNumber_co = ...,
+        correction: float = ...,
+    ) -> Any: ...
+    @overload
+    def std(
+        self,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        ddof: float = 0,
+        keepdims: builtins.bool = False,
+        *,
+        where: _ArrayLikeBool_co = True,
+        mean: _ArrayLikeNumber_co = ...,
+        correction: float = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def std(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        ddof: float = 0,
+        keepdims: builtins.bool = False,
+        where: _ArrayLikeBool_co = True,
+        mean: _ArrayLikeNumber_co = ...,
+        correction: float = ...,
     ) -> _ArrayT: ...
 
     @overload
     def var(
         self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: None = ...,
-        ddof: float = ...,
-        keepdims: builtins.bool = ...,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        out: None = None,
+        ddof: float = 0,
+        keepdims: builtins.bool = False,
         *,
-        where: _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co = True,
+        mean: _ArrayLikeNumber_co = ...,
+        correction: float = ...,
     ) -> Any: ...
     @overload
     def var(
         self,
-        axis: None | _ShapeLike = ...,
-        dtype: DTypeLike = ...,
-        out: _ArrayT = ...,
-        ddof: float = ...,
-        keepdims: builtins.bool = ...,
+        axis: _ShapeLike | None,
+        dtype: DTypeLike | None,
+        out: _ArrayT,
+        ddof: float = 0,
+        keepdims: builtins.bool = False,
         *,
-        where: _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co = True,
+        mean: _ArrayLikeNumber_co = ...,
+        correction: float = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def var(
+        self,
+        axis: _ShapeLike | None = None,
+        dtype: DTypeLike | None = None,
+        *,
+        out: _ArrayT,
+        ddof: float = 0,
+        keepdims: builtins.bool = False,
+        where: _ArrayLikeBool_co = True,
+        mean: _ArrayLikeNumber_co = ...,
+        correction: float = ...,
     ) -> _ArrayT: ...
 
-
-
-if sys.version_info >= (3, 12):
-    from collections.abc import Buffer as _SupportsBuffer
-else:
-    _SupportsBuffer: TypeAlias = (
-        bytes
-        | bytearray
-        | memoryview
-        | _array.array[Any]
-        | mmap.mmap
-        | NDArray[Any]
-        | generic
-    )
 
 class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
     __hash__: ClassVar[None]  # type: ignore[assignment]  # pyright: ignore[reportIncompatibleMethodOverride]
