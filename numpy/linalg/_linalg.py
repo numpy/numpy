@@ -2588,7 +2588,8 @@ def norm(x, ord=None, axis=None, keepdims=False):
         is None. If both `axis` and `ord` are None, the 2-norm of
         ``x.ravel`` will be returned.
     ord : {int, float, inf, -inf, 'fro', 'nuc'}, optional
-        Order of the norm (see table under ``Notes``). inf means numpy's
+        Order of the norm (see table under ``Notes`` for what values are
+        supported for matrices and vectors respectively). inf means numpy's
         `inf` object. The default is None.
     axis : {None, int, 2-tuple of ints}, optional.
         If `axis` is an integer, it specifies the axis of `x` along which to
