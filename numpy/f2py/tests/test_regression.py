@@ -151,3 +151,15 @@ def test_gh25784():
         )
     except ImportError as rerr:
         assert "unknown_subroutine_" in str(rerr)
+
+
+@pytest.mark.slow
+class TestAssignmentOnlyModules(util.F2PyTest):
+    # Ensure that variables are exposed without functions or subroutines in a module
+    sources = [util.getpath("tests", "src", "regression", "assignOnlyModule.f90")]
+
+    @pytest.mark.slow
+    def test_gh27167(self):
+        assert (self.module.f_globals.n_max == 16)
+        assert (self.module.f_globals.i_max == 18)
+        assert (self.module.f_globals.j_max == 72)
