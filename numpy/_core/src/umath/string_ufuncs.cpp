@@ -633,6 +633,67 @@ string_partition_index_loop(PyArrayMethod_Context *context,
 }
 
 
+template <ENCODING enc>
+static int
+string_slice_loop(PyArrayMethod_Context *context,
+        char *const data[], npy_intp const dimensions[],
+        npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    int insize = context->descriptors[0]->elsize;
+    int outsize = context->descriptors[4]->elsize;
+
+    char *in_ptr = data[0];
+    char *start_ptr = data[1];
+    char *stop_ptr = data[2];
+    char *step_ptr = data[3];
+    char *out_ptr = data[4];
+
+    npy_intp N = dimensions[0];
+
+    while (N--) {
+        Buffer<enc> inbuf(in_ptr, insize);
+        Buffer<enc> outbuf(out_ptr, outsize);
+
+        // get the slice
+        npy_intp start = *(npy_intp*)start_ptr;
+        npy_intp stop = *(npy_intp*)stop_ptr;
+        npy_intp step = *(npy_intp*)step_ptr;
+
+        // adjust slice to string length in codepoints
+        // and handle negative indices
+        size_t num_codepoints = inbuf.num_codepoints();
+        npy_intp slice_length = PySlice_AdjustIndices(num_codepoints, &start, &stop, step);
+
+        // iterate over slice and copy each character of the string
+        inbuf.advance_chars_or_bytes(start);
+        for (npy_intp i = 0; i < slice_length; i++) {
+            // copy one codepoint
+            inbuf.buffer_memcpy(outbuf, 1);
+
+            // Move in inbuf by step.
+            inbuf += step;
+
+            // Move in outbuf by the number of chars or bytes written
+            outbuf.advance_chars_or_bytes(1);
+        }
+
+        // fill remaining outbuf with zero bytes
+        for (char *tmp = outbuf.buf; tmp < outbuf.after; tmp++) {
+            *tmp = 0;
+        }
+
+        // Go to the next array element
+        in_ptr += strides[0];
+        start_ptr += strides[1];
+        stop_ptr += strides[2];
+        step_ptr += strides[3];
+        out_ptr += strides[4];
+    }
+
+    return 0;
+}
+
+
 /* Resolve descriptors & promoter functions */
 
 static NPY_CASTING
@@ -1063,6 +1124,53 @@ string_partition_resolve_descriptors(
     return NPY_NO_CASTING;
 }
 
+
+static int
+string_slice_promoter(PyObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[0] = op_dtypes[0];
+    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_IntpDType);
+    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_IntpDType);
+    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_IntpDType);
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[4] = op_dtypes[0];
+    return 0;
+}
+
+static NPY_CASTING
+string_slice_resolve_descriptors(
+        PyArrayMethodObject *self,
+        PyArray_DTypeMeta *const NPY_UNUSED(dtypes[5]),
+        PyArray_Descr *const given_descrs[5],
+        PyArray_Descr *loop_descrs[5],
+        npy_intp *NPY_UNUSED(view_offset))
+{
+    if (given_descrs[4]) {
+        PyErr_Format(PyExc_TypeError,
+                     "The '%s' ufunc does not "
+                     "currently support the 'out' keyword",
+                     self->name);
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        loop_descrs[i] = NPY_DT_CALL_ensure_canonical(given_descrs[i]);
+        if (loop_descrs[i] == NULL) {
+            return _NPY_ERROR_OCCURRED_IN_CAST;
+        }
+    }
+
+    loop_descrs[4] = PyArray_DescrNew(loop_descrs[0]);
+    if (loop_descrs[4] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+    loop_descrs[4]->elsize = loop_descrs[0]->elsize;
+
+    return NPY_NO_CASTING;
+}
 
 /*
  * Machinery to add the string loops to the existing ufuncs.
@@ -1742,6 +1850,28 @@ init_string_ufuncs(PyObject *umath)
                 string_partition_promoter) < 0) {
             return -1;
         }
+    }
+
+    dtypes[0] = NPY_OBJECT;
+    dtypes[1] = NPY_INTP;
+    dtypes[2] = NPY_INTP;
+    dtypes[3] = NPY_INTP;
+    dtypes[4] = NPY_OBJECT;
+    if (init_ufunc(
+            umath, "_slice", 4, 1, dtypes, ENCODING::ASCII,
+            string_slice_loop<ENCODING::ASCII>,
+            string_slice_resolve_descriptors, NULL) < 0) {
+        return -1;
+    }
+    if (init_ufunc(
+            umath, "_slice", 4, 1, dtypes, ENCODING::UTF32,
+            string_slice_loop<ENCODING::UTF32>,
+            string_slice_resolve_descriptors, NULL) < 0) {
+        return -1;
+    }
+    if (init_promoter(umath, "_slice", 4, 1,
+            string_slice_promoter) < 0) {
+        return -1;
     }
 
     return 0;
