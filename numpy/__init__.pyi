@@ -12,6 +12,7 @@ from fractions import Fraction
 from uuid import UUID
 
 import numpy as np
+from numpy.__config__ import show as show_config
 from numpy._pytesttester import PytestTester
 from numpy._core._internal import _ctypes
 
@@ -4798,5 +4799,3 @@ def from_dlpack(
     device: L["cpu"] | None = None,
     copy: builtins.bool | None = None,
 ) -> NDArray[number[Any] | np.bool]: ...
-
-def show_config() -> None: ...
