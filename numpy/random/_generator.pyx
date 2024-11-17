@@ -22,6 +22,7 @@ from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8, _gen_mask)
 from ._pcg64 import PCG64
+from ._mt19937 import MT19937
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
@@ -4990,7 +4991,7 @@ def default_rng(seed=None):
 
     Parameters
     ----------
-    seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator}, optional
+    seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator, RandomState}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then all values must be non-negative and will be
@@ -4998,6 +4999,7 @@ def default_rng(seed=None):
         pass in a `SeedSequence` instance.
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
+        When passed a legacy `RandomState` instance it will be coerced to a `Generator`.
 
     Returns
     -------
@@ -5070,6 +5072,10 @@ def default_rng(seed=None):
     elif isinstance(seed, Generator):
         # Pass through a Generator.
         return seed
+    elif isinstance(seed, np.random.RandomState):
+        gen = np.random.Generator(seed._bit_generator)
+        return gen
+
     # Otherwise we need to instantiate a new BitGenerator and Generator as
     # normal.
     return Generator(PCG64(seed))
