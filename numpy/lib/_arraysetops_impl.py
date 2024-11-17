@@ -1263,6 +1263,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     """
     if assume_unique:
         ar1 = np.asarray(ar1).ravel()
+        ar2 = np.asarray(ar2)
     else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)

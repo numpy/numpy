@@ -4672,12 +4672,13 @@ def _lerp(a, b, t, out=None):
     """
     Compute the linear interpolation weighted by gamma on each point of
     two same shape array.
+    Function is meant to be used with arrays not scalars.
 
-    a : array_like
+    a : array
         Left bound.
-    b : array_like
+    b : array
         Right bound.
-    t : array_like
+    t : array
         The interpolation weight.
     out : array_like
         Output array.
@@ -4877,9 +4878,9 @@ def _quantile(
                 slices_having_nans = np.isnan(arr[-1, ...])
             else:
                 slices_having_nans = None
-            # --- Get values from indexes
-            previous = arr[previous_indexes]
-            next = arr[next_indexes]
+            # --- Get values from indexes (ensure array result)
+            previous = arr[previous_indexes, ...]
+            next = arr[next_indexes, ...]
             # --- Linear interpolation
             gamma = _get_gamma(virtual_indexes, previous_indexes, method_props)
             result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)

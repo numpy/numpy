@@ -26,8 +26,10 @@ import warnings
 import numpy as np
 import numpy._core.numeric as _nx
 from numpy._core import overrides
+from numpy._core._multiarray_umath import _array_converter
 from numpy.lib import _function_base_impl as fnb
 from numpy.lib._function_base_impl import _weights_are_valid
+
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -1384,11 +1386,22 @@ def nanpercentile(
         method = fnb._check_interpolation_as_method(
             method, interpolation, "nanpercentile")
 
-    a = np.asanyarray(a)
+    conv = _array_converter(a, q)
+    a, q_arr = conv.as_arrays(pyscalars="convert")
+
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
     q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
+
+    # TODO(seberg): Again this change might have made sense but should be meaningless for now
+    # # Use dtype of array if possible (e.g., if q is a python int or float)
+    # # by making the divisor have the dtype of the data array.
+    # if isinstance(q, (int, float)) and a.dtype.kind == "f":
+    #     q = np.true_divide(q, np.array(100, dtype=a.dtype))
+    # else:
+    #     q = q_arr / 100
+
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 
@@ -1403,8 +1416,10 @@ def nanpercentile(
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
 
-    return _nanquantile_unchecked(
+    result = _nanquantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
+    # If no broadcasting happened, and q was a scalar, return a scalar:
+    return conv.wrap(result, to_scalar=conv.scalar_input[1])
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
@@ -1571,7 +1586,9 @@ def nanquantile(
         method = fnb._check_interpolation_as_method(
             method, interpolation, "nanquantile")
 
-    a = np.asanyarray(a)
+    conv = _array_converter(a, q)
+    a, q_arr = conv.as_arrays(pyscalars="convert")
+
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
@@ -1579,7 +1596,7 @@ def nanquantile(
     if isinstance(q, (int, float)) and a.dtype.kind == "f":
         q = np.asanyarray(q, dtype=a.dtype)
     else:
-        q = np.asanyarray(q)
+        q = q_arr
 
     if not fnb._quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
@@ -1595,8 +1612,10 @@ def nanquantile(
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
 
-    return _nanquantile_unchecked(
+    result = _nanquantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
+    # If no broadcasting happened, and q was a scalar, return a scalar:
+    return conv.wrap(result, to_scalar=conv.scalar_input[1])
 
 
 def _nanquantile_unchecked(
