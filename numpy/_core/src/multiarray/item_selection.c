@@ -811,6 +811,11 @@ npy_fastrepeat_impl(
     return 0;
 }
 
+
+/*
+ * Helper to allow the compiler to specialize for all direct element copy
+ * cases (e.g. all numerical dtypes).
+ */
 static NPY_GCC_OPT_3 int
 npy_fastrepeat(
     npy_intp n_outer, npy_intp n, npy_intp nel, npy_intp chunk,
