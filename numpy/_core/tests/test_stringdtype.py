@@ -1574,6 +1574,17 @@ def test_unset_na_coercion():
             arr == op
 
 
+def test_repeat(string_array):
+    res = string_array.repeat(1000)
+    # Create an empty array with expanded dimension, and fill it.  Then,
+    # reshape it to the expected result.
+    expected = np.empty_like(string_array, shape=string_array.shape + (1000,))
+    expected[...] = string_array[:, np.newaxis]
+    expected = expected.reshape(-1)
+
+    assert_array_equal(res, expected, strict=True)
+
+
 class TestImplementation:
     """Check that strings are stored in the arena when possible.
 
