@@ -54,7 +54,7 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
             const auto is_min_val = Eq(vec_src, vec_min_val);
             const auto vec_res = IfThenElse(is_min_val, vec_min_val, Neg(vec_src));
             StoreU(vec_res, d, dst + i);
-            if (!AllFalse(d, is_min_val)) {
+            if (!raise_overflow && !AllFalse(d, is_min_val)) {
                 raise_overflow = true;
             }
         }
@@ -64,7 +64,7 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
             const auto is_min_val = Eq(vec_src, vec_min_val);
             const auto vec_res = IfThenElse(is_min_val, vec_min_val, Neg(vec_src));
             StoreN(vec_res, d, dst + i, num);
-            if (!AllFalse(d, is_min_val)) {
+            if (!raise_overflow && !AllFalse(d, is_min_val)) {
                 raise_overflow = true;
             }
         }
