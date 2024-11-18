@@ -1,8 +1,8 @@
 from typing import Literal
+from typing_extensions import assert_type
 
 import numpy as np
 
-from typing_extensions import assert_type
 
 assert_type(
     np.ScalarType,
@@ -44,7 +44,7 @@ assert_type(np.ScalarType[0], type[int])
 assert_type(np.ScalarType[3], type[bool])
 assert_type(np.ScalarType[8], type[np.csingle])
 assert_type(np.ScalarType[10], type[np.clongdouble])
-assert_type(np.bool_, type[np.bool])
+assert_type(np.bool_(object()), np.bool)
 
 assert_type(np.typecodes["Character"], Literal["c"])
 assert_type(np.typecodes["Complex"], Literal["FDG"])

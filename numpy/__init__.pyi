@@ -801,6 +801,7 @@ _SCT = TypeVar("_SCT", bound=generic)
 _SCT_co = TypeVar("_SCT_co", bound=generic, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number[Any])
 _FloatingT_co = TypeVar("_FloatingT_co", bound=floating[Any], default=floating[Any], covariant=True)
+_IntegerT = TypeVar("_IntegerT", bound=integer)
 _IntegerT_co = TypeVar("_IntegerT_co", bound=integer[Any], default=integer[Any], covariant=True)
 
 _NBit = TypeVar("_NBit", bound=NBitBase, default=Any)
@@ -808,6 +809,8 @@ _NBit1 = TypeVar("_NBit1", bound=NBitBase, default=Any)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase, default=_NBit1)
 
 _ItemT_co = TypeVar("_ItemT_co", default=Any, covariant=True)
+_BoolItemT = TypeVar("_BoolItemT", bound=builtins.bool)
+_BoolItemT_co = TypeVar("_BoolItemT_co", bound=builtins.bool, default=builtins.bool, covariant=True)
 _NumberItemT_co = TypeVar("_NumberItemT_co", bound=int | float | complex, default=int | float | complex, covariant=True)
 _InexactItemT_co = TypeVar("_InexactItemT_co", bound=float | complex, default=float | complex, covariant=True)
 _FlexibleItemT_co = TypeVar(
@@ -822,6 +825,9 @@ _DT64ItemT_co = TypeVar("_DT64ItemT_co", bound=dt.date | int | None, default=dt.
 _TD64UnitT = TypeVar("_TD64UnitT", bound=_TD64Unit, default=_TD64Unit)
 
 ### Type Aliases (for internal use only)
+
+_Falsy: TypeAlias = L[False, 0] | np.bool[L[False]]
+_Truthy: TypeAlias = L[True, 1] | np.bool[L[True]]
 
 _1D: TypeAlias = tuple[int]
 _2D: TypeAlias = tuple[int, int]
@@ -1144,8 +1150,9 @@ nan: Final[float] = ...
 pi: Final[float] = ...
 
 little_endian: Final[builtins.bool] = ...
-True_: Final[np.bool] = ...
-False_: Final[np.bool] = ...
+
+False_: Final[np.bool[L[False]]] = ...
+True_: Final[np.bool[L[True]]] = ...
 
 newaxis: Final[None] = None
 
@@ -3559,13 +3566,42 @@ class number(generic[_NumberItemT_co], Generic[_NBit, _NumberItemT_co]):
     __gt__: _ComparisonOpGT[_NumberLike_co, _ArrayLikeNumber_co]
     __ge__: _ComparisonOpGE[_NumberLike_co, _ArrayLikeNumber_co]
 
-class bool(_RealMixin, generic[builtins.bool]):
-    def __init__(self, value: object = ..., /) -> None: ...
+class bool(generic[_BoolItemT_co], Generic[_BoolItemT_co]):
+    @property
+    def itemsize(self) -> L[1]: ...
+    @property
+    def nbytes(self) -> L[1]: ...
+    @property
+    def real(self) -> Self: ...
+    @property
+    def imag(self) -> np.bool[L[False]]: ...
 
+    @overload
+    def __init__(self: np.bool[L[False]], /) -> None: ...
+    @overload
+    def __init__(self: np.bool[L[False]], value: _Falsy = ..., /) -> None: ...
+    @overload
+    def __init__(self: np.bool[L[True]], value: _Truthy, /) -> None: ...
+    @overload
+    def __init__(self, value: object, /) -> None: ...
+
+    def __bool__(self, /) -> _BoolItemT_co: ...
+    @overload
+    def __int__(self: np.bool[L[False]], /) -> L[0]: ...
+    @overload
+    def __int__(self: np.bool[L[True]], /) -> L[1]: ...
+    @overload
+    def __int__(self, /) -> L[0, 1]: ...
     @deprecated("In future, it will be an error for 'np.bool' scalars to be interpreted as an index")
-    def __index__(self, /) -> int: ...
+    def __index__(self, /) -> L[0, 1]: ...
     def __abs__(self) -> Self: ...
-    def __invert__(self) -> np.bool: ...
+
+    @overload
+    def __invert__(self: np.bool[L[False]], /) -> np.bool[L[True]]: ...
+    @overload
+    def __invert__(self: np.bool[L[True]], /) -> np.bool[L[False]]: ...
+    @overload
+    def __invert__(self, /) -> np.bool: ...
 
     __add__: _BoolOp[np.bool]
     __radd__: _BoolOp[np.bool]
@@ -3573,22 +3609,60 @@ class bool(_RealMixin, generic[builtins.bool]):
     __rsub__: _BoolSub
     __mul__: _BoolOp[np.bool]
     __rmul__: _BoolOp[np.bool]
+    __truediv__: _BoolTrueDiv
+    __rtruediv__: _BoolTrueDiv
     __floordiv__: _BoolOp[int8]
     __rfloordiv__: _BoolOp[int8]
     __pow__: _BoolOp[int8]
     __rpow__: _BoolOp[int8]
-    __truediv__: _BoolTrueDiv
-    __rtruediv__: _BoolTrueDiv
+
     __lshift__: _BoolBitOp[int8]
     __rlshift__: _BoolBitOp[int8]
     __rshift__: _BoolBitOp[int8]
     __rrshift__: _BoolBitOp[int8]
-    __and__: _BoolBitOp[np.bool]
-    __rand__: _BoolBitOp[np.bool]
-    __xor__: _BoolBitOp[np.bool]
-    __rxor__: _BoolBitOp[np.bool]
-    __or__: _BoolBitOp[np.bool]
-    __ror__: _BoolBitOp[np.bool]
+
+    @overload
+    def __and__(self: np.bool[L[False]], other: builtins.bool | np.bool, /) -> np.bool[L[False]]: ...
+    @overload
+    def __and__(self, other: L[False] | np.bool[L[False]], /) -> np.bool[L[False]]: ...
+    @overload
+    def __and__(self, other: L[True] | np.bool[L[True]], /) -> Self: ...
+    @overload
+    def __and__(self, other: builtins.bool | np.bool, /) -> np.bool: ...
+    @overload
+    def __and__(self, other: _IntegerT, /) -> _IntegerT: ...
+    @overload
+    def __and__(self, other: int, /) -> np.bool | intp: ...
+    __rand__ = __and__
+
+    @overload
+    def __xor__(self: np.bool[L[False]], other: _BoolItemT | np.bool[_BoolItemT], /) -> np.bool[_BoolItemT]: ...
+    @overload
+    def __xor__(self: np.bool[L[True]], other: L[True] | np.bool[L[True]], /) -> np.bool[L[False]]: ...
+    @overload
+    def __xor__(self, other: L[False] | np.bool[L[False]], /) -> Self: ...
+    @overload
+    def __xor__(self, other: builtins.bool | np.bool, /) -> np.bool: ...
+    @overload
+    def __xor__(self, other: _IntegerT, /) -> _IntegerT: ...
+    @overload
+    def __xor__(self, other: int, /) -> np.bool | intp: ...
+    __rxor__ = __xor__
+
+    @overload
+    def __or__(self: np.bool[L[True]], other: builtins.bool | np.bool, /) -> np.bool[L[True]]: ...
+    @overload
+    def __or__(self, other: L[False] | np.bool[L[False]], /) -> Self: ...
+    @overload
+    def __or__(self, other: L[True] | np.bool[L[True]], /) -> np.bool[L[True]]: ...
+    @overload
+    def __or__(self, other: builtins.bool | np.bool, /) -> np.bool: ...
+    @overload
+    def __or__(self, other: _IntegerT, /) -> _IntegerT: ...
+    @overload
+    def __or__(self, other: int, /) -> np.bool | intp: ...
+    __ror__ = __or__
+
     __mod__: _BoolMod
     __rmod__: _BoolMod
     __divmod__: _BoolDivMod
@@ -3599,7 +3673,8 @@ class bool(_RealMixin, generic[builtins.bool]):
     __gt__: _ComparisonOpGT[_NumberLike_co, _ArrayLikeNumber_co]
     __ge__: _ComparisonOpGE[_NumberLike_co, _ArrayLikeNumber_co]
 
-bool_: TypeAlias = bool
+# NOTE: This should _not_ be `Final` or a `TypeAlias`
+bool_ = bool
 
 # NOTE: The `object_` constructor returns the passed object, so instances with type
 # `object_` cannot exists (at runtime).
