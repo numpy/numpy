@@ -220,7 +220,6 @@ class TestMemmap:
         # empty memmap works with mode in ('w+','r+')
         memmap(self.tmpfp, shape=(0, 4), mode='w+')
 
-        self.tmpfp.write(b'\0')
         # ok now the file is not empty
         memmap(self.tmpfp, shape=(0, 4), mode='w+')
 
