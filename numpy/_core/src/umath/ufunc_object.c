@@ -2906,7 +2906,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             }
         }
         else {
-            memmove(dataptr_copy[0], dataptr_copy[1], itemsize);
+            memmove(dataptr_copy[2], dataptr_copy[1], itemsize);
         }
 
         if (count > 1) {
