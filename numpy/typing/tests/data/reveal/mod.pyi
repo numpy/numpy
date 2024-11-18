@@ -1,3 +1,4 @@
+import datetime as dt
 from typing import Any
 
 import numpy as np
@@ -26,7 +27,7 @@ AR_m: npt.NDArray[np.timedelta64]
 
 # Time structures
 
-assert_type(td % td, np.timedelta64)
+assert_type(td % td, np.timedelta64[dt.timedelta])
 assert_type(AR_m % td, npt.NDArray[np.timedelta64])
 assert_type(td % AR_m, npt.NDArray[np.timedelta64])
 
