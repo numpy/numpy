@@ -214,7 +214,7 @@ class TestMemmap:
     def test_empty_array(self):
         # gh-12653
         with pytest.raises(ValueError, match='empty file'):
-            memmap(self.tmpfp, shape=(0,4), mode='r')
+            memmap(self.tmpfp, shape=(0, 4), mode='r')
 
         # gh-27723
         # empty memmap works with mode in ('w+','r+')
