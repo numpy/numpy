@@ -1,0 +1,4 @@
+* Improved support for empty `memmap`. Previously an empty `memmap` would fail
+  unless a non-zero ``offset`` was set. Now a zero-size `memmap` is supported
+  even if ``offset=0``. To achieve this, if a `memmap` is mapped to an empty
+  file that file is padded with a single byte.
