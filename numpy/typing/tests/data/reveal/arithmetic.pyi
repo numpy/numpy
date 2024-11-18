@@ -1,3 +1,4 @@
+import datetime as dt
 from typing import Any
 
 import numpy as np
@@ -6,28 +7,40 @@ from numpy._typing import _32Bit,_64Bit, _128Bit
 
 from typing_extensions import assert_type
 
+b: bool
+c: complex
+f: float
+i: int
+
+c16: np.complex128
+c8: np.complex64
+
 # Can't directly import `np.float128` as it is not available on all platforms
 f16: np.floating[_128Bit]
+f8: np.float64
+f4: np.float32
 
-c16 = np.complex128()
-f8 = np.float64()
-i8 = np.int64()
-u8 = np.uint64()
+i8: np.int64
+i4: np.int32
 
-c8 = np.complex64()
-f4 = np.float32()
-i4 = np.int32()
-u4 = np.uint32()
+u8: np.uint64
+u4: np.uint32
 
-dt = np.datetime64(0, "D")
-td = np.timedelta64(0, "D")
+b_: np.bool
 
-b_ = np.bool()
+M8: np.datetime64
+M8_none: np.datetime64[None]
+M8_date: np.datetime64[dt.date]
+M8_time: np.datetime64[dt.datetime]
+M8_int: np.datetime64[int]
+date: dt.date
+time: dt.datetime
 
-b = bool()
-c = complex()
-f = float()
-i = int()
+m8: np.timedelta64
+m8_none: np.timedelta64[None]
+m8_int: np.timedelta64[int]
+m8_delta: np.timedelta64[dt.timedelta]
+delta: dt.timedelta
 
 AR_b: npt.NDArray[np.bool]
 AR_u: npt.NDArray[np.uint32]
@@ -259,7 +272,10 @@ assert_type(-i8, np.int64)
 assert_type(-i4, np.int32)
 assert_type(-u8, np.uint64)
 assert_type(-u4, np.uint32)
-assert_type(-td, np.timedelta64)
+assert_type(-m8, np.timedelta64)
+assert_type(-m8_none, np.timedelta64[None])
+assert_type(-m8_int, np.timedelta64[int])
+assert_type(-m8_delta, np.timedelta64[dt.timedelta])
 assert_type(-AR_f, npt.NDArray[np.float64])
 
 assert_type(+f16, np.floating[_128Bit])
@@ -271,7 +287,9 @@ assert_type(+i8, np.int64)
 assert_type(+i4, np.int32)
 assert_type(+u8, np.uint64)
 assert_type(+u4, np.uint32)
-assert_type(+td, np.timedelta64)
+assert_type(+m8_none, np.timedelta64[None])
+assert_type(+m8_int, np.timedelta64[int])
+assert_type(+m8_delta, np.timedelta64[dt.timedelta])
 assert_type(+AR_f, npt.NDArray[np.float64])
 
 assert_type(abs(f16), np.floating[_128Bit])
@@ -283,33 +301,66 @@ assert_type(abs(i8), np.int64)
 assert_type(abs(i4), np.int32)
 assert_type(abs(u8), np.uint64)
 assert_type(abs(u4), np.uint32)
-assert_type(abs(td), np.timedelta64)
+assert_type(abs(m8), np.timedelta64)
+assert_type(abs(m8_none), np.timedelta64[None])
+assert_type(abs(m8_int), np.timedelta64[int])
+assert_type(abs(m8_delta), np.timedelta64[dt.timedelta])
 assert_type(abs(b_), np.bool)
 
 # Time structures
 
-assert_type(dt + td, np.datetime64)
-assert_type(dt + i, np.datetime64)
-assert_type(dt + i4, np.datetime64)
-assert_type(dt + i8, np.datetime64)
-assert_type(dt - dt, np.timedelta64)
-assert_type(dt - i, np.datetime64)
-assert_type(dt - i4, np.datetime64)
-assert_type(dt - i8, np.datetime64)
+assert_type(M8 + m8, np.datetime64)
+assert_type(M8 + i, np.datetime64)
+assert_type(M8 + i8, np.datetime64)
+assert_type(M8 - M8, np.timedelta64)
+assert_type(M8 - i, np.datetime64)
+assert_type(M8 - i8, np.datetime64)
 
-assert_type(td + td, np.timedelta64)
-assert_type(td + i, np.timedelta64)
-assert_type(td + i4, np.timedelta64)
-assert_type(td + i8, np.timedelta64)
-assert_type(td - td, np.timedelta64)
-assert_type(td - i, np.timedelta64)
-assert_type(td - i4, np.timedelta64)
-assert_type(td - i8, np.timedelta64)
-assert_type(td / f, np.timedelta64)
-assert_type(td / f4, np.timedelta64)
-assert_type(td / f8, np.timedelta64)
-assert_type(td / td, np.float64)
-assert_type(td // td, np.int64)
+assert_type(M8_none + m8, np.datetime64[None])
+assert_type(M8_none + i, np.datetime64[None])
+assert_type(M8_none + i8, np.datetime64[None])
+assert_type(M8_none - M8, np.timedelta64[None])
+assert_type(M8_none - m8, np.datetime64[None])
+assert_type(M8_none - i, np.datetime64[None])
+assert_type(M8_none - i8, np.datetime64[None])
+
+assert_type(m8 + m8, np.timedelta64)
+assert_type(m8 + i, np.timedelta64)
+assert_type(m8 + i8, np.timedelta64)
+assert_type(m8 - m8, np.timedelta64)
+assert_type(m8 - i, np.timedelta64)
+assert_type(m8 - i8, np.timedelta64)
+assert_type(m8 * f, np.timedelta64)
+assert_type(m8 * f4, np.timedelta64)
+assert_type(m8 * np.True_, np.timedelta64)
+assert_type(m8 / f, np.timedelta64)
+assert_type(m8 / f4, np.timedelta64)
+assert_type(m8 / m8, np.float64)
+assert_type(m8 // m8, np.int64)
+assert_type(m8 % m8, np.timedelta64)
+assert_type(divmod(m8, m8), tuple[np.int64, np.timedelta64])
+
+assert_type(m8_none + m8, np.timedelta64[None])
+assert_type(m8_none + i, np.timedelta64[None])
+assert_type(m8_none + i8, np.timedelta64[None])
+assert_type(m8_none - i, np.timedelta64[None])
+assert_type(m8_none - i8, np.timedelta64[None])
+
+assert_type(m8_int + i, np.timedelta64[int])
+assert_type(m8_int + m8_delta, np.timedelta64[int])
+assert_type(m8_int + m8, np.timedelta64[int | None])
+assert_type(m8_int - i, np.timedelta64[int])
+assert_type(m8_int - m8_delta, np.timedelta64[int])
+assert_type(m8_int - m8, np.timedelta64[int | None])
+
+assert_type(m8_delta + date, dt.date)
+assert_type(m8_delta + time, dt.datetime)
+assert_type(m8_delta + delta, dt.timedelta)
+assert_type(m8_delta - delta, dt.timedelta)
+assert_type(m8_delta / delta, float)
+assert_type(m8_delta // delta, int)
+assert_type(m8_delta % delta, dt.timedelta)
+assert_type(divmod(m8_delta, delta), tuple[int, dt.timedelta])
 
 # boolean
 

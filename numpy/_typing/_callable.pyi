@@ -22,7 +22,6 @@ from typing import (
 import numpy as np
 from numpy import (
     generic,
-    timedelta64,
     number,
     integer,
     unsignedinteger,
@@ -38,7 +37,6 @@ from ._nbit import _NBitInt
 from ._scalars import (
     _BoolLike_co,
     _IntLike_co,
-    _FloatLike_co,
     _NumberLike_co,
 )
 from . import NBitBase
@@ -131,15 +129,6 @@ class _BoolDivMod(Protocol):
     def __call__(self, other: _IntType, /) -> _2Tuple[_IntType]: ...
     @overload
     def __call__(self, other: _FloatType, /) -> _2Tuple[_FloatType]: ...
-
-@type_check_only
-class _TD64Div(Protocol[_NumberType_co]):
-    @overload
-    def __call__(self, other: timedelta64, /) -> _NumberType_co: ...
-    @overload
-    def __call__(self, other: _BoolLike_co, /) -> NoReturn: ...
-    @overload
-    def __call__(self, other: _FloatLike_co, /) -> timedelta64: ...
 
 @type_check_only
 class _IntTrueDiv(Protocol[_NBit1]):
