@@ -2916,8 +2916,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
 
             NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
 
-            needs_api = PyDataType_REFCHK(descrs[0]);
-
             if (!needs_api) {
                 NPY_BEGIN_THREADS_THRESHOLDED(count);
             }
