@@ -387,8 +387,9 @@ def lint(ctx, branch, uncommitted):
     required=False,
     nargs=-1
 )
+@meson.build_dir_option
 @click.pass_context
-def bench(ctx, tests, compare, verbose, quick, commits):
+def bench(ctx, tests, compare, verbose, quick, commits, build_dir):
     """🏋 Run benchmarks.
 
     \b
@@ -440,7 +441,7 @@ def bench(ctx, tests, compare, verbose, quick, commits):
         )
         ctx.invoke(build)
 
-        meson._set_pythonpath()
+        meson._set_pythonpath(build_dir)
 
         p = spin.util.run(
             ['python', '-c', 'import numpy as np; print(np.__version__)'],
