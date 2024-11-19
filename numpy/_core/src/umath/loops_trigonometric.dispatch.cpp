@@ -1,7 +1,10 @@
-#include "simd/simd.h"
-#include "loops_utils.h"
-#include "loops.h"
 #include "fast_loop_macros.h"
+#include "highway_compute.h"
+#include "highway_masked_fallback.h"
+#include "loops.h"
+#include "loops_utils.h"
+
+#include "simd/simd.h"
 #include <hwy/highway.h>
 namespace hn = hwy::HWY_NAMESPACE;
 
@@ -31,8 +34,7 @@ namespace hn = hwy::HWY_NAMESPACE;
  */
 
 #if NPY_SIMD_FMA3  // native support
-typedef enum
-{
+typedef enum {
     SIMD_COMPUTE_SIN,
     SIMD_COMPUTE_COS
 } SIMD_TRIG_OP;
@@ -44,7 +46,8 @@ using vec_s32 = hn::Vec<decltype(s32)>;
 using opmask_t = hn::Mask<decltype(f32)>;
 
 HWY_INLINE HWY_ATTR vec_f32
-simd_range_reduction_f32(vec_f32& x, vec_f32& y, const vec_f32& c1, const vec_f32& c2, const vec_f32& c3)
+simd_range_reduction_f32(vec_f32 &x, vec_f32 &y, const vec_f32 &c1,
+                         const vec_f32 &c2, const vec_f32 &c3)
 {
     vec_f32 reduced_x = hn::MulAdd(y, c1, x);
     reduced_x = hn::MulAdd(y, c2, reduced_x);
@@ -53,7 +56,7 @@ simd_range_reduction_f32(vec_f32& x, vec_f32& y, const vec_f32& c1, const vec_f3
 }
 
 HWY_INLINE HWY_ATTR vec_f32
-simd_cosine_poly_f32(vec_f32& x2)
+simd_cosine_poly_f32(vec_f32 &x2)
 {
     const vec_f32 invf8 = hn::Set(f32, 0x1.98e616p-16f);
     const vec_f32 invf6 = hn::Set(f32, -0x1.6c06dcp-10f);
@@ -73,7 +76,7 @@ simd_cosine_poly_f32(vec_f32& x2)
  * Polynomial approximation based on unpublished work by T. Myklebust
  */
 HWY_INLINE HWY_ATTR vec_f32
-simd_sine_poly_f32(vec_f32& x, vec_f32& x2)
+simd_sine_poly_f32(vec_f32 &x, vec_f32 &x2)
 {
     const vec_f32 invf9 = hn::Set(f32, 0x1.7d3bbcp-19f);
     const vec_f32 invf7 = hn::Set(f32, -0x1.a06bbap-13f);
@@ -94,8 +97,8 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
 {
     // Load up frequently used constants
     const vec_f32 zerosf = hn::Zero(f32);
-    const vec_s32 ones  = hn::Set(s32, 1);
-    const vec_s32 twos  = hn::Set(s32, 2);
+    const vec_s32 ones = hn::Set(s32, 1);
+    const vec_s32 twos = hn::Set(s32, 2);
     const vec_f32 two_over_pi = hn::Set(f32, 0x1.45f306p-1f);
     const vec_f32 codyw_pio2_highf = hn::Set(f32, -0x1.921fb0p+00f);
     const vec_f32 codyw_pio2_medf = hn::Set(f32, -0x1.5110b4p-22f);
@@ -108,89 +111,72 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
     }
     const vec_f32 max_cody = hn::Set(f32, max_codi);
 
-    const int lanes = hn::Lanes(f32);
-    const vec_s32 src_index = hn::Mul(hn::Iota(s32, 0), hn::Set(s32, ssrc));
-    const vec_s32 dst_index = hn::Mul(hn::Iota(s32, 0), hn::Set(s32, sdst));
+    hn::ComputeUnary(
+            f32, src, ssrc, dst, sdst, len,
+            [&](vec_f32 &x_in) -> vec_f32 HWY_ATTR {
+                /*
+                 * For elements outside of this range, Cody-Waite's range
+                 * reduction becomes inaccurate and we will call libc to
+                 * compute cosine for these numbers
+                 */
+                opmask_t nnan_mask = hn::Not(hn::IsNaN(x_in));
+                // Eliminate NaN to avoid FP invalid exception
+                x_in = hn::IfThenElse(nnan_mask, x_in, zerosf);
+                opmask_t simd_mask = hn::Le(hn::Abs(x_in), max_cody);
+                vec_f32 x_out;
 
-    for (; len > 0; len -= lanes, src += ssrc*lanes, dst += sdst*lanes) {
-        vec_f32 x_in;
-        if (ssrc == 1) {
-            x_in = hn::LoadN(f32, src, len);
-        } else {
-            x_in = hn::GatherIndexN(f32, src, src_index, len);
-        }
-        opmask_t nnan_mask = hn::Not(hn::IsNaN(x_in));
-        // Eliminate NaN to avoid FP invalid exception
-        x_in = hn::IfThenElse(nnan_mask, x_in, zerosf);
-        opmask_t simd_mask = hn::Le(hn::Abs(x_in), max_cody);
-        /*
-         * For elements outside of this range, Cody-Waite's range reduction
-         * becomes inaccurate and we will call libc to compute cosine for
-         * these numbers
-         */
-        if (!hn::AllFalse(f32, simd_mask)) {
-            vec_f32 x = hn::IfThenElse(hn::And(nnan_mask, simd_mask), x_in, zerosf);
+                /*
+                 * For elements outside of this range, Cody-Waite's range
+                 * reduction becomes inaccurate and we will call libc to
+                 * compute cosine for these numbers
+                 */
+                if (!hn::AllFalse(f32, simd_mask)) {
+                    opmask_t combined_mask = hn::And(nnan_mask, simd_mask);
+                    vec_f32 x = hn::IfThenElse(combined_mask, x_in, zerosf);
 
-            vec_f32 quadrant = hn::Mul(x, two_over_pi);
-            // round to nearest, -0.0f -> +0.0f, and |a| must be <= 0x1.0p+22
-            quadrant = hn::Add(quadrant, rint_cvt_magic);
-            quadrant = hn::Sub(quadrant, rint_cvt_magic);
+                    vec_f32 quadrant = hn::Mul(x, two_over_pi);
+                    // round to nearest, -0.0f -> +0.0f, and |a| must be <=
+                    // 0x1.0p+22
+                    quadrant = hn::Add(quadrant, rint_cvt_magic);
+                    quadrant = hn::Sub(quadrant, rint_cvt_magic);
 
-            // Cody-Waite's range reduction algorithm
-            vec_f32 reduced_x = simd_range_reduction_f32(
-                x, quadrant, codyw_pio2_highf, codyw_pio2_medf, codyw_pio2_lowf
-            );
-            vec_f32 reduced_x2 = hn::Mul(reduced_x, reduced_x);
+                    // Cody-Waite's range reduction algorithm
+                    vec_f32 reduced_x = simd_range_reduction_f32(
+                            x, quadrant, codyw_pio2_highf, codyw_pio2_medf,
+                            codyw_pio2_lowf);
+                    vec_f32 reduced_x2 = hn::Mul(reduced_x, reduced_x);
 
-            // compute cosine and sine
-            vec_f32 cos = simd_cosine_poly_f32(reduced_x2);
-            vec_f32 sin = simd_sine_poly_f32(reduced_x, reduced_x2);
+                    // compute cosine and sine
+                    vec_f32 cos = simd_cosine_poly_f32(reduced_x2);
+                    vec_f32 sin = simd_sine_poly_f32(reduced_x, reduced_x2);
 
-            vec_s32 iquadrant = hn::NearestInt(quadrant);
-            if (trig_op == SIMD_COMPUTE_COS) {
-                iquadrant = hn::Add(iquadrant, ones);
-            }
-            // blend sin and cos based on the quadrant
-            opmask_t sine_mask = hn::RebindMask(f32, hn::Eq(hn::And(iquadrant, ones), hn::Zero(s32)));
-            cos = hn::IfThenElse(sine_mask, sin, cos);
-
-            // multiply by -1 for appropriate elements
-            opmask_t negate_mask = hn::RebindMask(f32, hn::Eq(hn::And(iquadrant, twos), twos));
-            cos = hn::MaskedSubOr(cos, negate_mask, zerosf, cos);
-            cos = hn::IfThenElse(nnan_mask, cos, hn::Set(f32, NPY_NANF));
-
-            if (sdst == 1) {
-                hn::StoreN(cos, f32, dst, len);
-            } else {
-                hn::ScatterIndexN(cos, f32, dst, dst_index, len);
-            }
-        }
-        if (!hn::AllTrue(f32, simd_mask)) {
-            npy_uint64 simd_maski;
-            hn::StoreMaskBits(f32, simd_mask, (uint8_t*)&simd_maski);
-            float NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) ip_fback[hn::Lanes(f32)];
-            hn::Store(x_in, f32, ip_fback);
-
-            // process elements using libc for large elements
-            if (trig_op == SIMD_COMPUTE_COS) {
-                for (unsigned i = 0; i < hn::Lanes(f32); ++i) {
-                    if ((simd_maski >> i) & 1) {
-                        continue;
+                    vec_s32 iquadrant = hn::NearestInt(quadrant);
+                    if (trig_op == SIMD_COMPUTE_COS) {
+                        iquadrant = hn::Add(iquadrant, ones);
                     }
-                    dst[sdst*i] = npy_cosf(ip_fback[i]);
+                    // blend sin and cos based on the quadrant
+                    opmask_t sine_mask = hn::RebindMask(
+                            f32,
+                            hn::Eq(hn::And(iquadrant, ones), hn::Zero(s32)));
+                    cos = hn::IfThenElse(sine_mask, sin, cos);
+
+                    // multiply by -1 for appropriate elements
+                    opmask_t negate_mask = hn::RebindMask(
+                            f32, hn::Eq(hn::And(iquadrant, twos), twos));
+                    cos = hn::MaskedSubOr(cos, negate_mask, zerosf, cos);
+                    x_out = hn::IfThenElse(nnan_mask, cos,
+                                           hn::Set(f32, NPY_NANF));
                 }
-            }
-            else {
-                for (unsigned i = 0; i < hn::Lanes(f32); ++i) {
-                    if ((simd_maski >> i) & 1) {
-                        continue;
-                    }
-                    dst[sdst*i] = npy_sinf(ip_fback[i]);
+
+                // Any remaining values we can use libc
+                if (trig_op == SIMD_COMPUTE_COS) {
+                    x_out = hn::MaskedScalarFallbackUnary(f32, x_in, x_out, simd_mask, npy_cosf);
+                } else {
+                    x_out = hn::MaskedScalarFallbackUnary(f32, x_in, x_out, simd_mask, npy_sinf);
                 }
-            }
-        }
-    npyv_cleanup();
-    }
+
+                return x_out;
+            });
 }
 #endif // NPY_SIMD_FMA3
 
