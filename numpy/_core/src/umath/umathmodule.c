@@ -144,10 +144,10 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     /* Do a better job someday */
     doc = "dynamic ufunc based on a python function";
 
-    self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
+    self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(
             (PyUFuncGenericFunction *)pyfunc_functions, data,
             types, /* ntypes */ 1, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
-            str, doc, /* unused */ 0, NULL, identity);
+            str, doc, /* unused */ 0, NULL, identity, NPY_METH_NO_FLOATINGPOINT_ERRORS);
 
     if (self == NULL) {
         PyArray_free(ptr);

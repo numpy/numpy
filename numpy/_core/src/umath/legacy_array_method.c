@@ -344,6 +344,19 @@ NPY_NO_EXPORT PyArrayMethodObject *
 PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[])
 {
+    return PyArray_NewLegacyWrappingArrayMethodWithFlags(ufunc, signature, (NPY_ARRAYMETHOD_FLAGS)NULL);
+}
+
+
+/*
+ * Get the unbound ArrayMethod which wraps the instances of the ufunc.
+ * Note that this function stores the result on the ufunc and then only
+ * returns the same one.
+ */
+NPY_NO_EXPORT PyArrayMethodObject *
+PyArray_NewLegacyWrappingArrayMethodWithFlags(PyUFuncObject *ufunc,
+        PyArray_DTypeMeta *signature[], NPY_ARRAYMETHOD_FLAGS add_flags)
+{
     char method_name[101];
     const char *name = ufunc->name ? ufunc->name : "<unknown>";
     snprintf(method_name, 100, "legacy_ufunc_wrapper_for_%s", name);
@@ -403,6 +416,9 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         if (NPY_DT_is_parametric(signature[i])) {
             any_output_flexible = 1;
         }
+    }
+    if (add_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS) {
+        flags |= NPY_METH_NO_FLOATINGPOINT_ERRORS;
     }
 
     PyType_Slot slots[4] = {

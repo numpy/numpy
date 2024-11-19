@@ -13,6 +13,10 @@ NPY_NO_EXPORT PyArrayMethodObject *
 PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[]);
 
+NPY_NO_EXPORT PyArrayMethodObject *
+PyArray_NewLegacyWrappingArrayMethodWithFlags(PyUFuncObject *ufunc,
+        PyArray_DTypeMeta *signature[], NPY_ARRAYMETHOD_FLAGS add_flags);
+
 /*
  * The following two symbols are in the header so that other places can use
  * them to probe for special cases (or whether an ArrayMethod is a "legacy"

@@ -720,14 +720,26 @@ NPY_NO_EXPORT PyObject *
 add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *operation_dtypes[], int ignore_duplicate)
 {
+    return add_and_return_legacy_wrapping_ufunc_loop_with_flags(ufunc, operation_dtypes, ignore_duplicate, (NPY_ARRAYMETHOD_FLAGS)NULL);
+}
+
+
+/*
+ * Note, this function returns a BORROWED references to info since it adds
+ * it to the loops.
+ */
+NPY_NO_EXPORT PyObject *
+add_and_return_legacy_wrapping_ufunc_loop_with_flags(PyUFuncObject *ufunc,
+        PyArray_DTypeMeta *operation_dtypes[], int ignore_duplicate, NPY_ARRAYMETHOD_FLAGS flags)
+{
     PyObject *DType_tuple = PyArray_TupleFromItems(ufunc->nargs,
             (PyObject **)operation_dtypes, 0);
     if (DType_tuple == NULL) {
         return NULL;
     }
 
-    PyArrayMethodObject *method = PyArray_NewLegacyWrappingArrayMethod(
-            ufunc, operation_dtypes);
+    PyArrayMethodObject *method = PyArray_NewLegacyWrappingArrayMethodWithFlags(
+            ufunc, operation_dtypes, flags);
     if (method == NULL) {
         Py_DECREF(DType_tuple);
         return NULL;
