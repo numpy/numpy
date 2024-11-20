@@ -47,6 +47,14 @@ object_only_ufunc_promoter(PyObject *ufunc,
 NPY_NO_EXPORT int
 install_logical_ufunc_promoter(PyObject *ufunc);
 
+NPY_NO_EXPORT PyObject *
+PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(PyUFuncGenericFunction *func, void *const *data,
+                                     const char *types, int ntypes,
+                                     int nin, int nout, int identity,
+                                     const char *name, const char *doc,
+                                     const int unused, const char *signature,
+                                     PyObject *identity_value, NPY_ARRAYMETHOD_FLAGS flags);
+
 #ifdef __cplusplus
 }
 #endif

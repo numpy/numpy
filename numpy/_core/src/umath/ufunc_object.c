@@ -4661,7 +4661,6 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
         unused, signature, identity_value, (NPY_ARRAYMETHOD_FLAGS)NULL);
 }
 
-/*UFUNC_API*/
 NPY_NO_EXPORT PyObject *
 PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(PyUFuncGenericFunction *func, void *const *data,
                                      const char *types, int ntypes,
