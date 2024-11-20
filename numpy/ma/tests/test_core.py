@@ -1178,6 +1178,10 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.greater_equal(x, y), greater_equal(xm, ym))
         assert_equal(np.conjugate(x), conjugate(xm))
 
+    def test_basic_ufuncs_masked(self):
+        # Mostly regression test for gh-25635
+        assert np.sqrt(np.ma.masked) is np.ma.masked
+
     def test_count_func(self):
         # Tests count
         assert_equal(1, count(1))
