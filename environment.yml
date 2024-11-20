@@ -17,7 +17,7 @@ dependencies:
   - pkg-config
   - meson-python
   - pip:
-      - spin==0.13rc0
+      - spin==0.13
   - ccache
   # For testing
   - pytest
