@@ -1351,7 +1351,7 @@ class TestMaskedArrayArithmetic:
             assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
             assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
 
-    @pytest.mark.parametrize("dtype","bBiIqQ")
+    @pytest.mark.parametrize("dtype", "bBiIqQ")
     @pytest.mark.parametrize("mask", [
         [False, False, False, True, True],  # masked min/max
         [False, False, False, True, False],  # masked max only
