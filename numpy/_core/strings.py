@@ -10,6 +10,7 @@ from numpy import (
     add, multiply as _multiply_ufunc,
 )
 from numpy._core.multiarray import _vec_string
+from numpy._core.overrides import set_module
 from numpy._core.umath import (
     isalpha,
     isdigit,
@@ -46,6 +47,17 @@ from numpy._core.umath import (
     _rpartition,
     _rpartition_index,
 )
+
+
+def _override___module__():
+    for ufunc in [
+        isalnum, isalpha, isdecimal, isdigit, islower, isnumeric, isspace,
+        istitle, isupper, str_len,
+    ]:
+        ufunc.__module__ = "numpy.strings"
+
+
+_override___module__()
 
 
 __all__ = [
@@ -116,6 +128,7 @@ def _clean_args(*args):
     return newargs
 
 
+@set_module("numpy.strings")
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -179,6 +192,7 @@ def multiply(a, i):
     return _multiply_ufunc(a, i, out=out)
 
 
+@set_module("numpy.strings")
 def mod(a, values):
     """
     Return (a % i), that is pre-Python 2.6 string formatting
@@ -215,6 +229,7 @@ def mod(a, values):
         _vec_string(a, np.object_, '__mod__', (values,)), a)
 
 
+@set_module("numpy.strings")
 def find(a, sub, start=0, end=None):
     """
     For each element, return the lowest index in the string where
@@ -252,6 +267,7 @@ def find(a, sub, start=0, end=None):
     return _find_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def rfind(a, sub, start=0, end=None):
     """
     For each element, return the highest index in the string where
@@ -294,6 +310,7 @@ def rfind(a, sub, start=0, end=None):
     return _rfind_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def index(a, sub, start=0, end=None):
     """
     Like `find`, but raises :exc:`ValueError` when the substring is not found.
@@ -327,6 +344,7 @@ def index(a, sub, start=0, end=None):
     return _index_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def rindex(a, sub, start=0, end=None):
     """
     Like `rfind`, but raises :exc:`ValueError` when the substring `sub` is
@@ -360,6 +378,7 @@ def rindex(a, sub, start=0, end=None):
     return _rindex_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def count(a, sub, start=0, end=None):
     """
     Returns an array with the number of non-overlapping occurrences of
@@ -404,6 +423,7 @@ def count(a, sub, start=0, end=None):
     return _count_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def startswith(a, prefix, start=0, end=None):
     """
     Returns a boolean array which is `True` where the string element
@@ -444,6 +464,7 @@ def startswith(a, prefix, start=0, end=None):
     return _startswith_ufunc(a, prefix, start, end)
 
 
+@set_module("numpy.strings")
 def endswith(a, suffix, start=0, end=None):
     """
     Returns a boolean array which is `True` where the string element
@@ -484,6 +505,7 @@ def endswith(a, suffix, start=0, end=None):
     return _endswith_ufunc(a, suffix, start, end)
 
 
+@set_module("numpy.strings")
 def decode(a, encoding=None, errors=None):
     r"""
     Calls :meth:`bytes.decode` element-wise.
@@ -531,6 +553,7 @@ def decode(a, encoding=None, errors=None):
         np.str_(''))
 
 
+@set_module("numpy.strings")
 def encode(a, encoding=None, errors=None):
     """
     Calls :meth:`str.encode` element-wise.
@@ -575,6 +598,7 @@ def encode(a, encoding=None, errors=None):
         np.bytes_(b''))
 
 
+@set_module("numpy.strings")
 def expandtabs(a, tabsize=8):
     """
     Return a copy of each string element where all tab characters are
@@ -626,6 +650,7 @@ def expandtabs(a, tabsize=8):
     return _expandtabs(a, tabsize, out=out)
 
 
+@set_module("numpy.strings")
 def center(a, width, fillchar=' '):
     """
     Return a copy of `a` with its elements centered in a string of
@@ -693,6 +718,7 @@ def center(a, width, fillchar=' '):
     return _center(a, width, fillchar, out=out)
 
 
+@set_module("numpy.strings")
 def ljust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` left-justified in a
@@ -756,6 +782,7 @@ def ljust(a, width, fillchar=' '):
     return _ljust(a, width, fillchar, out=out)
 
 
+@set_module("numpy.strings")
 def rjust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` right-justified in a
@@ -819,6 +846,7 @@ def rjust(a, width, fillchar=' '):
     return _rjust(a, width, fillchar, out=out)
 
 
+@set_module("numpy.strings")
 def zfill(a, width):
     """
     Return the numeric string left-filled with zeros. A leading
@@ -865,6 +893,7 @@ def zfill(a, width):
     return _zfill(a, width, out=out)
 
 
+@set_module("numpy.strings")
 def lstrip(a, chars=None):
     """
     For each element in `a`, return a copy with the leading characters
@@ -912,6 +941,7 @@ def lstrip(a, chars=None):
     return _lstrip_chars(a, chars)
 
 
+@set_module("numpy.strings")
 def rstrip(a, chars=None):
     """
     For each element in `a`, return a copy with the trailing characters
@@ -954,6 +984,7 @@ def rstrip(a, chars=None):
     return _rstrip_chars(a, chars)
 
 
+@set_module("numpy.strings")
 def strip(a, chars=None):
     """
     For each element in `a`, return a copy with the leading and
@@ -1000,6 +1031,7 @@ def strip(a, chars=None):
     return _strip_chars(a, chars)
 
 
+@set_module("numpy.strings")
 def upper(a):
     """
     Return an array with the elements converted to uppercase.
@@ -1036,6 +1068,7 @@ def upper(a):
     return _vec_string(a_arr, a_arr.dtype, 'upper')
 
 
+@set_module("numpy.strings")
 def lower(a):
     """
     Return an array with the elements converted to lowercase.
@@ -1072,6 +1105,7 @@ def lower(a):
     return _vec_string(a_arr, a_arr.dtype, 'lower')
 
 
+@set_module("numpy.strings")
 def swapcase(a):
     """
     Return element-wise a copy of the string with
@@ -1111,6 +1145,7 @@ def swapcase(a):
     return _vec_string(a_arr, a_arr.dtype, 'swapcase')
 
 
+@set_module("numpy.strings")
 def capitalize(a):
     """
     Return a copy of ``a`` with only the first character of each element
@@ -1150,6 +1185,7 @@ def capitalize(a):
     return _vec_string(a_arr, a_arr.dtype, 'capitalize')
 
 
+@set_module("numpy.strings")
 def title(a):
     """
     Return element-wise title cased version of string or unicode.
@@ -1191,6 +1227,7 @@ def title(a):
     return _vec_string(a_arr, a_arr.dtype, 'title')
 
 
+@set_module("numpy.strings")
 def replace(a, old, new, count=-1):
     """
     For each element in ``a``, return a copy of the string with
@@ -1416,6 +1453,7 @@ def _splitlines(a, keepends=None):
         a, np.object_, 'splitlines', _clean_args(keepends))
 
 
+@set_module("numpy.strings")
 def partition(a, sep):
     """
     Partition each element in ``a`` around ``sep``.
@@ -1483,6 +1521,7 @@ def partition(a, sep):
     return _partition_index(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
+@set_module("numpy.strings")
 def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
@@ -1551,6 +1590,7 @@ def rpartition(a, sep):
         a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
+@set_module("numpy.strings")
 def translate(a, table, deletechars=None):
     """
     For each element in `a`, return a copy of the string where all
