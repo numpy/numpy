@@ -3153,7 +3153,11 @@ class MaskedArray(ndarray):
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
                 with np.errstate(divide='ignore', invalid='ignore'):
-                    d = filled(domain(*input_args), True)
+                    # The result may be masked for two (unary) domains.
+                    # That can't really be right as some domains drop
+                    # the mask and some don't behaving differently here.
+                    d = domain(*input_args).astype(bool, copy=False)
+                    d = filled(d, True)
 
                 if d.any():
                     # Fill the result where the domain is wrong
