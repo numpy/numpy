@@ -469,6 +469,16 @@ def _check_fill_value(fill_value, ndtype):
     ndtype = np.dtype(ndtype)
     if fill_value is None:
         fill_value = default_fill_value(ndtype)
+        # TODO: It seems better to always store a valid fill_value, the oddity
+        #       about is that `_fill_value = None` would behave even more
+        #       different then.
+        #       (e.g. this allows arr_uint8.astype(int64) to have the default
+        #       fill value again...)
+        # The one thing that changed in 2.0/2.1 around cast safety is that the
+        # default `int(99...)` is not a same-kind cast anymore, so if we
+        # have a uint, use the default uint.
+        if ndtype.kind == "u":
+            fill_value = np.uint(fill_value)
     elif ndtype.names is not None:
         if isinstance(fill_value, (ndarray, np.void)):
             try:
@@ -6165,7 +6175,7 @@ class MaskedArray(ndarray):
         >>> y.ptp(axis=1).view(np.uint8)
         masked_array(data=[126, 127, 128, 129],
                      mask=False,
-               fill_value=np.int64(999999),
+               fill_value=np.uint64(999999),
                     dtype=uint8)
         """
         if out is None:
@@ -7853,7 +7863,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     >>> np.ma.diff(u8_arr)
     masked_array(data=[255],
                  mask=False,
-           fill_value=np.int64(999999),
+           fill_value=np.uint64(999999),
                 dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
     np.uint8(255)

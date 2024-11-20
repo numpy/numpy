@@ -1351,6 +1351,23 @@ class TestMaskedArrayArithmetic:
             assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
             assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
 
+    @pytest.mark.parametrize("dtype", "bBiIqQ")
+    @pytest.mark.parametrize("mask", [
+        [False, False, False, True, True],  # masked min/max
+        [False, False, False, True, False],  # masked max only
+        [False, False, False, False, True],  # masked min only
+    ])
+    @pytest.mark.parametrize("axis", [None, -1])
+    def test_minmax_ints(self, dtype, mask, axis):
+        iinfo = np.iinfo(dtype)
+        # two dimensional to hit certain filling paths
+        a = np.array([[0, 10, -10, iinfo.min, iinfo.max]] * 2).astype(dtype)
+        mask = np.asarray([mask] * 2)
+
+        masked_a = masked_array(a, mask=mask)
+        assert_array_equal(masked_a.min(axis), a[~mask].min(axis))
+        assert_array_equal(masked_a.max(axis), a[~mask].max(axis))
+
     @pytest.mark.parametrize("time_type", ["M8[s]", "m8[s]"])
     def test_minmax_time_dtypes(self, time_type):
         def minmax_with_mask(arr, mask):
@@ -5755,3 +5772,15 @@ def test_deepcopy_0d_obj():
     deepcopy[...] = 17
     assert_equal(source, 0)
     assert_equal(deepcopy, 17)
+
+
+def test_uint_fill_value_and_filled():
+    # See also gh-27269
+    a = np.ma.MaskedArray([1, 1], [True, False], dtype="uint16")
+    # the fill value should likely not be 99999, but for now guarantee it:
+    assert a.fill_value == 999999
+    # However, it's type is uint:
+    assert a.fill_value.dtype.kind == "u"
+    # And this ensures things like filled work:
+    np.testing.assert_array_equal(
+        a.filled(), np.array([999999, 1]).astype("uint16"), strict=True)
