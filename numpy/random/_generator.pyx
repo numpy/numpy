@@ -800,6 +800,9 @@ cdef class Generator:
         ``p`` must sum to 1 when cast to ``float64``. To ensure this, you may wish
         to normalize using ``p = p / np.sum(p, dtype=float)``.
 
+        When passing ``a`` as an integer type and ``size`` is not specified, the return
+        type is a native Python ``int``.
+
         Examples
         --------
         Generate a uniform random sample from np.arange(5) of size 3:
