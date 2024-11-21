@@ -2036,22 +2036,22 @@ gentype_getarray(PyObject *scalar, PyObject *args)
     return ret;
 }
 
-static char doc_sc_wraparray[] = "Array wrap to implementation for scalar types";
+static char doc_sc_wraparray[] = "__array_wrap__ implementation for scalar types";
 
 /*
- * Array wrap for scalars, returning a scalar again preferentially.
+ * __array_wrap__ for scalars, returning a scalar if possible.
  * (note that NumPy itself may well never call this itself).
  */
 static PyObject *
 gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 {
     PyArrayObject *arr;
-    PyObject *context_ignored = NULL;
-    /* return_scalar should be passed, but it was a scalar so prefer scalar */
+    PyObject *UNUSED = NULL;  /* for the context argument */
+    /* return_scalar should be passed, but we're scalar, so return scalar by default */
     int return_scalar = 1;
 
     if (!PyArg_ParseTuple(args, "O!|OO&:__array_wrap__",
-                &PyArray_Type, &arr, &context_ignored,
+                &PyArray_Type, &arr, &UNUSED,
                 &PyArray_OptionalBoolConverter, &return_scalar)) {
         return NULL;
     }

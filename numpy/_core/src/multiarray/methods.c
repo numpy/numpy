@@ -888,27 +888,38 @@ array_finalizearray(PyArrayObject *self, PyObject *obj)
 }
 
 
+/*
+ * Default `__array_wrap__` implementation.
+ *
+ * If `self` is not a base class, we always create a new view, even if
+ * `return_scalar` is set. This way we preserve the (presumably important)
+ * subclass information.
+ * If the type is a base class array, we honor `return_scalar` and call
+ * PyArray_Return to convert any array with ndim=0 to scalar.
+ *
+ * By default, do not return a scalar (because this was always the default).
+ */
 static PyObject *
 array_wraparray(PyArrayObject *self, PyObject *args)
 {
     PyArrayObject *arr;
-    PyObject *context_ignored = NULL;
-    /*
-     * return_scalar should always be passed, if it is not default to how
-     * this function behaved in older NumPy versions.
-     */
+    PyObject *UNUSED = NULL;  /* for the context argument */
     int return_scalar = 0;
 
     if (!PyArg_ParseTuple(args, "O!|OO&:__array_wrap__",
-                &PyArray_Type, &arr, &context_ignored,
+                &PyArray_Type, &arr, &UNUSED,
                 &PyArray_OptionalBoolConverter, &return_scalar)) {
         return NULL;
     }
 
+    if (return_scalar && Py_TYPE(self) == &PyArray_Type && PyArray_NDIM(arr) == 0) {
+        /* Strict scalar return here (but go via PyArray_Return anyway) */
+        Py_INCREF(arr);
+        return PyArray_Return(arr);
+    }
+
     /*
-     * Subclasses must implement `__array_wrap__` with all the arguments.
-     * If they do not, we default to never returning a scalar to allow
-     * preserving the (presumably important) subclass information.
+     * Return an array, but should ensure it has the type of self
      */
     if (Py_TYPE(self) != Py_TYPE(arr)) {
         PyArray_Descr *dtype = PyArray_DESCR(arr);
@@ -920,10 +931,6 @@ array_wraparray(PyArrayObject *self, PyObject *args)
                 PyArray_DIMS(arr),
                 PyArray_STRIDES(arr), PyArray_DATA(arr),
                 PyArray_FLAGS(arr), (PyObject *)self, (PyObject *)arr);
-    }
-    else if (return_scalar) {
-        Py_INCREF(arr);
-        return PyArray_Return(arr);
     }
     else {
         /*

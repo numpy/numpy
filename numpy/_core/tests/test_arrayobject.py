@@ -33,8 +33,18 @@ def test_matrix_transpose_equals_swapaxes(shape):
     assert_array_equal(tgt, mT)
 
 
-@pytest.mark.parametrize("subclass", [False, True])
-def test_array_wrap(subclass):
+class MyArr(np.ndarray):
+    def __array_wrap__(self, arr, context=None, return_scalar=None):
+        return super().__array_wrap__(arr, context, return_scalar)
+
+
+class MyArrNoWrap(np.ndarray):
+    pass
+
+
+@pytest.mark.parametrize("subclass_self", [np.ndarray, MyArr, MyArrNoWrap])
+@pytest.mark.parametrize("subclass_arr", [np.ndarray, MyArr, MyArrNoWrap])
+def test_array_wrap(subclass_self, subclass_arr):
     # NumPy should allow `__array_wrap__` to be called on arrays, it's logic
     # is designed in a way that:
     #
@@ -42,19 +52,15 @@ def test_array_wrap(subclass):
     #   information).  They can choose to if they wish.
     # * NumPy returns scalars, if `return_scalar` is passed as True to allow
     #   manual calls to `arr.__array_wrap__` to do the right thing.
+    # * The type of the input should be ignored (it should be a base-class
+    #   array, but I am not sure this is guaranteed).
 
-    class MyArr(np.ndarray):
-        def __array_wrap__(self, arr, context=None, return_scalar=None):
-            return super().__array_wrap__(arr, context, return_scalar)
+    arr = np.arange(3).view(subclass_self)
 
-    arr = np.arange(3)
-    if subclass:
-        arr = arr.view(MyArr)
-
-    arr0d = np.array(3, dtype=np.int8)
-    # Third argument not passed, None, or True "decays" to scalar.
+    arr0d = np.array(3, dtype=np.int8).view(subclass_arr)
+    # With third argument True, ndarray allows "decay" to scalar.
     # (I don't think NumPy would pass `None`, but it seems clear to support)
-    if not subclass:
+    if subclass_self is np.ndarray:
         assert type(arr.__array_wrap__(arr0d, None, True)) is np.int8
     else:
         assert type(arr.__array_wrap__(arr0d, None, True)) is type(arr)
@@ -65,5 +71,5 @@ def test_array_wrap(subclass):
     assert type(arr.__array_wrap__(arr0d, None, False)) is type(arr)
 
     # Non 0-D array can't be converted to scalar, so we ignore that
-    arr1d = np.array([3], dtype=np.int8)
+    arr1d = np.array([3], dtype=np.int8).view(subclass_arr)
     assert type(arr.__array_wrap__(arr1d, None, True)) is type(arr)
