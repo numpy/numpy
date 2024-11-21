@@ -1,0 +1,2 @@
+* NumPy now indicates hugepages also for large ``np.zeros`` allocations
+  on linux.  Thus should generally improve performance.
