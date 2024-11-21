@@ -1390,6 +1390,16 @@ class TestDateTime:
         expected = (op1 // op2, op1 % op2)
         assert_equal(divmod(op1, op2), expected)
 
+    @pytest.mark.parametrize("op1, op2", [
+        # Y and M are incompatible with all units except Y and M
+        (np.timedelta64(1, 'Y'),
+         np.timedelta64(1, 's')),
+        (np.timedelta64(1, 'D'),
+         np.timedelta64(1, 'M')),    
+        ])
+    def test_timedelta_divmod_typeerror(self, op1, op2):
+        assert_raises(TypeError, np.divmod, op1, op2)
+
     @pytest.mark.skipif(IS_WASM, reason="does not work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # reuse cases from floordiv
