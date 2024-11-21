@@ -99,31 +99,24 @@ template <typename vtype, typename type_t>
 HWY_ATTR NPY_FINLINE vtype
 load_vector(type_t* src, npy_intp ssrc, npy_intp len){
     auto D = hn::DFromV<vtype>();
+    using DI = hn::RebindToSigned<decltype(D)>;
+    DI di;
+    
+    auto indices = hn::Iota(di, 0);
+    auto stride = hn::Set(di, ssrc);
+    indices = hn::Mul(indices, stride);
+    
     const int nlanes = hn::Lanes(D);
     if (len < nlanes){
         if (ssrc == 1) {
             return hn::LoadN(D, src, len);
         } else {
-            using DI = hn::RebindToSigned<decltype(D)>;
-            DI di;
-            
-            auto indices = hn::Iota(di, 0);
-            auto stride = hn::Set(di, ssrc);
-            indices = hn::Mul(indices, stride);
-            
             return hn::GatherIndexN(D, src, indices, len); 
         }
     }else{
         if (ssrc == 1) {
             return hn::LoadU(D, src);
         } else {
-            using DI = hn::RebindToSigned<decltype(D)>;
-            DI di;
-            
-            auto indices = hn::Iota(di, 0);
-            auto stride = hn::Set(di, ssrc);
-            indices = hn::Mul(indices, stride);
-            
             return hn::GatherIndex(D, src, indices); 
         }
     }
@@ -133,31 +126,24 @@ template <typename vtype, typename type_t>
 HWY_ATTR NPY_FINLINE void
 store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
     auto D = hn::DFromV<vtype>();
+    using DI = hn::RebindToSigned<decltype(D)>;
+    DI di;
+    
+    auto indices = hn::Iota(di, 0);
+    auto stride = hn::Set(di, sdst);
+    indices = hn::Mul(indices, stride);
+    
     const int nlanes = hn::Lanes(D);
     if (len < nlanes){
         if (sdst == 1) {
             hn::StoreN(vec, D, dst, len);
         } else {
-            using DI = hn::RebindToSigned<decltype(D)>;
-            DI di;
-            
-            auto indices = hn::Iota(di, 0);
-            auto stride = hn::Set(di, sdst);
-            indices = hn::Mul(indices, stride);
-            
             hn::ScatterIndexN(vec, D, dst, indices, len); 
         }
     }else{
         if (sdst == 1) {
             hn::StoreU(vec, D, dst);
         } else {
-            using DI = hn::RebindToSigned<decltype(D)>;
-            DI di;
-            
-            auto indices = hn::Iota(di, 0);
-            auto stride = hn::Set(di, sdst);
-            indices = hn::Mul(indices, stride);
-            
             hn::ScatterIndex(vec, D, dst, indices); 
         }
     }
@@ -397,9 +383,7 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
     const int nlanes = hn::Lanes(f64);
     const vec_f64 qnan = hn::Set(f64, NPY_NAN);
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
-        vec_f64 x;
-        
-        x = load_vector<vec_f64>(src, ssrc, len);
+        vec_f64 x = load_vector<vec_f64>(src, ssrc, len);
         
         vec_s64 ndnan = hn::And(hn::BitCast(s64, x), hn::Set(s64, 0x7ff8000000000000ll));
         // |x| > HUGE_THRESHOLD, INF and NaNs.
@@ -632,9 +616,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
     const int nlanes = hn::Lanes(f32);//npyv_nlanes_f32;
     const vec_f32 qnan = hn::Set(f32, NPY_NAN);
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
-        vec_f32 x;
-        
-        x = load_vector<vec_f32>(src, ssrc, len);
+        vec_f32 x = load_vector<vec_f32>(src, ssrc, len);
         
         vec_s32 ndnan = hn::And(hn::BitCast(s32, x), hn::Set(s32, 0x7fe00000));
         // check |x| > HUGE_THRESHOLD, INF and NaNs.
