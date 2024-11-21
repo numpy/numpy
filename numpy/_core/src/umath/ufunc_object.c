@@ -4656,19 +4656,6 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentity(PyUFuncGenericFunction *func, voi
                                      const int unused, const char *signature,
                                      PyObject *identity_value)
 {
-    return PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(
-        func, data, types, ntypes, nin, nout, identity, name, doc,
-        unused, signature, identity_value, (NPY_ARRAYMETHOD_FLAGS)NULL);
-}
-
-NPY_NO_EXPORT PyObject *
-PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(PyUFuncGenericFunction *func, void *const *data,
-                                     const char *types, int ntypes,
-                                     int nin, int nout, int identity,
-                                     const char *name, const char *doc,
-                                     const int unused, const char *signature,
-                                     PyObject *identity_value, NPY_ARRAYMETHOD_FLAGS flags)
-{
     PyUFuncObject *ufunc;
     if (nin + nout > NPY_MAXARGS) {
         PyErr_Format(PyExc_ValueError,
@@ -4786,7 +4773,7 @@ PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(PyUFuncGenericFunction *f
         }
         curr_types += nin + nout;
 
-        info = add_and_return_legacy_wrapping_ufunc_loop_with_flags(ufunc, op_dtypes, 1, flags);
+        info = add_and_return_legacy_wrapping_ufunc_loop(ufunc, op_dtypes, 1);
         if (info == NULL) {
             Py_DECREF(ufunc);
             return NULL;

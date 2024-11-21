@@ -29,10 +29,6 @@ NPY_NO_EXPORT PyObject *
 add_and_return_legacy_wrapping_ufunc_loop(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *operation_dtypes[], int ignore_duplicate);
 
-NPY_NO_EXPORT PyObject *
-add_and_return_legacy_wrapping_ufunc_loop_with_flags(PyUFuncObject *ufunc,
-        PyArray_DTypeMeta *operation_dtypes[], int ignore_duplicate, NPY_ARRAYMETHOD_FLAGS flags);
-
 NPY_NO_EXPORT int
 default_ufunc_promoter(PyObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[], PyArray_DTypeMeta *signature[],
@@ -46,14 +42,6 @@ object_only_ufunc_promoter(PyObject *ufunc,
 
 NPY_NO_EXPORT int
 install_logical_ufunc_promoter(PyObject *ufunc);
-
-NPY_NO_EXPORT PyObject *
-PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(PyUFuncGenericFunction *func, void *const *data,
-                                     const char *types, int ntypes,
-                                     int nin, int nout, int identity,
-                                     const char *name, const char *doc,
-                                     const int unused, const char *signature,
-                                     PyObject *identity_value, NPY_ARRAYMETHOD_FLAGS flags);
 
 #ifdef __cplusplus
 }

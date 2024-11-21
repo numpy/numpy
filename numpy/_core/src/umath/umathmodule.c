@@ -33,6 +33,7 @@
 #include "special_integer_comparisons.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 #include "ufunc_type_resolution.h"
+#include "legacy_array_method.h"
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
@@ -144,15 +145,75 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     /* Do a better job someday */
     doc = "dynamic ufunc based on a python function";
 
-    self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentityAndFlags(
+    /* Create the ufunc but without any loops by not passing types*/
+    self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
             (PyUFuncGenericFunction *)pyfunc_functions, data,
-            types, /* ntypes */ 1, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
-            str, doc, /* unused */ 0, NULL, identity, NPY_METH_NO_FLOATINGPOINT_ERRORS);
+            NULL, /* ntypes */ 0, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
+            str, doc, /* unused */ 0, NULL, identity);
 
     if (self == NULL) {
         PyArray_free(ptr);
         return NULL;
     }
+
+    PyArray_DTypeMeta *op_dtypes[NPY_MAXARGS];
+    for (int arg = 0; arg < nin + nout; arg++) {
+        op_dtypes[arg] = PyArray_DTypeFromTypeNum(types[arg]);
+        /* These DTypes are immortal and adding INCREFs: so borrow it */
+        Py_DECREF(op_dtypes[arg]);
+    }
+
+    char method_name[101];
+    snprintf(method_name, 100, "legacy_ufunc_wrapper_for_%s", str);
+
+    NPY_ARRAYMETHOD_FLAGS flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    PyArrayMethod_GetReductionInitial *get_reduction_intial = NULL;
+    if (nin == 2 && nout == 1) {
+        npy_bool reorderable = NPY_FALSE;
+        PyObject *identity_obj = PyUFunc_GetDefaultIdentity(
+                self, &reorderable);
+        if (identity_obj == NULL) {
+            PyArray_free(ptr);
+            return NULL;
+        }
+        /*
+         * TODO: For object, "reorderable" is needed(?), because otherwise
+         *       we disable multi-axis reductions `arr.sum(0, 1)`. But for
+         *       `arr = array([["a", "b"], ["c", "d"]], dtype="object")`
+         *       it isn't actually reorderable (order changes result).
+         */
+        if (reorderable) {
+            flags |= NPY_METH_IS_REORDERABLE;
+        }
+        if (identity_obj != Py_None) {
+            get_reduction_intial = &get_initial_from_ufunc;
+        }
+    }
+
+    PyType_Slot slots[4] = {
+        {NPY_METH_get_loop, &get_wrapped_legacy_ufunc_loop},
+        {NPY_METH_resolve_descriptors, &simple_legacy_resolve_descriptors},
+        {NPY_METH_get_reduction_initial, get_reduction_intial},
+        {0, NULL},
+    };
+    PyArrayMethod_Spec spec = {
+        .name = method_name,
+        .nin = nin,
+        .nout = nout,
+        .casting = NPY_NO_CASTING,
+        .flags = flags,
+        .dtypes = op_dtypes,
+        .slots = slots,
+    };
+    int res = PyUFunc_AddLoopFromSpec_int((PyObject *)self, &spec, 0);
+    if (res < 0) {
+        PyArray_free(ptr);
+        return NULL;
+    }
+    self->types = types;
+    self->ntypes = 1;
+
     Py_INCREF(function);
     self->obj = function;
     self->ptr = ptr;

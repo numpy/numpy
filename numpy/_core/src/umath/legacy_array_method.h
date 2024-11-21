@@ -9,13 +9,14 @@
 extern "C" {
 #endif
 
+NPY_NO_EXPORT int
+get_initial_from_ufunc(
+        PyArrayMethod_Context *context, npy_bool reduction_is_empty,
+        void *initial);
+
 NPY_NO_EXPORT PyArrayMethodObject *
 PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *signature[]);
-
-NPY_NO_EXPORT PyArrayMethodObject *
-PyArray_NewLegacyWrappingArrayMethodWithFlags(PyUFuncObject *ufunc,
-        PyArray_DTypeMeta *signature[], NPY_ARRAYMETHOD_FLAGS add_flags);
 
 /*
  * The following two symbols are in the header so that other places can use
@@ -33,6 +34,14 @@ get_wrapped_legacy_ufunc_loop(PyArrayMethod_Context *context,
 NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *,
         PyArray_DTypeMeta *const *, PyArray_Descr *const *, PyArray_Descr **, npy_intp *);
+
+NPY_NO_EXPORT NPY_CASTING
+simple_legacy_resolve_descriptors(
+        PyArrayMethodObject *method,
+        PyArray_DTypeMeta *const *dtypes,
+        PyArray_Descr *const *given_descrs,
+        PyArray_Descr **output_descrs,
+        npy_intp *NPY_UNUSED(view_offset));
 
 #ifdef __cplusplus
 }
