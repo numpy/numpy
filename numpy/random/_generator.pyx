@@ -775,7 +775,7 @@ cdef class Generator:
 
         Returns
         -------
-        samples : single item or ndarray or int
+        samples : single item or ndarray
             The generated random samples
 
         Raises
@@ -800,10 +800,8 @@ cdef class Generator:
         ``p`` must sum to 1 when cast to ``float64``. To ensure this, you may wish
         to normalize using ``p = p / np.sum(p, dtype=float)``.
 
-        When passing ``a`` as an integer type (e.g. ``np.int64`` or ``int``) and ``size`` is
-        not specified, the return type is a native Python ``int``. In such a case, ``integers`` 
-        returns an ``np.int64``. However, ``integers`` does not sample non-uniformly (i.e., it
-        does not have a ``p`` parameter) and it only allows sampling with replacement.
+        When passing ``a`` as an integer type and ``size`` is not specified, the return
+        type is a native Python ``int``.
 
         Examples
         --------
