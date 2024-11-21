@@ -31,3 +31,39 @@ def test_matrix_transpose_equals_swapaxes(shape):
     tgt = np.swapaxes(arr, num_of_axes - 2, num_of_axes - 1)
     mT = arr.mT
     assert_array_equal(tgt, mT)
+
+
+@pytest.mark.parametrize("subclass", [False, True])
+def test_array_wrap(subclass):
+    # NumPy should allow `__array_wrap__` to be called on arrays, it's logic
+    # is designed in a way that:
+    #
+    # * Subclasses never return scalars by default (to preserve their
+    #   information).  They can choose to if they wish.
+    # * NumPy returns scalars, if `return_scalar` is passed as True to allow
+    #   manual calls to `arr.__array_wrap__` to do the right thing.
+
+    class MyArr(np.ndarray):
+        def __array_wrap__(self, arr, context=None, return_scalar=None):
+            return super().__array_wrap__(arr, context, return_scalar)
+
+    arr = np.arange(3)
+    if subclass:
+        arr = arr.view(MyArr)
+
+    arr0d = np.array(3, dtype=np.int8)
+    # Third argument not passed, None, or True "decays" to scalar.
+    # (I don't think NumPy would pass `None`, but it seems clear to support)
+    if not subclass:
+        assert type(arr.__array_wrap__(arr0d, None, True)) is np.int8
+    else:
+        assert type(arr.__array_wrap__(arr0d, None, True)) is type(arr)
+
+    # Otherwise, result should be viewed as the subclass
+    assert type(arr.__array_wrap__(arr0d)) is type(arr)
+    assert type(arr.__array_wrap__(arr0d, None, None)) is type(arr)
+    assert type(arr.__array_wrap__(arr0d, None, False)) is type(arr)
+
+    # Non 0-D array can't be converted to scalar, so we ignore that
+    arr1d = np.array([3], dtype=np.int8)
+    assert type(arr.__array_wrap__(arr1d, None, True)) is type(arr)

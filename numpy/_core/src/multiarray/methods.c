@@ -892,24 +892,24 @@ static PyObject *
 array_wraparray(PyArrayObject *self, PyObject *args)
 {
     PyArrayObject *arr;
-    PyObject *obj;
+    PyObject *context_ignored = NULL;
+    /*
+     * return_scalar should always be passed, if it is not default to how
+     * this function behaved in older NumPy versions.
+     */
+    int return_scalar = 0;
 
-    if (PyTuple_Size(args) < 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "only accepts 1 argument");
+    if (!PyArg_ParseTuple(args, "O!|OO&:__array_wrap__",
+                &PyArray_Type, &arr, &context_ignored,
+                &PyArray_OptionalBoolConverter, &return_scalar)) {
         return NULL;
     }
-    obj = PyTuple_GET_ITEM(args, 0);
-    if (obj == NULL) {
-        return NULL;
-    }
-    if (!PyArray_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "can only be called with ndarray object");
-        return NULL;
-    }
-    arr = (PyArrayObject *)obj;
 
+    /*
+     * Subclasses must implement `__array_wrap__` with all the arguments.
+     * If they do not, we default to never returning a scalar to allow
+     * preserving the (presumably important) subclass information.
+     */
     if (Py_TYPE(self) != Py_TYPE(arr)) {
         PyArray_Descr *dtype = PyArray_DESCR(arr);
         Py_INCREF(dtype);
@@ -919,7 +919,11 @@ array_wraparray(PyArrayObject *self, PyObject *args)
                 PyArray_NDIM(arr),
                 PyArray_DIMS(arr),
                 PyArray_STRIDES(arr), PyArray_DATA(arr),
-                PyArray_FLAGS(arr), (PyObject *)self, obj);
+                PyArray_FLAGS(arr), (PyObject *)self, (PyObject *)arr);
+    }
+    else if (return_scalar) {
+        Py_INCREF(arr);
+        return PyArray_Return(arr);
     }
     else {
         /*

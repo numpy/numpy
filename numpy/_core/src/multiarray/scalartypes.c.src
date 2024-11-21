@@ -25,6 +25,7 @@
 #include "numpyos.h"
 #include "can_cast_table.h"
 #include "common.h"
+#include "conversion_utils.h"
 #include "flagsobject.h"
 #include "scalartypes.h"
 #include "_datetime.h"
@@ -2035,29 +2036,33 @@ gentype_getarray(PyObject *scalar, PyObject *args)
     return ret;
 }
 
-static char doc_sc_wraparray[] = "sc.__array_wrap__(obj) return scalar from array";
+static char doc_sc_wraparray[] = "Array wrap to implementation for scalar types";
 
+/*
+ * Array wrap for scalars, returning a scalar again preferentially.
+ * (note that NumPy itself may well never call this itself).
+ */
 static PyObject *
 gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 {
-    PyObject *obj;
     PyArrayObject *arr;
+    PyObject *context_ignored = NULL;
+    /* return_scalar should be passed, but it was a scalar so prefer scalar */
+    int return_scalar = 1;
 
-    if (PyTuple_Size(args) < 1) {
-        PyErr_SetString(PyExc_TypeError,
-                "only accepts 1 argument.");
+    if (!PyArg_ParseTuple(args, "O!|OO&:__array_wrap__",
+                &PyArray_Type, &arr, &context_ignored,
+                &PyArray_OptionalBoolConverter, &return_scalar)) {
         return NULL;
     }
-    obj = PyTuple_GET_ITEM(args, 0);
-    if (!PyArray_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError,
-                "can only be called with ndarray object");
-        return NULL;
-    }
-    arr = (PyArrayObject *)obj;
 
-    return PyArray_Scalar(PyArray_DATA(arr),
-                    PyArray_DESCR(arr), (PyObject *)arr);
+    Py_INCREF(arr);
+    if (!return_scalar) {
+        return (PyObject *)arr;
+    }
+    else {
+        return PyArray_Return(arr);
+    }
 }
 
 /*
