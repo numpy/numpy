@@ -10,7 +10,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 
 from numpy._core.function_base import add_newdoc
-from numpy._core.overrides import array_function_like_doc
+from numpy._core.overrides import get_array_function_like_doc
 
 
 ###############################################################################
@@ -927,10 +927,7 @@ add_newdoc('numpy._core.multiarray', 'array',
     matrix([[1, 2],
             [3, 4]])
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'asarray',
     """
@@ -1022,10 +1019,7 @@ add_newdoc('numpy._core.multiarray', 'asarray',
     >>> np.asanyarray(a) is a
     True
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'asanyarray',
     """
@@ -1101,10 +1095,7 @@ add_newdoc('numpy._core.multiarray', 'asanyarray',
     >>> np.asanyarray(a) is a
     True
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
     """
@@ -1167,10 +1158,7 @@ add_newdoc('numpy._core.multiarray', 'ascontiguousarray',
     Note: This function returns an array with at least one-dimension (1-d)
     so it will not preserve 0-d arrays.
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'asfortranarray',
     """
@@ -1233,10 +1221,7 @@ add_newdoc('numpy._core.multiarray', 'asfortranarray',
     Note: This function returns an array with at least one-dimension (1-d)
     so it will not preserve 0-d arrays.
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'empty',
     """
@@ -1296,10 +1281,7 @@ add_newdoc('numpy._core.multiarray', 'empty',
     array([[-1073741821, -1067949133],
            [  496041986,    19249760]])                     #uninitialized
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'scalar',
     """
@@ -1370,10 +1352,7 @@ add_newdoc('numpy._core.multiarray', 'zeros',
     array([(0, 0), (0, 0)],
           dtype=[('x', '<i4'), ('y', '<i4')])
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'set_typeDict',
     """set_typeDict(dict)
@@ -1441,10 +1420,7 @@ add_newdoc('numpy._core.multiarray', 'fromstring',
     >>> np.fromstring('1, 2', dtype=int, sep=',')
     array([1, 2])
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'compare_chararrays',
     """
@@ -1537,10 +1513,7 @@ add_newdoc('numpy._core.multiarray', 'fromiter',
            [5, 6]])
 
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'fromfile',
     """
@@ -1623,10 +1596,7 @@ add_newdoc('numpy._core.multiarray', 'fromfile',
     array([((10, 0), 98.25)],
           dtype=[('time', [('min', '<i8'), ('sec', '<i8')]), ('temp', '<f8')])
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'frombuffer',
     """
@@ -1686,10 +1656,7 @@ add_newdoc('numpy._core.multiarray', 'frombuffer',
     >>> np.frombuffer(b'\\x01\\x02\\x03\\x04\\x05', dtype=np.uint8, count=3)
     array([1, 2, 3], dtype=uint8)
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', 'from_dlpack',
     """
@@ -1855,10 +1822,7 @@ add_newdoc('numpy._core.multiarray', 'arange',
     >>> np.arange(3,7,2)
     array([3, 5])
 
-    """.replace(
-        "${ARRAY_FUNCTION_LIKE}",
-        array_function_like_doc,
-    ))
+    """)
 
 add_newdoc('numpy._core.multiarray', '_get_ndarray_c_version',
     """_get_ndarray_c_version()
