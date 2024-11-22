@@ -16,7 +16,7 @@ __all__ = ['build_and_import_extension', 'compile_extension_module']
 
 def build_and_import_extension(
         modname, functions, *, prologue="", build_dir=None,
-        include_dirs=[], more_init=""):
+        include_dirs=None, more_init=""):
     """
     Build and imports a c-extension module `modname` from a list of function
     fragments `functions`.
@@ -53,6 +53,8 @@ def build_and_import_extension(
     >>> assert not mod.test_bytes('abc')
     >>> assert mod.test_bytes(b'abc')
     """
+    if include_dirs == None:
+        include_dirs = []
     body = prologue + _make_methods(functions, modname)
     init = """
     PyObject *mod = PyModule_Create(&moduledef);
@@ -68,12 +70,8 @@ def build_and_import_extension(
         init += more_init
     init += "\nreturn mod;"
     source_string = _make_source(modname, init, body)
-    try:
-        mod_so = compile_extension_module(
-            modname, build_dir, include_dirs, source_string)
-    except Exception as e:
-        # shorten the exception chain
-        raise RuntimeError(f"could not compile in {build_dir}:") from e
+    mod_so = compile_extension_module(
+        modname, build_dir, include_dirs, source_string)
     import importlib.util
     spec = importlib.util.spec_from_file_location(modname, mod_so)
     foo = importlib.util.module_from_spec(spec)
@@ -83,7 +81,7 @@ def build_and_import_extension(
 
 def compile_extension_module(
         name, builddir, include_dirs,
-        source_string, libraries=[], library_dirs=[]):
+        source_string, libraries=None, library_dirs=None):
     """
     Build an extension module and return the filename of the resulting
     native code file.
@@ -106,11 +104,14 @@ def compile_extension_module(
     dirname = builddir / name
     dirname.mkdir(exist_ok=True)
     cfile = _convert_str_to_file(source_string, dirname)
-    include_dirs = include_dirs + [sysconfig.get_config_var('INCLUDEPY')]
+    include_dirs = include_dirs if include_dirs else []
+    include_dirs.append(sysconfig.get_config_var('INCLUDEPY'))
+    libraries = libraries if libraries else []
+    library_dirs = library_dirs if library_dirs else []
 
     return _c_compile(
         cfile, outputfilename=dirname / modname,
-        include_dirs=include_dirs, libraries=[], library_dirs=[],
+        include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs,
         )
 
 
@@ -167,7 +168,14 @@ def _make_methods(functions, modname):
 def _make_source(name, init, body):
     """ Combines the code fragments into source code ready to be compiled
     """
-    code = """
+    # python.h doesn't set Py_GIL_DISABLED on the windows free-threade build
+    if sys.platform == "win32" and bool(sysconfig.get_config_var("Py_GIL_DISABLED")):
+        code = """
+        #define Py_GIL_DISABLED
+        """
+    else:
+        code = ""
+    code += """
     #include <Python.h>
 
     %(body)s
@@ -182,11 +190,13 @@ def _make_source(name, init, body):
     return code
 
 
-def _c_compile(cfile, outputfilename, include_dirs=[], libraries=[],
-               library_dirs=[]):
+def _c_compile(cfile, outputfilename, include_dirs, libraries,
+               library_dirs):
     if sys.platform == 'win32':
         compile_extra = ["/we4013"]
-        link_extra = ["/LIBPATH:" + os.path.join(sys.base_prefix, 'libs')]
+        link_extra = [f"-L{sysconfig.get_config_var('LIBDIR')}"]
+        link_extra.append(f"-l{sysconfig.get_config_var('LDLIBRARY')}".strip(".dll"))
+        link_extra.append('/DEBUG')  # generate .pdb file
     elif sys.platform.startswith('linux'):
         compile_extra = [
             "-O0", "-g", "-Werror=implicit-function-declaration", "-fPIC"]
@@ -194,8 +204,6 @@ def _c_compile(cfile, outputfilename, include_dirs=[], libraries=[],
     else:
         compile_extra = link_extra = []
         pass
-    if sys.platform == 'win32':
-        link_extra = link_extra + ['/DEBUG']  # generate .pdb file
     if sys.platform == 'darwin':
         # support Fink & Darwinports
         for s in ('/sw/', '/opt/local/'):
