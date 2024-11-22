@@ -16,8 +16,8 @@ dependencies:
   - ninja
   - pkg-config
   - meson-python
-  - pip
-  - spin=0.8 # Unpin when spin 0.9.1 is released
+  - pip:
+      - spin==0.13
   - ccache
   # For testing
   - pytest
