@@ -2311,6 +2311,13 @@ class TestSinc:
         assert_array_equal(y1, y2)
         assert_array_equal(y1, y3)
 
+    def test_bool_dtypes(self, dtype):
+        x = (np.arange(4, dtype=np.uint8) % 2 == 1)
+        actual = sinc(x)
+        expected = sinc(x.astype(np.float64))
+        assert_allclose(actual, expected)
+        assert actual.dtype == np.float64
+
     @pytest.mark.parametrize('dtype', [np.uint8, np.int16, np.uint64])
     def test_int_dtypes(self, dtype):
         x = np.arange(4, dtype=dtype)
@@ -2318,7 +2325,6 @@ class TestSinc:
         expected = sinc(x.astype(np.float64))
         assert_allclose(actual, expected)
         assert actual.dtype == np.float64
-
     @pytest.mark.parametrize(
             'dtype',
             [np.float16, np.float32, np.complex64, np.complex128]
