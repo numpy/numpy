@@ -53,7 +53,7 @@ def build_and_import_extension(
     >>> assert not mod.test_bytes('abc')
     >>> assert mod.test_bytes(b'abc')
     """
-    if include_dirs == None:
+    if include_dirs is None:
         include_dirs = []
     body = prologue + _make_methods(functions, modname)
     init = """
