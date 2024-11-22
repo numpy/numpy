@@ -174,19 +174,9 @@ HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
     }
 }
 
-    // For architectures without efficient gather / scatter instructions, it is
-    // better to use a transposed LUT where we can load all coefficients for an
-    // index linearly.  In order to keep the same vertical calculation, we
-    // transpose the coef. into lanes.  2 lane transpose is all that's
-    // implemented so we require `npyv_nlanes_f64` == 2.
-    #if npyv_nlanes_f64 == 2
-    #define TANH_TRANSPOSED_LUT
-    #endif // npyv_nlanes_f64 == 2
-
 HWY_ATTR static void
 simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_intp len)
 {
-#if defined(TANH_TRANSPOSED_LUT)
     static const npy_uint64 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut18x16[] = {
         // 0
         0x0ull,                0x0ull,                0x3ff0000000000000ull, 0xbbf0b3ea3fdfaa19ull, // b,   c0,  c1,  c2
@@ -285,7 +275,7 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         0x0ull,                0x0ull,                0x0ull,                0x0ull,
         0x0ull,                0x0ull,               
     };
-#else
+
     static const npy_uint64 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut16x18[] = {
         // 0
         0x0ull,                0x3fcc000000000000ull, 0x3fd4000000000000ull, 0x3fdc000000000000ull,
@@ -378,7 +368,6 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         0xbe567e924bf5ff6eull, 0x3de3f7f7de6b0eb6ull, 0x3d69ed18bae3ebbcull, 0xbcf7534c4f3dfa71ull,
         0xbc730b73f1eaff20ull, 0xbbba2cff8135d462ull, 0xbab5a71b5f7d9035ull, 0x0ull
     };
-#endif // defined(TANH_TRANSPOSED_LUT)
 
     const int nlanes = hn::Lanes(f64);
     const vec_f64 qnan = hn::Set(f64, NPY_NAN);
@@ -396,44 +385,50 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
                  idxl = hn::Min(idxl, hn::Set(s32, 0x780000));
         vec_u64 idx  = hn::ShiftRightSame(hn::BitCast(u64, idxl), 51);
 
-#if defined(TANH_TRANSPOSED_LUT)
-        vec_f64 e0e1[hn::Lanes(f64)];
-        uint64_t index[hn::Lanes(f64)];
-        hn::StoreU(idx, u64, index);
+        // For architectures without efficient gather / scatter instructions, it is
+        // better to use a transposed LUT where we can load all coefficients for an
+        // index linearly.  In order to keep the same vertical calculation, we
+        // transpose the coef. into lanes.  2 lane transpose is all that's
+        // implemented so we require `npyv_nlanes_f64` == 2.
+        vec_f64 b, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16;
+        if constexpr(hn::MaxLanes(f64) == 2){
+            vec_f64 e0e1[hn::Lanes(f64)];
+            uint64_t index[hn::Lanes(f64)];
+            hn::StoreU(idx, u64, index);
 
-        /**begin repeat
-         * #off= 0, 2,  4,  6,  8,  10, 12,  14,  16#
-         * #e0 = b, c1, c3, c5, c7, c9, c11, c13, c15#
-         * #e1 = c0,c2, c4, c6, c8, c10,c12, c14, c16#
-         */
-        /**begin repeat1
-         * #lane = 0, 1#
-         */
-        e0e1[@lane@] = hn::BitCast(f64, hn::LoadU(u64, lut18x16 + index[@lane@] * 18 + @off@));
-        /**end repeat1**/
-        vec_f64 @e0@ = hn::ConcatLowerLower(f64, e0e1[1], e0e1[0]);
-        vec_f64 @e1@ = hn::ConcatUpperUpper(f64, e0e1[1], e0e1[0]);
-        /**end repeat**/
-#else
-        vec_f64 b = lut_16_f64((const double*)lut16x18 + 16*0, idx);
-        vec_f64 c0 = lut_16_f64((const double*)lut16x18 + 1*16, idx);
-        vec_f64 c1 = lut_16_f64((const double*)lut16x18 + 2*16, idx);
-        vec_f64 c2 = lut_16_f64((const double*)lut16x18 + 3*16, idx);
-        vec_f64 c3 = lut_16_f64((const double*)lut16x18 + 4*16, idx);
-        vec_f64 c4 = lut_16_f64((const double*)lut16x18 + 5*16, idx);
-        vec_f64 c5 = lut_16_f64((const double*)lut16x18 + 6*16, idx);
-        vec_f64 c6 = lut_16_f64((const double*)lut16x18 + 7*16, idx);
-        vec_f64 c7 = lut_16_f64((const double*)lut16x18 + 8*16, idx);
-        vec_f64 c8 = lut_16_f64((const double*)lut16x18 + 9*16, idx);
-        vec_f64 c9 = lut_16_f64((const double*)lut16x18 + 10*16, idx);
-        vec_f64 c10 = lut_16_f64((const double*)lut16x18 + 11*16, idx);
-        vec_f64 c11 = lut_16_f64((const double*)lut16x18 + 12*16, idx);
-        vec_f64 c12 = lut_16_f64((const double*)lut16x18 + 13*16, idx);
-        vec_f64 c13 = lut_16_f64((const double*)lut16x18 + 14*16, idx);
-        vec_f64 c14 = lut_16_f64((const double*)lut16x18 + 15*16, idx);
-        vec_f64 c15 = lut_16_f64((const double*)lut16x18 + 16*16, idx);
-        vec_f64 c16 = lut_16_f64((const double*)lut16x18 + 17*16, idx);
-#endif // defined(TANH_TRANSPOSED_LUT)
+            /**begin repeat
+             * #off= 0, 2,  4,  6,  8,  10, 12,  14,  16#
+             * #e0 = b, c1, c3, c5, c7, c9, c11, c13, c15#
+             * #e1 = c0,c2, c4, c6, c8, c10,c12, c14, c16#
+             */
+            /**begin repeat1
+             * #lane = 0, 1#
+             */
+            e0e1[@lane@] = hn::BitCast(f64, hn::LoadU(u64, lut18x16 + index[@lane@] * 18 + @off@));
+            /**end repeat1**/
+            @e0@ = hn::ConcatLowerLower(f64, e0e1[1], e0e1[0]);
+            @e1@ = hn::ConcatUpperUpper(f64, e0e1[1], e0e1[0]);
+            /**end repeat**/
+        } else {
+            b = lut_16_f64((const double*)lut16x18 + 16*0, idx);
+            c0 = lut_16_f64((const double*)lut16x18 + 1*16, idx);
+            c1 = lut_16_f64((const double*)lut16x18 + 2*16, idx);
+            c2 = lut_16_f64((const double*)lut16x18 + 3*16, idx);
+            c3 = lut_16_f64((const double*)lut16x18 + 4*16, idx);
+            c4 = lut_16_f64((const double*)lut16x18 + 5*16, idx);
+            c5 = lut_16_f64((const double*)lut16x18 + 6*16, idx);
+            c6 = lut_16_f64((const double*)lut16x18 + 7*16, idx);
+            c7 = lut_16_f64((const double*)lut16x18 + 8*16, idx);
+            c8 = lut_16_f64((const double*)lut16x18 + 9*16, idx);
+            c9 = lut_16_f64((const double*)lut16x18 + 10*16, idx);
+            c10 = lut_16_f64((const double*)lut16x18 + 11*16, idx);
+            c11 = lut_16_f64((const double*)lut16x18 + 12*16, idx);
+            c12 = lut_16_f64((const double*)lut16x18 + 13*16, idx);
+            c13 = lut_16_f64((const double*)lut16x18 + 14*16, idx);
+            c14 = lut_16_f64((const double*)lut16x18 + 15*16, idx);
+            c15 = lut_16_f64((const double*)lut16x18 + 16*16, idx);
+            c16 = lut_16_f64((const double*)lut16x18 + 17*16, idx);
+        }
 
         // no need to zerofy nans or avoid FP exceptions by NO_EXC like SVML does
         // since we're clearing the FP status anyway.
@@ -464,8 +459,6 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         store_vector<vec_f64>(r, dst, sdst, len);
     }
 }
-
-#undef TANH_TRANSPOSED_LUT
 
 #endif // NPY_SIMD_F64
 
@@ -505,27 +498,9 @@ HWY_ATTR NPY_FINLINE vec_f32 lut_32_f32(const float * lut, vec_u32 idx){
     }
 }
 
-// For architectures without efficient gather / scatter instructions, it is
-// better to use a transposed LUT where we can load all coefficients for an
-// index linearly.  In order to keep the same vertical calculation, we
-// transpose the coef. into lanes.  A 4x4 transpose is all that's
-// supported so we require `npyv_nlanes_f32` == 4.
-#if npyv_nlanes_f32 == 4
-#define TANHF_TRANSPOSED_LUT
-// Define missing universal intrinsics used below
-#if !defined(npyv_get_lane_u32)
-    #if defined(NPY_HAVE_ASIMD)
-    #elif defined(NPY_HAVE_SSE41)
-    #else
-        #undef TANHF_TRANSPOSED_LUT
-    #endif
-#endif // !defined(npyv_get_lane_u32)
-#endif // npyv_nlanes_f32 == 4
-
 HWY_ATTR static void
 simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_intp len)
 {
-#if defined(TANHF_TRANSPOSED_LUT)
     static const npy_uint32 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut8x32[] = {
         // c6       c5          c4          c3          c2          c1          c0          b
         0xbc0e2f66, 0x3e0910e9, 0xb76dd6b9, 0xbeaaaaa5, 0xb0343c7b, 0x3f800000, 0x0,        0x0,       
@@ -568,7 +543,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         0xb15a1f04, 0x322487b0, 0xb2ab78ac, 0x332b3cb6, 0xb383012c, 0x338306c6, 0x3f7fffff, 0x41100000,
         0x0,        0x0,        0x0,        0x0,        0x0,        0x0,        0x3f800000, 0x0,       
     };
-#else
+
     static const npy_uint32 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut32x8[] = {
         // 0
         0x0,        0x3d700000, 0x3d900000, 0x3db00000, 0x3dd00000, 0x3df00000, 0x3e100000, 0x3e300000,
@@ -611,7 +586,6 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         0x3c1d7bfb, 0x3c722cd1, 0x3c973f1c, 0x3c33a31b, 0x3b862ef4, 0x3a27b3d0, 0xba3b5907, 0xba0efc22,
         0xb97f9f0f, 0xb8c8af50, 0xb7bdddfb, 0xb64f2950, 0xb4e085b1, 0xb3731dfa, 0xb15a1f04, 0x0
     };
-#endif // defined(TANHF_TRANSPOSED_LUT)
 
     const int nlanes = hn::Lanes(f32);//npyv_nlanes_f32;
     const vec_f32 qnan = hn::Set(f32, NPY_NAN);
@@ -627,57 +601,63 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
                  idxs = hn::Min(idxs, hn::Set(s32, 0x3e00000));
         vec_u32 idx  = hn::ShiftRightSame(hn::BitCast(u32, idxs), 21);
 
-#if defined(TANHF_TRANSPOSED_LUT)
-        vec_f32 c6543[npyv_nlanes_f32];
-        vec_f32 c210b[npyv_nlanes_f32];
-        npyv_lanetype_u32 index[npyv_nlanes_f32];
+        // For architectures without efficient gather / scatter instructions, it is
+        // better to use a transposed LUT where we can load all coefficients for an
+        // index linearly.  In order to keep the same vertical calculation, we
+        // transpose the coef. into lanes.  A 4x4 transpose is all that's
+        // supported so we require `npyv_nlanes_f32` == 4.
+        vec_f32 b, c0, c1, c2, c3, c4, c5, c6;
+        if constexpr(hn::MaxLanes(f32) == 4 && HWY_TARGET >= HWY_SSE4){
+            vec_f32 c6543[npyv_nlanes_f32];
+            vec_f32 c210b[npyv_nlanes_f32];
+            npyv_lanetype_u32 index[npyv_nlanes_f32];
 
-        /**begin repeat
-         * #lane = 0, 1, 2, 3#
-         */
-        index[@lane@] = hn::ExtractLane(idx, @lane@);
-        c6543[@lane@] = hn::BitCast(f32, hn::LoadU(u32, lut8x32 + index[@lane@] * 8));
-        c210b[@lane@] = hn::BitCast(f32, hn::LoadU(u32, lut8x32 + index[@lane@] * 8 + 4));
-        /**end repeat**/
+            /**begin repeat
+             * #lane = 0, 1, 2, 3#
+             */
+            index[@lane@] = hn::ExtractLane(idx, @lane@);
+            c6543[@lane@] = hn::BitCast(f32, hn::LoadU(u32, lut8x32 + index[@lane@] * 8));
+            c210b[@lane@] = hn::BitCast(f32, hn::LoadU(u32, lut8x32 + index[@lane@] * 8 + 4));
+            /**end repeat**/
 
-        // lane0: {c6, c5, c4, c3},  {c2, c1, c0, b}
-        // lane1: {c6, c5, c4, c3},  {c2, c1, c0, b}
-        // lane2: {c6, c5, c4, c3},  {c2, c1, c0, b}
-        // lane3: {c6, c5, c4, c3},  {c2, c1, c0, b}
-        //
-        // transposed:
-        // c6: {lane0, lane1, lane2, lane3}
-        // c5: {lane0, lane1, lane2, lane3}
-        // c4: {lane0, lane1, lane2, lane3}
-        // c3: {lane0, lane1, lane2, lane3}
-        // c2: {lane0, lane1, lane2, lane3}
-        // c1: {lane0, lane1, lane2, lane3}
-        // c0: {lane0, lane1, lane2, lane3}
-        // b : {lane0, lane1, lane2, lane3}
+            // lane0: {c6, c5, c4, c3},  {c2, c1, c0, b}
+            // lane1: {c6, c5, c4, c3},  {c2, c1, c0, b}
+            // lane2: {c6, c5, c4, c3},  {c2, c1, c0, b}
+            // lane3: {c6, c5, c4, c3},  {c2, c1, c0, b}
+            //
+            // transposed:
+            // c6: {lane0, lane1, lane2, lane3}
+            // c5: {lane0, lane1, lane2, lane3}
+            // c4: {lane0, lane1, lane2, lane3}
+            // c3: {lane0, lane1, lane2, lane3}
+            // c2: {lane0, lane1, lane2, lane3}
+            // c1: {lane0, lane1, lane2, lane3}
+            // c0: {lane0, lane1, lane2, lane3}
+            // b : {lane0, lane1, lane2, lane3}
 
-        hwy_f32x2 c6543_l01 = zip_f32(c6543[0], c6543[1]);
-        hwy_f32x2 c6543_l23 = zip_f32(c6543[2], c6543[3]);
-        vec_f32 c6 = hn::ConcatLowerLower(f32, c6543_l23.val[0], c6543_l01.val[0]);
-        vec_f32 c5 = hn::ConcatUpperUpper(f32, c6543_l23.val[0], c6543_l01.val[0]);
-        vec_f32 c4 = hn::ConcatLowerLower(f32, c6543_l23.val[1], c6543_l01.val[1]);
-        vec_f32 c3 = hn::ConcatUpperUpper(f32, c6543_l23.val[1], c6543_l01.val[1]);
+            hwy_f32x2 c6543_l01 = zip_f32(c6543[0], c6543[1]);
+            hwy_f32x2 c6543_l23 = zip_f32(c6543[2], c6543[3]);
+            c6 = hn::ConcatLowerLower(f32, c6543_l23.val[0], c6543_l01.val[0]);
+            c5 = hn::ConcatUpperUpper(f32, c6543_l23.val[0], c6543_l01.val[0]);
+            c4 = hn::ConcatLowerLower(f32, c6543_l23.val[1], c6543_l01.val[1]);
+            c3 = hn::ConcatUpperUpper(f32, c6543_l23.val[1], c6543_l01.val[1]);
 
-        hwy_f32x2 c210b_l01 = zip_f32(c210b[0], c210b[1]);
-        hwy_f32x2 c210b_l23 = zip_f32(c210b[2], c210b[3]);
-        vec_f32 c2 = hn::ConcatLowerLower(f32, c210b_l23.val[0], c210b_l01.val[0]);
-        vec_f32 c1 = hn::ConcatUpperUpper(f32, c210b_l23.val[0], c210b_l01.val[0]);
-        vec_f32 c0 = hn::ConcatLowerLower(f32, c210b_l23.val[1], c210b_l01.val[1]);
-        vec_f32 b  = hn::ConcatUpperUpper(f32, c210b_l23.val[1], c210b_l01.val[1]);
-#else
-        vec_f32 b  = lut_32_f32((const float*)lut32x8 + 32*0, idx);
-        vec_f32 c0 = lut_32_f32((const float*)lut32x8 + 32*1, idx);
-        vec_f32 c1 = lut_32_f32((const float*)lut32x8 + 32*2, idx);
-        vec_f32 c2 = lut_32_f32((const float*)lut32x8 + 32*3, idx);
-        vec_f32 c3 = lut_32_f32((const float*)lut32x8 + 32*4, idx);
-        vec_f32 c4 = lut_32_f32((const float*)lut32x8 + 32*5, idx);
-        vec_f32 c5 = lut_32_f32((const float*)lut32x8 + 32*6, idx);
-        vec_f32 c6 = lut_32_f32((const float*)lut32x8 + 32*7, idx);
-#endif // defined(TANHF_TRANSPOSED_LUT)
+            hwy_f32x2 c210b_l01 = zip_f32(c210b[0], c210b[1]);
+            hwy_f32x2 c210b_l23 = zip_f32(c210b[2], c210b[3]);
+            c2 = hn::ConcatLowerLower(f32, c210b_l23.val[0], c210b_l01.val[0]);
+            c1 = hn::ConcatUpperUpper(f32, c210b_l23.val[0], c210b_l01.val[0]);
+            c0 = hn::ConcatLowerLower(f32, c210b_l23.val[1], c210b_l01.val[1]);
+            b  = hn::ConcatUpperUpper(f32, c210b_l23.val[1], c210b_l01.val[1]);
+        } else {
+            b  = lut_32_f32((const float*)lut32x8 + 32*0, idx);
+            c0 = lut_32_f32((const float*)lut32x8 + 32*1, idx);
+            c1 = lut_32_f32((const float*)lut32x8 + 32*2, idx);
+            c2 = lut_32_f32((const float*)lut32x8 + 32*3, idx);
+            c3 = lut_32_f32((const float*)lut32x8 + 32*4, idx);
+            c4 = lut_32_f32((const float*)lut32x8 + 32*5, idx);
+            c5 = lut_32_f32((const float*)lut32x8 + 32*6, idx);
+            c6 = lut_32_f32((const float*)lut32x8 + 32*7, idx);
+        }
 
         // no need to zerofy nans or avoid FP exceptions by NO_EXC like SVML does
         // since we're clearing the FP status anyway.
@@ -698,8 +678,6 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         store_vector<vec_f32>(r, dst, sdst, len);
     }
 }
-
-#undef TANHF_TRANSPOSED_LUT
 
 #endif // NPY_SIMD_F32
 #endif // HWY_NATIVE_FMA
