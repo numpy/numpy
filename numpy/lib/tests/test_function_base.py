@@ -2311,7 +2311,7 @@ class TestSinc:
         assert_array_equal(y1, y2)
         assert_array_equal(y1, y3)
 
-    def test_bool_dtypes(self, dtype):
+    def test_bool_dtypes(self):
         x = (np.arange(4, dtype=np.uint8) % 2 == 1)
         actual = sinc(x)
         expected = sinc(x.astype(np.float64))
