@@ -1,0 +1,4 @@
+* Calling ``__array_wrap__`` directly on NumPy arrays or scalars
+  now does the right thing when ``return_scalar`` is passed
+  (Added in NumPy 2).  It is further safe now to call the scalar
+  ``__array_wrap__`` on a non-scalar result.
