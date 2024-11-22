@@ -404,7 +404,7 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
             /**begin repeat1
              * #lane = 0, 1#
              */
-            e0e1[@lane@] = hn::BitCast(f64, hn::LoadU(u64, lut18x16 + index[@lane@] * 18 + @off@));
+            e0e1[@lane@] = hn::LoadU(f64, (const double*)lut18x16 + index[@lane@] * 18 + @off@);
             /**end repeat1**/
             @e0@ = hn::ConcatLowerLower(f64, e0e1[1], e0e1[0]);
             @e1@ = hn::ConcatUpperUpper(f64, e0e1[1], e0e1[0]);
@@ -616,8 +616,8 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
              * #lane = 0, 1, 2, 3#
              */
             index[@lane@] = hn::ExtractLane(idx, @lane@);
-            c6543[@lane@] = hn::BitCast(f32, hn::LoadU(u32, lut8x32 + index[@lane@] * 8));
-            c210b[@lane@] = hn::BitCast(f32, hn::LoadU(u32, lut8x32 + index[@lane@] * 8 + 4));
+            c6543[@lane@] = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8);
+            c210b[@lane@] = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8 + 4);
             /**end repeat**/
 
             // lane0: {c6, c5, c4, c3},  {c2, c1, c0, b}
