@@ -2311,6 +2311,27 @@ class TestSinc:
         assert_array_equal(y1, y2)
         assert_array_equal(y1, y3)
 
+    @pytest.mark.parametrize('dtype', [np.uint8, np.int16, np.uint64])
+    def test_int_dtypes(self, dtype):
+        x = np.arange(4, dtype=dtype)
+        actual = sinc(x)
+        expected = sinc(x.astype(np.float64))
+        assert_allclose(actual, expected)
+        assert actual.dtype == np.float64
+
+    @pytest.mark.parametrize(
+            'dtype',
+            [np.float16, np.float32, np.complex64, np.complex128]
+    )
+    def test_float_dtypes(self, dtype):
+        x = np.arange(4, dtype=dtype)
+        assert sinc(x).dtype == x.dtype
+
+    def test_float16_underflow(self):
+        x = np.float16(0)
+        # before gh-27784, fill value for 0 in input would underflow float16,
+        # resulting in nan
+        assert_array_equal(sinc(x), np.asarray(1.0))
 
 class TestUnique:
 
