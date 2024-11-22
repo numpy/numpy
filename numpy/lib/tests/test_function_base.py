@@ -2325,6 +2325,7 @@ class TestSinc:
         expected = sinc(x.astype(np.float64))
         assert_allclose(actual, expected)
         assert actual.dtype == np.float64
+    
     @pytest.mark.parametrize(
             'dtype',
             [np.float16, np.float32, np.complex64, np.complex128]
