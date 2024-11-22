@@ -195,7 +195,9 @@ def _c_compile(cfile, outputfilename, include_dirs, libraries,
     if sys.platform == 'win32':
         compile_extra = ["/we4013"]
         link_extra = [f"-L{sysconfig.get_config_var('LIBDIR')}"]
-        link_extra.append(f"-l{sysconfig.get_config_var('LDLIBRARY')}".strip(".dll"))
+        library_name = sysconfig.get_config_var('LDLIBRARY')
+        if library_name:
+            link_extra.append(f"-l{library_name}".strip(".dll"))
         link_extra.append('/DEBUG')  # generate .pdb file
     elif sys.platform.startswith('linux'):
         compile_extra = [
