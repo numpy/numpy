@@ -23,6 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         compiler: ["MSVC", "Clang-cl"]
+        version: ["3.11", "3.13t"]
     steps:
     - name: Checkout
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -31,9 +32,15 @@ jobs:
         fetch-tags: true
 
     - name: Setup Python
-      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      uses: quansight-labs/setup-python@b9ab292c751a42bcd2bb465b7fa202ea2c3f5796 # v5.3.1
       with:
-        python-version: '3.11'
+        python-version: ${{ matrix.version }}
+
+    # TODO: remove cython nightly install when cython does a release
+    - name: Install nightly Cython
+      if: matrix.version == '3.13t'
+      run: |
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
 
     - name: Install build dependencies from PyPI
       run: |
