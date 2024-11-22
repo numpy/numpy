@@ -4,6 +4,7 @@
 Functions in this module give python-space wrappers for cython functions
 exposed in numpy/__init__.pxd, so they can be tested in test_cython.py
 """
+from libc.stdlib cimport malloc, free
 cimport numpy as cnp
 cnp.import_array()
 
@@ -266,3 +267,66 @@ def inc2_cfloat_struct(cnp.ndarray[cnp.cfloat_t] arr):
     # This works in both modes
     arr[1].real = arr[1].real + 1
     arr[1].imag = arr[1].imag + 1
+
+
+def npystring_pack(arr):
+    cdef char *string = "Hello world"
+    cdef size_t size = 11
+
+    allocator = cnp.NpyString_acquire_allocator(
+        <cnp.PyArray_StringDTypeObject *>cnp.PyArray_DESCR(arr)
+    )
+
+    # copy string->packed_string, the pointer to the underlying array buffer
+    if cnp.NpyString_pack(
+        allocator, <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr), string, size,
+    ) == -1:
+        return -1
+
+    cnp.NpyString_release_allocator(allocator)
+    return 0
+
+
+def npystring_load(arr):
+    allocator = cnp.NpyString_acquire_allocator(
+        <cnp.PyArray_StringDTypeObject *>cnp.PyArray_DESCR(arr)
+    )
+
+    cdef cnp.npy_static_string sdata
+    sdata.size = 0
+    sdata.buf = NULL
+
+    cdef cnp.npy_packed_static_string *packed_string = <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr)
+    cdef int is_null = cnp.NpyString_load(allocator, packed_string, &sdata)
+    cnp.NpyString_release_allocator(allocator)
+    if is_null == -1:
+        raise ValueError("String unpacking failed.")
+    elif is_null == 1:
+        # String in the array buffer is the null string
+        return ""
+    else:
+        # Cython syntax for copying a c string to python bytestring:
+        # slice the char * by the length of the string
+        return sdata.buf[:sdata.size].decode('utf-8')
+
+
+def npystring_pack_multiple(arr1, arr2):
+    cdef cnp.npy_string_allocator *allocators[2]
+    cdef cnp.PyArray_Descr *descrs[2]
+    descrs[0] = cnp.PyArray_DESCR(arr1)
+    descrs[1] = cnp.PyArray_DESCR(arr2)
+
+    cnp.NpyString_acquire_allocators(2, descrs, allocators)
+
+    if cnp.NpyString_pack(
+        allocators[0], <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr1), "Hello world", 11,
+    ) == -1:
+        return -1
+
+    if cnp.NpyString_pack(
+        allocators[1], <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr2), "test this", 9,
+    ) == -1:
+        return -1
+
+    cnp.NpyString_release_allocators(2, allocators)
+    return 0

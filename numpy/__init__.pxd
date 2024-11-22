@@ -126,6 +126,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_OBJECT
         NPY_STRING
         NPY_UNICODE
+        NPY_VSTRING
         NPY_VOID
         NPY_DATETIME
         NPY_TIMEDELTA
