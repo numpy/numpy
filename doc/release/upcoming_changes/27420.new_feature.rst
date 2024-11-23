@@ -1,2 +1,0 @@
-* ``np.complexfloating[T, T]`` can now also be written as
-  ``np.complexfloating[T]``

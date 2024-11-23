@@ -1,4 +1,0 @@
-* The ``datetime64`` and ``timedelta64`` hashes now
-  correctly match the Pythons builtin ``datetime`` and
-  ``timedelta`` ones.  The hashes now evaluated equal
-  even for equal values with different time units.
