@@ -1,5 +1,0 @@
-``f2py`` handles multiple modules and exposes variables again
--------------------------------------------------------------
-A regression has been fixed which allows F2PY users to expose variables to
-Python in modules with only assignments, and also fixes situations where
-multiple modules are present within a single source file.
