@@ -416,7 +416,7 @@ NumPyOS_ascii_isupper(char c)
  * Same as tolower under C locale
  */
 NPY_NO_EXPORT int
-NumPyOS_ascii_tolower(int c)
+NumPyOS_ascii_tolower(char c)
 {
     if (c >= 'A' && c <= 'Z') {
         return c + ('a'-'A');
