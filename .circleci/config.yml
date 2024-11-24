@@ -52,7 +52,7 @@ jobs:
       - run:
           name: build NumPy
           command: |
-            python3.12 -m venv venv
+            python3.11 -m venv venv
             . venv/bin/activate
             pip install --progress-bar=off -r requirements/test_requirements.txt \
                -r requirements/build_requirements.txt \
