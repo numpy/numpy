@@ -141,7 +141,9 @@ jobs:
           rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
           rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
           git config --global --add safe.directory /numpy &&
-          python -m pip install -r /numpy/requirements/build_requirements.txt &&
+          # No need to build ninja from source, the host ninja is used for the build
+          grep -v ninja /numpy/requirements/build_requirements.txt > /tmp/build_requirements.txt &&
+          python -m pip install -r /tmp/build_requirements.txt &&
           python -m pip install pytest pytest-xdist hypothesis typing_extensions &&
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
