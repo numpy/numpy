@@ -9,7 +9,7 @@ _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
     # documented at https://circleci.com/developer/images/image/cimg/python
-    - image: cimg/python:3.11.8
+    - image: cimg/python:3.11.10
   working_directory: ~/repo
 
 
@@ -60,7 +60,7 @@ jobs:
             # get newer, pre-release versions of critical packages
             pip install --progress-bar=off --pre -r requirements/doc_requirements.txt
             # then install numpy HEAD, which will override the version installed above
-            spin build --with-scipy-openblas=64
+            spin build --with-scipy-openblas=64 -j 2
 
       - run:
           name: build devdocs w/ref warnings
@@ -97,8 +97,8 @@ jobs:
             #  - validates ReST blocks (via validate_rst_syntax)
             #  - checks that all of a module's `__all__` is reflected in the
             #    module-level docstring autosummary
-            echo calling python tools/refguide_check.py -v
-            python tools/refguide_check.py -v
+            echo calling python3 tools/refguide_check.py -v
+            python3 tools/refguide_check.py -v
 
       - persist_to_workspace:
           root: ~/repo
