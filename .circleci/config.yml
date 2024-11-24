@@ -9,7 +9,7 @@ _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
     # documented at https://circleci.com/developer/images/image/cimg/python
-    - image: cimg/python:3.11.8
+    - image: cimg/python:3.12.7
   working_directory: ~/repo
 
 
@@ -52,7 +52,7 @@ jobs:
       - run:
           name: build NumPy
           command: |
-            python3.11 -m venv venv
+            python3.12 -m venv venv
             . venv/bin/activate
             pip install --progress-bar=off -r requirements/test_requirements.txt \
                -r requirements/build_requirements.txt \
@@ -97,8 +97,8 @@ jobs:
             #  - validates ReST blocks (via validate_rst_syntax)
             #  - checks that all of a module's `__all__` is reflected in the
             #    module-level docstring autosummary
-            echo calling python tools/refguide_check.py -v
-            python tools/refguide_check.py -v
+            echo calling python3 tools/refguide_check.py -v
+            python3 tools/refguide_check.py -v
 
       - persist_to_workspace:
           root: ~/repo
