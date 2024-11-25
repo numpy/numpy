@@ -2906,6 +2906,8 @@ add_newdoc('numpy._core.umath', 'vecdot',
     where :math:`\\overline{a_i}` denotes the complex conjugate if :math:`a_i`
     is complex and the identity otherwise.
 
+    .. versionadded:: 2.0.0
+
     Parameters
     ----------
     x1, x2 : array_like
@@ -2951,7 +2953,6 @@ add_newdoc('numpy._core.umath', 'vecdot',
     >>> np.vecdot(v, n)
     array([ 3.,  8., 10.])
 
-    .. versionadded:: 2.0.0
     """)
 
 add_newdoc('numpy._core.umath', 'matvec',
@@ -2968,6 +2969,8 @@ add_newdoc('numpy._core.umath', 'matvec',
     where the sum is over the last dimensions in ``x1`` and ``x2``
     (unless ``axes`` is specified).  (For a matrix-vector product with the
     vector conjugated, use ``np.vecmat(x2, x1.mT)``.)
+
+    .. versionadded:: 2.2.0
 
     Parameters
     ----------
@@ -3017,7 +3020,6 @@ add_newdoc('numpy._core.umath', 'matvec',
            [ 0.,  0.,  1.],
            [ 6.,  0.,  8.]])
 
-    .. versionadded:: 2.1.0
     """)
 
 add_newdoc('numpy._core.umath', 'vecmat',
@@ -3036,6 +3038,8 @@ add_newdoc('numpy._core.umath', 'vecmat',
     :math:`\\overline{v_i}` denotes the complex conjugate if :math:`v`
     is complex and the identity otherwise. (For a non-conjugated vector-matrix
     product, use ``np.matvec(x2.mT, x1)``.)
+
+    .. versionadded:: 2.2.0
 
     Parameters
     ----------
@@ -3080,7 +3084,6 @@ add_newdoc('numpy._core.umath', 'vecmat',
     >>> np.vecmat(v, a)
     array([ 0.,  4., 0.])
 
-    .. versionadded:: 2.1.0
     """)
 
 add_newdoc('numpy._core.umath', 'modf',
