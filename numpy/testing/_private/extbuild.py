@@ -105,13 +105,13 @@ def compile_extension_module(
     dirname.mkdir(exist_ok=True)
     cfile = _convert_str_to_file(source_string, dirname)
     include_dirs = include_dirs if include_dirs else []
-    include_dirs.append(sysconfig.get_config_var('INCLUDEPY'))
     libraries = libraries if libraries else []
     library_dirs = library_dirs if library_dirs else []
 
     return _c_compile(
         cfile, outputfilename=dirname / modname,
-        include_dirs=include_dirs, libraries=libraries, library_dirs=library_dirs,
+        include_dirs=include_dirs, libraries=libraries,
+        library_dirs=library_dirs,
         )
 
 
@@ -169,13 +169,7 @@ def _make_source(name, init, body):
     """ Combines the code fragments into source code ready to be compiled
     """
     # python.h doesn't set Py_GIL_DISABLED on the windows free-threade build
-    if sys.platform == "win32" and bool(sysconfig.get_config_var("Py_GIL_DISABLED")):
-        code = """
-        #define Py_GIL_DISABLED
-        """
-    else:
-        code = ""
-    code += """
+    code = """
     #include <Python.h>
 
     %(body)s
@@ -192,35 +186,21 @@ def _make_source(name, init, body):
 
 def _c_compile(cfile, outputfilename, include_dirs, libraries,
                library_dirs):
+    link_extra = []
     if sys.platform == 'win32':
         compile_extra = ["/we4013"]
-        link_extra = [f"-L{sysconfig.get_config_var('LIBDIR')}"]
-        library_name = sysconfig.get_config_var('LDLIBRARY')
-        if library_name:
-            link_extra.append(f"-l{library_name}".strip(".dll"))
         link_extra.append('/DEBUG')  # generate .pdb file
     elif sys.platform.startswith('linux'):
         compile_extra = [
             "-O0", "-g", "-Werror=implicit-function-declaration", "-fPIC"]
-        link_extra = []
     else:
-        compile_extra = link_extra = []
+        compile_extra = []
         pass
-    if sys.platform == 'darwin':
-        # support Fink & Darwinports
-        for s in ('/sw/', '/opt/local/'):
-            if (s + 'include' not in include_dirs
-                    and os.path.exists(s + 'include')):
-                include_dirs.append(s + 'include')
-            if s + 'lib' not in library_dirs and os.path.exists(s + 'lib'):
-                library_dirs.append(s + 'lib')
 
-    outputfilename = outputfilename.with_suffix(get_so_suffix())
-    build(
+    return build(
         cfile, outputfilename,
         compile_extra, link_extra,
         include_dirs, libraries, library_dirs)
-    return outputfilename
 
 
 def build(cfile, outputfilename, compile_extra, link_extra,
@@ -229,18 +209,17 @@ def build(cfile, outputfilename, compile_extra, link_extra,
 
     build_dir = cfile.parent / "build"
     os.makedirs(build_dir, exist_ok=True)
-    so_name = outputfilename.parts[-1]
     with open(cfile.parent / "meson.build", "wt") as fid:
-        includes = ['-I' + d for d in include_dirs]
         link_dirs = ['-L' + d for d in library_dirs]
         fid.write(textwrap.dedent(f"""\
             project('foo', 'c')
-            shared_module('{so_name}', '{cfile.parts[-1]}',
-                c_args: {includes} + {compile_extra},
-                link_args: {link_dirs} + {link_extra},
-                link_with: {libraries},
-                name_prefix: '',
-                name_suffix: 'dummy',
+            py = import('python').find_installation(pure: false)
+            py.extension_module(
+                '{outputfilename.parts[-1]}',
+                '{cfile.parts[-1]}',
+                c_args: {compile_extra},
+                link_args: {link_dirs},
+                include_directories: {include_dirs},
             )
         """))
     if sys.platform == "win32":
@@ -250,11 +229,15 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                               cwd=build_dir,
                               )
     else:
-        subprocess.check_call(["meson", "setup", "--vsenv", ".."],
+        subprocess.check_call(["meson", "setup", ".."],
                               cwd=build_dir
                               )
+
+    so_name = outputfilename.parts[-1] + get_so_suffix()
     subprocess.check_call(["meson", "compile"], cwd=build_dir)
-    os.rename(str(build_dir / so_name) + ".dummy", cfile.parent / so_name)
+    os.rename(str(build_dir / so_name), cfile.parent / so_name)
+    return cfile.parent / so_name
+
 
 def get_so_suffix():
     ret = sysconfig.get_config_var('EXT_SUFFIX')
