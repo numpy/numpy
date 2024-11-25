@@ -1066,7 +1066,6 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
 
     Notes
     -----
-
     `isin` is an element-wise function version of the python keyword `in`.
     ``isin(a, b)`` is roughly equivalent to
     ``np.array([item in b for item in a])`` if `a` and `b` are 1-D sequences.

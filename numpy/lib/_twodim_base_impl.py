@@ -10,7 +10,7 @@ from numpy._core.numeric import (
     asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
     diagonal, nonzero, indices
     )
-from numpy._core.overrides import set_array_function_like_doc, set_module
+from numpy._core.overrides import finalize_array_function_like, set_module
 from numpy._core import overrides
 from numpy._core import iinfo
 from numpy.lib._stride_tricks_impl import broadcast_to
@@ -160,7 +160,7 @@ def flipud(m):
     return m[::-1, ...]
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     """
@@ -373,7 +373,7 @@ def diagflat(v, k=0):
     return conv.wrap(res)
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
@@ -856,9 +856,6 @@ def mask_indices(n, mask_func, k=0):
     --------
     triu, tril, triu_indices, tril_indices
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -924,9 +921,6 @@ def tril_indices(n, k=0, m=None):
     triu_indices : similar function, for upper-triangular.
     mask_indices : generic function accepting an arbitrary mask function.
     tril, triu
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1038,10 +1032,6 @@ def tril_indices_from(arr, k=0):
     See Also
     --------
     tril_indices, tril, triu_indices_from
-
-    Notes
-    -----
-
     """
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")
@@ -1078,9 +1068,6 @@ def triu_indices(n, k=0, m=None):
     tril_indices : similar function, for lower-triangular.
     mask_indices : generic function accepting an arbitrary mask function.
     triu, tril
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1195,10 +1182,6 @@ def triu_indices_from(arr, k=0):
     See Also
     --------
     triu_indices, triu, tril_indices_from
-
-    Notes
-    -----
-
     """
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")

@@ -2228,19 +2228,17 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
                     type_tup, out_dtypes);
     }
-    if (type_num1 == NPY_TIMEDELTA) {
-        if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
-            out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
-            out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
-            out_dtypes[3] = out_dtypes[0];
-            Py_INCREF(out_dtypes[3]);
+    if (type_num1 == NPY_TIMEDELTA && type_num2 == NPY_TIMEDELTA) {
+        out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                             PyArray_DESCR(operands[1]));                             
+        if (out_dtypes[0] == NULL) {
+            return -1;
         }
-        else {
-            return raise_binary_type_reso_error(ufunc, operands);
-        }
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+        out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
+        out_dtypes[3] = out_dtypes[0];
+        Py_INCREF(out_dtypes[3]);
     }
     else {
         return raise_binary_type_reso_error(ufunc, operands);

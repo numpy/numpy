@@ -172,6 +172,7 @@ from numpy.lib._utils_impl import drop_metadata
 
 __all__ = []
 
+drop_metadata.__module__ = "numpy.lib.format"
 
 EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
 MAGIC_PREFIX = b'\x93NUMPY'

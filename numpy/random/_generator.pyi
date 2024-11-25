@@ -17,7 +17,7 @@ from numpy import (
     uint32,
     uint64,
 )
-from numpy.random import BitGenerator, SeedSequence
+from numpy.random import BitGenerator, SeedSequence, RandomState
 from numpy._typing import (
     ArrayLike,
     NDArray,
@@ -782,5 +782,5 @@ class Generator:
     def shuffle(self, x: ArrayLike, axis: int = ...) -> None: ...
 
 def default_rng(
-    seed: None | _ArrayLikeInt_co | SeedSequence | BitGenerator | Generator = ...
+    seed: None | _ArrayLikeInt_co | SeedSequence | BitGenerator | Generator | RandomState = ...
 ) -> Generator: ...

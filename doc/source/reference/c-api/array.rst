@@ -4044,8 +4044,8 @@ Memory management
 
 .. c:function:: char* PyDataMem_RENEW(void * ptr, size_t newbytes)
 
-    Macros to allocate, free, and reallocate memory. These macros are used
-    internally to create arrays.
+    Functions to allocate, free, and reallocate memory. These are used
+    internally to manage array data memory unless overridden.
 
 .. c:function:: npy_intp*  PyDimMem_NEW(int nd)
 

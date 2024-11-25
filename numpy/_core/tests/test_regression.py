@@ -2312,8 +2312,11 @@ class TestRegression:
 
             try:
                 hash(val)
-            except TypeError as e:
+            except TypeError:
                 assert_(t.__hash__ is None)
+            except ValueError:
+                assert_(t is np.timedelta64)
+                assert_(t.__hash__ is not None)
             else:
                 assert_(t.__hash__ is not None)
 

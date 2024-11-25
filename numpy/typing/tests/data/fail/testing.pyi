@@ -23,6 +23,6 @@ np.testing.assert_array_max_ulp(AR_U, AR_U)  # E: incompatible type
 np.testing.assert_warns(warning_class=RuntimeWarning, func=func)  # E: No overload variant
 np.testing.assert_no_warnings(func=func)  # E: No overload variant
 np.testing.assert_no_warnings(func, None)  # E: Too many arguments
-np.testing.assert_no_warnings(func, test=None)  # E: Unexpected keyword argument
+np.testing.assert_no_warnings(func, test=None)  # E: No overload variant
 
 np.testing.assert_no_gc_cycles(func=func)  # E: No overload variant

@@ -63,6 +63,7 @@ intern_strings(void)
     INTERN_STRING(__dlpack__, "__dlpack__");
     INTERN_STRING(pyvals_name, "UFUNC_PYVALS_NAME");
     INTERN_STRING(legacy, "legacy");
+    INTERN_STRING(__doc__, "__doc__");
     return 0;
 }
 

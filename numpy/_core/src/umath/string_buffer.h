@@ -866,7 +866,7 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
             {
                 char ch = *buf2;
                 CheckedIndexer<char> ind(start_loc, end_loc - start_loc);
-                result = (npy_intp) findchar(ind, end_loc - start_loc, ch);
+                result = (npy_intp) find_char(ind, end_loc - start_loc, ch);
                 if (enc == ENCODING::UTF8 && result > 0) {
                     result = utf8_character_index(
                             start_loc, start_loc - buf1.buf, start, result,
@@ -878,7 +878,7 @@ string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
             {
                 npy_ucs4 ch = *buf2;
                 CheckedIndexer<npy_ucs4> ind((npy_ucs4 *)(buf1 + start).buf, end-start);
-                result = (npy_intp) findchar(ind, end - start, ch);
+                result = (npy_intp) find_char(ind, end - start, ch);
                 break;
             }
         }
@@ -970,7 +970,7 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
             {
                 char ch = *buf2;
                 CheckedIndexer<char> ind(start_loc, end_loc - start_loc);
-                result = (npy_intp) rfindchar(ind, end_loc - start_loc, ch);
+                result = (npy_intp) rfind_char(ind, end_loc - start_loc, ch);
                 if (enc == ENCODING::UTF8 && result > 0) {
                     result = utf8_character_index(
                             start_loc, start_loc - buf1.buf, start, result,
@@ -982,7 +982,7 @@ string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
             {
                 npy_ucs4 ch = *buf2;
                 CheckedIndexer<npy_ucs4> ind((npy_ucs4 *)(buf1 + start).buf, end - start);
-                result = (npy_intp) rfindchar(ind, end - start, ch);
+                result = (npy_intp) rfind_char(ind, end - start, ch);
                 break;
             }
         }
@@ -1236,14 +1236,14 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 case ENCODING::ASCII:
                 {
                     CheckedIndexer<char> ind(buf2.buf, len2);
-                    res = findchar<char>(ind, len2, *traverse_buf);
+                    res = find_char<char>(ind, len2, *traverse_buf);
                     break;
                 }
                 case ENCODING::UTF8:
                 {
                     if (current_point_bytes == 1) {
                         CheckedIndexer<char> ind(buf2.buf, len2);
-                        res = findchar<char>(ind, len2, *traverse_buf);
+                        res = find_char<char>(ind, len2, *traverse_buf);
                     } else {
                         res = fastsearch(buf2.buf, buf2.after - buf2.buf,traverse_buf.buf, current_point_bytes, -1, FAST_SEARCH);
                     }
@@ -1252,7 +1252,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 case ENCODING::UTF32:
                 {
                     CheckedIndexer<npy_ucs4> ind((npy_ucs4 *)buf2.buf, len2);
-                    res = findchar<npy_ucs4>(ind, len2, *traverse_buf);
+                    res = find_char<npy_ucs4>(ind, len2, *traverse_buf);
                     break;
                 }
             }
@@ -1280,14 +1280,14 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 case ENCODING::ASCII:
                 {
                     CheckedIndexer<char> ind(buf2.buf, len2);
-                    res = findchar<char>(ind, len2, *traverse_buf);
+                    res = find_char<char>(ind, len2, *traverse_buf);
                     break;
                 }
                 case ENCODING::UTF8:
                 {
                     if (current_point_bytes == 1) {
                         CheckedIndexer<char> ind(buf2.buf, len2);
-                        res = findchar<char>(ind, len2, *traverse_buf);
+                        res = find_char<char>(ind, len2, *traverse_buf);
                     } else {
                         res = fastsearch(buf2.buf, buf2.after - buf2.buf, traverse_buf.buf, current_point_bytes, -1, FAST_RSEARCH);
                     }
@@ -1296,7 +1296,7 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
                 case ENCODING::UTF32:
                 {
                     CheckedIndexer<npy_ucs4> ind((npy_ucs4 *)buf2.buf, len2);
-                    res = findchar<npy_ucs4>(ind, len2, *traverse_buf);
+                    res = find_char<npy_ucs4>(ind, len2, *traverse_buf);
                     break;
                 }
             }
@@ -1331,7 +1331,7 @@ findslice_for_replace(CheckedIndexer<char_type> buf1, npy_intp len1,
         return 0;
     }
     if (len2 == 1) {
-        return (npy_intp) findchar(buf1, len1, *buf2);
+        return (npy_intp) find_char(buf1, len1, *buf2);
     }
     return (npy_intp) fastsearch(buf1.buffer, len1, buf2.buffer, len2, -1, FAST_SEARCH);
 }
