@@ -160,3 +160,5 @@ def show(mode=DisplayModes.stdout.value):
         raise AttributeError(
             f"Invalid `mode`, use one of: {', '.join([e.value for e in DisplayModes])}"
         )
+
+show.__module__ = "numpy"

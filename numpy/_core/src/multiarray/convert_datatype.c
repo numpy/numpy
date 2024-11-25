@@ -716,18 +716,29 @@ can_cast_pyscalar_scalar_to(
     }
 
     /*
-     * For all other cases we use the default dtype.
+     * For all other cases we need to make a bit of a dance to find the cast
+     * safety.  We do so by finding the descriptor for the "scalar" (without
+     * a value; for parametric user dtypes a value may be needed eventually).
      */
-    PyArray_Descr *from;
+    PyArray_DTypeMeta *from_DType;
+    PyArray_Descr *default_dtype;
     if (flags & NPY_ARRAY_WAS_PYTHON_INT) {
-        from = PyArray_DescrFromType(NPY_LONG);
+        default_dtype = PyArray_DescrNewFromType(NPY_INTP);
+        from_DType = &PyArray_PyLongDType;
     }
     else if (flags & NPY_ARRAY_WAS_PYTHON_FLOAT) {
-        from = PyArray_DescrFromType(NPY_DOUBLE);
+        default_dtype = PyArray_DescrNewFromType(NPY_FLOAT64);
+        from_DType =  &PyArray_PyFloatDType;
     }
     else {
-        from = PyArray_DescrFromType(NPY_CDOUBLE);
+        default_dtype = PyArray_DescrNewFromType(NPY_COMPLEX128);
+        from_DType = &PyArray_PyComplexDType;
     }
+
+    PyArray_Descr *from = npy_find_descr_for_scalar(
+        NULL, default_dtype, from_DType, NPY_DTYPE(to));
+    Py_DECREF(default_dtype);
+
     int res = PyArray_CanCastTypeTo(from, to, casting);
     Py_DECREF(from);
     return res;

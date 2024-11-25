@@ -403,3 +403,12 @@ class TestParamEval:
         dimspec = '(0:4, 3:12, 5)'
         pytest.raises(ValueError, crackfortran.param_eval, v, g_params, params,
                       dimspec=dimspec)
+
+@pytest.mark.slow
+class TestLowerF2PYDirective(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "crackfortran", "gh27697.f90")]
+    options = ['--lower']
+
+    def test_no_lower_fail(self):
+        with pytest.raises(ValueError, match='aborting directly') as exc:
+            self.module.utils.my_abort('aborting directly')

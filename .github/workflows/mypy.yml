@@ -54,12 +54,15 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: ${{ matrix.os_python[1] }}
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
+        # orjson makes mypy faster but the default requirements.txt
+        # can't install it because orjson doesn't support 32 bit Linux
+        pip install orjson
         pip install -r requirements/test_requirements.txt
     - name: Build
       run: |

@@ -1435,9 +1435,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False):
     isin       : Version of this function that preserves the shape of ar1.
     numpy.in1d : Equivalent function for ndarrays.
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -1484,9 +1481,6 @@ def isin(element, test_elements, assume_unique=False, invert=False):
     --------
     in1d       : Flattened version of this function.
     numpy.isin : Equivalent function for ndarrays.
-
-    Notes
-    -----
 
     Examples
     --------
@@ -2214,9 +2208,6 @@ def clump_unmasked(a):
         The list of slices, one for each continuous region of unmasked
         elements in `a`.
 
-    Notes
-    -----
-
     See Also
     --------
     flatnotmasked_edges, flatnotmasked_contiguous, notmasked_edges
@@ -2252,9 +2243,6 @@ def clump_masked(a):
     slices : list of slice
         The list of slices, one for each continuous region of masked elements
         in `a`.
-
-    Notes
-    -----
 
     See Also
     --------

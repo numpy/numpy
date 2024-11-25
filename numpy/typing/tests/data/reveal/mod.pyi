@@ -1,3 +1,4 @@
+import datetime as dt
 from typing import Any
 
 import numpy as np
@@ -26,7 +27,7 @@ AR_m: npt.NDArray[np.timedelta64]
 
 # Time structures
 
-assert_type(td % td, np.timedelta64)
+assert_type(td % td, np.timedelta64[dt.timedelta])
 assert_type(AR_m % td, npt.NDArray[np.timedelta64])
 assert_type(td % AR_m, npt.NDArray[np.timedelta64])
 
@@ -99,7 +100,7 @@ assert_type(f % i8, np.floating[_64Bit])
 assert_type(i8 % i8, np.int64)
 assert_type(f8 % i8, np.float64)
 assert_type(i8 % i4, np.int64 | np.int32)
-assert_type(f8 % i4, np.float64 | np.float32)
+assert_type(f8 % i4, np.float64)
 assert_type(i4 % i4, np.int32)
 assert_type(f4 % i4, np.float32)
 assert_type(AR_b % i8, npt.NDArray[np.signedinteger[Any]])
@@ -125,7 +126,7 @@ assert_type(f8 % AR_b, npt.NDArray[np.floating[Any]])
 assert_type(divmod(f8, b), tuple[np.float64, np.float64])
 assert_type(divmod(f8, f), tuple[np.float64, np.float64])
 assert_type(divmod(f8, f8), tuple[np.float64, np.float64])
-assert_type(divmod(f8, f4), tuple[np.float64, np.float64] | tuple[np.float32, np.float32])
+assert_type(divmod(f8, f4), tuple[np.float64, np.float64])
 assert_type(divmod(f4, f4), tuple[np.float32, np.float32])
 assert_type(divmod(f8, AR_b), tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]])
 

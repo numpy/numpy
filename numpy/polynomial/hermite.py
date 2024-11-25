@@ -930,9 +930,6 @@ def hermval2d(x, y, c):
     --------
     hermval, hermgrid2d, hermval3d, hermgrid3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial.hermite import hermval2d
@@ -990,9 +987,6 @@ def hermgrid2d(x, y, c):
     --------
     hermval, hermval2d, hermval3d, hermgrid3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial.hermite import hermgrid2d
@@ -1049,9 +1043,6 @@ def hermval3d(x, y, z, c):
     See Also
     --------
     hermval, hermval2d, hermgrid2d, hermgrid3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1113,9 +1104,6 @@ def hermgrid3d(x, y, z, c):
     See Also
     --------
     hermval, hermval2d, hermgrid2d, hermval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1240,9 +1228,6 @@ def hermvander2d(x, y, deg):
     --------
     hermvander, hermvander3d, hermval2d, hermval3d
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -1302,9 +1287,6 @@ def hermvander3d(x, y, z, deg):
     See Also
     --------
     hermvander, hermvander3d, hermval2d, hermval3d
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1474,9 +1456,6 @@ def hermcompanion(c):
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
 
     Examples
     --------
@@ -1697,9 +1676,6 @@ def hermweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
 
     Examples
     --------

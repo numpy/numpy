@@ -35,7 +35,7 @@ __all__ = [
     "nanquantile",
 ]
 
-# NOTE: In reaility these functions are not aliases but distinct functions
+# NOTE: In reality these functions are not aliases but distinct functions
 # with identical signatures.
 nanmin = amin
 nanmax = amax
