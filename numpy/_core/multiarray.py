@@ -83,11 +83,11 @@ def _override___module__():
         'isfinite', 'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'less',
         'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
         'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-        'logical_xor', 'matmul', 'maximum', 'minimum', 'remainder', 'modf',
-        'multiply', 'negative', 'nextafter', 'not_equal', 'positive', 'power',
-        'rad2deg', 'radians', 'reciprocal', 'rint', 'sign', 'signbit', 'sin',
-        'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
-        'trunc', 'vecdot',
+        'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'remainder',
+        'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+        'power', 'rad2deg', 'radians', 'reciprocal', 'rint', 'sign', 'signbit',
+        'sin', 'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
+        'trunc', 'vecdot', 'vecmat',
     ]:
         ufunc = namespace_names[ufunc_name]
         ufunc.__module__ = "numpy"
