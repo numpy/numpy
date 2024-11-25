@@ -2312,8 +2312,11 @@ class TestRegression:
 
             try:
                 hash(val)
-            except TypeError as e:
+            except TypeError:
                 assert_(t.__hash__ is None)
+            except ValueError:
+                assert_(t is np.timedelta64)
+                assert_(t.__hash__ is not None)
             else:
                 assert_(t.__hash__ is not None)
 
@@ -2644,3 +2647,10 @@ class TestRegression:
             data = np.broadcast_to(vals, (128, 128, 128))
             data = data.transpose(0, 2, 1).copy()
             np.unique(data)
+
+    def test_sort_overlap(self):
+        # gh-27273
+        size = 100
+        inp = np.linspace(0, size, num=size, dtype=np.intc)
+        out = np.sort(inp)
+        assert_equal(inp, out)

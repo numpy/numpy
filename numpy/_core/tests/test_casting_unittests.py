@@ -776,7 +776,7 @@ class TestCasting:
             # completely invalid/impossible cast:
             ("i,i", "i,i,i", None),
         ])
-    def test_structured_view_offsets_paramteric(
+    def test_structured_view_offsets_parametric(
             self, from_dt, to_dt, expected_off):
         # TODO: While this test is fairly thorough, right now, it does not
         # really test some paths that may have nonzero offsets (they don't

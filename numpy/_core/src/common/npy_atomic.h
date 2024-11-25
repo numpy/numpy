@@ -9,7 +9,8 @@
 
 #include "numpy/npy_common.h"
 
-#if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
+    && !defined(__STDC_NO_ATOMICS__)
 // TODO: support C++ atomics as well if this header is ever needed in C++
     #include <stdatomic.h>
     #include <stdint.h>
@@ -53,15 +54,15 @@ npy_atomic_load_ptr(const void *obj) {
 #elif defined(MSC_ATOMICS)
 #if SIZEOF_VOID_P == 8
 #if defined(_M_X64) || defined(_M_IX86)
-    return *(volatile uint64_t *)obj;
+    return (void *)*(volatile uint64_t *)obj;
 #elif defined(_M_ARM64)
-    return (uint64_t)__ldar64((unsigned __int64 volatile *)obj);
+    return (void *)__ldar64((unsigned __int64 volatile *)obj);
 #endif
 #else
 #if defined(_M_X64) || defined(_M_IX86)
-    return *(volatile uint32_t *)obj;
+    return (void *)*(volatile uint32_t *)obj;
 #elif defined(_M_ARM64)
-    return (uint32_t)__ldar32((unsigned __int32 volatile *)obj);
+    return (void *)__ldar32((unsigned __int32 volatile *)obj);
 #endif
 #endif
 #elif defined(GCC_ATOMICS)

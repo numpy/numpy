@@ -1,13 +1,14 @@
 # NOTE: Numpy's mypy plugin is used for importing the correct
 # platform-specific `ctypes._SimpleCData[int]` sub-type
+import ctypes
 from ctypes import c_int64 as _c_intp
 
-import os
-import ctypes
+from _typeshed import StrOrBytesPath
 from collections.abc import Iterable, Sequence
 from typing import (
     Literal as L,
     Any,
+    TypeAlias,
     TypeVar,
     Generic,
     overload,
@@ -24,13 +25,11 @@ from numpy import (
     intc,
     long,
     longlong,
-    intp,
     ubyte,
     ushort,
     uintc,
     ulong,
     ulonglong,
-    uintp,
     single,
     double,
     longdouble,
@@ -44,6 +43,7 @@ from numpy._typing import (
     _ArrayLike,
 
     # Shapes
+    _Shape,
     _ShapeLike,
 
     # DTypes
@@ -66,12 +66,14 @@ from numpy._typing import (
     _LongDoubleCodes,
 )
 
+__all__ = ["load_library", "ndpointer", "c_intp", "as_ctypes", "as_array", "as_ctypes_type"]
+
 # TODO: Add a proper `_Shape` bound once we've got variadic typevars
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DTypeOptional = TypeVar("_DTypeOptional", bound=None | dtype[Any])
 _SCT = TypeVar("_SCT", bound=generic)
 
-_FlagsKind = L[
+_FlagsKind: TypeAlias = L[
     'C_CONTIGUOUS', 'CONTIGUOUS', 'C',
     'F_CONTIGUOUS', 'FORTRAN', 'F',
     'ALIGNED', 'A',
@@ -100,14 +102,9 @@ class _concrete_ndptr(_ndptr[_DType]):
     _dtype_: ClassVar[_DType]
     _shape_: ClassVar[tuple[int, ...]]
     @property
-    def contents(self) -> ndarray[Any, _DType]: ...
+    def contents(self) -> ndarray[_Shape, _DType]: ...
 
-def load_library(
-    libname: str | bytes | os.PathLike[str] | os.PathLike[bytes],
-    loader_path: str | bytes | os.PathLike[str] | os.PathLike[bytes],
-) -> ctypes.CDLL: ...
-
-__all__: list[str]
+def load_library(libname: StrOrBytesPath, loader_path: StrOrBytesPath) -> ctypes.CDLL: ...
 
 c_intp = _c_intp
 

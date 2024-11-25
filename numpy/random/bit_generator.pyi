@@ -4,10 +4,12 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import (
     Any,
     NamedTuple,
+    TypeAlias,
     TypedDict,
     TypeVar,
     overload,
     Literal,
+    type_check_only,
 )
 
 from numpy import dtype, uint32, uint64
@@ -22,25 +24,27 @@ from numpy._typing import (
 
 _T = TypeVar("_T")
 
-_DTypeLikeUint32 = (
+_DTypeLikeUint32: TypeAlias = (
     dtype[uint32]
     | _SupportsDType[dtype[uint32]]
     | type[uint32]
     | _UInt32Codes
 )
-_DTypeLikeUint64 = (
+_DTypeLikeUint64: TypeAlias = (
     dtype[uint64]
     | _SupportsDType[dtype[uint64]]
     | type[uint64]
     | _UInt64Codes
 )
 
+@type_check_only
 class _SeedSeqState(TypedDict):
     entropy: None | int | Sequence[int]
     spawn_key: tuple[int, ...]
     pool_size: int
     n_children_spawned: int
 
+@type_check_only
 class _Interface(NamedTuple):
     state_address: Any
     state: Any

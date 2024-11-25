@@ -7,9 +7,8 @@ from typing import (
     SupportsIndex,
     SupportsInt,
     TypeAlias,
-    TypeVar,
-    final,
     overload,
+    type_check_only,
 )
 
 import numpy as np
@@ -30,7 +29,7 @@ from numpy._typing import (
     _NumberLike_co,
 )
 
-from typing_extensions import LiteralString
+from typing_extensions import LiteralString, TypeVar
 
 
 _T = TypeVar("_T")
@@ -39,6 +38,7 @@ _Self = TypeVar("_Self")
 _SCT = TypeVar("_SCT", bound=np.number[Any] | np.bool | np.object_)
 
 # compatible with e.g. int, float, complex, Decimal, Fraction, and ABCPolyBase
+@type_check_only
 class _SupportsCoefOps(Protocol[_T_contra]):
     def __eq__(self, x: object, /) -> bool: ...
     def __ne__(self, x: object, /) -> bool: ...
@@ -113,15 +113,16 @@ _ArrayLikeCoef_co: TypeAlias = (
     | _ArrayLikeCoefObject_co
 )
 
-_Name_co = TypeVar("_Name_co", bound=LiteralString, covariant=True)
+_Name_co = TypeVar("_Name_co", bound=LiteralString, covariant=True, default=LiteralString)
 
+@type_check_only
 class _Named(Protocol[_Name_co]):
     @property
     def __name__(self, /) -> _Name_co: ...
 
 _Line: TypeAlias = np.ndarray[tuple[Literal[1, 2]], np.dtype[_SCT]]
 
-@final
+@type_check_only
 class _FuncLine(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, off: _SCT, scl: _SCT) -> _Line[_SCT]: ...
@@ -144,7 +145,7 @@ class _FuncLine(_Named[_Name_co], Protocol[_Name_co]):
         scl: _SupportsCoefOps[Any],
     ) -> _Line[np.object_]: ...
 
-@final
+@type_check_only
 class _FuncFromRoots(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, roots: _SeriesLikeFloat_co) -> _FloatSeries: ...
@@ -153,7 +154,7 @@ class _FuncFromRoots(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, roots: _SeriesLikeCoef_co) -> _ObjectSeries: ...
 
-@final
+@type_check_only
 class _FuncBinOp(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -184,7 +185,7 @@ class _FuncBinOp(_Named[_Name_co], Protocol[_Name_co]):
         c2: _SeriesLikeCoef_co,
     ) -> _ObjectSeries: ...
 
-@final
+@type_check_only
 class _FuncUnOp(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, c: _SeriesLikeFloat_co) -> _FloatSeries: ...
@@ -193,7 +194,7 @@ class _FuncUnOp(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, c: _SeriesLikeCoef_co) -> _ObjectSeries: ...
 
-@final
+@type_check_only
 class _FuncPoly2Ortho(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, pol: _SeriesLikeFloat_co) -> _FloatSeries: ...
@@ -202,7 +203,7 @@ class _FuncPoly2Ortho(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, pol: _SeriesLikeCoef_co) -> _ObjectSeries: ...
 
-@final
+@type_check_only
 class _FuncPow(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -229,7 +230,7 @@ class _FuncPow(_Named[_Name_co], Protocol[_Name_co]):
         maxpower: None | _IntLike_co = ...,
     ) -> _ObjectSeries: ...
 
-@final
+@type_check_only
 class _FuncDer(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -259,7 +260,7 @@ class _FuncDer(_Named[_Name_co], Protocol[_Name_co]):
         axis: SupportsIndex = ...,
     ) -> _ObjectArray: ...
 
-@final
+@type_check_only
 class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -295,7 +296,7 @@ class _FuncInteg(_Named[_Name_co], Protocol[_Name_co]):
         axis: SupportsIndex = ...,
     ) -> _ObjectArray: ...
 
-@final
+@type_check_only
 class _FuncValFromRoots(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -346,7 +347,7 @@ class _FuncValFromRoots(_Named[_Name_co], Protocol[_Name_co]):
         tensor: bool = ...,
     ) -> _SupportsCoefOps[Any]: ...
 
-@final
+@type_check_only
 class _FuncVal(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -397,7 +398,7 @@ class _FuncVal(_Named[_Name_co], Protocol[_Name_co]):
         tensor: bool = ...,
     ) -> _SupportsCoefOps[Any]: ...
 
-@final
+@type_check_only
 class _FuncVal2D(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -448,7 +449,7 @@ class _FuncVal2D(_Named[_Name_co], Protocol[_Name_co]):
         c: _SeriesLikeCoef_co,
     ) -> _SupportsCoefOps[Any]: ...
 
-@final
+@type_check_only
 class _FuncVal3D(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -510,7 +511,7 @@ _AnyValF: TypeAlias = Callable[
     _CoefArray,
 ]
 
-@final
+@type_check_only
 class _FuncValND(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -561,7 +562,7 @@ class _FuncValND(_Named[_Name_co], Protocol[_Name_co]):
         *args: _ArrayLikeCoef_co,
     ) -> _ObjectArray: ...
 
-@final
+@type_check_only
 class _FuncVander(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -594,7 +595,7 @@ class _FuncVander(_Named[_Name_co], Protocol[_Name_co]):
 
 _AnyDegrees: TypeAlias = Sequence[SupportsIndex]
 
-@final
+@type_check_only
 class _FuncVander2D(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -629,7 +630,7 @@ class _FuncVander2D(_Named[_Name_co], Protocol[_Name_co]):
         deg: _AnyDegrees,
     ) -> _CoefArray: ...
 
-@final
+@type_check_only
 class _FuncVander3D(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -674,7 +675,7 @@ _AnyFuncVander: TypeAlias = Callable[
     _CoefArray,
 ]
 
-@final
+@type_check_only
 class _FuncVanderND(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -713,7 +714,7 @@ class _FuncVanderND(_Named[_Name_co], Protocol[_Name_co]):
 
 _FullFitResult: TypeAlias = Sequence[np.inexact[Any] | np.int32]
 
-@final
+@type_check_only
 class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -820,7 +821,7 @@ class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):
         w: None | _SeriesLikeFloat_co = ...,
     ) -> tuple[_ObjectArray, _FullFitResult]: ...
 
-@final
+@type_check_only
 class _FuncRoots(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -840,7 +841,7 @@ class _FuncRoots(_Named[_Name_co], Protocol[_Name_co]):
 
 _Companion: TypeAlias = np.ndarray[tuple[int, int], np.dtype[_SCT]]
 
-@final
+@type_check_only
 class _FuncCompanion(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -857,7 +858,7 @@ class _FuncCompanion(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, c: _SeriesLikeCoef_co) -> _Companion[np.object_]: ...
 
-@final
+@type_check_only
 class _FuncGauss(_Named[_Name_co], Protocol[_Name_co]):
     def __call__(
         self,
@@ -865,7 +866,7 @@ class _FuncGauss(_Named[_Name_co], Protocol[_Name_co]):
         deg: SupportsIndex,
     ) -> _Tuple2[_Series[np.float64]]: ...
 
-@final
+@type_check_only
 class _FuncWeight(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(
@@ -882,6 +883,6 @@ class _FuncWeight(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, c: _ArrayLikeCoef_co) -> _ObjectArray: ...
 
-@final
+@type_check_only
 class _FuncPts(_Named[_Name_co], Protocol[_Name_co]):
     def __call__(self, /, npts: _AnyInt) -> _Series[np.float64]: ...
