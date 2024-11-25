@@ -19,7 +19,7 @@ from ._datasource import DataSource
 from numpy._core import overrides
 from numpy._core.multiarray import packbits, unpackbits
 from numpy._core._multiarray_umath import _load_from_filelike
-from numpy._core.overrides import set_array_function_like_doc, set_module
+from numpy._core.overrides import finalize_array_function_like, set_module
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
@@ -483,8 +483,10 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         else:
             # Try a pickle
             if not allow_pickle:
-                raise ValueError("Cannot load file containing pickled data "
-                                 "when allow_pickle=False")
+                raise ValueError(
+                    "This file contains pickled (object) data. If you trust "
+                    "the file you can load it unsafely using the "
+                    "`allow_pickle=` keyword argument or `pickle.load()`.")
             try:
                 return pickle.load(fid, **pickle_kwargs)
             except Exception as e:
@@ -1124,7 +1126,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         return arr
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
@@ -1742,7 +1744,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 #####--------------------------------------------------------------------------
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,

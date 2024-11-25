@@ -841,7 +841,7 @@ typedef struct {
         npy_int32 month, day, hour, min, sec, us, ps, as;
 } npy_datetimestruct;
 
-/* This is not used internally. */
+/* This structure contains an exploded view of a timedelta value */
 typedef struct {
         npy_int64 day;
         npy_int32 sec, us, ps, as;

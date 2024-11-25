@@ -1447,10 +1447,6 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
     args and keyword arguments kwargs.
 
     Alternatively, can be used as a context manager like `assert_raises`.
-
-    Notes
-    -----
-
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     return _d.assertRaisesRegex(exception_class, expected_regexp, *args, **kwargs)

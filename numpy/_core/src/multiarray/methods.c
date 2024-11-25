@@ -888,28 +888,39 @@ array_finalizearray(PyArrayObject *self, PyObject *obj)
 }
 
 
+/*
+ * Default `__array_wrap__` implementation.
+ *
+ * If `self` is not a base class, we always create a new view, even if
+ * `return_scalar` is set. This way we preserve the (presumably important)
+ * subclass information.
+ * If the type is a base class array, we honor `return_scalar` and call
+ * PyArray_Return to convert any array with ndim=0 to scalar.
+ *
+ * By default, do not return a scalar (because this was always the default).
+ */
 static PyObject *
 array_wraparray(PyArrayObject *self, PyObject *args)
 {
     PyArrayObject *arr;
-    PyObject *obj;
+    PyObject *UNUSED = NULL;  /* for the context argument */
+    int return_scalar = 0;
 
-    if (PyTuple_Size(args) < 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "only accepts 1 argument");
+    if (!PyArg_ParseTuple(args, "O!|OO&:__array_wrap__",
+                &PyArray_Type, &arr, &UNUSED,
+                &PyArray_OptionalBoolConverter, &return_scalar)) {
         return NULL;
     }
-    obj = PyTuple_GET_ITEM(args, 0);
-    if (obj == NULL) {
-        return NULL;
-    }
-    if (!PyArray_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "can only be called with ndarray object");
-        return NULL;
-    }
-    arr = (PyArrayObject *)obj;
 
+    if (return_scalar && Py_TYPE(self) == &PyArray_Type && PyArray_NDIM(arr) == 0) {
+        /* Strict scalar return here (but go via PyArray_Return anyway) */
+        Py_INCREF(arr);
+        return PyArray_Return(arr);
+    }
+
+    /*
+     * Return an array, but should ensure it has the type of self
+     */
     if (Py_TYPE(self) != Py_TYPE(arr)) {
         PyArray_Descr *dtype = PyArray_DESCR(arr);
         Py_INCREF(dtype);
@@ -919,7 +930,7 @@ array_wraparray(PyArrayObject *self, PyObject *args)
                 PyArray_NDIM(arr),
                 PyArray_DIMS(arr),
                 PyArray_STRIDES(arr), PyArray_DATA(arr),
-                PyArray_FLAGS(arr), (PyObject *)self, obj);
+                PyArray_FLAGS(arr), (PyObject *)self, (PyObject *)arr);
     }
     else {
         /*

@@ -3,12 +3,6 @@ Utilities that manipulate strides to achieve desirable effects.
 
 An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
-Functions
----------
-
-.. autosummary::
-   :toctree: generated/
-
 """
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
@@ -403,9 +397,6 @@ def broadcast_to(array, shape, subok=False):
     broadcast
     broadcast_arrays
     broadcast_shapes
-
-    Notes
-    -----
 
     Examples
     --------

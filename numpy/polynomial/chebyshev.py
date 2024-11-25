@@ -674,9 +674,6 @@ def chebmulx(c):
     --------
     chebadd, chebsub, chebmul, chebdiv, chebpow
 
-    Notes
-    -----
-
     Examples
     --------
     >>> from numpy.polynomial import chebyshev as C
@@ -1210,10 +1207,6 @@ def chebval2d(x, y, c):
     See Also
     --------
     chebval, chebgrid2d, chebval3d, chebgrid3d
-
-    Notes
-    -----
-
     """
     return pu._valnd(chebval, c, x, y)
 
@@ -1261,10 +1254,6 @@ def chebgrid2d(x, y, c):
     See Also
     --------
     chebval, chebval2d, chebval3d, chebgrid3d
-
-    Notes
-    -----
-
     """
     return pu._gridnd(chebval, c, x, y)
 
@@ -1310,10 +1299,6 @@ def chebval3d(x, y, z, c):
     See Also
     --------
     chebval, chebval2d, chebgrid2d, chebgrid3d
-
-    Notes
-    -----
-
     """
     return pu._valnd(chebval, c, x, y, z)
 
@@ -1364,10 +1349,6 @@ def chebgrid3d(x, y, z, c):
     See Also
     --------
     chebval, chebval2d, chebgrid2d, chebval3d
-
-    Notes
-    -----
-
     """
     return pu._gridnd(chebval, c, x, y, z)
 
@@ -1468,10 +1449,6 @@ def chebvander2d(x, y, deg):
     See Also
     --------
     chebvander, chebvander3d, chebval2d, chebval3d
-
-    Notes
-    -----
-
     """
     return pu._vander_nd_flat((chebvander, chebvander), (x, y), deg)
 
@@ -1520,10 +1497,6 @@ def chebvander3d(x, y, z, deg):
     See Also
     --------
     chebvander, chebvander3d, chebval2d, chebval3d
-
-    Notes
-    -----
-
     """
     return pu._vander_nd_flat((chebvander, chebvander, chebvander), (x, y, z), deg)
 
@@ -1672,10 +1645,6 @@ def chebcompanion(c):
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
-
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1793,7 +1762,6 @@ def chebinterpolate(func, deg, args=()):
 
     Notes
     -----
-
     The Chebyshev polynomials used in the interpolation are orthogonal when
     sampled at the Chebyshev points of the first kind. If it is desired to
     constrain some of the coefficients they can simply be set to the desired
@@ -1881,10 +1849,6 @@ def chebweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
-
     """
     w = 1./(np.sqrt(1. + x) * np.sqrt(1. - x))
     return w
@@ -1910,10 +1874,6 @@ def chebpts1(npts):
     See Also
     --------
     chebpts2
-
-    Notes
-    -----
-
     """
     _npts = int(npts)
     if _npts != npts:
@@ -1942,10 +1902,6 @@ def chebpts2(npts):
     -------
     pts : ndarray
         The Chebyshev points of the second kind.
-
-    Notes
-    -----
-
     """
     _npts = int(npts)
     if _npts != npts:

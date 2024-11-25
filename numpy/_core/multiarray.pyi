@@ -1,6 +1,6 @@
 # TODO: Sort out any and all missing functions in this namespace
-import os
 import datetime as dt
+from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
 from collections.abc import Sequence, Callable, Iterable
 from typing import (
     Literal as L,
@@ -54,10 +54,10 @@ from numpy import (  # type: ignore[attr-defined]
     _CastingKind,
     _ModeKind,
     _SupportsBuffer,
-    _IOProtocol,
+    _SupportsFileMethods,
     _CopyMode,
     _NDIterFlagsKind,
-    _NDIterOpFlagsKind,
+    _NDIterFlagsOp,
 )
 from numpy.lib._array_utils_impl import normalize_axis_index
 
@@ -237,20 +237,12 @@ _RollKind: TypeAlias = L[  # `raise` is deliberately excluded
 ]
 
 @type_check_only
-class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
-    def __len__(self) -> int: ...
-    def __getitem__(self, key: _T_contra, /) -> _T_co: ...
-
-@type_check_only
 class _SupportsArray(Protocol[_ArrayType_co]):
     def __array__(self, /) -> _ArrayType_co: ...
 
 @type_check_only
-class _KwargsEmptyLike(TypedDict, total=False):
+class _KwargsEmpty(TypedDict, total=False):
     device: None | L["cpu"]
-
-@type_check_only
-class _KwargsEmpty(_KwargsEmptyLike, total=False):
     like: None | _SupportsArrayFunc
 
 @type_check_only
@@ -558,7 +550,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: _SupportsLenAndGetItem[int, ArrayLike],
+    arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -568,7 +560,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: _SupportsLenAndGetItem[int, ArrayLike],
+    arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -578,7 +570,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: _SupportsLenAndGetItem[int, ArrayLike],
+    arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -588,7 +580,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(
-    arrays: _SupportsLenAndGetItem[int, ArrayLike],
+    arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: _ArrayType = ...,
@@ -963,7 +955,7 @@ def frompyfunc(
 
 @overload
 def fromfile(
-    file: str | bytes | os.PathLike[Any] | _IOProtocol,
+    file: StrOrBytesPath | _SupportsFileMethods,
     dtype: None = ...,
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -973,7 +965,7 @@ def fromfile(
 ) -> NDArray[float64]: ...
 @overload
 def fromfile(
-    file: str | bytes | os.PathLike[Any] | _IOProtocol,
+    file: StrOrBytesPath | _SupportsFileMethods,
     dtype: _DTypeLike[_SCT],
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -983,7 +975,7 @@ def fromfile(
 ) -> NDArray[_SCT]: ...
 @overload
 def fromfile(
-    file: str | bytes | os.PathLike[Any] | _IOProtocol,
+    file: StrOrBytesPath | _SupportsFileMethods,
     dtype: DTypeLike,
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -1348,7 +1340,7 @@ def nested_iters(
     op: ArrayLike | Sequence[ArrayLike],
     axes: Sequence[Sequence[SupportsIndex]],
     flags: None | Sequence[_NDIterFlagsKind] = ...,
-    op_flags: None | Sequence[Sequence[_NDIterOpFlagsKind]] = ...,
+    op_flags: None | Sequence[Sequence[_NDIterFlagsOp]] = ...,
     op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
     order: _OrderKACF = ...,
     casting: _CastingKind = ...,

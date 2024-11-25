@@ -24,6 +24,12 @@ except NameError:
     RecursionError = RuntimeError  # python < 3.5
 
 
+def _assert_equal_hash(v1, v2):
+    assert v1 == v2
+    assert hash(v1) == hash(v2)
+    assert v2 in {v1}
+
+
 class TestDateTime:
 
     def test_string(self):
@@ -1390,6 +1396,14 @@ class TestDateTime:
         expected = (op1 // op2, op1 % op2)
         assert_equal(divmod(op1, op2), expected)
 
+    @pytest.mark.parametrize("op1, op2", [
+        # Y and M are incompatible with all units except Y and M
+        (np.timedelta64(1, 'Y'), np.timedelta64(1, 's')),
+        (np.timedelta64(1, 'D'), np.timedelta64(1, 'M')),    
+        ])
+    def test_timedelta_divmod_typeerror(self, op1, op2):
+        assert_raises(TypeError, np.divmod, op1, op2)
+
     @pytest.mark.skipif(IS_WASM, reason="does not work in wasm")
     @pytest.mark.parametrize("op1, op2", [
         # reuse cases from floordiv
@@ -2551,6 +2565,101 @@ class TestDateTime:
         # week reprs are not distinguishable.
         limit_via_str = np.datetime64(str(limit), time_unit)
         assert limit_via_str == limit
+
+    def test_datetime_hash_nat(self):
+        nat1 = np.datetime64()
+        nat2 = np.datetime64()
+        assert nat1 is not nat2
+        assert nat1 != nat2
+        assert hash(nat1) != hash(nat2)
+
+    @pytest.mark.parametrize('unit', ('Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms', 'us'))
+    def test_datetime_hash_weeks(self, unit):
+        dt = np.datetime64(2348, 'W')  # 2015-01-01
+        dt2 = np.datetime64(dt, unit)
+        _assert_equal_hash(dt, dt2)
+
+        dt3 = np.datetime64(int(dt2.astype(int)) + 1, unit)
+        assert hash(dt) != hash(dt3)  # doesn't collide
+
+    @pytest.mark.parametrize('unit', ('h', 'm', 's', 'ms', 'us'))
+    def test_datetime_hash_weeks_vs_pydatetime(self, unit):
+        dt = np.datetime64(2348, 'W')  # 2015-01-01
+        dt2 = np.datetime64(dt, unit)
+        pydt = dt2.astype(datetime.datetime)
+        assert isinstance(pydt, datetime.datetime)
+        _assert_equal_hash(pydt, dt2)
+
+    @pytest.mark.parametrize('unit', ('Y', 'M', 'W', 'D', 'h', 'm', 's', 'ms', 'us'))
+    def test_datetime_hash_big_negative(self, unit):
+        dt = np.datetime64(-102894, 'W')  # -002-01-01
+        dt2 = np.datetime64(dt, unit)
+        _assert_equal_hash(dt, dt2)
+
+    # can only go down to "fs" before integer overflow
+    @pytest.mark.parametrize('unit', ('m', 's', 'ms', 'us', 'ns', 'ps', 'fs'))
+    def test_datetime_hash_minutes(self, unit):
+        dt = np.datetime64(3, 'm')
+        dt2 = np.datetime64(dt, unit)
+        _assert_equal_hash(dt, dt2)
+
+    @pytest.mark.parametrize('unit', ('ns', 'ps', 'fs', 'as'))
+    def test_datetime_hash_ns(self, unit):
+        dt = np.datetime64(3, 'ns')
+        dt2 = np.datetime64(dt, unit)
+        _assert_equal_hash(dt, dt2)
+
+        dt3 = np.datetime64(int(dt2.astype(int)) + 1, unit)
+        assert hash(dt) != hash(dt3)  # doesn't collide
+
+    @pytest.mark.parametrize('wk', range(500000, 500010))  # 11552-09-04
+    @pytest.mark.parametrize('unit', ('W', 'D', 'h', 'm', 's', 'ms', 'us'))
+    def test_datetime_hash_big_positive(self, wk, unit):
+        dt = np.datetime64(wk, 'W')
+        dt2 = np.datetime64(dt, unit)
+        _assert_equal_hash(dt, dt2)
+
+    def test_timedelta_hash_generic(self):
+        assert_raises(ValueError, hash, np.timedelta64(123))  # generic
+
+    @pytest.mark.parametrize('unit', ('Y', 'M'))
+    def test_timedelta_hash_year_month(self, unit):
+        td = np.timedelta64(45, 'Y')
+        td2 = np.timedelta64(td, unit)
+        _assert_equal_hash(td, td2)
+
+    @pytest.mark.parametrize('unit', ('W', 'D', 'h', 'm', 's', 'ms', 'us'))
+    def test_timedelta_hash_weeks(self, unit):
+        td = np.timedelta64(10, 'W')
+        td2 = np.timedelta64(td, unit)
+        _assert_equal_hash(td, td2)
+
+        td3 = np.timedelta64(int(td2.astype(int)) + 1, unit)
+        assert hash(td) != hash(td3)  # doesn't collide
+
+    @pytest.mark.parametrize('unit', ('W', 'D', 'h', 'm', 's', 'ms', 'us'))
+    def test_timedelta_hash_weeks_vs_pydelta(self, unit):
+        td = np.timedelta64(10, 'W')
+        td2 = np.timedelta64(td, unit)
+        pytd = td2.astype(datetime.timedelta)
+        assert isinstance(pytd, datetime.timedelta)
+        _assert_equal_hash(pytd, td2)
+
+    @pytest.mark.parametrize('unit', ('ms', 'us', 'ns', 'ps', 'fs', 'as'))
+    def test_timedelta_hash_ms(self, unit):
+        td = np.timedelta64(3, 'ms')
+        td2 = np.timedelta64(td, unit)
+        _assert_equal_hash(td, td2)
+
+        td3 = np.timedelta64(int(td2.astype(int)) + 1, unit)
+        assert hash(td) != hash(td3)  # doesn't collide
+
+    @pytest.mark.parametrize('wk', range(500000, 500010))
+    @pytest.mark.parametrize('unit', ('W', 'D', 'h', 'm', 's', 'ms', 'us'))
+    def test_timedelta_hash_big_positive(self, wk, unit):
+        td = np.timedelta64(wk, 'W')
+        td2 = np.timedelta64(td, unit)
+        _assert_equal_hash(td, td2)
 
 
 class TestDateTimeData:

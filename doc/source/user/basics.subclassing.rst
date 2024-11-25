@@ -42,7 +42,7 @@ This can result in surprising behavior if you use NumPy methods or
 functions you have not explicitly tested.
 
 On the other hand, compared to other interoperability approaches,
-subclassing can be a useful because many thing will "just work".
+subclassing can be useful because many things will "just work".
 
 This means that subclassing can be a convenient approach and for a long time
 it was also often the only available approach.
@@ -227,7 +227,7 @@ like::
 
   obj = ndarray.__new__(subtype, shape, ...
 
-where ``subdtype`` is the subclass.  Thus the returned view is of the
+where ``subtype`` is the subclass.  Thus the returned view is of the
 same class as the subclass, rather than being of class ``ndarray``.
 
 That solves the problem of returning views of the same type, but now

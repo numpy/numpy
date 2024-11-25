@@ -1256,22 +1256,22 @@ dtypemeta_wrap_legacy_descriptor(
 
 
 static PyObject *
-dtypemeta_get_abstract(PyArray_DTypeMeta *self) {
+dtypemeta_get_abstract(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_abstract(self));
 }
 
 static PyObject *
-dtypemeta_get_legacy(PyArray_DTypeMeta *self) {
+dtypemeta_get_legacy(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_legacy(self));
 }
 
 static PyObject *
-dtypemeta_get_parametric(PyArray_DTypeMeta *self) {
+dtypemeta_get_parametric(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_parametric(self));
 }
 
 static PyObject *
-dtypemeta_get_is_numeric(PyArray_DTypeMeta *self) {
+dtypemeta_get_is_numeric(PyArray_DTypeMeta *self, void *NPY_UNUSED(ignored)) {
     return PyBool_FromLong(NPY_DT_is_numeric(self));
 }
 

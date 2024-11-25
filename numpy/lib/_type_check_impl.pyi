@@ -1,33 +1,24 @@
 from collections.abc import Container, Iterable
-from typing import (
-    Literal as L,
-    Any,
-    overload,
-    TypeVar,
-    Protocol,
-    type_check_only,
-)
+from typing import Literal as L, Any, overload, TypeVar
 
 import numpy as np
 from numpy import (
+    _HasRealAndImag,
     dtype,
     generic,
     floating,
-    float64,
     complexfloating,
     integer,
 )
 
 from numpy._typing import (
     ArrayLike,
-    DTypeLike,
     NBitBase,
     NDArray,
     _64Bit,
     _SupportsDType,
     _ScalarLike_co,
     _ArrayLike,
-    _DTypeLikeComplex,
 )
 
 __all__ = [
@@ -50,15 +41,6 @@ _SCT = TypeVar("_SCT", bound=generic)
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 
-@type_check_only
-class _SupportsReal(Protocol[_T_co]):
-    @property
-    def real(self) -> _T_co: ...
-
-@type_check_only
-class _SupportsImag(Protocol[_T_co]):
-    @property
-    def imag(self) -> _T_co: ...
 
 def mintypecode(
     typechars: Iterable[str | ArrayLike],
@@ -67,12 +49,12 @@ def mintypecode(
 ) -> str: ...
 
 @overload
-def real(val: _SupportsReal[_T]) -> _T: ...
+def real(val: _HasRealAndImag[_T, Any]) -> _T: ...
 @overload
 def real(val: ArrayLike) -> NDArray[Any]: ...
 
 @overload
-def imag(val: _SupportsImag[_T]) -> _T: ...
+def imag(val: _HasRealAndImag[Any, _T]) -> _T: ...
 @overload
 def imag(val: ArrayLike) -> NDArray[Any]: ...
 

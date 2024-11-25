@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 #cython: language_level=3
 """
 This file shows how the to use a BitGenerator to create a distribution.
