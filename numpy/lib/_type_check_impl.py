@@ -398,27 +398,17 @@ def nan_to_num(x, copy=True, nan=0.0, posinf=None, neginf=None):
         in-place (False). The in-place operation only occurs if
         casting to an array does not require a copy.
         Default is True.
-
-        .. versionadded:: 1.13
     nan : int, float, optional
         Value to be used to fill NaN values. If no value is passed
         then NaN values will be replaced with 0.0.
-
-        .. versionadded:: 1.17
     posinf : int, float, optional
         Value to be used to fill positive infinity values. If no value is
         passed then positive infinity values will be replaced with a very
         large number.
-
-        .. versionadded:: 1.17
     neginf : int, float, optional
         Value to be used to fill negative infinity values. If no value is
         passed then negative infinity values will be replaced with a very
         small (or negative) number.
-
-        .. versionadded:: 1.17
-
-
 
     Returns
     -------

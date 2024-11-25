@@ -1,19 +1,19 @@
 from collections.abc import Iterable
-from typing import Any, TypeVar, overload, Literal
+from typing import Any, TypeAlias, TypeVar, overload, Literal
 
 from numpy._typing import NDArray, DTypeLike, _SupportsArrayFunc
 
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_Requirements = Literal[
+_Requirements: TypeAlias = Literal[
     "C", "C_CONTIGUOUS", "CONTIGUOUS",
     "F", "F_CONTIGUOUS", "FORTRAN",
     "A", "ALIGNED",
     "W", "WRITEABLE",
     "O", "OWNDATA"
 ]
-_E = Literal["E", "ENSUREARRAY"]
-_RequirementsWithE = _Requirements | _E
+_E: TypeAlias = Literal["E", "ENSUREARRAY"]
+_RequirementsWithE: TypeAlias = _Requirements | _E
 
 @overload
 def require(

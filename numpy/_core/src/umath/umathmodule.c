@@ -167,6 +167,13 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
 PyObject *
 add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
+
+    /* 2024-11-12, NumPy 2.2 */
+    if (DEPRECATE("_add_newdoc_ufunc is deprecated. "
+                  "Use `ufunc.__doc__ = newdoc` instead.") < 0) {
+        return NULL;
+    }
+
     PyUFuncObject *ufunc;
     PyObject *str;
     if (!PyArg_ParseTuple(args, "O!O!:_add_newdoc_ufunc", &PyUFunc_Type, &ufunc,

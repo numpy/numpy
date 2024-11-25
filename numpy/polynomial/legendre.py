@@ -639,8 +639,6 @@ def legder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     der : ndarray
@@ -740,8 +738,6 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -874,8 +870,6 @@ def legval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, algebra_like
@@ -911,8 +905,8 @@ def legval(x, c, tensor=True):
         for i in range(3, len(c) + 1):
             tmp = c0
             nd = nd - 1
-            c0 = c[-i] - (c1*(nd - 1))/nd
-            c1 = tmp + (c1*x*(2*nd - 1))/nd
+            c0 = c[-i] - c1*((nd - 1)/nd)
+            c1 = tmp + c1*x*((2*nd - 1)/nd)
     return c0 + c1*x
 
 
@@ -955,12 +949,6 @@ def legval2d(x, y, c):
     See Also
     --------
     legval, leggrid2d, legval3d, leggrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(legval, c, x, y)
 
@@ -1008,12 +996,6 @@ def leggrid2d(x, y, c):
     See Also
     --------
     legval, legval2d, legval3d, leggrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(legval, c, x, y)
 
@@ -1059,12 +1041,6 @@ def legval3d(x, y, z, c):
     See Also
     --------
     legval, legval2d, leggrid2d, leggrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(legval, c, x, y, z)
 
@@ -1115,12 +1091,6 @@ def leggrid3d(x, y, z, c):
     See Also
     --------
     legval, legval2d, leggrid2d, legval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(legval, c, x, y, z)
 
@@ -1221,12 +1191,6 @@ def legvander2d(x, y, deg):
     See Also
     --------
     legvander, legvander3d, legval2d, legval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((legvander, legvander), (x, y), deg)
 
@@ -1275,12 +1239,6 @@ def legvander3d(x, y, z, deg):
     See Also
     --------
     legvander, legvander3d, legval2d, legval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((legvander, legvander, legvander), (x, y, z), deg)
 
@@ -1328,8 +1286,6 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         chosen so that the errors of the products ``w[i]*y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
-        .. versionadded:: 1.5.0
 
     Returns
     -------
@@ -1433,12 +1389,6 @@ def legcompanion(c):
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1542,9 +1492,6 @@ def leggauss(deg):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
-
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
@@ -1604,12 +1551,6 @@ def legweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     w = x*0.0 + 1.0
     return w
@@ -1636,8 +1577,6 @@ class Legendre(ABCPolyBase):
         The default value is [-1., 1.].
     window : (2,) array_like, optional
         Window, see `domain` for its use. The default value is [-1., 1.].
-
-        .. versionadded:: 1.6.0
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.

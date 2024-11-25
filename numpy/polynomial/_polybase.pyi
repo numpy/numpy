@@ -11,7 +11,6 @@ from typing import (
     SupportsIndex,
     TypeAlias,
     TypeGuard,
-    TypeVar,
     overload,
 )
 
@@ -42,15 +41,15 @@ from ._polytypes import (
     _ArrayLikeCoef_co,
 )
 
-from typing_extensions import LiteralString
+from typing_extensions import LiteralString, TypeVar
 
 
 __all__: Final[Sequence[str]] = ("ABCPolyBase",)
 
 
-_NameCo = TypeVar("_NameCo", bound=None | LiteralString, covariant=True)
+_NameCo = TypeVar("_NameCo", bound=LiteralString | None, covariant=True, default=LiteralString | None)
 _Self = TypeVar("_Self")
-_Other = TypeVar("_Other", bound=ABCPolyBase[Any])
+_Other = TypeVar("_Other", bound=ABCPolyBase)
 
 _AnyOther: TypeAlias = ABCPolyBase | _CoefLike_co | _SeriesLikeCoef_co
 _Hundred: TypeAlias = Literal[100]

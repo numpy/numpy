@@ -7,7 +7,7 @@ requires = [
 
 [project]
 name = "numpy"
-version = "2.2.0.dev0"
+version = "2.3.0.dev0"
 # TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
 license = {file = "LICENSE.txt"}
 
@@ -29,6 +29,7 @@ classifiers = [
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3 :: Only',
     'Programming Language :: Python :: Implementation :: CPython',
     'Topic :: Software Development',

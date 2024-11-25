@@ -119,8 +119,6 @@ def npy_load_module(name, fn, info=None):
     3.12. An alternative that uses ``exec_module`` is in
     numpy.distutils.misc_util.exec_mod_from_location
 
-    .. versionadded:: 1.11.2
-
     Parameters
     ----------
     name : str

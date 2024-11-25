@@ -30,7 +30,7 @@ from numpy.testing import (
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, IS_WASM, IS_PYSTON, HAS_REFCOUNT,
     assert_array_less, runstring, temppath, suppress_warnings, break_cycles,
-    _SUPPORTS_SVE, assert_array_compare,
+    check_support_sve, assert_array_compare,
     )
 from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy._core.tests._locales import CommaDecimalPointLocale
@@ -4767,7 +4767,7 @@ class TestArgmax:
             ([np.nan, 0, 1, 2, 3], 0),
             ([np.nan, 0, np.nan, 2, 3], 0),
             # To hit the tail of SIMD multi-level(x4, x1) inner loops
-            # on variant SIMD widthes
+            # on variant SIMD widths
             ([1] * (2*5-1) + [np.nan], 2*5-1),
             ([1] * (4*5-1) + [np.nan], 4*5-1),
             ([1] * (8*5-1) + [np.nan], 8*5-1),
@@ -4910,7 +4910,7 @@ class TestArgmin:
             ([np.nan, 0, 1, 2, 3], 0),
             ([np.nan, 0, np.nan, 2, 3], 0),
             # To hit the tail of SIMD multi-level(x4, x1) inner loops
-            # on variant SIMD widthes
+            # on variant SIMD widths
             ([1] * (2*5-1) + [np.nan], 2*5-1),
             ([1] * (4*5-1) + [np.nan], 4*5-1),
             ([1] * (8*5-1) + [np.nan], 8*5-1),
@@ -9807,7 +9807,7 @@ def test_equal_subclass_no_override(op, dt1, dt2):
 
         def __array_wrap__(self, new, context=None, return_scalar=False):
             type(self).called_wrap += 1
-            return super().__array_wrap__(new)
+            return super().__array_wrap__(new, context, return_scalar)
 
     numpy_arr = np.zeros(5, dtype=dt1)
     my_arr = np.zeros(5, dtype=dt2).view(MyArr)
@@ -10119,7 +10119,7 @@ class TestViewDtype:
         assert_array_equal(x.view('<i2'), expected)
 
 
-@pytest.mark.xfail(_SUPPORTS_SVE, reason="gh-22982")
+@pytest.mark.xfail(check_support_sve(), reason="gh-22982")
 # Test various array sizes that hit different code paths in quicksort-avx512
 @pytest.mark.parametrize("N", np.arange(1, 512))
 @pytest.mark.parametrize("dtype", ['e', 'f', 'd'])

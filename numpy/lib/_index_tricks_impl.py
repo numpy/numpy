@@ -447,7 +447,7 @@ class AxisConcatenator:
     def __len__(self):
         return 0
 
-# separate classes are used here instead of just making r_ = concatentor(0),
+# separate classes are used here instead of just making r_ = concatenator(0),
 # etc. because otherwise we couldn't get the doc string to come out right
 # in help(r_)
 
@@ -841,8 +841,6 @@ def fill_diagonal(a, val, wrap=False):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
-
     This functionality can be obtained via `diag_indices`, but internally
     this version uses a much faster implementation that never constructs the
     indices and uses simple slicing.
@@ -970,10 +968,6 @@ def diag_indices(n, ndim=2):
     --------
     diag_indices_from
 
-    Notes
-    -----
-    .. versionadded:: 1.4.0
-
     Examples
     --------
     >>> import numpy as np
@@ -1035,10 +1029,6 @@ def diag_indices_from(arr):
     See Also
     --------
     diag_indices
-
-    Notes
-    -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------

@@ -13,27 +13,11 @@ module provide the mathematically valid answers in the complex plane::
 Similarly, `sqrt`, other base logarithms, `power` and trig functions are
 correctly handled.  See their respective docstrings for specific examples.
 
-Functions
----------
-
-.. autosummary::
-   :toctree: generated/
-
-   sqrt
-   log
-   log2
-   logn
-   log10
-   power
-   arccos
-   arcsin
-   arctanh
-
 """
 import numpy._core.numeric as nx
 import numpy._core.numerictypes as nt
 from numpy._core.numeric import asarray, any
-from numpy._core.overrides import array_function_dispatch
+from numpy._core.overrides import array_function_dispatch, set_module
 from numpy.lib._type_check_impl import isreal
 
 
@@ -199,6 +183,7 @@ def _unary_dispatcher(x):
     return (x,)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def sqrt(x):
     """
@@ -254,6 +239,7 @@ def sqrt(x):
     return nx.sqrt(x)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def log(x):
     """
@@ -303,6 +289,7 @@ def log(x):
     return nx.log(x)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def log10(x):
     """
@@ -358,6 +345,7 @@ def _logn_dispatcher(n, x):
     return (n, x,)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_logn_dispatcher)
 def logn(n, x):
     """
@@ -395,6 +383,7 @@ def logn(n, x):
     return nx.log(x)/nx.log(n)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def log2(x):
     """
@@ -448,6 +437,7 @@ def _power_dispatcher(x, p):
     return (x, p)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_power_dispatcher)
 def power(x, p):
     """
@@ -502,6 +492,7 @@ def power(x, p):
     return nx.power(x, p)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def arccos(x):
     """
@@ -548,6 +539,7 @@ def arccos(x):
     return nx.arccos(x)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def arcsin(x):
     """
@@ -595,6 +587,7 @@ def arcsin(x):
     return nx.arcsin(x)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def arctanh(x):
     """

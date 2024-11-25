@@ -52,8 +52,6 @@ class CommaDecimalPointLocale:
     to the initial locale. It also serves as context manager with the same
     effect. If no such locale is available, the test is skipped.
 
-    .. versionadded:: 1.15.0
-
     """
     (cur_locale, tst_locale) = find_comma_decimal_point_locale()
 

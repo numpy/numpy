@@ -100,7 +100,7 @@ def run():
                     print('------')
         except Exception as msg:
             print(
-                'error:', msg, '(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)')
+                'error:', msg, '(ignore it, build_flib is obsolete for numpy.distutils 0.2.2 and up)')
             print('------')
         try:
             if has_numpy_distutils == 2:

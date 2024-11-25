@@ -22,7 +22,7 @@ AR_M: npt.NDArray[np.datetime64]
 AR_O: npt.NDArray[np.object_]
 AR_b: npt.NDArray[np.bool]
 AR_U: npt.NDArray[np.str_]
-CHAR_AR_U: np.char.chararray[Any, np.dtype[np.str_]]
+CHAR_AR_U: np.char.chararray[tuple[int, ...], np.dtype[np.str_]]
 
 AR_b_list: list[npt.NDArray[np.bool]]
 
@@ -83,9 +83,9 @@ assert_type(np.select([AR_f8], [AR_f8]), npt.NDArray[Any])
 
 assert_type(np.copy(AR_LIKE_f8), npt.NDArray[Any])
 assert_type(np.copy(AR_U), npt.NDArray[np.str_])
-assert_type(np.copy(CHAR_AR_U), np.ndarray[Any, Any])
-assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[Any, np.dtype[np.str_]])
-assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[Any, np.dtype[np.str_]])
+assert_type(np.copy(CHAR_AR_U), npt.NDArray[np.str_])
+assert_type(np.copy(CHAR_AR_U, "K", subok=True), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
+assert_type(np.copy(CHAR_AR_U, subok=True), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
 
 assert_type(np.gradient(AR_f8, axis=None), Any)
 assert_type(np.gradient(AR_LIKE_f8, edge_order=2), Any)

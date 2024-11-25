@@ -1,5 +1,6 @@
 from typing import (
     Literal as L,
+    TypeAlias,
     overload,
     Any,
     SupportsInt,
@@ -10,7 +11,7 @@ from typing import (
 
 import numpy as np
 from numpy import (
-    poly1d as poly1d,
+    poly1d,
     unsignedinteger,
     signedinteger,
     floating,
@@ -35,8 +36,8 @@ from numpy._typing import (
 
 _T = TypeVar("_T")
 
-_2Tup = tuple[_T, _T]
-_5Tup = tuple[
+_2Tup: TypeAlias = tuple[_T, _T]
+_5Tup: TypeAlias = tuple[
     _T,
     NDArray[float64],
     NDArray[int32],
@@ -44,7 +45,19 @@ _5Tup = tuple[
     NDArray[float64],
 ]
 
-__all__: list[str]
+__all__ = [
+    "poly",
+    "roots",
+    "polyint",
+    "polyder",
+    "polyadd",
+    "polysub",
+    "polymul",
+    "polydiv",
+    "polyval",
+    "poly1d",
+    "polyfit",
+]
 
 def poly(seq_of_zeros: ArrayLike) -> NDArray[floating[Any]]: ...
 

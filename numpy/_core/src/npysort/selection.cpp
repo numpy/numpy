@@ -258,7 +258,7 @@ unguarded_partition_(type *v, npy_intp *tosort, const type pivot, npy_intp *ll,
 /*
  * select median of median of blocks of 5
  * if used as partition pivot it splits the range into at least 30%/70%
- * allowing linear time worstcase quickselect
+ * allowing linear time worst-case quickselect
  */
 template <typename Tag, bool arg, typename type>
 static npy_intp

@@ -390,6 +390,12 @@ PyArray_DescrFromTypeObject(PyObject *type)
         Py_INCREF(type);
         return (PyArray_Descr *)new;
     }
+
+    PyObject *DType = PyArray_DiscoverDTypeFromScalarType((PyTypeObject *)type);
+    if (DType != NULL) {
+        return PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
+    }
+
     return _descr_from_subtype(type);
 }
 

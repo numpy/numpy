@@ -308,11 +308,6 @@ def polymulx(c):
     --------
     polyadd, polysub, polymul, polydiv, polypow
 
-    Notes
-    -----
-
-    .. versionadded:: 1.5.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -495,8 +490,6 @@ def polyder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     der : ndarray
@@ -585,8 +578,6 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -712,8 +703,6 @@ def polyval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, compatible object
@@ -786,8 +775,6 @@ def polyvalfromroots(x, r, tensor=True):
     ``False``, the shape will be r.shape[1:]; that is, each polynomial is
     evaluated only for the corresponding broadcast value of `x`. Note that
     scalars have shape (,).
-
-    .. versionadded:: 1.12
 
     Parameters
     ----------
@@ -896,11 +883,6 @@ def polyval2d(x, y, c):
     --------
     polyval, polygrid2d, polyval3d, polygrid3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -956,11 +938,6 @@ def polygrid2d(x, y, c):
     --------
     polyval, polyval2d, polyval3d, polygrid3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -1014,11 +991,6 @@ def polyval3d(x, y, z, c):
     See Also
     --------
     polyval, polyval2d, polygrid2d, polygrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1077,11 +1049,6 @@ def polygrid3d(x, y, z, c):
     See Also
     --------
     polyval, polyval2d, polygrid2d, polyval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1286,11 +1253,6 @@ def polyvander3d(x, y, z, deg):
     --------
     polyvander, polyvander3d, polyval2d, polyval3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> import numpy as np
@@ -1366,8 +1328,6 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         chosen so that the errors of the products ``w[i]*y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
-        .. versionadded:: 1.5.0
 
     Returns
     -------
@@ -1495,11 +1455,6 @@ def polycompanion(c):
     mat : ndarray
         Companion matrix of dimensions (deg, deg).
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -1609,8 +1564,6 @@ class Polynomial(ABCPolyBase):
         The default value is [-1., 1.].
     window : (2,) array_like, optional
         Window, see `domain` for its use. The default value is [-1., 1.].
-
-        .. versionadded:: 1.6.0
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.
