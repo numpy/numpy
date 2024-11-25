@@ -16,3 +16,6 @@ pickleshare
 # needed to build release notes
 towncrier
 toml
+
+# for doctests, also needs pytz which is in test_requirements
+scipy-doctest
