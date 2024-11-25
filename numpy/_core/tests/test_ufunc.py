@@ -1644,51 +1644,46 @@ class TestUfunc:
         assert_array_equal((a[where] < b_where), out[where].astype(bool))
         assert not out[~where].any()  # outside mask, out remains all 0
 
-    def check_identityless_reduction(self, a):
+    @staticmethod
+    def identityless_reduce_arrs():
+        yield np.empty((2, 3, 4), order='C')
+        yield np.empty((2, 3, 4), order='F')
+        # Mixed order (reduce order differs outer)
+        yield np.empty((2, 4, 3), order='C').swapaxes(1, 2)
+        # Reversed order
+        yield np.empty((2, 3, 4), order='C')[::-1, ::-1, ::-1]
+        # Not contiguous
+        yield np.empty((3, 5, 4), order='C').swapaxes(1, 2)[1:, 1:, 1:]
+        # Not contiguous and not aligned
+        a = np.empty((3*4*5*8 + 1,), dtype='i1')
+        a = a[1:].view(dtype='f8')
+        a.shape = (3, 4, 5)
+        a = a[1:, 1:, 1:]
+        yield a
+
+    @pytest.mark.parametrize("a", identityless_reduce_arrs())
+    @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+    def test_identityless_reduction(self, a, pos):
         # np.minimum.reduce is an identityless reduction
-
-        # Verify that it sees the zero at various positions
         a[...] = 1
-        a[1, 0, 0] = 0
-        assert_equal(np.minimum.reduce(a, axis=None), 0)
-        assert_equal(np.minimum.reduce(a, axis=(0, 1)), [0, 1, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(0, 2)), [0, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(1, 2)), [1, 0])
-        assert_equal(np.minimum.reduce(a, axis=0),
-                                    [[0, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=1),
-                                    [[1, 1, 1, 1], [0, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=2),
-                                    [[1, 1, 1], [0, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=()), a)
+        a[pos] = 0
 
-        a[...] = 1
-        a[0, 1, 0] = 0
-        assert_equal(np.minimum.reduce(a, axis=None), 0)
-        assert_equal(np.minimum.reduce(a, axis=(0, 1)), [0, 1, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(0, 2)), [1, 0, 1])
-        assert_equal(np.minimum.reduce(a, axis=(1, 2)), [0, 1])
-        assert_equal(np.minimum.reduce(a, axis=0),
-                                    [[1, 1, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=1),
-                                    [[0, 1, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=2),
-                                    [[1, 0, 1], [1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=()), a)
+        for axis in [None, (0, 1), (0, 2), (1, 2), 0, 1, 2, ()]:
+            if axis is None:
+                axes = np.array([], dtype=np.intp)
+            else:
+                axes = np.delete(np.arange(a.ndim), axis)
 
-        a[...] = 1
-        a[0, 0, 1] = 0
-        assert_equal(np.minimum.reduce(a, axis=None), 0)
-        assert_equal(np.minimum.reduce(a, axis=(0, 1)), [1, 0, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(0, 2)), [0, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(1, 2)), [0, 1])
-        assert_equal(np.minimum.reduce(a, axis=0),
-                                    [[1, 0, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=1),
-                                    [[1, 0, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=2),
-                                    [[0, 1, 1], [1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=()), a)
+            expected_pos = tuple(np.array(pos)[axes])
+            expected = np.ones(np.array(a.shape)[axes])
+            expected[expected_pos] = 0
+
+            res = np.minimum.reduce(a, axis=axis)
+            assert_equal(res, expected, strict=True)
+
+            res = np.full_like(res, np.nan)
+            np.minimum.reduce(a, axis=axis, out=res)
+            assert_equal(res, expected, strict=True)
 
     @requires_memory(6 * 1024**3)
     @pytest.mark.skipif(sys.maxsize < 2**32,
@@ -1702,30 +1697,6 @@ class TestUfunc:
         del arr
         assert res[0] == 3
         assert res[-1] == 4
-
-    def test_identityless_reduction_corder(self):
-        a = np.empty((2, 3, 4), order='C')
-        self.check_identityless_reduction(a)
-
-    def test_identityless_reduction_forder(self):
-        a = np.empty((2, 3, 4), order='F')
-        self.check_identityless_reduction(a)
-
-    def test_identityless_reduction_otherorder(self):
-        a = np.empty((2, 4, 3), order='C').swapaxes(1, 2)
-        self.check_identityless_reduction(a)
-
-    def test_identityless_reduction_noncontig(self):
-        a = np.empty((3, 5, 4), order='C').swapaxes(1, 2)
-        a = a[1:, 1:, 1:]
-        self.check_identityless_reduction(a)
-
-    def test_identityless_reduction_noncontig_unaligned(self):
-        a = np.empty((3*4*5*8 + 1,), dtype='i1')
-        a = a[1:].view(dtype='f8')
-        a.shape = (3, 4, 5)
-        a = a[1:, 1:, 1:]
-        self.check_identityless_reduction(a)
 
     def test_reduce_identity_depends_on_loop(self):
         """
