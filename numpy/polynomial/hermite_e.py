@@ -621,8 +621,6 @@ def hermeder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     der : ndarray
@@ -713,8 +711,6 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -841,8 +837,6 @@ def hermeval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, algebra_like
@@ -932,12 +926,6 @@ def hermeval2d(x, y, c):
     See Also
     --------
     hermeval, hermegrid2d, hermeval3d, hermegrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(hermeval, c, x, y)
 
@@ -985,12 +973,6 @@ def hermegrid2d(x, y, c):
     See Also
     --------
     hermeval, hermeval2d, hermeval3d, hermegrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(hermeval, c, x, y)
 
@@ -1036,12 +1018,6 @@ def hermeval3d(x, y, z, c):
     See Also
     --------
     hermeval, hermeval2d, hermegrid2d, hermegrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(hermeval, c, x, y, z)
 
@@ -1092,12 +1068,6 @@ def hermegrid3d(x, y, z, c):
     See Also
     --------
     hermeval, hermeval2d, hermegrid2d, hermeval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(hermeval, c, x, y, z)
 
@@ -1206,12 +1176,6 @@ def hermevander2d(x, y, deg):
     See Also
     --------
     hermevander, hermevander3d, hermeval2d, hermeval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((hermevander, hermevander), (x, y), deg)
 
@@ -1260,12 +1224,6 @@ def hermevander3d(x, y, z, deg):
     See Also
     --------
     hermevander, hermevander3d, hermeval2d, hermeval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((hermevander, hermevander, hermevander), (x, y, z), deg)
 
@@ -1424,12 +1382,6 @@ def hermecompanion(c):
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1536,8 +1488,6 @@ def _normed_hermite_e_n(x, n):
 
     Notes
     -----
-    .. versionadded:: 1.10.0
-
     This function is needed for finding the Gauss points and integration
     weights for high degrees. The values of the standard HermiteE functions
     overflow when n >= 207.
@@ -1580,9 +1530,6 @@ def hermegauss(deg):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
-
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
@@ -1640,12 +1587,6 @@ def hermeweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     w = np.exp(-.5*x**2)
     return w
@@ -1673,8 +1614,6 @@ class HermiteE(ABCPolyBase):
         The default value is [-1., 1.].
     window : (2,) array_like, optional
         Window, see `domain` for its use. The default value is [-1., 1.].
-
-        .. versionadded:: 1.6.0
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.

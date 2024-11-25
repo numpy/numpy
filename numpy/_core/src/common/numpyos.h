@@ -51,7 +51,7 @@ NPY_NO_EXPORT int
 NumPyOS_ascii_isupper(char c);
 
 NPY_NO_EXPORT int
-NumPyOS_ascii_tolower(char c);
+NumPyOS_ascii_tolower(int c);
 
 /* Convert a string to an int in an arbitrary base */
 NPY_NO_EXPORT npy_longlong

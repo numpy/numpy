@@ -1689,7 +1689,7 @@ def test_suppress_warnings_decorate_no_record():
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        warn(UserWarning)  # should be supppressed
+        warn(UserWarning)  # should be suppressed
         warn(RuntimeWarning)
         assert_equal(len(w), 1)
 

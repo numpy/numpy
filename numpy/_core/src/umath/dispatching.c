@@ -213,7 +213,7 @@ PyUFunc_AddLoopFromSpec_int(PyObject *ufunc, PyArrayMethod_Spec *spec, int priv)
  *       both are `(f4, f4, f8)`.  The cache would need to store also which
  *       output was provided by `dtype=`/`signature=`.
  *
- * @param ufunc
+ * @param ufunc The universal function to be resolved
  * @param op_dtypes The DTypes that are either passed in (defined by an
  *        operand) or defined by the `signature` as also passed in as
  *        `fixed_DTypes`.
@@ -976,8 +976,11 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-    PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
+    PyObject *info;
+    Py_BEGIN_CRITICAL_SECTION((PyObject *)ufunc);
+    info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
+    Py_END_CRITICAL_SECTION();
 
     if (info == NULL) {
         goto handle_error;

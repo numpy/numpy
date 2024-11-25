@@ -3,6 +3,7 @@
 """
 __all__ = ['finfo', 'iinfo']
 
+import types
 import warnings
 
 from .._utils import set_module
@@ -487,6 +488,8 @@ class finfo:
 
     _finfo_cache = {}
 
+    __class_getitem__ = classmethod(types.GenericAlias)
+
     def __new__(cls, dtype):
         try:
             obj = cls._finfo_cache.get(dtype)  # most common path
@@ -688,6 +691,8 @@ class iinfo:
 
     _min_vals = {}
     _max_vals = {}
+
+    __class_getitem__ = classmethod(types.GenericAlias)
 
     def __init__(self, int_type):
         try:

@@ -2544,8 +2544,8 @@ class TestUfunc:
         assert single_res != res
 
     def test_reducelike_output_needs_identical_cast(self):
-        # Checks the case where the we have a simple byte-swap works, maily
-        # tests that this is not rejected directly.
+        # Checks the case where a simple byte-swap works, mainly tests that
+        # this is not rejected directly.
         # (interesting because we require descriptor identity in reducelikes).
         arr = np.ones(20, dtype="f8")
         out = np.empty((), dtype=arr.dtype.newbyteorder())

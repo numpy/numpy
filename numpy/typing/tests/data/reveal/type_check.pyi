@@ -20,20 +20,18 @@ AR_c16: npt.NDArray[np.complex128]
 
 AR_LIKE_f: list[float]
 
-class RealObj:
+class ComplexObj:
     real: slice
-
-class ImagObj:
     imag: slice
 
 assert_type(np.mintypecode(["f8"], typeset="qfQF"), str)
 
-assert_type(np.real(RealObj()), slice)
+assert_type(np.real(ComplexObj()), slice)
 assert_type(np.real(AR_f8), npt.NDArray[np.float64])
 assert_type(np.real(AR_c16), npt.NDArray[np.float64])
 assert_type(np.real(AR_LIKE_f), npt.NDArray[Any])
 
-assert_type(np.imag(ImagObj()), slice)
+assert_type(np.imag(ComplexObj()), slice)
 assert_type(np.imag(AR_f8), npt.NDArray[np.float64])
 assert_type(np.imag(AR_c16), npt.NDArray[np.float64])
 assert_type(np.imag(AR_LIKE_f), npt.NDArray[Any])
@@ -55,7 +53,10 @@ assert_type(np.nan_to_num(AR_f8, nan=1.5), npt.NDArray[np.float64])
 assert_type(np.nan_to_num(AR_LIKE_f, posinf=9999), npt.NDArray[Any])
 
 assert_type(np.real_if_close(AR_f8), npt.NDArray[np.float64])
-assert_type(np.real_if_close(AR_c16), npt.NDArray[np.float64] | npt.NDArray[np.complex128])
+assert_type(
+    np.real_if_close(AR_c16),
+    npt.NDArray[np.floating[_64Bit]] | npt.NDArray[np.complexfloating[_64Bit, _64Bit]],
+)
 assert_type(np.real_if_close(AR_c8), npt.NDArray[np.float32] | npt.NDArray[np.complex64])
 assert_type(np.real_if_close(AR_LIKE_f), npt.NDArray[Any])
 
@@ -64,7 +65,7 @@ assert_type(np.typename("B"), Literal["unsigned char"])
 assert_type(np.typename("V"), Literal["void"])
 assert_type(np.typename("S1"), Literal["character"])
 
-assert_type(np.common_type(AR_i4), type[np.float64])
+assert_type(np.common_type(AR_i4), type[np.floating[_64Bit]])
 assert_type(np.common_type(AR_f2), type[np.float16])
 assert_type(np.common_type(AR_f2, AR_i4), type[np.floating[_16Bit | _64Bit]])
 assert_type(np.common_type(AR_f16, AR_i4), type[np.floating[_64Bit | _128Bit]])

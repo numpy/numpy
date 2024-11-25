@@ -172,6 +172,7 @@ from numpy.lib._utils_impl import drop_metadata
 
 __all__ = []
 
+drop_metadata.__module__ = "numpy.lib.format"
 
 EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
 MAGIC_PREFIX = b'\x93NUMPY'
@@ -483,8 +484,6 @@ def write_array_header_2_0(fp, d):
     """ Write the header for an array using the 2.0 format.
         The 2.0 format allows storing very large structured arrays.
 
-    .. versionadded:: 1.9.0
-
     Parameters
     ----------
     fp : filelike object
@@ -536,8 +535,6 @@ def read_array_header_2_0(fp, max_header_size=_MAX_HEADER_SIZE):
     version.
 
     This will leave the file object located just after the header.
-
-    .. versionadded:: 1.9.0
 
     Parameters
     ----------
@@ -774,10 +771,6 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
         and time.
     allow_pickle : bool, optional
         Whether to allow writing pickled data. Default: False
-
-        .. versionchanged:: 1.16.3
-            Made default False in response to CVE-2019-6446.
-
     pickle_kwargs : dict
         Additional keyword arguments to pass to pickle.load. These are only
         useful when loading object arrays saved on Python 2 when using

@@ -271,6 +271,7 @@ python_sources = [
   '__init__.pxd',
   '__init__.py',
   '__init__.pyi',
+  '__config__.pyi',
   '_array_api_info.py',
   '_array_api_info.pyi',
   '_configtool.py',

@@ -115,7 +115,7 @@ _PRECISION_DICT: Final = _get_precision_dict()
 #: A list with the names of all extended precision `np.number` subclasses.
 _EXTENDED_PRECISION_LIST: Final = _get_extended_precision_list()
 
-#: The name of the ctypes quivalent of `np.intp`
+#: The name of the ctypes equivalent of `np.intp`
 _C_INTP: Final = _get_c_intp_name()
 
 

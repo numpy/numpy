@@ -25,6 +25,7 @@
 #include "numpyos.h"
 #include "can_cast_table.h"
 #include "common.h"
+#include "conversion_utils.h"
 #include "flagsobject.h"
 #include "scalartypes.h"
 #include "_datetime.h"
@@ -2035,29 +2036,33 @@ gentype_getarray(PyObject *scalar, PyObject *args)
     return ret;
 }
 
-static char doc_sc_wraparray[] = "sc.__array_wrap__(obj) return scalar from array";
+static char doc_sc_wraparray[] = "__array_wrap__ implementation for scalar types";
 
+/*
+ * __array_wrap__ for scalars, returning a scalar if possible.
+ * (note that NumPy itself may well never call this itself).
+ */
 static PyObject *
 gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 {
-    PyObject *obj;
     PyArrayObject *arr;
+    PyObject *UNUSED = NULL;  /* for the context argument */
+    /* return_scalar should be passed, but we're scalar, so return scalar by default */
+    int return_scalar = 1;
 
-    if (PyTuple_Size(args) < 1) {
-        PyErr_SetString(PyExc_TypeError,
-                "only accepts 1 argument.");
+    if (!PyArg_ParseTuple(args, "O!|OO&:__array_wrap__",
+                &PyArray_Type, &arr, &UNUSED,
+                &PyArray_OptionalBoolConverter, &return_scalar)) {
         return NULL;
     }
-    obj = PyTuple_GET_ITEM(args, 0);
-    if (!PyArray_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError,
-                "can only be called with ndarray object");
-        return NULL;
-    }
-    arr = (PyArrayObject *)obj;
 
-    return PyArray_Scalar(PyArray_DATA(arr),
-                    PyArray_DESCR(arr), (PyObject *)arr);
+    Py_INCREF(arr);
+    if (!return_scalar) {
+        return (PyObject *)arr;
+    }
+    else {
+        return PyArray_Return(arr);
+    }
 }
 
 /*
@@ -3904,43 +3909,24 @@ static inline npy_hash_t
  * #lname = datetime, timedelta#
  * #name = Datetime, Timedelta#
  */
-#if NPY_SIZEOF_HASH_T==NPY_SIZEOF_DATETIME
 static npy_hash_t
 @lname@_arrtype_hash(PyObject *obj)
 {
-    npy_hash_t x = (npy_hash_t)(PyArrayScalar_VAL(obj, @name@));
-    if (x == -1) {
-        x = -2;
-    }
-    return x;
-}
-#elif NPY_SIZEOF_LONGLONG==NPY_SIZEOF_DATETIME
-static npy_hash_t
-@lname@_arrtype_hash(PyObject *obj)
-{
-    npy_hash_t y;
-    npy_longlong x = (PyArrayScalar_VAL(obj, @name@));
+    PyArray_DatetimeMetaData *meta;
+    PyArray_Descr *dtype;
+    npy_@lname@ val = PyArrayScalar_VAL(obj, @name@);
 
-    if ((x <= LONG_MAX)) {
-        y = (npy_hash_t) x;
+    if (val == NPY_DATETIME_NAT) {
+        /* Use identity, similar to NaN */
+        return PyBaseObject_Type.tp_hash(obj);
     }
-    else {
-        union Mask {
-            long hashvals[2];
-            npy_longlong v;
-        } both;
 
-        both.v = x;
-        y = both.hashvals[0] + (1000003)*both.hashvals[1];
-    }
-    if (y == -1) {
-        y = -2;
-    }
-    return y;
+    dtype = PyArray_DescrFromScalar(obj);
+    meta = get_datetime_metadata_from_dtype(dtype);
+
+    return @lname@_hash(meta, val);
 }
-#endif
 /**end repeat**/
-
 
 
 /* Wrong thing to do for longdouble, but....*/

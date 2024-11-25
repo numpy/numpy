@@ -495,15 +495,30 @@ def test_fancy_indexing(string_list):
     sarr = np.array(string_list, dtype="T")
     assert_array_equal(sarr, sarr[np.arange(sarr.shape[0])])
 
+    inds = [
+        [True, True],
+        [0, 1],
+        ...,
+        np.array([0, 1], dtype='uint8'),
+    ]
+
+    lops = [
+        ['a'*25, 'b'*25],
+        ['', ''],
+        ['hello', 'world'],
+        ['hello', 'world'*25],
+    ]
+
     # see gh-27003 and gh-27053
-    for ind in [[True, True], [0, 1], ...]:
-        for lop in [['a'*16, 'b'*16], ['', '']]:
+    for ind in inds:
+        for lop in lops:
             a = np.array(lop, dtype="T")
-            rop = ['d'*16, 'e'*16]
+            assert_array_equal(a[ind], a)
+            rop = ['d'*25, 'e'*25]
             for b in [rop, np.array(rop, dtype="T")]:
                 a[ind] = b
                 assert_array_equal(a, b)
-                assert a[0] == 'd'*16
+                assert a[0] == 'd'*25
 
 
 def test_creation_functions():
@@ -994,6 +1009,62 @@ def test_ufunc_multiply(dtype, string_list, other, other_dtype, use_out):
             arr * other
         with pytest.raises(TypeError):
             other * arr
+
+
+def test_findlike_promoters():
+    r = "Wally"
+    l = "Where's Wally?"
+    s = np.int32(3)
+    e = np.int8(13)
+    for dtypes in [("T", "U"), ("U", "T")]:
+        for function, answer in [
+            (np.strings.index, 8),
+            (np.strings.endswith, True),
+        ]:
+            assert answer == function(
+                np.array(l, dtype=dtypes[0]), np.array(r, dtype=dtypes[1]), s, e
+            )
+
+
+def test_strip_promoter():
+    arg = ["Hello!!!!", "Hello??!!"]
+    strip_char = "!"
+    answer = ["Hello", "Hello??"]
+    for dtypes in [("T", "U"), ("U", "T")]:
+        result = np.strings.strip(
+            np.array(arg, dtype=dtypes[0]),
+            np.array(strip_char, dtype=dtypes[1])
+        )
+        assert_array_equal(result, answer)
+        assert result.dtype.char == "T"
+
+
+def test_replace_promoter():
+    arg = ["Hello, planet!", "planet, Hello!"]
+    old = "planet"
+    new = "world"
+    answer = ["Hello, world!", "world, Hello!"]
+    for dtypes in itertools.product("TU", repeat=3):
+        if dtypes == ("U", "U", "U"):
+            continue
+        answer_arr = np.strings.replace(
+            np.array(arg, dtype=dtypes[0]),
+            np.array(old, dtype=dtypes[1]),
+            np.array(new, dtype=dtypes[2]),
+        )
+        assert_array_equal(answer_arr, answer)
+        assert answer_arr.dtype.char == "T"
+
+
+def test_center_promoter():
+    arg = ["Hello", "planet!"]
+    fillchar = "/"
+    for dtypes in [("T", "U"), ("U", "T")]:
+        answer = np.strings.center(
+            np.array(arg, dtype=dtypes[0]), 9, np.array(fillchar, dtype=dtypes[1])
+        )
+        assert_array_equal(answer, ["//Hello//", "/planet!/"])
+        assert answer.dtype.char == "T"
 
 
 DATETIME_INPUT = [
@@ -1501,6 +1572,40 @@ def test_unset_na_coercion():
         op = np.array(inp, dtype=op_dtype)
         with pytest.raises(TypeError):
             arr == op
+
+
+def test_repeat(string_array):
+    res = string_array.repeat(1000)
+    # Create an empty array with expanded dimension, and fill it.  Then,
+    # reshape it to the expected result.
+    expected = np.empty_like(string_array, shape=string_array.shape + (1000,))
+    expected[...] = string_array[:, np.newaxis]
+    expected = expected.reshape(-1)
+
+    assert_array_equal(res, expected, strict=True)
+
+
+@pytest.mark.parametrize("tile", [1, 6, (2, 5)])
+def test_accumulation(string_array, tile):
+    """Accumulation is odd for StringDType but tests dtypes with references.
+    """
+    # Fill with mostly empty strings to not create absurdly big strings
+    arr = np.zeros_like(string_array, shape=(100,))
+    arr[:len(string_array)] = string_array
+    arr[-len(string_array):] = string_array
+
+    # Bloat size a bit (get above thresholds and test >1 ndim).
+    arr = np.tile(string_array, tile)
+
+    res = np.add.accumulate(arr, axis=0)
+    res_obj = np.add.accumulate(arr.astype(object), axis=0)
+    assert_array_equal(res, res_obj.astype(arr.dtype), strict=True)
+
+    if arr.ndim > 1:
+        res = np.add.accumulate(arr, axis=-1)
+        res_obj = np.add.accumulate(arr.astype(object), axis=-1)
+
+        assert_array_equal(res, res_obj.astype(arr.dtype), strict=True)
 
 
 class TestImplementation:

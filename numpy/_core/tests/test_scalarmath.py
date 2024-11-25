@@ -16,7 +16,7 @@ from numpy._core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
-    assert_warns, _SUPPORTS_SVE,
+    assert_warns, check_support_sve,
     )
 
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -151,7 +151,7 @@ def test_int_float_promotion_truediv(fscalar):
 
 
 class TestBaseMath:
-    @pytest.mark.xfail(_SUPPORTS_SVE, reason="gh-22982")
+    @pytest.mark.xfail(check_support_sve(), reason="gh-22982")
     def test_blocked(self):
         # test alignments offsets for simd instructions
         # alignments for vz + 2 * (vs - 1) + 1
@@ -1159,7 +1159,7 @@ def test_scalar_matches_array_op_with_pyscalar(op, sctype, other_type, rop):
     assert res == expected
     if isinstance(val1, float) and other_type is complex and rop:
         # Python complex accepts float subclasses, so we don't get a chance
-        # and the result may be a Python complelx (thus, the `np.array()``)
+        # and the result may be a Python complex (thus, the `np.array()``)
         assert np.array(res).dtype == expected.dtype
     else:
         assert res.dtype == expected.dtype

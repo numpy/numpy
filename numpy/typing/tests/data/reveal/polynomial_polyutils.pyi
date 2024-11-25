@@ -159,9 +159,9 @@ assert_type(pu.mapparms(seq_num_object, seq_num_object), _Tuple2[object])
 
 assert_type(pu.mapparms(seq_sct_int, seq_sct_int), _Tuple2[np.floating[Any]])
 assert_type(pu.mapparms(seq_sct_int, seq_sct_float), _Tuple2[np.floating[Any]])
-assert_type(pu.mapparms(seq_sct_float, seq_sct_float), _Tuple2[np.floating[Any]])
-assert_type(pu.mapparms(seq_sct_float, seq_sct_complex), _Tuple2[np.complexfloating[Any, Any]])
-assert_type(pu.mapparms(seq_sct_complex, seq_sct_complex), _Tuple2[np.complexfloating[Any, Any]])
+assert_type(pu.mapparms(seq_sct_float, seq_sct_float), _Tuple2[float])
+assert_type(pu.mapparms(seq_sct_float, seq_sct_complex), _Tuple2[complex])
+assert_type(pu.mapparms(seq_sct_complex, seq_sct_complex), _Tuple2[complex])
 assert_type(pu.mapparms(seq_sct_complex, seq_sct_object), _Tuple2[object])
 assert_type(pu.mapparms(seq_sct_object, seq_sct_object), _Tuple2[object])
 

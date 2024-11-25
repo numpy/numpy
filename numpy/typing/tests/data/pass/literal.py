@@ -25,15 +25,15 @@ order_list: list[tuple[frozenset[str | None], Callable[..., Any]]] = [
     (KACF, AR.flatten),
     (KACF, AR.ravel),
     (KACF, partial(np.array, 1)),
-    (CF, partial(np.zeros, 1)),
-    (CF, partial(np.ones, 1)),
-    (CF, partial(np.empty, 1)),
+    # NOTE: __call__ is needed due to mypy 1.11 bugs (#17620, #17631)
+    (CF, partial(np.zeros.__call__, 1)),
+    (CF, partial(np.ones.__call__, 1)),
+    (CF, partial(np.empty.__call__, 1)),
     (CF, partial(np.full, 1, 1)),
     (KACF, partial(np.zeros_like, AR)),
     (KACF, partial(np.ones_like, AR)),
     (KACF, partial(np.empty_like, AR)),
     (KACF, partial(np.full_like, AR, 1)),
-    # __call__ is needed due to mypy 1.11 bugs (#17620, #17631)
     (KACF, partial(np.add.__call__, 1, 1)),  # i.e. np.ufunc.__call__
     (ACF, partial(np.reshape, AR, 1)),
     (KACF, partial(np.ravel, AR)),

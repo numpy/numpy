@@ -1132,8 +1132,6 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
 
     Notes
     -----
-    .. versionadded:: 1.6.0
-
     The Einstein summation convention can be used to compute
     many multi-dimensional, linear algebraic array operations. `einsum`
     provides a succinct way of representing these.
@@ -1210,15 +1208,11 @@ def einsum(*operands, out=None, optimize=False, **kwargs):
     The examples below have corresponding `einsum` calls with the two
     parameter methods.
 
-    .. versionadded:: 1.10.0
-
     Views returned from einsum are now writeable whenever the input array
     is writeable. For example, ``np.einsum('ijk...->kji...', a)`` will now
     have the same effect as :py:func:`np.swapaxes(a, 0, 2) <numpy.swapaxes>`
     and ``np.einsum('ii->i', a)`` will return a writeable view of the diagonal
     of a 2D array.
-
-    .. versionadded:: 1.12.0
 
     Added the ``optimize`` argument which will optimize the contraction order
     of an einsum expression. For a contraction with three or more operands
