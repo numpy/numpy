@@ -1,5 +1,5 @@
 meson-python>=0.13.1
 Cython>=3.0.6
-ninja
+ninja==1.11.1.1
 spin==0.13
 build
