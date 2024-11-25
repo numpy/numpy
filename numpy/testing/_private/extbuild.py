@@ -168,7 +168,6 @@ def _make_methods(functions, modname):
 def _make_source(name, init, body):
     """ Combines the code fragments into source code ready to be compiled
     """
-    # python.h doesn't set Py_GIL_DISABLED on the windows free-threade build
     code = """
     #include <Python.h>
 
@@ -229,7 +228,7 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                               cwd=build_dir,
                               )
     else:
-        subprocess.check_call(["meson", "setup", ".."],
+        subprocess.check_call(["meson", "setup", "--vsenv", ".."],
                               cwd=build_dir
                               )
 
