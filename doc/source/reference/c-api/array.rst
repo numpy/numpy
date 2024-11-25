@@ -2672,7 +2672,7 @@ Array Functions
     See the :func:`~numpy.einsum` function for more details.
 
 .. c:function:: PyObject* PyArray_Correlate( \
-        PyObject* op1, PyObject* op2, int mode)
+        PyObject* op1, PyObject* op2, PyArrayObject* out, int mode)
 
     Compute the 1-d correlation of the 1-d arrays *op1* and *op2*
     . The correlation is computed at each output point by multiplying
@@ -2691,7 +2691,7 @@ Array Functions
     See PyArray_Correlate2 for the usual signal processing correlation.
 
 .. c:function:: PyObject* PyArray_Correlate2( \
-        PyObject* op1, PyObject* op2, int mode)
+        PyObject* op1, PyObject* op2, PyArrayObject* out, int mode)
 
     Updated version of PyArray_Correlate, which uses the usual definition of
     correlation for 1d arrays. The correlation is computed at each output point
