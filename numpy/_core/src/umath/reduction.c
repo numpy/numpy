@@ -218,10 +218,13 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
             NPY_ITER_ZEROSIZE_OK |
             NPY_ITER_REFS_OK |
             NPY_ITER_DELAY_BUFALLOC |
+            /*
+             * stride negation (if reorderable) could currently misalign the
+             * first-visit and initial value copy logic.
+             */
+            NPY_ITER_DONT_NEGATE_STRIDES |
             NPY_ITER_COPY_IF_OVERLAP;
-    if (!(context->method->flags & NPY_METH_IS_REORDERABLE)) {
-        it_flags |= NPY_ITER_DONT_NEGATE_STRIDES;
-    }
+
     op_flags[0] = NPY_ITER_READWRITE |
                   NPY_ITER_ALIGNED |
                   NPY_ITER_ALLOCATE |
