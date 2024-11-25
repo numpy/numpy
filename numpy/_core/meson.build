@@ -245,8 +245,8 @@ endforeach
 
 # variable attributes tested via "int %s a" % attribute
 optional_variable_attributes = [
-  ['thread_local', 'HAVE_THREAD_LOCAL'],
-  ['_Thread_local', 'HAVE__THREAD_LOCAL'],
+  ['thread_local', 'HAVE_THREAD_LOCAL'],    # C23
+  ['_Thread_local', 'HAVE__THREAD_LOCAL'],  # C11/C17
   ['__thread', 'HAVE__THREAD'],
   ['__declspec(thread)', 'HAVE___DECLSPEC_THREAD_']
 ]
@@ -681,7 +681,6 @@ c_args_common = [
 
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [
-  '-D__STDC_VERSION__=0',  # for compatibility with C headers
 ]
 if cc.get_argument_syntax() != 'msvc'
   cpp_args_common += [
@@ -829,7 +828,7 @@ foreach gen_mtargets : [
     'highway_qsort.dispatch.h',
     'src/npysort/highway_qsort.dispatch.cpp',
     use_highway ? [
-      SVE, ASIMD, VSX2,  # FIXME: disable VXE due to runtime segfault
+      ASIMD, VSX2,  # FIXME: disable VXE due to runtime segfault
     ] : []
   ],
   [
@@ -952,7 +951,9 @@ foreach gen_mtargets : [
     'src/umath/loops_trigonometric.dispatch.cpp',
     [
       AVX512_SKX, [AVX2, FMA3],
+      VSX4, VSX3, VSX2,
       NEON_VFPV4,
+      VXE2, VXE,
     ]
   ],
   [
@@ -1213,7 +1214,8 @@ py.extension_module('_multiarray_umath',
     src_numpy_api[1],  # __multiarray_api.h
     src_umath_doc_h,
     npy_math_internal_h,
-  ] + svml_objects,
+  ],
+  objects: svml_objects,
   c_args: c_args_common,
   cpp_args: cpp_args_common,
   include_directories: [

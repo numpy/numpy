@@ -268,7 +268,8 @@ typedef int (PyArrayMethod_TranslateGivenDescriptors)(int nin, int nout,
  *
  * The function must clean up on error.
  *
- * @param nargs Number of arguments
+ * @param nin Number of input arguments
+ * @param nout Number of output arguments
  * @param new_dtypes The DTypes of the output (usually probably not needed)
  * @param given_descrs Original given_descrs to the resolver, necessary to
  *        fetch any information related to the new dtypes from the original.

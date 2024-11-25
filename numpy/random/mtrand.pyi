@@ -5,7 +5,6 @@ from typing import Any, overload, Literal
 import numpy as np
 from numpy import (
     dtype,
-    float32,
     float64,
     int8,
     int16,
@@ -26,12 +25,7 @@ from numpy._typing import (
     NDArray,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
-    _DoubleCodes,
     _DTypeLikeBool,
-    _DTypeLikeInt,
-    _DTypeLikeUInt,
-    _Float32Codes,
-    _Float64Codes,
     _Int8Codes,
     _Int16Codes,
     _Int32Codes,
@@ -39,7 +33,6 @@ from numpy._typing import (
     _IntCodes,
     _LongCodes,
     _ShapeLike,
-    _SingleCodes,
     _SupportsDType,
     _UInt8Codes,
     _UInt16Codes,
@@ -49,22 +42,6 @@ from numpy._typing import (
     _ULongCodes,
 )
 
-_DTypeLikeFloat32 = (
-    dtype[float32]
-    | _SupportsDType[dtype[float32]]
-    | type[float32]
-    | _Float32Codes
-    | _SingleCodes
-)
-
-_DTypeLikeFloat64 = (
-    dtype[float64]
-    | _SupportsDType[dtype[float64]]
-    | type[float]
-    | type[float64]
-    | _Float64Codes
-    | _DoubleCodes
-)
 
 class RandomState:
     _bit_generator: BitGenerator

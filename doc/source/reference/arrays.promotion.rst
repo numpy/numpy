@@ -149,7 +149,7 @@ Note the following specific rules and observations:
 
 1. When a Python ``float`` or ``complex`` interacts with a NumPy integer
    the result will be ``float64`` or ``complex128`` (yellow border).
-   NumPy booleans will also be cast to the default integer.[#default-int]
+   NumPy booleans will also be cast to the default integer [#default-int]_.
    This is not relevant when additionally NumPy floating point values are
    involved.
 2. The precision is drawn such that ``float16 < int16 < uint16`` because
@@ -172,7 +172,7 @@ would give.
 
 Behavior of ``sum`` and ``prod``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**``np.sum`` and ``np.prod``:** Will always return the default integer type
+``np.sum`` and ``np.prod`` will always return the default integer type
 when summing over integer values (or booleans).  This is usually an ``int64``.
 The reason for this is that integer summations are otherwise very likely
 to overflow and give confusing results.
@@ -247,7 +247,7 @@ could drastically slow down evaluation.
 
 
 .. [#hist-reasons] To a large degree, this may just be for choices made early
-   on in NumPy's predecessors.  For more details, see `NEP 50 <NEP50>`.
+   on in NumPy's predecessors.  For more details, see :ref:`NEP 50 <NEP50>`.
 
 .. [#NEP50] See also :ref:`NEP 50 <NEP50>` which changed the rules for
    NumPy 2.0. Previous versions of NumPy would sometimes return higher

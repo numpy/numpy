@@ -5,6 +5,7 @@ import pytest
 import threading
 import traceback
 import time
+import platform
 
 import numpy as np
 from numpy.testing import IS_PYPY
@@ -244,3 +245,17 @@ class TestGH25211(util.F2PyTest):
 
         res = self.module.foo(bar)
         assert res == 110
+
+
+@pytest.mark.slow
+@pytest.mark.xfail(condition=(platform.system().lower() == 'darwin'),
+                   run=False,
+                   reason="Callback aborts cause CI failures on macOS")
+class TestCBFortranCallstatement(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "callback", "gh26681.f90")]
+    options = ['--lower']
+
+    def test_callstatement_fortran(self):
+        with pytest.raises(ValueError, match='helpme') as exc:
+            self.module.mypy_abort = self.module.utils.my_abort
+            self.module.utils.do_something('helpme')

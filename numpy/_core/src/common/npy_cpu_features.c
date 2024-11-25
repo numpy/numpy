@@ -849,7 +849,7 @@ npy__cpu_init_features(void)
 {
     /*
      * just in case if the compiler doesn't respect ANSI
-     * but for knowing platforms it still nessecery, because @npy__cpu_init_features
+     * but for knowing platforms it still necessary, because @npy__cpu_init_features
      * may called multiple of times and we need to clear the disabled features by
      * ENV Var or maybe in the future we can support other methods like
      * global variables, go back to @npy__cpu_try_disable_env for more understanding

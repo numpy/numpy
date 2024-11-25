@@ -280,11 +280,11 @@ raise_missing_argument(const char *funcname,
  *
  * See macro version for an example pattern of how to use this function.
  *
- * @param funcname
- * @param cache
+ * @param funcname Function name
+ * @param cache a NULL initialized persistent storage for data
  * @param args Python passed args (METH_FASTCALL)
- * @param len_args
- * @param kwnames
+ * @param len_args Number of arguments (not flagged)
+ * @param kwnames Tuple as passed by METH_FASTCALL or NULL.
  * @param ... List of arguments (see macro version).
  *
  * @return Returns 0 on success and -1 on failure.

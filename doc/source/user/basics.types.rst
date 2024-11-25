@@ -342,6 +342,30 @@ range of possible values.
     >>> np.power(100, 100, dtype=np.float64)
     1e+200
 
+Floating point precision
+========================
+
+Many functions in NumPy, especially those in `numpy.linalg`, involve floating-point
+arithmetic, which can introduce small inaccuracies due to the way computers 
+represent decimal numbers. For instance, when performing basic arithmetic operations 
+involving floating-point numbers:
+
+    >>> 0.3 - 0.2 - 0.1  # This does not equal 0 due to floating-point precision
+    -2.7755575615628914e-17
+
+To handle such cases, it's advisable to use functions like `np.isclose` to compare 
+values, rather than checking for exact equality:
+
+    >>> np.isclose(0.3 - 0.2 - 0.1, 0, rtol=1e-05)  # Check for closeness to 0
+    True
+
+In this example, `np.isclose` accounts for the minor inaccuracies that occur in 
+floating-point calculations by applying a relative tolerance, ensuring that results
+within a small threshold are considered close.
+
+For information about precision in calculations, see `Floating-Point Arithmetic <https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html>`_.
+
+
 Extended precision
 ==================
 

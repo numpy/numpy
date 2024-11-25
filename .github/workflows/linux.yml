@@ -37,7 +37,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.10'
     - name: Install linter requirements
@@ -55,15 +55,20 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.10", "3.11", "3.12", "3.13-dev"]
+        version: ["3.10", "3.11", "3.12", "3.13", "3.13t"]
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+    - uses: quansight-labs/setup-python@b9ab292c751a42bcd2bb465b7fa202ea2c3f5796 # v5.3.1
       with:
         python-version: ${{ matrix.version }}
+    # TODO: remove cython nightly install when cython does a release
+    - name: Install nightly Cython
+      if: matrix.version == '3.13t'
+      run: |
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
     - uses: ./.github/meson_actions
 
   pypy:
@@ -75,7 +80,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: 'pypy3.10-v7.3.17'
     - name: Setup using scipy-openblas
@@ -122,7 +127,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.10'
     - name: Install build and test dependencies from PyPI
@@ -157,7 +162,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.10'
     - name: Install build and benchmarking dependencies
@@ -194,7 +199,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
     - name: Install gfortran and setup OpenBLAS (sdist build)
@@ -236,7 +241,7 @@ jobs:
         submodules: 'true'
         path: 'array-api-tests'
     - name: Set up Python
-      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI
@@ -264,7 +269,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI
@@ -274,7 +279,7 @@ jobs:
         pip install vulture
     - name: Build and install NumPy
       run: |
-        # Install using the fastests way to build (no BLAS, no SIMD)
+        # Install using the fastest way to build (no BLAS, no SIMD)
         spin build -j2 -- -Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none
     - name: Check build-internal dependencies
       run: |
@@ -291,23 +296,3 @@ jobs:
         rm -rf build-install
         ./vendored-meson/meson/meson.py install -C build --destdir ../build-install --tags=runtime,python-runtime,devel
         python tools/check_installed_files.py $(find ./build-install -path '*/site-packages/numpy') --no-tests
-
-  free-threaded:
-    needs: [smoke_test]
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'
-    steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      with:
-        submodules: recursive
-        fetch-tags: true
-    # TODO: replace with setup-python when there is support
-    - uses: deadsnakes/action@6c8b9b82fe0b4344f4b98f2775fcc395df45e494 # v3.1.0
-      with:
-          python-version: '3.13-dev'
-          nogil: true
-    # TODO: remove cython nightly install when cython does a release
-    - name: Install nightly Cython
-      run: |
-        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
-    - uses: ./.github/meson_actions

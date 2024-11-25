@@ -117,8 +117,6 @@ class AxisError(ValueError, IndexError):
     ``except ValueError`` and ``except IndexError`` statements continue
     to catch ``AxisError``.
 
-    .. versionadded:: 1.13
-
     Parameters
     ----------
     axis : int or str

@@ -48,12 +48,14 @@ __all__ = [
     "stride_tricks", "tracemalloc_domain"
 ]
 
+add_newdoc.__module__ = "numpy.lib"
+
 from numpy._pytesttester import PytestTester
 test = PytestTester(__name__)
 del PytestTester
 
 def __getattr__(attr):
-    # Warn for reprecated attributes
+    # Warn for deprecated/removed aliases
     import math
     import warnings
 

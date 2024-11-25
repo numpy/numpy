@@ -6,8 +6,6 @@
 Datetimes and timedeltas
 ************************
 
-.. versionadded:: 1.7.0
-
 Starting in NumPy 1.7, there are core array data types which natively
 support datetime functionality. The data type is called :class:`datetime64`,
 so named because :class:`~datetime.datetime` is already taken by the Python standard library.
