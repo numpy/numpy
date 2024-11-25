@@ -1761,7 +1761,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         The axis for the calculation of the mean should be the same as used in
         the call to this var function.
 
-        .. versionadded:: 1.26.0
+        .. versionadded:: 2.0.0
 
     correction : {int, float}, optional
         Array API compatible name for the ``ddof`` parameter. Only one of them
@@ -1958,7 +1958,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue,
         The axis for the calculation of the mean should be the same as used in
         the call to this std function.
 
-        .. versionadded:: 1.26.0
+        .. versionadded:: 2.0.0
 
     correction : {int, float}, optional
         Array API compatible name for the ``ddof`` parameter. Only one of them
