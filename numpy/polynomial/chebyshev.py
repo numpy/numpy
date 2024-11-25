@@ -670,10 +670,9 @@ def chebmulx(c):
     out : ndarray
         Array representing the result of the multiplication.
 
-    Notes
-    -----
-
-    .. versionadded:: 1.5.0
+    See Also
+    --------
+    chebadd, chebsub, chebmul, chebdiv, chebpow
 
     Examples
     --------
@@ -796,7 +795,7 @@ def chebdiv(c1, c2):
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
     if c2[-1] == 0:
-        raise ZeroDivisionError()
+        raise ZeroDivisionError  # FIXME: add message with details to exception
 
     # note: this is more efficient than `pu._div(chebmul, c1, c2)`
     lc1 = len(c1)
@@ -900,8 +899,6 @@ def chebder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     der : ndarray
@@ -1001,8 +998,6 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -1134,8 +1129,6 @@ def chebval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, algebra_like
@@ -1214,12 +1207,6 @@ def chebval2d(x, y, c):
     See Also
     --------
     chebval, chebgrid2d, chebval3d, chebgrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(chebval, c, x, y)
 
@@ -1267,12 +1254,6 @@ def chebgrid2d(x, y, c):
     See Also
     --------
     chebval, chebval2d, chebval3d, chebgrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(chebval, c, x, y)
 
@@ -1318,12 +1299,6 @@ def chebval3d(x, y, z, c):
     See Also
     --------
     chebval, chebval2d, chebgrid2d, chebgrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._valnd(chebval, c, x, y, z)
 
@@ -1374,12 +1349,6 @@ def chebgrid3d(x, y, z, c):
     See Also
     --------
     chebval, chebval2d, chebgrid2d, chebval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._gridnd(chebval, c, x, y, z)
 
@@ -1480,12 +1449,6 @@ def chebvander2d(x, y, deg):
     See Also
     --------
     chebvander, chebvander3d, chebval2d, chebval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((chebvander, chebvander), (x, y), deg)
 
@@ -1534,12 +1497,6 @@ def chebvander3d(x, y, z, deg):
     See Also
     --------
     chebvander, chebvander3d, chebval2d, chebval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     return pu._vander_nd_flat((chebvander, chebvander, chebvander), (x, y, z), deg)
 
@@ -1587,8 +1544,6 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         chosen so that the errors of the products ``w[i]*y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
-        .. versionadded:: 1.5.0
 
     Returns
     -------
@@ -1690,12 +1645,6 @@ def chebcompanion(c):
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1785,8 +1734,6 @@ def chebinterpolate(func, deg, args=()):
     series tends to a minmax approximation to `func` with increasing `deg`
     if the function is continuous in the interval.
 
-    .. versionadded:: 1.14.0
-
     Parameters
     ----------
     func : function
@@ -1815,7 +1762,6 @@ def chebinterpolate(func, deg, args=()):
 
     Notes
     -----
-
     The Chebyshev polynomials used in the interpolation are orthogonal when
     sampled at the Chebyshev points of the first kind. If it is desired to
     constrain some of the coefficients they can simply be set to the desired
@@ -1867,9 +1813,6 @@ def chebgauss(deg):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
-
     The results have only been tested up to degree 100, higher degrees may
     be problematic. For Gauss-Chebyshev there are closed form solutions for
     the sample points and weights. If n = `deg`, then
@@ -1906,12 +1849,6 @@ def chebweight(x):
     -------
     w : ndarray
        The weight function at `x`.
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     """
     w = 1./(np.sqrt(1. + x) * np.sqrt(1. - x))
     return w
@@ -1937,12 +1874,6 @@ def chebpts1(npts):
     See Also
     --------
     chebpts2
-
-    Notes
-    -----
-
-    .. versionadded:: 1.5.0
-
     """
     _npts = int(npts)
     if _npts != npts:
@@ -1971,12 +1902,6 @@ def chebpts2(npts):
     -------
     pts : ndarray
         The Chebyshev points of the second kind.
-
-    Notes
-    -----
-
-    .. versionadded:: 1.5.0
-
     """
     _npts = int(npts)
     if _npts != npts:
@@ -2007,11 +1932,9 @@ class Chebyshev(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [-1, 1].
+        The default value is [-1., 1.].
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [-1, 1].
-
-        .. versionadded:: 1.6.0
+        Window, see `domain` for its use. The default value is [-1., 1.].
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.
@@ -2042,8 +1965,6 @@ class Chebyshev(ABCPolyBase):
         the first kind scaled and shifted to the `domain`. The resulting series
         tends to a minmax approximation of `func` when the function is
         continuous in the domain.
-
-        .. versionadded:: 1.14.0
 
         Parameters
         ----------

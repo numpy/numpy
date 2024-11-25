@@ -6,6 +6,7 @@
 #include <Python.h>
 
 #include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 #include "lowlevel_strided_loops.h"
 #include "numpy/arrayobject.h"
@@ -224,36 +225,39 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
     PyObject *DType;
 
     if (pytype == &PyArray_Type) {
-        DType = Py_None;
+        DType = Py_NewRef(Py_None);
     }
     else if (pytype == &PyFloat_Type) {
-        DType = (PyObject *)&PyArray_PyFloatDType;
+        DType = Py_NewRef((PyObject *)&PyArray_PyFloatDType);
     }
     else if (pytype == &PyLong_Type) {
-        DType = (PyObject *)&PyArray_PyLongDType;
+        DType = Py_NewRef((PyObject *)&PyArray_PyLongDType);
     }
     else {
-        DType = PyDict_GetItem(_global_pytype_to_type_dict,
-                               (PyObject *)pytype);
+        int res = PyDict_GetItemRef(_global_pytype_to_type_dict,
+                                    (PyObject *)pytype, (PyObject **)&DType);
 
-        if (DType == NULL) {
-            /* the python type is not known */
+        if (res <= 0) {
+            /* the python type is not known or an error was set */
             return NULL;
         }
     }
-    Py_INCREF(DType);
     assert(DType == Py_None || PyObject_TypeCheck(DType, (PyTypeObject *)&PyArrayDTypeMeta_Type));
     return (PyArray_DTypeMeta *)DType;
 }
 
 /*
- * Note: This function never fails, but will return `NULL` for unknown scalars
- *       and `None` for known array-likes (e.g. tuple, list, ndarray).
+ * Note: This function never fails, but will return `NULL` for unknown scalars or
+ *       known array-likes (e.g. tuple, list, ndarray).
  */
 NPY_NO_EXPORT PyObject *
 PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype)
 {
-    return (PyObject *)npy_discover_dtype_from_pytype(pytype);
+    PyObject *DType = (PyObject *)npy_discover_dtype_from_pytype(pytype);
+    if (DType == NULL || DType == Py_None) {
+        return NULL;
+    }
+    return DType;
 }
 
 
@@ -660,8 +664,8 @@ npy_new_coercion_cache(
 /**
  * Unlink coercion cache item.
  *
- * @param current
- * @return next coercion cache object (or NULL)
+ * @param current This coercion cache object
+ * @return next Next coercion cache object (or NULL)
  */
 NPY_NO_EXPORT coercion_cache_obj *
 npy_unlink_coercion_cache(coercion_cache_obj *current)
@@ -905,7 +909,7 @@ find_descriptor_from_array(
  * it supports inspecting the elements when the array has object dtype
  * (and the given datatype describes a parametric DType class).
  *
- * @param arr
+ * @param arr The array object.
  * @param dtype NULL or a dtype class
  * @param descr A dtype instance, if the dtype is NULL the dtype class is
  *              found and e.g. "S0" is converted to denote only String.
@@ -1185,7 +1189,7 @@ PyArray_DiscoverDTypeAndShape_Recursive(
     }
 
     /*
-     * For a sequence we need to make a copy of the final aggreate anyway.
+     * For a sequence we need to make a copy of the final aggregate anyway.
      * There's no need to pass explicit `copy=True`, so we switch
      * to `copy=None` (copy if needed).
      */

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 
 Rules for building C/API module with f2py2e.
@@ -47,7 +46,8 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-import os, sys
+import os
+import sys
 import time
 import copy
 from pathlib import Path
@@ -235,6 +235,11 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 #initf90modhooks#
 #initcommonhooks#
 #interface_usercode#
+
+#if Py_GIL_DISABLED
+    // signal whether this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m , #gil_used#);
+#endif
 
 #ifdef F2PY_REPORT_ATEXIT
     if (! PyErr_Occurred())
@@ -454,7 +459,7 @@ rout_rules = [
     {
       extern #ctype# #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
-      tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
+      tmp = F2PyCapsule_FromVoidPtr((void*)#F_WRAPPEDFUNC#(#name_lower#,#NAME#),NULL);
       PyObject_SetAttrString(o,"_cpointer", tmp);
       Py_DECREF(tmp);
       s = PyUnicode_FromString("#name#");

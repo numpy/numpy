@@ -308,11 +308,6 @@ def polymulx(c):
     --------
     polyadd, polysub, polymul, polydiv, polypow
 
-    Notes
-    -----
-
-    .. versionadded:: 1.5.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -407,7 +402,7 @@ def polydiv(c1, c2):
     # c1, c2 are trimmed copies
     [c1, c2] = pu.as_series([c1, c2])
     if c2[-1] == 0:
-        raise ZeroDivisionError()
+        raise ZeroDivisionError  # FIXME: add message with details to exception
 
     # note: this is more efficient than `pu._div(polymul, c1, c2)`
     lc1 = len(c1)
@@ -494,8 +489,6 @@ def polyder(c, m=1, scl=1, axis=0):
         of variable. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -585,8 +578,6 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -712,8 +703,6 @@ def polyval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, compatible object
@@ -729,6 +718,7 @@ def polyval(x, c, tensor=True):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.polynomial import polyval
     >>> polyval(1, [1,2,3])
     6.0
@@ -785,8 +775,6 @@ def polyvalfromroots(x, r, tensor=True):
     ``False``, the shape will be r.shape[1:]; that is, each polynomial is
     evaluated only for the corresponding broadcast value of `x`. Note that
     scalars have shape (,).
-
-    .. versionadded:: 1.12
 
     Parameters
     ----------
@@ -895,16 +883,11 @@ def polyval2d(x, y, c):
     --------
     polyval, polygrid2d, polyval3d, polygrid3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
     >>> c = ((1, 2, 3), (4, 5, 6))
-    >>> P.polyval2d(1, 1, c) 
+    >>> P.polyval2d(1, 1, c)
     21.0
 
     """
@@ -954,11 +937,6 @@ def polygrid2d(x, y, c):
     See Also
     --------
     polyval, polyval2d, polyval3d, polygrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1013,11 +991,6 @@ def polyval3d(x, y, z, c):
     See Also
     --------
     polyval, polyval2d, polygrid2d, polygrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1077,11 +1050,6 @@ def polygrid3d(x, y, z, c):
     --------
     polyval, polyval2d, polygrid2d, polyval3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial import polynomial as P
@@ -1134,7 +1102,7 @@ def polyvander(x, deg):
     Examples
     --------
     The Vandermonde matrix of degree ``deg = 5`` and sample points
-    ``x = [-1, 2, 3]`` contains the element-wise powers of `x` 
+    ``x = [-1, 2, 3]`` contains the element-wise powers of `x`
     from 0 to 5 as its columns.
 
     >>> from numpy.polynomial import polynomial as P
@@ -1207,6 +1175,8 @@ def polyvander2d(x, y, deg):
 
     Examples
     --------
+    >>> import numpy as np
+
     The 2-D pseudo-Vandermonde matrix of degree ``[1, 2]`` and sample
     points ``x = [-1, 2]`` and ``y = [1, 3]`` is as follows:
 
@@ -1233,7 +1203,7 @@ def polyvander2d(x, y, deg):
     >>> P.polyvander2d(x=x, y=0*x, deg=(m, 0)) == P.polyvander(x=x, deg=m)
     array([[ True,  True],
            [ True,  True]])
-    
+
     """
     return pu._vander_nd_flat((polyvander, polyvander), (x, y), deg)
 
@@ -1283,13 +1253,9 @@ def polyvander3d(x, y, z, deg):
     --------
     polyvander, polyvander3d, polyval2d, polyval3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.asarray([-1, 2, 1])
     >>> y = np.asarray([1, -2, -3])
@@ -1304,7 +1270,7 @@ def polyvander3d(x, y, z, deg):
              -8.,   8.,  16.,   4.,   8.,  -8., -16.,  16.,  32.],
            [  1.,   5.,  -3., -15.,   9.,  45.,   1.,   5.,  -3.,
             -15.,   9.,  45.,   1.,   5.,  -3., -15.,   9.,  45.]])
-    
+
     We can verify the columns for any ``0 <= i <= l``, ``0 <= j <= m``,
     and ``0 <= k <= n``
 
@@ -1362,8 +1328,6 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         chosen so that the errors of the products ``w[i]*y[i]`` all have the
         same variance.  When using inverse-variance weighting, use
         ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
-        .. versionadded:: 1.5.0
 
     Returns
     -------
@@ -1441,27 +1405,32 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
-    >>> np.random.seed(123)
+    >>> import numpy as np
     >>> from numpy.polynomial import polynomial as P
     >>> x = np.linspace(-1,1,51)  # x "data": [-1, -0.96, ..., 0.96, 1]
-    >>> y = x**3 - x + np.random.randn(len(x))  # x^3 - x + Gaussian noise
+    >>> rng = np.random.default_rng()
+    >>> err = rng.normal(size=len(x))
+    >>> y = x**3 - x + err  # x^3 - x + Gaussian noise
     >>> c, stats = P.polyfit(x,y,3,full=True)
-    >>> np.random.seed(123)
-    >>> c # c[0], c[2] should be approx. 0, c[1] approx. -1, c[3] approx. 1
-    array([ 0.01909725, -1.30598256, -0.00577963,  1.02644286])  # may vary
+    >>> c # c[0], c[1] approx. -1, c[2] should be approx. 0, c[3] approx. 1
+    array([ 0.23111996, -1.02785049, -0.2241444 ,  1.08405657]) # may vary
     >>> stats # note the large SSR, explaining the rather poor results
-     [array([ 38.06116253]), 4, array([ 1.38446749,  1.32119158,  0.50443316, # may vary
-              0.28853036]), 1.1324274851176597e-014]
+    [array([48.312088]),                                        # may vary
+     4,
+     array([1.38446749, 1.32119158, 0.50443316, 0.28853036]),
+     1.1324274851176597e-14]
 
     Same thing without the added noise
 
     >>> y = x**3 - x
     >>> c, stats = P.polyfit(x,y,3,full=True)
-    >>> c # c[0], c[2] should be "very close to 0", c[1] ~= -1, c[3] ~= 1
-    array([-6.36925336e-18, -1.00000000e+00, -4.08053781e-16,  1.00000000e+00])
+    >>> c # c[0], c[1] ~= -1, c[2] should be "very close to 0", c[3] ~= 1
+    array([-6.73496154e-17, -1.00000000e+00,  0.00000000e+00,  1.00000000e+00])
     >>> stats # note the minuscule SSR
-    [array([  7.46346754e-31]), 4, array([ 1.38446749,  1.32119158, # may vary
-               0.50443316,  0.28853036]), 1.1324274851176597e-014]
+    [array([8.79579319e-31]),
+     np.int32(4),
+     array([1.38446749, 1.32119158, 0.50443316, 0.28853036]),
+     1.1324274851176597e-14]
 
     """
     return pu._fit(polyvander, x, y, deg, rcond, full, w)
@@ -1485,11 +1454,6 @@ def polycompanion(c):
     -------
     mat : ndarray
         Companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1597,11 +1561,9 @@ class Polynomial(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [-1, 1].
+        The default value is [-1., 1.].
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [-1, 1].
-
-        .. versionadded:: 1.6.0
+        Window, see `domain` for its use. The default value is [-1., 1.].
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.

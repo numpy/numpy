@@ -17,6 +17,7 @@ from unittest.case import SkipTest
 from warnings import WarningMessage
 import pprint
 import sysconfig
+import concurrent.futures
 
 import numpy as np
 from numpy._core import (
@@ -39,8 +40,8 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        '_OLD_PROMOTION', 'IS_MUSL', '_SUPPORTS_SVE', 'NOGIL_BUILD',
-        'IS_EDITABLE'
+        'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
+        'IS_EDITABLE', 'run_threaded',
         ]
 
 
@@ -58,8 +59,6 @@ IS_PYSTON = hasattr(sys, "pyston_version_info")
 IS_EDITABLE = not bool(np.__path__) or 'editable' in np.__path__[0]
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
-
-_OLD_PROMOTION = lambda: np._get_promotion_state() == 'legacy'
 
 IS_MUSL = False
 # alternate way is
@@ -465,7 +464,6 @@ def print_assert_equal(test_string, actual, desired):
         raise AssertionError(msg.getvalue())
 
 
-@np._no_nep50_warning()
 def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     """
     Raises an AssertionError if two items are not equal up to desired
@@ -592,7 +590,6 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
         raise AssertionError(_build_err_msg())
 
 
-@np._no_nep50_warning()
 def assert_approx_equal(actual, desired, significant=7, err_msg='',
                         verbose=True):
     """
@@ -693,7 +690,6 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
         raise AssertionError(msg)
 
 
-@np._no_nep50_warning()
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False, names=('ACTUAL', 'DESIRED')):
@@ -855,27 +851,27 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         remarks.append(
                             'Max absolute difference among violations: '
                             + array2string(max_abs_error))
-                        
+
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
                     # Filter values where the divisor would be zero
                     nonzero = np.bool(y != 0)
                     nonzero_and_invalid = np.logical_and(invalids, nonzero)
-                    
+
                     if all(~nonzero_and_invalid):
                         max_rel_error = array(inf)
                     else:
                         nonzero_invalid_error = error[nonzero_and_invalid]
                         broadcasted_y = np.broadcast_to(y, error.shape)
                         nonzero_invalid_y = broadcasted_y[nonzero_and_invalid]
-                        max_rel_error = max(nonzero_invalid_error 
+                        max_rel_error = max(nonzero_invalid_error
                                             / abs(nonzero_invalid_y))
 
-                    if getattr(error, 'dtype', object_) == object_: 
+                    if getattr(error, 'dtype', object_) == object_:
                         remarks.append(
                             'Max relative difference among violations: '
                             + str(max_rel_error))
-                    else:               
+                    else:
                         remarks.append(
                             'Max relative difference among violations: '
                             + array2string(max_rel_error))
@@ -1026,7 +1022,6 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
                          strict=strict)
 
 
-@np._no_nep50_warning()
 @_rename_parameter(['x', 'y'], ['actual', 'desired'], dep_version='2.0.0')
 def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
                               verbose=True):
@@ -1379,21 +1374,24 @@ def rundocs(filename=None, raise_on_error=True):
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
-def check_support_sve():
+def check_support_sve(__cache=[]):
     """
     gh-22982
     """
+    
+    if __cache:
+        return __cache[0]
     
     import subprocess
     cmd = 'lscpu'
     try:
         output = subprocess.run(cmd, capture_output=True, text=True)
-        return 'sve' in output.stdout
-    except OSError:
-        return False
+        result = 'sve' in output.stdout
+    except (OSError, subprocess.SubprocessError):
+        result = False
+    __cache.append(result)
+    return __cache[0]
 
-
-_SUPPORTS_SVE = check_support_sve()
 
 #
 # assert_raises and assert_raises_regex are taken from unittest.
@@ -1449,11 +1447,6 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
     args and keyword arguments kwargs.
 
     Alternatively, can be used as a context manager like `assert_raises`.
-
-    Notes
-    -----
-    .. versionadded:: 1.9.0
-
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     return _d.assertRaisesRegex(exception_class, expected_regexp, *args, **kwargs)
@@ -1593,8 +1586,6 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
     that ``allclose`` has different default values). It compares the difference
     between `actual` and `desired` to ``atol + rtol * abs(desired)``.
-
-    .. versionadded:: 1.5.0
 
     Parameters
     ----------
@@ -1923,8 +1914,6 @@ def assert_warns(warning_class, *args, **kwargs):
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
 
-    .. versionadded:: 1.4.0
-
     Parameters
     ----------
     warning_class : class
@@ -1989,8 +1978,6 @@ def assert_no_warnings(*args, **kwargs):
             do_something()
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -2531,8 +2518,6 @@ def assert_no_gc_cycles(*args, **kwargs):
         with assert_no_gc_cycles():
             do_something()
 
-    .. versionadded:: 1.15.0
-
     Parameters
     ----------
     func : callable
@@ -2697,3 +2682,14 @@ def _get_glibc_version():
 
 _glibcver = _get_glibc_version()
 _glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
+
+
+def run_threaded(func, iters, pass_count=False):
+    """Runs a function many times in parallel"""
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
+        if pass_count:
+            futures = [tpe.submit(func, i) for i in range(iters)]
+        else:
+            futures = [tpe.submit(func) for _ in range(iters)]
+        for f in futures:
+            f.result()

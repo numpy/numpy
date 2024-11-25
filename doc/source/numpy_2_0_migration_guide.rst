@@ -23,7 +23,7 @@ guide can be automatically adapted in downstream code with a dedicated
 `Ruff <https://docs.astral.sh/ruff/>`__ rule, namely rule
 `NPY201 <https://docs.astral.sh/ruff/rules/numpy2-deprecation/>`__.
 
-You should install ``ruff>=0.2.0`` and add the ``NPY201`` rule to your
+You should install ``ruff>=0.4.8`` and add the ``NPY201`` rule to your
 ``pyproject.toml``::
 
     [tool.ruff.lint]
@@ -149,8 +149,8 @@ Please do not hesitate to open a NumPy issue, if you require assistance or
 the provided functions are not sufficient.
 
 **Custom User DTypes:**
-Existing user dtypes must now use ``PyArray_DescrProto`` to define their
-dtype and slightly modify the code. See note in `PyArray_RegisterDataType`.
+Existing user dtypes must now use :c:type:`PyArray_DescrProto` to define
+their dtype and slightly modify the code. See note in :c:func:`PyArray_RegisterDataType`.
 
 Functionality moved to headers requiring ``import_array()``
 -----------------------------------------------------------
@@ -202,23 +202,36 @@ native C99 types. While the memory layout of those types remains identical
 to the types used in NumPy 1.x, the API is slightly different, since direct
 field access (like ``c.real`` or ``c.imag``) is no longer possible.
 
-It is recommended to use the functions `npy_creal` and `npy_cimag` (and the
-corresponding float and long double variants) to retrieve
+It is recommended to use the functions ``npy_creal`` and ``npy_cimag``
+(and the corresponding float and long double variants) to retrieve
 the real or imaginary part of a complex number, as these will work with both
-NumPy 1.x and with NumPy 2.x. New functions `npy_csetreal` and `npy_csetimag`,
-along with compatibility macros `NPY_CSETREAL` and `NPY_CSETIMAG` (and the
-corresponding float and long double variants), have been
-added for setting the real or imaginary part.
+NumPy 1.x and with NumPy 2.x. New functions ``npy_csetreal`` and
+``npy_csetimag``, along with compatibility macros ``NPY_CSETREAL`` and
+``NPY_CSETIMAG`` (and the corresponding float and long double variants),
+have been added for setting the real or imaginary part.
 
 The underlying type remains a struct under C++ (all of the above still remains
 valid).
 
-This has implications for Cython. It is recommened to always use the native
+This has implications for Cython. It is recommended to always use the native
 typedefs ``cfloat_t``, ``cdouble_t``, ``clongdouble_t`` rather than the NumPy
 types ``npy_cfloat``, etc, unless you have to interface with C code written
 using the NumPy types. You can still write cython code using the ``c.real`` and
 ``c.imag`` attributes (using the native typedefs), but you can no longer use
 in-place operators ``c.imag += 1`` in Cython's c++ mode.
+
+Because NumPy 2 now includes ``complex.h`` code that uses a variable named
+``I`` may see an error such as
+
+.. code-block::C
+   error: expected ‘)’ before ‘__extension__’
+                    double I,
+
+to use the name ``I`` requires an ``#undef I`` now.
+
+.. note::
+  NumPy 2.0.1 briefly included the ``#undef I`` to help users not already
+  including ``complex.h``.
 
 
 Changes to namespaces
@@ -231,7 +244,7 @@ private.
 Please see the tables below for guidance on migration.  For most changes this
 means replacing it with a backwards compatible alternative. 
 
-Please refer to `NEP 52 <https://numpy.org/neps/nep-0052-python-api-cleanup.html>`_ for more details.
+Please refer to :ref:`NEP52` for more details.
 
 Main namespace
 --------------
@@ -246,12 +259,14 @@ removed member          migration guideline
 add_docstring           It's still available as ``np.lib.add_docstring``.
 add_newdoc              It's still available as ``np.lib.add_newdoc``.
 add_newdoc_ufunc        It's an internal function and doesn't have a replacement.
-alltrue                 Use ``all`` instead.
+alltrue                 Use ``np.all`` instead.
 asfarray                Use ``np.asarray`` with a float dtype instead.
 byte_bounds             Now it's available under ``np.lib.array_utils.byte_bounds``
 cast                    Use ``np.asarray(arr, dtype=dtype)`` instead.
 cfloat                  Use ``np.complex128`` instead.
+charrarray              It's still available as ``np.char.chararray``.
 clongfloat              Use ``np.clongdouble`` instead.
+compare_chararrays      It's still available as ``np.char.compare_chararrays``.
 compat                  There's no replacement, as Python 2 is no longer supported.
 complex\_               Use ``np.complex128`` instead.
 cumproduct              Use ``np.cumprod`` instead.
@@ -266,6 +281,7 @@ find_common_type        Use ``numpy.promote_types`` or ``numpy.result_type`` ins
                         To achieve semantics for the ``scalar_types`` argument, 
                         use ``numpy.result_type`` and pass the Python values ``0``, 
                         ``0.0``, or ``0j``.
+format_parser           It's still available as ``np.rec.format_parser``.
 get_array_wrap
 float\_                 Use ``np.float64`` instead.
 geterrobj               Use the np.errstate context manager instead.
@@ -304,7 +320,7 @@ set_string_function     Use ``np.set_printoptions`` instead with a formatter
                         for custom printing of NumPy objects.
 singlecomplex           Use ``np.complex64`` instead.
 string\_                Use ``np.bytes_`` instead.
-sometrue                Use ``any`` instead.
+sometrue                Use ``np.any`` instead.
 source                  Use ``inspect.getsource`` instead.
 tracemalloc_domain      It's now available from ``np.lib``.
 unicode\_               Use ``np.str_`` instead.
@@ -382,7 +398,6 @@ expired member          migration guideline
 newbyteorder            Use ``arr.view(arr.dtype.newbyteorder(order))`` instead.
 ptp                     Use ``np.ptp(arr, ...)`` instead.
 setitem                 Use ``arr[index] = value`` instead.
-...                     ...
 ======================  ========================================================
 
 

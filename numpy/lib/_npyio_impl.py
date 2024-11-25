@@ -9,7 +9,7 @@ import warnings
 import weakref
 import contextlib
 import operator
-from operator import itemgetter, index as opindex, methodcaller
+from operator import itemgetter
 from collections.abc import Mapping
 import pickle
 
@@ -19,7 +19,7 @@ from ._datasource import DataSource
 from numpy._core import overrides
 from numpy._core.multiarray import packbits, unpackbits
 from numpy._core._multiarray_umath import _load_from_filelike
-from numpy._core.overrides import set_array_function_like_doc, set_module
+from numpy._core.overrides import finalize_array_function_like, set_module
 from ._iotools import (
     LineSplitter, NameValidator, StringConverter, ConverterError,
     ConverterLockError, ConversionWarning, _is_string_like,
@@ -51,6 +51,7 @@ class BagObj:
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib._npyio_impl import BagObj as BO
     >>> class BagDemo:
     ...     def __getitem__(self, key): # An instance of BagObj(BagDemo)
@@ -131,10 +132,6 @@ class NpzFile(Mapping):
         to getitem access on the `NpzFile` instance itself.
     allow_pickle : bool, optional
         Allow loading pickled data. Default: False
-
-        .. versionchanged:: 1.16.3
-            Made default False in response to CVE-2019-6446.
-
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass on to pickle.load.
         These are only useful when loading object arrays saved on
@@ -157,6 +154,7 @@ class NpzFile(Mapping):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from tempfile import TemporaryFile
     >>> outfile = TemporaryFile()
     >>> x = np.arange(10)
@@ -338,10 +336,6 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         disallowing pickles include security, as loading pickled data can
         execute arbitrary code. If pickles are disallowed, loading object
         arrays will fail. Default: False
-
-        .. versionchanged:: 1.16.3
-            Made default False in response to CVE-2019-6446.
-
     fix_imports : bool, optional
         Only useful when loading Python 2 generated pickled files on Python 3,
         which includes npy/npz files containing object arrays. If `fix_imports`
@@ -403,6 +397,8 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
 
     Examples
     --------
+    >>> import numpy as np
+
     Store data to disk, and load it again:
 
     >>> np.save('/tmp/123', np.array([[1, 2, 3], [4, 5, 6]]))
@@ -465,7 +461,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # If the file size is less than N, we need to make sure not
         # to seek past the beginning of the file
         fid.seek(-min(N, len(magic)), 1)  # back-up
-        if magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):
+        if magic.startswith((_ZIP_PREFIX, _ZIP_SUFFIX)):
             # zip-file (assume .npz)
             # Potentially transfer file ownership to NpzFile
             stack.pop_all()
@@ -487,8 +483,10 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         else:
             # Try a pickle
             if not allow_pickle:
-                raise ValueError("Cannot load file containing pickled data "
-                                 "when allow_pickle=False")
+                raise ValueError(
+                    "This file contains pickled (object) data. If you trust "
+                    "the file you can load it unsafely using the "
+                    "`allow_pickle=` keyword argument or `pickle.load()`.")
             try:
                 return pickle.load(fid, **pickle_kwargs)
             except Exception as e:
@@ -542,6 +540,8 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
+
     >>> from tempfile import TemporaryFile
     >>> outfile = TemporaryFile()
 
@@ -582,13 +582,13 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
                            pickle_kwargs=dict(fix_imports=fix_imports))
 
 
-def _savez_dispatcher(file, *args, **kwds):
+def _savez_dispatcher(file, *args, allow_pickle=True, **kwds):
     yield from args
     yield from kwds.values()
 
 
 @array_function_dispatch(_savez_dispatcher)
-def savez(file, *args, **kwds):
+def savez(file, *args, allow_pickle=True, **kwds):
     """Save several arrays into a single file in uncompressed ``.npz`` format.
 
     Provide arrays as keyword arguments to store them under the
@@ -608,6 +608,14 @@ def savez(file, *args, **kwds):
         Arrays to save to the file. Please use keyword arguments (see
         `kwds` below) to assign names to arrays.  Arrays specified as
         args will be named "arr_0", "arr_1", and so on.
+    allow_pickle : bool, optional
+        Allow saving object arrays using Python pickles. Reasons for
+        disallowing pickles include security (loading pickled data can execute
+        arbitrary code) and portability (pickled objects may not be loadable
+        on different Python installations, for example if the stored objects
+        require libraries that are not available, and not all pickled data is
+        compatible between different versions of Python).
+        Default: True
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
         output file with its corresponding keyword name.
@@ -644,6 +652,7 @@ def savez(file, *args, **kwds):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from tempfile import TemporaryFile
     >>> outfile = TemporaryFile()
     >>> x = np.arange(10)
@@ -671,16 +680,16 @@ def savez(file, *args, **kwds):
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
     """
-    _savez(file, args, kwds, False)
+    _savez(file, args, kwds, False, allow_pickle=allow_pickle)
 
 
-def _savez_compressed_dispatcher(file, *args, **kwds):
+def _savez_compressed_dispatcher(file, *args, allow_pickle=True, **kwds):
     yield from args
     yield from kwds.values()
 
 
 @array_function_dispatch(_savez_compressed_dispatcher)
-def savez_compressed(file, *args, **kwds):
+def savez_compressed(file, *args, allow_pickle=True, **kwds):
     """
     Save several arrays into a single file in compressed ``.npz`` format.
 
@@ -701,6 +710,14 @@ def savez_compressed(file, *args, **kwds):
         Arrays to save to the file. Please use keyword arguments (see
         `kwds` below) to assign names to arrays.  Arrays specified as
         args will be named "arr_0", "arr_1", and so on.
+    allow_pickle : bool, optional
+        Allow saving object arrays using Python pickles. Reasons for
+        disallowing pickles include security (loading pickled data can execute
+        arbitrary code) and portability (pickled objects may not be loadable
+        on different Python installations, for example if the stored objects
+        require libraries that are not available, and not all pickled data is
+        compatible between different versions of Python).
+        Default: True
     kwds : Keyword arguments, optional
         Arrays to save to the file. Each array will be saved to the
         output file with its corresponding keyword name.
@@ -732,6 +749,7 @@ def savez_compressed(file, *args, **kwds):
 
     Examples
     --------
+    >>> import numpy as np
     >>> test_array = np.random.rand(3, 2)
     >>> test_vector = np.random.rand(4)
     >>> np.savez_compressed('/tmp/123', a=test_array, b=test_vector)
@@ -742,7 +760,7 @@ def savez_compressed(file, *args, **kwds):
     True
 
     """
-    _savez(file, args, kwds, True)
+    _savez(file, args, kwds, True, allow_pickle=allow_pickle)
 
 
 def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
@@ -769,17 +787,17 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         compression = zipfile.ZIP_STORED
 
     zipf = zipfile_factory(file, mode="w", compression=compression)
-
-    for key, val in namedict.items():
-        fname = key + '.npy'
-        val = np.asanyarray(val)
-        # always force zip64, gh-10776
-        with zipf.open(fname, 'w', force_zip64=True) as fid:
-            format.write_array(fid, val,
-                               allow_pickle=allow_pickle,
-                               pickle_kwargs=pickle_kwargs)
-
-    zipf.close()
+    try:
+        for key, val in namedict.items():
+            fname = key + '.npy'
+            val = np.asanyarray(val)
+            # always force zip64, gh-10776
+            with zipf.open(fname, 'w', force_zip64=True) as fid:
+                format.write_array(fid, val,
+                                   allow_pickle=allow_pickle,
+                                   pickle_kwargs=pickle_kwargs)
+    finally:
+        zipf.close()
 
 
 def _ensure_ndmin_ndarray_check_param(ndmin):
@@ -1040,6 +1058,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             # Due to chunking, certain error reports are less clear, currently.
             if filelike:
                 data = iter(data)  # cannot chunk when reading from file
+                filelike = False
 
             c_byte_converters = False
             if read_dtype_via_object_chunks == "S":
@@ -1055,7 +1074,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 next_arr = _load_from_filelike(
                     data, delimiter=delimiter, comment=comment, quote=quote,
                     imaginary_unit=imaginary_unit,
-                    usecols=usecols, skiplines=skiplines, max_rows=max_rows,
+                    usecols=usecols, skiplines=skiplines, max_rows=chunk_size,
                     converters=converters, dtype=dtype,
                     encoding=encoding, filelike=filelike,
                     byte_converters=byte_converters,
@@ -1107,7 +1126,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         return arr
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
@@ -1158,11 +1177,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Which columns to read, with 0 being the first. For example,
         ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
         The default, None, results in all columns being read.
-
-        .. versionchanged:: 1.11.0
-            When a single column has to be read it is possible to use
-            an integer instead of a tuple. E.g ``usecols = 3`` reads the
-            fourth column the same way as ``usecols = (3,)`` would.
     unpack : bool, optional
         If True, the returned array is transposed, so that arguments may be
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a
@@ -1172,8 +1186,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         The returned array will have at least `ndmin` dimensions.
         Otherwise mono-dimensional axes will be squeezed.
         Legal values: 0 (default), 1 or 2.
-
-        .. versionadded:: 1.6.0
     encoding : str, optional
         Encoding used to decode the inputfile. Does not apply to input streams.
         The special value 'bytes' enables backward compatibility workarounds
@@ -1182,7 +1194,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         unicode arrays and pass strings as input to converters.  If set to None
         the system default is used. The default value is 'bytes'.
 
-        .. versionadded:: 1.14.0
         .. versionchanged:: 2.0
             Before NumPy 2, the default was ``'bytes'`` for Python 2
             compatibility. The default is now ``None``.
@@ -1192,8 +1203,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         to read all the rows. Note that empty rows containing no data such as
         empty lines and comment lines are not counted towards `max_rows`,
         while such lines are counted in `skiprows`.
-
-        .. versionadded:: 1.16.0
 
         .. versionchanged:: 1.23.0
             Lines containing no data, including comment lines (e.g., lines
@@ -1235,13 +1244,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
     subset of up to n columns (where n is the least number of values present
     in all rows) can be read by specifying the columns via `usecols`.
 
-    .. versionadded:: 1.10.0
-
     The strings produced by the Python float.hex method can be used as
     input for floats.
 
     Examples
     --------
+    >>> import numpy as np
     >>> from io import StringIO   # StringIO behaves like a file object
     >>> c = StringIO("0 1\n2 3")
     >>> np.loadtxt(c)
@@ -1432,30 +1440,19 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         String or character separating columns.
     newline : str, optional
         String or character separating lines.
-
-        .. versionadded:: 1.5.0
     header : str, optional
         String that will be written at the beginning of the file.
-
-        .. versionadded:: 1.7.0
     footer : str, optional
         String that will be written at the end of the file.
-
-        .. versionadded:: 1.7.0
     comments : str, optional
         String that will be prepended to the ``header`` and ``footer`` strings,
         to mark them as comments. Default: '# ',  as expected by e.g.
         ``numpy.loadtxt``.
-
-        .. versionadded:: 1.7.0
     encoding : {None, str}, optional
         Encoding used to encode the outputfile. Does not apply to output
         streams. If the encoding is something other than 'bytes' or 'latin1'
         you will not be able to load the file in NumPy versions < 1.14. Default
         is 'latin1'.
-
-        .. versionadded:: 1.14.0
-
 
     See Also
     --------
@@ -1517,6 +1514,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = y = z = np.arange(0.0,5.0,1.0)
     >>> np.savetxt('test.out', x, delimiter=',')   # X is an array
     >>> np.savetxt('test.out', (x,y,z))   # x,y,z equal sized 1D arrays
@@ -1660,6 +1658,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 
         .. versionchanged:: 1.22.0
             Now accepts `os.PathLike` implementations.
+
     regexp : str or regexp
         Regular expression used to parse the file.
         Groups in the regular expression correspond to fields in the dtype.
@@ -1667,8 +1666,6 @@ def fromregex(file, regexp, dtype, encoding=None):
         Dtype for the structured array; must be a structured datatype.
     encoding : str, optional
         Encoding used to decode the inputfile. Does not apply to input streams.
-
-        .. versionadded:: 1.14.0
 
     Returns
     -------
@@ -1693,6 +1690,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from io import StringIO
     >>> text = StringIO("1312 foo\n1534  bar\n444   qux")
 
@@ -1746,7 +1744,7 @@ def fromregex(file, regexp, dtype, encoding=None):
 #####--------------------------------------------------------------------------
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
@@ -1845,8 +1843,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         The maximum number of rows to read. Must not be used with skip_footer
         at the same time.  If given, the value must be at least 1. Default is
         to read the entire file.
-
-        .. versionadded:: 1.10.0
     encoding : str, optional
         Encoding used to decode the inputfile. Does not apply when `fname`
         is a file object. The special value 'bytes' enables backward
@@ -1856,7 +1852,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         as input to converters.  If set to None the system default is used.
         The default value is 'bytes'.
 
-        .. versionadded:: 1.14.0
         .. versionchanged:: 2.0
             Before NumPy 2, the default was ``'bytes'`` for Python 2
             compatibility. The default is now ``None``.
@@ -2097,7 +2092,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             user_missing_values = user_missing_values.decode('latin1')
 
         # Define the list of missing_values (one column: one list)
-        missing_values = [list(['']) for _ in range(nbcols)]
+        missing_values = [[''] for _ in range(nbcols)]
 
         # We have a dictionary: process it field by field
         if isinstance(user_missing_values, dict):

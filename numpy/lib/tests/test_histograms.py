@@ -6,7 +6,6 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_allclose,
     assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
-from numpy.testing._private.utils import requires_memory
 import pytest
 
 
@@ -270,7 +269,7 @@ class TestHistogram:
             histogram, [np.array(0.4) for i in range(10)] + [np.inf])
 
         # these should not crash
-        np.histogram([np.array(0.5) for i in range(10)] + [.500000000000001])
+        np.histogram([np.array(0.5) for i in range(10)] + [.500000000000002])
         np.histogram([np.array(0.5) for i in range(10)] + [.5])
 
     def test_some_nan_values(self):
@@ -394,6 +393,11 @@ class TestHistogram:
         hist, e = histogram(arr, bins='auto', range=(0, 1))
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
+
+    def test_small_value_range(self):
+        arr = np.array([1, 1 + 2e-16] * 10)
+        with pytest.raises(ValueError, match="Too many bins for data range"):
+            histogram(arr, bins=10)
 
     # @requires_memory(free_bytes=1e10)
     # @pytest.mark.slow

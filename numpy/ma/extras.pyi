@@ -1,12 +1,56 @@
 from typing import Any
-from numpy.lib.index_tricks import AxisConcatenator
 
-from numpy.ma.core import (
-    dot as dot,
-    mask_rowcols as mask_rowcols,
-)
+from numpy.lib._index_tricks_impl import AxisConcatenator
+from .core import dot, mask_rowcols
 
-__all__: list[str]
+__all__ = [
+    "apply_along_axis",
+    "apply_over_axes",
+    "atleast_1d",
+    "atleast_2d",
+    "atleast_3d",
+    "average",
+    "clump_masked",
+    "clump_unmasked",
+    "column_stack",
+    "compress_cols",
+    "compress_nd",
+    "compress_rowcols",
+    "compress_rows",
+    "count_masked",
+    "corrcoef",
+    "cov",
+    "diagflat",
+    "dot",
+    "dstack",
+    "ediff1d",
+    "flatnotmasked_contiguous",
+    "flatnotmasked_edges",
+    "hsplit",
+    "hstack",
+    "isin",
+    "in1d",
+    "intersect1d",
+    "mask_cols",
+    "mask_rowcols",
+    "mask_rows",
+    "masked_all",
+    "masked_all_like",
+    "median",
+    "mr_",
+    "ndenumerate",
+    "notmasked_contiguous",
+    "notmasked_edges",
+    "polyfit",
+    "row_stack",
+    "setdiff1d",
+    "setxor1d",
+    "stack",
+    "unique",
+    "union1d",
+    "vander",
+    "vstack",
+]
 
 def count_masked(arr, axis=...): ...
 def masked_all(shape, dtype = ...): ...

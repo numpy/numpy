@@ -1,26 +1,29 @@
 from collections.abc import Generator
+from types import EllipsisType
 from typing import (
     Any,
+    TypeAlias,
     TypeVar,
     overload,
 )
 
 from numpy import ndarray, dtype, generic
-from numpy._typing import DTypeLike, NDArray
+from numpy._typing import DTypeLike, NDArray, _Shape as _AnyShape
 
-# TODO: Set a shape bound once we've got proper shape support
-_Shape = TypeVar("_Shape", bound=Any)
+__all__ = ["Arrayterator"]
+
+# TODO: Rename to ``_ShapeType``
+_Shape = TypeVar("_Shape", bound=_AnyShape)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _ScalarType = TypeVar("_ScalarType", bound=generic)
 
-_Index = (
-    ellipsis
+_Index: TypeAlias = (
+    EllipsisType
     | int
     | slice
-    | tuple[ellipsis | int | slice, ...]
+    | tuple[EllipsisType | int | slice, ...]
 )
 
-__all__: list[str]
 
 # NOTE: In reality `Arrayterator` does not actually inherit from `ndarray`,
 # but its ``__getattr__` method does wrap around the former and thus has
@@ -41,8 +44,8 @@ class Arrayterator(ndarray[_Shape, _DType]):
         self, var: ndarray[_Shape, _DType], buf_size: None | int = ...
     ) -> None: ...
     @overload
-    def __array__(self, dtype: None = ..., copy: None | bool = ...) -> ndarray[Any, _DType]: ...
+    def __array__(self, dtype: None = ..., copy: None | bool = ...) -> ndarray[_AnyShape, _DType]: ...
     @overload
     def __array__(self, dtype: DTypeLike, copy: None | bool = ...) -> NDArray[Any]: ...
-    def __getitem__(self, index: _Index) -> Arrayterator[Any, _DType]: ...
-    def __iter__(self) -> Generator[ndarray[Any, _DType], None, None]: ...
+    def __getitem__(self, index: _Index) -> Arrayterator[_AnyShape, _DType]: ...
+    def __iter__(self) -> Generator[ndarray[_AnyShape, _DType], None, None]: ...

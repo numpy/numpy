@@ -47,19 +47,22 @@ jobs:
       matrix:
         os_python:
           - [ubuntu-latest, '3.12']
-          - [windows-2019, '3.11']
-          - [macos-12, '3.10']
+          - [windows-latest, '3.11']
+          - [macos-latest, '3.10']
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: ${{ matrix.os_python[1] }}
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
+        # orjson makes mypy faster but the default requirements.txt
+        # can't install it because orjson doesn't support 32 bit Linux
+        pip install orjson
         pip install -r requirements/test_requirements.txt
     - name: Build
       run: |

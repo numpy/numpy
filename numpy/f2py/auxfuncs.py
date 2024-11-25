@@ -13,10 +13,10 @@ import sys
 import re
 import types
 from functools import reduce
-from copy import deepcopy
 
 from . import __version__
 from . import cfuncs
+from .cfuncs import errmess
 
 __all__ = [
     'applyrules', 'debugcapi', 'dictappend', 'errmess', 'gentitle',
@@ -35,23 +35,21 @@ __all__ = [
     'isintent_nothide', 'isintent_out', 'isintent_overwrite', 'islogical',
     'islogicalfunction', 'islong_complex', 'islong_double',
     'islong_doublefunction', 'islong_long', 'islong_longfunction',
-    'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isrequired',
-    'isroutine', 'isscalar', 'issigned_long_longarray', 'isstring',
-    'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
-    'issubroutine', 'get_f2py_modulename',
-    'issubroutine_wrap', 'isthreadsafe', 'isunsigned', 'isunsigned_char',
-    'isunsigned_chararray', 'isunsigned_long_long',
-    'isunsigned_long_longarray', 'isunsigned_short',
-    'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
-    'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value',
-    'getuseblocks', 'process_f2cmap_dict'
+    'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isvariable',
+    'isrequired', 'isroutine', 'isscalar', 'issigned_long_longarray',
+    'isstring', 'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
+    'issubroutine', 'get_f2py_modulename', 'issubroutine_wrap', 'isthreadsafe',
+    'isunsigned', 'isunsigned_char', 'isunsigned_chararray',
+    'isunsigned_long_long', 'isunsigned_long_longarray', 'isunsigned_short',
+    'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess', 'replace',
+    'show', 'stripcomma', 'throw_error', 'isattr_value', 'getuseblocks',
+    'process_f2cmap_dict', 'containscommon'
 ]
 
 
 f2py_version = __version__.version
 
 
-errmess = sys.stderr.write
 show = pprint.pprint
 
 options = {}
@@ -518,6 +516,15 @@ def isprivate(var):
     return 'attrspec' in var and 'private' in var['attrspec']
 
 
+def isvariable(var):
+    # heuristic to find public/private declarations of filtered subroutines
+    if len(var) == 1 and 'attrspec' in var and \
+            var['attrspec'][0] in ('public', 'private'):
+        is_var = False
+    else:
+        is_var = True
+    return is_var
+
 def hasinitvalue(var):
     return '=' in var
 
@@ -701,9 +708,9 @@ def getcallprotoargument(rout, cb_map={}):
             else:
                 if not isattr_value(var):
                     ctype = ctype + '*'
-            if ((isstring(var)
+            if (isstring(var)
                  or isarrayofstrings(var)  # obsolete?
-                 or isstringarray(var))):
+                 or isstringarray(var)):
                 arg_types2.append('size_t')
         arg_types.append(ctype)
 

@@ -3,12 +3,6 @@ Utilities that manipulate strides to achieve desirable effects.
 
 An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
-Functions
----------
-
-.. autosummary::
-   :toctree: generated/
-
 """
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
@@ -56,12 +50,8 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     strides : sequence of int, optional
         The strides of the new array. Defaults to ``x.strides``.
     subok : bool, optional
-        .. versionadded:: 1.10
-
         If True, subclasses are preserved.
     writeable : bool, optional
-        .. versionadded:: 1.12
-
         If set to False, the returned array will always be readonly.
         Otherwise it will be writable if the original array was. It
         is advisable to set this to False if possible (see Notes).
@@ -137,7 +127,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
     Also known as rolling or moving window, the window slides across all
     dimensions of the array and extracts subsets of the array at all window
     positions.
-    
+
     .. versionadded:: 1.20.0
 
     Parameters
@@ -204,6 +194,7 @@ def sliding_window_view(x, window_shape, axis=None, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.lib.stride_tricks import sliding_window_view
     >>> x = np.arange(6)
     >>> x.shape
@@ -407,12 +398,9 @@ def broadcast_to(array, shape, subok=False):
     broadcast_arrays
     broadcast_shapes
 
-    Notes
-    -----
-    .. versionadded:: 1.10.0
-
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 3])
     >>> np.broadcast_to(x, (3, 3))
     array([[1, 2, 3],
@@ -437,6 +425,9 @@ def _broadcast_shape(*args):
         b = broadcast_to(0, b.shape)
         b = np.broadcast(b, *args[pos:(pos + 31)])
     return b.shape
+
+
+_size0_dtype = np.dtype([])
 
 
 @set_module('numpy')
@@ -472,13 +463,14 @@ def broadcast_shapes(*args):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.broadcast_shapes((1, 2), (3, 1), (3, 2))
     (3, 2)
 
     >>> np.broadcast_shapes((6, 7), (5, 6, 1), (7,), (5, 1, 7))
     (5, 6, 7)
     """
-    arrays = [np.empty(x, dtype=[]) for x in args]
+    arrays = [np.empty(x, dtype=_size0_dtype) for x in args]
     return _broadcast_shape(*arrays)
 
 
@@ -523,6 +515,7 @@ def broadcast_arrays(*args, subok=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([[1,2,3]])
     >>> y = np.array([[4],[5]])
     >>> np.broadcast_arrays(x, y)
@@ -546,13 +539,11 @@ def broadcast_arrays(*args, subok=False):
     # return np.nditer(args, flags=['multi_index', 'zerosize_ok'],
     #                  order='C').itviews
 
-    args = tuple(np.array(_m, copy=None, subok=subok) for _m in args)
+    args = [np.array(_m, copy=None, subok=subok) for _m in args]
 
     shape = _broadcast_shape(*args)
 
-    if all(array.shape == shape for array in args):
-        # Common case where nothing needs to be broadcasted.
-        return args
-
-    return tuple(_broadcast_to(array, shape, subok=subok, readonly=False)
-                 for array in args)
+    result = [array if array.shape == shape
+              else _broadcast_to(array, shape, subok=subok, readonly=False)
+                              for array in args]
+    return tuple(result)

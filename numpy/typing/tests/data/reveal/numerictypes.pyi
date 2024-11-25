@@ -1,12 +1,8 @@
-import sys
 from typing import Literal
+from typing_extensions import assert_type
 
 import numpy as np
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
 
 assert_type(
     np.ScalarType,
@@ -48,8 +44,10 @@ assert_type(np.ScalarType[0], type[int])
 assert_type(np.ScalarType[3], type[bool])
 assert_type(np.ScalarType[8], type[np.csingle])
 assert_type(np.ScalarType[10], type[np.clongdouble])
-assert_type(np.bool_, type[np.bool])
+assert_type(np.bool_(object()), np.bool)
 
 assert_type(np.typecodes["Character"], Literal["c"])
 assert_type(np.typecodes["Complex"], Literal["FDG"])
-assert_type(np.typecodes["All"], Literal["?bhilqpBHILQPefdgFDGSUVOMm"])
+assert_type(np.typecodes["All"], Literal["?bhilqnpBHILQNPefdgFDGSUVOMm"])
+
+assert_type(np.sctypeDict['uint8'], type[np.generic])

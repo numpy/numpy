@@ -9,6 +9,8 @@
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
 
 #if NPY_SIMD_FMA3 // native support
 /*
@@ -608,32 +610,29 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
-    const @type@ *src = (@type@*)args[0];
-          @type@ *dst = (@type@*)args[1];
-
-    const int lsize = sizeof(src[0]);
-    const npy_intp ssrc = steps[0] / lsize;
-    const npy_intp sdst = steps[1] / lsize;
-    npy_intp len = dimensions[0];
-    assert(len <= 1 || (steps[0] % lsize == 0 && steps[1] % lsize == 0));
 #if @simd@
-    if (is_mem_overlap(src, steps[0], dst, steps[1], len) ||
-        !npyv_loadable_stride_@sfx@(ssrc) || !npyv_storable_stride_@sfx@(sdst)
+    npy_intp len = dimensions[0];
+
+    if (is_mem_overlap(args[0], steps[0], args[1], steps[1], len) ||
+        !npyv_loadable_stride_@sfx@(steps[0]) ||
+        !npyv_storable_stride_@sfx@(steps[1])
     ) {
-        for (; len > 0; --len, src += ssrc, dst += sdst) {
-            simd_@func@_@sfx@(src, 1, dst, 1, 1);
+        UNARY_LOOP {
+            simd_@func@_@sfx@((@type@ *)ip1, 1, (@type@ *)op1, 1, 1);
         }
     } else {
-        simd_@func@_@sfx@(src, ssrc, dst, sdst, len);
+        npy_intp ssrc = steps[0] / sizeof(@type@);
+        npy_intp sdst = steps[1] / sizeof(@type@);
+        simd_@func@_@sfx@((@type@ *)args[0], ssrc, (@type@ *)args[1], sdst, len);
     }
     npyv_cleanup();
     #if @simd_req_clear@
         npy_clear_floatstatus_barrier((char*)dimensions);
     #endif
 #else
-    for (; len > 0; --len, src += ssrc, dst += sdst) {
-        const @type@ src0 = *src;
-        *dst = npy_@func@@ssfx@(src0);
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *(@type@ *)op1 = npy_@func@@ssfx@(in1);
     }
 #endif
 }

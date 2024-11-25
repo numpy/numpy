@@ -38,7 +38,6 @@ def test_numpy_namespace():
     # We override dir to not show these members
     allowlist = {
         'recarray': 'numpy.rec.recarray',
-        'show_config': 'numpy.__config__.show',
     }
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
@@ -536,7 +535,7 @@ def test_core_shims_coherence():
         if (
             member_name.startswith("_")
             or member_name in ["tests", "strings"]
-            or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES 
+            or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES
         ):
             continue
 
@@ -614,8 +613,7 @@ def test_functions_single_location():
             # else check if we got a function-like object
             elif (
                 inspect.isfunction(member) or
-                isinstance(member, dispatched_function) or
-                isinstance(member, np.ufunc)
+                isinstance(member, (dispatched_function, np.ufunc))
             ):
                 if member in visited_functions:
 
@@ -681,3 +679,63 @@ def test_functions_single_location():
     del visited_functions, visited_modules, functions_original_paths
 
     assert len(duplicated_functions) == 0, duplicated_functions
+
+
+def test___module__attribute():
+    modules_queue = [np]
+    visited_modules = {np}
+    visited_functions = set()
+    incorrect_entries = []
+
+    while len(modules_queue) > 0:
+        module = modules_queue.pop()
+        for member_name in dir(module):
+            member = getattr(module, member_name)
+            # first check if we got a module
+            if (
+                inspect.ismodule(member) and  # it's a module
+                "numpy" in member.__name__ and  # inside NumPy
+                not member_name.startswith("_") and  # not private
+                "numpy._core" not in member.__name__ and  # outside _core
+                # not in a skip module list
+                member_name not in [
+                    "char", "core", "ctypeslib", "f2py", "ma", "lapack_lite",
+                    "mrecords", "testing", "tests", "polynomial", "typing",
+                    "random",  # cython disallows overriding __module__
+                ] and
+                member not in visited_modules  # not visited yet
+            ):
+                modules_queue.append(member)
+                visited_modules.add(member)
+            elif (
+                not inspect.ismodule(member) and
+                hasattr(member, "__name__") and
+                not member.__name__.startswith("_") and
+                member.__module__ != module.__name__ and
+                member not in visited_functions
+            ):
+                # skip ufuncs that are exported in np.strings as well
+                if member.__name__ in (
+                    "add", "equal", "not_equal", "greater", "greater_equal",
+                    "less", "less_equal",
+                ) and module.__name__ == "numpy.strings":
+                    continue
+
+                # recarray and record are exported in np and np.rec
+                if (
+                    (member.__name__ == "recarray" and module.__name__ == "numpy") or
+                    (member.__name__ == "record" and module.__name__ == "numpy.rec")
+                ):
+                    continue
+
+                incorrect_entries.append(
+                    dict(
+                        Func=member.__name__,
+                        actual=member.__module__,
+                        expected=module.__name__,
+                    )
+                )
+                visited_functions.add(member)
+
+    if incorrect_entries:
+        assert len(incorrect_entries) == 0, incorrect_entries

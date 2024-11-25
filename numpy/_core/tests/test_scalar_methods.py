@@ -203,3 +203,44 @@ class TestBitCount:
             assert np.uint64(a - 1).bit_count() == exp
             assert np.uint64(a ^ 63).bit_count() == 7
             assert np.uint64((a - 1) ^ 510).bit_count() == exp - 8
+
+
+class TestDevice:
+    """
+    Test scalar.device attribute and scalar.to_device() method.
+    """
+    scalars = [np.bool(True), np.int64(1), np.uint64(1), np.float64(1.0),
+               np.complex128(1+1j)]
+
+    @pytest.mark.parametrize("scalar", scalars)
+    def test_device(self, scalar):
+        assert scalar.device == "cpu"
+
+    @pytest.mark.parametrize("scalar", scalars)
+    def test_to_device(self, scalar):
+        assert scalar.to_device("cpu") is scalar
+
+    @pytest.mark.parametrize("scalar", scalars)
+    def test___array_namespace__(self, scalar):
+        assert scalar.__array_namespace__() is np
+
+
+@pytest.mark.parametrize("scalar", [np.bool(True), np.int8(1), np.float64(1)])
+def test_array_wrap(scalar):
+    # Test scalars array wrap as long as it exists.  NumPy itself should
+    # probably not use it, so it may not be necessary to keep it around.
+
+    arr0d = np.array(3, dtype=np.int8)
+    # Third argument not passed, None, or True "decays" to scalar.
+    # (I don't think NumPy would pass `None`, but it seems clear to support)
+    assert type(scalar.__array_wrap__(arr0d)) is np.int8
+    assert type(scalar.__array_wrap__(arr0d, None, None)) is np.int8
+    assert type(scalar.__array_wrap__(arr0d, None, True)) is np.int8
+
+    # Otherwise, result should be the input
+    assert scalar.__array_wrap__(arr0d, None, False) is arr0d
+
+    # An old bug.  A non 0-d array cannot be converted to scalar:
+    arr1d = np.array([3], dtype=np.int8)
+    assert scalar.__array_wrap__(arr1d) is arr1d
+    assert scalar.__array_wrap__(arr1d, None, True) is arr1d

@@ -22,6 +22,7 @@ from ._bounded_integers cimport (_rand_bool, _rand_int32, _rand_int64,
          _rand_int16, _rand_int8, _rand_uint64, _rand_uint32, _rand_uint16,
          _rand_uint8, _gen_mask)
 from ._pcg64 import PCG64
+from ._mt19937 import MT19937
 from numpy.random cimport bitgen_t
 from ._common cimport (POISSON_LAM_MAX, CONS_POSITIVE, CONS_NONE,
             CONS_NON_NEGATIVE, CONS_BOUNDED_0_1, CONS_BOUNDED_GT_0_1,
@@ -169,9 +170,10 @@ cdef class Generator:
 
     Notes
     -----
-    The Python stdlib module `random` contains pseudo-random number generator
-    with a number of methods that are similar to the ones available in
-    `Generator`. It uses Mersenne Twister, and this bit generator can
+    The Python stdlib module :external+python:mod:`random` contains
+    pseudo-random number generator with a number of methods that are similar
+    to the ones available in `Generator`.
+    It uses Mersenne Twister, and this bit generator can
     be accessed using `MT19937`. `Generator`, besides being
     NumPy-aware, has the advantage that it provides a much larger number
     of probability distributions to choose from.
@@ -798,6 +800,9 @@ cdef class Generator:
         ``p`` must sum to 1 when cast to ``float64``. To ensure this, you may wish
         to normalize using ``p = p / np.sum(p, dtype=float)``.
 
+        When passing ``a`` as an integer type and ``size`` is not specified, the return
+        type is a native Python ``int``.
+
         Examples
         --------
         Generate a uniform random sample from np.arange(5) of size 3:
@@ -1257,7 +1262,7 @@ cdef class Generator:
         >>> rng = np.random.default_rng()
         >>> s = rng.normal(mu, sigma, 1000)
 
-        Verify the mean and the variance:
+        Verify the mean and the standard deviation:
 
         >>> abs(mu - np.mean(s))
         0.0  # may vary
@@ -1548,7 +1553,7 @@ cdef class Generator:
         and ``m = 20`` is:
         
         >>> import matplotlib.pyplot as plt
-        >>> from scipy import stats  # doctest: +SKIP
+        >>> from scipy import stats
         >>> dfnum, dfden, size = 20, 20, 10000
         >>> s = rng.f(dfnum=dfnum, dfden=dfden, size=size)
         >>> bins, density, _ = plt.hist(s, 30, density=True)
@@ -1578,9 +1583,6 @@ cdef class Generator:
         ----------
         dfnum : float or array_like of floats
             Numerator degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.14.0
-               Earlier NumPy versions required dfnum > 1.
         dfden : float or array_like of floats
             Denominator degrees of freedom, must be > 0.
         nonc : float or array_like of floats
@@ -1678,7 +1680,7 @@ cdef class Generator:
         The variable obtained by summing the squares of `df` independent,
         standard normally distributed random variables:
 
-        .. math:: Q = \\sum_{i=0}^{\\mathtt{df}} X^2_i
+        .. math:: Q = \\sum_{i=1}^{\\mathtt{df}} X^2_i
 
         is chi-square distributed, denoted
 
@@ -1735,9 +1737,6 @@ cdef class Generator:
         ----------
         df : float or array_like of floats
             Degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.10.0
-               Earlier NumPy versions required dfnum > 1.
         nonc : float or array_like of floats
             Non-centrality, must be non-negative.
         size : int or tuple of ints, optional
@@ -1982,7 +1981,7 @@ cdef class Generator:
         Draw samples from a von Mises distribution.
 
         Samples are drawn from a von Mises distribution with specified mode
-        (mu) and dispersion (kappa), on the interval [-pi, pi].
+        (mu) and concentration (kappa), on the interval [-pi, pi].
 
         The von Mises distribution (also known as the circular normal
         distribution) is a continuous probability distribution on the unit
@@ -1994,7 +1993,7 @@ cdef class Generator:
         mu : float or array_like of floats
             Mode ("center") of the distribution.
         kappa : float or array_like of floats
-            Dispersion of the distribution, has to be >=0.
+            Concentration of the distribution, has to be >=0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2017,7 +2016,7 @@ cdef class Generator:
 
         .. math:: p(x) = \\frac{e^{\\kappa cos(x-\\mu)}}{2\\pi I_0(\\kappa)},
 
-        where :math:`\\mu` is the mode and :math:`\\kappa` the dispersion,
+        where :math:`\\mu` is the mode and :math:`\\kappa` the concentration,
         and :math:`I_0(\\kappa)` is the modified Bessel function of order 0.
 
         The von Mises is named for Richard Edler von Mises, who was born in
@@ -2038,7 +2037,7 @@ cdef class Generator:
         --------
         Draw samples from the distribution:
 
-        >>> mu, kappa = 0.0, 4.0 # mean and dispersion
+        >>> mu, kappa = 0.0, 4.0 # mean and concentration
         >>> rng = np.random.default_rng()
         >>> s = rng.vonmises(mu, kappa, 1000)
 
@@ -3009,7 +3008,7 @@ cdef class Generator:
 
         Notes
         -----
-        The probability density for the binomial distribution is
+        The probability mass function (PMF) for the binomial distribution is
 
         .. math:: P(N) = \\binom{n}{N}p^N(1-p)^{n-N},
 
@@ -3281,7 +3280,7 @@ cdef class Generator:
 
         Notes
         -----
-        The Poisson distribution
+        The probability mass function (PMF) of Poisson distribution is
 
         .. math:: f(k; \\lambda)=\\frac{\\lambda^k e^{-\\lambda}}{k!}
 
@@ -3371,7 +3370,7 @@ cdef class Generator:
 
         Notes
         -----
-        The probability density for the Zipf distribution is
+        The probability mass function (PMF) for the Zipf distribution is
 
         .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
@@ -3536,7 +3535,7 @@ cdef class Generator:
 
         Notes
         -----
-        The probability density for the Hypergeometric distribution is
+        The probability mass function (PMF) for the Hypergeometric distribution is
 
         .. math:: P(x) = \\frac{\\binom{g}{x}\\binom{b}{n-x}}{\\binom{g+b}{n}},
 
@@ -3757,8 +3756,6 @@ cdef class Generator:
             the slowest, while 'cholesky' is the fastest but less robust than
             the slowest method. The method `eigh` uses eigen decomposition to
             compute A and is faster than svd but slower than cholesky.
-
-            .. versionadded:: 1.18.0
 
         Returns
         -------
@@ -4007,9 +4004,6 @@ cdef class Generator:
 
             Each entry ``out[i,j,...,:]`` is a ``p``-dimensional value drawn
             from the distribution.
-
-            .. versionchanged:: 1.22.0
-                Added support for broadcasting `pvals` against `n`
 
         Examples
         --------
@@ -4303,8 +4297,6 @@ cdef class Generator:
         can be significantly faster than the "marginals" method.  If
         performance of the algorithm is important, test the two methods
         with typical inputs to decide which works best.
-
-        .. versionadded:: 1.18.0
 
         Examples
         --------
@@ -5002,7 +4994,7 @@ def default_rng(seed=None):
 
     Parameters
     ----------
-    seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator}, optional
+    seed : {None, int, array_like[ints], SeedSequence, BitGenerator, Generator, RandomState}, optional
         A seed to initialize the `BitGenerator`. If None, then fresh,
         unpredictable entropy will be pulled from the OS. If an ``int`` or
         ``array_like[ints]`` is passed, then all values must be non-negative and will be
@@ -5010,6 +5002,7 @@ def default_rng(seed=None):
         pass in a `SeedSequence` instance.
         Additionally, when passed a `BitGenerator`, it will be wrapped by
         `Generator`. If passed a `Generator`, it will be returned unaltered.
+        When passed a legacy `RandomState` instance it will be coerced to a `Generator`.
 
     Returns
     -------
@@ -5022,13 +5015,13 @@ def default_rng(seed=None):
     is instantiated. This function does not manage a default global instance.
 
     See :ref:`seeding_and_entropy` for more information about seeding.
-    
+
     Examples
     --------
     `default_rng` is the recommended constructor for the random number class
     `Generator`. Here are several ways we can construct a random 
     number generator using `default_rng` and the `Generator` class. 
-    
+
     Here we use `default_rng` to generate a random float:
  
     >>> import numpy as np
@@ -5082,6 +5075,10 @@ def default_rng(seed=None):
     elif isinstance(seed, Generator):
         # Pass through a Generator.
         return seed
+    elif isinstance(seed, np.random.RandomState):
+        gen = np.random.Generator(seed._bit_generator)
+        return gen
+
     # Otherwise we need to instantiate a new BitGenerator and Generator as
     # normal.
     return Generator(PCG64(seed))

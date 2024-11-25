@@ -304,7 +304,7 @@ cdef class RandomState:
         st['gauss'] = self._aug_state.gauss
         if legacy and not isinstance(self._bit_generator, _MT19937):
             raise ValueError(
-                "legacy can only be True when the underlyign bitgenerator is "
+                "legacy can only be True when the underlying bitgenerator is "
                 "an instance of MT19937."
             )
         if legacy:
@@ -718,8 +718,6 @@ cdef class RandomState:
             Desired dtype of the result. Byteorder must be native.
             The default value is long.
 
-            .. versionadded:: 1.11.0
-
             .. warning::
               This function defaults to the C-long dtype, which is 32bit on windows
               and otherwise 64bit on 64bit platforms (and 32bit on 32bit ones).
@@ -860,8 +858,6 @@ cdef class RandomState:
         choice(a, size=None, replace=True, p=None)
 
         Generates a random sample from a given 1-D array
-
-        .. versionadded:: 1.7.0
 
         .. note::
             New code should use the `~numpy.random.Generator.choice`
@@ -1138,7 +1134,7 @@ cdef class RandomState:
 
         >>> x = np.float32(5*0.99999999)
         >>> x
-        5.0
+        np.float32(5.0)
 
 
         Examples
@@ -1551,7 +1547,7 @@ cdef class RandomState:
         >>> mu, sigma = 0, 0.1 # mean and standard deviation
         >>> s = np.random.normal(mu, sigma, 1000)
 
-        Verify the mean and the variance:
+        Verify the mean and the standard deviation:
 
         >>> abs(mu - np.mean(s))
         0.0  # may vary
@@ -1864,9 +1860,6 @@ cdef class RandomState:
         ----------
         dfnum : float or array_like of floats
             Numerator degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.14.0
-               Earlier NumPy versions required dfnum > 1.
         dfden : float or array_like of floats
             Denominator degrees of freedom, must be > 0.
         nonc : float or array_like of floats
@@ -1976,7 +1969,7 @@ cdef class RandomState:
         The variable obtained by summing the squares of `df` independent,
         standard normally distributed random variables:
 
-        .. math:: Q = \\sum_{i=0}^{\\mathtt{df}} X^2_i
+        .. math:: Q = \\sum_{i=1}^{\\mathtt{df}} X^2_i
 
         is chi-square distributed, denoted
 
@@ -2025,9 +2018,6 @@ cdef class RandomState:
         ----------
         df : float or array_like of floats
             Degrees of freedom, must be > 0.
-
-            .. versionchanged:: 1.10.0
-               Earlier NumPy versions required dfnum > 1.
         nonc : float or array_like of floats
             Non-centrality, must be non-negative.
         size : int or tuple of ints, optional
@@ -2292,7 +2282,7 @@ cdef class RandomState:
         Draw samples from a von Mises distribution.
 
         Samples are drawn from a von Mises distribution with specified mode
-        (mu) and dispersion (kappa), on the interval [-pi, pi].
+        (mu) and concentration (kappa), on the interval [-pi, pi].
 
         The von Mises distribution (also known as the circular normal
         distribution) is a continuous probability distribution on the unit
@@ -2309,7 +2299,7 @@ cdef class RandomState:
         mu : float or array_like of floats
             Mode ("center") of the distribution.
         kappa : float or array_like of floats
-            Dispersion of the distribution, has to be >=0.
+            Concentration of the distribution, has to be >=0.
         size : int or tuple of ints, optional
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.  If size is ``None`` (default),
@@ -2333,7 +2323,7 @@ cdef class RandomState:
 
         .. math:: p(x) = \\frac{e^{\\kappa cos(x-\\mu)}}{2\\pi I_0(\\kappa)},
 
-        where :math:`\\mu` is the mode and :math:`\\kappa` the dispersion,
+        where :math:`\\mu` is the mode and :math:`\\kappa` the concentration,
         and :math:`I_0(\\kappa)` is the modified Bessel function of order 0.
 
         The von Mises is named for Richard Edler von Mises, who was born in
@@ -2354,7 +2344,7 @@ cdef class RandomState:
         --------
         Draw samples from the distribution:
 
-        >>> mu, kappa = 0.0, 4.0 # mean and dispersion
+        >>> mu, kappa = 0.0, 4.0 # mean and concentration
         >>> s = np.random.vonmises(mu, kappa, 1000)
 
         Display the histogram of the samples, along with
@@ -3416,7 +3406,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the binomial distribution is
+        The probability mass function (PMF) for the binomial distribution is
 
         .. math:: P(N) = \\binom{n}{N}p^N(1-p)^{n-N},
 
@@ -3656,7 +3646,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The Poisson distribution
+        The probability mass function (PMF) of Poisson distribution is
 
         .. math:: f(k; \\lambda)=\\frac{\\lambda^k e^{-\\lambda}}{k!}
 
@@ -3744,7 +3734,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Zipf distribution is
+        The probability mass function (PMF) for the Zipf distribution is
 
         .. math:: p(k) = \\frac{k^{-a}}{\\zeta(a)},
 
@@ -3908,7 +3898,7 @@ cdef class RandomState:
 
         Notes
         -----
-        The probability density for the Hypergeometric distribution is
+        The probability mass function (PMF) for the Hypergeometric distribution is
 
         .. math:: P(x) = \\frac{\\binom{g}{x}\\binom{b}{n-x}}{\\binom{g+b}{n}},
 

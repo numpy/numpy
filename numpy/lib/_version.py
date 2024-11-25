@@ -11,7 +11,7 @@ import re
 __all__ = ['NumpyVersion']
 
 
-class NumpyVersion():
+class NumpyVersion:
     """Parse and compare numpy version strings.
 
     NumPy has the following versioning scheme (numbers given are examples; they
@@ -31,8 +31,6 @@ class NumpyVersion():
     `NumpyVersion` instance. Note that all development versions of the same
     (pre-)release compare equal.
 
-    .. versionadded:: 1.9.0
-
     Parameters
     ----------
     vstring : str
@@ -51,6 +49,8 @@ class NumpyVersion():
     ValueError: Not a valid numpy version string
 
     """
+
+    __module__ = "numpy.lib"
 
     def __init__(self, vstring):
         self.vstring = vstring

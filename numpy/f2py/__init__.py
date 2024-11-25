@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Fortran to Python Interface Generator.
 
 Copyright 1999 -- 2011 Pearu Peterson all rights reserved.

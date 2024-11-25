@@ -264,7 +264,7 @@ class TestSubclassing:
         # Checks that masked_array(...,subok=True) preserves the class.
         x = np.arange(5)
         m = [0, 0, 1, 0, 0]
-        xinfo = [(i, j) for (i, j) in zip(x, m)]
+        xinfo = list(zip(x, m))
         xsub = MSubArray(x, mask=m, info={'xsub':xinfo})
         #
         mxsub = masked_array(xsub, subok=False)

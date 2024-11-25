@@ -841,7 +841,7 @@ typedef struct {
         npy_int32 month, day, hour, min, sec, us, ps, as;
 } npy_datetimestruct;
 
-/* This is not used internally. */
+/* This structure contains an exploded view of a timedelta value */
 typedef struct {
         npy_int64 day;
         npy_int32 sec, us, ps, as;
@@ -1302,7 +1302,7 @@ typedef struct {
         PyArrayIterObject    *iters[64];
 #elif defined(__cplusplus)
         /*
-         * C++ doesn't stricly support flexible members and gives compilers
+         * C++ doesn't strictly support flexible members and gives compilers
          * warnings (pedantic only), so we lie.  We can't make it 64 because
          * then Cython is unhappy (larger struct at runtime is OK smaller not).
          */

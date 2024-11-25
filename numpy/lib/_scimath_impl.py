@@ -13,27 +13,11 @@ module provide the mathematically valid answers in the complex plane::
 Similarly, `sqrt`, other base logarithms, `power` and trig functions are
 correctly handled.  See their respective docstrings for specific examples.
 
-Functions
----------
-
-.. autosummary::
-   :toctree: generated/
-
-   sqrt
-   log
-   log2
-   logn
-   log10
-   power
-   arccos
-   arcsin
-   arctanh
-
 """
 import numpy._core.numeric as nx
 import numpy._core.numerictypes as nt
 from numpy._core.numeric import asarray, any
-from numpy._core.overrides import array_function_dispatch
+from numpy._core.overrides import array_function_dispatch, set_module
 from numpy.lib._type_check_impl import isreal
 
 
@@ -66,6 +50,7 @@ def _tocomplex(arr):
 
     Examples
     --------
+    >>> import numpy as np
 
     First, consider an input of type short:
 
@@ -124,6 +109,7 @@ def _fix_real_lt_zero(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib.scimath._fix_real_lt_zero([1,2])
     array([1, 2])
 
@@ -152,6 +138,7 @@ def _fix_int_lt_zero(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib.scimath._fix_int_lt_zero([1,2])
     array([1, 2])
 
@@ -179,6 +166,7 @@ def _fix_real_abs_gt_1(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.lib.scimath._fix_real_abs_gt_1([0,1])
     array([0, 1])
 
@@ -195,6 +183,7 @@ def _unary_dispatcher(x):
     return (x,)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def sqrt(x):
     """
@@ -222,6 +211,8 @@ def sqrt(x):
     --------
     For real, non-negative inputs this works just like `numpy.sqrt`:
 
+    >>> import numpy as np
+
     >>> np.emath.sqrt(1)
     1.0
     >>> np.emath.sqrt([1, 4])
@@ -248,6 +239,7 @@ def sqrt(x):
     return nx.sqrt(x)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def log(x):
     """
@@ -282,6 +274,7 @@ def log(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.emath.log(np.exp(1))
     1.0
 
@@ -296,6 +289,7 @@ def log(x):
     return nx.log(x)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def log10(x):
     """
@@ -330,6 +324,7 @@ def log10(x):
 
     Examples
     --------
+    >>> import numpy as np
 
     (We set the printing precision so the example can be auto-tested)
 
@@ -350,6 +345,7 @@ def _logn_dispatcher(n, x):
     return (n, x,)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_logn_dispatcher)
 def logn(n, x):
     """
@@ -373,6 +369,7 @@ def logn(n, x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.logn(2, [4, 8])
@@ -386,6 +383,7 @@ def logn(n, x):
     return nx.log(x)/nx.log(n)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def log2(x):
     """
@@ -420,6 +418,7 @@ def log2(x):
 
     Examples
     --------
+
     We set the printing precision so the example can be auto-tested:
 
     >>> np.set_printoptions(precision=4)
@@ -438,6 +437,7 @@ def _power_dispatcher(x, p):
     return (x, p)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_power_dispatcher)
 def power(x, p):
     """
@@ -468,6 +468,7 @@ def power(x, p):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.power(2, 2)
@@ -491,6 +492,7 @@ def power(x, p):
     return nx.power(x, p)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def arccos(x):
     """
@@ -523,6 +525,7 @@ def arccos(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.arccos(1) # a scalar is returned
@@ -536,6 +539,7 @@ def arccos(x):
     return nx.arccos(x)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def arcsin(x):
     """
@@ -569,6 +573,7 @@ def arcsin(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.arcsin(0)
@@ -582,6 +587,7 @@ def arcsin(x):
     return nx.arcsin(x)
 
 
+@set_module('numpy.lib.scimath')
 @array_function_dispatch(_unary_dispatcher)
 def arctanh(x):
     """
@@ -617,6 +623,7 @@ def arctanh(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.set_printoptions(precision=4)
 
     >>> np.emath.arctanh(0.5)

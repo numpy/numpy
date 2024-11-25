@@ -251,7 +251,7 @@ class TestMaskedArray:
 
         # The above only failed due a long chain of oddity, try also with
         # an object array that cannot be converted to bool always:
-        class NotBool():
+        class NotBool:
             def __bool__(self):
                 raise ValueError("not a bool!")
         masked_obj = np.ma.masked_array([NotBool(), 'b'], mask=[True, False])
@@ -1015,6 +1015,13 @@ class TestMaskedArray:
         mx[1].data[0] = 0.
         assert_(mx2[0] == 0.)
 
+    def test_maskedarray_tofile_raises_notimplementederror(self):
+        xm = masked_array([1, 2, 3], mask=[False, True, False])
+        # Test case to check the NotImplementedError. 
+        # It is not implemented at this point of time. We can change this in future 
+        with pytest.raises(NotImplementedError):
+            np.save('xm.np', xm)
+
 
 class TestMaskedArrayArithmetic:
     # Base test class for MaskedArrays.
@@ -1177,6 +1184,10 @@ class TestMaskedArrayArithmetic:
         assert_equal(np.less_equal(x, y), less_equal(xm, ym))
         assert_equal(np.greater_equal(x, y), greater_equal(xm, ym))
         assert_equal(np.conjugate(x), conjugate(xm))
+
+    def test_basic_ufuncs_masked(self):
+        # Mostly regression test for gh-25635
+        assert np.sqrt(np.ma.masked) is np.ma.masked
 
     def test_count_func(self):
         # Tests count
@@ -1343,6 +1354,43 @@ class TestMaskedArrayArithmetic:
             cmax = np.inf - 1j * np.finfo(np.float64).max
             assert masked_array([-cmax, 0], mask=[0, 1]).max() == -cmax
             assert masked_array([cmax, 0], mask=[0, 1]).min() == cmax
+
+    @pytest.mark.parametrize("dtype", "bBiIqQ")
+    @pytest.mark.parametrize("mask", [
+        [False, False, False, True, True],  # masked min/max
+        [False, False, False, True, False],  # masked max only
+        [False, False, False, False, True],  # masked min only
+    ])
+    @pytest.mark.parametrize("axis", [None, -1])
+    def test_minmax_ints(self, dtype, mask, axis):
+        iinfo = np.iinfo(dtype)
+        # two dimensional to hit certain filling paths
+        a = np.array([[0, 10, -10, iinfo.min, iinfo.max]] * 2).astype(dtype)
+        mask = np.asarray([mask] * 2)
+
+        masked_a = masked_array(a, mask=mask)
+        assert_array_equal(masked_a.min(axis), a[~mask].min(axis))
+        assert_array_equal(masked_a.max(axis), a[~mask].max(axis))
+
+    @pytest.mark.parametrize("time_type", ["M8[s]", "m8[s]"])
+    def test_minmax_time_dtypes(self, time_type):
+        def minmax_with_mask(arr, mask):
+            masked_arr = masked_array(arr, mask=mask)
+            expected_min = arr[~np.array(mask, dtype=bool)].min()
+            expected_max = arr[~np.array(mask, dtype=bool)].max()
+
+            assert_array_equal(masked_arr.min(), expected_min)
+            assert_array_equal(masked_arr.max(), expected_max)
+
+        # Additional tests on max/min for time dtypes
+        x1 = np.array([1, 1, -2, 4, 5, -10, 10, 1, 2, -2**63+1], dtype=time_type)
+        x2 = np.array(['NaT', 1, -2, 4, 5, -10, 10, 1, 2, 3], dtype=time_type)
+        x3 = np.array(['NaT', 'NaT', -2, 4, 5, -10, 10, 1, 2, 3], dtype=time_type)
+        x_test = [x1, x2, x3]
+        m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+
+        for x in x_test:
+            minmax_with_mask(x, m)
 
     def test_addsumprod(self):
         # Tests add, sum, product.
@@ -1868,20 +1916,20 @@ class TestMaskedArrayArithmetic:
         with suppress_warnings() as sup:
             sup.filter(FutureWarning, "Comparison to `None`")
             a = array([None, 1], mask=[0, 1])
-            assert_equal(a == None, array([True, False], mask=[0, 1]))
-            assert_equal(a.data == None, [True, False])
-            assert_equal(a != None, array([False, True], mask=[0, 1]))
+            assert_equal(a == None, array([True, False], mask=[0, 1]))  # noqa: E711
+            assert_equal(a.data == None, [True, False])  # noqa: E711
+            assert_equal(a != None, array([False, True], mask=[0, 1]))  # noqa: E711
             # With nomask
             a = array([None, 1], mask=False)
-            assert_equal(a == None, [True, False])
-            assert_equal(a != None, [False, True])
+            assert_equal(a == None, [True, False])  # noqa: E711
+            assert_equal(a != None, [False, True])  # noqa: E711
             # With complete mask
             a = array([None, 2], mask=True)
-            assert_equal(a == None, array([False, True], mask=True))
-            assert_equal(a != None, array([True, False], mask=True))
+            assert_equal(a == None, array([False, True], mask=True))  # noqa: E711
+            assert_equal(a != None, array([True, False], mask=True))  # noqa: E711
             # Fully masked, even comparison to None should return "masked"
             a = masked
-            assert_equal(a == None, masked)
+            assert_equal(a == None, masked)  # noqa: E711
 
     def test_eq_with_scalar(self):
         a = array(1)
@@ -3789,9 +3837,9 @@ class TestMaskedArrayMethods:
         assert_equal(record['_mask'], data._mask)
 
         ndtype = [('i', int), ('s', '|S3'), ('f', float)]
-        data = array([(i, s, f) for (i, s, f) in zip(np.arange(10),
-                                                     'ABCDEFGHIJKLM',
-                                                     np.random.rand(10))],
+        data = array(list(zip(np.arange(10),
+                              'ABCDEFGHIJKLM',
+                              np.random.rand(10))),
                      dtype=ndtype)
         data[[0, 1, 2, -1]] = masked
         record = data.toflex()
@@ -3799,9 +3847,9 @@ class TestMaskedArrayMethods:
         assert_equal(record['_mask'], data._mask)
 
         ndtype = np.dtype("int, (2,3)float, float")
-        data = array([(i, f, ff) for (i, f, ff) in zip(np.arange(10),
-                                                       np.random.rand(10),
-                                                       np.random.rand(10))],
+        data = array(list(zip(np.arange(10),
+                              np.random.rand(10),
+                              np.random.rand(10))),
                      dtype=ndtype)
         data[[0, 1, 2, -1]] = masked
         record = data.toflex()
@@ -4631,7 +4679,7 @@ class TestMaskedArrayFunctions:
         # getdata() used to be bad for pandas series due to its _data
         # attribute.  This test is a regression test mainly and may be
         # removed if getdata() is adjusted.
-        class Series():
+        class Series:
             _data = "nonsense"
 
             def __array__(self, dtype=None, copy=None):
@@ -4848,6 +4896,26 @@ class TestMaskedArrayFunctions:
         bmask = np.array([(1, (0, 1)), (0, (0, 0))], dtype=dtype)
         cntrl = np.array([(1, (1, 1)), (0, (1, 0))], dtype=dtype)
         assert_equal(mask_or(amask, bmask), cntrl)
+
+        a = np.array([False, False])
+        assert mask_or(a, a) is nomask  # gh-27360
+
+    def test_allequal(self):
+        x = array([1, 2, 3], mask=[0, 0, 0])
+        y = array([1, 2, 3], mask=[1, 0, 0])
+        z = array([[1, 2, 3], [4, 5, 6]], mask=[[0, 0, 0], [1, 1, 1]])
+
+        assert allequal(x, y)
+        assert not allequal(x, y, fill_value=False)
+        assert allequal(x, z)
+
+        # test allequal for the same input, with mask=nomask, this test is for
+        # the scenario raised in https://github.com/numpy/numpy/issues/27201
+        assert allequal(x, x)
+        assert allequal(x, x, fill_value=False)
+
+        assert allequal(y, y)
+        assert not allequal(y, y, fill_value=False)
 
     def test_flatten_mask(self):
         # Tests flatten mask
@@ -5435,7 +5503,8 @@ class TestMaskedConstant:
 
     def test_subclass(self):
         # https://github.com/astropy/astropy/issues/6645
-        class Sub(type(np.ma.masked)): pass
+        class Sub(type(np.ma.masked)):
+            pass
 
         a = Sub()
         assert_(a is Sub())
@@ -5707,3 +5776,15 @@ def test_deepcopy_0d_obj():
     deepcopy[...] = 17
     assert_equal(source, 0)
     assert_equal(deepcopy, 17)
+
+
+def test_uint_fill_value_and_filled():
+    # See also gh-27269
+    a = np.ma.MaskedArray([1, 1], [True, False], dtype="uint16")
+    # the fill value should likely not be 99999, but for now guarantee it:
+    assert a.fill_value == 999999
+    # However, it's type is uint:
+    assert a.fill_value.dtype.kind == "u"
+    # And this ensures things like filled work:
+    np.testing.assert_array_equal(
+        a.filled(), np.array([999999, 1]).astype("uint16"), strict=True)

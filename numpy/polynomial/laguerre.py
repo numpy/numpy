@@ -126,6 +126,7 @@ def poly2lag(pol):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import poly2lag
     >>> poly2lag(np.arange(4))
     array([ 23., -63.,  58., -18.])
@@ -616,8 +617,6 @@ def lagder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     der : ndarray
@@ -712,8 +711,6 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -841,8 +838,6 @@ def lagval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, algebra_like
@@ -933,11 +928,6 @@ def lagval2d(x, y, c):
     --------
     lagval, laggrid2d, lagval3d, laggrid3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial.laguerre import lagval2d
@@ -991,11 +981,6 @@ def laggrid2d(x, y, c):
     See Also
     --------
     lagval, lagval2d, lagval3d, laggrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1051,18 +1036,13 @@ def lagval3d(x, y, z, c):
     --------
     lagval, lagval2d, laggrid2d, laggrid3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial.laguerre import lagval3d
     >>> c = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
     >>> lagval3d(1, 1, 2, c)
     -1.0
-    
+
     """
     return pu._valnd(lagval, c, x, y, z)
 
@@ -1114,11 +1094,6 @@ def laggrid3d(x, y, z, c):
     --------
     lagval, lagval2d, laggrid2d, lagval3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial.laguerre import laggrid3d
@@ -1128,7 +1103,7 @@ def laggrid3d(x, y, z, c):
             [ -2., -18.]],
            [[ -2., -14.],
             [ -1.,  -5.]]])
-    
+
     """
     return pu._gridnd(lagval, c, x, y, z)
 
@@ -1169,6 +1144,7 @@ def lagvander(x, deg):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import lagvander
     >>> x = np.array([0, 1, 2])
     >>> lagvander(x, 3)
@@ -1237,19 +1213,15 @@ def lagvander2d(x, y, deg):
     --------
     lagvander, lagvander3d, lagval2d, lagval3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import lagvander2d
     >>> x = np.array([0])
     >>> y = np.array([2])
     >>> lagvander2d(x, y, [2, 1])
     array([[ 1., -1.,  1., -1.,  1., -1.]])
-    
+
     """
     return pu._vander_nd_flat((lagvander, lagvander), (x, y), deg)
 
@@ -1299,13 +1271,9 @@ def lagvander3d(x, y, z, deg):
     --------
     lagvander, lagvander3d, lagval2d, lagval3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import lagvander3d
     >>> x = np.array([0])
     >>> y = np.array([2])
@@ -1439,12 +1407,14 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.laguerre import lagfit, lagval
     >>> x = np.linspace(0, 10)
-    >>> err = np.random.randn(len(x))/10
+    >>> rng = np.random.default_rng()
+    >>> err = rng.normal(scale=1./10, size=len(x))
     >>> y = lagval(x, [1, 2, 3]) + err
     >>> lagfit(x, y, 2)
-    array([ 0.96971004,  2.00193749,  3.00288744]) # may vary
+    array([1.00578369, 1.99417356, 2.99827656]) # may vary
 
     """
     return pu._fit(lagvander, x, y, deg, rcond, full, w)
@@ -1469,18 +1439,13 @@ def lagcompanion(c):
     mat : ndarray
         Companion matrix of dimensions (deg, deg).
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial.laguerre import lagcompanion
     >>> lagcompanion([1, 2, 3])
     array([[ 1.        , -0.33333333],
            [-1.        ,  4.33333333]])
-           
+
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
@@ -1588,9 +1553,6 @@ def laggauss(deg):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
-
     The results have only been tested up to degree 100 higher degrees may
     be problematic. The weights are determined by using the fact that
 
@@ -1652,11 +1614,6 @@ def lagweight(x):
     w : ndarray
        The weight function at `x`.
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial.laguerre import lagweight
@@ -1687,11 +1644,9 @@ class Laguerre(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [0, 1].
+        The default value is [0., 1.].
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [0, 1].
-
-        .. versionadded:: 1.6.0
+        Window, see `domain` for its use. The default value is [0., 1.].
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.

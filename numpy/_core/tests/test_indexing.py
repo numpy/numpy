@@ -133,6 +133,28 @@ class TestIndexing:
         b = np.array([])
         assert_raises(IndexError, a.__getitem__, b)
 
+    def test_gh_26542(self):
+        a = np.array([0, 1, 2])
+        idx = np.array([2, 1, 0])
+        a[idx] = a
+        expected = np.array([2, 1, 0])
+        assert_equal(a, expected)
+
+    def test_gh_26542_2d(self):
+        a = np.array([[0, 1, 2]])
+        idx_row = np.zeros(3, dtype=int)
+        idx_col = np.array([2, 1, 0])
+        a[idx_row, idx_col] = a
+        expected = np.array([[2, 1, 0]])
+        assert_equal(a, expected)
+
+    def test_gh_26542_index_overlap(self):
+        arr = np.arange(100)
+        expected_vals = np.copy(arr[:-10])
+        arr[10:] = arr[:-10]
+        actual_vals = arr[10:]
+        assert_equal(actual_vals, expected_vals)
+
     def test_ellipsis_index(self):
         a = np.array([[1, 2, 3],
                       [4, 5, 6],
@@ -345,7 +367,7 @@ class TestIndexing:
         assert_array_equal(a[idx], idx)
 
         # this case must not go into the fast path, note that idx is
-        # a non-contiuguous none 1D array here.
+        # a non-contiguous none 1D array here.
         a[idx] = -1
         res = np.arange(6)
         res[0] = -1
@@ -387,15 +409,19 @@ class TestIndexing:
         a[...] = memoryview(s)
         assert_array_equal(a, s)
 
-    def test_subclass_writeable(self):
+    @pytest.mark.parametrize("writeable", [True, False])
+    def test_subclass_writeable(self, writeable):
         d = np.rec.array([('NGC1001', 11), ('NGC1002', 1.), ('NGC1003', 1.)],
                          dtype=[('target', 'S20'), ('V_mag', '>f4')])
+        d.flags.writeable = writeable
+        # Advanced indexing results are always writeable:
         ind = np.array([False,  True,  True], dtype=bool)
-        assert_(d[ind].flags.writeable)
+        assert d[ind].flags.writeable
         ind = np.array([0, 1])
-        assert_(d[ind].flags.writeable)
-        assert_(d[...].flags.writeable)
-        assert_(d[0].flags.writeable)
+        assert d[ind].flags.writeable
+        # Views should be writeable if the original array is:
+        assert d[...].flags.writeable == writeable
+        assert d[0].flags.writeable == writeable
 
     def test_memory_order(self):
         # This is not necessary to preserve. Memory layouts for
@@ -646,12 +672,12 @@ class TestBroadcastedAssignments:
             ([0, 1], ..., 0),
             (..., [1, 2], [1, 2])])
     def test_broadcast_error_reports_correct_shape(self, index):
-        values = np.zeros((100, 100))  # will never broadcast below  
+        values = np.zeros((100, 100))  # will never broadcast below
 
         arr = np.zeros((3, 4, 5, 6, 7))
         # We currently report without any spaces (could be changed)
         shape_str = str(arr[index].shape).replace(" ", "")
-        
+
         with pytest.raises(ValueError) as e:
             arr[index] = values
 
@@ -961,7 +987,7 @@ class TestMultiIndexingAutomated:
             elif indx is None:
                 # this is like taking a slice with one element from a new axis:
                 indices.append(['n', np.array([0], dtype=np.intp)])
-                arr = arr.reshape((arr.shape[:ax] + (1,) + arr.shape[ax:]))
+                arr = arr.reshape(arr.shape[:ax] + (1,) + arr.shape[ax:])
                 continue
             if isinstance(indx, np.ndarray) and indx.dtype == bool:
                 if indx.shape != arr.shape[ax:ax+indx.ndim]:
@@ -976,9 +1002,9 @@ class TestMultiIndexingAutomated:
                     flat_indx = np.array([0]*indx.sum(), dtype=np.intp)
                 # concatenate axis into a single one:
                 if indx.ndim != 0:
-                    arr = arr.reshape((arr.shape[:ax]
+                    arr = arr.reshape(arr.shape[:ax]
                                   + (np.prod(arr.shape[ax:ax+indx.ndim]),)
-                                  + arr.shape[ax+indx.ndim:]))
+                                  + arr.shape[ax+indx.ndim:])
                     indx = flat_indx
                 else:
                     # This could be changed, a 0-d boolean index can
@@ -1045,9 +1071,9 @@ class TestMultiIndexingAutomated:
                 # First of all, reshape arr to combine fancy axes into one:
                 orig_shape = arr.shape
                 orig_slice = orig_shape[ax:ax + len(indx[1:])]
-                arr = arr.reshape((arr.shape[:ax]
+                arr = arr.reshape(arr.shape[:ax]
                                     + (np.prod(orig_slice).astype(int),)
-                                    + arr.shape[ax + len(indx[1:]):]))
+                                    + arr.shape[ax + len(indx[1:]):])
 
                 # Check if broadcasting works
                 res = np.broadcast(*indx[1:])
@@ -1081,9 +1107,9 @@ class TestMultiIndexingAutomated:
                     raise ValueError
                 arr = arr.take(mi.ravel(), axis=ax)
                 try:
-                    arr = arr.reshape((arr.shape[:ax]
+                    arr = arr.reshape(arr.shape[:ax]
                                         + mi.shape
-                                        + arr.shape[ax+1:]))
+                                        + arr.shape[ax+1:])
                 except ValueError:
                     # too many dimensions, probably
                     raise IndexError

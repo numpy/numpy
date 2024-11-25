@@ -62,7 +62,7 @@ __all__ = [
 # get_virtual_index : Callable
 #   The function used to compute the virtual_index.
 # fix_gamma : Callable
-#   A function used for discret methods to force the index to a specific value.
+#   A function used for discrete methods to force the index to a specific value.
 _QuantileMethods = dict(
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
@@ -169,8 +169,6 @@ def rot90(m, k=1, axes=(0, 1)):
         The array is rotated in the plane defined by the axes.
         Axes must be different.
 
-        .. versionadded:: 1.12.0
-
     Returns
     -------
     y : ndarray
@@ -192,6 +190,7 @@ def rot90(m, k=1, axes=(0, 1)):
 
     Examples
     --------
+    >>> import numpy as np
     >>> m = np.array([[1,2],[3,4]], int)
     >>> m
     array([[1, 2],
@@ -253,8 +252,6 @@ def flip(m, axis=None):
 
     The shape of the array is preserved, but the elements are reordered.
 
-    .. versionadded:: 1.12.0
-
     Parameters
     ----------
     m : array_like
@@ -266,9 +263,6 @@ def flip(m, axis=None):
 
          If axis is a tuple of ints, flipping is performed on all of the axes
          specified in the tuple.
-
-         .. versionchanged:: 1.15.0
-            None and tuples of axes are supported
 
     Returns
     -------
@@ -297,6 +291,7 @@ def flip(m, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> A = np.arange(8).reshape((2,2,2))
     >>> A
     array([[[0, 1],
@@ -323,7 +318,8 @@ def flip(m, axis=None):
             [7, 6]],
            [[1, 0],
             [3, 2]]])
-    >>> A = np.random.randn(3,4,5)
+    >>> rng = np.random.default_rng()
+    >>> A = rng.normal(size=(3,4,5))
     >>> np.all(np.flip(A,2) == A[:,:,::-1,...])
     True
     """
@@ -359,6 +355,7 @@ def iterable(y):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.iterable([1, 2, 3])
     True
     >>> np.iterable(2)
@@ -387,7 +384,7 @@ def iterable(y):
 
 def _weights_are_valid(weights, a, axis):
     """Validate weights array.
-    
+
     We assume, weights is not None.
     """
     wgt = np.asanyarray(weights)
@@ -430,9 +427,6 @@ def average(a, axis=None, weights=None, returned=False, *,
         Axis or axes along which to average `a`.  The default,
         `axis=None`, will average over all of the elements of the input array.
         If axis is negative it counts from the last to the first axis.
-
-        .. versionadded:: 1.7.0
-
         If axis is a tuple of ints, averaging is performed on all of the axes
         specified in the tuple instead of a single axis or all the axes as
         before.
@@ -447,7 +441,7 @@ def average(a, axis=None, weights=None, returned=False, *,
         The calculation is::
 
             avg = sum(a * weights) / sum(weights)
-        
+
         where the sum is over all included elements.
         The only constraint on the values of `weights` is that `sum(weights)`
         must not be 0.
@@ -501,6 +495,7 @@ def average(a, axis=None, weights=None, returned=False, *,
 
     Examples
     --------
+    >>> import numpy as np
     >>> data = np.arange(1, 5)
     >>> data
     array([1, 2, 3, 4])
@@ -626,7 +621,9 @@ def asarray_chkfinite(a, dtype=None, order=None):
 
     Examples
     --------
-    Convert a list into an array.  If all elements are finite
+    >>> import numpy as np
+
+    Convert a list into an array. If all elements are finite, then
     ``asarray_chkfinite`` is identical to ``asarray``.
 
     >>> a = [1, 2]
@@ -727,6 +724,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
 
     Examples
     --------
+    >>> import numpy as np
+
     Define the signum function, which is -1 for ``x < 0`` and +1 for ``x >= 0``.
 
     >>> x = np.linspace(-2.5, 2.5, 6)
@@ -815,6 +814,8 @@ def select(condlist, choicelist, default=0):
 
     Examples
     --------
+    >>> import numpy as np
+
     Beginning with an array of integers from 0 to 5 (inclusive),
     elements less than ``3`` are negated, elements greater than ``3``
     are squared, and elements not meeting either of these conditions
@@ -914,8 +915,6 @@ def copy(a, order='K', subok=False):
         If True, then sub-classes will be passed-through, otherwise the
         returned array will be forced to be a base-class array (defaults to False).
 
-        .. versionadded:: 1.19.0
-
     Returns
     -------
     arr : ndarray
@@ -937,6 +936,8 @@ def copy(a, order='K', subok=False):
 
     Examples
     --------
+    >>> import numpy as np
+
     Create an array x, with a reference y and a copy z:
 
     >>> x = np.array([1, 2, 3])
@@ -1004,16 +1005,11 @@ def gradient(f, *varargs, axis=None, edge_order=1):
     edge_order : {1, 2}, optional
         Gradient is calculated using N-th order accurate differences
         at the boundaries. Default: 1.
-
-        .. versionadded:: 1.9.1
-
     axis : None or int or tuple of ints, optional
         Gradient is calculated only along the given axis or axes
         The default (axis = None) is to calculate the gradient for all the axes
         of the input array. axis may be negative, in which case it counts from
         the last to the first axis.
-
-        .. versionadded:: 1.11.0
 
     Returns
     -------
@@ -1024,6 +1020,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
 
     Examples
     --------
+    >>> import numpy as np
     >>> f = np.array([1, 2, 4, 7, 11, 16])
     >>> np.gradient(f)
     array([1. , 1.5, 2.5, 3.5, 4.5, 5. ])
@@ -1395,8 +1392,6 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
         of the input array in along all other axes.  Otherwise the
         dimension and shape must match `a` except along axis.
 
-        .. versionadded:: 1.16.0
-
     Returns
     -------
     diff : ndarray
@@ -1425,7 +1420,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     >>> np.diff(u8_arr)
     array([255], dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
-    255
+    np.uint8(255)
 
     If this is not desirable, then the array should be cast to a larger
     integer type first:
@@ -1436,6 +1431,7 @@ def diff(a, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([1, 2, 4, 7, 0])
     >>> np.diff(x)
     array([ 1,  2,  3, -7])
@@ -1538,8 +1534,6 @@ def interp(x, xp, fp, left=None, right=None, period=None):
         interpolation of angular x-coordinates. Parameters `left` and `right`
         are ignored if `period` is specified.
 
-        .. versionadded:: 1.10.0
-
     Returns
     -------
     y : float or complex (corresponding to fp) or ndarray
@@ -1570,6 +1564,7 @@ def interp(x, xp, fp, left=None, right=None, period=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> xp = [1, 2, 3]
     >>> fp = [3, 2, 0]
     >>> np.interp(2.5, xp, fp)
@@ -1669,9 +1664,6 @@ def angle(z, deg=False):
         The counterclockwise angle from the positive real axis on the complex
         plane in the range ``(-pi, pi]``, with dtype as numpy.float64.
 
-        .. versionchanged:: 1.16.0
-            This function works on subclasses of ndarray like `ma.array`.
-
     See Also
     --------
     arctan2
@@ -1685,6 +1677,7 @@ def angle(z, deg=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.angle([1.0, 1.0j, 1+1j])               # in radians
     array([ 0.        ,  1.57079633,  0.78539816]) # may vary
     >>> np.angle(1+1j, deg=True)                  # in degrees
@@ -1759,6 +1752,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2*pi):
 
     Examples
     --------
+    >>> import numpy as np
     >>> phase = np.linspace(0, np.pi, num=5)
     >>> phase[3:] += np.pi
     >>> phase
@@ -1828,6 +1822,7 @@ def sort_complex(a):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.sort_complex([5, 3, 6, 2, 1])
     array([1.+0.j, 2.+0.j, 3.+0.j, 5.+0.j, 6.+0.j])
 
@@ -1848,37 +1843,103 @@ def sort_complex(a):
         return b
 
 
-def _trim_zeros(filt, trim=None):
+def _arg_trim_zeros(filt):
+    """Return indices of the first and last non-zero element.
+
+    Parameters
+    ----------
+    filt : array_like
+        Input array.
+
+    Returns
+    -------
+    start, stop : ndarray
+        Two arrays containing the indices of the first and last non-zero
+        element in each dimension.
+
+    See also
+    --------
+    trim_zeros
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> _arg_trim_zeros(np.array([0, 0, 1, 1, 0]))
+    (array([2]), array([3]))
+    """
+    nonzero = (
+        np.argwhere(filt)
+        if filt.dtype != np.object_
+        # Historically, `trim_zeros` treats `None` in an object array
+        # as non-zero while argwhere doesn't, account for that
+        else np.argwhere(filt != 0)
+    )
+    if nonzero.size == 0:
+        start = stop = np.array([], dtype=np.intp)
+    else:
+        start = nonzero.min(axis=0)
+        stop = nonzero.max(axis=0)
+    return start, stop
+
+
+def _trim_zeros(filt, trim=None, axis=None):
     return (filt,)
 
 
 @array_function_dispatch(_trim_zeros)
-def trim_zeros(filt, trim='fb'):
-    """
-    Trim the leading and/or trailing zeros from a 1-D array or sequence.
+def trim_zeros(filt, trim='fb', axis=None):
+    """Remove values along a dimension which are zero along all other.
 
     Parameters
     ----------
-    filt : 1-D array or sequence
+    filt : array_like
         Input array.
-    trim : str, optional
+    trim : {"fb", "f", "b"}, optional
         A string with 'f' representing trim from front and 'b' to trim from
-        back. Default is 'fb', trim zeros from both front and back of the
-        array.
+        back. By default, zeros are trimmed on both sides.
+        Front and back refer to the edges of a dimension, with "front" refering
+        to the side with the lowest index 0, and "back" refering to the highest
+        index (or index -1).
+    axis : int or sequence, optional
+        If None, `filt` is cropped such, that the smallest bounding box is
+        returned that still contains all values which are not zero.
+        If an axis is specified, `filt` will be sliced in that dimension only
+        on the sides specified by `trim`. The remaining area will be the
+        smallest that still contains all values wich are not zero.
 
     Returns
     -------
-    trimmed : 1-D array or sequence
-        The result of trimming the input. The input data type is preserved.
+    trimmed : ndarray or sequence
+        The result of trimming the input. The number of dimensions and the
+        input data type are preserved.
+
+    Notes
+    -----
+    For all-zero arrays, the first axis is trimmed first.
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array((0, 0, 0, 1, 2, 3, 0, 2, 1, 0))
     >>> np.trim_zeros(a)
     array([1, 2, 3, 0, 2, 1])
 
-    >>> np.trim_zeros(a, 'b')
+    >>> np.trim_zeros(a, trim='b')
     array([0, 0, 0, ..., 0, 2, 1])
+
+    Multiple dimensions are supported.
+
+    >>> b = np.array([[0, 0, 2, 3, 0, 0],
+    ...               [0, 1, 0, 3, 0, 0],
+    ...               [0, 0, 0, 0, 0, 0]])
+    >>> np.trim_zeros(b)
+    array([[0, 2, 3],
+           [1, 0, 3]])
+
+    >>> np.trim_zeros(b, axis=-1)
+    array([[0, 2, 3],
+           [1, 0, 3],
+           [0, 0, 0]])
 
     The input data type is preserved, list/tuple in means list/tuple out.
 
@@ -1886,23 +1947,40 @@ def trim_zeros(filt, trim='fb'):
     [1, 2]
 
     """
+    filt_ = np.asarray(filt)
 
-    first = 0
-    trim = trim.upper()
-    if 'F' in trim:
-        for i in filt:
-            if i != 0.:
-                break
-            else:
-                first = first + 1
-    last = len(filt)
-    if 'B' in trim:
-        for i in filt[::-1]:
-            if i != 0.:
-                break
-            else:
-                last = last - 1
-    return filt[first:last]
+    trim = trim.lower()
+    if trim not in {"fb", "bf", "f", "b"}:
+        raise ValueError(f"unexpected character(s) in `trim`: {trim!r}")
+
+    start, stop = _arg_trim_zeros(filt_)
+    stop += 1  # Adjust for slicing
+
+    if start.size == 0:
+        # filt is all-zero -> assign same values to start and stop so that
+        # resulting slice will be empty
+        start = stop = np.zeros(filt_.ndim, dtype=np.intp)
+    else:
+        if 'f' not in trim:
+            start = (None,) * filt_.ndim
+        if 'b' not in trim:
+            stop = (None,) * filt_.ndim
+
+    if len(start) == 1:
+        # filt is 1D -> don't use multi-dimensional slicing to preserve
+        # non-array input types
+        sl = slice(start[0], stop[0])
+    elif axis is None:
+        # trim all axes
+        sl = tuple(slice(*x) for x in zip(start, stop))
+    else:
+        # only trim single axis
+        axis = normalize_axis_index(axis, filt_.ndim)
+        sl = (slice(None),) * axis + (slice(start[axis], stop[axis]),) + (...,)
+
+    trimmed = filt[sl]
+    return trimmed
+
 
 
 def _extract_dispatcher(condition, arr):
@@ -1938,6 +2016,7 @@ def extract(condition, arr):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.arange(12).reshape((3, 4))
     >>> arr
     array([[ 0,  1,  2,  3],
@@ -1995,6 +2074,7 @@ def place(arr, mask, vals):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.arange(6).reshape(2, 3)
     >>> np.place(arr, arr>2, [44, 55])
     >>> arr
@@ -2030,6 +2110,8 @@ def disp(mesg, device=None, linefeed=True):
 
     Examples
     --------
+    >>> import numpy as np
+
     Besides ``sys.stdout``, a file-like object can also be used as it has
     both required methods:
 
@@ -2048,7 +2130,7 @@ def disp(mesg, device=None, linefeed=True):
         "(deprecated in NumPy 2.0)",
         DeprecationWarning,
         stacklevel=2
-    )    
+    )
 
     if device is None:
         device = sys.stdout
@@ -2218,16 +2300,12 @@ class vectorize:
         ``pyfunc.__doc__``.
     excluded : set, optional
         Set of strings or integers representing the positional or keyword
-        arguments for which the function will not be vectorized.  These will be
+        arguments for which the function will not be vectorized. These will be
         passed directly to `pyfunc` unmodified.
-
-        .. versionadded:: 1.7.0
 
     cache : bool, optional
         If `True`, then cache the first function call that determines the number
         of outputs if `otypes` is not provided.
-
-        .. versionadded:: 1.7.0
 
     signature : string, optional
         Generalized universal function signature, e.g., ``(m,n),(n)->(m)`` for
@@ -2235,8 +2313,6 @@ class vectorize:
         be called with (and expected to return) arrays with shapes given by the
         size of corresponding core dimensions. By default, ``pyfunc`` is
         assumed to take scalars as input and output.
-
-        .. versionadded:: 1.12.0
 
     Returns
     -------
@@ -2269,6 +2345,7 @@ class vectorize:
 
     Examples
     --------
+    >>> import numpy as np
     >>> def myfunc(a, b):
     ...     "Return a-b if a>b, otherwise return a+b"
     ...     if a > b:
@@ -2310,14 +2387,14 @@ class vectorize:
     ...     while _p:
     ...         res = res*x + _p.pop(0)
     ...     return res
-    >>> vpolyval = np.vectorize(mypolyval, excluded=['p'])
-    >>> vpolyval(p=[1, 2, 3], x=[0, 1])
-    array([3, 6])
 
-    Positional arguments may also be excluded by specifying their position:
+    Here, we exclude the zeroth argument from vectorization whether it is
+    passed by position or keyword.
 
-    >>> vpolyval.excluded.add(0)
+    >>> vpolyval = np.vectorize(mypolyval, excluded={0, 'p'})
     >>> vpolyval([1, 2, 3], x=[0, 1])
+    array([3, 6])
+    >>> vpolyval(p=[1, 2, 3], x=[0, 1])
     array([3, 6])
 
     The `signature` argument allows for vectorizing functions that act on
@@ -2639,20 +2716,14 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         `fweights` and `aweights` are specified, and ``ddof=0`` will return
         the simple average. See the notes for the details. The default value
         is ``None``.
-
-        .. versionadded:: 1.5
     fweights : array_like, int, optional
         1-D array of integer frequency weights; the number of times each
         observation vector should be repeated.
-
-        .. versionadded:: 1.10
     aweights : array_like, optional
         1-D array of observation vector weights. These relative weights are
         typically large for observations considered "important" and smaller for
         observations considered less "important". If ``ddof=0`` the array of
         weights can be used to assign probabilities to observation vectors.
-
-        .. versionadded:: 1.10
     dtype : data-type, optional
         Data-type of the result. By default, the return data-type will have
         at least `numpy.float64` precision.
@@ -2690,6 +2761,8 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
 
     Examples
     --------
+    >>> import numpy as np
+
     Consider two variables, :math:`x_0` and :math:`x_1`, which
     correlate perfectly, but in opposite directions:
 
@@ -2745,7 +2818,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
             dtype = np.result_type(m, y, np.float64)
 
     X = array(m, ndmin=2, dtype=dtype)
-    if not rowvar and X.shape[0] != 1:
+    if not rowvar and m.ndim != 1:
         X = X.T
     if X.shape[0] == 0:
         return np.array([]).reshape(0, 0)
@@ -2893,6 +2966,8 @@ def corrcoef(x, y=None, rowvar=True, bias=np._NoValue, ddof=np._NoValue, *,
 
     Examples
     --------
+    >>> import numpy as np
+
     In this example we generate two random arrays, ``xarr`` and ``yarr``, and
     compute the row-wise and column-wise Pearson correlation coefficients,
     ``R``. Since ``rowvar`` is  true by  default, we first find the row-wise
@@ -3030,6 +3105,7 @@ def blackman(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.blackman(12)
     array([-1.38777878e-17,   3.26064346e-02,   1.59903635e-01, # may vary
@@ -3138,6 +3214,7 @@ def bartlett(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.bartlett(12)
     array([ 0.        ,  0.18181818,  0.36363636,  0.54545455,  0.72727273, # may vary
@@ -3239,6 +3316,7 @@ def hanning(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.hanning(12)
     array([0.        , 0.07937323, 0.29229249, 0.57115742, 0.82743037,
            0.97974649, 0.97974649, 0.82743037, 0.57115742, 0.29229249,
@@ -3338,6 +3416,7 @@ def hamming(M):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.hamming(12)
     array([ 0.08      ,  0.15302337,  0.34890909,  0.60546483,  0.84123594, # may vary
             0.98136677,  0.98136677,  0.84123594,  0.60546483,  0.34890909,
@@ -3517,6 +3596,7 @@ def i0(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.i0(0.)
     array(1.0)
     >>> np.i0([0, 1, 2, 3])
@@ -3613,6 +3693,7 @@ def kaiser(M, beta):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> np.kaiser(12, 14)
      array([7.72686684e-06, 3.46009194e-03, 4.65200189e-02, # may vary
@@ -3715,6 +3796,7 @@ def sinc(x):
 
     Examples
     --------
+    >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> x = np.linspace(-4, 4, 41)
     >>> np.sinc(x)
@@ -3845,13 +3927,9 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
     axis : {int, sequence of int, None}, optional
         Axis or axes along which the medians are computed. The default,
         axis=None, will compute the median along a flattened version of
-        the array.
-        
-        .. versionadded:: 1.9.0
-
-        If a sequence of axes, the array is first flattened along the
-        given axes, then the median is computed along the resulting
-        flattened axis.
+        the array. If a sequence of axes, the array is first flattened
+        along the given axes, then the median is computed along the
+        resulting flattened axis.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -3868,8 +3946,6 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the original `arr`.
-
-        .. versionadded:: 1.9.0
 
     Returns
     -------
@@ -3893,6 +3969,7 @@ def median(a, axis=None, out=None, overwrite_input=False, keepdims=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
@@ -4014,9 +4091,6 @@ def percentile(a,
         Axis or axes along which the percentiles are computed. The
         default is to compute the percentile(s) along a flattened
         version of the array.
-
-        .. versionchanged:: 1.9.0
-            A tuple of axes is supported
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -4057,8 +4131,6 @@ def percentile(a,
         If this is set to True, the axes which are reduced are left in
         the result as dimensions with size one. With this option, the
         result will broadcast correctly against the original array `a`.
-
-        .. versionadded:: 1.9.0
 
      weights : array_like, optional
         An array of weights associated with the values in `a`. Each value in
@@ -4104,6 +4176,7 @@ def percentile(a,
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
@@ -4220,8 +4293,6 @@ def quantile(a,
              interpolation=None):
     """
     Compute the q-th quantile of the data along the specified axis.
-
-    .. versionadded:: 1.15.0
 
     Parameters
     ----------
@@ -4354,12 +4425,14 @@ def quantile(a,
     The table above includes only the estimators from H&F that are continuous
     functions of probability `q` (estimators 4-9). NumPy also provides the
     three discontinuous estimators from H&F (estimators 1-3), where ``j`` is
-    defined as above and ``m`` and ``g`` are defined as follows.
+    defined as above, ``m`` is defined as follows, and ``g`` is a function
+    of the real-valued ``index = q*n + m - 1`` and ``j``.
 
-    1. ``inverted_cdf``: ``m = 0`` and ``g = int(q*n > 0)``
-    2. ``averaged_inverted_cdf``: ``m = 0`` and ``g = (1 + int(q*n > 0)) / 2``
+    1. ``inverted_cdf``: ``m = 0`` and ``g = int(index - j > 0)``
+    2. ``averaged_inverted_cdf``: ``m = 0`` and
+       ``g = (1 + int(index - j > 0)) / 2``
     3. ``closest_observation``: ``m = -1/2`` and
-       ``1 - int((g == 0) & (j%2 == 0))``
+       ``g = 1 - int((index == j) & (j%2 == 1))``
 
     For backward compatibility with previous versions of NumPy, `quantile`
     provides four additional discontinuous estimators. Like
@@ -4393,12 +4466,13 @@ def quantile(a,
 
     For weighted quantiles, the coverage conditions still hold. The
     empirical cumulative distribution is simply replaced by its weighted
-    version, i.e. 
+    version, i.e.
     :math:`P(Y \\leq t) = \\frac{1}{\\sum_i w_i} \\sum_i w_i 1_{x_i \\leq t}`.
     Only ``method="inverted_cdf"`` supports weights.
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array([[10, 7, 4], [3, 2, 1]])
     >>> a
     array([[10,  7,  4],
@@ -4592,7 +4666,7 @@ def _get_gamma_mask(shape, default_value, conditioned_value, where):
     return out
 
 
-def _discret_interpolation_to_boundaries(index, gamma_condition_fun):
+def _discrete_interpolation_to_boundaries(index, gamma_condition_fun):
     previous = np.floor(index)
     next = previous + 1
     gamma = index - previous
@@ -4607,22 +4681,24 @@ def _discret_interpolation_to_boundaries(index, gamma_condition_fun):
 
 
 def _closest_observation(n, quantiles):
-    gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 0)
-    return _discret_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
-                                                gamma_fun)
+    # "choose the nearest even order statistic at g=0" (H&F (1996) pp. 362).
+    # Order is 1-based so for zero-based indexing round to nearest odd index.
+    gamma_fun = lambda gamma, index: (gamma == 0) & (np.floor(index) % 2 == 1)
+    return _discrete_interpolation_to_boundaries((n * quantiles) - 1 - 0.5,
+                                                 gamma_fun)
 
 
 def _inverted_cdf(n, quantiles):
     gamma_fun = lambda gamma, _: (gamma == 0)
-    return _discret_interpolation_to_boundaries((n * quantiles) - 1,
-                                                gamma_fun)
+    return _discrete_interpolation_to_boundaries((n * quantiles) - 1,
+                                                 gamma_fun)
 
 
 def _quantile_ureduce_func(
         a: np.array,
         q: np.array,
         weights: np.array,
-        axis: int = None,
+        axis: int | None = None,
         out=None,
         overwrite_input: bool = False,
         method="linear",
@@ -4827,6 +4903,13 @@ def _quantile(
         # returns 2 instead of 1 because 0.4 is not binary representable.
         if quantiles.dtype.kind == "f":
             cdf = cdf.astype(quantiles.dtype)
+        # Weights must be non-negative, so we might have zero weights at the
+        # beginning leading to some leading zeros in cdf. The call to
+        # np.searchsorted for quantiles=0 will then pick the first element,
+        # but should pick the first one larger than zero. We
+        # therefore simply set 0 values in cdf to -1.
+        if np.any(cdf[0, ...] == 0):
+            cdf[cdf == 0] = -1
 
         def find_cdf_1d(arr, cdf):
             indices = np.searchsorted(cdf, quantiles, side="left")
@@ -4837,7 +4920,7 @@ def _quantile(
             return result
 
         r_shape = arr.shape[1:]
-        if quantiles.ndim > 0: 
+        if quantiles.ndim > 0:
             r_shape = quantiles.shape + r_shape
         if out is None:
             result = np.empty_like(arr, shape=r_shape)
@@ -4932,6 +5015,8 @@ def trapezoid(y, x=None, dx=1.0, axis=-1):
 
     Examples
     --------
+    >>> import numpy as np
+
     Use the trapezoidal rule on evenly spaced points:
 
     >>> np.trapezoid([1, 2, 3])
@@ -5038,9 +5123,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     N-D scalar/vector fields over N-D grids, given
     one-dimensional coordinate arrays x1, x2,..., xn.
 
-    .. versionchanged:: 1.9
-       1-D and 0-D cases are allowed.
-
     Parameters
     ----------
     x1, x2,..., xn : array_like
@@ -5048,8 +5130,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     indexing : {'xy', 'ij'}, optional
         Cartesian ('xy', default) or matrix ('ij') indexing of output.
         See Notes for more details.
-
-        .. versionadded:: 1.7.0
     sparse : bool, optional
         If True the shape of the returned coordinate array for dimension *i*
         is reduced from ``(N1, ..., Ni, ... Nn)`` to
@@ -5060,7 +5140,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
         Default is False.
 
-        .. versionadded:: 1.7.0
     copy : bool, optional
         If False, a view into the original arrays are returned in order to
         conserve memory.  Default is True.  Please note that
@@ -5068,8 +5147,6 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         arrays.  Furthermore, more than one element of a broadcast array
         may refer to a single memory location.  If you need to write to the
         arrays, make copies first.
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -5112,6 +5189,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
 
     Examples
     --------
+    >>> import numpy as np
     >>> nx, ny = (3, 2)
     >>> x = np.linspace(0, 1, nx)
     >>> y = np.linspace(0, 1, ny)
@@ -5202,7 +5280,7 @@ def delete(arr, obj, axis=None):
     ----------
     arr : array_like
         Input array.
-    obj : slice, int or array of ints
+    obj : slice, int, array-like of ints or bools
         Indicate indices of sub-arrays to remove along the specified axis.
 
         .. versionchanged:: 1.19.0
@@ -5239,6 +5317,7 @@ def delete(arr, obj, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([[1,2,3,4], [5,6,7,8], [9,10,11,12]])
     >>> arr
     array([[ 1,  2,  3,  4],
@@ -5383,11 +5462,13 @@ def insert(arr, obj, values, axis=None):
     ----------
     arr : array_like
         Input array.
-    obj : int, slice or sequence of ints
+    obj : slice, int, array-like of ints or bools
         Object that defines the index or indices before which `values` is
         inserted.
 
-        .. versionadded:: 1.8.0
+        .. versionchanged:: 2.1.2
+            Boolean indices are now treated as a mask of elements to insert,
+            rather than being cast to the integers 0 and 1.
 
         Support for multiple insertions when `obj` is a single scalar or a
         sequence with one element (similar to calling insert multiple
@@ -5418,43 +5499,50 @@ def insert(arr, obj, values, axis=None):
     -----
     Note that for higher dimensional inserts ``obj=0`` behaves very different
     from ``obj=[0]`` just like ``arr[:,0,:] = values`` is different from
-    ``arr[:,[0],:] = values``.
+    ``arr[:,[0],:] = values``. This is because of the difference between basic
+    and advanced :ref:`indexing <basics.indexing>`.
 
     Examples
     --------
-    >>> a = np.array([[1, 1], [2, 2], [3, 3]])
+    >>> import numpy as np
+    >>> a = np.arange(6).reshape(3, 2)
     >>> a
-    array([[1, 1],
-           [2, 2],
-           [3, 3]])
-    >>> np.insert(a, 1, 5)
-    array([1, 5, 1, ..., 2, 3, 3])
-    >>> np.insert(a, 1, 5, axis=1)
-    array([[1, 5, 1],
-           [2, 5, 2],
-           [3, 5, 3]])
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> np.insert(a, 1, 6)
+    array([0, 6, 1, 2, 3, 4, 5])
+    >>> np.insert(a, 1, 6, axis=1)
+    array([[0, 6, 1],
+           [2, 6, 3],
+           [4, 6, 5]])
 
-    Difference between sequence and scalars:
+    Difference between sequence and scalars,
+    showing how ``obj=[1]`` behaves different from ``obj=1``:
 
-    >>> np.insert(a, [1], [[1],[2],[3]], axis=1)
-    array([[1, 1, 1],
-           [2, 2, 2],
-           [3, 3, 3]])
-    >>> np.array_equal(np.insert(a, 1, [1, 2, 3], axis=1),
-    ...                np.insert(a, [1], [[1],[2],[3]], axis=1))
+    >>> np.insert(a, [1], [[7],[8],[9]], axis=1)
+    array([[0, 7, 1],
+           [2, 8, 3],
+           [4, 9, 5]])
+    >>> np.insert(a, 1, [[7],[8],[9]], axis=1)
+    array([[0, 7, 8, 9, 1],
+           [2, 7, 8, 9, 3],
+           [4, 7, 8, 9, 5]])
+    >>> np.array_equal(np.insert(a, 1, [7, 8, 9], axis=1),
+    ...                np.insert(a, [1], [[7],[8],[9]], axis=1))
     True
 
     >>> b = a.flatten()
     >>> b
-    array([1, 1, 2, 2, 3, 3])
-    >>> np.insert(b, [2, 2], [5, 6])
-    array([1, 1, 5, ..., 2, 3, 3])
+    array([0, 1, 2, 3, 4, 5])
+    >>> np.insert(b, [2, 2], [6, 7])
+    array([0, 1, 6, 7, 2, 3, 4, 5])
 
-    >>> np.insert(b, slice(2, 4), [5, 6])
-    array([1, 1, 5, ..., 2, 3, 3])
+    >>> np.insert(b, slice(2, 4), [7, 8])
+    array([0, 1, 7, 2, 8, 3, 4, 5])
 
     >>> np.insert(b, [2, 2], [7.13, False]) # type casting
-    array([1, 1, 7, ..., 2, 3, 3])
+    array([0, 1, 7, 0, 2, 3, 4, 5])
 
     >>> x = np.arange(8).reshape(2, 4)
     >>> idx = (1, 3)
@@ -5487,18 +5575,10 @@ def insert(arr, obj, values, axis=None):
         # need to copy obj, because indices will be changed in-place
         indices = np.array(obj)
         if indices.dtype == bool:
-            # See also delete
-            # 2012-10-11, NumPy 1.8
-            warnings.warn(
-                "in the future insert will treat boolean arrays and "
-                "array-likes as a boolean index instead of casting it to "
-                "integer", FutureWarning, stacklevel=2)
-            indices = indices.astype(intp)
-            # Code after warning period:
-            #if obj.ndim != 1:
-            #    raise ValueError('boolean array argument obj to insert '
-            #                     'must be one dimensional')
-            #indices = np.flatnonzero(obj)
+            if obj.ndim != 1:
+                raise ValueError('boolean array argument obj to insert '
+                                'must be one dimensional')
+            indices = np.flatnonzero(obj)
         elif indices.ndim > 1:
             raise ValueError(
                 "index array argument obj to insert must be one dimensional "
@@ -5593,6 +5673,7 @@ def append(arr, values, axis=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.append([1, 2, 3], [[4, 5, 6], [7, 8, 9]])
     array([1, 2, 3, ..., 7, 8, 9])
 
@@ -5705,6 +5786,7 @@ def digitize(x, bins, right=False):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array([0.2, 6.4, 3.0, 1.6])
     >>> bins = np.array([0.0, 1.0, 2.5, 4.0, 10.0])
     >>> inds = np.digitize(x, bins)

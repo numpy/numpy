@@ -199,6 +199,13 @@ class TestMemmap:
         fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
         assert_(fp.offset == offset)
 
+    def test_empty_array_with_offset_multiple_of_allocation_granularity(self):
+        self.tmpfp.write(b'a'*mmap.ALLOCATIONGRANULARITY)
+        size = 0
+        offset = mmap.ALLOCATIONGRANULARITY
+        fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
+        assert_equal(fp.offset, offset)
+
     def test_no_shape(self):
         self.tmpfp.write(b'a'*16)
         mm = memmap(self.tmpfp, dtype='float64')
@@ -207,13 +214,15 @@ class TestMemmap:
     def test_empty_array(self):
         # gh-12653
         with pytest.raises(ValueError, match='empty file'):
-            memmap(self.tmpfp, shape=(0,4), mode='w+')
+            memmap(self.tmpfp, shape=(0, 4), mode='r')
 
-        self.tmpfp.write(b'\0')
+        # gh-27723
+        # empty memmap works with mode in ('w+','r+')
+        memmap(self.tmpfp, shape=(0, 4), mode='w+')
 
         # ok now the file is not empty
-        memmap(self.tmpfp, shape=(0,4), mode='w+')
-    
+        memmap(self.tmpfp, shape=(0, 4), mode='w+')
+
     def test_shape_type(self):
         memmap(self.tmpfp, shape=3, mode='w+')
         memmap(self.tmpfp, shape=self.shape, mode='w+')

@@ -1,4 +1,3 @@
-import sys
 import threading
 from typing import Any
 from collections.abc import Sequence
@@ -12,10 +11,7 @@ from numpy.random._sfc64 import SFC64
 from numpy.random._philox import Philox
 from numpy.random.bit_generator import SeedSequence, SeedlessSeedSequence
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 def_rng = np.random.default_rng()
 seed_seq = np.random.SeedSequence()
@@ -1551,5 +1547,5 @@ assert_type(random_st.tomaxint(), int)
 assert_type(random_st.tomaxint(1), npt.NDArray[np.int64])
 assert_type(random_st.tomaxint((1,)), npt.NDArray[np.int64])
 
-assert_type(np.random.set_bit_generator(pcg64), None)
-assert_type(np.random.get_bit_generator(), np.random.BitGenerator)
+assert_type(np.random.mtrand.set_bit_generator(pcg64), None)
+assert_type(np.random.mtrand.get_bit_generator(), np.random.BitGenerator)

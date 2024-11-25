@@ -84,7 +84,7 @@ class memmap(ndarray):
         .. versionchanged:: 2.0
          The shape parameter can now be any integer sequence type, previously
          types were limited to tuple and int.
-    
+
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout:
         :term:`row-major`, C-style or :term:`column-major`,
@@ -127,6 +127,7 @@ class memmap(ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> data = np.arange(12, dtype='float32')
     >>> data.resize((3,4))
 
@@ -261,10 +262,14 @@ class memmap(ndarray):
 
             bytes = int(offset + size*_dbytes)
 
-            if mode in ('w+', 'r+') and flen < bytes:
-                fid.seek(bytes - 1, 0)
-                fid.write(b'\0')
-                fid.flush()
+            if mode in ('w+', 'r+'):
+                # gh-27723
+                # if bytes == 0, we write out 1 byte to allow empty memmap.
+                bytes = max(bytes, 1)
+                if flen < bytes:
+                    fid.seek(bytes - 1, 0)
+                    fid.write(b'\0')
+                    fid.flush()
 
             if mode == 'c':
                 acc = mmap.ACCESS_COPY
@@ -275,6 +280,11 @@ class memmap(ndarray):
 
             start = offset - offset % mmap.ALLOCATIONGRANULARITY
             bytes -= start
+            # bytes == 0 is problematic as in mmap length=0 maps the full file.
+            # See PR gh-27723 for a more detailed explanation.
+            if bytes == 0 and start > 0:
+                bytes += mmap.ALLOCATIONGRANULARITY
+                start -= mmap.ALLOCATIONGRANULARITY
             array_offset = offset - start
             mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 

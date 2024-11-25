@@ -11,6 +11,8 @@
 #include "numpy/npy_common.h"
 #include "npy_config.h"
 #include "alloc.h"
+#include "npy_static_data.h"
+#include "multiarraymodule.h"
 
 #include <assert.h>
 #ifdef NPY_OS_LINUX
@@ -35,13 +37,11 @@ typedef struct {
 static cache_bucket datacache[NBUCKETS];
 static cache_bucket dimcache[NBUCKETS_DIM];
 
-static int _madvise_hugepage = 1;
-
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
  * `MADV_HUGEPAGE`.  `madvise` is only ever used on linux, so the value
- * of `_madvise_hugepage` may be ignored.
+ * of `madvise_hugepage` may be ignored.
  *
  * It is exposed to Python as `np._core.multiarray._get_madvise_hugepage`.
  */
@@ -49,7 +49,7 @@ NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 {
 #ifdef NPY_OS_LINUX
-    if (_madvise_hugepage) {
+    if (npy_thread_unsafe_state.madvise_hugepage) {
         Py_RETURN_TRUE;
     }
 #endif
@@ -59,24 +59,42 @@ _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args))
 
 /*
  * This function enables or disables the use of `MADV_HUGEPAGE` on Linux
- * by modifying the global static `_madvise_hugepage`.
- * It returns the previous value of `_madvise_hugepage`.
+ * by modifying the global static `madvise_hugepage`.
+ * It returns the previous value of `madvise_hugepage`.
  *
  * It is exposed to Python as `np._core.multiarray._set_madvise_hugepage`.
  */
 NPY_NO_EXPORT PyObject *
 _set_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *enabled_obj)
 {
-    int was_enabled = _madvise_hugepage;
+    int was_enabled = npy_thread_unsafe_state.madvise_hugepage;
     int enabled = PyObject_IsTrue(enabled_obj);
     if (enabled < 0) {
         return NULL;
     }
-    _madvise_hugepage = enabled;
+    npy_thread_unsafe_state.madvise_hugepage = enabled;
     if (was_enabled) {
         Py_RETURN_TRUE;
     }
     Py_RETURN_FALSE;
+}
+
+
+NPY_FINLINE void
+indicate_hugepages(void *p, size_t size) {
+#ifdef NPY_OS_LINUX
+    /* allow kernel allocating huge pages for large arrays */
+    if (NPY_UNLIKELY(size >= ((1u<<22u))) &&
+        npy_thread_unsafe_state.madvise_hugepage) {
+        npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
+        npy_uintp length = size - offset;
+        /**
+         * Intentionally not checking for errors that may be returned by
+         * older kernel versions; optimistically tries enabling huge pages.
+         */
+        madvise((void*)((npy_uintp)p + offset), length, MADV_HUGEPAGE);
+    }
+#endif
 }
 
 
@@ -108,18 +126,7 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
 #ifdef _PyPyGC_AddMemoryPressure
         _PyPyPyGC_AddMemoryPressure(nelem * esz);
 #endif
-#ifdef NPY_OS_LINUX
-        /* allow kernel allocating huge pages for large arrays */
-        if (NPY_UNLIKELY(nelem * esz >= ((1u<<22u))) && _madvise_hugepage) {
-            npy_uintp offset = 4096u - (npy_uintp)p % (4096u);
-            npy_uintp length = nelem * esz - offset;
-            /**
-             * Intentionally not checking for errors that may be returned by
-             * older kernel versions; optimistically tries enabling huge pages.
-             */
-            madvise((void*)((npy_uintp)p + offset), length, MADV_HUGEPAGE);
-        }
-#endif
+        indicate_hugepages(p, nelem * esz);
     }
     return p;
 }
@@ -171,6 +178,9 @@ npy_alloc_cache_zero(size_t nmemb, size_t size)
     NPY_BEGIN_THREADS;
     p = PyDataMem_NEW_ZEROED(nmemb, size);
     NPY_END_THREADS;
+    if (p) {
+        indicate_hugepages(p, sz);
+    }
     return p;
 }
 
@@ -237,7 +247,11 @@ PyDataMem_NEW(size_t size)
 
     assert(size != 0);
     result = malloc(size);
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (ret == -1) {
+        free(result);
+        return NULL;
+    }
     return result;
 }
 
@@ -250,7 +264,11 @@ PyDataMem_NEW_ZEROED(size_t nmemb, size_t size)
     void *result;
 
     result = calloc(nmemb, size);
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    if (ret == -1) {
+        free(result);
+        return NULL;
+    }
     return result;
 }
 
@@ -273,11 +291,13 @@ PyDataMem_RENEW(void *ptr, size_t size)
     void *result;
 
     assert(size != 0);
+    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     result = realloc(ptr, size);
-    if (result != ptr) {
-        PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (ret == -1) {
+        free(result);
+        return NULL;
     }
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     return result;
 }
 
@@ -308,6 +328,9 @@ default_calloc(void *NPY_UNUSED(ctx), size_t nelem, size_t elsize)
     }
     NPY_BEGIN_THREADS;
     p = calloc(nelem, elsize);
+    if (p) {
+        indicate_hugepages(p, sz);
+    }
     NPY_END_THREADS;
     return p;
 }
@@ -354,13 +377,18 @@ NPY_NO_EXPORT void *
 PyDataMem_UserNEW(size_t size, PyObject *mem_handler)
 {
     void *result;
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         return NULL;
     }
     assert(size != 0);
     result = handler->allocator.malloc(handler->allocator.ctx, size);
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (ret == -1) {
+        handler->allocator.free(handler->allocator.ctx, result, size);
+        return NULL;
+    }
     return result;
 }
 
@@ -368,12 +396,17 @@ NPY_NO_EXPORT void *
 PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
 {
     void *result;
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         return NULL;
     }
     result = handler->allocator.calloc(handler->allocator.ctx, nmemb, size);
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, nmemb * size);
+    if (ret == -1) {
+        handler->allocator.free(handler->allocator.ctx, result, size);
+        return NULL;
+    }
     return result;
 }
 
@@ -381,7 +414,8 @@ PyDataMem_UserNEW_ZEROED(size_t nmemb, size_t size, PyObject *mem_handler)
 NPY_NO_EXPORT void
 PyDataMem_UserFREE(void *ptr, size_t size, PyObject *mem_handler)
 {
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         WARN_NO_RETURN(PyExc_RuntimeWarning,
                      "Could not get pointer to 'mem_handler' from PyCapsule");
@@ -395,17 +429,20 @@ NPY_NO_EXPORT void *
 PyDataMem_UserRENEW(void *ptr, size_t size, PyObject *mem_handler)
 {
     void *result;
-    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    PyDataMem_Handler *handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         return NULL;
     }
 
     assert(size != 0);
+    PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
     result = handler->allocator.realloc(handler->allocator.ctx, ptr, size);
-    if (result != ptr) {
-        PyTraceMalloc_Untrack(NPY_TRACE_DOMAIN, (npy_uintp)ptr);
+    int ret = PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
+    if (ret == -1) {
+        handler->allocator.free(handler->allocator.ctx, result, size);
+        return NULL;
     }
-    PyTraceMalloc_Track(NPY_TRACE_DOMAIN, (npy_uintp)result, size);
     return result;
 }
 
@@ -426,6 +463,10 @@ PyDataMem_SetHandler(PyObject *handler)
     }
     if (handler == NULL) {
         handler = PyDataMem_DefaultHandler;
+    }
+    if (!PyCapsule_IsValid(handler, MEM_HANDLER_CAPSULE_NAME)) {
+        PyErr_SetString(PyExc_ValueError, "Capsule must be named 'mem_handler'");
+        return NULL;
     }
     token = PyContextVar_Set(current_handler, handler);
     if (token == NULL) {
@@ -477,7 +518,8 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *args)
             return NULL;
         }
     }
-    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         Py_DECREF(mem_handler);
         return NULL;
@@ -514,7 +556,8 @@ get_handler_version(PyObject *NPY_UNUSED(self), PyObject *args)
             return NULL;
         }
     }
-    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(mem_handler, "mem_handler");
+    handler = (PyDataMem_Handler *) PyCapsule_GetPointer(
+            mem_handler, MEM_HANDLER_CAPSULE_NAME);
     if (handler == NULL) {
         Py_DECREF(mem_handler);
         return NULL;

@@ -623,8 +623,6 @@ def hermder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     der : ndarray
@@ -715,8 +713,6 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-
-        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -843,8 +839,6 @@ def hermval(x, c, tensor=True):
         over the columns of `c` for the evaluation.  This keyword is useful
         when `c` is multidimensional. The default value is True.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     values : ndarray, algebra_like
@@ -936,11 +930,6 @@ def hermval2d(x, y, c):
     --------
     hermval, hermgrid2d, hermval3d, hermgrid3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial.hermite import hermval2d
@@ -948,7 +937,7 @@ def hermval2d(x, y, c):
     >>> y = [4, 5]
     >>> c = [[1, 2, 3], [4, 5, 6]]
     >>> hermval2d(x, y, c)
-    array ([1035., 2883.])
+    array([1035., 2883.])
 
     """
     return pu._valnd(hermval, c, x, y)
@@ -997,11 +986,6 @@ def hermgrid2d(x, y, c):
     See Also
     --------
     hermval, hermval2d, hermval3d, hermgrid3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1060,11 +1044,6 @@ def hermval3d(x, y, z, c):
     --------
     hermval, hermval2d, hermgrid2d, hermgrid3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial.hermite import hermval3d
@@ -1074,7 +1053,7 @@ def hermval3d(x, y, z, c):
     >>> c = [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]
     >>> hermval3d(x, y, z, c)
     array([ 40077., 120131.])
-    
+
     """
     return pu._valnd(hermval, c, x, y, z)
 
@@ -1125,11 +1104,6 @@ def hermgrid3d(x, y, z, c):
     See Also
     --------
     hermval, hermval2d, hermgrid2d, hermval3d
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1184,6 +1158,7 @@ def hermvander(x, deg):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite import hermvander
     >>> x = np.array([-1, 0, 1])
     >>> hermvander(x, 3)
@@ -1253,13 +1228,9 @@ def hermvander2d(x, y, deg):
     --------
     hermvander, hermvander3d, hermval2d, hermval3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite import hermvander2d
     >>> x = np.array([-1, 0, 1])
     >>> y = np.array([-1, 0, 1])
@@ -1317,11 +1288,6 @@ def hermvander3d(x, y, z, deg):
     --------
     hermvander, hermvander3d, hermval2d, hermval3d
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
     >>> from numpy.polynomial.hermite import hermvander3d
@@ -1332,7 +1298,7 @@ def hermvander3d(x, y, z, deg):
     array([[ 1., -2.,  2., -2.,  4., -4.],
            [ 1.,  0., -2.,  0.,  0., -0.],
            [ 1.,  2.,  2.,  2.,  4.,  4.]])
-           
+
     """
     return pu._vander_nd_flat((hermvander, hermvander, hermvander), (x, y, z), deg)
 
@@ -1458,12 +1424,14 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite import hermfit, hermval
     >>> x = np.linspace(-10, 10)
-    >>> err = np.random.randn(len(x))/10
+    >>> rng = np.random.default_rng()
+    >>> err = rng.normal(scale=1./10, size=len(x))
     >>> y = hermval(x, [1, 2, 3]) + err
     >>> hermfit(x, y, 2)
-    array([1.0218, 1.9986, 2.9999]) # may vary
+    array([1.02294967, 2.00016403, 2.99994614]) # may vary
 
     """
     return pu._fit(hermvander, x, y, deg, rcond, full, w)
@@ -1488,11 +1456,6 @@ def hermcompanion(c):
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
-
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1607,8 +1570,6 @@ def _normed_hermite_n(x, n):
 
     Notes
     -----
-    .. versionadded:: 1.10.0
-
     This function is needed for finding the Gauss points and integration
     weights for high degrees. The values of the standard Hermite functions
     overflow when n >= 207.
@@ -1651,9 +1612,6 @@ def hermgauss(deg):
 
     Notes
     -----
-
-    .. versionadded:: 1.7.0
-
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
@@ -1719,13 +1677,9 @@ def hermweight(x):
     w : ndarray
        The weight function at `x`.
 
-    Notes
-    -----
-
-    .. versionadded:: 1.7.0
-
     Examples
     --------
+    >>> import numpy as np
     >>> from numpy.polynomial.hermite import hermweight
     >>> x = np.arange(-2, 2)
     >>> hermweight(x)
@@ -1755,11 +1709,9 @@ class Hermite(ABCPolyBase):
     domain : (2,) array_like, optional
         Domain to use. The interval ``[domain[0], domain[1]]`` is mapped
         to the interval ``[window[0], window[1]]`` by shifting and scaling.
-        The default value is [-1, 1].
+        The default value is [-1., 1.].
     window : (2,) array_like, optional
-        Window, see `domain` for its use. The default value is [-1, 1].
-
-        .. versionadded:: 1.6.0
+        Window, see `domain` for its use. The default value is [-1., 1.].
     symbol : str, optional
         Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.

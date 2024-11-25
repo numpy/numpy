@@ -238,7 +238,6 @@ def _hist_bin_auto(x, range):
     and is the default in the R language. This method gives good off-the-shelf
     behaviour.
 
-    .. versionchanged:: 1.15.0
     If there is limited variance the IQR can be 0, which results in the
     FD bin width being 0 too. This is not a valid bin width, so
     ``np.histogram_bin_edges`` chooses 1 bin instead, which may not be optimal.
@@ -450,6 +449,10 @@ def _get_bin_edges(a, bins, range, weights):
         bin_edges = np.linspace(
             first_edge, last_edge, n_equal_bins + 1,
             endpoint=True, dtype=bin_type)
+        if np.any(bin_edges[:-1] >= bin_edges[1:]):
+            raise ValueError(
+                f'Too many bins for data range. Cannot create {n_equal_bins} '
+                f'finite-sized bins.')
         return bin_edges, (first_edge, last_edge, n_equal_bins)
     else:
         return bin_edges, None
@@ -498,7 +501,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
         supported for automated bin size selection.
 
         'auto'
-            Minimum bin width between the 'sturges' and 'fd' estimators. 
+            Minimum bin width between the 'sturges' and 'fd' estimators.
             Provides good all-around performance.
 
         'fd' (Freedman Diaconis Estimator)
@@ -632,6 +635,7 @@ def histogram_bin_edges(a, bins=10, range=None, weights=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> arr = np.array([0, 0, 0, 1, 2, 3, 3, 4, 5])
     >>> np.histogram_bin_edges(arr, bins='auto', range=(0, 1))
     array([0.  , 0.25, 0.5 , 0.75, 1.  ])
@@ -697,8 +701,6 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         sequence, it defines a monotonically increasing array of bin edges,
         including the rightmost edge, allowing for non-uniform bin widths.
 
-        .. versionadded:: 1.11.0
-
         If `bins` is a string, it defines the method used to calculate the
         optimal bin width, as defined by `histogram_bin_edges`.
 
@@ -755,6 +757,7 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.histogram([1, 2, 1], bins=[0, 1, 2, 3])
     (array([0, 2, 1]), array([0, 1, 2, 3]))
     >>> np.histogram(np.arange(4), bins=np.arange(5), density=True)
@@ -770,8 +773,6 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
     2.4999999999999996
     >>> np.sum(hist * np.diff(bin_edges))
     1.0
-
-    .. versionadded:: 1.11.0
 
     Automated Bin Selection Methods example, using 2 peak random data
     with 2000 points.
@@ -972,7 +973,9 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
 
     Examples
     --------
-    >>> r = np.random.randn(100,3)
+    >>> import numpy as np
+    >>> rng = np.random.default_rng()
+    >>> r = rng.normal(size=(100,3))
     >>> H, edges = np.histogramdd(r, bins = (5, 8, 4))
     >>> H.shape, edges[0].size, edges[1].size, edges[2].size
     ((5, 8, 4), 6, 9, 5)

@@ -2,95 +2,19 @@
 
 from __future__ import annotations
 
-from .. import ufunc
-from .._utils import set_module
-from typing import TYPE_CHECKING, final
-
-
-@final  # Disallow the creation of arbitrary `NBitBase` subclasses
-@set_module("numpy.typing")
-class NBitBase:
-    """
-    A type representing `numpy.number` precision during static type checking.
-
-    Used exclusively for the purpose static type checking, `NBitBase`
-    represents the base of a hierarchical set of subclasses.
-    Each subsequent subclass is herein used for representing a lower level
-    of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
-
-    .. versionadded:: 1.20
-
-    Examples
-    --------
-    Below is a typical usage example: `NBitBase` is herein used for annotating
-    a function that takes a float and integer of arbitrary precision
-    as arguments and returns a new float of whichever precision is largest
-    (*e.g.* ``np.float16 + np.int64 -> np.float64``).
-
-    .. code-block:: python
-
-        >>> from __future__ import annotations
-        >>> from typing import TypeVar, TYPE_CHECKING
-        >>> import numpy as np
-        >>> import numpy.typing as npt
-
-        >>> T1 = TypeVar("T1", bound=npt.NBitBase)
-        >>> T2 = TypeVar("T2", bound=npt.NBitBase)
-
-        >>> def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[T1 | T2]:
-        ...     return a + b
-
-        >>> a = np.float16()
-        >>> b = np.int64()
-        >>> out = add(a, b)
-
-        >>> if TYPE_CHECKING:
-        ...     reveal_locals()
-        ...     # note: Revealed local types are:
-        ...     # note:     a: numpy.floating[numpy.typing._16Bit*]
-        ...     # note:     b: numpy.signedinteger[numpy.typing._64Bit*]
-        ...     # note:     out: numpy.floating[numpy.typing._64Bit*]
-
-    """
-
-    def __init_subclass__(cls) -> None:
-        allowed_names = {
-            "NBitBase", "_256Bit", "_128Bit", "_96Bit", "_80Bit",
-            "_64Bit", "_32Bit", "_16Bit", "_8Bit",
-        }
-        if cls.__name__ not in allowed_names:
-            raise TypeError('cannot inherit from final class "NBitBase"')
-        super().__init_subclass__()
-
-
-# Silence errors about subclassing a `@final`-decorated class
-class _256Bit(NBitBase):  # type: ignore[misc]
-    pass
-
-class _128Bit(_256Bit):  # type: ignore[misc]
-    pass
-
-class _96Bit(_128Bit):  # type: ignore[misc]
-    pass
-
-class _80Bit(_96Bit):  # type: ignore[misc]
-    pass
-
-class _64Bit(_80Bit):  # type: ignore[misc]
-    pass
-
-class _32Bit(_64Bit):  # type: ignore[misc]
-    pass
-
-class _16Bit(_32Bit):  # type: ignore[misc]
-    pass
-
-class _8Bit(_16Bit):  # type: ignore[misc]
-    pass
-
-
 from ._nested_sequence import (
     _NestedSequence as _NestedSequence,
+)
+from ._nbit_base import (
+    NBitBase as NBitBase,
+    _8Bit as _8Bit,
+    _16Bit as _16Bit,
+    _32Bit as _32Bit,
+    _64Bit as _64Bit,
+    _80Bit as _80Bit,
+    _96Bit as _96Bit,
+    _128Bit as _128Bit,
+    _256Bit as _256Bit,
 )
 from ._nbit import (
     _NBitByte as _NBitByte,
@@ -147,6 +71,17 @@ from ._char_codes import (
     _BytesCodes as _BytesCodes,
     _VoidCodes as _VoidCodes,
     _ObjectCodes as _ObjectCodes,
+    _StringCodes as _StringCodes,
+    _UnsignedIntegerCodes as _UnsignedIntegerCodes,
+    _SignedIntegerCodes as _SignedIntegerCodes,
+    _IntegerCodes as _IntegerCodes,
+    _FloatingCodes as _FloatingCodes,
+    _ComplexFloatingCodes as _ComplexFloatingCodes,
+    _InexactCodes as _InexactCodes,
+    _NumberCodes as _NumberCodes,
+    _CharacterCodes as _CharacterCodes,
+    _FlexibleCodes as _FlexibleCodes,
+    _GenericCodes as _GenericCodes,
 )
 from ._scalars import (
     _CharLike_co as _CharLike_co,
@@ -202,23 +137,16 @@ from ._array_like import (
     _ArrayLikeVoid_co as _ArrayLikeVoid_co,
     _ArrayLikeStr_co as _ArrayLikeStr_co,
     _ArrayLikeBytes_co as _ArrayLikeBytes_co,
+    _ArrayLikeString_co as _ArrayLikeString_co,
+    _ArrayLikeAnyString_co as _ArrayLikeAnyString_co,
     _ArrayLikeUnknown as _ArrayLikeUnknown,
     _UnknownType as _UnknownType,
 )
 
-if TYPE_CHECKING:
-    from ._ufunc import (
-        _UFunc_Nin1_Nout1 as _UFunc_Nin1_Nout1,
-        _UFunc_Nin2_Nout1 as _UFunc_Nin2_Nout1,
-        _UFunc_Nin1_Nout2 as _UFunc_Nin1_Nout2,
-        _UFunc_Nin2_Nout2 as _UFunc_Nin2_Nout2,
-        _GUFunc_Nin2_Nout1 as _GUFunc_Nin2_Nout1,
-    )
-else:
-    # Declare the (type-check-only) ufunc subclasses as ufunc aliases during
-    # runtime; this helps autocompletion tools such as Jedi (numpy/numpy#19834)
-    _UFunc_Nin1_Nout1 = ufunc
-    _UFunc_Nin2_Nout1 = ufunc
-    _UFunc_Nin1_Nout2 = ufunc
-    _UFunc_Nin2_Nout2 = ufunc
-    _GUFunc_Nin2_Nout1 = ufunc
+from ._ufunc import (
+    _UFunc_Nin1_Nout1 as _UFunc_Nin1_Nout1,
+    _UFunc_Nin2_Nout1 as _UFunc_Nin2_Nout1,
+    _UFunc_Nin1_Nout2 as _UFunc_Nin1_Nout2,
+    _UFunc_Nin2_Nout2 as _UFunc_Nin2_Nout2,
+    _GUFunc_Nin2_Nout1 as _GUFunc_Nin2_Nout1,
+)

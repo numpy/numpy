@@ -42,7 +42,7 @@ This can result in surprising behavior if you use NumPy methods or
 functions you have not explicitly tested.
 
 On the other hand, compared to other interoperability approaches,
-subclassing can be a useful because many thing will "just work".
+subclassing can be useful because many things will "just work".
 
 This means that subclassing can be a convenient approach and for a long time
 it was also often the only available approach.
@@ -158,21 +158,21 @@ __new__ documentation
 For example, consider the following Python code:
 
 >>> class C:
->>>     def __new__(cls, *args):
->>>         print('Cls in __new__:', cls)
->>>         print('Args in __new__:', args)
->>>         # The `object` type __new__ method takes a single argument.
->>>         return object.__new__(cls)
->>>     def __init__(self, *args):
->>>         print('type(self) in __init__:', type(self))
->>>         print('Args in __init__:', args)
+...     def __new__(cls, *args):
+...         print('Cls in __new__:', cls)
+...         print('Args in __new__:', args)
+...         # The `object` type __new__ method takes a single argument.
+...         return object.__new__(cls)
+...     def __init__(self, *args):
+...         print('type(self) in __init__:', type(self))
+...         print('Args in __init__:', args)
 
 meaning that we get:
 
 >>> c = C('hello')
-Cls in __new__: <class 'C'>
+Cls in __new__: <class '__main__.C'>
 Args in __new__: ('hello',)
-type(self) in __init__: <class 'C'>
+type(self) in __init__: <class '__main__.C'>
 Args in __init__: ('hello',)
 
 When we call ``C('hello')``, the ``__new__`` method gets its own class
@@ -227,7 +227,7 @@ like::
 
   obj = ndarray.__new__(subtype, shape, ...
 
-where ``subdtype`` is the subclass.  Thus the returned view is of the
+where ``subtype`` is the subclass.  Thus the returned view is of the
 same class as the subclass, rather than being of class ``ndarray``.
 
 That solves the problem of returning views of the same type, but now
@@ -460,8 +460,6 @@ So:
 
 ``__array_ufunc__`` for ufuncs
 ==============================
-
-.. versionadded:: 1.13
 
 A subclass can override what happens when executing numpy ufuncs on it by
 overriding the default ``ndarray.__array_ufunc__`` method. This method is

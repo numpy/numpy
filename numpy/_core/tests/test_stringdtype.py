@@ -11,7 +11,7 @@ import pytest
 
 from numpy.dtypes import StringDType
 from numpy._core.tests._natype import pd_NA
-from numpy.testing import assert_array_equal, IS_WASM
+from numpy.testing import assert_array_equal, IS_WASM, IS_PYPY
 
 
 @pytest.fixture
@@ -116,13 +116,13 @@ def test_dtype_repr(dtype):
     if not hasattr(dtype, "na_object") and dtype.coerce:
         assert repr(dtype) == "StringDType()"
     elif dtype.coerce:
-        assert repr(dtype) == f"StringDType(na_object={repr(dtype.na_object)})"
+        assert repr(dtype) == f"StringDType(na_object={dtype.na_object!r})"
     elif not hasattr(dtype, "na_object"):
         assert repr(dtype) == "StringDType(coerce=False)"
     else:
         assert (
             repr(dtype)
-            == f"StringDType(na_object={repr(dtype.na_object)}, coerce=False)"
+            == f"StringDType(na_object={dtype.na_object!r}, coerce=False)"
         )
 
 
@@ -232,12 +232,12 @@ def test_self_casts(dtype, dtype2, strings):
     if hasattr(dtype, "na_object") and hasattr(dtype2, "na_object"):
         na1 = dtype.na_object
         na2 = dtype2.na_object
-        if ((na1 is not na2 and
+        if (na1 is not na2 and
              # check for pd_NA first because bool(pd_NA) is an error
              ((na1 is pd_NA or na2 is pd_NA) or
               # the second check is a NaN check, spelled this way
               # to avoid errors from math.isnan and np.isnan
-              (na1 != na2 and not (na1 != na1 and na2 != na2))))):
+              (na1 != na2 and not (na1 != na1 and na2 != na2)))):
             with pytest.raises(TypeError):
                 arr[:-1] == newarr[:-1]
             return
@@ -495,6 +495,31 @@ def test_fancy_indexing(string_list):
     sarr = np.array(string_list, dtype="T")
     assert_array_equal(sarr, sarr[np.arange(sarr.shape[0])])
 
+    inds = [
+        [True, True],
+        [0, 1],
+        ...,
+        np.array([0, 1], dtype='uint8'),
+    ]
+
+    lops = [
+        ['a'*25, 'b'*25],
+        ['', ''],
+        ['hello', 'world'],
+        ['hello', 'world'*25],
+    ]
+
+    # see gh-27003 and gh-27053
+    for ind in inds:
+        for lop in lops:
+            a = np.array(lop, dtype="T")
+            assert_array_equal(a[ind], a)
+            rop = ['d'*25, 'e'*25]
+            for b in [rop, np.array(rop, dtype="T")]:
+                a[ind] = b
+                assert_array_equal(a, b)
+                assert a[0] == 'd'*25
+
 
 def test_creation_functions():
     assert_array_equal(np.zeros(3, dtype="T"), ["", "", ""])
@@ -509,6 +534,15 @@ def test_concatenate(string_list):
     sarr_cat = np.array(string_list + string_list, dtype="T")
 
     assert_array_equal(np.concatenate([sarr], axis=0), sarr)
+
+
+def test_resize_method(string_list):
+    sarr = np.array(string_list, dtype="T")
+    if IS_PYPY:
+        sarr.resize(len(string_list)+3, refcheck=False)
+    else:
+        sarr.resize(len(string_list)+3)
+    assert_array_equal(sarr, np.array(string_list + ['']*3,  dtype="T"))
 
 
 def test_create_with_copy_none(string_list):
@@ -828,6 +862,31 @@ def test_add_promoter(string_list):
         assert_array_equal(op + arr, lresult)
         assert_array_equal(arr + op, rresult)
 
+    # The promoter should be able to handle things if users pass `dtype=`
+    res = np.add("hello", string_list, dtype=StringDType)
+    assert res.dtype == StringDType()
+
+    # The promoter should not kick in if users override the input,
+    # which means arr is cast, this fails because of the unknown length.
+    with pytest.raises(TypeError, match="cannot cast dtype"):
+        np.add(arr, "add", signature=("U", "U", None), casting="unsafe")
+
+    # But it must simply reject the following:
+    with pytest.raises(TypeError, match=".*did not contain a loop"):
+        np.add(arr, "add", signature=(None, "U", None))
+
+    with pytest.raises(TypeError, match=".*did not contain a loop"):
+        np.add("a", "b", signature=("U", "U", StringDType))
+
+
+def test_add_no_legacy_promote_with_signature():
+    # Possibly misplaced, but useful to test with string DType.  We check that
+    # if there is clearly no loop found, a stray `dtype=` doesn't break things
+    # Regression test for the bad error in gh-26735
+    # (If legacy promotion is gone, this can be deleted...)
+    with pytest.raises(TypeError, match=".*did not contain a loop"):
+        np.add("3", 6, dtype=StringDType)
+
 
 def test_add_promoter_reduce():
     # Exact TypeError could change, but ensure StringDtype doesn't match
@@ -950,6 +1009,62 @@ def test_ufunc_multiply(dtype, string_list, other, other_dtype, use_out):
             arr * other
         with pytest.raises(TypeError):
             other * arr
+
+
+def test_findlike_promoters():
+    r = "Wally"
+    l = "Where's Wally?"
+    s = np.int32(3)
+    e = np.int8(13)
+    for dtypes in [("T", "U"), ("U", "T")]:
+        for function, answer in [
+            (np.strings.index, 8),
+            (np.strings.endswith, True),
+        ]:
+            assert answer == function(
+                np.array(l, dtype=dtypes[0]), np.array(r, dtype=dtypes[1]), s, e
+            )
+
+
+def test_strip_promoter():
+    arg = ["Hello!!!!", "Hello??!!"]
+    strip_char = "!"
+    answer = ["Hello", "Hello??"]
+    for dtypes in [("T", "U"), ("U", "T")]:
+        result = np.strings.strip(
+            np.array(arg, dtype=dtypes[0]),
+            np.array(strip_char, dtype=dtypes[1])
+        )
+        assert_array_equal(result, answer)
+        assert result.dtype.char == "T"
+
+
+def test_replace_promoter():
+    arg = ["Hello, planet!", "planet, Hello!"]
+    old = "planet"
+    new = "world"
+    answer = ["Hello, world!", "world, Hello!"]
+    for dtypes in itertools.product("TU", repeat=3):
+        if dtypes == ("U", "U", "U"):
+            continue
+        answer_arr = np.strings.replace(
+            np.array(arg, dtype=dtypes[0]),
+            np.array(old, dtype=dtypes[1]),
+            np.array(new, dtype=dtypes[2]),
+        )
+        assert_array_equal(answer_arr, answer)
+        assert answer_arr.dtype.char == "T"
+
+
+def test_center_promoter():
+    arg = ["Hello", "planet!"]
+    fillchar = "/"
+    for dtypes in [("T", "U"), ("U", "T")]:
+        answer = np.strings.center(
+            np.array(arg, dtype=dtypes[0]), 9, np.array(fillchar, dtype=dtypes[1])
+        )
+        assert_array_equal(answer, ["//Hello//", "/planet!/"])
+        assert answer.dtype.char == "T"
 
 
 DATETIME_INPUT = [
@@ -1457,6 +1572,40 @@ def test_unset_na_coercion():
         op = np.array(inp, dtype=op_dtype)
         with pytest.raises(TypeError):
             arr == op
+
+
+def test_repeat(string_array):
+    res = string_array.repeat(1000)
+    # Create an empty array with expanded dimension, and fill it.  Then,
+    # reshape it to the expected result.
+    expected = np.empty_like(string_array, shape=string_array.shape + (1000,))
+    expected[...] = string_array[:, np.newaxis]
+    expected = expected.reshape(-1)
+
+    assert_array_equal(res, expected, strict=True)
+
+
+@pytest.mark.parametrize("tile", [1, 6, (2, 5)])
+def test_accumulation(string_array, tile):
+    """Accumulation is odd for StringDType but tests dtypes with references.
+    """
+    # Fill with mostly empty strings to not create absurdly big strings
+    arr = np.zeros_like(string_array, shape=(100,))
+    arr[:len(string_array)] = string_array
+    arr[-len(string_array):] = string_array
+
+    # Bloat size a bit (get above thresholds and test >1 ndim).
+    arr = np.tile(string_array, tile)
+
+    res = np.add.accumulate(arr, axis=0)
+    res_obj = np.add.accumulate(arr.astype(object), axis=0)
+    assert_array_equal(res, res_obj.astype(arr.dtype), strict=True)
+
+    if arr.ndim > 1:
+        res = np.add.accumulate(arr, axis=-1)
+        res_obj = np.add.accumulate(arr.astype(object), axis=-1)
+
+        assert_array_equal(res, res_obj.astype(arr.dtype), strict=True)
 
 
 class TestImplementation:

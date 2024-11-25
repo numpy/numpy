@@ -1,12 +1,27 @@
 from collections.abc import Sequence
-from typing import Literal as L
+from typing import Literal as L, TypeAlias
 
 from numpy import complex128, float64
 from numpy._typing import ArrayLike, NDArray, _ArrayLikeNumber_co
 
-_NormKind = L[None, "backward", "ortho", "forward"]
+__all__ = [
+    "fft",
+    "ifft",
+    "rfft",
+    "irfft",
+    "hfft",
+    "ihfft",
+    "rfftn",
+    "irfftn",
+    "rfft2",
+    "irfft2",
+    "fft2",
+    "ifft2",
+    "fftn",
+    "ifftn",
+]
 
-__all__: list[str]
+_NormKind: TypeAlias = L[None, "backward", "ortho", "forward"]
 
 def fft(
     a: ArrayLike,

@@ -86,9 +86,9 @@ class VisibleDeprecationWarning(UserWarning):
 
 class RankWarning(RuntimeWarning):
     """Matrix rank warning.
-    
+
     Issued by polynomial functions when the design matrix is rank deficient.
-    
+
     """
     pass
 
@@ -117,8 +117,6 @@ class AxisError(ValueError, IndexError):
     ``except ValueError`` and ``except IndexError`` statements continue
     to catch ``AxisError``.
 
-    .. versionadded:: 1.13
-
     Parameters
     ----------
     axis : int or str
@@ -146,6 +144,7 @@ class AxisError(ValueError, IndexError):
 
     Examples
     --------
+    >>> import numpy as np
     >>> array_1d = np.arange(10)
     >>> np.cumsum(array_1d, axis=1)
     Traceback (most recent call last):
@@ -222,7 +221,10 @@ class DTypePromotionError(TypeError):
     Datetimes and complex numbers are incompatible classes and cannot be
     promoted:
 
-    >>> np.result_type(np.dtype("M8[s]"), np.complex128)
+    >>> import numpy as np
+    >>> np.result_type(np.dtype("M8[s]"), np.complex128)  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+     ...
     DTypePromotionError: The DType <class 'numpy.dtype[datetime64]'> could not
     be promoted by <class 'numpy.dtype[complex128]'>. This means that no common
     DType exists for the given inputs. For example they cannot be stored in a
@@ -235,9 +237,11 @@ class DTypePromotionError(TypeError):
 
     >>> dtype1 = np.dtype([("field1", np.float64), ("field2", np.int64)])
     >>> dtype2 = np.dtype([("field1", np.float64)])
-    >>> np.promote_types(dtype1, dtype2)
+    >>> np.promote_types(dtype1, dtype2)  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+     ...
     DTypePromotionError: field names `('field1', 'field2')` and `('field1',)`
     mismatch.
 
-    """
+    """  # NOQA
     pass

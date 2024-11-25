@@ -82,8 +82,6 @@ def func(a: np.float32) -> None: ...
 func(f2)  # E: incompatible type
 func(f8)  # E: incompatible type
 
-round(c8)  # E: No overload variant
-
 c8.__getnewargs__()  # E: Invalid self argument
 f2.__getnewargs__()  # E: Invalid self argument
 f2.hex()  # E: Invalid self argument

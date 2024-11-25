@@ -1,7 +1,5 @@
 import importlib
-import codecs
 import time
-import unicodedata
 import pytest
 import numpy as np
 from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
@@ -66,7 +64,7 @@ class TestPublicPrivate:
         pyf = crackfortran.crack2fortran(mod)
         assert 'bar' not in pyf
 
-class TestModuleProcedure():
+class TestModuleProcedure:
     def test_moduleOperators(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "operators.f90")
         mod = crackfortran.crackfortran([str(fpath)])
@@ -347,14 +345,14 @@ class TestFortranGroupCounters(util.F2PyTest):
             assert False, f"'crackfortran.crackfortran' raised an exception {exc}"
 
 
-class TestF77CommonBlockReader():
+class TestF77CommonBlockReader:
     def test_gh22648(self, tmp_path):
         fpath = util.getpath("tests", "src", "crackfortran", "gh22648.pyf")
         with contextlib.redirect_stdout(io.StringIO()) as stdout_f2py:
             mod = crackfortran.crackfortran([str(fpath)])
         assert "Mismatch" not in stdout_f2py.getvalue()
 
-class TestParamEval():
+class TestParamEval:
     # issue gh-11612, array parameter parsing
     def test_param_eval_nested(self):
         v = '(/3.14, 4./)'
@@ -405,3 +403,12 @@ class TestParamEval():
         dimspec = '(0:4, 3:12, 5)'
         pytest.raises(ValueError, crackfortran.param_eval, v, g_params, params,
                       dimspec=dimspec)
+
+@pytest.mark.slow
+class TestLowerF2PYDirective(util.F2PyTest):
+    sources = [util.getpath("tests", "src", "crackfortran", "gh27697.f90")]
+    options = ['--lower']
+
+    def test_no_lower_fail(self):
+        with pytest.raises(ValueError, match='aborting directly') as exc:
+            self.module.utils.my_abort('aborting directly')

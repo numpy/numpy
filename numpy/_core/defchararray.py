@@ -78,10 +78,11 @@ def equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> y = "aa "
     >>> x = "aa"
     >>> np.char.equal(x, y)
-    array(True)    
+    array(True)
 
     See Also
     --------
@@ -115,10 +116,11 @@ def not_equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.not_equal(x1, 'b')
     array([ True, False,  True])
-    
+
     """
     return compare_chararrays(x1, x2, '!=', True)
 
@@ -149,10 +151,11 @@ def greater_equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.greater_equal(x1, 'b')
     array([False,  True,  True])
-    
+
     """
     return compare_chararrays(x1, x2, '>=', True)
 
@@ -182,10 +185,11 @@ def less_equal(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less_equal(x1, 'b')
     array([ True,  True, False])
-    
+
     """
     return compare_chararrays(x1, x2, '<=', True)
 
@@ -212,13 +216,14 @@ def greater(x1, x2):
     See Also
     --------
     equal, not_equal, greater_equal, less_equal, less
-    
+
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.greater(x1, 'b')
     array([False, False,  True])
-    
+
     """
     return compare_chararrays(x1, x2, '>', True)
 
@@ -248,14 +253,16 @@ def less(x1, x2):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x1 = np.array(['a', 'b', 'c'])
     >>> np.char.less(x1, 'b')
     array([True, False, False])
-    
+
     """
     return compare_chararrays(x1, x2, '<', True)
 
 
+@set_module("numpy.char")
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -283,6 +290,7 @@ def multiply(a, i):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(["a", "b", "c"])
     >>> np.strings.multiply(a, 3)
     array(['aaa', 'bbb', 'ccc'], dtype='<U3')
@@ -306,6 +314,7 @@ def multiply(a, i):
         raise ValueError("Can only multiply by integers")
 
 
+@set_module("numpy.char")
 def partition(a, sep):
     """
     Partition each element in `a` around `sep`.
@@ -334,10 +343,11 @@ def partition(a, sep):
 
     Examples
     --------
+    >>> import numpy as np
     >>> x = np.array(["Numpy is nice!"])
     >>> np.char.partition(x, " ")
     array([['Numpy', ' ', 'is nice!']], dtype='<U8')
-    
+
     See Also
     --------
     str.partition
@@ -346,6 +356,7 @@ def partition(a, sep):
     return np.stack(strings_partition(a, sep), axis=-1)
 
 
+@set_module("numpy.char")
 def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
@@ -378,6 +389,7 @@ def rpartition(a, sep):
 
     Examples
     --------
+    >>> import numpy as np
     >>> a = np.array(['aAaAaA', '  aA  ', 'abBABba'])
     >>> np.char.rpartition(a, 'A')
     array([['aAaAa', 'A', ''],
@@ -515,6 +527,7 @@ class chararray(ndarray):
 
     Examples
     --------
+    >>> import numpy as np
     >>> charar = np.char.chararray((3, 3))
     >>> charar[:] = 'a'
     >>> charar
@@ -1259,6 +1272,15 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         fastest).  If order is 'A', then the returned array may
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
+    
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> char_array = np.char.array(['hello', 'world', 'numpy','array'])
+    >>> char_array
+    chararray(['hello', 'world', 'numpy', 'array'], dtype='<U5')
+
     """
     if isinstance(obj, (bytes, str)):
         if unicode is None:
@@ -1383,9 +1405,10 @@ def asarray(obj, itemsize=None, unicode=None, order=None):
 
     Examples
     --------
+    >>> import numpy as np
     >>> np.char.asarray(['hello', 'world'])
     chararray(['hello', 'world'], dtype='<U5')
-    
+
     """
     return array(obj, itemsize, copy=False,
                  unicode=unicode, order=order)

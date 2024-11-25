@@ -253,7 +253,7 @@ a user to:
   yet compatible.
 
 The import of ``numpy2_compat`` (and an error when it is missing) will be
-inserted by the NumPy eaders as part of the ``import_array()`` call.
+inserted by the NumPy headers as part of the ``import_array()`` call.
 
 Alternatives
 ============

@@ -1,14 +1,11 @@
-import sys
+import datetime as dt
 from typing import Any
 
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import _32Bit, _64Bit
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing_extensions import assert_type
 
 f8 = np.float64()
 i8 = np.int64()
@@ -30,7 +27,7 @@ AR_m: npt.NDArray[np.timedelta64]
 
 # Time structures
 
-assert_type(td % td, np.timedelta64)
+assert_type(td % td, np.timedelta64[dt.timedelta])
 assert_type(AR_m % td, npt.NDArray[np.timedelta64])
 assert_type(td % AR_m, npt.NDArray[np.timedelta64])
 
@@ -79,57 +76,57 @@ assert_type(divmod(AR_b, b_), tuple[npt.NDArray[np.int8], npt.NDArray[np.int8]])
 # int
 
 assert_type(i8 % b, np.int64)
-assert_type(i8 % f, np.float64)
 assert_type(i8 % i8, np.int64)
-assert_type(i8 % f8, np.float64)
-assert_type(i4 % i8, np.signedinteger[_32Bit | _64Bit])
-assert_type(i4 % f8, np.floating[_32Bit | _64Bit])
+assert_type(i8 % f, np.floating[_64Bit])
+assert_type(i8 % f8, np.floating[_64Bit])
+assert_type(i4 % i8, np.int64 | np.int32)
+assert_type(i4 % f8, np.float64 | np.float32)
 assert_type(i4 % i4, np.int32)
 assert_type(i4 % f4, np.float32)
 assert_type(i8 % AR_b, npt.NDArray[np.signedinteger[Any]])
 
-assert_type(divmod(i8, b), tuple[np.int64, np.int64])
-assert_type(divmod(i8, f), tuple[np.float64, np.float64])
-assert_type(divmod(i8, i8), tuple[np.int64, np.int64])
-assert_type(divmod(i8, f8), tuple[np.float64, np.float64])
-assert_type(divmod(i8, i4), tuple[np.signedinteger[_32Bit | _64Bit], np.signedinteger[_32Bit | _64Bit]])
-assert_type(divmod(i8, f4), tuple[np.floating[_32Bit | _64Bit], np.floating[_32Bit | _64Bit]])
-assert_type(divmod(i4, i4), tuple[np.int32, np.int32])
-assert_type(divmod(i4, f4), tuple[np.float32, np.float32])
+assert_type(divmod(i8, b), tuple[np.signedinteger[_64Bit], np.signedinteger[_64Bit]])
+assert_type(divmod(i8, f), tuple[np.floating[_64Bit], np.floating[_64Bit]])
+assert_type(divmod(i8, i8), tuple[np.signedinteger[_64Bit], np.signedinteger[_64Bit]])
+assert_type(divmod(i8, f8), tuple[np.floating[_64Bit], np.floating[_64Bit]])
+assert_type(divmod(i8, i4), tuple[np.signedinteger[_64Bit], np.signedinteger[_64Bit]] | tuple[np.signedinteger[_32Bit], np.signedinteger[_32Bit]])
+assert_type(divmod(i8, f4), tuple[np.floating[_64Bit], np.floating[_64Bit]] | tuple[np.floating[_32Bit], np.floating[_32Bit]])
+assert_type(divmod(i4, i4), tuple[np.signedinteger[_32Bit], np.signedinteger[_32Bit]])
+assert_type(divmod(i4, f4), tuple[np.floating[_32Bit], np.floating[_32Bit]])
 assert_type(divmod(i8, AR_b), tuple[npt.NDArray[np.signedinteger[Any]], npt.NDArray[np.signedinteger[Any]]])
 
-assert_type(b % i8, np.int64)
-assert_type(f % i8, np.float64)
+assert_type(b % i8, np.signedinteger[_64Bit])
+assert_type(f % i8, np.floating[_64Bit])
 assert_type(i8 % i8, np.int64)
 assert_type(f8 % i8, np.float64)
-assert_type(i8 % i4, np.signedinteger[_32Bit | _64Bit])
-assert_type(f8 % i4, np.floating[_32Bit | _64Bit])
+assert_type(i8 % i4, np.int64 | np.int32)
+assert_type(f8 % i4, np.float64)
 assert_type(i4 % i4, np.int32)
 assert_type(f4 % i4, np.float32)
 assert_type(AR_b % i8, npt.NDArray[np.signedinteger[Any]])
 
-assert_type(divmod(b, i8), tuple[np.int64, np.int64])
-assert_type(divmod(f, i8), tuple[np.float64, np.float64])
+assert_type(divmod(b, i8), tuple[np.signedinteger[_64Bit], np.signedinteger[_64Bit]])
+assert_type(divmod(f, i8), tuple[np.floating[_64Bit], np.floating[_64Bit]])
 assert_type(divmod(i8, i8), tuple[np.int64, np.int64])
 assert_type(divmod(f8, i8), tuple[np.float64, np.float64])
-assert_type(divmod(i4, i8), tuple[np.signedinteger[_32Bit | _64Bit], np.signedinteger[_32Bit | _64Bit]])
-assert_type(divmod(f4, i8), tuple[np.floating[_32Bit | _64Bit], np.floating[_32Bit | _64Bit]])
-assert_type(divmod(i4, i4), tuple[np.int32, np.int32])
-assert_type(divmod(f4, i4), tuple[np.float32, np.float32])
+assert_type(divmod(i4, i8), tuple[np.signedinteger[_64Bit], np.signedinteger[_64Bit]] | tuple[np.signedinteger[_32Bit], np.signedinteger[_32Bit]])
+assert_type(divmod(f4, i8), tuple[np.floating[_64Bit], np.floating[_64Bit]] | tuple[np.floating[_32Bit], np.floating[_32Bit]])
+assert_type(divmod(i4, i4), tuple[np.signedinteger[_32Bit], np.signedinteger[_32Bit]])
+assert_type(divmod(f4, i4), tuple[np.floating[_32Bit], np.floating[_32Bit]])
 assert_type(divmod(AR_b, i8), tuple[npt.NDArray[np.signedinteger[Any]], npt.NDArray[np.signedinteger[Any]]])
 
 # float
 
 assert_type(f8 % b, np.float64)
 assert_type(f8 % f, np.float64)
-assert_type(i8 % f4, np.floating[_32Bit | _64Bit])
+assert_type(i8 % f4, np.floating[_64Bit] | np.floating[_32Bit])
 assert_type(f4 % f4, np.float32)
 assert_type(f8 % AR_b, npt.NDArray[np.floating[Any]])
 
 assert_type(divmod(f8, b), tuple[np.float64, np.float64])
 assert_type(divmod(f8, f), tuple[np.float64, np.float64])
 assert_type(divmod(f8, f8), tuple[np.float64, np.float64])
-assert_type(divmod(f8, f4), tuple[np.floating[_32Bit | _64Bit], np.floating[_32Bit | _64Bit]])
+assert_type(divmod(f8, f4), tuple[np.float64, np.float64])
 assert_type(divmod(f4, f4), tuple[np.float32, np.float32])
 assert_type(divmod(f8, AR_b), tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]])
 
@@ -143,6 +140,6 @@ assert_type(AR_b % f8, npt.NDArray[np.floating[Any]])
 assert_type(divmod(b, f8), tuple[np.float64, np.float64])
 assert_type(divmod(f, f8), tuple[np.float64, np.float64])
 assert_type(divmod(f8, f8), tuple[np.float64, np.float64])
-assert_type(divmod(f4, f8), tuple[np.floating[_32Bit | _64Bit], np.floating[_32Bit | _64Bit]])
+assert_type(divmod(f4, f8), tuple[np.float64, np.float64] | tuple[np.float32, np.float32])
 assert_type(divmod(f4, f4), tuple[np.float32, np.float32])
 assert_type(divmod(AR_b, f8), tuple[npt.NDArray[np.floating[Any]], npt.NDArray[np.floating[Any]]])

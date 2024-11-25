@@ -7,8 +7,6 @@ Array iterator API
    pair: iterator; C-API
    pair: C-API; iterator
 
-.. versionadded:: 1.6
-
 Array iterator
 --------------
 
@@ -639,8 +637,6 @@ Construction and destruction
 
 .. c:macro:: NPY_ITER_ARRAYMASK
 
-    .. versionadded:: 1.7
-
     Indicates that this operand is the mask to use for
     selecting elements when writing to operands which have
     the :c:data:`NPY_ITER_WRITEMASKED` flag applied to them.
@@ -662,8 +658,6 @@ Construction and destruction
     of input masks.
 
 .. c:macro:: NPY_ITER_WRITEMASKED
-
-    .. versionadded:: 1.7
 
     This array is the mask for all `writemasked <numpy.nditer>`
     operands. Code uses the ``writemasked`` flag which indicates 
@@ -715,7 +709,7 @@ Construction and destruction
     may not be repeated.  The following example is how normal broadcasting
     applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
 
-    **Note**: Before NumPy 1.8 ``oa_ndim == 0` was used for signalling
+    **Note**: Before NumPy 1.8 ``oa_ndim == 0`` was used for signalling
     that ``op_axes`` and ``itershape`` are unused. This is deprecated and
     should be replaced with -1. Better backward compatibility may be
     achieved by using :c:func:`NpyIter_MultiNew` for this case.
@@ -1126,8 +1120,6 @@ Construction and destruction
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
 .. c:function:: npy_bool NpyIter_IsFirstVisit(NpyIter* iter, int iop)
-
-    .. versionadded:: 1.7
 
     Checks to see whether this is the first time the elements of the
     specified reduction operand which the iterator points at are being

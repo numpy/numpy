@@ -65,6 +65,39 @@ typedef int (PyUFunc_TypeResolutionFunc)(
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
+/*
+ * This is the signature for the functions that may be assigned to the
+ * `process_core_dims_func` field of the PyUFuncObject structure.
+ * Implementation of this function is optional.  This function is only used
+ * by generalized ufuncs (i.e. those with the field `core_enabled` set to 1).
+ * The function is called by the ufunc during the processing of the arguments
+ * of a call of the ufunc. The function can check the core dimensions of the
+ * input and output arrays and return -1 with an exception set if any
+ * requirements are not satisfied. If the caller of the ufunc didn't provide
+ * output arrays, the core dimensions associated with the output arrays (i.e.
+ * those that are not also used in input arrays) will have the value -1 in
+ * `core_dim_sizes`.  This function can replace any output core dimensions
+ * that are -1 with a value that is appropriate for the ufunc.
+ *
+ * Parameter       Description
+ * --------------- ------------------------------------------------------
+ * ufunc           The ufunc object
+ * core_dim_sizes  An array with length `ufunc->core_num_dim_ix`.
+ *                 The core dimensions of the arrays passed to the ufunc
+ *                 will have been set.  If the caller of the ufunc didn't
+ *                 provide the output array(s), the output-only core
+ *                 dimensions will have the value -1.
+ *
+ * The function must not change any element in `core_dim_sizes` that is
+ * not -1 on input. Doing so will result in incorrect output from the
+ * ufunc, and could result in a crash of the Python interpreter.
+ *
+ * The function must return 0 on success, -1 on failure (with an exception
+ * set).
+ */
+typedef int (PyUFunc_ProcessCoreDimsFunc)(
+                                struct _tagPyUFuncObject *ufunc,
+                                npy_intp *core_dim_sizes);
 
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
@@ -137,8 +170,10 @@ typedef struct _tagPyUFuncObject {
          * with the dtypes for the inputs and outputs.
          */
         PyUFunc_TypeResolutionFunc *type_resolver;
-        /* Was the legacy loop resolver */
-        void *reserved2;
+
+        /* A dictionary to monkeypatch ufuncs */
+        PyObject *dict;
+
         /*
          * This was blocked off to be the "new" inner loop selector in 1.7,
          * but this was never implemented. (This is also why the above
@@ -190,6 +225,12 @@ typedef struct _tagPyUFuncObject {
         void *_dispatch_cache;
         /* A PyListObject of `(tuple of DTypes, ArrayMethod/Promoter)` */
         PyObject *_loops;
+    #endif
+    #if NPY_FEATURE_VERSION >= NPY_2_1_API_VERSION
+        /*
+         * Optional function to process core dimensions of a gufunc.
+         */
+        PyUFunc_ProcessCoreDimsFunc *process_core_dims_func;
     #endif
 } PyUFuncObject;
 

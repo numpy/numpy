@@ -18,18 +18,16 @@ probability distributions. In general, users will create a `Generator` instance
 with `default_rng` and call the various methods on it to obtain samples from
 different distributions.
 
-::
-
   >>> import numpy as np
   >>> rng = np.random.default_rng()
   # Generate one random float uniformly distributed over the range [0, 1)
   >>> rng.random()  #doctest: +SKIP
   0.06369197489564249  # may vary
-  # Generate an array of 10 numbers according to a unit Gaussian distribution.
+  # Generate an array of 10 numbers according to a unit Gaussian distribution
   >>> rng.standard_normal(10)  #doctest: +SKIP
   array([-0.31018314, -1.8922078 , -0.3628523 , -0.63526532,  0.43181166,  # may vary
           0.51640373,  1.25693945,  0.07779185,  0.84090247, -2.13406828])
-  # Generate an array of 5 integers uniformly over the range [0, 10).
+  # Generate an array of 5 integers uniformly over the range [0, 10)
   >>> rng.integers(low=0, high=10, size=5)  #doctest: +SKIP
   array([8, 7, 6, 2, 0])  # may vary
 
@@ -40,14 +38,13 @@ generate different numbers each time. The pseudo-random sequences will be
 independent for all practical purposes, at least those purposes for which our
 pseudo-randomness was good for in the first place.
 
-::
-
-    >>> rng1 = np.random.default_rng()
-    >>> rng1.random()  #doctest: +SKIP
-    0.6596288841243357  # may vary
-    >>> rng2 = np.random.default_rng()
-    >>> rng2.random()  #doctest: +SKIP
-    0.11885628817151628  # may vary
+  >>> import numpy as np
+  >>> rng1 = np.random.default_rng()
+  >>> rng1.random()  #doctest: +SKIP
+  0.6596288841243357  # may vary
+  >>> rng2 = np.random.default_rng()
+  >>> rng2.random()  #doctest: +SKIP
+  0.11885628817151628  # may vary
 
 .. warning::
 
@@ -66,18 +63,17 @@ intentionally *trying* to reproduce their result. A convenient way to get
 such a seed number is to use :py:func:`secrets.randbits` to get an
 arbitrary 128-bit integer.
 
-::
-
-    >>> import secrets
-    >>> import numpy as np
-    >>> secrets.randbits(128)  #doctest: +SKIP
-    122807528840384100672342137672332424406  # may vary
-    >>> rng1 = np.random.default_rng(122807528840384100672342137672332424406)
-    >>> rng1.random()
-    0.5363922081269535
-    >>> rng2 = np.random.default_rng(122807528840384100672342137672332424406)
-    >>> rng2.random()
-    0.5363922081269535
+  >>> import numpy as np
+  >>> import secrets
+  >>> import numpy as np
+  >>> secrets.randbits(128)  #doctest: +SKIP
+  122807528840384100672342137672332424406  # may vary
+  >>> rng1 = np.random.default_rng(122807528840384100672342137672332424406)
+  >>> rng1.random()
+  0.5363922081269535
+  >>> rng2 = np.random.default_rng(122807528840384100672342137672332424406)
+  >>> rng2.random()
+  0.5363922081269535
 
 See the documentation on `default_rng` and `SeedSequence` for more advanced
 options for controlling the seed in specialized scenarios.
