@@ -1074,10 +1074,14 @@ AVX512F_log_DOUBLE(npy_double * op,
             _mm512_mask_storeu_pd(op, load_mask, res);
         }
 
-        /* call glibc's log func when x around 1.0f */
+        /* call glibc's log func when x around 1.0f. */
         if (glibc_mask != 0) {
             double NPY_DECL_ALIGNED(64) ip_fback[8];
-            _mm512_store_pd(ip_fback, x_in);
+            /* Using a mask_store_pd instead of store_pd to prevent a fatal
+             * compiler optimization bug. See
+             * https://github.com/numpy/numpy/issues/27745#issuecomment-2498684564
+             * for details.*/
+            _mm512_mask_store_pd(ip_fback, avx512_get_full_load_mask_pd(), x_in);
 
             for (int ii = 0; ii < 8; ++ii, glibc_mask >>= 1) {
                 if (glibc_mask & 0x01) {
