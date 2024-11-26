@@ -135,7 +135,7 @@ def main(token, revision_range):
     def backtick_repl(matchobj):
         """repl to add an escaped space following a code block if needed"""
         if matchobj.group(2) != ' ':
-            post = r'\ ' + matchobj.group(2)
+            post = r' ' + matchobj.group(2)
         else:
             post = matchobj.group(2)
         return '``' + matchobj.group(1) + '``' + post

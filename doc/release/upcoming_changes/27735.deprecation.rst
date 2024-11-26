@@ -1,2 +1,0 @@
-* ``_add_newdoc_ufunc`` is now deprecated. ``ufunc.__doc__ = newdoc`` should
-  be used instead.
