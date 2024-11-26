@@ -889,6 +889,35 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     return info;
 }
 
+/*
+ * Fast path for promote_and_get_info_and_ufuncimpl.
+ * Enters a critical section if there is a cache miss.
+ */
+static inline PyObject *
+try_promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
+        PyArrayObject *const ops[],
+        PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *op_dtypes[],
+        npy_bool legacy_promotion_is_possible)
+{
+    PyObject *info = PyArrayIdentityHash_GetItem(ufunc->_dispatch_cache,
+                                                 (PyObject **)op_dtypes);
+
+    if (info != NULL && PyObject_TypeCheck(
+                    PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+        /* Found the ArrayMethod and NOT a promoter: return it */
+        return info;
+    }
+
+    Py_BEGIN_CRITICAL_SECTION((PyObject *)ufunc);
+    info = promote_and_get_info_and_ufuncimpl(ufunc,
+            ops, signature, op_dtypes, legacy_promotion_is_possible);
+    Py_END_CRITICAL_SECTION();
+
+
+    return info;
+}
+
 
 /**
  * The central entry-point for the promotion and dispatching machinery.
@@ -976,11 +1005,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-    PyObject *info;
-    Py_BEGIN_CRITICAL_SECTION((PyObject *)ufunc);
-    info = promote_and_get_info_and_ufuncimpl(ufunc,
+    PyObject *info = try_promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-    Py_END_CRITICAL_SECTION();
 
     if (info == NULL) {
         goto handle_error;
