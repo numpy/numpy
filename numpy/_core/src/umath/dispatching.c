@@ -50,6 +50,7 @@
 #include "arrayobject.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
+// this includes "internal/pycore_lock.h" for _PyRWMutex
 #include "npy_hashtable.h"
 #include "legacy_array_method.h"
 #include "ufunc_object.h"
@@ -889,6 +890,49 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     return info;
 }
 
+/*
+ * Fast path for promote_and_get_info_and_ufuncimpl.
+ * Acquires a read lock to check for a cache hit and then
+ * only acquires a write lock on a cache miss to fill the cache
+ */
+static inline PyObject *
+try_promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
+        PyArrayObject *const ops[],
+        PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *op_dtypes[],
+        npy_bool legacy_promotion_is_possible)
+{
+#ifdef Py_GIL_DISABLED
+    _PyRWMutex_RLock(&((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+#endif
+    PyObject *info = PyArrayIdentityHash_GetItem(ufunc->_dispatch_cache,
+                                                 (PyObject **)op_dtypes);
+#ifdef Py_GIL_DISABLED
+    _PyRWMutex_RUnlock(&((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+#endif
+
+    if (info != NULL && PyObject_TypeCheck(
+                    PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+        /* Found the ArrayMethod and NOT a promoter: return it */
+        return info;
+    }
+
+    // cache miss, need to acquire a write lock and recursively calculate the correct
+    // dispatch resolution
+
+#ifdef Py_GIL_DISABLED
+    _PyRWMutex_Lock(&((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+#endif
+    info = promote_and_get_info_and_ufuncimpl(ufunc,
+            ops, signature, op_dtypes, legacy_promotion_is_possible);
+#ifdef Py_GIL_DISABLED
+    _PyRWMutex_Unlock(&((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+#endif
+
+
+    return info;
+}
+
 
 /**
  * The central entry-point for the promotion and dispatching machinery.
@@ -976,11 +1020,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-    PyObject *info;
-    Py_BEGIN_CRITICAL_SECTION((PyObject *)ufunc);
-    info = promote_and_get_info_and_ufuncimpl(ufunc,
+    PyObject *info = try_promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-    Py_END_CRITICAL_SECTION();
 
     if (info == NULL) {
         goto handle_error;

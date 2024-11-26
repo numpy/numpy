@@ -99,6 +99,9 @@ PyArrayIdentityHash_New(int key_len)
     res->key_len = key_len;
     res->size = 4;  /* Start with a size of 4 */
     res->nelem = 0;
+#ifdef Py_GIL_DISABLED
+    memset(&res->mutex, 0, sizeof(_PyRWMutex));
+#endif
 
     res->buckets = PyMem_Calloc(4 * (key_len + 1), sizeof(PyObject *));
     if (res->buckets == NULL) {
