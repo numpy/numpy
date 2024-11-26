@@ -47,7 +47,7 @@ jobs:
         fi
         git submodule update --init
 
-        ln -s /usr/local/bin/python3.10 /usr/local/bin/python
+        ln -s /usr/local/bin/python3.11 /usr/local/bin/python
 
     - name: test-musllinux_x86_64
       env:

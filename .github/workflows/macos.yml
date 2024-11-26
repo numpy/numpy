@@ -113,7 +113,7 @@ jobs:
         build_runner:
           - [ macos-13, "macos_x86_64" ]
           - [ macos-14, "macos_arm64" ]
-        version: ["3.10", "3.13t"]
+        version: ["3.11", "3.13t"]
 
     steps:
     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
