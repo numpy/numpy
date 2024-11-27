@@ -152,6 +152,8 @@ jobs:
       run: |
         pytest numpy --cov-report=html:build/coverage
         # TODO: gcov
+      env:
+        PYTHONOPTIMIZE: 2
 
   benchmark:
     needs: [smoke_test]
