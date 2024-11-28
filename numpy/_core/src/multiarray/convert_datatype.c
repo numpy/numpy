@@ -2403,6 +2403,10 @@ cast_to_string_resolve_descriptors(
             return -1;
     }
     if (dtypes[1]->type_num == NPY_UNICODE) {
+        if (size > NPY_MAX_INT / 4) {
+            PyErr_SetString(PyExc_TypeError, "Result string too large.");
+            return -1;
+        }
         size *= 4;
     }
 
