@@ -2,6 +2,7 @@
 Discrete Fourier Transforms - _helper.py
 
 """
+import operator
 from numpy._core import integer, empty, arange, asarray, roll
 from numpy._core.overrides import array_function_dispatch, set_module
 
@@ -152,11 +153,6 @@ def fftfreq(n, d=1.0, device=None):
     f : ndarray
         Array of length `n` containing the sample frequencies.
 
-    Raises
-    ------
-    ValueError
-        If `n` is not a positive integer.
-
     Examples
     --------
     >>> import numpy as np
@@ -168,15 +164,22 @@ def fftfreq(n, d=1.0, device=None):
     >>> freq
     array([ 0.  ,  1.25,  2.5 , ..., -3.75, -2.5 , -1.25])
     """
-    if not isinstance(n, integer_types) or n <= 0:
-        raise ValueError("n should be a positive integer")
+    try:
+        n = operator.index(n)
+    except TypeError:
+        raise TypeError("n must be an integer")
+    
+    if n <= 0:
+        raise TypeError("n should be a positive integer")
+    
     val = 1.0 / (n * d)
     results = empty(n, int, device=device)
-    N = (n-1)//2 + 1
+    N = (n - 1) // 2 + 1
     p1 = arange(0, N, dtype=int, device=device)
     results[:N] = p1
-    p2 = arange(-(n//2), 0, dtype=int, device=device)
+    p2 = arange(-(n // 2), 0, dtype=int, device=device)
     results[N:] = p2
+
     return results * val
 
 @set_module('numpy.fft')
@@ -214,11 +217,6 @@ def rfftfreq(n, d=1.0, device=None):
     f : ndarray
         Array of length ``n//2 + 1`` containing the sample frequencies.
 
-    Raises
-    ------
-    ValueError
-        If `n` is not a positive integer.
-
     Examples
     --------
     >>> import numpy as np
@@ -234,10 +232,17 @@ def rfftfreq(n, d=1.0, device=None):
     array([  0.,  10.,  20.,  30.,  40.,  50.])
 
     """
-    if not isinstance(n, integer_types) or n <= 0:
-        raise ValueError("n should be a positive integer")
+    try:
+        n = operator.index(n)
+    except TypeError:
+        raise TypeError("n must be an integer")
+    
+    if n <= 0:
+        raise TypeError("n should be a positive integer")
+    
     val = 1.0 / (n * d)
     N = n // 2 + 1
     results = arange(0, N, dtype=int, device=device)
+    
     return results * val
 
