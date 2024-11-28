@@ -892,7 +892,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         raise ValueError(msg)
 
 
-@_rename_parameter(['x', 'y'], ['actual', 'desired'], dep_version='2.0.0')
 def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
                        strict=False):
     """
@@ -1022,7 +1021,6 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
                          strict=strict)
 
 
-@_rename_parameter(['x', 'y'], ['actual', 'desired'], dep_version='2.0.0')
 def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
                               verbose=True):
     """
@@ -1378,10 +1376,10 @@ def check_support_sve(__cache=[]):
     """
     gh-22982
     """
-    
+
     if __cache:
         return __cache[0]
-    
+
     import subprocess
     cmd = 'lscpu'
     try:
