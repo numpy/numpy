@@ -643,6 +643,12 @@ string_addition_resolve_descriptors(
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
+    /* NOTE: elsize is large enough now, but too much code still uses ints */
+    if (given_descrs[0]->elsize + given_descrs[1]->elsize > NPY_MAX_INT) {
+        PyErr_SetString(PyExc_TypeError, "Result string too large.");
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
         return _NPY_ERROR_OCCURRED_IN_CAST;
@@ -650,11 +656,14 @@ string_addition_resolve_descriptors(
 
     loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
     if (loop_descrs[1] == NULL) {
+        Py_DECREF(loop_descrs[0]);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
     loop_descrs[2] = PyArray_DescrNew(loop_descrs[0]);
     if (loop_descrs[2] == NULL) {
+        Py_DECREF(loop_descrs[0]);
+        Py_DECREF(loop_descrs[1]);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
     loop_descrs[2]->elsize += loop_descrs[1]->elsize;
