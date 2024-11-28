@@ -99,6 +99,8 @@ npyiter_get_priority_subtype(int nop, PyArrayObject **op,
 static int
 npyiter_allocate_transfer_functions(NpyIter *iter);
 
+static void
+npyiter_find_buffering_setup(NpyIter *iter);
 
 /*NUMPY_API
  * Allocate a new iterator for multiple array objects, and advanced
@@ -472,14 +474,16 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         }
     }
 
-    /* If buffering is set without delayed allocation */
+    /* If buffering is set prepare it */
     if (itflags & NPY_ITFLAG_BUFFER) {
+        npyiter_find_buffering_setup(iter);
+
         if (!npyiter_allocate_transfer_functions(iter)) {
             NpyIter_Deallocate(iter);
             return NULL;
         }
         if (!(itflags & NPY_ITFLAG_DELAYBUF)) {
-            /* Allocate the buffers */
+            /* Allocate the buffers if that is not delayed */
             if (!npyiter_allocate_buffers(iter, NULL)) {
                 NpyIter_Deallocate(iter);
                 return NULL;
@@ -1931,6 +1935,363 @@ operand_different_than_broadcast: {
     }
 }
 
+
+/*
+ * At this point we (presumably) use a buffered iterator and here we want
+ * to find out the best way to buffer the iterator in a fashion that we don't
+ * have to figure out a lot of things on every iteration.
+ *
+ * How do we iterate?
+ * ------------------
+ * There are currently two modes of "buffered" iteration:
+ * 1. The normal mode, where we either buffer each operand or not and
+ *    then do a normal 1-D loop on those buffers (or operands).
+ * 2. The "reduce" mode.  In reduce mode (ITFLAG_REDUCE) we internally use a
+ *    a double iteration where:
+ *      - One outer iteration with stride == 0 and a single stride core != 0.
+ *      - One outer iteration with stride != 0 and a core of strides == 0.
+ *    This setup allows filling the buffer with only the stride != 0 and then
+ *    doing the double loop on the buffer (either ).
+ *
+ * Only a writeable (reduce) operand require this reduce mode because for
+ * reading it is OK if the buffer holds duplicates.
+ * The reason for the reduce mode is that it allows for a larger core size.
+ * If we use the reduce-mode, we can apply it also to read-only operands.
+ *
+ * Best buffer and core size
+ * -------------------------
+ * We don't want to figure out the complicated copies every time we fill buffers
+ * so we want to find a the outer iteration dimension so that:
+ *   - Its core size is smaller than the buffersize if buffering is needed.
+ *   - Allows for reductions to work (with or without reduce-mode)
+ *   - Optimizes for iteration overhead.  We estimate the total overhead with:
+ *     `(1 + n_buffers) / size`.
+ *     The `size` is the `min(core_size * outer_dim_size, buffersize)` and
+ *     estimates how often we fill buffers (size is unbounded if no buffering
+ *     is needed).
+ *     NOTE: We could tweak this, it is not optimized/proven to be best.
+ *
+ * NOTE: The function does not attempt 
+ */
+static void
+npyiter_find_buffering_setup(NpyIter *iter)
+{
+    int nop = iter->nop;
+    int ndim = iter->ndim;
+    npy_uint32 itflags = iter->itflags;
+    NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+
+    /*
+     * We check two things here, first whether the core is single strided
+     * and second, whether we found a reduce stride dimension for the operand.
+     * That is an outer dimension a reduce would have to take place on.
+     */
+    int op_single_stride_dims[NPY_MAXARGS];
+    int op_reduce_outer_dim[NPY_MAXARGS];
+
+    /*
+     * Note that this code requires/uses the fact that there is always one
+     * axisdata even for ndim == 0 (i.e. no need to worry about it).
+     */
+    npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
+
+    /*
+     * We can only continue as long as we are within the maximum allowed size.
+     * When no buffering is needed and GROWINNER is set, we don't have to
+     * worry about this maximum.
+     */
+    npy_intp maximum_size = NBF_BUFFERSIZE(bufferdata);
+
+    /* The cost factor defined by: (1 + n_buffered) */
+    int cost = 1;
+
+    for (int iop = 0; iop < nop; ++iop) {
+        op_single_stride_dims[iop] = 1;
+        op_reduce_outer_dim[iop] = 0;
+        if (op_itflags[iop] & NPY_OP_ITFLAG_CAST) {
+            cost += 1;
+        }
+    }
+
+    /*
+     * Once a reduce operand reaches a ==0/!=0 stride flip, this dimension
+     * becomes the outer reduce dimension.
+     * We may continue growing, but only if strides align for any such operand.
+     */
+    int outer_reduce_dim = 0;
+
+    npy_intp size = axisdata->shape;  /* the current total size */
+
+    int best_dim = 0;
+    int best_cost = cost;
+    /* The size of the "outer" iteration and all previous dimensions: */
+    npy_intp best_size = size;
+    npy_intp best_coresize = 1;
+
+    NPY_IT_DBG_PRINT("Iterator: discovering best core size\n");
+    for (int idim = 1; idim < ndim; idim++) {
+        if (outer_reduce_dim) {
+            /* Cannot currently expand beyond reduce dim! */
+            break;
+        }
+        if (size >= maximum_size &&
+                (cost > 1 || !(itflags & NPY_ITFLAG_GROWINNER))) {
+            /* Exceeded buffer size, can only improve without buffers and growinner. */
+            break;
+        }
+
+        npy_intp *prev_strides = NAD_STRIDES(axisdata);
+        npy_intp prev_shape = NAD_SHAPE(axisdata);
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
+        npy_intp *strides = NAD_STRIDES(axisdata);
+
+        int iop;
+        for (iop = 0; iop < nop; iop++) {
+            /* Check that we set things up nicely (if shape is ever 1) */
+            assert((axisdata->shape == 1) ? (prev_strides[iop] == strides[iop]) : 1);
+            /*
+             * Best case: the strides collaps for this operand, all fine.
+             * Keep track at which single-stride or outer dims we are.
+             */
+            if (prev_strides[iop] * prev_shape == strides[iop]) {
+                if (op_single_stride_dims[iop] == idim) {
+                    op_single_stride_dims[iop] += 1;
+                }
+                continue;
+            }
+
+            if (op_single_stride_dims[iop] == idim) {
+                /*
+                 * Operand now requires buffering (if it was not already).
+                 * NOTE: This is technically not true since we may still use
+                 *       an outer reduce at this point.
+                 *       So it prefers a non-reduce setup, which seems not
+                 *       ideal, but OK.
+                 */
+                if (!(op_itflags[iop] & NPY_OP_ITFLAG_CAST)) {
+                    cost += 1;
+                }
+            }
+
+            /*
+             * If this operand is a reduction operand and this is not the
+             * outer_reduce_dim, then we must stop.
+             */
+            if (op_itflags[iop] & NPY_OP_ITFLAG_REDUCE) {
+                /*
+                 * We swap between !=0/==0 and thus make it a reduce
+                 * (it is OK if another op started a reduce at this dimension)
+                 */
+                if (strides[iop] == 0 || prev_strides[iop] == 0) {
+                    if (outer_reduce_dim == 0 || outer_reduce_dim == idim) {
+                        op_reduce_outer_dim[iop] = idim;
+                        outer_reduce_dim = idim;
+                    }
+                }
+            }
+            /* For clarity: op_reduce_outer_dim[iop] if set always matches. */
+            assert(!op_reduce_outer_dim[iop] || op_reduce_outer_dim[iop] == outer_reduce_dim);
+        }
+        if (iop != nop) {
+            /* Including this dimension is invalid due to a reduction. */
+            break;
+        }
+
+        npy_intp coresize = size;  /* if we iterate here, this is the core */
+        size *= axisdata->shape;
+
+        double bufsize = size;
+        if (bufsize > maximum_size &&
+                (cost > 1 || !(itflags & NPY_ITFLAG_GROWINNER))) {
+            /* If we need buffering, limit size in cost calculation. */
+            bufsize = maximum_size;
+        }
+
+        NPY_IT_DBG_PRINT("    dim=%d, n_buffered=%d, cost=%g @bufsize=%g (prev scaled cost=%g)\n",
+                         idim, cost - 1, cost * (double)best_size, bufsize, best_cost * bufsize);
+
+        /*
+         * Compare cost (use double to avoid overflows), as explained above
+         * the cost is compared via the other buffersize.
+         */
+        if (cost * (double)best_size <= best_cost * bufsize) {
+            /* This dimension is better! */
+            best_cost = cost;
+            best_coresize = coresize;
+            best_size = size;
+            best_dim = idim;
+        }
+    }
+
+    npy_bool using_reduce = outer_reduce_dim && (best_dim == outer_reduce_dim);
+    npy_bool iterator_must_buffer = 0;
+
+    /* We found the best chunking store the information */
+    NIT_BUFFERDATA(iter)->coresize = best_coresize;
+    NIT_BUFFERDATA(iter)->outerdim = best_dim;
+
+    /*
+     * We found the best dimensions to iterate on and now need to fill
+     * in all the buffer information related to the iteration.
+     * This includes filling in information about reduce outer dims
+     * (we do this even if it is not a reduce for simplicity).
+     */
+    axisdata = NIT_AXISDATA(iter);
+    NpyIter_AxisData *reduce_axisdata = NIT_INDEX_AXISDATA(axisdata, outer_reduce_dim);
+
+    NPY_IT_DBG_PRINT("Iterator: Found core size=%zd, outer=%zd at dim=%d:\n",
+                      best_coresize, reduce_axisdata->shape, best_dim);
+
+    /* If we are not using a reduce axes mark it and shrink. */
+    if (using_reduce) {
+        assert(NIT_ITFLAGS(iter) & NPY_ITFLAG_REDUCE);
+        NPY_IT_DBG_PRINT("    using reduce logic\n");
+    }
+    else {
+        NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_REDUCE;
+        NPY_IT_DBG_PRINT("    not using reduce logic\n");
+    }
+
+    for (int iop = 0; iop < nop; iop++) {
+        /* We need to fill in the following information */
+        npy_bool is_reduce_op;
+        npy_bool op_is_buffered = (op_itflags[iop]&NPY_OP_ITFLAG_CAST) != 0;
+
+        /*
+         * Figure out if this is iterated as a reduce op.  Even one marked
+         * for reduction may not be iterated as one.
+         */
+        if (!using_reduce) {
+            is_reduce_op = 0;
+        }
+        else if (op_reduce_outer_dim[iop] == best_dim) {
+            /* This op *must* use reduce semantics. */
+            is_reduce_op = 1;
+        }
+        else if (op_single_stride_dims[iop] == best_dim && !op_is_buffered) {
+            /*
+             * Optimization: This operand is not buffered and we might as well
+             * iterate it as an unbuffered reduce operand (if not yet buffered).
+             */
+            is_reduce_op = 1;
+        }
+        else if (NAD_STRIDES(reduce_axisdata)[iop] == 0
+                    && op_single_stride_dims[iop] <= best_dim) {
+            /*
+             * Optimization: If the outer (reduce) stride is 0 on the operand
+             * then we can iterate this in a reduce way: buffer the core only
+             * and repeat it in the "outer" dimension.
+             */
+            is_reduce_op = 1;
+        }
+        else {
+            is_reduce_op = 0;
+        }
+
+        /*
+         * See if the operand is a single stride (if we use reduce logic)
+         * we don't need to worry about the outermost dimension.
+         * If it is not a single stride, we must buffer the operand.
+         */
+        if (op_single_stride_dims[iop] + is_reduce_op > best_dim) {
+            NIT_OPITFLAGS(iter)[iop] |= NPY_OP_ITFLAG_SINGLESTRIDE;
+        }
+        else {
+            op_is_buffered = 1;
+        }
+
+        npy_intp inner_stride;
+        npy_intp reduce_outer_stride;
+        if (op_is_buffered) {
+            npy_intp itemsize = NIT_DTYPES(iter)[iop]->elsize;
+            /*
+             * A buffered operand has a stride of itemsize unless we use
+             * reduce logic.  In that case, either the inner or outer stride
+             * is 0.
+             */
+            if (!is_reduce_op
+                    && NIT_OPITFLAGS(iter)[iop] & NPY_OP_ITFLAG_SINGLESTRIDE
+                    && NAD_STRIDES(axisdata)[iop] == 0) {
+                /* This op is always 0 strides, so even the buffer is that. */
+                inner_stride = 0;
+                reduce_outer_stride = 0;
+            }
+            else if (!is_reduce_op) {
+                /* normal buffered op */
+                inner_stride = itemsize;
+                reduce_outer_stride = itemsize * best_coresize;
+            }
+            else if (NAD_STRIDES(reduce_axisdata)[iop] == 0) {
+                inner_stride = itemsize;
+                reduce_outer_stride = 0;
+            }
+            else {
+                inner_stride = 0;
+                reduce_outer_stride = itemsize;
+            }
+        }
+        else {
+            inner_stride = NAD_STRIDES(axisdata)[iop];
+            reduce_outer_stride = NAD_STRIDES(reduce_axisdata)[iop];
+        }
+
+        if (!using_reduce) {
+            /* invalidate for now, since we should not use it */
+            reduce_outer_stride = NPY_MIN_INTP;
+        }
+
+        NPY_IT_DBG_PRINT(
+            "Iterator: op=%d (buffered=%d, reduce=%d, single-stride=%d):\n"
+            "    inner stride: %zd\n"
+            "    reduce outer stride: %zd  (if iterator uses reduce)\n",
+            iop, op_is_buffered, is_reduce_op,
+            (NIT_OPITFLAGS(iter)[iop] & NPY_OP_ITFLAG_SINGLESTRIDE) != 0,
+            inner_stride, reduce_outer_stride);
+
+        NBF_STRIDES(bufferdata)[iop] = inner_stride;
+        NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop] = reduce_outer_stride;
+
+        /* The actual reduce usage may have changed! */
+        if (is_reduce_op) {
+            NIT_OPITFLAGS(iter)[iop] |= NPY_OP_ITFLAG_REDUCE;
+        }
+        else {
+            NIT_OPITFLAGS(iter)[iop] &= ~NPY_OP_ITFLAG_REDUCE;
+        }
+
+        if (!op_is_buffered) {
+            NIT_OPITFLAGS(iter)[iop] |= NPY_OP_ITFLAG_BUFNEVER;
+        }
+        else {
+            iterator_must_buffer = 1;
+        }
+    }
+
+    /*
+     * If we buffer or do not have grow-inner, make sure that the size is
+     * below the maximum_size, but a multiple of the coresize.
+     */
+    if (iterator_must_buffer || !(itflags & NPY_ITFLAG_GROWINNER)) {
+        if (maximum_size < best_size) {
+            best_size = best_coresize * (maximum_size / best_coresize);
+        }
+    }
+    /*
+     * Set the buffersize to either the:
+     * - the largest we amount trivially iterate (no buffering!).
+     * - the largest multiple of the coresize that is smaller than the
+     *   requested/default buffersize.
+     */
+    NIT_BUFFERDATA(iter)->buffersize = best_size;
+    /* Core size is 0 (unless the user applies a range explicitly). */
+    NIT_BUFFERDATA(iter)->coreoffset = 0;
+
+    return;
+}
+
+
 /*
  * Replaces the AXISDATA for the iop'th operand, broadcasting
  * the dimensions as necessary.  Assumes the replacement array is
@@ -3105,6 +3466,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
          * Reduction operands may be buffered with a different stride,
          * so we must pass NPY_MAX_INTP to the transfer function factory.
          */
+        // TODO: This should not be the case anymore!?  (was it ever?!?)
         op_stride = (flags & NPY_OP_ITFLAG_REDUCE) ? NPY_MAX_INTP :
                                                    strides[iop];
 
