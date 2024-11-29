@@ -81,6 +81,9 @@ doc/cdoc/build
 .cache
 pip-wheel-metadata
 .python-version
+# virtual envs
+numpy-dev/
+venv/
 
 # Paver generated files #
 #########################
