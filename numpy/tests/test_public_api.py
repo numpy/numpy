@@ -746,3 +746,61 @@ def test___module__attribute():
 
     if incorrect_entries:
         assert len(incorrect_entries) == 0, incorrect_entries
+
+
+def _check___qualname__(obj, module_name) -> bool:
+    qualname = obj.__qualname__
+    name = obj.__name__
+
+    if "numpy.random" in module_name:
+        if type(getattr(obj, "__self__", None)) is np.random.RandomState:
+            return qualname == f"RandomState.{name}"
+        elif obj is np.random.bit_generator.randbits:
+            return qualname == f"SystemRandom.{name}"
+        else:
+            return qualname == name
+    elif "f2py" in module_name and name in ("match", "search"):
+        return qualname == f"Pattern.{name}"
+    elif "ma" in module_name and name == "reduce":
+        return qualname == f"_MaskedBinaryOperation.{name}"
+    else:
+        return qualname == name
+
+
+def test___qualname__attribute():
+    modules_queue = [np]
+    visited_modules = {np}
+    visited_functions = set()
+    incorrect_entries = []
+
+    while len(modules_queue) > 0:
+        module = modules_queue.pop()
+        for member_name in dir(module):
+            member = getattr(module, member_name)
+            # first check if we got a module
+            if (
+                inspect.ismodule(member) and  # it's a module
+                "numpy" in member.__name__ and  # inside NumPy
+                not member_name.startswith("_") and  # not private
+                member_name not in ["tests"] and  # skip tests modules
+                "numpy._core" not in member.__name__ and  # outside _core
+                member not in visited_modules  # not visited yet
+            ):
+                modules_queue.append(member)
+                visited_modules.add(member)
+            elif (
+                not inspect.ismodule(member) and
+                hasattr(member, "__name__") and
+                not member.__name__.startswith("_") and
+                not _check___qualname__(member, module.__name__) and
+                member not in visited_functions
+            ):
+                incorrect_entries.append(
+                    dict(
+                        actual=member.__qualname__, expected=member.__name__,
+                    )
+                )
+                visited_functions.add(member)
+
+    if incorrect_entries:
+        assert len(incorrect_entries) == 0, incorrect_entries

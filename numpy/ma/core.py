@@ -21,12 +21,12 @@ Released for unlimited redistribution.
 """
 # pylint: disable-msg=E1002
 import builtins
+import functools
 import inspect
 import operator
 import warnings
 import textwrap
 import re
-from functools import reduce
 from typing import Dict
 
 import numpy as np
@@ -939,6 +939,7 @@ class _MaskedUFunc:
         self.f = ufunc
         self.__doc__ = ufunc.__doc__
         self.__name__ = ufunc.__name__
+        self.__qualname__ = ufunc.__qualname__
 
     def __str__(self):
         return f"Masked version of {self.f}"
@@ -3157,7 +3158,7 @@ class MaskedArray(ndarray):
             func, args, out_i = context
             # args sometimes contains outputs (gh-10459), which we don't want
             input_args = args[:func.nin]
-            m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
+            m = functools.reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
             domain = ufunc_domain.get(func)
             if domain is not None:
@@ -7099,6 +7100,7 @@ class _frommethod:
 
     def __init__(self, methodname, reversed=False):
         self.__name__ = methodname
+        self.__qualname__ = methodname
         self.__doc__ = self.getdoc()
         self.reversed = reversed
 
