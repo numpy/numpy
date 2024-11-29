@@ -65,7 +65,6 @@ arbitrary 128-bit integer.
 
   >>> import numpy as np
   >>> import secrets
-  >>> import numpy as np
   >>> secrets.randbits(128)  #doctest: +SKIP
   122807528840384100672342137672332424406  # may vary
   >>> rng1 = np.random.default_rng(122807528840384100672342137672332424406)
