@@ -2681,8 +2681,8 @@ def test_iter_buffering_reduction():
     it = np.nditer([p, None],
             ['delay_bufalloc', 'reduce_ok', 'buffered', 'external_loop'],
             [['readonly'], ['readwrite', 'allocate']],
-            op_axes=[[-1, 0], [-1, -1]],
-            itershape=(2, 2))
+            op_axes=[[-1, 0], [1, 0]],
+            itershape=(2, 2), op_dtypes=["float64", "int64"])
     with it:
         it.operands[1].fill(0)
         it.reset()
@@ -3296,7 +3296,7 @@ def test_debug_print(capfd):
     expected = """
     ------ BEGIN ITERATOR DUMP ------
     | Iterator Address:
-    | ItFlags: BUFFER REDUCE REUSE_REDUCE_LOOPS
+    | ItFlags: BUFFER REDUCE
     | NDim: 2
     | NOp: 2
     | IterSize: 50
@@ -3321,18 +3321,19 @@ def test_debug_print(capfd):
     | BufferData:
     |   BufferSize: 50
     |   Size: 5
-    |   BufIterEnd: 5
+    |   BufIterEnd: 50
     |   REDUCE Pos: 0
-    |   REDUCE OuterSize: 10
-    |   REDUCE OuterDim: 1
+    |   BUFFER CoreSize: 5
+    |   BUFFER Reduce outersize: 10
+    |   BUFFER OuterDim: 1
     |   Strides: 8 4
     |   Ptrs:
     |   REDUCE Outer Strides: 40 0
     |   REDUCE Outer Ptrs:
     |   ReadTransferFn:
-    |   ReadTransferData:
+    |   ReadTransferData: 0x0 0x0
     |   WriteTransferFn:
-    |   WriteTransferData:
+    |   WriteTransferData: 0x0 0x0
     |   Buffers:
     |
     | AxisData[0]:
