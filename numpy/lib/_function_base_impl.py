@@ -3827,7 +3827,7 @@ def sinc(x):
 
     """
     x = np.asanyarray(x)
-    x *= pi
+    x = pi * x
     y = where(x, x, np.finfo(x.dtype).eps)
     return sin(y)/y
 
