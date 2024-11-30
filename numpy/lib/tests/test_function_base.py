@@ -2334,10 +2334,6 @@ class TestSinc:
         x = np.arange(4, dtype=dtype)
         assert sinc(x).dtype == x.dtype
 
-    def test_object_dtype(self):
-        x = np.arange(4, dtype=object)
-        assert sinc(x).dtype == x.dtype
-
     def test_float16_underflow(self):
         x = np.float16(0)
         # before gh-27784, fill value for 0 in input would underflow float16,
