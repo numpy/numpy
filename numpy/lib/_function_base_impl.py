@@ -3827,8 +3827,8 @@ def sinc(x):
 
     """
     x = np.asanyarray(x)
-    x = x.astype(np.float64) if np.isdtype(x.dtype, ('bool', 'integral')) else x
-    y = pi * where(x, x, np.finfo(x.dtype).smallest_normal)
+    x *= pi
+    y = where(x, x, np.finfo(x.dtype).eps)
     return sin(y)/y
 
 
