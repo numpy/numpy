@@ -3828,12 +3828,7 @@ def sinc(x):
     """
     x = np.asanyarray(x)
     x = pi * x
-    if x.dtype.kind == "f":  
-        eps = np.finfo(x.dtype).eps  
-    else:  
-        # Hope that 1e-20 is sufficient for objects...  
-        eps = 1e-20  
-    y = where(x, x, eps)
+    y = where(x, x, np.finfo(x.dtype).eps)
     return sin(y)/y
 
 
