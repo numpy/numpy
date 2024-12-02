@@ -2101,6 +2101,9 @@ npyiter_find_buffering_setup(NpyIter *iter)
 
         npy_intp coresize = size;  /* if we iterate here, this is the core */
         size *= axisdata->shape;
+        if (size == 0) {
+            break;  /* Avoid a zero coresize. */
+        }
 
         double bufsize = size;
         if (bufsize > maximum_size &&
@@ -2129,6 +2132,7 @@ npyiter_find_buffering_setup(NpyIter *iter)
     npy_bool iterator_must_buffer = 0;
 
     /* We found the best chunking store the information */
+    assert(best_coresize != 0);
     NIT_BUFFERDATA(iter)->coresize = best_coresize;
     NIT_BUFFERDATA(iter)->outerdim = best_dim;
 
