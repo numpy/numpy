@@ -1567,8 +1567,6 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("CAST ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_BUFNEVER)
             printf("BUFNEVER ");
-        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_ALIGNED)
-            printf("ALIGNED ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_REDUCE)
             printf("REDUCE ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_VIRTUAL)

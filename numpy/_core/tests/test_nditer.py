@@ -3315,8 +3315,8 @@ def test_debug_print(capfd):
     | Operands:
     | Operand DTypes: dtype('int64') dtype('float64')
     | OpItFlags:
-    |   Flags[0]: READ CAST ALIGNED
-    |   Flags[1]: READ WRITE CAST ALIGNED REDUCE
+    |   Flags[0]: READ CAST
+    |   Flags[1]: READ WRITE CAST REDUCE
     |
     | BufferData:
     |   BufferSize: 50
