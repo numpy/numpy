@@ -1942,7 +1942,7 @@ npyiter_fill_buffercopy_params(
 
     if (opitflags & NPY_OP_ITFLAG_REDUCE) {
         /* Outer dim is reduced, so omit it from copying */
-        ndim_transfer -= 1;
+        *ndim_transfer -= 1;
         if (*op_transfersize > bufferdata->coresize) {
             *op_transfersize = bufferdata->coresize;
         }
