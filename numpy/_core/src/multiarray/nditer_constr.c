@@ -1103,14 +1103,25 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             return 0;
         }
         *op_dataptr = PyArray_BYTES(*op);
-        /* PyArray_DESCR does not give us a reference */
-        *op_dtype = PyArray_DESCR(*op);
-        if (*op_dtype == NULL) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Iterator input operand has no dtype descr");
-            return 0;
+
+        /*
+         * Checking whether casts are valid is done later, once the
+         * final data types have been selected.  For now, just store the
+         * requested type.
+         */
+        if (op_request_dtype != NULL && op_request_dtype != PyArray_DESCR(*op)) {
+            /* We just have a borrowed reference to op_request_dtype */
+            *op_dtype = PyArray_AdaptDescriptorToArray(
+                                            *op, NULL, op_request_dtype);
+            if (*op_dtype == NULL) {
+                return 0;
+            }
         }
-        Py_INCREF(*op_dtype);
+        else {
+            *op_dtype = PyArray_DESCR(*op);
+            Py_INCREF(*op_dtype);
+        }
+
         /*
          * If references weren't specifically allowed, make sure there
          * are no references in the inputs or requested dtypes.
@@ -1126,19 +1137,6 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                         "Iterator operand or requested dtype holds "
                         "references, but the NPY_ITER_REFS_OK flag was not "
                         "enabled");
-                return 0;
-            }
-        }
-        /*
-         * Checking whether casts are valid is done later, once the
-         * final data types have been selected.  For now, just store the
-         * requested type.
-         */
-        if (op_request_dtype != NULL) {
-            /* We just have a borrowed reference to op_request_dtype */
-            Py_SETREF(*op_dtype, PyArray_AdaptDescriptorToArray(
-                                            *op, NULL, op_request_dtype));
-            if (*op_dtype == NULL) {
                 return 0;
             }
         }
@@ -1162,7 +1160,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         /* Check if the operand is aligned */
         if (op_flags & NPY_ITER_ALIGNED) {
             /* Check alignment */
-            if (!IsAligned(*op)) {
+            if (!PyArray_ISALIGNED(*op)) {
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_ALIGNED\n");
                 *op_itflags |= NPY_OP_ITFLAG_CAST;
