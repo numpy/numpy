@@ -2104,13 +2104,13 @@ class _Parse:
         # remove any implied features and keep the origins
         if not targets:
             self.dist_fatal("empty multi-target '()'")
-        if not all(self.feature_is_exist(tar) for tar in targets) :
+        if not all(self.feature_is_exist(tar) for tar in targets):
             self.dist_fatal("invalid target name in multi-target", targets)
         if not all((
                 tar in self.parse_baseline_names or
                 tar in self.parse_dispatch_names
             )
-            for tar in targets) :
+            for tar in targets):
             return None
         targets = self.feature_ahead(targets)
         if not targets:
