@@ -2109,8 +2109,7 @@ class _Parse:
         if not all((
                 tar in self.parse_baseline_names or
                 tar in self.parse_dispatch_names
-            )
-            for tar in targets):
+                ) for tar in targets):
             return None
         targets = self.feature_ahead(targets)
         if not targets:
