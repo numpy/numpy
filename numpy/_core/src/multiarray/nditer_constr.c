@@ -2836,13 +2836,6 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iop, op[iop], ndim,
                     op_axes ? op_axes[iop] : NULL);
 
-            /*
-             * New arrays are guaranteed true-aligned, but copy/cast code
-             * needs uint-alignment in addition.
-             */
-            if (IsUintAligned(out)) {
-                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
-            }
             /* New arrays need no cast */
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
         }
@@ -2877,13 +2870,6 @@ npyiter_allocate_arrays(NpyIter *iter,
              */
             npyiter_replace_axisdata(iter, iop, op[iop], 0, NULL);
 
-            /*
-             * New arrays are guaranteed true-aligned, but copy/cast code
-             * needs uint-alignment in addition.
-             */
-            if (IsUintAligned(temp)) {
-                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
-            }
             /*
              * New arrays need no cast, and in the case
              * of scalars, always have stride 0 so never need buffering
@@ -2949,13 +2935,6 @@ npyiter_allocate_arrays(NpyIter *iter,
             npyiter_replace_axisdata(iter, iop, op[iop], ondim,
                     op_axes ? op_axes[iop] : NULL);
 
-            /*
-             * New arrays are guaranteed true-aligned, but copy/cast code
-             * additionally needs uint-alignment in addition.
-             */
-            if (IsUintAligned(temp)) {
-                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
-            }
             /* The temporary copy needs no cast */
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
         }
@@ -2970,14 +2949,6 @@ npyiter_allocate_arrays(NpyIter *iter,
                         "Iterator operand required copying or buffering, "
                         "but neither copying nor buffering was enabled");
                 return 0;
-            }
-
-            /*
-             * If the operand is aligned, any buffering can use aligned
-             * optimizations.
-             */
-            if (IsUintAligned(op[iop])) {
-                op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
             }
         }
 
@@ -3144,10 +3115,11 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
          * allocate the appropriate transfer functions
          */
         if (!(flags & NPY_OP_ITFLAG_BUFNEVER)) {
+            int aligned = IsUintAligned(op[iop]);
             if (flags & NPY_OP_ITFLAG_READ) {
                 int move_references = 0;
                 if (PyArray_GetDTypeTransferFunction(
-                                        (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
+                                        aligned,
                                         op_stride,
                                         op_dtype[iop]->elsize,
                                         PyArray_DESCR(op[iop]),
@@ -3177,7 +3149,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                      * could be inconsistent.
                      */
                     if (PyArray_GetMaskedDTypeTransferFunction(
-                            (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
+                            aligned,
                             op_dtype[iop]->elsize,
                             op_stride,
                             (strides[maskop] == mask_dtype->elsize) ?
@@ -3194,7 +3166,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                 }
                 else {
                     if (PyArray_GetDTypeTransferFunction(
-                            (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
+                            aligned,
                             op_dtype[iop]->elsize,
                             op_stride,
                             op_dtype[iop],
@@ -3219,7 +3191,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                  * src references.
                  */
                 if (PyArray_GetClearFunction(
-                        (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
+                        aligned,
                         op_dtype[iop]->elsize, op_dtype[iop],
                         &transferinfo[iop].clear, &nc_flags) < 0) {
                     goto fail;
