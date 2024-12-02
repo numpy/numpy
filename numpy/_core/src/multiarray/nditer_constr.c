@@ -3043,17 +3043,12 @@ npyiter_allocate_arrays(NpyIter *iter,
                         int **op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
-    int idim, ndim = NIT_NDIM(iter);
+    int ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
 
     int check_writemasked_reductions = 0;
 
-    NpyIter_BufferData *bufferdata = NULL;
     PyArrayObject **op = NIT_OPERANDS(iter);
-
-    if (itflags & NPY_ITFLAG_BUFFER) {
-        bufferdata = NIT_BUFFERDATA(iter);
-    }
 
     if (flags & NPY_ITER_COPY_IF_OVERLAP) {
         /*
@@ -3223,15 +3218,8 @@ npyiter_allocate_arrays(NpyIter *iter,
              */
             npyiter_replace_axisdata(iter, iop, op[iop], 0, NULL);
 
-            /*
-             * New arrays need no cast, and in the case
-             * of scalars, always have stride 0 so never need buffering
-             */
-            op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
+            /* New arrays need no cast */
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
-            if (itflags & NPY_ITFLAG_BUFFER) {
-                NBF_STRIDES(bufferdata)[iop] = 0;
-            }
         }
         /*
          * Make a temporary copy if,
@@ -3320,63 +3308,6 @@ npyiter_allocate_arrays(NpyIter *iter,
                             "to be contiguous as requested, but "
                             "buffering is not enabled");
                     return 0;
-                }
-            }
-        }
-
-        /*
-         * If no alignment, byte swap, or casting is needed,
-         * the inner stride of this operand works for the whole
-         * array, we can set NPY_OP_ITFLAG_BUFNEVER.
-         */
-        if ((itflags & NPY_ITFLAG_BUFFER) &&
-                                !(op_itflags[iop] & NPY_OP_ITFLAG_CAST)) {
-            NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-            if (ndim <= 1) {
-                op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
-                NBF_STRIDES(bufferdata)[iop] = NAD_STRIDES(axisdata)[iop];
-            }
-            else if (PyArray_NDIM(op[iop]) > 0) {
-                npy_intp stride, shape, innerstride = 0, innershape;
-                npy_intp sizeof_axisdata =
-                                    NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-                /* Find stride of the first non-empty shape */
-                for (idim = 0; idim < ndim; ++idim) {
-                    innershape = NAD_SHAPE(axisdata);
-                    if (innershape != 1) {
-                        innerstride = NAD_STRIDES(axisdata)[iop];
-                        break;
-                    }
-                    NIT_ADVANCE_AXISDATA(axisdata, 1);
-                }
-                ++idim;
-                NIT_ADVANCE_AXISDATA(axisdata, 1);
-                /* Check that everything could have coalesced together */
-                for (; idim < ndim; ++idim) {
-                    stride = NAD_STRIDES(axisdata)[iop];
-                    shape = NAD_SHAPE(axisdata);
-                    if (shape != 1) {
-                        /*
-                         * If N times the inner stride doesn't equal this
-                         * stride, the multi-dimensionality is needed.
-                         */
-                        if (innerstride*innershape != stride) {
-                            break;
-                        }
-                        else {
-                            innershape *= shape;
-                        }
-                    }
-                    NIT_ADVANCE_AXISDATA(axisdata, 1);
-                }
-                /*
-                 * If we looped all the way to the end, one stride works.
-                 * Set that stride, because it may not belong to the first
-                 * dimension.
-                 */
-                if (idim == ndim) {
-                    op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
-                    NBF_STRIDES(bufferdata)[iop] = innerstride;
                 }
             }
         }
