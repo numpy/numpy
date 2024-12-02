@@ -46,5 +46,5 @@ fi
 
 # Run full tests with -n=auto. This makes pytest-xdist distribute tests across
 # the available N CPU cores: 2 by default for Linux instances and 4 for macOS arm64
-python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto']))"
+python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-v', '-n=auto']))"
 python $PROJECT_DIR/tools/wheels/check_license.py
