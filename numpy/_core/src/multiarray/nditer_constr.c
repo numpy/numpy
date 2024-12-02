@@ -2018,7 +2018,6 @@ npyiter_find_buffering_setup(NpyIter *iter)
     /*
      * Once a reduce operand reaches a ==0/!=0 stride flip, this dimension
      * becomes the outer reduce dimension.
-     * We may continue growing, but only if strides align for any such operand.
      */
     int outer_reduce_dim = 0;
 
@@ -2051,10 +2050,7 @@ npyiter_find_buffering_setup(NpyIter *iter)
         for (iop = 0; iop < nop; iop++) {
             /* Check that we set things up nicely (if shape is ever 1) */
             assert((axisdata->shape == 1) ? (prev_strides[iop] == strides[iop]) : 1);
-            /*
-             * Best case: the strides collaps for this operand, all fine.
-             * Keep track at which single-stride or outer dims we are.
-             */
+            /*  Best case: the strides collapse for this operand. */
             if (prev_strides[iop] * prev_shape == strides[iop]) {
                 if (op_single_stride_dims[iop] == idim) {
                     op_single_stride_dims[iop] += 1;
@@ -2095,7 +2091,7 @@ npyiter_find_buffering_setup(NpyIter *iter)
             assert(!op_reduce_outer_dim[iop] || op_reduce_outer_dim[iop] == outer_reduce_dim);
         }
         if (iop != nop) {
-            /* Including this dimension is invalid due to a reduction. */
+            /* Including this dimension was invalid due to a reduction. */
             break;
         }
 
@@ -2282,12 +2278,6 @@ npyiter_find_buffering_setup(NpyIter *iter)
             best_size = best_coresize * (maximum_size / best_coresize);
         }
     }
-    /*
-     * Set the buffersize to either the:
-     * - the largest we amount trivially iterate (no buffering!).
-     * - the largest multiple of the coresize that is smaller than the
-     *   requested/default buffersize.
-     */
     NIT_BUFFERDATA(iter)->buffersize = best_size;
     /* Core size is 0 (unless the user applies a range explicitly). */
     NIT_BUFFERDATA(iter)->coreoffset = 0;

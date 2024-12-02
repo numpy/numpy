@@ -5,8 +5,7 @@ import pytest
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_raises, suppress_warnings, assert_raises_regex, assert_allclose,
-    assert_array_almost_equal_nulp
+    assert_raises, suppress_warnings, assert_raises_regex, assert_allclose
     )
 
 # Setup for optimize einsum

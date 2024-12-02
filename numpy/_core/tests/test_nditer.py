@@ -2681,8 +2681,8 @@ def test_iter_buffering_reduction():
     it = np.nditer([p, None],
             ['delay_bufalloc', 'reduce_ok', 'buffered', 'external_loop'],
             [['readonly'], ['readwrite', 'allocate']],
-            op_axes=[[-1, 0], [1, 0]],
-            itershape=(2, 2), op_dtypes=["float64", "int64"])
+            op_axes=[[-1, 0], [-1, -1]],
+            itershape=(2, 2))
     with it:
         it.operands[1].fill(0)
         it.reset()

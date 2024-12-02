@@ -106,7 +106,6 @@
 #define NPY_ITFLAG_REDUCE       (1 << 12)
 /* Reduce iteration doesn't need to recalculate reduce loops next time */
 #define NPY_ITFLAG_REUSE_REDUCE_LOOPS (1 << 13)
-
 /*
  * Offset of (combined) ArrayMethod flags for all transfer functions.
  * For now, we use the top 8 bits.

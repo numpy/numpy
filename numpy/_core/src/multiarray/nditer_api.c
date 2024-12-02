@@ -808,7 +808,6 @@ NpyIter_IsFirstVisit(NpyIter *iter, int iop)
      * We only need to check the outer level of this two-level loop,
      * because of the requirement that EXTERNAL_LOOP be enabled.
      */
-     // TODO: Do I need to change this?  Chance is no, so long REDUCE_OUTERSTRIDES still makes sense!
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
         /* The outer reduce loop */
