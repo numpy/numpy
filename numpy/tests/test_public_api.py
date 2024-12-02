@@ -701,7 +701,7 @@ def test___module__attribute():
                 member_name not in [
                     "char", "core", "ctypeslib", "f2py", "ma", "lapack_lite",
                     "mrecords", "testing", "tests", "polynomial", "typing",
-                    "random",  # cython disallows overriding __module__
+                    "mtrand", "bit_generator",
                 ] and
                 member not in visited_modules  # not visited yet
             ):
@@ -725,6 +725,13 @@ def test___module__attribute():
                 if (
                     (member.__name__ == "recarray" and module.__name__ == "numpy") or
                     (member.__name__ == "record" and module.__name__ == "numpy.rec")
+                ):
+                    continue
+
+                # skip cdef classes
+                if member.__name__ in (
+                    "BitGenerator", "Generator", "MT19937", "PCG64", "PCG64DXSM",
+                    "Philox", "RandomState", "SFC64", "SeedSequence",
                 ):
                     continue
 

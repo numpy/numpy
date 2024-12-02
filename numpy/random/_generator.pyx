@@ -5082,3 +5082,6 @@ def default_rng(seed=None):
     # Otherwise we need to instantiate a new BitGenerator and Generator as
     # normal.
     return Generator(PCG64(seed))
+
+
+default_rng.__module__ = "numpy.random"
