@@ -2493,7 +2493,6 @@ reduce_loop(PyArrayMethod_Context *context,
             dataptrs_copy[3] = dataptrs[2];
             strides_copy[3] = strides[2];
         }
-
         retval = strided_loop(context,
                 dataptrs_copy, countptr, strides_copy, auxdata);
         if (retval < 0) {

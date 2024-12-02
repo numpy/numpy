@@ -1571,6 +1571,8 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("VIRTUAL ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_WRITEMASKED)
             printf("WRITEMASKED ");
+        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_SINGLESTRIDE)
+            printf("SINGLESTRIDE ");
         printf("\n");
     }
     printf("|\n");
@@ -1583,11 +1585,11 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("|   BufferSize: %d\n", (int)NBF_BUFFERSIZE(bufferdata));
         printf("|   Size: %d\n", (int)NBF_SIZE(bufferdata));
         printf("|   BufIterEnd: %d\n", (int)NBF_BUFITEREND(bufferdata));
+        printf("|   BUFFER CoreSize: %d\n",
+                    (int)NBF_CORESIZE(bufferdata));
         if (itflags&NPY_ITFLAG_REDUCE) {
             printf("|   REDUCE Pos: %d\n",
                         (int)NBF_REDUCE_POS(bufferdata));
-            printf("|   BUFFER CoreSize: %d\n",
-                        (int)NBF_CORESIZE(bufferdata));
             printf("|   BUFFER Reduce outersize: %d\n",
                         (int)NBF_REDUCE_OUTERSIZE(bufferdata));
             printf("|   BUFFER OuterDim: %d\n",
@@ -1886,8 +1888,8 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
     }
     if (itflags&NPY_ITFLAG_BUFFER) {
         /* Find the remainder if chunking to the buffers coresize */
-        npy_intp fact = iterindex / NIT_BUFFERDATA(iter)->coresize;
-        npy_intp offset = iterindex - fact * NIT_BUFFERDATA(iter)->coresize;
+        npy_intp fact = NIT_ITERINDEX(iter) / NIT_BUFFERDATA(iter)->coresize;
+        npy_intp offset = NIT_ITERINDEX(iter) - fact * NIT_BUFFERDATA(iter)->coresize;
         NIT_BUFFERDATA(iter)->coreoffset = offset;
     }
 }
@@ -2194,6 +2196,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         if (NBF_REDUCE_OUTERSIZE(bufferdata) > 1) {
             /* WARNING: bufferdata->size does not include reduce-outersize */
             bufferdata->size = bufferdata->coresize;
+            NBF_BUFITEREND(bufferdata) = iterindex + bufferdata->coresize;
         }
         NBF_REDUCE_POS(bufferdata) = 0;
     }
@@ -2238,6 +2241,11 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
              */
             NPY_IT_DBG_PRINT("    marking operand %d for buffer reuse\n", iop);
             NIT_OPITFLAGS(iter)[iop] |= NPY_OP_ITFLAG_BUF_REUSABLE;
+        }
+        else if (prev_dataptrs == NULL || prev_dataptrs[iop] != ad_ptrs[iop] ||
+                 bufferdata->coreoffset) {
+            /* Copying at a different offset, so must unset re-use. */
+            NIT_OPITFLAGS(iter)[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
         }
 
         int ndim_transfer;

@@ -3321,7 +3321,7 @@ def test_debug_print(capfd):
     | BufferData:
     |   BufferSize: 50
     |   Size: 5
-    |   BufIterEnd: 50
+    |   BufIterEnd: 5
     |   REDUCE Pos: 0
     |   BUFFER CoreSize: 5
     |   BUFFER Reduce outersize: 10
