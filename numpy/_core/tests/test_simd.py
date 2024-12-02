@@ -185,7 +185,7 @@ class _SIMD_BOOL(_Test_Utility):
         assert data_xnor == vxnor
 
     def test_tobits(self):
-        data2bits = lambda data: sum([int(x != 0) << i for i, x in enumerate(data, 0)])
+        data2bits = lambda data: sum(int(x != 0) << i for i, x in enumerate(data, 0))
         for data in (self._data(), self._data(reverse=True)):
             vdata = self._load_b(data)
             data_bits = data2bits(data)

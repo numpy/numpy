@@ -8170,7 +8170,7 @@ class TestNewBufferProtocol:
         assert_equal(y.ndim, 1)
         assert_equal(y.suboffsets, ())
 
-        sz = sum([np.dtype(b).itemsize for a, b in dt])
+        sz = sum(np.dtype(b).itemsize for a, b in dt)
         if np.dtype('l').itemsize == 4:
             assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:q:dx:B:e:@H:f:=I:g:L:h:Q:hx:f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
         else:

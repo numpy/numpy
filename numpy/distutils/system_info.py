@@ -3214,7 +3214,7 @@ def dict_append(d, **kws):
         else:
             d[k] = v
     if languages:
-        l = inv_language_map[max([language_map.get(l, 0) for l in languages])]
+        l = inv_language_map[max(language_map.get(l, 0) for l in languages)]
         d['language'] = l
     return
 

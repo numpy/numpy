@@ -1338,7 +1338,7 @@ class _Feature:
             if isinstance(k, str):
                 return self.feature_supported[k]["interest"]
             # multiple features
-            rank = max([self.feature_supported[f]["interest"] for f in k])
+            rank = max(self.feature_supported[f]["interest"] for f in k)
             # FIXME: that's not a safe way to increase the rank for
             # multi targets
             rank += len(k) -1
@@ -2104,17 +2104,13 @@ class _Parse:
         # remove any implied features and keep the origins
         if not targets:
             self.dist_fatal("empty multi-target '()'")
-        if not all([
-            self.feature_is_exist(tar) for tar in targets
-        ]) :
+        if not all(self.feature_is_exist(tar) for tar in targets) :
             self.dist_fatal("invalid target name in multi-target", targets)
-        if not all([
-            (
+        if not all((
                 tar in self.parse_baseline_names or
                 tar in self.parse_dispatch_names
             )
-            for tar in targets
-        ]) :
+            for tar in targets) :
             return None
         targets = self.feature_ahead(targets)
         if not targets:
@@ -2133,10 +2129,8 @@ class _Parse:
                 is_base = tar in self.parse_baseline_names
             else:
                 # multi targets
-                is_base = all([
-                    f in self.parse_baseline_names
-                    for f in tar
-                ])
+                is_base = all(f in self.parse_baseline_names
+                    for f in tar)
             if is_base:
                 skipped.append(tar)
                 final_targets.remove(tar)
@@ -2197,10 +2191,8 @@ class _Parse:
             if isinstance(tar, str):
                 can = self.feature_can_autovec(tar)
             else: # multiple target
-                can = all([
-                    self.feature_can_autovec(t)
-                    for t in tar
-                ])
+                can = all(self.feature_can_autovec(t)
+                    for t in tar)
             if not can:
                 final_targets.remove(tar)
                 skipped.append(tar)

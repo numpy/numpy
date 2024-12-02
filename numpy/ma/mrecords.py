@@ -343,7 +343,7 @@ class MaskedRecords(ma.MaskedArray):
 
         """
         _names = self.dtype.names
-        fmt = "%%%is : %%s" % (max([len(n) for n in _names]) + 4,)
+        fmt = "%%%is : %%s" % (max(len(n) for n in _names) + 4,)
         reprstr = [fmt % (f, getattr(self, f)) for f in self.dtype.names]
         reprstr.insert(0, 'masked_records(')
         reprstr.extend([fmt % ('    fill_value', self.fill_value),
