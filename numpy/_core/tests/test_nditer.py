@@ -3331,9 +3331,9 @@ def test_debug_print(capfd):
     |   REDUCE Outer Strides: 40 0
     |   REDUCE Outer Ptrs:
     |   ReadTransferFn:
-    |   ReadTransferData: 0x0 0x0
+    |   ReadTransferData:
     |   WriteTransferFn:
-    |   WriteTransferData: 0x0 0x0
+    |   WriteTransferData:
     |   Buffers:
     |
     | AxisData[0]:
