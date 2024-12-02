@@ -122,6 +122,8 @@
 #define NPY_OP_ITFLAG_CAST         0x0004
 /* The operand never needs buffering (implies BUF_SINGLESTRIDE) */
 #define NPY_OP_ITFLAG_BUFNEVER     0x0008
+/* Whether the buffer filling can use a single stride (minus reduce if reduce) */
+#define NPY_OP_ITFLAG_BUF_SINGLESTRIDE 0x0010
 /* The operand is being reduced */
 #define NPY_OP_ITFLAG_REDUCE       0x0020
 /* The operand is for temporary use, does not have a backing array */
@@ -137,8 +139,6 @@
 #define NPY_OP_ITFLAG_FORCECOPY    0x0200
 /* The operand has temporary data, write it back at dealloc */
 #define NPY_OP_ITFLAG_HAS_WRITEBACK 0x0400
-/* Whether the buffer filling can use a single stride (minus reduce if reduce) */
-#define NPY_OP_ITFLAG_SINGLESTRIDE 0x0800
 
 /*
  * The data layout of the iterator is fully specified by

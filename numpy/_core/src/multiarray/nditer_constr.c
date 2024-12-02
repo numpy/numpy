@@ -2196,7 +2196,7 @@ npyiter_find_buffering_setup(NpyIter *iter)
          * If it is not a single stride, we must buffer the operand.
          */
         if (op_single_stride_dims[iop] + is_reduce_op > best_dim) {
-            NIT_OPITFLAGS(iter)[iop] |= NPY_OP_ITFLAG_SINGLESTRIDE;
+            NIT_OPITFLAGS(iter)[iop] |= NPY_OP_ITFLAG_BUF_SINGLESTRIDE;
         }
         else {
             op_is_buffered = 1;
@@ -2212,7 +2212,7 @@ npyiter_find_buffering_setup(NpyIter *iter)
              * is 0.
              */
             if (!is_reduce_op
-                    && NIT_OPITFLAGS(iter)[iop] & NPY_OP_ITFLAG_SINGLESTRIDE
+                    && NIT_OPITFLAGS(iter)[iop] & NPY_OP_ITFLAG_BUF_SINGLESTRIDE
                     && NAD_STRIDES(axisdata)[iop] == 0) {
                 /* This op is always 0 strides, so even the buffer is that. */
                 inner_stride = 0;
@@ -2247,7 +2247,7 @@ npyiter_find_buffering_setup(NpyIter *iter)
             "    inner stride: %zd\n"
             "    reduce outer stride: %zd  (if iterator uses reduce)\n",
             iop, op_is_buffered, is_reduce_op,
-            (NIT_OPITFLAGS(iter)[iop] & NPY_OP_ITFLAG_SINGLESTRIDE) != 0,
+            (NIT_OPITFLAGS(iter)[iop] & NPY_OP_ITFLAG_BUF_SINGLESTRIDE) != 0,
             inner_stride, reduce_outer_stride);
 
         NBF_STRIDES(bufferdata)[iop] = inner_stride;

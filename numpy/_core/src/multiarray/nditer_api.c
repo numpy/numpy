@@ -1570,8 +1570,8 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("VIRTUAL ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_WRITEMASKED)
             printf("WRITEMASKED ");
-        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_SINGLESTRIDE)
-            printf("SINGLESTRIDE ");
+        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_BUF_SINGLESTRIDE)
+            printf("BUF_SINGLESTRIDE ");
         printf("\n");
     }
     printf("|\n");
@@ -1950,7 +1950,7 @@ npyiter_fill_buffercopy_params(
         /* copy setup is identical to non-reduced now. */
     }
 
-    if (opitflags & NPY_OP_ITFLAG_SINGLESTRIDE) {
+    if (opitflags & NPY_OP_ITFLAG_BUF_SINGLESTRIDE) {
         /* Flatten the copy into a single stride. */
         *ndim_transfer = 1;
         *op_shape = op_transfersize;
