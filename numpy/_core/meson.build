@@ -1153,7 +1153,7 @@ src_umath = umath_gen_headers + [
   'src/umath/ufunc_type_resolution.c',
   'src/umath/clip.cpp',
   'src/umath/clip.h',
-  'src/umath/dispatching.c',
+  'src/umath/dispatching.cpp',
   'src/umath/extobj.c',
   'src/umath/legacy_array_method.c',
   'src/umath/override.c',
