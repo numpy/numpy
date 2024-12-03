@@ -53,7 +53,6 @@
 #include "arrayobject.h"
 #include "dispatching.h"
 #include "dtypemeta.h"
-// this includes "internal/pycore_lock.h" for _PyRWMutex
 #include "npy_hashtable.h"
 #include "legacy_array_method.h"
 #include "ufunc_object.h"
