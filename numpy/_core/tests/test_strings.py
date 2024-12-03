@@ -141,7 +141,7 @@ def test_large_string_coercion_error(str_dt):
         large_string = "A" * (very_large + 1)
     except Exception:
         # We may not be able to create this Python string on 32bit.
-        return
+        pytest.skip("python failed to create huge string")
 
     class MyStr:
         def __str__(self):
