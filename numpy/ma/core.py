@@ -837,7 +837,6 @@ def is_string_or_list_of_strings(val):
 ufunc_domain = {}
 ufunc_fills = {}
 
-
 class _DomainCheckInterval:
     """
     Define a valid interval, so that :
@@ -859,8 +858,8 @@ class _DomainCheckInterval:
         # nans at masked positions cause RuntimeWarnings, even though
         # they are masked. To avoid this we suppress warnings.
         with np.errstate(invalid='ignore'):
-            return umath.logical_or(umath.greater(x, self.b),
-                                    umath.less(x, self.a))
+            return umath.logical_or(np.greater(x, self.b),
+                                    np.less(x, self.a))
 
 
 class _DomainTan:
@@ -878,7 +877,7 @@ class _DomainTan:
     def __call__(self, x):
         "Executes the call behavior."
         with np.errstate(invalid='ignore'):
-            return umath.less(umath.absolute(umath.cos(x)), self.eps)
+            return np.less(umath.absolute(umath.cos(x)), self.eps)
 
 
 class _DomainSafeDivide:
@@ -915,7 +914,7 @@ class _DomainGreater:
     def __call__(self, x):
         "Executes the call behavior."
         with np.errstate(invalid='ignore'):
-            return umath.less_equal(x, self.critical_value)
+            return np.less_equal(x, self.critical_value)
 
 
 class _DomainGreaterEqual:
@@ -931,7 +930,39 @@ class _DomainGreaterEqual:
     def __call__(self, x):
         "Executes the call behavior."
         with np.errstate(invalid='ignore'):
-            return umath.less(x, self.critical_value)
+            return np.less(x, self.critical_value)
+
+
+class _DomainNotEqual:
+    """
+    DomainGreaterEqual(v)(x) is True where x == v.
+
+    """
+
+    def __init__(self, critical_value):
+        "DomainGreaterEqual(v)(x) = true where x == v"
+        self.critical_value = critical_value
+
+    def __call__(self, x):
+        "Executes the call behavior."
+        with np.errstate(invalid='ignore'):
+            return np.equal(x, self.critical_value)
+
+
+class _DomainNotIn:
+    """
+    DomainGreaterEqual(v)(x) is True where x in critical_values.
+
+    """
+
+    def __init__(self, critical_values):
+        "DomainGreaterEqual(v)(x) is True where x in critical_values."
+        self.critical_values = critical_values
+
+    def __call__(self, x):
+        "Executes the call behavior."
+        with np.errstate(invalid='ignore'):
+            return ~np.isin(x, self.critical_values)
 
 
 class _MaskedUFunc:
@@ -956,17 +987,22 @@ class _MaskedUnaryOperation(_MaskedUFunc):
         as ``_MaskedUnaryOperation.f``.
     fill : scalar, optional
         Filling value, default is 0.
-    domain : class instance
-        Domain for the function. Should be one of the ``_Domain*``
-        classes. Default is None.
+    real_domain : class instance
+        Specifies the domain for the function in the real number space.
+        It should be an instance of one of the ``_Domain*`` classes.
+        The default value is None.
+    complex_domain : class instance
+        Specifies the domain for the function in the complex number space.
+        It should be an instance of one of the ``_Domain*`` classes.
+        The default value is None.
 
     """
 
-    def __init__(self, mufunc, fill=0, domain=None):
+    def __init__(self, mufunc, fill=0, real_domain=None, complex_domain=None):
         super().__init__(mufunc)
         self.fill = fill
-        self.domain = domain
-        ufunc_domain[mufunc] = domain
+        self.domain = (real_domain, complex_domain)
+        ufunc_domain[mufunc] = self.domain
         ufunc_fills[mufunc] = fill
 
     def __call__(self, a, *args, **kwargs):
@@ -976,7 +1012,12 @@ class _MaskedUnaryOperation(_MaskedUFunc):
         """
         d = getdata(a)
         # Deal with domain
-        if self.domain is not None:
+        is_complex = isinstance(d, (complex, np.complexfloating))
+        if self.domain is None:
+            domain = None
+        else:
+            domain = self.domain[1] if is_complex else self.domain[0]
+        if domain is not None:
             # Case 1.1. : Domained function
             # nans at masked positions cause RuntimeWarnings, even though
             # they are masked. To avoid this we suppress warnings.
@@ -984,7 +1025,7 @@ class _MaskedUnaryOperation(_MaskedUFunc):
                 result = self.f(d, *args, **kwargs)
             # Make a mask
             m = ~umath.isfinite(result)
-            m |= self.domain(d)
+            m |= domain(d)
             m |= getmask(a)
         else:
             # Case 1.2. : Function without a domain
@@ -1174,7 +1215,7 @@ class _DomainedBinaryOperation(_MaskedUFunc):
 
     Parameters
     ----------
-    mbfunc : function
+    dbfunc : function
         The function for which to define a masked version. Made available
         as ``_DomainedBinaryOperation.f``.
     domain : class instance
@@ -1187,15 +1228,16 @@ class _DomainedBinaryOperation(_MaskedUFunc):
 
     """
 
-    def __init__(self, dbfunc, domain, fillx=0, filly=0):
+    def __init__(self, dbfunc, real_domain, complex_domain,
+                 fillx=0, filly=0):
         """abfunc(fillx, filly) must be defined.
            abfunc(x, filly) = x for all x to enable reduce.
         """
         super().__init__(dbfunc)
-        self.domain = domain
+        self.domain = (real_domain, complex_domain)
         self.fillx = fillx
         self.filly = filly
-        ufunc_domain[dbfunc] = domain
+        ufunc_domain[dbfunc] = self.domain
         ufunc_fills[dbfunc] = (fillx, filly)
 
     def __call__(self, a, b, *args, **kwargs):
@@ -1210,7 +1252,13 @@ class _DomainedBinaryOperation(_MaskedUFunc):
         m |= getmask(a)
         m |= getmask(b)
         # Apply the domain
-        domain = ufunc_domain.get(self.f, None)
+        domain = self.domain
+        is_complex = (isinstance(da, (complex, np.complexfloating)) or
+                      isinstance(da, (complex, np.complexfloating)))
+        if self.domain is None:
+            domain = None
+        else:
+            domain = self.domain[1] if is_complex else self.domain[0]
         if domain is not None:
             m |= domain(da, db)
         # Take care of the scalar case first
@@ -1264,13 +1312,13 @@ logical_not = _MaskedUnaryOperation(umath.logical_not)
 sqrt = _MaskedUnaryOperation(umath.sqrt, 0.0,
                              _DomainGreaterEqual(0.0))
 log = _MaskedUnaryOperation(umath.log, 1.0,
-                            _DomainGreater(0.0))
+                            _DomainGreater(0.0), _DomainNotEqual(0.0))
 log2 = _MaskedUnaryOperation(umath.log2, 1.0,
-                             _DomainGreater(0.0))
+                             _DomainGreater(0.0), _DomainNotEqual(0.0))
 log10 = _MaskedUnaryOperation(umath.log10, 1.0,
-                              _DomainGreater(0.0))
+                              _DomainGreater(0.0), _DomainNotEqual(0.0))
 tan = _MaskedUnaryOperation(umath.tan, 0.0,
-                            _DomainTan(1e-35))
+                            _DomainTan(1e-35), _DomainTan(1e-35))
 arcsin = _MaskedUnaryOperation(umath.arcsin, 0.0,
                                _DomainCheckInterval(-1.0, 1.0))
 arccos = _MaskedUnaryOperation(umath.arccos, 0.0,
@@ -1278,7 +1326,8 @@ arccos = _MaskedUnaryOperation(umath.arccos, 0.0,
 arccosh = _MaskedUnaryOperation(umath.arccosh, 1.0,
                                 _DomainGreaterEqual(1.0))
 arctanh = _MaskedUnaryOperation(umath.arctanh, 0.0,
-                                _DomainCheckInterval(-1.0 + 1e-15, 1.0 - 1e-15))
+                                _DomainCheckInterval(-1.0 + 1e-15, 1.0 - 1e-15),
+                                _DomainNotIn((1.0, -1.0)))
 
 # Binary ufuncs
 add = _MaskedBinaryOperation(umath.add)
@@ -1308,15 +1357,18 @@ bitwise_xor = _MaskedBinaryOperation(umath.bitwise_xor)
 hypot = _MaskedBinaryOperation(umath.hypot)
 
 # Domained binary ufuncs
-divide = _DomainedBinaryOperation(umath.divide, _DomainSafeDivide(), 0, 1)
-true_divide = _DomainedBinaryOperation(umath.true_divide,
+divide = _DomainedBinaryOperation(umath.divide, _DomainSafeDivide(),
+                                  _DomainSafeDivide(), 0, 1)
+true_divide = _DomainedBinaryOperation(umath.true_divide, _DomainSafeDivide(),
                                        _DomainSafeDivide(), 0, 1)
-floor_divide = _DomainedBinaryOperation(umath.floor_divide,
+floor_divide = _DomainedBinaryOperation(umath.floor_divide, _DomainSafeDivide(),
                                         _DomainSafeDivide(), 0, 1)
-remainder = _DomainedBinaryOperation(umath.remainder,
+remainder = _DomainedBinaryOperation(umath.remainder, _DomainSafeDivide(),
                                      _DomainSafeDivide(), 0, 1)
-fmod = _DomainedBinaryOperation(umath.fmod, _DomainSafeDivide(), 0, 1)
-mod = _DomainedBinaryOperation(umath.mod, _DomainSafeDivide(), 0, 1)
+fmod = _DomainedBinaryOperation(umath.fmod, _DomainSafeDivide(),
+                                _DomainSafeDivide(), 0, 1)
+mod = _DomainedBinaryOperation(umath.mod, _DomainSafeDivide(),
+                               _DomainSafeDivide(), 0, 1)
 
 
 ###############################################################################
@@ -3159,7 +3211,12 @@ class MaskedArray(ndarray):
             input_args = args[:func.nin]
             m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
+            is_complex = np.issubdtype(self.dtype, np.complexfloating)
             domain = ufunc_domain.get(func)
+            if domain is None:
+                domain = None
+            else:
+                domain = domain[1] if is_complex else domain[0]
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
                 with np.errstate(divide='ignore', invalid='ignore'):
