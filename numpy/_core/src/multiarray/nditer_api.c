@@ -1857,7 +1857,6 @@ npyiter_fill_buffercopy_params(
      * NOTE: Except the transfersize itself everything here is fixed
      *       and we could create it once early on.
      */
-    static npy_intp zero = 0;  // TODO: better way?
     *ndim_transfer = ndim;
     *op_transfersize = transfersize;
 
@@ -1873,7 +1872,7 @@ npyiter_fill_buffercopy_params(
         *buf_stride = NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop];
 
         *op_shape = op_transfersize;
-        *op_coords = &zero;
+        assert(*op_coords == 0);  /* initialized by caller currently */
         *op_strides = &NAD_STRIDES(outer_axisdata)[iop];
         return;
     }
@@ -1898,7 +1897,7 @@ npyiter_fill_buffercopy_params(
         /* Flatten the copy into a single stride. */
         *ndim_transfer = 1;
         *op_shape = op_transfersize;
-        *op_coords = &zero;
+        assert(*op_coords == 0);  /* initialized by caller currently */
         *op_strides = &NAD_STRIDES(axisdata)[iop];
         if ((*op_strides)[0] == 0) {
             *op_transfersize = 1;
@@ -1979,11 +1978,12 @@ npyiter_copy_from_buffers(NpyIter *iter)
             NPY_IT_DBG_PRINT1("Iterator: Operand %d was buffered\n",
                                         (int)iop);
 
+            npy_intp zero = 0;  /* used as coord for 1-D copies */
             int ndim_transfer;
             npy_intp op_transfersize;
             npy_intp src_stride;
             npy_intp *dst_strides;
-            npy_intp *dst_coords;
+            npy_intp *dst_coords = &zero;
             npy_intp *dst_shape;
 
             npyiter_fill_buffercopy_params(nop, iop, ndim, op_itflags[iop],
@@ -2191,11 +2191,12 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
             NIT_OPITFLAGS(iter)[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
         }
 
+        npy_intp zero = 0;  /* used as coord for 1-D copies */
         int ndim_transfer;
         npy_intp op_transfersize;
         npy_intp dst_stride;
         npy_intp *src_strides;
-        npy_intp *src_coords;
+        npy_intp *src_coords = &zero;
         npy_intp *src_shape;
         npy_intp src_itemsize = PyArray_DTYPE(operands[iop])->elsize;
 
