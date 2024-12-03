@@ -1872,7 +1872,7 @@ npyiter_fill_buffercopy_params(
         *buf_stride = NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop];
 
         *op_shape = op_transfersize;
-        assert(*op_coords == 0);  /* initialized by caller currently */
+        assert(**op_coords == 0);  /* initialized by caller currently */
         *op_strides = &NAD_STRIDES(outer_axisdata)[iop];
         return;
     }
@@ -1897,7 +1897,7 @@ npyiter_fill_buffercopy_params(
         /* Flatten the copy into a single stride. */
         *ndim_transfer = 1;
         *op_shape = op_transfersize;
-        assert(*op_coords == 0);  /* initialized by caller currently */
+        assert(**op_coords == 0);  /* initialized by caller currently */
         *op_strides = &NAD_STRIDES(axisdata)[iop];
         if ((*op_strides)[0] == 0) {
             *op_transfersize = 1;
