@@ -1948,8 +1948,9 @@ operand_different_than_broadcast: {
  *    then do a normal 1-D loop on those buffers (or operands).
  * 2. The "reduce" mode.  In reduce mode (ITFLAG_REDUCE) we internally use a
  *    a double iteration where:
- *      - One outer iteration with stride == 0 and a single stride core != 0.
- *      - One outer iteration with stride != 0 and a core of strides == 0.
+ *      - One outer iteration with stride == 0 and a core with at least one
+ *        stride != 0 (all of them if this is a reduce operand).
+ *      - One outer iteration with stride != 0 and a core of all strides == 0.
  *    This setup allows filling the buffer with only the stride != 0 and then
  *    doing the double loop on the buffer (either ).
  *
@@ -1957,6 +1958,20 @@ operand_different_than_broadcast: {
  * reading it is OK if the buffer holds duplicates.
  * The reason for the reduce mode is that it allows for a larger core size.
  * If we use the reduce-mode, we can apply it also to read-only operands.
+ *
+ * The functino here finds an outer dimension and it's "core" to use that
+ * works with reductions.
+ * While iterating, we will buffer while making sure that:
+ *   - Never buffer beyond the outer dimension (optimize chance of re-use).
+ *   - Never buffer beyond the end of the core (all but outer dimension)
+ *     if the user manually set the iterator to the middle of the core.
+ *
+ * These two things mean that the buffer always looks the same, although it
+ * may be smaller and it also means that we can optimize buffer copies for
+ * the inner-sizes.
+ * (In the original version, the buffersize was always fully used for non
+ * reductions, which meant a lot of work on each buffer copy, less buffer
+ * re-use, and no fixed-strides into the buffer.)
  *
  * Best buffer and core size
  * -------------------------
@@ -1971,7 +1986,8 @@ operand_different_than_broadcast: {
  *     is needed).
  *     NOTE: We could tweak this, it is not optimized/proven to be best.
  *
- * NOTE: The function does not attempt 
+ * In theory, the reduction axis could also span multiple axes, but we do
+ * not try to discover this.
  */
 static void
 npyiter_find_buffering_setup(NpyIter *iter)
@@ -3395,7 +3411,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
         /*
          * Reduce operands buffer the outer stride if it is nonzero; compare
          * `npyiter_fill_buffercopy_params`.
-         * (Inner strides cannot _all_ be zero if the outer is, but some can be.)
+         * (Inner strides cannot _all_ be zero if the outer is, but some.)
          */
         if ((op_itflags[iop] & NPY_OP_ITFLAG_REDUCE) && reduce_strides[iop] != 0) {
             op_stride = reduce_strides[iop];
