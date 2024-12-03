@@ -911,11 +911,12 @@ promote_and_get_info_and_ufuncimpl_with_locking(
         PyArray_DTypeMeta *op_dtypes[],
         npy_bool legacy_promotion_is_possible)
 {
-    ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->lock_shared();
+    std::shared_mutex *mutex = ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+    mutex->lock_shared();
     PyObject *info = PyArrayIdentityHash_GetItem(
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
-    ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->unlock_shared();
+    mutex->unlock_shared();
 
     if (info != NULL && PyObject_TypeCheck(
                     PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
@@ -925,10 +926,10 @@ promote_and_get_info_and_ufuncimpl_with_locking(
 
     // cache miss, need to acquire a write lock and recursively calculate the
     // correct dispatch resolution
-    ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->lock();
+    mutex->lock();
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-    ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->unlock();
+    mutex->unlock();
 
     return info;
 }
