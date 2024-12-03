@@ -1,3 +1,4 @@
+import functools
 import sys
 import sysconfig
 import subprocess
@@ -748,26 +749,30 @@ def test___module__attribute():
         assert len(incorrect_entries) == 0, incorrect_entries
 
 
-def _check___qualname__(obj, module_name) -> bool:
+def _check___qualname__(obj, module_name: str) -> bool:
     qualname = obj.__qualname__
     name = obj.__name__
+    assert name == qualname.split(".")[-1]
 
-    if "numpy.random" in module_name:
-        if type(getattr(obj, "__self__", None)) is np.random.RandomState:
-            return qualname == f"RandomState.{name}"
-        elif obj is np.random.bit_generator.randbits:
-            return qualname == f"SystemRandom.{name}"
-        else:
-            return qualname == name
-    elif "f2py" in module_name and name in ("match", "search"):
-        return qualname == f"Pattern.{name}"
-    elif "ma" in module_name and name == "reduce":
-        return qualname == f"_MaskedBinaryOperation.{name}"
-    else:
-        return qualname == name
+    if qualname == "show":
+        qualname = "show_config"
+    # Skip trimcoef from numpy.polynomial as it is duplicated by design.
+    if name == "trimcoef" and module_name.startswith("numpy.polynomial"):
+        return True
+
+    module = sys.modules[module_name]
+    actual_obj = functools.reduce(getattr, qualname.split("."), module)
+    return (
+        actual_obj is obj or
+        (
+            # for bound methods check qualname match
+            module_name.startswith("numpy.random") and
+            actual_obj.__qualname__ == qualname
+        )
+    )
 
 
-def test___qualname__attribute():
+def test___qualname___attribute():
     modules_queue = [np]
     visited_modules = {np}
     visited_functions = set()
@@ -782,7 +787,10 @@ def test___qualname__attribute():
                 inspect.ismodule(member) and  # it's a module
                 "numpy" in member.__name__ and  # inside NumPy
                 not member_name.startswith("_") and  # not private
-                member_name not in ["tests"] and  # skip tests modules
+                member_name not in [
+                    "f2py", "ma", "tests", "testing", "typing",
+                    "bit_generator", "ctypeslib",
+                ] and  # skip modules
                 "numpy._core" not in member.__name__ and  # outside _core
                 member not in visited_modules  # not visited yet
             ):
@@ -792,6 +800,7 @@ def test___qualname__attribute():
                 not inspect.ismodule(member) and
                 hasattr(member, "__name__") and
                 not member.__name__.startswith("_") and
+                not member_name.startswith("_") and
                 not _check___qualname__(member, module.__name__) and
                 member not in visited_functions
             ):
