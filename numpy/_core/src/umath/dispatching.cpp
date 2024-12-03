@@ -904,7 +904,8 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
  * only acquires a write lock on a cache miss to fill the cache
  */
 static inline PyObject *
-try_promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
+promote_and_get_info_and_ufuncimpl_with_locking(
+        PyUFuncObject *ufunc,
         PyArrayObject *const ops[],
         PyArray_DTypeMeta *signature[],
         PyArray_DTypeMeta *op_dtypes[],
@@ -1022,7 +1023,7 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
     }
 
 #ifdef Py_GIL_DISABLED
-    PyObject *info = try_promote_and_get_info_and_ufuncimpl(ufunc,
+    PyObject *info = promote_and_get_info_and_ufuncimpl_with_locking(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
 #else
     PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
