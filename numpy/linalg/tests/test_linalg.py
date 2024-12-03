@@ -21,7 +21,7 @@ from numpy.linalg._linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, suppress_warnings,
-    assert_raises_regex, HAS_LAPACK64, IS_WASM
+    assert_raises_regex, HAS_LAPACK64, IS_WASM, NOGIL_BUILD,
     )
 try:
     import numpy.linalg.lapack_lite
@@ -1944,9 +1944,13 @@ def test_generalized_raise_multiloop():
 
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
 
+
 @pytest.mark.skipif(
     threading.active_count() > 1,
     reason="skipping test that uses fork because there are multiple threads")
+@pytest.mark.skipif(
+    NOGIL_BUILD,
+    reason="Cannot safely use fork in tests on the free-threaded build")
 def test_xerbla_override():
     # Check that our xerbla has been successfully linked in. If it is not,
     # the default xerbla routine is called, which prints a message to stdout
