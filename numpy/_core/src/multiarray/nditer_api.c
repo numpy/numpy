@@ -1326,8 +1326,10 @@ NpyIter_GetAxisStrideArray(NpyIter *iter, int axis)
 
 /*NUMPY_API
  * Get an array of strides which are fixed.  Any strides which may
- * change during iteration receive the value NPY_MAX_INTP.  Once
- * the iterator is ready to iterate, call this to get the strides
+ * change during iteration receive the value NPY_MAX_INTP
+ * (as of NumPy 2.3, `NPY_MAX_INTP` will never happen but must be supported;
+ * we could guarantee this, but not sure if we should).
+ * Once the iterator is ready to iterate, call this to get the strides
  * which will always be fixed in the inner loop, then choose optimized
  * inner loop functions which take advantage of those fixed strides.
  *
@@ -1337,75 +1339,16 @@ NPY_NO_EXPORT void
 NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
-    int ndim = NIT_NDIM(iter);
-    int iop, nop = NIT_NOP(iter);
+    int nop = NIT_NOP(iter);
 
     NpyIter_AxisData *axisdata0 = NIT_AXISDATA(iter);
-    npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
     if (itflags&NPY_ITFLAG_BUFFER) {
-        NpyIter_BufferData *data = NIT_BUFFERDATA(iter);
-        npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
-        npy_intp stride, *strides = NBF_STRIDES(data),
-                *ad_strides = NAD_STRIDES(axisdata0);
-        PyArray_Descr **dtypes = NIT_DTYPES(iter);
-
-        for (iop = 0; iop < nop; ++iop) {
-            stride = strides[iop];
-            /*
-             * Operands which are always/never buffered have fixed strides,
-             * and everything has fixed strides when ndim is 0 or 1
-             */
-            if (ndim <= 1 || (op_itflags[iop]&
-                            (NPY_OP_ITFLAG_CAST|NPY_OP_ITFLAG_BUFNEVER))) {
-                out_strides[iop] = stride;
-            }
-            /* If it's a reduction, 0-stride inner loop may have fixed stride */
-            else if (stride == 0 && (itflags&NPY_ITFLAG_REDUCE)) {
-                /* If it's a reduction operand, definitely fixed stride */
-                if (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) {
-                    out_strides[iop] = stride;
-                }
-                /*
-                 * Otherwise it's guaranteed to be a fixed stride if the
-                 * stride is 0 for all the dimensions.
-                 */
-                else {
-                    NpyIter_AxisData *axisdata = axisdata0;
-                    int idim;
-                    for (idim = 0; idim < ndim; ++idim) {
-                        if (NAD_STRIDES(axisdata)[iop] != 0) {
-                            break;
-                        }
-                        NIT_ADVANCE_AXISDATA(axisdata, 1);
-                    }
-                    /* If all the strides were 0, the stride won't change */
-                    if (idim == ndim) {
-                        out_strides[iop] = stride;
-                    }
-                    else {
-                        out_strides[iop] = NPY_MAX_INTP;
-                    }
-                }
-            }
-            /*
-             * Inner loop contiguous array means its stride won't change when
-             * switching between buffering and not buffering
-             */
-            else if (ad_strides[iop] == dtypes[iop]->elsize) {
-                out_strides[iop] = ad_strides[iop];
-            }
-            /*
-             * Otherwise the strides can change if the operand is sometimes
-             * buffered, sometimes not.
-             */
-            else {
-                out_strides[iop] = NPY_MAX_INTP;
-            }
-        }
+        /* If there is buffering we wrote the strides into the bufferdata. */
+        memcpy(out_strides, NBF_STRIDES(NIT_BUFFERDATA(iter)), nop*NPY_SIZEOF_INTP);
     }
     else {
-        /* If there's no buffering, the strides are always fixed */
+        /* If there's no buffering, the strides come from the operands. */
         memcpy(out_strides, NAD_STRIDES(axisdata0), nop*NPY_SIZEOF_INTP);
     }
 }
