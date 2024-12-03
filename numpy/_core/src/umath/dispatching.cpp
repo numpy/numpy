@@ -38,6 +38,9 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
+#include <mutex>
+#include <shared_mutex>
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <convert_datatype.h>
@@ -908,13 +911,13 @@ try_promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         npy_bool legacy_promotion_is_possible)
 {
 #ifdef Py_GIL_DISABLED
-    _PyRWMutex_RLock(&((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+    ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->lock_shared();
 #endif
     PyObject *info = PyArrayIdentityHash_GetItem(
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
 #ifdef Py_GIL_DISABLED
-    _PyRWMutex_RUnlock(&((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+    ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->unlock_shared();
 #endif
 
     if (info != NULL && PyObject_TypeCheck(
@@ -923,18 +926,16 @@ try_promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         return info;
     }
 
-    // cache miss, need to acquire a write lock and recursively calculate the correct
-    // dispatch resolution
-
+    // cache miss, need to acquire a write lock and recursively calculate the
+    // correct dispatch resolution
 #ifdef Py_GIL_DISABLED
-    _PyRWMutex_Lock(&((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+    ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->lock();
 #endif
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
 #ifdef Py_GIL_DISABLED
-    _PyRWMutex_Unlock(&((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+    ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->unlock();
 #endif
-
 
     return info;
 }

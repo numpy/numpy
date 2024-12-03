@@ -2,9 +2,6 @@
 #define NUMPY_CORE_SRC_COMMON_NPY_NPY_HASHTABLE_H_
 
 #include <Python.h>
-// For _PyRWMutex
-#define Py_BUILD_CORE
-#include "internal/pycore_lock.h"
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #include "numpy/ndarraytypes.h"
@@ -21,7 +18,7 @@ typedef struct {
     npy_intp size;  /* current size */
     npy_intp nelem;  /* number of elements */
 #ifdef Py_GIL_DISABLED
-    _PyRWMutex mutex;
+    void *mutex;
 #endif
 } PyArrayIdentityHash;
 
