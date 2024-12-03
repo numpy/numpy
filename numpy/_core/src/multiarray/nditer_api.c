@@ -1863,8 +1863,9 @@ npyiter_fill_buffercopy_params(
 
     if ((opitflags & NPY_OP_ITFLAG_REDUCE) && (NAD_STRIDES(outer_axisdata)[iop] != 0)) {
         /*
-         * Reduce with inner stride ==0 (outer !=0), we buffer the outer stride
-         * which also means buffering only outersize items.
+         * Reduce with all inner strides ==0 (outer !=0).  We buffer the outer
+         * stride which also means buffering only outersize items.
+         * (If the outer stride is 0, some inner ones are guaranteed nonzero.)
          */
         assert(NAD_STRIDES(axisdata)[iop] == 0);
         *ndim_transfer = 1;

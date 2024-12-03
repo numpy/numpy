@@ -3381,19 +3381,28 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     npy_intp *strides = NAD_STRIDES(axisdata), op_stride;
     NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
 
+    npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+    NpyIter_AxisData *reduce_axisdata = NIT_INDEX_AXISDATA(axisdata, bufferdata->outerdim);
+    npy_intp *reduce_strides = NAD_STRIDES(reduce_axisdata);
+
     /* combined cast flags, the new cast flags for each cast: */
     NPY_ARRAYMETHOD_FLAGS cflags = PyArrayMethod_MINIMAL_FLAGS;
     NPY_ARRAYMETHOD_FLAGS nc_flags;
 
     for (iop = 0; iop < nop; ++iop) {
         npyiter_opitflags flags = op_itflags[iop];
+
         /*
-         * Reduction operands may be buffered with a different stride,
-         * so we must pass NPY_MAX_INTP to the transfer function factory.
+         * Reduce operands buffer the outer stride if it is nonzero; compare
+         * `npyiter_fill_buffercopy_params`.
+         * (Inner strides cannot _all_ be zero if the outer is, but some can be.)
          */
-        // TODO: This should not be the case anymore!?  (was it ever?!?)
-        op_stride = (flags & NPY_OP_ITFLAG_REDUCE) ? NPY_MAX_INTP :
-                                                   strides[iop];
+        if ((op_itflags[iop] & NPY_OP_ITFLAG_REDUCE) && reduce_strides[iop] != 0) {
+            op_stride = reduce_strides[iop];
+        }
+        else {
+            op_stride = strides[iop];
+        }
 
         /*
          * If we have determined that a buffer may be needed,
