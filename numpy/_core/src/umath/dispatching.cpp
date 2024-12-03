@@ -897,6 +897,7 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     return info;
 }
 
+#ifdef Py_GIL_DISABLED
 /*
  * Fast path for promote_and_get_info_and_ufuncimpl.
  * Acquires a read lock to check for a cache hit and then
@@ -909,15 +910,11 @@ try_promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         PyArray_DTypeMeta *op_dtypes[],
         npy_bool legacy_promotion_is_possible)
 {
-#ifdef Py_GIL_DISABLED
     ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->lock_shared();
-#endif
     PyObject *info = PyArrayIdentityHash_GetItem(
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
-#ifdef Py_GIL_DISABLED
     ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->unlock_shared();
-#endif
 
     if (info != NULL && PyObject_TypeCheck(
                     PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
@@ -927,18 +924,14 @@ try_promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
 
     // cache miss, need to acquire a write lock and recursively calculate the
     // correct dispatch resolution
-#ifdef Py_GIL_DISABLED
     ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->lock();
-#endif
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-#ifdef Py_GIL_DISABLED
     ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex)->unlock();
-#endif
 
     return info;
 }
-
+#endif
 
 /**
  * The central entry-point for the promotion and dispatching machinery.
@@ -1028,8 +1021,13 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
+#ifdef Py_GIL_DISABLED
     PyObject *info = try_promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
+#else
+    PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
+            ops, signature, op_dtypes, legacy_promotion_is_possible);
+#endif
 
     if (info == NULL) {
         goto handle_error;
