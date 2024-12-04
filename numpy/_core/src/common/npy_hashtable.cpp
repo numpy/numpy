@@ -111,7 +111,12 @@ PyArrayIdentityHash_New(int key_len)
     }
 
 #ifdef Py_GIL_DISABLED
-    res->mutex = new std::shared_mutex();
+    res->mutex = new(std::nothrow) std::shared_mutex();
+    if (res->mutex == nullptr) {
+        PyErr_NoMemory();
+        PyMem_Free(res);
+        return NULL;
+    }
 #endif
     return res;
 }
