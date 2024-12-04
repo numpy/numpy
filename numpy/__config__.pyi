@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from enum import Enum
 from types import ModuleType
 from typing import Final, Literal as L, TypedDict, overload, type_check_only
@@ -82,7 +81,7 @@ _ConfigDict = TypedDict(
 
 ###
 
-__all__: Final[Sequence[str]] = ["show_config"]
+__all__ = ["show_config"]
 
 CONFIG: Final[_ConfigDict] = ...
 
