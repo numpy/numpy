@@ -522,22 +522,15 @@ NPY_NO_EXPORT void
         // stride for second argument is 0
         BINARY_DEFS
         const @type@ in2 = *(@type@ *)ip2;
-        #if @SIGNED@
-            if (in2 < 0) {
-                npy_gil_error(PyExc_ValueError,
-                              "Integers to negative integer powers are not allowed.");
-                return;
-            }
-        #endif
 
-        int first_bit = in2 & 1;
-        @type@ in2start = in2 >> 1;
+        @type@ in2_working = in2;
+        int first_bit = in2_working & 1;
+        in2_working >>= 1;
 
         BINARY_LOOP_SLIDING {
             @type@ in1 = *(@type@ *)ip1;
-
-            if (_@TYPE@_power_fast_path_helper(in1, in2start, (@type@ *)op1) != 0) {
-                *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2start, first_bit);
+            if (_@TYPE@_power_fast_path_helper(in1, in2, (@type@ *)op1) != 0) {
+                *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2_working, first_bit);
             }
         }
         return;
@@ -545,11 +538,12 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         @type@ in1 = *(@type@ *)ip1;
         @type@ in2 = *(@type@ *)ip2;
+        @type@ in2_working = in2;
 
         if (_@TYPE@_power_fast_path_helper(in1, in2, (@type@ *)op1) != 0) {
-            int first_bit = in2 & 1;
-            in2 >>= 1;
-            *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2, first_bit);
+            int first_bit = in2_working & 1;
+            in2_working >>= 1;
+            *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2_working, first_bit);
         }
     }
 }
