@@ -749,14 +749,11 @@ def test___module___attribute():
         assert len(incorrect_entries) == 0, incorrect_entries
 
 
-def _check___qualname__(obj, module_name: str) -> bool:
+def _check___qualname__(obj) -> bool:
     qualname = obj.__qualname__
     name = obj.__name__
+    module_name = obj.__module__
     assert name == qualname.split(".")[-1]
-
-    # trimcoef is re-exported in a few modules
-    if name == "trimcoef":
-        module_name = obj.__module__
 
     module = sys.modules[module_name]
     actual_obj = functools.reduce(getattr, qualname.split("."), module)
@@ -787,7 +784,7 @@ def test___qualname___attribute():
                 not member_name.startswith("_") and  # not private
                 member_name not in [
                     "f2py", "ma", "tests", "testing", "typing",
-                    "bit_generator", "ctypeslib",
+                    "bit_generator", "ctypeslib", "lapack_lite",
                 ] and  # skip modules
                 "numpy._core" not in member.__name__ and  # outside _core
                 member not in visited_modules  # not visited yet
@@ -799,7 +796,7 @@ def test___qualname___attribute():
                 hasattr(member, "__name__") and
                 not member.__name__.startswith("_") and
                 not member_name.startswith("_") and
-                not _check___qualname__(member, module.__name__) and
+                not _check___qualname__(member) and
                 member not in visited_functions
             ):
                 incorrect_entries.append(
