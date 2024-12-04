@@ -643,9 +643,17 @@ string_addition_resolve_descriptors(
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
-    /* NOTE: elsize is large enough now, but too much code still uses ints */
-    if (given_descrs[0]->elsize + given_descrs[1]->elsize > NPY_MAX_INT) {
-        PyErr_SetString(PyExc_TypeError, "Result string too large.");
+    npy_intp result_itemsize = given_descrs[0]->elsize + given_descrs[1]->elsize;
+
+    /* NOTE: elsize can fit more than MAX_INT, but some code may still use ints */
+    if (result_itemsize > NPY_MAX_INT || result_itemsize < 0) {
+            npy_intp length = result_itemsize;
+            if (given_descrs[0]->type == NPY_UNICODE) {
+                length /= 4;
+            }
+            PyErr_Format(PyExc_TypeError,
+                    "addition result string of length %zd is too large to store inside array.",
+                    length);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 

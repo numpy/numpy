@@ -77,8 +77,8 @@ PyArray_DTypeFromObjectStringDiscovery(
         }
         if (itemsize > NPY_MAX_INT) {
             /* We can allow this, but should audit code paths before we do. */
-            PyErr_SetString(PyExc_TypeError,
-                    "string too large to store inside array.");
+            PyErr_Format(PyExc_TypeError,
+                    "string of length %zd is too large to store inside array.", itemsize);
             return NULL;
         }
     }
@@ -93,8 +93,8 @@ PyArray_DTypeFromObjectStringDiscovery(
             return NULL;
         }
         if (itemsize > NPY_MAX_INT / 4) {
-            PyErr_SetString(PyExc_TypeError,
-                    "string too large to store inside array.");
+            PyErr_Format(PyExc_TypeError,
+                    "string of length %zd is too large to store inside array.", itemsize);
             return NULL;
         }
         itemsize *= 4;  /* convert UCS4 codepoints to bytes */
