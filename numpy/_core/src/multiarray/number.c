@@ -328,6 +328,62 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
     return res;
 }
 
+static int
+fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
+{
+    if (!PyArray_Check(o1)) {
+        return -1;
+    }
+
+    PyArrayObject *a1 = (PyArrayObject *)o1;
+    if (PyArray_ISOBJECT(a1)) {
+        return -1;
+    }
+
+    PyObject *fastop = NULL;
+    if (PyLong_CheckExact(o2)) {
+        long exp = PyLong_AsLong(o2);
+        if (error_converting(exp)) {
+            PyErr_Clear();
+        }
+
+        if (exp == -1) {
+            fastop = n_ops.reciprocal;
+        }
+        else if (exp == 2) {
+            fastop = n_ops.square;
+        }
+        else {
+            return -1;
+        }
+    }
+    else if (PyFloat_CheckExact(o2)) {
+        double exp = PyFloat_AsDouble(o2);
+        if (error_converting(exp)) {
+            PyErr_Clear();
+        }
+
+        if (exp == 0.5) {
+            fastop = n_ops.sqrt;
+        }
+        else {
+            return -1;
+        }
+    }
+    else {
+        return -1;
+    }
+
+    if (inplace || can_elide_temp_unary(a1)) {
+        *result = PyArray_GenericInplaceUnaryFunction(a1, fastop);
+    }
+    else {
+        *result = PyArray_GenericUnaryFunction(a1, fastop);
+    }
+
+    return 0;
+}
+
 static PyObject *
 array_power(PyObject *a1, PyObject *o2, PyObject *modulo)
 {
@@ -340,7 +396,9 @@ array_power(PyObject *a1, PyObject *o2, PyObject *modulo)
     }
 
     BINOP_GIVE_UP_IF_NEEDED(a1, o2, nb_power, array_power);
-    value = PyArray_GenericBinaryFunction(a1, o2, n_ops.power);
+    if (fast_scalar_power(a1, o2, 0, &value) != 0) {
+        value = PyArray_GenericBinaryFunction(a1, o2, n_ops.power);
+    }
     return value;
 }
 
@@ -480,7 +538,9 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
 
     INPLACE_GIVE_UP_IF_NEEDED(
             a1, o2, nb_inplace_power, array_inplace_power);
-    value = PyArray_GenericInplaceBinaryFunction(a1, o2, n_ops.power);
+    if (fast_scalar_power((PyObject *) a1, o2, 1, &value) != 0) {
+        value = PyArray_GenericInplaceBinaryFunction(a1, o2, n_ops.power);
+    }
     return value;
 }
 
