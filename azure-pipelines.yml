@@ -44,7 +44,7 @@ stages:
     steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '3.10'
+        versionSpec: '3.11'
         addToPath: true
         architecture: 'x64'
     - script: >-
@@ -57,7 +57,7 @@ stages:
       displayName: 'Run Lint Checks'
       failOnStderr: true
 
-  - job: Linux_Python_310_32bit_full_with_asserts
+  - job: Linux_Python_311_32bit_full_with_asserts
     pool:
       vmImage: 'ubuntu-20.04'
     steps:
@@ -78,23 +78,24 @@ stages:
     strategy:
       maxParallel: 3
       matrix:
-          Python310-64bit-fast:
-            PYTHON_VERSION: '3.10'
+          Python311-64bit-fast:
+            PYTHON_VERSION: '3.11'
             PYTHON_ARCH: 'x64'
             TEST_MODE: fast
             BITS: 64
-          Python311-64bit-full:
-            PYTHON_VERSION: '3.11'
+          Python312-64bit-full:
+            PYTHON_VERSION: '3.12'
             PYTHON_ARCH: 'x64'
             TEST_MODE: full
             BITS: 64
             _USE_BLAS_ILP64: '1'
-          PyPy310-64bit-fast:
-            PYTHON_VERSION: 'pypy3.10'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: fast
-            BITS: 64
-            _USE_BLAS_ILP64: '1'
+# TODO pypy: uncomment when pypy3.11 comes out
+#          PyPy310-64bit-fast:
+#            PYTHON_VERSION: 'pypy3.10'
+#            PYTHON_ARCH: 'x64'
+#            TEST_MODE: fast
+#            BITS: 64
+#            _USE_BLAS_ILP64: '1'
 
     steps:
     - template: azure-steps-windows.yml
