@@ -493,7 +493,7 @@ _@TYPE@_power_fast_path_helper(@type@ in1, @type@ in2, @type@ *op1) {
         if (in2 < 0) {
             npy_gil_error(PyExc_ValueError,
                             "Integers to negative integer powers are not allowed.");
-            return;
+            return 0;
         }
     #endif
     if (in1 == 1) {
