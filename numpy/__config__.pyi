@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from enum import Enum
 from types import ModuleType
 from typing import Final, Literal as L, TypedDict, overload, type_check_only
@@ -81,7 +82,7 @@ _ConfigDict = TypedDict(
 
 ###
 
-__all__ = ["show"]
+__all__: Final[Sequence[str]] = ["show_config"]
 
 CONFIG: Final[_ConfigDict] = ...
 
@@ -95,3 +96,8 @@ def _check_pyyaml() -> ModuleType: ...
 def show(mode: L["stdout"] = "stdout") -> None: ...
 @overload
 def show(mode: L["dicts"]) -> _ConfigDict: ...
+
+@overload
+def show_config(mode: L["stdout"] = "stdout") -> None: ...
+@overload
+def show_config(mode: L["dicts"]) -> _ConfigDict: ...

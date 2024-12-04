@@ -682,7 +682,7 @@ def test_functions_single_location():
     assert len(duplicated_functions) == 0, duplicated_functions
 
 
-def test___module__attribute():
+def test___module___attribute():
     modules_queue = [np]
     visited_modules = {np}
     visited_functions = set()
@@ -754,11 +754,9 @@ def _check___qualname__(obj, module_name: str) -> bool:
     name = obj.__name__
     assert name == qualname.split(".")[-1]
 
-    if qualname == "show":
-        qualname = "show_config"
-    # Skip trimcoef from numpy.polynomial as it is duplicated by design.
-    if name == "trimcoef" and module_name.startswith("numpy.polynomial"):
-        return True
+    # trimcoef is re-exported in a few modules
+    if name == "trimcoef":
+        module_name = obj.__module__
 
     module = sys.modules[module_name]
     actual_obj = functools.reduce(getattr, qualname.split("."), module)
