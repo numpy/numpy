@@ -62,7 +62,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DTypeFromObjectStringDiscovery(
         PyObject *obj, PyArray_Descr *last_dtype, int string_type)
 {
-    int itemsize;
+    npy_intp itemsize;
 
     if (string_type == NPY_STRING) {
         PyObject *temp = PyObject_Str(obj);
@@ -75,6 +75,12 @@ PyArray_DTypeFromObjectStringDiscovery(
         if (itemsize < 0) {
             return NULL;
         }
+        if (itemsize > NPY_MAX_INT) {
+            /* We can allow this, but should audit code paths before we do. */
+            PyErr_Format(PyExc_TypeError,
+                    "string of length %zd is too large to store inside array.", itemsize);
+            return NULL;
+        }
     }
     else if (string_type == NPY_UNICODE) {
         PyObject *temp = PyObject_Str(obj);
@@ -84,6 +90,11 @@ PyArray_DTypeFromObjectStringDiscovery(
         itemsize = PyUnicode_GetLength(temp);
         Py_DECREF(temp);
         if (itemsize < 0) {
+            return NULL;
+        }
+        if (itemsize > NPY_MAX_INT / 4) {
+            PyErr_Format(PyExc_TypeError,
+                    "string of length %zd is too large to store inside array.", itemsize);
             return NULL;
         }
         itemsize *= 4;  /* convert UCS4 codepoints to bytes */

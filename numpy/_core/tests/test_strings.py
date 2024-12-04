@@ -5,7 +5,7 @@ import operator
 import numpy as np
 
 from numpy.testing import assert_array_equal, assert_raises, IS_PYPY
-
+from numpy.testing._private.utils import requires_memory
 
 COMPARISONS = [
     (operator.eq, np.equal, "=="),
@@ -107,6 +107,88 @@ def test_float_to_string_cast(str_dt, float_dt):
 
     res = arr.astype(str_dt)
     assert_array_equal(res, np.array(expected, dtype=str_dt))
+
+
+@pytest.mark.parametrize("str_dt", "US")
+@pytest.mark.parametrize("size", [-1, np.iinfo(np.intc).max])
+def test_string_size_dtype_errors(str_dt, size):
+    if size > 0:
+        size = size // np.dtype(f"{str_dt}1").itemsize + 1
+
+    with pytest.raises(ValueError):
+        np.dtype((str_dt, size))
+    with pytest.raises(TypeError):
+        np.dtype(f"{str_dt}{size}")
+
+
+@pytest.mark.parametrize("str_dt", "US")
+def test_string_size_dtype_large_repr(str_dt):
+    size = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
+    size_str = str(size)
+
+    dtype = np.dtype((str_dt, size))
+    assert size_str in dtype.str
+    assert size_str in str(dtype)
+    assert size_str in repr(dtype)
+
+
+@pytest.mark.slow
+@requires_memory(2 * np.iinfo(np.intc).max)
+@pytest.mark.parametrize("str_dt", "US")
+def test_large_string_coercion_error(str_dt):
+    very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
+    try:
+        large_string = "A" * (very_large + 1)
+    except Exception:
+        # We may not be able to create this Python string on 32bit.
+        pytest.skip("python failed to create huge string")
+
+    class MyStr:
+        def __str__(self):
+            return large_string
+
+    try:
+        # TypeError from NumPy, or OverflowError from 32bit Python.
+        with pytest.raises((TypeError, OverflowError)):
+            np.array([large_string], dtype=str_dt)
+
+        # Same as above, but input has to be converted to a string.
+        with pytest.raises((TypeError, OverflowError)):
+            np.array([MyStr()], dtype=str_dt)
+    except MemoryError:
+        # Catch memory errors, because `requires_memory` would do so.
+        raise AssertionError("Ops should raise before any large allocation.")
+
+@pytest.mark.slow
+@requires_memory(2 * np.iinfo(np.intc).max)
+@pytest.mark.parametrize("str_dt", "US")
+def test_large_string_addition_error(str_dt):
+    very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
+
+    a = np.array(["A" * very_large], dtype=str_dt)
+    b = np.array("B", dtype=str_dt)
+    try:
+        with pytest.raises(TypeError):
+            np.add(a, b)
+        with pytest.raises(TypeError):
+            np.add(a, a)
+    except MemoryError:
+        # Catch memory errors, because `requires_memory` would do so.
+        raise AssertionError("Ops should raise before any large allocation.")
+
+
+def test_large_string_cast():
+    very_large = np.iinfo(np.intc).max // 4
+    # Could be nice to test very large path, but it makes too many huge
+    # allocations right now (need non-legacy cast loops for this).
+    # a = np.array([], dtype=np.dtype(("S", very_large)))
+    # assert a.astype("U").dtype.itemsize == very_large * 4
+
+    a = np.array([], dtype=np.dtype(("S", very_large + 1)))
+    # It is not perfect but OK if this raises a MemoryError during setup
+    # (this happens due clunky code and/or buffer setup.)
+    with pytest.raises((TypeError, MemoryError)):
+        a.astype("U")
 
 
 @pytest.mark.parametrize("dt", ["S", "U", "T"])
