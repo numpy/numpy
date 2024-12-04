@@ -499,7 +499,7 @@ _@TYPE@_power_fast_path_helper(@type@ in1, @type@ in2, @type@ *op1) {
     if (in1 == 1) {
         *op1 = 1;
     }
-    else if (in2 == 0 & in1 != 0) {
+    else if (in2 == 0 && in1 != 0) {
         *op1 = 1;
     }
     else if (in2 == 1) {
