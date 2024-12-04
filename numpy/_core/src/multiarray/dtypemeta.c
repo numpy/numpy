@@ -494,12 +494,14 @@ string_discover_descr_from_pyobject(
         itemsize = PyUnicode_GetLength(obj);
     }
     if (itemsize != -1) {
-        if (cls->type_num == NPY_UNICODE) {
-            itemsize *= 4;
-        }
-        if (itemsize > NPY_MAX_INT) {
+        if (itemsize > NPY_MAX_INT || (
+                cls->type_num == NPY_UNICODE && itemsize > NPY_MAX_INT / 4)) {
             PyErr_SetString(PyExc_TypeError,
                     "string too large to store inside array.");
+            return NULL;
+        }
+        if (cls->type_num == NPY_UNICODE) {
+            itemsize *= 4;
         }
         PyArray_Descr *res = PyArray_DescrNewFromType(cls->type_num);
         if (res == NULL) {
