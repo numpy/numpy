@@ -2404,7 +2404,8 @@ cast_to_string_resolve_descriptors(
     }
     if (dtypes[1]->type_num == NPY_UNICODE) {
         if (size > NPY_MAX_INT / 4) {
-            PyErr_SetString(PyExc_TypeError, "Result string too large.");
+            PyErr_Format(PyExc_TypeError,
+                    "string of length %zd is too large to store inside array.", size);
             return -1;
         }
         size *= 4;
