@@ -112,7 +112,7 @@ class TestRegression:
         assert_raises(ValueError, linalg.norm, testvector, ord=np.inf)
         assert_raises(ValueError, linalg.norm, testvector, ord=-np.inf)
         assert_raises(ValueError, linalg.norm, testvector, ord=0)
-        assert_raises(ValueError, linalg.norm, testvector, ord=-1)
+        assert_raises(RuntimeWarning, linalg.norm, testvector, ord=-1)
         assert_raises(ValueError, linalg.norm, testvector, ord=-2)
 
         testmatrix = np.array([[np.array([0, 1]), 0, 0],
