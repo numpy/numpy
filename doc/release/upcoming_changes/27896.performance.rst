@@ -1,2 +1,0 @@
-* Improved multithreaded scaling on the free-threaded build when many threads
-  simultaneously call the same ufunc operations.
