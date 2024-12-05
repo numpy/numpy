@@ -331,15 +331,6 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
 static int
 fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
 {
-    if (!PyArray_Check(o1)) {
-        return -1;
-    }
-
-    PyArrayObject *a1 = (PyArrayObject *)o1;
-    if (PyArray_ISOBJECT(a1)) {
-        return 1;
-    }
-
     PyObject *fastop = NULL;
     if (PyLong_CheckExact(o2)) {
         int overflow = 0;
@@ -368,6 +359,11 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
         }
     }
     else {
+        return 1;
+    }
+
+    PyArrayObject *a1 = (PyArrayObject *)o1;
+    if (PyArray_ISOBJECT(a1)) {
         return 1;
     }
 
