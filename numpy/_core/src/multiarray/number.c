@@ -337,7 +337,7 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
 
     PyArrayObject *a1 = (PyArrayObject *)o1;
     if (PyArray_ISOBJECT(a1)) {
-        return -1;
+        return 1;
     }
 
     PyObject *fastop = NULL;
@@ -354,7 +354,7 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
             fastop = n_ops.square;
         }
         else {
-            return -1;
+            return 1;
         }
     }
     else if (PyFloat_CheckExact(o2)) {
@@ -367,11 +367,11 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
             fastop = n_ops.sqrt;
         }
         else {
-            return -1;
+            return 1;
         }
     }
     else {
-        return -1;
+        return 1;
     }
 
     if (inplace || can_elide_temp_unary(a1)) {
