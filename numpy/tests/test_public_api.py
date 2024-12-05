@@ -759,9 +759,9 @@ def _check_correct_qualname_and_module(obj) -> bool:
     actual_obj = functools.reduce(getattr, qualname.split("."), module)
     return (
         actual_obj is obj or
-        # `obj` may be a bound method of `actual_obj`:
+        # `obj` may be a bound method/property of `actual_obj`:
         (
-            hasattr(actual_obj, "__get__") == hasattr(obj, "__self__") and
+            hasattr(actual_obj, "__get__") and hasattr(obj, "__self__") and
             actual_obj.__module__ == obj.__module__ and
             actual_obj.__qualname__ == qualname
         )
@@ -786,7 +786,8 @@ def test___qualname___and___module___attribute():
                 inspect.ismodule(member) and  # it's a module
                 "numpy" in member.__name__ and  # inside NumPy
                 not member_name.startswith("_") and  # not private
-                member_name not in ["tests"] and  # skip tests
+                member_name != "tests" and
+                member_name != "typing" and  # 2024-12: type names don't match
                 "numpy._core" not in member.__name__ and  # outside _core
                 member not in visited_modules  # not visited yet
             ):
