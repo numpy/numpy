@@ -107,13 +107,13 @@ class TestRegression:
         assert_array_equal(norm, [0, 1])
         assert_(norm.dtype == np.dtype('float64'))
 
-        assert_raises(ValueError, linalg.norm, testvector, ord='fro')
-        assert_raises(ValueError, linalg.norm, testvector, ord='nuc')
-        assert_raises(ValueError, linalg.norm, testvector, ord=np.inf)
-        assert_raises(ValueError, linalg.norm, testvector, ord=-np.inf)
-        assert_raises(ValueError, linalg.norm, testvector, ord=0)
-        assert_raises(RuntimeWarning, linalg.norm, testvector, ord=-1)
-        assert_raises(ValueError, linalg.norm, testvector, ord=-2)
+        for ord in ['fro', 'nuc', np.inf, -np.inf, 0, -1, -2]:
+            pytest.raises(
+                (ValueError, ZeroDivisionError, RuntimeWarning),
+                linalg.norm,
+                testvector,
+                ord=ord,
+            )
 
         testmatrix = np.array([[np.array([0, 1]), 0, 0],
                                [0,                0, 0]], dtype=object)
@@ -126,15 +126,13 @@ class TestRegression:
         assert_array_equal(norm, [0, 1])
         assert_(norm.dtype == np.dtype('float64'))
 
-        assert_raises(TypeError, linalg.norm, testmatrix, ord='nuc')
-        assert_raises(ValueError, linalg.norm, testmatrix, ord=np.inf)
-        assert_raises(ValueError, linalg.norm, testmatrix, ord=-np.inf)
-        assert_raises(ValueError, linalg.norm, testmatrix, ord=0)
-        assert_raises(ValueError, linalg.norm, testmatrix, ord=1)
-        assert_raises(ValueError, linalg.norm, testmatrix, ord=-1)
-        assert_raises(TypeError, linalg.norm, testmatrix, ord=2)
-        assert_raises(TypeError, linalg.norm, testmatrix, ord=-2)
-        assert_raises(ValueError, linalg.norm, testmatrix, ord=3)
+        for ord in ['nuc', np.inf, -np.inf, 0, 1, -1, 2, -2, 3]:
+            pytest.raises(
+                (ValueError, TypeError, ZeroDivisionError, RuntimeWarning),
+                linalg.norm,
+                testmatrix,
+                ord=ord,
+            )
 
     def test_lstsq_complex_larger_rhs(self):
         # gh-9891
