@@ -4019,7 +4019,9 @@ class TestSpecialMethods:
     def test_ufunc_docstring(self):
         original_doc = np.add.__doc__
         new_doc = "new docs"
-        expected_dict = {} if IS_PYPY else {"__module__": "numpy"}
+        expected_dict = (
+            {} if IS_PYPY else {"__module__": "numpy", "__qualname__": "add"}
+        )
 
         np.add.__doc__ = new_doc
         assert np.add.__doc__ == new_doc

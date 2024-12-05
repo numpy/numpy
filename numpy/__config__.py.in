@@ -7,7 +7,7 @@ from numpy._core._multiarray_umath import (
     __cpu_dispatch__,
 )
 
-__all__ = ["show"]
+__all__ = ["show_config"]
 _built_with_meson = True
 
 
@@ -161,4 +161,10 @@ def show(mode=DisplayModes.stdout.value):
             f"Invalid `mode`, use one of: {', '.join([e.value for e in DisplayModes])}"
         )
 
-show.__module__ = "numpy"
+
+def show_config(mode=DisplayModes.stdout.value):
+    return show(mode)
+
+
+show_config.__doc__ = show.__doc__
+show_config.__module__ = "numpy"

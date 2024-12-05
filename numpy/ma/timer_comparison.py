@@ -1,5 +1,5 @@
+import functools
 import timeit
-from functools import reduce
 
 import numpy as np
 import numpy._core.fromnumeric as fromnumeric
@@ -133,10 +133,10 @@ class ModuleTester:
         xf = np.where(m1, 1.e+20, x)
         xm.set_fill_value(1.e+20)
 
-        assert((xm-ym).filled(0).any())
+        assert (xm-ym).filled(0).any()
         s = x.shape
-        assert(xm.size == reduce(lambda x, y:x*y, s))
-        assert(self.count(xm) == len(m1) - reduce(lambda x, y:x+y, m1))
+        assert xm.size == functools.reduce(lambda x, y: x*y, s)
+        assert self.count(xm) == len(m1) - functools.reduce(lambda x, y: x+y, m1)
 
         for s in [(4, 3), (6, 2)]:
             x.shape = s
@@ -144,7 +144,7 @@ class ModuleTester:
             xm.shape = s
             ym.shape = s
             xf.shape = s
-            assert(self.count(xm) == len(m1) - reduce(lambda x, y:x+y, m1))
+            assert self.count(xm) == len(m1) - functools.reduce(lambda x, y: x+y, m1)
 
     @np.errstate(all='ignore')
     def test_2(self):

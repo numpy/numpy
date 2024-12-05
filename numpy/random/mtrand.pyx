@@ -4967,3 +4967,5 @@ for method_name in __all__[:-1]:
     method = getattr(RandomState, method_name, None)
     if method is not None:
         method.__module__ = "numpy.random"
+
+del method, method_name
