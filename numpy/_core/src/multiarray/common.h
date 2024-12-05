@@ -12,6 +12,10 @@
 #include "npy_import.h"
 #include <limits.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
 #ifdef NPY_ALLOW_THREADS
@@ -104,13 +108,13 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis,
         /* Try to be as clear as possible about what went wrong. */
         if (axis >= 0) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for axis %d with size %"NPY_INTP_FMT,
+                         "index %" NPY_INTP_FMT" is out of bounds "
+                         "for axis %d with size %" NPY_INTP_FMT,
                          *index, axis, max_item);
         } else {
             PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" is out of bounds "
-                         "for size %"NPY_INTP_FMT, *index, max_item);
+                         "index %" NPY_INTP_FMT " is out of bounds "
+                         "for size %" NPY_INTP_FMT, *index, max_item);
         }
         return -1;
     }
@@ -163,7 +167,9 @@ check_and_adjust_axis(int *axis, int ndim)
  * <https://gcc.gnu.org/bugzilla/show_bug.cgi?id=52023>.
  * clang versions < 8.0.0 have the same bug.
  */
-#if (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
+#ifdef __cplusplus
+#define NPY_ALIGNOF(type) alignof(type)
+#elif (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112 \
      || (defined __GNUC__ && __GNUC__ < 4 + (__GNUC_MINOR__ < 9) \
   && !defined __clang__) \
      || (defined __clang__ && __clang_major__ < 8))
@@ -346,5 +352,9 @@ new_array_for_sum(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject* out,
  * function (so that the way we flag the axis can be changed).
  */
 #define NPY_ITER_REDUCTION_AXIS(axis) (axis + (1 << (NPY_BITSOF_INT - 2)))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_COMMON_H_ */
