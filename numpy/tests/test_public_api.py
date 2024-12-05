@@ -770,7 +770,7 @@ def _check_correct_qualname_and_module(obj) -> bool:
 
 def test___qualname___and___module___attribute():
     # NumPy messes with module and name/qualname attributes, but any object
-    # shuold be discoverable based on its module and qualname, so test that.
+    # should be discoverable based on its module and qualname, so test that.
     # We do this for anything with a name (ensuring qualname is also set).
     modules_queue = [np]
     visited_modules = {np}
