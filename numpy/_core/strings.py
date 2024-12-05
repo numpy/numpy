@@ -55,6 +55,7 @@ def _override___module__():
         istitle, isupper, str_len,
     ]:
         ufunc.__module__ = "numpy.strings"
+        ufunc.__qualname__ = ufunc.__name__
 
 
 _override___module__()

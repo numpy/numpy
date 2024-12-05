@@ -1,3 +1,4 @@
+import functools
 import sys
 import sysconfig
 import subprocess
@@ -681,7 +682,7 @@ def test_functions_single_location():
     assert len(duplicated_functions) == 0, duplicated_functions
 
 
-def test___module__attribute():
+def test___module___attribute():
     modules_queue = [np]
     visited_modules = {np}
     visited_functions = set()
@@ -740,6 +741,67 @@ def test___module__attribute():
                         Func=member.__name__,
                         actual=member.__module__,
                         expected=module.__name__,
+                    )
+                )
+                visited_functions.add(member)
+
+    if incorrect_entries:
+        assert len(incorrect_entries) == 0, incorrect_entries
+
+
+def _check___qualname__(obj) -> bool:
+    qualname = obj.__qualname__
+    name = obj.__name__
+    module_name = obj.__module__
+    assert name == qualname.split(".")[-1]
+
+    module = sys.modules[module_name]
+    actual_obj = functools.reduce(getattr, qualname.split("."), module)
+    return (
+        actual_obj is obj or
+        (
+            # for bound methods check qualname match
+            module_name.startswith("numpy.random") and
+            actual_obj.__qualname__ == qualname
+        )
+    )
+
+
+def test___qualname___attribute():
+    modules_queue = [np]
+    visited_modules = {np}
+    visited_functions = set()
+    incorrect_entries = []
+
+    while len(modules_queue) > 0:
+        module = modules_queue.pop()
+        for member_name in dir(module):
+            member = getattr(module, member_name)
+            # first check if we got a module
+            if (
+                inspect.ismodule(member) and  # it's a module
+                "numpy" in member.__name__ and  # inside NumPy
+                not member_name.startswith("_") and  # not private
+                member_name not in [
+                    "f2py", "ma", "tests", "testing", "typing",
+                    "bit_generator", "ctypeslib", "lapack_lite",
+                ] and  # skip modules
+                "numpy._core" not in member.__name__ and  # outside _core
+                member not in visited_modules  # not visited yet
+            ):
+                modules_queue.append(member)
+                visited_modules.add(member)
+            elif (
+                not inspect.ismodule(member) and
+                hasattr(member, "__name__") and
+                not member.__name__.startswith("_") and
+                not member_name.startswith("_") and
+                not _check___qualname__(member) and
+                member not in visited_functions
+            ):
+                incorrect_entries.append(
+                    dict(
+                        actual=member.__qualname__, expected=member.__name__,
                     )
                 )
                 visited_functions.add(member)

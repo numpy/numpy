@@ -249,6 +249,7 @@ class _fromnxfunction:
 
     def __init__(self, funcname):
         self.__name__ = funcname
+        self.__qualname__ = funcname
         self.__doc__ = self.getdoc()
 
     def getdoc(self):
