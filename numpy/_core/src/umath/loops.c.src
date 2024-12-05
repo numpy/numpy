@@ -489,10 +489,7 @@ _@TYPE@_squared_exponentiation_helper(@type@ base, @type@ exponent_two, int firs
 static inline @type@
 _@TYPE@_power_fast_path_helper(@type@ in1, @type@ in2, @type@ *op1) {
     // Fast path for power calculation
-    if (in1 == 1) {
-        *op1 = 1;
-    }
-    else if (in2 == 0 && in1 != 0) {
+    if (in2 == 0 || in1 == 1) {
         *op1 = 1;
     }
     else if (in2 == 1) {
@@ -527,17 +524,11 @@ NPY_NO_EXPORT void
         int first_bit = in2 & 1;
         @type@ in2start = in2 >> 1;
 
-        if (in2 == 0 || in2 == 1 || in2 == 2) {
-            BINARY_LOOP_SLIDING {
-                @type@ in1 = *(@type@ *)ip1;
-                if (_@TYPE@_power_fast_path_helper(in1, in2, (@type@ *)op1) != 0) {
-                    *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2start, first_bit);
-                }
-            }
-        }
-        else {
-            BINARY_LOOP_SLIDING {
-                @type@ in1 = *(@type@ *)ip1;
+        int fastop_exists = 1;
+        BINARY_LOOP_SLIDING {
+            @type@ in1 = *(@type@ *)ip1;
+            if (fastop_exists && _@TYPE@_power_fast_path_helper(in1, in2, (@type@ *)op1) != 0) {
+                fastop_exists = 0;
                 *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2start, first_bit);
             }
         }
