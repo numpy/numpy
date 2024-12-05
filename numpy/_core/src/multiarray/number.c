@@ -342,9 +342,10 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
 
     PyObject *fastop = NULL;
     if (PyLong_CheckExact(o2)) {
-        long exp = PyLong_AsLong(o2);
-        if (error_converting(exp)) {
-            PyErr_Clear();
+        int overflow = 0;
+        long exp = PyLong_AsLongAndOverflow(o2, &overflow);
+        if (overflow != 0) {
+            return -1;
         }
 
         if (exp == -1) {
@@ -359,10 +360,6 @@ fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
     }
     else if (PyFloat_CheckExact(o2)) {
         double exp = PyFloat_AsDouble(o2);
-        if (error_converting(exp)) {
-            PyErr_Clear();
-        }
-
         if (exp == 0.5) {
             fastop = n_ops.sqrt;
         }
