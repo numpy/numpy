@@ -1010,6 +1010,10 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, npyiter_opitflags *op_itflags)
         *op_itflags |= NPY_OP_ITFLAG_VIRTUAL;
     }
 
+    if (op_flags & NPY_ITER_CONTIG) {
+        *op_itflags |= NPY_OP_ITFLAG_CONTIG;
+    }
+
     return 1;
 }
 
@@ -2175,6 +2179,11 @@ npyiter_find_buffering_setup(NpyIter *iter)
         npy_bool is_reduce_op;
         npy_bool op_is_buffered = (op_itflags[iop]&NPY_OP_ITFLAG_CAST) != 0;
 
+        /* If contig was requested and this is not writeable avoid zero strides */
+        npy_bool avoid_zero_strides = (
+                (op_itflags[iop] & NPY_OP_ITFLAG_CONTIG) != 0
+                && !(op_itflags[iop] & NPY_OP_ITFLAG_WRITE));
+
         /*
          * Figure out if this is iterated as a reduce op.  Even one marked
          * for reduction may not be iterated as one.
@@ -2189,16 +2198,19 @@ npyiter_find_buffering_setup(NpyIter *iter)
         else if (op_single_stride_dims[iop] == best_dim && !op_is_buffered) {
             /*
              * Optimization: This operand is not buffered and we might as well
-             * iterate it as an unbuffered reduce operand (if not yet buffered).
+             * iterate it as an unbuffered reduce operand.
              */
             is_reduce_op = 1;
         }
         else if (NAD_STRIDES(reduce_axisdata)[iop] == 0
-                    && op_single_stride_dims[iop] <= best_dim) {
+                    && op_single_stride_dims[iop] <= best_dim
+                    && !avoid_zero_strides) {
             /*
              * Optimization: If the outer (reduce) stride is 0 on the operand
              * then we can iterate this in a reduce way: buffer the core only
              * and repeat it in the "outer" dimension.
+             * If user requested contig, we may have to avoid 0 strides, this
+             * is incompatible with the reduce path.
              */
             is_reduce_op = 1;
         }
@@ -2229,7 +2241,8 @@ npyiter_find_buffering_setup(NpyIter *iter)
              */
             if (!is_reduce_op
                     && NIT_OPITFLAGS(iter)[iop] & NPY_OP_ITFLAG_BUF_SINGLESTRIDE
-                    && NAD_STRIDES(axisdata)[iop] == 0) {
+                    && NAD_STRIDES(axisdata)[iop] == 0
+                    && !avoid_zero_strides) {
                 /* This op is always 0 strides, so even the buffer is that. */
                 inner_stride = 0;
                 reduce_outer_stride = 0;
@@ -3310,11 +3323,16 @@ npyiter_allocate_arrays(NpyIter *iter,
         }
 
         /* Here we can finally check for contiguous iteration */
-        if (op_flags[iop] & NPY_ITER_CONTIG) {
+        if (op_itflags[iop] & NPY_OP_ITFLAG_CONTIG) {
             NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
             npy_intp stride = NAD_STRIDES(axisdata)[iop];
 
             if (stride != op_dtype[iop]->elsize) {
+                /*
+                 * Need to copy to buffer (cast) to ensure contiguous
+                 * NOTE: This is the wrong place in case of axes reorder
+                 *       (there is an xfailing test for this).
+                 */
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_CONTIG\n");
                 op_itflags[iop] |= NPY_OP_ITFLAG_CAST;

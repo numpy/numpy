@@ -1515,6 +1515,8 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("WRITEMASKED ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_BUF_SINGLESTRIDE)
             printf("BUF_SINGLESTRIDE ");
+        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_CONTIG)
+            printf("CONTIG ");
         printf("\n");
     }
     printf("|\n");
@@ -1532,9 +1534,9 @@ NpyIter_DebugPrint(NpyIter *iter)
         if (itflags&NPY_ITFLAG_REDUCE) {
             printf("|   REDUCE Pos: %d\n",
                         (int)NBF_REDUCE_POS(bufferdata));
-            printf("|   BUFFER Reduce outersize: %d\n",
+            printf("|   REDUCE OuterSize: %d\n",
                         (int)NBF_REDUCE_OUTERSIZE(bufferdata));
-            printf("|   BUFFER OuterDim: %d\n",
+            printf("|   REDUCE OuterDim: %d\n",
                         (int)NBF_OUTERDIM(bufferdata));
         }
         printf("|   Strides: ");
@@ -1894,12 +1896,17 @@ npyiter_fill_buffercopy_params(
     }
 
     if (opitflags & NPY_OP_ITFLAG_BUF_SINGLESTRIDE) {
-        /* Flatten the copy into a single stride. */
         *ndim_transfer = 1;
         *op_shape = op_transfersize;
         assert(**op_coords == 0);  /* initialized by caller currently */
         *op_strides = &NAD_STRIDES(axisdata)[iop];
-        if ((*op_strides)[0] == 0) {
+        if ((*op_strides)[0] == 0 && (
+                !(opitflags & NPY_OP_ITFLAG_CONTIG) ||
+                (opitflags & NPY_OP_ITFLAG_WRITE))) {
+            /*
+             * If the user didn't force contig, optimize single element.
+             * (Unless CONTIG was requested and this is not a write/reduce!)
+             */
             *op_transfersize = 1;
             *buf_stride = 0;
         }
