@@ -91,6 +91,7 @@ def _override___module__():
     ]:
         ufunc = namespace_names[ufunc_name]
         ufunc.__module__ = "numpy"
+        ufunc.__qualname__ = ufunc_name
 
 
 _override___module__()

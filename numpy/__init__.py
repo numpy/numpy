@@ -111,7 +111,7 @@ else:
     from . import _distributor_init
 
     try:
-        from numpy.__config__ import show as show_config
+        from numpy.__config__ import show_config
     except ImportError as e:
         msg = """Error importing numpy: you should not try to import numpy from
         its source directory; please exit the numpy source tree, and relaunch
