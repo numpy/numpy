@@ -12,6 +12,9 @@
  * case is likely desired.
  */
 
+#include <mutex>
+#include <shared_mutex>
+
 #include "templ_common.h"
 #include "npy_hashtable.h"
 
@@ -89,7 +92,7 @@ find_item(PyArrayIdentityHash const *tb, PyObject *const *key)
 NPY_NO_EXPORT PyArrayIdentityHash *
 PyArrayIdentityHash_New(int key_len)
 {
-    PyArrayIdentityHash *res = PyMem_Malloc(sizeof(PyArrayIdentityHash));
+    PyArrayIdentityHash *res = (PyArrayIdentityHash *)PyMem_Malloc(sizeof(PyArrayIdentityHash));
     if (res == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -100,12 +103,21 @@ PyArrayIdentityHash_New(int key_len)
     res->size = 4;  /* Start with a size of 4 */
     res->nelem = 0;
 
-    res->buckets = PyMem_Calloc(4 * (key_len + 1), sizeof(PyObject *));
+    res->buckets = (PyObject **)PyMem_Calloc(4 * (key_len + 1), sizeof(PyObject *));
     if (res->buckets == NULL) {
         PyErr_NoMemory();
         PyMem_Free(res);
         return NULL;
     }
+
+#ifdef Py_GIL_DISABLED
+    res->mutex = new(std::nothrow) std::shared_mutex();
+    if (res->mutex == nullptr) {
+        PyErr_NoMemory();
+        PyMem_Free(res);
+        return NULL;
+    }
+#endif
     return res;
 }
 
@@ -115,6 +127,9 @@ PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 {
     PyMem_Free(tb->buckets);
     PyMem_Free(tb);
+#ifdef Py_GIL_DISABLED
+    delete (std::shared_mutex *)tb->mutex;
+#endif
 }
 
 
@@ -149,7 +164,7 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
     if (npy_mul_sizes_with_overflow(&alloc_size, new_size, tb->key_len + 1)) {
         return -1;
     }
-    tb->buckets = PyMem_Calloc(alloc_size, sizeof(PyObject *));
+    tb->buckets = (PyObject **)PyMem_Calloc(alloc_size, sizeof(PyObject *));
     if (tb->buckets == NULL) {
         tb->buckets = old_table;
         PyErr_NoMemory();

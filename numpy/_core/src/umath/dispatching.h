@@ -43,6 +43,10 @@ object_only_ufunc_promoter(PyObject *ufunc,
 NPY_NO_EXPORT int
 install_logical_ufunc_promoter(PyObject *ufunc);
 
+NPY_NO_EXPORT PyObject *
+get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
+                 int ndtypes);
+
 #ifdef __cplusplus
 }
 #endif

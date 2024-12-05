@@ -1592,13 +1592,10 @@ def make_code(funcdict, filename):
     #include "matmul.h"
     #include "clip.h"
     #include "dtypemeta.h"
+    #include "dispatching.h"
     #include "_umath_doc_generated.h"
 
     %s
-    /* Returns a borrowed ref of the second value in the matching info tuple */
-    PyObject *
-    get_info_no_cast(PyUFuncObject *ufunc, PyArray_DTypeMeta *op_dtype,
-                     int ndtypes);
 
     static int
     InitOperators(PyObject *dictionary) {
