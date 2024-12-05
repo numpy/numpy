@@ -2358,24 +2358,21 @@ def test_iter_contig_flag_single_operand_strides(arr):
 
     with iterator:
         iterator.reset()
-        try:
-            for f, b, r in iterator:
-                # The first operand is contigouos, we should have a view
-                assert np.shares_memory(f, first_op)
-                # Although broadcast, the second op always has a contiguous stride
-                assert b.strides[0] == 8
-                assert not np.shares_memory(b, broadcast_op)
-                # The reduction has a contiguous stride or a 0 stride
-                if red_op.ndim == 0 or red_op.shape[-1] == 1:
-                    assert r.strides[0] == 0
-                else:
-                    # The stride is 8, although it was not originally:
-                    assert r.strides[0] == 8
-                # If the reduce stride is 0, buffering makes no difference, but we
-                # do it anyway right now:
-                assert not np.shares_memory(r, red_op)
-        finally:
-            iterator.debug_print()
+        for f, b, r in iterator:
+            # The first operand is contigouos, we should have a view
+            assert np.shares_memory(f, first_op)
+            # Although broadcast, the second op always has a contiguous stride
+            assert b.strides[0] == 8
+            assert not np.shares_memory(b, broadcast_op)
+            # The reduction has a contiguous stride or a 0 stride
+            if red_op.ndim == 0 or red_op.shape[-1] == 1:
+                assert r.strides[0] == 0
+            else:
+                # The stride is 8, although it was not originally:
+                assert r.strides[0] == 8
+            # If the reduce stride is 0, buffering makes no difference, but we
+            # do it anyway right now:
+            assert not np.shares_memory(r, red_op)
 
 
 @pytest.mark.xfail(reason="The contig flag was always buggy.")
