@@ -530,7 +530,9 @@ NPY_NO_EXPORT void
         if (in2 == 0 || in2 == 1 || in2 == 2) {
             BINARY_LOOP_SLIDING {
                 @type@ in1 = *(@type@ *)ip1;
-                _@TYPE@_power_fast_path_helper(in1, in2, (@type@ *)op1)
+                if (_@TYPE@_power_fast_path_helper(in1, in2, (@type@ *)op1) != 0) {
+                    *((@type@ *) op1) = _@TYPE@_squared_exponentiation_helper(in1, in2start, first_bit);
+                }
             }
         }
         else {
