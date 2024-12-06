@@ -112,8 +112,8 @@ jobs:
       env:
         TERM: xterm-256color
       run: |
-        pip install pytest pytest-xdist hypothesis typing_extensions
-        spin test -j auto
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        spin test -j auto -- --timeout=600 --durations=10
 
 
   openblas_no_pkgconfig_fedora:
@@ -134,13 +134,13 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest hypothesis typing_extensions
+        pip install pytest hypothesis typing_extensions pytest-timeout
 
     - name: Build (LP64)
       run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build (ILP64)
       run: |
@@ -148,7 +148,7 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
 
   flexiblas_fedora:
@@ -169,13 +169,13 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest hypothesis typing_extensions
+        pip install pytest hypothesis typing_extensions pytest-timeout
 
     - name: Build
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build (ILP64)
       run: |
@@ -183,7 +183,7 @@ jobs:
         spin build -- -Ddisable-optimization=true -Duse-ilp64=true -Dallow-noblas=false
 
     - name: Test (ILP64)
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
 
   openblas_cmake:
@@ -202,7 +202,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -211,7 +211,7 @@ jobs:
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -j auto -- numpy/linalg
+      run: spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
  
   netlib-debian:
@@ -239,8 +239,8 @@ jobs:
 
     - name: Test
       run: |
-        pip install pytest pytest-xdist hypothesis typing_extensions
-        spin test -j auto -- numpy/linalg
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
   netlib-split:
@@ -270,8 +270,8 @@ jobs:
 
     - name: Test
       run: |
-        pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions
-        spin test -j auto -- numpy/linalg
+        pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+        spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
   mkl:
@@ -290,7 +290,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         pip install mkl mkl-devel
 
     - name: Repair MKL pkg-config files and symlinks
@@ -314,7 +314,7 @@ jobs:
         spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build with ILP64
       run: |
@@ -323,7 +323,7 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build without pkg-config (default options, SDL)
       run: |
@@ -335,7 +335,7 @@ jobs:
         spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
   blis:
     if: github.repository == 'numpy/numpy'
@@ -353,7 +353,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -371,7 +371,7 @@ jobs:
       run: spin build -- -Dblas=blis -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test
-      run: spin test -- numpy/linalg
+      run: spin test -- numpy/linalg --timeout=600 --durations=10
 
   atlas:
     if: github.repository == 'numpy/numpy'
@@ -389,7 +389,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 
