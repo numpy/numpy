@@ -2386,8 +2386,10 @@ def test_iter_contig_flag_incorrect():
     with iterator:
         iterator.reset()
         for a, b in iterator:
-            assert a.strides == 8
-            assert b.strides == 8  # should be 8 but is 0 due to axis reorder
+            # Remove a and b from locals (pytest may want to format them)
+            a, b = a.strides, b.strides
+            assert a == 8
+            assert b == 8  # should be 8 but is 0 due to axis reorder
 
 
 @pytest.mark.slow
