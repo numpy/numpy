@@ -2339,8 +2339,6 @@ class vectorize:
     The new keyword argument interface and `excluded` argument support
     further degrades performance.
 
-    Floating point errors are not checked within the resulting function.
-
     References
     ----------
     .. [1] :doc:`/reference/c-api/generalized-ufuncs`

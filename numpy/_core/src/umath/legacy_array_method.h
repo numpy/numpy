@@ -35,14 +35,6 @@ NPY_NO_EXPORT NPY_CASTING
 wrapped_legacy_resolve_descriptors(PyArrayMethodObject *,
         PyArray_DTypeMeta *const *, PyArray_Descr *const *, PyArray_Descr **, npy_intp *);
 
-NPY_NO_EXPORT NPY_CASTING
-simple_legacy_resolve_descriptors(
-        PyArrayMethodObject *method,
-        PyArray_DTypeMeta *const *dtypes,
-        PyArray_Descr *const *given_descrs,
-        PyArray_Descr **output_descrs,
-        npy_intp *NPY_UNUSED(view_offset));
-
 #ifdef __cplusplus
 }
 #endif
