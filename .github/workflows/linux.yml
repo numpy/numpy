@@ -116,7 +116,7 @@ jobs:
       run: |
         source venv/bin/activate
         cd tools
-        pytest --pyargs numpy -m "not slow"
+        pytest --timeout=600 --durations=10 --pyargs numpy -m "not slow"
 
   full:
     # Install as editable, then run the full test suite with code coverage
@@ -150,7 +150,7 @@ jobs:
         pip install -e . --no-build-isolation
     - name: Run full test suite
       run: |
-        pytest numpy --cov-report=html:build/coverage
+        pytest numpy --durations=10 --timeout=600 --cov-report=html:build/coverage
         # TODO: gcov
       env:
         PYTHONOPTIMIZE: 2

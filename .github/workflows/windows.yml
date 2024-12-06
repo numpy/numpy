@@ -88,7 +88,7 @@ jobs:
 
     - name: Run test suite
       run: |
-        spin test
+        spin test -- --timeout=600 --durations=10
 
   msvc_32bit_python_no_openblas:
     name: MSVC, 32-bit Python, no BLAS
@@ -124,4 +124,4 @@ jobs:
       - name: Run test suite (fast)
         run: |
           cd tools
-          python -m pytest --pyargs numpy -m "not slow" -n2
+          python -m pytest --pyargs numpy -m "not slow" -n2 --timeout=600 --durations=10

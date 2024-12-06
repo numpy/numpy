@@ -173,7 +173,7 @@ jobs:
           -v $(pwd):/numpy -v /:/host the_container \
           /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
             export F90=/usr/bin/gfortran
-            cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
+            cd /numpy && spin test -- --timeout=600 --durations=10 -k \"${RUNTIME_TEST_FILTER}\"
           '"
 
 

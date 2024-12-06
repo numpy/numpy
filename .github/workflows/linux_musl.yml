@@ -63,7 +63,7 @@ jobs:
         # the Duse-ilp64 is not needed with scipy-openblas wheels > 0.3.24.95.0
         # spin build --with-scipy-openblas=64 -- -Duse-ilp64=true
         spin build --with-scipy-openblas=64
-        spin test -j auto
+        spin test -j auto -- --timeout=600 --durations=10
 
     - name: Meson Log
       shell: bash

@@ -139,13 +139,13 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis
+        pip install pytest pytest-xdist pytest-timeout hypothesis
 
     - name: Build against Accelerate (LP64)
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (linalg only)
-      run: spin test -j2 -- numpy/linalg
+      run: spin test -j2 -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build NumPy against Accelerate (ILP64)
       run: |
@@ -153,4 +153,4 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (fast tests)
-      run: spin test -j2
+      run: spin test -j2 -- --timeout=600 --durations=10
