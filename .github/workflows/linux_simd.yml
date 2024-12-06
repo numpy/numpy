@@ -58,7 +58,7 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -75,7 +75,7 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -140,7 +140,7 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -154,7 +154,7 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
@@ -204,7 +204,7 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
