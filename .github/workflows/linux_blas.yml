@@ -134,7 +134,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest hypothesis typing_extensions
+        pip install pytest hypothesis typing_extensions pytest-timeout
 
     - name: Build (LP64)
       run: spin build -- -Dblas=openblas -Dlapack=openblas -Ddisable-optimization=true -Dallow-noblas=false
@@ -169,7 +169,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest hypothesis typing_extensions
+        pip install pytest hypothesis typing_extensions pytest-timeout
 
     - name: Build
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
@@ -202,7 +202,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         sudo apt-get update
         sudo apt-get install libopenblas-dev cmake
         sudo apt-get remove pkg-config
@@ -239,7 +239,7 @@ jobs:
 
     - name: Test
       run: |
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
@@ -270,7 +270,7 @@ jobs:
 
     - name: Test
       run: |
-        pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions
+        pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         spin test -j auto -- numpy/linalg  --timeout=600 --durations=10
 
 
@@ -290,7 +290,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         pip install mkl mkl-devel
 
     - name: Repair MKL pkg-config files and symlinks
@@ -353,7 +353,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         sudo apt-get update
         sudo apt-get install libblis-dev libopenblas-dev pkg-config
 
@@ -389,7 +389,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         sudo apt-get update
         sudo apt-get install libatlas-base-dev pkg-config
 
