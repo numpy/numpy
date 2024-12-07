@@ -7,13 +7,17 @@ def jacobian(func, x, epsilon=1e-6, axis=None):
 
     Parameters
     ----------
-    func:    Callable. The vector-valued function.
-     x:       ndarray. The point to compute the Jacobian
-    epsilon: float. Used for finite differences approximation.
+    func:       Callable. 
+                The vector-valued function.          
+     x:         Ndarray. 
+                The point to compute the Jacobian.
+    epsilon:    float. 
+                Used for finite differences approximation.
         
     Returns
     -------
-
+    jacobian:   Ndarray.
+                The numerical Jacobian matrix of func at the point x.
     """ 
 
     x = np.asarray(x, dtype=float)
