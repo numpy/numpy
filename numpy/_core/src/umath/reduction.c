@@ -46,6 +46,54 @@ count_axes(int ndim, const npy_bool *axis_flags)
     return naxes;
 }
 
+NPY_NO_EXPORT int
+get_initial_buf(PyArrayMethod_Context *context, npy_bool empty_iteration,
+                PyArray_Descr *dtype, PyObject *initial, char **initial_buf)
+{
+    /*
+     * Get the initial value (if it exists).  If the iteration is empty
+     * then we assume the reduction is also empty.  The reason is that when
+     * the outer iteration is empty we just won't use the initial value
+     * in any case.  (`np.sum(np.zeros((0, 3)), axis=0)` is a length 3
+     * reduction but has an empty result.)
+     */
+    if ((initial == NULL && context->method->get_reduction_initial == NULL)
+            || initial == Py_None) {
+        /* There is no initial value, or initial value was explicitly unset */
+        return 0;
+    }
+    /* Not all functions will need initialization, but init always: */
+    *initial_buf = PyMem_Calloc(1, dtype->elsize);
+    if (*initial_buf == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    if (initial != NULL) {
+        /* must use user provided initial value */
+        if (PyArray_Pack(dtype, *initial_buf, initial) < 0) {
+            return -1;
+        }
+    }
+    else {
+        /*
+         * Fetch initial from ArrayMethod, we pretend the reduction is
+         * empty when the iteration is.  This may be wrong, but when it is,
+         * we will not need the identity as the result is also empty.
+         */
+        int has_initial = context->method->get_reduction_initial(
+                    context, empty_iteration, *initial_buf);
+        if (has_initial < 0) {
+            return -1;
+        }
+        if (!has_initial) {
+            /* We have no initial value available, free buffer to indicate */
+            PyMem_FREE(*initial_buf);
+            *initial_buf = NULL;
+        }
+    }
+    return 0;
+}
+
 /*
  * This function initializes a result array for a reduction operation
  * which has no identity. This means it needs to copy the first element
@@ -295,51 +343,13 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     npy_bool empty_iteration = NpyIter_GetIterSize(iter) == 0;
     result = NpyIter_GetOperandArray(iter)[0];
 
-    /*
-     * Get the initial value (if it exists).  If the iteration is empty
-     * then we assume the reduction is also empty.  The reason is that when
-     * the outer iteration is empty we just won't use the initial value
-     * in any case.  (`np.sum(np.zeros((0, 3)), axis=0)` is a length 3
-     * reduction but has an empty result.)
-     */
-    if ((initial == NULL && context->method->get_reduction_initial == NULL)
-            || initial == Py_None) {
-        /* There is no initial value, or initial value was explicitly unset */
-    }
-    else {
-        /* Not all functions will need initialization, but init always: */
-        initial_buf = PyMem_Calloc(1, op_dtypes[0]->elsize);
-        if (initial_buf == NULL) {
-            PyErr_NoMemory();
-            goto fail;
-        }
-        if (initial != NULL) {
-            /* must use user provided initial value */
-            if (PyArray_Pack(op_dtypes[0], initial_buf, initial) < 0) {
-                goto fail;
-            }
-        }
-        else {
-            /*
-             * Fetch initial from ArrayMethod, we pretend the reduction is
-             * empty when the iteration is.  This may be wrong, but when it is,
-             * we will not need the identity as the result is also empty.
-             */
-            int has_initial = context->method->get_reduction_initial(
-                    context, empty_iteration, initial_buf);
-            if (has_initial < 0) {
-                goto fail;
-            }
-            if (!has_initial) {
-                /* We have no initial value available, free buffer to indicate */
-                PyMem_FREE(initial_buf);
-                initial_buf = NULL;
-            }
-        }
-    }
-
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
+
+    if (get_initial_buf(context, empty_iteration, op_dtypes[0], initial,
+                        &initial_buf) < 0) {
+        goto fail;
+    }
 
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     needs_api |= NpyIter_IterationNeedsAPI(iter);

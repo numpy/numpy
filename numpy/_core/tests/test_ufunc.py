@@ -221,8 +221,47 @@ class TestUfunc:
     def test_reduceat_shifting_sum(self):
         L = 6
         x = np.arange(L)
+        # old style
         idx = np.array(list(zip(np.arange(L - 2), np.arange(L - 2) + 2))).ravel()
         assert_array_equal(np.add.reduceat(x, idx)[::2], [1, 3, 5, 7])
+        # start, stop slices
+        idx = (np.arange(0, L-2), np.arange(2, L))
+        assert_array_equal(np.add.reduceat(x, idx), [1, 3, 5, 7])
+
+    def test_reduceat_multi_d(self):
+        # Following examples in documentation.
+        x = np.arange(16.).reshape(4, 4)
+        res = np.add.reduceat(x, ([0, 3, 1, 2, 0], [3, 4, 2, 3, 4]))
+        exp = np.array([[12., 15., 18., 21.],
+                        [12., 13., 14., 15.],
+                        [4., 5., 6., 7.],
+                        [8., 9., 10., 11.],
+                        [24., 28., 32., 36.]])
+        assert_array_equal(res, exp)
+        # old style
+        res = np.add.reduceat(x, [0, 3, 1, 2, 0])
+        assert_array_equal(res, exp)
+        res = np.multiply.reduceat(x, ([0, 3], [3, 4]), 1)
+        exp = np.array([[0., 3.], [120., 7.], [720., 11.], [2184., 15.]])
+        assert_array_equal(res, exp)
+        # old style
+        res = np.multiply.reduceat(x, [0, 3], 1)
+        assert_array_equal(res, exp)
+
+    def test_reduceat_initial(self):
+        a = np.arange(12)
+        initial = 10
+        exp = np.add.reduceat(a, ([1, 3, 5], [2, -1, 0])) + initial
+        res = np.add.reduceat(a, ([1, 3, 5], [2, -1, 0]), initial=initial)
+        assert_array_equal(res, exp)
+        # ufunc without an identity
+        res = np.minimum.reduceat(a, ([1, 3, 5], [2, -1, 0]), initial=initial)
+        assert_array_equal(res, [1, 3, 10])
+        with pytest.raises(ValueError, match="empty slice"):
+            np.minimum.reduceat(a, ([1, 3, 5], [2, -1, 0]))
+        # old style is not supported
+        with pytest.raises(ValueError, match="only supported"):
+            np.add.reduceat(a, [1, 2, 0], initial=initial)
 
     def test_all_ufunc(self):
         """Try to check presence and results of all ufuncs.
@@ -1569,7 +1608,7 @@ class TestUfunc:
         out = np.empty(4, dtype=object)
         out[:] = [[1] for i in range(4)]
         np.add.reduceat(arr, np.arange(4), out=arr)
-        np.add.reduceat(arr, np.arange(4), out=arr)
+        np.add.reduceat(arr, (np.arange(4), np.arange(4)+1), out=arr)
         assert_array_equal(arr, out)
 
         # And the same if the axis argument is used
@@ -1578,7 +1617,7 @@ class TestUfunc:
         out = np.ones((2, 4), dtype=object)
         out[0, :] = [[2] for i in range(4)]
         np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
-        np.add.reduceat(arr, np.arange(4), out=arr, axis=-1)
+        np.add.reduceat(arr, (np.arange(4), np.arange(4)+1), out=arr, axis=-1)
         assert_array_equal(arr, out)
 
     def test_object_array_reduceat_failure(self):
@@ -1589,6 +1628,14 @@ class TestUfunc:
         # But errors when None would be involved in an operation:
         with pytest.raises(TypeError):
             np.add.reduceat([1, None, 2], [0, 2])
+        # Also true for new-style
+        res = np.add.reduceat(np.array([1, None, 2], dtype=object), ([1, 2], [2, 3]))
+        assert_array_equal(res, np.array([None, 2], dtype=object))
+        with pytest.raises(TypeError):
+            np.add.reduceat([1, None, 2], ([0, 2], [2, 3]))
+        # Or when initial is given.
+        with pytest.raises(TypeError):
+            np.add.reduceat([1, None, 2], ([1, 2], [2, 3]), initial=0)
 
     def test_zerosize_reduction(self):
         # Test with default dtype and object dtype
@@ -2547,6 +2594,9 @@ class TestUfunc:
         assert_array_equal(np.add.accumulate(arr_be), np.add.accumulate(arr_le))
         assert_array_equal(
             np.add.reduceat(arr_be, [1]), np.add.reduceat(arr_le, [1]))
+        # start-stop style just to be sure.
+        assert_array_equal(np.add.reduceat(arr_be, ([1], [10])),
+                           np.add.reduceat(arr_le, ([1], [10])))
 
     def test_reducelike_out_promotes(self):
         # Check that the out argument to reductions is considered for
@@ -2584,6 +2634,11 @@ class TestUfunc:
         out = np.empty(2, dtype=arr.dtype.newbyteorder())
         expected = np.add.reduceat(arr, [0, 1])
         np.add.reduceat(arr, [0, 1], out=out)
+        assert_array_equal(expected, out)
+        # start-stop
+        out2 = np.empty(2, dtype=arr.dtype.newbyteorder())
+        out = np.add.reduceat(arr, ([0, 1], [1, 20]), out=out2)
+        assert out is out2
         assert_array_equal(expected, out)
         # And accumulate:
         out = np.empty(arr.shape, dtype=arr.dtype.newbyteorder())
@@ -2624,6 +2679,9 @@ class TestUfunc:
 
         with pytest.raises(ValueError, match="(shape|size)"):
             np.add.reduceat(arr, [0, 3], out=out)
+
+        with pytest.raises(ValueError, match="(shape|size)"):
+            np.add.reduceat(arr, ([0, 3], [3, 5]), out=out)
 
         with pytest.raises(ValueError, match="(shape|size)"):
             np.add.accumulate(arr, out=out)

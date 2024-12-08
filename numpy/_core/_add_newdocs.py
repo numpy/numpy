@@ -5338,15 +5338,23 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
 
 add_newdoc('numpy._core', 'ufunc', ('reduceat',
     """
-    reduceat(array, indices, axis=0, dtype=None, out=None)
+    reduceat(array, indices, axis=0, dtype=None, out=None, initial=<no value>)
 
     Performs a (local) reduce with specified slices over a single axis.
 
-    For i in ``range(len(indices))``, `reduceat` computes
-    ``ufunc.reduce(array[indices[i]:indices[i+1]])``, which becomes the i-th
-    generalized "row" parallel to `axis` in the final result (i.e., in a
-    2-D array, for example, if `axis = 0`, it becomes the i-th row, but if
-    `axis = 1`, it becomes the i-th column).  There are three exceptions to this:
+    There are two modes for how `indices` is interpreted. If it is a tuple of
+    2 arrays (or an array with two rows), then these are interpreted as start
+    and stop values of slices over which to compute reductions, i.e., for each
+    row i, ``ufunc.reduce(array[indices[0, i]:indices[1, i]])`` is computed,
+    which becomes the i-th element along `axis` in the final result (e.g., in
+    a 2-D array, if ``axis=0``, it becomes the i-th row, but if ``axis=1``,
+    it becomes the i-th column). Like for slices, negative indices are allowed
+    for both start and stop, and the values are clipped to be between 0 and
+    the shape of the array along `axis`.
+
+    If `indices` is one-dimentional, the stop values are taken to be the
+    previous index, i.e., ``ufunc.reduce(array[indices[i]:indices[i+1]])`` is
+    computed. There are three exceptions to this:
 
     * when ``i = len(indices) - 1`` (so for the last index),
       ``indices[i+1] = array.shape[axis]``.
@@ -5354,16 +5362,16 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
       simply ``array[indices[i]]``.
     * if ``indices[i] >= len(array)`` or ``indices[i] < 0``, an error is raised.
 
-    The shape of the output depends on the size of `indices`, and may be
-    larger than `array` (this happens if ``len(indices) > array.shape[axis]``).
+    .. versionchanged:: 2.2
+       Allow indices to be a 2-D array or tuple of start, stop sequences.
 
     Parameters
     ----------
     array : array_like
         The array to act on.
-    indices : array_like
-        Paired indices, comma separated (not colon), specifying slices to
-        reduce.
+    indices : array_like or tuple of array_like
+        Start and stop index arrays, interpreted like slices, or a single
+        sequence of indices, interpreted pairwise (see above).
     axis : int, optional
         The axis along which to apply the reduceat.
     dtype : data-type code, optional
@@ -5376,6 +5384,15 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
+    initial : scalar, optional
+        The value with which to start the reduction of a slice (only supported
+        if indices are in the start, stop form).
+        If the ufunc has no identity or the dtype is object, this defaults
+        to None - otherwise it defaults to ufunc.identity.
+        If ``None`` is given, the first element of the reduction is used,
+        and an error is thrown if the reduction is empty.
+
+        .. versionadded:: 2.2
 
     Returns
     -------
@@ -5387,22 +5404,19 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
     -----
     A descriptive example:
 
-    If `array` is 1-D, the function `ufunc.accumulate(array)` is the same as
-    ``ufunc.reduceat(array, indices)[::2]`` where `indices` is
-    ``range(len(array) - 1)`` with a zero placed
-    in every other element:
-    ``indices = zeros(2 * len(array) - 1)``,
-    ``indices[1::2] = range(1, len(array))``.
+    If `array` is 1-D, the function ``ufunc.accumulate(array)`` is the same as
+    ``ufunc.reduceat(array, (np.zeros(len(a)), np.arange(1, len(array)+1)))``.
 
-    Don't be fooled by this attribute's name: `reduceat(array)` is not
-    necessarily smaller than `array`.
+    Don't be fooled by this attribute's name: ``reduceat(array)`` is not
+    necessarily smaller than `array`: the shape of the output equals the
+    length of `indices` along `axis`, which may be larger than `array`.
 
     Examples
     --------
     To take the running sum of four successive values:
 
     >>> import numpy as np
-    >>> np.add.reduceat(np.arange(8),[0,4, 1,5, 2,6, 3,7])[::2]
+    >>> np.add.reduceat(np.arange(8), ([0, 1, 2, 3], [4, 5, 6, 7]))
     array([ 6, 10, 14, 18])
 
     A 2-D example:
@@ -5423,6 +5437,14 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
      # [row3]
      # [row1 + row2 + row3 + row4]
 
+    >>> np.add.reduceat(x, ([0, 3, 1, 2, 0], [3, 4, 2, 3, 4]))
+    array([[12.,  15.,  18.,  21.],
+           [12.,  13.,  14.,  15.],
+           [ 4.,   5.,   6.,   7.],
+           [ 8.,   9.,  10.,  11.],
+           [24.,  28.,  32.,  36.]])
+
+    Here, the old method of a single index array is shorter (but not clearer):
     >>> np.add.reduceat(x, [0, 3, 1, 2, 0])
     array([[12.,  15.,  18.,  21.],
            [12.,  13.,  14.,  15.],
@@ -5430,12 +5452,13 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
            [ 8.,   9.,  10.,  11.],
            [24.,  28.,  32.,  36.]])
 
+
     ::
 
      # reduce such that result has the following two columns:
      # [col1 * col2 * col3, col4]
 
-    >>> np.multiply.reduceat(x, [0, 3], 1)
+    >>> np.multiply.reduceat(x, ([0, 3], [3, 4]), 1)
     array([[   0.,     3.],
            [ 120.,     7.],
            [ 720.,    11.],

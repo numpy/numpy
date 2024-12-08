@@ -4700,6 +4700,10 @@ def test_reduceat_empty():
     result = np.add.reduceat(x, [], axis=1)
     assert_equal(result.dtype, x.dtype)
     assert_equal(result.shape, (5, 0))
+    # Start-stop index
+    result = np.add.reduceat(x, ([], []), axis=0)
+    assert_equal(result.dtype, x.dtype)
+    assert_equal(result.shape, (0, 2))
 
 def test_complex_nan_comparisons():
     nans = [complex(np.nan, 0), complex(0, np.nan), complex(np.nan, np.nan)]
