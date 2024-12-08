@@ -47,6 +47,7 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+          persist-credentials: false
 
       - uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969  # v2.22.0
         env:

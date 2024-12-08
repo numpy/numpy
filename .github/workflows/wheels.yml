@@ -52,13 +52,16 @@ jobs:
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - name: Get commit message
         id: commit_message
+        env:
+          HEAD: ${{ github.ref }}
         run: |
           set -xe
           COMMIT_MSG=$(git log --no-merges -1 --oneline)
           echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
-          echo github.ref ${{ github.ref }}
+          echo github.ref "$HEAD"
 
   build_wheels:
     name: Build wheel ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
@@ -107,6 +110,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           submodules: true
+          persist-credentials: false
 
       - name: Setup MSVC (32-bit)
         if: ${{ matrix.buildplat[1] == 'win32' }}
@@ -228,6 +232,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           submodules: true
+          persist-credentials: false
       # Used to push the built wheels
       - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:

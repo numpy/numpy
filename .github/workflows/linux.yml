@@ -37,6 +37,7 @@ jobs:
       with:
         submodules: recursive
         fetch-depth: 0
+        persist-credentials: false
     - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
@@ -44,8 +45,10 @@ jobs:
       run:
         python -m pip install -r requirements/linter_requirements.txt
     - name: Run linter on PR diff
+      env:
+        BASE_REF: ${{ github.base_ref }}
       run:
-        python tools/linter.py --branch origin/${{ github.base_ref }}
+        python tools/linter.py --branch origin/"$BASE_REF"
 
   smoke_test:
     # To enable this job on a fork, comment out:
@@ -61,6 +64,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
     - uses: quansight-labs/setup-python@b9ab292c751a42bcd2bb465b7fa202ea2c3f5796 # v5.3.1
       with:
         python-version: ${{ matrix.version }}
@@ -81,6 +85,7 @@ jobs:
       #with:
         #submodules: recursive
         #fetch-tags: true
+        #persist-credentials: false
     #- uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       #with:
         #python-version: 'pypy3.10-v7.3.17'
@@ -99,6 +104,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
     - name: Install debug Python
       run: |
         sudo apt-get update
@@ -128,6 +134,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
     - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
@@ -165,6 +172,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
     - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
@@ -202,6 +210,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
     - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
@@ -236,6 +245,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
     - name: Checkout array-api-tests
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
@@ -243,6 +253,7 @@ jobs:
         ref: '827edd804bcace9d64176b8115138d29ae3e8dec'  # Latest commit as of 2024-07-30
         submodules: 'true'
         path: 'array-api-tests'
+        persist-credentials: false
     - name: Set up Python
       uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
@@ -272,6 +283,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
     - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
