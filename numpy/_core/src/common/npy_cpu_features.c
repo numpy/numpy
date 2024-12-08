@@ -631,10 +631,13 @@ npy__cpu_init_features(void)
 #elif defined(__s390x__)
 
 #include <sys/auxv.h>
+
+#ifndef HWCAP_S390_VX
+    #define HWCAP_S390_VX 2048
+#endif
 #ifndef HWCAP_S390_VXE
     #define HWCAP_S390_VXE 8192
 #endif
-
 #ifndef HWCAP_S390_VXRS_EXT2
     #define HWCAP_S390_VXRS_EXT2 32768
 #endif
