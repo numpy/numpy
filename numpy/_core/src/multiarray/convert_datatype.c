@@ -1551,8 +1551,8 @@ PyArray_ResultType(
         return NPY_DT_CALL_ensure_canonical(result);
     }
 
-    NPY_DEFINE_SMALL_WORKSPACE(workspace, void *, 2 * 8);
-    if (npy_init_workspace(workspace, 2 * (narrs + ndtypes)) < 0) {
+    NPY_ALLOC_WORKSPACE(workspace, void *, 2 * 8, 2 * (narrs + ndtypes));
+    if (workspace == NULL) {
         return NULL;
     }
 
@@ -1647,13 +1647,13 @@ PyArray_ResultType(
     }
 
     Py_DECREF(common_dtype);
-    npy_free_small_workspace(workspace);
+    npy_free_workspace(workspace);
     return result;
 
   error:
     Py_XDECREF(result);
     Py_XDECREF(common_dtype);
-    npy_free_small_workspace(workspace);
+    npy_free_workspace(workspace);
     return NULL;
 }
 

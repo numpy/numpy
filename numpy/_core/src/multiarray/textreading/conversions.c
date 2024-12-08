@@ -66,8 +66,8 @@ double_from_ucs4(
 
     size_t str_len = end - str + 1;
     /* We convert to ASCII for the Python parser, use stack if small: */
-    NPY_DEFINE_SMALL_WORKSPACE(ascii, char, 128);
-    if (npy_init_workspace(ascii, str_len) < 0) {
+    NPY_ALLOC_WORKSPACE(ascii, char, 128, str_len);
+    if (ascii == NULL) {
         return -1;
     }
 
@@ -87,7 +87,7 @@ double_from_ucs4(
     /* Rewind `end` to the first UCS4 character not parsed: */
     end = end - (c - end_parsed);
 
-    npy_free_small_workspace(ascii);
+    npy_free_workspace(ascii);
 
     if (*result == -1. && PyErr_Occurred()) {
         return -1;

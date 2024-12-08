@@ -2427,8 +2427,8 @@ npyiter_get_common_dtype(int nop, PyArrayObject **op,
     int iop;
     npy_intp narrs = 0, ndtypes = 0;
     PyArray_Descr *ret;
-    NPY_DEFINE_SMALL_WORKSPACE(arrs_and_dtypes, void *, 2 * 4);
-    if (npy_init_workspace(arrs_and_dtypes, 2 * nop) < 0) {
+    NPY_ALLOC_WORKSPACE(arrs_and_dtypes, void *, 2 * 4, 2 * nop);
+    if (arrs_and_dtypes == NULL) {
         return NULL;
     }
 
@@ -2476,7 +2476,7 @@ npyiter_get_common_dtype(int nop, PyArrayObject **op,
         ret = PyArray_ResultType(narrs, arrs, ndtypes, dtypes);
     }
 
-    npy_free_small_workspace(arrs_and_dtypes);
+    npy_free_workspace(arrs_and_dtypes);
     return ret;
 }
 

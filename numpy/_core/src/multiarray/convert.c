@@ -405,14 +405,17 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
      * not actually need a helping buffer, we always null it, just in case.
      * Use `long double` to ensure that the heap allocation is aligned.
      */
-    NPY_DEFINE_SMALL_WORKSPACE(value, long double, 2);
     size_t n_max_align_t = (descr->elsize + sizeof(long double) - 1) / sizeof(long double);
-    if (npy_zero_init_workspace(value, n_max_align_t) < 0) {
+    NPY_ALLOC_WORKSPACE(value, long double, 2, n_max_align_t);
+    if (value == NULL) {
         return -1;
+    }
+    if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+        memset(value, 0, descr->elsize);
     }
 
     if (PyArray_Pack(descr, value, obj) < 0) {
-        npy_free_small_workspace(value);
+        npy_free_workspace(value);
         return -1;
     }
 
@@ -428,7 +431,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     if (PyDataType_REFCHK(descr)) {
         PyArray_ClearBuffer(descr, (void *)value, 0, 1, 1);
     }
-    npy_free_small_workspace(value);
+    npy_free_workspace(value);
     return retcode;
 }
 

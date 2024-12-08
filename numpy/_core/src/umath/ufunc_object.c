@@ -4306,10 +4306,12 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
      * Scratch space for operands, dtypes, etc.  Note that operands and
      * operation_descrs may hold an entry for the wheremask.
      */
-    NPY_DEFINE_SMALL_WORKSPACE(scratch_objs, void *, UFUNC_STACK_NARGS * 4 + 2);
-    if (npy_zero_init_workspace(scratch_objs, nop * 4 + 2) < 0) {
+    NPY_ALLOC_WORKSPACE(scratch_objs, void *, UFUNC_STACK_NARGS * 4 + 2, nop * 4 + 2);
+    if (scratch_objs == NULL) {
         return NULL;
     }
+    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2));
+    
     PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
     PyArrayObject **operands = (PyArrayObject **)(signature + nop);
     PyArray_DTypeMeta **operand_DTypes = (PyArray_DTypeMeta **)(operands + nop + 1);
@@ -4566,7 +4568,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
 
-    npy_free_small_workspace(scratch_objs);
+    npy_free_workspace(scratch_objs);
     return result;
 
 fail:
@@ -4579,7 +4581,7 @@ fail:
         Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
     }
-    npy_free_small_workspace(scratch_objs);
+    npy_free_workspace(scratch_objs);
     return NULL;
 }
 

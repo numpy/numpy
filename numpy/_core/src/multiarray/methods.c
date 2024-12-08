@@ -81,11 +81,11 @@ npy_forward_method(
     npy_intp len_kwargs = kwnames != NULL ? PyTuple_GET_SIZE(kwnames) : 0;
     npy_intp total_nargs = (len_args + len_kwargs);
 
-    NPY_DEFINE_SMALL_WORKSPACE(new_args, PyObject *, 14);
-    if (npy_init_workspace(new_args, total_nargs + 1) < 0) {
+    NPY_ALLOC_WORKSPACE(new_args, PyObject *, 14, total_nargs + 1);
+    if (new_args == NULL) {
         /*
-         * If this fails Python uses `PY_VECTORCALL_ARGUMENTS_OFFSET` and
-         * we should probably add a fast-path for that (hopefully almost)
+         * This may fail if Python starts passing `PY_VECTORCALL_ARGUMENTS_OFFSET`
+         * and we should probably add a fast-path for that (hopefully almost)
          * always taken.
          */
         return NULL;
@@ -95,7 +95,7 @@ npy_forward_method(
     memcpy(&new_args[1], args, total_nargs * sizeof(PyObject *));
     PyObject *res = PyObject_Vectorcall(callable, new_args, len_args+1, kwnames);
 
-    npy_free_small_workspace(new_args);
+    npy_free_workspace(new_args);
     return res;
 }
 
