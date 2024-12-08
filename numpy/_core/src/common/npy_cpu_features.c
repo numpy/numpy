@@ -631,10 +631,14 @@ npy__cpu_init_features(void)
 #elif defined(__s390x__)
 
 #include <sys/auxv.h>
-#ifndef HWCAP_S390_VXE
-    #define HWCAP_S390_VXE 8192
-#endif
 
+/* kernel HWCAP names, available in musl, not available in glibc<2.33: https://sourceware.org/bugzilla/show_bug.cgi?id=25971 */
+#ifndef HWCAP_S390_VXRS
+    #define HWCAP_S390_VXRS 2048
+#endif
+#ifndef HWCAP_S390_VXRS_EXT
+    #define HWCAP_S390_VXRS_EXT 8192
+#endif
 #ifndef HWCAP_S390_VXRS_EXT2
     #define HWCAP_S390_VXRS_EXT2 32768
 #endif
@@ -645,7 +649,7 @@ npy__cpu_init_features(void)
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
 
     unsigned int hwcap = getauxval(AT_HWCAP);
-    if ((hwcap & HWCAP_S390_VX) == 0) {
+    if ((hwcap & HWCAP_S390_VXRS) == 0) {
         return;
     }
 
@@ -656,7 +660,7 @@ npy__cpu_init_features(void)
        return;
     }
 
-    npy__cpu_have[NPY_CPU_FEATURE_VXE] = (hwcap & HWCAP_S390_VXE) != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_VXE] = (hwcap & HWCAP_S390_VXRS_EXT) != 0;
 
     npy__cpu_have[NPY_CPU_FEATURE_VX]  = 1;
 }
