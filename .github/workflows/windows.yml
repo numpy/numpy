@@ -32,6 +32,7 @@ jobs:
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
     - name: Setup Python
       uses: quansight-labs/setup-python@b9ab292c751a42bcd2bb465b7fa202ea2c3f5796 # v5.3.1
@@ -101,6 +102,7 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+          persist-credentials: false
 
       - name: Setup Python (32-bit)
         uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0

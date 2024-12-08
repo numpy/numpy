@@ -22,6 +22,7 @@ jobs:
         with:
           submodules: recursive
           fetch-tags: true
+          persist-credentials: false
       - name: Install Cygwin
         uses: egor-tensin/setup-cygwin@d2c752bab416d4b0662591bd366fc2686297c82d # v4
         with:
