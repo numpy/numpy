@@ -14,6 +14,7 @@
 /* Allow this .c file to include nditer_impl.h */
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 
+#include "alloc.h"
 #include "nditer_impl.h"
 #include "arrayobject.h"
 #include "array_coercion.h"
@@ -2425,9 +2426,14 @@ npyiter_get_common_dtype(int nop, PyArrayObject **op,
 {
     int iop;
     npy_intp narrs = 0, ndtypes = 0;
-    PyArrayObject *arrs[NPY_MAXARGS];
-    PyArray_Descr *dtypes[NPY_MAXARGS];
     PyArray_Descr *ret;
+    NPY_ALLOC_WORKSPACE(arrs_and_dtypes, void *, 2 * 4, 2 * nop);
+    if (arrs_and_dtypes == NULL) {
+        return NULL;
+    }
+
+    PyArrayObject **arrs = (PyArrayObject **)arrs_and_dtypes;
+    PyArray_Descr **dtypes = (PyArray_Descr **)arrs_and_dtypes + nop;
 
     NPY_IT_DBG_PRINT("Iterator: Getting a common data type from operands\n");
 
@@ -2470,6 +2476,7 @@ npyiter_get_common_dtype(int nop, PyArrayObject **op,
         ret = PyArray_ResultType(narrs, arrs, ndtypes, dtypes);
     }
 
+    npy_free_workspace(arrs_and_dtypes);
     return ret;
 }
 
