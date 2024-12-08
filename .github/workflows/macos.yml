@@ -33,8 +33,6 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-        persist-credentials: false
-      
 
     - name:  Prepare cache dirs and timestamps
       id:    prep-ccache
