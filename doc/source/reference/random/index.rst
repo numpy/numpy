@@ -4,8 +4,8 @@
 
 .. currentmodule:: numpy.random
 
-Random sampling (:mod:`numpy.random`)
-=====================================
+Random sampling
+===============
 
 .. _random-quick-start:
 
