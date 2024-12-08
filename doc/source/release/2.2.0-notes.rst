@@ -125,6 +125,11 @@ multiple modules are present within a single source file.
 Performance improvements and changes
 ====================================
 
+* Improved multithreaded scaling on the free-threaded build when many threads
+  simultaneously call the same ufunc operations.
+
+  (`gh-27896 <https://github.com/numpy/numpy/pull/27896>`__)
+
 * NumPy now uses fast-on-failure attribute lookups for protocols.  This can
   greatly reduce overheads of function calls or array creation especially with
   custom Python objects.  The largest improvements will be seen on Python 3.12

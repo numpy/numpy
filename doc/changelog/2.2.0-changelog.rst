@@ -1,4 +1,3 @@
-Generating change log for range v2.2.0.dev0^..HEAD
 
 Contributors
 ============
@@ -6,8 +5,14 @@ Contributors
 A total of 106 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
+* !Dreamge +
+* !bersbersbers +
 * !fengluoqiuwu +
 * !h-vetinari
+* !hutauf +
+* !musvaage +
+* !nullSoup +
+* Aarni Koskela +
 * Abhishek Kumar +
 * Abraham Medina +
 * Aditi Juneja +
@@ -18,7 +23,6 @@ names contributed a patch for the first time.
 * Amit Subhash Chejara +
 * Andrew Nelson
 * Anne Gunn
-* Aarni Koskela +
 * Austin Ran +
 * Ben Walsh
 * Benjamin A. Beasley +
@@ -31,7 +35,6 @@ names contributed a patch for the first time.
 * Clément Robert
 * Dane Reimers +
 * Dimitri Papadopoulos Orfanos
-* Dreamge +
 * Evgeni Burovski
 * GUAN MING
 * Habiba Hye +
@@ -95,7 +98,7 @@ names contributed a patch for the first time.
 * Slava Gorloff +
 * Slobodan Miletic +
 * Soutrik Bandyopadhyay +
-* Stan U. +
+* Stan Ulbrych +
 * Stefan van der Walt
 * Tim Hoffmann
 * Timo Röhling
@@ -106,17 +109,13 @@ names contributed a patch for the first time.
 * Warren Weckesser
 * Xiao Yuan +
 * Yashasvi Misra
-* bersbersbers +
 * bilderbuchi +
 * dependabot[bot]
-* hutauf +
-* musvaage +
-* nullSoup +
 
 Pull requests merged
 ====================
 
-A total of 307 pull requests were merged for this release.
+A total of 317 pull requests were merged for this release.
 
 * `#14622 <https://github.com/numpy/numpy/pull/14622>`__: BUG: fix datetime64/timedelta64 hash and match Python
 * `#15181 <https://github.com/numpy/numpy/pull/15181>`__: ENH: Add nd-support to trim_zeros
@@ -425,4 +424,14 @@ A total of 307 pull requests were merged for this release.
 * `#27845 <https://github.com/numpy/numpy/pull/27845>`__: BUG: Never negate strides in reductions (for now)
 * `#27846 <https://github.com/numpy/numpy/pull/27846>`__: ENH: add matvec and vecmat gufuncs
 * `#27852 <https://github.com/numpy/numpy/pull/27852>`__: DOC: Correct versionadded for vecmat and matvec.
+* `#27853 <https://github.com/numpy/numpy/pull/27853>`__: REL: Prepare for the NumPy 2.2.0rc1 release [wheel build]
+* `#27874 <https://github.com/numpy/numpy/pull/27874>`__: BUG: fix importing numpy in Python's optimized mode (#27868)
+* `#27895 <https://github.com/numpy/numpy/pull/27895>`__: DOC: Fix double import in docs (#27878)
+* `#27904 <https://github.com/numpy/numpy/pull/27904>`__: MAINT: Ensure correct handling for very large unicode strings
+* `#27906 <https://github.com/numpy/numpy/pull/27906>`__: MAINT: Use mask_store instead of store for compiler workaround
+* `#27908 <https://github.com/numpy/numpy/pull/27908>`__: MAINT: Update highway from main.
+* `#27911 <https://github.com/numpy/numpy/pull/27911>`__: ENH: update __module__ in numpy.random module
+* `#27912 <https://github.com/numpy/numpy/pull/27912>`__: ENH: Refactor ``__qualname__`` across API
+* `#27913 <https://github.com/numpy/numpy/pull/27913>`__: PERF: improve multithreaded ufunc scaling
+* `#27916 <https://github.com/numpy/numpy/pull/27916>`__: MAINT: Bump actions/cache from 4.1.2 to 4.2.0
 
