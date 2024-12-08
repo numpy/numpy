@@ -678,6 +678,15 @@ struct Buffer {
 template <IMPLEMENTED_UNARY_FUNCTIONS f, ENCODING enc, typename T>
 struct call_buffer_member_function {
     T operator()(Buffer<enc> buf) {
+        static_assert(f == IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISDIGIT ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISSPACE ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISALNUM ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISNUMERIC ||
+                      f == IMPLEMENTED_UNARY_FUNCTIONS::ISDECIMAL,
+                      "Invalid IMPLEMENTED_UNARY_FUNCTIONS value " \
+                      "in call_buffer_member_function.");
+
         switch (f) {
             case IMPLEMENTED_UNARY_FUNCTIONS::ISALPHA:
                 return codepoint_isalpha<enc>(*buf);
@@ -1166,14 +1175,14 @@ string_lrstrip_whitespace(Buffer<enc> buf, Buffer<enc> out, STRIPTYPE striptype)
     }
 
     size_t new_stop = len;  // New stop is a range (beyond last char)
-    if (enc == ENCODING::UTF8) {
-        traverse_buf = Buffer<enc>(buf.after, 0) - 1;
-    }
-    else {
-        traverse_buf = buf + (new_stop - 1);
-    }
 
     if (striptype != STRIPTYPE::LEFTSTRIP) {
+        if (enc == ENCODING::UTF8) {
+            traverse_buf = Buffer<enc>(buf.after, 0) - 1;
+        }
+        else {
+            traverse_buf = buf + (new_stop - 1);
+        }
         while (new_stop > new_start) {
             if (*traverse_buf != 0 && !traverse_buf.first_character_isspace()) {
                 break;
@@ -1265,14 +1274,14 @@ string_lrstrip_chars(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out, STRIPT
     }
 
     size_t new_stop = len1;  // New stop is a range (beyond last char)
-    if (enc == ENCODING::UTF8) {
-        traverse_buf = Buffer<enc>(buf1.after, 0) - 1;
-    }
-    else {
-        traverse_buf = buf1 + (new_stop - 1);
-    }
 
     if (striptype != STRIPTYPE::LEFTSTRIP) {
+        if (enc == ENCODING::UTF8) {
+            traverse_buf = Buffer<enc>(buf1.after, 0) - 1;
+        }
+        else {
+            traverse_buf = buf1 + (new_stop - 1);
+        }
         while (new_stop > new_start) {
             size_t current_point_bytes = traverse_buf.num_bytes_next_character();
             Py_ssize_t res;
@@ -1345,11 +1354,10 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     size_t len1 = buf1.num_codepoints();
     size_t len2 = buf2.num_codepoints();
     size_t len3 = buf3.num_codepoints();
+
     char *start;
-    size_t length = len1;
     if (enc == ENCODING::UTF8) {
         start = buf1.after;
-        length = 0;
     }
     else if (enc == ENCODING::UTF32) {
         start = buf1.buf + sizeof(npy_ucs4) * len1;
@@ -1357,8 +1365,7 @@ string_replace(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> buf3, npy_int64 c
     else {
         start = buf1.buf + len1;
     }
-
-    Buffer<enc> end1(start, length);
+    Buffer<enc> end1(start, 0);
     size_t span2, span3;
 
     switch(enc) {
@@ -1575,7 +1582,6 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Bu
         right = 0;
     }
 
-    assert(left >= 0 || right >= 0);
     assert(left <= PY_SSIZE_T_MAX - len && right <= PY_SSIZE_T_MAX - (left + len));
 
     if (left > 0) {
