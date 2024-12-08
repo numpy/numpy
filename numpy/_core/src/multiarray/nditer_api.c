@@ -299,6 +299,10 @@ NpyIter_Reset(NpyIter *iter, char **errmsg)
             return NPY_FAIL;
         }
     }
+    else if (itflags&NPY_ITFLAG_EXLOOP)  {
+        /* make sure to update the user pointers (copy to buffer does). */
+        memcpy(NIT_USERPTRS(iter), NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
+    }
 
     return NPY_SUCCEED;
 }
@@ -654,7 +658,7 @@ NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)
             char **ptrs;
 
             strides = NBF_STRIDES(bufferdata);
-            ptrs = NBF_PTRS(bufferdata);
+            ptrs = NIT_USERPTRS(iter);
             delta = iterindex - NIT_ITERINDEX(iter);
 
             for (iop = 0; iop < nop; ++iop) {
@@ -1091,13 +1095,11 @@ NpyIter_GetDataPtrArray(NpyIter *iter)
     /*int ndim = NIT_NDIM(iter);*/
     int nop = NIT_NOP(iter);
 
-    if (itflags&NPY_ITFLAG_BUFFER) {
-        NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
-        return NBF_PTRS(bufferdata);
+    if (itflags&(NPY_ITFLAG_BUFFER|NPY_ITFLAG_EXLOOP)) {
+        return NIT_USERPTRS(iter);
     }
     else {
-        NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-        return NAD_PTRS(axisdata);
+        return NIT_DATAPTRS(iter);
     }
 }
 
@@ -1214,11 +1216,9 @@ NpyIter_GetIndexPtr(NpyIter *iter)
     /*int ndim = NIT_NDIM(iter);*/
     int nop = NIT_NOP(iter);
 
-    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-
     if (itflags&NPY_ITFLAG_HASINDEX) {
         /* The index is just after the data pointers */
-        return (npy_intp*)NAD_PTRS(axisdata) + nop;
+        return (npy_intp*)(NpyIter_GetDataPtrArray(iter) + nop);
     }
     else {
         return NULL;
@@ -1531,6 +1531,18 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("%i ", (int)NIT_BASEOFFSETS(iter)[iop]);
     }
     printf("\n");
+    printf("| Ptrs: ");
+    for (iop = 0; iop < nop; ++iop) {
+        printf("%p ", (void *)NIT_DATAPTRS(iter)[iop]);
+    }
+    printf("\n");
+    if (itflags&(NPY_ITFLAG_EXLOOP|NPY_ITFLAG_BUFFER)) {
+        printf("| User/buffer ptrs: ");
+        for (iop = 0; iop < nop; ++iop) {
+            printf("%p ", (void *)NIT_USERPTRS(iter)[iop]);
+        }
+        printf("\n");
+    }
     if (itflags&NPY_ITFLAG_HASINDEX) {
         printf("| InitIndex: %d\n",
                         (int)(npy_intp)NIT_RESETDATAPTR(iter)[nop]);
@@ -1606,10 +1618,6 @@ NpyIter_DebugPrint(NpyIter *iter)
                 printf("%d ", (int)fixedstrides[iop]);
             printf("\n");
         }
-        printf("|   Ptrs: ");
-        for (iop = 0; iop < nop; ++iop)
-            printf("%p ", (void *)NBF_PTRS(bufferdata)[iop]);
-        printf("\n");
         if (itflags&NPY_ITFLAG_REDUCE) {
             printf("|   REDUCE Outer Strides: ");
             for (iop = 0; iop < nop; ++iop)
@@ -1657,14 +1665,9 @@ NpyIter_DebugPrint(NpyIter *iter)
         if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("|   Index Stride: %d\n", (int)NAD_STRIDES(axisdata)[nop]);
         }
-        printf("|   Ptrs: ");
-        for (iop = 0; iop < nop; ++iop) {
-            printf("%p ", (void *)NAD_PTRS(axisdata)[iop]);
-        }
-        printf("\n");
         if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("|   Index Value: %d\n",
-                               (int)((npy_intp*)NAD_PTRS(axisdata))[nop]);
+                               (int)((npy_intp*)NIT_DATAPTRS(iter))[nop]);
         }
     }
 
@@ -1813,7 +1816,8 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
     int idim, ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
 
-    char **dataptr;
+    char **ptrs = NIT_DATAPTRS(iter);
+
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
     npy_intp istrides, nstrides, i, shape;
@@ -1826,17 +1830,13 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
 
     ndim = ndim ? ndim : 1;
 
+    for (istrides = 0; istrides < nstrides; ++istrides) {
+        ptrs[istrides] = NIT_RESETDATAPTR(iter)[istrides];
+    }
+
     if (iterindex == 0) {
-        dataptr = NIT_RESETDATAPTR(iter);
-
         for (idim = 0; idim < ndim; ++idim) {
-            char **ptrs;
             NAD_INDEX(axisdata) = 0;
-            ptrs = NAD_PTRS(axisdata);
-            for (istrides = 0; istrides < nstrides; ++istrides) {
-                ptrs[istrides] = dataptr[istrides];
-            }
-
             NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
     }
@@ -1845,44 +1845,20 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
          * Set the multi-index, from the fastest-changing to the
          * slowest-changing.
          */
-        axisdata = NIT_AXISDATA(iter);
-        shape = NAD_SHAPE(axisdata);
-        i = iterindex;
-        iterindex /= shape;
-        NAD_INDEX(axisdata) = i - iterindex * shape;
-        for (idim = 0; idim < ndim-1; ++idim) {
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-
+        for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
             shape = NAD_SHAPE(axisdata);
             i = iterindex;
             iterindex /= shape;
             NAD_INDEX(axisdata) = i - iterindex * shape;
-        }
 
-        dataptr = NIT_RESETDATAPTR(iter);
-
-        /*
-         * Accumulate the successive pointers with their
-         * offsets in the opposite order, starting from the
-         * original data pointers.
-         */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp *strides;
-            char **ptrs;
-
-            strides = NAD_STRIDES(axisdata);
-            ptrs = NAD_PTRS(axisdata);
-
-            i = NAD_INDEX(axisdata);
-
+            npy_intp *strides = NAD_STRIDES(axisdata);
             for (istrides = 0; istrides < nstrides; ++istrides) {
-                ptrs[istrides] = dataptr[istrides] + i*strides[istrides];
+                ptrs[istrides] += NAD_INDEX(axisdata) * strides[istrides];
             }
-
-            dataptr = ptrs;
-
-            NIT_ADVANCE_AXISDATA(axisdata, -1);
         }
+    }
+    if ((itflags & NPY_ITFLAG_EXLOOP) && !(itflags & NPY_ITFLAG_BUFFER)) {
+        memcpy(NIT_USERPTRS(iter), ptrs, nstrides * sizeof(void *));
     }
 }
 
@@ -1909,7 +1885,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     npy_intp *strides = NBF_STRIDES(bufferdata),
              *ad_strides = NAD_STRIDES(axisdata);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    char **ad_ptrs = NAD_PTRS(axisdata);
+    char **ad_ptrs = NIT_DATAPTRS(iter);
     char **buffers = NBF_BUFFERS(bufferdata);
     char *buffer;
 
@@ -2098,7 +2074,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     npy_intp *strides = NBF_STRIDES(bufferdata),
              *ad_strides = NAD_STRIDES(axisdata);
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
+    char **ptrs = NIT_USERPTRS(iter), **ad_ptrs = NIT_DATAPTRS(iter);
     char **buffers = NBF_BUFFERS(bufferdata);
     npy_intp iterindex, iterend, transfersize,
             singlestridesize, reduce_innersize = 0, reduce_outerdim = 0;
