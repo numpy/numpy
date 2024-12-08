@@ -309,10 +309,31 @@ nc_log@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_log1p@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ l = npy_hypot@c@(npy_creal@c@(*x) + 1,npy_cimag@c@(*x));
-    npy_csetimag@c@(r, npy_atan2@c@(npy_cimag@c@(*x), npy_creal@c@(*x) + 1));
-    npy_csetreal@c@(r, npy_log@c@(l));
-    return;
+    @ftype@ xr = npy_creal@c@(*x);
+    @ftype@ xi = npy_cimag@c@(*x);
+    @ctype@ xp1 = npy_cpack@c@(xr + 1, xi);
+    @ftype@ delta = 0.001;
+    /*
+     * Should we use the high precision calculation? First check if
+     * x is within a bounding box, and then check if x is close to the
+     * unit circle centered at -1+0j.  The bounding box is checked first
+     * to avoid overflow that might occur in npy_cabs@c@(xp1) when xr or
+     * xi is very close to the maximum value of @ftype@.
+     */
+    if (-2 - delta < xr && xr < delta && -1 - delta < xi && xi < 1 + delta) {
+        @ftype@ m = npy_cabs@c@(xp1);
+        if (1 - delta < m && m < 1 + delta) {
+            /* Use the high precision calculation in this region. */
+            clog1p@c@(x, r);
+            return;
+        }
+    }
+    /*
+     * Use clog(1 + x).
+     * This branch of the code will also be used if either
+     * xr or xi is nan.
+     */
+    nc_log@c@(&xp1, r);
 }
 
 static void
