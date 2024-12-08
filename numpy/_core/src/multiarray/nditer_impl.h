@@ -55,13 +55,14 @@
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_IT_DBG_TRACING 0
 
+/* TODO: Can remove the n-args macros, old C89 didn't have variadic macros. */
 #if NPY_IT_DBG_TRACING
-#define NPY_IT_DBG_PRINT(s) printf("%s", s)
-#define NPY_IT_DBG_PRINT1(s, p1) printf(s, p1)
-#define NPY_IT_DBG_PRINT2(s, p1, p2) printf(s, p1, p2)
-#define NPY_IT_DBG_PRINT3(s, p1, p2, p3) printf(s, p1, p2, p3)
+#define NPY_IT_DBG_PRINT(...) printf(__VA_ARGS__)
+#define NPY_IT_DBG_PRINT1(s, p1) NPY_IT_DBG_PRINT(s, p1)
+#define NPY_IT_DBG_PRINT2(s, p1, p2) NPY_IT_DBG_PRINT(s, p1, p2)
+#define NPY_IT_DBG_PRINT3(s, p1, p2, p3) NPY_IT_DBG_PRINT(s, p1, p2, p3)
 #else
-#define NPY_IT_DBG_PRINT(s)
+#define NPY_IT_DBG_PRINT(...)
 #define NPY_IT_DBG_PRINT1(s, p1)
 #define NPY_IT_DBG_PRINT2(s, p1, p2)
 #define NPY_IT_DBG_PRINT3(s, p1, p2, p3)
@@ -119,20 +120,27 @@
 #define NPY_OP_ITFLAG_READ         0x0002
 /* The operand needs type conversion/byte swapping/alignment */
 #define NPY_OP_ITFLAG_CAST         0x0004
-/* The operand never needs buffering */
+/* The operand never needs buffering (implies BUF_SINGLESTRIDE) */
 #define NPY_OP_ITFLAG_BUFNEVER     0x0008
+/* Whether the buffer filling can use a single stride (minus reduce if reduce) */
+#define NPY_OP_ITFLAG_BUF_SINGLESTRIDE 0x0010
 /* The operand is being reduced */
 #define NPY_OP_ITFLAG_REDUCE       0x0020
 /* The operand is for temporary use, does not have a backing array */
 #define NPY_OP_ITFLAG_VIRTUAL      0x0040
 /* The operand requires masking when copying buffer -> array */
 #define NPY_OP_ITFLAG_WRITEMASKED  0x0080
-/* The operand's data pointer is pointing into its buffer */
-#define NPY_OP_ITFLAG_USINGBUFFER  0x0100
+/*
+ * Whether the buffer is *fully* filled and thus ready for re-usable.
+ * (Must check if the start pointer matches until copy-from-buffer checks)
+ */
+#define NPY_OP_ITFLAG_BUF_REUSABLE 0x0100
 /* The operand must be copied (with UPDATEIFCOPY if also ITFLAG_WRITE) */
 #define NPY_OP_ITFLAG_FORCECOPY    0x0200
 /* The operand has temporary data, write it back at dealloc */
 #define NPY_OP_ITFLAG_HAS_WRITEBACK 0x0400
+/* Whether the user request a contiguous operand */
+#define NPY_OP_ITFLAG_CONTIG 0x0800
 
 /*
  * The data layout of the iterator is fully specified by
@@ -176,7 +184,7 @@ typedef npy_int16 npyiter_opitflags;
         (NPY_PTR_ALIGNED(sizeof(npyiter_opitflags) * nop))
 #define NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop) \
         ((itflags&NPY_ITFLAG_BUFFER) ? ( \
-            (NPY_SIZEOF_PY_INTPTR_T)*(6 + 5*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
+            (NPY_SIZEOF_PY_INTPTR_T)*(8 + 5*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
 
 /* Byte offsets of the iterator members starting from iter->iter_flexdata */
 #define NIT_PERM_OFFSET() \
@@ -249,7 +257,7 @@ struct NpyIter_TransferInfo_tag {
 
 struct NpyIter_BufferData_tag {
     npy_intp buffersize, size, bufiterend,
-             reduce_pos, reduce_outersize, reduce_outerdim;
+             reduce_pos, coresize, outersize, coreoffset, outerdim;
     Py_intptr_t bd_flexdata;
 };
 
@@ -257,8 +265,10 @@ struct NpyIter_BufferData_tag {
 #define NBF_SIZE(bufferdata) ((bufferdata)->size)
 #define NBF_BUFITEREND(bufferdata) ((bufferdata)->bufiterend)
 #define NBF_REDUCE_POS(bufferdata) ((bufferdata)->reduce_pos)
-#define NBF_REDUCE_OUTERSIZE(bufferdata) ((bufferdata)->reduce_outersize)
-#define NBF_REDUCE_OUTERDIM(bufferdata) ((bufferdata)->reduce_outerdim)
+#define NBF_CORESIZE(bufferdata) ((bufferdata)->coresize)
+#define NBF_COREOFFSET(bufferdata) ((bufferdata)->coreoffset)
+#define NBF_REDUCE_OUTERSIZE(bufferdata) ((bufferdata)->outersize)
+#define NBF_OUTERDIM(bufferdata) ((bufferdata)->outerdim)
 #define NBF_STRIDES(bufferdata) ( \
         &(bufferdata)->bd_flexdata + 0)
 #define NBF_PTRS(bufferdata) ((char **) \
