@@ -252,6 +252,42 @@ class Sort(Benchmark):
         np.argsort(self.arr, kind=kind)
 
 
+class LexSort(Benchmark):
+    """
+    This benchmark tests sorting multiple arrays with lexsort, for varying
+    sizes.
+    """
+    params = [
+        # Integers have a different code paths from any other type:
+        ['int64', 'float64'],
+        [2, 4],
+        [10**i for i in range(2, 7)],
+        ['mixed', 'separated', 'big']
+    ]
+    param_names = ['dtype', 'levels', 'n', 'mode']
+
+    def setup(self, dtype, levels, n, mode):
+        np.random.seed(1234)
+        # In 'big' mode, we use values large enough as to make the int-specific
+        # code path unfeasible:
+        max_val = np.iinfo(np.uint).max / 2 if mode == 'big' else 10**6
+        arr = np.random.randint(-max_val, max_val, size=(levels, n))
+        arr = arr.astype(dtype)
+        if mode == 'separated':
+            # In this mode, the array is actually the concatenation of two
+            # internally ordered sub-arrays.
+
+            # Just a ratio that is going to be roughly coprime with n:
+            point = int(n/np.pi)
+            chunks = [arr[:, :point], arr[:, point:]]
+            s_chunks = [ch[:, np.lexsort(ch)] for ch in chunks]
+            arr = np.concatenate(s_chunks, axis=1)
+
+        self.arr = arr
+
+    def time_lexsort(self, dtype, levels, n, ordered_runs):
+        np.lexsort(self.arr)
+
 class Partition(Benchmark):
     params = [
         ['float64', 'int64', 'float32', 'int32', 'int16', 'float16'],

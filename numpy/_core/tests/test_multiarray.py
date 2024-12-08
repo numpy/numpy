@@ -5337,6 +5337,28 @@ class TestLexsort:
         assert_array_equal(idx, expected_idx)
         assert_array_equal(a[idx], np.sort(a))
 
+    def test_long_int(self):
+        # gh-26434: the int fast path is only taken for levels of length > 1000
+        disorder = np.arange(1500, dtype=int)
+        np.random.shuffle(disorder)
+        a = np.arange(1500, dtype=int)[disorder]
+        # Non unique "b", so that lexsorting is not trivial:
+        b = (np.arange(1500, dtype=int) // 300)[disorder]
+        ordered = np.lexsort((a, b))
+        assert_array_equal(disorder[ordered], np.arange(1500))
+        assert_array_equal(a[ordered], np.sort(a))
+        assert_array_equal(b[ordered], np.sort(b))
+
+        # Same but with numbers too large for the int fast path, that is,
+        # levels that together need more bits than the platform uint:
+        added_bits = int(np.iinfo(np.uint).bits * 2/3)
+        a = a * 2**added_bits
+        b = b * 2**added_bits
+        ordered = np.lexsort((a, b))
+        assert_array_equal(disorder[ordered], np.arange(1500))
+        assert_array_equal(a[ordered], np.sort(a))
+        assert_array_equal(b[ordered], np.sort(b))
+
     def test_mixed(self):
         a = np.array([1, 2, 1, 3, 1, 5])
         b = np.array([0, 4, 5, 6, 2, 3], dtype='datetime64[D]')
