@@ -34,6 +34,18 @@ def get_mat(n):
     data = np.add.outer(data, data)
     return data
 
+def test_interp_scalar():
+    import numpy as np
+    result = np.interp(0, [1, 2], [3, 4])
+    assert result == 3.0  # Check the value
+    assert isinstance(result, np.float64)  # Check the type
+
+def test_interp_array():
+    import numpy as np
+    result = np.interp([0], [1, 2], [3, 4])
+    assert result.shape == (1,)
+    assert result[0] == 3.0
+
 
 def _make_complex(real, imag):
     """
