@@ -62,7 +62,7 @@ inline npy_ucs4
 getchar<ENCODING::UTF8>(const unsigned char *buf, int *bytes)
 {
     Py_UCS4 codepoint;
-    *bytes = utf8_char_to_ucs4_code(buf, &codepoint);
+    *bytes = static_cast<int>(utf8_char_to_ucs4_code(buf, &codepoint));
     return (npy_ucs4)codepoint;
 }
 
@@ -74,7 +74,7 @@ template<>
 inline bool
 codepoint_isalpha<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isalpha(code);
+    return NumPyOS_ascii_isalpha((char)code);
 }
 
 template<>
@@ -99,7 +99,7 @@ template<>
 inline bool
 codepoint_isdigit<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isdigit(code);
+    return NumPyOS_ascii_isdigit((char)code);
 }
 
 template<>
@@ -124,7 +124,7 @@ template<>
 inline bool
 codepoint_isspace<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isspace(code);
+    return NumPyOS_ascii_isspace((char)code);
 }
 
 template<>
@@ -149,7 +149,7 @@ template<>
 inline bool
 codepoint_isalnum<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isalnum(code);
+    return NumPyOS_ascii_isalnum((char)code);
 }
 
 template<>
@@ -174,7 +174,7 @@ template<>
 inline bool
 codepoint_islower<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_islower(code);
+    return NumPyOS_ascii_islower((char)code);
 }
 
 template<>
@@ -199,7 +199,7 @@ template<>
 inline bool
 codepoint_isupper<ENCODING::ASCII>(npy_ucs4 code)
 {
-    return NumPyOS_ascii_isupper(code);
+    return NumPyOS_ascii_isupper((char)code);
 }
 
 template<>
@@ -412,8 +412,8 @@ struct Buffer {
         }
         switch (enc) {
             case ENCODING::ASCII:
-                memset(this->buf, fill_char, n_chars);
-                return n_chars;
+                memset(this->buf, (char)fill_char, n_chars);
+                return (npy_intp)n_chars;
             case ENCODING::UTF32:
             {
                 char *tmp = this->buf;
@@ -421,7 +421,7 @@ struct Buffer {
                     *(npy_ucs4 *)tmp = fill_char;
                     tmp += sizeof(npy_ucs4);
                 }
-                return n_chars;
+                return (npy_intp)n_chars;
             }
             case ENCODING::UTF8:
             {
@@ -432,7 +432,7 @@ struct Buffer {
                     memcpy(tmp, utf8_c, num_bytes);
                     tmp += num_bytes;
                 }
-                return num_bytes * n_chars;
+                return (npy_intp)(num_bytes * n_chars);
             }
         }
     }
@@ -806,9 +806,10 @@ operator>=(Buffer<enc> lhs, Buffer<enc> rhs)
  * start/end arguments to str function like find/rfind etc.
  */
 static inline void
-adjust_offsets(npy_int64 *start, npy_int64 *end, size_t len)
+adjust_offsets(npy_int64 *start, npy_int64 *end, npy_int64 len)
 {
-    if (*end > static_cast<npy_int64>(len)) {
+    assert(len >= 0);
+    if (*end > len) {
         *end = len;
     }
     else if (*end < 0) {
@@ -830,11 +831,19 @@ template <ENCODING enc>
 static inline npy_intp
 string_find(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        return (npy_intp) -2;
+    }
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
+        npy_gil_error(PyExc_ValueError, "pattern string is too long");
+        return (npy_intp) -2;
+    }
 
     adjust_offsets(&start, &end, len1);
-    if (end - start < static_cast<npy_int64>(len2)) {
+    if (end - start < len2) {
         return (npy_intp) -1;
     }
     if (len2 == 0) {
@@ -933,11 +942,19 @@ template <ENCODING enc>
 static inline npy_intp
 string_rfind(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        return (npy_intp) -2;
+    }
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
+        npy_gil_error(PyExc_ValueError, "pattern string is too long");
+        return (npy_intp) -2;
+    }
 
     adjust_offsets(&start, &end, len1);
-    if (end - start < static_cast<npy_int64>(len2)) {
+    if (end - start < len2) {
         return (npy_intp) -1;
     }
 
@@ -1042,11 +1059,19 @@ template <ENCODING enc>
 static inline npy_intp
 string_count(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end)
 {
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        return (npy_intp) -2;
+    }
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
+        npy_gil_error(PyExc_ValueError, "pattern string is too long");
+        return (npy_intp) -2;
+    }
 
     adjust_offsets(&start, &end, len1);
-    if (end < start || end - start < static_cast<npy_int64>(len2)) {
+    if (end < start || end - start < len2) {
         return (npy_intp) 0;
     }
 
@@ -1096,17 +1121,25 @@ inline npy_bool
 tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
           STARTPOSITION direction)
 {
-    size_t len1 = buf1.num_codepoints();
-    size_t len2 = buf2.num_codepoints();
+    npy_int64 len1 = buf1.num_codepoints();
+    npy_int64 len2 = buf2.num_codepoints();
+    if (len1 > PY_SSIZE_T_MAX || len1 < 0) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        return NPY_FALSE;
+    }
+    if (len2 > PY_SSIZE_T_MAX || len2 < 0) {
+        npy_gil_error(PyExc_ValueError, "pattern string is too long");
+        return NPY_FALSE;
+    }
 
     adjust_offsets(&start, &end, len1);
     end -= len2;
     if (end < start) {
-        return 0;
+        return NPY_FALSE;
     }
 
     if (len2 == 0) {
-        return 1;
+        return NPY_TRUE;
     }
 
     size_t offset;
@@ -1129,7 +1162,7 @@ tailmatch(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 start, npy_int64 end,
         return !start_buf.buffer_memcmp(buf2, size2);
     }
 
-    return 0;
+    return NPY_FALSE;
 }
 
 enum class STRIPTYPE {
@@ -1487,7 +1520,7 @@ string_expandtabs_length(Buffer<enc> buf, npy_int64 tabsize)
                 line_pos = 0;
             }
         }
-        if (new_len > INT_MAX  || new_len < 0) {
+        if (new_len < 0) {
             npy_gil_error(PyExc_OverflowError, "new string is too long");
             return -1;
         }
@@ -1589,7 +1622,7 @@ string_pad(Buffer<enc> buf, npy_int64 width, npy_ucs4 fill, JUSTPOSITION pos, Bu
         out.advance_chars_or_bytes(out.buffer_memset(fill, right));
     }
 
-    return finalwidth;
+    return (npy_intp)finalwidth;
 }
 
 
@@ -1630,6 +1663,24 @@ string_partition(Buffer<enc> buf1, Buffer<enc> buf2, npy_int64 idx,
 
     size_t len1 = buf1.num_codepoints();
     size_t len2 = buf2.num_codepoints();
+
+    if (len1 > PY_SSIZE_T_MAX) {
+        npy_gil_error(PyExc_ValueError, "target string is too long");
+        *final_len1 = *final_len2 = *final_len3 = -1;
+        return;
+    }
+    if (idx >= 0) {
+        if (len2 > len1) {
+            npy_gil_error(PyExc_ValueError, "separator string is too long");
+            *final_len1 = *final_len2 = *final_len3 = -1;
+            return;
+        }
+        if ((size_t)idx > len1 - len2) {
+            npy_gil_error(PyExc_ValueError, "input index is too large");
+            *final_len1 = *final_len2 = *final_len3 = -1;
+            return;
+        }
+    }
 
     if (len2 == 0) {
         npy_gil_error(PyExc_ValueError, "empty separator");
