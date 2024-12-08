@@ -73,6 +73,53 @@ class TestEinsum:
             b = np.ones((3, 4, 5))
             einsum_fn('aabcb,abc', a, b)
 
+    def test_einsum_sorting_behavior(self):
+        # Case 1: 26 dimensions (all lowercase indices)
+        n1 = 26
+        x1 = np.random.random((1,) * n1)
+        path1 = np.einsum_path(x1, range(n1))[1]  # Get einsum path details
+        output_indices1 = path1.split("->")[-1].strip()  # Extract the output indices
+        # Assert indices are only lowercase letters and sorted correctly
+        assert all(c.isupper() for c in output_indices1), (
+            f"Output indices for n=26 should use uppercase letters only: {output_indices1}"
+        )
+        assert_equal(
+            output_indices1,
+            ''.join(sorted(output_indices1)),
+            err_msg=(
+                f"Output indices for n=26 are not lexicographically sorted: {output_indices1}"
+            )
+        )
+
+        # Case 2: 27 dimensions (includes uppercase indices)
+        n2 = 27
+        x2 = np.random.random((1,) * n2)
+        path2 = np.einsum_path(x2, range(n2))[1]
+        output_indices2 = path2.split("->")[-1].strip()
+        # Assert indices include both uppercase and lowercase letters
+        assert any(c.islower() for c in output_indices2), (
+            f"Output indices for n=27 should include uppercase letters: {output_indices2}"
+        )
+        # Assert output indices are sorted uppercase before lowercase
+        assert_equal(
+            output_indices2,
+            ''.join(sorted(output_indices2)),
+            err_msg=(
+                f"Output indices for n=27 are not lexicographically sorted: {output_indices2}"
+            )
+        )
+
+        # Additional Check: Ensure dimensions correspond correctly to indices
+        # Generate expected mapping of dimensions to indices
+        expected_indices = [chr(i + ord('A')) if i < 26 else chr(i - 26 + ord('a')) for i in range(n2)]
+        assert_equal(
+            output_indices2,
+            ''.join(expected_indices),
+            err_msg=(
+                f"Output indices do not map to the correct dimensions. Expected: {''.join(expected_indices)}, Got: {output_indices2}"
+            )
+        )
+
     @pytest.mark.parametrize("do_opt", [True, False])
     def test_einsum_specific_errors(self, do_opt):
         # out parameter must be an array
