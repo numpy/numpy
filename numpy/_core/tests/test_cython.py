@@ -295,3 +295,34 @@ def test_complex(install_temp):
     arr = np.array([0, 10+10j], dtype="F")
     inc2_cfloat_struct(arr)
     assert arr[1] == (12 + 12j)
+
+
+def test_npystring_pack(install_temp):
+    """Check that the cython API can write to a vstring array."""
+    import checks
+
+    arr = np.array(['a', 'b', 'c'], dtype='T')
+    assert checks.npystring_pack(arr) == 0
+
+    # checks.npystring_pack writes to the beginning of the array
+    assert arr[0] == "Hello world"
+
+def test_npystring_load(install_temp):
+    """Check that the cython API can load strings from a vstring array."""
+    import checks
+
+    arr = np.array(['abcd', 'b', 'c'], dtype='T')
+    result = checks.npystring_load(arr)
+    assert result == 'abcd'
+
+
+def test_npystring_multiple_allocators(install_temp):
+    """Check that the cython API can acquire/release multiple vstring allocators."""
+    import checks
+
+    arr1 = np.array(['abcd', 'b', 'c'], dtype='T')
+    arr2 = np.array(['a', 'b', 'c'], dtype='T')
+
+    assert checks.npystring_pack_multiple(arr1, arr2) == 0
+    assert arr1[0] == "Hello world"
+    assert arr2[0] == "test this"
