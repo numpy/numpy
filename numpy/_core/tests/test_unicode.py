@@ -7,7 +7,7 @@ def buffer_length(arr):
         if not arr:
             charmax = 0
         else:
-            charmax = max([ord(c) for c in arr])
+            charmax = max(ord(c) for c in arr)
         if charmax < 256:
             size = 1
         elif charmax < 65536:
