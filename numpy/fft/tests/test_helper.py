@@ -4,7 +4,7 @@ Copied from fftpack.helper by Pearu Peterson, October 2005
 
 """
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_raises
 from numpy import fft, pi
 
 
@@ -142,6 +142,14 @@ class TestFFTFreq:
         x = [0, 1, 2, 3, 4, -5, -4, -3, -2, -1]
         assert_array_almost_equal(10*fft.fftfreq(10), x)
         assert_array_almost_equal(10*pi*fft.fftfreq(10, pi), x)
+    
+    def test_invalid_n(self):
+        with assert_raises(TypeError):
+            fft.rfftfreq("invalid")
+        with assert_raises(TypeError):
+            fft.rfftfreq(-5)
+        with assert_raises(TypeError):
+            fft.rfftfreq(0)
 
 
 class TestRFFTFreq:
@@ -153,6 +161,14 @@ class TestRFFTFreq:
         x = [0, 1, 2, 3, 4, 5]
         assert_array_almost_equal(10*fft.rfftfreq(10), x)
         assert_array_almost_equal(10*pi*fft.rfftfreq(10, pi), x)
+
+    def test_invalid_n(self):
+        with assert_raises(TypeError):
+            fft.rfftfreq("invalid")
+        with assert_raises(TypeError):
+            fft.rfftfreq(-5)
+        with assert_raises(TypeError):
+            fft.rfftfreq(0)
 
 
 class TestIRFFTN:
