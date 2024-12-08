@@ -76,7 +76,7 @@ macosx_arm64_task:
 
   build_script: |
     brew install micromamba gfortran
-    micromamba shell init -s bash -p ~/micromamba
+    micromamba shell init -s bash --root-prefix ~/micromamba
     source ~/.bash_profile
     
     micromamba create -n numpydev
