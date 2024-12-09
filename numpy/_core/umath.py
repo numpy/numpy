@@ -20,7 +20,7 @@ from ._multiarray_umath import (
     _replace, _strip_whitespace, _lstrip_whitespace, _rstrip_whitespace,
     _strip_chars, _lstrip_chars, _rstrip_chars, _expandtabs_length,
     _expandtabs, _center, _ljust, _rjust, _zfill, _partition, _partition_index,
-    _rpartition, _rpartition_index)
+    _rpartition, _rpartition_index, _slice)
 
 __all__ = [
     'absolute', 'add',
