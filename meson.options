@@ -35,6 +35,7 @@ option('test-simd', type: 'array',
           'VSX', 'VSX2', 'VSX3', 'VSX4',
           'NEON', 'ASIMD',
           'VX', 'VXE', 'VXE2',
+          'LSX',
         ],
         description: 'Specify a list of CPU features to be tested against NumPy SIMD interface')
 option('test-simd-args', type: 'string', value: '',

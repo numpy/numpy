@@ -178,3 +178,86 @@ jobs:
           '"
 
 
+  linux_loongarch64_qemu:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        BUILD_PROP:
+          - [
+              "loongarch64",
+              "loongarch64-linux-gnu",
+              "loongcr.lcpu.dev/lcpu/debian:unstable-240513",
+              "-Dallow-noblas=true",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+              "loong64"
+            ]
+    env:
+      TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
+      DOCKER_CONTAINER: ${{ matrix.BUILD_PROP[2] }}
+      MESON_OPTIONS: ${{ matrix.BUILD_PROP[3] }}
+      RUNTIME_TEST_FILTER: ${{ matrix.BUILD_PROP[4] }}
+      ARCH: ${{ matrix.BUILD_PROP[5] }}
+      TERM: xterm-256color
+
+    name: "${{ matrix.BUILD_PROP[0] }}"
+    steps:
+    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      with:
+        submodules: recursive
+        fetch-tags: true
+
+    - name: Initialize binfmt_misc for qemu-user-static
+      run: |
+          docker run --rm --privileged loongcr.lcpu.dev/multiarch/archlinux --reset -p yes
+
+    - name: Cache docker container
+      uses: actions/cache@v4.1.2
+      id: container-cache
+      with:
+        path: ~/docker_${{ matrix.BUILD_PROP[1] }}
+        key: container-${{ runner.os }}-${{ matrix.BUILD_PROP[1] }}-${{ matrix.BUILD_PROP[2] }}-${{ hashFiles('requirements/build_requirements.txt') }}
+
+    - name: Creates new container
+      if: steps.container-cache.outputs.cache-hit != 'true'
+      run: |
+        docker run --platform=linux/${ARCH} --name the_container --interactive \
+          -v /:/host -v $(pwd):/numpy ${DOCKER_CONTAINER} /bin/bash -c "
+          sed -i 's|URIs: http://mirrors.cloud.tencent.com/debian-ports|URIs: https://deb.debian.org/debian-ports|' /etc/apt/sources.list.d/debian.sources &&
+          apt update &&
+          apt install -y cmake cmake-data git python3 python-is-python3 python3-dev python3-pip gfortran &&
+          git config --global --add safe.directory /numpy &&
+          python -m pip install --break-system-packages -r /numpy/requirements/build_requirements.txt &&
+          python -m pip install --break-system-packages pytest pytest-xdist hypothesis typing_extensions
+        "
+        docker commit the_container the_container
+        mkdir -p "~/docker_${TOOLCHAIN_NAME}"
+        docker save -o "~/docker_${TOOLCHAIN_NAME}/the_container.tar" the_container
+
+    - name: Load container from cache
+      if: steps.container-cache.outputs.cache-hit == 'true'
+      run: docker load -i "~/docker_${TOOLCHAIN_NAME}/the_container.tar"
+
+    - name: Meson Build
+      run: |
+        docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
+          -v $(pwd):/numpy -v /:/host the_container \
+          /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
+            cd /numpy && spin build --clean -- ${MESON_OPTIONS}
+          '"
+
+    - name: Meson Log
+      if: always()
+      run: 'cat build/meson-logs/meson-log.txt'
+
+    - name: Run Tests
+      run: |
+        docker run --rm --platform=linux/${ARCH} -e "TERM=xterm-256color" \
+        -v $(pwd):/numpy -v /:/host the_container \
+        /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
+          cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
+        '"
+

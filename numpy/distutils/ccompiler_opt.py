@@ -325,7 +325,7 @@ class _Config:
         ## ARMv8.2 dot product
         ASIMDDP = dict(interest=6, implies="ASIMD"),
         ## ARMv8.2 Single & half-precision Multiply
-        ASIMDFHM = dict(interest=7, implies="ASIMDHP"),
+        ASIMDFHM = dict(interest=7, implies="ASIMDHP")
     )
     def conf_features_partial(self):
         """Return a dictionary of supported CPU features by the platform,
