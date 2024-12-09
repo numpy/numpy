@@ -256,8 +256,7 @@ It’s tempting to try to define cleaned up versions of ndarray methods
 with a more minimal interface to allow for easier implementation. For
 example, ``__array_reshape__`` could drop some of the strange
 arguments accepted by ``reshape`` and ``__array_basic_getitem__``
-could drop all the `strange edge cases
-<http://www.numpy.org/neps/nep-0021-advanced-indexing.html>`__ of
+could drop all the :doc:`strange edge cases <nep-0021-advanced-indexing>` of
 NumPy’s advanced indexing.
 
 But as discussed above, we don’t really know what APIs we need for

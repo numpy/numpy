@@ -13,8 +13,7 @@ NEP 16 — An abstract base class for identifying "duck arrays"
 .. note::
 
     This NEP has been withdrawn in favor of the protocol based approach
-    described in
-    `NEP 22 <nep-0022-ndarray-duck-typing-overview.html>`__
+    described in :doc:`nep-0022-ndarray-duck-typing-overview`
 
 Abstract
 --------
