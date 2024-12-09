@@ -78,16 +78,18 @@ class TestEinsum:
         n1 = 26
         x1 = np.random.random((1,) * n1)
         path1 = np.einsum_path(x1, range(n1))[1]  # Get einsum path details
-        output_indices1 = path1.split("->")[-1].strip()  # Extract the output indices
+        output_indices1 = path1.split("->")[-1].strip()  # Extract output indices
         # Assert indices are only lowercase letters and sorted correctly
         assert all(c.isupper() for c in output_indices1), (
-            f"Output indices for n=26 should use uppercase letters only: {output_indices1}"
+            "Output indices for n=26 should use uppercase letters only: "
+            f"{output_indices1}"
         )
         assert_equal(
             output_indices1,
             ''.join(sorted(output_indices1)),
             err_msg=(
-                f"Output indices for n=26 are not lexicographically sorted: {output_indices1}"
+                "Output indices for n=26 are not lexicographically sorted: "
+                f"{output_indices1}"
             )
         )
 
@@ -98,25 +100,31 @@ class TestEinsum:
         output_indices2 = path2.split("->")[-1].strip()
         # Assert indices include both uppercase and lowercase letters
         assert any(c.islower() for c in output_indices2), (
-            f"Output indices for n=27 should include uppercase letters: {output_indices2}"
+            "Output indices for n=27 should include uppercase letters: "
+            f"{output_indices2}"
         )
         # Assert output indices are sorted uppercase before lowercase
         assert_equal(
             output_indices2,
             ''.join(sorted(output_indices2)),
             err_msg=(
-                f"Output indices for n=27 are not lexicographically sorted: {output_indices2}"
+                "Output indices for n=27 are not lexicographically sorted: "
+                f"{output_indices2}"
             )
         )
 
         # Additional Check: Ensure dimensions correspond correctly to indices
         # Generate expected mapping of dimensions to indices
-        expected_indices = [chr(i + ord('A')) if i < 26 else chr(i - 26 + ord('a')) for i in range(n2)]
+        expected_indices = [
+            chr(i + ord('A')) if i < 26 else chr(i - 26 + ord('a')) 
+            for i in range(n2)
+        ]
         assert_equal(
             output_indices2,
             ''.join(expected_indices),
             err_msg=(
-                f"Output indices do not map to the correct dimensions. Expected: {''.join(expected_indices)}, Got: {output_indices2}"
+                "Output indices do not map to the correct dimensions. Expected: "
+                f"{''.join(expected_indices)}, Got: {output_indices2}"
             )
         )
 
