@@ -52,4 +52,63 @@ get_handler_name(PyObject *NPY_UNUSED(self), PyObject *obj);
 NPY_NO_EXPORT PyObject *
 get_handler_version(PyObject *NPY_UNUSED(self), PyObject *obj);
 
+/* Helper to add an overflow check (and avoid inlininig this probably) */
+NPY_NO_EXPORT void *
+_Npy_MallocWithOverflowCheck(npy_intp size, npy_intp elsize);
+
+
+static inline void
+_npy_init_workspace(
+    void **buf, void *static_buf, size_t static_buf_size, size_t elsize, size_t size)
+{
+    if (NPY_LIKELY(size <= static_buf_size / elsize)) {
+        *buf = static_buf;
+    }
+    else {
+        *buf = _Npy_MallocWithOverflowCheck(size, elsize);
+        if (*buf == NULL) {
+            PyErr_NoMemory();
+        }
+    }
+}
+
+
+/*
+ * Helper definition macro for a small work/scratchspace.
+ * The `NAME` is the C array to to be defined of with the type `TYPE`.
+ *
+ * The usage pattern for this is:
+ *
+ *     NPY_ALLOC_WORKSPACE(arr, PyObject *, 14, n_objects);
+ *     if (arr == NULL) {
+ *         return -1;  // Memory error is set
+ *     }
+ *     ...
+ *     npy_free_workspace(arr);
+ *
+ * Notes
+ * -----
+ * The reason is to avoid allocations in most cases, but gracefully
+ * succeed for large sizes as well.
+ * With some caches, it may be possible to malloc/calloc very quickly in which
+ * case we should not hesitate to replace this pattern.
+ */
+#define NPY_ALLOC_WORKSPACE(NAME, TYPE, fixed_size, size)  \
+    TYPE NAME##_static[fixed_size];                        \
+    TYPE *NAME;                                            \
+    _npy_init_workspace((void **)&NAME, NAME##_static, (fixed_size), sizeof(TYPE), (size))
+
+
+static inline void
+_npy_free_workspace(void *buf, void *static_buf)
+{
+    if (buf != static_buf) {
+        PyMem_FREE(buf);
+    }
+}
+
+/* Free a small workspace allocation (macro to fetch the _static name) */
+#define npy_free_workspace(NAME)  \
+    _npy_free_workspace(NAME, NAME##_static)
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_ */
