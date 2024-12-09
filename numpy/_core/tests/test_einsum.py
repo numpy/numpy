@@ -79,7 +79,7 @@ class TestEinsum:
         x1 = np.random.random((1,) * n1)
         path1 = np.einsum_path(x1, range(n1))[1]  # Get einsum path details
         output_indices1 = path1.split("->")[-1].strip()  # Extract output indices
-        # Assert indices are only lowercase letters and sorted correctly
+        # Assert indices are only uppercase letters and sorted correctly
         assert all(c.isupper() for c in output_indices1), (
             "Output indices for n=26 should use uppercase letters only: "
             f"{output_indices1}"
