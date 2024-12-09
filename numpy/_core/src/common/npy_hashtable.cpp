@@ -126,10 +126,10 @@ NPY_NO_EXPORT void
 PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 {
     PyMem_Free(tb->buckets);
-    PyMem_Free(tb);
 #ifdef Py_GIL_DISABLED
     delete (std::shared_mutex *)tb->mutex;
 #endif
+    PyMem_Free(tb);
 }
 
 
