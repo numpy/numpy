@@ -23,7 +23,7 @@ import numpy._core.fromnumeric as fromnumeric
 import numpy._core.umath as umath
 from numpy.exceptions import AxisError
 from numpy.testing import (
-    assert_raises, assert_warns, suppress_warnings, IS_WASM
+    assert_raises, assert_warns, suppress_warnings, IS_WASM, temppath
     )
 from numpy.testing._private.utils import requires_memory
 from numpy import ndarray
@@ -1014,6 +1014,14 @@ class TestMaskedArray:
         # check that we return a view.
         mx[1].data[0] = 0.
         assert_(mx2[0] == 0.)
+
+    def test_maskedarray_tofile_raises_notimplementederror(self):
+        xm = masked_array([1, 2, 3], mask=[False, True, False])
+        # Test case to check the NotImplementedError. 
+        # It is not implemented at this point of time. We can change this in future 
+        with temppath(suffix='.npy') as path:
+            with pytest.raises(NotImplementedError):
+                np.save(path, xm)
 
 
 class TestMaskedArrayArithmetic:
