@@ -40,37 +40,6 @@
 #include "__umath_generated.c"
 
 
-static NPY_CASTING
-frompyfunc_resolve_descriptors(
-        PyArrayMethodObject *self,
-        PyArray_DTypeMeta *const *NPY_UNUSED(dtypes),
-        PyArray_Descr *const *NPY_UNUSED(given_descrs),
-        PyArray_Descr **loop_descrs,
-        npy_intp *NPY_UNUSED(view_offset));
-
-static NPY_CASTING
-frompyfunc_resolve_descriptors(
-        PyArrayMethodObject *self,
-        PyArray_DTypeMeta *const *NPY_UNUSED(dtypes),
-        PyArray_Descr *const *NPY_UNUSED(given_descrs),
-        PyArray_Descr **loop_descrs,
-        npy_intp *NPY_UNUSED(view_offset))
-{
-    int i, nop = self->nin + self->nout;
-
-    loop_descrs[0] = PyArray_DescrFromType(NPY_OBJECT);
-    if (loop_descrs[0] == NULL) {
-        return _NPY_ERROR_OCCURRED_IN_CAST;
-    }
-
-    for (i = 1; i < nop; ++i) {
-        Py_INCREF(loop_descrs[0]);
-        loop_descrs[i] = loop_descrs[0];
-    }
-
-    return NPY_NO_CASTING;
-}
-
 static int
 frompyfunc_promoter(PyObject *ufunc,
         PyArray_DTypeMeta *const NPY_UNUSED(op_dtypes[]),
@@ -236,7 +205,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     }
 
     char method_name[101];
-    snprintf(method_name, 100, "legacy_ufunc_wrapper_for_%s", str);
+    snprintf(method_name, 100, "ArrayMethod_implementation_for_%s", str);
 
     NPY_ARRAYMETHOD_FLAGS flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
@@ -263,9 +232,8 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
         }
     }
 
-    PyType_Slot slots[5] = {
+    PyType_Slot slots[4] = {
         {NPY_METH_strided_loop, &pyfunc_loop},
-        {NPY_METH_resolve_descriptors, &frompyfunc_resolve_descriptors},
         {NPY_METH_get_reduction_initial, get_reduction_intial},
         {_NPY_METH_static_data, function},
         {0, NULL},
@@ -305,12 +273,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     Py_DECREF(dtypes_tuple);
     Py_DECREF(promoter_obj);
     if (info == NULL) {
-        PyArray_free(str);
-        return NULL;
-    }
-
-    PyObject *name = PyUnicode_FromString(str);
-    if (name == NULL) {
         PyArray_free(str);
         return NULL;
     }
