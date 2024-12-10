@@ -100,9 +100,9 @@ NPY_FINLINE double c_square_f64(double a)
  */
 #if @VCHK@
 /**begin repeat1
- * #kind     = rint,  floor, ceil, trunc, sqrt, absolute, square, reciprocal#
- * #intr     = rint,  floor, ceil, trunc, sqrt, abs,      square, recip#
- * #repl_0w1 = 0*7, 1#
+ * #kind     = reciprocal#
+ * #intr     = recip#
+ * #repl_0w1 = 1#
  */
 /**begin repeat2
  * #STYPE  = CONTIG, NCONTIG, CONTIG,  NCONTIG#
@@ -199,9 +199,9 @@ static void simd_@TYPE@_@kind@_@STYPE@_@DTYPE@
  * #VCHK = NPY_SIMD_F32, NPY_SIMD_F64#
  */
 /**begin repeat1
- * #kind  = rint, floor, ceil, trunc, sqrt, absolute, square, reciprocal#
- * #intr  = rint, floor, ceil, trunc, sqrt, abs,      square, recip#
- * #clear = 0,    0,     0,    0,     0,    1,        0,      0#
+ * #kind  = reciprocal#
+ * #intr  = recip#
+ * #clear = 0#
  */
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
