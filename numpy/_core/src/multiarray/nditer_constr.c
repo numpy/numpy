@@ -100,7 +100,7 @@ static int
 npyiter_allocate_transfer_functions(NpyIter *iter);
 
 static void
-npyiter_find_buffering_setup(NpyIter *iter);
+npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize);
 
 /*NUMPY_API
  * Allocate a new iterator for multiple array objects, and advanced
@@ -254,28 +254,6 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     }
 
     NPY_IT_TIME_POINT(c_fill_axisdata);
-
-    if (itflags & NPY_ITFLAG_BUFFER) {
-        /*
-         * If buffering is enabled and no buffersize was given, use a default
-         * chosen to be big enough to get some amortization benefits, but
-         * small enough to be cache-friendly.
-         */
-        if (buffersize <= 0) {
-            buffersize = NPY_BUFSIZE;
-        }
-        /* No point in a buffer bigger than the iteration size */
-        if (buffersize > NIT_ITERSIZE(iter)) {
-            buffersize = NIT_ITERSIZE(iter);
-        }
-        NBF_BUFFERSIZE(bufferdata) = buffersize;
-
-        /*
-         * Initialize for use in FirstVisit, which may be called before
-         * the buffers are filled and the reduce pos is updated.
-         */
-        NBF_REDUCE_POS(bufferdata) = 0;
-    }
 
     /*
      * If an index was requested, compute the strides for it.
@@ -476,7 +454,13 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     /* If buffering is set prepare it */
     if (itflags & NPY_ITFLAG_BUFFER) {
-        npyiter_find_buffering_setup(iter);
+        npyiter_find_buffering_setup(iter, buffersize);
+
+        /*
+         * Initialize for use in FirstVisit, which may be called before
+         * the buffers are filled and the reduce pos is updated.
+         */
+        NBF_REDUCE_POS(bufferdata) = 0;
 
         if (!npyiter_allocate_transfer_functions(iter)) {
             NpyIter_Deallocate(iter);
@@ -1994,7 +1978,7 @@ operand_different_than_broadcast: {
  * not try to discover this.
  */
 static void
-npyiter_find_buffering_setup(NpyIter *iter)
+npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
 {
     int nop = iter->nop;
     int ndim = iter->ndim;
@@ -2021,8 +2005,11 @@ npyiter_find_buffering_setup(NpyIter *iter)
      * We can only continue as long as we are within the maximum allowed size.
      * When no buffering is needed and GROWINNER is set, we don't have to
      * worry about this maximum.
+     *
+     * If the user passed no buffersize, default to one small enough that it
+     * should be cache friendly and big enough to amortize overheads.
      */
-    npy_intp maximum_size = NBF_BUFFERSIZE(bufferdata);
+    npy_intp maximum_size = buffersize <= 0 ? NPY_BUFSIZE : buffersize;
 
     /* The cost factor defined by: (1 + n_buffered) */
     int cost = 1;
