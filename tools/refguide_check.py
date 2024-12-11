@@ -406,12 +406,12 @@ def validate_rst_syntax(text, name, dots=True):
             output_dot('E')
         return False, "ERROR: %s: no documentation" % (name,)
 
-    ok_unknown_items = set([
+    ok_unknown_items = {
         'mod', 'doc', 'currentmodule', 'autosummary', 'data', 'attr',
         'obj', 'versionadded', 'versionchanged', 'module', 'class',
         'ref', 'func', 'toctree', 'moduleauthor', 'term', 'c:member',
         'sectionauthor', 'codeauthor', 'eq', 'doi', 'DOI', 'arXiv', 'arxiv'
-    ])
+    }
 
     # Run through docutils
     error_stream = io.StringIO()

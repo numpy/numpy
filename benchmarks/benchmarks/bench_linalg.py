@@ -72,7 +72,7 @@ class Eindot(Benchmark):
 
 
 class Linalg(Benchmark):
-    params = sorted(set(TYPES1) - set(['float16']))
+    params = sorted(set(TYPES1) - {'float16'})
     param_names = ['dtype']
 
     def setup(self, typename):
