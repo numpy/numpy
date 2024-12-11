@@ -271,7 +271,7 @@ class TestStringLikeCasts:
     def test_void_casts(self, dtype, strings):
         sarr = np.array(strings, dtype=dtype)
         utf8_bytes = [s.encode("utf-8") for s in strings]
-        void_dtype = f"V{max([len(s) for s in utf8_bytes])}"
+        void_dtype = f"V{max(len(s) for s in utf8_bytes)}"
         varr = np.array(utf8_bytes, dtype=void_dtype)
         assert_array_equal(varr, sarr.astype(void_dtype))
         assert_array_equal(varr.astype(dtype), sarr)
@@ -280,7 +280,7 @@ class TestStringLikeCasts:
         sarr = np.array(strings, dtype=dtype)
         try:
             utf8_bytes = [s.encode("ascii") for s in strings]
-            bytes_dtype = f"S{max([len(s) for s in utf8_bytes])}"
+            bytes_dtype = f"S{max(len(s) for s in utf8_bytes)}"
             barr = np.array(utf8_bytes, dtype=bytes_dtype)
             assert_array_equal(barr, sarr.astype(bytes_dtype))
             assert_array_equal(barr.astype(dtype), sarr)
