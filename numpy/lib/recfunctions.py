@@ -1611,7 +1611,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     for fname, fdtype in _get_fieldspec(r2.dtype):
         # Have we seen the current name already ?
         # we need to rebuild this list every time
-        names = list(name for name, dtype in ndtype)
+        names = [name for name, dtype in ndtype]
         try:
             nameidx = names.index(fname)
         except ValueError:
