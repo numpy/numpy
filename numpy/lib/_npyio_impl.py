@@ -2284,9 +2284,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             # Store the values
             append_to_rows(tuple(values))
             if usemask:
-                append_to_masks(tuple([v.strip() in m
+                append_to_masks(tuple(v.strip() in m
                                        for (v, m) in zip(values,
-                                                         missing_values)]))
+                                                         missing_values)))
             if len(rows) == max_rows:
                 break
 

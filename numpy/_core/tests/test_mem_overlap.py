@@ -72,8 +72,8 @@ def test_overlapping_assignments():
     inds = _indices(ndims)
 
     for ind in inds:
-        srcidx = tuple([a[0] for a in ind])
-        dstidx = tuple([a[1] for a in ind])
+        srcidx = tuple(a[0] for a in ind)
+        dstidx = tuple(a[1] for a in ind)
 
         _check_assignment(srcidx, dstidx)
 

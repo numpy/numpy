@@ -2606,8 +2606,8 @@ class vectorize:
             if ufunc.nout == 1:
                 res = asanyarray(outputs, dtype=otypes[0])
             else:
-                res = tuple([asanyarray(x, dtype=t)
-                             for x, t in zip(outputs, otypes)])
+                res = tuple(asanyarray(x, dtype=t)
+                             for x, t in zip(outputs, otypes))
         return res
 
     def _vectorize_call_with_signature(self, func, args):
