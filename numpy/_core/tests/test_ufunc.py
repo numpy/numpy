@@ -3002,7 +3002,7 @@ def test_addition_reduce_negative_zero(dtype, use_initial):
 
     # Test various length, in case SIMD paths or chunking play a role.
     # 150 extends beyond the pairwise blocksize; probably not important.
-    for i in range(0, 150):
+    for i in range(150):
         arr = np.array([neg_zero] * i, dtype=dtype)
         res = np.sum(arr, **kwargs)
         if i > 0 or use_initial:

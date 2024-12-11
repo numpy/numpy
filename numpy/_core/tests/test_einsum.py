@@ -207,7 +207,7 @@ class TestEinsum:
         assert_raises(CustomException, np.einsum, "ij->i", a)
 
         # raised from unbuffered_loop_nop1_ndim3
-        b = np.array([DestructoBox(i, 100) for i in range(0, 27)],
+        b = np.array([DestructoBox(i, 100) for i in range(27)],
                      dtype='object').reshape(3, 3, 3)
         assert_raises(CustomException, np.einsum, "i...k->...", b)
 

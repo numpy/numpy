@@ -316,7 +316,7 @@ class TestRealScalars:
         # which happens when the first double is normal and the second is
         # subnormal.
         x = np.float128('2.123123123123123123123123123123123e-286')
-        got = [str(x/np.float128('2e' + str(i))) for i in range(0,40)]
+        got = [str(x/np.float128('2e' + str(i))) for i in range(40)]
         expected = [
             "1.06156156156156156156156156156157e-286",
             "1.06156156156156156156156156156158e-287",

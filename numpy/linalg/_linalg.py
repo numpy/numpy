@@ -289,7 +289,7 @@ def tensorsolve(a, b, axes=None):
     an = a.ndim
 
     if axes is not None:
-        allaxes = list(range(0, an))
+        allaxes = list(range(an))
         for k in axes:
             allaxes.remove(k)
             allaxes.insert(an, k)
