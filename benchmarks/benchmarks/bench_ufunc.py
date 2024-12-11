@@ -31,7 +31,7 @@ for name in ufuncs:
 
 all_ufuncs = (getattr(np, name, None) for name in dir(np))
 all_ufuncs = set(filter(lambda f: isinstance(f, np.ufunc), all_ufuncs))
-bench_ufuncs = set(getattr(np, name, None) for name in ufuncs)
+bench_ufuncs = {getattr(np, name, None) for name in ufuncs}
 
 missing_ufuncs = all_ufuncs - bench_ufuncs
 if len(missing_ufuncs) > 0:
