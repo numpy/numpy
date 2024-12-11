@@ -278,47 +278,53 @@ class ABCPolyBase(abc.ABC):
             When `other` is an incompatible instance of ABCPolyBase.
 
         """
-        if isinstance(other, ABCPolyBase):
-            if not isinstance(other, self.__class__):
-                raise TypeError("Polynomial types differ")
-            elif not np.all(self.domain == other.domain):
+        if isinstance(other, self.__class__):
+            if not (self.domain == other.domain).all():
                 raise TypeError("Domains differ")
-            elif not np.all(self.window == other.window):
+            elif not (self.window == other.window).all():
                 raise TypeError("Windows differ")
             elif self.symbol != other.symbol:
                 raise ValueError("Polynomial symbols differ")
             return other.coef
+        elif isinstance(other, ABCPolyBase):
+            raise TypeError("Polynomial types differ")
         return other
 
-    def __init__(self, coef, domain=None, window=None, symbol='x'):
-        [coef] = pu.as_series([coef], trim=False)
-        self.coef = coef
+    def __init__(self, coef, domain=None, window=None, symbol='x',
+                 _validate_input = True):
+        if _validate_input:
+            [coef] = pu.as_series([coef], trim=False)
 
-        if domain is not None:
-            [domain] = pu.as_series([domain], trim=False)
-            if len(domain) != 2:
-                raise ValueError("Domain has wrong number of elements.")
-            self.domain = domain
+            if domain is not None:
+                [domain] = pu.as_series([domain], trim=False)
+                if len(domain) != 2:
+                    raise ValueError("Domain has wrong number of elements.")
+                self.domain = domain
 
-        if window is not None:
-            [window] = pu.as_series([window], trim=False)
-            if len(window) != 2:
-                raise ValueError("Window has wrong number of elements.")
-            self.window = window
+            if window is not None:
+                [window] = pu.as_series([window], trim=False)
+                if len(window) != 2:
+                    raise ValueError("Window has wrong number of elements.")
+                self.window = window
 
-        # Validation for symbol
-        try:
-            if not symbol.isidentifier():
-                raise ValueError(
-                    "Symbol string must be a valid Python identifier"
-                )
-        # If a user passes in something other than a string, the above
-        # results in an AttributeError. Catch this and raise a more
-        # informative exception
-        except AttributeError:
-            raise TypeError("Symbol must be a non-empty string")
+            # Validation for symbol
+            try:
+                if not symbol.isidentifier():
+                    raise ValueError(
+                        "Symbol string must be a valid Python identifier"
+                    )
+            # If a user passes in something other than a string, the above
+            # results in an AttributeError. Catch this and raise a more
+            # informative exception
+            except AttributeError:
+                raise TypeError("Symbol must be a non-empty string")
+        else:
+            coef = np.array(coef)
+            self.domain = np.array(domain)
+            self.window = np.array(window)
 
         self._symbol = symbol
+        self.coef = coef
 
     def __repr__(self):
         coef = repr(self.coef)[6:-1]
@@ -523,8 +529,8 @@ class ABCPolyBase(abc.ABC):
     # Numeric properties.
 
     def __neg__(self):
-        return self.__class__(
-            -self.coef, self.domain, self.window, self.symbol
+        return self.__class__(-self.coef, self.domain, self.window,
+                              self.symbol, _validate_input=False,
         )
 
     def __pos__(self):
@@ -536,7 +542,8 @@ class ABCPolyBase(abc.ABC):
             coef = self._add(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self.__class__(coef, self.domain, self.window, self.symbol,
+                              _validate_input = False)
 
     def __sub__(self, other):
         othercoef = self._get_coefficients(other)
@@ -544,7 +551,8 @@ class ABCPolyBase(abc.ABC):
             coef = self._sub(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self.__class__(coef, self.domain, self.window, self.symbol,
+                              _validate_input = False)
 
     def __mul__(self, other):
         othercoef = self._get_coefficients(other)
@@ -552,7 +560,8 @@ class ABCPolyBase(abc.ABC):
             coef = self._mul(self.coef, othercoef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self.__class__(coef, self.domain, self.window, self.symbol,
+                              _validate_input = False)
 
     def __truediv__(self, other):
         # there is no true divide if the rhs is not a Number, although it
@@ -613,7 +622,8 @@ class ABCPolyBase(abc.ABC):
             coef = self._mul(other, self.coef)
         except Exception:
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window, self.symbol)
+        return self.__class__(coef, self.domain, self.window, self.symbol,
+                              _validate_input=False)
 
     def __rdiv__(self, other):
         # set to __floordiv__ /.
