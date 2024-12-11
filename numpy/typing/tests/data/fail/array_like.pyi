@@ -3,7 +3,7 @@ from numpy._typing import ArrayLike
 
 
 class A:
-    pass
+    ...
 
 
 x1: ArrayLike = (i for i in range(10))  # E: Incompatible types in assignment

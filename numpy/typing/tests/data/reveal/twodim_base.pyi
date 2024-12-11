@@ -9,11 +9,11 @@ _SCT = TypeVar("_SCT", bound=np.generic)
 
 
 def func1(ar: npt.NDArray[_SCT], a: int) -> npt.NDArray[_SCT]:
-    pass
+    ...
 
 
 def func2(ar: npt.NDArray[np.number[Any]], a: str) -> npt.NDArray[np.float64]:
-    pass
+    ...
 
 
 AR_b: npt.NDArray[np.bool]
