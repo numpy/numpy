@@ -287,10 +287,10 @@ def is_unexpected(name):
     return True
 
 
-if sys.version_info < (3, 12):
-    SKIP_LIST = ["numpy.distutils.msvc9compiler"]
-else:
+if sys.version_info >= (3, 12):
     SKIP_LIST = []
+else:
+    SKIP_LIST = ["numpy.distutils.msvc9compiler"]
 
 
 # suppressing warnings from deprecated modules
