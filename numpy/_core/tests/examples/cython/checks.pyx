@@ -4,7 +4,6 @@
 Functions in this module give python-space wrappers for cython functions
 exposed in numpy/__init__.pxd, so they can be tested in test_cython.py
 """
-from libc.stdlib cimport malloc, free
 cimport numpy as cnp
 cnp.import_array()
 
@@ -318,15 +317,43 @@ def npystring_pack_multiple(arr1, arr2):
 
     cnp.NpyString_acquire_allocators(2, descrs, allocators)
 
-    if cnp.NpyString_pack(
+    # Write into the first element of each array
+    cdef int ret1 = cnp.NpyString_pack(
         allocators[0], <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr1), "Hello world", 11,
-    ) == -1:
+    )
+    cdef int ret2 = cnp.NpyString_pack(
+        allocators[1], <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr2), "test this", 9,
+    )
+
+    # Write a null string into the last element
+    cdef cnp.npy_intp elsize = cnp.PyArray_ITEMSIZE(arr1)
+    cdef int ret3 = cnp.NpyString_pack_null(
+        allocators[0],
+        <cnp.npy_packed_static_string *>(<char *>cnp.PyArray_DATA(arr1) + 2*elsize),
+    )
+
+    cnp.NpyString_release_allocators(2, allocators)
+    if ret1 == -1 or ret2 == -1 or ret3 == -1:
         return -1
 
-    if cnp.NpyString_pack(
-        allocators[1], <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr2), "test this", 9,
-    ) == -1:
-        return -1
+    return 0
+
+
+def npystring_allocators_other_types(arr1, arr2):
+    cdef cnp.npy_string_allocator *allocators[2]
+    cdef cnp.PyArray_Descr *descrs[2]
+    descrs[0] = cnp.PyArray_DESCR(arr1)
+    descrs[1] = cnp.PyArray_DESCR(arr2)
+
+    cnp.NpyString_acquire_allocators(2, descrs, allocators)
+
+    # None of the dtypes here are StringDType, so every allocator
+    # should be NULL upon acquisition.
+    cdef int ret = 0
+    for allocator in allocators:
+        if allocator != NULL:
+            ret = -1
+            break
 
     cnp.NpyString_release_allocators(2, allocators)
     return 0
