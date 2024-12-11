@@ -791,6 +791,23 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
         plt.show()
 
     """
+
+    # Validate the input data
+    try:
+        a = np.asarray(a, dtype=np.float64)  # Convert input to float
+    except (ValueError, TypeError):
+        raise TypeError(
+            "Input array must contain numeric data only. "
+            "Strings or other non-numeric types are not supported."
+        )
+
+    # Validate weights if provided
+    if weights is not None:
+        if not isinstance(weights, np.ndarray):
+            weights = np.asarray(weights)
+        if weights.shape != a.shape:
+            raise ValueError("weights should have the same shape as the input data.")
+
     a, weights = _ravel_and_check_weights(a, weights)
 
     bin_edges, uniform_bins = _get_bin_edges(a, bins, range, weights)
