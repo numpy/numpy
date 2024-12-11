@@ -33,6 +33,13 @@ forward but not backward compatible. This means: binaries compiled against a
 given target version of NumPy's C API will still run correctly with newer NumPy
 versions, but not with older versions.
 
+NumPy can also be safely built in
+:ref:`CPython's ``abi3`` mode <<python:stable-abi>`, which allows
+extension modules to be built against a single version of Python but be
+forward compatible higher versions in the 3.x series. This can greatly reduce
+the number of wheels that need to be built and distributed. For more
+information and examples, see the
+`cibuildwheel docs <https://cibuildwheel.pypa.io/en/stable/faq/#abi3>`__.
 
 .. _testing-prereleases:
 
@@ -82,7 +89,7 @@ Build-time dependency
 
 If a package either uses the NumPy C API directly or it uses some other tool
 that depends on it like Cython or Pythran, NumPy is a *build-time* dependency
-of the package. 
+of the package.
 
 By default, NumPy will expose an API that is backwards compatible with the
 oldest NumPy version that supports the currently oldest compatible Python
