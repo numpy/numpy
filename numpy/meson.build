@@ -224,7 +224,6 @@ atomic_dep = null_dep
 code_non_lockfree = '''
   #include <stdint.h>
   #include <stddef.h>
-  #include <stdatomic.h>
   int main() {
    struct {
      void *p;
