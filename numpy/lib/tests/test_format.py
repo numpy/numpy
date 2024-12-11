@@ -887,7 +887,7 @@ def test_bad_header():
     # d = {"shape": (1, 2),
     #      "descr": "x"}
     s = BytesIO(
-        b"\x93NUMPY\x01\x006\x00{'descr': 'x', 'shape': (1, 2), }" +
+        b"\x93NUMPY\x01\x006\x00{'descr': 'x', 'shape': (1, 2), }"
         b"                    \n"
     )
     assert_raises(ValueError, format.read_array_header_1_0, s)

@@ -107,7 +107,7 @@ class TestRepr:
         assert_equal(repr(np.iinfo(np.int16)), expected)
 
     def test_finfo_repr(self):
-        expected = "finfo(resolution=1e-06, min=-3.4028235e+38," + \
+        expected = "finfo(resolution=1e-06, min=-3.4028235e+38,"\
                    " max=3.4028235e+38, dtype=float32)"
         assert_equal(repr(np.finfo(np.float32)), expected)
 
