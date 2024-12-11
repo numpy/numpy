@@ -859,7 +859,7 @@ _SignedIntegerCType: TypeAlias = type[
 ]  # fmt: skip
 _FloatingCType: TypeAlias = type[ct.c_float | ct.c_double | ct.c_longdouble]
 _IntegerCType: TypeAlias = _UnsignedIntegerCType | _SignedIntegerCType
-_NumberCType: TypeAlias = _IntegerCType | _IntegerCType
+_NumberCType: TypeAlias = _IntegerCType
 _GenericCType: TypeAlias = _NumberCType | type[ct.c_bool | ct.c_char | ct.py_object[Any]]
 
 # some commonly used builtin types that are known to result in a
