@@ -1262,8 +1262,8 @@ def unreplace_parenthesis(s, d):
     """
     for k, v in d.items():
         p = _get_parenthesis_kind(k)
-        left = dict(ROUND='(', SQUARE='[', CURLY='{', ROUNDDIV='(/')[p]
-        right = dict(ROUND=')', SQUARE=']', CURLY='}', ROUNDDIV='/)')[p]
+        left = {'ROUND': '(', 'SQUARE': '[', 'CURLY': '{', 'ROUNDDIV': '(/'}[p]
+        right = {'ROUND': ')', 'SQUARE': ']', 'CURLY': '}', 'ROUNDDIV': '/)'}[p]
         s = s.replace(k, left + v + right)
     return s
 

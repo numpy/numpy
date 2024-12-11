@@ -441,7 +441,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # result can similarly silently corrupt numerical data.
         raise ValueError("encoding must be 'ASCII', 'latin1', or 'bytes'")
 
-    pickle_kwargs = dict(encoding=encoding, fix_imports=fix_imports)
+    pickle_kwargs = {'encoding': encoding, 'fix_imports': fix_imports}
 
     with contextlib.ExitStack() as stack:
         if hasattr(file, 'read'):
@@ -579,7 +579,7 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
     with file_ctx as fid:
         arr = np.asanyarray(arr)
         format.write_array(fid, arr, allow_pickle=allow_pickle,
-                           pickle_kwargs=dict(fix_imports=fix_imports))
+                           pickle_kwargs={'fix_imports': fix_imports})
 
 
 def _savez_dispatcher(file, *args, allow_pickle=True, **kwds):

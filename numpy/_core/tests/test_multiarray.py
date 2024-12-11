@@ -1534,7 +1534,7 @@ class TestStructured:
         assert_equal(xx, [[b'', b''], [b'', b'']])
         # check for no uninitialized memory due to viewing S0 array
         assert_equal(xx[:].dtype, xx.dtype)
-        assert_array_equal(eval(repr(xx), dict(np=np, array=np.array)), xx)
+        assert_array_equal(eval(repr(xx), {"np": np, "array": np.array}), xx)
 
         b = io.BytesIO()
         np.save(b, xx)
@@ -1653,9 +1653,9 @@ class TestStructured:
         assert_equal(np.concatenate([a, a]).dtype, np.dtype([('x', 'i4')]))
 
     @pytest.mark.parametrize("dtype_dict", [
-            dict(names=["a", "b"], formats=["i4", "f"], itemsize=100),
-            dict(names=["a", "b"], formats=["i4", "f"],
-                 offsets=[0, 12])])
+            {"names": ["a", "b"], "formats": ["i4", "f"], "itemsize": 100},
+            {"names": ["a", "b"], "formats": ["i4", "f"],
+                 "offsets": [0, 12]}])
     @pytest.mark.parametrize("align", [True, False])
     def test_structured_promotion_packs(self, dtype_dict, align):
         # Structured dtypes are packed when promoted (we consider the packed
@@ -3538,7 +3538,7 @@ class TestMethods:
         # when calling np.put, make sure an
         # IndexError is raised if the
         # array is empty
-        empty_array = np.asarray(list())
+        empty_array = np.asarray([])
         with pytest.raises(IndexError,
                             match="cannot replace elements of an empty array"):
             np.put(empty_array, 1, 1, mode="wrap")
@@ -7900,7 +7900,7 @@ class TestPEP3118Dtype:
         def aligned(n):
             return align * (1 + (n - 1) // align)
 
-        base = dict(formats=['i'], names=['f0'])
+        base = {"formats": ['i'], "names": ['f0']}
 
         self._check('ix',    dict(itemsize=aligned(size + 1), **base))
         self._check('ixx',   dict(itemsize=aligned(size + 2), **base))
@@ -7947,12 +7947,12 @@ class TestPEP3118Dtype:
         def aligned(n):
             return (align * (1 + (n - 1) // align))
 
-        self._check('(3)T{ix}', (dict(
-            names=['f0'],
-            formats=['i'],
-            offsets=[0],
-            itemsize=aligned(size + 1)
-        ), (3,)))
+        self._check('(3)T{ix}', ({
+            "names": ['f0'],
+            "formats": ['i'],
+            "offsets": [0],
+            "itemsize": aligned(size + 1)
+        }, (3,)))
 
     def test_char_vs_string(self):
         dt = np.dtype('c')
@@ -8294,12 +8294,12 @@ class TestNewBufferProtocol:
             assert_(strides[-1] == 8)
 
     def test_out_of_order_fields(self):
-        dt = np.dtype(dict(
-            formats=['<i4', '<i4'],
-            names=['one', 'two'],
-            offsets=[4, 0],
-            itemsize=8
-        ))
+        dt = np.dtype({
+            "formats": ['<i4', '<i4'],
+            "names": ['one', 'two'],
+            "offsets": [4, 0],
+            "itemsize": 8
+        })
 
         # overlapping fields cannot be represented by PEP3118
         arr = np.empty(1, dt)
@@ -9412,12 +9412,12 @@ class TestCTypes:
         np.array([['one', 'two'], ['three', 'four']]),
         np.array((1, 2), dtype='i4,i4'),
         np.zeros((2,), dtype=
-            np.dtype(dict(
-                formats=['<i4', '<i4'],
-                names=['a', 'b'],
-                offsets=[0, 2],
-                itemsize=6
-            ))
+            np.dtype({
+                "formats": ['<i4', '<i4'],
+                "names": ['a', 'b'],
+                "offsets": [0, 2],
+                "itemsize": 6
+            })
         ),
         np.array([None], dtype=object),
         np.array([]),

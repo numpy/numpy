@@ -867,7 +867,7 @@ class TestRandomDist:
         assert_(random.choice(arr, replace=True) is a)
 
         # Check 0-d array
-        s = tuple()
+        s = ()
         assert_(not np.isscalar(random.choice(2, s, replace=True)))
         assert_(not np.isscalar(random.choice(2, s, replace=False)))
         assert_(not np.isscalar(random.choice(2, s, replace=True, p=p)))
@@ -2450,7 +2450,7 @@ class TestBroadcast:
         random = Generator(MT19937(self.seed))
         pvals = np.array([1 / 4] * 4)
         actual = random.multinomial(n, pvals)
-        n_shape = tuple() if isinstance(n, int) else n.shape
+        n_shape = () if isinstance(n, int) else n.shape
         expected_shape = n_shape + (4,)
         assert actual.shape == expected_shape
         pvals = np.vstack([pvals, pvals])

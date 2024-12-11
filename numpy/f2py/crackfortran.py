@@ -1039,7 +1039,7 @@ def analyzeline(m, case, line):
             block = 'abstract interface'
         if block == 'type':
             name, attrs, _ = _resolvetypedefpattern(m.group('after'))
-            groupcache[groupcounter]['vars'][name] = dict(attrspec = attrs)
+            groupcache[groupcounter]['vars'][name] = {'attrspec': attrs}
             args = []
             result = None
         else:
@@ -3619,7 +3619,7 @@ def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
             if new_index is not None:
                 new_result.append(new_item)
     elif isinstance(obj, dict):
-        new_result = dict()
+        new_result = {}
         for key, value in obj.items():
             new_key, new_value = traverse((key, value), visit,
                                           parents=parents + [parent],

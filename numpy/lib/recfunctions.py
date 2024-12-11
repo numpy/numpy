@@ -1656,7 +1656,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
             current[-r2spc:] = selected[r2cmn:]
     # Sort and finalize the output
     output.sort(order=key)
-    kwargs = dict(usemask=usemask, asrecarray=asrecarray)
+    kwargs = {'usemask': usemask, 'asrecarray': asrecarray}
     return _fix_output(_fix_defaults(output, defaults), **kwargs)
 
 
@@ -1677,8 +1677,8 @@ def rec_join(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     --------
     join_by : equivalent function
     """
-    kwargs = dict(jointype=jointype, r1postfix=r1postfix, r2postfix=r2postfix,
-                  defaults=defaults, usemask=False, asrecarray=True)
+    kwargs = {'jointype': jointype, 'r1postfix': r1postfix, 'r2postfix': r2postfix,
+                  'defaults': defaults, 'usemask': False, 'asrecarray': True}
     return join_by(key, r1, r2, **kwargs)
 
 

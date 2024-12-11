@@ -1314,7 +1314,7 @@ for target_name, npyv in targets.items():
         pretty_name = pretty_name[0]
 
     skip = ""
-    skip_sfx = dict()
+    skip_sfx = {}
     if not npyv:
         skip = f"target '{pretty_name}' isn't supported by current machine"
     elif not npyv.simd:
@@ -1331,7 +1331,7 @@ for target_name, npyv in targets.items():
         for sfx in sfxes:
             skip_m = skip_sfx.get(sfx, skip)
             inhr = (cls,)
-            attr = dict(npyv=targets[target_name], sfx=sfx, target_name=target_name)
+            attr = {"npyv": targets[target_name], "sfx": sfx, "target_name": target_name}
             tcls = type(f"Test{cls.__name__}_{simd_width}_{target_name}_{sfx}", inhr, attr)
             if skip_m:
                 pytest.mark.skip(reason=skip_m)(tcls)

@@ -133,7 +133,7 @@ class TestGetImplementingArgs:
         assert_equal(_get_implementing_args([a, c, b]), [c, b, a])
 
     def test_too_many_duck_arrays(self):
-        namespace = dict(__array_function__=_return_not_implemented)
+        namespace = {'__array_function__': _return_not_implemented}
         types = [type('A' + str(i), (object,), namespace) for i in range(65)]
         relevant_args = [t() for t in types]
 

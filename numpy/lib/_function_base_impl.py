@@ -63,87 +63,87 @@ __all__ = [
 #   The function used to compute the virtual_index.
 # fix_gamma : Callable
 #   A function used for discrete methods to force the index to a specific value.
-_QuantileMethods = dict(
+_QuantileMethods = {
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
-    inverted_cdf=dict(
-        get_virtual_index=lambda n, quantiles: _inverted_cdf(n, quantiles),
-        fix_gamma=None,  # should never be called
-    ),
-    averaged_inverted_cdf=dict(
-        get_virtual_index=lambda n, quantiles: (n * quantiles) - 1,
-        fix_gamma=lambda gamma, _: _get_gamma_mask(
+    'inverted_cdf': {
+        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),
+        'fix_gamma': None,  # should never be called
+    },
+    'averaged_inverted_cdf': {
+        'get_virtual_index': lambda n, quantiles: (n * quantiles) - 1,
+        'fix_gamma': lambda gamma, _: _get_gamma_mask(
             shape=gamma.shape,
             default_value=1.,
             conditioned_value=0.5,
             where=gamma == 0),
-    ),
-    closest_observation=dict(
-        get_virtual_index=lambda n, quantiles: _closest_observation(n,
+    },
+    'closest_observation': {
+        'get_virtual_index': lambda n, quantiles: _closest_observation(n,
                                                                     quantiles),
-        fix_gamma=None,  # should never be called
-    ),
+        'fix_gamma': None,  # should never be called
+    },
     # Continuous methods
-    interpolated_inverted_cdf=dict(
-        get_virtual_index=lambda n, quantiles:
+    'interpolated_inverted_cdf': {
+        'get_virtual_index': lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 0, 1),
-        fix_gamma=lambda gamma, _: gamma,
-    ),
-    hazen=dict(
-        get_virtual_index=lambda n, quantiles:
+        'fix_gamma': lambda gamma, _: gamma,
+    },
+    'hazen': {
+        'get_virtual_index': lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 0.5, 0.5),
-        fix_gamma=lambda gamma, _: gamma,
-    ),
-    weibull=dict(
-        get_virtual_index=lambda n, quantiles:
+        'fix_gamma': lambda gamma, _: gamma,
+    },
+    'weibull': {
+        'get_virtual_index': lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 0, 0),
-        fix_gamma=lambda gamma, _: gamma,
-    ),
+        'fix_gamma': lambda gamma, _: gamma,
+    },
     # Default method.
     # To avoid some rounding issues, `(n-1) * quantiles` is preferred to
     # `_compute_virtual_index(n, quantiles, 1, 1)`.
     # They are mathematically equivalent.
-    linear=dict(
-        get_virtual_index=lambda n, quantiles: (n - 1) * quantiles,
-        fix_gamma=lambda gamma, _: gamma,
-    ),
-    median_unbiased=dict(
-        get_virtual_index=lambda n, quantiles:
+    'linear': {
+        'get_virtual_index': lambda n, quantiles: (n - 1) * quantiles,
+        'fix_gamma': lambda gamma, _: gamma,
+    },
+    'median_unbiased': {
+        'get_virtual_index': lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 1 / 3.0, 1 / 3.0),
-        fix_gamma=lambda gamma, _: gamma,
-    ),
-    normal_unbiased=dict(
-        get_virtual_index=lambda n, quantiles:
+        'fix_gamma': lambda gamma, _: gamma,
+    },
+    'normal_unbiased': {
+        'get_virtual_index': lambda n, quantiles:
         _compute_virtual_index(n, quantiles, 3 / 8.0, 3 / 8.0),
-        fix_gamma=lambda gamma, _: gamma,
-    ),
+        'fix_gamma': lambda gamma, _: gamma,
+    },
     # --- OTHER METHODS
-    lower=dict(
-        get_virtual_index=lambda n, quantiles: np.floor(
+    'lower': {
+        'get_virtual_index': lambda n, quantiles: np.floor(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=None,  # should never be called, index dtype is int
-    ),
-    higher=dict(
-        get_virtual_index=lambda n, quantiles: np.ceil(
+        'fix_gamma': None,  # should never be called, index dtype is int
+    },
+    'higher': {
+        'get_virtual_index': lambda n, quantiles: np.ceil(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=None,  # should never be called, index dtype is int
-    ),
-    midpoint=dict(
-        get_virtual_index=lambda n, quantiles: 0.5 * (
+        'fix_gamma': None,  # should never be called, index dtype is int
+    },
+    'midpoint': {
+        'get_virtual_index': lambda n, quantiles: 0.5 * (
                 np.floor((n - 1) * quantiles)
                 + np.ceil((n - 1) * quantiles)),
-        fix_gamma=lambda gamma, index: _get_gamma_mask(
+        'fix_gamma': lambda gamma, index: _get_gamma_mask(
             shape=gamma.shape,
             default_value=0.5,
             conditioned_value=0.,
             where=index % 1 == 0),
-    ),
-    nearest=dict(
-        get_virtual_index=lambda n, quantiles: np.around(
+    },
+    'nearest': {
+        'get_virtual_index': lambda n, quantiles: np.around(
             (n - 1) * quantiles).astype(np.intp),
-        fix_gamma=None,
+        'fix_gamma': None,
         # should never be called, index dtype is int
-    ))
+    }}
 
 
 def _rot90_dispatcher(m, k=None, axes=None):

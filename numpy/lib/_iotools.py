@@ -354,7 +354,7 @@ class NameValidator:
         replace_space = self.replace_space
         # Initializes some variables ...
         validatednames = []
-        seen = dict()
+        seen = {}
         nbempty = 0
 
         for item in names:
@@ -869,7 +869,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         elif isinstance(names, str):
             names = names.split(",")
         names = validate(names, nbfields=nbfields, defaultfmt=defaultfmt)
-        ndtype = np.dtype(dict(formats=ndtype, names=names))
+        ndtype = np.dtype({"formats": ndtype, "names": names})
     else:
         # Explicit names
         if names is not None:
