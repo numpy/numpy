@@ -34,7 +34,7 @@ given target version of NumPy's C API will still run correctly with newer NumPy
 versions, but not with older versions.
 
 Modules can also be safely built against NumPy 2.0 or later in
-:ref:`CPython's abi3 mode <<python:stable-abi>`, which allows
+:ref:`CPython's abi3 mode <python:stable-abi>`, which allows
 building against a single (minimum-supported) version of Python but be
 forward compatible higher versions in the same series (e.g., ``3.x``).
 This can greatly reduce the number of wheels that need to be built and
