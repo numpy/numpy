@@ -1122,7 +1122,7 @@ def tensordot(a, b, axes=2):
         iter(axes)
     except Exception:
         axes_a = list(range(-axes, 0))
-        axes_b = list(range(0, axes))
+        axes_b = list(range(axes))
     else:
         axes_a, axes_b = axes
     try:
@@ -1377,7 +1377,7 @@ def rollaxis(a, axis, start=0):
         start -= 1
     if axis == start:
         return a[...]
-    axes = list(range(0, n))
+    axes = list(range(n))
     axes.remove(axis)
     axes.insert(start, axis)
     return a.transpose(axes)

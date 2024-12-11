@@ -194,7 +194,6 @@ def _c_compile(cfile, outputfilename, include_dirs, libraries,
             "-O0", "-g", "-Werror=implicit-function-declaration", "-fPIC"]
     else:
         compile_extra = []
-        pass
 
     return build(
         cfile, outputfilename,
