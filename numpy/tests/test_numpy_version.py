@@ -42,7 +42,7 @@ def test_short_version():
 
 
 def test_version_module():
-    contents = set([s for s in dir(np.version) if not s.startswith('_')])
+    contents = {s for s in dir(np.version) if not s.startswith('_')}
     expected = set([
         'full_version',
         'git_revision',
