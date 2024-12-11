@@ -133,7 +133,7 @@ class Template:
                 lineno = caller.f_lineno
                 if "__file__" in globals:
                     name = globals["__file__"]
-                    if name.endswith(".pyc") or name.endswith(".pyo"):
+                    if name.endswith((".pyc", ".pyo")):
                         name = name[:-1]
                 elif "__name__" in globals:
                     name = globals["__name__"]
@@ -784,7 +784,7 @@ def parse_expr(tokens, name, context=()):
     expr = expr.strip()
     if expr.startswith("py:"):
         expr = expr[3:].lstrip(" \t")
-        if expr.startswith("\n") or expr.startswith("\r"):
+        if expr.startswith(("\n", "\r")):
             expr = expr.lstrip("\r\n")
             if "\r" in expr:
                 expr = expr.replace("\r\n", "\n")
