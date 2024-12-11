@@ -223,6 +223,7 @@ null_dep = dependency('', required : false)
 atomic_dep = null_dep
 code_non_lockfree = '''
   #include <stdint.h>
+  #include <stddef.h>
   int main() {
    struct {
      void *p;
@@ -230,10 +231,10 @@ code_non_lockfree = '''
    } x;
    x.p = NULL;
    x.u8v = 0;
-   uint8_t res = __atomic_load_n(x.u8v, __ATOMIC_SEQ_CST);
-   __atomic_store_n(x.u8v, 1, ATOMIC_SEQ_CST);
-   void *p = __atomic_load_n(x.p, __ATOMIC_SEQ_CST);
-   __atomic_store_n((void **)x.p, NULL, __ATOMIC_SEQ_CST)
+   uint8_t res = __atomic_load_n(&x.u8v, __ATOMIC_SEQ_CST);
+   __atomic_store_n(&x.u8v, 1, __ATOMIC_SEQ_CST);
+   void *p = __atomic_load_n((void **)x.p, __ATOMIC_SEQ_CST);
+   __atomic_store_n((void **)x.p, NULL, __ATOMIC_SEQ_CST);
    return 0;
    }
 '''
