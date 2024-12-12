@@ -5451,3 +5451,58 @@ add_newdoc('numpy._core.umath', '_rpartition',
      array(['', '  ', 'Bba'], dtype=StringDType()))
 
     """)
+
+add_newdoc('numpy._core.umath', '_slice',
+    """
+    Slice the strings in `a` by slices specified by `start`, `stop`, `step`.
+    Like in the regular Python `slice` object, if only `start` is
+    specified then it is interpreted as the `stop`.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+
+    start : the start of the slice, can be None, an integer or
+            an array of integers which can be broadcasted to`a`'s shape
+
+    stop : the end point of the slice, can be None, and integer or
+           an array of integers which can be broadcasted to`a`'s shape
+
+    step : the step for the slice, can be None, an integer or
+           an array of integers which can be broadcasted to`a`'s shape
+
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array(['hello', 'world'])
+    >>> np.strings.slice(a, 2)
+    array(['he', 'wo'], dtype='<U5')
+
+    >>> np.strings.slice(a, 1, 5, 2)
+    array(['el', 'ol'], dtype='<U5')
+
+    One can specify different start/stop/step for different array entries:
+
+    >>> np.strings.slice(a, np.array([1, 2]), np.array([4, 5]))
+    array(['ell', 'rld'], dtype='<U5')
+
+    Negative slices have the same meaning as in regular Python:
+
+    >>> b = np.array(['hello world', 'γεια σου κόσμε', '你好世界', '👋 🌍'],
+    ...              dtype=np.dtypes.StringDType())
+    >>> np.strings.slice(b, -2)
+    array(['hello wor', 'γεια σου κόσ', '你好', '👋'], dtype=StringDType())
+
+    >>> np.strings.slice(b, [3, -10, 2, -3], [-1, -2, -1, 3])
+    array(['lo worl', ' σου κόσ', '世', '👋 🌍'], dtype=StringDType())
+
+    >>> np.strings.slice(b, None, None, -1)
+    array(['dlrow olleh', 'εμσόκ υοσ αιεγ', '界世好你', '🌍 👋'],
+          dtype=StringDType())
+
+    """)
