@@ -1,6 +1,10 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "npy_common.h"
 #include "npy_endian.h"
 #include "npy_cpu.h"
@@ -841,7 +845,7 @@ typedef struct {
         npy_int32 month, day, hour, min, sec, us, ps, as;
 } npy_datetimestruct;
 
-/* This is not used internally. */
+/* This structure contains an exploded view of a timedelta value */
 typedef struct {
         npy_int64 day;
         npy_int32 sec, us, ps, as;
@@ -1921,5 +1925,9 @@ typedef struct {
  * #endif
  */
 #undef NPY_DEPRECATED_INCLUDES
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

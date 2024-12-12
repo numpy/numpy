@@ -891,7 +891,7 @@ class _SIMD_ALL(_Test_Utility):
             return
         intrin = eval(intrin)
         idx_itrin = getattr(self.npyv, f"setall_u{elsize}")
-        table = range(0, table_size)
+        table = range(table_size)
         for i in table:
             broadi = self.setall(i)
             idx = idx_itrin(i)

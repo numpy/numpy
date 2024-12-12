@@ -11,7 +11,7 @@ on:
     branches: ["main"]
 
 # Declare default permissions as read only.
-permissions: read-all
+permissions: {}
 
 jobs:
   analysis:
@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v3.1.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v3.1.0
         with:
           persist-credentials: false
 
@@ -50,6 +50,6 @@ jobs:
 
       # Upload the results to GitHub's code scanning dashboard.
       - name: "Upload to code-scanning"
-        uses: github/codeql-action/upload-sarif@662472033e021d55d94146f66f6058822b0b39fd # v2.1.27
+        uses: github/codeql-action/upload-sarif@babb554ede22fd5605947329c4d04d8e7a0b8155 # v2.1.27
         with:
           sarif_file: results.sarif

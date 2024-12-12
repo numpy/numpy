@@ -9807,7 +9807,7 @@ def test_equal_subclass_no_override(op, dt1, dt2):
 
         def __array_wrap__(self, new, context=None, return_scalar=False):
             type(self).called_wrap += 1
-            return super().__array_wrap__(new)
+            return super().__array_wrap__(new, context, return_scalar)
 
     numpy_arr = np.zeros(5, dtype=dt1)
     my_arr = np.zeros(5, dtype=dt2).view(MyArr)
@@ -9872,12 +9872,11 @@ def test_comparisons_forwards_error(op):
 
 
 def test_richcompare_scalar_boolean_singleton_return():
-    # These are currently guaranteed to be the boolean singletons, but maybe
-    # returning NumPy booleans would also be OK:
-    assert (np.array(0) == "a") is False
-    assert (np.array(0) != "a") is True
-    assert (np.int16(0) == "a") is False
-    assert (np.int16(0) != "a") is True
+    # These are currently guaranteed to be the boolean numpy singletons
+    assert (np.array(0) == "a") is np.bool_(False)
+    assert (np.array(0) != "a") is np.bool_(True)
+    assert (np.int16(0) == "a") is np.bool_(False)
+    assert (np.int16(0) != "a") is np.bool_(True)
 
 
 @pytest.mark.parametrize("op", [

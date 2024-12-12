@@ -643,6 +643,20 @@ string_addition_resolve_descriptors(
         PyArray_Descr *loop_descrs[3],
         npy_intp *NPY_UNUSED(view_offset))
 {
+    npy_intp result_itemsize = given_descrs[0]->elsize + given_descrs[1]->elsize;
+
+    /* NOTE: elsize can fit more than MAX_INT, but some code may still use ints */
+    if (result_itemsize > NPY_MAX_INT || result_itemsize < 0) {
+            npy_intp length = result_itemsize;
+            if (given_descrs[0]->type == NPY_UNICODE) {
+                length /= 4;
+            }
+            PyErr_Format(PyExc_TypeError,
+                    "addition result string of length %zd is too large to store inside array.",
+                    length);
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
         return _NPY_ERROR_OCCURRED_IN_CAST;
@@ -650,11 +664,14 @@ string_addition_resolve_descriptors(
 
     loop_descrs[1] = NPY_DT_CALL_ensure_canonical(given_descrs[1]);
     if (loop_descrs[1] == NULL) {
+        Py_DECREF(loop_descrs[0]);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
 
     loop_descrs[2] = PyArray_DescrNew(loop_descrs[0]);
     if (loop_descrs[2] == NULL) {
+        Py_DECREF(loop_descrs[0]);
+        Py_DECREF(loop_descrs[1]);
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
     loop_descrs[2]->elsize += loop_descrs[1]->elsize;

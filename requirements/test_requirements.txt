@@ -9,6 +9,7 @@ pytest-cov==4.1.0
 meson
 ninja; sys_platform != "emscripten"
 pytest-xdist
+pytest-timeout
 # for numpy.random.test.test_extending
 cffi; python_version < '3.10'
 # For testing types. Notes on the restrictions:

@@ -15,6 +15,7 @@ from numpy.testing import (
     )
 
 from numpy._core._multiarray_tests import fromstring_null_term_c_api
+import numpy._core._struct_ufunc_tests as struct_ufunc
 
 try:
     import pytz
@@ -732,3 +733,13 @@ class TestDeprecatedSaveFixImports(_DeprecationTestCase):
                 self.assert_deprecated(np.save, args=sample_args,
                                     kwargs={'allow_pickle': allow_pickle,
                                             'fix_imports': False})
+
+
+class TestAddNewdocUFunc(_DeprecationTestCase):
+    # Deprecated in Numpy 2.2, 2024-11
+    def test_deprecated(self):
+        self.assert_deprecated(
+            lambda: np._core.umath._add_newdoc_ufunc(
+                struct_ufunc.add_triplet, "new docs"
+            )
+        )

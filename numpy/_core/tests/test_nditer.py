@@ -2356,7 +2356,7 @@ def test_iter_buffered_reduce_reuse():
 
             comp_res = nditer2.operands[-1]
 
-        for bufsize in range(0, 3**3):
+        for bufsize in range(3**3):
             nditer1 = np.nditer([arr, None],
                                 op_axes=op_axes, flags=flags, op_flags=op_flags,
                                 buffersize=bufsize, op_dtypes=op_dtypes)
@@ -3315,8 +3315,8 @@ def test_debug_print(capfd):
     | Operands:
     | Operand DTypes: dtype('int64') dtype('float64')
     | OpItFlags:
-    |   Flags[0]: READ CAST ALIGNED
-    |   Flags[1]: READ WRITE CAST ALIGNED REDUCE
+    |   Flags[0]: READ CAST
+    |   Flags[1]: READ WRITE CAST REDUCE
     |
     | BufferData:
     |   BufferSize: 50

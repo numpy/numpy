@@ -4148,7 +4148,7 @@ class TestBroadcast:
         assert_equal(mit.numiter, mit2.numiter)
         assert_(mit.iters[0].base is mit2.iters[0].base)
 
-        assert_raises(ValueError, np.broadcast, 1, **{'x': 1})
+        assert_raises(ValueError, np.broadcast, 1, x=1)
 
     def test_shape_mismatch_error_message(self):
         with pytest.raises(ValueError, match=r"arg 0 with shape \(1, 3\) and "

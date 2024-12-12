@@ -21,12 +21,12 @@ Released for unlimited redistribution.
 """
 # pylint: disable-msg=E1002
 import builtins
+import functools
 import inspect
 import operator
 import warnings
 import textwrap
 import re
-from functools import reduce
 from typing import Dict
 
 import numpy as np
@@ -469,6 +469,16 @@ def _check_fill_value(fill_value, ndtype):
     ndtype = np.dtype(ndtype)
     if fill_value is None:
         fill_value = default_fill_value(ndtype)
+        # TODO: It seems better to always store a valid fill_value, the oddity
+        #       about is that `_fill_value = None` would behave even more
+        #       different then.
+        #       (e.g. this allows arr_uint8.astype(int64) to have the default
+        #       fill value again...)
+        # The one thing that changed in 2.0/2.1 around cast safety is that the
+        # default `int(99...)` is not a same-kind cast anymore, so if we
+        # have a uint, use the default uint.
+        if ndtype.kind == "u":
+            fill_value = np.uint(fill_value)
     elif ndtype.names is not None:
         if isinstance(fill_value, (ndarray, np.void)):
             try:
@@ -929,6 +939,7 @@ class _MaskedUFunc:
         self.f = ufunc
         self.__doc__ = ufunc.__doc__
         self.__name__ = ufunc.__name__
+        self.__qualname__ = ufunc.__qualname__
 
     def __str__(self):
         return f"Masked version of {self.f}"
@@ -1299,15 +1310,13 @@ hypot = _MaskedBinaryOperation(umath.hypot)
 
 # Domained binary ufuncs
 divide = _DomainedBinaryOperation(umath.divide, _DomainSafeDivide(), 0, 1)
-true_divide = _DomainedBinaryOperation(umath.true_divide,
-                                       _DomainSafeDivide(), 0, 1)
+true_divide = divide  # Since Python 3 just an alias for divide.
 floor_divide = _DomainedBinaryOperation(umath.floor_divide,
                                         _DomainSafeDivide(), 0, 1)
 remainder = _DomainedBinaryOperation(umath.remainder,
                                      _DomainSafeDivide(), 0, 1)
 fmod = _DomainedBinaryOperation(umath.fmod, _DomainSafeDivide(), 0, 1)
-mod = _DomainedBinaryOperation(umath.mod, _DomainSafeDivide(), 0, 1)
-
+mod = remainder
 
 ###############################################################################
 #                        Mask creation functions                              #
@@ -3147,13 +3156,17 @@ class MaskedArray(ndarray):
             func, args, out_i = context
             # args sometimes contains outputs (gh-10459), which we don't want
             input_args = args[:func.nin]
-            m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
+            m = functools.reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
             domain = ufunc_domain.get(func)
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
                 with np.errstate(divide='ignore', invalid='ignore'):
-                    d = filled(domain(*input_args), True)
+                    # The result may be masked for two (unary) domains.
+                    # That can't really be right as some domains drop
+                    # the mask and some don't behaving differently here.
+                    d = domain(*input_args).astype(bool, copy=False)
+                    d = filled(d, True)
 
                 if d.any():
                     # Fill the result where the domain is wrong
@@ -5641,13 +5654,6 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort. If None, the default, the flattened array
             is used.
-
-            ..  versionchanged:: 1.13.0
-                Previously, the default was documented to be -1, but that was
-                in error. At some future date, the default will change to -1, as
-                originally intended.
-                Until then, the axis should be given explicitly when
-                ``arr.ndim > 1``, to avoid a FutureWarning.
         kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             The sorting algorithm used.
         order : list, optional
@@ -6172,7 +6178,7 @@ class MaskedArray(ndarray):
         >>> y.ptp(axis=1).view(np.uint8)
         masked_array(data=[126, 127, 128, 129],
                      mask=False,
-               fill_value=np.int64(999999),
+               fill_value=np.uint64(999999),
                     dtype=uint8)
         """
         if out is None:
@@ -7092,6 +7098,7 @@ class _frommethod:
 
     def __init__(self, methodname, reversed=False):
         self.__name__ = methodname
+        self.__qualname__ = methodname
         self.__doc__ = self.getdoc()
         self.reversed = reversed
 
@@ -7135,7 +7142,7 @@ mean = _frommethod('mean')
 minimum = _extrema_operation(umath.minimum, less, minimum_fill_value)
 nonzero = _frommethod('nonzero')
 prod = _frommethod('prod')
-product = _frommethod('prod')
+product = _frommethod('product')
 ravel = _frommethod('ravel')
 repeat = _frommethod('repeat')
 shrink_mask = _frommethod('shrink_mask')
@@ -7860,7 +7867,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     >>> np.ma.diff(u8_arr)
     masked_array(data=[255],
                  mask=False,
-           fill_value=np.int64(999999),
+           fill_value=np.uint64(999999),
                 dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
     np.uint8(255)

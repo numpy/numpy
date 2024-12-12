@@ -38,6 +38,9 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
+#include <mutex>
+#include <shared_mutex>
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <convert_datatype.h>
@@ -504,8 +507,9 @@ call_promoter_and_recurse(PyUFuncObject *ufunc, PyObject *info,
         PyObject *promoter = PyTuple_GET_ITEM(info, 1);
         if (PyCapsule_CheckExact(promoter)) {
             /* We could also go the other way and wrap up the python function... */
-            PyArrayMethod_PromoterFunction *promoter_function = PyCapsule_GetPointer(
-                    promoter, "numpy._ufunc_promoter");
+            PyArrayMethod_PromoterFunction *promoter_function =
+                    (PyArrayMethod_PromoterFunction *)PyCapsule_GetPointer(
+                            promoter, "numpy._ufunc_promoter");
             if (promoter_function == NULL) {
                 return NULL;
             }
@@ -770,8 +774,9 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
      * 2. Check all registered loops/promoters to find the best match.
      * 3. Fall back to the legacy implementation if no match was found.
      */
-    PyObject *info = PyArrayIdentityHash_GetItem(ufunc->_dispatch_cache,
-                (PyObject **)op_dtypes);
+    PyObject *info = PyArrayIdentityHash_GetItem(
+            (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+            (PyObject **)op_dtypes);
     if (info != NULL && PyObject_TypeCheck(
             PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
         /* Found the ArrayMethod and NOT a promoter: return it */
@@ -793,8 +798,9 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
              * Found the ArrayMethod and NOT promoter.  Before returning it
              * add it to the cache for faster lookup in the future.
              */
-            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
-                    (PyObject **)op_dtypes, info, 0) < 0) {
+            if (PyArrayIdentityHash_SetItem(
+                        (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+                        (PyObject **)op_dtypes, info, 0) < 0) {
                 return NULL;
             }
             return info;
@@ -815,8 +821,9 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
         }
         else if (info != NULL) {
             /* Add result to the cache using the original types: */
-            if (PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
-                    (PyObject **)op_dtypes, info, 0) < 0) {
+            if (PyArrayIdentityHash_SetItem(
+                        (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+                        (PyObject **)op_dtypes, info, 0) < 0) {
                 return NULL;
             }
             return info;
@@ -882,13 +889,51 @@ promote_and_get_info_and_ufuncimpl(PyUFuncObject *ufunc,
     }
 
     /* Add this to the cache using the original types: */
-    if (cacheable && PyArrayIdentityHash_SetItem(ufunc->_dispatch_cache,
-            (PyObject **)op_dtypes, info, 0) < 0) {
+    if (cacheable && PyArrayIdentityHash_SetItem(
+                (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+                (PyObject **)op_dtypes, info, 0) < 0) {
         return NULL;
     }
     return info;
 }
 
+#ifdef Py_GIL_DISABLED
+/*
+ * Fast path for promote_and_get_info_and_ufuncimpl.
+ * Acquires a read lock to check for a cache hit and then
+ * only acquires a write lock on a cache miss to fill the cache
+ */
+static inline PyObject *
+promote_and_get_info_and_ufuncimpl_with_locking(
+        PyUFuncObject *ufunc,
+        PyArrayObject *const ops[],
+        PyArray_DTypeMeta *signature[],
+        PyArray_DTypeMeta *op_dtypes[],
+        npy_bool legacy_promotion_is_possible)
+{
+    std::shared_mutex *mutex = ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+    mutex->lock_shared();
+    PyObject *info = PyArrayIdentityHash_GetItem(
+            (PyArrayIdentityHash *)ufunc->_dispatch_cache,
+            (PyObject **)op_dtypes);
+    mutex->unlock_shared();
+
+    if (info != NULL && PyObject_TypeCheck(
+                    PyTuple_GET_ITEM(info, 1), &PyArrayMethod_Type)) {
+        /* Found the ArrayMethod and NOT a promoter: return it */
+        return info;
+    }
+
+    // cache miss, need to acquire a write lock and recursively calculate the
+    // correct dispatch resolution
+    mutex->lock();
+    info = promote_and_get_info_and_ufuncimpl(ufunc,
+            ops, signature, op_dtypes, legacy_promotion_is_possible);
+    mutex->unlock();
+
+    return info;
+}
+#endif
 
 /**
  * The central entry-point for the promotion and dispatching machinery.
@@ -941,6 +986,8 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
 {
     int nin = ufunc->nin, nargs = ufunc->nargs;
     npy_bool legacy_promotion_is_possible = NPY_TRUE;
+    PyObject *all_dtypes = NULL;
+    PyArrayMethodObject *method = NULL;
 
     /*
      * Get the actual DTypes we operate with by setting op_dtypes[i] from
@@ -976,18 +1023,20 @@ promote_and_get_ufuncimpl(PyUFuncObject *ufunc,
         }
     }
 
-    PyObject *info;
-    Py_BEGIN_CRITICAL_SECTION((PyObject *)ufunc);
-    info = promote_and_get_info_and_ufuncimpl(ufunc,
+#ifdef Py_GIL_DISABLED
+    PyObject *info = promote_and_get_info_and_ufuncimpl_with_locking(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
-    Py_END_CRITICAL_SECTION();
+#else
+    PyObject *info = promote_and_get_info_and_ufuncimpl(ufunc,
+            ops, signature, op_dtypes, legacy_promotion_is_possible);
+#endif
 
     if (info == NULL) {
         goto handle_error;
     }
 
-    PyArrayMethodObject *method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
-    PyObject *all_dtypes = PyTuple_GET_ITEM(info, 0);
+    method = (PyArrayMethodObject *)PyTuple_GET_ITEM(info, 1);
+    all_dtypes = PyTuple_GET_ITEM(info, 0);
 
     /*
      * In certain cases (only the logical ufuncs really), the loop we found may
@@ -1218,7 +1267,7 @@ install_logical_ufunc_promoter(PyObject *ufunc)
     if (dtype_tuple == NULL) {
         return -1;
     }
-    PyObject *promoter = PyCapsule_New(&logical_ufunc_promoter,
+    PyObject *promoter = PyCapsule_New((void *)&logical_ufunc_promoter,
             "numpy._ufunc_promoter", NULL);
     if (promoter == NULL) {
         Py_DECREF(dtype_tuple);

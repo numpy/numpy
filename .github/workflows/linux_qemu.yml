@@ -100,10 +100,11 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
@@ -115,7 +116,7 @@ jobs:
         sudo apt install -y ninja-build gcc-${TOOLCHAIN_NAME} g++-${TOOLCHAIN_NAME} gfortran-${TOOLCHAIN_NAME}
 
     - name: Cache docker container
-      uses: actions/cache@v4.1.2
+      uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
       id: container-cache
       with:
         path: ~/docker_${{ matrix.BUILD_PROP[1] }}
@@ -141,8 +142,10 @@ jobs:
           rm -f /usr/bin/ld.bfd && ln -s /host/usr/bin/${TOOLCHAIN_NAME}-ld.bfd /usr/bin/ld.bfd &&
           rm -f /usr/bin/ninja && ln -s /host/usr/bin/ninja /usr/bin/ninja &&
           git config --global --add safe.directory /numpy &&
-          python -m pip install -r /numpy/requirements/build_requirements.txt &&
-          python -m pip install pytest pytest-xdist hypothesis typing_extensions &&
+          # No need to build ninja from source, the host ninja is used for the build
+          grep -v ninja /numpy/requirements/build_requirements.txt > /tmp/build_requirements.txt &&
+          python -m pip install -r /tmp/build_requirements.txt &&
+          python -m pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout &&
           rm -f /usr/local/bin/ninja && mkdir -p /usr/local/bin && ln -s /host/usr/bin/ninja /usr/local/bin/ninja
         "
         docker commit the_container the_container
@@ -171,7 +174,7 @@ jobs:
           -v $(pwd):/numpy -v /:/host the_container \
           /bin/script -e -q -c "/bin/bash --noprofile --norc -eo pipefail -c '
             export F90=/usr/bin/gfortran
-            cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
+            cd /numpy && spin test -- --timeout=600 --durations=10 -k \"${RUNTIME_TEST_FILTER}\"
           '"
 
 

@@ -2796,8 +2796,10 @@ def test_load_multiple_arrays_until_eof():
     np.save(f, 1)
     np.save(f, 2)
     f.seek(0)
-    assert np.load(f) == 1
-    assert np.load(f) == 2
+    out1 = np.load(f)
+    assert out1 == 1
+    out2 = np.load(f)
+    assert out2 == 2
     with pytest.raises(EOFError):
         np.load(f)
 

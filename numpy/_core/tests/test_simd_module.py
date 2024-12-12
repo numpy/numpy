@@ -93,7 +93,7 @@ class Test_SIMD_MODULE:
         assert round(f32, 1) == 0.1
 
     def test_compare(self):
-        data_range = range(0, npyv.nlanes_u32)
+        data_range = range(npyv.nlanes_u32)
         vdata = npyv.load_u32(data_range)
         assert vdata == list(data_range)
         assert vdata == tuple(data_range)

@@ -21,10 +21,11 @@ jobs:
     if: github.repository == 'numpy/numpy'
     steps:
     - name: Checkout
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
     - name: Setup Python
       uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
@@ -173,7 +174,7 @@ jobs:
           path: ./*.whl
 
     - name: Setup Mamba
-      uses: mamba-org/setup-micromamba@617811f69075e3fd3ae68ca64220ad065877f246
+      uses: mamba-org/setup-micromamba@068f1ab4b37ed9b3d9f73da7db90a0cda0a48d29
       with:
         # for installation of anaconda-client, required for upload to
         # anaconda.org

@@ -53,9 +53,7 @@ __all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
            'as_ctypes_type']
 
 import os
-from numpy import (
-    integer, ndarray, dtype as _dtype, asarray, frombuffer
-)
+import numpy as np
 from numpy._core.multiarray import _flagdict, flagsobj
 
 try:
@@ -181,7 +179,7 @@ def _flags_fromnum(num):
 class _ndptr(_ndptr_base):
     @classmethod
     def from_param(cls, obj):
-        if not isinstance(obj, ndarray):
+        if not isinstance(obj, np.ndarray):
             raise TypeError("argument must be an ndarray")
         if cls._dtype_ is not None \
                and obj.dtype != cls._dtype_:
@@ -221,10 +219,10 @@ class _concrete_ndptr(_ndptr):
 
         This mirrors the `contents` attribute of a normal ctypes pointer
         """
-        full_dtype = _dtype((self._dtype_, self._shape_))
+        full_dtype = np.dtype((self._dtype_, self._shape_))
         full_ctype = ctypes.c_char * full_dtype.itemsize
         buffer = ctypes.cast(self, ctypes.POINTER(full_ctype)).contents
-        return frombuffer(buffer, dtype=full_dtype).squeeze(axis=0)
+        return np.frombuffer(buffer, dtype=full_dtype).squeeze(axis=0)
 
 
 # Factory for an array-checking class with from_param defined for
@@ -284,14 +282,14 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
 
     # normalize dtype to dtype | None
     if dtype is not None:
-        dtype = _dtype(dtype)
+        dtype = np.dtype(dtype)
 
     # normalize flags to int | None
     num = None
     if flags is not None:
         if isinstance(flags, str):
             flags = flags.split(',')
-        elif isinstance(flags, (int, integer)):
+        elif isinstance(flags, (int, np.integer)):
             num = flags
             flags = _flags_fromnum(num)
         elif isinstance(flags, flagsobj):
@@ -368,7 +366,7 @@ if ctypes is not None:
             ct.c_float, ct.c_double,
             ct.c_bool,
         ]
-        return {_dtype(ctype): ctype for ctype in simple_types}
+        return {np.dtype(ctype): ctype for ctype in simple_types}
 
 
     _scalar_type_map = _get_scalar_type_map()
@@ -516,7 +514,7 @@ if ctypes is not None:
         <class 'struct'>
 
         """
-        return _ctype_from_dtype(_dtype(dtype))
+        return _ctype_from_dtype(np.dtype(dtype))
 
 
     def as_array(obj, shape=None):
@@ -557,7 +555,7 @@ if ctypes is not None:
             p_arr_type = ctypes.POINTER(_ctype_ndarray(obj._type_, shape))
             obj = ctypes.cast(obj, p_arr_type).contents
 
-        return asarray(obj)
+        return np.asarray(obj)
 
 
     def as_ctypes(obj):

@@ -46,7 +46,7 @@ Please carefully study the documentation linked above for further help.
 Original error was: %s
 """ % (sys.version_info[0], sys.version_info[1], sys.executable,
         __version__, exc)
-    raise ImportError(msg)
+    raise ImportError(msg) from exc
 finally:
     for envkey in env_added:
         del os.environ[envkey]

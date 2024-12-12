@@ -400,7 +400,7 @@ PyMODINIT_FUNC PyInit_lapack_lite(void)
     }
     import_array();
     d = PyModule_GetDict(m);
-    LapackError = PyErr_NewException("lapack_lite.LapackError", NULL, NULL);
+    LapackError = PyErr_NewException("numpy.linalg.lapack_lite.LapackError", NULL, NULL);
     PyDict_SetItemString(d, "LapackError", LapackError);
 
 #ifdef HAVE_BLAS_ILP64

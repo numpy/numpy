@@ -601,7 +601,7 @@ class TestInterpolate:
             return x**p
 
         x = np.linspace(0, 2, 10)
-        for deg in range(0, 10):
-            for t in range(0, deg + 1):
+        for deg in range(10):
+            for t in range(deg + 1):
                 p = Chebyshev.interpolate(powx, deg, domain=[0, 2], args=(t,))
                 assert_almost_equal(p(x), powx(x, t), decimal=11)

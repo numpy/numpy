@@ -824,19 +824,76 @@ class TestUfunc:
         actual3 = np.vecdot(arr1.astype("object"), arr2)
         assert_array_equal(actual3, expected.astype("object"))
 
-    def test_vecdot_complex(self):
+    def test_matvec(self):
+        arr1 = np.arange(6).reshape((2, 3))
+        arr2 = np.arange(3).reshape((1, 3))
+
+        actual = np.matvec(arr1, arr2)
+        expected = np.array([[5, 14]])
+
+        assert_array_equal(actual, expected)
+
+        actual2 = np.matvec(arr1.T, arr2.T, axes=[(-1, -2), -2, -1])
+        assert_array_equal(actual2, expected)
+
+        actual3 = np.matvec(arr1.astype("object"), arr2)
+        assert_array_equal(actual3, expected.astype("object"))
+
+    @pytest.mark.parametrize("vec", [
+        np.array([[1., 2., 3.], [4., 5., 6.]]),
+        np.array([[1., 2j, 3.], [4., 5., 6j]]),
+        np.array([[1., 2., 3.], [4., 5., 6.]], dtype=object),
+        np.array([[1., 2j, 3.], [4., 5., 6j]], dtype=object)])
+    @pytest.mark.parametrize("matrix", [
+        None,
+        np.array([[1.+1j, 0.5, -0.5j],
+                  [0.25, 2j, 0.],
+                  [4., 0., -1j]])])
+    def test_vecmatvec_identity(self, matrix, vec):
+        """Check that (x†A)x equals x†(Ax)."""
+        mat = matrix if matrix is not None else np.eye(3)
+        matvec = np.matvec(mat, vec)  # Ax
+        vecmat = np.vecmat(vec, mat)  # x†A
+        if matrix is None:
+            assert_array_equal(matvec, vec)
+            assert_array_equal(vecmat.conj(), vec)
+        assert_array_equal(matvec, (mat @ vec[..., np.newaxis]).squeeze(-1))
+        assert_array_equal(vecmat, (vec[..., np.newaxis].mT.conj()
+                                    @ mat).squeeze(-2))
+        expected = np.einsum('...i,ij,...j', vec.conj(), mat, vec)
+        vec_matvec = (vec.conj() * matvec).sum(-1)
+        vecmat_vec = (vecmat * vec).sum(-1)
+        assert_array_equal(vec_matvec, expected)
+        assert_array_equal(vecmat_vec, expected)
+
+    @pytest.mark.parametrize("ufunc, shape1, shape2, conj", [
+        (np.vecdot, (3,), (3,), True),
+        (np.vecmat, (3,), (3, 1), True),
+        (np.matvec, (1, 3), (3,), False),
+        (np.matmul, (1, 3), (3, 1), False),
+    ])
+    def test_vecdot_matvec_vecmat_complex(self, ufunc, shape1, shape2, conj):
         arr1 = np.array([1, 2j, 3])
         arr2 = np.array([1, 2, 3])
 
-        actual = np.vecdot(arr1, arr2)
-        expected = np.array([10-4j])
-        assert_array_equal(actual, expected)
+        actual1 = ufunc(arr1.reshape(shape1), arr2.reshape(shape2))
+        expected1 = np.array(((arr1.conj() if conj else arr1) * arr2).sum(),
+                             ndmin=min(len(shape1), len(shape2)))
+        assert_array_equal(actual1, expected1)
+        # This would fail for conj=True, since matmul omits the conjugate.
+        if not conj:
+            assert_array_equal(arr1.reshape(shape1) @ arr2.reshape(shape2),
+                               expected1)
 
-        actual2 = np.vecdot(arr2, arr1)
-        assert_array_equal(actual2, expected.conj())
+        actual2 = ufunc(arr2.reshape(shape1), arr1.reshape(shape2))
+        expected2 = np.array(((arr2.conj() if conj else arr2) * arr1).sum(),
+                             ndmin=min(len(shape1), len(shape2)))
+        assert_array_equal(actual2, expected2)
 
-        actual3 = np.vecdot(arr1.astype("object"), arr2.astype("object"))
-        assert_array_equal(actual3, expected.astype("object"))
+        actual3 = ufunc(arr1.reshape(shape1).astype("object"),
+                        arr2.reshape(shape2).astype("object"))
+        expected3 = expected1.astype(object)
+        assert_array_equal(actual3, expected3)
 
     def test_vecdot_subclass(self):
         class MySubclass(np.ndarray):
@@ -1644,51 +1701,46 @@ class TestUfunc:
         assert_array_equal((a[where] < b_where), out[where].astype(bool))
         assert not out[~where].any()  # outside mask, out remains all 0
 
-    def check_identityless_reduction(self, a):
+    @staticmethod
+    def identityless_reduce_arrs():
+        yield np.empty((2, 3, 4), order='C')
+        yield np.empty((2, 3, 4), order='F')
+        # Mixed order (reduce order differs outer)
+        yield np.empty((2, 4, 3), order='C').swapaxes(1, 2)
+        # Reversed order
+        yield np.empty((2, 3, 4), order='C')[::-1, ::-1, ::-1]
+        # Not contiguous
+        yield np.empty((3, 5, 4), order='C').swapaxes(1, 2)[1:, 1:, 1:]
+        # Not contiguous and not aligned
+        a = np.empty((3*4*5*8 + 1,), dtype='i1')
+        a = a[1:].view(dtype='f8')
+        a.shape = (3, 4, 5)
+        a = a[1:, 1:, 1:]
+        yield a
+
+    @pytest.mark.parametrize("a", identityless_reduce_arrs())
+    @pytest.mark.parametrize("pos", [(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+    def test_identityless_reduction(self, a, pos):
         # np.minimum.reduce is an identityless reduction
-
-        # Verify that it sees the zero at various positions
         a[...] = 1
-        a[1, 0, 0] = 0
-        assert_equal(np.minimum.reduce(a, axis=None), 0)
-        assert_equal(np.minimum.reduce(a, axis=(0, 1)), [0, 1, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(0, 2)), [0, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(1, 2)), [1, 0])
-        assert_equal(np.minimum.reduce(a, axis=0),
-                                    [[0, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=1),
-                                    [[1, 1, 1, 1], [0, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=2),
-                                    [[1, 1, 1], [0, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=()), a)
+        a[pos] = 0
 
-        a[...] = 1
-        a[0, 1, 0] = 0
-        assert_equal(np.minimum.reduce(a, axis=None), 0)
-        assert_equal(np.minimum.reduce(a, axis=(0, 1)), [0, 1, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(0, 2)), [1, 0, 1])
-        assert_equal(np.minimum.reduce(a, axis=(1, 2)), [0, 1])
-        assert_equal(np.minimum.reduce(a, axis=0),
-                                    [[1, 1, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=1),
-                                    [[0, 1, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=2),
-                                    [[1, 0, 1], [1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=()), a)
+        for axis in [None, (0, 1), (0, 2), (1, 2), 0, 1, 2, ()]:
+            if axis is None:
+                axes = np.array([], dtype=np.intp)
+            else:
+                axes = np.delete(np.arange(a.ndim), axis)
 
-        a[...] = 1
-        a[0, 0, 1] = 0
-        assert_equal(np.minimum.reduce(a, axis=None), 0)
-        assert_equal(np.minimum.reduce(a, axis=(0, 1)), [1, 0, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(0, 2)), [0, 1, 1])
-        assert_equal(np.minimum.reduce(a, axis=(1, 2)), [0, 1])
-        assert_equal(np.minimum.reduce(a, axis=0),
-                                    [[1, 0, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=1),
-                                    [[1, 0, 1, 1], [1, 1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=2),
-                                    [[0, 1, 1], [1, 1, 1]])
-        assert_equal(np.minimum.reduce(a, axis=()), a)
+            expected_pos = tuple(np.array(pos)[axes])
+            expected = np.ones(np.array(a.shape)[axes])
+            expected[expected_pos] = 0
+
+            res = np.minimum.reduce(a, axis=axis)
+            assert_equal(res, expected, strict=True)
+
+            res = np.full_like(res, np.nan)
+            np.minimum.reduce(a, axis=axis, out=res)
+            assert_equal(res, expected, strict=True)
 
     @requires_memory(6 * 1024**3)
     @pytest.mark.skipif(sys.maxsize < 2**32,
@@ -1702,30 +1754,6 @@ class TestUfunc:
         del arr
         assert res[0] == 3
         assert res[-1] == 4
-
-    def test_identityless_reduction_corder(self):
-        a = np.empty((2, 3, 4), order='C')
-        self.check_identityless_reduction(a)
-
-    def test_identityless_reduction_forder(self):
-        a = np.empty((2, 3, 4), order='F')
-        self.check_identityless_reduction(a)
-
-    def test_identityless_reduction_otherorder(self):
-        a = np.empty((2, 4, 3), order='C').swapaxes(1, 2)
-        self.check_identityless_reduction(a)
-
-    def test_identityless_reduction_noncontig(self):
-        a = np.empty((3, 5, 4), order='C').swapaxes(1, 2)
-        a = a[1:, 1:, 1:]
-        self.check_identityless_reduction(a)
-
-    def test_identityless_reduction_noncontig_unaligned(self):
-        a = np.empty((3*4*5*8 + 1,), dtype='i1')
-        a = a[1:].view(dtype='f8')
-        a.shape = (3, 4, 5)
-        a = a[1:, 1:, 1:]
-        self.check_identityless_reduction(a)
 
     def test_reduce_identity_depends_on_loop(self):
         """
@@ -2757,9 +2785,9 @@ def test_ufunc_noncontiguous(ufunc):
             # bool, object, datetime are too irregular for this simple test
             continue
         inp, out = typ.split('->')
-        args_c = [np.empty(6, t) for t in inp]
-        # non contiguous (3 step)
-        args_n = [np.empty(18, t)[::3] for t in inp]
+        args_c = [np.empty((6, 6), t) for t in inp]
+        # non contiguous (2, 3 step on the two dimensions)
+        args_n = [np.empty((12, 18), t)[::2, ::3] for t in inp]
         # alignment != itemsize is possible.  So create an array with such
         # an odd step manually.
         args_o = []
@@ -2767,10 +2795,9 @@ def test_ufunc_noncontiguous(ufunc):
             orig_dt = np.dtype(t)
             off_dt = f"S{orig_dt.alignment}"  # offset by alignment
             dtype = np.dtype([("_", off_dt), ("t", orig_dt)], align=False)
-            args_o.append(np.empty(6, dtype=dtype)["t"])
-
+            args_o.append(np.empty((6, 6), dtype=dtype)["t"])
         for a in args_c + args_n + args_o:
-            a.flat = range(1,7)
+            a.flat = range(1, 37)
 
         with warnings.catch_warnings(record=True):
             warnings.filterwarnings("always")
@@ -2788,7 +2815,7 @@ def test_ufunc_noncontiguous(ufunc):
                 # since different algorithms (libm vs. intrinsics) can be used
                 # for different input strides
                 res_eps = np.finfo(dt).eps
-                tol = 2*res_eps
+                tol = 3*res_eps
                 assert_allclose(res_c, res_n, atol=tol, rtol=tol)
                 assert_allclose(res_c, res_o, atol=tol, rtol=tol)
             else:
@@ -2975,7 +3002,7 @@ def test_addition_reduce_negative_zero(dtype, use_initial):
 
     # Test various length, in case SIMD paths or chunking play a role.
     # 150 extends beyond the pairwise blocksize; probably not important.
-    for i in range(0, 150):
+    for i in range(150):
         arr = np.array([neg_zero] * i, dtype=dtype)
         res = np.sum(arr, **kwargs)
         if i > 0 or use_initial:

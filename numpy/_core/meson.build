@@ -245,8 +245,8 @@ endforeach
 
 # variable attributes tested via "int %s a" % attribute
 optional_variable_attributes = [
-  ['thread_local', 'HAVE_THREAD_LOCAL'],
-  ['_Thread_local', 'HAVE__THREAD_LOCAL'],
+  ['thread_local', 'HAVE_THREAD_LOCAL'],    # C23
+  ['_Thread_local', 'HAVE__THREAD_LOCAL'],  # C11/C17
   ['__thread', 'HAVE__THREAD'],
   ['__declspec(thread)', 'HAVE___DECLSPEC_THREAD_']
 ]
@@ -713,7 +713,7 @@ py.extension_module('_multiarray_tests',
     src_file.process('src/multiarray/_multiarray_tests.c.src'),
     'src/common/mem_overlap.c',
     'src/common/npy_argparse.c',
-    'src/common/npy_hashtable.c',
+    'src/common/npy_hashtable.cpp',
     src_file.process('src/common/templ_common.h.src')
   ],
   c_args: c_args_common,
@@ -912,12 +912,12 @@ foreach gen_mtargets : [
   ],
   [
     'loops_hyperbolic.dispatch.h',
-    src_file.process('src/umath/loops_hyperbolic.dispatch.c.src'),
+    src_file.process('src/umath/loops_hyperbolic.dispatch.cpp.src'),
     [
       AVX512_SKX, [AVX2, FMA3],
       VSX4, VSX2,
       NEON_VFPV4,
-      VXE, VX
+      VXE
     ]
   ],
   [
@@ -954,6 +954,7 @@ foreach gen_mtargets : [
       AVX512_SKX, [AVX2, FMA3],
       VSX4, VSX3, VSX2,
       NEON_VFPV4,
+      VXE2, VXE,
     ]
   ],
   [
@@ -1042,7 +1043,7 @@ src_multiarray_umath_common = [
   'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
-  'src/common/npy_hashtable.c',
+  'src/common/npy_hashtable.cpp',
   'src/common/npy_import.c',
   'src/common/npy_longdouble.c',
   'src/common/ucsnarrow.c',
@@ -1153,7 +1154,7 @@ src_umath = umath_gen_headers + [
   'src/umath/ufunc_type_resolution.c',
   'src/umath/clip.cpp',
   'src/umath/clip.h',
-  'src/umath/dispatching.c',
+  'src/umath/dispatching.cpp',
   'src/umath/extobj.c',
   'src/umath/legacy_array_method.c',
   'src/umath/override.c',

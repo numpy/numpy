@@ -1237,7 +1237,7 @@ class TestMedian:
                 assert_equal(np.ma.median(a), -2.5)
             assert_equal(np.ma.median(a, axis=1), [-1., -2.5, inf])
 
-            for i in range(0, 10):
+            for i in range(10):
                 for j in range(1, 10):
                     a = np.array([([np.nan] * i) + ([inf] * j)] * 2)
                     a = np.ma.masked_array(a, mask=np.isnan(a))

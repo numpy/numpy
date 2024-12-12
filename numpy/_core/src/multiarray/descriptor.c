@@ -274,8 +274,16 @@ _convert_from_tuple(PyObject *obj, int align)
     if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
         int itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
-
-        if (error_converting(itemsize)) {
+        if (type->type_num == NPY_UNICODE) {
+            if (itemsize > NPY_MAX_INT / 4) {
+                itemsize = -1;
+            }
+            else {
+                itemsize *= 4;
+            }
+        }
+        if (itemsize < 0) {
+            /* Error may or may not be set by PyIntAsInt. */
             PyErr_SetString(PyExc_ValueError,
                     "invalid itemsize in generic type tuple");
             Py_DECREF(type);
@@ -285,12 +293,8 @@ _convert_from_tuple(PyObject *obj, int align)
         if (type == NULL) {
             return NULL;
         }
-        if (type->type_num == NPY_UNICODE) {
-            type->elsize = itemsize << 2;
-        }
-        else {
-            type->elsize = itemsize;
-        }
+
+        type->elsize = itemsize;
         return type;
     }
     else if (type->metadata && (PyDict_Check(val) || PyDictProxy_Check(val))) {
@@ -1861,7 +1865,10 @@ _convert_from_str(PyObject *obj, int align)
                  */
                 case NPY_UNICODELTR:
                     check_num = NPY_UNICODE;
-                    elsize <<= 2;
+                    if (elsize > (NPY_MAX_INT / 4)) {
+                        goto fail;
+                    }
+                    elsize *= 4;
                     break;
 
                 case NPY_VOIDLTR:

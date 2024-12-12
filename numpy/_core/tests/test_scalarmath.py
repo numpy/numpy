@@ -397,6 +397,15 @@ class TestModulus:
                 match=r"Cannot cast ufunc 'floor_divide' output from"):
             a //= b
 
+class TestComparison:
+    def test_comparision_different_types(self):
+        x = np.array(1)
+        y = np.array('s')
+        eq = x == y
+        neq = x != y
+        assert eq is np.bool_(False)
+        assert neq is np.bool_(True)
+
 
 class TestComplexDivision:
     def test_zero_division(self):

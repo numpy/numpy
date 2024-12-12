@@ -13,7 +13,8 @@ __all__ = ['einsum', 'einsum_path']
 
 # importing string for string.ascii_letters would be too slow
 # the first import before caching has been measured to take 800 µs (#23777)
-einsum_symbols = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+# imports begin with uppercase to mimic ASCII values to avoid sorting issues
+einsum_symbols = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
 einsum_symbols_set = set(einsum_symbols)
 
 

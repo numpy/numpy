@@ -501,8 +501,8 @@ class TestInterpolate:
             return x**p
 
         x = np.linspace(-1, 1, 10)
-        for deg in range(0, 10):
-            for p in range(0, deg + 1):
+        for deg in range(10):
+            for p in range(deg + 1):
                 c = cheb.chebinterpolate(powx, deg, (p,))
                 assert_almost_equal(cheb.chebval(x, c), powx(x, p), decimal=12)
 

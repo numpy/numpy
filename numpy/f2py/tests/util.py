@@ -57,7 +57,6 @@ def check_language(lang, code_snippet=None):
         return runmeson.returncode == 0
     finally:
         shutil.rmtree(tmpdir)
-    return False
 
 
 fortran77_code = '''

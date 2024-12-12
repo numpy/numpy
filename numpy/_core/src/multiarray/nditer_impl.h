@@ -121,8 +121,6 @@
 #define NPY_OP_ITFLAG_CAST         0x0004
 /* The operand never needs buffering */
 #define NPY_OP_ITFLAG_BUFNEVER     0x0008
-/* The operand is aligned */
-#define NPY_OP_ITFLAG_ALIGNED      0x0010
 /* The operand is being reduced */
 #define NPY_OP_ITFLAG_REDUCE       0x0020
 /* The operand is for temporary use, does not have a backing array */

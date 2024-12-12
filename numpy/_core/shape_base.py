@@ -839,7 +839,6 @@ def block(arrays):
 
     Notes
     -----
-
     When called with only scalars, ``np.block`` is equivalent to an ndarray
     call. So ``np.block([[1, 2], [3, 4]])`` is equivalent to
     ``np.array([[1, 2], [3, 4]])``.

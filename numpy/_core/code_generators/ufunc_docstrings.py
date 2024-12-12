@@ -44,7 +44,7 @@ def add_newdoc(place, name, doc):
 
     skip = (
         # gufuncs do not use the OUT_SCALAR replacement strings
-        'matmul', 'vecdot',
+        'matmul', 'vecdot', 'matvec', 'vecmat',
         # clip has 3 inputs, which is not handled by this
         'clip',
     )
@@ -836,9 +836,6 @@ add_newdoc('numpy._core.umath', 'trunc',
     --------
     ceil, floor, rint, fix
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -1028,7 +1025,6 @@ add_newdoc('numpy._core.umath', 'rad2deg',
 
     Notes
     -----
-
     rad2deg(x) is ``180 * x / pi``.
 
     Examples
@@ -1065,9 +1061,6 @@ add_newdoc('numpy._core.umath', 'heaviside',
     out : ndarray or scalar
         The output array, element-wise Heaviside step function of `x1`.
         $OUT_SCALAR_2
-
-    Notes
-    -----
 
     References
     ----------
@@ -1268,9 +1261,6 @@ add_newdoc('numpy._core.umath', 'exp2',
     See Also
     --------
     power
-
-    Notes
-    -----
 
     Examples
     --------
@@ -2219,9 +2209,6 @@ add_newdoc('numpy._core.umath', 'logaddexp',
     --------
     logaddexp2: Logarithm of the sum of exponentiations of inputs in base 2.
 
-    Notes
-    -----
-
     Examples
     --------
     >>> import numpy as np
@@ -2261,9 +2248,6 @@ add_newdoc('numpy._core.umath', 'logaddexp2',
     See Also
     --------
     logaddexp: Logarithm of the sum of exponentiations of the inputs.
-
-    Notes
-    -----
 
     Examples
     --------
@@ -2662,7 +2646,6 @@ add_newdoc('numpy._core.umath', 'fmax',
 
     Notes
     -----
-
     The fmax is equivalent to ``np.where(x1 >= x2, x1, x2)`` when neither
     x1 nor x2 are NaNs, but it is faster and does proper broadcasting.
 
@@ -2720,7 +2703,6 @@ add_newdoc('numpy._core.umath', 'fmin',
 
     Notes
     -----
-
     The fmin is equivalent to ``np.where(x1 <= x2, x1, x2)`` when neither
     x1 nor x2 are NaNs, but it is faster and does proper broadcasting.
 
@@ -2811,14 +2793,15 @@ add_newdoc('numpy._core.umath', 'matmul',
 
     See Also
     --------
-    vdot : Complex-conjugating dot product.
+    vecdot : Complex-conjugating dot product for stacks of vectors.
+    matvec : Matrix-vector product for stacks of matrices and vectors.
+    vecmat : Vector-matrix product for stacks of vectors and matrices.
     tensordot : Sum products over arbitrary axes.
     einsum : Einstein summation convention.
     dot : alternative matrix product with different broadcasting rules.
 
     Notes
     -----
-
     The behavior depends on the arguments in the following way.
 
     - If both arguments are 2-D they are multiplied like conventional
@@ -2827,10 +2810,10 @@ add_newdoc('numpy._core.umath', 'matmul',
       matrices residing in the last two indexes and broadcast accordingly.
     - If the first argument is 1-D, it is promoted to a matrix by
       prepending a 1 to its dimensions. After matrix multiplication
-      the prepended 1 is removed.
+      the prepended 1 is removed. (For stacks of vectors, use ``vecmat``.)
     - If the second argument is 1-D, it is promoted to a matrix by
       appending a 1 to its dimensions. After matrix multiplication
-      the appended 1 is removed.
+      the appended 1 is removed. (For stacks of vectors, use ``matvec``.)
 
     ``matmul`` differs from ``dot`` in two important ways:
 
@@ -2923,14 +2906,16 @@ add_newdoc('numpy._core.umath', 'vecdot',
     where :math:`\\overline{a_i}` denotes the complex conjugate if :math:`a_i`
     is complex and the identity otherwise.
 
+    .. versionadded:: 2.0.0
+
     Parameters
     ----------
     x1, x2 : array_like
         Input arrays, scalars not allowed.
     out : ndarray, optional
         A location into which the result is stored. If provided, it must have
-        a shape that the broadcasted shape of `x1` and `x2` with the last axis
-        removed. If not provided or None, a freshly-allocated array is used.
+        the broadcasted shape of `x1` and `x2` with the last axis removed.
+        If not provided or None, a freshly-allocated array is used.
     **kwargs
         For other keyword-only arguments, see the
         :ref:`ufunc docs <ufuncs.kwargs>`.
@@ -2952,6 +2937,9 @@ add_newdoc('numpy._core.umath', 'vecdot',
     See Also
     --------
     vdot : same but flattens arguments first
+    matmul : Matrix-matrix product.
+    vecmat : Vector-matrix product.
+    matvec : Matrix-vector product.
     einsum : Einstein summation convention.
 
     Examples
@@ -2965,7 +2953,137 @@ add_newdoc('numpy._core.umath', 'vecdot',
     >>> np.vecdot(v, n)
     array([ 3.,  8., 10.])
 
-    .. versionadded:: 2.0.0
+    """)
+
+add_newdoc('numpy._core.umath', 'matvec',
+    """
+    Matrix-vector dot product of two arrays.
+
+    Given a matrix (or stack of matrices) :math:`\\mathbf{A}` in ``x1`` and
+    a vector (or stack of vectors) :math:`\\mathbf{v}` in ``x2``, the
+    matrix-vector product is defined as:
+
+    .. math::
+       \\mathbf{A} \\cdot \\mathbf{b} = \\sum_{j=0}^{n-1} A_{ij} v_j
+
+    where the sum is over the last dimensions in ``x1`` and ``x2``
+    (unless ``axes`` is specified).  (For a matrix-vector product with the
+    vector conjugated, use ``np.vecmat(x2, x1.mT)``.)
+
+    .. versionadded:: 2.2.0
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        the broadcasted shape of ``x1`` and ``x2`` with the summation axis
+        removed. If not provided or None, a freshly-allocated array is used.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+    Returns
+    -------
+    y : ndarray
+        The matrix-vector product of the inputs.
+
+    Raises
+    ------
+    ValueError
+        If the last dimensions of ``x1`` and ``x2`` are not the same size.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    vecdot : Vector-vector product.
+    vecmat : Vector-matrix product.
+    matmul : Matrix-matrix product.
+    einsum : Einstein summation convention.
+
+    Examples
+    --------
+    Rotate a set of vectors from Y to X along Z.
+
+    >>> a = np.array([[0., 1., 0.],
+    ...               [-1., 0., 0.],
+    ...               [0., 0., 1.]])
+    >>> v = np.array([[1., 0., 0.],
+    ...               [0., 1., 0.],
+    ...               [0., 0., 1.],
+    ...               [0., 6., 8.]])
+    >>> np.matvec(a, v)
+    array([[ 0., -1.,  0.],
+           [ 1.,  0.,  0.],
+           [ 0.,  0.,  1.],
+           [ 6.,  0.,  8.]])
+
+    """)
+
+add_newdoc('numpy._core.umath', 'vecmat',
+    """
+    Vector-matrix dot product of two arrays.
+
+    Given a vector (or stack of vector) :math:`\\mathbf{v}` in ``x1`` and
+    a matrix (or stack of matrices) :math:`\\mathbf{A}` in ``x2``, the
+    vector-matrix product is defined as:
+
+    .. math::
+       \\mathbf{b} \\cdot \\mathbf{A} = \\sum_{i=0}^{n-1} \\overline{v_i}A_{ij}
+
+    where the sum is over the last dimension of ``x1`` and the one-but-last
+    dimensions in ``x2`` (unless `axes` is specified) and where
+    :math:`\\overline{v_i}` denotes the complex conjugate if :math:`v`
+    is complex and the identity otherwise. (For a non-conjugated vector-matrix
+    product, use ``np.matvec(x2.mT, x1)``.)
+
+    .. versionadded:: 2.2.0
+
+    Parameters
+    ----------
+    x1, x2 : array_like
+        Input arrays, scalars not allowed.
+    out : ndarray, optional
+        A location into which the result is stored. If provided, it must have
+        the broadcasted shape of ``x1`` and ``x2`` with the summation axis
+        removed. If not provided or None, a freshly-allocated array is used.
+    **kwargs
+        For other keyword-only arguments, see the
+        :ref:`ufunc docs <ufuncs.kwargs>`.
+
+    Returns
+    -------
+    y : ndarray
+        The vector-matrix product of the inputs.
+
+    Raises
+    ------
+    ValueError
+        If the last dimensions of ``x1`` and the one-but-last dimension of
+        ``x2`` are not the same size.
+
+        If a scalar value is passed in.
+
+    See Also
+    --------
+    vecdot : Vector-vector product.
+    matvec : Matrix-vector product.
+    matmul : Matrix-matrix product.
+    einsum : Einstein summation convention.
+
+    Examples
+    --------
+    Project a vector along X and Y.
+
+    >>> v = np.array([0., 4., 2.])
+    >>> a = np.array([[1., 0., 0.],
+    ...               [0., 1., 0.],
+    ...               [0., 0., 0.]])
+    >>> np.vecmat(v, a)
+    array([ 0.,  4., 0.])
+
     """)
 
 add_newdoc('numpy._core.umath', 'modf',
