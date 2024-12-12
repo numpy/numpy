@@ -21,7 +21,7 @@ __all__ = [
     "ifftn",
 ]
 
-_NormKind: TypeAlias = L[None, "backward", "ortho", "forward"]
+_NormKind: TypeAlias = L["backward", "ortho", "forward"] | None
 
 def fft(
     a: ArrayLike,

@@ -15,14 +15,6 @@ class _ErrDict(TypedDict):
     under: _ErrKind
     invalid: _ErrKind
 
-@type_check_only
-class _ErrDictOptional(TypedDict, total=False):
-    all: None | _ErrKind
-    divide: None | _ErrKind
-    over: None | _ErrKind
-    under: None | _ErrKind
-    invalid: None | _ErrKind
-
 def seterr(
     all: None | _ErrKind = ...,
     divide: None | _ErrKind = ...,
