@@ -126,6 +126,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_OBJECT
         NPY_STRING
         NPY_UNICODE
+        NPY_VSTRING
         NPY_VOID
         NPY_DATETIME
         NPY_TIMEDELTA
@@ -1155,3 +1156,35 @@ cdef extern from "numpy/arrayobject.h":
     void NpyIter_GetInnerFixedStrideArray(NpyIter* it, npy_intp* outstrides) nogil
     npy_bool NpyIter_IterationNeedsAPI(NpyIter* it) nogil
     void NpyIter_DebugPrint(NpyIter* it)
+
+# NpyString API
+cdef extern from "numpy/ndarraytypes.h":
+    ctypedef struct npy_string_allocator:
+        pass
+
+    ctypedef struct npy_packed_static_string:
+        pass
+
+    ctypedef struct npy_static_string:
+        size_t size
+        const char *buf
+
+    ctypedef struct PyArray_StringDTypeObject:
+        PyArray_Descr base
+        PyObject *na_object
+        char coerce
+        char has_nan_na
+        char has_string_na
+        char array_owned
+        npy_static_string default_string
+        npy_static_string na_name
+        npy_string_allocator *allocator
+
+cdef extern from "numpy/arrayobject.h":
+    npy_string_allocator *NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
+    void NpyString_acquire_allocators(size_t n_descriptors, PyArray_Descr *const descrs[], npy_string_allocator *allocators[])
+    void NpyString_release_allocator(npy_string_allocator *allocator)
+    void NpyString_release_allocators(size_t length, npy_string_allocator *allocators[])
+    int NpyString_load(npy_string_allocator *allocator, const npy_packed_static_string *packed_string, npy_static_string *unpacked_string)
+    int NpyString_pack_null(npy_string_allocator *allocator, npy_packed_static_string *packed_string)
+    int NpyString_pack(npy_string_allocator *allocator, npy_packed_static_string *packed_string, const char *buf, size_t size)
