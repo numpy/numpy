@@ -11,6 +11,7 @@
 #include "numpy/arrayscalars.h"
 
 
+#include "alloc.h"
 #include "common.h"
 #include "arrayobject.h"
 #include "ctors.h"
@@ -397,28 +398,24 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         return -1;
     }
 
+    PyArray_Descr *descr = PyArray_DESCR(arr);
+
     /*
      * If we knew that the output array has at least one element, we would
      * not actually need a helping buffer, we always null it, just in case.
-     *
-     * (The longlong here should help with alignment.)
+     * Use `long double` to ensure that the heap allocation is aligned.
      */
-    npy_longlong value_buffer_stack[4] = {0};
-    char *value_buffer_heap = NULL;
-    char *value = (char *)value_buffer_stack;
-    PyArray_Descr *descr = PyArray_DESCR(arr);
-
-    if (PyDataType_ELSIZE(descr) > sizeof(value_buffer_stack)) {
-        /* We need a large temporary buffer... */
-        value_buffer_heap = PyMem_Calloc(1, PyDataType_ELSIZE(descr));
-        if (value_buffer_heap == NULL) {
-            PyErr_NoMemory();
-            return -1;
-        }
-        value = value_buffer_heap;
+    size_t n_max_align_t = (descr->elsize + sizeof(long double) - 1) / sizeof(long double);
+    NPY_ALLOC_WORKSPACE(value, long double, 2, n_max_align_t);
+    if (value == NULL) {
+        return -1;
     }
+    if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+        memset(value, 0, descr->elsize);
+    }
+
     if (PyArray_Pack(descr, value, obj) < 0) {
-        PyMem_FREE(value_buffer_heap);
+        npy_free_workspace(value);
         return -1;
     }
 
@@ -429,12 +426,12 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     int retcode = raw_array_assign_scalar(
             PyArray_NDIM(arr), PyArray_DIMS(arr), descr,
             PyArray_BYTES(arr), PyArray_STRIDES(arr),
-            descr, value);
+            descr, (void *)value);
 
     if (PyDataType_REFCHK(descr)) {
-        PyArray_ClearBuffer(descr, value, 0, 1, 1);
+        PyArray_ClearBuffer(descr, (void *)value, 0, 1, 1);
     }
-    PyMem_FREE(value_buffer_heap);
+    npy_free_workspace(value);
     return retcode;
 }
 

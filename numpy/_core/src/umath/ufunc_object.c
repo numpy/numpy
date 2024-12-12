@@ -51,6 +51,7 @@
 #include "npy_import.h"
 #include "extobj.h"
 
+#include "alloc.h"
 #include "arrayobject.h"
 #include "arraywrap.h"
 #include "common.h"
@@ -127,6 +128,9 @@ PyUFunc_clearfperr()
     npy_clear_floatstatus_barrier(&param);
 }
 
+
+/* This many operands we optimize for on the stack. */
+#define UFUNC_STACK_NARGS 5
 
 #define NPY_UFUNC_DEFAULT_INPUT_FLAGS \
     NPY_ITER_READONLY | \
@@ -4295,18 +4299,23 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     int nin = ufunc->nin, nout = ufunc->nout, nop = ufunc->nargs;
 
     /* All following variables are cleared in the `fail` error path */
-    ufunc_full_args full_args;
+    ufunc_full_args full_args = {NULL, NULL};
     PyArrayObject *wheremask = NULL;
 
-    PyArray_DTypeMeta *signature[NPY_MAXARGS];
-    PyArrayObject *operands[NPY_MAXARGS];
-    PyArray_DTypeMeta *operand_DTypes[NPY_MAXARGS];
-    PyArray_Descr *operation_descrs[NPY_MAXARGS];
-    /* Initialize all arrays (we usually only need a small part) */
-    memset(signature, 0, nop * sizeof(*signature));
-    memset(operands, 0, nop * sizeof(*operands));
-    memset(operand_DTypes, 0, nop * sizeof(*operation_descrs));
-    memset(operation_descrs, 0, nop * sizeof(*operation_descrs));
+    /*
+     * Scratch space for operands, dtypes, etc.  Note that operands and
+     * operation_descrs may hold an entry for the wheremask.
+     */
+    NPY_ALLOC_WORKSPACE(scratch_objs, void *, UFUNC_STACK_NARGS * 4 + 2, nop * 4 + 2);
+    if (scratch_objs == NULL) {
+        return NULL;
+    }
+    memset(scratch_objs, 0, sizeof(void *) * (nop * 4 + 2));
+    
+    PyArray_DTypeMeta **signature = (PyArray_DTypeMeta **)scratch_objs;
+    PyArrayObject **operands = (PyArrayObject **)(signature + nop);
+    PyArray_DTypeMeta **operand_DTypes = (PyArray_DTypeMeta **)(operands + nop + 1);
+    PyArray_Descr **operation_descrs = (PyArray_Descr **)(operand_DTypes + nop);
 
     /*
      * Note that the input (and possibly output) arguments are passed in as
@@ -4322,13 +4331,13 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                 "%s() takes from %d to %d positional arguments but "
                 "%zd were given",
                 ufunc_get_name_cstr(ufunc) , nin, nop, len_args);
-        return NULL;
+        goto fail;
     }
 
     /* Fetch input arguments. */
     full_args.in = PyArray_TupleFromItems(ufunc->nin, args, 0);
     if (full_args.in == NULL) {
-        return NULL;
+        goto fail;
     }
 
     /*
@@ -4559,6 +4568,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
 
+    npy_free_workspace(scratch_objs);
     return result;
 
 fail:
@@ -4571,6 +4581,7 @@ fail:
         Py_XDECREF(operand_DTypes[i]);
         Py_XDECREF(operation_descrs[i]);
     }
+    npy_free_workspace(scratch_objs);
     return NULL;
 }
 
