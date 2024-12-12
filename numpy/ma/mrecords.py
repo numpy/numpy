@@ -117,7 +117,7 @@ class MaskedRecords(ma.MaskedArray):
                 elif nm == nd:
                     mask = np.reshape(mask, self.shape)
                 else:
-                    msg = "Mask and data not compatible: data size is %i, " + \
+                    msg = "Mask and data not compatible: data size is %i, "\
                           "mask size is %i."
                     raise ma.MAError(msg % (nd, nm))
             if not keep_mask:

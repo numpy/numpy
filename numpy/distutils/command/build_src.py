@@ -49,10 +49,10 @@ class build_src(build_ext.build_ext):
         ('swigflags=', None, "additional flags to swig (use --swig-opts= instead)"), # obsolete
         ('force', 'f', "forcibly build everything (ignore file timestamps)"),
         ('inplace', 'i',
-         "ignore build-lib and put compiled extensions into the source " +
+         "ignore build-lib and put compiled extensions into the source "
          "directory alongside your pure Python modules"),
         ('verbose-cfg', None,
-         "change logging level from WARN to INFO which will show all " +
+         "change logging level from WARN to INFO which will show all "
          "compiler output")
         ]
 

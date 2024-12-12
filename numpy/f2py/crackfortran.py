@@ -582,8 +582,8 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             beginpattern, quiet, verbose, dolowercase = saveglobals
 
 # Crack line
-beforethisafter = r'\s*(?P<before>%s(?=\s*(\b(%s)\b)))' + \
-    r'\s*(?P<this>(\b(%s)\b))' + \
+beforethisafter = r'\s*(?P<before>%s(?=\s*(\b(%s)\b)))'\
+    r'\s*(?P<this>(\b(%s)\b))'\
     r'\s*(?P<after>%s)\s*\Z'
 ##
 fortrantypes = r'character|logical|integer|real|complex|double\s*(precision\s*(complex|)|complex)|type(?=\s*\([\w\s,=(*)]*\))|byte'
@@ -602,7 +602,7 @@ groupbegins77 = r'program|block\s*data'
 beginpattern77 = re.compile(
     beforethisafter % ('', groupbegins77, groupbegins77, '.*'), re.I), 'begin'
 groupbegins90 = groupbegins77 + \
-    r'|module(?!\s*procedure)|python\s*module|(abstract|)\s*interface|' + \
+    r'|module(?!\s*procedure)|python\s*module|(abstract|)\s*interface|'\
     r'type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
@@ -611,7 +611,7 @@ groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
 endpattern = re.compile(
     beforethisafter % ('', groupends, groupends, '.*'), re.I), 'end'
 # block, the Fortran 2008 construct needs special handling in the rest of the file
-endifs = r'end\s*(if|do|where|select|while|forall|associate|' + \
+endifs = r'end\s*(if|do|where|select|while|forall|associate|'\
          r'critical|enum|team)'
 endifpattern = re.compile(
     beforethisafter % (r'[\w]*?', endifs, endifs, '.*'), re.I), 'endif'
