@@ -259,7 +259,7 @@ class TestEval(util.F2PyTest):
 
         assert eval_scalar('123', {}) == '123'
         assert eval_scalar('12 + 3', {}) == '15'
-        assert eval_scalar('a + b', dict(a=1, b=2)) == '3'
+        assert eval_scalar('a + b', {"a": 1, "b": 2}) == '3'
         assert eval_scalar('"123"', {}) == "'123'"
 
 
@@ -356,9 +356,9 @@ class TestParamEval:
     # issue gh-11612, array parameter parsing
     def test_param_eval_nested(self):
         v = '(/3.14, 4./)'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
+        g_params = {"kind": crackfortran._kind_func,
+                "selected_int_kind": crackfortran._selected_int_kind_func,
+                "selected_real_kind": crackfortran._selected_real_kind_func}
         params = {'dp': 8, 'intparamarray': {1: 3, 2: 5},
                   'nested': {1: 1, 2: 2, 3: 3}}
         dimspec = '(2)'
@@ -367,9 +367,9 @@ class TestParamEval:
 
     def test_param_eval_nonstandard_range(self):
         v = '(/ 6, 3, 1 /)'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
+        g_params = {"kind": crackfortran._kind_func,
+                "selected_int_kind": crackfortran._selected_int_kind_func,
+                "selected_real_kind": crackfortran._selected_real_kind_func}
         params = {}
         dimspec = '(-1:1)'
         ret = crackfortran.param_eval(v, g_params, params, dimspec=dimspec)
@@ -377,9 +377,9 @@ class TestParamEval:
 
     def test_param_eval_empty_range(self):
         v = '6'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
+        g_params = {"kind": crackfortran._kind_func,
+                "selected_int_kind": crackfortran._selected_int_kind_func,
+                "selected_real_kind": crackfortran._selected_real_kind_func}
         params = {}
         dimspec = ''
         pytest.raises(ValueError, crackfortran.param_eval, v, g_params, params,
@@ -387,18 +387,18 @@ class TestParamEval:
 
     def test_param_eval_non_array_param(self):
         v = '3.14_dp'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
+        g_params = {"kind": crackfortran._kind_func,
+                "selected_int_kind": crackfortran._selected_int_kind_func,
+                "selected_real_kind": crackfortran._selected_real_kind_func}
         params = {}
         ret = crackfortran.param_eval(v, g_params, params, dimspec=None)
         assert ret == '3.14_dp'
 
     def test_param_eval_too_many_dims(self):
         v = 'reshape((/ (i, i=1, 250) /), (/5, 10, 5/))'
-        g_params = dict(kind=crackfortran._kind_func,
-                selected_int_kind=crackfortran._selected_int_kind_func,
-                selected_real_kind=crackfortran._selected_real_kind_func)
+        g_params = {"kind": crackfortran._kind_func,
+                "selected_int_kind": crackfortran._selected_int_kind_func,
+                "selected_real_kind": crackfortran._selected_real_kind_func}
         params = {}
         dimspec = '(0:4, 3:12, 5)'
         pytest.raises(ValueError, crackfortran.param_eval, v, g_params, params,

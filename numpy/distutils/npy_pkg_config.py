@@ -159,7 +159,7 @@ class VariableSet:
 
     """
     def __init__(self, d):
-        self._raw_data = dict([(k, v) for k, v in d.items()])
+        self._raw_data = d.copy()
 
         self._re = {}
         self._re_sub = {}

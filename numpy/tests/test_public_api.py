@@ -583,7 +583,7 @@ def test_functions_single_location():
     visited_functions: Set[Callable[..., Any]] = set()
     # Functions often have `__name__` overridden, therefore we need
     # to keep track of locations where functions have been found.
-    functions_original_paths: Dict[Callable[..., Any], str] = dict()
+    functions_original_paths: Dict[Callable[..., Any], str] = {}
 
     # Here we aggregate functions with more than one location.
     # It must be empty for the test to pass.
@@ -737,11 +737,11 @@ def test___module___attribute():
                     continue
 
                 incorrect_entries.append(
-                    dict(
-                        Func=member.__name__,
-                        actual=member.__module__,
-                        expected=module.__name__,
-                    )
+                    {
+                        "Func": member.__name__,
+                        "actual": member.__module__,
+                        "expected": module.__name__,
+                    }
                 )
                 visited_functions.add(member)
 
@@ -802,10 +802,10 @@ def test___qualname___and___module___attribute():
                 member not in visited_functions
             ):
                 incorrect_entries.append(
-                    dict(
-                        found_at=f"{module.__name__}:{member_name}",
-                        advertises=f"{member.__module__}:{member.__qualname__}",
-                    )
+                    {
+                        "found_at": f"{module.__name__}:{member_name}",
+                        "advertises": f"{member.__module__}:{member.__qualname__}",
+                    }
                 )
                 visited_functions.add(member)
 

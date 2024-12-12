@@ -74,14 +74,14 @@ def test_array_array():
     # test array interface
     a = np.array(100.0, dtype=np.float64)
     o = type("o", (object,),
-             dict(__array_interface__=a.__array_interface__))
+             {"__array_interface__": a.__array_interface__})
     assert_equal(np.array(o, dtype=np.float64), a)
 
     # test array_struct interface
     a = np.array([(1, 4.0, 'Hello'), (2, 6.0, 'World')],
                  dtype=[('f0', int), ('f1', float), ('f2', str)])
     o = type("o", (object,),
-             dict(__array_struct__=a.__array_struct__))
+             {"__array_struct__": a.__array_struct__})
     ## wasn't what I expected... is np.array(o) supposed to equal a ?
     ## instead we get a array([...], dtype=">V18")
     assert_equal(bytes(np.array(o).data), bytes(a.data))
@@ -90,7 +90,7 @@ def test_array_array():
     def custom__array__(self, dtype=None, copy=None):
         return np.array(100.0, dtype=dtype, copy=copy)
 
-    o = type("o", (object,), dict(__array__=custom__array__))()
+    o = type("o", (object,), {"__array__": custom__array__})()
     assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
 
     # test recursion

@@ -1268,7 +1268,7 @@ def roll(a, shift, axis=None):
         if broadcasted.ndim > 1:
             raise ValueError(
                 "'shift' and 'axis' should be scalars or 1D sequences")
-        shifts = {ax: 0 for ax in range(a.ndim)}
+        shifts = dict.fromkeys(range(a.ndim), 0)
         for sh, ax in broadcasted:
             shifts[ax] += int(sh)
 
@@ -1432,7 +1432,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
         except TypeError:
             pass
     # Going via an iterator directly is slower than via list comprehension.
-    axis = tuple([normalize_axis_index(ax, ndim, argname) for ax in axis])
+    axis = tuple(normalize_axis_index(ax, ndim, argname) for ax in axis)
     if not allow_duplicate and len(set(axis)) != len(axis):
         if argname:
             raise ValueError('repeated axis in `{}` argument'.format(argname))
@@ -1830,7 +1830,7 @@ def indices(dimensions, dtype=int, sparse=False):
     N = len(dimensions)
     shape = (1,)*N
     if sparse:
-        res = tuple()
+        res = ()
     else:
         res = empty((N,)+dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):

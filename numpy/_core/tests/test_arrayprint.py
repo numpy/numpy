@@ -330,7 +330,7 @@ class TestArray2String:
             r"       b'\x1B\x5B\x33\x31\x6D\x52\x65\x64'], dtype='|V8')")
 
         assert_equal(eval(repr(a), vars(np)), a)
-        assert_equal(eval(repr(a[0]), dict(np=np)), a[0])
+        assert_equal(eval(repr(a[0]), {'np': np}), a[0])
 
     def test_edgeitems_kwarg(self):
         # previously the global print options would be taken over the kwarg

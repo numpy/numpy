@@ -204,12 +204,12 @@ if HAVE_SCPDT:
     dt_config.check_namespace['StringDType'] = numpy.dtypes.StringDType
 
     # temporary skips
-    dt_config.skiplist = set([
+    dt_config.skiplist = {
         'numpy.savez',    # unclosed file
         'numpy.matlib.savez',
         'numpy.__array_namespace_info__',
         'numpy.matlib.__array_namespace_info__',
-    ])
+    }
 
     # xfail problematic tutorials
     dt_config.pytest_extra_xfail = {

@@ -2501,16 +2501,17 @@ def _recursive_printoption(result, mask, printopt):
         np.copyto(result, printopt, where=mask)
     return
 
+
 # For better or worse, these end in a newline
-_legacy_print_templates = dict(
-    long_std=textwrap.dedent("""\
+_legacy_print_templates = {
+    'long_std': textwrap.dedent("""\
         masked_%(name)s(data =
          %(data)s,
         %(nlen)s        mask =
          %(mask)s,
         %(nlen)s  fill_value = %(fill)s)
         """),
-    long_flx=textwrap.dedent("""\
+    'long_flx': textwrap.dedent("""\
         masked_%(name)s(data =
          %(data)s,
         %(nlen)s        mask =
@@ -2518,18 +2519,18 @@ _legacy_print_templates = dict(
         %(nlen)s  fill_value = %(fill)s,
         %(nlen)s       dtype = %(dtype)s)
         """),
-    short_std=textwrap.dedent("""\
+    'short_std': textwrap.dedent("""\
         masked_%(name)s(data = %(data)s,
         %(nlen)s        mask = %(mask)s,
         %(nlen)s  fill_value = %(fill)s)
         """),
-    short_flx=textwrap.dedent("""\
+    'short_flx': textwrap.dedent("""\
         masked_%(name)s(data = %(data)s,
         %(nlen)s        mask = %(mask)s,
         %(nlen)s  fill_value = %(fill)s,
         %(nlen)s       dtype = %(dtype)s)
         """)
-)
+}
 
 ###############################################################################
 #                          MaskedArray class                                  #
@@ -3034,13 +3035,13 @@ class MaskedArray(ndarray):
         _optinfo.update(getattr(obj, '_basedict', {}))
         if not isinstance(obj, MaskedArray):
             _optinfo.update(getattr(obj, '__dict__', {}))
-        _dict = dict(_fill_value=getattr(obj, '_fill_value', None),
-                     _hardmask=getattr(obj, '_hardmask', False),
-                     _sharedmask=getattr(obj, '_sharedmask', False),
-                     _isfield=getattr(obj, '_isfield', False),
-                     _baseclass=getattr(obj, '_baseclass', _baseclass),
-                     _optinfo=_optinfo,
-                     _basedict=_optinfo)
+        _dict = {'_fill_value': getattr(obj, '_fill_value', None),
+                     '_hardmask': getattr(obj, '_hardmask', False),
+                     '_sharedmask': getattr(obj, '_sharedmask', False),
+                     '_isfield': getattr(obj, '_isfield', False),
+                     '_baseclass': getattr(obj, '_baseclass', _baseclass),
+                     '_optinfo': _optinfo,
+                     '_basedict': _optinfo}
         self.__dict__.update(_dict)
         self.__dict__.update(_optinfo)
         return
@@ -4099,14 +4100,14 @@ class MaskedArray(ndarray):
         # 2016-11-19: Demoted to legacy format
         if np._core.arrayprint._get_legacy_print_mode() <= 113:
             is_long = self.ndim > 1
-            parameters = dict(
-                name=name,
-                nlen=" " * len(name),
-                data=str(self),
-                mask=str(self._mask),
-                fill=str(self.fill_value),
-                dtype=str(self.dtype)
-            )
+            parameters = {
+                'name': name,
+                'nlen': " " * len(name),
+                'data': str(self),
+                'mask': str(self._mask),
+                'fill': str(self.fill_value),
+                'dtype': str(self.dtype)
+            }
             is_structured = bool(self.dtype.names)
             key = '{}_{}'.format(
                 'long' if is_long else 'short',
@@ -4143,7 +4144,7 @@ class MaskedArray(ndarray):
             prefix = ''  # absorbed into the first indent
         else:
             # each key on its own line, indented by two spaces
-            indents = {k: ' ' * min_indent for k in keys}
+            indents = dict.fromkeys(keys, ' ' * min_indent)
             prefix = prefix + '\n'  # first key on the next line
 
         # format the field values
@@ -7010,9 +7011,9 @@ class _extrema_operation(_MaskedUFunc):
             axis = None
 
         if axis is not np._NoValue:
-            kwargs = dict(axis=axis)
+            kwargs = {'axis': axis}
         else:
-            kwargs = dict()
+            kwargs = {}
 
         if m is nomask:
             t = self.f.reduce(target, **kwargs)
@@ -8842,19 +8843,19 @@ class _convert2ma:
 
 arange = _convert2ma(
     'arange',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='arange : ndarray',
     np_ma_ret='arange : MaskedArray',
 )
 clip = _convert2ma(
     'clip',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='clipped_array : ndarray',
     np_ma_ret='clipped_array : MaskedArray',
 )
 empty = _convert2ma(
     'empty',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
@@ -8875,19 +8876,19 @@ fromfunction = _convert2ma(
 )
 identity = _convert2ma(
     'identity',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
 indices = _convert2ma(
     'indices',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='grid : one ndarray or tuple of ndarrays',
     np_ma_ret='grid : one MaskedArray or tuple of MaskedArrays',
 )
 ones = _convert2ma(
     'ones',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
@@ -8898,13 +8899,13 @@ ones_like = _convert2ma(
 )
 squeeze = _convert2ma(
     'squeeze',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='squeezed : ndarray',
     np_ma_ret='squeezed : MaskedArray',
 )
 zeros = _convert2ma(
     'zeros',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )

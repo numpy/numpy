@@ -136,15 +136,15 @@ def check_td_order(tds):
         _check_order(signatures[prev_i], sign)
 
 
-_floatformat_map = dict(
-    e='npy_%sf',
-    f='npy_%sf',
-    d='npy_%s',
-    g='npy_%sl',
-    F='nc_%sf',
-    D='nc_%s',
-    G='nc_%sl'
-)
+_floatformat_map = {
+    "e": 'npy_%sf',
+    "f": 'npy_%sf',
+    "d": 'npy_%s',
+    "g": 'npy_%sl',
+    "F": 'nc_%sf',
+    "D": 'nc_%s',
+    "G": 'nc_%sl'
+}
 
 def build_func_data(types, f):
     func_data = [_floatformat_map.get(t, '%s') % (f,) for t in types]
@@ -1511,19 +1511,19 @@ def make_ufuncs(funcdict):
                 return -1;
             }}
         """)
-        args = dict(
-            name=name,
-            funcs=f"{name}_functions" if not uf.empty else "NULL",
-            data=f"{name}_data" if not uf.empty else "NULL",
-            signatures=f"{name}_signatures" if not uf.empty else "NULL",
-            nloops=len(uf.type_descriptions),
-            nin=uf.nin, nout=uf.nout,
-            has_identity='0' if uf.identity is None_ else '1',
-            identity='PyUFunc_IdentityValue',
-            identity_expr=uf.identity,
-            doc=uf.docstring,
-            sig=sig,
-        )
+        args = {
+            "name": name,
+            "funcs": f"{name}_functions" if not uf.empty else "NULL",
+            "data": f"{name}_data" if not uf.empty else "NULL",
+            "signatures": f"{name}_signatures" if not uf.empty else "NULL",
+            "nloops": len(uf.type_descriptions),
+            "nin": uf.nin, "nout": uf.nout,
+            "has_identity": '0' if uf.identity is None_ else '1',
+            "identity": 'PyUFunc_IdentityValue',
+            "identity_expr": uf.identity,
+            "doc": uf.docstring,
+            "sig": sig,
+        }
 
         # Only PyUFunc_None means don't reorder - we pass this using the old
         # argument

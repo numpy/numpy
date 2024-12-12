@@ -1035,7 +1035,7 @@ def analyzeline(m, case, line):
             block = 'abstract interface'
         if block == 'type':
             name, attrs, _ = _resolvetypedefpattern(m.group('after'))
-            groupcache[groupcounter]['vars'][name] = dict(attrspec = attrs)
+            groupcache[groupcounter]['vars'][name] = {'attrspec': attrs}
             args = []
             result = None
         else:
@@ -2617,7 +2617,7 @@ def analyzevars(block):
         del vars['']
         if 'attrspec' in block['vars']['']:
             gen = block['vars']['']['attrspec']
-            for n in set(vars) | set(b['name'] for b in block['body']):
+            for n in set(vars) | {b['name'] for b in block['body']}:
                 for k in ['public', 'private']:
                     if k in gen:
                         vars[n] = setattrspec(vars.get(n, {}), k)
@@ -2786,9 +2786,9 @@ def analyzevars(block):
                                     # solve_v function here.
                                     solve_v = None
                                     all_symbols = set(dsize.symbols())
-                                v_deps = set(
+                                v_deps = {
                                     s.data for s in all_symbols
-                                    if s.data in vars)
+                                    if s.data in vars}
                                 solver_and_deps[v] = solve_v, list(v_deps)
                         # Note that dsize may contain symbols that are
                         # not defined in block['vars']. Here we assume
@@ -3611,7 +3611,7 @@ def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
             if new_index is not None:
                 new_result.append(new_item)
     elif isinstance(obj, dict):
-        new_result = dict()
+        new_result = {}
         for key, value in obj.items():
             new_key, new_value = traverse((key, value), visit,
                                           parents=parents + [parent],

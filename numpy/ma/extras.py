@@ -306,8 +306,8 @@ class _fromnxfunction_seq(_fromnxfunction):
     """
     def __call__(self, x, *args, **params):
         func = getattr(np, self.__name__)
-        _d = func(tuple([np.asarray(a) for a in x]), *args, **params)
-        _m = func(tuple([getmaskarray(a) for a in x]), *args, **params)
+        _d = func(tuple(np.asarray(a) for a in x), *args, **params)
+        _m = func(tuple(getmaskarray(a) for a in x), *args, **params)
         return masked_array(_d, mask=_m)
 
 
@@ -2027,8 +2027,8 @@ def notmasked_edges(a, axis=None):
         return flatnotmasked_edges(a)
     m = getmaskarray(a)
     idx = array(np.indices(a.shape), mask=np.asarray([m] * a.ndim))
-    return [tuple([idx[i].min(axis).compressed() for i in range(a.ndim)]),
-            tuple([idx[i].max(axis).compressed() for i in range(a.ndim)]), ]
+    return [tuple(idx[i].min(axis).compressed() for i in range(a.ndim)),
+            tuple(idx[i].max(axis).compressed() for i in range(a.ndim)), ]
 
 
 def flatnotmasked_contiguous(a):

@@ -50,7 +50,7 @@ def _get_compiler_status():
         sys.exit(99)
         """
     )
-    code = code % dict(syspath=repr(sys.path))
+    code = code % {"syspath": repr(sys.path)}
 
     tmpdir = tempfile.mkdtemp()
     try:

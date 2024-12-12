@@ -2417,7 +2417,7 @@ class openblas_info(blas_info):
             {
                 %(calls)s
                 return 0;
-            }""") % dict(prototypes=prototypes, calls=calls)
+            }""") % {'prototypes': prototypes, 'calls': calls}
         src = os.path.join(tmpdir, 'source.c')
         out = os.path.join(tmpdir, 'a.out')
         # Add the additional "extra" arguments
@@ -3214,7 +3214,7 @@ def dict_append(d, **kws):
         else:
             d[k] = v
     if languages:
-        l = inv_language_map[max([language_map.get(l, 0) for l in languages])]
+        l = inv_language_map[max(language_map.get(l, 0) for l in languages)]
         d['language'] = l
     return
 

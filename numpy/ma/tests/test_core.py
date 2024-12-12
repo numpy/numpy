@@ -3593,12 +3593,12 @@ class TestMaskedArrayMethods:
     def test_argsort_matches_sort(self):
         x = array([1, 4, 2, 3], mask=[0, 1, 0, 0], dtype=np.uint8)
 
-        for kwargs in [dict(),
-                       dict(endwith=True),
-                       dict(endwith=False),
-                       dict(fill_value=2),
-                       dict(fill_value=2, endwith=True),
-                       dict(fill_value=2, endwith=False)]:
+        for kwargs in [{},
+                       {"endwith": True},
+                       {"endwith": False},
+                       {"fill_value": 2},
+                       {"fill_value": 2, "endwith": True},
+                       {"fill_value": 2, "endwith": False}]:
             sortedx = sort(x, **kwargs)
             argsortedx = x[argsort(x, **kwargs)]
             assert_equal(sortedx._data, argsortedx._data)
@@ -5039,7 +5039,7 @@ class TestMaskedFields:
         mdtype = [('a', bool), ('b', bool), ('c', bool)]
         mask = [0, 1, 0, 0, 1]
         base = array(list(zip(ilist, flist, slist)), mask=mask, dtype=ddtype)
-        self.data = dict(base=base, mask=mask, ddtype=ddtype, mdtype=mdtype)
+        self.data = {"base": base, "mask": mask, "ddtype": ddtype, "mdtype": mdtype}
 
     def test_set_records_masks(self):
         base = self.data['base']

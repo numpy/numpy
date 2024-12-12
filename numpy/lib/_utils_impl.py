@@ -753,9 +753,9 @@ def drop_metadata(dtype, /):
         if not found_metadata:
             return dtype
 
-        structure = dict(
-            names=names, formats=formats, offsets=offsets, titles=titles,
-            itemsize=dtype.itemsize)
+        structure = {
+            'names': names, 'formats': formats, 'offsets': offsets, 'titles': titles,
+            'itemsize': dtype.itemsize}
 
         # NOTE: Could pass (dtype.type, structure) to preserve record dtypes...
         return np.dtype(structure, align=dtype.isalignedstruct)

@@ -129,22 +129,22 @@ _convert_to_float = {
 # Parameters for creating MachAr / MachAr-like objects
 _title_fmt = 'numpy {} precision floating point number'
 _MACHAR_PARAMS = {
-    ntypes.double: dict(
-        itype = ntypes.int64,
-        fmt = '%24.16e',
-        title = _title_fmt.format('double')),
-    ntypes.single: dict(
-        itype = ntypes.int32,
-        fmt = '%15.7e',
-        title = _title_fmt.format('single')),
-    ntypes.longdouble: dict(
-        itype = ntypes.longlong,
-        fmt = '%s',
-        title = _title_fmt.format('long double')),
-    ntypes.half: dict(
-        itype = ntypes.int16,
-        fmt = '%12.5e',
-        title = _title_fmt.format('half'))}
+    ntypes.double: {
+        'itype': ntypes.int64,
+        'fmt': '%24.16e',
+        'title': _title_fmt.format('double')},
+    ntypes.single: {
+        'itype': ntypes.int32,
+        'fmt': '%15.7e',
+        'title': _title_fmt.format('single')},
+    ntypes.longdouble: {
+        'itype': ntypes.longlong,
+        'fmt': '%s',
+        'title': _title_fmt.format('long double')},
+    ntypes.half: {
+        'itype': ntypes.int16,
+        'fmt': '%12.5e',
+        'title': _title_fmt.format('half')}}
 
 # Key to identify the floating point type.  Key is result of
 #

@@ -25,16 +25,16 @@ else:
     from numpy.testing import assert_, tempdir
 
 # architectures and compilers to test
-arch_compilers = dict(
-    x86 = ("gcc", "clang", "icc", "iccw", "msvc"),
-    x64 = ("gcc", "clang", "icc", "iccw", "msvc"),
-    ppc64 = ("gcc", "clang"),
-    ppc64le = ("gcc", "clang"),
-    armhf = ("gcc", "clang"),
-    aarch64 = ("gcc", "clang", "fcc"),
-    s390x = ("gcc", "clang"),
-    noarch = ("gcc",)
-)
+arch_compilers = {
+    'x86': ("gcc", "clang", "icc", "iccw", "msvc"),
+    'x64': ("gcc", "clang", "icc", "iccw", "msvc"),
+    'ppc64': ("gcc", "clang"),
+    'ppc64le': ("gcc", "clang"),
+    'armhf': ("gcc", "clang"),
+    'aarch64': ("gcc", "clang", "fcc"),
+    's390x': ("gcc", "clang"),
+    'noarch': ("gcc",)
+}
 
 class FakeCCompilerOpt(CCompilerOpt):
     fake_info = ""
@@ -142,12 +142,12 @@ class _Test_CCompilerOpt:
         return targets, gflags
 
     def arg_regex(self, **kwargs):
-        map2origin = dict(
-            x64 = "x86",
-            ppc64le = "ppc64",
-            aarch64 = "armhf",
-            clang = "gcc",
-        )
+        map2origin = {
+            'x64': "x86",
+            'ppc64le': "ppc64",
+            'aarch64': "armhf",
+            'clang': "gcc",
+        }
         march = self.march(); cc_name = self.cc_name()
         map_march = map2origin.get(march, march)
         map_cc = map2origin.get(cc_name, cc_name)
@@ -683,13 +683,13 @@ class _Test_CCompilerOpt:
             """
             /*@targets $keep_baseline baseline #test_group */
             """,
-            groups=dict(
-                test_group=("""
+            groups={
+                'test_group': ("""
                     $keep_baseline
                     asimddp sse2 vsx2 avx2 vsx3
                     avx512f asimdhp
                 """)
-            ),
+            },
             x86="avx512f avx2 sse2 baseline",
             ppc64="vsx3 vsx2 baseline",
             armhf="asimddp asimdhp baseline"
@@ -705,14 +705,14 @@ class _Test_CCompilerOpt:
              * asimddp asimdfhm
             */
             """,
-            groups=dict(
-                test_group_1=("""
+            groups={
+                'test_group_1': ("""
                     VSX2 vsx3 asimd avx2 SSE41
                 """),
-                test_group_2=("""
+                'test_group_2': ("""
                     vsx2 vsx3 asImd aVx2 sse41
                 """)
-            ),
+            },
             x86="avx512f avx2 avx sse42 sse41",
             ppc64="vsx3 vsx2",
             # vsx2 part of the default baseline of ppc64le, option ("min")

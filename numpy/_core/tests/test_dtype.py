@@ -282,7 +282,7 @@ class TestRecord:
         formats = ["f8"]
         titles = ["t1"]
         offsets = [0]
-        d = dict(names=names, formats=formats, titles=titles, offsets=offsets)
+        d = {"names": names, "formats": formats, "titles": titles, "offsets": offsets}
         refcounts = {k: sys.getrefcount(i) for k, i in d.items()}
         np.dtype(d)
         refcounts_new = {k: sys.getrefcount(i) for k, i in d.items()}
@@ -326,9 +326,9 @@ class TestRecord:
         the dtype constructor.
         """
         assert_raises(TypeError, np.dtype,
-                      dict(names={'A', 'B'}, formats=['f8', 'i4']))
+                      {"names": {'A', 'B'}, "formats": ['f8', 'i4']})
         assert_raises(TypeError, np.dtype,
-                      dict(names=['A', 'B'], formats={'f8', 'i4'}))
+                      {"names": ['A', 'B'], "formats": {'f8', 'i4'}})
 
     def test_aligned_size(self):
         # Check that structured dtypes get padded to an aligned size
@@ -653,7 +653,7 @@ class TestSubarray:
 
     def test_shape_equal(self):
         """Test some data types that are equal"""
-        assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', tuple())))
+        assert_dtype_equal(np.dtype('f8'), np.dtype(('f8', ())))
         assert_dtype_equal(np.dtype('(1,)f8'), np.dtype(('f8', 1)))
         assert np.dtype(('f8', 1)).shape == (1,)
         assert_dtype_equal(np.dtype((int, 2)), np.dtype((int, (2,))))
@@ -972,7 +972,7 @@ class TestMonsterType:
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_list_recursion(self):
-        l = list()
+        l = []
         l.append(('f', l))
         with pytest.raises(RecursionError):
             np.dtype(l)
@@ -987,7 +987,7 @@ class TestMonsterType:
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
     def test_dict_recursion(self):
-        d = dict(names=['self'], formats=[None], offsets=[0])
+        d = {"names": ['self'], "formats": [None], "offsets": [0]}
         d['formats'][0] = d
         with pytest.raises(RecursionError):
             np.dtype(d)
@@ -1733,12 +1733,12 @@ class TestFromCTypes:
                 ('a', ctypes.c_uint8),
                 ('b', ctypes.c_uint16),
             ]
-        expected = np.dtype(dict(
-            names=['a', 'b'],
-            formats=[np.uint8, np.uint16],
-            offsets=[0, 0],
-            itemsize=2
-        ))
+        expected = np.dtype({
+            "names": ['a', 'b'],
+            "formats": [np.uint8, np.uint16],
+            "offsets": [0, 0],
+            "itemsize": 2
+        })
         self.check(Union, expected)
 
     def test_union_with_struct_packed(self):
@@ -1756,12 +1756,12 @@ class TestFromCTypes:
                 ('c', ctypes.c_uint32),
                 ('d', Struct),
             ]
-        expected = np.dtype(dict(
-            names=['a', 'b', 'c', 'd'],
-            formats=['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
-            offsets=[0, 0, 0, 0],
-            itemsize=ctypes.sizeof(Union)
-        ))
+        expected = np.dtype({
+            "names": ['a', 'b', 'c', 'd'],
+            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "offsets": [0, 0, 0, 0],
+            "itemsize": ctypes.sizeof(Union)
+        })
         self.check(Union, expected)
 
     def test_union_packed(self):
@@ -1779,12 +1779,12 @@ class TestFromCTypes:
                 ('c', ctypes.c_uint32),
                 ('d', Struct),
             ]
-        expected = np.dtype(dict(
-            names=['a', 'b', 'c', 'd'],
-            formats=['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
-            offsets=[0, 0, 0, 0],
-            itemsize=ctypes.sizeof(Union)
-        ))
+        expected = np.dtype({
+            "names": ['a', 'b', 'c', 'd'],
+            "formats": ['u1', np.uint16, np.uint32, [('one', 'u1'), ('two', np.uint32)]],
+            "offsets": [0, 0, 0, 0],
+            "itemsize": ctypes.sizeof(Union)
+        })
         self.check(Union, expected)
 
     def test_packed_structure(self):
@@ -1812,11 +1812,11 @@ class TestFromCTypes:
                 ('f', ctypes.c_uint32),
                 ('g', ctypes.c_uint8)
                 ]
-        expected = np.dtype(dict(
-            formats=[np.uint8, np.uint16, np.uint8, np.uint16, np.uint32, np.uint32, np.uint8 ],
-            offsets=[0, 2, 4, 6, 8, 12, 16],
-            names=['a', 'b', 'c', 'd', 'e', 'f', 'g'],
-            itemsize=18))
+        expected = np.dtype({
+            "formats": [np.uint8, np.uint16, np.uint8, np.uint16, np.uint32, np.uint32, np.uint8],
+            "offsets": [0, 2, 4, 6, 8, 12, 16],
+            "names": ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+            "itemsize": 18})
         self.check(PackedStructure, expected)
 
     def test_big_endian_structure_packed(self):

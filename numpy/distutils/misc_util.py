@@ -348,8 +348,8 @@ def terminal_has_colors():
     return 0
 
 if terminal_has_colors():
-    _colour_codes = dict(black=0, red=1, green=2, yellow=3,
-                         blue=4, magenta=5, cyan=6, white=7, default=9)
+    _colour_codes = {'black': 0, 'red': 1, 'green': 2, 'yellow': 3,
+                         'blue': 4, 'magenta': 5, 'cyan': 6, 'white': 7, 'default': 9}
     def colour_text(s, fg=None, bg=None, bold=False):
         seq = []
         if bold:
@@ -830,12 +830,12 @@ class Configuration:
             self.packages.append(self.name)
             self.package_dir[self.name] = package_path
 
-        self.options = dict(
-            ignore_setup_xxx_py = False,
-            assume_default_configuration = False,
-            delegate_options_to_subpackages = False,
-            quiet = False,
-            )
+        self.options = {
+            'ignore_setup_xxx_py': False,
+            'assume_default_configuration': False,
+            'delegate_options_to_subpackages': False,
+            'quiet': False,
+            }
 
         caller_instance = None
         for i in range(1, 3):

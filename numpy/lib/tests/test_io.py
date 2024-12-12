@@ -1397,7 +1397,7 @@ class TestFromTxt(LoadTxtBase):
     def test_skiprows(self):
         # Test row skipping
         control = np.array([1, 2, 3, 5], int)
-        kwargs = dict(dtype=int, delimiter=',')
+        kwargs = {"dtype": int, "delimiter": ','}
         #
         data = TextIO('comment\n1,2,3,5\n')
         test = np.genfromtxt(data, skip_header=1, **kwargs)
@@ -1412,7 +1412,7 @@ class TestFromTxt(LoadTxtBase):
         data.append("A, B, C")
         data.extend(["%i,%3.1f,%03s" % (i, i, i) for i in range(51)])
         data[-1] = "99,99"
-        kwargs = dict(delimiter=",", names=True, skip_header=5, skip_footer=10)
+        kwargs = {"delimiter": ",", "names": True, "skip_header": 5, "skip_footer": 10}
         test = np.genfromtxt(TextIO("\n".join(data)), **kwargs)
         ctrl = np.array([("%f" % i, "%f" % i, "%f" % i) for i in range(41)],
                         dtype=[(_, float) for _ in "ABC"])
@@ -1631,9 +1631,9 @@ M   33  21.99
         s = TextIO("D01N01,10/1/2003 ,1 %,R 75,400,600\r\n"
                    "L24U05,12/5/2003, 2 %,1,300, 150.5\r\n"
                    "D02N03,10/10/2004,R 1,,7,145.55")
-        kwargs = dict(
-            converters={2: strip_per, 3: strip_rand}, delimiter=",",
-            dtype=None, encoding="bytes")
+        kwargs = {
+            "converters": {2: strip_per, 3: strip_rand}, "delimiter": ",",
+            "dtype": None, "encoding": "bytes"}
         assert_raises(ConverterError, np.genfromtxt, s, **kwargs)
 
     def test_tricky_converter_bug1666(self):
@@ -1808,7 +1808,7 @@ M   33  21.99
         # Test usecols with named columns
         ctrl = np.array([(1, 3), (4, 6)], dtype=[('a', float), ('c', float)])
         data = "1 2 3\n4 5 6"
-        kwargs = dict(names="a, b, c")
+        kwargs = {"names": "a, b, c"}
         test = np.genfromtxt(TextIO(data), usecols=(0, -1), **kwargs)
         assert_equal(test, ctrl)
         test = np.genfromtxt(TextIO(data),
@@ -1846,7 +1846,7 @@ M   33  21.99
 
     def test_withmissing(self):
         data = TextIO('A,B\n0,1\n2,N/A')
-        kwargs = dict(delimiter=",", missing_values="N/A", names=True)
+        kwargs = {"delimiter": ",", "missing_values": "N/A", "names": True}
         test = np.genfromtxt(data, dtype=None, usemask=True, **kwargs)
         control = ma.array([(0, 1), (2, -1)],
                            mask=[(False, False), (False, True)],
@@ -1864,7 +1864,7 @@ M   33  21.99
 
     def test_user_missing_values(self):
         data = "A, B, C\n0, 0., 0j\n1, N/A, 1j\n-9, 2.2, N/A\n3, -99, 3j"
-        basekwargs = dict(dtype=None, delimiter=",", names=True,)
+        basekwargs = {"dtype": None, "delimiter": ",", "names": True}
         mdtype = [('A', int), ('B', float), ('C', complex)]
         #
         test = np.genfromtxt(TextIO(data), missing_values="N/A",
@@ -1898,11 +1898,11 @@ M   33  21.99
         # Test with missing and filling values
         ctrl = np.array([(0, 3), (4, -999)], dtype=[('a', int), ('b', int)])
         data = "N/A, 2, 3\n4, ,???"
-        kwargs = dict(delimiter=",",
-                      dtype=int,
-                      names="a,b,c",
-                      missing_values={0: "N/A", 'b': " ", 2: "???"},
-                      filling_values={0: 0, 'b': 0, 2: -999})
+        kwargs = {"delimiter": ",",
+                      "dtype": int,
+                      "names": "a,b,c",
+                      "missing_values": {0: "N/A", 'b': " ", 2: "???"},
+                      "filling_values": {0: 0, 'b': 0, 2: -999}}
         test = np.genfromtxt(TextIO(data), **kwargs)
         ctrl = np.array([(0, 2, 3), (4, 0, -999)],
                         dtype=[(_, int) for _ in "abc"])
@@ -1958,7 +1958,7 @@ M   33  21.99
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
 
-        kwargs = dict(delimiter=",", dtype=None, names=True)
+        kwargs = {"delimiter": ",", "dtype": None, "names": True}
         def f():
             return np.genfromtxt(mdata, invalid_raise=False, **kwargs)
         mtest = assert_warns(ConversionWarning, f)
@@ -1977,8 +1977,8 @@ M   33  21.99
         data.insert(0, "a, b, c, d, e")
         mdata = TextIO("\n".join(data))
 
-        kwargs = dict(delimiter=",", dtype=None, names=True,
-                      invalid_raise=False)
+        kwargs = {"delimiter": ",", "dtype": None, "names": True,
+                      "invalid_raise": False}
         def f():
             return np.genfromtxt(mdata, usecols=(0, 4), **kwargs)
         mtest = assert_warns(ConversionWarning, f)
@@ -1998,8 +1998,8 @@ M   33  21.99
         mdata = TextIO("\n".join(data))
 
         converters = {4: lambda x: "(%s)" % x.decode()}
-        kwargs = dict(delimiter=",", converters=converters,
-                      dtype=[(_, int) for _ in 'abcde'], encoding="bytes")
+        kwargs = {"delimiter": ",", "converters": converters,
+                      "dtype": [(_, int) for _ in 'abcde'], "encoding": "bytes"}
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
 
     def test_default_field_format(self):
@@ -2049,7 +2049,7 @@ M   33  21.99
     def test_autostrip(self):
         # Test autostrip
         data = "01/01/2003  , 1.3,   abcde"
-        kwargs = dict(delimiter=",", dtype=None, encoding="bytes")
+        kwargs = {"delimiter": ",", "dtype": None, "encoding": "bytes"}
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', VisibleDeprecationWarning)
             mtest = np.genfromtxt(TextIO(data), **kwargs)
@@ -2116,7 +2116,7 @@ M   33  21.99
     def test_incomplete_names(self):
         # Test w/ incomplete names
         data = "A,,C\n0,1,2\n3,4,5"
-        kwargs = dict(delimiter=",", names=True)
+        kwargs = {"delimiter": ",", "names": True}
         # w/ dtype=None
         ctrl = np.array([(0, 1, 2), (3, 4, 5)],
                         dtype=[(_, int) for _ in ('A', 'f0', 'C')])
@@ -2158,13 +2158,13 @@ M   33  21.99
     def test_fixed_width_names(self):
         # Test fix-width w/ names
         data = "    A    B   C\n    0    1 2.3\n   45   67   9."
-        kwargs = dict(delimiter=(5, 5, 4), names=True, dtype=None)
+        kwargs = {"delimiter": (5, 5, 4), "names": True, "dtype": None}
         ctrl = np.array([(0, 1, 2.3), (45, 67, 9.)],
                         dtype=[('A', int), ('B', int), ('C', float)])
         test = np.genfromtxt(TextIO(data), **kwargs)
         assert_equal(test, ctrl)
         #
-        kwargs = dict(delimiter=5, names=True, dtype=None)
+        kwargs = {"delimiter": 5, "names": True, "dtype": None}
         ctrl = np.array([(0, 1, 2.3), (45, 67, 9.)],
                         dtype=[('A', int), ('B', int), ('C', float)])
         test = np.genfromtxt(TextIO(data), **kwargs)
@@ -2173,7 +2173,7 @@ M   33  21.99
     def test_filling_values(self):
         # Test missing values
         data = b"1, 2, 3\n1, , 5\n0, 6, \n"
-        kwargs = dict(delimiter=",", dtype=None, filling_values=-999)
+        kwargs = {"delimiter": ",", "dtype": None, "filling_values": -999}
         ctrl = np.array([[1, 2, 3], [1, -999, 5], [0, 6, -999]], dtype=int)
         test = np.genfromtxt(TextIO(data), **kwargs)
         assert_equal(test, ctrl)
@@ -2307,7 +2307,7 @@ M   33  21.99
     def test_recfromtxt(self):
         #
         data = TextIO('A,B\n0,1\n2,3')
-        kwargs = dict(delimiter=",", missing_values="N/A", names=True)
+        kwargs = {"delimiter": ",", "missing_values": "N/A", "names": True}
         test = recfromtxt(data, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
@@ -2327,8 +2327,8 @@ M   33  21.99
     def test_recfromcsv(self):
         #
         data = TextIO('A,B\n0,1\n2,3')
-        kwargs = dict(missing_values="N/A", names=True, case_sensitive=True,
-                      encoding="bytes")
+        kwargs = {"missing_values": "N/A", "names": True, "case_sensitive": True,
+                      "encoding": "bytes"}
         test = recfromcsv(data, dtype=None, **kwargs)
         control = np.array([(0, 1), (2, 3)],
                            dtype=[('A', int), ('B', int)])
@@ -2632,7 +2632,7 @@ class TestPathUsage:
             with open(path, 'w') as f:
                 f.write('A,B\n0,1\n2,3')
 
-            kwargs = dict(delimiter=",", missing_values="N/A", names=True)
+            kwargs = {"delimiter": ",", "missing_values": "N/A", "names": True}
             test = recfromtxt(path, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])
@@ -2647,9 +2647,9 @@ class TestPathUsage:
             with open(path, 'w') as f:
                 f.write('A,B\n0,1\n2,3')
 
-            kwargs = dict(
-                missing_values="N/A", names=True, case_sensitive=True
-            )
+            kwargs = {
+                "missing_values": "N/A", "names": True, "case_sensitive": True
+            }
             test = recfromcsv(path, dtype=None, **kwargs)
             control = np.array([(0, 1), (2, 3)],
                                dtype=[('A', int), ('B', int)])

@@ -1028,7 +1028,7 @@ class TestAppendFieldsObj:
 
     def setup_method(self):
         from datetime import date
-        self.data = dict(obj=date(2000, 1, 1))
+        self.data = {'obj': date(2000, 1, 1)}
 
     def test_append_to_objects(self):
         "Test append_fields when the base array contains objects"

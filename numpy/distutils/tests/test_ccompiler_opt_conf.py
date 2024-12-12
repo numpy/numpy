@@ -8,15 +8,15 @@ if is_standalone:
 else:
     from numpy.distutils.ccompiler_opt import CCompilerOpt
 
-arch_compilers = dict(
-    x86 = ("gcc", "clang", "icc", "iccw", "msvc"),
-    x64 = ("gcc", "clang", "icc", "iccw", "msvc"),
-    ppc64 = ("gcc", "clang"),
-    ppc64le = ("gcc", "clang"),
-    armhf = ("gcc", "clang"),
-    aarch64 = ("gcc", "clang"),
-    narch = ("gcc",)
-)
+arch_compilers = {
+    'x86': ("gcc", "clang", "icc", "iccw", "msvc"),
+    'x64': ("gcc", "clang", "icc", "iccw", "msvc"),
+    'ppc64': ("gcc", "clang"),
+    'ppc64le': ("gcc", "clang"),
+    'armhf': ("gcc", "clang"),
+    'aarch64': ("gcc", "clang"),
+    'narch': ("gcc",)
+}
 
 class FakeCCompilerOpt(CCompilerOpt):
     fake_info = ("arch", "compiler", "extra_args")

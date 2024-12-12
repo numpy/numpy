@@ -405,12 +405,12 @@ def validate_rst_syntax(text, name, dots=True):
             output_dot('E')
         return False, "ERROR: %s: no documentation" % (name,)
 
-    ok_unknown_items = set([
+    ok_unknown_items = {
         'mod', 'doc', 'currentmodule', 'autosummary', 'data', 'attr',
         'obj', 'versionadded', 'versionchanged', 'module', 'class',
         'ref', 'func', 'toctree', 'moduleauthor', 'term', 'c:member',
         'sectionauthor', 'codeauthor', 'eq', 'doi', 'DOI', 'arXiv', 'arxiv'
-    ])
+    }
 
     # Run through docutils
     error_stream = io.StringIO()
@@ -422,16 +422,16 @@ def validate_rst_syntax(text, name, dots=True):
 
     docutils.core.publish_doctree(
         text, token,
-        settings_overrides = dict(halt_level=5,
-                                  traceback=True,
-                                  default_reference_context='title-reference',
-                                  default_role='emphasis',
-                                  link_base='',
-                                  resolve_name=resolve,
-                                  stylesheet_path='',
-                                  raw_enabled=0,
-                                  file_insertion_enabled=0,
-                                  warning_stream=error_stream))
+        settings_overrides = {'halt_level': 5,
+                                  'traceback': True,
+                                  'default_reference_context': 'title-reference',
+                                  'default_role': 'emphasis',
+                                  'link_base': '',
+                                  'resolve_name': resolve,
+                                  'stylesheet_path': '',
+                                  'raw_enabled': 0,
+                                  'file_insertion_enabled': 0,
+                                  'warning_stream': error_stream})
 
     # Print errors, disregarding unimportant ones
     error_msg = error_stream.getvalue()

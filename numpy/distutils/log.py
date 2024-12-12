@@ -12,7 +12,7 @@ def _fix_args(args,flag=1):
     if is_string(args):
         return args.replace('%', '%%')
     if flag and is_sequence(args):
-        return tuple([_fix_args(a, flag=0) for a in args])
+        return tuple(_fix_args(a, flag=0) for a in args)
     return args
 
 

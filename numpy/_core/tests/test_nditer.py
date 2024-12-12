@@ -1707,7 +1707,7 @@ def test_iter_remove_multi_index_inner_loop():
     # Removing the inner loop means there's just one iteration
     i.reset()
     assert_equal(i.itersize, 24)
-    assert_equal(i[0].shape, tuple())
+    assert_equal(i[0].shape, ())
     i.enable_external_loop()
     assert_equal(i.itersize, 24)
     assert_equal(i[0].shape, (24,))

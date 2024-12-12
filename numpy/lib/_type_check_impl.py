@@ -69,7 +69,7 @@ def mintypecode(typechars, typeset='GDFgdf', default='d'):
     """
     typecodes = ((isinstance(t, str) and t) or asarray(t).dtype.char
                  for t in typechars)
-    intersection = set(t for t in typecodes if t in typeset)
+    intersection = {t for t in typecodes if t in typeset}
     if not intersection:
         return default
     if 'F' in intersection and 'd' in intersection:

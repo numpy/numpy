@@ -838,7 +838,7 @@ def test_bad_magic_args():
 
 def test_large_header():
     s = BytesIO()
-    d = {'shape': tuple(), 'fortran_order': False, 'descr': '<i8'}
+    d = {'shape': (), 'fortran_order': False, 'descr': '<i8'}
     format.write_array_header_1_0(s, d)
 
     s = BytesIO()

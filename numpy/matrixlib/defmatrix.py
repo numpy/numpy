@@ -177,7 +177,7 @@ class matrix(N.ndarray):
         if (ndim == 2):
             return
         if (ndim > 2):
-            newshape = tuple([x for x in self.shape if x > 1])
+            newshape = tuple(x for x in self.shape if x > 1)
             ndim = len(newshape)
             if ndim == 2:
                 self.shape = newshape

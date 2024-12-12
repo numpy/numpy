@@ -592,7 +592,7 @@ class NumPyLexer(CLexer):
 # -----------------------------------------------------------------------------
 # Breathe & Doxygen
 # -----------------------------------------------------------------------------
-breathe_projects = dict(numpy=os.path.join("..", "build", "doxygen", "xml"))
+breathe_projects = {'numpy': os.path.join("..", "build", "doxygen", "xml")}
 breathe_default_project = "numpy"
 breathe_default_members = ("members", "undoc-members", "protected-members")
 

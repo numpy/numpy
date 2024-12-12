@@ -883,7 +883,7 @@ def parse_for(tokens, name, context):
             position=pos,
             name=name,
         )
-    vars = tuple([v.strip() for v in first[: match.start()].split(",") if v.strip()])
+    vars = tuple(v.strip() for v in first[: match.start()].split(",") if v.strip())
     expr = first[match.end():]
     while 1:
         if not tokens:

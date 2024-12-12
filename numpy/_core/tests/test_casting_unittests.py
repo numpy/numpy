@@ -752,11 +752,11 @@ class TestCasting:
             # field cases (field to field is tested explicitly also):
             # Not considered viewable, because a negative offset would allow
             # may structured dtype to indirectly access invalid memory.
-            ("i", dict(names=["a"], formats=["i"], offsets=[2]), None),
-            (dict(names=["a"], formats=["i"], offsets=[2]), "i", 2),
+            ("i", {"names": ["a"], "formats": ["i"], "offsets": [2]}, None),
+            ({"names": ["a"], "formats": ["i"], "offsets": [2]}, "i", 2),
             # Currently considered not viewable, due to multiple fields
             # even though they overlap (maybe we should not allow that?)
-            ("i", dict(names=["a", "b"], formats=["i", "i"], offsets=[2, 2]),
+            ("i", {"names": ["a", "b"], "formats": ["i", "i"], "offsets": [2, 2]},
              None),
             # different number of fields can't work, should probably just fail
             # so it never reports "viewable":

@@ -85,7 +85,7 @@ def createfuncwrapper(rout, signature=0):
         for i, d in enumerate(v.get('dimension', [])):
             if d == ':':
                 dn = 'f2py_%s_d%s' % (a, i)
-                dv = dict(typespec='integer', intent=['hide'])
+                dv = {'typespec': 'integer', 'intent': ['hide']}
                 dv['='] = 'shape(%s, %s)' % (a, i)
                 extra_args.append(dn)
                 vars[dn] = dv
@@ -209,7 +209,7 @@ def createsubrwrapper(rout, signature=0):
         for i, d in enumerate(v.get('dimension', [])):
             if d == ':':
                 dn = 'f2py_%s_d%s' % (a, i)
-                dv = dict(typespec='integer', intent=['hide'])
+                dv = {'typespec': 'integer', 'intent': ['hide']}
                 dv['='] = 'shape(%s, %s)' % (a, i)
                 extra_args.append(dn)
                 vars[dn] = dv

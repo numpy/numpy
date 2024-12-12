@@ -188,145 +188,145 @@ class _Config:
     conf_target_groups = {}
     conf_c_prefix = 'NPY_'
     conf_c_prefix_ = 'NPY__'
-    conf_cc_flags = dict(
-        gcc = dict(
+    conf_cc_flags = {
+        "gcc": {
             # native should always fail on arm and ppc64,
             # native usually works only with x86
-            native = '-march=native',
-            opt = '-O3',
-            werror = '-Werror',
-        ),
-        clang = dict(
-            native = '-march=native',
-            opt = "-O3",
+            "native": '-march=native',
+            "opt": '-O3',
+            "werror": '-Werror',
+        },
+        "clang": {
+            "native": '-march=native',
+            "opt": "-O3",
             # One of the following flags needs to be applicable for Clang to
             # guarantee the sanity of the testing process, however in certain
             # cases `-Werror` gets skipped during the availability test due to
             # "unused arguments" warnings.
             # see https://github.com/numpy/numpy/issues/19624
-            werror = '-Werror=switch -Werror',
-        ),
-        icc = dict(
-            native = '-xHost',
-            opt = '-O3',
-            werror = '-Werror',
-        ),
-        iccw = dict(
-            native = '/QxHost',
-            opt = '/O3',
-            werror = '/Werror',
-        ),
-        msvc = dict(
-            native = None,
-            opt = '/O2',
-            werror = '/WX',
-        ),
-        fcc = dict(
-            native = '-mcpu=a64fx',
-            opt = None,
-            werror = None,
-        )
-    )
-    conf_min_features = dict(
-        x86 = "SSE SSE2",
-        x64 = "SSE SSE2 SSE3",
-        ppc64 = '', # play it safe
-        ppc64le = "VSX VSX2",
-        s390x = '',
-        armhf = '', # play it safe
-        aarch64 = "NEON NEON_FP16 NEON_VFPV4 ASIMD"
-    )
-    conf_features = dict(
+            "werror": '-Werror=switch -Werror',
+        },
+        "icc": {
+            "native": '-xHost',
+            "opt": '-O3',
+            "werror": '-Werror',
+        },
+        "iccw": {
+            "native": '/QxHost',
+            "opt": '/O3',
+            "werror": '/Werror',
+        },
+        "msvc": {
+            "native": None,
+            "opt": '/O2',
+            "werror": '/WX',
+        },
+        "fcc": {
+            "native": '-mcpu=a64fx',
+            "opt": None,
+            "werror": None,
+        }
+    }
+    conf_min_features = {
+        "x86": "SSE SSE2",
+        "x64": "SSE SSE2 SSE3",
+        "ppc64": '', # play it safe
+        "ppc64le": "VSX VSX2",
+        "s390x": '',
+        "armhf": '', # play it safe
+        "aarch64": "NEON NEON_FP16 NEON_VFPV4 ASIMD"
+    }
+    conf_features = {
         # X86
-        SSE = dict(
-            interest=1, headers="xmmintrin.h",
+        "SSE": {
+            "interest": 1, "headers": "xmmintrin.h",
             # enabling SSE without SSE2 is useless also
             # it's non-optional for x86_64
-            implies="SSE2"
-        ),
-        SSE2   = dict(interest=2, implies="SSE", headers="emmintrin.h"),
-        SSE3   = dict(interest=3, implies="SSE2", headers="pmmintrin.h"),
-        SSSE3  = dict(interest=4, implies="SSE3", headers="tmmintrin.h"),
-        SSE41  = dict(interest=5, implies="SSSE3", headers="smmintrin.h"),
-        POPCNT = dict(interest=6, implies="SSE41", headers="popcntintrin.h"),
-        SSE42  = dict(interest=7, implies="POPCNT"),
-        AVX    = dict(
-            interest=8, implies="SSE42", headers="immintrin.h",
-            implies_detect=False
-        ),
-        XOP    = dict(interest=9, implies="AVX", headers="x86intrin.h"),
-        FMA4   = dict(interest=10, implies="AVX", headers="x86intrin.h"),
-        F16C   = dict(interest=11, implies="AVX"),
-        FMA3   = dict(interest=12, implies="F16C"),
-        AVX2   = dict(interest=13, implies="F16C"),
-        AVX512F = dict(
-            interest=20, implies="FMA3 AVX2", implies_detect=False,
-            extra_checks="AVX512F_REDUCE"
-        ),
-        AVX512CD = dict(interest=21, implies="AVX512F"),
-        AVX512_KNL = dict(
-            interest=40, implies="AVX512CD", group="AVX512ER AVX512PF",
-            detect="AVX512_KNL", implies_detect=False
-        ),
-        AVX512_KNM = dict(
-            interest=41, implies="AVX512_KNL",
-            group="AVX5124FMAPS AVX5124VNNIW AVX512VPOPCNTDQ",
-            detect="AVX512_KNM", implies_detect=False
-        ),
-        AVX512_SKX = dict(
-            interest=42, implies="AVX512CD", group="AVX512VL AVX512BW AVX512DQ",
-            detect="AVX512_SKX", implies_detect=False,
-            extra_checks="AVX512BW_MASK AVX512DQ_MASK"
-        ),
-        AVX512_CLX = dict(
-            interest=43, implies="AVX512_SKX", group="AVX512VNNI",
-            detect="AVX512_CLX"
-        ),
-        AVX512_CNL = dict(
-            interest=44, implies="AVX512_SKX", group="AVX512IFMA AVX512VBMI",
-            detect="AVX512_CNL", implies_detect=False
-        ),
-        AVX512_ICL = dict(
-            interest=45, implies="AVX512_CLX AVX512_CNL",
-            group="AVX512VBMI2 AVX512BITALG AVX512VPOPCNTDQ",
-            detect="AVX512_ICL", implies_detect=False
-        ),
-        AVX512_SPR = dict(
-            interest=46, implies="AVX512_ICL", group="AVX512FP16",
-            detect="AVX512_SPR", implies_detect=False
-        ),
+            "implies": "SSE2"
+        },
+        "SSE2": {"interest": 2, "implies": "SSE", "headers": "emmintrin.h"},
+        "SSE3": {"interest": 3, "implies": "SSE2", "headers": "pmmintrin.h"},
+        "SSSE3": {"interest": 4, "implies": "SSE3", "headers": "tmmintrin.h"},
+        "SSE41": {"interest": 5, "implies": "SSSE3", "headers": "smmintrin.h"},
+        "POPCNT": {"interest": 6, "implies": "SSE41", "headers": "popcntintrin.h"},
+        "SSE42": {"interest": 7, "implies": "POPCNT"},
+        "AVX": {
+            "interest": 8, "implies": "SSE42", "headers": "immintrin.h",
+            "implies_detect": False
+        },
+        "XOP": {"interest": 9, "implies": "AVX", "headers": "x86intrin.h"},
+        "FMA4": {"interest": 10, "implies": "AVX", "headers": "x86intrin.h"},
+        "F16C": {"interest": 11, "implies": "AVX"},
+        "FMA3": {"interest": 12, "implies": "F16C"},
+        "AVX2": {"interest": 13, "implies": "F16C"},
+        "AVX512F": {
+            "interest": 20, "implies": "FMA3 AVX2", "implies_detect": False,
+            "extra_checks": "AVX512F_REDUCE"
+        },
+        "AVX512CD": {"interest": 21, "implies": "AVX512F"},
+        "AVX512_KNL": {
+            "interest": 40, "implies": "AVX512CD", "group": "AVX512ER AVX512PF",
+            "detect": "AVX512_KNL", "implies_detect": False
+        },
+        "AVX512_KNM": {
+            "interest": 41, "implies": "AVX512_KNL",
+            "group": "AVX5124FMAPS AVX5124VNNIW AVX512VPOPCNTDQ",
+            "detect": "AVX512_KNM", "implies_detect": False
+        },
+        "AVX512_SKX": {
+            "interest": 42, "implies": "AVX512CD", "group": "AVX512VL AVX512BW AVX512DQ",
+            "detect": "AVX512_SKX", "implies_detect": False,
+            "extra_checks": "AVX512BW_MASK AVX512DQ_MASK"
+        },
+        "AVX512_CLX": {
+            "interest": 43, "implies": "AVX512_SKX", "group": "AVX512VNNI",
+            "detect": "AVX512_CLX"
+        },
+        "AVX512_CNL": {
+            "interest": 44, "implies": "AVX512_SKX", "group": "AVX512IFMA AVX512VBMI",
+            "detect": "AVX512_CNL", "implies_detect": False
+        },
+        "AVX512_ICL": {
+            "interest": 45, "implies": "AVX512_CLX AVX512_CNL",
+            "group": "AVX512VBMI2 AVX512BITALG AVX512VPOPCNTDQ",
+            "detect": "AVX512_ICL", "implies_detect": False
+        },
+        "AVX512_SPR": {
+            "interest": 46, "implies": "AVX512_ICL", "group": "AVX512FP16",
+            "detect": "AVX512_SPR", "implies_detect": False
+        },
         # IBM/Power
         ## Power7/ISA 2.06
-        VSX = dict(interest=1, headers="altivec.h", extra_checks="VSX_ASM"),
+        "VSX": {"interest": 1, "headers": "altivec.h", "extra_checks": "VSX_ASM"},
         ## Power8/ISA 2.07
-        VSX2 = dict(interest=2, implies="VSX", implies_detect=False),
+        "VSX2": {"interest": 2, "implies": "VSX", "implies_detect": False},
         ## Power9/ISA 3.00
-        VSX3 = dict(interest=3, implies="VSX2", implies_detect=False,
-                    extra_checks="VSX3_HALF_DOUBLE"),
+        "VSX3": {"interest": 3, "implies": "VSX2", "implies_detect": False,
+                    "extra_checks": "VSX3_HALF_DOUBLE"},
         ## Power10/ISA 3.1
-        VSX4 = dict(interest=4, implies="VSX3", implies_detect=False,
-                    extra_checks="VSX4_MMA"),
+        "VSX4": {"interest": 4, "implies": "VSX3", "implies_detect": False,
+                    "extra_checks": "VSX4_MMA"},
         # IBM/Z
         ## VX(z13) support
-        VX = dict(interest=1, headers="vecintrin.h"),
+        "VX": {"interest": 1, "headers": "vecintrin.h"},
         ## Vector-Enhancements Facility
-        VXE = dict(interest=2, implies="VX", implies_detect=False),
+        "VXE": {"interest": 2, "implies": "VX", "implies_detect": False},
         ## Vector-Enhancements Facility 2
-        VXE2 = dict(interest=3, implies="VXE", implies_detect=False),
+        "VXE2": {"interest": 3, "implies": "VXE", "implies_detect": False},
         # ARM
-        NEON  = dict(interest=1, headers="arm_neon.h"),
-        NEON_FP16 = dict(interest=2, implies="NEON"),
+        "NEON": {"interest": 1, "headers": "arm_neon.h"},
+        "NEON_FP16": {"interest": 2, "implies": "NEON"},
         ## FMA
-        NEON_VFPV4 = dict(interest=3, implies="NEON_FP16"),
+        "NEON_VFPV4": {"interest": 3, "implies": "NEON_FP16"},
         ## Advanced SIMD
-        ASIMD = dict(interest=4, implies="NEON_FP16 NEON_VFPV4", implies_detect=False),
+        "ASIMD": {"interest": 4, "implies": "NEON_FP16 NEON_VFPV4", "implies_detect": False},
         ## ARMv8.2 half-precision & vector arithm
-        ASIMDHP = dict(interest=5, implies="ASIMD"),
+        "ASIMDHP": {"interest": 5, "implies": "ASIMD"},
         ## ARMv8.2 dot product
-        ASIMDDP = dict(interest=6, implies="ASIMD"),
+        "ASIMDDP": {"interest": 6, "implies": "ASIMD"},
         ## ARMv8.2 Single & half-precision Multiply
-        ASIMDFHM = dict(interest=7, implies="ASIMDHP"),
-    )
+        "ASIMDFHM": {"interest": 7, "implies": "ASIMDHP"},
+    }
     def conf_features_partial(self):
         """Return a dictionary of supported CPU features by the platform,
         and accumulate the rest of undefined options in `conf_features`,
@@ -341,159 +341,159 @@ class _Config:
         on_x86 = self.cc_on_x86 or self.cc_on_x64
         is_unix = self.cc_is_gcc or self.cc_is_clang or self.cc_is_fcc
 
-        if on_x86 and is_unix: return dict(
-            SSE    = dict(flags="-msse"),
-            SSE2   = dict(flags="-msse2"),
-            SSE3   = dict(flags="-msse3"),
-            SSSE3  = dict(flags="-mssse3"),
-            SSE41  = dict(flags="-msse4.1"),
-            POPCNT = dict(flags="-mpopcnt"),
-            SSE42  = dict(flags="-msse4.2"),
-            AVX    = dict(flags="-mavx"),
-            F16C   = dict(flags="-mf16c"),
-            XOP    = dict(flags="-mxop"),
-            FMA4   = dict(flags="-mfma4"),
-            FMA3   = dict(flags="-mfma"),
-            AVX2   = dict(flags="-mavx2"),
-            AVX512F = dict(flags="-mavx512f -mno-mmx"),
-            AVX512CD = dict(flags="-mavx512cd"),
-            AVX512_KNL = dict(flags="-mavx512er -mavx512pf"),
-            AVX512_KNM = dict(
-                flags="-mavx5124fmaps -mavx5124vnniw -mavx512vpopcntdq"
-            ),
-            AVX512_SKX = dict(flags="-mavx512vl -mavx512bw -mavx512dq"),
-            AVX512_CLX = dict(flags="-mavx512vnni"),
-            AVX512_CNL = dict(flags="-mavx512ifma -mavx512vbmi"),
-            AVX512_ICL = dict(
-                flags="-mavx512vbmi2 -mavx512bitalg -mavx512vpopcntdq"
-            ),
-            AVX512_SPR = dict(flags="-mavx512fp16"),
-        )
-        if on_x86 and self.cc_is_icc: return dict(
-            SSE    = dict(flags="-msse"),
-            SSE2   = dict(flags="-msse2"),
-            SSE3   = dict(flags="-msse3"),
-            SSSE3  = dict(flags="-mssse3"),
-            SSE41  = dict(flags="-msse4.1"),
-            POPCNT = {},
-            SSE42  = dict(flags="-msse4.2"),
-            AVX    = dict(flags="-mavx"),
-            F16C   = {},
-            XOP    = dict(disable="Intel Compiler doesn't support it"),
-            FMA4   = dict(disable="Intel Compiler doesn't support it"),
+        if on_x86 and is_unix: return {
+            "SSE": {"flags": "-msse"},
+            "SSE2": {"flags": "-msse2"},
+            "SSE3": {"flags": "-msse3"},
+            "SSSE3": {"flags": "-mssse3"},
+            "SSE41": {"flags": "-msse4.1"},
+            "POPCNT": {"flags": "-mpopcnt"},
+            "SSE42": {"flags": "-msse4.2"},
+            "AVX": {"flags": "-mavx"},
+            "F16C": {"flags": "-mf16c"},
+            "XOP": {"flags": "-mxop"},
+            "FMA4": {"flags": "-mfma4"},
+            "FMA3": {"flags": "-mfma"},
+            "AVX2": {"flags": "-mavx2"},
+            "AVX512F": {"flags": "-mavx512f -mno-mmx"},
+            "AVX512CD": {"flags": "-mavx512cd"},
+            "AVX512_KNL": {"flags": "-mavx512er -mavx512pf"},
+            "AVX512_KNM": {
+                "flags": "-mavx5124fmaps -mavx5124vnniw -mavx512vpopcntdq"
+            },
+            "AVX512_SKX": {"flags": "-mavx512vl -mavx512bw -mavx512dq"},
+            "AVX512_CLX": {"flags": "-mavx512vnni"},
+            "AVX512_CNL": {"flags": "-mavx512ifma -mavx512vbmi"},
+            "AVX512_ICL": {
+                "flags": "-mavx512vbmi2 -mavx512bitalg -mavx512vpopcntdq"
+            },
+            "AVX512_SPR": {"flags": "-mavx512fp16"},
+        }
+        if on_x86 and self.cc_is_icc: return {
+            "SSE": {"flags": "-msse"},
+            "SSE2": {"flags": "-msse2"},
+            "SSE3": {"flags": "-msse3"},
+            "SSSE3": {"flags": "-mssse3"},
+            "SSE41": {"flags": "-msse4.1"},
+            "POPCNT": {},
+            "SSE42": {"flags": "-msse4.2"},
+            "AVX": {"flags": "-mavx"},
+            "F16C": {},
+            "XOP": {"disable": "Intel Compiler doesn't support it"},
+            "FMA4": {"disable": "Intel Compiler doesn't support it"},
             # Intel Compiler doesn't support AVX2 or FMA3 independently
-            FMA3 = dict(
-                implies="F16C AVX2", flags="-march=core-avx2"
-            ),
-            AVX2 = dict(implies="FMA3", flags="-march=core-avx2"),
+            "FMA3": {
+                "implies": "F16C AVX2", "flags": "-march=core-avx2"
+            },
+            "AVX2": {"implies": "FMA3", "flags": "-march=core-avx2"},
             # Intel Compiler doesn't support AVX512F or AVX512CD independently
-            AVX512F = dict(
-                implies="AVX2 AVX512CD", flags="-march=common-avx512"
-            ),
-            AVX512CD = dict(
-                implies="AVX2 AVX512F", flags="-march=common-avx512"
-            ),
-            AVX512_KNL = dict(flags="-xKNL"),
-            AVX512_KNM = dict(flags="-xKNM"),
-            AVX512_SKX = dict(flags="-xSKYLAKE-AVX512"),
-            AVX512_CLX = dict(flags="-xCASCADELAKE"),
-            AVX512_CNL = dict(flags="-xCANNONLAKE"),
-            AVX512_ICL = dict(flags="-xICELAKE-CLIENT"),
-            AVX512_SPR = dict(disable="Not supported yet")
-        )
-        if on_x86 and self.cc_is_iccw: return dict(
-            SSE    = dict(flags="/arch:SSE"),
-            SSE2   = dict(flags="/arch:SSE2"),
-            SSE3   = dict(flags="/arch:SSE3"),
-            SSSE3  = dict(flags="/arch:SSSE3"),
-            SSE41  = dict(flags="/arch:SSE4.1"),
-            POPCNT = {},
-            SSE42  = dict(flags="/arch:SSE4.2"),
-            AVX    = dict(flags="/arch:AVX"),
-            F16C   = {},
-            XOP    = dict(disable="Intel Compiler doesn't support it"),
-            FMA4   = dict(disable="Intel Compiler doesn't support it"),
+            "AVX512F": {
+                "implies": "AVX2 AVX512CD", "flags": "-march=common-avx512"
+            },
+            "AVX512CD": {
+                "implies": "AVX2 AVX512F", "flags": "-march=common-avx512"
+            },
+            "AVX512_KNL": {"flags": "-xKNL"},
+            "AVX512_KNM": {"flags": "-xKNM"},
+            "AVX512_SKX": {"flags": "-xSKYLAKE-AVX512"},
+            "AVX512_CLX": {"flags": "-xCASCADELAKE"},
+            "AVX512_CNL": {"flags": "-xCANNONLAKE"},
+            "AVX512_ICL": {"flags": "-xICELAKE-CLIENT"},
+            "AVX512_SPR": {"disable": "Not supported yet"}
+        }
+        if on_x86 and self.cc_is_iccw: return {
+            "SSE": {"flags": "/arch:SSE"},
+            "SSE2": {"flags": "/arch:SSE2"},
+            "SSE3": {"flags": "/arch:SSE3"},
+            "SSSE3": {"flags": "/arch:SSSE3"},
+            "SSE41": {"flags": "/arch:SSE4.1"},
+            "POPCNT": {},
+            "SSE42": {"flags": "/arch:SSE4.2"},
+            "AVX": {"flags": "/arch:AVX"},
+            "F16C": {},
+            "XOP": {"disable": "Intel Compiler doesn't support it"},
+            "FMA4": {"disable": "Intel Compiler doesn't support it"},
             # Intel Compiler doesn't support FMA3 or AVX2 independently
-            FMA3 = dict(
-                implies="F16C AVX2", flags="/arch:CORE-AVX2"
-            ),
-            AVX2 = dict(
-                implies="FMA3", flags="/arch:CORE-AVX2"
-            ),
+            "FMA3": {
+                "implies": "F16C AVX2", "flags": "/arch:CORE-AVX2"
+            },
+            "AVX2": {
+                "implies": "FMA3", "flags": "/arch:CORE-AVX2"
+            },
             # Intel Compiler doesn't support AVX512F or AVX512CD independently
-            AVX512F = dict(
-                implies="AVX2 AVX512CD", flags="/Qx:COMMON-AVX512"
-            ),
-            AVX512CD = dict(
-                implies="AVX2 AVX512F", flags="/Qx:COMMON-AVX512"
-            ),
-            AVX512_KNL = dict(flags="/Qx:KNL"),
-            AVX512_KNM = dict(flags="/Qx:KNM"),
-            AVX512_SKX = dict(flags="/Qx:SKYLAKE-AVX512"),
-            AVX512_CLX = dict(flags="/Qx:CASCADELAKE"),
-            AVX512_CNL = dict(flags="/Qx:CANNONLAKE"),
-            AVX512_ICL = dict(flags="/Qx:ICELAKE-CLIENT"),
-            AVX512_SPR = dict(disable="Not supported yet")
-        )
-        if on_x86 and self.cc_is_msvc: return dict(
-            SSE = dict(flags="/arch:SSE") if self.cc_on_x86 else {},
-            SSE2 = dict(flags="/arch:SSE2") if self.cc_on_x86 else {},
-            SSE3   = {},
-            SSSE3  = {},
-            SSE41  = {},
-            POPCNT = dict(headers="nmmintrin.h"),
-            SSE42  = {},
-            AVX    = dict(flags="/arch:AVX"),
-            F16C   = {},
-            XOP    = dict(headers="ammintrin.h"),
-            FMA4   = dict(headers="ammintrin.h"),
+            "AVX512F": {
+                "implies": "AVX2 AVX512CD", "flags": "/Qx:COMMON-AVX512"
+            },
+            "AVX512CD": {
+                "implies": "AVX2 AVX512F", "flags": "/Qx:COMMON-AVX512"
+            },
+            "AVX512_KNL": {"flags": "/Qx:KNL"},
+            "AVX512_KNM": {"flags": "/Qx:KNM"},
+            "AVX512_SKX": {"flags": "/Qx:SKYLAKE-AVX512"},
+            "AVX512_CLX": {"flags": "/Qx:CASCADELAKE"},
+            "AVX512_CNL": {"flags": "/Qx:CANNONLAKE"},
+            "AVX512_ICL": {"flags": "/Qx:ICELAKE-CLIENT"},
+            "AVX512_SPR": {"disable": "Not supported yet"}
+        }
+        if on_x86 and self.cc_is_msvc: return {
+            "SSE": {"flags": "/arch:SSE"} if self.cc_on_x86 else {},
+            "SSE2": {"flags": "/arch:SSE2"} if self.cc_on_x86 else {},
+            "SSE3": {},
+            "SSSE3": {},
+            "SSE41": {},
+            "POPCNT": {"headers": "nmmintrin.h"},
+            "SSE42": {},
+            "AVX": {"flags": "/arch:AVX"},
+            "F16C": {},
+            "XOP": {"headers": "ammintrin.h"},
+            "FMA4": {"headers": "ammintrin.h"},
             # MSVC doesn't support FMA3 or AVX2 independently
-            FMA3 = dict(
-                implies="F16C AVX2", flags="/arch:AVX2"
-            ),
-            AVX2 = dict(
-                implies="F16C FMA3", flags="/arch:AVX2"
-            ),
+            "FMA3": {
+                "implies": "F16C AVX2", "flags": "/arch:AVX2"
+            },
+            "AVX2": {
+                "implies": "F16C FMA3", "flags": "/arch:AVX2"
+            },
             # MSVC doesn't support AVX512F or AVX512CD independently,
             # always generate instructions belong to (VL/VW/DQ)
-            AVX512F = dict(
-                implies="AVX2 AVX512CD AVX512_SKX", flags="/arch:AVX512"
-            ),
-            AVX512CD = dict(
-                implies="AVX512F AVX512_SKX", flags="/arch:AVX512"
-            ),
-            AVX512_KNL = dict(
-                disable="MSVC compiler doesn't support it"
-            ),
-            AVX512_KNM = dict(
-                disable="MSVC compiler doesn't support it"
-            ),
-            AVX512_SKX = dict(flags="/arch:AVX512"),
-            AVX512_CLX = {},
-            AVX512_CNL = {},
-            AVX512_ICL = {},
-            AVX512_SPR= dict(
-                disable="MSVC compiler doesn't support it"
-            )
-        )
+            "AVX512F": {
+                "implies": "AVX2 AVX512CD AVX512_SKX", "flags": "/arch:AVX512"
+            },
+            "AVX512CD": {
+                "implies": "AVX512F AVX512_SKX", "flags": "/arch:AVX512"
+            },
+            "AVX512_KNL": {
+                "disable": "MSVC compiler doesn't support it"
+            },
+            "AVX512_KNM": {
+                "disable": "MSVC compiler doesn't support it"
+            },
+            "AVX512_SKX": {"flags": "/arch:AVX512"},
+            "AVX512_CLX": {},
+            "AVX512_CNL": {},
+            "AVX512_ICL": {},
+            "AVX512_SPR": {
+                "disable": "MSVC compiler doesn't support it"
+            }
+        }
 
         on_power = self.cc_on_ppc64le or self.cc_on_ppc64
         if on_power:
-            partial = dict(
-                VSX = dict(
-                    implies=("VSX2" if self.cc_on_ppc64le else ""),
-                    flags="-mvsx"
-                ),
-                VSX2 = dict(
-                    flags="-mcpu=power8", implies_detect=False
-                ),
-                VSX3 = dict(
-                    flags="-mcpu=power9 -mtune=power9", implies_detect=False
-                ),
-                VSX4 = dict(
-                    flags="-mcpu=power10 -mtune=power10", implies_detect=False
-                )
-            )
+            partial = {
+                "VSX": {
+                    "implies": ("VSX2" if self.cc_on_ppc64le else ""),
+                    "flags": "-mvsx"
+                },
+                "VSX2": {
+                    "flags": "-mcpu=power8", "implies_detect": False
+                },
+                "VSX3": {
+                    "flags": "-mcpu=power9 -mtune=power9", "implies_detect": False
+                },
+                "VSX4": {
+                    "flags": "-mcpu=power10 -mtune=power10", "implies_detect": False
+                }
+            }
             if self.cc_is_clang:
                 partial["VSX"]["flags"]  = "-maltivec -mvsx"
                 partial["VSX2"]["flags"] = "-mcpu=power8"
@@ -504,67 +504,67 @@ class _Config:
 
         on_zarch = self.cc_on_s390x
         if on_zarch:
-            partial = dict(
-                VX = dict(
-                    flags="-march=arch11 -mzvector"
-                ),
-                VXE = dict(
-                    flags="-march=arch12", implies_detect=False
-                ),
-                VXE2 = dict(
-                    flags="-march=arch13", implies_detect=False
-                )
-            )
+            partial = {
+                "VX": {
+                    "flags": "-march=arch11 -mzvector"
+                },
+                "VXE": {
+                    "flags": "-march=arch12", "implies_detect": False
+                },
+                "VXE2": {
+                    "flags": "-march=arch13", "implies_detect": False
+                }
+            }
 
             return partial
 
 
-        if self.cc_on_aarch64 and is_unix: return dict(
-            NEON = dict(
-                implies="NEON_FP16 NEON_VFPV4 ASIMD", autovec=True
-            ),
-            NEON_FP16 = dict(
-                implies="NEON NEON_VFPV4 ASIMD", autovec=True
-            ),
-            NEON_VFPV4 = dict(
-                implies="NEON NEON_FP16 ASIMD", autovec=True
-            ),
-            ASIMD = dict(
-                implies="NEON NEON_FP16 NEON_VFPV4", autovec=True
-            ),
-            ASIMDHP = dict(
-                flags="-march=armv8.2-a+fp16"
-            ),
-            ASIMDDP = dict(
-                flags="-march=armv8.2-a+dotprod"
-            ),
-            ASIMDFHM = dict(
-                flags="-march=armv8.2-a+fp16fml"
-            ),
-        )
-        if self.cc_on_armhf and is_unix: return dict(
-            NEON = dict(
-                flags="-mfpu=neon"
-            ),
-            NEON_FP16 = dict(
-                flags="-mfpu=neon-fp16 -mfp16-format=ieee"
-            ),
-            NEON_VFPV4 = dict(
-                flags="-mfpu=neon-vfpv4",
-            ),
-            ASIMD = dict(
-                flags="-mfpu=neon-fp-armv8 -march=armv8-a+simd",
-            ),
-            ASIMDHP = dict(
-                flags="-march=armv8.2-a+fp16"
-            ),
-            ASIMDDP = dict(
-                flags="-march=armv8.2-a+dotprod",
-            ),
-            ASIMDFHM = dict(
-                flags="-march=armv8.2-a+fp16fml"
-            )
-        )
+        if self.cc_on_aarch64 and is_unix: return {
+            "NEON": {
+                "implies": "NEON_FP16 NEON_VFPV4 ASIMD", "autovec": True
+            },
+            "NEON_FP16": {
+                "implies": "NEON NEON_VFPV4 ASIMD", "autovec": True
+            },
+            "NEON_VFPV4": {
+                "implies": "NEON NEON_FP16 ASIMD", "autovec": True
+            },
+            "ASIMD": {
+                "implies": "NEON NEON_FP16 NEON_VFPV4", "autovec": True
+            },
+            "ASIMDHP": {
+                "flags": "-march=armv8.2-a+fp16"
+            },
+            "ASIMDDP": {
+                "flags": "-march=armv8.2-a+dotprod"
+            },
+            "ASIMDFHM": {
+                "flags": "-march=armv8.2-a+fp16fml"
+            },
+        }
+        if self.cc_on_armhf and is_unix: return {
+            "NEON": {
+                "flags": "-mfpu=neon"
+            },
+            "NEON_FP16": {
+                "flags": "-mfpu=neon-fp16 -mfp16-format=ieee"
+            },
+            "NEON_VFPV4": {
+                "flags": "-mfpu=neon-vfpv4",
+            },
+            "ASIMD": {
+                "flags": "-mfpu=neon-fp-armv8 -march=armv8-a+simd",
+            },
+            "ASIMDHP": {
+                "flags": "-march=armv8.2-a+fp16"
+            },
+            "ASIMDDP": {
+                "flags": "-march=armv8.2-a+dotprod",
+            },
+            "ASIMDFHM": {
+                "flags": "-march=armv8.2-a+fp16fml"
+            }
+        }
         # TODO: ARM MSVC
         return {}
 
@@ -1338,7 +1338,7 @@ class _Feature:
             if isinstance(k, str):
                 return self.feature_supported[k]["interest"]
             # multiple features
-            rank = max([self.feature_supported[f]["interest"] for f in k])
+            rank = max(self.feature_supported[f]["interest"] for f in k)
             # FIXME: that's not a safe way to increase the rank for
             # multi targets
             rank += len(k) -1
@@ -1397,7 +1397,7 @@ class _Feature:
     def feature_implies_c(self, names):
         """same as feature_implies() but combining 'names'"""
         if isinstance(names, str):
-            names = set((names,))
+            names = {names}
         else:
             names = set(names)
         return names.union(self.feature_implies(names))
@@ -1756,30 +1756,30 @@ class _Parse:
 
     """
     def __init__(self, cpu_baseline, cpu_dispatch):
-        self._parse_policies = dict(
+        self._parse_policies = {
             # POLICY NAME, (HAVE, NOT HAVE, [DEB])
-            KEEP_BASELINE = (
+            "KEEP_BASELINE": (
                 None, self._parse_policy_not_keepbase,
                 []
             ),
-            KEEP_SORT = (
+            "KEEP_SORT": (
                 self._parse_policy_keepsort,
                 self._parse_policy_not_keepsort,
                 []
             ),
-            MAXOPT = (
+            "MAXOPT": (
                 self._parse_policy_maxopt, None,
                 []
             ),
-            WERROR = (
+            "WERROR": (
                 self._parse_policy_werror, None,
                 []
             ),
-            AUTOVEC = (
+            "AUTOVEC": (
                 self._parse_policy_autovec, None,
                 ["MAXOPT"]
             )
-        )
+        }
         if hasattr(self, "parse_is_cached"):
             return
 
@@ -2104,17 +2104,11 @@ class _Parse:
         # remove any implied features and keep the origins
         if not targets:
             self.dist_fatal("empty multi-target '()'")
-        if not all([
-            self.feature_is_exist(tar) for tar in targets
-        ]) :
+        if not all(self.feature_is_exist(tar) for tar in targets):
             self.dist_fatal("invalid target name in multi-target", targets)
-        if not all([
-            (
+        if not all((
                 tar in self.parse_baseline_names or
-                tar in self.parse_dispatch_names
-            )
-            for tar in targets
-        ]) :
+                tar in self.parse_dispatch_names) for tar in targets):
             return None
         targets = self.feature_ahead(targets)
         if not targets:
@@ -2133,10 +2127,8 @@ class _Parse:
                 is_base = tar in self.parse_baseline_names
             else:
                 # multi targets
-                is_base = all([
-                    f in self.parse_baseline_names
-                    for f in tar
-                ])
+                is_base = all(f in self.parse_baseline_names
+                    for f in tar)
             if is_base:
                 skipped.append(tar)
                 final_targets.remove(tar)
@@ -2197,10 +2189,8 @@ class _Parse:
             if isinstance(tar, str):
                 can = self.feature_can_autovec(tar)
             else: # multiple target
-                can = all([
-                    self.feature_can_autovec(t)
-                    for t in tar
-                ])
+                can = all(self.feature_can_autovec(t)
+                    for t in tar)
             if not can:
                 final_targets.remove(tar)
                 skipped.append(tar)
@@ -2605,7 +2595,7 @@ class CCompilerOpt(_Config, _Distutils, _Cache, _CCompiler, _Feature, _Parse):
             if isinstance(tar, str):
                 target_name = tar
             else: # multi target
-                target_name = '__'.join([t for t in tar])
+                target_name = '__'.join(list(tar))
             req_detect = self.feature_detect(tar)
             req_detect = '&&'.join([
                 "CHK(%s)" % f for f in req_detect

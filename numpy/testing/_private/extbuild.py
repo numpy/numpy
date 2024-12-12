@@ -161,7 +161,7 @@ def _make_methods(functions, modname):
         -1,             /* m_size */
         methods,        /* m_methods */
     };
-    """ % dict(methods='\n'.join(methods_table), modname=modname)
+    """ % {'methods': '\n'.join(methods_table), 'modname': modname}
     return body
 
 
@@ -177,9 +177,9 @@ def _make_source(name, init, body):
     PyInit_%(name)s(void) {
     %(init)s
     }
-    """ % dict(
-        name=name, init=init, body=body,
-    )
+    """ % {
+        'name': name, 'init': init, 'body': body,
+    }
     return code
 
 

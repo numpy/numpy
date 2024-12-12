@@ -289,7 +289,7 @@ def create_name_header(output_dir):
     extern_re = re.compile(r'^extern [a-z]+ ([a-z0-9_]+)\(.*$')
 
     # BLAS/LAPACK symbols
-    symbols = set(['xerbla'])
+    symbols = {'xerbla'}
     for fn in os.listdir(output_dir):
         fn = os.path.join(output_dir, fn)
 

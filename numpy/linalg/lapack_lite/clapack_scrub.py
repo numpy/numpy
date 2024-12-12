@@ -265,8 +265,8 @@ def replaceDlamch(source):
     """Replace dlamch_ calls with appropriate macros"""
     def repl(m):
         s = m.group(1)
-        return dict(E='EPSILON', P='PRECISION', S='SAFEMINIMUM',
-                    B='BASE')[s[0]]
+        return {'E': 'EPSILON', 'P': 'PRECISION', 'S': 'SAFEMINIMUM',
+                    'B': 'BASE'}[s[0]]
     source = re.sub(r'dlamch_\("(.*?)"\)', repl, source)
     source = re.sub(r'^\s+extern.*? dlamch_.*?;$(?m)', '', source)
     return source

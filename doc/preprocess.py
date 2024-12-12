@@ -29,7 +29,7 @@ def doxy_config(root_path):
     """
     confs = []
     dsrc_path = os.path.join(root_path, "doc", "source")
-    sub = dict(ROOT_DIR=root_path)
+    sub = {'ROOT_DIR': root_path}
     with open(os.path.join(dsrc_path, "doxyfile")) as fd:
         conf = DoxyTpl(fd.read())
         confs.append(conf.substitute(CUR_DIR=dsrc_path, **sub))
