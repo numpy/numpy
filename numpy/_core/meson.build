@@ -890,6 +890,7 @@ foreach gen_mtargets : [
       NEON,
       VSX4, VSX2,
       VX,
+      LSX,
     ]
   ],
   [
