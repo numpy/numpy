@@ -43,13 +43,13 @@ class MSVCCompiler(_MSVCCompiler):
     def initialize(self):
         # The 'lib' and 'include' variables may be overwritten
         # by MSVCCompiler.initialize, so save them for later merge.
-        environ_lib = os.getenv('lib', '')
-        environ_include = os.getenv('include', '')
+        environ_lib = os.getenv('LIB', '')
+        environ_include = os.getenv('INCLUDE', '')
         _MSVCCompiler.initialize(self)
 
         # Merge current and previous values of 'lib' and 'include'
-        os.environ['lib'] = _merge(environ_lib, os.environ['lib'])
-        os.environ['include'] = _merge(environ_include, os.environ['include'])
+        os.environ['LIB'] = _merge(environ_lib, os.environ['LIB'])
+        os.environ['INCLUDE'] = _merge(environ_include, os.environ['INCLUDE'])
 
         # msvc9 building for 32 bits requires SSE2 to work around a
         # compiler bug.

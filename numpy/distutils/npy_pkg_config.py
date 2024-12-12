@@ -178,7 +178,7 @@ class VariableSet:
         # Brute force: we keep interpolating until there is no '${var}' anymore
         # or until interpolated string is equal to input string
         def _interpolate(value):
-            for k in self._re.keys():
+            for k in self._re:
                 value = self._re[k].sub(self._re_sub[k], value)
             return value
         while _VAR.search(value):

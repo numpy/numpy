@@ -345,7 +345,7 @@ def _makenamedict(module='numpy'):
         if len(totraverse) == 0:
             break
         thisdict = totraverse.pop(0)
-        for x in thisdict.keys():
+        for x in thisdict:
             if isinstance(thisdict[x], types.ModuleType):
                 modname = thisdict[x].__name__
                 if modname not in dictlist:

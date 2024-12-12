@@ -566,10 +566,9 @@ def sign2map(a, var):
         else:
             ret['vardebuginfo'] = 'debug-capi:%s %s=%s:%s' % (
                 ret['ctype'], a, ret['showinit'], ','.join(rl))
-        if isscalar(var):
-            if ret['ctype'] in cformat_map:
-                ret['vardebugshowvalue'] = 'debug-capi:%s=%s' % (
-                    a, cformat_map[ret['ctype']])
+        if isscalar(var) and ret['ctype'] in cformat_map:
+            ret['vardebugshowvalue'] = 'debug-capi:%s=%s' % (
+                a, cformat_map[ret['ctype']])
         if isstring(var):
             ret['vardebugshowvalue'] = 'debug-capi:slen(%s)=%%d %s=\\"%%s\\"' % (
                 a, a)
@@ -617,12 +616,12 @@ def routsign2map(rout):
         ret['F_WRAPPEDFUNC'] = 'F_WRAPPEDFUNC'
     lcb_map = {}
     if 'use' in rout:
-        for u in rout['use'].keys():
+        for u in rout['use']:
             if u in cb_rules.cb_map:
                 for un in cb_rules.cb_map[u]:
                     ln = un[0]
                     if 'map' in rout['use'][u]:
-                        for k in rout['use'][u]['map'].keys():
+                        for k in rout['use'][u]['map']:
                             if rout['use'][u]['map'][k] == un[0]:
                                 ln = k
                                 break

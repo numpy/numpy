@@ -105,7 +105,7 @@ def buildhooks(pymod):
         if hasbody(m):
             for b in m['body']:
                 notvars.append(b['name'])
-        for n in m['vars'].keys():
+        for n in m['vars']:
             var = m['vars'][n]
 
             if (n not in notvars and isvariable(var)) and (not l_or(isintent_hide, isprivate)(var)):

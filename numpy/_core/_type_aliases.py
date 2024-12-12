@@ -113,7 +113,7 @@ for type_info in typeinfo.values():
             break
 
 # sort sctype groups by bitsize
-for sctype_key in sctypes.keys():
+for sctype_key in sctypes:
     sctype_list = list(sctypes[sctype_key])
     sctype_list.sort(key=lambda x: dtype(x).itemsize)
     sctypes[sctype_key] = sctype_list

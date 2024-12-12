@@ -745,9 +745,8 @@ class system_info:
 
     def parse_config_files(self):
         self.cp.read(self.files)
-        if not self.cp.has_section(self.section):
-            if self.section is not None:
-                self.cp.add_section(self.section)
+        if not self.cp.has_section(self.section) and self.section is not None:
+            self.cp.add_section(self.section)
 
     def calc_libraries_info(self):
         libs = self.get_libraries()
@@ -850,14 +849,13 @@ class system_info:
             log.info(self.__class__.__name__ + ':')
             if hasattr(self, 'calc_info'):
                 self.calc_info()
-            if notfound_action:
-                if not self.has_info():
-                    if notfound_action == 1:
-                        warnings.warn(self.notfounderror.__doc__, stacklevel=2)
-                    elif notfound_action == 2:
-                        raise self.notfounderror(self.notfounderror.__doc__)
-                    else:
-                        raise ValueError(repr(notfound_action))
+            if notfound_action and not self.has_info():
+                if notfound_action == 1:
+                    warnings.warn(self.notfounderror.__doc__, stacklevel=2)
+                elif notfound_action == 2:
+                    raise self.notfounderror(self.notfounderror.__doc__)
+                else:
+                    raise ValueError(repr(notfound_action))
 
             if not self.has_info():
                 log.info('  NOT AVAILABLE')
@@ -879,16 +877,15 @@ class system_info:
     def get_paths(self, section, key):
         dirs = self.cp.get(section, key).split(os.pathsep)
         env_var = self.dir_env_var
-        if env_var:
-            if is_sequence(env_var):
-                e0 = env_var[-1]
-                for e in env_var:
-                    if e in os.environ:
-                        e0 = e
-                        break
-                if not env_var[0] == e0:
-                    log.info('Setting %s=%s' % (env_var[0], e0))
-                env_var = e0
+        if env_var and is_sequence(env_var):
+            e0 = env_var[-1]
+            for e in env_var:
+                if e in os.environ:
+                    e0 = e
+                    break
+            if not env_var[0] == e0:
+                log.info('Setting %s=%s' % (env_var[0], e0))
+            env_var = e0
         if env_var and env_var in os.environ:
             d = os.environ[env_var]
             if d == 'None':

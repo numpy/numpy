@@ -52,8 +52,8 @@ def main(install_dir, tests_check):
         print("----------- No test files were installed --------------")
     else:
         # Check test files detected in repo are installed
-        for test_file in numpy_test_files.keys():
-            if test_file not in installed_test_files.keys():
+        for test_file in numpy_test_files:
+            if test_file not in installed_test_files:
                 raise Exception(
                     "%s is not installed" % numpy_test_files[test_file]
                 )
@@ -64,8 +64,8 @@ def main(install_dir, tests_check):
     installed_pyi_files = get_files(INSTALLED_DIR, kind='stub')
 
     # Check *.pyi files detected in repo are installed
-    for pyi_file in numpy_pyi_files.keys():
-        if pyi_file not in installed_pyi_files.keys():
+    for pyi_file in numpy_pyi_files:
+        if pyi_file not in installed_pyi_files:
             if (tests_check == "--no-tests" and
                     "tests" in numpy_pyi_files[pyi_file]):
                 continue
@@ -115,7 +115,7 @@ if __name__ == '__main__':
                            'intro-install_plan.json'), 'r') as f:
         targets = json.load(f)
 
-    for key in targets.keys():
+    for key in targets:
         for values in list(targets[key].values()):
             if values['tag'] not in all_tags:
                 all_tags.add(values['tag'])

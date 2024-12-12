@@ -281,10 +281,7 @@ def is_unexpected(name):
     if name in PUBLIC_ALIASED_MODULES:
         return False
 
-    if name in PRIVATE_BUT_PRESENT_MODULES:
-        return False
-
-    return True
+    return not name in PRIVATE_BUT_PRESENT_MODULES
 
 
 if sys.version_info < (3, 12):

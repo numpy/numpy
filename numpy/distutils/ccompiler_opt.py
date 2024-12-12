@@ -735,12 +735,12 @@ class _Distutils:
         if not hasattr(self._ccompiler, "_paths"):
             self._dist_test_spawn(cmd)
             return
-        old_path = os.getenv("path")
+        old_path = os.getenv("PATH")
         try:
-            os.environ["path"] = self._ccompiler._paths
+            os.environ["PATH"] = self._ccompiler._paths
             self._dist_test_spawn(cmd)
         finally:
-            os.environ["path"] = old_path
+            os.environ["PATH"] = old_path
 
     _dist_warn_regex = re.compile(
         # intel and msvc compilers don't raise
@@ -815,25 +815,24 @@ class _Cache:
 
         self._cache_hash = self.cache_hash(*factors, *self.conf_cache_factors)
         self._cache_path = cache_path
-        if cache_path:
-            if os.path.exists(cache_path):
-                self.dist_log("load cache from file ->", cache_path)
-                cache_mod = self.dist_load_module("cache", cache_path)
-                if not cache_mod:
-                    self.dist_log(
-                        "unable to load the cache file as a module",
-                        stderr=True
-                    )
-                elif not hasattr(cache_mod, "hash") or \
+        if cache_path and os.path.exists(cache_path):
+            self.dist_log("load cache from file ->", cache_path)
+            cache_mod = self.dist_load_module("cache", cache_path)
+            if not cache_mod:
+                self.dist_log(
+                    "unable to load the cache file as a module",
+                    stderr=True
+                )
+            elif not hasattr(cache_mod, "hash") or \
                      not hasattr(cache_mod, "data"):
-                    self.dist_log("invalid cache file", stderr=True)
-                elif self._cache_hash == cache_mod.hash:
-                    self.dist_log("hit the file cache")
-                    for attr, val in cache_mod.data.items():
-                        setattr(self, attr, val)
-                    self.cache_infile = True
-                else:
-                    self.dist_log("miss the file cache")
+                self.dist_log("invalid cache file", stderr=True)
+            elif self._cache_hash == cache_mod.hash:
+                self.dist_log("hit the file cache")
+                for attr, val in cache_mod.data.items():
+                    setattr(self, attr, val)
+                self.cache_infile = True
+            else:
+                self.dist_log("miss the file cache")
 
         if not self.cache_infile:
             other_cache = _share_cache.get(self._cache_hash)
@@ -863,7 +862,7 @@ class _Cache:
         # TODO: don't write if the cache doesn't change
         self.dist_log("write cache to path ->", self._cache_path)
         cdict = self.__dict__.copy()
-        for attr in self.__dict__.keys():
+        for attr in self.__dict__:
             if re.match(self._cache_ignore, attr):
                 cdict.pop(attr)
 

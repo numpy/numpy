@@ -954,9 +954,8 @@ def as_number(obj, kind=4):
         return Expr(Op.INTEGER, (obj, kind))
     if isinstance(obj, float):
         return Expr(Op.REAL, (obj, kind))
-    if isinstance(obj, Expr):
-        if obj.op in (Op.INTEGER, Op.REAL):
-            return obj
+    if isinstance(obj, Expr) and obj.op in (Op.INTEGER, Op.REAL):
+        return obj
     raise OpError(f'cannot convert {obj} to INTEGER or REAL constant')
 
 
@@ -965,9 +964,8 @@ def as_integer(obj, kind=4):
     """
     if isinstance(obj, int):
         return Expr(Op.INTEGER, (obj, kind))
-    if isinstance(obj, Expr):
-        if obj.op is Op.INTEGER:
-            return obj
+    if isinstance(obj, Expr) and obj.op is Op.INTEGER:
+        return obj
     raise OpError(f'cannot convert {obj} to INTEGER constant')
 
 
@@ -1078,12 +1076,11 @@ def as_factors(obj):
         obj = normalize(obj)
         if obj.op is Op.FACTORS:
             return obj
-        if obj.op is Op.TERMS:
-            if len(obj.data) == 1:
-                (term, coeff), = obj.data.items()
-                if coeff == 1:
-                    return Expr(Op.FACTORS, {term: 1})
-                return Expr(Op.FACTORS, {term: 1, Expr.number(coeff): 1})
+        if obj.op is Op.TERMS and len(obj.data) == 1:
+            (term, coeff), = obj.data.items()
+            if coeff == 1:
+                return Expr(Op.FACTORS, {term: 1})
+            return Expr(Op.FACTORS, {term: 1, Expr.number(coeff): 1})
         if (obj.op is Op.APPLY
              and obj.data[0] is ArithOp.DIV
              and not obj.data[2]):
@@ -1101,10 +1098,9 @@ def as_term_coeff(obj):
             return as_integer(1, obj.data[1]), obj.data[0]
         if obj.op is Op.REAL:
             return as_real(1, obj.data[1]), obj.data[0]
-        if obj.op is Op.TERMS:
-            if len(obj.data) == 1:
-                (term, coeff), = obj.data.items()
-                return term, coeff
+        if obj.op is Op.TERMS and len(obj.data) == 1:
+            (term, coeff), = obj.data.items()
+            return term, coeff
             # TODO: find common divisor of coefficients
         if obj.op is Op.APPLY and obj.data[0] is ArithOp.DIV:
             t, c = as_term_coeff(obj.data[1][0])
@@ -1344,10 +1340,9 @@ class _FromStringWorker:
             operands = restore(r.split(','))
             if context == 'args':
                 return tuple(self.process(operands))
-            if context == 'expr':
-                if len(operands) == 2:
-                    # complex number literal
-                    return as_complex(*self.process(operands))
+            if context == 'expr' and len(operands) == 2:
+                # complex number literal
+                return as_complex(*self.process(operands))
             raise NotImplementedError(
                 f'parsing comma-separated list (context={context}): {r}')
 
@@ -1475,9 +1470,8 @@ class _FromStringWorker:
             paren = _get_parenthesis_kind(r)
             items = self.process(restore(raw_symbols_map[r]),
                                  'expr' if paren == 'ROUND' else 'args')
-            if paren == 'ROUND':
-                if isinstance(items, Expr):
-                    return items
+            if paren == 'ROUND' and isinstance(items, Expr):
+                return items
             if paren in ['ROUNDDIV', 'SQUARE']:
                 # Expression is a array constructor
                 if isinstance(items, Expr):

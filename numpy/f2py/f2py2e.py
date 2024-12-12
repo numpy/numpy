@@ -387,7 +387,7 @@ def buildmodules(lst):
             cb_rules.buildcallbacks(item)
         else:
             if 'use' in item:
-                for u in item['use'].keys():
+                for u in item['use']:
                     if u not in isusedby:
                         isusedby[u] = []
                     isusedby[u].append(item['name'])
@@ -401,7 +401,7 @@ def buildmodules(lst):
         else:
             um = []
             if 'use' in module:
-                for u in module['use'].keys():
+                for u in module['use']:
                     if u in isusedby and u in mnames:
                         um.append(modules[mnames.index(u)])
                     else:
@@ -474,7 +474,7 @@ def run_main(comline_list):
     isusedby = {}
     for plist in postlist:
         if 'use' in plist:
-            for u in plist['use'].keys():
+            for u in plist['use']:
                 if u not in isusedby:
                     isusedby[u] = []
                 isusedby[u].append(plist['name'])
@@ -506,7 +506,7 @@ def run_main(comline_list):
 
     ret = buildmodules(postlist)
 
-    for mn in ret.keys():
+    for mn in ret:
         dict_append(ret[mn], {'csrc': fobjcsrc, 'h': fobjhsrc})
     return ret
 

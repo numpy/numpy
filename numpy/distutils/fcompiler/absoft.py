@@ -106,9 +106,8 @@ class AbsoftFCompiler(FCompiler):
         opt = FCompiler.get_flags(self)
         if os.name != 'nt':
             opt.extend(['-s'])
-            if self.get_version():
-                if self.get_version()>='8.2':
-                    opt.append('-fpic')
+            if self.get_version() and self.get_version()>='8.2':
+                opt.append('-fpic')
         return opt
 
     def get_flags_f77(self):
@@ -133,9 +132,8 @@ class AbsoftFCompiler(FCompiler):
         opt = FCompiler.get_flags_f90(self)
         opt.extend(["-YCFRL=1", "-YCOM_NAMES=LCS", "-YCOM_PFX", "-YEXT_PFX",
                     "-YCOM_SFX=_", "-YEXT_SFX=_", "-YEXT_NAMES=LCS"])
-        if self.get_version():
-            if self.get_version()>'4.6':
-                opt.extend(["-YDEALLOC=ALL"])
+        if self.get_version() and self.get_version()>'4.6':
+            opt.extend(["-YDEALLOC=ALL"])
         return opt
 
     def get_flags_fix(self):

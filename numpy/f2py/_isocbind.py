@@ -58,5 +58,5 @@ iso_c2py_map = {}
 
 isoc_kindmap = {}
 for fortran_type, c_type_dict in iso_c_binding_map.items():
-    for c_type in c_type_dict.keys():
+    for c_type in c_type_dict:
         isoc_kindmap[c_type] = fortran_type

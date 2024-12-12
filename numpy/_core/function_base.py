@@ -464,10 +464,7 @@ def _needs_add_docstring(obj):
     if isinstance(obj, (types.FunctionType, types.MethodType, property)):
         return False
 
-    if isinstance(obj, type) and obj.__flags__ & Py_TPFLAGS_HEAPTYPE:
-        return False
-
-    return True
+    return not (isinstance(obj, type) and obj.__flags__ & Py_TPFLAGS_HEAPTYPE)
 
 
 def _add_docstring(obj, doc, warn_on_python):

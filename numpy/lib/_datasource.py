@@ -264,7 +264,7 @@ class DataSource:
 
         """
         fname, ext = os.path.splitext(filename)
-        return ext in _file_openers.keys()
+        return ext in _file_openers
 
     def _iswritemode(self, mode):
         """Test if the given mode will open a file for writing."""
@@ -291,7 +291,7 @@ class DataSource:
         """Return a tuple containing compressed filename variations."""
         names = [filename]
         if not self._iszip(filename):
-            for zipext in _file_openers.keys():
+            for zipext in _file_openers:
                 if zipext:
                     names.append(filename+zipext)
         return names

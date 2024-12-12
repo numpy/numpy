@@ -472,9 +472,9 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
         return lambda: x
 
     if formatter is not None:
-        fkeys = [k for k in formatter.keys() if formatter[k] is not None]
+        fkeys = [k for k in formatter if formatter[k] is not None]
         if 'all' in fkeys:
-            for key in formatdict.keys():
+            for key in formatdict:
                 formatdict[key] = indirect(formatter['all'])
         if 'int_kind' in fkeys:
             for key in ['int']:
@@ -487,7 +487,7 @@ def _get_formatdict(data, *, precision, floatmode, suppress, sign, legacy,
                 formatdict[key] = indirect(formatter['complex_kind'])
         if 'str_kind' in fkeys:
             formatdict['numpystr'] = indirect(formatter['str_kind'])
-        for key in formatdict.keys():
+        for key in formatdict:
             if key in fkeys:
                 formatdict[key] = indirect(formatter[key])
 

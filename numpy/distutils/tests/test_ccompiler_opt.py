@@ -265,11 +265,10 @@ class _Test_CCompilerOpt:
                     'expected to find target "%s"' % match_tar
                 )
             flags = tar_flags[match_tar]
-            if not match_flags:
-                if len(flags) != 0:
-                    raise AssertionError(
-                        'expected to find empty flags in target "%s"' % match_tar
-                    )
+            if not match_flags and len(flags) != 0:
+                raise AssertionError(
+                    'expected to find empty flags in target "%s"' % match_tar
+                )
             if not re.match(match_flags, flags):
                 raise AssertionError(
                     '"%s" flags "%s" not match "%s"' % (match_tar, flags, match_flags)

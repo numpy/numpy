@@ -1329,7 +1329,7 @@ def buildmodule(m, um):
     needs['typedefs'] += [cvar for cvar in capi_maps.f2cmap_mapped #
                           if cvar in typedef_need_dict.values()]
     code = {}
-    for n in needs.keys():
+    for n in needs:
         code[n] = []
         for k in needs[n]:
             c = ''

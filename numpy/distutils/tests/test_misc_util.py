@@ -63,9 +63,7 @@ class TestSharedExtension:
     def test_get_shared_lib_extension(self):
         import sys
         ext = get_shared_lib_extension(is_python_ext=False)
-        if sys.platform.startswith('linux'):
-            assert_equal(ext, '.so')
-        elif sys.platform.startswith('gnukfreebsd'):
+        if sys.platform.startswith(('linux', 'gnukfreebsd')):
             assert_equal(ext, '.so')
         elif sys.platform.startswith('darwin'):
             assert_equal(ext, '.dylib')

@@ -414,9 +414,8 @@ def isexternal(var):
 
 def getdimension(var):
     dimpattern = r"\((.*?)\)"
-    if 'attrspec' in var.keys():
-        if any('dimension' in s for s in var['attrspec']):
-            return [re.findall(dimpattern, v) for v in var['attrspec']][0]
+    if 'attrspec' in var and any('dimension' in s for s in var['attrspec']):
+        return [re.findall(dimpattern, v) for v in var['attrspec']][0]
 
 
 def isrequired(var):
@@ -701,9 +700,7 @@ def getcallprotoargument(rout, cb_map={}):
             ctype = cb_map[n] + '_typedef'
         else:
             ctype = getctype(var)
-            if l_and(isintent_c, l_or(isscalar, iscomplex))(var):
-                pass
-            elif isstring(var):
+            if l_and(isintent_c, l_or(isscalar, iscomplex))(var) or isstring(var):
                 pass
             else:
                 if not isattr_value(var):
@@ -750,7 +747,7 @@ def getargs(rout):
 
 def getargs2(rout):
     sortargs, args = [], rout.get('args', [])
-    auxvars = [a for a in rout['vars'].keys() if isintent_aux(rout['vars'][a])
+    auxvars = [a for a in rout['vars'] if isintent_aux(rout['vars'][a])
                and a not in args]
     args = auxvars + args
     if 'sortvars' in rout:
@@ -815,7 +812,7 @@ def dictappend(rd, ar):
         for a in ar:
             rd = dictappend(rd, a)
         return rd
-    for k in ar.keys():
+    for k in ar:
         if k[0] == '_':
             continue
         if k in rd:
@@ -826,14 +823,13 @@ def dictappend(rd, ar):
                     rd[k] = rd[k] + ar[k]
                 else:
                     rd[k].append(ar[k])
-            elif isinstance(rd[k], dict):
-                if isinstance(ar[k], dict):
-                    if k == 'separatorsfor':
-                        for k1 in ar[k].keys():
-                            if k1 not in rd[k]:
-                                rd[k][k1] = ar[k][k1]
-                    else:
-                        rd[k] = dictappend(rd[k], ar[k])
+            elif isinstance(rd[k], dict) and isinstance(ar[k], dict):
+                if k == 'separatorsfor':
+                    for k1 in ar[k]:
+                        if k1 not in rd[k]:
+                            rd[k][k1] = ar[k][k1]
+                else:
+                    rd[k] = dictappend(rd[k], ar[k])
         else:
             rd[k] = ar[k]
     return rd
@@ -855,7 +851,7 @@ def applyrules(rules, d, var={}):
         if 'needs' in res:
             cfuncs.append_needs(res['needs'])
 
-    for k in rules.keys():
+    for k in rules:
         if k == 'separatorsfor':
             ret[k] = rules[k]
             continue
@@ -871,25 +867,19 @@ def applyrules(rules, d, var={}):
             continue
         elif isinstance(rules[k], dict):
             ret[k] = []
-            for k1 in rules[k].keys():
+            for k1 in rules[k]:
                 if isinstance(k1, types.FunctionType) and k1(var):
                     if isinstance(rules[k][k1], list):
                         for i in rules[k][k1]:
                             if isinstance(i, dict):
                                 res = applyrules({'supertext': i}, d, var)
-                                if 'supertext' in res:
-                                    i = res['supertext']
-                                else:
-                                    i = ''
+                                i = res.get('supertext', '')
                             ret[k].append(replace(i, d))
                     else:
                         i = rules[k][k1]
                         if isinstance(i, dict):
                             res = applyrules({'supertext': i}, d)
-                            if 'supertext' in res:
-                                i = res['supertext']
-                            else:
-                                i = ''
+                            i = res.get('supertext', '')
                         ret[k].append(replace(i, d))
         else:
             errmess('applyrules: ignoring rule %s.\n' % repr(rules[k]))
@@ -922,7 +912,7 @@ def getuseblocks(pymod):
     for inner in pymod['body']:
         for modblock in inner['body']:
             if modblock.get('use'):
-                all_uses.extend([x for x in modblock.get("use").keys() if "__" not in x])
+                all_uses.extend([x for x in modblock.get("use") if "__" not in x])
     return all_uses
 
 def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):

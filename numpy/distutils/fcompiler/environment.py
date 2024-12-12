@@ -68,10 +68,9 @@ class EnvironmentConfig:
                         var = envvar_contents
                 else:
                     var = envvar_contents
-        if confvar is not None and self._conf:
-            if confvar in self._conf:
-                source, confvar_contents = self._conf[confvar]
-                var = convert(confvar_contents)
+        if confvar is not None and self._conf and confvar in self._conf:
+            source, confvar_contents = self._conf[confvar]
+            var = convert(confvar_contents)
         return var
 
 

@@ -908,7 +908,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
             if dim == 1:
                 broadcast_indices[tnum].append(char)
 
-            if char in dimension_dict.keys():
+            if char in dimension_dict:
                 # For broadcasting cases we always want the largest dim size
                 if dimension_dict[char] == 1:
                     dimension_dict[char] = dim

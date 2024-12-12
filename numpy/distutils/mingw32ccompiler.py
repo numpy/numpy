@@ -562,10 +562,9 @@ def check_embedded_msvcr_match_linked(msver):
     # check msvcr major version are the same for linking and
     # embedding
     maj = msvc_runtime_major()
-    if maj:
-        if not maj == int(msver):
-            raise ValueError(
-                  "Discrepancy between linked msvcr " \
+    if maj and not maj == int(msver):
+        raise ValueError(
+              "Discrepancy between linked msvcr " \
                   "(%d) and the one about to be embedded " \
                   "(%d)" % (int(msver), maj))
 
@@ -586,12 +585,11 @@ def rc_name(config):
 
 def generate_manifest(config):
     msver = get_build_msvc_version()
-    if msver is not None:
-        if msver >= 8:
-            check_embedded_msvcr_match_linked(msver)
-            ma_str, mi_str = str(msver).split('.')
-            # Write the manifest file
-            manxml = msvc_manifest_xml(int(ma_str), int(mi_str))
-            with open(manifest_name(config), "w") as man:
-                config.temp_files.append(manifest_name(config))
-                man.write(manxml)
+    if msver is not None and msver >= 8:
+        check_embedded_msvcr_match_linked(msver)
+        ma_str, mi_str = str(msver).split('.')
+        # Write the manifest file
+        manxml = msvc_manifest_xml(int(ma_str), int(mi_str))
+        with open(manifest_name(config), "w") as man:
+            config.temp_files.append(manifest_name(config))
+            man.write(manxml)

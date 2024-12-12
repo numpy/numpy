@@ -2753,8 +2753,8 @@ def test_npzfile_dict():
 
     assert_('x' in z)
     assert_('y' in z)
-    assert_('x' in z.keys())
-    assert_('y' in z.keys())
+    assert_('x' in z)
+    assert_('y' in z)
 
     for f, a in z.items():
         assert_(f in ['x', 'y'])
@@ -2768,7 +2768,7 @@ def test_npzfile_dict():
     for f in z:
         assert_(f in ['x', 'y'])
 
-    assert_('x' in z.keys())
+    assert_('x' in z)
     assert (z.get('x') == z['x']).all()
 
 
