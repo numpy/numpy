@@ -1927,55 +1927,60 @@ operand_different_than_broadcast: {
 /*
  * At this point we (presumably) use a buffered iterator and here we want
  * to find out the best way to buffer the iterator in a fashion that we don't
- * have to figure out a lot of things on every iteration.
+ * have to figure out a lot of things on every outer iteration.
  *
  * How do we iterate?
  * ------------------
  * There are currently two modes of "buffered" iteration:
  * 1. The normal mode, where we either buffer each operand or not and
- *    then do a normal 1-D loop on those buffers (or operands).
+ *    then do a 1-D loop on those buffers (or operands).
  * 2. The "reduce" mode.  In reduce mode (ITFLAG_REDUCE) we internally use a
- *    a double iteration where:
+ *    a double iteration where for "reduce" operands we have:
  *      - One outer iteration with stride == 0 and a core with at least one
- *        stride != 0 (all of them if this is a reduce operand).
+ *        stride != 0 (all of them if this is a true reduce/writeable operand).
  *      - One outer iteration with stride != 0 and a core of all strides == 0.
  *    This setup allows filling the buffer with only the stride != 0 and then
- *    doing the double loop on the buffer (either ).
+ *    doing the double loop.
  *
  * Only a writeable (reduce) operand require this reduce mode because for
- * reading it is OK if the buffer holds duplicates.
- * The reason for the reduce mode is that it allows for a larger core size.
- * If we use the reduce-mode, we can apply it also to read-only operands.
+ * reading it is OK if the buffer holds duplicates elements.
+ * The goal of the reduce mode is that it allows for larger core sizes and
+ * buffers since the zero strides do not allow a single 1-d iteration.
+ * If do we use the reduce-mode, we can apply it also to read-only operands
+ * as an optimization.
  *
  * The functino here finds an outer dimension and it's "core" to use that
  * works with reductions.
- * While iterating, we will buffer while making sure that:
+ * While iterating, we will fill the buffers making sure that we:
  *   - Never buffer beyond the outer dimension (optimize chance of re-use).
  *   - Never buffer beyond the end of the core (all but outer dimension)
- *     if the user manually set the iterator to the middle of the core.
+ *     if the user manually moved the iterator to the middle of the core.
+ *     (Not typical and if, should usually happen once.)
  *
- * These two things mean that the buffer always looks the same, although it
- * may be smaller and it also means that we can optimize buffer copies for
- * the inner-sizes.
- * (In the original version, the buffersize was always fully used for non
- * reductions, which meant a lot of work on each buffer copy, less buffer
- * re-use, and no fixed-strides into the buffer.)
+ * This means that the data stored in the buffer has always the same structure
+ * (except when manually moved).  And we can simplify optimize the buffer
+ * filling in some cases and it is easy to decide whether a buffer content
+ * may be re-usable (this can happen with broadcasted operands).
  *
  * Best buffer and core size
  * -------------------------
  * We don't want to figure out the complicated copies every time we fill buffers
- * so we want to find a the outer iteration dimension so that:
- *   - Its core size is smaller than the buffersize if buffering is needed.
+ * so here we want to find a the outer iteration dimension so that:
+ *   - Its core size is <= the maximum buffersize if buffering is needed.
  *   - Allows for reductions to work (with or without reduce-mode)
  *   - Optimizes for iteration overhead.  We estimate the total overhead with:
  *     `(1 + n_buffers) / size`.
  *     The `size` is the `min(core_size * outer_dim_size, buffersize)` and
- *     estimates how often we fill buffers (size is unbounded if no buffering
- *     is needed).
- *     NOTE: We could tweak this, it is not optimized/proven to be best.
+ *     estimates how often we fill buffers (unbounded if not buffering).
  *
- * In theory, the reduction axis could also span multiple axes, but we do
- * not try to discover this.
+ * TODO: Probably should tweak or simplify?  The formula is clearly not
+ *       the actual cost (Buffers add a constant total cost as well).
+ *       Right now, it mostly rejects growing the core size when we are already
+ *       close to the maximum buffersize (even overhead wise not worth it).
+ *       That may be good enough, but maybe it can be spelled simpler?
+ *
+ * In theory, the reduction could also span multiple axes if other operands
+ * are buffered.  We do not try to discover this.
  */
 static void
 npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
