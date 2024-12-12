@@ -240,7 +240,6 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         bufferdata = NIT_BUFFERDATA(iter);
         NBF_SIZE(bufferdata) = 0;
         memset(NBF_BUFFERS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
-        memset(NBF_PTRS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
         /* Ensure that the transferdata/auxdata is NULLed */
         memset(NBF_TRANSFERINFO(bufferdata), 0, nop * sizeof(NpyIter_TransferInfo));
     }
@@ -492,6 +491,11 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
                 return NULL;
             }
         }
+    }
+    else if (itflags&NPY_ITFLAG_EXLOOP)  {
+        /* make sure to update the user pointers (copy to buffer does). */
+        assert(!(itflags & NPY_ITFLAG_HASINDEX));
+        memcpy(NIT_USERPTRS(iter), NIT_DATAPTRS(iter), nop * sizeof(void *));
     }
 
     NPY_IT_TIME_POINT(c_prepare_buffers);
@@ -1595,11 +1599,11 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
+    memcpy(NIT_DATAPTRS(iter), op_dataptr, nop * sizeof(void *));
     if (ndim == 0) {
         /* Need to fill the first axisdata, even if the iterator is 0-d */
         NAD_SHAPE(axisdata) = 1;
         NAD_INDEX(axisdata) = 0;
-        memcpy(NAD_PTRS(axisdata), op_dataptr, NPY_SIZEOF_INTP*nop);
         memset(NAD_STRIDES(axisdata), 0, NPY_SIZEOF_INTP*nop);
     }
 
@@ -1610,7 +1614,6 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
 
         NAD_SHAPE(axisdata) = bshape;
         NAD_INDEX(axisdata) = 0;
-        memcpy(NAD_PTRS(axisdata), op_dataptr, NPY_SIZEOF_INTP*nop);
 
         for (iop = 0; iop < nop; ++iop) {
             op_cur = op[iop];
@@ -2022,13 +2025,7 @@ npyiter_replace_axisdata(
     /* Now the base data pointer is calculated, set it everywhere it's needed */
     NIT_RESETDATAPTR(iter)[iop] = op_dataptr;
     NIT_BASEOFFSETS(iter)[iop] = baseoffset;
-    axisdata = axisdata0;
-    /* Fill at least one axisdata, for the 0-d case */
-    NAD_PTRS(axisdata)[iop] = op_dataptr;
-    NIT_ADVANCE_AXISDATA(axisdata, 1);
-    for (idim = 1; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-        NAD_PTRS(axisdata)[iop] = op_dataptr;
-    }
+    NIT_DATAPTRS(iter)[iop] = op_dataptr;
 }
 
 /*
@@ -2049,15 +2046,15 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
 
+    NIT_DATAPTRS(iter)[nop] = 0;
     /*
      * If there is only one element being iterated, we just have
-     * to touch the first AXISDATA because nothing will ever be
-     * incremented. This also initializes the data for the 0-d case.
+     * to touch the first set the "dataptr".
+     * This also initializes the data for the 0-d case.
      */
     if (NIT_ITERSIZE(iter) == 1) {
         if (itflags & NPY_ITFLAG_HASINDEX) {
             axisdata = NIT_AXISDATA(iter);
-            NAD_PTRS(axisdata)[nop] = 0;
         }
         return;
     }
@@ -2075,7 +2072,6 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
             else {
                 NAD_STRIDES(axisdata)[nop] = indexstride;
             }
-            NAD_PTRS(axisdata)[nop] = 0;
             indexstride *= shape;
         }
     }
@@ -2092,7 +2088,6 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
             else {
                 NAD_STRIDES(axisdata)[nop] = indexstride;
             }
-            NAD_PTRS(axisdata)[nop] = 0;
             indexstride *= shape;
         }
     }
@@ -2161,12 +2156,12 @@ npyiter_flip_negative_strides(NpyIter *iter)
     int iop, nop = NIT_NOP(iter);
 
     npy_intp istrides, nstrides = NAD_NSTRIDES();
-    NpyIter_AxisData *axisdata, *axisdata0;
+    NpyIter_AxisData *axisdata;
     npy_intp *baseoffsets;
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
     int any_flipped = 0;
 
-    axisdata0 = axisdata = NIT_AXISDATA(iter);
+    axisdata = NIT_AXISDATA(iter);
     baseoffsets = NIT_BASEOFFSETS(iter);
     for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
         npy_intp *strides = NAD_STRIDES(axisdata);
@@ -2217,13 +2212,7 @@ npyiter_flip_negative_strides(NpyIter *iter)
 
         for (istrides = 0; istrides < nstrides; ++istrides) {
             resetdataptr[istrides] += baseoffsets[istrides];
-        }
-        axisdata = axisdata0;
-        for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-            char **ptrs = NAD_PTRS(axisdata);
-            for (istrides = 0; istrides < nstrides; ++istrides) {
-                ptrs[istrides] = resetdataptr[istrides];
-            }
+            NIT_DATAPTRS(iter)[istrides] = resetdataptr[istrides];
         }
         /*
          * Indicate that some of the perm entries are negative,

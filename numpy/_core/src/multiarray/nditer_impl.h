@@ -174,9 +174,13 @@ typedef npy_int16 npyiter_opitflags;
         ((NPY_SIZEOF_PY_INTPTR_T)*(nop))
 #define NIT_OPITFLAGS_SIZEOF(itflags, ndim, nop) \
         (NPY_PTR_ALIGNED(sizeof(npyiter_opitflags) * nop))
+#define NIT_DATAPTRS_SIZEOF(itflags, ndim, nop) \
+        ((NPY_SIZEOF_PY_INTPTR_T)*(nop+1))
+#define NIT_USERPTRS_SIZEOF(itflags, ndim, nop) \
+        ((NPY_SIZEOF_PY_INTPTR_T)*(nop+1))
 #define NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop) \
         ((itflags&NPY_ITFLAG_BUFFER) ? ( \
-            (NPY_SIZEOF_PY_INTPTR_T)*(6 + 5*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
+            (NPY_SIZEOF_PY_INTPTR_T)*(6 + 4*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
 
 /* Byte offsets of the iterator members starting from iter->iter_flexdata */
 #define NIT_PERM_OFFSET() \
@@ -199,9 +203,15 @@ typedef npy_int16 npyiter_opitflags;
 #define NIT_BUFFERDATA_OFFSET(itflags, ndim, nop) \
         (NIT_OPITFLAGS_OFFSET(itflags, ndim, nop) + \
          NIT_OPITFLAGS_SIZEOF(itflags, ndim, nop))
-#define NIT_AXISDATA_OFFSET(itflags, ndim, nop) \
+#define NIT_DATAPTRS_OFFSET(itflags, ndim, nop) + \
         (NIT_BUFFERDATA_OFFSET(itflags, ndim, nop) + \
          NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop))
+#define NIT_USERPTRS_OFFSET(itflags, ndim, nop) + \
+        (NIT_DATAPTRS_OFFSET(itflags, ndim, nop) + \
+         NIT_DATAPTRS_SIZEOF(itflags, ndim, nop))
+#define NIT_AXISDATA_OFFSET(itflags, ndim, nop) \
+        (NIT_USERPTRS_OFFSET(itflags, ndim, nop) + \
+         NIT_USERPTRS_SIZEOF(itflags, ndim, nop))
 
 /* Internal-only ITERATOR DATA MEMBER ACCESS */
 #define NIT_ITFLAGS(iter) \
@@ -234,6 +244,10 @@ typedef npy_int16 npyiter_opitflags;
         iter->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop)))
 #define NIT_BUFFERDATA(iter) ((NpyIter_BufferData *)( \
         iter->iter_flexdata + NIT_BUFFERDATA_OFFSET(itflags, ndim, nop)))
+#define NIT_DATAPTRS(iter) ((char **)( \
+        iter->iter_flexdata + NIT_DATAPTRS_OFFSET(itflags, ndim, nop)))
+#define NIT_USERPTRS(iter) ((char **)( \
+        iter->iter_flexdata + NIT_USERPTRS_OFFSET(itflags, ndim, nop)))
 #define NIT_AXISDATA(iter) ((NpyIter_AxisData *)( \
         iter->iter_flexdata + NIT_AXISDATA_OFFSET(itflags, ndim, nop)))
 
@@ -261,16 +275,14 @@ struct NpyIter_BufferData_tag {
 #define NBF_REDUCE_OUTERDIM(bufferdata) ((bufferdata)->reduce_outerdim)
 #define NBF_STRIDES(bufferdata) ( \
         &(bufferdata)->bd_flexdata + 0)
-#define NBF_PTRS(bufferdata) ((char **) \
-        (&(bufferdata)->bd_flexdata + 1*(nop)))
 #define NBF_REDUCE_OUTERSTRIDES(bufferdata) ( \
-        (&(bufferdata)->bd_flexdata + 2*(nop)))
+        (&(bufferdata)->bd_flexdata + 1*(nop)))
 #define NBF_REDUCE_OUTERPTRS(bufferdata) ((char **) \
-        (&(bufferdata)->bd_flexdata + 3*(nop)))
+        (&(bufferdata)->bd_flexdata + 2*(nop)))
 #define NBF_BUFFERS(bufferdata) ((char **) \
-        (&(bufferdata)->bd_flexdata + 4*(nop)))
+        (&(bufferdata)->bd_flexdata + 3*(nop)))
 #define NBF_TRANSFERINFO(bufferdata) ((NpyIter_TransferInfo *) \
-        (&(bufferdata)->bd_flexdata + 5*(nop)))
+        (&(bufferdata)->bd_flexdata + 4*(nop)))
 
 /* Internal-only AXISDATA MEMBER ACCESS. */
 struct NpyIter_AxisData_tag {
@@ -281,8 +293,6 @@ struct NpyIter_AxisData_tag {
 #define NAD_INDEX(axisdata) ((axisdata)->index)
 #define NAD_STRIDES(axisdata) ( \
         &(axisdata)->ad_flexdata + 0)
-#define NAD_PTRS(axisdata) ((char **) \
-        (&(axisdata)->ad_flexdata + 1*(nop+1)))
 
 #define NAD_NSTRIDES() \
         ((nop) + ((itflags&NPY_ITFLAG_HASINDEX) ? 1 : 0))
@@ -294,7 +304,7 @@ struct NpyIter_AxisData_tag {
         /* intp index */ \
         1 + \
         /* intp stride[nop+1] AND char* ptr[nop+1] */ \
-        2*((nop)+1) \
+        1*((nop)+1) \
         )*(size_t)NPY_SIZEOF_PY_INTPTR_T)
 
 /*
