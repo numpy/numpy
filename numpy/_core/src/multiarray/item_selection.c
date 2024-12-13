@@ -2014,8 +2014,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 }
                 rcode = argsort(its[j]->dataptr,
                         (npy_intp *)rit->dataptr, N, mps[j]);
-                if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
-                            && PyErr_Occurred())) {
+                if (rcode < 0 || (object && PyErr_Occurred())) {
                     goto fail;
                 }
                 PyArray_ITER_NEXT(its[j]);
