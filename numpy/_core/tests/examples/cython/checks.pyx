@@ -277,13 +277,12 @@ def npystring_pack(arr):
     )
 
     # copy string->packed_string, the pointer to the underlying array buffer
-    if cnp.NpyString_pack(
+    ret = cnp.NpyString_pack(
         allocator, <cnp.npy_packed_static_string *>cnp.PyArray_DATA(arr), string, size,
-    ) == -1:
-        return -1
+    )
 
     cnp.NpyString_release_allocator(allocator)
-    return 0
+    return ret
 
 
 def npystring_load(arr):
@@ -356,4 +355,4 @@ def npystring_allocators_other_types(arr1, arr2):
             break
 
     cnp.NpyString_release_allocators(2, allocators)
-    return 0
+    return ret
