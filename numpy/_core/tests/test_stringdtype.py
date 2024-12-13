@@ -415,8 +415,19 @@ def test_sort(dtype, strings):
 
     def test_sort(strings, arr_sorted):
         arr = np.array(strings, dtype=dtype)
-        np.random.default_rng().shuffle(arr)
         na_object = getattr(arr.dtype, "na_object", "")
+        if na_object is None and None in strings:
+            with pytest.raises(
+                ValueError,
+                match="Cannot compare null that is not a nan-like value",
+            ):
+                np.argsort(arr)
+            argsorted = None
+        elif na_object is pd_NA or na_object != '':
+            argsorted = None
+        else:
+            argsorted = np.argsort(arr)
+        np.random.default_rng().shuffle(arr)
         if na_object is None and None in strings:
             with pytest.raises(
                 ValueError,
@@ -426,6 +437,9 @@ def test_sort(dtype, strings):
         else:
             arr.sort()
             assert np.array_equal(arr, arr_sorted, equal_nan=True)
+        if argsorted is not None:
+            assert np.array_equal(argsorted, np.argsort(strings))
+
 
     # make a copy so we don't mutate the lists in the fixture
     strings = strings.copy()
