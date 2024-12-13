@@ -14,7 +14,7 @@ curdir = pathlib.Path(__file__).parent
 meson_import_dir = curdir.parent / 'vendored-meson' / 'meson' / 'mesonbuild'
 if not meson_import_dir.exists():
     raise RuntimeError(
-        'The `vendored-meson/meson` git submodule does not exist! ' +
+        'The `vendored-meson/meson` git submodule does not exist! '
         'Run `git submodule update --init` to fix this problem.'
     )
 

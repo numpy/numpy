@@ -605,8 +605,7 @@ rout_rules = [
                  '    int #name#_return_value_len = 0;'],
         'callfortran':'#name#_return_value,#name#_return_value_len,',
         'callfortranroutine':['    #name#_return_value_len = #rlength#;',
-                              '    if ((#name#_return_value = (string)malloc('
-                              + '#name#_return_value_len+1) == NULL) {',
+                              '    if ((#name#_return_value = (string)malloc(#name#_return_value_len+1) == NULL) {',
                               '        PyErr_SetString(PyExc_MemoryError, \"out of memory\");',
                               '        f2py_success = 0;',
                               '    } else {',
