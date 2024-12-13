@@ -2318,20 +2318,6 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
     PyArrayObject *ops[3] = {out ? out : arr, arr, out};
 
     /*
-     * TODO: This is a dangerous hack, that works by relying on the GIL, it is
-     *       terrible, terrifying, and trusts that nobody does crazy stuff
-     *       in their type-resolvers.
-     *       By mutating the `out` dimension, we ensure that reduce-likes
-     *       live in a future without value-based promotion even when legacy
-     *       promotion has to be used.
-     */
-    npy_bool evil_ndim_mutating_hack = NPY_FALSE;
-    if (out != NULL && PyArray_NDIM(out) == 0 && PyArray_NDIM(arr) != 0) {
-        evil_ndim_mutating_hack = NPY_TRUE;
-        ((PyArrayObject_fields *)out)->nd = 1;
-    }
-
-    /*
      * TODO: If `out` is not provided, arguably `initial` could define
      *       the first DType (and maybe also the out one), that way
      *       `np.add.reduce([1, 2, 3], initial=3.4)` would return a float
@@ -2351,9 +2337,6 @@ reducelike_promote_and_resolve(PyUFuncObject *ufunc,
 
     PyArrayMethodObject *ufuncimpl = promote_and_get_ufuncimpl(ufunc,
             ops, signature, operation_DTypes, NPY_FALSE, NPY_FALSE, NPY_TRUE);
-    if (evil_ndim_mutating_hack) {
-        ((PyArrayObject_fields *)out)->nd = 0;
-    }
 
     if (ufuncimpl == NULL) {
         /* DTypes may currently get filled in fallbacks and XDECREF for error: */
