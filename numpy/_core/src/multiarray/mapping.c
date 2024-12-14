@@ -976,10 +976,7 @@ array_boolean_subscript(PyArrayObject *self,
         /* Get a dtype transfer function */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
         NPY_cast_info cast_info;
-        /*
-         * TODO: Ignoring cast flags, since this is only ever a copy. In
-         *       principle that may not be quite right in some future?
-         */
+
         NPY_ARRAYMETHOD_FLAGS cast_flags;
         if (PyArray_GetDTypeTransferFunction(
                         IsUintAligned(self) && IsAligned(self),
@@ -992,6 +989,8 @@ array_boolean_subscript(PyArrayObject *self,
             NpyIter_Deallocate(iter);
             return NULL;
         }
+        cast_flags = PyArrayMethod_COMBINED_FLAGS(
+                cast_flags, NpyIter_GetTransferFlags(iter));
 
         /* Get the values needed for the inner loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -1002,7 +1001,10 @@ array_boolean_subscript(PyArrayObject *self,
             return NULL;
         }
 
-        NPY_BEGIN_THREADS_NDITER(iter);
+        /* NOTE: Don't worry about floating point errors as this is a copy. */
+        if (!(cast_flags & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
+        }
 
         innerstrides = NpyIter_GetInnerStrideArray(iter);
         dataptrs = NpyIter_GetDataPtrArray(iter);
@@ -1195,8 +1197,11 @@ array_assign_boolean_subscript(PyArrayObject *self,
             return -1;
         }
 
+        cast_flags = PyArrayMethod_COMBINED_FLAGS(
+                cast_flags, NpyIter_GetTransferFlags(iter));
+
         if (!(cast_flags & NPY_METH_REQUIRES_PYAPI)) {
-            NPY_BEGIN_THREADS_NDITER(iter);
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
         if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
             npy_clear_floatstatus_barrier((char *)self);
@@ -2662,7 +2667,9 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
             return -1;
         }
 
-        NPY_BEGIN_THREADS_NDITER(op_iter);
+        if (!(NpyIter_GetTransferFlags(op_iter) & NPY_METH_REQUIRES_PYAPI)) {
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(op_iter));
+        }
         iterptr = NpyIter_GetDataPtrArray(op_iter);
         iterstride = NpyIter_GetInnerStrideArray(op_iter);
         do {

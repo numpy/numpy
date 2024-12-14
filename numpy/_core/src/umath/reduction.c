@@ -27,9 +27,6 @@
 #include "lowlevel_strided_loops.h"
 #include "reduction.h"
 #include "extobj.h"  /* for _check_ufunc_fperr */
-/* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
-#define NPY_ITERATOR_IMPLEMENTATION_CODE
-#include "nditer_impl.h"
 
 
 /*
