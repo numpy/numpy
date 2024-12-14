@@ -870,12 +870,15 @@ NpyIter_IterationNeedsAPI(NpyIter *iter)
 }
 
 
-/*
- * Fetch the ArrayMethod (runtime) flags for all "transfer functions' (i.e.
- * copy to buffer/casts).
+/*NUMPY_API
+ * Fetch the NPY_ARRAYMETHOD_FLAGS (runtime) flags for all "transfer functions'
+ * (i.e. copy to buffer/casts).
  *
- * TODO: This should be public API, but that only makes sense when the
- *       ArrayMethod API is made public.
+ * It is the preferred way to check whether the iteration requires to hold the
+ * GIL or may set floating point errors during buffer copies.
+ *
+ * I.e. use `NpyIter_GetTransferFlags(iter) & NPY_METH_REQUIRES_PYAPI` to check
+ * if you cannot release the GIL.
  */
 NPY_NO_EXPORT int
 NpyIter_GetTransferFlags(NpyIter *iter)

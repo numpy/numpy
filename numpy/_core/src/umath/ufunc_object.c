@@ -66,10 +66,6 @@
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
 
-/* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
-#define NPY_ITERATOR_IMPLEMENTATION_CODE
-#include "nditer_impl.h"
-
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
 
