@@ -859,7 +859,7 @@ _SignedIntegerCType: TypeAlias = type[
 ]  # fmt: skip
 _FloatingCType: TypeAlias = type[ct.c_float | ct.c_double | ct.c_longdouble]
 _IntegerCType: TypeAlias = _UnsignedIntegerCType | _SignedIntegerCType
-_NumberCType: TypeAlias = _IntegerCType | _IntegerCType
+_NumberCType: TypeAlias = _IntegerCType
 _GenericCType: TypeAlias = _NumberCType | type[ct.c_bool | ct.c_char | ct.py_object[Any]]
 
 # some commonly used builtin types that are known to result in a
@@ -961,9 +961,9 @@ _ArrayAPIVersion: TypeAlias = L["2021.12", "2022.12", "2023.12"]
 
 _CastingKind: TypeAlias = L["no", "equiv", "safe", "same_kind", "unsafe"]
 
-_OrderKACF: TypeAlias = L[None, "K", "A", "C", "F"]
-_OrderACF: TypeAlias = L[None, "A", "C", "F"]
-_OrderCF: TypeAlias = L[None, "C", "F"]
+_OrderKACF: TypeAlias = L["K", "A", "C", "F"] | None
+_OrderACF: TypeAlias = L["A", "C", "F"] | None
+_OrderCF: TypeAlias = L["C", "F"] | None
 
 _ModeKind: TypeAlias = L["raise", "wrap", "clip"]
 _PartitionKind: TypeAlias = L["introselect"]
@@ -1051,8 +1051,7 @@ class _SupportsFileMethods(SupportsFlush, Protocol):
     def seek(self, offset: int, whence: int, /) -> object: ...
 
 @type_check_only
-class _SupportsFileMethodsRW(SupportsWrite[bytes], _SupportsFileMethods, Protocol):
-    pass
+class _SupportsFileMethodsRW(SupportsWrite[bytes], _SupportsFileMethods, Protocol): ...
 
 @type_check_only
 class _SupportsItem(Protocol[_T_co]):
@@ -1068,8 +1067,7 @@ class _HasShape(Protocol[_ShapeT_co]):
     def shape(self, /) -> _ShapeT_co: ...
 
 @type_check_only
-class _HasShapeAndSupportsItem(_HasShape[_ShapeT_co], _SupportsItem[_T_co], Protocol[_ShapeT_co, _T_co]):
-    pass
+class _HasShapeAndSupportsItem(_HasShape[_ShapeT_co], _SupportsItem[_T_co], Protocol[_ShapeT_co, _T_co]): ...
 
 # matches any `x` on `x.type.item() -> _T_co`, e.g. `dtype[np.int8]` gives `_T_co: int`
 @type_check_only

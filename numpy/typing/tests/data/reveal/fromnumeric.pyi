@@ -7,8 +7,7 @@ import numpy.typing as npt
 
 from typing_extensions import assert_type
 
-class NDArraySubclass(npt.NDArray[np.complex128]):
-    ...
+class NDArraySubclass(npt.NDArray[np.complex128]): ...
 
 AR_b: npt.NDArray[np.bool]
 AR_f4: npt.NDArray[np.float32]

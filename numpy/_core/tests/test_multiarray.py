@@ -8962,8 +8962,6 @@ class TestConversion:
                 assert_equal(3, int_func(np.array(HasTrunc())))
                 with assert_warns(DeprecationWarning):
                     assert_equal(3, int_func(np.array([HasTrunc()])))
-            else:
-                pass
 
             class NotConvertible:
                 def __int__(self):
