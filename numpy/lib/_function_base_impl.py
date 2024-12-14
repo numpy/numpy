@@ -1897,8 +1897,8 @@ def trim_zeros(filt, trim='fb', axis=None):
     trim : {"fb", "f", "b"}, optional
         A string with 'f' representing trim from front and 'b' to trim from
         back. By default, zeros are trimmed on both sides.
-        Front and back refer to the edges of a dimension, with "front" refering
-        to the side with the lowest index 0, and "back" refering to the highest
+        Front and back refer to the edges of a dimension, with "front" referring
+        to the side with the lowest index 0, and "back" referring to the highest
         index (or index -1).
     axis : int or sequence, optional
         If None, `filt` is cropped such, that the smallest bounding box is

@@ -378,7 +378,7 @@ interface is self-documenting, so please see ``spin --help`` and
 
 .. warning::
 
-    In an activated conda enviroment on Windows, the AR, LD, and LDFLAGS
+    In an activated conda environment on Windows, the AR, LD, and LDFLAGS
     environment variables may be set, which will cause the build to fail.
     These variables are only needed for flang and can be safely unset
     for build.
