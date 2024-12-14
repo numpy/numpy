@@ -86,7 +86,7 @@ def array2string(
     sign: Literal["-", "+", " "] | None = ...,
     floatmode: None | _FloatMode = ...,
     suffix: str = ...,
-    legacy: Literal[False, "1.13", "1.21"] | None= ...,
+    legacy: Literal[False, "1.13", "1.21"] | None = ...,
 ) -> str: ...
 def format_float_scientific(
     x: _FloatLike_co,
