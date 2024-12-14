@@ -63,7 +63,7 @@ npy_find_array_wrap(
             else if (new_wrap == NULL) {
                 continue;
             }
-            double curr_priority = PyArray_GetPriority(obj, 0);
+            double curr_priority = PyArray_GetPriority(obj, NPY_PRIORITY);
             if (wrap == NULL || priority < curr_priority
                     /* Prefer subclasses `__array_wrap__`: */
                     || (curr_priority == NPY_PRIORITY && wrap == Py_None)) {
