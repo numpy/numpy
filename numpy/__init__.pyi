@@ -1051,8 +1051,7 @@ class _SupportsFileMethods(SupportsFlush, Protocol):
     def seek(self, offset: int, whence: int, /) -> object: ...
 
 @type_check_only
-class _SupportsFileMethodsRW(SupportsWrite[bytes], _SupportsFileMethods, Protocol):
-    ...
+class _SupportsFileMethodsRW(SupportsWrite[bytes], _SupportsFileMethods, Protocol): ...
 
 @type_check_only
 class _SupportsItem(Protocol[_T_co]):
@@ -1068,8 +1067,7 @@ class _HasShape(Protocol[_ShapeT_co]):
     def shape(self, /) -> _ShapeT_co: ...
 
 @type_check_only
-class _HasShapeAndSupportsItem(_HasShape[_ShapeT_co], _SupportsItem[_T_co], Protocol[_ShapeT_co, _T_co]):
-    ...
+class _HasShapeAndSupportsItem(_HasShape[_ShapeT_co], _SupportsItem[_T_co], Protocol[_ShapeT_co, _T_co]): ...
 
 # matches any `x` on `x.type.item() -> _T_co`, e.g. `dtype[np.int8]` gives `_T_co: int`
 @type_check_only
