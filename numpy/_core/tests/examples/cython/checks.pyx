@@ -356,3 +356,9 @@ def npystring_allocators_other_types(arr1, arr2):
 
     cnp.NpyString_release_allocators(2, allocators)
     return ret
+
+
+def check_npy_uintp_type_enum():
+    # Regression test for gh-27890: cnp.NPY_UINTP was not defined.
+    # Cython would fail to compile this before gh-27890 was fixed.
+    return cnp.NPY_UINTP > 0

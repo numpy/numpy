@@ -338,3 +338,8 @@ def test_npystring_allocators_other_dtype(install_temp):
     arr2 = np.array([4, 5, 6], dtype='i')
 
     assert checks.npystring_allocators_other_types(arr1, arr2) == 0
+
+
+def test_npy_uintp_type_enum():
+    import checks
+    assert checks.check_npy_uintp_type_enum()
