@@ -998,3 +998,20 @@ class TestUnique:
             assert_array_equal(expected_values, result.values)
             assert_array_equal(expected_inverse, result.inverse_indices)
             assert_array_equal(arr, result.values[result.inverse_indices])
+
+    @pytest.mark.parametrize(
+        'data',
+        [[[1, 1, 1],
+          [1, 1, 1]],
+         [1, 3, 2],
+         1],
+    )
+    @pytest.mark.parametrize('transpose', [False, True])
+    @pytest.mark.parametrize('dtype', [np.int32, np.float64])
+    def test_unique_with_matrix(self, data, transpose, dtype):
+        mat = np.matrix(data).astype(dtype)
+        if transpose:
+            mat = mat.T
+        u = np.unique(mat)
+        expected = np.unique(np.asarray(mat))
+        assert_array_equal(u, expected, strict=True)
