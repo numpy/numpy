@@ -6066,7 +6066,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('itemsize',
 
 add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     """
-    A character code (one of 'biufcmMOSUV') identifying the general kind of data.
+    A character code (one of 'biufcmMOSTUV') identifying the general kind of data.
 
     =  ======================
     b  boolean
@@ -6078,6 +6078,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     M  datetime
     O  object
     S  (byte-)string
+    T  string (StringDType)
     U  Unicode
     V  void
     =  ======================
