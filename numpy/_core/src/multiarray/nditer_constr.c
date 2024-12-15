@@ -1941,37 +1941,73 @@ operand_different_than_broadcast: {
  *      - One outer iteration with stride != 0 and a core of all strides == 0.
  *    This setup allows filling the buffer with only the stride != 0 and then
  *    doing the double loop.
+ *    An Example for these two cases is:
+ *        arr = np.ones((100, 10, 10))[::2, :, :]
+ *        arr.sum(-1)
+ *        arr.sum(-2)
+ *    Where the slice prevents the iterator from collapsing axes and the
+ *    result has stride 0 either along the last or the second to last axis.
+ *    In both cases we can buffer 10x10 elements in reduce mode.
+ *    (This iteration needs no buffer, add a cast to ensure actual buffering.)
  *
  * Only a writeable (reduce) operand require this reduce mode because for
- * reading it is OK if the buffer holds duplicates elements.
- * The goal of the reduce mode is that it allows for larger core sizes and
+ * reading it is OK if the buffer holds duplicated elements.
+ * The benefit of the reduce mode is that it allows for larger core sizes and
  * buffers since the zero strides do not allow a single 1-d iteration.
- * If do we use the reduce-mode, we can apply it also to read-only operands
- * as an optimization.
+ * If we use reduce-mode, we can apply it also to read-only operands as an
+ * optimization.
  *
- * The functino here finds an outer dimension and it's "core" to use that
- * works with reductions.
+ * The function here finds the first "outer" dimension and it's "core" to use
+ * that works with reductions.
  * While iterating, we will fill the buffers making sure that we:
- *   - Never buffer beyond the outer dimension (optimize chance of re-use).
- *   - Never buffer beyond the end of the core (all but outer dimension)
- *     if the user manually moved the iterator to the middle of the core.
- *     (Not typical and if, should usually happen once.)
+ *   - Never buffer beyond the first outer dimension (optimize chance of re-use).
+ *   - If the iterator is manually set to an offset into what is part of the
+ *     core (see second example below), then we only fill the buffer to finish
+ *     that one core.  This re-aligns us with the core and is necessary for
+ *     reductions.  (Such manual setting should be rare or happens exactly once
+ *     for splitting the iteration into worker chunks.)
+ *
+ * And examples for these two constraints:
+ *   Given the iteration shape is (100, 10, 10) and the core size 10 with a
+ *   buffer size of 60 (due to limits), making dimension 1 the "outer" one.
+ *   The first iterations/buffers would then range (excluding end-point):
+ *     - (0, 0, 0) -> (0, 6, 0)
+ *     - (0, 6, 0) -> (1, 0, 0)  # Buffer only holds 40 of 60 possible elements.
+ *     - (1, 0, 0) -> (1, 6, 0)
+ *     - ...
+ *   If the user limits to a range starting from 75, we use:
+ *     - (0, 7, 5) -> (0, 8, 0)  # Only 5 elements to re-align with core.
+ *     - (0, 8, 0) -> (1, 0, 0)
+ *     - ...  # continue as above
  *
  * This means that the data stored in the buffer has always the same structure
- * (except when manually moved).  And we can simplify optimize the buffer
- * filling in some cases and it is easy to decide whether a buffer content
- * may be re-usable (this can happen with broadcasted operands).
+ * (except when manually moved),  which allows us to fill the buffer more simply
+ * and optimally in some cases, and makes it easier to determine whether buffer
+ * content is re-usable (e.g., because it represents broadcasted operands).
  *
  * Best buffer and core size
  * -------------------------
- * We don't want to figure out the complicated copies every time we fill buffers
- * so here we want to find a the outer iteration dimension so that:
- *   - Its core size is <= the maximum buffersize if buffering is needed.
- *   - Allows for reductions to work (with or without reduce-mode)
- *   - Optimizes for iteration overhead.  We estimate the total overhead with:
- *     `(1 + n_buffers) / size`.
- *     The `size` is the `min(core_size * outer_dim_size, buffersize)` and
- *     estimates how often we fill buffers (unbounded if not buffering).
+ * To avoid having to figure out what to copy every time we fill buffers,
+ * we here want to find the outer iteration dimension such that:
+ *   - Its core size is <= the maximum buffersize if buffering is needed;
+ *   - Reductions are possible (with or without reduce mode);
+ *   - Iteration overhead is minimized.  We estimate the total overhead with
+ *     the number "outer" iterations:
+ *
+ *        N_o = full_iterator_size / min(core_size * outer_dim_size, buffersize)
+ *
+ *     This is approximately how often `iternext()` is called when the user
+ *     is using an external-loop and how often we would fill buffers.
+ *     The total overhead is then estimated as:
+ *
+ *        (1 + n_buffers) * N_o
+ *
+ *     Since the iterator size is a constant, we can estimate the overhead as:
+ *
+ *        (1 + n_buffers) / min(core_size * outer_dim_size, buffersize)
+ *
+ *     And when comparing two options multiply by the others divisor/size to
+ *     avoid the division.
  *
  * TODO: Probably should tweak or simplify?  The formula is clearly not
  *       the actual cost (Buffers add a constant total cost as well).
