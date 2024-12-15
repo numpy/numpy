@@ -295,3 +295,9 @@ def test_complex(install_temp):
     arr = np.array([0, 10+10j], dtype="F")
     inc2_cfloat_struct(arr)
     assert arr[1] == (12 + 12j)
+
+
+def test_npy_uintp_type_enum():
+    import checks
+    assert checks.check_npy_uintp_type_enum()
+
