@@ -161,6 +161,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_COMPLEX512
 
         NPY_INTP
+        NPY_UINTP
         NPY_DEFAULT_INT  # Not a compile time constant (normally)!
 
     ctypedef enum NPY_ORDER:
