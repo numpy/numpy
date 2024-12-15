@@ -2520,7 +2520,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('dtype',
     array([[0, 1],
            [2, 3]])
     >>> x.dtype
-    dtype('int32')   # may vary (OS, bitness)
+    dtype('int64')   # may vary (OS, bitness)
     >>> isinstance(x.dtype, np.dtype)
     True
 
