@@ -6096,9 +6096,6 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     >>> dt = np.dtype([('field1', 'f8')])
     >>> dt.kind
     'V'
-    >>> dt = np.dtype('U10')  # Example for StringDType
-    >>> dt.kind
-    'T'
 
     """))
 
