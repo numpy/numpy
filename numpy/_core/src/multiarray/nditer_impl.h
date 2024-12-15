@@ -131,7 +131,7 @@
 /* The operand requires masking when copying buffer -> array */
 #define NPY_OP_ITFLAG_WRITEMASKED  0x0080
 /*
- * Whether the buffer is *fully* filled and thus ready for re-usable.
+ * Whether the buffer is *fully* filled and thus ready for reuse.
  * (Must check if the start pointer matches until copy-from-buffer checks)
  */
 #define NPY_OP_ITFLAG_BUF_REUSABLE 0x0100
@@ -139,7 +139,7 @@
 #define NPY_OP_ITFLAG_FORCECOPY    0x0200
 /* The operand has temporary data, write it back at dealloc */
 #define NPY_OP_ITFLAG_HAS_WRITEBACK 0x0400
-/* Whether the user request a contiguous operand */
+/* Whether the user requested a contiguous operand */
 #define NPY_OP_ITFLAG_CONTIG 0x0800
 
 /*

@@ -2185,7 +2185,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                         && op_itflags[iop]&NPY_OP_ITFLAG_REDUCE
                         && NAD_STRIDES(outer_axisdata)[iop] == 0)) {
             /*
-             * If we have a fully copy or a reduce with 0 stride outer and
+             * If we have a full copy or a reduce with 0 stride outer and
              * a copy larger than the coresize, this is now re-usable.
              * NB: With a core-offset, we always copy less than the core-size.
              */

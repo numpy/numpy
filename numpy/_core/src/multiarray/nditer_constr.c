@@ -2027,8 +2027,9 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
 
     /*
-     * We check two things here, first whether the core is single strided
-     * and second, whether we found a reduce stride dimension for the operand.
+     * We check two things here, first how many operand dimensions can be
+     * iterated using a single stride (all dimensions are consistent),
+     * and second, whether we found a reduce dimension for the operand.
      * That is an outer dimension a reduce would have to take place on.
      */
     int op_single_stride_dims[NPY_MAXARGS];
@@ -2094,19 +2095,17 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
         NIT_ADVANCE_AXISDATA(axisdata, 1);
         npy_intp *strides = NAD_STRIDES(axisdata);
 
-        int iop;
-        for (iop = 0; iop < nop; iop++) {
+        for (int iop = 0; iop < nop; iop++) {
             /* Check that we set things up nicely (if shape is ever 1) */
             assert((axisdata->shape == 1) ? (prev_strides[iop] == strides[iop]) : 1);
-            /*  Best case: the strides collapse for this operand. */
-            if (prev_strides[iop] * prev_shape == strides[iop]) {
-                if (op_single_stride_dims[iop] == idim) {
-                    op_single_stride_dims[iop] += 1;
-                }
-                continue;
-            }
 
             if (op_single_stride_dims[iop] == idim) {
+                /*  Best case: the strides still collapse for this operand. */
+                if (prev_strides[iop] * prev_shape == strides[iop]) {
+                    op_single_stride_dims[iop] += 1;
+                    continue;
+                }
+
                 /*
                  * Operand now requires buffering (if it was not already).
                  * NOTE: This is technically not true since we may still use
@@ -2120,27 +2119,18 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
             }
 
             /*
-             * If this operand is a reduction operand and this is not the
-             * outer_reduce_dim, then we must stop.
+             * If this operand is a reduction operand and the stride swapped
+             * between !=0 and ==0 then this is the `outer_reduce_dim` and
+             * we will never continue further (see break at start of op loop).
              */
-            if (op_itflags[iop] & NPY_OP_ITFLAG_REDUCE) {
-                /*
-                 * We swap between !=0/==0 and thus make it a reduce
-                 * (it is OK if another op started a reduce at this dimension)
-                 */
-                if (strides[iop] == 0 || prev_strides[iop] == 0) {
-                    if (outer_reduce_dim == 0 || outer_reduce_dim == idim) {
-                        op_reduce_outer_dim[iop] = idim;
-                        outer_reduce_dim = idim;
-                    }
-                }
+            if ((op_itflags[iop] & NPY_OP_ITFLAG_REDUCE)
+                    && (strides[iop] == 0 || prev_strides[iop] == 0)) {
+                assert(outer_reduce_dim == 0 || outer_reduce_dim == idim);
+                op_reduce_outer_dim[iop] = idim;
+                outer_reduce_dim = idim;
             }
             /* For clarity: op_reduce_outer_dim[iop] if set always matches. */
             assert(!op_reduce_outer_dim[iop] || op_reduce_outer_dim[iop] == outer_reduce_dim);
-        }
-        if (iop != nop) {
-            /* Including this dimension was invalid due to a reduction. */
-            break;
         }
 
         npy_intp coresize = size;  /* if we iterate here, this is the core */
@@ -2209,7 +2199,7 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
 
         /* If contig was requested and this is not writeable avoid zero strides */
         npy_bool avoid_zero_strides = (
-                (op_itflags[iop] & NPY_OP_ITFLAG_CONTIG) != 0
+                (op_itflags[iop] & NPY_OP_ITFLAG_CONTIG)
                 && !(op_itflags[iop] & NPY_OP_ITFLAG_WRITE));
 
         /*
@@ -2267,26 +2257,29 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
              * reduce logic.  In that case, either the inner or outer stride
              * is 0.
              */
-            if (!is_reduce_op
-                    && NIT_OPITFLAGS(iter)[iop] & NPY_OP_ITFLAG_BUF_SINGLESTRIDE
-                    && NAD_STRIDES(axisdata)[iop] == 0
-                    && !avoid_zero_strides) {
-                /* This op is always 0 strides, so even the buffer is that. */
-                inner_stride = 0;
-                reduce_outer_stride = 0;
-            }
-            else if (!is_reduce_op) {
-                /* normal buffered op */
-                inner_stride = itemsize;
-                reduce_outer_stride = itemsize * best_coresize;
-            }
-            else if (NAD_STRIDES(reduce_axisdata)[iop] == 0) {
-                inner_stride = itemsize;
-                reduce_outer_stride = 0;
+            if (is_reduce_op) {
+                if (NAD_STRIDES(reduce_axisdata)[iop] == 0) {
+                    inner_stride = itemsize;
+                    reduce_outer_stride = 0;
+                }
+                else {
+                    inner_stride = 0;
+                    reduce_outer_stride = itemsize;
+                }
             }
             else {
-                inner_stride = 0;
-                reduce_outer_stride = itemsize;
+                if (NIT_OPITFLAGS(iter)[iop] & NPY_OP_ITFLAG_BUF_SINGLESTRIDE
+                        && NAD_STRIDES(axisdata)[iop] == 0
+                        && !avoid_zero_strides) {
+                    /* This op is always 0 strides, so even the buffer is that. */
+                    inner_stride = 0;
+                    reduce_outer_stride = 0;
+                }
+                else {
+                    /* normal buffered op */
+                    inner_stride = itemsize;
+                    reduce_outer_stride = itemsize * best_coresize;
+                }
             }
         }
         else {
