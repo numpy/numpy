@@ -2,6 +2,7 @@
 Discrete Fourier Transforms - _helper.py
 
 """
+import operator
 from numpy._core import integer, empty, arange, asarray, roll
 from numpy._core.overrides import array_function_dispatch, set_module
 
@@ -121,14 +122,13 @@ def ifftshift(x, axes=None):
 
     return roll(x, shift, axes)
 
-
 @set_module('numpy.fft')
 def fftfreq(n, d=1.0, device=None):
     """
     Return the Discrete Fourier Transform sample frequencies.
 
     The returned float array `f` contains the frequency bin centers in cycles
-    per unit of the sample spacing (with zero at the start).  For instance, if
+    per unit of the sample spacing (with zero at the start). For instance, if
     the sample spacing is in seconds, then the frequency unit is cycles/second.
 
     Given a window length `n` and a sample spacing `d`::
@@ -139,7 +139,7 @@ def fftfreq(n, d=1.0, device=None):
     Parameters
     ----------
     n : int
-        Window length.
+        Window length. Must be a positive integer.
     d : scalar, optional
         Sample spacing (inverse of the sampling rate). Defaults to 1.
     device : str, optional
@@ -163,19 +163,24 @@ def fftfreq(n, d=1.0, device=None):
     >>> freq = np.fft.fftfreq(n, d=timestep)
     >>> freq
     array([ 0.  ,  1.25,  2.5 , ..., -3.75, -2.5 , -1.25])
-
     """
-    if not isinstance(n, integer_types):
-        raise ValueError("n should be an integer")
+    try:
+        n = operator.index(n)
+    except TypeError:
+        raise TypeError("n must be an integer")
+    
+    if n <= 0:
+        raise TypeError("n should be a positive integer")
+    
     val = 1.0 / (n * d)
     results = empty(n, int, device=device)
-    N = (n-1)//2 + 1
+    N = (n - 1) // 2 + 1
     p1 = arange(0, N, dtype=int, device=device)
     results[:N] = p1
-    p2 = arange(-(n//2), 0, dtype=int, device=device)
+    p2 = arange(-(n // 2), 0, dtype=int, device=device)
     results[N:] = p2
-    return results * val
 
+    return results * val
 
 @set_module('numpy.fft')
 def rfftfreq(n, d=1.0, device=None):
@@ -198,7 +203,7 @@ def rfftfreq(n, d=1.0, device=None):
     Parameters
     ----------
     n : int
-        Window length.
+        Window length. Must be a positive integer.
     d : scalar, optional
         Sample spacing (inverse of the sampling rate). Defaults to 1.
     device : str, optional
@@ -227,9 +232,17 @@ def rfftfreq(n, d=1.0, device=None):
     array([  0.,  10.,  20.,  30.,  40.,  50.])
 
     """
-    if not isinstance(n, integer_types):
-        raise ValueError("n should be an integer")
-    val = 1.0/(n*d)
-    N = n//2 + 1
+    try:
+        n = operator.index(n)
+    except TypeError:
+        raise TypeError("n must be an integer")
+    
+    if n <= 0:
+        raise TypeError("n should be a positive integer")
+    
+    val = 1.0 / (n * d)
+    N = n // 2 + 1
     results = arange(0, N, dtype=int, device=device)
+    
     return results * val
+
