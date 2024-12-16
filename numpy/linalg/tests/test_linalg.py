@@ -298,7 +298,7 @@ def _stride_comb_iter(x):
 
     for repeats in itertools.product(*tuple(stride_set)):
         new_shape = [abs(a * b) for a, b in zip(x.shape, repeats)]
-        slices = tuple([slice(None, None, repeat) for repeat in repeats])
+        slices = tuple(slice(None, None, repeat) for repeat in repeats)
 
         # new array with different strides, but same data
         xi = np.empty(new_shape, dtype=x.dtype)

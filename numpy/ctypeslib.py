@@ -416,11 +416,11 @@ if ctypes is not None:
                 _fields_.append(('', ctypes.c_char * dtype.itemsize))
 
             # we inserted manual padding, so always `_pack_`
-            return type('union', (ctypes.Union,), dict(
-                _fields_=_fields_,
-                _pack_=1,
-                __module__=None,
-            ))
+            return type('union', (ctypes.Union,), {
+                '_fields_': _fields_,
+                '_pack_': 1,
+                '__module__': None,
+            })
         else:
             last_offset = 0
             _fields_ = []
@@ -439,11 +439,11 @@ if ctypes is not None:
                 _fields_.append(('', ctypes.c_char * padding))
 
             # we inserted manual padding, so always `_pack_`
-            return type('struct', (ctypes.Structure,), dict(
-                _fields_=_fields_,
-                _pack_=1,
-                __module__=None,
-            ))
+            return type('struct', (ctypes.Structure,), {
+                '_fields_': _fields_,
+                '_pack_': 1,
+                '__module__': None,
+            })
 
     def _ctype_from_dtype(dtype):
         if dtype.fields is not None:

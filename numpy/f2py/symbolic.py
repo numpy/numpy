@@ -570,7 +570,7 @@ class Expr:
         # TODO: implement a method for deciding when __call__ should
         # return an INDEXING expression.
         return as_apply(self, *map(as_expr, args),
-                        **dict((k, as_expr(v)) for k, v in kwargs.items()))
+                        **{k: as_expr(v) for k, v in kwargs.items()})
 
     def __getitem__(self, index):
         # Provided to support C indexing operations that .pyf files
@@ -636,8 +636,8 @@ class Expr:
             if isinstance(target, Expr):
                 target = target.substitute(symbols_map)
             args = tuple(a.substitute(symbols_map) for a in args)
-            kwargs = dict((k, v.substitute(symbols_map))
-                          for k, v in kwargs.items())
+            kwargs = {k: v.substitute(symbols_map)
+                          for k, v in kwargs.items()}
             return normalize(Expr(self.op, (target, args, kwargs)))
         if self.op is Op.INDEXING:
             func = self.data[0]
@@ -693,8 +693,8 @@ class Expr:
                     if isinstance(obj, Expr) else obj)
             operands = tuple(operand.traverse(visit, *args, **kwargs)
                              for operand in self.data[1])
-            kwoperands = dict((k, v.traverse(visit, *args, **kwargs))
-                              for k, v in self.data[2].items())
+            kwoperands = {k: v.traverse(visit, *args, **kwargs)
+                              for k, v in self.data[2].items()}
             return normalize(Expr(self.op, (func, operands, kwoperands)))
         elif self.op is Op.INDEXING:
             obj = self.data[0]
@@ -1011,7 +1011,7 @@ def as_apply(func, *args, **kwargs):
     """
     return Expr(Op.APPLY,
                 (func, tuple(map(as_expr, args)),
-                 dict((k, as_expr(v)) for k, v in kwargs.items())))
+                 {k: as_expr(v) for k, v in kwargs.items()}))
 
 
 def as_ternary(cond, expr1, expr2):
@@ -1262,8 +1262,8 @@ def unreplace_parenthesis(s, d):
     """
     for k, v in d.items():
         p = _get_parenthesis_kind(k)
-        left = dict(ROUND='(', SQUARE='[', CURLY='{', ROUNDDIV='(/')[p]
-        right = dict(ROUND=')', SQUARE=']', CURLY='}', ROUNDDIV='/)')[p]
+        left = {'ROUND': '(', 'SQUARE': '[', 'CURLY': '{', 'ROUNDDIV': '(/'}[p]
+        right = {'ROUND': ')', 'SQUARE': ']', 'CURLY': '}', 'ROUNDDIV': '/)'}[p]
         s = s.replace(k, left + v + right)
     return s
 
@@ -1494,8 +1494,8 @@ class _FromStringWorker:
             if not isinstance(args, tuple):
                 args = args,
             if paren == 'ROUND':
-                kwargs = dict((a.left, a.right) for a in args
-                              if isinstance(a, _Pair))
+                kwargs = {a.left: a.right for a in args
+                              if isinstance(a, _Pair)}
                 args = tuple(a for a in args if not isinstance(a, _Pair))
                 # Warning: this could also be Fortran indexing operation..
                 return as_apply(target, *args, **kwargs)

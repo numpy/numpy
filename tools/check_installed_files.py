@@ -76,7 +76,7 @@ def main(install_dir, tests_check):
 
 
 def get_files(dir_to_check, kind='test'):
-    files = dict()
+    files = {}
     patterns = {
         'test': f'{dir_to_check}/**/test_*.py',
         'stub': f'{dir_to_check}/**/*.pyi',
@@ -120,5 +120,5 @@ if __name__ == '__main__':
             if values['tag'] not in all_tags:
                 all_tags.add(values['tag'])
 
-    if all_tags != set(['runtime', 'python-runtime', 'devel', 'tests']):
+    if all_tags != {'runtime', 'python-runtime', 'devel', 'tests'}:
         raise AssertionError(f"Found unexpected install tag: {all_tags}")

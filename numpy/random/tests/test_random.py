@@ -436,7 +436,7 @@ class TestRandomDist:
         assert_(np.random.choice(arr, replace=True) is a)
 
         # Check 0-d array
-        s = tuple()
+        s = ()
         assert_(not np.isscalar(np.random.choice(2, s, replace=True)))
         assert_(not np.isscalar(np.random.choice(2, s, replace=False)))
         assert_(not np.isscalar(np.random.choice(2, s, replace=True, p=p)))

@@ -1115,8 +1115,8 @@ class TestNanFunctions_Percentile:
                 "weights": np.ones_like(nan_mat), "method": "inverted_cdf"
             }
         else:
-            w_args = dict()
-            nan_w_args = dict()
+            w_args = {}
+            nan_w_args = {}
         tgt = np.percentile(mat, 42, axis=1, **w_args)
         res = np.nanpercentile(nan_mat, 42, axis=1, out=resout, **nan_w_args)
         assert_almost_equal(res, resout)
@@ -1309,7 +1309,7 @@ class TestNanFunctions_Quantile:
         if weighted:
             w_args = {"weights": np.ones_like(ar), "method": "inverted_cdf"}
         else:
-            w_args = dict()
+            w_args = {}
 
         assert_equal(np.nanquantile(ar, q=0.5, **w_args),
                      np.nanpercentile(ar, q=50, **w_args))
