@@ -2035,10 +2035,6 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
     int op_single_stride_dims[NPY_MAXARGS];
     int op_reduce_outer_dim[NPY_MAXARGS];
 
-    /*
-     * Note that this code requires/uses the fact that there is always one
-     * axisdata even for ndim == 0 (i.e. no need to worry about it).
-     */
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
@@ -2072,6 +2068,7 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
 
     npy_intp size = axisdata->shape;  /* the current total size */
 
+    /* Note that there is always one axidata that we use (even with ndim =0) */
     int best_dim = 0;
     int best_cost = cost;
     /* The size of the "outer" iteration and all previous dimensions: */
@@ -2329,7 +2326,7 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
         }
     }
     NIT_BUFFERDATA(iter)->buffersize = best_size;
-    /* Core size is 0 (unless the user applies a range explicitly). */
+    /* Core starts at 0 initially, if needed it is set in goto index. */
     NIT_BUFFERDATA(iter)->coreoffset = 0;
 
     return;

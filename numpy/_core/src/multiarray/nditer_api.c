@@ -1940,7 +1940,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
 
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
     npy_intp *strides = NBF_STRIDES(bufferdata);
-    npy_intp transfersize = bufferdata->size;
+    npy_intp transfersize = NBF_SIZE(bufferdata);
 
     char **ad_ptrs = NAD_PTRS(axisdata);
     char **buffers = NBF_BUFFERS(bufferdata);
@@ -1956,7 +1956,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
 
     if (itflags & NPY_ITFLAG_REDUCE) {
         npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-        outer_axisdata = NIT_INDEX_AXISDATA(axisdata, bufferdata->outerdim);
+        outer_axisdata = NIT_INDEX_AXISDATA(axisdata, NBF_OUTERDIM(bufferdata));
         transfersize *= NBF_REDUCE_OUTERSIZE(bufferdata);
     }
 
@@ -2082,8 +2082,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
 
     npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
-    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter),
-                     *outer_axisdata = NULL;
+    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
+    NpyIter_AxisData *outer_axisdata = NULL;
 
     PyArrayObject **operands = NIT_OPERANDS(iter);
 
