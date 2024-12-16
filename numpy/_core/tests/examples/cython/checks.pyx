@@ -266,3 +266,9 @@ def inc2_cfloat_struct(cnp.ndarray[cnp.cfloat_t] arr):
     # This works in both modes
     arr[1].real = arr[1].real + 1
     arr[1].imag = arr[1].imag + 1
+
+
+def check_npy_uintp_type_enum():
+    # Regression test for gh-27890: cnp.NPY_UINTP was not defined.
+    # Cython would fail to compile this before gh-27890 was fixed.
+    return cnp.NPY_UINTP > 0
