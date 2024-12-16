@@ -5,13 +5,11 @@ from argparse import ArgumentParser
 from git import Repo, exc
 
 CWD = os.path.abspath(os.path.dirname(__file__))
-CONFIG = os.path.join(CWD, '..', 'ruff.toml')
 
 
 class DiffLinter:
     def __init__(self):
-        self.repo = Repo(os.path.join(CWD, '..'))
-        self.head = self.repo.head.commit
+        self.repository_root = os.path.realpath(os.path.join(CWD, '..'))
 
     def run_ruff(self):
         """
@@ -22,8 +20,9 @@ class DiffLinter:
             its output to the given diff.
         """
         res = subprocess.run(
-            ['ruff', 'check', '--statistics', '--config', CONFIG],
+            ['ruff', 'check', '--statistics'],
             stdout=subprocess.PIPE,
+            cwd=self.repository_root,
             encoding='utf-8',
         )
         return res.returncode, res.stdout
