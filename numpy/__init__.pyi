@@ -877,11 +877,11 @@ _dtype: TypeAlias = dtype[_SCT]
 _ByteOrderChar: TypeAlias = L["<", ">", "=", "|"]
 # can be anything, is case-insensitive, and only the first character matters
 _ByteOrder: TypeAlias = L[
-    "S",                # swap the current order (default)
-    "<", "L", "little", # little-endian
-    ">", "B", "big",    # big endian
-    "=", "N", "native", # native order
-    "|", "I",           # ignore
+    "S",                 # swap the current order (default)
+    "<", "L", "little",  # little-endian
+    ">", "B", "big",     # big endian
+    "=", "N", "native",  # native order
+    "|", "I",            # ignore
 ]  # fmt: skip
 _DTypeKind: TypeAlias = L[
     "b",  # boolean
@@ -978,7 +978,7 @@ _SortKind: TypeAlias = L[
 _SortSide: TypeAlias = L["left", "right"]
 
 _ConvertibleToInt: TypeAlias = SupportsInt | SupportsIndex | _CharLike_co
-_ConvertibleToFloat: TypeAlias =  SupportsFloat | SupportsIndex | _CharLike_co
+_ConvertibleToFloat: TypeAlias = SupportsFloat | SupportsIndex | _CharLike_co
 if sys.version_info >= (3, 11):
     _ConvertibleToComplex: TypeAlias = SupportsComplex | SupportsFloat | SupportsIndex | _CharLike_co
 else:
@@ -1028,7 +1028,7 @@ _MemMapModeKind: TypeAlias = L[
 
 _DT64Date: TypeAlias = _HasDateAttributes | L["TODAY", "today", b"TODAY", b"today"]
 _DT64Now: TypeAlias = L["NOW", "now", b"NOW", b"now"]
-_NaTValue: TypeAlias = L["NAT","NaT", "nat",b"NAT", b"NaT", b"nat"]
+_NaTValue: TypeAlias = L["NAT", "NaT", "nat", b"NAT", b"NaT", b"nat"]
 
 _MonthUnit: TypeAlias = L["Y", "M", b"Y", b"M"]
 _DayUnit: TypeAlias = L["W", "D", b"W", b"D"]
@@ -1112,7 +1112,6 @@ class _HasDateAttributes(Protocol):
     def month(self) -> int: ...
     @property
     def year(self) -> int: ...
-
 
 ### Mixins (for internal use only)
 
@@ -1581,7 +1580,6 @@ class dtype(Generic[_SCT_co]):
     def str(self) -> LiteralString: ...
     @property
     def type(self) -> type[_SCT_co]: ...
-
 
 @final
 class flatiter(Generic[_ArrayT_co]):
@@ -4004,7 +4002,6 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     def __divmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[override]
     def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[override]
 
-
 half: TypeAlias = floating[_NBitHalf]
 single: TypeAlias = floating[_NBitSingle]
 double: TypeAlias = floating[_NBitDouble]
@@ -4720,7 +4717,6 @@ class finfo(Generic[_FloatingT_co]):
         cls, dtype: str
     ) -> finfo[floating[Any]]: ...
 
-
 class iinfo(Generic[_IntegerT_co]):
     dtype: Final[dtype[_IntegerT_co]]
     kind: Final[LiteralString]
@@ -4953,7 +4949,6 @@ class poly1d:
         k: None | _ArrayLikeComplex_co | _ArrayLikeObject_co = ...,
     ) -> poly1d: ...
 
-
 class matrix(ndarray[_2DShapeT_co, _DType_co]):
     __array_priority__: ClassVar[float]
     def __new__(
@@ -5090,7 +5085,7 @@ class matrix(ndarray[_2DShapeT_co, _DType_co]):
     @property
     def T(self) -> matrix[_2D, _DType_co]: ...
     @property
-    def I(self) -> matrix[_2D, Any]: ...
+    def I(self) -> matrix[_2D, Any]: ...  # noqa: E743
     @property
     def A(self) -> ndarray[_2DShapeT_co, _DType_co]: ...
     @property
@@ -5102,7 +5097,6 @@ class matrix(ndarray[_2DShapeT_co, _DType_co]):
     def getA(self) -> ndarray[_2DShapeT_co, _DType_co]: ...
     def getA1(self) -> ndarray[_Shape, _DType_co]: ...
     def getH(self) -> matrix[_2D, _DType_co]: ...
-
 
 def from_dlpack(
     x: _SupportsDLPack[None],

@@ -467,6 +467,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
         result = asarray(outarr, dtype=max_dtypes)
         result.fill_value = ma.default_fill_value(result)
     return result
+
+
 apply_along_axis.__doc__ = np.apply_along_axis.__doc__
 
 
@@ -698,7 +700,7 @@ def average(a, axis=None, weights=None, returned=False, *,
                                     for ax, s in enumerate(a.shape)))
 
         if m is not nomask:
-            wgt = wgt*(~a.mask)
+            wgt = wgt * (~a.mask)
             wgt.mask |= a.mask
 
         scl = wgt.sum(axis=axis, dtype=result_dtype, **keepdims_kw)
@@ -845,9 +847,9 @@ def _median(a, axis=None, out=None, overwrite_input=False):
 
     # duplicate high if odd number of elements so mean does nothing
     odd = counts % 2 == 1
-    l = np.where(odd, h, h-1)
+    l = np.where(odd, h, h - 1)
 
-    lh = np.concatenate([l,h], axis=axis)
+    lh = np.concatenate([l, h], axis=axis)
 
     # get low and high median
     low_high = np.take_along_axis(asorted, lh, axis=axis)
@@ -930,7 +932,7 @@ def compress_nd(x, axis=None):
     data = x._data
     for ax in axis:
         axes = tuple(list(range(ax)) + list(range(ax + 1, x.ndim)))
-        data = data[(slice(None),)*ax + (~m.any(axis=axes),)]
+        data = data[(slice(None),) * ax + (~m.any(axis=axes),)]
     return data
 
 
@@ -1847,6 +1849,7 @@ class mr_class(MAxisConcatenator):
     def __init__(self):
         MAxisConcatenator.__init__(self, 0)
 
+
 mr_ = mr_class()
 
 
@@ -2144,7 +2147,7 @@ def notmasked_contiguous(a, axis=None):
     >>> np.ma.notmasked_contiguous(ma, axis=1)
     [[slice(0, 1, None), slice(2, 4, None)], [slice(3, 4, None)], [slice(0, 1, None), slice(3, 4, None)]]
 
-    """
+    """  # noqa: E501
     a = asarray(a)
     nd = a.ndim
     if nd > 2:
@@ -2281,6 +2284,7 @@ def vander(x, n=None):
         _vander[m] = 0
     return _vander
 
+
 vander.__doc__ = ma.doc_note(np.vander.__doc__, vander.__doc__)
 
 
@@ -2317,5 +2321,6 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         return np.polyfit(x[not_m], y[not_m], deg, rcond, full, w, cov)
     else:
         return np.polyfit(x, y, deg, rcond, full, w, cov)
+
 
 polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)

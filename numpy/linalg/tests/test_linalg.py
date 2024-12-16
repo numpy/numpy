@@ -71,7 +71,7 @@ def get_rtol(dtype):
 # used to categorize tests
 all_tags = {
   'square', 'nonsquare', 'hermitian',  # mutually exclusive
-  'generalized', 'size-0', 'strided' # optional additions
+  'generalized', 'size-0', 'strided'  # optional additions
 }
 
 
@@ -707,6 +707,7 @@ class SVDHermitianCases(HermitianTestCase, HermitianGeneralizedTestCase):
         assert_allclose(a, matmul(np.asarray(u) * np.asarray(s)[..., None, :],
                                            np.asarray(vt)),
                         rtol=get_rtol(u.dtype))
+
         def hermitian(mat):
             axes = list(range(mat.ndim))
             axes[-1], axes[-2] = axes[-2], axes[-1]
@@ -774,7 +775,7 @@ class TestCond(CondCases):
         # Smoketest the non-svd norms
         A = array([[1., 0, 1], [0, -2., 0], [0, 0, 3.]])
         assert_almost_equal(linalg.cond(A, inf), 4)
-        assert_almost_equal(linalg.cond(A, -inf), 2/3)
+        assert_almost_equal(linalg.cond(A, -inf), 2 / 3)
         assert_almost_equal(linalg.cond(A, 1), 4)
         assert_almost_equal(linalg.cond(A, -1), 0.5)
         assert_almost_equal(linalg.cond(A, 'fro'), np.sqrt(265 / 12))
@@ -802,14 +803,14 @@ class TestCond(CondCases):
         p_pos = [None, 1, 2, 'fro']
 
         A = np.ones((2, 2))
-        A[0,1] = np.nan
+        A[0, 1] = np.nan
         for p in ps:
             c = linalg.cond(A, p)
             assert_(isinstance(c, np.float64))
             assert_(np.isnan(c))
 
         A = np.ones((3, 2, 2))
-        A[1,0,1] = np.nan
+        A[1, 0, 1] = np.nan
         for p in ps:
             c = linalg.cond(A, p)
             assert_(np.isnan(c[1]))
@@ -825,15 +826,15 @@ class TestCond(CondCases):
         # singular
         np.random.seed(1234)
         A = np.random.rand(2, 2, 2, 2)
-        A[0,0] = 0
-        A[1,1] = 0
+        A[0, 0] = 0
+        A[1, 1] = 0
 
         for p in (None, 1, 2, 'fro', -1, -2):
             c = linalg.cond(A, p)
-            assert_equal(c[0,0], np.inf)
-            assert_equal(c[1,1], np.inf)
-            assert_(np.isfinite(c[0,1]))
-            assert_(np.isfinite(c[1,0]))
+            assert_equal(c[0, 0], np.inf)
+            assert_equal(c[1, 1], np.inf)
+            assert_(np.isfinite(c[0, 1]))
+            assert_(np.isfinite(c[1, 0]))
 
 
 class PinvCases(LinalgSquareTestCase,
@@ -1032,7 +1033,7 @@ class TestMatrixPower:
     rshft_3 = rshft_0[[1, 2, 3, 0]]
     rshft_all = [rshft_0, rshft_1, rshft_2, rshft_3]
     noninv = array([[1, 0], [0, 0]])
-    stacked = np.block([[[rshft_0]]]*2)
+    stacked = np.block([[[rshft_0]]] * 2)
     #FIXME the 'e' dtype might work in future
     dtnoinv = [object, np.dtype('e'), np.dtype('g'), np.dtype('G')]
 
@@ -1311,11 +1312,11 @@ class _TestNormGeneral(_TestNormBase):
 
             an = norm(at, 2)
             self.check_dtype(at, an)
-            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/2.0))
+            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0 / 2.0))
 
             an = norm(at, 4)
             self.check_dtype(at, an)
-            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0/4.0))
+            assert_almost_equal(an, an.dtype.type(2.0)**an.dtype.type(1.0 / 4.0))
 
             an = norm(at, np.inf)
             self.check_dtype(at, an)
@@ -1470,7 +1471,7 @@ class _TestNorm2D(_TestNormBase):
 
             an = norm(at, 2)
             self.check_dtype(at, an)
-            assert_almost_equal(an, 3.0**(1.0/2.0))
+            assert_almost_equal(an, 3.0**(1.0 / 2.0))
 
             an = norm(at, -2)
             self.check_dtype(at, an)
@@ -1627,7 +1628,7 @@ class TestMatrixRank:
         # accepts array-like
         assert_equal(matrix_rank([1]), 1)
         # greater than 2 dimensions treated as stacked matrices
-        ms = np.array([I, np.eye(4), np.zeros((4,4))])
+        ms = np.array([I, np.eye(4), np.zeros((4, 4))])
         assert_equal(matrix_rank(ms), np.array([3, 4, 0]))
         # works on scalar
         assert_equal(matrix_rank(1), 1)
@@ -1707,7 +1708,6 @@ class TestQR:
         assert_(isinstance(r2, a_type))
         assert_almost_equal(r2, r1)
 
-
     @pytest.mark.parametrize(["m", "n"], [
         (3, 0),
         (0, 3),
@@ -1783,7 +1783,7 @@ class TestQR:
         assert_almost_equal(matmul(q, r), a)
         I_mat = np.identity(q.shape[-1])
         stack_I_mat = np.broadcast_to(I_mat,
-                        q.shape[:-2] + (q.shape[-1],)*2)
+                        q.shape[:-2] + (q.shape[-1],) * 2)
         assert_almost_equal(matmul(swapaxes(q, -1, -2).conj(), q), stack_I_mat)
         assert_almost_equal(np.triu(r[..., :, :]), r)
 
@@ -1798,7 +1798,7 @@ class TestQR:
         assert_almost_equal(matmul(q1, r1), a)
         I_mat = np.identity(q1.shape[-1])
         stack_I_mat = np.broadcast_to(I_mat,
-                        q1.shape[:-2] + (q1.shape[-1],)*2)
+                        q1.shape[:-2] + (q1.shape[-1],) * 2)
         assert_almost_equal(matmul(swapaxes(q1, -1, -2).conj(), q1),
                             stack_I_mat)
         assert_almost_equal(np.triu(r1[..., :, :]), r1)
@@ -1823,7 +1823,7 @@ class TestQR:
         A = rng.normal(size=outer_size + size).astype(dt)
         B = rng.normal(size=outer_size + size).astype(dt)
         self.check_qr_stacked(A)
-        self.check_qr_stacked(A + 1.j*B)
+        self.check_qr_stacked(A + 1.j * B)
 
 
 class TestCholesky:
@@ -1840,7 +1840,7 @@ class TestCholesky:
         np.random.seed(1)
         a = np.random.randn(*shape)
         if np.issubdtype(dtype, np.complexfloating):
-            a = a + 1j*np.random.randn(*shape)
+            a = a + 1j * np.random.randn(*shape)
 
         t = list(range(len(shape)))
         t[-2:] = -1, -2
@@ -1882,7 +1882,7 @@ class TestCholesky:
 
     def test_upper_lower_arg(self):
         # Explicit test of upper argument that also checks the default.
-        a = np.array([[1+0j, 0-2j], [0+2j, 5+0j]])
+        a = np.array([[1 + 0j, 0 - 2j], [0 + 2j, 5 + 0j]])
 
         assert_equal(linalg.cholesky(a), linalg.cholesky(a, upper=False))
 
@@ -2243,9 +2243,9 @@ def test_blas64_dot():
     n = 2**32
     a = np.zeros([1, n], dtype=np.float32)
     b = np.ones([1, 1], dtype=np.float32)
-    a[0,-1] = 1
+    a[0, -1] = 1
     c = np.dot(b, a)
-    assert_equal(c[0,-1], 1)
+    assert_equal(c[0, -1], 1)
 
 
 @pytest.mark.xfail(not HAS_LAPACK64,

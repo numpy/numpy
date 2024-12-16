@@ -508,7 +508,7 @@ dt2 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
 # nested struct-in-struct
 dt3 = np.dtype({'names': ['c', 'd'], 'formats': ['i4', dt2]})
 # field with '' name
-dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})
+dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4'] * 3})
 # titles
 dt5 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
                 'offsets': [1, 6], 'titles': ['aa', 'bb']})
@@ -605,10 +605,10 @@ def test_pickle_disallow(tmpdir):
                        ('c', np.int32),
                       ], align=True),
              (3,)),
-    np.dtype([('x', np.dtype({'names':['a','b'],
-                              'formats':['i1','i1'],
-                              'offsets':[0,4],
-                              'itemsize':8,
+    np.dtype([('x', np.dtype({'names': ['a', 'b'],
+                              'formats': ['i1', 'i1'],
+                              'offsets': [0, 4],
+                              'itemsize': 8,
                              },
                     (3,)),
                (4,),
@@ -619,10 +619,10 @@ def test_pickle_disallow(tmpdir):
                )]),
     np.dtype([('x', np.dtype((
         np.dtype((
-            np.dtype({'names':['a','b'],
-                      'formats':['i1','i1'],
-                      'offsets':[0,4],
-                      'itemsize':8}),
+            np.dtype({'names': ['a', 'b'],
+                      'formats': ['i1', 'i1'],
+                      'offsets': [0, 4],
+                      'itemsize': 8}),
             (3,)
             )),
         (4,)
@@ -634,10 +634,10 @@ def test_pickle_disallow(tmpdir):
                 np.dtype((
                     np.dtype([
                         ('a', int),
-                        ('b', np.dtype({'names':['a','b'],
-                                        'formats':['i1','i1'],
-                                        'offsets':[0,4],
-                                        'itemsize':8})),
+                        ('b', np.dtype({'names': ['a', 'b'],
+                                        'formats': ['i1', 'i1'],
+                                        'offsets': [0, 4],
+                                        'itemsize': 8})),
                     ]),
                     (3,),
                 )),
@@ -647,7 +647,6 @@ def test_pickle_disallow(tmpdir):
         )))
         ]),
     ])
-
 def test_descr_to_dtype(dt):
     dt1 = format.descr_to_dtype(dt.descr)
     assert_equal_(dt1, dt)
@@ -714,7 +713,7 @@ def test_version_2_0_memmap(tmpdir):
 @pytest.mark.parametrize("mmap_mode", ["r", None])
 def test_huge_header(tmpdir, mmap_mode):
     f = os.path.join(tmpdir, 'large_header.npy')
-    arr = np.array(1, dtype="i,"*10000+"i")
+    arr = np.array(1, dtype="i," * 10000 + "i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.save(f, arr)
@@ -733,7 +732,7 @@ def test_huge_header(tmpdir, mmap_mode):
 
 def test_huge_header_npz(tmpdir):
     f = os.path.join(tmpdir, 'large_header.npz')
-    arr = np.array(1, dtype="i,"*10000+"i")
+    arr = np.array(1, dtype="i," * 10000 + "i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.savez(f, arr=arr)
@@ -842,7 +841,7 @@ def test_large_header():
     format.write_array_header_1_0(s, d)
 
     s = BytesIO()
-    d['descr'] = [('x'*256*256, '<i8')]
+    d['descr'] = [('x' * 256 * 256, '<i8')]
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
 
 
@@ -993,7 +992,7 @@ def test_header_growth_axis():
             format.write_array_header_1_0(fp, {
                 'shape': (2, size) if is_fortran_array else (size, 2),
                 'fortran_order': is_fortran_array,
-                'descr': np.dtype([(' '*dtype_space, int)])
+                'descr': np.dtype([(' ' * dtype_space, int)])
             })
 
             assert len(fp.getvalue()) == expected_header_length

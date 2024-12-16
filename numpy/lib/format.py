@@ -177,7 +177,7 @@ drop_metadata.__module__ = "numpy.lib.format"
 EXPECTED_KEYS = {'descr', 'fortran_order', 'shape'}
 MAGIC_PREFIX = b'\x93NUMPY'
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
-ARRAY_ALIGN = 64 # plausible values are powers of 2 between 16 and 4096
+ARRAY_ALIGN = 64  # plausible values are powers of 2 between 16 and 4096
 BUFFER_SIZE = 2**18  # size of buffer for reading npz files in bytes
 # allow growth within the address space of a 64 bit machine along one axis
 GROWTH_AXIS_MAX_DIGITS = 21  # = len(str(8*2**64-1)) hypothetical int1 dtype
@@ -405,7 +405,7 @@ def _wrap_header(header, version):
     # ARRAY_ALIGN byte boundary.  This supports memory mapping of dtypes
     # aligned up to ARRAY_ALIGN on systems like Linux where mmap()
     # offset must be page-aligned (i.e. the beginning of the file).
-    return header_prefix + header + b' '*padlen + b'\n'
+    return header_prefix + header + b' ' * padlen + b'\n'
 
 
 def _wrap_header_guess_version(header):
@@ -849,7 +849,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
                     read_count = min(max_read_count, count - i)
                     read_size = int(read_count * dtype.itemsize)
                     data = _read_bytes(fp, read_size, "array data")
-                    array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
+                    array[i:i + read_count] = numpy.frombuffer(data, dtype=dtype,
                                                              count=read_count)
 
         if fortran_order:
@@ -936,7 +936,7 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             shape=shape,
         )
         # If we got here, then it should be safe to create the file.
-        with open(os.fspath(filename), mode+'b') as fp:
+        with open(os.fspath(filename), mode + 'b') as fp:
             _write_array_header(fp, d, version)
             offset = fp.tell()
     else:

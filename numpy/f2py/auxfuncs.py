@@ -900,6 +900,7 @@ def applyrules(rules, d, var={}):
                 del ret[k]
     return ret
 
+
 _f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
                                      re.I).match
 _f2py_user_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]*?'
@@ -911,7 +912,7 @@ def get_f2py_modulename(source):
         for line in f:
             m = _f2py_module_name_match(line)
             if m:
-                if _f2py_user_module_name_match(line): # skip *__user__* names
+                if _f2py_user_module_name_match(line):  # skip *__user__* names
                     continue
                 name = m.group('name')
                 break

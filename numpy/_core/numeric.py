@@ -284,7 +284,7 @@ def ones_like(
 def _full_dispatcher(
     shape, fill_value, dtype=None, order=None, *, device=None, like=None
 ):
-    return(like,)
+    return (like,)
 
 
 @finalize_array_function_like
@@ -1828,14 +1828,14 @@ def indices(dimensions, dtype=int, sparse=False):
     """
     dimensions = tuple(dimensions)
     N = len(dimensions)
-    shape = (1,)*N
+    shape = (1,) * N
     if sparse:
         res = tuple()
     else:
-        res = empty((N,)+dimensions, dtype=dtype)
+        res = empty((N,) + dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
         idx = arange(dim, dtype=dtype).reshape(
-            shape[:i] + (dim,) + shape[i+1:]
+            shape[:i] + (dim,) + shape[i + 1:]
         )
         if sparse:
             res = res + (idx,)
@@ -2444,7 +2444,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         y = float(y)
 
     with errstate(invalid='ignore'):
-        result = (less_equal(abs(x-y), atol + rtol * abs(y))
+        result = (less_equal(abs(x - y), atol + rtol * abs(y))
                   & isfinite(y)
                   | (x == y))
         if equal_nan:

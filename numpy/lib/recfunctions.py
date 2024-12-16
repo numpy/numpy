@@ -885,7 +885,7 @@ def _get_fields_and_offsets(dt, offset=0):
                     # optimization: avoid list comprehension if no subarray
                     fields.extend(subfields)
                 else:
-                    fields.extend([(d, c, o + i*size) for d, c, o in subfields])
+                    fields.extend([(d, c, o + i * size) for d, c, o in subfields])
     return fields
 
 def _common_stride(offsets, counts, itemsize):
@@ -1543,7 +1543,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     # Check the keys
     if len(set(key)) != len(key):
-        dup = next(x for n,x in enumerate(key) if x in key[n+1:])
+        dup = next(x for n, x in enumerate(key) if x in key[n + 1:])
         raise ValueError("duplicate join key %r" % dup)
     for name in key:
         if name not in r1.dtype.names:
@@ -1568,7 +1568,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     # Make temporary arrays of just the keys
     #  (use order of keys in `r1` for back-compatibility)
-    key1 = [ n for n in r1names if n in key ]
+    key1 = [n for n in r1names if n in key]
     r1k = _keep_fields(r1, key1)
     r2k = _keep_fields(r2, key1)
 

@@ -587,7 +587,7 @@ class TestStringScalarArr(util.F2PyTest):
     def test_char_arr(self):
         for out in (self.module.string_test.strarr,
                     self.module.string_test.strarr77):
-            expected = (5,7)
+            expected = (5, 7)
             assert out.shape == expected
             expected = '|S12'
             assert out.dtype == expected

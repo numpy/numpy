@@ -121,6 +121,7 @@ def _get_cancast_table():
 
     return cancast
 
+
 CAST_TABLE = _get_cancast_table()
 
 
@@ -267,8 +268,8 @@ class TestCasting:
                 for to_dt in [to_Dt(), to_Dt().newbyteorder()]:
                     casting, (from_res, to_res), view_off = (
                             cast._resolve_descriptors((from_dt, to_dt)))
-                    assert(type(from_res) == from_Dt)
-                    assert(type(to_res) == to_Dt)
+                    assert type(from_res) == from_Dt
+                    assert type(to_res) == to_Dt
                     if view_off is not None:
                         # If a view is acceptable, this is "no" casting
                         # and byte order must be matching.
@@ -284,8 +285,8 @@ class TestCasting:
                         assert casting == CAST_TABLE[from_Dt][to_Dt]
 
                     if from_Dt is to_Dt:
-                        assert(from_dt is from_res)
-                        assert(to_dt is to_res)
+                        assert from_dt is from_res
+                        assert to_dt is to_res
 
     @pytest.mark.filterwarnings("ignore::numpy.exceptions.ComplexWarning")
     @pytest.mark.parametrize("from_dt", simple_dtype_instances())
@@ -433,7 +434,7 @@ class TestCasting:
             to_dt = np.dtype(to_dt)
 
         # Test a few values for casting (results generated with NumPy 1.19)
-        values = np.array([-2**63, 1, 2**63-1, 10000, -10000, 2**32])
+        values = np.array([-2**63, 1, 2**63 - 1, 10000, -10000, 2**32])
         values = values.astype(np.dtype("int64").newbyteorder(from_dt.byteorder))
         assert values.dtype.byteorder == from_dt.byteorder
         assert np.isnat(values.view(from_dt)[0])

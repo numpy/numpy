@@ -86,7 +86,6 @@ _SCT2 = TypeVar("_SCT2", bound=generic, covariant=True)
 _2Tuple: TypeAlias = tuple[_T, _T]
 _ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
 
-
 class EigResult(NamedTuple):
     eigenvalues: NDArray[Any]
     eigenvectors: NDArray[Any]
@@ -114,19 +113,19 @@ class SVDResult(NamedTuple):
 def tensorsolve(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
-    axes: None | Iterable[int] =...,
+    axes: None | Iterable[int] = ...,
 ) -> NDArray[float64]: ...
 @overload
 def tensorsolve(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
-    axes: None | Iterable[int] =...,
+    axes: None | Iterable[int] = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def tensorsolve(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
-    axes: None | Iterable[int] =...,
+    axes: None | Iterable[int] = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 
 @overload

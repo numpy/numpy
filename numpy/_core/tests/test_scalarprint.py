@@ -15,13 +15,13 @@ class TestRealScalars:
         svals = [0.0, -0.0, 1, -1, np.inf, -np.inf, np.nan]
         styps = [np.float16, np.float32, np.float64, np.longdouble]
         wanted = [
-             ['0.0',  '0.0',  '0.0',  '0.0' ],
+             ['0.0',  '0.0',  '0.0',  '0.0' ],  # noqa: E202
              ['-0.0', '-0.0', '-0.0', '-0.0'],
-             ['1.0',  '1.0',  '1.0',  '1.0' ],
+             ['1.0',  '1.0',  '1.0',  '1.0' ],  # noqa: E202
              ['-1.0', '-1.0', '-1.0', '-1.0'],
-             ['inf',  'inf',  'inf',  'inf' ],
+             ['inf',  'inf',  'inf',  'inf' ],  # noqa: E202
              ['-inf', '-inf', '-inf', '-inf'],
-             ['nan',  'nan',  'nan',  'nan']]
+             ['nan',  'nan',  'nan',  'nan' ]]  # noqa: E202
 
         for wants, val in zip(wanted, svals):
             for want, styp in zip(wants, styps):
@@ -124,7 +124,6 @@ class TestRealScalars:
         assert_equal(fsci64('9.9999999999999694e-311', **preckwd(16)),
                             '9.9999999999999694e-311')
 
-
         # test rounding
         # 3.1415927410 is closest float32 to np.pi
         assert_equal(fpos32('3.14159265358979323846', **preckwd(10)),
@@ -146,7 +145,6 @@ class TestRealScalars:
         assert_equal(fpos64('3.14159265358979323846', **preckwd(50)),
                          "3.14159265358979311599796346854418516159057617187500")
         assert_equal(fpos64('3.14159265358979323846'), "3.141592653589793")
-
 
         # smallest numbers
         assert_equal(fpos32(0.5**(126 + 23), unique=False, precision=149),
@@ -316,7 +314,7 @@ class TestRealScalars:
         # which happens when the first double is normal and the second is
         # subnormal.
         x = np.float128('2.123123123123123123123123123123123e-286')
-        got = [str(x/np.float128('2e' + str(i))) for i in range(40)]
+        got = [str(x / np.float128('2e' + str(i))) for i in range(40)]
         expected = [
             "1.06156156156156156156156156156157e-286",
             "1.06156156156156156156156156156158e-287",
@@ -363,7 +361,7 @@ class TestRealScalars:
         # Note: we follow glibc behavior, but it (or gcc) might not be right.
         # In particular we can get two values that print the same but are not
         # equal:
-        a = np.float128('2')/np.float128('3')
+        a = np.float128('2') / np.float128('3')
         b = np.float128(str(a))
         assert_equal(str(a), str(b))
         assert_(a != b)

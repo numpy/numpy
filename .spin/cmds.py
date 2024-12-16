@@ -277,7 +277,7 @@ def _set_mem_rlimit(max_mem=None):
 def _commit_to_sha(commit):
     p = spin.util.run(['git', 'rev-parse', commit], output=False, echo=False)
     if p.returncode != 0:
-        raise(
+        raise (
             click.ClickException(
                 f'Could not find SHA matching commit `{commit}`'
             )

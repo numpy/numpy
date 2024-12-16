@@ -373,7 +373,7 @@ def test_as_strided():
     a['num'] = np.arange(1, 5)
     a_view = as_strided(a, shape=(3, 4), strides=(0, a.itemsize))
     expected_num = [[1, 2, 3, 4]] * 3
-    expected_obj = [[None]*4]*3
+    expected_obj = [[None] * 4] * 3
     assert_equal(a_view.dtype, dt)
     assert_array_equal(expected_num, a_view['num'])
     assert_array_equal(expected_obj, a_view['obj'])
@@ -409,7 +409,7 @@ class TestSlidingWindowView:
 
     def test_2d(self):
         i, j = np.ogrid[:3, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         shape = (2, 2)
         arr_view = sliding_window_view(arr, shape)
         expected = np.array([[[[0, 1], [10, 11]],
@@ -422,7 +422,7 @@ class TestSlidingWindowView:
 
     def test_2d_with_axis(self):
         i, j = np.ogrid[:3, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         arr_view = sliding_window_view(arr, 3, 0)
         expected = np.array([[[0, 10, 20],
                               [1, 11, 21],
@@ -432,7 +432,7 @@ class TestSlidingWindowView:
 
     def test_2d_repeated_axis(self):
         i, j = np.ogrid[:3, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         arr_view = sliding_window_view(arr, (2, 3), (1, 1))
         expected = np.array([[[[0, 1, 2],
                                [1, 2, 3]]],
@@ -444,7 +444,7 @@ class TestSlidingWindowView:
 
     def test_2d_without_axis(self):
         i, j = np.ogrid[:4, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         shape = (2, 3)
         arr_view = sliding_window_view(arr, shape)
         expected = np.array([[[[0, 1, 2], [10, 11, 12]],
@@ -457,7 +457,7 @@ class TestSlidingWindowView:
 
     def test_errors(self):
         i, j = np.ogrid[:4, :4]
-        arr = 10*i + j
+        arr = 10 * i + j
         with pytest.raises(ValueError, match='cannot contain negative values'):
             sliding_window_view(arr, (-1, 3))
         with pytest.raises(

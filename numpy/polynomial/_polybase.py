@@ -493,8 +493,6 @@ class ABCPolyBase(abc.ABC):
 
         return rf"${self.symbol} \mapsto {body}$"
 
-
-
     # Pickle and copy
 
     def __getstate__(self):
@@ -877,8 +875,8 @@ class ABCPolyBase(abc.ABC):
         if lbnd is None:
             lbnd = 0
         else:
-            lbnd = off + scl*lbnd
-        coef = self._int(self.coef, m, k, lbnd, 1./scl)
+            lbnd = off + scl * lbnd
+        coef = self._int(self.coef, m, k, lbnd, 1. / scl)
         return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def deriv(self, m=1):
@@ -1078,7 +1076,7 @@ class ABCPolyBase(abc.ABC):
 
         deg = len(roots)
         off, scl = pu.mapparms(domain, window)
-        rnew = off + scl*roots
+        rnew = off + scl * roots
         coef = cls._fromroots(rnew) / scl**deg
         return cls(coef, domain=domain, window=window, symbol=symbol)
 
@@ -1154,7 +1152,7 @@ class ABCPolyBase(abc.ABC):
 
         if ideg != deg or ideg < 0:
             raise ValueError("deg must be non-negative integer")
-        return cls([0]*ideg + [1], domain, window, symbol)
+        return cls([0] * ideg + [1], domain, window, symbol)
 
     @classmethod
     def cast(cls, series, domain=None, window=None):

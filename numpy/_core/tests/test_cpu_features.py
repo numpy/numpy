@@ -72,6 +72,7 @@ class AbstractTest:
     def load_flags(self):
         # a hook
         pass
+
     def test_features(self):
         self.load_flags()
         for gname, features in self.features_groups.items():
@@ -329,10 +330,11 @@ if __name__ == "__main__":
             )
             self._expect_error(msg, err_type)
 
+
 is_linux = sys.platform.startswith('linux')
 is_cygwin = sys.platform.startswith('cygwin')
-machine  = platform.machine()
-is_x86   = re.match("^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
+machine = platform.machine()
+is_x86 = re.match("^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
 @pytest.mark.skipif(
     not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
 )
@@ -365,8 +367,10 @@ class Test_X86_Features(AbstractTest):
         AVX5124FMAPS="AVX512_4FMAPS", AVX5124VNNIW="AVX512_4VNNIW", AVX512VPOPCNTDQ="AVX512_VPOPCNTDQ",
         AVX512FP16="AVX512_FP16",
     )
+
     def load_flags(self):
         self.load_flags_cpuinfo("flags")
+
 
 is_power = re.match("^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")
@@ -395,15 +399,16 @@ class Test_ARM_Features(AbstractTest):
         "SVE", "NEON", "ASIMD", "FPHP", "ASIMDHP", "ASIMDDP", "ASIMDFHM"
     ]
     features_groups = dict(
-        NEON_FP16  = ["NEON", "HALF"],
+        NEON_FP16 = ["NEON", "HALF"],
         NEON_VFPV4 = ["NEON", "VFPV4"],
     )
+
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
         arch = self.get_cpuinfo_item("CPU architecture")
         # in case of mounting virtual filesystem of aarch64 kernel
-        is_rootfs_v8 = int('0'+next(iter(arch))) > 7 if arch else 0
-        if  re.match("^(aarch64|AARCH64)", machine) or is_rootfs_v8:
+        is_rootfs_v8 = int('0' + next(iter(arch))) > 7 if arch else 0
+        if re.match("^(aarch64|AARCH64)", machine) or is_rootfs_v8:
             self.features_map = dict(
                 NEON="ASIMD", HALF="ASIMD", VFPV4="ASIMD"
             )

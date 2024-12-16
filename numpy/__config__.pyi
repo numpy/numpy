@@ -25,7 +25,7 @@ _CompilerConfigDict = TypedDict(
 _MachineInformationDict = TypedDict(
     "_MachineInformationDict",
     {
-        "host":_MachineInformationDictValue,
+        "host": _MachineInformationDictValue,
         "build": _MachineInformationDictValue,
         "cross-compiled": NotRequired[L[True]],
     },

@@ -358,7 +358,6 @@ class TestNanFunctions_ArgminArgmax:
             assert ret == reference
 
 
-
 _TEST_ARRAYS = {
     "0d": np.array(5),
     "1d": np.array([127, 39, 93, 87, 46])
@@ -586,7 +585,7 @@ class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
     def test_empty(self):
         for f, tgt_value in zip([np.nansum, np.nanprod], [0, 1]):
             mat = np.zeros((0, 3))
-            tgt = [tgt_value]*3
+            tgt = [tgt_value] * 3
             res = f(mat, axis=0)
             assert_equal(res, tgt)
             tgt = []
@@ -645,7 +644,7 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
     def test_empty(self):
         for f, tgt_value in zip(self.nanfuncs, [0, 1]):
             mat = np.zeros((0, 3))
-            tgt = tgt_value*np.ones((0, 3))
+            tgt = tgt_value * np.ones((0, 3))
             res = f(mat, axis=0)
             assert_equal(res, tgt)
             tgt = mat
@@ -679,7 +678,7 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
             tgt = np.cumprod(_ndat_ones, axis=axis)
             res = np.nancumprod(_ndat, axis=axis)
             assert_almost_equal(res, tgt)
-            tgt = np.cumsum(_ndat_zeros,axis=axis)
+            tgt = np.cumsum(_ndat_zeros, axis=axis)
             res = np.nancumsum(_ndat, axis=axis)
             assert_almost_equal(res, tgt)
 
@@ -826,6 +825,7 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
         assert std_old.shape == mean.shape
         assert_almost_equal(std, std_old)
 
+
 _TIME_UNITS = (
     "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as"
 )
@@ -923,7 +923,7 @@ class TestNanFunctions_Median:
             # Randomly set some elements to NaN:
             w = np.random.randint(0, d.size, size=d.size // 5)
             d.ravel()[w] = np.nan
-            d[:,0] = 1.  # ensure at least one good value
+            d[:, 0] = 1.  # ensure at least one good value
             # use normal median without nans to compare
             tgt = []
             for x in d:
@@ -933,9 +933,9 @@ class TestNanFunctions_Median:
             assert_array_equal(np.nanmedian(d, axis=-1), tgt)
 
     def test_result_values(self):
-            tgt = [np.median(d) for d in _rdat]
-            res = np.nanmedian(_ndat, axis=1)
-            assert_almost_equal(res, tgt)
+        tgt = [np.median(d) for d in _rdat]
+        res = np.nanmedian(_ndat, axis=1)
+        assert_almost_equal(res, tgt)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])
     @pytest.mark.parametrize("dtype", _TYPE_CODES)
@@ -1136,11 +1136,11 @@ class TestNanFunctions_Percentile:
         assert_almost_equal(res, tgt)
 
     def test_complex(self):
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='D')
         assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='F')
         assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
 
     @pytest.mark.parametrize("weighted", [False, True])
@@ -1329,11 +1329,11 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 0.5), 1.75)
 
     def test_complex(self):
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='D')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='F')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
 
     def test_no_p_overwrite(self):

@@ -3,7 +3,7 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _32Bit,_64Bit, _128Bit
+from numpy._typing import _32Bit, _64Bit, _128Bit
 
 from typing_extensions import assert_type
 
@@ -450,7 +450,7 @@ assert_type(AR_f + c8, npt.NDArray[np.complexfloating[Any, Any]])
 
 # Float
 
-assert_type(f8 + f16, np.float64| np.floating[_128Bit])
+assert_type(f8 + f16, np.float64 | np.floating[_128Bit])
 assert_type(f8 + f8, np.float64)
 assert_type(f8 + i8, np.float64)
 assert_type(f8 + f4, np.float64)

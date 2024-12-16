@@ -33,7 +33,6 @@ def replace_scalar_type_names():
         ('ob_type', ctypes.POINTER(PyTypeObject)),
     ]
 
-
     PyTypeObject._fields_ = [
         # varhead
         ('ob_base', PyObject),
@@ -178,7 +177,7 @@ class LegacyDirective(Directive):
                 "NumPy versions.")
 
         try:
-            self.content[0] = text+" "+self.content[0]
+            self.content[0] = text + " " + self.content[0]
         except IndexError:
             # Content is empty; use the default text
             source, lineno = self.state_machine.get_source_and_line(
@@ -458,7 +457,7 @@ plot_include_source = True
 plot_formats = [('png', 100), 'pdf']
 
 import math
-phi = (math.sqrt(5) + 1)/2
+phi = (math.sqrt(5) + 1) / 2
 
 plot_rcparams = {
     'font.size': 8,
@@ -467,7 +466,7 @@ plot_rcparams = {
     'xtick.labelsize': 8,
     'ytick.labelsize': 8,
     'legend.fontsize': 8,
-    'figure.figsize': (3*phi, 3),
+    'figure.figsize': (3 * phi, 3),
     'figure.subplot.bottom': 0.2,
     'figure.subplot.left': 0.2,
     'figure.subplot.right': 0.9,
@@ -573,6 +572,7 @@ def linkcode_resolve(domain, info):
     else:
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)
+
 
 from pygments.lexers import CLexer
 from pygments.lexer import inherit

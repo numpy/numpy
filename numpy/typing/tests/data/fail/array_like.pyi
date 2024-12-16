@@ -1,9 +1,7 @@
 import numpy as np
 from numpy._typing import ArrayLike
 
-
 class A: ...
-
 
 x1: ArrayLike = (i for i in range(10))  # E: Incompatible types in assignment
 x2: ArrayLike = A()  # E: Incompatible types in assignment

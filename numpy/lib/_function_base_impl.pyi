@@ -136,7 +136,7 @@ def iterable(y: object) -> TypeGuard[Iterable[Any]]: ...
 def average(
     a: _ArrayLikeFloat_co,
     axis: None = ...,
-    weights: None | _ArrayLikeFloat_co= ...,
+    weights: None | _ArrayLikeFloat_co = ...,
     returned: L[False] = ...,
     keepdims: L[False] = ...,
 ) -> floating[Any]: ...
@@ -160,7 +160,7 @@ def average(
 def average(
     a: _ArrayLikeFloat_co,
     axis: None = ...,
-    weights: None | _ArrayLikeFloat_co= ...,
+    weights: None | _ArrayLikeFloat_co = ...,
     returned: L[True] = ...,
     keepdims: L[False] = ...,
 ) -> _2Tuple[floating[Any]]: ...
@@ -705,7 +705,6 @@ def percentile(
 # NOTE: Not an alias, but they do have identical signatures
 # (that we can reuse)
 quantile = percentile
-
 
 _SCT_fm = TypeVar(
     "_SCT_fm",

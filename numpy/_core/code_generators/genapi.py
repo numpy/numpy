@@ -129,7 +129,7 @@ class MinVersion:
 
 class StealRef:
     def __init__(self, arg):
-        self.arg = arg # counting from 1
+        self.arg = arg  # counting from 1
 
     def __str__(self):
         try:
@@ -194,6 +194,7 @@ def split_arguments(argstr):
     arguments = []
     current_argument = []
     i = 0
+
     def finish_arg():
         if current_argument:
             argstr = ''.join(current_argument).strip()
@@ -212,8 +213,8 @@ def split_arguments(argstr):
             finish_arg()
         elif c == '(':
             p = skip_brackets(argstr[i:], '(', ')')
-            current_argument += argstr[i:i+p]
-            i += p-1
+            current_argument += argstr[i:i + p]
+            i += p - 1
         else:
             current_argument += c
         i += 1
@@ -283,7 +284,7 @@ def find_functions(filename, tag='API'):
                 if m:
                     function_name = m.group(1)
                 else:
-                    raise ParseError(filename, lineno+1,
+                    raise ParseError(filename, lineno + 1,
                                      'could not find function name')
                 function_args.append(line[m.end():])
                 state = STATE_ARGS
@@ -461,6 +462,7 @@ NPY_NO_EXPORT %s %s %s \\\n       (%s);""" % (annstr, self.return_type,
 def order_dict(d):
     """Order dict by its values."""
     o = list(d.items())
+
     def _key(x):
         return x[1] + (x[0],)
     return sorted(o, key=_key)
@@ -537,6 +539,7 @@ def fullapi_hash(api_dicts):
         ''.join(a).encode('ascii'), usedforsecurity=False
     ).hexdigest()
 
+
 # To parse strings like 'hex = checksum' where hex is e.g. 0x1234567F and
 # checksum a 128 bits md5 checksum (hex format as well)
 VERRE = re.compile(r'(^0x[\da-f]{8})\s*=\s*([\da-f]{32})')
@@ -564,6 +567,7 @@ def main():
         m.update(ah)
         print(hex(int(ah, 16)))
     print(hex(int(m.hexdigest()[:8], 16)))
+
 
 if __name__ == '__main__':
     main()

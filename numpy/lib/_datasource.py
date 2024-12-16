@@ -149,6 +149,7 @@ class _FileOpeners:
         self._load()
         return self._file_openers[key]
 
+
 _file_openers = _FileOpeners()
 
 def open(path, mode='r', destpath=os.curdir, encoding=None, newline=None):
@@ -293,7 +294,7 @@ class DataSource:
         if not self._iszip(filename):
             for zipext in _file_openers.keys():
                 if zipext:
-                    names.append(filename+zipext)
+                    names.append(filename + zipext)
         return names
 
     def _isurl(self, path):
@@ -474,7 +475,7 @@ class DataSource:
             try:
                 netfile = urlopen(path)
                 netfile.close()
-                del(netfile)
+                del netfile
                 return True
             except URLError:
                 return False

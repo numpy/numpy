@@ -242,6 +242,7 @@ def outmess(line, flag=1):
             sys.stdout.write(filepositiontext)
         sys.stdout.write(line)
 
+
 re._MAXCACHE = 50
 defaultimplicitrules = {}
 for c in "abcdefghopqrstuvwxyz$_":
@@ -472,7 +473,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             else:
                 r = cont1.match(l)
                 if r:
-                    l = r.group('line') # Continuation follows ..
+                    l = r.group('line')  # Continuation follows ..
                 if cont:
                     ll = ll + cont2.match(l).group('line')
                     finalline = ''
@@ -580,6 +581,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
     else:
         gotnextfile, filepositiontext, currentfilename, sourcecodeform, strictf77,\
             beginpattern, quiet, verbose, dolowercase = saveglobals
+
 
 # Crack line
 beforethisafter = r'\s*(?P<before>%s(?=\s*(\b(%s)\b)))'\
@@ -690,6 +692,7 @@ def _simplifyargs(argsline):
             n = n.replace(r, '_')
         a.append(n)
     return ','.join(a)
+
 
 crackline_re_1 = re.compile(r'\s*(?P<result>\b[a-z]+\w*\b)\s*=.*', re.I)
 crackline_bind_1 = re.compile(r'\s*(?P<bind>\b[a-z]+\w*\b)\s*=.*', re.I)
@@ -927,6 +930,7 @@ def appenddecl(decl, decl2, force=1):
                             str(k))
     return decl
 
+
 selectpattern = re.compile(
     r'\s*(?P<this>(@\(@.*?@\)@|\*[\d*]+|\*\s*@\(@.*?@\)@|))(?P<after>.*)\Z', re.I)
 typedefpattern = re.compile(
@@ -1161,7 +1165,7 @@ def analyzeline(m, case, line):
             if bindcline:
                 bindcdat = re.search(crackline_bindlang, bindcline)
                 if bindcdat:
-                    groupcache[groupcounter]['bindlang'] = {name : {}}
+                    groupcache[groupcounter]['bindlang'] = {name: {}}
                     groupcache[groupcounter]['bindlang'][name]["lang"] = bindcdat.group('lang')
                     if bindcdat.group('lang_name'):
                         groupcache[groupcounter]['bindlang'][name]["name"] = bindcdat.group('lang_name')
@@ -1198,7 +1202,7 @@ def analyzeline(m, case, line):
             groupcounter = groupcounter - 1  # end interface
 
     elif case == 'entry':
-        name, args, result, _= _resolvenameargspattern(m.group('after'))
+        name, args, result, _ = _resolvenameargspattern(m.group('after'))
         if name is not None:
             if args:
                 args = rmbadname([x.strip()
@@ -1473,7 +1477,7 @@ def analyzeline(m, case, line):
                                 try:
                                     multiplier, value = match.split("*")
                                     expanded_list.extend([value.strip()] * int(multiplier))
-                                except ValueError: # if int(multiplier) fails
+                                except ValueError:  # if int(multiplier) fails
                                     expanded_list.append(match.strip())
                             else:
                                 expanded_list.append(match.strip())
@@ -1620,6 +1624,8 @@ def cracktypespec0(typespec, ll):
         attr = ll[:i].strip()
         ll = ll[i + 2:]
     return typespec, selector, attr, ll
+
+
 #####
 namepattern = re.compile(r'\s*(?P<name>\b\w+\b)\s*(?P<after>.*)\s*\Z', re.I)
 kindselector = re.compile(
@@ -2303,6 +2309,7 @@ def myeval(e, g=None, l=None):
         return r
     raise ValueError('r=%r' % (r))
 
+
 getlincoef_re_1 = re.compile(r'\A\b\w+\b\Z', re.I)
 
 
@@ -2650,7 +2657,7 @@ def analyzevars(block):
         if n[0] in list(attrrules.keys()):
             vars[n] = setattrspec(vars[n], attrrules[n[0]])
         if 'typespec' not in vars[n]:
-            if not('attrspec' in vars[n] and 'external' in vars[n]['attrspec']):
+            if not ('attrspec' in vars[n] and 'external' in vars[n]['attrspec']):
                 if implicitrules:
                     ln0 = n[0].lower()
                     for k in list(implicitrules[ln0].keys()):
@@ -3024,7 +3031,7 @@ def param_eval(v, g_params, params, dimspec=None):
 
     # This is an array parameter.
     # First, we parse the dimension information
-    if len(dimspec) < 2 or dimspec[::len(dimspec)-1] != "()":
+    if len(dimspec) < 2 or dimspec[::len(dimspec) - 1] != "()":
         raise ValueError(f'param_eval: dimension {dimspec} can\'t be parsed')
     dimrange = dimspec[1:-1].split(',')
     if len(dimrange) == 1:
@@ -3033,11 +3040,11 @@ def param_eval(v, g_params, params, dimspec=None):
         # now, dimrange is a list of 1 or 2 elements
         if len(dimrange) == 1:
             bound = param_parse(dimrange[0], params)
-            dimrange = range(1, int(bound)+1)
+            dimrange = range(1, int(bound) + 1)
         else:
             lbound = param_parse(dimrange[0], params)
             ubound = param_parse(dimrange[1], params)
-            dimrange = range(int(lbound), int(ubound)+1)
+            dimrange = range(int(lbound), int(ubound) + 1)
     else:
         raise ValueError('param_eval: multidimensional array parameters '
                          f'{dimspec} not supported')
@@ -3117,7 +3124,7 @@ def param_parse(d, params):
     if "(" in d:
         # this dimension expression is an array
         dname = d[:d.find("(")]
-        ddims = d[d.find("(")+1:d.rfind(")")]
+        ddims = d[d.find("(") + 1:d.rfind(")")]
         # this dimension expression is also a parameter;
         # parse it recursively
         index = int(param_parse(ddims, params))
@@ -3199,6 +3206,7 @@ def analyzeargs(block):
     if 'result' in block and block['result'] not in block['vars']:
         block['vars'][block['result']] = {}
     return block
+
 
 determineexprtype_re_1 = re.compile(r'\A\(.+?,.+?\)\Z', re.I)
 determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(?P<name>\w+)|)\Z', re.I)

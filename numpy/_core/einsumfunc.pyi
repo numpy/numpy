@@ -31,7 +31,6 @@ _OptimizeKind: TypeAlias = bool | Literal["greedy", "optimal"] | Sequence[Any] |
 _CastingSafe: TypeAlias = Literal["no", "equiv", "safe", "same_kind"]
 _CastingUnsafe: TypeAlias = Literal["unsafe"]
 
-
 # TODO: Properly handle the `casting`-based combinatorics
 # TODO: We need to evaluate the content `__subscripts` in order
 # to identify whether or an array or scalar is returned. At a cursory

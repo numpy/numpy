@@ -50,7 +50,6 @@ _NOut = TypeVar("_NOut", bound=int, covariant=True)
 _ReturnType_co = TypeVar("_ReturnType_co", covariant=True)
 _ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
 
-
 @type_check_only
 class _SupportsArrayUFunc(Protocol):
     def __array_ufunc__(
@@ -60,7 +59,6 @@ class _SupportsArrayUFunc(Protocol):
         *inputs: Any,
         **kwargs: Any,
     ) -> Any: ...
-
 
 # NOTE: `reduce`, `accumulate`, `reduceat` and `outer` raise a ValueError for
 # ufuncs that don't accept two input arguments and return one output argument.

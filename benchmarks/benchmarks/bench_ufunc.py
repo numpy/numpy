@@ -251,7 +251,7 @@ class NDArrayGetItem(Benchmark):
 
     def setup(self, margs, msize):
         self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        self.xl = np.random.uniform(-1, 1, 50*50).reshape(50, 50)
+        self.xl = np.random.uniform(-1, 1, 50 * 50).reshape(50, 50)
 
     def time_methods_getitem(self, margs, msize):
         if msize == 'small':
@@ -268,7 +268,7 @@ class NDArraySetItem(Benchmark):
 
     def setup(self, margs, msize):
         self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        self.xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        self.xl = np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
 
     def time_methods_setitem(self, margs, msize):
         if msize == 'small':
@@ -512,9 +512,11 @@ class Scalar(Benchmark):
 
 class ArgPack:
     __slots__ = ['args', 'kwargs']
+
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
     def __repr__(self):
         return '({})'.format(', '.join(
             [repr(a) for a in self.args] +

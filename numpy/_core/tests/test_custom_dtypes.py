@@ -14,13 +14,13 @@ SF = _get_sfloat_dtype()
 class TestSFloat:
     def _get_array(self, scaling, aligned=True):
         if not aligned:
-            a = np.empty(3*8 + 1, dtype=np.uint8)[1:]
+            a = np.empty(3 * 8 + 1, dtype=np.uint8)[1:]
             a = a.view(np.float64)
             a[:] = [1., 2., 3.]
         else:
             a = np.array([1., 2., 3.])
 
-        a *= 1./scaling  # the casting code also uses the reciprocal.
+        a *= 1. / scaling  # the casting code also uses the reciprocal.
         return a.view(SF(scaling))
 
     def test_sfloat_rescaled(self):

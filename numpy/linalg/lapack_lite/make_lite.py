@@ -70,6 +70,7 @@ class FortranRoutine:
     """Wrapper for a Fortran routine in a file.
     """
     type = 'generic'
+
     def __init__(self, name=None, filename=None):
         self.filename = filename
         if name is None:
@@ -93,6 +94,7 @@ class UnknownFortranRoutine(FortranRoutine):
     is not known.
     """
     type = 'unknown'
+
     def __init__(self, name):
         FortranRoutine.__init__(self, name=name, filename='<unknown>')
 
@@ -238,6 +240,7 @@ def getWrappedRoutineNames(wrapped_routines_file):
             else:
                 routines.append(line)
     return routines, ignores
+
 
 types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack', 'config'}
 

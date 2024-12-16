@@ -300,7 +300,7 @@ def test_unicode_with_converter():
 def test_converter_with_structured_dtype():
     txt = StringIO('1.5,2.5,Abc\n3.0,4.0,dEf\n5.5,6.0,ghI\n')
     dt = np.dtype([('m', np.int32), ('r', np.float32), ('code', 'U8')])
-    conv = {0: lambda s: int(10*float(s)), -1: lambda s: s.upper()}
+    conv = {0: lambda s: int(10 * float(s)), -1: lambda s: s.upper()}
     res = np.loadtxt(txt, dtype=dt, delimiter=",", converters=conv)
     expected = np.array(
         [(15, 2.5, 'ABC'), (30, 4.0, 'DEF'), (55, 6.0, 'GHI')], dtype=dt
@@ -430,7 +430,7 @@ def test_complex_parsing(dtype, with_parens):
 
     res = np.loadtxt(StringIO(s), dtype=dtype, delimiter=",")
     expected = np.array(
-        [[1.0-2.5j, 3.75, 7-5j], [4.0, -1900j, 0]], dtype=dtype
+        [[1.0 - 2.5j, 3.75, 7 - 5j], [4.0, -1900j, 0]], dtype=dtype
     )
     assert_equal(res, expected)
 
@@ -438,7 +438,7 @@ def test_complex_parsing(dtype, with_parens):
 def test_read_from_generator():
     def gen():
         for i in range(4):
-            yield f"{i},{2*i},{i**2}"
+            yield f"{i},{2 * i},{i**2}"
 
     res = np.loadtxt(gen(), dtype=int, delimiter=",")
     expected = np.array([[0, 0, 0], [1, 2, 1], [2, 4, 4], [3, 6, 9]])
@@ -683,11 +683,11 @@ def test_warn_on_skipped_data(skiprows):
         ("i8", 0x0001020304050607), ("u8", 0x0001020304050607),
         # The following values are constructed to lead to unique bytes:
         ("float16", 3.07e-05),
-        ("float32", 9.2557e-41), ("complex64", 9.2557e-41+2.8622554e-29j),
+        ("float32", 9.2557e-41), ("complex64", 9.2557e-41 + 2.8622554e-29j),
         ("float64", -1.758571353180402e-24),
         # Here and below, the repr side-steps a small loss of precision in
         # complex `str` in PyPy (which is probably fine, as repr works):
-        ("complex128", repr(5.406409232372729e-29-1.758571353180402e-24j)),
+        ("complex128", repr(5.406409232372729e-29 - 1.758571353180402e-24j)),
         # Use integer values that fit into double.  Everything else leads to
         # problems due to longdoubles going via double and decimal strings
         # causing rounding errors.
@@ -728,7 +728,7 @@ def test_unicode_whitespace_stripping_complex(dtype):
     line = " 1 , 2+3j , ( 4+5j ), ( 6+-7j )  , 8j , ( 9j ) \n"
     data = [line, line.replace(" ", "\u202F")]
     res = np.loadtxt(data, dtype=dtype, delimiter=',')
-    assert_array_equal(res, np.array([[1, 2+3j, 4+5j, 6-7j, 8j, 9j]] * 2))
+    assert_array_equal(res, np.array([[1, 2 + 3j, 4 + 5j, 6 - 7j, 8j, 9j]] * 2))
 
 
 @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
@@ -826,7 +826,7 @@ def test_iterator_fails_getting_next_line():
         def __getitem__(self, item):
             if item == 50:
                 raise RuntimeError("Bad things happened!")
-            return f"{item}, {item+1}"
+            return f"{item}, {item + 1}"
 
     with pytest.raises(RuntimeError, match="Bad things happened!"):
         np.loadtxt(BadSequence(), dtype=int, delimiter=",")
@@ -972,7 +972,7 @@ def test_parametric_unit_discovery(
     # Unit should be "D" (days) due to last entry
     data = [generic_data] * nrows + [long_datum]
     expected = np.array(data, dtype=expected_dtype)
-    assert len(data) == nrows+1
+    assert len(data) == nrows + 1
     assert len(data) == len(expected)
 
     # file-like path
@@ -986,17 +986,17 @@ def test_parametric_unit_discovery(
     fd, fname = mkstemp()
     os.close(fd)
     with open(fname, "w") as fh:
-        fh.write("\n".join(data)+"\n")
+        fh.write("\n".join(data) + "\n")
     # loading the full file...
     a = np.loadtxt(fname, dtype=unitless_dtype)
     assert len(a) == len(expected)
     assert a.dtype == expected.dtype
     assert_equal(a, expected)
     # loading half of the file...
-    a = np.loadtxt(fname, dtype=unitless_dtype, max_rows=int(nrows/2))
+    a = np.loadtxt(fname, dtype=unitless_dtype, max_rows=int(nrows / 2))
     os.remove(fname)
-    assert len(a) == int(nrows/2)
-    assert_equal(a, expected[:int(nrows/2)])
+    assert len(a) == int(nrows / 2)
+    assert_equal(a, expected[:int(nrows / 2)])
 
 
 def test_str_dtype_unit_discovery_with_converter():
@@ -1051,7 +1051,7 @@ def test_field_growing_cases():
 
     for i in range(1, 1024):
         res = np.loadtxt(["," * i], delimiter=",", dtype=bytes, max_rows=10)
-        assert len(res) == i+1
+        assert len(res) == i + 1
 
 @pytest.mark.parametrize("nmax", (10000, 50000, 55000, 60000))
 def test_maxrows_exceeding_chunksize(nmax):
@@ -1060,7 +1060,7 @@ def test_maxrows_exceeding_chunksize(nmax):
     file_length = 60000
 
     # file-like path
-    data = ["a 0.5 1"]*file_length
+    data = ["a 0.5 1"] * file_length
     txt = StringIO("\n".join(data))
     res = np.loadtxt(txt, dtype=str, delimiter=" ", max_rows=nmax)
     assert len(res) == nmax

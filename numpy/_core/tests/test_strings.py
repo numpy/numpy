@@ -363,19 +363,19 @@ class TestMethods:
         ("", "xx", 0, None, -1),
         ("", "xx", 1, 1, -1),
         ("", "xx", MAX, 0, -1),
-        pytest.param(99*"a" + "b", "b", 0, None, 99,
+        pytest.param(99 * "a" + "b", "b", 0, None, 99,
                      id="99*a+b-b-0-None-99"),
-        pytest.param(98*"a" + "ba", "ba", 0, None, 98,
+        pytest.param(98 * "a" + "ba", "ba", 0, None, 98,
                      id="98*a+ba-ba-0-None-98"),
-        pytest.param(100*"a", "b", 0, None, -1,
+        pytest.param(100 * "a", "b", 0, None, -1,
                      id="100*a-b-0-None--1"),
-        pytest.param(30000*"a" + 100*"b", 100*"b", 0, None, 30000,
+        pytest.param(30000 * "a" + 100 * "b", 100 * "b", 0, None, 30000,
                      id="30000*a+100*b-100*b-0-None-30000"),
-        pytest.param(30000*"a", 100*"b", 0, None, -1,
+        pytest.param(30000 * "a", 100 * "b", 0, None, -1,
                      id="30000*a-100*b-0-None--1"),
-        pytest.param(15000*"a" + 15000*"b", 15000*"b", 0, None, 15000,
+        pytest.param(15000 * "a" + 15000 * "b", 15000 * "b", 0, None, 15000,
                      id="15000*a+15000*b-15000*b-0-None-15000"),
-        pytest.param(15000*"a" + 15000*"b", 15000*"c", 0, None, -1,
+        pytest.param(15000 * "a" + 15000 * "b", 15000 * "c", 0, None, -1,
                      id="15000*a+15000*b-15000*c-0-None--1"),
         (["abcdefghiabc", "rrarrrrrrrrra"], ["def", "arr"], [0, 3],
          None, [3, -1]),
@@ -429,17 +429,17 @@ class TestMethods:
         ("aaa", "", -1, None, 2),
         ("aaa", "", -10, None, 4),
         ("aaa", "aaaa", 0, None, 0),
-        pytest.param(98*"a" + "ba", "ba", 0, None, 1,
+        pytest.param(98 * "a" + "ba", "ba", 0, None, 1,
                      id="98*a+ba-ba-0-None-1"),
-        pytest.param(30000*"a" + 100*"b", 100*"b", 0, None, 1,
+        pytest.param(30000 * "a" + 100 * "b", 100 * "b", 0, None, 1,
                      id="30000*a+100*b-100*b-0-None-1"),
-        pytest.param(30000*"a", 100*"b", 0, None, 0,
+        pytest.param(30000 * "a", 100 * "b", 0, None, 0,
                      id="30000*a-100*b-0-None-0"),
-        pytest.param(30000*"a" + 100*"ab", "ab", 0, None, 100,
+        pytest.param(30000 * "a" + 100 * "ab", "ab", 0, None, 100,
                      id="30000*a+100*ab-ab-0-None-100"),
-        pytest.param(15000*"a" + 15000*"b", 15000*"b", 0, None, 1,
+        pytest.param(15000 * "a" + 15000 * "b", 15000 * "b", 0, None, 1,
                      id="15000*a+15000*b-15000*b-0-None-1"),
-        pytest.param(15000*"a" + 15000*"b", 15000*"c", 0, None, 0,
+        pytest.param(15000 * "a" + 15000 * "b", 15000 * "c", 0, None, 0,
                      id="15000*a+15000*b-15000*c-0-None-0"),
         ("", "", 0, None, 1),
         ("", "", 1, 1, 0),
@@ -648,7 +648,7 @@ class TestMethods:
         ("ABCADAA", "A", "", -1, "BCD"),
         ("BCD", "A", "", -1, "BCD"),
         ("*************", "A", "", -1, "*************"),
-        ("^"+"A"*1000+"^", "A", "", 999, "^A^"),
+        ("^" + "A" * 1000 + "^", "A", "", 999, "^A^"),
         ("the", "the", "", -1, ""),
         ("theater", "the", "", -1, "ater"),
         ("thethe", "the", "", -1, ""),
@@ -1161,7 +1161,7 @@ class TestMethodsWithUnicode:
         [
             ("λμ", "μ"),
             ("λμ", "λ"),
-            ("λ"*5 + "μ"*2, "μ"),
+            ("λ" * 5 + "μ" * 2, "μ"),
             ("λ" * 5 + "μ" * 2, "λ"),
             ("λ" * 5 + "A" + "μ" * 2, "μλ"),
             ("λμ" * 5, "μ"),
@@ -1255,21 +1255,21 @@ class TestReplaceOnArrays:
     def test_replace_count_and_size(self, dt):
         a = np.array(["0123456789" * i for i in range(4)], dtype=dt)
         r1 = np.strings.replace(a, "5", "ABCDE")
-        assert r1.dtype.itemsize == check_itemsize(3*10 + 3*4, dt)
+        assert r1.dtype.itemsize == check_itemsize(3 * 10 + 3 * 4, dt)
         r1_res = np.array(["01234ABCDE6789" * i for i in range(4)], dtype=dt)
         assert_array_equal(r1, r1_res)
         r2 = np.strings.replace(a, "5", "ABCDE", 1)
-        assert r2.dtype.itemsize == check_itemsize(3*10 + 4, dt)
+        assert r2.dtype.itemsize == check_itemsize(3 * 10 + 4, dt)
         r3 = np.strings.replace(a, "5", "ABCDE", 0)
         assert r3.dtype.itemsize == a.dtype.itemsize
         assert_array_equal(r3, a)
         # Negative values mean to replace all.
         r4 = np.strings.replace(a, "5", "ABCDE", -1)
-        assert r4.dtype.itemsize == check_itemsize(3*10 + 3*4, dt)
+        assert r4.dtype.itemsize == check_itemsize(3 * 10 + 3 * 4, dt)
         assert_array_equal(r4, r1)
         # We can do count on an element-by-element basis.
         r5 = np.strings.replace(a, "5", "ABCDE", [-1, -1, -1, 1])
-        assert r5.dtype.itemsize == check_itemsize(3*10 + 4, dt)
+        assert r5.dtype.itemsize == check_itemsize(3 * 10 + 4, dt)
         assert_array_equal(r5, np.array(
             ["01234ABCDE6789" * i for i in range(3)]
             + ["01234ABCDE6789" + "0123456789" * 2], dtype=dt))

@@ -192,29 +192,29 @@ class TestGeomspace:
         assert_allclose(y, [-4j, -12j, -36j, -108j, -324j])
         assert_array_equal(y.real, 0)
 
-        y = geomspace(1+1j, 1000+1000j, num=4)
-        assert_allclose(y, [1+1j, 10+10j, 100+100j, 1000+1000j])
+        y = geomspace(1 + 1j, 1000 + 1000j, num=4)
+        assert_allclose(y, [1 + 1j, 10 + 10j, 100 + 100j, 1000 + 1000j])
 
-        y = geomspace(-1+1j, -1000+1000j, num=4)
-        assert_allclose(y, [-1+1j, -10+10j, -100+100j, -1000+1000j])
+        y = geomspace(-1 + 1j, -1000 + 1000j, num=4)
+        assert_allclose(y, [-1 + 1j, -10 + 10j, -100 + 100j, -1000 + 1000j])
 
         # Logarithmic spirals
         y = geomspace(-1, 1, num=3, dtype=complex)
         assert_allclose(y, [-1, 1j, +1])
 
-        y = geomspace(0+3j, -3+0j, 3)
-        assert_allclose(y, [0+3j, -3/sqrt(2)+3j/sqrt(2), -3+0j])
-        y = geomspace(0+3j, 3+0j, 3)
-        assert_allclose(y, [0+3j, 3/sqrt(2)+3j/sqrt(2), 3+0j])
-        y = geomspace(-3+0j, 0-3j, 3)
-        assert_allclose(y, [-3+0j, -3/sqrt(2)-3j/sqrt(2), 0-3j])
-        y = geomspace(0+3j, -3+0j, 3)
-        assert_allclose(y, [0+3j, -3/sqrt(2)+3j/sqrt(2), -3+0j])
-        y = geomspace(-2-3j, 5+7j, 7)
-        assert_allclose(y, [-2-3j, -0.29058977-4.15771027j,
-                            2.08885354-4.34146838j, 4.58345529-3.16355218j,
-                            6.41401745-0.55233457j, 6.75707386+3.11795092j,
-                            5+7j])
+        y = geomspace(0 + 3j, -3 + 0j, 3)
+        assert_allclose(y, [0 + 3j, -3 / sqrt(2) + 3j / sqrt(2), -3 + 0j])
+        y = geomspace(0 + 3j, 3 + 0j, 3)
+        assert_allclose(y, [0 + 3j, 3 / sqrt(2) + 3j / sqrt(2), 3 + 0j])
+        y = geomspace(-3 + 0j, 0 - 3j, 3)
+        assert_allclose(y, [-3 + 0j, -3 / sqrt(2) - 3j / sqrt(2), 0 - 3j])
+        y = geomspace(0 + 3j, -3 + 0j, 3)
+        assert_allclose(y, [0 + 3j, -3 / sqrt(2) + 3j / sqrt(2), -3 + 0j])
+        y = geomspace(-2 - 3j, 5 + 7j, 7)
+        assert_allclose(y, [-2 - 3j, -0.29058977 - 4.15771027j,
+                            2.08885354 - 4.34146838j, 4.58345529 - 3.16355218j,
+                            6.41401745 - 0.55233457j, 6.75707386 + 3.11795092j,
+                            5 + 7j])
 
         # Type promotion should prevent the -5 from becoming a NaN
         y = geomspace(3j, -5, 2)
@@ -225,13 +225,12 @@ class TestGeomspace:
     def test_complex_shortest_path(self):
         # test the shortest logarithmic spiral is used, see gh-25644
         x = 1.2 + 3.4j
-        y = np.exp(1j*(np.pi-.1)) * x
+        y = np.exp(1j * (np.pi - .1)) * x
         z = np.geomspace(x, y, 5)
         expected = np.array([1.2 + 3.4j, -1.47384 + 3.2905616j,
                         -3.33577588 + 1.36842949j, -3.36011056 - 1.30753855j,
                         -1.53343861 - 3.26321406j])
         np.testing.assert_array_almost_equal(z, expected)
-
 
     def test_dtype(self):
         y = geomspace(1, 1e6, dtype='float32')
@@ -265,8 +264,8 @@ class TestGeomspace:
 
     def test_start_stop_array(self):
         # Try to use all special cases.
-        start = array([1.e0, 32., 1j, -4j, 1+1j, -1])
-        stop = array([1.e4, 2., 16j, -324j, 10000+10000j, 1])
+        start = array([1.e0, 32., 1j, -4j, 1 + 1j, -1])
+        stop = array([1.e4, 2., 16j, -324j, 10000 + 10000j, 1])
         t1 = geomspace(start, stop, 5)
         t2 = stack([geomspace(_start, _stop, 5)
                     for _start, _stop in zip(start, stop)], axis=1)
@@ -360,9 +359,9 @@ class TestLinspace:
 
     def test_complex(self):
         lim1 = linspace(1 + 2j, 3 + 4j, 5)
-        t1 = array([1.0+2.j, 1.5+2.5j,  2.0+3j, 2.5+3.5j, 3.0+4j])
+        t1 = array([1.0 + 2.j, 1.5 + 2.5j,  2.0 + 3j, 2.5 + 3.5j, 3.0 + 4j])
         lim2 = linspace(1j, 10, 5)
-        t2 = array([0.0+1.j, 2.5+0.75j, 5.0+0.5j, 7.5+0.25j, 10.0+0j])
+        t2 = array([0.0 + 1.j, 2.5 + 0.75j, 5.0 + 0.5j, 7.5 + 0.25j, 10.0 + 0j])
         assert_equal(lim1, t1)
         assert_equal(lim2, t2)
 
@@ -424,8 +423,8 @@ class TestLinspace:
 
     def test_equivalent_to_arange(self):
         for j in range(1000):
-            assert_equal(linspace(0, j, j+1, dtype=int),
-                         arange(j+1, dtype=int))
+            assert_equal(linspace(0, j, j + 1, dtype=int),
+                         arange(j + 1, dtype=int))
 
     def test_retstep(self):
         for num in [0, 1, 2]:

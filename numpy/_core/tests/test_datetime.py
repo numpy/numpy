@@ -377,7 +377,7 @@ class TestDateTime:
     # "generic" to select generic unit
     ("Y"), ("M"), ("W"), ("D"), ("h"), ("m"),
     ("s"), ("ms"), ("us"), ("ns"), ("ps"),
-    ("fs"), ("as"), ("generic") ])
+    ("fs"), ("as"), ("generic")])
     def test_timedelta_np_int_construction(self, unit):
         # regression test for gh-7617
         if unit != "generic":
@@ -630,42 +630,42 @@ class TestDateTime:
 
     def test_days_creation(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('i8'),
-                (1600-1970)*365 - (1972-1600)/4 + 3 - 365)
+                (1600 - 1970) * 365 - (1972 - 1600) / 4 + 3 - 365)
         assert_equal(np.array('1600', dtype='M8[D]').astype('i8'),
-                (1600-1970)*365 - (1972-1600)/4 + 3)
+                (1600 - 1970) * 365 - (1972 - 1600) / 4 + 3)
         assert_equal(np.array('1601', dtype='M8[D]').astype('i8'),
-                (1600-1970)*365 - (1972-1600)/4 + 3 + 366)
+                (1600 - 1970) * 365 - (1972 - 1600) / 4 + 3 + 366)
         assert_equal(np.array('1900', dtype='M8[D]').astype('i8'),
-                (1900-1970)*365 - (1970-1900)//4)
+                (1900 - 1970) * 365 - (1970 - 1900) // 4)
         assert_equal(np.array('1901', dtype='M8[D]').astype('i8'),
-                (1900-1970)*365 - (1970-1900)//4 + 365)
-        assert_equal(np.array('1967', dtype='M8[D]').astype('i8'), -3*365 - 1)
-        assert_equal(np.array('1968', dtype='M8[D]').astype('i8'), -2*365 - 1)
-        assert_equal(np.array('1969', dtype='M8[D]').astype('i8'), -1*365)
-        assert_equal(np.array('1970', dtype='M8[D]').astype('i8'), 0*365)
-        assert_equal(np.array('1971', dtype='M8[D]').astype('i8'), 1*365)
-        assert_equal(np.array('1972', dtype='M8[D]').astype('i8'), 2*365)
-        assert_equal(np.array('1973', dtype='M8[D]').astype('i8'), 3*365 + 1)
-        assert_equal(np.array('1974', dtype='M8[D]').astype('i8'), 4*365 + 1)
+                (1900 - 1970) * 365 - (1970 - 1900) // 4 + 365)
+        assert_equal(np.array('1967', dtype='M8[D]').astype('i8'), -3 * 365 - 1)
+        assert_equal(np.array('1968', dtype='M8[D]').astype('i8'), -2 * 365 - 1)
+        assert_equal(np.array('1969', dtype='M8[D]').astype('i8'), -1 * 365)
+        assert_equal(np.array('1970', dtype='M8[D]').astype('i8'), 0 * 365)
+        assert_equal(np.array('1971', dtype='M8[D]').astype('i8'), 1 * 365)
+        assert_equal(np.array('1972', dtype='M8[D]').astype('i8'), 2 * 365)
+        assert_equal(np.array('1973', dtype='M8[D]').astype('i8'), 3 * 365 + 1)
+        assert_equal(np.array('1974', dtype='M8[D]').astype('i8'), 4 * 365 + 1)
         assert_equal(np.array('2000', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)//4)
+                 (2000 - 1970) * 365 + (2000 - 1972) // 4)
         assert_equal(np.array('2001', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)//4 + 366)
+                 (2000 - 1970) * 365 + (2000 - 1972) // 4 + 366)
         assert_equal(np.array('2400', dtype='M8[D]').astype('i8'),
-                 (2400 - 1970)*365 + (2400 - 1972)//4 - 3)
+                 (2400 - 1970) * 365 + (2400 - 1972) // 4 - 3)
         assert_equal(np.array('2401', dtype='M8[D]').astype('i8'),
-                 (2400 - 1970)*365 + (2400 - 1972)//4 - 3 + 366)
+                 (2400 - 1970) * 365 + (2400 - 1972) // 4 - 3 + 366)
 
         assert_equal(np.array('1600-02-29', dtype='M8[D]').astype('i8'),
-                (1600-1970)*365 - (1972-1600)//4 + 3 + 31 + 28)
+                (1600 - 1970) * 365 - (1972 - 1600) // 4 + 3 + 31 + 28)
         assert_equal(np.array('1600-03-01', dtype='M8[D]').astype('i8'),
-                (1600-1970)*365 - (1972-1600)//4 + 3 + 31 + 29)
+                (1600 - 1970) * 365 - (1972 - 1600) // 4 + 3 + 31 + 29)
         assert_equal(np.array('2000-02-29', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)//4 + 31 + 28)
+                 (2000 - 1970) * 365 + (2000 - 1972) // 4 + 31 + 28)
         assert_equal(np.array('2000-03-01', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)//4 + 31 + 29)
+                 (2000 - 1970) * 365 + (2000 - 1972) // 4 + 31 + 29)
         assert_equal(np.array('2001-03-22', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)//4 + 366 + 31 + 28 + 21)
+                 (2000 - 1970) * 365 + (2000 - 1972) // 4 + 366 + 31 + 28 + 21)
 
     def test_days_to_pydate(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('O'),
@@ -880,23 +880,23 @@ class TestDateTime:
         # timedelta <op> timedelta computes the metadata gcd
         for mM in ['m', 'M']:
             assert_equal(
-                np.promote_types(np.dtype(mM+'8[2Y]'), np.dtype(mM+'8[2Y]')),
-                np.dtype(mM+'8[2Y]'))
+                np.promote_types(np.dtype(mM + '8[2Y]'), np.dtype(mM + '8[2Y]')),
+                np.dtype(mM + '8[2Y]'))
             assert_equal(
-                np.promote_types(np.dtype(mM+'8[12Y]'), np.dtype(mM+'8[15Y]')),
-                np.dtype(mM+'8[3Y]'))
+                np.promote_types(np.dtype(mM + '8[12Y]'), np.dtype(mM + '8[15Y]')),
+                np.dtype(mM + '8[3Y]'))
             assert_equal(
-                np.promote_types(np.dtype(mM+'8[62M]'), np.dtype(mM+'8[24M]')),
-                np.dtype(mM+'8[2M]'))
+                np.promote_types(np.dtype(mM + '8[62M]'), np.dtype(mM + '8[24M]')),
+                np.dtype(mM + '8[2M]'))
             assert_equal(
-                np.promote_types(np.dtype(mM+'8[1W]'), np.dtype(mM+'8[2D]')),
-                np.dtype(mM+'8[1D]'))
+                np.promote_types(np.dtype(mM + '8[1W]'), np.dtype(mM + '8[2D]')),
+                np.dtype(mM + '8[1D]'))
             assert_equal(
-                np.promote_types(np.dtype(mM+'8[W]'), np.dtype(mM+'8[13s]')),
-                np.dtype(mM+'8[s]'))
+                np.promote_types(np.dtype(mM + '8[W]'), np.dtype(mM + '8[13s]')),
+                np.dtype(mM + '8[s]'))
             assert_equal(
-                np.promote_types(np.dtype(mM+'8[13W]'), np.dtype(mM+'8[49s]')),
-                np.dtype(mM+'8[7s]'))
+                np.promote_types(np.dtype(mM + '8[13W]'), np.dtype(mM + '8[49s]')),
+                np.dtype(mM + '8[7s]'))
         # timedelta <op> timedelta raises when there is no reasonable gcd
         assert_raises(TypeError, np.promote_types,
                             np.dtype('m8[Y]'), np.dtype('m8[D]'))
@@ -1097,7 +1097,7 @@ class TestDateTime:
                       np.array(['NaT'], dtype='M8[D]'),
                       np.array([3], dtype='m8[D]'),
                       np.array([11], dtype='m8[h]'),
-                      np.array([3*24 + 11], dtype='m8[h]')),
+                      np.array([3 * 24 + 11], dtype='m8[h]')),
                      # NumPy scalars
                      (np.datetime64('2012-12-21', '[D]'),
                       np.datetime64('2012-12-24', '[D]'),
@@ -1105,7 +1105,7 @@ class TestDateTime:
                       np.datetime64('NaT', '[D]'),
                       np.timedelta64(3, '[D]'),
                       np.timedelta64(11, '[h]'),
-                      np.timedelta64(3*24 + 11, '[h]'))]:
+                      np.timedelta64(3 * 24 + 11, '[h]'))]:
             # m8 + m8
             assert_equal(tda + tdb, tdc)
             assert_equal((tda + tdb).dtype, np.dtype('m8[h]'))
@@ -1113,14 +1113,14 @@ class TestDateTime:
             assert_equal(tdb + True, tdb + 1)
             assert_equal((tdb + True).dtype, np.dtype('m8[h]'))
             # m8 + int
-            assert_equal(tdb + 3*24, tdc)
-            assert_equal((tdb + 3*24).dtype, np.dtype('m8[h]'))
+            assert_equal(tdb + 3 * 24, tdc)
+            assert_equal((tdb + 3 * 24).dtype, np.dtype('m8[h]'))
             # bool + m8
             assert_equal(False + tdb, tdb)
             assert_equal((False + tdb).dtype, np.dtype('m8[h]'))
             # int + m8
-            assert_equal(3*24 + tdb, tdc)
-            assert_equal((3*24 + tdb).dtype, np.dtype('m8[h]'))
+            assert_equal(3 * 24 + tdb, tdc)
+            assert_equal((3 * 24 + tdb).dtype, np.dtype('m8[h]'))
             # M8 + bool
             assert_equal(dta + True, dta + 1)
             assert_equal(dtnat + True, dtnat)
@@ -1169,7 +1169,7 @@ class TestDateTime:
                       np.array(['NaT'], dtype='M8[D]'),
                       np.array([3], dtype='m8[D]'),
                       np.array([11], dtype='m8[h]'),
-                      np.array([3*24 - 11], dtype='m8[h]')),
+                      np.array([3 * 24 - 11], dtype='m8[h]')),
                      # NumPy scalars
                      (np.datetime64('2012-12-21', '[D]'),
                       np.datetime64('2012-12-24', '[D]'),
@@ -1179,7 +1179,7 @@ class TestDateTime:
                       np.datetime64('NaT', '[D]'),
                       np.timedelta64(3, '[D]'),
                       np.timedelta64(11, '[h]'),
-                      np.timedelta64(3*24 - 11, '[h]'))]:
+                      np.timedelta64(3 * 24 - 11, '[h]'))]:
             # m8 - m8
             assert_equal(tda - tdb, tdc)
             assert_equal((tda - tdb).dtype, np.dtype('m8[h]'))
@@ -1189,14 +1189,14 @@ class TestDateTime:
             assert_equal(tdc - True, tdc - 1)
             assert_equal((tdc - True).dtype, np.dtype('m8[h]'))
             # m8 - int
-            assert_equal(tdc - 3*24, -tdb)
-            assert_equal((tdc - 3*24).dtype, np.dtype('m8[h]'))
+            assert_equal(tdc - 3 * 24, -tdb)
+            assert_equal((tdc - 3 * 24).dtype, np.dtype('m8[h]'))
             # int - m8
             assert_equal(False - tdb, -tdb)
             assert_equal((False - tdb).dtype, np.dtype('m8[h]'))
             # int - m8
-            assert_equal(3*24 - tdb, tdc)
-            assert_equal((3*24 - tdb).dtype, np.dtype('m8[h]'))
+            assert_equal(3 * 24 - tdb, tdc)
+            assert_equal((3 * 24 - tdb).dtype, np.dtype('m8[h]'))
             # M8 - bool
             assert_equal(dtb - True, dtb - 1)
             assert_equal(dtnat - True, dtnat)
@@ -1277,6 +1277,7 @@ class TestDateTime:
         with suppress_warnings() as sup:
             sup.filter(RuntimeWarning, "invalid value encountered in multiply")
             nat = np.timedelta64('NaT')
+
             def check(a, b, res):
                 assert_equal(a * b, res)
                 assert_equal(b * a, res)
@@ -1561,7 +1562,7 @@ class TestDateTime:
 
         # Also do timedelta
         a = np.array(3, dtype='m8[h]')
-        b = np.array(3*3600 - 3, dtype='m8[s]')
+        b = np.array(3 * 3600 - 3, dtype='m8[s]')
         assert_equal(np.minimum(a, b), b)
         assert_equal(np.minimum(a, b).dtype, np.dtype('m8[s]'))
         assert_equal(np.fmin(a, b), b)
@@ -1591,7 +1592,7 @@ class TestDateTime:
 
     def test_hours(self):
         t = np.ones(3, dtype='M8[s]')
-        t[0] = 60*60*24 + 60*60*10
+        t[0] = 60 * 60 * 24 + 60 * 60 * 10
         assert_(t[0].item().hour == 10)
 
     def test_divisor_conversion_year(self):
@@ -2382,7 +2383,7 @@ class TestDateTime:
         assert_equal(np.busday_count(dates, '2011-12-31', busdaycal=bdd),
                      expected)
         # Returns negative value when reversed
-        expected = -np.arange(366)+1
+        expected = -np.arange(366) + 1
         expected[0] = 0
         assert_equal(np.busday_count('2011-12-31', dates, busdaycal=bdd),
                      expected)
@@ -2407,7 +2408,6 @@ class TestDateTime:
 
         assert_equal(np.busday_count(friday, saturday), 1)
         assert_equal(np.busday_count(saturday, friday), 0)
-
 
     def test_datetime_is_busday(self):
         holidays = ['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
@@ -2493,9 +2493,9 @@ class TestDateTime:
         '''
         arr_val = [123, -321, "NaT"]
         arr = np.array(arr_val,  dtype= dstr % unit)
-        pos = np.array([True, True,  False])
-        neg = np.array([False, False,  True])
-        false = np.array([False, False,  False])
+        pos = np.array([True, True, False])
+        neg = np.array([False, False, True])
+        false = np.array([False, False, False])
         assert_equal(np.isfinite(arr), pos)
         assert_equal(np.isinf(arr), false)
         assert_equal(np.isnan(arr), neg)

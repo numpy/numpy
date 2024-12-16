@@ -167,9 +167,9 @@ class TestMemmap:
             assert_(binary_op(fp, fp).__class__ is ndarray)
 
         fp += 1
-        assert(fp.__class__ is memmap)
+        assert fp.__class__ is memmap
         add(fp, 1, out=fp)
-        assert(fp.__class__ is memmap)
+        assert fp.__class__ is memmap
 
     def test_getitem(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
@@ -191,7 +191,7 @@ class TestMemmap:
         assert_(sum(fp, axis=0).__class__ is MemmapSubClass)
         assert_(sum(fp).__class__ is MemmapSubClass)
         assert_(fp[1:, :-1].__class__ is MemmapSubClass)
-        assert(fp[[0, 1]].__class__ is MemmapSubClass)
+        assert fp[[0, 1]].__class__ is MemmapSubClass
 
     def test_mmap_offset_greater_than_allocation_granularity(self):
         size = 5 * mmap.ALLOCATIONGRANULARITY
@@ -200,14 +200,14 @@ class TestMemmap:
         assert_(fp.offset == offset)
 
     def test_empty_array_with_offset_multiple_of_allocation_granularity(self):
-        self.tmpfp.write(b'a'*mmap.ALLOCATIONGRANULARITY)
+        self.tmpfp.write(b'a' * mmap.ALLOCATIONGRANULARITY)
         size = 0
         offset = mmap.ALLOCATIONGRANULARITY
         fp = memmap(self.tmpfp, shape=size, mode='w+', offset=offset)
         assert_equal(fp.offset, offset)
 
     def test_no_shape(self):
-        self.tmpfp.write(b'a'*16)
+        self.tmpfp.write(b'a' * 16)
         mm = memmap(self.tmpfp, dtype='float64')
         assert_equal(mm.shape, (2,))
 

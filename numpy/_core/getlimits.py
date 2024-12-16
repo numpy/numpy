@@ -714,7 +714,7 @@ class iinfo:
             try:
                 val = iinfo._min_vals[self.key]
             except KeyError:
-                val = int(-(1 << (self.bits-1)))
+                val = int(-(1 << (self.bits - 1)))
                 iinfo._min_vals[self.key] = val
             return val
 
@@ -727,7 +727,7 @@ class iinfo:
             if self.kind == 'u':
                 val = int((1 << self.bits) - 1)
             else:
-                val = int((1 << (self.bits-1)) - 1)
+                val = int((1 << (self.bits - 1)) - 1)
             iinfo._max_vals[self.key] = val
         return val
 

@@ -102,6 +102,7 @@ class CompilerChecker:
 
             self.compilers_checked = True
 
+
 if not IS_WASM:
     checker = CompilerChecker()
     checker.check_compilers()
@@ -369,7 +370,7 @@ class F2PyTest:
     @property
     def module_name(self):
         cls = type(self)
-        return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
+        return f'_{cls.__module__.rsplit(".", 1)[-1]}_{cls.__name__}_ext_module'
 
     @classmethod
     def setup_class(cls):

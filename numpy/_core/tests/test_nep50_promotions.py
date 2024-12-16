@@ -215,7 +215,7 @@ def test_expected_promotion(expected, dtypes, optional_dtypes, data):
         [np.int8, np.int16, np.int32, np.int64,
          np.uint8, np.uint16, np.uint32, np.uint64])
 @pytest.mark.parametrize("other_val",
-        [-2*100, -1, 0, 9, 10, 11, 2**63, 2*100])
+        [-2 * 100, -1, 0, 9, 10, 11, 2**63, 2 * 100])
 @pytest.mark.parametrize("comp",
         [operator.eq, operator.ne, operator.le, operator.lt,
          operator.ge, operator.gt])

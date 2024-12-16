@@ -190,7 +190,7 @@ class Expr:
             # (default is 1)
             assert isinstance(data, tuple) and len(data) == 2
             assert (isinstance(data[0], str)
-                    and data[0][::len(data[0])-1] in ('""', "''", '@@'))
+                    and data[0][::len(data[0]) - 1] in ('""', "''", '@@'))
             assert isinstance(data[1], (int, str)), data
         elif op is Op.SYMBOL:
             # data is any hashable object
@@ -866,9 +866,9 @@ def normalize(obj):
         t2, c2 = as_term_coeff(divisor)
         if isinstance(c1, integer_types) and isinstance(c2, integer_types):
             g = gcd(c1, c2)
-            c1, c2 = c1//g, c2//g
+            c1, c2 = c1 // g, c2 // g
         else:
-            c1, c2 = c1/c2, 1
+            c1, c2 = c1 / c2, 1
 
         if t1.op is Op.APPLY and t1.data[0] is ArithOp.DIV:
             numer = t1.data[1][0] * c1
@@ -1241,13 +1241,13 @@ def replace_parenthesis(s):
     while s.count(left, i + 1, j) != s.count(right, i + 1, j):
         j = s.find(right, j + 1)
         if j == -1:
-            raise ValueError(f'Mismatch of {left+right} parenthesis in {s!r}')
+            raise ValueError(f'Mismatch of {left + right} parenthesis in {s!r}')
 
     p = {'(': 'ROUND', '[': 'SQUARE', '{': 'CURLY', '(/': 'ROUNDDIV'}[left]
 
     k = f'@__f2py_PARENTHESIS_{p}_{COUNTER.__next__()}@'
-    v = s[i+len(left):j]
-    r, d = replace_parenthesis(s[j+len(right):])
+    v = s[i + len(left):j]
+    r, d = replace_parenthesis(s[j + len(right):])
     d[k] = v
     return s[:i] + k + r, d
 

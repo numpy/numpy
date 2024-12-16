@@ -30,7 +30,7 @@ class FunctionHtmlFormatter(HtmlFormatter):
 
     def wrap(self, source, outfile):
         for i, (c, t) in enumerate(HtmlFormatter.wrap(self, source, outfile)):
-            as_functions = self.lines.get(i-1, None)
+            as_functions = self.lines.get(i - 1, None)
             if as_functions is not None:
                 yield 0, ('<div title=%s style="background: #ccffcc">[%2d]' %
                           (quoteattr('as ' + ', '.join(as_functions)),

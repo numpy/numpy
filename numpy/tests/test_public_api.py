@@ -154,7 +154,6 @@ if sys.version_info < (3, 12):
     ]
 
 
-
 PUBLIC_ALIASED_MODULES = [
     "numpy.char",
     "numpy.emath",

@@ -533,7 +533,7 @@ class recarray(ndarray):
             # show zero-length shape unless it is (0,)
             lst = "[], shape=%s" % (repr(self.shape),)
 
-        lf = '\n'+' '*len(prefix)
+        lf = '\n' + ' ' * len(prefix)
         if _get_legacy_print_mode() <= 113:
             lf = ' ' + lf  # trailing space
         return fmt % (lst, lf, repr_dtype)
