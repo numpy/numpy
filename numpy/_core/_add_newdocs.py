@@ -2514,13 +2514,15 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('dtype',
 
     Examples
     --------
+    >>> import numpy as np
+    >>> x = np.arange(4).reshape((2, 2))
     >>> x
     array([[0, 1],
            [2, 3]])
     >>> x.dtype
-    dtype('int32')
-    >>> type(x.dtype)
-    <type 'numpy.dtype'>
+    dtype('int64')   # may vary (OS, bitness)
+    >>> isinstance(x.dtype, np.dtype)
+    True
 
     """))
 
@@ -6256,11 +6258,11 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('subdtype',
     Examples
     --------
     >>> import numpy as np
-    >>> x = numpy.dtype('8f')
+    >>> x = np.dtype('8f')
     >>> x.subdtype
     (dtype('float32'), (8,))
 
-    >>> x =  numpy.dtype('i2')
+    >>> x =  np.dtype('i2')
     >>> x.subdtype
     >>>
 
@@ -6278,11 +6280,11 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('base',
     Examples
     --------
     >>> import numpy as np
-    >>> x = numpy.dtype('8f')
+    >>> x = np.dtype('8f')
     >>> x.base
     dtype('float32')
 
-    >>> x =  numpy.dtype('i2')
+    >>> x =  np.dtype('i2')
     >>> x.base
     dtype('int16')
 
