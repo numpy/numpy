@@ -370,12 +370,4 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs);
 NPY_NO_EXPORT void
 npyiter_clear_buffers(NpyIter *iter);
 
-/*
- * Function to get the ArrayMethod flags of the transfer functions.
- * TODO: This function should be public and removed from `nditer_impl.h`, but
- *       this requires making the ArrayMethod flags public API first.
- */
-NPY_NO_EXPORT int
-NpyIter_GetTransferFlags(NpyIter *iter);
-
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_ */

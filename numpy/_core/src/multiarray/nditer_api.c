@@ -896,7 +896,7 @@ NpyIter_IterationNeedsAPI(NpyIter *iter)
  * I.e. use `NpyIter_GetTransferFlags(iter) & NPY_METH_REQUIRES_PYAPI` to check
  * if you cannot release the GIL.
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT NPY_ARRAYMETHOD_FLAGS
 NpyIter_GetTransferFlags(NpyIter *iter)
 {
     return NIT_ITFLAGS(iter) >> NPY_ITFLAG_TRANSFERFLAGS_SHIFT;

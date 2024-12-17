@@ -826,7 +826,7 @@ Construction and destruction
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
-.. c:function:: int NpyIter_GetTransferFlags(NpyIter *iter)
+.. c:function:: NPY_ARRAYMETHOD_FLAGS NpyIter_GetTransferFlags(NpyIter *iter)
 
     .. versionadded:: 2.3
 
