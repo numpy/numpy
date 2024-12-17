@@ -1695,7 +1695,6 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
     int i, j, idim, nop;
     const char *ufunc_name;
     int retval;
-    int needs_api = 0;
 
     /* Use remapped axes for generalized ufunc */
     int broadcast_ndim, iter_ndim;
@@ -2093,7 +2092,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
         goto fail;
     }
     flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
-    needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
 
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
@@ -2575,7 +2574,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     int *op_axes[2] = {op_axes_arrays[0], op_axes_arrays[1]};
     npy_uint32 op_flags[2];
     int idim, ndim;
-    int needs_api, need_outer_iterator;
+    int need_outer_iterator;
     int res = 0;
 
     NPY_cast_info copy_info;
@@ -2762,7 +2761,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
     }
 
-    needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
         npy_clear_floatstatus_barrier((char*)&iter);
@@ -2983,7 +2982,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                             op_axes_arrays[2]};
     npy_uint32 op_flags[3];
     int idim, ndim;
-    int needs_api, need_outer_iterator = 0;
+    int need_outer_iterator = 0;
 
     int res = 0;
 
@@ -3186,7 +3185,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
     }
 
-    needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
         npy_clear_floatstatus_barrier((char*)&iter);

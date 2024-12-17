@@ -2696,7 +2696,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 
     npy_intp dst_count, src_count, count;
     npy_intp dst_size, src_size;
-    int needs_api;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -2787,7 +2786,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         return -1;
     }
     /* No need to worry about API use in unbuffered iterator */
-    needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char *)src_iter);
     }

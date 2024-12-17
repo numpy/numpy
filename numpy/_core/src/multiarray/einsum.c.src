@@ -1128,7 +1128,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         char **dataptr;
         npy_intp *stride;
         npy_intp *countptr;
-        int needs_api;
         NPY_BEGIN_THREADS_DEF;
 
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -1139,7 +1138,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         stride = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
         /* IterationNeedsAPI additionally checks for object dtype here. */
-        needs_api = NpyIter_IterationNeedsAPI(iter);
+        int needs_api = NpyIter_IterationNeedsAPI(iter);
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
