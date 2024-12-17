@@ -7,4 +7,4 @@ This function is also faster if you already know your needs without buffering.
 
 The ``NpyIter_IterationNeedsAPI`` function now performs all the checks that were
 previously performed at setup time.  While it was never necessary to call it
-multiple times, doing so will now have a larger cost,
+multiple times, doing so will now have a larger cost.
