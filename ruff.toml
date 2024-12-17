@@ -4,7 +4,14 @@ exclude = [
     "numpy/typing/_char_codes.py",
     "numpy/typing/tests/data",
     "spin/cmds.py",
-    "vendored-meson",
+    # Submodules.
+    "doc/source/_static/scipy-mathjax",
+    "vendored-meson/meson",
+    "numpy/fft/pocketfft",
+    "numpy/_core/src/umath/svml",
+    "numpy/_core/src/npysort/x86-simd-sort",
+    "numpy/_core/src/highway",
+    "numpy/_core/src/common/pythoncapi-compat",
 ]
 
 [lint]
