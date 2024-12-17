@@ -3384,6 +3384,8 @@ def test_debug_print(capfd):
     | DTypes: dtype('float64') dtype('int32')
     | InitDataPtrs:
     | BaseOffsets: 0 0
+    | Ptrs:
+    | User/buffer ptrs:
     | Operands:
     | Operand DTypes: dtype('int64') dtype('float64')
     | OpItFlags:
@@ -3399,7 +3401,6 @@ def test_debug_print(capfd):
     |   REDUCE OuterSize: 10
     |   REDUCE OuterDim: 1
     |   Strides: 8 4
-    |   Ptrs:
     |   REDUCE Outer Strides: 40 0
     |   REDUCE Outer Ptrs:
     |   ReadTransferFn:
@@ -3412,12 +3413,10 @@ def test_debug_print(capfd):
     |   Shape: 5
     |   Index: 0
     |   Strides: 16 8
-    |   Ptrs:
     | AxisData[1]:
     |   Shape: 10
     |   Index: 0
     |   Strides: 80 0
-    |   Ptrs:
     ------- END ITERATOR DUMP -------
     """.strip().splitlines()
 

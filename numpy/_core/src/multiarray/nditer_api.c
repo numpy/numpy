@@ -293,6 +293,10 @@ NpyIter_Reset(NpyIter *iter, char **errmsg)
             return NPY_FAIL;
         }
     }
+    else if (itflags&NPY_ITFLAG_EXLOOP)  {
+        /* make sure to update the user pointers (buffer copy does it above). */
+        memcpy(NIT_USERPTRS(iter), NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
+    }
 
     return NPY_SUCCEED;
 }
@@ -648,7 +652,7 @@ NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)
             char **ptrs;
 
             strides = NBF_STRIDES(bufferdata);
-            ptrs = NBF_PTRS(bufferdata);
+            ptrs = NIT_USERPTRS(iter);
             delta = iterindex - NIT_ITERINDEX(iter);
 
             for (iop = 0; iop < nop; ++iop) {
@@ -1088,13 +1092,11 @@ NpyIter_GetDataPtrArray(NpyIter *iter)
     /*int ndim = NIT_NDIM(iter);*/
     int nop = NIT_NOP(iter);
 
-    if (itflags&NPY_ITFLAG_BUFFER) {
-        NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
-        return NBF_PTRS(bufferdata);
+    if (itflags&(NPY_ITFLAG_BUFFER|NPY_ITFLAG_EXLOOP)) {
+        return NIT_USERPTRS(iter);
     }
     else {
-        NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-        return NAD_PTRS(axisdata);
+        return NIT_DATAPTRS(iter);
     }
 }
 
@@ -1211,11 +1213,9 @@ NpyIter_GetIndexPtr(NpyIter *iter)
     /*int ndim = NIT_NDIM(iter);*/
     int nop = NIT_NOP(iter);
 
-    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-
     if (itflags&NPY_ITFLAG_HASINDEX) {
         /* The index is just after the data pointers */
-        return (npy_intp*)NAD_PTRS(axisdata) + nop;
+        return (npy_intp*)(NpyIter_GetDataPtrArray(iter) + nop);
     }
     else {
         return NULL;
@@ -1471,6 +1471,18 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("%i ", (int)NIT_BASEOFFSETS(iter)[iop]);
     }
     printf("\n");
+    printf("| Ptrs: ");
+    for (iop = 0; iop < nop; ++iop) {
+        printf("%p ", (void *)NIT_DATAPTRS(iter)[iop]);
+    }
+    printf("\n");
+    if (itflags&(NPY_ITFLAG_EXLOOP|NPY_ITFLAG_BUFFER)) {
+        printf("| User/buffer ptrs: ");
+        for (iop = 0; iop < nop; ++iop) {
+            printf("%p ", (void *)NIT_USERPTRS(iter)[iop]);
+        }
+        printf("\n");
+    }
     if (itflags&NPY_ITFLAG_HASINDEX) {
         printf("| InitIndex: %d\n",
                         (int)(npy_intp)NIT_RESETDATAPTR(iter)[nop]);
@@ -1552,10 +1564,6 @@ NpyIter_DebugPrint(NpyIter *iter)
                 printf("%d ", (int)fixedstrides[iop]);
             printf("\n");
         }
-        printf("|   Ptrs: ");
-        for (iop = 0; iop < nop; ++iop)
-            printf("%p ", (void *)NBF_PTRS(bufferdata)[iop]);
-        printf("\n");
         if (itflags&NPY_ITFLAG_REDUCE) {
             printf("|   REDUCE Outer Strides: ");
             for (iop = 0; iop < nop; ++iop)
@@ -1603,14 +1611,9 @@ NpyIter_DebugPrint(NpyIter *iter)
         if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("|   Index Stride: %d\n", (int)NAD_STRIDES(axisdata)[nop]);
         }
-        printf("|   Ptrs: ");
-        for (iop = 0; iop < nop; ++iop) {
-            printf("%p ", (void *)NAD_PTRS(axisdata)[iop]);
-        }
-        printf("\n");
         if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("|   Index Value: %d\n",
-                               (int)((npy_intp*)NAD_PTRS(axisdata))[nop]);
+                               (int)((npy_intp*)NIT_DATAPTRS(iter))[nop]);
         }
     }
 
@@ -1759,7 +1762,8 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
     int idim, ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
 
-    char **dataptr;
+    char **dataptrs = NIT_DATAPTRS(iter);
+
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
     npy_intp istrides, nstrides, i, shape;
@@ -1772,17 +1776,13 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
 
     ndim = ndim ? ndim : 1;
 
+    for (istrides = 0; istrides < nstrides; ++istrides) {
+        dataptrs[istrides] = NIT_RESETDATAPTR(iter)[istrides];
+    }
+
     if (iterindex == 0) {
-        dataptr = NIT_RESETDATAPTR(iter);
-
         for (idim = 0; idim < ndim; ++idim) {
-            char **ptrs;
             NAD_INDEX(axisdata) = 0;
-            ptrs = NAD_PTRS(axisdata);
-            for (istrides = 0; istrides < nstrides; ++istrides) {
-                ptrs[istrides] = dataptr[istrides];
-            }
-
             NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
     }
@@ -1791,50 +1791,28 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
          * Set the multi-index, from the fastest-changing to the
          * slowest-changing.
          */
-        axisdata = NIT_AXISDATA(iter);
-        shape = NAD_SHAPE(axisdata);
-        i = iterindex;
-        iterindex /= shape;
-        NAD_INDEX(axisdata) = i - iterindex * shape;
-        for (idim = 0; idim < ndim-1; ++idim) {
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-
+        for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
             shape = NAD_SHAPE(axisdata);
             i = iterindex;
             iterindex /= shape;
             NAD_INDEX(axisdata) = i - iterindex * shape;
-        }
 
-        dataptr = NIT_RESETDATAPTR(iter);
-
-        /*
-         * Accumulate the successive pointers with their
-         * offsets in the opposite order, starting from the
-         * original data pointers.
-         */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp *strides;
-            char **ptrs;
-
-            strides = NAD_STRIDES(axisdata);
-            ptrs = NAD_PTRS(axisdata);
-
-            i = NAD_INDEX(axisdata);
-
+            npy_intp *strides = NAD_STRIDES(axisdata);
             for (istrides = 0; istrides < nstrides; ++istrides) {
-                ptrs[istrides] = dataptr[istrides] + i*strides[istrides];
+                dataptrs[istrides] += NAD_INDEX(axisdata) * strides[istrides];
             }
-
-            dataptr = ptrs;
-
-            NIT_ADVANCE_AXISDATA(axisdata, -1);
         }
     }
+
     if (itflags&NPY_ITFLAG_BUFFER) {
         /* Find the remainder if chunking to the buffers coresize */
         npy_intp fact = NIT_ITERINDEX(iter) / NIT_BUFFERDATA(iter)->coresize;
         npy_intp offset = NIT_ITERINDEX(iter) - fact * NIT_BUFFERDATA(iter)->coresize;
         NIT_BUFFERDATA(iter)->coreoffset = offset;
+    }
+    else if (itflags&NPY_ITFLAG_EXLOOP) {
+        /* If buffered, user pointers are updated during buffer copy. */
+        memcpy(NIT_USERPTRS(iter), dataptrs, nstrides * sizeof(void *));
     }
 }
 
@@ -1942,7 +1920,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     npy_intp *strides = NBF_STRIDES(bufferdata);
     npy_intp transfersize = NBF_SIZE(bufferdata);
 
-    char **ad_ptrs = NAD_PTRS(axisdata);
+    char **dataptrs = NIT_DATAPTRS(iter);
     char **buffers = NBF_BUFFERS(bufferdata);
     char *buffer;
 
@@ -2012,14 +1990,14 @@ npyiter_copy_from_buffers(NpyIter *iter)
                  * the array, detect which one.
                  */
                 if ((op_itflags[maskop]&NPY_OP_ITFLAG_BUFNEVER)) {
-                    maskptr = (npy_bool *)ad_ptrs[maskop];
+                    maskptr = (npy_bool *)dataptrs[maskop];
                 }
                 else {
                     maskptr = (npy_bool *)buffers[maskop];
                 }
 
                 if (PyArray_TransferMaskedStridedToNDim(ndim_transfer,
-                        ad_ptrs[iop], dst_strides, axisdata_incr,
+                        dataptrs[iop], dst_strides, axisdata_incr,
                         buffer, src_stride,
                         maskptr, strides[maskop],
                         dst_coords, axisdata_incr,
@@ -2032,7 +2010,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Regular operand */
             else {
                 if (PyArray_TransferStridedToNDim(ndim_transfer,
-                        ad_ptrs[iop], dst_strides, axisdata_incr,
+                        dataptrs[iop], dst_strides, axisdata_incr,
                         buffer, src_stride,
                         dst_coords, axisdata_incr,
                         dst_shape, axisdata_incr,
@@ -2088,7 +2066,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     PyArrayObject **operands = NIT_OPERANDS(iter);
 
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
+    char **user_ptrs = NIT_USERPTRS(iter), **dataptrs = NIT_DATAPTRS(iter);
     char **buffers = NBF_BUFFERS(bufferdata);
     npy_intp iterindex, iterend, transfersize;
 
@@ -2154,18 +2132,18 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
     for (iop = 0; iop < nop; ++iop) {
         NPY_IT_DBG_PRINT("Iterator: buffer prep for op=%d @ %p inner-stride=%zd\n",
-                         iop, ad_ptrs[iop], NBF_STRIDES(bufferdata)[iop]);
+                         iop, dataptrs[iop], NBF_STRIDES(bufferdata)[iop]);
 
         if (op_itflags[iop]&NPY_OP_ITFLAG_BUFNEVER) {
-            ptrs[iop] = ad_ptrs[iop];
-            NBF_REDUCE_OUTERPTRS(bufferdata)[iop] = ptrs[iop];
+            user_ptrs[iop] = dataptrs[iop];
+            NBF_REDUCE_OUTERPTRS(bufferdata)[iop] = dataptrs[iop];
             NPY_IT_DBG_PRINT("    unbuffered op (skipping)\n");
             continue;
         }
         else {
-            /* Pointers currently never change here. */
-            ptrs[iop] = buffers[iop];
-            NBF_REDUCE_OUTERPTRS(bufferdata)[iop] = ptrs[iop];
+            /* Pointers shouldn't change (but user could modify them). */
+            user_ptrs[iop] = buffers[iop];
+            NBF_REDUCE_OUTERPTRS(bufferdata)[iop] = buffers[iop];
         }
 
         if (!(op_itflags[iop]&NPY_OP_ITFLAG_READ)) {
@@ -2174,7 +2152,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         }
 
         if (op_itflags[iop]&NPY_OP_ITFLAG_BUF_REUSABLE
-                && prev_dataptrs && prev_dataptrs[iop] == ad_ptrs[iop]) {
+                && prev_dataptrs && prev_dataptrs[iop] == dataptrs[iop]) {
             NPY_IT_DBG_PRINT2("Iterator: skipping operands %d "
                     "copy (%d items) because the data pointer didn't change\n",
                     (int)iop, (int)transfersize);
@@ -2192,7 +2170,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
             NPY_IT_DBG_PRINT("    marking operand %d for buffer reuse\n", iop);
             NIT_OPITFLAGS(iter)[iop] |= NPY_OP_ITFLAG_BUF_REUSABLE;
         }
-        else if (prev_dataptrs == NULL || prev_dataptrs[iop] != ad_ptrs[iop] ||
+        else if (prev_dataptrs == NULL || prev_dataptrs[iop] != dataptrs[iop] ||
                  bufferdata->coreoffset) {
             /* Copying at a different offset, so must unset re-use. */
             NIT_OPITFLAGS(iter)[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
@@ -2229,8 +2207,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
             iop, op_transfersize, ndim_transfer, src_strides[0], src_shape[0], dst_stride);
 
         if (PyArray_TransferNDimToStrided(
-                ndim_transfer, ptrs[iop], dst_stride,
-                ad_ptrs[iop], src_strides, axisdata_incr,
+                ndim_transfer, buffers[iop], dst_stride,
+                dataptrs[iop], src_strides, axisdata_incr,
                 src_coords, axisdata_incr,
                 src_shape, axisdata_incr,
                 op_transfersize, src_itemsize,
