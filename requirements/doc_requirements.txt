@@ -18,4 +18,4 @@ towncrier
 toml
 
 # for doctests, also needs pytz which is in test_requirements
-scipy-doctest
+scipy-doctest==1.5.1
