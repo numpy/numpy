@@ -685,9 +685,11 @@ class ABCPolyBase(abc.ABC):
 
         Create a polynomial object for ``1 + 7*x + 4*x**2``:
 
+        # set the print format to ascii for doctests
+        >>> np.polynomial.set_default_printstyle("ascii")
         >>> poly = np.polynomial.Polynomial([1, 7, 4])
         >>> print(poly)
-        1.0 + 7.0·x + 4.0·x²
+        1.0 + 7.0 x + 4.0 x**2
         >>> poly.degree()
         2
 
@@ -696,7 +698,7 @@ class ABCPolyBase(abc.ABC):
 
         >>> poly = np.polynomial.Polynomial([1, 7, 0])
         >>> print(poly)
-        1.0 + 7.0·x + 0.0·x²
+        1.0 + 7.0 x + 0.0 x**2
         >>> poly.degree()
         2
         >>> poly.trim().degree()
