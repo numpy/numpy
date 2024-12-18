@@ -18,17 +18,6 @@ extern "C" {
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
-#ifdef NPY_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_NDITER(iter) \
-        do { \
-            if (!NpyIter_IterationNeedsAPI(iter)) { \
-                NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter)); \
-            } \
-        } while(0)
-#else
-#define NPY_BEGIN_THREADS_NDITER(iter)
-#endif
-
 
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DTypeFromObjectStringDiscovery(

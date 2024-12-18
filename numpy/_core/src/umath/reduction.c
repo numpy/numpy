@@ -339,10 +339,25 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     }
 
     PyArrayMethod_StridedLoop *strided_loop;
-    NPY_ARRAYMETHOD_FLAGS flags = 0;
+    NPY_ARRAYMETHOD_FLAGS flags;
+
+    npy_intp fixed_strides[3];
+    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    if (wheremask != NULL) {
+        if (PyArrayMethod_GetMaskedStridedLoop(context,
+                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        if (context->method->get_strided_loop(context,
+                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+            goto fail;
+        }
+    }
+    flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
 
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
-    needs_api |= NpyIter_IterationNeedsAPI(iter);
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
         npy_clear_floatstatus_barrier((char*)&iter);
@@ -387,25 +402,6 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
 
     if (!NpyIter_Reset(iter, NULL)) {
         goto fail;
-    }
-
-    /*
-     * Note that we need to ensure that the iterator is reset before getting
-     * the fixed strides.  (The buffer information is uninitialized before.)
-     */
-    npy_intp fixed_strides[3];
-    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
-    if (wheremask != NULL) {
-        if (PyArrayMethod_GetMaskedStridedLoop(context,
-                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
-            goto fail;
-        }
-    }
-    else {
-        if (context->method->get_strided_loop(context,
-                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
-            goto fail;
-        }
     }
 
     if (!empty_iteration) {

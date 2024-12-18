@@ -870,18 +870,37 @@ NpyIter_RequiresBuffering(NpyIter *iter)
 NPY_NO_EXPORT npy_bool
 NpyIter_IterationNeedsAPI(NpyIter *iter)
 {
-    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NEEDSAPI) != 0;
+    int nop = NIT_NOP(iter);
+    /* If any of the buffer filling need the API, flag it as well. */
+    if (NpyIter_GetTransferFlags(iter) & NPY_METH_REQUIRES_PYAPI) {
+        return NPY_TRUE;
+    }
+
+    for (int iop = 0; iop < nop; ++iop) {
+        PyArray_Descr *rdt = NIT_DTYPES(iter)[iop];
+        if ((rdt->flags & (NPY_ITEM_REFCOUNT |
+                                 NPY_ITEM_IS_POINTER |
+                                 NPY_NEEDS_PYAPI)) != 0) {
+            /* Iteration needs API access */
+            return NPY_TRUE;
+        }
+    }
+
+    return NPY_FALSE;
 }
 
 
-/*
- * Fetch the ArrayMethod (runtime) flags for all "transfer functions' (i.e.
- * copy to buffer/casts).
+/*NUMPY_API
+ * Fetch the NPY_ARRAYMETHOD_FLAGS (runtime) flags for all "transfer functions'
+ * (i.e. copy to buffer/casts).
  *
- * TODO: This should be public API, but that only makes sense when the
- *       ArrayMethod API is made public.
+ * It is the preferred way to check whether the iteration requires to hold the
+ * GIL or may set floating point errors during buffer copies.
+ *
+ * I.e. use `NpyIter_GetTransferFlags(iter) & NPY_METH_REQUIRES_PYAPI` to check
+ * if you cannot release the GIL.
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT NPY_ARRAYMETHOD_FLAGS
 NpyIter_GetTransferFlags(NpyIter *iter)
 {
     return NIT_ITFLAGS(iter) >> NPY_ITFLAG_TRANSFERFLAGS_SHIFT;
@@ -1417,8 +1436,6 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("ONEITERATION ");
     if (itflags&NPY_ITFLAG_DELAYBUF)
         printf("DELAYBUF ");
-    if (itflags&NPY_ITFLAG_NEEDSAPI)
-        printf("NEEDSAPI ");
     if (itflags&NPY_ITFLAG_REDUCE)
         printf("REDUCE ");
     if (itflags&NPY_ITFLAG_REUSE_REDUCE_LOOPS)

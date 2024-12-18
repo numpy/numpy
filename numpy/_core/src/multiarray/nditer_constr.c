@@ -431,27 +431,6 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         }
     }
 
-    /*
-     * If REFS_OK was specified, check whether there are any
-     * reference arrays and flag it if so.
-     *
-     * NOTE: This really should be unnecessary, but chances are someone relies
-     *       on it.  The iterator itself does not require the API here
-     *       as it only does so for casting/buffering.  But in almost all
-     *       use-cases the API will be required for whatever operation is done.
-     */
-    if (flags & NPY_ITER_REFS_OK) {
-        for (iop = 0; iop < nop; ++iop) {
-            PyArray_Descr *rdt = op_dtype[iop];
-            if ((rdt->flags & (NPY_ITEM_REFCOUNT |
-                                     NPY_ITEM_IS_POINTER |
-                                     NPY_NEEDS_PYAPI)) != 0) {
-                /* Iteration needs API access */
-                NIT_ITFLAGS(iter) |= NPY_ITFLAG_NEEDSAPI;
-            }
-        }
-    }
-
     /* If buffering is set prepare it */
     if (itflags & NPY_ITFLAG_BUFFER) {
         npyiter_find_buffering_setup(iter, buffersize);
@@ -3554,11 +3533,6 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     /* Store the combined transfer flags on the iterator */
     NIT_ITFLAGS(iter) |= cflags << NPY_ITFLAG_TRANSFERFLAGS_SHIFT;
     assert(NIT_ITFLAGS(iter) >> NPY_ITFLAG_TRANSFERFLAGS_SHIFT == cflags);
-
-    /* If any of the dtype transfer functions needed the API, flag it. */
-    if (cflags & NPY_METH_REQUIRES_PYAPI) {
-        NIT_ITFLAGS(iter) |= NPY_ITFLAG_NEEDSAPI;
-    }
 
     return 1;
 

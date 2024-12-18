@@ -66,10 +66,6 @@
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
 
-/* TODO: Only for `NpyIter_GetTransferFlags` until it is public */
-#define NPY_ITERATOR_IMPLEMENTATION_CODE
-#include "nditer_impl.h"
-
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_UF_DBG_TRACING 0
 
@@ -1699,7 +1695,6 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
     int i, j, idim, nop;
     const char *ufunc_name;
     int retval;
-    int needs_api = 0;
 
     /* Use remapped axes for generalized ufunc */
     int broadcast_ndim, iter_ndim;
@@ -2096,8 +2091,9 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
             &strided_loop, &auxdata, &flags) < 0) {
         goto fail;
     }
-    needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
-    needs_api |= NpyIter_IterationNeedsAPI(iter);
+    flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
         npy_clear_floatstatus_barrier((char*)&iter);
@@ -2130,7 +2126,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                     dataptr, inner_dimensions, inner_strides, auxdata);
         } while (retval == 0 && iternext(iter));
 
-        if (!needs_api && !NpyIter_IterationNeedsAPI(iter)) {
+        if (!needs_api) {
             NPY_END_THREADS;
         }
     }
@@ -2578,7 +2574,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     int *op_axes[2] = {op_axes_arrays[0], op_axes_arrays[1]};
     npy_uint32 op_flags[2];
     int idim, ndim;
-    int needs_api, need_outer_iterator;
+    int need_outer_iterator;
     int res = 0;
 
     NPY_cast_info copy_info;
@@ -2761,7 +2757,11 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         flags = PyArrayMethod_COMBINED_FLAGS(flags, copy_flags);
     }
 
-    needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    if (iter != NULL) {
+        flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
+    }
+
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
         npy_clear_floatstatus_barrier((char*)&iter);
@@ -2795,7 +2795,6 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
             goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
-        needs_api |= NpyIter_IterationNeedsAPI(iter);
 
         /* Execute the loop with just the outer iterator */
         count_m1 = PyArray_DIM(op[1], axis)-1;
@@ -2983,7 +2982,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                             op_axes_arrays[2]};
     npy_uint32 op_flags[3];
     int idim, ndim;
-    int needs_api, need_outer_iterator = 0;
+    int need_outer_iterator = 0;
 
     int res = 0;
 
@@ -3182,7 +3181,11 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
             1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
         goto fail;
     }
-    needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    if (iter != NULL) {
+        flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter));
+    }
+
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
         npy_clear_floatstatus_barrier((char*)&iter);
@@ -3206,7 +3209,6 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         npy_intp stride0_ind = PyArray_STRIDE(op[0], axis);
 
         int itemsize = descrs[0]->elsize;
-        needs_api |= NpyIter_IterationNeedsAPI(iter);
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -5612,9 +5614,9 @@ ufunc_at__slow_iter(PyUFuncObject *ufunc, NPY_ARRAYMETHOD_FLAGS flags,
         }
         return -1;
     }
+    flags = PyArrayMethod_COMBINED_FLAGS(flags, NpyIter_GetTransferFlags(iter_buffer));
 
     int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
-    needs_api |= NpyIter_IterationNeedsAPI(iter_buffer);
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         /* Start with the floating-point exception flags cleared */
         npy_clear_floatstatus_barrier((char*)&iter);

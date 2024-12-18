@@ -100,12 +100,10 @@
 #define NPY_ITFLAG_ONEITERATION (1 << 9)
 /* Delay buffer allocation until first Reset* call */
 #define NPY_ITFLAG_DELAYBUF     (1 << 10)
-/* Iteration needs API access during iternext */
-#define NPY_ITFLAG_NEEDSAPI     (1 << 11)
 /* Iteration includes one or more operands being reduced */
-#define NPY_ITFLAG_REDUCE       (1 << 12)
+#define NPY_ITFLAG_REDUCE       (1 << 11)
 /* Reduce iteration doesn't need to recalculate reduce loops next time */
-#define NPY_ITFLAG_REUSE_REDUCE_LOOPS (1 << 13)
+#define NPY_ITFLAG_REUSE_REDUCE_LOOPS (1 << 12)
 /*
  * Offset of (combined) ArrayMethod flags for all transfer functions.
  * For now, we use the top 8 bits.
@@ -381,13 +379,5 @@ NPY_NO_EXPORT int
 npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs);
 NPY_NO_EXPORT void
 npyiter_clear_buffers(NpyIter *iter);
-
-/*
- * Function to get the ArrayMethod flags of the transfer functions.
- * TODO: This function should be public and removed from `nditer_impl.h`, but
- *       this requires making the ArrayMethod flags public API first.
- */
-NPY_NO_EXPORT int
-NpyIter_GetTransferFlags(NpyIter *iter);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_ */
