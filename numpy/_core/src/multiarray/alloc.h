@@ -61,7 +61,7 @@ static inline void
 _npy_init_workspace(
     void **buf, void *static_buf, size_t static_buf_size, size_t elsize, size_t size)
 {
-    if (NPY_LIKELY(size <= static_buf_size / elsize)) {
+    if (NPY_LIKELY(size <= static_buf_size)) {
         *buf = static_buf;
     }
     else {
