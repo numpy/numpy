@@ -1405,7 +1405,7 @@ _loadtxt_with_like = array_function_dispatch()(loadtxt)
 
 def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
                         header=None, footer=None, comments=None,
-                        encoding=None):
+                        encoding=None, fstring_fmt=None):
     return (X,)
 
 
