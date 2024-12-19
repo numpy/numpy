@@ -143,7 +143,6 @@ npyiter_buffered_reduce_iternext_iters@tag_nop@(NpyIter *iter)
 
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
     char **ptrs;
-    char *prev_dataptrs[NPY_MAXARGS];
 
     ptrs = NIT_USERPTRS(iter);
 
@@ -182,8 +181,8 @@ npyiter_buffered_reduce_iternext_iters@tag_nop@(NpyIter *iter)
         return 1;
     }
 
-    /* Save the previously used data pointers */
-    memcpy(prev_dataptrs, NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
+    /* Save the previously used data pointers in the user pointers */
+    memcpy(ptrs, NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
 
     /* Write back to the arrays */
     if (npyiter_copy_from_buffers(iter) < 0) {
@@ -202,7 +201,7 @@ npyiter_buffered_reduce_iternext_iters@tag_nop@(NpyIter *iter)
     }
 
     /* Prepare the next buffers and set iterend/size */
-    if (npyiter_copy_to_buffers(iter, prev_dataptrs) < 0) {
+    if (npyiter_copy_to_buffers(iter, ptrs) < 0) {
         npyiter_clear_buffers(iter);
         return 0;
     }
