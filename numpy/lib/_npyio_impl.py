@@ -1629,7 +1629,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         if fstring_fmt:
             for row in X:
                 row_formatted = format_row.format(*row)
-                fh.write(row_formatted)
+                fh.write(row_formatted + newline)
         elif iscomplex_X:
             for row in X:
                 row2 = []
@@ -1637,7 +1637,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                     row2.append(number.real)
                     row2.append(number.imag)
                 s = format % tuple(row2) + newline
-                fh.write(s.replace('+-', '-'))
+                fh.write(s.replace('+-', '-') + newline)
         else:
             for row in X:
                 try:
@@ -1646,7 +1646,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
                                     % (str(X.dtype), format)) from e
-                fh.write(v)
+                fh.write(v + newline)
 
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)
