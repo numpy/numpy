@@ -9193,8 +9193,9 @@ if not IS_PYPY:
         @pytest.mark.parametrize("dtype", ["u4,f4", "u4,O"])
         def test_resize_structured(self, dtype):
             a = np.array([(0, 0.0) for i in range(5)], dtype=dtype)
-            a.resize(1000)
-            assert_array_equal(a, np.zeros(1000, dtype=dtype))
+            a_resized = np.resize(a, 1000)
+            assert_array_equal(a_resized[:5], a)
+            assert_array_equal(a_resized[5:], np.zeros(995, dtype=dtype))
 
         def test_error(self):
             d = np.ones(100)

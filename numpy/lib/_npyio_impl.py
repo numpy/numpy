@@ -1625,10 +1625,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
-            fh.write(comments + header + newline)
+            fh.write(comments + header.rstrip('\n') + newline)
         if fstring_fmt:
             for row in X:
-                row_formatted = format_row.format(*row)
+                row_formatted = format_row.format(*row).rstrip('\n')
                 fh.write(row_formatted + newline)
         elif iscomplex_X:
             for row in X:
@@ -1637,7 +1637,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                     row2.append(number.real)
                     row2.append(number.imag)
                 s = format % tuple(row2) + newline
-                fh.write(s.replace('+-', '-') + newline)
+                fh.write(s.replace('+-', '-').rstrip('\n') + newline)
         else:
             for row in X:
                 try:
@@ -1646,11 +1646,11 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
                                     % (str(X.dtype), format)) from e
-                fh.write(v + newline)
+                fh.write(v.rstrip('\n') + newline)
 
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)
-            fh.write(comments + footer + newline)
+            fh.write(comments + footer.rstrip('\n') + newline)
     finally:
         if own_fh:
             fh.close()
