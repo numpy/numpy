@@ -28,6 +28,7 @@ from numpy.strings import (
     multiply as strings_multiply,
     partition as strings_partition,
     rpartition as strings_rpartition,
+    slice as strings_slice,
 )
 from numpy._core.strings import (
     _split as split,
@@ -44,7 +45,7 @@ __all__ = [
     'istitle', 'isupper', 'join', 'ljust', 'lower', 'lstrip', 'partition',
     'replace', 'rfind', 'rindex', 'rjust', 'rpartition', 'rsplit',
     'rstrip', 'split', 'splitlines', 'startswith', 'strip', 'swapcase',
-    'title', 'translate', 'upper', 'zfill', 'isnumeric', 'isdecimal',
+    'title', 'translate', 'upper', 'zfill', 'isnumeric', 'isdecimal', 'slice',
     'array', 'asarray', 'compare_chararrays', 'chararray'
     ]
 
@@ -483,6 +484,7 @@ class chararray(ndarray):
     searchsorted
     setfield
     setflags
+    slice
     sort
     split
     splitlines
@@ -1209,6 +1211,19 @@ class chararray(ndarray):
         """
         return isdecimal(self)
 
+    def slice(self, start=None, stop=None, step=None, /):
+        """
+        Slice the strings in `self` by slices specified by `start`, `stop`, `step`.
+        Like in the regular Python `slice` object, if only `start` is specified
+        it is interpreted as the `stop`.
+
+        See Also
+        --------
+        char.slice
+
+        """
+        return asarray(strings_slice(self, start, stop, step))
+
 
 @set_module("numpy.char")
 def array(obj, itemsize=None, copy=True, unicode=None, order=None):
@@ -1272,7 +1287,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         fastest).  If order is 'A', then the returned array may
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
-    
+
     Examples
     --------
 
