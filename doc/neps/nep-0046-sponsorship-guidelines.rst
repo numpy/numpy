@@ -86,7 +86,7 @@ Sponsors will get acknowledged through:
 - prominent logo placement on https://numpy.org/about/
 - logos displayed in talks about NumPy by maintainers
 - announcements of the sponsorship on the NumPy mailing list and the numpy-team
-  Twitter account
+  X account
 
 In addition to Sponsors, we already have the concept of Institutional Partner
 (defined in NumPy's
