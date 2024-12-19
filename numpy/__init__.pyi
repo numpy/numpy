@@ -4740,7 +4740,7 @@ class iinfo(Generic[_IntegerT_co]):
 class nditer:
     def __new__(
         cls,
-        op: ArrayLike | Sequence[ArrayLike],
+        op: ArrayLike | Sequence[ArrayLike | None],
         flags: None | Sequence[_NDIterFlagsKind] = ...,
         op_flags: None | Sequence[Sequence[_NDIterFlagsOp]] = ...,
         op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
