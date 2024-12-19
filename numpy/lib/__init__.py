@@ -9,8 +9,9 @@ other public modules and are useful to have in the main name-space.
 """
 
 # Public submodules
-# Note: recfunctions and (maybe) format are public too, but not imported
+# Note: recfunctions is public, but not imported
 from . import array_utils
+from . import format
 from . import introspect
 from . import mixins
 from . import npyio
@@ -44,8 +45,8 @@ from numpy._core.function_base import add_newdoc
 
 __all__ = [
     "Arrayterator", "add_docstring", "add_newdoc", "array_utils",
-    "introspect", "mixins", "NumpyVersion", "npyio", "scimath",
-    "stride_tricks", "tracemalloc_domain"
+    "format", "introspect", "mixins", "NumpyVersion", "npyio", "scimath",
+    "stride_tricks", "tracemalloc_domain",
 ]
 
 add_newdoc.__module__ = "numpy.lib"
