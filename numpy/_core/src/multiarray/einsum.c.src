@@ -1035,7 +1035,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     iter_flags = NPY_ITER_EXTERNAL_LOOP|
             NPY_ITER_BUFFERED|
             NPY_ITER_DELAY_BUFALLOC|
-            NPY_ITER_GROWINNER|
             NPY_ITER_REFS_OK|
             NPY_ITER_ZEROSIZE_OK;
     if (out != NULL) {
