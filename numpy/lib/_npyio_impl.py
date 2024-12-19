@@ -1106,13 +1106,12 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
     #       A `squeeze=False` could be a better solution (pandas uses squeeze).
     arr = _ensure_ndmin_ndarray(arr, ndmin=ndmin)
 
-    if arr.shape:
-        if arr.shape[0] == 0:
-            warnings.warn(
-                f'loadtxt: input contained no data: "{fname}"',
-                category=UserWarning,
-                stacklevel=3
-            )
+    if arr.shape and arr.shape[0] == 0:
+        warnings.warn(
+            f'loadtxt: input contained no data: "{fname}"',
+            category=UserWarning,
+            stacklevel=3
+        )
 
     if unpack:
         # Unpack structured dtypes if requested:
@@ -1604,9 +1603,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 else:
                     fmt = [fmt, ] * ncol
                 format = delimiter.join(fmt)
-            elif iscomplex_X and n_fmt_chars != (2 * ncol):
-                raise error
-            elif ((not iscomplex_X) and n_fmt_chars != ncol):
+            elif iscomplex_X and n_fmt_chars != (2 * ncol) or ((not iscomplex_X) and n_fmt_chars != ncol):
                 raise error
             else:
                 format = fmt
@@ -2033,9 +2030,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # Should we take the first values as names ?
         if names is True:
             fval = first_values[0].strip()
-            if comments is not None:
-                if fval in comments:
-                    del first_values[0]
+            if comments is not None and fval in comments:
+                del first_values[0]
 
         # Check the columns to use: make sure `usecols` is a list
         if usecols is not None:

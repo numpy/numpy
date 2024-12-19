@@ -414,9 +414,8 @@ def isexternal(var):
 
 def getdimension(var):
     dimpattern = r"\((.*?)\)"
-    if 'attrspec' in var.keys():
-        if any('dimension' in s for s in var['attrspec']):
-            return [re.findall(dimpattern, v) for v in var['attrspec']][0]
+    if 'attrspec' in var.keys() and any('dimension' in s for s in var['attrspec']):
+        return [re.findall(dimpattern, v) for v in var['attrspec']][0]
 
 
 def isrequired(var):
@@ -701,9 +700,7 @@ def getcallprotoargument(rout, cb_map={}):
             ctype = cb_map[n] + '_typedef'
         else:
             ctype = getctype(var)
-            if l_and(isintent_c, l_or(isscalar, iscomplex))(var):
-                pass
-            elif isstring(var):
+            if l_and(isintent_c, l_or(isscalar, iscomplex))(var) or isstring(var):
                 pass
             else:
                 if not isattr_value(var):
@@ -826,14 +823,13 @@ def dictappend(rd, ar):
                     rd[k] = rd[k] + ar[k]
                 else:
                     rd[k].append(ar[k])
-            elif isinstance(rd[k], dict):
-                if isinstance(ar[k], dict):
-                    if k == 'separatorsfor':
-                        for k1 in ar[k].keys():
-                            if k1 not in rd[k]:
-                                rd[k][k1] = ar[k][k1]
-                    else:
-                        rd[k] = dictappend(rd[k], ar[k])
+            elif isinstance(rd[k], dict) and isinstance(ar[k], dict):
+                if k == 'separatorsfor':
+                    for k1 in ar[k].keys():
+                        if k1 not in rd[k]:
+                            rd[k][k1] = ar[k][k1]
+                else:
+                    rd[k] = dictappend(rd[k], ar[k])
         else:
             rd[k] = ar[k]
     return rd
@@ -877,19 +873,13 @@ def applyrules(rules, d, var={}):
                         for i in rules[k][k1]:
                             if isinstance(i, dict):
                                 res = applyrules({'supertext': i}, d, var)
-                                if 'supertext' in res:
-                                    i = res['supertext']
-                                else:
-                                    i = ''
+                                i = res.get('supertext', '')
                             ret[k].append(replace(i, d))
                     else:
                         i = rules[k][k1]
                         if isinstance(i, dict):
                             res = applyrules({'supertext': i}, d)
-                            if 'supertext' in res:
-                                i = res['supertext']
-                            else:
-                                i = ''
+                            i = res.get('supertext', '')
                         ret[k].append(replace(i, d))
         else:
             errmess('applyrules: ignoring rule %s.\n' % repr(rules[k]))

@@ -457,9 +457,8 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                     cont = False
                     is_f2py_directive = False
                     continue
-            elif strictf77:
-                if len(l) > 72:
-                    l = l[:72]
+            elif strictf77 and len(l) > 72:
+                l = l[:72]
             if l[0] not in spacedigits:
                 raise Exception('readfortrancode: Found non-(space,digit) char '
                                 'in the first column.\n\tAre you sure that '
@@ -1351,10 +1350,7 @@ def analyzeline(m, case, line):
         if m.group('after').strip().lower() == 'none':
             groupcache[groupcounter]['implicit'] = None
         elif m.group('after'):
-            if 'implicit' in groupcache[groupcounter]:
-                impl = groupcache[groupcounter]['implicit']
-            else:
-                impl = {}
+            impl = groupcache[groupcounter].get('implicit', {})
             if impl is None:
                 outmess(
                     'analyzeline: Overwriting earlier "implicit none" statement.\n')
@@ -1933,9 +1929,7 @@ def setattrspec(decl, attr, force=0):
         decl['attrspec'].append(attr)
     if attr in decl['attrspec']:
         return decl
-    if attr == 'static' and 'automatic' not in decl['attrspec']:
-        decl['attrspec'].append(attr)
-    elif attr == 'automatic' and 'static' not in decl['attrspec']:
+    if attr == 'static' and 'automatic' not in decl['attrspec'] or attr == 'automatic' and 'static' not in decl['attrspec']:
         decl['attrspec'].append(attr)
     elif attr == 'public':
         if 'private' not in decl['attrspec']:
@@ -2271,9 +2265,8 @@ def analyzebody(block, args, tab=''):
             as_ = args
         b = postcrack(b, as_, tab=tab + '\t')
         if b['block'] in ['interface', 'abstract interface'] and \
-           not b['body'] and not b.get('implementedby'):
-            if 'f2pyenhancements' not in b:
-                continue
+           not b['body'] and not b.get('implementedby') and 'f2pyenhancements' not in b:
+            continue
         if b['block'].replace(' ', '') == 'pythonmodule':
             usermodules.append(b)
         else:
@@ -2530,12 +2523,11 @@ def get_parameters(vars, global_params={}):
                     # has been replaced, see comment above.
                     is_replaced = len(v) < orig_v_len
 
-            if not is_replaced:
-                if not selected_kind_re.match(v):
-                    v_ = v.split('_')
-                    # In case there are additive parameters
-                    if len(v_) > 1: 
-                        v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
+            if not is_replaced and not selected_kind_re.match(v):
+                v_ = v.split('_')
+                # In case there are additive parameters
+                if len(v_) > 1: 
+                    v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
 
             # Currently this will not work for complex numbers.
             # There is missing code for extracting a complex number,
@@ -2671,23 +2663,21 @@ def analyzevars(block):
                 elif n in block['args']:
                     outmess('analyzevars: typespec of variable %s is not defined in routine %s.\n' % (
                         repr(n), block['name']))
-        if 'charselector' in vars[n]:
-            if 'len' in vars[n]['charselector']:
-                l = vars[n]['charselector']['len']
-                try:
-                    l = str(eval(l, {}, params))
-                except Exception:
-                    pass
-                vars[n]['charselector']['len'] = l
+        if 'charselector' in vars[n] and 'len' in vars[n]['charselector']:
+            l = vars[n]['charselector']['len']
+            try:
+                l = str(eval(l, {}, params))
+            except Exception:
+                pass
+            vars[n]['charselector']['len'] = l
 
-        if 'kindselector' in vars[n]:
-            if 'kind' in vars[n]['kindselector']:
-                l = vars[n]['kindselector']['kind']
-                try:
-                    l = str(eval(l, {}, params))
-                except Exception:
-                    pass
-                vars[n]['kindselector']['kind'] = l
+        if 'kindselector' in vars[n] and 'kind' in vars[n]['kindselector']:
+            l = vars[n]['kindselector']['kind']
+            try:
+                l = str(eval(l, {}, params))
+            except Exception:
+                pass
+            vars[n]['kindselector']['kind'] = l
 
         dimension_exprs = {}
         if 'attrspec' in vars[n]:
@@ -2892,17 +2882,16 @@ def analyzevars(block):
                                 vars[v]['depend'] = list(set(v_deps))
                             if n not in v_deps:
                                 n_deps.append(v)
-            elif isstring(vars[n]):
-                if 'charselector' in vars[n]:
-                    if '*' in vars[n]['charselector']:
-                        length = _eval_length(vars[n]['charselector']['*'],
-                                              params)
-                        vars[n]['charselector']['*'] = length
-                    elif 'len' in vars[n]['charselector']:
-                        length = _eval_length(vars[n]['charselector']['len'],
-                                              params)
-                        del vars[n]['charselector']['len']
-                        vars[n]['charselector']['*'] = length
+            elif isstring(vars[n]) and 'charselector' in vars[n]:
+                if '*' in vars[n]['charselector']:
+                    length = _eval_length(vars[n]['charselector']['*'],
+                                          params)
+                    vars[n]['charselector']['*'] = length
+                elif 'len' in vars[n]['charselector']:
+                    length = _eval_length(vars[n]['charselector']['len'],
+                                          params)
+                    del vars[n]['charselector']['len']
+                    vars[n]['charselector']['*'] = length
             if n_checks:
                 vars[n]['check'] = n_checks
             if n_deps:
@@ -3172,10 +3161,7 @@ def expr2name(a, block, args=[]):
         block['vars'][a] = at
     else:
         if a not in block['vars']:
-            if orig_a in block['vars']:
-                block['vars'][a] = block['vars'][orig_a]
-            else:
-                block['vars'][a] = {}
+            block['vars'][a] = block['vars'].get(orig_a, {})
         if 'externals' in block and orig_a in block['externals'] + block['interfaced']:
             block['vars'][a] = setattrspec(block['vars'][a], 'external')
     return a
@@ -3260,9 +3246,8 @@ def determineexprtype(expr, vars, rules={}):
             t = determineexprtype(m.group('name'), vars, rules)
             if t and 'attrspec' in t:
                 del t['attrspec']
-            if not t:
-                if rn[0] in rules:
-                    return _ensure_exprdict(rules[rn[0]])
+            if not t and rn[0] in rules:
+                return _ensure_exprdict(rules[rn[0]])
     if expr[0] in '\'"':
         return {'typespec': 'character', 'charselector': {'*': '*'}}
     if not t:

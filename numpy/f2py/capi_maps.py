@@ -566,10 +566,9 @@ def sign2map(a, var):
         else:
             ret['vardebuginfo'] = 'debug-capi:%s %s=%s:%s' % (
                 ret['ctype'], a, ret['showinit'], ','.join(rl))
-        if isscalar(var):
-            if ret['ctype'] in cformat_map:
-                ret['vardebugshowvalue'] = 'debug-capi:%s=%s' % (
-                    a, cformat_map[ret['ctype']])
+        if isscalar(var) and ret['ctype'] in cformat_map:
+            ret['vardebugshowvalue'] = 'debug-capi:%s=%s' % (
+                a, cformat_map[ret['ctype']])
         if isstring(var):
             ret['vardebugshowvalue'] = 'debug-capi:slen(%s)=%%d %s=\\"%%s\\"' % (
                 a, a)

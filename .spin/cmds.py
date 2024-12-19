@@ -144,9 +144,8 @@ def test(*, parent_callback, pytest_args, tests, markexpr, **kwargs):
     if (not pytest_args) and (not tests):
         pytest_args = ('--pyargs', 'numpy')
 
-    if '-m' not in pytest_args:
-        if markexpr != "full":
-            pytest_args = ('-m', markexpr) + pytest_args
+    if '-m' not in pytest_args and markexpr != "full":
+        pytest_args = ('-m', markexpr) + pytest_args
 
     kwargs['pytest_args'] = pytest_args
     parent_callback(**{'pytest_args': pytest_args, 'tests': tests, **kwargs})
