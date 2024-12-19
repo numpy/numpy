@@ -152,8 +152,8 @@
 struct NpyIter_InternalOnly {
     /* Initial fixed position data */
     npy_uint32 itflags;
-    npy_uint8 ndim, nop;
-    npy_int8 maskop;
+    npy_uint8 ndim;
+    int nop, maskop;
     npy_intp itersize, iterstart, iterend;
     /* iterindex is only used if RANGED or BUFFERED is set */
     npy_intp iterindex;
