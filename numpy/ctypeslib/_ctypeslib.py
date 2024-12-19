@@ -54,7 +54,8 @@ __all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
 
 import os
 import numpy as np
-from numpy._core.multiarray import _flagdict, flagsobj
+import numpy._core.multiarray as mu
+from numpy._utils import set_module
 
 try:
     import ctypes
@@ -62,6 +63,7 @@ except ImportError:
     ctypes = None
 
 if ctypes is None:
+    @set_module("numpy.ctypeslib")
     def _dummy(*args, **kwds):
         """
         Dummy object that raises an ImportError if ctypes is not available.
@@ -75,7 +77,9 @@ if ctypes is None:
         raise ImportError("ctypes is not available.")
     load_library = _dummy
     as_ctypes = _dummy
+    as_ctypes_type = _dummy
     as_array = _dummy
+    ndpointer = _dummy
     from numpy import intp as c_intp
     _ndptr_base = object
 else:
@@ -85,6 +89,7 @@ else:
     _ndptr_base = ctypes.c_void_p
 
     # Adapted from Albert Strasheim
+    @set_module("numpy.ctypeslib")
     def load_library(libname, loader_path):
         """
         It is possible to load a library using
@@ -162,7 +167,7 @@ else:
 def _num_fromflags(flaglist):
     num = 0
     for val in flaglist:
-        num += _flagdict[val]
+        num += mu._flagdict[val]
     return num
 
 
@@ -171,7 +176,7 @@ _flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
 def _flags_fromnum(num):
     res = []
     for key in _flagnames:
-        value = _flagdict[key]
+        value = mu._flagdict[key]
         if (num & value):
             res.append(key)
     return res
@@ -227,8 +232,10 @@ class _concrete_ndptr(_ndptr):
 
 
 # Factory for an array-checking class with from_param defined for
-#  use with ctypes argtypes mechanism
+# use with ctypes argtypes mechanism
 _pointer_type_cache = {}
+
+@set_module("numpy.ctypeslib")
 def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     """
     Array-checking restype/argtypes.
@@ -293,7 +300,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
         elif isinstance(flags, (int, np.integer)):
             num = flags
             flags = _flags_fromnum(num)
-        elif isinstance(flags, flagsobj):
+        elif isinstance(flags, mu.flagsobj):
             num = flags.num
             flags = _flags_fromnum(num)
         if num is None:
@@ -453,6 +460,7 @@ if ctypes is not None:
         else:
             return _ctype_from_dtype_scalar(dtype)
 
+    @set_module("numpy.ctypeslib")
     def as_ctypes_type(dtype):
         r"""
         Convert a dtype into a ctypes type.
@@ -509,6 +517,7 @@ if ctypes is not None:
         """
         return _ctype_from_dtype(np.dtype(dtype))
 
+    @set_module("numpy.ctypeslib")
     def as_array(obj, shape=None):
         """
         Create a numpy array from a ctypes array or POINTER.
@@ -549,6 +558,7 @@ if ctypes is not None:
 
         return np.asarray(obj)
 
+    @set_module("numpy.ctypeslib")
     def as_ctypes(obj):
         """
         Create and return a ctypes object from a numpy array.  Actually

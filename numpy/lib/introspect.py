@@ -1,7 +1,6 @@
 """
 Introspection helper functions.
 """
-import re
 
 __all__ = ['opt_func_info']
 
@@ -64,6 +63,7 @@ def opt_func_info(func_name=None, signature=None):
         }
 
     """
+    import re
     from numpy._core._multiarray_umath import (
         __cpu_targets_info__ as targets, dtype
     )
