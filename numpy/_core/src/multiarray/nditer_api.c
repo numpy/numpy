@@ -2067,6 +2067,9 @@ npyiter_copy_from_buffers(NpyIter *iter)
  * This gets called after the iterator has been positioned to a multi-index
  * for the start of a buffer.  It decides which operands need a buffer,
  * and copies the data into the buffers.
+ *
+ * If passed, this function expects `prev_dataptrs` to be `NIT_USERPTRS`
+ * (they are reset after querying `prev_dataptrs`).
  */
 NPY_NO_EXPORT int
 npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
@@ -2158,16 +2161,14 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
             continue;
         }
 
-        /* NOTE: we re-use the NIT_USERPTRS for this check (in iternext) */
-        assert(prev_dataptrs == NULL || prev_dataptrs == NIT_USERPTRS(iter));
         /*
-         * The prev_dataptrs must match to re-use buffers.  Also coreoffset
-         * must not be 0 to be able to re-use it.
-         * (As of writing coreoffset != 0 implies prev_dataptrs == NULL.)
+         * We may be able to reuse buffers if the pointer is unchanged and
+         * there is no coreoffset (which sets `prev_dataptrs = NULL` above).
+         * We re-use `user_ptrs` for `prev_dataptrs` to simplify `iternext()`.
          */
-        if (prev_dataptrs == NULL || prev_dataptrs[iop] != dataptrs[iop]) {
-            NIT_OPITFLAGS(iter)[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
-        }
+        assert(prev_dataptrs == NULL || prev_dataptrs == user_ptrs);
+        int unchanged_ptr_and_no_offset = (
+            prev_dataptrs != NULL && prev_dataptrs[iop] == dataptrs[iop]);
 
         user_ptrs[iop] = buffers[iop];
         NBF_REDUCE_OUTERPTRS(bufferdata)[iop] = buffers[iop];
@@ -2177,7 +2178,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
             continue;
         }
 
-        if (op_itflags[iop]&NPY_OP_ITFLAG_BUF_REUSABLE) {
+        if (unchanged_ptr_and_no_offset && op_itflags[iop]&NPY_OP_ITFLAG_BUF_REUSABLE) {
             NPY_IT_DBG_PRINT2("Iterator: skipping operands %d "
                     "copy (%d items) because the data pointer didn't change\n",
                     (int)iop, (int)transfersize);
@@ -2194,6 +2195,10 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
              */
             NPY_IT_DBG_PRINT("    marking operand %d for buffer reuse\n", iop);
             NIT_OPITFLAGS(iter)[iop] |= NPY_OP_ITFLAG_BUF_REUSABLE;
+        }
+        else {
+            NPY_IT_DBG_PRINT("    marking operand %d as not reusable\n", iop);
+            NIT_OPITFLAGS(iter)[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
         }
 
         npy_intp zero = 0;  /* used as coord for 1-D copies */
