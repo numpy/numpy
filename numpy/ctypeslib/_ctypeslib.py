@@ -55,6 +55,7 @@ __all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
 import os
 import numpy as np
 import numpy._core.multiarray as mu
+from numpy._utils import set_module
 
 try:
     import ctypes
@@ -62,6 +63,7 @@ except ImportError:
     ctypes = None
 
 if ctypes is None:
+    @set_module("numpy.ctypeslib")
     def _dummy(*args, **kwds):
         """
         Dummy object that raises an ImportError if ctypes is not available.
@@ -87,6 +89,7 @@ else:
     _ndptr_base = ctypes.c_void_p
 
     # Adapted from Albert Strasheim
+    @set_module("numpy.ctypeslib")
     def load_library(libname, loader_path):
         """
         It is possible to load a library using
@@ -229,8 +232,10 @@ class _concrete_ndptr(_ndptr):
 
 
 # Factory for an array-checking class with from_param defined for
-#  use with ctypes argtypes mechanism
+# use with ctypes argtypes mechanism
 _pointer_type_cache = {}
+
+@set_module("numpy.ctypeslib")
 def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     """
     Array-checking restype/argtypes.
@@ -455,6 +460,7 @@ if ctypes is not None:
         else:
             return _ctype_from_dtype_scalar(dtype)
 
+    @set_module("numpy.ctypeslib")
     def as_ctypes_type(dtype):
         r"""
         Convert a dtype into a ctypes type.
@@ -511,6 +517,7 @@ if ctypes is not None:
         """
         return _ctype_from_dtype(np.dtype(dtype))
 
+    @set_module("numpy.ctypeslib")
     def as_array(obj, shape=None):
         """
         Create a numpy array from a ctypes array or POINTER.
@@ -551,6 +558,7 @@ if ctypes is not None:
 
         return np.asarray(obj)
 
+    @set_module("numpy.ctypeslib")
     def as_ctypes(obj):
         """
         Create and return a ctypes object from a numpy array.  Actually
