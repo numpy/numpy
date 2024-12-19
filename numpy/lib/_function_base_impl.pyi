@@ -150,6 +150,14 @@ def average(
 ) -> complexfloating[Any, Any]: ...
 @overload
 def average(
+    a: _ArrayLikeTD64_co,
+    axis: None = ...,
+    weights: None | Any = ...,
+    returned: L[False] = ...,
+    keepdims: L[False] = ...,
+) -> timedelta64: ...
+@overload
+def average(
     a: _ArrayLikeObject_co,
     axis: None = ...,
     weights: None | Any = ...,
@@ -172,6 +180,14 @@ def average(
     returned: L[True] = ...,
     keepdims: L[False] = ...,
 ) -> _2Tuple[complexfloating[Any, Any]]: ...
+@overload
+def average(
+    a: _ArrayLikeTD64_co,
+    axis: None = ...,
+    weights: None | Any= ...,
+    returned: L[True] = ...,
+    keepdims: L[False] = ...,
+) -> _2Tuple[Any]: ...
 @overload
 def average(
     a: _ArrayLikeObject_co,
