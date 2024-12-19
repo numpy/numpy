@@ -223,10 +223,7 @@ def issctype(rep):
         return False
     try:
         res = obj2sctype(rep)
-        if res and res != object_:
-            return True
-        else:
-            return False
+        return res and res != object_
     except Exception:
         return False
 

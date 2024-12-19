@@ -5047,9 +5047,8 @@ class MaskedArray(ndarray):
                 return masked
             return d
         self.filled(True).all(axis=axis, out=out, **kwargs)
-        if isinstance(out, MaskedArray):
-            if out.ndim or mask:
-                out.__setmask__(mask)
+        if isinstance(out, MaskedArray) and (out.ndim or mask):
+            out.__setmask__(mask)
         return out
 
     def any(self, axis=None, out=None, keepdims=np._NoValue):
@@ -5077,9 +5076,8 @@ class MaskedArray(ndarray):
                 d = masked
             return d
         self.filled(False).any(axis=axis, out=out, **kwargs)
-        if isinstance(out, MaskedArray):
-            if out.ndim or mask:
-                out.__setmask__(mask)
+        if isinstance(out, MaskedArray) and (out.ndim or mask):
+            out.__setmask__(mask)
         return out
 
     def nonzero(self):

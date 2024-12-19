@@ -1253,9 +1253,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
         otype = np.dtype(otype.name.replace('datetime', 'timedelta'))
         # view as timedelta to allow addition
         f = f.view(otype)
-    elif otype.type is np.timedelta64:
-        pass
-    elif np.issubdtype(otype, np.inexact):
+    elif otype.type is np.timedelta64 or np.issubdtype(otype, np.inexact):
         pass
     else:
         # All other types convert to floating point.
@@ -3860,8 +3858,8 @@ def _ureduce(a, func, keepdims=False, **kwargs):
 
     """
     a = np.asanyarray(a)
-    axis = kwargs.get('axis', None)
-    out = kwargs.get('out', None)
+    axis = kwargs.get('axis')
+    out = kwargs.get('out')
 
     if keepdims is np._NoValue:
         keepdims = False
@@ -3870,11 +3868,10 @@ def _ureduce(a, func, keepdims=False, **kwargs):
     if axis is not None:
         axis = _nx.normalize_axis_tuple(axis, nd)
 
-        if keepdims:
-            if out is not None:
-                index_out = tuple(
-                    0 if i in axis else slice(None) for i in range(nd))
-                kwargs['out'] = out[(Ellipsis, ) + index_out]
+        if keepdims and out is not None:
+            index_out = tuple(
+                0 if i in axis else slice(None) for i in range(nd))
+            kwargs['out'] = out[(Ellipsis, ) + index_out]
 
         if len(axis) == 1:
             kwargs['axis'] = axis[0]
@@ -3888,10 +3885,9 @@ def _ureduce(a, func, keepdims=False, **kwargs):
             a = a.reshape(a.shape[:nkeep] + (-1,))
             kwargs['axis'] = -1
     else:
-        if keepdims:
-            if out is not None:
-                index_out = (0, ) * nd
-                kwargs['out'] = out[(Ellipsis, ) + index_out]
+        if keepdims and out is not None:
+            index_out = (0, ) * nd
+            kwargs['out'] = out[(Ellipsis, ) + index_out]
 
     r = func(a, **kwargs)
 

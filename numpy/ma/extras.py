@@ -1595,14 +1595,13 @@ def _covhelper(x, y=None, rowvar=True, allow_masked=True):
         ymask = ma.getmaskarray(y)
         if not allow_masked and ymask.any():
             raise ValueError("Cannot process masked data.")
-        if xmask.any() or ymask.any():
-            if y.shape == x.shape:
-                # Define some common mask
-                common_mask = np.logical_or(xmask, ymask)
-                if common_mask is not nomask:
-                    xmask = x._mask = y._mask = ymask = common_mask
-                    x._sharedmask = False
-                    y._sharedmask = False
+        if (xmask.any() or ymask.any()) and y.shape == x.shape:
+            # Define some common mask
+            common_mask = np.logical_or(xmask, ymask)
+            if common_mask is not nomask:
+                xmask = x._mask = y._mask = ymask = common_mask
+                x._sharedmask = False
+                y._sharedmask = False
         x = ma.concatenate((x, y), axis)
         # Check if we can guarantee that the integers in the (N - ddof)
         # normalisation can be accurately represented with single-precision

@@ -446,9 +446,8 @@ def validate_rst_syntax(text, name, dots=True):
             continue
 
         m = re.match(r'.*Unknown (?:interpreted text role|directive type) "(.*)".*$', lines[0])  # noqa: E501
-        if m:
-            if m.group(1) in ok_unknown_items:
-                continue
+        if m and m.group(1) in ok_unknown_items:
+            continue
 
         m = re.match(r'.*Error in "math" directive:.*unknown option: "label"', " ".join(lines), re.S)  # noqa: E501
         if m:
