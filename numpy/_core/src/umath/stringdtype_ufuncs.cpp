@@ -2298,7 +2298,7 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
             inbuf.buffer_memcpy(outbuf, outsize);
         }
         else {
-            // general case, iterate over each characterof the string
+            // general case, find each character of the output string and copy it into the output
             if (step > 0) {
                 npy_intp i_idx = 0, o_idx = 0;
                 while (o_idx < slice_length) {
