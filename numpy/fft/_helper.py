@@ -167,10 +167,10 @@ def fftfreq(n, d=1.0, device=None):
     try:
         n = operator.index(n)
     except TypeError:
-        raise TypeError("n must be an integer")
+        raise ValueError("n must be an integer")
     
     if n <= 0:
-        raise TypeError("n should be a positive integer")
+        raise ValueError("n should be a positive integer")
     
     val = 1.0 / (n * d)
     results = empty(n, int, device=device)
@@ -235,10 +235,10 @@ def rfftfreq(n, d=1.0, device=None):
     try:
         n = operator.index(n)
     except TypeError:
-        raise TypeError("n must be an integer")
+        raise ValueError("n must be an integer")
     
     if n <= 0:
-        raise TypeError("n should be a positive integer")
+        raise ValueError("n should be a positive integer")
     
     val = 1.0 / (n * d)
     N = n // 2 + 1
