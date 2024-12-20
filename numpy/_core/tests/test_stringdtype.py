@@ -551,11 +551,11 @@ def test_concatenate(string_list):
 
 def test_resize_method(string_list):
     sarr = np.array(string_list, dtype="T")
-    if IS_PYPY:
+    try:
         sarr.resize(len(string_list) + 3, refcheck=False)
-    else:
-        sarr.resize(len(string_list) + 3)
-    assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
+    except ValueError:
+        sarr = np.resize(sarr, len(string_list) + 3)
+    np.testing.assert_array_equal(sarr, np.array(string_list + [''] * 3, dtype="T"))
 
 
 def test_create_with_copy_none(string_list):
