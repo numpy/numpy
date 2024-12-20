@@ -144,11 +144,11 @@ class TestFFTFreq:
         assert_array_almost_equal(10*pi*fft.fftfreq(10, pi), x)
     
     def test_invalid_n(self):
-        with assert_raises(TypeError):
+        with assert_raises(ValueError):
             fft.rfftfreq("invalid")
-        with assert_raises(TypeError):
+        with assert_raises(ValueError):
             fft.rfftfreq(-5)
-        with assert_raises(TypeError):
+        with assert_raises(ValueError):
             fft.rfftfreq(0)
 
 
@@ -163,11 +163,11 @@ class TestRFFTFreq:
         assert_array_almost_equal(10*pi*fft.rfftfreq(10, pi), x)
 
     def test_invalid_n(self):
-        with assert_raises(TypeError):
+        with assert_raises(ValueError):
             fft.rfftfreq("invalid")
-        with assert_raises(TypeError):
+        with assert_raises(ValueError):
             fft.rfftfreq(-5)
-        with assert_raises(TypeError):
+        with assert_raises(ValueError):
             fft.rfftfreq(0)
 
 
