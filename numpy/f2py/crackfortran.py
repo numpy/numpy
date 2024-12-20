@@ -1351,10 +1351,7 @@ def analyzeline(m, case, line):
         if m.group('after').strip().lower() == 'none':
             groupcache[groupcounter]['implicit'] = None
         elif m.group('after'):
-            if 'implicit' in groupcache[groupcounter]:
-                impl = groupcache[groupcounter]['implicit']
-            else:
-                impl = {}
+            impl = groupcache[groupcounter].get('implicit', {})
             if impl is None:
                 outmess(
                     'analyzeline: Overwriting earlier "implicit none" statement.\n')
@@ -3172,10 +3169,7 @@ def expr2name(a, block, args=[]):
         block['vars'][a] = at
     else:
         if a not in block['vars']:
-            if orig_a in block['vars']:
-                block['vars'][a] = block['vars'][orig_a]
-            else:
-                block['vars'][a] = {}
+            block['vars'][a] = block['vars'].get(orig_a, {})
         if 'externals' in block and orig_a in block['externals'] + block['interfaced']:
             block['vars'][a] = setattrspec(block['vars'][a], 'external')
     return a

@@ -88,7 +88,7 @@ end interface
 end python module c_ext_return_real
     """
 
-    @pytest.mark.parametrize("name", "t4,t8,s4,s8".split(","))
+    @pytest.mark.parametrize("name", ["t4", "t8", "s4", "s8"])
     def test_all(self, name):
         self.check_function(getattr(self.module, name), name)
 
@@ -99,10 +99,10 @@ class TestFReturnReal(TestReturnReal):
         util.getpath("tests", "src", "return_real", "foo90.f90"),
     ]
 
-    @pytest.mark.parametrize("name", "t0,t4,t8,td,s0,s4,s8,sd".split(","))
+    @pytest.mark.parametrize("name", ["t0", "t4", "t8", "td", "s0", "s4", "s8", "sd"])
     def test_all_f77(self, name):
         self.check_function(getattr(self.module, name), name)
 
-    @pytest.mark.parametrize("name", "t0,t4,t8,td,s0,s4,s8,sd".split(","))
+    @pytest.mark.parametrize("name", ["t0", "t4", "t8", "td", "s0", "s4", "s8", "sd"])
     def test_all_f90(self, name):
         self.check_function(getattr(self.module.f90_return_real, name), name)

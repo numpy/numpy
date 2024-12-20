@@ -3860,8 +3860,8 @@ def _ureduce(a, func, keepdims=False, **kwargs):
 
     """
     a = np.asanyarray(a)
-    axis = kwargs.get('axis', None)
-    out = kwargs.get('out', None)
+    axis = kwargs.get('axis')
+    out = kwargs.get('out')
 
     if keepdims is np._NoValue:
         keepdims = False

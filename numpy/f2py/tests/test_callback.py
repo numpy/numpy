@@ -15,7 +15,7 @@ from . import util
 class TestF77Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "foo.f")]
 
-    @pytest.mark.parametrize("name", "t,t2".split(","))
+    @pytest.mark.parametrize("name", ["t", "t2"])
     @pytest.mark.slow
     def test_all(self, name):
         self.check_function(name)
