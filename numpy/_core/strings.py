@@ -1712,15 +1712,17 @@ def slice(a, start=None, stop=None, step=None, /):
 
     if start is None:
         start = np.where(step < 0, np.iinfo(np.intp).max, 0)
-    start = np.asanyarray(start)
-    if not np.issubdtype(start.dtype, np.integer):
-        raise TypeError(f"unsupported type {start.dtype} for operand 'start'")
+    else:
+        start = np.asanyarray(start)
+        if not np.issubdtype(start.dtype, np.integer):
+            raise TypeError(f"unsupported type {start.dtype} for operand 'start'")
 
     if stop is None:
         stop = np.where(step < 0, np.iinfo(np.intp).min, np.iinfo(np.intp).max)
-    stop = np.asanyarray(stop)
-    if not np.issubdtype(stop.dtype, np.integer):
-        raise TypeError(f"unsupported type {stop.dtype} for operand 'stop'")
+    else:
+        stop = np.asanyarray(stop)
+        if not np.issubdtype(stop.dtype, np.integer):
+            raise TypeError(f"unsupported type {stop.dtype} for operand 'stop'")
 
     a = np.asanyarray(a)
 
