@@ -1303,8 +1303,9 @@ def test_einsum_chunking_precision():
 
     (It is not clear that we should guarantee precision to this extend.)
     """
-    num = 100000000
-    value = 1.00000000002
-    res = np.einsum("i->", np.full(num, value)) / num
+    num = 1_000_000
+    value = 1. + np.finfo(np.float64).eps * 8196
+    res = np.einsum("i->", np.broadcast_to(np.array(value), num)) / num
 
-    assert_almost_equal(res, value, decimal=14)
+    # At with GROWINNER 11 decimals succeed (larger will be less)
+    assert_almost_equal(res, value, decimal=15)
