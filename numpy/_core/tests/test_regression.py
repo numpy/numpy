@@ -1528,7 +1528,7 @@ class TestRegression:
 
     def test_ticket_1538(self):
         x = np.finfo(np.float32)
-        for name in 'eps epsneg max min resolution tiny'.split():
+        for name in ('eps', 'epsneg', 'max', 'min', 'resolution', 'tiny'):
             assert_equal(type(getattr(x, name)), np.float32,
                          err_msg=name)
 

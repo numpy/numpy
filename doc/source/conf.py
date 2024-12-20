@@ -432,14 +432,11 @@ autosummary_generate = True
 # -----------------------------------------------------------------------------
 # Coverage checker
 # -----------------------------------------------------------------------------
-coverage_ignore_modules = r"""
-    """.split()
-coverage_ignore_functions = r"""
-    test($|_) (some|all)true bitwise_not cumproduct pkgload
-    generic\.
-    """.split()
-coverage_ignore_classes = r"""
-    """.split()
+coverage_ignore_modules = []
+coverage_ignore_functions = [
+	'test($|_)', '(some|all)true', 'bitwise_not', 'cumproduct', 'pkgload', 'generic\\.'
+]
+coverage_ignore_classes = []
 
 coverage_c_path = []
 coverage_c_regexes = {}
