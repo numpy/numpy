@@ -1032,10 +1032,13 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
                     NPY_ITER_NBO|
                     NPY_ITER_ALIGNED|
                     NPY_ITER_ALLOCATE;
+    /*
+     * Note: We skip GROWINNER here because this gives a partially stable
+     * summation for float64.  Pairwise summation would be better.
+     */
     iter_flags = NPY_ITER_EXTERNAL_LOOP|
             NPY_ITER_BUFFERED|
             NPY_ITER_DELAY_BUFALLOC|
-            NPY_ITER_GROWINNER|
             NPY_ITER_REFS_OK|
             NPY_ITER_ZEROSIZE_OK;
     if (out != NULL) {
