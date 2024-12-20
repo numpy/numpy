@@ -1110,12 +1110,20 @@ string_partition_resolve_descriptors(
 
 static NPY_CASTING
 string_slice_resolve_descriptors(
-        PyArrayMethodObject *NPY_UNUSED(self),
+        PyArrayMethodObject *self,
         PyArray_DTypeMeta *const NPY_UNUSED(dtypes[5]),
         PyArray_Descr *const given_descrs[5],
         PyArray_Descr *loop_descrs[5],
         npy_intp *NPY_UNUSED(view_offset))
 {
+    if (given_descrs[4]) {
+        PyErr_Format(PyExc_TypeError,
+                     "The StringDType '%s' ufunc does not "
+                     "currently support the 'out' keyword",
+                     self->name);
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
     for (int i = 0; i < 4; i++) {
         loop_descrs[i] = NPY_DT_CALL_ensure_canonical(given_descrs[i]);
         if (loop_descrs[i] == NULL) {

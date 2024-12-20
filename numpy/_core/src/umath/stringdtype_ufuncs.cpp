@@ -2273,22 +2273,11 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
         }
 
         char *buf = NULL;
-        if (context->descriptors[0] == context->descriptors[4]) {
-            // in-place
-            buf = (char *)PyMem_RawMalloc(outsize);
-            if (buf == NULL) {
-                npy_gil_error(PyExc_MemoryError,
-                              "Failed to allocate string in slice");
-                goto fail;
-            }
+        if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
+            goto fail;
         }
-        else {
-            if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
-                goto fail;
-            }
-            /* explicitly discard const; initializing new buffer */
-            buf = (char *)os.buf;
-        }
+        /* explicitly discard const; initializing new buffer */
+        buf = (char *)os.buf;
 
         // second pass: iterate over slice and copy each character of the
         // string
@@ -2345,17 +2334,6 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
                     }
                 }
             }
-        }
-
-        // in-place operations need to clean up temp buffer
-        if (context->descriptors[0] == context->descriptors[4]) {
-            if (NpyString_pack(oallocator, ops, buf, outsize) < 0) {
-                npy_gil_error(PyExc_MemoryError,
-                              "Failed to pack string in slice");
-                goto fail;
-            }
-
-            PyMem_RawFree(buf);
         }
 
         // move to next step
