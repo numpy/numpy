@@ -26,6 +26,8 @@
 #include "stringdtype/dtype.h"
 #include "stringdtype/utf8_utils.h"
 
+#include <vector>
+
 #define LOAD_TWO_INPUT_STRINGS(CONTEXT)                                            \
         const npy_packed_static_string *ps1 = (npy_packed_static_string *)in1;     \
         npy_static_string s1 = {0, NULL};                                          \
@@ -2193,6 +2195,10 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
     npy_string_allocator *iallocator = allocators[0];
     npy_string_allocator *oallocator = allocators[4];
 
+    // Build up an index mapping the codepoints to byte offsets in the encoded
+    // string.
+    std::vector<int> codepoint_offsets;
+
     while (N--) {
         // get the slice
         npy_intp start = *(npy_intp *)start_ptr;
@@ -2213,62 +2219,45 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
             goto fail;
         }
 
+        // determine number of codepoints in string
+        size_t num_codepoints = 0;
+        {
+            const char *inbuf_ptr = is.buf;
+            const char *inbuf_ptr_end = is.buf + is.size;
+
+            // ignore trailing nulls
+            while (inbuf_ptr < inbuf_ptr_end && *(inbuf_ptr_end - 1) == 0) {
+                inbuf_ptr_end--;
+            }
+
+            // count codepoints and build codepoint_offsets
+            codepoint_offsets.clear();
+            while (inbuf_ptr < inbuf_ptr_end) {
+                num_codepoints++;
+                int num_bytes = num_bytes_for_utf8_character(
+                        (const unsigned char *)inbuf_ptr);
+                codepoint_offsets.push_back(inbuf_ptr - is.buf);
+                inbuf_ptr += num_bytes;
+            }
+        }
+
         // adjust slice to string length in codepoints
         // and handle negative indices
-        Buffer<ENCODING::UTF8> inbuf((char *)is.buf, is.size);
-        size_t num_codepoints = inbuf.num_codepoints();
         npy_intp slice_length =
                 PySlice_AdjustIndices(num_codepoints, &start, &stop, step);
-
-        // move to start position in inbuf
-        inbuf += start;
 
         // first pass: compute outsize
         size_t outsize = 0;
         if (step > 0) {
-            const char *inbuf_ptr = inbuf.buf;
-            npy_intp i_idx = 0, o_idx = 0;
-            while (o_idx < slice_length) {
-                int num_bytes = num_bytes_for_utf8_character(
-                        (const unsigned char *)inbuf_ptr);
-
-                if (i_idx % step == 0) {
-                    outsize += num_bytes;
-                    o_idx++;
-                }
-
-                inbuf_ptr += num_bytes;
-                i_idx++;
+            for (npy_intp i = start; i < stop; i += step) {
+                outsize += num_bytes_for_utf8_character(
+                        (const unsigned char *)is.buf + codepoint_offsets[i]);
             }
         }
         else {
-            if (slice_length > 0) {
-                const char *inbuf_ptr = inbuf.buf;
-
-                // get number of bytes for current character
-                int num_bytes = num_bytes_for_utf8_character(
-                        (const unsigned char *)inbuf_ptr);
-
-                npy_intp i_idx = 0, o_idx = 0;
-                while (o_idx < slice_length) {
-                    if (i_idx % (-step) == 0) {
-                        outsize += num_bytes;
-                        o_idx++;
-                    }
-
-                    // break out of loop if we would read past the beginning of
-                    // the buffer
-                    if (inbuf_ptr <= is.buf) {
-                        break;
-                    }
-
-                    char *previous_char_ptr =
-                            (char *)find_previous_utf8_character(
-                                    (const unsigned char *)inbuf_ptr, 1);
-                    num_bytes = inbuf_ptr - previous_char_ptr;
-                    inbuf_ptr = previous_char_ptr;
-                    i_idx++;
-                }
+            for (npy_intp i = start; i > stop; i += step) {
+                outsize += num_bytes_for_utf8_character(
+                        (const unsigned char *)is.buf + codepoint_offsets[i]);
             }
         }
 
@@ -2279,59 +2268,27 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
         /* explicitly discard const; initializing new buffer */
         buf = (char *)os.buf;
 
-        // second pass: iterate over slice and copy each character of the
-        // string
-        Buffer<ENCODING::UTF8> outbuf(buf, outsize);
-        if (step == 1) {
-            // easy case, use memcpy
-            inbuf.buffer_memcpy(outbuf, outsize);
-        }
-        else {
-            // general case, find each character of the output string and copy it into the output
-            if (step > 0) {
-                npy_intp i_idx = 0, o_idx = 0;
-                while (o_idx < slice_length) {
-                    int num_bytes = num_bytes_for_utf8_character(
-                            (const unsigned char *)inbuf.buf);
-
-                    if (i_idx % step == 0) {
-                        inbuf.buffer_memcpy(outbuf, num_bytes);
-                        outbuf.advance_chars_or_bytes(num_bytes);
-                        o_idx++;
-                    }
-
-                    inbuf.buf += num_bytes;
-                    i_idx++;
-                }
+        if (outsize > 0) {
+            // second pass: iterate over slice and copy each character of the
+            // string
+            Buffer<ENCODING::UTF8> outbuf(buf, outsize);
+            if (step == 1) {
+                // easy case, use memcpy
+                memcpy(outbuf.buf, is.buf + codepoint_offsets[start], outsize);
             }
             else {
-                if (slice_length > 0) {
-                    // get number of bytes for current character
+                // general case, find each character of the output string and
+                // copy it into the output
+                npy_intp i_idx = start, o_idx = 0;
+                while (o_idx < slice_length) {
                     int num_bytes = num_bytes_for_utf8_character(
-                            (const unsigned char *)inbuf.buf);
-
-                    npy_intp i_idx = 0, o_idx = 0;
-                    while (o_idx < slice_length) {
-                        if (i_idx % (-step) == 0) {
-                            inbuf.buffer_memcpy(outbuf, num_bytes);
-                            outbuf.advance_chars_or_bytes(num_bytes);
-                            o_idx++;
-                        }
-
-                        // break out of loop if we would read past the
-                        // beginning of the buffer
-                        if (inbuf.buf <= is.buf) {
-                            break;
-                        }
-
-                        // find previous character and update num_bytes
-                        char *previous_char_ptr =
-                                (char *)find_previous_utf8_character(
-                                        (const unsigned char *)inbuf.buf, 1);
-                        num_bytes = inbuf.buf - previous_char_ptr;
-                        inbuf.buf = previous_char_ptr;
-                        i_idx++;
-                    }
+                            (const unsigned char *)is.buf +
+                            codepoint_offsets[i_idx]);
+                    memcpy(outbuf.buf, is.buf + codepoint_offsets[i_idx],
+                        num_bytes);
+                    outbuf.advance_chars_or_bytes(num_bytes);
+                    o_idx++;
+                    i_idx += step;
                 }
             }
         }
