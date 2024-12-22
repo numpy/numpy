@@ -174,3 +174,10 @@ float(np.array("1", dtype=np.str_))
 complex(np.array(1.0, dtype=np.float64))
 
 operator.index(np.array(1, dtype=np.int64))
+
+# this fails on numpy 2.2.1
+# https://github.com/scipy/scipy/blob/a755ee77ec47a64849abe42c349936475a6c2f24/scipy/io/arff/tests/test_arffread.py#L41-L44
+A_float = np.array([[1, 5], [2, 4], [np.nan, np.nan]])
+A_void: npt.NDArray[np.void] = np.empty(3, [("yop", float), ("yap", float)])
+A_void["yop"] = A_float[:, 0]
+A_void["yap"] = A_float[:, 1]
