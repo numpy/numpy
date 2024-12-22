@@ -23,6 +23,7 @@ like ``"float64"`` can be used.
 """
 
 # See doc/source/reference/routines.dtypes.rst for module-level docs
+# check https://numpy.org/ for documentation
 
 __all__ = []
 
