@@ -34,48 +34,12 @@
 #define npyv_shr_s64(A, C) __lsx_vsra_d(A, npyv_setall_u64(C))
 
 // Right by an immediate constant
-NPY_FINLINE __m128i npyv_shri_u16(__m128i a, unsigned int imm)
-{
-    if (imm > 15)
-        return __lsx_vldi(0);
-    else
-        return npyv_shr_u16(a, imm);
-}
-NPY_FINLINE __m128i npyv_shri_s16(__m128i a, int imm)
-{
-    if (imm > 15)
-        return __lsx_vldi(0);
-    else
-       return npyv_shr_s16(a, imm);
-}
-NPY_FINLINE __m128i npyv_shri_u32(__m128i a, int imm)
-{
-    if (imm > 31)
-        return __lsx_vldi(0);
-    else
-        return npyv_shr_u32(a, imm);
-}
-NPY_FINLINE __m128i npyv_shri_s32(__m128i a, int imm)
-{
-    if (imm > 31)
-        return __lsx_vldi(0);
-    else
-        return npyv_shr_s32(a, imm);
-}
-NPY_FINLINE __m128i npyv_shri_u64(__m128i a, int imm)
-{
-    if (imm > 63)
-        return __lsx_vldi(0);
-    else
-        return npyv_shr_u64(a, imm);
-}
-NPY_FINLINE __m128i npyv_shri_s64(__m128i a, int imm)
-{
-   if (imm > 63)
-        return __lsx_vldi(0);
-   else
-        return npyv_shr_s64(a, imm);
-}
+#define npyv_shri_u16 __lsx_vsrli_h
+#define npyv_shri_s16 __lsx_vsrai_h
+#define npyv_shri_u32 __lsx_vsrli_w
+#define npyv_shri_s32 __lsx_vsrai_w
+#define npyv_shri_u64 __lsx_vsrli_d
+#define npyv_shri_s64 __lsx_vsrai_d
 
 /***************************
  * Logical
