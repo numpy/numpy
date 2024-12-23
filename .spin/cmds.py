@@ -320,36 +320,20 @@ def _run_asv(cmd):
 
 @click.command()
 @click.option(
-    "-b", "--branch",
-    metavar='branch',
-    default="main",
-)
-@click.option(
-    '--uncommitted',
+    '--fix',
     is_flag=True,
     default=False,
     required=False,
 )
 @click.pass_context
-def lint(ctx, branch, uncommitted):
-    """🔦 Run lint checks on diffs.
-    Provide target branch name or `uncommitted` to check changes before committing:
+def lint(ctx, fix):
+    """🔦 Run lint checks with Ruff
 
     \b
-    Examples:
+    To run automatic fixes use:
 
     \b
-    For lint checks of your development branch with `main` or a custom branch:
-
-    \b
-    $ spin lint # defaults to main
-    $ spin lint --branch custom_branch
-
-    \b
-    To check just the uncommitted changes before committing
-
-    \b
-    $ spin lint --uncommitted
+    $ spin lint --fix
     """
     try:
         linter = _get_numpy_tools(pathlib.Path('linter.py'))
@@ -358,7 +342,7 @@ def lint(ctx, branch, uncommitted):
             f"{e.msg}. Install using requirements/linter_requirements.txt"
         )
 
-    linter.DiffLinter(branch).run_lint(uncommitted)
+    linter.DiffLinter().run_lint(fix)
 
 @click.command()
 @click.option(
