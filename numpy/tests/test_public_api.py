@@ -699,9 +699,9 @@ def test___module___attribute():
                 "numpy._core" not in member.__name__ and  # outside _core
                 # not in a skip module list
                 member_name not in [
-                    "char", "core", "ctypeslib", "f2py", "ma", "lapack_lite",
-                    "mrecords", "testing", "tests", "polynomial", "typing",
-                    "mtrand", "bit_generator",
+                    "char", "core", "f2py", "ma", "lapack_lite", "mrecords",
+                    "testing", "tests", "polynomial", "typing", "mtrand",
+                    "bit_generator",
                 ] and
                 member not in visited_modules  # not visited yet
             ):
@@ -725,6 +725,13 @@ def test___module___attribute():
                 if (
                     (member.__name__ == "recarray" and module.__name__ == "numpy") or
                     (member.__name__ == "record" and module.__name__ == "numpy.rec")
+                ):
+                    continue
+
+                # ctypeslib exports ctypes c_long/c_longlong
+                if (
+                    member.__name__ in ("c_long", "c_longlong") and
+                    module.__name__ == "numpy.ctypeslib"
                 ):
                     continue
 

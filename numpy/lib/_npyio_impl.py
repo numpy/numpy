@@ -16,6 +16,7 @@ import pickle
 import numpy as np
 from . import format
 from ._datasource import DataSource
+from ._format_impl import _MAX_HEADER_SIZE
 from numpy._core import overrides
 from numpy._core.multiarray import packbits, unpackbits
 from numpy._core._multiarray_umath import _load_from_filelike
@@ -182,7 +183,7 @@ class NpzFile(Mapping):
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None, *,
-                 max_header_size=format._MAX_HEADER_SIZE):
+                 max_header_size=_MAX_HEADER_SIZE):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
         _zip = zipfile_factory(fid)
@@ -307,7 +308,7 @@ class NpzFile(Mapping):
 
 @set_module('numpy')
 def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
-         encoding='ASCII', *, max_header_size=format._MAX_HEADER_SIZE):
+         encoding='ASCII', *, max_header_size=_MAX_HEADER_SIZE):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
 
