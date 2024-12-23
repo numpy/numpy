@@ -2,7 +2,6 @@
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include "hwy/highway.h"
 #include "loops_utils.h"
 #include "loops.h"
 #include <cstring> // for memcpy
@@ -13,11 +12,11 @@
 #include "numpy/npy_math.h"
 #include <cstdio>
 
-using namespace hwy::HWY_NAMESPACE;
+#include <hwy/highway.h>
+namespace hn = hwy::HWY_NAMESPACE;
 
 HWY_BEFORE_NAMESPACE();
 namespace HWY_NAMESPACE {
-
 
 // Helper function to set float status
 inline void set_float_status(bool overflow, bool divbyzero) {
@@ -32,9 +31,9 @@ inline void set_float_status(bool overflow, bool divbyzero) {
 // Signed integer division
 template <typename T>
 void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len) {
-    using D = ScalableTag<T>;
+    using D = hn::ScalableTag<T>;
     const D d;
-    const size_t N = Lanes(d);
+    const size_t N = hn::Lanes(d);
 
     bool raise_overflow = false;
     bool raise_divbyzero = false;
@@ -43,70 +42,80 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
         // Handle division by zero
         std::fill(dst, dst + len, static_cast<T>(0));
         raise_divbyzero = true;
-    } else if (scalar == 1) {
+    }
+    else if (scalar == 1) {
         // Special case for division by 1
         memcpy(dst, src, len * sizeof(T));
-    } else if (scalar == static_cast<T>(-1)) {
-        const auto vec_min_val = Set(d, std::numeric_limits<T>::min());
+    }
+    else if (scalar == static_cast<T>(-1)) {
+        const auto vec_min_val = hn::Set(d, std::numeric_limits<T>::min());
         size_t i = 0;
         for (; i + N <= static_cast<size_t>(len); i += N) {
-            const auto vec_src = LoadU(d, src + i);
-            const auto is_min_val = Eq(vec_src, vec_min_val);
-            const auto vec_res = IfThenElse(is_min_val, vec_min_val, Neg(vec_src));
-            StoreU(vec_res, d, dst + i);
-            if (!raise_overflow && !AllFalse(d, is_min_val)) {
+            const auto vec_src = hn::LoadU(d, src + i);
+            const auto is_min_val = hn::Eq(vec_src, vec_min_val);
+            const auto vec_res = hn::IfThenElse(is_min_val, vec_min_val, hn::Neg(vec_src));
+            hn::StoreU(vec_res, d, dst + i);
+            if (!raise_overflow && !hn::AllFalse(d, is_min_val)) {
                 raise_overflow = true;
             }
         }
         if (i < static_cast<size_t>(len)) {
             const size_t num = len - i;
-            const auto vec_src = LoadN(d, src + i, num);
-            const auto is_min_val = Eq(vec_src, vec_min_val);
-            const auto vec_res = IfThenElse(is_min_val, vec_min_val, Neg(vec_src));
-            StoreN(vec_res, d, dst + i, num);
-            if (!raise_overflow && !AllFalse(d, is_min_val)) {
+            const auto vec_src = hn::LoadN(d, src + i, num);
+            const auto is_min_val = hn::Eq(vec_src, vec_min_val);
+            const auto vec_res = hn::IfThenElse(is_min_val, vec_min_val, hn::Neg(vec_src));
+            hn::StoreN(vec_res, d, dst + i, num);
+            if (!raise_overflow && !hn::AllFalse(d, is_min_val)) {
                 raise_overflow = true;
             }
         }
-    } else {
-        const auto vec_scalar = Set(d, scalar);
-        const auto zero = Zero(d);
+    }
+    else {
+        const auto vec_scalar = hn::Set(d, scalar);
+        const auto zero = hn::Zero(d);
         size_t i = 0;
         for (; i + N <= static_cast<size_t>(len); i += N) {
-            const auto vec_src = LoadU(d, src + i);
-            auto vec_res = Div(vec_src, vec_scalar);
-            const auto vec_mul = Mul(vec_res, vec_scalar);
-            const auto remainder_check = Ne(vec_src, vec_mul);
-            const auto vec_nsign_src = Lt(vec_src, zero);
-            const auto vec_nsign_scalar = Lt(vec_scalar, zero);
-            const auto diff_sign = Xor(vec_nsign_src, vec_nsign_scalar);
-            vec_res = IfThenElse(And(remainder_check, diff_sign), Sub(vec_res, Set(d, 1)), vec_res);
-            StoreU(vec_res, d, dst + i);
+            const auto vec_src = hn::LoadU(d, src + i);
+            auto vec_res = hn::Div(vec_src, vec_scalar);
+            const auto vec_mul = hn::Mul(vec_res, vec_scalar);
+            const auto remainder_check = hn::Ne(vec_src, vec_mul);
+            const auto vec_nsign_src = hn::Lt(vec_src, zero);
+            const auto vec_nsign_scalar = hn::Lt(vec_scalar, zero);
+            const auto diff_sign = hn::Xor(vec_nsign_src, vec_nsign_scalar);
+            vec_res = hn::IfThenElse(
+                hn::And(remainder_check, diff_sign),
+                hn::Sub(vec_res, hn::Set(d, 1)),
+                vec_res
+            );
+            hn::StoreU(vec_res, d, dst + i);
         }
         if (i < static_cast<size_t>(len)) {
             const size_t num = len - i;
-            const auto vec_src = LoadN(d, src + i, num);
-            auto vec_res = Div(vec_src, vec_scalar);
-            const auto vec_mul = Mul(vec_res, vec_scalar);
-            const auto remainder_check = Ne(vec_src, vec_mul);
-            const auto vec_nsign_src = Lt(vec_src, zero);
-            const auto vec_nsign_scalar = Lt(vec_scalar, zero);
-            const auto diff_sign = Xor(vec_nsign_src, vec_nsign_scalar);
-            vec_res = IfThenElse(And(remainder_check, diff_sign), Sub(vec_res, Set(d, 1)), vec_res);
-            StoreN(vec_res, d, dst + i, num);
+            const auto vec_src = hn::LoadN(d, src + i, num);
+            auto vec_res = hn::Div(vec_src, vec_scalar);
+            const auto vec_mul = hn::Mul(vec_res, vec_scalar);
+            const auto remainder_check = hn::Ne(vec_src, vec_mul);
+            const auto vec_nsign_src = hn::Lt(vec_src, zero);
+            const auto vec_nsign_scalar = hn::Lt(vec_scalar, zero);
+            const auto diff_sign = hn::Xor(vec_nsign_src, vec_nsign_scalar);
+            vec_res = hn::IfThenElse(
+                hn::And(remainder_check, diff_sign),
+                hn::Sub(vec_res, hn::Set(d, 1)),
+                vec_res
+            );
+            hn::StoreN(vec_res, d, dst + i, num);
         }
     }
 
     set_float_status(raise_overflow, raise_divbyzero);
 }
 
-
 // Unsigned integer division
 template <typename T>
 void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp len) {
-    using D = ScalableTag<T>;
+    using D = hn::ScalableTag<T>;
     const D d;
-    const size_t N = Lanes(d);
+    const size_t N = hn::Lanes(d);
 
     bool raise_divbyzero = false;
 
@@ -114,28 +123,29 @@ void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp le
         // Handle division by zero
         std::fill(dst, dst + len, static_cast<T>(0));
         raise_divbyzero = true;
-    } else if (scalar == 1) {
+    }
+    else if (scalar == 1) {
         // Special case for division by 1
         memcpy(dst, src, len * sizeof(T));
-    } else {
-        const auto vec_scalar = Set(d, scalar);
+    }
+    else {
+        const auto vec_scalar = hn::Set(d, scalar);
         size_t i = 0;
         for (; i + N <= static_cast<size_t>(len); i += N) {
-            const auto vec_src = LoadU(d, src + i);
-            const auto vec_res = Div(vec_src, vec_scalar);
-            StoreU(vec_res, d, dst + i);
+            const auto vec_src = hn::LoadU(d, src + i);
+            const auto vec_res = hn::Div(vec_src, vec_scalar);
+            hn::StoreU(vec_res, d, dst + i);
         }
         if (i < static_cast<size_t>(len)) {
             const size_t num = len - i;
-            const auto vec_src = LoadN(d, src + i, num);
-            const auto vec_res = Div(vec_src, vec_scalar);
-            StoreN(vec_res, d, dst + i, num);
+            const auto vec_src = hn::LoadN(d, src + i, num);
+            const auto vec_res = hn::Div(vec_src, vec_scalar);
+            hn::StoreN(vec_res, d, dst + i, num);
         }
     }
 
     set_float_status(false, raise_divbyzero);
 }
-
 
 // Floor division for signed integers
 template <typename T>
@@ -144,7 +154,8 @@ T floor_div(T n, T d) {
         if (d == 0) {
             npy_set_floatstatus_divbyzero();
             return 0;
-        } else {
+        }
+        else {
             npy_set_floatstatus_overflow();
             return std::numeric_limits<T>::min();
         }
@@ -167,7 +178,8 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
     if (steps[0] == sizeof(T) && steps[1] == 0 && steps[2] == sizeof(T)) {
         // Contiguous case with scalar divisor
         simd_divide_by_scalar_contig_signed(src1, *src2, dst, len);
-    } else {
+    }
+    else {
         // Non-contiguous case
         for (npy_intp i = 0; i < len; ++i) {
             *dst = floor_div(*src1, *src2);
@@ -189,7 +201,8 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
     if (steps[0] == sizeof(T) && steps[1] == 0 && steps[2] == sizeof(T)) {
         // Contiguous case with scalar divisor
         simd_divide_by_scalar_contig_unsigned(src1, *src2, dst, len);
-    } else {
+    }
+    else {
         // Non-contiguous case
         for (npy_intp i = 0; i < len; ++i) {
             if (HWY_UNLIKELY(*src2 == 0)) {
@@ -274,7 +287,6 @@ DEFINE_DIVIDE_FUNCTION(LONG, int64_t)
 DEFINE_DIVIDE_FUNCTION(LONGLONG, int64_t)
 #endif
 
-
 #define DEFINE_DIVIDE_FUNCTION_UNSIGNED(TYPE, SCALAR_TYPE) \
     extern "C" { \
         NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TYPE##_divide)(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func) { \
@@ -293,10 +305,8 @@ DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONG, uint64_t)
 DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONGLONG, uint64_t)
 #endif
 
-
 #undef DEFINE_DIVIDE_FUNCTION
 #undef DEFINE_DIVIDE_FUNCTION_UNSIGNED
-#undef DEFINE_EXTERNAL_FUNCTIONS
 
 } // namespace HWY_NAMESPACE
 HWY_AFTER_NAMESPACE();
