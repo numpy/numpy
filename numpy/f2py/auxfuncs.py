@@ -882,19 +882,13 @@ def applyrules(rules, d, var={}):
                         for i in rules[k][k1]:
                             if isinstance(i, dict):
                                 res = applyrules({'supertext': i}, d, var)
-                                if 'supertext' in res:
-                                    i = res['supertext']
-                                else:
-                                    i = ''
+                                i = res.get('supertext', '')
                             ret[k].append(replace(i, d))
                     else:
                         i = rules[k][k1]
                         if isinstance(i, dict):
                             res = applyrules({'supertext': i}, d)
-                            if 'supertext' in res:
-                                i = res['supertext']
-                            else:
-                                i = ''
+                            i = res.get('supertext', '')
                         ret[k].append(replace(i, d))
         else:
             errmess('applyrules: ignoring rule %s.\n' % repr(rules[k]))

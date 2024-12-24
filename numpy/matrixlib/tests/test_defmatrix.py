@@ -296,10 +296,7 @@ class TestMatrixReturn:
                 # reset contents of a
                 a.astype('f8')
                 a.fill(1.0)
-                if attrib in methodargs:
-                    args = methodargs[attrib]
-                else:
-                    args = ()
+                args = methodargs.get(attrib, ())
                 b = f(*args)
                 assert_(type(b) is matrix, "%s" % attrib)
         assert_(type(a.real) is matrix)
