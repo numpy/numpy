@@ -1216,3 +1216,62 @@ def setdiff1d(ar1, ar2, assume_unique=False):
         ar1 = unique(ar1)
         ar2 = unique(ar2)
     return ar1[_in1d(ar1, ar2, assume_unique=True, invert=True)]
+
+
+def unique_2D(array):
+
+    """
+    Find the unique elements of an array along with the frequency of each 
+    unique value along the last dimension of the input array.
+    
+    Parameters
+    ----------
+    array : array_like
+        Input array from which unique elements and their counts will be computed. 
+        The array can be of any shape, and the function operates along the 
+        last dimension.
+    
+    Returns
+    -------
+    unique : ndarray
+        The sorted unique values.
+    unique_counts : ndarray, optional
+        The number of times each of the unique values comes up in the
+        last dimension of the original array. 
+    
+    See Also
+    --------
+    unique : Find the unique elements of an array.
+    repeat : Repeat elements of an array.
+    sort : Return a sorted copy of an array.
+    
+    Examples
+    --------
+    Return the unique elements in each list.
+    
+    >>> array = np.array([[1,2,3],
+    >>>                   [1,2,2],
+    >>>                   [3,3,3]])
+    >>> unique_2D(array)
+    (array([1, 2, 3]),
+     array([[1, 1, 1],
+            [1, 2, 0],
+            [0, 0, 3]]))
+    
+    Return the unique elements for multi-dimensional arrays.
+    
+    >>> array = np.random.randint(0,10,(20,30,40))
+    >>> values, counts = unique_2D(array)
+    >>> values
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    >>> counts.shape
+    (20, 30, 10)
+    
+    """
+    
+    values = unique(array)
+    new_array = np.tile(array, (len(values), *np.ones(array.ndim, dtype=int)))
+    counts = np.sum(new_array.T == values, axis=0)
+    counts = np.moveaxis(counts.T, 0, -1)
+    
+    return values, counts
