@@ -125,7 +125,8 @@ static struct {
                 {NPY_CPU_FEATURE_ASIMDDP, "ASIMDDP"},
                 {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"},
                 {NPY_CPU_FEATURE_SVE, "SVE"},
-                {NPY_CPU_FEATURE_RVV, "RVV"}};
+                {NPY_CPU_FEATURE_RVV, "RVV"},
+                {NPY_CPU_FEATURE_LSX, "LSX"}};
 
 
 NPY_VISIBILITY_HIDDEN PyObject *
@@ -663,6 +664,25 @@ npy__cpu_init_features(void)
     npy__cpu_have[NPY_CPU_FEATURE_VXE] = (hwcap & HWCAP_S390_VXRS_EXT) != 0;
 
     npy__cpu_have[NPY_CPU_FEATURE_VX]  = 1;
+}
+
+/***************** LoongArch ******************/
+
+#elif defined(__loongarch64)
+
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+
+static void
+npy__cpu_init_features(void)
+{
+   memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
+   unsigned int hwcap = getauxval(AT_HWCAP);
+
+   if ((hwcap & HWCAP_LOONGARCH_LSX)) {
+      npy__cpu_have[NPY_CPU_FEATURE_LSX]  = 1;
+      return;
+   }
 }
 
 

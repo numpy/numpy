@@ -420,3 +420,12 @@ class Test_ARM_Features(AbstractTest):
                 # if the kernel reports any one of the following ARM8 features.
                 "ASIMD": ("AES", "SHA1", "SHA2", "PMULL", "CRC32")
             }
+
+
+is_loongarch = re.match("^(loongarch)", machine, re.IGNORECASE)
+@pytest.mark.skipif(not is_linux or not is_loongarch, reason="Only for Linux and LoongArch")
+class Test_LOONGARCH_Features(AbstractTest):
+    features = ["LSX"]
+
+    def load_flags(self):
+        self.load_flags_cpuinfo("Features")
