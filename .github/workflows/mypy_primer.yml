@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        shard-index: [0]
+        shard-index: [0]  # e.g. change this to [0, 1, 2] and --num-shards below to 3
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -60,7 +60,7 @@ jobs:
             --new v${MYPY_VERSION} --old v${MYPY_VERSION} \
             --known-dependency-selector numpy \
             --old-prepend-path numpy_base --new-prepend-path numpy_to_test \
-            --num-shards 4 --shard-index ${{ matrix.shard-index }} \
+            --num-shards 1 --shard-index ${{ matrix.shard-index }} \
             --debug \
             --output concise \
             | tee diff_${{ matrix.shard-index }}.txt
