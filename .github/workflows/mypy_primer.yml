@@ -53,6 +53,8 @@ jobs:
           echo ''
           cd ..
           # fail action if exit code isn't zero or one
+          # TODO: note that we don't build numpy, so if a project attempts to use the
+          # numpy mypy plugin, we may see some issues involving version skew.
           (
             mypy_primer \
             --new v${MYPY_VERSION} --old v${MYPY_VERSION} \
