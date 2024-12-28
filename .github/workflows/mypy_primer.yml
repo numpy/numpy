@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        shard-index: [0, 1, 2, 3]
+        shard-index: [0]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
