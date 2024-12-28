@@ -19,7 +19,7 @@ from numpy._core import overrides
 from numpy.exceptions import RankWarning
 from numpy.lib._twodim_base_impl import diag, vander
 from numpy.lib._function_base_impl import trim_zeros
-from numpy.lib._type_check_impl import iscomplex, real, imag, mintypecode
+from numpy.lib._type_check_impl import iscomplex, iscomplexobj, real, imag, mintypecode
 from numpy.linalg import eigvals, lstsq, inv
 
 
@@ -769,11 +769,22 @@ def polyval(p, x):
 
     """
     p = NX.asarray(p)
-    if isinstance(x, poly1d):
-        y = 0
-    else:
+    y = NX.zeros_like(x)
+
+    # When x is not complex, cast y to p dtype
+    if not iscomplexobj(y):
+        y = y.astype(p.dtype)
+
+    if not isinstance(x, (poly1d, float, int, complex)):
         x = NX.asanyarray(x)
-        y = NX.zeros_like(x)
+    else:
+        # Special case for scalar or poly1d `x`
+        y = NX.int32(0).astype(p.dtype)
+
+    # Special case for multiplying two polynomials
+    if isinstance(x, poly1d):
+        y = poly1d(y)
+
     for pv in p:
         y = y * x + pv
     return y
