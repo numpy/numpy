@@ -999,7 +999,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
            the corresponding dimension
         4. Any combination of N scalars/arrays with the meaning of 2. and 3.
 
-        If `axis` is given, the number of varargs must equal the number of axes.
+        If `axis` is given, the number of varargs must equal the number of axes specified in the axis parameter.
         Default: 1. (see Examples below).
 
     edge_order : {1, 2}, optional
