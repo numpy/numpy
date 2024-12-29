@@ -82,7 +82,9 @@ jobs:
 
             let body
             if (data.trim()) {
-              body = 'Diff from [mypy_primer](https://github.com/hauntsaninja/mypy_primer), showing the effect of this PR on type check results on a corpus of open source code:\n```diff\n' + data + '```'
+              body = 'Diff from [mypy_primer](https://github.com/hauntsaninja/mypy_primer), '
+              body += 'showing the effect of this PR on type check results on a corpus of open source code:\n```diff\n'
+              body += data + '```'
               const prNumber = parseInt(fs.readFileSync("pr_number.txt", { encoding: "utf8" }))
               await github.rest.issues.createComment({
                 issue_number: prNumber,
