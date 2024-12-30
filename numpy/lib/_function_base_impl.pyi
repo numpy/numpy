@@ -312,7 +312,6 @@ def interp(
     right: None | _FloatLike_co = ...,
     period: None | _FloatLike_co = ...,
 ) -> float: ...
-
 @overload
 def interp(
     x: _ArrayLikeFloat_co,
