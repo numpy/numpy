@@ -816,7 +816,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
     NpyIter *iter = NULL;
     sum_of_products_fn sop;
-    npy_intp fixed_strides[NPY_MAXARGS];
+    npy_intp *stride;
 
     /* nop+1 (+1 is for the output) must fit in NPY_MAXARGS */
     if (nop >= NPY_MAXARGS) {
@@ -1111,11 +1111,11 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
      * Get an inner loop function, specializing it based on
      * the strides that are fixed for the whole loop.
      */
-    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    stride = NpyIter_GetInnerStrideArray(iter);
     sop = get_sum_of_products_function(nop,
                         NpyIter_GetDescrArray(iter)[0]->type_num,
                         NpyIter_GetDescrArray(iter)[0]->elsize,
-                        fixed_strides);
+                        stride);
 
 #if NPY_EINSUM_DBG_TRACING
     NpyIter_DebugPrint(iter);
@@ -1129,7 +1129,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     else if (NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
-        npy_intp *stride;
         npy_intp *countptr;
         NPY_BEGIN_THREADS_DEF;
 
@@ -1138,7 +1137,6 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
             goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
-        stride = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
         /* IterationNeedsAPI additionally checks for object dtype here. */
         int needs_api = NpyIter_IterationNeedsAPI(iter);
