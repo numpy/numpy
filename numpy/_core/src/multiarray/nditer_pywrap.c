@@ -1369,7 +1369,9 @@ npyiter_remove_multi_index(
 
     NpyIter_RemoveMultiIndex(self->iter);
     /* RemoveMultiIndex invalidates cached values */
-    npyiter_cache_values(self);
+    if (npyiter_cache_values(self) < 0) {
+        return NULL;
+    }
     /* RemoveMultiIndex also resets the iterator */
     if (NpyIter_GetIterSize(self->iter) == 0) {
         self->started = 1;
@@ -1395,7 +1397,9 @@ npyiter_enable_external_loop(
 
     NpyIter_EnableExternalLoop(self->iter);
     /* EnableExternalLoop invalidates cached values */
-    npyiter_cache_values(self);
+    if (npyiter_cache_values(self) < 0) {
+        return NULL;
+    }
     /* EnableExternalLoop also resets the iterator */
     if (NpyIter_GetIterSize(self->iter) == 0) {
         self->started = 1;
