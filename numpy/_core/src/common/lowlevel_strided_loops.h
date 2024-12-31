@@ -1,5 +1,6 @@
 #ifndef NUMPY_CORE_SRC_COMMON_LOWLEVEL_STRIDED_LOOPS_H_
 #define NUMPY_CORE_SRC_COMMON_LOWLEVEL_STRIDED_LOOPS_H_
+#include "stdbool.h"
 #include "common.h"
 #include "npy_config.h"
 #include "array_method.h"
@@ -13,7 +14,7 @@
 /*
  * NOTE: This API should remain private for the time being, to allow
  *       for further refinement.  I think the 'aligned' mechanism
- *       needs changing, for example. 
+ *       needs changing, for example.
  *
  *       Note: Updated in 2018 to distinguish "true" from "uint" alignment.
  */
@@ -786,5 +787,9 @@ PyArray_EQUIVALENTLY_ITERABLE_OVERLAP_OK(PyArrayObject *arr1, PyArrayObject *arr
                     stride1 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size1, arr1); \
                     stride2 = PyArray_TRIVIAL_PAIR_ITERATION_STRIDE(size2, arr2); \
                 }
+
+bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int dim, const npy_intp* shape,
+                        const npy_intp* strides, int dtype, npy_intp nonzero_count);
+
 
 #endif  /* NUMPY_CORE_SRC_COMMON_LOWLEVEL_STRIDED_LOOPS_H_ */
