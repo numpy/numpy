@@ -1,0 +1,3 @@
+* `NpyIter_GetTransferFlags` is now available to check if
+  the iterator itself needs the Python API or casts may
+  cause floating point warnings.
