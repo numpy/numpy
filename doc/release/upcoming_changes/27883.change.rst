@@ -4,6 +4,7 @@ The main iterator used in math functions, for ``np.nditer`` and
 on the ``NpyIter`` in the C-API now behaves different for some
 buffered iterations.
 This means that:
+
 * The actual buffer size used will more often be smaller than
   the maximum buffer sized allowed
 * The "growinner" flag is now honored with buffered reqductions
