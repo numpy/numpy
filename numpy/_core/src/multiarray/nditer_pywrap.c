@@ -956,7 +956,8 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
     NPY_ALLOC_WORKSPACE(op_flags, npy_uint32, 8, nop);
     NPY_ALLOC_WORKSPACE(op_flags_inner, npy_uint32, 8, nop);
     NPY_ALLOC_WORKSPACE(op_axes_storage, int, 8 * NPY_MAXDIMS, nop * NPY_MAXDIMS);
-    NPY_ALLOC_WORKSPACE(op_axes, int *, 8, nop);
+    NPY_ALLOC_WORKSPACE(op_axes, int *, 2 * 8, 2 * nop);
+    int **op_axes_nop = op_axes + nop;
     /*
      * Trying to allocate should be OK if one failed, check for error now
      * that we can use `goto cleanup` to clean up everything.
@@ -1027,8 +1028,6 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
 
     for (inest = 0; inest < nnest; ++inest) {
         NewNpyArrayIterObject *iter;
-        int *op_axes_nop[NPY_MAXARGS];
-
         /*
          * All the operands' op_axes are the same, except for
          * allocated outputs.

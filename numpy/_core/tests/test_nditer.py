@@ -3388,8 +3388,18 @@ def test_arbitrary_number_of_ops():
         assert all(v == i for v in vals)
 
 
+def test_arbitrary_number_of_ops_nested():
+    # 2*16 + 1 is still just a few kiB, so should be fast an easy to deal with
+    # but larger than any small custom integer.
+    ops = [np.arange(10) for a in range(2**16 + 1)]
+
+    it = np.nested_iters(ops, [[0], []])
+    for i, vals in enumerate(it):
+        assert all(v == i for v in vals)
+
+
 @pytest.mark.slow
-@requires_memory(10 * np.iinfo(np.intc).max)
+@requires_memory(9 * np.iinfo(np.intc).max)
 def test_arbitrary_number_of_ops_error():
     # A different error may happen for more than integer operands, but that
     # is too large to test nicely.
@@ -3397,6 +3407,9 @@ def test_arbitrary_number_of_ops_error():
     args = [a] * (np.iinfo(np.intc).max + 1)
     with pytest.raises(ValueError, match="Too many operands to nditer"):
         np.nditer(args)
+
+    with pytest.raises(ValueError, match="Too many operands to nditer"):
+        np.nested_iters(args, [[0], []])
 
 
 def test_debug_print(capfd):
