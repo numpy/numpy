@@ -2357,6 +2357,12 @@ def det(a):
     The determinant is computed via LU factorization using the LAPACK
     routine ``z/dgetrf``.
 
+    Due to the limitations of floating-point arithmetic, small numerical
+    errors may occur when calculating the determinant of a matrix. As a result, 
+    the determinant may return very small non-zero values instead of exactly zero 
+    for singular matrices. To check if a determinant is effectively zero, use 
+    `np.isclose()`.
+
     Examples
     --------
     The determinant of a 2-D array [[a, b], [c, d]] is ad - bc:
@@ -2373,6 +2379,13 @@ def det(a):
     (3, 2, 2)
     >>> np.linalg.det(a)
     array([-2., -3., -8.])
+
+    Checking if the determinant is effectively zero for singular matrices:
+
+    >>> a = np.array([[5, 5, 6], [7, 7, 5], [4, 4, 8]])
+    >>> det = np.linalg.det(a)
+    >>> np.isclose(det, 0)
+    True
 
     """
     a = asarray(a)
