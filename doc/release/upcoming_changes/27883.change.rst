@@ -1,17 +1,16 @@
 Changes to the main iterator and potential numerical changes
 ------------------------------------------------------------
-The main iterator used in math functions, for ``np.nditer`` and
-on the ``NpyIter`` in the C-API now behaves different for some
-buffered iterations.
+The main iterator, used in math functions and via ``np.nditer`` from Python
+and ``NpyIter`` in C, now behaves differently for some buffered iterations.
 This means that:
 
-* The actual buffer size used will more often be smaller than
-  the maximum buffer sized allowed
-* The "growinner" flag is now honored with buffered reqductions
-  when no operand requires buffering.
+* The buffer size used will often be smaller than the maximum buffer sized
+  allowed by the ``buffersize`` parameter.
+* The "growinner" flag is now honored with buffered reductions when no operand
+  requires buffering.
 
-At least for ``np.sum()`` such changes in buffersize can change
-the precise numerical results.
+For ``np.sum()`` such changes in buffersize may slightly change numerical
+results of floating point operations.
 Users who use "growinner" for custom reductions could notice
 changes in precision (for example, in NumPy we removed it from
 ``einsum`` to avoid most precision changes and improve precision
