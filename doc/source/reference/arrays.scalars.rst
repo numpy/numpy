@@ -191,6 +191,8 @@ Inexact types
    This means that variables with equal binary values but whose datatypes are of
    different precisions may display differently:
 
+   .. try_examples::
+
       >>> import numpy as np
 
       >>> f16 = np.float16("0.1")

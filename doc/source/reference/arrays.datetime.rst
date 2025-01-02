@@ -57,6 +57,8 @@ letters, for a "Not A Time" value.
 
 .. admonition:: Example
 
+  .. try_examples::
+
     A simple ISO date:
 
     >>> import numpy as np
@@ -95,6 +97,8 @@ datetime type with generic units.
 
 .. admonition:: Example
 
+  .. try_examples::
+
     >>> import numpy as np
 
     >>> np.array(['2007-07-13', '2006-01-13', '2010-08-13'], dtype='datetime64')
@@ -108,6 +112,8 @@ An array of datetimes can be constructed from integers representing
 POSIX timestamps with the given unit.
 
 .. admonition:: Example
+
+  .. try_examples::
 
     >>> import numpy as np
 
@@ -123,6 +129,8 @@ The datetime type works with many common NumPy functions, for
 example :func:`arange` can be used to generate ranges of dates.
 
 .. admonition:: Example
+
+  .. try_examples::
 
     All the dates for one month:
 
@@ -145,6 +153,8 @@ months to a smaller unit like days is considered a 'safe' cast
 because the moment of time is still being represented exactly.
 
 .. admonition:: Example
+
+  .. try_examples::
 
     >>> import numpy as np
 
@@ -175,6 +185,8 @@ data type also accepts the string "NAT" in place of the number for a "Not A Time
 
 .. admonition:: Example
 
+  .. try_examples::
+
     >>> import numpy as np
 
     >>> np.timedelta64(1, 'D')
@@ -190,6 +202,8 @@ Datetimes and Timedeltas work together to provide ways for
 simple datetime calculations.
 
 .. admonition:: Example
+
+  .. try_examples::
 
     >>> import numpy as np
 
@@ -225,6 +239,8 @@ conversion of months/years to days. The conversion follows
 calculating the averaged values from the 400 year leap-year cycle.
 
 .. admonition:: Example
+
+  .. try_examples::
 
     >>> import numpy as np
 
@@ -307,6 +323,8 @@ specified in business days to datetimes with a unit of 'D' (day).
 
 .. admonition:: Example
 
+  .. try_examples::
+
     >>> import numpy as np
 
     >>> np.busday_offset('2011-06-23', 1)
@@ -322,6 +340,8 @@ default rule is 'raise', which simply raises an exception.
 The rules most typically used are 'forward' and 'backward'.
 
 .. admonition:: Example
+
+  .. try_examples::
 
     >>> import numpy as np
 
@@ -347,6 +367,8 @@ is necessary to get a desired answer.
 
 .. admonition:: Example
 
+  .. try_examples::
+
     The first business day on or after a date:
 
     >>> import numpy as np
@@ -370,6 +392,8 @@ weekmask.
 
 .. admonition:: Example
 
+  .. try_examples::
+
     >>> import numpy as np
 
     >>> np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
@@ -385,6 +409,8 @@ np.is_busday():
 To test a `datetime64` value to see if it is a valid day, use :func:`is_busday`.
 
 .. admonition:: Example
+
+  .. try_examples::
 
     >>> import numpy as np
 
@@ -405,6 +431,8 @@ dates, use :func:`busday_count`:
 
 .. admonition:: Example
 
+  .. try_examples::
+
     >>> import numpy as np
 
     >>> np.busday_count(np.datetime64('2011-07-11'), np.datetime64('2011-07-18'))
@@ -416,6 +444,8 @@ If you have an array of datetime64 day values, and you want a count of
 how many of them are valid dates, you can do this:
 
 .. admonition:: Example
+
+  .. try_examples::
 
     >>> import numpy as np
 
@@ -466,6 +496,8 @@ given below.
     23:59:60.450 UTC" is a valid timestamp which is not parseable by
     `datetime64`:
 
+    .. try_examples::
+
       >>> import numpy as np
 
       >>> np.datetime64("2016-12-31 23:59:60.450")
@@ -480,6 +512,8 @@ given below.
 
     Compute the number of SI seconds between "2021-01-01 12:56:23.423 UTC" and
     "2001-01-01 00:00:00.000 UTC":
+
+    .. try_examples::
 
       >>> import numpy as np
 
@@ -501,7 +535,8 @@ given below.
      where UT is `universal time
      <https://en.wikipedia.org/wiki/Universal_Time>`_:
 
-    
+    .. try_examples::
+
       >>> import numpy as np
 
       >>> a = np.datetime64("0000-01-01", "us")
