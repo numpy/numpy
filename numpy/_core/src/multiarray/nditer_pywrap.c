@@ -811,9 +811,6 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     res = 0;
 
   finish:
-    Py_DECREF(op_in_owned);
-
-    npy_free_cache_dim_obj(itershape);
     for (int iop = 0; iop < nop; ++iop) {
         Py_XDECREF(op[iop]);
         Py_XDECREF(op_request_dtypes[iop]);
@@ -822,12 +819,11 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     npy_free_workspace(op_flags);
     npy_free_workspace(op_axes_storage);
     npy_free_workspace(op_axes);
-    return res;
 
   pre_alloc_fail:
     Py_XDECREF(op_in_owned);
     npy_free_cache_dim_obj(itershape);
-    return -1;
+    return res;
 }
 
 
@@ -1205,6 +1201,7 @@ npyiter_dealloc(NewNpyArrayIterObject *self)
         self->nested_child = NULL;
         PyErr_Restore(exc, val, tb);
     }
+    PyMem_Free(self->writeflags);
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 

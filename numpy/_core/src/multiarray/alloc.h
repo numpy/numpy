@@ -98,11 +98,6 @@ _npy_init_workspace(
     TYPE *NAME;                                            \
     _npy_init_workspace((void **)&NAME, NAME##_static, (fixed_size), sizeof(TYPE), (size))
 
-/* Same as above, but additionally nulls the workspace */
-#define NPY_CALLOC_WORKSPACE(NAME, TYPE, fixed_size, size)  \
-    TYPE NAME##_static[fixed_size];                        \
-    TYPE *NAME;                                            \
-    _npy_cinit_workspace((void **)&NAME, NAME##_static, (fixed_size), sizeof(TYPE), (size));
 
 static inline void
 _npy_free_workspace(void *buf, void *static_buf)
