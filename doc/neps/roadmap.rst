@@ -75,7 +75,7 @@ planned improvements. Adding more tutorials is underway in the
 `numpy-tutorials repo <https://github.com/numpy/numpy-tutorials>`__.
 
 We also intend to make all the example code in our documentation interactive -
-work is underway to do so via ``jupyterlite-sphinx`` and Pyodide. NumPy 2.1.0
+work is underway to do so via ``jupyterlite-sphinx`` and Pyodide. NumPy 2.3.0
 provides interactive documentation for examples as a pilot for this effort.
 
 Our website (https://numpy.org) is in good shape. Further work on expanding the
