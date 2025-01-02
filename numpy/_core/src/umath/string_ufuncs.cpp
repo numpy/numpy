@@ -1118,7 +1118,7 @@ string_slice_resolve_descriptors(
 {
     if (given_descrs[4]) {
         PyErr_Format(PyExc_TypeError,
-                     "The StringDType '%s' ufunc does not "
+                     "The '%s' ufunc does not "
                      "currently support the 'out' keyword",
                      self->name);
         return _NPY_ERROR_OCCURRED_IN_CAST;
