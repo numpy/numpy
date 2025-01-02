@@ -12,6 +12,7 @@ from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises,
     IS_WASM, HAS_REFCOUNT, suppress_warnings, break_cycles,
     )
+from numpy.testing._private.utils import requires_memory
 
 def iter_multi_index(i):
     ret = []
@@ -719,8 +720,6 @@ def test_iter_flags_errors():
 
     # Not enough operands
     assert_raises(ValueError, nditer, [], [], [])
-    # Too many operands
-    assert_raises(ValueError, nditer, [a] * 100, [], [['readonly']] * 100)
     # Bad global flag
     assert_raises(ValueError, nditer, [a], ['bad flag'], [['readonly']])
     # Bad op flag
@@ -3377,6 +3376,40 @@ def test_partial_iteration_error(in_dtype, buf_dtype):
         it.iternext()
 
     assert count == sys.getrefcount(value)
+
+
+def test_arbitrary_number_of_ops():
+    # 2*16 + 1 is still just a few kiB, so should be fast and easy to deal with
+    # but larger than any small custom integer.
+    ops = [np.arange(10) for a in range(2**16 + 1)]
+
+    it = np.nditer(ops)
+    for i, vals in enumerate(it):
+        assert all(v == i for v in vals)
+
+
+def test_arbitrary_number_of_ops_nested():
+    # 2*16 + 1 is still just a few kiB, so should be fast and easy to deal with
+    # but larger than any small custom integer.
+    ops = [np.arange(10) for a in range(2**16 + 1)]
+
+    it = np.nested_iters(ops, [[0], []])
+    for i, vals in enumerate(it):
+        assert all(v == i for v in vals)
+
+
+@pytest.mark.slow
+@requires_memory(9 * np.iinfo(np.intc).max)
+def test_arbitrary_number_of_ops_error():
+    # A different error may happen for more than integer operands, but that
+    # is too large to test nicely.
+    a = np.ones(1)
+    args = [a] * (np.iinfo(np.intc).max + 1)
+    with pytest.raises(ValueError, match="Too many operands to nditer"):
+        np.nditer(args)
+
+    with pytest.raises(ValueError, match="Too many operands to nditer"):
+        np.nested_iters(args, [[0], []])
 
 
 def test_debug_print(capfd):
