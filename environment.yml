@@ -40,8 +40,8 @@ dependencies:
   - doxygen
   - towncrier
   - jupyterlite-sphinx>=0.17.1
-  # wait until https://github.com/conda-forge/jupyterlite-pyodide-kernel-feedstock/pull/44
-  # - jupyterlite-pyodide-kernel==0.4.7 # earliest version which works with Pyodide 0.27.0
+  # see https://github.com/jupyterlite/pyodide-kernel#compatibility
+  - jupyterlite-pyodide-kernel==0.4.7 # earliest version which works with Pyodide 0.27.0
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0
   # For linting
@@ -50,5 +50,3 @@ dependencies:
   # Used in some tests
   - cffi
   - pytz
-  - pip:
-    - jupyterlite-pyodide-kernel==0.4.7
