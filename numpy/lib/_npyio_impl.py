@@ -1626,7 +1626,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
-            fh.write(comments + header.rstrip('\n') + newline)
+            fh.write(comments + header + newline)
         if fstring_fmt:
             for row in X:
                 row_formatted = format_row.format(*row).rstrip('\n')
