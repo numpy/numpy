@@ -1577,7 +1577,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         # Handle 1-dimensional arrays
         if X.ndim == 0 or X.ndim > 2:
-            raise ValueError("Expected 1D or 2D array, got %dD array instead" % X.ndim)
+            raise ValueError(
+                "Expected 1D or 2D array, got %dD array instead" % X.ndim)
         elif X.ndim == 1:
             # Common case -- 1d array of numbers
             if X.dtype.names is None:
