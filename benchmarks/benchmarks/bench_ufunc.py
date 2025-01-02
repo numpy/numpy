@@ -588,6 +588,12 @@ class BinaryBench(Benchmark):
     def time_pow_half(self, dtype):
         np.power(self.a, 0.5)
 
+    def time_pow_2_op(self, dtype):
+        self.a ** 2
+
+    def time_pow_half_op(self, dtype):
+        self.a ** 0.5
+
     def time_atan2(self, dtype):
         np.arctan2(self.a, self.b)
 
