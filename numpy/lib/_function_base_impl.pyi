@@ -305,6 +305,15 @@ def diff(
 
 @overload
 def interp(
+    x: _FloatLike_co,
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLikeFloat_co,
+    left: None | _FloatLike_co = ...,
+    right: None | _FloatLike_co = ...,
+    period: None | _FloatLike_co = ...,
+) -> float64: ...
+@overload
+def interp(
     x: _ArrayLikeFloat_co,
     xp: _ArrayLikeFloat_co,
     fp: _ArrayLikeFloat_co,
