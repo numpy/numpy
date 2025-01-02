@@ -613,16 +613,16 @@ npyiter_prepare_ops(PyObject *op_in, PyObject **out_owner, PyObject ***out_objs)
     }
     else {
         Py_INCREF(op_in);
+        *out_objs = out_owner;  /* `out_owner` is in caller stack space */
         *out_owner = op_in;
-        *out_objs = out_owner;
         return 1;
     }
 }
 
 /*
  * Converts the operand array and op_flags array into the form
- * NpyIter_AdvancedNew needs.  Sets nop, and on success, each
- * op[i] owns a reference to an array object.
+ * NpyIter_AdvancedNew needs.  On success, each op[i] owns a reference
+ * to an array object.
  */
 static int
 npyiter_convert_ops(int nop, PyObject **op_objs, PyObject *op_flags_in,
@@ -719,19 +719,16 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
 
     /* Need nop to set up workspaces */
     PyObject **op_objs = NULL;
-    PyObject *op_in_owned;  /* Sequence/object owning op_objs. */
+    PyObject *op_in_owned = NULL;  /* Sequence/object owning op_objs. */
     int nop = npyiter_prepare_ops(op_in, &op_in_owned, &op_objs);
     if (nop < 0) {
-        npy_free_cache_dim_obj(itershape);
-        return -1;
+        goto pre_alloc_fail;
     }
 
     /* allocate workspace for Python objects (operands and dtypes) */
     NPY_ALLOC_WORKSPACE(op, PyArrayObject *, 2 * 8, 2 * nop);
     if (op == NULL) {
-        npy_free_cache_dim_obj(itershape);
-        Py_DECREF(op_in_owned);
-        return -1;
+        goto pre_alloc_fail;
     }
     memset(op, 0, sizeof(PyObject *) * 2 * nop);
     PyArray_Descr **op_request_dtypes = (PyArray_Descr **)(op + nop);
@@ -742,7 +739,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     NPY_ALLOC_WORKSPACE(op_axes, int *, 8, nop);
     /*
      * Trying to allocate should be OK if one failed, check for error now
-     * that we can use `goto cleanup` to clean up everything.
+     * that we can use `goto finish` to clean up everything.
      * (NPY_ALLOC_WORKSPACE has to be done before a goto fail currently.)
      */
     if (op_flags == NULL || op_axes_storage == NULL || op_axes == NULL) {
@@ -826,6 +823,11 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     npy_free_workspace(op_axes_storage);
     npy_free_workspace(op_axes);
     return res;
+
+  pre_alloc_fail:
+    Py_XDECREF(op_in_owned);
+    npy_free_cache_dim_obj(itershape);
+    return -1;
 }
 
 
@@ -957,15 +959,16 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
     NPY_ALLOC_WORKSPACE(op_flags_inner, npy_uint32, 8, nop);
     NPY_ALLOC_WORKSPACE(op_axes_storage, int, 8 * NPY_MAXDIMS, nop * NPY_MAXDIMS);
     NPY_ALLOC_WORKSPACE(op_axes, int *, 2 * 8, 2 * nop);
-    int **op_axes_nop = op_axes + nop;
     /*
      * Trying to allocate should be OK if one failed, check for error now
-     * that we can use `goto cleanup` to clean up everything.
+     * that we can use `goto finish` to clean up everything.
      * (NPY_ALLOC_WORKSPACE has to be done before a goto fail currently.)
      */
     if (op_flags == NULL || op_axes_storage == NULL || op_axes == NULL) {
         goto finish;
     }
+    /* Finalize shared workspace: */
+    int **op_axes_nop = op_axes + nop;
 
     /* op and op_flags */
     if (npyiter_convert_ops(nop, op_objs, op_flags_in, op, op_flags) != 1) {

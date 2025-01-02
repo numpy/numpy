@@ -3379,7 +3379,7 @@ def test_partial_iteration_error(in_dtype, buf_dtype):
 
 
 def test_arbitrary_number_of_ops():
-    # 2*16 + 1 is still just a few kiB, so should be fast an easy to deal with
+    # 2*16 + 1 is still just a few kiB, so should be fast and easy to deal with
     # but larger than any small custom integer.
     ops = [np.arange(10) for a in range(2**16 + 1)]
 
@@ -3389,7 +3389,7 @@ def test_arbitrary_number_of_ops():
 
 
 def test_arbitrary_number_of_ops_nested():
-    # 2*16 + 1 is still just a few kiB, so should be fast an easy to deal with
+    # 2*16 + 1 is still just a few kiB, so should be fast and easy to deal with
     # but larger than any small custom integer.
     ops = [np.arange(10) for a in range(2**16 + 1)]
 
