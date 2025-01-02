@@ -23,8 +23,6 @@ class ABCPolyBase(abc.ABC):
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' along with the
     methods listed below.
 
-    .. versionadded:: 1.9.0
-
     Parameters
     ----------
     coef : array_like
@@ -39,7 +37,7 @@ class ABCPolyBase(abc.ABC):
         Window, see domain for its use. The default value is the
         derived class window.
     symbol : str, optional
-        Symbol used to represent the independent variable in string 
+        Symbol used to represent the independent variable in string
         representations of the polynomial expression, e.g. for printing.
         The symbol must be a valid Python identifier. Default value is 'x'.
 
@@ -190,8 +188,6 @@ class ABCPolyBase(abc.ABC):
     def has_samecoef(self, other):
         """Check if coefficients match.
 
-        .. versionadded:: 1.6.0
-
         Parameters
         ----------
         other : class instance
@@ -203,17 +199,13 @@ class ABCPolyBase(abc.ABC):
             True if the coefficients are the same, False otherwise.
 
         """
-        if len(self.coef) != len(other.coef):
-            return False
-        elif not np.all(self.coef == other.coef):
-            return False
-        else:
-            return True
+        return (
+			len(self.coef) == len(other.coef)
+			and np.all(self.coef == other.coef)
+		)
 
     def has_samedomain(self, other):
         """Check if domains match.
-
-        .. versionadded:: 1.6.0
 
         Parameters
         ----------
@@ -231,8 +223,6 @@ class ABCPolyBase(abc.ABC):
     def has_samewindow(self, other):
         """Check if windows match.
 
-        .. versionadded:: 1.6.0
-
         Parameters
         ----------
         other : class instance
@@ -248,8 +238,6 @@ class ABCPolyBase(abc.ABC):
 
     def has_sametype(self, other):
         """Check if types match.
-
-        .. versionadded:: 1.7.0
 
         Parameters
         ----------
@@ -270,8 +258,6 @@ class ABCPolyBase(abc.ABC):
         The `other` argument is checked to see if it is of the same
         class as self with identical domain and window. If so,
         return its coefficients, otherwise return `other`.
-
-        .. versionadded:: 1.9.0
 
         Parameters
         ----------
@@ -464,7 +450,7 @@ class ABCPolyBase(abc.ABC):
             )
             needs_parens = True
         return term, needs_parens
-    
+
     def _repr_latex_(self):
         # get the scaled argument string to the basis functions
         off, scale = self.mapparms()
@@ -504,8 +490,6 @@ class ABCPolyBase(abc.ABC):
             body = '0'
 
         return rf"${self.symbol} \mapsto {body}$"
-
-
 
     # Pickle and copy
 
@@ -689,8 +673,6 @@ class ABCPolyBase(abc.ABC):
     def degree(self):
         """The degree of the series.
 
-        .. versionadded:: 1.5.0
-
         Returns
         -------
         degree : int
@@ -701,6 +683,7 @@ class ABCPolyBase(abc.ABC):
 
         Create a polynomial object for ``1 + 7*x + 4*x**2``:
 
+        >>> np.polynomial.set_default_printstyle("unicode")
         >>> poly = np.polynomial.Polynomial([1, 7, 4])
         >>> print(poly)
         1.0 + 7.0·x + 4.0·x²
@@ -729,8 +712,6 @@ class ABCPolyBase(abc.ABC):
         copy of the current series is returned. This can be useful in least
         squares where the coefficients of the high degree terms may be very
         small.
-
-        .. versionadded:: 1.5.0
 
         Parameters
         ----------
@@ -893,8 +874,8 @@ class ABCPolyBase(abc.ABC):
         if lbnd is None:
             lbnd = 0
         else:
-            lbnd = off + scl*lbnd
-        coef = self._int(self.coef, m, k, lbnd, 1./scl)
+            lbnd = off + scl * lbnd
+        coef = self._int(self.coef, m, k, lbnd, 1. / scl)
         return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def deriv(self, m=1):
@@ -941,8 +922,6 @@ class ABCPolyBase(abc.ABC):
         domain.  Here y is the value of the polynomial at the points x. By
         default the domain is the same as that of the series instance.
         This method is intended mostly as a plotting aid.
-
-        .. versionadded:: 1.5.0
 
         Parameters
         ----------
@@ -1010,13 +989,9 @@ class ABCPolyBase(abc.ABC):
             chosen so that the errors of the products ``w[i]*y[i]`` all have
             the same variance.  When using inverse-variance weighting, use
             ``w[i] = 1/sigma(y[i])``.  The default value is None.
-
-            .. versionadded:: 1.5.0
         window : {[beg, end]}, optional
             Window to use for the returned series. The default
             value is the default class domain
-
-            .. versionadded:: 1.6.0
         symbol : str, optional
             Symbol representing the independent variable. Default is 'x'.
 
@@ -1041,6 +1016,9 @@ class ABCPolyBase(abc.ABC):
         """
         if domain is None:
             domain = pu.getdomain(x)
+            if domain[0] == domain[1]:
+                domain[0] -= 1
+                domain[1] += 1
         elif type(domain) is list and len(domain) == 0:
             domain = cls.domain
 
@@ -1097,7 +1075,7 @@ class ABCPolyBase(abc.ABC):
 
         deg = len(roots)
         off, scl = pu.mapparms(domain, window)
-        rnew = off + scl*roots
+        rnew = off + scl * roots
         coef = cls._fromroots(rnew) / scl**deg
         return cls(coef, domain=domain, window=window, symbol=symbol)
 
@@ -1142,8 +1120,6 @@ class ABCPolyBase(abc.ABC):
 
         Returns the series representing the basis polynomial of degree `deg`.
 
-        .. versionadded:: 1.7.0
-
         Parameters
         ----------
         deg : int
@@ -1175,7 +1151,7 @@ class ABCPolyBase(abc.ABC):
 
         if ideg != deg or ideg < 0:
             raise ValueError("deg must be non-negative integer")
-        return cls([0]*ideg + [1], domain, window, symbol)
+        return cls([0] * ideg + [1], domain, window, symbol)
 
     @classmethod
     def cast(cls, series, domain=None, window=None):
@@ -1185,8 +1161,6 @@ class ABCPolyBase(abc.ABC):
         series of one of the types supported by by the numpy.polynomial
         module, but could be some other class that supports the convert
         method.
-
-        .. versionadded:: 1.7.0
 
         Parameters
         ----------

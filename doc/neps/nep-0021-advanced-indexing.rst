@@ -649,7 +649,7 @@ eventualities.
 Copyright
 ---------
 
-This document is placed under the CC0 1.0 Universell (CC0 1.0) Public Domain Dedication [1]_.
+This document is placed under the CC0 1.0 Universal (CC0 1.0) Public Domain Dedication [1]_.
 
 
 References and footnotes
@@ -659,5 +659,4 @@ References and footnotes
    with this work has waived all copyright and related or neighboring
    rights to this work. The CC0 license may be found at
    https://creativecommons.org/publicdomain/zero/1.0/
-.. [2] e.g., see NEP 18,
-   http://www.numpy.org/neps/nep-0018-array-function-protocol.html
+.. [2] e.g., see :doc:`nep-0018-array-function-protocol`

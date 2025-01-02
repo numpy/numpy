@@ -13,8 +13,8 @@ UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values() if
 UNARY_OBJECT_UFUNCS = [uf for uf in UNARY_UFUNCS if "O->O" in uf.types]
 
 # Remove functions that do not support `floats`
-UNARY_OBJECT_UFUNCS.remove(getattr(np, 'invert'))
-UNARY_OBJECT_UFUNCS.remove(getattr(np, 'bitwise_count'))
+UNARY_OBJECT_UFUNCS.remove(np.invert)
+UNARY_OBJECT_UFUNCS.remove(np.bitwise_count)
 
 IS_AVX = __cpu_features__.get('AVX512F', False) or \
         (__cpu_features__.get('FMA3', False) and __cpu_features__.get('AVX2', False))
@@ -41,6 +41,7 @@ def convert(s, datatype="np.float32"):
 
     return fp.contents.value         # dereference the pointer, get the float
 
+
 str_to_float = np.vectorize(convert)
 
 class TestAccuracy:
@@ -53,17 +54,19 @@ class TestAccuracy:
             for filename in files:
                 filepath = path.join(data_dir, filename)
                 with open(filepath) as fid:
-                    file_without_comments = (r for r in fid if not r[0] in ('$', '#'))
+                    file_without_comments = (
+                        r for r in fid if r[0] not in ('$', '#')
+                    )
                     data = np.genfromtxt(file_without_comments,
-                                         dtype=('|S39','|S39','|S39',int),
-                                         names=('type','input','output','ulperr'),
+                                         dtype=('|S39', '|S39', '|S39', int),
+                                         names=('type', 'input', 'output', 'ulperr'),
                                          delimiter=',',
                                          skip_header=1)
                     npname = path.splitext(filename)[0].split('-')[3]
                     npfunc = getattr(np, npname)
                     for datatype in np.unique(data['type']):
                         data_subset = data[data['type'] == datatype]
-                        inval  = np.array(str_to_float(data_subset['input'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
+                        inval = np.array(str_to_float(data_subset['input'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
                         outval = np.array(str_to_float(data_subset['output'].astype(str), data_subset['type'].astype(str)), dtype=eval(datatype))
                         perm = np.random.permutation(len(inval))
                         inval = inval[perm]

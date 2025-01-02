@@ -1,3 +1,4 @@
+import functools
 import sys
 import sysconfig
 import subprocess
@@ -38,7 +39,6 @@ def test_numpy_namespace():
     # We override dir to not show these members
     allowlist = {
         'recarray': 'numpy.rec.recarray',
-        'show_config': 'numpy.__config__.show',
     }
     bad_results = check_dir(np)
     # pytest gives better error messages with the builtin assert than with
@@ -152,7 +152,6 @@ if sys.version_info < (3, 12):
             "distutils.system_info",
         ]
     ]
-
 
 
 PUBLIC_ALIASED_MODULES = [
@@ -272,25 +271,18 @@ if sys.version_info < (3, 12):
 
 def is_unexpected(name):
     """Check if this needs to be considered."""
-    if '._' in name or '.tests' in name or '.setup' in name:
-        return False
-
-    if name in PUBLIC_MODULES:
-        return False
-
-    if name in PUBLIC_ALIASED_MODULES:
-        return False
-
-    if name in PRIVATE_BUT_PRESENT_MODULES:
-        return False
-
-    return True
+    return (
+        '._' not in name and '.tests' not in name and '.setup' not in name
+		and name not in PUBLIC_MODULES
+		and name not in PUBLIC_ALIASED_MODULES
+		and name not in PRIVATE_BUT_PRESENT_MODULES
+	)
 
 
-if sys.version_info < (3, 12):
-    SKIP_LIST = ["numpy.distutils.msvc9compiler"]
-else:
+if sys.version_info >= (3, 12):
     SKIP_LIST = []
+else:
+    SKIP_LIST = ["numpy.distutils.msvc9compiler"]
 
 
 # suppressing warnings from deprecated modules
@@ -536,7 +528,7 @@ def test_core_shims_coherence():
         if (
             member_name.startswith("_")
             or member_name in ["tests", "strings"]
-            or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES 
+            or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES
         ):
             continue
 
@@ -583,7 +575,7 @@ def test_functions_single_location():
     visited_functions: Set[Callable[..., Any]] = set()
     # Functions often have `__name__` overridden, therefore we need
     # to keep track of locations where functions have been found.
-    functions_original_paths: Dict[Callable[..., Any], str] = dict()
+    functions_original_paths: Dict[Callable[..., Any], str] = {}
 
     # Here we aggregate functions with more than one location.
     # It must be empty for the test to pass.
@@ -680,3 +672,141 @@ def test_functions_single_location():
     del visited_functions, visited_modules, functions_original_paths
 
     assert len(duplicated_functions) == 0, duplicated_functions
+
+
+def test___module___attribute():
+    modules_queue = [np]
+    visited_modules = {np}
+    visited_functions = set()
+    incorrect_entries = []
+
+    while len(modules_queue) > 0:
+        module = modules_queue.pop()
+        for member_name in dir(module):
+            member = getattr(module, member_name)
+            # first check if we got a module
+            if (
+                inspect.ismodule(member) and  # it's a module
+                "numpy" in member.__name__ and  # inside NumPy
+                not member_name.startswith("_") and  # not private
+                "numpy._core" not in member.__name__ and  # outside _core
+                # not in a skip module list
+                member_name not in [
+                    "char", "core", "f2py", "ma", "lapack_lite", "mrecords",
+                    "testing", "tests", "polynomial", "typing", "mtrand",
+                    "bit_generator",
+                ] and
+                member not in visited_modules  # not visited yet
+            ):
+                modules_queue.append(member)
+                visited_modules.add(member)
+            elif (
+                not inspect.ismodule(member) and
+                hasattr(member, "__name__") and
+                not member.__name__.startswith("_") and
+                member.__module__ != module.__name__ and
+                member not in visited_functions
+            ):
+                # skip ufuncs that are exported in np.strings as well
+                if member.__name__ in (
+                    "add", "equal", "not_equal", "greater", "greater_equal",
+                    "less", "less_equal",
+                ) and module.__name__ == "numpy.strings":
+                    continue
+
+                # recarray and record are exported in np and np.rec
+                if (
+                    (member.__name__ == "recarray" and module.__name__ == "numpy") or
+                    (member.__name__ == "record" and module.__name__ == "numpy.rec")
+                ):
+                    continue
+
+                # ctypeslib exports ctypes c_long/c_longlong
+                if (
+                    member.__name__ in ("c_long", "c_longlong") and
+                    module.__name__ == "numpy.ctypeslib"
+                ):
+                    continue
+
+                # skip cdef classes
+                if member.__name__ in (
+                    "BitGenerator", "Generator", "MT19937", "PCG64", "PCG64DXSM",
+                    "Philox", "RandomState", "SFC64", "SeedSequence",
+                ):
+                    continue
+
+                incorrect_entries.append(
+                    {
+                        "Func": member.__name__,
+                        "actual": member.__module__,
+                        "expected": module.__name__,
+                    }
+                )
+                visited_functions.add(member)
+
+    if incorrect_entries:
+        assert len(incorrect_entries) == 0, incorrect_entries
+
+
+def _check_correct_qualname_and_module(obj) -> bool:
+    qualname = obj.__qualname__
+    name = obj.__name__
+    module_name = obj.__module__
+    assert name == qualname.split(".")[-1]
+
+    module = sys.modules[module_name]
+    actual_obj = functools.reduce(getattr, qualname.split("."), module)
+    return (
+        actual_obj is obj or
+        # `obj` may be a bound method/property of `actual_obj`:
+        (
+            hasattr(actual_obj, "__get__") and hasattr(obj, "__self__") and
+            actual_obj.__module__ == obj.__module__ and
+            actual_obj.__qualname__ == qualname
+        )
+    )
+
+
+def test___qualname___and___module___attribute():
+    # NumPy messes with module and name/qualname attributes, but any object
+    # should be discoverable based on its module and qualname, so test that.
+    # We do this for anything with a name (ensuring qualname is also set).
+    modules_queue = [np]
+    visited_modules = {np}
+    visited_functions = set()
+    incorrect_entries = []
+
+    while len(modules_queue) > 0:
+        module = modules_queue.pop()
+        for member_name in dir(module):
+            member = getattr(module, member_name)
+            # first check if we got a module
+            if (
+                inspect.ismodule(member) and  # it's a module
+                "numpy" in member.__name__ and  # inside NumPy
+                not member_name.startswith("_") and  # not private
+                member_name != "tests" and
+                member_name != "typing" and  # 2024-12: type names don't match
+                "numpy._core" not in member.__name__ and  # outside _core
+                member not in visited_modules  # not visited yet
+            ):
+                modules_queue.append(member)
+                visited_modules.add(member)
+            elif (
+                not inspect.ismodule(member) and
+                hasattr(member, "__name__") and
+                not member.__name__.startswith("_") and
+                not member_name.startswith("_") and
+                not _check_correct_qualname_and_module(member) and
+                member not in visited_functions
+            ):
+                incorrect_entries.append(
+                    {
+                        "found_at": f"{module.__name__}:{member_name}",
+                        "advertises": f"{member.__module__}:{member.__qualname__}",
+                    }
+                )
+                visited_functions.add(member)
+
+    if incorrect_entries:
+        assert len(incorrect_entries) == 0, incorrect_entries

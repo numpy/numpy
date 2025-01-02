@@ -508,7 +508,7 @@ dt2 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
 # nested struct-in-struct
 dt3 = np.dtype({'names': ['c', 'd'], 'formats': ['i4', dt2]})
 # field with '' name
-dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4']*3})
+dt4 = np.dtype({'names': ['a', '', 'b'], 'formats': ['i4'] * 3})
 # titles
 dt5 = np.dtype({'names': ['a', 'b'], 'formats': ['i4', 'i4'],
                 'offsets': [1, 6], 'titles': ['aa', 'bb']})
@@ -605,10 +605,10 @@ def test_pickle_disallow(tmpdir):
                        ('c', np.int32),
                       ], align=True),
              (3,)),
-    np.dtype([('x', np.dtype({'names':['a','b'],
-                              'formats':['i1','i1'],
-                              'offsets':[0,4],
-                              'itemsize':8,
+    np.dtype([('x', np.dtype({'names': ['a', 'b'],
+                              'formats': ['i1', 'i1'],
+                              'offsets': [0, 4],
+                              'itemsize': 8,
                              },
                     (3,)),
                (4,),
@@ -619,10 +619,10 @@ def test_pickle_disallow(tmpdir):
                )]),
     np.dtype([('x', np.dtype((
         np.dtype((
-            np.dtype({'names':['a','b'],
-                      'formats':['i1','i1'],
-                      'offsets':[0,4],
-                      'itemsize':8}),
+            np.dtype({'names': ['a', 'b'],
+                      'formats': ['i1', 'i1'],
+                      'offsets': [0, 4],
+                      'itemsize': 8}),
             (3,)
             )),
         (4,)
@@ -634,10 +634,10 @@ def test_pickle_disallow(tmpdir):
                 np.dtype((
                     np.dtype([
                         ('a', int),
-                        ('b', np.dtype({'names':['a','b'],
-                                        'formats':['i1','i1'],
-                                        'offsets':[0,4],
-                                        'itemsize':8})),
+                        ('b', np.dtype({'names': ['a', 'b'],
+                                        'formats': ['i1', 'i1'],
+                                        'offsets': [0, 4],
+                                        'itemsize': 8})),
                     ]),
                     (3,),
                 )),
@@ -647,7 +647,6 @@ def test_pickle_disallow(tmpdir):
         )))
         ]),
     ])
-
 def test_descr_to_dtype(dt):
     dt1 = format.descr_to_dtype(dt.descr)
     assert_equal_(dt1, dt)
@@ -685,8 +684,8 @@ def test_version_2_0_memmap(tmpdir):
     # requires more than 2 byte for header
     dt = [(("%d" % i) * 100, float) for i in range(500)]
     d = np.ones(1000, dtype=dt)
-    tf1 = os.path.join(tmpdir, f'version2_01.npy')
-    tf2 = os.path.join(tmpdir, f'version2_02.npy')
+    tf1 = os.path.join(tmpdir, 'version2_01.npy')
+    tf2 = os.path.join(tmpdir, 'version2_02.npy')
 
     # 1.0 requested but data cannot be saved this way
     assert_raises(ValueError, format.open_memmap, tf1, mode='w+', dtype=d.dtype,
@@ -713,12 +712,12 @@ def test_version_2_0_memmap(tmpdir):
 
 @pytest.mark.parametrize("mmap_mode", ["r", None])
 def test_huge_header(tmpdir, mmap_mode):
-    f = os.path.join(tmpdir, f'large_header.npy')
-    arr = np.array(1, dtype="i,"*10000+"i")
+    f = os.path.join(tmpdir, 'large_header.npy')
+    arr = np.array(1, dtype="i," * 10000 + "i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.save(f, arr)
-    
+
     with pytest.raises(ValueError, match="Header.*large"):
         np.load(f, mmap_mode=mmap_mode)
 
@@ -732,12 +731,12 @@ def test_huge_header(tmpdir, mmap_mode):
     assert_array_equal(res, arr)
 
 def test_huge_header_npz(tmpdir):
-    f = os.path.join(tmpdir, f'large_header.npz')
-    arr = np.array(1, dtype="i,"*10000+"i")
+    f = os.path.join(tmpdir, 'large_header.npz')
+    arr = np.array(1, dtype="i," * 10000 + "i")
 
     with pytest.warns(UserWarning, match=".*format 2.0"):
         np.savez(f, arr=arr)
-    
+
     # Only getting the array from the file actually reads it
     with pytest.raises(ValueError, match="Header.*large"):
         np.load(f)["arr"]
@@ -838,11 +837,11 @@ def test_bad_magic_args():
 
 def test_large_header():
     s = BytesIO()
-    d = {'shape': tuple(), 'fortran_order': False, 'descr': '<i8'}
+    d = {'shape': (), 'fortran_order': False, 'descr': '<i8'}
     format.write_array_header_1_0(s, d)
 
     s = BytesIO()
-    d['descr'] = [('x'*256*256, '<i8')]
+    d['descr'] = [('x' * 256 * 256, '<i8')]
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
 
 
@@ -887,7 +886,7 @@ def test_bad_header():
     # d = {"shape": (1, 2),
     #      "descr": "x"}
     s = BytesIO(
-        b"\x93NUMPY\x01\x006\x00{'descr': 'x', 'shape': (1, 2), }" +
+        b"\x93NUMPY\x01\x006\x00{'descr': 'x', 'shape': (1, 2), }"
         b"                    \n"
     )
     assert_raises(ValueError, format.read_array_header_1_0, s)
@@ -993,37 +992,35 @@ def test_header_growth_axis():
             format.write_array_header_1_0(fp, {
                 'shape': (2, size) if is_fortran_array else (size, 2),
                 'fortran_order': is_fortran_array,
-                'descr': np.dtype([(' '*dtype_space, int)])
+                'descr': np.dtype([(' ' * dtype_space, int)])
             })
 
             assert len(fp.getvalue()) == expected_header_length
 
-@pytest.mark.parametrize('dt, fail', [
-    (np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3',
-                 metadata={'some': 'stuff'})]}), True),
-    (np.dtype(int, metadata={'some': 'stuff'}), False),
-    (np.dtype([('subarray', (int, (2,)))], metadata={'some': 'stuff'}), False),
+@pytest.mark.parametrize('dt', [
+    np.dtype({'names': ['a', 'b'], 'formats':  [float, np.dtype('S3',
+                 metadata={'some': 'stuff'})]}),
+    np.dtype(int, metadata={'some': 'stuff'}),
+    np.dtype([('subarray', (int, (2,)))], metadata={'some': 'stuff'}),
     # recursive: metadata on the field of a dtype
-    (np.dtype({'names': ['a', 'b'], 'formats': [
+    np.dtype({'names': ['a', 'b'], 'formats': [
         float, np.dtype({'names': ['c'], 'formats': [np.dtype(int, metadata={})]})
-    ]}), False)
+    ]}),
     ])
 @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
         reason="PyPy bug in error formatting")
-def test_metadata_dtype(dt, fail):
+def test_metadata_dtype(dt):
     # gh-14142
     arr = np.ones(10, dtype=dt)
     buf = BytesIO()
     with assert_warns(UserWarning):
         np.save(buf, arr)
     buf.seek(0)
-    if fail:
-        with assert_raises(ValueError):
-            np.load(buf)
-    else:
-        arr2 = np.load(buf)
-        # BUG: assert_array_equal does not check metadata
-        from numpy.lib._utils_impl import drop_metadata
-        assert_array_equal(arr, arr2)
-        assert drop_metadata(arr.dtype) is not arr.dtype
-        assert drop_metadata(arr2.dtype) is arr2.dtype
+
+    # Loading should work (metadata was stripped):
+    arr2 = np.load(buf)
+    # BUG: assert_array_equal does not check metadata
+    from numpy.lib._utils_impl import drop_metadata
+    assert_array_equal(arr, arr2)
+    assert drop_metadata(arr.dtype) is not arr.dtype
+    assert drop_metadata(arr2.dtype) is arr2.dtype

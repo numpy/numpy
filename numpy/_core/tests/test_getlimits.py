@@ -1,6 +1,7 @@
 """ Test functions for limits module.
 
 """
+import types
 import warnings
 import numpy as np
 import pytest
@@ -77,10 +78,10 @@ class TestFinfo:
         class NonHashableWithDtype:
             __hash__ = None
             dtype = np.dtype('float32')
-  
+
         x = NonHashableWithDtype()
         assert np.finfo(x) == np.finfo(x.dtype)
-        
+
 
 class TestIinfo:
     def test_basic(self):
@@ -106,7 +107,7 @@ class TestRepr:
         assert_equal(repr(np.iinfo(np.int16)), expected)
 
     def test_finfo_repr(self):
-        expected = "finfo(resolution=1e-06, min=-3.4028235e+38," + \
+        expected = "finfo(resolution=1e-06, min=-3.4028235e+38,"\
                    " max=3.4028235e+38, dtype=float32)"
         assert_equal(repr(np.finfo(np.float32)), expected)
 
@@ -192,3 +193,11 @@ def test_plausible_finfo():
         assert_(info.nmant > 1)
         assert_(info.minexp < -1)
         assert_(info.maxexp > 1)
+
+
+class TestRuntimeSubscriptable:
+    def test_finfo_generic(self):
+        assert isinstance(np.finfo[np.float64], types.GenericAlias)
+
+    def test_iinfo_generic(self):
+        assert isinstance(np.iinfo[np.int_], types.GenericAlias)

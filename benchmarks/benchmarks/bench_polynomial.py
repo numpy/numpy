@@ -22,8 +22,8 @@ class Polynomial(Benchmark):
 
     def time_polynomial_evaluation_array_1000(self):
         self.polynomial_degree2(self.array1000)
-        
+
     def time_polynomial_addition(self):
         _ = self.polynomial_degree2 + self.polynomial_degree2
-        
+
 

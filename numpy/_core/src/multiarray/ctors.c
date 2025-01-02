@@ -1416,7 +1416,7 @@ fail:
  * * an object with an __array__ function.
  *
  * @param op The object to convert to an array
- * @param requested_type a requested dtype instance, may be NULL; The result
+ * @param requested_dtype a requested dtype instance, may be NULL; The result
  *                       DType may be used, but is not enforced.
  * @param writeable whether the result must be writeable.
  * @param context Unused parameter, must be NULL (should be removed later).
@@ -2036,13 +2036,12 @@ PyArray_FromStructInterface(PyObject *input)
     PyObject *attr;
     char endian = NPY_NATBYTE;
 
-    attr = PyArray_LookupSpecial_OnInstance(input, npy_interned_str.array_struct);
-    if (attr == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        } else {
-            return Py_NotImplemented;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+            input, npy_interned_str.array_struct, &attr) < 0) {
+        return NULL;
+    }
+    else if (attr == NULL) {
+        return Py_NotImplemented;
     }
     if (!PyCapsule_CheckExact(attr)) {
         if (PyType_Check(input) && PyObject_HasAttrString(attr, "__get__")) {
@@ -2160,12 +2159,11 @@ PyArray_FromInterface(PyObject *origin)
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
-    iface = PyArray_LookupSpecial_OnInstance(origin, npy_interned_str.array_interface);
-
-    if (iface == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+            origin, npy_interned_str.array_interface, &iface) < 0) {
+        return NULL;
+    }
+    else if (iface == NULL) {
         return Py_NotImplemented;
     }
     if (!PyDict_Check(iface)) {
@@ -2234,8 +2232,8 @@ PyArray_FromInterface(PyObject *origin)
                     Py_SETREF(dtype, new_dtype);
                 }
             }
+            Py_DECREF(descr);
         }
-        Py_DECREF(descr);
     }
     Py_CLEAR(attr);
 
@@ -2478,7 +2476,10 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         Py_XDECREF(traceback);
         if (DEPRECATE("__array__ implementation doesn't accept a copy keyword, "
                       "so passing copy=False failed. __array__ must implement "
-                      "'dtype' and 'copy' keyword arguments.") < 0) {
+                      "'dtype' and 'copy' keyword arguments. "
+                      "To learn more, see the migration guide "
+                      "https://numpy.org/devdocs/numpy_2_0_migration_guide.html"
+                      "#adapting-to-changes-in-the-copy-keyword") < 0) {
             return -1;
         }
         return 0;
@@ -2515,11 +2516,11 @@ PyArray_FromArrayAttr_int(PyObject *op, PyArray_Descr *descr, int copy,
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyArray_LookupSpecial_OnInstance(op, npy_interned_str.array);
-    if (array_meth == NULL) {
-        if (PyErr_Occurred()) {
-            return NULL;
-        }
+    if (PyArray_LookupSpecial_OnInstance(
+                op, npy_interned_str.array, &array_meth) < 0) {
+        return NULL;
+    }
+    else if (array_meth == NULL) {
         return Py_NotImplemented;
     }
 
@@ -2695,7 +2696,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 
     npy_intp dst_count, src_count, count;
     npy_intp dst_size, src_size;
-    int needs_api;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -2756,13 +2756,13 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     /* Get all the values needed for the inner loop */
     dst_iternext = NpyIter_GetIterNext(dst_iter, NULL);
     dst_dataptr = NpyIter_GetDataPtrArray(dst_iter);
-    /* Since buffering is disabled, we can cache the stride */
+    /* The inner stride is also the fixed stride for the whole iteration. */
     dst_stride = NpyIter_GetInnerStrideArray(dst_iter)[0];
     dst_countptr = NpyIter_GetInnerLoopSizePtr(dst_iter);
 
     src_iternext = NpyIter_GetIterNext(src_iter, NULL);
     src_dataptr = NpyIter_GetDataPtrArray(src_iter);
-    /* Since buffering is disabled, we can cache the stride */
+    /* The inner stride is also the fixed stride for the whole iteration. */
     src_stride = NpyIter_GetInnerStrideArray(src_iter)[0];
     src_countptr = NpyIter_GetInnerLoopSizePtr(src_iter);
 
@@ -2772,15 +2772,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         return -1;
     }
 
-    needs_api = NpyIter_IterationNeedsAPI(dst_iter) ||
-                NpyIter_IterationNeedsAPI(src_iter);
-
-    /*
-     * Because buffering is disabled in the iterator, the inner loop
-     * strides will be the same throughout the iteration loop.  Thus,
-     * we can pass them to this function to take advantage of
-     * contiguous strides, etc.
-     */
     NPY_cast_info cast_info;
     NPY_ARRAYMETHOD_FLAGS flags;
     if (PyArray_GetDTypeTransferFunction(
@@ -2794,7 +2785,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         NpyIter_Deallocate(src_iter);
         return -1;
     }
-    needs_api |= (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    /* No need to worry about API use in unbuffered iterator */
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char *)src_iter);
     }

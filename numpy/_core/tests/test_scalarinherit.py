@@ -58,7 +58,7 @@ class TestInherit:
         # Test that integer repr works correctly for subclasses (gh-27106)
         class my_int16(np.int16):
             pass
-    
+
         s = repr(my_int16(3))
         assert s == "my_int16(3)"
 
@@ -93,7 +93,7 @@ class TestCharacter:
             pass
 
         ret = s + MyBytes(b'abc')
-        assert(type(ret) is type(s))
+        assert type(ret) is type(s)
         assert ret == b"defabc"
 
     def test_char_repeat(self):

@@ -161,7 +161,8 @@ your system.
     This is needed even if you use the MinGW-w64 or Intel compilers, in order
     to ensure you have the Windows Universal C Runtime (the other components of
     Visual Studio are not needed when using Mingw-w64, and can be deselected if
-    desired, to save disk space).
+    desired, to save disk space). The recommended version of the UCRT is
+    >= 10.0.22621.0.
 
     .. tab-set::
 
@@ -173,6 +174,12 @@ your system.
         C/C++ compilers available inside the shell you are using, you need to
         run a ``.bat`` file for the correct bitness and architecture (e.g., for
         64-bit Intel CPUs, use ``vcvars64.bat``).
+
+        If using a Conda environment while a version of Visual Studio 2019+ is
+        installed that includes the MSVC v142 package (VS 2019 C++ x86/x64
+        build tools), activating the conda environment should cause Visual
+        Studio to be found and the appropriate .bat file executed to set
+        these variables.
 
         For detailed guidance, see `Use the Microsoft C++ toolset from the command line
         <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170>`__.
@@ -224,7 +231,7 @@ Otherwise, conda is recommended.
 .. note::
 
     If you don't have a conda installation yet, we recommend using
-    Mambaforge_; any conda flavor will work though.
+    Miniforge_; any conda flavor will work though.
 
 Building from source to use NumPy
 `````````````````````````````````
@@ -255,6 +262,12 @@ Building from source to use NumPy
       cd numpy
       git submodule update --init
       pip install . --no-build-isolation
+
+    .. warning::
+
+        On Windows, the AR, LD, and LDFLAGS environment variables may be set,
+        which will cause the pip install command to fail. These variables are only
+        needed for flang and can be safely unset prior to running pip install.
 
   .. tab-item:: Virtual env or system Python
     :sync: pip
@@ -363,6 +376,13 @@ like build the html documentation or running benchmarks. The ``spin``
 interface is self-documenting, so please see ``spin --help`` and
 ``spin <subcommand> --help`` for detailed guidance.
 
+.. warning::
+
+    In an activated conda environment on Windows, the AR, LD, and LDFLAGS
+    environment variables may be set, which will cause the build to fail.
+    These variables are only needed for flang and can be safely unset
+    for build.
+
 .. _meson-editable-installs:
 
 .. admonition:: IDE support & editable installs
@@ -432,5 +452,5 @@ Background information
    distutils_equivalents
 
 
-.. _Mambaforge: https://github.com/conda-forge/miniforge#mambaforge
+.. _Miniforge: https://github.com/conda-forge/miniforge
 .. _meson-python: https://mesonbuild.com/meson-python/

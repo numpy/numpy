@@ -1,10 +1,9 @@
-import sys
 import datetime as dt
 
 import pytest
 import numpy as np
 
-b =  np.bool()
+b = np.bool()
 b_ = np.bool_()
 u8 = np.uint64()
 i8 = np.int64()

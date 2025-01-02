@@ -59,7 +59,7 @@ order = np.log(table).mean().sort_values().index
 table = table.T
 table = table.reindex(columns)
 table = table.T
-table = table.reindex([k for k in funcs], axis=0)
+table = table.reindex(list(funcs), axis=0)
 print(table.to_csv(float_format='%0.1f'))
 
 
@@ -74,12 +74,12 @@ rel = rel.T
 print(rel.to_csv(float_format='%0d'))
 
 # Cross-platform table
-rows = ['32-bit Unsigned Ints','64-bit Unsigned Ints','Uniforms','Normals','Exponentials']
+rows = ['32-bit Unsigned Ints', '64-bit Unsigned Ints', 'Uniforms', 'Normals', 'Exponentials']
 xplat = rel.reindex(rows, axis=0)
-xplat = 100 * (xplat / xplat.MT19937.values[:,None])
+xplat = 100 * (xplat / xplat.MT19937.values[:, None])
 overall = np.exp(np.log(xplat).mean(0))
 xplat = xplat.T.copy()
-xplat['Overall']=overall
+xplat['Overall'] = overall
 print(xplat.T.round(1))
 
 

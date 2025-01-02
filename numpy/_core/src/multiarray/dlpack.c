@@ -57,7 +57,7 @@ array_dlpack_deleter_unversioned(DLManagedTensor *self)
 
 
 /*
- * Deleter for a DLPack capsule wrapping a DLManagedTensor(Versioed).
+ * Deleter for a DLPack capsule wrapping a DLManagedTensor(Versioned).
  *
  * This is exactly as mandated by dlpack
  */

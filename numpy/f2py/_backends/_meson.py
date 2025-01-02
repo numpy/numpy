@@ -12,8 +12,6 @@ from ._backend import Backend
 from string import Template
 from itertools import chain
 
-import warnings
-
 
 class MesonTemplate:
     """Template meson build file generation class."""
@@ -98,13 +96,13 @@ class MesonTemplate:
 
         self.substitutions["lib_declarations"] = "\n".join(
             [
-                f"{lib.replace('.','_')} = declare_dependency(link_args : ['-l{lib}'])"
+                f"{lib.replace('.', '_')} = declare_dependency(link_args : ['-l{lib}'])"
                 for lib in self.libraries
             ]
         )
 
         self.substitutions["lib_list"] = f"\n{self.indent}".join(
-            [f"{self.indent}{lib.replace('.','_')}," for lib in self.libraries]
+            [f"{self.indent}{lib.replace('.', '_')}," for lib in self.libraries]
         )
         self.substitutions["lib_dir_list"] = f"\n{self.indent}".join(
             [f"{self.indent}lib_dir_{i}," for i in range(len(self.library_dirs))]
@@ -118,7 +116,7 @@ class MesonTemplate:
     def fortran_args_substitution(self) -> None:
         if self.fortran_args:
             self.substitutions["fortran_args"] = (
-                f"{self.indent}fortran_args: [{', '.join([arg for arg in self.fortran_args])}],"
+                f"{self.indent}fortran_args: [{', '.join(list(self.fortran_args))}],"
             )
         else:
             self.substitutions["fortran_args"] = ""

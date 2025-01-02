@@ -1,18 +1,19 @@
-import os
 import sys
 import ast
 import types
 import warnings
 import unittest
-import contextlib
-from re import Pattern
+from _typeshed import GenericPath, StrOrBytesPath, StrPath
 from collections.abc import Callable, Iterable, Sequence
+from contextlib import _GeneratorContextManager
+from re import Pattern
 from typing import (
     Literal as L,
     Any,
     AnyStr,
     ClassVar,
     NoReturn,
+    TypeAlias,
     overload,
     type_check_only,
     TypeVar,
@@ -22,7 +23,7 @@ from typing import (
 )
 
 import numpy as np
-from numpy import number, object_, _FloatValue
+from numpy import number, object_, _ConvertibleToFloat
 from numpy._typing import (
     NDArray,
     ArrayLike,
@@ -33,9 +34,54 @@ from numpy._typing import (
     _ArrayLikeDT64_co,
 )
 
-from unittest.case import (
-    SkipTest as SkipTest,
-)
+from unittest.case import SkipTest
+
+__all__ = [
+    "IS_EDITABLE",
+    "IS_MUSL",
+    "IS_PYPY",
+    "IS_PYSTON",
+    "IS_WASM",
+    "HAS_LAPACK64",
+    "HAS_REFCOUNT",
+    "NOGIL_BUILD",
+    "assert_",
+    "assert_array_almost_equal_nulp",
+    "assert_raises_regex",
+    "assert_array_max_ulp",
+    "assert_warns",
+    "assert_no_warnings",
+    "assert_allclose",
+    "assert_equal",
+    "assert_almost_equal",
+    "assert_approx_equal",
+    "assert_array_equal",
+    "assert_array_less",
+    "assert_string_equal",
+    "assert_array_almost_equal",
+    "assert_raises",
+    "build_err_msg",
+    "decorate_methods",
+    "jiffies",
+    "memusage",
+    "print_assert_equal",
+    "rundocs",
+    "runstring",
+    "verbose",
+    "measure",
+    "IgnoreException",
+    "clear_and_catch_warnings",
+    "SkipTest",
+    "KnownFailureException",
+    "temppath",
+    "tempdir",
+    "suppress_warnings",
+    "assert_array_compare",
+    "assert_no_gc_cycles",
+    "break_cycles",
+    "check_support_sve",
+    "run_threaded",
+]
 
 _P = ParamSpec("_P")
 _T = TypeVar("_T")
@@ -44,7 +90,7 @@ _FT = TypeVar("_FT", bound=Callable[..., Any])
 
 # Must return a bool or an ndarray/generic type
 # that is supported by `np.logical_and.reduce`
-_ComparisonFunc = Callable[
+_ComparisonFunc: TypeAlias = Callable[
     [NDArray[Any], NDArray[Any]],
     (
         bool
@@ -54,12 +100,10 @@ _ComparisonFunc = Callable[
     )
 ]
 
-__all__: list[str]
-
 class KnownFailureException(Exception): ...
 class IgnoreException(Exception): ...
 
-class clear_and_catch_warnings(warnings.catch_warnings):
+class clear_and_catch_warnings(warnings.catch_warnings[list[warnings.WarningMessage]]):
     class_modules: ClassVar[tuple[types.ModuleType, ...]]
     modules: set[types.ModuleType]
     @overload
@@ -127,10 +171,14 @@ class suppress_warnings:
     def __call__(self, func: _FT) -> _FT: ...
 
 verbose: int
+IS_EDITABLE: Final[bool]
+IS_MUSL: Final[bool]
 IS_PYPY: Final[bool]
 IS_PYSTON: Final[bool]
+IS_WASM: Final[bool]
 HAS_REFCOUNT: Final[bool]
 HAS_LAPACK64: Final[bool]
+NOGIL_BUILD: Final[bool]
 
 def assert_(val: object, msg: str | Callable[[], str] = ...) -> None: ...
 
@@ -139,13 +187,13 @@ def assert_(val: object, msg: str | Callable[[], str] = ...) -> None: ...
 if sys.platform == "win32" or sys.platform == "cygwin":
     def memusage(processName: str = ..., instance: int = ...) -> int: ...
 elif sys.platform == "linux":
-    def memusage(_proc_pid_stat: str | bytes | os.PathLike[Any] = ...) -> None | int: ...
+    def memusage(_proc_pid_stat: StrOrBytesPath = ...) -> None | int: ...
 else:
     def memusage() -> NoReturn: ...
 
 if sys.platform == "linux":
     def jiffies(
-        _proc_pid_stat: str | bytes | os.PathLike[Any] = ...,
+        _proc_pid_stat: StrOrBytesPath = ...,
         _load_time: list[float] = ...,
     ) -> int: ...
 else:
@@ -185,8 +233,8 @@ def assert_almost_equal(
 
 # Anything that can be coerced into `builtins.float`
 def assert_approx_equal(
-    actual: _FloatValue,
-    desired: _FloatValue,
+    actual: _ConvertibleToFloat,
+    desired: _ConvertibleToFloat,
     significant: int = ...,
     err_msg: object = ...,
     verbose: bool = ...,
@@ -261,9 +309,11 @@ def runstring(
 def assert_string_equal(actual: str, desired: str) -> None: ...
 
 def rundocs(
-    filename: None | str | os.PathLike[str] = ...,
+    filename: StrPath | None = ...,
     raise_on_error: bool = ...,
 ) -> None: ...
+
+def check_support_sve(__cache: list[_T]) -> _T: ...
 
 def raises(*args: type[BaseException]) -> Callable[[_FT], _FT]: ...
 
@@ -350,9 +400,7 @@ def assert_array_max_ulp(
 ) -> NDArray[Any]: ...
 
 @overload
-def assert_warns(
-    warning_class: type[Warning],
-) -> contextlib._GeneratorContextManager[None]: ...
+def assert_warns(warning_class: type[Warning]) -> _GeneratorContextManager[None]: ...
 @overload
 def assert_warns(
     warning_class: type[Warning],
@@ -363,7 +411,7 @@ def assert_warns(
 ) -> _T: ...
 
 @overload
-def assert_no_warnings() -> contextlib._GeneratorContextManager[None]: ...
+def assert_no_warnings() -> _GeneratorContextManager[None]: ...
 @overload
 def assert_no_warnings(
     func: Callable[_P, _T],
@@ -377,13 +425,13 @@ def tempdir(
     suffix: None = ...,
     prefix: None = ...,
     dir: None = ...,
-) -> contextlib._GeneratorContextManager[str]: ...
+) -> _GeneratorContextManager[str]: ...
 @overload
 def tempdir(
-    suffix: None | AnyStr = ...,
-    prefix: None | AnyStr = ...,
-    dir: None | AnyStr | os.PathLike[AnyStr] = ...,
-) -> contextlib._GeneratorContextManager[AnyStr]: ...
+    suffix: AnyStr | None = ...,
+    prefix: AnyStr | None = ...,
+    dir: GenericPath[AnyStr] | None = ...,
+) -> _GeneratorContextManager[AnyStr]: ...
 
 @overload
 def temppath(
@@ -391,17 +439,17 @@ def temppath(
     prefix: None = ...,
     dir: None = ...,
     text: bool = ...,
-) -> contextlib._GeneratorContextManager[str]: ...
+) -> _GeneratorContextManager[str]: ...
 @overload
 def temppath(
-    suffix: None | AnyStr = ...,
-    prefix: None | AnyStr = ...,
-    dir: None | AnyStr | os.PathLike[AnyStr] = ...,
+    suffix: AnyStr | None = ...,
+    prefix: AnyStr | None = ...,
+    dir: GenericPath[AnyStr] | None = ...,
     text: bool = ...,
-) -> contextlib._GeneratorContextManager[AnyStr]: ...
+) -> _GeneratorContextManager[AnyStr]: ...
 
 @overload
-def assert_no_gc_cycles() -> contextlib._GeneratorContextManager[None]: ...
+def assert_no_gc_cycles() -> _GeneratorContextManager[None]: ...
 @overload
 def assert_no_gc_cycles(
     func: Callable[_P, Any],
@@ -411,3 +459,5 @@ def assert_no_gc_cycles(
 ) -> None: ...
 
 def break_cycles() -> None: ...
+
+def run_threaded(func: Callable[[], None], iters: int, pass_count: bool = False) -> None: ...

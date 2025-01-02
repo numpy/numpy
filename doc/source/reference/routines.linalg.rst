@@ -2,8 +2,8 @@
 
 .. module:: numpy.linalg
 
-Linear algebra (:mod:`numpy.linalg`)
-====================================
+Linear algebra
+==============
 
 The NumPy linear algebra functions rely on BLAS and LAPACK to provide efficient
 low level implementations of standard linear algebra algorithms. Those
@@ -62,6 +62,8 @@ Matrix and vector products
    outer
    matmul
    linalg.matmul (Array API compatible location)
+   matvec
+   vecmat
    tensordot
    linalg.tensordot (Array API compatible location)
    einsum
@@ -138,8 +140,6 @@ Exceptions
 
 Linear algebra on several matrices at once
 ------------------------------------------
-
-.. versionadded:: 1.8.0
 
 Several of the linear algebra routines listed above are able to
 compute results for several matrices at once, if they are stacked into

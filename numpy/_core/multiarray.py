@@ -1,7 +1,7 @@
 """
-Create the numpy._core.multiarray namespace for backward compatibility. 
-In v1.16 the multiarray and umath c-extension modules were merged into 
-a single _multiarray_umath extension module. So we replicate the old 
+Create the numpy._core.multiarray namespace for backward compatibility.
+In v1.16 the multiarray and umath c-extension modules were merged into
+a single _multiarray_umath extension module. So we replicate the old
 namespace by importing from the extension module.
 
 """
@@ -17,7 +17,6 @@ from ._multiarray_umath import (
     _flagdict, from_dlpack, _place, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
     _get_madvise_hugepage, _set_madvise_hugepage,
-    _get_promotion_state, _set_promotion_state
     )
 
 __all__ = [
@@ -40,10 +39,9 @@ __all__ = [
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
     'set_typeDict', 'shares_memory', 'typeinfo',
-    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
-    '_get_promotion_state', '_set_promotion_state']
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
 
-# For backward compatibility, make sure pickle imports 
+# For backward compatibility, make sure pickle imports
 # these functions from here
 _reconstruct.__module__ = 'numpy._core.multiarray'
 scalar.__module__ = 'numpy._core.multiarray'
@@ -67,9 +65,36 @@ may_share_memory.__module__ = 'numpy'
 nested_iters.__module__ = 'numpy'
 promote_types.__module__ = 'numpy'
 zeros.__module__ = 'numpy'
-_get_promotion_state.__module__ = 'numpy'
-_set_promotion_state.__module__ = 'numpy'
 normalize_axis_index.__module__ = 'numpy.lib.array_utils'
+add_docstring.__module__ = 'numpy.lib'
+compare_chararrays.__module__ = 'numpy.char'
+
+
+def _override___module__():
+    namespace_names = globals()
+    for ufunc_name in [
+        'absolute', 'arccos', 'arccosh', 'add', 'arcsin', 'arcsinh', 'arctan',
+        'arctan2', 'arctanh', 'bitwise_and', 'bitwise_count', 'invert',
+        'left_shift', 'bitwise_or', 'right_shift', 'bitwise_xor', 'cbrt',
+        'ceil', 'conjugate', 'copysign', 'cos', 'cosh', 'deg2rad', 'degrees',
+        'divide', 'divmod', 'equal', 'exp', 'exp2', 'expm1', 'fabs',
+        'float_power', 'floor', 'floor_divide', 'fmax', 'fmin', 'fmod',
+        'frexp', 'gcd', 'greater', 'greater_equal', 'heaviside', 'hypot',
+        'isfinite', 'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'less',
+        'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
+        'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
+        'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'remainder',
+        'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+        'power', 'rad2deg', 'radians', 'reciprocal', 'rint', 'sign', 'signbit',
+        'sin', 'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
+        'trunc', 'vecdot', 'vecmat',
+    ]:
+        ufunc = namespace_names[ufunc_name]
+        ufunc.__module__ = "numpy"
+        ufunc.__qualname__ = ufunc_name
+
+
+_override___module__()
 
 
 # We can't verify dispatcher signatures because NumPy's C functions don't
@@ -96,15 +121,11 @@ def empty_like(
         of the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
-
-        .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `prototype` is Fortran
         contiguous, 'C' otherwise. 'K' means match the layout of `prototype`
         as closely as possible.
-
-        .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
         type of `prototype`, otherwise it will be a base-class array. Defaults
@@ -113,8 +134,6 @@ def empty_like(
         Overrides the shape of the result. If order='K' and the number of
         dimensions is unchanged, will try to keep order, otherwise,
         order='C' is implied.
-
-        .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -162,10 +181,10 @@ def empty_like(
 def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     """
     concatenate(
-        (a1, a2, ...), 
-        axis=0, 
-        out=None, 
-        dtype=None, 
+        (a1, a2, ...),
+        axis=0,
+        out=None,
+        dtype=None,
         casting="same_kind"
     )
 
@@ -192,7 +211,7 @@ def concatenate(arrays, axis=None, out=None, *, dtype=None, casting=None):
     casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
         Controls what kind of data casting may occur. Defaults to 'same_kind'.
         For a description of the options, please see :term:`casting`.
-        
+
         .. versionadded:: 1.20.0
 
     Returns
@@ -300,6 +319,7 @@ def inner(a, b):
     --------
     tensordot : Sum products over arbitrary axes.
     dot : Generalised matrix product, using second last dimension of `b`.
+    vecdot : Vector dot product of two arrays.
     einsum : Einstein summation convention.
 
     Notes
@@ -588,16 +608,6 @@ def can_cast(from_, to, casting=None):
 
     Notes
     -----
-    .. versionchanged:: 1.17.0
-       Casting between a simple data type and a structured one is possible only
-       for "unsafe" casting.  Casting to multiple fields is allowed, but
-       casting from multiple fields is not.
-
-    .. versionchanged:: 1.9.0
-       Casting from numeric to string types in 'safe' casting mode requires
-       that the string dtype length is long enough to store the maximum
-       integer/float value converted.
-
     .. versionchanged:: 2.0
        This function does not support Python scalars anymore and does not
        apply any value-based logic for 0-D arrays and NumPy scalars.
@@ -650,10 +660,6 @@ def min_scalar_type(a):
     -------
     out : dtype
         The minimal data type.
-
-    Notes
-    -----
-    .. versionadded:: 1.6.0
 
     See Also
     --------
@@ -717,8 +723,6 @@ def result_type(*arrays_and_dtypes):
 
     Notes
     -----
-    .. versionadded:: 1.6.0
-
     The specific algorithm used is as follows.
 
     Categories are determined by first checking which of boolean,
@@ -813,6 +817,7 @@ def dot(a, b, out=None):
     See Also
     --------
     vdot : Complex-conjugating dot product.
+    vecdot : Vector dot product of two arrays.
     tensordot : Sum products over arbitrary axes.
     einsum : Einstein summation convention.
     matmul : '@' operator as method with out parameter.
@@ -850,18 +855,22 @@ def dot(a, b, out=None):
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.vdot)
 def vdot(a, b):
-    """
+    r"""
     vdot(a, b, /)
 
     Return the dot product of two vectors.
 
-    The vdot(`a`, `b`) function handles complex numbers differently than
-    dot(`a`, `b`).  If the first argument is complex the complex conjugate
-    of the first argument is used for the calculation of the dot product.
+    The `vdot` function handles complex numbers differently than `dot`:
+    if the first argument is complex, it is replaced by its complex conjugate
+    in the dot product calculation. `vdot` also handles multidimensional
+    arrays differently than `dot`: it does not perform a matrix product, but
+    flattens the arguments to 1-D arrays before taking a vector dot product.
 
-    Note that `vdot` handles multidimensional arrays differently than `dot`:
-    it does *not* perform a matrix product, but flattens input arguments
-    to 1-D vectors first. Consequently, it should only be used for vectors.
+    Consequently, when the arguments are 2-D arrays of the same shape, this
+    function effectively returns their
+    `Frobenius inner product <https://en.wikipedia.org/wiki/Frobenius_inner_product>`_
+    (also known as the *trace inner product* or the *standard inner product*
+    on a vector space of matrices).
 
     Parameters
     ----------
@@ -903,7 +912,7 @@ def vdot(a, b):
     >>> 1*4 + 4*1 + 5*2 + 6*2
     30
 
-    """
+    """  # noqa: E501
     return (a, b)
 
 
@@ -931,8 +940,6 @@ def bincount(x, weights=None, minlength=None):
         Weights, array of the same shape as `x`.
     minlength : int, optional
         A minimum number of bins for the output array.
-
-        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -1024,10 +1031,6 @@ def ravel_multi_index(multi_index, dims, mode=None, order=None):
     --------
     unravel_index
 
-    Notes
-    -----
-    .. versionadded:: 1.6.0
-
     Examples
     --------
     >>> import numpy as np
@@ -1063,15 +1066,9 @@ def unravel_index(indices, shape=None, order=None):
         this function accepted just one index value.
     shape : tuple of ints
         The shape of the array to use for unraveling ``indices``.
-
-        .. versionchanged:: 1.16.0
-            Renamed from ``dims`` to ``shape``.
-
     order : {'C', 'F'}, optional
         Determines whether the indices should be viewed as indexing in
         row-major (C-style) or column-major (Fortran-style) order.
-
-        .. versionadded:: 1.6.0
 
     Returns
     -------
@@ -1107,8 +1104,6 @@ def copyto(dst, src, casting=None, where=None):
 
     Raises a TypeError if the `casting` rule is violated, and if
     `where` is provided, it selects which elements to copy.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1219,8 +1214,6 @@ def packbits(a, axis=None, bitorder='big'):
         reverse the order so ``[1, 1, 0, 0, 0, 0, 0, 0] => 3``.
         Defaults to 'big'.
 
-        .. versionadded:: 1.17.0
-
     Returns
     -------
     packed : ndarray
@@ -1283,16 +1276,11 @@ def unpackbits(a, axis=None, count=None, bitorder='big'):
         default). Counts larger than the available number of bits will
         add zero padding to the output. Negative counts must not
         exceed the available number of bits.
-
-        .. versionadded:: 1.17.0
-
     bitorder : {'big', 'little'}, optional
         The order of the returned bits. 'big' will mimic bin(val),
         ``3 = 0b00000011 => [0, 0, 0, 0, 0, 0, 1, 1]``, 'little' will reverse
         the order to ``[1, 1, 0, 0, 0, 0, 0, 0]``.
         Defaults to 'big'.
-
-        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -1465,16 +1453,14 @@ def may_share_memory(a, b, max_work=None):
 def is_busday(dates, weekmask=None, holidays=None, busdaycal=None, out=None):
     """
     is_busday(
-        dates, 
-        weekmask='1111100', 
-        holidays=None, 
-        busdaycal=None, 
+        dates,
+        weekmask='1111100',
+        holidays=None,
+        busdaycal=None,
         out=None
     )
 
     Calculates which of the given dates are valid days, and which are not.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1527,20 +1513,18 @@ def busday_offset(dates, offsets, roll=None, weekmask=None, holidays=None,
                   busdaycal=None, out=None):
     """
     busday_offset(
-        dates, 
-        offsets, 
-        roll='raise', 
-        weekmask='1111100', 
-        holidays=None, 
-        busdaycal=None, 
+        dates,
+        offsets,
+        roll='raise',
+        weekmask='1111100',
+        holidays=None,
+        busdaycal=None,
         out=None
     )
 
     First adjusts the date to fall on a valid day according to
     the ``roll`` rule, then applies offsets to the given dates
     counted in valid days.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1631,11 +1615,11 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
                  busdaycal=None, out=None):
     """
     busday_count(
-        begindates, 
-        enddates, 
-        weekmask='1111100', 
-        holidays=[], 
-        busdaycal=None, 
+        begindates,
+        enddates,
+        weekmask='1111100',
+        holidays=[],
+        busdaycal=None,
         out=None
     )
 
@@ -1644,8 +1628,6 @@ def busday_count(begindates, enddates, weekmask=None, holidays=None,
 
     If ``enddates`` specifies a date value that is earlier than the
     corresponding ``begindates`` date value, the count will be negative.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -1715,7 +1697,7 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     arr : array_like of datetime64
         The array of UTC timestamps to format.
     unit : str
-        One of None, 'auto', or 
+        One of None, 'auto', or
         a :ref:`datetime unit <arrays.dtypes.dateunits>`.
     timezone : {'naive', 'UTC', 'local'} or tzinfo
         Timezone information to use when displaying the datetime. If 'UTC',

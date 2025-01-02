@@ -70,6 +70,7 @@ class FortranRoutine:
     """Wrapper for a Fortran routine in a file.
     """
     type = 'generic'
+
     def __init__(self, name=None, filename=None):
         self.filename = filename
         if name is None:
@@ -93,6 +94,7 @@ class UnknownFortranRoutine(FortranRoutine):
     is not known.
     """
     type = 'unknown'
+
     def __init__(self, name):
         FortranRoutine.__init__(self, name=name, filename='<unknown>')
 
@@ -239,6 +241,7 @@ def getWrappedRoutineNames(wrapped_routines_file):
                 routines.append(line)
     return routines, ignores
 
+
 types = {'blas', 'lapack', 'd_lapack', 's_lapack', 'z_lapack', 'c_lapack', 'config'}
 
 def dumpRoutineNames(library, output_dir):
@@ -289,7 +292,7 @@ def create_name_header(output_dir):
     extern_re = re.compile(r'^extern [a-z]+ ([a-z0-9_]+)\(.*$')
 
     # BLAS/LAPACK symbols
-    symbols = set(['xerbla'])
+    symbols = {'xerbla'}
     for fn in os.listdir(output_dir):
         fn = os.path.join(output_dir, fn)
 

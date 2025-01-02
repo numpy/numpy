@@ -1,6 +1,6 @@
 """
-Exceptions and Warnings (:mod:`numpy.exceptions`)
-=================================================
+Exceptions and Warnings
+=======================
 
 General exceptions used by NumPy.  Note that some exceptions may be module
 specific, such as linear algebra errors.
@@ -86,9 +86,9 @@ class VisibleDeprecationWarning(UserWarning):
 
 class RankWarning(RuntimeWarning):
     """Matrix rank warning.
-    
+
     Issued by polynomial functions when the design matrix is rank deficient.
-    
+
     """
     pass
 
@@ -116,8 +116,6 @@ class AxisError(ValueError, IndexError):
     situation, this exception subclasses both to ensure that
     ``except ValueError`` and ``except IndexError`` statements continue
     to catch ``AxisError``.
-
-    .. versionadded:: 1.13
 
     Parameters
     ----------

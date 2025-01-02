@@ -17,13 +17,7 @@
 #include "nditer_impl.h"
 #include "templ_common.h"
 #include "ctors.h"
-#include "refcount.h"
 
-/* Internal helper functions private to this file */
-static npy_intp
-npyiter_checkreducesize(NpyIter *iter, npy_intp count,
-                                npy_intp *reduce_innersize,
-                                npy_intp *reduce_outerdim);
 
 /*NUMPY_API
  * Removes an axis from iteration. This requires that NPY_ITER_MULTI_INDEX
@@ -298,6 +292,10 @@ NpyIter_Reset(NpyIter *iter, char **errmsg)
             }
             return NPY_FAIL;
         }
+    }
+    else if (itflags&NPY_ITFLAG_EXLOOP)  {
+        /* make sure to update the user pointers (buffer copy does it above). */
+        memcpy(NIT_USERPTRS(iter), NIT_DATAPTRS(iter), NPY_SIZEOF_INTP*nop);
     }
 
     return NPY_SUCCEED;
@@ -654,7 +652,7 @@ NpyIter_GotoIterIndex(NpyIter *iter, npy_intp iterindex)
             char **ptrs;
 
             strides = NBF_STRIDES(bufferdata);
-            ptrs = NBF_PTRS(bufferdata);
+            ptrs = NIT_USERPTRS(iter);
             delta = iterindex - NIT_ITERINDEX(iter);
 
             for (iop = 0; iop < nop; ++iop) {
@@ -828,6 +826,9 @@ NpyIter_IsFirstVisit(NpyIter *iter, int iop)
 
 /*NUMPY_API
  * Whether the iteration could be done with no buffering.
+ *
+ * Note that the iterator may use buffering to increase the inner loop size
+ * even when buffering is not required.
  */
 NPY_NO_EXPORT npy_bool
 NpyIter_RequiresBuffering(NpyIter *iter)
@@ -869,18 +870,37 @@ NpyIter_RequiresBuffering(NpyIter *iter)
 NPY_NO_EXPORT npy_bool
 NpyIter_IterationNeedsAPI(NpyIter *iter)
 {
-    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_NEEDSAPI) != 0;
+    int nop = NIT_NOP(iter);
+    /* If any of the buffer filling need the API, flag it as well. */
+    if (NpyIter_GetTransferFlags(iter) & NPY_METH_REQUIRES_PYAPI) {
+        return NPY_TRUE;
+    }
+
+    for (int iop = 0; iop < nop; ++iop) {
+        PyArray_Descr *rdt = NIT_DTYPES(iter)[iop];
+        if ((rdt->flags & (NPY_ITEM_REFCOUNT |
+                                 NPY_ITEM_IS_POINTER |
+                                 NPY_NEEDS_PYAPI)) != 0) {
+            /* Iteration needs API access */
+            return NPY_TRUE;
+        }
+    }
+
+    return NPY_FALSE;
 }
 
 
-/*
- * Fetch the ArrayMethod (runtime) flags for all "transfer functions' (i.e.
- * copy to buffer/casts).
+/*NUMPY_API
+ * Fetch the NPY_ARRAYMETHOD_FLAGS (runtime) flags for all "transfer functions'
+ * (i.e. copy to buffer/casts).
  *
- * TODO: This should be public API, but that only makes sense when the
- *       ArrayMethod API is made public.
+ * It is the preferred way to check whether the iteration requires to hold the
+ * GIL or may set floating point errors during buffer copies.
+ *
+ * I.e. use `NpyIter_GetTransferFlags(iter) & NPY_METH_REQUIRES_PYAPI` to check
+ * if you cannot release the GIL.
  */
-NPY_NO_EXPORT int
+NPY_NO_EXPORT NPY_ARRAYMETHOD_FLAGS
 NpyIter_GetTransferFlags(NpyIter *iter)
 {
     return NIT_ITFLAGS(iter) >> NPY_ITFLAG_TRANSFERFLAGS_SHIFT;
@@ -1091,13 +1111,11 @@ NpyIter_GetDataPtrArray(NpyIter *iter)
     /*int ndim = NIT_NDIM(iter);*/
     int nop = NIT_NOP(iter);
 
-    if (itflags&NPY_ITFLAG_BUFFER) {
-        NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
-        return NBF_PTRS(bufferdata);
+    if (itflags&(NPY_ITFLAG_BUFFER|NPY_ITFLAG_EXLOOP)) {
+        return NIT_USERPTRS(iter);
     }
     else {
-        NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-        return NAD_PTRS(axisdata);
+        return NIT_DATAPTRS(iter);
     }
 }
 
@@ -1214,11 +1232,9 @@ NpyIter_GetIndexPtr(NpyIter *iter)
     /*int ndim = NIT_NDIM(iter);*/
     int nop = NIT_NOP(iter);
 
-    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-
     if (itflags&NPY_ITFLAG_HASINDEX) {
         /* The index is just after the data pointers */
-        return (npy_intp*)NAD_PTRS(axisdata) + nop;
+        return (npy_intp*)(NpyIter_GetDataPtrArray(iter) + nop);
     }
     else {
         return NULL;
@@ -1329,8 +1345,10 @@ NpyIter_GetAxisStrideArray(NpyIter *iter, int axis)
 
 /*NUMPY_API
  * Get an array of strides which are fixed.  Any strides which may
- * change during iteration receive the value NPY_MAX_INTP.  Once
- * the iterator is ready to iterate, call this to get the strides
+ * change during iteration receive the value NPY_MAX_INTP
+ * (as of NumPy 2.3, `NPY_MAX_INTP` will never happen but must be supported;
+ * we could guarantee this, but not sure if we should).
+ * Once the iterator is ready to iterate, call this to get the strides
  * which will always be fixed in the inner loop, then choose optimized
  * inner loop functions which take advantage of those fixed strides.
  *
@@ -1340,75 +1358,16 @@ NPY_NO_EXPORT void
 NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
-    int ndim = NIT_NDIM(iter);
-    int iop, nop = NIT_NOP(iter);
+    int nop = NIT_NOP(iter);
 
     NpyIter_AxisData *axisdata0 = NIT_AXISDATA(iter);
-    npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
     if (itflags&NPY_ITFLAG_BUFFER) {
-        NpyIter_BufferData *data = NIT_BUFFERDATA(iter);
-        npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
-        npy_intp stride, *strides = NBF_STRIDES(data),
-                *ad_strides = NAD_STRIDES(axisdata0);
-        PyArray_Descr **dtypes = NIT_DTYPES(iter);
-
-        for (iop = 0; iop < nop; ++iop) {
-            stride = strides[iop];
-            /*
-             * Operands which are always/never buffered have fixed strides,
-             * and everything has fixed strides when ndim is 0 or 1
-             */
-            if (ndim <= 1 || (op_itflags[iop]&
-                            (NPY_OP_ITFLAG_CAST|NPY_OP_ITFLAG_BUFNEVER))) {
-                out_strides[iop] = stride;
-            }
-            /* If it's a reduction, 0-stride inner loop may have fixed stride */
-            else if (stride == 0 && (itflags&NPY_ITFLAG_REDUCE)) {
-                /* If it's a reduction operand, definitely fixed stride */
-                if (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) {
-                    out_strides[iop] = stride;
-                }
-                /*
-                 * Otherwise it's guaranteed to be a fixed stride if the
-                 * stride is 0 for all the dimensions.
-                 */
-                else {
-                    NpyIter_AxisData *axisdata = axisdata0;
-                    int idim;
-                    for (idim = 0; idim < ndim; ++idim) {
-                        if (NAD_STRIDES(axisdata)[iop] != 0) {
-                            break;
-                        }
-                        NIT_ADVANCE_AXISDATA(axisdata, 1);
-                    }
-                    /* If all the strides were 0, the stride won't change */
-                    if (idim == ndim) {
-                        out_strides[iop] = stride;
-                    }
-                    else {
-                        out_strides[iop] = NPY_MAX_INTP;
-                    }
-                }
-            }
-            /*
-             * Inner loop contiguous array means its stride won't change when
-             * switching between buffering and not buffering
-             */
-            else if (ad_strides[iop] == dtypes[iop]->elsize) {
-                out_strides[iop] = ad_strides[iop];
-            }
-            /*
-             * Otherwise the strides can change if the operand is sometimes
-             * buffered, sometimes not.
-             */
-            else {
-                out_strides[iop] = NPY_MAX_INTP;
-            }
-        }
+        /* If there is buffering we wrote the strides into the bufferdata. */
+        memcpy(out_strides, NBF_STRIDES(NIT_BUFFERDATA(iter)), nop*NPY_SIZEOF_INTP);
     }
     else {
-        /* If there's no buffering, the strides are always fixed */
+        /* If there's no buffering, the strides come from the operands. */
         memcpy(out_strides, NAD_STRIDES(axisdata0), nop*NPY_SIZEOF_INTP);
     }
 }
@@ -1477,8 +1436,6 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("ONEITERATION ");
     if (itflags&NPY_ITFLAG_DELAYBUF)
         printf("DELAYBUF ");
-    if (itflags&NPY_ITFLAG_NEEDSAPI)
-        printf("NEEDSAPI ");
     if (itflags&NPY_ITFLAG_REDUCE)
         printf("REDUCE ");
     if (itflags&NPY_ITFLAG_REUSE_REDUCE_LOOPS)
@@ -1531,6 +1488,18 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("%i ", (int)NIT_BASEOFFSETS(iter)[iop]);
     }
     printf("\n");
+    printf("| Ptrs: ");
+    for (iop = 0; iop < nop; ++iop) {
+        printf("%p ", (void *)NIT_DATAPTRS(iter)[iop]);
+    }
+    printf("\n");
+    if (itflags&(NPY_ITFLAG_EXLOOP|NPY_ITFLAG_BUFFER)) {
+        printf("| User/buffer ptrs: ");
+        for (iop = 0; iop < nop; ++iop) {
+            printf("%p ", (void *)NIT_USERPTRS(iter)[iop]);
+        }
+        printf("\n");
+    }
     if (itflags&NPY_ITFLAG_HASINDEX) {
         printf("| InitIndex: %d\n",
                         (int)(npy_intp)NIT_RESETDATAPTR(iter)[nop]);
@@ -1567,14 +1536,16 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("CAST ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_BUFNEVER)
             printf("BUFNEVER ");
-        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_ALIGNED)
-            printf("ALIGNED ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_REDUCE)
             printf("REDUCE ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_VIRTUAL)
             printf("VIRTUAL ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_WRITEMASKED)
             printf("WRITEMASKED ");
+        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_BUF_SINGLESTRIDE)
+            printf("BUF_SINGLESTRIDE ");
+        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_CONTIG)
+            printf("CONTIG ");
         printf("\n");
     }
     printf("|\n");
@@ -1587,13 +1558,15 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("|   BufferSize: %d\n", (int)NBF_BUFFERSIZE(bufferdata));
         printf("|   Size: %d\n", (int)NBF_SIZE(bufferdata));
         printf("|   BufIterEnd: %d\n", (int)NBF_BUFITEREND(bufferdata));
+        printf("|   BUFFER CoreSize: %d\n",
+                    (int)NBF_CORESIZE(bufferdata));
         if (itflags&NPY_ITFLAG_REDUCE) {
             printf("|   REDUCE Pos: %d\n",
                         (int)NBF_REDUCE_POS(bufferdata));
             printf("|   REDUCE OuterSize: %d\n",
                         (int)NBF_REDUCE_OUTERSIZE(bufferdata));
             printf("|   REDUCE OuterDim: %d\n",
-                        (int)NBF_REDUCE_OUTERDIM(bufferdata));
+                        (int)NBF_OUTERDIM(bufferdata));
         }
         printf("|   Strides: ");
         for (iop = 0; iop < nop; ++iop)
@@ -1608,10 +1581,6 @@ NpyIter_DebugPrint(NpyIter *iter)
                 printf("%d ", (int)fixedstrides[iop]);
             printf("\n");
         }
-        printf("|   Ptrs: ");
-        for (iop = 0; iop < nop; ++iop)
-            printf("%p ", (void *)NBF_PTRS(bufferdata)[iop]);
-        printf("\n");
         if (itflags&NPY_ITFLAG_REDUCE) {
             printf("|   REDUCE Outer Strides: ");
             for (iop = 0; iop < nop; ++iop)
@@ -1659,14 +1628,9 @@ NpyIter_DebugPrint(NpyIter *iter)
         if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("|   Index Stride: %d\n", (int)NAD_STRIDES(axisdata)[nop]);
         }
-        printf("|   Ptrs: ");
-        for (iop = 0; iop < nop; ++iop) {
-            printf("%p ", (void *)NAD_PTRS(axisdata)[iop]);
-        }
-        printf("\n");
         if (itflags&NPY_ITFLAG_HASINDEX) {
             printf("|   Index Value: %d\n",
-                               (int)((npy_intp*)NAD_PTRS(axisdata))[nop]);
+                               (int)((npy_intp*)NIT_DATAPTRS(iter))[nop]);
         }
     }
 
@@ -1815,7 +1779,8 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
     int idim, ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
 
-    char **dataptr;
+    char **dataptrs = NIT_DATAPTRS(iter);
+
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
     npy_intp istrides, nstrides, i, shape;
@@ -1828,17 +1793,13 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
 
     ndim = ndim ? ndim : 1;
 
+    for (istrides = 0; istrides < nstrides; ++istrides) {
+        dataptrs[istrides] = NIT_RESETDATAPTR(iter)[istrides];
+    }
+
     if (iterindex == 0) {
-        dataptr = NIT_RESETDATAPTR(iter);
-
         for (idim = 0; idim < ndim; ++idim) {
-            char **ptrs;
             NAD_INDEX(axisdata) = 0;
-            ptrs = NAD_PTRS(axisdata);
-            for (istrides = 0; istrides < nstrides; ++istrides) {
-                ptrs[istrides] = dataptr[istrides];
-            }
-
             NIT_ADVANCE_AXISDATA(axisdata, 1);
         }
     }
@@ -1847,46 +1808,112 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
          * Set the multi-index, from the fastest-changing to the
          * slowest-changing.
          */
-        axisdata = NIT_AXISDATA(iter);
-        shape = NAD_SHAPE(axisdata);
-        i = iterindex;
-        iterindex /= shape;
-        NAD_INDEX(axisdata) = i - iterindex * shape;
-        for (idim = 0; idim < ndim-1; ++idim) {
-            NIT_ADVANCE_AXISDATA(axisdata, 1);
-
+        for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
             shape = NAD_SHAPE(axisdata);
             i = iterindex;
             iterindex /= shape;
             NAD_INDEX(axisdata) = i - iterindex * shape;
-        }
 
-        dataptr = NIT_RESETDATAPTR(iter);
-
-        /*
-         * Accumulate the successive pointers with their
-         * offsets in the opposite order, starting from the
-         * original data pointers.
-         */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp *strides;
-            char **ptrs;
-
-            strides = NAD_STRIDES(axisdata);
-            ptrs = NAD_PTRS(axisdata);
-
-            i = NAD_INDEX(axisdata);
-
+            npy_intp *strides = NAD_STRIDES(axisdata);
             for (istrides = 0; istrides < nstrides; ++istrides) {
-                ptrs[istrides] = dataptr[istrides] + i*strides[istrides];
+                dataptrs[istrides] += NAD_INDEX(axisdata) * strides[istrides];
             }
-
-            dataptr = ptrs;
-
-            NIT_ADVANCE_AXISDATA(axisdata, -1);
         }
     }
+
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        /* Find the remainder if chunking to the buffers coresize */
+        npy_intp fact = NIT_ITERINDEX(iter) / NIT_BUFFERDATA(iter)->coresize;
+        npy_intp offset = NIT_ITERINDEX(iter) - fact * NIT_BUFFERDATA(iter)->coresize;
+        NIT_BUFFERDATA(iter)->coreoffset = offset;
+    }
+    else if (itflags&NPY_ITFLAG_EXLOOP) {
+        /* If buffered, user pointers are updated during buffer copy. */
+        memcpy(NIT_USERPTRS(iter), dataptrs, nstrides * sizeof(void *));
+    }
 }
+
+
+/*
+ * This helper fills the bufferdata copy information for an operand.  It
+ * is very specific to copy from and to buffers.
+ */
+static inline void
+npyiter_fill_buffercopy_params(
+        int nop, int iop, int ndim, npy_uint32 opitflags, npy_intp transfersize,
+        NpyIter_BufferData *bufferdata,
+        NpyIter_AxisData *axisdata,
+        NpyIter_AxisData *outer_axisdata,
+        int *ndim_transfer,
+        npy_intp *op_transfersize,
+        npy_intp *buf_stride,
+        npy_intp *op_strides[], npy_intp *op_shape[], npy_intp *op_coords[])
+{
+    /*
+     * Set up if we had to do the full generic copy.
+     * NOTE: Except the transfersize itself everything here is fixed
+     *       and we could create it once early on.
+     */
+    *ndim_transfer = ndim;
+    *op_transfersize = transfersize;
+
+    if ((opitflags & NPY_OP_ITFLAG_REDUCE) && (NAD_STRIDES(outer_axisdata)[iop] != 0)) {
+        /*
+         * Reduce with all inner strides ==0 (outer !=0).  We buffer the outer
+         * stride which also means buffering only outersize items.
+         * (If the outer stride is 0, some inner ones are guaranteed nonzero.)
+         */
+        assert(NAD_STRIDES(axisdata)[iop] == 0);
+        *ndim_transfer = 1;
+        *op_transfersize = NBF_REDUCE_OUTERSIZE(bufferdata);
+        *buf_stride = NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop];
+
+        *op_shape = op_transfersize;
+        assert(**op_coords == 0);  /* initialized by caller currently */
+        *op_strides = &NAD_STRIDES(outer_axisdata)[iop];
+        return;
+    }
+
+    /*
+     * The copy is now a typical copy into a contiguous buffer.
+     * If it is a reduce, we only copy the inner part (i.e. less).
+     * The buffer strides are now always contiguous.
+     */
+    *buf_stride = NBF_STRIDES(bufferdata)[iop];
+
+    if (opitflags & NPY_OP_ITFLAG_REDUCE) {
+        /* Outer dim is reduced, so omit it from copying */
+        *ndim_transfer -= 1;
+        if (*op_transfersize > bufferdata->coresize) {
+            *op_transfersize = bufferdata->coresize;
+        }
+        /* copy setup is identical to non-reduced now. */
+    }
+
+    if (opitflags & NPY_OP_ITFLAG_BUF_SINGLESTRIDE) {
+        *ndim_transfer = 1;
+        *op_shape = op_transfersize;
+        assert(**op_coords == 0);  /* initialized by caller currently */
+        *op_strides = &NAD_STRIDES(axisdata)[iop];
+        if ((*op_strides)[0] == 0 && (
+                !(opitflags & NPY_OP_ITFLAG_CONTIG) ||
+                (opitflags & NPY_OP_ITFLAG_WRITE))) {
+            /*
+             * If the user didn't force contig, optimize single element.
+             * (Unless CONTIG was requested and this is not a write/reduce!)
+             */
+            *op_transfersize = 1;
+            *buf_stride = 0;
+        }
+    }
+    else {
+        /* We do a full multi-dimensional copy */
+        *op_shape = &NAD_SHAPE(axisdata);
+        *op_coords = &NAD_INDEX(axisdata);
+        *op_strides = &NAD_STRIDES(axisdata)[iop];
+    }
+}
+
 
 /*
  * This gets called after the buffers have been exhausted, and
@@ -1903,20 +1930,16 @@ npyiter_copy_from_buffers(NpyIter *iter)
 
     npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
-    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter),
-                    *reduce_outeraxisdata = NULL;
+    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
+    NpyIter_AxisData *outer_axisdata = NULL;
 
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
+    npy_intp *strides = NBF_STRIDES(bufferdata);
     npy_intp transfersize = NBF_SIZE(bufferdata);
-    npy_intp *strides = NBF_STRIDES(bufferdata),
-             *ad_strides = NAD_STRIDES(axisdata);
-    npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    char **ad_ptrs = NAD_PTRS(axisdata);
+
+    char **dataptrs = NIT_DATAPTRS(iter);
     char **buffers = NBF_BUFFERS(bufferdata);
     char *buffer;
-
-    npy_intp reduce_outerdim = 0;
-    npy_intp *reduce_outerstrides = NULL;
 
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, nop) /
                                 NPY_SIZEOF_INTP;
@@ -1926,17 +1949,25 @@ npyiter_copy_from_buffers(NpyIter *iter)
         return 0;
     }
 
-    NPY_IT_DBG_PRINT("Iterator: Copying buffers to outputs\n");
-
-    if (itflags&NPY_ITFLAG_REDUCE) {
-        reduce_outerdim = NBF_REDUCE_OUTERDIM(bufferdata);
-        reduce_outerstrides = NBF_REDUCE_OUTERSTRIDES(bufferdata);
-        reduce_outeraxisdata = NIT_INDEX_AXISDATA(axisdata, reduce_outerdim);
+    if (itflags & NPY_ITFLAG_REDUCE) {
+        npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+        outer_axisdata = NIT_INDEX_AXISDATA(axisdata, NBF_OUTERDIM(bufferdata));
         transfersize *= NBF_REDUCE_OUTERSIZE(bufferdata);
     }
 
+    NPY_IT_DBG_PRINT("Iterator: Copying buffers to outputs\n");
+
     NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
     for (iop = 0; iop < nop; ++iop) {
+        if (op_itflags[iop]&NPY_OP_ITFLAG_BUFNEVER) {
+            continue;
+        }
+
+        /* Currently, we always trash the buffer if there are references */
+        if (PyDataType_REFCHK(dtypes[iop])) {
+            NIT_OPITFLAGS(iter)[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
+        }
+
         buffer = buffers[iop];
         /*
          * Copy the data back to the arrays.  If the type has refs,
@@ -1945,73 +1976,27 @@ npyiter_copy_from_buffers(NpyIter *iter)
          * The flag USINGBUFFER is set when the buffer was used, so
          * only copy back when this flag is on.
          */
-        if ((transferinfo[iop].write.func != NULL) &&
-               (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
-            npy_intp op_transfersize;
-
-            npy_intp src_stride, *dst_strides, *dst_coords, *dst_shape;
-            int ndim_transfer;
-
+        if (transferinfo[iop].write.func != NULL) {
             NPY_IT_DBG_PRINT1("Iterator: Operand %d was buffered\n",
                                         (int)iop);
 
-            /*
-             * If this operand is being reduced in the inner loop,
-             * its buffering stride was set to zero, and just
-             * one element was copied.
-             */
-            if (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) {
-                if (strides[iop] == 0) {
-                    if (reduce_outerstrides[iop] == 0) {
-                        op_transfersize = 1;
-                        src_stride = 0;
-                        dst_strides = &src_stride;
-                        dst_coords = &NAD_INDEX(reduce_outeraxisdata);
-                        dst_shape = &NAD_SHAPE(reduce_outeraxisdata);
-                        ndim_transfer = 1;
-                    }
-                    else {
-                        op_transfersize = NBF_REDUCE_OUTERSIZE(bufferdata);
-                        src_stride = reduce_outerstrides[iop];
-                        dst_strides =
-                                &NAD_STRIDES(reduce_outeraxisdata)[iop];
-                        dst_coords = &NAD_INDEX(reduce_outeraxisdata);
-                        dst_shape = &NAD_SHAPE(reduce_outeraxisdata);
-                        ndim_transfer = ndim - reduce_outerdim;
-                    }
-                }
-                else {
-                    if (reduce_outerstrides[iop] == 0) {
-                        op_transfersize = NBF_SIZE(bufferdata);
-                        src_stride = strides[iop];
-                        dst_strides = &ad_strides[iop];
-                        dst_coords = &NAD_INDEX(axisdata);
-                        dst_shape = &NAD_SHAPE(axisdata);
-                        ndim_transfer = reduce_outerdim ?
-                                        reduce_outerdim : 1;
-                    }
-                    else {
-                        op_transfersize = transfersize;
-                        src_stride = strides[iop];
-                        dst_strides = &ad_strides[iop];
-                        dst_coords = &NAD_INDEX(axisdata);
-                        dst_shape = &NAD_SHAPE(axisdata);
-                        ndim_transfer = ndim;
-                    }
-                }
-            }
-            else {
-                op_transfersize = transfersize;
-                src_stride = strides[iop];
-                dst_strides = &ad_strides[iop];
-                dst_coords = &NAD_INDEX(axisdata);
-                dst_shape = &NAD_SHAPE(axisdata);
-                ndim_transfer = ndim;
-            }
+            npy_intp zero = 0;  /* used as coord for 1-D copies */
+            int ndim_transfer;
+            npy_intp op_transfersize;
+            npy_intp src_stride;
+            npy_intp *dst_strides;
+            npy_intp *dst_coords = &zero;
+            npy_intp *dst_shape;
 
-            NPY_IT_DBG_PRINT2("Iterator: Copying buffer to "
-                                "operand %d (%d items)\n",
-                                (int)iop, (int)op_transfersize);
+            npyiter_fill_buffercopy_params(nop, iop, ndim, op_itflags[iop],
+                transfersize, bufferdata, axisdata, outer_axisdata,
+                &ndim_transfer, &op_transfersize, &src_stride,
+                &dst_strides, &dst_shape, &dst_coords);
+
+            NPY_IT_DBG_PRINT(
+                "Iterator: Copying buffer to operand %d (%zd items):\n"
+                "    transfer ndim: %d, inner stride: %zd, inner shape: %zd, buffer stride: %zd\n",
+                iop, op_transfersize, ndim_transfer, dst_strides[0], dst_shape[0], src_stride);
 
             /* WRITEMASKED operand */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
@@ -2021,15 +2006,15 @@ npyiter_copy_from_buffers(NpyIter *iter)
                  * The mask pointer may be in the buffer or in
                  * the array, detect which one.
                  */
-                if ((op_itflags[maskop]&NPY_OP_ITFLAG_USINGBUFFER) != 0) {
-                    maskptr = (npy_bool *)buffers[maskop];
+                if ((op_itflags[maskop]&NPY_OP_ITFLAG_BUFNEVER)) {
+                    maskptr = (npy_bool *)dataptrs[maskop];
                 }
                 else {
-                    maskptr = (npy_bool *)ad_ptrs[maskop];
+                    maskptr = (npy_bool *)buffers[maskop];
                 }
 
                 if (PyArray_TransferMaskedStridedToNDim(ndim_transfer,
-                        ad_ptrs[iop], dst_strides, axisdata_incr,
+                        dataptrs[iop], dst_strides, axisdata_incr,
                         buffer, src_stride,
                         maskptr, strides[maskop],
                         dst_coords, axisdata_incr,
@@ -2042,7 +2027,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
             /* Regular operand */
             else {
                 if (PyArray_TransferStridedToNDim(ndim_transfer,
-                        ad_ptrs[iop], dst_strides, axisdata_incr,
+                        dataptrs[iop], dst_strides, axisdata_incr,
                         buffer, src_stride,
                         dst_coords, axisdata_incr,
                         dst_shape, axisdata_incr,
@@ -2059,11 +2044,11 @@ npyiter_copy_from_buffers(NpyIter *iter)
          * The flag USINGBUFFER is set when the buffer was used, so
          * only decrement refs when this flag is on.
          */
-        else if (transferinfo[iop].clear.func != NULL &&
-                    (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
+        else if (transferinfo[iop].clear.func != NULL) {
             NPY_IT_DBG_PRINT1(
                     "Iterator: clearing refs of operand %d\n", (int)iop);
             npy_intp buf_stride = dtypes[iop]->elsize;
+            // TODO: transfersize is too large for reductions
             if (transferinfo[iop].clear.func(
                     NULL, transferinfo[iop].clear.descr, buffer, transfersize,
                     buf_stride, transferinfo[iop].clear.auxdata) < 0) {
@@ -2082,6 +2067,9 @@ npyiter_copy_from_buffers(NpyIter *iter)
  * This gets called after the iterator has been positioned to a multi-index
  * for the start of a buffer.  It decides which operands need a buffer,
  * and copies the data into the buffers.
+ *
+ * If passed, this function expects `prev_dataptrs` to be `NIT_USERPTRS`
+ * (they are reset after querying `prev_dataptrs`).
  */
 NPY_NO_EXPORT int
 npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
@@ -2092,510 +2080,170 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
 
     npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
-    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter),
-                    *reduce_outeraxisdata = NULL;
+    NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
+    NpyIter_AxisData *outer_axisdata = NULL;
 
-    PyArray_Descr **dtypes = NIT_DTYPES(iter);
     PyArrayObject **operands = NIT_OPERANDS(iter);
-    npy_intp *strides = NBF_STRIDES(bufferdata),
-             *ad_strides = NAD_STRIDES(axisdata);
+
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
+    char **user_ptrs = NIT_USERPTRS(iter), **dataptrs = NIT_DATAPTRS(iter);
     char **buffers = NBF_BUFFERS(bufferdata);
-    npy_intp iterindex, iterend, transfersize,
-            singlestridesize, reduce_innersize = 0, reduce_outerdim = 0;
-    int is_onestride = 0, any_buffered = 0;
-
-    npy_intp *reduce_outerstrides = NULL;
-    char **reduce_outerptrs = NULL;
-
-    /*
-     * Have to get this flag before npyiter_checkreducesize sets
-     * it for the next iteration.
-     */
-    npy_bool reuse_reduce_loops = (prev_dataptrs != NULL) &&
-                    ((itflags&NPY_ITFLAG_REUSE_REDUCE_LOOPS) != 0);
+    npy_intp iterindex, iterend, transfersize;
 
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, nop) /
                                 NPY_SIZEOF_INTP;
 
-    NPY_IT_DBG_PRINT("Iterator: Copying inputs to buffers\n");
-
-    /* Calculate the size if using any buffers */
+    /* Fetch the maximum size we may wish to copy (or use if unbuffered) */
     iterindex = NIT_ITERINDEX(iter);
     iterend = NIT_ITEREND(iter);
     transfersize = NBF_BUFFERSIZE(bufferdata);
+    outer_axisdata = NIT_INDEX_AXISDATA(axisdata, bufferdata->outerdim);
+    npy_intp remaining_outersize = (
+            outer_axisdata->shape - outer_axisdata->index);
+
+    NPY_IT_DBG_PRINT("Iterator: Copying inputs to buffers\n");
+    NPY_IT_DBG_PRINT("    Max transfersize=%zd, coresize=%zd\n",
+                     transfersize, bufferdata->coresize);
+
+    /*
+     * If there is a coreoffset just copy to the end of a single coresize
+     * NB: Also if the size is shrunk, we definitely won't set buffer re-use.
+     */
+    if (bufferdata->coreoffset) {
+        prev_dataptrs = NULL;  /* No way we can re-use the buffers safely. */
+        transfersize = bufferdata->coresize - bufferdata->coreoffset;
+        NPY_IT_DBG_PRINT("    Shrunk transfersize due to coreoffset=%zd: %zd\n",
+                         bufferdata->coreoffset, transfersize);
+    }
+    else if (transfersize > bufferdata->coresize * remaining_outersize) {
+        /*
+         * Shrink transfersize to not go beyond outer axis size.  If not
+         * a reduction, it is unclear that this is necessary.
+         */
+        transfersize = bufferdata->coresize * remaining_outersize;
+        NPY_IT_DBG_PRINT("    Shrunk transfersize outer size: %zd\n", transfersize);
+    }
+
+    /* And ensure that we don't go beyond the iterator end (if ranged) */
     if (transfersize > iterend - iterindex) {
         transfersize = iterend - iterindex;
+        NPY_IT_DBG_PRINT("    Shrunk transfersize to itersize: %zd\n", transfersize);
     }
 
-    /* If last time around, the reduce loop structure was full, we reuse it */
-    if (reuse_reduce_loops) {
-        npy_intp full_transfersize, prev_reduce_outersize;
+    bufferdata->size = transfersize;
+    NBF_BUFITEREND(bufferdata) = iterindex + transfersize;
 
-        prev_reduce_outersize = NBF_REDUCE_OUTERSIZE(bufferdata);
-        reduce_outerstrides = NBF_REDUCE_OUTERSTRIDES(bufferdata);
-        reduce_outerptrs = NBF_REDUCE_OUTERPTRS(bufferdata);
-        reduce_outerdim = NBF_REDUCE_OUTERDIM(bufferdata);
-        reduce_outeraxisdata = NIT_INDEX_AXISDATA(axisdata, reduce_outerdim);
-        reduce_innersize = NBF_SIZE(bufferdata);
+    if (transfersize == 0) {
+        return 0;
+    }
+
+    NPY_IT_DBG_PRINT("Iterator: Buffer transfersize=%zd\n", transfersize);
+
+    if (itflags & NPY_ITFLAG_REDUCE) {
+        NBF_REDUCE_OUTERSIZE(bufferdata) = transfersize / bufferdata->coresize;
+        if (NBF_REDUCE_OUTERSIZE(bufferdata) > 1) {
+            /* WARNING: bufferdata->size does not include reduce-outersize */
+            bufferdata->size = bufferdata->coresize;
+            NBF_BUFITEREND(bufferdata) = iterindex + bufferdata->coresize;
+        }
         NBF_REDUCE_POS(bufferdata) = 0;
-        /*
-         * Try to do make the outersize as big as possible. This allows
-         * it to shrink when processing the last bit of the outer reduce loop,
-         * then grow again at the beginning of the next outer reduce loop.
-         */
-        NBF_REDUCE_OUTERSIZE(bufferdata) = (NAD_SHAPE(reduce_outeraxisdata)-
-                                            NAD_INDEX(reduce_outeraxisdata));
-        full_transfersize = NBF_REDUCE_OUTERSIZE(bufferdata)*reduce_innersize;
-        /* If the full transfer size doesn't fit in the buffer, truncate it */
-        if (full_transfersize > NBF_BUFFERSIZE(bufferdata)) {
-            NBF_REDUCE_OUTERSIZE(bufferdata) = transfersize/reduce_innersize;
-            transfersize = NBF_REDUCE_OUTERSIZE(bufferdata)*reduce_innersize;
-        }
-        else {
-            transfersize = full_transfersize;
-        }
-        if (prev_reduce_outersize < NBF_REDUCE_OUTERSIZE(bufferdata)) {
-            /*
-             * If the previous time around less data was copied it may not
-             * be safe to reuse the buffers even if the pointers match.
-             */
-            reuse_reduce_loops = 0;
-        }
-        NBF_BUFITEREND(bufferdata) = iterindex + reduce_innersize;
-
-        NPY_IT_DBG_PRINT3("Reused reduce transfersize: %d innersize: %d "
-                        "itersize: %d\n",
-                            (int)transfersize,
-                            (int)reduce_innersize,
-                            (int)NpyIter_GetIterSize(iter));
-        NPY_IT_DBG_PRINT1("Reduced reduce outersize: %d",
-                            (int)NBF_REDUCE_OUTERSIZE(bufferdata));
-    }
-    /*
-     * If there are any reduction operands, we may have to make
-     * the size smaller so we don't copy the same value into
-     * a buffer twice, as the buffering does not have a mechanism
-     * to combine values itself.
-     */
-    else if (itflags&NPY_ITFLAG_REDUCE) {
-        NPY_IT_DBG_PRINT("Iterator: Calculating reduce loops\n");
-        transfersize = npyiter_checkreducesize(iter, transfersize,
-                                                &reduce_innersize,
-                                                &reduce_outerdim);
-        NPY_IT_DBG_PRINT3("Reduce transfersize: %d innersize: %d "
-                        "itersize: %d\n",
-                            (int)transfersize,
-                            (int)reduce_innersize,
-                            (int)NpyIter_GetIterSize(iter));
-
-        reduce_outerstrides = NBF_REDUCE_OUTERSTRIDES(bufferdata);
-        reduce_outerptrs = NBF_REDUCE_OUTERPTRS(bufferdata);
-        reduce_outeraxisdata = NIT_INDEX_AXISDATA(axisdata, reduce_outerdim);
-        NBF_SIZE(bufferdata) = reduce_innersize;
-        NBF_REDUCE_POS(bufferdata) = 0;
-        NBF_REDUCE_OUTERDIM(bufferdata) = reduce_outerdim;
-        NBF_BUFITEREND(bufferdata) = iterindex + reduce_innersize;
-        if (reduce_innersize == 0) {
-            NBF_REDUCE_OUTERSIZE(bufferdata) = 0;
-            return 0;
-        }
-        else {
-            NBF_REDUCE_OUTERSIZE(bufferdata) = transfersize/reduce_innersize;
-        }
-    }
-    else {
-        NBF_SIZE(bufferdata) = transfersize;
-        NBF_BUFITEREND(bufferdata) = iterindex + transfersize;
-    }
-
-    /* Calculate the maximum size if using a single stride and no buffers */
-    singlestridesize = NAD_SHAPE(axisdata)-NAD_INDEX(axisdata);
-    if (singlestridesize > iterend - iterindex) {
-        singlestridesize = iterend - iterindex;
-    }
-    if (singlestridesize >= transfersize) {
-        is_onestride = 1;
     }
 
     NpyIter_TransferInfo *transferinfo = NBF_TRANSFERINFO(bufferdata);
     for (iop = 0; iop < nop; ++iop) {
+        NPY_IT_DBG_PRINT("Iterator: buffer prep for op=%d @ %p inner-stride=%zd\n",
+                         iop, dataptrs[iop], NBF_STRIDES(bufferdata)[iop]);
 
-        switch (op_itflags[iop]&
-                        (NPY_OP_ITFLAG_BUFNEVER|
-                         NPY_OP_ITFLAG_CAST|
-                         NPY_OP_ITFLAG_REDUCE)) {
-            /* Never need to buffer this operand */
-            case NPY_OP_ITFLAG_BUFNEVER:
-                ptrs[iop] = ad_ptrs[iop];
-                if (itflags&NPY_ITFLAG_REDUCE) {
-                    reduce_outerstrides[iop] = reduce_innersize *
-                                                 strides[iop];
-                    reduce_outerptrs[iop] = ptrs[iop];
-                }
-                /*
-                 * Should not adjust the stride - ad_strides[iop]
-                 * could be zero, but strides[iop] was initialized
-                 * to the first non-trivial stride.
-                 */
-                /* The flag NPY_OP_ITFLAG_USINGBUFFER can be ignored here */
-                assert(!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER));
-                break;
-            /* Never need to buffer this operand */
-            case NPY_OP_ITFLAG_BUFNEVER|NPY_OP_ITFLAG_REDUCE:
-                ptrs[iop] = ad_ptrs[iop];
-                reduce_outerptrs[iop] = ptrs[iop];
-                reduce_outerstrides[iop] = 0;
-                /*
-                 * Should not adjust the stride - ad_strides[iop]
-                 * could be zero, but strides[iop] was initialized
-                 * to the first non-trivial stride.
-                 */
-                /* The flag NPY_OP_ITFLAG_USINGBUFFER can be ignored here */
-                assert(!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER));
-                break;
-            /* Just a copy */
-            case 0:
-                /* Do not reuse buffer if it did not exist */
-                if (!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER) &&
-                                                (prev_dataptrs != NULL)) {
-                    prev_dataptrs[iop] = NULL;
-                }
-                /*
-                 * No copyswap or cast was requested, so all we're
-                 * doing is copying the data to fill the buffer and
-                 * produce a single stride.  If the underlying data
-                 * already does that, no need to copy it.
-                 */
-                if (is_onestride) {
-                    ptrs[iop] = ad_ptrs[iop];
-                    strides[iop] = ad_strides[iop];
-                    /* Signal that the buffer is not being used */
-                    op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
-                }
-                /* If some other op is reduced, we have a double reduce loop */
-                else if ((itflags&NPY_ITFLAG_REDUCE) &&
-                                (reduce_outerdim == 1) &&
-                                (transfersize/reduce_innersize <=
-                                            NAD_SHAPE(reduce_outeraxisdata) -
-                                            NAD_INDEX(reduce_outeraxisdata))) {
-                    ptrs[iop] = ad_ptrs[iop];
-                    reduce_outerptrs[iop] = ptrs[iop];
-                    strides[iop] = ad_strides[iop];
-                    reduce_outerstrides[iop] =
-                                    NAD_STRIDES(reduce_outeraxisdata)[iop];
-                    /* Signal that the buffer is not being used */
-                    op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
-                }
-                else {
-                    /* In this case, the buffer is being used */
-                    ptrs[iop] = buffers[iop];
-                    strides[iop] = dtypes[iop]->elsize;
-                    if (itflags&NPY_ITFLAG_REDUCE) {
-                        reduce_outerstrides[iop] = reduce_innersize *
-                                                     strides[iop];
-                        reduce_outerptrs[iop] = ptrs[iop];
-                    }
-                    /* Signal that the buffer is being used */
-                    op_itflags[iop] |= NPY_OP_ITFLAG_USINGBUFFER;
-                }
-                break;
-            /* Just a copy, but with a reduction */
-            case NPY_OP_ITFLAG_REDUCE:
-                /* Do not reuse buffer if it did not exist */
-                if (!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER) &&
-                                                (prev_dataptrs != NULL)) {
-                    prev_dataptrs[iop] = NULL;
-                }
-                if (ad_strides[iop] == 0) {
-                    strides[iop] = 0;
-                    /* It's all in one stride in the inner loop dimension */
-                    if (is_onestride) {
-                        NPY_IT_DBG_PRINT1("reduce op %d all one stride\n", (int)iop);
-                        ptrs[iop] = ad_ptrs[iop];
-                        reduce_outerstrides[iop] = 0;
-                        /* Signal that the buffer is not being used */
-                        op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
-                    }
-                    /* It's all in one stride in the reduce outer loop */
-                    else if ((reduce_outerdim > 0) &&
-                                    (transfersize/reduce_innersize <=
-                                            NAD_SHAPE(reduce_outeraxisdata) -
-                                            NAD_INDEX(reduce_outeraxisdata))) {
-                        NPY_IT_DBG_PRINT1("reduce op %d all one outer stride\n",
-                                                            (int)iop);
-                        ptrs[iop] = ad_ptrs[iop];
-                        /* Outer reduce loop advances by one item */
-                        reduce_outerstrides[iop] =
-                                NAD_STRIDES(reduce_outeraxisdata)[iop];
-                        /* Signal that the buffer is not being used */
-                        op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
-                    }
-                    /* In this case, the buffer is being used */
-                    else {
-                        NPY_IT_DBG_PRINT1("reduce op %d must buffer\n", (int)iop);
-                        ptrs[iop] = buffers[iop];
-                        /* Both outer and inner reduce loops have stride 0 */
-                        if (NAD_STRIDES(reduce_outeraxisdata)[iop] == 0) {
-                            reduce_outerstrides[iop] = 0;
-                        }
-                        /* Outer reduce loop advances by one item */
-                        else {
-                            reduce_outerstrides[iop] = dtypes[iop]->elsize;
-                        }
-                        /* Signal that the buffer is being used */
-                        op_itflags[iop] |= NPY_OP_ITFLAG_USINGBUFFER;
-                    }
-
-                }
-                else if (is_onestride) {
-                    NPY_IT_DBG_PRINT1("reduce op %d all one stride in dim 0\n", (int)iop);
-                    ptrs[iop] = ad_ptrs[iop];
-                    strides[iop] = ad_strides[iop];
-                    reduce_outerstrides[iop] = 0;
-                    /* Signal that the buffer is not being used */
-                    op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
-                }
-                else {
-                    /* It's all in one stride in the reduce outer loop */
-                    if ((reduce_outerdim == 1) &&
-                                    (transfersize/reduce_innersize <=
-                                            NAD_SHAPE(reduce_outeraxisdata) -
-                                            NAD_INDEX(reduce_outeraxisdata))) {
-                        ptrs[iop] = ad_ptrs[iop];
-                        strides[iop] = ad_strides[iop];
-                        /* Outer reduce loop advances by one item */
-                        reduce_outerstrides[iop] =
-                                NAD_STRIDES(reduce_outeraxisdata)[iop];
-                        /* Signal that the buffer is not being used */
-                        op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
-                    }
-                    /* In this case, the buffer is being used */
-                    else {
-                        ptrs[iop] = buffers[iop];
-                        strides[iop] = dtypes[iop]->elsize;
-
-                        if (NAD_STRIDES(reduce_outeraxisdata)[iop] == 0) {
-                            /* Reduction in outer reduce loop */
-                            reduce_outerstrides[iop] = 0;
-                        }
-                        else {
-                            /* Advance to next items in outer reduce loop */
-                            reduce_outerstrides[iop] = reduce_innersize *
-                                                         dtypes[iop]->elsize;
-                        }
-                        /* Signal that the buffer is being used */
-                        op_itflags[iop] |= NPY_OP_ITFLAG_USINGBUFFER;
-                    }
-                }
-                reduce_outerptrs[iop] = ptrs[iop];
-                break;
-            default:
-                /* In this case, the buffer is always being used */
-                any_buffered = 1;
-
-                /* Signal that the buffer is being used */
-                op_itflags[iop] |= NPY_OP_ITFLAG_USINGBUFFER;
-
-                if (!(op_itflags[iop]&NPY_OP_ITFLAG_REDUCE)) {
-                    ptrs[iop] = buffers[iop];
-                    strides[iop] = dtypes[iop]->elsize;
-                    if (itflags&NPY_ITFLAG_REDUCE) {
-                        reduce_outerstrides[iop] = reduce_innersize *
-                                                     strides[iop];
-                        reduce_outerptrs[iop] = ptrs[iop];
-                    }
-                }
-                /* The buffer is being used with reduction */
-                else {
-                    ptrs[iop] = buffers[iop];
-                    if (ad_strides[iop] == 0) {
-                        NPY_IT_DBG_PRINT1("cast op %d has innermost stride 0\n", (int)iop);
-                        strides[iop] = 0;
-                        /* Both outer and inner reduce loops have stride 0 */
-                        if (NAD_STRIDES(reduce_outeraxisdata)[iop] == 0) {
-                            NPY_IT_DBG_PRINT1("cast op %d has outermost stride 0\n", (int)iop);
-                            reduce_outerstrides[iop] = 0;
-                        }
-                        /* Outer reduce loop advances by one item */
-                        else {
-                            NPY_IT_DBG_PRINT1("cast op %d has outermost stride !=0\n", (int)iop);
-                            reduce_outerstrides[iop] = dtypes[iop]->elsize;
-                        }
-                    }
-                    else {
-                        NPY_IT_DBG_PRINT1("cast op %d has innermost stride !=0\n", (int)iop);
-                        strides[iop] = dtypes[iop]->elsize;
-
-                        if (NAD_STRIDES(reduce_outeraxisdata)[iop] == 0) {
-                            NPY_IT_DBG_PRINT1("cast op %d has outermost stride 0\n", (int)iop);
-                            /* Reduction in outer reduce loop */
-                            reduce_outerstrides[iop] = 0;
-                        }
-                        else {
-                            NPY_IT_DBG_PRINT1("cast op %d has outermost stride !=0\n", (int)iop);
-                            /* Advance to next items in outer reduce loop */
-                            reduce_outerstrides[iop] = reduce_innersize *
-                                                         dtypes[iop]->elsize;
-                        }
-                    }
-                    reduce_outerptrs[iop] = ptrs[iop];
-                }
-                break;
+        if (op_itflags[iop]&NPY_OP_ITFLAG_BUFNEVER) {
+            user_ptrs[iop] = dataptrs[iop];
+            NBF_REDUCE_OUTERPTRS(bufferdata)[iop] = dataptrs[iop];
+            NPY_IT_DBG_PRINT("    unbuffered op (skipping)\n");
+            continue;
         }
 
         /*
-         * If OP_ITFLAG_USINGBUFFER is enabled and the read func is not NULL,
-         * the buffer needs to be read.
+         * We may be able to reuse buffers if the pointer is unchanged and
+         * there is no coreoffset (which sets `prev_dataptrs = NULL` above).
+         * We re-use `user_ptrs` for `prev_dataptrs` to simplify `iternext()`.
          */
-        if (op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER &&
-                transferinfo[iop].read.func != NULL) {
-            npy_intp src_itemsize;
-            npy_intp op_transfersize;
+        assert(prev_dataptrs == NULL || prev_dataptrs == user_ptrs);
+        int unchanged_ptr_and_no_offset = (
+            prev_dataptrs != NULL && prev_dataptrs[iop] == dataptrs[iop]);
 
-            npy_intp dst_stride, *src_strides, *src_coords, *src_shape;
-            int ndim_transfer;
+        user_ptrs[iop] = buffers[iop];
+        NBF_REDUCE_OUTERPTRS(bufferdata)[iop] = buffers[iop];
 
-            npy_bool skip_transfer = 0;
+        if (!(op_itflags[iop]&NPY_OP_ITFLAG_READ)) {
+            NPY_IT_DBG_PRINT("    non-reading op (skipping)\n");
+            continue;
+        }
 
-            src_itemsize = PyArray_DTYPE(operands[iop])->elsize;
-
-            /* If we reach here, buffering is required */
-            any_buffered = 1;
-
+        if (unchanged_ptr_and_no_offset && op_itflags[iop]&NPY_OP_ITFLAG_BUF_REUSABLE) {
+            NPY_IT_DBG_PRINT2("Iterator: skipping operands %d "
+                    "copy (%d items) because the data pointer didn't change\n",
+                    (int)iop, (int)transfersize);
+            continue;
+        }
+        else if (transfersize == NBF_BUFFERSIZE(bufferdata)
+                    || (transfersize >= NBF_CORESIZE(bufferdata)
+                        && op_itflags[iop]&NPY_OP_ITFLAG_REDUCE
+                        && NAD_STRIDES(outer_axisdata)[iop] == 0)) {
             /*
-             * If this operand is being reduced in the inner loop,
-             * set its buffering stride to zero, and just copy
-             * one element.
+             * If we have a full copy or a reduce with 0 stride outer and
+             * a copy larger than the coresize, this is now re-usable.
+             * NB: With a core-offset, we always copy less than the core-size.
              */
-            if (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) {
-                if (ad_strides[iop] == 0) {
-                    strides[iop] = 0;
-                    if (reduce_outerstrides[iop] == 0) {
-                        op_transfersize = 1;
-                        dst_stride = 0;
-                        src_strides = &dst_stride;
-                        src_coords = &NAD_INDEX(reduce_outeraxisdata);
-                        src_shape = &NAD_SHAPE(reduce_outeraxisdata);
-                        ndim_transfer = 1;
+            NPY_IT_DBG_PRINT("    marking operand %d for buffer reuse\n", iop);
+            NIT_OPITFLAGS(iter)[iop] |= NPY_OP_ITFLAG_BUF_REUSABLE;
+        }
+        else {
+            NPY_IT_DBG_PRINT("    marking operand %d as not reusable\n", iop);
+            NIT_OPITFLAGS(iter)[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
+        }
 
-                        /*
-                         * When we're reducing a single element, and
-                         * it's still the same element, don't overwrite
-                         * it even when reuse reduce loops is unset.
-                         * This preserves the precision of the
-                         * intermediate calculation.
-                         */
-                        if (prev_dataptrs &&
-                                    prev_dataptrs[iop] == ad_ptrs[iop]) {
-                            NPY_IT_DBG_PRINT1("Iterator: skipping operand %d"
-                                    " copy because it's a 1-element reduce\n",
-                                    (int)iop);
+        npy_intp zero = 0;  /* used as coord for 1-D copies */
+        int ndim_transfer;
+        npy_intp op_transfersize;
+        npy_intp dst_stride;
+        npy_intp *src_strides;
+        npy_intp *src_coords = &zero;
+        npy_intp *src_shape;
+        npy_intp src_itemsize = PyArray_DTYPE(operands[iop])->elsize;
 
-                            skip_transfer = 1;
-                        }
-                    }
-                    else {
-                        op_transfersize = NBF_REDUCE_OUTERSIZE(bufferdata);
-                        dst_stride = reduce_outerstrides[iop];
-                        src_strides = &NAD_STRIDES(reduce_outeraxisdata)[iop];
-                        src_coords = &NAD_INDEX(reduce_outeraxisdata);
-                        src_shape = &NAD_SHAPE(reduce_outeraxisdata);
-                        ndim_transfer = ndim - reduce_outerdim;
-                    }
-                }
-                else {
-                    if (reduce_outerstrides[iop] == 0) {
-                        op_transfersize = NBF_SIZE(bufferdata);
-                        dst_stride = strides[iop];
-                        src_strides = &ad_strides[iop];
-                        src_coords = &NAD_INDEX(axisdata);
-                        src_shape = &NAD_SHAPE(axisdata);
-                        ndim_transfer = reduce_outerdim ? reduce_outerdim : 1;
-                    }
-                    else {
-                        op_transfersize = transfersize;
-                        dst_stride = strides[iop];
-                        src_strides = &ad_strides[iop];
-                        src_coords = &NAD_INDEX(axisdata);
-                        src_shape = &NAD_SHAPE(axisdata);
-                        ndim_transfer = ndim;
-                    }
-                }
-            }
-            else {
-                op_transfersize = transfersize;
-                dst_stride = strides[iop];
-                src_strides = &ad_strides[iop];
-                src_coords = &NAD_INDEX(axisdata);
-                src_shape = &NAD_SHAPE(axisdata);
-                ndim_transfer = ndim;
-            }
+        npyiter_fill_buffercopy_params(nop, iop, ndim, op_itflags[iop],
+            transfersize, bufferdata, axisdata, outer_axisdata,
+            &ndim_transfer, &op_transfersize, &dst_stride,
+            &src_strides, &src_shape, &src_coords);
 
-            /*
-             * If the whole buffered loop structure remains the same,
-             * and the source pointer for this data didn't change,
-             * we don't have to copy the data again.
-             */
-            if (reuse_reduce_loops && prev_dataptrs[iop] == ad_ptrs[iop]) {
-                NPY_IT_DBG_PRINT2("Iterator: skipping operands %d "
-                        "copy (%d items) because loops are reused and the data "
-                        "pointer didn't change\n",
-                        (int)iop, (int)op_transfersize);
-                skip_transfer = 1;
-            }
+        /*
+         * Copy data to the buffers if necessary.
+         *
+         * We always copy if the operand has references. In that case
+         * a "write" function must be in use that either copies or clears
+         * the buffer.
+         * This write from buffer call does not check for skip-transfer
+         * so we have to assume the buffer is cleared.  For dtypes that
+         * do not have references, we can assume that the write function
+         * will leave the source (buffer) unmodified.
+         */
+        NPY_IT_DBG_PRINT(
+            "Iterator: Copying operand %d to buffer (%zd items):\n"
+            "    transfer ndim: %d, inner stride: %zd, inner shape: %zd, buffer stride: %zd\n",
+            iop, op_transfersize, ndim_transfer, src_strides[0], src_shape[0], dst_stride);
 
-            /*
-             * Copy data to the buffers if necessary.
-             *
-             * We always copy if the operand has references. In that case
-             * a "write" function must be in use that either copies or clears
-             * the buffer.
-             * This write from buffer call does not check for skip-transfer
-             * so we have to assume the buffer is cleared.  For dtypes that
-             * do not have references, we can assume that the write function
-             * will leave the source (buffer) unmodified.
-             */
-            if (!skip_transfer || PyDataType_REFCHK(dtypes[iop])) {
-                NPY_IT_DBG_PRINT2("Iterator: Copying operand %d to "
-                                "buffer (%d items)\n",
-                                (int)iop, (int)op_transfersize);
-
-                if (PyArray_TransferNDimToStrided(
-                        ndim_transfer, ptrs[iop], dst_stride,
-                        ad_ptrs[iop], src_strides, axisdata_incr,
-                        src_coords, axisdata_incr,
-                        src_shape, axisdata_incr,
-                        op_transfersize, src_itemsize,
-                        &transferinfo[iop].read) < 0) {
-                    return -1;
-                }
-            }
+        if (PyArray_TransferNDimToStrided(
+                ndim_transfer, buffers[iop], dst_stride,
+                dataptrs[iop], src_strides, axisdata_incr,
+                src_coords, axisdata_incr,
+                src_shape, axisdata_incr,
+                op_transfersize, src_itemsize,
+                &transferinfo[iop].read) < 0) {
+            return -1;
         }
     }
-
-    /*
-     * If buffering wasn't needed, we can grow the inner
-     * loop to as large as possible.
-     *
-     * TODO: Could grow REDUCE loop too with some more logic above.
-     */
-    if (!any_buffered && (itflags&NPY_ITFLAG_GROWINNER) &&
-                        !(itflags&NPY_ITFLAG_REDUCE)) {
-        if (singlestridesize > transfersize) {
-            NPY_IT_DBG_PRINT2("Iterator: Expanding inner loop size "
-                    "from %d to %d since buffering wasn't needed\n",
-                    (int)NBF_SIZE(bufferdata), (int)singlestridesize);
-            NBF_SIZE(bufferdata) = singlestridesize;
-            NBF_BUFITEREND(bufferdata) = iterindex + singlestridesize;
-        }
-    }
-
-    NPY_IT_DBG_PRINT1("Any buffering needed: %d\n", any_buffered);
 
     NPY_IT_DBG_PRINT1("Iterator: Finished copying inputs to buffers "
-                        "(buffered size is %d)\n", (int)NBF_SIZE(bufferdata));
+                        "(buffered size is %zd)\n", transfersize);
     return 0;
 }
 
@@ -2633,13 +2281,16 @@ npyiter_clear_buffers(NpyIter *iter)
     PyArray_Descr **dtypes = NIT_DTYPES(iter);
     npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     for (int iop = 0; iop < nop; ++iop, ++buffers) {
-        if (transferinfo[iop].clear.func == NULL ||
-                 !(op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER)) {
+        if (transferinfo[iop].clear.func == NULL) {
             continue;
         }
         if (*buffers == 0) {
             continue;
         }
+        assert(!(op_itflags[iop]&NPY_OP_ITFLAG_BUFNEVER));
+        /* Buffer cannot be re-used (not that we should ever try!) */
+        op_itflags[iop] &= ~NPY_OP_ITFLAG_BUF_REUSABLE;
+
         int itemsize = dtypes[iop]->elsize;
         if (transferinfo[iop].clear.func(NULL,
                 dtypes[iop], *buffers, NBF_SIZE(bufferdata), itemsize,
@@ -2653,236 +2304,6 @@ npyiter_clear_buffers(NpyIter *iter)
     PyErr_Restore(type, value, traceback);
 }
 
-
-/*
- * This checks how much space can be buffered without encountering the
- * same value twice, or for operands whose innermost stride is zero,
- * without encountering a different value.  By reducing the buffered
- * amount to this size, reductions can be safely buffered.
- *
- * Reductions are buffered with two levels of looping, to avoid
- * frequent copying to the buffers.  The return value is the over-all
- * buffer size, and when the flag NPY_ITFLAG_REDUCE is set, reduce_innersize
- * receives the size of the inner of the two levels of looping.
- *
- * The value placed in reduce_outerdim is the index into the AXISDATA
- * for where the second level of the double loop begins.
- *
- * The return value is always a multiple of the value placed in
- * reduce_innersize.
- */
-static npy_intp
-npyiter_checkreducesize(NpyIter *iter, npy_intp count,
-                                npy_intp *reduce_innersize,
-                                npy_intp *reduce_outerdim)
-{
-    npy_uint32 itflags = NIT_ITFLAGS(iter);
-    int idim, ndim = NIT_NDIM(iter);
-    int iop, nop = NIT_NOP(iter);
-
-    NpyIter_AxisData *axisdata;
-    npy_intp sizeof_axisdata;
-    npy_intp coord, shape, *strides;
-    npy_intp reducespace = 1, factor;
-    npy_bool nonzerocoord;
-
-    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
-    char stride0op[NPY_MAXARGS];
-
-    /* Default to no outer axis */
-    *reduce_outerdim = 0;
-
-    /* If there's only one dimension, no need to calculate anything */
-    if (ndim == 1 || count == 0) {
-        *reduce_innersize = count;
-        return count;
-    }
-
-    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
-    axisdata = NIT_AXISDATA(iter);
-
-    /* Indicate which REDUCE operands have stride 0 in the inner loop */
-    strides = NAD_STRIDES(axisdata);
-    for (iop = 0; iop < nop; ++iop) {
-        stride0op[iop] = (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) &&
-                           (strides[iop] == 0);
-        NPY_IT_DBG_PRINT2("Iterator: Operand %d has stride 0 in "
-                        "the inner loop? %d\n", iop, (int)stride0op[iop]);
-    }
-    shape = NAD_SHAPE(axisdata);
-    coord = NAD_INDEX(axisdata);
-    reducespace += (shape-coord-1);
-    factor = shape;
-    NIT_ADVANCE_AXISDATA(axisdata, 1);
-
-    /* Initialize nonzerocoord based on the first coordinate */
-    nonzerocoord = (coord != 0);
-
-    /* Go forward through axisdata, calculating the space available */
-    for (idim = 1; idim < ndim && reducespace < count;
-                                ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-        NPY_IT_DBG_PRINT2("Iterator: inner loop reducespace %d, count %d\n",
-                                (int)reducespace, (int)count);
-
-        strides = NAD_STRIDES(axisdata);
-        for (iop = 0; iop < nop; ++iop) {
-            /*
-             * If a reduce stride switched from zero to non-zero, or
-             * vice versa, that's the point where the data will stop
-             * being the same element or will repeat, and if the
-             * buffer starts with an all zero multi-index up to this
-             * point, gives us the reduce_innersize.
-             */
-            if((stride0op[iop] && (strides[iop] != 0)) ||
-                        (!stride0op[iop] &&
-                         (strides[iop] == 0) &&
-                         (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE))) {
-                NPY_IT_DBG_PRINT1("Iterator: Reduce operation limits "
-                                    "buffer to %d\n", (int)reducespace);
-                /*
-                 * If we already found more elements than count, or
-                 * the starting coordinate wasn't zero, the two-level
-                 * looping is unnecessary/can't be done, so return.
-                 */
-                if (count <= reducespace) {
-                    *reduce_innersize = count;
-                    NIT_ITFLAGS(iter) |= NPY_ITFLAG_REUSE_REDUCE_LOOPS;
-                    return count;
-                }
-                else if (nonzerocoord) {
-                    if (reducespace < count) {
-                        count = reducespace;
-                    }
-                    *reduce_innersize = count;
-                    /* NOTE: This is similar to the (coord != 0) case below. */
-                    NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_REUSE_REDUCE_LOOPS;
-                    return count;
-                }
-                else {
-                    *reduce_innersize = reducespace;
-                    break;
-                }
-            }
-        }
-        /* If we broke out of the loop early, we found reduce_innersize */
-        if (iop != nop) {
-            NPY_IT_DBG_PRINT2("Iterator: Found first dim not "
-                            "reduce (%d of %d)\n", iop, nop);
-            break;
-        }
-
-        shape = NAD_SHAPE(axisdata);
-        coord = NAD_INDEX(axisdata);
-        if (coord != 0) {
-            nonzerocoord = 1;
-        }
-        reducespace += (shape-coord-1) * factor;
-        factor *= shape;
-    }
-
-    /*
-     * If there was any non-zero coordinate, the reduction inner
-     * loop doesn't fit in the buffersize, or the reduction inner loop
-     * covered the entire iteration size, can't do the double loop.
-     */
-    if (nonzerocoord || count < reducespace || idim == ndim) {
-        if (reducespace < count) {
-            count = reducespace;
-        }
-        *reduce_innersize = count;
-        /* In this case, we can't reuse the reduce loops */
-        NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_REUSE_REDUCE_LOOPS;
-        return count;
-    }
-
-    coord = NAD_INDEX(axisdata);
-    if (coord != 0) {
-        /*
-         * In this case, it is only safe to reuse the buffer if the amount
-         * of data copied is not more than the current axes, as is the
-         * case when reuse_reduce_loops was active already.
-         * It should be in principle OK when the idim loop returns immediately.
-         */
-        NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_REUSE_REDUCE_LOOPS;
-    }
-    else {
-        /* In this case, we can reuse the reduce loops */
-        NIT_ITFLAGS(iter) |= NPY_ITFLAG_REUSE_REDUCE_LOOPS;
-    }
-
-    *reduce_innersize = reducespace;
-    count /= reducespace;
-
-    NPY_IT_DBG_PRINT2("Iterator: reduce_innersize %d count /ed %d\n",
-                    (int)reducespace, (int)count);
-
-    /*
-     * Continue through the rest of the dimensions.  If there are
-     * two separated reduction axes, we may have to cut the buffer
-     * short again.
-     */
-    *reduce_outerdim = idim;
-    reducespace = 1;
-    factor = 1;
-    /* Indicate which REDUCE operands have stride 0 at the current level */
-    strides = NAD_STRIDES(axisdata);
-    for (iop = 0; iop < nop; ++iop) {
-        stride0op[iop] = (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) &&
-                           (strides[iop] == 0);
-        NPY_IT_DBG_PRINT2("Iterator: Operand %d has stride 0 in "
-                        "the outer loop? %d\n", iop, (int)stride0op[iop]);
-    }
-    shape = NAD_SHAPE(axisdata);
-    reducespace += (shape-coord-1) * factor;
-    factor *= shape;
-    NIT_ADVANCE_AXISDATA(axisdata, 1);
-    ++idim;
-
-    for (; idim < ndim && reducespace < count;
-                                ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
-        NPY_IT_DBG_PRINT2("Iterator: outer loop reducespace %d, count %d\n",
-                                (int)reducespace, (int)count);
-        strides = NAD_STRIDES(axisdata);
-        for (iop = 0; iop < nop; ++iop) {
-            /*
-             * If a reduce stride switched from zero to non-zero, or
-             * vice versa, that's the point where the data will stop
-             * being the same element or will repeat, and if the
-             * buffer starts with an all zero multi-index up to this
-             * point, gives us the reduce_innersize.
-             */
-            if((stride0op[iop] && (strides[iop] != 0)) ||
-                        (!stride0op[iop] &&
-                         (strides[iop] == 0) &&
-                         (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE))) {
-                NPY_IT_DBG_PRINT1("Iterator: Reduce operation limits "
-                                    "buffer to %d\n", (int)reducespace);
-                /*
-                 * This terminates the outer level of our double loop.
-                 */
-                if (count <= reducespace) {
-                    return count * (*reduce_innersize);
-                }
-                else {
-                    return reducespace * (*reduce_innersize);
-                }
-            }
-        }
-
-        shape = NAD_SHAPE(axisdata);
-        coord = NAD_INDEX(axisdata);
-        if (coord != 0) {
-            nonzerocoord = 1;
-        }
-        reducespace += (shape-coord-1) * factor;
-        factor *= shape;
-    }
-
-    if (reducespace < count) {
-        count = reducespace;
-    }
-    return count * (*reduce_innersize);
-}
 
 NPY_NO_EXPORT npy_bool
 npyiter_has_writeback(NpyIter *iter)

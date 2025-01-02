@@ -13,7 +13,6 @@ import sys
 import re
 import types
 from functools import reduce
-from copy import deepcopy
 
 from . import __version__
 from . import cfuncs
@@ -27,7 +26,7 @@ __all__ = [
     'hasexternals', 'hasinitvalue', 'hasnote', 'hasresultnote',
     'isallocatable', 'isarray', 'isarrayofstrings',
     'ischaracter', 'ischaracterarray', 'ischaracter_or_characterarray',
-    'iscomplex',
+    'iscomplex', 'iscstyledirective',
     'iscomplexarray', 'iscomplexfunction', 'iscomplexfunction_warn',
     'isdouble', 'isdummyroutine', 'isexternal', 'isfunction',
     'isfunction_wrap', 'isint1', 'isint1array', 'isinteger', 'isintent_aux',
@@ -36,16 +35,15 @@ __all__ = [
     'isintent_nothide', 'isintent_out', 'isintent_overwrite', 'islogical',
     'islogicalfunction', 'islong_complex', 'islong_double',
     'islong_doublefunction', 'islong_long', 'islong_longfunction',
-    'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isrequired',
-    'isroutine', 'isscalar', 'issigned_long_longarray', 'isstring',
-    'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
-    'issubroutine', 'get_f2py_modulename',
-    'issubroutine_wrap', 'isthreadsafe', 'isunsigned', 'isunsigned_char',
-    'isunsigned_chararray', 'isunsigned_long_long',
-    'isunsigned_long_longarray', 'isunsigned_short',
-    'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess',
-    'replace', 'show', 'stripcomma', 'throw_error', 'isattr_value',
-    'getuseblocks', 'process_f2cmap_dict'
+    'ismodule', 'ismoduleroutine', 'isoptional', 'isprivate', 'isvariable',
+    'isrequired', 'isroutine', 'isscalar', 'issigned_long_longarray',
+    'isstring', 'isstringarray', 'isstring_or_stringarray', 'isstringfunction',
+    'issubroutine', 'get_f2py_modulename', 'issubroutine_wrap', 'isthreadsafe',
+    'isunsigned', 'isunsigned_char', 'isunsigned_chararray',
+    'isunsigned_long_long', 'isunsigned_long_longarray', 'isunsigned_short',
+    'isunsigned_shortarray', 'l_and', 'l_not', 'l_or', 'outmess', 'replace',
+    'show', 'stripcomma', 'throw_error', 'isattr_value', 'getuseblocks',
+    'process_f2cmap_dict', 'containscommon'
 ]
 
 
@@ -425,6 +423,11 @@ def isrequired(var):
     return not isoptional(var) and isintent_nothide(var)
 
 
+def iscstyledirective(f2py_line):
+    directives = {"callstatement", "callprotoargument", "pymethoddef"}
+    return any(directive in f2py_line.lower() for directive in directives)
+
+
 def isintent_in(var):
     if 'intent' not in var:
         return 1
@@ -517,6 +520,15 @@ isintent_dict = {isintent_in: 'INTENT_IN', isintent_inout: 'INTENT_INOUT',
 def isprivate(var):
     return 'attrspec' in var and 'private' in var['attrspec']
 
+
+def isvariable(var):
+    # heuristic to find public/private declarations of filtered subroutines
+    if len(var) == 1 and 'attrspec' in var and \
+            var['attrspec'][0] in ('public', 'private'):
+        is_var = False
+    else:
+        is_var = True
+    return is_var
 
 def hasinitvalue(var):
     return '=' in var
@@ -870,19 +882,13 @@ def applyrules(rules, d, var={}):
                         for i in rules[k][k1]:
                             if isinstance(i, dict):
                                 res = applyrules({'supertext': i}, d, var)
-                                if 'supertext' in res:
-                                    i = res['supertext']
-                                else:
-                                    i = ''
+                                i = res.get('supertext', '')
                             ret[k].append(replace(i, d))
                     else:
                         i = rules[k][k1]
                         if isinstance(i, dict):
                             res = applyrules({'supertext': i}, d)
-                            if 'supertext' in res:
-                                i = res['supertext']
-                            else:
-                                i = ''
+                            i = res.get('supertext', '')
                         ret[k].append(replace(i, d))
         else:
             errmess('applyrules: ignoring rule %s.\n' % repr(rules[k]))
@@ -892,6 +898,7 @@ def applyrules(rules, d, var={}):
             if ret[k] == []:
                 del ret[k]
     return ret
+
 
 _f2py_module_name_match = re.compile(r'\s*python\s*module\s*(?P<name>[\w_]+)',
                                      re.I).match
@@ -904,7 +911,7 @@ def get_f2py_modulename(source):
         for line in f:
             m = _f2py_module_name_match(line)
             if m:
-                if _f2py_user_module_name_match(line): # skip *__user__* names
+                if _f2py_user_module_name_match(line):  # skip *__user__* names
                     continue
                 name = m.group('name')
                 break

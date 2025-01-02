@@ -1,5 +1,4 @@
 from fractions import Fraction
-import sys
 from collections.abc import Sequence
 from decimal import Decimal
 from typing import Any, Literal as L, TypeAlias, TypeVar
@@ -8,10 +7,7 @@ import numpy as np
 import numpy.polynomial as npp
 import numpy.typing as npt
 
-if sys.version_info >= (3, 11):
-    from typing import LiteralString, assert_type
-else:
-    from typing_extensions import LiteralString, assert_type
+from typing_extensions import assert_type, LiteralString
 
 _Ar_x: TypeAlias = npt.NDArray[np.inexact[Any] | np.object_]
 _Ar_f: TypeAlias = npt.NDArray[np.floating[Any]]
@@ -45,7 +41,7 @@ AR_i: npt.NDArray[np.int_]
 AR_f: npt.NDArray[np.float64]
 AR_f_co: npt.NDArray[np.float64] | npt.NDArray[np.int_]
 AR_c: npt.NDArray[np.complex128]
-AR_c_co: npt.NDArray[np.complex128] |npt.NDArray[np.float64] | npt.NDArray[np.int_]
+AR_c_co: npt.NDArray[np.complex128] | npt.NDArray[np.float64] | npt.NDArray[np.int_]
 AR_O: npt.NDArray[np.object_]
 AR_O_co: npt.NDArray[np.object_ | np.number[Any]]
 

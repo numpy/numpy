@@ -18,6 +18,7 @@ def get_docdir():
     # Assumes that an editable install is used to run tests
     return parents[3] / "doc" / "source" / "f2py" / "code"
 
+
 pytestmark = pytest.mark.skipif(
     not get_docdir().is_dir(),
     reason=f"Could not find f2py documentation sources"
@@ -34,11 +35,11 @@ class TestDocAdvanced(util.F2PyTest):
                _path('ftype.f')]
 
     def test_asterisk1(self):
-        foo = getattr(self.module, 'foo1')
+        foo = self.module.foo1
         assert_equal(foo(), b'123456789A12')
 
     def test_asterisk2(self):
-        foo = getattr(self.module, 'foo2')
+        foo = self.module.foo2
         assert_equal(foo(2), b'12')
         assert_equal(foo(12), b'123456789A12')
         assert_equal(foo(20), b'123456789A123456789B')

@@ -66,7 +66,7 @@ class LenSubsScanner(MyScanner):
 
     digits = Re('[0-9]+')
     iofun = Re(r'\([^;]*;')
-    decl = Re(r'\([^)]*\)[,;'+'\n]')
+    decl = Re(r'\([^)]*\)[,;' + '\n]')
     any = Re('[.]*')
     S = Re('[ \t\n]*')
     cS = Str(',') + S
@@ -86,11 +86,11 @@ class LenSubsScanner(MyScanner):
             (Str('('),   beginArgs),
             (AnyChar,    TEXT),
         ]),
-        (cS+Re(r'[1-9][0-9]*L'),                IGNORE),
-        (cS+Str('ftnlen')+Opt(S+len_),          IGNORE),
-        (cS+sep_seq(['(', 'ftnlen', ')'], S)+S+digits,      IGNORE),
-        (Bol+Str('ftnlen ')+len_+Str(';\n'),    IGNORE),
-        (cS+len_,                               TEXT),
+        (cS + Re(r'[1-9][0-9]*L'),                IGNORE),
+        (cS + Str('ftnlen') + Opt(S + len_),          IGNORE),
+        (cS + sep_seq(['(', 'ftnlen', ')'], S) + S + digits,      IGNORE),
+        (Bol + Str('ftnlen ') + len_ + Str(';\n'),    IGNORE),
+        (cS + len_,                               TEXT),
         (AnyChar,                               TEXT),
     ])
 
@@ -155,10 +155,12 @@ class CommentQueue(LineQueue):
 def cleanComments(source):
     lines = LineQueue()
     comments = CommentQueue()
+
     def isCommentLine(line):
         return line.startswith('/*') and line.endswith('*/\n')
 
     blanks = LineQueue()
+
     def isBlank(line):
         return line.strip() == ''
 
@@ -169,6 +171,7 @@ def cleanComments(source):
         else:
             lines.add(line)
             return SourceLines
+
     def HaveCommentLines(line):
         if isBlank(line):
             blanks.add('\n')
@@ -180,6 +183,7 @@ def cleanComments(source):
             comments.flushTo(lines)
             lines.add(line)
             return SourceLines
+
     def HaveBlankLines(line):
         if isBlank(line):
             blanks.add('\n')
@@ -210,11 +214,13 @@ def removeHeader(source):
         else:
             lines.add(line)
             return LookingForHeader
+
     def InHeader(line):
         if line.startswith('*/'):
             return OutOfHeader
         else:
             return InHeader
+
     def OutOfHeader(line):
         if line.startswith('#include "f2c.h"'):
             pass
@@ -243,6 +249,7 @@ def removeSubroutinePrototypes(source):
 
 def removeBuiltinFunctions(source):
     lines = LineQueue()
+
     def LookingForBuiltinFunctions(line):
         if line.strip() == '/* Builtin functions */':
             return InBuiltInFunctions
@@ -265,8 +272,8 @@ def replaceDlamch(source):
     """Replace dlamch_ calls with appropriate macros"""
     def repl(m):
         s = m.group(1)
-        return dict(E='EPSILON', P='PRECISION', S='SAFEMINIMUM',
-                    B='BASE')[s[0]]
+        return {'E': 'EPSILON', 'P': 'PRECISION', 'S': 'SAFEMINIMUM',
+                    'B': 'BASE'}[s[0]]
     source = re.sub(r'dlamch_\("(.*?)"\)', repl, source)
     source = re.sub(r'^\s+extern.*? dlamch_.*?;$(?m)', '', source)
     return source
@@ -294,6 +301,7 @@ def scrubSource(source, nsteps=None, verbose=False):
 
     return source
 
+
 if __name__ == '__main__':
     filename = sys.argv[1]
     outfilename = os.path.join(sys.argv[2], os.path.basename(filename))
@@ -305,7 +313,7 @@ if __name__ == '__main__':
     else:
         nsteps = None
 
-    source = scrub_source(source, nsteps, verbose=True)
+    source = scrubSource(source, nsteps, verbose=True)
 
     with open(outfilename, 'w') as writefo:
         writefo.write(source)

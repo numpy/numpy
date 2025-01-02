@@ -216,7 +216,7 @@ def greater(x1, x2):
     See Also
     --------
     equal, not_equal, greater_equal, less_equal, less
-    
+
     Examples
     --------
     >>> import numpy as np
@@ -262,6 +262,7 @@ def less(x1, x2):
     return compare_chararrays(x1, x2, '<', True)
 
 
+@set_module("numpy.char")
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -313,6 +314,7 @@ def multiply(a, i):
         raise ValueError("Can only multiply by integers")
 
 
+@set_module("numpy.char")
 def partition(a, sep):
     """
     Partition each element in `a` around `sep`.
@@ -354,6 +356,7 @@ def partition(a, sep):
     return np.stack(strings_partition(a, sep), axis=-1)
 
 
+@set_module("numpy.char")
 def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
@@ -1269,6 +1272,15 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         fastest).  If order is 'A', then the returned array may
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
+    
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> char_array = np.char.array(['hello', 'world', 'numpy','array'])
+    >>> char_array
+    chararray(['hello', 'world', 'numpy', 'array'], dtype='<U5')
+
     """
     if isinstance(obj, (bytes, str)):
         if unicode is None:

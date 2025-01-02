@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 crackfortran --- read fortran (77,90) code and extract declaration information.
 
@@ -243,6 +242,7 @@ def outmess(line, flag=1):
             sys.stdout.write(filepositiontext)
         sys.stdout.write(line)
 
+
 re._MAXCACHE = 50
 defaultimplicitrules = {}
 for c in "abcdefghopqrstuvwxyz$_":
@@ -425,11 +425,14 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             if l[-1] not in "\n\r\f":
                 break
             l = l[:-1]
+        # Do not lower for directives, gh-2547, gh-27697, gh-26681
+        is_f2py_directive = False
         # Unconditionally remove comments
         (l, rl) = split_by_unquoted(l, '!')
         l += ' '
         if rl[:5].lower() == '!f2py':  # f2py directive
             l, _ = split_by_unquoted(l + 4 * ' ' + rl[5:], '!')
+            is_f2py_directive = True
         if l.strip() == '':  # Skip empty line
             if sourcecodeform == 'free':
                 # In free form, a statement continues in the next line
@@ -449,13 +452,15 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             if l[0] in ['*', 'c', '!', 'C', '#']:
                 if l[1:5].lower() == 'f2py':  # f2py directive
                     l = '     ' + l[5:]
+                    is_f2py_directive = True
                 else:  # Skip comment line
                     cont = False
+                    is_f2py_directive = False
                     continue
             elif strictf77:
                 if len(l) > 72:
                     l = l[:72]
-            if not (l[0] in spacedigits):
+            if l[0] not in spacedigits:
                 raise Exception('readfortrancode: Found non-(space,digit) char '
                                 'in the first column.\n\tAre you sure that '
                                 'this code is in fix form?\n\tline=%s' % repr(l))
@@ -468,7 +473,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
             else:
                 r = cont1.match(l)
                 if r:
-                    l = r.group('line') # Continuation follows ..
+                    l = r.group('line')  # Continuation follows ..
                 if cont:
                     ll = ll + cont2.match(l).group('line')
                     finalline = ''
@@ -476,6 +481,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 else:
                     # clean up line beginning from possible digits.
                     l = '     ' + l[5:]
+                    # f2py directives are already stripped by this point
                     if localdolowercase:
                         finalline = ll.lower()
                     else:
@@ -505,7 +511,9 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 origfinalline = ''
             else:
                 if localdolowercase:
-                    finalline = ll.lower()
+                    # only skip lowering for C style constructs
+                    # gh-2547, gh-27697, gh-26681, gh-28014
+                    finalline = ll.lower() if not (is_f2py_directive and iscstyledirective(ll)) else ll
                 else:
                     finalline = ll
                 origfinalline = ll
@@ -537,6 +545,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
         else:
             dowithline(finalline)
         l1 = ll
+    # Last line should never have an f2py directive anyway
     if localdolowercase:
         finalline = ll.lower()
     else:
@@ -571,9 +580,10 @@ def readfortrancode(ffile, dowithline=show, istop=1):
         gotnextfile, filepositiontext, currentfilename, sourcecodeform, strictf77,\
             beginpattern, quiet, verbose, dolowercase = saveglobals
 
+
 # Crack line
-beforethisafter = r'\s*(?P<before>%s(?=\s*(\b(%s)\b)))' + \
-    r'\s*(?P<this>(\b(%s)\b))' + \
+beforethisafter = r'\s*(?P<before>%s(?=\s*(\b(%s)\b)))'\
+    r'\s*(?P<this>(\b(%s)\b))'\
     r'\s*(?P<after>%s)\s*\Z'
 ##
 fortrantypes = r'character|logical|integer|real|complex|double\s*(precision\s*(complex|)|complex)|type(?=\s*\([\w\s,=(*)]*\))|byte'
@@ -592,7 +602,7 @@ groupbegins77 = r'program|block\s*data'
 beginpattern77 = re.compile(
     beforethisafter % ('', groupbegins77, groupbegins77, '.*'), re.I), 'begin'
 groupbegins90 = groupbegins77 + \
-    r'|module(?!\s*procedure)|python\s*module|(abstract|)\s*interface|' + \
+    r'|module(?!\s*procedure)|python\s*module|(abstract|)\s*interface|'\
     r'type(?!\s*\()'
 beginpattern90 = re.compile(
     beforethisafter % ('', groupbegins90, groupbegins90, '.*'), re.I), 'begin'
@@ -601,7 +611,7 @@ groupends = (r'end|endprogram|endblockdata|endmodule|endpythonmodule|'
 endpattern = re.compile(
     beforethisafter % ('', groupends, groupends, '.*'), re.I), 'end'
 # block, the Fortran 2008 construct needs special handling in the rest of the file
-endifs = r'end\s*(if|do|where|select|while|forall|associate|' + \
+endifs = r'end\s*(if|do|where|select|while|forall|associate|'\
          r'critical|enum|team)'
 endifpattern = re.compile(
     beforethisafter % (r'[\w]*?', endifs, endifs, '.*'), re.I), 'endif'
@@ -680,6 +690,7 @@ def _simplifyargs(argsline):
             n = n.replace(r, '_')
         a.append(n)
     return ','.join(a)
+
 
 crackline_re_1 = re.compile(r'\s*(?P<result>\b[a-z]+\w*\b)\s*=.*', re.I)
 crackline_bind_1 = re.compile(r'\s*(?P<bind>\b[a-z]+\w*\b)\s*=.*', re.I)
@@ -917,6 +928,7 @@ def appenddecl(decl, decl2, force=1):
                             str(k))
     return decl
 
+
 selectpattern = re.compile(
     r'\s*(?P<this>(@\(@.*?@\)@|\*[\d*]+|\*\s*@\(@.*?@\)@|))(?P<after>.*)\Z', re.I)
 typedefpattern = re.compile(
@@ -1025,7 +1037,7 @@ def analyzeline(m, case, line):
             block = 'abstract interface'
         if block == 'type':
             name, attrs, _ = _resolvetypedefpattern(m.group('after'))
-            groupcache[groupcounter]['vars'][name] = dict(attrspec = attrs)
+            groupcache[groupcounter]['vars'][name] = {'attrspec': attrs}
             args = []
             result = None
         else:
@@ -1151,7 +1163,7 @@ def analyzeline(m, case, line):
             if bindcline:
                 bindcdat = re.search(crackline_bindlang, bindcline)
                 if bindcdat:
-                    groupcache[groupcounter]['bindlang'] = {name : {}}
+                    groupcache[groupcounter]['bindlang'] = {name: {}}
                     groupcache[groupcounter]['bindlang'][name]["lang"] = bindcdat.group('lang')
                     if bindcdat.group('lang_name'):
                         groupcache[groupcounter]['bindlang'][name]["name"] = bindcdat.group('lang_name')
@@ -1188,7 +1200,7 @@ def analyzeline(m, case, line):
             groupcounter = groupcounter - 1  # end interface
 
     elif case == 'entry':
-        name, args, result, _= _resolvenameargspattern(m.group('after'))
+        name, args, result, _ = _resolvenameargspattern(m.group('after'))
         if name is not None:
             if args:
                 args = rmbadname([x.strip()
@@ -1337,10 +1349,7 @@ def analyzeline(m, case, line):
         if m.group('after').strip().lower() == 'none':
             groupcache[groupcounter]['implicit'] = None
         elif m.group('after'):
-            if 'implicit' in groupcache[groupcounter]:
-                impl = groupcache[groupcounter]['implicit']
-            else:
-                impl = {}
+            impl = groupcache[groupcounter].get('implicit', {})
             if impl is None:
                 outmess(
                     'analyzeline: Overwriting earlier "implicit none" statement.\n')
@@ -1463,7 +1472,7 @@ def analyzeline(m, case, line):
                                 try:
                                     multiplier, value = match.split("*")
                                     expanded_list.extend([value.strip()] * int(multiplier))
-                                except ValueError: # if int(multiplier) fails
+                                except ValueError:  # if int(multiplier) fails
                                     expanded_list.append(match.strip())
                             else:
                                 expanded_list.append(match.strip())
@@ -1610,6 +1619,8 @@ def cracktypespec0(typespec, ll):
         attr = ll[:i].strip()
         ll = ll[i + 2:]
     return typespec, selector, attr, ll
+
+
 #####
 namepattern = re.compile(r'\s*(?P<name>\b\w+\b)\s*(?P<after>.*)\s*\Z', re.I)
 kindselector = re.compile(
@@ -2079,7 +2090,7 @@ def postcrack(block, args=None, tab=''):
     block = analyzecommon(block)
     block['vars'] = analyzevars(block)
     block['sortvars'] = sortvarnames(block['vars'])
-    if 'args' in block and block['args']:
+    if block.get('args'):
         args = block['args']
     block['body'] = analyzebody(block, args, tab=tab)
 
@@ -2095,7 +2106,7 @@ def postcrack(block, args=None, tab=''):
     if 'name' in block:
         name = block['name']
     # and not userisdefined: # Build a __user__ module
-    if 'externals' in block and block['externals']:
+    if block.get('externals'):
         interfaced = []
         if 'interfaced' in block:
             interfaced = block['interfaced']
@@ -2292,6 +2303,7 @@ def myeval(e, g=None, l=None):
     if type(r) in [int, float]:
         return r
     raise ValueError('r=%r' % (r))
+
 
 getlincoef_re_1 = re.compile(r'\A\b\w+\b\Z', re.I)
 
@@ -2607,7 +2619,7 @@ def analyzevars(block):
         del vars['']
         if 'attrspec' in block['vars']['']:
             gen = block['vars']['']['attrspec']
-            for n in set(vars) | set(b['name'] for b in block['body']):
+            for n in set(vars) | {b['name'] for b in block['body']}:
                 for k in ['public', 'private']:
                     if k in gen:
                         vars[n] = setattrspec(vars.get(n, {}), k)
@@ -2640,7 +2652,7 @@ def analyzevars(block):
         if n[0] in list(attrrules.keys()):
             vars[n] = setattrspec(vars[n], attrrules[n[0]])
         if 'typespec' not in vars[n]:
-            if not('attrspec' in vars[n] and 'external' in vars[n]['attrspec']):
+            if not ('attrspec' in vars[n] and 'external' in vars[n]['attrspec']):
                 if implicitrules:
                     ln0 = n[0].lower()
                     for k in list(implicitrules[ln0].keys()):
@@ -2776,9 +2788,9 @@ def analyzevars(block):
                                     # solve_v function here.
                                     solve_v = None
                                     all_symbols = set(dsize.symbols())
-                                v_deps = set(
+                                v_deps = {
                                     s.data for s in all_symbols
-                                    if s.data in vars)
+                                    if s.data in vars}
                                 solver_and_deps[v] = solve_v, list(v_deps)
                         # Note that dsize may contain symbols that are
                         # not defined in block['vars']. Here we assume
@@ -2951,7 +2963,7 @@ def analyzevars(block):
                     else:
                         outmess(
                             'analyzevars: prefix (%s) were not used\n' % repr(block['prefix']))
-    if not block['block'] in ['module', 'pythonmodule', 'python module', 'block data']:
+    if block['block'] not in ['module', 'pythonmodule', 'python module', 'block data']:
         if 'commonvars' in block:
             neededvars = copy.copy(block['args'] + block['commonvars'])
         else:
@@ -3014,7 +3026,7 @@ def param_eval(v, g_params, params, dimspec=None):
 
     # This is an array parameter.
     # First, we parse the dimension information
-    if len(dimspec) < 2 or dimspec[::len(dimspec)-1] != "()":
+    if len(dimspec) < 2 or dimspec[::len(dimspec) - 1] != "()":
         raise ValueError(f'param_eval: dimension {dimspec} can\'t be parsed')
     dimrange = dimspec[1:-1].split(',')
     if len(dimrange) == 1:
@@ -3023,14 +3035,14 @@ def param_eval(v, g_params, params, dimspec=None):
         # now, dimrange is a list of 1 or 2 elements
         if len(dimrange) == 1:
             bound = param_parse(dimrange[0], params)
-            dimrange = range(1, int(bound)+1)
+            dimrange = range(1, int(bound) + 1)
         else:
             lbound = param_parse(dimrange[0], params)
             ubound = param_parse(dimrange[1], params)
-            dimrange = range(int(lbound), int(ubound)+1)
+            dimrange = range(int(lbound), int(ubound) + 1)
     else:
-        raise ValueError(f'param_eval: multidimensional array parameters '
-                         '{dimspec} not supported')
+        raise ValueError('param_eval: multidimensional array parameters '
+                         f'{dimspec} not supported')
 
     # Parse parameter value
     v = (v[2:-2] if v.startswith('(/') else v).split(',')
@@ -3107,7 +3119,7 @@ def param_parse(d, params):
     if "(" in d:
         # this dimension expression is an array
         dname = d[:d.find("(")]
-        ddims = d[d.find("(")+1:d.rfind(")")]
+        ddims = d[d.find("(") + 1:d.rfind(")")]
         # this dimension expression is also a parameter;
         # parse it recursively
         index = int(param_parse(ddims, params))
@@ -3155,10 +3167,7 @@ def expr2name(a, block, args=[]):
         block['vars'][a] = at
     else:
         if a not in block['vars']:
-            if orig_a in block['vars']:
-                block['vars'][a] = block['vars'][orig_a]
-            else:
-                block['vars'][a] = {}
+            block['vars'][a] = block['vars'].get(orig_a, {})
         if 'externals' in block and orig_a in block['externals'] + block['interfaced']:
             block['vars'][a] = setattrspec(block['vars'][a], 'external')
     return a
@@ -3189,6 +3198,7 @@ def analyzeargs(block):
     if 'result' in block and block['result'] not in block['vars']:
         block['vars'][block['result']] = {}
     return block
+
 
 determineexprtype_re_1 = re.compile(r'\A\(.+?,.+?\)\Z', re.I)
 determineexprtype_re_2 = re.compile(r'\A[+-]?\d+(_(?P<name>\w+)|)\Z', re.I)
@@ -3601,7 +3611,7 @@ def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
             if new_index is not None:
                 new_result.append(new_item)
     elif isinstance(obj, dict):
-        new_result = dict()
+        new_result = {}
         for key, value in obj.items():
             new_key, new_value = traverse((key, value), visit,
                                           parents=parents + [parent],

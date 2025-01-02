@@ -34,16 +34,17 @@ def process_tex(lines):
     """
     new_lines = []
     for line in lines:
-        if (line.startswith(r'\section{numpy.')
-            or line.startswith(r'\subsection{numpy.')
-            or line.startswith(r'\subsubsection{numpy.')
-            or line.startswith(r'\paragraph{numpy.')
-            or line.startswith(r'\subparagraph{numpy.')
-            ):
-            pass # skip!
+        if line.startswith(("\\section{numpy.",
+                            "\\subsection{numpy.",
+                            "\\subsubsection{numpy.",
+                            "\\paragraph{numpy.",
+                            "\\subparagraph{numpy.",
+                            )):
+            pass
         else:
             new_lines.append(line)
     return new_lines
+
 
 if __name__ == "__main__":
     main()

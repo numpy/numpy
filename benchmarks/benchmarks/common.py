@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import os
 from functools import lru_cache
 from pathlib import Path
 
@@ -42,7 +41,7 @@ CACHE_ROOT = Path(__file__).resolve().parent.parent / 'env' / 'numpy_benchdata'
 @lru_cache(typed=True)
 def get_values():
     rnd = np.random.RandomState(1804169117)
-    values = np.tile(rnd.uniform(0, 100, size=nx*ny//10), 10)
+    values = np.tile(rnd.uniform(0, 100, size=nx * ny // 10), 10)
     return values
 
 
@@ -54,7 +53,7 @@ def get_square(dtype):
     # adjust complex ones to have non-degenerated imagery part -- use
     # original data transposed for that
     if arr.dtype.kind == 'c':
-        arr += arr.T*1j
+        arr += arr.T * 1j
 
     return arr
 
@@ -204,7 +203,7 @@ def get_data(size, dtype, ip_num=0, zeros=False, finite=True, denormal=False):
             rands += [np.zeros(lsize, dtype)]
         stride = len(rands)
         for start, r in enumerate(rands):
-            array[start:len(r)*stride:stride] = r
+            array[start:len(r) * stride:stride] = r
 
     if not CACHE_ROOT.exists():
         CACHE_ROOT.mkdir(parents=True)

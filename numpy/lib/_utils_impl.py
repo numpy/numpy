@@ -2,7 +2,6 @@ import os
 import sys
 import textwrap
 import types
-import re
 import warnings
 import functools
 import platform
@@ -178,7 +177,7 @@ class _Deprecate:
                     skip += len(line) + 1
                 doc = doc[skip:]
             depdoc = textwrap.indent(depdoc, ' ' * indent)
-            doc = '\n\n'.join([depdoc, doc])
+            doc = f'{depdoc}\n\n{doc}'
         newfunc.__doc__ = doc
 
         return newfunc
@@ -327,10 +326,11 @@ def _split_line(name, arguments, width):
         k = k + len(argument) + len(addstr)
         if k > width:
             k = firstwidth + 1 + len(argument)
-            newstr = newstr + ",\n" + " "*(firstwidth+2) + argument
+            newstr = newstr + ",\n" + " " * (firstwidth + 2) + argument
         else:
             newstr = newstr + addstr + argument
     return newstr
+
 
 _namedict = None
 _dictlist = None
@@ -339,7 +339,7 @@ _dictlist = None
 # to see if something is defined
 def _makenamedict(module='numpy'):
     module = __import__(module, globals(), locals(), [])
-    thedict = {module.__name__:module.__dict__}
+    thedict = {module.__name__: module.__dict__}
     dictlist = [module.__name__]
     totraverse = [module.__dict__]
     while True:
@@ -510,7 +510,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
                     objlist.append(id(obj))
                     print("     *** Found in %s ***" % namestr, file=output)
                     info(obj)
-                    print("-"*maxwidth, file=output)
+                    print("-" * maxwidth, file=output)
                 numfound += 1
             except KeyError:
                 pass
@@ -529,7 +529,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -544,7 +544,7 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
         except Exception:
             arguments = "()"
 
-        if len(name+arguments) > maxwidth:
+        if len(name + arguments) > maxwidth:
             argstr = _split_line(name, arguments, maxwidth)
         else:
             argstr = name + arguments
@@ -754,9 +754,9 @@ def drop_metadata(dtype, /):
         if not found_metadata:
             return dtype
 
-        structure = dict(
-            names=names, formats=formats, offsets=offsets, titles=titles,
-            itemsize=dtype.itemsize)
+        structure = {
+            'names': names, 'formats': formats, 'offsets': offsets, 'titles': titles,
+            'itemsize': dtype.itemsize}
 
         # NOTE: Could pass (dtype.type, structure) to preserve record dtypes...
         return np.dtype(structure, align=dtype.isalignedstruct)

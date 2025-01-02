@@ -19,6 +19,21 @@ we list them in alphabetical order):
 - Website design and development
 - Writing technical documentation
 
+We understand that everyone has a different level of experience,
+also NumPy is a pretty well-established project, so it's hard to
+make assumptions about an ideal "first-time-contributor". 
+So, that's why we don't mark issues with the "good-first-issue"
+label. Instead, you'll find `issues labeled "Sprintable" <https://github.com/numpy/numpy/labels/sprintable>`__.
+These issues can either be:
+
+- **Easily fixed** when you have guidance from an experienced
+  contributor (perfect for working in a sprint).
+- **A learning opportunity** for those ready to dive deeper,
+  even if you're not in a sprint. 
+
+Additionally, depending on your prior experience, some "Sprintable"
+issues might be easy, while others could be more challenging for you.
+
 The rest of this document discusses working on the NumPy code base and documentation.
 We're in the process of updating our descriptions of other activities and roles.
 If you are interested in these other activities, please contact us!

@@ -1,14 +1,19 @@
 from collections.abc import Sequence, Iterator, Callable, Iterable
 from typing import (
+    Concatenate,
     Literal as L,
     Any,
+    ParamSpec,
+    TypeAlias,
     TypeVar,
     overload,
     Protocol,
     SupportsIndex,
     SupportsInt,
-    TypeGuard
+    TypeGuard,
+    type_check_only
 )
+from typing_extensions import deprecated
 
 from numpy import (
     vectorize as vectorize,
@@ -22,10 +27,10 @@ from numpy import (
     timedelta64,
     datetime64,
     object_,
-    bool as bool_,
+    bool_,
     _OrderKACF,
 )
-
+from numpy._core.multiarray import bincount
 from numpy._typing import (
     NDArray,
     ArrayLike,
@@ -34,6 +39,7 @@ from numpy._typing import (
     _ScalarLike_co,
     _DTypeLike,
     _ArrayLike,
+    _ArrayLikeBool_co,
     _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
@@ -44,27 +50,63 @@ from numpy._typing import (
     _ComplexLike_co,
 )
 
-from numpy._core.multiarray import (
-    bincount as bincount,
-)
+__all__ = [
+    "select",
+    "piecewise",
+    "trim_zeros",
+    "copy",
+    "iterable",
+    "percentile",
+    "diff",
+    "gradient",
+    "angle",
+    "unwrap",
+    "sort_complex",
+    "flip",
+    "rot90",
+    "extract",
+    "place",
+    "vectorize",
+    "asarray_chkfinite",
+    "average",
+    "bincount",
+    "digitize",
+    "cov",
+    "corrcoef",
+    "median",
+    "sinc",
+    "hamming",
+    "hanning",
+    "bartlett",
+    "blackman",
+    "kaiser",
+    "trapezoid",
+    "trapz",
+    "i0",
+    "meshgrid",
+    "delete",
+    "insert",
+    "append",
+    "interp",
+    "quantile",
+]
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
+# The `{}ss` suffix refers to the Python 3.12 syntax: `**P`
+_Pss = ParamSpec("_Pss")
 _SCT = TypeVar("_SCT", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
-_2Tuple = tuple[_T, _T]
+_2Tuple: TypeAlias = tuple[_T, _T]
 
+@type_check_only
 class _TrimZerosSequence(Protocol[_T_co]):
     def __len__(self) -> int: ...
+    @overload
+    def __getitem__(self, key: int, /) -> object: ...
+    @overload
     def __getitem__(self, key: slice, /) -> _T_co: ...
-    def __iter__(self) -> Iterator[Any]: ...
-
-class _SupportsWriteFlush(Protocol):
-    def write(self, s: str, /) -> object: ...
-    def flush(self) -> object: ...
-
-__all__: list[str]
 
 @overload
 def rot90(
@@ -94,7 +136,7 @@ def iterable(y: object) -> TypeGuard[Iterable[Any]]: ...
 def average(
     a: _ArrayLikeFloat_co,
     axis: None = ...,
-    weights: None | _ArrayLikeFloat_co= ...,
+    weights: None | _ArrayLikeFloat_co = ...,
     returned: L[False] = ...,
     keepdims: L[False] = ...,
 ) -> floating[Any]: ...
@@ -118,7 +160,7 @@ def average(
 def average(
     a: _ArrayLikeFloat_co,
     axis: None = ...,
-    weights: None | _ArrayLikeFloat_co= ...,
+    weights: None | _ArrayLikeFloat_co = ...,
     returned: L[True] = ...,
     keepdims: L[False] = ...,
 ) -> _2Tuple[floating[Any]]: ...
@@ -180,23 +222,29 @@ def asarray_chkfinite(
     order: _OrderKACF = ...,
 ) -> NDArray[Any]: ...
 
-# TODO: Use PEP 612 `ParamSpec` once mypy supports `Concatenate`
-# xref python/mypy#8645
 @overload
 def piecewise(
     x: _ArrayLike[_SCT],
-    condlist: ArrayLike,
-    funclist: Sequence[Any | Callable[..., Any]],
-    *args: Any,
-    **kw: Any,
+    condlist: _ArrayLike[bool_] | Sequence[_ArrayLikeBool_co],
+    funclist: Sequence[
+        Callable[Concatenate[NDArray[_SCT], _Pss], NDArray[_SCT | Any]]
+        | _SCT | object
+    ],
+    /,
+    *args: _Pss.args,
+    **kw: _Pss.kwargs,
 ) -> NDArray[_SCT]: ...
 @overload
 def piecewise(
     x: ArrayLike,
-    condlist: ArrayLike,
-    funclist: Sequence[Any | Callable[..., Any]],
-    *args: Any,
-    **kw: Any,
+    condlist: _ArrayLike[bool_] | Sequence[_ArrayLikeBool_co],
+    funclist: Sequence[
+        Callable[Concatenate[NDArray[Any], _Pss], NDArray[Any]]
+        | object
+    ],
+    /,
+    *args: _Pss.args,
+    **kw: _Pss.kwargs,
 ) -> NDArray[Any]: ...
 
 def select(
@@ -618,7 +666,7 @@ def percentile(
 ) -> NDArray[object_]: ...
 @overload
 def percentile(
-    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
     axis: None | _ShapeLike = ...,
     out: None = ...,
@@ -630,7 +678,7 @@ def percentile(
 ) -> Any: ...
 @overload
 def percentile(
-    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
     axis: None | _ShapeLike,
     out: _ArrayType,
@@ -643,7 +691,7 @@ def percentile(
 ) -> _ArrayType: ...
 @overload
 def percentile(
-    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
     axis: None | _ShapeLike = ...,
     *,
@@ -657,7 +705,6 @@ def percentile(
 # NOTE: Not an alias, but they do have identical signatures
 # (that we can reuse)
 quantile = percentile
-
 
 _SCT_fm = TypeVar(
     "_SCT_fm",
@@ -719,6 +766,9 @@ def trapezoid(
     floating[Any] | complexfloating[Any, Any] | timedelta64
     | NDArray[floating[Any] | complexfloating[Any, Any] | timedelta64 | object_]
 ): ...
+
+@deprecated("Use 'trapezoid' instead")
+def trapz(y: ArrayLike, x: ArrayLike | None = None, dx: float = 1.0, axis: int = -1) -> generic | NDArray[generic]: ...
 
 def meshgrid(
     *xi: ArrayLike,

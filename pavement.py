@@ -23,8 +23,6 @@ TODO
       the same underlying python for egg install in venv and for bdist_mpkg
 """
 import os
-import sys
-import shutil
 import hashlib
 import textwrap
 
@@ -38,7 +36,7 @@ from paver.easy import Bunch, options, task, sh
 #-----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/source/release/2.1.0-notes.rst'
+RELEASE_NOTES = 'doc/source/release/2.3.0-notes.rst'
 
 
 #-------------------------------------------------------

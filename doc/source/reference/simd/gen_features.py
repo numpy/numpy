@@ -1,7 +1,7 @@
 """
 Generate CPU features tables from CCompilerOpt
 """
-from os import sys, path
+from os import path
 from numpy.distutils.ccompiler_opt import CCompilerOpt
 
 class FakeCCompilerOpt(CCompilerOpt):
@@ -114,13 +114,13 @@ class Features:
         return self.gen_rst_table(fields, rows, **kwargs)
 
     def gen_rst_table(self, field_names, rows, tab_size=4):
-        assert(not rows or len(field_names) == len(rows[0]))
+        assert not rows or len(field_names) == len(rows[0])
         rows.append(field_names)
         fld_len = len(field_names)
         cls_len = [max(len(c[i]) for c in rows) for i in range(fld_len)]
         del rows[-1]
         cformat = ' '.join('{:<%d}' % i for i in cls_len)
-        border = cformat.format(*['='*i for i in cls_len])
+        border = cformat.format(*['=' * i for i in cls_len])
 
         rows = [cformat.format(*row) for row in rows]
         # header
@@ -132,17 +132,17 @@ class Features:
         return '\n'.join(rows)
 
 def wrapper_section(title, content, tab_size=4):
-    tab = ' '*tab_size
+    tab = ' ' * tab_size
     if content:
         return (
-            f"{title}\n{'~'*len(title)}"
+            f"{title}\n{'~' * len(title)}"
             f"\n.. table::\n{tab}:align: left\n\n"
             f"{content}\n\n"
         )
     return ''
 
 def wrapper_tab(title, table, tab_size=4):
-    tab = ' '*tab_size
+    tab = ' ' * tab_size
     if table:
         ('\n' + tab).join((
             '.. tab:: ' + title,

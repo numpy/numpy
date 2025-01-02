@@ -16,7 +16,7 @@ from numpy._core._rational_tests import rational
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_almost_equal,
     assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
-    assert_warns, _SUPPORTS_SVE,
+    assert_warns, check_support_sve,
     )
 
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -151,7 +151,7 @@ def test_int_float_promotion_truediv(fscalar):
 
 
 class TestBaseMath:
-    @pytest.mark.xfail(_SUPPORTS_SVE, reason="gh-22982")
+    @pytest.mark.xfail(check_support_sve(), reason="gh-22982")
     def test_blocked(self):
         # test alignments offsets for simd instructions
         # alignments for vz + 2 * (vs - 1) + 1
@@ -298,10 +298,10 @@ class TestModulus:
                 for sg1, sg2 in itertools.product(_signs(dt1), _signs(dt2)):
                     fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
                     msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
-                    a = np.array(sg1*71, dtype=dt1)[()]
-                    b = np.array(sg2*19, dtype=dt2)[()]
+                    a = np.array(sg1 * 71, dtype=dt1)[()]
+                    b = np.array(sg2 * 19, dtype=dt2)[()]
                     div, rem = op(a, b)
-                    assert_equal(div*b + rem, a, err_msg=msg)
+                    assert_equal(div * b + rem, a, err_msg=msg)
                     if sg2 == -1:
                         assert_(b < rem <= 0, msg)
                     else:
@@ -315,7 +315,7 @@ class TestModulus:
         dividend = nlst + [0] + plst
         divisor = nlst + plst
         arg = list(itertools.product(dividend, divisor))
-        tgt = list(divmod(*t) for t in arg)
+        tgt = [divmod(*t) for t in arg]
 
         a, b = np.array(arg, dtype=int).T
         # convert exact integer results from Python to float so that
@@ -330,7 +330,7 @@ class TestModulus:
                 fa = a.astype(dt)
                 fb = b.astype(dt)
                 # use list comprehension so a_ and b_ are scalars
-                div, rem = zip(*[op(a_, b_) for  a_, b_ in zip(fa, fb)])
+                div, rem = zip(*[op(a_, b_) for a_, b_ in zip(fa, fb)])
                 assert_equal(div, tgtdiv, err_msg=msg)
                 assert_equal(rem, tgtrem, err_msg=msg)
 
@@ -342,11 +342,11 @@ class TestModulus:
                 for sg1, sg2 in itertools.product((+1, -1), (+1, -1)):
                     fmt = 'op: %s, dt1: %s, dt2: %s, sg1: %s, sg2: %s'
                     msg = fmt % (op.__name__, dt1, dt2, sg1, sg2)
-                    a = np.array(sg1*78*6e-8, dtype=dt1)[()]
-                    b = np.array(sg2*6e-8, dtype=dt2)[()]
+                    a = np.array(sg1 * 78 * 6e-8, dtype=dt1)[()]
+                    b = np.array(sg2 * 6e-8, dtype=dt2)[()]
                     div, rem = op(a, b)
                     # Equal assertion should hold when fmod is used
-                    assert_equal(div*b + rem, a, err_msg=msg)
+                    assert_equal(div * b + rem, a, err_msg=msg)
                     if sg2 == -1:
                         assert_(b < rem <= 0, msg)
                     else:
@@ -397,6 +397,15 @@ class TestModulus:
                 match=r"Cannot cast ufunc 'floor_divide' output from"):
             a //= b
 
+class TestComparison:
+    def test_comparision_different_types(self):
+        x = np.array(1)
+        y = np.array('s')
+        eq = x == y
+        neq = x != y
+        assert eq is np.bool_(False)
+        assert neq is np.bool_(True)
+
 
 class TestComplexDivision:
     def test_zero_division(self):
@@ -404,17 +413,17 @@ class TestComplexDivision:
             for t in [np.complex64, np.complex128]:
                 a = t(0.0)
                 b = t(1.0)
-                assert_(np.isinf(b/a))
+                assert_(np.isinf(b / a))
                 b = t(complex(np.inf, np.inf))
-                assert_(np.isinf(b/a))
+                assert_(np.isinf(b / a))
                 b = t(complex(np.inf, np.nan))
-                assert_(np.isinf(b/a))
+                assert_(np.isinf(b / a))
                 b = t(complex(np.nan, np.inf))
-                assert_(np.isinf(b/a))
+                assert_(np.isinf(b / a))
                 b = t(complex(np.nan, np.nan))
-                assert_(np.isnan(b/a))
+                assert_(np.isnan(b / a))
                 b = t(0.)
-                assert_(np.isnan(b/a))
+                assert_(np.isnan(b / a))
 
     def test_signed_zeros(self):
         with np.errstate(all="ignore"):
@@ -422,14 +431,14 @@ class TestComplexDivision:
                 # tupled (numerator, denominator, expected)
                 # for testing as expected == numerator/denominator
                 data = (
-                    (( 0.0,-1.0), ( 0.0, 1.0), (-1.0,-0.0)),
-                    (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
-                    (( 0.0,-1.0), (-0.0,-1.0), ( 1.0, 0.0)),
-                    (( 0.0,-1.0), (-0.0, 1.0), (-1.0, 0.0)),
-                    (( 0.0, 1.0), ( 0.0,-1.0), (-1.0, 0.0)),
-                    (( 0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
-                    ((-0.0,-1.0), ( 0.0,-1.0), ( 1.0,-0.0)),
-                    ((-0.0, 1.0), ( 0.0,-1.0), (-1.0,-0.0))
+                    (( 0.0, -1.0), ( 0.0, 1.0), (-1.0, -0.0)),
+                    (( 0.0, -1.0), ( 0.0, -1.0), ( 1.0, -0.0)),
+                    (( 0.0, -1.0), (-0.0, -1.0), ( 1.0, 0.0)),
+                    (( 0.0, -1.0), (-0.0, 1.0), (-1.0, 0.0)),
+                    (( 0.0, 1.0), ( 0.0, -1.0), (-1.0, 0.0)),
+                    (( 0.0, -1.0), ( 0.0, -1.0), ( 1.0, -0.0)),
+                    ((-0.0, -1.0), ( 0.0, -1.0), ( 1.0, -0.0)),
+                    ((-0.0, 1.0), ( 0.0, -1.0), (-1.0, -0.0))
                 )
                 for cases in data:
                     n = cases[0]
@@ -446,7 +455,7 @@ class TestComplexDivision:
             for t in [np.complex64, np.complex128]:
                 # tupled (numerator, denominator, expected)
                 # for testing as expected == numerator/denominator
-                data = list()
+                data = []
 
                 # trigger branch: real(fabs(denom)) > imag(fabs(denom))
                 # followed by else condition as neither are == 0
@@ -457,7 +466,7 @@ class TestComplexDivision:
                 # is performed in test_zero_division(), so this is skipped
 
                 # trigger else if branch: real(fabs(denom)) < imag(fabs(denom))
-                data.append((( 1.0, 2.0), ( 1.0, 2.0), (1.0, 0.0)))
+                data.append(((1.0, 2.0), (1.0, 2.0), (1.0, 0.0)))
 
                 for cases in data:
                     n = cases[0]
@@ -588,15 +597,15 @@ class TestConversion:
         # The comparisons are flagged by pep8, ignore that.
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', FutureWarning)
-            assert_(not np.float32(1) == None)
-            assert_(not np.str_('test') == None)
+            assert_(not np.float32(1) == None)  # noqa: E711
+            assert_(not np.str_('test') == None)  # noqa: E711
             # This is dubious (see below):
-            assert_(not np.datetime64('NaT') == None)
+            assert_(not np.datetime64('NaT') == None)  # noqa: E711
 
-            assert_(np.float32(1) != None)
-            assert_(np.str_('test') != None)
+            assert_(np.float32(1) != None)  # noqa: E711
+            assert_(np.str_('test') != None)  # noqa: E711
             # This is dubious (see below):
-            assert_(np.datetime64('NaT') != None)
+            assert_(np.datetime64('NaT') != None)  # noqa: E711
         assert_(len(w) == 0)
 
         # For documentation purposes, this is why the datetime is dubious.
@@ -619,18 +628,18 @@ class TestRepr:
         finfo = np.finfo(t)
         last_fraction_bit_idx = finfo.nexp + finfo.nmant
         last_exponent_bit_idx = finfo.nexp
-        storage_bytes = np.dtype(t).itemsize*8
+        storage_bytes = np.dtype(t).itemsize * 8
         # could add some more types to the list below
         for which in ['small denorm', 'small norm']:
             # Values from https://en.wikipedia.org/wiki/IEEE_754
-            constr = np.array([0x00]*storage_bytes, dtype=np.uint8)
+            constr = np.array([0x00] * storage_bytes, dtype=np.uint8)
             if which == 'small denorm':
                 byte = last_fraction_bit_idx // 8
-                bytebit = 7-(last_fraction_bit_idx % 8)
+                bytebit = 7 - (last_fraction_bit_idx % 8)
                 constr[byte] = 1 << bytebit
             elif which == 'small norm':
                 byte = last_exponent_bit_idx // 8
-                bytebit = 7-(last_exponent_bit_idx % 8)
+                bytebit = 7 - (last_exponent_bit_idx % 8)
                 constr[byte] = 1 << bytebit
             else:
                 raise ValueError('hmm')
@@ -818,8 +827,8 @@ class TestBitShifts:
                     assert_equal(res_scl, 0)
 
                 # Result on scalars should be the same as on arrays
-                val_arr = np.array([val_scl]*32, dtype=dt)
-                shift_arr = np.array([shift]*32, dtype=dt)
+                val_arr = np.array([val_scl] * 32, dtype=dt)
+                shift_arr = np.array([shift] * 32, dtype=dt)
                 res_arr = op(val_arr, shift_arr)
                 assert_equal(res_arr, res_scl)
 
@@ -852,7 +861,7 @@ class TestHash:
     def test_complex_hashes(self, type_code):
         # Test some complex valued hashes specifically:
         scalar = np.dtype(type_code).type
-        for val in [np.pi+1j, np.inf-3j, 3j, 6.+1j]:
+        for val in [np.pi + 1j, np.inf - 3j, 3j, 6. + 1j]:
             numpy_val = scalar(val)
             assert hash(complex(numpy_val)) == hash(numpy_val)
 
@@ -1065,13 +1074,12 @@ def test_longdouble_complex():
     # Simple test to check longdouble and complex combinations, since these
     # need to go through promotion, which longdouble needs to be careful about.
     x = np.longdouble(1)
-    assert x + 1j == 1+1j
-    assert 1j + x == 1+1j
+    assert x + 1j == 1 + 1j
+    assert 1j + x == 1 + 1j
 
 
 @pytest.mark.parametrize(["__op__", "__rop__", "op", "cmp"], ops_with_names)
 @pytest.mark.parametrize("subtype", [float, int, complex, np.float16])
-@np._no_nep50_warning()
 def test_pyscalar_subclasses(subtype, __op__, __rop__, op, cmp):
     # This tests that python scalar subclasses behave like a float64 (if they
     # don't override it).
@@ -1160,7 +1168,7 @@ def test_scalar_matches_array_op_with_pyscalar(op, sctype, other_type, rop):
     assert res == expected
     if isinstance(val1, float) and other_type is complex and rop:
         # Python complex accepts float subclasses, so we don't get a chance
-        # and the result may be a Python complelx (thus, the `np.array()``)
+        # and the result may be a Python complex (thus, the `np.array()``)
         assert np.array(res).dtype == expected.dtype
     else:
         assert res.dtype == expected.dtype

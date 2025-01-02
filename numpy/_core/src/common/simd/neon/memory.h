@@ -584,7 +584,7 @@ NPYV_IMPL_NEON_REST_PARTIAL_TYPES_PAIR(f64, s64)
 #endif
 
 /************************************************************
- *  de-interlave load / interleave contiguous store
+ *  de-interleave load / interleave contiguous store
  ************************************************************/
 // two channels
 #define NPYV_IMPL_NEON_MEM_INTERLEAVE(SFX, T_PTR)                        \

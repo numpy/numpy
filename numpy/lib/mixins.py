@@ -1,8 +1,6 @@
 """
 Mixin classes for custom array types that don't inherit from ndarray.
 """
-from numpy._core import umath as um
-
 
 __all__ = ['NDArrayOperatorsMixin']
 
@@ -69,8 +67,7 @@ class NDArrayOperatorsMixin:
 
     It is useful for writing classes that do not inherit from `numpy.ndarray`,
     but that should support arithmetic and numpy universal functions like
-    arrays as described in `A Mechanism for Overriding Ufuncs
-    <https://numpy.org/neps/nep-0013-ufunc-overrides.html>`_.
+    arrays as described in :external+neps:doc:`nep-0013-ufunc-overrides`.
 
     As an trivial example, consider this implementation of an ``ArrayLike``
     class that simply wraps a NumPy array and ensures that the result of any
@@ -116,7 +113,7 @@ class NDArrayOperatorsMixin:
         ...         else:
         ...             # one return value
         ...             return type(self)(result)
-        ... 
+        ...
         ...     def __repr__(self):
         ...         return '%s(%r)' % (type(self).__name__, self.value)
 
@@ -137,8 +134,9 @@ class NDArrayOperatorsMixin:
     with arbitrary, unrecognized types. This ensures that interactions with
     ArrayLike preserve a well-defined casting hierarchy.
 
-    .. versionadded:: 1.13
     """
+    from numpy._core import umath as um
+
     __slots__ = ()
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
     # overrides NEP.

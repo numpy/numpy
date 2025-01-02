@@ -1919,17 +1919,7 @@ linear_search_type_resolver(PyUFuncObject *self,
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    int promotion_state = get_npy_promotion_state();
-
-    assert(promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
-    /* Always "use" with new promotion in case of Python int/float/complex */
-    int use_min_scalar;
-    if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
-        use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
-    }
-    else {
-        use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
-    }
+    int use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
 
     /* If the ufunc has userloops, search for them. */
     if (self->userloops) {
@@ -2123,17 +2113,7 @@ type_tuple_type_resolver(PyUFuncObject *self,
 
     ufunc_name = ufunc_get_name_cstr(self);
 
-    int promotion_state = get_npy_promotion_state();
-
-    assert(promotion_state != NPY_USE_WEAK_PROMOTION_AND_WARN);
-    /* Always "use" with new promotion in case of Python int/float/complex */
-    int use_min_scalar;
-    if (promotion_state == NPY_USE_LEGACY_PROMOTION) {
-        use_min_scalar = should_use_min_scalar(nin, op, 0, NULL);
-    }
-    else {
-        use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
-    }
+    int use_min_scalar = should_use_min_scalar_weak_literals(nin, op);
 
     /* Fill in specified_types from the tuple or string */
     const char *bad_type_tup_msg = (
@@ -2248,19 +2228,17 @@ PyUFunc_DivmodTypeResolver(PyUFuncObject *ufunc,
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
                     type_tup, out_dtypes);
     }
-    if (type_num1 == NPY_TIMEDELTA) {
-        if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
-                                                PyArray_DESCR(operands[1]));
-            out_dtypes[1] = out_dtypes[0];
-            Py_INCREF(out_dtypes[1]);
-            out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
-            out_dtypes[3] = out_dtypes[0];
-            Py_INCREF(out_dtypes[3]);
+    if (type_num1 == NPY_TIMEDELTA && type_num2 == NPY_TIMEDELTA) {
+        out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                             PyArray_DESCR(operands[1]));                             
+        if (out_dtypes[0] == NULL) {
+            return -1;
         }
-        else {
-            return raise_binary_type_reso_error(ufunc, operands);
-        }
+        out_dtypes[1] = out_dtypes[0];
+        Py_INCREF(out_dtypes[1]);
+        out_dtypes[2] = PyArray_DescrFromType(NPY_LONGLONG);
+        out_dtypes[3] = out_dtypes[0];
+        Py_INCREF(out_dtypes[3]);
     }
     else {
         return raise_binary_type_reso_error(ufunc, operands);

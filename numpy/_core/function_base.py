@@ -33,9 +33,6 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
 
     The endpoint of the interval can optionally be excluded.
 
-    .. versionchanged:: 1.16.0
-        Non-scalar `start` and `stop` are now supported.
-
     .. versionchanged:: 1.20.0
         Values are rounded towards ``-inf`` instead of ``0`` when an
         integer ``dtype`` is specified. The old behavior can
@@ -63,14 +60,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         is inferred from `start` and `stop`. The inferred dtype will never be
         an integer; `float` is chosen even if the arguments would produce an
         array of integers.
-
-        .. versionadded:: 1.9.0
     axis : int, optional
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
         new axis inserted at the beginning. Use -1 to get an axis at the end.
-
-        .. versionadded:: 1.16.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -209,9 +202,6 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
     (`base` to the power of `start`) and ends with ``base ** stop``
     (see `endpoint` below).
 
-    .. versionchanged:: 1.16.0
-        Non-scalar `start` and `stop` are now supported.
-
     .. versionchanged:: 1.25.0
         Non-scalar 'base` is now supported
 
@@ -243,9 +233,6 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None,
         stop, or base are array-like.  By default (0), the samples will be
         along a new axis inserted at the beginning. Use -1 to get an axis at
         the end.
-
-        .. versionadded:: 1.16.0
-
 
     Returns
     -------
@@ -328,9 +315,6 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
     This is similar to `logspace`, but with endpoints specified directly.
     Each output sample is a constant multiple of the previous.
 
-    .. versionchanged:: 1.16.0
-        Non-scalar `start` and `stop` are now supported.
-
     Parameters
     ----------
     start : array_like
@@ -354,8 +338,6 @@ def geomspace(start, stop, num=50, endpoint=True, dtype=None, axis=0):
         The axis in the result to store the samples.  Relevant only if start
         or stop are array-like.  By default (0), the samples will be along a
         new axis inserted at the beginning. Use -1 to get an axis at the end.
-
-        .. versionadded:: 1.16.0
 
     Returns
     -------
@@ -551,6 +533,8 @@ def add_newdoc(place, obj, doc, warn_on_python=True):
     """
     new = getattr(__import__(place, globals(), {}, [obj]), obj)
     if isinstance(doc, str):
+        if "${ARRAY_FUNCTION_LIKE}" in doc:
+            doc = overrides.get_array_function_like_doc(new, doc)
         _add_docstring(new, doc.strip(), warn_on_python)
     elif isinstance(doc, tuple):
         attr, docstring = doc

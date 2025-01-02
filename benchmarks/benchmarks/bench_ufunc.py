@@ -16,12 +16,12 @@ ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'isinf', 'isnan', 'isnat', 'lcm', 'ldexp', 'left_shift', 'less',
           'less_equal', 'log', 'log10', 'log1p', 'log2', 'logaddexp',
           'logaddexp2', 'logical_and', 'logical_not', 'logical_or',
-          'logical_xor', 'matmul', 'maximum', 'minimum', 'mod', 'modf',
-          'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
+          'logical_xor', 'matmul', 'matvec', 'maximum', 'minimum', 'mod',
+          'modf', 'multiply', 'negative', 'nextafter', 'not_equal', 'positive',
           'power', 'rad2deg', 'radians', 'reciprocal', 'remainder',
           'right_shift', 'rint', 'sign', 'signbit', 'sin',
           'sinh', 'spacing', 'sqrt', 'square', 'subtract', 'tan', 'tanh',
-          'true_divide', 'trunc', 'vecdot']
+          'true_divide', 'trunc', 'vecdot', 'vecmat']
 arrayfuncdisp = ['real', 'round']
 
 for name in ufuncs:
@@ -31,7 +31,7 @@ for name in ufuncs:
 
 all_ufuncs = (getattr(np, name, None) for name in dir(np))
 all_ufuncs = set(filter(lambda f: isinstance(f, np.ufunc), all_ufuncs))
-bench_ufuncs = set(getattr(np, name, None) for name in ufuncs)
+bench_ufuncs = {getattr(np, name, None) for name in ufuncs}
 
 missing_ufuncs = all_ufuncs - bench_ufuncs
 if len(missing_ufuncs) > 0:
@@ -50,7 +50,7 @@ class ArrayFunctionDispatcher(Benchmark):
         try:
             self.afdn = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.args = []
         for _, aarg in get_squares_().items():
             arg = (aarg,) * 1  # no nin
@@ -97,7 +97,7 @@ class UFunc(Benchmark):
         try:
             self.ufn = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.args = []
         for _, aarg in get_squares_().items():
             arg = (aarg,) * self.ufn.nin
@@ -251,14 +251,14 @@ class NDArrayGetItem(Benchmark):
 
     def setup(self, margs, msize):
         self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        self.xl = np.random.uniform(-1, 1, 50*50).reshape(50, 50)
+        self.xl = np.random.uniform(-1, 1, 50 * 50).reshape(50, 50)
 
     def time_methods_getitem(self, margs, msize):
         if msize == 'small':
             mdat = self.xs
         elif msize == 'big':
             mdat = self.xl
-        getattr(mdat, '__getitem__')(margs)
+        mdat.__getitem__(margs)
 
 
 class NDArraySetItem(Benchmark):
@@ -268,7 +268,7 @@ class NDArraySetItem(Benchmark):
 
     def setup(self, margs, msize):
         self.xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        self.xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        self.xl = np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
 
     def time_methods_setitem(self, margs, msize):
         if msize == 'small':
@@ -332,7 +332,7 @@ class UFuncSmall(Benchmark):
         try:
             self.f = getattr(np, ufuncname)
         except AttributeError:
-            raise NotImplementedError()
+            raise NotImplementedError
         self.array_5 = np.array([1., 2., 10., 3., 4.])
         self.array_int_3 = np.array([1, 2, 3])
         self.float64 = np.float64(1.1)
@@ -512,9 +512,11 @@ class Scalar(Benchmark):
 
 class ArgPack:
     __slots__ = ['args', 'kwargs']
+
     def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
+
     def __repr__(self):
         return '({})'.format(', '.join(
             [repr(a) for a in self.args] +
@@ -597,7 +599,7 @@ class BinaryBenchInteger(Benchmark):
         N = 1000000
         self.a = np.random.randint(20, size=N).astype(dtype)
         self.b = np.random.randint(4, size=N).astype(dtype)
-        
+
     def time_pow(self, dtype):
         np.power(self.a, self.b)
 

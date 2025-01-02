@@ -432,7 +432,6 @@ class TestPCG64(Base):
         assert state["state"] == advanced_state
 
 
-
 class TestPCG64DXSM(Base):
     @classmethod
     def setup_class(cls):
@@ -538,7 +537,7 @@ class TestSFC64(Base):
         )
 
         base_path = os.path.split(os.path.abspath(__file__))[0]
-        pkl_file = os.path.join(base_path, "data", f"sfc64_np126.pkl.gz")
+        pkl_file = os.path.join(base_path, "data", "sfc64_np126.pkl.gz")
         with gzip.open(pkl_file) as gz:
             sfc = pickle.load(gz)
 
@@ -559,3 +558,22 @@ class TestDefaultRNG:
         rg2 = default_rng(rg)
         assert rg2 is rg
         assert rg2.bit_generator is bg
+
+    def test_coercion_RandomState_Generator(self):
+        # use default_rng to coerce RandomState to Generator
+        rs = RandomState(1234)
+        rg = default_rng(rs)
+        assert isinstance(rg.bit_generator, MT19937)
+        assert rg.bit_generator is rs._bit_generator
+
+        # RandomState with a non MT19937 bit generator
+        _original = np.random.get_bit_generator()
+        bg = PCG64(12342298)
+        np.random.set_bit_generator(bg)
+        rs = np.random.mtrand._rand
+        rg = default_rng(rs)
+        assert rg.bit_generator is bg
+
+        # vital to get global state back to original, otherwise
+        # other tests start to fail.
+        np.random.set_bit_generator(_original)

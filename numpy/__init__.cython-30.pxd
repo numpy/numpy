@@ -117,6 +117,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_OBJECT
         NPY_STRING
         NPY_UNICODE
+        NPY_VSTRING
         NPY_VOID
         NPY_DATETIME
         NPY_TIMEDELTA
@@ -151,6 +152,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_COMPLEX512
 
         NPY_INTP
+        NPY_UINTP
         NPY_DEFAULT_INT  # Not a compile time constant (normally)!
 
     ctypedef enum NPY_ORDER:
@@ -757,6 +759,23 @@ cdef extern from "numpy/arrayobject.h":
     npy_intp PyArray_OverflowMultiplyList (npy_intp *, int)
     int PyArray_SetBaseObject(ndarray, base) except -1 # NOTE: steals a reference to base! Use "set_array_base()" instead.
 
+    # The memory handler functions require the NumPy 1.22 API
+    # and may require defining NPY_TARGET_VERSION
+    ctypedef struct PyDataMemAllocator:
+        void *ctx
+        void* (*malloc) (void *ctx, size_t size)
+        void* (*calloc) (void *ctx, size_t nelem, size_t elsize)
+        void* (*realloc) (void *ctx, void *ptr, size_t new_size)
+        void (*free) (void *ctx, void *ptr, size_t size)
+
+    ctypedef struct PyDataMem_Handler:
+        char* name
+        npy_uint8 version
+        PyDataMemAllocator allocator
+
+    object PyDataMem_SetHandler(object handler)
+    object PyDataMem_GetHandler()
+
     # additional datetime related functions are defined below
 
 
@@ -1223,3 +1242,35 @@ cdef extern from "numpy/arrayobject.h":
     void NpyIter_GetInnerFixedStrideArray(NpyIter* it, npy_intp* outstrides) nogil
     npy_bool NpyIter_IterationNeedsAPI(NpyIter* it) nogil
     void NpyIter_DebugPrint(NpyIter* it)
+
+# NpyString API
+cdef extern from "numpy/ndarraytypes.h":
+    ctypedef struct npy_string_allocator:
+        pass
+
+    ctypedef struct npy_packed_static_string:
+        pass
+
+    ctypedef struct npy_static_string:
+        size_t size
+        const char *buf
+
+    ctypedef struct PyArray_StringDTypeObject:
+        PyArray_Descr base
+        PyObject *na_object
+        char coerce
+        char has_nan_na
+        char has_string_na
+        char array_owned
+        npy_static_string default_string
+        npy_static_string na_name
+        npy_string_allocator *allocator
+
+cdef extern from "numpy/arrayobject.h":
+    npy_string_allocator *NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
+    void NpyString_acquire_allocators(size_t n_descriptors, PyArray_Descr *const descrs[], npy_string_allocator *allocators[])
+    void NpyString_release_allocator(npy_string_allocator *allocator)
+    void NpyString_release_allocators(size_t length, npy_string_allocator *allocators[])
+    int NpyString_load(npy_string_allocator *allocator, const npy_packed_static_string *packed_string, npy_static_string *unpacked_string)
+    int NpyString_pack_null(npy_string_allocator *allocator, npy_packed_static_string *packed_string)
+    int NpyString_pack(npy_string_allocator *allocator, npy_packed_static_string *packed_string, const char *buf, size_t size)

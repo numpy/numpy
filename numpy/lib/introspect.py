@@ -1,7 +1,6 @@
 """
 Introspection helper functions.
 """
-import re
 
 __all__ = ['opt_func_info']
 
@@ -64,6 +63,7 @@ def opt_func_info(func_name=None, signature=None):
         }
 
     """
+    import re
     from numpy._core._multiarray_umath import (
         __cpu_targets_info__ as targets, dtype
     )
@@ -83,11 +83,10 @@ def opt_func_info(func_name=None, signature=None):
         for k, v in matching_funcs.items():
             matching_chars = {}
             for chars, targets in v.items():
-                if any([
-                    sig_pattern.search(c) or
-                    sig_pattern.search(dtype(c).name)
+                if any(
+                    sig_pattern.search(c) or sig_pattern.search(dtype(c).name)
                     for c in chars
-                ]):
+                ):
                     matching_chars[chars] = targets
             if matching_chars:
                 matching_sigs[k] = matching_chars

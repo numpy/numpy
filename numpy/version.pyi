@@ -1,10 +1,6 @@
-import sys
-from typing import Final, TypeAlias
+from typing import Final
 
-if sys.version_info >= (3, 11):
-    from typing import LiteralString
-else:
-    LiteralString: TypeAlias = str
+from typing_extensions import LiteralString
 
 __all__ = (
     '__version__',

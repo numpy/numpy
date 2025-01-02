@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 
 f2py2e - Fortran to Python C/API generator. 2nd Edition.
@@ -15,10 +14,7 @@ import sys
 import os
 import pprint
 import re
-from pathlib import Path
-from itertools import dropwhile
 import argparse
-import copy
 
 from . import crackfortran
 from . import rules
@@ -547,7 +543,7 @@ class CombineIncludePaths(argparse.Action):
             include_paths_set.update(values.split(':'))
         else:
             include_paths_set.add(values)
-        setattr(namespace, 'include_paths', list(include_paths_set))
+        namespace.include_paths = list(include_paths_set)
 
 def f2py_parser():
     parser = argparse.ArgumentParser(add_help=False)

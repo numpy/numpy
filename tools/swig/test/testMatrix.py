@@ -5,9 +5,11 @@ import unittest
 
 # Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
-if major == 0: BadListError = TypeError
-else:          BadListError = ValueError
+major, minor = [int(d) for d in np.__version__.split(".")[:2]]
+if major == 0:
+    BadListError = TypeError
+else:
+    BadListError = ValueError
 
 import Matrix
 
@@ -17,7 +19,7 @@ class MatrixTestCase(unittest.TestCase):
 
     def __init__(self, methodName="runTests"):
         unittest.TestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
     # Test (type IN_ARRAY2[ANY][ANY]) typemap
@@ -240,7 +242,7 @@ class MatrixTestCase(unittest.TestCase):
 class scharTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "schar"
+        self.typeStr = "schar"
         self.typeCode = "b"
 
 ######################################################################
@@ -248,7 +250,7 @@ class scharTestCase(MatrixTestCase):
 class ucharTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "uchar"
+        self.typeStr = "uchar"
         self.typeCode = "B"
 
 ######################################################################
@@ -256,7 +258,7 @@ class ucharTestCase(MatrixTestCase):
 class shortTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "short"
+        self.typeStr = "short"
         self.typeCode = "h"
 
 ######################################################################
@@ -264,7 +266,7 @@ class shortTestCase(MatrixTestCase):
 class ushortTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "ushort"
+        self.typeStr = "ushort"
         self.typeCode = "H"
 
 ######################################################################
@@ -272,7 +274,7 @@ class ushortTestCase(MatrixTestCase):
 class intTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "int"
+        self.typeStr = "int"
         self.typeCode = "i"
 
 ######################################################################
@@ -280,7 +282,7 @@ class intTestCase(MatrixTestCase):
 class uintTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "uint"
+        self.typeStr = "uint"
         self.typeCode = "I"
 
 ######################################################################
@@ -288,7 +290,7 @@ class uintTestCase(MatrixTestCase):
 class longTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "long"
+        self.typeStr = "long"
         self.typeCode = "l"
 
 ######################################################################
@@ -296,7 +298,7 @@ class longTestCase(MatrixTestCase):
 class ulongTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "ulong"
+        self.typeStr = "ulong"
         self.typeCode = "L"
 
 ######################################################################
@@ -304,7 +306,7 @@ class ulongTestCase(MatrixTestCase):
 class longLongTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "longLong"
+        self.typeStr = "longLong"
         self.typeCode = "q"
 
 ######################################################################
@@ -312,7 +314,7 @@ class longLongTestCase(MatrixTestCase):
 class ulongLongTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "ulongLong"
+        self.typeStr = "ulongLong"
         self.typeCode = "Q"
 
 ######################################################################
@@ -320,7 +322,7 @@ class ulongLongTestCase(MatrixTestCase):
 class floatTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "float"
+        self.typeStr = "float"
         self.typeCode = "f"
 
 ######################################################################
@@ -328,10 +330,11 @@ class floatTestCase(MatrixTestCase):
 class doubleTestCase(MatrixTestCase):
     def __init__(self, methodName="runTest"):
         MatrixTestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
 ######################################################################
+
 
 if __name__ == "__main__":
 

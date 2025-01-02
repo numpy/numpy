@@ -1,3 +1,4 @@
+import os
 import re
 
 # START OF CODE VENDORED FROM `numpy.distutils.from_template`
@@ -67,16 +68,17 @@ def parse_structure(astr):
         if function_start_re.match(astr, start, m.end()):
             while True:
                 i = astr.rfind('\n', ind, start)
-                if i==-1:
+                if i == -1:
                     break
                 start = i
-                if astr[i:i+7]!='\n     $':
+                if astr[i:i + 7] != '\n     $':
                     break
         start += 1
         m = routine_end_re.search(astr, m.end())
-        ind = end = m and m.end()-1 or len(astr)
+        ind = end = m and m.end() - 1 or len(astr)
         spanlist.append((start, end))
     return spanlist
+
 
 template_re = re.compile(r"<\s*(\w[\w\d]*)\s*>")
 named_re = re.compile(r"<\s*(\w[\w\d]*)\s*=\s*(.*?)\s*>")
@@ -96,6 +98,7 @@ def find_and_remove_repl_patterns(astr):
     names = find_repl_patterns(astr)
     astr = re.subn(named_re, '', astr)[0]
     return astr, names
+
 
 item_re = re.compile(r"\A\\(?P<index>\d+)\Z")
 def conv(astr):
@@ -142,8 +145,9 @@ def expand_sub(substr, names):
             lnames[name] = thelist
         return "<%s>" % name
 
-    substr = list_re.sub(listrepl, substr) # convert all lists to named templates
-                                           # newnames are constructed as needed
+    # convert all lists to named templates
+    # new names are constructed as needed
+    substr = list_re.sub(listrepl, substr) 
 
     numsubs = None
     base_rule = None
@@ -172,7 +176,7 @@ def expand_sub(substr, names):
 
     def namerepl(mobj):
         name = mobj.group(1)
-        return rules.get(name, (k+1)*[name])[k]
+        return rules.get(name, (k + 1) * [name])[k]
 
     newstr = ''
     for k in range(numsubs):
@@ -196,10 +200,11 @@ def process_str(allstr):
         writestr += cleanedstr
         names.update(defs)
         writestr += expand_sub(newstr[sub[0]:sub[1]], names)
-        oldend =  sub[1]
+        oldend = sub[1]
     writestr += newstr[oldend:]
 
     return writestr
+
 
 include_src_re = re.compile(r"(\n|\A)\s*include\s*['\"](?P<name>[\w\d./\\]+\.src)['\"]", re.I)
 
@@ -224,6 +229,7 @@ def resolve_includes(source):
 def process_file(source):
     lines = resolve_includes(source)
     return process_str(''.join(lines))
+
 
 _special_names = find_repl_patterns('''
 <_c=s,d,c,z>

@@ -184,7 +184,7 @@ class TestRandint:
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
-            tgt = (lbnd + ubnd)//2
+            tgt = (lbnd + ubnd) // 2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
     def test_full_range(self):
@@ -221,15 +221,15 @@ class TestRandint:
         # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool': '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',
-               'int16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
-               'int32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
-               'int64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
-               'int8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',
-               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
-               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
-               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
-               'uint8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}
+        tgt = {'bool':   '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',  # noqa: E501
+               'int16':  '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',  # noqa: E501
+               'int32':  'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',  # noqa: E501
+               'int64':  '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',  # noqa: E501
+               'int8':   '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',  # noqa: E501
+               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',  # noqa: E501
+               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',  # noqa: E501
+               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',  # noqa: E501
+               'uint8':  '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}  # noqa: E501
 
         for dt in self.itype[1:]:
             np.random.seed(1234)
@@ -436,7 +436,7 @@ class TestRandomDist:
         assert_(np.random.choice(arr, replace=True) is a)
 
         # Check 0-d array
-        s = tuple()
+        s = ()
         assert_(not np.isscalar(np.random.choice(2, s, replace=True)))
         assert_(not np.isscalar(np.random.choice(2, s, replace=False)))
         assert_(not np.isscalar(np.random.choice(2, s, replace=True, p=p)))
@@ -756,7 +756,7 @@ class TestRandomDist:
 
     def test_multinomial(self):
         np.random.seed(self.seed)
-        actual = np.random.multinomial(20, [1/6.]*6, size=(3, 2))
+        actual = np.random.multinomial(20, [1 / 6.] * 6, size=(3, 2))
         desired = np.array([[[4, 3, 5, 4, 2, 2],
                              [5, 2, 8, 2, 2, 1]],
                             [[3, 4, 3, 6, 0, 4],
@@ -882,9 +882,9 @@ class TestRandomDist:
         lambig = np.iinfo('l').max
         lamneg = -1
         assert_raises(ValueError, np.random.poisson, lamneg)
-        assert_raises(ValueError, np.random.poisson, [lamneg]*10)
+        assert_raises(ValueError, np.random.poisson, [lamneg] * 10)
         assert_raises(ValueError, np.random.poisson, lambig)
-        assert_raises(ValueError, np.random.poisson, [lambig]*10)
+        assert_raises(ValueError, np.random.poisson, [lambig] * 10)
 
     def test_power(self):
         np.random.seed(self.seed)
@@ -1661,7 +1661,7 @@ class TestThread:
 
     def test_multinomial(self):
         def gen_random(state, out):
-            out[...] = state.multinomial(10, [1/6.]*6, size=10000)
+            out[...] = state.multinomial(10, [1 / 6.] * 6, size=10000)
         self.check_function(gen_random, sz=(10000, 6))
 
 

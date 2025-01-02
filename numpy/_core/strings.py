@@ -10,6 +10,7 @@ from numpy import (
     add, multiply as _multiply_ufunc,
 )
 from numpy._core.multiarray import _vec_string
+from numpy._core.overrides import set_module
 from numpy._core.umath import (
     isalpha,
     isdigit,
@@ -46,6 +47,18 @@ from numpy._core.umath import (
     _rpartition,
     _rpartition_index,
 )
+
+
+def _override___module__():
+    for ufunc in [
+        isalnum, isalpha, isdecimal, isdigit, islower, isnumeric, isspace,
+        istitle, isupper, str_len,
+    ]:
+        ufunc.__module__ = "numpy.strings"
+        ufunc.__qualname__ = ufunc.__name__
+
+
+_override___module__()
 
 
 __all__ = [
@@ -116,6 +129,7 @@ def _clean_args(*args):
     return newargs
 
 
+@set_module("numpy.strings")
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -179,6 +193,7 @@ def multiply(a, i):
     return _multiply_ufunc(a, i, out=out)
 
 
+@set_module("numpy.strings")
 def mod(a, values):
     """
     Return (a % i), that is pre-Python 2.6 string formatting
@@ -215,6 +230,7 @@ def mod(a, values):
         _vec_string(a, np.object_, '__mod__', (values,)), a)
 
 
+@set_module("numpy.strings")
 def find(a, sub, start=0, end=None):
     """
     For each element, return the lowest index in the string where
@@ -252,6 +268,7 @@ def find(a, sub, start=0, end=None):
     return _find_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def rfind(a, sub, start=0, end=None):
     """
     For each element, return the highest index in the string where
@@ -294,6 +311,7 @@ def rfind(a, sub, start=0, end=None):
     return _rfind_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def index(a, sub, start=0, end=None):
     """
     Like `find`, but raises :exc:`ValueError` when the substring is not found.
@@ -327,6 +345,7 @@ def index(a, sub, start=0, end=None):
     return _index_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def rindex(a, sub, start=0, end=None):
     """
     Like `rfind`, but raises :exc:`ValueError` when the substring `sub` is
@@ -360,6 +379,7 @@ def rindex(a, sub, start=0, end=None):
     return _rindex_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def count(a, sub, start=0, end=None):
     """
     Returns an array with the number of non-overlapping occurrences of
@@ -404,6 +424,7 @@ def count(a, sub, start=0, end=None):
     return _count_ufunc(a, sub, start, end)
 
 
+@set_module("numpy.strings")
 def startswith(a, prefix, start=0, end=None):
     """
     Returns a boolean array which is `True` where the string element
@@ -444,6 +465,7 @@ def startswith(a, prefix, start=0, end=None):
     return _startswith_ufunc(a, prefix, start, end)
 
 
+@set_module("numpy.strings")
 def endswith(a, suffix, start=0, end=None):
     """
     Returns a boolean array which is `True` where the string element
@@ -484,6 +506,7 @@ def endswith(a, suffix, start=0, end=None):
     return _endswith_ufunc(a, suffix, start, end)
 
 
+@set_module("numpy.strings")
 def decode(a, encoding=None, errors=None):
     r"""
     Calls :meth:`bytes.decode` element-wise.
@@ -531,6 +554,7 @@ def decode(a, encoding=None, errors=None):
         np.str_(''))
 
 
+@set_module("numpy.strings")
 def encode(a, encoding=None, errors=None):
     """
     Calls :meth:`str.encode` element-wise.
@@ -575,6 +599,7 @@ def encode(a, encoding=None, errors=None):
         np.bytes_(b''))
 
 
+@set_module("numpy.strings")
 def expandtabs(a, tabsize=8):
     """
     Return a copy of each string element where all tab characters are
@@ -626,6 +651,7 @@ def expandtabs(a, tabsize=8):
     return _expandtabs(a, tabsize, out=out)
 
 
+@set_module("numpy.strings")
 def center(a, width, fillchar=' '):
     """
     Return a copy of `a` with its elements centered in a string of
@@ -669,23 +695,31 @@ def center(a, width, fillchar=' '):
     array(['a1b2', '1b2a', 'b2a1', '2a1b'], dtype='<U4')
 
     """
+    width = np.asanyarray(width)
+
+    if not np.issubdtype(width.dtype, np.integer):
+        raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
+
     a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar, dtype=a.dtype)
+    fillchar = np.asanyarray(fillchar)
 
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
             "The fill character must be exactly one character long")
 
-    if a.dtype.char == "T":
+    if np.result_type(a, fillchar).char == "T":
         return _center(a, width, fillchar)
 
+    fillchar = fillchar.astype(a.dtype, copy=False)
     width = np.maximum(str_len(a), width)
     out_dtype = f"{a.dtype.char}{width.max()}"
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
+
     return _center(a, width, fillchar, out=out)
 
 
+@set_module("numpy.strings")
 def ljust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` left-justified in a
@@ -726,23 +760,30 @@ def ljust(a, width, fillchar=' '):
     array(['aAaAaA   ', '  aA     ', 'abBABba  '], dtype='<U9')
 
     """
+    width = np.asanyarray(width)
+    if not np.issubdtype(width.dtype, np.integer):
+        raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
+
     a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar, dtype=a.dtype)
+    fillchar = np.asanyarray(fillchar)
 
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
             "The fill character must be exactly one character long")
 
-    if a.dtype.char == "T":
+    if np.result_type(a, fillchar).char == "T":
         return _ljust(a, width, fillchar)
 
+    fillchar = fillchar.astype(a.dtype, copy=False)
     width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
+
     return _ljust(a, width, fillchar, out=out)
 
 
+@set_module("numpy.strings")
 def rjust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` right-justified in a
@@ -783,23 +824,30 @@ def rjust(a, width, fillchar=' '):
     array(['   aAaAaA', '     aA  ', '  abBABba'], dtype='<U9')
 
     """
+    width = np.asanyarray(width)
+    if not np.issubdtype(width.dtype, np.integer):
+        raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
+
     a = np.asanyarray(a)
-    fillchar = np.asanyarray(fillchar, dtype=a.dtype)
+    fillchar = np.asanyarray(fillchar)
 
     if np.any(str_len(fillchar) != 1):
         raise TypeError(
             "The fill character must be exactly one character long")
 
-    if a.dtype.char == "T":
+    if np.result_type(a, fillchar).char == "T":
         return _rjust(a, width, fillchar)
 
+    fillchar = fillchar.astype(a.dtype, copy=False)
     width = np.maximum(str_len(a), width)
     shape = np.broadcast_shapes(a.shape, width.shape, fillchar.shape)
     out_dtype = f"{a.dtype.char}{width.max()}"
     out = np.empty_like(a, shape=shape, dtype=out_dtype)
+
     return _rjust(a, width, fillchar, out=out)
 
 
+@set_module("numpy.strings")
 def zfill(a, width):
     """
     Return the numeric string left-filled with zeros. A leading
@@ -830,6 +878,10 @@ def zfill(a, width):
     array(['001', '-01', '+01'], dtype='<U3')
 
     """
+    width = np.asanyarray(width)
+    if not np.issubdtype(width.dtype, np.integer):
+        raise TypeError(f"unsupported type {width.dtype} for operand 'width'")
+
     a = np.asanyarray(a)
 
     if a.dtype.char == "T":
@@ -842,6 +894,7 @@ def zfill(a, width):
     return _zfill(a, width, out=out)
 
 
+@set_module("numpy.strings")
 def lstrip(a, chars=None):
     """
     For each element in `a`, return a copy with the leading characters
@@ -889,6 +942,7 @@ def lstrip(a, chars=None):
     return _lstrip_chars(a, chars)
 
 
+@set_module("numpy.strings")
 def rstrip(a, chars=None):
     """
     For each element in `a`, return a copy with the trailing characters
@@ -931,6 +985,7 @@ def rstrip(a, chars=None):
     return _rstrip_chars(a, chars)
 
 
+@set_module("numpy.strings")
 def strip(a, chars=None):
     """
     For each element in `a`, return a copy with the leading and
@@ -977,6 +1032,7 @@ def strip(a, chars=None):
     return _strip_chars(a, chars)
 
 
+@set_module("numpy.strings")
 def upper(a):
     """
     Return an array with the elements converted to uppercase.
@@ -1013,6 +1069,7 @@ def upper(a):
     return _vec_string(a_arr, a_arr.dtype, 'upper')
 
 
+@set_module("numpy.strings")
 def lower(a):
     """
     Return an array with the elements converted to lowercase.
@@ -1049,6 +1106,7 @@ def lower(a):
     return _vec_string(a_arr, a_arr.dtype, 'lower')
 
 
+@set_module("numpy.strings")
 def swapcase(a):
     """
     Return element-wise a copy of the string with
@@ -1088,6 +1146,7 @@ def swapcase(a):
     return _vec_string(a_arr, a_arr.dtype, 'swapcase')
 
 
+@set_module("numpy.strings")
 def capitalize(a):
     """
     Return a copy of ``a`` with only the first character of each element
@@ -1127,6 +1186,7 @@ def capitalize(a):
     return _vec_string(a_arr, a_arr.dtype, 'capitalize')
 
 
+@set_module("numpy.strings")
 def title(a):
     """
     Return element-wise title cased version of string or unicode.
@@ -1168,6 +1228,7 @@ def title(a):
     return _vec_string(a_arr, a_arr.dtype, 'title')
 
 
+@set_module("numpy.strings")
 def replace(a, old, new, count=-1):
     """
     For each element in ``a``, return a copy of the string with
@@ -1192,7 +1253,7 @@ def replace(a, old, new, count=-1):
     See Also
     --------
     str.replace
-    
+
     Examples
     --------
     >>> import numpy as np
@@ -1205,22 +1266,29 @@ def replace(a, old, new, count=-1):
     array(['The dwash was fresh', 'Thwas was it'], dtype='<U19')
 
     """
-    arr = np.asanyarray(a)
-    a_dt = arr.dtype
-    old = np.asanyarray(old, dtype=getattr(old, 'dtype', a_dt))
-    new = np.asanyarray(new, dtype=getattr(new, 'dtype', a_dt))
     count = np.asanyarray(count)
+    if not np.issubdtype(count.dtype, np.integer):
+        raise TypeError(f"unsupported type {count.dtype} for operand 'count'")
 
-    if arr.dtype.char == "T":
+    arr = np.asanyarray(a)
+    old_dtype = getattr(old, 'dtype', None)
+    old = np.asanyarray(old)
+    new_dtype = getattr(new, 'dtype', None)
+    new = np.asanyarray(new)
+
+    if np.result_type(arr, old, new).char == "T":
         return _replace(arr, old, new, count)
 
+    a_dt = arr.dtype
+    old = old.astype(old_dtype if old_dtype else a_dt, copy=False)
+    new = new.astype(new_dtype if new_dtype else a_dt, copy=False)
     max_int64 = np.iinfo(np.int64).max
     counts = _count_ufunc(arr, old, 0, max_int64)
     counts = np.where(count < 0, counts, np.minimum(counts, count))
-
     buffersizes = str_len(arr) + counts * (str_len(new) - str_len(old))
     out_dtype = f"{arr.dtype.char}{buffersizes.max()}"
     out = np.empty_like(arr, shape=buffersizes.shape, dtype=out_dtype)
+
     return _replace(arr, old, new, counts, out=out)
 
 
@@ -1373,11 +1441,20 @@ def _splitlines(a, keepends=None):
     --------
     str.splitlines
 
+    Examples
+    --------
+    >>> np.char.splitlines("first line\\nsecond line")
+    array(list(['first line', 'second line']), dtype=object)
+    >>> a = np.array(["first\\nsecond", "third\\nfourth"])
+    >>> np.char.splitlines(a)
+    array([list(['first', 'second']), list(['third', 'fourth'])], dtype=object)
+
     """
     return _vec_string(
         a, np.object_, 'splitlines', _clean_args(keepends))
 
 
+@set_module("numpy.strings")
 def partition(a, sep):
     """
     Partition each element in ``a`` around ``sep``.
@@ -1421,11 +1498,12 @@ def partition(a, sep):
 
     """
     a = np.asanyarray(a)
-    # TODO switch to copy=False when issues around views are fixed
-    sep = np.array(sep, dtype=a.dtype, copy=True, subok=True)
-    if a.dtype.char == "T":
+    sep = np.asanyarray(sep)
+
+    if np.result_type(a, sep).char == "T":
         return _partition(a, sep)
 
+    sep = sep.astype(a.dtype, copy=False)
     pos = _find_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1444,6 +1522,7 @@ def partition(a, sep):
     return _partition_index(a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
+@set_module("numpy.strings")
 def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.
@@ -1487,11 +1566,12 @@ def rpartition(a, sep):
 
     """
     a = np.asanyarray(a)
-    # TODO switch to copy=False when issues around views are fixed
-    sep = np.array(sep, dtype=a.dtype, copy=True, subok=True)
-    if a.dtype.char == "T":
+    sep = np.asanyarray(sep)
+
+    if np.result_type(a, sep).char == "T":
         return _rpartition(a, sep)
 
+    sep = sep.astype(a.dtype, copy=False)
     pos = _rfind_ufunc(a, sep, 0, MAX)
     a_len = str_len(a)
     sep_len = str_len(sep)
@@ -1511,6 +1591,7 @@ def rpartition(a, sep):
         a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
+@set_module("numpy.strings")
 def translate(a, table, deletechars=None):
     """
     For each element in `a`, return a copy of the string where all

@@ -17,6 +17,10 @@ pickleshare
 towncrier
 toml
 
+
+# for doctests, also needs pytz which is in test_requirements
+scipy-doctest==1.6.0
+
 # interactive documentation utilities
 jupyterlite-sphinx>=0.17.1
 # earliest version which works with Pyodide 0.27.0

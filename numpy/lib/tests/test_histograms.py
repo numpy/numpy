@@ -6,7 +6,6 @@ from numpy.testing import (
     assert_array_almost_equal, assert_raises, assert_allclose,
     assert_array_max_ulp, assert_raises_regex, suppress_warnings,
     )
-from numpy.testing._private.utils import requires_memory
 import pytest
 
 
@@ -100,7 +99,6 @@ class TestHistogram:
         w = np.arange(11) + .5
         with assert_raises_regex(ValueError, "same shape as"):
             h, b = histogram(a, range=[1, 9], weights=w, density=True)
-
 
     def test_type(self):
         # Check the type of the returned histogram
@@ -212,7 +210,7 @@ class TestHistogram:
         assert_array_equal(a, np.array([0]))
         assert_array_equal(b, np.array([0, 1]))
 
-    def test_error_binnum_type (self):
+    def test_error_binnum_type(self):
         # Tests if right Error is raised if bins argument is float
         vals = np.linspace(0.0, 1.0, num=100)
         histogram(vals, 5)
@@ -221,9 +219,9 @@ class TestHistogram:
     def test_finite_range(self):
         # Normal ranges should be fine
         vals = np.linspace(0.0, 1.0, num=100)
-        histogram(vals, range=[0.25,0.75])
-        assert_raises(ValueError, histogram, vals, range=[np.nan,0.75])
-        assert_raises(ValueError, histogram, vals, range=[0.25,np.inf])
+        histogram(vals, range=[0.25, 0.75])
+        assert_raises(ValueError, histogram, vals, range=[np.nan, 0.75])
+        assert_raises(ValueError, histogram, vals, range=[0.25, np.inf])
 
     def test_invalid_range(self):
         # start of range must be < end of range
@@ -270,7 +268,7 @@ class TestHistogram:
             histogram, [np.array(0.4) for i in range(10)] + [np.inf])
 
         # these should not crash
-        np.histogram([np.array(0.5) for i in range(10)] + [.500000000000001])
+        np.histogram([np.array(0.5) for i in range(10)] + [.500000000000002])
         np.histogram([np.array(0.5) for i in range(10)] + [.5])
 
     def test_some_nan_values(self):
@@ -394,6 +392,11 @@ class TestHistogram:
         hist, e = histogram(arr, bins='auto', range=(0, 1))
         edges = histogram_bin_edges(arr, bins='auto', range=(0, 1))
         assert_array_equal(edges, e)
+
+    def test_small_value_range(self):
+        arr = np.array([1, 1 + 2e-16] * 10)
+        with pytest.raises(ValueError, match="Too many bins for data range"):
+            histogram(arr, bins=10)
 
     # @requires_memory(free_bytes=1e10)
     # @pytest.mark.slow
@@ -816,8 +819,8 @@ class TestHistogramdd:
             [1, 3]])
 
         # ensure the number of points in each region is proportional to its area
-        x = np.array([1] + [1]*3 + [7]*3 + [7]*9)
-        y = np.array([7] + [1]*3 + [7]*3 + [1]*9)
+        x = np.array([1] + [1] * 3 + [7] * 3 + [7] * 9)
+        y = np.array([7] + [1] * 3 + [7] * 3 + [1] * 9)
 
         # sanity check that the above worked as intended
         hist, edges = histogramdd((y, x), bins=(y_edges, x_edges))
@@ -825,7 +828,7 @@ class TestHistogramdd:
 
         # resulting histogram should be uniform, since counts and areas are proportional
         hist, edges = histogramdd((y, x), bins=(y_edges, x_edges), density=True)
-        assert_equal(hist, 1 / (8*8))
+        assert_equal(hist, 1 / (8 * 8))
 
     def test_density_non_uniform_1d(self):
         # compare to histogram to show the results are the same

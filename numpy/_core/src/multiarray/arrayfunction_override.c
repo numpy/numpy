@@ -4,6 +4,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#include "numpy/ndarrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "get_attr_string.h"
 #include "npy_import.h"
@@ -25,8 +26,9 @@ get_array_function(PyObject *obj)
         return npy_static_pydata.ndarray_array_function;
     }
 
-    PyObject *array_function = PyArray_LookupSpecial(obj, npy_interned_str.array_function);
-    if (array_function == NULL && PyErr_Occurred()) {
+    PyObject *array_function;
+    if (PyArray_LookupSpecial(
+            obj, npy_interned_str.array_function, &array_function) < 0) {
         PyErr_Clear(); /* TODO[gh-14801]: propagate crashes during attribute access? */
     }
 
@@ -153,10 +155,21 @@ array_function_method_impl(PyObject *func, PyObject *types, PyObject *args,
             return Py_NotImplemented;
         }
     }
-
-    PyObject *implementation = PyObject_GetAttr(func, npy_interned_str.implementation);
-    if (implementation == NULL) {
+    /*
+     * Python functions are wrapped, and we should now call their
+     * implementation, so that we do not dispatch a second time
+     * on possible subclasses.
+     * C functions that can be overridden with "like" are not wrapped and
+     * thus do not have an _implementation attribute, but since the like
+     * keyword has been removed, we can safely call those directly.
+     */
+    PyObject *implementation;
+    if (PyObject_GetOptionalAttr(
+            func, npy_interned_str.implementation, &implementation) < 0) {
         return NULL;
+    }
+    else if (implementation == NULL) {
+        return PyObject_Call(func, args, kwargs);
     }
     PyObject *result = PyObject_Call(implementation, args, kwargs);
     Py_DECREF(implementation);

@@ -434,7 +434,7 @@ With ``np.reshape``, you can specify a few optional parameters::
 
 ``a`` is the array to be reshaped.
 
-``newshape`` is the new shape you want. You can specify an integer or a tuple of
+``shape`` is the new shape you want. You can specify an integer or a tuple of
 integers. If you specify an integer, the result will be an array of that length.
 The shape should be compatible with the original shape.
 
@@ -668,7 +668,10 @@ where you want to slice your array. ::
   array([4, 5, 6, 7, 8])
 
 Here, you grabbed a section of your array from index position 3 through index
-position 8.
+position 8 but not including position 8 itself.
+
+*Reminder: Array indexes begin at 0. This means the first element of the array is at index 0,
+the second element is at index 1, and so on.*
 
 You can also stack two existing arrays, both vertically and horizontally. Let's
 say you have two arrays, ``a1`` and ``a2``::

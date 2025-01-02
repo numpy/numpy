@@ -32,7 +32,7 @@ hypothesis.configuration.set_hypothesis_home_dir(
 
 # We register two custom profiles for Numpy - for details see
 # https://hypothesis.readthedocs.io/en/latest/settings.html
-# The first is designed for our own CI runs; the latter also 
+# The first is designed for our own CI runs; the latter also
 # forces determinism and is designed for use via np.test()
 hypothesis.settings.register_profile(
     name="numpy-profile", deadline=None, print_blob=True,
@@ -42,8 +42,8 @@ hypothesis.settings.register_profile(
     deadline=None, print_blob=True, database=None, derandomize=True,
     suppress_health_check=list(hypothesis.HealthCheck),
 )
-# Note that the default profile is chosen based on the presence 
-# of pytest.ini, but can be overridden by passing the 
+# Note that the default profile is chosen based on the presence
+# of pytest.ini, but can be overridden by passing the
 # --hypothesis-profile=NAME argument to pytest.
 _pytest_ini = os.path.join(os.path.dirname(__file__), "..", "pytest.ini")
 hypothesis.settings.load_profile(
@@ -150,23 +150,6 @@ def env_setup(monkeypatch):
     monkeypatch.setenv('PYTHONHASHSEED', '0')
 
 
-@pytest.fixture(params=[True, False])
-def weak_promotion(request):
-    """
-    Fixture to ensure "legacy" promotion state or change it to use the new
-    weak promotion (plus warning).  `old_promotion` should be used as a
-    parameter in the function.
-    """
-    state = numpy._get_promotion_state()
-    if request.param:
-        numpy._set_promotion_state("weak_and_warn")
-    else:
-        numpy._set_promotion_state("legacy")
-
-    yield request.param
-    numpy._set_promotion_state(state)
-
-
 if HAVE_SCPDT:
 
     @contextmanager
@@ -211,6 +194,9 @@ if HAVE_SCPDT:
     dt_config.rndm_markers.add('#uninitialized')
     dt_config.rndm_markers.add('# uninitialized')
 
+    # make the checker pick on mismatched dtypes
+    dt_config.strict_check = True
+
     import doctest
     dt_config.optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
 
@@ -218,12 +204,12 @@ if HAVE_SCPDT:
     dt_config.check_namespace['StringDType'] = numpy.dtypes.StringDType
 
     # temporary skips
-    dt_config.skiplist = set([
+    dt_config.skiplist = {
         'numpy.savez',    # unclosed file
         'numpy.matlib.savez',
         'numpy.__array_namespace_info__',
         'numpy.matlib.__array_namespace_info__',
-    ])
+    }
 
     # xfail problematic tutorials
     dt_config.pytest_extra_xfail = {
