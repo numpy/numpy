@@ -48,7 +48,6 @@ String operations
    rpartition
    rsplit
    rstrip
-   slice
    split
    splitlines
    strip
