@@ -46,6 +46,7 @@ String operations
    rjust
    rpartition
    rstrip
+   slice
    strip
    swapcase
    title
