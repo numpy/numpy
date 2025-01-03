@@ -668,7 +668,7 @@ npy__cpu_init_features(void)
 
 /***************** LoongArch ******************/
 
-#elif defined(__loongarch64)
+#elif defined(__loongarch__)
 
 #include <sys/auxv.h>
 #include <asm/hwcap.h>
