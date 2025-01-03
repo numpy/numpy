@@ -2195,9 +2195,9 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
     npy_string_allocator *iallocator = allocators[0];
     npy_string_allocator *oallocator = allocators[4];
 
-    // Build up an index mapping the codepoints to byte offsets in the encoded
+    // Build up an index mapping codepoint indices to locations in the encoded
     // string.
-    std::vector<int> codepoint_offsets;
+    std::vector<unsigned char *> codepoint_offsets;
 
     while (N--) {
         // get the slice
@@ -2219,8 +2219,11 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
             goto fail;
         }
 
-        // determine number of codepoints in string
+        // number of codepoints in string
         size_t num_codepoints = 0;
+        // leaves capacity the same as in previous loop iterations to avoid
+        // heap thrashing
+        codepoint_offsets.clear();
         {
             const char *inbuf_ptr = is.buf;
             const char *inbuf_ptr_end = is.buf + is.size;
@@ -2230,13 +2233,11 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
                 inbuf_ptr_end--;
             }
 
-            // count codepoints and build codepoint_offsets
-            codepoint_offsets.clear();
             while (inbuf_ptr < inbuf_ptr_end) {
                 num_codepoints++;
                 int num_bytes = num_bytes_for_utf8_character(
-                        (const unsigned char *)inbuf_ptr);
-                codepoint_offsets.push_back(inbuf_ptr - is.buf);
+                        ((unsigned char *)inbuf_ptr));
+                codepoint_offsets.push_back((unsigned char *)inbuf_ptr);
                 inbuf_ptr += num_bytes;
             }
         }
@@ -2246,47 +2247,31 @@ slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
         npy_intp slice_length =
                 PySlice_AdjustIndices(num_codepoints, &start, &stop, step);
 
-        // first pass: compute outsize
-        size_t outsize = 0;
-        if (step > 0) {
-            for (npy_intp i = start; i < stop; i += step) {
-                outsize += num_bytes_for_utf8_character(
-                        (const unsigned char *)is.buf + codepoint_offsets[i]);
-            }
-        }
-        else {
-            for (npy_intp i = start; i > stop; i += step) {
-                outsize += num_bytes_for_utf8_character(
-                        (const unsigned char *)is.buf + codepoint_offsets[i]);
-            }
+        // compute outsize
+        npy_intp outsize = 0;
+        for (int i = start; step > 0 ? i < stop : i > stop; i += step) {
+            outsize += num_bytes_for_utf8_character(codepoint_offsets[i]);
         }
 
         char *buf = NULL;
         if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
             goto fail;
         }
+
         /* explicitly discard const; initializing new buffer */
         buf = (char *)os.buf;
 
         if (outsize > 0) {
-            // second pass: iterate over slice and copy each character of the
-            // string
-            Buffer<ENCODING::UTF8> outbuf(buf, outsize);
             if (step == 1) {
                 // easy case, use memcpy
-                memcpy(outbuf.buf, is.buf + codepoint_offsets[start], outsize);
+                memcpy(buf, codepoint_offsets[start], outsize);
             }
             else {
-                // general case, find each character of the output string and
-                // copy it into the output
                 npy_intp i_idx = start, o_idx = 0;
                 while (o_idx < slice_length) {
-                    int num_bytes = num_bytes_for_utf8_character(
-                            (const unsigned char *)is.buf +
-                            codepoint_offsets[i_idx]);
-                    memcpy(outbuf.buf, is.buf + codepoint_offsets[i_idx],
-                        num_bytes);
-                    outbuf.advance_chars_or_bytes(num_bytes);
+                    int num_bytes = num_bytes_for_utf8_character(codepoint_offsets[i_idx]);
+                    memcpy(buf, codepoint_offsets[i_idx], num_bytes);
+                    buf += num_bytes;
                     o_idx++;
                     i_idx += step;
                 }
