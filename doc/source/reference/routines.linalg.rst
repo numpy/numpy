@@ -78,7 +78,7 @@ Decompositions
 .. autosummary::
    :toctree: generated/
 
-   linalg.cholesky   
+   linalg.cholesky
    linalg.qr
    linalg.svd
    linalg.svdvals
