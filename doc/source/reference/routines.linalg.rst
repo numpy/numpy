@@ -60,6 +60,7 @@ Matrix and vector products
    linalg.vecdot
    inner
    outer
+   linalg.outer
    matmul
    linalg.matmul (Array API compatible location)
    matvec
@@ -71,7 +72,7 @@ Matrix and vector products
    linalg.matrix_power
    kron
    linalg.cross
-   linalg.outer
+   
 
 Decompositions
 --------------
