@@ -71,14 +71,14 @@ Matrix and vector products
    linalg.matrix_power
    kron
    linalg.cross
+   linalg.outer
 
 Decompositions
 --------------
 .. autosummary::
    :toctree: generated/
 
-   linalg.cholesky
-   linalg.outer
+   linalg.cholesky   
    linalg.qr
    linalg.svd
    linalg.svdvals
