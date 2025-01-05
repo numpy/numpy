@@ -1526,7 +1526,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
     """
 
-    class WriteWrap
+    class WriteWrap:
         """Convert to bytes on bytestream inputs."""
         def __init__(self, fh, encoding):
             self.fh = fh
@@ -1572,7 +1572,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
     try:
         X = np.asarray(X)
-
         # Handle 1-dimensional arrays
         if X.ndim == 0 or X.ndim > 2:
             raise ValueError(
@@ -1582,7 +1581,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             if X.dtype.names is None:
                 X = np.atleast_2d(X).T
                 ncol = 1
-
             # Complex dtype -- each field indicates a separate column
             else:
                 ncol = len(X.dtype.names)
