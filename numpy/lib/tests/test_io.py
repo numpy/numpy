@@ -637,6 +637,37 @@ class TestSaveTxt:
             pytest.xfail("subprocess got a SIGKILL, apparently free memory was not sufficient")
         assert p.exitcode == 0
 
+    def test_fstring_fmt(self):
+        # Test fstring_fmt with simple data
+        a = np.array([[1, 2], [3, 4]])
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt=["{:.2f}", "{:.2f}"])
+        assert c.getvalue().decode('utf-8') == "1.00 2.00\n3.00 4.00\n"
+
+        # Test fstring_fmt with 1D array
+        a = np.array([1, 2, 3, 4])
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:03d}")
+        c.seek(0)
+        assert_equal(c.readlines(), [b'001\n', b'002\n', b'003\n', b'004\n'])
+
+        # Test fstring_fmt with headers and footers
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:03d}", header="Header", footer="Footer")
+        c.seek(0)
+        assert_equal(c.read(), b"# Header\n001\n002\n003\n004\n# Footer\n")
+
+        # Test fstring_fmt with invalid format
+        c = BytesIO()
+        assert_raises(ValueError, np.savetxt, c, a, fstring_fmt="{:invalid}")
+
+        # Test fstring_fmt with delimiter
+        a = np.array([[1, 2], [3, 4]])
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:d},{:d}", delimiter=",")
+        c.seek(0)
+        assert c.read().decode('utf-8').strip() == "1,2\n3,4"
+
 class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
         # Test that we can load data from a compressed file

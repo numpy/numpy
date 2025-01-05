@@ -1527,8 +1527,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     """
 
     class WriteWrap:
-        """Convert to bytes on bytestream inputs."""
-
         def __init__(self, fh, encoding):
             self.fh = fh
             self.encoding = encoding
@@ -1547,57 +1545,47 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 self.fh.write(v.encode(self.encoding))
 
         def write_normal(self, v):
-            self.fh.write(asunicode(v))
+            self.fh.write(v)
 
         def first_write(self, v):
             try:
                 self.write_normal(v)
                 self.write = self.write_normal
             except TypeError:
-                # input is probably a bytestream
                 self.write_bytes(v)
                 self.write = self.write_bytes
 
     own_fh = False
     if isinstance(fname, os.PathLike):
         fname = os.fspath(fname)
-    if _is_string_like(fname):
-        # datasource doesn't support creating a new file ...
+    if isinstance(fname, str):
         open(fname, 'wt').close()
         fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
         own_fh = True
     elif hasattr(fname, 'write'):
-        # wrap to handle byte output streams
         fh = WriteWrap(fname, encoding or 'latin1')
     else:
         raise ValueError('fname must be a string or file handle')
 
     try:
         X = np.asarray(X)
-
-        # Handle 1-dimensional arrays
         if X.ndim == 0 or X.ndim > 2:
             raise ValueError(
                 "Expected 1D or 2D array, got %dD array instead" % X.ndim)
         elif X.ndim == 1:
-            # Common case -- 1d array of numbers
             if X.dtype.names is None:
                 X = np.atleast_2d(X).T
                 ncol = 1
-
-            # Complex dtype -- each field indicates a separate column
             else:
                 ncol = len(X.dtype.names)
         else:
             ncol = X.shape[1]
 
         iscomplex_X = np.iscomplexobj(X)
-        # `fmt` can be a string with multiple insertion points or a
-        # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
         if fstring_fmt:
             if isinstance(fstring_fmt, str):
-                fstring_fmt = [fstring_fmt] * ncol
-            elif len(fstring_fmt) != ncol:
+                fstring_fmt = fstring_fmt.split(delimiter)
+            if len(fstring_fmt) != ncol:
                 raise ValueError("fstring_fmt has wrong shape. %s" % str(fstring_fmt))
             format_row = delimiter.join(fstring_fmt) + newline
         else:
@@ -1629,6 +1617,9 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             fh.write(comments + header + newline)
         if fstring_fmt:
             for row in X:
+                if iscomplex_X:
+                    row = [(item.real, item.imag) for item in row]
+                    row = [item for sublist in row for item in sublist]
                 row_formatted = format_row.format(*row).rstrip('\n')
                 fh.write(row_formatted + newline)
         elif iscomplex_X:
