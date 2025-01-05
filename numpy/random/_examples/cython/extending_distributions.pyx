@@ -12,6 +12,8 @@ from numpy.random import PCG64
 from numpy.random.c_distributions cimport (
       random_standard_uniform_fill, random_standard_uniform_fill_f)
 
+np.import_array()
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
