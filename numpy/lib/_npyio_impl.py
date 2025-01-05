@@ -1526,7 +1526,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
     """
 
-    class WriteWrap:
+    class WriteWrap
+        """Convert to bytes on bytestream inputs."""
         def __init__(self, fh, encoding):
             self.fh = fh
             self.encoding = encoding
@@ -1552,6 +1553,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 self.write_normal(v)
                 self.write = self.write_normal
             except TypeError:
+                # input is probably a bytestream
                 self.write_bytes(v)
                 self.write = self.write_bytes
 
@@ -1563,19 +1565,25 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
         own_fh = True
     elif hasattr(fname, 'write'):
+        # wrap to handle byte output streams
         fh = WriteWrap(fname, encoding or 'latin1')
     else:
         raise ValueError('fname must be a string or file handle')
 
     try:
         X = np.asarray(X)
+
+        # Handle 1-dimensional arrays
         if X.ndim == 0 or X.ndim > 2:
             raise ValueError(
                 "Expected 1D or 2D array, got %dD array instead" % X.ndim)
         elif X.ndim == 1:
+            # Common case -- 1d array of numbers
             if X.dtype.names is None:
                 X = np.atleast_2d(X).T
                 ncol = 1
+
+            # Complex dtype -- each field indicates a separate column
             else:
                 ncol = len(X.dtype.names)
         else:
