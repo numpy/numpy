@@ -21,6 +21,7 @@ from numpy import (
     str_,
     bytes_,
 )
+from ._nbit_base import _32Bit, _64Bit
 from ._nested_sequence import _NestedSequence
 from ._shape import _Shape
 
@@ -163,6 +164,11 @@ _ArrayLikeAnyString_co: TypeAlias = (
     _ArrayLikeBytes_co |
     _ArrayLikeString_co
 )
+
+__Float64_co: TypeAlias = np.floating[_64Bit] | np.float32 | np.float16 | np.integer | np.bool
+__Complex128_co: TypeAlias = np.number[_64Bit] | np.number[_32Bit] | np.float16 | np.integer | np.bool
+_ArrayLikeFloat64_co: TypeAlias = _DualArrayLike[dtype[__Float64_co], float | int]
+_ArrayLikeComplex128_co: TypeAlias = _DualArrayLike[dtype[__Complex128_co], complex | float | int]
 
 # NOTE: This includes `builtins.bool`, but not `numpy.bool`.
 _ArrayLikeInt: TypeAlias = _DualArrayLike[
