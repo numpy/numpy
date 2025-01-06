@@ -87,17 +87,16 @@ _DualArrayLike: TypeAlias = (
 )
 
 if sys.version_info >= (3, 12):
-    from collections.abc import Buffer
-
-    ArrayLike: TypeAlias = Buffer | _DualArrayLike[
-        dtype[Any],
-        bool | int | float | complex | str | bytes,
-    ]
+    from collections.abc import Buffer as _Buffer
 else:
-    ArrayLike: TypeAlias = _DualArrayLike[
-        dtype[Any],
-        bool | int | float | complex | str | bytes,
-    ]
+    @runtime_checkable
+    class _Buffer(Protocol):
+        def __buffer__(self, flags: int, /) -> memoryview: ...
+
+ArrayLike: TypeAlias = _Buffer | _DualArrayLike[
+    dtype[Any],
+    bool | int | float | complex | str | bytes,
+]
 
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`
 # given the casting rules `same_kind`

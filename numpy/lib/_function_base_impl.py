@@ -823,9 +823,9 @@ def select(condlist, choicelist, default=0):
 
     >>> x = np.arange(6)
     >>> condlist = [x<3, x>3]
-    >>> choicelist = [x, x**2]
+    >>> choicelist = [-x, x**2]
     >>> np.select(condlist, choicelist, 42)
-    array([ 0,  1,  2, 42, 16, 25])
+    array([ 0,  -1,  -2, 42, 16, 25])
 
     When multiple conditions are satisfied, the first one encountered in
     `condlist` is used.
