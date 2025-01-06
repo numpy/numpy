@@ -50,7 +50,7 @@ npyiter_prepare_operands(int nop,
                     PyArray_Descr **op_dtype,
                     npy_uint32 flags,
                     npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
-                    npy_int8 *out_maskop);
+                    int *out_maskop);
 static int
 npyiter_check_casting(int nop, PyArrayObject **op,
                     PyArray_Descr **op_dtype,
@@ -100,7 +100,7 @@ npyiter_get_priority_subtype(int nop, PyArrayObject **op,
 static int
 npyiter_allocate_transfer_functions(NpyIter *iter);
 
-static void
+static int
 npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize);
 
 /*NUMPY_API
@@ -157,13 +157,6 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 #endif
 
     NPY_IT_TIME_POINT(c_start);
-
-    if (nop > NPY_MAXARGS) {
-        PyErr_Format(PyExc_ValueError,
-            "Cannot construct an iterator with more than %d operands "
-            "(%d were requested)", NPY_MAXARGS, nop);
-        return NULL;
-    }
 
     /*
      * Before 1.8, if `oa_ndim == 0`, this meant `op_axes != NULL` was an error.
@@ -433,7 +426,10 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     /* If buffering is set prepare it */
     if (itflags & NPY_ITFLAG_BUFFER) {
-        npyiter_find_buffering_setup(iter, buffersize);
+        if (npyiter_find_buffering_setup(iter, buffersize) < 0) {
+            NpyIter_Deallocate(iter);
+            return NULL;
+        }
 
         /*
          * Initialize for use in FirstVisit, which may be called before
@@ -1168,10 +1164,10 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                     PyArray_Descr **op_dtype,
                     npy_uint32 flags,
                     npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
-                    npy_int8 *out_maskop)
+                    int *out_maskop)
 {
     int iop, i;
-    npy_int8 maskop = -1;
+    int maskop = -1;
     int any_writemasked_ops = 0;
 
     /*
@@ -2001,7 +1997,7 @@ operand_different_than_broadcast: {
  * In theory, the reduction could also span multiple axes if other operands
  * are buffered.  We do not try to discover this.
  */
-static void
+static int
 npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
 {
     int nop = iter->nop;
@@ -2009,14 +2005,19 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
     npy_uint32 itflags = iter->itflags;
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
 
+    /* Per operand space; could also reuse an iterator field initialized later */
+    NPY_ALLOC_WORKSPACE(dim_scratch_space, int, 10, 2 * nop);
+    if (dim_scratch_space == NULL) {
+        return -1;
+    }
     /*
      * We check two things here, first how many operand dimensions can be
      * iterated using a single stride (all dimensions are consistent),
      * and second, whether we found a reduce dimension for the operand.
      * That is an outer dimension a reduce would have to take place on.
      */
-    int op_single_stride_dims[NPY_MAXARGS];
-    int op_reduce_outer_dim[NPY_MAXARGS];
+    int *op_single_stride_dims = dim_scratch_space;
+    int *op_reduce_outer_dim = dim_scratch_space + nop;
 
     npy_intp sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
@@ -2312,7 +2313,8 @@ npyiter_find_buffering_setup(NpyIter *iter, npy_intp buffersize)
     /* Core starts at 0 initially, if needed it is set in goto index. */
     NIT_BUFFERDATA(iter)->coreoffset = 0;
 
-    return;
+    npy_free_workspace(dim_scratch_space);
+    return 0;
 }
 
 
