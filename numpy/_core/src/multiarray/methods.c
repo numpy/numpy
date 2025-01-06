@@ -1,8 +1,4 @@
 #include "numpy/ndarraytypes.h"
-#include "pytypedefs.h"
-#include "tupleobject.h"
-#include <stdatomic.h>
-#include <string.h>
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
@@ -1911,10 +1907,11 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 
         // check if nparray is transposed_contiguous
         for (int i = n - 1, check_s = 1; i >= 0; i--) {
-            if (check_s * self->descr->elsize != items[i].stride) {
+            if (check_s * PyArray_DESCR(self)->elsize !=
+                items[i].stride) {
                 return array_reduce_ex_regular(self, protocol);
             }
-            check_s *= self->dimensions[items[i].perm];
+            check_s *= PyArray_DIMS(self)[items[i].perm];
         }
 
         rev_perm = PyTuple_New(n);
