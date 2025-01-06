@@ -1900,7 +1900,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     else {
         order = 'K'; // won't be used
         const int n = PyArray_NDIM(self);
-        npy_stride_sort_item items[n];
+        npy_stride_sort_item items[NPY_MAXDIMS];
         // sort (strde, perm) as descending = transpose to C
         PyArray_CreateSortedStridePerm(n, PyArray_STRIDES(self), items);
 
@@ -1915,7 +1915,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 
         rev_perm = PyTuple_New(n);
         PyArray_Dims perm;
-        npy_intp d[n];
+        npy_intp d[NPY_MAXDIMS];
         for (int i = 0; i < n; i++) {
             d[i] = items[i].perm;
             PyTuple_SET_ITEM(rev_perm, items[i].perm, PyLong_FromLong(i));
