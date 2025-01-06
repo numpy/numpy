@@ -900,6 +900,7 @@ static NPY_CASTING string_to_int_resolve_descriptors(
 // Example template parameters:
 // TNpyType: npy_int8
 // TNpyLongType: npy_longlong
+// TClongType: One of {long long, unsigned long long}
 // typenum: NPY_BYTE
 template <typename TNpyType, typename TNpyLongType, typename TClongType, NPY_TYPES typenum>
 static int string_to_int(
@@ -2339,20 +2340,20 @@ get_casts() {
     casts[cast_i++] = getIntToStringCastSpec<npy_uint64, unsigned long long, NPY_UINT64>();
 
 #if NPY_SIZEOF_BYTE == NPY_SIZEOF_SHORT
-    casts[cast_i++] = getStringToIntCastSpec<npy_byte,  npy_longlong,       NPY_BYTE>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_ubyte, npy_ulonglong,      NPY_UBYTE>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_byte,  npy_longlong,  long long,          NPY_BYTE>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_ubyte, npy_ulonglong, unsigned long long, NPY_UBYTE>();
     casts[cast_i++] = getIntToStringCastSpec<npy_byte,  long long,          NPY_BYTE>();
     casts[cast_i++] = getIntToStringCastSpec<npy_ubyte, unsigned long long, NPY_UBYTE>();
 #endif
 #if NPY_SIZEOF_SHORT == NPY_SIZEOF_INT
-    casts[cast_i++] = getStringToIntCastSpec<npy_short,  npy_longlong,       NPY_SHORT>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_ushort, npy_ulonglong,      NPY_USHORT>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_short,  npy_longlong,  long long,          NPY_SHORT>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_ushort, npy_ulonglong, unsigned long long, NPY_USHORT>();
     casts[cast_i++] = getIntToStringCastSpec<npy_short,  long long,          NPY_SHORT>();
     casts[cast_i++] = getIntToStringCastSpec<npy_ushort, unsigned long long, NPY_USHORT>();
 #endif
 #if NPY_SIZEOF_INT == NPY_SIZEOF_LONG
-    casts[cast_i++] = getStringToIntCastSpec<npy_int,  npy_longlong,       NPY_INT>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_uint, npy_ulonglong,      NPY_UINT>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_int,  npy_longlong,  long long,          NPY_INT>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_uint, npy_ulonglong, unsigned long long, NPY_UINT>();
     casts[cast_i++] = getIntToStringCastSpec<npy_int,  long long,          NPY_INT>();
     casts[cast_i++] = getIntToStringCastSpec<npy_uint, unsigned long long, NPY_UINT>();
 #endif
