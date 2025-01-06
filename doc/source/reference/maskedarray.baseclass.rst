@@ -1,8 +1,5 @@
 .. currentmodule:: numpy.ma
 
-.. for doctests
-   >>> from numpy import ma
-
 .. _numpy.ma.constants:
 
 Constants of the :mod:`numpy.ma` module
@@ -20,10 +17,10 @@ defines several constants.
 
       >>> import numpy as np
 
-      >>> x = ma.array([1, 2, 3], mask=[0, 1, 0])
-      >>> x[1] is ma.masked
+      >>> x = np.ma.array([1, 2, 3], mask=[0, 1, 0])
+      >>> x[1] is np.ma.masked
       True
-      >>> x[-1] = ma.masked
+      >>> x[-1] = np.ma.masked
       >>> x
       masked_array(data=[1, --, --],
                    mask=[False,  True,  True],
