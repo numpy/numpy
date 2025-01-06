@@ -1,8 +1,5 @@
 .. currentmodule:: numpy.ma
 
-.. for doctests
-   >>> from numpy import ma
-
 .. _numpy.ma.constants:
 
 Constants of the :mod:`numpy.ma` module
