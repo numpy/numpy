@@ -6,36 +6,66 @@
 // Get the array-protocol type string for the given type number.
 const char *typenum_to_shortname_cstr(NPY_TYPES typenum) {
     switch (typenum) {
+        #ifdef NPY_INT8
         case NPY_INT8:
             return "i8";
+        #endif
+        #ifdef NPY_INT16
         case NPY_INT16:
             return "i16";
+        #endif
+        #ifdef NPY_INT32
         case NPY_INT32:
             return "i32";
+        #endif
+        #ifdef NPY_INT64
         case NPY_INT64:
             return "i64";
+        #endif
+        #ifdef NPY_UINT8
         case NPY_UINT8:
             return "u8";
+        #endif
+        #ifdef NPY_UINT16
         case NPY_UINT16:
             return "u16";
+        #endif
+        #ifdef NPY_UINT32
         case NPY_UINT32:
             return "u32";
+        #endif
+        #ifdef NPY_UINT64
         case NPY_UINT64:
             return "u64";
+        #endif
+        #ifdef NPY_FLOAT16
         case NPY_FLOAT16:
             return "f16";
+        #endif
+        #ifdef NPY_FLOAT32
         case NPY_FLOAT32:
             return "f32";
+        #endif
+        #ifdef NPY_FLOAT64
         case NPY_FLOAT64:
             return "f64";
+        #endif
+        #ifdef NPY_FLOAT128
         case NPY_FLOAT128:
             return "f128";
+        #endif
+        #ifdef NPY_COMPLEX64
         case NPY_COMPLEX64:
             return "c64";
+        #endif
+        #ifdef NPY_COMPLEX128
         case NPY_COMPLEX128:
             return "c128";
+        #endif
+        #ifdef NPY_COMPLEX256
         case NPY_COMPLEX256:
             return "c256";
+        #endif
         case NPY_BOOL:
             return "?";
         case NPY_OBJECT:
@@ -125,40 +155,70 @@ const char *typenum_to_cstr(NPY_TYPES typenum) {
 // error handling is left to the caller.
 PyArray_DTypeMeta *typenum_to_dtypemeta(NPY_TYPES typenum) {
     switch (typenum) {
+        #ifdef NPY_INT8
         case NPY_INT8:
             return &PyArray_Int8DType;
+        #endif
+        #ifdef NPY_INT16
         case NPY_INT16:
             return &PyArray_Int16DType;
+        #endif
+        #ifdef NPY_INT32
         case NPY_INT32:
             return &PyArray_Int32DType;
+        #endif
+        #ifdef NPY_INT64
         case NPY_INT64:
             return &PyArray_Int64DType;
+        #endif
         case NPY_LONGLONG:
             return &PyArray_LongLongDType;
+        #ifdef NPY_UINT8
         case NPY_UINT8:
             return &PyArray_UInt8DType;
+        #endif
+        #ifdef NPY_UINT16
         case NPY_UINT16:
             return &PyArray_UInt16DType;
+        #endif
+        #ifdef NPY_UINT32
         case NPY_UINT32:
             return &PyArray_UInt32DType;
+        #endif
+        #ifdef NPY_UINT64
         case NPY_UINT64:
             return &PyArray_UInt64DType;
+        #endif
         case NPY_ULONGLONG:
             return &PyArray_ULongLongDType;
+        #ifdef NPY_FLOAT16
         case NPY_FLOAT16:
             return &PyArray_HalfDType;
+        #endif
+        #ifdef NPY_FLOAT32
         case NPY_FLOAT32:
             return &PyArray_FloatDType;
+        #endif
+        #ifdef NPY_FLOAT64
         case NPY_FLOAT64:
             return &PyArray_DoubleDType;
+        #endif
+        #ifdef NPY_FLOAT128
         case NPY_FLOAT128:
             return &PyArray_LongDoubleDType;
+        #endif
+        #ifdef NPY_COMPLEX64
         case NPY_COMPLEX64:
             return &PyArray_CFloatDType;
+        #endif
+        #ifdef NPY_COMPLEX128
         case NPY_COMPLEX128:
             return &PyArray_CDoubleDType;
+        #endif
+        #ifdef NPY_COMPLEX256
         case NPY_COMPLEX256:
             return &PyArray_CLongDoubleDType;
+        #endif
         case NPY_BOOL:
             return &PyArray_BoolDType;
         case NPY_OBJECT:
@@ -1134,7 +1194,7 @@ fail:
 // Long double types do not fit in a (64-bit) PyFloat, so we handle this
 // case specially here.
 template<>
-int string_to_float<npy_float128, nullptr, nullptr>(
+int string_to_float<npy_longdouble, nullptr, nullptr>(
     PyArrayMethod_Context *context,
     char *const data[],
     npy_intp const dimensions[],
@@ -1147,10 +1207,10 @@ int string_to_float<npy_float128, nullptr, nullptr>(
     const npy_static_string *default_string = &descr->default_string;
     npy_intp N = dimensions[0];
     char *in = data[0];
-    npy_float128 *out = (npy_float128 *)data[1];
+    npy_longdouble *out = (npy_longdouble *)data[1];
 
     npy_intp in_stride = strides[0];
-    npy_intp out_stride = strides[1] / sizeof(npy_float128);
+    npy_intp out_stride = strides[1] / sizeof(npy_longdouble);
 
     while (N--) {
         npy_static_string s = {0, NULL};
@@ -1165,7 +1225,7 @@ int string_to_float<npy_float128, nullptr, nullptr>(
 
         char *end = NULL;
         errno = 0;
-        npy_float128 longdouble_value = NumPyOS_ascii_strtold(buf, &end);
+        npy_longdouble longdouble_value = NumPyOS_ascii_strtold(buf, &end);
 
         if (errno == ERANGE) {
             /* strtold returns INFINITY of the correct sign. */
@@ -2307,11 +2367,11 @@ get_casts() {
     casts[cast_i++] = getFloatToStringCastSpec<npy_float16, NPY_FLOAT16>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float32, NPY_FLOAT32>();
 
-    // Special handling for f64 and f128 types because they don't fit in a PyFloat
-    casts[cast_i++] = getStringToFloatCastSpec<npy_float64,  NPY_FLOAT64,  nullptr, nullptr>();
-    casts[cast_i++] = getStringToFloatCastSpec<npy_float128, NPY_FLOAT128, nullptr, nullptr, NPY_METH_NO_FLOATINGPOINT_ERRORS>();
-    casts[cast_i++] = getFloatToStringCastSpec<npy_float64,  NPY_FLOAT64>();
-    casts[cast_i++] = getFloatToStringCastSpec<npy_float128, NPY_FLOAT128, (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
+    // Special handling for f64 and longdouble types because they don't fit in a PyFloat
+    casts[cast_i++] = getStringToFloatCastSpec<npy_float64,  NPY_DOUBLE,  nullptr, nullptr>();
+    casts[cast_i++] = getStringToFloatCastSpec<npy_longdouble, NPY_LONGDOUBLE, nullptr, nullptr, NPY_METH_NO_FLOATINGPOINT_ERRORS>();
+    casts[cast_i++] = getFloatToStringCastSpec<npy_float64,  NPY_DOUBLE>();
+    casts[cast_i++] = getFloatToStringCastSpec<npy_longdouble, NPY_LONGDOUBLE, (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
 
     casts[cast_i++] = getStringToComplexCastSpec<npy_cfloat,      npy_float,      NPY_CFLOAT,      npy_csetrealf, npy_csetimagf>();
     casts[cast_i++] = getStringToComplexCastSpec<npy_cdouble,     npy_double,     NPY_CDOUBLE,     npy_csetreal,  npy_csetimag>();
