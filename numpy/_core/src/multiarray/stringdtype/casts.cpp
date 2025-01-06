@@ -2313,12 +2313,12 @@ get_casts() {
     casts[cast_i++] = getFloatToStringCastSpec<npy_float64,  NPY_FLOAT64>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float128, NPY_FLOAT128, (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
 
-    casts[cast_i++] = getStringToComplexCastSpec<npy_complex64,  npy_float32,  NPY_COMPLEX64,  npy_csetrealf, npy_csetimagf>();
-    casts[cast_i++] = getStringToComplexCastSpec<npy_complex128, npy_float64,  NPY_COMPLEX128, npy_csetreal,  npy_csetimag>();
-    casts[cast_i++] = getStringToComplexCastSpec<npy_complex256, npy_float128, NPY_COMPLEX256, npy_csetreall, npy_csetimagl>();
-    casts[cast_i++] = getFloatToStringCastSpec<npy_complex64,  NPY_COMPLEX64>();
-    casts[cast_i++] = getFloatToStringCastSpec<npy_complex128, NPY_COMPLEX128>();
-    casts[cast_i++] = getFloatToStringCastSpec<npy_complex256, NPY_COMPLEX256>();
+    casts[cast_i++] = getStringToComplexCastSpec<npy_cfloat,      npy_float,      NPY_CFLOAT,      npy_csetrealf, npy_csetimagf>();
+    casts[cast_i++] = getStringToComplexCastSpec<npy_cdouble,     npy_double,     NPY_CDOUBLE,     npy_csetreal,  npy_csetimag>();
+    casts[cast_i++] = getStringToComplexCastSpec<npy_clongdouble, npy_longdouble, NPY_CLONGDOUBLE, npy_csetreall, npy_csetimagl>();
+    casts[cast_i++] = getFloatToStringCastSpec<npy_cfloat,      NPY_CFLOAT>();
+    casts[cast_i++] = getFloatToStringCastSpec<npy_cdouble,     NPY_CDOUBLE>();
+    casts[cast_i++] = getFloatToStringCastSpec<npy_clongdouble, NPY_CLONGDOUBLE>();
 
     casts[cast_i++] = StringToDatetimeCastSpec;
     casts[cast_i++] = DatetimeToStringCastSpec;
