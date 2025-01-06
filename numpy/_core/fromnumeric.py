@@ -64,9 +64,8 @@ def _wrapit(obj, method, *args, **kwds):
 
 
 def _wrapfunc(obj, method, *args, **kwds):
-    try:
-        bound = _get_method(obj, method)
-    except (AttributeError, TypeError):
+    bound = getattr(obj, method, NotImplemented)
+    if not callable(bound):
         # attribute does not exists or is not callable
         return _wrapit(obj, method, *args, **kwds)
 
