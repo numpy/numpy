@@ -1,3 +1,8 @@
+#include "numpy/ndarraytypes.h"
+#include "pytypedefs.h"
+#include "tupleobject.h"
+#include <stdatomic.h>
+#include <string.h>
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
@@ -1866,6 +1871,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     PyObject *picklebuf_args = NULL;
     PyObject *buffer = NULL, *transposed_array = NULL;
     PyArray_Descr *descr = NULL;
+    PyObject *rev_perm = NULL;  // only used in 'K' order
     char order;
 
     descr = PyArray_DESCR(self);
@@ -1882,19 +1888,46 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     }
 
     /* Construct a PickleBuffer of the array */
-
-    if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject*) self) &&
-         PyArray_IS_F_CONTIGUOUS((PyArrayObject*) self)) {
+    if (PyArray_IS_C_CONTIGUOUS((PyArrayObject *)self)) {
+        order = 'C';
+        picklebuf_args = Py_BuildValue("(O)", self);
+        rev_perm = Py_BuildValue("O", Py_None);
+    }
+    else if (PyArray_IS_F_CONTIGUOUS((PyArrayObject *)self)) {
         /* if the array if Fortran-contiguous and not C-contiguous,
          * the PickleBuffer instance will hold a view on the transpose
          * of the initial array, that is C-contiguous. */
         order = 'F';
-        transposed_array = PyArray_Transpose((PyArrayObject*)self, NULL);
+        transposed_array = PyArray_Transpose((PyArrayObject *)self, NULL);
         picklebuf_args = Py_BuildValue("(N)", transposed_array);
+        rev_perm = Py_BuildValue("O", Py_None);
     }
     else {
-        order = 'C';
-        picklebuf_args = Py_BuildValue("(O)", self);
+        order = 'K'; // won't be used
+        const int n = PyArray_NDIM(self);
+        npy_stride_sort_item items[n];
+        // sort (strde, perm) as descending = transpose to C
+        PyArray_CreateSortedStridePerm(n, self->strides, items);
+
+        // check if nparray is transposed_contiguous
+        for (int i = n - 1, check_s = 1; i >= 0; i--) {
+            if (check_s * self->descr->elsize != items[i].stride) {
+                return array_reduce_ex_regular(self, protocol);
+            }
+            check_s *= self->dimensions[items[i].perm];
+        }
+
+        rev_perm = PyTuple_New(n);
+        PyArray_Dims perm;
+        npy_intp d[n];
+        for (int i = 0; i < n; i++) {
+            d[i] = items[i].perm;
+            PyTuple_SET_ITEM(rev_perm, items[i].perm, PyLong_FromLong(i));
+        }
+        perm.ptr = d;
+        perm.len = n;
+        transposed_array = PyArray_Transpose((PyArrayObject *)self, &perm);
+        picklebuf_args = Py_BuildValue("(N)", transposed_array);
     }
     if (picklebuf_args == NULL) {
         Py_DECREF(picklebuf_class);
@@ -1928,10 +1961,15 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         return NULL;
     }
 
-    return Py_BuildValue("N(NONN)",
-                         from_buffer_func, buffer, (PyObject *)descr,
-                         PyObject_GetAttrString((PyObject *)self, "shape"),
-                         PyUnicode_FromStringAndSize(&order, 1));
+
+    PyObject* shape = NULL;
+    if(order == 'K') {
+        shape = PyObject_GetAttrString((PyObject *)transposed_array, "shape");
+    } else {
+        shape = PyObject_GetAttrString((PyObject *)self, "shape");
+    }
+    return Py_BuildValue("N(NONNO)", from_buffer_func, buffer, (PyObject *)descr, shape,
+            PyUnicode_FromStringAndSize(&order, 1), rev_perm);
 }
 
 static PyObject *
@@ -1946,8 +1984,6 @@ array_reduce_ex(PyArrayObject *self, PyObject *args)
 
     descr = PyArray_DESCR(self);
     if ((protocol < 5) ||
-        (!PyArray_IS_C_CONTIGUOUS((PyArrayObject*)self) &&
-         !PyArray_IS_F_CONTIGUOUS((PyArrayObject*)self)) ||
         PyDataType_FLAGCHK(descr, NPY_ITEM_HASOBJECT) ||
         (PyType_IsSubtype(((PyObject*)self)->ob_type, &PyArray_Type) &&
          ((PyObject*)self)->ob_type != &PyArray_Type) ||

@@ -4389,6 +4389,22 @@ class TestPickling:
                                                     buffers=buffers)
 
         assert_equal(f_contiguous_array, depickled_f_contiguous_array)
+    
+    def test_transposed_contiguous_array(self):
+        transposed_contiguous_array = np.random.rand(2,3,4).transpose((1,0,2))
+        buffers = []
+
+        # When using pickle protocol 5, Fortran-contiguous arrays can be
+        # serialized using out-of-band buffers
+        bytes_string = pickle.dumps(transposed_contiguous_array, protocol=5,
+                                    buffer_callback=buffers.append)
+
+        assert len(buffers) > 0
+
+        depickled_transposed_contiguous_array = pickle.loads(bytes_string,
+                                                    buffers=buffers)
+
+        assert_equal(transposed_contiguous_array, depickled_transposed_contiguous_array)
 
     def test_non_contiguous_array(self):
         non_contiguous_array = np.arange(12).reshape(3, 4)[:, :2]
