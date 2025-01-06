@@ -1903,7 +1903,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         const int n = PyArray_NDIM(self);
         npy_stride_sort_item items[n];
         // sort (strde, perm) as descending = transpose to C
-        PyArray_CreateSortedStridePerm(n, self->strides, items);
+        PyArray_CreateSortedStridePerm(n, PyArray_STRIDES(self), items);
 
         // check if nparray is transposed_contiguous
         for (int i = n - 1, check_s = 1; i >= 0; i--) {
