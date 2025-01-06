@@ -29,7 +29,7 @@ jobs:
           platform: x86_64
           install-dir: 'C:\tools\cygwin'
           packages: >-
-            python39=3.9.16-1 python39-devel=3.9.16-1 python39-pip python-pip-wheel
+            python312=3.12.8-1 python312-devel=3.12.8-1 python312-pip python-pip-wheel
             python-setuptools-wheel liblapack-devel liblapack0 gcc-fortran
             gcc-g++ git dash cmake ninja
       - name: Set Windows PATH
@@ -46,35 +46,35 @@ jobs:
       - name: Verify python version
         # Make sure it's the Cygwin one, not a Windows one
         run: |
-          dash -c "which python3.9; /usr/bin/python3.9 --version -V"
+          dash -c "which python3.12; /usr/bin/python3.12 --version -V"
       - name: Build NumPy wheel
         run: |
-          dash -c "/usr/bin/python3.9 -m pip install build pytest hypothesis pytest-xdist Cython meson"
-          dash -c "/usr/bin/python3.9 -m build . --wheel -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack -Csetup-args=-Dcpu-dispatch=none -Csetup-args=-Dcpu-baseline=native"
+          dash -c "/usr/bin/python3.12 -m pip install build pytest hypothesis pytest-xdist Cython meson"
+          dash -c "/usr/bin/python3.12 -m build . --wheel -Csetup-args=-Dblas=blas -Csetup-args=-Dlapack=lapack -Csetup-args=-Dcpu-dispatch=none -Csetup-args=-Dcpu-baseline=native"
       - name: Install NumPy from wheel
         run: |
-          bash -c "/usr/bin/python3.9 -m pip install dist/numpy-*cp39*.whl"
+          bash -c "/usr/bin/python3.12 -m pip install dist/numpy-*cp312*.whl"
       - name: Rebase NumPy compiled extensions
         run: |
-          dash "tools/rebase_installed_dlls_cygwin.sh" 3.9
+          dash "tools/rebase_installed_dlls_cygwin.sh" 3.12
       - name: Run NumPy test suite
         shell: "C:\\tools\\cygwin\\bin\\bash.exe -o igncr -eo pipefail {0}"
         run: |
           cd tools
-          /usr/bin/python3.9 -m pytest --pyargs numpy -n2 -m "not slow"
+          /usr/bin/python3.12 -m pytest --pyargs numpy -n2 -m "not slow"
       - name: Upload wheel if tests fail
         uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         if: failure()
         with:
           name: numpy-cygwin-wheel
-          path: dist/numpy-*cp39*.whl
+          path: dist/numpy-*cp312*.whl
       - name: Check the extension modules on failure
         if: failure()
         run: |
-          dash -c "/usr/bin/python3.9 -m pip show numpy"
-          dash -c "/usr/bin/python3.9 -m pip show -f numpy | grep .dll"
+          dash -c "/usr/bin/python3.12 -m pip show numpy"
+          dash -c "/usr/bin/python3.12 -m pip show -f numpy | grep .dll"
           dash -c "/bin/tr -d '\r' <tools/list_installed_dll_dependencies_cygwin.sh >list_dlls_unix.sh"
-          dash "list_dlls_unix.sh" 3.9
+          dash "list_dlls_unix.sh" 3.12
       - name: Print installed package versions on failure
         if: failure()
         run: |
