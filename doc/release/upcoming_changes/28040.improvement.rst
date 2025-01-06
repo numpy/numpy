@@ -1,0 +1,2 @@
+* Added `fstring_fmt` support to `numpy.savetxt`, enabling Python’s modern
+  `{}`-style string formatting alongside the existing `%-`-style.

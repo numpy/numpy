@@ -1408,7 +1408,6 @@ def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
                         encoding=None, fstring_fmt=None):
     return (X,)
 
-
 @array_function_dispatch(_savetxt_dispatcher)
 def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             footer='', comments='# ', encoding=None, fstring_fmt=None):
@@ -1456,7 +1455,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     fstring_fmt : str or sequence of strs, optional
         A single format ({:.18e}), a sequence of formats, or a
         multi-format string. Overrides `fmt` if provided.
-
 
     See Also
     --------
@@ -1560,7 +1558,9 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
     own_fh = False
     if isinstance(fname, os.PathLike):
         fname = os.fspath(fname)
-    if isinstance(fname, str):
+    if _is_string_like(fname):
+        # Ensure the file exists before opening it with np.lib._datasource.
+        # This is necessary to handle file paths correctly, regardless of fstring_fmt.
         open(fname, 'wt').close()
         fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
         own_fh = True
@@ -1588,6 +1588,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             ncol = X.shape[1]
 
         iscomplex_X = np.iscomplexobj(X)
+
+        # Handle fstring_fmt if provided
         if fstring_fmt:
             if isinstance(fstring_fmt, str):
                 fstring_fmt = fstring_fmt.split(delimiter)
@@ -1595,6 +1597,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 raise ValueError("fstring_fmt has wrong shape. %s" % str(fstring_fmt))
             format_row = delimiter.join(fstring_fmt) + newline
         else:
+            # Handle fmt if fstring_fmt is not provided
             if isinstance(fmt, (list, tuple)):
                 if len(fmt) != ncol:
                     raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
@@ -1621,6 +1624,8 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
             fh.write(comments + header + newline)
+
+        # Write data rows
         if fstring_fmt:
             for row in X:
                 if iscomplex_X:
