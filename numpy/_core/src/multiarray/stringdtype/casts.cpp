@@ -2016,14 +2016,39 @@ string_to_bytes(PyArrayMethod_Context *context, char *const data[],
         }
 
         for (size_t i=0; i<s.size; i++) {
-            if (((unsigned char *)s.buf)[i] > 127) {
+                    if (((unsigned char *)s.buf)[i] > 127) {
                 NPY_ALLOW_C_API_DEF;
                 NPY_ALLOW_C_API;
+                PyObject *str = PyUnicode_FromStringAndSize(s.buf, s.size);
+
+                if (str == NULL) {
+                    PyErr_SetString(
+                        PyExc_UnicodeEncodeError, "Invalid character encountered during unicode encoding."
+                    );
+                    goto fail;
+                }
+
                 PyObject *exc = PyObject_CallFunction(
-                        PyExc_UnicodeEncodeError, "ss#nns", "ascii", s.buf,
-                        (Py_ssize_t)s.size, (Py_ssize_t)i, (Py_ssize_t)(i+1), "ordinal not in range(128)");
+                    PyExc_UnicodeEncodeError,
+                    "sOnns",
+                    "ascii",
+                    str,
+                    (Py_ssize_t)i,
+                    (Py_ssize_t)(i+1),
+                    "ordinal not in range(128)"
+                );
+
+                if (exc == NULL) {
+                    PyErr_SetString(
+                        PyExc_UnicodeEncodeError, "Invalid character encountered during unicode encoding."
+                    );
+                    Py_DECREF(str);
+                    goto fail;
+                }
+
                 PyErr_SetObject(PyExceptionInstance_Class(exc), exc);
                 Py_DECREF(exc);
+                Py_DECREF(str);
                 NPY_DISABLE_C_API;
                 goto fail;
             }
