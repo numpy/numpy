@@ -1108,7 +1108,7 @@ execute_ufunc_loop(PyArrayMethod_Context *context, int masked,
      * based on the fixed strides.
      */
     PyArrayMethod_StridedLoop *strided_loop;
-    NpyAuxData *auxdata;
+    NpyAuxData *auxdata = NULL;
     npy_intp fixed_strides[NPY_MAXARGS];
 
     NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
