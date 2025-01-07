@@ -237,6 +237,20 @@ def test_integer_comparison(sctype, other_val, comp):
     assert_array_equal(comp(other_val, val_obj), comp(other_val, val))
 
 
+@pytest.mark.parametrize("arr", [
+    np.ones((100, 100), dtype=np.uint8)[::2],  # not trivially iterable
+    np.ones(20000, dtype=">u4"),  # cast and >buffersize
+    np.ones(100, dtype=">u4"),  # fast path compatible with cast
+])
+def test_integer_comparison_with_cast(arr):
+    # Similar to above, but mainly test a few cases that cover the slow path
+    # the test is limited to unsigned ints and -1 for simplicity.
+    res = arr >= -1
+    assert_array_equal(res, np.ones_like(arr, dtype=bool))
+    res = arr < -1
+    assert_array_equal(res, np.zeros_like(arr, dtype=bool))
+
+
 @pytest.mark.parametrize("comp",
         [np.equal, np.not_equal, np.less_equal, np.less,
          np.greater_equal, np.greater])
