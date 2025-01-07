@@ -3,85 +3,124 @@
 #include "casts.h"
 
 
-// Get the array-protocol type string for the given type number.
-const char *typenum_to_shortname_cstr(NPY_TYPES typenum) {
+// Get the shortname letter associated with the given type number.
+NPY_TYPECHAR typenum_to_typechar(NPY_TYPES typenum) {
     switch (typenum) {
-        #ifdef NPY_INT8
-        case NPY_INT8:
-            return "i8";
-        #endif
-        #ifdef NPY_INT16
-        case NPY_INT16:
-            return "i16";
-        #endif
-        #ifdef NPY_INT32
-        case NPY_INT32:
-            return "i32";
-        #endif
-        #ifdef NPY_INT64
-        case NPY_INT64:
-            return "i64";
-        #endif
-        #ifdef NPY_UINT8
-        case NPY_UINT8:
-            return "u8";
-        #endif
-        #ifdef NPY_UINT16
-        case NPY_UINT16:
-            return "u16";
-        #endif
-        #ifdef NPY_UINT32
-        case NPY_UINT32:
-            return "u32";
-        #endif
-        #ifdef NPY_UINT64
-        case NPY_UINT64:
-            return "u64";
-        #endif
-        #ifdef NPY_FLOAT16
-        case NPY_FLOAT16:
-            return "f16";
-        #endif
-        #ifdef NPY_FLOAT32
-        case NPY_FLOAT32:
-            return "f32";
-        #endif
-        #ifdef NPY_FLOAT64
-        case NPY_FLOAT64:
-            return "f64";
-        #endif
-        #ifdef NPY_FLOAT128
-        case NPY_FLOAT128:
-            return "f128";
-        #endif
-        #ifdef NPY_COMPLEX64
-        case NPY_COMPLEX64:
-            return "c64";
-        #endif
-        #ifdef NPY_COMPLEX128
-        case NPY_COMPLEX128:
-            return "c128";
-        #endif
-        #ifdef NPY_COMPLEX256
-        case NPY_COMPLEX256:
-            return "c256";
-        #endif
         case NPY_BOOL:
-            return "?";
+            return NPY_BOOLLTR;
+        case NPY_BYTE:
+            return NPY_BYTELTR;
+        case NPY_UBYTE:
+            return NPY_UBYTELTR;
+        case NPY_SHORT:
+            return NPY_SHORTLTR;
+        case NPY_USHORT:
+            return NPY_USHORTLTR;
+        case NPY_INT:
+            return NPY_INTLTR;
+        case NPY_UINT:
+            return NPY_UINTLTR;
+        case NPY_LONG:
+            return NPY_LONGLTR;
+        case NPY_ULONG:
+            return NPY_ULONGLTR;
+        case NPY_LONGLONG:
+            return NPY_LONGLONGLTR;
+        case NPY_ULONGLONG:
+            return NPY_ULONGLONGLTR;
+        case NPY_HALF:
+            return NPY_HALFLTR;
+        case NPY_FLOAT:
+            return NPY_FLOATLTR;
+        case NPY_DOUBLE:
+            return NPY_DOUBLELTR;
+        case NPY_LONGDOUBLE:
+            return NPY_LONGDOUBLELTR;
+        case NPY_CFLOAT:
+            return NPY_CFLOATLTR;
+        case NPY_CDOUBLE:
+            return NPY_CDOUBLELTR;
+        case NPY_CLONGDOUBLE:
+            return NPY_CLONGDOUBLELTR;
         case NPY_OBJECT:
-            return "O";
-        case NPY_VOID:
-            return "V";
-        case NPY_DATETIME:
-            return "M";
-        case NPY_TIMEDELTA:
-            return "m";
+            return NPY_OBJECTLTR;
+        case NPY_STRING:
+            return NPY_STRINGLTR;
         case NPY_UNICODE:
-            return "U";
+            return NPY_UNICODELTR;
+        case NPY_VOID:
+            return NPY_VOIDLTR;
+        case NPY_DATETIME:
+            return NPY_DATETIMELTR;
+        case NPY_TIMEDELTA:
+            return NPY_TIMEDELTALTR;
+        case NPY_CHAR:
+            return NPY_CHARLTR;
         case NPY_VSTRING:
-            return "T";
+            return NPY_VSTRINGLTR;
         default:
-            return "unknown";
+            PyErr_SetString(
+                PyExc_TypeError,
+                "No NPY_TYPECHAR associated with the given typenum."
+            );
+            return static_cast<NPY_TYPECHAR>('\0');
+    }
+}
+
+// Get the array-protocol type string for the given type number.
+std::string typenum_to_shortname(NPY_TYPES typenum) {
+    std::string typechar = std::to_string(typenum_to_typechar(typenum));
+    switch (typenum) {
+        case NPY_BOOL:
+        case NPY_VOID:
+        case NPY_DATETIME:
+        case NPY_TIMEDELTA:
+        case NPY_CHAR:
+        case NPY_VSTRING:
+        case NPY_OBJECT:
+        case NPY_STRING:
+        case NPY_UNICODE:
+            return typechar;
+        case NPY_BYTE:
+            return typechar + std::to_string(NPY_BITSOF_BYTE);
+        case NPY_UBYTE:
+            return typechar + std::to_string(NPY_BITSOF_BYTE);
+        case NPY_SHORT:
+            return typechar + std::to_string(NPY_BITSOF_SHORT);
+        case NPY_USHORT:
+            return typechar + std::to_string(NPY_BITSOF_SHORT);
+        case NPY_INT:
+            return typechar + std::to_string(NPY_BITSOF_INT);
+        case NPY_UINT:
+            return typechar + std::to_string(NPY_BITSOF_INT);
+        case NPY_LONG:
+            return typechar + std::to_string(NPY_BITSOF_LONG);
+        case NPY_ULONG:
+            return typechar + std::to_string(NPY_BITSOF_LONG);
+        case NPY_LONGLONG:
+            return typechar + std::to_string(NPY_BITSOF_LONGLONG);
+        case NPY_ULONGLONG:
+            return typechar + std::to_string(NPY_BITSOF_LONGLONG);
+        case NPY_HALF:
+            return typechar + std::to_string(NPY_BITSOF_HALF);
+        case NPY_FLOAT:
+            return typechar + std::to_string(NPY_BITSOF_FLOAT);
+        case NPY_DOUBLE:
+            return typechar + std::to_string(NPY_BITSOF_DOUBLE);
+        case NPY_LONGDOUBLE:
+            return typechar + std::to_string(NPY_BITSOF_LONGDOUBLE);
+        case NPY_CFLOAT:
+            return typechar + std::to_string(NPY_BITSOF_CFLOAT);
+        case NPY_CDOUBLE:
+            return typechar + std::to_string(NPY_BITSOF_CDOUBLE);
+        case NPY_CLONGDOUBLE:
+            return typechar + std::to_string(NPY_BITSOF_CLONGDOUBLE);
+        default:
+            PyErr_SetString(
+                PyExc_TypeError,
+                "No shortname associated with the given typenum."
+            );
+            return "";
     }
 }
 
@@ -110,6 +149,8 @@ const char *typenum_to_cstr(NPY_TYPES typenum) {
             return "long long";
         case NPY_ULONGLONG:
             return "ulong long";
+        case NPY_HALF:
+            return "half";
         case NPY_FLOAT:
             return "float";
         case NPY_DOUBLE:
@@ -134,8 +175,6 @@ const char *typenum_to_cstr(NPY_TYPES typenum) {
             return "datetime";
         case NPY_TIMEDELTA:
             return "timedelta";
-        case NPY_HALF:
-            return "half";
         case NPY_CHAR:
             return "char";
         case NPY_NOTYPE:
@@ -155,82 +194,54 @@ const char *typenum_to_cstr(NPY_TYPES typenum) {
 // error handling is left to the caller.
 PyArray_DTypeMeta *typenum_to_dtypemeta(NPY_TYPES typenum) {
     switch (typenum) {
-        #ifdef NPY_INT8
-        case NPY_INT8:
-            return &PyArray_Int8DType;
-        #endif
-        #ifdef NPY_INT16
-        case NPY_INT16:
-            return &PyArray_Int16DType;
-        #endif
-        #ifdef NPY_INT32
-        case NPY_INT32:
-            return &PyArray_Int32DType;
-        #endif
-        #ifdef NPY_INT64
-        case NPY_INT64:
-            return &PyArray_Int64DType;
-        #endif
-        case NPY_LONGLONG:
-            return &PyArray_LongLongDType;
-        #ifdef NPY_UINT8
-        case NPY_UINT8:
-            return &PyArray_UInt8DType;
-        #endif
-        #ifdef NPY_UINT16
-        case NPY_UINT16:
-            return &PyArray_UInt16DType;
-        #endif
-        #ifdef NPY_UINT32
-        case NPY_UINT32:
-            return &PyArray_UInt32DType;
-        #endif
-        #ifdef NPY_UINT64
-        case NPY_UINT64:
-            return &PyArray_UInt64DType;
-        #endif
-        case NPY_ULONGLONG:
-            return &PyArray_ULongLongDType;
-        #ifdef NPY_FLOAT16
-        case NPY_FLOAT16:
-            return &PyArray_HalfDType;
-        #endif
-        #ifdef NPY_FLOAT32
-        case NPY_FLOAT32:
-            return &PyArray_FloatDType;
-        #endif
-        #ifdef NPY_FLOAT64
-        case NPY_FLOAT64:
-            return &PyArray_DoubleDType;
-        #endif
-        #ifdef NPY_FLOAT128
-        case NPY_FLOAT128:
-            return &PyArray_LongDoubleDType;
-        #endif
-        #ifdef NPY_COMPLEX64
-        case NPY_COMPLEX64:
-            return &PyArray_CFloatDType;
-        #endif
-        #ifdef NPY_COMPLEX128
-        case NPY_COMPLEX128:
-            return &PyArray_CDoubleDType;
-        #endif
-        #ifdef NPY_COMPLEX256
-        case NPY_COMPLEX256:
-            return &PyArray_CLongDoubleDType;
-        #endif
         case NPY_BOOL:
             return &PyArray_BoolDType;
+        case NPY_BYTE:
+            return &PyArray_ByteDType;
+        case NPY_UBYTE:
+            return &PyArray_UByteDType;
+        case NPY_SHORT:
+            return &PyArray_ShortDType;
+        case NPY_USHORT:
+            return &PyArray_UShortDType;
+        case NPY_INT:
+            return &PyArray_IntDType;
+        case NPY_UINT:
+            return &PyArray_UIntDType;
+        case NPY_LONG:
+            return &PyArray_LongDType;
+        case NPY_ULONG:
+            return &PyArray_ULongDType;
+        case NPY_LONGLONG:
+            return &PyArray_LongLongDType;
+        case NPY_ULONGLONG:
+            return &PyArray_ULongLongDType;
+        case NPY_HALF:
+            return &PyArray_HalfDType;
+        case NPY_FLOAT:
+            return &PyArray_FloatDType;
+        case NPY_DOUBLE:
+            return &PyArray_DoubleDType;
+        case NPY_LONGDOUBLE:
+            return &PyArray_LongDoubleDType;
+        case NPY_CFLOAT:
+            return &PyArray_CFloatDType;
+        case NPY_CDOUBLE:
+            return &PyArray_CDoubleDType;
+        case NPY_CLONGDOUBLE:
+            return &PyArray_CLongDoubleDType;
         case NPY_OBJECT:
             return &PyArray_ObjectDType;
+        case NPY_STRING:
+            return &PyArray_BytesDType;
+        case NPY_UNICODE:
+            return &PyArray_UnicodeDType;
         case NPY_VOID:
             return &PyArray_VoidDType;
         case NPY_DATETIME:
             return &PyArray_DatetimeDType;
         case NPY_TIMEDELTA:
             return &PyArray_TimedeltaDType;
-        case NPY_UNICODE:
-            return &PyArray_UnicodeDType;
         case NPY_VSTRING:
             return &PyArray_StringDType;
         default:
@@ -1046,7 +1057,7 @@ PyArray_DTypeMeta **get_s2type_dtypes(NPY_TYPES typenum) {
 template<typename TNpyType, typename TNpyLongType, typename TClongType, NPY_TYPES typenum>
 PyArrayMethod_Spec *getStringToIntCastSpec() {
     return get_cast_spec(
-        typenum_to_shortname_cstr(typenum),
+        typenum_to_shortname(typenum),
         NPY_UNSAFE_CASTING,
         NPY_METH_REQUIRES_PYAPI,
         get_s2type_dtypes(typenum),
@@ -1452,7 +1463,7 @@ template<
 PyArrayMethod_Spec *getStringToFloatCastSpec(
 ) {
     return get_cast_spec(
-        typenum_to_shortname_cstr(typenum),
+        typenum_to_shortname(typenum),
         NPY_UNSAFE_CASTING,
         flags,
         get_s2type_dtypes(typenum),
