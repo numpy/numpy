@@ -1135,10 +1135,15 @@ static int string_to_float(
         TNpyType fval = (double_to_float)(dval);
 
         if (NPY_UNLIKELY(isinf(fval) && !(npy_isinf(dval)))) {
-            if (PyUFunc_GiveFloatingpointErrors("cast",
-                                                NPY_FPE_OVERFLOW) < 0) {
-                goto fail;
-            }
+            PyErr_SetString(
+                PyExc_RuntimeWarning,
+                (std::to_string(fval) + " " + std::to_string(isinf(fval)) + " " + std::to_string(dval) + " " + std::to_string(npy_isinf(dval))).c_str()
+            );
+            goto fail;
+            // if (PyUFunc_GiveFloatingpointErrors("cast",
+            //                                     NPY_FPE_OVERFLOW) < 0) {
+            //     goto fail;
+            // }
         }
 
         *out = fval;
