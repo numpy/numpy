@@ -1205,6 +1205,11 @@ fail:
 //
 // Long double types do not fit in a (64-bit) PyFloat, so we handle this
 // case specially here.
+//
+// Note that some platforms have npy_longdouble == npy_float64, in which
+// case compilation will fail as there are two redundant definitions for string_to_float.
+// Only generate this definition if it makes sense to do so on the current platform.
+#if NPY_BITSOF_LONGDOUBLE > 64
 template<>
 int string_to_float<npy_longdouble, nullptr, nullptr>(
     PyArrayMethod_Context *context,
@@ -1269,6 +1274,7 @@ fail:
     NpyString_release_allocator(allocator);
     return -1;
 }
+#endif
 
 template<NPY_TYPES typenum>
 static NPY_CASTING string_to_float_resolve_descriptors(
@@ -2173,7 +2179,7 @@ get_casts() {
         s2s_slots
     );
 
-    int num_casts = 43;
+    int num_casts = 41;
 
 #if NPY_SIZEOF_BYTE == NPY_SIZEOF_SHORT
     num_casts += 4;
@@ -2186,6 +2192,10 @@ get_casts() {
 #endif
 #if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG
     num_casts += 4;
+#endif
+
+#if NPY_BITSOF_LONGDOUBLE > 64
+    num_casts += 2;
 #endif
 
     PyArray_DTypeMeta **u2s_dtypes = get_dtypes(
@@ -2381,9 +2391,14 @@ get_casts() {
 
     // Special handling for f64 and longdouble types because they don't fit in a PyFloat
     casts[cast_i++] = getStringToFloatCastSpec<npy_float64,  NPY_DOUBLE,  nullptr, nullptr>();
-    casts[cast_i++] = getStringToFloatCastSpec<npy_longdouble, NPY_LONGDOUBLE, nullptr, nullptr, NPY_METH_NO_FLOATINGPOINT_ERRORS>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float64,  NPY_DOUBLE>();
+
+// On some platforms, npy_longdouble == npy_float64; guard against this
+// if it makes sense to do so on the current platform.
+#if NPY_BITSOF_LONGDOUBLE > 64
+    casts[cast_i++] = getStringToFloatCastSpec<npy_longdouble, NPY_LONGDOUBLE, nullptr, nullptr, NPY_METH_NO_FLOATINGPOINT_ERRORS>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_longdouble, NPY_LONGDOUBLE, (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
+#endif
 
     casts[cast_i++] = getStringToComplexCastSpec<npy_cfloat,      npy_float,      NPY_CFLOAT,      npy_csetrealf, npy_csetimagf>();
     casts[cast_i++] = getStringToComplexCastSpec<npy_cdouble,     npy_double,     NPY_CDOUBLE,     npy_csetreal,  npy_csetimag>();
