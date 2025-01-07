@@ -6279,8 +6279,38 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('base',
 
     """))
 
-add_newdoc('numpy._core.multiarray', 'dtype', ('type',
-    """The type object used to instantiate a scalar of this data-type."""))
+add_newdoc(
+    "numpy._core.multiarray",
+    "dtype",
+    (
+        "type",
+        """
+        type()
+
+        Return the type object used to instantiate a scalar of this data-type.
+
+        This attribute provides the actual Python type (such as 'numpy.float64')
+        associated with the dtype. It can be called directly to create new
+        scalars of the same type.
+
+        Returns
+        -------
+        type
+            The Python type corresponding to the data-type.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> dt = np.dtype("float64")
+        >>> dt.type
+        <class 'numpy.float64'>
+        >>> val = dt.type(3.14)
+        >>> val
+        3.14
+        >>> type(val)
+        <class 'numpy.float64'>
+        """
+    ))
 
 ##############################################################################
 #
