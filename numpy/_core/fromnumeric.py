@@ -37,21 +37,6 @@ array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
 
-def _get_method(obj, method):
-    # _get_method(object, name) -> callable
-    #
-    # Get a named method from an object.
-    # Raises:
-    # - AttributeError if method does not exist
-    # - TypeError if named attribute exists but is not callable
-
-    bound = getattr(obj, method)
-    if not callable(bound):
-        msg = f"Attribute '{method}' is not callable"
-        raise TypeError(msg)
-    return bound
-
-
 # functions that are now methods
 def _wrapit(obj, method, *args, **kwds):
     conv = _array_converter(obj)
@@ -65,21 +50,22 @@ def _wrapit(obj, method, *args, **kwds):
 
 def _wrapfunc(obj, method, *args, **kwds):
     bound = getattr(obj, method, NotImplemented)
-    if not callable(bound):
-        # attribute does not exists or is not callable
-        return _wrapit(obj, method, *args, **kwds)
 
-    try:
-        return bound(*args, **kwds)
-    except TypeError:
-        # A TypeError occurs if the object does have such a method in its
-        # class, but its signature is not identical to that of NumPy's. This
-        # situation has occurred in the case of a downstream library like
-        # 'pandas'.
-        #
-        # Call _wrapit from within the except clause to ensure a potential
-        # exception has a traceback chain.
-        return _wrapit(obj, method, *args, **kwds)
+    if callable(bound):
+        # dispatch to obj.method
+        try:
+            return bound(*args, **kwds)
+        except TypeError:
+            # A TypeError occurs if the object does have such a method in its
+            # class, but its signature is not identical to that of NumPy's. This
+            # situation has occurred in the case of a downstream library like
+            # 'pandas'.
+
+            # Should we raise a warning here?
+            pass
+
+    # fall back: no obj.method or error raised when calling obj.method(...)
+    return _wrapit(obj, method, *args, **kwds)
 
 
 def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
@@ -87,11 +73,8 @@ def _wrapreduction(obj, ufunc, method, axis, dtype, out, **kwargs):
                   if v is not np._NoValue}
 
     if type(obj) is not mu.ndarray:
-        try:
-            reduction = _get_method(obj, method)
-        except (AttributeError, TypeError):
-            pass
-        else:
+        reduction = getattr(obj, method, NotImplemented)
+        if callable(reduction):
             # This branch is needed for reductions like any which don't
             # support a dtype.
             if dtype is not None:
@@ -108,11 +91,8 @@ def _wrapreduction_any_all(obj, ufunc, method, axis, out, **kwargs):
                   if v is not np._NoValue}
 
     if type(obj) is not mu.ndarray:
-        try:
-            reduction = _get_method(obj, method)
-        except (AttributeError, TypeError):
-            pass
-        else:
+        reduction = getattr(obj, method, NotImplemented)
+        if callable(reduction):
             return reduction(axis=axis, out=out, **passkwargs)
 
     return ufunc.reduce(obj, axis, bool, out, **passkwargs)
@@ -578,13 +558,12 @@ def put(a, ind, v, mode='raise'):
     array([ 0,  1,  2,  3, -5])
 
     """
-    try:
-        put = _get_method(a, 'put')
-    except (AttributeError, TypeError) as e:
+    put = getattr(a, 'put', NotImplemented)
+    if not callable(put):
         msg = "argument 1 ({name}) does not have a 'put' method".format(
             name=type(a).__name__
             )
-        raise TypeError(msg) from e
+        raise TypeError(msg)
 
     return put(ind, v, mode=mode)
 
@@ -1696,9 +1675,8 @@ def squeeze(a, axis=None):
     1234
 
     """
-    try:
-        squeeze = _get_method(a, 'squeeze')
-    except (AttributeError, TypeError):
+    squeeze = getattr(a, 'squeeze', NotImplemented)
+    if not callable(squeeze):
         return _wrapit(a, 'squeeze', axis=axis)
     if axis is None:
         return squeeze()
@@ -3868,11 +3846,8 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
     if where is not np._NoValue:
         kwargs['where'] = where
     if type(a) is not mu.ndarray:
-        try:
-            mean = _get_method(a, 'mean')
-        except (AttributeError, TypeError):
-            pass
-        else:
+        mean = getattr(a, 'mean', NotImplemented)
+        if callable(mean):
             return mean(axis=axis, dtype=dtype, out=out, **kwargs)
 
     return _methods._mean(a, axis=axis, dtype=dtype,
@@ -4072,11 +4047,8 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
             ddof = correction
 
     if type(a) is not mu.ndarray:
-        try:
-            std = _get_method(a, 'std')
-        except (AttributeError, TypeError):
-            pass
-        else:
+        std = getattr(a, 'std', NotImplemented)
+        if callable(std):
             return std(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
 
     return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
@@ -4275,11 +4247,8 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
             ddof = correction
 
     if type(a) is not mu.ndarray:
-        try:
-            var = _get_method(a, 'var')
-        except (AttributeError, TypeError):
-            pass
-        else:
+        var = getattr(a, 'var', NotImplemented)
+        if callable(var):
             return var(axis=axis, dtype=dtype, out=out, ddof=ddof, **kwargs)
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
