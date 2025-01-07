@@ -467,7 +467,7 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
         # Note: Assume value is integral (double of LONG_MAX should work out)
         if val < 0:
             raise ValueError(name + " < 0")
-        elif val > LONG_MAX:
+        elif val > <double> LONG_MAX:
             raise ValueError(
                     name + " is out of bounds for long, consider using "
                     "the new generator API for 64bit integers.")
