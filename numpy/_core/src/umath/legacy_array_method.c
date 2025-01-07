@@ -294,24 +294,7 @@ get_initial_from_ufunc(
         Py_DECREF(identity_obj);
         return 0;
     }
-    if (PyTypeNum_ISUNSIGNED(context->descriptors[1]->type_num)
-            && PyLong_CheckExact(identity_obj)) {
-        /*
-         * This is a bit of a hack until we have truly loop specific
-         * identities.  Python -1 cannot be cast to unsigned so convert
-         * it to a NumPy scalar, but we use -1 for bitwise functions to
-         * signal all 1s.
-         * (A builtin identity would not overflow here, although we may
-         * unnecessary convert 0 and 1.)
-         */
-        Py_SETREF(identity_obj, PyObject_CallFunctionObjArgs(
-                     (PyObject *)&PyLongArrType_Type, identity_obj, NULL));
-        if (identity_obj == NULL) {
-            return -1;
-        }
-    }
-    else if (context->descriptors[0]->type_num == NPY_OBJECT
-            && !reduction_is_empty) {
+    if (context->descriptors[0]->type_num == NPY_OBJECT && !reduction_is_empty) {
         /* Allows `sum([object()])` to work, but use 0 when empty. */
         Py_DECREF(identity_obj);
         return 0;
@@ -321,13 +304,6 @@ get_initial_from_ufunc(
     Py_DECREF(identity_obj);
     if (res < 0) {
         return -1;
-    }
-
-    if (PyTypeNum_ISNUMBER(context->descriptors[0]->type_num)) {
-        /* For numbers we can cache to avoid going via Python ints */
-        memcpy(context->method->legacy_initial, initial,
-               context->descriptors[0]->elsize);
-        context->method->get_reduction_initial = &copy_cached_initial;
     }
 
     /* Reduction can use the initial value */
@@ -427,11 +403,73 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     };
 
     PyBoundArrayMethodObject *bound_res = PyArrayMethod_FromSpec_int(&spec, 1);
+
     if (bound_res == NULL) {
         return NULL;
     }
     PyArrayMethodObject *res = bound_res->method;
+
+    // set cached initial value for numeric reductions
+    if (PyTypeNum_ISNUMBER(bound_res->dtypes[0]->type_num)) {
+        npy_bool reorderable;
+        PyObject *identity_obj =
+                PyUFunc_GetDefaultIdentity(ufunc, &reorderable);
+
+        if (identity_obj == NULL) {
+            return NULL;
+        }
+        if (identity_obj == Py_None) {
+            /* UFunc has no identity, ignore */
+            Py_INCREF(res);
+            Py_DECREF(bound_res);
+
+            Py_DECREF(identity_obj);
+            return res;
+        }
+        if (PyTypeNum_ISUNSIGNED(bound_res->dtypes[1]->type_num)
+            && PyLong_CheckExact(identity_obj)) {
+            /*
+             * This is a bit of a hack until we have truly loop specific
+             * identities.  Python -1 cannot be cast to unsigned so convert
+             * it to a NumPy scalar, but we use -1 for bitwise functions to
+             * signal all 1s.
+             * (A builtin identity would not overflow here, although we may
+             * unnecessary convert 0 and 1.)
+             */
+            Py_SETREF(identity_obj, PyObject_CallFunctionObjArgs(
+                              (PyObject *)&PyLongArrType_Type, identity_obj, NULL));
+            if (identity_obj == NULL) {
+                return NULL;
+            }
+        }
+        char *initial =
+                PyMem_Calloc(1, bound_res->dtypes[0]->singleton->elsize);
+        if (initial == NULL) {
+            PyErr_NoMemory();
+            Py_DECREF(identity_obj);
+            PyMem_Free(initial);
+            return NULL;
+        }
+
+        int pack_res = PyArray_Pack(bound_res->dtypes[0]->singleton, initial,
+                                    identity_obj);
+        Py_DECREF(identity_obj);
+        if (pack_res < 0) {
+            PyMem_Free(initial);
+            return NULL;
+        };
+
+        /* For numbers we can cache to avoid going via Python ints */
+        memcpy(bound_res->method->legacy_initial, initial,
+               bound_res->dtypes[0]->singleton->elsize);
+        bound_res->method->get_reduction_initial = &copy_cached_initial;
+
+        PyMem_Free(initial);
+    }
+
+
     Py_INCREF(res);
     Py_DECREF(bound_res);
+
     return res;
 }
