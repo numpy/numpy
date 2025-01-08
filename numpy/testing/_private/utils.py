@@ -2685,9 +2685,9 @@ _glibcver = _get_glibc_version()
 _glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
 
 
-def run_threaded(func, iters, pass_count=False):
+def run_threaded(func, iters, pass_count=False, max_workers=8):
     """Runs a function many times in parallel"""
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as tpe:
         if pass_count:
             futures = [tpe.submit(func, i) for i in range(iters)]
         else:
