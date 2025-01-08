@@ -887,6 +887,7 @@ static int string_to_int(
     npy_intp const strides[],
     NpyAuxData *NPY_UNUSED(auxdata)
 ) {
+    printf("string_to_int: %s", typenum_to_cstr(typenum));
     PyArray_StringDTypeObject *descr =
             ((PyArray_StringDTypeObject *)context->descriptors[0]);
     npy_string_allocator *allocator =
@@ -901,12 +902,16 @@ static int string_to_int(
     npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1] / sizeof(TNpyType);
 
+
+    printf("string_to_int: %s, 1", typenum_to_cstr(typenum));
+
     while (N--) {
         TNpyLongType value;
         if (stringbuf_to_int<TNpyLongType>(in, &value, has_null, default_string, allocator) != 0) {
             npy_gil_error(PyExc_RuntimeError, "Encountered problem converting string dtype to integer dtype.");
             goto fail;
         }
+        printf("string_to_int: %s, 2", typenum_to_cstr(typenum));
         *out = (TNpyType)value;
 
         // Cast back to TNpyLongType to check for out-of-bounds errors
