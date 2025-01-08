@@ -428,18 +428,12 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
 
     // set cached initial value for numeric reductions to avoid creating
     // a python int in every reduction
-    if (PyTypeNum_ISNUMBER(bound_res->dtypes[0]->type_num)) {
-        PyArray_Descr **descrs = PyMem_Calloc(ufunc->nin + ufunc->nout,
-                                              sizeof(PyArray_Descr *));
+    if (PyTypeNum_ISNUMBER(bound_res->dtypes[0]->type_num) &&
+        ufunc->nin == 2 && ufunc->nout == 1) {
 
-        if (descrs == NULL) {
-            PyErr_NoMemory();
-            PyMem_Free(initial);
-            return NULL;
-        }
+        PyArray_Descr *descrs[3];
 
-
-        for (int i = 0; i < ufunc->nin + ufunc->nout; i++) {
+        for (int i = 0; i < 3; i++) {
             // only dealing with numeric legacy dtypes so this should always be
             // valid
             descrs[i] = bound_res->dtypes[i]->singleton;
@@ -454,8 +448,7 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         int ret = get_initial_from_ufunc(&context, 0, context.method->legacy_initial);
 
         if (ret < 0) {
-            PyMem_Free(initial);
-            PyMem_Free(descrs);
+            Py_DECREF(bound_res);
             return NULL;
         }
 
@@ -463,8 +456,6 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
         if (ret > 0) {
             context.method->get_reduction_initial = &copy_cached_initial;
         }
-
-        PyMem_Free(descrs);
     }
 
 
