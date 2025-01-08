@@ -1137,7 +1137,13 @@ static int string_to_float(
         if (NPY_UNLIKELY(isinf(fval) && !(npy_isinf(dval)))) {
             PyErr_SetString(
                 PyExc_RuntimeWarning,
-                (std::to_string(fval) + " " + std::to_string(isinf(fval)) + " " + std::to_string(dval) + " " + std::to_string(npy_isinf(dval))).c_str()
+                (
+                    std::to_string(fval) + " " +
+                    std::to_string(isinf(fval)) + " " +
+                    std::to_string(dval) + " " +
+                    std::to_string(npy_isinf(dval)) + " " +
+                    std::to_string(std::isinf(dval))
+                ).c_str()
             );
             goto fail;
             // if (PyUFunc_GiveFloatingpointErrors("cast",
@@ -2406,7 +2412,7 @@ get_casts() {
     casts[cast_i++] = getIntToStringCastSpec<npy_longlong, unsigned long long, NPY_ULONGLONG>();
 #endif
 
-    casts[cast_i++] = getStringToFloatCastSpec<npy_float16, NPY_HALF, npy_half_isinf,      npy_double_to_half>();
+    casts[cast_i++] = getStringToFloatCastSpec<npy_float16, NPY_HALF,  npy_half_isinf,      npy_double_to_half>();
     casts[cast_i++] = getStringToFloatCastSpec<npy_float32, NPY_FLOAT, is_inf<npy_float32>, to_float<npy_float32>>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float16, NPY_HALF>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float32, NPY_FLOAT>();
