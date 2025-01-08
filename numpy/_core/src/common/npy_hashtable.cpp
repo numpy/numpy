@@ -12,11 +12,12 @@
  * case is likely desired.
  */
 
+#include "npy_hashtable.h"
+
 #include <mutex>
 #include <shared_mutex>
 
 #include "templ_common.h"
-#include "npy_hashtable.h"
 #include <new>
 
 
