@@ -1651,20 +1651,22 @@ def slice(a, start=None, stop=None, step=None, /):
     Parameters
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
 
-    start : the start of the slice, can be None, an integer or
-            an array of integers which can be broadcasted to`a`'s shape
+    start : None, an integer or an array of integers
+        The start of the slice, broadcasted to `a`'s shape
 
-    stop : the end point of the slice, can be None, and integer or
-           an array of integers which can be broadcasted to`a`'s shape
+    stop : None, an integer or an array of integers
+        The end of the slice, broadcasted to `a`'s shape
 
-    step : the step for the slice, can be None, an integer or
-           an array of integers which can be broadcasted to`a`'s shape
+    step : None, an integer or an array of integers
+        The step for the slice, broadcasted to `a`'s shape
 
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
 
     Examples
     --------
