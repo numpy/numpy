@@ -1670,10 +1670,10 @@ def slice(a, start=None, stop=None, step=None, /):
     --------
     >>> import numpy as np
     >>> a = np.array(['hello', 'world'])
-    >>> np.char.slice(a, 2)
+    >>> np.strings.slice(a, 2)
     array(['he', 'wo'], dtype='<U5')
 
-    >>> np.char.slice(a, 1, 5, 2)
+    >>> np.strings.slice(a, 1, 5, 2)
     array(['el', 'ol'], dtype='<U5')
 
     One can specify different start/stop/step for different array entries:
