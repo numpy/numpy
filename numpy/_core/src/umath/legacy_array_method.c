@@ -294,7 +294,24 @@ get_initial_from_ufunc(
         Py_DECREF(identity_obj);
         return 0;
     }
-    if (context->descriptors[0]->type_num == NPY_OBJECT && !reduction_is_empty) {
+    if (PyTypeNum_ISUNSIGNED(context->descriptors[1]->type_num)
+            && PyLong_CheckExact(identity_obj)) {
+        /*
+         * This is a bit of a hack until we have truly loop specific
+         * identities.  Python -1 cannot be cast to unsigned so convert
+         * it to a NumPy scalar, but we use -1 for bitwise functions to
+         * signal all 1s.
+         * (A builtin identity would not overflow here, although we may
+         * unnecessary convert 0 and 1.)
+         */
+        Py_SETREF(identity_obj, PyObject_CallFunctionObjArgs(
+                     (PyObject *)&PyLongArrType_Type, identity_obj, NULL));
+        if (identity_obj == NULL) {
+            return -1;
+        }
+    }
+    else if (context->descriptors[0]->type_num == NPY_OBJECT
+             && !reduction_is_empty) {
         /* Allows `sum([object()])` to work, but use 0 when empty. */
         Py_DECREF(identity_obj);
         return 0;
@@ -409,62 +426,56 @@ PyArray_NewLegacyWrappingArrayMethod(PyUFuncObject *ufunc,
     }
     PyArrayMethodObject *res = bound_res->method;
 
-    // set cached initial value for numeric reductions
+    // set cached initial value for numeric reductions to avoid creating
+    // a python int in every reduction
     if (PyTypeNum_ISNUMBER(bound_res->dtypes[0]->type_num)) {
-        npy_bool reorderable;
-        PyObject *identity_obj =
-                PyUFunc_GetDefaultIdentity(ufunc, &reorderable);
-
-        if (identity_obj == NULL) {
-            return NULL;
-        }
-        if (identity_obj == Py_None) {
-            /* UFunc has no identity, ignore */
-            Py_INCREF(res);
-            Py_DECREF(bound_res);
-
-            Py_DECREF(identity_obj);
-            return res;
-        }
-        if (PyTypeNum_ISUNSIGNED(bound_res->dtypes[1]->type_num)
-            && PyLong_CheckExact(identity_obj)) {
-            /*
-             * This is a bit of a hack until we have truly loop specific
-             * identities.  Python -1 cannot be cast to unsigned so convert
-             * it to a NumPy scalar, but we use -1 for bitwise functions to
-             * signal all 1s.
-             * (A builtin identity would not overflow here, although we may
-             * unnecessary convert 0 and 1.)
-             */
-            Py_SETREF(identity_obj, PyObject_CallFunctionObjArgs(
-                              (PyObject *)&PyLongArrType_Type, identity_obj, NULL));
-            if (identity_obj == NULL) {
-                return NULL;
-            }
-        }
         char *initial =
                 PyMem_Calloc(1, bound_res->dtypes[0]->singleton->elsize);
+
         if (initial == NULL) {
             PyErr_NoMemory();
-            Py_DECREF(identity_obj);
+            return NULL;
+        }
+
+        PyArray_Descr **descrs = PyMem_Calloc(ufunc->nin + ufunc->nout,
+                                              sizeof(PyArray_Descr *));
+
+        if (descrs == NULL) {
+            PyErr_NoMemory();
             PyMem_Free(initial);
             return NULL;
         }
 
-        int pack_res = PyArray_Pack(bound_res->dtypes[0]->singleton, initial,
-                                    identity_obj);
-        Py_DECREF(identity_obj);
-        if (pack_res < 0) {
-            PyMem_Free(initial);
-            return NULL;
+
+        for (int i = 0; i < ufunc->nin + ufunc->nout; i++) {
+            // only dealing with numeric legacy dtypes so this should always be
+            // valid
+            descrs[i] = bound_res->dtypes[i]->singleton;
+        }
+
+        PyArrayMethod_Context context = {
+                (PyObject *)ufunc,
+                bound_res->method,
+                descrs,
         };
 
-        /* For numbers we can cache to avoid going via Python ints */
-        memcpy(bound_res->method->legacy_initial, initial,
-               bound_res->dtypes[0]->singleton->elsize);
-        bound_res->method->get_reduction_initial = &copy_cached_initial;
+        int ret = get_initial_from_ufunc(&context, 0, initial);
+
+        if (ret < 0) {
+            PyMem_Free(initial);
+            PyMem_Free(descrs);
+            return NULL;
+        }
+
+        // only use the initial value if it's valid
+        if (ret > 0) {
+            memcpy(context.method->legacy_initial, initial,
+                   context.descriptors[0]->elsize);
+            context.method->get_reduction_initial = &copy_cached_initial;
+        }
 
         PyMem_Free(initial);
+        PyMem_Free(descrs);
     }
 
 
