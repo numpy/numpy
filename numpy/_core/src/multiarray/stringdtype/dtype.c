@@ -853,7 +853,7 @@ init_string_dtype(void)
 
     for (int i = 0; PyArray_StringDType_casts[i] != NULL; i++) {
         PyMem_Free(PyArray_StringDType_casts[i]->dtypes);
-        PyMem_Free((void *)PyArray_StringDType_casts[i]->name);
+        PyMem_RawFree((void *)PyArray_StringDType_casts[i]->name);
         PyMem_Free(PyArray_StringDType_casts[i]);
     }
 

@@ -1,6 +1,5 @@
 #include <cmath>
-#include <cstring>
-#include <string>
+#include <type_traits>
 
 #include "numpy/npy_common.h"
 #define PY_SSIZE_T_CLEAN
@@ -88,63 +87,6 @@ NPY_TYPECHAR typenum_to_typechar(NPY_TYPES typenum) {
                 "No NPY_TYPECHAR associated with the given typenum."
             );
             return static_cast<NPY_TYPECHAR>('\0');
-    }
-}
-
-// Get the array-protocol type string for the given type number.
-std::string typenum_to_shortname(NPY_TYPES typenum) {
-    std::string typechar = std::to_string(typenum_to_typechar(typenum));
-    switch (typenum) {
-        case NPY_BOOL:
-        case NPY_VOID:
-        case NPY_DATETIME:
-        case NPY_TIMEDELTA:
-        case NPY_CHAR:
-        case NPY_VSTRING:
-        case NPY_OBJECT:
-        case NPY_STRING:
-        case NPY_UNICODE:
-            return typechar;
-        case NPY_BYTE:
-            return typechar + std::to_string(NPY_BITSOF_BYTE);
-        case NPY_UBYTE:
-            return typechar + std::to_string(NPY_BITSOF_BYTE);
-        case NPY_SHORT:
-            return typechar + std::to_string(NPY_BITSOF_SHORT);
-        case NPY_USHORT:
-            return typechar + std::to_string(NPY_BITSOF_SHORT);
-        case NPY_INT:
-            return typechar + std::to_string(NPY_BITSOF_INT);
-        case NPY_UINT:
-            return typechar + std::to_string(NPY_BITSOF_INT);
-        case NPY_LONG:
-            return typechar + std::to_string(NPY_BITSOF_LONG);
-        case NPY_ULONG:
-            return typechar + std::to_string(NPY_BITSOF_LONG);
-        case NPY_LONGLONG:
-            return typechar + std::to_string(NPY_BITSOF_LONGLONG);
-        case NPY_ULONGLONG:
-            return typechar + std::to_string(NPY_BITSOF_LONGLONG);
-        case NPY_HALF:
-            return typechar + std::to_string(NPY_BITSOF_HALF);
-        case NPY_FLOAT:
-            return typechar + std::to_string(NPY_BITSOF_FLOAT);
-        case NPY_DOUBLE:
-            return typechar + std::to_string(NPY_BITSOF_DOUBLE);
-        case NPY_LONGDOUBLE:
-            return typechar + std::to_string(NPY_BITSOF_LONGDOUBLE);
-        case NPY_CFLOAT:
-            return typechar + std::to_string(NPY_BITSOF_CFLOAT);
-        case NPY_CDOUBLE:
-            return typechar + std::to_string(NPY_BITSOF_CDOUBLE);
-        case NPY_CLONGDOUBLE:
-            return typechar + std::to_string(NPY_BITSOF_CLONGDOUBLE);
-        default:
-            PyErr_SetString(
-                PyExc_TypeError,
-                "No shortname associated with the given typenum."
-            );
-            return "";
     }
 }
 
@@ -1015,8 +957,13 @@ static const char *make_s2type_name(NPY_TYPES typenum) {
     size_t nlen = strlen(type_name);
 
     char *buf = (char *)PyMem_RawCalloc(sizeof(char), plen + nlen + 1);
+    if (buf == NULL) {
+        npy_gil_error(PyExc_MemoryError, "Failed allocate memory for cast");
+    }
+
     strncpy(buf, prefix, plen);
     strncat(buf, type_name, nlen);
+    printf("%s", buf);
     return buf;
 }
 
@@ -1103,7 +1050,7 @@ PyArray_DTypeMeta **get_s2type_dtypes(NPY_TYPES typenum) {
 template<typename TNpyType, typename TNpyLongType, NPY_TYPES typenum>
 PyArrayMethod_Spec *getStringToIntCastSpec() {
     return get_cast_spec(
-        typenum_to_shortname(typenum),
+        make_s2type_name(typenum),
         NPY_UNSAFE_CASTING,
         NPY_METH_REQUIRES_PYAPI,
         get_s2type_dtypes(typenum),
@@ -1513,7 +1460,7 @@ template<
 PyArrayMethod_Spec *getStringToFloatCastSpec(
 ) {
     return get_cast_spec(
-        typenum_to_shortname(typenum),
+        make_s2type_name(typenum),
         NPY_UNSAFE_CASTING,
         flags,
         get_s2type_dtypes(typenum),
@@ -2193,7 +2140,7 @@ static PyType_Slot bytes2s_slots[] = {
 
 PyArrayMethod_Spec *
 get_cast_spec(
-    std::string name,
+    const char *name,
     NPY_CASTING casting,
     NPY_ARRAYMETHOD_FLAGS flags,
     PyArray_DTypeMeta **dtypes,
@@ -2206,7 +2153,7 @@ get_cast_spec(
 
     PyArrayMethod_Spec *ret = (PyArrayMethod_Spec *)PyMem_Malloc(sizeof(PyArrayMethod_Spec));
 
-    ret->name = name.c_str();
+    ret->name = name;
     ret->nin = 1;
     ret->nout = 1;
     ret->casting = casting;
