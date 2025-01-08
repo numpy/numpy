@@ -961,9 +961,10 @@ static const char *make_s2type_name(NPY_TYPES typenum) {
         npy_gil_error(PyExc_MemoryError, "Failed allocate memory for cast");
     }
 
-    strncpy(buf, prefix, plen);
+    // memcpy instead of strcpy to avoid stringop-truncation warning, since
+    // we are not including the trailing null character
+    memcpy(buf, prefix, plen);
     strncat(buf, type_name, nlen);
-    printf("%s", buf);
     return buf;
 }
 
@@ -978,7 +979,10 @@ static const char *make_type2s_name(NPY_TYPES typenum) {
     size_t slen = strlen(suffix);
 
     char *buf = (char *)PyMem_RawCalloc(sizeof(char), plen + nlen + slen + 1);
-    strncpy(buf, prefix, plen);
+
+    // memcpy instead of strcpy to avoid stringop-truncation warning, since
+    // we are not including the trailing null character
+    memcpy(buf, prefix, plen);
     strncat(buf, type_name, nlen);
     strncat(buf, suffix, slen);
     return buf;
