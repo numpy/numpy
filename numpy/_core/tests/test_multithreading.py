@@ -128,6 +128,7 @@ def test_parallel_reduction():
     b = threading.Barrier(NUM_THREADS)
 
     x = np.arange(1000)
+
     def closure():
         b.wait()
         np.sum(x)
