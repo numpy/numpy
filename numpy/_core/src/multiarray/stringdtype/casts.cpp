@@ -825,7 +825,7 @@ string_to_pylong(char *in, int has_null,
     return pylong_value;
 }
 
-template<typename TNpyLongType, typename TClongType>
+template<typename TNpyLongType>
 static npy_longlong
 stringbuf_to_int(char *in, TNpyLongType *value, int has_null,
                  const npy_static_string *default_string,
@@ -837,7 +837,7 @@ stringbuf_to_int(char *in, TNpyLongType *value, int has_null,
         return -1;
     }
 
-    if constexpr (std::is_same_v<TClongType, unsigned long long>) {
+    if constexpr (std::is_same_v<TNpyLongType, npy_ulonglong>) {
         *value = PyLong_AsUnsignedLongLong(pylong_value);
         if (*value == (unsigned long long)-1 && PyErr_Occurred()) {
             goto fail;
@@ -914,7 +914,7 @@ static NPY_CASTING string_to_int_resolve_descriptors(
 // TNpyLongType: npy_longlong
 // TClongType: One of {long long, unsigned long long}
 // typenum: NPY_BYTE
-template <typename TNpyType, typename TNpyLongType, typename TClongType, NPY_TYPES typenum>
+template <typename TNpyType, typename TNpyLongType, NPY_TYPES typenum>
 static int string_to_int(
     PyArrayMethod_Context * context,
     char *const data[],
@@ -938,7 +938,8 @@ static int string_to_int(
 
     while (N--) {
         TNpyLongType value;
-        if (stringbuf_to_int<TNpyLongType, TClongType>(in, &value, has_null, default_string, allocator) != 0) {
+        if (stringbuf_to_int<TNpyLongType>(in, &value, has_null, default_string, allocator) != 0) {
+            npy_gil_error(PyExc_RuntimeError, "Encountered problem converting string dtype to integer dtype.");
             goto fail;
         }
         *out = (TNpyType)value;
@@ -976,10 +977,10 @@ static int string_to_int(
     return -1;
 }
 
-template<typename TNpyType, typename TNpyLongType, typename TClongType, NPY_TYPES typenum>
+template<typename TNpyType, typename TNpyLongType, NPY_TYPES typenum>
 static PyType_Slot s2int_slots[] = {
     {NPY_METH_resolve_descriptors, (void *)&string_to_int_resolve_descriptors<typenum>},
-    {NPY_METH_strided_loop, (void *)&string_to_int<TNpyType, TNpyLongType, TClongType, typenum>},
+    {NPY_METH_strided_loop, (void *)&string_to_int<TNpyType, TNpyLongType, typenum>},
     {0, NULL}
 };
 
@@ -1055,14 +1056,14 @@ PyArray_DTypeMeta **get_s2type_dtypes(NPY_TYPES typenum) {
     return get_dtypes(&PyArray_StringDType, typenum_to_dtypemeta(typenum));
 }
 
-template<typename TNpyType, typename TNpyLongType, typename TClongType, NPY_TYPES typenum>
+template<typename TNpyType, typename TNpyLongType, NPY_TYPES typenum>
 PyArrayMethod_Spec *getStringToIntCastSpec() {
     return get_cast_spec(
         typenum_to_shortname(typenum),
         NPY_UNSAFE_CASTING,
         NPY_METH_REQUIRES_PYAPI,
         get_s2type_dtypes(typenum),
-        s2int_slots<TNpyType, TNpyLongType, TClongType, typenum>
+        s2int_slots<TNpyType, TNpyLongType, typenum>
     );
 }
 
@@ -2362,45 +2363,45 @@ get_casts() {
     casts[cast_i++] = StringToBoolCastSpec;
     casts[cast_i++] = BoolToStringCastSpec;
 
-    casts[cast_i++] = getStringToIntCastSpec<npy_int8,  npy_longlong, long long, NPY_INT8>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_int16, npy_longlong, long long, NPY_INT16>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_int32, npy_longlong, long long, NPY_INT32>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_int64, npy_longlong, long long, NPY_INT64>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_int8,  npy_longlong, NPY_INT8>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_int16, npy_longlong, NPY_INT16>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_int32, npy_longlong, NPY_INT32>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_int64, npy_longlong, NPY_INT64>();
     casts[cast_i++] = getIntToStringCastSpec<npy_int8,  long long, NPY_INT8>();
     casts[cast_i++] = getIntToStringCastSpec<npy_int16, long long, NPY_INT16>();
     casts[cast_i++] = getIntToStringCastSpec<npy_int32, long long, NPY_INT32>();
     casts[cast_i++] = getIntToStringCastSpec<npy_int64, long long, NPY_INT64>();
 
-    casts[cast_i++] = getStringToIntCastSpec<npy_uint8,  npy_ulonglong, unsigned long long, NPY_UINT8>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_uint16, npy_ulonglong, unsigned long long, NPY_UINT16>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_uint32, npy_ulonglong, unsigned long long, NPY_UINT32>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_uint64, npy_ulonglong, unsigned long long, NPY_UINT64>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_uint8,  npy_ulonglong, NPY_UINT8>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_uint16, npy_ulonglong, NPY_UINT16>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_uint32, npy_ulonglong, NPY_UINT32>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_uint64, npy_ulonglong, NPY_UINT64>();
     casts[cast_i++] = getIntToStringCastSpec<npy_uint8,  unsigned long long, NPY_UINT8>();
     casts[cast_i++] = getIntToStringCastSpec<npy_uint16, unsigned long long, NPY_UINT16>();
     casts[cast_i++] = getIntToStringCastSpec<npy_uint32, unsigned long long, NPY_UINT32>();
     casts[cast_i++] = getIntToStringCastSpec<npy_uint64, unsigned long long, NPY_UINT64>();
 
 #if NPY_SIZEOF_BYTE == NPY_SIZEOF_SHORT
-    casts[cast_i++] = getStringToIntCastSpec<npy_byte,  npy_longlong,  long long,          NPY_BYTE>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_ubyte, npy_ulonglong, unsigned long long, NPY_UBYTE>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_byte,  npy_longlong,  NPY_BYTE>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_ubyte, npy_ulonglong, NPY_UBYTE>();
     casts[cast_i++] = getIntToStringCastSpec<npy_byte,  long long,          NPY_BYTE>();
     casts[cast_i++] = getIntToStringCastSpec<npy_ubyte, unsigned long long, NPY_UBYTE>();
 #endif
 #if NPY_SIZEOF_SHORT == NPY_SIZEOF_INT
-    casts[cast_i++] = getStringToIntCastSpec<npy_short,  npy_longlong,  long long,          NPY_SHORT>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_ushort, npy_ulonglong, unsigned long long, NPY_USHORT>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_short,  npy_longlong,  NPY_SHORT>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_ushort, npy_ulonglong, NPY_USHORT>();
     casts[cast_i++] = getIntToStringCastSpec<npy_short,  long long,          NPY_SHORT>();
     casts[cast_i++] = getIntToStringCastSpec<npy_ushort, unsigned long long, NPY_USHORT>();
 #endif
 #if NPY_SIZEOF_INT == NPY_SIZEOF_LONG
-    casts[cast_i++] = getStringToIntCastSpec<npy_int,  npy_longlong,  long long,          NPY_INT>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_uint, npy_ulonglong, unsigned long long, NPY_UINT>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_int,  npy_longlong,  NPY_INT>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_uint, npy_ulonglong, NPY_UINT>();
     casts[cast_i++] = getIntToStringCastSpec<npy_int,  long long,          NPY_INT>();
     casts[cast_i++] = getIntToStringCastSpec<npy_uint, unsigned long long, NPY_UINT>();
 #endif
 #if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG
-    casts[cast_i++] = getStringToIntCastSpec<npy_longlong, npy_longlong,  long long,          NPY_LONGLONG>();
-    casts[cast_i++] = getStringToIntCastSpec<npy_longlong, npy_ulonglong, unsigned long long, NPY_ULONGLONG>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_longlong, npy_longlong,  NPY_LONGLONG>();
+    casts[cast_i++] = getStringToIntCastSpec<npy_longlong, npy_ulonglong, NPY_ULONGLONG>();
     casts[cast_i++] = getIntToStringCastSpec<npy_longlong, long long,          NPY_LONGLONG>();
     casts[cast_i++] = getIntToStringCastSpec<npy_longlong, unsigned long long, NPY_ULONGLONG>();
 #endif
