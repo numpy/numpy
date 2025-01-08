@@ -1453,7 +1453,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         you will not be able to load the file in NumPy versions < 1.14. Default
         is 'latin1'.
     fstring_fmt : str or sequence of strs, optional
-        A single format ({:.18e}), a sequence of formats, or a
+        A single format (e.g. '{:.18e}'), a sequence of formats, or a
         multi-format string. Overrides `fmt` if provided.
 
     See Also
@@ -1544,7 +1544,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 self.fh.write(v.encode(self.encoding))
 
         def write_normal(self, v):
-            self.fh.write(v)
+            self.fh.write(asunicode(v))
 
         def first_write(self, v):
             try:
@@ -1589,15 +1589,21 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         iscomplex_X = np.iscomplexobj(X)
 
-        # Handle fstring_fmt if provided
         if fstring_fmt:
             if isinstance(fstring_fmt, str):
-                fstring_fmt = fstring_fmt.split(delimiter)
+                if delimiter in fstring_fmt:
+                    fstring_fmt = fstring_fmt.split(delimiter)
+                else:
+                    fstring_fmt = [fstring_fmt] * ncol
+            elif not isinstance(fstring_fmt, (list, tuple)):
+                raise ValueError('fstring_fmt must be a string, list, or tuple.')
             if len(fstring_fmt) != ncol:
-                raise ValueError("fstring_fmt has wrong shape. %s" % str(fstring_fmt))
-            format_row = delimiter.join(fstring_fmt) + newline
+                raise ValueError(
+                    f"fstring_fmt has wrong shape. Expected {ncol} elements.")
+            format_row = delimiter.join(
+                fstring_fmt) + newline
+
         else:
-            # Handle fmt if fstring_fmt is not provided
             if isinstance(fmt, (list, tuple)):
                 if len(fmt) != ncol:
                     raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
@@ -1653,7 +1659,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)
-            fh.write(comments + footer.rstrip('\n') + newline)
+            fh.write(comments + footer + newline)
     finally:
         if own_fh:
             fh.close()

@@ -639,34 +639,61 @@ class TestSaveTxt:
 
     def test_fstring_fmt(self):
         # Test fstring_fmt with simple data
-        a = np.array([[1, 2], [3, 4]])
+        a = np.array([[1.1, 2.2], [3.3, 4.4]])
         c = BytesIO()
         np.savetxt(c, a, fstring_fmt=["{:.2f}", "{:.2f}"])
-        assert c.getvalue().decode('utf-8') == "1.00 2.00\n3.00 4.00\n"
+        assert c.getvalue().decode('utf-8') == "1.10 2.20\n3.30 4.40\n"
 
         # Test fstring_fmt with 1D array
-        a = np.array([1, 2, 3, 4])
+        a = np.array([1.1, 2.2, 3.3, 4.4])
         c = BytesIO()
-        np.savetxt(c, a, fstring_fmt="{:03d}")
+        np.savetxt(c, a, fstring_fmt="{:.1f}")
         c.seek(0)
-        assert_equal(c.readlines(), [b'001\n', b'002\n', b'003\n', b'004\n'])
+        assert_equal(c.readlines(), [b'1.1\n', b'2.2\n', b'3.3\n', b'4.4\n'])
 
         # Test fstring_fmt with headers and footers
         c = BytesIO()
-        np.savetxt(c, a, fstring_fmt="{:03d}", header="Header", footer="Footer")
+        np.savetxt(c, a, fstring_fmt="{:.1f}", header="Header", footer="Footer")
         c.seek(0)
-        assert_equal(c.read(), b"# Header\n001\n002\n003\n004\n# Footer\n")
+        assert_equal(c.read(), b"# Header\n1.1\n2.2\n3.3\n4.4\n# Footer\n")
 
         # Test fstring_fmt with invalid format
         c = BytesIO()
         assert_raises(ValueError, np.savetxt, c, a, fstring_fmt="{:invalid}")
 
         # Test fstring_fmt with delimiter
-        a = np.array([[1, 2], [3, 4]])
+        a = np.array([[1.1, 2.2], [3.3, 4.4]])
         c = BytesIO()
-        np.savetxt(c, a, fstring_fmt="{:d},{:d}", delimiter=",")
+        np.savetxt(c, a, fstring_fmt="{:.1f},{:.1f}", delimiter=",")
         c.seek(0)
-        assert c.read().decode('utf-8').strip() == "1,2\n3,4"
+        assert c.read().decode('utf-8').strip() == "1.1,2.2\n3.3,4.4"
+
+        # Test fstring_fmt with complex numbers
+        a = np.array([[1 + 2j, 3 + 4j], [5 + 6j, 7 + 8j]])
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt=["{:.1f}+{:.1f}j", "{:.1f}+{:.1f}j"])
+        assert c.getvalue().decode(
+            'utf-8').strip() == "1.0+2.0j 3.0+4.0j\n5.0+6.0j 7.0+8.0j"
+
+        # Test fstring_fmt with complex numbers and delimiter
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt=["{:.1f}+{:.1f}j", "{:.1f}+{:.1f}j"],
+                   delimiter=",")
+        assert c.getvalue().decode(
+            'utf-8').strip() == "1.0+2.0j,3.0+4.0j\n5.0+6.0j,7.0+8.0j"
+
+        # Test fstring_fmt with complex numbers and headers/footers
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt=["{:.1f}+{:.1f}j", "{:.1f}+{:.1f}j"],
+                   header="Complex Header", footer="Complex Footer")
+        assert c.getvalue().decode(
+            'utf-8').strip() == "# Complex Header\n1.0+2.0j 3.0+4.0j\n5.0+6.0j 7.0+8.0j\n# Complex Footer"
+
+        # Test fstring_fmt with complex numbers and invalid format
+        c = BytesIO()
+        assert_raises(ValueError, np.savetxt, c, a,
+                      fstring_fmt="{:invalid}+{:invalid}j")
+
 
 class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
