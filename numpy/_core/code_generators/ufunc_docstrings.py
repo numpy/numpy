@@ -5461,20 +5461,22 @@ add_newdoc('numpy._core.umath', '_slice',
     Parameters
     ----------
     a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
 
-    start : the start of the slice, an integer or an array of integers
-            which can be broadcasted to`a`'s shape
+    start : array-like, with integer dtype
+        The start of the slice, broadcasted to `a`'s shape
 
-    stop : the end point of the slice, an integer or an array of integers
-           which can be broadcasted to`a`'s shape
+    stop : array-like, with integer dtype
+        The end of the slice, broadcasted to `a`'s shape
 
-    step : the step for the slice, an integer or an array of integers
-           which can be broadcasted to`a`'s shape
+    step : array-like, with integer dtype
+        The step for the slice, broadcasted to `a`'s shape
 
     Returns
     -------
     out : ndarray
-        Output array of str or unicode, depending on input type
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
 
     Examples
     --------
