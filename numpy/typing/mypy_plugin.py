@@ -16,6 +16,7 @@ Its functionality can be split into three distinct parts:
   Without the plugin the type will default to `ctypes.c_int64`.
 
   .. versionadded:: 1.22
+  .. deprecated:: 2.3
 
 Examples
 --------
@@ -35,7 +36,7 @@ from typing import Final
 
 import numpy as np
 
-__all__ = ()
+__all__: list[str] = []
 
 
 def _get_precision_dict() -> dict[str, str]:
@@ -111,9 +112,7 @@ try:
     from mypy.nodes import MypyFile, ImportFrom, Statement
     from mypy.build import PRI_MED
 
-
     _HookFunc: TypeAlias = Callable[[AnalyzeTypeContext], mypy.types.Type]
-
 
     def _hook(ctx: AnalyzeTypeContext) -> mypy.types.Type:
         """Replace a type-alias with a concrete ``NBitBase`` subclass."""
@@ -121,7 +120,6 @@ try:
         name = typ.name.split(".")[-1]
         name_new = _PRECISION_DICT[f"{_MODULE}._nbit.{name}"]
         return cast("TypeAnalyser", api).named_type(name_new)
-
 
     def _index(iterable: Iterable[Statement], id: str) -> int:
         """Identify the first ``ImportFrom`` instance the specified `id`."""
@@ -145,7 +143,6 @@ try:
         for lst in [file.defs, cast("list[Statement]", file.imports)]:
             i = _index(lst, module)
             lst[i] = import_obj
-
 
     class _NumpyPlugin(Plugin):
         """A mypy plugin for handling versus numpy-specific typing tasks."""
@@ -186,9 +183,15 @@ try:
                 )
             return [(PRI_MED, fullname, -1)]
 
-
     def plugin(version: str) -> type:
-        """An entry-point for mypy."""
+        import warnings
+
+        warnings.warn(
+            "`numpy.typing.mypy_plugin` is deprecated, and will be removed in "
+            "a future release.",
+            category=DeprecationWarning,
+            stacklevel=3,
+        )
         return _NumpyPlugin
 
 except ModuleNotFoundError as e:
