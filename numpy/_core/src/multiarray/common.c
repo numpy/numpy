@@ -62,7 +62,7 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_DTypeFromObjectStringDiscovery(
         PyObject *obj, PyArray_Descr *last_dtype, int string_type)
 {
-    int itemsize;
+    npy_intp itemsize;
 
     if (string_type == NPY_STRING) {
         PyObject *temp = PyObject_Str(obj);
@@ -75,6 +75,12 @@ PyArray_DTypeFromObjectStringDiscovery(
         if (itemsize < 0) {
             return NULL;
         }
+        if (itemsize > NPY_MAX_INT) {
+            /* We can allow this, but should audit code paths before we do. */
+            PyErr_Format(PyExc_TypeError,
+                    "string of length %zd is too large to store inside array.", itemsize);
+            return NULL;
+        }
     }
     else if (string_type == NPY_UNICODE) {
         PyObject *temp = PyObject_Str(obj);
@@ -84,6 +90,11 @@ PyArray_DTypeFromObjectStringDiscovery(
         itemsize = PyUnicode_GetLength(temp);
         Py_DECREF(temp);
         if (itemsize < 0) {
+            return NULL;
+        }
+        if (itemsize > NPY_MAX_INT / 4) {
+            PyErr_Format(PyExc_TypeError,
+                    "string of length %zd is too large to store inside array.", itemsize);
             return NULL;
         }
         itemsize *= 4;  /* convert UCS4 codepoints to bytes */
@@ -188,9 +199,9 @@ _IsWriteable(PyArrayObject *ap)
 /**
  * Convert an array shape to a string such as "(1, 2)".
  *
- * @param Dimensionality of the shape
- * @param npy_intp pointer to shape array
- * @param String to append after the shape `(1, 2)%s`.
+ * @param n Dimensionality of the shape
+ * @param vals npy_intp pointer to shape array
+ * @param ending String to append after the shape `(1, 2)%s`.
  *
  * @return Python unicode string
  */
@@ -299,12 +310,11 @@ end:
 /**
  * unpack tuple of PyDataType_FIELDS(dtype) (descr, offset, title[not-needed])
  *
- * @param "value" should be the tuple.
+ * @param value should be the tuple.
+ * @param descr will be set to the field's dtype
+ * @param offset will be set to the field's offset
  *
- * @return "descr" will be set to the field's dtype
- * @return "offset" will be set to the field's offset
- *
- * returns -1 on failure, 0 on success.
+ * @return -1 on failure, 0 on success.
  */
 NPY_NO_EXPORT int
 _unpack_field(PyObject *value, PyArray_Descr **descr, npy_intp *offset)

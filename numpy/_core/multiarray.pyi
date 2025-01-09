@@ -1,13 +1,12 @@
 # TODO: Sort out any and all missing functions in this namespace
-import os
 import datetime as dt
+from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
 from collections.abc import Sequence, Callable, Iterable
 from typing import (
     Literal as L,
     Any,
     TypeAlias,
     overload,
-    TypeAlias,
     TypeVar,
     TypedDict,
     SupportsIndex,
@@ -17,16 +16,24 @@ from typing import (
     ClassVar,
     type_check_only,
 )
-from typing_extensions import Unpack
+from typing_extensions import CapsuleType, Unpack
 
 import numpy as np
 from numpy import (  # type: ignore[attr-defined]
     # Re-exports
-    busdaycalendar as busdaycalendar,
-    broadcast as broadcast,
-    dtype as dtype,
-    ndarray as ndarray,
-    nditer as nditer,
+    busdaycalendar,
+    broadcast,
+    correlate,
+    count_nonzero,
+    dtype,
+    einsum as c_einsum,
+    flatiter,
+    from_dlpack,
+    interp,
+    matmul,
+    ndarray,
+    nditer,
+    vecdot,
 
     # The rest
     ufunc,
@@ -47,11 +54,12 @@ from numpy import (  # type: ignore[attr-defined]
     _CastingKind,
     _ModeKind,
     _SupportsBuffer,
-    _IOProtocol,
+    _SupportsFileMethods,
     _CopyMode,
     _NDIterFlagsKind,
-    _NDIterOpFlagsKind,
+    _NDIterFlagsOp,
 )
+from numpy.lib._array_utils_impl import normalize_axis_index
 
 from numpy._typing import (
     # Shapes
@@ -91,6 +99,98 @@ from numpy._typing._ufunc import (
     _PyFunc_Nin1P_Nout2P,
 )
 
+__all__ = [
+    "_ARRAY_API",
+    "ALLOW_THREADS",
+    "BUFSIZE",
+    "CLIP",
+    "DATETIMEUNITS",
+    "ITEM_HASOBJECT",
+    "ITEM_IS_POINTER",
+    "LIST_PICKLE",
+    "MAXDIMS",
+    "MAY_SHARE_BOUNDS",
+    "MAY_SHARE_EXACT",
+    "NEEDS_INIT",
+    "NEEDS_PYAPI",
+    "RAISE",
+    "USE_GETITEM",
+    "USE_SETITEM",
+    "WRAP",
+    "_flagdict",
+    "from_dlpack",
+    "_place",
+    "_reconstruct",
+    "_vec_string",
+    "_monotonicity",
+    "add_docstring",
+    "arange",
+    "array",
+    "asarray",
+    "asanyarray",
+    "ascontiguousarray",
+    "asfortranarray",
+    "bincount",
+    "broadcast",
+    "busday_count",
+    "busday_offset",
+    "busdaycalendar",
+    "can_cast",
+    "compare_chararrays",
+    "concatenate",
+    "copyto",
+    "correlate",
+    "correlate2",
+    "count_nonzero",
+    "c_einsum",
+    "datetime_as_string",
+    "datetime_data",
+    "dot",
+    "dragon4_positional",
+    "dragon4_scientific",
+    "dtype",
+    "empty",
+    "empty_like",
+    "error",
+    "flagsobj",
+    "flatiter",
+    "format_longfloat",
+    "frombuffer",
+    "fromfile",
+    "fromiter",
+    "fromstring",
+    "get_handler_name",
+    "get_handler_version",
+    "inner",
+    "interp",
+    "interp_complex",
+    "is_busday",
+    "lexsort",
+    "matmul",
+    "vecdot",
+    "may_share_memory",
+    "min_scalar_type",
+    "ndarray",
+    "nditer",
+    "nested_iters",
+    "normalize_axis_index",
+    "packbits",
+    "promote_types",
+    "putmask",
+    "ravel_multi_index",
+    "result_type",
+    "scalar",
+    "set_datetimeparse_function",
+    "set_typeDict",
+    "shares_memory",
+    "typeinfo",
+    "unpackbits",
+    "unravel_index",
+    "vdot",
+    "where",
+    "zeros",
+]
+
 _T_co = TypeVar("_T_co", covariant=True)
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
@@ -112,7 +212,7 @@ _1DArray: TypeAlias = ndarray[tuple[_SizeType], dtype[_SCT]]
 _Array: TypeAlias = ndarray[_ShapeType, dtype[_SCT]]
 
 # Valid time units
-_UnitKind = L[
+_UnitKind: TypeAlias = L[
     "Y",
     "M",
     "D",
@@ -126,7 +226,7 @@ _UnitKind = L[
     "fs",
     "as",
 ]
-_RollKind = L[  # `raise` is deliberately excluded
+_RollKind: TypeAlias = L[  # `raise` is deliberately excluded
     "nat",
     "forward",
     "following",
@@ -136,19 +236,13 @@ _RollKind = L[  # `raise` is deliberately excluded
     "modifiedpreceding",
 ]
 
-class _SupportsLenAndGetItem(Protocol[_T_contra, _T_co]):
-    def __len__(self) -> int: ...
-    def __getitem__(self, key: _T_contra, /) -> _T_co: ...
-
+@type_check_only
 class _SupportsArray(Protocol[_ArrayType_co]):
     def __array__(self, /) -> _ArrayType_co: ...
 
 @type_check_only
-class _KwargsEmptyLike(TypedDict, total=False):
+class _KwargsEmpty(TypedDict, total=False):
     device: None | L["cpu"]
-
-@type_check_only
-class _KwargsEmpty(_KwargsEmptyLike, total=False):
     like: None | _SupportsArrayFunc
 
 @type_check_only
@@ -255,8 +349,34 @@ class _ConstructorEmpty(Protocol):
         **kwargs: Unpack[_KwargsEmpty],
     ) -> NDArray[Any]: ...
 
+error: Final = Exception
 
-__all__: list[str]
+# from ._multiarray_umath
+ITEM_HASOBJECT: Final = 1
+LIST_PICKLE: Final = 2
+ITEM_IS_POINTER: Final = 4
+NEEDS_INIT: Final = 8
+NEEDS_PYAPI: Final = 16
+USE_GETITEM: Final = 32
+USE_SETITEM: Final = 64
+DATETIMEUNITS: Final[CapsuleType]
+_ARRAY_API: Final[CapsuleType]
+_flagdict: Final[dict[str, int]]
+_monotonicity: Final[Callable[..., object]]
+_place: Final[Callable[..., object]]
+_reconstruct: Final[Callable[..., object]]
+_vec_string: Final[Callable[..., object]]
+correlate2: Final[Callable[..., object]]
+dragon4_positional: Final[Callable[..., object]]
+dragon4_scientific: Final[Callable[..., object]]
+interp_complex: Final[Callable[..., object]]
+set_datetimeparse_function: Final[Callable[..., object]]
+def get_handler_name(a: NDArray[Any] = ..., /) -> str | None: ...
+def get_handler_version(a: NDArray[Any] = ..., /) -> int | None: ...
+def format_longfloat(x: np.longdouble, precision: int) -> str: ...
+def scalar(dtype: _DType, object: bytes | object = ...) -> ndarray[tuple[()], _DType]: ...
+def set_typeDict(dict_: dict[str, np.dtype[Any]], /) -> None: ...
+typeinfo: Final[dict[str, np.dtype[np.generic]]]
 
 ALLOW_THREADS: Final[int]  # 0 or 1 (system-specific)
 BUFSIZE: L[8192]
@@ -430,7 +550,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: _SupportsLenAndGetItem[int, ArrayLike],
+    arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -440,7 +560,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: _SupportsLenAndGetItem[int, ArrayLike],
+    arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -450,7 +570,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[_SCT]: ...
 @overload
 def concatenate(  # type: ignore[misc]
-    arrays: _SupportsLenAndGetItem[int, ArrayLike],
+    arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: None = ...,
@@ -460,7 +580,7 @@ def concatenate(  # type: ignore[misc]
 ) -> NDArray[Any]: ...
 @overload
 def concatenate(
-    arrays: _SupportsLenAndGetItem[int, ArrayLike],
+    arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
     out: _ArrayType = ...,
@@ -517,7 +637,7 @@ def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> np.bool: ...  # type:
 @overload
 def vdot(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co, /) -> unsignedinteger[Any]: ...  # type: ignore[misc]
 @overload
-def vdot(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, /) -> signedinteger[Any]: ... # type: ignore[misc]
+def vdot(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, /) -> signedinteger[Any]: ...  # type: ignore[misc]
 @overload
 def vdot(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, /) -> floating[Any]: ...  # type: ignore[misc]
 @overload
@@ -835,7 +955,7 @@ def frompyfunc(
 
 @overload
 def fromfile(
-    file: str | bytes | os.PathLike[Any] | _IOProtocol,
+    file: StrOrBytesPath | _SupportsFileMethods,
     dtype: None = ...,
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -845,7 +965,7 @@ def fromfile(
 ) -> NDArray[float64]: ...
 @overload
 def fromfile(
-    file: str | bytes | os.PathLike[Any] | _IOProtocol,
+    file: StrOrBytesPath | _SupportsFileMethods,
     dtype: _DTypeLike[_SCT],
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -855,7 +975,7 @@ def fromfile(
 ) -> NDArray[_SCT]: ...
 @overload
 def fromfile(
-    file: str | bytes | os.PathLike[Any] | _IOProtocol,
+    file: StrOrBytesPath | _SupportsFileMethods,
     dtype: DTypeLike,
     count: SupportsIndex = ...,
     sep: str = ...,
@@ -1164,7 +1284,7 @@ def compare_chararrays(
 
 def add_docstring(obj: Callable[..., Any], docstring: str, /) -> None: ...
 
-_GetItemKeys = L[
+_GetItemKeys: TypeAlias = L[
     "C", "CONTIGUOUS", "C_CONTIGUOUS",
     "F", "FORTRAN", "F_CONTIGUOUS",
     "W", "WRITEABLE",
@@ -1177,7 +1297,7 @@ _GetItemKeys = L[
     "FNC",
     "FORC",
 ]
-_SetItemKeys = L[
+_SetItemKeys: TypeAlias = L[
     "A", "ALIGNED",
     "W", "WRITEABLE",
     "X", "WRITEBACKIFCOPY",
@@ -1220,7 +1340,7 @@ def nested_iters(
     op: ArrayLike | Sequence[ArrayLike],
     axes: Sequence[Sequence[SupportsIndex]],
     flags: None | Sequence[_NDIterFlagsKind] = ...,
-    op_flags: None | Sequence[Sequence[_NDIterOpFlagsKind]] = ...,
+    op_flags: None | Sequence[Sequence[_NDIterFlagsOp]] = ...,
     op_dtypes: DTypeLike | Sequence[DTypeLike] = ...,
     order: _OrderKACF = ...,
     casting: _CastingKind = ...,

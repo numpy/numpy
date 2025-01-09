@@ -215,7 +215,7 @@ def test_expected_promotion(expected, dtypes, optional_dtypes, data):
         [np.int8, np.int16, np.int32, np.int64,
          np.uint8, np.uint16, np.uint32, np.uint64])
 @pytest.mark.parametrize("other_val",
-        [-2*100, -1, 0, 9, 10, 11, 2**63, 2*100])
+        [-2 * 100, -1, 0, 9, 10, 11, 2**63, 2 * 100])
 @pytest.mark.parametrize("comp",
         [operator.eq, operator.ne, operator.le, operator.lt,
          operator.ge, operator.gt])
@@ -235,6 +235,20 @@ def test_integer_comparison(sctype, other_val, comp):
     val = val_obj.astype(sctype)
     assert_array_equal(comp(val_obj, other_val), comp(val, other_val))
     assert_array_equal(comp(other_val, val_obj), comp(other_val, val))
+
+
+@pytest.mark.parametrize("arr", [
+    np.ones((100, 100), dtype=np.uint8)[::2],  # not trivially iterable
+    np.ones(20000, dtype=">u4"),  # cast and >buffersize
+    np.ones(100, dtype=">u4"),  # fast path compatible with cast
+])
+def test_integer_comparison_with_cast(arr):
+    # Similar to above, but mainly test a few cases that cover the slow path
+    # the test is limited to unsigned ints and -1 for simplicity.
+    res = arr >= -1
+    assert_array_equal(res, np.ones_like(arr, dtype=bool))
+    res = arr < -1
+    assert_array_equal(res, np.zeros_like(arr, dtype=bool))
 
 
 @pytest.mark.parametrize("comp",

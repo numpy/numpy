@@ -177,7 +177,6 @@ int_common_dtype(PyArray_DTypeMeta *NPY_UNUSED(cls), PyArray_DTypeMeta *other)
         /* This is a back-compat fallback to usually do the right thing... */
         PyArray_DTypeMeta *uint8_dt = &PyArray_UInt8DType;
         PyArray_DTypeMeta *res = NPY_DT_CALL_common_dtype(other, uint8_dt);
-        Py_DECREF(uint8_dt);
         if (res == NULL) {
             PyErr_Clear();
         }
@@ -477,7 +476,6 @@ npy_find_descr_for_scalar(
             /* If the DType doesn't know the scalar type, guess at default. */
             !NPY_DT_CALL_is_known_scalar_type(common, Py_TYPE(scalar))) {
         if (common->singleton != NULL) {
-            Py_INCREF(common->singleton);
             res = common->singleton;
             Py_INCREF(res);
         }

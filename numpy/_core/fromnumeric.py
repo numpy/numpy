@@ -134,9 +134,6 @@ def take(a, indices, axis=None, out=None, mode='raise'):
         The source array.
     indices : array_like (Nj...)
         The indices of the values to extract.
-
-        .. versionadded:: 1.8.0
-
         Also allow scalars for indices.
     axis : int, optional
         The axis over which to select values. By default, the flattened
@@ -169,7 +166,6 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
     Notes
     -----
-
     By eliminating the inner loop in the description above, and using `s_` to
     build simple slice objects, `take` can be expressed  in terms of applying
     fancy indexing to each 1-d slice::
@@ -341,10 +337,9 @@ def choose(a, choices, out=None, mode='raise'):
 
     First of all, if confused or uncertain, definitely look at the Examples -
     in its full generality, this function is less simple than it might
-    seem from the following code description (below ndi =
-    `numpy.lib.index_tricks`):
+    seem from the following code description::
 
-    ``np.choose(a,c) == np.array([c[a[I]][I] for I in ndi.ndindex(a.shape)])``.
+        np.choose(a,c) == np.array([c[a[I]][I] for I in np.ndindex(a.shape)])
 
     But this omits some subtleties.  Here is a fully general summary:
 
@@ -773,8 +768,6 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     partitions on the either side of the k-th element in the output array is
     undefined.
 
-    .. versionadded:: 1.8.0
-
     Parameters
     ----------
     a : array_like
@@ -888,8 +881,6 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     indices of the same shape as `a` that index data along the given
     axis in partitioned order.
 
-    .. versionadded:: 1.8.0
-
     Parameters
     ----------
     a : array_like
@@ -992,10 +983,6 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
         and 'mergesort' use timsort or radix sort under the covers and,
         in general, the actual implementation will vary with data type.
         The 'mergesort' option is retained for backwards compatibility.
-
-        .. versionchanged:: 1.15.0.
-           The 'stable' option was added.
-
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -1066,8 +1053,6 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
     placements are sorted according to the non-nan part if it exists.
     Non-nan values are sorted as before.
 
-    .. versionadded:: 1.12.0
-
     quicksort has been changed to:
     `introsort <https://en.wikipedia.org/wiki/Introsort>`_.
     When sorting does not make enough progress it switches to
@@ -1084,8 +1069,6 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
     ability to select the implementation and it is hardwired for the different
     data types.
 
-    .. versionadded:: 1.17.0
-
     Timsort is added for better performance on already or nearly
     sorted data. On random data timsort is almost identical to
     mergesort. It is now used for stable sort while quicksort is still the
@@ -1094,8 +1077,6 @@ def sort(a, axis=-1, kind=None, order=None, *, stable=None):
     <https://github.com/python/cpython/blob/3.7/Objects/listsort.txt>`_
     'mergesort' and 'stable' are mapped to radix sort for integer data types.
     Radix sort is an O(n) sort instead of O(n log n).
-
-    .. versionchanged:: 1.18.0
 
     NaT now sorts to the end of arrays for consistency with NaN.
 
@@ -1167,9 +1148,6 @@ def argsort(a, axis=-1, kind=None, order=None, *, stable=None):
         and 'mergesort' use timsort under the covers and, in general, the
         actual implementation will vary with data type. The 'mergesort' option
         is retained for backwards compatibility.
-
-        .. versionchanged:: 1.15.0.
-           The 'stable' option was added.
     order : str or list of str, optional
         When `a` is an array with fields defined, this argument specifies
         which fields to compare first, second, etc.  A single field can
@@ -1500,8 +1478,6 @@ def searchsorted(a, v, side='left', sorter=None):
         Optional array of integer indices that sort array a into ascending
         order. They are typically the result of argsort.
 
-        .. versionadded:: 1.7.0
-
     Returns
     -------
     indices : int or array of ints
@@ -1535,6 +1511,18 @@ def searchsorted(a, v, side='left', sorter=None):
     >>> np.searchsorted([11,12,13,14,15], [-10, 20, 12, 13])
     array([0, 5, 1, 2])
 
+    When `sorter` is used, the returned indices refer to the sorted
+    array of `a` and not `a` itself:
+
+    >>> a = np.array([40, 10, 20, 30])
+    >>> sorter = np.argsort(a)
+    >>> sorter
+    array([1, 2, 3, 0])  # Indices that would sort the array 'a'
+    >>> result = np.searchsorted(a, 25, sorter=sorter)
+    >>> result
+    2
+    >>> a[sorter[result]]
+    30  # The element at index 2 of the sorted array is 30.
     """
     return _wrapfunc(a, 'searchsorted', v, side=side, sorter=sorter)
 
@@ -1640,8 +1628,6 @@ def squeeze(a, axis=None):
     a : array_like
         Input data.
     axis : None or int or tuple of ints, optional
-        .. versionadded:: 1.7.0
-
         Selects a subset of the entries of length one in the
         shape. If an axis is selected with shape entry greater than
         one, an error is raised.
@@ -2290,8 +2276,6 @@ def clip(a, a_min=np._NoValue, a_max=np._NoValue, out=None, *,
         For other keyword-only arguments, see the
         :ref:`ufunc docs <ufuncs.kwargs>`.
 
-        .. versionadded:: 1.17.0
-
     Returns
     -------
     clipped_array : ndarray
@@ -2364,11 +2348,8 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     axis : None or int or tuple of ints, optional
         Axis or axes along which a sum is performed.  The default,
         axis=None, will sum all of the elements of the input array.  If
-        axis is negative it counts from the last to the first axis.
-
-        .. versionadded:: 1.7.0
-
-        If axis is a tuple of ints, a sum is performed on all of the axes
+        axis is negative it counts from the last to the first axis. If
+        axis is a tuple of ints, a sum is performed on all of the axes
         specified in the tuple instead of a single axis or all the axes as
         before.
     dtype : dtype, optional
@@ -2394,13 +2375,8 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         exceptions will be raised.
     initial : scalar, optional
         Starting value for the sum. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.15.0
-
     where : array_like of bool, optional
         Elements to include in the sum. See `~numpy.ufunc.reduce` for details.
-
-        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -2513,11 +2489,8 @@ def any(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
         Axis or axes along which a logical OR reduction is performed.
         The default (``axis=None``) is to perform a logical OR over all
         the dimensions of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-
-        .. versionadded:: 1.7.0
-
-        If this is a tuple of ints, a reduction is performed on multiple
+        which case it counts from the last to the first axis. If this
+        is a tuple of ints, a reduction is performed on multiple
         axes, instead of a single axis or all the axes as before.
     out : ndarray, optional
         Alternate output array in which to place the result.  It must have
@@ -2626,11 +2599,8 @@ def all(a, axis=None, out=None, keepdims=np._NoValue, *, where=np._NoValue):
         Axis or axes along which a logical AND reduction is performed.
         The default (``axis=None``) is to perform a logical AND over all
         the dimensions of the input array. `axis` may be negative, in
-        which case it counts from the last to the first axis.
-
-        .. versionadded:: 1.7.0
-
-        If this is a tuple of ints, a reduction is performed on multiple
+        which case it counts from the last to the first axis. If this
+        is a tuple of ints, a reduction is performed on multiple
         axes, instead of a single axis or all the axes as before.
     out : ndarray, optional
         Alternate output array in which to place the result.
@@ -2845,7 +2815,7 @@ def cumulative_sum(x, /, *, axis=None, dtype=None, out=None,
         but the type will be cast if necessary. See :ref:`ufuncs-output-type`
         for more details.
     include_initial : bool, optional
-        Boolean indicating whether to include the initial value (ones) as
+        Boolean indicating whether to include the initial value (zeros) as
         the first value in the output. With ``include_initial=True``
         the shape of the output is different than the shape of the input.
         Default: ``False``.
@@ -3012,9 +2982,6 @@ def ptp(a, axis=None, out=None, keepdims=np._NoValue):
         Axis along which to find the peaks.  By default, flatten the
         array.  `axis` may be negative, in
         which case it counts from the last to the first axis.
-
-        .. versionadded:: 1.15.0
-
         If this is a tuple of ints, a reduction is performed on multiple
         axes, instead of a single axis or all the axes as before.
     out : array_like
@@ -3095,12 +3062,9 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         Input data.
     axis : None or int or tuple of ints, optional
         Axis or axes along which to operate.  By default, flattened input is
-        used.
+        used. If this is a tuple of ints, the maximum is selected over
+        multiple axes, instead of a single axis or all the axes as before.
 
-        .. versionadded:: 1.7.0
-
-        If this is a tuple of ints, the maximum is selected over multiple axes,
-        instead of a single axis or all the axes as before.
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
@@ -3121,13 +3085,9 @@ def max(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         The minimum value of an output element. Must be present to allow
         computation on empty slice. See `~numpy.ufunc.reduce` for details.
 
-        .. versionadded:: 1.15.0
-
     where : array_like of bool, optional
         Elements to compare for the maximum. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -3241,8 +3201,6 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         Axis or axes along which to operate.  By default, flattened input is
         used.
 
-        .. versionadded:: 1.7.0
-
         If this is a tuple of ints, the minimum is selected over multiple axes,
         instead of a single axis or all the axes as before.
     out : ndarray, optional
@@ -3265,13 +3223,9 @@ def min(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
         The maximum value of an output element. Must be present to allow
         computation on empty slice. See `~numpy.ufunc.reduce` for details.
 
-        .. versionadded:: 1.15.0
-
     where : array_like of bool, optional
         Elements to compare for the minimum. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -3387,8 +3341,6 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
         input array. If axis is negative it counts from the last to the
         first axis.
 
-        .. versionadded:: 1.7.0
-
         If axis is a tuple of ints, a product is performed on all of the
         axes specified in the tuple instead of a single axis or all the
         axes as before.
@@ -3416,14 +3368,9 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=np._NoValue,
     initial : scalar, optional
         The starting value for this product. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.15.0
-
     where : array_like of bool, optional
         Elements to include in the product. See `~numpy.ufunc.reduce`
         for details.
-
-        .. versionadded:: 1.17.0
 
     Returns
     -------
@@ -3804,8 +3751,6 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=np._NoValue, *,
         Axis or axes along which the means are computed. The default is to
         compute the mean of the flattened array.
 
-        .. versionadded:: 1.7.0
-
         If this is a tuple of ints, a mean is performed over multiple axes,
         instead of a single axis or all the axes as before.
     dtype : data-type, optional
@@ -3938,9 +3883,6 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     axis : None or int or tuple of ints, optional
         Axis or axes along which the standard deviation is computed. The
         default is to compute the standard deviation of the flattened array.
-
-        .. versionadded:: 1.7.0
-
         If this is a tuple of ints, a standard deviation is performed over
         multiple axes, instead of a single axis or all the axes as before.
     dtype : dtype, optional
@@ -3978,7 +3920,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         The axis for the calculation of the mean should be the same as used in
         the call to this std function.
 
-        .. versionadded:: 1.26.0
+        .. versionadded:: 2.0.0
 
     correction : {int, float}, optional
         Array API compatible name for the ``ddof`` parameter. Only one of them
@@ -4146,9 +4088,6 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
     axis : None or int or tuple of ints, optional
         Axis or axes along which the variance is computed.  The default is to
         compute the variance of the flattened array.
-
-        .. versionadded:: 1.7.0
-
         If this is a tuple of ints, a variance is performed over multiple axes,
         instead of a single axis or all the axes as before.
     dtype : data-type, optional
@@ -4185,7 +4124,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
         The axis for the calculation of the mean should be the same as used in
         the call to this var function.
 
-        .. versionadded:: 1.26.0
+        .. versionadded:: 2.0.0
 
     correction : {int, float}, optional
         Array API compatible name for the ``ddof`` parameter. Only one of them
@@ -4328,4 +4267,3 @@ def var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=np._NoValue, *,
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                          **kwargs)
-

@@ -91,7 +91,7 @@ enum npy_cpu_features
 
     // IBM/ZARCH
     NPY_CPU_FEATURE_VX                = 350,
- 
+
     // Vector-Enhancements Facility 1
     NPY_CPU_FEATURE_VXE               = 351,
 
@@ -100,6 +100,9 @@ enum npy_cpu_features
 
     // RISC-V
     NPY_CPU_FEATURE_RVV               = 400,
+
+    // LOONGARCH
+    NPY_CPU_FEATURE_LSX               = 500,
 
     NPY_CPU_FEATURE_MAX
 };
@@ -113,7 +116,7 @@ enum npy_cpu_features
  *  - uses 'NPY_DISABLE_CPU_FEATURES' to disable dispatchable features
  *  - uses 'NPY_ENABLE_CPU_FEATURES' to enable dispatchable features
  *
- * It will set a RuntimeError when 
+ * It will set a RuntimeError when
  *  - CPU baseline features from the build are not supported at runtime
  *  - 'NPY_DISABLE_CPU_FEATURES' tries to disable a baseline feature
  *  - 'NPY_DISABLE_CPU_FEATURES' and 'NPY_ENABLE_CPU_FEATURES' are
@@ -122,14 +125,14 @@ enum npy_cpu_features
  *    by the machine or build
  *  - 'NPY_ENABLE_CPU_FEATURES' tries to enable a feature when the project was
  *    not built with any feature optimization support
- *  
+ *
  * It will set an ImportWarning when:
  *  - 'NPY_DISABLE_CPU_FEATURES' tries to disable a feature that is not supported
  *    by the machine or build
  *  - 'NPY_DISABLE_CPU_FEATURES' or 'NPY_ENABLE_CPU_FEATURES' tries to
  *    disable/enable a feature when the project was not built with any feature
  *    optimization support
- * 
+ *
  * return 0 on success otherwise return -1
  */
 NPY_VISIBILITY_HIDDEN int

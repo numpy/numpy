@@ -8,11 +8,14 @@ from typing import (
     SupportsIndex,
     SupportsInt,
     NamedTuple,
-    Generic,
 )
 
 import numpy as np
 from numpy import (
+    # re-exports
+    vecdot,
+
+    # other
     generic,
     floating,
     complexfloating,
@@ -24,12 +27,13 @@ from numpy import (
     float64,
     complex128,
 )
-
-from numpy.linalg import LinAlgError as LinAlgError
-
+from numpy.linalg import LinAlgError
+from numpy._core.fromnumeric import matrix_transpose
+from numpy._core.numeric import tensordot
 from numpy._typing import (
     NDArray,
     ArrayLike,
+    DTypeLike,
     _ArrayLikeUnknown,
     _ArrayLikeBool_co,
     _ArrayLikeInt_co,
@@ -38,18 +42,49 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
-    DTypeLike,
 )
+
+__all__ = [
+    "matrix_power",
+    "solve",
+    "tensorsolve",
+    "tensorinv",
+    "inv",
+    "cholesky",
+    "eigvals",
+    "eigvalsh",
+    "pinv",
+    "slogdet",
+    "det",
+    "svd",
+    "svdvals",
+    "eig",
+    "eigh",
+    "lstsq",
+    "norm",
+    "qr",
+    "cond",
+    "matrix_rank",
+    "LinAlgError",
+    "multi_dot",
+    "trace",
+    "diagonal",
+    "cross",
+    "outer",
+    "tensordot",
+    "matmul",
+    "matrix_transpose",
+    "matrix_norm",
+    "vector_norm",
+    "vecdot",
+]
 
 _T = TypeVar("_T")
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
-_SCT = TypeVar("_SCT", bound=generic, covariant=True)
 _SCT2 = TypeVar("_SCT2", bound=generic, covariant=True)
 
 _2Tuple: TypeAlias = tuple[_T, _T]
 _ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
-
-__all__: list[str]
 
 class EigResult(NamedTuple):
     eigenvalues: NDArray[Any]
@@ -78,19 +113,19 @@ class SVDResult(NamedTuple):
 def tensorsolve(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
-    axes: None | Iterable[int] =...,
+    axes: None | Iterable[int] = ...,
 ) -> NDArray[float64]: ...
 @overload
 def tensorsolve(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
-    axes: None | Iterable[int] =...,
+    axes: None | Iterable[int] = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def tensorsolve(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
-    axes: None | Iterable[int] =...,
+    axes: None | Iterable[int] = ...,
 ) -> NDArray[complexfloating[Any, Any]]: ...
 
 @overload

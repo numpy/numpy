@@ -83,12 +83,14 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         options['legacy'] = 121
     elif legacy == '1.25':
         options['legacy'] = 125
+    elif legacy == '2.1':
+        options['legacy'] = 201
     elif legacy is None:
         pass  # OK, do nothing.
     else:
         warnings.warn(
             "legacy printing option can currently only be '1.13', '1.21', "
-            "'1.25', or `False`", stacklevel=3)
+            "'1.25', '2.1, or `False`", stacklevel=3)
 
     if threshold is not None:
         # forbid the bad threshold arg suggested by stack overflow, gh-12351
@@ -214,14 +216,16 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         that numeric scalars are printed without their type information, e.g.
         as ``3.0`` rather than ``np.float64(3.0)``.
 
+        If set to ``'2.1'``, shape information is not given when arrays are
+        summarized (i.e., multiple elements replaced with ``...``).
+
         If set to `False`, disables legacy mode.
 
         Unrecognized strings will be ignored with a warning for forward
         compatibility.
 
-        .. versionadded:: 1.14.0
         .. versionchanged:: 1.22.0
-        .. versionchanged:: 2.0
+        .. versionchanged:: 2.2
 
     override_repr: callable, optional
         If set a passed function will be used for generating arrays' repr.
@@ -250,7 +254,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     >>> np.set_printoptions(threshold=5)
     >>> np.arange(10)
-    array([0, 1, 2, ..., 7, 8, 9])
+    array([0, 1, 2, ..., 7, 8, 9], shape=(10,))
 
     Small results can be suppressed:
 
@@ -283,7 +287,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     >>> with np.printoptions(precision=2, suppress=True, threshold=5):
     ...     np.linspace(0, 10, 10)
-    array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ])
+    array([ 0.  ,  1.11,  2.22, ...,  7.78,  8.89, 10.  ], shape=(10,))
 
     """
     _set_printoptions(precision, threshold, edgeitems, linewidth, suppress,
@@ -412,7 +416,7 @@ def _leading_trailing(a, edgeitems, index=()):
     if axis == a.ndim:
         return a[index]
 
-    if a.shape[axis] > 2*edgeitems:
+    if a.shape[axis] > 2 * edgeitems:
         return concatenate((
             _leading_trailing(a, edgeitems, index + np.index_exp[:edgeitems]),
             _leading_trailing(a, edgeitems, index + np.index_exp[-edgeitems:])
@@ -581,7 +585,7 @@ def _array2string(a, options, separator=' ', prefix=""):
     # skip over "["
     next_line_prefix = " "
     # skip over array(
-    next_line_prefix += " "*len(prefix)
+    next_line_prefix += " " * len(prefix)
 
     lst = _formatArray(a, format_function, options['linewidth'],
                        next_line_prefix, separator, options['edgeitems'],
@@ -711,8 +715,6 @@ def array2string(a, max_line_width=None, precision=None,
         `False`, disables legacy mode. Unrecognized strings will be ignored
         with a warning for forward compatibility.
 
-        .. versionadded:: 1.14.0
-
     Returns
     -------
     array_str : str
@@ -811,7 +813,7 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
         line = next_line_prefix + words[0]
         indent = next_line_prefix
     else:
-        indent = len(line)*' '
+        indent = len(line) * ' '
         line += words[0]
 
     for word in words[1::]:
@@ -819,7 +821,7 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
         line = indent + word
 
     suffix_length = max_word_length - len(words[-1])
-    line += suffix_length*' '
+    line += suffix_length * ' '
 
     return s, line
 
@@ -853,7 +855,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             next_width = curr_width - len(']')
 
         a_len = a.shape[axis]
-        show_summary = summary_insert and 2*edge_items < a_len
+        show_summary = summary_insert and 2 * edge_items < a_len
         if show_summary:
             leading_items = edge_items
             trailing_items = edge_items
@@ -908,7 +910,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         # other axes - insert newlines between rows
         else:
             s = ''
-            line_sep = separator.rstrip() + '\n'*(axes_left - 1)
+            line_sep = separator.rstrip() + '\n' * (axes_left - 1)
 
             for i in range(leading_items):
                 nested = recurser(
@@ -993,7 +995,7 @@ class FloatingFormat:
             min_val = np.min(abs_non_zero)
             with errstate(over='ignore'):  # division can overflow
                 if max_val >= 1.e8 or (not self.suppress_small and
-                        (min_val < 0.0001 or max_val/min_val > 1000.)):
+                        (min_val < 0.0001 or max_val / min_val > 1000.)):
                     self.exp_format = True
 
         # do a first pass of printing all the numbers, to determine sizes
@@ -1078,7 +1080,7 @@ class FloatingFormat:
                 else:  # isinf
                     sign = '-' if x < 0 else '+' if self.sign == '+' else ''
                     ret = sign + current_options['infstr']
-                return ' '*(
+                return ' ' * (
                     self.pad_left + self.pad_right + 1 - len(ret)
                 ) + ret
 
@@ -1415,7 +1417,7 @@ class SubArrayFormat:
         if np.ndim(a) == 0:
             return self.format_function(a)
 
-        if self.summary_insert and a.shape[0] > 2*self.edge_items:
+        if self.summary_insert and a.shape[0] > 2 * self.edge_items:
             formatted = (
                 [self.format_array(a_) for a_ in a[:self.edge_items]]
                 + [self.summary_insert]
@@ -1581,39 +1583,41 @@ def _array_repr_implementation(
     else:
         class_name = "array"
 
-    skipdtype = dtype_is_implied(arr.dtype) and arr.size > 0
-
     prefix = class_name + "("
-    suffix = ")" if skipdtype else ","
-
     if (current_options['legacy'] <= 113 and
             arr.shape == () and not arr.dtype.names):
         lst = repr(arr.item())
-    elif arr.size > 0 or arr.shape == (0,):
+    else:
         lst = array2string(arr, max_line_width, precision, suppress_small,
-                           ', ', prefix, suffix=suffix)
-    else:  # show zero-length shape unless it is (0,)
-        lst = "[], shape=%s" % (repr(arr.shape),)
+                           ', ', prefix, suffix=")")
 
-    arr_str = prefix + lst + suffix
+    # Add dtype and shape information if these cannot be inferred from
+    # the array string.
+    extras = []
+    if (arr.size == 0 and arr.shape != (0,)
+            or current_options['legacy'] > 210
+            and arr.size > current_options['threshold']):
+        extras.append(f"shape={arr.shape}")
+    if not dtype_is_implied(arr.dtype) or arr.size == 0:
+        extras.append(f"dtype={dtype_short_repr(arr.dtype)}")
 
-    if skipdtype:
-        return arr_str
+    if not extras:
+        return prefix + lst + ")"
 
-    dtype_str = "dtype={})".format(dtype_short_repr(arr.dtype))
-
-    # compute whether we should put dtype on a new line: Do so if adding the
-    # dtype would extend the last line past max_line_width.
+    arr_str = prefix + lst + ","
+    extra_str = ", ".join(extras) + ")"
+    # compute whether we should put extras on a new line: Do so if adding the
+    # extras would extend the last line past max_line_width.
     # Note: This line gives the correct result even when rfind returns -1.
     last_line_len = len(arr_str) - (arr_str.rfind('\n') + 1)
     spacer = " "
     if current_options['legacy'] <= 113:
         if issubclass(arr.dtype.type, flexible):
-            spacer = '\n' + ' '*len(class_name + "(")
-    elif last_line_len + len(dtype_str) + 1 > max_line_width:
-        spacer = '\n' + ' '*len(class_name + "(")
+            spacer = '\n' + ' ' * len(prefix)
+    elif last_line_len + len(extra_str) + 1 > max_line_width:
+        spacer = '\n' + ' ' * len(prefix)
 
-    return arr_str + spacer + dtype_str
+    return arr_str + spacer + extra_str
 
 
 def _array_repr_dispatcher(

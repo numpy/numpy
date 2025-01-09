@@ -198,7 +198,7 @@ class TestSubclassing:
         assert_(isinstance(add(mx, mx), MMatrix))
         assert_(isinstance(add(mx, x), MMatrix))
         # Result should work
-        assert_equal(add(mx, x), mx+x)
+        assert_equal(add(mx, x), mx + x)
         assert_(isinstance(add(mx, mx)._data, np.matrix))
         with assert_warns(DeprecationWarning):
             assert_(isinstance(add.outer(mx, mx), MMatrix))

@@ -16,6 +16,7 @@ Its functionality can be split into three distinct parts:
   Without the plugin the type will default to `ctypes.c_int64`.
 
   .. versionadded:: 1.22
+  .. deprecated:: 2.3
 
 Examples
 --------
@@ -31,26 +32,9 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
 
 """
 
-from __future__ import annotations
-
-from typing import Final, TYPE_CHECKING, Callable
+from typing import Final
 
 import numpy as np
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-try:
-    import mypy.types
-    from mypy.types import Type
-    from mypy.plugin import Plugin, AnalyzeTypeContext
-    from mypy.nodes import MypyFile, ImportFrom, Statement
-    from mypy.build import PRI_MED
-
-    _HookFunc = Callable[[AnalyzeTypeContext], Type]
-    MYPY_EX: None | ModuleNotFoundError = None
-except ModuleNotFoundError as ex:
-    MYPY_EX = ex
 
 __all__: list[str] = []
 
@@ -70,11 +54,10 @@ def _get_precision_dict() -> dict[str, str]:
         ("_NBitDouble", np.double),
         ("_NBitLongDouble", np.longdouble),
     ]
-    ret = {}
-    module = "numpy._typing"
+    ret: dict[str, str] = {}
     for name, typ in names:
-        n: int = 8 * typ().dtype.itemsize
-        ret[f'{module}._nbit.{name}'] = f"{module}._nbit_base._{n}Bit"
+        n = 8 * np.dtype(typ).itemsize
+        ret[f"{_MODULE}._nbit.{name}"] = f"{_MODULE}._nbit_base._{n}Bit"
     return ret
 
 
@@ -97,16 +80,14 @@ def _get_extended_precision_list() -> list[str]:
 
 def _get_c_intp_name() -> str:
     # Adapted from `np.core._internal._getintp_ctype`
-    char = np.dtype('n').char
-    if char == 'i':
-        return "c_int"
-    elif char == 'l':
-        return "c_long"
-    elif char == 'q':
-        return "c_longlong"
-    else:
-        return "c_long"
+    return {
+        "i": "c_int",
+        "l": "c_long",
+        "q": "c_longlong",
+    }.get(np.dtype("n").char, "c_long")
 
+
+_MODULE: Final = "numpy._typing"
 
 #: A dictionary mapping type-aliases in `numpy._typing._nbit` to
 #: concrete `numpy.typing.NBitBase` subclasses.
@@ -119,15 +100,27 @@ _EXTENDED_PRECISION_LIST: Final = _get_extended_precision_list()
 _C_INTP: Final = _get_c_intp_name()
 
 
-def _hook(ctx: AnalyzeTypeContext) -> Type:
-    """Replace a type-alias with a concrete ``NBitBase`` subclass."""
-    typ, _, api = ctx
-    name = typ.name.split(".")[-1]
-    name_new = _PRECISION_DICT[f"numpy._typing._nbit.{name}"]
-    return api.named_type(name_new)
+try:
+    from collections.abc import Callable, Iterable
+    from typing import TYPE_CHECKING, TypeAlias, cast
 
+    if TYPE_CHECKING:
+        from mypy.typeanal import TypeAnalyser
 
-if TYPE_CHECKING or MYPY_EX is None:
+    import mypy.types
+    from mypy.plugin import Plugin, AnalyzeTypeContext
+    from mypy.nodes import MypyFile, ImportFrom, Statement
+    from mypy.build import PRI_MED
+
+    _HookFunc: TypeAlias = Callable[[AnalyzeTypeContext], mypy.types.Type]
+
+    def _hook(ctx: AnalyzeTypeContext) -> mypy.types.Type:
+        """Replace a type-alias with a concrete ``NBitBase`` subclass."""
+        typ, _, api = ctx
+        name = typ.name.split(".")[-1]
+        name_new = _PRECISION_DICT[f"{_MODULE}._nbit.{name}"]
+        return cast("TypeAnalyser", api).named_type(name_new)
+
     def _index(iterable: Iterable[Statement], id: str) -> int:
         """Identify the first ``ImportFrom`` instance the specified `id`."""
         for i, value in enumerate(iterable):
@@ -139,7 +132,7 @@ if TYPE_CHECKING or MYPY_EX is None:
     def _override_imports(
         file: MypyFile,
         module: str,
-        imports: list[tuple[str, None | str]],
+        imports: list[tuple[str, str | None]],
     ) -> None:
         """Override the first `module`-based import with new `imports`."""
         # Construct a new `from module import y` statement
@@ -147,14 +140,14 @@ if TYPE_CHECKING or MYPY_EX is None:
         import_obj.is_top_level = True
 
         # Replace the first `module`-based import statement with `import_obj`
-        for lst in [file.defs, file.imports]:  # type: list[Statement]
+        for lst in [file.defs, cast("list[Statement]", file.imports)]:
             i = _index(lst, module)
             lst[i] = import_obj
 
     class _NumpyPlugin(Plugin):
         """A mypy plugin for handling versus numpy-specific typing tasks."""
 
-        def get_type_analyze_hook(self, fullname: str) -> None | _HookFunc:
+        def get_type_analyze_hook(self, fullname: str) -> _HookFunc | None:
             """Set the precision of platform-specific `numpy.number`
             subclasses.
 
@@ -175,25 +168,33 @@ if TYPE_CHECKING or MYPY_EX is None:
             * Import the appropriate `ctypes` equivalent to `numpy.intp`.
 
             """
-            ret = [(PRI_MED, file.fullname, -1)]
-
-            if file.fullname == "numpy":
+            fullname = file.fullname
+            if fullname == "numpy":
                 _override_imports(
-                    file, "numpy._typing._extended_precision",
+                    file,
+                    f"{_MODULE}._extended_precision",
                     imports=[(v, v) for v in _EXTENDED_PRECISION_LIST],
                 )
-            elif file.fullname == "numpy.ctypeslib":
+            elif fullname == "numpy.ctypeslib":
                 _override_imports(
-                    file, "ctypes",
+                    file,
+                    "ctypes",
                     imports=[(_C_INTP, "_c_intp")],
                 )
-            return ret
+            return [(PRI_MED, fullname, -1)]
 
-    def plugin(version: str) -> type[_NumpyPlugin]:
-        """An entry-point for mypy."""
+    def plugin(version: str) -> type:
+        import warnings
+
+        warnings.warn(
+            "`numpy.typing.mypy_plugin` is deprecated, and will be removed in "
+            "a future release.",
+            category=DeprecationWarning,
+            stacklevel=3,
+        )
         return _NumpyPlugin
 
-else:
-    def plugin(version: str) -> type[_NumpyPlugin]:
-        """An entry-point for mypy."""
-        raise MYPY_EX
+except ModuleNotFoundError as e:
+
+    def plugin(version: str) -> type:
+        raise e

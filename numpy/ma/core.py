@@ -21,12 +21,12 @@ Released for unlimited redistribution.
 """
 # pylint: disable-msg=E1002
 import builtins
+import functools
 import inspect
 import operator
 import warnings
 import textwrap
 import re
-from functools import reduce
 from typing import Dict
 
 import numpy as np
@@ -193,7 +193,7 @@ for sctype in ntypes.sctypeDict.values():
 
     if scalar_dtype.kind in "Mm":
         info = np.iinfo(np.int64)
-        min_val, max_val = info.min, info.max
+        min_val, max_val = info.min + 1, info.max
     elif np.issubdtype(scalar_dtype, np.integer):
         info = np.iinfo(sctype)
         min_val, max_val = info.min, info.max
@@ -213,7 +213,7 @@ max_filler.update([(k, -np.inf) for k in float_types_list[:4]])
 max_filler.update([(k, complex(-np.inf, -np.inf)) for k in float_types_list[-3:]])
 
 min_filler = _maxvals
-min_filler.update([(k,  +np.inf) for k in float_types_list[:4]])
+min_filler.update([(k, +np.inf) for k in float_types_list[:4]])
 min_filler.update([(k, complex(+np.inf, +np.inf)) for k in float_types_list[-3:]])
 
 del float_types_list
@@ -469,6 +469,16 @@ def _check_fill_value(fill_value, ndtype):
     ndtype = np.dtype(ndtype)
     if fill_value is None:
         fill_value = default_fill_value(ndtype)
+        # TODO: It seems better to always store a valid fill_value, the oddity
+        #       about is that `_fill_value = None` would behave even more
+        #       different then.
+        #       (e.g. this allows arr_uint8.astype(int64) to have the default
+        #       fill value again...)
+        # The one thing that changed in 2.0/2.1 around cast safety is that the
+        # default `int(99...)` is not a same-kind cast anymore, so if we
+        # have a uint, use the default uint.
+        if ndtype.kind == "u":
+            fill_value = np.uint(fill_value)
     elif ndtype.names is not None:
         if isinstance(fill_value, (ndarray, np.void)):
             try:
@@ -929,6 +939,7 @@ class _MaskedUFunc:
         self.f = ufunc
         self.__doc__ = ufunc.__doc__
         self.__name__ = ufunc.__name__
+        self.__qualname__ = ufunc.__qualname__
 
     def __str__(self):
         return f"Masked version of {self.f}"
@@ -1155,7 +1166,6 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         return masked_result
 
 
-
 class _DomainedBinaryOperation(_MaskedUFunc):
     """
     Define binary operations that have a domain, like divide.
@@ -1299,15 +1309,13 @@ hypot = _MaskedBinaryOperation(umath.hypot)
 
 # Domained binary ufuncs
 divide = _DomainedBinaryOperation(umath.divide, _DomainSafeDivide(), 0, 1)
-true_divide = _DomainedBinaryOperation(umath.true_divide,
-                                       _DomainSafeDivide(), 0, 1)
+true_divide = divide  # Since Python 3 just an alias for divide.
 floor_divide = _DomainedBinaryOperation(umath.floor_divide,
                                         _DomainSafeDivide(), 0, 1)
 remainder = _DomainedBinaryOperation(umath.remainder,
                                      _DomainSafeDivide(), 0, 1)
 fmod = _DomainedBinaryOperation(umath.fmod, _DomainSafeDivide(), 0, 1)
-mod = _DomainedBinaryOperation(umath.mod, _DomainSafeDivide(), 0, 1)
-
+mod = remainder
 
 ###############################################################################
 #                        Mask creation functions                              #
@@ -2471,6 +2479,7 @@ class _MaskedPrintOption:
 
     __repr__ = __str__
 
+
 # if you single index into a masked location you get this object.
 masked_print_option = _MaskedPrintOption('--')
 
@@ -2492,16 +2501,17 @@ def _recursive_printoption(result, mask, printopt):
         np.copyto(result, printopt, where=mask)
     return
 
+
 # For better or worse, these end in a newline
-_legacy_print_templates = dict(
-    long_std=textwrap.dedent("""\
+_legacy_print_templates = {
+    'long_std': textwrap.dedent("""\
         masked_%(name)s(data =
          %(data)s,
         %(nlen)s        mask =
          %(mask)s,
         %(nlen)s  fill_value = %(fill)s)
         """),
-    long_flx=textwrap.dedent("""\
+    'long_flx': textwrap.dedent("""\
         masked_%(name)s(data =
          %(data)s,
         %(nlen)s        mask =
@@ -2509,18 +2519,18 @@ _legacy_print_templates = dict(
         %(nlen)s  fill_value = %(fill)s,
         %(nlen)s       dtype = %(dtype)s)
         """),
-    short_std=textwrap.dedent("""\
+    'short_std': textwrap.dedent("""\
         masked_%(name)s(data = %(data)s,
         %(nlen)s        mask = %(mask)s,
         %(nlen)s  fill_value = %(fill)s)
         """),
-    short_flx=textwrap.dedent("""\
+    'short_flx': textwrap.dedent("""\
         masked_%(name)s(data = %(data)s,
         %(nlen)s        mask = %(mask)s,
         %(nlen)s  fill_value = %(fill)s,
         %(nlen)s       dtype = %(dtype)s)
         """)
-)
+}
 
 ###############################################################################
 #                          MaskedArray class                                  #
@@ -2967,7 +2977,7 @@ class MaskedArray(ndarray):
                 elif nm == nd:
                     mask = np.reshape(mask, _data.shape)
                 else:
-                    msg = "Mask and data not compatible: data size is %i, " + \
+                    msg = "Mask and data not compatible: data size is %i, "\
                           "mask size is %i."
                     raise MaskError(msg % (nd, nm))
                 copy = True
@@ -3009,7 +3019,6 @@ class MaskedArray(ndarray):
         _data._baseclass = _baseclass
         return _data
 
-
     def _update_from(self, obj):
         """
         Copies some attributes of obj to self.
@@ -3025,13 +3034,13 @@ class MaskedArray(ndarray):
         _optinfo.update(getattr(obj, '_basedict', {}))
         if not isinstance(obj, MaskedArray):
             _optinfo.update(getattr(obj, '__dict__', {}))
-        _dict = dict(_fill_value=getattr(obj, '_fill_value', None),
-                     _hardmask=getattr(obj, '_hardmask', False),
-                     _sharedmask=getattr(obj, '_sharedmask', False),
-                     _isfield=getattr(obj, '_isfield', False),
-                     _baseclass=getattr(obj, '_baseclass', _baseclass),
-                     _optinfo=_optinfo,
-                     _basedict=_optinfo)
+        _dict = {'_fill_value': getattr(obj, '_fill_value', None),
+                     '_hardmask': getattr(obj, '_hardmask', False),
+                     '_sharedmask': getattr(obj, '_sharedmask', False),
+                     '_isfield': getattr(obj, '_isfield', False),
+                     '_baseclass': getattr(obj, '_baseclass', _baseclass),
+                     '_optinfo': _optinfo,
+                     '_basedict': _optinfo}
         self.__dict__.update(_dict)
         self.__dict__.update(_optinfo)
         return
@@ -3147,13 +3156,17 @@ class MaskedArray(ndarray):
             func, args, out_i = context
             # args sometimes contains outputs (gh-10459), which we don't want
             input_args = args[:func.nin]
-            m = reduce(mask_or, [getmaskarray(arg) for arg in input_args])
+            m = functools.reduce(mask_or, [getmaskarray(arg) for arg in input_args])
             # Get the domain mask
             domain = ufunc_domain.get(func)
             if domain is not None:
                 # Take the domain, and make sure it's a ndarray
                 with np.errstate(divide='ignore', invalid='ignore'):
-                    d = filled(domain(*input_args), True)
+                    # The result may be masked for two (unary) domains.
+                    # That can't really be right as some domains drop
+                    # the mask and some don't behaving differently here.
+                    d = domain(*input_args).astype(bool, copy=False)
+                    d = filled(d, True)
 
                 if d.any():
                     # Fill the result where the domain is wrong
@@ -4082,18 +4095,17 @@ class MaskedArray(ndarray):
         else:
             name = self._baseclass.__name__
 
-
         # 2016-11-19: Demoted to legacy format
         if np._core.arrayprint._get_legacy_print_mode() <= 113:
             is_long = self.ndim > 1
-            parameters = dict(
-                name=name,
-                nlen=" " * len(name),
-                data=str(self),
-                mask=str(self._mask),
-                fill=str(self.fill_value),
-                dtype=str(self.dtype)
-            )
+            parameters = {
+                'name': name,
+                'nlen': " " * len(name),
+                'data': str(self),
+                'mask': str(self._mask),
+                'fill': str(self.fill_value),
+                'dtype': str(self.dtype)
+            }
             is_structured = bool(self.dtype.names)
             key = '{}_{}'.format(
                 'long' if is_long else 'short',
@@ -4130,7 +4142,7 @@ class MaskedArray(ndarray):
             prefix = ''  # absorbed into the first indent
         else:
             # each key on its own line, indented by two spaces
-            indents = {k: ' ' * min_indent for k in keys}
+            indents = dict.fromkeys(keys, ' ' * min_indent)
             prefix = prefix + '\n'  # first key on the next line
 
         # format the field values
@@ -4626,9 +4638,6 @@ class MaskedArray(ndarray):
             The default, None, performs the count over all
             the dimensions of the input array. `axis` may be negative, in
             which case it counts from the last to the first axis.
-
-            .. versionadded:: 1.10.0
-
             If this is a tuple of ints, the count is performed on multiple
             axes, instead of a single axis or all the axes as before.
         keepdims : bool, optional
@@ -4775,7 +4784,6 @@ class MaskedArray(ndarray):
         else:
             r._mask = nomask
         return r
-
 
     def reshape(self, *s, **kwargs):
         """
@@ -5198,8 +5206,6 @@ class MaskedArray(ndarray):
         recommended that the optional arguments be treated as keyword only.
         At some point that may be mandatory.
 
-        .. versionadded:: 1.10.0
-
         Parameters
         ----------
         b : masked_array_like
@@ -5217,8 +5223,6 @@ class MaskedArray(ndarray):
             for the computation. Default is False.  Propagating the mask
             means that if a masked value appears in a row or column, the
             whole row or column is considered masked.
-
-            .. versionadded:: 1.10.2
 
         See Also
         --------
@@ -5648,13 +5652,6 @@ class MaskedArray(ndarray):
         axis : int, optional
             Axis along which to sort. If None, the default, the flattened array
             is used.
-
-            ..  versionchanged:: 1.13.0
-                Previously, the default was documented to be -1, but that was
-                in error. At some future date, the default will change to -1, as
-                originally intended.
-                Until then, the axis should be given explicitly when
-                ``arr.ndim > 1``, to avoid a FutureWarning.
         kind : {'quicksort', 'mergesort', 'heapsort', 'stable'}, optional
             The sorting algorithm used.
         order : list, optional
@@ -5911,7 +5908,6 @@ class MaskedArray(ndarray):
         axis : None or int or tuple of ints, optional
             Axis along which to operate.  By default, ``axis`` is None and the
             flattened input is used.
-            .. versionadded:: 1.7.0
             If this is a tuple of ints, the minimum is selected over multiple
             axes, instead of a single axis or all the axes as before.
         out : array_like, optional
@@ -5987,7 +5983,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        result = self.filled(fill_value).min(axis=axis, out=out, **kwargs)
+        self.filled(fill_value).min(axis=axis, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
@@ -6010,7 +6006,6 @@ class MaskedArray(ndarray):
         axis : None or int or tuple of ints, optional
             Axis along which to operate.  By default, ``axis`` is None and the
             flattened input is used.
-            .. versionadded:: 1.7.0
             If this is a tuple of ints, the maximum is selected over multiple
             axes, instead of a single axis or all the axes as before.
         out : array_like, optional
@@ -6093,7 +6088,7 @@ class MaskedArray(ndarray):
                 result = masked
             return result
         # Explicit output
-        result = self.filled(fill_value).max(axis=axis, out=out, **kwargs)
+        self.filled(fill_value).max(axis=axis, out=out, **kwargs)
         if isinstance(out, MaskedArray):
             outmask = getmask(out)
             if outmask is nomask:
@@ -6181,7 +6176,7 @@ class MaskedArray(ndarray):
         >>> y.ptp(axis=1).view(np.uint8)
         masked_array(data=[126, 127, 128, 129],
                      mask=False,
-               fill_value=np.int64(999999),
+               fill_value=np.uint64(999999),
                     dtype=uint8)
         """
         if out is None:
@@ -6211,7 +6206,72 @@ class MaskedArray(ndarray):
 
     def take(self, indices, axis=None, out=None, mode='raise'):
         """
-        """
+        Take elements from a masked array along an axis.
+
+        This function does the same thing as "fancy" indexing (indexing arrays
+        using arrays) for masked arrays. It can be easier to use if you need
+        elements along a given axis.
+
+        Parameters
+        ----------
+        a : masked_array
+            The source masked array.
+        indices : array_like
+            The indices of the values to extract. Also allow scalars for indices.
+        axis : int, optional
+            The axis over which to select values. By default, the flattened
+            input array is used.
+        out : MaskedArray, optional
+            If provided, the result will be placed in this array. It should
+            be of the appropriate shape and dtype. Note that `out` is always
+            buffered if `mode='raise'`; use other modes for better performance.
+        mode : {'raise', 'wrap', 'clip'}, optional
+            Specifies how out-of-bounds indices will behave.
+
+            * 'raise' -- raise an error (default)
+            * 'wrap' -- wrap around
+            * 'clip' -- clip to the range
+
+            'clip' mode means that all indices that are too large are replaced
+            by the index that addresses the last element along that axis. Note
+            that this disables indexing with negative numbers.
+
+        Returns
+        -------
+        out : MaskedArray
+            The returned array has the same type as `a`.
+
+        See Also
+        --------
+        numpy.take : Equivalent function for ndarrays.
+        compress : Take elements using a boolean mask.
+        take_along_axis : Take elements by matching the array and the index arrays.
+
+        Notes
+        -----
+        This function behaves similarly to `numpy.take`, but it handles masked
+        values. The mask is retained in the output array, and masked values
+        in the input array remain masked in the output.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> a = np.ma.array([4, 3, 5, 7, 6, 8], mask=[0, 0, 1, 0, 1, 0])
+        >>> indices = [0, 1, 4]
+        >>> np.ma.take(a, indices)
+        masked_array(data=[4, 3, --],
+                    mask=[False, False,  True],
+            fill_value=999999)
+
+        When `indices` is not one-dimensional, the output also has these dimensions:
+
+        >>> np.ma.take(a, [[0, 1], [2, 3]])
+        masked_array(data=[[4, 3],
+                        [--, 7]],
+                    mask=[[False, False],
+                        [ True, False]],
+            fill_value=999999)
+        """ 
         (_data, _mask) = (self._data, self._mask)
         cls = type(self)
         # Make sure the indices are not masked
@@ -6278,7 +6338,6 @@ class MaskedArray(ndarray):
             return masked_array(data=self._data.mT)
         else:
             return masked_array(data=self.data.mT, mask=self.mask.mT)
-
 
     def tolist(self, fill_value=None):
         """
@@ -6352,8 +6411,6 @@ class MaskedArray(ndarray):
         Return the array data as a string containing the raw bytes in the array.
 
         The array is filled with a fill value before the string conversion.
-
-        .. versionadded:: 1.9.0
 
         Parameters
         ----------
@@ -6854,6 +6911,8 @@ def array(data, dtype=None, copy=False, order=None,
                        subok=subok, keep_mask=keep_mask,
                        hard_mask=hard_mask, fill_value=fill_value,
                        ndmin=ndmin, shrink=shrink, order=order)
+
+
 array.__doc__ = masked_array.__doc__
 
 
@@ -6950,9 +7009,9 @@ class _extrema_operation(_MaskedUFunc):
             axis = None
 
         if axis is not np._NoValue:
-            kwargs = dict(axis=axis)
+            kwargs = {'axis': axis}
         else:
-            kwargs = dict()
+            kwargs = {}
 
         if m is nomask:
             t = self.f.reduce(target, **kwargs)
@@ -6993,6 +7052,8 @@ def min(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         # fill_value argument
         return asanyarray(obj).min(axis=axis, fill_value=fill_value,
                                    out=out, **kwargs)
+
+
 min.__doc__ = MaskedArray.min.__doc__
 
 def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
@@ -7005,6 +7066,8 @@ def max(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         # fill_value argument
         return asanyarray(obj).max(axis=axis, fill_value=fill_value,
                                    out=out, **kwargs)
+
+
 max.__doc__ = MaskedArray.max.__doc__
 
 
@@ -7017,6 +7080,8 @@ def ptp(obj, axis=None, out=None, fill_value=None, keepdims=np._NoValue):
         # a fill_value argument
         return asanyarray(obj).ptp(axis=axis, fill_value=fill_value,
                                    out=out, **kwargs)
+
+
 ptp.__doc__ = MaskedArray.ptp.__doc__
 
 
@@ -7038,6 +7103,7 @@ class _frommethod:
 
     def __init__(self, methodname, reversed=False):
         self.__name__ = methodname
+        self.__qualname__ = methodname
         self.__doc__ = self.getdoc()
         self.reversed = reversed
 
@@ -7081,7 +7147,7 @@ mean = _frommethod('mean')
 minimum = _extrema_operation(umath.minimum, less, minimum_fill_value)
 nonzero = _frommethod('nonzero')
 prod = _frommethod('prod')
-product = _frommethod('prod')
+product = _frommethod('product')
 ravel = _frommethod('ravel')
 repeat = _frommethod('repeat')
 shrink_mask = _frommethod('shrink_mask')
@@ -7097,6 +7163,7 @@ count = _frommethod('count')
 
 def take(a, indices, axis=None, out=None, mode='raise'):
     """
+
     """
     a = masked_array(a)
     return a.take(indices, axis=axis, out=out, mode=mode)
@@ -7180,6 +7247,7 @@ def power(a, b, third=None):
         result._data[invalid] = result.fill_value
     return result
 
+
 argmin = _frommethod('argmin')
 argmax = _frommethod('argmax')
 
@@ -7197,6 +7265,8 @@ def argsort(a, axis=np._NoValue, kind=None, order=None, endwith=True,
                          fill_value=fill_value, stable=None)
     else:
         return a.argsort(axis=axis, kind=kind, order=order, stable=None)
+
+
 argsort.__doc__ = MaskedArray.argsort.__doc__
 
 def sort(a, axis=-1, kind=None, order=None, endwith=True, fill_value=None, *,
@@ -7737,18 +7807,23 @@ def ndim(obj):
     """
     return np.ndim(getdata(obj))
 
+
 ndim.__doc__ = np.ndim.__doc__
 
 
 def shape(obj):
     "maskedarray version of the numpy function."
     return np.shape(getdata(obj))
+
+
 shape.__doc__ = np.shape.__doc__
 
 
 def size(obj, axis=None):
     "maskedarray version of the numpy function."
     return np.size(getdata(obj), axis)
+
+
 size.__doc__ = np.size.__doc__
 
 
@@ -7805,7 +7880,7 @@ def diff(a, /, n=1, axis=-1, prepend=np._NoValue, append=np._NoValue):
     >>> np.ma.diff(u8_arr)
     masked_array(data=[255],
                  mask=False,
-           fill_value=np.int64(999999),
+           fill_value=np.uint64(999999),
                 dtype=uint8)
     >>> u8_arr[1,...] - u8_arr[0,...]
     np.uint8(255)
@@ -8115,6 +8190,8 @@ def round_(a, decimals=0, out=None):
         if hasattr(out, '_mask'):
             out._mask = getmask(a)
         return out
+
+
 round = round_
 
 
@@ -8162,8 +8239,6 @@ def dot(a, b, strict=False, out=None):
         for `dot(a,b)`. This is a performance feature. Therefore, if these
         conditions are not met, an exception is raised, instead of attempting
         to be flexible.
-
-        .. versionadded:: 1.10.2
 
     See Also
     --------
@@ -8234,6 +8309,8 @@ def inner(a, b):
     if fb.ndim == 0:
         fb.shape = (1,)
     return np.inner(fa, fb).view(MaskedArray)
+
+
 inner.__doc__ = doc_note(np.inner.__doc__,
                          "Masked values are replaced by 0.")
 innerproduct = inner
@@ -8252,6 +8329,8 @@ def outer(a, b):
     mb = getmaskarray(b)
     m = make_mask(1 - np.outer(1 - ma, 1 - mb), copy=False)
     return masked_array(d, mask=m)
+
+
 outer.__doc__ = doc_note(np.outer.__doc__,
                          "Masked values are replaced by 0.")
 outerproduct = outer
@@ -8782,19 +8861,19 @@ class _convert2ma:
 
 arange = _convert2ma(
     'arange',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='arange : ndarray',
     np_ma_ret='arange : MaskedArray',
 )
 clip = _convert2ma(
     'clip',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='clipped_array : ndarray',
     np_ma_ret='clipped_array : MaskedArray',
 )
 empty = _convert2ma(
     'empty',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
@@ -8815,19 +8894,19 @@ fromfunction = _convert2ma(
 )
 identity = _convert2ma(
     'identity',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
 indices = _convert2ma(
     'indices',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='grid : one ndarray or tuple of ndarrays',
     np_ma_ret='grid : one MaskedArray or tuple of MaskedArrays',
 )
 ones = _convert2ma(
     'ones',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
@@ -8838,13 +8917,13 @@ ones_like = _convert2ma(
 )
 squeeze = _convert2ma(
     'squeeze',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='squeezed : ndarray',
     np_ma_ret='squeezed : MaskedArray',
 )
 zeros = _convert2ma(
     'zeros',
-    params=dict(fill_value=None, hardmask=False),
+    params={'fill_value': None, 'hardmask': False},
     np_ret='out : ndarray',
     np_ma_ret='out : MaskedArray',
 )
@@ -8857,8 +8936,6 @@ zeros_like = _convert2ma(
 
 def append(a, b, axis=None):
     """Append values to the end of an array.
-
-    .. versionadded:: 1.9.0
 
     Parameters
     ----------

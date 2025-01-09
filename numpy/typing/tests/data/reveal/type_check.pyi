@@ -20,20 +20,18 @@ AR_c16: npt.NDArray[np.complex128]
 
 AR_LIKE_f: list[float]
 
-class RealObj:
+class ComplexObj:
     real: slice
-
-class ImagObj:
     imag: slice
 
 assert_type(np.mintypecode(["f8"], typeset="qfQF"), str)
 
-assert_type(np.real(RealObj()), slice)
+assert_type(np.real(ComplexObj()), slice)
 assert_type(np.real(AR_f8), npt.NDArray[np.float64])
 assert_type(np.real(AR_c16), npt.NDArray[np.float64])
 assert_type(np.real(AR_LIKE_f), npt.NDArray[Any])
 
-assert_type(np.imag(ImagObj()), slice)
+assert_type(np.imag(ComplexObj()), slice)
 assert_type(np.imag(AR_f8), npt.NDArray[np.float64])
 assert_type(np.imag(AR_c16), npt.NDArray[np.float64])
 assert_type(np.imag(AR_LIKE_f), npt.NDArray[Any])

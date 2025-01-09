@@ -74,6 +74,7 @@ class PytestTester:
     """
     def __init__(self, module_name):
         self.module_name = module_name
+        self.__module__ = module_name
 
     def __call__(self, label='fast', verbose=1, extra_argv=None,
                  doctests=False, coverage=False, durations=-1, tests=None):
@@ -164,7 +165,7 @@ class PytestTester:
             pytest_args += list(extra_argv)
 
         if verbose > 1:
-            pytest_args += ["-" + "v"*(verbose - 1)]
+            pytest_args += ["-" + "v" * (verbose - 1)]
 
         if coverage:
             pytest_args += ["--cov=" + module_path]

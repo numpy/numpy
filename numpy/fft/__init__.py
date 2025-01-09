@@ -1,6 +1,6 @@
 """
-Discrete Fourier Transform (:mod:`numpy.fft`)
-=============================================
+Discrete Fourier Transform
+==========================
 
 .. currentmodule:: numpy.fft
 

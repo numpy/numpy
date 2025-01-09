@@ -58,13 +58,14 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-dispatch=none"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        persist-credentials: false
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
-        python-version: '3.10'
+        python-version: '3.11'
     - uses: ./.github/meson_actions
       name: Build/Test
 
@@ -75,35 +76,36 @@ jobs:
     env:
       MESON_ARGS: "-Dallow-noblas=true"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        persist-credentials: false
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
-        python-version: '3.10'
+        python-version: '3.11'
 
-    - name: Install GCC/8/9
+    - name: Install GCC9/10
       run: |
         echo "deb http://archive.ubuntu.com/ubuntu focal main universe" | sudo tee /etc/apt/sources.list.d/focal.list
         sudo apt update
-        sudo apt install -y g++-8 g++-9
-
-    - name: Enable gcc-8
-      run: |
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 1
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 1
-
-    - uses: ./.github/meson_actions
-      name: Build/Test against gcc-8
+        sudo apt install -y g++-9 g++-10
 
     - name: Enable gcc-9
       run: |
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 2
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 2
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 1
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 1
 
     - uses: ./.github/meson_actions
       name: Build/Test against gcc-9
+
+    - name: Enable gcc-10
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 2
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 2
+
+    - uses: ./.github/meson_actions
+      name: Build/Test against gcc-10
 
   specialize:
     needs: [baseline_only]
@@ -127,12 +129,12 @@ jobs:
           - [
             "without avx512",
             "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3",
-            "3.10"
+            "3.11"
           ]
           - [
             "without avx512/avx2/fma3",
             "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C",
-            "3.10"
+            "3.11"
           ]
 
     env:
@@ -140,11 +142,12 @@ jobs:
 
     name: "${{ matrix.BUILD_PROP[0] }}"
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        persist-credentials: false
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: "${{ matrix.BUILD_PROP[2] }}"
     - uses: ./.github/meson_actions
@@ -154,11 +157,12 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        persist-credentials: false
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
 
@@ -204,11 +208,12 @@ jobs:
     needs: [baseline_only]
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        persist-credentials: false
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
 

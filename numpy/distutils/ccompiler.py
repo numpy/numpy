@@ -781,14 +781,14 @@ def new_compiler (plat=None,
             __import__(module_name)
         except ImportError as e:
             msg = str(e)
-            raise DistutilsModuleError("can't compile C/C++ code: unable to load module '%s'" % \
-                  module_name)
+            raise DistutilsModuleError("can't compile C/C++ code: unable to load "
+                                       "module '%s'" % module_name)
     try:
         module = sys.modules[module_name]
         klass = vars(module)[class_name]
     except KeyError:
-        raise DistutilsModuleError(("can't compile C/C++ code: unable to find class '%s' " +
-               "in module '%s'") % (class_name, module_name))
+        raise DistutilsModuleError(("can't compile C/C++ code: unable to find "
+               "class '%s' in module '%s'") % (class_name, module_name))
     compiler = klass(None, dry_run, force)
     compiler.verbose = verbose
     log.debug('new_compiler returns %s' % (klass))

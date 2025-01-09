@@ -43,17 +43,18 @@ jobs:
     if: github.repository == 'numpy/numpy'
     steps:
       - name: Checkout NumPy
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           submodules: recursive
           fetch-tags: true
+          persist-credentials: false
 
-      - uses: pypa/cibuildwheel@d4a2945fcc8d13f20a1b99d461b8e844d5fc6e23  # v2.21.1
+      - uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969  # v2.22.0
         env:
           CIBW_PLATFORM: pyodide
 
       - name: Upload wheel artifact(s)
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874  # v4.4.0
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4.5.0
         with:
           name: cp312-pyodide_wasm32
           path: ./wheelhouse/*.whl
@@ -78,7 +79,7 @@ jobs:
           merge-multiple: true
 
       - name: Push to Anaconda PyPI index
-        uses: scientific-python/upload-nightly-action@b67d7fcc0396e1128a474d1ab2b48aa94680f9fc  # v0.5.0
+        uses: scientific-python/upload-nightly-action@82396a2ed4269ba06c6b2988bb4fd568ef3c3d6b  # v0.6.1
         with:
           artifacts_path: wheelhouse/
           anaconda_nightly_upload_token: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}

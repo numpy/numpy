@@ -6,6 +6,10 @@
 #include "npy_cpu.h"
 #include "utils.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NPY_NO_EXPORT NPY_VISIBILITY_HIDDEN
 
 /* Always allow threading unless it was explicitly disabled at build time */
@@ -841,7 +845,7 @@ typedef struct {
         npy_int32 month, day, hour, min, sec, us, ps, as;
 } npy_datetimestruct;
 
-/* This is not used internally. */
+/* This structure contains an exploded view of a timedelta value */
 typedef struct {
         npy_int64 day;
         npy_int32 sec, us, ps, as;
@@ -1921,5 +1925,9 @@ typedef struct {
  * #endif
  */
 #undef NPY_DEPRECATED_INCLUDES
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY_NDARRAYTYPES_H_ */

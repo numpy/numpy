@@ -39,11 +39,6 @@ np.strings.partition(AR_S, "a")  # E: incompatible type
 np.strings.rpartition(AR_U, b"a")  # E: incompatible type
 np.strings.rpartition(AR_S, "a")  # E: incompatible type
 
-np.strings.split(AR_U, b"_")  # E: incompatible type
-np.strings.split(AR_S, "_")  # E: incompatible type
-np.strings.rsplit(AR_U, b"_")  # E: incompatible type
-np.strings.rsplit(AR_S, "_")  # E: incompatible type
-
 np.strings.count(AR_U, b"a", [1, 2, 3], [1, 2, 3])  # E: incompatible type
 np.strings.count(AR_S, "a", 0, 9)  # E: incompatible type
 
@@ -54,7 +49,7 @@ np.strings.startswith(AR_S, "a", 0, 9)  # E: incompatible type
 
 np.strings.find(AR_U, b"a", [1, 2, 3], [1, 2, 3])  # E: incompatible type
 np.strings.find(AR_S, "a", 0, 9)  # E: incompatible type
-np.strings.rfind(AR_U, b"a", [1, 2, 3], [1, 2 , 3])  # E: incompatible type
+np.strings.rfind(AR_U, b"a", [1, 2, 3], [1, 2, 3])  # E: incompatible type
 np.strings.rfind(AR_S, "a", 0, 9)  # E: incompatible type
 
 np.strings.index(AR_U, b"a", start=[1, 2, 3])  # E: incompatible type

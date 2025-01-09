@@ -259,7 +259,7 @@ def do_generate_api(targets, sources):
 
     for name, val in types_api.items():
         index = val[0]
-        internal_type =  None if len(val) == 1 else val[1]
+        internal_type = None if len(val) == 1 else val[1]
         multiarray_api_dict[name] = TypeApi(
             name, index, 'PyTypeObject', api_name, internal_type)
 

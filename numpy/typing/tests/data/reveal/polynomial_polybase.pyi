@@ -41,7 +41,7 @@ AR_i: npt.NDArray[np.int_]
 AR_f: npt.NDArray[np.float64]
 AR_f_co: npt.NDArray[np.float64] | npt.NDArray[np.int_]
 AR_c: npt.NDArray[np.complex128]
-AR_c_co: npt.NDArray[np.complex128] |npt.NDArray[np.float64] | npt.NDArray[np.int_]
+AR_c_co: npt.NDArray[np.complex128] | npt.NDArray[np.float64] | npt.NDArray[np.int_]
 AR_O: npt.NDArray[np.object_]
 AR_O_co: npt.NDArray[np.object_ | np.number[Any]]
 

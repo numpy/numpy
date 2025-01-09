@@ -137,7 +137,7 @@ class CorrConv(Benchmark):
 
     def setup(self, size1, size2, mode):
         self.x1 = np.linspace(0, 1, num=size1)
-        self.x2 = np.cos(np.linspace(0, 2*np.pi, num=size2))
+        self.x2 = np.cos(np.linspace(0, 2 * np.pi, num=size2))
 
     def time_correlate(self, size1, size2, mode):
         np.correlate(self.x1, self.x2, mode=mode)
@@ -170,9 +170,34 @@ class CountNonzero(Benchmark):
                 self.x.ndim - 1, self.x.ndim - 2))
 
 
+class Nonzero(Benchmark):
+    params = [
+        [bool, np.uint8, np.uint64, np.int64, np.float32, np.float64],
+        [(1_000_000,), (1000, 1000), (100, ), (2, )]
+    ]
+    param_names = ["dtype", "shape"]
+
+    def setup(self, dtype, size):
+        self.x = np.random.randint(0, 3, size=size).astype(dtype)
+        self.x_sparse = np.zeros(size).astype(dtype)
+        self.x_sparse[1] = 1
+        self.x_sparse[-1] = 1
+        self.x_dense = np.ones(size).astype(dtype)
+
+    def time_nonzero(self, dtype, size):
+        np.nonzero(self.x)
+
+    def time_nonzero_sparse(self, dtype, size):
+        np.nonzero(self.x_sparse)
+
+    def time_nonzero_dense(self, dtype, size):
+        np.nonzero(self.x_dense)
+
+
 class PackBits(Benchmark):
     param_names = ['dtype']
     params = [[bool, np.uintp]]
+
     def setup(self, dtype):
         self.d = np.ones(10000, dtype=dtype)
         self.d2 = np.ones((200, 1000), dtype=dtype)
@@ -251,10 +276,10 @@ class StatsMethods(Benchmark):
 
 class NumPyChar(Benchmark):
     def setup(self):
-        self.A = np.array([100*'x', 100*'y'])
+        self.A = np.array([100 * 'x', 100 * 'y'])
         self.B = np.array(1000 * ['aa'])
 
-        self.C = np.array([100*'x' + 'z', 100*'y' + 'z' + 'y', 100*'x'])
+        self.C = np.array([100 * 'x' + 'z', 100 * 'y' + 'z' + 'y', 100 * 'x'])
         self.D = np.array(1000 * ['ab'] + 1000 * ['ac'])
 
     def time_isalpha_small_list_big_string(self):

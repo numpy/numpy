@@ -10,7 +10,7 @@ from numpy._core.numeric import (
     asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
     diagonal, nonzero, indices
     )
-from numpy._core.overrides import set_array_function_like_doc, set_module
+from numpy._core.overrides import finalize_array_function_like, set_module
 from numpy._core import overrides
 from numpy._core import iinfo
 from numpy.lib._stride_tricks_impl import broadcast_to
@@ -160,7 +160,7 @@ def flipud(m):
     return m[::-1, ...]
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     """
@@ -181,8 +181,6 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
     order : {'C', 'F'}, optional
         Whether the output should be stored in row-major (C-style) or
         column-major (Fortran-style) order in memory.
-
-        .. versionadded:: 1.14.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -233,7 +231,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
         i = k
     else:
         i = (-k) * M
-    m[:M-k].flat[i::M+1] = 1
+    m[:M - k].flat[i::M + 1] = 1
     return m
 
 
@@ -303,13 +301,13 @@ def diag(v, k=0):
     v = asanyarray(v)
     s = v.shape
     if len(s) == 1:
-        n = s[0]+abs(k)
+        n = s[0] + abs(k)
         res = zeros((n, n), v.dtype)
         if k >= 0:
             i = k
         else:
             i = (-k) * n
-        res[:n-k].flat[i::n+1] = v
+        res[:n - k].flat[i::n + 1] = v
         return res
     elif len(s) == 2:
         return diagonal(v, k)
@@ -365,17 +363,17 @@ def diagflat(v, k=0):
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
     if (k >= 0):
-        i = arange(0, n-k, dtype=intp)
-        fi = i+k+i*n
+        i = arange(0, n - k, dtype=intp)
+        fi = i + k + i * n
     else:
-        i = arange(0, n+k, dtype=intp)
-        fi = i+(i-k)*n
+        i = arange(0, n + k, dtype=intp)
+        fi = i + (i - k) * n
     res.flat[fi] = v
 
     return conv.wrap(res)
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def tri(N, M=None, k=0, dtype=float, *, like=None):
     """
@@ -425,7 +423,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
         M = N
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
-                            arange(-k, M-k, dtype=_min_int(-k, M - k)))
+                            arange(-k, M - k, dtype=_min_int(-k, M - k)))
 
     # Avoid making a copy if the requested type is already bool
     m = m.astype(dtype, copy=False)
@@ -536,7 +534,7 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
-    mask = tri(*m.shape[-2:], k=k-1, dtype=bool)
+    mask = tri(*m.shape[-2:], k=k - 1, dtype=bool)
 
     return where(mask, zeros(1, m.dtype), m)
 
@@ -568,8 +566,6 @@ def vander(x, N=None, increasing=False):
     increasing : bool, optional
         Order of the powers of the columns.  If True, the powers increase
         from left to right, if False (the default) they are reversed.
-
-        .. versionadded:: 1.9.0
 
     Returns
     -------
@@ -860,10 +856,6 @@ def mask_indices(n, mask_func, k=0):
     --------
     triu, tril, triu_indices, tril_indices
 
-    Notes
-    -----
-    .. versionadded:: 1.4.0
-
     Examples
     --------
     >>> import numpy as np
@@ -912,8 +904,6 @@ def tril_indices(n, k=0, m=None):
     k : int, optional
         Diagonal offset (see `tril` for details).
     m : int, optional
-        .. versionadded:: 1.9.0
-
         The column dimension of the arrays for which the returned
         arrays will be valid.
         By default `m` is taken equal to `n`.
@@ -931,10 +921,6 @@ def tril_indices(n, k=0, m=None):
     triu_indices : similar function, for upper-triangular.
     mask_indices : generic function accepting an arbitrary mask function.
     tril, triu
-
-    Notes
-    -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -1046,11 +1032,6 @@ def tril_indices_from(arr, k=0):
     See Also
     --------
     tril_indices, tril, triu_indices_from
-
-    Notes
-    -----
-    .. versionadded:: 1.4.0
-
     """
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")
@@ -1070,8 +1051,6 @@ def triu_indices(n, k=0, m=None):
     k : int, optional
         Diagonal offset (see `triu` for details).
     m : int, optional
-        .. versionadded:: 1.9.0
-
         The column dimension of the arrays for which the returned
         arrays will be valid.
         By default `m` is taken equal to `n`.
@@ -1089,10 +1068,6 @@ def triu_indices(n, k=0, m=None):
     tril_indices : similar function, for lower-triangular.
     mask_indices : generic function accepting an arbitrary mask function.
     triu, tril
-
-    Notes
-    -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -1207,11 +1182,6 @@ def triu_indices_from(arr, k=0):
     See Also
     --------
     triu_indices, triu, tril_indices_from
-
-    Notes
-    -----
-    .. versionadded:: 1.4.0
-
     """
     if arr.ndim != 2:
         raise ValueError("input array must be 2-d")
