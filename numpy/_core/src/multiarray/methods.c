@@ -1914,6 +1914,9 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         }
 
         rev_perm = PyTuple_New(n);
+        if(rev_perm == NULL) {
+            return NULL;
+        }
         PyArray_Dims perm;
         npy_intp d[NPY_MAXDIMS];
         for (int i = 0; i < n; i++) {
