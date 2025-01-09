@@ -245,6 +245,11 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
     if (! PyErr_Occurred())
         on_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
+
+    if (PyType_Ready(&PyFortran_Type) < 0) {
+        return NULL;
+    }
+
     return m;
 }
 #ifdef __cplusplus
