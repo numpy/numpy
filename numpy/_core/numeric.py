@@ -1921,7 +1921,7 @@ _fromfunction_with_like = array_function_dispatch()(fromfunction)
 
 
 def _frombuffer(buf, dtype, shape, order, axis=None):
-    if order == 'K' and not axis is None:
+    if order == 'K' and axis is not None:
         return frombuffer(buf, dtype=dtype).reshape(shape, order='C').transpose(axis)
     return frombuffer(buf, dtype=dtype).reshape(shape, order=order)
 
