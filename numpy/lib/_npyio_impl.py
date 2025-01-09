@@ -1646,7 +1646,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                     row2.append(number.real)
                     row2.append(number.imag)
                 s = format % tuple(row2) + newline
-                fh.write(s.replace('+-', '-').rstrip('\n') + newline)
+                fh.write(s.replace('+-', '-'))
         else:
             for row in X:
                 try:
@@ -1655,7 +1655,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                     raise TypeError("Mismatch between array dtype ('%s') and "
                                     "format specifier ('%s')"
                                     % (str(X.dtype), format)) from e
-                fh.write(v.rstrip('\n') + newline)
+                fh.write(v)
 
         if len(footer) > 0:
             footer = footer.replace('\n', '\n' + comments)

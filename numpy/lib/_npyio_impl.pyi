@@ -223,6 +223,7 @@ def savetxt(
     footer: str = ...,
     comments: str = ...,
     encoding: None | str = ...,
+    fstring_fmt: None | str | Sequence[str] = ...
 ) -> None: ...
 
 @overload
