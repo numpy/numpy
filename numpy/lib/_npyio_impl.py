@@ -1623,7 +1623,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                     raise error
                 else:
                     format = fmt
-                format += newline
             else:
                 raise ValueError('invalid fmt: %r' % (fmt,))
 
