@@ -1600,8 +1600,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             if len(fstring_fmt) != ncol:
                 raise ValueError(
                     f"fstring_fmt has wrong shape. Expected {ncol} elements.")
-            format_row = delimiter.join(
-                fstring_fmt) + newline
+            format_row = delimiter.join(fstring_fmt) + newline
 
         else:
             if isinstance(fmt, (list, tuple)):
