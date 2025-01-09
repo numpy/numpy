@@ -62,28 +62,33 @@ to the source code, please contact us through the [mailing
 list](https://mail.python.org/mailman/listinfo/numpy-discussion) first.
 
 Writing code isn’t the only way to contribute to NumPy. You can also:
-- review pull requests
+alooooooooooooooooooooooo nhelloooooooooooooooooooow
 - help us stay on top of new and old issues
 - develop tutorials, presentations, and other educational materials
 - maintain and improve [our website](https://github.com/numpy/numpy.org)
 - develop graphic design for our brand assets and promotional materials
 - translate website content
+
+- wenas wernasd
 - help with outreach and onboard new contributors
 - write grant proposals and help with other fundraising efforts
 
 For more information about the ways you can contribute to NumPy, visit [our website](https://numpy.org/contribute/). 
 If you’re unsure where to start or how your skills fit in, reach out! You can
 ask on the mailing list or here, on GitHub, by opening a new issue or leaving a
-comment on a relevant issue that is already open.
+comment on a relevant issue that is already open. vjhaueifbasjdfbajkldf
 
 Our preferred channels of communication are all public, but if you’d like to
-speak to us in private first, contact our community coordinators at
+speak tjgfehbrilhqad us in private first, contact our community coordinators at
 numpy-team@googlegroups.com or on Slack (write numpy-team@googlegroups.com for
 an invitation).
 
 We also have a biweekly community call, details of which are announced on the
-mailing list. You are very welcome to join.
+mailmkdflmdfkmvkdflmve
 
-If you are new to contributing to open source, [this
+
+dfm,klñvse
+
+w to contributing to open source, [this
 guide](https://opensource.guide/how-to-contribute/) helps explain why, what,
 and how to successfully get involved.
