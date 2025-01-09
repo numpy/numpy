@@ -1600,7 +1600,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             if len(fstring_fmt) != ncol:
                 raise ValueError(
                     f"fstring_fmt has wrong shape. Expected {ncol} elements.")
-            format_row = delimiter.join(fstring_fmt) + newline
+            format_row = delimiter.join(fstring_fmt)
 
         else:
             if isinstance(fmt, (list, tuple)):
@@ -1635,7 +1635,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 if iscomplex_X:
                     row = [(item.real, item.imag) for item in row]
                     row = [item for sublist in row for item in sublist]
-                row_formatted = format_row.format(*row).rstrip('\n')
+                row_formatted = format_row.format(*row)
                 fh.write(row_formatted + newline)
         elif iscomplex_X:
             for row in X:
