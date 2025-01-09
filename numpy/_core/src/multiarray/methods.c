@@ -1,3 +1,4 @@
+#include "numpy/ndarraytypes.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
@@ -1903,16 +1904,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         npy_stride_sort_item items[NPY_MAXDIMS];
         // sort (strde, perm) as descending = transpose to C
         PyArray_CreateSortedStridePerm(n, PyArray_STRIDES(self), items);
-
-        // check if nparray is transposed_contiguous
-        for (int i = n - 1, check_s = 1; i >= 0; i--) {
-            if (check_s * PyArray_DESCR(self)->elsize !=
-                items[i].stride) {
-                return array_reduce_ex_regular(self, protocol);
-            }
-            check_s *= PyArray_DIMS(self)[items[i].perm];
-        }
-
         rev_perm = PyTuple_New(n);
         if(rev_perm == NULL) {
             return NULL;
@@ -1926,6 +1917,12 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         perm.ptr = d;
         perm.len = n;
         transposed_array = PyArray_Transpose((PyArrayObject *)self, &perm);
+        if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject *)transposed_array)) {
+            // self is non-contiguous
+            Py_DECREF(picklebuf_class);
+            Py_DECREF(rev_perm);
+            return array_reduce_ex_regular(self, protocol);
+        }
         picklebuf_args = Py_BuildValue("(N)", transposed_array);
     }
     if (picklebuf_args == NULL) {
