@@ -184,6 +184,15 @@ static struct PyModuleDef uniquemodule = {
 PyMODINIT_FUNC
 PyInit__unique(void)
 {
+    PyObject *m;
     PyArray_ImportNumPyAPI();
-    return PyModule_Create(&uniquemodule);
+    m = PyModule_Create(&uniquemodule);
+    if (m == NULL) {
+        return m;
+    }
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
+    return m;
 }
