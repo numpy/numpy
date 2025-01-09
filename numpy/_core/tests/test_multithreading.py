@@ -120,3 +120,17 @@ def test_printoptions_thread_safety():
 
     task1.start()
     task2.start()
+
+def test_parallel_reduction():
+    # gh-28041
+    NUM_THREADS = 50
+
+    b = threading.Barrier(NUM_THREADS)
+
+    x = np.arange(1000)
+
+    def closure():
+        b.wait()
+        np.sum(x)
+
+    run_threaded(closure, NUM_THREADS, max_workers=NUM_THREADS)
