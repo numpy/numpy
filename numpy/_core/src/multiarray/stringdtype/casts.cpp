@@ -877,7 +877,6 @@ static NPY_CASTING string_to_int_resolve_descriptors(
 // Example template parameters:
 // TNpyType: npy_int8
 // TNpyLongType: npy_longlong
-// TClongType: One of {long long, unsigned long long}
 // typenum: NPY_BYTE
 template <typename TNpyType, typename TNpyLongType, NPY_TYPES typenum>
 static int string_to_int(
@@ -887,7 +886,6 @@ static int string_to_int(
     npy_intp const strides[],
     NpyAuxData *NPY_UNUSED(auxdata)
 ) {
-    printf("string_to_int: %s", typenum_to_cstr(typenum));
     PyArray_StringDTypeObject *descr =
             ((PyArray_StringDTypeObject *)context->descriptors[0]);
     npy_string_allocator *allocator =
@@ -902,35 +900,24 @@ static int string_to_int(
     npy_intp in_stride = strides[0];
     npy_intp out_stride = strides[1] / sizeof(TNpyType);
 
-
-    printf("string_to_int: %s, 1", typenum_to_cstr(typenum));
-
     while (N--) {
         TNpyLongType value;
         if (stringbuf_to_int<TNpyLongType>(in, &value, has_null, default_string, allocator) != 0) {
             npy_gil_error(PyExc_RuntimeError, "Encountered problem converting string dtype to integer dtype.");
             goto fail;
         }
-        printf("string_to_int: %s, 2", typenum_to_cstr(typenum));
         *out = (TNpyType)value;
 
         // Cast back to TNpyLongType to check for out-of-bounds errors
         if (static_cast<TNpyLongType>(*out) != value) {
             // out of bounds, raise error following NEP 50 behavior
             const char *errmsg = NULL;
-            switch (typenum) {
-                case NPY_INT8:
-                case NPY_INT16:
-                case NPY_INT32:
-                case NPY_INT64:
-                    errmsg = "Integer %lli is out of bounds for %s";
-                case NPY_UINT8:
-                case NPY_UINT16:
-                case NPY_UINT32:
-                case NPY_UINT64:
-                    errmsg = "Integer %llu is out of bounds for %s";
-                default:
-                    errmsg = "Unrecognized integer type %i is out of bounds for %s";
+            if constexpr (std::is_same_v<TNpyLongType, npy_ulonglong>) {
+                errmsg = "Integer %llu is out of bounds for %s";
+            } else if constexpr (std::is_same_v<TNpyLongType, npy_longlong>) {
+                errmsg = "Integer %lli is out of bounds for %s";
+            } else {
+                errmsg = "Unrecognized integer type %i is out of bounds for %s";
             }
             npy_gil_error(PyExc_OverflowError, errmsg, value, typenum_to_cstr(typenum));
             goto fail;
