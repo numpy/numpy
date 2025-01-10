@@ -1886,7 +1886,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     if (PyArray_IS_C_CONTIGUOUS((PyArrayObject *)self)) {
         order = 'C';
         picklebuf_args = Py_BuildValue("(O)", self);
-        rev_perm = Py_BuildValue("O", Py_None);
+        rev_perm = PyTuple_Pack(0);
     }
     else if (PyArray_IS_F_CONTIGUOUS((PyArrayObject *)self)) {
         /* if the array if Fortran-contiguous and not C-contiguous,
@@ -1895,7 +1895,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         order = 'F';
         transposed_array = PyArray_Transpose((PyArrayObject *)self, NULL);
         picklebuf_args = Py_BuildValue("(N)", transposed_array);
-        rev_perm = Py_BuildValue("O", Py_None);
+        rev_perm = PyTuple_Pack(0);
     }
     else {
         order = 'K'; // won't be used
