@@ -170,22 +170,48 @@ T floor_div(T n, T d) {
 // Dispatch functions for signed integer division
 template <typename T>
 void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)) {
-    T* src1 = reinterpret_cast<T*>(args[0]);
-    T* src2 = reinterpret_cast<T*>(args[1]);
-    T* dst = reinterpret_cast<T*>(args[2]);
-    npy_intp len = dimensions[0];
-
-    if (steps[0] == sizeof(T) && steps[1] == 0 && steps[2] == sizeof(T)) {
-        // Contiguous case with scalar divisor
-        simd_divide_by_scalar_contig_signed(src1, *src2, dst, len);
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(T) {
+            const T divisor = *reinterpret_cast<T*>(ip2);
+            if (HWY_UNLIKELY(divisor == 0)) {
+                npy_set_floatstatus_divbyzero();
+                io1 = 0;
+            } else if (HWY_UNLIKELY(io1 == std::numeric_limits<T>::min() && divisor == -1)) {
+                npy_set_floatstatus_overflow();
+                io1 = std::numeric_limits<T>::min();
+            } else {
+                io1 = floor_div(io1, divisor);
+            }
+        }
+        *reinterpret_cast<T*>(iop1) = io1;
+    }
+    else if (steps[0] == sizeof(T) && steps[1] == 0 && steps[2] == sizeof(T)) {
+        T* src1 = reinterpret_cast<T*>(args[0]);
+        T* src2 = reinterpret_cast<T*>(args[1]);
+        T* dst = reinterpret_cast<T*>(args[2]);
+        
+        if (HWY_UNLIKELY(*src2 == 0)) {
+            npy_set_floatstatus_divbyzero();
+            std::fill(dst, dst + dimensions[0], 0);
+        } else {
+            simd_divide_by_scalar_contig_signed(src1, *src2, dst, dimensions[0]);
+        }
     }
     else {
-        // Non-contiguous case
-        for (npy_intp i = 0; i < len; ++i) {
-            *dst = floor_div(*src1, *src2);
-            src1 = reinterpret_cast<T*>(reinterpret_cast<char*>(src1) + steps[0]);
-            src2 = reinterpret_cast<T*>(reinterpret_cast<char*>(src2) + steps[1]);
-            dst = reinterpret_cast<T*>(reinterpret_cast<char*>(dst) + steps[2]);
+        BINARY_LOOP {
+            const T dividend = *reinterpret_cast<T*>(ip1);
+            const T divisor = *reinterpret_cast<T*>(ip2);
+            T* result = reinterpret_cast<T*>(op1);
+            
+            if (HWY_UNLIKELY(divisor == 0)) {
+                npy_set_floatstatus_divbyzero();
+                *result = 0;
+            } else if (HWY_UNLIKELY(dividend == std::numeric_limits<T>::min() && divisor == -1)) {
+                npy_set_floatstatus_overflow();
+                *result = std::numeric_limits<T>::min();
+            } else {
+                *result = floor_div(dividend, divisor);
+            }
         }
     }
 }
@@ -193,27 +219,40 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
 // Dispatch functions for unsigned integer division
 template <typename T>
 void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)) {
-    T* src1 = reinterpret_cast<T*>(args[0]);
-    T* src2 = reinterpret_cast<T*>(args[1]);
-    T* dst = reinterpret_cast<T*>(args[2]);
-    npy_intp len = dimensions[0];
-
-    if (steps[0] == sizeof(T) && steps[1] == 0 && steps[2] == sizeof(T)) {
-        // Contiguous case with scalar divisor
-        simd_divide_by_scalar_contig_unsigned(src1, *src2, dst, len);
+    if (IS_BINARY_REDUCE) {
+        BINARY_REDUCE_LOOP(T) {
+            const T d = *reinterpret_cast<T*>(ip2);
+            if (HWY_UNLIKELY(d == 0)) {
+                npy_set_floatstatus_divbyzero();
+                io1 = 0;
+            } else {
+                io1 /= d;
+            }
+        }
+        *reinterpret_cast<T*>(iop1) = io1;
+    }
+    else if (steps[0] == sizeof(T) && steps[1] == 0 && steps[2] == sizeof(T)) {
+        T* src1 = reinterpret_cast<T*>(args[0]);
+        T* src2 = reinterpret_cast<T*>(args[1]);
+        T* dst = reinterpret_cast<T*>(args[2]);
+        
+        if (HWY_UNLIKELY(*src2 == 0)) {
+            npy_set_floatstatus_divbyzero();
+            std::fill(dst, dst + dimensions[0], 0);
+        } else {
+            simd_divide_by_scalar_contig_unsigned(src1, *src2, dst, dimensions[0]);
+        }
     }
     else {
-        // Non-contiguous case
-        for (npy_intp i = 0; i < len; ++i) {
-            if (HWY_UNLIKELY(*src2 == 0)) {
+        BINARY_LOOP {
+            const T in1 = *reinterpret_cast<T*>(ip1);
+            const T in2 = *reinterpret_cast<T*>(ip2);
+            if (HWY_UNLIKELY(in2 == 0)) {
                 npy_set_floatstatus_divbyzero();
-                *dst = 0;
+                *reinterpret_cast<T*>(op1) = 0;
             } else {
-                *dst = *src1 / *src2;
+                *reinterpret_cast<T*>(op1) = in1 / in2;
             }
-            src1 = reinterpret_cast<T*>(reinterpret_cast<char*>(src1) + steps[0]);
-            src2 = reinterpret_cast<T*>(reinterpret_cast<char*>(src2) + steps[1]);
-            dst = reinterpret_cast<T*>(reinterpret_cast<char*>(dst) + steps[2]);
         }
     }
 }
