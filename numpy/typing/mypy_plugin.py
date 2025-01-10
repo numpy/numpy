@@ -193,6 +193,7 @@ else:
         import warnings
 
         plugin = "numpy.typing.mypy_plugin"
+        # Deprecated 2025-01-10, NumPy 2.3
         warn_msg = (
             f"`{plugin}` is deprecated, and will be removed in a future "
             f"release. Please remove `plugins = {plugin}` in your mypy config."
