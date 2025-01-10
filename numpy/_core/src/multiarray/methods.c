@@ -1899,7 +1899,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         rev_perm = PyTuple_Pack(0);
     }
     else {
-        order = 'K'; // won't be used
+        order = 'K'; // it is ignored when unpickling 
         const int n = PyArray_NDIM(self);
         npy_stride_sort_item items[NPY_MAXDIMS];
         // sort (strde, perm) as descending = transpose to C
