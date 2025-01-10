@@ -879,7 +879,8 @@ static PyType_Slot s2int_slots[] = {
     {0, NULL}
 };
 
-static const char *make_s2type_name(NPY_TYPES typenum) {
+static const char *
+make_s2type_name(NPY_TYPES typenum) {
     const char *prefix = "cast_StringDType_to_";
     size_t plen = strlen(prefix);
 
