@@ -1991,6 +1991,11 @@ array_reduce_ex(PyArrayObject *self, PyObject *args)
         return array_reduce_ex_regular(self, protocol);
     }
     else {
+        /* The func will check internally
+         * if the array isn't backed by a contiguous data buffer or
+         * if the array refuses to export a buffer
+         * In either case, fall back to `array_reduce_ex_regular`
+         */
         return array_reduce_ex_picklebuffer(self, protocol);
     }
 }
