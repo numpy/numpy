@@ -1920,9 +1920,9 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 _fromfunction_with_like = array_function_dispatch()(fromfunction)
 
 
-def _frombuffer(buf, dtype, shape, order, axis=None):
-    if order == 'K' and axis is not None:
-        return frombuffer(buf, dtype=dtype).reshape(shape, order='C').transpose(axis)
+def _frombuffer(buf, dtype, shape, order, axis_order=None):
+    if order == 'K' and axis_order is not None:
+        return frombuffer(buf, dtype=dtype).reshape(shape, order='C').transpose(axis_order)
     return frombuffer(buf, dtype=dtype).reshape(shape, order=order)
 
 
