@@ -26,7 +26,8 @@
 #include "casts.h"
 
 // Get a c string representation of a type number.
-const char *typenum_to_cstr(NPY_TYPES typenum) {
+static const char *
+typenum_to_cstr(NPY_TYPES typenum) {
     switch (typenum) {
         case NPY_BOOL:
             return "bool";
