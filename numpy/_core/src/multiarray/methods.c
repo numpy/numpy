@@ -1963,7 +1963,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     } else {
         shape = PyObject_GetAttrString((PyObject *)self, "shape");
     }
-    return Py_BuildValue("N(NONNO)", from_buffer_func, buffer, (PyObject *)descr, shape,
+    return Py_BuildValue("N(NONNN)", from_buffer_func, buffer, (PyObject *)descr, shape,
             PyUnicode_FromStringAndSize(&order, 1), rev_perm);
 }
 
