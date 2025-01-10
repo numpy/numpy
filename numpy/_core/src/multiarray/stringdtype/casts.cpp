@@ -977,7 +977,8 @@ static PyType_Slot int2s_slots[] = {
         {NPY_METH_strided_loop, (void *)&type_to_string<TNpyType, TClongType, typenum>},
         {0, NULL}};
 
-PyArray_DTypeMeta **get_s2type_dtypes(NPY_TYPES typenum) {
+PyArray_DTypeMeta **
+get_s2type_dtypes(NPY_TYPES typenum) {
     return get_dtypes(&PyArray_StringDType, typenum_to_dtypemeta(typenum));
 }
 
