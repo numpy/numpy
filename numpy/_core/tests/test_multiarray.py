@@ -4389,13 +4389,17 @@ class TestPickling:
                                                     buffers=buffers)
 
         assert_equal(f_contiguous_array, depickled_f_contiguous_array)
-    
-    def test_transposed_contiguous_array(self):
-        transposed_contiguous_array = np.random.rand(2, 3, 4).transpose((1, 0, 2))
+
+    @pytest.mark.skipif(pickle.HIGHEST_PROTOCOL < 5, reason="requires pickle protocol 5")
+    @pytest.mark.parametrize('transposed_contiguous_array', 
+        [np.random.rand(2, 3, 4).transpose((1, 0, 2)), 
+         np.random.rand(2, 3, 4, 5).transpose((1, 3, 0, 2))] + 
+        [np.random.rand(*np.arange(2, 7)).transpose(np.random.permutation(5)) for _ in range(3)])
+    def test_transposed_contiguous_array(self, transposed_contiguous_array):
         buffers = []
 
-        # When using pickle protocol 5, Fortran-contiguous arrays can be
-        # serialized using out-of-band buffers
+        # When using pickle protocol 5, arrays which can be transposed to c_contiguous
+        # can be serialized using out-of-band buffers
         bytes_string = pickle.dumps(transposed_contiguous_array, protocol=5,
                                     buffer_callback=buffers.append)
 
