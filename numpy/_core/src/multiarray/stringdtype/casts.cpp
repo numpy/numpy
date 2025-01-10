@@ -790,7 +790,8 @@ pyobj_to_string(PyObject *obj, char *out, npy_string_allocator *allocator)
 }
 
 template<NPY_TYPES typenum>
-static NPY_CASTING string_to_int_resolve_descriptors(
+static NPY_CASTING 
+string_to_int_resolve_descriptors(
     PyObject *NPY_UNUSED(self),
     PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
     PyArray_Descr *given_descrs[2],
