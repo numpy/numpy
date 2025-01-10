@@ -172,7 +172,8 @@ get_dtypes(PyArray_DTypeMeta *dt1, PyArray_DTypeMeta *dt2)
 
 
 template<NPY_CASTING safety>
-static NPY_CASTING any_to_string_resolve_descriptors(
+static NPY_CASTING 
+any_to_string_resolve_descriptors(
         PyObject *NPY_UNUSED(self),
         PyArray_DTypeMeta *NPY_UNUSED(dtypes[2]),
         PyArray_Descr *given_descrs[2], PyArray_Descr *loop_descrs[2],
