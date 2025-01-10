@@ -136,7 +136,6 @@ PyArray_RawIterBaseInit(PyArrayIterObject *it, PyArrayObject *ao)
     nd = PyArray_NDIM(ao);
     /* The legacy iterator only supports 32 dimensions */
     assert(nd <= NPY_MAXDIMS_LEGACY_ITERS);
-    PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
         it->contiguous = 1;
     }
