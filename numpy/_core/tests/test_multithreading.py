@@ -131,3 +131,14 @@ def test_parallel_reduction():
 
     run_threaded(closure, NUM_THREADS, max_workers=NUM_THREADS,
                  pass_barrier=True)
+
+
+def test_parallel_flat_iterator():
+    x = np.arange(20).reshape(5, 4).T
+
+    def closure(b):
+        b.wait()
+        for _ in range(100):
+            list(x.flat)
+
+    run_threaded(closure, outer_iterations=100, pass_barrier=True)
