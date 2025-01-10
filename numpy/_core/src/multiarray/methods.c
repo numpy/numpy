@@ -1905,6 +1905,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         PyArray_CreateSortedStridePerm(n, PyArray_STRIDES(self), items);
         rev_perm = PyTuple_New(n);
         if(rev_perm == NULL) {
+            Py_DECREF(picklebuf_class);
             return NULL;
         }
         PyArray_Dims perm;
