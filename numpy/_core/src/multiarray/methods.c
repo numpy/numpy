@@ -1,3 +1,4 @@
+#include "numpy/ndarraytypes.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
@@ -1908,15 +1909,15 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
             Py_DECREF(picklebuf_class);
             return NULL;
         }
-        PyArray_Dims perm;
+        PyArray_Dims dims;
         npy_intp d[NPY_MAXDIMS];
         for (int i = 0; i < n; i++) {
             d[i] = items[i].perm;
             PyTuple_SET_ITEM(rev_perm, items[i].perm, PyLong_FromLong(i));
         }
-        perm.ptr = d;
-        perm.len = n;
-        transposed_array = PyArray_Transpose((PyArrayObject *)self, &perm);
+        dims.ptr = d;
+        dims.len = n;
+        transposed_array = PyArray_Transpose((PyArrayObject *)self, &dims);
         if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject *)transposed_array)) {
             // self is non-contiguous
             Py_DECREF(picklebuf_class);
@@ -1957,12 +1958,14 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         return NULL;
     }
 
-
-    PyObject* shape = NULL;
+    PyObject *shape = NULL;
     if(order == 'K') {
-        shape = PyObject_GetAttrString((PyObject *)transposed_array, "shape");
+        shape = PyArray_IntTupleFromIntp(
+                PyArray_NDIM((PyArrayObject *)transposed_array),
+                PyArray_SHAPE((PyArrayObject *)transposed_array));
     } else {
-        shape = PyObject_GetAttrString((PyObject *)self, "shape");
+        shape = PyArray_IntTupleFromIntp(PyArray_NDIM(self),
+                                         PyArray_SHAPE(self));
     }
     return Py_BuildValue("N(NONNN)", from_buffer_func, buffer, (PyObject *)descr, shape,
             PyUnicode_FromStringAndSize(&order, 1), rev_perm);
