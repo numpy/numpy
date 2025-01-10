@@ -1407,7 +1407,8 @@ template<
     NPY_TYPES typenum,
     NPY_ARRAYMETHOD_FLAGS flags = NPY_METH_REQUIRES_PYAPI
 >
-PyArrayMethod_Spec *getFloatToStringCastSpec() {
+PyArrayMethod_Spec *
+getFloatToStringCastSpec() {
     return get_cast_spec(
         make_type2s_name(typenum),
         NPY_SAFE_CASTING,
