@@ -186,13 +186,14 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
         *reinterpret_cast<T*>(iop1) = io1;
         return;
     }
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) && 
-             *reinterpret_cast<T*>(args[1]) != 0) {
-        T* src1 = reinterpret_cast<T*>(args[0]);
-        T* src2 = reinterpret_cast<T*>(args[1]);
-        T* dst = reinterpret_cast<T*>(args[2]);
-        
-        if (args[0] != args[2]) {  // Not in-place operation
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
+        *reinterpret_cast<T*>(args[1]) != 0)
+    {
+        bool no_overlap = nomemoverlap(args[2], steps[2], args[0], steps[0], dimensions[0]);
+        if (no_overlap) {
+            T* src1 = reinterpret_cast<T*>(args[0]);
+            T* src2 = reinterpret_cast<T*>(args[1]);
+            T* dst = reinterpret_cast<T*>(args[2]);
             simd_divide_by_scalar_contig_signed(src1, *src2, dst, dimensions[0]);
             return;
         }
@@ -226,19 +227,20 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
                 npy_set_floatstatus_divbyzero();
                 io1 = 0;
             } else {
-                io1 /= d;
+                io1 = io1 / d;
             }
         }
         *reinterpret_cast<T*>(iop1) = io1;
         return;
     }
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) && 
-             *reinterpret_cast<T*>(args[1]) != 0) {
-        T* src1 = reinterpret_cast<T*>(args[0]);
-        T* src2 = reinterpret_cast<T*>(args[1]);
-        T* dst = reinterpret_cast<T*>(args[2]);
-        
-        if (args[0] != args[2]) {  // Not in-place operation
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
+        *reinterpret_cast<T*>(args[1]) != 0)
+    {
+        bool no_overlap = nomemoverlap(args[2], steps[2], args[0], steps[0], dimensions[0]);
+        if (no_overlap) {
+            T* src1 = reinterpret_cast<T*>(args[0]);
+            T* src2 = reinterpret_cast<T*>(args[1]);
+            T* dst  = reinterpret_cast<T*>(args[2]);
             simd_divide_by_scalar_contig_unsigned(src1, *src2, dst, dimensions[0]);
             return;
         }
