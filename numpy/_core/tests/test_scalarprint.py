@@ -8,7 +8,8 @@ import sys
 
 from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_raises, IS_MUSL
+from numpy.testing import assert_, assert_equal, assert_raises
+from numpy.testing import assert_raises_regex, IS_MUSL
 
 class TestRealScalars:
     def test_str(self):
@@ -273,7 +274,7 @@ class TestRealScalars:
             assert_equal(fpos(tp('-1.0'), pad_left=4, pad_right=4), "  -1.    ")
             assert_equal(fpos(tp('-10.2'),
                          pad_left=4, pad_right=4), " -10.2   ")
-
+            
             # test exp_digits
             assert_equal(fsci(tp('1.23e1'), exp_digits=5), "1.23e+00001")
 
@@ -305,6 +306,9 @@ class TestRealScalars:
                          "1.2" if tp != np.float16 else "1.2002")
             assert_equal(fpos(tp('1.'), trim='-'), "1")
             assert_equal(fpos(tp('1.001'), precision=1, trim='-'), "1")
+                        
+            assert_raises_regex(ValueError, "Left padding exceeds buffer size of 16384", fpos, tp('1.047'), precision=2, pad_left=int(1e5))            
+            assert_raises_regex(ValueError, "Right padding exceeds buffer size of 16384", fpos, tp('1.047'), precision=2, pad_right=int(1e5))
 
     @pytest.mark.skipif(not platform.machine().startswith("ppc64"),
                         reason="only applies to ppc float128 values")
