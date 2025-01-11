@@ -184,34 +184,34 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
             }
         }
         *reinterpret_cast<T*>(iop1) = io1;
+        return;
     }
-    else if (steps[0] == sizeof(T) && steps[1] == 0 && steps[2] == sizeof(T)) {
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) && 
+             *reinterpret_cast<T*>(args[1]) != 0) {
         T* src1 = reinterpret_cast<T*>(args[0]);
         T* src2 = reinterpret_cast<T*>(args[1]);
         T* dst = reinterpret_cast<T*>(args[2]);
         
-        if (HWY_UNLIKELY(*src2 == 0)) {
-            npy_set_floatstatus_divbyzero();
-            std::fill(dst, dst + dimensions[0], 0);
-        } else {
+        if (args[0] != args[2]) {  // Not in-place operation
             simd_divide_by_scalar_contig_signed(src1, *src2, dst, dimensions[0]);
+            return;
         }
     }
-    else {
-        BINARY_LOOP {
-            const T dividend = *reinterpret_cast<T*>(ip1);
-            const T divisor = *reinterpret_cast<T*>(ip2);
-            T* result = reinterpret_cast<T*>(op1);
-            
-            if (HWY_UNLIKELY(divisor == 0)) {
-                npy_set_floatstatus_divbyzero();
-                *result = 0;
-            } else if (HWY_UNLIKELY(dividend == std::numeric_limits<T>::min() && divisor == -1)) {
-                npy_set_floatstatus_overflow();
-                *result = std::numeric_limits<T>::min();
-            } else {
-                *result = floor_div(dividend, divisor);
-            }
+
+    // Fallback for non-blockable, in-place, or zero divisor cases
+    BINARY_LOOP {
+        const T dividend = *reinterpret_cast<T*>(ip1);
+        const T divisor = *reinterpret_cast<T*>(ip2);
+        T* result = reinterpret_cast<T*>(op1);
+        
+        if (HWY_UNLIKELY(divisor == 0)) {
+            npy_set_floatstatus_divbyzero();
+            *result = 0;
+        } else if (HWY_UNLIKELY(dividend == std::numeric_limits<T>::min() && divisor == -1)) {
+            npy_set_floatstatus_overflow();
+            *result = std::numeric_limits<T>::min();
+        } else {
+            *result = floor_div(dividend, divisor);
         }
     }
 }
@@ -230,29 +230,29 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
             }
         }
         *reinterpret_cast<T*>(iop1) = io1;
+        return;
     }
-    else if (steps[0] == sizeof(T) && steps[1] == 0 && steps[2] == sizeof(T)) {
+    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) && 
+             *reinterpret_cast<T*>(args[1]) != 0) {
         T* src1 = reinterpret_cast<T*>(args[0]);
         T* src2 = reinterpret_cast<T*>(args[1]);
         T* dst = reinterpret_cast<T*>(args[2]);
         
-        if (HWY_UNLIKELY(*src2 == 0)) {
-            npy_set_floatstatus_divbyzero();
-            std::fill(dst, dst + dimensions[0], 0);
-        } else {
+        if (args[0] != args[2]) {  // Not in-place operation
             simd_divide_by_scalar_contig_unsigned(src1, *src2, dst, dimensions[0]);
+            return;
         }
     }
-    else {
-        BINARY_LOOP {
-            const T in1 = *reinterpret_cast<T*>(ip1);
-            const T in2 = *reinterpret_cast<T*>(ip2);
-            if (HWY_UNLIKELY(in2 == 0)) {
-                npy_set_floatstatus_divbyzero();
-                *reinterpret_cast<T*>(op1) = 0;
-            } else {
-                *reinterpret_cast<T*>(op1) = in1 / in2;
-            }
+
+    // Fallback for non-blockable, in-place, or zero divisor cases
+    BINARY_LOOP {
+        const T in1 = *reinterpret_cast<T*>(ip1);
+        const T in2 = *reinterpret_cast<T*>(ip2);
+        if (HWY_UNLIKELY(in2 == 0)) {
+            npy_set_floatstatus_divbyzero();
+            *reinterpret_cast<T*>(op1) = 0;
+        } else {
+            *reinterpret_cast<T*>(op1) = in1 / in2;
         }
     }
 }
