@@ -259,49 +259,51 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
 
 // Indexed division for signed integers
 template <typename T>
-int TYPE_divide_indexed(char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func)) {
+int TYPE_divide_indexed(char * const*args, npy_intp const *dimensions, 
+                       npy_intp const *steps, NpyAuxData *NPY_UNUSED(func)) {
     char *ip1 = args[0];
     char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
     npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
-    npy_intp i;
-    T *indexed;
-    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+    
+    for(npy_intp i = 0; i < n; i++, indxp += isindex, value += isb) {
         npy_intp indx = *(npy_intp *)indxp;
         if (indx < 0) {
             indx += shape;
         }
-        indexed = (T *)(ip1 + is1 * indx);
-        *indexed = floor_div(*indexed, *(T *)value);
+        T* indexed = reinterpret_cast<T*>(ip1 + is1 * indx);
+        T divisor = *reinterpret_cast<T*>(value);
+        *indexed = floor_div(*indexed, divisor);
     }
     return 0;
 }
 
 // Indexed division for unsigned integers
 template <typename T>
-int TYPE_divide_unsigned_indexed(char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func)) {
+int TYPE_divide_unsigned_indexed(char * const*args, npy_intp const *dimensions, 
+                               npy_intp const *steps, NpyAuxData *NPY_UNUSED(func)) {
     char *ip1 = args[0];
     char *indxp = args[1];
     char *value = args[2];
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
     npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
-    npy_intp i;
-    T *indexed;
-    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+    
+    for(npy_intp i = 0; i < n; i++, indxp += isindex, value += isb) {
         npy_intp indx = *(npy_intp *)indxp;
         if (indx < 0) {
             indx += shape;
         }
-        indexed = (T *)(ip1 + is1 * indx);
-        T in2 = *(T *)value;
-        if (HWY_UNLIKELY(in2 == 0)) {
+        T* indexed = reinterpret_cast<T*>(ip1 + is1 * indx);
+        T divisor = *reinterpret_cast<T*>(value);
+        
+        if (HWY_UNLIKELY(divisor == 0)) {
             npy_set_floatstatus_divbyzero();
             *indexed = 0;
         } else {
-            *indexed = *indexed / in2;
+            *indexed = *indexed / divisor;
         }
     }
     return 0;
