@@ -1614,8 +1614,15 @@ typedef struct Dragon4_Options {
  *    hasUnequalMargins - is the high margin twice as large as the low margin
  *
  * See Dragon4_Options for description of remaining arguments.
+ *  
+ * Required left or right padding may exceed the size of the string buffer.
+ * Error codes for those conditions are defined below
  */
-static npy_uint32
+
+#define RIGHT_PADDING_OVERFLOW -1 
+#define LEFT_PADDING_OVERFLOW -2
+
+static npy_int32
 FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                  npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
                  npy_bool hasUnequalMargins, DigitMode digit_mode,
@@ -1646,7 +1653,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         buffer[pos++] = '-';
         has_sign = 1;
     }
-
+        
     numDigits = Dragon4(mantissa, exponent, mantissaBit, hasUnequalMargins,
                         digit_mode, cutoff_mode, precision, min_digits,
                         buffer + has_sign, maxPrintLen - has_sign,
@@ -1658,7 +1665,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
     /* if output has a whole number */
     if (printExponent >= 0) {
         /* leave the whole number at the start of the buffer */
-        numWholeDigits = printExponent+1;
+        numWholeDigits = printExponent+1;        
         if (numDigits <= numWholeDigits) {
             npy_int32 count = numWholeDigits - numDigits;
             pos += numDigits;
@@ -1803,6 +1810,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
 
     /* add any whitespace padding to right side */
     if (digits_right >= numFractionDigits) {
+        npy_bool right_overflow = NPY_FALSE;
         npy_int32 count = digits_right - numFractionDigits;
 
         /* in trim_mode DptZeros, if right padding, add a space for the . */
@@ -1810,30 +1818,48 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                 && pos < maxPrintLen) {
             buffer[pos++] = ' ';
         }
-
+        
+        /* provided digits_rights is too large, can't create the string required*/
         if (pos + count > maxPrintLen) {
+            right_overflow = NPY_TRUE;
             count = maxPrintLen - pos;
         }
 
         for ( ; count > 0; count--) {
             buffer[pos++] = ' ';
         }
+
+        /* handle overflow condition safely*/
+        if (NPY_TRUE == right_overflow) {
+            buffer[pos] = '\0';
+            return RIGHT_PADDING_OVERFLOW;
+        }
     }
     /* add any whitespace padding to left side */
     if (digits_left > numWholeDigits + has_sign) {
+        npy_bool left_overflow = NPY_FALSE;
         npy_int32 shift = digits_left - (numWholeDigits + has_sign);
         npy_int32 count = pos;
-
+        
+        /* provided digits_left is too large, can't create the string required*/
         if (count + shift > maxPrintLen) {
-            count = maxPrintLen - shift;
+            shift = maxPrintLen - count;
+            left_overflow = NPY_TRUE;
         }
 
         if (count > 0) {
             memmove(buffer + shift, buffer, count);
         }
+
         pos = shift + count;
         for ( ; shift > 0; shift--) {
             buffer[shift - 1] = ' ';
+        }
+        
+        /* handle overflow condition safely*/
+        if (NPY_TRUE == left_overflow) {
+            buffer[pos] = '\0';
+            return LEFT_PADDING_OVERFLOW;
         }
     }
 
@@ -1860,7 +1886,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
  *
  * See Dragon4_Options for description of remaining arguments.
  */
-static npy_uint32
+static npy_int32
 FormatScientific (char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                   npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
                   npy_bool hasUnequalMargins, DigitMode digit_mode,
@@ -2158,7 +2184,7 @@ PrintInfNan(char *buffer, npy_uint32 bufferSize, npy_uint64 mantissa,
  * Helper function that takes Dragon4 parameters and options and
  * calls Dragon4.
  */
-static npy_uint32
+static npy_int32
 Format_floatbits(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                  npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
                  npy_bool hasUnequalMargins, Dragon4_Options *opt)
@@ -2187,7 +2213,7 @@ Format_floatbits(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
  * exponent:  5 bits
  * mantissa: 10 bits
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary16(
         npy_half *value, Dragon4_Options *opt)
 {
@@ -2274,7 +2300,7 @@ Dragon4_PrintFloat_IEEE_binary16(
  * exponent:  8 bits
  * mantissa: 23 bits
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary32(
         npy_float32 *value,
         Dragon4_Options *opt)
@@ -2367,7 +2393,7 @@ Dragon4_PrintFloat_IEEE_binary32(
  * exponent: 11 bits
  * mantissa: 52 bits
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary64(
         npy_float64 *value, Dragon4_Options *opt)
 {
@@ -2482,7 +2508,7 @@ typedef struct FloatVal128 {
  * intbit     1 bit,  first u64
  * mantissa: 63 bits, first u64
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Intel_extended(
     FloatVal128 value, Dragon4_Options *opt)
 {
@@ -2580,7 +2606,7 @@ Dragon4_PrintFloat_Intel_extended(
  * system. But numpy defines NPY_FLOAT80, so if we come across it, assume it is
  * an Intel extended format.
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Intel_extended80(
     npy_float80 *value, Dragon4_Options *opt)
 {
@@ -2604,7 +2630,7 @@ Dragon4_PrintFloat_Intel_extended80(
 
 #ifdef HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE
 /* Intel's 80-bit IEEE extended precision format, 96-bit storage */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Intel_extended96(
     npy_float96 *value, Dragon4_Options *opt)
 {
@@ -2628,7 +2654,7 @@ Dragon4_PrintFloat_Intel_extended96(
 
 #ifdef HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE
 /* Motorola Big-endian equivalent of the Intel-extended 96 fp format */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Motorola_extended96(
     npy_float96 *value, Dragon4_Options *opt)
 {
@@ -2665,7 +2691,7 @@ typedef union FloatUnion128
 
 #ifdef HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE
 /* Intel's 80-bit IEEE extended precision format, 128-bit storage */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_Intel_extended128(
     npy_float128 *value, Dragon4_Options *opt)
 {
@@ -2694,7 +2720,7 @@ Dragon4_PrintFloat_Intel_extended128(
  * I am not sure if the arch also supports uint128, and C does not seem to
  * support int128 literals. So we use uint64 to do manipulation.
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary128(
     FloatVal128 val128, Dragon4_Options *opt)
 {
@@ -2779,7 +2805,7 @@ Dragon4_PrintFloat_IEEE_binary128(
 }
 
 #if defined(HAVE_LDOUBLE_IEEE_QUAD_LE)
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary128_le(
     npy_float128 *value, Dragon4_Options *opt)
 {
@@ -2799,7 +2825,7 @@ Dragon4_PrintFloat_IEEE_binary128_le(
  * This function is untested, very few, if any, architectures implement
  * big endian IEEE binary128 floating point.
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IEEE_binary128_be(
     npy_float128 *value, Dragon4_Options *opt)
 {
@@ -2854,7 +2880,7 @@ Dragon4_PrintFloat_IEEE_binary128_be(
  * https://gcc.gnu.org/wiki/Ieee128PowerPCA
  * https://www.ibm.com/support/knowledgecenter/en/ssw_aix_71/com.ibm.aix.genprogc/128bit_long_double_floating-point_datatype.htm
  */
-static npy_uint32
+static npy_int32
 Dragon4_PrintFloat_IBM_double_double(
     npy_float128 *value, Dragon4_Options *opt)
 {
@@ -3041,13 +3067,31 @@ Dragon4_PrintFloat_IBM_double_double(
  * which goes up to about 10^4932. The Dragon4_scratch struct provides a string
  * buffer of this size.
  */
+
 #define make_dragon4_typefuncs_inner(Type, npy_type, format) \
 \
 PyObject *\
 Dragon4_Positional_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
 {\
     PyObject *ret;\
-    if (Dragon4_PrintFloat_##format(val, opt) < 0) {\
+    npy_int32 status = Dragon4_PrintFloat_##format(val, opt);\
+    if (status < 0) { \
+        const char *error_msg; \
+        PyObject *error_type = PyExc_ValueError;\
+        \
+        switch (status) { \
+            case RIGHT_PADDING_OVERFLOW:\
+                error_msg = "Right padding exceeds buffer size of 16384";\
+                break;\
+            case LEFT_PADDING_OVERFLOW:\
+                error_msg = "Left padding exceeds buffer size of 16384";\
+                break;\
+            default:\
+                error_type = PyExc_RuntimeError;\
+                error_msg = "An unexpected error occurred";\
+                break;\
+        }\
+        PyErr_SetString(error_type, error_msg);\
         return NULL;\
     }\
     ret = PyUnicode_FromString(_bigint_static.repr);\
