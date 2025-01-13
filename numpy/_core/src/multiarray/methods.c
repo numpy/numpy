@@ -1904,10 +1904,10 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         if (rev_perm == NULL) {
             return NULL;
         }
-        PyArray_Dims dims;
-        npy_intp d[NPY_MAXDIMS];
+        PyArray_Dims perm;
+        npy_intp dims[NPY_MAXDIMS];
         for (int i = 0; i < n; i++) {
-            d[i] = items[i].perm;
+            dims[i] = items[i].perm;
             PyObject *idx = PyLong_FromLong(i);
             if(idx == NULL) {
                 Py_DECREF(rev_perm);
@@ -1916,9 +1916,9 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
             PyTuple_SET_ITEM(rev_perm, items[i].perm, idx);
             Py_DECREF(idx);
         }
-        dims.ptr = d;
-        dims.len = n;
-        transposed_array = PyArray_Transpose((PyArrayObject *)self, &dims);
+        perm.ptr = dims;
+        perm.len = n;
+        transposed_array = PyArray_Transpose((PyArrayObject *)self, &perm);
         if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject *)transposed_array)) {
             // self is non-contiguous
             Py_DECREF(rev_perm);
