@@ -1908,7 +1908,13 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         npy_intp d[NPY_MAXDIMS];
         for (int i = 0; i < n; i++) {
             d[i] = items[i].perm;
-            PyTuple_SET_ITEM(rev_perm, items[i].perm, PyLong_FromLong(i));
+            PyObject *idx = PyLong_FromLong(i);
+            if(idx == NULL) {
+                Py_DECREF(rev_perm);
+                return NULL;
+            }
+            PyTuple_SET_ITEM(rev_perm, items[i].perm, idx);
+            Py_DECREF(idx);
         }
         dims.ptr = d;
         dims.len = n;
