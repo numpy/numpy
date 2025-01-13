@@ -1560,28 +1560,23 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         fname = os.fspath(fname)
     if _is_string_like(fname):
         # Ensure the file exists before opening it with np.lib._datasource.
-        # This is necessary to handle file paths correctly, regardless of fstring_fmt.
         open(fname, 'wt').close()
         fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
         own_fh = True
     elif hasattr(fname, 'write'):
-        # wrap to handle byte output streams
+        # Wrap to handle byte output streams
         fh = WriteWrap(fname, encoding or 'latin1')
     else:
-        raise ValueError('fname must be a string or file handle')
+        raise ValueError("fname must be a string or file handle")
 
     try:
         X = np.asarray(X)
-        # Handle 1-dimensional arrays
         if X.ndim == 0 or X.ndim > 2:
-            raise ValueError(
-                "Expected 1D or 2D array, got %dD array instead" % X.ndim)
+            raise ValueError(f"Expected 1D or 2D array, got {X.ndim}D array instead")
         elif X.ndim == 1:
-            # Common case -- 1d array of numbers
             if X.dtype.names is None:
                 X = np.atleast_2d(X).T
                 ncol = 1
-            # Complex dtype -- each field indicates a separate column
             else:
                 ncol = len(X.dtype.names)
         else:
@@ -1591,42 +1586,43 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
 
         if fstring_fmt:
             if isinstance(fstring_fmt, str):
-                if delimiter in fstring_fmt:
-                    fstring_fmt = fstring_fmt.split(delimiter)
-                else:
-                    fstring_fmt = [fstring_fmt] * ncol
-            elif not isinstance(fstring_fmt, (list, tuple)):
-                raise ValueError('fstring_fmt must be a string, list, or tuple.')
-            if len(fstring_fmt) != ncol:
+                if "{" in fstring_fmt and "}" in fstring_fmt:
+                    if fstring_fmt.count("{") > 1 or fstring_fmt.count("}") > 1:
+                        raise ValueError(
+                            "Multi-column f-strings are not supported for fstring_fmt. "
+                            "Please provide a single f-string for formatting."
+                        )
+                fstring_fmt = [fstring_fmt] * ncol
+            elif isinstance(fstring_fmt, (list, tuple)):
                 raise ValueError(
-                    f"fstring_fmt has wrong shape. Expected {ncol} elements.")
+                    "Multi-column fstring_fmt is not supported. "
+                    "Provide a single string for fstring_fmt."
+                )
+            else:
+                raise ValueError("fstring_fmt must be a string.")
             format_row = delimiter.join(fstring_fmt)
-
         else:
             if isinstance(fmt, (list, tuple)):
                 if len(fmt) != ncol:
-                    raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
+                    raise ValueError(f"fmt has wrong shape: {fmt}")
                 format = delimiter.join(fmt)
             elif isinstance(fmt, str):
                 n_fmt_chars = fmt.count('%')
-                error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
                 if n_fmt_chars == 1:
-                    if iscomplex_X:
-                        fmt = [' (%s+%sj)' % (fmt, fmt)] * ncol
-                    else:
-                        fmt = [fmt] * ncol
+                    fmt = [fmt] * ncol
                     format = delimiter.join(fmt)
                 elif iscomplex_X and n_fmt_chars != (2 * ncol):
-                    raise error
+                    raise ValueError(f"fmt has wrong number of %% formats: {fmt}")
                 elif not iscomplex_X and n_fmt_chars != ncol:
-                    raise error
+                    raise ValueError(f"fmt has wrong number of %% formats: {fmt}")
                 else:
                     format = fmt
             else:
-                raise ValueError('invalid fmt: %r' % (fmt,))
+                raise ValueError(f"Invalid fmt: {fmt!r}")
 
-        if len(header) > 0:
-            header = header.replace('\n', '\n' + comments)
+        # Write header
+        if header:
+            header = header.replace("\n", "\n" + comments)
             fh.write(comments + header + newline)
 
         # Write data rows
@@ -1639,25 +1635,25 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 fh.write(row_formatted + newline)
         elif iscomplex_X:
             for row in X:
-                row2 = []
-                for number in row:
-                    row2.append(number.real)
-                    row2.append(number.imag)
+                row2 = [number.real if i % 2 == 0 else number.imag for i, number in
+                        enumerate(row)]
                 s = format % tuple(row2) + newline
-                fh.write(s.replace('+-', '-'))
+                fh.write(s.replace("+-", "-"))
         else:
             for row in X:
                 try:
                     v = format % tuple(row) + newline
                 except TypeError as e:
-                    raise TypeError("Mismatch between array dtype ('%s') and "
-                                    "format specifier ('%s')"
-                                    % (str(X.dtype), format)) from e
+                    raise TypeError(
+                        f"Mismatch between array dtype ('{X.dtype}') and format specifier ('{format}')"
+                    ) from e
                 fh.write(v)
 
-        if len(footer) > 0:
-            footer = footer.replace('\n', '\n' + comments)
+        # Write footer
+        if footer:
+            footer = footer.replace("\n", "\n" + comments)
             fh.write(comments + footer + newline)
+
     finally:
         if own_fh:
             fh.close()
