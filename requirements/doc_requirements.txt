@@ -23,6 +23,6 @@ scipy-doctest==1.6.0
 
 # interactive documentation utilities
 # see https://github.com/jupyterlite/pyodide-kernel#compatibility
-jupyterlite-sphinx>=0.18.1
+jupyterlite-sphinx>=0.18.0
 # Works with Pyodide 0.27.0
 jupyterlite-pyodide-kernel==0.5.0
