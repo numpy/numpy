@@ -1862,7 +1862,7 @@ static PyObject *
 array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 {
     PyObject *numeric_mod = NULL, *from_buffer_func = NULL;
-    PyObject *pickle_module = NULL, *picklebuf_class = NULL;
+    PyObject *picklebuf_class = NULL;
     PyObject *picklebuf_args = NULL;
     PyObject *buffer = NULL, *transposed_array = NULL;
     PyArray_Descr *descr = NULL;
@@ -1872,13 +1872,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     descr = PyArray_DESCR(self);
 
     /* we expect protocol 5 to be available in Python 3.8 */
-    pickle_module = PyImport_ImportModule("pickle");
-    if (pickle_module == NULL){
-        return NULL;
-    }
-    picklebuf_class = PyObject_GetAttrString(pickle_module, "PickleBuffer");
-    Py_DECREF(pickle_module);
-    if (picklebuf_class == NULL) {
+    if (npy_cache_import_runtime("pickle", "PickleBuffer", &picklebuf_class)) {
         return NULL;
     }
 
@@ -1886,7 +1880,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     if (PyArray_IS_C_CONTIGUOUS((PyArrayObject *)self)) {
         order = 'C';
         picklebuf_args = Py_BuildValue("(O)", self);
-        rev_perm = PyTuple_Pack(0);
+        rev_perm = PyTuple_New(0);
     }
     else if (PyArray_IS_F_CONTIGUOUS((PyArrayObject *)self)) {
         /* if the array if Fortran-contiguous and not C-contiguous,
@@ -1895,7 +1889,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         order = 'F';
         transposed_array = PyArray_Transpose((PyArrayObject *)self, NULL);
         picklebuf_args = Py_BuildValue("(N)", transposed_array);
-        rev_perm = PyTuple_Pack(0);
+        rev_perm = PyTuple_New(0);
     }
     else {
         order = 'K';
@@ -1905,7 +1899,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         PyArray_CreateSortedStridePerm(n, PyArray_STRIDES(self), items);
         rev_perm = PyTuple_New(n);
         if (rev_perm == NULL) {
-            Py_DECREF(picklebuf_class);
             return NULL;
         }
         PyArray_Dims dims;
@@ -1919,19 +1912,16 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         transposed_array = PyArray_Transpose((PyArrayObject *)self, &dims);
         if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject *)transposed_array)) {
             // self is non-contiguous
-            Py_DECREF(picklebuf_class);
             Py_DECREF(rev_perm);
             return array_reduce_ex_regular(self, protocol);
         }
         picklebuf_args = Py_BuildValue("(N)", transposed_array);
     }
     if (picklebuf_args == NULL) {
-        Py_DECREF(picklebuf_class);
         return NULL;
     }
 
     buffer = PyObject_CallObject(picklebuf_class, picklebuf_args);
-    Py_DECREF(picklebuf_class);
     Py_DECREF(picklebuf_args);
     if (buffer == NULL) {
         /* Some arrays may refuse to export a buffer, in which case
@@ -1946,13 +1936,14 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 
     numeric_mod = PyImport_ImportModule("numpy._core.numeric");
     if (numeric_mod == NULL) {
+        Py_DECREF(rev_perm);
         Py_DECREF(buffer);
         return NULL;
     }
-    from_buffer_func = PyObject_GetAttrString(numeric_mod,
-                                              "_frombuffer");
+    from_buffer_func = PyObject_GetAttrString(numeric_mod, "_frombuffer");
     Py_DECREF(numeric_mod);
     if (from_buffer_func == NULL) {
+        Py_DECREF(rev_perm);
         Py_DECREF(buffer);
         return NULL;
     }
@@ -1967,8 +1958,9 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         shape = PyArray_IntTupleFromIntp(PyArray_NDIM(self),
                                          PyArray_SHAPE(self));
     }
-    return Py_BuildValue("N(NONNN)", from_buffer_func, buffer, (PyObject *)descr, shape,
-            PyUnicode_FromStringAndSize(&order, 1), rev_perm);
+    return Py_BuildValue("N(NONNN)", from_buffer_func, buffer,
+                         (PyObject *)descr, shape,
+                         PyUnicode_FromStringAndSize(&order, 1), rev_perm);
 }
 
 static PyObject *
