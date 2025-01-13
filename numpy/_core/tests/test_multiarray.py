@@ -4396,6 +4396,7 @@ class TestPickling:
          np.random.rand(2, 3, 4, 5).transpose((1, 3, 0, 2))] + 
         [np.random.rand(*np.arange(2, 7)).transpose(np.random.permutation(5)) for _ in range(3)])
     def test_transposed_contiguous_array(self, transposed_contiguous_array):
+        np.random.seed(42)
         buffers = []
 
         # When using pickle protocol 5, arrays which can be transposed to c_contiguous
