@@ -1863,7 +1863,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 {
     PyObject *numeric_mod = NULL, *from_buffer_func = NULL;
     PyObject *picklebuf_class = NULL;
-    PyObject *picklebuf_args = NULL;
     PyObject *buffer = NULL, *transposed_array = NULL;
     PyArray_Descr *descr = NULL;
     PyObject *rev_perm = NULL;  // only used in 'K' order
@@ -1879,7 +1878,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     /* Construct a PickleBuffer of the array */
     if (PyArray_IS_C_CONTIGUOUS((PyArrayObject *)self)) {
         order = 'C';
-        picklebuf_args = Py_BuildValue("(O)", self);
         rev_perm = PyTuple_New(0);
         if (rev_perm == NULL) {
             return NULL;
@@ -1891,7 +1889,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
          * of the initial array, that is C-contiguous. */
         order = 'F';
         transposed_array = PyArray_Transpose((PyArrayObject *)self, NULL);
-        picklebuf_args = Py_BuildValue("(N)", transposed_array);
         rev_perm = PyTuple_New(0);
         if (rev_perm == NULL) {
             return NULL;
@@ -1921,14 +1918,8 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
             Py_DECREF(rev_perm);
             return array_reduce_ex_regular(self, protocol);
         }
-        picklebuf_args = Py_BuildValue("(N)", transposed_array);
     }
-    if (picklebuf_args == NULL) {
-        return NULL;
-    }
-
-    buffer = PyObject_CallObject(picklebuf_class, picklebuf_args);
-    Py_DECREF(picklebuf_args);
+    buffer = PyObject_CallOneArg(picklebuf_class, transposed_array == NULL ? (PyObject*) self: transposed_array);
     if (buffer == NULL) {
         /* Some arrays may refuse to export a buffer, in which case
          * just fall back on regular __reduce_ex__ implementation
