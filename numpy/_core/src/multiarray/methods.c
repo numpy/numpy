@@ -1904,7 +1904,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         // sort (strde, perm) as descending = transpose to C
         PyArray_CreateSortedStridePerm(n, PyArray_STRIDES(self), items);
         rev_perm = PyTuple_New(n);
-        if(rev_perm == NULL) {
+        if (rev_perm == NULL) {
             Py_DECREF(picklebuf_class);
             return NULL;
         }
@@ -1958,7 +1958,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     }
 
     PyObject *shape = NULL;
-    if(order == 'K') {
+    if (order == 'K') {
         shape = PyArray_IntTupleFromIntp(
                 PyArray_NDIM((PyArrayObject *)transposed_array),
                 PyArray_SHAPE((PyArrayObject *)transposed_array));
