@@ -1962,6 +1962,9 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         shape = PyArray_IntTupleFromIntp(PyArray_NDIM(self),
                                          PyArray_SHAPE(self));
     }
+    if (transposed_array != NULL) {
+        Py_DECREF(transposed_array);
+    }
     return Py_BuildValue("N(NONNN)", from_buffer_func, buffer,
                          (PyObject *)descr, shape,
                          PyUnicode_FromStringAndSize(&order, 1), rev_perm);
