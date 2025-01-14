@@ -366,8 +366,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     # masked arrays are not supported yet.
     if not optional_indices and not return_counts and not np.ma.is_masked(ar):
-        # from numpy._core._multiarray_umath import unique_hash
-        from numpy._core._unique import unique_hash
+        from numpy._core._multiarray_umath import unique_hash
         # First we convert the array to a numpy array, later we wrap it back
         # in case it was a subclass of numpy.ndarray.
         conv = _array_converter(ar)

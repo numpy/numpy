@@ -1,4 +1,5 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _MULTIARRAYMODULE
 
 #include <iostream>
 #include <Python.h>
@@ -186,40 +187,4 @@ array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
         NPY_DISABLE_C_API;
         return NULL;
     }
-}
-
-
-
-// The following is to expose the unique function to Python
-static PyMethodDef UniqueMethods[] = {
-    {"unique_hash",  array_unique, METH_VARARGS,
-     "Collect unique values via a hash map."},
-    {NULL, NULL, 0, NULL}
-};
-
-static struct PyModuleDef uniquemodule = {
-    PyModuleDef_HEAD_INIT,
-    "_unique", /* name of module */
-    NULL, /* module docs */
-    -1,  /* size of per-interpreter state of the module,
-            or -1 if the module keeps state in global variables. */
-    UniqueMethods
-};
-
-PyMODINIT_FUNC
-PyInit__unique(void)
-{
-    PyObject *m;
-    PyArray_ImportNumPyAPI();
-    m = PyModule_Create(&uniquemodule);
-    if (m == NULL) {
-        return m;
-    }
-    // TODO: with no-gil we probably want to put a lock on the array so that it's
-    // not changed before we calculate the unique values???
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
-    return m;
 }
