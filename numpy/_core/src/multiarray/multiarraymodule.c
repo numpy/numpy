@@ -5037,6 +5037,24 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
+    /*
+     * Initialize the default PyDataMem_Handler capsule singleton.
+     */
+    PyDataMem_DefaultHandler = PyCapsule_New(
+            &default_handler, MEM_HANDLER_CAPSULE_NAME, NULL);
+    if (PyDataMem_DefaultHandler == NULL) {
+        goto err;
+    }
+
+    /*
+     * Initialize the context-local current handler
+     * with the default PyDataMem_Handler capsule.
+     */
+    current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
+    if (current_handler == NULL) {
+        goto err;
+    }
+
     if (initumath(m) != 0) {
         goto err;
     }
@@ -5071,7 +5089,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
      * init_string_dtype() but that needs to happen after
      * the legacy dtypemeta classes are available.
      */
-    
+
     if (npy_cache_import_runtime(
             "numpy.dtypes", "_add_dtype_helper",
             &npy_runtime_imports._add_dtype_helper) == -1) {
@@ -5084,23 +5102,6 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
     PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
-
-    /*
-     * Initialize the default PyDataMem_Handler capsule singleton.
-     */
-    PyDataMem_DefaultHandler = PyCapsule_New(
-            &default_handler, MEM_HANDLER_CAPSULE_NAME, NULL);
-    if (PyDataMem_DefaultHandler == NULL) {
-        goto err;
-    }
-    /*
-     * Initialize the context-local current handler
-     * with the default PyDataMem_Handler capsule.
-     */
-    current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
-    if (current_handler == NULL) {
-        goto err;
-    }
 
     // initialize static reference to a zero-like array
     npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(

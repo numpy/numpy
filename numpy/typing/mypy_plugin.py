@@ -16,7 +16,8 @@ Its functionality can be split into three distinct parts:
   Without the plugin the type will default to `ctypes.c_int64`.
 
   .. versionadded:: 1.22
-  .. deprecated:: 2.3
+
+.. deprecated:: 2.3
 
 Examples
 --------
@@ -32,7 +33,8 @@ To enable the plugin, one must add it to their mypy `configuration file`_:
 
 """
 
-from typing import Final
+from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING, Final, TypeAlias, cast
 
 import numpy as np
 
@@ -101,9 +103,6 @@ _C_INTP: Final = _get_c_intp_name()
 
 
 try:
-    from collections.abc import Callable, Iterable
-    from typing import TYPE_CHECKING, TypeAlias, cast
-
     if TYPE_CHECKING:
         from mypy.typeanal import TypeAnalyser
 
@@ -111,6 +110,13 @@ try:
     from mypy.plugin import Plugin, AnalyzeTypeContext
     from mypy.nodes import MypyFile, ImportFrom, Statement
     from mypy.build import PRI_MED
+
+except ModuleNotFoundError as e:
+
+    def plugin(version: str) -> type:
+        raise e
+
+else:
 
     _HookFunc: TypeAlias = Callable[[AnalyzeTypeContext], mypy.types.Type]
 
@@ -186,15 +192,13 @@ try:
     def plugin(version: str) -> type:
         import warnings
 
-        warnings.warn(
-            "`numpy.typing.mypy_plugin` is deprecated, and will be removed in "
-            "a future release.",
-            category=DeprecationWarning,
-            stacklevel=3,
+        plugin = "numpy.typing.mypy_plugin"
+        # Deprecated 2025-01-10, NumPy 2.3
+        warn_msg = (
+            f"`{plugin}` is deprecated, and will be removed in a future "
+            f"release. Please remove `plugins = {plugin}` in your mypy config."
+            f"(deprecated in NumPy 2.3)"
         )
+        warnings.warn(warn_msg, DeprecationWarning, stacklevel=3)
+
         return _NumpyPlugin
-
-except ModuleNotFoundError as e:
-
-    def plugin(version: str) -> type:
-        raise e
