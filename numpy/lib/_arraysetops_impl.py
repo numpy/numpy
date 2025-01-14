@@ -372,12 +372,15 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         conv = _array_converter(ar)
         ar_, = conv
 
-        hash_unique = unique_hash(ar_)
-        if hash_unique is not None:
+        try:
+            hash_unique = unique_hash(ar_)
             if sorted:
                 hash_unique.sort()
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
+        except NotImplementedError:
+            # We don't support this dtype, so we use the slower sorting method.
+            pass
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:

@@ -1,7 +1,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
-#include <iostream>
 #include <Python.h>
 
 #include <unordered_set>
@@ -138,7 +137,6 @@ array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     If the input array is not supported, it returns None.
     */
-    std::cout << "Hello, world!" << std::endl;
     // this is to allow grabbing the GIL before raising a python exception.
     NPY_ALLOW_C_API_DEF;
     PyArrayObject *self = NULL;
@@ -165,12 +163,14 @@ array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
         auto type = PyArray_TYPE(self);
         // we only support data types present in our unique_funcs map
         if (unique_funcs.find(type) == unique_funcs.end()) {
-            std::cout << "Type not found" << std::endl;
-            return Py_None;
+            // Grab GIL before raising an exception
+            NPY_ALLOW_C_API;
+            PyErr_SetString(PyExc_NotImplementedError, "Unsupported dtype");
+            NPY_DISABLE_C_API;
+            return NULL;
         }
 
         res = unique_funcs[type](self);
-        std::cout << "Bye, world!" << std::endl;
         return res;
     }
     catch (const std::bad_alloc &e) {
