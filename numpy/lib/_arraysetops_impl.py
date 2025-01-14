@@ -368,13 +368,19 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     if not optional_indices and not return_counts and not np.ma.is_masked(ar):
         # from numpy._core._multiarray_umath import unique_hash
         from numpy._core._unique import unique_hash
-        hash_unique = unique_hash(ar)
+        # First we convert the array to a numpy array, later we wrap it back
+        # in case it was a subclass of numpy.ndarray.
+        conv = _array_converter(ar)
+        ar_, = conv
+
+        hash_unique = unique_hash(ar_)
         if hash_unique is not None:
             if sorted:
                 hash_unique.sort()
-            return (hash_unique,)
+            # We wrap the result back in case it was a subclass of numpy.ndarray.
+            return (conv.wrap(hash_unique),)
 
-
+    # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         aux = ar[perm]

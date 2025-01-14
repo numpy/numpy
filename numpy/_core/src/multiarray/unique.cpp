@@ -1,5 +1,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
+#include <iostream>
 #include <Python.h>
 
 #include <unordered_set>
@@ -43,9 +44,11 @@ PyObject* unique(PyArrayObject *self)
     npy_intp* strideptr,* innersizeptr;
     std::unordered_set<T> hashset;
 
-    iter = NpyIter_New(self, NPY_ITER_READONLY|
-                             NPY_ITER_EXTERNAL_LOOP|
-                             NPY_ITER_REFS_OK,
+    iter = NpyIter_New(self, NPY_ITER_READONLY |
+                             NPY_ITER_EXTERNAL_LOOP |
+                             NPY_ITER_REFS_OK |
+                             NPY_ITER_ZEROSIZE_OK |
+                             NPY_ITER_GROWINNER,
                         NPY_KEEPORDER, NPY_NO_CASTING,
                         NULL);
     // Making sure the iterator is deallocated when the function returns, with
@@ -94,7 +97,8 @@ PyObject* unique(PyArrayObject *self)
         dims, // shape
         NULL, // strides
         res, // data
-        NPY_ARRAY_OUT_ARRAY, // flags
+        // This flag is needed to be able to call .sort on it.
+        NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
 }
@@ -125,7 +129,7 @@ std::unordered_map<int, function_type> unique_funcs = {
 
 
 extern "C" NPY_NO_EXPORT PyObject *
-PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
+array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     /* This is called from Python space, and expects a single numpy array as input.
 
@@ -133,6 +137,9 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
 
     If the input array is not supported, it returns None.
     */
+    std::cout << "Hello, world!" << std::endl;
+    // this is to allow grabbing the GIL before raising a python exception.
+    NPY_ALLOW_C_API_DEF;
     PyArrayObject *self = NULL;
     PyObject *res = NULL;
     if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self))
@@ -143,31 +150,49 @@ PyArray_Unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
     auto self_decref = finally([&]() { Py_XDECREF(self); });
 
 
-    /* Handle zero-sized arrays specially */
-    if (PyArray_SIZE(self) == 0) {
-        return PyArray_NewLikeArray(
-            self,
-            NPY_ANYORDER,
-            NULL, // descr (use prototype's descr)
-            1 // subok
-        );
-    }
+    try {
+        /* Handle zero-sized arrays specially */
+        if (PyArray_SIZE(self) == 0) {
+            return PyArray_NewLikeArray(
+                self,
+                NPY_ANYORDER,
+                NULL, // descr (use prototype's descr)
+                1 // subok
+            );
+        }
 
-    auto type = PyArray_TYPE(self);
-    // we only support data types present in our unique_funcs map
-    if (unique_funcs.find(type) == unique_funcs.end()) {
-        return Py_None;
-    }
+        auto type = PyArray_TYPE(self);
+        // we only support data types present in our unique_funcs map
+        if (unique_funcs.find(type) == unique_funcs.end()) {
+            std::cout << "Type not found" << std::endl;
+            return Py_None;
+        }
 
-    res = unique_funcs[type](self);
-    return res;
+        res = unique_funcs[type](self);
+        std::cout << "Bye, world!" << std::endl;
+        return res;
+    }
+    catch (const std::bad_alloc &e) {
+        // Grab GIL before raising an exception
+        NPY_ALLOW_C_API;
+        PyErr_NoMemory();
+        NPY_DISABLE_C_API;
+        return NULL;
+    }
+    catch (const std::exception &e) {
+        // Grab GIL before raising an exception
+        NPY_ALLOW_C_API;
+        PyErr_SetString(PyExc_RuntimeError, e.what());
+        NPY_DISABLE_C_API;
+        return NULL;
+    }
 }
 
 
 
 // The following is to expose the unique function to Python
 static PyMethodDef UniqueMethods[] = {
-    {"unique_hash",  PyArray_Unique, METH_VARARGS,
+    {"unique_hash",  array_unique, METH_VARARGS,
      "Collect unique values via a hash map."},
     {NULL, NULL, 0, NULL}
 };
@@ -190,6 +215,8 @@ PyInit__unique(void)
     if (m == NULL) {
         return m;
     }
+    // TODO: with no-gil we probably want to put a lock on the array so that it's
+    // not changed before we calculate the unique values???
 #if Py_GIL_DISABLED
     // signal this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);

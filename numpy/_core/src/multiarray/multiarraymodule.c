@@ -4588,8 +4588,8 @@ static struct PyMethodDef array_module_methods[] = {
         "Give a warning on reload and big warning in sub-interpreters."},
     {"from_dlpack", (PyCFunction)from_dlpack,
         METH_FASTCALL | METH_KEYWORDS, NULL},
-    {"unique_hash",  (PyCFunction)PyArray_Unique, METH_VARARGS,
-     "Collect unique values via a hash map."},
+    {"unique_hash",  (PyCFunction)array_unique,
+        METH_VARARGS, "Collect unique values via a hash map."},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

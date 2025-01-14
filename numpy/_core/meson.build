@@ -690,7 +690,8 @@ cpp_args_common = c_args_common + [
 ]
 if cc.get_argument_syntax() != 'msvc'
   cpp_args_common += [
-    '-fno-exceptions',  # no exception support
+    # unique code handles C++ exceptions
+    # '-fno-exceptions',  # no exception support
     '-fno-rtti',  # no runtime type information
   ]
 endif
