@@ -200,6 +200,17 @@ npy_cpu_baseline_list(void);
 NPY_VISIBILITY_HIDDEN PyObject *
 npy_cpu_dispatch_list(void);
 
+/*
+ * Return a new a Python list contains the dispatched set of additional optimizations
+ * that are supported by the compiler and will be enabled by default if supported by
+ * the platform according to the specified values to command argument '--cpu-dispatch-default'.
+ *
+ * This function is mainly used to implement umath's attribute '__cpu_dispatch_default__',
+ * and the items are sorted from the lowest to highest interest.
+ */
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_dispatch_default_list(void);
+
 #ifdef __cplusplus
 }
 #endif

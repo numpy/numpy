@@ -4950,6 +4950,16 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     }
     Py_DECREF(s);
 
+    s = npy_cpu_dispatch_default_list();
+    if (s == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(d, "__cpu_dispatch_default__", s) < 0) {
+        Py_DECREF(s);
+        goto err;
+    }
+    Py_DECREF(s);
+
     s = PyCapsule_New((void *)_datetime_strings, NULL, NULL);
     if (s == NULL) {
         goto err;
@@ -5067,7 +5077,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
      * init_string_dtype() but that needs to happen after
      * the legacy dtypemeta classes are available.
      */
-    
+
     if (npy_cache_import_runtime(
             "numpy.dtypes", "_add_dtype_helper",
             &npy_runtime_imports._add_dtype_helper) == -1) {

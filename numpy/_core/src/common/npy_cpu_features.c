@@ -212,6 +212,21 @@ npy_cpu_dispatch_list(void)
 #endif
 }
 
+NPY_VISIBILITY_HIDDEN PyObject *
+npy_cpu_dispatch_default_list(void)
+{
+#if !defined(NPY_DISABLE_OPTIMIZATION) && NPY_WITH_CPU_DISPATCH_DEFAULT_N > 0
+    PyObject *list = PyList_New(NPY_WITH_CPU_DISPATCH_DEFAULT_N), *item;
+    int index = 0;
+    if (list != NULL) {
+        NPY_WITH_CPU_DISPATCH_DEFAULT_CALL(NPY__CPU_PYLIST_APPEND_CB, list)
+    }
+    return list;
+#else
+    return PyList_New(0);
+#endif
+}
+
 /******************** Private Definitions *********************/
 #define NPY__CPU_FEATURE_ID_CB(FEATURE, WITH_FEATURE)     \
     if (strcmp(NPY_TOSTRING(FEATURE), WITH_FEATURE) == 0) \

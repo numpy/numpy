@@ -136,6 +136,11 @@ jobs:
             "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C",
             "3.11"
           ]
+          - [
+            "with avx2 enabled for dispatching default, which means that avx512 is off by default",
+            "-Dallow-noblas=true -Dcpu-dispatch-default=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3",
+            "3.11"
+          ]
 
     env:
       MESON_ARGS: ${{ matrix.BUILD_PROP[1] }}

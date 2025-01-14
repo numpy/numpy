@@ -1,3 +1,4 @@
+import contextlib
 import os
 import re
 import sys
@@ -9,6 +10,7 @@ from numpy._core._multiarray_umath import (
     __cpu_features__,
     __cpu_baseline__,
     __cpu_dispatch__,
+    __cpu_dispatch_default__,
 )
 import numpy as np
 
@@ -76,10 +78,18 @@ class AbstractTest:
     def test_features(self):
         self.load_flags()
         for gname, features in self.features_groups.items():
+            # if we only enable certain cpu features by default skip
+            # the test for a group that is not enabled by default
+            if __cpu_dispatch_default__ and gname not in __cpu_dispatch_default__:
+                continue
             test_features = [self.cpu_have(f) for f in features]
             assert_features_equal(__cpu_features__.get(gname), all(test_features), gname)
 
         for feature_name in self.features:
+            # if we only enable certain cpu features by default skip
+            # the test for a feature that is not enabled by default
+            if __cpu_dispatch_default__ and feature_name not in __cpu_dispatch_default__:
+                continue
             cpu_have = self.cpu_have(feature_name)
             npy_have = __cpu_features__.get(feature_name)
             assert_features_equal(npy_have, cpu_have, feature_name)
@@ -129,7 +139,10 @@ class TestEnvPrivation:
     _disable = os.environ.pop('NPY_DISABLE_CPU_FEATURES', None)
     SUBPROCESS_ARGS = {"cwd": cwd, "capture_output": True, "text": True, "check": True}
     unavailable_feats = [
-        feat for feat in __cpu_dispatch__ if not __cpu_features__[feat]
+        feat for feat in (__cpu_dispatch_default__
+                          if __cpu_dispatch_default__
+                          else __cpu_dispatch__)
+        if not __cpu_features__[feat]
     ]
     UNAVAILABLE_FEAT = (
         None if len(unavailable_feats) == 0
@@ -191,6 +204,25 @@ if __name__ == "__main__":
         self.env = os.environ.copy()
         return
 
+    @contextlib.contextmanager
+    def env_ctx(self, **kwargs):
+        """
+        Temporarily modify the environment variables with the given keyword
+        arguments.
+        """
+        old_values = {}
+        for key, value in kwargs.items():
+            old_values[key] = self.env.get(key, None)
+            self.env[key] = value
+        try:
+            yield
+        finally:
+            for key, value in old_values.items():
+                if value is None:
+                    self.env.pop(key)
+                else:
+                    self.env[key] = value
+
     def test_runtime_feature_selection(self):
         """
         Ensure that when selecting `NPY_ENABLE_CPU_FEATURES`, only the
@@ -205,30 +237,51 @@ if __name__ == "__main__":
             pytest.skip(
                 "No dispatchable features outside of baseline detected."
             )
-        feature = non_baseline_features[0]
+        for feature in non_baseline_features:
+            # Capture runtime-enabled features when `NPY_ENABLE_CPU_FEATURES` is
+            # specified
+            with self.env_ctx(NPY_ENABLE_CPU_FEATURES = feature):
+                out = self._run()
+            enabled_features = _text_to_list(out.stdout)
 
-        # Capture runtime-enabled features when `NPY_ENABLE_CPU_FEATURES` is
-        # specified
-        self.env['NPY_ENABLE_CPU_FEATURES'] = feature
-        out = self._run()
-        enabled_features = _text_to_list(out.stdout)
+            # Ensure that only the default feature and the requested feature
+            # specified by `NPY_ENABLE_CPU_FEATURES` are enabled
+            assert set(enabled_features) == {feature} | set(__cpu_dispatch_default__)
 
-        # Ensure that only one feature is enabled, and it is exactly the one
-        # specified by `NPY_ENABLE_CPU_FEATURES`
-        assert set(enabled_features) == {feature}
+            # Capture runtime-enabled features when `NPY_DISABLE_CPU_FEATURES` is
+            # specified
+            with self.env_ctx(NPY_DISABLE_CPU_FEATURES=feature):
+                out = self._run()
+            enabled_features = _text_to_list(out.stdout)
+
+            # Ensure that only the default feature except for the requested feature
+            # specified by `NPY_DISABLE_CPU_FEATURES` are enabled
+            if __cpu_dispatch_default__:
+                dispatched_features = set(feat for feat in __cpu_dispatch_default__ if __cpu_features__[feat])
+            else:
+                dispatched_features = set(feat for feat in __cpu_dispatch__ if __cpu_features__[feat])
+            assert set(enabled_features) == dispatched_features - {feature}
 
         if len(non_baseline_features) < 2:
             pytest.skip("Only one non-baseline feature detected.")
         # Capture runtime-enabled features when `NPY_ENABLE_CPU_FEATURES` is
         # specified
-        self.env['NPY_ENABLE_CPU_FEATURES'] = ",".join(non_baseline_features)
-        out = self._run()
+        with self.env_ctx(NPY_ENABLE_CPU_FEATURES=",".join(non_baseline_features)):
+            out = self._run()
         enabled_features = _text_to_list(out.stdout)
 
         # Ensure that both features are enabled, and they are exactly the ones
         # specified by `NPY_ENABLE_CPU_FEATURES`
         assert set(enabled_features) == set(non_baseline_features)
-        return
+
+        # Capture runtime-enabled features when `NPY_DISABLE_CPU_FEATURES` is
+        # specified
+        with self.env_ctx(NPY_DISABLE_CPU_FEATURES=",".join(non_baseline_features)):
+            out = self._run()
+        enabled_features = _text_to_list(out.stdout)
+
+        # Ensure that no features are enabled
+        assert enabled_features is None
 
     @pytest.mark.parametrize("enabled, disabled",
     [
@@ -240,11 +293,11 @@ if __name__ == "__main__":
         Ensure that when both environment variables are set then an
         ImportError is thrown
         """
-        self.env['NPY_ENABLE_CPU_FEATURES'] = enabled
-        self.env['NPY_DISABLE_CPU_FEATURES'] = disabled
-        msg = "Both NPY_DISABLE_CPU_FEATURES and NPY_ENABLE_CPU_FEATURES"
-        err_type = "ImportError"
-        self._expect_error(msg, err_type)
+        with self.env_ctx(NPY_ENABLE_CPU_FEATURES=enabled,
+                          NPY_DISABLE_CPU_FEATURES=disabled):
+            msg = "Both NPY_DISABLE_CPU_FEATURES and NPY_ENABLE_CPU_FEATURES"
+            err_type = "ImportError"
+            self._expect_error(msg, err_type)
 
     @pytest.mark.skipif(
         not __cpu_dispatch__,
@@ -285,13 +338,13 @@ if __name__ == "__main__":
         if self.BASELINE_FEAT is None:
             pytest.skip("There are no unavailable features to test with")
         bad_feature = self.BASELINE_FEAT
-        self.env['NPY_DISABLE_CPU_FEATURES'] = bad_feature
-        msg = (
-            f"You cannot disable CPU feature '{bad_feature}', since it is "
-            "part of the baseline optimizations"
-        )
-        err_type = "RuntimeError"
-        self._expect_error(msg, err_type)
+        with self.env_ctx(NPY_DISABLE_CPU_FEATURES=bad_feature):
+            msg = (
+                f"You cannot disable CPU feature '{bad_feature}', since it is "
+                "part of the baseline optimizations"
+            )
+            err_type = "RuntimeError"
+            self._expect_error(msg, err_type)
 
     def test_impossible_feature_enable(self):
         """

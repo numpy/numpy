@@ -26,6 +26,15 @@ that target certain CPU features:
       During the runtime, NumPy modules will skip any specified features
       that are not available in the target CPU.
 
+- ``cpu-dispatch-default``: if specified this controls which of the dispatched
+   CPU features are enabled by default.
+
+   .. note::
+
+      This option can be useful if you want to be able to automaticall enable
+      CPU features like AVX2 by default if detected, but want to make advanced
+      CPU features like AVX512 opt in only via ``NPY_ENABLE_CPU_FEATURES``.
+
 These options are accessible at build time by passing setup arguments to meson-python
 via the build frontend (e.g., ``pip`` or ``build``).
 They accept a set of :ref:`CPU features <opt-supported-features>`
@@ -99,6 +108,23 @@ any other CPU feature and you want to exclude from the dispatched features::
 
     python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512f -avx512cd \
     -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl"
+
+Another option would be to use the ``cpu-dispatch-default`` option to enable
+dispatching of all non-AVX512 features by default::
+
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch-default="avx2"
+
+This will enable all non-AVX512 features by default if supported::
+
+    python -c 'from numpy._core._multiarray_umath import __cpu_dispatch__, __cpu_features__; print({feat: __cpu_features__[feat] for feat in __cpu_dispatch__})'
+    {'SSSE3': True, 'SSE41': True, 'POPCNT': True, 'SSE42': True, 'AVX': True, 'F16C': True, 'FMA3': True, 'AVX2': True, 'AVX512F': False, 'AVX512CD': False, 'AVX512_KNL': False, 'AVX512_KNM': False, 'AVX512_SKX': False, 'AVX512_CLX': False, 'AVX512_CNL': False, 'AVX512_ICL': False}
+
+In this case users can still opt-in to AVX512 features by setting the
+``NPY_ENABLE_CPU_FEATURES`` environment variable to a list of features
+they want to enable::
+
+    NPY_ENABLE_CPU_FEATURES="AVX512F AVX512CD" python -c 'from numpy._core._multiarray_umath import __cpu_dispatch__, __cpu_features__; print({feat: __cpu_features__[feat] for feat in __cpu_dispatch__})'
+    {'SSSE3': True, 'SSE41': True, 'POPCNT': True, 'SSE42': True, 'AVX': True, 'F16C': True, 'FMA3': True, 'AVX2': True, 'AVX512F': True, 'AVX512CD': True, 'AVX512_KNL': False, 'AVX512_KNM': False, 'AVX512_SKX': False, 'AVX512_CLX': False, 'AVX512_CNL': False, 'AVX512_ICL': False}
 
 .. _opt-supported-features:
 
