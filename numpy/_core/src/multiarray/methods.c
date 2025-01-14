@@ -1861,7 +1861,7 @@ array_reduce_ex_regular(PyArrayObject *self, int NPY_UNUSED(protocol))
 static PyObject *
 array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
 {
-    PyObject *numeric_mod = NULL, *from_buffer_func = NULL;
+    PyObject *from_buffer_func = NULL;
     PyObject *picklebuf_class = NULL;
     PyObject *buffer = NULL, *transposed_array = NULL;
     PyArray_Descr *descr = NULL;
@@ -1932,23 +1932,21 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
          * (gh-12745).
          */
         Py_DECREF(rev_perm);
+        if (transposed_array != NULL) {
+            Py_DECREF(transposed_array);
+        }
         PyErr_Clear();
         return array_reduce_ex_regular(self, protocol);
     }
 
     /* Get the _frombuffer() function for reconstruction */
-
-    numeric_mod = PyImport_ImportModule("numpy._core.numeric");
-    if (numeric_mod == NULL) {
+    if (npy_cache_import_runtime("numpy._core.numeric", "_frombuffer",
+                                 &from_buffer_func) == -1) {
         Py_DECREF(rev_perm);
         Py_DECREF(buffer);
-        return NULL;
-    }
-    from_buffer_func = PyObject_GetAttrString(numeric_mod, "_frombuffer");
-    Py_DECREF(numeric_mod);
-    if (from_buffer_func == NULL) {
-        Py_DECREF(rev_perm);
-        Py_DECREF(buffer);
+        if (transposed_array != NULL) {
+            Py_DECREF(transposed_array);
+        }
         return NULL;
     }
 
