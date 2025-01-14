@@ -1837,10 +1837,7 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
             }
         }
         else if (in_descr && !PyArray_ISNBO(in_descr->byteorder)) {
-            PyArray_DESCR_REPLACE(in_descr);
-        }
-        if (in_descr && in_descr->byteorder != NPY_IGNORE) {
-            in_descr->byteorder = NPY_NATIVE;
+            PyArray_DESCR_REPLACE_CANONICAL(in_descr);
         }
     }
 
