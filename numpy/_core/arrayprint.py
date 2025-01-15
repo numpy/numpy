@@ -1232,14 +1232,10 @@ def format_float_positional(x, precision=None, unique=True,
         Whether to show the sign for positive values.
     pad_left : non-negative integer, optional
         Pad the left side of the string with whitespace until at least that
-        many characters are to the left of the decimal point. Total length of 
-        string representation of the floating point value cannot exceed 16384, 
-        including pad_right, if any.
+        many characters are to the left of the decimal point.
     pad_right : non-negative integer, optional
         Pad the right side of the string with whitespace until at least that
-        many characters are to the right of the decimal point. Total length of 
-        string representation of the floating point value cannot exceed 16384, 
-        including pad_left, if any.
+        many characters are to the right of the decimal point.
     min_digits : non-negative integer or None, optional
         Minimum number of digits to print. Only has an effect if `unique=True`
         in which case additional digits past those necessary to uniquely
@@ -1251,6 +1247,12 @@ def format_float_positional(x, precision=None, unique=True,
     -------
     rep : string
         The string representation of the floating point value
+    
+    Raises
+    ------
+    RuntimeError
+        If the decimal string representation of the floating point scalar is longer
+        than 16384 characters
 
     See Also
     --------
