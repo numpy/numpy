@@ -1619,9 +1619,6 @@ typedef struct Dragon4_Options {
  * Error codes for those conditions are defined below
  */
 
-#define RIGHT_PADDING_OVERFLOW -1 
-#define LEFT_PADDING_OVERFLOW -2
-
 static npy_int32
 FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                  npy_int32 exponent, char signbit, npy_uint32 mantissaBit,
@@ -1670,9 +1667,10 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
             npy_int32 count = numWholeDigits - numDigits;
             pos += numDigits;
 
-            /* don't overflow the buffer */
-            if (pos + count > maxPrintLen) {
-                count = maxPrintLen - pos;
+            /* integer part too long for buffer, avoid overflow */
+            if (count > maxPrintLen - pos) {
+                PyErr_SetString(PyExc_RuntimeError, "String buffer overflow");
+                return -1;
             }
 
             /* add trailing zeros up to the decimal point */
@@ -1774,9 +1772,13 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
              pos < maxPrintLen) {
         /* add trailing zeros up to add_digits length */
         /* compute the number of trailing zeros needed */
+        
         npy_int32 count = desiredFractionalDigits - numFractionDigits;
-        if (pos + count > maxPrintLen) {
-            count = maxPrintLen - pos;
+        
+        /* too many trailing zeros required, avoid buffer overflow */
+        if (count > maxPrintLen - pos) {
+            PyErr_SetString(PyExc_RuntimeError, "String buffer overflow");
+            return -1;
         }
         numFractionDigits += count;
 
@@ -1809,8 +1811,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
     }
 
     /* add any whitespace padding to right side */
-    if (digits_right >= numFractionDigits) {
-        npy_bool right_overflow = NPY_FALSE;
+    if (digits_right >= numFractionDigits) {        
         npy_int32 count = digits_right - numFractionDigits;
 
         /* in trim_mode DptZeros, if right padding, add a space for the . */
@@ -1819,32 +1820,28 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
             buffer[pos++] = ' ';
         }
         
-        /* provided digits_rights is too large, can't create the string required*/
-        if (pos + count > maxPrintLen) {
-            right_overflow = NPY_TRUE;
-            count = maxPrintLen - pos;
+        /* 
+         * provided digits_rights is too large, 
+         * can't create the string required
+         */
+        if (count > maxPrintLen - pos) {
+            PyErr_SetString(PyExc_RuntimeError, "String buffer overflow");
+            return -1;
         }
 
         for ( ; count > 0; count--) {
             buffer[pos++] = ' ';
         }
-
-        /* handle overflow condition safely*/
-        if (NPY_TRUE == right_overflow) {
-            buffer[pos] = '\0';
-            return RIGHT_PADDING_OVERFLOW;
-        }
     }
     /* add any whitespace padding to left side */
     if (digits_left > numWholeDigits + has_sign) {
-        npy_bool left_overflow = NPY_FALSE;
         npy_int32 shift = digits_left - (numWholeDigits + has_sign);
         npy_int32 count = pos;
         
         /* provided digits_left is too large, can't create the string required*/
         if (count + shift > maxPrintLen) {
-            shift = maxPrintLen - count;
-            left_overflow = NPY_TRUE;
+            PyErr_SetString(PyExc_RuntimeError, "String buffer overflow");
+            return -1;
         }
 
         if (count > 0) {
@@ -1854,12 +1851,6 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         pos = shift + count;
         for ( ; shift > 0; shift--) {
             buffer[shift - 1] = ' ';
-        }
-        
-        /* handle overflow condition safely*/
-        if (NPY_TRUE == left_overflow) {
-            buffer[pos] = '\0';
-            return LEFT_PADDING_OVERFLOW;
         }
     }
 
@@ -3074,24 +3065,7 @@ PyObject *\
 Dragon4_Positional_##Type##_opt(npy_type *val, Dragon4_Options *opt)\
 {\
     PyObject *ret;\
-    npy_int32 status = Dragon4_PrintFloat_##format(val, opt);\
-    if (status < 0) { \
-        const char *error_msg; \
-        PyObject *error_type = PyExc_ValueError;\
-        \
-        switch (status) { \
-            case RIGHT_PADDING_OVERFLOW:\
-                error_msg = "Right padding exceeds buffer size of 16384";\
-                break;\
-            case LEFT_PADDING_OVERFLOW:\
-                error_msg = "Left padding exceeds buffer size of 16384";\
-                break;\
-            default:\
-                error_type = PyExc_RuntimeError;\
-                error_msg = "An unexpected error occurred";\
-                break;\
-        }\
-        PyErr_SetString(error_type, error_msg);\
+    if (Dragon4_PrintFloat_##format(val, opt) < 0) {\
         return NULL;\
     }\
     ret = PyUnicode_FromString(_bigint_static.repr);\
