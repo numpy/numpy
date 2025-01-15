@@ -253,6 +253,8 @@ if __name__ == "__main__":
             with self.env_ctx(NPY_DISABLE_CPU_FEATURES=feature):
                 out = self._run()
             enabled_features = _text_to_list(out.stdout)
+            if enabled_features is None:
+                enabled_features = []
 
             # Ensure that only the default feature except for the requested feature
             # specified by `NPY_DISABLE_CPU_FEATURES` are enabled
