@@ -1829,8 +1829,7 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
 {
     PyObject *obj;
     if (requires & NPY_ARRAY_NOTSWAPPED) {
-        if (!in_descr && PyArray_Check(op) &&
-                PyArray_ISBYTESWAPPED((PyArrayObject* )op)) {
+        if (!in_descr && PyArray_Check(op)) {
             in_descr = PyArray_DESCR((PyArrayObject *)op);
             Py_INCREF(in_descr);
         }
