@@ -627,6 +627,17 @@ class TestIndexing:
         b = np.array([0, 5, 6])
         assert_equal(a.flat[b.flat], np.array([0, 5, 6]))
 
+    def test_empty_string_flat_index_on_flatiter(self):
+        a = np.arange(9).reshape((3, 3))
+        b = np.array([], dtype="S")
+        assert_equal(a.flat[b.flat], np.array([]))
+
+    def test_nonempty_string_flat_index_on_flatiter(self):
+        a = np.arange(9).reshape((3, 3))
+        b = np.array(["a"], dtype="S")
+        with pytest.raises(IndexError, match="unsupported iterator index"):
+            a.flat[b.flat]
+
 
 class TestFieldIndexing:
     def test_scalar_return_type(self):

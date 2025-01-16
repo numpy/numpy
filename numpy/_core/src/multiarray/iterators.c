@@ -694,8 +694,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         obj = ind;
     }
 
-    if (PyArrayIter_Check(obj)) {
-        PyArrayObject *tmp_arr = (PyArrayObject *)PyArray_FROM_O(obj);
+    if (!PyArray_Check(obj)) {
+        PyArrayObject *tmp_arr = (PyArrayObject *) PyArray_FROM_O(obj);
         if (tmp_arr == NULL) {
             goto fail;
         }
@@ -711,11 +711,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         else {
             obj = (PyObject *) tmp_arr;
         }
-    }
-
-    /* Any remaining valid input is an array or has been turned into one */
-    if (!PyArray_Check(obj)) {
-        goto fail;
     }
 
     /* Check for Boolean array */
