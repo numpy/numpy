@@ -478,7 +478,7 @@ class RNG:
                            self.seed_vector_bits - 1) + 1
         bg = self.bit_generator(seed)
         state1 = bg.state
-        bg  = self.bit_generator(seed[0])
+        bg = self.bit_generator(seed[0])
         state2 = bg.state
         assert_(not comp_state(state1, state2))
 

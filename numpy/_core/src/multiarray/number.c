@@ -328,165 +328,53 @@ array_inplace_matrix_multiply(PyArrayObject *self, PyObject *other)
     return res;
 }
 
-/*
- * Determine if object is a scalar and if so, convert the object
- * to a double and place it in the out_exponent argument
- * and return the "scalar kind" as a result.   If the object is
- * not a scalar (or if there are other error conditions)
- * return NPY_NOSCALAR, and out_exponent is undefined.
- */
-static NPY_SCALARKIND
-is_scalar_with_conversion(PyObject *o2, double* out_exponent)
-{
-    PyObject *temp;
-    const int optimize_fpexps = 1;
-
-    if (PyLong_Check(o2)) {
-        long tmp = PyLong_AsLong(o2);
-        if (error_converting(tmp)) {
-            PyErr_Clear();
-            return NPY_NOSCALAR;
-        }
-        *out_exponent = (double)tmp;
-        return NPY_INTPOS_SCALAR;
-    }
-
-    if (optimize_fpexps && PyFloat_Check(o2)) {
-        *out_exponent = PyFloat_AsDouble(o2);
-        return NPY_FLOAT_SCALAR;
-    }
-
-    if (PyArray_Check(o2)) {
-        if ((PyArray_NDIM((PyArrayObject *)o2) == 0) &&
-                ((PyArray_ISINTEGER((PyArrayObject *)o2) ||
-                 (optimize_fpexps && PyArray_ISFLOAT((PyArrayObject *)o2))))) {
-            temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
-            if (temp == NULL) {
-                return NPY_NOSCALAR;
-            }
-            *out_exponent = PyFloat_AsDouble(o2);
-            Py_DECREF(temp);
-            if (PyArray_ISINTEGER((PyArrayObject *)o2)) {
-                return NPY_INTPOS_SCALAR;
-            }
-            else { /* ISFLOAT */
-                return NPY_FLOAT_SCALAR;
-            }
-        }
-    }
-    else if (PyArray_IsScalar(o2, Integer) ||
-                (optimize_fpexps && PyArray_IsScalar(o2, Floating))) {
-        temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
-        if (temp == NULL) {
-            return NPY_NOSCALAR;
-        }
-        *out_exponent = PyFloat_AsDouble(o2);
-        Py_DECREF(temp);
-
-        if (PyArray_IsScalar(o2, Integer)) {
-                return NPY_INTPOS_SCALAR;
-        }
-        else { /* IsScalar(o2, Floating) */
-            return NPY_FLOAT_SCALAR;
-        }
-    }
-    else if (PyIndex_Check(o2)) {
-        PyObject* value = PyNumber_Index(o2);
-        Py_ssize_t val;
-        if (value == NULL) {
-            if (PyErr_Occurred()) {
-                PyErr_Clear();
-            }
-            return NPY_NOSCALAR;
-        }
-        val = PyLong_AsSsize_t(value);
-        Py_DECREF(value);
-        if (error_converting(val)) {
-            PyErr_Clear();
-            return NPY_NOSCALAR;
-        }
-        *out_exponent = (double) val;
-        return NPY_INTPOS_SCALAR;
-    }
-    return NPY_NOSCALAR;
-}
-
-/*
- * optimize float array or complex array to a scalar power
- * returns 0 on success, -1 if no optimization is possible
- * the result is in value (can be NULL if an error occurred)
- */
 static int
-fast_scalar_power(PyObject *o1, PyObject *o2, int inplace,
-                  PyObject **value)
+fast_scalar_power(PyObject *o1, PyObject *o2, int inplace, PyObject **result)
 {
-    double exponent;
-    NPY_SCALARKIND kind;   /* NPY_NOSCALAR is not scalar */
-
-    if (PyArray_Check(o1) &&
-            !PyArray_ISOBJECT((PyArrayObject *)o1) &&
-            ((kind=is_scalar_with_conversion(o2, &exponent))>0)) {
-        PyArrayObject *a1 = (PyArrayObject *)o1;
-        PyObject *fastop = NULL;
-        if (PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1)) {
-            if (exponent == 1.0) {
-                fastop = n_ops.positive;
-            }
-            else if (exponent == -1.0) {
-                fastop = n_ops.reciprocal;
-            }
-            else if (exponent ==  0.0) {
-                fastop = n_ops._ones_like;
-            }
-            else if (exponent ==  0.5) {
-                fastop = n_ops.sqrt;
-            }
-            else if (exponent ==  2.0) {
-                fastop = n_ops.square;
-            }
-            else {
-                return -1;
-            }
-
-            if (inplace || can_elide_temp_unary(a1)) {
-                *value = PyArray_GenericInplaceUnaryFunction(a1, fastop);
-            }
-            else {
-                *value = PyArray_GenericUnaryFunction(a1, fastop);
-            }
-            return 0;
+    PyObject *fastop = NULL;
+    if (PyLong_CheckExact(o2)) {
+        int overflow = 0;
+        long exp = PyLong_AsLongAndOverflow(o2, &overflow);
+        if (overflow != 0) {
+            return -1;
         }
-        /* Because this is called with all arrays, we need to
-         *  change the output if the kind of the scalar is different
-         *  than that of the input and inplace is not on ---
-         *  (thus, the input should be up-cast)
-         */
-        else if (exponent == 2.0) {
+
+        if (exp == -1) {
+            fastop = n_ops.reciprocal;
+        }
+        else if (exp == 2) {
             fastop = n_ops.square;
-            if (inplace) {
-                *value = PyArray_GenericInplaceUnaryFunction(a1, fastop);
-            }
-            else {
-                /* We only special-case the FLOAT_SCALAR and integer types */
-                if (kind == NPY_FLOAT_SCALAR && PyArray_ISINTEGER(a1)) {
-                    PyArray_Descr *dtype = PyArray_DescrFromType(NPY_DOUBLE);
-                    a1 = (PyArrayObject *)PyArray_CastToType(a1, dtype,
-                            PyArray_ISFORTRAN(a1));
-                    if (a1 != NULL) {
-                        /* cast always creates a new array */
-                        *value = PyArray_GenericInplaceUnaryFunction(a1, fastop);
-                        Py_DECREF(a1);
-                    }
-                }
-                else {
-                    *value = PyArray_GenericUnaryFunction(a1, fastop);
-                }
-            }
-            return 0;
+        }
+        else {
+            return 1;
         }
     }
-    /* no fast operation found */
-    return -1;
+    else if (PyFloat_CheckExact(o2)) {
+        double exp = PyFloat_AsDouble(o2);
+        if (exp == 0.5) {
+            fastop = n_ops.sqrt;
+        }
+        else {
+            return 1;
+        }
+    }
+    else {
+        return 1;
+    }
+
+    PyArrayObject *a1 = (PyArrayObject *)o1;
+    if (!(PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1))) {
+        return 1;
+    }
+
+    if (inplace || can_elide_temp_unary(a1)) {
+        *result = PyArray_GenericInplaceUnaryFunction(a1, fastop);
+    }
+    else {
+        *result = PyArray_GenericUnaryFunction(a1, fastop);
+    }
+
+    return 0;
 }
 
 static PyObject *
@@ -643,7 +531,8 @@ array_inplace_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo
 
     INPLACE_GIVE_UP_IF_NEEDED(
             a1, o2, nb_inplace_power, array_inplace_power);
-    if (fast_scalar_power((PyObject *)a1, o2, 1, &value) != 0) {
+
+    if (fast_scalar_power((PyObject *) a1, o2, 1, &value) != 0) {
         value = PyArray_GenericInplaceBinaryFunction(a1, o2, n_ops.power);
     }
     return value;

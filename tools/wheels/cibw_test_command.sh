@@ -38,7 +38,7 @@ if [[ $FREE_THREADED_BUILD == "True" ]]; then
     # Manually check that importing NumPy does not re-enable the GIL.
     # In principle the tests should catch this but it seems harmless to leave it
     # here as a final sanity check before uploading broken wheels
-    if [[ $(python -c "import numpy" 2>&1) == "*The global interpreter lock (GIL) has been enabled*" ]]; then
+    if [[ $(python -c "import numpy" 2>&1) == *"The global interpreter lock (GIL) has been enabled"* ]]; then
         echo "Error: Importing NumPy re-enables the GIL in the free-threaded build"
         exit 1
     fi
@@ -46,5 +46,8 @@ fi
 
 # Run full tests with -n=auto. This makes pytest-xdist distribute tests across
 # the available N CPU cores: 2 by default for Linux instances and 4 for macOS arm64
-python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto']))"
+# Also set a 30 minute timeout in case of test hangs and on success, print the
+# durations for the 10 slowests tests to help with debugging slow or hanging
+# tests
+python -c "import sys; import numpy; sys.exit(not numpy.test(label='full', extra_argv=['-n=auto', '--timeout=1800', '--durations=10']))"
 python $PROJECT_DIR/tools/wheels/check_license.py

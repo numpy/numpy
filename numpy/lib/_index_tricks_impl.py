@@ -102,7 +102,7 @@ def ix_(*args):
             raise ValueError("Cross index must be 1 dimensional")
         if issubdtype(new.dtype, _nx.bool):
             new, = new.nonzero()
-        new = new.reshape((1,)*k + (new.size,) + (1,)*(nd-k-1))
+        new = new.reshape((1,) * k + (new.size,) + (1,) * (nd - k - 1))
         out.append(new)
     return tuple(out)
 
@@ -165,12 +165,12 @@ class nd_grid:
                     size.append(int(step))
                 else:
                     size.append(
-                        int(math.ceil((stop - start) / (step*1.0))))
+                        int(math.ceil((stop - start) / (step * 1.0))))
                 num_list += [start, stop, step]
             typ = _nx.result_type(*num_list)
             if self.sparse:
                 nn = [_nx.arange(_x, dtype=_t)
-                      for _x, _t in zip(size, (typ,)*len(size))]
+                      for _x, _t in zip(size, (typ,) * len(size))]
             else:
                 nn = _nx.indices(size, typ)
             for k, kk in enumerate(key):
@@ -184,9 +184,9 @@ class nd_grid:
                     step = int(abs(step))
                     if step != 1:
                         step = (kk.stop - start) / float(step - 1)
-                nn[k] = (nn[k]*step+start)
+                nn[k] = (nn[k] * step + start)
             if self.sparse:
-                slobj = [_nx.newaxis]*len(size)
+                slobj = [_nx.newaxis] * len(size)
                 for k in range(len(size)):
                     slobj[k] = slice(None, None)
                     nn[k] = nn[k][tuple(slobj)]
@@ -204,9 +204,9 @@ class nd_grid:
                 step_float = abs(step)
                 step = length = int(step_float)
                 if step != 1:
-                    step = (key.stop-start)/float(step-1)
+                    step = (key.stop - start) / float(step - 1)
                 typ = _nx.result_type(start, stop, step_float)
-                return _nx.arange(0, length, 1, dtype=typ)*step + start
+                return _nx.arange(0, length, 1, dtype=typ) * step + start
             else:
                 return _nx.arange(start, stop, step)
 
@@ -447,7 +447,7 @@ class AxisConcatenator:
     def __len__(self):
         return 0
 
-# separate classes are used here instead of just making r_ = concatentor(0),
+# separate classes are used here instead of just making r_ = concatenator(0),
 # etc. because otherwise we couldn't get the doc string to come out right
 # in help(r_)
 
@@ -841,8 +841,6 @@ def fill_diagonal(a, val, wrap=False):
 
     Notes
     -----
-    .. versionadded:: 1.4.0
-
     This functionality can be obtained via `diag_indices`, but internally
     this version uses a much faster implementation that never constructs the
     indices and uses simple slicing.
@@ -970,10 +968,6 @@ def diag_indices(n, ndim=2):
     --------
     diag_indices_from
 
-    Notes
-    -----
-    .. versionadded:: 1.4.0
-
     Examples
     --------
     >>> import numpy as np
@@ -1035,10 +1029,6 @@ def diag_indices_from(arr):
     See Also
     --------
     diag_indices
-
-    Notes
-    -----
-    .. versionadded:: 1.4.0
 
     Examples
     --------

@@ -14,8 +14,7 @@ f: tuple[int, ...]
 g: list[int]
 h: Sequence[Any]
 
-def func(a: _NestedSequence[int]) -> None:
-    ...
+def func(a: _NestedSequence[int]) -> None: ...
 
 assert_type(func(a), None)
 assert_type(func(b), None)

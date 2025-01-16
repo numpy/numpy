@@ -55,19 +55,6 @@ find_previous_utf8_character(const unsigned char *c, size_t nchar)
     return c;
 }
 
-NPY_NO_EXPORT int
-num_bytes_for_utf8_character(const unsigned char *c) {
-    if (c[0] <= 0x7F) {
-        return 1;
-    }
-    else if (c[0] <= 0xDF) {
-        return 2;
-    }
-    else if (c[0] <= 0xEF) {
-        return 3;
-    }
-    return 4;
-}
 
 NPY_NO_EXPORT int
 num_utf8_bytes_for_codepoint(uint32_t code)

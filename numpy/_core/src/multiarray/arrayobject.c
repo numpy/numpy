@@ -940,13 +940,17 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         if (PyArray_NDIM(self) == 0 && PyArray_NDIM(array_other) == 0) {
-            /*
-             * (seberg) not sure that this is best, but we preserve Python
-             * bool result for "scalar" inputs for now by returning
-             * `NotImplemented`.
-             */
+            // we have scalar arrays with different types
+            // we return a numpy bool directly instead of NotImplemented,
+            // which would mean a fallback to the python default __eq__/__neq__
+            // see gh-27271
             Py_DECREF(array_other);
-            Py_RETURN_NOTIMPLEMENTED;
+            if (cmp_op == Py_EQ) {
+                return Py_NewRef(PyArrayScalar_False);
+            }
+            else {
+                return Py_NewRef(PyArrayScalar_True);
+            }
         }
 
         /* Hack warning: using NpyIter to allocate broadcasted result. */

@@ -20,7 +20,7 @@ c_names_dict = dict(
 
 def get_testdir():
     testroot = Path(__file__).resolve().parent / "src"
-    return  testroot / "array_from_pyobj"
+    return testroot / "array_from_pyobj"
 
 def setup_module():
     """
@@ -143,7 +143,7 @@ _cast_dict['CHARACTER'] = ['CHARACTER']
 
 # 32 bit system malloc typically does not provide the alignment required by
 # 16 byte long double types this means the inout intent cannot be satisfied
-# and several tests fail as the alignment flag can be randomly true or fals
+# and several tests fail as the alignment flag can be randomly true or false
 # when numpy gains an aligned allocator the tests could be enabled again
 #
 # Furthermore, on macOS ARM64, LONGDOUBLE is an alias for DOUBLE.

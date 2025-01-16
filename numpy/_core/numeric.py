@@ -23,7 +23,7 @@ from .multiarray import (
 from . import overrides
 from . import umath
 from . import shape_base
-from .overrides import set_array_function_like_doc, set_module
+from .overrides import finalize_array_function_like, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
 from ..exceptions import AxisError
@@ -75,15 +75,11 @@ def zeros_like(
         the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
-
-        .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible.
-
-        .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
         type of `a`, otherwise it will be a base-class array. Defaults
@@ -92,8 +88,6 @@ def zeros_like(
         Overrides the shape of the result. If order='K' and the number of
         dimensions is unchanged, will try to keep order, otherwise,
         order='C' is implied.
-
-        .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -140,7 +134,7 @@ def zeros_like(
     return res
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def ones(shape, dtype=None, order='C', *, device=None, like=None):
     """
@@ -230,15 +224,11 @@ def ones_like(
         the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
-
-        .. versionadded:: 1.6.0
     order : {'C', 'F', 'A', or 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible.
-
-        .. versionadded:: 1.6.0
     subok : bool, optional.
         If True, then the newly created array will use the sub-class
         type of `a`, otherwise it will be a base-class array. Defaults
@@ -247,8 +237,6 @@ def ones_like(
         Overrides the shape of the result. If order='K' and the number of
         dimensions is unchanged, will try to keep order, otherwise,
         order='C' is implied.
-
-        .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -296,10 +284,10 @@ def ones_like(
 def _full_dispatcher(
     shape, fill_value, dtype=None, order=None, *, device=None, like=None
 ):
-    return(like,)
+    return (like,)
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def full(shape, fill_value, dtype=None, order='C', *, device=None, like=None):
     """
@@ -406,8 +394,6 @@ def full_like(
         Overrides the shape of the result. If order='K' and the number of
         dimensions is unchanged, will try to keep order, otherwise,
         order='C' is implied.
-
-        .. versionadded:: 1.17.0
     device : str, optional
         The device on which to place the created array. Default: None.
         For Array-API interoperability only, so must be ``"cpu"`` if passed.
@@ -484,15 +470,10 @@ def count_nonzero(a, axis=None, *, keepdims=False):
         Axis or tuple of axes along which to count non-zeros.
         Default is None, meaning that non-zeros will be counted
         along a flattened version of ``a``.
-
-        .. versionadded:: 1.12.0
-
     keepdims : bool, optional
         If this is set to True, the axes that are counted are left
         in the result as dimensions with size one. With this option,
         the result will broadcast correctly against the input array.
-
-        .. versionadded:: 1.19.0
 
     Returns
     -------
@@ -916,8 +897,6 @@ def outer(a, b, out=None):
     out : (M, N) ndarray, optional
         A location where the result is stored
 
-        .. versionadded:: 1.9.0
-
     Returns
     -------
     out : (M, N) ndarray
@@ -1143,7 +1122,7 @@ def tensordot(a, b, axes=2):
         iter(axes)
     except Exception:
         axes_a = list(range(-axes, 0))
-        axes_b = list(range(0, axes))
+        axes_b = list(range(axes))
     else:
         axes_a, axes_b = axes
     try:
@@ -1184,13 +1163,13 @@ def tensordot(a, b, axes=2):
     notin = [k for k in range(nda) if k not in axes_a]
     newaxes_a = notin + axes_a
     N2 = math.prod(as_[axis] for axis in axes_a)
-    newshape_a = (math.prod([as_[ax] for ax in notin]), N2)
+    newshape_a = (math.prod(as_[ax] for ax in notin), N2)
     olda = [as_[axis] for axis in notin]
 
     notin = [k for k in range(ndb) if k not in axes_b]
     newaxes_b = axes_b + notin
     N2 = math.prod(bs[axis] for axis in axes_b)
-    newshape_b = (N2, math.prod([bs[ax] for ax in notin]))
+    newshape_b = (N2, math.prod(bs[ax] for ax in notin))
     oldb = [bs[axis] for axis in notin]
 
     at = a.transpose(newaxes_a).reshape(newshape_a)
@@ -1238,8 +1217,6 @@ def roll(a, shift, axis=None):
 
     Notes
     -----
-    .. versionadded:: 1.12.0
-
     Supports rolling over multiple dimensions simultaneously.
 
     Examples
@@ -1291,9 +1268,9 @@ def roll(a, shift, axis=None):
         if broadcasted.ndim > 1:
             raise ValueError(
                 "'shift' and 'axis' should be scalars or 1D sequences")
-        shifts = {ax: 0 for ax in range(a.ndim)}
+        shifts = dict.fromkeys(range(a.ndim), 0)
         for sh, ax in broadcasted:
-            shifts[ax] += sh
+            shifts[ax] += int(sh)
 
         rolls = [((slice(None), slice(None)),)] * a.ndim
         for ax, offset in shifts.items():
@@ -1400,7 +1377,7 @@ def rollaxis(a, axis, start=0):
         start -= 1
     if axis == start:
         return a[...]
-    axes = list(range(0, n))
+    axes = list(range(n))
     axes.remove(axis)
     axes.insert(start, axis)
     return a.transpose(axes)
@@ -1418,8 +1395,6 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     By default, this forbids axes from being specified multiple times.
 
     Used internally by multi-axis-checking logic.
-
-    .. versionadded:: 1.13.0
 
     Parameters
     ----------
@@ -1457,7 +1432,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
         except TypeError:
             pass
     # Going via an iterator directly is slower than via list comprehension.
-    axis = tuple([normalize_axis_index(ax, ndim, argname) for ax in axis])
+    axis = tuple(normalize_axis_index(ax, ndim, argname) for ax in axis)
     if not allow_duplicate and len(set(axis)) != len(axis):
         if argname:
             raise ValueError('repeated axis in `{}` argument'.format(argname))
@@ -1476,8 +1451,6 @@ def moveaxis(a, source, destination):
     Move axes of an array to new positions.
 
     Other axes remain in their original order.
-
-    .. versionadded:: 1.11.0
 
     Parameters
     ----------
@@ -1598,8 +1571,6 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
     Notes
     -----
-    .. versionadded:: 1.9.0
-
     Supports full broadcasting of the inputs.
 
     Dimension-2 input arrays were deprecated in 2.0.0. If you do need this
@@ -1789,8 +1760,6 @@ def indices(dimensions, dtype=int, sparse=False):
         Return a sparse representation of the grid instead of a dense
         representation. Default is False.
 
-        .. versionadded:: 1.17
-
     Returns
     -------
     grid : one ndarray or tuple of ndarrays
@@ -1859,14 +1828,14 @@ def indices(dimensions, dtype=int, sparse=False):
     """
     dimensions = tuple(dimensions)
     N = len(dimensions)
-    shape = (1,)*N
+    shape = (1,) * N
     if sparse:
-        res = tuple()
+        res = ()
     else:
-        res = empty((N,)+dimensions, dtype=dtype)
+        res = empty((N,) + dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
         idx = arange(dim, dtype=dtype).reshape(
-            shape[:i] + (dim,) + shape[i+1:]
+            shape[:i] + (dim,) + shape[i + 1:]
         )
         if sparse:
             res = res + (idx,)
@@ -1875,7 +1844,7 @@ def indices(dimensions, dtype=int, sparse=False):
     return res
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
     """
@@ -2223,7 +2192,7 @@ def _maketup(descr, val):
         return tuple(res)
 
 
-@set_array_function_like_doc
+@finalize_array_function_like
 @set_module('numpy')
 def identity(n, dtype=None, *, like=None):
     """
@@ -2299,8 +2268,6 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     equal_nan : bool
         Whether to compare NaN's as equal.  If True, NaN's in `a` will be
         considered equal to NaN's in `b` in the output array.
-
-        .. versionadded:: 1.10.0
 
     Returns
     -------
@@ -2407,8 +2374,6 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     Notes
     -----
-    .. versionadded:: 1.7.0
-
     For finite values, isclose uses the following equation to test whether
     two floating point values are equivalent.::
 
@@ -2479,7 +2444,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         y = float(y)
 
     with errstate(invalid='ignore'):
-        result = (less_equal(abs(x-y), atol + rtol * abs(y))
+        result = (less_equal(abs(x - y), atol + rtol * abs(y))
                   & isfinite(y)
                   | (x == y))
         if equal_nan:
@@ -2520,8 +2485,6 @@ def array_equal(a1, a2, equal_nan=False):
         Whether to compare NaN's as equal. If the dtype of a1 and a2 is
         complex, values will be considered equal if either the real or the
         imaginary component of a given value is ``nan``.
-
-        .. versionadded:: 1.19.0
 
     Returns
     -------

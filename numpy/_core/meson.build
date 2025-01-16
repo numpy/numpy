@@ -48,7 +48,9 @@ C_ABI_VERSION = '0x02000000'
 # 0x00000011 - 1.25.x
 # 0x00000012 - 2.0.x
 # 0x00000013 - 2.1.x
-C_API_VERSION = '0x00000013'
+# 0x00000013 - 2.2.x
+# 0x00000014 - 2.3.x
+C_API_VERSION = '0x00000014'
 
 # Check whether we have a mismatch between the set C API VERSION and the
 # actual C API VERSION. Will raise a MismatchCAPIError if so.
@@ -95,6 +97,10 @@ if use_svml
   if not fs.exists('src/umath/svml')
     error('Missing the `SVML` git submodule! Run `git submodule update --init` to fix this.')
   endif
+endif
+
+if host_machine.cpu_family() == 'loongarch64'
+  add_project_arguments(['-DHWY_COMPILE_ONLY_SCALAR'], language: ['cpp'])
 endif
 
 use_highway = not get_option('disable-highway')
@@ -245,8 +251,8 @@ endforeach
 
 # variable attributes tested via "int %s a" % attribute
 optional_variable_attributes = [
-  ['thread_local', 'HAVE_THREAD_LOCAL'],
-  ['_Thread_local', 'HAVE__THREAD_LOCAL'],
+  ['thread_local', 'HAVE_THREAD_LOCAL'],    # C23
+  ['_Thread_local', 'HAVE__THREAD_LOCAL'],  # C11/C17
   ['__thread', 'HAVE__THREAD'],
   ['__declspec(thread)', 'HAVE___DECLSPEC_THREAD_']
 ]
@@ -681,7 +687,6 @@ c_args_common = [
 
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [
-  '-D__STDC_VERSION__=0',  # for compatibility with C headers
 ]
 if cc.get_argument_syntax() != 'msvc'
   cpp_args_common += [
@@ -714,7 +719,7 @@ py.extension_module('_multiarray_tests',
     src_file.process('src/multiarray/_multiarray_tests.c.src'),
     'src/common/mem_overlap.c',
     'src/common/npy_argparse.c',
-    'src/common/npy_hashtable.c',
+    'src/common/npy_hashtable.cpp',
     src_file.process('src/common/templ_common.h.src')
   ],
   c_args: c_args_common,
@@ -829,7 +834,7 @@ foreach gen_mtargets : [
     'highway_qsort.dispatch.h',
     'src/npysort/highway_qsort.dispatch.cpp',
     use_highway ? [
-      SVE, ASIMD, VSX2,  # FIXME: disable VXE due to runtime segfault
+      ASIMD, VSX2,  # FIXME: disable VXE due to runtime segfault
     ] : []
   ],
   [
@@ -881,6 +886,7 @@ foreach gen_mtargets : [
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,
+      LSX,
     ]
   ],
   [
@@ -891,6 +897,7 @@ foreach gen_mtargets : [
       NEON,
       VSX4, VSX2,
       VX,
+      LSX,
     ]
   ],
   [
@@ -901,6 +908,7 @@ foreach gen_mtargets : [
       VSX3, VSX2,
       NEON,
       VXE, VX,
+      LSX,
     ]
   ],
   [
@@ -912,12 +920,13 @@ foreach gen_mtargets : [
   ],
   [
     'loops_hyperbolic.dispatch.h',
-    src_file.process('src/umath/loops_hyperbolic.dispatch.c.src'),
+    src_file.process('src/umath/loops_hyperbolic.dispatch.cpp.src'),
     [
       AVX512_SKX, [AVX2, FMA3],
       VSX4, VSX2,
       NEON_VFPV4,
-      VXE, VX
+      VXE,
+      LSX,
     ]
   ],
   [
@@ -928,6 +937,7 @@ foreach gen_mtargets : [
       AVX512_SKX, AVX2, SSE2,
       VSX2,
       VX,
+      LSX,
     ]
   ],
   [
@@ -938,6 +948,7 @@ foreach gen_mtargets : [
       AVX512_SKX, AVX2, SSE2,
       VSX2,
       VXE, VX,
+      LSX,
     ]
   ],
   [
@@ -952,7 +963,10 @@ foreach gen_mtargets : [
     'src/umath/loops_trigonometric.dispatch.cpp',
     [
       AVX512_SKX, [AVX2, FMA3],
+      VSX4, VSX3, VSX2,
       NEON_VFPV4,
+      VXE2, VXE,
+      LSX,
     ]
   ],
   [
@@ -967,7 +981,8 @@ foreach gen_mtargets : [
       ASIMD, NEON,
       AVX512_SKX, AVX2, SSE2,
       VSX2,
-      VXE, VX
+      VXE, VX,
+      LSX,
     ]
   ],
   [
@@ -977,7 +992,8 @@ foreach gen_mtargets : [
       SSE41, SSE2,
       VSX2,
       ASIMD, NEON,
-      VXE, VX
+      VXE, VX,
+      LSX,
     ]
   ],
   [
@@ -987,6 +1003,7 @@ foreach gen_mtargets : [
       SSE41, SSE2,
       VSX2,
       ASIMD, NEON,
+      LSX,
     ]
   ],
   [
@@ -997,6 +1014,7 @@ foreach gen_mtargets : [
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,
+      LSX,
     ]
   ],
   [
@@ -1007,6 +1025,7 @@ foreach gen_mtargets : [
       NEON,
       VSX2,
       VX,
+      LSX,
     ]
   ],
 ]
@@ -1041,7 +1060,7 @@ src_multiarray_umath_common = [
   'src/common/gil_utils.c',
   'src/common/mem_overlap.c',
   'src/common/npy_argparse.c',
-  'src/common/npy_hashtable.c',
+  'src/common/npy_hashtable.cpp',
   'src/common/npy_import.c',
   'src/common/npy_longdouble.c',
   'src/common/ucsnarrow.c',
@@ -1152,7 +1171,7 @@ src_umath = umath_gen_headers + [
   'src/umath/ufunc_type_resolution.c',
   'src/umath/clip.cpp',
   'src/umath/clip.h',
-  'src/umath/dispatching.c',
+  'src/umath/dispatching.cpp',
   'src/umath/extobj.c',
   'src/umath/legacy_array_method.c',
   'src/umath/override.c',
@@ -1213,7 +1232,8 @@ py.extension_module('_multiarray_umath',
     src_numpy_api[1],  # __multiarray_api.h
     src_umath_doc_h,
     npy_math_internal_h,
-  ] + svml_objects,
+  ],
+  objects: svml_objects,
   c_args: c_args_common,
   cpp_args: cpp_args_common,
   include_directories: [

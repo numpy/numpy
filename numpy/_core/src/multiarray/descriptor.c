@@ -29,6 +29,7 @@
 #include "npy_buffer.h"
 #include "dtypemeta.h"
 #include "stringdtype/dtype.h"
+#include "array_coercion.h"
 
 #ifndef PyDictProxy_Check
 #define PyDictProxy_Check(obj) (Py_TYPE(obj) == &PyDictProxy_Type)
@@ -273,8 +274,16 @@ _convert_from_tuple(PyObject *obj, int align)
     if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
         int itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
-
-        if (error_converting(itemsize)) {
+        if (type->type_num == NPY_UNICODE) {
+            if (itemsize > NPY_MAX_INT / 4) {
+                itemsize = -1;
+            }
+            else {
+                itemsize *= 4;
+            }
+        }
+        if (itemsize < 0) {
+            /* Error may or may not be set by PyIntAsInt. */
             PyErr_SetString(PyExc_ValueError,
                     "invalid itemsize in generic type tuple");
             Py_DECREF(type);
@@ -284,12 +293,8 @@ _convert_from_tuple(PyObject *obj, int align)
         if (type == NULL) {
             return NULL;
         }
-        if (type->type_num == NPY_UNICODE) {
-            type->elsize = itemsize << 2;
-        }
-        else {
-            type->elsize = itemsize;
-        }
+
+        type->elsize = itemsize;
         return type;
     }
     else if (type->metadata && (PyDict_Check(val) || PyDictProxy_Check(val))) {
@@ -1409,7 +1414,8 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
  * TODO: This function should eventually receive a deprecation warning and
  *       be removed.
  *
- * @param descr
+ * @param descr descriptor to be checked
+ * @param DType pointer to the DType of the descriptor
  * @return 1 if this is not a concrete dtype instance 0 otherwise
  */
 static int
@@ -1441,9 +1447,9 @@ descr_is_legacy_parametric_instance(PyArray_Descr *descr,
  * both results can be NULL (if the input is).  But it always sets the DType
  * when a descriptor is set.
  *
- * @param dtype
- * @param out_descr
- * @param out_DType
+ * @param dtype Input descriptor to be converted
+ * @param out_descr Output descriptor
+ * @param out_DType DType of the output descriptor
  * @return 0 on success -1 on failure
  */
 NPY_NO_EXPORT int
@@ -1470,7 +1476,7 @@ PyArray_ExtractDTypeAndDescriptor(PyArray_Descr *dtype,
  * Converter function filling in an npy_dtype_info struct on success.
  *
  * @param obj representing a dtype instance (descriptor) or DType class.
- * @param[out] npy_dtype_info filled with the DType class and dtype/descriptor
+ * @param[out] dt_info npy_dtype_info filled with the DType class and dtype/descriptor
  *         instance.  The class is always set while the instance may be NULL.
  *         On error, both will be NULL.
  * @return 0 on failure and 1 on success (as a converter)
@@ -1522,7 +1528,7 @@ PyArray_DTypeOrDescrConverterRequired(PyObject *obj, npy_dtype_info *dt_info)
  * NULL anyway).
  *
  * @param obj None or obj representing a dtype instance (descr) or DType class.
- * @param[out] npy_dtype_info filled with the DType class and dtype/descriptor
+ * @param[out] dt_info filled with the DType class and dtype/descriptor
  *         instance.  If `obj` is None, is not modified.  Otherwise the class
  *         is always set while the instance may be NULL.
  *         On error, both will be NULL.
@@ -1599,6 +1605,10 @@ _convert_from_type(PyObject *obj) {
         return PyArray_DescrFromType(NPY_OBJECT);
     }
     else {
+        PyObject *DType = PyArray_DiscoverDTypeFromScalarType(typ);
+        if (DType != NULL) {
+            return PyArray_GetDefaultDescr((PyArray_DTypeMeta *)DType);
+        }
         PyArray_Descr *ret = _try_convert_from_dtype_attr(obj);
         if ((PyObject *)ret != Py_NotImplemented) {
             return ret;
@@ -1855,7 +1865,10 @@ _convert_from_str(PyObject *obj, int align)
                  */
                 case NPY_UNICODELTR:
                     check_num = NPY_UNICODE;
-                    elsize <<= 2;
+                    if (elsize > (NPY_MAX_INT / 4)) {
+                        goto fail;
+                    }
+                    elsize *= 4;
                     break;
 
                 case NPY_VOIDLTR:

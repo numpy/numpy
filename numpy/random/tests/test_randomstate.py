@@ -26,24 +26,24 @@ INT_FUNCS = {'binomial': (100.0, 0.6),
 
 if np.iinfo(np.long).max < 2**32:
     # Windows and some 32-bit platforms, e.g., ARM
-    INT_FUNC_HASHES = {'binomial': '2fbead005fc63942decb5326d36a1f32fe2c9d32c904ee61e46866b88447c263',
-                       'logseries': '23ead5dcde35d4cfd4ef2c105e4c3d43304b45dc1b1444b7823b9ee4fa144ebb',
-                       'geometric': '0d764db64f5c3bad48c8c33551c13b4d07a1e7b470f77629bef6c985cac76fcf',
-                       'hypergeometric': '7b59bf2f1691626c5815cdcd9a49e1dd68697251d4521575219e4d2a1b8b2c67',
-                       'multinomial': 'd754fa5b92943a38ec07630de92362dd2e02c43577fc147417dc5b9db94ccdd3',
-                       'negative_binomial': '8eb216f7cb2a63cf55605422845caaff002fddc64a7dc8b2d45acd477a49e824',
-                       'poisson': '70c891d76104013ebd6f6bcf30d403a9074b886ff62e4e6b8eb605bf1a4673b7',
-                       'zipf': '01f074f97517cd5d21747148ac6ca4074dde7fcb7acbaec0a936606fecacd93f',
+    INT_FUNC_HASHES = {'binomial':          '2fbead005fc63942decb5326d36a1f32fe2c9d32c904ee61e46866b88447c263',  # noqa: E501
+                       'logseries':         '23ead5dcde35d4cfd4ef2c105e4c3d43304b45dc1b1444b7823b9ee4fa144ebb',  # noqa: E501
+                       'geometric':         '0d764db64f5c3bad48c8c33551c13b4d07a1e7b470f77629bef6c985cac76fcf',  # noqa: E501
+                       'hypergeometric':    '7b59bf2f1691626c5815cdcd9a49e1dd68697251d4521575219e4d2a1b8b2c67',  # noqa: E501
+                       'multinomial':       'd754fa5b92943a38ec07630de92362dd2e02c43577fc147417dc5b9db94ccdd3',  # noqa: E501
+                       'negative_binomial': '8eb216f7cb2a63cf55605422845caaff002fddc64a7dc8b2d45acd477a49e824',  # noqa: E501
+                       'poisson':           '70c891d76104013ebd6f6bcf30d403a9074b886ff62e4e6b8eb605bf1a4673b7',  # noqa: E501
+                       'zipf':              '01f074f97517cd5d21747148ac6ca4074dde7fcb7acbaec0a936606fecacd93f',  # noqa: E501
                        }
 else:
-    INT_FUNC_HASHES = {'binomial': '8626dd9d052cb608e93d8868de0a7b347258b199493871a1dc56e2a26cacb112',
-                       'geometric': '8edd53d272e49c4fc8fbbe6c7d08d563d62e482921f3131d0a0e068af30f0db9',
-                       'hypergeometric': '83496cc4281c77b786c9b7ad88b74d42e01603a55c60577ebab81c3ba8d45657',
-                       'logseries': '65878a38747c176bc00e930ebafebb69d4e1e16cd3a704e264ea8f5e24f548db',
-                       'multinomial': '7a984ae6dca26fd25374479e118b22f55db0aedccd5a0f2584ceada33db98605',
-                       'negative_binomial': 'd636d968e6a24ae92ab52fe11c46ac45b0897e98714426764e820a7d77602a61',
-                       'poisson': '956552176f77e7c9cb20d0118fc9cf690be488d790ed4b4c4747b965e61b0bb4',
-                       'zipf': 'f84ba7feffda41e606e20b28dfc0f1ea9964a74574513d4a4cbc98433a8bfa45',
+    INT_FUNC_HASHES = {'binomial':          '8626dd9d052cb608e93d8868de0a7b347258b199493871a1dc56e2a26cacb112',  # noqa: E501
+                       'geometric':         '8edd53d272e49c4fc8fbbe6c7d08d563d62e482921f3131d0a0e068af30f0db9',  # noqa: E501
+                       'hypergeometric':    '83496cc4281c77b786c9b7ad88b74d42e01603a55c60577ebab81c3ba8d45657',  # noqa: E501
+                       'logseries':         '65878a38747c176bc00e930ebafebb69d4e1e16cd3a704e264ea8f5e24f548db',  # noqa: E501
+                       'multinomial':       '7a984ae6dca26fd25374479e118b22f55db0aedccd5a0f2584ceada33db98605',  # noqa: E501
+                       'negative_binomial': 'd636d968e6a24ae92ab52fe11c46ac45b0897e98714426764e820a7d77602a61',  # noqa: E501
+                       'poisson':           '956552176f77e7c9cb20d0118fc9cf690be488d790ed4b4c4747b965e61b0bb4',  # noqa: E501
+                       'zipf':              'f84ba7feffda41e606e20b28dfc0f1ea9964a74574513d4a4cbc98433a8bfa45',  # noqa: E501
                        }
 
 
@@ -305,7 +305,7 @@ class TestRandint:
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
-            tgt = (lbnd + ubnd)//2
+            tgt = (lbnd + ubnd) // 2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
     def test_full_range(self):
@@ -341,15 +341,15 @@ class TestRandint:
         # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool': '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',
-               'int16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
-               'int32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
-               'int64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
-               'int8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',
-               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
-               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
-               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
-               'uint8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}
+        tgt = {'bool':   '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',  # noqa: E501
+               'int16':  '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',  # noqa: E501
+               'int32':  'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',  # noqa: E501
+               'int64':  '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',  # noqa: E501
+               'int8':   '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',  # noqa: E501
+               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',  # noqa: E501
+               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',  # noqa: E501
+               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',  # noqa: E501
+               'uint8':  '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}  # noqa: E501
 
         for dt in self.itype[1:]:
             random.seed(1234)
@@ -629,7 +629,7 @@ class TestRandomDist:
         assert_(random.choice(arr, replace=True) is a)
 
         # Check 0-d array
-        s = tuple()
+        s = ()
         assert_(not np.isscalar(random.choice(2, s, replace=True)))
         assert_(not np.isscalar(random.choice(2, s, replace=False)))
         assert_(not np.isscalar(random.choice(2, s, replace=True, p=p)))

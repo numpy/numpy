@@ -844,7 +844,7 @@ class TestArrayAssertLess:
 
     def test_rank3(self):
         x = np.ones(shape=(2, 2, 2))
-        y = np.ones(shape=(2, 2, 2))+1
+        y = np.ones(shape=(2, 2, 2)) + 1
 
         self._assert_func(x, y)
         assert_raises(AssertionError, lambda: self._assert_func(y, x))
@@ -1216,12 +1216,12 @@ class TestArrayAlmostEqualNulp:
 
         # Addition
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp/2.
+        y = x + x * eps * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
         # Subtraction
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp/2.
+        y = x - x * epsneg * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
     def test_float64_fail(self):
@@ -1231,12 +1231,12 @@ class TestArrayAlmostEqualNulp:
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp*2.
+        y = x + x * eps * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       x, y, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp*2.
+        y = x - x * epsneg * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       x, y, nulp)
 
@@ -1258,11 +1258,11 @@ class TestArrayAlmostEqualNulp:
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp/2.
+        y = x + x * eps * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp/2.
+        y = x - x * epsneg * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
     def test_float32_fail(self):
@@ -1272,12 +1272,12 @@ class TestArrayAlmostEqualNulp:
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp*2.
+        y = x + x * eps * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       x, y, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp*2.
+        y = x - x * epsneg * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       x, y, nulp)
 
@@ -1299,11 +1299,11 @@ class TestArrayAlmostEqualNulp:
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp/2.
+        y = x + x * eps * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp/2.
+        y = x - x * epsneg * nulp / 2.
         assert_array_almost_equal_nulp(x, y, nulp)
 
     def test_float16_fail(self):
@@ -1313,12 +1313,12 @@ class TestArrayAlmostEqualNulp:
         x = np.r_[-x, x]
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp*2.
+        y = x + x * eps * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       x, y, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp*2.
+        y = x - x * epsneg * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
                       x, y, nulp)
 
@@ -1338,100 +1338,100 @@ class TestArrayAlmostEqualNulp:
         x = np.linspace(-20, 20, 50, dtype=np.float64)
         x = 10**x
         x = np.r_[-x, x]
-        xi = x + x*1j
+        xi = x + x * 1j
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp/2.
-        assert_array_almost_equal_nulp(xi, x + y*1j, nulp)
-        assert_array_almost_equal_nulp(xi, y + x*1j, nulp)
+        y = x + x * eps * nulp / 2.
+        assert_array_almost_equal_nulp(xi, x + y * 1j, nulp)
+        assert_array_almost_equal_nulp(xi, y + x * 1j, nulp)
         # The test condition needs to be at least a factor of sqrt(2) smaller
         # because the real and imaginary parts both change
-        y = x + x*eps*nulp/4.
-        assert_array_almost_equal_nulp(xi, y + y*1j, nulp)
+        y = x + x * eps * nulp / 4.
+        assert_array_almost_equal_nulp(xi, y + y * 1j, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp/2.
-        assert_array_almost_equal_nulp(xi, x + y*1j, nulp)
-        assert_array_almost_equal_nulp(xi, y + x*1j, nulp)
-        y = x - x*epsneg*nulp/4.
-        assert_array_almost_equal_nulp(xi, y + y*1j, nulp)
+        y = x - x * epsneg * nulp / 2.
+        assert_array_almost_equal_nulp(xi, x + y * 1j, nulp)
+        assert_array_almost_equal_nulp(xi, y + x * 1j, nulp)
+        y = x - x * epsneg * nulp / 4.
+        assert_array_almost_equal_nulp(xi, y + y * 1j, nulp)
 
     def test_complex128_fail(self):
         nulp = 5
         x = np.linspace(-20, 20, 50, dtype=np.float64)
         x = 10**x
         x = np.r_[-x, x]
-        xi = x + x*1j
+        xi = x + x * 1j
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp*2.
+        y = x + x * eps * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, x + y*1j, nulp)
+                      xi, x + y * 1j, nulp)
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, y + x*1j, nulp)
+                      xi, y + x * 1j, nulp)
         # The test condition needs to be at least a factor of sqrt(2) smaller
         # because the real and imaginary parts both change
-        y = x + x*eps*nulp
+        y = x + x * eps * nulp
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, y + y*1j, nulp)
+                      xi, y + y * 1j, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp*2.
+        y = x - x * epsneg * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, x + y*1j, nulp)
+                      xi, x + y * 1j, nulp)
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, y + x*1j, nulp)
-        y = x - x*epsneg*nulp
+                      xi, y + x * 1j, nulp)
+        y = x - x * epsneg * nulp
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, y + y*1j, nulp)
+                      xi, y + y * 1j, nulp)
 
     def test_complex64_pass(self):
         nulp = 5
         x = np.linspace(-20, 20, 50, dtype=np.float32)
         x = 10**x
         x = np.r_[-x, x]
-        xi = x + x*1j
+        xi = x + x * 1j
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp/2.
-        assert_array_almost_equal_nulp(xi, x + y*1j, nulp)
-        assert_array_almost_equal_nulp(xi, y + x*1j, nulp)
-        y = x + x*eps*nulp/4.
-        assert_array_almost_equal_nulp(xi, y + y*1j, nulp)
+        y = x + x * eps * nulp / 2.
+        assert_array_almost_equal_nulp(xi, x + y * 1j, nulp)
+        assert_array_almost_equal_nulp(xi, y + x * 1j, nulp)
+        y = x + x * eps * nulp / 4.
+        assert_array_almost_equal_nulp(xi, y + y * 1j, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp/2.
-        assert_array_almost_equal_nulp(xi, x + y*1j, nulp)
-        assert_array_almost_equal_nulp(xi, y + x*1j, nulp)
-        y = x - x*epsneg*nulp/4.
-        assert_array_almost_equal_nulp(xi, y + y*1j, nulp)
+        y = x - x * epsneg * nulp / 2.
+        assert_array_almost_equal_nulp(xi, x + y * 1j, nulp)
+        assert_array_almost_equal_nulp(xi, y + x * 1j, nulp)
+        y = x - x * epsneg * nulp / 4.
+        assert_array_almost_equal_nulp(xi, y + y * 1j, nulp)
 
     def test_complex64_fail(self):
         nulp = 5
         x = np.linspace(-20, 20, 50, dtype=np.float32)
         x = 10**x
         x = np.r_[-x, x]
-        xi = x + x*1j
+        xi = x + x * 1j
 
         eps = np.finfo(x.dtype).eps
-        y = x + x*eps*nulp*2.
+        y = x + x * eps * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, x + y*1j, nulp)
+                      xi, x + y * 1j, nulp)
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, y + x*1j, nulp)
-        y = x + x*eps*nulp
+                      xi, y + x * 1j, nulp)
+        y = x + x * eps * nulp
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, y + y*1j, nulp)
+                      xi, y + y * 1j, nulp)
 
         epsneg = np.finfo(x.dtype).epsneg
-        y = x - x*epsneg*nulp*2.
+        y = x - x * epsneg * nulp * 2.
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, x + y*1j, nulp)
+                      xi, x + y * 1j, nulp)
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, y + x*1j, nulp)
-        y = x - x*epsneg*nulp
+                      xi, y + x * 1j, nulp)
+        y = x - x * epsneg * nulp
         assert_raises(AssertionError, assert_array_almost_equal_nulp,
-                      xi, y + y*1j, nulp)
+                      xi, y + y * 1j, nulp)
 
 
 class TestULP:
@@ -1445,14 +1445,14 @@ class TestULP:
         x = np.ones(10).astype(np.float32)
         x += 0.01 * np.random.randn(10).astype(np.float32)
         eps = np.finfo(np.float32).eps
-        assert_array_max_ulp(x, x+eps, maxulp=20)
+        assert_array_max_ulp(x, x + eps, maxulp=20)
 
     def test_double(self):
         # Generate 1 + small deviation, check that adding eps gives a few UNL
         x = np.ones(10).astype(np.float64)
         x += 0.01 * np.random.randn(10).astype(np.float64)
         eps = np.finfo(np.float64).eps
-        assert_array_max_ulp(x, x+eps, maxulp=200)
+        assert_array_max_ulp(x, x + eps, maxulp=200)
 
     def test_inf(self):
         for dt in [np.float32, np.float64]:
@@ -1689,7 +1689,7 @@ def test_suppress_warnings_decorate_no_record():
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        warn(UserWarning)  # should be supppressed
+        warn(UserWarning)  # should be suppressed
         warn(RuntimeWarning)
         assert_equal(len(w), 1)
 
@@ -1899,31 +1899,3 @@ class TestAssertNoGcCycles:
         finally:
             # make sure that we stop creating reference cycles
             ReferenceCycleInDel.make_cycle = False
-
-
-@pytest.mark.parametrize('assert_func', [assert_array_equal,
-                                         assert_array_almost_equal])
-def test_xy_rename(assert_func):
-    # Test that keywords `x` and `y` have been renamed to `actual` and
-    # `desired`, respectively. These tests and use of `_rename_parameter`
-    # decorator can be removed before the release of NumPy 2.2.0.
-    assert_func(1, 1)
-    assert_func(actual=1, desired=1)
-
-    assert_message = "Arrays are not..."
-    with pytest.raises(AssertionError, match=assert_message):
-        assert_func(1, 2)
-    with pytest.raises(AssertionError, match=assert_message):
-        assert_func(actual=1, desired=2)
-
-    dep_message = 'Use of keyword argument...'
-    with pytest.warns(DeprecationWarning, match=dep_message):
-        assert_func(x=1, desired=1)
-    with pytest.warns(DeprecationWarning, match=dep_message):
-        assert_func(1, y=1)
-
-    type_message = '...got multiple values for argument'
-    with (pytest.warns(DeprecationWarning, match=dep_message),
-          pytest.raises(TypeError, match=type_message)):
-        assert_func(1, x=1)
-        assert_func(1, 2, y=2)

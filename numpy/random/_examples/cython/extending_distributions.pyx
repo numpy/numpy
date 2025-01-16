@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 #cython: language_level=3
 """
 This file shows how the to use a BitGenerator to create a distribution.
@@ -12,6 +11,8 @@ from numpy.random cimport bitgen_t
 from numpy.random import PCG64
 from numpy.random.c_distributions cimport (
       random_standard_uniform_fill, random_standard_uniform_fill_f)
+
+np.import_array()
 
 
 @cython.boundscheck(False)

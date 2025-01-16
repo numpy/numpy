@@ -74,14 +74,14 @@ def test_array_array():
     # test array interface
     a = np.array(100.0, dtype=np.float64)
     o = type("o", (object,),
-             dict(__array_interface__=a.__array_interface__))
+             {"__array_interface__": a.__array_interface__})
     assert_equal(np.array(o, dtype=np.float64), a)
 
     # test array_struct interface
     a = np.array([(1, 4.0, 'Hello'), (2, 6.0, 'World')],
                  dtype=[('f0', int), ('f1', float), ('f2', str)])
     o = type("o", (object,),
-             dict(__array_struct__=a.__array_struct__))
+             {"__array_struct__": a.__array_struct__})
     ## wasn't what I expected... is np.array(o) supposed to equal a ?
     ## instead we get a array([...], dtype=">V18")
     assert_equal(bytes(np.array(o).data), bytes(a.data))
@@ -90,7 +90,7 @@ def test_array_array():
     def custom__array__(self, dtype=None, copy=None):
         return np.array(100.0, dtype=dtype, copy=copy)
 
-    o = type("o", (object,), dict(__array__=custom__array__))()
+    o = type("o", (object,), {"__array__": custom__array__})()
     assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
 
     # test recursion
@@ -228,21 +228,21 @@ def test_array_astype():
 
     # Make sure converting from string object to fixed length string
     # does not truncate.
-    a = np.array([b'a'*100], dtype='O')
+    a = np.array([b'a' * 100], dtype='O')
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
-    a = np.array(['a'*100], dtype='O')
+    a = np.array(['a' * 100], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U100'))
 
     # Same test as above but for strings shorter than 64 characters
-    a = np.array([b'a'*10], dtype='O')
+    a = np.array([b'a' * 10], dtype='O')
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S10'))
-    a = np.array(['a'*10], dtype='O')
+    a = np.array(['a' * 10], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U10'))
@@ -335,12 +335,12 @@ def test_string_to_boolean_cast(dtype, out_dtype):
         [np.complex64, np.complex128, np.clongdouble])
 def test_string_to_complex_cast(str_type, scalar_type):
     value = scalar_type(b"1+3j")
-    assert scalar_type(value) == 1+3j
-    assert np.array([value], dtype=object).astype(scalar_type)[()] == 1+3j
-    assert np.array(value).astype(scalar_type)[()] == 1+3j
+    assert scalar_type(value) == 1 + 3j
+    assert np.array([value], dtype=object).astype(scalar_type)[()] == 1 + 3j
+    assert np.array(value).astype(scalar_type)[()] == 1 + 3j
     arr = np.zeros(1, dtype=scalar_type)
     arr[0] = value
-    assert arr[0] == 1+3j
+    assert arr[0] == 1 + 3j
 
 @pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
 def test_none_to_nan_cast(dtype):
@@ -441,8 +441,8 @@ def test_copyto_permut():
     # test explicit overflow case
     pad = 500
     l = [True] * pad + [True, True, True, True]
-    r = np.zeros(len(l)-pad)
-    d = np.ones(len(l)-pad)
+    r = np.zeros(len(l) - pad)
+    d = np.ones(len(l) - pad)
     mask = np.array(l)[pad:]
     np.copyto(r, d, where=mask[::-1])
 
@@ -552,7 +552,7 @@ def test_copy_order():
     check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
 
 def test_contiguous_flags():
-    a = np.ones((4, 4, 1))[::2,:,:]
+    a = np.ones((4, 4, 1))[::2, :, :]
     a.strides = a.strides[:2] + (-123,)
     b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 

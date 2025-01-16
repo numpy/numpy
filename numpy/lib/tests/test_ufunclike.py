@@ -76,7 +76,7 @@ class TestUfunclike:
         assert_equal(f.metadata, 'foo')
 
         # check 0d arrays don't decay to scalars
-        m0d = m[0,...]
+        m0d = m[0, ...]
         m0d.metadata = 'bar'
         f0d = fix(m0d)
         assert_(isinstance(f0d, MyArray))

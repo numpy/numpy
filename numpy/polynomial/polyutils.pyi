@@ -262,7 +262,7 @@ def mapdomain(
 @overload
 def mapdomain(
     x: _SeriesLikeCoef_co,
-    old:_SeriesLikeCoef_co,
+    old: _SeriesLikeCoef_co,
     new: _SeriesLikeCoef_co,
 ) -> _ObjectSeries: ...
 @overload
@@ -409,7 +409,7 @@ def _fit(
     y: _SeriesLikeCoef_co,
     deg: _SeriesLikeInt_co,
     domain: None | _SeriesLikeCoef_co,
-    rcond: None | _FloatLike_co ,
+    rcond: None | _FloatLike_co,
     full: Literal[True],
     /,
     w: None | _SeriesLikeCoef_co = ...,

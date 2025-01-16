@@ -1,3 +1,3 @@
-from numpy import memmap as memmap
+from numpy import memmap
 
-__all__: list[str]
+__all__ = ["memmap"]

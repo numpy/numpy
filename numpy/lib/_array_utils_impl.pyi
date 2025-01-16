@@ -3,7 +3,7 @@ from typing import Any, Iterable
 from numpy import generic
 from numpy.typing import NDArray
 
-__all__: list[str]
+__all__ = ["byte_bounds", "normalize_axis_tuple", "normalize_axis_index"]
 
 # NOTE: In practice `byte_bounds` can (potentially) take any object
 # implementing the `__array_interface__` protocol. The caveat is

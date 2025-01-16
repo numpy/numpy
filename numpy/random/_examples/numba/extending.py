@@ -24,6 +24,7 @@ def normals(n, state):
             out[2 * i + 1] = f * x2
     return out
 
+
 # Compile using Numba
 normalsj = nb.jit(normals, nopython=True)
 # Must use state address not state with numba
@@ -32,10 +33,12 @@ n = 10000
 def numbacall():
     return normalsj(n, state_addr)
 
+
 rg = np.random.Generator(PCG64())
 
 def numpycall():
     return rg.normal(size=n)
+
 
 # Check that the functions work
 r1 = numbacall()

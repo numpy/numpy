@@ -8,9 +8,9 @@ ext2 = Extension(name = 'fib2',
 if __name__ == "__main__":
     from numpy.distutils.core import setup
     setup(name = 'f2py_example',
-          description       = "F2PY Users Guide examples",
-          author            = "Pearu Peterson",
-          author_email      = "pearu@cens.ioc.ee",
+          description = "F2PY Users Guide examples",
+          author = "Pearu Peterson",
+          author_email = "pearu@cens.ioc.ee",
           ext_modules = [ext1, ext2]
           )
 # End of setup_example.py

@@ -123,15 +123,16 @@ is_contiguous(
  * true, i.e., for cast safety "no-cast". It will not recognize view as an
  * option for other casts (e.g., viewing '>i8' as '>i4' with an offset of 4).
  *
- * @param context
- * @param aligned
- * @param move_references UNUSED.
- * @param strides
- * @param descriptors
- * @param out_loop
- * @param out_transferdata
- * @param flags
- * @return 0 on success -1 on failure.
+ * @param context The arraymethod context
+ * @param aligned Flag indicating data is aligned (1) or not (0)
+ * param move_references UNUSED -- listed below but doxygen doesn't see as a parameter
+ * @param strides Array of step sizes for each dimension of the arrays involved
+ * @param out_loop Output pointer to the function that will perform the strided loop.
+ * @param out_transferdata Output pointer to auxiliary data (if any) 
+ *        needed by the out_loop function.
+ * @param flags Output pointer to additional flags (if any) 
+ *        needed by the out_loop function
+ * @returns 0 on success -1 on failure.
  */
 NPY_NO_EXPORT int
 npy_default_get_strided_loop(
@@ -169,7 +170,7 @@ npy_default_get_strided_loop(
 /**
  * Validate that the input is usable to create a new ArrayMethod.
  *
- * @param spec
+ * @param spec Array method specification to be validated
  * @return 0 on success -1 on error.
  */
 static int
