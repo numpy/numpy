@@ -9,7 +9,7 @@ NPY_NO_EXPORT void
 npy_gil_error(PyObject *type, const char *format, ...);
 
 NPY_NO_EXPORT int
-npy_gil_warning(PyObject *category, int stacklevel, const char *format, ...);
+npy_gil_warning(PyObject *category, int stacklevel, const char *message);
 
 #ifdef __cplusplus
 }
