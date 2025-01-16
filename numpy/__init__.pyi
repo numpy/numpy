@@ -2496,7 +2496,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
         casting: _CastingKind = ...,
         subok: builtins.bool = ...,
         copy: builtins.bool | _CopyMode = ...,
-    ) -> NDArray[_SCT]: ...
+    ) -> ndarray[_ShapeT_co, dtype[_SCT]]: ...
     @overload
     def astype(
         self,
@@ -2505,7 +2505,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
         casting: _CastingKind = ...,
         subok: builtins.bool = ...,
         copy: builtins.bool | _CopyMode = ...,
-    ) -> NDArray[Any]: ...
+    ) -> ndarray[_ShapeT_co, dtype[Any]]: ...
 
     @overload
     def view(self) -> Self: ...
