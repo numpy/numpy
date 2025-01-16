@@ -702,14 +702,14 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 
         if (PyArray_SIZE(tmp_arr) == 0) {
             PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
-            obj = PyArray_FromArray(tmp_arr, indtype, NPY_ARRAY_FORCECAST);
+            Py_SETREF(obj, PyArray_FromArray(tmp_arr, indtype, NPY_ARRAY_FORCECAST));
             Py_DECREF(tmp_arr);
             if (obj == NULL) {
                 goto fail;
             }
         }
         else {
-            obj = (PyObject *) tmp_arr;
+            Py_SETREF(obj, (PyObject *) tmp_arr);
         }
     }
 
