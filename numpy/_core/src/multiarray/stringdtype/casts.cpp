@@ -1078,11 +1078,6 @@ fail:
     return -1;
 }
 
-// TODO: this is incorrect. The longdouble to unicode cast is also broken in
-// the same way. To fix this we'd need an ldtoa implementation in NumPy. It's
-// not in the standard library. Another option would be to use `snprintf` but we'd
-// need to somehow pre-calculate the size of the result string.
-//
 // Long double types do not fit in a (64-bit) PyFloat, so we handle this
 // case specially here.
 template<>
@@ -1122,14 +1117,19 @@ string_to_float<npy_longdouble, NPY_LONGDOUBLE>(
 
         if (errno == ERANGE) {
             /* strtold returns INFINITY of the correct sign. */
-            if (PyErr_Warn(PyExc_RuntimeWarning,
-                           "overflow encountered in conversion from string") < 0) {
+            if (
+                npy_gil_warning(
+                    PyExc_RuntimeWarning,
+                    1,
+                    "overflow encountered in conversion from string"
+                ) < 0
+            ) {
                 PyMem_RawFree(buf);
                 goto fail;
             }
         }
         else if (errno || end == buf || *end) {
-            PyErr_Format(PyExc_ValueError,
+            npy_gil_error(PyExc_ValueError,
                          "invalid literal for long double: %s (%s)",
                          buf,
                          strerror(errno));
@@ -2294,9 +2294,9 @@ get_casts() {
 
     // Special handling for f64 and longdouble types because they don't fit in a PyFloat
     casts[cast_i++] = getStringToFloatCastSpec<npy_float64,    NPY_DOUBLE>();
-    casts[cast_i++] = getStringToFloatCastSpec<npy_longdouble, NPY_LONGDOUBLE, nullptr, nullptr, nullptr, NPY_METH_NO_FLOATINGPOINT_ERRORS>();
+    casts[cast_i++] = getStringToFloatCastSpec<npy_longdouble, NPY_LONGDOUBLE, nullptr, nullptr, nullptr, static_cast<NPY_ARRAYMETHOD_FLAGS>(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float64,    NPY_DOUBLE>();
-    casts[cast_i++] = getFloatToStringCastSpec<npy_longdouble, NPY_LONGDOUBLE, (NPY_ARRAYMETHOD_FLAGS)(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
+    casts[cast_i++] = getFloatToStringCastSpec<npy_longdouble, NPY_LONGDOUBLE, static_cast<NPY_ARRAYMETHOD_FLAGS>(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
 
     casts[cast_i++] = getStringToComplexCastSpec<npy_cfloat,      npy_float,      NPY_CFLOAT,      npy_csetrealf, npy_csetimagf>();
     casts[cast_i++] = getStringToComplexCastSpec<npy_cdouble,     npy_double,     NPY_CDOUBLE,     npy_csetreal,  npy_csetimag>();
