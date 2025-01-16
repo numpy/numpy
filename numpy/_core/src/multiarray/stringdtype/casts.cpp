@@ -8,7 +8,6 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
-#include "abstractdtypes.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"
 #include "numpy/halffloat.h"
