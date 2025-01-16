@@ -81,6 +81,11 @@ npy_find_descr_for_scalar(
     PyObject *scalar, PyArray_Descr *original_descr,
     PyArray_DTypeMeta *in_DT, PyArray_DTypeMeta *op_DT);
 
+// Get the pointer to the PyArray_DTypeMeta for the type associated with the typenum.
+static inline PyArray_DTypeMeta *
+typenum_to_dtypemeta(enum NPY_TYPES typenum) {
+    return NPY_DTYPE(PyArray_DescrFromType(typenum));
+}
 
 #ifdef __cplusplus
 }

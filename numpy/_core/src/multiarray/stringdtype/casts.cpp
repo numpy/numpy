@@ -8,6 +8,7 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
+#include "abstractdtypes.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"
 #include "numpy/halffloat.h"
@@ -88,12 +89,6 @@ typenum_to_cstr(NPY_TYPES typenum) {
         default:
             return "unknown";
     }
-}
-
-// Get the pointer to the PyArray_DTypeMeta for the type associated with the typenum.
-static PyArray_DTypeMeta
-*typenum_to_dtypemeta(NPY_TYPES typenum) {
-    return NPY_DTYPE(PyArray_DescrFromType(typenum));
 }
 
 static PyArray_DTypeMeta **
@@ -976,8 +971,8 @@ string_to_pyfloat(
 template<
     typename NpyType,
     NPY_TYPES typenum,
-    int (*npy_is_inf)(NpyType) = nullptr,
-    int (*double_is_inf)(double) = nullptr,
+    bool (*npy_is_inf)(NpyType) = nullptr,
+    bool (*double_is_inf)(double) = nullptr,
     NpyType (*double_to_float)(double) = nullptr
 >
 static int
@@ -1177,8 +1172,8 @@ string_to_float_resolve_descriptors(
 template<
     typename NpyType,
     NPY_TYPES typenum,
-    int (*npy_is_inf)(NpyType) = nullptr,
-    int (*double_is_inf)(double) = nullptr,
+    bool (*npy_is_inf)(NpyType) = nullptr,
+    bool (*double_is_inf)(double) = nullptr,
     NpyType (*double_to_float)(double) = nullptr
 >
 static PyType_Slot s2float_slots[] = {
@@ -1341,8 +1336,8 @@ getStringToComplexCastSpec() {
 template<
     typename NpyType,
     NPY_TYPES typenum,
-    int (*npy_is_inf)(NpyType) = nullptr,
-    int (*double_is_inf)(double) = nullptr,
+    bool (*npy_is_inf)(NpyType) = nullptr,
+    bool (*double_is_inf)(double) = nullptr,
     NpyType (*double_to_float)(double) = nullptr,
     NPY_ARRAYMETHOD_FLAGS flags = NPY_METH_REQUIRES_PYAPI
 >
@@ -2052,13 +2047,11 @@ get_cast_spec(
     return ret;
 }
 
-// Check if the argument is inf.
-// Needed to ensure the return type is an int, which is needed
-// for getStringToFloatCastSpec.
-template<typename T>
-static int
-is_inf(T x) {
-    return std::isinf(x);
+// Call the given function and cast the result to bool.
+// Needed to ensure the right return type for getStringToFloatCastSpec.
+template<typename T, int (*func)(T)>
+bool as_bool(T x) {
+    return static_cast<bool>(func(x));
 }
 
 // Cast the argument to the given type.
@@ -2287,15 +2280,22 @@ get_casts() {
     casts[cast_i++] = getIntToStringCastSpec<npy_longlong, unsigned long long, NPY_ULONGLONG>();
 #endif
 
-    casts[cast_i++] = getStringToFloatCastSpec<npy_float16, NPY_HALF,  npy_half_isinf,      is_inf<double>, npy_double_to_half>();
-    casts[cast_i++] = getStringToFloatCastSpec<npy_float32, NPY_FLOAT, is_inf<npy_float32>, is_inf<double>, to_float<npy_float32>>();
+    casts[cast_i++] = getStringToFloatCastSpec<npy_float16, NPY_HALF,  as_bool<npy_half, npy_half_isinf>, std::isinf, npy_double_to_half>();
+    casts[cast_i++] = getStringToFloatCastSpec<npy_float32, NPY_FLOAT, std::isinf, std::isinf, to_float<npy_float32>>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float16, NPY_HALF>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float32, NPY_FLOAT>();
 
     // Special handling for f64 and longdouble types because they don't fit in a PyFloat
     casts[cast_i++] = getStringToFloatCastSpec<npy_float64,    NPY_DOUBLE>();
-    casts[cast_i++] = getStringToFloatCastSpec<npy_longdouble, NPY_LONGDOUBLE, nullptr, nullptr, nullptr, static_cast<NPY_ARRAYMETHOD_FLAGS>(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float64,    NPY_DOUBLE>();
+
+    // TODO: this is incorrect. The longdouble to unicode cast is also broken in
+    // the same way. To fix this we'd need an ldtoa implementation in NumPy. It's
+    // not in the standard library. Another option would be to use `snprintf` but we'd
+    // need to somehow pre-calculate the size of the result string.
+    //
+    // TODO: Add a concrete implementation to properly handle 80-bit long doubles on Linux.
+    casts[cast_i++] = getStringToFloatCastSpec<npy_longdouble, NPY_LONGDOUBLE, nullptr, nullptr, nullptr, static_cast<NPY_ARRAYMETHOD_FLAGS>(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_longdouble, NPY_LONGDOUBLE, static_cast<NPY_ARRAYMETHOD_FLAGS>(NPY_METH_NO_FLOATINGPOINT_ERRORS | NPY_METH_REQUIRES_PYAPI)>();
 
     casts[cast_i++] = getStringToComplexCastSpec<npy_cfloat,      npy_float,      NPY_CFLOAT,      npy_csetrealf, npy_csetimagf>();

@@ -35,21 +35,14 @@ npy_gil_error(PyObject *type, const char *format, ...)
     va_end(va);
 }
 
-// Acquire the GIL before emitting a warning of the given category
-// and stacklevel. The format and following args are passed to
-// PyUnicode_FromFormatV.
+// Acquire the GIL before emitting a warning containing a message of
+// the given category and stacklevel.
 NPY_NO_EXPORT int
-npy_gil_warning(PyObject *category, int stacklevel, const char *format, ...)
+npy_gil_warning(PyObject *category, int stacklevel, const char *message)
 {
-    va_list va;
-    va_start(va, format);
     NPY_ALLOW_C_API_DEF;
     NPY_ALLOW_C_API;
-    PyObject *message_obj = PyUnicode_FromFormatV(format, va);
-    const char *message = PyUnicode_AsUTF8(message_obj);
     int result = PyErr_WarnEx(category, message, stacklevel);
-    Py_DECREF(message_obj);
     NPY_DISABLE_C_API;
-    va_end(va);
     return result;
 }
