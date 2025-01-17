@@ -2046,11 +2046,16 @@ get_cast_spec(
     return ret;
 }
 
-// Call the given function and cast the result to bool.
+// Check if the argument is inf using `isinf_func`, and cast the result
+// to a bool; if `isinf_func` is unspecified, use std::isinf.
 // Needed to ensure the right return type for getStringToFloatCastSpec.
-template<typename T, int (*func)(T)>
-bool as_bool(T x) {
-    return static_cast<bool>(func(x));
+template<typename T, int (*isinf_func)(T) = nullptr>
+static bool
+is_inf(T x) {
+    if (isinf_func == nullptr) {
+        return std::isinf(x);
+    }
+    return static_cast<bool>(isinf_func(x));
 }
 
 // Cast the argument to the given type.
@@ -2279,8 +2284,8 @@ get_casts() {
     casts[cast_i++] = getIntToStringCastSpec<npy_longlong, unsigned long long, NPY_ULONGLONG>();
 #endif
 
-    casts[cast_i++] = getStringToFloatCastSpec<npy_float16, NPY_HALF,  as_bool<npy_half, npy_half_isinf>, std::isinf, npy_double_to_half>();
-    casts[cast_i++] = getStringToFloatCastSpec<npy_float32, NPY_FLOAT, std::isinf, std::isinf, to_float<npy_float32>>();
+    casts[cast_i++] = getStringToFloatCastSpec<npy_float16, NPY_HALF,  is_inf<npy_half, npy_half_isinf>, is_inf<double>, npy_double_to_half>();
+    casts[cast_i++] = getStringToFloatCastSpec<npy_float32, NPY_FLOAT, is_inf<npy_float32>, is_inf<double>, to_float<npy_float32>>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float16, NPY_HALF>();
     casts[cast_i++] = getFloatToStringCastSpec<npy_float32, NPY_FLOAT>();
 
