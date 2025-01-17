@@ -1,3 +1,4 @@
+# ruff: noqa: I001
 import builtins
 import sys
 import mmap
@@ -206,17 +207,19 @@ else:
     )
 
 from typing import (
-    Literal as L,
     Any,
+    ClassVar,
+    Final,
+    Generic,
+    Literal as L,
     NoReturn,
     SupportsComplex,
     SupportsFloat,
     SupportsInt,
     SupportsIndex,
-    Final,
-    final,
-    ClassVar,
     TypeAlias,
+    TypedDict,
+    final,
     type_check_only,
 )
 
@@ -225,11 +228,13 @@ from typing import (
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
 from _typeshed import StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, Generic, LiteralString, Never, Protocol, Self, TypeVar, Unpack, deprecated, overload
+from typing_extensions import CapsuleType, LiteralString, Never, Protocol, Self, TypeVar, Unpack, deprecated, overload
 
 from numpy import (
+    char,
     core,
     ctypeslib,
+    dtypes,
     exceptions,
     f2py,
     fft,
@@ -238,14 +243,21 @@ from numpy import (
     ma,
     polynomial,
     random,
+    rec,
+    strings,
     testing,
     typing,
-    version,
-    dtypes,
-    rec,
-    char,
-    strings,
 )
+
+# available through `__getattr__`, but not in `__all__` or `__dir__`
+from numpy import (
+    __config__ as __config__,
+    matlib as matlib,
+    matrixlib as matrixlib,
+    version as version,
+)
+if sys.version_info < (3, 12):
+    from numpy import distutils as distutils
 
 from numpy._core.records import (
     record,
@@ -440,6 +452,7 @@ from numpy.lib._arraypad_impl import (
 
 from numpy.lib._arraysetops_impl import (
     ediff1d,
+    in1d,
     intersect1d,
     isin,
     setdiff1d,
@@ -481,6 +494,8 @@ from numpy.lib._function_base_impl import (
     bartlett,
     blackman,
     kaiser,
+    trapezoid,
+    trapz,
     i0,
     meshgrid,
     delete,
@@ -488,7 +503,6 @@ from numpy.lib._function_base_impl import (
     append,
     interp,
     quantile,
-    trapezoid,
 )
 
 from numpy.lib._histograms_impl import (
@@ -627,13 +641,10 @@ from numpy.matrixlib import (
     bmat,
 )
 
-__all__ = [
-    "emath", "show_config", "version", "__version__", "__array_namespace_info__",
-
+__all__ = [  # noqa: RUF022
     # __numpy_submodules__
-    "linalg", "fft", "dtypes", "random", "polynomial", "ma", "exceptions", "lib",
-    "ctypeslib", "testing", "test", "rec", "char", "strings",
-    "core", "typing", "f2py",
+    "char", "core", "ctypeslib", "dtypes", "exceptions", "f2py", "fft", "lib", "linalg",
+    "ma", "polynomial", "random", "rec", "strings", "test", "testing", "typing",
 
     # _core.__all__
     "abs", "acos", "acosh", "asin", "asinh", "atan", "atanh", "atan2", "bitwise_invert",
@@ -651,8 +662,8 @@ __all__ = [
     "tensordot", "little_endian", "fromiter", "array_equal", "array_equiv", "indices",
     "fromfunction", "isclose", "isscalar", "binary_repr", "base_repr", "ones",
     "identity", "allclose", "putmask", "flatnonzero", "inf", "nan", "False_", "True_",
-    "bitwise_not", "full", "full_like", "matmul", "vecdot", "shares_memory",
-    "may_share_memory", "_get_promotion_state", "_set_promotion_state",
+    "bitwise_not", "full", "full_like", "matmul", "vecdot", "vecmat",
+    "shares_memory", "may_share_memory",
     "all", "amax", "amin", "any", "argmax", "argmin", "argpartition", "argsort",
     "around", "choose", "clip", "compress", "cumprod", "cumsum", "cumulative_prod",
     "cumulative_sum", "diagonal", "mean", "max", "min", "matrix_transpose", "ndim",
@@ -667,7 +678,7 @@ __all__ = [
     "frompyfunc", "gcd", "greater", "greater_equal", "heaviside", "hypot", "invert",
     "isfinite", "isinf", "isnan", "isnat", "lcm", "ldexp", "left_shift", "less",
     "less_equal", "log", "log10", "log1p", "log2", "logaddexp", "logaddexp2",
-    "logical_and", "logical_not", "logical_or", "logical_xor", "maximum", "minimum",
+    "logical_and", "logical_not", "logical_or", "logical_xor", "matvec", "maximum", "minimum",
     "mod", "modf", "multiply", "negative", "nextafter", "not_equal", "pi", "positive",
     "power", "rad2deg", "radians", "reciprocal", "remainder", "right_shift", "rint",
     "sign", "signbit", "sin", "sinh", "spacing", "sqrt", "square", "subtract", "tan",
@@ -686,7 +697,7 @@ __all__ = [
     "array2string", "array_str", "array_repr", "set_printoptions", "get_printoptions",
     "printoptions", "format_float_positional", "format_float_scientific", "require",
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
-    "errstate", "_no_nep50_warning",
+    "errstate",
     # _core.function_base.__all__
     "logspace", "linspace", "geomspace",
     # _core.getlimits.__all__
@@ -696,7 +707,8 @@ __all__ = [
     "vstack",
     # _core.einsumfunc.__all__
     "einsum", "einsum_path",
-
+    # matrixlib.__all__
+    "matrix", "bmat", "asmatrix",
     # lib._histograms_impl.__all__
     "histogram", "histogramdd", "histogram_bin_edges",
     # lib._nanfunctions_impl.__all__
@@ -704,13 +716,12 @@ __all__ = [
     "nanpercentile", "nanvar", "nanstd", "nanprod", "nancumsum", "nancumprod",
     "nanquantile",
     # lib._function_base_impl.__all__
-    # NOTE: `trapz` is omitted because it is deprecated
     "select", "piecewise", "trim_zeros", "copy", "iterable", "percentile", "diff",
     "gradient", "angle", "unwrap", "sort_complex", "flip", "rot90", "extract", "place",
     "vectorize", "asarray_chkfinite", "average", "bincount", "digitize", "cov",
     "corrcoef", "median", "sinc", "hamming", "hanning", "bartlett", "blackman",
-    "kaiser", "i0", "meshgrid", "delete", "insert", "append", "interp", "quantile",
-    "trapezoid",
+    "kaiser", "trapezoid", "trapz", "i0", "meshgrid", "delete", "insert", "append",
+    "interp", "quantile",
     # lib._twodim_base_impl.__all__
     "diag", "diagflat", "eye", "fliplr", "flipud", "tri", "triu", "tril", "vander",
     "histogram2d", "mask_indices", "tril_indices", "tril_indices_from", "triu_indices",
@@ -724,9 +735,8 @@ __all__ = [
     "iscomplexobj", "isrealobj", "imag", "iscomplex", "isreal", "nan_to_num", "real",
     "real_if_close", "typename", "mintypecode", "common_type",
     # lib._arraysetops_impl.__all__
-    # NOTE: `in1d` is omitted because it is deprecated
-    "ediff1d", "intersect1d", "isin", "setdiff1d", "setxor1d", "union1d", "unique",
-    "unique_all", "unique_counts", "unique_inverse", "unique_values",
+    "ediff1d", "in1d", "intersect1d", "isin", "setdiff1d", "setxor1d", "union1d",
+    "unique", "unique_all", "unique_counts", "unique_inverse", "unique_values",
     # lib._ufunclike_impl.__all__
     "fix", "isneginf", "isposinf",
     # lib._arraypad_impl.__all__
@@ -746,9 +756,9 @@ __all__ = [
     "index_exp", "ix_", "ndenumerate", "ndindex", "fill_diagonal", "diag_indices",
     "diag_indices_from",
 
-    # matrixlib.__all__
-    "matrix", "bmat", "asmatrix",
-]
+    # __init__.__all__
+    "emath", "show_config", "__version__", "__array_namespace_info__",
+]  # fmt: skip
 
 ### Constrained types  (for internal use only)
 # Only use these for functions; never as generic type parameter.
@@ -1047,6 +1057,16 @@ _IntTD64Unit: TypeAlias = L[_MonthUnit, _IntTimeUnit]
 _TD64Unit: TypeAlias = L[_DateUnit, _TimeUnit]
 _TimeUnitSpec: TypeAlias = _TD64UnitT | tuple[_TD64UnitT, SupportsIndex]
 
+### TypedDict's (for internal use only)
+
+@type_check_only
+class _FormerAttrsDict(TypedDict):
+    object: LiteralString
+    float: LiteralString
+    complex: LiteralString
+    str: LiteralString
+    int: LiteralString
+
 ### Protocols (for internal use only)
 
 @type_check_only
@@ -1147,21 +1167,25 @@ class _IntegralMixin(_RealMixin):
 ### Public API
 
 __version__: Final[LiteralString] = ...
-__array_api_version__: Final = "2023.12"
-test: Final[PytestTester] = ...
 
 e: Final[float] = ...
 euler_gamma: Final[float] = ...
+pi: Final[float] = ...
 inf: Final[float] = ...
 nan: Final[float] = ...
-pi: Final[float] = ...
-
 little_endian: Final[builtins.bool] = ...
-
 False_: Final[np.bool[L[False]]] = ...
 True_: Final[np.bool[L[True]]] = ...
-
 newaxis: Final[None] = None
+
+# not in __all__
+__NUMPY_SETUP__: Final[L[False]] = False
+__numpy_submodules__: Final[set[LiteralString]] = ...
+__expired_attributes__: Final[dict[LiteralString, LiteralString]]
+__former_attrs__: Final[_FormerAttrsDict] = ...
+__future_scalars__: Final[set[L["bytes", "str", "object"]]] = ...
+__array_api_version__: Final[L["2023.12"]] = "2023.12"
+test: Final[PytestTester] = ...
 
 @final
 class dtype(Generic[_SCT_co]):
@@ -2496,7 +2520,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
         casting: _CastingKind = ...,
         subok: builtins.bool = ...,
         copy: builtins.bool | _CopyMode = ...,
-    ) -> NDArray[_SCT]: ...
+    ) -> ndarray[_ShapeT_co, dtype[_SCT]]: ...
     @overload
     def astype(
         self,
@@ -2505,7 +2529,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
         casting: _CastingKind = ...,
         subok: builtins.bool = ...,
         copy: builtins.bool | _CopyMode = ...,
-    ) -> NDArray[Any]: ...
+    ) -> ndarray[_ShapeT_co, dtype[Any]]: ...
 
     @overload
     def view(self) -> Self: ...
