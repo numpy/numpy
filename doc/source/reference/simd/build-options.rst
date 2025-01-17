@@ -31,7 +31,7 @@ that target certain CPU features:
 
    .. note::
 
-      This option can be useful if you want to be able to automaticall enable
+      This option can be useful if you want to automatically enable
       CPU features like AVX2 by default if detected, but want to make advanced
       CPU features like AVX512 opt in only via ``NPY_ENABLE_CPU_FEATURES``.
 
@@ -45,36 +45,6 @@ perform a series of procedures.
 To customize CPU/build options::
 
     pip install . -Csetup-args=-Dcpu-baseline="avx2 fma3" -Csetup-args=-Dcpu-dispatch="max"
-
-
-Choosing CPU options at runtime
--------------------------------
-
-You can use the ``NPY_DISABLE_CPU_FEATURES`` and ``NPY_ENABLE_CPU_FEATURES``
-environment variables to choose which of the dispatched CPU features should
-be enabled when detected.
-
-For example, consider an Icelake processor which supports a subset of AVX512 instructions 
-and where ``cpu-dispatch-default`` is not specified:
-
-=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
-CPU Feature                                                         SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
-=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
-no environment variables                                            ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ✅      ✅       ❌         ❌         ✅         ✅         ❌         ❌
-NPY_DISABLE_CPU_FEATURES=AVX512_SKX,AVX512_CLX                      ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ✅      ✅       ❌         ❌         ❌         ❌         ❌         ❌
-NPY_ENABLE_CPU_FEATURES=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3 ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ❌      ❌       ❌         ❌         ❌         ❌         ❌         ❌
-=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
-
-As an example forwhen ``cpu-dispatch-default`` is specified and set to
-`cpu-dispatch-default=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3` then
-
-=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
-CPU Feature                                                         SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
-=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
-no environment variables                                            ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ❌      ❌       ❌         ❌         ❌         ❌         ❌         ❌
-NPY_DISABLE_CPU_FEATURES=FMA3,AVX2                                  ✅    ✅    ✅     ✅    ✅  ✅   ❌   ❌   ❌      ❌       ❌         ❌         ❌         ❌         ❌         ❌
-NPY_ENABLE_CPU_FEATURES=AVX512F,AVX512CD                            ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ✅      ✅       ❌         ❌         ❌         ❌         ❌         ❌
-=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
 
 
 Quick start
@@ -419,6 +389,37 @@ this will disable ``AVX2`` and ``FMA3``::
     NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"
 
 If the feature is not available, a warning will be emitted.
+
+Similarly, the ``NPY_ENABLE_CPU_FEATURES`` environment variable can be used
+to control which of the dispatched CPU features should be enabled when detected.
+
+For example, consider an Icelake processor which supports a subset of AVX512 instructions
+and a numpy build where ``cpu-dispatch-default`` was not specified:
+
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+CPU Feature                                                         SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+no environment variables                                            ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ✅      ✅       ❌         ❌         ✅         ✅         ❌         ❌
+NPY_DISABLE_CPU_FEATURES=AVX512_SKX,AVX512_CLX                      ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ✅      ✅       ❌         ❌         ❌         ❌         ❌         ❌
+NPY_ENABLE_CPU_FEATURES=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3 ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ❌      ❌       ❌         ❌         ❌         ❌         ❌         ❌
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+
+If ``cpu-dispatch-default`` is specified then the behavior of ``NPY_DISABLE_CPU_FEATURES``
+and ``NPY_ENABLE_CPU_FEATURES`` disables/enables features starting from the specified
+default features. For example, if ``cpu-dispatch-default`` is set to::
+
+    cpu-dispatch-default=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3
+
+then
+
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+CPU Feature                                                         SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+no environment variables                                            ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ❌      ❌       ❌         ❌         ❌         ❌         ❌         ❌
+NPY_DISABLE_CPU_FEATURES=FMA3,AVX2                                  ✅    ✅    ✅     ✅    ✅  ✅   ❌   ❌   ❌      ❌       ❌         ❌         ❌         ❌         ❌         ❌
+NPY_ENABLE_CPU_FEATURES=AVX512F,AVX512CD                            ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ✅      ✅       ❌         ❌         ❌         ❌         ❌         ❌
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+
 
 Tracking dispatched functions
 -----------------------------
