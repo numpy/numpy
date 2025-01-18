@@ -198,7 +198,7 @@ PyArray_Type and PyArrayObject
    enabling the use of user-defined memory allocation and deallocation routines
    instead of the standard `malloc`, `calloc`, `realloc`, and `free` functions.
 
-   Accessed through the macro :c:data:`PyArray_HANDLER`.
+   Accessed through :c:data:`PyArray_HANDLER`.
    For setting or retrieving the current memory management policy,
    see the `PyDataMem_SetHandler` and `PyDataMem_GetHandler` functions.
 
