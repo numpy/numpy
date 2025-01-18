@@ -79,8 +79,8 @@ and its sub-types).
     .. versionadded:: 1.22
 
     Returns a pointer to the memory handler of the array, which is used
-    for memory allocation operations such as `malloc`, `calloc`, `realloc`,
-    and `free` for each object. In some cases, it may return `NULL`.
+    for memory allocation operations such as ``malloc``, ``calloc``,
+    ``realloc``, and ``free`` for each object. In some cases, it may return ``NULL``.
     For more details, refer to the :c:type:`PyDataMem_Handler`.
 
 .. c:function:: void *PyArray_DATA(PyArrayObject *arr)
