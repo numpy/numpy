@@ -682,7 +682,7 @@ __all__ = [
     "uintc", "int64", "long", "uint64", "ulong", "longlong", "ulonglong", "intp",
     "uintp", "double", "cdouble", "single", "csingle", "half", "bool_", "int_", "uint",
     "uint128", "uint256", "int128", "int256", "float80", "float96", "float128",
-    "float256", "complex160", "complex192", "complex256", "complex512",
+    "float256", "complex160", "complex192", "complex256", "complex512", "vstr",
     "array2string", "array_str", "array_repr", "set_printoptions", "get_printoptions",
     "printoptions", "format_float_positional", "format_float_scientific", "require",
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
@@ -4646,6 +4646,9 @@ class str_(character[str], str):
     def __init__(self, value: object = ..., /) -> None: ...
     @overload
     def __init__(self, value: bytes, /, encoding: str = ..., errors: str = ...) -> None: ...
+
+class vstr(character[str], str):
+    pass  # TODO
 
 # See `numpy._typing._ufunc` for more concrete nin-/nout-specific stubs
 @final

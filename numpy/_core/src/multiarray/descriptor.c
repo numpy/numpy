@@ -1871,6 +1871,10 @@ _convert_from_str(PyObject *obj, int align)
                     elsize *= 4;
                     break;
 
+                case NPY_VSTRINGLTR:
+                    check_num = NPY_VSTRING;
+                    break;
+
                 case NPY_VOIDLTR:
                     check_num = NPY_VOID;
                     break;

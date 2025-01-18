@@ -824,7 +824,7 @@ init_string_dtype(void)
 
     PyArrayDTypeMeta_Spec PyArray_StringDType_DTypeSpec = {
             .flags = NPY_DT_PARAMETRIC,
-            .typeobj = &PyUnicode_Type,
+            .typeobj = &PyVStringArrType_Type,
             .slots = PyArray_StringDType_Slots,
             .casts = PyArray_StringDType_casts,
     };

@@ -96,6 +96,8 @@ multiarray_types_api = {
     #       makes them tricky to expose.  (This may be refactored.)
     # Slot 366, 367, 368 are the abstract DTypes
     # End 2.0 API
+    #'PyVStringArrType_Type':            (369,),
+    # End 2.3 API
 }
 
 # define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])

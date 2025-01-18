@@ -1810,3 +1810,35 @@ class TestImplementation:
         assert_array_equal(c, self.a)
         assert_array_equal(self.in_arena(c), False)
         assert_array_equal(self.is_on_heap(c), self.in_arena(self.a))
+
+
+class TestVStringScalar:
+    def test_essentials(self):
+        arr = np.array(["foo", "bar"], dtype=np.vstr)
+        assert arr.dtype == np.dtypes.StringDType()
+
+        scalar = np.vstr("foo")
+        assert isinstance(scalar, np.vstr)
+        assert str(scalar) == "foo"
+        assert repr(scalar) == "np.vstr('foo')"
+        assert scalar.item() == "foo"
+        assert np.asarray([scalar, np.vstr("bar")]).dtype == np.dtypes.StringDType()
+        assert_array_equal(arr, np.asarray([scalar, np.vstr("bar")]))
+
+    def test_codes(self):
+        data = "foo"
+        base_arr = np.array(data, dtype=np.dtypes.StringDType)
+
+        for dt in [np.vstr, "vstr", np.dtypes.StringDType.type, "T"]:
+            arr = np.array(data, dtype=dt)
+            assert_array_equal(arr, base_arr)
+            assert base_arr.dtype == arr.dtype
+
+    def test_ufuncs(self):
+        l1, l2 = ["a", "b", "c"], "d"
+        arr1 = np.array(l1, dtype=np.vstr)
+        scalar1 = np.vstr(l2)
+        arr2 = np.array(["da", "db", "dc"], dtype=np.vstr)
+
+        assert_array_equal(arr2, scalar1 + arr1)
+        assert_array_equal(np.True_, np.strings.isalpha(scalar1))

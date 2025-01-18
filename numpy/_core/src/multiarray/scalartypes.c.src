@@ -38,6 +38,7 @@
 #include "npy_static_data.h"
 #include "multiarraymodule.h"
 #include "array_api_standard.h"
+#include "stringdtype/static_string.h"
 
 #include <stdlib.h>
 
@@ -4632,7 +4633,8 @@ static scalar_type typeobjects[] = {
     {&PyVoidArrType_Type, NPY_VOID},
     {&PyDatetimeArrType_Type, NPY_DATETIME},
     {&PyTimedeltaArrType_Type, NPY_TIMEDELTA},
-    {&PyHalfArrType_Type, NPY_HALF}
+    {&PyHalfArrType_Type, NPY_HALF},
+    {&PyVStringArrType_Type, NPY_VSTRING}
 };
 
 static int compare_types(const void * a_, const void * b_)

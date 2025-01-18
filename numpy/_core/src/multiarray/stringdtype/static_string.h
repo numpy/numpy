@@ -1,5 +1,5 @@
-#ifndef NUMPY_CORE_SRC_MULTIARRAY_STATIC_STRING_H_
-#define NUMPY_CORE_SRC_MULTIARRAY_STATIC_STRING_H_
+#ifndef _NPY_CORE_SRC_MULTIARRAY_STRINGDTYPE_STATIC_STRING_H_
+#define _NPY_CORE_SRC_MULTIARRAY_STRINGDTYPE_STATIC_STRING_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,8 +97,20 @@ NPY_NO_EXPORT int
 NpyString_share_memory(const npy_packed_static_string *s1, npy_string_allocator *a1,
                        const npy_packed_static_string *s2, npy_string_allocator *a2);
 
+NPY_NO_EXPORT PyObject *
+vstring_scalar_alloc(PyTypeObject *type, PyArray_StringDTypeObject *descr,
+                     npy_intp length, const char* contents);
+
+NPY_NO_EXPORT void
+vstring_scalar_dealloc(PyObject *v);
+
+NPY_NO_EXPORT PyObject *
+vstring_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *kwds);
+
+extern NPY_NO_EXPORT PyTypeObject PyVStringArrType_Type;
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NUMPY_CORE_SRC_MULTIARRAY_STATIC_STRING_H_ */
+#endif /* _NPY_CORE_SRC_MULTIARRAY_STRINGDTYPE_STATIC_STRING_H_ */

@@ -74,6 +74,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "lowlevel_strided_loops.h"
 #include "dtype_transfer.h"
 #include "stringdtype/dtype.h"
+#include "stringdtype/static_string.h"
 
 #include "get_attr_string.h"
 #include "public_dtype_api.h"  /* _fill_dtype_api */
@@ -4702,6 +4703,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
 
     DUAL_INHERIT2(String, Bytes, Character);
     DUAL_INHERIT2(Unicode, Unicode, Character);
+    SINGLE_INHERIT(VString, Generic);  // TODO: Character?
 
     SINGLE_INHERIT(Void, Flexible);
 
@@ -5098,6 +5100,19 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
     PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
+
+    PyObject *typeinfo_dict = PyDict_GetItemString(d, "typeinfo");
+    if (typeinfo_dict == NULL) {
+        goto err;
+    }
+    if (PyDict_SetItemString(
+            typeinfo_dict, "NPY_VSTRING", (PyObject *)&PyArray_StringDType) == -1) {
+        goto err;
+    }
+    if (PyDict_SetItemString(
+            typeinfo_dict, NPY_VSTRING_name, (PyObject *)&PyArray_StringDType) == -1) {
+        goto err;
+    }
 
     // initialize static reference to a zero-like array
     npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
