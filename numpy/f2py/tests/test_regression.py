@@ -122,6 +122,15 @@ class TestF90Contiuation(util.F2PyTest):
         assert(res[0] == 8)
         assert(res[1] == 15)
 
+class TestLowerF2PYDirectives(util.F2PyTest):
+    # Check variables are cased correctly
+    sources = [util.getpath("tests", "src", "regression", "lower_f2py_fortran.f90")]
+
+    @pytest.mark.slow
+    def test_gh28014(self):
+        self.module.inquire_next(3)
+        assert True
+
 @pytest.mark.slow
 def test_gh26623():
     # Including libraries with . should not generate an incorrect meson.build
