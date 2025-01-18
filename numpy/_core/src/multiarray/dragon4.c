@@ -1669,7 +1669,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
 
             /* integer part too long for buffer, avoid overflow */
             if (count > maxPrintLen - pos) {
-                PyErr_SetString(PyExc_RuntimeError, "String buffer overflow");
+                PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
                 return -1;
             }
 
@@ -1777,7 +1777,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         
         /* too many trailing zeros required, avoid buffer overflow */
         if (count > maxPrintLen - pos) {
-            PyErr_SetString(PyExc_RuntimeError, "String buffer overflow");
+            PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
             return -1;
         }
         numFractionDigits += count;
@@ -1819,13 +1819,9 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
                 && pos < maxPrintLen) {
             buffer[pos++] = ' ';
         }
-        
-        /* 
-         * provided digits_rights is too large, 
-         * can't create the string required
-         */
+
         if (count > maxPrintLen - pos) {
-            PyErr_SetString(PyExc_RuntimeError, "String buffer overflow");
+            PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
             return -1;
         }
 
@@ -1837,10 +1833,9 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
     if (digits_left > numWholeDigits + has_sign) {
         npy_int32 shift = digits_left - (numWholeDigits + has_sign);
         npy_int32 count = pos;
-        
-        /* provided digits_left is too large, can't create the string required*/
-        if (count + shift > maxPrintLen) {
-            PyErr_SetString(PyExc_RuntimeError, "String buffer overflow");
+                
+        if (count > maxPrintLen - shift) {
+            PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
             return -1;
         }
 
