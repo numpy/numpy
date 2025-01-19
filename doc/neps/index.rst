@@ -15,7 +15,6 @@ Roadmap
 
    The Scope of NumPy <scope>
    Current roadmap <roadmap>
-   Wish list <https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22>
 
 NumPy enhancement proposals (NEPs)
 ----------------------------------
