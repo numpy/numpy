@@ -139,6 +139,11 @@ array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
     */
     // this is to allow grabbing the GIL before raising a python exception.
     NPY_ALLOW_C_API_DEF;
+
+    // release the GIL
+    PyThreadState *_save;
+    _save = PyEval_SaveThread();
+
     PyArrayObject *self = NULL;
     PyObject *res = NULL;
     if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self))
@@ -147,6 +152,9 @@ array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
     // Making sure the DECREF is called when the function returns, with
     // or w/o an exception
     auto self_decref = finally([&]() { Py_XDECREF(self); });
+    // Making sure the GIL is re-acquired when the function returns, with
+    // or w/o an exception
+    auto release_gil = finally([&]() { PyEval_RestoreThread(_save); });
 
 
     try {
