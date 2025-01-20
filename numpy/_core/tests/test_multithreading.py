@@ -38,7 +38,7 @@ def test_parallel_ufunc_execution():
         b.wait()
         return a.sum()
 
-    run_threaded(f, NUM_THREADS, max_workers=NUM_THREADS, pass_barrier=True)
+    run_threaded(f, NUM_THREADS, pass_barrier=True)
 
 
 def test_temp_elision_thread_safety():
@@ -129,8 +129,7 @@ def test_parallel_reduction():
         b.wait()
         np.sum(x)
 
-    run_threaded(closure, NUM_THREADS, max_workers=NUM_THREADS,
-                 pass_barrier=True)
+    run_threaded(closure, NUM_THREADS, pass_barrier=True)
 
 
 def test_parallel_flat_iterator():
