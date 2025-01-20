@@ -1829,11 +1829,14 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
 {
     PyObject *obj;
     if (requires & NPY_ARRAY_NOTSWAPPED) {
-        if (!in_descr && PyArray_Check(op)) {
-            in_descr = PyArray_DESCR((PyArrayObject *)op);
-            Py_INCREF(in_descr);
+        if (!in_descr && PyArray_Check(op) &&
+                PyArray_ISBYTESWAPPED((PyArrayObject* )op)) {
+            in_descr = PyArray_DescrNew(PyArray_DESCR((PyArrayObject *)op));
+            if (in_descr == NULL) {
+                return NULL;
+            }
         }
-        if (in_descr) {
+        else if (in_descr && !PyArray_ISNBO(in_descr->byteorder)) {
             PyArray_DESCR_REPLACE_CANONICAL(in_descr);
         }
     }
