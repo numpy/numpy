@@ -17,11 +17,6 @@ Useful info can be found in the following locations:
   - `RELEASE_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst>`_
   - `BRANCH_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst>`_
 
-* **Release scripts**
-
-  - `numpy-vendor <https://github.com/numpy/numpy-vendor>`_
-
-
 Supported platforms and versions
 ================================
 :ref:`NEP 29 <NEP29>` outlines which Python versions
