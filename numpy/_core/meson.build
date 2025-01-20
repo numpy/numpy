@@ -685,13 +685,22 @@ c_args_common = [
   cflags_large_file_support,
 ]
 
+# CPP exceptions are handled in the unique_hash code and therefore the `-fexceptions`
+# flag.
+unique_hash_cpp_args = c_args_common
+if cc.get_argument_syntax() != 'msvc'
+  unique_hash_cpp_args += [
+    '-fexceptions',
+    '-fno-rtti',  # no runtime type information
+  ]
+endif
+
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [
 ]
 if cc.get_argument_syntax() != 'msvc'
   cpp_args_common += [
-    # unique code handles C++ exceptions
-    # '-fno-exceptions',  # no exception support
+    '-fno-exceptions',  # no exception support
     '-fno-rtti',  # no runtime type information
   ]
 endif
@@ -1159,7 +1168,6 @@ src_multiarray = multiarray_gen_headers + [
   'src/multiarray/textreading/stream_pyobject.c',
   'src/multiarray/textreading/str_to_int.c',
   'src/multiarray/textreading/tokenize.cpp',
-  'src/multiarray/unique.cpp',
   # Remove this `arm64_exports.c` file once scipy macos arm64 build correctly
   # links to the arm64 npymath library, see gh-22673
   'src/npymath/arm64_exports.c',
@@ -1223,6 +1231,20 @@ if use_svml
   endforeach
 endif
 
+unique_hash_so = static_library(
+  'unique_hash',
+  ['src/multiarray/unique.cpp'],
+  c_args: c_args_common,
+  cpp_args: unique_hash_cpp_args,
+  include_directories: [
+    'include',
+    'src/common',
+  ],
+  dependencies: [
+    py_dep,
+  ],
+)
+
 py.extension_module('_multiarray_umath',
   [
     config_h,
@@ -1247,7 +1269,11 @@ py.extension_module('_multiarray_umath',
     'src/highway'
   ],
   dependencies: [blas_dep],
-  link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')] + highway_lib,
+  link_with: [
+    npymath_lib,
+    unique_hash_so,
+    multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')
+  ] + highway_lib,
   install: true,
   subdir: 'numpy/_core',
 )

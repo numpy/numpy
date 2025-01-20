@@ -6,9 +6,8 @@
 #include <unordered_set>
 #include <functional>
 
+#include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
-#include "numpy/npy_common.h"
-
 
 // This is to use RAII pattern to handle cpp exceptions while avoiding memory leaks.
 // Adapted from https://stackoverflow.com/a/25510879/2536294
@@ -38,6 +37,7 @@ PyObject* unique(PyArrayObject *self)
     among binary representations of the input data. This means it won't apply to
     custom or complicated dtypes or string values.
     */
+    NPY_ALLOW_C_API_DEF;
     NpyIter* iter;
     NpyIter_IterNextFunc *iternext;
     char** dataptr;
@@ -66,6 +66,12 @@ PyObject* unique(PyArrayObject *self)
     strideptr = NpyIter_GetInnerStrideArray(iter);
     innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
+    // release the GIL
+    PyThreadState *_save;
+    _save = PyEval_SaveThread();
+    // Making sure the GIL is re-acquired when the function returns, with
+    // or w/o an exception
+    auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
     // first we put the data in a hash map
     do {
         char* data = *dataptr;
@@ -90,7 +96,8 @@ PyObject* unique(PyArrayObject *self)
     npy_intp dims[1] = {(npy_intp)hashset.size()};
     PyArray_Descr *descr = PyArray_DESCR(self);
     Py_INCREF(descr);
-    return PyArray_NewFromDescr(
+    NPY_ALLOW_C_API;
+    PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
         1, // ndim
@@ -101,6 +108,8 @@ PyObject* unique(PyArrayObject *self)
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
+    NPY_DISABLE_C_API;
+    return res_obj;
 }
 
 
@@ -140,22 +149,14 @@ array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
     // this is to allow grabbing the GIL before raising a python exception.
     NPY_ALLOW_C_API_DEF;
 
-    // release the GIL
-    PyThreadState *_save;
-    _save = PyEval_SaveThread();
 
     PyArrayObject *self = NULL;
     PyObject *res = NULL;
     if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self))
         return NULL;
-    
     // Making sure the DECREF is called when the function returns, with
     // or w/o an exception
     auto self_decref = finally([&]() { Py_XDECREF(self); });
-    // Making sure the GIL is re-acquired when the function returns, with
-    // or w/o an exception
-    auto release_gil = finally([&]() { PyEval_RestoreThread(_save); });
-
 
     try {
         /* Handle zero-sized arrays specially */
