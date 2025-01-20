@@ -1076,6 +1076,7 @@ def test_maxrows_exceeding_chunksize(nmax):
 
 def test_footer_header():
 
+    print("Test")
     data = StringIO(
 
         "# Header\n"
