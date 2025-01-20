@@ -231,7 +231,6 @@ def issctype(rep):
         return False
 
 
-@set_module('numpy')
 def obj2sctype(rep, default=None):
     """
     Return the scalar dtype or NumPy equivalent of Python type of an object.

@@ -29,3 +29,8 @@ Name: spin
 Files: .spin/cmds.py
 License: BSD-3
   For license text, see .spin/LICENSE
+
+Name: tempita
+Files: numpy/_build_utils/tempita/*
+License: MIT
+  For details, see numpy/_build_utils/tempita/LICENCE.txt

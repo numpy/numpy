@@ -10,9 +10,9 @@
 #ifndef _NPY_UMATH_FAST_LOOP_MACROS_H_
 #define _NPY_UMATH_FAST_LOOP_MACROS_H_
 
-#include <assert.h>
-
 #include "simd/simd.h"
+
+#include <assert.h>
 
 /*
  * largest simd vector size in bytes numpy supports
@@ -315,7 +315,7 @@ abs_ptrdiff(char *a, char *b)
 /*
  * stride is equal to element size and input and destination are equal or
  * don't overlap within one register. The check of the steps against
- * esize also quarantees that steps are >= 0.
+ * esize also guarantees that steps are >= 0.
  */
 #define IS_BLOCKABLE_UNARY(esize, vsize) \
     (steps[0] == (esize) && steps[0] == steps[1] && \

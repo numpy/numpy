@@ -45,7 +45,7 @@ class present in ``util.py``.
 
 This class many helper functions for parsing and compiling test source files. Its child 
 classes can override its ``sources`` data member to provide their own source files.
-This superclass will then compile the added source files upon object creation andtheir
+This superclass will then compile the added source files upon object creation and their
 functions will be appended to ``self.module`` data member. Thus, the child classes will
 be able to access the fortran functions specified in source file by calling
 ``self.module.[fortran_function_name]``.

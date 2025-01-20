@@ -153,7 +153,7 @@ def _scalar_str(dtype, short):
 
         # Longer repr, like 'float64'
         else:
-            return "'%s%d'" % (_kind_name(dtype), 8*dtype.itemsize)
+            return "'%s%d'" % (_kind_name(dtype), 8 * dtype.itemsize)
 
     elif dtype.isbuiltin == 2:
         return dtype.type.__name__

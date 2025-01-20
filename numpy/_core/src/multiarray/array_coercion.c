@@ -247,13 +247,17 @@ npy_discover_dtype_from_pytype(PyTypeObject *pytype)
 }
 
 /*
- * Note: This function never fails, but will return `NULL` for unknown scalars
- *       and `None` for known array-likes (e.g. tuple, list, ndarray).
+ * Note: This function never fails, but will return `NULL` for unknown scalars or
+ *       known array-likes (e.g. tuple, list, ndarray).
  */
 NPY_NO_EXPORT PyObject *
 PyArray_DiscoverDTypeFromScalarType(PyTypeObject *pytype)
 {
-    return (PyObject *)npy_discover_dtype_from_pytype(pytype);
+    PyObject *DType = (PyObject *)npy_discover_dtype_from_pytype(pytype);
+    if (DType == NULL || DType == Py_None) {
+        return NULL;
+    }
+    return DType;
 }
 
 
@@ -660,8 +664,8 @@ npy_new_coercion_cache(
 /**
  * Unlink coercion cache item.
  *
- * @param current
- * @return next coercion cache object (or NULL)
+ * @param current This coercion cache object
+ * @return next Next coercion cache object (or NULL)
  */
 NPY_NO_EXPORT coercion_cache_obj *
 npy_unlink_coercion_cache(coercion_cache_obj *current)
@@ -905,7 +909,7 @@ find_descriptor_from_array(
  * it supports inspecting the elements when the array has object dtype
  * (and the given datatype describes a parametric DType class).
  *
- * @param arr
+ * @param arr The array object.
  * @param dtype NULL or a dtype class
  * @param descr A dtype instance, if the dtype is NULL the dtype class is
  *              found and e.g. "S0" is converted to denote only String.

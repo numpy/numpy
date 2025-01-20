@@ -1,4 +1,4 @@
-name: macOS tests (meson)
+name: macOS tests
 
 on:
   pull_request:
@@ -25,13 +25,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12"]
 
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
     - name:  Prepare cache dirs and timestamps
       id:    prep-ccache
@@ -44,7 +45,7 @@ jobs:
         echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
 
     - name: Setup compiler cache
-      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
       id:    cache-ccache
       with:
         path: ${{ steps.prep-ccache.outputs.dir }}
@@ -53,7 +54,7 @@ jobs:
           ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
 
     - name: Setup Miniforge
-      uses: conda-incubator/setup-miniconda@a4260408e20b96e80095f42ff7f1a15b27dd94ca # v3.0.4
+      uses: conda-incubator/setup-miniconda@d2e6a045a86077fb6cad6f5adf368e9076ddaa8d # v3.1.0
       with:
         python-version: ${{ matrix.python-version }}
         channels: conda-forge
@@ -68,7 +69,7 @@ jobs:
     # ensure we re-solve once a day (since we don't lock versions). Could be
     # replaced by a conda-lock based approach in the future.
     - name: Cache conda environment
-      uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
       env:
         # Increase this value to reset cache if environment.yml has not changed
         CACHE_NUMBER: 1
@@ -103,7 +104,8 @@ jobs:
 
 
   accelerate:
-    name: Accelerate (LP64, ILP64) - ${{ matrix.build_runner[1] }}
+    name: Accelerate - ${{ matrix.build_runner[1] }} - ${{ matrix.version }}
+    # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     runs-on: ${{ matrix.build_runner[0] }}
     strategy:
@@ -112,32 +114,40 @@ jobs:
         build_runner:
           - [ macos-13, "macos_x86_64" ]
           - [ macos-14, "macos_arm64" ]
+        version: ["3.11", "3.13t"]
 
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
+        persist-credentials: false
 
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+    - uses: quansight-labs/setup-python@b9ab292c751a42bcd2bb465b7fa202ea2c3f5796 # v5.3.1
       with:
-        python-version: '3.10'
+        python-version: ${{ matrix.version }}
 
     - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
       if: ${{ matrix.build_runner[0] == 'macos-13' }}
       with:
         xcode-version: '14.3'
 
+    # TODO: remove cython nightly install when cython does a release
+    - name: Install nightly Cython
+      if: matrix.version == '3.13t'
+      run: |
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
-        pip install pytest pytest-xdist hypothesis
+        pip install pytest pytest-xdist pytest-timeout hypothesis
 
     - name: Build against Accelerate (LP64)
       run: spin build -- -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (linalg only)
-      run: spin test -j2 -- numpy/linalg
+      run: spin test -j2 -- numpy/linalg --timeout=600 --durations=10
 
     - name: Build NumPy against Accelerate (ILP64)
       run: |
@@ -145,4 +155,4 @@ jobs:
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (fast tests)
-      run: spin test -j2
+      run: spin test -j2 -- --timeout=600 --durations=10

@@ -1,13 +1,15 @@
-import os
+from _typeshed import StrOrBytesPath
 from collections.abc import Sequence, Iterable
 from types import EllipsisType
 from typing import (
     Any,
+    TypeAlias,
     TypeVar,
     overload,
     Protocol,
     SupportsIndex,
-    Literal
+    Literal,
+    type_check_only
 )
 
 from numpy import (
@@ -17,8 +19,6 @@ from numpy import (
     void,
     _ByteOrder,
     _SupportsBuffer,
-    _ShapeType_co,
-    _DType_co,
     _OrderKACF,
 )
 
@@ -33,10 +33,26 @@ from numpy._typing import (
     _NestedSequence,
 )
 
+__all__ = [
+    "record",
+    "recarray",
+    "format_parser",
+    "fromarrays",
+    "fromrecords",
+    "fromstring",
+    "fromfile",
+    "array",
+    "find_duplicate",
+]
+
+_T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
+_DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
 
-_RecArray = recarray[Any, dtype[_SCT]]
+_RecArray: TypeAlias = recarray[Any, dtype[_SCT]]
 
+@type_check_only
 class _SupportsReadInto(Protocol):
     def seek(self, offset: int, whence: int, /) -> object: ...
     def tell(self, /) -> int: ...
@@ -51,7 +67,7 @@ class record(void):
     @overload
     def __getitem__(self, key: list[str]) -> record: ...
 
-class recarray(ndarray[_ShapeType_co, _DType_co]):
+class recarray(ndarray[_ShapeT_co, _DType_co]):
     # NOTE: While not strictly mandatory, we're demanding here that arguments
     # for the `format_parser`- and `dtype`-based dtype constructors are
     # mutually exclusive
@@ -116,7 +132,7 @@ class recarray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def __getitem__(self, indx: str) -> NDArray[Any]: ...
     @overload
-    def __getitem__(self, indx: list[str]) -> recarray[_ShapeType_co, dtype[record]]: ...
+    def __getitem__(self, indx: list[str]) -> recarray[_ShapeT_co, dtype[record]]: ...
     @overload
     def field(self, attr: int | str, val: None = ...) -> Any: ...
     @overload
@@ -132,8 +148,6 @@ class format_parser:
         aligned: bool = ...,
         byteorder: None | _ByteOrder = ...,
     ) -> None: ...
-
-__all__: list[str]
 
 @overload
 def fromarrays(
@@ -211,7 +225,7 @@ def fromstring(
 
 @overload
 def fromfile(
-    fd: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _SupportsReadInto,
+    fd: StrOrBytesPath | _SupportsReadInto,
     dtype: DTypeLike,
     shape: None | _ShapeLike = ...,
     offset: int = ...,
@@ -223,7 +237,7 @@ def fromfile(
 ) -> _RecArray[Any]: ...
 @overload
 def fromfile(
-    fd: str | bytes | os.PathLike[str] | os.PathLike[bytes] | _SupportsReadInto,
+    fd: StrOrBytesPath | _SupportsReadInto,
     dtype: None = ...,
     shape: None | _ShapeLike = ...,
     offset: int = ...,
@@ -329,3 +343,5 @@ def array(
     byteorder: None | _ByteOrder = ...,
     copy: bool = ...,
 ) -> _RecArray[record]: ...
+
+def find_duplicate(list: Iterable[_T]) -> list[_T]: ...

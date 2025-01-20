@@ -1,8 +1,8 @@
 .. _numpy-distutils-refguide:
 
-**********************************
-Packaging (:mod:`numpy.distutils`)
-**********************************
+*********
+Packaging
+*********
 
 .. module:: numpy.distutils
 

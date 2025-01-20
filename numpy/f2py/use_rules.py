@@ -69,10 +69,7 @@ def buildusevars(m, r):
                     '\t\t\tNo definition for variable "%s=>%s". Skipping.\n' % (v, r['map'][v]))
     else:
         for v in m['vars'].keys():
-            if v in revmap:
-                varsmap[v] = revmap[v]
-            else:
-                varsmap[v] = v
+            varsmap[v] = revmap.get(v, v)
     for v in varsmap.keys():
         ret = dictappend(ret, buildusevar(v, varsmap[v], m['vars'], m['name']))
     return ret

@@ -26,11 +26,12 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
-    - uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+        persist-credentials: false
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
@@ -51,8 +52,8 @@ jobs:
       env:
         TERM: xterm-256color
       run: |
-        pip install pytest pytest-xdist hypothesis typing_extensions
+        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
         ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:halt_on_error=1 \
         UBSAN_OPTIONS=halt_on_error=0 \
         LD_PRELOAD=$(clang --print-file-name=libclang_rt.asan-x86_64.so) \
-        python -m spin test -- -v -s
+        python -m spin test -- -v -s --timeout=600 --durations=10

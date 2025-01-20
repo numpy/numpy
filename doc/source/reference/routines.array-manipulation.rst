@@ -18,7 +18,6 @@ Changing array shape
 .. autosummary::
    :toctree: generated/
 
-
    reshape
    ravel
    ndarray.flat
@@ -119,6 +118,5 @@ Rearranging elements
    flip
    fliplr
    flipud
-   reshape
    roll
    rot90

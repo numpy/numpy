@@ -117,7 +117,6 @@ plot_html_show_formats = False
 plot_html_show_source_link = False
 
 
-
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.

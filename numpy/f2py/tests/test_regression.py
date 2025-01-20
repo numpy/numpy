@@ -24,6 +24,18 @@ class TestIntentInOut(util.F2PyTest):
         assert np.allclose(x, [3, 1, 2])
 
 
+class TestDataOnlyMultiModule(util.F2PyTest):
+    # Check that modules without subroutines work
+    sources = [util.getpath("tests", "src", "regression", "datonly.f90")]
+
+    @pytest.mark.slow
+    def test_mdat(self):
+        assert self.module.datonly.max_value == 100
+        assert self.module.dat.max_ == 1009
+        int_in = 5
+        assert self.module.simple_subroutine(5) == 1014
+
+
 class TestNegativeBounds(util.F2PyTest):
     # Check that negative bounds work correctly
     sources = [util.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
@@ -33,8 +45,10 @@ class TestNegativeBounds(util.F2PyTest):
         xvec = np.arange(12)
         xlow = -6
         xhigh = 4
+
         # Calculate the upper bound,
         # Keeping the 1 index in mind
+
         def ubound(xl, xh):
             return xh - xl + 1
         rval = self.module.foo(is_=xlow, ie_=xhigh,
@@ -77,7 +91,7 @@ class TestIncludeFiles(util.F2PyTest):
     def test_gh25344(self):
         exp = 7.0
         res = self.module.add(3.0, 4.0)
-        assert  exp == res
+        assert exp == res
 
 class TestF77Comments(util.F2PyTest):
     # Check that comments are stripped from F77 continuation lines
@@ -87,15 +101,15 @@ class TestF77Comments(util.F2PyTest):
     def test_gh26148(self):
         x1 = np.array(3, dtype=np.int32)
         x2 = np.array(5, dtype=np.int32)
-        res=self.module.testsub(x1, x2)
-        assert(res[0] == 8)
-        assert(res[1] == 15)
+        res = self.module.testsub(x1, x2)
+        assert res[0] == 8
+        assert res[1] == 15
 
     @pytest.mark.slow
     def test_gh26466(self):
         # Check that comments after PARAMETER directions are stripped
-        expected = np.arange(1, 11, dtype=np.float32)*2
-        res=self.module.testsub2()
+        expected = np.arange(1, 11, dtype=np.float32) * 2
+        res = self.module.testsub2()
         npt.assert_allclose(expected, res)
 
 class TestF90Contiuation(util.F2PyTest):
@@ -106,9 +120,18 @@ class TestF90Contiuation(util.F2PyTest):
     def test_gh26148b(self):
         x1 = np.array(3, dtype=np.int32)
         x2 = np.array(5, dtype=np.int32)
-        res=self.module.testsub(x1, x2)
-        assert(res[0] == 8)
-        assert(res[1] == 15)
+        res = self.module.testsub(x1, x2)
+        assert res[0] == 8
+        assert res[1] == 15
+
+class TestLowerF2PYDirectives(util.F2PyTest):
+    # Check variables are cased correctly
+    sources = [util.getpath("tests", "src", "regression", "lower_f2py_fortran.f90")]
+
+    @pytest.mark.slow
+    def test_gh28014(self):
+        self.module.inquire_next(3)
+        assert True
 
 @pytest.mark.slow
 def test_gh26623():
@@ -139,3 +162,15 @@ def test_gh25784():
         )
     except ImportError as rerr:
         assert "unknown_subroutine_" in str(rerr)
+
+
+@pytest.mark.slow
+class TestAssignmentOnlyModules(util.F2PyTest):
+    # Ensure that variables are exposed without functions or subroutines in a module
+    sources = [util.getpath("tests", "src", "regression", "assignOnlyModule.f90")]
+
+    @pytest.mark.slow
+    def test_gh27167(self):
+        assert (self.module.f_globals.n_max == 16)
+        assert (self.module.f_globals.i_max == 18)
+        assert (self.module.f_globals.j_max == 72)

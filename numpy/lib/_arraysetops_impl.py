@@ -179,8 +179,6 @@ def unique(ar, return_index=False, return_inverse=False,
         that contain objects are not supported if the `axis` kwarg is used. The
         default is None.
 
-        .. versionadded:: 1.13.0
-
     equal_nan : bool, optional
         If True, collapses multiple NaN values in the return array into one.
 
@@ -207,8 +205,6 @@ def unique(ar, return_index=False, return_inverse=False,
     unique_counts : ndarray, optional
         The number of times each of the unique values comes up in the
         original array. Only provided if `return_counts` is True.
-
-        .. versionadded:: 1.9.0
 
     See Also
     --------
@@ -305,7 +301,7 @@ def unique(ar, return_index=False, return_inverse=False,
         except np.exceptions.AxisError:
             # this removes the "axis1" or "axis2" prefix from the error message
             raise np.exceptions.AxisError(axis, ar.ndim) from None
-    
+
     if ar.size == 0:
         perm = np.arange(len(ar))
         mask = perm == 0  # True for the first (if any)
@@ -342,28 +338,28 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
     """
     Sort lexicographically the rows of the table that would be obtained by
     concatenating the provided arrays horizontally.
-    
+
     Returns the indices of the sorted rows and optionally a boolean mask indicating
     the indices that correspond to unique rows.
-    
+
     Parameters
     ----------
 
     arrays : (first-array, second-array, ...) array_like
         One or more arrays of the same length (first axis). The arrays can be
         multi-dimensional, structured, masked, or have dtype=object.
-        
+
         The first array is the most significant for sorting.
         Then, for multi-dimensional arrays, the second to last axes are flattened,
         producing a 2D table in which the first column is the most significant.
         Then, for structured arrays, the first field is the most significant.
         Then, for masked arrays, masked elements are considered equal and largest.
         Finally, the usual order of elements in each non-structured 1D column is used.
-    
+
     equal_nan : bool, optional
         Whether to treat all nan types as equal or as different elements.
         This parameter matters both for sorting and for detecting unique elements.
-    
+
     objects : {'compare', 'different', 'equal', 'compare-no-nan'}, optional
         Rule for comparing objects. The possible options are to treat all objects
         as different ('different'), as equal ('equal'), or to compare them with
@@ -372,19 +368,19 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
         a nan object. To disable this check, use 'compare-no-nan'.
         The default is 'compare'.
         This parameter matters both for sorting and for detecting unique elements.
-    
+
     Returns
     -------
     index_array : ndarray of ints
         Array of indices that sort lexicographically the rows of table.
         If ``cols = table.T`` where ``table`` is two-dimensional array, then
         ``table[index_array]`` is sorted lexicographically.
-    
+
     is_unique : boolean ndarray, optional
         Boolean mask with the same shape as `index_array` that indicates what indices
         correspond to unique rows. Only the first occurrence is marked as `True`.
         If ``table[index_array]`` is sorted lexicographically, then
-        ``table[index_array[is_unique]]`` contains unique rows.        
+        ``table[index_array[is_unique]]`` contains unique rows.
 
     See Also
     --------
@@ -413,7 +409,7 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
         For sorting, all nan values are considered equal, e.g. 1+nanj=nan-3j, and their
         order is given by the order in which they appear in the input.
         Since all nan values are equal, only the first occurrence is marked as unique.
-    
+
     Examples
     --------
 
@@ -424,7 +420,7 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
     array([['Bouvier', 'Marge'],
            ['Simpson', 'Bart'],
            ['Simpson', 'Homer']], dtype='<U7')
-         
+
     Mixed dtypes, strings and numbers:
 
     >>> country = ['Germany', 'France', 'Germany', 'Colombia']
@@ -442,9 +438,9 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
     array([('Colombia', 'Laura', 35), ('France', 'Pierre', 25),
            ('Germany', 'Laura', 35), ('Germany', 'Lukas', 35)],
           dtype=[('country', '<U10'), ('name', '<U10'), ('age', '<i8')])
-       
+
     Masked arrays and nan support:
-    
+
     >>> a = np.array([complex(np.nan, -1), np.nan, complex(3, np.nan), np.nan])
     >>> idx1, mask1 = _lexargsort(a, equal_nan=True, return_is_unique=True)
     >>> idx2, mask2 = _lexargsort(a, equal_nan=False, return_is_unique=True)
@@ -466,10 +462,10 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
             [False, False],
             [False,  True]],
       fill_value=1e+20)
-    
+
     Custom objects (doctest disabled because the function is not exposed to the user
     and doctest generates a warning with __eq__ and __lt__ methods)
-    
+
     >>> class Person:  # doctest: +SKIP
     ...     def __init__(self, name, age):
     ...         self.name = name
@@ -541,7 +537,7 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
 
     perm = np.arange(n)
     blocks = [(0, n)] if n > 1 else []
-    
+
     # Loop invariant: (Conceptual explanation)
     # C[perm] is sorted and all groups C[perm[start:stop]] of 2 or more equal
     # consecutuve elements  appear as (start, stop) in the list blocks.
@@ -565,18 +561,18 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
         # display(C[perm[start:stop]])  # Invariant
         if not blocks:
             break
-    
+
     for start, stop in blocks:
         idx = np.argsort(perm[start:stop], kind="stable")
         perm[start:stop] = perm[start:stop][idx]
-    
+
     out = (perm,)
     if return_is_unique:
         is_unique = np.ones(n, dtype=bool)
         for start, stop in blocks:
             is_unique[start + 1:stop] = False
         out += (is_unique,)
-    
+
     return out[0] if len(out) == 1 else out
 
 
@@ -606,14 +602,14 @@ def _unique_all_dispatcher(x, /):
 @array_function_dispatch(_unique_all_dispatcher)
 def unique_all(x):
     """
-    Find the unique elements of an array, and counts, inverse and indices.
+    Find the unique elements of an array, and counts, inverse, and indices.
 
-    This function is an Array API compatible alternative to:
+    This function is an Array API compatible alternative to::
 
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, return_index=True, return_inverse=True,
-    ...           return_counts=True, equal_nan=False)
-    (array([1, 2]), array([0, 2]), array([0, 0, 1]), array([2, 1]))
+        np.unique(x, return_index=True, return_inverse=True,
+                  return_counts=True, equal_nan=False)
+
+    but returns a namedtuple for easier access to each output.
 
     Parameters
     ----------
@@ -638,12 +634,16 @@ def unique_all(x):
     Examples
     --------
     >>> import numpy as np
-    >>> np.unique_all([1, 1, 2])
-    UniqueAllResult(values=array([1, 2]),
-                    indices=array([0, 2]),
-                    inverse_indices=array([0, 0, 1]),
-                    counts=array([2, 1]))
-
+    >>> x = [1, 1, 2]
+    >>> uniq = np.unique_all(x)
+    >>> uniq.values
+    array([1, 2])
+    >>> uniq.indices
+    array([0, 2])
+    >>> uniq.inverse_indices
+    array([0, 0, 1])
+    >>> uniq.counts
+    array([2, 1])
     """
     result = unique(
         x,
@@ -664,11 +664,11 @@ def unique_counts(x):
     """
     Find the unique elements and counts of an input array `x`.
 
-    This function is an Array API compatible alternative to:
+    This function is an Array API compatible alternative to::
 
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, return_counts=True, equal_nan=False)
-    (array([1, 2]), array([2, 1]))
+        np.unique(x, return_counts=True, equal_nan=False)
+
+    but returns a namedtuple for easier access to each output.
 
     Parameters
     ----------
@@ -690,9 +690,12 @@ def unique_counts(x):
     Examples
     --------
     >>> import numpy as np
-    >>> np.unique_counts([1, 1, 2])
-    UniqueCountsResult(values=array([1, 2]), counts=array([2, 1]))
-
+    >>> x = [1, 1, 2]
+    >>> uniq = np.unique_counts(x)
+    >>> uniq.values
+    array([1, 2])
+    >>> uniq.counts
+    array([2, 1])
     """
     result = unique(
         x,
@@ -713,11 +716,11 @@ def unique_inverse(x):
     """
     Find the unique elements of `x` and indices to reconstruct `x`.
 
-    This function is Array API compatible alternative to:
+    This function is an Array API compatible alternative to::
 
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, return_inverse=True, equal_nan=False)
-    (array([1, 2]), array([0, 0, 1]))
+        np.unique(x, return_inverse=True, equal_nan=False)
+
+    but returns a namedtuple for easier access to each output.
 
     Parameters
     ----------
@@ -740,9 +743,12 @@ def unique_inverse(x):
     Examples
     --------
     >>> import numpy as np
-    >>> np.unique_inverse([1, 1, 2])
-    UniqueInverseResult(values=array([1, 2]), inverse_indices=array([0, 0, 1]))
-
+    >>> x = [1, 1, 2]
+    >>> uniq = np.unique_inverse(x)
+    >>> uniq.values
+    array([1, 2])
+    >>> uniq.inverse_indices
+    array([0, 0, 1])
     """
     result = unique(
         x,
@@ -763,11 +769,9 @@ def unique_values(x):
     """
     Returns the unique elements of an input array `x`.
 
-    This function is Array API compatible alternative to:
+    This function is an Array API compatible alternative to::
 
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, equal_nan=False)
-    array([1, 2])
+        np.unique(x, equal_nan=False)
 
     Parameters
     ----------
@@ -824,8 +828,6 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         If True, the indices which correspond to the intersection of the two
         arrays are returned. The first instance of a value is used if there are
         multiple. Default is False.
-
-        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -997,8 +999,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
           'table' may be faster in most cases. If 'table' is chosen,
           `assume_unique` will have no effect.
 
-        .. versionadded:: 1.8.0
-
     Returns
     -------
     in1d : (M,) ndarray, bool
@@ -1025,8 +1025,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     but may use greater memory. The default value for `kind` will
     be automatically selected based only on memory usage, so one may
     manually set ``kind='table'`` if memory constraints can be relaxed.
-
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -1159,7 +1157,6 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             "Please select 'sort' or None for kind."
         )
 
-
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
 
@@ -1262,7 +1259,6 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
 
     Notes
     -----
-
     `isin` is an element-wise function version of the python keyword `in`.
     ``isin(a, b)`` is roughly equivalent to
     ``np.array([item in b for item in a])`` if `a` and `b` are 1-D sequences.
@@ -1281,8 +1277,6 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
     but may use greater memory. The default value for `kind` will
     be automatically selected based only on memory usage, so one may
     manually set ``kind='table'`` if memory constraints can be relaxed.
-
-    .. versionadded:: 1.13.0
 
     Examples
     --------

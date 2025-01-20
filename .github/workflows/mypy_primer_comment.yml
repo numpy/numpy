@@ -1,0 +1,103 @@
+name: Comment with mypy_primer diff
+
+on:
+  workflow_run:
+    workflows:
+      - Run mypy_primer
+    types:
+      - completed
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    name: Comment PR from mypy_primer
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download diffs
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: ${{ github.event.workflow_run.id }},
+            });
+            const [matchArtifact] = artifacts.data.artifacts.filter((artifact) =>
+              artifact.name == "mypy_primer_diffs");
+
+            const download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: "zip",
+            });
+            fs.writeFileSync("diff.zip", Buffer.from(download.data));
+
+      - run: unzip diff.zip
+
+      - name: Get PR number
+        id: get-pr-number
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            return parseInt(fs.readFileSync("pr_number.txt", { encoding: "utf8" }))
+
+      - name: Hide old comments
+        uses: kanga333/comment-hider@c12bb20b48aeb8fc098e35967de8d4f8018fffdf  # v0.4.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          issue_number: ${{ steps.get-pr-number.outputs.result }}
+
+      - run: cat diff_*.txt | tee fulldiff.txt
+
+      - name: Post comment
+        id: post-comment
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const MAX_CHARACTERS = 50000
+            const MAX_CHARACTERS_PER_PROJECT = MAX_CHARACTERS / 3
+
+            const fs = require('fs')
+            let data = fs.readFileSync('fulldiff.txt', { encoding: 'utf8' })
+
+            function truncateIfNeeded(original, maxLength) {
+              if (original.length <= maxLength) {
+                return original
+              }
+              let truncated = original.substring(0, maxLength)
+              // further, remove last line that might be truncated
+              truncated = truncated.substring(0, truncated.lastIndexOf('\n'))
+              let lines_truncated = original.split('\n').length - truncated.split('\n').length
+              return `${truncated}\n\n... (truncated ${lines_truncated} lines) ...`
+            }
+
+            const projects = data.split('\n\n')
+            // don't let one project dominate
+            data = projects.map(project => truncateIfNeeded(project, MAX_CHARACTERS_PER_PROJECT)).join('\n\n')
+            // posting comment fails if too long, so truncate
+            data = truncateIfNeeded(data, MAX_CHARACTERS)
+
+            console.log("Diff from mypy_primer:")
+            console.log(data)
+
+            let body
+            if (data.trim()) {
+              body = 'Diff from [mypy_primer](https://github.com/hauntsaninja/mypy_primer), '
+              body += 'showing the effect of this PR on type check results on a corpus of open source code:\n```diff\n'
+              body += data + '```'
+              const prNumber = parseInt(fs.readFileSync("pr_number.txt", { encoding: "utf8" }))
+              await github.rest.issues.createComment({
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body
+              })
+            }

@@ -53,10 +53,9 @@ __all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
            'as_ctypes_type']
 
 import os
-from numpy import (
-    integer, ndarray, dtype as _dtype, asarray, frombuffer
-)
-from numpy._core.multiarray import _flagdict, flagsobj
+import numpy as np
+import numpy._core.multiarray as mu
+from numpy._utils import set_module
 
 try:
     import ctypes
@@ -64,6 +63,7 @@ except ImportError:
     ctypes = None
 
 if ctypes is None:
+    @set_module("numpy.ctypeslib")
     def _dummy(*args, **kwds):
         """
         Dummy object that raises an ImportError if ctypes is not available.
@@ -77,7 +77,9 @@ if ctypes is None:
         raise ImportError("ctypes is not available.")
     load_library = _dummy
     as_ctypes = _dummy
+    as_ctypes_type = _dummy
     as_array = _dummy
+    ndpointer = _dummy
     from numpy import intp as c_intp
     _ndptr_base = object
 else:
@@ -87,6 +89,7 @@ else:
     _ndptr_base = ctypes.c_void_p
 
     # Adapted from Albert Strasheim
+    @set_module("numpy.ctypeslib")
     def load_library(libname, loader_path):
         """
         It is possible to load a library using
@@ -164,15 +167,16 @@ else:
 def _num_fromflags(flaglist):
     num = 0
     for val in flaglist:
-        num += _flagdict[val]
+        num += mu._flagdict[val]
     return num
+
 
 _flagnames = ['C_CONTIGUOUS', 'F_CONTIGUOUS', 'ALIGNED', 'WRITEABLE',
               'OWNDATA', 'WRITEBACKIFCOPY']
 def _flags_fromnum(num):
     res = []
     for key in _flagnames:
-        value = _flagdict[key]
+        value = mu._flagdict[key]
         if (num & value):
             res.append(key)
     return res
@@ -181,7 +185,7 @@ def _flags_fromnum(num):
 class _ndptr(_ndptr_base):
     @classmethod
     def from_param(cls, obj):
-        if not isinstance(obj, ndarray):
+        if not isinstance(obj, np.ndarray):
             raise TypeError("argument must be an ndarray")
         if cls._dtype_ is not None \
                and obj.dtype != cls._dtype_:
@@ -221,15 +225,17 @@ class _concrete_ndptr(_ndptr):
 
         This mirrors the `contents` attribute of a normal ctypes pointer
         """
-        full_dtype = _dtype((self._dtype_, self._shape_))
+        full_dtype = np.dtype((self._dtype_, self._shape_))
         full_ctype = ctypes.c_char * full_dtype.itemsize
         buffer = ctypes.cast(self, ctypes.POINTER(full_ctype)).contents
-        return frombuffer(buffer, dtype=full_dtype).squeeze(axis=0)
+        return np.frombuffer(buffer, dtype=full_dtype).squeeze(axis=0)
 
 
 # Factory for an array-checking class with from_param defined for
-#  use with ctypes argtypes mechanism
+# use with ctypes argtypes mechanism
 _pointer_type_cache = {}
+
+@set_module("numpy.ctypeslib")
 def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     """
     Array-checking restype/argtypes.
@@ -284,17 +290,17 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
 
     # normalize dtype to dtype | None
     if dtype is not None:
-        dtype = _dtype(dtype)
+        dtype = np.dtype(dtype)
 
     # normalize flags to int | None
     num = None
     if flags is not None:
         if isinstance(flags, str):
             flags = flags.split(',')
-        elif isinstance(flags, (int, integer)):
+        elif isinstance(flags, (int, np.integer)):
             num = flags
             flags = _flags_fromnum(num)
-        elif isinstance(flags, flagsobj):
+        elif isinstance(flags, mu.flagsobj):
             num = flags.num
             flags = _flags_fromnum(num)
         if num is None:
@@ -329,20 +335,20 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     if ndim is not None:
         name += "_%dd" % ndim
     if shape is not None:
-        name += "_"+"x".join(str(x) for x in shape)
+        name += "_" + "x".join(str(x) for x in shape)
     if flags is not None:
-        name += "_"+"_".join(flags)
+        name += "_" + "_".join(flags)
 
     if dtype is not None and shape is not None:
         base = _concrete_ndptr
     else:
         base = _ndptr
 
-    klass = type("ndpointer_%s"%name, (base,),
+    klass = type("ndpointer_%s" % name, (base,),
                  {"_dtype_": dtype,
-                  "_shape_" : shape,
-                  "_ndim_" : ndim,
-                  "_flags_" : num})
+                  "_shape_": shape,
+                  "_ndim_": ndim,
+                  "_flags_": num})
     _pointer_type_cache[cache_key] = klass
     return klass
 
@@ -356,7 +362,6 @@ if ctypes is not None:
             element_type.__module__ = None
         return element_type
 
-
     def _get_scalar_type_map():
         """
         Return a dictionary mapping native endian scalar dtype to ctypes types
@@ -368,11 +373,9 @@ if ctypes is not None:
             ct.c_float, ct.c_double,
             ct.c_bool,
         ]
-        return {_dtype(ctype): ctype for ctype in simple_types}
-
+        return {np.dtype(ctype): ctype for ctype in simple_types}
 
     _scalar_type_map = _get_scalar_type_map()
-
 
     def _ctype_from_dtype_scalar(dtype):
         # swapping twice ensure that `=` is promoted to <, >, or |
@@ -392,12 +395,10 @@ if ctypes is not None:
 
         return ctype
 
-
     def _ctype_from_dtype_subarray(dtype):
         element_dtype, shape = dtype.subdtype
         ctype = _ctype_from_dtype(element_dtype)
         return _ctype_ndarray(ctype, shape)
-
 
     def _ctype_from_dtype_structured(dtype):
         # extract offsets of each field
@@ -422,11 +423,11 @@ if ctypes is not None:
                 _fields_.append(('', ctypes.c_char * dtype.itemsize))
 
             # we inserted manual padding, so always `_pack_`
-            return type('union', (ctypes.Union,), dict(
-                _fields_=_fields_,
-                _pack_=1,
-                __module__=None,
-            ))
+            return type('union', (ctypes.Union,), {
+                '_fields_': _fields_,
+                '_pack_': 1,
+                '__module__': None,
+            })
         else:
             last_offset = 0
             _fields_ = []
@@ -440,18 +441,16 @@ if ctypes is not None:
                 _fields_.append((name, ctype))
                 last_offset = offset + ctypes.sizeof(ctype)
 
-
             padding = dtype.itemsize - last_offset
             if padding > 0:
                 _fields_.append(('', ctypes.c_char * padding))
 
             # we inserted manual padding, so always `_pack_`
-            return type('struct', (ctypes.Structure,), dict(
-                _fields_=_fields_,
-                _pack_=1,
-                __module__=None,
-            ))
-
+            return type('struct', (ctypes.Structure,), {
+                '_fields_': _fields_,
+                '_pack_': 1,
+                '__module__': None,
+            })
 
     def _ctype_from_dtype(dtype):
         if dtype.fields is not None:
@@ -461,7 +460,7 @@ if ctypes is not None:
         else:
             return _ctype_from_dtype_scalar(dtype)
 
-
+    @set_module("numpy.ctypeslib")
     def as_ctypes_type(dtype):
         r"""
         Convert a dtype into a ctypes type.
@@ -516,9 +515,9 @@ if ctypes is not None:
         <class 'struct'>
 
         """
-        return _ctype_from_dtype(_dtype(dtype))
+        return _ctype_from_dtype(np.dtype(dtype))
 
-
+    @set_module("numpy.ctypeslib")
     def as_array(obj, shape=None):
         """
         Create a numpy array from a ctypes array or POINTER.
@@ -527,6 +526,26 @@ if ctypes is not None:
 
         The shape parameter must be given if converting from a ctypes POINTER.
         The shape parameter is ignored if converting from a ctypes array
+
+        Examples
+        --------
+        Converting a ctypes integer array:
+
+        >>> import ctypes
+        >>> ctypes_array = (ctypes.c_int * 5)(0, 1, 2, 3, 4)
+        >>> np_array = np.ctypeslib.as_array(ctypes_array)
+        >>> np_array
+        array([0, 1, 2, 3, 4], dtype=int32)
+
+        Converting a ctypes POINTER:
+
+        >>> import ctypes
+        >>> buffer = (ctypes.c_int * 5)(0, 1, 2, 3, 4)
+        >>> pointer = ctypes.cast(buffer, ctypes.POINTER(ctypes.c_int))
+        >>> np_array = np.ctypeslib.as_array(pointer, (5,))
+        >>> np_array
+        array([0, 1, 2, 3, 4], dtype=int32)
+
         """
         if isinstance(obj, ctypes._Pointer):
             # convert pointers to an array of the desired shape
@@ -537,12 +556,35 @@ if ctypes is not None:
             p_arr_type = ctypes.POINTER(_ctype_ndarray(obj._type_, shape))
             obj = ctypes.cast(obj, p_arr_type).contents
 
-        return asarray(obj)
+        return np.asarray(obj)
 
-
+    @set_module("numpy.ctypeslib")
     def as_ctypes(obj):
-        """Create and return a ctypes object from a numpy array.  Actually
-        anything that exposes the __array_interface__ is accepted."""
+        """
+        Create and return a ctypes object from a numpy array.  Actually
+        anything that exposes the __array_interface__ is accepted.
+
+        Examples
+        --------
+        Create ctypes object from inferred int ``np.array``:
+
+        >>> inferred_int_array = np.array([1, 2, 3])
+        >>> c_int_array = np.ctypeslib.as_ctypes(inferred_int_array)
+        >>> type(c_int_array)
+        <class 'c_long_Array_3'>
+        >>> c_int_array[:]
+        [1, 2, 3]
+
+        Create ctypes object from explicit 8 bit unsigned int ``np.array`` :
+
+        >>> exp_int_array = np.array([1, 2, 3], dtype=np.uint8)
+        >>> c_int_array = np.ctypeslib.as_ctypes(exp_int_array)
+        >>> type(c_int_array)
+        <class 'c_ubyte_Array_3'>
+        >>> c_int_array[:]
+        [1, 2, 3]
+
+        """
         ai = obj.__array_interface__
         if ai["strides"]:
             raise TypeError("strided arrays not supported")

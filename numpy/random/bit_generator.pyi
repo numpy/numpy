@@ -4,10 +4,12 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import (
     Any,
     NamedTuple,
+    TypeAlias,
     TypedDict,
     TypeVar,
     overload,
     Literal,
+    type_check_only,
 )
 
 from numpy import dtype, uint32, uint64
@@ -22,25 +24,27 @@ from numpy._typing import (
 
 _T = TypeVar("_T")
 
-_DTypeLikeUint32 = (
+_DTypeLikeUint32: TypeAlias = (
     dtype[uint32]
     | _SupportsDType[dtype[uint32]]
     | type[uint32]
     | _UInt32Codes
 )
-_DTypeLikeUint64 = (
+_DTypeLikeUint64: TypeAlias = (
     dtype[uint64]
     | _SupportsDType[dtype[uint64]]
     | type[uint64]
     | _UInt64Codes
 )
 
+@type_check_only
 class _SeedSeqState(TypedDict):
     entropy: None | int | Sequence[int]
     spawn_key: tuple[int, ...]
     pool_size: int
     n_children_spawned: int
 
+@type_check_only
 class _Interface(NamedTuple):
     state_address: Any
     state: Any
@@ -114,9 +118,13 @@ class BitGenerator(abc.ABC):
     @overload
     def random_raw(self, size: None = ..., output: Literal[True] = ...) -> int: ...  # type: ignore[misc]
     @overload
-    def random_raw(self, size: _ShapeLike = ..., output: Literal[True] = ...) -> NDArray[uint64]: ...  # type: ignore[misc]
+    def random_raw(
+        self, size: _ShapeLike = ..., output: Literal[True] = ...
+    ) -> NDArray[uint64]: ...  # type: ignore[misc]
     @overload
-    def random_raw(self, size: None | _ShapeLike = ..., output: Literal[False] = ...) -> None: ...  # type: ignore[misc]
+    def random_raw(
+        self, size: None | _ShapeLike = ..., output: Literal[False] = ...
+    ) -> None: ...  # type: ignore[misc]
     def _benchmark(self, cnt: int, method: str = ...) -> None: ...
     @property
     def ctypes(self) -> _Interface: ...

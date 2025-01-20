@@ -195,7 +195,7 @@ def test_composition():
 
 
 def test_fit():
-    x, y = (range(10),)*2
+    x, y = (range(10),) * 2
     p = poly.Polynomial.fit(x, y, deg=1, symbol='z')
     assert_equal(p.symbol, 'z')
 

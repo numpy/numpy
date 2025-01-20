@@ -15,9 +15,9 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
 )
 
-_SCT = TypeVar("_SCT", bound=generic)
+__all__ = ["logspace", "linspace", "geomspace"]
 
-__all__: list[str]
+_SCT = TypeVar("_SCT", bound=generic)
 
 @overload
 def linspace(

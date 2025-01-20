@@ -111,7 +111,7 @@ class TestAtleast3d:
         a = array([[1, 2], [1, 2]])
         b = array([[2, 3], [2, 3]])
         res = [atleast_3d(a), atleast_3d(b)]
-        desired = [a[:,:, newaxis], b[:,:, newaxis]]
+        desired = [a[:, :, newaxis], b[:, :, newaxis]]
         assert_array_equal(res, desired)
 
     def test_3D_array(self):
@@ -225,7 +225,6 @@ class TestVstack:
             vstack((a, b), casting="safe", dtype=np.int64)
 
 
-
 class TestConcatenate:
     def test_returns_copy(self):
         a = np.eye(3)
@@ -236,7 +235,7 @@ class TestConcatenate:
     def test_exceptions(self):
         # test axis must be in bounds
         for ndim in [1, 2, 3]:
-            a = np.ones((1,)*ndim)
+            a = np.ones((1,) * ndim)
             np.concatenate((a, a), axis=0)  # OK
             assert_raises(AxisError, np.concatenate, (a, a), axis=ndim)
             assert_raises(AxisError, np.concatenate, (a, a), axis=-(ndim + 1))
@@ -354,7 +353,7 @@ class TestConcatenate:
         import operator
         a = array([1, 2])
         b = array([3, 4])
-        n = [1,2]
+        n = [1, 2]
         res = array([1, 2, 3, 4])
         assert_raises(TypeError, operator.concat, a, b)
         assert_raises(TypeError, operator.concat, a, n)
@@ -367,8 +366,8 @@ class TestConcatenate:
         b = array([3, 4])
 
         assert_raises(ValueError, concatenate, (a, b), out=np.empty(5))
-        assert_raises(ValueError, concatenate, (a, b), out=np.empty((4,1)))
-        assert_raises(ValueError, concatenate, (a, b), out=np.empty((1,4)))
+        assert_raises(ValueError, concatenate, (a, b), out=np.empty((4, 1)))
+        assert_raises(ValueError, concatenate, (a, b), out=np.empty((1, 4)))
         concatenate((a, b), out=np.empty(4))
 
     @pytest.mark.parametrize("axis", [None, 0])
@@ -765,9 +764,10 @@ class TestBlock:
         assert_raises(ValueError, block, [a, b])
         assert_raises(ValueError, block, [b, a])
 
-        to_block = [[np.ones((2,3)), np.ones((2,2))],
-                    [np.ones((2,2)), np.ones((2,2))]]
+        to_block = [[np.ones((2, 3)), np.ones((2, 2))],
+                    [np.ones((2, 2)), np.ones((2, 2))]]
         assert_raises(ValueError, block, to_block)
+
     def test_no_lists(self, block):
         assert_equal(block(1),         np.array(1))
         assert_equal(block(np.eye(3)), np.eye(3))
@@ -817,8 +817,8 @@ class TestBlock:
 
     def test_block_memory_order(self, block):
         # 3D
-        arr_c = np.zeros((3,)*3, order='C')
-        arr_f = np.zeros((3,)*3, order='F')
+        arr_c = np.zeros((3,) * 3, order='C')
+        arr_f = np.zeros((3,) * 3, order='F')
 
         b_c = [[[arr_c, arr_c],
                 [arr_c, arr_c]],

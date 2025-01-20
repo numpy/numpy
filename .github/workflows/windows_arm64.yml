@@ -1,0 +1,208 @@
+name: Windows Arm64
+
+on:
+  workflow_dispatch:
+
+env:
+  python_version: 3.12
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  windows_arm:
+    runs-on: windows-2019
+
+    # To enable this job on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+
+    - name: Setup Python
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      with:
+        python-version: ${{env.python_version}}
+        architecture: x64
+
+    - name: Install build dependencies from PyPI
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+
+    - name: Prepare python
+      shell: powershell
+      run: |
+        $ErrorActionPreference = "Stop"
+
+        #Detecting python location and version
+        $PythonDir = (Split-Path -Parent (get-command python).Path)
+        $PythonVersionParts = ( -split (python -V))
+        $PythonVersion = $PythonVersionParts[1]
+
+        #Downloading the package for appropriate python version from nuget
+        $PythonARM64NugetLink = "https://www.nuget.org/api/v2/package/pythonarm64/$PythonVersion"
+        $PythonARM64NugetZip = "nuget_python.zip"
+        $PythonARM64NugetDir = "temp_nuget"
+        Invoke-WebRequest $PythonARM64NugetLink -OutFile $PythonARM64NugetZip
+
+        #Changing the libs folder to enable python libraries to be linked for arm64
+        Expand-Archive $PythonARM64NugetZip $PythonARM64NugetDir
+        Copy-Item $PythonARM64NugetDir\tools\libs\* $PythonDir\libs
+        Remove-Item -Force -Recurse $PythonARM64NugetDir
+        Remove-Item -Force $PythonARM64NugetZip
+
+        if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
+
+    - name: Prepare Licence
+      shell: powershell
+      run: |
+        $ErrorActionPreference = "Stop"
+
+        $CurrentDir = (get-location).Path
+        $LicenseFile = "$CurrentDir\LICENSE.txt"
+        Set-Content $LicenseFile ([Environment]::NewLine)
+        Add-Content $LicenseFile "----"
+        Add-Content $LicenseFile ([Environment]::NewLine)
+        Add-Content $LicenseFile (Get-Content "$CurrentDir\LICENSES_bundled.txt")
+        Add-Content $LicenseFile (Get-Content "$CurrentDir\tools\wheels\LICENSE_win32.txt")
+
+        if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
+
+    - name: Wheel build
+      shell: powershell
+      run: |
+        $ErrorActionPreference = "Stop"
+
+        #Creating cross compile script for messon subsystem
+        $CurrentDir = (get-location)
+        $CrossScript = "$CurrentDir\arm64_w64.txt"
+        $CrossScriptContent =
+        {
+            [host_machine]
+            system = 'windows'
+            subsystem = 'windows'
+            kernel = 'nt'
+            cpu_family = 'aarch64'
+            cpu = 'aarch64'
+            endian = 'little'
+
+            [binaries]
+            c='cl.exe'
+            cpp = 'cl.exe'
+
+            [properties]
+            sizeof_short = 2
+            sizeof_int = 4
+            sizeof_long = 4
+            sizeof_long_long = 8
+            sizeof_float = 4
+            sizeof_double = 8
+            sizeof_long_double = 8
+            sizeof_size_t = 8
+            sizeof_wchar_t = 2
+            sizeof_off_t = 4
+            sizeof_Py_intptr_t = 8
+            sizeof_PY_LONG_LONG = 8
+            longdouble_format = 'IEEE_DOUBLE_LE'
+        }
+        Set-Content $CrossScript $CrossScriptContent.ToString()
+
+        #Setting up cross compilers from MSVC
+        $Products = 'Community', 'Professional', 'Enterprise', 'BuildTools' | % { "Microsoft.VisualStudio.Product.$_" }
+        $VsInstallPath = (vswhere -products $Products -latest -format json | ConvertFrom-Json).installationPath
+        $VSVars = (Get-ChildItem -Path $VsInstallPath -Recurse -Filter "vcvarsamd64_arm64.bat").FullName
+        $ScriptingObj = New-Object -ComObject Scripting.FileSystemObject
+        $VSVarsShort = $ScriptingObj.GetFile($VSVars).ShortPath
+        cmd /c "$VSVarsShort && set" |
+        ForEach-Object {
+            if ($_ -match "=") {
+                $Var = $_.split("=")
+                set-item -force -path "ENV:\$($Var[0])"  -value "$($Var[1])"
+            }
+        }
+
+        #Building the wheel
+        pip wheel . --config-settings=setup-args="--cross-file=$CrossScript"
+
+        if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
+
+    - name: Fix wheel
+      shell: powershell
+      run: |
+        $ErrorActionPreference = "Stop"
+
+        #Finding whl file
+        $CurrentDir = (get-location)
+        $WhlName = ((Get-ChildItem -Filter "*.whl").FullName)
+        $ZipWhlName = "$CurrentDir\ZipWhlName.zip"
+        $UnzippedWhl = "$CurrentDir\unzipedWhl"
+
+        #Expanding whl file
+        Rename-Item -Path $WhlName $ZipWhlName
+        if (Test-Path $UnzippedWhl) {
+            Remove-Item -Force -Recurse $UnzippedWhl
+        }
+        Expand-Archive -Force -Path $ZipWhlName $UnzippedWhl
+
+        #Renaming all files to show that their arch is arm64
+        Get-ChildItem -Recurse -Path $UnzippedWhl *win_amd64* | Rename-Item -NewName { $_.Name -replace 'win_amd64', 'win_arm64' }
+        $DIST_DIR = (Get-ChildItem -Recurse -Path $UnzippedWhl *dist-info).FullName
+
+        #Changing amd64 references from metafiles
+        (GET-Content $DIST_DIR/RECORD) -replace 'win_amd64', 'win_arm64' | Set-Content $DIST_DIR/RECORD
+        (GET-Content $DIST_DIR/WHEEL) -replace 'win_amd64', 'win_arm64' | Set-Content $DIST_DIR/WHEEL
+
+        #Packing whl file
+        Compress-Archive -Path $UnzippedWhl\* -DestinationPath $ZipWhlName -Force
+        $WhlName = $WhlName.Replace("win_amd64", "win_arm64")
+        Rename-Item -Path $ZipWhlName $WhlName
+
+        if ((Test-Path -LiteralPath variable:\LASTEXITCODE)) { exit $LASTEXITCODE }
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+      with:
+          name: ${{ env.python_version }}-win_arm64
+          path: ./*.whl
+
+    - name: Setup Mamba
+      uses: mamba-org/setup-micromamba@068f1ab4b37ed9b3d9f73da7db90a0cda0a48d29
+      with:
+        # for installation of anaconda-client, required for upload to
+        # anaconda.org
+        # Note that this step is *after* specific pythons have been used to
+        # build and test the wheel
+        # for installation of anaconda-client, for upload to anaconda.org
+        # environment will be activated after creation, and in future bash steps
+        init-shell: bash
+        environment-name: upload-env
+        create-args: >-
+          anaconda-client
+
+    # - name: Upload wheels
+    #   if: success()
+    #   shell: bash -el {0}
+    #   # see https://github.com/marketplace/actions/setup-miniconda for why
+    #   # `-el {0}` is required.
+    #   env:
+    #     NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
+    #     NUMPY_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}
+    #   run: |
+    #     source tools/wheels/upload_wheels.sh
+    #     set_upload_vars
+    #     # trigger an upload to
+    #     # https://anaconda.org/scientific-python-nightly-wheels/numpy
+    #     # for cron jobs or "Run workflow" (restricted to main branch).
+    #     # Tags will upload to
+    #     # https://anaconda.org/multibuild-wheels-staging/numpy
+    #     # The tokens were originally generated at anaconda.org
+    #     upload_wheels
+

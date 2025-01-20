@@ -7,6 +7,7 @@ from typing import (
     SupportsIndex,
     TypeVar,
 )
+from typing_extensions import deprecated
 
 import numpy as np
 from numpy import (
@@ -49,6 +50,21 @@ from numpy._typing import (
     _ArrayLikeObject_co,
     _ArrayLikeNumber_co,
 )
+
+__all__ = [
+    "ediff1d",
+    "in1d",
+    "intersect1d",
+    "isin",
+    "setdiff1d",
+    "setxor1d",
+    "union1d",
+    "unique",
+    "unique_all",
+    "unique_counts",
+    "unique_inverse",
+    "unique_values",
+]
 
 _SCT = TypeVar("_SCT", bound=generic)
 _NumberType = TypeVar("_NumberType", bound=number[Any])
@@ -100,8 +116,6 @@ class UniqueCountsResult(NamedTuple, Generic[_SCT]):
 class UniqueInverseResult(NamedTuple, Generic[_SCT]):
     values: NDArray[_SCT]
     inverse_indices: NDArray[intp]
-
-__all__: list[str]
 
 @overload
 def ediff1d(
@@ -366,6 +380,16 @@ def setxor1d(
 ) -> NDArray[Any]: ...
 
 def isin(
+    element: ArrayLike,
+    test_elements: ArrayLike,
+    assume_unique: bool = ...,
+    invert: bool = ...,
+    *,
+    kind: None | str = ...,
+) -> NDArray[np.bool]: ...
+
+@deprecated("Use 'isin' instead")
+def in1d(
     element: ArrayLike,
     test_elements: ArrayLike,
     assume_unique: bool = ...,

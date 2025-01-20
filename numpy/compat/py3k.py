@@ -63,6 +63,7 @@ def open_latin1(filename, mode='r'):
 def sixu(s):
     return s
 
+
 strchar = 'U'
 
 def getexception():
@@ -118,8 +119,6 @@ def npy_load_module(name, fn, info=None):
     Load a module. Uses ``load_module`` which will be deprecated in python
     3.12. An alternative that uses ``exec_module`` is in
     numpy.distutils.misc_util.exec_mod_from_location
-
-    .. versionadded:: 1.11.2
 
     Parameters
     ----------

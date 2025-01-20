@@ -3,16 +3,21 @@
  ** (avx2 fma3) AVX512_SKX
  ** vsx2 vsx4
  ** neon_vfpv4
- ** vx vxe
+ ** vxe
  **/
+
 #include "numpy/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
+
 // Provides the various *_LOOP macros
 #include "fast_loop_macros.h"
+#include <hwy/highway.h>
+namespace hn = hwy::HWY_NAMESPACE;
 
-#if NPY_SIMD_FMA3 // native support
+#if HWY_NATIVE_FMA // native support
+
 /*
  * NOTE: The following implementation of tanh(f32, f64) have been converted from
  * Intel SVML to universal intrinsics, and the original code can be found in:
@@ -75,21 +80,103 @@
  *         achieve wider than target precision.
  *
  */
+
+const hn::ScalableTag<float> f32;
+const hn::ScalableTag<int32_t> s32;
+const hn::ScalableTag<uint32_t> u32;
+using vec_f32 = hn::Vec<decltype(f32)>;
+using vec_s32 = hn::Vec<decltype(s32)>;
+using vec_u32 = hn::Vec<decltype(u32)>;
+
+const hn::ScalableTag<double> f64;
+const hn::ScalableTag<int64_t> s64;
+const hn::ScalableTag<uint64_t> u64;
+using vec_f64 = hn::Vec<decltype(f64)>;
+using vec_s64 = hn::Vec<decltype(s64)>;
+using vec_u64 = hn::Vec<decltype(u64)>;
+
+template <typename vtype, typename type_t>
+HWY_ATTR NPY_FINLINE vtype
+load_vector(type_t* src, npy_intp ssrc, npy_intp len){
+    auto D = hn::DFromV<vtype>();
+    using DI = hn::RebindToSigned<decltype(D)>;
+    DI di;
+    
+    auto indices = hn::Iota(di, 0);
+    auto stride = hn::Set(di, ssrc);
+    indices = hn::Mul(indices, stride);
+    
+    const int nlanes = hn::Lanes(D);
+    if (len < nlanes){
+        if (ssrc == 1) {
+            return hn::LoadN(D, src, len);
+        } else {
+            return hn::GatherIndexN(D, src, indices, len); 
+        }
+    }else{
+        if (ssrc == 1) {
+            return hn::LoadU(D, src);
+        } else {
+            return hn::GatherIndex(D, src, indices); 
+        }
+    }
+}
+
+template <typename vtype, typename type_t>
+HWY_ATTR NPY_FINLINE void
+store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
+    auto D = hn::DFromV<vtype>();
+    using DI = hn::RebindToSigned<decltype(D)>;
+    DI di;
+    
+    auto indices = hn::Iota(di, 0);
+    auto stride = hn::Set(di, sdst);
+    indices = hn::Mul(indices, stride);
+    
+    const int nlanes = hn::Lanes(D);
+    if (len < nlanes){
+        if (sdst == 1) {
+            hn::StoreN(vec, D, dst, len);
+        } else {
+            hn::ScatterIndexN(vec, D, dst, indices, len); 
+        }
+    }else{
+        if (sdst == 1) {
+            hn::StoreU(vec, D, dst);
+        } else {
+            hn::ScatterIndex(vec, D, dst, indices); 
+        }
+    }
+}
+
 #if NPY_SIMD_F64
 
-    // For architectures without efficient gather / scatter instructions, it is
-    // better to use a transposed LUT where we can load all coefficients for an
-    // index linearly.  In order to keep the same vertical calculation, we
-    // transpose the coef. into lanes.  2 lane transpose is all that's
-    // implemented so we require `npyv_nlanes_f64` == 2.
-    #if npyv_nlanes_f64 == 2
-    #define TANH_TRANSPOSED_LUT
-    #endif // npyv_nlanes_f64 == 2
+HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
+    if constexpr(hn::Lanes(f64) == 8){
+        const vec_f64 lut0 = hn::Load(f64, lut);
+        const vec_f64 lut1 = hn::Load(f64, lut + 8);
+        return hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, idx));
+    }else if constexpr (hn::Lanes(f64) == 4){
+        const vec_f64 lut0 = hn::Load(f64, lut);
+        const vec_f64 lut1 = hn::Load(f64, lut + 4);
+        const vec_f64 lut2 = hn::Load(f64, lut + 8);
+        const vec_f64 lut3 = hn::Load(f64, lut + 12);
+        
+        const auto high_mask = hn::Ne(hn::ShiftRight<3>(idx), hn::Zero(u64));
+        const auto load_mask = hn::And(idx, hn::Set(u64, 0b111));
+        
+        const vec_f64 lut_low = hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, load_mask));
+        const vec_f64 lut_high = hn::TwoTablesLookupLanes(f64, lut2, lut3, hn::IndicesFromVec(f64, load_mask));
+        
+        return hn::IfThenElse(hn::RebindMask(f64, high_mask), lut_high, lut_low);
+    }else{
+        return hn::GatherIndex(f64, lut, hn::BitCast(s64, idx));
+    }
+}
 
-static void
+HWY_ATTR static void
 simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_intp len)
 {
-#if defined(TANH_TRANSPOSED_LUT)
     static const npy_uint64 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut18x16[] = {
         // 0
         0x0ull,                0x0ull,                0x3ff0000000000000ull, 0xbbf0b3ea3fdfaa19ull, // b,   c0,  c1,  c2
@@ -188,7 +275,7 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         0x0ull,                0x0ull,                0x0ull,                0x0ull,
         0x0ull,                0x0ull,               
     };
-#else
+
     static const npy_uint64 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut16x18[] = {
         // 0
         0x0ull,                0x3fcc000000000000ull, 0x3fd4000000000000ull, 0x3fdc000000000000ull,
@@ -281,132 +368,139 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         0xbe567e924bf5ff6eull, 0x3de3f7f7de6b0eb6ull, 0x3d69ed18bae3ebbcull, 0xbcf7534c4f3dfa71ull,
         0xbc730b73f1eaff20ull, 0xbbba2cff8135d462ull, 0xbab5a71b5f7d9035ull, 0x0ull
     };
-#endif // defined(TANH_TRANSPOSED_LUT)
 
-    const int nlanes = npyv_nlanes_f64;
-    const npyv_f64 qnan = npyv_setall_f64(NPY_NAN);
+    const int nlanes = hn::Lanes(f64);
+    const vec_f64 qnan = hn::Set(f64, NPY_NAN);
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
-        npyv_f64 x;
-        if (ssrc == 1) {
-            x = npyv_load_tillz_f64(src, len);
-        } else {
-            x = npyv_loadn_tillz_f64(src, ssrc, len);
-        }
-        npyv_s64 ndnan = npyv_and_s64(npyv_reinterpret_s64_f64(x), npyv_setall_s64(0x7ff8000000000000ll));
+        vec_f64 x = load_vector<vec_f64>(src, ssrc, len);
+        
+        vec_s64 ndnan = hn::And(hn::BitCast(s64, x), hn::Set(s64, 0x7ff8000000000000ll));
         // |x| > HUGE_THRESHOLD, INF and NaNs.
-        npyv_b64 special_m = npyv_cmple_s64(ndnan, npyv_setall_s64(0x7fe0000000000000ll));
-        npyv_b64 nnan_m = npyv_notnan_f64(x);
-        npyv_s64 idxs = npyv_sub_s64(ndnan, npyv_setall_s64(0x3fc0000000000000ll));
+        auto special_m = hn::Le(ndnan, hn::Set(s64, 0x7fe0000000000000ll));
+        auto nan_m = hn::IsNaN(x);
+        vec_s64 idxs = hn::Sub(ndnan, hn::Set(s64, 0x3fc0000000000000ll));
         // no native 64-bit for max/min and its fine to use 32-bit max/min
         // since we're not crossing 32-bit edge
-        npyv_s32 idxl = npyv_max_s32(npyv_reinterpret_s32_s64(idxs), npyv_zero_s32());
-                 idxl = npyv_min_s32(idxl, npyv_setall_s32(0x780000));
-        npyv_u64 idx  = npyv_shri_u64(npyv_reinterpret_u64_s32(idxl), 51);
+        vec_s32 idxl = hn::Max(hn::BitCast(s32, idxs), hn::Zero(s32));
+                 idxl = hn::Min(idxl, hn::Set(s32, 0x780000));
+        vec_u64 idx  = hn::ShiftRightSame(hn::BitCast(u64, idxl), 51);
 
-#if defined(TANH_TRANSPOSED_LUT)
-        npyv_f64 e0e1[npyv_nlanes_f64];
-        npyv_lanetype_u64 index[npyv_nlanes_f64];
-        npyv_store_u64(index, idx);
+        // For architectures without efficient gather / scatter instructions, it is
+        // better to use a transposed LUT where we can load all coefficients for an
+        // index linearly.  In order to keep the same vertical calculation, we
+        // transpose the coef. into lanes.  2 lane transpose is all that's
+        // implemented so we require `npyv_nlanes_f64` == 2.
+        vec_f64 b, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16;
+        if constexpr(hn::MaxLanes(f64) == 2){
+            vec_f64 e0e1[hn::Lanes(f64)];
+            uint64_t index[hn::Lanes(f64)];
+            hn::StoreU(idx, u64, index);
 
-        /**begin repeat
-         * #off= 0, 2,  4,  6,  8,  10, 12,  14,  16#
-         * #e0 = b, c1, c3, c5, c7, c9, c11, c13, c15#
-         * #e1 = c0,c2, c4, c6, c8, c10,c12, c14, c16#
-         */
-        /**begin repeat1
-         * #lane = 0, 1#
-         */
-        e0e1[@lane@] = npyv_reinterpret_f64_u64(npyv_load_u64(lut18x16 + index[@lane@] * 18 + @off@));
-        /**end repeat1**/
-        npyv_f64 @e0@ = npyv_combinel_f64(e0e1[0], e0e1[1]);
-        npyv_f64 @e1@ = npyv_combineh_f64(e0e1[0], e0e1[1]);
-        /**end repeat**/
-#else
-        npyv_f64 b = npyv_lut16_f64((const double*)lut16x18 + 16*0, idx);
-        npyv_f64 c0 = npyv_lut16_f64((const double*)lut16x18 + 1*16, idx);
-        npyv_f64 c1 = npyv_lut16_f64((const double*)lut16x18 + 2*16, idx);
-        npyv_f64 c2 = npyv_lut16_f64((const double*)lut16x18 + 3*16, idx);
-        npyv_f64 c3 = npyv_lut16_f64((const double*)lut16x18 + 4*16, idx);
-        npyv_f64 c4 = npyv_lut16_f64((const double*)lut16x18 + 5*16, idx);
-        npyv_f64 c5 = npyv_lut16_f64((const double*)lut16x18 + 6*16, idx);
-        npyv_f64 c6 = npyv_lut16_f64((const double*)lut16x18 + 7*16, idx);
-        npyv_f64 c7 = npyv_lut16_f64((const double*)lut16x18 + 8*16, idx);
-        npyv_f64 c8 = npyv_lut16_f64((const double*)lut16x18 + 9*16, idx);
-        npyv_f64 c9 = npyv_lut16_f64((const double*)lut16x18 + 10*16, idx);
-        npyv_f64 c10 = npyv_lut16_f64((const double*)lut16x18 + 11*16, idx);
-        npyv_f64 c11 = npyv_lut16_f64((const double*)lut16x18 + 12*16, idx);
-        npyv_f64 c12 = npyv_lut16_f64((const double*)lut16x18 + 13*16, idx);
-        npyv_f64 c13 = npyv_lut16_f64((const double*)lut16x18 + 14*16, idx);
-        npyv_f64 c14 = npyv_lut16_f64((const double*)lut16x18 + 15*16, idx);
-        npyv_f64 c15 = npyv_lut16_f64((const double*)lut16x18 + 16*16, idx);
-        npyv_f64 c16 = npyv_lut16_f64((const double*)lut16x18 + 17*16, idx);
-#endif // defined(TANH_TRANSPOSED_LUT)
+            /**begin repeat
+             * #off= 0, 2,  4,  6,  8,  10, 12,  14,  16#
+             * #e0 = b, c1, c3, c5, c7, c9, c11, c13, c15#
+             * #e1 = c0,c2, c4, c6, c8, c10,c12, c14, c16#
+             */
+            /**begin repeat1
+             * #lane = 0, 1#
+             */
+            e0e1[@lane@] = hn::LoadU(f64, (const double*)lut18x16 + index[@lane@] * 18 + @off@);
+            /**end repeat1**/
+            @e0@ = hn::ConcatLowerLower(f64, e0e1[1], e0e1[0]);
+            @e1@ = hn::ConcatUpperUpper(f64, e0e1[1], e0e1[0]);
+            /**end repeat**/
+        } else {
+            b = lut_16_f64((const double*)lut16x18 + 16*0, idx);
+            c0 = lut_16_f64((const double*)lut16x18 + 1*16, idx);
+            c1 = lut_16_f64((const double*)lut16x18 + 2*16, idx);
+            c2 = lut_16_f64((const double*)lut16x18 + 3*16, idx);
+            c3 = lut_16_f64((const double*)lut16x18 + 4*16, idx);
+            c4 = lut_16_f64((const double*)lut16x18 + 5*16, idx);
+            c5 = lut_16_f64((const double*)lut16x18 + 6*16, idx);
+            c6 = lut_16_f64((const double*)lut16x18 + 7*16, idx);
+            c7 = lut_16_f64((const double*)lut16x18 + 8*16, idx);
+            c8 = lut_16_f64((const double*)lut16x18 + 9*16, idx);
+            c9 = lut_16_f64((const double*)lut16x18 + 10*16, idx);
+            c10 = lut_16_f64((const double*)lut16x18 + 11*16, idx);
+            c11 = lut_16_f64((const double*)lut16x18 + 12*16, idx);
+            c12 = lut_16_f64((const double*)lut16x18 + 13*16, idx);
+            c13 = lut_16_f64((const double*)lut16x18 + 14*16, idx);
+            c14 = lut_16_f64((const double*)lut16x18 + 15*16, idx);
+            c15 = lut_16_f64((const double*)lut16x18 + 16*16, idx);
+            c16 = lut_16_f64((const double*)lut16x18 + 17*16, idx);
+        }
 
         // no need to zerofy nans or avoid FP exceptions by NO_EXC like SVML does
         // since we're clearing the FP status anyway.
-        npyv_f64 sign = npyv_and_f64(x, npyv_reinterpret_f64_s64(npyv_setall_s64(0x8000000000000000ull)));
-        npyv_f64 y = npyv_sub_f64(npyv_abs_f64(x), b);
-        npyv_f64 r = npyv_muladd_f64(c16, y, c15);
-        r = npyv_muladd_f64(r, y, c14);
-        r = npyv_muladd_f64(r, y, c13);
-        r = npyv_muladd_f64(r, y, c12);
-        r = npyv_muladd_f64(r, y, c11);
-        r = npyv_muladd_f64(r, y, c10);
-        r = npyv_muladd_f64(r, y, c9);
-        r = npyv_muladd_f64(r, y, c8);
-        r = npyv_muladd_f64(r, y, c7);
-        r = npyv_muladd_f64(r, y, c6);
-        r = npyv_muladd_f64(r, y, c5);
-        r = npyv_muladd_f64(r, y, c4);
-        r = npyv_muladd_f64(r, y, c3);
-        r = npyv_muladd_f64(r, y, c2);
-        r = npyv_muladd_f64(r, y, c1);
-        r = npyv_muladd_f64(r, y, c0);
+        vec_f64 sign = hn::And(x, hn::BitCast(f64, hn::Set(u64, 0x8000000000000000ull)));
+        vec_f64 y = hn::Sub(hn::Abs(x), b);
+        vec_f64 r = hn::MulAdd(c16, y, c15);
+        r = hn::MulAdd(r, y, c14);
+        r = hn::MulAdd(r, y, c13);
+        r = hn::MulAdd(r, y, c12);
+        r = hn::MulAdd(r, y, c11);
+        r = hn::MulAdd(r, y, c10);
+        r = hn::MulAdd(r, y, c9);
+        r = hn::MulAdd(r, y, c8);
+        r = hn::MulAdd(r, y, c7);
+        r = hn::MulAdd(r, y, c6);
+        r = hn::MulAdd(r, y, c5);
+        r = hn::MulAdd(r, y, c4);
+        r = hn::MulAdd(r, y, c3);
+        r = hn::MulAdd(r, y, c2);
+        r = hn::MulAdd(r, y, c1);
+        r = hn::MulAdd(r, y, c0);
         // 1.0 if |x| > HUGE_THRESHOLD || INF
-        r = npyv_select_f64(special_m, r, npyv_setall_f64(1.0));
-        r = npyv_or_f64(r, sign);
+        r = hn::IfThenElse(hn::RebindMask(f64, special_m), r, hn::Set(f64, 1.0));
+        r = hn::Or(r, sign);
         // qnan if nan
-        r = npyv_select_f64(nnan_m, r, qnan);
-        if (sdst == 1) {
-            npyv_store_till_f64(dst, len, r);
-        } else {
-            npyv_storen_till_f64(dst, sdst, len, r);
-        }
+        r = hn::IfThenElse(hn::RebindMask(f64, nan_m), qnan, r);
+        
+        store_vector<vec_f64>(r, dst, sdst, len);
     }
 }
-
-#undef TANH_TRANSPOSED_LUT
 
 #endif // NPY_SIMD_F64
 
 #if NPY_SIMD_F32
 
+struct hwy_f32x2 {
+    vec_f32 val[2];
+};
 
-    // For architectures without efficient gather / scatter instructions, it is
-    // better to use a transposed LUT where we can load all coefficients for an
-    // index linearly.  In order to keep the same vertical calculation, we
-    // transpose the coef. into lanes.  A 4x4 transpose is all that's
-    // supported so we require `npyv_nlanes_f32` == 4.
-    #if npyv_nlanes_f32 == 4
-    #define TANHF_TRANSPOSED_LUT
-    // Define missing universal intrinsics used below
-    #if !defined(npyv_get_lane_u32)
-        #if defined(NPY_HAVE_ASIMD)
-            #define UNDEF_npyv_get_lane_u32
-            #define npyv_get_lane_u32 vgetq_lane_u32
-        #elif defined(NPY_HAVE_SSE41)
-            #define UNDEF_npyv_get_lane_u32
-            #define npyv_get_lane_u32 _mm_extract_epi32
-        #else
-            #undef TANHF_TRANSPOSED_LUT
-        #endif
-    #endif // !defined(npyv_get_lane_u32)
-    #endif // npyv_nlanes_f32 == 4
+HWY_ATTR NPY_FINLINE hwy_f32x2 zip_f32(vec_f32 a, vec_f32 b){
+    hwy_f32x2 res;
+    res.val[0] = hn::InterleaveLower(f32, a, b);
+    res.val[1] = hn::InterleaveUpper(f32, a, b);
+    return res;
+}
 
-static void
+HWY_ATTR NPY_FINLINE vec_f32 lut_32_f32(const float * lut, vec_u32 idx){
+    if constexpr(hn::Lanes(f32) == 16){
+        const vec_f32 lut0 = hn::Load(f32, lut);
+        const vec_f32 lut1 = hn::Load(f32, lut + 16);
+        return hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, idx));
+    }else if constexpr (hn::Lanes(f32) == 8){
+        const vec_f32 lut0 = hn::Load(f32, lut);
+        const vec_f32 lut1 = hn::Load(f32, lut + 8);
+        const vec_f32 lut2 = hn::Load(f32, lut + 16);
+        const vec_f32 lut3 = hn::Load(f32, lut + 24);
+        
+        const auto high_mask = hn::Ne(hn::ShiftRight<4>(idx), hn::Zero(u32));
+        const auto load_mask = hn::And(idx, hn::Set(u32, 0b1111));
+        
+        const vec_f32 lut_low = hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, load_mask));
+        const vec_f32 lut_high = hn::TwoTablesLookupLanes(f32, lut2, lut3, hn::IndicesFromVec(f32, load_mask));
+        
+        return hn::IfThenElse(hn::RebindMask(f32, high_mask), lut_high, lut_low);
+    }else{
+        return hn::GatherIndex(f32, lut, hn::BitCast(s32, idx));
+    }
+}
+
+HWY_ATTR static void
 simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_intp len)
 {
-#if defined(TANHF_TRANSPOSED_LUT)
     static const npy_uint32 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut8x32[] = {
         // c6       c5          c4          c3          c2          c1          c0          b
         0xbc0e2f66, 0x3e0910e9, 0xb76dd6b9, 0xbeaaaaa5, 0xb0343c7b, 0x3f800000, 0x0,        0x0,       
@@ -449,7 +543,7 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         0xb15a1f04, 0x322487b0, 0xb2ab78ac, 0x332b3cb6, 0xb383012c, 0x338306c6, 0x3f7fffff, 0x41100000,
         0x0,        0x0,        0x0,        0x0,        0x0,        0x0,        0x3f800000, 0x0,       
     };
-#else
+
     static const npy_uint32 NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) lut32x8[] = {
         // 0
         0x0,        0x3d700000, 0x3d900000, 0x3db00000, 0x3dd00000, 0x3df00000, 0x3e100000, 0x3e300000,
@@ -492,116 +586,108 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         0x3c1d7bfb, 0x3c722cd1, 0x3c973f1c, 0x3c33a31b, 0x3b862ef4, 0x3a27b3d0, 0xba3b5907, 0xba0efc22,
         0xb97f9f0f, 0xb8c8af50, 0xb7bdddfb, 0xb64f2950, 0xb4e085b1, 0xb3731dfa, 0xb15a1f04, 0x0
     };
-#endif // defined(TANHF_TRANSPOSED_LUT)
 
-    const int nlanes = npyv_nlanes_f32;
-    const npyv_f32 qnan = npyv_setall_f32(NPY_NANF);
+    const int nlanes = hn::Lanes(f32);//npyv_nlanes_f32;
+    const vec_f32 qnan = hn::Set(f32, NPY_NAN);
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
-        npyv_f32 x;
-        if (ssrc == 1) {
-            x = npyv_load_tillz_f32(src, len);
-        } else {
-            x = npyv_loadn_tillz_f32(src, ssrc, len);
-        }
-        npyv_s32 ndnan = npyv_and_s32(npyv_reinterpret_s32_f32(x), npyv_setall_s32(0x7fe00000));
+        vec_f32 x = load_vector<vec_f32>(src, ssrc, len);
+        
+        vec_s32 ndnan = hn::And(hn::BitCast(s32, x), hn::Set(s32, 0x7fe00000));
         // check |x| > HUGE_THRESHOLD, INF and NaNs.
-        npyv_b32 special_m = npyv_cmple_s32(ndnan, npyv_setall_s32(0x7f000000));
-        npyv_b32 nnan_m = npyv_notnan_f32(x);
-        npyv_s32 idxs = npyv_sub_s32(ndnan, npyv_setall_s32(0x3d400000));
-                 idxs = npyv_max_s32(idxs, npyv_zero_s32());
-                 idxs = npyv_min_s32(idxs, npyv_setall_s32(0x3e00000));
-        npyv_u32 idx  = npyv_shri_u32(npyv_reinterpret_u32_s32(idxs), 21);
+        auto special_m = hn::Le(ndnan, hn::Set(s32, 0x7f000000));
+        auto nan_m = hn::IsNaN(x);
+        vec_s32 idxs = hn::Sub(ndnan, hn::Set(s32, 0x3d400000));
+                 idxs = hn::Max(idxs, hn::Zero(s32));
+                 idxs = hn::Min(idxs, hn::Set(s32, 0x3e00000));
+        vec_u32 idx  = hn::ShiftRightSame(hn::BitCast(u32, idxs), 21);
 
-#if defined(TANHF_TRANSPOSED_LUT)
-        npyv_f32 c6543[npyv_nlanes_f32];
-        npyv_f32 c210b[npyv_nlanes_f32];
-        npyv_lanetype_u32 index[npyv_nlanes_f32];
+        // For architectures without efficient gather / scatter instructions, it is
+        // better to use a transposed LUT where we can load all coefficients for an
+        // index linearly.  In order to keep the same vertical calculation, we
+        // transpose the coef. into lanes.  A 4x4 transpose is all that's
+        // supported so we require `npyv_nlanes_f32` == 4.
+        vec_f32 b, c0, c1, c2, c3, c4, c5, c6;
+        if constexpr(hn::MaxLanes(f32) == 4 && HWY_TARGET >= HWY_SSE4){
+            vec_f32 c6543[npyv_nlanes_f32];
+            vec_f32 c210b[npyv_nlanes_f32];
+            npyv_lanetype_u32 index[npyv_nlanes_f32];
 
-        /**begin repeat
-         * #lane = 0, 1, 2, 3#
-         */
-        index[@lane@] = npyv_get_lane_u32(idx, @lane@);
-        c6543[@lane@] = npyv_reinterpret_f32_u32(npyv_load_u32(lut8x32 + index[@lane@] * 8));
-        c210b[@lane@] = npyv_reinterpret_f32_u32(npyv_load_u32(lut8x32 + index[@lane@] * 8 + 4));
-        /**end repeat**/
+            /**begin repeat
+             * #lane = 0, 1, 2, 3#
+             */
+            index[@lane@] = hn::ExtractLane(idx, @lane@);
+            c6543[@lane@] = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8);
+            c210b[@lane@] = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8 + 4);
+            /**end repeat**/
 
-        // lane0: {c6, c5, c4, c3},  {c2, c1, c0, b}
-        // lane1: {c6, c5, c4, c3},  {c2, c1, c0, b}
-        // lane2: {c6, c5, c4, c3},  {c2, c1, c0, b}
-        // lane3: {c6, c5, c4, c3},  {c2, c1, c0, b}
-        //
-        // transposed:
-        // c6: {lane0, lane1, lane2, lane3}
-        // c5: {lane0, lane1, lane2, lane3}
-        // c4: {lane0, lane1, lane2, lane3}
-        // c3: {lane0, lane1, lane2, lane3}
-        // c2: {lane0, lane1, lane2, lane3}
-        // c1: {lane0, lane1, lane2, lane3}
-        // c0: {lane0, lane1, lane2, lane3}
-        // b : {lane0, lane1, lane2, lane3}
+            // lane0: {c6, c5, c4, c3},  {c2, c1, c0, b}
+            // lane1: {c6, c5, c4, c3},  {c2, c1, c0, b}
+            // lane2: {c6, c5, c4, c3},  {c2, c1, c0, b}
+            // lane3: {c6, c5, c4, c3},  {c2, c1, c0, b}
+            //
+            // transposed:
+            // c6: {lane0, lane1, lane2, lane3}
+            // c5: {lane0, lane1, lane2, lane3}
+            // c4: {lane0, lane1, lane2, lane3}
+            // c3: {lane0, lane1, lane2, lane3}
+            // c2: {lane0, lane1, lane2, lane3}
+            // c1: {lane0, lane1, lane2, lane3}
+            // c0: {lane0, lane1, lane2, lane3}
+            // b : {lane0, lane1, lane2, lane3}
 
-        npyv_f32x2 c6543_l01 = npyv_zip_f32(c6543[0], c6543[1]);
-        npyv_f32x2 c6543_l23 = npyv_zip_f32(c6543[2], c6543[3]);
-        npyv_f32 c6 = npyv_combinel_f32(c6543_l01.val[0], c6543_l23.val[0]);
-        npyv_f32 c5 = npyv_combineh_f32(c6543_l01.val[0], c6543_l23.val[0]);
-        npyv_f32 c4 = npyv_combinel_f32(c6543_l01.val[1], c6543_l23.val[1]);
-        npyv_f32 c3 = npyv_combineh_f32(c6543_l01.val[1], c6543_l23.val[1]);
+            hwy_f32x2 c6543_l01 = zip_f32(c6543[0], c6543[1]);
+            hwy_f32x2 c6543_l23 = zip_f32(c6543[2], c6543[3]);
+            c6 = hn::ConcatLowerLower(f32, c6543_l23.val[0], c6543_l01.val[0]);
+            c5 = hn::ConcatUpperUpper(f32, c6543_l23.val[0], c6543_l01.val[0]);
+            c4 = hn::ConcatLowerLower(f32, c6543_l23.val[1], c6543_l01.val[1]);
+            c3 = hn::ConcatUpperUpper(f32, c6543_l23.val[1], c6543_l01.val[1]);
 
-        npyv_f32x2 c210b_l01 = npyv_zip_f32(c210b[0], c210b[1]);
-        npyv_f32x2 c210b_l23 = npyv_zip_f32(c210b[2], c210b[3]);
-        npyv_f32 c2 = npyv_combinel_f32(c210b_l01.val[0], c210b_l23.val[0]);
-        npyv_f32 c1 = npyv_combineh_f32(c210b_l01.val[0], c210b_l23.val[0]);
-        npyv_f32 c0 = npyv_combinel_f32(c210b_l01.val[1], c210b_l23.val[1]);
-        npyv_f32 b  = npyv_combineh_f32(c210b_l01.val[1], c210b_l23.val[1]);
-#else
-        npyv_f32 b  = npyv_lut32_f32((const float*)lut32x8 + 32*0, idx);
-        npyv_f32 c0 = npyv_lut32_f32((const float*)lut32x8 + 32*1, idx);
-        npyv_f32 c1 = npyv_lut32_f32((const float*)lut32x8 + 32*2, idx);
-        npyv_f32 c2 = npyv_lut32_f32((const float*)lut32x8 + 32*3, idx);
-        npyv_f32 c3 = npyv_lut32_f32((const float*)lut32x8 + 32*4, idx);
-        npyv_f32 c4 = npyv_lut32_f32((const float*)lut32x8 + 32*5, idx);
-        npyv_f32 c5 = npyv_lut32_f32((const float*)lut32x8 + 32*6, idx);
-        npyv_f32 c6 = npyv_lut32_f32((const float*)lut32x8 + 32*7, idx);
-#endif // defined(TANHF_TRANSPOSED_LUT)
+            hwy_f32x2 c210b_l01 = zip_f32(c210b[0], c210b[1]);
+            hwy_f32x2 c210b_l23 = zip_f32(c210b[2], c210b[3]);
+            c2 = hn::ConcatLowerLower(f32, c210b_l23.val[0], c210b_l01.val[0]);
+            c1 = hn::ConcatUpperUpper(f32, c210b_l23.val[0], c210b_l01.val[0]);
+            c0 = hn::ConcatLowerLower(f32, c210b_l23.val[1], c210b_l01.val[1]);
+            b  = hn::ConcatUpperUpper(f32, c210b_l23.val[1], c210b_l01.val[1]);
+        } else {
+            b  = lut_32_f32((const float*)lut32x8 + 32*0, idx);
+            c0 = lut_32_f32((const float*)lut32x8 + 32*1, idx);
+            c1 = lut_32_f32((const float*)lut32x8 + 32*2, idx);
+            c2 = lut_32_f32((const float*)lut32x8 + 32*3, idx);
+            c3 = lut_32_f32((const float*)lut32x8 + 32*4, idx);
+            c4 = lut_32_f32((const float*)lut32x8 + 32*5, idx);
+            c5 = lut_32_f32((const float*)lut32x8 + 32*6, idx);
+            c6 = lut_32_f32((const float*)lut32x8 + 32*7, idx);
+        }
 
         // no need to zerofy nans or avoid FP exceptions by NO_EXC like SVML does
         // since we're clearing the FP status anyway.
-        npyv_f32 sign = npyv_and_f32(x, npyv_reinterpret_f32_u32(npyv_setall_u32(0x80000000)));
-        npyv_f32 y = npyv_sub_f32(npyv_abs_f32(x), b);
-        npyv_f32 r = npyv_muladd_f32(c6, y, c5);
-        r = npyv_muladd_f32(r, y, c4);
-        r = npyv_muladd_f32(r, y, c3);
-        r = npyv_muladd_f32(r, y, c2);
-        r = npyv_muladd_f32(r, y, c1);
-        r = npyv_muladd_f32(r, y, c0);
+        vec_f32 sign = hn::And(x, hn::BitCast(f32, hn::Set(s32, 0x80000000)));
+        vec_f32 y = hn::Sub(hn::Abs(x), b);
+        vec_f32 r = hn::MulAdd(c6, y, c5);
+        r = hn::MulAdd(r, y, c4);
+        r = hn::MulAdd(r, y, c3);
+        r = hn::MulAdd(r, y, c2);
+        r = hn::MulAdd(r, y, c1);
+        r = hn::MulAdd(r, y, c0);
         // 1.0 if |x| > HUGE_THRESHOLD || INF
-        r = npyv_select_f32(special_m, r, npyv_setall_f32(1.0f));
-        r = npyv_or_f32(r, sign);
+        r = hn::IfThenElse(hn::RebindMask(f32, special_m), r, hn::Set(f32, 1.0f));
+        r = hn::Or(r, sign);
         // qnan if nan
-        r = npyv_select_f32(nnan_m, r, qnan);
-        if (sdst == 1) {
-            npyv_store_till_f32(dst, len, r);
-        } else {
-            npyv_storen_till_f32(dst, sdst, len, r);
-        }
+        r = hn::IfThenElse(hn::RebindMask(f32, nan_m), qnan, r);
+        
+        store_vector<vec_f32>(r, dst, sdst, len);
     }
 }
 
-#undef TANHF_TRANSPOSED_LUT
-#if defined(UNDEF_npyv_get_lane_u32)
-#undef UNDEF_npyv_get_lane_u32
-#undef npyv_get_lane_u32
-#endif
-
 #endif // NPY_SIMD_F32
-#endif // NPY_SIMD_FMA3
+#endif // HWY_NATIVE_FMA
 
 /**begin repeat
  * #TYPE = FLOAT, DOUBLE#
  * #type = float, double#
  * #sfx  = f32,   f64#
  * #ssfx = f,     #
- * #simd = NPY_SIMD_FMA3 && NPY_SIMD_F32, NPY_SIMD_FMA3 && NPY_SIMD_F64#
+ * #simd = HWY_NATIVE_FMA && NPY_SIMD_F32, HWY_NATIVE_FMA && NPY_SIMD_F64#
  */
 /**begin repeat1
  *  #func = tanh#

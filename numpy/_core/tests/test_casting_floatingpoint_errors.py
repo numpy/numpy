@@ -36,7 +36,7 @@ def values_and_dtypes():
 
     # Cast to complex32:
     yield param(2e300, "complex64", id="float-to-c8")
-    yield param(2e300+0j, "complex64", id="complex-to-c8")
+    yield param(2e300 + 0j, "complex64", id="complex-to-c8")
     yield param(2e300j, "complex64", id="complex-to-c8")
     yield param(np.longdouble(2e300), "complex64", id="longdouble-to-c8")
 

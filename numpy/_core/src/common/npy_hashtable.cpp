@@ -12,8 +12,13 @@
  * case is likely desired.
  */
 
-#include "templ_common.h"
 #include "npy_hashtable.h"
+
+#include <mutex>
+#include <shared_mutex>
+
+#include "templ_common.h"
+#include <new>
 
 
 
@@ -27,18 +32,6 @@
 #define _NpyHASH_XXPRIME_2 ((Py_uhash_t)2246822519UL)
 #define _NpyHASH_XXPRIME_5 ((Py_uhash_t)374761393UL)
 #define _NpyHASH_XXROTATE(x) ((x << 13) | (x >> 19))  /* Rotate left 13 bits */
-#endif
-
-#ifdef Py_GIL_DISABLED
-#define LOCK_TABLE(tb) PyMutex_Lock(&tb->mutex)
-#define UNLOCK_TABLE(tb) PyMutex_Unlock(&tb->mutex)
-#define INITIALIZE_LOCK(tb) memset(&tb->mutex, 0, sizeof(PyMutex))
-#else
-// the GIL serializes access to the table so no need
-// for locking if it is enabled
-#define LOCK_TABLE(tb)
-#define UNLOCK_TABLE(tb)
-#define INITIALIZE_LOCK(tb)
 #endif
 
 /*
@@ -101,7 +94,7 @@ find_item(PyArrayIdentityHash const *tb, PyObject *const *key)
 NPY_NO_EXPORT PyArrayIdentityHash *
 PyArrayIdentityHash_New(int key_len)
 {
-    PyArrayIdentityHash *res = PyMem_Malloc(sizeof(PyArrayIdentityHash));
+    PyArrayIdentityHash *res = (PyArrayIdentityHash *)PyMem_Malloc(sizeof(PyArrayIdentityHash));
     if (res == NULL) {
         PyErr_NoMemory();
         return NULL;
@@ -112,14 +105,21 @@ PyArrayIdentityHash_New(int key_len)
     res->size = 4;  /* Start with a size of 4 */
     res->nelem = 0;
 
-    INITIALIZE_LOCK(res);
-
-    res->buckets = PyMem_Calloc(4 * (key_len + 1), sizeof(PyObject *));
+    res->buckets = (PyObject **)PyMem_Calloc(4 * (key_len + 1), sizeof(PyObject *));
     if (res->buckets == NULL) {
         PyErr_NoMemory();
         PyMem_Free(res);
         return NULL;
     }
+
+#ifdef Py_GIL_DISABLED
+    res->mutex = new(std::nothrow) std::shared_mutex();
+    if (res->mutex == nullptr) {
+        PyErr_NoMemory();
+        PyMem_Free(res);
+        return NULL;
+    }
+#endif
     return res;
 }
 
@@ -128,6 +128,9 @@ NPY_NO_EXPORT void
 PyArrayIdentityHash_Dealloc(PyArrayIdentityHash *tb)
 {
     PyMem_Free(tb->buckets);
+#ifdef Py_GIL_DISABLED
+    delete (std::shared_mutex *)tb->mutex;
+#endif
     PyMem_Free(tb);
 }
 
@@ -163,7 +166,7 @@ _resize_if_necessary(PyArrayIdentityHash *tb)
     if (npy_mul_sizes_with_overflow(&alloc_size, new_size, tb->key_len + 1)) {
         return -1;
     }
-    tb->buckets = PyMem_Calloc(alloc_size, sizeof(PyObject *));
+    tb->buckets = (PyObject **)PyMem_Calloc(alloc_size, sizeof(PyObject *));
     if (tb->buckets == NULL) {
         tb->buckets = old_table;
         PyErr_NoMemory();
@@ -206,17 +209,14 @@ NPY_NO_EXPORT int
 PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
         PyObject *const *key, PyObject *value, int replace)
 {
-    LOCK_TABLE(tb);
     if (value != NULL && _resize_if_necessary(tb) < 0) {
         /* Shrink, only if a new value is added. */
-        UNLOCK_TABLE(tb);
         return -1;
     }
 
     PyObject **tb_item = find_item(tb, key);
     if (value != NULL) {
         if (tb_item[0] != NULL && tb_item[0] != value && !replace) {
-            UNLOCK_TABLE(tb);
             PyErr_SetString(PyExc_RuntimeError,
                     "Identity cache already includes an item with this key.");
             return -1;
@@ -230,7 +230,6 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
         memset(tb_item, 0, (tb->key_len + 1) * sizeof(PyObject *));
     }
 
-    UNLOCK_TABLE(tb);
     return 0;
 }
 
@@ -238,8 +237,6 @@ PyArrayIdentityHash_SetItem(PyArrayIdentityHash *tb,
 NPY_NO_EXPORT PyObject *
 PyArrayIdentityHash_GetItem(PyArrayIdentityHash *tb, PyObject *const *key)
 {
-    LOCK_TABLE(tb);
     PyObject *res = find_item(tb, key)[0];
-    UNLOCK_TABLE(tb);
     return res;
 }
