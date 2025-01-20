@@ -1073,3 +1073,18 @@ def test_maxrows_exceeding_chunksize(nmax):
     res = np.loadtxt(fname, dtype=str, delimiter=" ", max_rows=nmax)
     os.remove(fname)
     assert len(res) == nmax
+
+def test_footer_header():
+
+    data = StringIO(
+
+        "# Header\n"
+        "1\n"
+        "2\n"
+        "3\n"
+        "# Footer"
+
+    )
+    arr = np.loadtxt(data)
+
+test_footer_header()
