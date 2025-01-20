@@ -1614,9 +1614,6 @@ typedef struct Dragon4_Options {
  *    hasUnequalMargins - is the high margin twice as large as the low margin
  *
  * See Dragon4_Options for description of remaining arguments.
- *  
- * Required left or right padding may exceed the size of the string buffer.
- * Error codes for those conditions are defined below
  */
 
 static npy_int32
@@ -1667,7 +1664,6 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
             npy_int32 count = numWholeDigits - numDigits;
             pos += numDigits;
 
-            /* integer part too long for buffer, avoid overflow */
             if (count > maxPrintLen - pos) {
                 PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
                 return -1;
@@ -1775,7 +1771,6 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         
         npy_int32 count = desiredFractionalDigits - numFractionDigits;
         
-        /* too many trailing zeros required, avoid buffer overflow */
         if (count > maxPrintLen - pos) {
             PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
             return -1;

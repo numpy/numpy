@@ -1247,12 +1247,6 @@ def format_float_positional(x, precision=None, unique=True,
     -------
     rep : string
         The string representation of the floating point value
-    
-    Raises
-    ------
-    RuntimeError
-        If the decimal string representation of the floating point scalar is longer
-        than 16384 characters
 
     See Also
     --------

@@ -8,8 +8,8 @@ import sys
 
 from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_raises
-from numpy.testing import assert_raises_regex, IS_MUSL
+from numpy.testing import (
+    assert_, assert_equal, assert_raises, assert_raises_regex, IS_MUSL)
 
 class TestRealScalars:
     def test_str(self):
