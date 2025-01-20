@@ -1193,7 +1193,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         that ensures you receive byte arrays as results if possible and passes
         'latin1' encoded strings to converters. Override this value to receive
         unicode arrays and pass strings as input to converters.  If set to None
-        the system default is used. The default value is 'bytes'.
+        the system default is used. The default value is None.
 
         .. versionchanged:: 2.0
             Before NumPy 2, the default was ``'bytes'`` for Python 2

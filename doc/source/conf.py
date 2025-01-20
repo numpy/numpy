@@ -88,6 +88,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx_copybutton',
     'sphinx_design',
+    'sphinx.ext.imgconverter',
 ]
 
 skippable_extensions = [

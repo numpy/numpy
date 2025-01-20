@@ -38,12 +38,12 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
-#include <mutex>
-#include <shared_mutex>
-
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <convert_datatype.h>
+
+#include <mutex>
+#include <shared_mutex>
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_3kcompat.h"
