@@ -6,6 +6,7 @@ on:
       - main
       - maintenance/**
 
+
 permissions:
    contents: read  # to fetch code (actions/checkout)
 
@@ -128,6 +129,9 @@ jobs:
         python-version: ${{ matrix.version }}
         enable-cache: false
 
+    - run:
+        uv pip install --python=${{ matrix.version }} pip
+
     - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
       if: ${{ matrix.build_runner[0] == 'macos-13' }}
       with:
@@ -142,6 +146,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
+        pip install -r requirements/setuptools_requirement.txt
         pip install pytest pytest-xdist pytest-timeout hypothesis
 
     - name: Build against Accelerate (LP64)
@@ -152,7 +157,7 @@ jobs:
 
     - name: Build NumPy against Accelerate (ILP64)
       run: |
-        git clean -xdf
+        rm -r build build-install
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (fast tests)

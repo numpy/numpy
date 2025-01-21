@@ -40,20 +40,18 @@ jobs:
         python-version: ${{ matrix.compiler-pyversion[1] }}
         enable-cache: false
 
-    - name: Ensure pip is installed
-      run: |
-        python -m ensurepip
-        python -m pip install -U pip setuptools
+    - run:
+        uv pip install --python=${{ matrix.version }} pip
 
     # TODO: remove cython nightly install when cython does a release
     - name: Install nightly Cython
       if: matrix.compiler-pyversion[1] == '3.13t'
       run: |
-        python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
 
     - name: Install build dependencies from PyPI
       run: |
-        python -m pip install -r requirements/build_requirements.txt
+        pip install -r requirements/build_requirements.txt
 
     - name: Install pkg-config
       run: |
@@ -72,15 +70,15 @@ jobs:
     - name: Install NumPy (MSVC)
       if: matrix.compiler-pyversion[0] == 'MSVC'
       run: |
-        python -m pip install -r requirements/ci_requirements.txt
-        python -m spin build --with-scipy-openblas=32 -j2 -- --vsenv
+        pip install -r requirements/ci_requirements.txt
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv
 
     - name: Install NumPy (Clang-cl)
       if: matrix.compiler-pyversion[0] == 'Clang-cl'
       run: |
         "[binaries]","c = 'clang-cl'","cpp = 'clang-cl'","ar = 'llvm-lib'","c_ld = 'lld-link'","cpp_ld = 'lld-link'" | Out-File $PWD/clang-cl-build.ini -Encoding ascii
-        python -m pip install -r requirements/ci_requirements.txt
-        python -m spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
+        pip install -r requirements/ci_requirements.txt
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv --native-file=$PWD/clang-cl-build.ini
 
     - name: Meson Log
       shell: bash
@@ -95,7 +93,7 @@ jobs:
 
     - name: Run test suite
       run: |
-        python -m spin test -- --timeout=600 --durations=10
+        spin test -- --timeout=600 --durations=10
 
   msvc_32bit_python_no_openblas:
     name: MSVC, 32-bit Python, no BLAS

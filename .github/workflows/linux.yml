@@ -69,6 +69,8 @@ jobs:
       with:
         python-version: ${{ matrix.version }}
         enable-cache: false
+    - run:
+        uv pip install --python=${{ matrix.version }} pip
     # TODO: remove cython nightly install when cython does a release
     - name: Install nightly Cython
       if: matrix.version == '3.13t'
