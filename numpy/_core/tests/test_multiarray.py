@@ -4125,27 +4125,6 @@ class TestBinop:
         assert_equal(A[0], 30)
         assert_(isinstance(A, OutClass))
 
-    def test_pow_override_with_errors(self):
-        # regression test for gh-9112
-        class PowerOnly(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
-                if ufunc is not np.power:
-                    raise NotImplementedError
-                return "POWER!"
-        # explicit cast to float, to ensure the fast power path is taken.
-        a = np.array(5., dtype=np.float64).view(PowerOnly)
-        assert_equal(a ** 2.5, "POWER!")
-        with assert_raises(NotImplementedError):
-            a ** 0.5
-        with assert_raises(NotImplementedError):
-            a ** 0
-        with assert_raises(NotImplementedError):
-            a ** 1
-        with assert_raises(NotImplementedError):
-            a ** -1
-        with assert_raises(NotImplementedError):
-            a ** 2
-
     def test_pow_array_object_dtype(self):
         # test pow on arrays of object dtype
         class SomeClass:
@@ -8596,6 +8575,12 @@ class TestArrayCreationCopyArgument:
         second_copy = np.array(arr_random, copy=True, order="F")
         assert arr_random.true_passed
         assert second_copy is not copy_arr
+
+        arr_random = ArrayRandom()
+        arr = np.ones((size, size))
+        arr[...] = arr_random
+        assert not arr_random.true_passed
+        assert not np.shares_memory(arr, base_arr)
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test__array__reference_leak(self):

@@ -5450,3 +5450,42 @@ add_newdoc('numpy._core.umath', '_rpartition',
      array(['', '  ', 'Bba'], dtype=StringDType()))
 
     """)
+
+add_newdoc('numpy._core.umath', '_slice',
+    """
+    Slice the strings in `a` by slices specified by `start`, `stop`, `step`.
+    Like in the regular Python `slice` object, if only `start` is
+    specified then it is interpreted as the `stop`.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+
+    start : array-like, with integer dtype
+        The start of the slice, broadcasted to `a`'s shape
+
+    stop : array-like, with integer dtype
+        The end of the slice, broadcasted to `a`'s shape
+
+    step : array-like, with integer dtype
+        The step for the slice, broadcasted to `a`'s shape
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
+
+    Examples
+    --------
+    >>> import numpy as np
+
+    The ufunc is used most easily via ``np.strings.slice``,
+    which calls it under the hood::
+
+    >>> a = np.array(['hello', 'world'])
+    >>> np.strings.slice(a, 2)
+    array(['he', 'wo'], dtype='<U5')
+
+    """)
