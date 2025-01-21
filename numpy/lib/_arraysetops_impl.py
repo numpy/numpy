@@ -291,7 +291,10 @@ def unique(ar, return_index=False, return_inverse=False,
     array([1, 2, 2, 2, 3, 4, 6])    # original order not preserved
 
     """
-    ar = np.asanyarray(ar)
+    if isinstance(ar, np.matrix):
+        ar = np.asarray(ar)
+    else:
+        ar = np.asanyarray(ar)
     orig_shape = ar.shape
     if axis is None:
         ar = ar.flatten()
@@ -484,7 +487,7 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
     array([0, 1, 2])
     """
     # Parse input
-    arrays = [np.asanyarray(ar) for ar in arrays]
+    arrays = [np.asarray(ar) for ar in arrays]
     assert len(arrays), "Expected at least one column to detect the number of rows"
     n = len(arrays[0])
     assert all(len(ar) == n for ar in arrays), (
