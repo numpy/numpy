@@ -1022,46 +1022,13 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     dtype = PyArray_DESCR(mps[0]);
 
     /* Set-up return array */
-    if (out == NULL) {
-        Py_INCREF(dtype);
-        obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
-                                                    dtype,
-                                                    multi->nd,
-                                                    multi->dimensions,
-                                                    NULL, NULL, 0,
-                                                    (PyObject *)ap);
-    }
-    else {
-        int flags = NPY_ARRAY_CARRAY |
-                    NPY_ARRAY_WRITEBACKIFCOPY |
-                    NPY_ARRAY_FORCECAST;
-
-        if ((PyArray_NDIM(out) != multi->nd)
-                    || !PyArray_CompareLists(PyArray_DIMS(out),
-                                             multi->dimensions,
-                                             multi->nd)) {
-            PyErr_SetString(PyExc_TypeError,
-                            "choose: invalid shape for output array.");
-            goto fail;
-        }
-
-        for (i = 0; i < n; i++) {
-            if (arrays_overlap(out, mps[i])) {
-                flags |= NPY_ARRAY_ENSURECOPY;
-            }
-        }
-
-        if (clipmode == NPY_RAISE) {
-            /*
-             * we need to make sure and get a copy
-             * so the input array is not changed
-             * before the error is called
-             */
-            flags |= NPY_ARRAY_ENSURECOPY;
-        }
-        Py_INCREF(dtype);
-        obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
-    }
+    Py_INCREF(dtype);
+    obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
+                                                dtype,
+                                                multi->nd,
+                                                multi->dimensions,
+                                                NULL, NULL, 0,
+                                                (PyObject *)ap);
 
     if (obj == NULL) {
         goto fail;
@@ -1137,7 +1104,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyDataMem_FREE(mps);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
-        PyArray_ResolveWritebackIfCopy(obj);
+        PyArray_CopyAnyInto(out, obj);
         Py_DECREF(obj);
         obj = out;
     }
