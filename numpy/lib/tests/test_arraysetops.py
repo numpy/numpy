@@ -1019,7 +1019,7 @@ class TestUnique:
         ref['b'][np.isnan(ref['b'])] = -1
         assert_array_equal(unq, ref)
 
-        a = np.array([(0, 2), (0, nan), (0, nan), (1, nan)]*2)
+        a = np.array([(0, 2), (0, nan), (0, nan), (1, nan)] * 2)
         unq = unique(a, axis=0, equal_nan=True)
         ref = np.array([(0, 2), (0, nan), (1, nan)])
         assert_array_equal(unq, ref)
@@ -1028,7 +1028,7 @@ class TestUnique:
 
     def test_unique_nanequals_multidimensional_2(self):
         # issues gh-23286 and gh-20873
-        a = 0.0 + np.stack([np.arange(200) % 3, (3+np.arange(200)) % 7], axis=-1)
+        a = 0.0 + np.stack([np.arange(200) % 3, (3 + np.arange(200)) % 7], axis=-1)
         a[:6, 0] = np.nan
         a[4:10, 1] = np.nan
 
@@ -1050,11 +1050,10 @@ class TestUnique:
         tup_unq = unique(tup_a, axis=0, equal_nan=True)
         assert_array_equal(tup_unq.view(a.dtype), unq.ravel())
 
-        a = np.stack([*a.T, *(1j+a.T)], axis=-1)
+        a = np.stack([*a.T, *(1j + a.T)], axis=-1)
         unq = unique(a, axis=0, equal_nan=True)
         unq_rep = replace_nan_trick(a, axis=0, equal_nan=True)
         assert_array_equal(unq, unq_rep)
-
 
     @pytest.mark.parametrize(
         'data',
