@@ -1019,6 +1019,18 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     if (multi == NULL) {
         goto fail;
     }
+
+    if (out != NULL) {
+        if ((PyArray_NDIM(out) != multi->nd)
+                    || !PyArray_CompareLists(PyArray_DIMS(out),
+                                             multi->dimensions,
+                                             multi->nd)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "choose: invalid shape for output array.");
+            goto fail;
+        }
+    }
+
     dtype = PyArray_DESCR(mps[0]);
 
     /* Set-up return array */
