@@ -98,6 +98,9 @@ get_dtypes(PyArray_DTypeMeta *dt1, PyArray_DTypeMeta *dt2)
         return NULL;
     }
     PyArray_DTypeMeta **ret = (PyArray_DTypeMeta **)PyMem_Malloc(2 * sizeof(PyArray_DTypeMeta *));
+    if (ret == NULL) {
+        return reinterpret_cast<PyArray_DTypeMeta **>(PyErr_NoMemory());
+    }
 
     ret[0] = dt1;
     ret[1] = dt2;
@@ -826,6 +829,7 @@ make_s2type_name(NPY_TYPES typenum) {
     char *buf = (char *)PyMem_RawCalloc(sizeof(char), plen + nlen + 1);
     if (buf == NULL) {
         npy_gil_error(PyExc_MemoryError, "Failed allocate memory for cast");
+        return NULL;
     }
 
     // memcpy instead of strcpy to avoid stringop-truncation warning, since
@@ -2034,6 +2038,9 @@ get_cast_spec(
     }
 
     PyArrayMethod_Spec *ret = (PyArrayMethod_Spec *)PyMem_Malloc(sizeof(PyArrayMethod_Spec));
+    if (ret == NULL) {
+        return reinterpret_cast<PyArrayMethod_Spec *>(PyErr_NoMemory());
+    }
 
     ret->name = name;
     ret->nin = 1;
@@ -2049,12 +2056,14 @@ get_cast_spec(
 // Check if the argument is inf using `isinf_func`, and cast the result
 // to a bool; if `isinf_func` is unspecified, use std::isinf.
 // Needed to ensure the right return type for getStringToFloatCastSpec.
-template<typename T, int (*isinf_func)(T) = nullptr>
+template<typename T>
 static bool
 is_inf(T x) {
-    if (isinf_func == nullptr) {
-        return std::isinf(x);
-    }
+    return std::isinf(x);
+}
+template<typename T, int (*isinf_func)(T)>
+static bool
+is_inf(T x) {
     return static_cast<bool>(isinf_func(x));
 }
 
@@ -2232,6 +2241,9 @@ get_casts() {
     PyArrayMethod_Spec **casts = (PyArrayMethod_Spec **)PyMem_Malloc(
         (num_casts + 1) * sizeof(PyArrayMethod_Spec *)
     );
+    if (casts == NULL) {
+        return reinterpret_cast<PyArrayMethod_Spec **>(PyErr_NoMemory());
+    }
 
     int cast_i = 0;
 
@@ -2320,6 +2332,9 @@ get_casts() {
     casts[cast_i++] = NULL;
 
     // Check that every cast spec is valid
+    if (PyErr_Occurred() != NULL) {
+        return NULL;
+    }
     for (int i = 0; i<num_casts; i++) {
         assert(casts[i] != NULL);
     }
