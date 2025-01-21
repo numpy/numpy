@@ -922,16 +922,23 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
         }
     }
 
+    /* Fill in dimensions of new array */
+    npy_intp dims[NPY_MAXDIMS] = {0};
+
+    for (int i = 0; i < PyArray_NDIM(aop); i++) {
+        dims[i] = PyArray_DIMS(aop)[i];
+    }
+
+    dims[axis] = total;
+
     /* Construct new array */
-    PyArray_DIMS(aop)[axis] = total;
     Py_INCREF(PyArray_DESCR(aop));
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(aop),
                                                 PyArray_DESCR(aop),
                                                 PyArray_NDIM(aop),
-                                                PyArray_DIMS(aop),
+                                                dims,
                                                 NULL, NULL, 0,
                                                 (PyObject *)aop);
-    PyArray_DIMS(aop)[axis] = n;
     if (ret == NULL) {
         goto fail;
     }
