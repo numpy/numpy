@@ -486,8 +486,8 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
     >>> _lexargsort(num_children, people)
     array([0, 1, 2])
     """
-    # Parse input
-    arrays = [np.asarray(ar) for ar in arrays]
+    # Parse input. Matrix must be converted to array
+    arrays = [np.asanyarray(ar) for ar in arrays]
     assert len(arrays), "Expected at least one column to detect the number of rows"
     n = len(arrays[0])
     assert all(len(ar) == n for ar in arrays), (
@@ -498,6 +498,9 @@ def _lexargsort(*arrays, equal_nan=True, objects="compare", return_is_unique=Fal
         for col in arrays:
             # col is a (1D) column in all cases except the first two
             if col.ndim > 1:
+                if isinstance(col, np.matrix):
+                    # The columns will still be 2D if the input was a matrix
+                    col = np.asarray(col)
                 yield from column_provider(col.reshape(n, -1).T)
             elif col.dtype.names:
                 yield from column_provider([col[f] for f in col.dtype.names])
