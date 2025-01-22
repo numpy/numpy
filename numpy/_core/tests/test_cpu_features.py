@@ -430,6 +430,7 @@ class Test_LOONGARCH_Features(AbstractTest):
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
 
+
 is_riscv = re.match("^(riscv64)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_riscv, reason="Only for Linux and RISC-V")
 class Test_RISCV_Features(AbstractTest):

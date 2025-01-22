@@ -379,7 +379,9 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
 
     const int nlanes = hn::Lanes(f64);
     const vec_f64 qnan = hn::Set(f64, NPY_NAN);
+#if defined(NPY_HAVE_RVV)
     vec_f64 vec0,vec1;
+#endif
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
         vec_f64 x = load_vector<vec_f64>(src, ssrc, len);
         
