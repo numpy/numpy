@@ -43,6 +43,9 @@ button.btn.version-switcher__button:hover {
   font-size: small;
 }
 
+html[data-theme=dark] button.btn.version-switcher__button{
+  color : white;
+}
 /* Main index page overview cards */
 
 .sd-card .sd-card-img-top {
