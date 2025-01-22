@@ -82,14 +82,6 @@ jobs:
               "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_gcd_overflow",
               "s390x"
             ]
-          - [
-              "riscv64",
-              "riscv64-linux-gnu",
-              "riscv64/ubuntu:22.04",
-              "-Dallow-noblas=true",
-              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
-              "riscv64"
-            ]
     env:
       TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
       DOCKER_CONTAINER: ${{ matrix.BUILD_PROP[2] }}
@@ -178,7 +170,7 @@ jobs:
           '"
 
 
-  linux_loongarch64_qemu:
+  linux_loongarch64_riscv64_qemu:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-24.04
@@ -194,6 +186,14 @@ jobs:
               "-Dallow-noblas=true",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "loong64"
+            ]
+          - [
+              "riscv64",
+              "riscv64-linux-gnu",
+              "riscv64/ubuntu:22.04",
+              "-Dallow-noblas=true",
+              "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
+              "riscv64"
             ]
     env:
       TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
