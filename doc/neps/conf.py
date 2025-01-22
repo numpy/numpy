@@ -94,11 +94,6 @@ html_theme_options = {
     "image_dark": "_static/numpylogo_dark.svg",
   },
   "github_url": "https://github.com/numpy/numpy",
-  "external_links": [
-      {"name": "Wishlist",
-       "url": "https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22",
-      },
-  ],
   "show_prev_next": False,
 }
 
