@@ -91,6 +91,10 @@ typedef double     npyv_lanetype_f64;
     #include "lsx/lsx.h"
 #endif
 
+#ifdef NPY_HAVE_RVV
+    #include "rvv/rvv.h"
+#endif
+
 #ifndef NPY_SIMD
     /// SIMD width in bits or 0 if there's no SIMD extension available.
     #define NPY_SIMD 0
