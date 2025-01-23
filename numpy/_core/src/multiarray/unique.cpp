@@ -95,8 +95,8 @@ PyObject* unique(PyArrayObject *self)
     // does this need to have the same lifetime as the array?
     npy_intp dims[1] = {(npy_intp)hashset.size()};
     PyArray_Descr *descr = PyArray_DESCR(self);
-    Py_INCREF(descr);
     NPY_ALLOW_C_API;
+    Py_INCREF(descr);
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
