@@ -976,7 +976,6 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 "disable comments."
             )
         comments = tuple(comment)
-        print("Test")
         comment = None
         if len(comments) == 0:
             comments = None  # No comments at all
