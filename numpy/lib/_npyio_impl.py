@@ -847,6 +847,7 @@ def _check_nonneg_int(value, name="argument"):
         raise ValueError(f"{name} must be nonnegative")
 
 
+
 def _preprocess_comments(iterable, comments, encoding):
     """
     Generator that consumes a line iterated iterable and strips out the
@@ -872,10 +873,10 @@ _loadtxt_chunksize = 50000
 def _read(fname, *, delimiter=',', comment='#', quote='"',
           imaginary_unit='j', usecols=None, skiplines=0,
           max_rows=None, converters=None, ndmin=None, unpack=False,
-          dtype=np.float64, encoding=None):
+          dtype=np.float64, encoding=None, save_comments=False):
     r"""
     Read a NumPy array from a text file.
-    This is a helper function for loadtxt.
+    This is a helper function for loadtxt and load_txt_with_comments.
 
     Parameters
     ----------
@@ -931,11 +932,16 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         bytes objects. The special value 'bytes' has no additional effect if
         ``converters=None``. If encoding is ``'bytes'`` or ``None``, the
         default system encoding is used.
+    save_comments: bool, optional
+        If True changes the ruturn to a tuple of the format
+        (Data, Comments), original behaviour if False
 
     Returns
     -------
-    ndarray
-        NumPy array.
+    out: ndarray, tuple
+        Returns a NumPy array if save_comments is false, otherwise returns a
+        tuple of the format (NumPy array, NumPy array), where the first array
+        is the data, and the second array are the comments
     """
     # Handle special 'bytes' keyword for encoding
     byte_converters = False
@@ -976,7 +982,6 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 "disable comments."
             )
         comments = tuple(comment)
-        print("Test")
         comment = None
         if len(comments) == 0:
             comments = None  # No comments at all
@@ -1037,12 +1042,53 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             f"fname must be a string, filehandle, list of strings,\n"
             f"or generator. Got {type(fname)} instead.") from e
 
+    comment_lst = []
     with fh_closing_ctx:
         if comments is not None:
             if filelike:
                 data = iter(data)
                 filelike = False
-            data = _preprocess_comments(data, comments, encoding)
+            #This is very niche, so don'tbelive it needs to be super optimized
+            if save_comments is True:
+                # Needed to pass by reference/use a global varible but no pointers or using global variables
+                # Uses in class parameters as a global variable to not change how the function fundamentally works
+                # Or the values it returns
+                class Preprocess():
+                    def __init__(self):
+                        self.comment_lst = []
+                    
+                    def _preprocess_and_save_comments(self, iterable, comments, encoding):
+                        
+                        """
+                        Generator that consumes a line iterated iterable and strips out the
+                        multiple (or multi-character) comments from lines and saves them in a list.
+                        This is a pre-processing step to achieve feature parity with loadtxt_wcomm
+                        (we assume that this feature is a nieche feature).
+                        """
+
+                        for line in iterable:
+                            if isinstance(line, bytes):
+                                # Need to handle conversion here, or the splitting would fail
+                                line = line.decode(encoding)
+
+                            for c in comments:
+
+                                if c in line:
+                                    line_arr = line.split(c, 1)
+                                    line = line_arr[0]
+                                    #removing \n at the end of the comments, if they are there
+                                    comment = line_arr[1].split('\n',1)[0]
+                                    self.comment_lst.append(comment)
+                                    
+                            yield line
+                
+                prep = Preprocess()
+                data = prep._preprocess_and_save_comments(data, comments, encoding)
+                #Using the fact that arrays is python are passed by reference to work arround the yield
+                # used in the _preprocess_and_save_comments function and its predecessor
+                comment_lst = prep.comment_lst
+            else:
+                data = _preprocess_comments(data, comments, encoding)
 
         if read_dtype_via_object_chunks is None:
             arr = _load_from_filelike(
@@ -1116,16 +1162,232 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 stacklevel=3
             )
 
-    if unpack:
-        # Unpack structured dtypes if requested:
-        dt = arr.dtype
-        if dt.names is not None:
-            # For structured arrays, return an array for each field.
-            return [arr[field] for field in dt.names]
+    
+    if save_comments is True: 
+        comment_arr = np.array(comment_lst)
+        if unpack:
+            # Unpack structured dtypes if requested:
+            dt = arr.dtype
+            if dt.names is not None:
+                # For structured arrays, return an array for each field.
+                return [arr[field] for field in dt.names], comment_arr
+            else:
+                return arr.T, comment_arr
         else:
-            return arr.T
+            return arr, comment_arr
     else:
-        return arr
+        if unpack:
+            # Unpack structured dtypes if requested:
+            dt = arr.dtype
+            if dt.names is not None:
+                # For structured arrays, return an array for each field.
+                return [arr[field] for field in dt.names]
+            else:
+                return arr.T
+        else:
+            return arr
+
+
+@finalize_array_function_like
+@set_module('numpy')
+#May change name 
+def loadtxt_w_comm(fname, dtype=float, comments='#', delimiter=None,
+            converters=None, skiprows=0, usecols=None, unpack=False,
+            ndmin=0, encoding=None, max_rows=None, *, quotechar=None,
+            like=None):
+    
+    r"""
+    Load data from a text file, and saves any comments
+
+    Parameters
+    ----------
+    fname : file, str, pathlib.Path, list of str, generator
+        File, filename, list, or generator to read.  If the filename
+        extension is ``.gz`` or ``.bz2``, the file is first decompressed. Note
+        that generators must return bytes or strings. The strings
+        in a list or produced by a generator are treated as lines.
+    dtype : data-type, optional
+        Data-type of the resulting array; default: float.  If this is a
+        structured data-type, the resulting array will be 1-dimensional, and
+        each row will be interpreted as an element of the array.  In this
+        case, the number of columns used must match the number of fields in
+        the data-type.
+    comments : str or sequence of str or None, optional
+        The characters or list of characters used to indicate the start of a
+        comment. None implies no comments. For backwards compatibility, byte
+        strings will be decoded as 'latin1'. The default is '#'.
+    delimiter : str, optional
+        The character used to separate the values. For backwards compatibility,
+        byte strings will be decoded as 'latin1'. The default is whitespace.
+
+        .. versionchanged:: 1.23.0
+           Only single character delimiters are supported. Newline characters
+           cannot be used as the delimiter.
+
+    converters : dict or callable, optional
+        Converter functions to customize value parsing. If `converters` is
+        callable, the function is applied to all columns, else it must be a
+        dict that maps column number to a parser function.
+        See examples for further details.
+        Default: None.
+
+        .. versionchanged:: 1.23.0
+           The ability to pass a single callable to be applied to all columns
+           was added.
+
+    skiprows : int, optional
+        Skip the first `skiprows` lines, including comments; default: 0.
+    usecols : int or sequence, optional
+        Which columns to read, with 0 being the first. For example,
+        ``usecols = (1,4,5)`` will extract the 2nd, 5th and 6th columns.
+        The default, None, results in all columns being read.
+    unpack : bool, optional
+        If True, the returned array is transposed, so that arguments may be
+        unpacked using ``x, y, z = loadtxt_w_comm(...)``.  When used with a
+        structured data-type, arrays are returned for each field.
+        Default is False.
+    ndmin : int, optional
+        The returned array will have at least `ndmin` dimensions.
+        Otherwise mono-dimensional axes will be squeezed.
+        Legal values: 0 (default), 1 or 2.
+    encoding : str, optional
+        Encoding used to decode the inputfile. Does not apply to input streams.
+        The special value 'bytes' enables backward compatibility workarounds
+        that ensures you receive byte arrays as results if possible and passes
+        'latin1' encoded strings to converters. Override this value to receive
+        unicode arrays and pass strings as input to converters.  If set to None
+        the system default is used. The default value is None.
+
+        .. versionchanged:: 2.0
+            Before NumPy 2, the default was ``'bytes'`` for Python 2
+            compatibility. The default is now ``None``.
+
+    max_rows : int, optional
+        Read `max_rows` rows of content after `skiprows` lines. The default is
+        to read all the rows. Note that empty rows containing no data such as
+        empty lines and comment lines are not counted towards `max_rows`,
+        while such lines are counted in `skiprows`.
+
+        .. versionchanged:: 1.23.0
+            Lines containing no data, including comment lines (e.g., lines
+            starting with '#' or as specified via `comments`) are not counted
+            towards `max_rows`.
+    quotechar : unicode character or None, optional
+        The character used to denote the start and end of a quoted item.
+        Occurrences of the delimiter or comment characters are ignored within
+        a quoted item. The default value is ``quotechar=None``, which means
+        quoting support is disabled.
+
+        If two consecutive instances of `quotechar` are found within a quoted
+        field, the first is treated as an escape character. See examples.
+
+        .. versionadded:: 1.23.0
+    ${ARRAY_FUNCTION_LIKE}
+
+        .. versionadded:: 1.20.0
+
+    Returns
+    -------
+    out : tuple
+        Return a tuple of the format (Data read from the text file, Comments in the text file)
+
+    See Also
+    --------
+    load, fromstring, fromregex, loadtxt
+    genfromtxt : Load data with missing values handled as specified.
+    scipy.io.loadmat : reads MATLAB data files
+
+    Notes
+    -----
+    This function aims to be a fast reader for simply formatted files.  The
+    `genfromtxt` function provides more sophisticated handling of, e.g.,
+    lines with missing values.
+
+    Each row in the input text file must have the same number of values to be
+    able to read all values. If all rows do not have same number of values, a
+    subset of up to n columns (where n is the least number of values present
+    in all rows) can be read by specifying the columns via `usecols`.
+
+    The strings produced by the Python float.hex method can be used as
+    input for floats.
+
+    This function is very simmilar to loadtxt, for more through examples
+    see loadtxt.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from io import StringIO   # StringIO behaves like a file object
+    >>> c = StringIO("#Values\n0 1\n2 3")
+    >>> a, comm = np.loadtxt_w_comm(c)
+    >>> a
+    array([[0., 1.],
+           [2., 3.]])
+    >>> comm
+    array(["Values"])
+
+    >>> d = StringIO("#DnD Characters\nM 21 72\nF 35 58")
+    >>> a, comm = np.loadtxt_w_comm(d, dtype={'names': ('gender', 'age', 'weight'),
+    ...                      'formats': ('S1', 'i4', 'f4')})
+    >>> a
+    array([(b'M', 21, 72.), (b'F', 35, 58.)],
+          dtype=[('gender', 'S1'), ('age', '<i4'), ('weight', '<f4')])
+    >>> comm
+    array(["DnD Characters"])
+          
+    >>> c = StringIO("# Cool Numbers\n1,0,2\n3,0,4")
+    >>> x, y, comm = np.loadtxt_w_comm(c, delimiter=',', usecols=(0, 2), unpack=True)
+    >>> x
+    array([1., 3.])
+    >>> y
+    array([2., 4.])
+    >>> comm
+    array([" Cool Numbers"])
+
+    The comments argument can take a list of strings that will define comments
+
+    c = StringIO("#My favorite numbers are\n1 2 3 5 7\n//I don't like\n4 6 8 9 10\nFooPrimes are cool")
+    a, comm = np.loadtxt_w_comm(c, comments=["#", "Foo", "//"])
+    >>> a
+    array([[1., 2., 3., 5., 7.],
+           [4., 6., 8., 9., 10.]])
+    >>> comm
+    array(["My favorite numbers are", "I don't like", "Primes are cool"])
+
+    
+    """
+
+    if like is not None:
+        return _loadtxt_w_comm_and_like(
+            like, fname, dtype=dtype, comments=comments, delimiter=delimiter,
+            converters=converters, skiprows=skiprows, usecols=usecols,
+            unpack=unpack, ndmin=ndmin, encoding=encoding,
+            max_rows=max_rows
+        )
+
+    if isinstance(delimiter, bytes):
+        delimiter.decode("latin1")
+
+    if dtype is None:
+        dtype = np.float64
+
+    comment = comments
+    # Control character type conversions for Py3 convenience
+    if comment is not None:
+        if isinstance(comment, (str, bytes)):
+            comment = [comment]
+        comment = [
+            x.decode('latin1') if isinstance(x, bytes) else x for x in comment]
+    if isinstance(delimiter, bytes):
+        delimiter = delimiter.decode('latin1')
+
+    arr, comment_lst = _read(fname, dtype=dtype, comment=comment, delimiter=delimiter,
+                converters=converters, skiplines=skiprows, usecols=usecols,
+                unpack=unpack, ndmin=ndmin, encoding=encoding,
+                max_rows=max_rows, quote=quotechar, save_comments=True)
+
+    return arr, comment_lst
+
 
 
 @finalize_array_function_like
@@ -1231,7 +1493,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
     See Also
     --------
-    load, fromstring, fromregex
+    load, fromstring, fromregex, loadtxt_w_comm
     genfromtxt : Load data with missing values handled as specified.
     scipy.io.loadmat : reads MATLAB data files
 
@@ -1403,6 +1665,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
 
 _loadtxt_with_like = array_function_dispatch()(loadtxt)
+_loadtxt_w_comm_and_like = array_function_dispatch()(loadtxt_w_comm)
 
 
 def _savetxt_dispatcher(fname, X, fmt=None, delimiter=None, newline=None,
