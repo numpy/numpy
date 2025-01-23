@@ -1242,6 +1242,7 @@ unique_hash_so = static_library(
   ],
   dependencies: [
     py_dep,
+    np_core_dep,
   ],
 )
 
