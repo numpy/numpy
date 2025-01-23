@@ -123,7 +123,7 @@ jobs:
       run: |
         source venv/bin/activate
         cd tools
-        PYTHONFAULTHANDLER=1 PYTHONMALLOC=malloc_debug pytest --timeout=1200 --durations=10 --pyargs numpy -m "not slow"
+        PYTHONFAULTHANDLER=1 PYTHONMALLOC=malloc_debug pytest --timeout=1200 --durations=10 -vs --pyargs numpy -m "not slow"
 
   full:
     # Install as editable, then run the full test suite with code coverage
