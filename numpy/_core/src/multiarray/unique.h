@@ -1,8 +1,6 @@
 #ifndef NUMPY_CORE_INCLUDE_NUMPY_MULTIARRAY_UNIQUE_H_
 #define NUMPY_CORE_INCLUDE_NUMPY_MULTIARRAY_UNIQUE_H_
 
-#include <Python.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
