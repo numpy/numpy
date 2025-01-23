@@ -1116,7 +1116,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyDataMem_FREE(mps);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
-        if (PyArray_CopyAnyInto(out, obj) != 0) {
+        if (PyArray_CopyAnyInto(out, obj) < 0) {
             Py_DECREF(out);
             goto fail;
         }
