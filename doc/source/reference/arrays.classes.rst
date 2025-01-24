@@ -317,7 +317,9 @@ NumPy provides several hooks that classes can customize:
    - ``dtype`` is the requested data type of the returned array and is passed
      by NumPy positionally (only if requested by the user).
      It is acceptable to ignore the ``dtype`` because NumPy will check the
-     result and cast to ``dtype`` if necessary.
+     result and cast to ``dtype`` if necessary.  If it is more efficient to
+     coerce the data to the requested dtype without relying on NumPy,
+     you should handle it in your library.
    - ``copy`` is a boolean passed by keyword.  If ``copy=True`` you *must*
      return a copy. Returning a view into existing data will lead to incorrect
      user code.
