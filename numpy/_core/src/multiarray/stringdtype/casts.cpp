@@ -696,6 +696,7 @@ fail:
     return -1;
 }
 
+// steals reference to obj
 static int
 pyobj_to_string(PyObject *obj, char *out, npy_string_allocator *allocator)
 {
@@ -865,6 +866,7 @@ static int
 int_to_stringbuf(long long in, char *out, npy_string_allocator *allocator)
 {
     PyObject *pylong_val = PyLong_FromLongLong(in);
+    // steals reference to pylong_val
     return pyobj_to_string(pylong_val, out, allocator);
 }
 
@@ -872,6 +874,7 @@ static int
 int_to_stringbuf(unsigned long long in, char *out, npy_string_allocator *allocator)
 {
     PyObject *pylong_val = PyLong_FromUnsignedLongLong(in);
+    // steals reference to pylong_val
     return pyobj_to_string(pylong_val, out, allocator);
 }
 
@@ -954,6 +957,7 @@ getIntToStringCastSpec() {
         int2s_slots<NpyType, TClongType, typenum>
     );
 }
+
 static PyObject *
 string_to_pyfloat(
     char *in,
@@ -1207,6 +1211,7 @@ float_to_string(
 
     while (N--) {
         PyObject *scalar_val = PyArray_Scalar(in, float_descr, NULL);
+        // steals reference to scalar_val
         if (pyobj_to_string(scalar_val, out, allocator) == -1) {
             goto fail;
         }
