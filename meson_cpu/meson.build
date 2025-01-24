@@ -97,7 +97,7 @@ min_features = {
   's390x': [],
   'arm': [],
   'aarch64': [ASIMD],
-  'riscv64': [],
+  'riscv64': [RVV],
   'wasm32': [],
   'loongarch64': [LSX],
 }.get(cpu_family, [])

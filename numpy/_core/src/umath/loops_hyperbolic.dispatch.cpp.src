@@ -152,11 +152,19 @@ store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
 #if NPY_SIMD_F64
 
 HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
+#if defined(NPY_HAVE_RVV)
+    if (hn::Lanes(f64) == 8){
+#else
     if constexpr(hn::Lanes(f64) == 8){
+#endif
         const vec_f64 lut0 = hn::Load(f64, lut);
         const vec_f64 lut1 = hn::Load(f64, lut + 8);
         return hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, idx));
+#if defined(NPY_HAVE_RVV)
+    }else if (hn::Lanes(f64) == 4){
+#else
     }else if constexpr (hn::Lanes(f64) == 4){
+#endif
         const vec_f64 lut0 = hn::Load(f64, lut);
         const vec_f64 lut1 = hn::Load(f64, lut + 4);
         const vec_f64 lut2 = hn::Load(f64, lut + 8);
@@ -371,6 +379,9 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
 
     const int nlanes = hn::Lanes(f64);
     const vec_f64 qnan = hn::Set(f64, NPY_NAN);
+#if defined(NPY_HAVE_RVV)
+    vec_f64 vec0,vec1;
+#endif
     for (; len > 0; len -= nlanes, src += ssrc*nlanes, dst += sdst*nlanes) {
         vec_f64 x = load_vector<vec_f64>(src, ssrc, len);
         
@@ -391,6 +402,22 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         // transpose the coef. into lanes.  2 lane transpose is all that's
         // implemented so we require `npyv_nlanes_f64` == 2.
         vec_f64 b, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16;
+#if defined(NPY_HAVE_RVV)
+        if (hn::MaxLanes(f64) == 2){
+            uint64_t index[2];
+            hn::StoreU(idx, u64, index);
+
+            /**begin repeat
+             * #off= 0, 2,  4,  6,  8,  10, 12,  14,  16#
+             * #e0 = b, c1, c3, c5, c7, c9, c11, c13, c15#
+             * #e1 = c0,c2, c4, c6, c8, c10,c12, c14, c16#
+             */
+            vec0 = hn::LoadU(f64, (const double*)lut18x16 + index[0] * 18 + @off@);
+            vec1 = hn::LoadU(f64, (const double*)lut18x16 + index[1] * 18 + @off@);
+            @e0@ = hn::ConcatLowerLower(f64, vec1, vec0);
+            @e1@ = hn::ConcatUpperUpper(f64, vec1, vec0);
+            /**end repeat**/
+#else
         if constexpr(hn::MaxLanes(f64) == 2){
             vec_f64 e0e1[hn::Lanes(f64)];
             uint64_t index[hn::Lanes(f64)];
@@ -409,6 +436,7 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
             @e0@ = hn::ConcatLowerLower(f64, e0e1[1], e0e1[0]);
             @e1@ = hn::ConcatUpperUpper(f64, e0e1[1], e0e1[0]);
             /**end repeat**/
+#endif
         } else {
             b = lut_16_f64((const double*)lut16x18 + 16*0, idx);
             c0 = lut_16_f64((const double*)lut16x18 + 1*16, idx);
