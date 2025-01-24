@@ -303,19 +303,31 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array__(dtype=None, copy=None)
 
-   If defined on an object, should return an ``ndarray``.
-   This method is called by array-coercion functions like np.array()
+   If defined on an object, it must return a NumPy ``ndarray``.
+   This method is called by array-coercion functions like ``np.array()``
    if an object implementing this interface is passed to those functions.
-   The third-party implementations of ``__array__`` must take ``dtype`` and
-   ``copy`` keyword arguments, as ignoring them might break third-party code
-   or NumPy itself.
 
-   - ``dtype`` is a data type of the returned array.
-   - ``copy`` is an optional boolean that indicates whether a copy should be
-     returned. For ``True`` a copy should always be made, for ``None`` only
-     if required (e.g. due to passed ``dtype`` value), and for ``False`` a copy
-     should never be made (if a copy is still required, an appropriate exception
-     should be raised).
+   Third-party implementations of ``__array__`` must take ``dtype`` and
+   ``copy`` arguments.
+
+   .. deprecated:: NumPy 2.0
+      Not implementing ``copy`` and ``dtype`` is deprecated as of NumPy 2.
+      When adding them, you must ensure correct behavior for ``copy``.
+
+   - ``dtype`` is the requested data type of the returned array and is passed
+     by NumPy positionally (only if requested by the user).
+     It is acceptable to ignore the ``dtype`` because NumPy will check the
+     result and cast to ``dtype`` if necessary.  If it is more efficient to
+     coerce the data to the requested dtype without relying on NumPy,
+     you should handle it in your library.
+   - ``copy`` is a boolean passed by keyword.  If ``copy=True`` you *must*
+     return a copy. Returning a view into existing data will lead to incorrect
+     user code.
+     If ``copy=False`` the user requested that a copy is never made and you *must*
+     raise an error unless no copy is made and the returned array is a view into
+     existing data.  It is valid to always raise an error for ``copy=False``.
+     The default ``copy=None`` (not passed) allows for the result to either be a
+     view or a copy.  However, a view return should be preferred when possible.
 
    Please refer to :ref:`Interoperability with NumPy <basics.interoperability>`
    for the protocol hierarchy, of which ``__array__`` is the oldest and least
