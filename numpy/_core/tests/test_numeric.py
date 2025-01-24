@@ -3184,49 +3184,49 @@ class TestIsclose:
 
             warnings.simplefilter("always")
             b = np.isclose(a, a, rtol=np.inf)
-            assert(len(w) == 1)
-            assert(issubclass(w[-1].category, UserWarning))
-            assert("At least one of rtol and atol are infinite" in str(w[-1].message))
+            assert len(w) == 1
+            assert issubclass(w[-1].category, UserWarning)
+            assert "At least one of rtol and atol are infinite" in str(w[-1].message)
         #Testing when atol is infinite
         with warnings.catch_warnings(record=True) as w:
 
             warnings.simplefilter("always")
             b = np.isclose(a, a, atol=np.inf)
-            assert(len(w) == 1)
-            assert(issubclass(w[-1].category, UserWarning))
-            assert("At least one of rtol and atol are infinite" in str(w[-1].message))
+            assert len(w) == 1
+            assert issubclass(w[-1].category, UserWarning)
+            assert "At least one of rtol and atol are infinite" in str(w[-1].message)
         #Testing when both are infinite
         with warnings.catch_warnings(record=True) as w:
 
             warnings.simplefilter("always")
             b = np.isclose(a, a, atol=np.inf, rtol=np.inf)
-            assert(len(w) == 1)
-            assert(issubclass(w[-1].category, UserWarning))
-            assert("At least one of rtol and atol are infinite" in str(w[-1].message))
+            assert len(w) == 1
+            assert issubclass(w[-1].category, UserWarning)
+            assert "At least one of rtol and atol are infinite" in str(w[-1].message)
         #Testing when atol is nan
         with warnings.catch_warnings(record=True) as w:
 
             warnings.simplefilter("always")
             b = np.isclose(a, a, atol=np.nan)
-            assert(len(w) == 1)
-            assert(issubclass(w[-1].category, UserWarning))
-            assert("At least one of rtol and atol are not a number" in str(w[-1].message))
+            assert len(w) == 1
+            assert issubclass(w[-1].category, UserWarning)
+            assert "At least one of rtol and atol are not a number" in str(w[-1].message)
         #Testing when rtol is nan
         with warnings.catch_warnings(record=True) as w:
 
             warnings.simplefilter("always")
             b = np.isclose(a, a, rtol=np.nan)
-            assert(len(w) == 1)
-            assert(issubclass(w[-1].category, UserWarning))
-            assert("At least one of rtol and atol are not a number" in str(w[-1].message))
+            assert len(w) == 1
+            assert issubclass(w[-1].category, UserWarning)
+            assert "At least one of rtol and atol are not a number" in str(w[-1].message)
         #Testing when bath are nan
         with warnings.catch_warnings(record=True) as w:
 
             warnings.simplefilter("always")
             b = np.isclose(a, a, atol=np.nan,)
-            assert(len(w) == 1)
-            assert(issubclass(w[-1].category, UserWarning))
-            assert("At least one of rtol and atol are not a number" in str(w[-1].message))
+            assert len(w) == 1
+            assert issubclass(w[-1].category, UserWarning)
+            assert "At least one of rtol and atol are not a number" in str(w[-1].message)
 
 
 class TestStdVar:
