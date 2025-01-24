@@ -2,8 +2,10 @@
 Utility function to facilitate testing.
 
 """
+import importlib.metadata
 import os
 import sys
+import pathlib
 import platform
 import re
 import gc
@@ -42,7 +44,7 @@ __all__ = [
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
-        'IS_EDITABLE', 'run_threaded',
+        'IS_EDITABLE', 'IS_INSTALLED', 'NUMPY_ROOT', 'run_threaded',
         ]
 
 
@@ -54,10 +56,20 @@ class KnownFailureException(Exception):
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
+try:
+    np_dist = importlib.metadata.distribution('numpy')
+except importlib.metadata.PackageNotFoundError:
+    IS_INSTALLED = IS_EDITABLE = False
+else:
+    IS_INSTALLED = True
+    try:
+        IS_EDITABLE = np_dist.origin.dir_info.editable
+    except AttributeError:
+        IS_EDITABLE = False
+
 IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
-IS_EDITABLE = not bool(np.__path__) or 'editable' in np.__path__[0]
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 
@@ -71,6 +83,8 @@ if 'musl' in _v:
     IS_MUSL = True
 
 NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+
+NUMPY_ROOT = pathlib.Path(np.__file__).parent
 
 def assert_(val, msg=''):
     """
