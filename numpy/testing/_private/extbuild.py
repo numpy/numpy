@@ -220,7 +220,6 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                 include_directories: {include_dirs},
             )
         """))
-    # https://github.com/FFY00/meson-python/blob/2510cde44342f3167c44ea05d650c8a524a43879/mesonpy/__init__.py#L615-L618
     native_file_name = cfile.parent / ".mesonpy-native-file.ini"
     with open(native_file_name, "wt") as fid:
         fid.write(textwrap.dedent(f"""\
@@ -234,7 +233,6 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                               cwd=build_dir,
                               )
     else:
-        # https://github.com/FFY00/meson-python/blob/2510cde44342f3167c44ea05d650c8a524a43879/mesonpy/__init__.py#L665-L667
         subprocess.check_call(["meson", "setup", "--vsenv", "..", f'--native-file={os.fspath(native_file_name)}'],
                               cwd=build_dir
                               )
