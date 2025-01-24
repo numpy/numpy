@@ -2,3 +2,5 @@ hypothesis==6.81.1
 pytest==7.4.0
 pytz==2023.3.post1
 pytest-xdist
+# For importlib.metadata.Distribution.origin
+importlib_metadata >= 6.11.0; python_version < '3.13'

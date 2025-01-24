@@ -2,7 +2,6 @@
 Utility function to facilitate testing.
 
 """
-import importlib.metadata
 import os
 import sys
 import pathlib
@@ -31,6 +30,13 @@ from numpy._utils import _rename_parameter
 
 from io import StringIO
 
+
+if sys.version_info >= (3, 13):
+    import importlib.metadata as importlib_metadata
+else:
+    import importlib_metadata
+
+
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
         'assert_array_equal', 'assert_array_less', 'assert_string_equal',
@@ -57,8 +63,8 @@ KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
 try:
-    np_dist = importlib.metadata.distribution('numpy')
-except importlib.metadata.PackageNotFoundError:
+    np_dist = importlib_metadata.distribution('numpy')
+except importlib_metadata.PackageNotFoundError:
     IS_INSTALLED = IS_EDITABLE = False
 else:
     IS_INSTALLED = True
