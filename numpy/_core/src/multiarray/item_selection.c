@@ -922,16 +922,23 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
         }
     }
 
+    /* Fill in dimensions of new array */
+    npy_intp dims[NPY_MAXDIMS] = {0};
+
+    for (int i = 0; i < PyArray_NDIM(aop); i++) {
+        dims[i] = PyArray_DIMS(aop)[i];
+    }
+
+    dims[axis] = total;
+
     /* Construct new array */
-    PyArray_DIMS(aop)[axis] = total;
     Py_INCREF(PyArray_DESCR(aop));
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(aop),
                                                 PyArray_DESCR(aop),
                                                 PyArray_NDIM(aop),
-                                                PyArray_DIMS(aop),
+                                                dims,
                                                 NULL, NULL, 0,
                                                 (PyObject *)aop);
-    PyArray_DIMS(aop)[axis] = n;
     if (ret == NULL) {
         goto fail;
     }
@@ -1019,8 +1026,23 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     if (multi == NULL) {
         goto fail;
     }
+    dtype = PyArray_DESCR(mps[0]);
 
-    if (out != NULL) {
+    /* Set-up return array */
+    if (out == NULL) {
+        Py_INCREF(dtype);
+        obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
+                                                    dtype,
+                                                    multi->nd,
+                                                    multi->dimensions,
+                                                    NULL, NULL, 0,
+                                                    (PyObject *)ap);
+    }
+    else {
+        int flags = NPY_ARRAY_CARRAY |
+                    NPY_ARRAY_WRITEBACKIFCOPY |
+                    NPY_ARRAY_FORCECAST;
+
         if ((PyArray_NDIM(out) != multi->nd)
                     || !PyArray_CompareLists(PyArray_DIMS(out),
                                              multi->dimensions,
@@ -1029,18 +1051,24 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                             "choose: invalid shape for output array.");
             goto fail;
         }
+
+        for (i = 0; i < n; i++) {
+            if (arrays_overlap(out, mps[i])) {
+                flags |= NPY_ARRAY_ENSURECOPY;
+            }
+        }
+
+        if (clipmode == NPY_RAISE) {
+            /*
+             * we need to make sure and get a copy
+             * so the input array is not changed
+             * before the error is called
+             */
+            flags |= NPY_ARRAY_ENSURECOPY;
+        }
+        Py_INCREF(dtype);
+        obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
     }
-
-    dtype = PyArray_DESCR(mps[0]);
-
-    /* Set-up return array */
-    Py_INCREF(dtype);
-    obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
-                                                dtype,
-                                                multi->nd,
-                                                multi->dimensions,
-                                                NULL, NULL, 0,
-                                                (PyObject *)ap);
 
     if (obj == NULL) {
         goto fail;
@@ -1116,10 +1144,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyDataMem_FREE(mps);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
-        if (PyArray_CopyAnyInto(out, obj) < 0) {
-            Py_DECREF(out);
-            goto fail;
-        }
+        PyArray_ResolveWritebackIfCopy(obj);
         Py_DECREF(obj);
         obj = out;
     }
