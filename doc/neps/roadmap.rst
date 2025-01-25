@@ -162,7 +162,7 @@ Use of the CPython limited C API, allowing producing ``abi3`` wheels that use
 the stable ABI and are hence independent of CPython feature releases, has
 benefits for both downstream packages that use NumPy's C API and for NumPy
 itself. In NumPy 2.0, work was done to enable using the limited C API with
-the Cython support in NumPy (see `gh-25531 <https://github.com/numpy/numpy/pull/25531`__).
+the Cython support in NumPy (see `gh-25531 <https://github.com/numpy/numpy/pull/25531>`__).
 More work and testing is needed to ensure full support for downstream packages.
 
 We also want to explore what is needed for NumPy itself to use the limited
