@@ -1028,6 +1028,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     dtype = PyArray_DESCR(mps[0]);
 
+    int is_newarr = 0;
     /* Set-up return array */
     if (out == NULL) {
         Py_INCREF(dtype);
@@ -1037,6 +1038,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                                                     multi->dimensions,
                                                     NULL, NULL, 0,
                                                     (PyObject *)ap);
+        is_newarr = 1;
     }
     else {
         int flags = NPY_ARRAY_CARRAY |
@@ -1067,7 +1069,18 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             flags |= NPY_ARRAY_ENSURECOPY;
         }
         Py_INCREF(dtype);
-        obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
+        if (!PyArray_EquivTypes(dtype, PyArray_DESCR(out))) {
+            obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(out),
+                                                        dtype,
+                                                        multi->nd,
+                                                        multi->dimensions,
+                                                        NULL, NULL, 0,
+                                                        (PyObject *)out);
+            is_newarr = 1;
+        }
+        else {
+            obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
+        }
     }
 
     if (obj == NULL) {
@@ -1144,7 +1157,17 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyDataMem_FREE(mps);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
-        PyArray_ResolveWritebackIfCopy(obj);
+        int success;
+        if (is_newarr) {
+            success = PyArray_CopyAnyInto(out, obj);
+        }
+        else {
+            success = PyArray_ResolveWritebackIfCopy(obj);
+        }
+        if (success < 0) {
+            Py_DECREF(obj);
+            goto fail;
+        }
         Py_DECREF(obj);
         obj = out;
     }
