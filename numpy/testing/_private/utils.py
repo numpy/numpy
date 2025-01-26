@@ -62,9 +62,12 @@ class KnownFailureException(Exception):
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
+NUMPY_ROOT = pathlib.Path(np.__file__).parent
+
 try:
-    np_dist = importlib_metadata.distribution('numpy')
-except importlib_metadata.PackageNotFoundError:
+    # Make sure we find the distibution in the path where the module was loaded from.
+    np_dist = next(importlib_metadata.distributions(name='numpy', path=[NUMPY_ROOT.parent]))
+except StopIteration:
     IS_INSTALLED = IS_EDITABLE = False
 else:
     IS_INSTALLED = True
@@ -89,8 +92,6 @@ if 'musl' in _v:
     IS_MUSL = True
 
 NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
-
-NUMPY_ROOT = pathlib.Path(np.__file__).parent
 
 def assert_(val, msg=''):
     """
