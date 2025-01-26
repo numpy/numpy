@@ -91,7 +91,7 @@ freebsd_test_task:
     source .venv/bin/activate
     # Minimal build and test requirements
     python3.11 -m pip install -U pip
-    python3.11 -m pip install meson-python Cython pytest hypothesis
+    python3.11 -m pip install meson-python Cython pytest hypothesis importlib_metadata
 
   build_script: |
     chsh -s /usr/local/bin/bash
