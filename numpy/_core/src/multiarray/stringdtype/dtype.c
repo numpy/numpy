@@ -144,7 +144,7 @@ fail:
     return NULL;
 }
 
-static int
+NPY_NO_EXPORT int
 na_eq_cmp(PyObject *a, PyObject *b) {
     if (a == b) {
         // catches None and other singletons like Pandas.NA

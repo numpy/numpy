@@ -1208,14 +1208,35 @@ float_to_string(
     PyArray_StringDTypeObject *descr =
             (PyArray_StringDTypeObject *)context->descriptors[1];
     npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+    // borrowed reference
+    PyObject *na_object = descr->na_object;
 
     while (N--) {
         PyObject *scalar_val = PyArray_Scalar(in, float_descr, NULL);
+        if (descr->has_nan_na) {
+            // check for case when scalar_val is the na_object and store a null string
+            int na_cmp = na_eq_cmp(scalar_val, na_object);
+            if (na_cmp < 0) {
+                Py_DECREF(scalar_val);
+                goto fail;
+            }
+            if (na_cmp) {
+                Py_DECREF(scalar_val);
+                if (NpyString_pack_null(allocator, (npy_packed_static_string *)out) < 0) {
+                    PyErr_SetString(PyExc_MemoryError,
+                                    "Failed to pack null string during float "
+                                    "to string cast");
+                    goto fail;
+                }
+                goto next_step;
+            }
+        }
         // steals reference to scalar_val
         if (pyobj_to_string(scalar_val, out, allocator) == -1) {
             goto fail;
         }
 
+      next_step:
         in += in_stride;
         out += out_stride;
     }
