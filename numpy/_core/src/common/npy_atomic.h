@@ -18,7 +18,6 @@
     #define STDC_ATOMICS
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
     && !defined(__STDC_NO_ATOMICS__)
-// TODO: support C++ atomics as well if this header is ever needed in C++
     #include <stdatomic.h>
     #include <stdint.h>
     #define _NPY_USING_STD
