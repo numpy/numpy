@@ -1889,6 +1889,9 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
          * of the initial array, that is C-contiguous. */
         order = 'F';
         transposed_array = PyArray_Transpose((PyArrayObject *)self, NULL);
+        if(transposed_array == NULL) {
+            return NULL;
+        }
         rev_perm = PyTuple_New(0);
         if (rev_perm == NULL) {
             return NULL;
@@ -1919,6 +1922,10 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         perm.ptr = dims;
         perm.len = n;
         transposed_array = PyArray_Transpose((PyArrayObject *)self, &perm);
+        if(transposed_array == NULL) {
+            Py_DECREF(rev_perm);
+            return NULL;
+        }
         if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject *)transposed_array)) {
             // self is non-contiguous
             Py_DECREF(rev_perm);
