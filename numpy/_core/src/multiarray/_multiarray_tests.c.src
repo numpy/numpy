@@ -1877,7 +1877,8 @@ get_fpu_mode(PyObject *NPY_UNUSED(self), PyObject *args)
         result = _controlfp(0, 0);
         return PyLong_FromLongLong(result);
     }
-#elif (defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))) || (defined(_MSC_VER) && defined(__clang__))
+#elif (defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))) \
+  || (defined(_MSC_VER) && defined(__clang__) && !defined(__ARM_ARCH))
     {
         unsigned short cw = 0;
         __asm__("fstcw %w0" : "=m" (cw));
