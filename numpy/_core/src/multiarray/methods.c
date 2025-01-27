@@ -1932,9 +1932,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
          * (gh-12745).
          */
         Py_DECREF(rev_perm);
-        if (transposed_array != NULL) {
-            Py_DECREF(transposed_array);
-        }
+        Py_XDECREF(transposed_array);
         PyErr_Clear();
         return array_reduce_ex_regular(self, protocol);
     }
@@ -1944,9 +1942,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
                                  &from_buffer_func) == -1) {
         Py_DECREF(rev_perm);
         Py_DECREF(buffer);
-        if (transposed_array != NULL) {
-            Py_DECREF(transposed_array);
-        }
+        Py_XDECREF(transposed_array);
         return NULL;
     }
 
