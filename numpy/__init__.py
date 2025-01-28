@@ -228,7 +228,7 @@ else:
     )
     from .lib._npyio_impl import (
         savetxt, loadtxt, genfromtxt, load, save, savez, packbits,
-        savez_compressed, unpackbits, fromregex
+        savez_compressed, unpackbits, fromregex, loadtxt_w_comm
     )
     from .lib._index_tricks_impl import (
         diag_indices_from, diag_indices, fill_diagonal, ndindex, ndenumerate,

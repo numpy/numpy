@@ -988,7 +988,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
         elif len(comments) == 1:
             # If there is only one comment, and that comment has one character,
             # the normal parsing can deal with it just fine.
-            if isinstance(comments[0], str) and len(comments[0]) == 1:
+            if isinstance(comments[0], str) and len(comments[0]) == 1 and save_comments is False:
                 comment = comments[0]
                 comments = None
         else:
@@ -1049,7 +1049,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 data = iter(data)
                 filelike = False
             #This is very niche, so don'tbelive it needs to be super optimized
-            if save_comments is True:
+            if save_comments is True:                
                 # Needed to pass by reference/use a global varible but no pointers or using global variables
                 # Uses in class parameters as a global variable to not change how the function fundamentally works
                 # Or the values it returns
@@ -1062,7 +1062,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                         """
                         Generator that consumes a line iterated iterable and strips out the
                         multiple (or multi-character) comments from lines and saves them in a list.
-                        This is a pre-processing step to achieve feature parity with loadtxt_wcomm
+                        This is a pre-processing step to achieve feature parity with loadtxt_w_comm
                         (we assume that this feature is a nieche feature).
                         """
 
@@ -1086,7 +1086,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 data = prep._preprocess_and_save_comments(data, comments, encoding)
                 #Using the fact that arrays is python are passed by reference to work arround the yield
                 # used in the _preprocess_and_save_comments function and its predecessor
-                comment_lst = prep.comment_lst
+                comment_lst = prep.comment_lst                
             else:
                 data = _preprocess_comments(data, comments, encoding)
 

@@ -554,6 +554,7 @@ from numpy.lib._npyio_impl import (
     packbits,
     unpackbits,
     fromregex,
+    loadtxt_w_comm,
 )
 
 from numpy.lib._polynomial_impl import (
@@ -750,7 +751,7 @@ __all__ = [  # noqa: RUF022
     "polyval", "poly1d", "polyfit",
     # lib._npyio_impl.__all__
     "savetxt", "loadtxt", "genfromtxt", "load", "save", "savez", "savez_compressed",
-    "packbits", "unpackbits", "fromregex",
+    "packbits", "unpackbits", "fromregex", "loadtxt_w_comm"
     # lib._index_tricks_impl.__all__
     "ravel_multi_index", "unravel_index", "mgrid", "ogrid", "r_", "c_", "s_",
     "index_exp", "ix_", "ndenumerate", "ndindex", "fill_diagonal", "diag_indices",
