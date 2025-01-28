@@ -145,12 +145,12 @@ def test_set_replace_na(i):
     s_long = "-=+" * 100
     strings = [s_medium, s_empty, s_short, s_medium, s_long]
     a = np.array(strings, StringDType(na_object=np.nan))
-    for s in [a[i], s_medium+s_short, s_short, s_empty, s_long]:
+    for s in [a[i], s_medium + s_short, s_short, s_empty, s_long]:
         a[i] = np.nan
         assert np.isnan(a[i])
         a[i] = s
         assert a[i] == s
-        assert_array_equal(a, strings[:i] + [s] + strings[i+1:])
+        assert_array_equal(a, strings[:i] + [s] + strings[i + 1:])
 
 
 def test_null_roundtripping():
@@ -271,7 +271,7 @@ class TestStringLikeCasts:
     def test_void_casts(self, dtype, strings):
         sarr = np.array(strings, dtype=dtype)
         utf8_bytes = [s.encode("utf-8") for s in strings]
-        void_dtype = f"V{max([len(s) for s in utf8_bytes])}"
+        void_dtype = f"V{max(len(s) for s in utf8_bytes)}"
         varr = np.array(utf8_bytes, dtype=void_dtype)
         assert_array_equal(varr, sarr.astype(void_dtype))
         assert_array_equal(varr.astype(dtype), sarr)
@@ -280,7 +280,7 @@ class TestStringLikeCasts:
         sarr = np.array(strings, dtype=dtype)
         try:
             utf8_bytes = [s.encode("ascii") for s in strings]
-            bytes_dtype = f"S{max([len(s) for s in utf8_bytes])}"
+            bytes_dtype = f"S{max(len(s) for s in utf8_bytes)}"
             barr = np.array(utf8_bytes, dtype=bytes_dtype)
             assert_array_equal(barr, sarr.astype(bytes_dtype))
             assert_array_equal(barr.astype(dtype), sarr)
@@ -415,8 +415,19 @@ def test_sort(dtype, strings):
 
     def test_sort(strings, arr_sorted):
         arr = np.array(strings, dtype=dtype)
-        np.random.default_rng().shuffle(arr)
         na_object = getattr(arr.dtype, "na_object", "")
+        if na_object is None and None in strings:
+            with pytest.raises(
+                ValueError,
+                match="Cannot compare null that is not a nan-like value",
+            ):
+                np.argsort(arr)
+            argsorted = None
+        elif na_object is pd_NA or na_object != '':
+            argsorted = None
+        else:
+            argsorted = np.argsort(arr)
+        np.random.default_rng().shuffle(arr)
         if na_object is None and None in strings:
             with pytest.raises(
                 ValueError,
@@ -426,6 +437,8 @@ def test_sort(dtype, strings):
         else:
             arr.sort()
             assert np.array_equal(arr, arr_sorted, equal_nan=True)
+        if argsorted is not None:
+            assert np.array_equal(argsorted, np.argsort(strings))
 
     # make a copy so we don't mutate the lists in the fixture
     strings = strings.copy()
@@ -503,10 +516,10 @@ def test_fancy_indexing(string_list):
     ]
 
     lops = [
-        ['a'*25, 'b'*25],
+        ['a' * 25, 'b' * 25],
         ['', ''],
         ['hello', 'world'],
-        ['hello', 'world'*25],
+        ['hello', 'world' * 25],
     ]
 
     # see gh-27003 and gh-27053
@@ -514,11 +527,11 @@ def test_fancy_indexing(string_list):
         for lop in lops:
             a = np.array(lop, dtype="T")
             assert_array_equal(a[ind], a)
-            rop = ['d'*25, 'e'*25]
+            rop = ['d' * 25, 'e' * 25]
             for b in [rop, np.array(rop, dtype="T")]:
                 a[ind] = b
                 assert_array_equal(a, b)
-                assert a[0] == 'd'*25
+                assert a[0] == 'd' * 25
 
 
 def test_creation_functions():
@@ -539,10 +552,10 @@ def test_concatenate(string_list):
 def test_resize_method(string_list):
     sarr = np.array(string_list, dtype="T")
     if IS_PYPY:
-        sarr.resize(len(string_list)+3, refcheck=False)
+        sarr.resize(len(string_list) + 3, refcheck=False)
     else:
-        sarr.resize(len(string_list)+3)
-    assert_array_equal(sarr, np.array(string_list + ['']*3,  dtype="T"))
+        sarr.resize(len(string_list) + 3)
+    assert_array_equal(sarr, np.array(string_list + [''] * 3,  dtype="T"))
 
 
 def test_create_with_copy_none(string_list):
@@ -720,6 +733,21 @@ def test_float_casts(typename):
     eres = [np.inf, fi.max, -np.inf, fi.min]
     res = np.array(inp, dtype=typename).astype("T").astype(typename)
     assert_array_equal(eres, res)
+
+
+def test_float_nan_cast_na_object():
+    # gh-28157
+    dt = np.dtypes.StringDType(na_object=np.nan)
+    arr1 = np.full((1,), fill_value=np.nan, dtype=dt)
+    arr2 = np.full_like(arr1, fill_value=np.nan)
+
+    assert arr1.item() is np.nan
+    assert arr2.item() is np.nan
+
+    inp = [1.2, 2.3, np.nan]
+    arr = np.array(inp).astype(dt)
+    assert arr[2] is np.nan
+    assert arr[0] == '1.2'
 
 
 @pytest.mark.parametrize(
@@ -1152,7 +1180,7 @@ def test_nat_casts():
         for arr in [dt_array, td_array]:
             assert_array_equal(
                 arr.astype(dtype),
-                np.array([output_object]*arr.size, dtype=dtype))
+                np.array([output_object] * arr.size, dtype=dtype))
 
 
 def test_nat_conversion():

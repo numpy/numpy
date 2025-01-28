@@ -8,20 +8,21 @@ import sys
 
 from tempfile import TemporaryFile
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_raises, IS_MUSL
+from numpy.testing import (
+    assert_, assert_equal, assert_raises, assert_raises_regex, IS_MUSL)
 
 class TestRealScalars:
     def test_str(self):
         svals = [0.0, -0.0, 1, -1, np.inf, -np.inf, np.nan]
         styps = [np.float16, np.float32, np.float64, np.longdouble]
         wanted = [
-             ['0.0',  '0.0',  '0.0',  '0.0' ],
+             ['0.0',  '0.0',  '0.0',  '0.0' ],  # noqa: E202
              ['-0.0', '-0.0', '-0.0', '-0.0'],
-             ['1.0',  '1.0',  '1.0',  '1.0' ],
+             ['1.0',  '1.0',  '1.0',  '1.0' ],  # noqa: E202
              ['-1.0', '-1.0', '-1.0', '-1.0'],
-             ['inf',  'inf',  'inf',  'inf' ],
+             ['inf',  'inf',  'inf',  'inf' ],  # noqa: E202
              ['-inf', '-inf', '-inf', '-inf'],
-             ['nan',  'nan',  'nan',  'nan']]
+             ['nan',  'nan',  'nan',  'nan' ]]  # noqa: E202
 
         for wants, val in zip(wanted, svals):
             for want, styp in zip(wants, styps):
@@ -124,7 +125,6 @@ class TestRealScalars:
         assert_equal(fsci64('9.9999999999999694e-311', **preckwd(16)),
                             '9.9999999999999694e-311')
 
-
         # test rounding
         # 3.1415927410 is closest float32 to np.pi
         assert_equal(fpos32('3.14159265358979323846', **preckwd(10)),
@@ -146,7 +146,6 @@ class TestRealScalars:
         assert_equal(fpos64('3.14159265358979323846', **preckwd(50)),
                          "3.14159265358979311599796346854418516159057617187500")
         assert_equal(fpos64('3.14159265358979323846'), "3.141592653589793")
-
 
         # smallest numbers
         assert_equal(fpos32(0.5**(126 + 23), unique=False, precision=149),
@@ -260,53 +259,93 @@ class TestRealScalars:
         assert_equal(fpos64('324', unique=False, precision=5,
                                    fractional=False), "324.00")
 
-    def test_dragon4_interface(self):
-        tps = [np.float16, np.float32, np.float64]
+    available_float_dtypes = [np.float16, np.float32, np.float64, np.float128]\
+        if hasattr(np, 'float128') else [np.float16, np.float32, np.float64]
+    
+    @pytest.mark.parametrize("tp", available_float_dtypes)
+    def test_dragon4_positional_interface(self, tp):
         # test is flaky for musllinux on np.float128
-        if hasattr(np, 'float128') and not IS_MUSL:
-            tps.append(np.float128)
-
+        if IS_MUSL and tp == np.float128:
+            pytest.skip("Skipping flaky test of float128 on musllinux")
+                
         fpos = np.format_float_positional
+        
+        # test padding
+        assert_equal(fpos(tp('1.0'), pad_left=4, pad_right=4), "   1.    ")
+        assert_equal(fpos(tp('-1.0'), pad_left=4, pad_right=4), "  -1.    ")
+        assert_equal(fpos(tp('-10.2'),
+                        pad_left=4, pad_right=4), " -10.2   ")
+        
+        # test fixed (non-unique) mode
+        assert_equal(fpos(tp('1.0'), unique=False, precision=4), "1.0000")
+
+    @pytest.mark.parametrize("tp", available_float_dtypes)
+    def test_dragon4_positional_interface_trim(self, tp):
+        # test is flaky for musllinux on np.float128
+        if IS_MUSL and tp == np.float128:
+            pytest.skip("Skipping flaky test of float128 on musllinux")
+                        
+        fpos = np.format_float_positional
+        # test trimming
+        # trim of 'k' or '.' only affects non-unique mode, since unique
+        # mode will not output trailing 0s.
+        assert_equal(fpos(tp('1.'), unique=False, precision=4, trim='k'),
+                        "1.0000")
+
+        assert_equal(fpos(tp('1.'), unique=False, precision=4, trim='.'),
+                        "1.")
+        assert_equal(fpos(tp('1.2'), unique=False, precision=4, trim='.'),
+                        "1.2" if tp != np.float16 else "1.2002")
+
+        assert_equal(fpos(tp('1.'), unique=False, precision=4, trim='0'),
+                        "1.0")
+        assert_equal(fpos(tp('1.2'), unique=False, precision=4, trim='0'),
+                        "1.2" if tp != np.float16 else "1.2002")
+        assert_equal(fpos(tp('1.'), trim='0'), "1.0")
+
+        assert_equal(fpos(tp('1.'), unique=False, precision=4, trim='-'),
+                        "1")
+        assert_equal(fpos(tp('1.2'), unique=False, precision=4, trim='-'),
+                        "1.2" if tp != np.float16 else "1.2002")
+        assert_equal(fpos(tp('1.'), trim='-'), "1")
+        assert_equal(fpos(tp('1.001'), precision=1, trim='-'), "1")
+                
+    @pytest.mark.parametrize("tp", available_float_dtypes)
+    @pytest.mark.parametrize("pad_val", [10**5, np.iinfo("int32").max])
+    def test_dragon4_positional_interface_overflow(self, tp, pad_val):
+        # test is flaky for musllinux on np.float128
+        if IS_MUSL and tp == np.float128:
+            pytest.skip("Skipping flaky test of float128 on musllinux")
+                
+        fpos = np.format_float_positional
+
+        #gh-28068            
+        with pytest.raises(RuntimeError, 
+                           match="Float formating result too large"):
+            fpos(tp('1.047'), unique=False, precision=pad_val)
+
+        with pytest.raises(RuntimeError, 
+                           match="Float formating result too large"):
+            fpos(tp('1.047'), precision=2, pad_left=pad_val)
+
+        with pytest.raises(RuntimeError, 
+                           match="Float formating result too large"):
+            fpos(tp('1.047'), precision=2, pad_right=pad_val)
+
+    @pytest.mark.parametrize("tp", available_float_dtypes)
+    def test_dragon4_scientific_interface(self, tp):
+        # test is flaky for musllinux on np.float128
+        if IS_MUSL and tp == np.float128:
+            pytest.skip("Skipping flaky test of float128 on musllinux")
+                        
         fsci = np.format_float_scientific
 
-        for tp in tps:
-            # test padding
-            assert_equal(fpos(tp('1.0'), pad_left=4, pad_right=4), "   1.    ")
-            assert_equal(fpos(tp('-1.0'), pad_left=4, pad_right=4), "  -1.    ")
-            assert_equal(fpos(tp('-10.2'),
-                         pad_left=4, pad_right=4), " -10.2   ")
+        # test exp_digits
+        assert_equal(fsci(tp('1.23e1'), exp_digits=5), "1.23e+00001")
 
-            # test exp_digits
-            assert_equal(fsci(tp('1.23e1'), exp_digits=5), "1.23e+00001")
-
-            # test fixed (non-unique) mode
-            assert_equal(fpos(tp('1.0'), unique=False, precision=4), "1.0000")
-            assert_equal(fsci(tp('1.0'), unique=False, precision=4),
-                         "1.0000e+00")
-
-            # test trimming
-            # trim of 'k' or '.' only affects non-unique mode, since unique
-            # mode will not output trailing 0s.
-            assert_equal(fpos(tp('1.'), unique=False, precision=4, trim='k'),
-                         "1.0000")
-
-            assert_equal(fpos(tp('1.'), unique=False, precision=4, trim='.'),
-                         "1.")
-            assert_equal(fpos(tp('1.2'), unique=False, precision=4, trim='.'),
-                         "1.2" if tp != np.float16 else "1.2002")
-
-            assert_equal(fpos(tp('1.'), unique=False, precision=4, trim='0'),
-                         "1.0")
-            assert_equal(fpos(tp('1.2'), unique=False, precision=4, trim='0'),
-                         "1.2" if tp != np.float16 else "1.2002")
-            assert_equal(fpos(tp('1.'), trim='0'), "1.0")
-
-            assert_equal(fpos(tp('1.'), unique=False, precision=4, trim='-'),
-                         "1")
-            assert_equal(fpos(tp('1.2'), unique=False, precision=4, trim='-'),
-                         "1.2" if tp != np.float16 else "1.2002")
-            assert_equal(fpos(tp('1.'), trim='-'), "1")
-            assert_equal(fpos(tp('1.001'), precision=1, trim='-'), "1")
+        # test fixed (non-unique) mode
+        assert_equal(fsci(tp('1.0'), unique=False, precision=4),
+                        "1.0000e+00")
 
     @pytest.mark.skipif(not platform.machine().startswith("ppc64"),
                         reason="only applies to ppc float128 values")
@@ -316,7 +355,7 @@ class TestRealScalars:
         # which happens when the first double is normal and the second is
         # subnormal.
         x = np.float128('2.123123123123123123123123123123123e-286')
-        got = [str(x/np.float128('2e' + str(i))) for i in range(0,40)]
+        got = [str(x / np.float128('2e' + str(i))) for i in range(40)]
         expected = [
             "1.06156156156156156156156156156157e-286",
             "1.06156156156156156156156156156158e-287",
@@ -363,7 +402,7 @@ class TestRealScalars:
         # Note: we follow glibc behavior, but it (or gcc) might not be right.
         # In particular we can get two values that print the same but are not
         # equal:
-        a = np.float128('2')/np.float128('3')
+        a = np.float128('2') / np.float128('3')
         b = np.float128(str(a))
         assert_equal(str(a), str(b))
         assert_(a != b)

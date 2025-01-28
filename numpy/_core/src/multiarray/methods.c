@@ -74,36 +74,28 @@ npy_forward_method(
         PyObject *callable, PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyObject *args_buffer[NPY_MAXARGS];
-    /* Practically guaranteed NPY_MAXARGS is enough. */
-    PyObject **new_args = args_buffer;
-
     /*
      * `PY_VECTORCALL_ARGUMENTS_OFFSET` seems never set, probably `args[-1]`
      * is always `self` but do not rely on it unless Python documents that.
      */
     npy_intp len_kwargs = kwnames != NULL ? PyTuple_GET_SIZE(kwnames) : 0;
-    size_t original_arg_size = (len_args + len_kwargs) * sizeof(PyObject *);
+    npy_intp total_nargs = (len_args + len_kwargs);
 
-    if (NPY_UNLIKELY(len_args + len_kwargs > NPY_MAXARGS)) {
-        new_args = (PyObject **)PyMem_MALLOC(original_arg_size + sizeof(PyObject *));
-        if (new_args == NULL) {
-            /*
-             * If this fails Python uses `PY_VECTORCALL_ARGUMENTS_OFFSET` and
-             * we should probably add a fast-path for that (hopefully almost)
-             * always taken.
-             */
-            return PyErr_NoMemory();
-        }
+    NPY_ALLOC_WORKSPACE(new_args, PyObject *, 14, total_nargs + 1);
+    if (new_args == NULL) {
+        /*
+         * This may fail if Python starts passing `PY_VECTORCALL_ARGUMENTS_OFFSET`
+         * and we should probably add a fast-path for that (hopefully almost)
+         * always taken.
+         */
+        return NULL;
     }
 
     new_args[0] = self;
-    memcpy(&new_args[1], args, original_arg_size);
+    memcpy(&new_args[1], args, total_nargs * sizeof(PyObject *));
     PyObject *res = PyObject_Vectorcall(callable, new_args, len_args+1, kwnames);
 
-    if (NPY_UNLIKELY(len_args + len_kwargs > NPY_MAXARGS)) {
-        PyMem_FREE(new_args);
-    }
+    npy_free_workspace(new_args);
     return res;
 }
 

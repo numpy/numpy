@@ -93,7 +93,7 @@ class TestCharacter:
             pass
 
         ret = s + MyBytes(b'abc')
-        assert(type(ret) is type(s))
+        assert type(ret) is type(s)
         assert ret == b"defabc"
 
     def test_char_repeat(self):

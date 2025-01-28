@@ -150,12 +150,12 @@ class TestNdpointerCFunc:
     @pytest.mark.parametrize(
         'dt', [
             float,
-            np.dtype(dict(
-                formats=['<i4', '<i4'],
-                names=['a', 'b'],
-                offsets=[0, 2],
-                itemsize=6
-            ))
+            np.dtype({
+                'formats': ['<i4', '<i4'],
+                'names': ['a', 'b'],
+                'offsets': [0, 2],
+                'itemsize': 6
+            })
         ], ids=[
             'float',
             'overlapping-fields'
@@ -337,11 +337,11 @@ class TestAsCtypesType:
         ])
 
     def test_union(self):
-        dt = np.dtype(dict(
-            names=['a', 'b'],
-            offsets=[0, 0],
-            formats=[np.uint16, np.uint32]
-        ))
+        dt = np.dtype({
+            'names': ['a', 'b'],
+            'offsets': [0, 0],
+            'formats': [np.uint16, np.uint32]
+        })
 
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_(issubclass(ct, ctypes.Union))
@@ -352,12 +352,12 @@ class TestAsCtypesType:
         ])
 
     def test_padded_union(self):
-        dt = np.dtype(dict(
-            names=['a', 'b'],
-            offsets=[0, 0],
-            formats=[np.uint16, np.uint32],
-            itemsize=5,
-        ))
+        dt = np.dtype({
+            'names': ['a', 'b'],
+            'offsets': [0, 0],
+            'formats': [np.uint16, np.uint32],
+            'itemsize': 5,
+        })
 
         ct = np.ctypeslib.as_ctypes_type(dt)
         assert_(issubclass(ct, ctypes.Union))
@@ -369,9 +369,9 @@ class TestAsCtypesType:
         ])
 
     def test_overlapping(self):
-        dt = np.dtype(dict(
-            names=['a', 'b'],
-            offsets=[0, 2],
-            formats=[np.uint32, np.uint32]
-        ))
+        dt = np.dtype({
+            'names': ['a', 'b'],
+            'offsets': [0, 2],
+            'formats': [np.uint32, np.uint32]
+        })
         assert_raises(NotImplementedError, np.ctypeslib.as_ctypes_type, dt)

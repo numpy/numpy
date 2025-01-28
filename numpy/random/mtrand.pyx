@@ -4902,6 +4902,7 @@ def ranf(*args, **kwargs):
     return _rand.random_sample(*args, **kwargs)
 
 __all__ = [
+    'RandomState',
     'beta',
     'binomial',
     'bytes',
@@ -4954,5 +4955,18 @@ __all__ = [
     'wald',
     'weibull',
     'zipf',
-    'RandomState',
 ]
+
+seed.__module__ = "numpy.random"
+ranf.__module__ = "numpy.random"
+sample.__module__ = "numpy.random"
+get_bit_generator.__module__ = "numpy.random"
+set_bit_generator.__module__ = "numpy.random"
+
+# The first item in __all__ is 'RandomState', so it can be skipped here.
+for method_name in __all__[1:]:
+    method = getattr(RandomState, method_name, None)
+    if method is not None:
+        method.__module__ = "numpy.random"
+
+del method, method_name

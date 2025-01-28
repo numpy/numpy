@@ -42,10 +42,10 @@ linux_aarch64_test_task:
   prepare_env_script: |
     apt-get update
     apt-get install -y --no-install-recommends software-properties-common gcc g++ gfortran pkg-config ccache
-    apt-get install -y --no-install-recommends python3.10 python3.10-venv libopenblas-dev libatlas-base-dev liblapack-dev
+    apt-get install -y --no-install-recommends python3.11 python3.11-venv libopenblas-dev libatlas-base-dev liblapack-dev
 
-    # python3.10 -m ensurepip --default-pip --user
-    ln -s $(which python3.10) python
+    # python3.11 -m ensurepip --default-pip --user
+    ln -s $(which python3.11) python
 
     # put ccache and python on PATH
     export PATH=/usr/lib/ccache:$PWD:$PATH

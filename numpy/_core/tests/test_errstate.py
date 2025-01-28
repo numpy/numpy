@@ -46,6 +46,7 @@ class TestErrstate:
                         reason='platform/cpu issue with FPU (gh-15562)')
     def test_errcall(self):
         count = 0
+
         def foo(*args):
             nonlocal count
             count += 1

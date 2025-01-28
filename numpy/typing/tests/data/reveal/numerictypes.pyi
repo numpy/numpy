@@ -3,7 +3,6 @@ from typing_extensions import assert_type
 
 import numpy as np
 
-
 assert_type(
     np.ScalarType,
     tuple[

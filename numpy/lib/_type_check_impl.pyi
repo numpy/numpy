@@ -41,7 +41,6 @@ _SCT = TypeVar("_SCT", bound=generic)
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 
-
 def mintypecode(
     typechars: Iterable[str | ArrayLike],
     typeset: Container[str] = ...,

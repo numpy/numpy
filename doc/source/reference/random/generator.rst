@@ -72,6 +72,8 @@ By default, `Generator.permuted` returns a copy.  To operate in-place with
 `Generator.permuted`, pass the same array as the first argument *and* as
 the value of the ``out`` parameter.  For example,
 
+.. try_examples::
+
     >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> x = np.arange(0, 15).reshape(3, 5)
@@ -101,6 +103,8 @@ which dimension of the input array to use as the sequence. In the case of a
 two-dimensional array, ``axis=0`` will, in effect, rearrange the rows of the
 array, and  ``axis=1`` will rearrange the columns.  For example
 
+.. try_examples::
+
     >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> x = np.arange(0, 15).reshape(3, 5)
@@ -121,6 +125,8 @@ how `numpy.sort` treats it.  Each slice along the given axis is shuffled
 independently of the others.  Compare the following example of the use of
 `Generator.permuted` to the above example of `Generator.permutation`:
 
+.. try_examples::
+
     >>> import numpy as np
     >>> rng = np.random.default_rng()
     >>> rng.permuted(x, axis=1) #doctest: +SKIP
@@ -136,6 +142,8 @@ Shuffling non-NumPy sequences
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 `Generator.shuffle` works on non-NumPy sequences.  That is, if it is given
 a sequence that is not a NumPy array, it shuffles that sequence in-place.
+
+.. try_examples::
 
     >>> import numpy as np
     >>> rng = np.random.default_rng()

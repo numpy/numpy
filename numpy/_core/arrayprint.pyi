@@ -62,10 +62,10 @@ def set_printoptions(
     nanstr: None | str = ...,
     infstr: None | str = ...,
     formatter: None | _FormatDict = ...,
-    sign: Literal[None, "-", "+", " "] = ...,
+    sign: Literal["-", "+", " "] | None = ...,
     floatmode: None | _FloatMode = ...,
     *,
-    legacy: Literal[None, False, "1.13", "1.21"] = ...,
+    legacy: Literal[False, "1.13", "1.21"] | None = ...,
     override_repr: None | Callable[[NDArray[Any]], str] = ...,
 ) -> None: ...
 def get_printoptions() -> _FormatOptions: ...
@@ -83,10 +83,10 @@ def array2string(
     formatter: None | _FormatDict = ...,
     threshold: None | int = ...,
     edgeitems: None | int = ...,
-    sign: Literal[None, "-", "+", " "] = ...,
+    sign: Literal["-", "+", " "] | None = ...,
     floatmode: None | _FloatMode = ...,
     suffix: str = ...,
-    legacy: Literal[None, False, "1.13", "1.21"] = ...,
+    legacy: Literal[False, "1.13", "1.21"] | None = ...,
 ) -> str: ...
 def format_float_scientific(
     x: _FloatLike_co,
@@ -130,8 +130,8 @@ def printoptions(
     nanstr: None | str = ...,
     infstr: None | str = ...,
     formatter: None | _FormatDict = ...,
-    sign: Literal[None, "-", "+", " "] = ...,
+    sign: Literal["-", "+", " "] | None = ...,
     floatmode: None | _FloatMode = ...,
     *,
-    legacy: Literal[None, False, "1.13", "1.21"] = ...
+    legacy: Literal[False, "1.13", "1.21"] | None = ...
 ) -> _GeneratorContextManager[_FormatOptions]: ...

@@ -22,25 +22,25 @@ class TestIndexing:
         assert_raises(IndexError, lambda: a[0.0])
         assert_raises(IndexError, lambda: a[0, 0.0])
         assert_raises(IndexError, lambda: a[0.0, 0])
-        assert_raises(IndexError, lambda: a[0.0,:])
+        assert_raises(IndexError, lambda: a[0.0, :])
         assert_raises(IndexError, lambda: a[:, 0.0])
-        assert_raises(IndexError, lambda: a[:, 0.0,:])
-        assert_raises(IndexError, lambda: a[0.0,:,:])
+        assert_raises(IndexError, lambda: a[:, 0.0, :])
+        assert_raises(IndexError, lambda: a[0.0, :, :])
         assert_raises(IndexError, lambda: a[0, 0, 0.0])
         assert_raises(IndexError, lambda: a[0.0, 0, 0])
         assert_raises(IndexError, lambda: a[0, 0.0, 0])
         assert_raises(IndexError, lambda: a[-1.4])
         assert_raises(IndexError, lambda: a[0, -1.4])
         assert_raises(IndexError, lambda: a[-1.4, 0])
-        assert_raises(IndexError, lambda: a[-1.4,:])
+        assert_raises(IndexError, lambda: a[-1.4, :])
         assert_raises(IndexError, lambda: a[:, -1.4])
-        assert_raises(IndexError, lambda: a[:, -1.4,:])
-        assert_raises(IndexError, lambda: a[-1.4,:,:])
+        assert_raises(IndexError, lambda: a[:, -1.4, :])
+        assert_raises(IndexError, lambda: a[-1.4, :, :])
         assert_raises(IndexError, lambda: a[0, 0, -1.4])
         assert_raises(IndexError, lambda: a[-1.4, 0, 0])
         assert_raises(IndexError, lambda: a[0, -1.4, 0])
         assert_raises(IndexError, lambda: a[0.0:, 0.0])
-        assert_raises(IndexError, lambda: a[0.0:, 0.0,:])
+        assert_raises(IndexError, lambda: a[0.0:, 0.0, :])
 
     def test_slicing_no_floats(self):
         a = np.array([[5]])
@@ -49,26 +49,26 @@ class TestIndexing:
         assert_raises(TypeError, lambda: a[0.0:])
         assert_raises(TypeError, lambda: a[0:, 0.0:2])
         assert_raises(TypeError, lambda: a[0.0::2, :0])
-        assert_raises(TypeError, lambda: a[0.0:1:2,:])
+        assert_raises(TypeError, lambda: a[0.0:1:2, :])
         assert_raises(TypeError, lambda: a[:, 0.0:])
         # stop as float.
         assert_raises(TypeError, lambda: a[:0.0])
         assert_raises(TypeError, lambda: a[:0, 1:2.0])
         assert_raises(TypeError, lambda: a[:0.0:2, :0])
-        assert_raises(TypeError, lambda: a[:0.0,:])
+        assert_raises(TypeError, lambda: a[:0.0, :])
         assert_raises(TypeError, lambda: a[:, 0:4.0:2])
         # step as float.
         assert_raises(TypeError, lambda: a[::1.0])
         assert_raises(TypeError, lambda: a[0:, :2:2.0])
         assert_raises(TypeError, lambda: a[1::4.0, :0])
-        assert_raises(TypeError, lambda: a[::5.0,:])
+        assert_raises(TypeError, lambda: a[::5.0, :])
         assert_raises(TypeError, lambda: a[:, 0:4:2.0])
         # mixed.
         assert_raises(TypeError, lambda: a[1.0:2:2.0])
         assert_raises(TypeError, lambda: a[1.0::2.0])
         assert_raises(TypeError, lambda: a[0:, :2.0:2.0])
         assert_raises(TypeError, lambda: a[1.0:1:4.0, :0])
-        assert_raises(TypeError, lambda: a[1.0:5.0:5.0,:])
+        assert_raises(TypeError, lambda: a[1.0:5.0:5.0, :])
         assert_raises(TypeError, lambda: a[:, 0.4:4.0:2.0])
         # should still get the DeprecationWarning if step = 0.
         assert_raises(TypeError, lambda: a[::0.0])
@@ -113,8 +113,8 @@ class TestIndexing:
         arr = np.arange(10).reshape(5, 2)
         assert_array_equal(arr[index], arr[u_index])
 
-        arr[u_index] = np.arange(5)[:,None]
-        assert_array_equal(arr, np.arange(5)[:,None].repeat(2, axis=1))
+        arr[u_index] = np.arange(5)[:, None]
+        assert_array_equal(arr, np.arange(5)[:, None].repeat(2, axis=1))
 
         arr = np.arange(25).reshape(5, 5)
         assert_array_equal(arr[u_index, u_index], arr[index, index])
@@ -167,7 +167,7 @@ class TestIndexing:
         # Slicing with ellipsis can skip an
         # arbitrary number of dimensions
         assert_equal(a[0, ...], a[0])
-        assert_equal(a[0, ...], a[0,:])
+        assert_equal(a[0, ...], a[0, :])
         assert_equal(a[..., 0], a[:, 0])
 
         # Slicing with ellipsis always results
@@ -219,8 +219,8 @@ class TestIndexing:
     def test_boolean_indexing_onedim(self):
         # Indexing a 2-dimensional array with
         # boolean array of length one
-        a = np.array([[ 0.,  0.,  0.]])
-        b = np.array([ True], dtype=bool)
+        a = np.array([[0.,  0.,  0.]])
+        b = np.array([True], dtype=bool)
         assert_equal(a[b], a)
         # boolean assignment
         a[b] = 1.
@@ -258,9 +258,9 @@ class TestIndexing:
         a = np.array([[1, 2, 3],
                       [4, 5, 6],
                       [7, 8, 9]])
-        b = np.array([[ True, False,  True],
-                      [False,  True, False],
-                      [ True, False,  True]])
+        b = np.array([[ True, False, True],
+                      [False, True, False],
+                      [ True, False, True]])
         assert_equal(a[b], [1, 3, 5, 7, 9])
         assert_equal(a[b[1]], [[4, 5, 6]])
         assert_equal(a[b[0]], a[b[2]])
@@ -415,7 +415,7 @@ class TestIndexing:
                          dtype=[('target', 'S20'), ('V_mag', '>f4')])
         d.flags.writeable = writeable
         # Advanced indexing results are always writeable:
-        ind = np.array([False,  True,  True], dtype=bool)
+        ind = np.array([False, True, True], dtype=bool)
         assert d[ind].flags.writeable
         ind = np.array([0, 1])
         assert d[ind].flags.writeable
@@ -427,7 +427,7 @@ class TestIndexing:
         # This is not necessary to preserve. Memory layouts for
         # more complex indices are not as simple.
         a = np.arange(10)
-        b = np.arange(10).reshape(5,2).T
+        b = np.arange(10).reshape(5, 2).T
         assert_(a[b].flags.f_contiguous)
 
         # Takes a different implementation branch:
@@ -604,6 +604,7 @@ class TestIndexing:
         arr = np.random.uniform(size=(6000, 8)).view(dt)[:, 0]
 
         rng = np.random.default_rng()
+
         def func(arr):
             indx = rng.integers(0, len(arr), size=6000, dtype=np.intp)
             arr[indx]
@@ -626,7 +627,7 @@ class TestFieldIndexing:
     def test_scalar_return_type(self):
         # Field access on an array should return an array, even if it
         # is 0-d.
-        a = np.zeros((), [('a','f8')])
+        a = np.zeros((), [('a', 'f8')])
         assert_(isinstance(a['a'], np.ndarray))
         assert_(isinstance(a[['a']], np.ndarray))
 
@@ -654,7 +655,7 @@ class TestBroadcastedAssignments:
         # Too large and not only ones.
         assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
         assert_raises(ValueError, assign, a, s_[[1, 2, 3],], np.ones((2, 1)))
-        assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2,2,1)))
+        assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2, 2, 1)))
 
     def test_simple_broadcasting_errors(self):
         assign = self.assign
@@ -692,7 +693,7 @@ class TestBroadcastedAssignments:
 
     def test_broadcast_subspace(self):
         a = np.zeros((100, 100))
-        v = np.arange(100)[:,None]
+        v = np.arange(100)[:, None]
         b = np.arange(100)[::-1]
         a[b] = v
         assert_((a[::-1] == v).all())
@@ -740,7 +741,6 @@ class TestSubclasses:
         s_fancy = s[[0, 1, 2]]
         assert_(s_fancy.flags.writeable)
 
-
     def test_finalize_gets_full_info(self):
         # Array finalize should be called on the filled array.
         class SubClass(np.ndarray):
@@ -753,7 +753,7 @@ class TestSubclasses:
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
-        new_s = s[[0,1,2,3]]
+        new_s = s[[0, 1, 2, 3]]
         assert_array_equal(new_s.finalize_status, new_s)
         assert_array_equal(new_s.old, s)
 
@@ -790,20 +790,20 @@ class TestFancyIndexingEquivalence:
         # The right hand side cannot be converted to an array here.
         a = np.arange(5, dtype=object)
         b = a.copy()
-        a[:3] = [1, (1,2), 3]
-        b[[0, 1, 2]] = [1, (1,2), 3]
+        a[:3] = [1, (1, 2), 3]
+        b[[0, 1, 2]] = [1, (1, 2), 3]
         assert_array_equal(a, b)
 
         # test same for subspace fancy indexing
         b = np.arange(5, dtype=object)[None, :]
-        b[[0], :3] = [[1, (1,2), 3]]
+        b[[0], :3] = [[1, (1, 2), 3]]
         assert_array_equal(a, b[0])
 
         # Check that swapping of axes works.
         # There was a bug that made the later assignment throw a ValueError
         # do to an incorrectly transposed temporary right hand side (gh-5714)
         b = b.T
-        b[:3, [0]] = [[1], [(1,2)], [3]]
+        b[:3, [0]] = [[1], [(1, 2)], [3]]
         assert_array_equal(a, b[:, 0])
 
         # Another test for the memory order of the subspace
@@ -875,7 +875,7 @@ class TestMultiIndexingAutomated:
             np.array([[2], [0], [1]]),
             np.array([[0, -1], [0, 1]], dtype=np.dtype('intp').newbyteorder()),
             np.array([2, -1], dtype=np.int8),
-            np.zeros([1]*31, dtype=int),  # trigger too large array.
+            np.zeros([1] * 31, dtype=int),  # trigger too large array.
             np.array([0., 1.])]  # invalid datatype
         # Some simpler indices that still cover a bit more
         self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]),
@@ -975,7 +975,7 @@ class TestMultiIndexingAutomated:
             return arr.copy(), no_copy
 
         if ellipsis_pos is not None:
-            in_indices[ellipsis_pos:ellipsis_pos+1] = ([slice(None, None)] *
+            in_indices[ellipsis_pos:ellipsis_pos + 1] = ([slice(None, None)] *
                                                        (arr.ndim - ndim))
 
         for ax, indx in enumerate(in_indices):
@@ -990,21 +990,21 @@ class TestMultiIndexingAutomated:
                 arr = arr.reshape(arr.shape[:ax] + (1,) + arr.shape[ax:])
                 continue
             if isinstance(indx, np.ndarray) and indx.dtype == bool:
-                if indx.shape != arr.shape[ax:ax+indx.ndim]:
+                if indx.shape != arr.shape[ax:ax + indx.ndim]:
                     raise IndexError
 
                 try:
                     flat_indx = np.ravel_multi_index(np.nonzero(indx),
-                                    arr.shape[ax:ax+indx.ndim], mode='raise')
+                                    arr.shape[ax:ax + indx.ndim], mode='raise')
                 except Exception:
                     error_unless_broadcast_to_empty = True
                     # fill with 0s instead, and raise error later
-                    flat_indx = np.array([0]*indx.sum(), dtype=np.intp)
+                    flat_indx = np.array([0] * indx.sum(), dtype=np.intp)
                 # concatenate axis into a single one:
                 if indx.ndim != 0:
                     arr = arr.reshape(arr.shape[:ax]
-                                  + (np.prod(arr.shape[ax:ax+indx.ndim]),)
-                                  + arr.shape[ax+indx.ndim:])
+                                  + (np.prod(arr.shape[ax:ax + indx.ndim]),)
+                                  + arr.shape[ax + indx.ndim:])
                     indx = flat_indx
                 else:
                     # This could be changed, a 0-d boolean index can
@@ -1087,7 +1087,7 @@ class TestMultiIndexingAutomated:
                         if _indx.size == 0:
                             continue
                         if np.any(_indx >= _size) or np.any(_indx < -_size):
-                                raise IndexError
+                            raise IndexError
                 if len(indx[1:]) == len(orig_slice):
                     if np.prod(orig_slice) == 0:
                         # Work around for a crash or IndexError with 'wrap'
@@ -1109,7 +1109,7 @@ class TestMultiIndexingAutomated:
                 try:
                     arr = arr.reshape(arr.shape[:ax]
                                         + mi.shape
-                                        + arr.shape[ax+1:])
+                                        + arr.shape[ax + 1:])
                 except ValueError:
                     # too many dimensions, probably
                     raise IndexError
@@ -1268,8 +1268,8 @@ class TestFloatNonIntegerArgument:
         a[np.array([0])]
         a[[0, 0]]
         a[:, [0, 0]]
-        a[:, 0,:]
-        a[:,:,:]
+        a[:, 0, :]
+        a[:, :, :]
 
     def test_valid_slicing(self):
         # These should raise no errors.
@@ -1302,7 +1302,7 @@ class TestFloatNonIntegerArgument:
         mult([1], np.int_(3))
 
     def test_reduce_axis_float_index(self):
-        d = np.zeros((3,3,3))
+        d = np.zeros((3, 3, 3))
         assert_raises(TypeError, np.min, d, 0.5)
         assert_raises(TypeError, np.min, d, (0.5, 1))
         assert_raises(TypeError, np.min, d, (1, 2.2))
@@ -1335,21 +1335,21 @@ class TestBooleanIndexing:
         a = np.ones((3, 3))
 
         # This used to incorrectly work (and give an array of shape (0,))
-        idx1 = np.array([[False]*9])
+        idx1 = np.array([[False] * 9])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along axis 0; "
             "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx1])
 
         # This used to incorrectly give a ValueError: operands could not be broadcast together
-        idx2 = np.array([[False]*8 + [True]])
+        idx2 = np.array([[False] * 8 + [True]])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along axis 0; "
             "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx2])
 
         # This is the same as it used to be. The above two should work like this.
-        idx3 = np.array([[False]*10])
+        idx3 = np.array([[False] * 10])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along axis 0; "
             "size of axis is 3 but size of corresponding boolean axis is 1",

@@ -63,6 +63,7 @@ def open_latin1(filename, mode='r'):
 def sixu(s):
     return s
 
+
 strchar = 'U'
 
 def getexception():

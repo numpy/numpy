@@ -25,7 +25,7 @@ dependencies:
   - hypothesis
   # For type annotations
   - typing_extensions>=4.2.0  # needed for python < 3.10
-  - mypy=1.13.0
+  - mypy=1.14.1
   - orjson  # makes mypy faster
   # For building docs
   - sphinx>=4.5.0
@@ -39,10 +39,13 @@ dependencies:
   - pydata-sphinx-theme>=0.15.2
   - doxygen
   - towncrier
+  - jupyterlite-sphinx>=0.18.0
+  # see https://github.com/jupyterlite/pyodide-kernel#compatibility
+  - jupyterlite-pyodide-kernel==0.5.2 # supports Pyodide 0.27.1
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0
   # For linting
-  - pycodestyle=2.12.1
+  - ruff=0.8.3
   - gitpython
   # Used in some tests
   - cffi

@@ -1272,7 +1272,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
         fastest).  If order is 'A', then the returned array may
         be in any order (either C-, Fortran-contiguous, or even
         discontiguous).
-    
+
     Examples
     --------
 

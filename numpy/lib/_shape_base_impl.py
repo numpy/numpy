@@ -35,7 +35,7 @@ def _make_along_axis_idx(arr_shape, indices, axis):
         raise ValueError(
             "`indices` and `arr` must have the same number of dimensions")
     shape_ones = (1,) * indices.ndim
-    dest_dims = list(range(axis)) + [None] + list(range(axis+1, indices.ndim))
+    dest_dims = list(range(axis)) + [None] + list(range(axis + 1, indices.ndim))
 
     # build a fancy index, consisting of orthogonal aranges, with the
     # requested index inserted at the right location
@@ -44,7 +44,7 @@ def _make_along_axis_idx(arr_shape, indices, axis):
         if dim is None:
             fancy_index.append(indices)
         else:
-            ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim+1:]
+            ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim + 1:]
             fancy_index.append(_nx.arange(n).reshape(ind_shape))
 
     return tuple(fancy_index)
@@ -369,7 +369,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
 
     # arr, with the iteration axis at the end
     in_dims = list(range(nd))
-    inarr_view = transpose(arr, in_dims[:axis] + in_dims[axis+1:] + [axis])
+    inarr_view = transpose(arr, in_dims[:axis] + in_dims[axis + 1:] + [axis])
 
     # compute indices for the iteration axes, and append a trailing ellipsis to
     # prevent 0d arrays decaying to scalars, which fixes gh-8642
@@ -399,8 +399,8 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
     buff_dims = list(range(buff.ndim))
     buff_permute = (
         buff_dims[0 : axis] +
-        buff_dims[buff.ndim-res.ndim : buff.ndim] +
-        buff_dims[axis : buff.ndim-res.ndim]
+        buff_dims[buff.ndim - res.ndim : buff.ndim] +
+        buff_dims[axis : buff.ndim - res.ndim]
     )
 
     # save the first result, then compute and save all remaining results
@@ -782,8 +782,8 @@ def array_split(ary, indices_or_sections, axis=0):
             raise ValueError('number sections must be larger than 0.') from None
         Neach_section, extras = divmod(Ntotal, Nsections)
         section_sizes = ([0] +
-                         extras * [Neach_section+1] +
-                         (Nsections-extras) * [Neach_section])
+                         extras * [Neach_section + 1] +
+                         (Nsections - extras) * [Neach_section])
         div_points = _nx.array(section_sizes, dtype=_nx.intp).cumsum()
 
     sub_arys = []
@@ -1178,16 +1178,16 @@ def kron(a, b):
         b = reshape(b, bs)
 
     # Equalise the shapes by prepending smaller one with 1s
-    as_ = (1,)*max(0, ndb-nda) + as_
-    bs = (1,)*max(0, nda-ndb) + bs
+    as_ = (1,) * max(0, ndb - nda) + as_
+    bs = (1,) * max(0, nda - ndb) + bs
 
     # Insert empty dimensions
-    a_arr = expand_dims(a, axis=tuple(range(ndb-nda)))
-    b_arr = expand_dims(b, axis=tuple(range(nda-ndb)))
+    a_arr = expand_dims(a, axis=tuple(range(ndb - nda)))
+    b_arr = expand_dims(b, axis=tuple(range(nda - ndb)))
 
     # Compute the product
-    a_arr = expand_dims(a_arr, axis=tuple(range(1, nd*2, 2)))
-    b_arr = expand_dims(b_arr, axis=tuple(range(0, nd*2, 2)))
+    a_arr = expand_dims(a_arr, axis=tuple(range(1, nd * 2, 2)))
+    b_arr = expand_dims(b_arr, axis=tuple(range(0, nd * 2, 2)))
     # In case of `mat`, convert result to `array`
     result = _nx.multiply(a_arr, b_arr, subok=(not is_any_mat))
 
@@ -1283,8 +1283,8 @@ def tile(A, reps):
         # have no data there is no risk of an inadvertent overwrite.
         c = _nx.array(A, copy=None, subok=True, ndmin=d)
     if (d < c.ndim):
-        tup = (1,)*(c.ndim-d) + tup
-    shape_out = tuple(s*t for s, t in zip(c.shape, tup))
+        tup = (1,) * (c.ndim - d) + tup
+    shape_out = tuple(s * t for s, t in zip(c.shape, tup))
     n = c.size
     if n > 0:
         for dim_in, nrep in zip(c.shape, tup):

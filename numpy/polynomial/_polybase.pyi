@@ -43,17 +43,19 @@ from ._polytypes import (
 
 from typing_extensions import LiteralString, TypeVar
 
-
 __all__: Final[Sequence[str]] = ("ABCPolyBase",)
 
-
-_NameCo = TypeVar("_NameCo", bound=LiteralString | None, covariant=True, default=LiteralString | None)
+_NameCo = TypeVar(
+    "_NameCo",
+    bound=LiteralString | None,
+    covariant=True,
+    default=LiteralString | None
+)
 _Self = TypeVar("_Self")
 _Other = TypeVar("_Other", bound=ABCPolyBase)
 
 _AnyOther: TypeAlias = ABCPolyBase | _CoefLike_co | _SeriesLikeCoef_co
 _Hundred: TypeAlias = Literal[100]
-
 
 class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
     __hash__: ClassVar[None]  # type: ignore[assignment]

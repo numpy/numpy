@@ -1,0 +1,39 @@
+exclude = [
+    "numpy/__config__.py",
+    "numpy/distutils",
+    "numpy/typing/_char_codes.py",
+    "numpy/typing/tests/data",
+    "spin/cmds.py",
+    # Submodules.
+    "doc/source/_static/scipy-mathjax",
+    "vendored-meson/meson",
+    "numpy/fft/pocketfft",
+    "numpy/_core/src/umath/svml",
+    "numpy/_core/src/npysort/x86-simd-sort",
+    "numpy/_core/src/highway",
+    "numpy/_core/src/common/pythoncapi-compat",
+]
+
+[lint]
+preview = true
+extend-select = [ "E" ]
+ignore = [
+    "F",     # TODO: enable Pyflakes rules
+    "E241",
+    "E251",
+    "E265",
+    "E266",
+    "E302",
+    "E402",
+    "E501",  # TODO: Line too long
+    "E712",
+    "E721",
+    "E731",
+    "E741",
+    "W291",
+    "W293",
+    "W391",
+]
+
+[lint.per-file-ignores]
+"test*.py" = ["E201", "E714"]

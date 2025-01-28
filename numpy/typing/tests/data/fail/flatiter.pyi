@@ -3,11 +3,8 @@ from typing import Any
 import numpy as np
 import numpy._typing as npt
 
-
 class Index:
-    def __index__(self) -> int:
-        ...
-
+    def __index__(self) -> int: ...
 
 a: np.flatiter[npt.NDArray[np.float64]]
 supports_array: npt._SupportsArray[np.dtype[np.float64]]

@@ -20,7 +20,7 @@ c_names_dict = dict(
 
 def get_testdir():
     testroot = Path(__file__).resolve().parent / "src"
-    return  testroot / "array_from_pyobj"
+    return testroot / "array_from_pyobj"
 
 def setup_module():
     """

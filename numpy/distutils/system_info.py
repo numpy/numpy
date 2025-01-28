@@ -447,7 +447,7 @@ def _parse_env_order(base_order, env):
     if order_str is None:
         return base_order, []
 
-    neg = order_str.startswith('^') or order_str.startswith('!')
+    neg = order_str.startswith(('^', '!'))
     # Check format
     order_str_l = list(order_str)
     sum_neg = order_str_l.count('^') + order_str_l.count('!')

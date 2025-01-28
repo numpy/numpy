@@ -416,7 +416,7 @@ def _leading_trailing(a, edgeitems, index=()):
     if axis == a.ndim:
         return a[index]
 
-    if a.shape[axis] > 2*edgeitems:
+    if a.shape[axis] > 2 * edgeitems:
         return concatenate((
             _leading_trailing(a, edgeitems, index + np.index_exp[:edgeitems]),
             _leading_trailing(a, edgeitems, index + np.index_exp[-edgeitems:])
@@ -585,7 +585,7 @@ def _array2string(a, options, separator=' ', prefix=""):
     # skip over "["
     next_line_prefix = " "
     # skip over array(
-    next_line_prefix += " "*len(prefix)
+    next_line_prefix += " " * len(prefix)
 
     lst = _formatArray(a, format_function, options['linewidth'],
                        next_line_prefix, separator, options['edgeitems'],
@@ -813,7 +813,7 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
         line = next_line_prefix + words[0]
         indent = next_line_prefix
     else:
-        indent = len(line)*' '
+        indent = len(line) * ' '
         line += words[0]
 
     for word in words[1::]:
@@ -821,7 +821,7 @@ def _extendLine_pretty(s, line, word, line_width, next_line_prefix, legacy):
         line = indent + word
 
     suffix_length = max_word_length - len(words[-1])
-    line += suffix_length*' '
+    line += suffix_length * ' '
 
     return s, line
 
@@ -855,7 +855,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
             next_width = curr_width - len(']')
 
         a_len = a.shape[axis]
-        show_summary = summary_insert and 2*edge_items < a_len
+        show_summary = summary_insert and 2 * edge_items < a_len
         if show_summary:
             leading_items = edge_items
             trailing_items = edge_items
@@ -910,7 +910,7 @@ def _formatArray(a, format_function, line_width, next_line_prefix,
         # other axes - insert newlines between rows
         else:
             s = ''
-            line_sep = separator.rstrip() + '\n'*(axes_left - 1)
+            line_sep = separator.rstrip() + '\n' * (axes_left - 1)
 
             for i in range(leading_items):
                 nested = recurser(
@@ -995,7 +995,7 @@ class FloatingFormat:
             min_val = np.min(abs_non_zero)
             with errstate(over='ignore'):  # division can overflow
                 if max_val >= 1.e8 or (not self.suppress_small and
-                        (min_val < 0.0001 or max_val/min_val > 1000.)):
+                        (min_val < 0.0001 or max_val / min_val > 1000.)):
                     self.exp_format = True
 
         # do a first pass of printing all the numbers, to determine sizes
@@ -1080,7 +1080,7 @@ class FloatingFormat:
                 else:  # isinf
                     sign = '-' if x < 0 else '+' if self.sign == '+' else ''
                     ret = sign + current_options['infstr']
-                return ' '*(
+                return ' ' * (
                     self.pad_left + self.pad_right + 1 - len(ret)
                 ) + ret
 
@@ -1417,7 +1417,7 @@ class SubArrayFormat:
         if np.ndim(a) == 0:
             return self.format_function(a)
 
-        if self.summary_insert and a.shape[0] > 2*self.edge_items:
+        if self.summary_insert and a.shape[0] > 2 * self.edge_items:
             formatted = (
                 [self.format_array(a_) for a_ in a[:self.edge_items]]
                 + [self.summary_insert]
@@ -1613,9 +1613,9 @@ def _array_repr_implementation(
     spacer = " "
     if current_options['legacy'] <= 113:
         if issubclass(arr.dtype.type, flexible):
-            spacer = '\n' + ' '*len(prefix)
+            spacer = '\n' + ' ' * len(prefix)
     elif last_line_len + len(extra_str) + 1 > max_line_width:
-        spacer = '\n' + ' '*len(prefix)
+        spacer = '\n' + ' ' * len(prefix)
 
     return arr_str + spacer + extra_str
 

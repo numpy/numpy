@@ -885,7 +885,7 @@ def _get_fields_and_offsets(dt, offset=0):
                     # optimization: avoid list comprehension if no subarray
                     fields.extend(subfields)
                 else:
-                    fields.extend([(d, c, o + i*size) for d, c, o in subfields])
+                    fields.extend([(d, c, o + i * size) for d, c, o in subfields])
     return fields
 
 def _common_stride(offsets, counts, itemsize):
@@ -1543,7 +1543,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     # Check the keys
     if len(set(key)) != len(key):
-        dup = next(x for n,x in enumerate(key) if x in key[n+1:])
+        dup = next(x for n, x in enumerate(key) if x in key[n + 1:])
         raise ValueError("duplicate join key %r" % dup)
     for name in key:
         if name not in r1.dtype.names:
@@ -1568,7 +1568,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     # Make temporary arrays of just the keys
     #  (use order of keys in `r1` for back-compatibility)
-    key1 = [ n for n in r1names if n in key ]
+    key1 = [n for n in r1names if n in key]
     r1k = _keep_fields(r1, key1)
     r2k = _keep_fields(r2, key1)
 
@@ -1611,7 +1611,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     for fname, fdtype in _get_fieldspec(r2.dtype):
         # Have we seen the current name already ?
         # we need to rebuild this list every time
-        names = list(name for name, dtype in ndtype)
+        names = [name for name, dtype in ndtype]
         try:
             nameidx = names.index(fname)
         except ValueError:
@@ -1656,7 +1656,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
             current[-r2spc:] = selected[r2cmn:]
     # Sort and finalize the output
     output.sort(order=key)
-    kwargs = dict(usemask=usemask, asrecarray=asrecarray)
+    kwargs = {'usemask': usemask, 'asrecarray': asrecarray}
     return _fix_output(_fix_defaults(output, defaults), **kwargs)
 
 
@@ -1677,8 +1677,8 @@ def rec_join(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     --------
     join_by : equivalent function
     """
-    kwargs = dict(jointype=jointype, r1postfix=r1postfix, r2postfix=r2postfix,
-                  defaults=defaults, usemask=False, asrecarray=True)
+    kwargs = {'jointype': jointype, 'r1postfix': r1postfix, 'r2postfix': r2postfix,
+                  'defaults': defaults, 'usemask': False, 'asrecarray': True}
     return join_by(key, r1, r2, **kwargs)
 
 

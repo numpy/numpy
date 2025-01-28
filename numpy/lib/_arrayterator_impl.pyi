@@ -24,7 +24,6 @@ _Index: TypeAlias = (
     | tuple[EllipsisType | int | slice, ...]
 )
 
-
 # NOTE: In reality `Arrayterator` does not actually inherit from `ndarray`,
 # but its ``__getattr__` method does wrap around the former and thus has
 # access to all its methods
