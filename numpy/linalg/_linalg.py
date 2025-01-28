@@ -1294,8 +1294,9 @@ def eigvalsh(a, UPLO='L'):
            [0.+2.j, 2.+0.j]])
     >>> wa = LA.eigvalsh(a)
     >>> wb = LA.eigvals(b)
-    >>> wa; wb
+    >>> wa
     array([1., 6.])
+    >>> wb
     array([6.+0.j, 1.+0.j])
 
     """
