@@ -514,6 +514,17 @@ NPY_INPLACE @type@
 npy_remainder@c@(@type@ a, @type@ b)
 {
     @type@ mod;
+#if defined(__aarch64__) && defined(__clang__)
+    /* Special handling for ARM64 with Clang to avoid FPE with float128 */
+     /*
+     * TODO: This is a workaround for a known Clang issue on ARM64 where float128
+     * operations trigger incorrect FPE behavior. This can be removed once fixed:
+     * https://github.com/llvm/llvm-project/issues/59924
+     */
+    if (NPY_UNLIKELY(sizeof(@type@) == sizeof(long double) && (npy_isnan(a) || npy_isnan(b)))) {
+        return npy_fmod@c@(a, b);  /* Let hardware handle NaN modulo */
+    }
+#endif
     if (NPY_UNLIKELY(!b)) {
         /*
          * in2 == 0 (and not NaN): normal fmod will give the correct
@@ -531,6 +542,17 @@ npy_remainder@c@(@type@ a, @type@ b)
 NPY_INPLACE @type@
 npy_floor_divide@c@(@type@ a, @type@ b) {
     @type@ div, mod;
+#if defined(__aarch64__) && defined(__clang__)
+    /* Special handling for ARM64 with Clang to avoid FPE with float128 */
+    /*
+     * TODO: This is a workaround for a known Clang issue on ARM64 where float128
+     * operations trigger incorrect FPE behavior. This can be removed once fixed:
+     * https://github.com/llvm/llvm-project/issues/59924
+     */
+    if (NPY_UNLIKELY(sizeof(@type@) == sizeof(long double) && (npy_isnan(a) || npy_isnan(b)))) {
+        return a / b;  /* Let hardware handle NaN division */
+    }
+#endif
     if (NPY_UNLIKELY(!b)) {
         /*
          * in2 == 0 (and not NaN): normal division will give the correct

@@ -1,5 +1,4 @@
 import platform
-import os
 import warnings
 import fnmatch
 import itertools
@@ -38,9 +37,6 @@ UFUNCS_BINARY = [
 UFUNCS_BINARY_ACC = [
     uf for uf in UFUNCS_BINARY if hasattr(uf, "accumulate") and uf.nout == 1
 ]
-
-def is_arm64_clang():
-    return (platform.machine() == 'aarch64' and os.environ.get('CC', '').find('clang') >= 0)
 
 def interesting_binop_operands(val1, val2, dtype):
     """
@@ -668,8 +664,6 @@ class TestDivision:
     @pytest.mark.skipif(IS_WASM, reason="fp errors don't work in wasm")
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     def test_floor_division_errors(self, dtype):
-        if is_arm64_clang() and dtype == 'g':
-            pytest.xfail("Fails on aarch64 with clang compiler and dtype='g' due to FloatingPointError")
         fnan = np.array(np.nan, dtype=dtype)
         fone = np.array(1.0, dtype=dtype)
         fzer = np.array(0.0, dtype=dtype)
@@ -818,8 +812,6 @@ class TestRemainder:
     @pytest.mark.parametrize('dtype', np.typecodes['Float'])
     @pytest.mark.parametrize('fn', [np.fmod, np.remainder])
     def test_float_remainder_errors(self, dtype, fn):
-        if is_arm64_clang() and dtype == 'g':
-            pytest.xfail("Fails on aarch64 with clang compiler and dtype='g' due to FloatingPointError")
         fzero = np.array(0.0, dtype=dtype)
         fone = np.array(1.0, dtype=dtype)
         finf = np.array(np.inf, dtype=dtype)
