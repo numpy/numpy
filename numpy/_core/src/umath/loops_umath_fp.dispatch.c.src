@@ -249,11 +249,30 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
             npyv_loadable_stride_@sfx@(steps[0]) &&
             npyv_storable_stride_@sfx@(steps[2])
         ) {
-            const npy_intp ssrc = steps[0] / sizeof(@type@);
-            const npy_intp sdst = steps[2] / sizeof(@type@);
+            npyv_@sfx@ srcv = npyv_load_till_@sfx@(src, dimensions[0], 0);
+            npyv_@sfx@ dstv = npyv_load_till_@sfx@(dst, dimensions[0], 0);
 
-            if (*exp == 2) {
-                simd_exp2_@sfx@(src, ssrc, dst, sdst, dimensions[0]);
+            if (*exp == -1.0) {
+                dstv = npyv_recip_@sfx@(srcv);
+            }
+            else if (*exp == 0.0) {
+                dstv = npyv_setall_@sfx@(1.0);
+            }
+            else if (*exp == 0.5) {
+                dstv = npyv_sqrt_@sfx@(srcv);
+            }
+            else if (*exp == 1.0) {
+                dstv = srcv;
+            }
+            else if (*exp == 2.0) {
+                dstv = npyv_square_@sfx@(srcv);
+            }
+            else {
+                fastop_found = 0;
+            }
+            
+            if (fastop_found) {
+                npyv_store_till_@sfx@(dst, dimensions[0], dstv);
                 return;
             }
         }
