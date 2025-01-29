@@ -939,6 +939,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
                                                 dims,
                                                 NULL, NULL, 0,
                                                 (PyObject *)aop);
+    PyArray_DIMS(aop)[axis] = n;
     if (ret == NULL) {
         goto fail;
     }
