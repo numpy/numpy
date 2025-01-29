@@ -249,13 +249,20 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
             npyv_loadable_stride_@sfx@(steps[0]) &&
             npyv_storable_stride_@sfx@(steps[2])
         ) {
-            npyv_@sfx@ srcv = npyv_load_till_@sfx@(src, dimensions[0], 0);
-            npyv_@sfx@ dstv = npyv_load_till_@sfx@(dst, dimensions[0], 0);
+            const npy_intp ssrc = steps[0] / sizeof(@type@);
+            const npy_intp sdst = steps[2] / sizeof(@type@);
 
-            if (*exp == -1.0) {
-                dstv = npyv_recip_@sfx@(srcv);
+            npyv_@sfx@ srcv;
+            npyv_@sfx@ dstv;
+
+            if (ssrc == 1) {
+                srcv = npyv_load_till_@sfx@(src, dimensions[0], 0);
+            } 
+            else {
+                srcv = npyv_loadn_till_@sfx@(src, ssrc, dimensions[0], 0);
             }
-            else if (*exp == 0.0) {
+
+            if (*exp == 0.0) {
                 dstv = npyv_setall_@sfx@(1.0);
             }
             else if (*exp == 0.5) {
@@ -272,7 +279,12 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
             }
             
             if (fastop_found) {
-                npyv_store_till_@sfx@(dst, dimensions[0], dstv);
+                if (sdst == 1) {
+                    npyv_store_till_@sfx@(dst, dimensions[0], dstv);
+                }
+                else {
+                    npyv_storen_till_@sfx@(dst, sdst, dimensions[0], dstv);
+                }
                 return;
             }
         }
@@ -282,10 +294,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
         const @type@ in2 = *(@type@ *)ip2;
         BINARY_LOOP_SLIDING {
             const @type@ in1 = *(@type@ *)ip1;
-            if (in2 == -1.0) {
-                *(@type@ *)op1 = 1.0 / in1;
-            }
-            else if (in2 == 0.0) {
+            if (in2 == 0.0) {
                 *(@type@ *)op1 = 1.0;
             }
             else if (in2 == 0.5) {
