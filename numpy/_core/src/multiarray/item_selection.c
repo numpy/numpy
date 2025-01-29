@@ -928,7 +928,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(aop),
                                                 PyArray_DESCR(aop),
                                                 PyArray_NDIM(aop),
-                                                dims,
+                                                PyArray_DIMS(aop),
                                                 NULL, NULL, 0,
                                                 (PyObject *)aop);
     if (ret == NULL) {
