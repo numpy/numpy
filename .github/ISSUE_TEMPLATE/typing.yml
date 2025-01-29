@@ -1,7 +1,7 @@
 name: Static Typing
 description: Report an issue with the NumPy typing hints.
 title: "TYP: <Please write a comprehensive title after the 'TYP: ' prefix>"
-labels: [Static typing]
+labels: [41 - Static typing]
 
 body:
 - type: markdown

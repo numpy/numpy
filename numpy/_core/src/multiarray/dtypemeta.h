@@ -292,4 +292,13 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
         } while(0)
 
 
+// Get the pointer to the PyArray_DTypeMeta for the type associated with the typenum.
+static inline PyArray_DTypeMeta *
+typenum_to_dtypemeta(enum NPY_TYPES typenum) {
+    PyArray_Descr * descr = PyArray_DescrFromType(typenum);
+    Py_DECREF(descr);
+    return NPY_DTYPE(descr);
+}
+
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_ */

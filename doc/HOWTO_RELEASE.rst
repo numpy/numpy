@@ -13,14 +13,9 @@ Useful info can be found in the following locations:
 
 * **NumPy docs**
 
-  - https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst
-  - https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst
-  - https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst
-
-* **Release scripts**
-
-  - https://github.com/numpy/numpy-vendor
-
+  - `HOWTO_RELEASE.rst <https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst>`_
+  - `RELEASE_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst>`_
+  - `BRANCH_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst>`_
 
 Supported platforms and versions
 ================================
