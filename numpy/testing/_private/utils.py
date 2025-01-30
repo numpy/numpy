@@ -65,9 +65,8 @@ verbose = 0
 NUMPY_ROOT = pathlib.Path(np.__file__).parent
 
 try:
-    # Make sure we find the distibution in the path where the module was loaded from.
-    np_dist = next(importlib_metadata.distributions(name='numpy', path=[NUMPY_ROOT.parent]))
-except StopIteration:
+    np_dist = importlib_metadata.distribution('numpy')
+except importlib_metadata.PackageNotFoundError:
     IS_INSTALLED = IS_EDITABLE = False
 else:
     IS_INSTALLED = True
@@ -75,6 +74,15 @@ else:
         IS_EDITABLE = np_dist.origin.dir_info.editable
     except AttributeError:
         IS_EDITABLE = False
+
+    # spin installs numpy directly via meson, instead of using meson-python, and
+    # runs the module by setting PYTHONPATH. This is problematic because the
+    # resulting installation lacks the Python metadata (.dist-info), and numpy
+    # might already be installed on the environment, causing us to find its
+    # metadata, even though we are not actually loading that package.
+    # Work around this issue by checking if the numpy root matches.
+    if not IS_EDITABLE and np_dist.locate_file('numpy') != NUMPY_ROOT:
+        IS_INSTALLED = False
 
 IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
