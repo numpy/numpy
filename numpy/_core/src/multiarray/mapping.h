@@ -1,6 +1,10 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_MAPPING_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_MAPPING_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 
 
@@ -161,5 +165,9 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterArrayCopyIfOverlap(PyArrayObject * a, PyObject * index,
                                   int copy_if_overlap, PyArrayObject *extra_op);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_MAPPING_H_ */

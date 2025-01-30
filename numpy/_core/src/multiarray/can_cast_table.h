@@ -14,6 +14,9 @@
 
 #include "numpy/ndarraytypes.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* The from type fits into to (it has a smaller or equal number of bits) */
 #define FITS(FROM, TO) (NPY_SIZEOF_##FROM <= NPY_SIZEOF_##TO)
@@ -120,5 +123,9 @@ static const npy_bool _npy_can_cast_safely_table[NPY_NTYPES_LEGACY][NPY_NTYPES_L
 #undef CASTS_SAFELY_TO_INT
 #undef CASTS_SAFELY_TO_FLOAT
 #undef CASTS_SAFELY_TO_CFLOAT
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_CAN_CAST_TABLE_H_ */

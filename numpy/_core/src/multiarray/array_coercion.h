@@ -1,6 +1,9 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * We do not want to coerce arrays many times unless absolutely necessary.
@@ -57,5 +60,9 @@ npy_unlink_coercion_cache(coercion_cache_obj *current);
 
 NPY_NO_EXPORT int
 PyArray_AssignFromCache(PyArrayObject *self, coercion_cache_obj *cache);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAY_COERCION_H_ */

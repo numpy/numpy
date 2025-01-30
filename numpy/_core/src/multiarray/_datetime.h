@@ -4,6 +4,10 @@
 extern NPY_NO_EXPORT char const *_datetime_strings[NPY_DATETIME_NUMUNITS];
 extern NPY_NO_EXPORT int _days_per_month_table[2][12];
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 NPY_NO_EXPORT void
 numpy_pydatetime_import(void);
 
@@ -333,5 +337,9 @@ datetime_hash(PyArray_DatetimeMetaData *meta, npy_datetime dt);
 
 NPY_NO_EXPORT npy_hash_t
 timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_ */

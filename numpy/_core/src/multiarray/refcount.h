@@ -1,6 +1,10 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_REFCOUNT_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_REFCOUNT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 NPY_NO_EXPORT int
 PyArray_ClearBuffer(
         PyArray_Descr *descr, char *data,
@@ -28,5 +32,9 @@ PyArray_XDECREF(PyArrayObject *mp);
 
 NPY_NO_EXPORT int
 PyArray_SetObjectsToNone(PyArrayObject *arr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_REFCOUNT_H_ */

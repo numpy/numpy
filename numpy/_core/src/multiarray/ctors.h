@@ -3,6 +3,9 @@
 
 extern NPY_NO_EXPORT const char *npy_no_copy_err_msg;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr(
@@ -68,11 +71,11 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
                          PyArray_DTypeMeta *in_DType, int min_depth,
-                         int max_depth, int requires, PyObject *context);
+                         int max_depth, int requires_, PyObject *context);
 
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
-                     int max_depth, int requires, PyObject *context);
+                     int max_depth, int requires_, PyObject *context);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags);
@@ -134,5 +137,9 @@ PyArray_Zeros_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
 NPY_NO_EXPORT PyObject *
 PyArray_Empty_int(int nd, npy_intp const *dims, PyArray_Descr *descr,
                   PyArray_DTypeMeta *dtype, int is_f_order);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_CTORS_H_ */

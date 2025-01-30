@@ -3,6 +3,10 @@
 
 #include "array_method.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /*
  * More than for most functions, cast information needs to be stored in
@@ -200,5 +204,8 @@ get_wrapped_legacy_cast_function(int aligned,
         NpyAuxData **out_transferdata,
         int *out_needs_api, int allow_wrapped);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPE_TRANSFER_H_  */

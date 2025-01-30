@@ -6,6 +6,10 @@
 #include "numpy/npy_common.h"
 #include "npy_atomic.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Cached references to objects obtained via an import. All of these are
  * can be initialized at any time by npy_cache_import_runtime.
@@ -110,5 +114,9 @@ npy_cache_import_runtime(const char *module, const char *attr, PyObject **obj) {
 
 NPY_NO_EXPORT int
 init_import_mutex(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_COMMON_NPY_IMPORT_H_ */

@@ -3,6 +3,10 @@
 
 #include "array_method.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* NumPy DType clear (object DECREF + NULLing) implementations */
 
 NPY_NO_EXPORT int
@@ -98,5 +102,8 @@ PyArray_GetClearFunction(
         int aligned, npy_intp stride, PyArray_Descr *dtype,
         NPY_traverse_info *clear_info, NPY_ARRAYMETHOD_FLAGS *flags);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPE_TRAVERSAL_H_ */

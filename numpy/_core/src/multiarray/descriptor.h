@@ -1,6 +1,9 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_DESCRIPTOR_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * In some API calls we wish to allow users to pass a DType class or a
@@ -62,6 +65,10 @@ is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype);
  */
 NPY_NO_EXPORT PyArray_Descr *
 arraydescr_field_subset_view(_PyArray_LegacyDescr *self, PyObject *ind);
+
+#ifdef __cplusplus
+}
+#endif
 
 extern NPY_NO_EXPORT char const *_datetime_strings[];
 

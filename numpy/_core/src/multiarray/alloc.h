@@ -8,6 +8,10 @@
 #define NPY_TRACE_DOMAIN 389047
 #define MEM_HANDLER_CAPSULE_NAME "mem_handler"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 NPY_NO_EXPORT PyObject *
 _get_madvise_hugepage(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args));
 
@@ -110,5 +114,9 @@ _npy_free_workspace(void *buf, void *static_buf)
 /* Free a small workspace allocation (macro to fetch the _static name) */
 #define npy_free_workspace(NAME)  \
     _npy_free_workspace(NAME, NAME##_static)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ALLOC_H_ */
