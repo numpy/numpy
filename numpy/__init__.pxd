@@ -845,10 +845,16 @@ cdef extern from "numpy/ufuncobject.h":
         PyUFunc_Zero
         PyUFunc_One
         PyUFunc_None
+        # deprecated
         UFUNC_FPE_DIVIDEBYZERO
         UFUNC_FPE_OVERFLOW
         UFUNC_FPE_UNDERFLOW
         UFUNC_FPE_INVALID
+        # use these instead
+        NPY_FPE_DIVIDEBYZERO
+        NPY_FPE_OVERFLOW
+        NPY_FPE_UNDERFLOW
+        NPY_FPE_INVALID
 
     object PyUFunc_FromFuncAndData(PyUFuncGenericFunction *,
           void **, char *, int, int, int, int, char *, char *, int)

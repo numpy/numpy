@@ -316,6 +316,14 @@ typedef struct _loop1d_info {
 
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
 
+/* THESE MACROS ARE DEPRECATED.
+ * Use npy_set_floatstatus_* in the npymath library.
+ */
+#define UFUNC_FPE_DIVIDEBYZERO  NPY_FPE_DIVIDEBYZERO
+#define UFUNC_FPE_OVERFLOW      NPY_FPE_OVERFLOW
+#define UFUNC_FPE_UNDERFLOW     NPY_FPE_UNDERFLOW
+#define UFUNC_FPE_INVALID       NPY_FPE_INVALID
+
 /* Make sure it gets defined if it isn't already */
 #ifndef UFUNC_NOFPE
 /* Clear the floating point exception default of Borland C++ */
