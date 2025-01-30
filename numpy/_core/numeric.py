@@ -2445,12 +2445,9 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     with errstate(invalid='ignore'):
 
-        if np.any(np.isinf(atol)) or np.any(np.isinf(rtol)):
-            warnings.warn("At least one of rtol and atol are infinite", stacklevel=2)
-
-        if np.any(np.isnan(atol)) or np.any(np.isnan(rtol)):
-            warnings.warn("At least one of rtol and atol are not a number", stacklevel=2)
-        
+        if np.any(np.isinf(atol)) or np.any(np.isinf(rtol)) or np.any(np.isnan(atol)) or np.any(np.isnan(rtol)):
+            warnings.warn(f"One of rtol or atol is not valid, atol: {atol}, rtol: {rtol}", stacklevel=2)
+  
         result = (less_equal(abs(x - y), atol + rtol * abs(y))
                   & isfinite(y)
                   | (x == y))
