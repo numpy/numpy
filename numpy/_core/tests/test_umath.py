@@ -2836,7 +2836,7 @@ class TestInt:
 
 class TestFloatingPoint:
     def test_floating_point(self):
-        assert_equal(ncu.FLOATING_POINT_SUPPORT, 1)
+        assert_equal(ncu.UFUNC_FLOATING_POINT_SUPPORT, 1)
 
 
 class TestDegrees:

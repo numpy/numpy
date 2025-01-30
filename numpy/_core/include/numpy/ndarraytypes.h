@@ -1908,10 +1908,6 @@ typedef struct {
 #error "Do not use the reserved keyword NPY_DEPRECATED_INCLUDES."
 #endif
 #define NPY_DEPRECATED_INCLUDES
-#if !defined(NPY_NO_DEPRECATED_API) || \
-    (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
-#include "npy_1_7_deprecated_api.h"
-#endif
 /*
  * There is no file npy_1_8_deprecated_api.h since there are no additional
  * deprecated API features in NumPy 1.8.
@@ -1923,6 +1919,27 @@ typedef struct {
  *     (NPY_NO_DEPRECATED_API < NPY_1_9_API_VERSION)
  * #include "npy_1_9_deprecated_api.h"
  * #endif
+ * Then in the npy_1_9_deprecated_api.h header add something like this
+ * --------------------
+ * #ifndef NPY_DEPRECATED_INCLUDES
+ * #error "Should never include npy_*_*_deprecated_api directly."
+ * #endif
+ * #ifndef NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
+ * #define NUMPY_CORE_INCLUDE_NUMPY_NPY_1_7_DEPRECATED_API_H_
+ * 
+ * #ifndef NPY_NO_DEPRECATED_API
+ * #if defined(_WIN32)
+ * #define _WARN___STR2__(x) #x
+ * #define _WARN___STR1__(x) _WARN___STR2__(x)
+ * #define _WARN___LOC__ __FILE__ "(" _WARN___STR1__(__LINE__) ") : Warning Msg: "
+ * #pragma message(_WARN___LOC__"Using deprecated NumPy API, disable it with " \
+ *                          "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION")
+ * #else
+ * #warning "Using deprecated NumPy API, disable it with " \
+ *          "#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
+ * #endif
+ * #endif
+ * --------------------
  */
 #undef NPY_DEPRECATED_INCLUDES
 

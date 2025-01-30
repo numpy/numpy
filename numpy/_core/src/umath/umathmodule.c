@@ -1,5 +1,5 @@
 /* -*- c -*- */
-/* vim:syntax=c */
+// vim:syntax=c
 
 /*
  * _UMATHMODULE IS needed in __ufunc_api.h, included from numpy/ufuncobject.h.
@@ -242,17 +242,17 @@ int initumath(PyObject *m)
     PyDict_SetItemString(d, "euler_gamma", s = PyFloat_FromDouble(NPY_EULER));
     Py_DECREF(s);
 
-#define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
-#define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
+#define ADDCONST(str) PyModule_AddIntConstant(m, #str, str)
+#define ADDSCONST(str) PyModule_AddStringConstant(m, "" #str, str)
 
-    ADDCONST(FPE_DIVIDEBYZERO);
-    ADDCONST(FPE_OVERFLOW);
-    ADDCONST(FPE_UNDERFLOW);
-    ADDCONST(FPE_INVALID);
+    ADDCONST(NPY_FPE_DIVIDEBYZERO);
+    ADDCONST(NPY_FPE_OVERFLOW);
+    ADDCONST(NPY_FPE_UNDERFLOW);
+    ADDCONST(NPY_FPE_INVALID);
 
-    ADDCONST(FLOATING_POINT_SUPPORT);
+    ADDCONST(UFUNC_FLOATING_POINT_SUPPORT);
 
-    ADDSCONST(PYVALS_NAME);
+    ADDSCONST(UFUNC_PYVALS_NAME);
 
 #undef ADDCONST
 #undef ADDSCONST

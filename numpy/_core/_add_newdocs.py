@@ -4445,18 +4445,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tobytes', """
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('tostring', r"""
-    a.tostring(order='C')
-
-    A compatibility alias for `~ndarray.tobytes`, with exactly the same
-    behavior.
-
-    Despite its name, it returns :class:`bytes` not :class:`str`\ s.
-
-    .. deprecated:: 1.19.0
-    """))
-
-
 add_newdoc('numpy._core.multiarray', 'ndarray', ('trace',
     """
     a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)
