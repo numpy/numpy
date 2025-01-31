@@ -20,6 +20,7 @@ import pprint
 import sysconfig
 import concurrent.futures
 import threading
+import importlib.metadata
 
 import numpy as np
 from numpy._core import (
@@ -29,12 +30,6 @@ import numpy.linalg._umath_linalg
 from numpy._utils import _rename_parameter
 
 from io import StringIO
-
-
-if sys.version_info >= (3, 13):
-    import importlib.metadata as importlib_metadata
-else:
-    import importlib_metadata
 
 
 __all__ = [
@@ -65,13 +60,22 @@ verbose = 0
 NUMPY_ROOT = pathlib.Path(np.__file__).parent
 
 try:
-    np_dist = importlib_metadata.distribution('numpy')
-except importlib_metadata.PackageNotFoundError:
+    np_dist = importlib.metadata.distribution('numpy')
+except importlib.metadata.PackageNotFoundError:
     IS_INSTALLED = IS_EDITABLE = False
 else:
     IS_INSTALLED = True
     try:
-        IS_EDITABLE = np_dist.origin.dir_info.editable
+        if sys.version_info >= (3, 13):
+            IS_EDITABLE = np_dist.origin.dir_info.editable
+        else:
+            # Backport importlib.metadata.Distribution.origin
+            import json, types  # noqa: E401
+            origin = json.loads(
+                np_dist.read_text('direct_url.json') or '{}',
+                object_hook=lambda data: types.SimpleNamespace(**data),
+            )
+            IS_EDITABLE = origin.dir_info.editable
     except AttributeError:
         IS_EDITABLE = False
 
