@@ -6391,21 +6391,6 @@ class MaskedArray(ndarray):
         result.shape = inishape
         return result.tolist()
 
-    def tostring(self, fill_value=None, order='C'):
-        r"""
-        A compatibility alias for `tobytes`, with exactly the same behavior.
-
-        Despite its name, it returns `bytes` not `str`\ s.
-
-        .. deprecated:: 1.19.0
-        """
-        # 2020-03-30, Numpy 1.19.0
-        warnings.warn(
-            "tostring() is deprecated. Use tobytes() instead.",
-            DeprecationWarning, stacklevel=2)
-
-        return self.tobytes(fill_value, order=order)
-
     def tobytes(self, fill_value=None, order='C'):
         """
         Return the array data as a string containing the raw bytes in the array.

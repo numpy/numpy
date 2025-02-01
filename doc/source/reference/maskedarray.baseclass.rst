@@ -137,7 +137,6 @@ Conversion
    MaskedArray.toflex
    MaskedArray.tolist
    MaskedArray.torecords
-   MaskedArray.tostring
    MaskedArray.tobytes
 
 
