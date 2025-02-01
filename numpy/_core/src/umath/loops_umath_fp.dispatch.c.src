@@ -63,6 +63,52 @@ simd_@func@_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
  * #sfx = f32, f64#
  * #func_suffix = f16, 8_ha#
  */
+
+static inline int
+simd_fast_power_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
+                      const npyv_lanetype_@sfx@ *exp,
+                      npyv_lanetype_@sfx@ *dst, npy_intp sdst, npy_intp len)
+{
+    npyv_@sfx@ srcv;
+    npyv_@sfx@ dstv;
+
+    if (ssrc == 1) {
+        srcv = npyv_load_till_@sfx@(src, len, 0.0);
+    }
+    else {
+        srcv = npyv_loadn_till_@sfx@(src, ssrc, len, 0.0);
+    }
+    
+    if (*exp == 0.0) {
+        dstv = npyv_setall_@sfx@(1.0);
+    }
+    else if (*exp == 0.5) {
+        dstv = npyv_sqrt_@sfx@(srcv);
+    }
+    else if (*exp == 1.0) {
+        dstv = srcv;
+    }
+    else if (*exp == 2.0) {
+        dstv = npyv_square_@sfx@(srcv);
+    }
+    else {
+        return -1;
+    }
+
+    if (sdst == 1) {
+        npyv_store_till_@sfx@(dst, len, dstv);
+    }
+    else {
+        npyv_storen_till_@sfx@(dst, sdst, len, dstv);
+    }
+    return 0;
+}
+                       
+
+/**begin repeat
+ * #sfx = f32, f64#
+ * #func_suffix = f16, 8_ha#
+ */
 /**begin repeat1
  * #func = pow, atan2#
  */
@@ -236,59 +282,37 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(data))
 {
     int stride_zero = steps[1]==0;
-    if (stride_zero) {
-        int fastop_found = 1;
 
-#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX)
-        const @type@ *src = (@type@*)args[0];
-        const @type@ *exp = (@type@*)args[1];
-              @type@ *dst = (@type@*)args[2];
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
+    const @type@ *src1 = (@type@*)args[0];
+    const @type@ *src2 = (@type@*)args[1];
+          @type@ *dst  = (@type@*)args[2];
 
-        if (!is_mem_overlap(src, steps[0], dst, steps[2], dimensions[0]) &&
-            !is_mem_overlap(exp, steps[1], dst, steps[2], dimensions[0]) &&
-            npyv_loadable_stride_@sfx@(steps[0]) &&
-            npyv_storable_stride_@sfx@(steps[2])
-        ) {
-            const npy_intp ssrc = steps[0] / sizeof(@type@);
-            const npy_intp sdst = steps[2] / sizeof(@type@);
+    const npy_intp len = dimensions[0];
 
-            npyv_@sfx@ srcv;
-            npyv_@sfx@ dstv;
+    if (!is_mem_overlap(src1, steps[0], dst, steps[2], len) &&
+        !is_mem_overlap(src2, steps[1], dst, steps[2], len) &&
+        npyv_loadable_stride_@sfx@(steps[0]) &&
+        npyv_loadable_stride_@sfx@(steps[1]) &&
+        npyv_storable_stride_@sfx@(steps[2])
+    ) {
+        const npy_intp ssrc1 = steps[0] / sizeof(@type@);
+        const npy_intp ssrc2 = steps[1] / sizeof(@type@);
+        const npy_intp sdst  = steps[2] / sizeof(@type@);
 
-            if (ssrc == 1) {
-                srcv = npyv_load_till_@sfx@(src, dimensions[0], 0);
-            } 
-            else {
-                srcv = npyv_loadn_till_@sfx@(src, ssrc, dimensions[0], 0);
-            }
-
-            if (*exp == 0.0) {
-                dstv = npyv_setall_@sfx@(1.0);
-            }
-            else if (*exp == 0.5) {
-                dstv = npyv_sqrt_@sfx@(srcv);
-            }
-            else if (*exp == 1.0) {
-                dstv = srcv;
-            }
-            else if (*exp == 2.0) {
-                dstv = npyv_square_@sfx@(srcv);
-            }
-            else {
-                fastop_found = 0;
-            }
-            
-            if (fastop_found) {
-                if (sdst == 1) {
-                    npyv_store_till_@sfx@(dst, dimensions[0], dstv);
-                }
-                else {
-                    npyv_storen_till_@sfx@(dst, sdst, dimensions[0], dstv);
-                }
+        if (stride_zero) {            
+            if (simd_fast_power_@sfx@(src1, ssrc1, src2, dst, sdst, len) == 0) {
                 return;
             }
         }
+
+        simd_@intrin@_@sfx@(src1, ssrc1, src2, ssrc2, dst, sdst, len);
+        return;
+    }
 #endif
+
+    if (stride_zero) {
+        int fastop_found = 1;
 
         BINARY_DEFS
         const @type@ in2 = *(@type@ *)ip2;
@@ -315,27 +339,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@func@)
             return;
         }
     }
-#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
-    const @type@ *src1 = (@type@*)args[0];
-    const @type@ *src2 = (@type@*)args[1];
-          @type@ *dst  = (@type@*)args[2];
 
-    const npy_intp len = dimensions[0];
-
-    if (!is_mem_overlap(src1, steps[0], dst, steps[2], len) &&
-        !is_mem_overlap(src2, steps[1], dst, steps[2], len) &&
-        npyv_loadable_stride_@sfx@(steps[0]) &&
-        npyv_loadable_stride_@sfx@(steps[1]) &&
-        npyv_storable_stride_@sfx@(steps[2])
-    ) {
-        const npy_intp ssrc1 = steps[0] / sizeof(@type@);
-        const npy_intp ssrc2 = steps[1] / sizeof(@type@);
-        const npy_intp sdst  = steps[2] / sizeof(@type@);
-
-        simd_@intrin@_@sfx@(src1, ssrc1, src2, ssrc2, dst, sdst, len);
-        return;
-    }
-#endif
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
