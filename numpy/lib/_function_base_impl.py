@@ -1901,11 +1901,13 @@ def trim_zeros(filt, trim='fb', axis=None):
         to the side with the lowest index 0, and "back" referring to the highest
         index (or index -1).
     axis : int or sequence, optional
-        If None, `filt` is cropped such, that the smallest bounding box is
+        If None, `filt` is cropped such that the smallest bounding box is
         returned that still contains all values which are not zero.
         If an axis is specified, `filt` will be sliced in that dimension only
         on the sides specified by `trim`. The remaining area will be the
         smallest that still contains all values wich are not zero.
+
+        .. versionadded:: 2.2.0
 
     Returns
     -------

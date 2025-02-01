@@ -8212,6 +8212,10 @@ class TestNewBufferProtocol:
         res = pickle.loads(pickle_obj)
         assert_array_equal(res, obj)
 
+    def test_repr_user_dtype(self):
+        dt = np.dtype(rational)
+        assert_equal(repr(dt), 'dtype(rational)')
+
     def test_padding(self):
         for j in range(8):
             x = np.array([(1,), (2,)], dtype={'f0': (int, j)})

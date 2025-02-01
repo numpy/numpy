@@ -220,6 +220,12 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                 include_directories: {include_dirs},
             )
         """))
+    native_file_name = cfile.parent / ".mesonpy-native-file.ini"
+    with open(native_file_name, "wt") as fid:
+        fid.write(textwrap.dedent(f"""\
+            [binaries]
+            python = '{sys.executable}'
+        """))
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
                                "--buildtype=release",
@@ -227,7 +233,7 @@ def build(cfile, outputfilename, compile_extra, link_extra,
                               cwd=build_dir,
                               )
     else:
-        subprocess.check_call(["meson", "setup", "--vsenv", ".."],
+        subprocess.check_call(["meson", "setup", "--vsenv", "..", f'--native-file={os.fspath(native_file_name)}'],
                               cwd=build_dir
                               )
 

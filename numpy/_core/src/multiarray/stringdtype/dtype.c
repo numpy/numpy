@@ -144,7 +144,7 @@ fail:
     return NULL;
 }
 
-static int
+NPY_NO_EXPORT int
 na_eq_cmp(PyObject *a, PyObject *b) {
     if (a == b) {
         // catches None and other singletons like Pandas.NA
@@ -853,6 +853,7 @@ init_string_dtype(void)
 
     for (int i = 0; PyArray_StringDType_casts[i] != NULL; i++) {
         PyMem_Free(PyArray_StringDType_casts[i]->dtypes);
+        PyMem_RawFree((void *)PyArray_StringDType_casts[i]->name);
         PyMem_Free(PyArray_StringDType_casts[i]);
     }
 

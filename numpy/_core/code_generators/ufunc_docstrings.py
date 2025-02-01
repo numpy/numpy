@@ -426,10 +426,10 @@ add_newdoc('numpy._core.umath', 'arctan',
 
     Examples
     --------
+
     We expect the arctan of 0 to be 0, and of 1 to be pi/4:
 
     >>> import numpy as np
-
     >>> np.arctan([0, 1])
     array([ 0.        ,  0.78539816])
 
@@ -507,10 +507,10 @@ add_newdoc('numpy._core.umath', 'arctan2',
 
     Examples
     --------
+
     Consider four points in different quadrants:
 
     >>> import numpy as np
-
     >>> x = np.array([-1, +1, +1, -1])
     >>> y = np.array([-1, -1, +1, +1])
     >>> np.arctan2(y, x) * 180 / np.pi
@@ -989,7 +989,6 @@ add_newdoc('numpy._core.umath', 'degrees',
     Convert a radian array to degrees
 
     >>> import numpy as np
-
     >>> rad = np.arange(12.)*np.pi/6
     >>> np.degrees(rad)
     array([   0.,   30.,   60.,   90.,  120.,  150.,  180.,  210.,  240.,
@@ -1224,6 +1223,7 @@ add_newdoc('numpy._core.umath', 'exp',
     >>> import numpy as np
 
     >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
 
     >>> x = np.linspace(-2*np.pi, 2*np.pi, 100)
     >>> xx = x + 1j * x[:, np.newaxis] # a + ib over complex plane
@@ -1298,12 +1298,12 @@ add_newdoc('numpy._core.umath', 'expm1',
 
     Examples
     --------
+
     The true value of ``exp(1e-10) - 1`` is ``1.00000000005e-10`` to
     about 32 significant digits. This example shows the superiority of
     expm1 in this case.
 
     >>> import numpy as np
-
     >>> np.expm1(1e-10)
     1.00000000005e-10
     >>> np.exp(1e-10) - 1
@@ -2839,7 +2839,6 @@ add_newdoc('numpy._core.umath', 'matmul',
     For 2-D arrays it is the matrix product:
 
     >>> import numpy as np
-
     >>> a = np.array([[1, 0],
     ...               [0, 1]])
     >>> b = np.array([[4, 1],

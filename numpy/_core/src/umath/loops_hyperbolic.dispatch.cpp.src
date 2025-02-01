@@ -151,7 +151,7 @@ store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
 
 #if NPY_SIMD_F64
 
-HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
+[[maybe_unused]] HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
     if constexpr(hn::Lanes(f64) == 8){
         const vec_f64 lut0 = hn::Load(f64, lut);
         const vec_f64 lut1 = hn::Load(f64, lut + 8);
@@ -475,7 +475,7 @@ HWY_ATTR NPY_FINLINE hwy_f32x2 zip_f32(vec_f32 a, vec_f32 b){
     return res;
 }
 
-HWY_ATTR NPY_FINLINE vec_f32 lut_32_f32(const float * lut, vec_u32 idx){
+[[maybe_unused]] HWY_ATTR NPY_FINLINE vec_f32 lut_32_f32(const float * lut, vec_u32 idx){
     if constexpr(hn::Lanes(f32) == 16){
         const vec_f32 lut0 = hn::Load(f32, lut);
         const vec_f32 lut1 = hn::Load(f32, lut + 16);

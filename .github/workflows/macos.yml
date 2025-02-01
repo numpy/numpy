@@ -6,6 +6,7 @@ on:
       - main
       - maintenance/**
 
+
 permissions:
    contents: read  # to fetch code (actions/checkout)
 
@@ -123,9 +124,13 @@ jobs:
         fetch-tags: true
         persist-credentials: false
 
-    - uses: quansight-labs/setup-python@b9ab292c751a42bcd2bb465b7fa202ea2c3f5796 # v5.3.1
+    - uses: astral-sh/setup-uv@b5f58b2abc5763ade55e4e9d0fe52cd1ff7979ca
       with:
         python-version: ${{ matrix.version }}
+        enable-cache: false
+
+    - run:
+        uv pip install --python=${{ matrix.version }} pip
 
     - uses: maxim-lobanov/setup-xcode@60606e260d2fc5762a71e64e74b2174e8ea3c8bd # v1.6.0
       if: ${{ matrix.build_runner[0] == 'macos-13' }}
@@ -141,6 +146,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements/build_requirements.txt
+        pip install -r requirements/setuptools_requirement.txt
         pip install pytest pytest-xdist pytest-timeout hypothesis
 
     - name: Build against Accelerate (LP64)
@@ -151,7 +157,7 @@ jobs:
 
     - name: Build NumPy against Accelerate (ILP64)
       run: |
-        git clean -xdf
+        rm -r build build-install
         spin build -- -Duse-ilp64=true -Ddisable-optimization=true -Dallow-noblas=false
 
     - name: Test (fast tests)

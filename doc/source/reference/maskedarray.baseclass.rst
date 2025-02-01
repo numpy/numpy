@@ -15,6 +15,8 @@ defines several constants.
    specific entry of a masked array is masked, or to mask one or several
    entries of a masked array::
 
+   .. try_examples::
+
       >>> import numpy as np
 
       >>> x = np.ma.array([1, 2, 3], mask=[0, 1, 0])
