@@ -164,6 +164,47 @@ jobs:
         # TODO: gcov
       env:
         PYTHONOPTIMIZE: 2
+    
+  # Add ARM64-specific full test
+  aarch64_test:
+    needs: [smoke_test]
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - name: Checkout for PR
+      if: github.event_name == 'pull_request'
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      with:
+        python-version: '3.11'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install -r requirements/test_requirements.txt
+        python -m pip install -r requirements/ci32_requirements.txt
+        mkdir -p ./.openblas
+        python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
+
+    - name: Build
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
+      run: |
+        spin build -- -Dallow-noblas=true
+
+    - name: Test
+      run: |
+        spin test -j2 -m full -- --timeout=600 --durations=10
+
+    # Meson Log on failure
+    - name: Meson Log
+      if: always()
+      run: cat build/meson-logs/meson-log.txt
 
   benchmark:
     needs: [smoke_test]
