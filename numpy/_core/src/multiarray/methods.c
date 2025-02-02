@@ -1871,7 +1871,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     descr = PyArray_DESCR(self);
 
     /* we expect protocol 5 to be available in Python 3.8 */
-    if (npy_cache_import_runtime("pickle", "PickleBuffer", &picklebuf_class)) {
+    if (npy_cache_import_runtime("pickle", "PickleBuffer", &picklebuf_class) == -1) {
         return NULL;
     }
 
