@@ -4432,10 +4432,13 @@ class TestPickling:
 
         # make sure non-contiguous arrays can be pickled-depickled
         # using any protocol
+        buffers = []
         for proto in range(2, pickle.HIGHEST_PROTOCOL + 1):
             depickled_non_contiguous_array = pickle.loads(
-                    pickle.dumps(non_contiguous_array, protocol=proto))
+                    pickle.dumps(non_contiguous_array, protocol=proto, 
+                                 buffer_callback=buffers.append if proto >= 5 else None))
 
+            assert_equal(len(buffers), 0)
             assert_equal(non_contiguous_array, depickled_non_contiguous_array)
 
     def test_roundtrip(self):
