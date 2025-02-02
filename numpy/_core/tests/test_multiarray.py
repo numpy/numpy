@@ -206,12 +206,7 @@ class TestFlags:
             with assert_raises(ValueError):
                 view.flags.writeable = True
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("error", DeprecationWarning)
-                with assert_raises(DeprecationWarning):
-                    arr.flags.writeable = True
-
-            with assert_warns(DeprecationWarning):
+            with assert_raises(ValueError):
                 arr.flags.writeable = True
 
     def test_warnonwrite(self):
@@ -3729,6 +3724,15 @@ class TestMethods:
         assert res is out
         assert_array_equal(out, a.conjugate())
 
+    def test_conjugate_scalar(self):
+        for v in 5, 5j:
+            a = np.array(v)
+            assert a.conjugate() == v.conjugate()
+        for a in (np.array('s'), np.array('2016', 'M'),
+                np.array((1, 2), [('a', int), ('b', int)])):
+            with pytest.raises(TypeError):
+                a.conjugate()
+
     def test__complex__(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
                   'u1', 'u2', 'u4', 'u8',
@@ -5719,7 +5723,7 @@ class TestIO:
             b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, dtype=float, sep=',')
 
     def test_malformed(self, tmp_filename, decimal_sep_localization):
-        with assert_warns(DeprecationWarning):
+        with assert_raises(ValueError):
             self._check_from(
                 b'1.234 1,234', [1.234, 1.], tmp_filename, sep=' ')
 
@@ -5778,10 +5782,9 @@ class TestIO:
         assert_array_equal(x, res)
 
         x_str = x.tobytes()
-        with assert_warns(DeprecationWarning):
-            # binary fromstring is deprecated
-            res = np.fromstring(x_str, dtype="(3,4)i4")
-            assert_array_equal(x, res)
+        with pytest.raises(ValueError):
+            # binary fromstring raises
+            np.fromstring(x_str, dtype="(3,4)i4")
 
     def test_parsing_subarray_unsupported(self, tmp_filename):
         # We currently do not support parsing subarray dtypes
@@ -5803,8 +5806,7 @@ class TestIO:
 
         binary = expected.tobytes()
         with pytest.raises(ValueError):
-            with pytest.warns(DeprecationWarning):
-                np.fromstring(binary, dtype="(10,)i", count=10000)
+            np.fromstring(binary, dtype="(10,)i", count=10000)
 
         expected.tofile(tmp_filename)
         res = np.fromfile(tmp_filename, dtype="(10,)i", count=10000)
@@ -9672,6 +9674,63 @@ class TestArange:
         with pytest.raises(ValueError):
             # Fails discovering start dtype
             np.arange(*args)
+
+    def test_dtype_attribute_ignored(self):
+        # Until 2.3 this would raise a DeprecationWarning
+        class dt:
+            dtype = "f8"
+
+        class vdt(np.void):
+            dtype = "f,f"
+
+        assert_raises(ValueError, np.dtype, dt)
+        assert_raises(ValueError, np.dtype, dt())
+        assert_raises(ValueError, np.dtype, vdt)
+        assert_raises(ValueError, np.dtype, vdt(1))
+
+
+class TestDTypeCoercionForbidden:
+    forbidden_types = [
+        # The builtin scalar super types:
+        np.generic, np.flexible, np.number,
+        np.inexact, np.floating, np.complexfloating,
+        np.integer, np.unsignedinteger, np.signedinteger,
+        # character is a deprecated S1 special case:
+        np.character,
+    ]
+
+    def test_dtype_coercion(self):
+        for scalar_type in self.forbidden_types:
+            assert_raises(TypeError, np.dtype, args=(scalar_type,))
+
+    def test_array_construction(self):
+        for scalar_type in self.forbidden_types:
+            assert_raises(TypeError, np.array, args=([], scalar_type,))
+
+    def test_not_deprecated(self):
+        # All specific types work
+        for group in np._core.sctypes.values():
+            for scalar_type in group:
+                np.dtype(scalar_type)
+
+        for scalar_type in [type, dict, list, tuple]:
+            # Typical python types are coerced to object currently:
+            np.dtype(scalar_type)
+
+
+class TestDateTimeCreationTuple:
+    @pytest.mark.parametrize("cls", [np.datetime64, np.timedelta64])
+    def test_dt_tuple(self, cls):
+        # two valid uses - (unit, num) and (unit, num, den, None)
+        cls(1, ('ms', 2))
+        cls(1, ('ms', 2, 1, None))
+
+        # trying to use the event argument, removed in 1.7.0
+        # it used to be a uint8
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 'event')))
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 63)))
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 1, 'event')))
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 1, 63)))
 
 
 class TestArrayFinalize:

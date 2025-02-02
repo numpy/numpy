@@ -3903,14 +3903,9 @@ _get_fixed_signature(PyUFuncObject *ufunc,
                         "a single item type tuple cannot contain None.");
                 return -1;
             }
-            if (DEPRECATE("The use of a length 1 tuple for the ufunc "
-                          "`signature` is deprecated. Use `dtype` or  fill the"
-                          "tuple with `None`s.") < 0) {
-                return -1;
-            }
-            /* Use the same logic as for `dtype=` */
-            return _get_fixed_signature(ufunc,
-                    PyTuple_GET_ITEM(signature_obj, 0), NULL, signature);
+            PyErr_SetString(PyExc_TypeError,
+                  "Use `dtype` or  fill the tuple with more than one 'None'.");
+            return -1;
         }
         if (n != nop) {
             PyErr_Format(PyExc_ValueError,
@@ -3975,13 +3970,9 @@ _get_fixed_signature(PyUFuncObject *ufunc,
         }
         if (length == 1 && nin+nout != 1) {
             Py_DECREF(str_object);
-            if (DEPRECATE("The use of a length 1 string for the ufunc "
-                          "`signature` is deprecated. Use `dtype` attribute or "
-                          "pass a tuple with `None`s.") < 0) {
-                return -1;
-            }
-            /* `signature="l"` is the same as `dtype="l"` */
-            return _get_fixed_signature(ufunc, str_object, NULL, signature);
+            PyErr_SetString(PyExc_TypeError,
+                  "Use `dtype` or  fill the tuple with more than one 'None'.");
+            return -1;
         }
         else {
             for (int i = 0; i < nin+nout; ++i) {
@@ -5259,20 +5250,15 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
 
     const char *matrix_deprecation_msg = (
             "%s.outer() was passed a numpy matrix as %s argument. "
-            "Special handling of matrix is deprecated and will result in an "
-            "error in most cases. Please convert the matrix to a NumPy "
-            "array to retain the old behaviour. You can use `matrix.A` "
-            "to achieve this.");
+            "Special handling of matrix is removed. Convert to a "
+            "ndarray via 'matrix.A' ");
 
     tmp = PyTuple_GET_ITEM(args, 0);
 
     if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
-        /* DEPRECATED 2020-05-13, NumPy 1.20 */
-        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                matrix_deprecation_msg, ufunc->name, "first") < 0) {
-            return NULL;
-        }
-        ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+        PyErr_Format(PyExc_TypeError,
+                matrix_deprecation_msg, ufunc->name, "first");
+        return NULL;
     }
     else {
         ap1 = (PyArrayObject *) PyArray_FROM_O(tmp);
@@ -5284,13 +5270,9 @@ prepare_input_arguments_for_outer(PyObject *args, PyUFuncObject *ufunc)
     PyArrayObject *ap2 = NULL;
     tmp = PyTuple_GET_ITEM(args, 1);
     if (PyObject_IsInstance(tmp, npy_runtime_imports.numpy_matrix)) {
-        /* DEPRECATED 2020-05-13, NumPy 1.20 */
-        if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                matrix_deprecation_msg, ufunc->name, "second") < 0) {
-            Py_DECREF(ap1);
-            return NULL;
-        }
-        ap2 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
+        PyErr_Format(PyExc_TypeError,
+                matrix_deprecation_msg, ufunc->name, "second");
+        return NULL;
     }
     else {
         ap2 = (PyArrayObject *) PyArray_FROM_O(tmp);

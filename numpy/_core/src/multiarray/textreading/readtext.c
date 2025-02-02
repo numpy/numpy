@@ -201,7 +201,6 @@ _load_from_filelike(PyObject *NPY_UNUSED(mod),
         .imaginary_unit = 'j',
         .python_byte_converters = false,
         .c_byte_converters = false,
-        .gave_int_via_float_warning = false,
     };
     bool filelike = true;
 

@@ -291,7 +291,6 @@ Array conversion
 
    ndarray.item
    ndarray.tolist
-   ndarray.tostring
    ndarray.tobytes
    ndarray.tofile
    ndarray.dump

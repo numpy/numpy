@@ -34,7 +34,6 @@ assert_type(cG_4d.tolist(), complex | list[complex] | list[list[complex]] | list
 assert_type(i0_nd.tolist(), int | list[int] | list[list[int]] | list[list[list[Any]]])
 
 # itemset does not return a value
-# tostring is pretty simple
 # tobytes is pretty simple
 # tofile does not return a value
 # dump does not return a value

@@ -556,10 +556,8 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         }
     }
 
-    int out_passed = 0;
     if (ret != NULL) {
         assert(dtype == NULL);
-        out_passed = 1;
         if (PyArray_NDIM(ret) != 1) {
             PyErr_SetString(PyExc_ValueError,
                             "Output array must be 1D");
@@ -607,35 +605,18 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         return NULL;
     }
 
-    int give_deprecation_warning = 1;  /* To give warning for just one input array. */
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         /* Adjust the window dimensions for this array */
         sliding_view->dimensions[0] = PyArray_SIZE(arrays[iarrays]);
 
         if (!PyArray_CanCastArrayTo(
                 arrays[iarrays], PyArray_DESCR(ret), casting)) {
-            /* This should be an error, but was previously allowed here. */
-            if (casting_not_passed && out_passed) {
-                /* NumPy 1.20, 2020-09-03 */
-                if (give_deprecation_warning && DEPRECATE(
-                        "concatenate() with `axis=None` will use same-kind "
-                        "casting by default in the future. Please use "
-                        "`casting='unsafe'` to retain the old behaviour. "
-                        "In the future this will be a TypeError.") < 0) {
-                    Py_DECREF(sliding_view);
-                    Py_DECREF(ret);
-                    return NULL;
-                }
-                give_deprecation_warning = 0;
-            }
-            else {
-                npy_set_invalid_cast_error(
-                        PyArray_DESCR(arrays[iarrays]), PyArray_DESCR(ret),
-                        casting, PyArray_NDIM(arrays[iarrays]) == 0);
-                Py_DECREF(sliding_view);
-                Py_DECREF(ret);
-                return NULL;
-            }
+            npy_set_invalid_cast_error(
+                    PyArray_DESCR(arrays[iarrays]), PyArray_DESCR(ret),
+                    casting, PyArray_NDIM(arrays[iarrays]) == 0);
+            Py_DECREF(sliding_view);
+            Py_DECREF(ret);
+            return NULL;
         }
 
         /* Copy the data for this array */
@@ -2128,16 +2109,9 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     }
     if (PyDataType_FLAGCHK(typecode, NPY_LIST_PICKLE)) {
         if (typecode->type_num == NPY_OBJECT) {
-            /* Deprecated 2020-11-24, NumPy 1.20 */
-            if (DEPRECATE(
-                    "Unpickling a scalar with object dtype is deprecated. "
-                    "Object scalars should never be created. If this was a "
-                    "properly created pickle, please open a NumPy issue. In "
-                    "a best effort this returns the original object.") < 0) {
-                return NULL;
-            }
-            Py_INCREF(obj);
-            return obj;
+            PyErr_SetString(PyExc_TypeError,
+                    "Cannot unpickle a scalar with object dtype.");
+            return NULL;
         }
         /* We store the full array to unpack it here: */
         if (!PyArray_CheckExact(obj)) {
@@ -2323,13 +2297,9 @@ array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
 
     /* binary mode, condition copied from PyArray_FromString */
     if (sep == NULL || strlen(sep) == 0) {
-        /* Numpy 1.14, 2017-10-19 */
-        if (DEPRECATE(
-                "The binary mode of fromstring is deprecated, as it behaves "
-                "surprisingly on unicode inputs. Use frombuffer instead") < 0) {
-            Py_XDECREF(descr);
-            return NULL;
-        }
+        PyErr_SetString(PyExc_ValueError,
+            "The binary mode of fromstring is removed, use frombuffer instead");
+        return NULL;
     }
     return PyArray_FromString(data, (npy_intp)s, descr, (npy_intp)nin, sep);
 }

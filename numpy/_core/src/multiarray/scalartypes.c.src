@@ -2144,8 +2144,7 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 
 
 /**begin repeat
- * #name = integer, floating, complexfloating#
- * #complex = 0, 0, 1#
+ * #name = integer, floating#
  */
 static PyObject *
 @name@type_dunder_round(PyObject *self, PyObject *args, PyObject *kwds)
@@ -2155,14 +2154,6 @@ static PyObject *
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O:__round__", kwlist, &ndigits)) {
         return NULL;
     }
-
-#if @complex@
-    if (DEPRECATE("The Python built-in `round` is deprecated for complex "
-                  "scalars, and will raise a `TypeError` in a future release. "
-                  "Use `np.round` or `scalar.round` instead.") < 0) {
-        return NULL;
-    }
-#endif
 
     PyObject *tup;
     if (ndigits == Py_None) {
@@ -2182,13 +2173,11 @@ static PyObject *
         return NULL;
     }
 
-#if !@complex@
     if (ndigits == Py_None) {
         PyObject *ret = PyNumber_Long(obj);
         Py_DECREF(obj);
         return ret;
     }
-#endif
 
     return obj;
 }
@@ -2853,17 +2842,13 @@ static PyMethodDef @name@type_methods[] = {
 };
 /**end repeat**/
 
-/**begin repeat
- * #name = floating, complexfloating#
- */
-static PyMethodDef @name@type_methods[] = {
+static PyMethodDef floatingtype_methods[] = {
     /* Hook for the round() builtin */
     {"__round__",
-        (PyCFunction)@name@type_dunder_round,
+        (PyCFunction)floatingtype_dunder_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL} /* sentinel */
 };
-/**end repeat**/
 
 static PyMethodDef integertype_methods[] = {
     /* Hook for the round() builtin */
@@ -3724,19 +3709,6 @@ static PyObject *
 static PyNumberMethods @name@_arrtype_as_number;
 /**end repeat**/
 
-static PyObject *
-bool_index(PyObject *a)
-{
-    if (DEPRECATE(
-            "In future, it will be an error for 'np.bool' scalars to be "
-            "interpreted as an index") < 0) {
-        return NULL;
-    }
-    else {
-        return PyLong_FromLong(PyArrayScalar_VAL(a, Bool));
-    }
-}
-
 /* Arithmetic methods -- only so we can override &, |, ^. */
 NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
     .nb_bool = (inquiry)bool_arrtype_nonzero,
@@ -4428,8 +4400,6 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
-    PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
-
     PyStringArrType_Type.tp_alloc = NULL;
     PyStringArrType_Type.tp_free = NULL;
 
@@ -4498,8 +4468,8 @@ initialize_numeric_types(void)
     /**end repeat**/
 
     /**begin repeat
-     * #name = cfloat, clongdouble, floating, integer, complexfloating#
-     * #NAME = CFloat, CLongDouble, Floating, Integer, ComplexFloating#
+     * #name = cfloat, clongdouble, floating, integer#
+     * #NAME = CFloat, CLongDouble, Floating, Integer#
      */
 
     Py@NAME@ArrType_Type.tp_methods = @name@type_methods;
