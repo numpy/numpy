@@ -1930,6 +1930,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject *)transposed_array)) {
             // self is non-contiguous
             Py_DECREF(rev_perm);
+            Py_DECREF(transposed_array);
             return array_reduce_ex_regular(self, protocol);
         }
     }
@@ -1949,8 +1950,8 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     if (npy_cache_import_runtime("numpy._core.numeric", "_frombuffer",
                                  &from_buffer_func) == -1) {
         Py_DECREF(rev_perm);
-        Py_DECREF(buffer);
         Py_XDECREF(transposed_array);
+        Py_DECREF(buffer);
         return NULL;
     }
 
