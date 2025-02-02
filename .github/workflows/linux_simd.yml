@@ -106,6 +106,41 @@ jobs:
 
     - uses: ./.github/meson_actions
       name: Build/Test against gcc-10
+  # Add ARM64-specific SIMD tests
+  arm64_simd:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-22.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "baseline only"
+            args: "-Dallow-noblas=true -Dcpu-dispatch=none"
+          - name: "with NEON"
+            args: "-Dallow-noblas=true -Dcpu-baseline=neon"
+          - name: "with ASIMD"
+            args: "-Dallow-noblas=true -Dcpu-baseline=asimd"
+          - name: "native"
+            args: "-Dallow-noblas=true -Dcpu-baseline=native -Dcpu-dispatch=none"
+    name: "ARM64 SIMD - ${{ matrix.config.name }}"
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+    - name: Build
+      run: |
+        spin build -- ${{ matrix.config.args }}
+    - name: Test
+      run: |
+        spin test -- --timeout=600 --durations=10
 
   specialize:
     needs: [baseline_only]

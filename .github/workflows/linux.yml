@@ -77,8 +77,31 @@ jobs:
       run: |
         pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
     - uses: ./.github/meson_actions
-
-  # TODO pypy: uncomment when pypy3.11 becomes available    
+  
+    # Add ARM64-specific smoke test
+  smoke_test_arm64:
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-22.04-arm
+    env:
+      MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
+    strategy:
+      matrix:
+        version: ["3.11", "3.12"]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements/build_requirements.txt
+    - uses: ./.github/meson_actions
+  
+    # TODO pypy: uncomment when pypy3.11 becomes available    
   #pypy:
     #needs: [smoke_test]
     #runs-on: ubuntu-latest
@@ -165,6 +188,33 @@ jobs:
         # TODO: gcov
       env:
         PYTHONOPTIMIZE: 2
+    
+    # Add ARM64-specific full test
+  full_arm64:
+    needs: [smoke_test_arm64]
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install build and test dependencies
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install -r requirements/test_requirements.txt
+    - name: Install OpenBLAS
+      run: |
+        sudo apt update
+        sudo apt install -y gfortran libopenblas-dev
+    - name: Build and install
+      run: |
+        python -m pip install -e . --no-build-isolation
+    - name: Run full test suite
+      run: |
+        pytest numpy --durations=10 --timeout=600
 
   benchmark:
     needs: [smoke_test]
