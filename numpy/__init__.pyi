@@ -228,7 +228,7 @@ from typing import (
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
 from _typeshed import StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, LiteralString, Never, Protocol, Self, TypeVar, Unpack, deprecated, overload
+from typing_extensions import CapsuleType, LiteralString, Never, Protocol, Self, TypeVar, Unpack, overload
 
 from numpy import (
     char,
@@ -3880,8 +3880,6 @@ class bool(generic[_BoolItemT_co], Generic[_BoolItemT_co]):
     def __int__(self: np.bool[L[True]], /) -> L[1]: ...
     @overload
     def __int__(self, /) -> L[0, 1]: ...
-    @deprecated("In future, it will be an error for 'np.bool' scalars to be interpreted as an index")
-    def __index__(self, /) -> L[0, 1]: ...
     def __abs__(self) -> Self: ...
 
     @overload
@@ -4271,11 +4269,6 @@ class complexfloating(inexact[_NBit1, complex], Generic[_NBit1, _NBit2]):
     # NOTE: `__complex__` is technically defined in the concrete subtypes
     def __complex__(self, /) -> complex: ...
     def __abs__(self, /) -> floating[_NBit1 | _NBit2]: ...  # type: ignore[override]
-    @deprecated(
-        "The Python built-in `round` is deprecated for complex scalars, and will raise a `TypeError` in a future release. "
-        "Use `np.round` or `scalar.round` instead."
-    )
-    def __round__(self, /, ndigits: SupportsIndex | None = None) -> Self: ...
 
     @overload
     def __add__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
