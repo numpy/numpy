@@ -379,6 +379,11 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     EOFError
         When calling ``np.load`` multiple times on the same file handle,
         if all data has already been read
+    tokenize.TokenError
+    zipfile.BadZipFile
+    IndentationError
+    ValueError
+        If the input file is corrupted.
 
     See Also
     --------
