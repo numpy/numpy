@@ -2444,8 +2444,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         y = float(y)
 
     with errstate(invalid='ignore'):
-
-        if np.any(np.isinf(atol)) or np.any(np.isinf(rtol)) or np.any(np.isnan(atol)) or np.any(np.isnan(rtol)):
+        # atol and rtol can be arrays
+        if not (np.all(np.isfinite(atol)) and np.all(np.isfinite(rtol))):
             warnings.warn(f"One of rtol or atol is not valid, atol: {atol}, rtol: {rtol}", stacklevel=2)
   
         result = (less_equal(abs(x - y), atol + rtol * abs(y))
