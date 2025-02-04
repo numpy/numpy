@@ -1,4 +1,3 @@
-import concurrent.futures
 import itertools
 import os
 import pickle
@@ -11,46 +10,13 @@ import pytest
 
 from numpy.dtypes import StringDType
 from numpy._core.tests._natype import pd_NA
-from numpy.testing import assert_array_equal, IS_WASM, IS_PYPY
+from numpy.testing import assert_array_equal, IS_PYPY
+from numpy.testing._private.utils import get_stringdtype_dtype as get_dtype
 
 
 @pytest.fixture
 def string_list():
     return ["abc", "def", "ghi" * 10, "A¢☃€ 😊" * 100, "Abc" * 1000, "DEF"]
-
-
-@pytest.fixture
-def random_string_list():
-    chars = list(string.ascii_letters + string.digits)
-    chars = np.array(chars, dtype="U1")
-    ret = np.random.choice(chars, size=100 * 10, replace=True)
-    return ret.view("U100")
-
-
-@pytest.fixture(params=[True, False])
-def coerce(request):
-    return request.param
-
-
-@pytest.fixture(
-    params=["unset", None, pd_NA, np.nan, float("nan"), "__nan__"],
-    ids=["unset", "None", "pandas.NA", "np.nan", "float('nan')", "string nan"],
-)
-def na_object(request):
-    return request.param
-
-
-def get_dtype(na_object, coerce=True):
-    # explicit is check for pd_NA because != with pd_NA returns pd_NA
-    if na_object is pd_NA or na_object != "unset":
-        return StringDType(na_object=na_object, coerce=coerce)
-    else:
-        return StringDType(coerce=coerce)
-
-
-@pytest.fixture()
-def dtype(na_object, coerce):
-    return get_dtype(na_object, coerce)
 
 
 # second copy for cast tests to do a cartesian product over dtypes
@@ -1206,40 +1172,6 @@ def test_growing_strings(dtype):
         uarr = uarr + uarr
 
     assert_array_equal(arr, uarr)
-
-
-@pytest.mark.skipif(IS_WASM, reason="no threading support in wasm")
-def test_threaded_access_and_mutation(dtype, random_string_list):
-    # this test uses an RNG and may crash or cause deadlocks if there is a
-    # threading bug
-    rng = np.random.default_rng(0x4D3D3D3)
-
-    def func(arr):
-        rnd = rng.random()
-        # either write to random locations in the array, compute a ufunc, or
-        # re-initialize the array
-        if rnd < 0.25:
-            num = np.random.randint(0, arr.size)
-            arr[num] = arr[num] + "hello"
-        elif rnd < 0.5:
-            if rnd < 0.375:
-                np.add(arr, arr)
-            else:
-                np.add(arr, arr, out=arr)
-        elif rnd < 0.75:
-            if rnd < 0.875:
-                np.multiply(arr, np.int64(2))
-            else:
-                np.multiply(arr, np.int64(2), out=arr)
-        else:
-            arr[:] = random_string_list
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
-        arr = np.array(random_string_list, dtype=dtype)
-        futures = [tpe.submit(func, arr) for _ in range(500)]
-
-        for f in futures:
-            f.result()
 
 
 UFUNC_TEST_DATA = [
