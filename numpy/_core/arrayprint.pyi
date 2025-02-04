@@ -65,7 +65,7 @@ def set_printoptions(
     sign: Literal["-", "+", " "] | None = ...,
     floatmode: None | _FloatMode = ...,
     *,
-    legacy: Literal[False, "1.13", "1.21"] | None = ...,
+    legacy: Literal[False, "1.13", "1.21", "1.25", "2.1"] | None = ...,
     override_repr: None | Callable[[NDArray[Any]], str] = ...,
 ) -> None: ...
 def get_printoptions() -> _FormatOptions: ...
