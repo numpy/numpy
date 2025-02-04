@@ -190,10 +190,14 @@ def test_array_creation_utf8(dtype, data):
     ],
 )
 def test_scalars_string_conversion(data, dtype):
+    try:
+        str_vals = [str(d.decode('utf-8')) for d in data]
+    except AttributeError:
+        str_vals = [str(d) for d in data]
     if dtype.coerce:
         assert_array_equal(
             np.array(data, dtype=dtype),
-            np.array([str(d) for d in data], dtype=dtype),
+            np.array(str_vals, dtype=dtype),
         )
     else:
         with pytest.raises(ValueError):
@@ -284,6 +288,14 @@ class TestStringLikeCasts:
             barr = np.array(utf8_bytes, dtype=bytes_dtype)
             assert_array_equal(barr, sarr.astype(bytes_dtype))
             assert_array_equal(barr.astype(dtype), sarr)
+            if dtype.coerce:
+                barr = np.array(utf8_bytes, dtype=dtype)
+                assert_array_equal(barr, sarr)
+                barr = np.array(utf8_bytes, dtype="O")
+                assert_array_equal(barr.astype(dtype), sarr)
+            else:
+                with pytest.raises(ValueError):
+                    np.array(utf8_bytes, dtype=dtype)
         except UnicodeEncodeError:
             with pytest.raises(UnicodeEncodeError):
                 sarr.astype("S20")
