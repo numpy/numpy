@@ -5941,7 +5941,6 @@ fail:
     NPY_AUXDATA_FREE(auxdata);
 
     Py_XDECREF(op2_array);
-    Py_XDECREF(iter);
     Py_XDECREF(iter2);
     for (int i = 0; i < nop; i++) {
         Py_XDECREF(operation_descrs[i]);
@@ -5957,9 +5956,13 @@ fail:
         if (PyArray_FLAGS(op1_array) & NPY_ARRAY_WRITEBACKIFCOPY) {
             PyArray_DiscardWritebackIfCopy(op1_array);
         }
+        // iter might own the last refrence to op1_array,
+        // so it must be decref'd second
+        Py_XDECREF(iter);
         return NULL;
     }
     else {
+        Py_XDECREF(iter);
         Py_RETURN_NONE;
     }
 }
