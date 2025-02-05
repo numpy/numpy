@@ -289,6 +289,7 @@ python_sources = [
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
+  'matlib.pyi',
   'py.typed',
   'version.pyi',
 ]
