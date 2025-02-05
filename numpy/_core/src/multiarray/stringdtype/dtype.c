@@ -270,6 +270,15 @@ as_pystring(PyObject *scalar, int coerce)
                         "string coercion is disabled.");
         return NULL;
     }
+    else if (scalar_type == &PyBytes_Type) {
+        // assume UTF-8 encoding
+        char *buffer;
+        Py_ssize_t length;
+        if (PyBytes_AsStringAndSize(scalar, &buffer, &length) < 0) {
+            return NULL;
+        }
+        return PyUnicode_FromStringAndSize(buffer, length);
+    }
     else {
         // attempt to coerce to str
         scalar = PyObject_Str(scalar);
