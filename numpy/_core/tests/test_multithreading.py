@@ -1,4 +1,6 @@
+import concurrent.futures
 import threading
+import string
 
 import numpy as np
 import pytest
@@ -165,3 +167,90 @@ def test_multithreaded_repeat():
             x = np.repeat(x0, 2, axis=0)[::2]
 
     run_threaded(closure, max_workers=10, pass_barrier=True)
+
+
+def test_structured_advanced_indexing():
+    # Test that copyswap(n) used by integer array indexing is threadsafe
+    # for structured datatypes, see gh-15387. This test can behave randomly.
+
+    # Create a deeply nested dtype to make a failure more likely:
+    dt = np.dtype([("", "f8")])
+    dt = np.dtype([("", dt)] * 2)
+    dt = np.dtype([("", dt)] * 2)
+    # The array should be large enough to likely run into threading issues
+    arr = np.random.uniform(size=(6000, 8)).view(dt)[:, 0]
+
+    rng = np.random.default_rng()
+
+    def func(arr):
+        indx = rng.integers(0, len(arr), size=6000, dtype=np.intp)
+        arr[indx]
+
+    tpe = concurrent.futures.ThreadPoolExecutor(max_workers=8)
+    futures = [tpe.submit(func, arr) for _ in range(10)]
+    for f in futures:
+        f.result()
+
+    assert arr.dtype is dt
+
+
+def test_structured_threadsafety2():
+    # Nonzero (and some other functions) should be threadsafe for
+    # structured datatypes, see gh-15387. This test can behave randomly.
+    from concurrent.futures import ThreadPoolExecutor
+
+    # Create a deeply nested dtype to make a failure more likely:
+    dt = np.dtype([("", "f8")])
+    dt = np.dtype([("", dt)])
+    dt = np.dtype([("", dt)] * 2)
+    # The array should be large enough to likely run into threading issues
+    arr = np.random.uniform(size=(5000, 4)).view(dt)[:, 0]
+
+    def func(arr):
+        arr.nonzero()
+
+    tpe = ThreadPoolExecutor(max_workers=8)
+    futures = [tpe.submit(func, arr) for _ in range(10)]
+    for f in futures:
+        f.result()
+
+    assert arr.dtype is dt
+
+
+def test_stringdtype_multithreaded_access_and_mutation(
+        dtype, random_string_list):
+    # this test uses an RNG and may crash or cause deadlocks if there is a
+    # threading bug
+    rng = np.random.default_rng(0x4D3D3D3)
+
+    chars = list(string.ascii_letters + string.digits)
+    chars = np.array(chars, dtype="U1")
+    ret = rng.choice(chars, size=100 * 10, replace=True)
+    random_string_list = ret.view("U100")
+
+    def func(arr):
+        rnd = rng.random()
+        # either write to random locations in the array, compute a ufunc, or
+        # re-initialize the array
+        if rnd < 0.25:
+            num = np.random.randint(0, arr.size)
+            arr[num] = arr[num] + "hello"
+        elif rnd < 0.5:
+            if rnd < 0.375:
+                np.add(arr, arr)
+            else:
+                np.add(arr, arr, out=arr)
+        elif rnd < 0.75:
+            if rnd < 0.875:
+                np.multiply(arr, np.int64(2))
+            else:
+                np.multiply(arr, np.int64(2), out=arr)
+        else:
+            arr[:] = random_string_list
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
+        arr = np.array(random_string_list, dtype=dtype)
+        futures = [tpe.submit(func, arr) for _ in range(500)]
+
+        for f in futures:
+            f.result()
