@@ -151,7 +151,7 @@ ensure_castingimpl_exists(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
         return_error = 1;
     }
 
-    if (!return_error) {
+    if (res == NULL && !return_error) {
         res = create_casting_impl(from, to);
         if (res == NULL) {
             return_error = 1;
