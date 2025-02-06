@@ -1093,12 +1093,13 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
     if (PyDataType_REFCHK(dtype)) {
         int is_aligned = IsUintAligned(obj);
+        PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
         PyArray_GetDTypeTransferFunction(
                     is_aligned,
                     dtype->elsize,
-                    dtype->elsize,
+                    obj_dtype->elsize,
                     dtype,
-                    dtype, 0, &cast_info,
+                    obj_dtype, 0, &cast_info,
                     &transfer_flags);
     }
 
