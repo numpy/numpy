@@ -7,6 +7,7 @@ import pytest
 
 from numpy.testing import IS_WASM
 from numpy.testing._private.utils import run_threaded
+from numpy._core import _rational_tests
 
 if IS_WASM:
     pytest.skip(allow_module_level=True, reason="no threading support in wasm")
@@ -254,3 +255,11 @@ def test_stringdtype_multithreaded_access_and_mutation(
 
         for f in futures:
             f.result()
+
+
+def test_legacy_usertype_cast_init_thread_safety():
+    def closure(b):
+        b.wait()
+        np.full((10, 10), 1, _rational_tests.rational)
+
+    run_threaded(closure, 1000, pass_barrier=True)
