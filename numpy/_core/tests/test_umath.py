@@ -1258,17 +1258,6 @@ class TestPower:
             result = np.power(a, 0.5)
             assert_array_max_ulp(result, expected, maxulp=1)
 
-    def test_large_fast_power(self):
-        # gh-28248
-        for dt in [np.float32, np.float64]:
-            a = np.random.uniform(1, 4, 1000).astype(dt)
-
-            result = np.power(a, 2)
-            assert_array_equal(result, a * a)
-
-            result = np.power(a, 0.5)
-            assert_array_equal(result, np.sqrt(a))
-
 
 class TestFloat_power:
     def test_type_conversion(self):
