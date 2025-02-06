@@ -1166,8 +1166,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             success = PyArray_ResolveWritebackIfCopy(obj);
         }
         if (success < 0) {
-            Py_DECREF(obj);
-            goto fail;
+            return NULL;
         }
         Py_DECREF(obj);
         obj = out;
