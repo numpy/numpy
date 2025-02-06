@@ -69,37 +69,40 @@ simd_fast_power_@sfx@(const npyv_lanetype_@sfx@ *src, npy_intp ssrc,
                       const npyv_lanetype_@sfx@ *exp,
                       npyv_lanetype_@sfx@ *dst, npy_intp sdst, npy_intp len)
 {
-    npyv_@sfx@ srcv;
-    npyv_@sfx@ dstv;
+    const int vstep = npyv_nlanes_@sfx@;
+    for (; len > 0; len -= vstep, src += ssrc*vstep, dst += sdst*vstep) {   
+        npyv_@sfx@ srcv;
+        npyv_@sfx@ dstv;
 
-    if (ssrc == 1) {
-        srcv = npyv_load_till_@sfx@(src, len, 0.0);
-    }
-    else {
-        srcv = npyv_loadn_till_@sfx@(src, ssrc, len, 0.0);
-    }
-    
-    if (*exp == 0.0) {
-        dstv = npyv_setall_@sfx@(1.0);
-    }
-    else if (*exp == 0.5) {
-        dstv = npyv_sqrt_@sfx@(srcv);
-    }
-    else if (*exp == 1.0) {
-        dstv = srcv;
-    }
-    else if (*exp == 2.0) {
-        dstv = npyv_square_@sfx@(srcv);
-    }
-    else {
-        return -1;
-    }
+        if (ssrc == 1) {
+            srcv = npyv_load_till_@sfx@(src, len, 0.0);
+        }
+        else {
+            srcv = npyv_loadn_till_@sfx@(src, ssrc, len, 0.0);
+        }
+        
+        if (*exp == 0.0) {
+            dstv = npyv_setall_@sfx@(1.0);
+        }
+        else if (*exp == 0.5) {
+            dstv = npyv_sqrt_@sfx@(srcv);
+        }
+        else if (*exp == 1.0) {
+            dstv = srcv;
+        }
+        else if (*exp == 2.0) {
+            dstv = npyv_square_@sfx@(srcv);
+        }
+        else {
+            return -1;
+        }
 
-    if (sdst == 1) {
-        npyv_store_till_@sfx@(dst, len, dstv);
-    }
-    else {
-        npyv_storen_till_@sfx@(dst, sdst, len, dstv);
+        if (sdst == 1) {
+            npyv_store_till_@sfx@(dst, len, dstv);
+        }
+        else {
+            npyv_storen_till_@sfx@(dst, sdst, len, dstv);
+        }
     }
     return 0;
 }
