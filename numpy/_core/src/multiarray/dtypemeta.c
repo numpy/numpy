@@ -1252,6 +1252,12 @@ dtypemeta_wrap_legacy_descriptor(
             return -1;
         }
     }
+    else {
+        // ensure the within dtype cast is populated for legacy user dtypes
+        if (PyArray_GetCastingImpl(dtype_class, dtype_class) == NULL) {
+            return -1;
+        }
+    }
 
     return 0;
 }

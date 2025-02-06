@@ -188,9 +188,12 @@ ensure_castingimpl_exists(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 NPY_NO_EXPORT PyObject *
 PyArray_GetCastingImpl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
 {
-    PyObject *res;
+    PyObject *res = NULL;
     if (from == to) {
-        res = Py_XNewRef((PyObject *)NPY_DT_SLOTS(from)->within_dtype_castingimpl);
+        if ((NPY_DT_SLOTS(from)->within_dtype_castingimpl) != NULL) {
+            res = Py_XNewRef(
+                    (PyObject *)NPY_DT_SLOTS(from)->within_dtype_castingimpl);
+        }
     }
     else if (PyDict_GetItemRef(NPY_DT_SLOTS(from)->castingimpls,
                                (PyObject *)to, &res) < 0) {
