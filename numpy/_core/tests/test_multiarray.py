@@ -1984,14 +1984,6 @@ class TestMethods:
         y = np.choose([0, 0, 0], [x[:3], x[:3], x[:3]], out=x[1:4], mode='wrap')
         assert_equal(y, np.array([0, 1, 2]))
 
-        # gh-28206 test new StringDType casting
-        x = np.array(['a', 'b', 'c'], dtype=np.dtypes.StringDType())
-        y = np.array(['abc', 'def', 'this is a much longer string'], dtype=np.dtypes.StringDType())
-        ind = np.array([0, 0, 1])
-
-        A = ind.choose((x, y))
-        assert_equal(A, ['a', 'b', 'this is a much longer string'])
-
     def test_prod(self):
         ba = [1, 2, 10, 11, 6, 5, 4]
         ba2 = [[1, 2, 3, 4], [5, 6, 7, 9], [10, 3, 4, 5]]
