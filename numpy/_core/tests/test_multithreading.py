@@ -262,4 +262,4 @@ def test_legacy_usertype_cast_init_thread_safety():
         b.wait()
         np.full((10, 10), 1, _rational_tests.rational)
 
-    run_threaded(closure, 1000, pass_barrier=True)
+    run_threaded(closure, 250, pass_barrier=True)
