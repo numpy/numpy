@@ -60,6 +60,8 @@ jobs:
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/ci_requirements.txt
         pip install -r requirements/test_requirements.txt
+        # xdist captures stdout/stderr, but we want the ASAN output
+        pip uninstall -y pytest-xdist
     - name: Build
       run:
         python -m spin build -j2 -- -Db_sanitize=address
@@ -111,6 +113,8 @@ jobs:
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/ci_requirements.txt
         pip install -r requirements/test_requirements.txt
+        # xdist captures stdout/stderr, but we want the TSAN output
+        pip uninstall -y pytest-xdist
     - name: Build
       run:
         python -m spin build -j2 -- -Db_sanitize=thread
