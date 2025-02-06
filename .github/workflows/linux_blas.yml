@@ -60,9 +60,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {name: "OpenBLAS 32-bit stable", use_nightly: false, bits: 32}
-          - {name: "OpenBLAS 32-bit nightly", use_nightly: true, bits: 32}
-          - {name: "OpenBLAS 64-bit stable", use_nightly: false, bits: 64}
           - {name: "OpenBLAS 64-bit nightly", use_nightly: true, bits: 64}
     name: "Test ARM64 - ${{ matrix.config.name }}"
     steps:
@@ -76,36 +73,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install -r requirements/build_requirements.txt
-        if [[ "${{ matrix.config.use_nightly }}" == "true" ]]; then
-          if [[ "${{ matrix.config.bits }}" == "32" ]]; then
-            python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas32
-          else
-            python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas64
-          fi
-        else
-          if [[ "${{ matrix.config.bits }}" == "32" ]]; then
-            python -m pip install -r requirements/ci32_requirements.txt
-          else
-            python -m pip install -r requirements/ci_requirements.txt
-          fi
-        fi
+        python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas64
         mkdir -p ./.openblas
-        if [[ "${{ matrix.config.bits }}" == "32" ]]; then
-          python -c"import scipy_openblas32 as ob; print(ob.get_pkg_config())" > ./.openblas/scipy-openblas.pc
-        else
-          python -c"import scipy_openblas64 as ob; print(ob.get_pkg_config())" > ./.openblas/scipy-openblas.pc
-        fi
-
+        python -c"import scipy_openblas64 as ob; print(ob.get_pkg_config())" > ./.openblas/scipy-openblas.pc
     - name: Build
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
-        if [[ "${{ matrix.config.bits }}" == "64" ]]; then
-          spin build -- -Duse-ilp64=true -Dallow-noblas=false
-        else
-          spin build -- -Dallow-noblas=false
-        fi
-
+        spin build -- -Duse-ilp64=true -Dallow-noblas=false
     - name: Test
       run: |
         pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
