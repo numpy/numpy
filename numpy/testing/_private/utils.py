@@ -2690,28 +2690,29 @@ def run_threaded(func, max_workers=8, pass_count=False,
                  prepare_args=None):
     """Runs a function many times in parallel"""
     for _ in range(outer_iterations):
-        if pass_barrier:
-            barrier = threading.Barrier(max_workers)
-        try:
-            with (concurrent.futures.ThreadPoolExecutor(
-                    max_workers=max_workers) as tpe):
-                if prepare_args is None:
-                    args = []
-                else:
-                    args = prepare_args()
-                if pass_barrier:
-                    args.append(barrier)
-                if pass_count:
-                    futures = [
-                        tpe.submit(func, i, *args) for i in range(max_workers)]
-                else:
-                    futures = [
-                        tpe.submit(func, *args) for _ in range(max_workers)]
-                for f in futures:
-                    f.result()
-        finally:
+        with (concurrent.futures.ThreadPoolExecutor(
+                max_workers=max_workers) as tpe):
+            if prepare_args is None:
+                args = []
+            else:
+                args = prepare_args()
             if pass_barrier:
-                barrier.abort()
+                barrier = threading.Barrier(max_workers)
+                args.append(barrier)
+            try:
+                if pass_count:
+                    futures = [tpe.submit(func, i, *args) for i in
+                               range(max_workers)]
+                else:
+                    futures = [tpe.submit(func, *args) for _ in
+                               range(max_workers)]
+            except RuntimeError:
+                # python raises RuntimeError when it can't spawn new threads
+                if pass_barrier:
+                    barrier.abort()
+                raise
+            for f in futures:
+                f.result()
 
 
 def get_stringdtype_dtype(na_object, coerce=True):
