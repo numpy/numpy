@@ -171,6 +171,7 @@ ensure_castingimpl_exists(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
     if (from == to && res == Py_None) {
         PyErr_Format(PyExc_RuntimeError,
                 "Internal NumPy error, within-DType cast missing for %S!", from);
+        Py_DECREF(res);
         return NULL;
     }
     return res;
