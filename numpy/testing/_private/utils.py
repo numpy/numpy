@@ -2690,25 +2690,32 @@ def run_threaded(func, max_workers=8, pass_count=False,
                  prepare_args=None):
     """Runs a function many times in parallel"""
     for _ in range(outer_iterations):
-        with (concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
-              as tpe):
-            if prepare_args is None:
-                args = []
-            else:
-                args = prepare_args()
-            if pass_barrier:
-                barrier = threading.Barrier(max_workers)
-                args.append(barrier)
-            if pass_count:
-                all_func_args = [(func, i, *args) for i in range(max_workers)]
-            else:
-                all_func_args = [(func, *args) for i in range(max_workers)]
-            try:
-                futures = [tpe.submit(*func_args) for func_args in
-                           all_func_args]
-            except BaseException:
+        if pass_barrier:
+            barrier = threading.Barrier(max_workers)
+        try:
+            with (concurrent.futures.ThreadPoolExecutor(
+                    max_workers=max_workers) as tpe):
+                if prepare_args is None:
+                    args = []
+                else:
+                    args = prepare_args()
                 if pass_barrier:
-                    barrier.abort()
-                raise
+                    args.append(barrier)
+                if pass_count:
+                    all_args = [(func, i, *args) for i in range(max_workers)]
+                else:
+                    all_args = [(func, *args) for _ in range(max_workers)]
+                futures = [tpe.submit(*func_args) for func_args in all_args]
             for f in futures:
                 f.result()
+        finally:
+            if pass_barrier:
+                barrier.abort()
+
+
+def get_stringdtype_dtype(na_object, coerce=True):
+    # explicit is check for pd_NA because != with pd_NA returns pd_NA
+    if na_object is pd_NA or na_object != "unset":
+        return np.dtypes.StringDType(na_object=na_object, coerce=coerce)
+    else:
+        return np.dtypes.StringDType(coerce=coerce)
