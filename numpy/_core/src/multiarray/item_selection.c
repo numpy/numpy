@@ -1041,10 +1041,6 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         is_newarr = 1;
     }
     else {
-        int flags = NPY_ARRAY_CARRAY |
-                    NPY_ARRAY_WRITEBACKIFCOPY |
-                    NPY_ARRAY_FORCECAST;
-
         if ((PyArray_NDIM(out) != multi->nd)
                     || !PyArray_CompareLists(PyArray_DIMS(out),
                                              multi->dimensions,
@@ -1056,7 +1052,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
 
         for (i = 0; i < n; i++) {
             if (arrays_overlap(out, mps[i])) {
-                flags |= NPY_ARRAY_ENSURECOPY;
+                is_newarr = 1;
             }
         }
 
@@ -1066,19 +1062,27 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
              * so the input array is not changed
              * before the error is called
              */
-            flags |= NPY_ARRAY_ENSURECOPY;
+            is_newarr = 1;
         }
-        Py_INCREF(dtype);
+
         if (!PyArray_EquivTypes(dtype, PyArray_DESCR(out))) {
+            is_newarr = 1;
+        }
+
+        Py_INCREF(dtype);
+        if (is_newarr) {
             obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(out),
                                                         dtype,
                                                         multi->nd,
                                                         multi->dimensions,
                                                         NULL, NULL, 0,
                                                         (PyObject *)out);
-            is_newarr = 1;
         }
         else {
+            int flags = NPY_ARRAY_CARRAY |
+                        NPY_ARRAY_WRITEBACKIFCOPY |
+                        NPY_ARRAY_FORCECAST;
+
             obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         }
     }
