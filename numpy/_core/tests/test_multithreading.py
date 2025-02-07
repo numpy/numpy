@@ -263,8 +263,9 @@ def test_legacy_usertype_cast_init_thread_safety():
     try:
         run_threaded(closure, 250, pass_barrier=True)
     except RuntimeError:
-        # couldn't spawn enough threads, so skip this test on this system
-        # for whatever reason the 32 bit linux runner will trigger
-        # this. I can trigger it on my Linux laptop with 500 threads but
-        # the runner is more resource-constrained
+        # The 32 bit linux runner will trigger this with 250 threads. I can
+        # trigger it on my Linux laptop with 500 threads but the CI runner is
+        # more resource-constrained.
+        # Reducing the number of threads means the test doesn't trigger the
+        # bug. Better to skip on some platforms than add a useless test.
         pytest.skip("Couldn't spawn enough threads to run the test")
