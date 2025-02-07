@@ -103,8 +103,8 @@ create_casting_impl(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
             PyArray_VectorUnaryFunc *castfunc = PyArray_GetCastFunc(
                     from->singleton, to->type_num);
             if (castfunc == NULL) {
-                    PyErr_Clear();
-                    Py_RETURN_NONE;
+                PyErr_Clear();
+                Py_RETURN_NONE;
             }
         }
         /* Create a cast using the state of the legacy casting setup defined

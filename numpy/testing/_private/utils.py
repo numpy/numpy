@@ -2724,8 +2724,8 @@ def run_threaded(func, max_workers=8, pass_count=False,
                  prepare_args=None):
     """Runs a function many times in parallel"""
     for _ in range(outer_iterations):
-        with (concurrent.futures.ThreadPoolExecutor(
-                max_workers=max_workers) as tpe):
+        with (concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+              as tpe):
             if prepare_args is None:
                 args = []
             else:
