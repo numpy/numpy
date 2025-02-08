@@ -637,6 +637,83 @@ class TestSaveTxt:
             pytest.xfail("subprocess got a SIGKILL, apparently free memory was not sufficient")
         assert p.exitcode == 0
 
+    def test_fstring_fmt(self):
+        a = np.array([[1.1, 2.2], [3.3, 4.4]])
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:.2f}")
+        assert c.getvalue().decode('utf-8') == "1.10 2.20\n3.30 4.40\n"
+
+        # Test fstring_fmt with 1D array
+        a = np.array([1.1, 2.2, 3.3, 4.4])
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:.1f}")
+        c.seek(0)
+        assert_equal(c.readlines(), [b'1.1\n', b'2.2\n', b'3.3\n', b'4.4\n'])
+
+        # Test fstring_fmt with headers and footers
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:.1f}", header="Header", footer="Footer")
+        c.seek(0)
+        assert_equal(c.read(), b"# Header\n1.1\n2.2\n3.3\n4.4\n# Footer\n")
+
+        # Test fstring_fmt with invalid format
+        c = BytesIO()
+        assert_raises(ValueError, np.savetxt, c, a, fstring_fmt="{:invalid}")
+
+        # Test fstring_fmt with delimiter (valid case)
+        a = np.array([[1.1, 2.2], [3.3, 4.4]])
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:.1f}", delimiter=",")
+        c.seek(0)
+        assert c.read().decode('utf-8').strip() == "1.1,2.2\n3.3,4.4"
+
+        # Test fstring_fmt rejection of multi-column format
+        c = BytesIO()
+        assert_raises(
+            ValueError,
+            np.savetxt,
+            c,
+            a,
+            fstring_fmt=["{:.1f}", "{:.2f}"]
+        )
+
+        # Test fstring_fmt with complex numbers
+        a = np.array([[1 + 2j, 3 + 4j], [5 + 6j, 7 + 8j]])
+        c = BytesIO()
+        assert_raises(
+            ValueError,
+            np.savetxt,
+            c,
+            a,
+            fstring_fmt=["{:.1f}+{:.1f}j", "{:.1f}+{:.1f}j"]
+        )
+
+        # Test fstring_fmt with binary format
+        a = np.array([[1, 2], [3, 4]])
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:b}")
+        assert c.getvalue().decode('utf-8').strip() == "1 10\n11 100"
+
+        # Test fstring_fmt with binary format and delimiter
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:b}", delimiter=",")
+        assert c.getvalue().decode('utf-8').strip() == "1,10\n11,100"
+
+        # Test fstring_fmt with binary format and headers/footers
+        c = BytesIO()
+        np.savetxt(c, a, fstring_fmt="{:b}", header="Binary Header",
+                   footer="Binary Footer")
+        assert c.getvalue().decode(
+            'utf-8').strip() == "# Binary Header\n1 10\n11 100\n# Binary Footer"
+
+        # Test fstring_fmt with newline
+        a = np.arange(0.0, 5.0, 1.0)
+        c = BytesIO()
+        np.savetxt(c, a, newline='End-\nStart-', fstring_fmt="{:.3f}")
+        assert c.getvalue().decode(
+            'utf-8') == "0.000End-\nStart-1.000End-\nStart-2.000End-\nStart-3.000End-\nStart-4.000End-\nStart-"
+
+
 class LoadTxtBase:
     def check_compressed(self, fopen, suffixes):
         # Test that we can load data from a compressed file
