@@ -4995,7 +4995,7 @@ cdef class Generator:
         for n in range(nsample):
             selection_made = False
             while not selection_made:
-                selection = np.random.choice(len(arr), p=p)
+                selection = self.choice(len(arr), p=p)
                 if not arr[selection]:
                     res.append(items[selection])
                     arr[selection] = True
