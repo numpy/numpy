@@ -1028,7 +1028,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     dtype = PyArray_DESCR(mps[0]);
 
-    int copy_existing_out = 0;
+    int out_newarr = 0;
     /* Set-up return array */
     if (out == NULL) {
         Py_INCREF(dtype);
@@ -1038,7 +1038,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                                                     multi->dimensions,
                                                     NULL, NULL, 0,
                                                     (PyObject *)ap);
-        copy_existing_out = 1;
+        out_newarr = 1;
     }
     else {
         if ((PyArray_NDIM(out) != multi->nd)
@@ -1054,7 +1054,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
 
         for (i = 0; i < n; i++) {
             if (arrays_overlap(out, mps[i])) {
-                copy_existing_out = 1;
+                out_newarr = 1;
             }
         }
 
@@ -1064,15 +1064,15 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
              * so the input array is not changed
              * before the error is called
              */
-            copy_existing_out = 1;
+            out_newarr = 1;
         }
 
         if (!PyArray_EquivTypes(dtype, PyArray_DESCR(out))) {
-            copy_existing_out = 1;
+            out_newarr = 1;
         }
 
         Py_INCREF(dtype);
-        if (copy_existing_out) {
+        if (out_newarr) {
             obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(out),
                                                         dtype,
                                                         multi->nd,
@@ -1160,7 +1160,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyDataMem_FREE(mps);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
-        if (copy_existing_out) {
+        if (out_newarr) {
             if (PyArray_CopyAnyInto(out, obj) < 0) {
                 return NULL;
             }
