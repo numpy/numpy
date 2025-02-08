@@ -278,6 +278,7 @@ python_sources = [
   '_configtool.py',
   '_distributor_init.py',
   '_globals.py',
+  '_globals.pyi',
   '_pytesttester.py',
   '_pytesttester.pyi',
   '_expired_attrs_2_0.py',
