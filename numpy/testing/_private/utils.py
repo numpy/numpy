@@ -2699,18 +2699,19 @@ def run_threaded(func, max_workers=8, pass_count=False,
             if pass_barrier:
                 barrier = threading.Barrier(max_workers)
                 args.append(barrier)
+            if pass_count:
+                all_args = [(func, i, *args) for i in range(max_workers)]
+            else:
+                all_args = [(func, *args) for i in range(max_workers)]
             try:
-                if pass_count:
-                    futures = [tpe.submit(func, i, *args) for i in
-                               range(max_workers)]
-                else:
-                    futures = [tpe.submit(func, *args) for _ in
-                               range(max_workers)]
-            except RuntimeError:
-                # python raises RuntimeError when it can't spawn new threads
-                if pass_barrier:
+                n_submitted = 0
+                futures = []
+                for arg in all_args:
+                    futures.append(tpe.submit(*arg))
+                    n_submitted += 1
+            finally:
+                if n_submitted < max_workers and pass_barrier:
                     barrier.abort()
-                raise
             for f in futures:
                 f.result()
 
