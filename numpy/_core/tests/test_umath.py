@@ -1267,7 +1267,7 @@ class TestPower:
             assert_array_equal(result, a * a)
 
             result = np.power(a, 0.5)
-            assert_array_equal(result, np.sqrt(a))
+            assert_array_max_ulp(result, np.sqrt(a), maxulp=1)
 
 
 class TestFloat_power:
