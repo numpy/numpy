@@ -282,6 +282,7 @@ python_sources = [
   '_pytesttester.py',
   '_pytesttester.pyi',
   '_expired_attrs_2_0.py',
+  '_expired_attrs_2_0.pyi',
   'conftest.py',
   'exceptions.py',
   'exceptions.pyi',
