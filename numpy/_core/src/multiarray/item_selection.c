@@ -1028,7 +1028,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     dtype = PyArray_DESCR(mps[0]);
 
-    int is_newarr = 0;
+    int copy_existing_out = 0;
     /* Set-up return array */
     if (out == NULL) {
         Py_INCREF(dtype);
@@ -1038,7 +1038,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                                                     multi->dimensions,
                                                     NULL, NULL, 0,
                                                     (PyObject *)ap);
-        is_newarr = 1;
+        copy_existing_out = 1;
     }
     else {
         if ((PyArray_NDIM(out) != multi->nd)
@@ -1050,9 +1050,11 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             goto fail;
         }
 
+        PyArray_FailUnlessWriteable(out, "output array");
+
         for (i = 0; i < n; i++) {
             if (arrays_overlap(out, mps[i])) {
-                is_newarr = 1;
+                copy_existing_out = 1;
             }
         }
 
@@ -1062,15 +1064,15 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
              * so the input array is not changed
              * before the error is called
              */
-            is_newarr = 1;
+            copy_existing_out = 1;
         }
 
         if (!PyArray_EquivTypes(dtype, PyArray_DESCR(out))) {
-            is_newarr = 1;
+            copy_existing_out = 1;
         }
 
         Py_INCREF(dtype);
-        if (is_newarr) {
+        if (copy_existing_out) {
             obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(out),
                                                         dtype,
                                                         multi->nd,
@@ -1079,11 +1081,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                                                         (PyObject *)out);
         }
         else {
-            int flags = NPY_ARRAY_CARRAY |
-                        NPY_ARRAY_WRITEBACKIFCOPY |
-                        NPY_ARRAY_FORCECAST;
-
-            obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
+            obj = (PyArrayObject *)PyArray_FromArray(out, dtype, 0);
         }
     }
 
@@ -1162,15 +1160,10 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyDataMem_FREE(mps);
     if (out != NULL && out != obj) {
         Py_INCREF(out);
-        int success;
-        if (is_newarr) {
-            success = PyArray_CopyAnyInto(out, obj);
-        }
-        else {
-            success = PyArray_ResolveWritebackIfCopy(obj);
-        }
-        if (success < 0) {
-            return NULL;
+        if (copy_existing_out) {
+            if (PyArray_CopyAnyInto(out, obj) < 0) {
+                return NULL;
+            }
         }
         Py_DECREF(obj);
         obj = out;
