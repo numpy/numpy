@@ -4987,6 +4987,146 @@ cdef class Generator:
         slices[axis] = idx
         return arr[tuple(slices)]
 
+    def _core_select(self, items, nsample: int, p):
+        if nsample > len(items):
+            raise ValueError("cannot have a sample size greater than size of items")
+        arr = np.zeros(len(items), dtype=bool)
+        res = []
+        for n in range(nsample):
+            selection_made = False
+            while not selection_made:
+                selection = np.random.choice(len(arr), p=p)
+                if not arr[selection]:
+                    res.append(items[selection])
+                    arr[selection] = True
+                    selection_made = True
+        if nsample == 1:
+            return np.int64(res[0])
+        return res
+
+    def select(self, items, *, nsample=None, p=None, size=None, axis=None, out=None):
+        """
+        select(items, *, nsample=None, p=None, size=None, axis=None, out=None)
+
+        Randomly select `nsample` elements from `items` without replacement,
+        optionally along the given `axis`.
+
+        This function performs random selection similar to `numpy.random.choice`, but
+        allows for selection along a specified axis. When `axis` is provided, selection
+        is performed independently for each slice along that axis.
+
+        Parameters
+        ----------
+        items : array_like
+            The input array from which elements will be selected. If `items` is a
+            nonnegative integer, it behaves as if `items = np.arange(items)`.
+        nsample : int, optional
+            The number of elements to select. Default is 1. Cannot be larger than
+            the size of `items` along the given `axis`.
+        p : array_like, optional
+            The probabilities associated with each element in `items`. Must be the
+            same shape as `items` along `axis`. If `None`, the selection is uniform.
+        size : int, optional
+            The number of independent selections to generate. If provided, multiple
+            selections of shape `(size, nsample, ...)` are returned.
+        axis : int, optional
+            The axis along which selection is performed. If `None` (default), the array
+            is flattened before selection.
+        out : ndarray, optional
+            If given, this is the destination of the selected array. If `out` is provided,
+            the selection is stored in `out`, and `out` is returned.
+
+        Returns
+        -------
+        ndarray
+            If `out` is None, a new array containing the selected elements is returned.
+            Otherwise, the result is stored in `out`, which is returned.
+
+        See Also
+        --------
+        numpy.random.choice : Similar function for random sampling without axis support.
+        numpy.random.permuted : Similar function for randomly permuting elements.
+
+        Notes
+        -----
+        - When `axis` is `None`, selection is performed on the flattened array.
+        - If `size` is provided, multiple independent selections are made.
+        - If `out` is provided, it must have the correct shape to store the result.
+
+        Examples
+        --------
+        Create an example array:
+
+        >>> import numpy as np
+        >>> arr = np.array([[10, 20, 30, 40, 50],
+        ...                 [60, 70, 80, 90, 100]])
+
+        Select 2 elements from the entire array (flattened):
+
+        >>> np.random.default_rng().select(arr, nsample=2)
+        array([20, 90])  # random
+
+        Select 2 elements from each column (axis=0):
+
+        >>> np.random.default_rng().select(arr, nsample=2, axis=0)
+        array([[10, 70, 30, 90, 50],  # random
+               [60, 20, 80, 40, 100]])
+
+        Select 2 elements from each row (axis=1):
+
+        >>> np.random.default_rng().select(arr, nsample=2, axis=1)
+        array([[20, 50],  # random
+               [70, 90]])
+
+        Generate 3 independent selections from each row:
+
+        >>> np.random.default_rng().select(arr, nsample=2, size=3, axis=1)
+        array([[[20, 50],  # random
+                [30, 40],
+                [10, 40]],
+               [[80, 60],
+                [100, 70],
+                [60, 80]]])
+
+        Use `out` to store the result in-place:
+
+        >>> out = np.empty((2, 5), dtype=int)
+        >>> np.random.default_rng().select(arr, nsample=2, axis=0, out=out)
+        >>> out
+        array([[10, 70, 30, 90, 50],  # random
+               [60, 20, 80, 40, 100]])
+
+        """
+        items = np.asarray(items)
+
+        if not nsample:
+            nsample = 1
+
+        if axis is None:
+            items = items.ravel()
+            if size:
+                return [self._core_select(items, nsample, p) for _ in range(size)]
+            return self._core_select(items, nsample, p)
+
+        items = np.moveaxis(items, axis, 0)
+
+        if size:
+            res = np.array([[self._core_select(subarray, nsample, p) for _ in range(size)] for subarray in items])
+        else:
+            res = np.array([self._core_select(subarray, nsample, p) for subarray in items])
+
+        res = np.moveaxis(res, 0, axis)
+
+        if out is not None:
+            if not isinstance(out, np.ndarray):
+                raise TypeError("out must be a NumPy array")
+            if out.shape != res.shape:
+                raise ValueError(f"out must have shape {res.shape}, but got {out.shape}")
+            out[:] = res
+            return out
+
+        return res
+
 
 @cython.embedsignature(True)
 def default_rng(seed=None):

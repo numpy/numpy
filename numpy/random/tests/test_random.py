@@ -1749,3 +1749,45 @@ class TestSingleEltArrayInput:
 
             out = func(self.argOne, self.argTwo[0], self.argThree)
             assert_equal(out.shape, self.tgtShape)
+
+    def test_select(self):
+        rng = np.random.default_rng()
+        arr = [10, 20, 30, 40, 50]
+        res = rng.select(arr, nsample=3)
+
+        assert len(arr) == 5
+        assert len(res) == 3
+        for val in res:
+            assert val in arr
+
+        res = rng.select(arr, nsample=3, size=8)
+        assert len(res) == 8
+        for val in res:
+            assert len(val) == 3
+
+        res = rng.select(arr, size=15)
+        assert len(res) == 15
+
+        res = rng.select(arr)
+        assert type(res) is np.int64
+
+        res = rng.select(arr, nsample=3, p=[0.1, 0.1, 0.1, 0.0, 0.7], size=8)
+        assert len(res) == 8
+        for val in res:
+            assert len(val) == 3
+            assert np.any(val != 40)
+
+        arr = [
+            [10, 20, 30, 40, 50],
+            [60, 70, 80, 90, 100]
+        ]
+
+        res = rng.select(arr, nsample=2, axis=0)
+        assert len(res) == 2
+        for val in res:
+            assert len(val) == 2
+
+        res = rng.select(arr, nsample=2, axis=1)
+        assert len(res) == 2
+        for val in res:
+            assert len(val) == 5
