@@ -5,7 +5,6 @@ import mmap
 import ctypes as ct
 import array as _array
 import datetime as dt
-import enum
 from abc import abstractmethod
 from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
 from decimal import Decimal
@@ -442,6 +441,8 @@ from numpy._core.shape_base import (
     unstack,
 )
 
+from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
+
 from numpy.lib import (
     scimath as emath,
 )
@@ -504,6 +505,8 @@ from numpy.lib._function_base_impl import (
     interp,
     quantile,
 )
+
+from numpy._globals import _CopyMode
 
 from numpy.lib._histograms_impl import (
     histogram_bin_edges,
@@ -1184,7 +1187,6 @@ newaxis: Final[None] = None
 # not in __all__
 __NUMPY_SETUP__: Final[L[False]] = False
 __numpy_submodules__: Final[set[LiteralString]] = ...
-__expired_attributes__: Final[dict[LiteralString, LiteralString]]
 __former_attrs__: Final[_FormerAttrsDict] = ...
 __future_scalars__: Final[set[L["bytes", "str", "object"]]] = ...
 __array_api_version__: Final[L["2023.12"]] = "2023.12"
@@ -4911,11 +4913,6 @@ bitwise_invert = invert
 bitwise_right_shift = right_shift
 permute_dims = transpose
 pow = power
-
-class _CopyMode(enum.Enum):
-    ALWAYS: L[True]
-    IF_NEEDED: L[False]
-    NEVER: L[2]
 
 class errstate:
     def __init__(
