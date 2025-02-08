@@ -442,6 +442,8 @@ from numpy._core.shape_base import (
     unstack,
 )
 
+from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
+
 from numpy.lib import (
     scimath as emath,
 )
@@ -1181,7 +1183,6 @@ newaxis: Final[None] = None
 # not in __all__
 __NUMPY_SETUP__: Final[L[False]] = False
 __numpy_submodules__: Final[set[LiteralString]] = ...
-__expired_attributes__: Final[dict[LiteralString, LiteralString]]
 __former_attrs__: Final[_FormerAttrsDict] = ...
 __future_scalars__: Final[set[L["bytes", "str", "object"]]] = ...
 __array_api_version__: Final[L["2023.12"]] = "2023.12"
