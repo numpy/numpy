@@ -4987,12 +4987,17 @@ cdef class Generator:
         slices[axis] = idx
         return arr[tuple(slices)]
 
-    def _core_select(self, items, nsample: int, p):
-        if nsample > len(items):
-            raise ValueError("cannot have a sample size greater than size of items")
+    def _core_select(self, items, nsample, p):
+        if not nsample:
+            num_iterations = 1
+        else:
+            num_iterations = nsample
+            if nsample > len(items):
+                raise ValueError("error, cannot have a sample size greater than size of items")
+
         arr = np.zeros(len(items), dtype=bool)
         res = []
-        for n in range(nsample):
+        for n in range(num_iterations):
             selection_made = False
             while not selection_made:
                 selection = self.choice(len(arr), p=p)
@@ -5000,7 +5005,7 @@ cdef class Generator:
                     res.append(items[selection])
                     arr[selection] = True
                     selection_made = True
-        if nsample == 1:
+        if not nsample:
             return np.int64(res[0])
         return res
 
@@ -5099,16 +5104,14 @@ cdef class Generator:
         """
         items = np.asarray(items)
 
-        if not nsample:
-            nsample = 1
-
         if axis is None:
             items = items.ravel()
             if size:
                 return [self._core_select(items, nsample, p) for _ in range(size)]
             return self._core_select(items, nsample, p)
+        else:
+            items = np.moveaxis(items, axis, 0)
 
-        items = np.moveaxis(items, axis, 0)
 
         if size:
             res = np.array([[self._core_select(subarray, nsample, p) for _ in range(size)] for subarray in items])
