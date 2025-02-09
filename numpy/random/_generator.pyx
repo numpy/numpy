@@ -4988,7 +4988,7 @@ cdef class Generator:
         return arr[tuple(slices)]
 
     def _core_select(self, items, nsample, p):
-        if not nsample:
+        if nsample is None:
             num_iterations = 1
         else:
             num_iterations = nsample
@@ -5005,9 +5005,9 @@ cdef class Generator:
                     res.append(items[selection])
                     arr[selection] = True
                     selection_made = True
-        if not nsample:
+        if nsample is None:
             return np.int64(res[0])
-        return res
+        return np.array(res, dtype=np.int64)
 
     def select(self, items, *, nsample=None, p=None, size=None, axis=None, out=None):
         """

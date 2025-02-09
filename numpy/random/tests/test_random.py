@@ -4,10 +4,10 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-        assert_, assert_raises, assert_equal, assert_warns,
-        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings, IS_WASM
-        )
+    assert_, assert_raises, assert_equal, assert_warns,
+    assert_no_warnings, assert_array_equal, assert_array_almost_equal,
+    suppress_warnings, IS_WASM
+)
 from numpy import random
 import sys
 
@@ -154,7 +154,6 @@ class TestSetState:
 
 
 class TestRandint:
-
     rfunc = np.random.randint
 
     # valid integer/boolean types
@@ -207,11 +206,11 @@ class TestRandint:
 
         for dt in self.itype[1:]:
             for ubnd in [4, 8, 16]:
-                vals = self.rfunc(2, ubnd, size=2**16, dtype=dt)
+                vals = self.rfunc(2, ubnd, size=2 ** 16, dtype=dt)
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
 
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
+        vals = self.rfunc(0, 2, size=2 ** 16, dtype=np.bool)
 
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
@@ -221,15 +220,24 @@ class TestRandint:
         # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool':   '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',  # noqa: E501
-               'int16':  '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',  # noqa: E501
-               'int32':  'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',  # noqa: E501
-               'int64':  '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',  # noqa: E501
-               'int8':   '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',  # noqa: E501
-               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',  # noqa: E501
-               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',  # noqa: E501
-               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',  # noqa: E501
-               'uint8':  '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}  # noqa: E501
+        tgt = {
+            'bool': '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',
+            # noqa: E501
+            'int16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+            # noqa: E501
+            'int32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+            # noqa: E501
+            'int64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+            # noqa: E501
+            'int8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',
+            # noqa: E501
+            'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
+            # noqa: E501
+            'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
+            # noqa: E501
+            'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
+            # noqa: E501
+            'uint8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}  # noqa: E501
 
         for dt in self.itype[1:]:
             np.random.seed(1234)
@@ -311,8 +319,8 @@ class TestRandomDist:
         np.random.seed(self.seed)
         actual = np.random.randn(3, 2)
         desired = np.array([[1.34016345771863121, 1.73759122771936081],
-                           [1.498988344300628, -0.2286433324536169],
-                           [2.031033998682787, 2.17032494605655257]])
+                            [1.498988344300628, -0.2286433324536169],
+                            [2.031033998682787, 2.17032494605655257]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_randint(self):
@@ -493,7 +501,7 @@ class TestRandomDist:
                      # gh-11442
                      lambda x: (np.asarray([(i, i) for i in x],
                                            [("a", int), ("b", int)])
-                                .view(np.recarray)),
+                         .view(np.recarray)),
                      # gh-4270
                      lambda x: np.asarray([(i, i) for i in x],
                                           [("a", object), ("b", np.int32)])]:
@@ -519,17 +527,19 @@ class TestRandomDist:
                 sorted(b.data[~b.mask]), sorted(b_orig.data[~b_orig.mask]))
 
     @pytest.mark.parametrize("random",
-            [np.random, np.random.RandomState(), np.random.default_rng()])
+                             [np.random, np.random.RandomState(),
+                              np.random.default_rng()])
     def test_shuffle_untyped_warning(self, random):
         # Create a dict works like a sequence but isn't one
         values = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6}
         with pytest.warns(UserWarning,
-                match="you are shuffling a 'dict' object") as rec:
+                          match="you are shuffling a 'dict' object") as rec:
             random.shuffle(values)
         assert "test_random" in rec[0].filename
 
     @pytest.mark.parametrize("random",
-        [np.random, np.random.RandomState(), np.random.default_rng()])
+                             [np.random, np.random.RandomState(),
+                              np.random.default_rng()])
     @pytest.mark.parametrize("use_array_like", [True, False])
     def test_shuffle_no_object_unpacking(self, random, use_array_like):
         class MyArr(np.ndarray):
@@ -549,7 +559,7 @@ class TestRandomDist:
         if use_array_like and not isinstance(random, np.random.Generator):
             # The old API gives incorrect results, but warns about it.
             with pytest.warns(UserWarning,
-                    match="Shuffling a one dimensional array.*"):
+                              match="Shuffling a one dimensional array.*"):
                 random.shuffle(arr)
         else:
             random.shuffle(arr)
@@ -580,9 +590,9 @@ class TestRandomDist:
         np.random.seed(self.seed)
         actual = np.random.beta(.1, .9, size=(3, 2))
         desired = np.array(
-                [[1.45341850513746058e-02, 5.31297615662868145e-04],
-                 [1.85366619058432324e-06, 4.19214516800110563e-03],
-                 [1.58405155108498093e-04, 1.26252891949397652e-04]])
+            [[1.45341850513746058e-02, 5.31297615662868145e-04],
+             [1.85366619058432324e-06, 4.19214516800110563e-03],
+             [1.58405155108498093e-04, 1.26252891949397652e-04]])
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_binomial(self):
@@ -822,9 +832,9 @@ class TestRandomDist:
         assert_array_almost_equal(actual, desired, decimal=14)
 
         actual = np.random.noncentral_chisquare(df=.5, nonc=.2, size=(3, 2))
-        desired = np.array([[1.47145377828516666,  0.15052899268012659],
-                            [0.00943803056963588,  1.02647251615666169],
-                            [0.332334982684171,  0.15451287602753125]])
+        desired = np.array([[1.47145377828516666, 0.15052899268012659],
+                            [0.00943803056963588, 1.02647251615666169],
+                            [0.332334982684171, 0.15451287602753125]])
         assert_array_almost_equal(actual, desired, decimal=14)
 
         np.random.seed(self.seed)
@@ -859,9 +869,9 @@ class TestRandomDist:
         np.random.seed(self.seed)
         actual = np.random.pareto(a=.123456789, size=(3, 2))
         desired = np.array(
-                [[2.46852460439034849e+03, 1.41286880810518346e+03],
-                 [5.28287797029485181e+07, 6.57720981047328785e+07],
-                 [1.40840323350391515e+02, 1.98390255135251704e+05]])
+            [[2.46852460439034849e+03, 1.41286880810518346e+03],
+             [5.28287797029485181e+07, 6.57720981047328785e+07],
+             [1.40840323350391515e+02, 1.98390255135251704e+05]])
         # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
         # matrix differs by 24 nulps. Discussion:
         #   https://mail.python.org/pipermail/numpy-discussion/2012-September/063801.html
@@ -973,8 +983,8 @@ class TestRandomDist:
 
         func = np.random.uniform
         assert_raises(OverflowError, func, -np.inf, 0)
-        assert_raises(OverflowError, func,  0,      np.inf)
-        assert_raises(OverflowError, func,  fmin,   fmax)
+        assert_raises(OverflowError, func, 0, np.inf)
+        assert_raises(OverflowError, func, fmin, fmax)
         assert_raises(OverflowError, func, [-np.inf], [0])
         assert_raises(OverflowError, func, [0], [np.inf])
 
@@ -1018,7 +1028,7 @@ class TestRandomDist:
     def test_vonmises_small(self):
         # check infinite loop, gh-4720
         np.random.seed(self.seed)
-        r = np.random.vonmises(mu=0., kappa=1.1e-8, size=10**6)
+        r = np.random.vonmises(mu=0., kappa=1.1e-8, size=10 ** 6)
         np.testing.assert_(np.isfinite(r).all())
 
     def test_wald(self):
@@ -1652,16 +1662,19 @@ class TestThread:
     def test_normal(self):
         def gen_random(state, out):
             out[...] = state.normal(size=10000)
+
         self.check_function(gen_random, sz=(10000,))
 
     def test_exp(self):
         def gen_random(state, out):
             out[...] = state.exponential(scale=np.ones((100, 1000)))
+
         self.check_function(gen_random, sz=(100, 1000))
 
     def test_multinomial(self):
         def gen_random(state, out):
             out[...] = state.multinomial(10, [1 / 6.] * 6, size=10000)
+
         self.check_function(gen_random, sz=(10000, 6))
 
 
@@ -1759,6 +1772,13 @@ class TestSingleEltArrayInput:
         assert len(res) == 3
         for val in res:
             assert val in arr
+
+        res = rng.select(arr, nsample=0)
+        assert len(res) == 0
+
+        res = rng.select(arr, nsample=0, size=5)
+        assert len(res) == 5
+        assert np.shape(res) == (5, 0)
 
         res = rng.select(arr, nsample=3, size=8)
         assert len(res) == 8
