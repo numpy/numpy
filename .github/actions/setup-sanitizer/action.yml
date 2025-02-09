@@ -1,0 +1,43 @@
+name: 'Setup Sanitizer Environment'
+description: 'Sets up common environment for sanitizer tests'
+inputs:
+  sanitizer:
+    description: 'Type of sanitizer (asan/tsan)'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Setup ccache
+      shell: bash
+      run: mkdir -p .ccache
+
+    # Use shared cache for both sanitizers since environment is identical
+    - uses: actions/cache@v4
+      with:
+        path: |
+          .ccache
+          ~/.cache/pip
+          ~/python-build
+        key: sanitizer-env-${{ github.sha }}
+        restore-keys: |
+          sanitizer-env-
+
+    # Install system dependencies only if not cached
+    - name: Install system dependencies
+      if: steps.cache-env.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          clang-15 llvm-15 libclang-15-dev \
+          gfortran pkg-config ccache \
+          make libssl-dev zlib1g-dev
+
+    - name: Setup environment
+      shell: bash
+      run: |
+        sudo /usr/sbin/update-ccache-symlinks
+        echo "PATH=/usr/lib/ccache:$PATH" >> $GITHUB_ENV
+        echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
+        echo "CC=clang-15" >> $GITHUB_ENV
+        echo "CXX=clang++-15" >> $GITHUB_ENV
