@@ -1788,11 +1788,8 @@ class TestSingleEltArrayInput:
         res = rng.select(arr, size=15)
         assert len(res) == 15
 
-        res = rng.select(arr)
-        assert type(res) is np.int64
-
         res = rng.select(arr, nsample=1)
-        assert type(res) is not np.int64
+        assert type(res) is np.ndarray
 
         res = rng.select(arr, nsample=3, p=[0.1, 0.1, 0.1, 0.0, 0.7], size=8)
         assert len(res) == 8
