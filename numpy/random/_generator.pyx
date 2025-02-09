@@ -4997,6 +4997,7 @@ cdef class Generator:
 
         arr = np.zeros(len(items), dtype=bool)
         res = []
+        dtype = items.dtype
         for n in range(num_iterations):
             selection_made = False
             while not selection_made:
@@ -5006,8 +5007,8 @@ cdef class Generator:
                     arr[selection] = True
                     selection_made = True
         if nsample is None:
-            return np.int64(res[0])
-        return np.array(res, dtype=np.int64)
+            return np.array(res, dtype=dtype)[0]
+        return np.array(res, dtype=dtype)
 
     def select(self, items, *, nsample=None, p=None, size=None, axis=None, out=None):
         """
