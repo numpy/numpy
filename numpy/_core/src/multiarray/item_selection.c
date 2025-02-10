@@ -1072,8 +1072,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             copy_existing_out = 1;
         }
 
-        Py_INCREF(dtype);
         if (copy_existing_out) {
+            Py_INCREF(dtype);
             obj = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                         dtype,
                                                         multi->nd,
