@@ -15,7 +15,7 @@ class TestTake:
         modes = ['raise', 'wrap', 'clip']
         indices = [-1, 4]
         index_arrays = [np.empty(0, dtype=np.intp),
-                        np.empty(tuple(), dtype=np.intp),
+                        np.empty((), dtype=np.intp),
                         np.empty((1, 1), dtype=np.intp)]
         real_indices = {'raise': {-1: 1, 4: IndexError},
                         'wrap': {-1: 1, 4: 0},

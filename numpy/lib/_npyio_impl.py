@@ -16,6 +16,7 @@ import pickle
 import numpy as np
 from . import format
 from ._datasource import DataSource
+from ._format_impl import _MAX_HEADER_SIZE
 from numpy._core import overrides
 from numpy._core.multiarray import packbits, unpackbits
 from numpy._core._multiarray_umath import _load_from_filelike
@@ -182,7 +183,7 @@ class NpzFile(Mapping):
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None, *,
-                 max_header_size=format._MAX_HEADER_SIZE):
+                 max_header_size=_MAX_HEADER_SIZE):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
         _zip = zipfile_factory(fid)
@@ -307,7 +308,7 @@ class NpzFile(Mapping):
 
 @set_module('numpy')
 def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
-         encoding='ASCII', *, max_header_size=format._MAX_HEADER_SIZE):
+         encoding='ASCII', *, max_header_size=_MAX_HEADER_SIZE):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
 
@@ -441,7 +442,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         # result can similarly silently corrupt numerical data.
         raise ValueError("encoding must be 'ASCII', 'latin1', or 'bytes'")
 
-    pickle_kwargs = dict(encoding=encoding, fix_imports=fix_imports)
+    pickle_kwargs = {'encoding': encoding, 'fix_imports': fix_imports}
 
     with contextlib.ExitStack() as stack:
         if hasattr(file, 'read'):
@@ -579,7 +580,7 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
     with file_ctx as fid:
         arr = np.asanyarray(arr)
         format.write_array(fid, arr, allow_pickle=allow_pickle,
-                           pickle_kwargs=dict(fix_imports=fix_imports))
+                           pickle_kwargs={'fix_imports': fix_imports})
 
 
 def _savez_dispatcher(file, *args, allow_pickle=True, **kwds):
@@ -1192,7 +1193,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         that ensures you receive byte arrays as results if possible and passes
         'latin1' encoded strings to converters. Override this value to receive
         unicode arrays and pass strings as input to converters.  If set to None
-        the system default is used. The default value is 'bytes'.
+        the system default is used. The default value is None.
 
         .. versionchanged:: 2.0
             Before NumPy 2, the default was ``'bytes'`` for Python 2
@@ -2284,9 +2285,9 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             # Store the values
             append_to_rows(tuple(values))
             if usemask:
-                append_to_masks(tuple([v.strip() in m
+                append_to_masks(tuple(v.strip() in m
                                        for (v, m) in zip(values,
-                                                         missing_values)]))
+                                                         missing_values)))
             if len(rows) == max_rows:
                 break
 

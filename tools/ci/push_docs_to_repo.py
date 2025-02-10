@@ -33,7 +33,8 @@ if not os.path.exists(args.dir):
     print('Content directory does not exist')
     sys.exit(1)
 
-count = len([name for name in os.listdir(args.dir) if os.path.isfile(os.path.join(args.dir, name))])
+count = len([name for name in os.listdir(args.dir)
+             if os.path.isfile(os.path.join(args.dir, name))])
 
 if count < args.count:
     print(f"Expected {args.count} top-directory files to upload, got {count}")

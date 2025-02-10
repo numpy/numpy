@@ -2514,13 +2514,15 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('dtype',
 
     Examples
     --------
+    >>> import numpy as np
+    >>> x = np.arange(4).reshape((2, 2))
     >>> x
     array([[0, 1],
            [2, 3]])
     >>> x.dtype
-    dtype('int32')
-    >>> type(x.dtype)
-    <type 'numpy.dtype'>
+    dtype('int64')   # may vary (OS, bitness)
+    >>> isinstance(x.dtype, np.dtype)
+    True
 
     """))
 
@@ -2769,7 +2771,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('shape',
     >>> y.shape = (3, 6)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-    ValueError: total size of new array must be unchanged
+    ValueError: cannot reshape array of size 24 into shape (3,6)
     >>> np.zeros((4,2))[::2].shape = (-1,)
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
@@ -2852,31 +2854,32 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('strides',
     Examples
     --------
     >>> import numpy as np
-    >>> y = np.reshape(np.arange(2*3*4), (2,3,4))
+    >>> y = np.reshape(np.arange(2 * 3 * 4, dtype=np.int32), (2, 3, 4))
     >>> y
     array([[[ 0,  1,  2,  3],
             [ 4,  5,  6,  7],
             [ 8,  9, 10, 11]],
            [[12, 13, 14, 15],
             [16, 17, 18, 19],
-            [20, 21, 22, 23]]])
+            [20, 21, 22, 23]]], dtype=np.int32)
     >>> y.strides
     (48, 16, 4)
-    >>> y[1,1,1]
-    17
-    >>> offset=sum(y.strides * np.array((1,1,1)))
-    >>> offset/y.itemsize
-    17
+    >>> y[1, 1, 1]
+    np.int32(17)
+    >>> offset = sum(y.strides * np.array((1, 1, 1)))
+    >>> offset // y.itemsize
+    np.int64(17)
 
-    >>> x = np.reshape(np.arange(5*6*7*8), (5,6,7,8)).transpose(2,3,1,0)
+    >>> x = np.reshape(np.arange(5*6*7*8, dtype=np.int32), (5, 6, 7, 8))
+    >>> x = x.transpose(2, 3, 1, 0)
     >>> x.strides
     (32, 4, 224, 1344)
-    >>> i = np.array([3,5,2,2])
+    >>> i = np.array([3, 5, 2, 2], dtype=np.int32)
     >>> offset = sum(i * x.strides)
-    >>> x[3,5,2,2]
-    813
-    >>> offset / x.itemsize
-    813
+    >>> x[3, 5, 2, 2]
+    np.int32(813)
+    >>> offset // x.itemsize
+    np.int64(813)
 
     """))
 
@@ -4442,18 +4445,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tobytes', """
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('tostring', r"""
-    a.tostring(order='C')
-
-    A compatibility alias for `~ndarray.tobytes`, with exactly the same
-    behavior.
-
-    Despite its name, it returns :class:`bytes` not :class:`str`\ s.
-
-    .. deprecated:: 1.19.0
-    """))
-
-
 add_newdoc('numpy._core.multiarray', 'ndarray', ('trace',
     """
     a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)
@@ -4962,8 +4953,8 @@ add_newdoc('numpy._core', 'ufunc', ('identity',
     0
     >>> np.multiply.identity
     1
-    >>> np.power.identity
-    1
+    >>> print(np.power.identity)
+    None
     >>> print(np.exp.identity)
     None
     """))
@@ -5051,15 +5042,15 @@ add_newdoc('numpy._core', 'ufunc', ('ntypes',
     --------
     >>> import numpy as np
     >>> np.add.ntypes
-    18
+    22
     >>> np.multiply.ntypes
-    18
+    23
     >>> np.power.ntypes
-    17
+    21
     >>> np.exp.ntypes
-    7
+    10
     >>> np.remainder.ntypes
-    14
+    16
 
     """))
 
@@ -5078,26 +5069,16 @@ add_newdoc('numpy._core', 'ufunc', ('types',
     --------
     >>> import numpy as np
     >>> np.add.types
-    ['??->?', 'bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l',
-    'LL->L', 'qq->q', 'QQ->Q', 'ff->f', 'dd->d', 'gg->g', 'FF->F', 'DD->D',
-    'GG->G', 'OO->O']
-
-    >>> np.multiply.types
-    ['??->?', 'bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l',
-    'LL->L', 'qq->q', 'QQ->Q', 'ff->f', 'dd->d', 'gg->g', 'FF->F', 'DD->D',
-    'GG->G', 'OO->O']
+    ['??->?', 'bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', ...
 
     >>> np.power.types
-    ['bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l', 'LL->L',
-    'qq->q', 'QQ->Q', 'ff->f', 'dd->d', 'gg->g', 'FF->F', 'DD->D', 'GG->G',
-    'OO->O']
+    ['bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l', ...
 
     >>> np.exp.types
-    ['f->f', 'd->d', 'g->g', 'F->F', 'D->D', 'G->G', 'O->O']
+    ['e->e', 'f->f', 'd->d', 'f->f', 'd->d', 'g->g', 'F->F', 'D->D', 'G->G', 'O->O']
 
     >>> np.remainder.types
-    ['bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l', 'LL->L',
-    'qq->q', 'QQ->Q', 'ff->f', 'dd->d', 'gg->g', 'OO->O']
+    ['bb->b', 'BB->B', 'hh->h', 'HH->H', 'ii->i', 'II->I', 'll->l', ...
 
     """))
 
@@ -5717,7 +5698,6 @@ add_newdoc('numpy._core', 'ufunc', ('_get_strided_loop',
     """))
 
 
-
 ##############################################################################
 #
 # Documentation for dtype attributes and methods
@@ -5952,7 +5932,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('fields',
     >>> import numpy as np
     >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
     >>> print(dt.fields)
-    {'grades': (dtype(('float64',(2,))), 16), 'name': (dtype('|S16'), 0)}
+    {'name': (dtype('|S16'), 0), 'grades': (dtype(('float64',(2,))), 16)}
 
     """))
 
@@ -6066,7 +6046,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('itemsize',
 
 add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     """
-    A character code (one of 'biufcmMOSUV') identifying the general kind of data.
+    A character code (one of 'biufcmMOSTUV') identifying the general kind of data.
 
     =  ======================
     b  boolean
@@ -6078,6 +6058,7 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('kind',
     M  datetime
     O  object
     S  (byte-)string
+    T  string (StringDType)
     U  Unicode
     V  void
     =  ======================
@@ -6129,13 +6110,12 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('metadata',
     >>> (arr + arr).dtype.metadata
     mappingproxy({'key': 'value'})
 
-    But if the arrays have different dtype metadata, the metadata may be
-    dropped:
+    If the arrays have different dtype metadata, the first one wins:
 
     >>> dt2 = np.dtype(float, metadata={"key2": "value2"})
     >>> arr2 = np.array([3, 2, 1], dtype=dt2)
-    >>> (arr + arr2).dtype.metadata is None
-    True  # The metadata field is cleared so None is returned
+    >>> print((arr + arr2).dtype.metadata)
+    {'key': 'value'}
     """))
 
 add_newdoc('numpy._core.multiarray', 'dtype', ('name',
@@ -6255,11 +6235,11 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('subdtype',
     Examples
     --------
     >>> import numpy as np
-    >>> x = numpy.dtype('8f')
+    >>> x = np.dtype('8f')
     >>> x.subdtype
     (dtype('float32'), (8,))
 
-    >>> x =  numpy.dtype('i2')
+    >>> x =  np.dtype('i2')
     >>> x.subdtype
     >>>
 
@@ -6277,11 +6257,11 @@ add_newdoc('numpy._core.multiarray', 'dtype', ('base',
     Examples
     --------
     >>> import numpy as np
-    >>> x = numpy.dtype('8f')
+    >>> x = np.dtype('8f')
     >>> x.base
     dtype('float32')
 
-    >>> x =  numpy.dtype('i2')
+    >>> x =  np.dtype('i2')
     >>> x.base
     dtype('int16')
 

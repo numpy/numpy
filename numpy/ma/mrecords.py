@@ -117,7 +117,7 @@ class MaskedRecords(ma.MaskedArray):
                 elif nm == nd:
                     mask = np.reshape(mask, self.shape)
                 else:
-                    msg = "Mask and data not compatible: data size is %i, " + \
+                    msg = "Mask and data not compatible: data size is %i, "\
                           "mask size is %i."
                     raise ma.MAError(msg % (nd, nm))
             if not keep_mask:
@@ -343,7 +343,7 @@ class MaskedRecords(ma.MaskedArray):
 
         """
         _names = self.dtype.names
-        fmt = "%%%is : %%s" % (max([len(n) for n in _names]) + 4,)
+        fmt = "%%%is : %%s" % (max(len(n) for n in _names) + 4,)
         reprstr = [fmt % (f, getattr(self, f)) for f in self.dtype.names]
         reprstr.insert(0, 'masked_records(')
         reprstr.extend([fmt % ('    fill_value', self.fill_value),
@@ -483,6 +483,7 @@ def _mrreconstruct(subtype, baseclass, baseshape, basetype,):
     _data = np.ndarray.__new__(baseclass, baseshape, basetype).view(subtype)
     _mask = np.ndarray.__new__(np.ndarray, baseshape, 'b1')
     return subtype.__new__(subtype, _data, mask=_mask, dtype=basetype,)
+
 
 mrecarray = MaskedRecords
 

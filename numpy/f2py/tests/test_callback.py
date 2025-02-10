@@ -15,7 +15,7 @@ from . import util
 class TestF77Callback(util.F2PyTest):
     sources = [util.getpath("tests", "src", "callback", "foo.f")]
 
-    @pytest.mark.parametrize("name", "t,t2".split(","))
+    @pytest.mark.parametrize("name", ["t", "t2"])
     @pytest.mark.slow
     def test_all(self, name):
         self.check_function(name)
@@ -241,7 +241,7 @@ class TestGH25211(util.F2PyTest):
 
     def test_gh25211(self):
         def bar(x):
-            return x*x
+            return x * x
 
         res = self.module.foo(bar)
         assert res == 110

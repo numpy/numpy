@@ -94,6 +94,15 @@ assert_type(np.diff("bob", n=0), str)
 assert_type(np.diff(AR_f8, axis=0), npt.NDArray[Any])
 assert_type(np.diff(AR_LIKE_f8, prepend=1.5), npt.NDArray[Any])
 
+assert_type(np.interp(1, [1], AR_f8), np.float64)
+assert_type(np.interp(1, [1], [1]), np.float64)
+assert_type(np.interp(1, [1], AR_c16), np.complex128)
+assert_type(np.interp(1, [1], [1j]), np.complex128)  # pyright correctly infers `complex128 | float64`
+assert_type(np.interp([1], [1], AR_f8), npt.NDArray[np.float64])
+assert_type(np.interp([1], [1], [1]), npt.NDArray[np.float64])
+assert_type(np.interp([1], [1], AR_c16), npt.NDArray[np.complex128])
+assert_type(np.interp([1], [1], [1j]), npt.NDArray[np.complex128])  # pyright correctly infers `NDArray[complex128 | float64]`
+
 assert_type(np.angle(f8), np.floating[Any])
 assert_type(np.angle(AR_f8), npt.NDArray[np.floating[Any]])
 assert_type(np.angle(AR_c16, deg=True), npt.NDArray[np.floating[Any]])

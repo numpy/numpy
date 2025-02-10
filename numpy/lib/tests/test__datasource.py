@@ -19,6 +19,7 @@ def urlopen_stub(url, data=None):
     else:
         raise URLError('Name or service not known')
 
+
 # setup and teardown
 old_urlopen = None
 
@@ -32,6 +33,7 @@ def setup_module():
 
 def teardown_module():
     urllib_request.urlopen = old_urlopen
+
 
 # A valid website for more robust testing
 http_path = 'http://www.google.com/'
@@ -63,11 +65,11 @@ def invalid_textfile(filedir):
 
 
 def valid_httpurl():
-    return http_path+http_file
+    return http_path + http_file
 
 
 def invalid_httpurl():
-    return http_fakepath+http_fakefile
+    return http_fakepath + http_fakefile
 
 
 def valid_baseurl():
@@ -234,7 +236,7 @@ class TestDataSourceAbspath:
         assert_(tmp_path(tmpfile).startswith(self.tmpdir))
         assert_(tmp_path(tmpfilename).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(http_path + fn).startswith(self.tmpdir))
             assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):
@@ -270,7 +272,7 @@ class TestRepositoryAbspath:
         tmp_path = lambda x: os.path.abspath(self.repos.abspath(x))
         assert_(tmp_path(valid_httpfile()).startswith(self.tmpdir))
         for fn in malicious_files:
-            assert_(tmp_path(http_path+fn).startswith(self.tmpdir))
+            assert_(tmp_path(http_path + fn).startswith(self.tmpdir))
             assert_(tmp_path(fn).startswith(self.tmpdir))
 
     def test_windows_os_sep(self):

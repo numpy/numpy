@@ -20,7 +20,7 @@ from ._multiarray_umath import (
     _replace, _strip_whitespace, _lstrip_whitespace, _rstrip_whitespace,
     _strip_chars, _lstrip_chars, _rstrip_chars, _expandtabs_length,
     _expandtabs, _center, _ljust, _rjust, _zfill, _partition, _partition_index,
-    _rpartition, _rpartition_index)
+    _rpartition, _rpartition_index, _slice)
 
 __all__ = [
     'absolute', 'add',
@@ -33,8 +33,8 @@ __all__ = [
     'heaviside', 'hypot', 'invert', 'isfinite', 'isinf', 'isnan', 'isnat',
     'lcm', 'ldexp', 'left_shift', 'less', 'less_equal', 'log', 'log10',
     'log1p', 'log2', 'logaddexp', 'logaddexp2', 'logical_and', 'logical_not',
-    'logical_or', 'logical_xor', 'maximum', 'minimum', 'mod', 'modf',
+    'logical_or', 'logical_xor', 'matvec', 'maximum', 'minimum', 'mod', 'modf',
     'multiply', 'negative', 'nextafter', 'not_equal', 'pi', 'positive',
     'power', 'rad2deg', 'radians', 'reciprocal', 'remainder', 'right_shift',
     'rint', 'sign', 'signbit', 'sin', 'sinh', 'spacing', 'sqrt', 'square',
-    'subtract', 'tan', 'tanh', 'true_divide', 'trunc']
+    'subtract', 'tan', 'tanh', 'true_divide', 'trunc', 'vecdot', 'vecmat']

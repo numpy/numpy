@@ -2,7 +2,7 @@ set -xe
 
 git config --global --add safe.directory /numpy
 cd /numpy
-/opt/python/cp310-cp310/bin/python -mvenv venv
+/opt/python/cp311-cp311/bin/python -mvenv venv
 source venv/bin/activate
 pip install -r requirements/ci32_requirements.txt
 python3 -m pip install -r requirements/test_requirements.txt

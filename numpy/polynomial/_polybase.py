@@ -199,12 +199,10 @@ class ABCPolyBase(abc.ABC):
             True if the coefficients are the same, False otherwise.
 
         """
-        if len(self.coef) != len(other.coef):
-            return False
-        elif not np.all(self.coef == other.coef):
-            return False
-        else:
-            return True
+        return (
+			len(self.coef) == len(other.coef)
+			and np.all(self.coef == other.coef)
+		)
 
     def has_samedomain(self, other):
         """Check if domains match.
@@ -493,8 +491,6 @@ class ABCPolyBase(abc.ABC):
 
         return rf"${self.symbol} \mapsto {body}$"
 
-
-
     # Pickle and copy
 
     def __getstate__(self):
@@ -687,6 +683,7 @@ class ABCPolyBase(abc.ABC):
 
         Create a polynomial object for ``1 + 7*x + 4*x**2``:
 
+        >>> np.polynomial.set_default_printstyle("unicode")
         >>> poly = np.polynomial.Polynomial([1, 7, 4])
         >>> print(poly)
         1.0 + 7.0·x + 4.0·x²
@@ -877,8 +874,8 @@ class ABCPolyBase(abc.ABC):
         if lbnd is None:
             lbnd = 0
         else:
-            lbnd = off + scl*lbnd
-        coef = self._int(self.coef, m, k, lbnd, 1./scl)
+            lbnd = off + scl * lbnd
+        coef = self._int(self.coef, m, k, lbnd, 1. / scl)
         return self.__class__(coef, self.domain, self.window, self.symbol)
 
     def deriv(self, m=1):
@@ -1078,7 +1075,7 @@ class ABCPolyBase(abc.ABC):
 
         deg = len(roots)
         off, scl = pu.mapparms(domain, window)
-        rnew = off + scl*roots
+        rnew = off + scl * roots
         coef = cls._fromroots(rnew) / scl**deg
         return cls(coef, domain=domain, window=window, symbol=symbol)
 
@@ -1154,7 +1151,7 @@ class ABCPolyBase(abc.ABC):
 
         if ideg != deg or ideg < 0:
             raise ValueError("deg must be non-negative integer")
-        return cls([0]*ideg + [1], domain, window, symbol)
+        return cls([0] * ideg + [1], domain, window, symbol)
 
     @classmethod
     def cast(cls, series, domain=None, window=None):

@@ -231,7 +231,7 @@ def eye(N, M=None, k=0, dtype=float, order='C', *, device=None, like=None):
         i = k
     else:
         i = (-k) * M
-    m[:M-k].flat[i::M+1] = 1
+    m[:M - k].flat[i::M + 1] = 1
     return m
 
 
@@ -301,13 +301,13 @@ def diag(v, k=0):
     v = asanyarray(v)
     s = v.shape
     if len(s) == 1:
-        n = s[0]+abs(k)
+        n = s[0] + abs(k)
         res = zeros((n, n), v.dtype)
         if k >= 0:
             i = k
         else:
             i = (-k) * n
-        res[:n-k].flat[i::n+1] = v
+        res[:n - k].flat[i::n + 1] = v
         return res
     elif len(s) == 2:
         return diagonal(v, k)
@@ -363,11 +363,11 @@ def diagflat(v, k=0):
     n = s + abs(k)
     res = zeros((n, n), v.dtype)
     if (k >= 0):
-        i = arange(0, n-k, dtype=intp)
-        fi = i+k+i*n
+        i = arange(0, n - k, dtype=intp)
+        fi = i + k + i * n
     else:
-        i = arange(0, n+k, dtype=intp)
-        fi = i+(i-k)*n
+        i = arange(0, n + k, dtype=intp)
+        fi = i + (i - k) * n
     res.flat[fi] = v
 
     return conv.wrap(res)
@@ -423,7 +423,7 @@ def tri(N, M=None, k=0, dtype=float, *, like=None):
         M = N
 
     m = greater_equal.outer(arange(N, dtype=_min_int(0, N)),
-                            arange(-k, M-k, dtype=_min_int(-k, M - k)))
+                            arange(-k, M - k, dtype=_min_int(-k, M - k)))
 
     # Avoid making a copy if the requested type is already bool
     m = m.astype(dtype, copy=False)
@@ -534,7 +534,7 @@ def triu(m, k=0):
 
     """
     m = asanyarray(m)
-    mask = tri(*m.shape[-2:], k=k-1, dtype=bool)
+    mask = tri(*m.shape[-2:], k=k - 1, dtype=bool)
 
     return where(mask, zeros(1, m.dtype), m)
 

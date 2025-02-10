@@ -36,11 +36,11 @@ class TestFReturnCharacter(TestReturnCharacter):
     ]
 
     @pytest.mark.xfail(IS_S390X, reason="callback returns ' '")
-    @pytest.mark.parametrize("name", "t0,t1,t5,s0,s1,s5,ss".split(","))
+    @pytest.mark.parametrize("name", ["t0", "t1", "t5", "s0", "s1", "s5", "ss"])
     def test_all_f77(self, name):
         self.check_function(getattr(self.module, name), name)
 
     @pytest.mark.xfail(IS_S390X, reason="callback returns ' '")
-    @pytest.mark.parametrize("name", "t0,t1,t5,ts,s0,s1,s5,ss".split(","))
+    @pytest.mark.parametrize("name", ["t0", "t1", "t5", "ts", "s0", "s1", "s5", "ss"])
     def test_all_f90(self, name):
         self.check_function(getattr(self.module.f90_return_char, name), name)

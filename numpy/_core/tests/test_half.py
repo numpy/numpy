@@ -99,7 +99,7 @@ class TestHalf:
 
         # Test all (positive) finite numbers, denormals are most interesting
         # however:
-        f16s_patterns = np.arange(0, max_pattern+1, dtype=np.uint16)
+        f16s_patterns = np.arange(0, max_pattern + 1, dtype=np.uint16)
         f16s_float = f16s_patterns.view(np.float16).astype(float_t)
 
         # Shift the values by half a bit up or a down (or do not shift),
@@ -207,7 +207,7 @@ class TestHalf:
                       65504, -65504,           # Maximum magnitude
                       2.0**(-14), -2.0**(-14),  # Minimum normal
                       2.0**(-24), -2.0**(-24),  # Minimum subnormal
-                      0, -1/1e1000,            # Signed zeros
+                      0, -1 / 1e1000,            # Signed zeros
                       np.inf, -np.inf])
         b = np.array([0x3c00, 0xbc00,
                       0x4000, 0xc000,
@@ -225,16 +225,16 @@ class TestHalf:
         a = np.array([2.0**-25 + 2.0**-35,  # Rounds to minimum subnormal
                       2.0**-25,       # Underflows to zero (nearest even mode)
                       2.0**-26,       # Underflows to zero
-                      1.0+2.0**-11 + 2.0**-16,  # rounds to 1.0+2**(-10)
-                      1.0+2.0**-11,   # rounds to 1.0 (nearest even mode)
-                      1.0+2.0**-12,   # rounds to 1.0
+                      1.0 + 2.0**-11 + 2.0**-16,  # rounds to 1.0+2**(-10)
+                      1.0 + 2.0**-11,   # rounds to 1.0 (nearest even mode)
+                      1.0 + 2.0**-12,   # rounds to 1.0
                       65519,          # rounds to 65504
                       65520],         # rounds to inf
                       dtype=float64)
         rounded = [2.0**-24,
                    0.0,
                    0.0,
-                   1.0+2.0**(-10),
+                   1.0 + 2.0**(-10),
                    1.0,
                    1.0,
                    65504,
@@ -307,8 +307,8 @@ class TestHalf:
         assert_((a[1:] >= a[:-1]).all())
         assert_(not (a[1:] < a[:-1]).any())
         # All != except for +/-0
-        assert_equal(np.nonzero(a[:-1] < a[1:])[0].size, a.size-2)
-        assert_equal(np.nonzero(a[1:] > a[:-1])[0].size, a.size-2)
+        assert_equal(np.nonzero(a[:-1] < a[1:])[0].size, a.size - 2)
+        assert_equal(np.nonzero(a[1:] > a[:-1])[0].size, a.size - 2)
 
     def test_half_funcs(self):
         """Test the various ArrFuncs"""
@@ -323,7 +323,7 @@ class TestHalf:
         assert_equal(a, np.ones((5,), dtype=float16))
 
         # nonzero and copyswap
-        a = np.array([0, 0, -1, -1/1e20, 0, 2.0**-24, 7.629e-6], dtype=float16)
+        a = np.array([0, 0, -1, -1 / 1e20, 0, 2.0**-24, 7.629e-6], dtype=float16)
         assert_equal(a.nonzero()[0],
                      [2, 5, 6])
         a = a.byteswap()
@@ -358,7 +358,7 @@ class TestHalf:
         hnan = np.array((np.nan,), dtype=float16)
         a_f16 = a.view(dtype=float16)
 
-        assert_equal(np.spacing(a_f16[:-1]), a_f16[1:]-a_f16[:-1])
+        assert_equal(np.spacing(a_f16[:-1]), a_f16[1:] - a_f16[:-1])
 
         assert_equal(np.nextafter(a_f16[:-1], hinf), a_f16[1:])
         assert_equal(np.nextafter(a_f16[0], -hinf), -a_f16[1])
@@ -383,7 +383,7 @@ class TestHalf:
         a |= 0x8000
 
         assert_equal(np.spacing(a_f16[0]), np.spacing(a_f16[1]))
-        assert_equal(np.spacing(a_f16[1:]), a_f16[:-1]-a_f16[1:])
+        assert_equal(np.spacing(a_f16[1:]), a_f16[:-1] - a_f16[1:])
 
         assert_equal(np.nextafter(a_f16[0], hinf), -a_f16[1])
         assert_equal(np.nextafter(a_f16[1:], hinf), a_f16[:-1])
@@ -497,37 +497,37 @@ class TestHalf:
             by16 = float16(1e4)
 
             # Underflow errors
-            assert_raises_fpe('underflow', lambda a, b:a*b, sx16, sx16)
-            assert_raises_fpe('underflow', lambda a, b:a*b, sx16, sy16)
-            assert_raises_fpe('underflow', lambda a, b:a*b, sy16, sx16)
-            assert_raises_fpe('underflow', lambda a, b:a*b, sy16, sy16)
-            assert_raises_fpe('underflow', lambda a, b:a/b, sx16, bx16)
-            assert_raises_fpe('underflow', lambda a, b:a/b, sx16, by16)
-            assert_raises_fpe('underflow', lambda a, b:a/b, sy16, bx16)
-            assert_raises_fpe('underflow', lambda a, b:a/b, sy16, by16)
-            assert_raises_fpe('underflow', lambda a, b:a/b,
+            assert_raises_fpe('underflow', lambda a, b: a * b, sx16, sx16)
+            assert_raises_fpe('underflow', lambda a, b: a * b, sx16, sy16)
+            assert_raises_fpe('underflow', lambda a, b: a * b, sy16, sx16)
+            assert_raises_fpe('underflow', lambda a, b: a * b, sy16, sy16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sx16, bx16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sx16, by16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sy16, bx16)
+            assert_raises_fpe('underflow', lambda a, b: a / b, sy16, by16)
+            assert_raises_fpe('underflow', lambda a, b: a / b,
                                              float16(2.**-14), float16(2**11))
-            assert_raises_fpe('underflow', lambda a, b:a/b,
+            assert_raises_fpe('underflow', lambda a, b: a / b,
                                              float16(-2.**-14), float16(2**11))
-            assert_raises_fpe('underflow', lambda a, b:a/b,
-                                             float16(2.**-14+2**-24), float16(2))
-            assert_raises_fpe('underflow', lambda a, b:a/b,
-                                             float16(-2.**-14-2**-24), float16(2))
-            assert_raises_fpe('underflow', lambda a, b:a/b,
-                                             float16(2.**-14+2**-23), float16(4))
+            assert_raises_fpe('underflow', lambda a, b: a / b,
+                                             float16(2.**-14 + 2**-24), float16(2))
+            assert_raises_fpe('underflow', lambda a, b: a / b,
+                                             float16(-2.**-14 - 2**-24), float16(2))
+            assert_raises_fpe('underflow', lambda a, b: a / b,
+                                             float16(2.**-14 + 2**-23), float16(4))
 
             # Overflow errors
-            assert_raises_fpe('overflow', lambda a, b:a*b, bx16, bx16)
-            assert_raises_fpe('overflow', lambda a, b:a*b, bx16, by16)
-            assert_raises_fpe('overflow', lambda a, b:a*b, by16, bx16)
-            assert_raises_fpe('overflow', lambda a, b:a*b, by16, by16)
-            assert_raises_fpe('overflow', lambda a, b:a/b, bx16, sx16)
-            assert_raises_fpe('overflow', lambda a, b:a/b, bx16, sy16)
-            assert_raises_fpe('overflow', lambda a, b:a/b, by16, sx16)
-            assert_raises_fpe('overflow', lambda a, b:a/b, by16, sy16)
-            assert_raises_fpe('overflow', lambda a, b:a+b,
+            assert_raises_fpe('overflow', lambda a, b: a * b, bx16, bx16)
+            assert_raises_fpe('overflow', lambda a, b: a * b, bx16, by16)
+            assert_raises_fpe('overflow', lambda a, b: a * b, by16, bx16)
+            assert_raises_fpe('overflow', lambda a, b: a * b, by16, by16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, bx16, sx16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, bx16, sy16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, by16, sx16)
+            assert_raises_fpe('overflow', lambda a, b: a / b, by16, sy16)
+            assert_raises_fpe('overflow', lambda a, b: a + b,
                                              float16(65504), float16(17))
-            assert_raises_fpe('overflow', lambda a, b:a-b,
+            assert_raises_fpe('overflow', lambda a, b: a - b,
                                              float16(-65504), float16(17))
             assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
             assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))
@@ -539,9 +539,9 @@ class TestHalf:
             assert_raises_fpe('invalid', np.spacing, float16(np.nan))
 
             # These should not raise
-            float16(65472)+float16(32)
-            float16(2**-13)/float16(2)
-            float16(2**-14)/float16(2**10)
+            float16(65472) + float16(32)
+            float16(2**-13) / float16(2)
+            float16(2**-14) / float16(2**10)
             np.spacing(float16(-65504))
             np.nextafter(float16(65504), float16(-np.inf))
             np.nextafter(float16(-65504), float16(np.inf))
@@ -549,10 +549,10 @@ class TestHalf:
             np.nextafter(float16(-np.inf), float16(0))
             np.nextafter(float16(0), float16(np.nan))
             np.nextafter(float16(np.nan), float16(0))
-            float16(2**-14)/float16(2**10)
-            float16(-2**-14)/float16(2**10)
-            float16(2**-14+2**-23)/float16(2)
-            float16(-2**-14-2**-23)/float16(2)
+            float16(2**-14) / float16(2**10)
+            float16(-2**-14) / float16(2**10)
+            float16(2**-14 + 2**-23) / float16(2)
+            float16(-2**-14 - 2**-23) / float16(2)
 
     def test_half_array_interface(self):
         """Test that half is compatible with __array_interface__"""

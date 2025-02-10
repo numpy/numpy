@@ -118,9 +118,13 @@ class BitGenerator(abc.ABC):
     @overload
     def random_raw(self, size: None = ..., output: Literal[True] = ...) -> int: ...  # type: ignore[misc]
     @overload
-    def random_raw(self, size: _ShapeLike = ..., output: Literal[True] = ...) -> NDArray[uint64]: ...  # type: ignore[misc]
+    def random_raw(
+        self, size: _ShapeLike = ..., output: Literal[True] = ...
+    ) -> NDArray[uint64]: ...  # type: ignore[misc]
     @overload
-    def random_raw(self, size: None | _ShapeLike = ..., output: Literal[False] = ...) -> None: ...  # type: ignore[misc]
+    def random_raw(
+        self, size: None | _ShapeLike = ..., output: Literal[False] = ...
+    ) -> None: ...  # type: ignore[misc]
     def _benchmark(self, cnt: int, method: str = ...) -> None: ...
     @property
     def ctypes(self) -> _Interface: ...

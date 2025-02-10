@@ -289,13 +289,13 @@ def tensorsolve(a, b, axes=None):
     an = a.ndim
 
     if axes is not None:
-        allaxes = list(range(0, an))
+        allaxes = list(range(an))
         for k in axes:
             allaxes.remove(k)
             allaxes.insert(an, k)
         a = a.transpose(allaxes)
 
-    oldshape = a.shape[-(an-b.ndim):]
+    oldshape = a.shape[-(an - b.ndim):]
     prod = 1
     for k in oldshape:
         prod *= k
@@ -1294,8 +1294,9 @@ def eigvalsh(a, UPLO='L'):
            [0.+2.j, 2.+0.j]])
     >>> wa = LA.eigvalsh(a)
     >>> wb = LA.eigvals(b)
-    >>> wa; wb
+    >>> wa
     array([1., 6.])
+    >>> wb
     array([6.+0.j, 1.+0.j])
 
     """
@@ -2744,7 +2745,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
                 sqnorm = x.dot(x)
             ret = sqrt(sqnorm)
             if keepdims:
-                ret = ret.reshape(ndim*[1])
+                ret = ret.reshape(ndim * [1])
             return ret
 
     # Normalize the `axis` argument to a tuple.
@@ -3012,7 +3013,7 @@ def _multi_dot_matrix_chain_order(arrays, return_costs=False):
             j = i + l
             m[i, j] = inf
             for k in range(i, j):
-                q = m[i, k] + m[k+1, j] + p[i]*p[k+1]*p[j+1]
+                q = m[i, k] + m[k + 1, j] + p[i] * p[k + 1] * p[j + 1]
                 if q < m[i, j]:
                     m[i, j] = q
                     s[i, j] = k  # Note that Cormen uses 1-based index

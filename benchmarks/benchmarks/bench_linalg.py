@@ -72,7 +72,7 @@ class Eindot(Benchmark):
 
 
 class Linalg(Benchmark):
-    params = sorted(set(TYPES1) - set(['float16']))
+    params = sorted(set(TYPES1) - {'float16'})
     param_names = ['dtype']
 
     def setup(self, typename):
@@ -123,13 +123,14 @@ class Lstsq(Benchmark):
 class Einsum(Benchmark):
     param_names = ['dtype']
     params = [[np.float32, np.float64]]
+
     def setup(self, dtype):
         self.one_dim_small = np.arange(600, dtype=dtype)
         self.one_dim = np.arange(3000, dtype=dtype)
         self.one_dim_big = np.arange(480000, dtype=dtype)
         self.two_dim_small = np.arange(1200, dtype=dtype).reshape(30, 40)
         self.two_dim = np.arange(240000, dtype=dtype).reshape(400, 600)
-        self.three_dim_small = np.arange(10000, dtype=dtype).reshape(10,100,10)
+        self.three_dim_small = np.arange(10000, dtype=dtype).reshape(10, 100, 10)
         self.three_dim = np.arange(24000, dtype=dtype).reshape(20, 30, 40)
         # non_contiguous arrays
         self.non_contiguous_dim1_small = np.arange(1, 80, 2, dtype=dtype)
@@ -143,7 +144,7 @@ class Einsum(Benchmark):
 
     # multiply(a, b):trigger sum_of_products_contig_two
     def time_einsum_multiply(self, dtype):
-        np.einsum("..., ...", self.two_dim_small, self.three_dim , optimize=True)
+        np.einsum("..., ...", self.two_dim_small, self.three_dim, optimize=True)
 
     # sum and multiply:trigger sum_of_products_contig_stride0_outstride0_two
     def time_einsum_sum_mul(self, dtype):
@@ -208,8 +209,8 @@ class LinAlgTransposeVdot(Benchmark):
         self.x2arg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
         self.x2arg = self.x2arg.astype(npdtypes)
         if npdtypes.startswith('complex'):
-            self.xarg += self.xarg.T*1j
-            self.x2arg += self.x2arg.T*1j
+            self.xarg += self.xarg.T * 1j
+            self.x2arg += self.x2arg.T * 1j
 
     def time_transpose(self, shape, npdtypes):
         np.transpose(self.xarg)

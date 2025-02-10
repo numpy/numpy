@@ -538,6 +538,7 @@ def unstack(x, /, *, axis=0):
         raise ValueError("Input array must be at least 1-d.")
     return tuple(_nx.moveaxis(x, axis, 0))
 
+
 # Internal functions to eliminate the overhead of repeated dispatch in one of
 # the two possible paths inside np.block.
 # Use getattr to protect against __array_function__ being disabled.
@@ -682,14 +683,14 @@ def _concatenate_shapes(shapes, axis):
     # Take a shape, any shape
     first_shape = shapes[0]
     first_shape_pre = first_shape[:axis]
-    first_shape_post = first_shape[axis+1:]
+    first_shape_post = first_shape[axis + 1:]
 
     if any(shape[:axis] != first_shape_pre or
-           shape[axis+1:] != first_shape_post for shape in shapes):
+           shape[axis + 1:] != first_shape_post for shape in shapes):
         raise ValueError(
             'Mismatched array shapes in block along axis {}.'.format(axis))
 
-    shape = (first_shape_pre + (sum(shape_at_axis),) + first_shape[axis+1:])
+    shape = (first_shape_pre + (sum(shape_at_axis),) + first_shape[axis + 1:])
 
     offsets_at_axis = _accumulate(shape_at_axis)
     slice_prefixes = [(slice(start, end),)
@@ -727,7 +728,7 @@ def _block_info_recursion(arrays, max_depth, result_ndim, depth=0):
     """
     if depth < max_depth:
         shapes, slices, arrays = zip(
-            *[_block_info_recursion(arr, max_depth, result_ndim, depth+1)
+            *[_block_info_recursion(arr, max_depth, result_ndim, depth + 1)
               for arr in arrays])
 
         axis = result_ndim - max_depth + depth
@@ -761,9 +762,9 @@ def _block(arrays, max_depth, result_ndim, depth=0):
     for details).
     """
     if depth < max_depth:
-        arrs = [_block(arr, max_depth, result_ndim, depth+1)
+        arrs = [_block(arr, max_depth, result_ndim, depth + 1)
                 for arr in arrays]
-        return _concatenate(arrs, axis=-(max_depth-depth))
+        return _concatenate(arrs, axis=-(max_depth - depth))
     else:
         # We've 'bottomed out' - arrays is either a scalar or an array
         # type(arrays) is not list

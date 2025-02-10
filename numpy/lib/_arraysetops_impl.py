@@ -343,6 +343,10 @@ def _unique1d(ar, return_index=False, return_inverse=False,
     Find the unique elements of an array, ignoring shape.
     """
     ar = np.asanyarray(ar).flatten()
+    if len(ar.shape) != 1:
+        # np.matrix, and maybe some other array subclasses, insist on keeping
+        # two dimensions for all operations. Coerce to an ndarray in such cases.
+        ar = np.asarray(ar).flatten()
 
     optional_indices = return_index or return_inverse
 
@@ -962,7 +966,6 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             "supported for boolean or integer arrays. "
             "Please select 'sort' or None for kind."
         )
-
 
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject

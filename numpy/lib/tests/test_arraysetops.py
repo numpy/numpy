@@ -441,8 +441,8 @@ class TestSetOps:
             assert_array_equal(isin(ar1, ar2, kind=kind), expected)
 
     @pytest.mark.parametrize("data", [
-        np.array([2**63, 2**63+1], dtype=np.uint64),
-        np.array([-2**62, -2**62-1], dtype=np.int64),
+        np.array([2**63, 2**63 + 1], dtype=np.uint64),
+        np.array([-2**62, -2**62 - 1], dtype=np.int64),
     ])
     @pytest.mark.parametrize("kind", [None, "sort", "table"])
     def test_isin_mixed_huge_vals(self, kind, data):
@@ -471,21 +471,21 @@ class TestSetOps:
 
     def test_isin_first_array_is_object(self):
         ar1 = [None]
-        ar2 = np.array([1]*10)
+        ar2 = np.array([1] * 10)
         expected = np.array([False])
         result = np.isin(ar1, ar2)
         assert_array_equal(result, expected)
 
     def test_isin_second_array_is_object(self):
         ar1 = 1
-        ar2 = np.array([None]*10)
+        ar2 = np.array([None] * 10)
         expected = np.array([False])
         result = np.isin(ar1, ar2)
         assert_array_equal(result, expected)
 
     def test_isin_both_arrays_are_object(self):
         ar1 = [None]
-        ar2 = np.array([None]*10)
+        ar2 = np.array([None] * 10)
         expected = np.array([True])
         result = np.isin(ar1, ar2)
         assert_array_equal(result, expected)
@@ -495,7 +495,7 @@ class TestSetOps:
         # and a field of dtype `object` allowing for arbitrary Python objects
         dt = np.dtype([('field1', int), ('field2', object)])
         ar1 = np.array([(1, None)], dtype=dt)
-        ar2 = np.array([(1, None)]*10, dtype=dt)
+        ar2 = np.array([(1, None)] * 10, dtype=dt)
         expected = np.array([True])
         result = np.isin(ar1, ar2)
         assert_array_equal(result, expected)
@@ -678,10 +678,10 @@ class TestUnique:
             assert_array_equal(j2, i2, msg)
             assert_array_equal(j3, c, msg)
 
-        a = [5, 7, 1, 2, 1, 5, 7]*10
+        a = [5, 7, 1, 2, 1, 5, 7] * 10
         b = [1, 2, 5, 7]
         i1 = [2, 3, 0, 1]
-        i2 = [2, 3, 0, 1, 0, 2, 3]*10
+        i2 = [2, 3, 0, 1, 0, 2, 3] * 10
         c = np.multiply([2, 1, 2, 2], 10)
 
         # test for numeric arrays
@@ -752,8 +752,8 @@ class TestUnique:
         assert_equal(np.unique(a, return_counts=True), (ua, ua_cnt))
 
         # test for ticket 2111 - complex
-        a = [2.0-1j, np.nan, 1.0+1j, complex(0.0, np.nan), complex(1.0, np.nan)]
-        ua = [1.0+1j, 2.0-1j, complex(0.0, np.nan)]
+        a = [2.0 - 1j, np.nan, 1.0 + 1j, complex(0.0, np.nan), complex(1.0, np.nan)]
+        ua = [1.0 + 1j, 2.0 - 1j, complex(0.0, np.nan)]
         ua_idx = [2, 0, 3]
         ua_inv = [1, 2, 0, 2, 2]
         ua_cnt = [1, 1, 3]
@@ -998,3 +998,20 @@ class TestUnique:
             assert_array_equal(expected_values, result.values)
             assert_array_equal(expected_inverse, result.inverse_indices)
             assert_array_equal(arr, result.values[result.inverse_indices])
+
+    @pytest.mark.parametrize(
+        'data',
+        [[[1, 1, 1],
+          [1, 1, 1]],
+         [1, 3, 2],
+         1],
+    )
+    @pytest.mark.parametrize('transpose', [False, True])
+    @pytest.mark.parametrize('dtype', [np.int32, np.float64])
+    def test_unique_with_matrix(self, data, transpose, dtype):
+        mat = np.matrix(data).astype(dtype)
+        if transpose:
+            mat = mat.T
+        u = np.unique(mat)
+        expected = np.unique(np.asarray(mat))
+        assert_array_equal(u, expected, strict=True)

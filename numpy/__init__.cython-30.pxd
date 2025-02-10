@@ -117,6 +117,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_OBJECT
         NPY_STRING
         NPY_UNICODE
+        NPY_VSTRING
         NPY_VOID
         NPY_DATETIME
         NPY_TIMEDELTA
@@ -151,6 +152,7 @@ cdef extern from "numpy/arrayobject.h":
         NPY_COMPLEX512
 
         NPY_INTP
+        NPY_UINTP
         NPY_DEFAULT_INT  # Not a compile time constant (normally)!
 
     ctypedef enum NPY_ORDER:
@@ -190,40 +192,6 @@ cdef extern from "numpy/arrayobject.h":
         NPY_SEARCHRIGHT
 
     enum:
-        # DEPRECATED since NumPy 1.7 ! Do not use in new code!
-        NPY_C_CONTIGUOUS
-        NPY_F_CONTIGUOUS
-        NPY_CONTIGUOUS
-        NPY_FORTRAN
-        NPY_OWNDATA
-        NPY_FORCECAST
-        NPY_ENSURECOPY
-        NPY_ENSUREARRAY
-        NPY_ELEMENTSTRIDES
-        NPY_ALIGNED
-        NPY_NOTSWAPPED
-        NPY_WRITEABLE
-        NPY_ARR_HAS_DESCR
-
-        NPY_BEHAVED
-        NPY_BEHAVED_NS
-        NPY_CARRAY
-        NPY_CARRAY_RO
-        NPY_FARRAY
-        NPY_FARRAY_RO
-        NPY_DEFAULT
-
-        NPY_IN_ARRAY
-        NPY_OUT_ARRAY
-        NPY_INOUT_ARRAY
-        NPY_IN_FARRAY
-        NPY_OUT_FARRAY
-        NPY_INOUT_FARRAY
-
-        NPY_UPDATE_ALL
-
-    enum:
-        # Added in NumPy 1.7 to replace the deprecated enums above.
         NPY_ARRAY_C_CONTIGUOUS
         NPY_ARRAY_F_CONTIGUOUS
         NPY_ARRAY_OWNDATA
@@ -962,10 +930,17 @@ cdef extern from "numpy/ufuncobject.h":
         PyUFunc_Zero
         PyUFunc_One
         PyUFunc_None
+        # deprecated
         UFUNC_FPE_DIVIDEBYZERO
         UFUNC_FPE_OVERFLOW
         UFUNC_FPE_UNDERFLOW
         UFUNC_FPE_INVALID
+        # use these instead
+        NPY_FPE_DIVIDEBYZERO
+        NPY_FPE_OVERFLOW
+        NPY_FPE_UNDERFLOW
+        NPY_FPE_INVALID
+
 
     object PyUFunc_FromFuncAndData(PyUFuncGenericFunction *,
           void **, char *, int, int, int, int, char *, char *, int)
@@ -1240,3 +1215,35 @@ cdef extern from "numpy/arrayobject.h":
     void NpyIter_GetInnerFixedStrideArray(NpyIter* it, npy_intp* outstrides) nogil
     npy_bool NpyIter_IterationNeedsAPI(NpyIter* it) nogil
     void NpyIter_DebugPrint(NpyIter* it)
+
+# NpyString API
+cdef extern from "numpy/ndarraytypes.h":
+    ctypedef struct npy_string_allocator:
+        pass
+
+    ctypedef struct npy_packed_static_string:
+        pass
+
+    ctypedef struct npy_static_string:
+        size_t size
+        const char *buf
+
+    ctypedef struct PyArray_StringDTypeObject:
+        PyArray_Descr base
+        PyObject *na_object
+        char coerce
+        char has_nan_na
+        char has_string_na
+        char array_owned
+        npy_static_string default_string
+        npy_static_string na_name
+        npy_string_allocator *allocator
+
+cdef extern from "numpy/arrayobject.h":
+    npy_string_allocator *NpyString_acquire_allocator(const PyArray_StringDTypeObject *descr)
+    void NpyString_acquire_allocators(size_t n_descriptors, PyArray_Descr *const descrs[], npy_string_allocator *allocators[])
+    void NpyString_release_allocator(npy_string_allocator *allocator)
+    void NpyString_release_allocators(size_t length, npy_string_allocator *allocators[])
+    int NpyString_load(npy_string_allocator *allocator, const npy_packed_static_string *packed_string, npy_static_string *unpacked_string)
+    int NpyString_pack_null(npy_string_allocator *allocator, npy_packed_static_string *packed_string)
+    int NpyString_pack(npy_string_allocator *allocator, npy_packed_static_string *packed_string, const char *buf, size_t size)

@@ -230,7 +230,7 @@ these fragments in each commit message of a PR:
 Test building wheels
 ~~~~~~~~~~~~~~~~~~~~
 
-Numpy currently uses `cibuildwheel <https://https://cibuildwheel.readthedocs.io/en/stable/>`_
+Numpy currently uses `cibuildwheel <https://cibuildwheel.readthedocs.io/en/stable/>`_
 in order to build wheels through continuous integration services. To save resources, the
 cibuildwheel wheel builders are not run by default on every single PR or commit to main.
 

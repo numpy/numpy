@@ -35,7 +35,7 @@ class Histogram1D(Benchmark):
 
 class Histogram2D(Benchmark):
     def setup(self):
-        self.d = np.linspace(0, 100, 200000).reshape((-1,2))
+        self.d = np.linspace(0, 100, 200000).reshape((-1, 2))
 
     def time_full_coverage(self):
         np.histogramdd(self.d, (200, 200), ((0, 100), (0, 100)))
@@ -64,7 +64,7 @@ class Mean(Benchmark):
     params = [[1, 10, 100_000]]
 
     def setup(self, size):
-        self.array = np.arange(2*size).reshape(2, size)
+        self.array = np.arange(2 * size).reshape(2, size)
 
     def time_mean(self, size):
         np.mean(self.array)
@@ -136,6 +136,7 @@ class Select(Benchmark):
 
 def memoize(f):
     _memoized = {}
+
     def wrapped(*args):
         if args not in _memoized:
             _memoized[args] = f(*args)
@@ -181,11 +182,11 @@ class SortGenerator:
         dtype = np.dtype(dtype)
         try:
             with np.errstate(over="raise"):
-                res = dtype.type(size-1)
+                res = dtype.type(size - 1)
         except (OverflowError, FloatingPointError):
             raise SkipNotImplemented("Cannot construct arange for this size.")
 
-        return np.arange(size-1, -1, -1, dtype=dtype)
+        return np.arange(size - 1, -1, -1, dtype=dtype)
 
     @staticmethod
     @memoize

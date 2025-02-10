@@ -116,7 +116,7 @@ def main(token, revision_range):
     heading = "Contributors"
     print()
     print(heading)
-    print("="*len(heading))
+    print("=" * len(heading))
     print(author_msg % len(authors))
 
     for s in authors:
@@ -129,7 +129,7 @@ def main(token, revision_range):
 
     print()
     print(heading)
-    print("="*len(heading))
+    print("=" * len(heading))
     print(pull_request_msg % len(pull_requests))
 
     def backtick_repl(matchobj):

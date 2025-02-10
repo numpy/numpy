@@ -31,7 +31,6 @@ from numpy._typing import (
 
 from typing_extensions import LiteralString, TypeVar
 
-
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _Self = TypeVar("_Self")
@@ -113,7 +112,12 @@ _ArrayLikeCoef_co: TypeAlias = (
     | _ArrayLikeCoefObject_co
 )
 
-_Name_co = TypeVar("_Name_co", bound=LiteralString, covariant=True, default=LiteralString)
+_Name_co = TypeVar(
+    "_Name_co",
+    bound=LiteralString,
+    covariant=True,
+    default=LiteralString
+)
 
 @type_check_only
 class _Named(Protocol[_Name_co]):
@@ -127,7 +131,7 @@ class _FuncLine(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, off: _SCT, scl: _SCT) -> _Line[_SCT]: ...
     @overload
-    def __call__(self, /, off: int, scl: int) -> _Line[np.int_] : ...
+    def __call__(self, /, off: int, scl: int) -> _Line[np.int_]: ...
     @overload
     def __call__(self, /, off: float, scl: float) -> _Line[np.float64]: ...
     @overload
@@ -837,7 +841,6 @@ class _FuncRoots(_Named[_Name_co], Protocol[_Name_co]):
     ) -> _Series[np.complex128]: ...
     @overload
     def __call__(self, /, c: _SeriesLikeCoef_co) -> _ObjectSeries: ...
-
 
 _Companion: TypeAlias = np.ndarray[tuple[int, int], np.dtype[_SCT]]
 

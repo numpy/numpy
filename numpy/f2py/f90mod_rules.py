@@ -39,6 +39,7 @@ def findf90modules(m):
             ret = ret + findf90modules(b)
     return ret
 
+
 fgetdims1 = """\
       external f2pysetdata
       logical ns

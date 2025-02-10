@@ -38,6 +38,7 @@ static void **PyUFunc_API=NULL;
 static inline int
 _import_umath(void)
 {
+  PyObject *c_api;
   PyObject *numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
   if (numpy == NULL && PyErr_ExceptionMatches(PyExc_ModuleNotFoundError)) {
     PyErr_Clear();
@@ -50,7 +51,7 @@ _import_umath(void)
       return -1;
   }
 
-  PyObject *c_api = PyObject_GetAttrString(numpy, "_UFUNC_API");
+  c_api = PyObject_GetAttrString(numpy, "_UFUNC_API");
   Py_DECREF(numpy);
   if (c_api == NULL) {
       PyErr_SetString(PyExc_AttributeError, "_UFUNC_API not found");

@@ -5,7 +5,7 @@ import operator
 import numpy as np
 
 from numpy.testing import assert_array_equal, assert_raises, IS_PYPY
-
+from numpy.testing._private.utils import requires_memory
 
 COMPARISONS = [
     (operator.eq, np.equal, "=="),
@@ -107,6 +107,88 @@ def test_float_to_string_cast(str_dt, float_dt):
 
     res = arr.astype(str_dt)
     assert_array_equal(res, np.array(expected, dtype=str_dt))
+
+
+@pytest.mark.parametrize("str_dt", "US")
+@pytest.mark.parametrize("size", [-1, np.iinfo(np.intc).max])
+def test_string_size_dtype_errors(str_dt, size):
+    if size > 0:
+        size = size // np.dtype(f"{str_dt}1").itemsize + 1
+
+    with pytest.raises(ValueError):
+        np.dtype((str_dt, size))
+    with pytest.raises(TypeError):
+        np.dtype(f"{str_dt}{size}")
+
+
+@pytest.mark.parametrize("str_dt", "US")
+def test_string_size_dtype_large_repr(str_dt):
+    size = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
+    size_str = str(size)
+
+    dtype = np.dtype((str_dt, size))
+    assert size_str in dtype.str
+    assert size_str in str(dtype)
+    assert size_str in repr(dtype)
+
+
+@pytest.mark.slow
+@requires_memory(2 * np.iinfo(np.intc).max)
+@pytest.mark.parametrize("str_dt", "US")
+def test_large_string_coercion_error(str_dt):
+    very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
+    try:
+        large_string = "A" * (very_large + 1)
+    except Exception:
+        # We may not be able to create this Python string on 32bit.
+        pytest.skip("python failed to create huge string")
+
+    class MyStr:
+        def __str__(self):
+            return large_string
+
+    try:
+        # TypeError from NumPy, or OverflowError from 32bit Python.
+        with pytest.raises((TypeError, OverflowError)):
+            np.array([large_string], dtype=str_dt)
+
+        # Same as above, but input has to be converted to a string.
+        with pytest.raises((TypeError, OverflowError)):
+            np.array([MyStr()], dtype=str_dt)
+    except MemoryError:
+        # Catch memory errors, because `requires_memory` would do so.
+        raise AssertionError("Ops should raise before any large allocation.")
+
+@pytest.mark.slow
+@requires_memory(2 * np.iinfo(np.intc).max)
+@pytest.mark.parametrize("str_dt", "US")
+def test_large_string_addition_error(str_dt):
+    very_large = np.iinfo(np.intc).max // np.dtype(f"{str_dt}1").itemsize
+
+    a = np.array(["A" * very_large], dtype=str_dt)
+    b = np.array("B", dtype=str_dt)
+    try:
+        with pytest.raises(TypeError):
+            np.add(a, b)
+        with pytest.raises(TypeError):
+            np.add(a, a)
+    except MemoryError:
+        # Catch memory errors, because `requires_memory` would do so.
+        raise AssertionError("Ops should raise before any large allocation.")
+
+
+def test_large_string_cast():
+    very_large = np.iinfo(np.intc).max // 4
+    # Could be nice to test very large path, but it makes too many huge
+    # allocations right now (need non-legacy cast loops for this).
+    # a = np.array([], dtype=np.dtype(("S", very_large)))
+    # assert a.astype("U").dtype.itemsize == very_large * 4
+
+    a = np.array([], dtype=np.dtype(("S", very_large + 1)))
+    # It is not perfect but OK if this raises a MemoryError during setup
+    # (this happens due clunky code and/or buffer setup.)
+    with pytest.raises((TypeError, MemoryError)):
+        a.astype("U")
 
 
 @pytest.mark.parametrize("dt", ["S", "U", "T"])
@@ -281,19 +363,19 @@ class TestMethods:
         ("", "xx", 0, None, -1),
         ("", "xx", 1, 1, -1),
         ("", "xx", MAX, 0, -1),
-        pytest.param(99*"a" + "b", "b", 0, None, 99,
+        pytest.param(99 * "a" + "b", "b", 0, None, 99,
                      id="99*a+b-b-0-None-99"),
-        pytest.param(98*"a" + "ba", "ba", 0, None, 98,
+        pytest.param(98 * "a" + "ba", "ba", 0, None, 98,
                      id="98*a+ba-ba-0-None-98"),
-        pytest.param(100*"a", "b", 0, None, -1,
+        pytest.param(100 * "a", "b", 0, None, -1,
                      id="100*a-b-0-None--1"),
-        pytest.param(30000*"a" + 100*"b", 100*"b", 0, None, 30000,
+        pytest.param(30000 * "a" + 100 * "b", 100 * "b", 0, None, 30000,
                      id="30000*a+100*b-100*b-0-None-30000"),
-        pytest.param(30000*"a", 100*"b", 0, None, -1,
+        pytest.param(30000 * "a", 100 * "b", 0, None, -1,
                      id="30000*a-100*b-0-None--1"),
-        pytest.param(15000*"a" + 15000*"b", 15000*"b", 0, None, 15000,
+        pytest.param(15000 * "a" + 15000 * "b", 15000 * "b", 0, None, 15000,
                      id="15000*a+15000*b-15000*b-0-None-15000"),
-        pytest.param(15000*"a" + 15000*"b", 15000*"c", 0, None, -1,
+        pytest.param(15000 * "a" + 15000 * "b", 15000 * "c", 0, None, -1,
                      id="15000*a+15000*b-15000*c-0-None--1"),
         (["abcdefghiabc", "rrarrrrrrrrra"], ["def", "arr"], [0, 3],
          None, [3, -1]),
@@ -347,17 +429,17 @@ class TestMethods:
         ("aaa", "", -1, None, 2),
         ("aaa", "", -10, None, 4),
         ("aaa", "aaaa", 0, None, 0),
-        pytest.param(98*"a" + "ba", "ba", 0, None, 1,
+        pytest.param(98 * "a" + "ba", "ba", 0, None, 1,
                      id="98*a+ba-ba-0-None-1"),
-        pytest.param(30000*"a" + 100*"b", 100*"b", 0, None, 1,
+        pytest.param(30000 * "a" + 100 * "b", 100 * "b", 0, None, 1,
                      id="30000*a+100*b-100*b-0-None-1"),
-        pytest.param(30000*"a", 100*"b", 0, None, 0,
+        pytest.param(30000 * "a", 100 * "b", 0, None, 0,
                      id="30000*a-100*b-0-None-0"),
-        pytest.param(30000*"a" + 100*"ab", "ab", 0, None, 100,
+        pytest.param(30000 * "a" + 100 * "ab", "ab", 0, None, 100,
                      id="30000*a+100*ab-ab-0-None-100"),
-        pytest.param(15000*"a" + 15000*"b", 15000*"b", 0, None, 1,
+        pytest.param(15000 * "a" + 15000 * "b", 15000 * "b", 0, None, 1,
                      id="15000*a+15000*b-15000*b-0-None-1"),
-        pytest.param(15000*"a" + 15000*"b", 15000*"c", 0, None, 0,
+        pytest.param(15000 * "a" + 15000 * "b", 15000 * "c", 0, None, 0,
                      id="15000*a+15000*b-15000*c-0-None-0"),
         ("", "", 0, None, 1),
         ("", "", 1, 1, 0),
@@ -566,7 +648,7 @@ class TestMethods:
         ("ABCADAA", "A", "", -1, "BCD"),
         ("BCD", "A", "", -1, "BCD"),
         ("*************", "A", "", -1, "*************"),
-        ("^"+"A"*1000+"^", "A", "", 999, "^A^"),
+        ("^" + "A" * 1000 + "^", "A", "", 999, "^A^"),
         ("the", "the", "", -1, ""),
         ("theater", "the", "", -1, "ater"),
         ("thethe", "the", "", -1, ""),
@@ -859,6 +941,57 @@ class TestMethods:
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
 
+    @pytest.mark.parametrize("args", [
+        (None,),
+        (0,),
+        (1,),
+        (3,),
+        (5,),
+        (6,),  # test index past the end
+        (-1,),
+        (-3,),
+        ([3, 4],),
+        ([2, 4],),
+        ([-3, 5],),
+        ([0, -5],),
+        (1, 4),
+        (-3, 5),
+        (None, -1),
+        (0, [4, 2]),
+        ([1, 2], [-1, -2]),
+        (1, 5, 2),
+        (None, None, -1),
+        ([0, 6], [-1, 0], [2, -1]),
+    ])
+    def test_slice(self, args, dt):
+        buf = np.array(["hello", "world"], dtype=dt)
+        act = np.strings.slice(buf, *args)
+        bcast_args = tuple(np.broadcast_to(arg, buf.shape) for arg in args)
+        res = np.array([s[slice(*arg)]
+                        for s, arg in zip(buf, zip(*bcast_args))],
+                       dtype=dt)
+        assert_array_equal(act, res)
+
+    def test_slice_unsupported(self, dt):
+        with pytest.raises(TypeError, match="did not contain a loop"):
+            np.strings.slice(np.array([1, 2, 3]), 4)
+
+        with pytest.raises(TypeError, match=r"Cannot cast ufunc '_slice' input .* from .* to dtype\('int(64|32)'\)"):
+            np.strings.slice(np.array(['foo', 'bar'], dtype=dt), np.array(['foo', 'bar'], dtype=dt))
+
+    @pytest.mark.parametrize("int_dt", [np.int8, np.int16, np.int32, np.int64,
+                                        np.uint8, np.uint16, np.uint32, np.uint64])
+    def test_slice_int_type_promotion(self, int_dt, dt):
+        buf = np.array(["hello", "world"], dtype=dt)
+
+        assert_array_equal(np.strings.slice(buf, int_dt(4)), np.array(["hell", "worl"], dtype=dt))
+        assert_array_equal(np.strings.slice(buf, np.array([4, 4], dtype=int_dt)), np.array(["hell", "worl"], dtype=dt))
+
+        assert_array_equal(np.strings.slice(buf, int_dt(2), int_dt(4)), np.array(["ll", "rl"], dtype=dt))
+        assert_array_equal(np.strings.slice(buf, np.array([2, 2], dtype=int_dt), np.array([4, 4], dtype=int_dt)), np.array(["ll", "rl"], dtype=dt))
+
+        assert_array_equal(np.strings.slice(buf, int_dt(0), int_dt(4), int_dt(2)), np.array(["hl", "wr"], dtype=dt))
+        assert_array_equal(np.strings.slice(buf, np.array([0, 0], dtype=int_dt), np.array([4, 4], dtype=int_dt), np.array([2, 2], dtype=int_dt)), np.array(["hl", "wr"], dtype=dt))
 
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
@@ -1079,7 +1212,7 @@ class TestMethodsWithUnicode:
         [
             ("λμ", "μ"),
             ("λμ", "λ"),
-            ("λ"*5 + "μ"*2, "μ"),
+            ("λ" * 5 + "μ" * 2, "μ"),
             ("λ" * 5 + "μ" * 2, "λ"),
             ("λ" * 5 + "A" + "μ" * 2, "μλ"),
             ("λμ" * 5, "μ"),
@@ -1095,6 +1228,37 @@ class TestMethodsWithUnicode:
         actual = npy_func(src_array, strip)
 
         assert_array_equal(actual, expected)
+
+    @pytest.mark.parametrize("args", [
+        (None,),
+        (0,),
+        (1,),
+        (5,),
+        (15,),
+        (22,),
+        (-1,),
+        (-3,),
+        ([3, 4],),
+        ([-5, 5],),
+        ([0, -8],),
+        (1, 12),
+        (-12, 15),
+        (None, -1),
+        (0, [17, 6]),
+        ([1, 2], [-1, -2]),
+        (1, 11, 2),
+        (None, None, -1),
+        ([0, 10], [-1, 0], [2, -1]),
+    ])
+    def test_slice(self, args, dt):
+        buf = np.array(["Приве́т नमस्ते שָׁלוֹם", "😀😃😄😁😆😅🤣😂🙂🙃"],
+                       dtype=dt)
+        act = np.strings.slice(buf, *args)
+        bcast_args = tuple(np.broadcast_to(arg, buf.shape) for arg in args)
+        res = np.array([s[slice(*arg)]
+                        for s, arg in zip(buf, zip(*bcast_args))],
+                       dtype=dt)
+        assert_array_equal(act, res)
 
 
 class TestMixedTypeMethods:
@@ -1173,21 +1337,21 @@ class TestReplaceOnArrays:
     def test_replace_count_and_size(self, dt):
         a = np.array(["0123456789" * i for i in range(4)], dtype=dt)
         r1 = np.strings.replace(a, "5", "ABCDE")
-        assert r1.dtype.itemsize == check_itemsize(3*10 + 3*4, dt)
+        assert r1.dtype.itemsize == check_itemsize(3 * 10 + 3 * 4, dt)
         r1_res = np.array(["01234ABCDE6789" * i for i in range(4)], dtype=dt)
         assert_array_equal(r1, r1_res)
         r2 = np.strings.replace(a, "5", "ABCDE", 1)
-        assert r2.dtype.itemsize == check_itemsize(3*10 + 4, dt)
+        assert r2.dtype.itemsize == check_itemsize(3 * 10 + 4, dt)
         r3 = np.strings.replace(a, "5", "ABCDE", 0)
         assert r3.dtype.itemsize == a.dtype.itemsize
         assert_array_equal(r3, a)
         # Negative values mean to replace all.
         r4 = np.strings.replace(a, "5", "ABCDE", -1)
-        assert r4.dtype.itemsize == check_itemsize(3*10 + 3*4, dt)
+        assert r4.dtype.itemsize == check_itemsize(3 * 10 + 3 * 4, dt)
         assert_array_equal(r4, r1)
         # We can do count on an element-by-element basis.
         r5 = np.strings.replace(a, "5", "ABCDE", [-1, -1, -1, 1])
-        assert r5.dtype.itemsize == check_itemsize(3*10 + 4, dt)
+        assert r5.dtype.itemsize == check_itemsize(3 * 10 + 4, dt)
         assert_array_equal(r5, np.array(
             ["01234ABCDE6789" * i for i in range(3)]
             + ["01234ABCDE6789" + "0123456789" * 2], dtype=dt))

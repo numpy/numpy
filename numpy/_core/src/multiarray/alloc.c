@@ -12,6 +12,7 @@
 #include "npy_config.h"
 #include "alloc.h"
 #include "npy_static_data.h"
+#include "templ_common.h"
 #include "multiarraymodule.h"
 
 #include <assert.h>
@@ -565,4 +566,18 @@ get_handler_version(PyObject *NPY_UNUSED(self), PyObject *args)
     version = PyLong_FromLong(handler->version);
     Py_DECREF(mem_handler);
     return version;
+}
+
+
+/*
+ * Internal function to malloc, but add an overflow check similar to Calloc
+ */
+NPY_NO_EXPORT void *
+_Npy_MallocWithOverflowCheck(npy_intp size, npy_intp elsize)
+{
+    npy_intp total_size;
+    if (npy_mul_sizes_with_overflow(&total_size, size, elsize)) {
+        return NULL;
+    }
+    return PyMem_MALLOC(total_size);
 }

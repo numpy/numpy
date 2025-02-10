@@ -5,7 +5,7 @@ import unittest
 
 # Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
+major, minor = [int(d) for d in np.__version__.split(".")[:2]]
 if major == 0:
     BadListError = TypeError
 else:
@@ -19,7 +19,7 @@ class VectorTestCase(unittest.TestCase):
 
     def __init__(self, methodName="runTest"):
         unittest.TestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
     # Test the (type IN_ARRAY1[ANY]) typemap
@@ -224,7 +224,7 @@ class VectorTestCase(unittest.TestCase):
         eoSplit = Vector.__dict__[self.typeStr + "EOSplit"]
         even, odd = eoSplit([1, 2, 3])
         self.assertEqual((even == [1, 0, 3]).all(), True)
-        self.assertEqual((odd  == [0, 2, 0]).all(), True)
+        self.assertEqual((odd == [0, 2, 0]).all(), True)
 
     # Test the (type* ARGOUT_ARRAY1, int DIM1) typemap
     def testTwos(self):
@@ -261,7 +261,7 @@ class VectorTestCase(unittest.TestCase):
 class scharTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "schar"
+        self.typeStr = "schar"
         self.typeCode = "b"
 
 ######################################################################
@@ -269,7 +269,7 @@ class scharTestCase(VectorTestCase):
 class ucharTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "uchar"
+        self.typeStr = "uchar"
         self.typeCode = "B"
 
 ######################################################################
@@ -277,7 +277,7 @@ class ucharTestCase(VectorTestCase):
 class shortTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "short"
+        self.typeStr = "short"
         self.typeCode = "h"
 
 ######################################################################
@@ -285,7 +285,7 @@ class shortTestCase(VectorTestCase):
 class ushortTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "ushort"
+        self.typeStr = "ushort"
         self.typeCode = "H"
 
 ######################################################################
@@ -293,7 +293,7 @@ class ushortTestCase(VectorTestCase):
 class intTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "int"
+        self.typeStr = "int"
         self.typeCode = "i"
 
 ######################################################################
@@ -301,7 +301,7 @@ class intTestCase(VectorTestCase):
 class uintTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "uint"
+        self.typeStr = "uint"
         self.typeCode = "I"
 
 ######################################################################
@@ -309,7 +309,7 @@ class uintTestCase(VectorTestCase):
 class longTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "long"
+        self.typeStr = "long"
         self.typeCode = "l"
 
 ######################################################################
@@ -317,7 +317,7 @@ class longTestCase(VectorTestCase):
 class ulongTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "ulong"
+        self.typeStr = "ulong"
         self.typeCode = "L"
 
 ######################################################################
@@ -325,7 +325,7 @@ class ulongTestCase(VectorTestCase):
 class longLongTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "longLong"
+        self.typeStr = "longLong"
         self.typeCode = "q"
 
 ######################################################################
@@ -333,7 +333,7 @@ class longLongTestCase(VectorTestCase):
 class ulongLongTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "ulongLong"
+        self.typeStr = "ulongLong"
         self.typeCode = "Q"
 
 ######################################################################
@@ -341,7 +341,7 @@ class ulongLongTestCase(VectorTestCase):
 class floatTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "float"
+        self.typeStr = "float"
         self.typeCode = "f"
 
 ######################################################################
@@ -349,10 +349,11 @@ class floatTestCase(VectorTestCase):
 class doubleTestCase(VectorTestCase):
     def __init__(self, methodName="runTest"):
         VectorTestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
 ######################################################################
+
 
 if __name__ == "__main__":
 
