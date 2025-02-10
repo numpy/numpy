@@ -1050,7 +1050,9 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             goto fail;
         }
 
-        PyArray_FailUnlessWriteable(out, "output array");
+        if (PyArray_FailUnlessWriteable(out, "output array") < 0) {
+            return NULL;
+        }
 
         for (i = 0; i < n; i++) {
             if (arrays_overlap(out, mps[i])) {
