@@ -422,7 +422,7 @@ class BytesDType(  # type: ignore[misc]
     Generic[_ItemSize_co],
     _TypeCodes[L["S"], L["S"], L[18]],
     _NoOrder,
-    _NBit[L[1],_ItemSize_co],
+    _NBit[L[1], _ItemSize_co],
     _SimpleDType[np.bytes_],
 ):
     def __new__(cls, size: _ItemSize_co, /) -> BytesDType[_ItemSize_co]: ...
@@ -438,7 +438,7 @@ class StrDType(  # type: ignore[misc]
     Generic[_ItemSize_co],
     _TypeCodes[L["U"], L["U"], L[19]],
     _NativeOrder,
-    _NBit[L[4],_ItemSize_co],
+    _NBit[L[4], _ItemSize_co],
     _SimpleDType[np.str_],
 ):
     def __new__(cls, size: _ItemSize_co, /) -> StrDType[_ItemSize_co]: ...

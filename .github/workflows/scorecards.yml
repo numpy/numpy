@@ -11,7 +11,7 @@ on:
     branches: ["main"]
 
 # Declare default permissions as read only.
-permissions: read-all
+permissions: {}
 
 jobs:
   analysis:
@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: "Checkout code"
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v3.1.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v3.1.0
         with:
           persist-credentials: false
 
@@ -42,7 +42,7 @@ jobs:
       # Upload the results as artifacts (optional). Commenting out will disable
       # uploads of run results in SARIF format to the repository Actions tab.
       - name: "Upload artifact"
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: SARIF file
           path: results.sarif
@@ -50,6 +50,6 @@ jobs:
 
       # Upload the results to GitHub's code scanning dashboard.
       - name: "Upload to code-scanning"
-        uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v2.1.27
+        uses: github/codeql-action/upload-sarif@df409f7d9260372bd5f19e5b04e83cb3c43714ae # v2.1.27
         with:
           sarif_file: results.sarif

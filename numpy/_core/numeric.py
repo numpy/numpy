@@ -284,7 +284,7 @@ def ones_like(
 def _full_dispatcher(
     shape, fill_value, dtype=None, order=None, *, device=None, like=None
 ):
-    return(like,)
+    return (like,)
 
 
 @finalize_array_function_like
@@ -1122,7 +1122,7 @@ def tensordot(a, b, axes=2):
         iter(axes)
     except Exception:
         axes_a = list(range(-axes, 0))
-        axes_b = list(range(0, axes))
+        axes_b = list(range(axes))
     else:
         axes_a, axes_b = axes
     try:
@@ -1163,13 +1163,13 @@ def tensordot(a, b, axes=2):
     notin = [k for k in range(nda) if k not in axes_a]
     newaxes_a = notin + axes_a
     N2 = math.prod(as_[axis] for axis in axes_a)
-    newshape_a = (math.prod([as_[ax] for ax in notin]), N2)
+    newshape_a = (math.prod(as_[ax] for ax in notin), N2)
     olda = [as_[axis] for axis in notin]
 
     notin = [k for k in range(ndb) if k not in axes_b]
     newaxes_b = axes_b + notin
     N2 = math.prod(bs[axis] for axis in axes_b)
-    newshape_b = (N2, math.prod([bs[ax] for ax in notin]))
+    newshape_b = (N2, math.prod(bs[ax] for ax in notin))
     oldb = [bs[axis] for axis in notin]
 
     at = a.transpose(newaxes_a).reshape(newshape_a)
@@ -1268,7 +1268,7 @@ def roll(a, shift, axis=None):
         if broadcasted.ndim > 1:
             raise ValueError(
                 "'shift' and 'axis' should be scalars or 1D sequences")
-        shifts = {ax: 0 for ax in range(a.ndim)}
+        shifts = dict.fromkeys(range(a.ndim), 0)
         for sh, ax in broadcasted:
             shifts[ax] += int(sh)
 
@@ -1377,7 +1377,7 @@ def rollaxis(a, axis, start=0):
         start -= 1
     if axis == start:
         return a[...]
-    axes = list(range(0, n))
+    axes = list(range(n))
     axes.remove(axis)
     axes.insert(start, axis)
     return a.transpose(axes)
@@ -1432,7 +1432,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
         except TypeError:
             pass
     # Going via an iterator directly is slower than via list comprehension.
-    axis = tuple([normalize_axis_index(ax, ndim, argname) for ax in axis])
+    axis = tuple(normalize_axis_index(ax, ndim, argname) for ax in axis)
     if not allow_duplicate and len(set(axis)) != len(axis):
         if argname:
             raise ValueError('repeated axis in `{}` argument'.format(argname))
@@ -1828,14 +1828,14 @@ def indices(dimensions, dtype=int, sparse=False):
     """
     dimensions = tuple(dimensions)
     N = len(dimensions)
-    shape = (1,)*N
+    shape = (1,) * N
     if sparse:
-        res = tuple()
+        res = ()
     else:
-        res = empty((N,)+dimensions, dtype=dtype)
+        res = empty((N,) + dimensions, dtype=dtype)
     for i, dim in enumerate(dimensions):
         idx = arange(dim, dtype=dtype).reshape(
-            shape[:i] + (dim,) + shape[i+1:]
+            shape[:i] + (dim,) + shape[i + 1:]
         )
         if sparse:
             res = res + (idx,)
@@ -2444,7 +2444,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
         y = float(y)
 
     with errstate(invalid='ignore'):
-        result = (less_equal(abs(x-y), atol + rtol * abs(y))
+        result = (less_equal(abs(x - y), atol + rtol * abs(y))
                   & isfinite(y)
                   | (x == y))
         if equal_nan:

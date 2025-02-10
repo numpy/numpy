@@ -83,8 +83,8 @@ def test_bogus_string():
 @pytest.mark.skipif(string_to_longdouble_inaccurate, reason="Need strtold_l")
 def test_fromstring():
     o = 1 + LD_INFO.eps
-    s = (" " + str(o))*5
-    a = np.array([o]*5)
+    s = (" " + str(o)) * 5
+    a = np.array([o] * 5)
     assert_equal(np.fromstring(s, sep=" ", dtype=np.longdouble), a,
                  err_msg="reading '%s'" % s)
 
@@ -101,48 +101,39 @@ def test_fromstring_complex():
         assert_equal(np.fromstring("1+1j,2-2j, -3+3j,  -4e1+4j", sep=",", dtype=ctype),
                      np.array([1. + 1.j, 2. - 2.j, - 3. + 3.j, - 40. + 4j]))
         # Spaces at wrong places
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.fromstring("1+2 j,3", dtype=ctype, sep=","),
-                         np.array([1.]))
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.fromstring("1+ 2j,3", dtype=ctype, sep=","),
-                         np.array([1.]))
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.fromstring("1 +2j,3", dtype=ctype, sep=","),
-                         np.array([1.]))
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.fromstring("1+j", dtype=ctype, sep=","),
-                         np.array([1.]))
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.fromstring("1+", dtype=ctype, sep=","),
-                         np.array([1.]))
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.fromstring("1j+1", dtype=ctype, sep=","),
-                         np.array([1j]))
+        with assert_raises(ValueError):
+            np.fromstring("1+2 j,3", dtype=ctype, sep=",")
+        with assert_raises(ValueError):
+            np.fromstring("1+ 2j,3", dtype=ctype, sep=",")
+        with assert_raises(ValueError):
+            np.fromstring("1 +2j,3", dtype=ctype, sep=",")
+        with assert_raises(ValueError):
+            np.fromstring("1+j", dtype=ctype, sep=",")
+        with assert_raises(ValueError):
+            np.fromstring("1+", dtype=ctype, sep=",")
+        with assert_raises(ValueError):
+            np.fromstring("1j+1", dtype=ctype, sep=",")
 
 
 def test_fromstring_bogus():
-    with assert_warns(DeprecationWarning):
-        assert_equal(np.fromstring("1. 2. 3. flop 4.", dtype=float, sep=" "),
-                     np.array([1., 2., 3.]))
+    with assert_raises(ValueError):
+        np.fromstring("1. 2. 3. flop 4.", dtype=float, sep=" ")
 
 
 def test_fromstring_empty():
-    with assert_warns(DeprecationWarning):
-        assert_equal(np.fromstring("xxxxx", sep="x"),
-                     np.array([]))
+    with assert_raises(ValueError):
+        np.fromstring("xxxxx", sep="x")
 
 
 def test_fromstring_missing():
-    with assert_warns(DeprecationWarning):
-        assert_equal(np.fromstring("1xx3x4x5x6", sep="x"),
-                     np.array([1]))
+    with assert_raises(ValueError):
+        np.fromstring("1xx3x4x5x6", sep="x")
 
 
 class TestFileBased:
 
     ldbl = 1 + LD_INFO.eps
-    tgt = np.array([ldbl]*5)
+    tgt = np.array([ldbl] * 5)
     out = ''.join([str(t) + '\n' for t in tgt])
 
     def test_fromfile_bogus(self):
@@ -150,9 +141,8 @@ class TestFileBased:
             with open(path, 'w') as f:
                 f.write("1. 2. 3. flop 4.\n")
 
-            with assert_warns(DeprecationWarning):
-                res = np.fromfile(path, dtype=float, sep=" ")
-        assert_equal(res, np.array([1., 2., 3.]))
+            with assert_raises(ValueError):
+                np.fromfile(path, dtype=float, sep=" ")
 
     def test_fromfile_complex(self):
         for ctype in ["complex", "cdouble"]:
@@ -185,56 +175,48 @@ class TestFileBased:
                 with open(path, 'w') as f:
                     f.write("1+2 j,3\n")
 
-                with assert_warns(DeprecationWarning):
-                    res = np.fromfile(path, dtype=ctype, sep=",")
-            assert_equal(res, np.array([1.]))
+                with assert_raises(ValueError):
+                    np.fromfile(path, dtype=ctype, sep=",")
 
             # Spaces at wrong places
             with temppath() as path:
                 with open(path, 'w') as f:
                     f.write("1+ 2j,3\n")
 
-                with assert_warns(DeprecationWarning):
-                    res = np.fromfile(path, dtype=ctype, sep=",")
-            assert_equal(res, np.array([1.]))
+                with assert_raises(ValueError):
+                    np.fromfile(path, dtype=ctype, sep=",")
 
             # Spaces at wrong places
             with temppath() as path:
                 with open(path, 'w') as f:
                     f.write("1 +2j,3\n")
 
-                with assert_warns(DeprecationWarning):
-                    res = np.fromfile(path, dtype=ctype, sep=",")
-            assert_equal(res, np.array([1.]))
+                with assert_raises(ValueError):
+                    np.fromfile(path, dtype=ctype, sep=",")
 
-            # Spaces at wrong places
+            # Wrong sep
             with temppath() as path:
                 with open(path, 'w') as f:
                     f.write("1+j\n")
 
-                with assert_warns(DeprecationWarning):
-                    res = np.fromfile(path, dtype=ctype, sep=",")
-            assert_equal(res, np.array([1.]))
+                with assert_raises(ValueError):
+                    np.fromfile(path, dtype=ctype, sep=",")
 
-            # Spaces at wrong places
+            # Wrong sep
             with temppath() as path:
                 with open(path, 'w') as f:
                     f.write("1+\n")
 
-                with assert_warns(DeprecationWarning):
-                    res = np.fromfile(path, dtype=ctype, sep=",")
-            assert_equal(res, np.array([1.]))
+                with assert_raises(ValueError):
+                    np.fromfile(path, dtype=ctype, sep=",")
 
-            # Spaces at wrong places
+            # Wrong sep
             with temppath() as path:
                 with open(path, 'w') as f:
                     f.write("1j+1\n")
 
-                with assert_warns(DeprecationWarning):
-                    res = np.fromfile(path, dtype=ctype, sep=",")
-            assert_equal(res, np.array([1.j]))
-
-
+                with assert_raises(ValueError):
+                    np.fromfile(path, dtype=ctype, sep=",")
 
     @pytest.mark.skipif(string_to_longdouble_inaccurate,
                         reason="Need strtold_l")
@@ -323,16 +305,6 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
         a = np.fromstring(repr(f), dtype=float, sep=" ")
         assert_equal(a[0], f)
 
-    def test_fromstring_best_effort_float(self):
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.fromstring("1,234", dtype=float, sep=" "),
-                         np.array([1.]))
-
-    def test_fromstring_best_effort(self):
-        with assert_warns(DeprecationWarning):
-            assert_equal(np.fromstring("1,234", dtype=np.longdouble, sep=" "),
-                         np.array([1.]))
-
     def test_fromstring_foreign(self):
         s = "1.234"
         a = np.fromstring(s, dtype=np.longdouble, sep=" ")
@@ -344,9 +316,8 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
         assert_array_equal(a, b)
 
     def test_fromstring_foreign_value(self):
-        with assert_warns(DeprecationWarning):
-            b = np.fromstring("1,234", dtype=np.longdouble, sep=" ")
-            assert_array_equal(b[0], 1)
+        with assert_raises(ValueError):
+            np.fromstring("1,234", dtype=np.longdouble, sep=" ")
 
 
 @pytest.mark.parametrize("int_val", [

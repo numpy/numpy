@@ -1,4 +1,4 @@
-from collections.abc import Sequence, Iterator, Callable, Iterable
+from collections.abc import Sequence, Callable, Iterable
 from typing import (
     Concatenate,
     Literal as L,
@@ -15,8 +15,9 @@ from typing import (
 )
 from typing_extensions import deprecated
 
+import numpy as np
 from numpy import (
-    vectorize as vectorize,
+    vectorize,
     generic,
     integer,
     floating,
@@ -35,19 +36,22 @@ from numpy._typing import (
     NDArray,
     ArrayLike,
     DTypeLike,
-    _ShapeLike,
-    _ScalarLike_co,
-    _DTypeLike,
     _ArrayLike,
+    _DTypeLike,
+    _ShapeLike,
     _ArrayLikeBool_co,
     _ArrayLikeInt_co,
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeNumber_co,
     _ArrayLikeTD64_co,
     _ArrayLikeDT64_co,
     _ArrayLikeObject_co,
     _FloatLike_co,
     _ComplexLike_co,
+    _NumberLike_co,
+    _ScalarLike_co,
+    _NestedSequence
 )
 
 __all__ = [
@@ -136,7 +140,7 @@ def iterable(y: object) -> TypeGuard[Iterable[Any]]: ...
 def average(
     a: _ArrayLikeFloat_co,
     axis: None = ...,
-    weights: None | _ArrayLikeFloat_co= ...,
+    weights: None | _ArrayLikeFloat_co = ...,
     returned: L[False] = ...,
     keepdims: L[False] = ...,
 ) -> floating[Any]: ...
@@ -160,7 +164,7 @@ def average(
 def average(
     a: _ArrayLikeFloat_co,
     axis: None = ...,
-    weights: None | _ArrayLikeFloat_co= ...,
+    weights: None | _ArrayLikeFloat_co = ...,
     returned: L[True] = ...,
     keepdims: L[False] = ...,
 ) -> _2Tuple[floating[Any]]: ...
@@ -303,24 +307,87 @@ def diff(
     append: ArrayLike = ...,
 ) -> NDArray[Any]: ...
 
-@overload
+@overload  # float scalar
+def interp(
+    x: _FloatLike_co,
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLikeFloat_co,
+    left: _FloatLike_co | None = None,
+    right: _FloatLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> float64: ...
+@overload  # float array
+def interp(
+    x: NDArray[floating | integer | np.bool] | _NestedSequence[_FloatLike_co],
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLikeFloat_co,
+    left: _FloatLike_co | None = None,
+    right: _FloatLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[float64]: ...
+@overload  # float scalar or array
 def interp(
     x: _ArrayLikeFloat_co,
     xp: _ArrayLikeFloat_co,
     fp: _ArrayLikeFloat_co,
-    left: None | _FloatLike_co = ...,
-    right: None | _FloatLike_co = ...,
-    period: None | _FloatLike_co = ...,
-) -> NDArray[float64]: ...
-@overload
+    left: _FloatLike_co | None = None,
+    right: _FloatLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[float64] | float64: ...
+@overload  # complex scalar
+def interp(
+    x: _FloatLike_co,
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLike[complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> complex128: ...
+@overload  # complex or float scalar
+def interp(
+    x: _FloatLike_co,
+    xp: _ArrayLikeFloat_co,
+    fp: Sequence[complex | complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> complex128 | float64: ...
+@overload  # complex array
+def interp(
+    x: NDArray[floating | integer | np.bool] | _NestedSequence[_FloatLike_co],
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLike[complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[complex128]: ...
+@overload  # complex or float array
+def interp(
+    x: NDArray[floating | integer | np.bool] | _NestedSequence[_FloatLike_co],
+    xp: _ArrayLikeFloat_co,
+    fp: Sequence[complex | complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[complex128 | float64]: ...
+@overload  # complex scalar or array
 def interp(
     x: _ArrayLikeFloat_co,
     xp: _ArrayLikeFloat_co,
-    fp: _ArrayLikeComplex_co,
-    left: None | _ComplexLike_co = ...,
-    right: None | _ComplexLike_co = ...,
-    period: None | _FloatLike_co = ...,
-) -> NDArray[complex128]: ...
+    fp: _ArrayLike[complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[complex128] | complex128: ...
+@overload  # complex or float scalar or array
+def interp(
+    x: _ArrayLikeFloat_co,
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLikeNumber_co,
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[complex128 | float64] | complex128 | float64: ...
 
 @overload
 def angle(z: _ComplexLike_co, deg: bool = ...) -> floating[Any]: ...
@@ -666,7 +733,7 @@ def percentile(
 ) -> NDArray[object_]: ...
 @overload
 def percentile(
-    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
     axis: None | _ShapeLike = ...,
     out: None = ...,
@@ -678,7 +745,7 @@ def percentile(
 ) -> Any: ...
 @overload
 def percentile(
-    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
     axis: None | _ShapeLike,
     out: _ArrayType,
@@ -691,7 +758,7 @@ def percentile(
 ) -> _ArrayType: ...
 @overload
 def percentile(
-    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
     axis: None | _ShapeLike = ...,
     *,
@@ -705,7 +772,6 @@ def percentile(
 # NOTE: Not an alias, but they do have identical signatures
 # (that we can reuse)
 quantile = percentile
-
 
 _SCT_fm = TypeVar(
     "_SCT_fm",

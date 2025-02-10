@@ -352,13 +352,13 @@ class _ConstructorEmpty(Protocol):
 error: Final = Exception
 
 # from ._multiarray_umath
-ITEM_HASOBJECT: Final[L[1]]
-LIST_PICKLE: Final[L[2]]
-ITEM_IS_POINTER: Final[L[4]]
-NEEDS_INIT: Final[L[8]]
-NEEDS_PYAPI: Final[L[16]]
-USE_GETITEM: Final[L[32]]
-USE_SETITEM: Final[L[64]]
+ITEM_HASOBJECT: Final = 1
+LIST_PICKLE: Final = 2
+ITEM_IS_POINTER: Final = 4
+NEEDS_INIT: Final = 8
+NEEDS_PYAPI: Final = 16
+USE_GETITEM: Final = 32
+USE_SETITEM: Final = 64
 DATETIMEUNITS: Final[CapsuleType]
 _ARRAY_API: Final[CapsuleType]
 _flagdict: Final[dict[str, int]]
@@ -637,7 +637,7 @@ def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> np.bool: ...  # type:
 @overload
 def vdot(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co, /) -> unsignedinteger[Any]: ...  # type: ignore[misc]
 @overload
-def vdot(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, /) -> signedinteger[Any]: ... # type: ignore[misc]
+def vdot(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co, /) -> signedinteger[Any]: ...  # type: ignore[misc]
 @overload
 def vdot(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co, /) -> floating[Any]: ...  # type: ignore[misc]
 @overload

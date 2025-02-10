@@ -223,6 +223,7 @@ null_dep = dependency('', required : false)
 atomic_dep = null_dep
 code_non_lockfree = '''
   #include <stdint.h>
+  #include <stddef.h>
   int main() {
    struct {
      void *p;
@@ -230,10 +231,10 @@ code_non_lockfree = '''
    } x;
    x.p = NULL;
    x.u8v = 0;
-   uint8_t res = __atomic_load_n(x.u8v, __ATOMIC_SEQ_CST);
-   __atomic_store_n(x.u8v, 1, ATOMIC_SEQ_CST);
-   void *p = __atomic_load_n(x.p, __ATOMIC_SEQ_CST);
-   __atomic_store_n((void **)x.p, NULL, __ATOMIC_SEQ_CST)
+   uint8_t res = __atomic_load_n(&x.u8v, __ATOMIC_SEQ_CST);
+   __atomic_store_n(&x.u8v, 1, __ATOMIC_SEQ_CST);
+   void *p = __atomic_load_n((void **)x.p, __ATOMIC_SEQ_CST);
+   __atomic_store_n((void **)x.p, NULL, __ATOMIC_SEQ_CST);
    return 0;
    }
 '''
@@ -275,19 +276,22 @@ python_sources = [
   '_array_api_info.py',
   '_array_api_info.pyi',
   '_configtool.py',
+  '_configtool.pyi',
   '_distributor_init.py',
+  '_distributor_init.pyi',
   '_globals.py',
+  '_globals.pyi',
   '_pytesttester.py',
   '_pytesttester.pyi',
   '_expired_attrs_2_0.py',
+  '_expired_attrs_2_0.pyi',
   'conftest.py',
-  'ctypeslib.py',
-  'ctypeslib.pyi',
   'exceptions.py',
   'exceptions.pyi',
   'dtypes.py',
   'dtypes.pyi',
   'matlib.py',
+  'matlib.pyi',
   'py.typed',
   'version.pyi',
 ]
@@ -314,6 +318,7 @@ pure_subdirs = [
   '_typing',
   '_utils',
   'compat',
+  'ctypeslib',
   'doc',
   'f2py',
   'lib',

@@ -12,8 +12,7 @@ import numpy.typing as npt
 
 from typing_extensions import assert_type
 
-class SubClass(npt.NDArray[np.int64]):
-    ...
+class SubClass(npt.NDArray[np.int64]): ...
 
 i8: np.int64
 

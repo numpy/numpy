@@ -122,16 +122,9 @@ _try_convert_from_dtype_attr(PyObject *obj)
         goto fail;
     }
 
-    /* Deprecated 2021-01-05, NumPy 1.21 */
-    if (DEPRECATE("in the future the `.dtype` attribute of a given data"
-                  "type object must be a valid dtype instance. "
-                  "`data_type.dtype` may need to be coerced using "
-                  "`np.dtype(data_type.dtype)`. (Deprecated NumPy 1.20)") < 0) {
-        Py_DECREF(newdescr);
-        return NULL;
-    }
-
-    return newdescr;
+    Py_DECREF(newdescr);
+    PyErr_SetString(PyExc_ValueError, "dtype attribute is not a valid dtype instance");
+    return NULL;
 
   fail:
     /* Ignore all but recursion errors, to give ctypes a full try. */
@@ -274,8 +267,16 @@ _convert_from_tuple(PyObject *obj, int align)
     if (PyDataType_ISUNSIZED(type)) {
         /* interpret next item as a typesize */
         int itemsize = PyArray_PyIntAsInt(PyTuple_GET_ITEM(obj,1));
-
-        if (error_converting(itemsize)) {
+        if (type->type_num == NPY_UNICODE) {
+            if (itemsize > NPY_MAX_INT / 4) {
+                itemsize = -1;
+            }
+            else {
+                itemsize *= 4;
+            }
+        }
+        if (itemsize < 0) {
+            /* Error may or may not be set by PyIntAsInt. */
             PyErr_SetString(PyExc_ValueError,
                     "invalid itemsize in generic type tuple");
             Py_DECREF(type);
@@ -285,12 +286,8 @@ _convert_from_tuple(PyObject *obj, int align)
         if (type == NULL) {
             return NULL;
         }
-        if (type->type_num == NPY_UNICODE) {
-            type->elsize = itemsize << 2;
-        }
-        else {
-            type->elsize = itemsize;
-        }
+
+        type->elsize = itemsize;
         return type;
     }
     else if (type->metadata && (PyDict_Check(val) || PyDictProxy_Check(val))) {
@@ -1861,7 +1858,10 @@ _convert_from_str(PyObject *obj, int align)
                  */
                 case NPY_UNICODELTR:
                     check_num = NPY_UNICODE;
-                    elsize <<= 2;
+                    if (elsize > (NPY_MAX_INT / 4)) {
+                        goto fail;
+                    }
+                    elsize *= 4;
                     break;
 
                 case NPY_VOIDLTR:
@@ -2379,20 +2379,6 @@ arraydescr_names_set(
                 "there are no fields defined");
         return -1;
     }
-
-    /*
-     * FIXME
-     *
-     * This deprecation has been temporarily removed for the NumPy 1.7
-     * release. It should be re-added after the 1.7 branch is done,
-     * and a convenience API to replace the typical use-cases for
-     * mutable names should be implemented.
-     *
-     * if (DEPRECATE("Setting NumPy dtype names is deprecated, the dtype "
-     *                "will become immutable in a future version") < 0) {
-     *     return -1;
-     * }
-     */
 
     N = PyTuple_GET_SIZE(self->names);
     if (!PySequence_Check(val) || PyObject_Size((PyObject *)val) != N) {

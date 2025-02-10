@@ -8,6 +8,7 @@ class ScalarMath(Benchmark):
     # the function call overhead to some degree.
     params = [TYPES1]
     param_names = ["type"]
+
     def setup(self, typename):
         self.num = np.dtype(typename).type(2)
         self.int32 = np.int32(2)

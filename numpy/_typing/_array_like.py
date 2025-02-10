@@ -21,6 +21,7 @@ from numpy import (
     str_,
     bytes_,
 )
+from ._nbit_base import _32Bit, _64Bit
 from ._nested_sequence import _NestedSequence
 from ._shape import _Shape
 
@@ -87,17 +88,16 @@ _DualArrayLike: TypeAlias = (
 )
 
 if sys.version_info >= (3, 12):
-    from collections.abc import Buffer
-
-    ArrayLike: TypeAlias = Buffer | _DualArrayLike[
-        dtype[Any],
-        bool | int | float | complex | str | bytes,
-    ]
+    from collections.abc import Buffer as _Buffer
 else:
-    ArrayLike: TypeAlias = _DualArrayLike[
-        dtype[Any],
-        bool | int | float | complex | str | bytes,
-    ]
+    @runtime_checkable
+    class _Buffer(Protocol):
+        def __buffer__(self, flags: int, /) -> memoryview: ...
+
+ArrayLike: TypeAlias = _Buffer | _DualArrayLike[
+    dtype[Any],
+    bool | int | float | complex | str | bytes,
+]
 
 # `ArrayLike<X>_co`: array-like objects that can be coerced into `X`
 # given the casting rules `same_kind`
@@ -164,6 +164,11 @@ _ArrayLikeAnyString_co: TypeAlias = (
     _ArrayLikeBytes_co |
     _ArrayLikeString_co
 )
+
+__Float64_co: TypeAlias = np.floating[_64Bit] | np.float32 | np.float16 | np.integer | np.bool
+__Complex128_co: TypeAlias = np.number[_64Bit] | np.number[_32Bit] | np.float16 | np.integer | np.bool
+_ArrayLikeFloat64_co: TypeAlias = _DualArrayLike[dtype[__Float64_co], float | int]
+_ArrayLikeComplex128_co: TypeAlias = _DualArrayLike[dtype[__Complex128_co], complex | float | int]
 
 # NOTE: This includes `builtins.bool`, but not `numpy.bool`.
 _ArrayLikeInt: TypeAlias = _DualArrayLike[

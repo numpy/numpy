@@ -58,10 +58,10 @@ _Flat = Extension("_Flat",
                     )
 
 # NumyTypemapTests setup
-setup(name        = "NumpyTypemapTests",
+setup(name = "NumpyTypemapTests",
       description = "Functions that work on arrays",
-      author      = "Bill Spotz",
-      py_modules  = ["Array", "Farray", "Vector", "Matrix", "Tensor",
+      author = "Bill Spotz",
+      py_modules = ["Array", "Farray", "Vector", "Matrix", "Tensor",
                      "Fortran", "Flat"],
       ext_modules = [_Array, _Farray, _Vector, _Matrix, _Tensor,
                      _Fortran, _Flat]

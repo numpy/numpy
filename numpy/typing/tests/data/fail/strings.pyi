@@ -49,7 +49,7 @@ np.strings.startswith(AR_S, "a", 0, 9)  # E: incompatible type
 
 np.strings.find(AR_U, b"a", [1, 2, 3], [1, 2, 3])  # E: incompatible type
 np.strings.find(AR_S, "a", 0, 9)  # E: incompatible type
-np.strings.rfind(AR_U, b"a", [1, 2, 3], [1, 2 , 3])  # E: incompatible type
+np.strings.rfind(AR_U, b"a", [1, 2, 3], [1, 2, 3])  # E: incompatible type
 np.strings.rfind(AR_S, "a", 0, 9)  # E: incompatible type
 
 np.strings.index(AR_U, b"a", start=[1, 2, 3])  # E: incompatible type

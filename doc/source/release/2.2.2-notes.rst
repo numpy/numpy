@@ -1,0 +1,49 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.2.2 Release Notes
+==========================
+
+NumPy 2.2.2 is a patch release that fixes bugs found after the 2.2.1 release.
+The number of typing fixes/updates is notable. This release supports Python
+versions 3.10-3.13.
+
+
+Contributors
+============
+
+A total of 8 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Alicia Boya García +
+* Charles Harris
+* Joren Hammudoglu
+* Kai Germaschewski +
+* Nathan Goldbaum
+* PTUsumit +
+* Rohit Goswami
+* Sebastian Berg
+
+
+Pull requests merged
+====================
+
+A total of 16 pull requests were merged for this release.
+
+* `#28050 <https://github.com/numpy/numpy/pull/28050>`__: MAINT: Prepare 2.2.x for further development
+* `#28055 <https://github.com/numpy/numpy/pull/28055>`__: TYP: fix ``void`` arrays not accepting ``str`` keys in ``__setitem__``
+* `#28066 <https://github.com/numpy/numpy/pull/28066>`__: TYP: fix unnecessarily broad ``integer`` binop return types (#28065)
+* `#28112 <https://github.com/numpy/numpy/pull/28112>`__: TYP: Better ``ndarray`` binop return types for ``float64`` &...
+* `#28113 <https://github.com/numpy/numpy/pull/28113>`__: TYP: Return the correct ``bool`` from ``issubdtype``
+* `#28114 <https://github.com/numpy/numpy/pull/28114>`__: TYP: Always accept ``date[time]`` in the ``datetime64`` constructor
+* `#28120 <https://github.com/numpy/numpy/pull/28120>`__: BUG: Fix auxdata initialization in ufunc slow path
+* `#28131 <https://github.com/numpy/numpy/pull/28131>`__: BUG: move reduction initialization to ufunc initialization
+* `#28132 <https://github.com/numpy/numpy/pull/28132>`__: TYP: Fix ``interp`` to accept and return scalars
+* `#28137 <https://github.com/numpy/numpy/pull/28137>`__: BUG: call PyType_Ready in f2py to avoid data races
+* `#28145 <https://github.com/numpy/numpy/pull/28145>`__: BUG: remove unnecessary call to PyArray_UpdateFlags
+* `#28160 <https://github.com/numpy/numpy/pull/28160>`__: BUG: Avoid data race in PyArray_CheckFromAny_int
+* `#28175 <https://github.com/numpy/numpy/pull/28175>`__: BUG: Fix f2py directives and --lower casing
+* `#28176 <https://github.com/numpy/numpy/pull/28176>`__: TYP: Fix overlapping overloads issue in 2->1 ufuncs
+* `#28177 <https://github.com/numpy/numpy/pull/28177>`__: TYP: preserve shape-type in ndarray.astype()
+* `#28178 <https://github.com/numpy/numpy/pull/28178>`__: TYP: Fix missing and spurious top-level exports
+

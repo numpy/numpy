@@ -214,7 +214,7 @@ def zeros_like(
     dtype: None = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
@@ -224,7 +224,7 @@ def zeros_like(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
@@ -234,7 +234,7 @@ def zeros_like(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
@@ -267,7 +267,7 @@ def ones_like(
     dtype: None = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
@@ -277,7 +277,7 @@ def ones_like(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
@@ -287,7 +287,7 @@ def ones_like(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
@@ -422,7 +422,7 @@ def full_like(
     dtype: None = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
@@ -433,7 +433,7 @@ def full_like(
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
 ) -> NDArray[_SCT]: ...
@@ -444,7 +444,7 @@ def full_like(
     dtype: DTypeLike,
     order: _OrderKACF = ...,
     subok: bool = ...,
-    shape: None | _ShapeLike= ...,
+    shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
@@ -872,15 +872,15 @@ def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
 
 @overload
 def astype(
-    x: NDArray[Any],
+    x: ndarray[_ShapeType, dtype[Any]],
     dtype: _DTypeLike[_SCT],
     copy: bool = ...,
     device: None | L["cpu"] = ...,
-) -> NDArray[_SCT]: ...
+) -> ndarray[_ShapeType, dtype[_SCT]]: ...
 @overload
 def astype(
-    x: NDArray[Any],
+    x: ndarray[_ShapeType, dtype[Any]],
     dtype: DTypeLike,
     copy: bool = ...,
     device: None | L["cpu"] = ...,
-) -> NDArray[Any]: ...
+) -> ndarray[_ShapeType, dtype[Any]]: ...

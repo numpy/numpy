@@ -76,7 +76,7 @@ directly from the ``_generator`` shared object, using the `BitGenerator.cffi` in
 
 .. literalinclude:: ../../../../numpy/random/_examples/cffi/extending.py
     :language: python
-    :start-after: dlopen
+    :start-at: dlopen
 
 
 New BitGenerators

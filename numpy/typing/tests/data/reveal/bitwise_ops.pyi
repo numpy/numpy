@@ -27,7 +27,6 @@ i: int
 
 AR: npt.NDArray[np.int32]
 
-
 assert_type(i8 << i8, np.int64)
 assert_type(i8 >> i8, np.int64)
 assert_type(i8 | i8, np.int64)

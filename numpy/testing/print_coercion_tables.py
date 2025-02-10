@@ -40,7 +40,8 @@ def print_cancast_table(ntypes):
             print(cast, end=' ')
         print()
 
-def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, use_promote_types=False):
+def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray,
+                         use_promote_types=False):
     print('+', end=' ')
     for char in ntypes:
         print(char, end=' ')
@@ -96,7 +97,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
         4: ".",  # unsafe casting
     }
     flags_table = {
-        0 : "▗", 7: "█",
+        0: "▗", 7: "█",
         1: "▚", 2: "▐", 4: "▄",
                 3: "▜", 5: "▙",
                         6: "▟",
@@ -132,6 +133,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     # The np.dtype(x.type) is a bit strange, because dtype classes do
     # not expose much yet.
     types = np.typecodes["All"]
+
     def sorter(x):
         # This is a bit weird hack, to get a table as close as possible to
         # the one printing all typecodes (but expecting user-dtypes).
@@ -171,8 +173,10 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
 
     if flags:
         print()
-        print(f"{flags_table[0]}: no flags, {flags_table[1]}: PyAPI, "
-              f"{flags_table[2]}: supports unaligned, {flags_table[4]}: no-float-errors")
+        print(f"{flags_table[0]}: no flags, "
+              f"{flags_table[1]}: PyAPI, "
+              f"{flags_table[2]}: supports unaligned, "
+              f"{flags_table[4]}: no-float-errors")
         print()
         print_table("flags")
 

@@ -65,6 +65,7 @@ _import_array(void)
 {
   int st;
   PyObject *numpy = PyImport_ImportModule("numpy._core._multiarray_umath");
+  PyObject *c_api;
   if (numpy == NULL && PyErr_ExceptionMatches(PyExc_ModuleNotFoundError)) {
     PyErr_Clear();
     numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
@@ -74,7 +75,7 @@ _import_array(void)
       return -1;
   }
 
-  PyObject *c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
+  c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
   Py_DECREF(numpy);
   if (c_api == NULL) {
       return -1;
@@ -259,7 +260,7 @@ def do_generate_api(targets, sources):
 
     for name, val in types_api.items():
         index = val[0]
-        internal_type =  None if len(val) == 1 else val[1]
+        internal_type = None if len(val) == 1 else val[1]
         multiarray_api_dict[name] = TypeApi(
             name, index, 'PyTypeObject', api_name, internal_type)
 

@@ -26,6 +26,8 @@
 #include "stringdtype/dtype.h"
 #include "stringdtype/utf8_utils.h"
 
+#include <vector>
+
 #define LOAD_TWO_INPUT_STRINGS(CONTEXT)                                            \
         const npy_packed_static_string *ps1 = (npy_packed_static_string *)in1;     \
         npy_static_string s1 = {0, NULL};                                          \
@@ -2143,6 +2145,180 @@ string_inputs_promoter(
 }
 
 static int
+slice_promoter(PyObject *NPY_UNUSED(ufunc),
+        PyArray_DTypeMeta *const op_dtypes[], PyArray_DTypeMeta *const signature[],
+        PyArray_DTypeMeta *new_op_dtypes[])
+{
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[0] = op_dtypes[0];
+    new_op_dtypes[1] = NPY_DT_NewRef(&PyArray_IntpDType);
+    new_op_dtypes[2] = NPY_DT_NewRef(&PyArray_IntpDType);
+    new_op_dtypes[3] = NPY_DT_NewRef(&PyArray_IntpDType);
+    Py_INCREF(op_dtypes[0]);
+    new_op_dtypes[4] = op_dtypes[0];
+    return 0;
+}
+
+static NPY_CASTING
+slice_resolve_descriptors(PyArrayMethodObject *self,
+                          PyArray_DTypeMeta *const NPY_UNUSED(dtypes[5]),
+                          PyArray_Descr *const given_descrs[5],
+                          PyArray_Descr *loop_descrs[5],
+                          npy_intp *NPY_UNUSED(view_offset))
+{
+    if (given_descrs[4]) {
+        PyErr_Format(PyExc_TypeError,
+                     "The StringDType '%s' ufunc does not "
+                     "currently support the 'out' keyword",
+                     self->name);
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        Py_INCREF(given_descrs[i]);
+        loop_descrs[i] = given_descrs[i];
+    }
+
+    PyArray_StringDTypeObject *in_descr =
+            (PyArray_StringDTypeObject *)loop_descrs[0];
+    int out_coerce = in_descr->coerce;
+    PyObject *out_na_object = in_descr->na_object;
+    loop_descrs[4] = (PyArray_Descr *)new_stringdtype_instance(out_na_object,
+                                                               out_coerce);
+    if (loop_descrs[4] == NULL) {
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
+
+    return NPY_NO_CASTING;
+}
+
+static int
+slice_strided_loop(PyArrayMethod_Context *context, char *const data[],
+                   npy_intp const dimensions[], npy_intp const strides[],
+                   NpyAuxData *NPY_UNUSED(auxdata))
+{
+    char *iptr = data[0];
+    char *start_ptr = data[1];
+    char *stop_ptr = data[2];
+    char *step_ptr = data[3];
+    char *optr = data[4];
+
+    npy_intp N = dimensions[0];
+
+    npy_string_allocator *allocators[5] = {};
+    NpyString_acquire_allocators(5, context->descriptors, allocators);
+    npy_string_allocator *iallocator = allocators[0];
+    npy_string_allocator *oallocator = allocators[4];
+
+    // Build up an index mapping codepoint indices to locations in the encoded
+    // string.
+    std::vector<unsigned char *> codepoint_offsets;
+
+    while (N--) {
+        // get the slice
+        npy_intp start = *(npy_intp *)start_ptr;
+        npy_intp stop = *(npy_intp *)stop_ptr;
+        npy_intp step = *(npy_intp *)step_ptr;
+
+        npy_static_string is = {0, NULL};
+        const npy_packed_static_string *ips = (npy_packed_static_string *)iptr;
+        npy_static_string os = {0, NULL};
+        npy_packed_static_string *ops = (npy_packed_static_string *)optr;
+        int is_isnull = NpyString_load(iallocator, ips, &is);
+        if (is_isnull == -1) {
+            npy_gil_error(PyExc_MemoryError, "Failed to load string in slice");
+            goto fail;
+        }
+        else if (is_isnull) {
+            npy_gil_error(PyExc_TypeError, "Cannot slice null string");
+            goto fail;
+        }
+
+        // number of codepoints in string
+        size_t num_codepoints = 0;
+        // leaves capacity the same as in previous loop iterations to avoid
+        // heap thrashing
+        codepoint_offsets.clear();
+        {
+            const char *inbuf_ptr = is.buf;
+            const char *inbuf_ptr_end = is.buf + is.size;
+
+            // ignore trailing nulls
+            while (inbuf_ptr < inbuf_ptr_end && *(inbuf_ptr_end - 1) == 0) {
+                inbuf_ptr_end--;
+            }
+
+            while (inbuf_ptr < inbuf_ptr_end) {
+                num_codepoints++;
+                int num_bytes = num_bytes_for_utf8_character(
+                        ((unsigned char *)inbuf_ptr));
+                codepoint_offsets.push_back((unsigned char *)inbuf_ptr);
+                inbuf_ptr += num_bytes;
+            }
+        }
+
+        // adjust slice to string length in codepoints
+        // and handle negative indices
+        npy_intp slice_length =
+                PySlice_AdjustIndices(num_codepoints, &start, &stop, step);
+
+        if (step == 1) {
+            // step == 1 is the easy case, we can just use memcpy
+            npy_intp outsize = ((size_t)stop < num_codepoints
+                                        ? codepoint_offsets[stop]
+                                        : (unsigned char *)is.buf + is.size) -
+                               codepoint_offsets[start];
+
+            if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
+                goto fail;
+            }
+
+            /* explicitly discard const; initializing new buffer */
+            char *buf = (char *)os.buf;
+
+            memcpy(buf, codepoint_offsets[start], outsize);
+        }
+        else {
+            // handle step != 1
+            // compute outsize
+            npy_intp outsize = 0;
+            for (int i = start; step > 0 ? i < stop : i > stop; i += step) {
+                outsize += num_bytes_for_utf8_character(codepoint_offsets[i]);
+            }
+
+            if (outsize > 0) {
+                if (load_new_string(ops, &os, outsize, oallocator, "slice") < 0) {
+                    goto fail;
+                }
+
+                /* explicitly discard const; initializing new buffer */
+                char *buf = (char *)os.buf;
+
+                for (npy_intp i_idx = start, o_idx = 0; o_idx < slice_length; o_idx++, i_idx += step) {
+                    int num_bytes = num_bytes_for_utf8_character(codepoint_offsets[i_idx]);
+                    memcpy(buf, codepoint_offsets[i_idx], num_bytes);
+                    buf += num_bytes;
+                }
+            }
+        }
+
+        // move to next step
+        iptr += strides[0];
+        start_ptr += strides[1];
+        stop_ptr += strides[2];
+        step_ptr += strides[3];
+        optr += strides[4];
+    }
+
+    NpyString_release_allocators(5, allocators);
+    return 0;
+
+fail:
+    NpyString_release_allocators(5, allocators);
+    return -1;
+}
+
+static int
 string_object_bool_output_promoter(
         PyObject *ufunc, PyArray_DTypeMeta *const op_dtypes[],
         PyArray_DTypeMeta *const signature[],
@@ -2919,6 +3095,33 @@ init_stringdtype_ufuncs(PyObject *umath)
                        (NPY_ARRAYMETHOD_FLAGS) 0, &partition_startpositions[i]) < 0) {
             return -1;
         }
+    }
+
+    PyArray_DTypeMeta *slice_dtypes[] = {
+        &PyArray_StringDType,
+        &PyArray_IntpDType,
+        &PyArray_IntpDType,
+        &PyArray_IntpDType,
+        &PyArray_StringDType,
+    };
+
+    if (init_ufunc(umath, "_slice", slice_dtypes, slice_resolve_descriptors,
+                   slice_strided_loop, 4, 1, NPY_NO_CASTING,
+                   (NPY_ARRAYMETHOD_FLAGS) 0, NULL) < 0) {
+        return -1;
+    }
+
+    PyArray_DTypeMeta *slice_promoter_dtypes[] = {
+        &PyArray_StringDType,
+        &PyArray_IntAbstractDType,
+        &PyArray_IntAbstractDType,
+        &PyArray_IntAbstractDType,
+        &PyArray_StringDType,
+    };
+
+    if (add_promoter(umath, "_slice", slice_promoter_dtypes, 5,
+                     slice_promoter) < 0) {
+        return -1;
     }
 
     return 0;

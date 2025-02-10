@@ -133,7 +133,7 @@ class TestGetImplementingArgs:
         assert_equal(_get_implementing_args([a, c, b]), [c, b, a])
 
     def test_too_many_duck_arrays(self):
-        namespace = dict(__array_function__=_return_not_implemented)
+        namespace = {'__array_function__': _return_not_implemented}
         types = [type('A' + str(i), (object,), namespace) for i in range(65)]
         relevant_args = [t() for t in types]
 
@@ -482,7 +482,6 @@ class TestArrayFunctionImplementation:
             func(*objs)
 
 
-
 class TestNDArrayMethods:
 
     def test_repr(self):
@@ -526,8 +525,10 @@ class TestNumPyFunctions:
         class ArrayProxy:
             def __init__(self, value):
                 self.value = value
+
             def __array_function__(self, *args, **kwargs):
                 return self.value.__array_function__(*args, **kwargs)
+
             def __array__(self, *args, **kwargs):
                 return self.value.__array__(*args, **kwargs)
 
@@ -626,7 +627,6 @@ class TestArrayLike:
                                   dtype=[('int', 'i8'), ('float', 'f8')],
                                   delimiter=',')),
     ]
-
 
     def test_nep35_functions_as_array_functions(self,):
         all_array_functions = get_overridable_numpy_array_functions()

@@ -48,17 +48,20 @@ jobs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         # Gets the correct commit message for pull request
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - name: Get commit message
         id: commit_message
+        env:
+          HEAD: ${{ github.ref }}
         run: |
           set -xe
           COMMIT_MSG=$(git log --no-merges -1 --oneline)
           echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
-          echo github.ref ${{ github.ref }}
+          echo github.ref "$HEAD"
 
   build_wheels:
     name: Build wheel ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
@@ -85,7 +88,8 @@ jobs:
           - [macos-14, macosx_arm64, accelerate]  # always use accelerate
           - [windows-2019, win_amd64, ""]
           - [windows-2019, win32, ""]
-        python: ["cp310", "cp311", "cp312", "pp310", "cp313", "cp313t"]
+        # TODO pypy: Add pp311 to this list when it comes out (pp310 removed)  
+        python: ["cp311", "cp312", "cp313", "cp313t"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32, ""]
@@ -103,9 +107,10 @@ jobs:
       IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           submodules: true
+          persist-credentials: false
 
       - name: Setup MSVC (32-bit)
         if: ${{ matrix.buildplat[1] == 'win32' }}
@@ -163,18 +168,18 @@ jobs:
           echo "CIBW_BUILD_FRONTEND=pip; args: --no-build-isolation" >> "$GITHUB_ENV"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@7940a4c0e76eb2030e473a5f864f291f63ee879b  # v2.21.3
+        uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969  # v2.22.0
         env:
           CIBW_PRERELEASE_PYTHONS: True
           CIBW_FREE_THREADED_SUPPORT: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
-      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+      - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
 
-      - uses: mamba-org/setup-micromamba@ab6bf8bf7403e8023a094abeec19d6753bdc143e
+      - uses: mamba-org/setup-micromamba@068f1ab4b37ed9b3d9f73da7db90a0cda0a48d29
         with:
           # for installation of anaconda-client, required for upload to
           # anaconda.org
@@ -224,14 +229,15 @@ jobs:
       # IS_SCHEDULE_DISPATCH: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout numpy
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           submodules: true
+          persist-credentials: false
       # Used to push the built wheels
       - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           # Build sdist on lowest supported Python
-          python-version: "3.10"
+          python-version: "3.11"
       - name: Build sdist
         run: |
           python -m pip install -U pip build
@@ -250,7 +256,7 @@ jobs:
           python -mpip install twine
           twine check dist/*
 
-      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+      - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: sdist
           path: ./dist/*
@@ -263,7 +269,7 @@ jobs:
           # Note that this step is *after* specific pythons have been used to
           # build and test
           auto-update-conda: true
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Upload sdist
         if: success()

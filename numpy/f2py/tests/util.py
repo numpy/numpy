@@ -57,7 +57,6 @@ def check_language(lang, code_snippet=None):
         return runmeson.returncode == 0
     finally:
         shutil.rmtree(tmpdir)
-    return False
 
 
 fortran77_code = '''
@@ -102,6 +101,7 @@ class CompilerChecker:
                 self.has_f90 = futures[2].result()
 
             self.compilers_checked = True
+
 
 if not IS_WASM:
     checker = CompilerChecker()
@@ -370,7 +370,7 @@ class F2PyTest:
     @property
     def module_name(self):
         cls = type(self)
-        return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
+        return f'_{cls.__module__.rsplit(".", 1)[-1]}_{cls.__name__}_ext_module'
 
     @classmethod
     def setup_class(cls):

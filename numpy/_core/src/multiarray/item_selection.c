@@ -922,16 +922,23 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
         }
     }
 
+    /* Fill in dimensions of new array */
+    npy_intp dims[NPY_MAXDIMS] = {0};
+
+    for (int i = 0; i < PyArray_NDIM(aop); i++) {
+        dims[i] = PyArray_DIMS(aop)[i];
+    }
+
+    dims[axis] = total;
+
     /* Construct new array */
-    PyArray_DIMS(aop)[axis] = total;
     Py_INCREF(PyArray_DESCR(aop));
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(aop),
                                                 PyArray_DESCR(aop),
                                                 PyArray_NDIM(aop),
-                                                PyArray_DIMS(aop),
+                                                dims,
                                                 NULL, NULL, 0,
                                                 (PyObject *)aop);
-    PyArray_DIMS(aop)[axis] = n;
     if (ret == NULL) {
         goto fail;
     }
@@ -1586,12 +1593,9 @@ partition_prep_kth_array(PyArrayObject * ktharray,
     npy_intp nkth, i;
 
     if (PyArray_ISBOOL(ktharray)) {
-        /* 2021-09-29, NumPy 1.22 */
-        if (DEPRECATE(
-                "Passing booleans as partition index is deprecated"
-                " (warning added in NumPy 1.22)") < 0) {
-            return NULL;
-        }
+        PyErr_SetString(PyExc_ValueError,
+                "Booleans unacceptable as partition index");
+        return NULL;
     }
     else if (!PyArray_ISINTEGER(ktharray)) {
         PyErr_Format(PyExc_TypeError, "Partition index must be integer");
@@ -2014,8 +2018,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 }
                 rcode = argsort(its[j]->dataptr,
                         (npy_intp *)rit->dataptr, N, mps[j]);
-                if (rcode < 0 || (PyDataType_REFCHK(PyArray_DESCR(mps[j]))
-                            && PyErr_Occurred())) {
+                if (rcode < 0 || (object && PyErr_Occurred())) {
                     goto fail;
                 }
                 PyArray_ITER_NEXT(its[j]);
@@ -2758,6 +2761,7 @@ PyArray_CountNonzero(PyArrayObject *self)
     if (iter == NULL) {
         return -1;
     }
+    /* IterationNeedsAPI also checks dtype for whether `nonzero` may need it */
     needs_api = NpyIter_IterationNeedsAPI(iter);
 
     /* Get the pointers for inner loop iteration */
@@ -2767,7 +2771,9 @@ PyArray_CountNonzero(PyArrayObject *self)
         return -1;
     }
 
-    NPY_BEGIN_THREADS_NDITER(iter);
+    if (!needs_api) {
+        NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
+    }
 
     dataptr = NpyIter_GetDataPtrArray(iter);
     strideptr = NpyIter_GetInnerStrideArray(iter);
@@ -2988,9 +2994,12 @@ PyArray_Nonzero(PyArrayObject *self)
             return NULL;
         }
 
+        /* IterationNeedsAPI also checks dtype for whether `nonzero` may need it */
         needs_api = NpyIter_IterationNeedsAPI(iter);
 
-        NPY_BEGIN_THREADS_NDITER(iter);
+        if (!needs_api) {
+            NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
+        }
 
         dataptr = NpyIter_GetDataPtrArray(iter);
 

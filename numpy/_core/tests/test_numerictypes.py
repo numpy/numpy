@@ -73,7 +73,7 @@ NbufferT = [
     ]
 
 
-byteorder = {'little':'<', 'big':'>'}[sys.byteorder]
+byteorder = {'little': '<', 'big': '>'}[sys.byteorder]
 
 def normalize_descr(descr):
     "Normalize a description adding the platform byteorder."
