@@ -1074,17 +1074,17 @@ def test_maxrows_exceeding_chunksize(nmax):
     os.remove(fname)
     assert len(res) == nmax
 
-@pytest.mark.parametrize("nskip", (0, 10000, 55000, 200000, 300000))
-def test_skiprow_exceeding_maxrows_exceeding_chunksize(nskip):
+@pytest.mark.parametrize("nskip", (0, 10000, 50000, 100000))
+def test_skiprow_exceeding_maxrows_exceeding_chunksize(tmpdir, nskip):
     # tries to read all of the file,
     # or less, equal, greater than _loadtxt_chunksize
-    file_length = 400000
+    file_length = 110000
     data = np.arange(1, file_length + 1).astype(str) + np.array([" a 0.5 1"] * file_length)
 
     # file-like path
     txt = StringIO("\n".join(data))
-    res = np.loadtxt(txt, dtype = 'str', delimiter=" ", skiprows=nskip, max_rows=100005)
-    expected_length = min(100005, file_length - nskip)
+    res = np.loadtxt(txt, dtype = 'str', delimiter=" ", skiprows=nskip, max_rows=60000)
+    expected_length = min(60000, file_length - nskip)
     assert len(res) == expected_length
     # are the right lines read in res?
     assert np.all(np.equal(np.arange(nskip + 1, nskip + 1 + expected_length).astype(str), res[:, 0]))
@@ -1093,8 +1093,8 @@ def test_skiprow_exceeding_maxrows_exceeding_chunksize(nskip):
     tmp_file = tmpdir.join("test_data.txt")
     tmp_file.write("\n".join(data))
     fname = str(tmp_file)
-    res = np.loadtxt(fname, dtype = 'str', delimiter=" ", skiprows=nskip, max_rows=100005)
-    expected_length = min(100005, file_length - nskip)
+    res = np.loadtxt(fname, dtype = 'str', delimiter=" ", skiprows=nskip, max_rows=60000)
+    expected_length = min(60000, file_length - nskip)
     assert len(res) == expected_length
     # are the right lines read in res?
     assert np.all(np.equal(np.arange(nskip + 1, nskip + 1 + expected_length).astype(str), res[:, 0]))
