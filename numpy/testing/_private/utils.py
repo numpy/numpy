@@ -2704,13 +2704,11 @@ def run_threaded(func, max_workers=8, pass_count=False,
             else:
                 all_args = [(func, *args) for i in range(max_workers)]
             try:
-                n_submitted = 0
                 futures = []
                 for arg in all_args:
                     futures.append(tpe.submit(*arg))
-                    n_submitted += 1
             finally:
-                if n_submitted < max_workers and pass_barrier:
+                if len(futures) < max_workers and pass_barrier:
                     barrier.abort()
             for f in futures:
                 f.result()
