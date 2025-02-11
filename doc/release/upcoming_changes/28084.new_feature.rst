@@ -1,6 +1,6 @@
-New function `numpy.random.Generator.select`
-----------------------------------
-The new function `numpy.random.Generator.select` was added, which allows for
+New function `numpy.random.default_rng().select`
+-------------------------------------------------
+The new function `numpy.random.default_rng().select` was added, which allows for
 vectorized sampling without replacement. It is a step-up from `numpy.random.choice`,
 allowing for selecting from an n-dimensional array along axes, with probability
 distributions and size constraints. Credit goes to Warren Weckesser for the
