@@ -5099,8 +5099,8 @@ cdef class Generator:
         >>> out = np.empty((2, 5), dtype=int)
         >>> np.random.default_rng().select(arr, nsample=2, axis=0, out=out)
         >>> out
-        array([[10, 70, 30, 90, 50],  # random
-               [60, 20, 80, 40, 100]])
+        array([[10, 70],  # random
+               [60, 20]])
 
         """
         items = np.asarray(items)
