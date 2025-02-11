@@ -48,50 +48,6 @@ class TestRealScalars:
         check(1e15)
         check(1e16)
 
-    def test_py2_float_print(self):
-        # gh-10753
-        # In python2, the python float type implements an obsolete method
-        # tp_print, which overrides tp_repr and tp_str when using "print" to
-        # output to a "real file" (ie, not a StringIO). Make sure we don't
-        # inherit it.
-        x = np.double(0.1999999999999)
-        with TemporaryFile('r+t') as f:
-            print(x, file=f)
-            f.seek(0)
-            output = f.read()
-        assert_equal(output, str(x) + '\n')
-        # In python2 the value float('0.1999999999999') prints with reduced
-        # precision as '0.2', but we want numpy's np.double('0.1999999999999')
-        # to print the unique value, '0.1999999999999'.
-
-        # gh-11031
-        # Only in the python2 interactive shell and when stdout is a "real"
-        # file, the output of the last command is printed to stdout without
-        # Py_PRINT_RAW (unlike the print statement) so `>>> x` and `>>> print
-        # x` are potentially different. Make sure they are the same. The only
-        # way I found to get prompt-like output is using an actual prompt from
-        # the 'code' module. Again, must use tempfile to get a "real" file.
-
-        # dummy user-input which enters one line and then ctrl-Ds.
-        def userinput():
-            yield 'np.sqrt(2)'
-            raise EOFError
-        gen = userinput()
-        input_func = lambda prompt="": next(gen)
-
-        with TemporaryFile('r+t') as fo, TemporaryFile('r+t') as fe:
-            orig_stdout, orig_stderr = sys.stdout, sys.stderr
-            sys.stdout, sys.stderr = fo, fe
-
-            code.interact(local={'np': np}, readfunc=input_func, banner='')
-
-            sys.stdout, sys.stderr = orig_stdout, orig_stderr
-
-            fo.seek(0)
-            capture = fo.read().strip()
-
-        assert_equal(capture, repr(np.sqrt(2)))
-
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
         # see dragon4.c for details.
