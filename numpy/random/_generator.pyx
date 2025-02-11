@@ -5074,19 +5074,19 @@ cdef class Generator:
 
         Select 2 elements from each column (axis=0):
 
-        >>> np.random.default_rng().select(arr, nsample=2, axis=0)
+        >>> np.random.default_rng().select(arr, nsample=2, axis=1)
         array([[10, 70, 30, 90, 50],  # random
                [60, 20, 80, 40, 100]])
 
         Select 2 elements from each row (axis=1):
 
-        >>> np.random.default_rng().select(arr, nsample=2, axis=1)
+        >>> np.random.default_rng().select(arr, nsample=2, axis=0)
         array([[20, 50],  # random
                [70, 90]])
 
         Generate 3 independent selections from each row:
 
-        >>> np.random.default_rng().select(arr, nsample=2, size=3, axis=1)
+        >>> np.random.default_rng().select(arr, nsample=2, size=3, axis=0)
         array([[[20, 50],  # random
                 [30, 40],
                 [10, 40]],
