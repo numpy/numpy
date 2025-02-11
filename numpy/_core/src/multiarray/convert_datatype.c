@@ -151,17 +151,15 @@ ensure_castingimpl_exists(PyArray_DTypeMeta *from, PyArray_DTypeMeta *to)
                           &res) < 0) {
         return_error = 1;
     }
-
-    if (res == NULL && !return_error) {
+    else if (res == NULL) {
         res = create_casting_impl(from, to);
         if (res == NULL) {
             return_error = 1;
         }
-    }
-    if (!return_error &&
-        PyDict_SetItem(NPY_DT_SLOTS(from)->castingimpls,
-                       (PyObject *)to, res) < 0) {
-        return_error = 1;
+        else if (PyDict_SetItem(NPY_DT_SLOTS(from)->castingimpls,
+                                (PyObject *)to, res) < 0) {
+            return_error = 1;
+        }
     }
     Py_END_CRITICAL_SECTION();
     if (return_error) {
