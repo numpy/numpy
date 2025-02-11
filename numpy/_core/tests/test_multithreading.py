@@ -7,6 +7,7 @@ import pytest
 
 from numpy.testing import IS_WASM
 from numpy.testing._private.utils import run_threaded
+from numpy._core import _rational_tests
 
 if IS_WASM:
     pytest.skip(allow_module_level=True, reason="no threading support in wasm")
@@ -254,3 +255,19 @@ def test_stringdtype_multithreaded_access_and_mutation(
 
         for f in futures:
             f.result()
+
+
+def test_legacy_usertype_cast_init_thread_safety():
+    def closure(b):
+        b.wait()
+        np.full((10, 10), 1, _rational_tests.rational)
+
+    try:
+        run_threaded(closure, 250, pass_barrier=True)
+    except RuntimeError:
+        # The 32 bit linux runner will trigger this with 250 threads. I can
+        # trigger it on my Linux laptop with 500 threads but the CI runner is
+        # more resource-constrained.
+        # Reducing the number of threads means the test doesn't trigger the
+        # bug. Better to skip on some platforms than add a useless test.
+        pytest.skip("Couldn't spawn enough threads to run the test")

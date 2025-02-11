@@ -2734,9 +2734,16 @@ def run_threaded(func, max_workers=8, pass_count=False,
                 barrier = threading.Barrier(max_workers)
                 args.append(barrier)
             if pass_count:
-                futures = [tpe.submit(func, i, *args) for i in range(max_workers)]
+                all_args = [(func, i, *args) for i in range(max_workers)]
             else:
-                futures = [tpe.submit(func, *args) for _ in range(max_workers)]
+                all_args = [(func, *args) for i in range(max_workers)]
+            try:
+                futures = []
+                for arg in all_args:
+                    futures.append(tpe.submit(*arg))
+            finally:
+                if len(futures) < max_workers and pass_barrier:
+                    barrier.abort()
             for f in futures:
                 f.result()
 
