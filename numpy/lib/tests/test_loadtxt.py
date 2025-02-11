@@ -1079,7 +1079,7 @@ def test_skiprow_exceeding_maxrows_exceeding_chunksize(nskip):
     # tries to read all of the file,
     # or less, equal, greater than _loadtxt_chunksize
     file_length = 400000
-    data = np.arange(1,file_length+1).astype(str) + np.array([" a 0.5 1"]*file_length)
+    data = np.arange(1, file_length + 1).astype(str) + np.array([" a 0.5 1"] * file_length)
 
     # file-like path
     txt = StringIO("\n".join(data))
@@ -1090,10 +1090,9 @@ def test_skiprow_exceeding_maxrows_exceeding_chunksize(nskip):
     assert np.all(np.equal(np.arange(nskip + 1, nskip + 1 + expected_length).astype(str), res[:, 0]))
 
     # file-obj path
-    fd, fname = mkstemp()
-    os.close(fd)
-    with open(fname, "w") as fh:
-        fh.write("\n".join(data))
+    tmp_file = tmpdir.join("test_data.txt")
+    tmp_file.write("\n".join(data))
+    fname = str(tmp_file)
     res = np.loadtxt(fname, dtype = 'str', delimiter=" ", skiprows=nskip, max_rows=100005)
     expected_length = min(100005, file_length - nskip)
     assert len(res) == expected_length
