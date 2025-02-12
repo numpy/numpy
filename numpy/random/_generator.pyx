@@ -5096,8 +5096,8 @@ cdef class Generator:
 
         Use `out` to store the result in-place:
 
-        >>> out = np.empty((2, 5), dtype=int)
-        >>> np.random.default_rng().select(arr, nsample=2, axis=0, out=out)
+        >>> out = np.empty((2, 2), dtype=int)
+        >>> res = np.random.default_rng().select(arr, nsample=2, axis=0, out=out)
         >>> out
         array([[10, 70],  # random
                [60, 20]])

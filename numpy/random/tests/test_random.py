@@ -1811,3 +1811,9 @@ class TestSingleEltArrayInput:
         assert len(res) == 2
         for val in res:
             assert len(val) == 5
+
+        out = np.empty((2, 2), dtype=int)
+        np.random.default_rng().select(arr, nsample=2, axis=0, out=out)
+        assert np.shape(out) == (2, 2)
+        assert out.size > 0
+
