@@ -1,16 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 2.2.3 Release Notes
-==========================
-
-NumPy 2.2.3 is a patch release that fixes bugs found after the 2.2.2 release.
-The majority of the changes are typing improvements and fixes for free
-threaded Python. Both of those areas are still under development, so if you
-discover new problems, please report them.
-
-This release supports Python versions 3.10-3.13.
-
 
 Contributors
 ============
