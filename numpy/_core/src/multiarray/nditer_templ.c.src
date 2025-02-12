@@ -257,7 +257,7 @@ npyiter_buffered_iternext(NpyIter *iter)
     }
     /* Increment to the next buffer */
     else {
-        npyiter_goto_iterindex(iter, NIT_ITERINDEX(iter));
+        npyiter_incrementbuffer(iter);
     }
 
     /* Prepare the next buffers and set iterend/size */
