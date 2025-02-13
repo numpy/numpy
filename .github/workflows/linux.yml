@@ -77,8 +77,8 @@ jobs:
       run: |
         pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
     - uses: ./.github/meson_actions
-  
-    # TODO pypy: uncomment when pypy3.11 becomes available    
+
+  # TODO pypy: uncomment when pypy3.11 becomes available    
   #pypy:
     #needs: [smoke_test]
     #runs-on: ubuntu-latest
@@ -168,83 +168,39 @@ jobs:
     
   # Add ARM64-specific full test
   aarch64_test:
+    needs: [smoke_test]
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-22.04-arm
     steps:
-    # PR handling
     - name: Checkout for PR
       if: github.event_name == 'pull_request'
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
-        fetch-depth: 0
-        ref: ${{ github.event.pull_request.head.sha }}
-    
-    - name: Configure Git for PR
-      if: github.event_name == 'pull_request'
-      run: |
-        git config --global user.email "you@example.com"
-        git config --global user.name "GitHub Actions Bot"
-        git fetch origin ${{ github.base_ref }}
-        git checkout ${{ github.base_ref }}
-        git merge --no-commit ${{ github.event.pull_request.head.sha }}
-        git submodule update --init --recursive
+        fetch-tags: true
+        persist-credentials: false
 
-    # Regular checkout for non-PR builds
-    - name: Checkout for non-PR
-      if: github.event_name != 'pull_request'
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
-        fetch-depth: 0
-
-    # Setup ccache using Cirrus CI approach
-    - name: Setup ccache directory
-      run: |
-        mkdir -p .ccache
-
-    - uses: actions/cache@v4
-      with:
-        path: .ccache
-        key: ccache-linux_aarch64-${{ github.sha }}
-        restore-keys: |
-          ccache-linux_aarch64-
-
-    # Install system dependencies
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends \
-          software-properties-common \
-          gcc g++ gfortran pkg-config ccache \
-          libopenblas-dev libatlas-base-dev liblapack-dev
-
-        sudo /usr/sbin/update-ccache-symlinks
-        export PATH=/usr/lib/ccache:$PATH
-        echo "PATH=$PATH" >> $GITHUB_ENV
-        echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
-
-    # Setup Python
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: '3.11'
 
-    # Install Python dependencies
     - name: Install Python dependencies
       run: |
         python -m pip install -r requirements/build_requirements.txt
         python -m pip install -r requirements/test_requirements.txt
+        python -m pip install -r requirements/ci32_requirements.txt
+        mkdir -p ./.openblas
+        python -c"import scipy_openblas32 as ob32; print(ob32.get_pkg_config())" > ./.openblas/scipy-openblas.pc
 
-    # Build
     - name: Build
+      env:
+        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
         spin build -- -Dallow-noblas=true
 
-    # Test
     - name: Test
       run: |
-        spin test -j2 -- --timeout=600 --durations=10
-        ccache -s
+        spin test -j2 -m full -- --timeout=600 --durations=10
 
     # Meson Log on failure
     - name: Meson Log
