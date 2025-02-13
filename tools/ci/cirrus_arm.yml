@@ -67,7 +67,7 @@ freebsd_test_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   compute_engine_instance:
     image_project: freebsd-org-cloud-dev
-    image: family/freebsd-14-0
+    image: family/freebsd-14-2
     platform: freebsd
     cpu: 1
     memory: 4G
