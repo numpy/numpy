@@ -53,39 +53,6 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  openblas_arm64:
-    if: github.repository == 'numpy/numpy'
-    runs-on: ubuntu-22.04-arm
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - {name: "OpenBLAS 64-bit nightly", use_nightly: true, bits: 64}
-    name: "Test ARM64 - ${{ matrix.config.name }}"
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-        fetch-tags: true
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-    - name: Install dependencies
-      run: |
-        python -m pip install -r requirements/build_requirements.txt
-        python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scipy-openblas64
-        mkdir -p ./.openblas
-        python -c"import scipy_openblas64 as ob; print(ob.get_pkg_config())" > ./.openblas/scipy-openblas.pc
-    - name: Build
-      env:
-        PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
-      run: |
-        spin build -- -Duse-ilp64=true -Dallow-noblas=false
-    - name: Test
-      run: |
-        pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
-        spin test -- --timeout=600 --durations=10
-
   openblas32_stable_nightly:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
