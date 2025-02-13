@@ -152,11 +152,11 @@ store_vector(vtype vec, type_t* dst, npy_intp sdst, npy_intp len){
 #if NPY_SIMD_F64
 
 [[maybe_unused]] HWY_ATTR NPY_FINLINE vec_f64 lut_16_f64(const double * lut, vec_u64 idx){
-    if constexpr(hn::Lanes(f64) == 8){
+    if constexpr(hn::MaxLanes(f64) == 8){
         const vec_f64 lut0 = hn::Load(f64, lut);
         const vec_f64 lut1 = hn::Load(f64, lut + 8);
         return hn::TwoTablesLookupLanes(f64, lut0, lut1, hn::IndicesFromVec(f64, idx));
-    }else if constexpr (hn::Lanes(f64) == 4){
+    }else if constexpr (hn::MaxLanes(f64) == 4){
         const vec_f64 lut0 = hn::Load(f64, lut);
         const vec_f64 lut1 = hn::Load(f64, lut + 4);
         const vec_f64 lut2 = hn::Load(f64, lut + 8);
@@ -392,22 +392,19 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
         // implemented so we require `npyv_nlanes_f64` == 2.
         vec_f64 b, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16;
         if constexpr(hn::MaxLanes(f64) == 2){
-            vec_f64 e0e1[hn::Lanes(f64)];
+            vec_f64 e0e1_0, e0e1_1;
             uint64_t index[hn::Lanes(f64)];
             hn::StoreU(idx, u64, index);
 
             /**begin repeat
-             * #off= 0, 2,  4,  6,  8,  10, 12,  14,  16#
-             * #e0 = b, c1, c3, c5, c7, c9, c11, c13, c15#
-             * #e1 = c0,c2, c4, c6, c8, c10,c12, c14, c16#
-             */
-            /**begin repeat1
-             * #lane = 0, 1#
-             */
-            e0e1[@lane@] = hn::LoadU(f64, (const double*)lut18x16 + index[@lane@] * 18 + @off@);
-            /**end repeat1**/
-            @e0@ = hn::ConcatLowerLower(f64, e0e1[1], e0e1[0]);
-            @e1@ = hn::ConcatUpperUpper(f64, e0e1[1], e0e1[0]);
+            * #off = 0,  2,  4,  6,  8,  10, 12, 14, 16#
+            * #e0  = b,  c1, c3, c5, c7, c9, c11,c13,c15#
+            * #e1  = c0, c2, c4, c6, c8, c10,c12,c14,c16#
+            */
+            e0e1_0 = hn::LoadU(f64, (const double*)lut18x16 + index[0] * 18 + @off@);
+            e0e1_1 = hn::LoadU(f64, (const double*)lut18x16 + index[1] * 18 + @off@);
+            @e0@ = hn::ConcatLowerLower(f64, e0e1_1, e0e1_0);
+            @e1@ = hn::ConcatUpperUpper(f64, e0e1_1, e0e1_0);
             /**end repeat**/
         } else {
             b = lut_16_f64((const double*)lut16x18 + 16*0, idx);
@@ -464,23 +461,17 @@ simd_tanh_f64(const double *src, npy_intp ssrc, double *dst, npy_intp sdst, npy_
 
 #if NPY_SIMD_F32
 
-struct hwy_f32x2 {
-    vec_f32 val[2];
-};
-
-HWY_ATTR NPY_FINLINE hwy_f32x2 zip_f32(vec_f32 a, vec_f32 b){
-    hwy_f32x2 res;
-    res.val[0] = hn::InterleaveLower(f32, a, b);
-    res.val[1] = hn::InterleaveUpper(f32, a, b);
-    return res;
+HWY_ATTR NPY_FINLINE void zip_f32_lanes(vec_f32 a, vec_f32 b, vec_f32& lower, vec_f32& upper) {
+    lower = hn::InterleaveLower(f32, a, b);
+    upper = hn::InterleaveUpper(f32, a, b);
 }
 
 [[maybe_unused]] HWY_ATTR NPY_FINLINE vec_f32 lut_32_f32(const float * lut, vec_u32 idx){
-    if constexpr(hn::Lanes(f32) == 16){
+    if constexpr(hn::MaxLanes(f32) == 16){
         const vec_f32 lut0 = hn::Load(f32, lut);
         const vec_f32 lut1 = hn::Load(f32, lut + 16);
         return hn::TwoTablesLookupLanes(f32, lut0, lut1, hn::IndicesFromVec(f32, idx));
-    }else if constexpr (hn::Lanes(f32) == 8){
+    }else if constexpr (hn::MaxLanes(f32) == 8){
         const vec_f32 lut0 = hn::Load(f32, lut);
         const vec_f32 lut1 = hn::Load(f32, lut + 8);
         const vec_f32 lut2 = hn::Load(f32, lut + 16);
@@ -608,16 +599,16 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
         // supported so we require `npyv_nlanes_f32` == 4.
         vec_f32 b, c0, c1, c2, c3, c4, c5, c6;
         if constexpr(hn::MaxLanes(f32) == 4 && HWY_TARGET >= HWY_SSE4){
-            vec_f32 c6543[npyv_nlanes_f32];
-            vec_f32 c210b[npyv_nlanes_f32];
+            vec_f32 c6543_0, c6543_1, c6543_2, c6543_3;
+            vec_f32 c210b_0, c210b_1, c210b_2, c210b_3;
             npyv_lanetype_u32 index[npyv_nlanes_f32];
 
             /**begin repeat
              * #lane = 0, 1, 2, 3#
              */
             index[@lane@] = hn::ExtractLane(idx, @lane@);
-            c6543[@lane@] = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8);
-            c210b[@lane@] = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8 + 4);
+            c6543_@lane@ = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8);
+            c210b_@lane@ = hn::LoadU(f32, (const float*)lut8x32 + index[@lane@] * 8 + 4);
             /**end repeat**/
 
             // lane0: {c6, c5, c4, c3},  {c2, c1, c0, b}
@@ -635,19 +626,25 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
             // c0: {lane0, lane1, lane2, lane3}
             // b : {lane0, lane1, lane2, lane3}
 
-            hwy_f32x2 c6543_l01 = zip_f32(c6543[0], c6543[1]);
-            hwy_f32x2 c6543_l23 = zip_f32(c6543[2], c6543[3]);
-            c6 = hn::ConcatLowerLower(f32, c6543_l23.val[0], c6543_l01.val[0]);
-            c5 = hn::ConcatUpperUpper(f32, c6543_l23.val[0], c6543_l01.val[0]);
-            c4 = hn::ConcatLowerLower(f32, c6543_l23.val[1], c6543_l01.val[1]);
-            c3 = hn::ConcatUpperUpper(f32, c6543_l23.val[1], c6543_l01.val[1]);
+            vec_f32 c6543_l01_low, c6543_l01_high;
+            vec_f32 c6543_l23_low, c6543_l23_high;
+            zip_f32_lanes(c6543_0, c6543_1, c6543_l01_low, c6543_l01_high);
+            zip_f32_lanes(c6543_2, c6543_3, c6543_l23_low, c6543_l23_high);
 
-            hwy_f32x2 c210b_l01 = zip_f32(c210b[0], c210b[1]);
-            hwy_f32x2 c210b_l23 = zip_f32(c210b[2], c210b[3]);
-            c2 = hn::ConcatLowerLower(f32, c210b_l23.val[0], c210b_l01.val[0]);
-            c1 = hn::ConcatUpperUpper(f32, c210b_l23.val[0], c210b_l01.val[0]);
-            c0 = hn::ConcatLowerLower(f32, c210b_l23.val[1], c210b_l01.val[1]);
-            b  = hn::ConcatUpperUpper(f32, c210b_l23.val[1], c210b_l01.val[1]);
+            c6 = hn::ConcatLowerLower(f32, c6543_l23_low, c6543_l01_low);
+            c5 = hn::ConcatUpperUpper(f32, c6543_l23_low, c6543_l01_low);
+            c4 = hn::ConcatLowerLower(f32, c6543_l23_high, c6543_l01_high);
+            c3 = hn::ConcatUpperUpper(f32, c6543_l23_high, c6543_l01_high);
+
+            vec_f32 c210b_l01_low, c210b_l01_high;
+            vec_f32 c210b_l23_low, c210b_l23_high;
+            zip_f32_lanes(c210b_0, c210b_1, c210b_l01_low, c210b_l01_high);
+            zip_f32_lanes(c210b_2, c210b_3, c210b_l23_low, c210b_l23_high);
+
+            c2 = hn::ConcatLowerLower(f32, c210b_l23_low, c210b_l01_low);
+            c1 = hn::ConcatUpperUpper(f32, c210b_l23_low, c210b_l01_low);
+            c0 = hn::ConcatLowerLower(f32, c210b_l23_high, c210b_l01_high);
+            b  = hn::ConcatUpperUpper(f32, c210b_l23_high, c210b_l01_high);
         } else {
             b  = lut_32_f32((const float*)lut32x8 + 32*0, idx);
             c0 = lut_32_f32((const float*)lut32x8 + 32*1, idx);
