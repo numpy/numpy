@@ -1,0 +1,20 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.2.4 Release Notes
+==========================
+
+NumPy 2.2.4 is a patch release that fixes bugs found after the 2.2.3 release.
+
+Highlights
+==========
+
+*We'll choose highlights for this release near the end of the release cycle.*
+
+
+.. if release snippets have been incorporated already, uncomment the follow
+   line (leave the `.. include:: directive)
+
+.. **Content from release note snippets in doc/release/upcoming_changes:**
+
+.. include:: notes-towncrier.rst
