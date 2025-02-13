@@ -170,6 +170,11 @@ class TestStringDiscovery:
         # The DType class is accepted by `.astype()`
         assert arr.astype(type(np.dtype("S"))).dtype == expected
 
+    # Suppress known RuntimeWarning that occurs specifically on FreeBSD when 
+    # casting float objects to string dtype in nested arrays. This warning does not 
+    # affect the actual string length determination being tested.
+    # See https://github.com/numpy/numpy/issues/28329
+    @pytest.mark.filterwarnings("ignore:invalid value encountered in cast:RuntimeWarning")
     @pytest.mark.parametrize("obj",
             [object(), 1.2, 10**43, None, "string"],
             ids=["object", "1.2", "10**43", "None", "string"])
@@ -177,7 +182,8 @@ class TestStringDiscovery:
         length = len(str(obj))
         expected = np.dtype(f"S{length}")
         arr = np.array(obj, dtype="O")
-        assert np.array([arr, arr], dtype="S").dtype == expected
+        result = np.array([arr, arr], dtype="S").dtype
+        assert result == expected
 
     @pytest.mark.parametrize("arraylike", arraylikes())
     def test_unpack_first_level(self, arraylike):
