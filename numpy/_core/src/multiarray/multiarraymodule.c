@@ -2113,6 +2113,12 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
                     "Cannot unpickle a scalar with object dtype.");
             return NULL;
         }
+        if (typecode->type_num == NPY_VSTRING) {
+            // TODO: if we ever add a StringDType scalar, this might need to change
+            PyErr_SetString(PyExc_TypeError,
+                            "Cannot unpickle a StringDType scalar");
+            return NULL;
+        }
         /* We store the full array to unpack it here: */
         if (!PyArray_CheckExact(obj)) {
             /* We pickle structured voids as arrays currently */
