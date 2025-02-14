@@ -684,13 +684,21 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
         raise ValueError(msg.format(keys))
 
     # Sanity-check the values.
-    if (not isinstance(d['shape'], tuple) or
-            not all(isinstance(x, int) for x in d['shape'])):
+    if not isinstance(d['shape'], tuple):
         msg = "shape is not valid: {!r}"
         raise ValueError(msg.format(d['shape']))
+
+    # Convert np.int64 values to Python int only after the check for tuple
+    d['shape'] = tuple(int(x) for x in d['shape'])
+
+    if not all(isinstance(x, int) for x in d['shape']):
+        msg = "shape contains non-integer values: {!r}"
+        raise ValueError(msg.format(d['shape']))
+
     if not isinstance(d['fortran_order'], bool):
         msg = "fortran_order is not a valid bool: {!r}"
         raise ValueError(msg.format(d['fortran_order']))
+
     try:
         dtype = descr_to_dtype(d['descr'])
     except TypeError as e:
@@ -698,6 +706,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
         raise ValueError(msg.format(d['descr'])) from e
 
     return d['shape'], d['fortran_order'], dtype
+
 
 
 @set_module("numpy.lib.format")
