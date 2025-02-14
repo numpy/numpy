@@ -961,6 +961,9 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
         if dtype.hasobject:
             msg = "Array can't be memory-mapped: Python objects in dtype."
             raise ValueError(msg)
+        # Convert shape to native Python integers (added change)
+        if shape is not None:
+            shape = tuple(np.atleast_1d(shape).tolist())  # Converts to native ints
         d = {
             "descr": dtype_to_descr(dtype),
             "fortran_order": fortran_order,
@@ -1038,3 +1041,4 @@ def isfileobj(f):
         return True
     except OSError:
         return False
+
