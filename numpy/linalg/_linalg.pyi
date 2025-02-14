@@ -430,32 +430,32 @@ def trace(
 
 @overload
 def cross(
-    a: _ArrayLikeUInt_co,
-    b: _ArrayLikeUInt_co,
+    x1: _ArrayLikeUInt_co,
+    x2: _ArrayLikeUInt_co,
     /,
     *,
     axis: int = ...,
 ) -> NDArray[unsignedinteger[Any]]: ...
 @overload
 def cross(
-    a: _ArrayLikeInt_co,
-    b: _ArrayLikeInt_co,
+    x1: _ArrayLikeInt_co,
+    x2: _ArrayLikeInt_co,
     /,
     *,
     axis: int = ...,
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def cross(
-    a: _ArrayLikeFloat_co,
-    b: _ArrayLikeFloat_co,
+    x1: _ArrayLikeFloat_co,
+    x2: _ArrayLikeFloat_co,
     /,
     *,
     axis: int = ...,
 ) -> NDArray[floating[Any]]: ...
 @overload
 def cross(
-    a: _ArrayLikeComplex_co,
-    b: _ArrayLikeComplex_co,
+    x1: _ArrayLikeComplex_co,
+    x2: _ArrayLikeComplex_co,
     /,
     *,
     axis: int = ...,
