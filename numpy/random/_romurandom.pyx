@@ -149,9 +149,16 @@ cdef uint64_t romutrio32_raw(void *st) noexcept nogil:
     return <uint64_t>romutrio32_next32(<romutrio32_state *> st)
 
 
-
+# TODO (Vizonex) Optimize when I have the time to.
 
 cdef class RomuQuad(BitGenerator):
+    """
+    RomuQuad
+    --------
+
+    More robust than anyone could need, but uses more registers than RomuTrio.
+    Est. capacity >= 2^90 bytes. Register pressure = 8 (high). State size = 256 bits.
+    """
 
     cdef romuquad_state rng_state
 
@@ -172,7 +179,7 @@ cdef class RomuQuad(BitGenerator):
     
     @property
     def state(self):
-        key = np.zeros(4, dtype=np.uint64)
+        cdef np.ndarray key = np.zeros(4, dtype=np.uint64)
         for i in range(4):
             key[i] = self.rng_state.state[i]
 
@@ -183,11 +190,13 @@ cdef class RomuQuad(BitGenerator):
         if isinstance(value, tuple):
             if value[0] != 'RomuQuad' or len(value) != 2:
                 raise ValueError('state is not a RomuQuad state')
-            value = {'bit_generator': 'RomuQuad', 'state': {'key': value}}
+            value = {'bit_generator': 'RomuQuad', 'state': {'key': value[1]}}
 
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
+
         bitgen = value.get('bit_generator', '')
+        
         if bitgen != self.__class__.__name__:
             raise ValueError('state must be for a {0} '
                              'PRNG'.format(self.__class__.__name__))
@@ -200,6 +209,14 @@ cdef class RomuQuad(BitGenerator):
 
 
 cdef class RomuTrio(BitGenerator):
+    """
+    RomuTrio
+    --------
+
+    Great for general purpose work, including huge jobs.
+    Est. capacity = 2^75 bytes. Register pressure = 6. State size = 192 bits.
+
+    """
 
     cdef romutrio_state rng_state
 
@@ -231,7 +248,7 @@ cdef class RomuTrio(BitGenerator):
         if isinstance(value, tuple):
             if value[0] != 'RomuTrio' or len(value) != 2:
                 raise ValueError('state is not a RomuTrio state')
-            value = {'bit_generator': 'RomuTrio', 'state': {'key': value}}
+            value = {'bit_generator': 'RomuTrio', 'state': {'key': value[1]}}
 
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
@@ -246,7 +263,14 @@ cdef class RomuTrio(BitGenerator):
 
 
 cdef class RomuDuo(BitGenerator):
+    """
+    RomuDuo
+    -------
 
+    Might be faster than RomuTrio due to using fewer registers, but might struggle with massive jobs.
+    Est. capacity = 2^61 bytes. Register pressure = 5. State size = 128 bits.
+    """
+    
     cdef romuduo_state rng_state
 
     def __init__(self, seed=None) -> None:
@@ -266,7 +290,7 @@ cdef class RomuDuo(BitGenerator):
 
     @property
     def state(self):
-        key = np.zeros(2, dtype=np.uint64)
+        cdef np.ndarray key = np.zeros(2, dtype=np.uint64)
         for i in range(2):
             key[i] = self.rng_state.state[i]
 
@@ -277,7 +301,7 @@ cdef class RomuDuo(BitGenerator):
         if isinstance(value, tuple):
             if value[0] != 'RomuDuo' or len(value) != 2:
                 raise ValueError('state is not a RomuDuo state')
-            value = {'bit_generator': 'RomuDuo', 'state': {'key': value}}
+            value = {'bit_generator': 'RomuDuo', 'state': {'key': value[1]}}
 
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
@@ -292,7 +316,14 @@ cdef class RomuDuo(BitGenerator):
 
 
 cdef class RomuDuoJR(BitGenerator):
+    """
 
+    RomuDuoJR
+    ---------
+
+    The fastest generator using 64-bit arith., but not suited for huge jobs.
+    Est. capacity = 2^51 bytes. Register pressure = 4. State size = 128 bits.
+    """
     cdef romuduojr_state rng_state
 
     def __init__(self, seed=None) -> None:
@@ -312,7 +343,7 @@ cdef class RomuDuoJR(BitGenerator):
 
     @property
     def state(self):
-        key = np.zeros(2, dtype=np.uint64)
+        cdef np.ndarray key = np.zeros(2, dtype=np.uint64)
         for i in range(2):
             key[i] = self.rng_state.state[i]
 
@@ -323,7 +354,7 @@ cdef class RomuDuoJR(BitGenerator):
         if isinstance(value, tuple):
             if value[0] != 'RomuDuoJR' or len(value) != 2:
                 raise ValueError('state is not a RomuDuoJR state')
-            value = {'bit_generator': 'RomuDuoJR', 'state': {'key': value}}
+            value = {'bit_generator': 'RomuDuoJR', 'state': {'key': value[1]}}
 
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
@@ -338,6 +369,13 @@ cdef class RomuDuoJR(BitGenerator):
 
 
 cdef class RomuQuad32(BitGenerator):
+    """
+    RomuQuad32
+    ----------
+
+    32-bit arithmetic: Good for general purpose use.
+    Est. capacity >= 2^62 bytes. Register pressure = 7. State size = 128 bits.
+    """
 
     cdef romuquad32_state rng_state
 
@@ -372,7 +410,7 @@ cdef class RomuQuad32(BitGenerator):
         if isinstance(value, tuple):
             if value[0] != 'RomuQuad32' or len(value) != 2:
                 raise ValueError('state is not a RomuQuad32 state')
-            value = {'bit_generator': 'RomuQuad32', 'state': {'key': value}}
+            value = {'bit_generator': 'RomuQuad32', 'state': {'key': value[1]}}
 
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
@@ -388,6 +426,13 @@ cdef class RomuQuad32(BitGenerator):
 
 
 cdef class RomuTrio32(BitGenerator):
+    """
+    RomuTrio32
+    ----------
+
+    32-bit arithmetic: Good for general purpose use, except for huge jobs.
+    Est. capacity >= 2^53 bytes. Register pressure = 5. State size = 96 bits.
+    """
 
     cdef romutrio32_state rng_state
 
@@ -408,7 +453,7 @@ cdef class RomuTrio32(BitGenerator):
 
     @property
     def state(self):
-        key = np.zeros(3, dtype=np.uint32)
+        cdef np.ndarray key = np.zeros(3, dtype=np.uint32)
         for i in range(3):
             key[i] = self.rng_state.state[i]
         
@@ -419,7 +464,7 @@ cdef class RomuTrio32(BitGenerator):
         if isinstance(value, tuple):
             if value[0] != 'RomuTrio32' or len(value) != 2:
                 raise ValueError('state is not a RomuTrio32 state')
-            value = {'bit_generator': 'RomuTrio32', 'state': {'key': value}}
+            value = {'bit_generator': 'RomuTrio32', 'state': {'key': value[1]}}
 
         if not isinstance(value, dict):
             raise TypeError('state must be a dict')
@@ -431,3 +476,5 @@ cdef class RomuTrio32(BitGenerator):
         
         for i in range(4):
             self.rng_state.key[i] = key[i]
+
+
