@@ -9,6 +9,7 @@ from itertools import permutations, product
 import pytest
 from pytest import param
 
+import sys
 import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
@@ -170,11 +171,6 @@ class TestStringDiscovery:
         # The DType class is accepted by `.astype()`
         assert arr.astype(type(np.dtype("S"))).dtype == expected
 
-    # Suppress known RuntimeWarning that occurs specifically on FreeBSD when 
-    # casting float objects to string dtype in nested arrays. This warning does not 
-    # affect the actual string length determination being tested.
-    # See https://github.com/numpy/numpy/issues/28329
-    @pytest.mark.filterwarnings("ignore:invalid value encountered in cast:RuntimeWarning")
     @pytest.mark.parametrize("obj",
             [object(), 1.2, 10**43, None, "string"],
             ids=["object", "1.2", "10**43", "None", "string"])
@@ -182,8 +178,16 @@ class TestStringDiscovery:
         length = len(str(obj))
         expected = np.dtype(f"S{length}")
         arr = np.array(obj, dtype="O")
-        result = np.array([arr, arr], dtype="S").dtype
-        assert result == expected
+        # On FreeBSD, expecting and verifying the RuntimeWarning for float-to-string cast
+        # See https://github.com/numpy/numpy/issues/28329
+        if sys.platform.startswith("freebsd") and isinstance(obj, float):
+            with pytest.warns(RuntimeWarning, match="invalid value encountered in cast") as w:
+                result = np.array([arr, arr], dtype="S")
+                assert len(w) == 1  # Verify exactly one warning was raised
+                assert result.dtype == expected
+        else:
+            result = np.array([arr, arr], dtype="S")
+            assert result.dtype == expected
 
     @pytest.mark.parametrize("arraylike", arraylikes())
     def test_unpack_first_level(self, arraylike):
