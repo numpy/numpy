@@ -1083,7 +1083,7 @@ def test_skiprow_exceeding_maxrows_exceeding_chunksize(tmpdir, nskip):
 
     # file-like path
     txt = StringIO("\n".join(data))
-    res = np.loadtxt(txt, dtype = 'str', delimiter=" ", skiprows=nskip, max_rows=60000)
+    res = np.loadtxt(txt, dtype='str', delimiter=" ", skiprows=nskip, max_rows=60000)
     expected_length = min(60000, file_length - nskip)
     assert len(res) == expected_length
     # are the right lines read in res?
