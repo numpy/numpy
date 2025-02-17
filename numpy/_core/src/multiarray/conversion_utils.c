@@ -941,6 +941,10 @@ static int casting_parser(char const *str, Py_ssize_t length, void *data)
             *casting = NPY_SAME_KIND_CASTING;
             return 0;
         }
+        if (length == 10 && strcmp(str, "same_value") == 0) {
+            *casting = NPY_SAME_VALUE_CASTING;
+            return 0;
+        }
         break;
     case 's':
         if (length == 6 && strcmp(str, "unsafe") == 0) {

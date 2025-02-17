@@ -839,6 +839,8 @@ npy_casting_to_string(NPY_CASTING casting)
             return "'same_kind'";
         case NPY_UNSAFE_CASTING:
             return "'unsafe'";
+        case NPY_SAME_VALUE_CASTING:
+            return "'same_value'";
         default:
             return "<unknown>";
     }
