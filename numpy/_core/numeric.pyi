@@ -699,8 +699,8 @@ def moveaxis(
 
 @overload
 def cross(
-    x1: _ArrayLikeUnknown,
-    x2: _ArrayLikeUnknown,
+    a: _ArrayLikeUnknown,
+    b: _ArrayLikeUnknown,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -708,8 +708,8 @@ def cross(
 ) -> NDArray[Any]: ...
 @overload
 def cross(
-    x1: _ArrayLikeBool_co,
-    x2: _ArrayLikeBool_co,
+    a: _ArrayLikeBool_co,
+    b: _ArrayLikeBool_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -717,8 +717,8 @@ def cross(
 ) -> NoReturn: ...
 @overload
 def cross(
-    x1: _ArrayLikeUInt_co,
-    x2: _ArrayLikeUInt_co,
+    a: _ArrayLikeUInt_co,
+    b: _ArrayLikeUInt_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -726,8 +726,8 @@ def cross(
 ) -> NDArray[unsignedinteger[Any]]: ...
 @overload
 def cross(
-    x1: _ArrayLikeInt_co,
-    x2: _ArrayLikeInt_co,
+    a: _ArrayLikeInt_co,
+    b: _ArrayLikeInt_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -735,8 +735,8 @@ def cross(
 ) -> NDArray[signedinteger[Any]]: ...
 @overload
 def cross(
-    x1: _ArrayLikeFloat_co,
-    x2: _ArrayLikeFloat_co,
+    a: _ArrayLikeFloat_co,
+    b: _ArrayLikeFloat_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -744,8 +744,8 @@ def cross(
 ) -> NDArray[floating[Any]]: ...
 @overload
 def cross(
-    x1: _ArrayLikeComplex_co,
-    x2: _ArrayLikeComplex_co,
+    a: _ArrayLikeComplex_co,
+    b: _ArrayLikeComplex_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -753,8 +753,8 @@ def cross(
 ) -> NDArray[complexfloating[Any, Any]]: ...
 @overload
 def cross(
-    x1: _ArrayLikeObject_co,
-    x2: _ArrayLikeObject_co,
+    a: _ArrayLikeObject_co,
+    b: _ArrayLikeObject_co,
     axisa: int = ...,
     axisb: int = ...,
     axisc: int = ...,
@@ -874,6 +874,8 @@ def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
 def astype(
     x: ndarray[_ShapeType, dtype[Any]],
     dtype: _DTypeLike[_SCT],
+    /,
+    *,
     copy: bool = ...,
     device: None | L["cpu"] = ...,
 ) -> ndarray[_ShapeType, dtype[_SCT]]: ...
@@ -881,6 +883,8 @@ def astype(
 def astype(
     x: ndarray[_ShapeType, dtype[Any]],
     dtype: DTypeLike,
+    /,
+    *,
     copy: bool = ...,
     device: None | L["cpu"] = ...,
 ) -> ndarray[_ShapeType, dtype[Any]]: ...
