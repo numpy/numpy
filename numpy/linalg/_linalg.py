@@ -2541,7 +2541,7 @@ def lstsq(a, b, rcond=None):
     return wrap(x), wrap(resids), rank, s
 
 
-def _multi_svd_norm(x, row_axis, col_axis, op):
+def _multi_svd_norm(x, row_axis, col_axis, op, initial):
     """Compute a function of the singular values of the 2-D matrices in `x`.
 
     This is a private utility function used by `numpy.linalg.norm()`.
@@ -2565,7 +2565,7 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
 
     """
     y = moveaxis(x, (row_axis, col_axis), (-2, -1))
-    result = op(svd(y, compute_uv=False), axis=-1)
+    result = op(svd(y, compute_uv=False), axis=-1, initial=initial)
     return result
 
 
@@ -2763,9 +2763,9 @@ def norm(x, ord=None, axis=None, keepdims=False):
 
     if len(axis) == 1:
         if ord == inf:
-            return abs(x).max(axis=axis, keepdims=keepdims)
+            return abs(x).max(axis=axis, keepdims=keepdims, initial=0)
         elif ord == -inf:
-            return abs(x).min(axis=axis, keepdims=keepdims)
+            return abs(x).min(axis=axis, keepdims=keepdims, initial=inf)
         elif ord == 0:
             # Zero norm
             return (
@@ -2797,29 +2797,29 @@ def norm(x, ord=None, axis=None, keepdims=False):
         if row_axis == col_axis:
             raise ValueError('Duplicate axes given.')
         if ord == 2:
-            ret = _multi_svd_norm(x, row_axis, col_axis, amax)
+            ret = _multi_svd_norm(x, row_axis, col_axis, amax, 0)
         elif ord == -2:
-            ret = _multi_svd_norm(x, row_axis, col_axis, amin)
+            ret = _multi_svd_norm(x, row_axis, col_axis, amin, inf)
         elif ord == 1:
             if col_axis > row_axis:
                 col_axis -= 1
-            ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis)
+            ret = add.reduce(abs(x), axis=row_axis).max(axis=col_axis, initial=0)
         elif ord == inf:
             if row_axis > col_axis:
                 row_axis -= 1
-            ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis)
+            ret = add.reduce(abs(x), axis=col_axis).max(axis=row_axis, initial=0)
         elif ord == -1:
             if col_axis > row_axis:
                 col_axis -= 1
-            ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis)
+            ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis, initial=inf)
         elif ord == -inf:
             if row_axis > col_axis:
                 row_axis -= 1
-            ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
+            ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis, initial=inf)
         elif ord in [None, 'fro', 'f']:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
         elif ord == 'nuc':
-            ret = _multi_svd_norm(x, row_axis, col_axis, sum)
+            ret = _multi_svd_norm(x, row_axis, col_axis, sum, 0)
         else:
             raise ValueError("Invalid norm order for matrices.")
         if keepdims:
