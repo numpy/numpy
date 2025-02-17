@@ -212,7 +212,7 @@ jobs:
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
-          docker run --rm --privileged loongcr.lcpu.dev/multiarch/archlinux --reset -p yes
+          docker run --rm --privileged multiarch/qemu-user-static:x86_64-loongarch64-7.2.0-1 --reset -p yes
 
     - name: Install GCC cross-compilers
       run: |
