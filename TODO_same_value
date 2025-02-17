@@ -1,0 +1,14 @@
+- Check where PyArray_CopyObject, PyArray_NewCopy, PyArray_CopyInto, array_datetime_as_string, PyArray_Concatenate, PyArray_where are used, do we need a 'same_value' equivalents?
+- Is the comment in multiarray/common.c about NPY_DEFAULT_ASSIGN_CASTING warning still correct?
+- In PyArray_FromArray(arr, newtype, flags) shoule there be a SAME_VALUE flag?
+- Examine places where PyArray_CastingConverter is used and add SAME_VALUE handling
+  - array_astype: now errors, need to fix
+  - array_datetime_as_string:
+  - array_copyto: 
+  - PyArray_AssignArray (called with a cast arg)
+  - PyArray_ConcatenateInto (called with a cast arg)
+  - PyArray_EinsteinSum (called with a cast arg)
+  - NpyIter_AdvancedNew (called with a cast arg)
+
+----
+latest commit: `git grep UNSAFE_CASTING` up to `numpy/_core/src/multiarray/multiarraymodule.c`

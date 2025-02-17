@@ -841,6 +841,11 @@ array_astype(PyArrayObject *self,
         ((PyArrayObject_fields *)ret)->descr = dtype;
     }
     int success = PyArray_CopyInto(ret, self);
+    if (success >=0 && casting == NPY_SAME_VALUE_CASTING) {
+        /* XXX FIXME */
+        PyErr_SetString(PyExc_RuntimeError, "implement same_value check in array_astype");
+        success = -1;
+    }
 
     Py_DECREF(dtype);
     ((PyArrayObject_fields *)ret)->nd = out_ndim;
