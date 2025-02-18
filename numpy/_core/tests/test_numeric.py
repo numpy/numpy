@@ -3192,7 +3192,7 @@ class TestIsclose:
                     warnings.simplefilter("always")
                     c = np.isclose(a, a, atol=i, rtol=j)
                     assert len(w) == 1
-                    assert issubclass(w[-1].category, UserWarning)
+                    assert issubclass(w[-1].category, RuntimeWarning)
                     assert f"One of rtol or atol is not valid, atol: {i}, rtol: {j}" in str(w[-1].message)
 
 
