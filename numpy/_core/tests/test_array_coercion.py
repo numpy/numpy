@@ -9,6 +9,7 @@ from itertools import permutations, product
 import pytest
 from pytest import param
 
+import sys
 import numpy as np
 import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
@@ -177,7 +178,16 @@ class TestStringDiscovery:
         length = len(str(obj))
         expected = np.dtype(f"S{length}")
         arr = np.array(obj, dtype="O")
-        assert np.array([arr, arr], dtype="S").dtype == expected
+        # On FreeBSD, expecting and verifying the RuntimeWarning for float-to-string cast
+        # See gh-28351
+        if sys.platform.startswith("freebsd") and isinstance(obj, float):
+            with pytest.warns(RuntimeWarning, match="invalid value encountered in cast") as w:
+                result = np.array([arr, arr], dtype="S")
+                assert len(w) == 1  # Verify exactly one warning was raised
+                assert result.dtype == expected
+        else:
+            result = np.array([arr, arr], dtype="S")
+            assert result.dtype == expected
 
     @pytest.mark.parametrize("arraylike", arraylikes())
     def test_unpack_first_level(self, arraylike):
