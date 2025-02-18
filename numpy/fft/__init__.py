@@ -5,7 +5,7 @@ Discrete Fourier Transform
 .. currentmodule:: numpy.fft
 
 The SciPy module `scipy.fft` is a more comprehensive superset
-of ``numpy.fft``, which includes only a basic set of routines.
+of `numpy.fft`, which includes only a basic set of routines.
 
 Standard FFTs
 -------------
