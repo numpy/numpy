@@ -177,6 +177,11 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     }
 
     if (lst == NULL) {
+        PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
+        list = PyArray_FromAny(list, local_dtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
+        if (list == NULL) {
+            goto fail;
+        }
         lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
         if (lst == NULL) {
             goto fail;
