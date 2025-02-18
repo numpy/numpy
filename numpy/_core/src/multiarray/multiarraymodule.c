@@ -83,6 +83,8 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
 #include "umathmodule.h"
 
+#include "unique.h"
+
 /*
  *****************************************************************************
  **                    INCLUDE GENERATED CODE                               **
@@ -4562,6 +4564,8 @@ static struct PyMethodDef array_module_methods[] = {
         "Give a warning on reload and big warning in sub-interpreters."},
     {"from_dlpack", (PyCFunction)from_dlpack,
         METH_FASTCALL | METH_KEYWORDS, NULL},
+    {"unique_hash",  (PyCFunction)array_unique,
+        METH_VARARGS, "Collect unique values via a hash map."},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

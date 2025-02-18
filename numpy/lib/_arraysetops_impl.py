@@ -138,13 +138,15 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None, *, equal_nan=None):
+                       return_counts=None, axis=None, *, equal_nan=None,
+                       sorted=True):
     return (ar,)
 
 
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None, *, equal_nan=True):
+           return_counts=False, axis=None, *, equal_nan=True,
+           sorted=True):
     """
     Find the unique elements of an array.
 
@@ -181,6 +183,9 @@ def unique(ar, return_index=False, return_inverse=False,
         If True, collapses multiple NaN values in the return array into one.
 
         .. versionadded:: 1.24
+
+    sorted : bool, optional
+        If True, the unique elements are sorted.
 
     Returns
     -------
@@ -284,7 +289,8 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts,
-                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None)
+                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None,
+                        sorted=sorted)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -331,16 +337,18 @@ def unique(ar, return_index=False, return_inverse=False,
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
                        equal_nan=equal_nan, inverse_shape=inverse_shape,
-                       axis=axis)
+                       axis=axis, sorted=sorted)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
               return_counts=False, *, equal_nan=True, inverse_shape=None,
-              axis=None):
+              axis=None, sorted=True):
     """
     Find the unique elements of an array, ignoring shape.
+
+    Uses a hash table to find the unique elements if possible.
     """
     ar = np.asanyarray(ar).flatten()
     if len(ar.shape) != 1:
@@ -350,6 +358,31 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     optional_indices = return_index or return_inverse
 
+    if (optional_indices or return_counts) and not sorted:
+        raise ValueError(
+            "`sorted` can only be False if `return_index`, `return_inverse`, "
+            "and `return_counts` are all False."
+        )
+
+    # masked arrays are not supported yet.
+    if not optional_indices and not return_counts and not np.ma.is_masked(ar):
+        from numpy._core._multiarray_umath import unique_hash
+        # First we convert the array to a numpy array, later we wrap it back
+        # in case it was a subclass of numpy.ndarray.
+        conv = _array_converter(ar)
+        ar_, = conv
+
+        try:
+            hash_unique = unique_hash(ar_)
+            if sorted:
+                hash_unique.sort()
+            # We wrap the result back in case it was a subclass of numpy.ndarray.
+            return (conv.wrap(hash_unique),)
+        except NotImplementedError:
+            # We don't support this dtype, so we use the slower sorting method.
+            pass
+
+    # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         aux = ar[perm]
