@@ -1980,6 +1980,12 @@ class TestMethods:
         y = np.choose([0, 0, 0], [x[:3], x[:3], x[:3]], out=x[1:4], mode='wrap')
         assert_equal(y, np.array([0, 1, 2]))
 
+        # gh_28206 check fail when out not writeable
+        x = np.arange(3)
+        out = np.zeros(3)
+        out.setflags(write=False)
+        assert_raises(ValueError, np.choose, [0, 1, 2], [x, x, x], out=out)
+
     def test_prod(self):
         ba = [1, 2, 10, 11, 6, 5, 4]
         ba2 = [[1, 2, 3, 4], [5, 6, 7, 9], [10, 3, 4, 5]]
@@ -10285,6 +10291,16 @@ def test_gh_24459():
     a = np.zeros((50, 3), dtype=np.float64)
     with pytest.raises(TypeError):
         np.choose(a, [3, -1])
+
+
+def test_gh_28206():
+    a = np.arange(3)
+    b = np.ones((3, 3), dtype=np.int64)
+    out = np.array([np.nan, np.nan, np.nan])
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        np.choose(a, b, out=out)
 
 
 @pytest.mark.parametrize("N", np.arange(2, 512))
