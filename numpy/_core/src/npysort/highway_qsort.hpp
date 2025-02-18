@@ -1,16 +1,13 @@
 #ifndef NUMPY_SRC_COMMON_NPYSORT_HWY_SIMD_QSORT_HPP
 #define NUMPY_SRC_COMMON_NPYSORT_HWY_SIMD_QSORT_HPP
 
+#define VQSORT_ONLY_STATIC 1
 #include "hwy/highway.h"
+#include "hwy/contrib/sort/vqsort-inl.h"
 
 #include "common.hpp"
 
-// This replicates VQSORT_ENABLED from hwy/contrib/sort/shared-inl.h
-// without checking the scalar target as this is not built within the dynamic
-// dispatched sources.
-#if (HWY_COMPILER_MSVC && !HWY_IS_DEBUG_BUILD) ||                   \
-    (HWY_ARCH_ARM_V7 && HWY_IS_DEBUG_BUILD) ||                      \
-    (HWY_ARCH_ARM_A64 && HWY_COMPILER_GCC_ACTUAL && HWY_IS_ASAN)
+#if !VQSORT_COMPILER_COMPATIBLE
 #define NPY_DISABLE_HIGHWAY_SORT
 #endif
 

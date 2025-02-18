@@ -124,6 +124,7 @@ Thumbs.db
 doc/source/savefig/
 doc/source/**/generated/
 doc/source/release/notes-towncrier.rst
+doc/source/.jupyterlite.doit.db
 
 # Things specific to this project #
 ###################################

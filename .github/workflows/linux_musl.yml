@@ -60,8 +60,6 @@ jobs:
         pip install -r requirements/build_requirements.txt -r requirements/test_requirements.txt
 
         # use meson to build and test 
-        # the Duse-ilp64 is not needed with scipy-openblas wheels > 0.3.24.95.0
-        # spin build --with-scipy-openblas=64 -- -Duse-ilp64=true
         spin build --with-scipy-openblas=64
         spin test -j auto -- --timeout=600 --durations=10
 

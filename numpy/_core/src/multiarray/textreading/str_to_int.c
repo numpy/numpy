@@ -11,16 +11,6 @@
 #include "conversions.h"  /* For the deprecated parse-via-float path */
 
 
-const char *deprecation_msg = (
-        "loadtxt(): Parsing an integer via a float is deprecated.  To avoid "
-        "this warning, you can:\n"
-        "    * make sure the original data is stored as integers.\n"
-        "    * use the `converters=` keyword argument.  If you only use\n"
-        "      NumPy 1.23 or later, `converters=float` will normally work.\n"
-        "    * Use `np.loadtxt(...).astype(np.int64)` parsing the file as\n"
-        "      floating point and then convert it.  (On all NumPy versions.)\n"
-        "  (Deprecated NumPy 1.23)");
-
 #define DECLARE_TO_INT(intw, INT_MIN, INT_MAX, byteswap_unaligned)          \
     NPY_NO_EXPORT int                                                       \
     npy_to_##intw(PyArray_Descr *descr,                                     \
@@ -32,22 +22,7 @@ const char *deprecation_msg = (
                                                                             \
         if (NPY_UNLIKELY(                                                   \
                 str_to_int64(str, end, INT_MIN, INT_MAX, &parsed) < 0)) {   \
-            /* DEPRECATED 2022-07-03, NumPy 1.23 */                         \
-            double fval;                                                    \
-            PyArray_Descr *d_descr = PyArray_DescrFromType(NPY_DOUBLE);     \
-            Py_DECREF(d_descr);  /* borrowed */                             \
-            if (npy_to_double(d_descr, str, end, (char *)&fval, pconfig) < 0) { \
-                return -1;                                                  \
-            }                                                               \
-            if (!pconfig->gave_int_via_float_warning) {                     \
-                pconfig->gave_int_via_float_warning = true;                 \
-                if (PyErr_WarnEx(PyExc_DeprecationWarning,                  \
-                        deprecation_msg, 3) < 0) {                          \
-                    return -1;                                              \
-                }                                                           \
-            }                                                               \
-            pconfig->gave_int_via_float_warning = true;                     \
-            x = (intw##_t)fval;                                             \
+            return -1;                                                  \
         }                                                                   \
         else {                                                              \
             x = (intw##_t)parsed;                                           \
@@ -70,23 +45,8 @@ const char *deprecation_msg = (
                                                                             \
         if (NPY_UNLIKELY(                                                   \
                 str_to_uint64(str, end, UINT_MAX, &parsed) < 0)) {          \
-            /* DEPRECATED 2022-07-03, NumPy 1.23 */                         \
-            double fval;                                                    \
-            PyArray_Descr *d_descr = PyArray_DescrFromType(NPY_DOUBLE);     \
-            Py_DECREF(d_descr);  /* borrowed */                             \
-            if (npy_to_double(d_descr, str, end, (char *)&fval, pconfig) < 0) { \
-                return -1;                                                  \
-            }                                                               \
-            if (!pconfig->gave_int_via_float_warning) {                     \
-                pconfig->gave_int_via_float_warning = true;                 \
-                if (PyErr_WarnEx(PyExc_DeprecationWarning,                  \
-                        deprecation_msg, 3) < 0) {                          \
-                    return -1;                                              \
-                }                                                           \
-            }                                                               \
-            pconfig->gave_int_via_float_warning = true;                     \
-            x = (uintw##_t)fval;                                            \
-        }                                                                   \
+            return -1;                                                  \
+        }                                                               \
         else {                                                              \
             x = (uintw##_t)parsed;                                          \
         }                                                                   \

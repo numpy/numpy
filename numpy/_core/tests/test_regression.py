@@ -1501,8 +1501,7 @@ class TestRegression:
         assert_(np.all(b == np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])))
 
     def test_fromstring_crash(self):
-        # Ticket #1345: the following should not cause a crash
-        with assert_warns(DeprecationWarning):
+        with assert_raises(ValueError):
             np.fromstring(b'aa, aa, 1.0', sep=',')
 
     def test_ticket_1539(self):

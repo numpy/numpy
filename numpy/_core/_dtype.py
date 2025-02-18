@@ -146,6 +146,9 @@ def _scalar_str(dtype, short):
     elif dtype.type == np.timedelta64:
         return "'%sm8%s'" % (byteorder, _datetime_metadata_str(dtype))
 
+    elif dtype.isbuiltin == 2:
+        return dtype.type.__name__
+
     elif np.issubdtype(dtype, np.number):
         # Short repr with endianness, like '<f8'
         if short or dtype.byteorder not in ('=', '|'):
@@ -154,9 +157,6 @@ def _scalar_str(dtype, short):
         # Longer repr, like 'float64'
         else:
             return "'%s%d'" % (_kind_name(dtype), 8 * dtype.itemsize)
-
-    elif dtype.isbuiltin == 2:
-        return dtype.type.__name__
 
     else:
         raise RuntimeError(

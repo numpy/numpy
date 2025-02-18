@@ -9,11 +9,18 @@
 
 #include "numpy/npy_common.h"
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
+#ifdef __cplusplus
+    extern "C++" {
+        #include <atomic>
+    }
+    #define _NPY_USING_STD using namespace std
+    #define _Atomic(tp) atomic<tp>
+    #define STDC_ATOMICS
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
     && !defined(__STDC_NO_ATOMICS__)
-// TODO: support C++ atomics as well if this header is ever needed in C++
     #include <stdatomic.h>
     #include <stdint.h>
+    #define _NPY_USING_STD
     #define STDC_ATOMICS
 #elif _MSC_VER
     #include <intrin.h>
@@ -35,6 +42,7 @@
 static inline npy_uint8
 npy_atomic_load_uint8(const npy_uint8 *obj) {
 #ifdef STDC_ATOMICS
+    _NPY_USING_STD;
     return (npy_uint8)atomic_load((const _Atomic(uint8_t)*)obj);
 #elif defined(MSC_ATOMICS)
 #if defined(_M_X64) || defined(_M_IX86)
@@ -50,6 +58,7 @@ npy_atomic_load_uint8(const npy_uint8 *obj) {
 static inline void*
 npy_atomic_load_ptr(const void *obj) {
 #ifdef STDC_ATOMICS
+    _NPY_USING_STD;
     return atomic_load((const _Atomic(void *)*)obj);
 #elif defined(MSC_ATOMICS)
 #if SIZEOF_VOID_P == 8
@@ -73,6 +82,7 @@ npy_atomic_load_ptr(const void *obj) {
 static inline void
 npy_atomic_store_uint8(npy_uint8 *obj, npy_uint8 value) {
 #ifdef STDC_ATOMICS
+    _NPY_USING_STD;
     atomic_store((_Atomic(uint8_t)*)obj, value);
 #elif defined(MSC_ATOMICS)
     _InterlockedExchange8((volatile char *)obj, (char)value);
@@ -85,6 +95,7 @@ static inline void
 npy_atomic_store_ptr(void *obj, void *value)
 {
 #ifdef STDC_ATOMICS
+    _NPY_USING_STD;
     atomic_store((_Atomic(void *)*)obj, value);
 #elif defined(MSC_ATOMICS)
     _InterlockedExchangePointer((void * volatile *)obj, (void *)value);

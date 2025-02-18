@@ -2695,29 +2695,6 @@ PyArray_MapIterCheckIndices(PyArrayMapIterObject *mit)
     return 0;
 
 indexing_error:
-
-    if (mit->size == 0) {
-        PyObject *err_type = NULL, *err_value = NULL, *err_traceback = NULL;
-        PyErr_Fetch(&err_type, &err_value, &err_traceback);
-        /* 2020-05-27, NumPy 1.20 */
-        if (DEPRECATE(
-                "Out of bound index found. This was previously ignored "
-                "when the indexing result contained no elements. "
-                "In the future the index error will be raised. This error "
-                "occurs either due to an empty slice, or if an array has zero "
-                "elements even before indexing.\n"
-                "(Use `warnings.simplefilter('error')` to turn this "
-                "DeprecationWarning into an error and get more details on "
-                "the invalid index.)") < 0) {
-            npy_PyErr_ChainExceptions(err_type, err_value, err_traceback);
-            return -1;
-        }
-        Py_DECREF(err_type);
-        Py_DECREF(err_value);
-        Py_XDECREF(err_traceback);
-        return 0;
-    }
-
     return -1;
 }
 

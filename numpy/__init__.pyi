@@ -5,7 +5,6 @@ import mmap
 import ctypes as ct
 import array as _array
 import datetime as dt
-import enum
 from abc import abstractmethod
 from types import EllipsisType, ModuleType, TracebackType, MappingProxyType, GenericAlias
 from decimal import Decimal
@@ -228,7 +227,7 @@ from typing import (
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
 from _typeshed import StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, LiteralString, Never, Protocol, Self, TypeVar, Unpack, deprecated, overload
+from typing_extensions import CapsuleType, LiteralString, Never, Protocol, Self, TypeVar, Unpack, overload
 
 from numpy import (
     char,
@@ -442,6 +441,8 @@ from numpy._core.shape_base import (
     unstack,
 )
 
+from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
+
 from numpy.lib import (
     scimath as emath,
 )
@@ -504,6 +505,8 @@ from numpy.lib._function_base_impl import (
     interp,
     quantile,
 )
+
+from numpy._globals import _CopyMode
 
 from numpy.lib._histograms_impl import (
     histogram_bin_edges,
@@ -1181,7 +1184,6 @@ newaxis: Final[None] = None
 # not in __all__
 __NUMPY_SETUP__: Final[L[False]] = False
 __numpy_submodules__: Final[set[LiteralString]] = ...
-__expired_attributes__: Final[dict[LiteralString, LiteralString]]
 __former_attrs__: Final[_FormerAttrsDict] = ...
 __future_scalars__: Final[set[L["bytes", "str", "object"]]] = ...
 __array_api_version__: Final[L["2023.12"]] = "2023.12"
@@ -1688,8 +1690,6 @@ class _ArrayOrScalarCommon:
     def dump(self, file: StrOrBytesPath | SupportsWrite[bytes]) -> None: ...
     def dumps(self) -> bytes: ...
     def tobytes(self, order: _OrderKACF = ...) -> bytes: ...
-    # NOTE: `tostring()` is deprecated and therefore excluded
-    # def tostring(self, order=...): ...
     def tofile(self, fid: StrOrBytesPath | _SupportsFileMethods, sep: str = ..., format: str = ...) -> None: ...
     # generics and 0d arrays return builtin scalars
     def tolist(self) -> Any: ...
@@ -3882,8 +3882,6 @@ class bool(generic[_BoolItemT_co], Generic[_BoolItemT_co]):
     def __int__(self: np.bool[L[True]], /) -> L[1]: ...
     @overload
     def __int__(self, /) -> L[0, 1]: ...
-    @deprecated("In future, it will be an error for 'np.bool' scalars to be interpreted as an index")
-    def __index__(self, /) -> L[0, 1]: ...
     def __abs__(self) -> Self: ...
 
     @overload
@@ -4130,6 +4128,9 @@ float32: TypeAlias = floating[_32Bit]
 
 # either a C `double`, `float`, or `longdouble`
 class float64(floating[_64Bit], float):  # type: ignore[misc]
+    def __new__(cls, x: _ConvertibleToFloat | None = ..., /) -> Self: ...
+
+    #
     @property
     def itemsize(self) -> L[8]: ...
     @property
@@ -4263,7 +4264,15 @@ longdouble: TypeAlias = floating[_NBitLongDouble]
 # describing the two 64 bit floats representing its real and imaginary component
 
 class complexfloating(inexact[_NBit1, complex], Generic[_NBit1, _NBit2]):
-    def __init__(self, value: _ConvertibleToComplex | None = ..., /) -> None: ...
+    @overload
+    def __init__(
+        self,
+        real: complex | SupportsComplex | SupportsFloat | SupportsIndex = ...,
+        imag: complex | SupportsFloat | SupportsIndex = ...,
+        /,
+    ) -> None: ...
+    @overload
+    def __init__(self, real: _ConvertibleToComplex | None = ..., /) -> None: ...
 
     @property
     def real(self) -> floating[_NBit1]: ...  # type: ignore[override]
@@ -4273,11 +4282,6 @@ class complexfloating(inexact[_NBit1, complex], Generic[_NBit1, _NBit2]):
     # NOTE: `__complex__` is technically defined in the concrete subtypes
     def __complex__(self, /) -> complex: ...
     def __abs__(self, /) -> floating[_NBit1 | _NBit2]: ...  # type: ignore[override]
-    @deprecated(
-        "The Python built-in `round` is deprecated for complex scalars, and will raise a `TypeError` in a future release. "
-        "Use `np.round` or `scalar.round` instead."
-    )
-    def __round__(self, /, ndigits: SupportsIndex | None = None) -> Self: ...
 
     @overload
     def __add__(self, other: _Complex64_co, /) -> complexfloating[_NBit1, _NBit2]: ...
@@ -4347,6 +4351,17 @@ class complexfloating(inexact[_NBit1, complex], Generic[_NBit1, _NBit2]):
 complex64: TypeAlias = complexfloating[_32Bit, _32Bit]
 
 class complex128(complexfloating[_64Bit, _64Bit], complex):  # type: ignore[misc]
+    @overload
+    def __new__(
+        cls,
+        real: complex | SupportsComplex | SupportsFloat | SupportsIndex = ...,
+        imag: complex | SupportsFloat | SupportsIndex = ...,
+        /,
+    ) -> Self: ...
+    @overload
+    def __new__(cls, real: _ConvertibleToComplex | None = ..., /) -> Self: ...
+
+    #
     @property
     def itemsize(self) -> L[16]: ...
     @property
@@ -4409,9 +4424,11 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __init__(self: timedelta64[None], value: _NaTValue | None, format: _TimeUnitSpec, /) -> None: ...
     @overload
-    def __init__(self: timedelta64[int], value: dt.timedelta, format: _TimeUnitSpec[_IntTimeUnit], /) -> None: ...
+    def __init__(self: timedelta64[L[0]], value: L[0], format: _TimeUnitSpec[_IntTD64Unit] = ..., /) -> None: ...
     @overload
     def __init__(self: timedelta64[int], value: _IntLike_co, format: _TimeUnitSpec[_IntTD64Unit] = ..., /) -> None: ...
+    @overload
+    def __init__(self: timedelta64[int], value: dt.timedelta, format: _TimeUnitSpec[_IntTimeUnit], /) -> None: ...
     @overload
     def __init__(
         self: timedelta64[dt.timedelta],
@@ -4454,28 +4471,67 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     __rmul__ = __mul__
 
     @overload
+    def __mod__(self, x: timedelta64[None | L[0]], /) -> timedelta64[None]: ...
+    @overload
     def __mod__(self: timedelta64[None], x: timedelta64, /) -> timedelta64[None]: ...
+    @overload
+    def __mod__(self: timedelta64[int], x: timedelta64[int | dt.timedelta], /) -> timedelta64[int | None]: ...
+    @overload
+    def __mod__(self: timedelta64[dt.timedelta], x: timedelta64[_AnyTD64Item], /) -> timedelta64[_AnyTD64Item | None]: ...
     @overload
     def __mod__(self: timedelta64[dt.timedelta], x: dt.timedelta, /) -> dt.timedelta: ...
     @overload
-    def __mod__(self: timedelta64[dt.timedelta], x: timedelta64[_AnyTD64Item], /) -> timedelta64[_AnyTD64Item]: ...
-    @overload
-    def __mod__(self: timedelta64[int], x: timedelta64[int | dt.timedelta], /) -> timedelta64[int]: ...
-    @overload
-    def __mod__(self, x: timedelta64[None], /) -> timedelta64[None]: ...
-    @overload
-    def __mod__(self, x: timedelta64[int], /) -> timedelta64[int]: ...
+    def __mod__(self, x: timedelta64[int], /) -> timedelta64[int | None]: ...
     @overload
     def __mod__(self, x: timedelta64, /) -> timedelta64: ...
-    __rmod__ = __mod__  # at runtime the outcomes differ, but the type signatures are the same
 
+    # the L[0] makes __mod__ non-commutative, which the first two overloads reflect
+    @overload
+    def __rmod__(self, x: timedelta64[None], /) -> timedelta64[None]: ...
+    @overload
+    def __rmod__(self: timedelta64[None | L[0]], x: timedelta64, /) -> timedelta64[None]: ...
+    @overload
+    def __rmod__(self: timedelta64[int], x: timedelta64[int | dt.timedelta], /) -> timedelta64[int | None]: ...
+    @overload
+    def __rmod__(self: timedelta64[dt.timedelta], x: timedelta64[_AnyTD64Item], /) -> timedelta64[_AnyTD64Item | None]: ...
+    @overload
+    def __rmod__(self: timedelta64[dt.timedelta], x: dt.timedelta, /) -> dt.timedelta: ...
+    @overload
+    def __rmod__(self, x: timedelta64[int], /) -> timedelta64[int | None]: ...
+    @overload
+    def __rmod__(self, x: timedelta64, /) -> timedelta64: ...
+
+    # keep in sync with __mod__
+    @overload
+    def __divmod__(self, x: timedelta64[None | L[0]], /) -> tuple[int64, timedelta64[None]]: ...
     @overload
     def __divmod__(self: timedelta64[None], x: timedelta64, /) -> tuple[int64, timedelta64[None]]: ...
     @overload
+    def __divmod__(self: timedelta64[int], x: timedelta64[int | dt.timedelta], /) -> tuple[int64, timedelta64[int | None]]: ...
+    @overload
+    def __divmod__(self: timedelta64[dt.timedelta], x: timedelta64[_AnyTD64Item], /) -> tuple[int64, timedelta64[_AnyTD64Item | None]]: ...
+    @overload
     def __divmod__(self: timedelta64[dt.timedelta], x: dt.timedelta, /) -> tuple[int, dt.timedelta]: ...
     @overload
+    def __divmod__(self, x: timedelta64[int], /) -> tuple[int64, timedelta64[int | None]]: ...
+    @overload
     def __divmod__(self, x: timedelta64, /) -> tuple[int64, timedelta64]: ...
-    __rdivmod__ = __divmod__
+
+    # keep in sync with __rmod__
+    @overload
+    def __rdivmod__(self, x: timedelta64[None], /) -> tuple[int64, timedelta64[None]]: ...
+    @overload
+    def __rdivmod__(self: timedelta64[None | L[0]], x: timedelta64, /) -> tuple[int64, timedelta64[None]]: ...
+    @overload
+    def __rdivmod__(self: timedelta64[int], x: timedelta64[int | dt.timedelta], /) -> tuple[int64, timedelta64[int | None]]: ...
+    @overload
+    def __rdivmod__(self: timedelta64[dt.timedelta], x: timedelta64[_AnyTD64Item], /) -> tuple[int64, timedelta64[_AnyTD64Item | None]]: ...
+    @overload
+    def __rdivmod__(self: timedelta64[dt.timedelta], x: dt.timedelta, /) -> tuple[int, dt.timedelta]: ...
+    @overload
+    def __rdivmod__(self, x: timedelta64[int], /) -> tuple[int64, timedelta64[int | None]]: ...
+    @overload
+    def __rdivmod__(self, x: timedelta64, /) -> tuple[int64, timedelta64]: ...
 
     @overload
     def __sub__(self: timedelta64[None], b: _TD64Like_co, /) -> timedelta64[None]: ...
@@ -4660,12 +4716,26 @@ class character(flexible[_CharacterItemT_co], Generic[_CharacterItemT_co]):
 
 class bytes_(character[bytes], bytes):
     @overload
-    def __init__(self, value: object = ..., /) -> None: ...
+    def __new__(cls, o: object = ..., /) -> Self: ...
     @overload
-    def __init__(self, value: str, /, encoding: str = ..., errors: str = ...) -> None: ...
+    def __new__(cls, s: str, /, encoding: str, errors: str = ...) -> Self: ...
+
+    #
+    @overload
+    def __init__(self, o: object = ..., /) -> None: ...
+    @overload
+    def __init__(self, s: str, /, encoding: str, errors: str = ...) -> None: ...
+
+    #
     def __bytes__(self, /) -> bytes: ...
 
 class str_(character[str], str):
+    @overload
+    def __new__(cls, value: object = ..., /) -> Self: ...
+    @overload
+    def __new__(cls, value: bytes, /, encoding: str = ..., errors: str = ...) -> Self: ...
+
+    #
     @overload
     def __init__(self, value: object = ..., /) -> None: ...
     @overload
@@ -4829,11 +4899,6 @@ bitwise_invert = invert
 bitwise_right_shift = right_shift
 permute_dims = transpose
 pow = power
-
-class _CopyMode(enum.Enum):
-    ALWAYS: L[True]
-    IF_NEEDED: L[False]
-    NEVER: L[2]
 
 class errstate:
     def __init__(

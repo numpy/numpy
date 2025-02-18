@@ -691,12 +691,8 @@ class TestMultiply:
 
             for numpy_type in deprecated_types:
                 i = np.dtype(numpy_type).type()
-                assert_equal(
-                    assert_warns(DeprecationWarning, operator.mul, seq, i),
-                    seq * int(i))
-                assert_equal(
-                    assert_warns(DeprecationWarning, operator.mul, i, seq),
-                    int(i) * seq)
+                with assert_raises(TypeError):
+                    operator.mul(seq, i)
 
             for numpy_type in forbidden_types:
                 i = np.dtype(numpy_type).type()

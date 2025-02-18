@@ -139,16 +139,16 @@ initialize_and_map_pytypes_to_dtypes()
      *       the same could be achieved e.g. with additional abstract DTypes.
      */
     PyArray_DTypeMeta *dtype;
-    dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_UNICODE));
+    dtype = typenum_to_dtypemeta(NPY_UNICODE);
     if (_PyArray_MapPyTypeToDType(dtype, &PyUnicode_Type, NPY_FALSE) < 0) {
         return -1;
     }
 
-    dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_STRING));
+    dtype = typenum_to_dtypemeta(NPY_STRING);
     if (_PyArray_MapPyTypeToDType(dtype, &PyBytes_Type, NPY_FALSE) < 0) {
         return -1;
     }
-    dtype = NPY_DTYPE(PyArray_DescrFromType(NPY_BOOL));
+    dtype = typenum_to_dtypemeta(NPY_BOOL);
     if (_PyArray_MapPyTypeToDType(dtype, &PyBool_Type, NPY_FALSE) < 0) {
         return -1;
     }

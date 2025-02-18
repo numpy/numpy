@@ -610,22 +610,6 @@ array_tobytes(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_ToString(self, order);
 }
 
-static PyObject *
-array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
-{
-    NPY_ORDER order = NPY_CORDER;
-    static char *kwlist[] = {"order", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:tostring", kwlist,
-                                     PyArray_OrderConverter, &order)) {
-        return NULL;
-    }
-    /* 2020-03-30, NumPy 1.19 */
-    if (DEPRECATE("tostring() is deprecated. Use tobytes() instead.") < 0) {
-        return NULL;
-    }
-    return PyArray_ToString(self, order);
-}
 
 /* Like PyArray_ToFile but takes the file as a python object */
 static int
@@ -2725,12 +2709,10 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 if ((PyArray_BASE(self) == NULL) &&
                             !PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA) &&
                             !PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
-                    /* 2017-05-03, NumPy 1.17.0 */
-                    if (DEPRECATE("making a non-writeable array writeable "
-                                  "is deprecated for arrays without a base "
-                                  "which do not own their data.") < 0) {
-                        return NULL;
-                    }
+                    PyErr_SetString(PyExc_ValueError,
+                        "Cannot make a non-writeable array writeable "
+                        "for arrays with a base that do not own their data.");
+                    return NULL;
                 }
                 PyArray_ENABLEFLAGS(self, NPY_ARRAY_WRITEABLE);
                 PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
@@ -3015,9 +2997,6 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"tolist",
         (PyCFunction)array_tolist,
         METH_VARARGS, NULL},
-    {"tostring",
-        (PyCFunction)array_tostring,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"trace",
         (PyCFunction)array_trace,
         METH_FASTCALL | METH_KEYWORDS, NULL},

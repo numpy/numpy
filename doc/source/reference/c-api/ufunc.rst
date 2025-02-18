@@ -11,6 +11,9 @@ Constants
 ---------
 
 ``UFUNC_{THING}_{ERR}``
+
+    Deprecated, use ``NPY_{THING}_{ERR}`` instead
+
     .. c:macro:: UFUNC_FPE_DIVIDEBYZERO
 
     .. c:macro:: UFUNC_FPE_OVERFLOW

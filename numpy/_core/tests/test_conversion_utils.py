@@ -9,7 +9,7 @@ import pytest
 import numpy as np
 import numpy._core._multiarray_tests as mt
 from numpy._core.multiarray import CLIP, WRAP, RAISE
-from numpy.testing import assert_warns, IS_PYPY
+from numpy.testing import assert_raises
 
 
 class StringConverterTestCase:
@@ -25,7 +25,7 @@ class StringConverterTestCase:
 
     def _check_conv_assert_warn(self, val, expected):
         if self.warn:
-            with assert_warns(DeprecationWarning) as exc:
+            with assert_raises(ValueError) as exc:
                 assert self.conv(val) == expected
         else:
             assert self.conv(val) == expected
@@ -189,12 +189,9 @@ class TestIntpConverter:
         assert self.conv(()) == ()
 
     def test_none(self):
-        # once the warning expires, this will raise TypeError
-        with pytest.warns(DeprecationWarning):
+        with pytest.raises(TypeError):
             assert self.conv(None) == ()
 
-    @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
-            reason="PyPy bug in error formatting")
     def test_float(self):
         with pytest.raises(TypeError):
             self.conv(1.0)

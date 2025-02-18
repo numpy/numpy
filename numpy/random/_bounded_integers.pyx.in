@@ -120,8 +120,8 @@ cdef object _rand_{{nptype}}_broadcast(np.ndarray low, np.ndarray high, object s
     if np.any(low_high_comp(low_arr, high_arr)):
         raise ValueError(format_bounds_error(closed, low_arr))
 
-    low_arr = <np.ndarray>np.PyArray_FROM_OTF(low, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
-    high_arr = <np.ndarray>np.PyArray_FROM_OTF(high, np.{{npctype}}, np.NPY_ALIGNED | np.NPY_FORCECAST)
+    low_arr = <np.ndarray>np.PyArray_FROM_OTF(low, np.{{npctype}}, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_FORCECAST)
+    high_arr = <np.ndarray>np.PyArray_FROM_OTF(high, np.{{npctype}}, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_FORCECAST)
 
     if size is not None:
         out_arr = <np.ndarray>np.empty(size, np.{{otype}})
@@ -192,7 +192,7 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
     # We correct if the interval is not closed in this step if we go the long
     # route.  (Not otherwise, since the -1 could overflow in theory.)
     if np.can_cast(low_arr_orig, np.{{otype}}):
-        low_arr = <np.ndarray>np.PyArray_FROM_OTF(low_arr_orig, np.{{npctype}}, np.NPY_ALIGNED)
+        low_arr = <np.ndarray>np.PyArray_FROM_OTF(low_arr_orig, np.{{npctype}}, np.NPY_ARRAY_ALIGNED)
     else:
         low_arr = <np.ndarray>np.empty_like(low_arr_orig, dtype=np.{{otype}})
         flat = low_arr_orig.flat
@@ -207,7 +207,7 @@ cdef object _rand_{{nptype}}_broadcast(object low, object high, object size,
     del low_arr_orig
 
     if np.can_cast(high_arr_orig, np.{{otype}}):
-        high_arr = <np.ndarray>np.PyArray_FROM_OTF(high_arr_orig, np.{{npctype}}, np.NPY_ALIGNED)
+        high_arr = <np.ndarray>np.PyArray_FROM_OTF(high_arr_orig, np.{{npctype}}, np.NPY_ARRAY_ALIGNED)
     else:
         high_arr = np.empty_like(high_arr_orig, dtype=np.{{otype}})
         flat = high_arr_orig.flat

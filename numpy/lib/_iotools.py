@@ -278,8 +278,8 @@ class NameValidator:
 
     """
 
-    defaultexcludelist = ['return', 'file', 'print']
-    defaultdeletechars = set(r"""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
+    defaultexcludelist = 'return', 'file', 'print'
+    defaultdeletechars = frozenset(r"""~!@#$%^&*()-=+~\|]}[{';: /?.>,<""")
 
     def __init__(self, excludelist=None, deletechars=None,
                  case_sensitive=None, replace_space='_'):
@@ -290,7 +290,7 @@ class NameValidator:
         self.excludelist = excludelist
         # Process the list of characters to delete
         if deletechars is None:
-            delete = self.defaultdeletechars
+            delete = set(self.defaultdeletechars)
         else:
             delete = set(deletechars)
         delete.add('"')

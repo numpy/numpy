@@ -35,9 +35,13 @@ jobs:
         persist-credentials: false
 
     - name: Setup Python
-      uses: quansight-labs/setup-python@b9ab292c751a42bcd2bb465b7fa202ea2c3f5796 # v5.3.1
+      uses: astral-sh/setup-uv@b5f58b2abc5763ade55e4e9d0fe52cd1ff7979ca
       with:
         python-version: ${{ matrix.compiler-pyversion[1] }}
+        enable-cache: false
+
+    - run:
+        uv pip install --python=${{ matrix.version }} pip
 
     # TODO: remove cython nightly install when cython does a release
     - name: Install nightly Cython
@@ -47,7 +51,7 @@ jobs:
 
     - name: Install build dependencies from PyPI
       run: |
-        python -m pip install -r requirements/build_requirements.txt
+        pip install -r requirements/build_requirements.txt
 
     - name: Install pkg-config
       run: |

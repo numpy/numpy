@@ -1,0 +1,23 @@
+NumPy now registers its pkg-config paths with the pkgconf_ PyPI package
+-----------------------------------------------------------------------
+
+The pkgconf_ PyPI package provides an interface for projects like NumPy to
+register their own paths to be added to the pkg-config search path. This means
+that when using pkgconf_ from PyPI, NumPy will be discoverable without needing
+for any custom environment configuration.
+
+.. attention:: Attention
+
+    This only applies when using the pkgconf_ package from PyPI_, or put another
+    way, this only applies when installing pkgconf_ via a Python package
+    manager.
+
+    If you are using ``pkg-config`` or ``pkgconf`` provided by your system, or
+    any other source that does not use the pkgconf-pypi_ project, the NumPy
+    pkg-config directory will not be automatically added to the search path. In
+    these situations, you might want to use ``numpy-config``.
+
+
+.. _pkgconf: https://github.com/pypackaging-native/pkgconf-pypi
+.. _PyPI: https://pypi.org/
+.. _pkgconf-pypi: https://github.com/pypackaging-native/pkgconf-pypi

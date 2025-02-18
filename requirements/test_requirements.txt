@@ -15,7 +15,7 @@ cffi; python_version < '3.10'
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
 # NOTE: Keep mypy in sync with environment.yml
-mypy==1.14.1; platform_python_implementation != "PyPy"
+mypy==1.15.0; platform_python_implementation != "PyPy"
 typing_extensions>=4.2.0
 # for optional f2py encoding detection
 charset-normalizer

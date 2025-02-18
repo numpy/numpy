@@ -836,12 +836,9 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
     else {
         PyArrayObject *ret;
         if (!PyArray_ISNUMBER(self)) {
-            /* 2017-05-04, 1.13 */
-            if (DEPRECATE("attempting to conjugate non-numeric dtype; this "
-                          "will error in the future to match the behavior of "
-                          "np.conjugate") < 0) {
-                return NULL;
-            }
+            PyErr_SetString(PyExc_TypeError,
+                "cannot conjugate non-numeric dtype");
+            return NULL;
         }
         if (out) {
             if (PyArray_AssignArray(out, self,

@@ -86,17 +86,14 @@ todo_include_todos = False
 
 html_theme = 'pydata_sphinx_theme'
 
-html_logo = '../source/_static/numpylogo.svg'
-
 html_favicon = '../source/_static/favicon/favicon.ico'
 
 html_theme_options = {
+  "logo": {
+    "image_light": "_static/numpylogo.svg",
+    "image_dark": "_static/numpylogo_dark.svg",
+  },
   "github_url": "https://github.com/numpy/numpy",
-  "external_links": [
-      {"name": "Wishlist",
-       "url": "https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22",
-      },
-  ],
   "show_prev_next": False,
 }
 

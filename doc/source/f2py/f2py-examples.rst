@@ -241,7 +241,6 @@ Read more
 
 * `Wrapping C codes using f2py <https://scipy.github.io/old-wiki/pages/Cookbook/f2py_and_NumPy.html>`_
 * `F2py section on the SciPy Cookbook <https://scipy-cookbook.readthedocs.io/items/F2Py.html>`_
-* `F2py example: Interactive System for Ice sheet Simulation <http://websrv.cs.umt.edu/isis/index.php/F2py_example>`_
 * `"Interfacing With Other Languages" section on the SciPy Cookbook.
   <https://scipy-cookbook.readthedocs.io/items/idx_interfacing_with_other_languages.html>`_
 

@@ -5,8 +5,6 @@ is adopted in the main test suite.  A few may be moved elsewhere.
 """
 
 import operator
-import threading
-import warnings
 
 import numpy as np
 

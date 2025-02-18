@@ -802,7 +802,7 @@ class TestCasting:
             expected = arr_normal.astype(dtype)
         except TypeError:
             with pytest.raises(TypeError):
-                arr_NULLs.astype(dtype),
+                arr_NULLs.astype(dtype)
         else:
             assert_array_equal(expected, arr_NULLs.astype(dtype))
 

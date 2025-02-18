@@ -34,3 +34,15 @@ npy_gil_error(PyObject *type, const char *format, ...)
     NPY_DISABLE_C_API;
     va_end(va);
 }
+
+// Acquire the GIL before emitting a warning containing a message of
+// the given category and stacklevel.
+NPY_NO_EXPORT int
+npy_gil_warning(PyObject *category, int stacklevel, const char *message)
+{
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
+    int result = PyErr_WarnEx(category, message, stacklevel);
+    NPY_DISABLE_C_API;
+    return result;
+}

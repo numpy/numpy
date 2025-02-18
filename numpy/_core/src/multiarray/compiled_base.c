@@ -185,15 +185,12 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     len = PyArray_SIZE(lst);
 
     /*
-     * This if/else if can be removed by changing the argspec to O|On above,
-     * once we retire the deprecation
+     * This if/else if can be removed by changing the argspec above,
      */
     if (mlength == Py_None) {
-        /* NumPy 1.14, 2017-06-01 */
-        if (DEPRECATE("0 should be passed as minlength instead of None; "
-                      "this will error in future.") < 0) {
-            goto fail;
-        }
+        PyErr_SetString(PyExc_TypeError,
+             "use 0 instead of None for minlength");
+        goto fail;
     }
     else if (mlength != NULL) {
         minlength = PyArray_PyIntAsIntp(mlength);

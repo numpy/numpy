@@ -1676,6 +1676,22 @@ class TestDTypeClasses:
         with pytest.raises(AttributeError):
             getattr(numpy.dtypes, name + "DType") is numpy.dtypes.Float16DType
 
+    def test_scalar_helper_all_dtypes(self):
+        for dtype in np.dtypes.__all__:
+            dt_class = getattr(np.dtypes, dtype)
+            dt = np.dtype(dt_class)
+            if dt.char not in 'OTVM':
+                assert np._core.multiarray.scalar(dt) == dt.type()
+            elif dt.char == 'V':
+                assert np._core.multiarray.scalar(dt) == dt.type(b'\x00')
+            elif dt.char == 'M':
+                # can't do anything with this without generating ValueError
+                # because 'M' has no units
+                _ = np._core.multiarray.scalar(dt)
+            else:
+                with pytest.raises(TypeError):
+                    np._core.multiarray.scalar(dt)
+
 
 class TestFromCTypes:
 

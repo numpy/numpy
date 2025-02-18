@@ -144,7 +144,7 @@ fail:
     return NULL;
 }
 
-static int
+NPY_NO_EXPORT int
 na_eq_cmp(PyObject *a, PyObject *b) {
     if (a == b) {
         // catches None and other singletons like Pandas.NA
@@ -269,6 +269,15 @@ as_pystring(PyObject *scalar, int coerce)
                         "StringDType only allows string data when "
                         "string coercion is disabled.");
         return NULL;
+    }
+    else if (scalar_type == &PyBytes_Type) {
+        // assume UTF-8 encoding
+        char *buffer;
+        Py_ssize_t length;
+        if (PyBytes_AsStringAndSize(scalar, &buffer, &length) < 0) {
+            return NULL;
+        }
+        return PyUnicode_FromStringAndSize(buffer, length);
     }
     else {
         // attempt to coerce to str
@@ -853,6 +862,7 @@ init_string_dtype(void)
 
     for (int i = 0; PyArray_StringDType_casts[i] != NULL; i++) {
         PyMem_Free(PyArray_StringDType_casts[i]->dtypes);
+        PyMem_RawFree((void *)PyArray_StringDType_casts[i]->name);
         PyMem_Free(PyArray_StringDType_casts[i]);
     }
 
