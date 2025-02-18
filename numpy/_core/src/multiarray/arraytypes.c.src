@@ -30,6 +30,7 @@
 #include "alloc.h"
 #include "gil_utils.h"
 #include "stringdtype/dtype.h"
+#include "stringdtype/static_string.h"
 
 #include "npy_longdouble.h"
 #include "numpyos.h"
@@ -4557,6 +4558,13 @@ set_typeinfo(PyObject *dict)
     SETTYPE(Character, character);
 
 #undef SETTYPE
+
+    PyType_Ready(&PyVStringArrType_Type);
+
+    if (PyDict_SetItemString(dict, "vstr",
+            (PyObject *)&PyVStringArrType_Type) == -1) {
+        goto error;
+    }
 
     ret = PyDict_SetItemString(dict, "typeinfo", infodict);
     Py_DECREF(infodict);
