@@ -419,8 +419,12 @@ to the front of the integer name.
 
 .. c:type:: npy_uintp
 
-    The C ``size_t``/``Py_size_t``.
+   The C ``size_t``/``Py_size_t``.
 
+.. c:type:: npy_hash_t
+
+   An alias for ``Py_hash_t`` (used for hashing).
+   This type is utilized in NumPy to represent hash values for objects.
 
 (Complex) Floating point
 ~~~~~~~~~~~~~~~~~~~~~~~~
