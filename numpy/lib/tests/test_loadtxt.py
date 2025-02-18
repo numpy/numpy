@@ -1094,7 +1094,7 @@ def test_skiprow_exceeding_maxrows_exceeding_chunksize(tmpdir, nskip):
     tmp_file = tmpdir / "test_data.txt"
     tmp_file.write(data)
     fname = str(tmp_file)
-    res = np.loadtxt(fname, dtype = 'str', delimiter=" ", skiprows=nskip, max_rows=60000)
+    res = np.loadtxt(fname, dtype='str', delimiter=" ", skiprows=nskip, max_rows=60000)
     assert len(res) == expected_length
     # are the right lines read in res?
     assert_array_equal(expected, res[:, 0])
