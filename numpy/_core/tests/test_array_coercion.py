@@ -179,7 +179,7 @@ class TestStringDiscovery:
         expected = np.dtype(f"S{length}")
         arr = np.array(obj, dtype="O")
         # On FreeBSD, expecting and verifying the RuntimeWarning for float-to-string cast
-        # See https://github.com/numpy/numpy/issues/28329
+        # See gh-28351
         if sys.platform.startswith("freebsd") and isinstance(obj, float):
             with pytest.warns(RuntimeWarning, match="invalid value encountered in cast") as w:
                 result = np.array([arr, arr], dtype="S")
