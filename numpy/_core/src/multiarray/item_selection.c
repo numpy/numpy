@@ -2927,6 +2927,7 @@ PyArray_Nonzero(PyArrayObject *self)
         /* avoid function call for bool */
         if ( (ndim ==  1) && is_bool) {
             nonzero_idxs_1D_bool(count_first_dim, nonzero_count, data, M_strides[0], multi_index);
+            executed = 1;
         }
         else {
             executed = nonzero_idxs_dispatcher((void*)data, multi_index, PyArray_NDIM(self),
