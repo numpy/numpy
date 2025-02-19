@@ -1956,7 +1956,6 @@ class TestNonzero:
         a = np.array([[ThrowsAfter(15)]] * 10)
         assert_raises(ValueError, np.nonzero, a)
 
-
     def test_nonzero_byteorder(self):
         values = [0., -0., 1, float('nan'), 0, 1,
                   np.float16(0), np.float16(12.3)]
