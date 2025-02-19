@@ -2801,7 +2801,9 @@ finish:
     return nonzero_count;
 }
 
-static inline void nonzero_idxs_1D_bool(npy_intp count, npy_intp nonzero_count, char *data, npy_intp stride, npy_intp* multi_index)
+static inline void
+nonzero_idxs_1D_bool(npy_intp count, npy_intp nonzero_count, char *data,
+                     npy_intp stride, npy_intp* multi_index)
 {
     /*
     * use fast memchr variant for sparse data, see gh-4370
@@ -2910,14 +2912,11 @@ PyArray_Nonzero(PyArrayObject *self)
         goto finish;
     }
 
-    PyArrayObject* original_array = self;
-    if (PyArray_BASE(self) != NULL) {
-        original_array = (PyArrayObject*) PyArray_BASE(self);
-    }
-    int bytes_not_swapped = PyArray_ISNOTSWAPPED(self) && PyArray_ISNOTSWAPPED(original_array);
+    int bytes_not_swapped = PyArray_ISNOTSWAPPED(self);
 
     // do not add ndim=1, dtype->kind == 'b', since we have a separate fast path for it
-    int optimized_count = PyArray_TRIVIALLY_ITERABLE(self) && ! (ndim == 1 && dtype->kind=='b') && bytes_not_swapped;
+    int optimized_count = PyArray_TRIVIALLY_ITERABLE(self) &&
+            !(ndim == 1 && dtype->kind=='b') && bytes_not_swapped;
     if (optimized_count ) {
         npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
         char * data = PyArray_BYTES(self);
@@ -2926,9 +2925,14 @@ PyArray_Nonzero(PyArrayObject *self)
         const npy_intp* M_strides = PyArray_STRIDES(self);
         int M_type_num = dtype->type_num;
 
+        NPY_BEGIN_THREADS_DEF;
+        if (!needs_api) {
+            NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(self, 0));
+        }
         bool executed = nonzero_idxs_dispatcher((void*)data, multi_index, M_dim,
                                         M_shape, M_strides, M_type_num, nonzero_count);
 
+        NPY_END_THREADS;
         if (executed) {
             added_count = nonzero_count;
             goto finish;
@@ -2942,7 +2946,6 @@ PyArray_Nonzero(PyArrayObject *self)
         npy_intp stride = PyArray_STRIDE(self, 0);
         npy_intp count = PyArray_DIM(self, 0);
         NPY_BEGIN_THREADS_DEF;
-
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(count);
         }
