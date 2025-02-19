@@ -2725,9 +2725,11 @@ PyArray_CountNonzero(PyArrayObject *self)
         }
         else {
             /* Special low-overhead version specific to the float types (and some others) */
-            npy_intp dispatched_nonzero_count = count_nonzero_trivial_dispatcher(count, data, stride, dtype->type_num);
-            if (dispatched_nonzero_count >= 0) {
-                return dispatched_nonzero_count;
+            if (PyArray_ISNOTSWAPPED(self)) {
+                npy_intp dispatched_nonzero_count = count_nonzero_trivial_dispatcher(count, data, stride, dtype->type_num);
+                if (dispatched_nonzero_count >= 0) {
+                    return dispatched_nonzero_count;
+                }
             }
 
             NPY_BEGIN_THREADS_THRESHOLDED(count);
