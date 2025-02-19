@@ -2884,7 +2884,6 @@ PyArray_Nonzero(PyArrayObject *self)
     npy_intp added_count = 0;
 
     PyArray_Descr *dtype = PyArray_DESCR(self);
-    PyArray_NonzeroFunc *nonzero = PyDataType_GetArrFuncs(dtype)->nonzero;
     int needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
 
     /*
@@ -2913,31 +2912,34 @@ PyArray_Nonzero(PyArrayObject *self)
     }
 
     int bytes_not_swapped = PyArray_ISNOTSWAPPED(self);
-
-    // do not add ndim=1, dtype->kind == 'b', since we have a separate fast path for it
-    int optimized_count = PyArray_TRIVIALLY_ITERABLE(self) &&
-            !(ndim == 1 && dtype->kind=='b') && bytes_not_swapped;
+    int optimized_count = PyArray_TRIVIALLY_ITERABLE(self) && bytes_not_swapped;
     if (optimized_count ) {
         npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
         char * data = PyArray_BYTES(self);
-        const npy_intp M_dim = PyArray_NDIM(self);
-        const npy_intp* M_shape = PyArray_SHAPE(self);
         const npy_intp* M_strides = PyArray_STRIDES(self);
-        int M_type_num = dtype->type_num;
+        npy_intp count_first_dim = PyArray_DIM(self, 0);
 
         NPY_BEGIN_THREADS_DEF;
         if (!needs_api) {
-            NPY_BEGIN_THREADS_THRESHOLDED(PyArray_DIM(self, 0));
+            NPY_BEGIN_THREADS_THRESHOLDED(count_first_dim);
         }
-        bool executed = nonzero_idxs_dispatcher((void*)data, multi_index, M_dim,
-                                        M_shape, M_strides, M_type_num, nonzero_count);
-
+        npy_bool executed = 0;
+        /* avoid function call for bool */
+        if ( (ndim ==  1) && is_bool) {
+            nonzero_idxs_1D_bool(count_first_dim, nonzero_count, data, M_strides[0], multi_index);
+        }
+        else {
+            executed = nonzero_idxs_dispatcher((void*)data, multi_index, PyArray_NDIM(self),
+                                PyArray_SHAPE(self), M_strides, dtype->type_num, nonzero_count);
+        }
         NPY_END_THREADS;
         if (executed) {
             added_count = nonzero_count;
             goto finish;
         }
     }
+
+    PyArray_NonzeroFunc *nonzero = PyDataType_GetArrFuncs(dtype)->nonzero;
 
     /* If it's a one-dimensional result, don't use an iterator */
     if (ndim == 1) {
@@ -2950,24 +2952,17 @@ PyArray_Nonzero(PyArrayObject *self)
             NPY_BEGIN_THREADS_THRESHOLDED(count);
         }
 
-        /* avoid function call for bool */
-        if (is_bool) {
-            nonzero_idxs_1D_bool(count, nonzero_count, data, stride, multi_index);
-        }
-        else {
-            npy_intp j;
-            for (j = 0; j < count; ++j) {
-                if (nonzero(data, self)) {
-                    if (++added_count > nonzero_count) {
-                        break;
-                    }
-                    *multi_index++ = j;
-                }
-                if (needs_api && PyErr_Occurred()) {
+        for (npy_intp j = 0; j < count; ++j) {
+            if (nonzero(data, self)) {
+                if (++added_count > nonzero_count) {
                     break;
                 }
-                data += stride;
+                *multi_index++ = j;
             }
+            if (needs_api && PyErr_Occurred()) {
+                break;
+            }
+            data += stride;
         }
 
         NPY_END_THREADS;
