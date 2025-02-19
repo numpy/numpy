@@ -1887,7 +1887,7 @@ mapiter_@name@(
  * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
  */
 
-void nonzero_idxs_trivial_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) {
+static inline void nonzero_idxs_trivial_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) {
     npy_intp stride = strides[0];
     npy_intp added_count = 0;
     npy_intp a = 0;
@@ -1903,7 +1903,7 @@ void nonzero_idxs_trivial_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp*
     }
 }
 
-void nonzero_idxs_2D_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) { 
+static inline void nonzero_idxs_2D_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) { 
     npy_intp idxs_stride = 2; 
     npy_intp size_1 = shape[1]; 
     npy_intp stride_1 = strides[1]; 
@@ -1914,7 +1914,7 @@ void nonzero_idxs_2D_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shap
     while (added_count < nonzero_count) { 
         npy_intp old_added_count = added_count; 
         npy_intp b = 0;
-        while (added_count < nonzero_count && b<size_1) { 
+        while (added_count < nonzero_count && b < size_1) {
             *idxs_1 = b; 
             npy_uintp to_increment = (npy_uintp) ((bool) *data); 
             idxs_1 += (idxs_stride & (-to_increment)); 
@@ -1922,7 +1922,7 @@ void nonzero_idxs_2D_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shap
             data = (@dtype@ *) (((char *) data) + stride_1); 
             ++b;
         } 
-        for (npy_intp i=0; i<added_count - old_added_count; ++i) {
+        for (npy_intp i=0; i < added_count - old_added_count; ++i) {
             *idxs_0 = a;
             idxs_0 += idxs_stride;
         }
@@ -1932,7 +1932,7 @@ void nonzero_idxs_2D_@name@(@dtype@ * data, npy_intp* idxs, const npy_intp* shap
 
 /**end repeat**/
 
-bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int ndim, const npy_intp* shape, const npy_intp* strides, int dtype, npy_intp nonzero_count)
+npy_bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int ndim, const npy_intp* shape, const npy_intp* strides, int dtype, npy_intp nonzero_count)
 { 
 
     if (ndim==1) {
@@ -1977,5 +1977,3 @@ bool nonzero_idxs_dispatcher(void * data, npy_intp* idxs, int ndim, const npy_in
     return false;
 }
 
- /**end repeat1**/
- /**end repeat**/
