@@ -2923,7 +2923,7 @@ PyArray_Nonzero(PyArrayObject *self)
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(count_first_dim);
         }
-        npy_bool executed = 0;
+        npy_bool executed = NPY_FALSE;
         /* avoid function call for bool */
         if ( (ndim ==  1) && is_bool) {
             nonzero_idxs_1D_bool(count_first_dim, nonzero_count, data, M_strides[0], multi_index);

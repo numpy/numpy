@@ -12,6 +12,7 @@
 #include <Python.h>
 
 #include <assert.h>
+#include <stdbool.h>
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
@@ -1887,11 +1888,12 @@ mapiter_@name@(
  */
 
 static inline void nonzero_idxs_1D_@name@(@dtype@ const* data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) {
+    npy_intp size_0 = shape[0];
     npy_intp stride = strides[0];
     npy_intp added_count = 0;
     npy_intp a = 0;
-    while (added_count < nonzero_count && a < shape[0]) {
-        npy_bool element_nonzero = ((npy_bool) *data);
+    while (added_count < nonzero_count && (a < size_0)) {
+        bool element_nonzero = ((bool) *data);
         // branchless update of idxs
         *idxs = a;
         idxs += ((int) element_nonzero);
@@ -1911,12 +1913,12 @@ static inline void nonzero_idxs_2D_@name@(@dtype@ const* data, npy_intp* idxs, c
     npy_intp* idxs_1 = idxs + 1;    
     npy_intp added_count = 0; 
     npy_intp a = 0; 
-    while (added_count < nonzero_count && a < size_0) {
+    while (added_count < nonzero_count && (a < size_0)) {
         npy_intp old_added_count = added_count; 
         npy_intp b = 0;
         while (added_count < nonzero_count && b < size_1) {
             *idxs_1 = b; 
-            npy_uintp to_increment = (npy_uintp) ((npy_bool) *data);
+            npy_uintp to_increment = (npy_uintp) ((bool) *data);
             idxs_1 += (idxs_stride & (-to_increment)); 
             added_count += to_increment; 
             data = (@dtype@ *) (((char *) data) + stride_1); 
