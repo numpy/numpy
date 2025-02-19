@@ -2530,7 +2530,7 @@ count_nonzero_trivial_@name@(npy_intp count, const char *data, npy_int stride)
 }
 /**end repeat**/
 
-npy_intp
+NPY_NO_EXPORT npy_intp
 count_nonzero_trivial_dispatcher(npy_intp count, const char* data, npy_intp stride, int dtype_num) { 
     switch(dtype_num) {
         /**begin repeat

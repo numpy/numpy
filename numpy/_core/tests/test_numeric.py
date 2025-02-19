@@ -1957,6 +1957,17 @@ class TestNonzero:
         assert_raises(ValueError, np.nonzero, a)
 
 
+    def test_nonzero_byteorder(self):
+        values = [0., -0., 1, float('nan'), 0, 1, np.float16(0), np.float16(12.3)]
+        expected = [0, 0, 1, 1, 0, 1, 0, 1]
+
+        for value, expected in zip(values, expected):
+            A=np.array([value])
+            A_byteswapped=(A.view(A.dtype.newbyteorder()).byteswap()).copy()
+
+            assert np.count_nonzero(A) == expected
+            assert np.count_nonzero(A_byteswapped) == expected
+
 class TestIndex:
     def test_boolean(self):
         a = rand(3, 5, 8)
