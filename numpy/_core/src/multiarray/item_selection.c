@@ -2916,7 +2916,7 @@ PyArray_Nonzero(PyArrayObject *self)
                 npy_intp j = 0;
 
                 /* Manually unroll for GCC and maybe other compilers */
-                while (multi_index + 4 < multi_index_end) {
+                while (multi_index + 4 < multi_index_end && (j < count - 4) ) {
                     *multi_index = j;
                     multi_index += data[0] != 0;
                     *multi_index = j + 1;
@@ -2929,7 +2929,7 @@ PyArray_Nonzero(PyArrayObject *self)
                     j += 4;
                 }
 
-                while (multi_index < multi_index_end) {
+                while (multi_index < multi_index_end && (j < count) ) {
                     *multi_index = j;
                     multi_index += *data != 0;
                     data += stride;
