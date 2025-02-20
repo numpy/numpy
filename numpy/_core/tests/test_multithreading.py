@@ -271,3 +271,21 @@ def test_legacy_usertype_cast_init_thread_safety():
         # Reducing the number of threads means the test doesn't trigger the
         # bug. Better to skip on some platforms than add a useless test.
         pytest.skip("Couldn't spawn enough threads to run the test")
+
+
+def test_nonzero():
+    # np.nonzero uses np.count_nonzero to determine the size of the output array
+    # In a second pass the indices of the non-zero elements are determined, but they can have changed
+        
+    for dtype in [bool, int, float]:
+        x= np.random.randint(4, size=10_000).astype(dtype)
+    
+        def func(seed):
+            x[::2] = np.random.randint(2)
+            try:
+                r = np.nonzero(x)
+                assert r[0].min() >= 0
+            except RuntimeError as ex:
+                assert 'number of non-zero array elements changed during function execution' in str(ex)            
+   
+        run_threaded(func, max_workers=10, pass_count=True, outer_iterations=10)
