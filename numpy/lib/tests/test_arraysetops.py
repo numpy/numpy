@@ -836,6 +836,17 @@ class TestUnique:
             bb = Subclass(b.shape, dtype=dt, buffer=b)
             self.check_all(aa, bb, i1, i2, c, dt)
 
+    @pytest.mark.parametrize("arg", ["return_index", "return_inverse", "return_counts"])
+    def test_unsupported_hash_based(self, arg):
+        """Test that hash based unique is not supported when either of
+        return_index, return_inverse, or return_counts is True.
+
+        This is WIP and the above will gradually be supported in the future.
+        """
+        msg = "Currently, `sorted` can only be False"
+        with pytest.raises(ValueError, match=msg):
+            np.unique([1, 1], sorted=False, **{arg: True})
+
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)
         assert_raises(TypeError, self._run_axis_tests,
