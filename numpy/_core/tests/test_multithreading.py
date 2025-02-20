@@ -278,7 +278,7 @@ def test_nonzero():
     # In a second pass the indices of the non-zero elements are determined, but they can have changed
         
     for dtype in [bool, int, float]:
-        x= np.random.randint(4, size=10_000).astype(dtype)
+        x = np.random.randint(4, size=10_000).astype(dtype)
     
         def func(seed):
             x[::2] = np.random.randint(2)
