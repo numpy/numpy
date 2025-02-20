@@ -25,7 +25,8 @@ FinalAction<F> finally(F f) {
 }
 
 template<typename T>
-PyObject* unique(PyArrayObject *self)
+static PyObject*
+unique(PyArrayObject *self)
 {
     /* This function takes a numpy array and returns a numpy array containing
     the unique values.
@@ -55,12 +56,12 @@ PyObject* unique(PyArrayObject *self)
     // or w/o an exception
     auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
     if (iter == NULL) {
-        return Py_None;
+        return NULL;
     }
 
     iternext = NpyIter_GetIterNext(iter, NULL);
     if (iternext == NULL) {
-        return Py_None;
+        return NULL;
     }
     dataptr = NpyIter_GetDataPtrArray(iter);
     strideptr = NpyIter_GetInnerStrideArray(iter);
@@ -84,15 +85,6 @@ PyObject* unique(PyArrayObject *self)
         }
     } while(iternext(iter));
 
-    // then we iterate through the map's keys to get the unique values
-    T* res = new T[hashset.size()];
-    auto it = hashset.begin();
-    size_t i = 0;
-    for (; it != hashset.end(); it++, i++) {
-        res[i] = *it;
-    }
-
-    // does this need to have the same lifetime as the array?
     npy_intp dims[1] = {(npy_intp)hashset.size()};
     PyArray_Descr *descr = PyArray_DESCR(self);
     NPY_ALLOW_C_API;
@@ -103,12 +95,25 @@ PyObject* unique(PyArrayObject *self)
         1, // ndim
         dims, // shape
         NULL, // strides
-        res, // data
+        NULL, // data
         // This flag is needed to be able to call .sort on it.
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
     NPY_DISABLE_C_API;
+
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
+    // then we iterate through the map's keys to get the unique values
+    T* data = (T *)PyArray_DATA((PyArrayObject *)res_obj);
+    auto it = hashset.begin();
+    size_t i = 0;
+    for (; it != hashset.end(); it++, i++) {
+        data[i] = *it;
+    }
+
     return res_obj;
 }
 
@@ -134,11 +139,12 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_UINT16, unique<npy_uint16>},
     {NPY_UINT32, unique<npy_uint32>},
     {NPY_UINT64, unique<npy_uint64>},
+    {NPY_DATETIME, unique<npy_uint64>},
 };
 
 
 extern "C" NPY_NO_EXPORT PyObject *
-array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
+array__unique_hash(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     /* This is called from Python space, and expects a single numpy array as input.
 
@@ -147,13 +153,13 @@ array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
     If the input array is not supported, it returns None.
     */
     // this is to allow grabbing the GIL before raising a python exception.
-    NPY_ALLOW_C_API_DEF;
 
 
     PyArrayObject *self = NULL;
     PyObject *res = NULL;
-    if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self))
+    if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self)) {
         return NULL;
+    }
     // Making sure the DECREF is called when the function returns, with
     // or w/o an exception
     auto self_decref = finally([&]() { Py_XDECREF(self); });
@@ -165,35 +171,25 @@ array_unique(PyObject *NPY_UNUSED(dummy), PyObject *args)
                 self,
                 NPY_ANYORDER,
                 NULL, // descr (use prototype's descr)
-                1 // subok
+                0 // subok (function always returns base-class)
             );
         }
 
         auto type = PyArray_TYPE(self);
         // we only support data types present in our unique_funcs map
         if (unique_funcs.find(type) == unique_funcs.end()) {
-            // Grab GIL before raising an exception
-            NPY_ALLOW_C_API;
-            PyErr_SetString(PyExc_NotImplementedError, "Unsupported dtype");
-            NPY_DISABLE_C_API;
-            return NULL;
+            return Py_NotImplemented;
         }
 
         res = unique_funcs[type](self);
         return res;
     }
     catch (const std::bad_alloc &e) {
-        // Grab GIL before raising an exception
-        NPY_ALLOW_C_API;
         PyErr_NoMemory();
-        NPY_DISABLE_C_API;
         return NULL;
     }
     catch (const std::exception &e) {
-        // Grab GIL before raising an exception
-        NPY_ALLOW_C_API;
         PyErr_SetString(PyExc_RuntimeError, e.what());
-        NPY_DISABLE_C_API;
         return NULL;
     }
 }

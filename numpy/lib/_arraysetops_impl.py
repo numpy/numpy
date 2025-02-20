@@ -15,12 +15,14 @@ Original author: Robert Cimrman
 
 """
 import functools
+from types import NotImplementedType
 import warnings
 from typing import NamedTuple
 
 import numpy as np
 from numpy._core import overrides
 from numpy._core._multiarray_umath import _array_converter
+from numpy._core._multiarray_umath import _unique_hash
 
 
 array_function_dispatch = functools.partial(
@@ -186,6 +188,8 @@ def unique(ar, return_index=False, return_inverse=False,
 
     sorted : bool, optional
         If True, the unique elements are sorted.
+
+        .. versionadded:: 2.3
 
     Returns
     -------
@@ -360,27 +364,22 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     if (optional_indices or return_counts) and not sorted:
         raise ValueError(
-            "`sorted` can only be False if `return_index`, `return_inverse`, "
-            "and `return_counts` are all False."
+            "Currently, `sorted` can only be False if `return_index`, "
+            "`return_inverse`, and `return_counts` are all False."
         )
 
     # masked arrays are not supported yet.
     if not optional_indices and not return_counts and not np.ma.is_masked(ar):
-        from numpy._core._multiarray_umath import unique_hash
         # First we convert the array to a numpy array, later we wrap it back
         # in case it was a subclass of numpy.ndarray.
         conv = _array_converter(ar)
         ar_, = conv
 
-        try:
-            hash_unique = unique_hash(ar_)
+        if type(hash_unique := _unique_hash(ar_)) != NotImplementedType:
             if sorted:
                 hash_unique.sort()
             # We wrap the result back in case it was a subclass of numpy.ndarray.
             return (conv.wrap(hash_unique),)
-        except NotImplementedError:
-            # We don't support this dtype, so we use the slower sorting method.
-            pass
 
     # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
