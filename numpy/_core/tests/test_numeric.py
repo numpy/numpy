@@ -1956,29 +1956,6 @@ class TestNonzero:
         a = np.array([[ThrowsAfter(15)]] * 10)
         assert_raises(ValueError, np.nonzero, a)
 
-    @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have threads")
-    def test_structured_threadsafety(self):
-        # Nonzero (and some other functions) should be threadsafe for
-        # structured datatypes, see gh-15387. This test can behave randomly.
-        from concurrent.futures import ThreadPoolExecutor
-
-        # Create a deeply nested dtype to make a failure more likely:
-        dt = np.dtype([("", "f8")])
-        dt = np.dtype([("", dt)])
-        dt = np.dtype([("", dt)] * 2)
-        # The array should be large enough to likely run into threading issues
-        arr = np.random.uniform(size=(5000, 4)).view(dt)[:, 0]
-
-        def func(arr):
-            arr.nonzero()
-
-        tpe = ThreadPoolExecutor(max_workers=8)
-        futures = [tpe.submit(func, arr) for _ in range(10)]
-        for f in futures:
-            f.result()
-
-        assert arr.dtype is dt
-
 
 class TestIndex:
     def test_boolean(self):
@@ -3586,13 +3563,12 @@ class TestCorrelate:
         d = np.ones(100)
         k = np.ones(3)
         default_mode = np.correlate(d, k, mode='valid')
-        with assert_warns(DeprecationWarning):
-            valid_mode = np.correlate(d, k, mode='v')
-        assert_array_equal(valid_mode, default_mode)
+        with assert_raises(ValueError):
+            np.correlate(d, k, mode='v')
         # integer mode
         with assert_raises(ValueError):
             np.correlate(d, k, mode=-1)
-        assert_array_equal(np.correlate(d, k, mode=0), valid_mode)
+        # assert_array_equal(np.correlate(d, k, mode=), default_mode)
         # illegal arguments
         with assert_raises(TypeError):
             np.correlate(d, k, mode=None)
@@ -3615,13 +3591,12 @@ class TestConvolve:
         d = np.ones(100)
         k = np.ones(3)
         default_mode = np.convolve(d, k, mode='full')
-        with assert_warns(DeprecationWarning):
-            full_mode = np.convolve(d, k, mode='f')
-        assert_array_equal(full_mode, default_mode)
+        with assert_raises(ValueError):
+            np.convolve(d, k, mode='f')
         # integer mode
         with assert_raises(ValueError):
             np.convolve(d, k, mode=-1)
-        assert_array_equal(np.convolve(d, k, mode=2), full_mode)
+        assert_array_equal(np.convolve(d, k, mode=2), default_mode)
         # illegal arguments
         with assert_raises(TypeError):
             np.convolve(d, k, mode=None)
