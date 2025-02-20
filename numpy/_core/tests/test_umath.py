@@ -1261,7 +1261,8 @@ class TestPower:
     def test_large_fast_power(self):
         # gh-28248
         for dt in [np.float32, np.float64]:
-            a = np.random.uniform(1, 4, 1000).astype(dt)
+            rng = np.random.default_rng(42)
+            a = rng.uniform(1, 4, 1000).astype(dt)
 
             result = np.power(a, 2)
             assert_array_equal(result, a * a)
