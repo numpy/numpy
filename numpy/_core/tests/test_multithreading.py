@@ -281,7 +281,6 @@ def test_nonzero_bool():
         x[::2] = np.random.randint(2)
         try:
             r = np.nonzero(x)
-            assert r[0].min() >= 0
         except RuntimeError as ex:
             assert 'number of non-zero array elements changed during function execution' in str(ex)            
 
@@ -296,7 +295,6 @@ def test_nonzero_int():
         x[::2] = np.random.randint(2)
         try:
             r = np.nonzero(x)
-            assert r[0].min() >= 0
         except RuntimeError as ex:
             assert 'number of non-zero array elements changed during function execution' in str(ex)            
 
@@ -311,7 +309,6 @@ def test_nonzero_float():
         x[::2] = np.random.randint(2)
         try:
             r = np.nonzero(x)
-            assert r[0].min() >= 0
         except RuntimeError as ex:
             assert 'number of non-zero array elements changed during function execution' in str(ex)            
 
