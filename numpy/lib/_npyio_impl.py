@@ -1084,7 +1084,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 # be adapted (in principle the concatenate could cast).
                 chunks.append(next_arr.astype(read_dtype_via_object_chunks))
 
-                skiprows = 0  # Only have to skip for first chunk
+                skiplines = 0  # Only have to skip for first chunk
                 if max_rows >= 0:
                     max_rows -= chunk_size
                 if len(next_arr) < chunk_size:
