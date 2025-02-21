@@ -121,7 +121,7 @@ and its sub-types).
 
     Returns the total size (in number of elements) of the array.
 
-.. c:function:: npy_intp PyArray_Size(PyArrayObject* obj)
+.. c:function:: npy_intp PyArray_Size(PyObject* obj)
 
     Returns 0 if *obj* is not a sub-class of ndarray. Otherwise,
     returns the total number of elements in the array. Safer version
