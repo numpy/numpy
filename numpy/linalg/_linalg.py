@@ -2541,7 +2541,7 @@ def lstsq(a, b, rcond=None):
     return wrap(x), wrap(resids), rank, s
 
 
-def _multi_svd_norm(x, row_axis, col_axis, op, initial):
+def _multi_svd_norm(x, row_axis, col_axis, op, initial=None):
     """Compute a function of the singular values of the 2-D matrices in `x`.
 
     This is a private utility function used by `numpy.linalg.norm()`.
@@ -2765,7 +2765,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         if ord == inf:
             return abs(x).max(axis=axis, keepdims=keepdims, initial=0)
         elif ord == -inf:
-            return abs(x).min(axis=axis, keepdims=keepdims, initial=inf)
+            return abs(x).min(axis=axis, keepdims=keepdims)
         elif ord == 0:
             # Zero norm
             return (
@@ -2799,7 +2799,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         if ord == 2:
             ret = _multi_svd_norm(x, row_axis, col_axis, amax, 0)
         elif ord == -2:
-            ret = _multi_svd_norm(x, row_axis, col_axis, amin, inf)
+            ret = _multi_svd_norm(x, row_axis, col_axis, amin)
         elif ord == 1:
             if col_axis > row_axis:
                 col_axis -= 1
@@ -2811,11 +2811,11 @@ def norm(x, ord=None, axis=None, keepdims=False):
         elif ord == -1:
             if col_axis > row_axis:
                 col_axis -= 1
-            ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis, initial=inf)
+            ret = add.reduce(abs(x), axis=row_axis).min(axis=col_axis)
         elif ord == -inf:
             if row_axis > col_axis:
                 row_axis -= 1
-            ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis, initial=inf)
+            ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
         elif ord in [None, 'fro', 'f']:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
         elif ord == 'nuc':
