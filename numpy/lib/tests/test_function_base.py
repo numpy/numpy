@@ -2966,6 +2966,10 @@ class TestBincount:
         expected = [1, 3, 1, 1, 0, 0, 0, 1]
         assert_array_equal(actual, expected)
 
+    def test_contiguous_handling(self):
+        # check for absence of hard crash
+        np.bincount(np.arange(10000)[::2])
+
 
 class TestInterp:
 

@@ -119,6 +119,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     npy_intp *numbers, *ians, len, mx, mn, ans_size;
     npy_intp minlength = 0;
     npy_intp i;
+    int flags;
     double *weights , *dans;
 
     NPY_PREPARE_ARGPARSER;
@@ -177,12 +178,13 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     }
 
     if (lst == NULL) {
-        PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
-        list = PyArray_FromAny(list, local_dtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
-        if (list == NULL) {
-            goto fail;
+        flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
+        if (PyArray_Size((PyObject *)list) &&
+            PyArray_ISINTEGER((PyArrayObject *)list)) {
+            flags = flags | NPY_ARRAY_FORCECAST;
         }
-        lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
+        PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
+        lst = (PyArrayObject *)PyArray_FromAny(list, local_dtype, 1, 1, flags, NULL);
         if (lst == NULL) {
             goto fail;
         }
