@@ -16,6 +16,9 @@
 // Provides the various *_LOOP macros
 #include "fast_loop_macros.h"
 
+#include <hwy/highway.h>
+namespace hn = hwy::HWY_NAMESPACE;
+
 /*******************************************************************************
  ** Defining the SIMD kernels
  ******************************************************************************/
@@ -26,23 +29,25 @@
  * consistent, should not be required if bool is used correctly everywhere but
  * you never know
  */
-NPY_FINLINE npyv_u8 byte_to_true(npyv_u8 v)
+const hn::ScalableTag<uint8_t> u8;
+using vec_u8 = hn::Vec<decltype(u8)>;
+
+NPY_FINLINE vec_u8 byte_to_true(vec_u8 v)
 {
-    const npyv_u8 zero = npyv_zero_u8();
-    const npyv_u8 truemask = npyv_setall_u8(1 == 1);
-    // cmpeq(v, 0) turns 0x00 -> 0xff and non-zero -> 0x00
-    npyv_u8 tmp = npyv_cvt_u8_b8(npyv_cmpeq_u8(v, zero));
+    const vec_u8 zero = hn::Zero(u8);
+    const auto truemask = hn::Set(u8, 1 == 1);
+    vec_u8 tmp = hn::VecFromMask(u8, hn::Eq(v, zero));
     // tmp is filled with 0xff/0x00, negate and mask to boolean true
-    return npyv_andc_u8(truemask, tmp);
+    return hn::And(truemask, hn::Not(tmp));
 }
 /*
  * convert mask vector (0xff/0x00) to boolean true.  similar to byte_to_true(),
  * but we've already got a mask and can skip negation.
  */
-NPY_FINLINE npyv_u8 mask_to_true(npyv_b8 v)
+NPY_FINLINE vec_u8 mask_to_true(vec_u8 v)
 {
-    const npyv_u8 truemask = npyv_setall_u8(1 == 1);
-    return npyv_and_u8(truemask, npyv_cvt_u8_b8(v));
+    const vec_u8 truemask = hn::Set(u8, 1 == 1);
+    return  hn::And(truemask, v);
 }
 /*
  * For logical_and, we have to be careful to handle non-bool inputs where
@@ -50,32 +55,41 @@ NPY_FINLINE npyv_u8 mask_to_true(npyv_b8 v)
  * Both evaluate to boolean true, however, a & b is false.  Return value
  * should be consistent with byte_to_true().
  */
-NPY_FINLINE npyv_u8 simd_logical_and_u8(npyv_u8 a, npyv_u8 b)
+NPY_FINLINE vec_u8 simd_logical_and_u8(vec_u8 a, vec_u8 b)
 {
-    const npyv_u8 zero = npyv_zero_u8();
-    const npyv_u8 truemask = npyv_setall_u8(1 == 1);
-    npyv_b8 ma = npyv_cmpeq_u8(a, zero);
-    npyv_b8 mb = npyv_cmpeq_u8(b, zero);
-    npyv_u8 r = npyv_cvt_u8_b8(npyv_or_b8(ma, mb));
-    return npyv_andc_u8(truemask, r);
+    const vec_u8 zero = hn::Zero(u8);
+    const auto truemask = hn::Set(u8, 1 == 1);
+    auto ma = hn::VecFromMask(u8, hn::Eq(a, zero));
+    auto mb = hn::VecFromMask(u8, hn::Eq(b, zero));
+    vec_u8 r = hn::Or(ma, mb);
+    return hn::And(truemask, hn::Not(r));
 }
 /*
  * We don't really need the following, but it simplifies the templating code
  * below since it is paired with simd_logical_and_u8() above.
  */
-NPY_FINLINE npyv_u8 simd_logical_or_u8(npyv_u8 a, npyv_u8 b)
+NPY_FINLINE vec_u8 simd_logical_or_u8(vec_u8 a, vec_u8 b)
 {
-    npyv_u8 r = npyv_or_u8(a, b);
+    vec_u8 r = hn::Or(a, b);
     return byte_to_true(r);
 }
 
+NPY_FINLINE npy_bool simd_any_u8(vec_u8 v)
+{
+    return hn::ReduceMax(u8, v) != 0;
+}
+
+NPY_FINLINE npy_bool simd_all_u8(vec_u8 v)
+{
+    return hn::ReduceMin(u8, v) != 0;
+}
 
 /**begin repeat
  * #kind = logical_and, logical_or#
  * #and  = 1, 0#
  * #scalar_op = &&, ||#
  * #intrin = and, or#
- * #reduce = min, max#
+ * #reduce = Min, Max#
  * #scalar_cmp = ==, !=#
  * #anyall = all, any#
  */
@@ -84,7 +98,7 @@ simd_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2, npy_intp 
 {
     #define UNROLL 16
 
-    const int vstep = npyv_nlanes_u8;
+    const int vstep = hn::Lanes(u8);
     const int wstep = vstep * UNROLL;
 
     // Unrolled vectors loop
@@ -93,10 +107,10 @@ simd_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2, npy_intp 
          * #unroll = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
          */
         #if UNROLL > @unroll@
-        npyv_u8 a@unroll@ = npyv_load_u8(ip1 + vstep * @unroll@);
-        npyv_u8 b@unroll@ = npyv_load_u8(ip2 + vstep * @unroll@);
-        npyv_u8 r@unroll@ = simd_logical_@intrin@_u8(a@unroll@, b@unroll@);
-        npyv_store_u8(op + vstep * @unroll@, r@unroll@);
+        vec_u8 a@unroll@ = hn::LoadU(u8, ip1 + vstep * @unroll@);
+        vec_u8 b@unroll@ = hn::LoadU(u8, ip2 + vstep * @unroll@);
+        vec_u8 r@unroll@ = simd_logical_@intrin@_u8(a@unroll@, b@unroll@);
+        hn::StoreU(r@unroll@, u8, op + vstep * @unroll@);
         #endif
         /**end repeat1**/
     }
@@ -104,10 +118,10 @@ simd_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2, npy_intp 
 
     // Single vectors loop
     for (; len >= vstep; len -= vstep, ip1 += vstep, ip2 += vstep, op += vstep) {
-        npyv_u8 a = npyv_load_u8(ip1);
-        npyv_u8 b = npyv_load_u8(ip2);
-        npyv_u8 r = simd_logical_@intrin@_u8(a, b);
-        npyv_store_u8(op, r);
+        vec_u8 a = hn::LoadU(u8, ip1);
+        vec_u8 b = hn::LoadU(u8, ip2);
+        vec_u8 r = simd_logical_@intrin@_u8(a, b);
+        hn::StoreU(r, u8, op);
     }
 
     // Scalar loop to finish off
@@ -121,7 +135,7 @@ simd_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
 {
     #define UNROLL 8
 
-    const int vstep = npyv_nlanes_u8;
+    const int vstep = hn::Lanes(u8);
     const int wstep = vstep * UNROLL;
 
     // Unrolled vectors loop
@@ -129,26 +143,26 @@ simd_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
     #if defined(NPY_HAVE_SSE2)
         NPY_PREFETCH(ip + wstep, 0, 3);
     #endif
-        npyv_u8 v0 = npyv_load_u8(ip + vstep * 0);
-        npyv_u8 v1 = npyv_load_u8(ip + vstep * 1);
-        npyv_u8 v2 = npyv_load_u8(ip + vstep * 2);
-        npyv_u8 v3 = npyv_load_u8(ip + vstep * 3);
-        npyv_u8 v4 = npyv_load_u8(ip + vstep * 4);
-        npyv_u8 v5 = npyv_load_u8(ip + vstep * 5);
-        npyv_u8 v6 = npyv_load_u8(ip + vstep * 6);
-        npyv_u8 v7 = npyv_load_u8(ip + vstep * 7);
+        vec_u8 v0 = hn::LoadU(u8, ip + vstep * 0);
+        vec_u8 v1 = hn::LoadU(u8, ip + vstep * 1);
+        vec_u8 v2 = hn::LoadU(u8, ip + vstep * 2);
+        vec_u8 v3 = hn::LoadU(u8, ip + vstep * 3);
+        vec_u8 v4 = hn::LoadU(u8, ip + vstep * 4);
+        vec_u8 v5 = hn::LoadU(u8, ip + vstep * 5);
+        vec_u8 v6 = hn::LoadU(u8, ip + vstep * 6);
+        vec_u8 v7 = hn::LoadU(u8, ip + vstep * 7);
 
-        npyv_u8 m01 = npyv_@reduce@_u8(v0, v1);
-        npyv_u8 m23 = npyv_@reduce@_u8(v2, v3);
-        npyv_u8 m45 = npyv_@reduce@_u8(v4, v5);
-        npyv_u8 m67 = npyv_@reduce@_u8(v6, v7);
+        vec_u8 m01 = hn::@reduce@(v0, v1);
+        vec_u8 m23 = hn::@reduce@(v2, v3);
+        vec_u8 m45 = hn::@reduce@(v4, v5);
+        vec_u8 m67 = hn::@reduce@(v6, v7);
 
-        npyv_u8 m0123 = npyv_@reduce@_u8(m01, m23);
-        npyv_u8 m4567 = npyv_@reduce@_u8(m45, m67);
+        vec_u8 m0123 = hn::@reduce@(m01, m23);
+        vec_u8 m4567 = hn::@reduce@(m45, m67);
 
-        npyv_u8 mv = npyv_@reduce@_u8(m0123, m4567);
+        vec_u8 mv = hn::@reduce@(m0123, m4567);
 
-        if(npyv_@anyall@_u8(mv) @scalar_cmp@ 0){
+        if(simd_@anyall@_u8(mv) @scalar_cmp@ 0){
             *op = !@and@;
             return;
         }
@@ -156,8 +170,8 @@ simd_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
 
     // Single vectors loop
     for (; len >= vstep; len -= vstep, ip += vstep) {
-        npyv_u8 v0 = npyv_load_u8(ip);
-        if(npyv_@anyall@_u8(v0) @scalar_cmp@ 0){
+        vec_u8 v0 = hn::LoadU(u8, ip);
+        if(simd_@anyall@_u8(v0) @scalar_cmp@ 0){
             *op = !@and@;
             return;
         }
@@ -184,11 +198,11 @@ simd_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
 {
     #define UNROLL 16
 
-    const int vstep = npyv_nlanes_u8;
+    const int vstep = hn::Lanes(u8);
     const int wstep = vstep * UNROLL;
 
     #if @not@
-    const npyv_u8 zero = npyv_zero_u8();
+    const vec_u8 zero = hn::Zero(u8);
     #endif
 
     // Unrolled vectors loop
@@ -197,13 +211,13 @@ simd_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
          * #unroll = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15#
          */
         #if UNROLL > @unroll@
-        npyv_u8 v@unroll@ = npyv_load_u8(ip + vstep * @unroll@);
+        vec_u8 v@unroll@ = hn::LoadU(u8, ip + vstep * @unroll@);
 #if @not@
-        npyv_u8 r@unroll@ = mask_to_true(npyv_cmpeq_u8(v@unroll@, zero));
+        vec_u8 r@unroll@ = mask_to_true(hn::VecFromMask(u8, hn::Eq(v@unroll@, zero)));
 #else
-        npyv_u8 r@unroll@ = byte_to_true(v@unroll@);
+        vec_u8 r@unroll@ = byte_to_true(v@unroll@);
 #endif
-        npyv_store_u8(op + vstep * @unroll@, r@unroll@);
+        hn::StoreU(r@unroll@, u8, op + vstep * @unroll@);
         #endif
         /**end repeat1**/
     }
@@ -211,13 +225,13 @@ simd_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
 
     // Single vectors loop
     for (; len >= vstep; len -= vstep, ip += vstep, op += vstep) {
-        npyv_u8 v = npyv_load_u8(ip);
+        vec_u8 v = hn::LoadU(u8, ip);
 #if @not@
-        npyv_u8 r = mask_to_true(npyv_cmpeq_u8(v, zero));
+        vec_u8 r = mask_to_true(hn::VecFromMask(u8, hn::Eq(v, zero)));
 #else
-        npyv_u8 r = byte_to_true(v);
+        vec_u8 r = byte_to_true(v);
 #endif
-        npyv_store_u8(op, r);
+        hn::StoreU(r, u8, op);
     }
 
     // Scalar loop to finish off
@@ -374,4 +388,3 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_@kind@)
     }
 }
 /**end repeat**/
-
