@@ -121,7 +121,7 @@ jobs:
     - name: Test
       run: |
         # These tests are slow, so only run tests in files that do "import threading" to make them count
-        TSAN_OPTIONS=allocator_may_return_null=1 \
+        TSAN_OPTIONS="allocator_may_return_null=1:halt_on_error=1:suppressions=tools\ci\tsan_suppressions.txt" \
         python -m spin test \
         `find numpy -name "test*.py" | xargs grep -l "import threading" | tr '\n' ' '` \
         -- -v -s --timeout=600 --durations=10
