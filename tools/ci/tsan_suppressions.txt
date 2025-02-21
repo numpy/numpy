@@ -1,0 +1,9 @@
+# This file contains suppressions for the TSAN tool
+#
+# Reference: https://github.com/google/sanitizers/wiki/ThreadSanitizerSuppressions
+
+
+# These warnings trigger directly in a CPython function.
+
+# For np.nonzero, see gh-28361
+race:lowlevel_strided_loops.c.src
