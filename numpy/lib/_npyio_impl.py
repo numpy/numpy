@@ -1567,7 +1567,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         # wrap to handle byte output streams
         fh = WriteWrap(fname, encoding or 'latin1')
     else:
-        raise ValueError("fname must be a string or file handle")
+        raise ValueError('fname must be a string or file handle')
 
     try:
         X = np.asarray(X)
