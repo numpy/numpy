@@ -178,7 +178,7 @@ array__unique_hash(PyObject *NPY_UNUSED(dummy), PyObject *args)
         auto type = PyArray_TYPE(self);
         // we only support data types present in our unique_funcs map
         if (unique_funcs.find(type) == unique_funcs.end()) {
-            return Py_NotImplemented;
+            Py_RETURN_NOTIMPLEMENTED;
         }
 
         res = unique_funcs[type](self);
