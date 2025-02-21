@@ -46,6 +46,7 @@ from numpy._core.umath import (
     _partition_index,
     _rpartition,
     _rpartition_index,
+    _slice,
 )
 
 
@@ -68,7 +69,7 @@ __all__ = [
     "isupper", "istitle", "isdecimal", "isnumeric", "str_len", "find",
     "rfind", "index", "rindex", "count", "startswith", "endswith", "lstrip",
     "rstrip", "strip", "replace", "expandtabs", "center", "ljust", "rjust",
-    "zfill", "partition", "rpartition",
+    "zfill", "partition", "rpartition", "slice",
 
     # _vec_string - Will gradually become ufuncs as well
     "upper", "lower", "swapcase", "capitalize", "title",
@@ -1639,3 +1640,83 @@ def translate(a, table, deletechars=None):
             'translate',
             [table] + _clean_args(deletechars)
         )
+
+@set_module("numpy.strings")
+def slice(a, start=None, stop=None, step=None, /):
+    """
+    Slice the strings in `a` by slices specified by `start`, `stop`, `step`.
+    Like in the regular Python `slice` object, if only `start` is
+    specified then it is interpreted as the `stop`.
+
+    Parameters
+    ----------
+    a : array-like, with ``StringDType``, ``bytes_``, or ``str_`` dtype
+        Input array
+
+    start : None, an integer or an array of integers
+        The start of the slice, broadcasted to `a`'s shape
+
+    stop : None, an integer or an array of integers
+        The end of the slice, broadcasted to `a`'s shape
+
+    step : None, an integer or an array of integers
+        The step for the slice, broadcasted to `a`'s shape
+
+    Returns
+    -------
+    out : ndarray
+        Output array of ``StringDType``, ``bytes_`` or ``str_`` dtype,
+        depending on input type
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> a = np.array(['hello', 'world'])
+    >>> np.strings.slice(a, 2)
+    array(['he', 'wo'], dtype='<U5')
+
+    >>> np.strings.slice(a, 1, 5, 2)
+    array(['el', 'ol'], dtype='<U5')
+
+    One can specify different start/stop/step for different array entries:
+
+    >>> np.strings.slice(a, np.array([1, 2]), np.array([4, 5]))
+    array(['ell', 'rld'], dtype='<U5')
+
+    Negative slices have the same meaning as in regular Python:
+
+    >>> b = np.array(['hello world', 'γεια σου κόσμε', '你好世界', '👋 🌍'],
+    ...              dtype=np.dtypes.StringDType())
+    >>> np.strings.slice(b, -2)
+    array(['hello wor', 'γεια σου κόσ', '你好', '👋'], dtype=StringDType())
+
+    >>> np.strings.slice(b, [3, -10, 2, -3], [-1, -2, -1, 3])
+    array(['lo worl', ' σου κόσ', '世', '👋 🌍'], dtype=StringDType())
+
+    >>> np.strings.slice(b, None, None, -1)
+    array(['dlrow olleh', 'εμσόκ υοσ αιεγ', '界世好你', '🌍 👋'],
+          dtype=StringDType())
+
+    """
+    # Just like in the construction of a regular slice object, if only start
+    # is speficied then start will become stop, see logic in slice_new.
+    if stop is None:
+        stop = start
+        start = None
+
+    # adjust start, stop, step to be integers, see logic in PySlice_Unpack
+    if step is None:
+        step = 1
+    step = np.asanyarray(step)
+    if not np.issubdtype(step.dtype, np.integer):
+        raise TypeError(f"unsupported type {step.dtype} for operand 'step'")
+    if np.any(step == 0):
+        raise ValueError("slice step cannot be zero")
+
+    if start is None:
+        start = np.where(step < 0, np.iinfo(np.intp).max, 0)
+
+    if stop is None:
+        stop = np.where(step < 0, np.iinfo(np.intp).min, np.iinfo(np.intp).max)
+
+    return _slice(a, start, stop, step)

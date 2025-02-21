@@ -1879,7 +1879,7 @@ class TestAssertNoGcCycles:
                 self.cycle = None
 
                 if ReferenceCycleInDel.make_cycle:
-                    # but create a new one so that the garbage collector has more
+                    # but create a new one so that the garbage collector (GC) has more
                     # work to do.
                     ReferenceCycleInDel()
 
@@ -1891,7 +1891,7 @@ class TestAssertNoGcCycles:
                     assert_no_gc_cycles(lambda: None)
             except AssertionError:
                 # the above test is only necessary if the GC actually tried to free
-                # our object anyway, which python 2.7 does not.
+                # our object anyway.
                 if w() is not None:
                     pytest.skip("GC does not call __del__ on cyclic objects")
                     raise

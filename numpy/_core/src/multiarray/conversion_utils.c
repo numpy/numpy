@@ -117,18 +117,10 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     seq->ptr = NULL;
     seq->len = 0;
 
-    /*
-     * When the deprecation below expires, remove the `if` statement, and
-     * update the comment for PyArray_OptionalIntpConverter.
-     */
     if (obj == Py_None) {
-        /* Numpy 1.20, 2020-05-31 */
-        if (DEPRECATE(
-                "Passing None into shape arguments as an alias for () is "
-                "deprecated.") < 0){
-            return NPY_FAIL;
-        }
-        return NPY_SUCCEED;
+        PyErr_SetString(PyExc_TypeError,
+                "Use () not None as shape arguments");
+        return NPY_FAIL;
     }
 
     PyObject *seq_obj = NULL;
@@ -215,7 +207,6 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 
 /*
  * Like PyArray_IntpConverter, but leaves `seq` untouched if `None` is passed
- * rather than treating `None` as `()`.
  */
 NPY_NO_EXPORT int
 PyArray_OptionalIntpConverter(PyObject *obj, PyArray_Dims *seq)
@@ -677,15 +668,12 @@ static int searchside_parser(char const *str, Py_ssize_t length, void *data)
     }
 
     /* Filters out the case sensitive/non-exact
-     * match inputs and other inputs and outputs DeprecationWarning
+     * match inputs and other inputs and outputs
      */
     if (!is_exact) {
-        /* NumPy 1.20, 2020-05-19 */
-        if (DEPRECATE("inexact matches and case insensitive matches "
-                      "for search side are deprecated, please use "
-                      "one of 'left' or 'right' instead.") < 0) {
-            return -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+            "search side must be one of 'left' or 'right'");
+        return -1;
     }
 
     return 0;
@@ -769,15 +757,12 @@ static int clipmode_parser(char const *str, Py_ssize_t length, void *data)
     }
 
     /* Filters out the case sensitive/non-exact
-     * match inputs and other inputs and outputs DeprecationWarning
+     * match inputs and other inputs and outputs
      */
     if (!is_exact) {
-        /* Numpy 1.20, 2020-05-19 */
-        if (DEPRECATE("inexact matches and case insensitive matches "
-                      "for clip mode are deprecated, please use "
-                      "one of 'clip', 'raise', or 'wrap' instead.") < 0) {
-            return -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+            "Use one of 'clip', 'raise', or 'wrap' for clip mode");
+        return -1;
     }
 
     return 0;
@@ -893,12 +878,9 @@ static int correlatemode_parser(char const *str, Py_ssize_t length, void *data)
      * match inputs and other inputs and outputs DeprecationWarning
      */
     if (!is_exact) {
-        /* Numpy 1.21, 2021-01-19 */
-        if (DEPRECATE("inexact matches and case insensitive matches for "
-                      "convolve/correlate mode are deprecated, please "
-                      "use one of 'valid', 'same', or 'full' instead.") < 0) {
-            return -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+            "Use one of 'valid', 'same', or 'full' for convolve/correlate mode");
+        return -1;
     }
 
     return 0;

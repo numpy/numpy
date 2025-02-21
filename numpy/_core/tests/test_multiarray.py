@@ -206,12 +206,7 @@ class TestFlags:
             with assert_raises(ValueError):
                 view.flags.writeable = True
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("error", DeprecationWarning)
-                with assert_raises(DeprecationWarning):
-                    arr.flags.writeable = True
-
-            with assert_warns(DeprecationWarning):
+            with assert_raises(ValueError):
                 arr.flags.writeable = True
 
     def test_warnonwrite(self):
@@ -686,8 +681,9 @@ class TestAssignment:
 
     def test_cast_to_string(self):
         # cast to str should do "str(scalar)", not "str(scalar.item())"
-        # Example: In python2, str(float) is truncated, so we want to avoid
-        # str(np.float64(...).item()) as this would incorrectly truncate.
+        # When converting a float to a string via array assignment, we
+        # want to ensure that the conversion uses str(scalar) to preserve
+        # the expected precision.
         a = np.zeros(1, dtype='S20')
         a[:] = np.array(['1.12345678901234567890'], dtype='f8')
         assert_equal(a[0], b"1.1234567890123457")
@@ -3729,6 +3725,15 @@ class TestMethods:
         assert res is out
         assert_array_equal(out, a.conjugate())
 
+    def test_conjugate_scalar(self):
+        for v in 5, 5j:
+            a = np.array(v)
+            assert a.conjugate() == v.conjugate()
+        for a in (np.array('s'), np.array('2016', 'M'),
+                np.array((1, 2), [('a', int), ('b', int)])):
+            with pytest.raises(TypeError):
+                a.conjugate()
+
     def test__complex__(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
                   'u1', 'u2', 'u4', 'u8',
@@ -4124,27 +4129,6 @@ class TestBinop:
         np.multiply(C, B, out=A)
         assert_equal(A[0], 30)
         assert_(isinstance(A, OutClass))
-
-    def test_pow_override_with_errors(self):
-        # regression test for gh-9112
-        class PowerOnly(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
-                if ufunc is not np.power:
-                    raise NotImplementedError
-                return "POWER!"
-        # explicit cast to float, to ensure the fast power path is taken.
-        a = np.array(5., dtype=np.float64).view(PowerOnly)
-        assert_equal(a ** 2.5, "POWER!")
-        with assert_raises(NotImplementedError):
-            a ** 0.5
-        with assert_raises(NotImplementedError):
-            a ** 0
-        with assert_raises(NotImplementedError):
-            a ** 1
-        with assert_raises(NotImplementedError):
-            a ** -1
-        with assert_raises(NotImplementedError):
-            a ** 2
 
     def test_pow_array_object_dtype(self):
         # test pow on arrays of object dtype
@@ -5740,7 +5724,7 @@ class TestIO:
             b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, dtype=float, sep=',')
 
     def test_malformed(self, tmp_filename, decimal_sep_localization):
-        with assert_warns(DeprecationWarning):
+        with assert_raises(ValueError):
             self._check_from(
                 b'1.234 1,234', [1.234, 1.], tmp_filename, sep=' ')
 
@@ -5799,10 +5783,9 @@ class TestIO:
         assert_array_equal(x, res)
 
         x_str = x.tobytes()
-        with assert_warns(DeprecationWarning):
-            # binary fromstring is deprecated
-            res = np.fromstring(x_str, dtype="(3,4)i4")
-            assert_array_equal(x, res)
+        with pytest.raises(ValueError):
+            # binary fromstring raises
+            np.fromstring(x_str, dtype="(3,4)i4")
 
     def test_parsing_subarray_unsupported(self, tmp_filename):
         # We currently do not support parsing subarray dtypes
@@ -5824,8 +5807,7 @@ class TestIO:
 
         binary = expected.tobytes()
         with pytest.raises(ValueError):
-            with pytest.warns(DeprecationWarning):
-                np.fromstring(binary, dtype="(10,)i", count=10000)
+            np.fromstring(binary, dtype="(10,)i", count=10000)
 
         expected.tofile(tmp_filename)
         res = np.fromfile(tmp_filename, dtype="(10,)i", count=10000)
@@ -8233,6 +8215,10 @@ class TestNewBufferProtocol:
         res = pickle.loads(pickle_obj)
         assert_array_equal(res, obj)
 
+    def test_repr_user_dtype(self):
+        dt = np.dtype(rational)
+        assert_equal(repr(dt), 'dtype(rational)')
+
     def test_padding(self):
         for j in range(8):
             x = np.array([(1,), (2,)], dtype={'f0': (int, j)})
@@ -8596,6 +8582,12 @@ class TestArrayCreationCopyArgument:
         second_copy = np.array(arr_random, copy=True, order="F")
         assert arr_random.true_passed
         assert second_copy is not copy_arr
+
+        arr_random = ArrayRandom()
+        arr = np.ones((size, size))
+        arr[...] = arr_random
+        assert not arr_random.true_passed
+        assert not np.shares_memory(arr, base_arr)
 
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test__array__reference_leak(self):
@@ -9683,6 +9675,63 @@ class TestArange:
         with pytest.raises(ValueError):
             # Fails discovering start dtype
             np.arange(*args)
+
+    def test_dtype_attribute_ignored(self):
+        # Until 2.3 this would raise a DeprecationWarning
+        class dt:
+            dtype = "f8"
+
+        class vdt(np.void):
+            dtype = "f,f"
+
+        assert_raises(ValueError, np.dtype, dt)
+        assert_raises(ValueError, np.dtype, dt())
+        assert_raises(ValueError, np.dtype, vdt)
+        assert_raises(ValueError, np.dtype, vdt(1))
+
+
+class TestDTypeCoercionForbidden:
+    forbidden_types = [
+        # The builtin scalar super types:
+        np.generic, np.flexible, np.number,
+        np.inexact, np.floating, np.complexfloating,
+        np.integer, np.unsignedinteger, np.signedinteger,
+        # character is a deprecated S1 special case:
+        np.character,
+    ]
+
+    def test_dtype_coercion(self):
+        for scalar_type in self.forbidden_types:
+            assert_raises(TypeError, np.dtype, args=(scalar_type,))
+
+    def test_array_construction(self):
+        for scalar_type in self.forbidden_types:
+            assert_raises(TypeError, np.array, args=([], scalar_type,))
+
+    def test_not_deprecated(self):
+        # All specific types work
+        for group in np._core.sctypes.values():
+            for scalar_type in group:
+                np.dtype(scalar_type)
+
+        for scalar_type in [type, dict, list, tuple]:
+            # Typical python types are coerced to object currently:
+            np.dtype(scalar_type)
+
+
+class TestDateTimeCreationTuple:
+    @pytest.mark.parametrize("cls", [np.datetime64, np.timedelta64])
+    def test_dt_tuple(self, cls):
+        # two valid uses - (unit, num) and (unit, num, den, None)
+        cls(1, ('ms', 2))
+        cls(1, ('ms', 2, 1, None))
+
+        # trying to use the event argument, removed in 1.7.0
+        # it used to be a uint8
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 'event')))
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 63)))
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 1, 'event')))
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 1, 63)))
 
 
 class TestArrayFinalize:

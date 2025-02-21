@@ -389,4 +389,8 @@
 #ifdef @P@HAVE_RVV
     #include <riscv_vector.h>
 #endif
+
+#ifdef @P@HAVE_LSX
+    #include <lsxintrin.h>
+#endif
 #endif // @P@_CPU_DISPATCHER_CONF_H_

@@ -26,7 +26,7 @@ __all__ = [
     'hasexternals', 'hasinitvalue', 'hasnote', 'hasresultnote',
     'isallocatable', 'isarray', 'isarrayofstrings',
     'ischaracter', 'ischaracterarray', 'ischaracter_or_characterarray',
-    'iscomplex',
+    'iscomplex', 'iscstyledirective',
     'iscomplexarray', 'iscomplexfunction', 'iscomplexfunction_warn',
     'isdouble', 'isdummyroutine', 'isexternal', 'isfunction',
     'isfunction_wrap', 'isint1', 'isint1array', 'isinteger', 'isintent_aux',
@@ -421,6 +421,11 @@ def getdimension(var):
 
 def isrequired(var):
     return not isoptional(var) and isintent_nothide(var)
+
+
+def iscstyledirective(f2py_line):
+    directives = {"callstatement", "callprotoargument", "pymethoddef"}
+    return any(directive in f2py_line.lower() for directive in directives)
 
 
 def isintent_in(var):
@@ -877,19 +882,13 @@ def applyrules(rules, d, var={}):
                         for i in rules[k][k1]:
                             if isinstance(i, dict):
                                 res = applyrules({'supertext': i}, d, var)
-                                if 'supertext' in res:
-                                    i = res['supertext']
-                                else:
-                                    i = ''
+                                i = res.get('supertext', '')
                             ret[k].append(replace(i, d))
                     else:
                         i = rules[k][k1]
                         if isinstance(i, dict):
                             res = applyrules({'supertext': i}, d)
-                            if 'supertext' in res:
-                                i = res['supertext']
-                            else:
-                                i = ''
+                            i = res.get('supertext', '')
                         ret[k].append(replace(i, d))
         else:
             errmess('applyrules: ignoring rule %s.\n' % repr(rules[k]))

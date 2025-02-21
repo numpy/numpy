@@ -271,19 +271,12 @@ if sys.version_info < (3, 12):
 
 def is_unexpected(name):
     """Check if this needs to be considered."""
-    if '._' in name or '.tests' in name or '.setup' in name:
-        return False
-
-    if name in PUBLIC_MODULES:
-        return False
-
-    if name in PUBLIC_ALIASED_MODULES:
-        return False
-
-    if name in PRIVATE_BUT_PRESENT_MODULES:
-        return False
-
-    return True
+    return (
+        '._' not in name and '.tests' not in name and '.setup' not in name
+		and name not in PUBLIC_MODULES
+		and name not in PUBLIC_ALIASED_MODULES
+		and name not in PRIVATE_BUT_PRESENT_MODULES
+	)
 
 
 if sys.version_info >= (3, 12):
@@ -543,8 +536,13 @@ def test_core_shims_coherence():
 
         # np.core is a shim and all submodules of np.core are shims
         # but we should be able to import everything in those shims
-        # that are available in the "real" modules in np._core
-        if inspect.ismodule(member):
+        # that are available in the "real" modules in np._core, with
+        # the exception of the namespace packages (__spec__.origin is None),
+        # like numpy._core.include, or numpy._core.lib.pkgconfig.
+        if (
+            inspect.ismodule(member)
+            and member.__spec__ and member.__spec__.origin is not None
+        ):
             submodule = member
             submodule_name = member_name
             for submodule_member_name in dir(submodule):
@@ -699,9 +697,9 @@ def test___module___attribute():
                 "numpy._core" not in member.__name__ and  # outside _core
                 # not in a skip module list
                 member_name not in [
-                    "char", "core", "ctypeslib", "f2py", "ma", "lapack_lite",
-                    "mrecords", "testing", "tests", "polynomial", "typing",
-                    "mtrand", "bit_generator",
+                    "char", "core", "f2py", "ma", "lapack_lite", "mrecords",
+                    "testing", "tests", "polynomial", "typing", "mtrand",
+                    "bit_generator",
                 ] and
                 member not in visited_modules  # not visited yet
             ):
@@ -725,6 +723,13 @@ def test___module___attribute():
                 if (
                     (member.__name__ == "recarray" and module.__name__ == "numpy") or
                     (member.__name__ == "record" and module.__name__ == "numpy.rec")
+                ):
+                    continue
+
+                # ctypeslib exports ctypes c_long/c_longlong
+                if (
+                    member.__name__ in ("c_long", "c_longlong") and
+                    module.__name__ == "numpy.ctypeslib"
                 ):
                     continue
 

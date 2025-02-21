@@ -823,9 +823,9 @@ def select(condlist, choicelist, default=0):
 
     >>> x = np.arange(6)
     >>> condlist = [x<3, x>3]
-    >>> choicelist = [x, x**2]
+    >>> choicelist = [-x, x**2]
     >>> np.select(condlist, choicelist, 42)
-    array([ 0,  1,  2, 42, 16, 25])
+    array([ 0,  -1,  -2, 42, 16, 25])
 
     When multiple conditions are satisfied, the first one encountered in
     `condlist` is used.
@@ -999,7 +999,7 @@ def gradient(f, *varargs, axis=None, edge_order=1):
            the corresponding dimension
         4. Any combination of N scalars/arrays with the meaning of 2. and 3.
 
-        If `axis` is given, the number of varargs must equal the number of axes.
+        If `axis` is given, the number of varargs must equal the number of axes specified in the axis parameter.
         Default: 1. (see Examples below).
 
     edge_order : {1, 2}, optional
@@ -1901,11 +1901,13 @@ def trim_zeros(filt, trim='fb', axis=None):
         to the side with the lowest index 0, and "back" referring to the highest
         index (or index -1).
     axis : int or sequence, optional
-        If None, `filt` is cropped such, that the smallest bounding box is
+        If None, `filt` is cropped such that the smallest bounding box is
         returned that still contains all values which are not zero.
         If an axis is specified, `filt` will be sliced in that dimension only
         on the sides specified by `trim`. The remaining area will be the
         smallest that still contains all values wich are not zero.
+
+        .. versionadded:: 2.2.0
 
     Returns
     -------
@@ -3860,8 +3862,8 @@ def _ureduce(a, func, keepdims=False, **kwargs):
 
     """
     a = np.asanyarray(a)
-    axis = kwargs.get('axis', None)
-    out = kwargs.get('out', None)
+    axis = kwargs.get('axis')
+    out = kwargs.get('out')
 
     if keepdims is np._NoValue:
         keepdims = False
@@ -5136,7 +5138,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         If True the shape of the returned coordinate array for dimension *i*
         is reduced from ``(N1, ..., Ni, ... Nn)`` to
         ``(1, ..., 1, Ni, 1, ..., 1)``.  These sparse coordinate grids are
-        intended to be use with :ref:`basics.broadcasting`.  When all
+        intended to be used with :ref:`basics.broadcasting`.  When all
         coordinates are used in an expression, broadcasting still leads to a
         fully-dimensonal result array.
 

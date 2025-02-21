@@ -26,7 +26,6 @@ class container:
     Methods
     -------
     copy
-    tostring
     byteswap
     astype
 
@@ -226,10 +225,6 @@ class container:
     def copy(self):
         ""
         return self._rc(self.array.copy())
-
-    def tostring(self):
-        ""
-        return self.array.tostring()
 
     def tobytes(self):
         ""

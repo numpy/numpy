@@ -250,7 +250,7 @@ def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
         out, _ = capfd.readouterr()
         assert "--fcompiler cannot be used with meson" in out
     monkeypatch.setattr(
-        sys, "argv", "f2py --help-link".split()
+        sys, "argv", ["f2py", "--help-link"]
     )
     with util.switchdir(ipath.parent):
         f2pycli()
@@ -744,7 +744,7 @@ def test_version(capfd, monkeypatch):
 
     CLI :: -v
     """
-    monkeypatch.setattr(sys, "argv", 'f2py -v'.split())
+    monkeypatch.setattr(sys, "argv", ["f2py", "-v"])
     # TODO: f2py2e should not call sys.exit() after printing the version
     with pytest.raises(SystemExit):
         f2pycli()

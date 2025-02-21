@@ -16,6 +16,7 @@ import pickle
 import numpy as np
 from . import format
 from ._datasource import DataSource
+from ._format_impl import _MAX_HEADER_SIZE
 from numpy._core import overrides
 from numpy._core.multiarray import packbits, unpackbits
 from numpy._core._multiarray_umath import _load_from_filelike
@@ -182,7 +183,7 @@ class NpzFile(Mapping):
 
     def __init__(self, fid, own_fid=False, allow_pickle=False,
                  pickle_kwargs=None, *,
-                 max_header_size=format._MAX_HEADER_SIZE):
+                 max_header_size=_MAX_HEADER_SIZE):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
         _zip = zipfile_factory(fid)
@@ -307,7 +308,7 @@ class NpzFile(Mapping):
 
 @set_module('numpy')
 def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
-         encoding='ASCII', *, max_header_size=format._MAX_HEADER_SIZE):
+         encoding='ASCII', *, max_header_size=_MAX_HEADER_SIZE):
     """
     Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.
 
@@ -1084,7 +1085,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 # be adapted (in principle the concatenate could cast).
                 chunks.append(next_arr.astype(read_dtype_via_object_chunks))
 
-                skiprows = 0  # Only have to skip for first chunk
+                skiplines = 0  # Only have to skip for first chunk
                 if max_rows >= 0:
                     max_rows -= chunk_size
                 if len(next_arr) < chunk_size:
@@ -1192,7 +1193,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         that ensures you receive byte arrays as results if possible and passes
         'latin1' encoded strings to converters. Override this value to receive
         unicode arrays and pass strings as input to converters.  If set to None
-        the system default is used. The default value is 'bytes'.
+        the system default is used. The default value is None.
 
         .. versionchanged:: 2.0
             Before NumPy 2, the default was ``'bytes'`` for Python 2

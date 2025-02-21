@@ -75,7 +75,8 @@ planned improvements. Adding more tutorials is underway in the
 `numpy-tutorials repo <https://github.com/numpy/numpy-tutorials>`__.
 
 We also intend to make all the example code in our documentation interactive -
-work is underway to do so via ``jupyterlite-sphinx`` and Pyodide.
+work is underway to do so via ``jupyterlite-sphinx`` and Pyodide. NumPy 2.3.0
+provides interactive documentation for examples as a pilot for this effort.
 
 Our website (https://numpy.org) is in good shape. Further work on expanding the
 number of languages that the website is translated in is desirable. As are
@@ -162,7 +163,7 @@ Use of the CPython limited C API, allowing producing ``abi3`` wheels that use
 the stable ABI and are hence independent of CPython feature releases, has
 benefits for both downstream packages that use NumPy's C API and for NumPy
 itself. In NumPy 2.0, work was done to enable using the limited C API with
-the Cython support in NumPy (see `gh-25531 <https://github.com/numpy/numpy/pull/25531`__).
+the Cython support in NumPy (see `gh-25531 <https://github.com/numpy/numpy/pull/25531>`__).
 More work and testing is needed to ensure full support for downstream packages.
 
 We also want to explore what is needed for NumPy itself to use the limited

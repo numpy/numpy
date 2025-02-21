@@ -1,10 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap');
 
 .navbar-brand img {
-   height: 75px;
+  height: 75px;
 }
+
 .navbar-brand {
-   height: 75px;
+  height: 75px;
 }
 
 body {
@@ -71,4 +72,43 @@ div.admonition-legacy>.admonition-title::after {
 
 div.admonition-legacy>.admonition-title {
   background-color: var(--pst-color-warning-bg);
+}
+
+/* Buttons for JupyterLite-enabled interactive examples */
+
+.try_examples_button {
+  color: white;
+  background-color: var(--pst-color-info);
+  border: none;
+  padding: 5px 10px;
+  border-radius: 0.25rem;
+  margin-top: 3px;  /* better alignment under admonitions */
+  margin-bottom: 5px !important; /* fix uneven button sizes under admonitions */
+  box-shadow: 0 2px 5px rgba(108, 108, 108, 0.2);
+  font-weight: bold;
+  font-size: small;
+}
+
+/* Use more acccessible colours for text in dark mode */
+[data-theme=dark] .try_examples_button {
+  color: black;
+}
+
+.try_examples_button:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.try_examples_button_container {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Better gaps for examples buttons under admonitions */
+
+.try_examples_outer_iframe {
+  margin-top: 0.4em;
 }

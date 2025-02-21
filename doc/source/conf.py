@@ -88,6 +88,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx_copybutton',
     'sphinx_design',
+    'sphinx.ext.imgconverter',
+    'jupyterlite_sphinx',
 ]
 
 skippable_extensions = [
@@ -432,14 +434,11 @@ autosummary_generate = True
 # -----------------------------------------------------------------------------
 # Coverage checker
 # -----------------------------------------------------------------------------
-coverage_ignore_modules = r"""
-    """.split()
-coverage_ignore_functions = r"""
-    test($|_) (some|all)true bitwise_not cumproduct pkgload
-    generic\.
-    """.split()
-coverage_ignore_classes = r"""
-    """.split()
+coverage_ignore_modules = []
+coverage_ignore_functions = [
+	'test($|_)', '(some|all)true', 'bitwise_not', 'cumproduct', 'pkgload', 'generic\\.'
+]
+coverage_ignore_classes = []
 
 coverage_c_path = []
 coverage_c_regexes = {}
@@ -603,4 +602,17 @@ nitpick_ignore = [
     ('c:identifier', 'PyHeapTypeObject'),
 ]
 
+# -----------------------------------------------------------------------------
+# Interactive documentation examples via JupyterLite
+# -----------------------------------------------------------------------------
 
+global_enable_try_examples = True
+try_examples_global_button_text = "Try it in your browser!"
+try_examples_global_warning_text = (
+    "NumPy's interactive examples are experimental and may not always work"
+    " as expected, with high load times especially on low-resource platforms,"
+    " and the version of NumPy might not be in sync with the one you are"
+    " browsing the documentation for. If you encounter any issues, please"
+    " report them on the"
+    " [NumPy issue tracker](https://github.com/numpy/numpy/issues)."
+)

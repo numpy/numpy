@@ -38,7 +38,7 @@ if [[ $FREE_THREADED_BUILD == "True" ]]; then
     # Manually check that importing NumPy does not re-enable the GIL.
     # In principle the tests should catch this but it seems harmless to leave it
     # here as a final sanity check before uploading broken wheels
-    if [[ $(python -c "import numpy" 2>&1) == "*The global interpreter lock (GIL) has been enabled*" ]]; then
+    if [[ $(python -c "import numpy" 2>&1) == *"The global interpreter lock (GIL) has been enabled"* ]]; then
         echo "Error: Importing NumPy re-enables the GIL in the free-threaded build"
         exit 1
     fi

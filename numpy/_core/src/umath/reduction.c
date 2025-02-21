@@ -341,17 +341,16 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags;
 
-    npy_intp fixed_strides[3];
-    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
     if (wheremask != NULL) {
         if (PyArrayMethod_GetMaskedStridedLoop(context,
-                1, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+                1, strideptr, &strided_loop, &auxdata, &flags) < 0) {
             goto fail;
         }
     }
     else {
         if (context->method->get_strided_loop(context,
-                1, 0, fixed_strides, &strided_loop, &auxdata, &flags) < 0) {
+                1, 0, strideptr, &strided_loop, &auxdata, &flags) < 0) {
             goto fail;
         }
     }
@@ -407,7 +406,6 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
     if (!empty_iteration) {
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
-        npy_intp *strideptr;
         npy_intp *countptr;
 
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -415,7 +413,6 @@ PyUFunc_ReduceWrapper(PyArrayMethod_Context *context,
             goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
-        strideptr = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
         if (loop(context, strided_loop, auxdata,

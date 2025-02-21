@@ -941,21 +941,6 @@ PyArray_NewFromDescr_int(
         else if (func == npy_static_pydata.ndarray_array_finalize) {
             Py_DECREF(func);
         }
-        else if (func == Py_None) {
-            Py_DECREF(func);
-            /*
-             * 2022-01-08, NumPy 1.23; when deprecation period is over, remove this
-             * whole stanza so one gets a "NoneType object is not callable" TypeError.
-             */
-            if (DEPRECATE(
-                    "Setting __array_finalize__ = None to indicate no finalization"
-                    "should be done is deprecated.  Instead, just inherit from "
-                    "ndarray or, if that is not possible, explicitly set to "
-                    "ndarray.__array_function__; this will raise a TypeError "
-                    "in the future. (Deprecated since NumPy 1.23)") < 0) {
-                goto fail;
-            }
-        }
         else {
             if (PyCapsule_CheckExact(func)) {
                 /* A C-function is stored here */
@@ -1829,18 +1814,12 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
 {
     PyObject *obj;
     if (requires & NPY_ARRAY_NOTSWAPPED) {
-        if (!in_descr && PyArray_Check(op) &&
-                PyArray_ISBYTESWAPPED((PyArrayObject* )op)) {
-            in_descr = PyArray_DescrNew(PyArray_DESCR((PyArrayObject *)op));
-            if (in_descr == NULL) {
-                return NULL;
-            }
+        if (!in_descr && PyArray_Check(op)) {
+            in_descr = PyArray_DESCR((PyArrayObject *)op);
+            Py_INCREF(in_descr);
         }
-        else if (in_descr && !PyArray_ISNBO(in_descr->byteorder)) {
-            PyArray_DESCR_REPLACE(in_descr);
-        }
-        if (in_descr && in_descr->byteorder != NPY_IGNORE) {
-            in_descr->byteorder = NPY_NATIVE;
+        if (in_descr) {
+            PyArray_DESCR_REPLACE_CANONICAL(in_descr);
         }
     }
 
@@ -3627,12 +3606,9 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
             Py_DECREF(r);
             return NULL;
         }
-        /* 2019-09-12, NumPy 1.18 */
-        if (DEPRECATE(
-                "string or file could not be read to its end due to unmatched "
-                "data; this will raise a ValueError in the future.") < 0) {
-            goto fail;
-        }
+        PyErr_SetString(PyExc_ValueError,
+            "string or file could not be read to its end due to unmatched data");
+        goto fail;
     }
 
 fail:

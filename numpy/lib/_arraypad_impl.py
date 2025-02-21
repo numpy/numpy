@@ -848,7 +848,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     elif mode in stat_functions:
         func = stat_functions[mode]
-        length = kwargs.get("stat_length", None)
+        length = kwargs.get("stat_length")
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, width_pair, length_pair in zip(axes, pad_width, length):
             roi = _view_roi(padded, original_area_slice, axis)
