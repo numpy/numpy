@@ -186,7 +186,7 @@ simd_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
     }
 #undef UNROLL
 }
-/**end repeat**/ 
+/**end repeat**/
 
 /**begin repeat
  * #kind = logical_not, absolute#
