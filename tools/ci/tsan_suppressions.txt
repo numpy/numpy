@@ -6,7 +6,7 @@
 # These warnings trigger directly in a CPython function.
 
 # For np.nonzero, see gh-28361
-race:lowlevel_strided_loops.c.src
+#race:lowlevel_strided_loops.c.src
 race:count_nonzero_int
 race:count_nonzero_bool
 race:count_nonzero_float
