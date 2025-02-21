@@ -100,7 +100,10 @@ jobs:
 
   debug:
     needs: [smoke_test]
-    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.os }}
     if: github.event_name != 'push'
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -131,7 +134,10 @@ jobs:
   full:
     # Install as editable, then run the full test suite with code coverage
     needs: [smoke_test]
-    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
