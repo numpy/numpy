@@ -1654,7 +1654,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         if footer:
             footer = footer.replace("\n", "\n" + comments)
             fh.write(comments + footer + newline)
-
     finally:
         if own_fh:
             fh.close()
