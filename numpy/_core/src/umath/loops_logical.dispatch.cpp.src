@@ -141,7 +141,7 @@ simd_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp len)
     // Unrolled vectors loop
     for (; len >= wstep; len -= wstep, ip += wstep) {
     #if defined(NPY_HAVE_SSE2)
-        NPY_PREFETCH(ip + wstep, 0, 3);
+        NPY_PREFETCH(reinterpret_cast<const char *>(ip + wstep), 0, 3);
     #endif
         vec_u8 v0 = hn::LoadU(u8, ip + vstep * 0);
         vec_u8 v1 = hn::LoadU(u8, ip + vstep * 1);
