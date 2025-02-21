@@ -1564,7 +1564,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         fh = np.lib._datasource.open(fname, 'wt', encoding=encoding)
         own_fh = True
     elif hasattr(fname, 'write'):
-        # Wrap to handle byte output streams
+        # wrap to handle byte output streams
         fh = WriteWrap(fname, encoding or 'latin1')
     else:
         raise ValueError("fname must be a string or file handle")
