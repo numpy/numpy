@@ -236,7 +236,9 @@ such as byte-order, metadata, string length, or exact structured dtype layout.
 While the string length or field names of a structured dtype are important,
 NumPy considers byte-order, metadata, and the exact layout of a structured
 dtype as storage details.
+
 During promotion NumPy does *not* take these storage details into account:
+
 * Byte-order is converted to native byte-order.
 * Metadata attached to the dtype may or may not be preserved.
 * Resulting structured dtypes will be packed (but aligned if inputs were).
