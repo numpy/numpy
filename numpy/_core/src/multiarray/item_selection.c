@@ -2893,10 +2893,10 @@ PyArray_Nonzero(PyArrayObject *self)
              * the fast bool count is followed by this sparse path is faster
              * than combining the two loops, even for larger arrays
              */
+            npy_intp * multi_index_end = multi_index + nonzero_count;
             if (((double)nonzero_count / count) <= 0.1) {
                 npy_intp subsize;
                 npy_intp j = 0;
-                npy_intp * multi_index_end = multi_index + nonzero_count;
                 while (multi_index < multi_index_end) {
                     npy_memchr(data + j * stride, 0, stride, count - j,
                                &subsize, 1);
@@ -2912,7 +2912,6 @@ PyArray_Nonzero(PyArrayObject *self)
              * stalls that are very expensive on most modern processors.
              */
             else {
-                npy_intp *multi_index_end = multi_index + nonzero_count;
                 npy_intp j = 0;
 
                 /* Manually unroll for GCC and maybe other compilers */
