@@ -120,6 +120,9 @@ jobs:
         python -m spin build -j2 -- -Db_sanitize=thread
     - name: Test
       run: |
+        # try to figure out root folder for source
+        echo $HOME
+        set
         # These tests are slow, so only run tests in files that do "import threading" to make them count
         TSAN_OPTIONS="allocator_may_return_null=1:suppressions=/Users/runner/work/numpy/numpy/tools/ci/tsan_suppressions.txt" \
         python -m spin test \
