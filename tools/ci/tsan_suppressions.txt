@@ -1,0 +1,11 @@
+# This file contains suppressions for the TSAN tool
+#
+# Reference: https://github.com/google/sanitizers/wiki/ThreadSanitizerSuppressions
+
+# For np.nonzero, see gh-28361
+race:PyArray_Nonzero
+race:count_nonzero_int
+race:count_nonzero_bool
+race:count_nonzero_float
+race:DOUBLE_nonzero
+
