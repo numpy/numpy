@@ -235,8 +235,8 @@ any_to_object_get_loop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-
-    *flags = NPY_METH_REQUIRES_PYAPI;  /* No need for floating point errors */
+    /* Python API doesn't use FPEs and this also attempts to hide spurious ones. */
+    *flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     *out_loop = _strided_to_strided_any_to_object;
     *out_transferdata = PyMem_Malloc(sizeof(_any_to_object_auxdata));
@@ -342,7 +342,8 @@ object_to_any_get_loop(
         NpyAuxData **out_transferdata,
         NPY_ARRAYMETHOD_FLAGS *flags)
 {
-    *flags = NPY_METH_REQUIRES_PYAPI;
+    /* Python API doesn't use FPEs and this also attempts to hide spurious ones. */
+    *flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS;
 
     /* NOTE: auxdata is only really necessary to flag `move_references` */
     _object_to_any_auxdata *data = PyMem_Malloc(sizeof(*data));

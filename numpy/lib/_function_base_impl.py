@@ -5138,7 +5138,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
         If True the shape of the returned coordinate array for dimension *i*
         is reduced from ``(N1, ..., Ni, ... Nn)`` to
         ``(1, ..., 1, Ni, 1, ..., 1)``.  These sparse coordinate grids are
-        intended to be use with :ref:`basics.broadcasting`.  When all
+        intended to be used with :ref:`basics.broadcasting`.  When all
         coordinates are used in an expression, broadcasting still leads to a
         fully-dimensonal result array.
 

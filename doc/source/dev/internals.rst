@@ -6,10 +6,10 @@
 Internal organization of NumPy arrays
 *************************************
 
-It helps to understand a bit about how NumPy arrays are handled under the covers
-to help understand NumPy better. This section will not go into great detail.
-Those wishing to understand the full details are requested to refer to Travis
-Oliphant's book `Guide to NumPy <https://web.mit.edu/dvp/Public/numpybook.pdf>`_.
+It helps to learn a bit about how NumPy arrays are handled under the covers
+to understand NumPy better. This section provides a brief explanation.
+More details are available in Travis Oliphant's book
+`Guide to NumPy <https://web.mit.edu/dvp/Public/numpybook.pdf>`_.
 
 NumPy arrays consist of two major components: the raw array data (from now on,
 referred to as the data buffer), and the information about the raw array data.
