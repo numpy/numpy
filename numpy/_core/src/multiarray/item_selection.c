@@ -307,7 +307,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
              */
             flags |= NPY_ARRAY_ENSURECOPY;
         }
-        dtype = PyArray_DESCR(self);
+        dtype = PyArray_DESCR(out);
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         if (obj == NULL) {
