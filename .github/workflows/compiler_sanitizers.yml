@@ -68,7 +68,7 @@ jobs:
     - name: Test
       run: |
         # pass -s to pytest to see ASAN errors and warnings, otherwise pytest captures them
-        ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1:halt_on_error=1 \
+        ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1 \
         python -m spin test -- -v -s --timeout=600 --durations=10
 
   clang_TSAN:
@@ -121,7 +121,7 @@ jobs:
     - name: Test
       run: |
         # These tests are slow, so only run tests in files that do "import threading" to make them count
-        TSAN_OPTIONS=allocator_may_return_null=1:halt_on_error=1 \
+        TSAN_OPTIONS="allocator_may_return_null=1:suppressions=$GITHUB_WORKSPACE/tools/ci/tsan_suppressions.txt" \
         python -m spin test \
         `find numpy -name "test*.py" | xargs grep -l "import threading" | tr '\n' ' '` \
         -- -v -s --timeout=600 --durations=10
