@@ -1969,11 +1969,11 @@ class TestNonzero:
             assert np.count_nonzero(A_byteswapped) == expected
 
     def test_count_nonzero_non_aligned_array(self):
-        sz=64
+        sz = 64
         b = np.zeros(64 + 1).view(np.int8)[1:-(np.intp(0).itemsize - 1)]
         b = b.view(np.float64)[:sz]
         b[...] = .1 + np.arange(sz)
-        b[::2]=0
+        b[::2] = 0
 
         assert b.flags.aligned is False
         assert np.count_nonzero(b) == sz / 2
