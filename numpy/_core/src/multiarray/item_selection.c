@@ -2914,7 +2914,7 @@ PyArray_Nonzero(PyArrayObject *self)
     }
 
     int bytes_not_swapped = PyArray_ISNOTSWAPPED(self);
-    int optimized_count = PyArray_TRIVIALLY_ITERABLE(self) && bytes_not_swapped;
+    int optimized_count = PyArray_TRIVIALLY_ITERABLE(self) && bytes_not_swapped && PyArray_ISALIGNED(self);
     if (optimized_count ) {
         npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
         char * data = PyArray_BYTES(self);
@@ -2929,7 +2929,7 @@ PyArray_Nonzero(PyArrayObject *self)
         /* avoid function call for bool */
         if ( (ndim ==  1) && is_bool) {
             nonzero_idxs_1D_bool(count_first_dim, nonzero_count, data, M_strides[0], multi_index);
-            executed = 1;
+            executed = NPY_TRUE;
         }
         else {
             executed = nonzero_idxs_dispatcher((void*)data, multi_index, PyArray_NDIM(self),

@@ -1967,6 +1967,22 @@ class TestNonzero:
             assert_equal(np.nonzero(A)[0], expected)
             assert_equal(np.nonzero(A_byteswapped)[0], expected)
 
+    def test_nonzero_non_aligned_array(self):
+            # gh-27523
+            b = np.zeros(64 + 1, dtype=np.int8)[1:]
+            b = b.view(int)
+            b[:] = np.arange(b.size) % 2
+            assert b.flags.aligned is False
+            expected = np.arange(1, b.size, 2)
+            assert_equal(np.count_nonzero(b), expected)
+
+            b = np.zeros(64 + 1, dtype=np.float16)[1:]
+            b = b.view(float)
+            b[:] = np.arange(b.size) % 2
+            assert b.flags.aligned is False
+            expected = np.arange(1, b.size, 2)
+            assert_equal(np.count_nonzero(b), expected)
+
 
 class TestIndex:
     def test_boolean(self):
