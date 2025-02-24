@@ -6945,9 +6945,10 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
     array([False, True, False])
 
     >>> np.array([1.2, object(), "hello world"],
-    ...          dtype=StringDType(coerce=True))
-    ValueError: StringDType only allows string data when string coercion
-    is disabled.
+    ...          dtype=StringDType(coerce=False))
+    Traceback (most recent call last):
+        ...
+    ValueError: StringDType only allows string data when string coercion is disabled.
 
     >>> np.array(["hello", "world"], dtype=StringDType(coerce=True))
     array(["hello", "world"], dtype=StringDType(coerce=True))
