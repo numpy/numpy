@@ -1768,6 +1768,55 @@ fail:
 }
 
 /*
+ * This advances the AXISDATA portion of the iterator and the
+ * data pointers to the next buffer in normal mode buffered
+ * iteration. This function does no error checking.
+ */
+NPY_NO_EXPORT void
+npyiter_incrementbuffer(NpyIter *iter) {
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    int idim, ndim = NIT_NDIM(iter);
+    int nop = NIT_NOP(iter);
+
+    char **dataptrs = NIT_DATAPTRS(iter);
+
+    NpyIter_BufferData *bufferdata;
+    npy_intp delta;
+
+    bufferdata = NIT_BUFFERDATA(iter);
+    delta = NBF_SIZE(bufferdata);
+
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+    npy_intp istrides, nstrides, index, newindex, shape;
+
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+    nstrides = NAD_NSTRIDES();
+
+    ndim = ndim ? ndim : 1;
+
+    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+        shape = NAD_SHAPE(axisdata);
+        index = NAD_INDEX(axisdata);
+        
+        newindex = delta + index;
+        delta = newindex / shape;
+        newindex -= delta * shape;
+        NAD_INDEX(axisdata) = newindex;
+
+        npy_intp *strides = NAD_STRIDES(axisdata);
+        for (istrides = 0; istrides < nstrides; ++istrides) {
+            dataptrs[istrides] += (newindex - index) * strides[istrides];
+        }
+
+        if (delta == 0) {
+            return;
+        }
+    }
+}
+
+/*
  * This sets the AXISDATA portion of the iterator to the specified
  * iterindex, updating the pointers as well.  This function does
  * no error checking.
