@@ -271,3 +271,27 @@ def test_legacy_usertype_cast_init_thread_safety():
         # Reducing the number of threads means the test doesn't trigger the
         # bug. Better to skip on some platforms than add a useless test.
         pytest.skip("Couldn't spawn enough threads to run the test")
+
+@pytest.mark.parametrize("dtype", [bool, int, float])
+def test_nonzero(dtype):
+    # See: gh-28361
+    #
+    # np.nonzero uses np.count_nonzero to determine the size of the output array
+    # In a second pass the indices of the non-zero elements are determined, but they can have changed
+    #
+    # This test triggers a data race which is suppressed in the TSAN CI. The test is to ensure
+    # np.nonzero does not generate a segmentation fault
+    x = np.random.randint(4, size=10_000).astype(dtype)
+
+    def func(index):
+        for _ in range(10):
+            if index == 0:
+                x[::2] = np.random.randint(2)
+            else:
+                try:
+                    _ = np.nonzero(x)
+                except RuntimeError as ex:
+                    assert 'number of non-zero array elements changed during function execution' in str(ex)
+
+    run_threaded(func, max_workers=10, pass_count=True, outer_iterations=50)
+

@@ -3507,7 +3507,9 @@ initialize_void_and_object_globals(void) {
     method->nin = 1;
     method->nout = 1;
     method->name = "object_to_any_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->flags = (NPY_METH_SUPPORTS_UNALIGNED
+                     | NPY_METH_REQUIRES_PYAPI
+                     | NPY_METH_NO_FLOATINGPOINT_ERRORS);
     method->casting = NPY_UNSAFE_CASTING;
     method->resolve_descriptors = &object_to_any_resolve_descriptors;
     method->get_strided_loop = &object_to_any_get_loop;
@@ -3522,7 +3524,9 @@ initialize_void_and_object_globals(void) {
     method->nin = 1;
     method->nout = 1;
     method->name = "any_to_object_cast";
-    method->flags = NPY_METH_SUPPORTS_UNALIGNED | NPY_METH_REQUIRES_PYAPI;
+    method->flags = (NPY_METH_SUPPORTS_UNALIGNED
+                     | NPY_METH_REQUIRES_PYAPI
+                     | NPY_METH_NO_FLOATINGPOINT_ERRORS);
     method->casting = NPY_SAFE_CASTING;
     method->resolve_descriptors = &any_to_object_resolve_descriptors;
     method->get_strided_loop = &any_to_object_get_loop;
