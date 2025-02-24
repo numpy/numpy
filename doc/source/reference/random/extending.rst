@@ -11,10 +11,13 @@ small set of required functions.
 
 Numba
 -----
-Numba can be used with either CTypes or CFFI.  The current iteration of the
+Numba can be used with either
+`CTypes <https://docs.python.org/3/library/ctypes.html>`_
+or `CFFI <https://cffi.readthedocs.io/en/stable/overview.html>`_.
+The current iteration of the
 `BitGenerator`\ s all export a small set of functions through both interfaces.
 
-This example shows how numba can be used to produce gaussian samples using
+This example shows how Numba can be used to produce Gaussian samples using
 a pure Python implementation which is then compiled.  The random numbers are
 provided by ``ctypes.next_double``.
 
