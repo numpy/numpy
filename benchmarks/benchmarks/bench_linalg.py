@@ -217,3 +217,41 @@ class LinAlgTransposeVdot(Benchmark):
 
     def time_vdot(self, shape, npdtypes):
         np.vdot(self.xarg, self.x2arg)
+
+
+class MatmulStrided(Benchmark):
+    # some interesting points selected from
+    # https://github.com/numpy/numpy/pull/23752#issuecomment-2629521597
+    # (m, p, n, batch_size)
+    args = [
+        (2, 2, 2, 1), (2, 2, 2, 10), (5, 5, 5, 1), (5, 5, 5, 10),
+        (10, 10, 10, 1), (10, 10, 10, 10), (20, 20, 20, 1), (20, 20, 20, 10),
+        (50, 50, 50, 1), (50, 50, 50, 10),
+        (150, 150, 100, 1), (150, 150, 100, 10),
+        (400, 400, 100, 1), (400, 400, 100, 10)
+    ]
+
+    param_names = ['configuration']
+
+    def __init__(self):
+        self.args_map = {
+            'matmul_m%03d_p%03d_n%03d_bs%02d' % arg: arg for arg in self.args
+        }
+
+        self.params = [list(self.args_map.keys())]
+    
+    def setup(self, configuration):
+        m, p, n, batch_size = self.args_map[configuration]
+
+        self.a1raw = np.random.rand(batch_size * m * 2 * n).reshape(
+            (batch_size, m, 2 * n)
+        )
+        
+        self.a1 = self.a1raw[:, :, ::2]
+
+        self.a2 = np.random.rand(batch_size * n * p).reshape(
+            (batch_size, n, p)
+        )
+
+    def time_matmul(self, configuration):
+        return np.matmul(self.a1, self.a2)
