@@ -1974,14 +1974,14 @@ class TestNonzero:
         b[:] = np.arange(b.size) % 2
         assert b.flags.aligned is False
         expected = np.arange(1, b.size, 2)
-        assert_equal(np.nonzero(b), expected)
+        assert_equal(np.nonzero(b)[0], expected)
 
         b = np.zeros(64 + 1, dtype=np.float16)[1:]
         b = b.view(float)
         b[:] = np.arange(b.size) % 2
         assert b.flags.aligned is False
         expected = np.arange(1, b.size, 2)
-        assert_equal(np.nonzero(b), expected)
+        assert_equal(np.nonzero(b)[0], expected)
 
 
 class TestIndex:
