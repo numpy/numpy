@@ -70,16 +70,19 @@ unique(PyArrayObject *self)
     // or w/o an exception
     auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
     // first we put the data in a hash map
-    do {
-        char* data = *dataptr;
-        npy_intp stride = *strideptr;
-        npy_intp count = *innersizeptr;
 
-        while (count--) {
-            hashset.insert(*((T *) data));
-            data += stride;
-        }
-    } while(iternext(iter));
+    if (NpyIter_GetIterSize(iter) > 0) {
+        do {
+            char* data = *dataptr;
+            npy_intp stride = *strideptr;
+            npy_intp count = *innersizeptr;
+
+            while (count--) {
+                hashset.insert(*((T *) data));
+                data += stride;
+            }
+        } while (iternext(iter));
+    }
 
     npy_intp length = hashset.size();
 
