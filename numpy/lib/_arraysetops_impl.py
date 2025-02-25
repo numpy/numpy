@@ -632,7 +632,7 @@ def unique_values(x):
     --------
     >>> import numpy as np
     >>> np.unique_values([1, 1, 2])
-    array([1, 2])
+    array([1, 2])  # may vary
 
     """
     return unique(
