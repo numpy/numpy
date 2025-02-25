@@ -1050,7 +1050,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
         }
 
         if (PyArray_FailUnlessWriteable(out, "output array") < 0) {
-            return NULL;
+            goto fail;
         }
 
         for (i = 0; i < n; i++) {
@@ -1082,7 +1082,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                                                         (PyObject *)out);
         }
         else {
-            obj = (PyArrayObject *)PyArray_FromArray(out, dtype, 0);
+            obj = (PyArrayObject *)Py_NewRef(out);
         }
     }
 
@@ -1159,15 +1159,13 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     Py_DECREF(ap);
     PyDataMem_FREE(mps);
-    if (out != NULL && out != obj) {
-        Py_INCREF(out);
-        if (copy_existing_out) {
-            if (PyArray_CopyAnyInto(out, obj) < 0) {
-                return NULL;
-            }
-        }
+    if (copy_existing_out) {
+        int res = PyArray_CopyInto(out, obj);
         Py_DECREF(obj);
-        obj = out;
+        if (res < 0) {
+            return NULL;
+        }
+        return Py_NewRef(out);
     }
     return (PyObject *)obj;
 
