@@ -39,19 +39,15 @@ unique(PyArrayObject *self)
     custom or complicated dtypes or string values.
     */
     NPY_ALLOW_C_API_DEF;
-    NpyIter* iter;
-    NpyIter_IterNextFunc *iternext;
-    char** dataptr;
-    npy_intp* strideptr,* innersizeptr;
     std::unordered_set<T> hashset;
 
-    iter = NpyIter_New(self, NPY_ITER_READONLY |
-                             NPY_ITER_EXTERNAL_LOOP |
-                             NPY_ITER_REFS_OK |
-                             NPY_ITER_ZEROSIZE_OK |
-                             NPY_ITER_GROWINNER,
-                        NPY_KEEPORDER, NPY_NO_CASTING,
-                        NULL);
+    NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
+                                      NPY_ITER_EXTERNAL_LOOP |
+                                      NPY_ITER_REFS_OK |
+                                      NPY_ITER_ZEROSIZE_OK |
+                                      NPY_ITER_GROWINNER,
+                                NPY_KEEPORDER, NPY_NO_CASTING,
+                                NULL);
     // Making sure the iterator is deallocated when the function returns, with
     // or w/o an exception
     auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
@@ -59,13 +55,13 @@ unique(PyArrayObject *self)
         return NULL;
     }
 
-    iternext = NpyIter_GetIterNext(iter, NULL);
+    NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
     if (iternext == NULL) {
         return NULL;
     }
-    dataptr = NpyIter_GetDataPtrArray(iter);
-    strideptr = NpyIter_GetInnerStrideArray(iter);
-    innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+    char **dataptr = NpyIter_GetDataPtrArray(iter);
+    npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
+    npy_intp *innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
     // release the GIL
     PyThreadState *_save;
@@ -85,15 +81,16 @@ unique(PyArrayObject *self)
         }
     } while(iternext(iter));
 
-    npy_intp dims[1] = {(npy_intp)hashset.size()};
-    PyArray_Descr *descr = PyArray_DESCR(self);
+    npy_intp length = hashset.size();
+
     NPY_ALLOW_C_API;
+    PyArray_Descr *descr = PyArray_DESCR(self);
     Py_INCREF(descr);
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
         1, // ndim
-        dims, // shape
+        &length, // shape
         NULL, // strides
         NULL, // data
         // This flag is needed to be able to call .sort on it.
@@ -143,46 +140,34 @@ std::unordered_map<int, function_type> unique_funcs = {
 };
 
 
+/**
+ * Python exposed implementation of `_unique_hash`.
+ *
+ * This is a C only function wrapping code that may cause C++ exceptions into
+ * try/catch.
+ *
+ * @param arr NumPy array to find the unique values of.
+ * @return Base-class NumPy array with unique values, `NotImplemented` if the
+ * type is unsupported or `NULL` with an error set.
+ */
 extern "C" NPY_NO_EXPORT PyObject *
-array__unique_hash(PyObject *NPY_UNUSED(dummy), PyObject *args)
+array__unique_hash(PyObject *NPY_UNUSED(module), PyObject *arr_obj)
 {
-    /* This is called from Python space, and expects a single numpy array as input.
-
-    It then returns a numpy array containing the unique values of the input array.
-
-    If the input array is not supported, it returns None.
-    */
-    // this is to allow grabbing the GIL before raising a python exception.
-
-
-    PyArrayObject *self = NULL;
-    PyObject *res = NULL;
-    if (!PyArg_ParseTuple(args, "O&", PyArray_Converter, &self)) {
+    if (!PyArray_Check(arr_obj)) {
+        PyErr_SetString(PyExc_TypeError,
+                "_unique_hash() requires a NumPy array input.");
         return NULL;
     }
-    // Making sure the DECREF is called when the function returns, with
-    // or w/o an exception
-    auto self_decref = finally([&]() { Py_XDECREF(self); });
+    PyArrayObject *arr = (PyArrayObject *)arr_obj;
 
     try {
-        /* Handle zero-sized arrays specially */
-        if (PyArray_SIZE(self) == 0) {
-            return PyArray_NewLikeArray(
-                self,
-                NPY_ANYORDER,
-                NULL, // descr (use prototype's descr)
-                0 // subok (function always returns base-class)
-            );
-        }
-
-        auto type = PyArray_TYPE(self);
+        auto type = PyArray_TYPE(arr);
         // we only support data types present in our unique_funcs map
         if (unique_funcs.find(type) == unique_funcs.end()) {
             Py_RETURN_NOTIMPLEMENTED;
         }
 
-        res = unique_funcs[type](self);
-        return res;
+        return unique_funcs[type](arr);
     }
     catch (const std::bad_alloc &e) {
         PyErr_NoMemory();

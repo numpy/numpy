@@ -15,7 +15,6 @@ Original author: Robert Cimrman
 
 """
 import functools
-from types import NotImplementedType
 import warnings
 from typing import NamedTuple
 
@@ -375,7 +374,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         conv = _array_converter(ar)
         ar_, = conv
 
-        if type(hash_unique := _unique_hash(ar_)) != NotImplementedType:
+        if (hash_unique := _unique_hash(ar_)) is not NotImplemented:
             if sorted:
                 hash_unique.sort()
             # We wrap the result back in case it was a subclass of numpy.ndarray.
@@ -492,7 +491,7 @@ def unique_all(x):
         return_index=True,
         return_inverse=True,
         return_counts=True,
-        equal_nan=False
+        equal_nan=False,
     )
     return UniqueAllResult(*result)
 
@@ -544,7 +543,7 @@ def unique_counts(x):
         return_index=False,
         return_inverse=False,
         return_counts=True,
-        equal_nan=False
+        equal_nan=False,
     )
     return UniqueCountsResult(*result)
 
@@ -597,7 +596,7 @@ def unique_inverse(x):
         return_index=False,
         return_inverse=True,
         return_counts=False,
-        equal_nan=False
+        equal_nan=False,
     )
     return UniqueInverseResult(*result)
 
@@ -641,7 +640,8 @@ def unique_values(x):
         return_index=False,
         return_inverse=False,
         return_counts=False,
-        equal_nan=False
+        equal_nan=False,
+        sorted=False,
     )
 
 

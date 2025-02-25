@@ -4565,7 +4565,7 @@ static struct PyMethodDef array_module_methods[] = {
     {"from_dlpack", (PyCFunction)from_dlpack,
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"_unique_hash",  (PyCFunction)array__unique_hash,
-        METH_VARARGS, "Collect unique values via a hash map."},
+        METH_O, "Collect unique values via a hash map."},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
