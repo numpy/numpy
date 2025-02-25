@@ -628,55 +628,71 @@ class TestSetOps:
 
 class TestUnique:
 
+    def check_all(self, a, b, i1, i2, c, dt):
+        base_msg = 'check {0} failed for type {1}'
+
+        msg = base_msg.format('values', dt)
+        v = unique(a)
+        assert_array_equal(v, b, msg)
+        assert type(v) == type(b)
+
+        msg = base_msg.format('return_index', dt)
+        v, j = unique(a, True, False, False)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j, i1, msg)
+        assert type(v) == type(b)
+
+        msg = base_msg.format('return_inverse', dt)
+        v, j = unique(a, False, True, False)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j, i2, msg)
+        assert type(v) == type(b)
+
+        msg = base_msg.format('return_counts', dt)
+        v, j = unique(a, False, False, True)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j, c, msg)
+        assert type(v) == type(b)
+
+        msg = base_msg.format('return_index and return_inverse', dt)
+        v, j1, j2 = unique(a, True, True, False)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j1, i1, msg)
+        assert_array_equal(j2, i2, msg)
+        assert type(v) == type(b)
+
+        msg = base_msg.format('return_index and return_counts', dt)
+        v, j1, j2 = unique(a, True, False, True)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j1, i1, msg)
+        assert_array_equal(j2, c, msg)
+        assert type(v) == type(b)
+
+        msg = base_msg.format('return_inverse and return_counts', dt)
+        v, j1, j2 = unique(a, False, True, True)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j1, i2, msg)
+        assert_array_equal(j2, c, msg)
+        assert type(v) == type(b)
+
+        msg = base_msg.format(('return_index, return_inverse '
+                                'and return_counts'), dt)
+        v, j1, j2, j3 = unique(a, True, True, True)
+        assert_array_equal(v, b, msg)
+        assert_array_equal(j1, i1, msg)
+        assert_array_equal(j2, i2, msg)
+        assert_array_equal(j3, c, msg)
+        assert type(v) == type(b)
+
+    def get_types(self):
+        types = []
+        types.extend(np.typecodes['AllInteger'])
+        types.extend(np.typecodes['AllFloat'])
+        types.append('datetime64[D]')
+        types.append('timedelta64[D]')
+        return types
+
     def test_unique_1d(self):
-
-        def check_all(a, b, i1, i2, c, dt):
-            base_msg = 'check {0} failed for type {1}'
-
-            msg = base_msg.format('values', dt)
-            v = unique(a)
-            assert_array_equal(v, b, msg)
-
-            msg = base_msg.format('return_index', dt)
-            v, j = unique(a, True, False, False)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j, i1, msg)
-
-            msg = base_msg.format('return_inverse', dt)
-            v, j = unique(a, False, True, False)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j, i2, msg)
-
-            msg = base_msg.format('return_counts', dt)
-            v, j = unique(a, False, False, True)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j, c, msg)
-
-            msg = base_msg.format('return_index and return_inverse', dt)
-            v, j1, j2 = unique(a, True, True, False)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j1, i1, msg)
-            assert_array_equal(j2, i2, msg)
-
-            msg = base_msg.format('return_index and return_counts', dt)
-            v, j1, j2 = unique(a, True, False, True)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j1, i1, msg)
-            assert_array_equal(j2, c, msg)
-
-            msg = base_msg.format('return_inverse and return_counts', dt)
-            v, j1, j2 = unique(a, False, True, True)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j1, i2, msg)
-            assert_array_equal(j2, c, msg)
-
-            msg = base_msg.format(('return_index, return_inverse '
-                                   'and return_counts'), dt)
-            v, j1, j2, j3 = unique(a, True, True, True)
-            assert_array_equal(v, b, msg)
-            assert_array_equal(j1, i1, msg)
-            assert_array_equal(j2, i2, msg)
-            assert_array_equal(j3, c, msg)
 
         a = [5, 7, 1, 2, 1, 5, 7] * 10
         b = [1, 2, 5, 7]
@@ -685,15 +701,11 @@ class TestUnique:
         c = np.multiply([2, 1, 2, 2], 10)
 
         # test for numeric arrays
-        types = []
-        types.extend(np.typecodes['AllInteger'])
-        types.extend(np.typecodes['AllFloat'])
-        types.append('datetime64[D]')
-        types.append('timedelta64[D]')
+        types = self.get_types()
         for dt in types:
             aa = np.array(a, dt)
             bb = np.array(b, dt)
-            check_all(aa, bb, i1, i2, c, dt)
+            self.check_all(aa, bb, i1, i2, c, dt)
 
         # test for object arrays
         dt = 'O'
@@ -701,13 +713,13 @@ class TestUnique:
         aa[:] = a
         bb = np.empty(len(b), dt)
         bb[:] = b
-        check_all(aa, bb, i1, i2, c, dt)
+        self.check_all(aa, bb, i1, i2, c, dt)
 
         # test for structured arrays
         dt = [('', 'i'), ('', 'i')]
         aa = np.array(list(zip(a, a)), dt)
         bb = np.array(list(zip(b, b)), dt)
-        check_all(aa, bb, i1, i2, c, dt)
+        self.check_all(aa, bb, i1, i2, c, dt)
 
         # test for ticket #2799
         aa = [1. + 0.j, 1 - 1.j, 1]
@@ -796,6 +808,44 @@ class TestUnique:
         assert_equal(np.unique(all_nans, return_index=True), (ua, ua_idx))
         assert_equal(np.unique(all_nans, return_inverse=True), (ua, ua_inv))
         assert_equal(np.unique(all_nans, return_counts=True), (ua, ua_cnt))
+
+    def test_unique_zero_sized(self):
+        # test for zero-sized arrays
+        for dt in self.get_types():
+            a = np.array([], dt)
+            b = np.array([], dt)
+            i1 = np.array([], np.int64)
+            i2 = np.array([], np.int64)
+            c = np.array([], np.int64)
+            self.check_all(a, b, i1, i2, c, dt)
+
+    def test_unique_subclass(self):
+        class Subclass(np.ndarray):
+            pass
+
+        i1 = [2, 3, 0, 1]
+        i2 = [2, 3, 0, 1, 0, 2, 3] * 10
+        c = np.multiply([2, 1, 2, 2], 10)
+
+        # test for numeric arrays
+        types = self.get_types()
+        for dt in types:
+            a = np.array([5, 7, 1, 2, 1, 5, 7] * 10, dtype=dt)
+            b = np.array([1, 2, 5, 7], dtype=dt)
+            aa = Subclass(a.shape, dtype=dt, buffer=a)
+            bb = Subclass(b.shape, dtype=dt, buffer=b)
+            self.check_all(aa, bb, i1, i2, c, dt)
+
+    @pytest.mark.parametrize("arg", ["return_index", "return_inverse", "return_counts"])
+    def test_unsupported_hash_based(self, arg):
+        """Test that hash based unique is not supported when either of
+        return_index, return_inverse, or return_counts is True.
+
+        This is WIP and the above will gradually be supported in the future.
+        """
+        msg = "Currently, `sorted` can only be False"
+        with pytest.raises(ValueError, match=msg):
+            np.unique([1, 1], sorted=False, **{arg: True})
 
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)

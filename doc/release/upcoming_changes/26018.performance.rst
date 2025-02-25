@@ -1,0 +1,7 @@
+Performance improvements to ``np.unique``
+-----------------------------------------
+``np.unique`` now tries to use a hash table to find unique values instead of sorting
+values before finding unique values. This is limited to certain dtypes for now, and
+the function is now faster for those dtypes. The function now also exposes a ``sorted``
+parameter to allow returning unique values as they were found, instead of sorting them
+afterwards.
