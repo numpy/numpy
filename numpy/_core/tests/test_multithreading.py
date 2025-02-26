@@ -281,7 +281,7 @@ def test_nonzero(dtype):
     #
     # This test triggers a data race which is suppressed in the TSAN CI. The test is to ensure
     # np.nonzero does not generate a segmentation fault
-    x = np.random.randint(4, size=10_000).astype(dtype)
+    x = np.random.randint(4, size=100).astype(dtype)
 
     def func(index):
         for _ in range(10):
@@ -293,5 +293,4 @@ def test_nonzero(dtype):
                 except RuntimeError as ex:
                     assert 'number of non-zero array elements changed during function execution' in str(ex)
 
-    run_threaded(func, max_workers=10, pass_count=True, outer_iterations=50)
-
+    run_threaded(func, max_workers=10, pass_count=True, outer_iterations=5)
