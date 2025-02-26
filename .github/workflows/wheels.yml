@@ -42,8 +42,9 @@ jobs:
   get_commit_message:
     name: Get commit message
     runs-on: ubuntu-latest
-    # To enable this job and subsequent jobs on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    # Only workflow_dispatch is enabled on forks.
+    # To enable this job and subsequent jobs on a fork for other events, comment out:
+    if: github.repository == 'numpy/numpy' || github.event_name == 'workflow_dispatch'
     outputs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
@@ -197,7 +198,7 @@ jobs:
             anaconda-client
 
       - name: Upload wheels
-        if: success()
+        if: success() && github.repository == 'numpy/numpy'
         shell: bash -el {0}
         # see https://github.com/marketplace/actions/setup-miniconda for why
         # `-el {0}` is required.
@@ -276,7 +277,7 @@ jobs:
           python-version: "3.11"
 
       - name: Upload sdist
-        if: success()
+        if: success() && github.repository == 'numpy/numpy'
         shell: bash -el {0}
         env:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
