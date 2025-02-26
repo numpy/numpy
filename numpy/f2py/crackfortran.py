@@ -1494,9 +1494,11 @@ def analyzeline(m, case, line):
         f = 0
         bn = ''
         ol = ''
+        nslash = 0
         for c in line:
-            if c == '/':
+            if c == '/' and nslash < 2:
                 f = f + 1
+                nslash = nslash + 1
                 continue
             if f >= 3:
                 bn = bn.strip()
