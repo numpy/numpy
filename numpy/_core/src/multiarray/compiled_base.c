@@ -119,7 +119,6 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     npy_intp *numbers, *ians, len, mx, mn, ans_size;
     npy_intp minlength = 0;
     npy_intp i;
-    int flags;
     double *weights , *dans;
 
     NPY_PREPARE_ARGPARSER;
@@ -151,8 +150,13 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         }
         if (PyArray_SIZE(tmp1) > 0) {
             /* The input is not empty, so convert it to NPY_INTP. */
-            lst = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)tmp1,
-                                                             NPY_INTP, 1, 1);
+            int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
+            if (PyArray_Check((PyObject *)tmp1) &&
+                PyArray_ISINTEGER((PyArrayObject *)tmp1)) {
+                flags = flags | NPY_ARRAY_FORCECAST;
+            }
+            PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
+            lst = (PyArrayObject *)PyArray_FromAny((PyObject *)tmp1, local_dtype, 1, 1, flags, NULL);
             Py_DECREF(tmp1);
             if (lst == NULL) {
                 /* Failed converting to NPY_INTP. */
@@ -178,8 +182,8 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     }
 
     if (lst == NULL) {
-        flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
-        if (PyArray_Size((PyObject *)list) &&
+        int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
+        if (PyArray_Check((PyObject *)list) &&
             PyArray_ISINTEGER((PyArrayObject *)list)) {
             flags = flags | NPY_ARRAY_FORCECAST;
         }
