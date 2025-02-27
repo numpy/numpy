@@ -1887,7 +1887,8 @@ mapiter_@name@(
  * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
  */
 
-static inline void nonzero_idxs_1D_@name@(@dtype@ const* data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) {
+static inline void
+nonzero_idxs_1D_@name@(@dtype@ const* data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) {
     npy_intp size_0 = shape[0];
     npy_intp stride = strides[0];
     npy_intp added_count = 0;
@@ -1904,7 +1905,8 @@ static inline void nonzero_idxs_1D_@name@(@dtype@ const* data, npy_intp* idxs, c
     }
 }
 
-static inline void nonzero_idxs_2D_@name@(@dtype@ const* data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) {
+static inline void 
+nonzero_idxs_2D_@name@(@dtype@ const* data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) {
     npy_intp idxs_stride = 2; 
     npy_intp size_0 = shape[0];
     npy_intp size_1 = shape[1];
@@ -1934,7 +1936,8 @@ static inline void nonzero_idxs_2D_@name@(@dtype@ const* data, npy_intp* idxs, c
 
 /**end repeat**/
 
-npy_bool nonzero_idxs_dispatcher(void const * data, npy_intp* idxs, int ndim, const npy_intp* shape, const npy_intp* strides, int dtype, npy_intp nonzero_count)
+npy_bool
+nonzero_idxs_dispatcher(void const * data, npy_intp* idxs, int ndim, const npy_intp* shape, const npy_intp* strides, int dtype, npy_intp nonzero_count)
 { 
     if (ndim==1) {
         switch(dtype) {
