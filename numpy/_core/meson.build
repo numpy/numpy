@@ -1073,7 +1073,6 @@ src_multiarray_umath_common = [
   'src/common/npy_hashtable.cpp',
   'src/common/npy_import.c',
   'src/common/npy_longdouble.c',
-  'src/common/ucsnarrow.c',
   'src/common/ufunc_override.c',
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
