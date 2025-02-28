@@ -123,8 +123,7 @@ class TestCrackFortran(util.F2PyTest):
         assert r == (1, 2)
 
     def test_common_with_division(self):
-        # Currently crackfortran fails to correctly parse "common_with_division.f"
-        pass
+        assert len(self.module.mortmp.ctmp) == 11
 
 class TestMarkinnerspaces:
     # gh-14118: markinnerspaces does not handle multiple quotations
