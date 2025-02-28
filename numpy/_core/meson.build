@@ -685,6 +685,16 @@ c_args_common = [
   cflags_large_file_support,
 ]
 
+# CPP exceptions are handled in the unique_hash code and therefore the `-fexceptions`
+# flag.
+unique_hash_cpp_args = c_args_common
+if cc.get_argument_syntax() != 'msvc'
+  unique_hash_cpp_args += [
+    '-fexceptions',
+    '-fno-rtti',  # no runtime type information
+  ]
+endif
+
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [
 ]
@@ -1221,6 +1231,21 @@ if use_svml
   endforeach
 endif
 
+unique_hash_so = static_library(
+  'unique_hash',
+  ['src/multiarray/unique.cpp'],
+  c_args: c_args_common,
+  cpp_args: unique_hash_cpp_args,
+  include_directories: [
+    'include',
+    'src/common',
+  ],
+  dependencies: [
+    py_dep,
+    np_core_dep,
+  ],
+)
+
 py.extension_module('_multiarray_umath',
   [
     config_h,
@@ -1245,7 +1270,11 @@ py.extension_module('_multiarray_umath',
     'src/highway'
   ],
   dependencies: [blas_dep],
-  link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')] + highway_lib,
+  link_with: [
+    npymath_lib,
+    unique_hash_so,
+    multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')
+  ] + highway_lib,
   install: true,
   subdir: 'numpy/_core',
 )
