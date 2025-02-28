@@ -1,12 +1,12 @@
-#include <cmath>
-#include <type_traits>
-
 #include "numpy/npy_common.h"
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
+
+#include <cmath>
+#include <type_traits>
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/arrayobject.h"
