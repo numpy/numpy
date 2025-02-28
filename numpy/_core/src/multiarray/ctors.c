@@ -2249,14 +2249,21 @@ PyArray_FromInterface(PyObject *origin)
     }
     /* Get dimensions from shape tuple */
     else {
-        n = PyTuple_GET_SIZE(attr);
-        for (i = 0; i < n; i++) {
+        Py_ssize_t shape_tuple_len = PyTuple_GET_SIZE(attr);
+        if (shape_tuple_len > NPY_MAXDIMS) {
+            PyErr_Format(PyExc_ValueError,
+                         "number of dimensions must be within [0, %d], got %d",
+                         NPY_MAXDIMS, shape_tuple_len);
+            goto fail;
+        }
+        for (i = 0; i < shape_tuple_len; i++) {
             PyObject *tmp = PyTuple_GET_ITEM(attr, i);
             dims[i] = PyArray_PyIntAsIntp(tmp);
             if (error_converting(dims[i])) {
                 goto fail;
             }
         }
+        n = (int)shape_tuple_len;
     }
     Py_CLEAR(attr);
 
