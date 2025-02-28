@@ -2134,7 +2134,7 @@ PyArray_FromInterface(PyObject *origin)
     PyArray_Descr *dtype = NULL;
     char *data = NULL;
     Py_buffer view;
-    int i, n;
+    Py_ssize_t i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
@@ -2250,6 +2250,12 @@ PyArray_FromInterface(PyObject *origin)
     /* Get dimensions from shape tuple */
     else {
         n = PyTuple_GET_SIZE(attr);
+        if (n > NPY_MAXDIMS) {
+            PyErr_Format(PyExc_ValueError,
+                         "number of dimensions must be within [0, %d], got %d",
+                         NPY_MAXDIMS, n);
+            goto fail;
+        }
         for (i = 0; i < n; i++) {
             PyObject *tmp = PyTuple_GET_ITEM(attr, i);
             dims[i] = PyArray_PyIntAsIntp(tmp);
