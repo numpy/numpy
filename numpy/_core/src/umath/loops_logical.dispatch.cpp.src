@@ -14,6 +14,7 @@
 #include "loops.h"
 #include "lowlevel_strided_loops.h"
 #include "fast_loop_macros.h"
+#include <functional>
 
 #include <hwy/highway.h>
 namespace hn = hwy::HWY_NAMESPACE;
@@ -92,8 +93,8 @@ struct BinaryLogicalTraits;
 template<>
 struct BinaryLogicalTraits<logical_or_t> {
     static constexpr bool is_and = false;
-    static constexpr auto scalar_op = std::logical_or<>{};
-    static constexpr auto scalar_cmp = std::not_equal_to<>{};
+    static constexpr auto scalar_op = std::logical_or<bool>{};
+    static constexpr auto scalar_cmp = std::not_equal_to<bool>{};
     static constexpr auto anyall = simd_any_u8;
 
     NPY_FINLINE vec_u8 simd_op(vec_u8 a, vec_u8 b) {
@@ -108,8 +109,8 @@ struct BinaryLogicalTraits<logical_or_t> {
 template<>
 struct BinaryLogicalTraits<logical_and_t> {
     static constexpr bool is_and = true;
-    static constexpr auto scalar_op = std::logical_and<>{};
-    static constexpr auto scalar_cmp = std::equal_to<>{};
+    static constexpr auto scalar_op = std::logical_and<bool>{};
+    static constexpr auto scalar_cmp = std::equal_to<bool>{};
     static constexpr auto anyall = simd_all_u8;
 
     NPY_FINLINE vec_u8 simd_op(vec_u8 a, vec_u8 b) {
@@ -127,7 +128,7 @@ struct UnaryLogicalTraits;
 template<>
 struct UnaryLogicalTraits<logical_not_t> {
     static constexpr bool is_not = true;
-    static constexpr auto scalar_op = std::equal_to<>{};
+    static constexpr auto scalar_op = std::equal_to<bool>{};
 
     NPY_FINLINE vec_u8 simd_op(vec_u8 v) {
         const vec_u8 zero = hn::Zero(u8);
@@ -138,7 +139,7 @@ struct UnaryLogicalTraits<logical_not_t> {
 template<>
 struct UnaryLogicalTraits<absolute_t> {
     static constexpr bool is_not = false;
-    static constexpr auto scalar_op = std::not_equal_to<>{};
+    static constexpr auto scalar_op = std::not_equal_to<bool>{};
 
     NPY_FINLINE vec_u8 simd_op(vec_u8 v) {
         return byte_to_true(v);
