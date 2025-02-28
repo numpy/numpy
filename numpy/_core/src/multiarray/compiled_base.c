@@ -151,8 +151,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         if (PyArray_SIZE(tmp1) > 0) {
             /* The input is not empty, so convert it to NPY_INTP. */
             int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
-            if (PyArray_Check((PyObject *)tmp1) &&
-                PyArray_ISINTEGER((PyArrayObject *)tmp1)) {
+            if (PyArray_ISINTEGER(tmp1)) {
                 flags = flags | NPY_ARRAY_FORCECAST;
             }
             PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
