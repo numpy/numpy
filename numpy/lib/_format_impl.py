@@ -874,7 +874,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
                                                              count=read_count)
         
         if array.size != count:
-            raise IOError("Failed to read all data for array")
+            raise ValueError(f"Failed to read all data for array. Expected {shape} = {count} elements, read {array.size} elements.")
 
         if fortran_order:
             array.shape = shape[::-1]
