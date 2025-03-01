@@ -1,0 +1,1 @@
+* ``np.linalg.norm`` now yields zero for proper norms of empty vectors and matrices.
