@@ -283,7 +283,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY, IS_WASM, IS_64BIT
+    assert_warns, temppath, IS_PYPY, IS_WASM, IS_64BIT
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.lib import format
@@ -428,6 +428,17 @@ def roundtrip_truncated(arr):
     arr2 = format.read_array(f2)
     return arr2
 
+def file_truncated(arr):
+    with temppath() as path:
+        with open(path, 'wb') as f:
+            format.write_array(f, arr)
+        #truncate the file by one byte
+        with open(path, 'rb+') as f:
+            f.seek(-1, os.SEEK_END)
+            f.truncate()
+        with open(path, 'rb') as f:
+            arr2 = format.read_array(f)
+        return arr2
 
 def assert_equal_(o1, o2):
     assert_(o1 == o2)
@@ -451,6 +462,10 @@ def test_roundtrip_truncated():
         if arr.dtype != object:
             assert_raises(ValueError, roundtrip_truncated, arr)
 
+def test_file_truncated():
+    for arr in basic_arrays:
+        if arr.dtype != object:
+            assert_raises(ValueError, file_truncated, arr)
 
 def test_long_str():
     # check items larger than internal buffer size, gh-4027
