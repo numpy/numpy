@@ -1,6 +1,6 @@
-#include "numpy/npy_common.h"
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "numpy/npy_common.h"
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
