@@ -2959,6 +2959,27 @@ class TestBincount:
         with assert_raises(ValueError):
             np.bincount(vals)
 
+    @pytest.mark.parametrize("dt", np.typecodes["AllInteger"])
+    def test_gh_28354(self, dt):
+        a = np.array([0, 1, 1, 3, 2, 1, 7], dtype=dt)
+        actual = np.bincount(a)
+        expected = [1, 3, 1, 1, 0, 0, 0, 1]
+        assert_array_equal(actual, expected)
+
+    def test_contiguous_handling(self):
+        # check for absence of hard crash
+        np.bincount(np.arange(10000)[::2])
+
+    def test_gh_28354_array_like(self):
+        class A:
+            def __array__(self):
+                return np.array([0, 1, 1, 3, 2, 1, 7], dtype=np.uint64)
+
+        a = A()
+        actual = np.bincount(a)
+        expected = [1, 3, 1, 1, 0, 0, 0, 1]
+        assert_array_equal(actual, expected)
+
 
 class TestInterp:
 
