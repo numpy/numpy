@@ -14,6 +14,7 @@ on:
     branches:
       - main
       - maintenance/**
+  workflow_dispatch:
 
 defaults:
   run:
@@ -28,8 +29,9 @@ permissions:
 
 jobs:
   linux_qemu:
-    # To enable this workflow on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    # Only workflow_dispatch is enabled on forks.
+    # To enable this job and subsequent jobs on a fork for other events, comment out:
+    if: github.repository == 'numpy/numpy' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     continue-on-error: true
     strategy:
@@ -107,7 +109,7 @@ jobs:
 
     - name: Initialize binfmt_misc for qemu-user-static
       run: |
-        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+        docker run --rm --privileged tonistiigi/binfmt:qemu-v9.2.2-52 --install all
 
     - name: Install GCC cross-compilers
       run: |
@@ -175,5 +177,4 @@ jobs:
             export F90=/usr/bin/gfortran
             cd /numpy && spin test -- -k \"${RUNTIME_TEST_FILTER}\"
           '"
-
 
