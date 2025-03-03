@@ -91,18 +91,16 @@ jobs:
           - [macos-14, macosx_arm64, accelerate]  # always use accelerate
           - [windows-2019, win_amd64, ""]
           - [windows-2019, win32, ""]
-        # TODO pypy: Add pp311 to this list when it comes out (pp310 removed)
-        python: ["cp311", "cp312", "cp313", "cp313t"]
+        python: ["cp311", "cp312", "cp313", "cp313t", "pp311"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32, ""]
-            python: "pp310"
+            python: "pp311"
+          # No PyPy on musllinux images
           - buildplat: [ ubuntu-22.04, musllinux_x86_64, "" ]
-            python: "pp310"
+            python: "pp311"
           - buildplat: [ ubuntu-22.04-arm, musllinux_aarch64, "" ]
-            python: "pp310"
-          - buildplat: [ macos-14, macosx_arm64, accelerate ]
-            python: "pp310"
+            python: "pp311"
           - buildplat: [ macos13, macosx_x86_64, openblas ]
             python: "cp313t"
 
@@ -173,10 +171,8 @@ jobs:
           echo "CIBW_BUILD_FRONTEND=pip; args: --no-build-isolation" >> "$GITHUB_ENV"
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969  # v2.22.0
+        uses: pypa/cibuildwheel@6cccd09a31908ffd175b012fb8bf4e1dbda3bc6c  # v2.23.0
         env:
-          CIBW_PRERELEASE_PYTHONS: True
-          CIBW_FREE_THREADED_SUPPORT: True
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
       - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
