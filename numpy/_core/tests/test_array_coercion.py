@@ -14,7 +14,8 @@ import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
 
 from numpy.testing import (
-    assert_array_equal, assert_warns, IS_PYPY)
+    assert_array_equal, assert_warns, IS_PYPY, IS_64BIT
+)
 
 
 def arraylikes():
@@ -718,8 +719,7 @@ class TestArrayLikes:
         arr = np.array([ArrayLike])
         assert arr[0] is ArrayLike
 
-    @pytest.mark.skipif(
-            np.dtype(np.intp).itemsize < 8, reason="Needs 64bit platform")
+    @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
     def test_too_large_array_error_paths(self):
         """Test the error paths, including for memory leaks"""
         arr = np.array(0, dtype="uint8")

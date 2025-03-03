@@ -5,7 +5,7 @@ import string
 import numpy as np
 import pytest
 
-from numpy.testing import IS_WASM
+from numpy.testing import IS_WASM, IS_64BIT
 from numpy.testing._private.utils import run_threaded
 from numpy._core import _rational_tests
 
@@ -257,20 +257,16 @@ def test_stringdtype_multithreaded_access_and_mutation(
             f.result()
 
 
+@pytest.mark.skipif(
+    not IS_64BIT,
+    reason="Sometimes causes failures or crashes due to OOM on 32 bit runners"
+)
 def test_legacy_usertype_cast_init_thread_safety():
     def closure(b):
         b.wait()
         np.full((10, 10), 1, _rational_tests.rational)
 
-    try:
-        run_threaded(closure, 250, pass_barrier=True)
-    except RuntimeError:
-        # The 32 bit linux runner will trigger this with 250 threads. I can
-        # trigger it on my Linux laptop with 500 threads but the CI runner is
-        # more resource-constrained.
-        # Reducing the number of threads means the test doesn't trigger the
-        # bug. Better to skip on some platforms than add a useless test.
-        pytest.skip("Couldn't spawn enough threads to run the test")
+    run_threaded(closure, 250, pass_barrier=True)
 
 @pytest.mark.parametrize("dtype", [bool, int, float])
 def test_nonzero(dtype):
