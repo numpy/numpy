@@ -958,6 +958,20 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     return PyArray_MatrixProduct2(op1, op2, NULL);
 }
 
+static int
+check_fperr(const char *func_name)
+{
+    int errmask = 0;
+    if (_get_bufsize_errmask(NULL, &errmask) < 0) {
+        return -1;
+    }
+    if (_check_ufunc_fperr(errmask, func_name) < 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
 /*NUMPY_API
  * Numeric.matrixproduct2(a,v,out)
  * just like inner product but does the swapaxes stuff on the fly
@@ -1008,11 +1022,17 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         return NULL;
     }
 
+    npy_clear_floatstatus();
+
 #if defined(HAVE_CBLAS)
     if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
             (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
              NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
-        return cblas_matrixproduct(typenum, ap1, ap2, out);
+        PyObject *res = cblas_matrixproduct(typenum, ap1, ap2, out);
+        if (check_fperr("dot") < 0) {
+            return NULL;
+        }
+        return res;
     }
 #endif
 
@@ -1100,6 +1120,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     Py_DECREF(it2);
     if (PyErr_Occurred()) {
         /* only for OBJECT arrays */
+        goto fail;
+    }
+    if (check_fperr("dot") < 0) {
         goto fail;
     }
     Py_DECREF(ap1);
