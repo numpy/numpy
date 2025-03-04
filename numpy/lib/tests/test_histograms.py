@@ -421,8 +421,8 @@ class TestHistogram:
         Z = [0, 1, 1, 1, 1, 1, e, e, e, e, e, e, 2]
         counts, edges = np.histogram(Z, bins="auto")
         assert len(counts) < 10
-        assert edges[0] = Z[0]
-        assert edges[-1] = Z[-1]
+        assert edges[0] == Z[0]
+        assert edges[-1] == Z[-1]
 
 class TestHistogramOptimBinNums:
     """
