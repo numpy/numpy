@@ -416,6 +416,13 @@ class TestHistogram:
         expected_hist = np.array([1, 0])
         assert_array_equal(hist, expected_hist)
 
+    def test_gh_28400(self):
+        e = 1+1e-12
+        Z = [0, 1, 1, 1, 1, 1, e, e, e, e, e, e, 2]
+        counts, edges = np.histogram(Z, bins="auto")
+        assert len(counts) < 10
+        assert edges[0] = Z[0]
+        assert edges[-1] = Z[-1]
 
 class TestHistogramOptimBinNums:
     """
