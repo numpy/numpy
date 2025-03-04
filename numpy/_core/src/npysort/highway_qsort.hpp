@@ -27,6 +27,11 @@ NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSelect, (T* arr, npy_intp n
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size))
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSelect, (T* arr, npy_intp num, npy_intp kth))
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "highway_argsort.dispatch.h"
+#endif
+NPY_CPU_DISPATCH_DECLARE(template <typename T> void ArgQSort, (T *arr, npy_intp* arg, npy_intp size))
+
 } } } // np::highway::qsort_simd
 
 #endif // NUMPY_SRC_COMMON_NPYSORT_HWY_SIMD_QSORT_HPP
