@@ -265,7 +265,7 @@ def _hist_bin_auto(x, range):
     sturges_bw = _hist_bin_sturges(x, range)
 
     # heuristic to limit the maximal number of bins
-    maximum_number_of_bins = 2 * x.size / math.log(x.size + 1)
+    maximum_number_of_bins = 2 * x.size / math.log1p(x.size)
     minimal_bw = (range[1] - range[0]) / maximum_number_of_bins
     if fd_bw >= minimal_bw:
         return min(fd_bw, sturges_bw)
