@@ -1806,13 +1806,13 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
  * Internal version of PyArray_CheckFromAny that accepts a dtypemeta. Borrows
  * references to the descriptor and dtype.
  */
-
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
                          PyArray_DTypeMeta *in_DType, int min_depth,
                          int max_depth, int requires, PyObject *context)
 {
     PyObject *obj;
+    Py_XINCREF(in_descr);  /* take ownership as we may replace it */
     if (requires & NPY_ARRAY_NOTSWAPPED) {
         if (!in_descr && PyArray_Check(op)) {
             in_descr = PyArray_DESCR((PyArrayObject *)op);
@@ -1820,12 +1820,16 @@ PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
         }
         if (in_descr) {
             PyArray_DESCR_REPLACE_CANONICAL(in_descr);
+            if (in_descr == NULL) {
+                return NULL;
+            }
         }
     }
 
     int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
                               max_depth, requires, context, &was_scalar);
+    Py_XDECREF(in_descr);
     if (obj == NULL) {
         return NULL;
     }

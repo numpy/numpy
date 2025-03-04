@@ -2653,3 +2653,9 @@ class TestRegression:
         inp = np.linspace(0, size, num=size, dtype=np.intc)
         out = np.sort(inp)
         assert_equal(inp, out)
+
+    def test_searchsorted_structured(self):
+        # gh-28190
+        x = np.array([(0, 1.)], dtype=[('time', '<i8'), ('value', '<f8')])
+        y = np.array((0, 0.), dtype=[('time', '<i8'), ('value', '<f8')])
+        x.searchsorted(y)

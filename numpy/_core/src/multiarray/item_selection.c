@@ -2127,7 +2127,6 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     if (dtype == NULL) {
         return NULL;
     }
-    /* refs to dtype we own = 1 */
 
     /* Look for binary search function */
     if (perm) {
@@ -2138,26 +2137,23 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     }
     if (binsearch == NULL && argbinsearch == NULL) {
         PyErr_SetString(PyExc_TypeError, "compare not supported for type");
-        /* refs to dtype we own = 1 */
         Py_DECREF(dtype);
-        /* refs to dtype we own = 0 */
         return NULL;
     }
 
-    /* need ap2 as contiguous array and of right type */
-    /* refs to dtype we own = 1 */
-    Py_INCREF(dtype);
-    /* refs to dtype we own = 2 */
+    /* need ap2 as contiguous array and of right dtype (note: steals dtype reference) */
     ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
                                 0, 0,
                                 NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED,
                                 NULL);
-    /* refs to dtype we own = 1, array creation steals one even on failure */
     if (ap2 == NULL) {
-        Py_DECREF(dtype);
-        /* refs to dtype we own = 0 */
         return NULL;
     }
+    /*
+     * The dtype reference we had was used for creating ap2, which may have
+     * replaced it with another. So here we copy the dtype of ap2 and use it for `ap1`.
+     */
+     dtype = (PyArray_Descr *)Py_NewRef(PyArray_DESCR(ap2));
 
     /*
      * If the needle (ap2) is larger than the haystack (op1) we copy the
@@ -2166,9 +2162,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     if (PyArray_SIZE(ap2) > PyArray_SIZE(op1)) {
         ap1_flags |= NPY_ARRAY_CARRAY_RO;
     }
+    /* dtype is stolen, after this we have no reference */
     ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
                                 1, 1, ap1_flags, NULL);
-    /* refs to dtype we own = 0, array creation steals one even on failure */
     if (ap1 == NULL) {
         goto fail;
     }
