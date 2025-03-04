@@ -42,8 +42,9 @@ jobs:
   get_commit_message:
     name: Get commit message
     runs-on: ubuntu-latest
-    # To enable this job and subsequent jobs on a fork, comment out:
-    if: github.repository == 'numpy/numpy'
+    # Only workflow_dispatch is enabled on forks.
+    # To enable this job and subsequent jobs on a fork for other events, comment out:
+    if: github.repository == 'numpy/numpy' || github.event_name == 'workflow_dispatch'
     outputs:
       message: ${{ steps.commit_message.outputs.message }}
     steps:
@@ -81,6 +82,8 @@ jobs:
         buildplat:
           - [ubuntu-22.04, manylinux_x86_64, ""]
           - [ubuntu-22.04, musllinux_x86_64, ""]
+          - [ubuntu-22.04-arm, manylinux_aarch64, ""]
+          - [ubuntu-22.04-arm, musllinux_aarch64, ""]
           - [macos-13, macosx_x86_64, openblas]
 
           # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
@@ -88,13 +91,15 @@ jobs:
           - [macos-14, macosx_arm64, accelerate]  # always use accelerate
           - [windows-2019, win_amd64, ""]
           - [windows-2019, win32, ""]
-        # TODO pypy: Add pp311 to this list when it comes out (pp310 removed)  
+        # TODO pypy: Add pp311 to this list when it comes out (pp310 removed)
         python: ["cp311", "cp312", "cp313", "cp313t"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32, ""]
             python: "pp310"
           - buildplat: [ ubuntu-22.04, musllinux_x86_64, "" ]
+            python: "pp310"
+          - buildplat: [ ubuntu-22.04-arm, musllinux_aarch64, "" ]
             python: "pp310"
           - buildplat: [ macos-14, macosx_arm64, accelerate ]
             python: "pp310"
@@ -158,7 +163,7 @@ jobs:
             CIBW="RUNNER_OS=macOS"
             PKG_CONFIG_PATH="$PWD/.openblas"
             DYLD="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
-            echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"  
+            echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"
           fi
 
       - name: Set up free-threaded build
@@ -193,7 +198,7 @@ jobs:
             anaconda-client
 
       - name: Upload wheels
-        if: success()
+        if: success() && github.repository == 'numpy/numpy'
         shell: bash -el {0}
         # see https://github.com/marketplace/actions/setup-miniconda for why
         # `-el {0}` is required.
@@ -272,7 +277,7 @@ jobs:
           python-version: "3.11"
 
       - name: Upload sdist
-        if: success()
+        if: success() && github.repository == 'numpy/numpy'
         shell: bash -el {0}
         env:
           NUMPY_STAGING_UPLOAD_TOKEN: ${{ secrets.NUMPY_STAGING_UPLOAD_TOKEN }}
