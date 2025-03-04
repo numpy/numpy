@@ -46,7 +46,7 @@ __all__ = [
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
-        'IS_EDITABLE', 'IS_INSTALLED', 'NUMPY_ROOT', 'run_threaded',
+        'IS_EDITABLE', 'IS_INSTALLED', 'NUMPY_ROOT', 'run_threaded', 'IS_64BIT',
         ]
 
 
@@ -105,6 +105,7 @@ if 'musl' in _v:
     IS_MUSL = True
 
 NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+IS_64BIT = np.dtype(np.intp).itemsize == 8
 
 def assert_(val, msg=''):
     """

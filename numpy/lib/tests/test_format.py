@@ -283,7 +283,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY, IS_WASM
+    assert_warns, IS_PYPY, IS_WASM, IS_64BIT
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.lib import format
@@ -927,8 +927,7 @@ def test_large_file_support(tmpdir):
 
 
 @pytest.mark.skipif(IS_PYPY, reason="flaky on PyPy")
-@pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
-                    reason="test requires 64-bit system")
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)
 def test_large_archive(tmpdir):
