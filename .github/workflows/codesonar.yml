@@ -22,11 +22,11 @@ jobs:
       API_URL: https://api.github.com
       REQUEST_NUMBER: ${{ github.event.pull_request.number }}
       ROOT_TREE: "OSS-Projects/numpy-GitHub" 
-      PROJECT_NAME: "curl"
+      PROJECT_NAME: "numpy"
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
       CSONAR_HUB_URL: "https://partnerdemo.codesonar.com" 
       CSONAR_HUB_USER: "${{ secrets.CSONAR_HUB_USER }}"
-      CSONAR_HUB_PASSWORD: "${{ secrets.CSONAR_HUB_PASS }}"
+      CSONAR_HUB_PASSWORD: "${{ secrets.CSONAR_HUB_PASSWORD }}"
       CSONAR_CSHOME: /opt/codesonar
       COMMIT_HASH: ${{ github.sha }}
       REPO_URL: "https://github.com/CodeSecure-SE/numpy"    # the github.repositoryUrl is not an http-link.
