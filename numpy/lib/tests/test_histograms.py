@@ -418,7 +418,7 @@ class TestHistogram:
         assert_array_equal(hist, expected_hist)
 
     def test_gh_28400(self):
-        e = 1+1e-12
+        e = 1 + 1e-12
         Z = [0, 1, 1, 1, 1, 1, e, e, e, e, e, e, 2]
         counts, edges = np.histogram(Z, bins="auto")
         assert len(counts) < 10
