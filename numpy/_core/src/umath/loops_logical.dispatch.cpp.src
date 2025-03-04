@@ -38,10 +38,7 @@ using vec_u8 = hn::Vec<decltype(u8)>;
 
 NPY_FINLINE vec_u8 byte_to_true(vec_u8 v)
 {
-    const vec_u8 zero = hn::Zero(u8);
-    const auto truemask = hn::Set(u8, 1 == 1);
-    vec_u8 tmp = hn::VecFromMask(u8, hn::Eq(v, zero));
-    return hn::And(truemask, hn::Not(tmp));
+    return hn::IfThenZeroElse(hn::Eq(v, hn::Zero(u8)), hn::Set(u8, 1));
 }
 /*
  * convert mask vector (0xff/0x00) to boolean true.  similar to byte_to_true(),
@@ -60,12 +57,10 @@ NPY_FINLINE vec_u8 mask_to_true(vec_u8 v)
  */
 NPY_FINLINE vec_u8 simd_logical_and_u8(vec_u8 a, vec_u8 b)
 {
-    const vec_u8 zero = hn::Zero(u8);
-    const auto truemask = hn::Set(u8, 1 == 1);
-    auto ma = hn::VecFromMask(u8, hn::Eq(a, zero));
-    auto mb = hn::VecFromMask(u8, hn::Eq(b, zero));
-    vec_u8 r = hn::Or(ma, mb);
-    return hn::And(truemask, hn::Not(r));
+    return hn::IfThenZeroElse(
+        hn::Eq(hn::Zero(u8), hn::Min(a, b)), 
+        hn::Set(u8, 1)
+    );
 }
 /*
  * We don't really need the following, but it simplifies the templating code
