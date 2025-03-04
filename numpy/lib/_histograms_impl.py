@@ -3,6 +3,7 @@ Histogram-related functions
 """
 import contextlib
 import functools
+import math
 import operator
 import warnings
 
