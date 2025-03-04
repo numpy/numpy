@@ -103,6 +103,7 @@ enum npy_cpu_features
 
     // LOONGARCH
     NPY_CPU_FEATURE_LSX               = 500,
+    NPY_CPU_FEATURE_LASX              = 501,
 
     NPY_CPU_FEATURE_MAX
 };
