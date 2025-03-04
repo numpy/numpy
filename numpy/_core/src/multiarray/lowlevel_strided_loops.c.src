@@ -11,6 +11,9 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <assert.h>
+#include <stdbool.h>
+
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
@@ -1877,3 +1880,102 @@ mapiter_@name@(
 }
 
 /**end repeat**/
+
+/**begin repeat
+ *
+ * #dtype = npy_bool, npy_byte, npy_byte, npy_uint16, npy_int16, npy_uint32, npy_int32, npy_uint64, npy_int64, npy_float, npy_double#
+ * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
+ */
+
+static inline void
+nonzero_idxs_1D_@name@(@dtype@ const* data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) {
+    npy_intp size_0 = shape[0];
+    npy_intp stride = strides[0];
+    npy_intp added_count = 0;
+    npy_intp a = 0;
+    while (added_count < nonzero_count && (a < size_0)) {
+        bool element_nonzero = ((bool) *data);
+        // branchless update of idxs
+        *idxs = a;
+        idxs += ((int) element_nonzero);
+        added_count += ((int) element_nonzero);
+
+        data = (@dtype@ *) (((char*) data) + stride);
+        ++a;
+    }
+}
+
+static inline void 
+nonzero_idxs_2D_@name@(@dtype@ const* data, npy_intp* idxs, const npy_intp* shape, const npy_intp* strides, npy_intp nonzero_count) {
+    npy_intp idxs_stride = 2; 
+    npy_intp size_0 = shape[0];
+    npy_intp size_1 = shape[1];
+    npy_intp stride_1 = strides[1]; 
+    npy_intp* idxs_0 = idxs;
+    npy_intp* idxs_1 = idxs + 1;    
+    npy_intp added_count = 0; 
+    npy_intp a = 0; 
+    while (added_count < nonzero_count && (a < size_0)) {
+        npy_intp old_added_count = added_count; 
+        npy_intp b = 0;
+        while (added_count < nonzero_count && b < size_1) {
+            *idxs_1 = b; 
+            npy_uintp to_increment = (npy_uintp) ((bool) *data);
+            idxs_1 += (idxs_stride & (-to_increment)); 
+            added_count += to_increment; 
+            data = (@dtype@ *) (((char *) data) + stride_1); 
+            ++b;
+        } 
+        for (npy_intp i=0; i < added_count - old_added_count; ++i) {
+            *idxs_0 = a;
+            idxs_0 += idxs_stride;
+        }
+        ++a;
+    }
+}
+
+/**end repeat**/
+
+npy_bool
+nonzero_idxs_dispatcher(void const * data, npy_intp* idxs, int ndim, const npy_intp* shape, const npy_intp* strides, int dtype, npy_intp nonzero_count)
+{ 
+    if (ndim==1) {
+        switch(dtype) {
+            /**begin repeat
+            *
+            * #dtype = npy_bool, npy_byte, npy_byte, npy_uint16, npy_int16, npy_uint32, npy_int32, npy_uint64, npy_int64, npy_float, npy_double#
+            * #dtypeID = NPY_BOOL, NPY_UINT8, NPY_INT8, NPY_UINT16, NPY_INT16, NPY_UINT32, NPY_INT32, NPY_UINT64, NPY_INT64, NPY_FLOAT32, NPY_FLOAT64#
+            * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
+            */
+            case @dtypeID@:
+            {
+                @dtype@ * data_ptr = (@dtype@ *) data;
+                nonzero_idxs_1D_@name@(data_ptr, idxs, shape, strides, nonzero_count);
+                return NPY_TRUE;
+            }
+
+            /**end repeat**/
+        }
+    }
+    if (ndim==2) {
+        switch(dtype) {
+            /**begin repeat
+            *
+            * #dtype = npy_bool, npy_byte, npy_byte, npy_uint16, npy_int16, npy_uint32, npy_int32, npy_uint64, npy_int64, npy_float, npy_double#
+            * #dtypeID = NPY_BOOL, NPY_UINT8, NPY_INT8, NPY_UINT16, NPY_INT16, NPY_UINT32, NPY_INT32, NPY_UINT64, NPY_INT64, NPY_FLOAT32, NPY_FLOAT64#
+            * #name = bool, u8, i8, u16, i16, u32, i32, u64, i64, f32, f64#
+            */
+            case @dtypeID@:
+            {
+                @dtype@ * data_ptr = (@dtype@ *) data;
+                nonzero_idxs_2D_@name@(data_ptr, idxs, shape, strides, nonzero_count);
+                return NPY_TRUE;
+            }
+
+            /**end repeat**/
+        }
+    }
+
+    return NPY_FALSE;
+}
+
