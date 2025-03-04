@@ -2141,7 +2141,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         return NULL;
     }
 
-    /* need ap2 as contiguous array and of right dtype (steals and may be replace it) */
+    /* need ap2 as contiguous array and of right dtype (note: steals dtype reference) */
     ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
                                 0, 0,
                                 NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED,
@@ -2149,8 +2149,11 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     if (ap2 == NULL) {
         return NULL;
     }
-    /* dtype was stolen, replace it in case the array creation replaced it. */
-    dtype = (PyArray_Descr *)Py_NewRef(PyArray_DESCR(ap2));
+    /*
+     * The dtype reference we had was used for creating ap2, which may have
+     * replaced it with another. So here we copy the dtype of ap2 and use it for `ap1`.
+     */
+     dtype = (PyArray_Descr *)Py_NewRef(PyArray_DESCR(ap2));
 
     /*
      * If the needle (ap2) is larger than the haystack (op1) we copy the
