@@ -20,7 +20,6 @@ macosx_arm64_task:
         CIBW_BUILD: cp313-*
     - env:
         CIBW_BUILD: cp313t-*
-        CIBW_FREE_THREADED_SUPPORT: 1
         CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
   env:
     PATH: /usr/local/lib:/usr/local/include:$PATH
