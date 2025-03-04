@@ -44,6 +44,7 @@ bytes                Uniformly distributed random bytes.
 permutation          Randomly permute a sequence / generate a random sequence.
 shuffle              Randomly permute a sequence in place.
 choice               Random sample from 1-D array.
+select               Vectorized sampling without replacement.
 ==================== =========================================================
 
 ==================== =========================================================
