@@ -1,14 +1,3 @@
-/*@targets
- ** $maxopt baseline
- ** neon asimd
- ** sse2 avx2 avx512_skx
- ** vsx2
- ** vx
- **/
-#define _UMATHMODULE
-#define _MULTIARRAYMODULE
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
@@ -307,63 +296,41 @@ static NPY_INLINE int run_unary_simd_logical_BOOL(
     return 0;
 }
 
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_logical_and)(
-    char** args, npy_intp const* dimensions, npy_intp const* steps, void* NPY_UNUSED(func))
-{
-    if(IS_BINARY_REDUCE) {
-#if NPY_SIMD
-        if (run_reduce_simd_logical_BOOL<logical_and_t>(args, dimensions, steps)) {
-            return;
+template <typename Op>
+void BOOL_binary_func_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps) {
+    using Traits = BinaryLogicalTraits<Op>;
+    
+    if (run_binary_simd_logical_BOOL<Op>(args, dimensions, steps)) {
+        return;
+    }
+    else {
+        BINARY_LOOP {
+            const npy_bool in1 = *(npy_bool*)ip1;
+            const npy_bool in2 = *(npy_bool*)ip2;
+            *((npy_bool*)op1) = Traits::scalar_op(in1, in2);
         }
+    }
+}
+
+template <typename Op>
+void BOOL_binary_reduce_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps) {
+    using Traits = BinaryLogicalTraits<Op>;
+#if NPY_SIMD
+    if (run_reduce_simd_logical_BOOL<Op>(args, dimensions, steps)) {
+        return;
+    }
 #else
-        /* for now only use libc on 32-bit/non-x86 */
-        if (steps[1] == 1) {
-            npy_bool * op = (npy_bool *)args[0];
+    /* for now only use libc on 32-bit/non-x86 */
+    if (steps[1] == 1) {
+        npy_bool * op = (npy_bool *)args[0];
+        if constexpr (Traits::is_and) {
 
             /* np.all(), search for a zero (false) */
             if (*op) {
                 *op = memchr(args[1], 0, dimensions[0]) == NULL;
             }
-
-            return;
-        }
-#endif
-        else {
-            BINARY_REDUCE_LOOP(npy_bool) {
-                const npy_bool in2 = *(npy_bool*)ip2;
-                io1 = io1 && in2;
-                if (!io1) break;
-            }
-            *((npy_bool*)iop1) = io1;
-        }
-    }
-    else {
-        if (run_binary_simd_logical_BOOL<logical_and_t>(args, dimensions, steps)) {
-            return;
         }
         else {
-            BINARY_LOOP {
-                const npy_bool in1 = *(npy_bool*)ip1;
-                const npy_bool in2 = *(npy_bool*)ip2;
-                *((npy_bool*)op1) = in1 && in2;
-            }
-        }
-    }
-}
-
-NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_logical_or)(
-    char** args, npy_intp const* dimensions, npy_intp const* steps, void* NPY_UNUSED(func))
-{
-    if(IS_BINARY_REDUCE) {
-#if NPY_SIMD
-        if (run_reduce_simd_logical_BOOL<logical_or_t>(args, dimensions, steps)) {
-            return;
-        }
-#else
-        /* for now only use libc on 32-bit/non-x86 */
-        if (steps[1] == 1) {
-            npy_bool * op = (npy_bool *)args[0];
-
             /*
              * np.any(), search for a non-zero (true) via comparing against
              * zero blocks, memcmp is faster than memchr on SSE4 machines
@@ -378,29 +345,53 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_logical_or)(
             if (!*op && n - i > 0) {
                 *op = memcmp(&args[1][i], zero, n - i) != 0;
             }
-
-            return;
         }
+        return;
+    }
 #endif
-        else {
-            BINARY_REDUCE_LOOP(npy_bool) {
-                const npy_bool in2 = *(npy_bool*)ip2;
-                io1 = io1 || in2;
-                if (io1) break;
-            }
-            *((npy_bool*)iop1) = io1;
+    else {
+        BINARY_REDUCE_LOOP(npy_bool) {
+            const npy_bool in2 = *(npy_bool*)ip2;
+            io1 = Traits::scalar_op(io1, in2);
+            if ((Traits::is_and && !io1) || (!Traits::is_and && io1)) break;
         }
+        *((npy_bool*)iop1) = io1;
+    }
+}
+
+template <typename Op>
+void BOOL_logical_op_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps) {
+    if (IS_BINARY_REDUCE) {
+        BOOL_binary_reduce_wrapper<Op>(args, dimensions, steps);
     }
     else {
-        if (run_binary_simd_logical_BOOL<logical_or_t>(args, dimensions, steps)) {
-            return;
-        }
-        else {
-            BINARY_LOOP {
-                const npy_bool in1 = *(npy_bool*)ip1;
-                const npy_bool in2 = *(npy_bool*)ip2;
-                *((npy_bool*)op1) = in1 || in2;
-            }
+        BOOL_binary_func_wrapper<Op>(args, dimensions, steps);
+    }
+}
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_logical_and)(
+    char** args, npy_intp const* dimensions, npy_intp const* steps, void* NPY_UNUSED(func))
+{
+    BOOL_logical_op_wrapper<logical_and_t>(args, dimensions, steps);
+}
+
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_logical_or)(
+    char** args, npy_intp const* dimensions, npy_intp const* steps, void* NPY_UNUSED(func))
+{
+    BOOL_logical_op_wrapper<logical_or_t>(args, dimensions, steps);
+}
+
+template <typename Op>
+void BOOL_func_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps)
+{
+    using Traits = UnaryLogicalTraits<Op>;
+    if (run_unary_simd_logical_BOOL<Op>(args, dimensions, steps)) {
+        return;
+    }
+    else {
+        UNARY_LOOP {
+            npy_bool in1 = *(npy_bool*)ip1;
+            *((npy_bool*)op1) = Traits::scalar_op(in1, 0);
         }
     }
 }
@@ -408,27 +399,11 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_logical_or)(
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_logical_not)(
     char** args, npy_intp const* dimensions, npy_intp const* steps, void* NPY_UNUSED(func))
 {
-    if (run_unary_simd_logical_BOOL<logical_not_t>(args, dimensions, steps)) {
-        return;
-    }
-    else {
-        UNARY_LOOP {
-            npy_bool in1 = *(npy_bool*)ip1;
-            *((npy_bool*)op1) = in1 == 0;
-        }
-    }
+    BOOL_func_wrapper<logical_not_t>(args, dimensions, steps);
 }
 
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_absolute)(
     char** args, npy_intp const* dimensions, npy_intp const* steps, void* NPY_UNUSED(func))
 {
-    if (run_unary_simd_logical_BOOL<absolute_t>(args, dimensions, steps)) {
-        return;
-    }
-    else {
-        UNARY_LOOP {
-            npy_bool in1 = *(npy_bool*)ip1;
-            *((npy_bool*)op1) = in1 != 0;
-        }
-    }
+    BOOL_func_wrapper<absolute_t>(args, dimensions, steps);
 }
