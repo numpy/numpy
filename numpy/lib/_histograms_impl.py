@@ -232,7 +232,7 @@ def _hist_bin_auto(x, range):
     Freedman-Diaconis and Sturges estimators if the FD bin width does
     not result in a large number of bins.
     If the bin width from the FD estimator is smaller than 10 percent of the
-    Sturges estimator, the Sturged estimator is used.
+    Sturges estimator, the Sturges estimator is used.
 
     The FD estimator is usually the most robust method, but its width
     estimate tends to be too large for small `x` and bad for data with limited
@@ -241,10 +241,9 @@ def _hist_bin_auto(x, range):
     behaviour.
 
     If there is limited variance the IQR can be very small, which results in the
-    FD bin width being very small.
-    If the IQR is small, it's unlikely any variance-based estimators will be of
-    use, so we revert to the Sturges estimator, which only uses the size of the
-    dataset in its calculation.
+    FD bin width being very small. If the IQR is small, it's unlikely any
+    variance-based estimators will be of use, so we revert to the Sturges estimator,
+    which only uses the size of the dataset in its calculation.
 
     Parameters
     ----------
