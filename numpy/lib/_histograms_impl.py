@@ -230,8 +230,10 @@ def _hist_bin_fd(x, range):
 def _hist_bin_auto(x, range):
     """
     Histogram bin estimator that uses the minimum width of the
-    Freedman-Diaconis and Sturges estimators if the FD bin width is non-zero.
-    If the bin width from the FD estimator is 0, the Sturges estimator is used.
+    Freedman-Diaconis and Sturges estimators if the FD bin width does
+    not result in a large number of bins.
+    If the bin width from the FD estimator is smaller than 10 percent of the
+    Sturges estimator, the Sturged estimator is used.
 
     The FD estimator is usually the most robust method, but its width
     estimate tends to be too large for small `x` and bad for data with limited
@@ -239,10 +241,9 @@ def _hist_bin_auto(x, range):
     and is the default in the R language. This method gives good off-the-shelf
     behaviour.
 
-    If there is limited variance the IQR can be 0, which results in the
-    FD bin width being 0 too. This is not a valid bin width, so
-    ``np.histogram_bin_edges`` chooses 1 bin instead, which may not be optimal.
-    If the IQR is 0, it's unlikely any variance-based estimators will be of
+    If there is limited variance the IQR can be very small, which results in the
+    FD bin width being very small.
+    If the IQR is small, it's unlikely any variance-based estimators will be of
     use, so we revert to the Sturges estimator, which only uses the size of the
     dataset in its calculation.
 
@@ -265,8 +266,7 @@ def _hist_bin_auto(x, range):
     sturges_bw = _hist_bin_sturges(x, range)
 
     # heuristic to limit the maximal number of bins
-    maximum_number_of_bins = 2 * x.size / math.log1p(x.size)
-    minimal_bw = np.subtract(*np.percentile(range, (100, 0))) / maximum_number_of_bins
+    minimal_bw = .1 * sturges_bw
     if fd_bw >= minimal_bw:
         return min(fd_bw, sturges_bw)
     else:
