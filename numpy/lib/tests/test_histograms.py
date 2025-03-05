@@ -1,4 +1,3 @@
-import math
 import numpy as np
 
 from numpy import histogram, histogramdd, histogram_bin_edges
