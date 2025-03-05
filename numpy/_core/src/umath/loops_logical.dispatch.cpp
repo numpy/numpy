@@ -13,6 +13,34 @@ struct logical_or_t {};
 struct absolute_t {};
 struct logical_not_t {};
 
+template<typename Op>
+struct BinaryLogicalTraitsGlobal;
+
+template<>
+struct BinaryLogicalTraitsGlobal<logical_or_t> {
+    static constexpr bool is_and = false;
+    static constexpr auto scalar_op = std::logical_or<bool>{};
+};
+
+template<>
+struct BinaryLogicalTraitsGlobal<logical_and_t> {
+    static constexpr bool is_and = true;
+    static constexpr auto scalar_op = std::logical_and<bool>{};
+};
+
+template<typename Op>
+struct UnaryLogicalTraitsGlobal;
+
+template<>
+struct UnaryLogicalTraitsGlobal<logical_not_t> {
+    static constexpr auto scalar_op = std::equal_to<bool>{};
+};
+
+template<>
+struct UnaryLogicalTraitsGlobal<absolute_t> {
+    static constexpr auto scalar_op = std::not_equal_to<bool>{};
+};
+
 /*******************************************************************************
  ** Defining the SIMD kernels
  ******************************************************************************/
@@ -298,7 +326,7 @@ static NPY_INLINE int run_unary_simd_logical_BOOL(
 
 template <typename Op>
 void BOOL_binary_func_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps) {
-    using Traits = BinaryLogicalTraits<Op>;
+    using Traits = BinaryLogicalTraitsGlobal<Op>;
     
     if (run_binary_simd_logical_BOOL<Op>(args, dimensions, steps)) {
         return;
@@ -314,7 +342,7 @@ void BOOL_binary_func_wrapper(char** args, npy_intp const* dimensions, npy_intp 
 
 template <typename Op>
 void BOOL_binary_reduce_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps) {
-    using Traits = BinaryLogicalTraits<Op>;
+    using Traits = BinaryLogicalTraitsGlobal<Op>;
 #if NPY_SIMD
     if (run_reduce_simd_logical_BOOL<Op>(args, dimensions, steps)) {
         return;
@@ -384,7 +412,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_logical_or)(
 template <typename Op>
 void BOOL_func_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps)
 {
-    using Traits = UnaryLogicalTraits<Op>;
+    using Traits = UnaryLogicalTraitsGlobal<Op>;
     if (run_unary_simd_logical_BOOL<Op>(args, dimensions, steps)) {
         return;
     }
