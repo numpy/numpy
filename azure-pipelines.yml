@@ -65,7 +65,8 @@ stages:
         git submodule update --init
       displayName: 'Fetch submodules'
     - script: |
-            # yum does not have a ninja package, so use the PyPI one
+            # There are few options for i686 images at https://quay.io/organization/pypa,
+            # use the glibc2.17 one (manylinux2014)
             docker run -v $(pwd):/numpy -e CFLAGS="-msse2 -std=c99 -UNDEBUG" \
             -e F77=gfortran-5 -e F90=gfortran-5 quay.io/pypa/manylinux2014_i686 \
             /bin/bash -xc "source /numpy/tools/ci/run_32_bit_linux_docker.sh"
