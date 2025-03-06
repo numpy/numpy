@@ -148,6 +148,7 @@ before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
+enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux2014"

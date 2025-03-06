@@ -78,25 +78,24 @@ jobs:
         pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
     - uses: ./.github/meson_actions
 
-  # TODO pypy: uncomment when pypy3.11 becomes available    
-  #pypy:
-    #needs: [smoke_test]
-    #runs-on: ubuntu-latest
-    #if: github.event_name != 'push'
-    #steps:
-    #- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      #with:
-        #submodules: recursive
-        #fetch-tags: true
-        #persist-credentials: false
-    #- uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
-      #with:
-        #python-version: 'pypy3.10-v7.3.17'
-    #- name: Setup using scipy-openblas
-      #run: |
-        #python -m pip install -r requirements/ci_requirements.txt
-        #spin config-openblas --with-scipy-openblas=32
-    #- uses: ./.github/meson_actions
+  pypy:
+    needs: [smoke_test]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push'
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      with:
+        python-version: 'pypy3.11-v7.3.19'
+    - name: Setup using scipy-openblas
+      run: |
+        python -m pip install -r requirements/ci_requirements.txt
+        spin config-openblas --with-scipy-openblas=32
+    - uses: ./.github/meson_actions
 
   debug:
     needs: [smoke_test]
