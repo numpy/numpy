@@ -1,1 +1,1 @@
-* Currently, ``np.linalg.norm``, ``np.linalg.vector_norm``, and ``np.linalg.matrix_norm`` raise errors for some zero-sized inputs. This change ensures that any proper norm of a zero-sized input is zero, which makes it consistent with the mathematical properties of a norm.
+* In all cases, ``np.linalg.norm``, ``np.linalg.vector_norm``, and ``np.linalg.matrix_norm`` now return zero for arrays with a shape of zero along at least one axis. Previously, NumPy would raises errors or return zero depending on the shape of the array.
