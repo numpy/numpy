@@ -230,8 +230,8 @@ def _hist_bin_auto(x, range):
     """
     Histogram bin estimator that uses the minimum width of a relaxed
     Freedman-Diaconis and Sturges estimators if the FD bin width does
-    not result in a large number of bins. The relaxed Freedman-Diaconis estimato
-    is limits the bin width to half the sqrt estimated to avoid small bins.
+    not result in a large number of bins. The relaxed Freedman-Diaconis estimator
+    limits the bin width to half the sqrt estimated to avoid small bins.
 
     The FD estimator is usually the most robust method, but its width
     estimate tends to be too large for small `x` and bad for data with limited
