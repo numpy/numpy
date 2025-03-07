@@ -1,0 +1,5 @@
+Build manylinux_2_28 wheels
+---------------------------
+Wheels for linux systems will use the ``manylinux_2_28`` tag, which means
+dropping support for redhat7/centos7, amazonlinux2, debian9, ubuntu18.04, and
+other pre-glibc2.28 operating system versions.
