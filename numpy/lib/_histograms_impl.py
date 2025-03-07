@@ -228,11 +228,10 @@ def _hist_bin_fd(x, range):
 
 def _hist_bin_auto(x, range):
     """
-    Histogram bin estimator that uses the minimum width of the
+    Histogram bin estimator that uses the minimum width of a relaxed
     Freedman-Diaconis and Sturges estimators if the FD bin width does
-    not result in a large number of bins.
-    If the bin width from the FD estimator is smaller than 10 percent of the
-    Sturges estimator, the Sturges estimator is used.
+    not result in a large number of bins. The relaxed Freedman-Diaconis estimato
+    is limits the bin width to half the sqrt estimated to avoid small bins.
 
     The FD estimator is usually the most robust method, but its width
     estimate tends to be too large for small `x` and bad for data with limited
@@ -262,14 +261,10 @@ def _hist_bin_auto(x, range):
     """
     fd_bw = _hist_bin_fd(x, range)
     sturges_bw = _hist_bin_sturges(x, range)
-
+    sqrt_bw = _hist_bin_sqrt(x, range)
     # heuristic to limit the maximal number of bins
-    minimal_bw = .1 * sturges_bw
-    if fd_bw >= minimal_bw:
-        return min(fd_bw, sturges_bw)
-    else:
-        # limited variance, so we return a len dependent bw estimator
-        return sturges_bw
+    fd_bw_corrected = max(fd_bw, sqrt_bw / 2)
+    return min(fd_bw_corrected, sturges_bw)
 
 
 # Private dict initialized at module load time
