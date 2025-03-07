@@ -1613,7 +1613,7 @@ For all of these macros *arr* must be an instance of a (subclass of)
     Evaluates true if the data area of *arr* consists of a single
     (C-style or Fortran-style) contiguous segment.
 
-.. c:function:: void PyArray_UpdateFlags(const PyArrayObject* arr, int flagmask)
+.. c:function:: void PyArray_UpdateFlags(PyArrayObject* arr, int flagmask)
 
     The :c:data:`NPY_ARRAY_C_CONTIGUOUS`, :c:data:`NPY_ARRAY_ALIGNED`, and
     :c:data:`NPY_ARRAY_F_CONTIGUOUS` array flags can be "calculated" from the
