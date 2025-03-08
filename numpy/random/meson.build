@@ -104,6 +104,7 @@ py.install_sources(
     '_mt19937.pyi',
     '_pcg64.pyi',
     '_pickle.py',
+    '_pickle.pyi',
     '_philox.pyi',
     '_sfc64.pyi',
     'bit_generator.pxd',
