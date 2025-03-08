@@ -111,6 +111,7 @@ py.install_sources(
     'c_distributions.pxd',
     'LICENSE.md',
     'mtrand.pyi',
+    '_pickle.pyi',
   ],
   subdir: 'numpy/random'
 )
