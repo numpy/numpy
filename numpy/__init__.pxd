@@ -1118,7 +1118,7 @@ cdef extern from "numpy/arrayobject.h":
                                         npy_intp* outstrides) except NPY_FAIL
     npy_bool NpyIter_IsFirstVisit(NpyIter* it, int iop) nogil
     # functions for iterating an NpyIter object
-    NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
+    NpyIter_IterNextFunc NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
     NpyIter_GetMultiIndexFunc* NpyIter_GetGetMultiIndex(NpyIter* it,
                                                         char** errmsg) except NULL
     char** NpyIter_GetDataPtrArray(NpyIter* it) nogil
