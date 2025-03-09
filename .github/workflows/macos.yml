@@ -55,7 +55,7 @@ jobs:
           ${{ github.workflow }}-${{ matrix.python-version }}-ccache-macos-
 
     - name: Setup Miniforge
-      uses: conda-incubator/setup-miniconda@d2e6a045a86077fb6cad6f5adf368e9076ddaa8d # v3.1.0
+      uses: conda-incubator/setup-miniconda@505e6394dae86d6a5c7fbb6e3fb8938e3e863830 # v3.1.1
       with:
         python-version: ${{ matrix.python-version }}
         channels: conda-forge
