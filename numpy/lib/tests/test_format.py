@@ -283,7 +283,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, temppath, IS_PYPY, IS_WASM, IS_64BIT
+    assert_warns, IS_PYPY, IS_WASM, IS_64BIT
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.lib import format
