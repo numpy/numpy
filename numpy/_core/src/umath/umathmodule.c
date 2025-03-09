@@ -33,31 +33,109 @@
 #include "special_integer_comparisons.h"
 #include "extobj.h"  /* for _extobject_contextvar exposure */
 #include "ufunc_type_resolution.h"
+#include "legacy_array_method.h"
 
 /* Automatically generated code to define all ufuncs: */
 #include "funcs.inc"
 #include "__umath_generated.c"
 
 
-static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
+static int
+frompyfunc_promoter(PyObject *ufunc,
+        PyArray_DTypeMeta *const NPY_UNUSED(op_dtypes[]),
+        PyArray_DTypeMeta *const NPY_UNUSED(signature[]),
+        PyArray_DTypeMeta *new_op_dtypes[]);
 
 static int
-object_ufunc_type_resolver(PyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
-                                PyArray_Descr **out_dtypes)
+frompyfunc_promoter(PyObject *ufunc,
+        PyArray_DTypeMeta *const NPY_UNUSED(op_dtypes[]),
+        PyArray_DTypeMeta *const NPY_UNUSED(signature[]),
+        PyArray_DTypeMeta *new_op_dtypes[])
 {
-    int i, nop = ufunc->nin + ufunc->nout;
+    int i, nop = ((PyUFuncObject *)ufunc)->nin + ((PyUFuncObject *)ufunc)->nout;
 
-    out_dtypes[0] = PyArray_DescrFromType(NPY_OBJECT);
-    if (out_dtypes[0] == NULL) {
+    new_op_dtypes[0] = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+    if (new_op_dtypes[0] == NULL) {
         return -1;
     }
 
     for (i = 1; i < nop; ++i) {
-        Py_INCREF(out_dtypes[0]);
-        out_dtypes[i] = out_dtypes[0];
+        Py_INCREF(new_op_dtypes[0]);
+        new_op_dtypes[i] = new_op_dtypes[0];
+    }
+
+    return 0;
+}
+
+static int
+pyfunc_loop(PyArrayMethod_Context *context,
+                char *const data[], npy_intp const dimensions[],
+                npy_intp const strides[], NpyAuxData *NPY_UNUSED(auxdata))
+{
+    npy_intp N = dimensions[0];
+    int nin = context->method->nin;
+    int nout = context->method->nout;
+    int ntot = nin + nout;
+    PyObject *pyfunc = context->method->static_data;
+    char *ptrs[NPY_MAXARGS];
+    PyObject *arglist, *result;
+    PyObject *in, **op;
+    npy_intp i;
+
+    for(i = 0; i < ntot; i++) {
+        ptrs[i] = data[i];
+    }
+    while(N--) {
+        arglist = PyTuple_New(nin);
+        if (arglist == NULL) {
+            return -1;
+        }
+        for(i = 0; i < nin; i++) {
+            in = *((PyObject **)ptrs[i]);
+            /* We allow NULL, but try to guarantee non-NULL to downstream */
+            assert(in != NULL);
+            if (in == NULL) {
+                in = Py_None;
+            }
+            PyTuple_SET_ITEM(arglist, i, in);
+            Py_INCREF(in);
+        }
+        result = PyObject_CallObject(pyfunc, arglist);
+        Py_DECREF(arglist);
+        if (result == NULL) {
+            return -1;
+        }
+        if (nout == 0  && result == Py_None) {
+            /* No output expected, no output received, continue */
+            Py_DECREF(result);
+        }
+        else if (nout == 1) {
+            /* Single output expected, assign and continue */
+            op = (PyObject **)ptrs[nin];
+            Py_XDECREF(*op);
+            *op = result;
+        }
+        else if (PyTuple_Check(result) && nout == PyTuple_Size(result)) {
+            /*
+             * Multiple returns match expected number of outputs, assign
+             * and continue. Will also gobble empty tuples if nout == 0.
+             */
+            for(i = 0; i < nout; i++) {
+                op = (PyObject **)ptrs[i+nin];
+                Py_XDECREF(*op);
+                *op = PyTuple_GET_ITEM(result, i);
+                Py_INCREF(*op);
+            }
+            Py_DECREF(result);
+        }
+        else {
+            /* Mismatch between returns and expected outputs, exit */
+            Py_DECREF(result);
+            return -1;
+        }
+        for(i = 0; i < ntot; i++) {
+            ptrs[i] += strides[i];
+        }
     }
 
     return 0;
@@ -67,14 +145,11 @@ object_ufunc_type_resolver(PyUFuncObject *ufunc,
 PyObject *
 ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     PyObject *function, *pyname = NULL;
-    int nin, nout, i, nargs;
-    PyUFunc_PyFuncData *fdata;
+    int nin, nout, nargs;
     PyUFuncObject *self;
     const char *fname = NULL;
-    char *str, *types, *doc;
+    char *str, *doc;
     Py_ssize_t fname_len = -1;
-    void * ptr, **data;
-    int offset[2];
     PyObject *identity = NULL;  /* note: not the same semantics as Py_None */
     static char *kwlist[] = {"", "nin", "nout", "identity", NULL};
 
@@ -99,44 +174,11 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
         fname_len = 1;
     }
 
-    /*
-     * ptr will be assigned to self->ptr, holds a pointer for enough memory for
-     * self->data[0] (fdata)
-     * self->data
-     * self->name
-     * self->types
-     *
-     * To be safest, all of these need their memory aligned on void * pointers
-     * Therefore, we may need to allocate extra space.
-     */
-    offset[0] = sizeof(PyUFunc_PyFuncData);
-    i = (sizeof(PyUFunc_PyFuncData) % sizeof(void *));
-    if (i) {
-        offset[0] += (sizeof(void *) - i);
-    }
-    offset[1] = nargs;
-    i = (nargs % sizeof(void *));
-    if (i) {
-        offset[1] += (sizeof(void *)-i);
-    }
-    ptr = PyArray_malloc(offset[0] + offset[1] + sizeof(void *) +
-                            (fname_len + 14));
-    if (ptr == NULL) {
+    str = (char *)PyArray_malloc(fname_len + 14);
+    if (str == NULL) {
         Py_XDECREF(pyname);
         return PyErr_NoMemory();
     }
-    fdata = (PyUFunc_PyFuncData *)(ptr);
-    fdata->callable = function;
-    fdata->nin = nin;
-    fdata->nout = nout;
-
-    data = (void **)(((char *)ptr) + offset[0]);
-    data[0] = (void *)fdata;
-    types = (char *)data + sizeof(void *);
-    for (i = 0; i < nargs; i++) {
-        types[i] = NPY_OBJECT;
-    }
-    str = types + offset[1];
     memcpy(str, fname, fname_len);
     memcpy(str+fname_len, " (vectorized)", 14);
     Py_XDECREF(pyname);
@@ -144,20 +186,107 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds) {
     /* Do a better job someday */
     doc = "dynamic ufunc based on a python function";
 
+    /* Create the ufunc but without any loops by not passing types*/
     self = (PyUFuncObject *)PyUFunc_FromFuncAndDataAndSignatureAndIdentity(
-            (PyUFuncGenericFunction *)pyfunc_functions, data,
-            types, /* ntypes */ 1, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
+            NULL, NULL,
+            NULL, /* ntypes */ 0, nin, nout, identity ? PyUFunc_IdentityValue : PyUFunc_None,
             str, doc, /* unused */ 0, NULL, identity);
 
     if (self == NULL) {
-        PyArray_free(ptr);
+        PyArray_free(str);
         return NULL;
     }
+
+    PyArray_DTypeMeta *op_dtypes[NPY_MAXARGS];
+    for (int arg = 0; arg < nargs; arg++) {
+        op_dtypes[arg] = PyArray_DTypeFromTypeNum(NPY_OBJECT);
+        /* These DTypes are immortal and adding INCREFs: so borrow it */
+        Py_DECREF(op_dtypes[arg]);
+    }
+
+    char method_name[101];
+    snprintf(method_name, 100, "ArrayMethod_implementation_for_%s", str);
+
+    NPY_ARRAYMETHOD_FLAGS flags = NPY_METH_REQUIRES_PYAPI | NPY_METH_NO_FLOATINGPOINT_ERRORS;
+
+    PyArrayMethod_GetReductionInitial *get_reduction_intial = NULL;
+    if (nin == 2 && nout == 1) {
+        npy_bool reorderable = NPY_FALSE;
+        PyObject *identity_obj = PyUFunc_GetDefaultIdentity(
+                self, &reorderable);
+        if (identity_obj == NULL) {
+            PyArray_free(str);
+            return NULL;
+        }
+        /*
+         * TODO: For object, "reorderable" is needed(?), because otherwise
+         *       we disable multi-axis reductions `arr.sum(0, 1)`. But for
+         *       `arr = array([["a", "b"], ["c", "d"]], dtype="object")`
+         *       it isn't actually reorderable (order changes result).
+         */
+        if (reorderable) {
+            flags |= NPY_METH_IS_REORDERABLE;
+        }
+        if (identity_obj != Py_None) {
+            get_reduction_intial = &get_initial_from_ufunc;
+        }
+    }
+
+    PyType_Slot slots[4] = {
+        {NPY_METH_strided_loop, &pyfunc_loop},
+        {NPY_METH_get_reduction_initial, get_reduction_intial},
+        {_NPY_METH_static_data, function},
+        {0, NULL},
+    };
+    PyArrayMethod_Spec spec = {
+        .name = method_name,
+        .nin = nin,
+        .nout = nout,
+        .casting = NPY_NO_CASTING,
+        .flags = flags,
+        .dtypes = op_dtypes,
+        .slots = slots,
+    };
+    int res = PyUFunc_AddLoopFromSpec_int((PyObject *)self, &spec, 0);
+    if (res < 0) {
+        PyArray_free(str);
+        return NULL;
+    }
+
+    PyObject *promoter_obj = PyCapsule_New((void *) frompyfunc_promoter, "numpy._ufunc_promoter", NULL);
+    if (promoter_obj == NULL) {
+        PyArray_free(str);
+        return NULL;
+    }
+
+    PyObject *dtypes_tuple = PyTuple_New(nargs);
+    if (dtypes_tuple == NULL) {
+        Py_DECREF(promoter_obj);
+        PyArray_free(str);
+        return NULL;
+    }
+    for (int i = 0; i < nargs; i++) {
+        PyTuple_SET_ITEM(dtypes_tuple, i, Py_None);
+    }
+
+    PyObject *info = PyTuple_Pack(2, dtypes_tuple, promoter_obj);
+    Py_DECREF(dtypes_tuple);
+    Py_DECREF(promoter_obj);
+    if (info == NULL) {
+        PyArray_free(str);
+        return NULL;
+    }
+
+    res = PyUFunc_AddLoop(self, info, 0);
+    if (res < 0) {
+        PyArray_free(str);
+        return NULL;
+    }
+
     Py_INCREF(function);
     self->obj = function;
-    self->ptr = ptr;
+    self->ptr = str;
 
-    self->type_resolver = &object_ufunc_type_resolver;
     PyObject_GC_Track(self);
 
     return (PyObject *)self;
