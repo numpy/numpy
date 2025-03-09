@@ -9,8 +9,6 @@
 // TODO(@seiko2plus):
 // - covers half-precision operations that being supported by numpy/halffloat.h
 // - add support for arithmetic operations
-// - enables __fp16 causes massive FP exceptions on aarch64,
-//   needs a deep investigation
 
 namespace np {
 
@@ -19,7 +17,7 @@ namespace np {
 
 /// Provides a type that implements 16-bit floating point (half-precision).
 /// This type is ensured to be 16-bit size.
-#if 1 // ndef __ARM_FP16_FORMAT_IEEE
+#if !(defined(NPY_HAVE_NEON_FP16) && defined(__ARM_FP16_FORMAT_IEEE))
 class Half final {
   public:
     /// Whether `Half` has a full native HW support.
@@ -236,6 +234,7 @@ class Half final {
     {}
     constexpr operator __fp16() const
     { return half_; }
+
     static Half FromBits(uint16_t bits)
     {
         Half h;
@@ -244,6 +243,18 @@ class Half final {
     }
     uint16_t Bits() const
     { return BitCast<uint16_t>(half_); }
+
+    constexpr bool operator==(Half r) const
+    { return half_ == r.half_; }
+    constexpr bool operator<(Half r) const
+    { return half_ < r.half_; }
+    constexpr bool operator<=(Half r) const
+    { return half_ <= r.half_; }
+    constexpr bool operator>(Half r) const
+    { return r < *this; }
+    constexpr bool operator>=(Half r) const
+    {  return r <= *this; }
+
     constexpr bool Less(Half r) const
     { return half_ < r.half_; }
     constexpr bool LessEqual(Half r) const
