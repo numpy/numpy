@@ -428,18 +428,6 @@ def roundtrip_truncated(arr):
     arr2 = format.read_array(f2)
     return arr2
 
-def file_truncated(arr):
-    with temppath() as path:
-        with open(path, 'wb') as f:
-            format.write_array(f, arr)
-        #truncate the file by one byte
-        with open(path, 'rb+') as f:
-            f.seek(-1, os.SEEK_END)
-            f.truncate()
-        with open(path, 'rb') as f:
-            arr2 = format.read_array(f)
-        return arr2
-
 def assert_equal_(o1, o2):
     assert_(o1 == o2)
 
@@ -462,10 +450,30 @@ def test_roundtrip_truncated():
         if arr.dtype != object:
             assert_raises(ValueError, roundtrip_truncated, arr)
 
-def test_file_truncated():
+def test_file_truncated(tmp_path):
+    path = tmp_path / "a.npy"
     for arr in basic_arrays:
         if arr.dtype != object:
-            assert_raises(ValueError, file_truncated, arr)
+            with open(path, 'wb') as f:
+                format.write_array(f, arr)
+            #truncate the file by one byte
+            with open(path, 'rb+') as f:
+                f.seek(-1, os.SEEK_END)
+                f.truncate()
+            with open(path, 'rb') as f:
+                with pytest.raises(
+                    ValueError, 
+                    match = (
+                        r"EOF: reading array header, "
+                        r"expected (\d+) bytes got (\d+)"
+                    ) if arr.size == 0 else (
+                        r"Failed to read all data for array\. "
+                        r"Expected \(.*?\) = (\d+) elements, "
+                        r"could only read (\d+) elements\. "
+                        r"\(file seems not fully written\?\)"
+                    )
+                ):
+                    _ = format.read_array(f)
 
 def test_long_str():
     # check items larger than internal buffer size, gh-4027
