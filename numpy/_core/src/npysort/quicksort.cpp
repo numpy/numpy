@@ -117,9 +117,14 @@ inline bool aquicksort_dispatch(T *start, npy_intp* arg, npy_intp num)
     using TF = typename np::meta::FixedWidth<T>::Type;
     void (*dispfunc)(TF*, npy_intp*, npy_intp) = nullptr;
     #ifndef NPY_DISABLE_OPTIMIZATION
-        #include "x86_simd_argsort.dispatch.h"
+        #if defined(NPY_CPU_AMD64) || defined(NPY_CPU_X86)
+            #include "x86_simd_argsort.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSort, <TF>);
+        #elif !defined(NPY_DISABLE_HIGHWAY_SORT)
+            #include "highway_argsort.dispatch.h"
+            NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::highway::qsort_simd::template ArgQSort, <TF>);
+        #endif
     #endif
-    NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSort, <TF>);
     if (dispfunc) {
         (*dispfunc)(reinterpret_cast<TF*>(start), arg, num);
         return true;
