@@ -3347,17 +3347,26 @@ class TestMethods:
 
     @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
     def test_dot_errstate(self):
-        a = np.array([1, 1])
+        a = np.array([1., 1.])
         b = np.array([-np.inf, np.inf])
 
         with np.errstate(invalid='raise'):
+            # there are two paths, depending on the number of dimensions - test
+            # them both
             with pytest.raises(FloatingPointError,
                     match="invalid value encountered in dot"):
                 np.dot(a, b)
 
+            # test that fp exceptions are properly cleared
+            np.dot(a, a)
+
             with pytest.raises(FloatingPointError,
                     match="invalid value encountered in dot"):
-                np.dot(a[np.newaxis, np.newaxis, ...], b[np.newaxis, ..., np.newaxis])
+                np.dot(a[np.newaxis, np.newaxis, ...],
+                       b[np.newaxis, ..., np.newaxis])
+
+            np.dot(a[np.newaxis, np.newaxis, ...],
+                   a[np.newaxis, ..., np.newaxis])
 
     def test_dot_type_mismatch(self):
         c = 1.

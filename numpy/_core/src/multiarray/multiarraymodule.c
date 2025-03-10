@@ -958,20 +958,6 @@ PyArray_MatrixProduct(PyObject *op1, PyObject *op2)
     return PyArray_MatrixProduct2(op1, op2, NULL);
 }
 
-static int
-check_fperr(const char *func_name)
-{
-    int errmask = 0;
-    if (_get_bufsize_errmask(NULL, &errmask) < 0) {
-        return -1;
-    }
-    if (_check_ufunc_fperr(errmask, func_name) < 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
 /*NUMPY_API
  * Numeric.matrixproduct2(a,v,out)
  * just like inner product but does the swapaxes stuff on the fly
@@ -1022,17 +1008,11 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         return NULL;
     }
 
-    npy_clear_floatstatus();
-
 #if defined(HAVE_CBLAS)
     if (PyArray_NDIM(ap1) <= 2 && PyArray_NDIM(ap2) <= 2 &&
             (NPY_DOUBLE == typenum || NPY_CDOUBLE == typenum ||
              NPY_FLOAT == typenum || NPY_CFLOAT == typenum)) {
-        PyObject *res = cblas_matrixproduct(typenum, ap1, ap2, out);
-        if (check_fperr("dot") < 0) {
-            return NULL;
-        }
-        return res;
+        return cblas_matrixproduct(typenum, ap1, ap2, out);
     }
 #endif
 
@@ -1105,6 +1085,8 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         Py_DECREF(it1);
         goto fail;
     }
+
+    npy_clear_floatstatus_barrier((char *) result);
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
     while (it1->index < it1->size) {
         while (it2->index < it2->size) {
@@ -1122,7 +1104,9 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         /* only for OBJECT arrays */
         goto fail;
     }
-    if (check_fperr("dot") < 0) {
+
+    int fpes = npy_get_floatstatus_barrier((char *) result);
+    if (fpes && PyUFunc_GiveFloatingpointErrors("dot", fpes) < 0) {
         goto fail;
     }
     Py_DECREF(ap1);
