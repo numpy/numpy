@@ -1,0 +1,1 @@
+* The vector norm ``ord=inf`` and the matrix norms ``ord={1, 2, inf, 'nuc'}`` now always returns zero for empty arrays. Empty arrays have at least one axis of size zero. This affects `np.linalg.norm`, `np.linalg.vector_norm`, and `np.linalg.matrix_norm`. Previously, NumPy would raises errors or return zero depending on the shape of the array.
