@@ -126,7 +126,8 @@ static struct {
                 {NPY_CPU_FEATURE_ASIMDFHM, "ASIMDFHM"},
                 {NPY_CPU_FEATURE_SVE, "SVE"},
                 {NPY_CPU_FEATURE_RVV, "RVV"},
-                {NPY_CPU_FEATURE_LSX, "LSX"}};
+                {NPY_CPU_FEATURE_LSX, "LSX"},
+                {NPY_CPU_FEATURE_LASX, "LASX"}};
 
 
 NPY_VISIBILITY_HIDDEN PyObject *
@@ -676,13 +677,19 @@ npy__cpu_init_features(void)
 static void
 npy__cpu_init_features(void)
 {
-   memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
-   unsigned int hwcap = getauxval(AT_HWCAP);
+    memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
+    unsigned int hwcap = getauxval(AT_HWCAP);
 
-   if ((hwcap & HWCAP_LOONGARCH_LSX)) {
-      npy__cpu_have[NPY_CPU_FEATURE_LSX]  = 1;
-      return;
-   }
+    if ((hwcap & HWCAP_LOONGARCH_LASX)) {
+       npy__cpu_have[NPY_CPU_FEATURE_LASX]  = 1;
+       npy__cpu_have[NPY_CPU_FEATURE_LSX]   = 1;
+       return;
+    }
+
+    if ((hwcap & HWCAP_LOONGARCH_LSX)) {
+       npy__cpu_have[NPY_CPU_FEATURE_LSX]  = 1;
+       return;
+    }
 }
 
 /***************** ARM ******************/
