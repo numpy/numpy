@@ -3345,6 +3345,20 @@ class TestMethods:
         a.dot(b=b, out=c)
         assert_equal(c, np.dot(a, b))
 
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
+    def test_dot_errstate(self):
+        a = np.array([1, 1])
+        b = np.array([-np.inf, np.inf])
+
+        with np.errstate(invalid='raise'):
+            with pytest.raises(FloatingPointError,
+                    match="invalid value encountered in dot"):
+                np.dot(a, b)
+
+            with pytest.raises(FloatingPointError,
+                    match="invalid value encountered in dot"):
+                np.dot(a[np.newaxis, np.newaxis, ...], b[np.newaxis, ..., np.newaxis])
+
     def test_dot_type_mismatch(self):
         c = 1.
         A = np.array((1, 1), dtype='i,i')
