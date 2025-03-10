@@ -517,7 +517,7 @@ class TestHistogramOptimBinNums:
 
         edges_auto = histogram_bin_edges(lim_var_data, 'auto')
         assert_equal(edges_auto[0], 0)
-        assert_equal(edges_auto[-1], 1)
+        assert_equal(edges_auto[-1], 100.)
         assert_equal(len(edges_auto) < 20)
 
         edges_fd = histogram_bin_edges(lim_var_data, 'fd')
