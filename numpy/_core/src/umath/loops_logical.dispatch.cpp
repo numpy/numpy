@@ -179,15 +179,19 @@ static void simd_reduce_logical_BOOL(npy_bool* op, npy_bool* ip, npy_intp len) {
         #if defined(NPY_HAVE_SSE2)
             NPY_PREFETCH(reinterpret_cast<const char *>(ip + wstep), 0, 3);
         #endif
-        vec_u8 v[UNROLL] = {};
-        for(int i = 0; i < UNROLL; i++) {
-            v[i] = hn::LoadU(u8, ip + vstep * i);
-        }
+        vec_u8 v0 = hn::LoadU(u8, ip);
+        vec_u8 v1 = hn::LoadU(u8, ip + vstep);
+        vec_u8 v2 = hn::LoadU(u8, ip + vstep * 2);
+        vec_u8 v3 = hn::LoadU(u8, ip + vstep * 3);
+        vec_u8 v4 = hn::LoadU(u8, ip + vstep * 4);
+        vec_u8 v5 = hn::LoadU(u8, ip + vstep * 5);
+        vec_u8 v6 = hn::LoadU(u8, ip + vstep * 6);
+        vec_u8 v7 = hn::LoadU(u8, ip + vstep * 7);
 
-        vec_u8 m01 = traits.reduce(v[0], v[1]);
-        vec_u8 m23 = traits.reduce(v[2], v[3]);
-        vec_u8 m45 = traits.reduce(v[4], v[5]);
-        vec_u8 m67 = traits.reduce(v[6], v[7]);
+        vec_u8 m01 = traits.reduce(v0, v1);
+        vec_u8 m23 = traits.reduce(v2, v3);
+        vec_u8 m45 = traits.reduce(v4, v5);
+        vec_u8 m67 = traits.reduce(v6, v7);
 
         vec_u8 m0123 = traits.reduce(m01, m23);
         vec_u8 m4567 = traits.reduce(m45, m67);
