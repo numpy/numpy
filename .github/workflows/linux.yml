@@ -165,7 +165,7 @@ jobs:
       env:
         PYTHONOPTIMIZE: 2
     
-  # Add ARM64-specific full test
+
   aarch64_test:
     needs: [smoke_test]
     if: github.repository == 'numpy/numpy'
@@ -195,16 +195,11 @@ jobs:
       env:
         PKG_CONFIG_PATH: ${{ github.workspace }}/.openblas
       run: |
-        spin build -- -Dallow-noblas=true
+        spin build
 
     - name: Test
       run: |
         spin test -j2 -m full -- --timeout=600 --durations=10
-
-    # Meson Log on failure
-    - name: Meson Log
-      if: always()
-      run: cat build/meson-logs/meson-log.txt
 
   benchmark:
     needs: [smoke_test]

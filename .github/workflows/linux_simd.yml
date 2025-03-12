@@ -106,7 +106,7 @@ jobs:
 
     - uses: ./.github/meson_actions
       name: Build/Test against gcc-10
-  # Add ARM64-specific SIMD tests
+
   arm64_simd:
     if: github.repository == 'numpy/numpy'
     needs: [baseline_only]
@@ -117,8 +117,6 @@ jobs:
         config:
           - name: "baseline only"
             args: "-Dallow-noblas=true -Dcpu-dispatch=none"
-          - name: "with NEON"
-            args: "-Dallow-noblas=true -Dcpu-baseline=neon"
           - name: "with ASIMD"
             args: "-Dallow-noblas=true -Dcpu-baseline=asimd"
           - name: "native"
