@@ -941,13 +941,14 @@ foreach gen_mtargets : [
   ],
   [
     'loops_logical.dispatch.h',
-    src_file.process('src/umath/loops_logical.dispatch.c.src'),
+    'src/umath/loops_logical.dispatch.cpp',
     [
       ASIMD, NEON,
       AVX512_SKX, AVX2, SSE2,
       VSX2,
       VX,
       LSX,
+      RVV,
     ]
   ],
   [
