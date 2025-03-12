@@ -13,47 +13,19 @@ struct logical_or_t {};
 struct absolute_t {};
 struct logical_not_t {};
 
-template<typename Op>
-struct BinaryLogicalTraitsGlobal;
-
-template<>
-struct BinaryLogicalTraitsGlobal<logical_or_t> {
-    static constexpr bool is_and = false;
-    static constexpr auto scalar_op = std::logical_or<bool>{};
-};
-
-template<>
-struct BinaryLogicalTraitsGlobal<logical_and_t> {
-    static constexpr bool is_and = true;
-    static constexpr auto scalar_op = std::logical_and<bool>{};
-};
-
-template<typename Op>
-struct UnaryLogicalTraitsGlobal;
-
-template<>
-struct UnaryLogicalTraitsGlobal<logical_not_t> {
-    static constexpr auto scalar_op = std::equal_to<bool>{};
-};
-
-template<>
-struct UnaryLogicalTraitsGlobal<absolute_t> {
-    static constexpr auto scalar_op = std::not_equal_to<bool>{};
-};
+const hn::ScalableTag<uint8_t> u8;
+using vec_u8 = hn::Vec<decltype(u8)>;
 
 /*******************************************************************************
  ** Defining the SIMD kernels
  ******************************************************************************/
-#if NPY_SIMD
 /*
  * convert any bit set to boolean true so vectorized and normal operations are
  * consistent, should not be required if bool is used correctly everywhere but
  * you never know
  */
-const hn::ScalableTag<uint8_t> u8;
-using vec_u8 = hn::Vec<decltype(u8)>;
 
-NPY_FINLINE vec_u8 byte_to_true(vec_u8 v)
+HWY_INLINE HWY_ATTR vec_u8 byte_to_true(vec_u8 v)
 {
     return hn::IfThenZeroElse(hn::Eq(v, hn::Zero(u8)), hn::Set(u8, 1));
 }
@@ -61,7 +33,7 @@ NPY_FINLINE vec_u8 byte_to_true(vec_u8 v)
  * convert mask vector (0xff/0x00) to boolean true.  similar to byte_to_true(),
  * but we've already got a mask and can skip negation.
  */
-NPY_FINLINE vec_u8 mask_to_true(vec_u8 v)
+HWY_INLINE HWY_ATTR vec_u8 mask_to_true(vec_u8 v)
 {
     const vec_u8 truemask = hn::Set(u8, 1 == 1);
     return hn::And(truemask, v);
@@ -72,7 +44,7 @@ NPY_FINLINE vec_u8 mask_to_true(vec_u8 v)
  * Both evaluate to boolean true, however, a & b is false.  Return value
  * should be consistent with byte_to_true().
  */
-NPY_FINLINE vec_u8 simd_logical_and_u8(vec_u8 a, vec_u8 b)
+HWY_INLINE HWY_ATTR vec_u8 simd_logical_and_u8(vec_u8 a, vec_u8 b)
 {
     return hn::IfThenZeroElse(
         hn::Eq(hn::Zero(u8), hn::Min(a, b)), 
@@ -83,18 +55,18 @@ NPY_FINLINE vec_u8 simd_logical_and_u8(vec_u8 a, vec_u8 b)
  * We don't really need the following, but it simplifies the templating code
  * below since it is paired with simd_logical_and_u8() above.
  */
-NPY_FINLINE vec_u8 simd_logical_or_u8(vec_u8 a, vec_u8 b)
+HWY_INLINE HWY_ATTR vec_u8 simd_logical_or_u8(vec_u8 a, vec_u8 b)
 {
     vec_u8 r = hn::Or(a, b);
     return byte_to_true(r);
 }
 
-NPY_FINLINE npy_bool simd_any_u8(vec_u8 v)
+HWY_INLINE HWY_ATTR npy_bool simd_any_u8(vec_u8 v)
 {
     return hn::ReduceMax(u8, v) != 0;
 }
 
-NPY_FINLINE npy_bool simd_all_u8(vec_u8 v)
+HWY_INLINE HWY_ATTR npy_bool simd_all_u8(vec_u8 v)
 {
     return hn::ReduceMin(u8, v) != 0;
 }
@@ -109,11 +81,11 @@ struct BinaryLogicalTraits<logical_or_t> {
     static constexpr auto scalar_cmp = std::not_equal_to<bool>{};
     static constexpr auto anyall = simd_any_u8;
 
-    NPY_FINLINE vec_u8 simd_op(vec_u8 a, vec_u8 b) {
+    HWY_INLINE HWY_ATTR vec_u8 simd_op(vec_u8 a, vec_u8 b) {
         return simd_logical_or_u8(a, b);
     }
 
-    NPY_FINLINE vec_u8 reduce(vec_u8 a, vec_u8 b) {
+    HWY_INLINE HWY_ATTR vec_u8 reduce(vec_u8 a, vec_u8 b) {
         return simd_logical_or_u8(a, b);
     }
 };
@@ -125,11 +97,11 @@ struct BinaryLogicalTraits<logical_and_t> {
     static constexpr auto scalar_cmp = std::equal_to<bool>{};
     static constexpr auto anyall = simd_all_u8;
 
-    NPY_FINLINE vec_u8 simd_op(vec_u8 a, vec_u8 b) {
+    HWY_INLINE HWY_ATTR vec_u8 simd_op(vec_u8 a, vec_u8 b) {
         return simd_logical_and_u8(a, b);
     }
 
-    NPY_FINLINE vec_u8 reduce(vec_u8 a, vec_u8 b) {
+    HWY_INLINE HWY_ATTR vec_u8 reduce(vec_u8 a, vec_u8 b) {
         return simd_logical_and_u8(a, b);
     }
 };
@@ -142,7 +114,7 @@ struct UnaryLogicalTraits<logical_not_t> {
     static constexpr bool is_not = true;
     static constexpr auto scalar_op = std::equal_to<bool>{};
 
-    NPY_FINLINE vec_u8 simd_op(vec_u8 v) {
+    HWY_INLINE HWY_ATTR vec_u8 simd_op(vec_u8 v) {
         const vec_u8 zero = hn::Zero(u8);
         return mask_to_true(hn::VecFromMask(u8, hn::Eq(v, zero)));
     }
@@ -153,12 +125,14 @@ struct UnaryLogicalTraits<absolute_t> {
     static constexpr bool is_not = false;
     static constexpr auto scalar_op = std::not_equal_to<bool>{};
 
-    NPY_FINLINE vec_u8 simd_op(vec_u8 v) {
+    HWY_INLINE HWY_ATTR vec_u8 simd_op(vec_u8 v) {
         return byte_to_true(v);
     }
 };
 
+
 template<typename Op>
+HWY_ATTR SIMD_MSVC_NOINLINE
 static void simd_binary_logical_BOOL(npy_bool* op, npy_bool* ip1, npy_bool* ip2, npy_intp len) {
     using Traits = BinaryLogicalTraits<Op>;
     Traits traits;
@@ -192,6 +166,7 @@ static void simd_binary_logical_BOOL(npy_bool* op, npy_bool* ip1, npy_bool* ip2,
 }
 
 template<typename Op>
+HWY_ATTR SIMD_MSVC_NOINLINE
 static void simd_reduce_logical_BOOL(npy_bool* op, npy_bool* ip, npy_intp len) {
     using Traits = BinaryLogicalTraits<Op>;
     Traits traits;
@@ -244,6 +219,7 @@ static void simd_reduce_logical_BOOL(npy_bool* op, npy_bool* ip, npy_intp len) {
 }
 
 template<typename Op>
+HWY_ATTR SIMD_MSVC_NOINLINE
 static void simd_unary_logical_BOOL(npy_bool* op, npy_bool* ip, npy_intp len) {
     using Traits = UnaryLogicalTraits<Op>;
     Traits traits;
@@ -272,8 +248,6 @@ static void simd_unary_logical_BOOL(npy_bool* op, npy_bool* ip, npy_intp len) {
         *op = Traits::scalar_op(*ip, 0);
     }
 }
-
-#endif // NPY_SIMD
 
 /*******************************************************************************
  ** Defining ufunc inner functions
@@ -326,7 +300,7 @@ static NPY_INLINE int run_unary_simd_logical_BOOL(
 
 template <typename Op>
 void BOOL_binary_func_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps) {
-    using Traits = BinaryLogicalTraitsGlobal<Op>;
+    using Traits = BinaryLogicalTraits<Op>;
     
     if (run_binary_simd_logical_BOOL<Op>(args, dimensions, steps)) {
         return;
@@ -342,7 +316,7 @@ void BOOL_binary_func_wrapper(char** args, npy_intp const* dimensions, npy_intp 
 
 template <typename Op>
 void BOOL_binary_reduce_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps) {
-    using Traits = BinaryLogicalTraitsGlobal<Op>;
+    using Traits = BinaryLogicalTraits<Op>;
 #if NPY_SIMD
     if (run_reduce_simd_logical_BOOL<Op>(args, dimensions, steps)) {
         return;
@@ -412,7 +386,7 @@ NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(BOOL_logical_or)(
 template <typename Op>
 void BOOL_func_wrapper(char** args, npy_intp const* dimensions, npy_intp const* steps)
 {
-    using Traits = UnaryLogicalTraitsGlobal<Op>;
+    using Traits = UnaryLogicalTraits<Op>;
     if (run_unary_simd_logical_BOOL<Op>(args, dimensions, steps)) {
         return;
     }
