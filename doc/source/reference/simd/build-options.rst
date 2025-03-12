@@ -98,7 +98,7 @@ You may have some reservations about including of ``AVX512`` or
 any other CPU feature and you want to exclude from the dispatched features::
 
     python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512f -avx512cd \
-    -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl"
+    -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl -avx512_spr"
 
 .. _opt-supported-features:
 

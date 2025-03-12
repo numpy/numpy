@@ -100,9 +100,12 @@ _T_co = TypeVar("_T_co", covariant=True)
 # The `{}ss` suffix refers to the Python 3.12 syntax: `**P`
 _Pss = ParamSpec("_Pss")
 _SCT = TypeVar("_SCT", bound=generic)
+_SCT1 = TypeVar("_SCT1", bound=generic)
+_SCT2 = TypeVar("_SCT2", bound=generic)
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
 
 _2Tuple: TypeAlias = tuple[_T, _T]
+_MeshgridIdx: TypeAlias = L['ij', 'xy']
 
 @type_check_only
 class _TrimZerosSequence(Protocol[_T_co]):
@@ -837,11 +840,100 @@ def trapezoid(
 @deprecated("Use 'trapezoid' instead")
 def trapz(y: ArrayLike, x: ArrayLike | None = None, dx: float = 1.0, axis: int = -1) -> generic | NDArray[generic]: ...
 
+@overload
+def meshgrid(
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[()]: ...
+@overload
+def meshgrid(
+    x1: _ArrayLike[_SCT],
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[_SCT]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any]]: ...
+@overload
+def meshgrid(
+    x1: _ArrayLike[_SCT1],
+    x2: _ArrayLike[_SCT2],
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[_SCT1], NDArray[_SCT2]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    x2: _ArrayLike[_SCT],
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any], NDArray[_SCT]]: ...
+@overload
+def meshgrid(
+    x1: _ArrayLike[_SCT],
+    x2: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[_SCT], NDArray[Any]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    x2: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any], NDArray[Any]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    x2: ArrayLike,
+    x3: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    x2: ArrayLike,
+    x3: ArrayLike,
+    x4: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any], NDArray[Any]]: ...
+@overload
 def meshgrid(
     *xi: ArrayLike,
     copy: bool = ...,
     sparse: bool = ...,
-    indexing: L["xy", "ij"] = ...,
+    indexing: _MeshgridIdx = ...,
 ) -> tuple[NDArray[Any], ...]: ...
 
 @overload

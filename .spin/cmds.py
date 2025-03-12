@@ -1,13 +1,15 @@
 import os
-import shutil
 import pathlib
 import importlib
+import shutil
 import subprocess
+import sys
 
 import click
 import spin
 from spin.cmds import meson
 
+IS_PYPY = (sys.implementation.name == 'pypy')
 
 # Check that the meson git submodule is present
 curdir = pathlib.Path(__file__).parent
@@ -127,12 +129,16 @@ def docs(*, parent_callback, **kwargs):
 jobs_param = next(p for p in docs.params if p.name == 'jobs')
 jobs_param.default = 1
 
+if IS_PYPY:
+    default = "not slow and not slow_pypy"
+else:
+    default = "not slow"
 
 @click.option(
     "-m",
     "markexpr",
     metavar='MARKEXPR',
-    default="not slow",
+    default=default,
     help="Run tests with the given markers"
 )
 @spin.util.extend_command(spin.cmds.meson.test)

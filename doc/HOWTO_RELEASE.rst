@@ -42,7 +42,7 @@ installers may be available for a subset of these versions (see below).
 
 * **Linux**
 
-  We build and ship `manylinux2014 <https://www.python.org/dev/peps/pep-0513>`_
+  We build and ship `manylinux_2_28 <https://www.python.org/dev/peps/pep-0600>`_
   wheels for NumPy.  Many Linux distributions include their own binary builds
   of NumPy.
 
