@@ -59,7 +59,7 @@ def _unary_method(ufunc, name):
 class NDArrayOperatorsMixin:
     """Mixin defining all operator special methods using __array_ufunc__.
 
-    This class implements the special methods for almost all of Python's
+    This class implements special methods for almost all of Python's
     builtin operators defined in the `operator` module, including comparisons
     (``==``, ``>``, etc.) and arithmetic (``+``, ``*``, ``-``, etc.), by
     deferring to the ``__array_ufunc__`` method, which subclasses must
