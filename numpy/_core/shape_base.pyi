@@ -1,14 +1,8 @@
 from collections.abc import Sequence
-from typing import TypeVar, overload, Any, SupportsIndex
+from typing import Any, SupportsIndex, TypeVar, overload
 
-from numpy import generic, _CastingKind
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-    DTypeLike,
-    _ArrayLike,
-    _DTypeLike,
-)
+from numpy import _CastingKind, generic
+from numpy._typing import ArrayLike, DTypeLike, NDArray, _ArrayLike, _DTypeLike
 
 __all__ = [
     "atleast_1d",
@@ -22,29 +16,54 @@ __all__ = [
 ]
 
 _SCT = TypeVar("_SCT", bound=generic)
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_SCT1 = TypeVar("_SCT1", bound=generic)
+_SCT2 = TypeVar("_SCT2", bound=generic)
+_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
+
+###
 
 @overload
-def atleast_1d(arys: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
+def atleast_1d(a0: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
 @overload
-def atleast_1d(arys: ArrayLike, /) -> NDArray[Any]: ...
+def atleast_1d(a0: _ArrayLike[_SCT1], a1: _ArrayLike[_SCT2], /) -> tuple[NDArray[_SCT1], NDArray[_SCT2]]: ...
 @overload
-def atleast_1d(*arys: ArrayLike) -> tuple[NDArray[Any], ...]: ...
+def atleast_1d(a0: _ArrayLike[_SCT], a1: _ArrayLike[_SCT], /, *arys: _ArrayLike[_SCT]) -> tuple[NDArray[_SCT], ...]: ...
+@overload
+def atleast_1d(a0: ArrayLike, /) -> NDArray[Any]: ...
+@overload
+def atleast_1d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[Any]]: ...
+@overload
+def atleast_1d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
 
+#
 @overload
-def atleast_2d(arys: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
+def atleast_2d(a0: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
 @overload
-def atleast_2d(arys: ArrayLike, /) -> NDArray[Any]: ...
+def atleast_2d(a0: _ArrayLike[_SCT1], a1: _ArrayLike[_SCT2], /) -> tuple[NDArray[_SCT1], NDArray[_SCT2]]: ...
 @overload
-def atleast_2d(*arys: ArrayLike) -> tuple[NDArray[Any], ...]: ...
+def atleast_2d(a0: _ArrayLike[_SCT], a1: _ArrayLike[_SCT], /, *arys: _ArrayLike[_SCT]) -> tuple[NDArray[_SCT], ...]: ...
+@overload
+def atleast_2d(a0: ArrayLike, /) -> NDArray[Any]: ...
+@overload
+def atleast_2d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[Any]]: ...
+@overload
+def atleast_2d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
 
+#
 @overload
-def atleast_3d(arys: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
+def atleast_3d(a0: _ArrayLike[_SCT], /) -> NDArray[_SCT]: ...
 @overload
-def atleast_3d(arys: ArrayLike, /) -> NDArray[Any]: ...
+def atleast_3d(a0: _ArrayLike[_SCT1], a1: _ArrayLike[_SCT2], /) -> tuple[NDArray[_SCT1], NDArray[_SCT2]]: ...
 @overload
-def atleast_3d(*arys: ArrayLike) -> tuple[NDArray[Any], ...]: ...
+def atleast_3d(a0: _ArrayLike[_SCT], a1: _ArrayLike[_SCT], /, *arys: _ArrayLike[_SCT]) -> tuple[NDArray[_SCT], ...]: ...
+@overload
+def atleast_3d(a0: ArrayLike, /) -> NDArray[Any]: ...
+@overload
+def atleast_3d(a0: ArrayLike, a1: ArrayLike, /) -> tuple[NDArray[Any], NDArray[Any]]: ...
+@overload
+def atleast_3d(a0: ArrayLike, a1: ArrayLike, /, *ai: ArrayLike) -> tuple[NDArray[Any], ...]: ...
 
+#
 @overload
 def vstack(
     tup: Sequence[_ArrayLike[_SCT]],
@@ -119,12 +138,21 @@ def stack(
 @overload
 def stack(
     arrays: Sequence[ArrayLike],
-    axis: SupportsIndex = ...,
-    out: _ArrayType = ...,
+    axis: SupportsIndex,
+    out: _ArrayT,
     *,
-    dtype: DTypeLike = ...,
-    casting: _CastingKind = ...
-) -> _ArrayType: ...
+    dtype: DTypeLike | None = None,
+    casting: _CastingKind = "same_kind",
+) -> _ArrayT: ...
+@overload
+def stack(
+    arrays: Sequence[ArrayLike],
+    axis: SupportsIndex = 0,
+    *,
+    out: _ArrayT,
+    dtype: DTypeLike | None = None,
+    casting: _CastingKind = "same_kind",
+) -> _ArrayT: ...
 
 @overload
 def unstack(
