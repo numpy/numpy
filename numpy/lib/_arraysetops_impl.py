@@ -612,7 +612,11 @@ def unique_values(x):
 
     This function is an Array API compatible alternative to::
 
-        np.unique(x, equal_nan=False)
+        np.unique(x, equal_nan=False, sorted=False)
+
+    .. versionchanged:: 2.3
+       The algorithm was changed to a faster one that does not rely on
+       sorting, and hence the results are no longer implicitly sorted.
 
     Parameters
     ----------
