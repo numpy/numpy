@@ -99,7 +99,7 @@ py.install_sources(
     '__init__.pxd',
     '__init__.py',
     '__init__.pyi',
-    '_bounded_integer_pyi',
+    '_bounded_integers_pyi',
     '_common.pxd',
     '_generator.pyi',
     '_mt19937.pyi',
