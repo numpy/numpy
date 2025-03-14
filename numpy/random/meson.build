@@ -101,6 +101,7 @@ py.install_sources(
     '__init__.pyi',
     '_bounded_integers.pyi',
     '_common.pxd',
+    '_common.pyi',
     '_generator.pyi',
     '_mt19937.pyi',
     '_pcg64.pyi',
