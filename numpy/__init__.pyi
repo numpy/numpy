@@ -4789,6 +4789,17 @@ class ufunc:
     # outputs, so we can't type it very precisely.
     def at(self, /, *args: Any, **kwargs: Any) -> None: ...
 
+    #
+    def resolve_dtypes(
+        self,
+        /,
+        dtypes: tuple[dtype[Any] | type | None, ...],
+        *,
+        signature: tuple[dtype[Any] | None, ...] | None = None,
+        casting: _CastingKind | None = None,
+        reduction: builtins.bool = False,
+    ) -> tuple[dtype[Any], ...]: ...
+
 # Parameters: `__name__`, `ntypes` and `identity`
 absolute: _UFunc_Nin1_Nout1[L['absolute'], L[20], None]
 add: _UFunc_Nin2_Nout1[L['add'], L[22], L[0]]
