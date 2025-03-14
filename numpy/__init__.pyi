@@ -1096,6 +1096,11 @@ class _HasShape(Protocol[_ShapeT_co]):
     def shape(self, /) -> _ShapeT_co: ...
 
 @type_check_only
+class _HasDType(Protocol[_T_co]):
+    @property
+    def dtype(self, /) -> _T_co: ...
+
+@type_check_only
 class _HasShapeAndSupportsItem(_HasShape[_ShapeT_co], _SupportsItem[_T_co], Protocol[_ShapeT_co, _T_co]): ...
 
 # matches any `x` on `x.type.item() -> _T_co`, e.g. `dtype[np.int8]` gives `_T_co: int`
@@ -2339,12 +2344,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
 
     # `put` is technically available to `generic`,
     # but is pointless as `generic`s are immutable
-    def put(
-        self,
-        ind: _ArrayLikeInt_co,
-        v: ArrayLike,
-        mode: _ModeKind = ...,
-    ) -> None: ...
+    def put(self, /, indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
 
     @overload
     def searchsorted(  # type: ignore[misc]
@@ -2531,20 +2531,21 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
         copy: builtins.bool | _CopyMode = ...,
     ) -> ndarray[_ShapeT_co, dtype[Any]]: ...
 
-    @overload
-    def view(self) -> Self: ...
-    @overload
-    def view(self, type: type[_ArrayT]) -> _ArrayT: ...
-    @overload
-    def view(self, dtype: _DTypeLike[_SCT]) -> NDArray[_SCT]: ...
-    @overload
-    def view(self, dtype: DTypeLike) -> NDArray[Any]: ...
-    @overload
-    def view(
-        self,
-        dtype: DTypeLike,
-        type: type[_ArrayT],
-    ) -> _ArrayT: ...
+    #
+    @overload  # ()
+    def view(self, /) -> Self: ...
+    @overload  # (dtype: T)
+    def view(self, /, dtype: _DType | _HasDType[_DType]) -> ndarray[_ShapeT_co, _DType]: ...
+    @overload  # (dtype: dtype[T])
+    def view(self, /, dtype: _DTypeLike[_SCT]) -> NDArray[_SCT]: ...
+    @overload  # (type: T)
+    def view(self, /, *, type: type[_ArrayT]) -> _ArrayT: ...
+    @overload  # (_: T)
+    def view(self, /, dtype: type[_ArrayT]) -> _ArrayT: ...
+    @overload  # (dtype: ?)
+    def view(self, /, dtype: DTypeLike) -> ndarray[_ShapeT_co, dtype[Any]]: ...
+    @overload  # (dtype: ?, type: type[T])
+    def view(self, /, dtype: DTypeLike, type: type[_ArrayT]) -> _ArrayT: ...
 
     @overload
     def getfield(
