@@ -47,6 +47,13 @@ from numpy import (
     _OrderKACF,
     _OrderCF,
 )
+from .fromnumeric import (
+    all as all,
+    any as any,
+    argpartition as argpartition,
+    matrix_transpose as matrix_transpose,
+    mean as mean,
+)
 from .multiarray import (
     # re-exports
     arange,
