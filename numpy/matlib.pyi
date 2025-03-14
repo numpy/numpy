@@ -394,7 +394,7 @@ from numpy import (
     roots,
     rot90,
     round,
-    # row_stack,
+    row_stack,
     s_,
     save,
     savetxt,
