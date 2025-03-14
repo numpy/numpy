@@ -44,6 +44,7 @@ from numpy import (
     float64,
     timedelta64,
     object_,
+    _AnyShapeType,
     _OrderKACF,
     _OrderCF,
 )
@@ -190,7 +191,6 @@ _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 _DType = TypeVar("_DType", bound=np.dtype[Any])
 _ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
-_SizeType = TypeVar("_SizeType", bound=int)
 _ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 
 _CorrelateMode: TypeAlias = L["valid", "same", "full"]
@@ -303,69 +303,69 @@ def ones_like(
 # 1-D shape
 @overload
 def full(
-    shape: _SizeType,
+    shape: SupportsIndex,
     fill_value: _SCT,
     dtype: None = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[tuple[_SizeType], _SCT]: ...
+) -> _Array[tuple[int], _SCT]: ...
 @overload
 def full(
-    shape: _SizeType,
+    shape: SupportsIndex,
     fill_value: Any,
     dtype: _DType | _SupportsDType[_DType],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> np.ndarray[tuple[_SizeType], _DType]: ...
+) -> np.ndarray[tuple[int], _DType]: ...
 @overload
 def full(
-    shape: _SizeType,
+    shape: SupportsIndex,
     fill_value: Any,
     dtype: type[_SCT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[tuple[_SizeType], _SCT]: ...
+) -> _Array[tuple[int], _SCT]: ...
 @overload
 def full(
-    shape: _SizeType,
+    shape: SupportsIndex,
     fill_value: Any,
     dtype: None | DTypeLike = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[tuple[_SizeType], Any]: ...
+) -> _Array[tuple[int], Any]: ...
 # known shape
 @overload
 def full(
-    shape: _ShapeType,
+    shape: _AnyShapeType,
     fill_value: _SCT,
     dtype: None = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[_ShapeType, _SCT]: ...
+) -> _Array[_AnyShapeType, _SCT]: ...
 @overload
 def full(
-    shape: _ShapeType,
+    shape: _AnyShapeType,
     fill_value: Any,
     dtype: _DType | _SupportsDType[_DType],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> np.ndarray[_ShapeType, _DType]: ...
+) -> np.ndarray[_AnyShapeType, _DType]: ...
 @overload
 def full(
-    shape: _ShapeType,
+    shape: _AnyShapeType,
     fill_value: Any,
     dtype: type[_SCT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[_ShapeType, _SCT]: ...
+) -> _Array[_AnyShapeType, _SCT]: ...
 @overload
 def full(
-    shape: _ShapeType,
+    shape: _AnyShapeType,
     fill_value: Any,
     dtype: None | DTypeLike = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[_ShapeType, Any]: ...
+) -> _Array[_AnyShapeType, Any]: ...
 # unknown shape
 @overload
 def full(
