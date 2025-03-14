@@ -3970,7 +3970,7 @@ bool_ = bool
 # NOTE: Because mypy has some long-standing bugs related to `__new__`, `object_` can't
 # be made generic.
 @final
-class object_(_RealMixin, generic):
+class object_(_RealMixin, generic[Any]):
     @overload
     def __new__(cls, nothing_to_see_here: None = None, /) -> None: ...  # type: ignore[misc]
     @overload
@@ -3984,6 +3984,8 @@ class object_(_RealMixin, generic):
     @overload  # catch-all
     def __new__(cls, value: Any = ..., /) -> object | NDArray[Self]: ...  # type: ignore[misc]
     def __init__(self, value: object = ..., /) -> None: ...
+    def __hash__(self, /) -> int: ...
+    def __call__(self, /, *args: object, **kwargs: object) -> Any: ...
 
     if sys.version_info >= (3, 12):
         def __release_buffer__(self, buffer: memoryview, /) -> None: ...
@@ -4439,6 +4441,9 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     ) -> None: ...
     @overload
     def __init__(self, value: _ConvertibleToTD64, format: _TimeUnitSpec = ..., /) -> None: ...
+
+    # inherited at runtime from `signedinteger`
+    def __class_getitem__(cls, type_arg: type | object, /) -> GenericAlias: ...
 
     # NOTE: Only a limited number of units support conversion
     # to builtin scalar types: `Y`, `M`, `ns`, `ps`, `fs`, `as`
