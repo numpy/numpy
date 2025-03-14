@@ -44,7 +44,7 @@
  * the below code implements this converted to an iteration and as an
  * additional minor optimization skips the recursion depth checking on the
  * smaller partition as it is always less than half of the remaining data and
- * will thus terminate fast enough
+ * will thus terminate fast enough`
  */
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
@@ -56,6 +56,7 @@
 #include "numpy_tag.h"
 #include "x86_simd_qsort.hpp"
 #include "highway_qsort.hpp"
+#include "stringdtype/dtype.h"
 
 #include <cstdlib>
 #include <utility>
@@ -516,7 +517,7 @@ npy_quicksort(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    PyArray_CompareFunc *cmp;
     char *vp;
     char *pl = (char *)start;
     char *pr = pl + (num - 1) * elsize;
@@ -526,6 +527,8 @@ npy_quicksort(void *start, npy_intp num, void *varr)
     int depth[PYA_QS_STACK];
     int *psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
+
+    _init_sort_cmp(PyArray_DESCR(arr), &cmp);
 
     /* Items that have zero size don't make sense to sort */
     if (elsize == 0) {
@@ -612,6 +615,9 @@ npy_quicksort(void *start, npy_intp num, void *varr)
     }
 
     free(vp);
+    
+    _end_sort_cmp(PyArray_DESCR(arr));
+
     return 0;
 }
 
@@ -621,7 +627,7 @@ npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
     char *v = (char *)vv;
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    PyArray_CompareFunc *cmp;
     char *vp;
     npy_intp *pl = tosort;
     npy_intp *pr = tosort + num - 1;
@@ -631,6 +637,8 @@ npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
     int depth[PYA_QS_STACK];
     int *psdepth = depth;
     int cdepth = npy_get_msb(num) * 2;
+
+    _init_sort_cmp(PyArray_DESCR(arr), &cmp);
 
     /* Items that have zero size don't make sense to sort */
     if (elsize == 0) {
@@ -705,6 +713,8 @@ npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
         pl = *(--sptr);
         cdepth = *(--psdepth);
     }
+
+    _end_sort_cmp(PyArray_DESCR(arr));
 
     return 0;
 }
