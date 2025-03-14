@@ -186,7 +186,9 @@ def unique(ar, return_index=False, return_inverse=False,
         .. versionadded:: 1.24
 
     sorted : bool, optional
-        If True, the unique elements are sorted.
+        If True, the unique elements are sorted. Elements may be sorted in
+        practice even if ``sorted=False``, but this could change without
+        notice.
 
         .. versionadded:: 2.3
 
@@ -361,12 +363,6 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     optional_indices = return_index or return_inverse
 
-    if (optional_indices or return_counts) and not sorted:
-        raise ValueError(
-            "Currently, `sorted` can only be False if `return_index`, "
-            "`return_inverse`, and `return_counts` are all False."
-        )
-
     # masked arrays are not supported yet.
     if not optional_indices and not return_counts and not np.ma.is_masked(ar):
         # First we convert the array to a numpy array, later we wrap it back
@@ -448,9 +444,13 @@ def unique_all(x):
     This function is an Array API compatible alternative to::
 
         np.unique(x, return_index=True, return_inverse=True,
-                  return_counts=True, equal_nan=False)
+                  return_counts=True, equal_nan=False, sorted=False)
 
     but returns a namedtuple for easier access to each output.
+
+    .. note::
+        This function currently always returns a sorted result, however,
+        this could change in any NumPy minor release.
 
     Parameters
     ----------
@@ -507,9 +507,13 @@ def unique_counts(x):
 
     This function is an Array API compatible alternative to::
 
-        np.unique(x, return_counts=True, equal_nan=False)
+        np.unique(x, return_counts=True, equal_nan=False, sorted=False)
 
     but returns a namedtuple for easier access to each output.
+
+    .. note::
+        This function currently always returns a sorted result, however,
+        this could change in any NumPy minor release.
 
     Parameters
     ----------
@@ -559,9 +563,13 @@ def unique_inverse(x):
 
     This function is an Array API compatible alternative to::
 
-        np.unique(x, return_inverse=True, equal_nan=False)
+        np.unique(x, return_inverse=True, equal_nan=False, sorted=False)
 
     but returns a namedtuple for easier access to each output.
+
+    .. note::
+        This function currently always returns a sorted result, however,
+        this could change in any NumPy minor release.
 
     Parameters
     ----------
