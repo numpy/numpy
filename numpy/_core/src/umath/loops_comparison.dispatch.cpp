@@ -321,37 +321,71 @@ static vec_u8 process_simd_block(const typename Traits::ScalarType* src1,
         return simd_pack_b8_b16(hn::BitCast(u16, c1_vec), hn::BitCast(u16, c2_vec));
     }
     else if constexpr (Traits::Len == 32) {
-        std::array<typename Traits::VecType, 4> results;
-        for (int i = 0; i < 4; ++i) {
-            auto a = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * i);
-            auto b = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * i);
-            results[i] = process_simd_compare<Traits>(a, b, compare_op);
-        }
+        auto a1 = hn::LoadU(Traits::Tag, src1);
+        auto b1 = hn::LoadU(Traits::Tag, src2);
+        auto c1_vec = process_simd_compare<Traits>(a1, b1, compare_op);
+
+        auto a2 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag));
+        auto b2 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag));
+        auto c2_vec = process_simd_compare<Traits>(a2, b2, compare_op);
+
+        auto a3 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * 2);
+        auto b3 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * 2);
+        auto c3_vec = process_simd_compare<Traits>(a3, b3, compare_op);
+
+        auto a4 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * 3);
+        auto b4 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * 3);
+        auto c4_vec = process_simd_compare<Traits>(a4, b4, compare_op);
 
         return simd_pack_b8_b32(
-            hn::BitCast(u32, results[0]),
-            hn::BitCast(u32, results[1]),
-            hn::BitCast(u32, results[2]),
-            hn::BitCast(u32, results[3])
+            hn::BitCast(u32, c1_vec),
+            hn::BitCast(u32, c2_vec),
+            hn::BitCast(u32, c3_vec),
+            hn::BitCast(u32, c4_vec)
         );
     }
     else if constexpr (Traits::Len == 64) {
-        std::array<typename Traits::VecType, 8> results;
-        for (int i = 0; i < 8; ++i) {
-            auto a = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * i);
-            auto b = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * i);
-            results[i] = process_simd_compare<Traits>(a, b, compare_op);
-        }
+        auto a1 = hn::LoadU(Traits::Tag, src1);
+        auto b1 = hn::LoadU(Traits::Tag, src2);
+        auto c1_vec = process_simd_compare<Traits>(a1, b1, compare_op);
+
+        auto a2 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag));
+        auto b2 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag));
+        auto c2_vec = process_simd_compare<Traits>(a2, b2, compare_op);
+
+        auto a3 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * 2);
+        auto b3 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * 2);
+        auto c3_vec = process_simd_compare<Traits>(a3, b3, compare_op);
+
+        auto a4 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * 3);
+        auto b4 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * 3);
+        auto c4_vec = process_simd_compare<Traits>(a4, b4, compare_op);
+
+        auto a5 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * 4);
+        auto b5 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * 4);
+        auto c5_vec = process_simd_compare<Traits>(a5, b5, compare_op);
+
+        auto a6 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * 5);
+        auto b6 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * 5);
+        auto c6_vec = process_simd_compare<Traits>(a6, b6, compare_op);
+
+        auto a7 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * 6);
+        auto b7 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * 6);
+        auto c7_vec = process_simd_compare<Traits>(a7, b7, compare_op);
+
+        auto a8 = hn::LoadU(Traits::Tag, src1 + hn::Lanes(Traits::Tag) * 7);
+        auto b8 = hn::LoadU(Traits::Tag, src2 + hn::Lanes(Traits::Tag) * 7);
+        auto c8_vec = process_simd_compare<Traits>(a8, b8, compare_op);
 
         return simd_pack_b8_b64(
-            hn::BitCast(u64, results[0]),
-            hn::BitCast(u64, results[1]),
-            hn::BitCast(u64, results[2]),
-            hn::BitCast(u64, results[3]),
-            hn::BitCast(u64, results[4]),
-            hn::BitCast(u64, results[5]),
-            hn::BitCast(u64, results[6]),
-            hn::BitCast(u64, results[7])
+            hn::BitCast(u64, c1_vec),
+            hn::BitCast(u64, c2_vec),
+            hn::BitCast(u64, c3_vec),
+            hn::BitCast(u64, c4_vec),
+            hn::BitCast(u64, c5_vec),
+            hn::BitCast(u64, c6_vec),
+            hn::BitCast(u64, c7_vec),
+            hn::BitCast(u64, c8_vec)
         );
     }
 }
