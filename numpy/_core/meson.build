@@ -1382,6 +1382,7 @@ python_sources = [
   'strings.py',
   'strings.pyi',
   'umath.py',
+  'umath.pyi',
 ]
 
 py.install_sources(
