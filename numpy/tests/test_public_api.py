@@ -198,7 +198,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "linalg.linalg",
     "ma.core",
     "ma.testutils",
-    "ma.timer_comparison",
     "matlib",
     "matrixlib",
     "matrixlib.defmatrix",
