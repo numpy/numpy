@@ -394,7 +394,7 @@ def argmax(
 @overload
 def argmax(
     a: ArrayLike,
-    axis: SupportsIndex | None ,
+    axis: SupportsIndex | None,
     out: _ArrayT,
     *,
     keepdims: bool = ...,
