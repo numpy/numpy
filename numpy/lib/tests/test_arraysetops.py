@@ -838,14 +838,19 @@ class TestUnique:
 
     @pytest.mark.parametrize("arg", ["return_index", "return_inverse", "return_counts"])
     def test_unsupported_hash_based(self, arg):
-        """Test that hash based unique is not supported when either of
-        return_index, return_inverse, or return_counts is True.
+        """These currently never use the hash-based solution.  However,
+        it seems easier to just allow it.
 
-        This is WIP and the above will gradually be supported in the future.
+        When the hash-based solution is added, this test should fail and be
+        replaced with something more comprehensive.
         """
-        msg = "Currently, `sorted` can only be False"
-        with pytest.raises(ValueError, match=msg):
-            np.unique([1, 1], sorted=False, **{arg: True})
+        a = np.array([1, 5, 2, 3, 4, 8, 199, 1, 3, 5])
+
+        res_not_sorted = np.unique([1, 1], sorted=False, **{arg: True})
+        res_sorted = np.unique([1, 1], sorted=True, **{arg: True})
+        # The following should fail without first sorting `res_not_sorted`.
+        for arr, expected in zip(res_not_sorted, res_sorted):
+            assert_array_equal(arr, expected)
 
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)
