@@ -460,6 +460,33 @@ compare(void *a, void *b, void *arr)
 }
 
 int
+_compare_no_mutex(const void *a, const void *b, void *arr)
+{
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
+    return _compare((void*) a, (void*) b, descr, descr);
+}
+
+void
+_init_sort_cmp(PyArray_Descr *descr, PyArray_CompareFunc **out_cmp)
+{
+    if (descr->type_num == NPY_VSTRING) {
+        NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr);
+        *out_cmp = _compare_no_mutex;
+    }
+    else {
+        *out_cmp = PyDataType_GetArrFuncs(descr)->compare;
+    }
+}
+
+void
+_end_sort_cmp(PyArray_Descr *descr)
+{
+    if (descr->type_num == NPY_VSTRING) {
+        NpyString_release_allocator(((PyArray_StringDTypeObject *)descr)->allocator);
+    }
+}
+
+int
 _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
          PyArray_StringDTypeObject *descr_b)
 {
