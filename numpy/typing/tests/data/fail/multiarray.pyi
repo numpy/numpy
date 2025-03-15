@@ -34,7 +34,6 @@ np.unpackbits(AR_u1, bitorder=">")  # E: incompatible type
 np.shares_memory(1, 1, max_work=i8)  # E: incompatible type
 np.may_share_memory(1, 1, max_work=i8)  # E: incompatible type
 
-np.arange(M)  # E: No overload variant
 np.arange(stop=10)  # E: No overload variant
 
 np.datetime_data(int)  # E: incompatible type

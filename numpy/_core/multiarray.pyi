@@ -278,7 +278,7 @@ class _ConstructorEmpty(Protocol):
         self,
         /,
         shape: SupportsIndex,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None = ...,
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
     ) -> _Array1D[Any]: ...
@@ -316,7 +316,7 @@ class _ConstructorEmpty(Protocol):
         self,
         /,
         shape: _AnyShapeType,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None = ...,
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
     ) -> _Array[_AnyShapeType, Any]: ...
@@ -348,9 +348,10 @@ class _ConstructorEmpty(Protocol):
     ) -> NDArray[_SCT]: ...
     @overload
     def __call__(
-        self, /,
+        self,
+        /,
         shape: _ShapeLike,
-        dtype: DTypeLike,
+        dtype: DTypeLike | None = ...,
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
     ) -> NDArray[Any]: ...
@@ -419,16 +420,6 @@ def empty_like(
 ) -> NDArray[_SCT]: ...
 @overload
 def empty_like(
-    prototype: object,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    shape: None | _ShapeLike = ...,
-    *,
-    device: None | L["cpu"] = ...,
-) -> NDArray[Any]: ...
-@overload
-def empty_like(
     prototype: Any,
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
@@ -440,7 +431,7 @@ def empty_like(
 @overload
 def empty_like(
     prototype: Any,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
@@ -483,17 +474,6 @@ def array(
 ) -> NDArray[_SCT]: ...
 @overload
 def array(
-    object: object,
-    dtype: None = ...,
-    *,
-    copy: None | bool | _CopyMode = ...,
-    order: _OrderKACF = ...,
-    subok: bool = ...,
-    ndmin: int = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
-@overload
-def array(
     object: Any,
     dtype: _DTypeLike[_SCT],
     *,
@@ -506,7 +486,7 @@ def array(
 @overload
 def array(
     object: Any,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     *,
     copy: None | bool | _CopyMode = ...,
     order: _OrderKACF = ...,
@@ -555,15 +535,6 @@ def concatenate(  # type: ignore[misc]
     casting: None | _CastingKind = ...
 ) -> NDArray[_SCT]: ...
 @overload
-def concatenate(  # type: ignore[misc]
-    arrays: SupportsLenAndGetItem[ArrayLike],
-    /,
-    axis: None | SupportsIndex = ...,
-    out: None = ...,
-    *,
-    dtype: None = ...,
-    casting: None | _CastingKind = ...
-) -> NDArray[Any]: ...
 @overload
 def concatenate(  # type: ignore[misc]
     arrays: SupportsLenAndGetItem[ArrayLike],
@@ -581,7 +552,7 @@ def concatenate(  # type: ignore[misc]
     axis: None | SupportsIndex = ...,
     out: None = ...,
     *,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = None,
     casting: None | _CastingKind = ...
 ) -> NDArray[Any]: ...
 @overload
@@ -717,16 +688,6 @@ def asarray(
 ) -> NDArray[_SCT]: ...
 @overload
 def asarray(
-    a: object,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    *,
-    device: None | L["cpu"] = ...,
-    copy: None | bool = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
-@overload
-def asarray(
     a: Any,
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
@@ -738,7 +699,7 @@ def asarray(
 @overload
 def asarray(
     a: Any,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     order: _OrderKACF = ...,
     *,
     device: None | L["cpu"] = ...,
@@ -768,16 +729,6 @@ def asanyarray(
 ) -> NDArray[_SCT]: ...
 @overload
 def asanyarray(
-    a: object,
-    dtype: None = ...,
-    order: _OrderKACF = ...,
-    *,
-    device: None | L["cpu"] = ...,
-    copy: None | bool = ...,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
-@overload
-def asanyarray(
     a: Any,
     dtype: _DTypeLike[_SCT],
     order: _OrderKACF = ...,
@@ -789,7 +740,7 @@ def asanyarray(
 @overload
 def asanyarray(
     a: Any,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     order: _OrderKACF = ...,
     *,
     device: None | L["cpu"] = ...,
@@ -806,13 +757,6 @@ def ascontiguousarray(
 ) -> NDArray[_SCT]: ...
 @overload
 def ascontiguousarray(
-    a: object,
-    dtype: None = ...,
-    *,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
-@overload
-def ascontiguousarray(
     a: Any,
     dtype: _DTypeLike[_SCT],
     *,
@@ -821,7 +765,7 @@ def ascontiguousarray(
 @overload
 def ascontiguousarray(
     a: Any,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     *,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
@@ -835,13 +779,6 @@ def asfortranarray(
 ) -> NDArray[_SCT]: ...
 @overload
 def asfortranarray(
-    a: object,
-    dtype: None = ...,
-    *,
-    like: None | _SupportsArrayFunc = ...,
-) -> NDArray[Any]: ...
-@overload
-def asfortranarray(
     a: Any,
     dtype: _DTypeLike[_SCT],
     *,
@@ -850,7 +787,7 @@ def asfortranarray(
 @overload
 def asfortranarray(
     a: Any,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     *,
     like: None | _SupportsArrayFunc = ...,
 ) -> NDArray[Any]: ...
@@ -879,7 +816,7 @@ def fromstring(
 @overload
 def fromstring(
     string: str | bytes,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     count: SupportsIndex = ...,
     *,
     sep: str,
@@ -982,7 +919,7 @@ def fromfile(
 @overload
 def fromfile(
     file: StrOrBytesPath | _SupportsFileMethods,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     count: SupportsIndex = ...,
     sep: str = ...,
     offset: SupportsIndex = ...,
@@ -1028,7 +965,7 @@ def frombuffer(
 @overload
 def frombuffer(
     buffer: _SupportsBuffer,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     count: SupportsIndex = ...,
     offset: SupportsIndex = ...,
     *,
@@ -1121,7 +1058,7 @@ def arange(
 def arange(
     stop: Any, /,
     *,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = ...,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
 ) -> _Array1D[Any]: ...
@@ -1130,7 +1067,7 @@ def arange(
     start: Any,
     stop: Any,
     step: Any = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
