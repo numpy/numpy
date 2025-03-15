@@ -1,12 +1,13 @@
 # ruff: noqa: ANN401
 # pyright: reportSelfClsParameterName=false
 from collections.abc import Iterable, Sequence
-from types import EllipsisType
-from typing import Any, Literal, Protocol, SupportsIndex, TypeAlias, TypeVar, overload, type_check_only
+from typing import Any, ClassVar, Literal, Protocol, SupportsIndex, TypeAlias, overload, type_check_only
 
 from _typeshed import StrOrBytesPath
+from typing_extensions import TypeVar
 
-from numpy import _ByteOrder, _OrderKACF, _SupportsBuffer, dtype, generic, ndarray, void
+import numpy as np
+from numpy import _ByteOrder, _OrderKACF, _SupportsBuffer
 from numpy._typing import ArrayLike, DTypeLike, NDArray, _ArrayLikeVoid_co, _NestedSequence, _ShapeLike
 
 __all__ = [
@@ -22,11 +23,11 @@ __all__ = [
 ]
 
 _T = TypeVar("_T")
-_SCT = TypeVar("_SCT", bound=generic)
-_DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
+_SCT = TypeVar("_SCT", bound=np.generic)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype[Any], covariant=True)
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
 
-_RecArray: TypeAlias = recarray[Any, dtype[_SCT]]
+_RecArray: TypeAlias = recarray[Any, np.dtype[_SCT]]
 
 @type_check_only
 class _SupportsReadInto(Protocol):
@@ -37,7 +38,7 @@ class _SupportsReadInto(Protocol):
 ###
 
 # exported in `numpy.rec`
-class record(void):
+class record(np.void):
     def __getattribute__(self, attr: str) -> Any: ...
     def __setattr__(self, attr: str, val: ArrayLike) -> None: ...
     def pprint(self) -> str: ...
@@ -47,10 +48,9 @@ class record(void):
     def __getitem__(self, key: list[str]) -> record: ...
 
 # exported in `numpy.rec`
-class recarray(ndarray[_ShapeT_co, _DType_co]):
-    # NOTE: While not strictly mandatory, we're demanding here that arguments
-    # for the `format_parser`- and `dtype`-based dtype constructors are
-    # mutually exclusive
+class recarray(np.ndarray[_ShapeT_co, _DTypeT_co]):
+    __name__: ClassVar[Literal["record"]] = "record"
+    __module__: Literal["numpy"] = "numpy"
     @overload
     def __new__(
         subtype,
@@ -66,7 +66,7 @@ class recarray(ndarray[_ShapeT_co, _DType_co]):
         byteorder: _ByteOrder | None = None,
         aligned: bool = False,
         order: _OrderKACF = "C",
-    ) -> recarray[Any, dtype[record]]: ...
+    ) -> _RecArray[record]: ...
     @overload
     def __new__(
         subtype,
@@ -81,18 +81,20 @@ class recarray(ndarray[_ShapeT_co, _DType_co]):
         byteorder: None = None,
         aligned: Literal[False] = False,
         order: _OrderKACF = "C",
-    ) -> recarray[Any, dtype[Any]]: ...
+    ) -> _RecArray[Any]: ...
     def __array_finalize__(self, /, obj: object) -> None: ...
     def __getattribute__(self, attr: str, /) -> Any: ...
     def __setattr__(self, attr: str, val: ArrayLike, /) -> None: ...
-    @overload
-    def field(self, /, attr: int | str, val: None = None) -> Any: ...
+
+    #
     @overload
     def field(self, /, attr: int | str, val: ArrayLike) -> None: ...
+    @overload
+    def field(self, /, attr: int | str, val: None = None) -> Any: ...
 
 # exported in `numpy.rec`
 class format_parser:
-    dtype: dtype[void]
+    dtype: np.dtype[np.void]
     def __init__(
         self,
         /,
@@ -213,6 +215,7 @@ def array(
     dtype: None = None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
+    strides: tuple[int, ...] | None = None,
     formats: None = None,
     names: None = None,
     titles: None = None,
@@ -226,6 +229,7 @@ def array(
     dtype: DTypeLike,
     shape: _ShapeLike | None = None,
     offset: int = 0,
+    strides: tuple[int, ...] | None = None,
     formats: None = None,
     names: None = None,
     titles: None = None,
@@ -239,6 +243,7 @@ def array(
     dtype: None = None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
+    strides: tuple[int, ...] | None = None,
     *,
     formats: DTypeLike,
     names: str | Sequence[str] | None = None,
@@ -253,6 +258,7 @@ def array(
     dtype: DTypeLike,
     shape: _ShapeLike,
     offset: int = 0,
+    strides: tuple[int, ...] | None = None,
     formats: None = None,
     names: None = None,
     titles: None = None,
@@ -267,6 +273,7 @@ def array(
     *,
     shape: _ShapeLike,
     offset: int = 0,
+    strides: tuple[int, ...] | None = None,
     formats: DTypeLike,
     names: str | Sequence[str] | None = None,
     titles: str | Sequence[str] | None = None,
@@ -280,6 +287,7 @@ def array(
     dtype: DTypeLike,
     shape: _ShapeLike | None = None,
     offset: int = 0,
+    strides: tuple[int, ...] | None = None,
     formats: None = None,
     names: None = None,
     titles: None = None,
@@ -293,6 +301,7 @@ def array(
     dtype: None = None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
+    strides: tuple[int, ...] | None = None,
     *,
     formats: DTypeLike,
     names: str | Sequence[str] | None = None,
