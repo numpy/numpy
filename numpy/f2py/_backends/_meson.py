@@ -145,6 +145,7 @@ class MesonBackend(Backend):
         path_objects = chain(
             walk_dir.glob(f"{self.modulename}*.so"),
             walk_dir.glob(f"{self.modulename}*.pyd"),
+            walk_dir.glob(f"{self.modulename}*.dll"),
         )
         # Same behavior as distutils
         # https://github.com/numpy/numpy/issues/24874#issuecomment-1835632293
