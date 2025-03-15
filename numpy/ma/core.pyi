@@ -1,19 +1,13 @@
-from collections.abc import Callable
-from typing import Any, TypeVar
+# pyright: reportIncompatibleMethodOverride=false
+# ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
 
-from numpy import (
-    amax,
-    amin,
-    bool_,
-    expand_dims,
-    clip,
-    indices,
-    squeeze,
-    angle,
-    ndarray,
-    dtype,
-    float64,
-)
+from typing import Any, SupportsIndex, TypeVar
+
+from _typeshed import Incomplete
+from typing_extensions import deprecated
+
+from numpy import _OrderKACF, amax, amin, bool_, dtype, expand_dims, float64, ndarray
+from numpy._typing import ArrayLike, _DTypeLikeBool
 
 __all__ = [
     "MAError",
@@ -111,8 +105,8 @@ __all__ = [
     "less",
     "less_equal",
     "log",
-    "log10",
     "log2",
+    "log10",
     "logical_and",
     "logical_not",
     "logical_or",
@@ -257,6 +251,7 @@ cosh: _MaskedUnaryOperation
 tanh: _MaskedUnaryOperation
 abs: _MaskedUnaryOperation
 absolute: _MaskedUnaryOperation
+angle: _MaskedUnaryOperation
 fabs: _MaskedUnaryOperation
 negative: _MaskedUnaryOperation
 floor: _MaskedUnaryOperation
@@ -284,20 +279,21 @@ greater_equal: _MaskedBinaryOperation
 less: _MaskedBinaryOperation
 greater: _MaskedBinaryOperation
 logical_and: _MaskedBinaryOperation
-alltrue: _MaskedBinaryOperation
+def alltrue(target: ArrayLike, axis: SupportsIndex | None = 0, dtype: _DTypeLikeBool | None = None) -> Incomplete: ...
 logical_or: _MaskedBinaryOperation
-sometrue: Callable[..., Any]
+def sometrue(target: ArrayLike, axis: SupportsIndex | None = 0, dtype: _DTypeLikeBool | None = None) -> Incomplete: ...
 logical_xor: _MaskedBinaryOperation
 bitwise_and: _MaskedBinaryOperation
 bitwise_or: _MaskedBinaryOperation
 bitwise_xor: _MaskedBinaryOperation
 hypot: _MaskedBinaryOperation
-divide: _MaskedBinaryOperation
-true_divide: _MaskedBinaryOperation
-floor_divide: _MaskedBinaryOperation
-remainder: _MaskedBinaryOperation
-fmod: _MaskedBinaryOperation
-mod: _MaskedBinaryOperation
+
+divide: _DomainedBinaryOperation
+true_divide: _DomainedBinaryOperation
+floor_divide: _DomainedBinaryOperation
+remainder: _DomainedBinaryOperation
+fmod: _DomainedBinaryOperation
+mod: _DomainedBinaryOperation
 
 def make_mask_descr(ndtype): ...
 def getmask(a): ...
@@ -448,10 +444,10 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def var(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
     def std(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
     def round(self, decimals=..., out=...): ...
-    def argsort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., stable=...): ...
+    def argsort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
     def argmin(self, axis=..., fill_value=..., out=..., *, keepdims=...): ...
     def argmax(self, axis=..., fill_value=..., out=..., *, keepdims=...): ...
-    def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., stable=...): ...
+    def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
     def min(self, axis=..., out=..., fill_value=..., keepdims=...): ...
     # NOTE: deprecated
     # def tostring(self, fill_value=..., order=...): ...
@@ -460,6 +456,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def partition(self, *args, **kwargs): ...
     def argpartition(self, *args, **kwargs): ...
     def take(self, indices, axis=..., out=..., mode=...): ...
+
     copy: Any
     diagonal: Any
     flatten: Any
@@ -468,19 +465,26 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     swapaxes: Any
     T: Any
     transpose: Any
+
     @property  # type: ignore[misc]
     def mT(self): ...
-    def tolist(self, fill_value=...): ...
-    def tobytes(self, fill_value=..., order=...): ...
-    def tofile(self, fid, sep=..., format=...): ...
-    def toflex(self): ...
-    torecords: Any
+
+    #
+    def toflex(self) -> Incomplete: ...
+    def torecords(self) -> Incomplete: ...
+    def tolist(self, fill_value: Incomplete | None = None) -> Incomplete: ...
+    @deprecated("tostring() is deprecated. Use tobytes() instead.")
+    def tostring(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def tobytes(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def tofile(self, /, fid: Incomplete, sep: str = "", format: str = "%s") -> Incomplete: ...
+
+    #
     def __reduce__(self): ...
     def __deepcopy__(self, memo=...): ...
 
 class mvoid(MaskedArray[_ShapeType_co, _DType_co]):
     def __new__(
-        self,
+        self,  # pyright: ignore[reportSelfClsParameterName]
         data,
         mask=...,
         dtype=...,
@@ -593,8 +597,8 @@ maximum: _extrema_operation
 
 def take(a, indices, axis=..., out=..., mode=...): ...
 def power(a, b, third=...): ...
-def argsort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., stable=...): ...
-def sort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., stable=...): ...
+def argsort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
+def sort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
 def compressed(x): ...
 def concatenate(arrays, axis=...): ...
 def diag(v, k=...): ...
@@ -629,19 +633,21 @@ def asanyarray(a, dtype=...): ...
 def fromflex(fxarray): ...
 
 class _convert2ma:
-    __doc__: Any
-    def __init__(self, funcname, params=...): ...
-    def getdoc(self): ...
-    def __call__(self, *args, **params): ...
+    def __init__(self, /, funcname: str, np_ret: str, np_ma_ret: str, params: dict[str, Any] | None = None) -> None: ...
+    def __call__(self, /, *args: object, **params: object) -> Any: ...  # noqa: ANN401
+    def getdoc(self, /, np_ret: str, np_ma_ret: str) -> str | None: ...
 
 arange: _convert2ma
+clip: _convert2ma
 empty: _convert2ma
 empty_like: _convert2ma
 frombuffer: _convert2ma
 fromfunction: _convert2ma
 identity: _convert2ma
+indices: _convert2ma
 ones: _convert2ma
 ones_like: _convert2ma
+squeeze: _convert2ma
 zeros: _convert2ma
 zeros_like: _convert2ma
 
