@@ -49,6 +49,7 @@ from numpy import (  # type: ignore[attr-defined]
     signedinteger,
     floating,
     complexfloating,
+    _AnyShapeType,
     _OrderKACF,
     _OrderCF,
     _CastingKind,
@@ -191,8 +192,6 @@ __all__ = [
     "zeros",
 ]
 
-_T_co = TypeVar("_T_co", covariant=True)
-_T_contra = TypeVar("_T_contra", contravariant=True)
 _SCT = TypeVar("_SCT", bound=generic)
 _DType = TypeVar("_DType", bound=np.dtype[Any])
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
@@ -206,10 +205,9 @@ _IDType = TypeVar("_IDType")
 _Nin = TypeVar("_Nin", bound=int)
 _Nout = TypeVar("_Nout", bound=int)
 
-_SizeType = TypeVar("_SizeType", bound=int)
-_ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
-_1DArray: TypeAlias = ndarray[tuple[_SizeType], dtype[_SCT]]
-_Array: TypeAlias = ndarray[_ShapeType, dtype[_SCT]]
+_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
+_Array: TypeAlias = ndarray[_ShapeT, dtype[_SCT]]
+_Array1D: TypeAlias = ndarray[tuple[int], dtype[_SCT]]
 
 # Valid time units
 _UnitKind: TypeAlias = L[
@@ -250,70 +248,78 @@ class _ConstructorEmpty(Protocol):
     # 1-D shape
     @overload
     def __call__(
-        self, /,
-        shape: _SizeType,
+        self,
+        /,
+        shape: SupportsIndex,
         dtype: None = ...,
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[tuple[_SizeType], float64]: ...
+    ) -> _Array1D[float64]: ...
     @overload
     def __call__(
-        self, /,
-        shape: _SizeType,
+        self,
+        /,
+        shape: SupportsIndex,
         dtype: _DType | _SupportsDType[_DType],
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> ndarray[tuple[_SizeType], _DType]: ...
+    ) -> ndarray[tuple[int], _DType]: ...
     @overload
     def __call__(
-        self, /,
-        shape: _SizeType,
+        self,
+        /,
+        shape: SupportsIndex,
         dtype: type[_SCT],
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[tuple[_SizeType], _SCT]: ...
+    ) -> _Array1D[_SCT]: ...
     @overload
     def __call__(
-        self, /,
-        shape: _SizeType,
+        self,
+        /,
+        shape: SupportsIndex,
         dtype: DTypeLike,
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[tuple[_SizeType], Any]: ...
+    ) -> _Array1D[Any]: ...
 
     # known shape
     @overload
     def __call__(
-        self, /,
-        shape: _ShapeType,
+        self,
+        /,
+        shape: _AnyShapeType,
         dtype: None = ...,
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[_ShapeType, float64]: ...
+    ) -> _Array[_AnyShapeType, float64]: ...
     @overload
     def __call__(
-        self, /,
-        shape: _ShapeType,
+        self,
+        /,
+        shape: _AnyShapeType,
         dtype: _DType | _SupportsDType[_DType],
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> ndarray[_ShapeType, _DType]: ...
+    ) -> ndarray[_AnyShapeType, _DType]: ...
     @overload
     def __call__(
-        self, /,
-        shape: _ShapeType,
+        self,
+        /,
+        shape: _AnyShapeType,
         dtype: type[_SCT],
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[_ShapeType, _SCT]: ...
+    ) -> _Array[_AnyShapeType, _SCT]: ...
     @overload
     def __call__(
-        self, /,
-        shape: _ShapeType,
+        self,
+        /,
+        shape: _AnyShapeType,
         dtype: DTypeLike,
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[_ShapeType, Any]: ...
+    ) -> _Array[_AnyShapeType, Any]: ...
 
     # unknown shape
     @overload
@@ -1036,7 +1042,7 @@ def arange(  # type: ignore[misc]
     dtype: None = ...,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, signedinteger[Any]]: ...
+) -> _Array1D[signedinteger]: ...
 @overload
 def arange(  # type: ignore[misc]
     start: _IntLike_co,
@@ -1046,7 +1052,7 @@ def arange(  # type: ignore[misc]
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, signedinteger[Any]]: ...
+) -> _Array1D[signedinteger]: ...
 @overload
 def arange(  # type: ignore[misc]
     stop: _FloatLike_co,
@@ -1054,7 +1060,7 @@ def arange(  # type: ignore[misc]
     dtype: None = ...,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, floating[Any]]: ...
+) -> _Array1D[floating]: ...
 @overload
 def arange(  # type: ignore[misc]
     start: _FloatLike_co,
@@ -1064,7 +1070,7 @@ def arange(  # type: ignore[misc]
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, floating[Any]]: ...
+) -> _Array1D[floating]: ...
 @overload
 def arange(
     stop: _TD64Like_co,
@@ -1072,7 +1078,7 @@ def arange(
     dtype: None = ...,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, timedelta64]: ...
+) -> _Array1D[timedelta64]: ...
 @overload
 def arange(
     start: _TD64Like_co,
@@ -1082,7 +1088,7 @@ def arange(
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, timedelta64]: ...
+) -> _Array1D[timedelta64]: ...
 @overload
 def arange(  # both start and stop must always be specified for datetime64
     start: datetime64,
@@ -1092,7 +1098,7 @@ def arange(  # both start and stop must always be specified for datetime64
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, datetime64]: ...
+) -> _Array1D[datetime64]: ...
 @overload
 def arange(
     stop: Any,
@@ -1100,7 +1106,7 @@ def arange(
     dtype: _DTypeLike[_SCT],
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, _SCT]: ...
+) -> _Array1D[_SCT]: ...
 @overload
 def arange(
     start: Any,
@@ -1110,7 +1116,7 @@ def arange(
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, _SCT]: ...
+) -> _Array1D[_SCT]: ...
 @overload
 def arange(
     stop: Any, /,
@@ -1118,7 +1124,7 @@ def arange(
     dtype: DTypeLike,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, Any]: ...
+) -> _Array1D[Any]: ...
 @overload
 def arange(
     start: Any,
@@ -1128,7 +1134,7 @@ def arange(
     *,
     device: None | L["cpu"] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _1DArray[int, Any]: ...
+) -> _Array1D[Any]: ...
 
 def datetime_data(
     dtype: str | _DTypeLike[datetime64] | _DTypeLike[timedelta64], /,
