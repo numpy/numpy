@@ -574,6 +574,7 @@ from numpy.lib._polynomial_impl import (
 
 from numpy.lib._shape_base_impl import (
     column_stack,
+    row_stack,
     dstack,
     array_split,
     split,
@@ -730,10 +731,9 @@ __all__ = [  # noqa: RUF022
     "histogram2d", "mask_indices", "tril_indices", "tril_indices_from", "triu_indices",
     "triu_indices_from",
     # lib._shape_base_impl.__all__
-    # NOTE: `row_stack` is omitted because it is deprecated
     "column_stack", "dstack", "array_split", "split", "hsplit", "vsplit", "dsplit",
     "apply_over_axes", "expand_dims", "apply_along_axis", "kron", "tile",
-    "take_along_axis", "put_along_axis",
+    "take_along_axis", "put_along_axis", "row_stack",
     # lib._type_check_impl.__all__
     "iscomplexobj", "isrealobj", "imag", "iscomplex", "isreal", "nan_to_num", "real",
     "real_if_close", "typename", "mintypecode", "common_type",
