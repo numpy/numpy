@@ -9,7 +9,6 @@ function-based counterpart in `../from_numeric.py`.
 from __future__ import annotations
 
 import operator
-import warnings
 from typing import cast, Any
 
 import numpy as np
@@ -188,10 +187,11 @@ A_void["yap"] = A_float[:, 1]
 
 # deprecated
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", DeprecationWarning)
-
+with np.testing.assert_warns(DeprecationWarning):
     ctypes_obj.get_data()  # pyright: ignore[reportDeprecated]
+with np.testing.assert_warns(DeprecationWarning):
     ctypes_obj.get_shape()  # pyright: ignore[reportDeprecated]
+with np.testing.assert_warns(DeprecationWarning):
     ctypes_obj.get_strides()  # pyright: ignore[reportDeprecated]
+with np.testing.assert_warns(DeprecationWarning):
     ctypes_obj.get_as_parameter()  # pyright: ignore[reportDeprecated]
