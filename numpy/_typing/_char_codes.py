@@ -140,9 +140,7 @@ _TD64Codes = Literal[
     "m8[as]", "|m8[as]", "=m8[as]", "<m8[as]", ">m8[as]",
 ]
 
-# NOTE: `StringDType' has no scalar type, and therefore has no name that can
-# be passed to the `dtype` constructor
-_StringCodes = Literal["T", "|T", "=T", "<T", ">T"]
+_StringCodes = Literal["vstr", "T", "|T", "=T", "<T", ">T"]
 
 # NOTE: Nested literals get flattened and de-duplicated at runtime, which isn't
 # the case for a `Union` of `Literal`s.
@@ -204,6 +202,5 @@ _GenericCodes = Literal[
     _DT64Codes,
     _TD64Codes,
     _ObjectCodes,
-    # TODO: add `_StringCodes` once it has a scalar type
-    # _StringCodes,
+    _StringCodes,
 ]
