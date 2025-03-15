@@ -556,7 +556,7 @@ it's straightforward with NumPy.
 
 For example, if you start with this array::
 
-  >>> a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can easily print all of the values in the array that are less than 5. ::
 
@@ -1281,7 +1281,7 @@ Since ``ravel`` does not create a copy, it's memory efficient.
 
 If you start with this array::
 
-  >>> x = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> x = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can use ``flatten`` to flatten your array into a 1D array. ::
 
