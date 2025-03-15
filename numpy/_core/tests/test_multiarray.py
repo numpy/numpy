@@ -3345,10 +3345,11 @@ class TestMethods:
         a.dot(b=b, out=c)
         assert_equal(c, np.dot(a, b))
 
+    @pytest.mark.parametrize("dtype", [np.float16, np.float64, np.float128])
     @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
-    def test_dot_errstate(self):
-        a = np.array([1., 1.])
-        b = np.array([-np.inf, np.inf])
+    def test_dot_errstate(self, dtype):
+        a = np.array([1, 1], dtype=dtype)
+        b = np.array([-np.inf, np.inf], dtype=dtype)
 
         with np.errstate(invalid='raise'):
             # there are two paths, depending on the number of dimensions - test
