@@ -16,11 +16,6 @@ AR_b: npt.NDArray[np.bool]
 
 ctypes_obj = AR_f8.ctypes
 
-reveal_type(ctypes_obj.get_data())  # E: has no attribute
-reveal_type(ctypes_obj.get_shape())  # E: has no attribute
-reveal_type(ctypes_obj.get_strides())  # E: has no attribute
-reveal_type(ctypes_obj.get_as_parameter())  # E: has no attribute
-
 f8.argpartition(0)  # E: has no attribute
 f8.diagonal()  # E: has no attribute
 f8.dot(1)  # E: has no attribute
