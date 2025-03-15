@@ -3,7 +3,7 @@ import numpy.typing as npt
 
 AR_U: npt.NDArray[np.str_]
 
-def func() -> bool: ...
+def func(x: object) -> bool: ...
 
 np.testing.assert_(True, msg=1)  # E: incompatible type
 np.testing.build_err_msg(1, "test")  # E: incompatible type
@@ -20,9 +20,9 @@ np.testing.assert_allclose(AR_U, AR_U)  # E: incompatible type
 np.testing.assert_array_almost_equal_nulp(AR_U, AR_U)  # E: incompatible type
 np.testing.assert_array_max_ulp(AR_U, AR_U)  # E: incompatible type
 
-np.testing.assert_warns(warning_class=RuntimeWarning, func=func)  # E: No overload variant
+np.testing.assert_warns(RuntimeWarning, func)  # E: No overload variant
 np.testing.assert_no_warnings(func=func)  # E: No overload variant
-np.testing.assert_no_warnings(func, None)  # E: Too many arguments
-np.testing.assert_no_warnings(func, test=None)  # E: No overload variant
+np.testing.assert_no_warnings(func)  # E: Too many arguments
+np.testing.assert_no_warnings(func, y=None)  # E: No overload variant
 
 np.testing.assert_no_gc_cycles(func=func)  # E: No overload variant
