@@ -74,6 +74,15 @@ and its sub-types).
     Clears the specified array flags. This function does no validation,
     and assumes that you know what you're doing.
 
+.. c:function:: PyObject *PyArray_HANDLER(PyArrayObject *arr)
+
+    .. versionadded:: 1.22
+
+    Returns a pointer to the memory handler of the array, which is used
+    for memory allocation operations such as ``malloc`` , ``calloc`` ,
+    ``realloc`` , and ``free`` for each object. In some cases, it may return
+    ``NULL`` . For more details, refer to the :c:type:`PyDataMem_Handler`.
+
 .. c:function:: void *PyArray_DATA(PyArrayObject *arr)
 
 .. c:function:: char *PyArray_BYTES(PyArrayObject *arr)
