@@ -8916,6 +8916,8 @@ class TestConversion:
         assert_raises(NotImplementedError, bool, np.array([NotConvertible()]))
         if IS_PYSTON:
             pytest.skip("Pyston disables recursion checking")
+        if IS_WASM:
+            pytest.skip("Pyodide/WASM has limited stack size")
 
         self_containing = np.array([None])
         self_containing[0] = self_containing

@@ -13,7 +13,7 @@ from numpy._core._rational_tests import rational
 from numpy._core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
-    IS_PYSTON)
+    IS_PYSTON, IS_WASM)
 from itertools import permutations
 import random
 
@@ -970,6 +970,7 @@ class TestMonsterType:
         assert_dtype_equal(c, d)
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_list_recursion(self):
         l = []
         l.append(('f', l))
@@ -977,6 +978,7 @@ class TestMonsterType:
             np.dtype(l)
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
@@ -985,6 +987,7 @@ class TestMonsterType:
             np.dtype(d)
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_dict_recursion(self):
         d = {"names": ['self'], "formats": [None], "offsets": [0]}
         d['formats'][0] = d
@@ -1568,6 +1571,7 @@ class TestFromDTypeAttribute:
         assert np.dtype(dt()) == np.float64
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_recursion(self):
         class dt:
             pass
@@ -1592,6 +1596,7 @@ class TestFromDTypeAttribute:
         np.dtype(dt(1))
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_void_subtype_recursion(self):
         class vdt(np.void):
             pass
