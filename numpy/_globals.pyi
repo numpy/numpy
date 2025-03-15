@@ -6,8 +6,10 @@ from typing import Final, final
 @final
 class _CopyMode(enum.Enum):
     ALWAYS = True
-    IF_NEEDED = False
-    NEVER = 2
+    NEVER = False
+    IF_NEEDED = 2
+
+    def __bool__(self, /) -> bool: ...
 
 @final
 class _NoValueType: ...
