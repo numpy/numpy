@@ -3,7 +3,6 @@ from collections.abc import Sequence
 from typing import (
     Any,
     Literal,
-    NoReturn,
     Protocol,
     SupportsIndex,
     TypeAlias,
@@ -11,6 +10,8 @@ from typing import (
     overload,
     type_check_only,
 )
+
+from _typeshed import Incomplete
 from typing_extensions import Never, deprecated
 
 import numpy as np
@@ -551,9 +552,6 @@ def ravel(
 @overload
 def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[tuple[int], np.dtype[Any]]: ...
 
-@overload
-def nonzero(a: np.generic | np.ndarray[tuple[()], Any]) -> NoReturn: ...
-@overload
 def nonzero(a: _ArrayLike[Any]) -> tuple[NDArray[intp], ...]: ...
 
 # this prevents `Any` from being returned with Pyright
@@ -813,7 +811,7 @@ def all(
     keepdims: _BoolLike_co | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> np.bool | NDArray[np.bool]: ...
+) -> Incomplete: ...
 @overload
 def all(
     a: ArrayLike,
@@ -850,7 +848,7 @@ def any(
     keepdims: _BoolLike_co | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> np.bool | NDArray[np.bool]: ...
+) -> Incomplete: ...
 @overload
 def any(
     a: ArrayLike,
@@ -1443,10 +1441,10 @@ def mean(
     keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> complexfloating[Any, Any]: ...
+) -> complexfloating[Any]: ...
 @overload
 def mean(
-    a: _ArrayLikeTD64_co,
+    a: _ArrayLike[np.timedelta64],
     axis: None = ...,
     dtype: None = ...,
     out: None = ...,
@@ -1454,56 +1452,6 @@ def mean(
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> timedelta64: ...
-@overload
-def mean(
-    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: _ShapeLike | None = ...,
-    dtype: None = ...,
-    out: None = ...,
-    keepdims: bool | _NoValueType = ...,
-    *,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> Any: ...
-@overload
-def mean(
-    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: None,
-    dtype: _DTypeLike[_SCT],
-    out: None = ...,
-    keepdims: bool | _NoValueType = ...,
-    *,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> _SCT | NDArray[_SCT]: ...
-@overload
-def mean(
-    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: None = ...,
-    *,
-    dtype: _DTypeLike[_SCT],
-    out: None = ...,
-    keepdims: Literal[False] | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> _SCT: ...
-@overload
-def mean(
-    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: None = ...,
-    *,
-    dtype: _DTypeLike[_SCT],
-    out: None = ...,
-    keepdims: bool | _NoValueType = ...,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> _SCT | NDArray[_SCT]: ...
-@overload
-def mean(
-    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: _ShapeLike | None = ...,
-    dtype: DTypeLike = ...,
-    out: None = ...,
-    keepdims: bool | _NoValueType = ...,
-    *,
-    where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> Any: ...
 @overload
 def mean(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
@@ -1518,12 +1466,72 @@ def mean(
 def mean(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
     axis: _ShapeLike | None = ...,
-    dtype: DTypeLike = ...,
+    dtype: DTypeLike | None = ...,
     *,
     out: _ArrayT,
     keepdims: bool | _NoValueType = ...,
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> _ArrayT: ...
+@overload
+def mean(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: None,
+    dtype: _DTypeLike[_SCT],
+    out: None = ...,
+    keepdims: Literal[False] | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _SCT: ...
+@overload
+def mean(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: None = ...,
+    *,
+    dtype: _DTypeLike[_SCT],
+    out: None = ...,
+    keepdims: Literal[False] | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _SCT: ...
+@overload
+def mean(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: _ShapeLike | None,
+    dtype: _DTypeLike[_SCT],
+    out: None,
+    keepdims: Literal[True, 1],
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> NDArray[_SCT]: ...
+@overload
+def mean(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: _ShapeLike | None,
+    dtype: _DTypeLike[_SCT],
+    out: None = ...,
+    *,
+    keepdims: bool | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _SCT | NDArray[_SCT]: ...
+@overload
+def mean(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: _ShapeLike | None = ...,
+    *,
+    dtype: _DTypeLike[_SCT],
+    out: None = ...,
+    keepdims: bool | _NoValueType = ...,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> _SCT | NDArray[_SCT]: ...
+@overload
+def mean(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: _ShapeLike | None = ...,
+    dtype: DTypeLike | None = ...,
+    out: None = ...,
+    keepdims: bool | _NoValueType = ...,
+    *,
+    where: _ArrayLikeBool_co | _NoValueType = ...,
+) -> Incomplete: ...
 
 @overload
 def std(
