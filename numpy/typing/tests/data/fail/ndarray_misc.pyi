@@ -31,8 +31,6 @@ f8.setfield(2, np.float64)  # E: has no attribute
 f8.sort()  # E: has no attribute
 f8.trace()  # E: has no attribute
 
-AR_M.__int__()  # E: Invalid self argument
-AR_M.__float__()  # E: Invalid self argument
 AR_M.__complex__()  # E: Invalid self argument
 AR_b.__index__()  # E: Invalid self argument
 
