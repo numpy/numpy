@@ -425,7 +425,7 @@ class Test_ARM_Features(AbstractTest):
 is_loongarch = re.match("^(loongarch)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_loongarch, reason="Only for Linux and LoongArch")
 class Test_LOONGARCH_Features(AbstractTest):
-    features = ["LSX"]
+    features = ["LSX", "LASX"]
 
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
