@@ -180,5 +180,6 @@ def einsum_path(
     subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeComplex_co | _DTypeLikeObject,
-    optimize: _OptimizeKind = ...,
+    optimize: _OptimizeKind = "greedy",
+    einsum_call: Literal[False] = False,
 ) -> tuple[list[Any], str]: ...
