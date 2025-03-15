@@ -1085,6 +1085,8 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         Py_DECREF(it1);
         goto fail;
     }
+
+    npy_clear_floatstatus_barrier((char *) result);
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
     while (it1->index < it1->size) {
         while (it2->index < it2->size) {
@@ -1100,6 +1102,11 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     Py_DECREF(it2);
     if (PyErr_Occurred()) {
         /* only for OBJECT arrays */
+        goto fail;
+    }
+
+    int fpes = npy_get_floatstatus_barrier((char *) result);
+    if (fpes && PyUFunc_GiveFloatingpointErrors("dot", fpes) < 0) {
         goto fail;
     }
     Py_DECREF(ap1);

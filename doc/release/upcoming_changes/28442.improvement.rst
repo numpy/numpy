@@ -1,0 +1,1 @@
+* ``np.dot`` now reports floating point exceptions.
