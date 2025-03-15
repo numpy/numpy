@@ -32,22 +32,22 @@ using vec_s64 = hn::Vec<decltype(s64)>;
 using vec_f32 = hn::Vec<decltype(f32)>;
 using vec_f64 = hn::Vec<decltype(f64)>;
 
-HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b16(vec_u16 a, vec_u16 b) {
-    return hn::OrderedDemote2To(u8, a, b);
+HWY_INLINE vec_u8 simd_pack_b8_b16(vec_u16 a, vec_u16 b) {
+    return hn::OrderedTruncate2To(u8, a, b);
 }
 
-HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b32(vec_u32 a, vec_u32 b, vec_u32 c, vec_u32 d) {
-    auto ab = hn::OrderedDemote2To(u16, a, b);
-    auto cd = hn::OrderedDemote2To(u16, c, d);
+HWY_INLINE vec_u8 simd_pack_b8_b32(vec_u32 a, vec_u32 b, vec_u32 c, vec_u32 d) {
+    auto ab = hn::OrderedTruncate2To(u16, a, b);
+    auto cd = hn::OrderedTruncate2To(u16, c, d);
     return simd_pack_b8_b16(ab, cd);
 }
 
-HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b64(vec_u64 a, vec_u64 b, vec_u64 c, vec_u64 d,
+HWY_INLINE vec_u8 simd_pack_b8_b64(vec_u64 a, vec_u64 b, vec_u64 c, vec_u64 d,
                                      vec_u64 e, vec_u64 f, vec_u64 g, vec_u64 h) {
-    auto ab = hn::OrderedDemote2To(u32, a, b);
-    auto cd = hn::OrderedDemote2To(u32, c, d);
-    auto ef = hn::OrderedDemote2To(u32, e, f);
-    auto gh = hn::OrderedDemote2To(u32, g, h);
+    auto ab = hn::OrderedTruncate2To(u32, a, b);
+    auto cd = hn::OrderedTruncate2To(u32, c, d);
+    auto ef = hn::OrderedTruncate2To(u32, e, f);
+    auto gh = hn::OrderedTruncate2To(u32, g, h);
     return simd_pack_b8_b32(ab, cd, ef, gh);
 }
 
