@@ -355,7 +355,8 @@ class _ConstructorEmpty(Protocol):
         **kwargs: Unpack[_KwargsEmpty],
     ) -> NDArray[Any]: ...
 
-error: Final = Exception
+# using `Final` or `TypeAlias` will break stubtest
+error = Exception
 
 # from ._multiarray_umath
 ITEM_HASOBJECT: Final = 1
