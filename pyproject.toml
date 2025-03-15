@@ -142,7 +142,7 @@ tracker = "https://github.com/numpy/numpy/issues"
 # build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
 # `tools/ci/cirrus_wheels.yml`.
 build-frontend = "build"
-skip = "*_i686 *_ppc64le *_s390x *_universal2"
+skip = "*_i686 *_s390x *_universal2"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 # The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
 config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
