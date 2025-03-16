@@ -239,10 +239,6 @@ def _hist_bin_auto(x, range):
     and is the default in the R language. This method gives good off-the-shelf
     behaviour.
 
-    If there is limited variance the IQR can be very small, which results in the
-    FD bin width being very small. If the IQR is small, it's unlikely any
-    variance-based estimators will be of use, so we revert to the Sturges estimator,
-    which only uses the size of the dataset in its calculation.
 
     Parameters
     ----------
