@@ -1,0 +1,10 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.2.5 Release Notes
+==========================
+
+NumPy 2.2.5 is a patch release that fixes bugs found after the 2.2.4 release.
+
+This release supports Python versions 3.10-3.13.
+
