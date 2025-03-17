@@ -202,8 +202,8 @@ struct TypeTraits<double> {
 
 template<>
 struct TypeTraits<bool> {
-    using ScalarType  = bool;
-    using ScalarType2 = bool;
+    using ScalarType  = npyv_lanetype_u8;
+    using ScalarType2 = npy_ubyte;
     using VecType = vec_u8;
     static constexpr auto Tag = u8;
     static constexpr int  Len = 8;
@@ -478,6 +478,7 @@ static void simd_binary_compare_b8(char **args, npy_intp len) {
         auto a = hn::Eq(hn::LoadU(u8, src1), vzero);
         auto b = hn::Eq(hn::LoadU(u8, src2), vzero);
         vec_u8 c = Op_Traits::Op(hn::VecFromMask(u8, a), hn::VecFromMask(u8, b));
+        c = hn::And(hn::VecFromMask(u8, hn::Ne(c, hn::Zero(u8))), hn::Set(u8, 0x1));
         hn::StoreU(hn::And(c, truemask), u8, dst);
     }
 
@@ -504,6 +505,7 @@ static void simd_binary_scalar1_compare_b8(char **args, npy_intp len) {
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
         auto b = hn::Eq(hn::LoadU(u8, src), vzero);
         vec_u8 c = Op_Traits::Op(hn::VecFromMask(u8, a), hn::VecFromMask(u8, b));
+        c = hn::And(hn::VecFromMask(u8, hn::Ne(c, hn::Zero(u8))), hn::Set(u8, 0x1));
         hn::StoreU(hn::And(c, truemask), u8, dst);
     }
 
@@ -529,6 +531,7 @@ static void simd_binary_scalar2_compare_b8(char **args, npy_intp len) {
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
         auto a = hn::Eq(hn::LoadU(u8, src), vzero);
         vec_u8 c = Op_Traits::Op(hn::VecFromMask(u8, a), hn::VecFromMask(u8, b));
+        c = hn::And(hn::VecFromMask(u8, hn::Ne(c, hn::Zero(u8))), hn::Set(u8, 0x1));
         hn::StoreU(hn::And(c, truemask), u8, dst);
     }
 
