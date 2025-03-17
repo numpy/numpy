@@ -202,8 +202,8 @@ struct TypeTraits<double> {
 
 template<>
 struct TypeTraits<bool> {
-    using ScalarType = npyv_lanetype_u8;
-    using ScalarType2 = npy_ubyte;
+    using ScalarType  = bool;
+    using ScalarType2 = bool;
     using VecType = vec_u8;
     static constexpr auto Tag = u8;
     static constexpr int  Len = 8;
