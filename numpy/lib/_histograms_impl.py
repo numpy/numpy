@@ -888,16 +888,16 @@ def histogram(a, bins=10, range=None, density=None, weights=None):
                 sw = tmp_w[sorting_index]
                 cw = np.concatenate((zero, sw.cumsum()))
                 if (cw.max() > np.iinfo(ntype).max) and not warn:
-                    warnings.warn("Overflow detected! Use a higher precision dtype for weights to prevent this issue"\
-                            , RuntimeWarning, stacklevel=3)
+                    warnings.warn("Overflow detected! Use a higher precision dtype for weights to prevent this issue",
+                                  RuntimeWarning, stacklevel=3)
                     warn = True
 
                 bin_index = _search_sorted_inclusive(sa, bin_edges)
                 tmp_cum_n = cum_n.copy()
                 cum_n += cw[bin_index]
                 if (tmp_cum_n > cum_n).any() and not warn:
-                    warnings.warn("Overflow detected! Use a higher precision dtype for weights to prevent this issue"\
-                            , RuntimeWarning, stacklevel=3)
+                    warnings.warn("Overflow detected! Use a higher precision dtype for weights to prevent this issue",
+                                  RuntimeWarning, stacklevel=3)
                     warn = True
 
         n = np.diff(cum_n)
