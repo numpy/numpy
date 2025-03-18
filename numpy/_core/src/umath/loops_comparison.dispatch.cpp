@@ -98,7 +98,7 @@ struct TypeTraits<int8_t> {
 
 template<>
 struct TypeTraits<uint16_t> {
-    using ScalarType = npyv_lanetype_u16;
+    using ScalarType = uint16_t;
     using ScalarType2 = npy_ushort;
     using VecType = vec_u16;
     static constexpr auto Tag = u16;
@@ -111,7 +111,7 @@ struct TypeTraits<uint16_t> {
 
 template<>
 struct TypeTraits<int16_t> {
-    using ScalarType = npyv_lanetype_s16;
+    using ScalarType = int16_t;
     using ScalarType2 = npy_short;
     using VecType = vec_s16;
     static constexpr auto Tag = s16;
