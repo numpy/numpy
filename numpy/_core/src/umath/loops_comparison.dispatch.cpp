@@ -150,7 +150,7 @@ struct TypeTraits<int32_t> {
 
 template<>
 struct TypeTraits<uint64_t> {
-    using ScalarType = npyv_lanetype_u64;
+    using ScalarType = uint64_t;
     using ScalarType2 = npy_ulonglong;
     using VecType = vec_u64;
     static constexpr auto Tag = u64;
@@ -163,7 +163,7 @@ struct TypeTraits<uint64_t> {
 
 template<>
 struct TypeTraits<int64_t> {
-    using ScalarType = npyv_lanetype_s64;
+    using ScalarType = int64_t;
     using ScalarType2 = npy_longlong;
     using VecType = vec_s64;
     static constexpr auto Tag = s64;
@@ -404,12 +404,12 @@ static void simd_binary_compare(char **args, npy_intp len) {
     for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep, dst += vstep) {
         vec_u8 r = process_simd_block<Traits>(
             src1, src2,
-            [](const auto& a, const auto& b) { return Traits_Op::template compare(a, b); });
+            [](const auto& a, const auto& b) { return Traits_Op::compare(a, b); });
         hn::StoreU(hn::And(r, truemask), u8, dst);
     }
 
     for (; len > 0; --len, ++src1, ++src2, ++dst) {
-        *dst = Traits_Op::template scalarCompare(*src1, *src2);
+        *dst = Traits_Op::scalarCompare(*src1, *src2);
     }
 }
 
@@ -428,13 +428,13 @@ static void simd_binary_scalar1_compare(char **args, npy_intp len) {
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
         vec_u8 r = process_simd_block<Traits>(
             &scalar, src,
-            [&a](const auto&, const auto& b) { return Traits_Op::template compare(a, b); }
+            [&a](const auto&, const auto& b) { return Traits_Op::compare(a, b); }
         );
         hn::StoreU(hn::And(r, truemask), u8, dst);
     }
 
     for (; len > 0; --len, ++src, ++dst) {
-        *dst = Traits_Op::template scalarCompare(scalar, *src);
+        *dst = Traits_Op::scalarCompare(scalar, *src);
     }
 }
 
@@ -453,13 +453,13 @@ static void simd_binary_scalar2_compare(char **args, npy_intp len) {
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
         vec_u8 r = process_simd_block<Traits>(
             src, &scalar,
-            [&b](const auto& a, const auto&) { return Traits_Op::template compare(a, b); }
+            [&b](const auto& a, const auto&) { return Traits_Op::compare(a, b); }
         );
         hn::StoreU(hn::And(r, truemask), u8, dst);
     }
 
     for (; len > 0; --len, ++src, ++dst) {
-        *dst = Traits_Op::template scalarCompare(*src, scalar);
+        *dst = Traits_Op::scalarCompare(*src, scalar);
     }
 }
 
@@ -477,8 +477,7 @@ static void simd_binary_compare_b8(char **args, npy_intp len) {
     for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep, dst += vstep) {
         auto a = hn::Eq(hn::LoadU(u8, src1), vzero);
         auto b = hn::Eq(hn::LoadU(u8, src2), vzero);
-        vec_u8 c = Op_Traits::Op(hn::VecFromMask(u8, a), hn::VecFromMask(u8, b));
-        c = hn::And(hn::VecFromMask(u8, hn::Ne(c, hn::Zero(u8))), hn::Set(u8, 0x1));
+        vec_u8 c = Op_Traits::boolOp(hn::VecFromMask(u8, a), hn::VecFromMask(u8, b));
         hn::StoreU(hn::And(c, truemask), u8, dst);
     }
 
@@ -504,8 +503,7 @@ static void simd_binary_scalar1_compare_b8(char **args, npy_intp len) {
 
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
         auto b = hn::Eq(hn::LoadU(u8, src), vzero);
-        vec_u8 c = Op_Traits::Op(hn::VecFromMask(u8, a), hn::VecFromMask(u8, b));
-        c = hn::And(hn::VecFromMask(u8, hn::Ne(c, hn::Zero(u8))), hn::Set(u8, 0x1));
+        vec_u8 c = Op_Traits::boolOp(hn::VecFromMask(u8, a), hn::VecFromMask(u8, b));
         hn::StoreU(hn::And(c, truemask), u8, dst);
     }
 
@@ -530,8 +528,7 @@ static void simd_binary_scalar2_compare_b8(char **args, npy_intp len) {
 
     for (; len >= vstep; len -= vstep, src += vstep, dst += vstep) {
         auto a = hn::Eq(hn::LoadU(u8, src), vzero);
-        vec_u8 c = Op_Traits::Op(hn::VecFromMask(u8, a), hn::VecFromMask(u8, b));
-        c = hn::And(hn::VecFromMask(u8, hn::Ne(c, hn::Zero(u8))), hn::Set(u8, 0x1));
+        vec_u8 c = Op_Traits::boolOp(hn::VecFromMask(u8, a), hn::VecFromMask(u8, b));
         hn::StoreU(hn::And(c, truemask), u8, dst);
     }
 
@@ -551,16 +548,28 @@ static inline void run_binary_simd_compare(char **args, npy_intp const *dimensio
             !is_mem_overlap(args[1], steps[1], args[2], steps[2], dimensions[0])) {
             /* argument one scalar */
             if (IS_BINARY_CONT_S1(typename Traits::ScalarType2, npy_bool)) {
-                simd_binary_scalar1_compare<T, Op>(args, dimensions[0]);
+                if constexpr (Traits::IsBool) {
+                    simd_binary_scalar1_compare_b8<Op>(args, dimensions[0]);
+                } else {
+                    simd_binary_scalar1_compare<T, Op>(args, dimensions[0]);
+                }
                 return;
             }
             /* argument two scalar */
             else if (IS_BINARY_CONT_S2(typename Traits::ScalarType2, npy_bool)) {
-                simd_binary_scalar2_compare<T, Op>(args, dimensions[0]);
+                if constexpr (Traits::IsBool) {
+                    simd_binary_scalar2_compare_b8<Op>(args, dimensions[0]);
+                } else {
+                    simd_binary_scalar2_compare<T, Op>(args, dimensions[0]);
+                }
                 return;
             }
             else if (IS_BINARY_CONT(typename Traits::ScalarType2, npy_bool)) {
-                simd_binary_compare<T, Op>(args, dimensions[0]);
+                if constexpr (Traits::IsBool) {
+                    simd_binary_compare_b8<Op>(args, dimensions[0]);
+                } else {
+                    simd_binary_compare<T, Op>(args, dimensions[0]);
+                }
                 return;
             }
         }
@@ -570,11 +579,11 @@ static inline void run_binary_simd_compare(char **args, npy_intp const *dimensio
         if constexpr (Traits::IsBool) {
             npy_bool in1 = *((npy_bool *)ip1) != 0;
             npy_bool in2 = *((npy_bool *)ip2) != 0;
-            *((npy_bool *)op1) = Traits_Op::template scalarCompare(in1, in2);
+            *((npy_bool *)op1) = Traits_Op::scalarCompare(in1, in2);
         } else {
             typename Traits::ScalarType2 in1 = *(typename Traits::ScalarType2 *)ip1;
             typename Traits::ScalarType2 in2 = *(typename Traits::ScalarType2 *)ip2;
-            *((npy_bool *)op1) = Traits_Op::template scalarCompare(in1, in2);
+            *((npy_bool *)op1) = Traits_Op::scalarCompare(in1, in2);
         }
     }
 }
