@@ -262,6 +262,7 @@ struct CompareOpTraits<CompareOp::LessEqual> {
 };
 
 #if (NPY_SIMD || NPY_SIMD_F32 || NPY_SIMD_F64)
+#if !defined(__s390x__) && !defined(__arm__) && !defined(__loongarch64) && !defined(__loongarch64__)
 HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b16(vec_u16 a, vec_u16 b) {
     return hn::OrderedTruncate2To(u8, a, b);
 }
@@ -528,6 +529,7 @@ static void simd_binary_scalar2_compare_b8(char **args, npy_intp len) {
     }
 }
 #endif
+#endif
 
 template<typename T, CompareOp Op>
 static inline void run_binary_simd_compare(char **args, npy_intp const *dimensions, npy_intp const *steps) {
@@ -535,6 +537,7 @@ static inline void run_binary_simd_compare(char **args, npy_intp const *dimensio
     using Traits_Op = CompareOpTraits<Op>;
 
 #if (NPY_SIMD || NPY_SIMD_F32 || NPY_SIMD_F64)
+        #if !defined(__s390x__) && !defined(__arm__) && !defined(__loongarch64) && !defined(__loongarch64__)
         if (!is_mem_overlap(args[0], steps[0], args[2], steps[2], dimensions[0]) &&
             !is_mem_overlap(args[1], steps[1], args[2], steps[2], dimensions[0])) {
             /* argument one scalar */
@@ -564,6 +567,7 @@ static inline void run_binary_simd_compare(char **args, npy_intp const *dimensio
                 return;
             }
         }
+        #endif
 #endif
 
     BINARY_LOOP {
