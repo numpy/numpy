@@ -32,25 +32,6 @@ using vec_s64 = hn::Vec<decltype(s64)>;
 using vec_f32 = hn::Vec<decltype(f32)>;
 using vec_f64 = hn::Vec<decltype(f64)>;
 
-HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b16(vec_u16 a, vec_u16 b) {
-    return hn::OrderedTruncate2To(u8, a, b);
-}
-
-HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b32(vec_u32 a, vec_u32 b, vec_u32 c, vec_u32 d) {
-    auto ab = hn::OrderedTruncate2To(u16, a, b);
-    auto cd = hn::OrderedTruncate2To(u16, c, d);
-    return simd_pack_b8_b16(ab, cd);
-}
-
-HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b64(vec_u64 a, vec_u64 b, vec_u64 c, vec_u64 d,
-                                     vec_u64 e, vec_u64 f, vec_u64 g, vec_u64 h) {
-    auto ab = hn::OrderedTruncate2To(u32, a, b);
-    auto cd = hn::OrderedTruncate2To(u32, c, d);
-    auto ef = hn::OrderedTruncate2To(u32, e, f);
-    auto gh = hn::OrderedTruncate2To(u32, g, h);
-    return simd_pack_b8_b32(ab, cd, ef, gh);
-}
-
 HWY_INLINE HWY_ATTR vec_u8 simd_xnor_b8(vec_u8 a, vec_u8 b) {
     return hn::Not(hn::Xor(a, b));
 }
@@ -79,7 +60,6 @@ struct TypeTraits<uint8_t> {
     static constexpr int  Len = 8;
     static constexpr bool IsSigned = false;
     static constexpr bool IsFloat  = false;
-    static constexpr int  HasSIMD  = NPY_SIMD;
     static constexpr bool IsBool   = false;
 };
 
@@ -92,7 +72,6 @@ struct TypeTraits<int8_t> {
     static constexpr int  Len = 8;
     static constexpr bool IsSigned = true;
     static constexpr bool IsFloat  = false;
-    static constexpr int  HasSIMD  = NPY_SIMD;
     static constexpr bool IsBool   = false;
 };
 
@@ -105,7 +84,6 @@ struct TypeTraits<uint16_t> {
     static constexpr int  Len = 16;
     static constexpr bool IsSigned = false;
     static constexpr bool IsFloat  = false;
-    static constexpr int  HasSIMD  = NPY_SIMD;
     static constexpr bool IsBool   = false;
 };
 
@@ -118,7 +96,6 @@ struct TypeTraits<int16_t> {
     static constexpr int  Len = 16;
     static constexpr bool IsSigned = true;
     static constexpr bool IsFloat  = false;
-    static constexpr int  HasSIMD  = NPY_SIMD;
     static constexpr bool IsBool   = false;
 };
 
@@ -131,7 +108,6 @@ struct TypeTraits<uint32_t> {
     static constexpr int  Len = 32;
     static constexpr bool IsSigned = false;
     static constexpr bool IsFloat  = false;
-    static constexpr int  HasSIMD  = NPY_SIMD;
     static constexpr bool IsBool   = false;
 };
 
@@ -144,7 +120,6 @@ struct TypeTraits<int32_t> {
     static constexpr int  Len = 32;
     static constexpr bool IsSigned = true;
     static constexpr bool IsFloat  = false;
-    static constexpr int  HasSIMD  = NPY_SIMD;
     static constexpr bool IsBool   = false;
 };
 
@@ -157,7 +132,6 @@ struct TypeTraits<uint64_t> {
     static constexpr int  Len = 64;
     static constexpr bool IsSigned = false;
     static constexpr bool IsFloat  = false;
-    static constexpr int  HasSIMD  = NPY_SIMD;
     static constexpr bool IsBool   = false;
 };
 
@@ -170,7 +144,6 @@ struct TypeTraits<int64_t> {
     static constexpr int  Len = 64;
     static constexpr bool IsSigned = true;
     static constexpr bool IsFloat  = false;
-    static constexpr int  HasSIMD  = NPY_SIMD;
     static constexpr bool IsBool   = false;
 };
 
@@ -183,7 +156,6 @@ struct TypeTraits<float> {
     static constexpr int  Len = 32;
     static constexpr bool IsSigned = false;
     static constexpr bool IsFloat  = true;
-    static constexpr int  HasSIMD  = NPY_SIMD_F32;
     static constexpr bool IsBool   = false;
 };
 
@@ -196,7 +168,6 @@ struct TypeTraits<double> {
     static constexpr int  Len = 64;
     static constexpr bool IsSigned = false;
     static constexpr bool IsFloat  = true;
-    static constexpr int  HasSIMD  = NPY_SIMD_F64;
     static constexpr bool IsBool   = false;
 };
 
@@ -209,7 +180,6 @@ struct TypeTraits<bool> {
     static constexpr int  Len = 8;
     static constexpr bool IsSigned = false;
     static constexpr bool IsFloat  = false;
-    static constexpr int  HasSIMD  = NPY_SIMD;
     static constexpr bool IsBool   = true;
 };
 
@@ -290,6 +260,26 @@ struct CompareOpTraits<CompareOp::LessEqual> {
         return a <= b;
     }
 };
+
+#if (NPY_SIMD || NPY_SIMD_F32 || NPY_SIMD_F64)
+HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b16(vec_u16 a, vec_u16 b) {
+    return hn::OrderedTruncate2To(u8, a, b);
+}
+
+HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b32(vec_u32 a, vec_u32 b, vec_u32 c, vec_u32 d) {
+    auto ab = hn::OrderedTruncate2To(u16, a, b);
+    auto cd = hn::OrderedTruncate2To(u16, c, d);
+    return simd_pack_b8_b16(ab, cd);
+}
+
+HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b64(vec_u64 a, vec_u64 b, vec_u64 c, vec_u64 d,
+                                     vec_u64 e, vec_u64 f, vec_u64 g, vec_u64 h) {
+    auto ab = hn::OrderedTruncate2To(u32, a, b);
+    auto cd = hn::OrderedTruncate2To(u32, c, d);
+    auto ef = hn::OrderedTruncate2To(u32, e, f);
+    auto gh = hn::OrderedTruncate2To(u32, g, h);
+    return simd_pack_b8_b32(ab, cd, ef, gh);
+}
 
 template<typename Traits, typename Op>
 static auto process_simd_compare(const typename Traits::VecType& a, 
@@ -537,13 +527,14 @@ static void simd_binary_scalar2_compare_b8(char **args, npy_intp len) {
         *dst = Op_Traits::scalarCompare(a, scalar);
     }
 }
+#endif
 
 template<typename T, CompareOp Op>
 static inline void run_binary_simd_compare(char **args, npy_intp const *dimensions, npy_intp const *steps) {
     using Traits = TypeTraits<T>;
     using Traits_Op = CompareOpTraits<Op>;
 
-    if constexpr (Traits::HasSIMD) {
+#if (NPY_SIMD || NPY_SIMD_F32 || NPY_SIMD_F64)
         if (!is_mem_overlap(args[0], steps[0], args[2], steps[2], dimensions[0]) &&
             !is_mem_overlap(args[1], steps[1], args[2], steps[2], dimensions[0])) {
             /* argument one scalar */
@@ -573,7 +564,7 @@ static inline void run_binary_simd_compare(char **args, npy_intp const *dimensio
                 return;
             }
         }
-    }
+#endif
 
     BINARY_LOOP {
         if constexpr (Traits::IsBool) {
