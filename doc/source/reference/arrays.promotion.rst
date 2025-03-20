@@ -201,6 +201,27 @@ This leads to what may appear as "exceptions" to the rules:
 In principle, some of these exceptions may make sense for other functions.
 Please raise an issue if you feel this is the case.
 
+Notable behavior with Python builtin type classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When combining Python's builtin scalar *types* (i.e., ``float``, ``int``,
+or ``complex``, not scalar *values*), the promotion rules can appear
+surprising:
+
+  >>> np.result_type(7, np.array([1], np.float32))
+  dtype('float32')  # The scalar value '7' does not impact type promotion
+  >>> np.result_type(type(7), np.array([1], np.float32))
+  dtype('float64')  # The *type* of the scalar value '7' does impact promotion
+  # Similar situations happen with Python's float and complex types
+
+The reason for this behavior is that NumPy converts ``int`` to its default
+integer type, and uses that type for promotion:
+
+  >>> np.result_type(int)
+  dtype('int64')
+
+See also :ref:`dtype-constructing-from-python-types` for more details.
+
 Promotion of non-numerical datatypes
 ------------------------------------
 
@@ -258,4 +279,4 @@ could drastically slow down evaluation.
    precision of NumPy scalars or 0-D arrays for promotion purposes.
 
 .. [#default-int] The default integer is marked as ``int64`` in the schema
-   but is ``int32`` on 32bit platforms.  However, normal PCs are 64bit.
+   but is ``int32`` on 32bit platforms.  However, most modern systems are 64bit.
