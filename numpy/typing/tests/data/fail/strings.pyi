@@ -1,8 +1,10 @@
+from typing import Any
 import numpy as np
 import numpy.typing as npt
 
 AR_U: npt.NDArray[np.str_]
 AR_S: npt.NDArray[np.bytes_]
+AR_T: np.ndarray[Any, np.dtypes.StringDType]
 
 np.strings.equal(AR_U, AR_S)  # E: incompatible type
 
@@ -62,3 +64,5 @@ np.strings.isnumeric(AR_S)  # E: incompatible type
 
 np.strings.replace(AR_U, b"_", b"-", 10)  # E: incompatible type
 np.strings.replace(AR_S, "_", "-", 1)  # E: incompatible type
+
+np.strings.add(AR_T, 42)  # E: incompatible type
