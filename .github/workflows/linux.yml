@@ -65,7 +65,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231
+    - uses: astral-sh/setup-uv@22695119d769bdb6f7032ad67b9bca0ef8c4a174
       with:
         python-version: ${{ matrix.version }}
         enable-cache: false
