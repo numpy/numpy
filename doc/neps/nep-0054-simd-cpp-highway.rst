@@ -1,11 +1,11 @@
 .. _NEP54:
 
 ===================================================================================
-NEP 54 — SIMD infrastructure evolution: adopting Google Highway when moving to C++?
+NEP 54 — SIMD infrastructure evolution: adopting Google Highway when moving to C++
 ===================================================================================
 
 :Author: Sayed Adel, Jan Wassenberg, Matti Picus, Ralf Gommers, Chris Sidebottom
-:Status: Draft
+:Status: Accepted
 :Type: Standards Track
 :Created: 2023-07-06
 :Resolution: TODO
