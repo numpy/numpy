@@ -378,7 +378,7 @@ A total of 530 pull requests were merged for this release.
 * `#23130 <https://github.com/numpy/numpy/pull/23130>`__: MAINT, BLD: Update wheel and GitPython versions.
 * `#23136 <https://github.com/numpy/numpy/pull/23136>`__: ENH: create and use indexed inner loops
 * `#23141 <https://github.com/numpy/numpy/pull/23141>`__: CI: reduce CI load - two fewer Azure Windows jobs, and no GHA...
-* `#23142 <https://github.com/numpy/numpy/pull/23142>`__: NEP: add a paragraph about accreditation for sponsored work
+* `#23142 <https://github.com/numpy/numpy/pull/23142>`__: NEP: add a paragraph about accredidation for sponsored work
 * `#23143 <https://github.com/numpy/numpy/pull/23143>`__: ENH: Allow trivial pickling of user DType (classes)
 * `#23144 <https://github.com/numpy/numpy/pull/23144>`__: TYP,MAINT: Add a missing explicit ``Any`` parameter to the ``npt.ArrayLike``...
 * `#23145 <https://github.com/numpy/numpy/pull/23145>`__: TYP,MAINT: Remove typing-related Python <3.9 leftovers
@@ -662,7 +662,7 @@ A total of 530 pull requests were merged for this release.
 * `#23770 <https://github.com/numpy/numpy/pull/23770>`__: MAINT: do not use copyswap in where internals
 * `#23772 <https://github.com/numpy/numpy/pull/23772>`__: DOC: added note for git tagging
 * `#23774 <https://github.com/numpy/numpy/pull/23774>`__: BUG: Fix median and quantile NaT handling
-* `#23776 <https://github.com/numpy/numpy/pull/23776>`__: ENH: replace deprecated distutils use in convenience function
+* `#23776 <https://github.com/numpy/numpy/pull/23776>`__: ENH: replace depcrecated distutils use in convenience function
 * `#23777 <https://github.com/numpy/numpy/pull/23777>`__: Speed up _string_helpers init.
 * `#23779 <https://github.com/numpy/numpy/pull/23779>`__: DOC: Fix link from mtrand.randint -> Generator.integers.
 * `#23790 <https://github.com/numpy/numpy/pull/23790>`__: DOC: used a more readable if/else form than old-style ternary...

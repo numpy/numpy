@@ -153,7 +153,7 @@ A total of 413 pull requests were merged for this release.
 * `#13871 <https://github.com/numpy/numpy/pull/13871>`__: MAINT: Ensure array_dealloc does not modify refcount of self
 * `#13874 <https://github.com/numpy/numpy/pull/13874>`__: MAINT: Prepare master for 1.18.0 development.
 * `#13876 <https://github.com/numpy/numpy/pull/13876>`__: MAINT,BUG,DOC: Fix errors in _add_newdocs
-* `#13880 <https://github.com/numpy/numpy/pull/13880>`__: MAINT: Remove an unnecessary backslash between two string literals
+* `#13880 <https://github.com/numpy/numpy/pull/13880>`__: MAINT: Remove an unnessary backslash between two string literals
 * `#13881 <https://github.com/numpy/numpy/pull/13881>`__: MAINT: Update pavement to use python3 in shell commands.
 * `#13882 <https://github.com/numpy/numpy/pull/13882>`__: MAINT: Remove unnecessary backslashes (and replace others by...
 * `#13883 <https://github.com/numpy/numpy/pull/13883>`__: MAINT: Replace integers in places where booleans are expected
@@ -485,7 +485,7 @@ A total of 413 pull requests were merged for this release.
 * `#14845 <https://github.com/numpy/numpy/pull/14845>`__: MAINT: revert gh-14800, which gave precedence to OO->O over OO->?
 * `#14874 <https://github.com/numpy/numpy/pull/14874>`__: REL: Update master after 1.17.4 release.
 * `#14878 <https://github.com/numpy/numpy/pull/14878>`__: BUILD: remove SSE2 flag from numpy.random builds
-* `#14879 <https://github.com/numpy/numpy/pull/14879>`__: DOC: Update NEP29 with Python3.8 information.
+* `#14879 <https://github.com/numpy/numpy/pull/14879>`__: DOC: Update NEP29 with Python3.8 informations.
 * `#14881 <https://github.com/numpy/numpy/pull/14881>`__: BUG: Remove builtins from __all__
 * `#14898 <https://github.com/numpy/numpy/pull/14898>`__: MAINT: Delete and ignore generated files
 * `#14899 <https://github.com/numpy/numpy/pull/14899>`__: Update FUNDING.yml

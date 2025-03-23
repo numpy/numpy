@@ -180,7 +180,7 @@ A total of 469 pull requests were merged for this release.
 * `#26113 <https://github.com/numpy/numpy/pull/26113>`__: BLD: Do not use -O3 flag when building in debug mode
 * `#26116 <https://github.com/numpy/numpy/pull/26116>`__: ENH: inherit numerical dtypes from abstract ones.
 * `#26119 <https://github.com/numpy/numpy/pull/26119>`__: BUG: fix reference counting error in stringdtype setup
-* `#26123 <https://github.com/numpy/numpy/pull/26123>`__: BUG: update pocketfft to unconditionally disable use of aligned_alloc
+* `#26123 <https://github.com/numpy/numpy/pull/26123>`__: BUG: update pocketfft to unconditionaly disable use of aligned_alloc
 * `#26125 <https://github.com/numpy/numpy/pull/26125>`__: DOC: Bump pydata-sphinx-theme version
 * `#26128 <https://github.com/numpy/numpy/pull/26128>`__: DOC: Update absolute_beginners.rst
 * `#26129 <https://github.com/numpy/numpy/pull/26129>`__: MAINT: add missing noexcept clauses
@@ -362,7 +362,7 @@ A total of 469 pull requests were merged for this release.
 * `#26604 <https://github.com/numpy/numpy/pull/26604>`__: refguide-check with pytest as a runner
 * `#26605 <https://github.com/numpy/numpy/pull/26605>`__: DOC: fix typos in numpy v2.0 documentation
 * `#26606 <https://github.com/numpy/numpy/pull/26606>`__: DOC: Update randn() to use rng.standard_normal()
-* `#26607 <https://github.com/numpy/numpy/pull/26607>`__: MNT: Reorganize non-constant global statistics into structs
+* `#26607 <https://github.com/numpy/numpy/pull/26607>`__: MNT: Reorganize non-constant global statics into structs
 * `#26609 <https://github.com/numpy/numpy/pull/26609>`__: DOC: Updated notes and examples for np.insert.
 * `#26610 <https://github.com/numpy/numpy/pull/26610>`__: BUG: np.take handle 64-bit indices on 32-bit platforms
 * `#26611 <https://github.com/numpy/numpy/pull/26611>`__: MNT: Remove ``set_string_function``
@@ -495,7 +495,7 @@ A total of 469 pull requests were merged for this release.
 * `#26937 <https://github.com/numpy/numpy/pull/26937>`__: TYP,BUG: Remove ``numpy.cast`` and ``numpy.disp`` from the typing...
 * `#26938 <https://github.com/numpy/numpy/pull/26938>`__: TYP,BUG: Fix ``dtype`` type alias specialization issue in ``__init__.pyi``
 * `#26942 <https://github.com/numpy/numpy/pull/26942>`__: TYP: Improved ``numpy.generic`` rich comparison operator type...
-* `#26943 <https://github.com/numpy/numpy/pull/26943>`__: TYP,BUG: Remove non-existent ``numpy.__git_version__`` in the...
+* `#26943 <https://github.com/numpy/numpy/pull/26943>`__: TYP,BUG: Remove non-existant ``numpy.__git_version__`` in the...
 * `#26946 <https://github.com/numpy/numpy/pull/26946>`__: TYP: Add missing typecodes in ``numpy._core.numerictypes.typecodes``
 * `#26950 <https://github.com/numpy/numpy/pull/26950>`__: MAINT: add freethreading_compatible directive to cython build
 * `#26953 <https://github.com/numpy/numpy/pull/26953>`__: TYP: Replace ``typing.Union`` with ``|`` in ``numpy._typing``

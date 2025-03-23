@@ -341,7 +341,7 @@ A total of 581 pull requests were merged for this release.
 * `#18148 <https://github.com/numpy/numpy/pull/18148>`__: MAINT: Bump sphinx from 3.4.1 to 3.4.3
 * `#18149 <https://github.com/numpy/numpy/pull/18149>`__: MAINT: Bump hypothesis from 5.46.0 to 6.0.0
 * `#18150 <https://github.com/numpy/numpy/pull/18150>`__: BUG: Ensure too many advanced indices raises an exception
-* `#18152 <https://github.com/numpy/numpy/pull/18152>`__: BUG: Promotion between strings and objects was asymmetric
+* `#18152 <https://github.com/numpy/numpy/pull/18152>`__: BUG: Promotion between strings and objects was assymetric
 * `#18156 <https://github.com/numpy/numpy/pull/18156>`__: MAINT: Remove redundant null check before free
 * `#18157 <https://github.com/numpy/numpy/pull/18157>`__: BUG: Initialize value of no_castable_output used in ufunc_loop_matches
 * `#18161 <https://github.com/numpy/numpy/pull/18161>`__: MAINT: Make keyword arrays static
@@ -647,7 +647,7 @@ A total of 581 pull requests were merged for this release.
 * `#18851 <https://github.com/numpy/numpy/pull/18851>`__: MAINT: Disable pip version check for azure lint check.
 * `#18853 <https://github.com/numpy/numpy/pull/18853>`__: ENH: Improve the placeholder annotations within sub-modules (part...
 * `#18855 <https://github.com/numpy/numpy/pull/18855>`__: STY: change CRLF line terminators to Unix
-* `#18856 <https://github.com/numpy/numpy/pull/18856>`__: MAINT: Fix the typo "implement"
+* `#18856 <https://github.com/numpy/numpy/pull/18856>`__: MAINT: Fix the typo "implment"
 * `#18862 <https://github.com/numpy/numpy/pull/18862>`__: TST: Skip f2py TestSharedMemory for LONGDOUBLE on macos/arm64
 * `#18863 <https://github.com/numpy/numpy/pull/18863>`__: ENH: Add max values comparison for floating point
 * `#18864 <https://github.com/numpy/numpy/pull/18864>`__: MAINT: Remove dead codepath in generalized ufuncs
@@ -659,7 +659,7 @@ A total of 581 pull requests were merged for this release.
 * `#18880 <https://github.com/numpy/numpy/pull/18880>`__: API: Ensure that casting does not affect ufunc loop
 * `#18882 <https://github.com/numpy/numpy/pull/18882>`__: ENH: Add min values comparison for floating point
 * `#18885 <https://github.com/numpy/numpy/pull/18885>`__: MAINT: Remove unsafe unions and ABCs from return-annotations
-* `#18889 <https://github.com/numpy/numpy/pull/18889>`__: ENH: Add SIMD operations for min and max value comparison
+* `#18889 <https://github.com/numpy/numpy/pull/18889>`__: ENH: Add SIMD operations for min and max value comparision
 * `#18890 <https://github.com/numpy/numpy/pull/18890>`__: MAINT: ssize_t -> Py_ssize_t and other fixes for Python v3.10.0
 * `#18891 <https://github.com/numpy/numpy/pull/18891>`__: MAINT: Bump typing-extensions from 3.7.4.3 to 3.10.0.0
 * `#18893 <https://github.com/numpy/numpy/pull/18893>`__: DOC: Add a set of standard replies.
