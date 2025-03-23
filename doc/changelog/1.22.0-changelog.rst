@@ -23,7 +23,7 @@ names contributed a patch for the first time.
 * Anirudh Dagar +
 * Ankit Dwivedi +
 * Antony Lee
-* Arfy Slowly +
+* Arfy Slowy +
 * Arryan Singh +
 * Arun Palaniappen +
 * Arushi Sharma +

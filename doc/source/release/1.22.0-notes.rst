@@ -61,7 +61,7 @@ Deprecations
 
 Use delimiter rather than delimiter as kwarg in mrecords
 --------------------------------------------------------
-The misspelled keyword argument ``delimiter`` of
+The misspelled keyword argument ``delimitor`` of
 ``numpy.ma.mrecords.fromtextfile()`` has been changed to ``delimiter``, using
 it will emit a deprecation warning.
 

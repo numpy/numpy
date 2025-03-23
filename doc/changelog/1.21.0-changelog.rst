@@ -564,7 +564,7 @@ A total of 581 pull requests were merged for this release.
 * `#18670 <https://github.com/numpy/numpy/pull/18670>`__: BUG: Fix small issues found with pytest-leaks
 * `#18676 <https://github.com/numpy/numpy/pull/18676>`__: MAINT: Implement new style promotion for `np.result_type`, etc.
 * `#18679 <https://github.com/numpy/numpy/pull/18679>`__: BUG: Changed METH_VARARGS to METH_NOARGS
-* `#18680 <https://github.com/numpy/numpy/pull/18680>`__: Docs: simd-optimizations.rst: fix typo (baseline ~> baseline)
+* `#18680 <https://github.com/numpy/numpy/pull/18680>`__: Docs: simd-optimizations.rst: fix typo (basline ~> baseline)
 * `#18685 <https://github.com/numpy/numpy/pull/18685>`__: REL: Update main after 1.20.2 release.
 * `#18686 <https://github.com/numpy/numpy/pull/18686>`__: BUG: Fix test_ccompiler_opt when path contains dots
 * `#18689 <https://github.com/numpy/numpy/pull/18689>`__: DOC: Change matrix size in absolute beginners doc.
@@ -607,7 +607,7 @@ A total of 581 pull requests were merged for this release.
 * `#18773 <https://github.com/numpy/numpy/pull/18773>`__: CI: Fixing typo in Azure job run
 * `#18777 <https://github.com/numpy/numpy/pull/18777>`__: DOC: update random and asserts in test guidelines
 * `#18778 <https://github.com/numpy/numpy/pull/18778>`__: MAINT: Relax the integer-type-constraint of `npt._ShapeLike`
-* `#18779 <https://github.com/numpy/numpy/pull/18779>`__: DOC: fix spelling of "recommended" ("recommended")
+* `#18779 <https://github.com/numpy/numpy/pull/18779>`__: DOC: fix spelling of "reccomended" ("recommended")
 * `#18780 <https://github.com/numpy/numpy/pull/18780>`__: ENH: Improve the placeholder annotations for the main numpy namespace...
 * `#18781 <https://github.com/numpy/numpy/pull/18781>`__: ENH: Add `__all__` to a number of public modules
 * `#18785 <https://github.com/numpy/numpy/pull/18785>`__: DOC: change `dec.parametrize` to `pytest.mark.parametrize`
