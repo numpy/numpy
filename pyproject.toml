@@ -151,8 +151,13 @@ test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
 
 [tool.cibuildwheel.linux]
-manylinux-x86_64-image = "manylinux_2_28"
-manylinux-aarch64-image = "manylinux_2_28"
+# workaround https://github.com/numpy/numpy/issues/28570 by using
+# more recent images than the default ones in cibuildwheel 2.23.1
+# TODO remove this workaround once cibuildwheel gets updated to a version > 2.23.1
+manylinux-x86_64-image = "quay.io/pypa/manylinux_2_28:2025.03.23-1"
+manylinux-aarch64-image = "quay.io/pypa/manylinux_2_28:2025.03.23-1"
+# manylinux-x86_64-image = "manylinux_2_28"
+# manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
 musllinux-aarch64-image = "musllinux_1_2"
 
