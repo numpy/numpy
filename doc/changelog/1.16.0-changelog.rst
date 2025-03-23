@@ -374,7 +374,7 @@ A total of 490 pull requests were merged for this release.
 * `#11953 <https://github.com/numpy/numpy/pull/11953>`__: TST: codecov.yml improvements
 * `#11957 <https://github.com/numpy/numpy/pull/11957>`__: ENH: mark that large allocations can use huge pages
 * `#11958 <https://github.com/numpy/numpy/pull/11958>`__: TST: Add a test for np.pad where constant_values is an object
-* `#11959 <https://github.com/numpy/numpy/pull/11959>`__: MAINT: Explicitely cause pagefaults to happen before starting...
+* `#11959 <https://github.com/numpy/numpy/pull/11959>`__: MAINT: Explicitly cause pagefaults to happen before starting...
 * `#11961 <https://github.com/numpy/numpy/pull/11961>`__: TST: Add more tests for np.pad
 * `#11962 <https://github.com/numpy/numpy/pull/11962>`__: ENH: maximum lines of content to be read from numpy.loadtxt
 * `#11965 <https://github.com/numpy/numpy/pull/11965>`__: BENCH: Add a benchmark comparing block to copy in the 3D case
@@ -567,7 +567,7 @@ A total of 490 pull requests were merged for this release.
 * `#12437 <https://github.com/numpy/numpy/pull/12437>`__: MAINT: refactor datetime.c_metadata creation
 * `#12439 <https://github.com/numpy/numpy/pull/12439>`__: BUG: test, fix NPY_VISIBILITY_HIDDEN on gcc, which becomes NPY_NO_EXPORT
 * `#12440 <https://github.com/numpy/numpy/pull/12440>`__: BUG: don't override original errors when casting inside np.dot()...
-* `#12443 <https://github.com/numpy/numpy/pull/12443>`__: MAINT Use set litterals
+* `#12443 <https://github.com/numpy/numpy/pull/12443>`__: MAINT Use set literals
 * `#12445 <https://github.com/numpy/numpy/pull/12445>`__: MAINT: Use list and dict comprehension when possible
 * `#12446 <https://github.com/numpy/numpy/pull/12446>`__: MAINT: Fixups to new functions in np.lib.recfunctions
 * `#12447 <https://github.com/numpy/numpy/pull/12447>`__: ENH: add back the multifield copy->view change

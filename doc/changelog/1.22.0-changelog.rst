@@ -23,7 +23,7 @@ names contributed a patch for the first time.
 * Anirudh Dagar +
 * Ankit Dwivedi +
 * Antony Lee
-* Arfy Slowy +
+* Arfy Slowly +
 * Arryan Singh +
 * Arun Palaniappen +
 * Arushi Sharma +
@@ -220,7 +220,7 @@ A total of 609 pull requests were merged for this release.
 * `#19142 <https://github.com/numpy/numpy/pull/19142>`__: BUG: expose ``short_version`` as previously in version.py
 * `#19151 <https://github.com/numpy/numpy/pull/19151>`__: ENH: Vectorising np.linalg.qr
 * `#19165 <https://github.com/numpy/numpy/pull/19165>`__: DOC: Explicitly mention that ``searchsorted`` returns an integer...
-* `#19167 <https://github.com/numpy/numpy/pull/19167>`__: ENH: Improve readibility of error message in terminal.
+* `#19167 <https://github.com/numpy/numpy/pull/19167>`__: ENH: Improve readability of error message in terminal.
 * `#19170 <https://github.com/numpy/numpy/pull/19170>`__: API: Delay string and number promotion deprecation/future warning
 * `#19172 <https://github.com/numpy/numpy/pull/19172>`__: BUG: Fixed an issue wherein ``_GenericAlias`` could raise for non-iterable...
 * `#19173 <https://github.com/numpy/numpy/pull/19173>`__: ENH: Add support for copy modes to NumPy
@@ -251,7 +251,7 @@ A total of 609 pull requests were merged for this release.
 * `#19237 <https://github.com/numpy/numpy/pull/19237>`__: ENH: Add annotations to ``np.core.multiarray`` part 3/4
 * `#19241 <https://github.com/numpy/numpy/pull/19241>`__: MAINT: Bump hypothesis from 6.13.14 to 6.14.0
 * `#19242 <https://github.com/numpy/numpy/pull/19242>`__: MAINT: Bump mypy from 0.812 to 0.902
-* `#19244 <https://github.com/numpy/numpy/pull/19244>`__: BUG: Fix an issue wherein assigment to ``np.ma.masked_array`` ignores...
+* `#19244 <https://github.com/numpy/numpy/pull/19244>`__: BUG: Fix an issue wherein assignment to ``np.ma.masked_array`` ignores...
 * `#19245 <https://github.com/numpy/numpy/pull/19245>`__: ENH: Add dtype-support to the ``np.core.shape_base`` annotations
 * `#19251 <https://github.com/numpy/numpy/pull/19251>`__: BUG: revise string_from_pyobj/try_pyarr_from_string with respect...
 * `#19254 <https://github.com/numpy/numpy/pull/19254>`__: MAINT: Refactor output ufunc wrapping logic
@@ -286,7 +286,7 @@ A total of 609 pull requests were merged for this release.
 * `#19322 <https://github.com/numpy/numpy/pull/19322>`__: BUG: Fix cast safety and comparisons for zero sized voids
 * `#19323 <https://github.com/numpy/numpy/pull/19323>`__: BUG: Correct Cython declaration in random
 * `#19326 <https://github.com/numpy/numpy/pull/19326>`__: BUG: protect against accessing base attribute of a NULL subarray
-* `#19328 <https://github.com/numpy/numpy/pull/19328>`__: MAINT: Replace ``"dtype[Any]"`` with ``dtype`` in the definiton of...
+* `#19328 <https://github.com/numpy/numpy/pull/19328>`__: MAINT: Replace ``"dtype[Any]"`` with ``dtype`` in the definition of...
 * `#19329 <https://github.com/numpy/numpy/pull/19329>`__: ENH Add a conda-based CI job on azure.
 * `#19338 <https://github.com/numpy/numpy/pull/19338>`__: DOC: Removed duplicate instructions for building docs from ``dev/index``...
 * `#19344 <https://github.com/numpy/numpy/pull/19344>`__: MAINT: Annotate missing attributes of ``np.number`` subclasses
@@ -378,7 +378,7 @@ A total of 609 pull requests were merged for this release.
 * `#19560 <https://github.com/numpy/numpy/pull/19560>`__: TST: Bump the GitHub actions python 3.10 version
 * `#19561 <https://github.com/numpy/numpy/pull/19561>`__: DOC: Remove explicit parameter sparse=False in meshgrid() indexing...
 * `#19563 <https://github.com/numpy/numpy/pull/19563>`__: MAINT: Bump hypothesis from 6.14.3 to 6.14.4
-* `#19564 <https://github.com/numpy/numpy/pull/19564>`__: TST: Add "Scaled float" custom DType for testng
+* `#19564 <https://github.com/numpy/numpy/pull/19564>`__: TST: Add "Scaled float" custom DType for testing
 * `#19565 <https://github.com/numpy/numpy/pull/19565>`__: DOC: Fix sphinx warnings in c-info.beyond-basics.rst
 * `#19566 <https://github.com/numpy/numpy/pull/19566>`__: DOC: Remove ``dot`` docstring in numpy/core/_add_newdocs.py
 * `#19567 <https://github.com/numpy/numpy/pull/19567>`__: DOC: Fix Unknown section warning when building docs
@@ -527,7 +527,7 @@ A total of 609 pull requests were merged for this release.
 * `#19918 <https://github.com/numpy/numpy/pull/19918>`__: MAINT: Override the modules of ``np.char`` and ``np.rec`` functions
 * `#19919 <https://github.com/numpy/numpy/pull/19919>`__: ENH: Create an experimental export of the new DType API
 * `#19920 <https://github.com/numpy/numpy/pull/19920>`__: DOC: Fix typos in NEPs, found by codespell
-* `#19921 <https://github.com/numpy/numpy/pull/19921>`__: DEP: Use ``delimiter`` rather than ``delimitor`` as kwarg in mrecords
+* `#19921 <https://github.com/numpy/numpy/pull/19921>`__: DEP: Use ``delimiter`` rather than ``delimiter`` as kwarg in mrecords
 * `#19925 <https://github.com/numpy/numpy/pull/19925>`__: BUG: ufunc: Fix potential memory leak.
 * `#19926 <https://github.com/numpy/numpy/pull/19926>`__: BUG: Resolve Divide by Zero on Apple silicon + test failures
 * `#19927 <https://github.com/numpy/numpy/pull/19927>`__: BUG: Only call the get_versions() function once on import

@@ -1665,7 +1665,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
             pos += numDigits;
 
             if (count > maxPrintLen - pos) {
-                PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
+                PyErr_SetString(PyExc_RuntimeError, "Float formatting result too large");
                 return -1;
             }
 
@@ -1772,7 +1772,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         npy_int32 count = desiredFractionalDigits - numFractionDigits;
         
         if (count > maxPrintLen - pos) {
-            PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
+            PyErr_SetString(PyExc_RuntimeError, "Float formatting result too large");
             return -1;
         }
         numFractionDigits += count;
@@ -1816,7 +1816,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         }
 
         if (count > maxPrintLen - pos) {
-            PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
+            PyErr_SetString(PyExc_RuntimeError, "Float formatting result too large");
             return -1;
         }
 
@@ -1830,7 +1830,7 @@ FormatPositional(char *buffer, npy_uint32 bufferSize, BigInt *mantissa,
         npy_int32 count = pos;
                 
         if (count > maxPrintLen - shift) {
-            PyErr_SetString(PyExc_RuntimeError, "Float formating result too large");
+            PyErr_SetString(PyExc_RuntimeError, "Float formatting result too large");
             return -1;
         }
 
