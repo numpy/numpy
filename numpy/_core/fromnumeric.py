@@ -209,7 +209,7 @@ def _reshape_dispatcher(a, /, shape=None, order=None, *, newshape=None,
 
 
 @array_function_dispatch(_reshape_dispatcher)
-def reshape(a, /, shape=None, order='C', *, newshape=None, copy=None):
+def reshape(a, shape=None, order='C', *, newshape=None, copy=None):
     """
     Gives a new shape to an array without changing its data.
 
