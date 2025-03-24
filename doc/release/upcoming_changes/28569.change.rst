@@ -1,0 +1,5 @@
+Rewording eError messages when converting strings to floats
+-----------------------------------------------------------
+The error messages returned when converting a string to a float with the
+method ``np.format_float_positional`` have been slightly reworded. There
+was a spelling fix from "formating" to "formatting".
