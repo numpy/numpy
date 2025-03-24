@@ -773,6 +773,13 @@ cdef extern from "numpy/ndarraytypes.h":
         int64_t year
         int32_t month, day, hour, min, sec, us, ps, as
 
+    # Iterator API added in v1.6
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
+    # https://github.com/cython/cython/issues/6720
+    ctypedef int (*NpyIter_IterNextFunc "NpyIter_IterNextFunc *")(NpyIter* it) noexcept nogil
+    ctypedef void (*NpyIter_GetMultiIndexFunc "NpyIter_GetMultiIndexFunc *")(NpyIter* it, npy_intp* outcoords) noexcept nogil
 
 cdef extern from "numpy/arrayscalars.h":
 
@@ -1024,10 +1031,6 @@ cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
     return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base
 
 
-# Iterator API added in v1.6
-ctypedef int (*NpyIter_IterNextFunc)(NpyIter* it) noexcept nogil
-ctypedef void (*NpyIter_GetMultiIndexFunc)(NpyIter* it, npy_intp* outcoords) noexcept nogil
-
 cdef extern from "numpy/arrayobject.h":
 
     ctypedef struct NpyIter:
@@ -1145,6 +1148,9 @@ cdef extern from "numpy/arrayobject.h":
                                         npy_intp* outstrides) except NPY_FAIL
     npy_bool NpyIter_IsFirstVisit(NpyIter* it, int iop) nogil
     # functions for iterating an NpyIter object
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
     NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
     NpyIter_GetMultiIndexFunc* NpyIter_GetGetMultiIndex(NpyIter* it,
                                                         char** errmsg) except NULL
