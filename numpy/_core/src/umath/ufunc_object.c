@@ -506,8 +506,8 @@ fail:
 static int
 _set_out_array(PyObject *obj, PyArrayObject **store)
 {
-    if (obj == Py_None) {
-        /* Translate None to NULL */
+    if (obj == Py_None || obj == Py_Ellipsis) {
+        /* Translate None/Ellipsis to NULL; Ellipsis ensures an array return */
         return 0;
     }
     if (PyArray_Check(obj)) {
@@ -3596,7 +3596,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
     }
-    if (out_obj && !PyArray_OutputConverter(out_obj, &out)) {
+    /* Out can be`out=...` to indicate no scalar return or an array */
+    if (out_obj && out_obj != Py_Ellipsis && !PyArray_OutputConverter(out_obj, &out)) {
         goto fail;
     }
     if (keepdims_obj && !PyArray_PythonPyIntFromInt(keepdims_obj, &keepdims)) {

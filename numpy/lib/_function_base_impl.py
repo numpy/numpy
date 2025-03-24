@@ -4258,8 +4258,7 @@ def percentile(a,
 
     # Use dtype of array if possible (e.g., if q is a python int or float)
     # by making the divisor have the dtype of the data array.
-    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
-    q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 
