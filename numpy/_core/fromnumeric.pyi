@@ -177,7 +177,6 @@ def take(
 @overload
 def reshape(  # shape: index
     a: _ArrayLike[_SCT],
-    /,
     shape: SupportsIndex,
     order: _OrderACF = "C",
     *,
@@ -186,7 +185,6 @@ def reshape(  # shape: index
 @overload
 def reshape(  # shape: (int, ...) @ _AnyShapeType
     a: _ArrayLike[_SCT],
-    /,
     shape: _AnyShapeType,
     order: _OrderACF = "C",
     *,
@@ -195,7 +193,6 @@ def reshape(  # shape: (int, ...) @ _AnyShapeType
 @overload  # shape: Sequence[index]
 def reshape(
     a: _ArrayLike[_SCT],
-    /,
     shape: Sequence[SupportsIndex],
     order: _OrderACF = "C",
     *,
@@ -204,7 +201,6 @@ def reshape(
 @overload  # shape: index
 def reshape(
     a: ArrayLike,
-    /,
     shape: SupportsIndex,
     order: _OrderACF = "C",
     *,
@@ -213,7 +209,6 @@ def reshape(
 @overload
 def reshape(  # shape: (int, ...) @ _AnyShapeType
     a: ArrayLike,
-    /,
     shape: _AnyShapeType,
     order: _OrderACF = "C",
     *,
@@ -222,7 +217,6 @@ def reshape(  # shape: (int, ...) @ _AnyShapeType
 @overload  # shape: Sequence[index]
 def reshape(
     a: ArrayLike,
-    /,
     shape: Sequence[SupportsIndex],
     order: _OrderACF = "C",
     *,
@@ -236,7 +230,6 @@ def reshape(
 )
 def reshape(
     a: ArrayLike,
-    /,
     shape: None = None,
     order: _OrderACF = "C",
     *,
