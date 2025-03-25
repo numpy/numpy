@@ -521,6 +521,11 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
 
         return 0;
     }
+    if (obj == Py_Ellipsis) {
+        PyErr_SetString(PyExc_TypeError,
+            "must use `...` as `out=...` and not per-operand/in a tuple");
+        return -1;
+    }
     PyErr_SetString(PyExc_TypeError, "return arrays must be of ArrayType");
 
     return -1;
@@ -3487,7 +3492,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
      */
     PyObject *otype_obj = NULL, *out_obj = NULL, *indices_obj = NULL;
     PyObject *keepdims_obj = NULL, *wheremask_obj = NULL;
-    int return_scalar = 1;  /* scalar return is disabled for out=... */
+    npy_bool return_scalar = NPY_TRUE;  /* scalar return is disabled for out=... */
     if (operation == UFUNC_REDUCEAT) {
         NPY_PREPARE_ARGPARSER;
 
@@ -3551,7 +3556,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     if (out_is_passed_by_position) {
         /* in this branch, out is always wrapped in a tuple. */
         if (out_obj == Py_Ellipsis) {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_TypeError,
                 "out=... is only allowed as a keyword argument.");
             goto fail;
         }
@@ -3565,7 +3570,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     else if (out_obj) {
         if (out_obj == Py_Ellipsis) {
             out_obj = NULL;
-            return_scalar = 0;
+            return_scalar = NPY_FALSE;
         }
         else if (_set_full_args_out(1, out_obj, &full_args) < 0) {
             goto fail;
@@ -3606,7 +3611,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
     }
-    if (out_obj && !PyArray_OutputConverter(out_obj, &out)) {
+    if (out_obj && _set_out_array(out_obj, &out) < 0) {
         goto fail;
     }
     if (keepdims_obj && !PyArray_PythonPyIntFromInt(keepdims_obj, &keepdims)) {
@@ -4344,7 +4349,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             if (i < (int)len_args) {
                 tmp = args[i];
                 if (tmp == Py_Ellipsis) {
-                    PyErr_SetString(PyExc_ValueError,
+                    PyErr_SetString(PyExc_TypeError,
                         "out=... is only allowed as a keyword argument.");
                     goto fail;
                 }
