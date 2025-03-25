@@ -59,7 +59,7 @@ value for the ``usemask`` parameter.
 Deprecations
 ============
 
-Use delimiter rather than delimiter as kwarg in mrecords
+Use delimiter rather than delimitor as kwarg in mrecords
 --------------------------------------------------------
 The misspelled keyword argument ``delimitor`` of
 ``numpy.ma.mrecords.fromtextfile()`` has been changed to ``delimiter``, using
