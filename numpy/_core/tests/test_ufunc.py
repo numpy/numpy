@@ -1066,11 +1066,26 @@ class TestUfunc:
         np.vecdot(a, b, out=c[..., 0])
         assert_array_equal(c[..., 0], np.sum(a * b, axis=-1), err_msg=msg)
 
-    def test_output_ellipsis(self):
-        assert type(np.add(1, 2, out=...)) is np.ndarray
-        assert type(np.add.reduce(1, out=...)) is np.ndarray
-        res1, res2 = np.divmod(1, 2, out=...)
-        assert type(res1) is type(res2) is np.ndarray
+    @pytest.mark.parametrize("arg", ["array", "scalar", "subclass"])
+    def test_output_ellipsis(self, arg):
+        class subclass(np.ndarray):
+            def __array_wrap__(self, obj, context=None, return_value=None):
+                return super().__array_wrap__(obj, context, return_value)
+
+        if arg == "scalar":
+            one = 1
+            expected_type = np.ndarray
+        elif arg == "array":
+            one = np.array(1)
+            expected_type = np.ndarray
+        elif arg == "subclass":
+            one = np.array(1).view(subclass)
+            expected_type = subclass
+
+        assert type(np.add(one, 2, out=...)) is expected_type
+        assert type(np.add.reduce(one, out=...)) is expected_type
+        res1, res2 = np.divmod(one, 2, out=...)
+        assert type(res1) is type(res2) is expected_type
 
     def test_output_ellipsis_errors(self):
         with pytest.raises(TypeError,
