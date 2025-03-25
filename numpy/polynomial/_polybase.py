@@ -9,12 +9,15 @@ abc module from the stdlib, hence it is only available for Python >= 2.6.
 import os
 import abc
 import numbers
-from typing import Callable
+from typing import Callable, Optional, Union, List, Tuple, Any, Type, TypeVar
 
 import numpy as np
+from numpy import ndarray, dtype
 from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']
+
+T = TypeVar("T", bound="ABCPolyBase")
 
 class ABCPolyBase(abc.ABC):
     """An abstract base class for immutable series classes.
@@ -946,8 +949,18 @@ class ABCPolyBase(abc.ABC):
         return x, y
 
     @classmethod
-    def fit(cls, x, y, deg, domain=None, rcond=None, full=False, w=None,
-        window=None, symbol='x'):
+    def fit(
+            cls: Type[T],
+            x: ndarray[Any, dtype[np.float64]],
+            y: ndarray[Any, dtype[np.float64]],
+            deg: Union[int, ndarray[Any, dtype[np.int_]]],
+            domain: Optional[Union[List[float], None]] = None,
+            rcond: Optional[float] = None,
+            full: bool = False,
+            w: Optional[ndarray[Any, dtype[np.float64]]] = None,
+            window: Optional[Union[List[float], None]] = None,
+            symbol: str = 'x'
+        ) -> Union[T, Tuple[T, Any]]:
         """Least squares fit to data.
 
         Return a series instance that is the least squares fit to the data
