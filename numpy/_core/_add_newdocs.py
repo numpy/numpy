@@ -4906,12 +4906,19 @@ add_newdoc('numpy._core', 'ufunc',
     ----------
     *x : array_like
         Input arrays.
-    out : ndarray, None, or tuple of ndarray and None, optional
+    out : ndarray, None, ..., or tuple of ndarray and None, optional
         Alternate array object(s) in which to put the result; if provided, it
         must have a shape that the inputs broadcast to. A tuple of arrays
         (possible only as a keyword argument) must have length equal to the
         number of outputs; use None for uninitialized outputs to be
         allocated by the ufunc.
+        If ``out=...`` is passed, the output is guaranteed to be an array
+        and not a scalar.  This is useful when the result may be 0-D and
+        especially when the result dtype is object.
+
+        .. versionadded:: 2.3
+            Support for ``out=...`` was added.
+
     where : array_like, optional
         This condition is broadcast over the input. At locations where the
         condition is True, the `out` array will be set to the ufunc result.
@@ -5163,11 +5170,18 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         ``out`` if given, and the data type of ``array`` otherwise (though
         upcast to conserve precision for some cases, such as
         ``numpy.add.reduce`` for integer or boolean input).
-    out : ndarray, None, or tuple of ndarray and None, optional
+    out : ndarray, None, ..., or tuple of ndarray and None, optional
         A location into which the result is stored. If not provided or None,
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
+        If ``out=...`` is passed, the output is guaranteed to be an array
+        and not a scalar.  This is useful when the result may be 0-D and
+        especially when the result dtype is object.
+
+        .. versionadded:: 2.3
+            Support for ``out=...`` was added.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -5276,6 +5290,7 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
+        (``out=...`` is supported, but results are never scalar).
 
     Returns
     -------
@@ -5357,6 +5372,7 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
         a freshly-allocated array is returned. For consistency with
         ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
         1-element tuple.
+        (``out=...`` is supported, but results are never scalar).
 
     Returns
     -------
