@@ -1909,7 +1909,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
                 return NULL;
             }
             PyTuple_SET_ITEM(rev_perm, items[i].perm, idx);
-            Py_DECREF(idx);
         }
         perm.ptr = dims;
         perm.len = n;
