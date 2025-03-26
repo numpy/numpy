@@ -192,6 +192,9 @@ dtypemeta_initialize_struct_from_spec(
     NPY_DT_SLOTS(DType)->common_instance = NULL;
     NPY_DT_SLOTS(DType)->setitem = NULL;
     NPY_DT_SLOTS(DType)->getitem = NULL;
+    NPY_DT_SLOTS(DType)->get_sort_function = NULL;
+    NPY_DT_SLOTS(DType)->get_argsort_function = NULL;
+    NPY_DT_SLOTS(DType)->sort_compare = NULL;
     NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
     NPY_DT_SLOTS(DType)->get_fill_zero_loop = NULL;
     NPY_DT_SLOTS(DType)->finalize_descr = NULL;
@@ -1228,6 +1231,11 @@ dtypemeta_wrap_legacy_descriptor(
 
     if (PyTypeNum_ISNUMBER(descr->type_num)) {
         dtype_class->flags |= NPY_DT_NUMERIC;
+    }
+
+    /* If sorting compare not defined, set to arrfunc default */
+    if (dt_slots->sort_compare == NULL) {
+        dt_slots->sort_compare = arr_funcs->compare;
     }
 
     if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,

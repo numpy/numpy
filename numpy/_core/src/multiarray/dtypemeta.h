@@ -31,6 +31,10 @@ typedef struct {
      */
     PyArrayDTypeMeta_SetItem *setitem;
     PyArrayDTypeMeta_GetItem *getitem;
+
+    PyArrayDTypeMeta_GetSortFunction *get_sort_function;
+    PyArrayDTypeMeta_GetArgSortFunction *get_argsort_function;
+    PyArray_CompareFunc *sort_compare;
     /*
      * Either NULL or fetches a clearing function.  Clearing means deallocating
      * any referenced data and setting it to a safe state.  For Python objects
@@ -89,7 +93,7 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
-#define NPY_NUM_DTYPE_SLOTS 11
+#define NPY_NUM_DTYPE_SLOTS 14
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
@@ -291,6 +295,35 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                 Py_XSETREF(descr, _new_);  \
         } while(0)
 
+static inline int
+PyArray_GetSortFunction(PyArray_Descr *descr, NPY_SORTKIND which,
+                        PyArray_SortFunc **out_sort)
+{
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function == NULL) {
+        return -1;
+    }
+
+    NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function(descr, which, out_sort);
+    return 0;
+}
+
+static inline int
+PyArray_GetArgSortFunction(PyArray_Descr *descr, NPY_SORTKIND which,
+                           PyArray_ArgSortFunc **out_argsort)
+{
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function == NULL) {
+        return -1;
+    }
+
+    NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function(descr, which, out_argsort);
+    return 0;
+}
+
+static inline PyArray_CompareFunc *
+PyArray_SortCompareFunction(PyArray_Descr *descr)
+{
+    return NPY_DT_SLOTS(NPY_DTYPE(descr))->sort_compare;
+}
 
 // Get the pointer to the PyArray_DTypeMeta for the type associated with the typenum.
 static inline PyArray_DTypeMeta *
