@@ -4907,14 +4907,12 @@ add_newdoc('numpy._core', 'ufunc',
     *x : array_like
         Input arrays.
     out : ndarray, None, ..., or tuple of ndarray and None, optional
-        Alternate array object(s) in which to put the result; if provided, it
-        must have a shape that the inputs broadcast to. A tuple of arrays
-        (possible only as a keyword argument) must have length equal to the
-        number of outputs; use None for uninitialized outputs to be
-        allocated by the ufunc.
-        If ``out=...`` is passed, the output is guaranteed to be an array
-        and not a scalar.  This is useful when the result may be 0-D and
-        especially when the result dtype is object.
+        Location(s) into which the result(s) are stored.
+        If not provided or None, new array(s) are created by the ufunc.
+        If passed as a keyword argument, can be Ellipses (``out=...``) to
+        ensure an array is returned even if the result is 0-dimensional,
+        or a tuple with length equal to the number of outputs (where None
+        can be used for allocation by the ufunc).
 
         .. versionadded:: 2.3
             Support for ``out=...`` was added.
@@ -5171,13 +5169,12 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         upcast to conserve precision for some cases, such as
         ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, ..., or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or None,
-        a freshly-allocated array is returned. For consistency with
-        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
-        1-element tuple.
-        If ``out=...`` is passed, the output is guaranteed to be an array
-        and not a scalar.  This is useful when the result may be 0-D and
-        especially when the result dtype is object.
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        If passed as a keyword argument, can be Ellipses (``out=...``) to
+        ensure an array is returned even if the result is 0-dimensional
+        (which is useful especially for object dtype), or a 1-element tuple
+        (latter for consistency with ``ufunc.__call__``).
 
         .. versionadded:: 2.3
             Support for ``out=...`` was added.
@@ -5286,11 +5283,11 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
         to the data-type of the output array if such is provided, or the
         data-type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or None,
-        a freshly-allocated array is returned. For consistency with
-        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
-        1-element tuple.
-        (``out=...`` is supported, but results are never scalar).
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        For consistency with ``ufunc.__call__``, if passed as a keyword
+        argument, can be Ellipses (``out=...``, which has the same effect
+        as None as an array is always returned), or a 1-element tuple.
 
     Returns
     -------
@@ -5368,11 +5365,11 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
         upcast to conserve precision for some cases, such as
         ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or None,
-        a freshly-allocated array is returned. For consistency with
-        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
-        1-element tuple.
-        (``out=...`` is supported, but results are never scalar).
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        For consistency with ``ufunc.__call__``, if passed as a keyword
+        argument, can be Ellipses (``out=...``, which has the same effect
+        as None as an array is always returned), or a 1-element tuple.
 
     Returns
     -------
