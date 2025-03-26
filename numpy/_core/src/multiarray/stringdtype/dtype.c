@@ -9,6 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
+#include "npy_sort.h"
 
 #include "static_string.h"
 #include "dtypemeta.h"
@@ -460,33 +461,6 @@ compare(void *a, void *b, void *arr)
 }
 
 int
-_compare_no_mutex(const void *a, const void *b, void *arr)
-{
-    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
-    return _compare((void*) a, (void*) b, descr, descr);
-}
-
-void
-_init_sort_cmp(PyArray_Descr *descr, PyArray_CompareFunc **out_cmp)
-{
-    if (descr->type_num == NPY_VSTRING) {
-        NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr);
-        *out_cmp = _compare_no_mutex;
-    }
-    else {
-        *out_cmp = PyDataType_GetArrFuncs(descr)->compare;
-    }
-}
-
-void
-_end_sort_cmp(PyArray_Descr *descr)
-{
-    if (descr->type_num == NPY_VSTRING) {
-        NpyString_release_allocator(((PyArray_StringDTypeObject *)descr)->allocator);
-    }
-}
-
-int
 _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
          PyArray_StringDTypeObject *descr_b)
 {
@@ -541,6 +515,45 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
         }
     }
     return NpyString_cmp(&s_a, &s_b);
+}
+
+static int
+stringdtype_sort_compare(void *a, void *b, void *arr) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
+    return _compare(a, b, descr, descr);
+}
+
+int
+_stringdtype_sort(void *start, npy_intp num, void *varr, PyArray_SortFunc *sort) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(varr);
+
+    NpyString_acquire_allocator(descr);
+    int result = sort(start, num, varr);
+    NpyString_release_allocator(descr->allocator);
+    
+    return result;
+}
+
+int
+_stringdtype_quicksort(void *start, npy_intp num, void *varr) {
+    return _stringdtype_sort(start, num, varr, &npy_quicksort);
+}
+
+int
+stringdtype_get_sort_function(
+    PyArray_Descr *descr, NPY_SORTKIND sort_kind, PyArray_SortFunc **out_sort) {
+    
+    switch (sort_kind) {
+        case NPY_QUICKSORT:
+            *out_sort = &_stringdtype_quicksort;
+            return 0;
+        default:
+            PyErr_Format(PyExc_ValueError,
+                         "Sort kind %d not supported for string dtype", sort_kind);
+            return -1;
+    }
+
+    return 0;
 }
 
 // PyArray_ArgFunc
@@ -683,6 +696,7 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
          &string_discover_descriptor_from_pyobject},
         {NPY_DT_setitem, &stringdtype_setitem},
         {NPY_DT_getitem, &stringdtype_getitem},
+        {NPY_DT_sort_compare, &stringdtype_sort_compare},
         {NPY_DT_ensure_canonical, &stringdtype_ensure_canonical},
         {NPY_DT_PyArray_ArrFuncs_nonzero, &nonzero},
         {NPY_DT_PyArray_ArrFuncs_compare, &compare},

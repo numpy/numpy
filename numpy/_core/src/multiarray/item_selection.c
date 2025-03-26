@@ -1570,10 +1570,14 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return -1;
     }
 
-    sort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort[which];
+    PyArray_GetSortFunction(PyArray_DESCR(op), which, &sort);
 
     if (sort == NULL) {
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        sort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort[which];
+    }
+
+    if (sort == NULL) {
+        if (PyArray_SortCompareFunction(PyArray_DESCR(op)) != NULL) {
             switch (which) {
                 default:
                 case NPY_QUICKSORT:
@@ -1721,10 +1725,14 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_ArgSortFunc *argsort = NULL;
     PyObject *ret;
 
-    argsort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort[which];
+    PyArray_GetArgSortFunction(PyArray_DESCR(op), which, &argsort);
 
     if (argsort == NULL) {
-        if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare) {
+        argsort = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort[which];
+    }
+
+    if (argsort == NULL) {
+        if (PyArray_SortCompareFunction(PyArray_DESCR(op)) != NULL) {
             switch (which) {
                 default:
                 case NPY_QUICKSORT:
