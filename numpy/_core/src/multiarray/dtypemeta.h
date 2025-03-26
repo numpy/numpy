@@ -320,7 +320,7 @@ PyArray_GetArgSortFunction(PyArray_Descr *descr, NPY_SORTKIND which,
 }
 
 static inline PyArray_CompareFunc *
-PyArray_SortCompareFunction(PyArray_Descr *descr)
+PyArray_SortCompare(PyArray_Descr *descr)
 {
     return NPY_DT_SLOTS(NPY_DTYPE(descr))->sort_compare;
 }
