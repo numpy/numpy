@@ -574,8 +574,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     NPY_cast_info cast_info = {.func = NULL};
 
     /* Prepare the indices */
-    npy_intp dims[1] = {self->size};
-    index_type = prepare_index_noarray(1, dims, ind, indices, &index_num,
+    index_type = prepare_index_noarray(1, &self->size, ind, indices, &index_num,
         &ndim, &fancy_ndim, 1, 1);
 
     if (index_type < 0) {
@@ -652,7 +651,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 
     if (index_type & HAS_SLICE) {
         if (PySlice_GetIndicesEx(indices[0].object,
-                                 dims[0],
+                                 self->size,
                                  &start, &stop, &step, &n_steps) < 0) {
             goto finish;
         }
@@ -834,8 +833,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     NPY_cast_info cast_info = {.func = NULL};
 
     /* Prepare the indices */
-    npy_intp dims[1] = {self->size};
-    index_type = prepare_index_noarray(1, dims, ind, indices, &index_num,
+    index_type = prepare_index_noarray(1, &self->size, ind, indices, &index_num,
         &ndim, &fancy_ndim, 1, 1);
 
     if (index_type < 0) {
@@ -915,7 +913,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
     if (index_type & HAS_SLICE) {
         if (PySlice_GetIndicesEx(indices[0].object,
-                                 dims[0],
+                                 self->size,
                                  &start, &stop, &step, &n_steps) < 0) {
             goto finish;
         }
