@@ -1913,7 +1913,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         for (int i = 0; i < n; i++) {
             dims[i] = items[i].perm;
             PyObject *idx = PyLong_FromLong(i);
-            if(idx == NULL) {
+            if (idx == NULL) {
                 Py_DECREF(rev_perm);
                 return NULL;
             }
@@ -1923,7 +1923,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         perm.ptr = dims;
         perm.len = n;
         transposed_array = PyArray_Transpose((PyArrayObject *)self, &perm);
-        if(transposed_array == NULL) {
+        if (transposed_array == NULL) {
             Py_DECREF(rev_perm);
             return NULL;
         }
@@ -1966,7 +1966,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
                                          PyArray_SHAPE(self));
     }
     Py_XDECREF(transposed_array);
-    if(shape == NULL) {
+    if (shape == NULL) {
         Py_DECREF(rev_perm);
         Py_DECREF(buffer);
         return NULL;
