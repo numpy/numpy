@@ -1,6 +1,4 @@
 #include "highway_qsort.hpp"
-#define VQSORT_ONLY_STATIC 1
-#include "hwy/contrib/sort/vqsort-inl.h"
 
 #if VQSORT_ENABLED
 

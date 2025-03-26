@@ -44,6 +44,9 @@ classifiers = [
 f2py = 'numpy.f2py.f2py2e:main'
 numpy-config = 'numpy._configtool:main'
 
+[project.entry-points.pkg_config]
+numpy = 'numpy._core.lib.pkgconfig'
+
 [project.entry-points.array_api]
 numpy = 'numpy'
 
@@ -139,17 +142,19 @@ tracker = "https://github.com/numpy/numpy/issues"
 # build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
 # `tools/ci/cirrus_wheels.yml`.
 build-frontend = "build"
-skip = "cp36-* cp37-* cp-38* pp37-* *-manylinux_i686 *_ppc64le *_s390x *_universal2"
+skip = "*_i686 *_ppc64le *_s390x *_universal2"
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
 # The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
 config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
+enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
 
 [tool.cibuildwheel.linux]
-manylinux-x86_64-image = "manylinux2014"
-manylinux-aarch64-image = "manylinux2014"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
+musllinux-aarch64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.pyodide]
 config-settings = "build-dir=build setup-args=--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross setup-args=-Dblas=none setup-args=-Dlapack=none"

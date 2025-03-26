@@ -294,64 +294,42 @@ PyArray_DescrFromTypeObject(PyObject *type)
         return PyArray_DescrFromType(typenum);
     }
 
-    /* Check the generic types */
+    /* Check the generic types, was deprecated in 1.19 and removed for 2.3 */
     if ((type == (PyObject *) &PyNumberArrType_Type) ||
             (type == (PyObject *) &PyInexactArrType_Type) ||
             (type == (PyObject *) &PyFloatingArrType_Type)) {
-        if (DEPRECATE("Converting `np.inexact` or `np.floating` to "
-                      "a dtype is deprecated. The current result is `float64` "
-                      "which is not strictly correct.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_DOUBLE;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.inexact` or `np.floating` to "
+                      "a dtype not allowed");
+        return NULL;
     }
     else if (type == (PyObject *)&PyComplexFloatingArrType_Type) {
-        if (DEPRECATE("Converting `np.complex` to a dtype is deprecated. "
-                      "The current result is `complex128` which is not "
-                      "strictly correct.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_CDOUBLE;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.complex` to a dtype is not allowed.");
+        return NULL;
     }
     else if ((type == (PyObject *)&PyIntegerArrType_Type) ||
             (type == (PyObject *)&PySignedIntegerArrType_Type)) {
-        if (DEPRECATE("Converting `np.integer` or `np.signedinteger` to "
-                      "a dtype is deprecated. The current result is "
-                      "`np.dtype(np.int_)` which is not strictly correct. "
-                      "Note that the result depends on the system. To ensure "
-                      "stable results use may want to use `np.int64` or "
-                      "`np.int32`.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_LONG;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting 'np.integer' or 'np.signedinteger' to "
+                      "a dtype is not allowed");
+        return NULL;
     }
     else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type) {
-        if (DEPRECATE("Converting `np.unsignedinteger` to a dtype is "
-                      "deprecated. The current result is `np.dtype(np.uint)` "
-                      "which is not strictly correct. Note that the result "
-                      "depends on the system. To ensure stable results you may "
-                      "want to use `np.uint64` or `np.uint32`.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_ULONG;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.unsignedinteger` to a dtype is not allowed");
+        return NULL;
     }
     else if (type == (PyObject *) &PyCharacterArrType_Type) {
-        if (DEPRECATE("Converting `np.character` to a dtype is deprecated. "
-                      "The current result is `np.dtype(np.str_)` "
-                      "which is not strictly correct. Note that `np.character` "
-                      "is generally deprecated and 'S1' should be used.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_STRING;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.character` to a dtype is not allowed");
+        return NULL;
     }
     else if ((type == (PyObject *) &PyGenericArrType_Type) ||
             (type == (PyObject *) &PyFlexibleArrType_Type)) {
-        if (DEPRECATE("Converting `np.generic` to a dtype is "
-                      "deprecated. The current result is `np.dtype(np.void)` "
-                      "which is not strictly correct.") < 0) {
-            return NULL;
-        }
-        typenum = NPY_VOID;
+        PyErr_SetString(PyExc_TypeError,
+            "Converting `np.generic` to a dtype is not allowed.");
+        return NULL;
     }
 
     if (typenum != NPY_NOTYPE) {
@@ -592,9 +570,6 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
         if (type_num == NPY_STRING) {
             destptr = PyBytes_AS_STRING(obj);
-            #if PY_VERSION_HEX < 0x030b00b0
-                ((PyBytesObject *)obj)->ob_shash = -1;
-            #endif
             memcpy(destptr, data, itemsize);
             return obj;
         }

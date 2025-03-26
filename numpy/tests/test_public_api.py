@@ -198,7 +198,6 @@ PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
     "linalg.linalg",
     "ma.core",
     "ma.testutils",
-    "ma.timer_comparison",
     "matlib",
     "matrixlib",
     "matrixlib.defmatrix",
@@ -536,8 +535,13 @@ def test_core_shims_coherence():
 
         # np.core is a shim and all submodules of np.core are shims
         # but we should be able to import everything in those shims
-        # that are available in the "real" modules in np._core
-        if inspect.ismodule(member):
+        # that are available in the "real" modules in np._core, with
+        # the exception of the namespace packages (__spec__.origin is None),
+        # like numpy._core.include, or numpy._core.lib.pkgconfig.
+        if (
+            inspect.ismodule(member)
+            and member.__spec__ and member.__spec__.origin is not None
+        ):
             submodule = member
             submodule_name = member_name
             for submodule_member_name in dir(submodule):

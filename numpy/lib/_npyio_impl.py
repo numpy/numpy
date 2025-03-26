@@ -1085,7 +1085,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
                 # be adapted (in principle the concatenate could cast).
                 chunks.append(next_arr.astype(read_dtype_via_object_chunks))
 
-                skiprows = 0  # Only have to skip for first chunk
+                skiplines = 0  # Only have to skip for first chunk
                 if max_rows >= 0:
                     max_rows -= chunk_size
                 if len(next_arr) < chunk_size:
@@ -1193,7 +1193,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         that ensures you receive byte arrays as results if possible and passes
         'latin1' encoded strings to converters. Override this value to receive
         unicode arrays and pass strings as input to converters.  If set to None
-        the system default is used. The default value is 'bytes'.
+        the system default is used. The default value is None.
 
         .. versionchanged:: 2.0
             Before NumPy 2, the default was ``'bytes'`` for Python 2

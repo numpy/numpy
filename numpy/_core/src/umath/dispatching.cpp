@@ -38,12 +38,12 @@
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
 
-#include <mutex>
-#include <shared_mutex>
-
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <convert_datatype.h>
+
+#include <mutex>
+#include <shared_mutex>
 
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_3kcompat.h"
@@ -912,7 +912,9 @@ promote_and_get_info_and_ufuncimpl_with_locking(
         npy_bool legacy_promotion_is_possible)
 {
     std::shared_mutex *mutex = ((std::shared_mutex *)((PyArrayIdentityHash *)ufunc->_dispatch_cache)->mutex);
+    NPY_BEGIN_ALLOW_THREADS
     mutex->lock_shared();
+    NPY_END_ALLOW_THREADS
     PyObject *info = PyArrayIdentityHash_GetItem(
             (PyArrayIdentityHash *)ufunc->_dispatch_cache,
             (PyObject **)op_dtypes);
@@ -926,7 +928,9 @@ promote_and_get_info_and_ufuncimpl_with_locking(
 
     // cache miss, need to acquire a write lock and recursively calculate the
     // correct dispatch resolution
+    NPY_BEGIN_ALLOW_THREADS
     mutex->lock();
+    NPY_END_ALLOW_THREADS
     info = promote_and_get_info_and_ufuncimpl(ufunc,
             ops, signature, op_dtypes, legacy_promotion_is_possible);
     mutex->unlock();

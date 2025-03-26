@@ -941,6 +941,57 @@ class TestMethods:
         assert_array_equal(act3, res3)
         assert_array_equal(act1 + act2 + act3, buf)
 
+    @pytest.mark.parametrize("args", [
+        (None,),
+        (0,),
+        (1,),
+        (3,),
+        (5,),
+        (6,),  # test index past the end
+        (-1,),
+        (-3,),
+        ([3, 4],),
+        ([2, 4],),
+        ([-3, 5],),
+        ([0, -5],),
+        (1, 4),
+        (-3, 5),
+        (None, -1),
+        (0, [4, 2]),
+        ([1, 2], [-1, -2]),
+        (1, 5, 2),
+        (None, None, -1),
+        ([0, 6], [-1, 0], [2, -1]),
+    ])
+    def test_slice(self, args, dt):
+        buf = np.array(["hello", "world"], dtype=dt)
+        act = np.strings.slice(buf, *args)
+        bcast_args = tuple(np.broadcast_to(arg, buf.shape) for arg in args)
+        res = np.array([s[slice(*arg)]
+                        for s, arg in zip(buf, zip(*bcast_args))],
+                       dtype=dt)
+        assert_array_equal(act, res)
+
+    def test_slice_unsupported(self, dt):
+        with pytest.raises(TypeError, match="did not contain a loop"):
+            np.strings.slice(np.array([1, 2, 3]), 4)
+
+        with pytest.raises(TypeError, match=r"Cannot cast ufunc '_slice' input .* from .* to dtype\('int(64|32)'\)"):
+            np.strings.slice(np.array(['foo', 'bar'], dtype=dt), np.array(['foo', 'bar'], dtype=dt))
+
+    @pytest.mark.parametrize("int_dt", [np.int8, np.int16, np.int32, np.int64,
+                                        np.uint8, np.uint16, np.uint32, np.uint64])
+    def test_slice_int_type_promotion(self, int_dt, dt):
+        buf = np.array(["hello", "world"], dtype=dt)
+
+        assert_array_equal(np.strings.slice(buf, int_dt(4)), np.array(["hell", "worl"], dtype=dt))
+        assert_array_equal(np.strings.slice(buf, np.array([4, 4], dtype=int_dt)), np.array(["hell", "worl"], dtype=dt))
+
+        assert_array_equal(np.strings.slice(buf, int_dt(2), int_dt(4)), np.array(["ll", "rl"], dtype=dt))
+        assert_array_equal(np.strings.slice(buf, np.array([2, 2], dtype=int_dt), np.array([4, 4], dtype=int_dt)), np.array(["ll", "rl"], dtype=dt))
+
+        assert_array_equal(np.strings.slice(buf, int_dt(0), int_dt(4), int_dt(2)), np.array(["hl", "wr"], dtype=dt))
+        assert_array_equal(np.strings.slice(buf, np.array([0, 0], dtype=int_dt), np.array([4, 4], dtype=int_dt), np.array([2, 2], dtype=int_dt)), np.array(["hl", "wr"], dtype=dt))
 
 @pytest.mark.parametrize("dt", ["U", "T"])
 class TestMethodsWithUnicode:
@@ -1177,6 +1228,37 @@ class TestMethodsWithUnicode:
         actual = npy_func(src_array, strip)
 
         assert_array_equal(actual, expected)
+
+    @pytest.mark.parametrize("args", [
+        (None,),
+        (0,),
+        (1,),
+        (5,),
+        (15,),
+        (22,),
+        (-1,),
+        (-3,),
+        ([3, 4],),
+        ([-5, 5],),
+        ([0, -8],),
+        (1, 12),
+        (-12, 15),
+        (None, -1),
+        (0, [17, 6]),
+        ([1, 2], [-1, -2]),
+        (1, 11, 2),
+        (None, None, -1),
+        ([0, 10], [-1, 0], [2, -1]),
+    ])
+    def test_slice(self, args, dt):
+        buf = np.array(["Приве́т नमस्ते שָׁלוֹם", "😀😃😄😁😆😅🤣😂🙂🙃"],
+                       dtype=dt)
+        act = np.strings.slice(buf, *args)
+        bcast_args = tuple(np.broadcast_to(arg, buf.shape) for arg in args)
+        res = np.array([s[slice(*arg)]
+                        for s, arg in zip(buf, zip(*bcast_args))],
+                       dtype=dt)
+        assert_array_equal(act, res)
 
 
 class TestMixedTypeMethods:

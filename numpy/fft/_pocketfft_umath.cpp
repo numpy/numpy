@@ -12,8 +12,8 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #define PY_SSIZE_T_CLEAN
-#include <assert.h>
 #include <Python.h>
+#include <assert.h>
 
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"

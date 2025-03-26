@@ -285,6 +285,20 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
             v, itemptr, arr);
 }
 
+// Like PyArray_DESCR_REPLACE, but calls ensure_canonical instead of DescrNew
+#define PyArray_DESCR_REPLACE_CANONICAL(descr) do { \
+                PyArray_Descr *_new_ = NPY_DT_CALL_ensure_canonical(descr); \
+                Py_XSETREF(descr, _new_);  \
+        } while(0)
+
+
+// Get the pointer to the PyArray_DTypeMeta for the type associated with the typenum.
+static inline PyArray_DTypeMeta *
+typenum_to_dtypemeta(enum NPY_TYPES typenum) {
+    PyArray_Descr * descr = PyArray_DescrFromType(typenum);
+    Py_DECREF(descr);
+    return NPY_DTYPE(descr);
+}
 
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_DTYPEMETA_H_ */

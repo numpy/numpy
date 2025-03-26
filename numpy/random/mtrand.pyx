@@ -978,7 +978,7 @@ cdef class RandomState:
                     atol = max(atol, np.sqrt(np.finfo(p.dtype).eps))
 
             p = <np.ndarray>np.PyArray_FROM_OTF(
-                p, np.NPY_DOUBLE, np.NPY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
+                p, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_C_CONTIGUOUS)
             pix = <double*>np.PyArray_DATA(p)
 
             if p.ndim != 1:
@@ -1164,8 +1164,8 @@ cdef class RandomState:
         cdef double _low, _high, range
         cdef object temp
 
-        alow = <np.ndarray>np.PyArray_FROM_OTF(low, np.NPY_DOUBLE, np.NPY_ALIGNED)
-        ahigh = <np.ndarray>np.PyArray_FROM_OTF(high, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        alow = <np.ndarray>np.PyArray_FROM_OTF(low, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
+        ahigh = <np.ndarray>np.PyArray_FROM_OTF(high, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
 
         if np.PyArray_NDIM(alow) == np.PyArray_NDIM(ahigh) == 0:
             _low = PyFloat_AsDouble(low)
@@ -1553,7 +1553,7 @@ cdef class RandomState:
         0.0  # may vary
 
         >>> abs(sigma - np.std(s, ddof=1))
-        0.1  # may vary
+        0.0  # may vary
 
         Display the histogram of the samples, along with
         the probability density function:
@@ -3330,9 +3330,9 @@ cdef class RandomState:
         cdef double fleft, fmode, fright
         cdef np.ndarray oleft, omode, oright
 
-        oleft = <np.ndarray>np.PyArray_FROM_OTF(left, np.NPY_DOUBLE, np.NPY_ALIGNED)
-        omode = <np.ndarray>np.PyArray_FROM_OTF(mode, np.NPY_DOUBLE, np.NPY_ALIGNED)
-        oright = <np.ndarray>np.PyArray_FROM_OTF(right, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        oleft = <np.ndarray>np.PyArray_FROM_OTF(left, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
+        omode = <np.ndarray>np.PyArray_FROM_OTF(mode, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
+        oright = <np.ndarray>np.PyArray_FROM_OTF(right, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
 
         if np.PyArray_NDIM(oleft) == np.PyArray_NDIM(omode) == np.PyArray_NDIM(oright) == 0:
             fleft = PyFloat_AsDouble(left)
@@ -3464,9 +3464,9 @@ cdef class RandomState:
         cdef long *randoms_data
         cdef np.broadcast it
 
-        p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        p_arr = <np.ndarray>np.PyArray_FROM_OTF(p, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(p_arr) == 0
-        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INTP, np.NPY_ALIGNED)
+        n_arr = <np.ndarray>np.PyArray_FROM_OTF(n, np.NPY_INTP, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(n_arr) == 0
 
         if not is_scalar:
@@ -3953,9 +3953,9 @@ cdef class RandomState:
         cdef int64_t lngood, lnbad, lnsample
 
         # This legacy function supports "long" values only (checked below).
-        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_INT64, np.NPY_ALIGNED)
-        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_INT64, np.NPY_ALIGNED)
-        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_INT64, np.NPY_ALIGNED)
+        ongood = <np.ndarray>np.PyArray_FROM_OTF(ngood, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
+        onbad = <np.ndarray>np.PyArray_FROM_OTF(nbad, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
+        onsample = <np.ndarray>np.PyArray_FROM_OTF(nsample, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
 
         if np.PyArray_NDIM(ongood) == np.PyArray_NDIM(onbad) == np.PyArray_NDIM(onsample) == 0:
             lngood = <int64_t>ngood

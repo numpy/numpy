@@ -30,7 +30,7 @@ from numpy.testing import (
     assert_array_equal, assert_raises_regex, assert_array_almost_equal,
     assert_allclose, IS_PYPY, IS_WASM, IS_PYSTON, HAS_REFCOUNT,
     assert_array_less, runstring, temppath, suppress_warnings, break_cycles,
-    check_support_sve, assert_array_compare,
+    check_support_sve, assert_array_compare, IS_64BIT
     )
 from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy._core.tests._locales import CommaDecimalPointLocale
@@ -206,12 +206,7 @@ class TestFlags:
             with assert_raises(ValueError):
                 view.flags.writeable = True
 
-            with warnings.catch_warnings():
-                warnings.simplefilter("error", DeprecationWarning)
-                with assert_raises(DeprecationWarning):
-                    arr.flags.writeable = True
-
-            with assert_warns(DeprecationWarning):
+            with assert_raises(ValueError):
                 arr.flags.writeable = True
 
     def test_warnonwrite(self):
@@ -686,8 +681,9 @@ class TestAssignment:
 
     def test_cast_to_string(self):
         # cast to str should do "str(scalar)", not "str(scalar.item())"
-        # Example: In python2, str(float) is truncated, so we want to avoid
-        # str(np.float64(...).item()) as this would incorrectly truncate.
+        # When converting a float to a string via array assignment, we
+        # want to ensure that the conversion uses str(scalar) to preserve
+        # the expected precision.
         a = np.zeros(1, dtype='S20')
         a[:] = np.array(['1.12345678901234567890'], dtype='f8')
         assert_equal(a[0], b"1.1234567890123457")
@@ -982,7 +978,7 @@ class TestCreation:
         assert_raises(ValueError, np.zeros, shape, dtype=np.int8)
         assert_raises(ValueError, np.ones, shape, dtype=np.int8)
 
-    @pytest.mark.skipif(np.dtype(np.intp).itemsize != 8,
+    @pytest.mark.skipif(not IS_64BIT,
                         reason="malloc may not fail on 32 bit systems")
     def test_malloc_fails(self):
         # This test is guaranteed to fail due to a too large allocation
@@ -1983,6 +1979,12 @@ class TestMethods:
         x = np.arange(5)
         y = np.choose([0, 0, 0], [x[:3], x[:3], x[:3]], out=x[1:4], mode='wrap')
         assert_equal(y, np.array([0, 1, 2]))
+
+        # gh_28206 check fail when out not writeable
+        x = np.arange(3)
+        out = np.zeros(3)
+        out.setflags(write=False)
+        assert_raises(ValueError, np.choose, [0, 1, 2], [x, x, x], out=out)
 
     def test_prod(self):
         ba = [1, 2, 10, 11, 6, 5, 4]
@@ -3343,6 +3345,30 @@ class TestMethods:
         a.dot(b=b, out=c)
         assert_equal(c, np.dot(a, b))
 
+    @pytest.mark.parametrize("dtype", [np.half, np.double, np.longdouble])
+    @pytest.mark.skipif(IS_WASM, reason="no wasm fp exception support")
+    def test_dot_errstate(self, dtype):
+        a = np.array([1, 1], dtype=dtype)
+        b = np.array([-np.inf, np.inf], dtype=dtype)
+
+        with np.errstate(invalid='raise'):
+            # there are two paths, depending on the number of dimensions - test
+            # them both
+            with pytest.raises(FloatingPointError,
+                    match="invalid value encountered in dot"):
+                np.dot(a, b)
+
+            # test that fp exceptions are properly cleared
+            np.dot(a, a)
+
+            with pytest.raises(FloatingPointError,
+                    match="invalid value encountered in dot"):
+                np.dot(a[np.newaxis, np.newaxis, ...],
+                       b[np.newaxis, ..., np.newaxis])
+
+            np.dot(a[np.newaxis, np.newaxis, ...],
+                   a[np.newaxis, ..., np.newaxis])
+
     def test_dot_type_mismatch(self):
         c = 1.
         A = np.array((1, 1), dtype='i,i')
@@ -3728,6 +3754,15 @@ class TestMethods:
         res = a.conjugate(out)
         assert res is out
         assert_array_equal(out, a.conjugate())
+
+    def test_conjugate_scalar(self):
+        for v in 5, 5j:
+            a = np.array(v)
+            assert a.conjugate() == v.conjugate()
+        for a in (np.array('s'), np.array('2016', 'M'),
+                np.array((1, 2), [('a', int), ('b', int)])):
+            with pytest.raises(TypeError):
+                a.conjugate()
 
     def test__complex__(self):
         dtypes = ['i1', 'i2', 'i4', 'i8',
@@ -4124,27 +4159,6 @@ class TestBinop:
         np.multiply(C, B, out=A)
         assert_equal(A[0], 30)
         assert_(isinstance(A, OutClass))
-
-    def test_pow_override_with_errors(self):
-        # regression test for gh-9112
-        class PowerOnly(np.ndarray):
-            def __array_ufunc__(self, ufunc, method, *inputs, **kw):
-                if ufunc is not np.power:
-                    raise NotImplementedError
-                return "POWER!"
-        # explicit cast to float, to ensure the fast power path is taken.
-        a = np.array(5., dtype=np.float64).view(PowerOnly)
-        assert_equal(a ** 2.5, "POWER!")
-        with assert_raises(NotImplementedError):
-            a ** 0.5
-        with assert_raises(NotImplementedError):
-            a ** 0
-        with assert_raises(NotImplementedError):
-            a ** 1
-        with assert_raises(NotImplementedError):
-            a ** -1
-        with assert_raises(NotImplementedError):
-            a ** 2
 
     def test_pow_array_object_dtype(self):
         # test pow on arrays of object dtype
@@ -5778,7 +5792,7 @@ class TestIO:
             b'1,2,3,4', [1., 2., 3., 4.], tmp_filename, dtype=float, sep=',')
 
     def test_malformed(self, tmp_filename, decimal_sep_localization):
-        with assert_warns(DeprecationWarning):
+        with assert_raises(ValueError):
             self._check_from(
                 b'1.234 1,234', [1.234, 1.], tmp_filename, sep=' ')
 
@@ -5837,10 +5851,9 @@ class TestIO:
         assert_array_equal(x, res)
 
         x_str = x.tobytes()
-        with assert_warns(DeprecationWarning):
-            # binary fromstring is deprecated
-            res = np.fromstring(x_str, dtype="(3,4)i4")
-            assert_array_equal(x, res)
+        with pytest.raises(ValueError):
+            # binary fromstring raises
+            np.fromstring(x_str, dtype="(3,4)i4")
 
     def test_parsing_subarray_unsupported(self, tmp_filename):
         # We currently do not support parsing subarray dtypes
@@ -5862,8 +5875,7 @@ class TestIO:
 
         binary = expected.tobytes()
         with pytest.raises(ValueError):
-            with pytest.warns(DeprecationWarning):
-                np.fromstring(binary, dtype="(10,)i", count=10000)
+            np.fromstring(binary, dtype="(10,)i", count=10000)
 
         expected.tofile(tmp_filename)
         res = np.fromfile(tmp_filename, dtype="(10,)i", count=10000)
@@ -8271,6 +8283,10 @@ class TestNewBufferProtocol:
         res = pickle.loads(pickle_obj)
         assert_array_equal(res, obj)
 
+    def test_repr_user_dtype(self):
+        dt = np.dtype(rational)
+        assert_equal(repr(dt), 'dtype(rational)')
+
     def test_padding(self):
         for j in range(8):
             x = np.array([(1,), (2,)], dtype={'f0': (int, j)})
@@ -8635,6 +8651,12 @@ class TestArrayCreationCopyArgument:
         assert arr_random.true_passed
         assert second_copy is not copy_arr
 
+        arr_random = ArrayRandom()
+        arr = np.ones((size, size))
+        arr[...] = arr_random
+        assert not arr_random.true_passed
+        assert not np.shares_memory(arr, base_arr)
+
     @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
     def test__array__reference_leak(self):
         class NotAnArray:
@@ -8956,6 +8978,8 @@ class TestConversion:
         assert_raises(NotImplementedError, bool, np.array([NotConvertible()]))
         if IS_PYSTON:
             pytest.skip("Pyston disables recursion checking")
+        if IS_WASM:
+            pytest.skip("Pyodide/WASM has limited stack size")
 
         self_containing = np.array([None])
         self_containing[0] = self_containing
@@ -9722,6 +9746,63 @@ class TestArange:
             # Fails discovering start dtype
             np.arange(*args)
 
+    def test_dtype_attribute_ignored(self):
+        # Until 2.3 this would raise a DeprecationWarning
+        class dt:
+            dtype = "f8"
+
+        class vdt(np.void):
+            dtype = "f,f"
+
+        assert_raises(ValueError, np.dtype, dt)
+        assert_raises(ValueError, np.dtype, dt())
+        assert_raises(ValueError, np.dtype, vdt)
+        assert_raises(ValueError, np.dtype, vdt(1))
+
+
+class TestDTypeCoercionForbidden:
+    forbidden_types = [
+        # The builtin scalar super types:
+        np.generic, np.flexible, np.number,
+        np.inexact, np.floating, np.complexfloating,
+        np.integer, np.unsignedinteger, np.signedinteger,
+        # character is a deprecated S1 special case:
+        np.character,
+    ]
+
+    def test_dtype_coercion(self):
+        for scalar_type in self.forbidden_types:
+            assert_raises(TypeError, np.dtype, args=(scalar_type,))
+
+    def test_array_construction(self):
+        for scalar_type in self.forbidden_types:
+            assert_raises(TypeError, np.array, args=([], scalar_type,))
+
+    def test_not_deprecated(self):
+        # All specific types work
+        for group in np._core.sctypes.values():
+            for scalar_type in group:
+                np.dtype(scalar_type)
+
+        for scalar_type in [type, dict, list, tuple]:
+            # Typical python types are coerced to object currently:
+            np.dtype(scalar_type)
+
+
+class TestDateTimeCreationTuple:
+    @pytest.mark.parametrize("cls", [np.datetime64, np.timedelta64])
+    def test_dt_tuple(self, cls):
+        # two valid uses - (unit, num) and (unit, num, den, None)
+        cls(1, ('ms', 2))
+        cls(1, ('ms', 2, 1, None))
+
+        # trying to use the event argument, removed in 1.7.0
+        # it used to be a uint8
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 'event')))
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 63)))
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 1, 'event')))
+        assert_raises(TypeError, cls, args=(1, ('ms', 2, 1, 63)))
+
 
 class TestArrayFinalize:
     """ Tests __array_finalize__ """
@@ -10276,6 +10357,16 @@ def test_gh_24459():
         np.choose(a, [3, -1])
 
 
+def test_gh_28206():
+    a = np.arange(3)
+    b = np.ones((3, 3), dtype=np.int64)
+    out = np.array([np.nan, np.nan, np.nan])
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        np.choose(a, b, out=out)
+
+
 @pytest.mark.parametrize("N", np.arange(2, 512))
 @pytest.mark.parametrize("dtype", [np.int16, np.uint16,
                         np.int32, np.uint32, np.int64, np.uint64])
@@ -10393,3 +10484,24 @@ class TestDevice:
             r"The stream argument in to_device\(\) is not supported"
         ):
             arr.to_device("cpu", stream=1)
+
+def test_array_interface_excess_dimensions_raises():
+    """Regression test for gh-27949: ensure too many dims raises ValueError instead of segfault."""
+    
+    # Dummy object to hold a custom __array_interface__
+    class DummyArray:
+        def __init__(self, interface):
+            # Attach the array interface dict to mimic an array
+            self.__array_interface__ = interface
+
+    # Create a base array (scalar) and copy its interface
+    base = np.array(42)  # base can be any scalar or array
+    interface = dict(base.__array_interface__)
+
+    # Modify the shape to exceed NumPy's dimension limit (NPY_MAXDIMS, typically 64)
+    interface['shape'] = tuple([1] * 136)  # match the original bug report 
+
+    dummy = DummyArray(interface)
+    # Now, using np.asanyarray on this dummy should trigger a ValueError (not segfault)
+    with pytest.raises(ValueError, match="dimensions must be within"):
+        np.asanyarray(dummy)

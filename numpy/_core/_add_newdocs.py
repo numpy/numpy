@@ -4445,18 +4445,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('tobytes', """
     """))
 
 
-add_newdoc('numpy._core.multiarray', 'ndarray', ('tostring', r"""
-    a.tostring(order='C')
-
-    A compatibility alias for `~ndarray.tobytes`, with exactly the same
-    behavior.
-
-    Despite its name, it returns :class:`bytes` not :class:`str`\ s.
-
-    .. deprecated:: 1.19.0
-    """))
-
-
 add_newdoc('numpy._core.multiarray', 'ndarray', ('trace',
     """
     a.trace(offset=0, axis1=0, axis2=1, dtype=None, out=None)
@@ -6957,9 +6945,10 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
     array([False, True, False])
 
     >>> np.array([1.2, object(), "hello world"],
-    ...          dtype=StringDType(coerce=True))
-    ValueError: StringDType only allows string data when string coercion
-    is disabled.
+    ...          dtype=StringDType(coerce=False))
+    Traceback (most recent call last):
+        ...
+    ValueError: StringDType only allows string data when string coercion is disabled.
 
     >>> np.array(["hello", "world"], dtype=StringDType(coerce=True))
     array(["hello", "world"], dtype=StringDType(coerce=True))

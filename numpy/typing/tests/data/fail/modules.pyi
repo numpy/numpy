@@ -13,6 +13,5 @@ np.math  # E: Module has no attribute
 # e.g. one must first execute `import numpy.lib.recfunctions`
 np.lib.recfunctions  # E: Module has no attribute
 
-np.__NUMPY_SETUP__  # E: Module has no attribute
 np.__deprecated_attrs__  # E: Module has no attribute
 np.__expired_functions__  # E: Module has no attribute

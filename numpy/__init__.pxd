@@ -201,40 +201,6 @@ cdef extern from "numpy/arrayobject.h":
         NPY_SEARCHRIGHT
 
     enum:
-        # DEPRECATED since NumPy 1.7 ! Do not use in new code!
-        NPY_C_CONTIGUOUS
-        NPY_F_CONTIGUOUS
-        NPY_CONTIGUOUS
-        NPY_FORTRAN
-        NPY_OWNDATA
-        NPY_FORCECAST
-        NPY_ENSURECOPY
-        NPY_ENSUREARRAY
-        NPY_ELEMENTSTRIDES
-        NPY_ALIGNED
-        NPY_NOTSWAPPED
-        NPY_WRITEABLE
-        NPY_ARR_HAS_DESCR
-
-        NPY_BEHAVED
-        NPY_BEHAVED_NS
-        NPY_CARRAY
-        NPY_CARRAY_RO
-        NPY_FARRAY
-        NPY_FARRAY_RO
-        NPY_DEFAULT
-
-        NPY_IN_ARRAY
-        NPY_OUT_ARRAY
-        NPY_INOUT_ARRAY
-        NPY_IN_FARRAY
-        NPY_OUT_FARRAY
-        NPY_INOUT_FARRAY
-
-        NPY_UPDATE_ALL
-
-    enum:
-        # Added in NumPy 1.7 to replace the deprecated enums above.
         NPY_ARRAY_C_CONTIGUOUS
         NPY_ARRAY_F_CONTIGUOUS
         NPY_ARRAY_OWNDATA
@@ -774,6 +740,13 @@ cdef extern from "numpy/ndarraytypes.h":
         int64_t year
         int32_t month, day, hour, min, sec, us, ps, as
 
+    # Iterator API added in v1.6
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
+    # https://github.com/cython/cython/issues/6720
+    ctypedef int (*NpyIter_IterNextFunc "NpyIter_IterNextFunc *")(NpyIter* it) noexcept nogil
+    ctypedef void (*NpyIter_GetMultiIndexFunc "NpyIter_GetMultiIndexFunc *")(NpyIter* it, npy_intp* outcoords) noexcept nogil
 
 cdef extern from "numpy/arrayscalars.h":
 
@@ -879,10 +852,16 @@ cdef extern from "numpy/ufuncobject.h":
         PyUFunc_Zero
         PyUFunc_One
         PyUFunc_None
+        # deprecated
         UFUNC_FPE_DIVIDEBYZERO
         UFUNC_FPE_OVERFLOW
         UFUNC_FPE_UNDERFLOW
         UFUNC_FPE_INVALID
+        # use these instead
+        NPY_FPE_DIVIDEBYZERO
+        NPY_FPE_OVERFLOW
+        NPY_FPE_UNDERFLOW
+        NPY_FPE_INVALID
 
     object PyUFunc_FromFuncAndData(PyUFuncGenericFunction *,
           void **, char *, int, int, int, int, char *, char *, int)
@@ -1025,10 +1004,6 @@ cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
     return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base
 
 
-# Iterator API added in v1.6
-ctypedef int (*NpyIter_IterNextFunc)(NpyIter* it) noexcept nogil
-ctypedef void (*NpyIter_GetMultiIndexFunc)(NpyIter* it, npy_intp* outcoords) noexcept nogil
-
 cdef extern from "numpy/arrayobject.h":
 
     ctypedef struct NpyIter:
@@ -1146,6 +1121,9 @@ cdef extern from "numpy/arrayobject.h":
                                         npy_intp* outstrides) except NPY_FAIL
     npy_bool NpyIter_IsFirstVisit(NpyIter* it, int iop) nogil
     # functions for iterating an NpyIter object
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
     NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
     NpyIter_GetMultiIndexFunc* NpyIter_GetGetMultiIndex(NpyIter* it,
                                                         char** errmsg) except NULL

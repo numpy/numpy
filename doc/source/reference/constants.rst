@@ -62,6 +62,8 @@ NumPy includes several constants:
 
     .. rubric:: Examples
 
+.. try_examples::
+
     >>> import numpy as np
     >>> np.inf
     inf
@@ -91,6 +93,8 @@ NumPy includes several constants:
 
     .. rubric:: Examples
 
+.. try_examples::
+
     >>> import numpy as np
     >>> np.nan
     nan
@@ -105,6 +109,8 @@ NumPy includes several constants:
     A convenient alias for None, useful for indexing arrays.
 
     .. rubric:: Examples
+
+.. try_examples::
 
     >>> import numpy as np
     >>> np.newaxis is None

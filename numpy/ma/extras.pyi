@@ -1,7 +1,10 @@
-from typing import Any
+from _typeshed import Incomplete
 
+import numpy as np
+from numpy.lib._function_base_impl import average
 from numpy.lib._index_tricks_impl import AxisConcatenator
-from .core import dot, mask_rowcols
+
+from .core import MaskedArray, dot
 
 __all__ = [
     "apply_along_axis",
@@ -17,8 +20,8 @@ __all__ = [
     "compress_nd",
     "compress_rowcols",
     "compress_rows",
-    "count_masked",
     "corrcoef",
+    "count_masked",
     "cov",
     "diagflat",
     "dot",
@@ -28,9 +31,9 @@ __all__ = [
     "flatnotmasked_edges",
     "hsplit",
     "hstack",
-    "isin",
     "in1d",
     "intersect1d",
+    "isin",
     "mask_cols",
     "mask_rowcols",
     "mask_rows",
@@ -46,8 +49,8 @@ __all__ = [
     "setdiff1d",
     "setxor1d",
     "stack",
-    "unique",
     "union1d",
+    "unique",
     "vander",
     "vstack",
 ]
@@ -57,9 +60,9 @@ def masked_all(shape, dtype = ...): ...
 def masked_all_like(arr): ...
 
 class _fromnxfunction:
-    __name__: Any
-    __doc__: Any
-    def __init__(self, funcname): ...
+    __name__: Incomplete
+    __doc__: Incomplete
+    def __init__(self, funcname) -> None: ...
     def getdoc(self): ...
     def __call__(self, *args, **params): ...
 
@@ -88,7 +91,6 @@ diagflat: _fromnxfunction_single
 
 def apply_along_axis(func1d, axis, arr, *args, **kwargs): ...
 def apply_over_axes(func, a, axes): ...
-def average(a, axis=..., weights=..., returned=..., keepdims=...): ...
 def median(a, axis=..., out=..., overwrite_input=..., keepdims=...): ...
 def compress_nd(x, axis=...): ...
 def compress_rowcols(x, axis=...): ...
@@ -108,13 +110,13 @@ def cov(x, y=..., rowvar=..., bias=..., allow_masked=..., ddof=...): ...
 def corrcoef(x, y=..., rowvar=..., bias = ..., allow_masked=..., ddof = ...): ...
 
 class MAxisConcatenator(AxisConcatenator):
-    concatenate: Any
+    @staticmethod
+    def concatenate(arrays: Incomplete, axis: int = 0) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
     @classmethod
-    def makemat(cls, arr): ...
-    def __getitem__(self, key): ...
+    def makemat(cls, arr: Incomplete) -> Incomplete: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleVariableOverride]
 
 class mr_class(MAxisConcatenator):
-    def __init__(self): ...
+    def __init__(self) -> None: ...
 
 mr_: mr_class
 
@@ -127,3 +129,6 @@ def clump_unmasked(a): ...
 def clump_masked(a): ...
 def vander(x, n=...): ...
 def polyfit(x, y, deg, rcond=..., full=..., w=..., cov=...): ...
+
+#
+def mask_rowcols(a: Incomplete, axis: Incomplete | None = None) -> MaskedArray[Incomplete, np.dtype[Incomplete]]: ...

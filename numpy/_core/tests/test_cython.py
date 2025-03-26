@@ -267,6 +267,7 @@ def test_npyiter_api(install_temp):
     assert checks.get_npyiter_size(it) == it.itersize == np.prod(arr.shape)
     assert checks.npyiter_has_multi_index(it) == it.has_multi_index == True
     assert checks.get_npyiter_ndim(it) == it.ndim == 2
+    assert checks.test_get_multi_index_iter_next(it, arr)
 
     arr2 = np.random.rand(2, 1, 2)
     it = np.nditer([arr, arr2])

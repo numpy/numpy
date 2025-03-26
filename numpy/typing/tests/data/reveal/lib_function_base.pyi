@@ -94,6 +94,15 @@ assert_type(np.diff("bob", n=0), str)
 assert_type(np.diff(AR_f8, axis=0), npt.NDArray[Any])
 assert_type(np.diff(AR_LIKE_f8, prepend=1.5), npt.NDArray[Any])
 
+assert_type(np.interp(1, [1], AR_f8), np.float64)
+assert_type(np.interp(1, [1], [1]), np.float64)
+assert_type(np.interp(1, [1], AR_c16), np.complex128)
+assert_type(np.interp(1, [1], [1j]), np.complex128)  # pyright correctly infers `complex128 | float64`
+assert_type(np.interp([1], [1], AR_f8), npt.NDArray[np.float64])
+assert_type(np.interp([1], [1], [1]), npt.NDArray[np.float64])
+assert_type(np.interp([1], [1], AR_c16), npt.NDArray[np.complex128])
+assert_type(np.interp([1], [1], [1j]), npt.NDArray[np.complex128])  # pyright correctly infers `NDArray[complex128 | float64]`
+
 assert_type(np.angle(f8), np.floating[Any])
 assert_type(np.angle(AR_f8), npt.NDArray[np.floating[Any]])
 assert_type(np.angle(AR_c16, deg=True), npt.NDArray[np.floating[Any]])
@@ -185,8 +194,13 @@ assert_type(np.trapezoid(AR_m), np.timedelta64 | npt.NDArray[np.timedelta64])
 assert_type(np.trapezoid(AR_O), float | npt.NDArray[np.object_])
 assert_type(np.trapezoid(AR_O, AR_LIKE_f8), float | npt.NDArray[np.object_])
 
-assert_type(np.meshgrid(AR_f8, AR_i8, copy=False), tuple[npt.NDArray[Any], ...])
-assert_type(np.meshgrid(AR_f8, AR_i8, AR_c16, indexing="ij"), tuple[npt.NDArray[Any], ...])
+assert_type(np.meshgrid(), tuple[()])
+assert_type(np.meshgrid(AR_c16, indexing="ij"), tuple[npt.NDArray[np.complex128]])
+assert_type(np.meshgrid(AR_i8, AR_f8, copy=False), tuple[npt.NDArray[np.int64], npt.NDArray[np.float64]])
+assert_type(np.meshgrid(AR_LIKE_f8, AR_f8), tuple[npt.NDArray[Any], npt.NDArray[np.float64]])
+assert_type(np.meshgrid(AR_LIKE_f8, AR_i8, AR_c16), tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]])
+assert_type(np.meshgrid(AR_f8, AR_f8, AR_f8, AR_f8), tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]])
+assert_type(np.meshgrid(*AR_LIKE_f8), tuple[npt.NDArray[Any], ...])
 
 assert_type(np.delete(AR_f8, np.s_[:5]), npt.NDArray[np.float64])
 assert_type(np.delete(AR_LIKE_f8, [0, 4, 9], axis=0), npt.NDArray[Any])

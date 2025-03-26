@@ -52,7 +52,12 @@ def replace_scalar_type_names():
     ]:
         typ = getattr(numpy, name)
         c_typ = PyTypeObject.from_address(id(typ))
-        c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+        if sys.implementation.name == 'cpython':
+            c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+        else:
+            # It is not guarenteed that the c_typ has this model on other
+            # implementations
+            _name_cache[typ] = b"numpy." + name.encode('utf8')
 
 
 replace_scalar_type_names()
@@ -88,6 +93,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx_copybutton',
     'sphinx_design',
+    'sphinx.ext.imgconverter',
+    'jupyterlite_sphinx',
 ]
 
 skippable_extensions = [
@@ -600,4 +607,17 @@ nitpick_ignore = [
     ('c:identifier', 'PyHeapTypeObject'),
 ]
 
+# -----------------------------------------------------------------------------
+# Interactive documentation examples via JupyterLite
+# -----------------------------------------------------------------------------
 
+global_enable_try_examples = True
+try_examples_global_button_text = "Try it in your browser!"
+try_examples_global_warning_text = (
+    "NumPy's interactive examples are experimental and may not always work"
+    " as expected, with high load times especially on low-resource platforms,"
+    " and the version of NumPy might not be in sync with the one you are"
+    " browsing the documentation for. If you encounter any issues, please"
+    " report them on the"
+    " [NumPy issue tracker](https://github.com/numpy/numpy/issues)."
+)

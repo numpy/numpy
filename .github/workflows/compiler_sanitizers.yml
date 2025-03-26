@@ -1,0 +1,129 @@
+name: Test with compiler sanitizers
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+      - maintenance/**
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  clang_ASAN:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - name: Set up pyenv
+      run: |
+        git clone https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+        PYENV_ROOT="$HOME/.pyenv"
+        PYENV_BIN="$PYENV_ROOT/bin"
+        PYENV_SHIMS="$PYENV_ROOT/shims"
+        echo "$PYENV_BIN" >> $GITHUB_PATH
+        echo "$PYENV_SHIMS" >> $GITHUB_PATH
+        echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
+    - name: Check pyenv is working
+      run:
+        pyenv --version
+    - name: Set up LLVM
+      run: |
+        brew install llvm@19
+        LLVM_PREFIX=$(brew --prefix llvm@19)
+        echo CC="$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
+        echo CXX="$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
+        echo LDFLAGS="-L$LLVM_PREFIX/lib" >> $GITHUB_ENV
+        echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
+    - name: Build Python with address sanitizer
+      run: |
+        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.13t
+        pyenv global 3.13t
+    - name: Install dependencies
+      run: |
+        # TODO: remove when a released cython supports free-threaded python
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/ci_requirements.txt
+        pip install -r requirements/test_requirements.txt
+        # xdist captures stdout/stderr, but we want the ASAN output
+        pip uninstall -y pytest-xdist
+    - name: Build
+      run:
+        python -m spin build -j2 -- -Db_sanitize=address
+    - name: Test
+      run: |
+        # pass -s to pytest to see ASAN errors and warnings, otherwise pytest captures them
+        ASAN_OPTIONS=detect_leaks=0:symbolize=1:strict_init_order=true:allocator_may_return_null=1 \
+        python -m spin test -- -v -s --timeout=600 --durations=10
+
+  clang_TSAN:
+    # To enable this workflow on a fork, comment out:
+    if: github.repository == 'numpy/numpy'
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    - name: Set up pyenv
+      run: |
+        git clone https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
+        PYENV_ROOT="$HOME/.pyenv"
+        PYENV_BIN="$PYENV_ROOT/bin"
+        PYENV_SHIMS="$PYENV_ROOT/shims"
+        echo "$PYENV_BIN" >> $GITHUB_PATH
+        echo "$PYENV_SHIMS" >> $GITHUB_PATH
+        echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
+    - name: Check pyenv is working
+      run:
+        pyenv --version
+    - name: Set up LLVM
+      run: |
+        brew install llvm@19
+        LLVM_PREFIX=$(brew --prefix llvm@19)
+        echo CC="$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
+        echo CXX="$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
+        echo LDFLAGS="-L$LLVM_PREFIX/lib" >> $GITHUB_ENV
+        echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
+    - name: Build Python with thread sanitizer support
+      run: |
+        # free-threaded Python is much more likely to trigger races
+        CONFIGURE_OPTS="--with-thread-sanitizer" pyenv install 3.13t
+        pyenv global 3.13t
+    - name: Install dependencies
+      run: |
+        # TODO: remove when a released cython supports free-threaded python
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
+        pip install -r requirements/build_requirements.txt
+        pip install -r requirements/ci_requirements.txt
+        pip install -r requirements/test_requirements.txt
+        # xdist captures stdout/stderr, but we want the TSAN output
+        pip uninstall -y pytest-xdist
+    - name: Build
+      run:
+        python -m spin build -j2 -- -Db_sanitize=thread
+    - name: Test
+      run: |
+        # These tests are slow, so only run tests in files that do "import threading" to make them count
+        TSAN_OPTIONS="allocator_may_return_null=1:suppressions=$GITHUB_WORKSPACE/tools/ci/tsan_suppressions.txt" \
+        python -m spin test \
+        `find numpy -name "test*.py" | xargs grep -l "import threading" | tr '\n' ' '` \
+        -- -v -s --timeout=600 --durations=10

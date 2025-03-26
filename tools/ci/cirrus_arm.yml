@@ -21,53 +21,11 @@ modified_clone: &MODIFIED_CLONE
     fi
 
 
-linux_aarch64_test_task:
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
-  compute_engine_instance:
-    image_project: cirrus-images
-    image: family/docker-builder-arm64
-    architecture: arm64
-    platform: linux
-    cpu: 1
-    memory: 4G
-
-  <<: *MODIFIED_CLONE
-
-  ccache_cache:
-    folder: .ccache
-    populate_script:
-      - mkdir -p .ccache
-    fingerprint_key: ccache-linux_aarch64
-
-  prepare_env_script: |
-    apt-get update
-    apt-get install -y --no-install-recommends software-properties-common gcc g++ gfortran pkg-config ccache
-    apt-get install -y --no-install-recommends python3.11 python3.11-venv libopenblas-dev libatlas-base-dev liblapack-dev
-
-    # python3.11 -m ensurepip --default-pip --user
-    ln -s $(which python3.11) python
-
-    # put ccache and python on PATH
-    export PATH=/usr/lib/ccache:$PWD:$PATH
-    echo "PATH=$PATH" >> $CIRRUS_ENV
-    echo "CCACHE_DIR=$PWD/.ccache" >> $CIRRUS_ENV
-
-    pip install -r requirements/build_requirements.txt
-    pip install -r requirements/test_requirements.txt
-
-  build_script: |
-    spin build -- -Dallow-noblas=true
-
-  test_script: |
-    spin test -j 1
-    ccache -s
-
-
 freebsd_test_task:
   use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
   compute_engine_instance:
     image_project: freebsd-org-cloud-dev
-    image: family/freebsd-14-0
+    image: family/freebsd-14-2
     platform: freebsd
     cpu: 1
     memory: 4G

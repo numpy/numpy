@@ -467,7 +467,7 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
         # Note: Assume value is integral (double of LONG_MAX should work out)
         if val < 0:
             raise ValueError(name + " < 0")
-        elif val > LONG_MAX:
+        elif val > <double> LONG_MAX:
             raise ValueError(
                     name + " is out of bounds for long, consider using "
                     "the new generator API for 64bit integers.")
@@ -603,13 +603,13 @@ cdef object cont(void *func, void *state, object size, object lock, int narg,
     cdef bint is_scalar = True
     check_output(out, np.float64, size, narg > 0)
     if narg > 0:
-        a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
     if narg > 1:
-        b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
     if narg == 3:
-        c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(c_arr) == 0
 
     if not is_scalar:
@@ -879,23 +879,23 @@ cdef object disc(void *func, void *state, object size, object lock,
     cdef int64_t _ia = 0, _ib = 0, _ic = 0
     cdef bint is_scalar = True
     if narg_double > 0:
-        a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
         if narg_double > 1:
-            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_DOUBLE, np.NPY_ALIGNED)
+            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
         elif narg_int64 == 1:
-            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ALIGNED)
+            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
     else:
         if narg_int64 > 0:
-            a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_INT64, np.NPY_ALIGNED)
+            a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
         if narg_int64 > 1:
-            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ALIGNED)
+            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
         if narg_int64 > 2:
-            c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_INT64, np.NPY_ALIGNED)
+            c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(c_arr) == 0
 
     if not is_scalar:
@@ -918,31 +918,33 @@ cdef object disc(void *func, void *state, object size, object lock,
         else:
             raise NotImplementedError("No vector path available")
 
+    # At this point, we know is_scalar is True.
+
     if narg_double > 0:
         _da = PyFloat_AsDouble(a)
-        if a_constraint != CONS_NONE and is_scalar:
+        if a_constraint != CONS_NONE:
             check_constraint(_da, a_name, a_constraint)
 
         if narg_double > 1:
             _db = PyFloat_AsDouble(b)
-            if b_constraint != CONS_NONE and is_scalar:
+            if b_constraint != CONS_NONE:
                 check_constraint(_db, b_name, b_constraint)
         elif narg_int64 == 1:
             _ib = <int64_t>b
-            if b_constraint != CONS_NONE and is_scalar:
+            if b_constraint != CONS_NONE:
                 check_constraint(<double>_ib, b_name, b_constraint)
     else:
         if narg_int64 > 0:
             _ia = <int64_t>a
-            if a_constraint != CONS_NONE and is_scalar:
+            if a_constraint != CONS_NONE:
                 check_constraint(<double>_ia, a_name, a_constraint)
         if narg_int64 > 1:
             _ib = <int64_t>b
-            if b_constraint != CONS_NONE and is_scalar:
+            if b_constraint != CONS_NONE:
                 check_constraint(<double>_ib, b_name, b_constraint)
         if narg_int64 > 2:
             _ic = <int64_t>c
-            if c_constraint != CONS_NONE and is_scalar:
+            if c_constraint != CONS_NONE:
                 check_constraint(<double>_ic, c_name, c_constraint)
 
     if size is None:
@@ -1050,7 +1052,7 @@ cdef object cont_f(void *func, bitgen_t *state, object size, object lock,
     cdef np.ndarray a_arr, b_arr, c_arr
     cdef float _a
     cdef bint is_scalar = True
-    cdef int requirements = np.NPY_ALIGNED | np.NPY_FORCECAST
+    cdef int requirements = np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_FORCECAST
     check_output(out, np.float32, size, True)
     a_arr = <np.ndarray>np.PyArray_FROMANY(a, np.NPY_FLOAT32, 0, 0, requirements)
     is_scalar = np.PyArray_NDIM(a_arr) == 0

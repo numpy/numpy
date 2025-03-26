@@ -16,6 +16,8 @@ Legacy fixed-width string functionality
 The `numpy.char` module provides a set of vectorized string
 operations for arrays of type `numpy.str_` or `numpy.bytes_`. For example
 
+.. try_examples::
+
    >>> import numpy as np
    >>> np.char.capitalize(["python", "numpy"])
    array(['Python', 'Numpy'], dtype='<U6')
