@@ -235,6 +235,7 @@ template <typename T=uint8_t>
 struct OpGeBool {};
 
 #if !defined(__s390x__) && !defined(__arm__) && !defined(__loongarch64) && !defined(__loongarch64__)
+#if NPY_SIMD
 HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b16(vec_u16 a, vec_u16 b) {
     return hn::OrderedTruncate2To(u8, a, b);
 }
@@ -253,6 +254,7 @@ HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b64(vec_u64 a, vec_u64 b, vec_u64 c, vec
     auto gh = hn::OrderedTruncate2To(u32, g, h);
     return simd_pack_b8_b32(ab, cd, ef, gh);
 }
+#endif
 
 template <typename T, typename OP>
 inline void binary(char **args, size_t len)
