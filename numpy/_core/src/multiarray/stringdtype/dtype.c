@@ -550,8 +550,8 @@ _stringdtype_timsort(void *start, npy_intp num, void *varr) {
 }
 
 int
-stringdtype_get_sort_function(
-    PyArray_Descr *descr, NPY_SORTKIND sort_kind, PyArray_SortFunc **out_sort) {
+stringdtype_get_sort_function(PyArray_Descr *descr,
+    NPY_SORTKIND sort_kind, int descending, PyArray_SortFunc **out_sort) {
     
     switch (sort_kind) {
         default:
@@ -597,8 +597,8 @@ _stringdtype_atimsort(void *vv, npy_intp *tosort, npy_intp n, void *varr) {
 }
 
 int
-stringdtype_get_argsort_function(
-    PyArray_Descr *descr, NPY_SORTKIND sort_kind, PyArray_ArgSortFunc **out_argsort) {
+stringdtype_get_argsort_function(PyArray_Descr *descr, 
+    NPY_SORTKIND sort_kind, int descending, PyArray_ArgSortFunc **out_argsort) {
     
     switch (sort_kind) {
         default:
