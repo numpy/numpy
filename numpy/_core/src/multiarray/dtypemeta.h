@@ -296,26 +296,28 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
         } while(0)
 
 static inline int
-PyArray_GetSortFunction(PyArray_Descr *descr, NPY_SORTKIND which,
-                        PyArray_SortFunc **out_sort)
+PyArray_GetSortFunction(PyArray_Descr *descr, 
+    NPY_SORTKIND which, int descending, PyArray_SortFunc **out_sort)
 {
     if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function == NULL) {
         return -1;
     }
 
-    NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function(descr, which, out_sort);
+    NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function(
+        descr, which, descending, out_sort);
     return 0;
 }
 
 static inline int
-PyArray_GetArgSortFunction(PyArray_Descr *descr, NPY_SORTKIND which,
-                           PyArray_ArgSortFunc **out_argsort)
+PyArray_GetArgSortFunction(PyArray_Descr *descr, 
+    NPY_SORTKIND which, int descending, PyArray_ArgSortFunc **out_argsort)
 {
     if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function == NULL) {
         return -1;
     }
 
-    NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function(descr, which, out_argsort);
+    NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function(
+        descr, which, descending, out_argsort);
     return 0;
 }
 

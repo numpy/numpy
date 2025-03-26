@@ -481,8 +481,8 @@ typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
 
 typedef int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, 
-        npy_intp, PyArray_SortFunc **);
+        npy_intp, int, PyArray_SortFunc **);
 typedef int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, 
-        npy_intp, PyArray_ArgSortFunc **);
+        npy_intp, int, PyArray_ArgSortFunc **);
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */
