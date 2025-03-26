@@ -1878,10 +1878,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     /* Construct a PickleBuffer of the array */
     if (PyArray_IS_C_CONTIGUOUS((PyArrayObject *)self)) {
         order = 'C';
-        rev_perm = PyTuple_New(0);
-        if (rev_perm == NULL) {
-            return NULL;
-        }
     }
     else if (PyArray_IS_F_CONTIGUOUS((PyArrayObject *)self)) {
         /* if the array if Fortran-contiguous and not C-contiguous,
@@ -1890,11 +1886,6 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
         order = 'F';
         transposed_array = PyArray_Transpose((PyArrayObject *)self, NULL);
         if(transposed_array == NULL) {
-            return NULL;
-        }
-        rev_perm = PyTuple_New(0);
-        if (rev_perm == NULL) {
-            Py_DECREF(transposed_array);
             return NULL;
         }
     }
@@ -1940,7 +1931,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
          * just fall back on regular __reduce_ex__ implementation
          * (gh-12745).
          */
-        Py_DECREF(rev_perm);
+        Py_XDECREF(rev_perm);
         Py_XDECREF(transposed_array);
         PyErr_Clear();
         return array_reduce_ex_regular(self, protocol);
@@ -1949,7 +1940,7 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     /* Get the _frombuffer() function for reconstruction */
     if (npy_cache_import_runtime("numpy._core.numeric", "_frombuffer",
                                  &from_buffer_func) == -1) {
-        Py_DECREF(rev_perm);
+        Py_XDECREF(rev_perm);
         Py_XDECREF(transposed_array);
         Py_DECREF(buffer);
         return NULL;
@@ -1967,13 +1958,20 @@ array_reduce_ex_picklebuffer(PyArrayObject *self, int protocol)
     }
     Py_XDECREF(transposed_array);
     if (shape == NULL) {
-        Py_DECREF(rev_perm);
+        Py_XDECREF(rev_perm);
         Py_DECREF(buffer);
         return NULL;
     }
-    return Py_BuildValue("N(NONNN)", from_buffer_func, buffer,
-                         (PyObject *)descr, shape,
-                         PyUnicode_FromStringAndSize(&order, 1), rev_perm);
+    if (order == 'K') {
+        return Py_BuildValue("N(NONNN)", from_buffer_func, buffer,
+                             (PyObject *)descr, shape,
+                             PyUnicode_FromStringAndSize(&order, 1), rev_perm);
+    }
+    else {
+        return Py_BuildValue("N(NONN)", from_buffer_func, buffer,
+                             (PyObject *)descr, shape,
+                             PyUnicode_FromStringAndSize(&order, 1));
+    }
 }
 
 static PyObject *
