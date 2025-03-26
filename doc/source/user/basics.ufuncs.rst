@@ -107,7 +107,7 @@ If the input arguments of the ufunc (or its methods) are
 :class:`ndarrays <numpy.ndarray>`, then the output will be as well.
 The exception is when the result is zero-dimensional, in which case the
 output will be converted to an `array scalar <arrays.scalars>`. This can
-be avoided by passing in ``out=...``.
+be avoided by passing in ``out=...`` or ``out=Ellipsis``.
 
 If some or all of the input arguments are not
 :class:`ndarrays <numpy.ndarray>`, then the output may not be an

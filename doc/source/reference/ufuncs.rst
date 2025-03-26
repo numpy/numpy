@@ -52,7 +52,8 @@ tuple holding a single array) is also valid.
 If 'out' is None (the default), a uninitialized output array is created,
 which will be filled in the ufunc.  At the end, this array is returned
 unless it is zero-dimensional, in which case it is converted to a scalar;
-this conversion can be avoided by passing in ``out=...``.
+this conversion can be avoided by passing in ``out=...``. This can also be 
+spelled `out=Ellipsis` if you think that is clearer.
 
 Note that the output is filled only in the places that the broadcast
 'where' is True. If 'where' is the scalar True (the default), then this
