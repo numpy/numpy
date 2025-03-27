@@ -2331,7 +2331,7 @@ class TestSinc:
         expected = sinc(x.astype(np.float64))
         assert_allclose(actual, expected)
         assert actual.dtype == np.float64
-    
+
     @pytest.mark.parametrize(
             'dtype',
             [np.float16, np.float32, np.longdouble, np.complex64, np.complex128]
@@ -4510,3 +4510,33 @@ class TestSortComplex:
         actual = np.sort_complex(a)
         assert_equal(actual, expected)
         assert_equal(actual.dtype, expected.dtype)
+
+
+def test_quantile_zero_weights():
+    """
+    Test np.quantile raises an error when weights are all zeros.
+    (Corresponds to the example given in bug #28589)
+    """
+
+    arr = np.array([1, 2, 3, 4])
+    quantile = 0.5
+    weights = np.array([0, 0, 0, 0])
+
+    with pytest.raises(ValueError, match="All weights are zero, cannot compute quantile."):
+        np.quantile(arr, quantile, weights=weights, method='inverted_cdf')
+
+
+def test_quantile_valid_weights():
+    """
+    Test np.quantile with valid weights.
+    """
+    arr = np.array([1, 2, 3, 4])
+    quantile = 0.5
+    weights = np.array([1, 1, 1, 1])
+
+    result = np.quantile(arr, quantile, weights=weights, method='inverted_cdf')
+    expected = 2.5
+
+    assert np.isclose(result, expected)
+
+
