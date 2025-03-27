@@ -4151,20 +4151,16 @@ class TestQuantile:
 
         for i in range(len(arr)):
             wgt[i] = np.inf
-            try:
+            with pytest.raises(ValueError) as ex:
                 a = np.quantile(arr, q, weights=wgt, method=m)
-            except Exception as ex:
-                assert ex.__class__ == ValueError
-                assert str(ex) == "Weights must be non-infinite"
+            assert str(ex) == "Weights must be non-infinite"
             wgt[i] = 1
         
         for i in range(len(arr)):
             wgt[i] = np.inf
-            try:
+            with pytest.raises(ValueError) as ex:
                 a = np.quantile(arr, q, weights=wgt, method=m)
-            except Exception as ex:
-                assert ex.__class__ == ValueError
-                assert str(ex) == "Weights must be non-infinite"
+            assert str(ex) == "Weights must be non-infinite"
     
     def test_nan_err(self):
 
@@ -4175,20 +4171,16 @@ class TestQuantile:
 
         for i in range(len(arr)):
             wgt[i] = np.nan
-            try:
+            with pytest.raises(ValueError) as ex:
                 a = np.quantile(arr, q, weights=wgt, method=m)
-            except Exception as ex:
-                assert ex.__class__ == ValueError
-                assert str(ex) == "At least one weight is nan"
+            assert str(ex) == "At least one weight is nan"
             wgt[i] = 1
         
         for i in range(len(arr)):
             wgt[i] = np.nan
-            try:
+            with pytest.raises(ValueError) as ex:
                 a = np.quantile(arr, q, weights=wgt, method=m)
-            except Exception as ex:
-                assert ex.__class__ == ValueError
-                assert str(ex) == "At least one weight is nan"
+            assert str(ex) == "At least one weight is nan"
     
     def test_all_zeroes_err(self):
 
@@ -4196,11 +4188,9 @@ class TestQuantile:
         q = 0.5
         arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         wgt = np.zeros(10)
-        try:
+        with pytest.raises(ValueError) as ex:
             a = np.quantile(arr, q, weights=wgt, method=m)
-        except Exception as ex:
-            assert ex.__class__ == ValueError
-            assert str(ex) == "At least one weight must be non-zero"
+        assert str(ex) == "At least one weight must be non-zero"
             
             
 class TestLerp:
