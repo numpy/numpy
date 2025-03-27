@@ -1235,6 +1235,13 @@ dtypemeta_wrap_legacy_descriptor(
 
     /* If sorting compare not defined, set to arrfunc default */
     if (dt_slots->sort_compare == NULL) {
+        if (!NPY_DT_is_legacy(dtype_class)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "DType has no sort_compare function.");
+            Py_DECREF(dtype_class);
+            return -1;
+        }
+
         dt_slots->sort_compare = arr_funcs->compare;
     }
 
