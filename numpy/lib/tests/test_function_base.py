@@ -4153,14 +4153,14 @@ class TestQuantile:
             wgt[i] = np.inf
             with pytest.raises(ValueError) as ex:
                 a = np.quantile(arr, q, weights=wgt, method=m)
-            assert str(ex) == "Weights must be non-infinite"
+            assert "Weights must be non-infinite" in str(ex)
             wgt[i] = 1
         
         for i in range(len(arr)):
             wgt[i] = np.inf
             with pytest.raises(ValueError) as ex:
                 a = np.quantile(arr, q, weights=wgt, method=m)
-            assert str(ex) == "Weights must be non-infinite"
+            assert "Weights must be non-infinite" in str(ex)
     
     def test_nan_err(self):
 
@@ -4173,14 +4173,14 @@ class TestQuantile:
             wgt[i] = np.nan
             with pytest.raises(ValueError) as ex:
                 a = np.quantile(arr, q, weights=wgt, method=m)
-            assert str(ex) == "At least one weight is nan"
+            assert "At least one weight is nan" in str(ex)
             wgt[i] = 1
         
         for i in range(len(arr)):
             wgt[i] = np.nan
             with pytest.raises(ValueError) as ex:
                 a = np.quantile(arr, q, weights=wgt, method=m)
-            assert str(ex) == "At least one weight is nan"
+            assert "At least one weight is nan" in str(ex)
     
     def test_all_zeroes_err(self):
 
@@ -4190,7 +4190,8 @@ class TestQuantile:
         wgt = np.zeros(10)
         with pytest.raises(ValueError) as ex:
             a = np.quantile(arr, q, weights=wgt, method=m)
-        assert str(ex) == "At least one weight must be non-zero"
+
+        assert "At least one weight must be non-zero" in str(ex)
             
             
 class TestLerp:
