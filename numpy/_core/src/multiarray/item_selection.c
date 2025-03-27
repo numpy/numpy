@@ -1577,7 +1577,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
 
     if (sort == NULL) {
-        if (PyArray_SortCompare(PyArray_DESCR(op)) != NULL) {
+        if (PyArray_GetSortCompareFunction(PyArray_DESCR(op)) != NULL) {
             switch (which) {
                 default:
                 case NPY_QUICKSORT:
@@ -1732,7 +1732,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
 
     if (argsort == NULL) {
-        if (PyArray_SortCompare(PyArray_DESCR(op)) != NULL) {
+        if (PyArray_GetSortCompareFunction(PyArray_DESCR(op)) != NULL) {
             switch (which) {
                 default:
                 case NPY_QUICKSORT:
