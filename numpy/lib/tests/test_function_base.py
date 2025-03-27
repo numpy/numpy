@@ -4142,7 +4142,67 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
 
+    def test_inf_err(self):
 
+        m = "inverted_cdf"
+        q = 0.5
+        arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        wgt = np.ones(10)
+
+        for i in range(len(arr)):
+            wgt[i] = np.inf
+            try:
+                a = np.quantile(arr, q, weights=wgt, method=m)
+            except Exception as ex:
+                assert ex.__class__ == ValueError
+                assert str(ex) == "Weights must be non-infinite"
+            wgt[i] = 1
+        
+        for i in range(len(arr)):
+            wgt[i] = np.inf
+            try:
+                a = np.quantile(arr, q, weights=wgt, method=m)
+            except Exception as ex:
+                assert ex.__class__ == ValueError
+                assert str(ex) == "Weights must be non-infinite"
+    
+    def test_nan_err(self):
+
+        m = "inverted_cdf"
+        q = 0.5
+        arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        wgt = np.ones(10)
+
+        for i in range(len(arr)):
+            wgt[i] = np.nan
+            try:
+                a = np.quantile(arr, q, weights=wgt, method=m)
+            except Exception as ex:
+                assert ex.__class__ == ValueError
+                assert str(ex) == "At least one weight is nan"
+            wgt[i] = 1
+        
+        for i in range(len(arr)):
+            wgt[i] = np.nan
+            try:
+                a = np.quantile(arr, q, weights=wgt, method=m)
+            except Exception as ex:
+                assert ex.__class__ == ValueError
+                assert str(ex) == "At least one weight is nan"
+    
+    def test_all_zeroes_err(self):
+
+        m = "inverted_cdf"
+        q = 0.5
+        arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        wgt = np.zeros(10)
+        try:
+            a = np.quantile(arr, q, weights=wgt, method=m)
+        except Exception as ex:
+            assert ex.__class__ == ValueError
+            assert str(ex) == "At least one weight must be non-zero"
+            
+            
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
                                    min_value=0, max_value=1),

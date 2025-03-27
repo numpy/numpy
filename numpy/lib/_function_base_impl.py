@@ -4537,6 +4537,12 @@ def quantile(a,
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
+        elif np.all(weights == 0):
+            raise ValueError("At least one weight must be non-zero")
+        elif np.any(np.isinf(weights)):
+            raise ValueError("Weights must be non-infinite")
+        elif np.any(np.isnan(weights)):
+            raise ValueError("At least one weight is nan")
 
     return _quantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
