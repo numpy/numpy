@@ -4539,7 +4539,7 @@ def quantile(a,
             raise ValueError("Weights must be non-negative.")
         elif np.all(weights == 0):
             raise ValueError("At least one weight must be non-zero")
-        if weights.dtype is not object:
+        if weights.dtype != object:
             if np.any(np.isinf(weights)):
                 raise ValueError("Weights must be non-infinite")
             elif np.any(np.isnan(weights)):
