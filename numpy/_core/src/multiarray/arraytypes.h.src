@@ -164,4 +164,7 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT int BOOL_argmax,
 #undef INT_not_size_named
 #undef LONGLONG_not_size_named
 
+NPY_NO_EXPORT npy_intp
+count_nonzero_trivial_dispatcher(npy_intp count, const char* data, npy_intp stride, int dtype_num);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_ARRAYTYPES_H_ */
