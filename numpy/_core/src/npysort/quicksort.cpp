@@ -44,7 +44,7 @@
  * the below code implements this converted to an iteration and as an
  * additional minor optimization skips the recursion depth checking on the
  * smaller partition as it is always less than half of the remaining data and
- * will thus terminate fast enough`
+ * will thus terminate fast enough
  */
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
