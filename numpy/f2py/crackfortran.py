@@ -1492,7 +1492,7 @@ def analyzeline(m, case, line):
             line = '//' + line
 
         cl = []
-        [_,bn,ol] = re.split('/', line,2)
+        [_,bn,ol] = re.split('/', line, 2)
         bn = bn.strip()
         if not bn:
             bn = '_BLNK_'
