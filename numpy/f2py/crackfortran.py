@@ -1494,12 +1494,12 @@ def analyzeline(m, case, line):
         f = 0
         bn = ''
         ol = ''
-        nslash = 0
-        for c in line:
-            if c == '/' and nslash < 2:
-                f = f + 1
-                nslash = nslash + 1
-                continue
+        
+        # Find the /<common block name>/ and split the string at
+        # that location. 
+        split_line = re.split(r'\s*/[A-Za-z_]*[A-Za-z0-9_]*/', line)
+
+        for c in split_line[-1]:
             if f >= 3:
                 bn = bn.strip()
                 if not bn:
