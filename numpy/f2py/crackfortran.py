@@ -1494,7 +1494,7 @@ def analyzeline(m, case, line):
         f = 0
         bn = ''
         ol = ''
-        nslash = 0 # For counting common block instances.
+        nslash = 0  # For counting common block instances.
         for c in line:
             if c == '/' and nslash < 2:
                 f = f + 1
