@@ -588,8 +588,17 @@ def min(
 @overload
 def min(
     obj: ArrayLike,
+    axis: None,
+    out: _ArrayType,
+    fill_value: _ScalarLike_co | None = ...,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayType: ...
+@overload
+def min(
+    obj: ArrayLike,
     axis: _ShapeLike | None = None,
-    out: _ArrayType = ...,
+    *,
+    out: _ArrayType,
     fill_value: _ScalarLike_co | None = ...,
     keepdims: bool | _NoValueType = ...,
 ) -> _ArrayType: ...
