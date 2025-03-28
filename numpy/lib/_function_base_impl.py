@@ -4537,7 +4537,7 @@ def quantile(a,
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
         if weights.dtype != object:
             if np.any(np.isinf(weights)):
-                raise ValueError("Weights must be non-infinite.")
+                raise ValueError("Weights must be finite.")
             elif np.any(np.isnan(weights)):
                 raise ValueError("At least one weight is nan.")
         # Since np.isinf and np.isnan do not work in dtype object arrays

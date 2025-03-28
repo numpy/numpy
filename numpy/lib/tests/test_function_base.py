@@ -4144,11 +4144,11 @@ class TestQuantile:
 
     
     @pytest.mark.parametrize(["err_msg", "weight"], 
-                             [("Weights must be non-infinite.", np.array([1,np.inf, 1, 1])),
-                              ("Weights must be non-infinite.", np.array([1,np.inf, 1, 1], dtype=object)),
-                              ("Weights must be non-infinite.", np.array([1,-np.inf, 1, 1])),
-                              ("Weights must be non-infinite.", np.array([1,-np.inf, 1, 1], dtype=object)),
-                              ("Weights must be non-infinite.", np.array([1,np.inf, 1, np.inf])),
+                             [("Weights must be finite.", np.array([1,np.inf, 1, 1])),
+                              ("Weights must be finite.", np.array([1,np.inf, 1, 1], dtype=object)),
+                              ("Weights must be finite.", np.array([1,-np.inf, 1, 1])),
+                              ("Weights must be finite.", np.array([1,-np.inf, 1, 1], dtype=object)),
+                              ("Weights must be finite.", np.array([1,np.inf, 1, np.inf])),
                               ("At least one weight is nan.", np.array([1,np.nan, 1, 1])),
                               ("At least one weight is nan.", np.array([1,np.nan, 1, 1], dtype=object)),
                               ("At least one weight is nan.", np.array([1,np.nan, np.nan, 1])),
