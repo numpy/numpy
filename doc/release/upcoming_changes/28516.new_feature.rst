@@ -1,0 +1,7 @@
+New sorting function slots `NPY_DT_get_sort_function`, `NPY_DT_get_argsort_function` for dtype API
+---------------------------------------------------------------------------------------------------
+
+User-defined dtypes can now provide specific sorting functions for use with NumPy's sort methods.
+The new slot functions ``NPY_DT_get_sort_function`` and ``NPY_DT_get_argsort_function`` should 
+return function pointers that implement the sorting functionality for the dtype while considering
+sort-kind and order.
