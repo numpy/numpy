@@ -4548,7 +4548,7 @@ def quantile(a,
                 if np.isnan(w):
                     raise ValueError("At least one weight is nan.")
                 if np.isinf(w):
-                    raise ValueError("Weights must be non-infinite.")
+                    raise ValueError("Weights must be finite.")
                 
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
