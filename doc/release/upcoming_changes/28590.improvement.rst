@@ -1,0 +1,30 @@
+Improve `flatiter` indexing by using ndarray index preparation
+--------------------------------------------------------------
+
+The `flatiter`` object now shares the same index preparation logic as
+`ndarray`, ensuring consistent behavior and fixing several issues where
+invalid indices were previously accepted or misinterpreted.
+
+Key fixes and improvements:
+
+* Stricter index validation
+
+  ``arr.flat[[True, True]]`` and ``arr.flat[[1.0, 1.0]]`` were incorrectly
+  treated as ``arr.flat[[1, 1]]``. They now raise an `IndexError`` (unless
+  ``arr.flat[[True, Truee]]`` is a valid boolean index)
+
+* Fixed crash when assigning to an empty index tuple:
+
+  ``arr.flat[()] = 0`` previously crashed the Python interpreter. It now
+  correctly assigns to the entire array.
+
+* Consistent error types:
+
+  Certain invalid `flatiter` indices that previously raised `ValueError`
+  now correctly raise `IndexError`, aligning with `ndarray` behavior.
+
+* Improved error messages:
+
+  The error message for unsupported index operations now provides more
+  specific details, including explicitly listing the valid index types,
+  instead of the generic ``IndexError: unsupported index operation``.
