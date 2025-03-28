@@ -16,11 +16,6 @@ MAR_i8: MaskedNDArray[np.int64]
 MAR_subclass: MaskedNDArraySubclass
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype[Any]]
 
-b: np.bool
-f4: np.float32
-i8: np.int64
-f: float
-
 assert_type(MAR_1d.shape, tuple[int])
 
 assert_type(MAR_f4.dtype, np.dtype[np.float32])

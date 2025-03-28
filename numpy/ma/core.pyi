@@ -1,13 +1,30 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
 
-from typing import Any, SupportsIndex, TypeVar, overload, Literal
+from typing import Any, Literal, SupportsIndex, TypeVar, overload
 
 from _typeshed import Incomplete
 from typing_extensions import deprecated
 
-from numpy import _OrderKACF, amax, amin, bool_, dtype, expand_dims, float64, ndarray, generic
-from numpy._typing import ArrayLike, _DTypeLikeBool, _ShapeLike, _ArrayLike, _ScalarLike_co
+from numpy import (
+    _OrderKACF,
+    amax,
+    amin,
+    bool_,
+    dtype,
+    expand_dims,
+    float64,
+    generic,
+    ndarray,
+)
+from numpy._globals import _NoValueType
+from numpy._typing import (
+    ArrayLike,
+    _ArrayLike,
+    _DTypeLikeBool,
+    _ScalarLike_co,
+    _ShapeLike,
+)
 
 __all__ = [
     "MAError",
@@ -555,28 +572,26 @@ class _extrema_operation(_MaskedUFunc):
 @overload
 def min(
     obj: _ArrayLike[_SCT],
-    axis: None = ...,
-    out: None = ...,
-    fill_value: _ScalarLike_co | None = ...,
-    keepdims: Literal[False] = ...,
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
 ) -> _SCT: ...
-
 @overload
 def min(
-    obj: _ArrayLike[Any],
-    axis: _ShapeLike | None = ...,
-    out: None = ...,
-    fill_value: _ScalarLike_co | None = ...,
-    keepdims: bool = ...,
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...
 ) -> Any: ...
-
 @overload
 def min(
-    obj: _ArrayLike[Any],
-    axis: _ShapeLike | None = ...,
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
     out: _ArrayType = ...,
     fill_value: _ScalarLike_co | None = ...,
-    keepdims: bool = ...,
+    keepdims: bool | _NoValueType = ...,
 ) -> _ArrayType: ...
 
 def max(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
