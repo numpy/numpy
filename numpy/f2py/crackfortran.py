@@ -1494,12 +1494,12 @@ def analyzeline(m, case, line):
         f = 0
         bn = ''
         ol = ''
-        
-        # Find the /<common block name>/ and split the string at
-        # that location. 
-        split_line = re.split(r'\s*/[A-Za-z_]*[A-Za-z0-9_]*/', line)
-
-        for c in split_line[-1]:
+        nslash = 0 # For counting common block instances.
+        for c in line:
+            if c == '/' and nslash < 2:
+                f = f + 1
+                nslash = nslash + 1
+                continue
             if f >= 3:
                 bn = bn.strip()
                 if not bn:
