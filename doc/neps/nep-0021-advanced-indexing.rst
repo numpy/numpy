@@ -219,7 +219,7 @@ be deduced:
    no transposing should be done. The axes created by the integer array
    indices are always inserted at the front, even for a single index.
 
-4. Boolean indexing is conceptionally outer indexing. Broadcasting
+4. Boolean indexing is conceptually outer indexing. Broadcasting
    together with other advanced indices in the manner of legacy
    indexing is generally not helpful or well defined.
    A user who wishes the "``nonzero``" plus broadcast behaviour can thus
