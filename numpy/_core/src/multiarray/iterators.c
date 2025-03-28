@@ -581,12 +581,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         return NULL;
     }
 
-    else if (index_num == 0) {
-        Py_INCREF(self->ao);
-        ret = (PyObject *) self->ao;
-        goto finish;
-    }
-
     else if (indices[0].type == HAS_NEWAXIS) {
         PyErr_SetString(PyExc_IndexError,
             "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
