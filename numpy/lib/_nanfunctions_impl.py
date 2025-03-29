@@ -1389,9 +1389,7 @@ def nanpercentile(
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
-    # undo any decay that the ufunc performed (see gh-13105)
-    q = np.asanyarray(q)
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 

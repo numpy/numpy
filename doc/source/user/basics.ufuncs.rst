@@ -74,7 +74,7 @@ an integer (or Boolean) data-type and smaller than the size of the
 :class:`numpy.int_` data type, it will be internally upcast to the :class:`.int_`
 (or :class:`numpy.uint`) data-type. In the previous example::
 
-   >>> x.dtype 
+   >>> x.dtype
    dtype('int64')
    >>> np.multiply.reduce(x, dtype=float)
    array([ 0., 28., 80.])
@@ -103,10 +103,16 @@ of the previous operation for that item.
 Output type determination
 =========================
 
-The output of the ufunc (and its methods) is not necessarily an
-:class:`ndarray <numpy.ndarray>`, if all input arguments are not
-:class:`ndarrays <numpy.ndarray>`. Indeed, if any input defines an
-:obj:`~.class.__array_ufunc__` method,
+If the input arguments of the ufunc (or its methods) are
+:class:`ndarrays <numpy.ndarray>`, then the output will be as well.
+The exception is when the result is zero-dimensional, in which case the
+output will be converted to an `array scalar <arrays.scalars>`. This can
+be avoided by passing in ``out=...`` or ``out=Ellipsis``.
+
+If some or all of the input arguments are not
+:class:`ndarrays <numpy.ndarray>`, then the output may not be an
+:class:`ndarray <numpy.ndarray>` either.
+Indeed, if any input defines an :obj:`~.class.__array_ufunc__` method,
 control will be passed completely to that function, i.e., the ufunc is
 :ref:`overridden <ufuncs.overrides>`.
 
@@ -140,14 +146,14 @@ element is generally a scalar, but can be a vector or higher-order
 sub-array for generalized ufuncs). Standard
 :ref:`broadcasting rules <general-broadcasting-rules>` are applied
 so that inputs not sharing exactly the
-same shapes can still be usefully operated on. 
+same shapes can still be usefully operated on.
 
 By these rules, if an input has a dimension size of 1 in its shape, the
 first data entry in that dimension will be used for all calculations along
 that dimension. In other words, the stepping machinery of the
 :term:`ufunc` will simply not step along that dimension (the
 :ref:`stride <memory-layout>` will be 0 for that dimension).
-   
+
 
 .. _ufuncs.casting:
 
@@ -293,7 +299,7 @@ platform, these registers will be regularly checked during
 calculation. Error handling is controlled on a per-thread basis,
 and can be configured using the functions :func:`numpy.seterr` and
 :func:`numpy.seterrcall`.
-   
+
 
 .. _ufuncs.overrides:
 
