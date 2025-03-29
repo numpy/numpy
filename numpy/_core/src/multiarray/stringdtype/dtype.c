@@ -9,6 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
+#include "npy_sort.h"
 
 #include "static_string.h"
 #include "dtypemeta.h"
@@ -516,6 +517,105 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
     return NpyString_cmp(&s_a, &s_b);
 }
 
+static int
+stringdtype_sort_compare(void *a, void *b, void *arr) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
+    return _compare(a, b, descr, descr);
+}
+
+int
+_stringdtype_sort(void *start, npy_intp num, void *varr, PyArray_SortFunc *sort) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(varr);
+
+    NpyString_acquire_allocator(descr);
+    int result = sort(start, num, varr);
+    NpyString_release_allocator(descr->allocator);
+    
+    return result;
+}
+
+int
+_stringdtype_quicksort(void *start, npy_intp num, void *varr) {
+    return _stringdtype_sort(start, num, varr, &npy_quicksort);
+}
+
+int
+_stringdtype_heapsort(void *start, npy_intp num, void *varr) {
+    return _stringdtype_sort(start, num, varr, &npy_heapsort);
+}
+
+int
+_stringdtype_timsort(void *start, npy_intp num, void *varr) {
+    return _stringdtype_sort(start, num, varr, &npy_timsort);
+}
+
+int
+stringdtype_get_sort_function(PyArray_Descr *descr,
+    NPY_SORTKIND sort_kind, int descending, PyArray_SortFunc **out_sort) {
+    
+    switch (sort_kind) {
+        default:
+        case NPY_QUICKSORT:
+            *out_sort = &_stringdtype_quicksort;
+            break;
+        case NPY_HEAPSORT:
+            *out_sort = &_stringdtype_heapsort;
+            break;
+        case NPY_STABLESORT:
+            *out_sort = &_stringdtype_timsort;
+            break;
+    }
+
+    return 0;
+}
+
+int
+_stringdtype_argsort(void *vv, npy_intp *tosort, npy_intp num, void *varr,
+                     PyArray_ArgSortFunc *argsort) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(varr);
+
+    NpyString_acquire_allocator(descr);
+    int result = argsort(vv, tosort, num, varr);
+    NpyString_release_allocator(descr->allocator);
+    
+    return result;
+}
+
+int
+_stringdtype_aquicksort(void *vv, npy_intp *tosort, npy_intp n, void *varr) {
+    return _stringdtype_argsort(vv, tosort, n, varr, &npy_aquicksort);
+}
+
+int
+_stringdtype_aheapsort(void *vv, npy_intp *tosort, npy_intp n, void *varr) {
+    return _stringdtype_argsort(vv, tosort, n, varr, &npy_aheapsort);
+}
+
+int
+_stringdtype_atimsort(void *vv, npy_intp *tosort, npy_intp n, void *varr) {
+    return _stringdtype_argsort(vv, tosort, n, varr, &npy_atimsort);
+}
+
+int
+stringdtype_get_argsort_function(PyArray_Descr *descr, 
+    NPY_SORTKIND sort_kind, int descending, PyArray_ArgSortFunc **out_argsort) {
+    
+    switch (sort_kind) {
+        default:
+        case NPY_QUICKSORT:
+            *out_argsort = &npy_aquicksort;
+            break;
+        case NPY_HEAPSORT:
+            *out_argsort = &npy_aheapsort;
+            break;
+        case NPY_STABLESORT:
+            *out_argsort = &npy_atimsort;
+            break;
+    }
+
+    return 0;
+}
+
 // PyArray_ArgFunc
 // The max element is the one with the highest unicode code point.
 int
@@ -651,6 +751,9 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
          &string_discover_descriptor_from_pyobject},
         {NPY_DT_setitem, &stringdtype_setitem},
         {NPY_DT_getitem, &stringdtype_getitem},
+        {NPY_DT_sort_compare, &stringdtype_sort_compare},
+        {NPY_DT_get_sort_function, &stringdtype_get_sort_function},
+        {NPY_DT_get_argsort_function, &stringdtype_get_argsort_function},
         {NPY_DT_ensure_canonical, &stringdtype_ensure_canonical},
         {NPY_DT_PyArray_ArrFuncs_nonzero, &nonzero},
         {NPY_DT_PyArray_ArrFuncs_compare, &compare},
