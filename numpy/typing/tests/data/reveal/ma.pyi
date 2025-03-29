@@ -1,10 +1,33 @@
 import numpy as np
 from typing_extensions import assert_type
-m: np.ma.MaskedArray[tuple[int], np.dtype[np.float64]]
+from typing import Any, TypeAlias, TypeVar
+from numpy._typing import _Shape
+from numpy import dtype, generic
 
-assert_type(m.shape, tuple[int])
 
-assert_type(m.dtype, np.dtype[np.float64])
+_ScalarType_co = TypeVar("_ScalarType_co", bound=generic, covariant=True)
+MaskedNDArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarType_co]]
 
-assert_type(int(m), int)
-assert_type(float(m), float)
+class MaskedNDArraySubclass(MaskedNDArray[np.complex128]): ...
+
+MAR_b: MaskedNDArray[np.bool]
+MAR_f4: MaskedNDArray[np.float32]
+MAR_i8: MaskedNDArray[np.int64]
+MAR_subclass: MaskedNDArraySubclass
+MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype[Any]]
+
+assert_type(MAR_1d.shape, tuple[int])
+
+assert_type(MAR_f4.dtype, np.dtype[np.float32])
+
+assert_type(int(MAR_i8), int)
+assert_type(float(MAR_f4), float)
+
+assert_type(np.ma.min(MAR_b), np.bool)
+assert_type(np.ma.min(MAR_f4), np.float32)
+assert_type(np.ma.min(MAR_b, axis=0), Any)
+assert_type(np.ma.min(MAR_f4, axis=0), Any)
+assert_type(np.ma.min(MAR_b, keepdims=True), Any)
+assert_type(np.ma.min(MAR_f4, keepdims=True), Any)
+assert_type(np.ma.min(MAR_f4, out=MAR_subclass), MaskedNDArraySubclass)
+assert_type(np.ma.min(MAR_f4, None, MAR_subclass), MaskedNDArraySubclass)

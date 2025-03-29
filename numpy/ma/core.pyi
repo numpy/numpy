@@ -1,13 +1,30 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
 
-from typing import Any, SupportsIndex, TypeVar
+from typing import Any, Literal, SupportsIndex, TypeVar, overload
 
 from _typeshed import Incomplete
 from typing_extensions import deprecated
 
-from numpy import _OrderKACF, amax, amin, bool_, dtype, expand_dims, float64, ndarray
-from numpy._typing import ArrayLike, _DTypeLikeBool
+from numpy import (
+    _OrderKACF,
+    amax,
+    amin,
+    bool_,
+    dtype,
+    expand_dims,
+    float64,
+    generic,
+    ndarray,
+)
+from numpy._globals import _NoValueType
+from numpy._typing import (
+    ArrayLike,
+    _ArrayLike,
+    _DTypeLikeBool,
+    _ScalarLike_co,
+    _ShapeLike,
+)
 
 __all__ = [
     "MAError",
@@ -194,6 +211,8 @@ _ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 _ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
+_ArrayType = TypeVar("_ArrayType", bound=MaskedArray[Any, Any])
+_SCT = TypeVar("_SCT", bound=generic)
 
 MaskType = bool
 nomask: bool
@@ -550,7 +569,40 @@ class _extrema_operation(_MaskedUFunc):
     def reduce(self, target, axis=...): ...
     def outer(self, a, b): ...
 
-def min(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
+@overload
+def min(
+    obj: _ArrayLike[_SCT],
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _SCT: ...
+@overload
+def min(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...
+) -> Any: ...
+@overload
+def min(
+    obj: ArrayLike,
+    axis: None,
+    out: _ArrayType,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayType: ...
+@overload
+def min(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    out: _ArrayType,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayType: ...
+
 def max(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
 def ptp(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
 
