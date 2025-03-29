@@ -144,6 +144,17 @@ class TestDLPack:
         y = np.from_dlpack(x)
         assert not y.flags.writeable
 
+    def test_writeable(self):
+        x_new, x_old = new_and_old_dlpack()
+
+        # new dlpacks respect writeability
+        y = np.from_dlpack(x_new)
+        assert y.flags.writeable
+
+        # old dlpacks are not writeable for backwards compatibility
+        y = np.from_dlpack(x_old)
+        assert not y.flags.writeable
+
     def test_ndim0(self):
         x = np.array(1.0)
         y = np.from_dlpack(x)

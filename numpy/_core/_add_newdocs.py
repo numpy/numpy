@@ -1663,8 +1663,8 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
     from_dlpack(x, /, *, device=None, copy=None)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
-    protocol. Generally, the returned NumPy array is a read-only view
-    of the input object. See [1]_ and [2]_ for more details.
+    protocol. Generally, the returned NumPy array is a view of the input
+    object. See [1]_ and [2]_ for more details.
 
     Parameters
     ----------
