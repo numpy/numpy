@@ -32,9 +32,6 @@ typedef struct {
     PyArrayDTypeMeta_SetItem *setitem;
     PyArrayDTypeMeta_GetItem *getitem;
 
-    PyArrayDTypeMeta_GetSortFunction *get_sort_function;
-    PyArrayDTypeMeta_GetArgSortFunction *get_argsort_function;
-    PyArray_CompareFunc *sort_compare;
     /*
      * Either NULL or fetches a clearing function.  Clearing means deallocating
      * any referenced data and setting it to a safe state.  For Python objects
@@ -48,6 +45,7 @@ typedef struct {
      * Python objects.
      */
     PyArrayMethod_GetTraverseLoop *get_clear_loop;
+
     /*
        Either NULL or a function that sets a function pointer to a traversal
        loop that fills an array with zero values appropriate for the dtype. If
@@ -71,6 +69,12 @@ typedef struct {
      * parameters, if any, as the operand dtype.
      */
     PyArrayDTypeMeta_FinalizeDescriptor *finalize_descr;
+
+    /* DType sorting methods. */
+    PyArrayDTypeMeta_GetSortFunction *get_sort_function;
+    PyArrayDTypeMeta_GetArgSortFunction *get_argsort_function;
+    PyArray_CompareFunc *sort_compare;
+
     /*
      * The casting implementation (ArrayMethod) to convert between two
      * instances of this DType, stored explicitly for fast access:
