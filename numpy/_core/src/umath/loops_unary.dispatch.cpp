@@ -36,16 +36,16 @@ using vec_f64 = hn::Vec<decltype(f64)>;
 template<typename T>
 struct TagSelector;
 
-template<> struct TagSelector<uint8_t>  { static const auto& value() { return u8;  } };
-template<> struct TagSelector<int8_t>   { static const auto& value() { return s8;  } };
-template<> struct TagSelector<uint16_t> { static const auto& value() { return u16; } };
-template<> struct TagSelector<int16_t>  { static const auto& value() { return s16; } };
-template<> struct TagSelector<uint32_t> { static const auto& value() { return u32; } };
-template<> struct TagSelector<int32_t>  { static const auto& value() { return s32; } };
-template<> struct TagSelector<uint64_t> { static const auto& value() { return u64; } };
-template<> struct TagSelector<int64_t>  { static const auto& value() { return s64; } };
-template<> struct TagSelector<float>    { static const auto& value() { return f32; } };
-template<> struct TagSelector<double>   { static const auto& value() { return f64; } };
+template<> struct TagSelector<uint8_t>  { static constexpr const auto& value() { return u8;  } };
+template<> struct TagSelector<int8_t>   { static constexpr const auto& value() { return s8;  } };
+template<> struct TagSelector<uint16_t> { static constexpr const auto& value() { return u16; } };
+template<> struct TagSelector<int16_t>  { static constexpr const auto& value() { return s16; } };
+template<> struct TagSelector<uint32_t> { static constexpr const auto& value() { return u32; } };
+template<> struct TagSelector<int32_t>  { static constexpr const auto& value() { return s32; } };
+template<> struct TagSelector<uint64_t> { static constexpr const auto& value() { return u64; } };
+template<> struct TagSelector<int64_t>  { static constexpr const auto& value() { return s64; } };
+template<> struct TagSelector<float>    { static constexpr const auto& value() { return f32; } };
+template<> struct TagSelector<double>   { static constexpr const auto& value() { return f64; } };
 
 template<typename T>
 constexpr const auto& GetTag() {
@@ -72,47 +72,10 @@ struct OpNegative {
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
     HWY_INLINE HWY_ATTR auto operator()(const V& v) {
         if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
-            #if defined(NPY_HAVE_NEON)
-                if constexpr (std::is_same_v<T, float>) {
-                    return vnegq_f32(v);
-                } else {
-                    return vnegq_f64(v);
-                }
-            #else
                 // (v ^ signmask)
                 const auto signmask = hn::Set(GetTag<T>(), static_cast<T>(-0.));
                 return hn::Xor(v, signmask);
-            #endif
-        } else if constexpr (std::is_signed_v<T>) {
-            #if defined(NPY_HAVE_NEON)
-                if constexpr (sizeof(T) == 1) {
-                    return vnegq_s8(v);
-                } else if constexpr (sizeof(T) == 2) {
-                    return vnegq_s16(v);
-                } else if constexpr (sizeof(T) == 4) {
-                    return vnegq_s32(v);
-                } else if constexpr (sizeof(T) == 8) {
-                    #if defined(__aarch64__)
-                        return vnegq_s64(v);
-                    #endif
-                }
-            #endif
-            const auto m1 = hn::Set(GetTag<T>(), static_cast<T>(-1));
-            return hn::Sub(hn::Xor(v, m1), m1);
         } else {
-            #if defined(NPY_HAVE_NEON)
-                if constexpr (sizeof(T) == 1) {
-                    return hn::BitCast(u8, vnegq_s8(hn::BitCast(s8, v)));
-                } else if constexpr (sizeof(T) == 2) {
-                    return hn::BitCast(u16, vnegq_s16(hn::BitCast(s16, v)));
-                } else if constexpr (sizeof(T) == 4) {
-                    return hn::BitCast(u32, vnegq_s32(hn::BitCast(s32, v)));
-                } else if constexpr (sizeof(T) == 8) {
-                    #if defined(__aarch64__)
-                        return hn::BitCast(u64, vnegq_s64(hn::BitCast(s64, v)));
-                    #endif
-                }
-            #endif
                 const auto m1 = hn::Set(GetTag<T>(), static_cast<T>(-1));
                 return hn::Sub(hn::Xor(v, m1), m1);
         }
