@@ -671,7 +671,6 @@ def ptp(
     keepdims: bool | _NoValueType = ...,
 ) -> _ArrayType: ...
 
-
 class _frommethod:
     __name__: Any
     __doc__: Any
