@@ -2,6 +2,8 @@
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
+#include "lowlevel_strided_loops.h"
+#include "fast_loop_macros.h"
 #include "numpy/npy_common.h"
 #include "common.hpp"
 #include <hwy/highway.h>
@@ -435,3 +437,4 @@ DEFINE_NEGATIVE_FUNCTION(LONGLONG, npy_longlong)
 DEFINE_NEGATIVE_FUNCTION(FLOAT,      npy_float)
 DEFINE_NEGATIVE_FUNCTION(DOUBLE,     npy_double)
 DEFINE_NEGATIVE_FUNCTION(LONGDOUBLE, npy_longdouble)
+
