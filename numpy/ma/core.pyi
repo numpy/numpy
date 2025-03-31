@@ -603,8 +603,73 @@ def min(
     keepdims: bool | _NoValueType = ...,
 ) -> _ArrayType: ...
 
-def max(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
-def ptp(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
+@overload
+def max(
+    obj: _ArrayLike[_SCT],
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _SCT: ...
+@overload
+def max(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...
+) -> Any: ...
+@overload
+def max(
+    obj: ArrayLike,
+    axis: None,
+    out: _ArrayType,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayType: ...
+@overload
+def max(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    out: _ArrayType,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayType: ...
+
+@overload
+def ptp(
+    obj: _ArrayLike[_SCT],
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _SCT: ...
+@overload
+def ptp(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...
+) -> Any: ...
+@overload
+def ptp(
+    obj: ArrayLike,
+    axis: None,
+    out: _ArrayType,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayType: ...
+@overload
+def ptp(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    out: _ArrayType,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayType: ...
 
 class _frommethod:
     __name__: Any
