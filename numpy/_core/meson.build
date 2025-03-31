@@ -128,6 +128,16 @@ if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
 
+# Setup openmp flags for x86-simd-sort:
+omp_cflags = []
+omp = []
+if use_intel_sort and cpp.has_argument('-fopenmp')
+  omp = dependency('openmp', required : false)
+  if omp.found()
+    omp_cflags = ['-fopenmp', '-DXSS_USE_OPENMP']
+  endif
+endif
+
 if not fs.exists('src/common/pythoncapi-compat')
   error('Missing the `pythoncapi-compat` git submodule! ' +
         'Run `git submodule update --init` to fix this.')
@@ -867,6 +877,9 @@ foreach gen_mtargets : [
     ] : []
   ],
 ]
+
+
+
   mtargets = mod_features.multi_targets(
     gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
     dispatch: gen_mtargets[2],
@@ -874,7 +887,7 @@ foreach gen_mtargets : [
     prefix: 'NPY_',
     dependencies: [py_dep, np_core_dep],
     c_args: c_args_common + max_opt,
-    cpp_args: cpp_args_common + max_opt,
+    cpp_args: cpp_args_common + max_opt + omp_cflags,
     include_directories: [
       'include',
       'src/common',
@@ -1286,7 +1299,7 @@ py.extension_module('_multiarray_umath',
     'src/umath',
     'src/highway'
   ],
-  dependencies: [blas_dep],
+  dependencies: [blas_dep, omp],
   link_with: [
     npymath_lib,
     unique_hash_so,
