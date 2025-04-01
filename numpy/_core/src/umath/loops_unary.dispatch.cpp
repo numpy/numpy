@@ -7,6 +7,7 @@
 #include "numpy/npy_common.h"
 #include "common.hpp"
 #include <hwy/highway.h>
+#include <vector>
 
 namespace {
 namespace hn = hwy::HWY_NAMESPACE;
@@ -96,21 +97,21 @@ struct OpNegative<long double> {
 
 template <typename T>
 HWY_INLINE HWY_ATTR auto LoadWithStride(const T* src, npy_intp istride) {
-    constexpr size_t kMaxLanes = 64;
-    T temp[kMaxLanes] = {};
-    for (auto ii = 0; ii < (npy_intp)hn::Lanes(GetTag<T>()); ++ii) {
+    const size_t lanes = hn::Lanes(GetTag<T>());
+    std::vector<T> temp(lanes);
+    for (size_t ii = 0; ii < lanes; ++ii) {
         temp[ii] = src[ii * istride];
     }
-    return hn::LoadU(GetTag<T>(), temp);
+    return hn::LoadU(GetTag<T>(), temp.data());
 }
 
 template <typename T>
 HWY_INLINE HWY_ATTR void StoreWithStride(hn::Vec<hn::ScalableTag<T>> vec,
                                          T* dst, npy_intp sdst) {
-    constexpr size_t kMaxLanes = 64;
-    T temp[kMaxLanes] = {};
+    const size_t lanes = hn::Lanes(GetTag<T>());
+    std::vector<T> temp(lanes);
     hn::StoreU(vec, GetTag<T>(), temp);
-    for (auto ii = 0; ii < (npy_intp)hn::Lanes(GetTag<T>()); ++ii) {
+    for (size_t ii = 0; ii < lanes; ++ii) {
         dst[ii * sdst] = temp[ii];
     }
 }
@@ -293,7 +294,7 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
 #if NPY_SIMD
 
 #if defined(__arm__)
-    if constexpr (kSupportLane<T> && std::is_same_v<T, double>) {
+    if constexpr (kSupportLane<T> && !std::is_same_v<T, double>) {
 #else
     if constexpr (kSupportLane<T>) {
 #endif
@@ -359,7 +360,7 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
 
 #if NPY_SIMD
 #if defined(__arm__)
-    if constexpr (kSupportLane<T> && std::is_same_v<T, double>) {
+    if constexpr (kSupportLane<T> && !std::is_same_v<T, double>) {
 #else
     if constexpr (kSupportLane<T>) {
 #endif
