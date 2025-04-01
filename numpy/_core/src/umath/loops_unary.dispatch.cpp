@@ -150,11 +150,13 @@ struct TypeTraits<float> {
     static constexpr auto StoreStrideFunc = npyv_storable_stride_f32;
 };
 
+#if NPY_SIMD_F64
 template<>
 struct TypeTraits<double> {
     static constexpr auto LoadStrideFunc = npyv_loadable_stride_f64;
     static constexpr auto StoreStrideFunc = npyv_storable_stride_f64;
 };
+#endif
 
 template <typename T>
 HWY_INLINE HWY_ATTR void
