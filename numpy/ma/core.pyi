@@ -1,7 +1,7 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
 
-from typing import Any, Literal, SupportsIndex, TypeVar, overload
+from typing import Any, Literal, SupportsIndex, TypeVar, overload, TypeAlias
 
 from _typeshed import Incomplete
 from typing_extensions import deprecated
@@ -211,8 +211,10 @@ _ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 _ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
-_ArrayType = TypeVar("_ArrayType", bound=MaskedArray[Any, Any])
+_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 _SCT = TypeVar("_SCT", bound=generic)
+# A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
+_MaskedArray: TypeAlias = MaskedArray[Any, dtype[_SCT]]
 
 MaskType = bool
 nomask: bool
@@ -466,7 +468,39 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def argmin(self, axis=..., fill_value=..., out=..., *, keepdims=...): ...
     def argmax(self, axis=..., fill_value=..., out=..., *, keepdims=...): ...
     def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
-    def min(self, axis=..., out=..., fill_value=..., keepdims=...): ...
+    @overload
+    def min(  # type: ignore[override]
+        self: _MaskedArray[_SCT],
+        axis: None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> _SCT: ...
+    @overload
+    def min(  # type: ignore[override]
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...
+    ) -> Any: ...
+    @overload
+    def min(  # type: ignore[override]
+        self,
+        axis: None,
+        out: _ArrayType,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayType: ...
+    @overload
+    def min(  # type: ignore[override]
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        out: _ArrayType,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayType: ...
     def max(self, axis=..., out=..., fill_value=..., keepdims=...): ...
     def ptp(self, axis=..., out=..., fill_value=..., keepdims=...): ...
     def partition(self, *args, **kwargs): ...
