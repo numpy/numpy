@@ -2570,21 +2570,23 @@ class TestRegression:
         assert xp is np
         xp = arr.__array_namespace__(api_version="2023.12")
         assert xp is np
+        xp = arr.__array_namespace__(api_version="2024.12")
+        assert xp is np
         xp = arr.__array_namespace__(api_version=None)
         assert xp is np
 
         with pytest.raises(
             ValueError,
-            match="Version \"2024.12\" of the Array API Standard "
+            match="Version \"2025.12\" of the Array API Standard "
                   "is not supported."
         ):
-            arr.__array_namespace__(api_version="2024.12")
+            arr.__array_namespace__(api_version="2025.12")
 
         with pytest.raises(
             ValueError,
             match="Only None and strings are allowed as the Array API version"
         ):
-            arr.__array_namespace__(api_version=2023)
+            arr.__array_namespace__(api_version=2024)
 
     def test_isin_refcnt_bug(self):
         # gh-25295

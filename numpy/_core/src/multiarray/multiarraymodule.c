@@ -2280,14 +2280,18 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_
         return NULL;
     }
 
-    count =  PyArray_CountNonzero(array);
-
+    count = PyArray_CountNonzero(array);
     Py_DECREF(array);
 
     if (count == -1) {
         return NULL;
     }
-    return PyLong_FromSsize_t(count);
+
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_INTP);
+    if (descr == NULL) {
+        return NULL;
+    }
+    return PyArray_Scalar(&count, descr, NULL);
 }
 
 static PyObject *

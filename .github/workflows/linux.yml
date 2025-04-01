@@ -324,7 +324,7 @@ jobs:
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         repository: data-apis/array-api-tests
-        ref: '827edd804bcace9d64176b8115138d29ae3e8dec'  # Latest commit as of 2024-07-30
+        ref: 'c48410f96fc58e02eea844e6b7f6cc01680f77ce'  # Latest commit as of 2025-04-01
         submodules: 'true'
         path: 'array-api-tests'
         persist-credentials: false
