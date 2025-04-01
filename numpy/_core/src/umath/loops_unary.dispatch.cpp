@@ -96,7 +96,8 @@ struct OpNegative<long double> {
 
 template <typename T>
 HWY_INLINE HWY_ATTR auto LoadWithStride(const T* src, npy_intp istride) {
-    T temp[hn::Lanes(GetTag<T>())] = {};
+    constexpr size_t kMaxLanes = 64;
+    T temp[kMaxLanes] = {};
     for (auto ii = 0; ii < (npy_intp)hn::Lanes(GetTag<T>()); ++ii) {
         temp[ii] = src[ii * istride];
     }
@@ -106,7 +107,8 @@ HWY_INLINE HWY_ATTR auto LoadWithStride(const T* src, npy_intp istride) {
 template <typename T>
 HWY_INLINE HWY_ATTR void StoreWithStride(hn::Vec<hn::ScalableTag<T>> vec,
                                          T* dst, npy_intp sdst) {
-    T temp[hn::Lanes(GetTag<T>())] = {};
+    constexpr size_t kMaxLanes = 64;
+    T temp[kMaxLanes] = {};
     hn::StoreU(vec, GetTag<T>(), temp);
     for (auto ii = 0; ii < (npy_intp)hn::Lanes(GetTag<T>()); ++ii) {
         dst[ii * sdst] = temp[ii];
@@ -289,8 +291,12 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
     bool need_scalar = true;
 
 #if NPY_SIMD
+
+#if defined(__arm__)
+    if constexpr (kSupportLane<T> && std::is_same_v<T, double>) {
+#else
     if constexpr (kSupportLane<T>) {
-        
+#endif
         if (!is_mem_overlap(ip, istep, op, ostep, len)) {
             if (IS_UNARY_CONT(T, T)) {
                 // No overlap and operands are contiguous
@@ -352,7 +358,11 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
     }
 
 #if NPY_SIMD
+#if defined(__arm__)
+    if constexpr (kSupportLane<T> && std::is_same_v<T, double>) {
+#else
     if constexpr (kSupportLane<T>) {
+#endif
         npyv_cleanup();
     }
 #endif
