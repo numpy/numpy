@@ -211,7 +211,7 @@ _ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 _ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
-_MaskedArrayType = TypeVar("_MaskedArrayType", bound=MaskedArray[Any, Any])
+_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 _SCT = TypeVar("_SCT", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[Any, dtype[_SCT]]
@@ -488,19 +488,19 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def min(
         self,
         axis: None,
-        out: _MaskedArrayType,
+        out: _ArrayType,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
-    ) -> _MaskedArrayType: ...
+    ) -> _ArrayType: ...
     @overload
     def min(
         self,
         axis: _ShapeLike | None = None,
         *,
-        out: _MaskedArrayType,
+        out: _ArrayType,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
-    ) -> _MaskedArrayType: ...
+    ) -> _ArrayType: ...
     def max(self, axis=..., out=..., fill_value=..., keepdims=...): ...
     def ptp(self, axis=..., out=..., fill_value=..., keepdims=...): ...
     def partition(self, *args, **kwargs): ...
@@ -623,19 +623,19 @@ def min(
 def min(
     obj: ArrayLike,
     axis: None,
-    out: _MaskedArrayType,
+    out: _ArrayType,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _MaskedArrayType: ...
+) -> _ArrayType: ...
 @overload
 def min(
     obj: ArrayLike,
     axis: _ShapeLike | None = None,
     *,
-    out: _MaskedArrayType,
+    out: _ArrayType,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _MaskedArrayType: ...
+) -> _ArrayType: ...
 
 @overload
 def max(
@@ -657,19 +657,19 @@ def max(
 def max(
     obj: ArrayLike,
     axis: None,
-    out: _MaskedArrayType,
+    out: _ArrayType,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _MaskedArrayType: ...
+) -> _ArrayType: ...
 @overload
 def max(
     obj: ArrayLike,
     axis: _ShapeLike | None = None,
     *,
-    out: _MaskedArrayType,
+    out: _ArrayType,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _MaskedArrayType: ...
+) -> _ArrayType: ...
 
 @overload
 def ptp(
@@ -691,19 +691,19 @@ def ptp(
 def ptp(
     obj: ArrayLike,
     axis: None,
-    out: _MaskedArrayType,
+    out: _ArrayType,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _MaskedArrayType: ...
+) -> _ArrayType: ...
 @overload
 def ptp(
     obj: ArrayLike,
     axis: _ShapeLike | None = None,
     *,
-    out: _MaskedArrayType,
+    out: _ArrayType,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _MaskedArrayType: ...
+) -> _ArrayType: ...
 
 class _frommethod:
     __name__: Any
