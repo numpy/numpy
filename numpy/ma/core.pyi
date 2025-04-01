@@ -4,7 +4,7 @@
 from typing import Any, Literal, SupportsIndex, TypeVar, overload, TypeAlias
 
 from _typeshed import Incomplete
-from typing_extensions import deprecated, override
+from typing_extensions import deprecated
 
 from numpy import (
     _OrderKACF,
@@ -468,7 +468,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def argmin(self, axis=..., fill_value=..., out=..., *, keepdims=...): ...
     def argmax(self, axis=..., fill_value=..., out=..., *, keepdims=...): ...
     def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
-    @override
+    @overload
     def min(  # type: ignore[override]
         self: _MaskedArray[_SCT],
         axis: None = None,
@@ -476,7 +476,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         fill_value: _ScalarLike_co | None = None,
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> _SCT: ...
-    @override
+    @overload
     def min(  # type: ignore[override]
         self,
         axis: _ShapeLike | None = None,
@@ -484,7 +484,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...
     ) -> Any: ...
-    @override
+    @overload
     def min(  # type: ignore[override]
         self,
         axis: None,
@@ -492,7 +492,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayType: ...
-    @override
+    @overload
     def min(  # type: ignore[override]
         self,
         axis: _ShapeLike | None = None,
