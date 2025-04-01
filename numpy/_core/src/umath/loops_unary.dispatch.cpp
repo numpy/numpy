@@ -110,7 +110,7 @@ HWY_INLINE HWY_ATTR void StoreWithStride(hn::Vec<hn::ScalableTag<T>> vec,
                                          T* dst, npy_intp sdst) {
     const size_t lanes = hn::Lanes(GetTag<T>());
     std::vector<T> temp(lanes);
-    hn::StoreU(vec, GetTag<T>(), temp);
+    hn::StoreU(vec, GetTag<T>(), temp.data());
     for (size_t ii = 0; ii < lanes; ++ii) {
         dst[ii * sdst] = temp[ii];
     }
