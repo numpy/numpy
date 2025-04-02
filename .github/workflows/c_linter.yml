@@ -1,0 +1,16 @@
+name: LintCAPIUsage
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint-capi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Run suspicious C API usage linter
+        run: |
+          bash tools/ci/check_c_api_usage.sh
