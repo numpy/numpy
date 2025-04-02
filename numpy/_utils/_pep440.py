@@ -172,7 +172,7 @@ class LegacyVersion(_BaseVersion):
         return self._version
 
     def __repr__(self):
-        return f"<LegacyVersion({repr(str(self))})>"
+        return f"<LegacyVersion({str(self)!r})>"
 
     @property
     def public(self):
@@ -325,7 +325,7 @@ class Version(_BaseVersion):
         )
 
     def __repr__(self):
-        return f"<Version({repr(str(self))})>"
+        return f"<Version({str(self)!r})>"
 
     def __str__(self):
         parts = []
