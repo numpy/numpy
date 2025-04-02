@@ -521,6 +521,11 @@ _set_out_array(PyObject *obj, PyArrayObject **store)
 
         return 0;
     }
+    if (obj == Py_Ellipsis) {
+        PyErr_SetString(PyExc_TypeError,
+            "must use `...` as `out=...` and not per-operand/in a tuple");
+        return -1;
+    }
     PyErr_SetString(PyExc_TypeError, "return arrays must be of ArrayType");
 
     return -1;
@@ -3487,6 +3492,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
      */
     PyObject *otype_obj = NULL, *out_obj = NULL, *indices_obj = NULL;
     PyObject *keepdims_obj = NULL, *wheremask_obj = NULL;
+    npy_bool return_scalar = NPY_TRUE;  /* scalar return is disabled for out=... */
     if (operation == UFUNC_REDUCEAT) {
         NPY_PREPARE_ARGPARSER;
 
@@ -3549,6 +3555,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     /* Normalize output for PyUFunc_CheckOverride and conversion. */
     if (out_is_passed_by_position) {
         /* in this branch, out is always wrapped in a tuple. */
+        if (out_obj == Py_Ellipsis) {
+            PyErr_SetString(PyExc_TypeError,
+                "out=... is only allowed as a keyword argument.");
+            goto fail;
+        }
         if (out_obj != Py_None) {
             full_args.out = PyTuple_Pack(1, out_obj);
             if (full_args.out == NULL) {
@@ -3557,7 +3568,11 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
         }
     }
     else if (out_obj) {
-        if (_set_full_args_out(1, out_obj, &full_args) < 0) {
+        if (out_obj == Py_Ellipsis) {
+            out_obj = NULL;
+            return_scalar = NPY_FALSE;
+        }
+        else if (_set_full_args_out(1, out_obj, &full_args) < 0) {
             goto fail;
         }
         /* Ensure that out_obj is the array, not the tuple: */
@@ -3596,7 +3611,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
             goto fail;
         }
     }
-    if (out_obj && !PyArray_OutputConverter(out_obj, &out)) {
+    if (out_obj && _set_out_array(out_obj, &out) < 0) {
         goto fail;
     }
     if (keepdims_obj && !PyArray_PythonPyIntFromInt(keepdims_obj, &keepdims)) {
@@ -3731,7 +3746,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     /* TODO: Data is mutated, so force_wrap like a normal ufunc call does */
     PyObject *wrapped_result = npy_apply_wrap(
             (PyObject *)ret, out_obj, wrap, wrap_type, NULL,
-            PyArray_NDIM(ret) == 0, NPY_FALSE);
+            PyArray_NDIM(ret) == 0 && return_scalar, NPY_FALSE);
     Py_DECREF(ret);
     Py_DECREF(wrap);
     Py_DECREF(wrap_type);
@@ -4184,11 +4199,12 @@ resolve_descriptors(int nop,
  * @param full_args Original inputs and outputs
  * @param subok Whether subclasses are allowed
  * @param result_arrays The ufunc result(s).  REFERENCES ARE STOLEN!
+ * @param return_scalar Set to NPY_FALSE (out=...) to ensure array return.
  */
 static PyObject *
 replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
         ufunc_full_args full_args, npy_bool subok,
-        PyArrayObject *result_arrays[])
+        PyArrayObject *result_arrays[], npy_bool return_scalar)
 {
     PyObject *result = NULL;
     PyObject *wrap, *wrap_type;
@@ -4228,7 +4244,7 @@ replace_with_wrapped_result_and_return(PyUFuncObject *ufunc,
         PyObject *ret_i = npy_apply_wrap(
                 (PyObject *)result_arrays[out_i], original_out, wrap, wrap_type,
                 /* Always try to return a scalar right now: */
-                &context, PyArray_NDIM(result_arrays[out_i]) == 0, NPY_TRUE);
+                &context, PyArray_NDIM(result_arrays[out_i]) == 0 && return_scalar, NPY_TRUE);
         Py_CLEAR(result_arrays[out_i]);
         if (ret_i == NULL) {
             goto fail;
@@ -4332,6 +4348,11 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             PyObject *tmp;
             if (i < (int)len_args) {
                 tmp = args[i];
+                if (tmp == Py_Ellipsis) {
+                    PyErr_SetString(PyExc_TypeError,
+                        "out=... is only allowed as a keyword argument.");
+                    goto fail;
+                }
                 if (tmp != Py_None) {
                     all_none = NPY_FALSE;
                 }
@@ -4359,6 +4380,8 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     PyObject *keepdims_obj = NULL, *casting_obj = NULL, *order_obj = NULL;
     PyObject *subok_obj = NULL, *signature_obj = NULL, *sig_obj = NULL;
     PyObject *dtype_obj = NULL;
+    /* Typically, NumPy defaults to returnin scalars for 0-D results */
+    npy_bool return_scalar = NPY_TRUE;
 
     /* Skip parsing if there are no keyword arguments, nothing left to do */
     if (kwnames != NULL) {
@@ -4410,7 +4433,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
                         "positional and keyword argument");
                 goto fail;
             }
-            if (_set_full_args_out(nout, out_obj, &full_args) < 0) {
+            if (out_obj == Py_Ellipsis) {
+                return_scalar = NPY_FALSE;
+            }
+            else if (_set_full_args_out(nout, out_obj, &full_args) < 0) {
                 goto fail;
             }
         }
@@ -4540,7 +4566,7 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
     /* The following steals the references to the outputs: */
     PyObject *result = replace_with_wrapped_result_and_return(ufunc,
-            full_args, subok, operands+nin);
+            full_args, subok, operands+nin, return_scalar);
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
 
