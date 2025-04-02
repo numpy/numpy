@@ -1,0 +1,2 @@
+* NumPy's ``__array_api_version__`` was upgraded from ``2023.12`` to ``2024.12``.
+* `numpy.count_nonzero` for ``axis=None`` now returns a scalar instead of a Python integer.
