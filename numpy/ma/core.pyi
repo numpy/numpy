@@ -540,7 +540,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         axis: None = None,
         out: None = None,
         fill_value: _ScalarLike_co | None = None,
-        keepdims: Literal[False] | _NoValueType = ...,
+        keepdims: Literal[False] = False,
     ) -> _SCT: ...
     @overload
     def ptp(  # type: ignore[override]
@@ -548,7 +548,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         axis: _ShapeLike | None = None,
         out: None = None,
         fill_value: _ScalarLike_co | None = None,
-        keepdims: bool | _NoValueType = ...
+        keepdims: bool = False,
     ) -> Any: ...
     @overload
     def ptp(  # type: ignore[override]
@@ -556,7 +556,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         axis: None,
         out: _ArrayType,
         fill_value: _ScalarLike_co | None = None,
-        keepdims: bool | _NoValueType = ...,
+        keepdims: bool = False,
     ) -> _ArrayType: ...
     @overload
     def ptp(  # type: ignore[override]
@@ -565,7 +565,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         *,
         out: _ArrayType,
         fill_value: _ScalarLike_co | None = None,
-        keepdims: bool | _NoValueType = ...,
+        keepdims: bool = False,
     ) -> _ArrayType: ...
     def partition(self, *args, **kwargs): ...
     def argpartition(self, *args, **kwargs): ...
