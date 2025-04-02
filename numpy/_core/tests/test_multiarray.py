@@ -2175,7 +2175,7 @@ class TestMethods:
                 arr = np.array([1 + 3.j, 2 + 2.j, 3 + 1.j], dtype=endianness + dt)
                 c = arr.copy()
                 c.sort()
-                msg = 'byte-swapped complex sort, dtype={0}'.format(dt)
+                msg = f'byte-swapped complex sort, dtype={dt}'
                 assert_equal(c, arr, msg)
 
     @pytest.mark.parametrize('dtype', [np.bytes_, np.str_])
@@ -2262,7 +2262,7 @@ class TestMethods:
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
-            msg = 'test empty array sort with axis={0}'.format(axis)
+            msg = f'test empty array sort with axis={axis}'
             assert_equal(np.sort(a, axis=axis), a, msg)
         msg = 'test empty array sort with axis=None'
         assert_equal(np.sort(a, axis=None), a.ravel(), msg)
@@ -2443,7 +2443,7 @@ class TestMethods:
         for endianness in '<>':
             for dt in np.typecodes['Complex']:
                 arr = np.array([1 + 3.j, 2 + 2.j, 3 + 1.j], dtype=endianness + dt)
-                msg = 'byte-swapped complex argsort, dtype={0}'.format(dt)
+                msg = f'byte-swapped complex argsort, dtype={dt}'
                 assert_equal(arr.argsort(),
                              np.arange(len(arr), dtype=np.intp), msg)
 
@@ -2524,7 +2524,7 @@ class TestMethods:
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
-            msg = 'test empty array argsort with axis={0}'.format(axis)
+            msg = f'test empty array argsort with axis={axis}'
             assert_equal(np.argsort(a, axis=axis),
                          np.zeros_like(a, dtype=np.intp), msg)
         msg = 'test empty array argsort with axis=None'
@@ -2842,7 +2842,7 @@ class TestMethods:
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
-            msg = 'test empty array partition with axis={0}'.format(axis)
+            msg = f'test empty array partition with axis={axis}'
             assert_equal(np.partition(a, kth, axis=axis), a, msg)
         msg = 'test empty array partition with axis=None'
         assert_equal(np.partition(a, kth, axis=None), a.ravel(), msg)
@@ -2854,7 +2854,7 @@ class TestMethods:
         a = np.array([])
         a.shape = (3, 2, 1, 0)
         for axis in range(-a.ndim, a.ndim):
-            msg = 'test empty array argpartition with axis={0}'.format(axis)
+            msg = f'test empty array argpartition with axis={axis}'
             assert_equal(np.partition(a, kth, axis=axis),
                          np.zeros_like(a, dtype=np.intp), msg)
         msg = 'test empty array argpartition with axis=None'
@@ -3774,7 +3774,7 @@ class TestMethods:
             b = np.array([7], dtype=dt)
             c = np.array([[[[[7]]]]], dtype=dt)
 
-            msg = 'dtype: {0}'.format(dt)
+            msg = f'dtype: {dt}'
             ap = complex(a)
             assert_equal(ap, a, msg)
 
@@ -3906,9 +3906,9 @@ class TestBinop:
             if array_priority is not False:
                 class_namespace["__array_priority__"] = array_priority
             for op in ops:
-                class_namespace["__{0}__".format(op)] = op_impl
-                class_namespace["__r{0}__".format(op)] = rop_impl
-                class_namespace["__i{0}__".format(op)] = iop_impl
+                class_namespace[f"__{op}__"] = op_impl
+                class_namespace[f"__r{op}__"] = rop_impl
+                class_namespace[f"__i{op}__"] = iop_impl
             if array_ufunc is not False:
                 class_namespace["__array_ufunc__"] = array_ufunc
             eval_namespace = {"base": base,
@@ -3933,7 +3933,7 @@ class TestBinop:
                 if check_scalar:
                     check_objs.append(check_objs[0][0])
                 for arr in check_objs:
-                    arr_method = getattr(arr, "__{0}__".format(op))
+                    arr_method = getattr(arr, f"__{op}__")
 
                     def first_out_arg(result):
                         if op == "divmod":
@@ -3959,7 +3959,7 @@ class TestBinop:
                             assert_raises((TypeError, Coerced),
                                           arr_method, obj, err_msg=err_msg)
                     # obj __op__ arr
-                    arr_rmethod = getattr(arr, "__r{0}__".format(op))
+                    arr_rmethod = getattr(arr, f"__r{op}__")
                     if ufunc_override_expected:
                         res = arr_rmethod(obj)
                         assert_equal(res[0], "__array_ufunc__",
@@ -3980,7 +3980,7 @@ class TestBinop:
                     # arr __iop__ obj
                     # array scalars don't have in-place operators
                     if has_inplace and isinstance(arr, np.ndarray):
-                        arr_imethod = getattr(arr, "__i{0}__".format(op))
+                        arr_imethod = getattr(arr, f"__i{op}__")
                         if inplace_override_expected:
                             assert_equal(arr_method(obj), NotImplemented,
                                          err_msg=err_msg)
@@ -9391,12 +9391,12 @@ class TestFormat:
 
     def test_0d(self):
         a = np.array(np.pi)
-        assert_equal('{:0.3g}'.format(a), '3.14')
-        assert_equal('{:0.3g}'.format(a[()]), '3.14')
+        assert_equal(f'{a:0.3g}', '3.14')
+        assert_equal(f'{a[()]:0.3g}', '3.14')
 
     def test_1d_no_format(self):
         a = np.array([np.pi])
-        assert_equal('{}'.format(a), str(a))
+        assert_equal(f'{a}', str(a))
 
     def test_1d_format(self):
         # until gh-5543, ensure that the behaviour matches what it used to be

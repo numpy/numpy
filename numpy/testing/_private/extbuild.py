@@ -141,12 +141,12 @@ def _make_methods(functions, modname):
             signature = '(PyObject *self, PyObject *args)'
         methods_table.append(
             "{\"%s\", (PyCFunction)%s, %s}," % (funcname, cfuncname, flags))
-        func_code = """
+        func_code = f"""
         static PyObject* {cfuncname}{signature}
         {{
         {code}
         }}
-        """.format(cfuncname=cfuncname, signature=signature, code=code)
+        """
         codes.append(func_code)
 
     body = "\n".join(codes) + """

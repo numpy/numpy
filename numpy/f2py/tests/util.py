@@ -262,7 +262,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         # need to change to record how big each module is, rather than
         # relying on rebase being able to find that from the files.
         _module_list.extend(
-            glob.glob(os.path.join(d, "{:s}*".format(module_name)))
+            glob.glob(os.path.join(d, f"{module_name:s}*"))
         )
         subprocess.check_call(
             ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"]

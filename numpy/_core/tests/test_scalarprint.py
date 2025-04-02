@@ -26,7 +26,7 @@ class TestRealScalars:
 
         for wants, val in zip(wanted, svals):
             for want, styp in zip(wants, styps):
-                msg = 'for str({}({}))'.format(np.dtype(styp).name, repr(val))
+                msg = f'for str({np.dtype(styp).name}({val!r}))'
                 assert_equal(str(styp(val)), want, err_msg=msg)
 
     def test_scalar_cutoffs(self):

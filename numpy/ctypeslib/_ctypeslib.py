@@ -385,7 +385,7 @@ if ctypes is not None:
             ctype = _scalar_type_map[dtype_native]
         except KeyError as e:
             raise NotImplementedError(
-                "Converting {!r} to a ctypes type".format(dtype)
+                f"Converting {dtype!r} to a ctypes type"
             ) from None
 
         if dtype_with_endian.byteorder == '>':

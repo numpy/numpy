@@ -865,9 +865,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             n_mismatch = reduced.size - reduced.sum(dtype=intp)
             n_elements = flagged.size if flagged.ndim != 0 else reduced.size
             percent_mismatch = 100 * n_mismatch / n_elements
-            remarks = [
-                'Mismatched elements: {} / {} ({:.3g}%)'.format(
-                    n_mismatch, n_elements, percent_mismatch)]
+            remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
+                       f'({percent_mismatch:.3g}%)']
 
             with errstate(all='ignore'):
                 # ignore errors for non-numeric types
@@ -2654,8 +2653,9 @@ def _parse_size(size_str):
                 'kb': 1000, 'mb': 1000**2, 'gb': 1000**3, 'tb': 1000**4,
                 'kib': 1024, 'mib': 1024**2, 'gib': 1024**3, 'tib': 1024**4}
 
-    size_re = re.compile(r'^\s*(\d+|\d+\.\d+)\s*({0})\s*$'.format(
-        '|'.join(suffixes.keys())), re.I)
+    pipe_suffixes = "|".join(suffixes.keys())
+
+    size_re = re.compile(fr'^\s*(\d+|\d+\.\d+)\s*({pipe_suffixes})\s*$', re.I)
 
     m = size_re.match(size_str.lower())
     if not m or m.group(2) not in suffixes:
