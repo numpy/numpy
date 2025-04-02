@@ -1489,26 +1489,9 @@ def analyzeline(m, case, line):
         line = m.group('after').strip()
         if not line[0] == '/':
             line = '//' + line
+
         cl = []
-        f = 0
-        bn = ''
-        ol = ''
-        for c in line:
-            if c == '/':
-                f = f + 1
-                continue
-            if f >= 3:
-                bn = bn.strip()
-                if not bn:
-                    bn = '_BLNK_'
-                cl.append([bn, ol])
-                f = f - 2
-                bn = ''
-                ol = ''
-            if f % 2:
-                bn = bn + c
-            else:
-                ol = ol + c
+        [_, bn, ol] = re.split('/', line, maxsplit=2)
         bn = bn.strip()
         if not bn:
             bn = '_BLNK_'
