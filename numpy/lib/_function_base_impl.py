@@ -2552,7 +2552,7 @@ class vectorize:
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
-            args = [asarray(arg) for arg in args]
+            args = [asanyarray(arg) for arg in args]
             if builtins.any(arg.size == 0 for arg in args):
                 raise ValueError('cannot call `vectorize` on size 0 inputs '
                                  'unless `otypes` is set')
@@ -2581,8 +2581,10 @@ class vectorize:
                 nout = 1
                 outputs = (outputs,)
 
-            otypes = ''.join([asarray(outputs[_k]).dtype.char
-                              for _k in range(nout)])
+            otypes = tuple(
+                out.dtype if isinstance(out, np.ndarray) else np.dtype(type(out))
+                for out in outputs
+            )
 
             # Performance note: profiling indicates that creating the ufunc is
             # not a significant cost compared with wrapping so it seems not
@@ -2600,9 +2602,7 @@ class vectorize:
         else:
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
-            # Convert args to arrays first
             inputs = [np.expand_dims(asanyarray(a), 0) for a in args]
-
             outputs = ufunc(*inputs)
 
             if ufunc.nout == 1:

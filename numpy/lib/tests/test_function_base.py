@@ -1716,15 +1716,28 @@ class TestVectorize:
         assert_array_equal(f(x), x)
 
     def test_otypes_object_ticket_21274(self):
-        # with object otype, array-like outputs should stay intact
+        # with object otype, the vectorized function should return y
+        # wrapped into an object array
         y = np.arange(3)
         f = vectorize(lambda x: y, otypes=[object])
 
         assert f(None).item() is y
         assert f([None]).item() is y
 
+    def test_otypes_list_ticket_28624(self):
+        # with a list output, the vectorized function should return y
+        # wrapped into an object array
         y = [1, 2, 3]
-        f = vectorize(lambda x: y, otypes=[object])
+        f = vectorize(lambda x: y)
+
+        assert f(None).item() is y
+        assert f([None]).item() is y
+
+    def test_otypes_nested_list_ticket_28624(self):
+        # with a list output, the vectorized function should return y
+        # wrapped into an object array
+        y = [1, 2, [3, 4]]
+        f = vectorize(lambda x: y)
 
         assert f(None).item() is y
         assert f([None]).item() is y
@@ -2345,7 +2358,7 @@ class TestSinc:
         expected = sinc(x.astype(np.float64))
         assert_allclose(actual, expected)
         assert actual.dtype == np.float64
-    
+
     @pytest.mark.parametrize(
             'dtype',
             [np.float16, np.float32, np.longdouble, np.complex64, np.complex128]
