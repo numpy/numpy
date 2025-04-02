@@ -311,7 +311,7 @@ def unique(ar, return_index=False, return_inverse=False,
     orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
     ar = np.ascontiguousarray(ar)
-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+    dtype = [(f'f{i}', ar.dtype) for i in range(ar.shape[1])]
 
     # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
     # data type with `m` fields where each field has the data type of `ar`.

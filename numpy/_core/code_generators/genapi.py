@@ -498,7 +498,7 @@ def check_api_dict(d):
                 doubled[index] = [name]
         fmt = "Same index has been used twice in api definition: {}"
         val = ''.join(
-            '\n\tindex {} -> {}'.format(index, names)
+            f'\n\tindex {index} -> {names}'
             for index, names in doubled.items() if len(names) != 1
         )
         raise ValueError(fmt.format(val))

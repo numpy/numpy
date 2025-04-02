@@ -408,7 +408,7 @@ def _wrap_header(header, version):
     try:
         header_prefix = magic(*version) + struct.pack(fmt, hlen + padlen)
     except struct.error:
-        msg = "Header length {} too big for version={}".format(hlen, version)
+        msg = f"Header length {hlen} too big for version={version}"
         raise ValueError(msg) from None
 
     # Pad the header with spaces and a final newline such that the magic
@@ -629,7 +629,7 @@ def _read_array_header(fp, version, max_header_size=_MAX_HEADER_SIZE):
     import struct
     hinfo = _header_size_info.get(version)
     if hinfo is None:
-        raise ValueError("Invalid version {!r}".format(version))
+        raise ValueError(f"Invalid version {version!r}")
     hlength_type, encoding = hinfo
 
     hlength_str = _read_bytes(fp, struct.calcsize(hlength_type), "array header length")

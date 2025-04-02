@@ -170,7 +170,7 @@ class TestSetOps:
         # specifically, raise an appropriate
         # Exception when attempting to append or
         # prepend with an incompatible type
-        msg = 'dtype of `{}` must be compatible'.format(expected)
+        msg = f'dtype of `{expected}` must be compatible'
         with assert_raises_regex(TypeError, msg):
             ediff1d(ary=ary,
                     to_end=append,

@@ -430,7 +430,7 @@ class ABCPolyBase(abc.ABC):
     def _repr_latex_scalar(x, parens=False):
         # TODO: we're stuck with disabling math formatting until we handle
         # exponents in this function
-        return r'\text{{{}}}'.format(pu.format_float(x, parens=parens))
+        return fr'\text{{{pu.format_float(x, parens=parens)}}}'
 
     def _format_term(self, scalar_format: Callable, off: float, scale: float):
         """ Format a single term in the expansion """

@@ -3119,8 +3119,8 @@ class TestSpecialMethods:
                 # assert_equal produces truly useless error messages
                 raise AssertionError("\n".join([
                     "Bad arguments passed in ufunc call",
-                    " expected:              {}".format(expected),
-                    " __array_wrap__ got:    {}".format(w)
+                    f" expected:              {expected}",
+                    f" __array_wrap__ got:    {w}"
                 ]))
 
         # method not on the out argument
