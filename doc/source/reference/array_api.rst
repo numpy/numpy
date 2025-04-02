@@ -11,8 +11,8 @@ of the Python array API standard.
 
 NumPy aims to implement support for the
 `2024.12 version <https://data-apis.org/array-api/2024.12/index.html>`__
-and future versions of the standard - assuming that those future versions can be
-upgraded to given NumPy's
+(in progress) and future versions of the standard - assuming that those future
+versions can be upgraded to given NumPy's
 :ref:`backwards compatibility policy <NEP23>`.
 
 For usage guidelines for downstream libraries and end users who want to write
