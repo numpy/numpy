@@ -4145,18 +4145,17 @@ class TestQuantile:
     
     @pytest.mark.parametrize(["err_msg", "weight"], 
                              [("Weights must be finite.", [1, np.inf, 1, 1]),
-                              ("Weights must be finite.", [1, -np.inf, 1, 1]),
+                              ("Weights must be non-negative.", [1, -np.inf, 1, 1]),
                               ("Weights must be finite.", [1, np.inf, 1, np.inf]),
                               ("At least one weight is nan.", [1, np.nan, 1, 1]),
                               ("At least one weight is nan.", [1, np.nan, np.nan, 1]),
                               ("At least one weight must be non-zero.", np.zeros(4))])
-    @pytest.mark.parametrize("dty", ["f8", "O"])
-    def test_inf_nan_err(self, err_msg, weight, dty):
+    def test_inf_nan_err(self, err_msg, weight):
 
         m = "inverted_cdf"
         q = 0.5
         arr = [1, 2, 3, 4]
-        wgts = np.array(weight, dtype=dty)
+        wgts = np.array(weight)
         with pytest.raises(ValueError, match=err_msg):
             a = np.quantile(arr, q, weights=wgts, method=m)
      

@@ -4535,21 +4535,6 @@ def quantile(a,
         if axis is not None:
             axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
-        if weights.dtype != object:
-            if np.any(np.isinf(weights)):
-                raise ValueError("Weights must be finite.")
-            elif np.any(np.isnan(weights)):
-                raise ValueError("At least one weight is nan.")
-        # Since np.isinf and np.isnan do not work in dtype object arrays
-        # Also, dtpye object arrays with np.nan in them break <, > and == opperators
-        # This specific handling had to be done (Can be improved)   
-        elif weights.dtype == object:
-            for w in weights: 
-                if np.isnan(w):
-                    raise ValueError("At least one weight is nan.")
-                if np.isinf(w):
-                    raise ValueError("Weights must be finite.")
-                
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
         elif np.all(weights == 0):
@@ -4910,6 +4895,10 @@ def _quantile(
         # We use the weights to calculate the empirical cumulative
         # distribution function cdf
         cdf = weights.cumsum(axis=0, dtype=np.float64)
+        if np.any(np.isinf(cdf[-1])):
+            raise ValueError("Weights must be finite.")
+        elif np.any(np.isnan(cdf[-1])):
+            raise ValueError("At least one weight is nan.")
         cdf /= cdf[-1, ...]  # normalization to 1
         # Search index i such that
         #   sum(weights[j], j=0..i-1) < quantile <= sum(weights[j], j=0..i)
