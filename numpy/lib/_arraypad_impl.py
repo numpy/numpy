@@ -796,7 +796,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
     except KeyError:
         raise ValueError(f"mode '{mode}' is not supported") from None
     if unsupported_kwargs:
-        raise ValueError(f"unsupported keyword arguments for mode '{mode}': {unsupported_kwargs}")
+        raise ValueError("unsupported keyword arguments for mode "
+                         f"'{mode}': {unsupported_kwargs}")
 
     stat_functions = {"maximum": np.amax, "minimum": np.amin,
                       "mean": np.mean, "median": np.median}

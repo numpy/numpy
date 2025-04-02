@@ -280,8 +280,8 @@ def _ravel_and_check_weights(a, weights):
 
     # Ensure that the array is a "subtractable" dtype
     if a.dtype == np.bool:
-        warnings.warn(f"Converting input from {a.dtype} to {np.uint8} for compatibility.",
-                      RuntimeWarning, stacklevel=3)
+        msg = f"Converting input from {a.dtype} to {np.uint8} for compatibility."
+        warnings.warn(msg, RuntimeWarning, stacklevel=3)
         a = a.astype(np.uint8)
 
     if weights is not None:

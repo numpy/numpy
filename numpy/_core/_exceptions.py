@@ -166,4 +166,5 @@ class _ArrayMemoryError(MemoryError):
 
     def __str__(self):
         size_str = self._size_to_string(self._total_size)
-        return f"Unable to allocate {size_str} for an array with shape {self.shape} and data type {self.dtype}"
+        return (f"Unable to allocate {size_str} for an array with shape "
+                f"{self.shape} and data type {self.dtype}")
