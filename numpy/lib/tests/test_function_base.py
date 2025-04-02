@@ -1715,6 +1715,20 @@ class TestVectorize:
         x = np.arange(5)
         assert_array_equal(f(x), x)
 
+    def test_otypes_object_ticket_21274(self):
+        # with object otype, array-like outputs should stay intact
+        y = np.arange(3)
+        f = vectorize(lambda x: y, otypes=[object])
+
+        assert f(None).item() is y
+        assert f([None]).item() is y
+
+        y = [1, 2, 3]
+        f = vectorize(lambda x: y, otypes=[object])
+
+        assert f(None).item() is y
+        assert f([None]).item() is y
+
     def test_parse_gufunc_signature(self):
         assert_equal(nfb._parse_gufunc_signature('(x)->()'), ([('x',)], [()]))
         assert_equal(nfb._parse_gufunc_signature('(x,y)->()'),

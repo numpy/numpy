@@ -2600,16 +2600,16 @@ class vectorize:
         else:
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
-            # Convert args to object arrays first
-            inputs = [asanyarray(a, dtype=object) for a in args]
+            # Convert args to arrays first
+            inputs = [np.expand_dims(asanyarray(a), 0) for a in args]
 
             outputs = ufunc(*inputs)
 
             if ufunc.nout == 1:
-                res = asanyarray(outputs, dtype=otypes[0])
+                res = asanyarray(outputs, dtype=otypes[0]).squeeze(0)
             else:
-                res = tuple(asanyarray(x, dtype=t)
-                             for x, t in zip(outputs, otypes))
+                res = tuple(asanyarray(x, dtype=t).squeeze(0)
+                            for x, t in zip(outputs, otypes))
         return res
 
     def _vectorize_call_with_signature(self, func, args):
