@@ -2602,13 +2602,13 @@ class vectorize:
         else:
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
-            inputs = [np.expand_dims(asanyarray(a), 0) for a in args]
-            outputs = ufunc(*inputs)
+            inputs = [asanyarray(a) for a in args]
+            outputs = ufunc(*inputs, out=...)
 
             if ufunc.nout == 1:
-                res = asanyarray(outputs, dtype=otypes[0]).squeeze(0)
+                res = asanyarray(outputs, dtype=otypes[0])
             else:
-                res = tuple(asanyarray(x, dtype=t).squeeze(0)
+                res = tuple(asanyarray(x, dtype=t)
                             for x, t in zip(outputs, otypes))
         return res
 
