@@ -601,7 +601,7 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             return NULL;
         }
         dl_tensor = managed->dl_tensor;
-        readonly = 0;
+        readonly = 1;
     }
 
     const int ndim = dl_tensor.ndim;
@@ -702,13 +702,12 @@ from_dlpack(PyObject *NPY_UNUSED(self),
     }
 
     PyObject *ret = PyArray_NewFromDescr(&PyArray_Type, descr, ndim, shape,
-            dl_tensor.strides != NULL ? strides : NULL, data, 0, NULL);
+            dl_tensor.strides != NULL ? strides : NULL, data, readonly ? 0 :
+            NPY_ARRAY_WRITEABLE, NULL);
+
     if (ret == NULL) {
         Py_DECREF(capsule);
         return NULL;
-    }
-    if (readonly) {
-        PyArray_CLEARFLAGS((PyArrayObject *)ret, NPY_ARRAY_WRITEABLE);
     }
 
     PyObject *new_capsule;
