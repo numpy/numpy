@@ -431,7 +431,7 @@ def count_nonzero(
     axis: None = ...,
     *,
     keepdims: L[False] = ...,
-) -> int: ...
+) -> intp: ...
 @overload
 def count_nonzero(
     a: ArrayLike,
