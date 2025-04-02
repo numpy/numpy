@@ -501,8 +501,72 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayType: ...
-    def max(self, axis=..., out=..., fill_value=..., keepdims=...): ...
-    def ptp(self, axis=..., out=..., fill_value=..., keepdims=...): ...
+    @overload
+    def max(  # type: ignore[override]
+        self: _MaskedArray[_SCT],
+        axis: None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> _SCT: ...
+    @overload
+    def max(  # type: ignore[override]
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...
+    ) -> Any: ...
+    @overload
+    def max(  # type: ignore[override]
+        self,
+        axis: None,
+        out: _ArrayType,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayType: ...
+    @overload
+    def max(  # type: ignore[override]
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        out: _ArrayType,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayType: ...
+    @overload
+    def ptp(  # type: ignore[override]
+        self: _MaskedArray[_SCT],
+        axis: None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: Literal[False] = False,
+    ) -> _SCT: ...
+    @overload
+    def ptp(  # type: ignore[override]
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool = False,
+    ) -> Any: ...
+    @overload
+    def ptp(  # type: ignore[override]
+        self,
+        axis: None,
+        out: _ArrayType,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool = False,
+    ) -> _ArrayType: ...
+    @overload
+    def ptp(  # type: ignore[override]
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        out: _ArrayType,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool = False,
+    ) -> _ArrayType: ...
     def partition(self, *args, **kwargs): ...
     def argpartition(self, *args, **kwargs): ...
     def take(self, indices, axis=..., out=..., mode=...): ...
