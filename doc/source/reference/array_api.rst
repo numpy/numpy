@@ -32,8 +32,8 @@ rather than anything NumPy-specific, the `array-api-strict
     NumPy 1.22.0 was the first version to include support for the array API
     standard, via a separate ``numpy.array_api`` submodule. This module was
     marked as experimental (it emitted a warning on import) and removed in
-    NumPy 2.0 because full support (2022.12 version [1]_) was included in the main namespace (with
-    2023.12 version support in NumPy 2.1).
+    NumPy 2.0 because full support (2022.12 version [1]_) was included in
+    the main namespace (with 2023.12 version support in NumPy 2.1).
     :ref:`NEP 47 <NEP47>` and
     :ref:`NEP 56 <NEP56>`
     describe the motivation and scope for implementing the array API standard
