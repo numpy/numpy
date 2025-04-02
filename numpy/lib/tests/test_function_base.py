@@ -4144,22 +4144,21 @@ class TestQuantile:
 
     
     @pytest.mark.parametrize(["err_msg", "weight"], 
-                             [("Weights must be finite.", np.array([1, np.inf, 1, 1])),
-                              ("Weights must be finite.", np.array([1, np.inf, 1, 1], dtype=object)),
-                              ("Weights must be finite.", np.array([1, -np.inf, 1, 1])),
-                              ("Weights must be finite.", np.array([1, -np.inf, 1, 1], dtype=object)),
-                              ("Weights must be finite.", np.array([1, np.inf, 1, np.inf])),
-                              ("At least one weight is nan.", np.array([1, np.nan, 1, 1])),
-                              ("At least one weight is nan.", np.array([1, np.nan, 1, 1], dtype=object)),
-                              ("At least one weight is nan.", np.array([1, np.nan, np.nan, 1])),
+                             [("Weights must be finite.", [1, np.inf, 1, 1]),
+                              ("Weights must be finite.", [1, -np.inf, 1, 1]),
+                              ("Weights must be finite.", [1, np.inf, 1, np.inf]),
+                              ("At least one weight is nan.", [1, np.nan, 1, 1]),
+                              ("At least one weight is nan.", [1, np.nan, np.nan, 1]),
                               ("At least one weight must be non-zero.", np.zeros(4))])
-    def test_inf_nan_err(self, err_msg, weight):
+    @pytest.mark.parametrize("dty", ["f8", "O"])
+    def test_inf_nan_err(self, err_msg, weight, dty):
 
         m = "inverted_cdf"
         q = 0.5
         arr = [1, 2, 3, 4]
+        wgts = np.array(weight, dtype=dty)
         with pytest.raises(ValueError, match=err_msg):
-            a = np.quantile(arr, q, weights=weight, method=m)
+            a = np.quantile(arr, q, weights=wgts, method=m)
      
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
