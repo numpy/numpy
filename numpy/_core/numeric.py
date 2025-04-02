@@ -1717,7 +1717,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
             # cp1 = a2 * b0 - a0 * b2
             # cp2 = a0 * b1 - a1 * b0
             multiply(a1, b2, out=cp0)
-            tmp = array(a2 * b1)
+            tmp = np.multiply(a2, b1, out=...)
             cp0 -= tmp
             multiply(a2, b0, out=cp1)
             multiply(a0, b2, out=tmp)
