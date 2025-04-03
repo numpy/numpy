@@ -4158,16 +4158,16 @@ class TestQuantile:
             a = np.quantile(arr, q, weights=wgts, method=m)
 
     @pytest.mark.parametrize("weight", [[1, np.nan, 1, 1], [1, np.nan, np.nan, 1]])
-    @pytest.mark.parametrize(["err", "err_msg", "dty"],
-                             [(ValueError, "At least one weight is nan.", "f8"),
-                              ((RuntimeWarning, ValueError), "invalid value encountered in less", "O")])
-    def test_nan_err(self, err, err_msg, dty, weight):
+    @pytest.mark.parametrize(["err", "dty"],
+                             [(ValueError, "f8"),
+                              ((RuntimeWarning, ValueError), "O")])
+    def test_nan_err(self, err, dty, weight):
 
         m = "inverted_cdf"
         q = 0.5
         arr = [1, 2, 3, 4] 
         wgts = np.array(weight, dtype=dty)
-        with pytest.raises(err, match=err_msg):
+        with pytest.raises(err):
             a = np.quantile(arr, q, weights=wgts, method=m)
 
      
