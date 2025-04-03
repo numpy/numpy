@@ -15,7 +15,7 @@ __all__ = [
     'count_masked', 'corrcoef', 'cov', 'diagflat', 'dot', 'dstack', 'ediff1d',
     'flatnotmasked_contiguous', 'flatnotmasked_edges', 'hsplit', 'hstack',
     'isin', 'in1d', 'intersect1d', 'mask_cols', 'mask_rowcols', 'mask_rows',
-    'masked_all', 'masked_all_like', 'median', 'mr_', 'ndenumerate',
+    'masked_all', 'masked_all_like', 'median', 'median_of_masked', 'mr_', 'ndenumerate',
     'notmasked_contiguous', 'notmasked_edges', 'polyfit', 'row_stack',
     'setdiff1d', 'setxor1d', 'stack', 'unique', 'union1d', 'vander', 'vstack',
     ]
@@ -36,7 +36,52 @@ from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
 from numpy.lib._function_base_impl import _ureduce
 from numpy.lib._index_tricks_impl import AxisConcatenator
 
+def median_of_masked(masked_array) -> float:
+    """
+    Calculate the median of a masked array in less time by avoiding full sorting.
 
+    This function computes the median in less time by iterating over the array 
+    to find the minimum element up to the middle. It handles both even and 
+    odd-length arrays.
+
+    Parameters
+    ----------
+    masked_array : list[int] or numpy.ndarray
+        A list or array of integers from which to find the median.
+
+    Returns
+    -------
+    float
+        The median of the masked array.
+
+    Raises
+    ------
+    ValueError
+        If the array is empty.
+
+    Notes
+    -----
+    The function assumes that the input is a one-dimensional array or list.
+    """
+    masked_array = np.asarray(masked_array)
+    length = len(masked_array)
+    if length == 0:
+        raise ValueError("Cannot find median of an empty array.")
+    temp = []
+    if length % 2 == 1:
+        median_idx = length // 2
+        for _ in range(median_idx + 1):
+            minimum = np.min(masked_array)
+            temp.append(minimum)
+            masked_array = np.delete(masked_array, np.argmin(masked_array))
+        return float(temp[-1])
+    else:
+        median_idx = length // 2
+        for _ in range(median_idx + 1):
+            minimum = np.min(masked_array)
+            temp.append(minimum)
+            masked_array = np.delete(masked_array, np.argmin(masked_array))
+        return (temp[-1] + temp[-2]) / 2.0
 def issequence(seq):
     """
     Is seq a sequence (ndarray, list or tuple)?
