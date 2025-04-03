@@ -467,7 +467,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def round(self, decimals=..., out=...): ...
     def argsort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
 
-    #
+    # Keep in-sync with np.ma.argmin
     @overload
     def argmin(  # type: ignore[override]
         self,
@@ -504,6 +504,8 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         *,
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayType: ...
+
+    # Keep in-sync with np.ma.argmax
     @overload
     def argmax(  # type: ignore[override]
         self,
@@ -513,8 +515,6 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         *,
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> intp: ...
-
-    #
     @overload
     def argmax(  # type: ignore[override]
         self,
