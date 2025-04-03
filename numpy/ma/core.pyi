@@ -487,7 +487,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def min(  # type: ignore[override]
         self,
-        axis: None,
+        axis: _ShapeLike | None,
         out: _ArrayType,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
@@ -520,7 +520,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def max(  # type: ignore[override]
         self,
-        axis: None,
+        axis: _ShapeLike | None,
         out: _ArrayType,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
@@ -553,7 +553,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def ptp(  # type: ignore[override]
         self,
-        axis: None,
+        axis: _ShapeLike | None,
         out: _ArrayType,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool = False,
@@ -686,7 +686,7 @@ def min(
 @overload
 def min(
     obj: ArrayLike,
-    axis: None,
+    axis: _ShapeLike | None,
     out: _ArrayType,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
@@ -720,7 +720,7 @@ def max(
 @overload
 def max(
     obj: ArrayLike,
-    axis: None,
+    axis: _ShapeLike | None,
     out: _ArrayType,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
@@ -754,7 +754,7 @@ def ptp(
 @overload
 def ptp(
     obj: ArrayLike,
-    axis: None,
+    axis: _ShapeLike | None,
     out: _ArrayType,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
