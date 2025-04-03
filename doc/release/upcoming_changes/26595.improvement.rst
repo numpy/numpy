@@ -1,0 +1,6 @@
+Fixed corner cases in complex division (were ``(nan+nanj)``)
+------------------------------------------------------------
+Sometimes Smith's division algorithm, used in NumPy, produces complex nans.
+Added code (see e.g. C11 Annex G.5.2, ``_Cdivd()``'s example) checks that and
+recover meaningful components; e.g.  ``1/complex128('(inf+infj)')`` now is
+``complex128(0)``.

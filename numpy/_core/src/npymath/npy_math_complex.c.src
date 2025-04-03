@@ -93,7 +93,7 @@ static inline
 @ctype@
 cdiv@c@(@ctype@ a, @ctype@ b)
 {
-    @type@ ar, ai, br, bi, abs_br, abs_bi;
+    @type@ ar, ai, br, bi, abs_br, abs_bi, rr, ri;
     ar = npy_creal@c@(a);
     ai = npy_cimag@c@(a);
     br = npy_creal@c@(b);
@@ -104,19 +104,45 @@ cdiv@c@(@ctype@ a, @ctype@ b)
     if (abs_br >= abs_bi) {
         if (abs_br == 0 && abs_bi == 0) {
             /* divide by zeros should yield a complex inf or nan */
-            return npy_cpack@c@(ar/abs_br, ai/abs_bi);
+            rr = ar/abs_br;
+            ri = ai/abs_bi;
         }
         else {
             @type@ rat = bi/br;
             @type@ scl = 1.0@C@/(br+bi*rat);
-            return npy_cpack@c@((ar + ai*rat)*scl, (ai - ar*rat)*scl);
+            rr = (ar + ai*rat)*scl;
+            ri = (ai - ar*rat)*scl;
         }
     }
     else {
         @type@ rat = br/bi;
         @type@ scl = 1.0@C@/(bi + br*rat);
-        return npy_cpack@c@((ar*rat + ai)*scl, (ai*rat - ar)*scl);
+        rr = (ar*rat + ai)*scl;
+        ri = (ai*rat - ar)*scl;
     }
+
+    /* Recover infinities and zeros that computed as nan+nanj.  See e.g.
+       the C11, Annex G.5.2, routine _Cdivd(). */
+    if (npy_isnan(rr) && npy_isnan(ri)) {
+        if ((npy_isinf(ar) || npy_isinf(ai))
+            && npy_isfinite(br) && npy_isfinite(bi))
+        {
+            @type@ x = npy_copysign@c@(npy_isinf(ar) ? 1.0 : 0.0, ar);
+            @type@ y = npy_copysign@c@(npy_isinf(ai) ? 1.0 : 0.0, ai);
+            rr = NPY_INFINITY@C@ * (x*br + y*bi);
+            ri = NPY_INFINITY@C@ * (y*br - x*bi);
+        }
+        else if ((npy_isinf(abs_br) || npy_isinf(abs_bi))
+                 && npy_isfinite(ar) && npy_isfinite(ai))
+        {
+            @type@ x = npy_copysign@c@(npy_isinf(br) ? 1.0 : 0.0, br);
+            @type@ y = npy_copysign@c@(npy_isinf(bi) ? 1.0 : 0.0, bi);
+            rr = 0.0 * (ar*x + ai*y);
+            ri = 0.0 * (ai*x - ar*y);
+        }
+    }
+
+    return npy_cpack@c@(rr, ri);
 }
 
 /*==========================================================
