@@ -37,3 +37,25 @@ m.ptp(axis=1.0)  # E: No overload variant
 m.ptp(keepdims=1.0)  # E: No overload variant
 m.ptp(out=1.0)  # E: No overload variant
 m.ptp(fill_value=lambda x: 27)  # E: No overload variant
+
+m.argmin(axis=1.0)  # E: No overload variant
+m.argmin(keepdims=1.0)  # E: No overload variant
+m.argmin(out=1.0)  # E: No overload variant
+m.argmin(fill_value=lambda x: 27)  # E: No overload variant
+
+np.ma.argmin(m, axis=1.0)  # E: No overload variant
+np.ma.argmin(m, axis=(1,))  # E: No overload variant
+np.ma.argmin(m, keepdims=1.0)  # E: No overload variant
+np.ma.argmin(m, out=1.0)  # E: No overload variant
+np.ma.argmin(m, fill_value=lambda x: 27)  # E: No overload variant
+
+m.argmax(axis=1.0)  # E: No overload variant
+m.argmax(keepdims=1.0)  # E: No overload variant
+m.argmax(out=1.0)  # E: No overload variant
+m.argmax(fill_value=lambda x: 27)  # E: No overload variant
+
+np.ma.argmax(m, axis=1.0)  # E: No overload variant
+np.ma.argmax(m, axis=(0,))  # E: No overload variant
+np.ma.argmax(m, keepdims=1.0)  # E: No overload variant
+np.ma.argmax(m, out=1.0)  # E: No overload variant
+np.ma.argmax(m, fill_value=lambda x: 27)  # E: No overload variant
