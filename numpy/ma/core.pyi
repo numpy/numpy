@@ -881,8 +881,7 @@ count: _frommethod
 
 @overload
 def argmin(
-    obj: ArrayLike,
-    /,
+    self: ArrayLike,
     axis: None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
@@ -891,8 +890,7 @@ def argmin(
 ) -> intp: ...
 @overload
 def argmin(
-    obj: ArrayLike,
-    /,
+    self: ArrayLike,
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
@@ -901,8 +899,7 @@ def argmin(
 ) -> Any: ...
 @overload
 def argmin(
-    obj: ArrayLike,
-    /,
+    self: ArrayLike,
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     *,
@@ -911,8 +908,7 @@ def argmin(
 ) -> _ArrayType: ...
 @overload
 def argmin(
-    obj: ArrayLike,
-    /,
+    self: ArrayLike,
     axis: SupportsIndex | None,
     fill_value: _ScalarLike_co | None,
     out: _ArrayType,
@@ -922,8 +918,7 @@ def argmin(
 
 @overload
 def argmax(
-    obj: ArrayLike,
-    /,
+    self: ArrayLike,
     axis: None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
@@ -932,8 +927,7 @@ def argmax(
 ) -> intp: ...
 @overload
 def argmax(
-    obj: ArrayLike,
-    /,
+    self: ArrayLike,
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
@@ -942,8 +936,7 @@ def argmax(
 ) -> Any: ...
 @overload
 def argmax(
-    obj: ArrayLike,
-    /,
+    self: ArrayLike,
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     *,
@@ -952,8 +945,7 @@ def argmax(
 ) -> _ArrayType: ...
 @overload
 def argmax(
-    obj: ArrayLike,
-    /,
+    self: ArrayLike,
     axis: SupportsIndex | None,
     fill_value: _ScalarLike_co | None,
     out: _ArrayType,
