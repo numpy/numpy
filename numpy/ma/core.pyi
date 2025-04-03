@@ -466,6 +466,8 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def std(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
     def round(self, decimals=..., out=...): ...
     def argsort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
+
+    #
     @overload
     def argmin(  # type: ignore[override]
         self,
@@ -511,6 +513,8 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         *,
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> intp: ...
+
+    #
     @overload
     def argmax(  # type: ignore[override]
         self,
@@ -872,6 +876,8 @@ swapaxes: _frommethod
 trace: _frommethod
 var: _frommethod
 count: _frommethod
+
+#
 @overload
 def argmin(
     obj: ArrayLike,
@@ -912,6 +918,8 @@ def argmin(
     *,
     keepdims: bool | _NoValueType = ...,
 ) -> _ArrayType: ...
+
+#
 @overload
 def argmax(
     obj: ArrayLike,
