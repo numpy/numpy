@@ -542,6 +542,8 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         *,
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayType: ...
+
+    #
     def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
     @overload
     def min(  # type: ignore[override]
@@ -877,7 +879,6 @@ trace: _frommethod
 var: _frommethod
 count: _frommethod
 
-#
 @overload
 def argmin(
     obj: ArrayLike,
@@ -919,7 +920,6 @@ def argmin(
     keepdims: bool | _NoValueType = ...,
 ) -> _ArrayType: ...
 
-#
 @overload
 def argmax(
     obj: ArrayLike,
