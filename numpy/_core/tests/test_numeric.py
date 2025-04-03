@@ -129,6 +129,16 @@ class TestNonarrayArgs:
         assert_(np.mean(A) == 3.5)
         assert_(np.all(np.mean(A, 0) == np.array([2.5, 3.5, 4.5])))
         assert_(np.all(np.mean(A, 1) == np.array([2., 5.])))
+        assert_equal(
+            np.mean(
+                [np.datetime64('2002-04-10'), np.datetime64('2002-04-12')]
+            ), 
+            np.datetime64('2002-04-11')
+        )
+        assert_equal(
+            np.mean([np.datetime64('2001-11-17'), np.datetime64('NaT')]), 
+            np.datetime64('NaT')
+        )
 
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)

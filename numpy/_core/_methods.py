@@ -119,6 +119,7 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
     arr = asanyarray(a)
 
     is_float16_result = False
+    is_datetime64 = False
 
     rcount = _count_reduce_items(arr, axis, keepdims=keepdims, where=where)
     if rcount == 0 if where is True else umr_any(rcount == 0, axis=None):
@@ -131,6 +132,13 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
         elif issubclass(arr.dtype.type, nt.float16):
             dtype = mu.dtype('f4')
             is_float16_result = True
+        elif issubclass(arr.dtype.type, nt.datetime64):
+            if (np.isnat(arr).any() if where is True else 
+                    umr_any(np.isnat(arr), axis=None)):
+                return np.datetime64('NaT')
+            arr = arr.view('i8')
+            dtype = mu.dtype('i8')
+            is_datetime64 = True
 
     ret = umr_sum(arr, axis, dtype, out, keepdims, where=where)
     if isinstance(ret, mu.ndarray):
@@ -145,6 +153,9 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False, *, where=True):
             ret = ret.dtype.type(ret / rcount)
     else:
         ret = ret / rcount
+
+    if is_datetime64:
+        ret = ret.astype(nt.datetime64)
 
     return ret
 
