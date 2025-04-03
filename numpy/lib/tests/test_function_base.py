@@ -4141,7 +4141,6 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:8], q, method=m))
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
-
     
     @pytest.mark.parametrize(["err_msg", "weight"], 
                              [("Weights must be finite.", [1, np.inf, 1, 1]),

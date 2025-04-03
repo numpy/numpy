@@ -4539,8 +4539,6 @@ def quantile(a,
             raise ValueError("Weights must be non-negative.")
         elif np.all(weights == 0):
             raise ValueError("At least one weight must be non-zero.")
-        
-
     return _quantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
 
