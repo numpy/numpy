@@ -478,7 +478,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def argmin(  # type: ignore[override]
         self,
-        axis: _ShapeLike | None = None,
+        axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
         out: None = None,
         *,
@@ -487,7 +487,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def argmin(  # type: ignore[override]
         self,
-        axis: _ShapeLike | None = None,
+        axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
         *,
         out: _ArrayType,
@@ -496,7 +496,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def argmin(  # type: ignore[override]
         self,
-        axis: _ScalarLike_co | None,
+        axis: SupportsIndex | None,
         fill_value: _ScalarLike_co | None,
         out: _ArrayType,
         *,
@@ -514,7 +514,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def argmax(  # type: ignore[override]
         self,
-        axis: _ShapeLike | None = None,
+        axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
         out: None = None,
         *,
@@ -523,7 +523,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def argmax(  # type: ignore[override]
         self,
-        axis: _ShapeLike | None = None,
+        axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
         *,
         out: _ArrayType,
@@ -532,7 +532,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @overload
     def argmax(  # type: ignore[override]
         self,
-        axis: _ScalarLike_co | None,
+        axis: SupportsIndex | None,
         fill_value: _ScalarLike_co | None,
         out: _ArrayType,
         *,
@@ -886,7 +886,7 @@ def argmin(
 def argmin(
     obj: ArrayLike,
     /,
-    axis: _ShapeLike | None = None,
+    axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
     *,
@@ -896,7 +896,7 @@ def argmin(
 def argmin(
     obj: ArrayLike,
     /,
-    axis: _ShapeLike | None = None,
+    axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     *,
     out: _ArrayType,
@@ -906,7 +906,7 @@ def argmin(
 def argmin(
     obj: ArrayLike,
     /,
-    axis: _ScalarLike_co | None,
+    axis: SupportsIndex | None,
     fill_value: _ScalarLike_co | None,
     out: _ArrayType,
     *,
@@ -926,7 +926,7 @@ def argmax(
 def argmax(
     obj: ArrayLike,
     /,
-    axis: _ShapeLike | None = None,
+    axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     out: None = None,
     *,
@@ -936,7 +936,7 @@ def argmax(
 def argmax(
     obj: ArrayLike,
     /,
-    axis: _ShapeLike | None = None,
+    axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     *,
     out: _ArrayType,
@@ -946,7 +946,7 @@ def argmax(
 def argmax(
     obj: ArrayLike,
     /,
-    axis: _ScalarLike_co | None,
+    axis: SupportsIndex | None,
     fill_value: _ScalarLike_co | None,
     out: _ArrayType,
     *,
