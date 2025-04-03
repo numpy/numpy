@@ -1,6 +1,11 @@
 import os
 import argparse
+import sys
+from pathlib import Path
 
+# see gh-24907 for import shenanigans
+file_dir = Path(__file__).absolute().parents[0]
+sys.path.append(str(file_dir))
 import genapi
 from genapi import TypeApi, FunctionApi
 import numpy_api
