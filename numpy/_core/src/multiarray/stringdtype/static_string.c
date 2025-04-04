@@ -70,6 +70,15 @@ typedef union _npy_static_string_u {
 } _npy_static_string_u;
 
 
+typedef struct {
+        PyObject_HEAD;
+        _npy_static_string_u static_string;
+        PyArray_StringDTypeObject *descr;
+} _PyVStringScalarObject;
+
+#define NPY_VSTRING_SCALAR_OBJ_SIZE sizeof(_PyVStringScalarObject)
+
+
 // Flags defining whether a string exists and how it is stored.
 // Inside the arena, long means not medium (i.e., >255 bytes), while
 // outside, it means not short (i.e., >15 or 7, depending on arch).
@@ -801,3 +810,124 @@ NpyString_share_memory(const npy_packed_static_string *s1, npy_string_allocator 
     }
     return 0;
 }
+
+
+/*
+ * StringDType Scalar Type
+ */
+
+NPY_NO_EXPORT PyObject *
+vstring_scalar_alloc(PyTypeObject *type, PyArray_StringDTypeObject *descr, npy_intp length,
+                     const char* contents)
+{
+    _PyVStringScalarObject *obj = (_PyVStringScalarObject *)PyObject_Malloc(
+        NPY_VSTRING_SCALAR_OBJ_SIZE);
+
+    _npy_static_string_u init_static_str = {
+        .direct_buffer = {.size_and_flags = 0, .buf = {0}}
+    };
+    obj->static_string = init_static_str;
+    obj->descr = descr;
+
+    npy_string_allocator *allocator = NpyString_acquire_allocator(descr);
+
+    if (NpyString_free((npy_packed_static_string *) &(obj->static_string), allocator) < 0) {
+        return NULL;
+    }
+    if (NpyString_pack(allocator, (npy_packed_static_string *) &(obj->static_string), 
+                       contents, length) < 0) {
+        return NULL;
+    }
+
+    NpyString_release_allocator(allocator);
+
+    PyObject_Init((PyObject *)obj, type);
+    return (PyObject *)obj;
+}
+
+NPY_NO_EXPORT void
+vstring_scalar_dealloc(PyObject *obj)
+{
+    // TODO: Just a draft - didn't test yet
+    _PyVStringScalarObject *str_obj = (_PyVStringScalarObject *)obj;
+    NpyString_free((npy_packed_static_string *) &(str_obj->static_string),
+                   str_obj->descr->allocator);
+    Py_TYPE(str_obj)->tp_free(str_obj);
+}
+
+NPY_NO_EXPORT PyObject *
+vstring_scalar_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    PyObject *obj = NULL;
+
+    static char *kwnames[] = {"", NULL};  /* positional-only */
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|U:vstr", kwnames, &obj)) {
+        return NULL;
+    }
+
+    npy_intp length = PyUnicode_GetLength(obj);
+    if (length == -1) {
+        return NULL;
+    }
+    const char *contents = PyUnicode_AsUTF8(obj);
+    if (contents == NULL) {
+        return NULL;
+    }
+
+    // TODO: maybe a global scalars' Descr instance instead?
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject*)PyArray_DescrFromType(NPY_VSTRING);
+    if (descr == NULL) {
+        return NULL;
+    }
+
+    PyObject *ret = vstring_scalar_alloc(type, descr, length, contents);
+    return ret;
+}
+
+static PyObject *
+vstring_scalar_str(PyObject *self)
+{
+    _PyVStringScalarObject* casted_self = (_PyVStringScalarObject*)self;
+
+    npy_static_string sdata = {0, NULL};
+    npy_packed_static_string *packed_string = (npy_packed_static_string *)&(casted_self->static_string);
+
+    npy_string_allocator *allocator = NpyString_acquire_allocator(casted_self->descr);
+
+    int is_null = NpyString_load(allocator, packed_string, &sdata);
+
+    NpyString_release_allocator(allocator);
+
+    if (is_null == -1) {
+        return NULL;
+    }
+    else if (is_null) {
+        return PyUnicode_FromFormat("%s", "NULL");
+    }
+    else {
+        return PyUnicode_FromFormat("%s", sdata.buf);
+    }
+}
+
+static PyObject *
+vstring_scalar_repr(PyObject *self)
+{
+    PyObject * str_self = vstring_scalar_str(self);
+    if (str_self == NULL) {
+        return NULL;
+    }
+    return PyUnicode_FromFormat("np.vstr('%U')", str_self);
+}
+
+NPY_NO_EXPORT PyTypeObject PyVStringArrType_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "numpy.vstr",
+    .tp_basicsize = sizeof(_PyVStringScalarObject),
+    .tp_itemsize = 0,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_alloc = NULL,
+    .tp_dealloc = vstring_scalar_dealloc,
+    .tp_new = vstring_scalar_new,
+    .tp_repr = vstring_scalar_repr,
+    .tp_str = vstring_scalar_str,
+};
