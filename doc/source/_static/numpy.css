@@ -89,7 +89,7 @@ div.admonition-legacy>.admonition-title {
   font-size: small;
 }
 
-/* Use more acccessible colours for text in dark mode */
+/* Use more accessible colours for text in dark mode */
 [data-theme=dark] .try_examples_button {
   color: black;
 }

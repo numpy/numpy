@@ -5982,7 +5982,7 @@ fail:
         if (PyArray_FLAGS(op1_array) & NPY_ARRAY_WRITEBACKIFCOPY) {
             PyArray_DiscardWritebackIfCopy(op1_array);
         }
-        // iter might own the last refrence to op1_array,
+        // iter might own the last reference to op1_array,
         // so it must be decref'd second
         Py_XDECREF(iter);
         return NULL;
