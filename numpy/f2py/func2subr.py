@@ -18,6 +18,7 @@ from .auxfuncs import (
 )
 
 from ._isocbind import isoc_kindmap
+from ._isofenv import isof_kindmap
 
 def var2fixfortran(vars, a, fa=None, f90mode=None):
     if fa is None:
@@ -75,6 +76,14 @@ def useiso_c_binding(rout):
             return True
     return useisoc
 
+def useiso_fortran_env(rout):
+    useisof = False
+    for key, value in rout['vars'].items():
+        kind_value = value.get('kindselector', {}).get('kind')
+        if kind_value in isof_kindmap:
+            return True
+    return useisof
+
 def createfuncwrapper(rout, signature=0):
     assert isfunction(rout)
 
@@ -122,6 +131,7 @@ def createfuncwrapper(rout, signature=0):
     rl = None
 
     useisoc = useiso_c_binding(rout)
+    useisof = useiso_fortran_env(rout)
     sargs = ', '.join(args)
     if f90mode:
         # gh-23598 fix warning
@@ -136,10 +146,14 @@ def createfuncwrapper(rout, signature=0):
             add('use %s, only : %s' % (rout['modulename'], fortranname))
         if useisoc:
             add('use iso_c_binding')
+        if useisof:
+            add('use iso_fortran_env')
     else:
         add('subroutine f2pywrap%s (%s)' % (name, sargs))
         if useisoc:
             add('use iso_c_binding')
+        if useisof:
+            add('use iso_fortran_env')
         if not need_interface:
             add('external %s' % (fortranname))
             rl = l_tmpl.replace('@@@NAME@@@', '') + ' ' + fortranname
@@ -228,18 +242,23 @@ def createsubrwrapper(rout, signature=0):
     args = rout['args']
 
     useisoc = useiso_c_binding(rout)
+    useisof = useiso_fortran_env(rout)
     sargs = ', '.join(args)
     if f90mode:
         add('subroutine f2pywrap_%s_%s (%s)' %
             (rout['modulename'], name, sargs))
         if useisoc:
             add('use iso_c_binding')
+        if useisof:
+            add('use iso_fortran_env')
         if not signature:
             add('use %s, only : %s' % (rout['modulename'], fortranname))
     else:
         add('subroutine f2pywrap%s (%s)' % (name, sargs))
         if useisoc:
             add('use iso_c_binding')
+        if useisof:
+            add('use iso_fortran_env')
         if not need_interface:
             add('external %s' % (fortranname))
 
