@@ -1,0 +1,2 @@
+* No-copy pickling is now supported for any 
+  array that can be transposed to a C-contiguous array.
