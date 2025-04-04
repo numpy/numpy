@@ -10,20 +10,13 @@ from typing import (
     type_check_only,
 )
 
+from typing_extensions import deprecated
+
 import numpy as np
-from numpy import (
-    generic,
-    integer,
-    ufunc,
-    unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    object_,
-)
-from numpy._core.shape_base import vstack as row_stack
+from numpy import _CastingKind, generic, integer, ufunc, unsignedinteger, signedinteger, floating, complexfloating, object_
 from numpy._typing import (
     ArrayLike,
+    DTypeLike,
     NDArray,
     _ShapeLike,
     _ArrayLike,
@@ -72,6 +65,8 @@ class _SupportsArrayWrap(Protocol):
     @property
     def __array_wrap__(self) -> _ArrayWrap: ...
 
+###
+
 def take_along_axis(
     arr: _SCT | NDArray[_SCT],
     indices: NDArray[integer[Any]],
@@ -119,6 +114,16 @@ def expand_dims(
     axis: _ShapeLike,
 ) -> NDArray[Any]: ...
 
+# Deprecated in NumPy 2.0, 2023-08-18
+@deprecated("`row_stack` alias is deprecated. Use `np.vstack` directly.")
+def row_stack(
+    tup: Sequence[ArrayLike],
+    *,
+    dtype: DTypeLike | None = None,
+    casting: _CastingKind = "same_kind",
+) -> NDArray[Any]: ...
+
+#
 @overload
 def column_stack(tup: Sequence[_ArrayLike[_SCT]]) -> NDArray[_SCT]: ...
 @overload

@@ -2372,6 +2372,16 @@ def test_matrix_norm():
     assert_almost_equal(actual, np.array([[14.2828]]), double_decimal=3)
 
 
+def test_matrix_norm_empty():
+    for shape in [(0, 2), (2, 0), (0, 0)]:
+        for dtype in [np.float64, np.float32, np.int32]:
+            x = np.zeros(shape, dtype)
+            assert_equal(np.linalg.matrix_norm(x, ord="fro"), 0)
+            assert_equal(np.linalg.matrix_norm(x, ord="nuc"), 0)
+            assert_equal(np.linalg.matrix_norm(x, ord=1), 0)
+            assert_equal(np.linalg.matrix_norm(x, ord=2), 0)
+            assert_equal(np.linalg.matrix_norm(x, ord=np.inf), 0)
+
 def test_vector_norm():
     x = np.arange(9).reshape((3, 3))
     actual = np.linalg.vector_norm(x)
@@ -2388,3 +2398,11 @@ def test_vector_norm():
     expected = np.full((1, 1), 14.2828, dtype='float64')
     assert_equal(actual.shape, expected.shape)
     assert_almost_equal(actual, expected, double_decimal=3)
+
+
+def test_vector_norm_empty():
+    for dtype in [np.float64, np.float32, np.int32]:
+        x = np.zeros(0, dtype)
+        assert_equal(np.linalg.vector_norm(x, ord=1), 0)
+        assert_equal(np.linalg.vector_norm(x, ord=2), 0)
+        assert_equal(np.linalg.vector_norm(x, ord=np.inf), 0)

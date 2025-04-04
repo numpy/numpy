@@ -266,8 +266,7 @@ def test_str_exact():
 @pytest.mark.skipif(string_to_longdouble_inaccurate,
                     reason="Need strtold_l")
 def test_format():
-    o = 1 + LD_INFO.eps
-    assert_("{0:.40g}".format(o) != '1')
+    assert_(f"{1 + LD_INFO.eps:.40g}" != '1')
 
 
 @pytest.mark.skipif(longdouble_longer_than_double, reason="BUG #2376")

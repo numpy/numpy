@@ -69,7 +69,6 @@ Constants
 - ``Poly.window``     -- Default window
 - ``Poly.basis_name`` -- String used to represent the basis
 - ``Poly.maxpower``   -- Maximum value ``n`` such that ``p**n`` is allowed
-- ``Poly.nickname``   -- String used in printing
 
 Creation
 --------

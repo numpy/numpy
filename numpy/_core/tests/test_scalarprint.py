@@ -26,7 +26,7 @@ class TestRealScalars:
 
         for wants, val in zip(wanted, svals):
             for want, styp in zip(wants, styps):
-                msg = 'for str({}({}))'.format(np.dtype(styp).name, repr(val))
+                msg = f'for str({np.dtype(styp).name}({val!r}))'
                 assert_equal(str(styp(val)), want, err_msg=msg)
 
     def test_scalar_cutoffs(self):
@@ -277,15 +277,15 @@ class TestRealScalars:
 
         #gh-28068            
         with pytest.raises(RuntimeError, 
-                           match="Float formating result too large"):
+                           match="Float formatting result too large"):
             fpos(tp('1.047'), unique=False, precision=pad_val)
 
         with pytest.raises(RuntimeError, 
-                           match="Float formating result too large"):
+                           match="Float formatting result too large"):
             fpos(tp('1.047'), precision=2, pad_left=pad_val)
 
         with pytest.raises(RuntimeError, 
-                           match="Float formating result too large"):
+                           match="Float formatting result too large"):
             fpos(tp('1.047'), precision=2, pad_right=pad_val)
 
     @pytest.mark.parametrize("tp", available_float_dtypes)

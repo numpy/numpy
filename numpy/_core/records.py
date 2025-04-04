@@ -127,7 +127,7 @@ class format_parser:
         if isinstance(formats, list):
             dtype = sb.dtype(
                 [
-                    ('f{}'.format(i), format_)
+                    (f'f{i}', format_)
                     for i, format_ in enumerate(formats)
                 ],
                 aligned,

@@ -318,8 +318,6 @@ NPY_NO_EXPORT int
 check_is_convertible_to_scalar(PyArrayObject *v);
 
 
-#include "ucsnarrow.h"
-
 /*
  * Make a new empty array, of the passed size, of a type that takes the
  * priority of ap1 and ap2 into account.

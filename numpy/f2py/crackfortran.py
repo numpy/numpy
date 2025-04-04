@@ -673,8 +673,8 @@ def split_by_unquoted(line, characters):
     r = re.compile(
         r"\A(?P<before>({single_quoted}|{double_quoted}|{not_quoted})*)"
         r"(?P<after>{char}.*)\Z".format(
-            not_quoted="[^\"'{}]".format(re.escape(characters)),
-            char="[{}]".format(re.escape(characters)),
+            not_quoted=f"[^\"'{re.escape(characters)}]",
+            char=f"[{re.escape(characters)}]",
             single_quoted=r"('([^'\\]|(\\.))*')",
             double_quoted=r'("([^"\\]|(\\.))*")'))
     m = r.match(line)
@@ -1459,7 +1459,7 @@ def analyzeline(m, case, line):
                 vdim = getdimension(vars[v])
                 matches = re.findall(r"\(.*?\)", l[1]) if vtype == 'complex' else l[1].split(',')
                 try:
-                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
+                    new_val = f"(/{', '.join(matches)}/)" if vdim else matches[idx]
                 except IndexError:
                     # gh-24746
                     # Runs only if above code fails. Fixes the line
@@ -1477,7 +1477,7 @@ def analyzeline(m, case, line):
                             else:
                                 expanded_list.append(match.strip())
                         matches = expanded_list
-                    new_val = "(/{}/)".format(", ".join(matches)) if vdim else matches[idx]
+                    new_val = f"(/{', '.join(matches)}/)" if vdim else matches[idx]
                 current_val = vars[v].get('=')
                 if current_val and (current_val != new_val):
                     outmess('analyzeline: changing init expression of "%s" ("%s") to "%s"\n' % (v, current_val, new_val))
@@ -1490,26 +1490,9 @@ def analyzeline(m, case, line):
         line = m.group('after').strip()
         if not line[0] == '/':
             line = '//' + line
+
         cl = []
-        f = 0
-        bn = ''
-        ol = ''
-        for c in line:
-            if c == '/':
-                f = f + 1
-                continue
-            if f >= 3:
-                bn = bn.strip()
-                if not bn:
-                    bn = '_BLNK_'
-                cl.append([bn, ol])
-                f = f - 2
-                bn = ''
-                ol = ''
-            if f % 2:
-                bn = bn + c
-            else:
-                ol = ol + c
+        [_, bn, ol] = re.split('/', line, maxsplit=2)
         bn = bn.strip()
         if not bn:
             bn = '_BLNK_'

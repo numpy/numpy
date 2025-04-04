@@ -3,7 +3,7 @@
 * Remove alias ``generate_divbyzero_error`` to ``npy_set_floatstatus_divbyzero`` and ``generate_overflow_error`` to ``npy_set_floatstatus_overflow`` (deprecated since 1.10)
 * Remove ``np.tostring`` (deprecated since 1.19)
 * Raise on ``np.conjugate`` of non-numeric types (deprecated since 1.13)
-* Raise when using ``np.bincount(...minlength=None)``, use 0 intead (deprecated since 1.14)
+* Raise when using ``np.bincount(...minlength=None)``, use 0 instead (deprecated since 1.14)
 * Passing ``shape=None`` to functions with a non-optional shape argument errors, use ``()`` instead (deprecated since 1.20)
 * Inexact matches for ``mode`` and ``searchside`` raise (deprecated since 1.20)
 * Setting ``__array_finalize__ = None`` errors (deprecated since 1.23)

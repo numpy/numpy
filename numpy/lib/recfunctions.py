@@ -1009,7 +1009,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
         raise NotImplementedError("arr with no fields is not supported")
 
     dts, counts, offsets = zip(*fields)
-    names = ['f{}'.format(n) for n in range(n_fields)]
+    names = [f'f{n}' for n in range(n_fields)]
 
     if dtype is None:
         out_dtype = np.result_type(*[dt.base for dt in dts])
@@ -1138,7 +1138,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
 
     if dtype is None:
         if names is None:
-            names = ['f{}'.format(n) for n in range(n_elem)]
+            names = [f'f{n}' for n in range(n_elem)]
         out_dtype = np.dtype([(n, arr.dtype) for n in names], align=align)
         fields = _get_fields_and_offsets(out_dtype)
         dts, counts, offsets = zip(*fields)
@@ -1161,7 +1161,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
         if align and not out_dtype.isalignedstruct:
             raise ValueError("align was True but dtype is not aligned")
 
-    names = ['f{}'.format(n) for n in range(len(fields))]
+    names = [f'f{n}' for n in range(len(fields))]
 
     # Use a series of views and casts to convert to a structured array:
 

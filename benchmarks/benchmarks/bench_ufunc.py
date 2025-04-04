@@ -520,7 +520,7 @@ class ArgPack:
     def __repr__(self):
         return '({})'.format(', '.join(
             [repr(a) for a in self.args] +
-            ['{}={}'.format(k, repr(v)) for k, v in self.kwargs.items()]
+            [f'{k}={v!r}' for k, v in self.kwargs.items()]
         ))
 
 

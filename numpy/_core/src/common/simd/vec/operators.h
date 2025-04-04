@@ -44,6 +44,10 @@
 /***************************
  * Logical
  ***************************/
+#define NPYV_IMPL_VEC_BIN_WRAP(INTRIN, SFX) \
+    NPY_FINLINE npyv_##SFX npyv_##INTRIN##_##SFX(npyv_##SFX a, npyv_##SFX b) \
+    { return vec_##INTRIN(a, b); }
+
 #define NPYV_IMPL_VEC_BIN_CAST(INTRIN, SFX, CAST) \
     NPY_FINLINE npyv_##SFX npyv_##INTRIN##_##SFX(npyv_##SFX a, npyv_##SFX b) \
     { return (npyv_##SFX)vec_##INTRIN((CAST)a, (CAST)b); }
@@ -53,6 +57,15 @@
     #define NPYV_IMPL_VEC_BIN_B64(INTRIN) NPYV_IMPL_VEC_BIN_CAST(INTRIN, b64, npyv_u64)
 #else
     #define NPYV_IMPL_VEC_BIN_B64(INTRIN) NPYV_IMPL_VEC_BIN_CAST(INTRIN, b64, npyv_b64)
+#endif
+
+// Up to clang __VEC__ 10305 logical intrinsics do not support f32 or f64
+#if defined(NPY_HAVE_VX) && defined(__clang__) && __VEC__ < 10305
+    #define NPYV_IMPL_VEC_BIN_F32(INTRIN) NPYV_IMPL_VEC_BIN_CAST(INTRIN, f32, npyv_u32)
+    #define NPYV_IMPL_VEC_BIN_F64(INTRIN) NPYV_IMPL_VEC_BIN_CAST(INTRIN, f64, npyv_u64)
+#else
+    #define NPYV_IMPL_VEC_BIN_F32(INTRIN) NPYV_IMPL_VEC_BIN_WRAP(INTRIN, f32)
+    #define NPYV_IMPL_VEC_BIN_F64(INTRIN) NPYV_IMPL_VEC_BIN_WRAP(INTRIN, f64)
 #endif
 // AND
 #define npyv_and_u8  vec_and
@@ -64,9 +77,9 @@
 #define npyv_and_u64 vec_and
 #define npyv_and_s64 vec_and
 #if NPY_SIMD_F32
-    #define npyv_and_f32 vec_and
+    NPYV_IMPL_VEC_BIN_F32(and)
 #endif
-#define npyv_and_f64 vec_and
+NPYV_IMPL_VEC_BIN_F64(and)
 #define npyv_and_b8  vec_and
 #define npyv_and_b16 vec_and
 #define npyv_and_b32 vec_and
@@ -82,9 +95,9 @@ NPYV_IMPL_VEC_BIN_B64(and)
 #define npyv_or_u64 vec_or
 #define npyv_or_s64 vec_or
 #if NPY_SIMD_F32
-    #define npyv_or_f32 vec_or
+    NPYV_IMPL_VEC_BIN_F32(or)
 #endif
-#define npyv_or_f64 vec_or
+NPYV_IMPL_VEC_BIN_F64(or)
 #define npyv_or_b8  vec_or
 #define npyv_or_b16 vec_or
 #define npyv_or_b32 vec_or
@@ -100,9 +113,9 @@ NPYV_IMPL_VEC_BIN_B64(or)
 #define npyv_xor_u64 vec_xor
 #define npyv_xor_s64 vec_xor
 #if NPY_SIMD_F32
-    #define npyv_xor_f32 vec_xor
+    NPYV_IMPL_VEC_BIN_F32(xor)
 #endif
-#define npyv_xor_f64 vec_xor
+NPYV_IMPL_VEC_BIN_F64(xor)
 #define npyv_xor_b8  vec_xor
 #define npyv_xor_b16 vec_xor
 #define npyv_xor_b32 vec_xor

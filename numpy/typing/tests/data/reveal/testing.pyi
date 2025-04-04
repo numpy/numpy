@@ -32,15 +32,15 @@ assert_type(np.testing.IgnoreException(), np.testing.IgnoreException)
 
 assert_type(
     np.testing.clear_and_catch_warnings(modules=[np.testing]),
-    np.testing._private.utils._clear_and_catch_warnings_without_records,
+    np.testing.clear_and_catch_warnings[None],
 )
 assert_type(
     np.testing.clear_and_catch_warnings(True),
-    np.testing._private.utils._clear_and_catch_warnings_with_records,
+    np.testing.clear_and_catch_warnings[list[warnings.WarningMessage]],
 )
 assert_type(
     np.testing.clear_and_catch_warnings(False),
-    np.testing._private.utils._clear_and_catch_warnings_without_records,
+    np.testing.clear_and_catch_warnings[None],
 )
 assert_type(
     np.testing.clear_and_catch_warnings(bool_obj),

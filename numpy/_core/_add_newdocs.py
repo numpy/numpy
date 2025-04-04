@@ -1663,8 +1663,8 @@ add_newdoc('numpy._core.multiarray', 'from_dlpack',
     from_dlpack(x, /, *, device=None, copy=None)
 
     Create a NumPy array from an object implementing the ``__dlpack__``
-    protocol. Generally, the returned NumPy array is a read-only view
-    of the input object. See [1]_ and [2]_ for more details.
+    protocol. Generally, the returned NumPy array is a view of the input
+    object. See [1]_ and [2]_ for more details.
 
     Parameters
     ----------
@@ -4906,12 +4906,17 @@ add_newdoc('numpy._core', 'ufunc',
     ----------
     *x : array_like
         Input arrays.
-    out : ndarray, None, or tuple of ndarray and None, optional
-        Alternate array object(s) in which to put the result; if provided, it
-        must have a shape that the inputs broadcast to. A tuple of arrays
-        (possible only as a keyword argument) must have length equal to the
-        number of outputs; use None for uninitialized outputs to be
-        allocated by the ufunc.
+    out : ndarray, None, ..., or tuple of ndarray and None, optional
+        Location(s) into which the result(s) are stored.
+        If not provided or None, new array(s) are created by the ufunc.
+        If passed as a keyword argument, can be Ellipses (``out=...``) to
+        ensure an array is returned even if the result is 0-dimensional,
+        or a tuple with length equal to the number of outputs (where None
+        can be used for allocation by the ufunc).
+
+        .. versionadded:: 2.3
+            Support for ``out=...`` was added.
+
     where : array_like, optional
         This condition is broadcast over the input. At locations where the
         condition is True, the `out` array will be set to the ufunc result.
@@ -5163,11 +5168,17 @@ add_newdoc('numpy._core', 'ufunc', ('reduce',
         ``out`` if given, and the data type of ``array`` otherwise (though
         upcast to conserve precision for some cases, such as
         ``numpy.add.reduce`` for integer or boolean input).
-    out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or None,
-        a freshly-allocated array is returned. For consistency with
-        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
-        1-element tuple.
+    out : ndarray, None, ..., or tuple of ndarray and None, optional
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        If passed as a keyword argument, can be Ellipses (``out=...``) to
+        ensure an array is returned even if the result is 0-dimensional
+        (which is useful especially for object dtype), or a 1-element tuple
+        (latter for consistency with ``ufunc.__call__``).
+
+        .. versionadded:: 2.3
+            Support for ``out=...`` was added.
+
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -5272,10 +5283,11 @@ add_newdoc('numpy._core', 'ufunc', ('accumulate',
         to the data-type of the output array if such is provided, or the
         data-type of the input array if no output array is provided.
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or None,
-        a freshly-allocated array is returned. For consistency with
-        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
-        1-element tuple.
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        For consistency with ``ufunc.__call__``, if passed as a keyword
+        argument, can be Ellipses (``out=...``, which has the same effect
+        as None as an array is always returned), or a 1-element tuple.
 
     Returns
     -------
@@ -5353,10 +5365,11 @@ add_newdoc('numpy._core', 'ufunc', ('reduceat',
         upcast to conserve precision for some cases, such as
         ``numpy.add.reduce`` for integer or boolean input).
     out : ndarray, None, or tuple of ndarray and None, optional
-        A location into which the result is stored. If not provided or None,
-        a freshly-allocated array is returned. For consistency with
-        ``ufunc.__call__``, if given as a keyword, this may be wrapped in a
-        1-element tuple.
+        Location into which the result is stored.
+        If not provided or None, a freshly-allocated array is returned.
+        For consistency with ``ufunc.__call__``, if passed as a keyword
+        argument, can be Ellipses (``out=...``, which has the same effect
+        as None as an array is always returned), or a 1-element tuple.
 
     Returns
     -------
@@ -6945,9 +6958,10 @@ add_newdoc('numpy._core.multiarray', 'StringDType',
     array([False, True, False])
 
     >>> np.array([1.2, object(), "hello world"],
-    ...          dtype=StringDType(coerce=True))
-    ValueError: StringDType only allows string data when string coercion
-    is disabled.
+    ...          dtype=StringDType(coerce=False))
+    Traceback (most recent call last):
+        ...
+    ValueError: StringDType only allows string data when string coercion is disabled.
 
     >>> np.array(["hello", "world"], dtype=StringDType(coerce=True))
     array(["hello", "world"], dtype=StringDType(coerce=True))

@@ -49,16 +49,16 @@ output (which can be None for arrays to be allocated by the ufunc).
 For ufuncs with a single output, passing a single array (instead of a
 tuple holding a single array) is also valid.
 
-Passing a single array in the 'out' keyword argument to a ufunc with
-multiple outputs is deprecated, and will raise a warning in numpy 1.10,
-and an error in a future release.
+If 'out' is None (the default), a uninitialized output array is created,
+which will be filled in the ufunc.  At the end, this array is returned
+unless it is zero-dimensional, in which case it is converted to a scalar;
+this conversion can be avoided by passing in ``out=...``. This can also be 
+spelled `out=Ellipsis` if you think that is clearer.
 
-If 'out' is None (the default), a uninitialized return array is created.
-The output array is then filled with the results of the ufunc in the places
-that the broadcast 'where' is True. If 'where' is the scalar True (the
-default), then this corresponds to the entire output being filled.
-Note that outputs not explicitly filled are left with their
-uninitialized values.
+Note that the output is filled only in the places that the broadcast
+'where' is True. If 'where' is the scalar True (the default), then this
+corresponds to all elements of the output, but in other cases, the
+elements not explicitly filled are left with their uninitialized values.
 
 Operations where ufunc input and output operands have memory overlap are
 defined to be the same as for equivalent operations where there

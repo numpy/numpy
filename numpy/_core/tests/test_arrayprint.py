@@ -534,7 +534,7 @@ class TestArray2String:
         assert_equal(a[0], text)
         text = text.item()  # use raw python strings for repr below
         # and that np.array2string puts a newline in the expected location
-        expected_repr = "[{0!r} {0!r}\n {0!r}]".format(text)
+        expected_repr = f"[{text!r} {text!r}\n {text!r}]"
         result = np.array2string(a, max_line_width=len(repr(text)) * 2 + 3)
         assert_equal(result, expected_repr)
 
@@ -836,7 +836,7 @@ class TestPrintOptions:
         c = np.array([1.0 + 1.0j, 1.123456789 + 1.123456789j], dtype='c16')
 
         # also make sure 1e23 is right (is between two fp numbers)
-        w = np.array(['1e{}'.format(i) for i in range(25)], dtype=np.float64)
+        w = np.array([f'1e{i}' for i in range(25)], dtype=np.float64)
         # note: we construct w from the strings `1eXX` instead of doing
         # `10.**arange(24)` because it turns out the two are not equivalent in
         # python. On some architectures `1e23 != 10.**23`.
@@ -948,10 +948,10 @@ class TestPrintOptions:
 
         styp = '<U4'
         assert_equal(repr(np.ones(3, dtype=styp)),
-            "array(['1', '1', '1'], dtype='{}')".format(styp))
-        assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent("""\
+            f"array(['1', '1', '1'], dtype='{styp}')")
+        assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent(f"""\
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
-                  dtype='{}')""".format(styp)))
+                  dtype='{styp}')"""))
 
     @pytest.mark.parametrize(
         ['native'],

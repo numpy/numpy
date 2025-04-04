@@ -21,6 +21,7 @@ from typing import NamedTuple
 import numpy as np
 from numpy._core import overrides
 from numpy._core._multiarray_umath import _array_converter
+from numpy._core._multiarray_umath import _unique_hash
 
 
 array_function_dispatch = functools.partial(
@@ -138,13 +139,15 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None, *, equal_nan=None):
+                       return_counts=None, axis=None, *, equal_nan=None,
+                       sorted=True):
     return (ar,)
 
 
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None, *, equal_nan=True):
+           return_counts=False, axis=None, *, equal_nan=True,
+           sorted=True):
     """
     Find the unique elements of an array.
 
@@ -181,6 +184,13 @@ def unique(ar, return_index=False, return_inverse=False,
         If True, collapses multiple NaN values in the return array into one.
 
         .. versionadded:: 1.24
+
+    sorted : bool, optional
+        If True, the unique elements are sorted. Elements may be sorted in
+        practice even if ``sorted=False``, but this could change without
+        notice.
+
+        .. versionadded:: 2.3
 
     Returns
     -------
@@ -284,7 +294,8 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts,
-                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None)
+                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None,
+                        sorted=sorted)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -300,7 +311,7 @@ def unique(ar, return_index=False, return_inverse=False,
     orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
     ar = np.ascontiguousarray(ar)
-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+    dtype = [(f'f{i}', ar.dtype) for i in range(ar.shape[1])]
 
     # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
     # data type with `m` fields where each field has the data type of `ar`.
@@ -331,16 +342,18 @@ def unique(ar, return_index=False, return_inverse=False,
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
                        equal_nan=equal_nan, inverse_shape=inverse_shape,
-                       axis=axis)
+                       axis=axis, sorted=sorted)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
               return_counts=False, *, equal_nan=True, inverse_shape=None,
-              axis=None):
+              axis=None, sorted=True):
     """
     Find the unique elements of an array, ignoring shape.
+
+    Uses a hash table to find the unique elements if possible.
     """
     ar = np.asanyarray(ar).flatten()
     if len(ar.shape) != 1:
@@ -350,6 +363,20 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     optional_indices = return_index or return_inverse
 
+    # masked arrays are not supported yet.
+    if not optional_indices and not return_counts and not np.ma.is_masked(ar):
+        # First we convert the array to a numpy array, later we wrap it back
+        # in case it was a subclass of numpy.ndarray.
+        conv = _array_converter(ar)
+        ar_, = conv
+
+        if (hash_unique := _unique_hash(ar_)) is not NotImplemented:
+            if sorted:
+                hash_unique.sort()
+            # We wrap the result back in case it was a subclass of numpy.ndarray.
+            return (conv.wrap(hash_unique),)
+
+    # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         aux = ar[perm]
@@ -417,9 +444,13 @@ def unique_all(x):
     This function is an Array API compatible alternative to::
 
         np.unique(x, return_index=True, return_inverse=True,
-                  return_counts=True, equal_nan=False)
+                  return_counts=True, equal_nan=False, sorted=False)
 
     but returns a namedtuple for easier access to each output.
+
+    .. note::
+        This function currently always returns a sorted result, however,
+        this could change in any NumPy minor release.
 
     Parameters
     ----------
@@ -460,7 +491,7 @@ def unique_all(x):
         return_index=True,
         return_inverse=True,
         return_counts=True,
-        equal_nan=False
+        equal_nan=False,
     )
     return UniqueAllResult(*result)
 
@@ -476,9 +507,13 @@ def unique_counts(x):
 
     This function is an Array API compatible alternative to::
 
-        np.unique(x, return_counts=True, equal_nan=False)
+        np.unique(x, return_counts=True, equal_nan=False, sorted=False)
 
     but returns a namedtuple for easier access to each output.
+
+    .. note::
+        This function currently always returns a sorted result, however,
+        this could change in any NumPy minor release.
 
     Parameters
     ----------
@@ -512,7 +547,7 @@ def unique_counts(x):
         return_index=False,
         return_inverse=False,
         return_counts=True,
-        equal_nan=False
+        equal_nan=False,
     )
     return UniqueCountsResult(*result)
 
@@ -528,9 +563,13 @@ def unique_inverse(x):
 
     This function is an Array API compatible alternative to::
 
-        np.unique(x, return_inverse=True, equal_nan=False)
+        np.unique(x, return_inverse=True, equal_nan=False, sorted=False)
 
     but returns a namedtuple for easier access to each output.
+
+    .. note::
+        This function currently always returns a sorted result, however,
+        this could change in any NumPy minor release.
 
     Parameters
     ----------
@@ -565,7 +604,7 @@ def unique_inverse(x):
         return_index=False,
         return_inverse=True,
         return_counts=False,
-        equal_nan=False
+        equal_nan=False,
     )
     return UniqueInverseResult(*result)
 
@@ -581,7 +620,11 @@ def unique_values(x):
 
     This function is an Array API compatible alternative to::
 
-        np.unique(x, equal_nan=False)
+        np.unique(x, equal_nan=False, sorted=False)
+
+    .. versionchanged:: 2.3
+       The algorithm was changed to a faster one that does not rely on
+       sorting, and hence the results are no longer implicitly sorted.
 
     Parameters
     ----------
@@ -601,7 +644,7 @@ def unique_values(x):
     --------
     >>> import numpy as np
     >>> np.unique_values([1, 1, 2])
-    array([1, 2])
+    array([1, 2])  # may vary
 
     """
     return unique(
@@ -609,7 +652,8 @@ def unique_values(x):
         return_index=False,
         return_inverse=False,
         return_counts=False,
-        equal_nan=False
+        equal_nan=False,
+        sorted=False,
     )
 
 

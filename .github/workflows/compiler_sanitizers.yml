@@ -53,10 +53,12 @@ jobs:
         echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
     - name: Build Python with address sanitizer
       run: |
-        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.13
-        pyenv global 3.13
+        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.13t
+        pyenv global 3.13t
     - name: Install dependencies
       run: |
+        # TODO: remove when a released cython supports free-threaded python
+        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/ci_requirements.txt
         pip install -r requirements/test_requirements.txt

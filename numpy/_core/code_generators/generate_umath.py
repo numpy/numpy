@@ -1499,7 +1499,7 @@ def make_ufuncs(funcdict):
         if uf.signature is None:
             sig = "NULL"
         else:
-            sig = '"{}"'.format(uf.signature)
+            sig = f'"{uf.signature}"'
         fmt = textwrap.dedent("""\
             identity = {identity_expr};
             if ({has_identity} && identity == NULL) {{

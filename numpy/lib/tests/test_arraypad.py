@@ -1374,7 +1374,7 @@ def test_kwargs(mode):
     np.pad([1, 2, 3], 1, mode, **allowed)
     # Test if prohibited keyword arguments of other modes raise an error
     for key, value in not_allowed.items():
-        match = "unsupported keyword arguments for mode '{}'".format(mode)
+        match = f"unsupported keyword arguments for mode '{mode}'"
         with pytest.raises(ValueError, match=match):
             np.pad([1, 2, 3], 1, mode, **{key: value})
 
@@ -1386,7 +1386,7 @@ def test_constant_zero_default():
 
 @pytest.mark.parametrize("mode", [1, "const", object(), None, True, False])
 def test_unsupported_mode(mode):
-    match = "mode '{}' is not supported".format(mode)
+    match = f"mode '{mode}' is not supported"
     with pytest.raises(ValueError, match=match):
         np.pad([1, 2, 3], 4, mode=mode)
 

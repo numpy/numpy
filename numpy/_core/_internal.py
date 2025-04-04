@@ -739,8 +739,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
         elif stream.next in _pep3118_unsupported_map:
             desc = _pep3118_unsupported_map[stream.next]
             raise NotImplementedError(
-                "Unrepresentable PEP 3118 data type {!r} ({})"
-                .format(stream.next, desc))
+                f"Unrepresentable PEP 3118 data type {stream.next!r} ({desc})")
         else:
             raise ValueError(
                 "Unknown PEP 3118 data type specifier %r" % stream.s
@@ -873,8 +872,8 @@ def _lcm(a, b):
 
 def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     """ Format the error message for when __array_ufunc__ gives up. """
-    args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
-                            ['{}={!r}'.format(k, v)
+    args_string = ', '.join([f'{arg!r}' for arg in inputs] +
+                            [f'{k}={v!r}'
                              for k, v in kwargs.items()])
     args = inputs + kwargs.get('out', ())
     types_string = ', '.join(repr(type(arg).__name__) for arg in args)
@@ -885,7 +884,7 @@ def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
 
 def array_function_errmsg_formatter(public_api, types):
     """ Format the error message for when __array_ufunc__ gives up. """
-    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
+    func_name = f'{public_api.__module__}.{public_api.__name__}'
     return ("no implementation found for '{}' on types that implement "
             '__array_function__: {}'.format(func_name, list(types)))
 
@@ -911,7 +910,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     else:
         out_args = '[, {positional}], / [, out={default}]'.format(
             positional=', '.join(
-                'out{}'.format(i + 1) for i in range(ufunc.nout)),
+                f'out{i + 1}' for i in range(ufunc.nout)),
             default=repr((None,) * ufunc.nout)
         )
 
@@ -930,12 +929,7 @@ def _ufunc_doc_signature_formatter(ufunc):
         kwargs += "[, signature, axes, axis]"
 
     # join all the parts together
-    return '{name}({in_args}{out_args}, *{kwargs})'.format(
-        name=ufunc.__name__,
-        in_args=in_args,
-        out_args=out_args,
-        kwargs=kwargs
-    )
+    return f'{ufunc.__name__}({in_args}{out_args}, *{kwargs})'
 
 
 def npy_ctypes_check(cls):

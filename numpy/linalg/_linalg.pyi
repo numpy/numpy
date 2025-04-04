@@ -16,7 +16,6 @@ from numpy import (
     vecdot,
 
     # other
-    generic,
     floating,
     complexfloating,
     signedinteger,
@@ -79,12 +78,13 @@ __all__ = [
     "vecdot",
 ]
 
-_T = TypeVar("_T")
 _ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
-_SCT2 = TypeVar("_SCT2", bound=generic, covariant=True)
 
-_2Tuple: TypeAlias = tuple[_T, _T]
 _ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
+
+###
+
+fortran_int = np.intc
 
 class EigResult(NamedTuple):
     eigenvalues: NDArray[Any]

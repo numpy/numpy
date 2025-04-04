@@ -220,9 +220,9 @@ class memmap(ndarray):
             mode = mode_equivalents[mode]
         except KeyError as e:
             if mode not in valid_filemodes:
+                all_modes = valid_filemodes + list(mode_equivalents.keys())
                 raise ValueError(
-                    "mode must be one of {!r} (got {!r})"
-                    .format(valid_filemodes + list(mode_equivalents.keys()), mode)
+                    f"mode must be one of {all_modes!r} (got {mode!r})"
                 ) from None
 
         if mode == 'w+' and shape is None:

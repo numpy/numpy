@@ -23,18 +23,18 @@ different distributions.
   >>> import numpy as np
   >>> rng = np.random.default_rng()
 
-  Generate one random float uniformly distributed over the range [0, 1)
+  Generate one random float uniformly distributed over the range :math:`[0, 1)`:
 
   >>> rng.random()  #doctest: +SKIP
   0.06369197489564249  # may vary
 
-  Generate an array of 10 numbers according to a unit Gaussian distribution
+  Generate an array of 10 numbers according to a unit Gaussian distribution:
 
   >>> rng.standard_normal(10)  #doctest: +SKIP
   array([-0.31018314, -1.8922078 , -0.3628523 , -0.63526532,  0.43181166,  # may vary
           0.51640373,  1.25693945,  0.07779185,  0.84090247, -2.13406828])
 
-  Generate an array of 5 integers uniformly over the range [0, 10)
+  Generate an array of 5 integers uniformly over the range :math:`[0, 10)`:
 
   >>> rng.integers(low=0, high=10, size=5)  #doctest: +SKIP
   array([8, 7, 6, 2, 0])  # may vary

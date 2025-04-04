@@ -7,7 +7,7 @@ import numpy.typing as npt
 from typing_extensions import assert_type
 
 AR_i8: npt.NDArray[np.int64]
-REC_AR_V: np.recarray[Any, np.dtype[np.record]]
+REC_AR_V: np.recarray[tuple[int, ...], np.dtype[np.record]]
 AR_LIST: list[npt.NDArray[np.int64]]
 
 record: np.record
