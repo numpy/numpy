@@ -710,7 +710,7 @@ def get_masked_subclass(*arrays):
     return rcls
 
 
-def getdata(a, subok=True, return_scalar=False):
+def getdata(a, subok=True, return_pyscalar=False):
     """
     Return the data of a masked array as an ndarray.
 
@@ -724,6 +724,9 @@ def getdata(a, subok=True, return_scalar=False):
     subok : bool
         Whether to force the output to be a `pure` ndarray (False) or to
         return a subclass of ndarray if appropriate (True, default).
+    return_pyscalar : bool
+        Whether to force the ouput to remain a Python scalar if the input was
+        also a Python scalar (True), or to return an array in any case (False, default).
 
     See Also
     --------
@@ -756,7 +759,7 @@ def getdata(a, subok=True, return_scalar=False):
     try:
         data = a._data
     except AttributeError:
-        if isinstance(a, (bool, int, float)) and return_scalar:
+        if type(a) in (int, float, complex) and return_pyscalar:
             data = a
         else:
             data = np.array(a, copy=None, subok=subok)
@@ -1061,7 +1064,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
 
         """
         # Get the data, as ndarray
-        (da, db) = (getdata(a, return_scalar=True), getdata(b, return_scalar=True))
+        (da, db) = (getdata(a, return_pyscalar=True), getdata(b, return_pyscalar=True))
         # Get the result
         with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
@@ -1137,7 +1140,7 @@ class _MaskedBinaryOperation(_MaskedUFunc):
         Return the function applied to the outer product of a and b.
 
         """
-        (da, db) = (getdata(a, return_scalar=True), getdata(b, return_scalar=True))
+        (da, db) = (getdata(a, return_pyscalar=True), getdata(b, return_pyscalar=True))
         d = self.f.outer(da, db)
         ma = getmask(a)
         mb = getmask(b)
@@ -1204,7 +1207,7 @@ class _DomainedBinaryOperation(_MaskedUFunc):
     def __call__(self, a, b, *args, **kwargs):
         "Execute the call behavior."
         # Get the data
-        (da, db) = (getdata(a, return_scalar=True), getdata(b, return_scalar=True))
+        (da, db) = (getdata(a, return_pyscalar=True), getdata(b, return_pyscalar=True))
         # Get the result
         with np.errstate(divide='ignore', invalid='ignore'):
             result = self.f(da, db, *args, **kwargs)
@@ -4432,12 +4435,10 @@ class MaskedArray(ndarray):
         else:
             if m is not nomask:
                 self._mask += m
-        other_data = getdata(other, return_scalar=True)
-        if isinstance(other_data, (bool, int, float)):
-            # Trick to raise appropriate error and get output dtype
-            placehold_arr = np.array([0], dtype=self._data.dtype)
-            placehold_arr.__iadd__(other_data)
-            other_dtype = placehold_arr.dtype
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.add.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
         else:
             other_dtype = other_data.dtype
         other_data = np.where(self._mask, other_dtype.type(0), other_data)
@@ -4456,12 +4457,10 @@ class MaskedArray(ndarray):
                 self._mask += m
         elif m is not nomask:
             self._mask += m
-        other_data = getdata(other, return_scalar=True)
-        if isinstance(other_data, (bool, int, float)):
-            # Trick to raise appropriate error and get output dtype
-            placehold_arr = np.array([0], dtype=self._data.dtype)
-            placehold_arr.__iadd__(other_data)
-            other_dtype = placehold_arr.dtype
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.subtract.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
         else:
             other_dtype = other_data.dtype
         other_data = np.where(self._mask, other_dtype.type(0), other_data)
@@ -4480,12 +4479,10 @@ class MaskedArray(ndarray):
                 self._mask += m
         elif m is not nomask:
             self._mask += m
-        other_data = getdata(other, return_scalar=True)
-        if isinstance(other_data, (bool, int, float)):
-            # Trick to raise appropriate error and get output dtype
-            placehold_arr = np.array([0], dtype=self._data.dtype)
-            placehold_arr.__iadd__(other_data)
-            other_dtype = placehold_arr.dtype
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.multiply.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
         else:
             other_dtype = other_data.dtype
         other_data = np.where(self._mask, other_dtype.type(1), other_data)
@@ -4497,12 +4494,10 @@ class MaskedArray(ndarray):
         Divide self by other in-place.
 
         """
-        other_data = getdata(other, return_scalar=True)
-        if isinstance(other_data, (bool, int, float)):
-            # Trick to raise appropriate error and get output dtype
-            placehold_arr = np.array([0], dtype=self._data.dtype)
-            placehold_arr.__iadd__(other_data)
-            other_dtype = placehold_arr.dtype
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.divide.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
         else:
             other_dtype = other_data.dtype
         dom_mask = _DomainSafeDivide().__call__(self._data, other_data)
@@ -4523,12 +4518,10 @@ class MaskedArray(ndarray):
         Floor divide self by other in-place.
 
         """
-        other_data = getdata(other, return_scalar=True)
-        if isinstance(other_data, (bool, int, float)):
-            # Trick to raise appropriate error and get output dtype
-            placehold_arr = np.array([0], dtype=self._data.dtype)
-            placehold_arr.__iadd__(other_data)
-            other_dtype = placehold_arr.dtype
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.floor_divide.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
         else:
             other_dtype = other_data.dtype
         dom_mask = _DomainSafeDivide().__call__(self._data, other_data)
@@ -4549,12 +4542,10 @@ class MaskedArray(ndarray):
         True divide self by other in-place.
 
         """
-        other_data = getdata(other, return_scalar=True)
-        if isinstance(other_data, (bool, int, float)):
-            # Trick to raise appropriate error and get output dtype
-            placehold_arr = np.array([0], dtype=self._data.dtype)
-            placehold_arr.__iadd__(other_data)
-            other_dtype = placehold_arr.dtype
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.true_divide.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
         else:
             other_dtype = other_data.dtype
         dom_mask = _DomainSafeDivide().__call__(self._data, other_data)
@@ -4575,12 +4566,10 @@ class MaskedArray(ndarray):
         Raise self to the power other, in place.
 
         """
-        other_data = getdata(other, return_scalar=True)
-        if isinstance(other_data, (bool, int, float)):
-            # Trick to raise appropriate error and get output dtype
-            placehold_arr = np.array([0], dtype=self._data.dtype)
-            placehold_arr.__iadd__(other_data)
-            other_dtype = placehold_arr.dtype
+        other_data = getdata(other, return_pyscalar=True)
+        if type(other_data) in (int, float, complex):
+            other_dtype = np.power.resolve_dtypes(
+                (self._data.dtype, type(other_data), None), casting="unsafe")[1]
         else:
             other_dtype = other_data.dtype
         other_data = np.where(self._mask, other_dtype.type(1), other_data)

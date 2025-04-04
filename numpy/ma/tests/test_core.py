@@ -1017,7 +1017,7 @@ class TestMaskedArray:
 
     def test_maskedarray_tofile_raises_notimplementederror(self):
         xm = masked_array([1, 2, 3], mask=[False, True, False])
-        # Test case to check the NotImplementedError. 
+        # Test case to check the NotImplementedError.
         # It is not implemented at this point of time. We can change this in future
         with temppath(suffix='.npy') as path:
             with pytest.raises(NotImplementedError):
@@ -5919,7 +5919,7 @@ def test_oob_creation(sctype, create):
 
 @pytest.mark.parametrize("operator", ["__iadd__", "__isub__", "__imul__",
                                       "__ifloordiv__", "__itruediv__", "__ipow__"])
-@pytest.mark.parametrize("scalar", [True, 1, 1.])
+@pytest.mark.parametrize("scalar", [1, 1.])
 @pytest.mark.parametrize("dtype", [np.uint8, np.int8, np.uint32, np.int32, np.float32, np.float64])
 def test_nep50_inplace_ma(operator, scalar, dtype):
     """Check that in-place operations respect NEP50 like ndarrays do."""
