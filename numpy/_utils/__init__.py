@@ -27,11 +27,10 @@ def set_module(module):
     """
     def decorator(func):
         if module is not None:
-            if isinstance(func,type):
-                try:  # If it fails, just don't add __file__ to the class
-                    func.__file__ = sys.modules.get(func.__module__).__file__
-                except Exception as e:
-                    print(f"{e}")
+            try:  # If it fails, just don't add __source_module__ to the class
+                func.__source_module__ = sys.modules.get(func.__module__).__file__
+            except:
+                pass
                 
             func.__module__ = module
         return func

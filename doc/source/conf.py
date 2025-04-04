@@ -508,7 +508,9 @@ def _get_c_source_file(obj):
         return None
 
 
-def linkcode_resolve(domain, info):
+# This function teachs sphinks.ext.linkcode to associate a source code with an object
+# It can be changed to fix issue #28629
+def linkcode_resolve(domain, info):   
     """
     Determine the URL corresponding to Python object
     """
