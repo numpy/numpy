@@ -152,7 +152,7 @@ def _commonType(*arrays):
     for a in arrays:
         type_ = a.dtype.type
         if issubclass(type_, inexact):
-            is_complex = is_complex or isComplexType(type_):
+            is_complex = is_complex or isComplexType(type_)
 
             rt = _realType(type_, default=None)
             if rt is double:
