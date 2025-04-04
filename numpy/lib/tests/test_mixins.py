@@ -182,14 +182,14 @@ class TestNDArrayOperatorsMixin:
         for op in _ALL_BINARY_OPERATORS:
             expected = wrap_array_like(op(array, 1))
             actual = op(array_like, 1)
-            err_msg = 'failed for operator {}'.format(op)
+            err_msg = f'failed for operator {op}'
             _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
 
     def test_reflected_binary_methods(self):
         for op in _ALL_BINARY_OPERATORS:
             expected = wrap_array_like(op(2, 1))
             actual = op(2, ArrayLike(1))
-            err_msg = 'failed for operator {}'.format(op)
+            err_msg = f'failed for operator {op}'
             _assert_equal_type_and_value(expected, actual, err_msg=err_msg)
 
     def test_matmul(self):

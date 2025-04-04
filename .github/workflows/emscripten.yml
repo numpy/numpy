@@ -49,12 +49,12 @@ jobs:
           fetch-tags: true
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969  # v2.22.0
+      - uses: pypa/cibuildwheel@d04cacbc9866d432033b1d09142936e6a0e2121a  # 2.23.2
         env:
           CIBW_PLATFORM: pyodide
 
       - name: Upload wheel artifact(s)
-        uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b  # v4.5.0
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: cp312-pyodide_wasm32
           path: ./wheelhouse/*.whl
@@ -73,13 +73,13 @@ jobs:
       (github.event_name == 'schedule')
     steps:
       - name: Download wheel artifact(s)
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e  # v4.2.1
         with:
           path: wheelhouse/
           merge-multiple: true
 
       - name: Push to Anaconda PyPI index
-        uses: scientific-python/upload-nightly-action@82396a2ed4269ba06c6b2988bb4fd568ef3c3d6b  # v0.6.1
+        uses: scientific-python/upload-nightly-action@b36e8c0c10dbcfd2e05bf95f17ef8c14fd708dbf  # v0.6.2
         with:
           artifacts_path: wheelhouse/
           anaconda_nightly_upload_token: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}

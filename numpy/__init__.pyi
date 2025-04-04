@@ -515,6 +515,8 @@ from numpy.lib._histograms_impl import (
 )
 
 from numpy.lib._index_tricks_impl import (
+    ndenumerate,
+    ndindex,
     ravel_multi_index,
     unravel_index,
     mgrid,
@@ -574,6 +576,7 @@ from numpy.lib._polynomial_impl import (
 
 from numpy.lib._shape_base_impl import (
     column_stack,
+    row_stack,
     dstack,
     array_split,
     split,
@@ -730,10 +733,9 @@ __all__ = [  # noqa: RUF022
     "histogram2d", "mask_indices", "tril_indices", "tril_indices_from", "triu_indices",
     "triu_indices_from",
     # lib._shape_base_impl.__all__
-    # NOTE: `row_stack` is omitted because it is deprecated
     "column_stack", "dstack", "array_split", "split", "hsplit", "vsplit", "dsplit",
     "apply_over_axes", "expand_dims", "apply_along_axis", "kron", "tile",
-    "take_along_axis", "put_along_axis",
+    "take_along_axis", "put_along_axis", "row_stack",
     # lib._type_check_impl.__all__
     "iscomplexobj", "isrealobj", "imag", "iscomplex", "isreal", "nan_to_num", "real",
     "real_if_close", "typename", "mintypecode", "common_type",
@@ -1096,6 +1098,11 @@ class _HasShape(Protocol[_ShapeT_co]):
     def shape(self, /) -> _ShapeT_co: ...
 
 @type_check_only
+class _HasDType(Protocol[_T_co]):
+    @property
+    def dtype(self, /) -> _T_co: ...
+
+@type_check_only
 class _HasShapeAndSupportsItem(_HasShape[_ShapeT_co], _SupportsItem[_T_co], Protocol[_ShapeT_co, _T_co]): ...
 
 # matches any `x` on `x.type.item() -> _T_co`, e.g. `dtype[np.int8]` gives `_T_co: int`
@@ -1189,8 +1196,21 @@ __future_scalars__: Final[set[L["bytes", "str", "object"]]] = ...
 __array_api_version__: Final[L["2023.12"]] = "2023.12"
 test: Final[PytestTester] = ...
 
+@type_check_only
+class _DTypeMeta(type):
+    @property
+    def type(cls, /) -> type[generic] | None: ...
+    @property
+    def _abstract(cls, /) -> bool: ...
+    @property
+    def _is_numeric(cls, /) -> bool: ...
+    @property
+    def _parametric(cls, /) -> bool: ...
+    @property
+    def _legacy(cls, /) -> bool: ...
+
 @final
-class dtype(Generic[_SCT_co]):
+class dtype(Generic[_SCT_co], metaclass=_DTypeMeta):
     names: None | tuple[builtins.str, ...]
     def __hash__(self) -> int: ...
 
@@ -2206,11 +2226,9 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
     @overload
     def resize(self, new_shape: _ShapeLike, /, *, refcheck: builtins.bool = ...) -> None: ...
     @overload
-    def resize(self, *new_shape: SupportsIndex, refcheck: builtins.bool = ...) -> None: ...
+    def resize(self, /, *new_shape: SupportsIndex, refcheck: builtins.bool = ...) -> None: ...
 
-    def setflags(
-        self, write: builtins.bool = ..., align: builtins.bool = ..., uic: builtins.bool = ...
-    ) -> None: ...
+    def setflags(self, write: builtins.bool = ..., align: builtins.bool = ..., uic: builtins.bool = ...) -> None: ...
 
     def squeeze(
         self,
@@ -2339,12 +2357,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
 
     # `put` is technically available to `generic`,
     # but is pointless as `generic`s are immutable
-    def put(
-        self,
-        ind: _ArrayLikeInt_co,
-        v: ArrayLike,
-        mode: _ModeKind = ...,
-    ) -> None: ...
+    def put(self, /, indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
 
     @overload
     def searchsorted(  # type: ignore[misc]
@@ -2360,13 +2373,6 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
         side: _SortSide = ...,
         sorter: None | _ArrayLikeInt_co = ...,
     ) -> NDArray[intp]: ...
-
-    def setfield(
-        self,
-        val: ArrayLike,
-        dtype: DTypeLike,
-        offset: SupportsIndex = ...,
-    ) -> None: ...
 
     def sort(
         self,
@@ -2531,38 +2537,30 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
         copy: builtins.bool | _CopyMode = ...,
     ) -> ndarray[_ShapeT_co, dtype[Any]]: ...
 
-    @overload
-    def view(self) -> Self: ...
-    @overload
-    def view(self, type: type[_ArrayT]) -> _ArrayT: ...
-    @overload
-    def view(self, dtype: _DTypeLike[_SCT]) -> NDArray[_SCT]: ...
-    @overload
-    def view(self, dtype: DTypeLike) -> NDArray[Any]: ...
-    @overload
-    def view(
-        self,
-        dtype: DTypeLike,
-        type: type[_ArrayT],
-    ) -> _ArrayT: ...
+    #
+    @overload  # ()
+    def view(self, /) -> Self: ...
+    @overload  # (dtype: T)
+    def view(self, /, dtype: _DType | _HasDType[_DType]) -> ndarray[_ShapeT_co, _DType]: ...
+    @overload  # (dtype: dtype[T])
+    def view(self, /, dtype: _DTypeLike[_SCT]) -> NDArray[_SCT]: ...
+    @overload  # (type: T)
+    def view(self, /, *, type: type[_ArrayT]) -> _ArrayT: ...
+    @overload  # (_: T)
+    def view(self, /, dtype: type[_ArrayT]) -> _ArrayT: ...
+    @overload  # (dtype: ?)
+    def view(self, /, dtype: DTypeLike) -> ndarray[_ShapeT_co, dtype[Any]]: ...
+    @overload  # (dtype: ?, type: type[T])
+    def view(self, /, dtype: DTypeLike, type: type[_ArrayT]) -> _ArrayT: ...
 
+    def setfield(self, /, val: ArrayLike, dtype: DTypeLike, offset: CanIndex = 0) -> None: ...
     @overload
-    def getfield(
-        self,
-        dtype: _DTypeLike[_SCT],
-        offset: SupportsIndex = ...
-    ) -> NDArray[_SCT]: ...
+    def getfield(self, dtype: _DTypeLike[_SCT], offset: SupportsIndex = 0) -> NDArray[_SCT]: ...
     @overload
-    def getfield(
-        self,
-        dtype: DTypeLike,
-        offset: SupportsIndex = ...
-    ) -> NDArray[Any]: ...
+    def getfield(self, dtype: DTypeLike, offset: SupportsIndex = 0) -> NDArray[Any]: ...
 
-    def __index__(self: NDArray[np.integer[Any]], /) -> int: ...
-    def __int__(self: NDArray[number[Any] | np.timedelta64 | np.bool | object_], /) -> int: ...
-    def __float__(self: NDArray[number[Any] | np.timedelta64 | np.bool | object_], /) -> float: ...
-    def __complex__(self: NDArray[number[Any] | np.bool | object_], /) -> complex: ...
+    def __index__(self: NDArray[integer], /) -> int: ...
+    def __complex__(self: NDArray[number | np.bool | object_], /) -> complex: ...
 
     def __len__(self) -> int: ...
     def __contains__(self, value: object, /) -> builtins.bool: ...
@@ -2638,9 +2636,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
     # @overload
     # def __abs__(self: ndarray[_ShapeType, dtype[complex128]], /) -> ndarray[_ShapeType, dtype[float64]]: ...
     @overload
-    def __abs__(
-        self: ndarray[_ShapeT, dtype[complexfloating[_AnyNBitInexact]]], /
-    ) -> ndarray[_ShapeT, dtype[floating[_AnyNBitInexact]]]: ...
+    def __abs__(self: ndarray[_ShapeT, dtype[complexfloating[_NBit]]], /) -> ndarray[_ShapeT, dtype[floating[_NBit]]]: ...
     @overload
     def __abs__(self: _RealArrayT, /) -> _RealArrayT: ...
 
@@ -3969,7 +3965,7 @@ bool_ = bool
 # NOTE: Because mypy has some long-standing bugs related to `__new__`, `object_` can't
 # be made generic.
 @final
-class object_(_RealMixin, generic):
+class object_(_RealMixin, generic[Any]):
     @overload
     def __new__(cls, nothing_to_see_here: None = None, /) -> None: ...  # type: ignore[misc]
     @overload
@@ -3983,6 +3979,8 @@ class object_(_RealMixin, generic):
     @overload  # catch-all
     def __new__(cls, value: Any = ..., /) -> object | NDArray[Self]: ...  # type: ignore[misc]
     def __init__(self, value: object = ..., /) -> None: ...
+    def __hash__(self, /) -> int: ...
+    def __call__(self, /, *args: object, **kwargs: object) -> Any: ...
 
     if sys.version_info >= (3, 12):
         def __release_buffer__(self, buffer: memoryview, /) -> None: ...
@@ -4439,6 +4437,9 @@ class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]
     @overload
     def __init__(self, value: _ConvertibleToTD64, format: _TimeUnitSpec = ..., /) -> None: ...
 
+    # inherited at runtime from `signedinteger`
+    def __class_getitem__(cls, type_arg: type | object, /) -> GenericAlias: ...
+
     # NOTE: Only a limited number of units support conversion
     # to builtin scalar types: `Y`, `M`, `ns`, `ps`, `fs`, `as`
     def __int__(self: timedelta64[int], /) -> int: ...
@@ -4789,6 +4790,17 @@ class ufunc:
     # outputs, so we can't type it very precisely.
     def at(self, /, *args: Any, **kwargs: Any) -> None: ...
 
+    #
+    def resolve_dtypes(
+        self,
+        /,
+        dtypes: tuple[dtype[Any] | type | None, ...],
+        *,
+        signature: tuple[dtype[Any] | None, ...] | None = None,
+        casting: _CastingKind | None = None,
+        reduction: builtins.bool = False,
+    ) -> tuple[dtype[Any], ...]: ...
+
 # Parameters: `__name__`, `ntypes` and `identity`
 absolute: _UFunc_Nin1_Nout1[L['absolute'], L[20], None]
 add: _UFunc_Nin2_Nout1[L['add'], L[22], L[0]]
@@ -4920,50 +4932,6 @@ class errstate:
         /,
     ) -> None: ...
     def __call__(self, func: _CallableT) -> _CallableT: ...
-
-class ndenumerate(Generic[_SCT_co]):
-    @property
-    def iter(self) -> flatiter[NDArray[_SCT_co]]: ...
-
-    @overload
-    def __new__(
-        cls, arr: _FiniteNestedSequence[_SupportsArray[dtype[_SCT]]],
-    ) -> ndenumerate[_SCT]: ...
-    @overload
-    def __new__(cls, arr: str | _NestedSequence[str]) -> ndenumerate[str_]: ...
-    @overload
-    def __new__(cls, arr: bytes | _NestedSequence[bytes]) -> ndenumerate[bytes_]: ...
-    @overload
-    def __new__(cls, arr: builtins.bool | _NestedSequence[builtins.bool]) -> ndenumerate[np.bool]: ...
-    @overload
-    def __new__(cls, arr: int | _NestedSequence[int]) -> ndenumerate[int_]: ...
-    @overload
-    def __new__(cls, arr: float | _NestedSequence[float]) -> ndenumerate[float64]: ...
-    @overload
-    def __new__(cls, arr: complex | _NestedSequence[complex]) -> ndenumerate[complex128]: ...
-    @overload
-    def __new__(cls, arr: object) -> ndenumerate[object_]: ...
-
-    # The first overload is a (semi-)workaround for a mypy bug (tested with v1.10 and v1.11)
-    @overload
-    def __next__(
-        self: ndenumerate[np.bool | datetime64 | timedelta64 | number[Any] | flexible],
-        /,
-    ) -> tuple[_Shape, _SCT_co]: ...
-    @overload
-    def __next__(self: ndenumerate[object_], /) -> tuple[_Shape, Any]: ...
-    @overload
-    def __next__(self, /) -> tuple[_Shape, _SCT_co]: ...
-
-    def __iter__(self) -> Self: ...
-
-class ndindex:
-    @overload
-    def __init__(self, shape: tuple[SupportsIndex, ...], /) -> None: ...
-    @overload
-    def __init__(self, *shape: SupportsIndex) -> None: ...
-    def __iter__(self) -> Self: ...
-    def __next__(self) -> _Shape: ...
 
 # TODO: The type of each `__next__` and `iters` return-type depends
 # on the length and dtype of `args`; we can't describe this behavior yet

@@ -35,7 +35,7 @@ jobs:
         persist-credentials: false
 
     - name: Setup Python
-      uses: astral-sh/setup-uv@b5f58b2abc5763ade55e4e9d0fe52cd1ff7979ca
+      uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182
       with:
         python-version: ${{ matrix.compiler-pyversion[1] }}
         enable-cache: false
@@ -109,7 +109,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Python (32-bit)
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
           python-version: '3.11'
           architecture: 'x86'

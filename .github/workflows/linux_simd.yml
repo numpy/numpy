@@ -63,7 +63,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: '3.11'
     - uses: ./.github/meson_actions
@@ -81,7 +81,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: '3.11'
 
@@ -106,6 +106,40 @@ jobs:
 
     - uses: ./.github/meson_actions
       name: Build/Test against gcc-10
+
+  arm64_simd:
+    if: github.repository == 'numpy/numpy'
+    needs: [baseline_only]
+    runs-on: ubuntu-22.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "baseline only"
+            args: "-Dallow-noblas=true -Dcpu-dispatch=none"
+          - name: "with ASIMD"
+            args: "-Dallow-noblas=true -Dcpu-baseline=asimd"
+          - name: "native"
+            args: "-Dallow-noblas=true -Dcpu-baseline=native -Dcpu-dispatch=none"
+    name: "ARM64 SIMD - ${{ matrix.config.name }}"
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+    - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: |
+        python -m pip install -r requirements/build_requirements.txt
+        python -m pip install pytest pytest-xdist hypothesis typing_extensions pytest-timeout
+    - name: Build
+      run: |
+        spin build -- ${{ matrix.config.args }}
+    - name: Test
+      run: |
+        spin test -- --timeout=600 --durations=10
 
   specialize:
     needs: [baseline_only]
@@ -147,7 +181,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: "${{ matrix.BUILD_PROP[2] }}"
     - uses: ./.github/meson_actions
@@ -162,7 +196,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: '3.11'
 
@@ -213,7 +247,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+    - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: '3.11'
 

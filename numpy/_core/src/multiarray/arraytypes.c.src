@@ -632,10 +632,33 @@ UNICODE_getitem(void *ip, void *vap)
 {
     PyArrayObject *ap = vap;
     Py_ssize_t size = PyArray_ITEMSIZE(ap);
+    Py_ssize_t ucs4len = size / sizeof(npy_ucs4);
     int swap = PyArray_ISBYTESWAPPED(ap);
     int align = !PyArray_ISALIGNED(ap);
+    npy_ucs4 const *src = (npy_ucs4 const*)ip;
+    npy_ucs4 *buf = NULL;
 
-    return (PyObject *)PyUnicode_FromUCS4(ip, size, swap, align);
+    /* swap and align if needed */
+    if (swap || align) {
+        buf = (npy_ucs4 *)malloc(size);
+        if (buf == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        memcpy(buf, src, size);
+        if (swap) {
+            byte_swap_vector(buf, ucs4len, sizeof(npy_ucs4));
+        }
+        src = buf;
+    }
+
+    /* trim trailing zeros */
+    while (ucs4len > 0 && src[ucs4len - 1] == 0) {
+        ucs4len--;
+    }
+    PyObject *ret = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, src, ucs4len);
+    free(buf);
+    return ret;
 }
 
 static int

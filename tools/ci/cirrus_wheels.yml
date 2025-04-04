@@ -1,51 +1,3 @@
-build_and_store_wheels: &BUILD_AND_STORE_WHEELS
-  install_cibuildwheel_script:
-    - python -m pip install cibuildwheel
-  cibuildwheel_script:
-    - cibuildwheel
-  wheels_artifacts:
-    path: "wheelhouse/*"
-
-######################################################################
-# Build linux_aarch64 natively
-######################################################################
-
-linux_aarch64_task:
-  use_compute_credits: $CIRRUS_USER_COLLABORATOR == 'true'
-  env:
-    CIRRUS_CLONE_SUBMODULES: true
-  compute_engine_instance:
-    image_project: cirrus-images
-    image: family/docker-builder-arm64
-    architecture: arm64
-    platform: linux
-    cpu: 1
-    memory: 4G
-  matrix:
-    # build in a matrix because building and testing all four wheels in a
-    # single task takes longer than 60 mins (the default time limit for a
-    # cirrus-ci task).
-    - env:
-        CIBW_BUILD: cp311-*
-    - env:
-        CIBW_BUILD: cp312-*
-    - env:
-        CIBW_BUILD: cp313-*
-    - env:
-        CIBW_BUILD: cp313t-*
-        CIBW_FREE_THREADED_SUPPORT: 1
-        CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
-
-  initial_setup_script: |
-    apt update
-    apt install -y python3-venv python-is-python3 gfortran libatlas-base-dev libgfortran5 eatmydata
-    git fetch origin
-    bash ./tools/wheels/cibw_before_build.sh ${PWD}
-    which python
-    echo $CIRRUS_CHANGE_MESSAGE
-  <<: *BUILD_AND_STORE_WHEELS
-
-
 ######################################################################
 # Build macosx_arm64 natively
 #
@@ -68,7 +20,6 @@ macosx_arm64_task:
         CIBW_BUILD: cp313-*
     - env:
         CIBW_BUILD: cp313t-*
-        CIBW_FREE_THREADED_SUPPORT: 1
         CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
   env:
     PATH: /usr/local/lib:/usr/local/include:$PATH
@@ -78,11 +29,11 @@ macosx_arm64_task:
     brew install micromamba gfortran
     micromamba shell init -s bash --root-prefix ~/micromamba
     source ~/.bash_profile
-    
+
     micromamba create -n numpydev
     micromamba activate numpydev
     micromamba install -y -c conda-forge python=3.11 2>/dev/null
-    
+
     # Use scipy-openblas wheels
     export INSTALL_OPENBLAS=true
     export CIBW_ENVIRONMENT_MACOS="MACOSX_DEPLOYMENT_TARGET='11.0' INSTALL_OPENBLAS=true RUNNER_OS=macOS PKG_CONFIG_PATH=$PWD/.openblas"
@@ -112,7 +63,6 @@ wheels_upload_task:
   # final upload here. This is because a run may be on different OS for
   # which bash, etc, may not be present.
   depends_on:
-    - linux_aarch64
     - macosx_arm64
   compute_engine_instance:
     image_project: cirrus-images

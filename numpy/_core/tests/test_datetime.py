@@ -494,7 +494,7 @@ class TestDateTime:
 
     def test_timedelta_nat_format(self):
         # gh-17552
-        assert_equal('NaT', '{0}'.format(np.timedelta64('nat')))
+        assert_equal('NaT', f'{np.timedelta64("nat")}')
 
     def test_timedelta_scalar_construction_units(self):
         # String construction detecting units

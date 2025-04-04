@@ -685,6 +685,16 @@ c_args_common = [
   cflags_large_file_support,
 ]
 
+# CPP exceptions are handled in the unique_hash code and therefore the `-fexceptions`
+# flag.
+unique_hash_cpp_args = c_args_common
+if cc.get_argument_syntax() != 'msvc'
+  unique_hash_cpp_args += [
+    '-fexceptions',
+    '-fno-rtti',  # no runtime type information
+  ]
+endif
+
 # Same as NPY_CXX_FLAGS (TODO: extend for what ccompiler_opt adds)
 cpp_args_common = c_args_common + [
 ]
@@ -931,13 +941,14 @@ foreach gen_mtargets : [
   ],
   [
     'loops_logical.dispatch.h',
-    src_file.process('src/umath/loops_logical.dispatch.c.src'),
+    'src/umath/loops_logical.dispatch.cpp',
     [
       ASIMD, NEON,
       AVX512_SKX, AVX2, SSE2,
       VSX2,
       VX,
       LSX,
+      RVV,
     ]
   ],
   [
@@ -1063,7 +1074,6 @@ src_multiarray_umath_common = [
   'src/common/npy_hashtable.cpp',
   'src/common/npy_import.c',
   'src/common/npy_longdouble.c',
-  'src/common/ucsnarrow.c',
   'src/common/ufunc_override.c',
   'src/common/numpyos.c',
   'src/common/npy_cpu_features.c',
@@ -1221,6 +1231,21 @@ if use_svml
   endforeach
 endif
 
+unique_hash_so = static_library(
+  'unique_hash',
+  ['src/multiarray/unique.cpp'],
+  c_args: c_args_common,
+  cpp_args: unique_hash_cpp_args,
+  include_directories: [
+    'include',
+    'src/common',
+  ],
+  dependencies: [
+    py_dep,
+    np_core_dep,
+  ],
+)
+
 py.extension_module('_multiarray_umath',
   [
     config_h,
@@ -1245,7 +1270,11 @@ py.extension_module('_multiarray_umath',
     'src/highway'
   ],
   dependencies: [blas_dep],
-  link_with: [npymath_lib, multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')] + highway_lib,
+  link_with: [
+    npymath_lib,
+    unique_hash_so,
+    multiarray_umath_mtargets.static_lib('_multiarray_umath_mtargets')
+  ] + highway_lib,
   install: true,
   subdir: 'numpy/_core',
 )
@@ -1308,17 +1337,26 @@ python_sources = [
   '__init__.py',
   '__init__.pyi',
   '_add_newdocs.py',
+  '_add_newdocs.pyi',
   '_add_newdocs_scalars.py',
+  '_add_newdocs_scalars.pyi',
   '_asarray.py',
   '_asarray.pyi',
   '_dtype.py',
+  '_dtype.pyi',
   '_dtype_ctypes.py',
+  '_dtype_ctypes.pyi',
   '_exceptions.py',
+  '_exceptions.pyi',
   '_internal.py',
   '_internal.pyi',
   '_machar.py',
+  '_machar.pyi',
   '_methods.py',
+  '_methods.pyi',
+  '_simd.pyi',
   '_string_helpers.py',
+  '_string_helpers.pyi',
   '_type_aliases.py',
   '_type_aliases.pyi',
   '_ufunc_config.py',
@@ -1345,7 +1383,9 @@ python_sources = [
   'numerictypes.py',
   'numerictypes.pyi',
   'overrides.py',
+  'overrides.pyi',
   'printoptions.py',
+  'printoptions.pyi',
   'records.py',
   'records.pyi',
   'shape_base.py',
@@ -1353,6 +1393,7 @@ python_sources = [
   'strings.py',
   'strings.pyi',
   'umath.py',
+  'umath.pyi',
 ]
 
 py.install_sources(

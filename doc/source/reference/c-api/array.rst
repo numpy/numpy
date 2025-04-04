@@ -121,7 +121,7 @@ and its sub-types).
 
     Returns the total size (in number of elements) of the array.
 
-.. c:function:: npy_intp PyArray_Size(PyArrayObject* obj)
+.. c:function:: npy_intp PyArray_Size(PyObject* obj)
 
     Returns 0 if *obj* is not a sub-class of ndarray. Otherwise,
     returns the total number of elements in the array. Safer version
@@ -1546,7 +1546,7 @@ Flag checking
 For all of these macros *arr* must be an instance of a (subclass of)
 :c:data:`PyArray_Type`.
 
-.. c:function:: int PyArray_CHKFLAGS(PyObject *arr, int flags)
+.. c:function:: int PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 
     The first parameter, arr, must be an ndarray or subclass. The
     parameter, *flags*, should be an integer consisting of bitwise
@@ -1555,60 +1555,60 @@ For all of these macros *arr* must be an instance of a (subclass of)
     :c:data:`NPY_ARRAY_OWNDATA`, :c:data:`NPY_ARRAY_ALIGNED`,
     :c:data:`NPY_ARRAY_WRITEABLE`, :c:data:`NPY_ARRAY_WRITEBACKIFCOPY`.
 
-.. c:function:: int PyArray_IS_C_CONTIGUOUS(PyObject *arr)
+.. c:function:: int PyArray_IS_C_CONTIGUOUS(const PyArrayObject *arr)
 
     Evaluates true if *arr* is C-style contiguous.
 
-.. c:function:: int PyArray_IS_F_CONTIGUOUS(PyObject *arr)
+.. c:function:: int PyArray_IS_F_CONTIGUOUS(const PyArrayObject *arr)
 
     Evaluates true if *arr* is Fortran-style contiguous.
 
-.. c:function:: int PyArray_ISFORTRAN(PyObject *arr)
+.. c:function:: int PyArray_ISFORTRAN(const PyArrayObject *arr)
 
     Evaluates true if *arr* is Fortran-style contiguous and *not*
     C-style contiguous. :c:func:`PyArray_IS_F_CONTIGUOUS`
     is the correct way to test for Fortran-style contiguity.
 
-.. c:function:: int PyArray_ISWRITEABLE(PyObject *arr)
+.. c:function:: int PyArray_ISWRITEABLE(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* can be written to
 
-.. c:function:: int PyArray_ISALIGNED(PyObject *arr)
+.. c:function:: int PyArray_ISALIGNED(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is properly aligned on
     the machine.
 
-.. c:function:: int PyArray_ISBEHAVED(PyObject *arr)
+.. c:function:: int PyArray_ISBEHAVED(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is aligned and writeable
     and in machine byte-order according to its descriptor.
 
-.. c:function:: int PyArray_ISBEHAVED_RO(PyObject *arr)
+.. c:function:: int PyArray_ISBEHAVED_RO(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is aligned and in machine
     byte-order.
 
-.. c:function:: int PyArray_ISCARRAY(PyObject *arr)
+.. c:function:: int PyArray_ISCARRAY(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is C-style contiguous,
     and :c:func:`PyArray_ISBEHAVED` (*arr*) is true.
 
-.. c:function:: int PyArray_ISFARRAY(PyObject *arr)
+.. c:function:: int PyArray_ISFARRAY(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is Fortran-style
     contiguous and :c:func:`PyArray_ISBEHAVED` (*arr*) is true.
 
-.. c:function:: int PyArray_ISCARRAY_RO(PyObject *arr)
+.. c:function:: int PyArray_ISCARRAY_RO(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is C-style contiguous,
     aligned, and in machine byte-order.
 
-.. c:function:: int PyArray_ISFARRAY_RO(PyObject *arr)
+.. c:function:: int PyArray_ISFARRAY_RO(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* is Fortran-style
     contiguous, aligned, and in machine byte-order **.**
 
-.. c:function:: int PyArray_ISONESEGMENT(PyObject *arr)
+.. c:function:: int PyArray_ISONESEGMENT(const PyArrayObject *arr)
 
     Evaluates true if the data area of *arr* consists of a single
     (C-style or Fortran-style) contiguous segment.

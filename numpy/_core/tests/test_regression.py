@@ -14,7 +14,8 @@ from numpy.testing import (
         assert_, assert_equal, IS_PYPY, assert_almost_equal,
         assert_array_equal, assert_array_almost_equal, assert_raises,
         assert_raises_regex, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM
+        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM,
+        IS_64BIT,
         )
 from numpy.testing._private.utils import _no_tracing, requires_memory
 from numpy._utils import asbytes, asunicode
@@ -1771,6 +1772,7 @@ class TestRegression:
         assert_(b.flags.c_contiguous)
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_object_array_self_reference(self):
         # Object arrays with references to themselves can cause problems
         a = np.array(0, dtype=object)
@@ -1780,6 +1782,7 @@ class TestRegression:
         a[()] = None
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_object_array_circular_reference(self):
         # Test the same for a circular reference.
         a = np.array(0, dtype=object)
@@ -2123,7 +2126,7 @@ class TestRegression:
         # Ticket #4369.
         dt = np.dtype([('date', '<M8[D]'), ('val', '<f8')])
         arr = np.array([('2000-01-01', 1)], dt)
-        formatted = '{0}'.format(arr[0])
+        formatted = f'{arr[0]}'
         assert_equal(formatted, str(arr[0]))
 
     def test_deepcopy_on_0d_array(self):
@@ -2264,7 +2267,7 @@ class TestRegression:
     def test_reshape_size_overflow(self):
         # gh-7455
         a = np.ones(20)[::2]
-        if np.dtype(np.intp).itemsize == 8:
+        if IS_64BIT:
             # 64 bit. The following are the prime factors of 2**63 + 5,
             # plus a leading 2, so when multiplied together as int64,
             # the result overflows to a total size of 10.
@@ -2652,3 +2655,9 @@ class TestRegression:
         inp = np.linspace(0, size, num=size, dtype=np.intc)
         out = np.sort(inp)
         assert_equal(inp, out)
+
+    def test_searchsorted_structured(self):
+        # gh-28190
+        x = np.array([(0, 1.)], dtype=[('time', '<i8'), ('value', '<f8')])
+        y = np.array((0, 0.), dtype=[('time', '<i8'), ('value', '<f8')])
+        x.searchsorted(y)

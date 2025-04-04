@@ -86,8 +86,7 @@ class FortranRoutine:
         return self._dependencies
 
     def __repr__(self):
-        return "FortranRoutine({!r}, filename={!r})".format(self.name,
-                                                            self.filename)
+        return f"FortranRoutine({self.name!r}, filename={self.filename!r})"
 
 class UnknownFortranRoutine(FortranRoutine):
     """Wrapper for a Fortran routine for which the corresponding file
@@ -363,7 +362,7 @@ def main():
         patch_file = os.path.basename(fortran_file) + '.patch'
         if os.path.exists(patch_file):
             subprocess.check_call(['patch', '-u', fortran_file, patch_file])
-            print("Patched {}".format(fortran_file))
+            print(f"Patched {fortran_file}")
         try:
             runF2C(fortran_file, output_dir)
         except F2CError:

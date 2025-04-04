@@ -1028,6 +1028,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     dtype = PyArray_DESCR(mps[0]);
 
+    int copy_existing_out = 0;
     /* Set-up return array */
     if (out == NULL) {
         Py_INCREF(dtype);
@@ -1039,10 +1040,6 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                                                     (PyObject *)ap);
     }
     else {
-        int flags = NPY_ARRAY_CARRAY |
-                    NPY_ARRAY_WRITEBACKIFCOPY |
-                    NPY_ARRAY_FORCECAST;
-
         if ((PyArray_NDIM(out) != multi->nd)
                     || !PyArray_CompareLists(PyArray_DIMS(out),
                                              multi->dimensions,
@@ -1052,9 +1049,13 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
             goto fail;
         }
 
+        if (PyArray_FailUnlessWriteable(out, "output array") < 0) {
+            goto fail;
+        }
+
         for (i = 0; i < n; i++) {
             if (arrays_overlap(out, mps[i])) {
-                flags |= NPY_ARRAY_ENSURECOPY;
+                copy_existing_out = 1;
             }
         }
 
@@ -1064,10 +1065,25 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
              * so the input array is not changed
              * before the error is called
              */
-            flags |= NPY_ARRAY_ENSURECOPY;
+            copy_existing_out = 1;
         }
-        Py_INCREF(dtype);
-        obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
+
+        if (!PyArray_EquivTypes(dtype, PyArray_DESCR(out))) {
+            copy_existing_out = 1;
+        }
+
+        if (copy_existing_out) {
+            Py_INCREF(dtype);
+            obj = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                                        dtype,
+                                                        multi->nd,
+                                                        multi->dimensions,
+                                                        NULL, NULL, 0,
+                                                        (PyObject *)out);
+        }
+        else {
+            obj = (PyArrayObject *)Py_NewRef(out);
+        }
     }
 
     if (obj == NULL) {
@@ -1080,12 +1096,13 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
     if (PyDataType_REFCHK(dtype)) {
         int is_aligned = IsUintAligned(obj);
+        PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
         PyArray_GetDTypeTransferFunction(
                     is_aligned,
                     dtype->elsize,
-                    dtype->elsize,
+                    obj_dtype->elsize,
                     dtype,
-                    dtype, 0, &cast_info,
+                    obj_dtype, 0, &cast_info,
                     &transfer_flags);
     }
 
@@ -1142,11 +1159,13 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     }
     Py_DECREF(ap);
     PyDataMem_FREE(mps);
-    if (out != NULL && out != obj) {
-        Py_INCREF(out);
-        PyArray_ResolveWritebackIfCopy(obj);
+    if (copy_existing_out) {
+        int res = PyArray_CopyInto(out, obj);
         Py_DECREF(obj);
-        obj = out;
+        if (res < 0) {
+            return NULL;
+        }
+        return Py_NewRef(out);
     }
     return (PyObject *)obj;
 
@@ -2108,7 +2127,6 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     if (dtype == NULL) {
         return NULL;
     }
-    /* refs to dtype we own = 1 */
 
     /* Look for binary search function */
     if (perm) {
@@ -2119,26 +2137,23 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     }
     if (binsearch == NULL && argbinsearch == NULL) {
         PyErr_SetString(PyExc_TypeError, "compare not supported for type");
-        /* refs to dtype we own = 1 */
         Py_DECREF(dtype);
-        /* refs to dtype we own = 0 */
         return NULL;
     }
 
-    /* need ap2 as contiguous array and of right type */
-    /* refs to dtype we own = 1 */
-    Py_INCREF(dtype);
-    /* refs to dtype we own = 2 */
+    /* need ap2 as contiguous array and of right dtype (note: steals dtype reference) */
     ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
                                 0, 0,
                                 NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED,
                                 NULL);
-    /* refs to dtype we own = 1, array creation steals one even on failure */
     if (ap2 == NULL) {
-        Py_DECREF(dtype);
-        /* refs to dtype we own = 0 */
         return NULL;
     }
+    /*
+     * The dtype reference we had was used for creating ap2, which may have
+     * replaced it with another. So here we copy the dtype of ap2 and use it for `ap1`.
+     */
+     dtype = (PyArray_Descr *)Py_NewRef(PyArray_DESCR(ap2));
 
     /*
      * If the needle (ap2) is larger than the haystack (op1) we copy the
@@ -2147,9 +2162,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     if (PyArray_SIZE(ap2) > PyArray_SIZE(op1)) {
         ap1_flags |= NPY_ARRAY_CARRAY_RO;
     }
+    /* dtype is stolen, after this we have no reference */
     ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
                                 1, 1, ap1_flags, NULL);
-    /* refs to dtype we own = 0, array creation steals one even on failure */
     if (ap1 == NULL) {
         goto fail;
     }

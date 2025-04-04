@@ -220,8 +220,7 @@ def rot90(m, k=1, axes=(0, 1)):
 
     if (axes[0] >= m.ndim or axes[0] < -m.ndim
         or axes[1] >= m.ndim or axes[1] < -m.ndim):
-        raise ValueError("Axes={} out of range for array of ndim={}."
-            .format(axes, m.ndim))
+        raise ValueError(f"Axes={axes} out of range for array of ndim={m.ndim}.")
 
     k %= 4
 
@@ -762,8 +761,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         n += 1
     elif n != n2:
         raise ValueError(
-            "with {} condition(s), either {} or {} functions are expected"
-            .format(n, n, n + 1)
+            f"with {n} condition(s), either {n} or {n + 1} functions are expected"
         )
 
     y = zeros_like(x)
@@ -870,7 +868,7 @@ def select(condlist, choicelist, default=0):
     for i, cond in enumerate(condlist):
         if cond.dtype.type is not np.bool:
             raise TypeError(
-                'invalid entry {} in condlist: should be boolean ndarray'.format(i))
+                f'invalid entry {i} in condlist: should be boolean ndarray')
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -2145,10 +2143,10 @@ def disp(mesg, device=None, linefeed=True):
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
-_CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
-_ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
-_ARGUMENT_LIST = '{0:}(?:,{0:})*'.format(_ARGUMENT)
-_SIGNATURE = '^{0:}->{0:}$'.format(_ARGUMENT_LIST)
+_CORE_DIMENSION_LIST = f'(?:{_DIMENSION_NAME}(?:,{_DIMENSION_NAME})*)?'
+_ARGUMENT = fr'\({_CORE_DIMENSION_LIST}\)'
+_ARGUMENT_LIST = f'{_ARGUMENT}(?:,{_ARGUMENT})*'
+_SIGNATURE = f'^{_ARGUMENT_LIST}->{_ARGUMENT_LIST}$'
 
 
 def _parse_gufunc_signature(signature):
@@ -2170,7 +2168,7 @@ def _parse_gufunc_signature(signature):
 
     if not re.match(_SIGNATURE, signature):
         raise ValueError(
-            'not a valid gufunc signature: {}'.format(signature))
+            f'not a valid gufunc signature: {signature}')
     return tuple([tuple(re.findall(_DIMENSION_NAME, arg))
                   for arg in re.findall(_ARGUMENT, arg_list)]
                  for arg_list in signature.split('->'))
@@ -4258,8 +4256,7 @@ def percentile(a,
 
     # Use dtype of array if possible (e.g., if q is a python int or float)
     # by making the divisor have the dtype of the data array.
-    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
-    q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 

@@ -50,11 +50,11 @@ def add_newdoc(place, name, doc):
     )
     if name[0] != '_' and name not in skip:
         if '\nx :' in doc:
-            assert '$OUT_SCALAR_1' in doc, "in {}".format(name)
+            assert '$OUT_SCALAR_1' in doc, f"in {name}"
         elif '\nx2 :' in doc or '\nx1, x2 :' in doc:
-            assert '$OUT_SCALAR_2' in doc, "in {}".format(name)
+            assert '$OUT_SCALAR_2' in doc, f"in {name}"
         else:
-            assert False, "Could not detect number of inputs in {}".format(name)
+            assert False, f"Could not detect number of inputs in {name}"
 
     for k, v in subst.items():
         doc = doc.replace('$' + k, v)

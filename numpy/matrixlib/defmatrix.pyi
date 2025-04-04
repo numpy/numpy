@@ -1,10 +1,10 @@
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from numpy import matrix
 from numpy._typing import ArrayLike, DTypeLike, NDArray
 
-__all__ = ["matrix", "bmat", "asmatrix"]
+__all__ = ["asmatrix", "bmat", "matrix"]
 
 def bmat(
     obj: str | Sequence[ArrayLike] | NDArray[Any],
@@ -15,5 +15,3 @@ def bmat(
 def asmatrix(
     data: ArrayLike, dtype: DTypeLike = ...
 ) -> matrix[tuple[int, int], Any]: ...
-
-mat = asmatrix

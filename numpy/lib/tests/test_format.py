@@ -283,7 +283,7 @@ from io import BytesIO
 import numpy as np
 from numpy.testing import (
     assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY, IS_WASM
+    assert_warns, IS_PYPY, IS_WASM, IS_64BIT
     )
 from numpy.testing._private.utils import requires_memory
 from numpy.lib import format
@@ -428,7 +428,6 @@ def roundtrip_truncated(arr):
     arr2 = format.read_array(f2)
     return arr2
 
-
 def assert_equal_(o1, o2):
     assert_(o1 == o2)
 
@@ -451,6 +450,30 @@ def test_roundtrip_truncated():
         if arr.dtype != object:
             assert_raises(ValueError, roundtrip_truncated, arr)
 
+def test_file_truncated(tmp_path):
+    path = tmp_path / "a.npy"
+    for arr in basic_arrays:
+        if arr.dtype != object:
+            with open(path, 'wb') as f:
+                format.write_array(f, arr)
+            #truncate the file by one byte
+            with open(path, 'rb+') as f:
+                f.seek(-1, os.SEEK_END)
+                f.truncate()
+            with open(path, 'rb') as f:
+                with pytest.raises(
+                    ValueError, 
+                    match = (
+                        r"EOF: reading array header, "
+                        r"expected (\d+) bytes got (\d+)"
+                    ) if arr.size == 0 else (
+                        r"Failed to read all data for array\. "
+                        r"Expected \(.*?\) = (\d+) elements, "
+                        r"could only read (\d+) elements\. "
+                        r"\(file seems not fully written\?\)"
+                    )
+                ):
+                    _ = format.read_array(f)
 
 def test_long_str():
     # check items larger than internal buffer size, gh-4027
@@ -926,8 +949,7 @@ def test_large_file_support(tmpdir):
 
 
 @pytest.mark.skipif(IS_PYPY, reason="flaky on PyPy")
-@pytest.mark.skipif(np.dtype(np.intp).itemsize < 8,
-                    reason="test requires 64-bit system")
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
 @pytest.mark.slow
 @requires_memory(free_bytes=2 * 2**30)
 def test_large_archive(tmpdir):

@@ -52,7 +52,12 @@ def replace_scalar_type_names():
     ]:
         typ = getattr(numpy, name)
         c_typ = PyTypeObject.from_address(id(typ))
-        c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+        if sys.implementation.name == 'cpython':
+            c_typ.tp_name = _name_cache[typ] = b"numpy." + name.encode('utf8')
+        else:
+            # It is not guarenteed that the c_typ has this model on other
+            # implementations
+            _name_cache[typ] = b"numpy." + name.encode('utf8')
 
 
 replace_scalar_type_names()
