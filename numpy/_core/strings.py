@@ -1699,7 +1699,7 @@ def slice(a, start=None, stop=None, step=None, /):
 
     """
     # Just like in the construction of a regular slice object, if only start
-    # is speficied then start will become stop, see logic in slice_new.
+    # is specified then start will become stop, see logic in slice_new.
     if stop is None:
         stop = start
         start = None
