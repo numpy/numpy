@@ -152,8 +152,8 @@ def _commonType(*arrays):
     for a in arrays:
         type_ = a.dtype.type
         if issubclass(type_, inexact):
-            if isComplexType(type_):
-                is_complex = True
+            is_complex = is_complex or isComplexType(type_):
+
             rt = _realType(type_, default=None)
             if rt is double:
                 result_type = double
@@ -197,6 +197,9 @@ def _assert_stacked_2d(*arrays):
 
 def _assert_stacked_square(*arrays):
     for a in arrays:
+        if a.ndim < 2:
+            raise LinAlgError('%d-dimensional array given. Array must be '
+                    'at least two-dimensional' % a.ndim)
         m, n = a.shape[-2:]
         if m != n:
             raise LinAlgError('Last 2 dimensions of the array must be square')
@@ -392,7 +395,6 @@ def solve(a, b):
 
     """
     a, _ = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     b, wrap = _makearray(b)
     t, result_t = _commonType(a, b)
@@ -599,7 +601,6 @@ def inv(a):
 
     """
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
 
@@ -681,7 +682,6 @@ def matrix_power(a, n):
 
     """
     a = asanyarray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
 
     try:
@@ -830,7 +830,6 @@ def cholesky(a, /, *, upper=False):
     """
     gufunc = _umath_linalg.cholesky_up if upper else _umath_linalg.cholesky_lo
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
@@ -1201,7 +1200,6 @@ def eigvals(a):
 
     """
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     _assert_finite(a)
     t, result_t = _commonType(a)
@@ -1310,7 +1308,6 @@ def eigvalsh(a, UPLO='L'):
         gufunc = _umath_linalg.eigvalsh_up
 
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     signature = 'D->d' if isComplexType(t) else 'd->d'
@@ -1319,11 +1316,6 @@ def eigvalsh(a, UPLO='L'):
                   under='ignore'):
         w = gufunc(a, signature=signature)
     return w.astype(_realType(result_t), copy=False)
-
-def _convertarray(a):
-    t, result_t = _commonType(a)
-    a = a.astype(t).T.copy()
-    return a, t, result_t
 
 
 # Eigenvectors
@@ -1461,7 +1453,6 @@ def eig(a):
 
     """
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     _assert_finite(a)
     t, result_t = _commonType(a)
@@ -1612,7 +1603,6 @@ def eigh(a, UPLO='L'):
         raise ValueError("UPLO argument must be 'L' or 'U'")
 
     a, wrap = _makearray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
 
@@ -1978,7 +1968,6 @@ def cond(x, p=None):
     else:
         # Call inv(x) ignoring errors. The result array will
         # contain nans in the entries where inversion failed.
-        _assert_stacked_2d(x)
         _assert_stacked_square(x)
         t, result_t = _commonType(x)
         signature = 'D->D' if isComplexType(t) else 'd->d'
@@ -2318,7 +2307,6 @@ def slogdet(a):
 
     """
     a = asarray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     real_t = _realType(result_t)
@@ -2377,7 +2365,6 @@ def det(a):
 
     """
     a = asarray(a)
-    _assert_stacked_2d(a)
     _assert_stacked_square(a)
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
