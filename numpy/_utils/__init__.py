@@ -30,8 +30,8 @@ def set_module(module):
             if isinstance(func,type):
                 try:  # If it fails, just don't add __file__ to the class
                     func.__file__ = sys.modules.get(func.__module__).__file__
-                except:
-                    pass
+                except Exception as e:
+                    print(f"{e}")
                 
             func.__module__ = module
         return func
