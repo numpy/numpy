@@ -1605,7 +1605,7 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
             }
         }
     }
-    else {
+    else if (PyDataType_ISOBJECT(dtype)) {
         PyObject *itemp, *otemp;
         PyObject *res;
         memcpy(&itemp, iptr, sizeof(itemp));

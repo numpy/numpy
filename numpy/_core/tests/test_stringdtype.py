@@ -1,8 +1,9 @@
 import concurrent.futures
+import copy
 import itertools
 import os
-import pickle
 import string
+import pickle
 import sys
 import tempfile
 
@@ -403,6 +404,13 @@ def test_pickle(dtype, string_list):
     assert res[1] == dtype
 
     os.remove(f.name)
+
+
+def test_stdlib_copy(dtype, string_list):
+    arr = np.array(string_list, dtype=dtype)
+
+    assert_array_equal(copy.copy(arr), arr)
+    assert_array_equal(copy.deepcopy(arr), arr)
 
 
 @pytest.mark.parametrize(
@@ -1728,12 +1736,12 @@ class TestImplementation:
         assert_array_equal(z, "")
 
     def test_copy(self):
-        c = self.a.copy()
-        assert_array_equal(self.get_flags(c), self.get_flags(self.a))
-        assert_array_equal(c, self.a)
-        offsets = self.get_view(c)['offset']
-        assert offsets[2] == 1
-        assert offsets[3] == 1 + len(self.s_medium) + self.sizeofstr // 2
+        for c in [self.a.copy(), copy.copy(self.a), copy.deepcopy(self.a)]:
+            assert_array_equal(self.get_flags(c), self.get_flags(self.a))
+            assert_array_equal(c, self.a)
+            offsets = self.get_view(c)['offset']
+            assert offsets[2] == 1
+            assert offsets[3] == 1 + len(self.s_medium) + self.sizeofstr // 2
 
     def test_arena_use_with_setting(self):
         c = np.zeros_like(self.a)
