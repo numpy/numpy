@@ -9,6 +9,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/ndarraytypes.h"
 #include "numpy/npy_math.h"
+#include "npy_sort.h"
 
 #include "static_string.h"
 #include "dtypemeta.h"
@@ -516,6 +517,12 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
     return NpyString_cmp(&s_a, &s_b);
 }
 
+static int
+stringdtype_sort_compare(void *a, void *b, void *arr) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
+    return _compare(a, b, descr, descr);
+}
+
 // PyArray_ArgFunc
 // The max element is the one with the highest unicode code point.
 int
@@ -651,6 +658,7 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
          &string_discover_descriptor_from_pyobject},
         {NPY_DT_setitem, &stringdtype_setitem},
         {NPY_DT_getitem, &stringdtype_getitem},
+        {NPY_DT_sort_compare, &stringdtype_sort_compare},
         {NPY_DT_ensure_canonical, &stringdtype_ensure_canonical},
         {NPY_DT_PyArray_ArrFuncs_nonzero, &nonzero},
         {NPY_DT_PyArray_ArrFuncs_compare, &compare},

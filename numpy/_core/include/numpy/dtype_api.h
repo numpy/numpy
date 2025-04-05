@@ -367,6 +367,10 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
 #define NPY_DT_finalize_descr 11
+#define NPY_DT_get_sort_function 12
+#define NPY_DT_get_argsort_function 13
+#define NPY_DT_compare 14
+#define NPY_DT_sort_compare 15
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -476,5 +480,19 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtyp
  */
 typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
+
+typedef int (PyArray_CompareFuncWithDescr)(const void *, const void *,
+                                           PyArray_Descr *);
+typedef int (PyArray_SortFunc)(void *, npy_intp, 
+                               PyArrayMethod_Context *, NpyAuxData *,
+                               NpyAuxData **);
+typedef int (PyArray_ArgSortFunc)(void *, npy_intp *, npy_intp, 
+                                  PyArrayMethod_Context *, NpyAuxData *,
+                                  NpyAuxData **);
+
+typedef int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, 
+        npy_intp, int, PyArray_SortFunc **);
+typedef int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, 
+        npy_intp, int, PyArray_ArgSortFunc **);
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */
