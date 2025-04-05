@@ -616,7 +616,7 @@ npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
     char *v = (char *)vv;
     PyArrayObject *arr = (PyArrayObject *)varr;
     npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = _PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     char *vp;
     npy_intp *pl = tosort;
     npy_intp *pr = tosort + num - 1;
