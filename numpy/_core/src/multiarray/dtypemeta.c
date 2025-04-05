@@ -194,6 +194,7 @@ dtypemeta_initialize_struct_from_spec(
     NPY_DT_SLOTS(DType)->getitem = NULL;
     NPY_DT_SLOTS(DType)->get_sort_function = NULL;
     NPY_DT_SLOTS(DType)->get_argsort_function = NULL;
+    NPY_DT_SLOTS(DType)->compare = NULL;
     NPY_DT_SLOTS(DType)->sort_compare = NULL;
     NPY_DT_SLOTS(DType)->get_clear_loop = NULL;
     NPY_DT_SLOTS(DType)->get_fill_zero_loop = NULL;
@@ -1233,7 +1234,6 @@ dtypemeta_wrap_legacy_descriptor(
         dtype_class->flags |= NPY_DT_NUMERIC;
     }
 
-    /* If sorting compare not defined, set to arrfunc default */
     if (dt_slots->sort_compare == NULL) {
         if (!NPY_DT_is_legacy(dtype_class) && !NPY_DT_is_user_defined(dtype_class)) {
             PyErr_SetString(PyExc_RuntimeError,
@@ -1241,8 +1241,11 @@ dtypemeta_wrap_legacy_descriptor(
             Py_DECREF(dtype_class);
             return -1;
         }
+    }
 
-        dt_slots->sort_compare = arr_funcs->compare;
+    /* Auto-fill compare slot with sort-compare as default */
+    if (dt_slots->compare == NULL && dt_slots->sort_compare != NULL) {
+        dt_slots->compare = dt_slots->sort_compare;
     }
 
     if (_PyArray_MapPyTypeToDType(dtype_class, descr->typeobj,

@@ -422,8 +422,8 @@ typedef int (PyArray_FromStrFunc)(char *s, void *dptr, char **endptr,
 
 typedef int (PyArray_FillFunc)(void *, npy_intp, void *);
 
-typedef int (PyArray_SortFunc)(void *, npy_intp, void *);
-typedef int (PyArray_ArgSortFunc)(void *, npy_intp *, npy_intp, void *);
+typedef int (PyArray_SortFuncWithArray)(void *, npy_intp, void *);
+typedef int (PyArray_ArgSortFuncWithArray)(void *, npy_intp *, npy_intp, void *);
 
 typedef int (PyArray_FillWithScalarFunc)(void *, npy_intp, void *, void *);
 
@@ -514,8 +514,8 @@ typedef struct {
          * Sorting functions
          * Can be NULL
          */
-        PyArray_SortFunc *sort[NPY_NSORTS];
-        PyArray_ArgSortFunc *argsort[NPY_NSORTS];
+        PyArray_SortFuncWithArray *sort[NPY_NSORTS];
+        PyArray_ArgSortFuncWithArray *argsort[NPY_NSORTS];
 
         /*
          * Dictionary of additional casting functions

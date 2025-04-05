@@ -2250,7 +2250,7 @@ npy_timsort(void *start, npy_intp num, void *varr)
 {
     PyArrayObject *arr = reinterpret_cast<PyArrayObject *>(varr);
     size_t len = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyArray_GetSortCompareFunction(PyArray_DESCR(arr));
+    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     run stack[TIMSORT_STACK_SIZE];
@@ -2686,7 +2686,7 @@ npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
 {
     PyArrayObject *arr = reinterpret_cast<PyArrayObject *>(varr);
     size_t len = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyArray_GetSortCompareFunction(PyArray_DESCR(arr));
+    PyArray_CompareFunc *cmp = _PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     run stack[TIMSORT_STACK_SIZE];
