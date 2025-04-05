@@ -606,7 +606,7 @@ npy_quicksort(void *start, npy_intp num, void *varr)
     }
 
     free(vp);
-    
+
     return 0;
 }
 
