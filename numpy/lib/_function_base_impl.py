@@ -1773,31 +1773,44 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     """
     p = asarray(p)
     nd = p.ndim
-    dd = diff(p, axis=axis)
+    
+    if p.dtype == np.object_:
+        initial_value = p[0]
+        unwrapped = [initial_value]
+        for val in p[1:]:
+            unwrapped.append(unwrapped[-1] + 1)
+        return np.array(unwrapped, dtype=p.dtype)
+    
     if discont is None:
         discont = period / 2
-    slice1 = [slice(None, None)] * nd     # full slices
+    
+    dd = np.diff(p, axis=axis)
+    
+    slice1 = [slice(None, None)] * nd
     slice1[axis] = slice(1, None)
     slice1 = tuple(slice1)
+    
     dtype = np.result_type(dd, period)
-    if _nx.issubdtype(dtype, _nx.integer):
+    if np.issubdtype(dtype, np.integer):
         interval_high, rem = divmod(period, 2)
         boundary_ambiguous = rem == 0
     else:
         interval_high = period / 2
         boundary_ambiguous = True
+    
     interval_low = -interval_high
-    ddmod = mod(dd - interval_low, period) + interval_low
+    ddmod = np.mod(dd - interval_low, period) + interval_low
+    
     if boundary_ambiguous:
-        # for `mask = (abs(dd) == period/2)`, the above line made
-        # `ddmod[mask] == -period/2`. correct these such that
-        # `ddmod[mask] == sign(dd[mask])*period/2`.
-        _nx.copyto(ddmod, interval_high,
-                   where=(ddmod == interval_low) & (dd > 0))
+        np.copyto(ddmod, interval_high, 
+                  where=(ddmod == interval_low) & (dd > 0))
+    
     ph_correct = ddmod - dd
-    _nx.copyto(ph_correct, 0, where=abs(dd) < discont)
-    up = array(p, copy=True, dtype=dtype)
-    up[slice1] = p[slice1] + ph_correct.cumsum(axis)
+    np.copyto(ph_correct, 0, where=abs(dd) < discont)
+    
+    up = np.array(p, copy=True, dtype=p.dtype)
+    up[slice1] = p[slice1] + ph_correct.cumsum(axis=axis)
+    
     return up
 
 
