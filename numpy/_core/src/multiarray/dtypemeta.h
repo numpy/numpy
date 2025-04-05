@@ -31,7 +31,6 @@ typedef struct {
      */
     PyArrayDTypeMeta_SetItem *setitem;
     PyArrayDTypeMeta_GetItem *getitem;
-
     /*
      * Either NULL or fetches a clearing function.  Clearing means deallocating
      * any referenced data and setting it to a safe state.  For Python objects
@@ -45,7 +44,6 @@ typedef struct {
      * Python objects.
      */
     PyArrayMethod_GetTraverseLoop *get_clear_loop;
-
     /*
        Either NULL or a function that sets a function pointer to a traversal
        loop that fills an array with zero values appropriate for the dtype. If
