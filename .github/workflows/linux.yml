@@ -199,6 +199,51 @@ jobs:
       run: |
         spin test -j2 -m full -- --timeout=600 --durations=10
 
+
+  armhf_test:
+    # Tests NumPy on 32-bit ARM hard-float (armhf) via compatibility mode
+    # running on aarch64 (ARM 64-bit) GitHub runners.
+    needs: [smoke_test]
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    
+    - name: Creates new container
+      run: |
+        docker run --name the_container --interactive \
+          -v $(pwd):/numpy arm32v7/ubuntu:22.04 /bin/linux32 /bin/bash -c "
+          apt update &&
+          apt install -y ninja-build cmake git python3 python-is-python3 python3-dev python3-pip python3-venv &&
+          python -m pip install -r /numpy/requirements/build_requirements.txt &&
+          python -m pip install -r /numpy/requirements/test_requirements.txt
+        "
+        docker commit the_container the_container
+
+    - name: Meson Build
+      run: |
+        docker run --rm -e "TERM=xterm-256color" \
+          -v $(pwd):/numpy the_container \
+          /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
+            cd /numpy && spin build 
+          '"
+
+    - name: Meson Log
+      if: always()
+      run: 'cat build/meson-logs/meson-log.txt'
+
+    - name: Run Tests
+      run: |
+        docker run --rm -e "TERM=xterm-256color" \
+          -v $(pwd):/numpy the_container \
+          /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
+            cd /numpy && spin test -m full -- --timeout=600 --durations=10
+          '"
+
   benchmark:
     needs: [smoke_test]
     runs-on: ubuntu-latest
