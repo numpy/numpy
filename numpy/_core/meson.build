@@ -840,6 +840,13 @@ foreach gen_mtargets : [
     'src/npysort/x86_simd_qsort_16bit.dispatch.cpp',
     use_intel_sort ? [AVX512_SPR, AVX512_ICL] : []
   ],
+    [
+    'highway_argsort.dispatch.h',
+    'src/npysort/highway_argsort.dispatch.cpp',
+    use_highway ? [
+      ASIMD
+    ] : []
+  ],
   [
     'highway_qsort.dispatch.h',
     'src/npysort/highway_qsort.dispatch.cpp',
