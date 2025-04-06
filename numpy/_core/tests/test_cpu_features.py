@@ -407,8 +407,11 @@ class Test_ARM_Features(AbstractTest):
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
         arch = self.get_cpuinfo_item("CPU architecture")
-        # in case of mounting virtual filesystem of aarch64 kernel
-        is_rootfs_v8 = int('0' + next(iter(arch))) > 7 if arch else 0
+        # in case of mounting virtual filesystem of aarch64 kernel without linux32
+        is_rootfs_v8 = (
+            not re.match("^armv[0-9]+l$", machine) and
+            (int('0' + next(iter(arch))) > 7 if arch else 0)
+        )
         if re.match("^(aarch64|AARCH64)", machine) or is_rootfs_v8:
             self.features_map = {
                 "NEON": "ASIMD", "HALF": "ASIMD", "VFPV4": "ASIMD"
