@@ -1,10 +1,5 @@
 /**
  * Testing the utilities of the CPU dispatcher
- *
- * @targets $werror baseline
- * SSE2 SSE41 AVX2
- * VSX VSX2 VSX3
- * NEON ASIMD ASIMDHP
  */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>

@@ -1,11 +1,3 @@
-/*@targets
- ** $maxopt baseline
- ** (avx2 fma3) AVX512_SKX
- ** vsx2 vsx4
- ** neon_vfpv4
- ** vxe
- **/
-
 #include "numpy/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
