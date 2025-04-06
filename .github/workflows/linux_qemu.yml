@@ -39,17 +39,6 @@ jobs:
       matrix:
         BUILD_PROP:
           - [
-              "armhf",
-              "arm-linux-gnueabihf",
-              "arm32v7/ubuntu:22.04",
-              "-Dallow-noblas=true",
-              # test_unary_spurious_fpexception is currently skipped
-              # FIXME(@seiko2plus): Requires confirmation for the following issue:
-              # The presence of an FP invalid exception caused by sqrt. Unsure if this is a qemu bug or not.
-              "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_unary_spurious_fpexception",
-              "arm"
-            ]
-          - [
               "ppc64le",
               "powerpc64le-linux-gnu",
               "ppc64le/ubuntu:22.04",
