@@ -35,7 +35,7 @@ _SCT_co = TypeVar("_SCT_co", bound=np.generic, default=Any, covariant=True)
 _FName: TypeAlias = StrPath | Iterable[str] | Iterable[bytes]
 _FNameRead: TypeAlias = StrPath | SupportsRead[str] | SupportsRead[bytes]
 _FNameWriteBytes: TypeAlias = StrPath | SupportsWrite[bytes]
-_FNameWrite: TypeAlias = _FNameWriteBytes | SupportsWrite[bytes]
+_FNameWrite: TypeAlias = _FNameWriteBytes | SupportsWrite[str]
 
 @type_check_only
 class _SupportsReadSeek(SupportsRead[_T_co], Protocol[_T_co]):
@@ -160,7 +160,7 @@ def loadtxt(
 ) -> NDArray[Any]: ...
 
 def savetxt(
-    fname: StrPath | _FNameWrite,
+    fname: _FNameWrite,
     X: ArrayLike,
     fmt: str | Sequence[str] = "%.18e",
     delimiter: str = " ",
