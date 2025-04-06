@@ -1479,9 +1479,7 @@ def make_arrays(funcdict):
 
     for dname, funcs in dispdict.items():
         code2list.append(textwrap.dedent(f"""
-            #ifndef NPY_DISABLE_OPTIMIZATION
             #include "{dname}.dispatch.h"
-            #endif
         """))
         for (ufunc_name, func_idx, cfunc_name, inout) in funcs:
             code2list.append(textwrap.dedent(f"""\
