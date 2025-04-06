@@ -1,6 +1,3 @@
-/*@targets
- ** $maxopt baseline avx512_skx
- */
 #include "numpy/npy_math.h"
 #include "simd/simd.h"
 #include "loops_utils.h"
