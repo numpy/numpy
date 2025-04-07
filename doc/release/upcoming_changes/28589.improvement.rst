@@ -1,5 +1,5 @@
 Improved error handling in `np.quantile`
----------------------------------
+----------------------------------------
 `np.quantile` now raises errors if:
 
 * All weights are zero
