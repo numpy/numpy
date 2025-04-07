@@ -25,8 +25,8 @@ from numpy._typing import (
     NDArray,
     _ArrayLike,
     _DTypeLikeBool,
-    _Shape,
     _ScalarLike_co,
+    _Shape,
     _ShapeLike,
 )
 
