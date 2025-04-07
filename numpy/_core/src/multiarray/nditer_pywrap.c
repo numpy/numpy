@@ -111,7 +111,7 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
     int iflags, nflags;
 
     PyObject *f;
-    char *str = NULL;
+    const char *str = NULL;
     Py_ssize_t length = 0;
     npy_uint32 flag;
 
@@ -133,10 +133,10 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
             return 0;
         }
 
-        if (PyUnicode_Check(f)) {
+        if (PyBytes_Check(f)) {
             /* accept unicode input */
             PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
+            f_str = PyUnicode_FromEncodedObject(f, NULL, NULL);
             if (f_str == NULL) {
                 Py_DECREF(f);
                 return 0;
@@ -144,8 +144,8 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
             Py_DECREF(f);
             f = f_str;
         }
-
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
+        str = PyUnicode_AsUTF8AndSize(f, &length);
+        if (str == NULL) {
             Py_DECREF(f);
             return 0;
         }
@@ -257,7 +257,7 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
     *op_flags = 0;
     for (iflags = 0; iflags < nflags; ++iflags) {
         PyObject *f;
-        char *str = NULL;
+        const char *str = NULL;
         Py_ssize_t length = 0;
 
         f = PySequence_GetItem(op_flags_in, iflags);
@@ -265,10 +265,10 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
             return 0;
         }
 
-        if (PyUnicode_Check(f)) {
+        if (PyBytes_Check(f)) {
             /* accept unicode input */
             PyObject *f_str;
-            f_str = PyUnicode_AsASCIIString(f);
+            f_str = PyUnicode_FromEncodedObject(f, NULL, NULL);
             if (f_str == NULL) {
                 Py_DECREF(f);
                 return 0;
@@ -277,7 +277,8 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
             f = f_str;
         }
 
-        if (PyBytes_AsStringAndSize(f, &str, &length) < 0) {
+        str = PyUnicode_AsUTF8AndSize(f, &length);
+        if ( str == NULL) {
             PyErr_Clear();
             Py_DECREF(f);
             PyErr_SetString(PyExc_ValueError,
