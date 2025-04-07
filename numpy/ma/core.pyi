@@ -1,13 +1,14 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
 
-from typing import Any, Literal, SupportsIndex, TypeVar, overload, TypeAlias
+from typing import Any, Literal, SupportsIndex, TypeVar, overload, TypeAlias, Sequence
 
 from _typeshed import Incomplete
 from typing_extensions import deprecated
 
 from numpy import (
     intp,
+    _SortKind,
     _OrderKACF,
     amax,
     amin,
@@ -216,6 +217,7 @@ _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 _SCT = TypeVar("_SCT", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[Any, dtype[_SCT]]
+_MaskedArrayType = TypeVar("_MaskedArrayType", bound=MaskedArray[Any, Any])
 
 MaskType = bool
 nomask: bool
@@ -544,7 +546,16 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     ) -> _ArrayType: ...
 
     #
-    def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
+    def sort(
+        self,
+        axis: SupportsIndex | None = None,
+        kind: _SortKind | None = None,
+        order: str | Sequence[str] | None = None,
+        endwith: bool | None = None,
+        fill_value: _ScalarLike_co | None = None,
+        *,
+        stable: bool | None = None,
+    ) -> None: ...
     @overload
     def min(  # type: ignore[override]
         self: _MaskedArray[_SCT],
@@ -959,7 +970,16 @@ maximum: _extrema_operation
 def take(a, indices, axis=..., out=..., mode=...): ...
 def power(a, b, third=...): ...
 def argsort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
-def sort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
+def sort(
+    a: _MaskedArrayType,
+    axis: SupportsIndex | None = None,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: bool | None = None,
+) -> _MaskedArrayType: ...
 def compressed(x): ...
 def concatenate(arrays, axis=...): ...
 def diag(v, k=...): ...
