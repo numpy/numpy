@@ -1,15 +1,14 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
 
-from typing import Any, Literal, SupportsIndex, TypeVar, overload, TypeAlias, Sequence
+from typing import Any, Literal, Sequence, SupportsIndex, TypeAlias, TypeVar, overload
 
 from _typeshed import Incomplete
 from typing_extensions import deprecated
 
 from numpy import (
-    intp,
-    _SortKind,
     _OrderKACF,
+    _SortKind,
     amax,
     amin,
     bool_,
@@ -17,6 +16,7 @@ from numpy import (
     expand_dims,
     float64,
     generic,
+    intp,
     ndarray,
 )
 from numpy._globals import _NoValueType
