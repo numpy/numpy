@@ -1,7 +1,7 @@
 import numpy as np
 from typing_extensions import assert_type
 from typing import Any, TypeAlias, TypeVar
-from numpy._typing import _Shape
+from numpy._typing import _Shape, NDArray
 from numpy import dtype, generic
 
 
@@ -9,6 +9,8 @@ _ScalarType_co = TypeVar("_ScalarType_co", bound=generic, covariant=True)
 MaskedNDArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarType_co]]
 
 class MaskedNDArraySubclass(MaskedNDArray[np.complex128]): ...
+
+AR_f4: NDArray[np.float32]
 
 MAR_b: MaskedNDArray[np.bool]
 MAR_f4: MaskedNDArray[np.float32]
@@ -118,3 +120,11 @@ assert_type(np.ma.argmax(MAR_f4, axis=0), Any)
 assert_type(np.ma.argmax(MAR_b, keepdims=True), Any)
 assert_type(np.ma.argmax(MAR_f4, out=MAR_subclass), MaskedNDArraySubclass)
 assert_type(np.ma.argmax(MAR_f4, None, None, out=MAR_subclass), MaskedNDArraySubclass)
+
+assert_type(MAR_f4.sort(), None)
+assert_type(MAR_f4.sort(axis=0, kind='quicksort', order='K', endwith=False, fill_value=42., stable=False), None)
+
+assert_type(np.ma.sort(MAR_f4), MaskedNDArray[np.float32])
+assert_type(np.ma.sort(MAR_subclass), MaskedNDArraySubclass)
+assert_type(np.ma.sort([[0, 1], [2, 3]]), NDArray[Any])
+assert_type(np.ma.sort(AR_f4), NDArray[np.float32])

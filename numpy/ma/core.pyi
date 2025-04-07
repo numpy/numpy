@@ -1,14 +1,14 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
 
-from typing import Any, Literal, SupportsIndex, TypeVar, overload, TypeAlias
+from typing import Any, Literal, Sequence, SupportsIndex, TypeAlias, TypeVar, overload
 
 from _typeshed import Incomplete
 from typing_extensions import deprecated
 
 from numpy import (
-    intp,
     _OrderKACF,
+    _SortKind,
     amax,
     amin,
     bool_,
@@ -16,14 +16,17 @@ from numpy import (
     expand_dims,
     float64,
     generic,
+    intp,
     ndarray,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
+    NDArray,
     _ArrayLike,
     _DTypeLikeBool,
     _ScalarLike_co,
+    _Shape,
     _ShapeLike,
 )
 
@@ -215,7 +218,8 @@ _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 _ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
 _SCT = TypeVar("_SCT", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
-_MaskedArray: TypeAlias = MaskedArray[Any, dtype[_SCT]]
+_MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_SCT]]
+_MaskedArrayType = TypeVar("_MaskedArrayType", bound=MaskedArray[Any, Any])
 
 MaskType = bool
 nomask: bool
@@ -544,7 +548,18 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     ) -> _ArrayType: ...
 
     #
-    def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
+    def sort(
+        self,
+        axis: SupportsIndex = -1,
+        kind: _SortKind | None = None,
+        order: str | Sequence[str] | None = None,
+        endwith: bool | None = True,
+        fill_value: _ScalarLike_co | None = None,
+        *,
+        stable: Literal[False] | None = False,
+    ) -> None: ...
+
+    # 
     @overload
     def min(  # type: ignore[override]
         self: _MaskedArray[_SCT],
@@ -959,7 +974,28 @@ maximum: _extrema_operation
 def take(a, indices, axis=..., out=..., mode=...): ...
 def power(a, b, third=...): ...
 def argsort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
-def sort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
+@overload
+def sort(
+    a: _ArrayType,
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = True,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: Literal[False] | None = False,
+) -> _ArrayType: ...
+@overload
+def sort(
+    a: ArrayLike,
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = True,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: Literal[False] | None = False,
+) -> NDArray[Any]: ...
 def compressed(x): ...
 def concatenate(arrays, axis=...): ...
 def diag(v, k=...): ...
