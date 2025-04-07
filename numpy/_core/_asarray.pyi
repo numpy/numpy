@@ -3,7 +3,7 @@ from typing import Any, TypeAlias, TypeVar, overload, Literal
 
 from numpy._typing import NDArray, DTypeLike, _SupportsArrayFunc
 
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 _Requirements: TypeAlias = Literal[
     "C", "C_CONTIGUOUS", "CONTIGUOUS",
@@ -17,12 +17,12 @@ _RequirementsWithE: TypeAlias = _Requirements | _E
 
 @overload
 def require(
-    a: _ArrayType,
+    a: _ArrayT,
     dtype: None = ...,
     requirements: None | _Requirements | Iterable[_Requirements] = ...,
     *,
     like: _SupportsArrayFunc = ...
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def require(
     a: object,

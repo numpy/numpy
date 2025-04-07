@@ -212,7 +212,7 @@ _ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 _ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
-_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
+_ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _SCT = TypeVar("_SCT", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[Any, dtype[_SCT]]
@@ -492,18 +492,18 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
         *,
-        out: _ArrayType,
+        out: _ArrayT,
         keepdims: bool | _NoValueType = ...,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
     @overload
     def argmin(  # type: ignore[override]
         self,
         axis: SupportsIndex | None,
         fill_value: _ScalarLike_co | None,
-        out: _ArrayType,
+        out: _ArrayT,
         *,
         keepdims: bool | _NoValueType = ...,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
 
     # Keep in-sync with np.ma.argmax
     @overload
@@ -530,18 +530,18 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
         *,
-        out: _ArrayType,
+        out: _ArrayT,
         keepdims: bool | _NoValueType = ...,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
     @overload
     def argmax(  # type: ignore[override]
         self,
         axis: SupportsIndex | None,
         fill_value: _ScalarLike_co | None,
-        out: _ArrayType,
+        out: _ArrayT,
         *,
         keepdims: bool | _NoValueType = ...,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
 
     #
     def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
@@ -565,19 +565,19 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def min(  # type: ignore[override]
         self,
         axis: _ShapeLike | None,
-        out: _ArrayType,
+        out: _ArrayT,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
     @overload
     def min(  # type: ignore[override]
         self,
         axis: _ShapeLike | None = None,
         *,
-        out: _ArrayType,
+        out: _ArrayT,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
     @overload
     def max(  # type: ignore[override]
         self: _MaskedArray[_SCT],
@@ -598,19 +598,19 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def max(  # type: ignore[override]
         self,
         axis: _ShapeLike | None,
-        out: _ArrayType,
+        out: _ArrayT,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
     @overload
     def max(  # type: ignore[override]
         self,
         axis: _ShapeLike | None = None,
         *,
-        out: _ArrayType,
+        out: _ArrayT,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
     @overload
     def ptp(  # type: ignore[override]
         self: _MaskedArray[_SCT],
@@ -631,19 +631,19 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def ptp(  # type: ignore[override]
         self,
         axis: _ShapeLike | None,
-        out: _ArrayType,
+        out: _ArrayT,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool = False,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
     @overload
     def ptp(  # type: ignore[override]
         self,
         axis: _ShapeLike | None = None,
         *,
-        out: _ArrayType,
+        out: _ArrayT,
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool = False,
-    ) -> _ArrayType: ...
+    ) -> _ArrayT: ...
     def partition(self, *args, **kwargs): ...
     def argpartition(self, *args, **kwargs): ...
     def take(self, indices, axis=..., out=..., mode=...): ...
@@ -764,19 +764,19 @@ def min(
 def min(
     obj: ArrayLike,
     axis: _ShapeLike | None,
-    out: _ArrayType,
+    out: _ArrayT,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def min(
     obj: ArrayLike,
     axis: _ShapeLike | None = None,
     *,
-    out: _ArrayType,
+    out: _ArrayT,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 @overload
 def max(
@@ -798,19 +798,19 @@ def max(
 def max(
     obj: ArrayLike,
     axis: _ShapeLike | None,
-    out: _ArrayType,
+    out: _ArrayT,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def max(
     obj: ArrayLike,
     axis: _ShapeLike | None = None,
     *,
-    out: _ArrayType,
+    out: _ArrayT,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 @overload
 def ptp(
@@ -832,19 +832,19 @@ def ptp(
 def ptp(
     obj: ArrayLike,
     axis: _ShapeLike | None,
-    out: _ArrayType,
+    out: _ArrayT,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def ptp(
     obj: ArrayLike,
     axis: _ShapeLike | None = None,
     *,
-    out: _ArrayType,
+    out: _ArrayT,
     fill_value: _ScalarLike_co | None = None,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 class _frommethod:
     __name__: Any
@@ -903,18 +903,18 @@ def argmin(
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     *,
-    out: _ArrayType,
+    out: _ArrayT,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def argmin(
     self: ArrayLike,
     axis: SupportsIndex | None,
     fill_value: _ScalarLike_co | None,
-    out: _ArrayType,
+    out: _ArrayT,
     *,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 @overload
 def argmax(
@@ -940,18 +940,18 @@ def argmax(
     axis: SupportsIndex | None = None,
     fill_value: _ScalarLike_co | None = None,
     *,
-    out: _ArrayType,
+    out: _ArrayT,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def argmax(
     self: ArrayLike,
     axis: SupportsIndex | None,
     fill_value: _ScalarLike_co | None,
-    out: _ArrayType,
+    out: _ArrayT,
     *,
     keepdims: bool | _NoValueType = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 minimum: _extrema_operation
 maximum: _extrema_operation

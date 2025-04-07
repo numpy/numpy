@@ -105,7 +105,7 @@ _Pss = ParamSpec("_Pss")
 _SCT = TypeVar("_SCT", bound=generic)
 _SCT1 = TypeVar("_SCT1", bound=generic)
 _SCT2 = TypeVar("_SCT2", bound=generic)
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 _2Tuple: TypeAlias = tuple[_T, _T]
 _MeshgridIdx: TypeAlias = L['ij', 'xy']
@@ -257,17 +257,17 @@ def select(
 
 @overload
 def copy(
-    a: _ArrayType,
+    a: _ArrayT,
     order: _OrderKACF,
     subok: L[True],
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def copy(
-    a: _ArrayType,
+    a: _ArrayT,
     order: _OrderKACF = ...,
     *,
     subok: L[True],
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def copy(
     a: _ArrayLike[_SCT],
@@ -586,19 +586,19 @@ def median(
 def median(
     a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     axis: None | _ShapeLike,
-    out: _ArrayType,
+    out: _ArrayT,
     overwrite_input: bool = ...,
     keepdims: bool = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def median(
     a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     axis: None | _ShapeLike = ...,
     *,
-    out: _ArrayType,
+    out: _ArrayT,
     overwrite_input: bool = ...,
     keepdims: bool = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 _MethodKind = L[
     "inverted_cdf",
@@ -753,25 +753,25 @@ def percentile(
     a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
     axis: None | _ShapeLike,
-    out: _ArrayType,
+    out: _ArrayT,
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
     *,
     weights: None | _ArrayLikeFloat_co = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def percentile(
     a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
     axis: None | _ShapeLike = ...,
     *,
-    out: _ArrayType,
+    out: _ArrayT,
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
     weights: None | _ArrayLikeFloat_co = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 # NOTE: Not an alias, but they do have identical signatures
 # (that we can reuse)
