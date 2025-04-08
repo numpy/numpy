@@ -546,7 +546,7 @@ def linkcode_resolve(domain, info):
 
     # This can be removed when removing the decorator set_module. Fix issue #28629
     if hasattr(obj, '__module_file__'):
-        fn = obj.__module_file__
+        fn = obj._module_file
 
     if fn is None:
         try:

@@ -29,7 +29,7 @@ def set_module(module):
         if module is not None:
             if isinstance(func, type):
                 try:
-                    func.__module_file__ = sys.modules.get(func.__module__).__file__
+                    func._module_file = sys.modules.get(func.__module__).__file__
                 except (AttributeError, KeyError):
                     pass
                 
