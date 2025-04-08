@@ -547,6 +547,7 @@ def linkcode_resolve(domain, info):
     # This can be removed when removing the decorator set_module. Fix issue #28629
     if hasattr(obj, '_module_file'):
         fn = obj._module_file
+        fn = relpath(fn, start=dirname(numpy.__file__))
 
     if fn is None:
         try:
