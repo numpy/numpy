@@ -18,12 +18,12 @@ else:
     from numpy._core.multiarray import StringDType
 
 _T = TypeVar("_T")
-_ScalarType = TypeVar("_ScalarType", bound=np.generic)
-_ScalarType_co = TypeVar("_ScalarType_co", bound=np.generic, covariant=True)
+_SCT = TypeVar("_SCT", bound=np.generic)
+_SCT_co = TypeVar("_SCT_co", bound=np.generic, covariant=True)
 _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
 
-NDArray: TypeAlias = np.ndarray[_Shape, dtype[_ScalarType_co]]
+NDArray: TypeAlias = np.ndarray[_Shape, dtype[_SCT_co]]
 
 # The `_SupportsArray` protocol only cares about the default dtype
 # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
@@ -58,8 +58,8 @@ _FiniteNestedSequence: TypeAlias = (
 
 # A subset of `npt.ArrayLike` that can be parametrized w.r.t. `np.generic`
 _ArrayLike: TypeAlias = (
-    _SupportsArray[dtype[_ScalarType]]
-    | _NestedSequence[_SupportsArray[dtype[_ScalarType]]]
+    _SupportsArray[dtype[_SCT]]
+    | _NestedSequence[_SupportsArray[dtype[_SCT]]]
 )
 
 # A union representing array-like objects; consists of two typevars:
