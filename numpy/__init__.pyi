@@ -816,7 +816,7 @@ _2DShapeT_co = TypeVar("_2DShapeT_co", bound=_2D, covariant=True)
 _1NShapeT = TypeVar("_1NShapeT", bound=tuple[L[1], Unpack[tuple[L[1], ...]]])  # (1,) | (1, 1) | (1, 1, 1) | ...
 
 _SCT = TypeVar("_SCT", bound=generic)
-_SCT_co = TypeVar("_SCT_co", bound=generic, covariant=True)
+_SCT_co = TypeVar("_SCT_co", bound=generic, default=Any, covariant=True)
 _NumberT = TypeVar("_NumberT", bound=number[Any])
 _RealNumberT = TypeVar("_RealNumberT", bound=floating | integer)
 _FloatingT_co = TypeVar("_FloatingT_co", bound=floating[Any], default=floating[Any], covariant=True)
