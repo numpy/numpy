@@ -103,6 +103,8 @@ class LinalgNorm(Benchmark):
 class LinalgSmallArrays(Benchmark):
     """ Test overhead of linalg methods for small arrays """
     def setup(self):
+        self.array_3_3 = np.eye(3) + np.arange(9.).reshape((3, 3))
+        self.array_3 = np.arange(3.)
         self.array_5 = np.arange(5.)
         self.array_5_5 = np.reshape(np.arange(25.), (5, 5))
 
@@ -111,6 +113,16 @@ class LinalgSmallArrays(Benchmark):
 
     def time_det_small_array(self):
         np.linalg.det(self.array_5_5)
+
+    def time_det_3x3(self):
+        np.linalg.det(self.array_3_3)
+
+    def time_solve_3x3(self):
+        np.linalg.solve(self.array_3_3, self.array_3)
+
+    def time_eig_3x3(self):
+        np.linalg.eig(self.array_3_3)
+
 
 class Lstsq(Benchmark):
     def setup(self):
