@@ -190,21 +190,21 @@ __all__ = [
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 _DType = TypeVar("_DType", bound=np.dtype[Any])
-_ArrayType = TypeVar("_ArrayType", bound=np.ndarray[Any, Any])
+_ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
 _ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
 
 _CorrelateMode: TypeAlias = L["valid", "same", "full"]
 
 @overload
 def zeros_like(
-    a: _ArrayType,
+    a: _ArrayT,
     dtype: None = ...,
     order: _OrderKACF = ...,
     subok: L[True] = ...,
     shape: None = ...,
     *,
     device: None | L["cpu"] = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def zeros_like(
     a: _ArrayLike[_SCT],
@@ -240,14 +240,14 @@ ones: Final[_ConstructorEmpty]
 
 @overload
 def ones_like(
-    a: _ArrayType,
+    a: _ArrayT,
     dtype: None = ...,
     order: _OrderKACF = ...,
     subok: L[True] = ...,
     shape: None = ...,
     *,
     device: None | L["cpu"] = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def ones_like(
     a: _ArrayLike[_SCT],
@@ -382,7 +382,7 @@ def full(
 
 @overload
 def full_like(
-    a: _ArrayType,
+    a: _ArrayT,
     fill_value: Any,
     dtype: None = ...,
     order: _OrderKACF = ...,
@@ -390,7 +390,7 @@ def full_like(
     shape: None = ...,
     *,
     device: None | L["cpu"] = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def full_like(
     a: _ArrayLike[_SCT],
@@ -596,8 +596,8 @@ def outer(
 def outer(
     a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     b: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-    out: _ArrayType,
-) -> _ArrayType: ...
+    out: _ArrayT,
+) -> _ArrayT: ...
 
 @overload
 def tensordot(

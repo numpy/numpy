@@ -43,7 +43,7 @@ from numpy._typing import (
     _UIntCodes,
 )
 
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 _DTypeLikeFloat32: TypeAlias = (
     dtype[float32]

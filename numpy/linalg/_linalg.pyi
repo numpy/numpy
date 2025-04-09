@@ -78,7 +78,7 @@ __all__ = [
     "vecdot",
 ]
 
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 _ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
 
@@ -208,7 +208,7 @@ def outer(x1: _ArrayLikeObject_co, x2: _ArrayLikeObject_co) -> NDArray[object_]:
 def outer(
     x1: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     x2: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 @overload
 def qr(a: _ArrayLikeInt_co, mode: _ModeKind = ...) -> QRResult: ...
