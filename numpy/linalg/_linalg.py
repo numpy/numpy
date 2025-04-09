@@ -199,7 +199,7 @@ def _assert_stacked_square(*arrays):
     for a in arrays:
         try:
             m, n = a.shape[-2:]
-        except:
+        except ValueError:
             raise LinAlgError('%d-dimensional array given. Array must be '
                     'at least two-dimensional' % a.ndim)
         if m != n:
