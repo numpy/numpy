@@ -145,12 +145,13 @@ def _realType(t, default=double):
 def _complexType(t, default=cdouble):
     return _complex_types_map.get(t, default)
 
-def _commonType(*arrays):
+@functools.lru_cache
+def _commonType(*dtypes):
     # in lite version, use higher precision (always double or cdouble)
     result_type = single
     is_complex = False
-    for a in arrays:
-        type_ = a.dtype.type
+    for dtype in dtypes:
+        type_ = dtype.type
         if issubclass(type_, inexact):
             if isComplexType(type_):
                 is_complex = True
@@ -160,14 +161,14 @@ def _commonType(*arrays):
             elif rt is None:
                 # unsupported inexact scalar
                 raise TypeError("array type %s is unsupported in linalg" %
-                        (a.dtype.name,))
+                        (dtype.name,))
         else:
             result_type = double
     if is_complex:
         result_type = _complex_types_map[result_type]
-        return cdouble, result_type
+        return cdouble, result_type, is_complex
     else:
-        return double, result_type
+        return double, result_type, is_complex
 
 
 def _to_native_byte_order(*arrays):
@@ -398,7 +399,7 @@ def solve(a, b):
     a, _ = _makearray(a)
     _assert_stacked_square(a)
     b, wrap = _makearray(b)
-    t, result_t = _commonType(a, b)
+    t, result_t, is_complex = _commonType(a, b)
 
     # We use the b = (..., M,) logic, only if the number of extra dimensions
     # match exactly
@@ -407,7 +408,7 @@ def solve(a, b):
     else:
         gufunc = _umath_linalg.solve
 
-    signature = 'DD->D' if isComplexType(t) else 'dd->d'
+    signature = 'DD->D' if is_complex else 'dd->d'
     with errstate(call=_raise_linalgerror_singular, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         r = gufunc(a, b, signature=signature)
@@ -603,9 +604,9 @@ def inv(a):
     """
     a, wrap = _makearray(a)
     _assert_stacked_square(a)
-    t, result_t = _commonType(a)
+    t, result_t, is_complex = _commonType(a)
 
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    signature = 'D->D' if is_complex else 'd->d'
     with errstate(call=_raise_linalgerror_singular, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         ainv = _umath_linalg.inv(a, signature=signature)
@@ -832,8 +833,8 @@ def cholesky(a, /, *, upper=False):
     gufunc = _umath_linalg.cholesky_up if upper else _umath_linalg.cholesky_lo
     a, wrap = _makearray(a)
     _assert_stacked_square(a)
-    t, result_t = _commonType(a)
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    t, result_t, is_complex = _commonType(a)
+    signature = 'D->D' if is_complex else 'd->d'
     with errstate(call=_raise_linalgerror_nonposdef, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         r = gufunc(a, signature=signature)
@@ -1079,12 +1080,12 @@ def qr(a, mode='reduced'):
     a, wrap = _makearray(a)
     _assert_stacked_2d(a)
     m, n = a.shape[-2:]
-    t, result_t = _commonType(a)
+    t, result_t, is_complex = _commonType(a)
     a = a.astype(t, copy=True)
     a = _to_native_byte_order(a)
     mn = min(m, n)
 
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    signature = 'D->D' if is_complex else 'd->d'
     with errstate(call=_raise_linalgerror_qr, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         tau = _umath_linalg.qr_r_raw(a, signature=signature)
@@ -1116,7 +1117,7 @@ def qr(a, mode='reduced'):
         mc = mn
         gufunc = _umath_linalg.qr_reduced
 
-    signature = 'DD->D' if isComplexType(t) else 'dd->d'
+    signature = 'DD->D' if is_complex else 'dd->d'
     with errstate(call=_raise_linalgerror_qr, invalid='call',
                   over='ignore', divide='ignore', under='ignore'):
         q = gufunc(a, tau, signature=signature)
@@ -1203,15 +1204,15 @@ def eigvals(a):
     a, wrap = _makearray(a)
     _assert_stacked_square(a)
     _assert_finite(a)
-    t, result_t = _commonType(a)
+    t, result_t, is_complex = _commonType(a)
 
-    signature = 'D->D' if isComplexType(t) else 'd->D'
+    signature = 'D->D' if is_complex else 'd->D'
     with errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
         w = _umath_linalg.eigvals(a, signature=signature)
 
-    if not isComplexType(t):
+    if not is_complex:
         if all(w.imag == 0):
             w = w.real
             result_t = _realType(result_t)
@@ -1310,8 +1311,8 @@ def eigvalsh(a, UPLO='L'):
 
     a, wrap = _makearray(a)
     _assert_stacked_square(a)
-    t, result_t = _commonType(a)
-    signature = 'D->d' if isComplexType(t) else 'd->d'
+    t, result_t, is_complex = _commonType(a)
+    signature = 'D->d' if is_complexelse 'd->d'
     with errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
@@ -1456,15 +1457,15 @@ def eig(a):
     a, wrap = _makearray(a)
     _assert_stacked_square(a)
     _assert_finite(a)
-    t, result_t = _commonType(a)
+    t, result_t, is_complex = _commonType(a)
 
-    signature = 'D->DD' if isComplexType(t) else 'd->DD'
+    signature = 'D->DD' if is_complex else 'd->DD'
     with errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
         w, vt = _umath_linalg.eig(a, signature=signature)
 
-    if not isComplexType(t) and all(w.imag == 0.0):
+    if not is_complex and all(w.imag == 0.0):
         w = w.real
         vt = vt.real
         result_t = _realType(result_t)
@@ -1605,14 +1606,14 @@ def eigh(a, UPLO='L'):
 
     a, wrap = _makearray(a)
     _assert_stacked_square(a)
-    t, result_t = _commonType(a)
+    t, result_t, is_complex = _commonType(a)
 
     if UPLO == 'L':
         gufunc = _umath_linalg.eigh_lo
     else:
         gufunc = _umath_linalg.eigh_up
 
-    signature = 'D->dD' if isComplexType(t) else 'd->dd'
+    signature = 'D->dD' if is_complex else 'd->dd'
     with errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
                   invalid='call', over='ignore', divide='ignore',
                   under='ignore'):
@@ -1788,7 +1789,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             return sort(s)[..., ::-1]
 
     _assert_stacked_2d(a)
-    t, result_t = _commonType(a)
+    t, result_t, is_complex = _commonType(a)
 
     m, n = a.shape[-2:]
     if compute_uv:
@@ -1797,7 +1798,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         else:
             gufunc = _umath_linalg.svd_s
 
-        signature = 'D->DdD' if isComplexType(t) else 'd->ddd'
+        signature = 'D->DdD' if is_complex else 'd->ddd'
         with errstate(call=_raise_linalgerror_svd_nonconvergence,
                       invalid='call', over='ignore', divide='ignore',
                       under='ignore'):
@@ -1807,7 +1808,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
         vh = vh.astype(result_t, copy=False)
         return SVDResult(wrap(u), s, wrap(vh))
     else:
-        signature = 'D->d' if isComplexType(t) else 'd->d'
+        signature = 'D->d' if is_complex else 'd->d'
         with errstate(call=_raise_linalgerror_svd_nonconvergence,
                       invalid='call', over='ignore', divide='ignore',
                       under='ignore'):
@@ -1970,8 +1971,8 @@ def cond(x, p=None):
         # Call inv(x) ignoring errors. The result array will
         # contain nans in the entries where inversion failed.
         _assert_stacked_square(x)
-        t, result_t = _commonType(x)
-        signature = 'D->D' if isComplexType(t) else 'd->d'
+        t, result_t, is_complex = _commonType(x)
+        signature = 'D->D' if is_complex else 'd->d'
         with errstate(all='ignore'):
             invx = _umath_linalg.inv(x, signature=signature)
             r = norm(x, p, axis=(-2, -1)) * norm(invx, p, axis=(-2, -1))
@@ -2309,9 +2310,9 @@ def slogdet(a):
     """
     a = asarray(a)
     _assert_stacked_square(a)
-    t, result_t = _commonType(a)
+    t, result_t, is_complex = _commonType(a)
     real_t = _realType(result_t)
-    signature = 'D->Dd' if isComplexType(t) else 'd->dd'
+    signature = 'D->Dd' if is_complex else 'd->dd'
     sign, logdet = _umath_linalg.slogdet(a, signature=signature)
     sign = sign.astype(result_t, copy=False)
     logdet = logdet.astype(real_t, copy=False)
@@ -2367,8 +2368,8 @@ def det(a):
     """
     a = asarray(a)
     _assert_stacked_square(a)
-    t, result_t = _commonType(a)
-    signature = 'D->D' if isComplexType(t) else 'd->d'
+    t, result_t, is_complex = _commonType(a)
+    signature = 'D->D' if is_complex else 'd->d'
     r = _umath_linalg.det(a, signature=signature)
     r = r.astype(result_t, copy=False)
     return r
@@ -2488,13 +2489,13 @@ def lstsq(a, b, rcond=None):
     if m != m2:
         raise LinAlgError('Incompatible dimensions')
 
-    t, result_t = _commonType(a, b)
+    t, result_t, is_complex = _commonType(a, b)
     result_real_t = _realType(result_t)
 
     if rcond is None:
         rcond = finfo(t).eps * max(n, m)
 
-    signature = 'DDd->Ddid' if isComplexType(t) else 'ddd->ddid'
+    signature = 'DDd->Ddid' if is_complex else 'ddd->ddid'
     if n_rhs == 0:
         # lapack can't handle n_rhs = 0 - so allocate
         # the array one larger in that axis
