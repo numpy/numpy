@@ -154,7 +154,6 @@ def _commonType(*arrays):
         if issubclass(type_, inexact):
             if isComplexType(type_):
                 is_complex = True
-
             rt = _realType(type_, default=None)
             if rt is double:
                 result_type = double
