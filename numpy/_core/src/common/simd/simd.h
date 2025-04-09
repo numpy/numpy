@@ -87,7 +87,9 @@ typedef double     npyv_lanetype_f64;
     #include "neon/neon.h"
 #endif
 
-#ifdef NPY_HAVE_LSX
+#if defined(NPY_HAVE_LASX)
+    #include "lasx/lasx.h"
+#elif defined(NPY_HAVE_LSX)
     #include "lsx/lsx.h"
 #endif
 
