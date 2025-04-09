@@ -7,7 +7,7 @@ from typing import Any, Literal, TypeAlias
 import numpy as np
 from numpy.dtypes import StringDType
 
-from typing_extensions import assert_type
+from typing_extensions import LiteralString, assert_type
 
 # a combination of likely `object` dtype-like candidates (no `_co`)
 _PyObjectLike: TypeAlias = Decimal | Fraction | dt.datetime | dt.timedelta
@@ -70,6 +70,8 @@ assert_type(np.dtype(Decimal), np.dtype[np.object_])
 assert_type(np.dtype(Fraction), np.dtype[np.object_])
 
 # char-codes
+assert_type(np.dtype("?"), np.dtype[np.bool])
+assert_type(np.dtype("|b1"), np.dtype[np.bool])
 assert_type(np.dtype("u1"), np.dtype[np.uint8])
 assert_type(np.dtype("l"), np.dtype[np.long])
 assert_type(np.dtype("longlong"), np.dtype[np.longlong])
@@ -111,7 +113,7 @@ assert_type(dtype_U.base, np.dtype[Any])
 assert_type(dtype_U.subdtype, None | tuple[np.dtype[Any], tuple[int, ...]])
 assert_type(dtype_U.newbyteorder(), np.dtype[np.str_])
 assert_type(dtype_U.type, type[np.str_])
-assert_type(dtype_U.name, str)
+assert_type(dtype_U.name, LiteralString)
 assert_type(dtype_U.names, None | tuple[str, ...])
 
 assert_type(dtype_U * 0, np.dtype[np.str_])
