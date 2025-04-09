@@ -1,7 +1,8 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
 
-from typing import Any, Literal, Sequence, SupportsIndex, TypeAlias, TypeVar, overload
+from collections.abc import Sequence
+from typing import Any, Literal, SupportsIndex, TypeAlias, TypeVar, overload
 
 from _typeshed import Incomplete
 from typing_extensions import deprecated
@@ -219,7 +220,6 @@ _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _SCT = TypeVar("_SCT", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_SCT]]
-_MaskedArrayType = TypeVar("_MaskedArrayType", bound=MaskedArray[Any, Any])
 
 MaskType = bool
 nomask: bool
@@ -472,8 +472,8 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def argsort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
 
     # Keep in-sync with np.ma.argmin
-    @overload
-    def argmin(  # type: ignore[override]
+    @overload  # type: ignore[override]
+    def argmin(
         self,
         axis: None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -482,7 +482,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> intp: ...
     @overload
-    def argmin(  # type: ignore[override]
+    def argmin(
         self,
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -491,7 +491,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool | _NoValueType = ...,
     ) -> Any: ...
     @overload
-    def argmin(  # type: ignore[override]
+    def argmin(
         self,
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -500,7 +500,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayT: ...
     @overload
-    def argmin(  # type: ignore[override]
+    def argmin(
         self,
         axis: SupportsIndex | None,
         fill_value: _ScalarLike_co | None,
@@ -510,8 +510,8 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     ) -> _ArrayT: ...
 
     # Keep in-sync with np.ma.argmax
-    @overload
-    def argmax(  # type: ignore[override]
+    @overload  # type: ignore[override]
+    def argmax(
         self,
         axis: None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -520,7 +520,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> intp: ...
     @overload
-    def argmax(  # type: ignore[override]
+    def argmax(
         self,
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -529,7 +529,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool | _NoValueType = ...,
     ) -> Any: ...
     @overload
-    def argmax(  # type: ignore[override]
+    def argmax(
         self,
         axis: SupportsIndex | None = None,
         fill_value: _ScalarLike_co | None = None,
@@ -538,7 +538,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayT: ...
     @overload
-    def argmax(  # type: ignore[override]
+    def argmax(
         self,
         axis: SupportsIndex | None,
         fill_value: _ScalarLike_co | None,
@@ -559,9 +559,9 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         stable: Literal[False] | None = False,
     ) -> None: ...
 
-    # 
-    @overload
-    def min(  # type: ignore[override]
+    #
+    @overload  # type: ignore[override]
+    def min(
         self: _MaskedArray[_SCT],
         axis: None = None,
         out: None = None,
@@ -569,7 +569,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> _SCT: ...
     @overload
-    def min(  # type: ignore[override]
+    def min(
         self,
         axis: _ShapeLike | None = None,
         out: None = None,
@@ -577,7 +577,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool | _NoValueType = ...
     ) -> Any: ...
     @overload
-    def min(  # type: ignore[override]
+    def min(
         self,
         axis: _ShapeLike | None,
         out: _ArrayT,
@@ -585,7 +585,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayT: ...
     @overload
-    def min(  # type: ignore[override]
+    def min(
         self,
         axis: _ShapeLike | None = None,
         *,
@@ -593,8 +593,10 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayT: ...
-    @overload
-    def max(  # type: ignore[override]
+
+    #
+    @overload  # type: ignore[override]
+    def max(
         self: _MaskedArray[_SCT],
         axis: None = None,
         out: None = None,
@@ -602,7 +604,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> _SCT: ...
     @overload
-    def max(  # type: ignore[override]
+    def max(
         self,
         axis: _ShapeLike | None = None,
         out: None = None,
@@ -610,7 +612,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool | _NoValueType = ...
     ) -> Any: ...
     @overload
-    def max(  # type: ignore[override]
+    def max(
         self,
         axis: _ShapeLike | None,
         out: _ArrayT,
@@ -618,7 +620,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayT: ...
     @overload
-    def max(  # type: ignore[override]
+    def max(
         self,
         axis: _ShapeLike | None = None,
         *,
@@ -626,8 +628,10 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool | _NoValueType = ...,
     ) -> _ArrayT: ...
+
+    #
     @overload
-    def ptp(  # type: ignore[override]
+    def ptp(
         self: _MaskedArray[_SCT],
         axis: None = None,
         out: None = None,
@@ -635,7 +639,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: Literal[False] = False,
     ) -> _SCT: ...
     @overload
-    def ptp(  # type: ignore[override]
+    def ptp(
         self,
         axis: _ShapeLike | None = None,
         out: None = None,
@@ -643,7 +647,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool = False,
     ) -> Any: ...
     @overload
-    def ptp(  # type: ignore[override]
+    def ptp(
         self,
         axis: _ShapeLike | None,
         out: _ArrayT,
@@ -651,7 +655,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool = False,
     ) -> _ArrayT: ...
     @overload
-    def ptp(  # type: ignore[override]
+    def ptp(
         self,
         axis: _ShapeLike | None = None,
         *,
@@ -659,6 +663,8 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         fill_value: _ScalarLike_co | None = None,
         keepdims: bool = False,
     ) -> _ArrayT: ...
+
+    #
     def partition(self, *args, **kwargs): ...
     def argpartition(self, *args, **kwargs): ...
     def take(self, indices, axis=..., out=..., mode=...): ...
@@ -931,6 +937,7 @@ def argmin(
     keepdims: bool | _NoValueType = ...,
 ) -> _ArrayT: ...
 
+#
 @overload
 def argmax(
     self: ArrayLike,
@@ -976,7 +983,7 @@ def power(a, b, third=...): ...
 def argsort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
 @overload
 def sort(
-    a: _ArrayType,
+    a: _ArrayT,
     axis: SupportsIndex = -1,
     kind: _SortKind | None = None,
     order: str | Sequence[str] | None = None,
@@ -984,7 +991,7 @@ def sort(
     fill_value: _ScalarLike_co | None = None,
     *,
     stable: Literal[False] | None = False,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def sort(
     a: ArrayLike,
