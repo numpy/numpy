@@ -194,9 +194,9 @@ __all__ = [
 
 _SCT = TypeVar("_SCT", bound=generic)
 _DType = TypeVar("_DType", bound=np.dtype[Any])
-_ArrayType = TypeVar("_ArrayType", bound=ndarray[Any, Any])
-_ArrayType_co = TypeVar(
-    "_ArrayType_co",
+_ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
+_ArrayT_co = TypeVar(
+    "_ArrayT_co",
     bound=ndarray[Any, Any],
     covariant=True,
 )
@@ -235,8 +235,8 @@ _RollKind: TypeAlias = L[  # `raise` is deliberately excluded
 ]
 
 @type_check_only
-class _SupportsArray(Protocol[_ArrayType_co]):
-    def __array__(self, /) -> _ArrayType_co: ...
+class _SupportsArray(Protocol[_ArrayT_co]):
+    def __array__(self, /) -> _ArrayT_co: ...
 
 @type_check_only
 class _KwargsEmpty(TypedDict, total=False):
@@ -401,14 +401,14 @@ empty: Final[_ConstructorEmpty]
 
 @overload
 def empty_like(
-    prototype: _ArrayType,
+    prototype: _ArrayT,
     dtype: None = ...,
     order: _OrderKACF = ...,
     subok: bool = ...,
     shape: None | _ShapeLike = ...,
     *,
     device: None | L["cpu"] = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def empty_like(
     prototype: _ArrayLike[_SCT],
@@ -442,7 +442,7 @@ def empty_like(
 
 @overload
 def array(
-    object: _ArrayType,
+    object: _ArrayT,
     dtype: None = ...,
     *,
     copy: None | bool | _CopyMode = ...,
@@ -450,10 +450,10 @@ def array(
     subok: L[True],
     ndmin: int = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def array(
-    object: _SupportsArray[_ArrayType],
+    object: _SupportsArray[_ArrayT],
     dtype: None = ...,
     *,
     copy: None | bool | _CopyMode = ...,
@@ -461,7 +461,7 @@ def array(
     subok: L[True],
     ndmin: L[0] = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def array(
     object: _ArrayLike[_SCT],
@@ -561,11 +561,11 @@ def concatenate(
     arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: None | SupportsIndex = ...,
-    out: _ArrayType = ...,
+    out: _ArrayT = ...,
     *,
     dtype: DTypeLike = ...,
     casting: None | _CastingKind = ...
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 def inner(
     a: ArrayLike,
@@ -608,7 +608,7 @@ def result_type(
 @overload
 def dot(a: ArrayLike, b: ArrayLike, out: None = ...) -> Any: ...
 @overload
-def dot(a: ArrayLike, b: ArrayLike, out: _ArrayType) -> _ArrayType: ...
+def dot(a: ArrayLike, b: ArrayLike, out: _ArrayT) -> _ArrayT: ...
 
 @overload
 def vdot(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co, /) -> np.bool: ...  # type: ignore[misc]
@@ -710,14 +710,14 @@ def asarray(
 
 @overload
 def asanyarray(
-    a: _ArrayType,  # Preserve subclass-information
+    a: _ArrayT,  # Preserve subclass-information
     dtype: None = ...,
     order: _OrderKACF = ...,
     *,
     device: None | L["cpu"] = ...,
     copy: None | bool = ...,
     like: None | _SupportsArrayFunc = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def asanyarray(
     a: _ArrayLike[_SCT],
@@ -1106,8 +1106,8 @@ def busday_count(
     weekmask: ArrayLike = ...,
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
-    out: _ArrayType = ...,
-) -> _ArrayType: ...
+    out: _ArrayT = ...,
+) -> _ArrayT: ...
 
 # `roll="raise"` is (more or less?) equivalent to `casting="safe"`
 @overload
@@ -1138,8 +1138,8 @@ def busday_offset(  # type: ignore[misc]
     weekmask: ArrayLike = ...,
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
-    out: _ArrayType = ...,
-) -> _ArrayType: ...
+    out: _ArrayT = ...,
+) -> _ArrayT: ...
 @overload
 def busday_offset(  # type: ignore[misc]
     dates: _ScalarLike_co | dt.date,
@@ -1168,8 +1168,8 @@ def busday_offset(
     weekmask: ArrayLike = ...,
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
-    out: _ArrayType = ...,
-) -> _ArrayType: ...
+    out: _ArrayT = ...,
+) -> _ArrayT: ...
 
 @overload
 def is_busday(  # type: ignore[misc]
@@ -1193,8 +1193,8 @@ def is_busday(
     weekmask: ArrayLike = ...,
     holidays: None | ArrayLike | dt.date | _NestedSequence[dt.date] = ...,
     busdaycal: None | busdaycalendar = ...,
-    out: _ArrayType = ...,
-) -> _ArrayType: ...
+    out: _ArrayT = ...,
+) -> _ArrayT: ...
 
 @overload
 def datetime_as_string(  # type: ignore[misc]

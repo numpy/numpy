@@ -2126,7 +2126,7 @@ class TestRegression:
         # Ticket #4369.
         dt = np.dtype([('date', '<M8[D]'), ('val', '<f8')])
         arr = np.array([('2000-01-01', 1)], dt)
-        formatted = '{0}'.format(arr[0])
+        formatted = f'{arr[0]}'
         assert_equal(formatted, str(arr[0]))
 
     def test_deepcopy_on_0d_array(self):

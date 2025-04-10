@@ -4178,7 +4178,7 @@ class MaskedArray(ndarray):
 
         # join keys with values and indentations
         result = ',\n'.join(
-            '{}{}={}'.format(indents[k], k, reprs[k])
+            f'{indents[k]}{k}={reprs[k]}'
             for k in keys
         )
         return prefix + result + ')'

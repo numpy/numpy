@@ -280,9 +280,8 @@ def _ravel_and_check_weights(a, weights):
 
     # Ensure that the array is a "subtractable" dtype
     if a.dtype == np.bool:
-        warnings.warn("Converting input from {} to {} for compatibility."
-                      .format(a.dtype, np.uint8),
-                      RuntimeWarning, stacklevel=3)
+        msg = f"Converting input from {a.dtype} to {np.uint8} for compatibility."
+        warnings.warn(msg, RuntimeWarning, stacklevel=3)
         a = a.astype(np.uint8)
 
     if weights is not None:
@@ -307,7 +306,7 @@ def _get_outer_edges(a, range):
                 'max must be larger than min in range parameter.')
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
-                "supplied range of [{}, {}] is not finite".format(first_edge, last_edge))
+                f"supplied range of [{first_edge}, {last_edge}] is not finite")
     elif a.size == 0:
         # handle empty arrays. Can't determine range, so use 0-1.
         first_edge, last_edge = 0, 1
@@ -315,7 +314,7 @@ def _get_outer_edges(a, range):
         first_edge, last_edge = a.min(), a.max()
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
-                "autodetected range of [{}, {}] is not finite".format(first_edge, last_edge))
+                f"autodetected range of [{first_edge}, {last_edge}] is not finite")
 
     # expand empty range to avoid divide by zero
     if first_edge == last_edge:
@@ -384,7 +383,7 @@ def _get_bin_edges(a, bins, range, weights):
         # this will replace it with the number of bins calculated
         if bin_name not in _hist_bin_selectors:
             raise ValueError(
-                "{!r} is not a valid estimator for `bins`".format(bin_name))
+                f"{bin_name!r} is not a valid estimator for `bins`")
         if weights is not None:
             raise TypeError("Automated estimation of the number of "
                             "bins is not supported for weighted data")
@@ -1012,14 +1011,14 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         if np.ndim(bins[i]) == 0:
             if bins[i] < 1:
                 raise ValueError(
-                    '`bins[{}]` must be positive, when an integer'.format(i))
+                    f'`bins[{i}]` must be positive, when an integer')
             smin, smax = _get_outer_edges(sample[:, i], range[i])
             try:
                 n = operator.index(bins[i])
 
             except TypeError as e:
                 raise TypeError(
-                    "`bins[{}]` must be an integer, when a scalar".format(i)
+                    f"`bins[{i}]` must be an integer, when a scalar"
                 ) from e
 
             edges[i] = np.linspace(smin, smax, n + 1)
@@ -1027,11 +1026,10 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
                 raise ValueError(
-                    '`bins[{}]` must be monotonically increasing, when an array'
-                    .format(i))
+                    f'`bins[{i}]` must be monotonically increasing, when an array')
         else:
             raise ValueError(
-                '`bins[{}]` must be a scalar or 1d array'.format(i))
+                f'`bins[{i}]` must be a scalar or 1d array')
 
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])
