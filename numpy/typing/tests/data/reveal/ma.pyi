@@ -137,6 +137,7 @@ assert_type(MAR_f8.take(0, out=MAR_subclass), MaskedNDArraySubclass)
 assert_type(MAR_f8.take([0], out=MAR_subclass), MaskedNDArraySubclass)
 
 assert_type(np.ma.take(MAR_f8, 0), np.float64)
+assert_type(np.ma.take(AR_f4, 0), np.float32)
 assert_type(np.ma.take(MAR_1d, 0), Any)
 assert_type(np.ma.take(MAR_f8, [0]), MaskedNDArray[np.float64])
 assert_type(np.ma.take(AR_f4, [0]), MaskedNDArray[Any])

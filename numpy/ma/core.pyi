@@ -1033,7 +1033,7 @@ maximum: _extrema_operation
 
 @overload
 def take(  # type: ignore[overload-overlap]
-    a: _MaskedArray[_SCT],
+    a: _ArrayLike[_SCT],
     indices: _IntLike_co,
     axis: None = None,
     out: None = None,
