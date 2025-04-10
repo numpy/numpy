@@ -68,3 +68,13 @@ m.sort(endwith='cabbage')  # E: No overload variant
 m.sort(fill_value=lambda: 'cabbage')  # E: No overload variant
 m.sort(stable='cabbage')  # E: No overload variant
 m.sort(stable=True)  # E: No overload variant
+
+m.partition(['cabbage'])  # E: No overload variant
+m.partition(axis=(0,1))  # E: No overload variant
+m.partition(kind='cabbage')  # E: No overload variant
+m.partition(order=lambda: 'cabbage')  # E: No overload variant
+
+m.argpartition(['cabbage'])  # E: No overload variant
+m.argpartition(axis=(0,1))  # E: No overload variant
+m.argpartition(kind='cabbage')  # E: No overload variant
+m.argpartition(order=lambda: 'cabbage')  # E: No overload variant

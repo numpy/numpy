@@ -9,6 +9,7 @@ from typing_extensions import deprecated
 
 from numpy import (
     _OrderKACF,
+    _PartitionKind,
     _SortKind,
     amax,
     amin,
@@ -24,6 +25,7 @@ from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
     NDArray,
+    _ArrayLikeInt_co,
     _ArrayLike,
     _DTypeLikeBool,
     _ScalarLike_co,
@@ -665,8 +667,20 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     ) -> _ArrayT: ...
 
     #
-    def partition(self, *args, **kwargs): ...
-    def argpartition(self, *args, **kwargs): ...
+    def partition(
+        self,
+        kth: _ArrayLikeInt_co,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None
+    ) -> None: ...
+    def argpartition(
+        self,
+        kth: _ArrayLikeInt_co,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None
+    ) -> _MaskedArray[intp]: ...
     def take(self, indices, axis=..., out=..., mode=...): ...
 
     copy: Any

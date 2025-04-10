@@ -128,3 +128,9 @@ assert_type(np.ma.sort(MAR_f4), MaskedNDArray[np.float32])
 assert_type(np.ma.sort(MAR_subclass), MaskedNDArraySubclass)
 assert_type(np.ma.sort([[0, 1], [2, 3]]), NDArray[Any])
 assert_type(np.ma.sort(AR_f4), NDArray[np.float32])
+
+assert_type(MAR_f4.partition(1), None)
+assert_type(MAR_f4.partition(1, axis=0, kind='introselect', order='K'), None)
+
+assert_type(MAR_f4.argpartition(1), MaskedNDArray[np.intp])
+assert_type(MAR_1d.argpartition(1, axis=0, kind='introselect', order='K'), MaskedNDArray[np.intp])
