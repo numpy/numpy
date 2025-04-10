@@ -1041,20 +1041,20 @@ def take(  # type: ignore[overload-overlap]
 ) -> _SCT: ...
 @overload
 def take(
+    a: _ArrayLike[_SCT],
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None = None,
+    out: None = None,
+    mode: _ModeKind = 'raise',
+) -> _MaskedArray[_SCT]: ...
+@overload
+def take(
     a: ArrayLike,
     indices: _IntLike_co,
     axis: SupportsIndex | None = None,
     out: None = None,
     mode: _ModeKind = 'raise',
 ) -> Any: ...
-@overload
-def take(
-    a: _MaskedArray[_SCT],
-    indices: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = None,
-    out: None = None,
-    mode: _ModeKind = 'raise',
-) -> _MaskedArray[_SCT]: ...
 @overload
 def take(
     a: ArrayLike,
