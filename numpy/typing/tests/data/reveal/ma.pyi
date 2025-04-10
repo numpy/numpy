@@ -144,3 +144,9 @@ assert_type(np.ma.take(AR_f4, [0]), MaskedNDArray[np.float32])
 assert_type(np.ma.take(MAR_f8, 0, out=MAR_subclass), MaskedNDArraySubclass)
 assert_type(np.ma.take(MAR_f8, [0], out=MAR_subclass), MaskedNDArraySubclass)
 assert_type(np.ma.take(np.eye(2), 1, axis=0), MaskedNDArray[np.float64])
+
+assert_type(MAR_f4.partition(1), None)
+assert_type(MAR_f4.partition(1, axis=0, kind='introselect', order='K'), None)
+
+assert_type(MAR_f4.argpartition(1), MaskedNDArray[np.intp])
+assert_type(MAR_1d.argpartition(1, axis=0, kind='introselect', order='K'), MaskedNDArray[np.intp])

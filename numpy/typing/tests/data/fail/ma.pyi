@@ -2,8 +2,11 @@ from typing import Any
 
 import numpy as np
 import numpy.ma
+import numpy.typing as npt
 
 m: np.ma.MaskedArray[tuple[int], np.dtype[np.float64]]
+
+AR_b: npt.NDArray[np.bool]
 
 m.shape = (3, 1)  # E: Incompatible types in assignment
 m.dtype = np.bool  # E: Incompatible types in assignment
@@ -77,3 +80,15 @@ np.ma.take(None)  # E: No overload variant
 np.ma.take(axis=1.0)  # E: No overload variant
 np.ma.take(out=1)  # E: No overload variant
 np.ma.take(mode="bob")  # E: No overload variant
+
+m.partition(['cabbage'])  # E: No overload variant
+m.partition(axis=(0,1))  # E: No overload variant
+m.partition(kind='cabbage')  # E: No overload variant
+m.partition(order=lambda: 'cabbage')  # E: No overload variant
+m.partition(AR_b)  # E: No overload variant
+
+m.argpartition(['cabbage'])  # E: No overload variant
+m.argpartition(axis=(0,1))  # E: No overload variant
+m.argpartition(kind='cabbage')  # E: No overload variant
+m.argpartition(order=lambda: 'cabbage')  # E: No overload variant
+m.argpartition(AR_b)  # E: No overload variant
