@@ -734,7 +734,6 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         kind: _PartitionKind = "introselect",
         order: str | Sequence[str] | None = None
     ) -> _MaskedArray[intp]: ...
-
     def take(self, indices, axis=..., out=..., mode=...): ...
 
     copy: Any
