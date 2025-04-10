@@ -25,9 +25,9 @@ from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
     NDArray,
-    _ArrayLikeInt_co,
     _ArrayLike,
     _DTypeLikeBool,
+    _ArrayLikeInt,
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
@@ -669,14 +669,14 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     #
     def partition(
         self,
-        kth: _ArrayLikeInt_co,
+        kth: _ArrayLikeInt,
         axis: SupportsIndex = -1,
         kind: _PartitionKind = "introselect",
         order: str | Sequence[str] | None = None
     ) -> None: ...
     def argpartition(
         self,
-        kth: _ArrayLikeInt_co,
+        kth: _ArrayLikeInt,
         axis: SupportsIndex = -1,
         kind: _PartitionKind = "introselect",
         order: str | Sequence[str] | None = None
