@@ -8,6 +8,7 @@ from _typeshed import Incomplete
 from typing_extensions import deprecated
 
 from numpy import (
+    _ModeKind,
     _OrderKACF,
     _SortKind,
     amax,
@@ -23,8 +24,10 @@ from numpy import (
 from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
+    _IntLike_co,
     NDArray,
     _ArrayLike,
+    _ArrayLikeInt_co,
     _DTypeLikeBool,
     _ScalarLike_co,
     _Shape,
@@ -667,7 +670,57 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     #
     def partition(self, *args, **kwargs): ...
     def argpartition(self, *args, **kwargs): ...
-    def take(self, indices, axis=..., out=..., mode=...): ...
+
+    # Keep in-sync with np.ma.take
+    @overload
+    def take(  # type: ignore[overload-overlap]
+        self: _MaskedArray[_SCT],
+        indices: _IntLike_co,
+        axis: None = None,
+        out: None = None,
+        mode: _ModeKind = 'raise'
+    ) -> _SCT: ...
+    @overload
+    def take(
+        self,
+        indices: _IntLike_co,
+        axis: SupportsIndex | None = None,
+        out: None = None,
+        mode: _ModeKind = 'raise',
+    ) -> Any: ...
+    @overload
+    def take(
+        self: _MaskedArray[_SCT],
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None = None,
+        out: None = None,
+        mode: _ModeKind = 'raise',
+    ) -> _MaskedArray[_SCT]: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None = None,
+        out: None = None,
+        mode: _ModeKind = 'raise',
+    ) -> _MaskedArray[Any]: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None,
+        out: _ArrayT,
+        mode: _ModeKind = 'raise',
+    ) -> _ArrayT: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None = None,
+        *,
+        out: _ArrayT,
+        mode: _ModeKind = 'raise',
+    ) -> _ArrayT: ...
 
     copy: Any
     diagonal: Any
@@ -978,7 +1031,56 @@ def argmax(
 minimum: _extrema_operation
 maximum: _extrema_operation
 
-def take(a, indices, axis=..., out=..., mode=...): ...
+@overload
+def take(  # type: ignore[overload-overlap]
+    a: _MaskedArray[_SCT],
+    indices: _IntLike_co,
+    axis: None = None,
+    out: None = None,
+    mode: _ModeKind = 'raise'
+) -> _SCT: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _IntLike_co,
+    axis: SupportsIndex | None = None,
+    out: None = None,
+    mode: _ModeKind = 'raise',
+) -> Any: ...
+@overload
+def take(
+    a: _MaskedArray[_SCT],
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None = None,
+    out: None = None,
+    mode: _ModeKind = 'raise',
+) -> _MaskedArray[_SCT]: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None = None,
+    out: None = None,
+    mode: _ModeKind = 'raise',
+) -> _MaskedArray[Any]: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None,
+    out: _ArrayT,
+    mode: _ModeKind = 'raise',
+) -> _ArrayT: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None = None,
+    *,
+    out: _ArrayT,
+    mode: _ModeKind = 'raise',
+) -> _ArrayT: ...
+
 def power(a, b, third=...): ...
 def argsort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
 @overload
