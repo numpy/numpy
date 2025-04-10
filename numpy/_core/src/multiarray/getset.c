@@ -848,6 +848,15 @@ array_flat_set(PyArrayObject *self, PyObject *val, void *NPY_UNUSED(ignored))
 static PyObject *
 array_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 {
+    int ndim = PyArray_NDIM(self);
+    if (ndim != 2) {
+        if (PyErr_WarnFormat(PyExc_UserWarning, 1,
+                "In the future `.T` property will be supported for "
+                "2-dim arrays only. Here it is %d-dim array.",
+                ndim) < 0) {
+            return NULL;
+        }
+    }
     return PyArray_Transpose(self, NULL);
 }
 

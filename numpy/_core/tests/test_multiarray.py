@@ -3218,7 +3218,7 @@ class TestMethods:
         assert_equal(x0.flatten('F'), x0.T.flatten())
         assert_equal(x1.flatten(), y1)
         assert_equal(x1.flatten('F'), y1f)
-        assert_equal(x1.flatten('F'), x1.T.flatten())
+        assert_equal(x1.flatten('F'), x1.transpose().flatten())
 
     @pytest.mark.parametrize('func', (np.dot, np.matmul))
     def test_arr_mult(self, func):
@@ -3323,8 +3323,8 @@ class TestMethods:
         ret2 = func(a.copy(), b.copy())
         assert_equal(ret1, ret2)
 
-        ret1 = func(b.T, a.T)
-        ret2 = func(b.T.copy(), a.T.copy())
+        ret1 = func(b.transpose(), a.transpose())
+        ret2 = func(b.transpose().copy(), a.transpose().copy())
         assert_equal(ret1, ret2)
 
     def test_dot(self):
@@ -4626,7 +4626,7 @@ class TestArgmaxArgminCommon:
                 wrong_shape[0] = 2
             wrong_outarray = np.empty(wrong_shape, dtype=res.dtype)
             with pytest.raises(ValueError):
-                method(arr.T, axis=axis,
+                method(arr.transpose(), axis=axis,
                         out=wrong_outarray, keepdims=True)
 
         # non-contiguous arrays
@@ -4637,14 +4637,14 @@ class TestArgmaxArgminCommon:
             new_shape[axis] = 1
         new_shape = tuple(new_shape)
 
-        _res_orig = method(arr.T, axis=axis)
+        _res_orig = method(arr.transpose(), axis=axis)
         res_orig = _res_orig.reshape(new_shape)
-        res = method(arr.T, axis=axis, keepdims=True)
+        res = method(arr.transpose(), axis=axis, keepdims=True)
         assert_equal(res, res_orig)
         assert_(res.shape == new_shape)
         outarray = np.empty(new_shape[::-1], dtype=res.dtype)
-        outarray = outarray.T
-        res1 = method(arr.T, axis=axis, out=outarray,
+        outarray = outarray.transpose()
+        res1 = method(arr.transpose(), axis=axis, out=outarray,
                             keepdims=True)
         assert_(res1 is outarray)
         assert_equal(res, outarray)
@@ -4664,7 +4664,7 @@ class TestArgmaxArgminCommon:
                 wrong_shape[0] = 2
             wrong_outarray = np.empty(wrong_shape, dtype=res.dtype)
             with pytest.raises(ValueError):
-                method(arr.T, axis=axis,
+                method(arr.transpose(), axis=axis,
                         out=wrong_outarray, keepdims=True)
 
     @pytest.mark.parametrize('method', ['max', 'min'])
@@ -8298,7 +8298,7 @@ class TestNewBufferProtocol:
         fd = io.BytesIO()
         fd.write(c.data)
 
-        fortran = c.T
+        fortran = c.transpose()
         assert_(memoryview(fortran).strides == (8, 80, 800))
 
         arr = np.ones((1, 10))

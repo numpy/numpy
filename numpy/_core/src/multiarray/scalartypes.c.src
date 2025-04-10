@@ -1925,6 +1925,11 @@ gentype_flat_get(PyObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 gentype_transpose_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
+    if (PyErr_WarnEx(PyExc_UserWarning,
+            "In the future `.T` property for array scalars will "
+            "raise an error.", 1) < 0) {
+        return NULL;
+    }
     Py_INCREF(self);
     return self;
 }
