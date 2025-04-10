@@ -1037,8 +1037,8 @@ class TestUfunc:
         assert_equal(x[0, 0, 0, 0, 0, 0], -1, err_msg=msg2)
         assert_array_equal(np.vecdot(a, b), np.sum(a * b, axis=-1), err_msg=msg)
         x = np.arange(24).reshape(2, 3, 4)
-        a = x.T
-        b = x.T
+        a = x.transpose()
+        b = x.transpose()
         a[0, 0, 0] = -1
         assert_equal(x[0, 0, 0], -1, err_msg=msg2)
         assert_array_equal(np.vecdot(a, b), np.sum(a * b, axis=-1), err_msg=msg)

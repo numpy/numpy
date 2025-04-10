@@ -2771,7 +2771,7 @@ def cov(m, y=None, rowvar=True, bias=False, ddof=None, fweights=None,
         >>> v1 = np.sum(w)
         >>> v2 = np.sum(w * a)
         >>> m -= np.sum(m * w, axis=None, keepdims=True) / v1
-        >>> cov = np.dot(m * w, m.T) * v1 / (v1**2 - ddof * v2)
+        >>> cov = np.dot(m * w, m) * v1 / (v1**2 - ddof * v2)
 
     Note that when ``a == 1``, the normalization factor
     ``v1 / (v1**2 - ddof * v2)`` goes over to ``1 / (np.sum(f) - ddof)``

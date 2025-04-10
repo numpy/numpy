@@ -452,3 +452,17 @@ class TestAddNewdocUFunc(_DeprecationTestCase):
                 struct_ufunc.add_triplet, "new docs"
             )
         )
+
+
+def test_deprecated_T_non_2dim():
+    # Deprecated in Numpy 2.3, 2025-04
+    with pytest.warns(UserWarning, match="In the future `.T` property for "
+                      "array scalars will raise an error."):
+        np.int64(1).T
+    for shape in [(5,), (2, 3, 4)]:
+        with pytest.warns(
+                UserWarning,
+                match="In the future `.T` property will be "
+                      "supported for 2-dim arrays only. "
+                      f"Here it is {len(shape)}-dim array."):
+            np.ones(shape).T

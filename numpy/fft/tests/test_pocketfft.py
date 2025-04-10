@@ -413,7 +413,7 @@ class TestFFT1D:
     def test_fftn_out_argument(self, dtype, transpose, axes):
         def zeros_like(x):
             if transpose:
-                return np.zeros_like(x.T).T
+                return np.zeros_like(x.transpose()).transpose()
             else:
                 return np.zeros_like(x)
 
