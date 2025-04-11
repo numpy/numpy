@@ -335,6 +335,24 @@ string_amergesort_(type *v, npy_intp *tosort, npy_intp num, void *varr)
  *****************************************************************************
  */
 
+NPY_NO_EXPORT int
+npy_mergesort_with_context(void *start, npy_intp num,
+                           PyArrayMethod_Context *context, NpyAuxData *auxdata,
+                           NpyAuxData **out_auxdata)
+{
+    return handle_npysort_with_context(start, num, context, auxdata,
+                                       out_auxdata, &npy_mergesort);
+}
+
+NPY_NO_EXPORT int
+npy_amergesort_with_context(void *vv, npy_intp *tosort, npy_intp num,
+                            PyArrayMethod_Context *context, NpyAuxData *auxdata,
+                            NpyAuxData **out_auxdata)
+{
+    return handle_npyasort_with_context(vv, tosort, num, context, auxdata,
+                                        out_auxdata, &npy_amergesort);
+}
+
 static void
 npy_mergesort0(char *pl, char *pr, char *pw, char *vp, npy_intp elsize,
                PyArray_CompareFunc *cmp, PyArrayObject *arr)

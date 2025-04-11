@@ -10,6 +10,33 @@
 extern "C" {
 #endif
 
+
+/*
+ *****************************************************************************
+ **                        NEW SORTFUNC HANDLERS                            **
+ *****************************************************************************
+ */
+
+static inline int
+handle_npysort_with_context(void *start, npy_intp num,
+                            PyArrayMethod_Context *context, NpyAuxData *auxdata,
+                            NpyAuxData **out_auxdata,
+                            PyArray_SortFuncWithArray *sort)
+{
+    PyArray_Descr *descr = context->descriptors[0];
+    return sort(start, num, descr);
+}
+
+static inline int
+handle_npyasort_with_context(void *vv, npy_intp *tosort, npy_intp num,
+                             PyArrayMethod_Context *context, NpyAuxData *auxdata,
+                             NpyAuxData **out_auxdata,
+                             PyArray_ArgSortFuncWithArray *asort)
+{
+    PyArray_Descr *descr = context->descriptors[0];
+    return asort(vv, tosort, num, descr);
+}
+
 static inline void
 fill_sort_data_from_arr_or_descr(void *arr_or_descr, void **out_arr_or_descr,
                                  npy_intp *elsize, PyArray_CompareFunc **out_cmp)
@@ -27,8 +54,6 @@ fill_sort_data_from_arr_or_descr(void *arr_or_descr, void **out_arr_or_descr,
         *out_cmp = (PyArray_CompareFunc *)PyArray_GetSortCompareFunction(descr);
     }
 }
-
-
 
 /*
  *****************************************************************************

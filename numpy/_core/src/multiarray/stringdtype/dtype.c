@@ -518,9 +518,121 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
 }
 
 static int
-stringdtype_sort_compare(void *a, void *b, void *arr) {
-    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)PyArray_DESCR(arr);
-    return _compare(a, b, descr, descr);
+stringdtype_sort_compare(void *a, void *b, PyArray_Descr *descr) {
+    PyArray_StringDTypeObject *string_descr = (PyArray_StringDTypeObject *)descr;
+    return _compare(a, b, string_descr, string_descr);
+}
+
+int
+_stringdtype_sort(void *start, npy_intp num, PyArrayMethod_Context *context,
+                  NpyAuxData *auxdata, NpyAuxData **out_auxdata,
+                  PyArray_SortFunc *sort) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
+
+    NpyString_acquire_allocator(descr);
+    int result = sort(start, num, context, auxdata, out_auxdata);
+    NpyString_release_allocator(descr->allocator);
+    
+    return result;
+}
+
+int
+_stringdtype_quicksort(void *start, npy_intp num, PyArrayMethod_Context *context,
+                       NpyAuxData *auxdata, NpyAuxData **out_auxdata) {
+    return _stringdtype_sort(start, num, context, auxdata, out_auxdata,
+                             &npy_quicksort_with_context);
+}
+
+int
+_stringdtype_heapsort(void *start, npy_intp num, PyArrayMethod_Context *context,
+                        NpyAuxData *auxdata, NpyAuxData **out_auxdata) {
+    return _stringdtype_sort(start, num, context, auxdata, out_auxdata,
+                             &npy_heapsort_with_context);
+}
+
+int
+_stringdtype_timsort(void *start, npy_intp num, PyArrayMethod_Context *context,
+                       NpyAuxData *auxdata, NpyAuxData **out_auxdata) {
+    return _stringdtype_sort(start, num, context, auxdata, out_auxdata,
+                             &npy_timsort_with_context);
+}
+
+int
+stringdtype_get_sort_function(PyArray_Descr *descr,
+    NPY_SORTKIND sort_kind, int descending, PyArray_SortFunc **out_sort) {
+    
+    switch (sort_kind) {
+        default:
+        case NPY_QUICKSORT:
+            *out_sort = &_stringdtype_quicksort;
+            break;
+        case NPY_HEAPSORT:
+            *out_sort = &_stringdtype_heapsort;
+            break;
+        case NPY_STABLESORT:
+            *out_sort = &_stringdtype_timsort;
+            break;
+    }
+
+    return 0;
+}
+
+int
+_stringdtype_argsort(void *vv, npy_intp *tosort, npy_intp num,
+                     PyArrayMethod_Context *context, NpyAuxData *auxdata,
+                     NpyAuxData **out_auxdata,
+                     PyArray_ArgSortFunc *argsort) {
+    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
+
+    NpyString_acquire_allocator(descr);
+    int result = argsort(vv, tosort, num, context, auxdata, out_auxdata);
+    NpyString_release_allocator(descr->allocator);
+    
+    return result;
+}
+
+int
+_stringdtype_aquicksort(void *vv, npy_intp *tosort, npy_intp n, 
+                        PyArrayMethod_Context *context, NpyAuxData *auxdata,
+                        NpyAuxData **out_auxdata) {
+    return _stringdtype_argsort(vv, tosort, n, context, auxdata, out_auxdata,
+                          &npy_aquicksort_with_context);
+}
+
+int
+_stringdtype_aheapsort(void *vv, npy_intp *tosort, npy_intp n, 
+                        PyArrayMethod_Context *context, NpyAuxData *auxdata,
+                        NpyAuxData **out_auxdata) {
+    return _stringdtype_argsort(vv, tosort, n, context, auxdata, out_auxdata,
+                          &npy_aheapsort_with_context);
+}
+
+int
+_stringdtype_atimsort(void *vv, npy_intp *tosort, npy_intp n, 
+                        PyArrayMethod_Context *context, NpyAuxData *auxdata,
+                        NpyAuxData **out_auxdata) {
+    return _stringdtype_argsort(vv, tosort, n, context, auxdata, out_auxdata,
+                          &npy_atimsort_with_context);
+}
+
+int
+stringdtype_get_argsort_function(PyArray_Descr *descr, 
+    NPY_SORTKIND sort_kind, int descending, PyArray_ArgSortFunc **out_argsort) {
+    
+    switch (sort_kind) {
+        default:
+        case NPY_QUICKSORT:
+            *out_argsort = &_stringdtype_aquicksort;
+            break;
+        case NPY_HEAPSORT:
+            *out_argsort = &_stringdtype_aheapsort;
+            break;
+        case NPY_STABLESORT:
+            *out_argsort = &_stringdtype_atimsort;
+            break;
+    }
+
+    return 0;
 }
 
 // PyArray_ArgFunc

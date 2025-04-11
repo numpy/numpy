@@ -1599,6 +1599,23 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
 
     if (sort_with_array == NULL) {
+        if (PyArray_GetSortCompareFunction(PyArray_DESCR(op)) != NULL) {
+            switch (which) {
+                default:
+                case NPY_QUICKSORT:
+                    sort = npy_quicksort_with_context;
+                    break;
+                case NPY_HEAPSORT:
+                    sort = npy_heapsort_with_context;
+                    break;
+                case NPY_STABLESORT:
+                    sort = npy_timsort_with_context;
+                    break;
+            }
+        }
+    }
+
+    if (sort == NULL) {
         if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare != NULL) {
             switch (which) {
                 default:
@@ -1755,6 +1772,23 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
 
     if (argsort_with_array == NULL) {
+        if (PyArray_GetSortCompareFunction(PyArray_DESCR(op)) != NULL) {
+            switch (which) {
+                default:
+                case NPY_QUICKSORT:
+                    argsort = npy_aquicksort_with_context;
+                    break;
+                case NPY_HEAPSORT:
+                    argsort = npy_aheapsort_with_context;
+                    break;
+                case NPY_STABLESORT:
+                    argsort = npy_atimsort_with_context;
+                    break;
+            }
+        }
+    }
+
+    if (argsort == NULL) {
         if (PyDataType_GetArrFuncs(PyArray_DESCR(op))->compare != NULL) {
             switch (which) {
                 default:
