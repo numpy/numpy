@@ -398,7 +398,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     }
     ni = PyArray_SIZE(indices);
     if ((ni > 0) && (PyArray_Size((PyObject *)self) == 0)) {
-        PyErr_SetString(PyExc_IndexError, 
+        PyErr_SetString(PyExc_IndexError,
                         "cannot replace elements of an empty array");
         goto fail;
     }
@@ -2816,6 +2816,61 @@ finish:
     return nonzero_count;
 }
 
+static inline void
+nonzero_idxs_1D_bool(npy_intp count, npy_intp nonzero_count, char *data,
+                     npy_intp stride, npy_intp* multi_index)
+{
+    /*
+    * use fast memchr variant for sparse data, see gh-4370
+    * the fast bool count is followed by this sparse path is faster
+    * than combining the two loops, even for larger arrays
+    */
+   npy_intp * multi_index_end = multi_index + nonzero_count;
+
+    if (((double)nonzero_count / count) <= 0.1) {
+        npy_intp subsize;
+        npy_intp j = 0;
+        while (multi_index < multi_index_end) {
+            npy_memchr(data + j * stride, 0, stride, count - j,
+                        &subsize, 1);
+            j += subsize;
+            if (j >= count) {
+                break;
+            }
+            *multi_index++ = j++;
+        }
+    }
+    /*
+        * Fallback to a branchless strategy to avoid branch misprediction
+        * stalls that are very expensive on most modern processors.
+        */
+    else {
+        npy_intp *multi_index_end = multi_index + nonzero_count;
+        npy_intp j = 0;
+
+        /* Manually unroll for GCC and maybe other compilers */
+        while (multi_index + 4 < multi_index_end && (j < count - 4) ) {
+            *multi_index = j;
+            multi_index += data[0] != 0;
+            *multi_index = j + 1;
+            multi_index += data[stride] != 0;
+            *multi_index = j + 2;
+            multi_index += data[stride * 2] != 0;
+            *multi_index = j + 3;
+            multi_index += data[stride * 3] != 0;
+            data += stride * 4;
+            j += 4;
+        }
+
+        while (multi_index < multi_index_end && (j < count) ) {
+            *multi_index = j;
+            multi_index += *data != 0;
+            data += stride;
+            ++j;
+        }
+    }
+}
+
 /*NUMPY_API
  * Nonzero
  *
@@ -2824,10 +2879,11 @@ finish:
 NPY_NO_EXPORT PyObject *
 PyArray_Nonzero(PyArrayObject *self)
 {
-    int i, ndim = PyArray_NDIM(self);
+    int ndim = PyArray_NDIM(self);
+    int is_bool = PyArray_ISBOOL(self);
     if (ndim == 0) {
         char const* msg;
-        if (PyArray_ISBOOL(self)) {
+        if (is_bool) {
             msg =
                 "Calling nonzero on 0d arrays is not allowed. "
                 "Use np.atleast_1d(scalar).nonzero() instead. "
@@ -2842,38 +2898,22 @@ PyArray_Nonzero(PyArrayObject *self)
         return NULL;
     }
 
-    PyArrayObject *ret = NULL;
-    PyObject *ret_tuple;
-    npy_intp ret_dims[2];
-
-    PyArray_NonzeroFunc *nonzero;
-    PyArray_Descr *dtype;
-
-    npy_intp nonzero_count;
     npy_intp added_count = 0;
-    int needs_api;
-    int is_bool;
 
-    NpyIter *iter;
-    NpyIter_IterNextFunc *iternext;
-    NpyIter_GetMultiIndexFunc *get_multi_index;
-    char **dataptr;
-
-    dtype = PyArray_DESCR(self);
-    nonzero = PyDataType_GetArrFuncs(dtype)->nonzero;
-    needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
+    PyArray_Descr *dtype = PyArray_DESCR(self);
+    int needs_api = PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI);
 
     /*
      * First count the number of non-zeros in 'self'.
      */
-    nonzero_count = PyArray_CountNonzero(self);
+    npy_intp nonzero_count = PyArray_CountNonzero(self);
     if (nonzero_count < 0) {
         return NULL;
     }
 
-    is_bool = PyArray_ISBOOL(self);
-
     /* Allocate the result as a 2D array */
+    PyArrayObject *ret = NULL;
+    npy_intp ret_dims[2];
     ret_dims[0] = nonzero_count;
     ret_dims[1] = ndim;
     ret = (PyArrayObject *)PyArray_NewFromDescr(
@@ -2883,6 +2923,41 @@ PyArray_Nonzero(PyArrayObject *self)
     if (ret == NULL) {
         return NULL;
     }
+    /* nothing to do */
+    if (nonzero_count == 0) {
+        goto finish;
+    }
+
+    int bytes_not_swapped = PyArray_ISNOTSWAPPED(self);
+    int optimized_count = PyArray_TRIVIALLY_ITERABLE(self) && bytes_not_swapped && PyArray_ISALIGNED(self);
+    if (optimized_count ) {
+        npy_intp * multi_index = (npy_intp *)PyArray_DATA(ret);
+        char * data = PyArray_BYTES(self);
+        const npy_intp* M_strides = PyArray_STRIDES(self);
+        npy_intp count_first_dim = PyArray_DIM(self, 0);
+
+        NPY_BEGIN_THREADS_DEF;
+        if (!needs_api) {
+            NPY_BEGIN_THREADS_THRESHOLDED(count_first_dim);
+        }
+        npy_bool executed = NPY_FALSE;
+        /* avoid function call for bool */
+        if ( (ndim ==  1) && is_bool) {
+            nonzero_idxs_1D_bool(count_first_dim, nonzero_count, data, M_strides[0], multi_index);
+            executed = NPY_TRUE;
+        }
+        else {
+            executed = nonzero_idxs_dispatcher((void*)data, multi_index, PyArray_NDIM(self),
+                                PyArray_SHAPE(self), M_strides, dtype->type_num, nonzero_count);
+        }
+        NPY_END_THREADS;
+        if (executed) {
+            added_count = nonzero_count;
+            goto finish;
+        }
+    }
+
+    PyArray_NonzeroFunc *nonzero = PyDataType_GetArrFuncs(dtype)->nonzero;
 
     /* If it's a one-dimensional result, don't use an iterator */
     if (ndim == 1) {
@@ -2891,80 +2966,22 @@ PyArray_Nonzero(PyArrayObject *self)
         npy_intp stride = PyArray_STRIDE(self, 0);
         npy_intp count = PyArray_DIM(self, 0);
         NPY_BEGIN_THREADS_DEF;
-
-        /* nothing to do */
-        if (nonzero_count == 0) {
-            goto finish;
-        }
-
         if (!needs_api) {
             NPY_BEGIN_THREADS_THRESHOLDED(count);
         }
 
-        /* avoid function call for bool */
-        if (is_bool) {
-            /*
-             * use fast memchr variant for sparse data, see gh-4370
-             * the fast bool count is followed by this sparse path is faster
-             * than combining the two loops, even for larger arrays
-             */
-            npy_intp * multi_index_end = multi_index + nonzero_count;
-            if (((double)nonzero_count / count) <= 0.1) {
-                npy_intp subsize;
-                npy_intp j = 0;
-                while (multi_index < multi_index_end) {
-                    npy_memchr(data + j * stride, 0, stride, count - j,
-                               &subsize, 1);
-                    j += subsize;
-                    if (j >= count) {
-                        break;
-                    }
-                    *multi_index++ = j++;
-                }
-            }
-            /*
-             * Fallback to a branchless strategy to avoid branch misprediction
-             * stalls that are very expensive on most modern processors.
-             */
-            else {
-                npy_intp j = 0;
+        for (npy_intp j = 0; j < count; ++j) {
+            if (nonzero(data, self)) {
+                if (++added_count > nonzero_count) {
 
-                /* Manually unroll for GCC and maybe other compilers */
-                while (multi_index + 4 < multi_index_end && (j < count - 4) ) {
-                    *multi_index = j;
-                    multi_index += data[0] != 0;
-                    *multi_index = j + 1;
-                    multi_index += data[stride] != 0;
-                    *multi_index = j + 2;
-                    multi_index += data[stride * 2] != 0;
-                    *multi_index = j + 3;
-                    multi_index += data[stride * 3] != 0;
-                    data += stride * 4;
-                    j += 4;
-                }
-
-                while (multi_index < multi_index_end && (j < count) ) {
-                    *multi_index = j;
-                    multi_index += *data != 0;
-                    data += stride;
-                    ++j;
-                }
-            }
-        }
-        else {
-            npy_intp j;
-            for (j = 0; j < count; ++j) {
-                if (nonzero(data, self)) {
-                    if (++added_count > nonzero_count) {
-                        break;
-                    }
-                    *multi_index++ = j;
-                }
-                if (needs_api && PyErr_Occurred()) {
                     break;
                 }
-                data += stride;
+                *multi_index++ = j;
             }
+            if (needs_api && PyErr_Occurred()) {
+                break;
+            }
+            data += stride;
         }
 
         NPY_END_THREADS;
@@ -2975,7 +2992,7 @@ PyArray_Nonzero(PyArrayObject *self)
     /*
      * Build an iterator tracking a multi-index, in C order.
      */
-    iter = NpyIter_New(self, NPY_ITER_READONLY |
+    NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
                              NPY_ITER_MULTI_INDEX |
                              NPY_ITER_ZEROSIZE_OK |
                              NPY_ITER_REFS_OK,
@@ -2991,13 +3008,13 @@ PyArray_Nonzero(PyArrayObject *self)
         npy_intp * multi_index;
         NPY_BEGIN_THREADS_DEF;
         /* Get the pointers for inner loop iteration */
-        iternext = NpyIter_GetIterNext(iter, NULL);
+        NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
             NpyIter_Deallocate(iter);
             Py_DECREF(ret);
             return NULL;
         }
-        get_multi_index = NpyIter_GetGetMultiIndex(iter, NULL);
+        NpyIter_GetMultiIndexFunc *get_multi_index = NpyIter_GetGetMultiIndex(iter, NULL);
         if (get_multi_index == NULL) {
             NpyIter_Deallocate(iter);
             Py_DECREF(ret);
@@ -3011,7 +3028,7 @@ PyArray_Nonzero(PyArrayObject *self)
             NPY_BEGIN_THREADS_THRESHOLDED(NpyIter_GetIterSize(iter));
         }
 
-        dataptr = NpyIter_GetDataPtrArray(iter);
+        char **dataptr = NpyIter_GetDataPtrArray(iter);
 
         multi_index = (npy_intp *)PyArray_DATA(ret);
 
@@ -3060,14 +3077,14 @@ finish:
         return NULL;
     }
 
-    ret_tuple = PyTuple_New(ndim);
+    PyObject *ret_tuple = PyTuple_New(ndim);
     if (ret_tuple == NULL) {
         Py_DECREF(ret);
         return NULL;
     }
 
     /* Create views into ret, one for each dimension */
-    for (i = 0; i < ndim; ++i) {
+    for (int i = 0; i < ndim; ++i) {
         npy_intp stride = ndim * NPY_SIZEOF_INTP;
         /* the result is an empty array, the view must point to valid memory */
         npy_intp data_offset = nonzero_count == 0 ? 0 : i * NPY_SIZEOF_INTP;
