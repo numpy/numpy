@@ -72,6 +72,15 @@ m.sort(fill_value=lambda: 'cabbage')  # E: No overload variant
 m.sort(stable='cabbage')  # E: No overload variant
 m.sort(stable=True)  # E: No overload variant
 
+m.take(axis=1.0)  # E: No overload variant
+m.take(out=1)  # E: No overload variant
+m.take(mode="bob")  # E: No overload variant
+
+np.ma.take(None)  # E: No overload variant
+np.ma.take(axis=1.0)  # E: No overload variant
+np.ma.take(out=1)  # E: No overload variant
+np.ma.take(mode="bob")  # E: No overload variant
+
 m.partition(['cabbage'])  # E: No overload variant
 m.partition(axis=(0,1))  # E: No overload variant
 m.partition(kind='cabbage')  # E: No overload variant
