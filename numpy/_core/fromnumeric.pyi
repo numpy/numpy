@@ -27,7 +27,7 @@ from numpy import (
     timedelta64,
     object_,
     generic,
-    _AnyShapeType,
+    _AnyShapeT,
     _OrderKACF,
     _OrderACF,
     _ModeKind,
@@ -109,14 +109,14 @@ __all__ = [
 _SCT = TypeVar("_SCT", bound=generic)
 _SCT_uifcO = TypeVar("_SCT_uifcO", bound=number[Any] | object_)
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
-_ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
-_ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
+_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
+_ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
 
 @type_check_only
-class _SupportsShape(Protocol[_ShapeType_co]):
+class _SupportsShape(Protocol[_ShapeT_co]):
     # NOTE: it matters that `self` is positional only
     @property
-    def shape(self, /) -> _ShapeType_co: ...
+    def shape(self, /) -> _ShapeT_co: ...
 
 # a "sequence" that isn't a string, bytes, bytearray, or memoryview
 _T = TypeVar("_T")
@@ -184,14 +184,14 @@ def reshape(  # shape: index
     copy: bool | None = None,
 ) -> np.ndarray[tuple[int], np.dtype[_SCT]]: ...
 @overload
-def reshape(  # shape: (int, ...) @ _AnyShapeType
+def reshape(  # shape: (int, ...) @ _AnyShapeT
     a: _ArrayLike[_SCT],
     /,
-    shape: _AnyShapeType,
+    shape: _AnyShapeT,
     order: _OrderACF = "C",
     *,
     copy: bool | None = None,
-) -> np.ndarray[_AnyShapeType, np.dtype[_SCT]]: ...
+) -> np.ndarray[_AnyShapeT, np.dtype[_SCT]]: ...
 @overload  # shape: Sequence[index]
 def reshape(
     a: _ArrayLike[_SCT],
@@ -211,14 +211,14 @@ def reshape(
     copy: bool | None = None,
 ) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
 @overload
-def reshape(  # shape: (int, ...) @ _AnyShapeType
+def reshape(  # shape: (int, ...) @ _AnyShapeT
     a: ArrayLike,
     /,
-    shape: _AnyShapeType,
+    shape: _AnyShapeT,
     order: _OrderACF = "C",
     *,
     copy: bool | None = None,
-) -> np.ndarray[_AnyShapeType, np.dtype[Any]]: ...
+) -> np.ndarray[_AnyShapeT, np.dtype[Any]]: ...
 @overload  # shape: Sequence[index]
 def reshape(
     a: ArrayLike,
@@ -460,13 +460,13 @@ def searchsorted(
 @overload
 def resize(a: _ArrayLike[_SCT], new_shape: SupportsIndex | tuple[SupportsIndex]) -> np.ndarray[tuple[int], np.dtype[_SCT]]: ...
 @overload
-def resize(a: _ArrayLike[_SCT], new_shape: _AnyShapeType) -> np.ndarray[_AnyShapeType, np.dtype[_SCT]]: ...
+def resize(a: _ArrayLike[_SCT], new_shape: _AnyShapeT) -> np.ndarray[_AnyShapeT, np.dtype[_SCT]]: ...
 @overload
 def resize(a: _ArrayLike[_SCT], new_shape: _ShapeLike) -> NDArray[_SCT]: ...
 @overload
 def resize(a: ArrayLike, new_shape: SupportsIndex | tuple[SupportsIndex]) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
 @overload
-def resize(a: ArrayLike, new_shape: _AnyShapeType) -> np.ndarray[_AnyShapeType, np.dtype[Any]]: ...
+def resize(a: ArrayLike, new_shape: _AnyShapeT) -> np.ndarray[_AnyShapeT, np.dtype[Any]]: ...
 @overload
 def resize(a: ArrayLike, new_shape: _ShapeLike) -> NDArray[Any]: ...
 
@@ -558,7 +558,7 @@ def nonzero(a: _ArrayLike[Any]) -> tuple[NDArray[intp], ...]: ...
 @overload
 def shape(a: _SupportsShape[Never]) -> tuple[int, ...]: ...
 @overload
-def shape(a: _SupportsShape[_ShapeType]) -> _ShapeType: ...
+def shape(a: _SupportsShape[_ShapeT]) -> _ShapeT: ...
 @overload
 def shape(a: _PyScalar) -> tuple[()]: ...
 # `collections.abc.Sequence` can't be used hesre, since `bytes` and `str` are

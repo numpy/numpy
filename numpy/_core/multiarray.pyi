@@ -49,7 +49,7 @@ from numpy import (  # type: ignore[attr-defined]
     signedinteger,
     floating,
     complexfloating,
-    _AnyShapeType,
+    _AnyShapeT,
     _OrderKACF,
     _OrderCF,
     _CastingKind,
@@ -288,38 +288,38 @@ class _ConstructorEmpty(Protocol):
     def __call__(
         self,
         /,
-        shape: _AnyShapeType,
+        shape: _AnyShapeT,
         dtype: None = ...,
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[_AnyShapeType, float64]: ...
+    ) -> _Array[_AnyShapeT, float64]: ...
     @overload
     def __call__(
         self,
         /,
-        shape: _AnyShapeType,
+        shape: _AnyShapeT,
         dtype: _DType | _SupportsDType[_DType],
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> ndarray[_AnyShapeType, _DType]: ...
+    ) -> ndarray[_AnyShapeT, _DType]: ...
     @overload
     def __call__(
         self,
         /,
-        shape: _AnyShapeType,
+        shape: _AnyShapeT,
         dtype: type[_SCT],
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[_AnyShapeType, _SCT]: ...
+    ) -> _Array[_AnyShapeT, _SCT]: ...
     @overload
     def __call__(
         self,
         /,
-        shape: _AnyShapeType,
+        shape: _AnyShapeT,
         dtype: DTypeLike | None = ...,
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> _Array[_AnyShapeType, Any]: ...
+    ) -> _Array[_AnyShapeT, Any]: ...
 
     # unknown shape
     @overload

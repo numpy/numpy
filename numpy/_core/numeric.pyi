@@ -44,7 +44,7 @@ from numpy import (
     float64,
     timedelta64,
     object_,
-    _AnyShapeType,
+    _AnyShapeT,
     _OrderKACF,
     _OrderCF,
 )
@@ -191,7 +191,7 @@ _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
 _DType = TypeVar("_DType", bound=np.dtype[Any])
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
-_ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
+_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 
 _CorrelateMode: TypeAlias = L["valid", "same", "full"]
 
@@ -316,36 +316,36 @@ def full(
 # known shape
 @overload
 def full(
-    shape: _AnyShapeType,
+    shape: _AnyShapeT,
     fill_value: _SCT,
     dtype: None = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[_AnyShapeType, _SCT]: ...
+) -> _Array[_AnyShapeT, _SCT]: ...
 @overload
 def full(
-    shape: _AnyShapeType,
+    shape: _AnyShapeT,
     fill_value: Any,
     dtype: _DType | _SupportsDType[_DType],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> np.ndarray[_AnyShapeType, _DType]: ...
+) -> np.ndarray[_AnyShapeT, _DType]: ...
 @overload
 def full(
-    shape: _AnyShapeType,
+    shape: _AnyShapeT,
     fill_value: Any,
     dtype: type[_SCT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[_AnyShapeType, _SCT]: ...
+) -> _Array[_AnyShapeT, _SCT]: ...
 @overload
 def full(
-    shape: _AnyShapeType,
+    shape: _AnyShapeT,
     fill_value: Any,
     dtype: None | DTypeLike = ...,
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> _Array[_AnyShapeType, Any]: ...
+) -> _Array[_AnyShapeT, Any]: ...
 # unknown shape
 @overload
 def full(
@@ -862,19 +862,19 @@ def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
 
 @overload
 def astype(
-    x: ndarray[_ShapeType, dtype[Any]],
+    x: ndarray[_ShapeT, dtype[Any]],
     dtype: _DTypeLike[_SCT],
     /,
     *,
     copy: bool = ...,
     device: None | L["cpu"] = ...,
-) -> ndarray[_ShapeType, dtype[_SCT]]: ...
+) -> ndarray[_ShapeT, dtype[_SCT]]: ...
 @overload
 def astype(
-    x: ndarray[_ShapeType, dtype[Any]],
+    x: ndarray[_ShapeT, dtype[Any]],
     dtype: DTypeLike,
     /,
     *,
     copy: bool = ...,
     device: None | L["cpu"] = ...,
-) -> ndarray[_ShapeType, dtype[Any]]: ...
+) -> ndarray[_ShapeT, dtype[Any]]: ...

@@ -86,7 +86,7 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
 
     @overload
     def __call__(self, /, arg: _Other) -> _Other: ...
-    # TODO: Once `_ShapeType@ndarray` is covariant and bounded (see #26081),
+    # TODO: Once `_ShapeT@ndarray` is covariant and bounded (see #26081),
     # additionally include 0-d arrays as input types with scalar return type.
     @overload
     def __call__(

@@ -8,7 +8,7 @@ class XYGrid(NamedTuple):
     x_axis: int
     y_axis: int
 
-# Test variance of _ShapeType_co
+# Test variance of _ShapeT_co
 def accepts_2d(a: np.ndarray[tuple[int, int], Any]) -> None:
     return None
 
