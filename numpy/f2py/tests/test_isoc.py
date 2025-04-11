@@ -23,8 +23,8 @@ class TestISOC(util.F2PyTest):
 
     # gh-25207
     def test_bindc_kinds(self):
-        out = self.module.coddity.c_add_int64(1, 20)
-        exp_out = 21
+        out = self.module.coddity.c_add_int64(1, 2**32)
+        exp_out = 2**32 + 1
         assert out == exp_out
 
     # gh-25207
@@ -34,6 +34,7 @@ class TestISOC(util.F2PyTest):
         out = self.module.coddity.add_arr(a, b)
         exp_out = a * 2
         assert_allclose(out, exp_out)
+        assert out.dtype == exp_out.dtype
 
 
 def test_process_f2cmap_dict():
