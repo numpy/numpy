@@ -5789,3 +5789,163 @@ def test_uint_fill_value_and_filled():
     # And this ensures things like filled work:
     np.testing.assert_array_equal(
         a.filled(), np.array([999999, 1]).astype("uint16"), strict=True)
+
+
+@pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for fp errors")
+def test_nep50_examples():
+    """Adapted for masked arrays from numpy ndarray NP50 tests."""
+
+    res = np.ma.masked_array([1], dtype=np.uint8) + 2
+    assert res.dtype == np.uint8
+
+    res = np.ma.masked_array([1], dtype=np.uint8) + np.int64(1)
+    assert res.dtype == np.int64
+
+    res = np.ma.masked_array([1], dtype=np.uint8) + np.ma.masked_array(1, dtype=np.int64)
+    assert res.dtype == np.int64
+
+    res = np.ma.masked_array([0.1], dtype=np.float32) == np.float64(0.1)
+    assert res[0] == False
+
+    res = np.ma.masked_array([0.1], dtype=np.float32) + np.float64(0.1)
+    assert res.dtype == np.float64
+
+    res = np.ma.masked_array([1.], dtype=np.float32) + np.int64(3)
+    assert res.dtype == np.float64
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllInteger"])
+def test_nep50_weak_integers(dtype):
+    """Adapted for masked arrays from numpy ndarray NP50 tests."""
+
+    maxint = int(np.iinfo(dtype).max)
+
+    # Array operations are not expected to warn, but should give the same
+    # result dtype.
+    res = np.ma.masked_array([100], dtype=dtype) + maxint
+    assert res.dtype == dtype
+
+
+@pytest.mark.parametrize("dtype", np.typecodes["AllFloat"])
+def test_nep50_weak_integers_with_inexact(dtype):
+    """Adapted for masked arrays from numpy ndarray NP50 tests."""
+
+    too_big_int = int(np.finfo(dtype).max) * 2
+
+    if dtype in "dDG":
+        # These dtypes currently convert to Python float internally, which
+        # raises an OverflowError, while the other dtypes overflow to inf.
+        # NOTE: It may make sense to normalize the behavior!
+        with pytest.raises(OverflowError):
+            np.ma.masked_array([1], dtype=dtype) + too_big_int
+    else:
+        # NumPy uses (or used) `int -> string -> longdouble` for the
+        # conversion.  But Python may refuse `str(int)` for huge ints.
+        # In that case, RuntimeWarning would be correct, but conversion
+        # fails earlier (seems to happen on 32bit linux, possibly only debug).
+        if dtype in "gG":
+            try:
+                str(too_big_int)
+            except ValueError:
+                pytest.skip("`huge_int -> string -> longdouble` failed")
+
+        with pytest.warns(RuntimeWarning):
+            # We force the dtype here, since windows may otherwise pick the
+            # double instead of the longdouble loop.  That leads to slightly
+            # different results (conversion of the int fails as above).
+            res = np.add(np.ma.masked_array([1], dtype=dtype), too_big_int, dtype=dtype)
+        assert res.dtype == dtype
+        assert res == np.inf
+
+
+def test_nep50_integer_conversion_errors():
+    """Adapted for masked arrays from numpy ndarray NP50 tests."""
+
+    # Implementation for error paths is mostly missing (as of writing)
+    with pytest.raises(OverflowError, match=".*uint8"):
+        np.ma.masked_array([1], dtype=np.uint8) + 300
+
+
+def test_nep50_with_axisconcatenator():
+    """Adapted for masked arrays from numpy ndarray NP50 tests."""
+
+    # Concatenate/r_ does not promote, so this has to error:
+    with pytest.raises(OverflowError):
+        np.r_[np.ma.arange(5, dtype=np.int8), 255]
+
+
+@pytest.mark.parametrize("arr", [
+    np.ma.ones((100, 100), dtype=np.uint8)[::2],  # not trivially iterable
+    np.ma.ones(20000, dtype=">u4"),  # cast and >buffersize
+    np.ma.ones(100, dtype=">u4"),  # fast path compatible with cast
+])
+def test_integer_comparison_with_cast(arr):
+    """Adapted for masked arrays from numpy ndarray NP50 tests."""
+
+    # Similar to above, but mainly test a few cases that cover the slow path
+    # the test is limited to unsigned ints and -1 for simplicity.
+    res = arr >= -1
+    assert_array_equal(res.data, np.ones_like(arr, dtype=bool))
+    res = arr < -1
+    assert_array_equal(res.data, np.zeros_like(arr, dtype=bool))
+
+
+def create_with_ma_array(sctype, value):
+    return np.ma.masked_array([value], dtype=sctype)
+
+@pytest.mark.parametrize("sctype",
+        [np.int8, np.int16, np.int32, np.int64,
+         np.uint8, np.uint16, np.uint32, np.uint64])
+@pytest.mark.parametrize("create", [create_with_ma_array])
+def test_oob_creation(sctype, create):
+    """Adapted for masked arrays from numpy ndarray NP50 tests."""
+
+    iinfo = np.iinfo(sctype)
+
+    with pytest.raises(OverflowError):
+        create(sctype, iinfo.min - 1)
+
+    with pytest.raises(OverflowError):
+        create(sctype, iinfo.max + 1)
+
+    with pytest.raises(OverflowError):
+        create(sctype, str(iinfo.min - 1))
+
+    with pytest.raises(OverflowError):
+        create(sctype, str(iinfo.max + 1))
+
+    assert create(sctype, iinfo.min) == iinfo.min
+    assert create(sctype, iinfo.max) == iinfo.max
+
+@pytest.mark.parametrize("operator", ["__iadd__", "__isub__", "__imul__",
+                                      "__ifloordiv__", "__itruediv__", "__ipow__"])
+@pytest.mark.parametrize("scalar", [1, 1.])
+@pytest.mark.parametrize("dtype", [np.uint8, np.int8, np.uint32, np.int32, np.float32, np.float64])
+def test_nep50_inplace_ma(operator, scalar, dtype):
+    """Check that in-place operations respect NEP50 like ndarrays do."""
+
+    # Define ndarray, and apply in-place operation with scalar, capturing exceptions
+    arr = np.array([1], dtype=dtype)
+    try:
+        getattr(arr, operator)(scalar)
+        msg = None
+    except (OverflowError, np._core._exceptions._UFuncOutputCastingError) as e:
+        # Skip case where casting error occurs
+        if isinstance(e, np._core._exceptions._UFuncOutputCastingError):
+            return
+        # Otherwise continue to check overflow error of NEP50
+        else:
+            msg = str(e)
+
+    # Define masked array, and apply the same operation with the same scalar
+    ma_arr = np.ma.masked_array([1], dtype=dtype)
+    # If overflow error should be raised,
+    if msg is not None:
+        with pytest.raises(OverflowError, match=msg):
+            getattr(ma_arr, operator)(scalar)
+    # Otherwise, apply in-place operation
+    else:
+        getattr(ma_arr, operator)(scalar)
+
+    # Output data types should be the same
+    assert ma_arr.dtype == arr.dtype
