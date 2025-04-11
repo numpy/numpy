@@ -669,6 +669,7 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool = False,
     ) -> _ArrayT: ...
 
+    #
     def partition(
         self,
         kth: _ArrayLikeInt,
