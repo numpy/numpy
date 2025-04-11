@@ -24,8 +24,8 @@ _Ar_f_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.floating[Any]]]
 _Ar_c_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.complexfloating[Any, Any]]]
 _Ar_O_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
 
-_SCT = TypeVar("_SCT", bound=np.generic)
-_Ar_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[_SCT]]
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+_Ar_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 _BasisName: TypeAlias = L["X"]
 

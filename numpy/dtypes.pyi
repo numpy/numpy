@@ -45,15 +45,15 @@ __all__ = [  # noqa: RUF022
 
 # Helper base classes (typing-only)
 
-_SCT_co = TypeVar("_SCT_co", bound=np.generic, covariant=True)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 
 @type_check_only
-class _SimpleDType(np.dtype[_SCT_co], Generic[_SCT_co]):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
+class _SimpleDType(np.dtype[_ScalarT_co], Generic[_ScalarT_co]):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
     names: None  # pyright: ignore[reportIncompatibleVariableOverride]
     def __new__(cls, /) -> Self: ...
     def __getitem__(self, key: Any, /) -> NoReturn: ...
     @property
-    def base(self) -> np.dtype[_SCT_co]: ...
+    def base(self) -> np.dtype[_ScalarT_co]: ...
     @property
     def fields(self) -> None: ...
     @property
@@ -68,7 +68,7 @@ class _SimpleDType(np.dtype[_SCT_co], Generic[_SCT_co]):  # type: ignore[misc]  
     def subdtype(self) -> None: ...
 
 @type_check_only
-class _LiteralDType(_SimpleDType[_SCT_co], Generic[_SCT_co]):  # type: ignore[misc]
+class _LiteralDType(_SimpleDType[_ScalarT_co], Generic[_ScalarT_co]):  # type: ignore[misc]
     @property
     def flags(self) -> L[0]: ...
     @property

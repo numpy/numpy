@@ -102,9 +102,9 @@ _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 # The `{}ss` suffix refers to the Python 3.12 syntax: `**P`
 _Pss = ParamSpec("_Pss")
-_SCT = TypeVar("_SCT", bound=generic)
-_SCT1 = TypeVar("_SCT1", bound=generic)
-_SCT2 = TypeVar("_SCT2", bound=generic)
+_ScalarT = TypeVar("_ScalarT", bound=generic)
+_ScalarT1 = TypeVar("_ScalarT1", bound=generic)
+_ScalarT2 = TypeVar("_ScalarT2", bound=generic)
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 _2Tuple: TypeAlias = tuple[_T, _T]
@@ -122,10 +122,10 @@ class _TrimZerosSequence(Protocol[_T_co]):
 
 @overload
 def rot90(
-    m: _ArrayLike[_SCT],
+    m: _ArrayLike[_ScalarT],
     k: int = ...,
     axes: tuple[int, int] = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def rot90(
     m: ArrayLike,
@@ -134,11 +134,11 @@ def rot90(
 ) -> NDArray[Any]: ...
 
 @overload
-def flip(m: _SCT, axis: None = ...) -> _SCT: ...
+def flip(m: _ScalarT, axis: None = ...) -> _ScalarT: ...
 @overload
 def flip(m: _ScalarLike_co, axis: None = ...) -> Any: ...
 @overload
-def flip(m: _ArrayLike[_SCT], axis: None | _ShapeLike = ...) -> NDArray[_SCT]: ...
+def flip(m: _ArrayLike[_ScalarT], axis: None | _ShapeLike = ...) -> NDArray[_ScalarT]: ...
 @overload
 def flip(m: ArrayLike, axis: None | _ShapeLike = ...) -> NDArray[Any]: ...
 
@@ -201,10 +201,10 @@ def average(
 
 @overload
 def asarray_chkfinite(
-    a: _ArrayLike[_SCT],
+    a: _ArrayLike[_ScalarT],
     dtype: None = ...,
     order: _OrderKACF = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def asarray_chkfinite(
     a: object,
@@ -214,9 +214,9 @@ def asarray_chkfinite(
 @overload
 def asarray_chkfinite(
     a: Any,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     order: _OrderKACF = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def asarray_chkfinite(
     a: Any,
@@ -226,16 +226,16 @@ def asarray_chkfinite(
 
 @overload
 def piecewise(
-    x: _ArrayLike[_SCT],
+    x: _ArrayLike[_ScalarT],
     condlist: _ArrayLike[bool_] | Sequence[_ArrayLikeBool_co],
     funclist: Sequence[
-        Callable[Concatenate[NDArray[_SCT], _Pss], NDArray[_SCT | Any]]
-        | _SCT | object
+        Callable[Concatenate[NDArray[_ScalarT], _Pss], NDArray[_ScalarT | Any]]
+        | _ScalarT | object
     ],
     /,
     *args: _Pss.args,
     **kw: _Pss.kwargs,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def piecewise(
     x: ArrayLike,
@@ -270,10 +270,10 @@ def copy(
 ) -> _ArrayT: ...
 @overload
 def copy(
-    a: _ArrayLike[_SCT],
+    a: _ArrayLike[_ScalarT],
     order: _OrderKACF = ...,
     subok: L[False] = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def copy(
     a: ArrayLike,
@@ -421,7 +421,7 @@ def trim_zeros(
 ) -> _T: ...
 
 @overload
-def extract(condition: ArrayLike, arr: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
+def extract(condition: ArrayLike, arr: _ArrayLike[_ScalarT]) -> NDArray[_ScalarT]: ...
 @overload
 def extract(condition: ArrayLike, arr: ArrayLike) -> NDArray[Any]: ...
 
@@ -461,8 +461,8 @@ def cov(
     fweights: None | ArrayLike = ...,
     aweights: None | ArrayLike = ...,
     *,
-    dtype: _DTypeLike[_SCT],
-) -> NDArray[_SCT]: ...
+    dtype: _DTypeLike[_ScalarT],
+) -> NDArray[_ScalarT]: ...
 @overload
 def cov(
     m: _ArrayLikeComplex_co,
@@ -505,8 +505,8 @@ def corrcoef(
     bias: _NoValueType = ...,
     ddof: _NoValueType = ...,
     *,
-    dtype: _DTypeLike[_SCT],
-) -> NDArray[_SCT]: ...
+    dtype: _DTypeLike[_ScalarT],
+) -> NDArray[_ScalarT]: ...
 @overload
 def corrcoef(
     m: _ArrayLikeComplex_co,
@@ -777,8 +777,8 @@ def percentile(
 # (that we can reuse)
 quantile = percentile
 
-_SCT_fm = TypeVar(
-    "_SCT_fm",
+_ScalarT_fm = TypeVar(
+    "_ScalarT_fm",
     bound=floating[Any] | complexfloating[Any, Any] | timedelta64,
 )
 
@@ -815,11 +815,11 @@ def trapezoid(  # type: ignore[overload-overlap]
 ) -> float | NDArray[object_]: ...
 @overload
 def trapezoid(
-    y: _ArrayLike[_SCT_fm],
-    x: _ArrayLike[_SCT_fm] | _ArrayLikeInt_co | None = ...,
+    y: _ArrayLike[_ScalarT_fm],
+    x: _ArrayLike[_ScalarT_fm] | _ArrayLikeInt_co | None = ...,
     dx: float = ...,
     axis: SupportsIndex = ...,
-) -> _SCT_fm | NDArray[_SCT_fm]: ...
+) -> _ScalarT_fm | NDArray[_ScalarT_fm]: ...
 @overload
 def trapezoid(
     y: Sequence[_SupportsRMulFloat[_T]],
@@ -850,13 +850,13 @@ def meshgrid(
 ) -> tuple[()]: ...
 @overload
 def meshgrid(
-    x1: _ArrayLike[_SCT],
+    x1: _ArrayLike[_ScalarT],
     /,
     *,
     copy: bool = ...,
     sparse: bool = ...,
     indexing: _MeshgridIdx = ...,
-) -> tuple[NDArray[_SCT]]: ...
+) -> tuple[NDArray[_ScalarT]]: ...
 @overload
 def meshgrid(
     x1: ArrayLike,
@@ -868,34 +868,34 @@ def meshgrid(
 ) -> tuple[NDArray[Any]]: ...
 @overload
 def meshgrid(
-    x1: _ArrayLike[_SCT1],
-    x2: _ArrayLike[_SCT2],
+    x1: _ArrayLike[_ScalarT1],
+    x2: _ArrayLike[_ScalarT2],
     /,
     *,
     copy: bool = ...,
     sparse: bool = ...,
     indexing: _MeshgridIdx = ...,
-) -> tuple[NDArray[_SCT1], NDArray[_SCT2]]: ...
+) -> tuple[NDArray[_ScalarT1], NDArray[_ScalarT2]]: ...
 @overload
 def meshgrid(
     x1: ArrayLike,
-    x2: _ArrayLike[_SCT],
+    x2: _ArrayLike[_ScalarT],
     /,
     *,
     copy: bool = ...,
     sparse: bool = ...,
     indexing: _MeshgridIdx = ...,
-) -> tuple[NDArray[Any], NDArray[_SCT]]: ...
+) -> tuple[NDArray[Any], NDArray[_ScalarT]]: ...
 @overload
 def meshgrid(
-    x1: _ArrayLike[_SCT],
+    x1: _ArrayLike[_ScalarT],
     x2: ArrayLike,
     /,
     *,
     copy: bool = ...,
     sparse: bool = ...,
     indexing: _MeshgridIdx = ...,
-) -> tuple[NDArray[_SCT], NDArray[Any]]: ...
+) -> tuple[NDArray[_ScalarT], NDArray[Any]]: ...
 @overload
 def meshgrid(
     x1: ArrayLike,
@@ -939,10 +939,10 @@ def meshgrid(
 
 @overload
 def delete(
-    arr: _ArrayLike[_SCT],
+    arr: _ArrayLike[_ScalarT],
     obj: slice | _ArrayLikeInt_co,
     axis: None | SupportsIndex = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def delete(
     arr: ArrayLike,
@@ -952,11 +952,11 @@ def delete(
 
 @overload
 def insert(
-    arr: _ArrayLike[_SCT],
+    arr: _ArrayLike[_ScalarT],
     obj: slice | _ArrayLikeInt_co,
     values: ArrayLike,
     axis: None | SupportsIndex = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def insert(
     arr: ArrayLike,

@@ -47,7 +47,7 @@ __all__ = [
 ]
 
 _P = ParamSpec("_P")
-_SCT = TypeVar("_SCT", bound=generic)
+_ScalarT = TypeVar("_ScalarT", bound=generic)
 
 # Signature of `__array_wrap__`
 @type_check_only
@@ -68,13 +68,13 @@ class _SupportsArrayWrap(Protocol):
 ###
 
 def take_along_axis(
-    arr: _SCT | NDArray[_SCT],
+    arr: _ScalarT | NDArray[_ScalarT],
     indices: NDArray[integer[Any]],
     axis: None | int,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 
 def put_along_axis(
-    arr: NDArray[_SCT],
+    arr: NDArray[_ScalarT],
     indices: NDArray[integer[Any]],
     values: ArrayLike,
     axis: None | int,
@@ -82,12 +82,12 @@ def put_along_axis(
 
 @overload
 def apply_along_axis(
-    func1d: Callable[Concatenate[NDArray[Any], _P], _ArrayLike[_SCT]],
+    func1d: Callable[Concatenate[NDArray[Any], _P], _ArrayLike[_ScalarT]],
     axis: SupportsIndex,
     arr: ArrayLike,
     *args: _P.args,
     **kwargs: _P.kwargs,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def apply_along_axis(
     func1d: Callable[Concatenate[NDArray[Any], _P], Any],
@@ -98,16 +98,16 @@ def apply_along_axis(
 ) -> NDArray[Any]: ...
 
 def apply_over_axes(
-    func: Callable[[NDArray[Any], int], NDArray[_SCT]],
+    func: Callable[[NDArray[Any], int], NDArray[_ScalarT]],
     a: ArrayLike,
     axes: int | Sequence[int],
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 
 @overload
 def expand_dims(
-    a: _ArrayLike[_SCT],
+    a: _ArrayLike[_ScalarT],
     axis: _ShapeLike,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def expand_dims(
     a: ArrayLike,
@@ -125,21 +125,21 @@ def row_stack(
 
 #
 @overload
-def column_stack(tup: Sequence[_ArrayLike[_SCT]]) -> NDArray[_SCT]: ...
+def column_stack(tup: Sequence[_ArrayLike[_ScalarT]]) -> NDArray[_ScalarT]: ...
 @overload
 def column_stack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
 @overload
-def dstack(tup: Sequence[_ArrayLike[_SCT]]) -> NDArray[_SCT]: ...
+def dstack(tup: Sequence[_ArrayLike[_ScalarT]]) -> NDArray[_ScalarT]: ...
 @overload
 def dstack(tup: Sequence[ArrayLike]) -> NDArray[Any]: ...
 
 @overload
 def array_split(
-    ary: _ArrayLike[_SCT],
+    ary: _ArrayLike[_ScalarT],
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> list[NDArray[_SCT]]: ...
+) -> list[NDArray[_ScalarT]]: ...
 @overload
 def array_split(
     ary: ArrayLike,
@@ -149,10 +149,10 @@ def array_split(
 
 @overload
 def split(
-    ary: _ArrayLike[_SCT],
+    ary: _ArrayLike[_ScalarT],
     indices_or_sections: _ShapeLike,
     axis: SupportsIndex = ...,
-) -> list[NDArray[_SCT]]: ...
+) -> list[NDArray[_ScalarT]]: ...
 @overload
 def split(
     ary: ArrayLike,
@@ -162,9 +162,9 @@ def split(
 
 @overload
 def hsplit(
-    ary: _ArrayLike[_SCT],
+    ary: _ArrayLike[_ScalarT],
     indices_or_sections: _ShapeLike,
-) -> list[NDArray[_SCT]]: ...
+) -> list[NDArray[_ScalarT]]: ...
 @overload
 def hsplit(
     ary: ArrayLike,
@@ -173,9 +173,9 @@ def hsplit(
 
 @overload
 def vsplit(
-    ary: _ArrayLike[_SCT],
+    ary: _ArrayLike[_ScalarT],
     indices_or_sections: _ShapeLike,
-) -> list[NDArray[_SCT]]: ...
+) -> list[NDArray[_ScalarT]]: ...
 @overload
 def vsplit(
     ary: ArrayLike,
@@ -184,9 +184,9 @@ def vsplit(
 
 @overload
 def dsplit(
-    ary: _ArrayLike[_SCT],
+    ary: _ArrayLike[_ScalarT],
     indices_or_sections: _ShapeLike,
-) -> list[NDArray[_SCT]]: ...
+) -> list[NDArray[_ScalarT]]: ...
 @overload
 def dsplit(
     ary: ArrayLike,
@@ -215,9 +215,9 @@ def kron(a: Any, b: _ArrayLikeObject_co) -> NDArray[object_]: ...
 
 @overload
 def tile(
-    A: _ArrayLike[_SCT],
+    A: _ArrayLike[_ScalarT],
     reps: int | Sequence[int],
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def tile(
     A: ArrayLike,
