@@ -769,8 +769,8 @@ __all__ = [  # noqa: RUF022
 # Only use these for functions; never as generic type parameter.
 
 _AnyStr = TypeVar("_AnyStr", LiteralString, str, bytes)
-_AnyShapeType = TypeVar(
-    "_AnyShapeType",
+_AnyShapeT = TypeVar(
+    "_AnyShapeT",
     tuple[()],  # 0-d
     tuple[int],  # 1-d
     tuple[int, int],  # 2-d
@@ -2424,12 +2424,12 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
     @overload  # (() | (int) | (int, int) | ....)  # up to 8-d
     def reshape(
         self,
-        shape: _AnyShapeType,
+        shape: _AnyShapeT,
         /,
         *,
         order: _OrderACF = "C",
         copy: builtins.bool | None = None,
-    ) -> ndarray[_AnyShapeType, _DType_co]: ...
+    ) -> ndarray[_AnyShapeT, _DType_co]: ...
     @overload  # (index)
     def reshape(
         self,
@@ -2601,13 +2601,13 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DType_co]):
 
     # TODO: Uncomment once https://github.com/python/mypy/issues/14070 is fixed
     # @overload
-    # def __abs__(self: ndarray[_ShapeType, dtypes.Complex64DType], /) -> ndarray[_ShapeType, dtypes.Float32DType]: ...
+    # def __abs__(self: ndarray[_ShapeT, dtypes.Complex64DType], /) -> ndarray[_ShapeT, dtypes.Float32DType]: ...
     # @overload
-    # def __abs__(self: ndarray[_ShapeType, dtypes.Complex128DType], /) -> ndarray[_ShapeType, dtypes.Float64DType]: ...
+    # def __abs__(self: ndarray[_ShapeT, dtypes.Complex128DType], /) -> ndarray[_ShapeT, dtypes.Float64DType]: ...
     # @overload
-    # def __abs__(self: ndarray[_ShapeType, dtypes.CLongDoubleDType], /) -> ndarray[_ShapeType, dtypes.LongDoubleDType]: ...
+    # def __abs__(self: ndarray[_ShapeT, dtypes.CLongDoubleDType], /) -> ndarray[_ShapeT, dtypes.LongDoubleDType]: ...
     # @overload
-    # def __abs__(self: ndarray[_ShapeType, dtype[complex128]], /) -> ndarray[_ShapeType, dtype[float64]]: ...
+    # def __abs__(self: ndarray[_ShapeT, dtype[complex128]], /) -> ndarray[_ShapeT, dtype[float64]]: ...
     @overload
     def __abs__(self: ndarray[_ShapeT, dtype[complexfloating[_NBit]]], /) -> ndarray[_ShapeT, dtype[floating[_NBit]]]: ...
     @overload
@@ -3655,7 +3655,7 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         order: _OrderACF = "C",
         copy: builtins.bool | None = None,
     ) -> Self: ...
-    @overload  # ((1, *(1, ...))@_ShapeType)
+    @overload  # ((1, *(1, ...))@_ShapeT)
     def reshape(
         self,
         shape: _1NShapeT,
