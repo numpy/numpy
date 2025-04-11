@@ -1,0 +1,2 @@
+* ``arr.T`` property has been deprecated for array scalars and arrays with
+  dimensionality different than ``2``.
