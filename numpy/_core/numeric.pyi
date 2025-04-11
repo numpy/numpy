@@ -189,7 +189,7 @@ __all__ = [
 
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=generic)
-_DType = TypeVar("_DType", bound=np.dtype[Any])
+_DTypeT = TypeVar("_DTypeT", bound=np.dtype[Any])
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
 _ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 
@@ -293,10 +293,10 @@ def full(
 def full(
     shape: SupportsIndex,
     fill_value: Any,
-    dtype: _DType | _SupportsDType[_DType],
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> np.ndarray[tuple[int], _DType]: ...
+) -> np.ndarray[tuple[int], _DTypeT]: ...
 @overload
 def full(
     shape: SupportsIndex,
@@ -326,10 +326,10 @@ def full(
 def full(
     shape: _AnyShapeT,
     fill_value: Any,
-    dtype: _DType | _SupportsDType[_DType],
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> np.ndarray[_AnyShapeT, _DType]: ...
+) -> np.ndarray[_AnyShapeT, _DTypeT]: ...
 @overload
 def full(
     shape: _AnyShapeT,
@@ -359,10 +359,10 @@ def full(
 def full(
     shape: _ShapeLike,
     fill_value: Any,
-    dtype: _DType | _SupportsDType[_DType],
+    dtype: _DTypeT | _SupportsDType[_DTypeT],
     order: _OrderCF = ...,
     **kwargs: Unpack[_KwargsEmpty],
-) -> np.ndarray[Any, _DType]: ...
+) -> np.ndarray[Any, _DTypeT]: ...
 @overload
 def full(
     shape: _ShapeLike,
