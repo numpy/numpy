@@ -669,6 +669,21 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         keepdims: bool = False,
     ) -> _ArrayT: ...
 
+    def partition(
+        self,
+        kth: _ArrayLikeInt,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None
+    ) -> None: ...
+    def argpartition(
+        self,
+        kth: _ArrayLikeInt,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None
+    ) -> _MaskedArray[intp]: ...
+
     # Keep in-sync with np.ma.take
     @overload
     def take(  # type: ignore[overload-overlap]
@@ -680,28 +695,12 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     ) -> _SCT: ...
     @overload
     def take(
-        self,
-        indices: _IntLike_co,
-        axis: SupportsIndex | None = None,
-        out: None = None,
-        mode: _ModeKind = 'raise',
-    ) -> Any: ...
-    @overload
-    def take(
         self: _MaskedArray[_SCT],
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = None,
         out: None = None,
         mode: _ModeKind = 'raise',
     ) -> _MaskedArray[_SCT]: ...
-    @overload
-    def take(
-        self,
-        indices: _ArrayLikeInt_co,
-        axis: SupportsIndex | None = None,
-        out: None = None,
-        mode: _ModeKind = 'raise',
-    ) -> _MaskedArray[Any]: ...
     @overload
     def take(
         self,
@@ -719,22 +718,6 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
         out: _ArrayT,
         mode: _ModeKind = 'raise',
     ) -> _ArrayT: ...
-
-    def partition(
-        self,
-        kth: _ArrayLikeInt,
-        axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
-        order: str | Sequence[str] | None = None
-    ) -> None: ...
-    def argpartition(
-        self,
-        kth: _ArrayLikeInt,
-        axis: SupportsIndex = -1,
-        kind: _PartitionKind = "introselect",
-        order: str | Sequence[str] | None = None
-    ) -> _MaskedArray[intp]: ...
-    def take(self, indices, axis=..., out=..., mode=...): ...
 
     copy: Any
     diagonal: Any

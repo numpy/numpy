@@ -19,6 +19,9 @@ MAR_i8: MaskedNDArray[np.int64]
 MAR_subclass: MaskedNDArraySubclass
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype[Any]]
 
+f4: np.float32
+f: float
+
 assert_type(MAR_1d.shape, tuple[int])
 
 assert_type(MAR_f4.dtype, np.dtype[np.float32])
@@ -136,6 +139,8 @@ assert_type(MAR_f8.take([0]), MaskedNDArray[np.float64])
 assert_type(MAR_f8.take(0, out=MAR_subclass), MaskedNDArraySubclass)
 assert_type(MAR_f8.take([0], out=MAR_subclass), MaskedNDArraySubclass)
 
+assert_type(np.ma.take(f, 0), Any)
+assert_type(np.ma.take(f4, 0), np.float32)
 assert_type(np.ma.take(MAR_f8, 0), np.float64)
 assert_type(np.ma.take(AR_f4, 0), np.float32)
 assert_type(np.ma.take(MAR_1d, 0), Any)
@@ -143,6 +148,7 @@ assert_type(np.ma.take(MAR_f8, [0]), MaskedNDArray[np.float64])
 assert_type(np.ma.take(AR_f4, [0]), MaskedNDArray[np.float32])
 assert_type(np.ma.take(MAR_f8, 0, out=MAR_subclass), MaskedNDArraySubclass)
 assert_type(np.ma.take(MAR_f8, [0], out=MAR_subclass), MaskedNDArraySubclass)
+assert_type(np.ma.take([1], [0]), MaskedNDArray[Any])
 assert_type(np.ma.take(np.eye(2), 1, axis=0), MaskedNDArray[np.float64])
 
 assert_type(MAR_f4.partition(1), None)
