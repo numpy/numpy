@@ -3202,7 +3202,7 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('astype',
     copy : bool, optional
         By default, astype always returns a newly allocated array. If this
         is set to false, and the `dtype`, `order`, and `subok`
-        requirements are satisfied, the input array is returned instead
+        requirements are satisfied, the input array may be returned instead
         of a copy.
 
     Returns
