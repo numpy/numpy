@@ -52,6 +52,7 @@ jobs:
       - uses: pypa/cibuildwheel@d04cacbc9866d432033b1d09142936e6a0e2121a  # 2.23.2
         env:
           CIBW_PLATFORM: pyodide
+          CIBW_CONFIG_SETTINGS_PYODIDE: "build-dir=build setup-args=--cross-file=$(pyodide config get meson_cross_file) setup-args=-Dblas=none setup-args=-Dlapack=none"
 
       - name: Upload wheel artifact(s)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
