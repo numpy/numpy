@@ -15,22 +15,31 @@ from numpy import (
     amax,
     amin,
     bool_,
+    datetime64,
     dtype,
     expand_dims,
     float64,
     generic,
+    object_,
+    integer,
     intp,
     ndarray,
+    number,
+    timedelta64,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
-    _IntLike_co,
     NDArray,
     _ArrayLike,
-    _ArrayLikeInt_co,
-    _DTypeLikeBool,
     _ArrayLikeInt,
+    _ArrayLikeInt_co,
+    _ArrayLikeNumber_co,
+    _ArrayLikeDT64_co,
+    _ArrayLikeObject_co,
+    _ArrayLikeTD64_co,
+    _DTypeLikeBool,
+    _IntLike_co,
     _ScalarLike_co,
     _Shape,
     _ShapeLike,
@@ -223,8 +232,11 @@ _DType = TypeVar("_DType", bound=dtype[Any])
 _DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _SCT = TypeVar("_SCT", bound=generic)
+_SCT_co = TypeVar("_SCT_co", bound=generic, covariant=True)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
-_MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_SCT]]
+_MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_SCT_co]]
+_MaskedArrayNumber_co: TypeAlias = _MaskedArray[number | bool_]
+_MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | bool_]
 
 MaskType = bool
 nomask: bool
@@ -422,7 +434,18 @@ class MaskedArray(ndarray[_ShapeT_co, _DType_co]):
     def compress(self, condition, axis=..., out=...): ...
     def __eq__(self, other): ...
     def __ne__(self, other): ...
-    def __ge__(self, other): ...
+
+    @overload
+    def __ge__(self: _MaskedArrayNumber_co, other: _ArrayLikeNumber_co, /) -> _MaskedArray[bool_]: ...
+    @overload
+    def __ge__(self: _MaskedArrayTD64_co, other: _ArrayLikeTD64_co, /) -> _MaskedArray[bool_]: ...
+    @overload
+    def __ge__(self: _MaskedArray[datetime64], other: _ArrayLikeDT64_co, /) -> _MaskedArray[bool_]: ...
+    @overload
+    def __ge__(self: _MaskedArray[object_], other: Any, /) -> _MaskedArray[bool_]: ...
+    @overload
+    def __ge__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> _MaskedArray[bool_]: ...
+
     def __gt__(self, other): ...
     def __le__(self, other): ...
     def __lt__(self, other): ...
