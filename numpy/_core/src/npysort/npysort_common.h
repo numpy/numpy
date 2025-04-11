@@ -10,6 +10,26 @@
 extern "C" {
 #endif
 
+static inline void
+fill_sort_data_from_arr_or_descr(void *arr_or_descr, void **out_arr_or_descr,
+                                 npy_intp *elsize, PyArray_CompareFunc **out_cmp)
+{
+    if (PyArray_Check(arr_or_descr)) {
+        PyArrayObject *arr = (PyArrayObject *)arr_or_descr;
+        *out_arr_or_descr = arr;
+        *elsize = PyArray_ITEMSIZE(arr);
+        *out_cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    }
+    else {
+        PyArray_Descr *descr = (PyArray_Descr *)arr_or_descr;
+        *out_arr_or_descr = descr;
+        *elsize = PyDataType_ELSIZE(descr);
+        *out_cmp = (PyArray_CompareFunc *)PyArray_GetSortCompareFunction(descr);
+    }
+}
+
+
+
 /*
  *****************************************************************************
  **                        SWAP MACROS                                      **
