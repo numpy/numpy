@@ -193,7 +193,7 @@ __all__ = [
 ]
 
 _SCT = TypeVar("_SCT", bound=generic)
-_DType = TypeVar("_DType", bound=np.dtype[Any])
+_DTypeT = TypeVar("_DTypeT", bound=np.dtype[Any])
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _ArrayT_co = TypeVar(
     "_ArrayT_co",
@@ -260,10 +260,10 @@ class _ConstructorEmpty(Protocol):
         self,
         /,
         shape: SupportsIndex,
-        dtype: _DType | _SupportsDType[_DType],
+        dtype: _DTypeT | _SupportsDType[_DTypeT],
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> ndarray[tuple[int], _DType]: ...
+    ) -> ndarray[tuple[int], _DTypeT]: ...
     @overload
     def __call__(
         self,
@@ -298,10 +298,10 @@ class _ConstructorEmpty(Protocol):
         self,
         /,
         shape: _AnyShapeT,
-        dtype: _DType | _SupportsDType[_DType],
+        dtype: _DTypeT | _SupportsDType[_DTypeT],
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> ndarray[_AnyShapeT, _DType]: ...
+    ) -> ndarray[_AnyShapeT, _DTypeT]: ...
     @overload
     def __call__(
         self,
@@ -334,10 +334,10 @@ class _ConstructorEmpty(Protocol):
     def __call__(
         self, /,
         shape: _ShapeLike,
-        dtype: _DType | _SupportsDType[_DType],
+        dtype: _DTypeT | _SupportsDType[_DTypeT],
         order: _OrderCF = ...,
         **kwargs: Unpack[_KwargsEmpty],
-    ) -> ndarray[Any, _DType]: ...
+    ) -> ndarray[Any, _DTypeT]: ...
     @overload
     def __call__(
         self, /,
@@ -382,7 +382,7 @@ set_datetimeparse_function: Final[Callable[..., object]]
 def get_handler_name(a: NDArray[Any] = ..., /) -> str | None: ...
 def get_handler_version(a: NDArray[Any] = ..., /) -> int | None: ...
 def format_longfloat(x: np.longdouble, precision: int) -> str: ...
-def scalar(dtype: _DType, object: bytes | object = ...) -> ndarray[tuple[()], _DType]: ...
+def scalar(dtype: _DTypeT, object: bytes | object = ...) -> ndarray[tuple[()], _DTypeT]: ...
 def set_typeDict(dict_: dict[str, np.dtype[Any]], /) -> None: ...
 typeinfo: Final[dict[str, np.dtype[np.generic]]]
 

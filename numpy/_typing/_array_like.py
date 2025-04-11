@@ -20,8 +20,8 @@ else:
 _T = TypeVar("_T")
 _SCT = TypeVar("_SCT", bound=np.generic)
 _SCT_co = TypeVar("_SCT_co", bound=np.generic, covariant=True)
-_DType = TypeVar("_DType", bound=dtype[Any])
-_DType_co = TypeVar("_DType_co", covariant=True, bound=dtype[Any])
+_DTypeT = TypeVar("_DTypeT", bound=dtype[Any])
+_DTypeT_co = TypeVar("_DTypeT_co", covariant=True, bound=dtype[Any])
 
 NDArray: TypeAlias = np.ndarray[_Shape, dtype[_SCT_co]]
 
@@ -31,8 +31,8 @@ NDArray: TypeAlias = np.ndarray[_Shape, dtype[_SCT_co]]
 # Concrete implementations of the protocol are responsible for adding
 # any and all remaining overloads
 @runtime_checkable
-class _SupportsArray(Protocol[_DType_co]):
-    def __array__(self) -> np.ndarray[Any, _DType_co]: ...
+class _SupportsArray(Protocol[_DTypeT_co]):
+    def __array__(self) -> np.ndarray[Any, _DTypeT_co]: ...
 
 
 @runtime_checkable
@@ -66,8 +66,8 @@ _ArrayLike: TypeAlias = (
 # One representing types that can be parametrized w.r.t. `np.dtype`
 # and another one for the rest
 _DualArrayLike: TypeAlias = (
-    _SupportsArray[_DType]
-    | _NestedSequence[_SupportsArray[_DType]]
+    _SupportsArray[_DTypeT]
+    | _NestedSequence[_SupportsArray[_DTypeT]]
     | _T
     | _NestedSequence[_T]
 )

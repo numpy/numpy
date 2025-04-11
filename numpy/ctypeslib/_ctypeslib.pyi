@@ -69,8 +69,8 @@ from numpy._typing import (
 __all__ = ["load_library", "ndpointer", "c_intp", "as_ctypes", "as_array", "as_ctypes_type"]
 
 # TODO: Add a proper `_Shape` bound once we've got variadic typevars
-_DType = TypeVar("_DType", bound=dtype[Any])
-_DTypeOptional = TypeVar("_DTypeOptional", bound=None | dtype[Any])
+_DTypeT = TypeVar("_DTypeT", bound=dtype[Any])
+_DTypeOptionalT = TypeVar("_DTypeOptionalT", bound=None | dtype[Any])
 _SCT = TypeVar("_SCT", bound=generic)
 
 _FlagsKind: TypeAlias = L[
@@ -83,10 +83,10 @@ _FlagsKind: TypeAlias = L[
 ]
 
 # TODO: Add a shape typevar once we have variadic typevars (PEP 646)
-class _ndptr(ctypes.c_void_p, Generic[_DTypeOptional]):
+class _ndptr(ctypes.c_void_p, Generic[_DTypeOptionalT]):
     # In practice these 4 classvars are defined in the dynamic class
     # returned by `ndpointer`
-    _dtype_: ClassVar[_DTypeOptional]
+    _dtype_: ClassVar[_DTypeOptionalT]
     _shape_: ClassVar[None]
     _ndim_: ClassVar[None | int]
     _flags_: ClassVar[None | list[_FlagsKind]]
@@ -96,13 +96,13 @@ class _ndptr(ctypes.c_void_p, Generic[_DTypeOptional]):
     def from_param(cls: type[_ndptr[None]], obj: NDArray[Any]) -> _ctypes[Any]: ...
     @overload
     @classmethod
-    def from_param(cls: type[_ndptr[_DType]], obj: ndarray[Any, _DType]) -> _ctypes[Any]: ...
+    def from_param(cls: type[_ndptr[_DTypeT]], obj: ndarray[Any, _DTypeT]) -> _ctypes[Any]: ...
 
-class _concrete_ndptr(_ndptr[_DType]):
-    _dtype_: ClassVar[_DType]
+class _concrete_ndptr(_ndptr[_DTypeT]):
+    _dtype_: ClassVar[_DTypeT]
     _shape_: ClassVar[tuple[int, ...]]
     @property
-    def contents(self) -> ndarray[_Shape, _DType]: ...
+    def contents(self) -> ndarray[_Shape, _DTypeT]: ...
 
 def load_library(libname: StrOrBytesPath, loader_path: StrOrBytesPath) -> ctypes.CDLL: ...
 
