@@ -52,9 +52,11 @@
 NPY_NO_EXPORT int
 npy_heapsort(void *start, npy_intp num, void *varr)
 {
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr;
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_from_arr_or_descr(varr, &arr, &elsize, &cmp);
+    
     if (elsize == 0) {
         return 0;  /* no need for sorting elements of no size */
     }
@@ -114,9 +116,11 @@ NPY_NO_EXPORT int
 npy_aheapsort(void *vv, npy_intp *tosort, npy_intp n, void *varr)
 {
     char *v = (char *)vv;
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr;
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_from_arr_or_descr(varr, &arr, &elsize, &cmp);
+
     npy_intp *a, i, j, l, tmp;
 
     /* The array needs to be offset by one for heapsort indexing */
