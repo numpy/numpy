@@ -2131,7 +2131,7 @@ gentype_byteswap(PyObject *self, PyObject *args, PyObject *kwds)
  *
  * #name = take, getfield, put, repeat, tofile, mean, trace, diagonal, clip,
  *         std, var, sum, cumsum, prod, cumprod, compress, sort, argsort,
- *         round, argmax, argmin, max, min, any, all, astype, resize,
+ *         round, argmax, argmin, max, min, any, all, resize,
  *         reshape, choose, tostring, tobytes, copy, searchsorted, view,
  *         flatten, ravel, squeeze#
  */
@@ -2142,6 +2142,22 @@ gentype_@name@(PyObject *self, PyObject *args, PyObject *kwds)
 }
 /**end repeat**/
 
+static PyObject *
+gentype_astype(PyObject *self, PyObject *args, PyObject *kwds)
+{
+    if ((kwds == NULL) && (PyTuple_Size(args)==1)) {
+        // no keyword arguments, single argument is the dtype
+        PyArray_Descr *dtype = PyArray_DescrFromScalar(self);
+        assert(dtype != NULL);
+        int same_dtype = ( (PyObject *)dtype == PyTuple_GET_ITEM(args, 0));
+        Py_DECREF(dtype);
+        if (same_dtype) {
+            // dtypes are equal, scalars are immutable so no copy is needed
+            return Py_NewRef(self);
+        }
+    }
+    return gentype_generic_method(self, args, kwds, "astype");
+}
 
 /**begin repeat
  * #name = integer, floating#
