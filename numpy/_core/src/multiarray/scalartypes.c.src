@@ -704,9 +704,16 @@ format_@name@(@type@ val, npy_bool scientific,
                         sign, trim, pad_left, exp_digits);
     }
     else {
-        return Dragon4_Positional_@Name@(&val,
-                        DigitMode_Exact, CutoffMode_TotalLength, precision,
-                        -1, sign, trim, pad_left, pad_right);
+        if (val == (long long)val) {
+            return Dragon4_Positional_@Name@(&val,
+                            DigitMode_Exact, CutoffMode_TotalLength, precision,
+                            -1, sign, trim, pad_left, pad_right);
+        }
+        else {
+            return Dragon4_Positional_@Name@(&val,
+                            DigitMode_Unique, CutoffMode_TotalLength, precision,
+                            -1, sign, trim, pad_left, pad_right);
+        }
     }
 }
 

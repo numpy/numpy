@@ -677,23 +677,22 @@ def test_unsized_integer_casts(typename, signed):
 
 
 @pytest.mark.parametrize(
-    "typename, exp_repr",
+    "typename",
     [
         pytest.param(
             "longdouble",
-            "0.1000000000000000055511151231257827021181583404541015625",
             marks=pytest.mark.xfail(
                 np.dtypes.LongDoubleDType() != np.dtypes.Float64DType(),
                 reason="numpy lacks an ld2a implementation",
                 strict=True,
             ),
         ),
-        ("float64", "0.1000000000000000055511151231257827021181583404541015625"),
-        ("float32", "0.100000001490116119384765625"),
-        ("float16", "0.0999755859375"),
+        "float64",
+        "float32",
+        "float16",
     ],
 )
-def test_float_casts(typename, exp_repr):
+def test_float_casts(typename):
     inp = [1.1, 2.8, -3.2, 2.7e4]
     ainp = np.array(inp, dtype=typename)
     assert_array_equal(ainp, ainp.astype("T").astype(typename))
@@ -702,7 +701,10 @@ def test_float_casts(typename, exp_repr):
     sres = np.array(inp, dtype=typename).astype("T")
     res = sres.astype(typename)
     assert_array_equal(np.array(inp, dtype=typename), res)
-    assert sres[0] == exp_repr
+    if typename == "float16":
+        assert sres[0] == "0.0999755859375"
+    else:
+        assert sres[0] == "0.1"
 
     if typename == "longdouble":
         # let's not worry about platform-dependent rounding of longdouble
@@ -733,19 +735,16 @@ def test_float_nan_cast_na_object():
     inp = [1.2, 2.3, np.nan]
     arr = np.array(inp).astype(dt)
     assert arr[2] is np.nan
-    assert arr[0] == '1.1999999999999999555910790149937383830547332763671875'
+    assert arr[0] == '1.2'
 
 
 @pytest.mark.parametrize(
-    "typename, exp_repr",
+    "typename",
     [
-        ("csingle",
-         "(0.100000001490116119384765625+0.100000001490116119384765625j)"),
-        ("cdouble",
-         "(0.1000000000000000055511151231257827021181583404541015625+0.1000000000000000055511151231257827021181583404541015625j)"),
+        "csingle",
+        "cdouble",
         pytest.param(
             "clongdouble",
-            "(0.1000000000000000055511151231257827021181583404541015625+0.1000000000000000055511151231257827021181583404541015625j)",
             marks=pytest.mark.xfail(
                 np.dtypes.CLongDoubleDType() != np.dtypes.Complex128DType(),
                 reason="numpy lacks an ld2a implementation",
@@ -754,7 +753,7 @@ def test_float_nan_cast_na_object():
         ),
     ],
 )
-def test_cfloat_casts(typename, exp_repr):
+def test_cfloat_casts(typename):
     inp = [1.1 + 1.1j, 2.8 + 2.8j, -3.2 - 3.2j, 2.7e4 + 2.7e4j]
     ainp = np.array(inp, dtype=typename)
     assert_array_equal(ainp, ainp.astype("T").astype(typename))
@@ -763,7 +762,7 @@ def test_cfloat_casts(typename, exp_repr):
     sres = np.array(inp, dtype=typename).astype("T")
     res = sres.astype(typename)
     assert_array_equal(np.array(inp, dtype=typename), res)
-    assert sres[0] == exp_repr
+    assert sres[0] == "(0.1+0.1j)"
 
 
 def test_take(string_list):
