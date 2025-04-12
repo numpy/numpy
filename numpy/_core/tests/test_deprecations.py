@@ -464,5 +464,5 @@ def test_deprecated_T_non_2dim():
                 UserWarning,
                 match="In the future `.T` property will be "
                       "supported for 2-dim arrays only. "
-                      f"Here it is {len(shape)}-dim array."):
+                      f"Received {len(shape)}-dim array."):
             np.ones(shape).T

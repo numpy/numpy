@@ -852,7 +852,10 @@ array_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     if (ndim != 2) {
         if (PyErr_WarnFormat(PyExc_UserWarning, 1,
                 "In the future `.T` property will be supported for "
-                "2-dim arrays only. Here it is %d-dim array.",
+                "2-dim arrays only. Received %d-dim array. Either "
+                "`np.permute_dims(arr, range(arr.ndim)[::-1])` "
+                "(compatible with the Array API) or `arr.transpose()` "
+                "should be used instead.",
                 ndim) < 0) {
             return NULL;
         }
