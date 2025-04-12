@@ -7,10 +7,7 @@
 #include "npy_cpu_dispatch.h"
 #include "numpy/utils.h" // NPY_TOSTRING
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "_umath_tests.dispatch.h"
-#endif
-
+#include "_umath_tests.dispatch.h"
 NPY_CPU_DISPATCH_DECLARE(const char *_umath_tests_dispatch_func, (void))
 NPY_CPU_DISPATCH_DECLARE(extern const char *_umath_tests_dispatch_var)
 NPY_CPU_DISPATCH_DECLARE(void _umath_tests_dispatch_attach, (PyObject *list))
