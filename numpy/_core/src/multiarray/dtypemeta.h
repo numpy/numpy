@@ -72,7 +72,7 @@ typedef struct {
     PyArrayDTypeMeta_GetSortFunction *get_sort_function;
     PyArrayDTypeMeta_GetArgSortFunction *get_argsort_function;
     PyArray_CompareFuncWithDescr *compare;
-    PyArray_CompareFuncWithDescr *sort_compare;
+    PyArray_SortCompareFunc *sort_compare;
 
     /*
      * The casting implementation (ArrayMethod) to convert between two
@@ -330,7 +330,7 @@ PyArray_GetCompareFunction(PyArray_Descr *descr)
     return NPY_DT_SLOTS(NPY_DTYPE(descr))->compare;
 }
 
-static inline PyArray_CompareFuncWithDescr *
+static inline PyArray_SortCompareFunc *
 PyArray_GetSortCompareFunction(PyArray_Descr *descr)
 {
     return NPY_DT_SLOTS(NPY_DTYPE(descr))->sort_compare;

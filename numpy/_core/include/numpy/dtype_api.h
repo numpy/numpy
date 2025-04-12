@@ -483,6 +483,8 @@ typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
 
 typedef int (PyArray_CompareFuncWithDescr)(const void *, const void *,
                                            PyArray_Descr *);
+typedef int (PyArray_SortCompareFunc)(const void *, const void *,
+                                           PyArray_Descr *);                              
 typedef int (PyArray_SortFunc)(void *, npy_intp, 
                                PyArrayMethod_Context *, NpyAuxData *,
                                NpyAuxData **);
