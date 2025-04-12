@@ -75,6 +75,11 @@ The wrapper provides type constraints to help with SFINAE (Substitution Failure 
   constexpr bool kSupportLane<double> = NPY_SIMDX_F64 != 0;
   ```
 
+- `kMaxLanes<TLane>`: Maximum number of lanes supported by the SIMD extension for the specified lane type.
+  ```cpp
+  template <typename TLane>
+  constexpr size_t kMaxLanes = HWY_MAX_LANES_D(_Tag<TLane>);
+  ```
 
 ```cpp
 #include "simd/simd.hpp"
@@ -175,13 +180,13 @@ The SIMD wrapper automatically disables SIMD operations when optimizations are d
    
 3. **Feature Detection Constants vs. Highway Constants**
    - NumPy-specific constants (`NPY_SIMDX_F16`, `NPY_SIMDX_F64`, `NPY_SIMDX_FMA`) provide additional safety beyond raw Highway constants
-   - Highway constants (e.g., `HWY_HAVE_FLOAT16`) only check hardware capabilities but don't consider NumPy's build configuration
+   - Highway constants (e.g., `HWY_HAVE_FLOAT16`) only check platform capabilities but don't consider NumPy's build configuration
    - Our constants combine both checks:
      ```cpp
      #define NPY_SIMDX_F16 (NPY_SIMDX && HWY_HAVE_FLOAT16)
      ```
    - This ensures SIMD features won't be used when:
-     - Hardware supports it but NumPy optimization is disabled via meson option:
+     - Platform supports it but NumPy optimization is disabled via meson option:
        ```
        option('disable-optimization', type: 'boolean', value: false,
               description: 'Disable CPU optimized code (dispatch,simd,unroll...)')
