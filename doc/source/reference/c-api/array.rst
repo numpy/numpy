@@ -1874,7 +1874,7 @@ described below.
    embedded references.
 
 .. c:type:: int (PyArray_SortFunc)( \
-                 void *start, npy_intp num, PyArrayMethod_Context *context,
+                 void *start, npy_intp num, PyArrayMethod_Context *context, \
                  NpyAuxData *auxdata, NpyAuxData **out_auxdata)
     
     A function to sort a buffer of data. The *start* is a pointer to the
