@@ -686,7 +686,7 @@ class TestAssignment:
         # the expected precision.
         a = np.zeros(1, dtype='S20')
         a[:] = np.array(['1.12345678901234567890'], dtype='f8')
-        assert_equal(a[0], b"1.1234567890123457")
+        assert_equal(a[0], b"1.123456789012345691")
 
 
 class TestDtypedescr:

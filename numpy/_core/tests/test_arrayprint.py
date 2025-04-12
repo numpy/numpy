@@ -2,6 +2,7 @@ import sys
 import gc
 from hypothesis import given
 from hypothesis.extra import numpy as hynp
+import hypothesis.strategies as st
 import pytest
 
 import numpy as np
@@ -1279,3 +1280,27 @@ def test_multithreaded_array_printing():
     # reasons this test makes sure it is set up in a thread-safe manner
 
     run_threaded(TestPrintOptions().test_floatmode, 500)
+
+
+@st.composite
+def dtype_and_val(draw):
+    # produce integer values within the bounds
+    # of a given NumPy floating point dtype
+    dt = draw(hynp.floating_dtypes(sizes=(16, 32, 64)))
+    lower_bound = np.finfo(dt).min
+    upper_bound = np.finfo(dt).max
+    int_val = draw(st.integers(min_value=lower_bound, max_value=upper_bound))
+    return (dt, int_val)
+
+
+@given(dtype_and_val())
+def test_gh_28679(dt_val):
+    dt, int_val = dt_val
+    # require scalar floating point string representation
+    # to match regular array representation *up to the decimal*
+    # ("integer" value matching, not caring about i.e.,
+    # "15." vs ["15.0"])
+    actual = str(np.array(int_val, dtype=dt)).split(".")[0]
+    # we remove the `[` and `]`
+    expected = str(np.array([int_val], dtype=dt)).split(".")[0][1:]
+    assert actual == expected
