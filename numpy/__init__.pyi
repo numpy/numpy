@@ -4070,7 +4070,7 @@ class inexact(number[_NBit, _InexactItemT_co], Generic[_NBit, _InexactItemT_co])
     @abstractmethod
     def __init__(self, value: _InexactItemT_co | None = ..., /) -> None: ...
 
-class floating(_RealMixin, _RoundMixin, inexact[_NBit1, float]):
+class floating(_RealMixin, _RoundMixin, _ArrayOrScalarCommon, inexact[_NBit1, float]):
     def __init__(self, value: _ConvertibleToFloat | None = ..., /) -> None: ...
 
     __add__: _FloatOp[_NBit1]
