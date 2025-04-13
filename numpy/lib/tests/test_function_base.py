@@ -1715,7 +1715,7 @@ class TestVectorize:
         x = np.arange(5)
         assert_array_equal(f(x), x)
 
-    def test_otypes_object_ticket_21274(self):
+    def test_otypes_object_28624(self):
         # with object otype, the vectorized function should return y
         # wrapped into an object array
         y = np.arange(3)
@@ -1724,20 +1724,8 @@ class TestVectorize:
         assert f(None).item() is y
         assert f([None]).item() is y
 
-    def test_otypes_list_ticket_28624(self):
-        # with a list output, the vectorized function should return y
-        # wrapped into an object array
         y = [1, 2, 3]
-        f = vectorize(lambda x: y)
-
-        assert f(None).item() is y
-        assert f([None]).item() is y
-
-    def test_otypes_nested_list_ticket_28624(self):
-        # with a list output, the vectorized function should return y
-        # wrapped into an object array
-        y = [1, 2, [3, 4]]
-        f = vectorize(lambda x: y)
+        f = vectorize(lambda x: y, otypes=[object])
 
         assert f(None).item() is y
         assert f([None]).item() is y

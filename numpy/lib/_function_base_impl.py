@@ -2580,10 +2580,8 @@ class vectorize:
                 nout = 1
                 outputs = (outputs,)
 
-            otypes = tuple(
-                out.dtype if isinstance(out, np.ndarray) else np.dtype(type(out))
-                for out in outputs
-            )
+            otypes = ''.join([asarray(outputs[_k]).dtype.char
+                              for _k in range(nout)])
 
             # Performance note: profiling indicates that creating the ufunc is
             # not a significant cost compared with wrapping so it seems not
