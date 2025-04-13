@@ -82,6 +82,7 @@ jobs:
         buildplat:
           - [ubuntu-22.04, manylinux_x86_64, ""]
           - [ubuntu-22.04, musllinux_x86_64, ""]
+          - [ubuntu-22.04, manylinux_ppc64le, ""]
           - [ubuntu-22.04-arm, manylinux_aarch64, ""]
           - [ubuntu-22.04-arm, musllinux_aarch64, ""]
           - [macos-13, macosx_x86_64, openblas]
@@ -101,7 +102,11 @@ jobs:
             python: "pp311"
           - buildplat: [ ubuntu-22.04-arm, musllinux_aarch64, "" ]
             python: "pp311"
+          - buildplat: [ ubuntu-22.04, manylinux_ppc64le, "" ]
+            python: "pp311"
           - buildplat: [ macos13, macosx_x86_64, openblas ]
+            python: "cp313t"
+          - buildplat: [ ubuntu-22.04, manylinux_ppc64le, "" ] 
             python: "cp313t"
 
     env:
@@ -163,6 +168,17 @@ jobs:
             DYLD="$DYLD_LIBRARY_PATH:/$PWD/.openblas/lib"
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"
           fi
+
+      - name: Set up qemu  for ppc64le
+        if: ${{ matrix.buildplat[1] == 'manylinux_ppc64le' }}
+        uses: docker/setup-qemu-action@v3
+        with:
+            platforms: ppc64le
+
+      - name: Set up environment for ppc64le
+        if: ${{ matrix.buildplat[1] == 'manylinux_ppc64le' }}
+        run: |
+          echo "CIBW_ARCHS="ppc64le"" >> "$GITHUB_ENV"
 
       - name: Set up free-threaded build
         if: matrix.python == 'cp313t'

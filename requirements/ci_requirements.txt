@@ -1,4 +1,6 @@
 spin==0.13
 # Keep this in sync with ci32_requirements.txt
-scipy-openblas32==0.3.29.0.0
-scipy-openblas64==0.3.29.0.0
+scipy-openblas32==0.3.29.0.0 ; platform_machine!="ppc64le"
+scipy-openblas64==0.3.29.0.0 ; platform_machine!="ppc64le"
+scipy-openblas32==0.3.27.63.1 ; platform_machine=="ppc64le"
+scipy-openblas64==0.3.27.63.1 ; platform_machine=="ppc64le"
