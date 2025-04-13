@@ -4188,7 +4188,7 @@ class MaskedArray(ndarray):
         if (isinstance(data, np.ndarray) 
             and data.dtype == object 
             and data.shape == ()):
-                return str(data.item())
+            return str(data.item())
 
         # apply truncation before flattening, if legacy and 1D MaskedArray
         legacy = np.get_printoptions().get('legacy') == '1.13'

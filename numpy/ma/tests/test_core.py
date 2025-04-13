@@ -863,7 +863,7 @@ class TestMaskedArray:
                                              [False, False, True]],
                                      False),
                              dtype = "int, (2,3)float, float")
-        control = "(0, [[--, 0., --], [0., 0., --]], 0.)" # if trim='k' starts to work, adjust
+        control = "(0, [[--, 0., --], [0., 0., --]], 0.)"  # if trim='k' starts to work, adjust
         assert_equal(str(t_2d0), control)
 
     def test_floatmode_printoption(self):
