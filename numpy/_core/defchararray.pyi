@@ -90,9 +90,9 @@ __all__ = [
 ]
 
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
-_SCT = TypeVar("_SCT", bound=np.character)
+_CharacterT = TypeVar("_CharacterT", bound=np.character)
 _CharDTypeT_co = TypeVar("_CharDTypeT_co", bound=dtype[np.character], covariant=True)
-_CharArray: TypeAlias = chararray[tuple[int, ...], dtype[_SCT]]
+_CharArray: TypeAlias = chararray[tuple[int, ...], dtype[_CharacterT]]
 
 _StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
 _StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]

@@ -23,11 +23,11 @@ __all__ = [
 ]
 
 _T = TypeVar("_T")
-_SCT = TypeVar("_SCT", bound=np.generic)
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype[Any], covariant=True)
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
 
-_RecArray: TypeAlias = recarray[Any, np.dtype[_SCT]]
+_RecArray: TypeAlias = recarray[Any, np.dtype[_ScalarT]]
 
 @type_check_only
 class _SupportsReadInto(Protocol):
@@ -211,7 +211,7 @@ def fromfile(
 # exported in `numpy.rec`
 @overload
 def array(
-    obj: _SCT | NDArray[_SCT],
+    obj: _ScalarT | NDArray[_ScalarT],
     dtype: None = None,
     shape: _ShapeLike | None = None,
     offset: int = 0,
@@ -222,7 +222,7 @@ def array(
     aligned: bool = False,
     byteorder: None = None,
     copy: bool = True,
-) -> _RecArray[_SCT]: ...
+) -> _RecArray[_ScalarT]: ...
 @overload
 def array(
     obj: ArrayLike,

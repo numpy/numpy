@@ -12,7 +12,7 @@ from numpy._typing import (
 
 __all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes"]
 
-_SCT = TypeVar("_SCT", bound=generic)
+_ScalarT = TypeVar("_ScalarT", bound=generic)
 
 class DummyArray:
     __array_interface__: dict[str, Any]
@@ -25,12 +25,12 @@ class DummyArray:
 
 @overload
 def as_strided(
-    x: _ArrayLike[_SCT],
+    x: _ArrayLike[_ScalarT],
     shape: None | Iterable[int] = ...,
     strides: None | Iterable[int] = ...,
     subok: bool = ...,
     writeable: bool = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def as_strided(
     x: ArrayLike,
@@ -42,13 +42,13 @@ def as_strided(
 
 @overload
 def sliding_window_view(
-    x: _ArrayLike[_SCT],
+    x: _ArrayLike[_ScalarT],
     window_shape: int | Iterable[int],
     axis: None | SupportsIndex = ...,
     *,
     subok: bool = ...,
     writeable: bool = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def sliding_window_view(
     x: ArrayLike,
@@ -61,10 +61,10 @@ def sliding_window_view(
 
 @overload
 def broadcast_to(
-    array: _ArrayLike[_SCT],
+    array: _ArrayLike[_ScalarT],
     shape: int | Iterable[int],
     subok: bool = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def broadcast_to(
     array: ArrayLike,

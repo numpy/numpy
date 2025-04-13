@@ -34,7 +34,7 @@ from typing_extensions import LiteralString, TypeVar
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _Self = TypeVar("_Self")
-_SCT = TypeVar("_SCT", bound=np.number[Any] | np.bool | np.object_)
+_ScalarT = TypeVar("_ScalarT", bound=np.number[Any] | np.bool | np.object_)
 
 # compatible with e.g. int, float, complex, Decimal, Fraction, and ABCPolyBase
 @type_check_only
@@ -54,7 +54,7 @@ class _SupportsCoefOps(Protocol[_T_contra]):
     def __rsub__(self: _Self, x: _T_contra, /) -> _Self: ...
     def __rmul__(self: _Self, x: _T_contra, /) -> _Self: ...
 
-_Series: TypeAlias = np.ndarray[tuple[int], np.dtype[_SCT]]
+_Series: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 _FloatSeries: TypeAlias = _Series[np.floating[Any]]
 _ComplexSeries: TypeAlias = _Series[np.complexfloating[Any, Any]]
@@ -67,8 +67,8 @@ _ObjectArray: TypeAlias = npt.NDArray[np.object_]
 _CoefArray: TypeAlias = npt.NDArray[np.inexact[Any] | np.object_]
 
 _Tuple2: TypeAlias = tuple[_T, _T]
-_Array1: TypeAlias = np.ndarray[tuple[Literal[1]], np.dtype[_SCT]]
-_Array2: TypeAlias = np.ndarray[tuple[Literal[2]], np.dtype[_SCT]]
+_Array1: TypeAlias = np.ndarray[tuple[Literal[1]], np.dtype[_ScalarT]]
+_Array2: TypeAlias = np.ndarray[tuple[Literal[2]], np.dtype[_ScalarT]]
 
 _AnyInt: TypeAlias = SupportsInt | SupportsIndex
 
@@ -124,12 +124,12 @@ class _Named(Protocol[_Name_co]):
     @property
     def __name__(self, /) -> _Name_co: ...
 
-_Line: TypeAlias = np.ndarray[tuple[Literal[1, 2]], np.dtype[_SCT]]
+_Line: TypeAlias = np.ndarray[tuple[Literal[1, 2]], np.dtype[_ScalarT]]
 
 @type_check_only
 class _FuncLine(_Named[_Name_co], Protocol[_Name_co]):
     @overload
-    def __call__(self, /, off: _SCT, scl: _SCT) -> _Line[_SCT]: ...
+    def __call__(self, /, off: _ScalarT, scl: _ScalarT) -> _Line[_ScalarT]: ...
     @overload
     def __call__(self, /, off: int, scl: int) -> _Line[np.int_]: ...
     @overload
@@ -842,7 +842,7 @@ class _FuncRoots(_Named[_Name_co], Protocol[_Name_co]):
     @overload
     def __call__(self, /, c: _SeriesLikeCoef_co) -> _ObjectSeries: ...
 
-_Companion: TypeAlias = np.ndarray[tuple[int, int], np.dtype[_SCT]]
+_Companion: TypeAlias = np.ndarray[tuple[int, int], np.dtype[_ScalarT]]
 
 @type_check_only
 class _FuncCompanion(_Named[_Name_co], Protocol[_Name_co]):
