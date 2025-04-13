@@ -45,7 +45,9 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
     }
     else if (scalar == 1) {
         // Special case for division by 1
-        memcpy(dst, src, len * sizeof(T));
+        if (src != dst) {
+            std::memcpy(dst, src, len * sizeof(T));
+        }
     }
     else if (scalar == static_cast<T>(-1)) {
         const auto vec_min_val = hn::Set(d, std::numeric_limits<T>::min());
@@ -59,54 +61,48 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
                 raise_overflow = true;
             }
         }
-        if (i < static_cast<size_t>(len)) {
-            const size_t num = len - i;
-            const auto vec_src = hn::LoadN(d, src + i, num);
-            const auto is_min_val = hn::Eq(vec_src, vec_min_val);
-            const auto vec_res = hn::IfThenElse(is_min_val, vec_min_val, hn::Neg(vec_src));
-            hn::StoreN(vec_res, d, dst + i, num);
-            if (!raise_overflow && !hn::AllFalse(d, is_min_val)) {
+        // Handle remaining elements
+        for (; i < static_cast<size_t>(len); i++) {
+            T val = src[i];
+            if (val == std::numeric_limits<T>::min()) {
+                dst[i] = std::numeric_limits<T>::min();
                 raise_overflow = true;
+            } else {
+                dst[i] = -val;
             }
         }
     }
     else {
+        // General case with floor division semantics
         const auto vec_scalar = hn::Set(d, scalar);
-        const auto zero = hn::Zero(d);
+        const auto vec_zero = hn::Zero(d);
         size_t i = 0;
+        
         for (; i + N <= static_cast<size_t>(len); i += N) {
             const auto vec_src = hn::LoadU(d, src + i);
-            auto vec_res = hn::Div(vec_src, vec_scalar);
-            const auto vec_mul = hn::Mul(vec_res, vec_scalar);
-            const auto remainder_check = hn::Ne(vec_src, vec_mul);
-            const auto vec_nsign_src = hn::Lt(vec_src, zero);
-            const auto vec_nsign_scalar = hn::Lt(vec_scalar, zero);
-            const auto diff_sign = hn::Xor(vec_nsign_src, vec_nsign_scalar);
-            vec_res = hn::IfThenElse(
-                hn::And(remainder_check, diff_sign),
-                hn::Sub(vec_res, hn::Set(d, 1)),
-                vec_res
-            );
-            hn::StoreU(vec_res, d, dst + i);
+            auto vec_div = hn::Div(vec_src, vec_scalar);
+            const auto vec_mul = hn::Mul(vec_div, vec_scalar);
+            const auto has_remainder = hn::Ne(vec_src, vec_mul);
+            const auto src_sign = hn::Lt(vec_src, vec_zero);
+            const auto scalar_sign = hn::Lt(vec_scalar, vec_zero); 
+            const auto different_signs = hn::Xor(src_sign, scalar_sign);
+            
+            auto adjustment = hn::And(different_signs, has_remainder);
+            vec_div = hn::IfThenElse(adjustment, hn::Sub(vec_div, hn::Set(d, static_cast<T>(1))), vec_div);
+            
+            hn::StoreU(vec_div, d, dst + i);
         }
-        if (i < static_cast<size_t>(len)) {
-            const size_t num = len - i;
-            const auto vec_src = hn::LoadN(d, src + i, num);
-            auto vec_res = hn::Div(vec_src, vec_scalar);
-            const auto vec_mul = hn::Mul(vec_res, vec_scalar);
-            const auto remainder_check = hn::Ne(vec_src, vec_mul);
-            const auto vec_nsign_src = hn::Lt(vec_src, zero);
-            const auto vec_nsign_scalar = hn::Lt(vec_scalar, zero);
-            const auto diff_sign = hn::Xor(vec_nsign_src, vec_nsign_scalar);
-            vec_res = hn::IfThenElse(
-                hn::And(remainder_check, diff_sign),
-                hn::Sub(vec_res, hn::Set(d, 1)),
-                vec_res
-            );
-            hn::StoreN(vec_res, d, dst + i, num);
+        
+        // Handle remaining elements with scalar code
+        for (; i < static_cast<size_t>(len); i++) {
+            T n = src[i];
+            T r = n / scalar;
+            if (((n > 0) != (scalar > 0)) && ((r * scalar) != n)) {
+                r--;
+            }
+            dst[i] = r;
         }
     }
-
     set_float_status(raise_overflow, raise_divbyzero);
 }
 
@@ -126,7 +122,9 @@ void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp le
     }
     else if (scalar == 1) {
         // Special case for division by 1
-        memcpy(dst, src, len * sizeof(T));
+        if (src != dst) {
+            std::memcpy(dst, src, len * sizeof(T));
+        }
     }
     else {
         const auto vec_scalar = hn::Set(d, scalar);
@@ -136,11 +134,9 @@ void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp le
             const auto vec_res = hn::Div(vec_src, vec_scalar);
             hn::StoreU(vec_res, d, dst + i);
         }
-        if (i < static_cast<size_t>(len)) {
-            const size_t num = len - i;
-            const auto vec_src = hn::LoadN(d, src + i, num);
-            const auto vec_res = hn::Div(vec_src, vec_scalar);
-            hn::StoreN(vec_res, d, dst + i, num);
+        // Handle remaining elements
+        for (; i < static_cast<size_t>(len); i++) {
+            dst[i] = src[i] / scalar;
         }
     }
 
@@ -185,8 +181,8 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
         }
         *reinterpret_cast<T*>(iop1) = io1;
         return;
-    }
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
+    }    
+    if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
         *reinterpret_cast<T*>(args[1]) != 0)
     {
         bool no_overlap = nomemoverlap(args[2], steps[2], args[0], steps[0], dimensions[0]);
@@ -204,7 +200,7 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
         const T dividend = *reinterpret_cast<T*>(ip1);
         const T divisor = *reinterpret_cast<T*>(ip2);
         T* result = reinterpret_cast<T*>(op1);
-        
+
         if (HWY_UNLIKELY(divisor == 0)) {
             npy_set_floatstatus_divbyzero();
             *result = 0;
@@ -233,7 +229,7 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
         *reinterpret_cast<T*>(iop1) = io1;
         return;
     }
-    else if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
+    if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
         *reinterpret_cast<T*>(args[1]) != 0)
     {
         bool no_overlap = nomemoverlap(args[2], steps[2], args[0], steps[0], dimensions[0]);
@@ -245,7 +241,6 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
             return;
         }
     }
-
     // Fallback for non-blockable, in-place, or zero divisor cases
     BINARY_LOOP {
         const T in1 = *reinterpret_cast<T*>(ip1);
@@ -261,7 +256,8 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
 
 // Indexed division for signed integers
 template <typename T>
-int TYPE_divide_indexed(char * const*args, npy_intp const *dimensions, 
+int TYPE_divide_indexed(PyArrayMethod_Context *NPY_UNUSED(context), 
+                       char * const*args, npy_intp const *dimensions, 
                        npy_intp const *steps, NpyAuxData *NPY_UNUSED(func)) {
     char *ip1 = args[0];
     char *indxp = args[1];
@@ -269,14 +265,14 @@ int TYPE_divide_indexed(char * const*args, npy_intp const *dimensions,
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
     npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
-    
+
     for(npy_intp i = 0; i < n; i++, indxp += isindex, value += isb) {
         npy_intp indx = *(npy_intp *)indxp;
         if (indx < 0) {
             indx += shape;
         }
-        T* indexed = reinterpret_cast<T*>(ip1 + is1 * indx);
-        T divisor = *reinterpret_cast<T*>(value);
+        T* indexed = (T*)(ip1 + is1 * indx);
+        T divisor = *(T*)value;
         *indexed = floor_div(*indexed, divisor);
     }
     return 0;
@@ -284,7 +280,8 @@ int TYPE_divide_indexed(char * const*args, npy_intp const *dimensions,
 
 // Indexed division for unsigned integers
 template <typename T>
-int TYPE_divide_unsigned_indexed(char * const*args, npy_intp const *dimensions, 
+int TYPE_divide_unsigned_indexed(PyArrayMethod_Context *NPY_UNUSED(context), 
+                               char * const*args, npy_intp const *dimensions, 
                                npy_intp const *steps, NpyAuxData *NPY_UNUSED(func)) {
     char *ip1 = args[0];
     char *indxp = args[1];
@@ -292,15 +289,15 @@ int TYPE_divide_unsigned_indexed(char * const*args, npy_intp const *dimensions,
     npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
     npy_intp shape = steps[3];
     npy_intp n = dimensions[0];
-    
+
     for(npy_intp i = 0; i < n; i++, indxp += isindex, value += isb) {
         npy_intp indx = *(npy_intp *)indxp;
         if (indx < 0) {
             indx += shape;
         }
-        T* indexed = reinterpret_cast<T*>(ip1 + is1 * indx);
-        T divisor = *reinterpret_cast<T*>(value);
-        
+        T* indexed = (T*)(ip1 + is1 * indx);
+        T divisor = *(T*)value;
+
         if (HWY_UNLIKELY(divisor == 0)) {
             npy_set_floatstatus_divbyzero();
             *indexed = 0;
@@ -317,17 +314,26 @@ int TYPE_divide_unsigned_indexed(char * const*args, npy_intp const *dimensions,
             TYPE_divide<SCALAR_TYPE>(args, dimensions, steps, func); \
         } \
         NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_divide_indexed)(PyArrayMethod_Context *context, char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *func) { \
-            return TYPE_divide_indexed<SCALAR_TYPE>(args, dimensions, steps, func); \
+            return TYPE_divide_indexed<SCALAR_TYPE>(context, args, dimensions, steps, func); \
         } \
     } // extern "C"
 
 
 #ifdef NPY_CPU_DISPATCH_CURFX
-DEFINE_DIVIDE_FUNCTION(BYTE, int8_t)
-DEFINE_DIVIDE_FUNCTION(SHORT, int16_t)
-DEFINE_DIVIDE_FUNCTION(INT, int32_t)
-DEFINE_DIVIDE_FUNCTION(LONG, int64_t)
-DEFINE_DIVIDE_FUNCTION(LONGLONG, int64_t)
+// On Linux and macOS (LP64 model), long is 64 bits, but on 32-bit Windows (LLP64 model), long is 32 bits. Meanwhile, long long is guaranteed at least 64 bits
+#if defined(_WIN32) || defined(__EMSCRIPTEN__) || (defined(__arm__) && !defined(__aarch64__)) || (defined(__linux__) && ((defined(__i386__) || defined(__i686__))))
+    DEFINE_DIVIDE_FUNCTION(BYTE, int8_t)
+    DEFINE_DIVIDE_FUNCTION(SHORT, int16_t)  
+    DEFINE_DIVIDE_FUNCTION(INT, int32_t)
+    DEFINE_DIVIDE_FUNCTION(LONG, int32_t)  // LONG is 32-bit on 32-bit platforms
+    DEFINE_DIVIDE_FUNCTION(LONGLONG, int64_t)
+#else
+    DEFINE_DIVIDE_FUNCTION(BYTE, int8_t)
+    DEFINE_DIVIDE_FUNCTION(SHORT, int16_t)
+    DEFINE_DIVIDE_FUNCTION(INT, int32_t)
+    DEFINE_DIVIDE_FUNCTION(LONG, int64_t)  // LONG is 64-bit on 64-bit platforms
+    DEFINE_DIVIDE_FUNCTION(LONGLONG, int64_t)
+#endif
 #endif
 
 #define DEFINE_DIVIDE_FUNCTION_UNSIGNED(TYPE, SCALAR_TYPE) \
@@ -336,16 +342,24 @@ DEFINE_DIVIDE_FUNCTION(LONGLONG, int64_t)
             TYPE_divide_unsigned<SCALAR_TYPE>(args, dimensions, steps, func); \
         } \
         NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_divide_indexed)(PyArrayMethod_Context *context, char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *func) { \
-            return TYPE_divide_unsigned_indexed<SCALAR_TYPE>(args, dimensions, steps, func); \
+            return TYPE_divide_unsigned_indexed<SCALAR_TYPE>(context, args, dimensions, steps, func); \
         } \
     }
 
 #ifdef NPY_CPU_DISPATCH_CURFX
-DEFINE_DIVIDE_FUNCTION_UNSIGNED(UBYTE, uint8_t)
-DEFINE_DIVIDE_FUNCTION_UNSIGNED(USHORT, uint16_t)
-DEFINE_DIVIDE_FUNCTION_UNSIGNED(UINT, uint32_t)
-DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONG, uint64_t)
-DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONGLONG, uint64_t)
+#if defined(_WIN32) || defined(__EMSCRIPTEN__) || (defined(__arm__) && !defined(__aarch64__)) || (defined(__linux__) && ((defined(__i386__) || defined(__i686__))))
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UBYTE, uint8_t)
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(USHORT, uint16_t)
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UINT, uint32_t)
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONG, uint32_t)  // ULONG is 32-bit on 32-bit platforms
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONGLONG, uint64_t)
+#else
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UBYTE, uint8_t)
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(USHORT, uint16_t)
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UINT, uint32_t)
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONG, uint64_t)  // ULONG is 64-bit on 64-bit platforms
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONGLONG, uint64_t)
+#endif
 #endif
 
 #undef DEFINE_DIVIDE_FUNCTION
