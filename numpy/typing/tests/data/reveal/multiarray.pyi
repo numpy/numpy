@@ -6,9 +6,9 @@ import numpy.typing as npt
 
 from typing_extensions import Unpack, assert_type
 
-_SCT = TypeVar("_SCT", bound=np.generic, covariant=True)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 
-class SubClass(npt.NDArray[_SCT]): ...
+class SubClass(npt.NDArray[_ScalarT_co]): ...
 
 subclass: SubClass[np.float64]
 

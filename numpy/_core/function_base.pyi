@@ -17,7 +17,7 @@ from numpy._typing import (
 
 __all__ = ["logspace", "linspace", "geomspace"]
 
-_SCT = TypeVar("_SCT", bound=generic)
+_ScalarT = TypeVar("_ScalarT", bound=generic)
 
 @overload
 def linspace(
@@ -50,11 +50,11 @@ def linspace(
     num: SupportsIndex,
     endpoint: bool,
     retstep: L[False],
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     axis: SupportsIndex = ...,
     *,
     device: L["cpu"] | None = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -63,10 +63,10 @@ def linspace(
     endpoint: bool = ...,
     retstep: L[False] = ...,
     *,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     axis: SupportsIndex = ...,
     device: L["cpu"] | None = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -111,10 +111,10 @@ def linspace(
     endpoint: bool = ...,
     *,
     retstep: L[True],
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     axis: SupportsIndex = ...,
     device: L["cpu"] | None = ...,
-) -> tuple[NDArray[_SCT], _SCT]: ...
+) -> tuple[NDArray[_ScalarT], _ScalarT]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -155,9 +155,9 @@ def logspace(
     num: SupportsIndex,
     endpoint: bool,
     base: _ArrayLikeComplex_co,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     axis: SupportsIndex = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def logspace(
     start: _ArrayLikeComplex_co,
@@ -166,9 +166,9 @@ def logspace(
     endpoint: bool = ...,
     base: _ArrayLikeComplex_co = ...,
     *,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     axis: SupportsIndex = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def logspace(
     start: _ArrayLikeComplex_co,
@@ -204,9 +204,9 @@ def geomspace(
     stop: _ArrayLikeComplex_co,
     num: SupportsIndex,
     endpoint: bool,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     axis: SupportsIndex = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def geomspace(
     start: _ArrayLikeComplex_co,
@@ -214,9 +214,9 @@ def geomspace(
     num: SupportsIndex = ...,
     endpoint: bool = ...,
     *,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     axis: SupportsIndex = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def geomspace(
     start: _ArrayLikeComplex_co,
