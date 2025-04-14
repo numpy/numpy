@@ -3583,7 +3583,6 @@ static PyObject *
 array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len)
 {
     npy_intp i, narr = 0, ndtypes = 0;
-    PyArrayObject **arr = NULL;
     PyArray_Descr **dtypes = NULL;
     PyObject *ret = NULL;
 
@@ -3593,7 +3592,10 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
         goto finish;
     }
 
-    arr = PyArray_malloc(2 * len * sizeof(void *));
+    NPY_ALLOC_WORKSPACE(arr, PyArrayObject *, 2 * 3, 2 * len);
+    if (arr == NULL) {
+        return NULL;
+    }
     if (arr == NULL) {
         return PyErr_NoMemory();
     }
@@ -3636,7 +3638,7 @@ finish:
     for (i = 0; i < ndtypes; ++i) {
         Py_DECREF(dtypes[i]);
     }
-    PyArray_free(arr);
+    npy_free_workspace(arr);
     return ret;
 }
 
