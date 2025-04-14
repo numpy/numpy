@@ -1306,7 +1306,7 @@ legacy_@name@_format@kind@(npy_@name@ val){
 
 #define SINGLE_TYPE 0
 #define DOUBLE_TYPE 1
-#define LONG_TYPE 2
+#define LONG_DOUBLE_TYPE 2
 /**begin repeat1
  * #name = float, double, longdouble#
  * #dtype = 0, 1, 2#
