@@ -1304,8 +1304,12 @@ legacy_@name@_format@kind@(npy_@name@ val){
 
 #define IS_@kind@
 
+#define SINGLE_TYPE 0
+#define DOUBLE_TYPE 1
+#define LONG_TYPE 2
 /**begin repeat1
  * #name = float, double, longdouble#
+ * #dtype = 0, 1, 2#
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  * #n = f, , l#
@@ -1336,7 +1340,11 @@ static PyObject *
     }
     else {
         npy_@name@ absval = val < 0 ? -val : val;
-        use_positional = absval < 1.e16L && absval >= 1.e-4L;
+        #if @dtype@ == SINGLE_TYPE
+            use_positional = absval < 1.e7L && absval >= 1.e-4L;
+        #else
+            use_positional = absval < 1.e16L && absval >= 1.e-4L;
+        #endif
     }
 
     if (use_positional) {
@@ -1485,7 +1493,7 @@ halftype_@kind@(PyObject *self)
     absval = floatval < 0 ? -floatval : floatval;
 
     PyObject *string;
-    if (absval == 0 || (absval < 1.e16 && absval >= 1.e-4) ) {
+    if (absval == 0 || (absval < 1.e3 && absval >= 1.e-4) ) {
         string = format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
     }
     else {

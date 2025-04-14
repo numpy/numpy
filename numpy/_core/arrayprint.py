@@ -990,11 +990,19 @@ class FloatingFormat:
 
         # choose exponential mode based on the non-zero finite values:
         abs_non_zero = absolute(finite_vals[finite_vals != 0])
+
+        # consider data type while deciding the max cutoff for exp format
+        exp_cutoff_max = 1.e8
+        if data.dtype == "float16":
+            exp_cutoff_max = 1.e3
+        elif data.dtype == "float32":
+            exp_cutoff_max = 1.e7
+
         if len(abs_non_zero) != 0:
             max_val = np.max(abs_non_zero)
             min_val = np.min(abs_non_zero)
             with errstate(over='ignore'):  # division can overflow
-                if max_val >= 1.e8 or (not self.suppress_small and
+                if max_val >= exp_cutoff_max or (not self.suppress_small and
                         (min_val < 0.0001 or max_val / min_val > 1000.)):
                     self.exp_format = True
 

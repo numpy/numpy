@@ -48,6 +48,17 @@ class TestRealScalars:
         check(1e15)
         check(1e16)
 
+    def test_gh_28679(self):
+        # test cutoff to exponent notation for half and single
+        assert_equal(str(np.half(-0.000099)), "-9.9e-05")
+        assert_equal(str(np.half(0.0001)), "0.0001")
+        assert_equal(str(np.half(999)), "999.0")
+        assert_equal(str(np.half(-1000)), "-1e+03")
+        assert_equal(str(np.single(0.000099)), "9.9e-05")
+        assert_equal(str(np.single(-0.000100001)), "-0.000100001")
+        assert_equal(str(np.single(9999999)), "9999999.0")
+        assert_equal(str(np.single(-10000000)), "-1e+07")
+
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
         # see dragon4.c for details.
