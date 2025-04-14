@@ -394,6 +394,7 @@ assert_type(abs(m8_none), np.timedelta64[None])
 assert_type(abs(m8_int), np.timedelta64[int])
 assert_type(abs(m8_delta), np.timedelta64[dt.timedelta])
 assert_type(abs(b_), np.bool)
+assert_type(abs(AR_O), npt.NDArray[np.object_])
 
 # Time structures
 
