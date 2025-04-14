@@ -128,10 +128,15 @@ if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
 
+use_openmp = not get_option('disable-threading') and get_option('enable-openmp') and cpp.has_argument('-fopenmp')
+summary({
+  'Build with openMP? ' : use_openmp,
+})
+
 # Setup openmp flags for x86-simd-sort:
 omp_cflags = []
 omp = []
-if use_intel_sort and cpp.has_argument('-fopenmp')
+if use_intel_sort and use_openmp
   omp = dependency('openmp', required : false)
   if omp.found()
     omp_cflags = ['-fopenmp', '-DXSS_USE_OPENMP']
