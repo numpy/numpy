@@ -185,6 +185,92 @@ assert_type(AR_LIKE_m - AR_O, Any)
 assert_type(AR_LIKE_M - AR_O, Any)
 assert_type(AR_LIKE_O - AR_O, Any)
 
+# Array "true" division
+
+assert_type(AR_f / b, npt.NDArray[np.float64])
+assert_type(AR_f / i, npt.NDArray[np.float64])
+assert_type(AR_f / f, npt.NDArray[np.float64])
+
+assert_type(b / AR_f, npt.NDArray[np.float64])
+assert_type(i / AR_f, npt.NDArray[np.float64])
+assert_type(f / AR_f, npt.NDArray[np.float64])
+
+assert_type(AR_b / AR_LIKE_b, npt.NDArray[np.float64])
+assert_type(AR_b / AR_LIKE_u, npt.NDArray[np.float64])
+assert_type(AR_b / AR_LIKE_i, npt.NDArray[np.float64])
+assert_type(AR_b / AR_LIKE_f, npt.NDArray[np.float64])
+assert_type(AR_b / AR_LIKE_O, Any)
+
+assert_type(AR_LIKE_b / AR_b, npt.NDArray[np.float64])
+assert_type(AR_LIKE_u / AR_b, npt.NDArray[np.float64])
+assert_type(AR_LIKE_i / AR_b, npt.NDArray[np.float64])
+assert_type(AR_LIKE_f / AR_b, npt.NDArray[np.float64])
+assert_type(AR_LIKE_O / AR_b, Any)
+
+assert_type(AR_u / AR_LIKE_b, npt.NDArray[np.float64])
+assert_type(AR_u / AR_LIKE_u, npt.NDArray[np.float64])
+assert_type(AR_u / AR_LIKE_i, npt.NDArray[np.float64])
+assert_type(AR_u / AR_LIKE_f, npt.NDArray[np.float64])
+assert_type(AR_u / AR_LIKE_O, Any)
+
+assert_type(AR_LIKE_b / AR_u, npt.NDArray[np.float64])
+assert_type(AR_LIKE_u / AR_u, npt.NDArray[np.float64])
+assert_type(AR_LIKE_i / AR_u, npt.NDArray[np.float64])
+assert_type(AR_LIKE_f / AR_u, npt.NDArray[np.float64])
+assert_type(AR_LIKE_m / AR_u, npt.NDArray[np.timedelta64])
+assert_type(AR_LIKE_O / AR_u, Any)
+
+assert_type(AR_i / AR_LIKE_b, npt.NDArray[np.float64])
+assert_type(AR_i / AR_LIKE_u, npt.NDArray[np.float64])
+assert_type(AR_i / AR_LIKE_i, npt.NDArray[np.float64])
+assert_type(AR_i / AR_LIKE_f, npt.NDArray[np.float64])
+assert_type(AR_i / AR_LIKE_O, Any)
+
+assert_type(AR_LIKE_b / AR_i, npt.NDArray[np.float64])
+assert_type(AR_LIKE_u / AR_i, npt.NDArray[np.float64])
+assert_type(AR_LIKE_i / AR_i, npt.NDArray[np.float64])
+assert_type(AR_LIKE_f / AR_i, npt.NDArray[np.float64])
+assert_type(AR_LIKE_m / AR_i, npt.NDArray[np.timedelta64])
+assert_type(AR_LIKE_O / AR_i, Any)
+
+assert_type(AR_f / AR_LIKE_b, npt.NDArray[np.float64])
+assert_type(AR_f / AR_LIKE_u, npt.NDArray[np.float64])
+assert_type(AR_f / AR_LIKE_i, npt.NDArray[np.float64])
+assert_type(AR_f / AR_LIKE_f, npt.NDArray[np.float64])
+assert_type(AR_f / AR_LIKE_O, Any)
+
+assert_type(AR_LIKE_b / AR_f, npt.NDArray[np.float64])
+assert_type(AR_LIKE_u / AR_f, npt.NDArray[np.float64])
+assert_type(AR_LIKE_i / AR_f, npt.NDArray[np.float64])
+assert_type(AR_LIKE_f / AR_f, npt.NDArray[np.float64])
+assert_type(AR_LIKE_m / AR_f, npt.NDArray[np.timedelta64])
+assert_type(AR_LIKE_O / AR_f, Any)
+
+assert_type(AR_m / AR_LIKE_u, npt.NDArray[np.timedelta64])
+assert_type(AR_m / AR_LIKE_i, npt.NDArray[np.timedelta64])
+assert_type(AR_m / AR_LIKE_f, npt.NDArray[np.timedelta64])
+assert_type(AR_m / AR_LIKE_m, npt.NDArray[np.float64])
+assert_type(AR_m / AR_LIKE_O, Any)
+
+assert_type(AR_LIKE_m / AR_m, npt.NDArray[np.float64])
+assert_type(AR_LIKE_O / AR_m, Any)
+
+assert_type(AR_O / AR_LIKE_b, Any)
+assert_type(AR_O / AR_LIKE_u, Any)
+assert_type(AR_O / AR_LIKE_i, Any)
+assert_type(AR_O / AR_LIKE_f, Any)
+assert_type(AR_O / AR_LIKE_m, Any)
+assert_type(AR_O / AR_LIKE_M, Any)
+assert_type(AR_O / AR_LIKE_O, Any)
+
+assert_type(AR_LIKE_b / AR_O, Any)
+assert_type(AR_LIKE_u / AR_O, Any)
+assert_type(AR_LIKE_i / AR_O, Any)
+assert_type(AR_LIKE_f / AR_O, Any)
+assert_type(AR_LIKE_m / AR_O, Any)
+assert_type(AR_LIKE_M / AR_O, Any)
+assert_type(AR_LIKE_O / AR_O, Any)
+
 # Array floor division
 
 assert_type(AR_b // AR_LIKE_b, npt.NDArray[np.int8])
@@ -308,6 +394,7 @@ assert_type(abs(m8_none), np.timedelta64[None])
 assert_type(abs(m8_int), np.timedelta64[int])
 assert_type(abs(m8_delta), np.timedelta64[dt.timedelta])
 assert_type(abs(b_), np.bool)
+assert_type(abs(AR_O), npt.NDArray[np.object_])
 
 # Time structures
 

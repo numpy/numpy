@@ -25,8 +25,8 @@ from ._char_codes import (
     _ObjectCodes,
 )
 
-_SCT = TypeVar("_SCT", bound=np.generic)
-_DType_co = TypeVar("_DType_co", covariant=True, bound=np.dtype[Any])
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+_DTypeT_co = TypeVar("_DTypeT_co", covariant=True, bound=np.dtype[Any])
 
 _DTypeLikeNested: TypeAlias = Any  # TODO: wait for support for recursive types
 
@@ -49,13 +49,13 @@ class _DTypeDict(_DTypeDictBase, total=False):
 
 # A protocol for anything with the dtype attribute
 @runtime_checkable
-class _SupportsDType(Protocol[_DType_co]):
+class _SupportsDType(Protocol[_DTypeT_co]):
     @property
-    def dtype(self) -> _DType_co: ...
+    def dtype(self) -> _DTypeT_co: ...
 
 
 # A subset of `npt.DTypeLike` that can be parametrized w.r.t. `np.generic`
-_DTypeLike: TypeAlias = type[_SCT] | np.dtype[_SCT] | _SupportsDType[np.dtype[_SCT]]
+_DTypeLike: TypeAlias = type[_ScalarT] | np.dtype[_ScalarT] | _SupportsDType[np.dtype[_ScalarT]]
 
 
 # Would create a dtype[np.void]

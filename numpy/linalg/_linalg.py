@@ -3396,7 +3396,12 @@ def matrix_transpose(x, /):
     return _core_matrix_transpose(x)
 
 
-matrix_transpose.__doc__ = _core_matrix_transpose.__doc__
+matrix_transpose.__doc__ = f"""{_core_matrix_transpose.__doc__}
+
+    Notes
+    -----
+    This function is an alias of `numpy.matrix_transpose`.
+"""
 
 
 # matrix_norm
