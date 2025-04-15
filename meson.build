@@ -82,11 +82,5 @@ if cc_id.startswith('clang')
   endif
 endif
 
-if host_machine.system() == 'darwin' and cc.has_link_argument('-Wl,-ld_classic')
-  # New linker introduced in macOS 14 not working yet with at least OpenBLAS in Spack,
-  # see gh-24964 (and linked scipy issue from there).
-  add_project_link_arguments('-Wl,-ld_classic', language : ['c', 'cpp'])
-endif
-
 subdir('meson_cpu')
 subdir('numpy')
