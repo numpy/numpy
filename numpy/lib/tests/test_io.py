@@ -1406,7 +1406,7 @@ class TestFromTxt(LoadTxtBase):
         assert_equal(test, control)
 
     def test_skip_footer(self):
-        data = ["# %i" % i for i in range(1, 6)]
+        data = [f"# {i}" for i in range(1, 6)]
         data.append("A, B, C")
         data.extend(["%i,%3.1f,%03s" % (i, i, i) for i in range(51)])
         data[-1] = "99,99"

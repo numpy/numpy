@@ -444,9 +444,9 @@ def msvc_runtime_library():
     ver = msvc_runtime_major ()
     if ver:
         if ver < 140:
-            return "msvcr%i" % ver
+            return f"msvcr{ver}"
         else:
-            return "vcruntime%i" % ver
+            return f"vcruntime{ver}"
     else:
         return None
 

@@ -5419,8 +5419,8 @@ def delete(arr, obj, axis=None):
         # optimization for a single value
         if (obj < -N or obj >= N):
             raise IndexError(
-                "index %i is out of bounds for axis %i with "
-                "size %i" % (obj, axis, N))
+                f"index {obj} is out of bounds for axis {axis} with "
+                f"size {N}")
         if (obj < 0):
             obj += N
         newshape[axis] -= 1

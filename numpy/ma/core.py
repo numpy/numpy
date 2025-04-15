@@ -2977,9 +2977,8 @@ class MaskedArray(ndarray):
                 elif nm == nd:
                     mask = np.reshape(mask, _data.shape)
                 else:
-                    msg = "Mask and data not compatible: data size is %i, "\
-                          "mask size is %i."
-                    raise MaskError(msg % (nd, nm))
+                    msg = f"Mask and data not compatible: data size is {nd}, mask size is {nm}."
+                    raise MaskError(msg)
                 copy = True
             # Set the mask to the new value
             if _data._mask is nomask:
