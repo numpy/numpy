@@ -10,17 +10,17 @@ from typing import (
     Any,
     Generic,
     Literal,
+    LiteralString,
     NoReturn,
     Protocol,
     SupportsIndex,
     TypeAlias,
     TypedDict,
     TypeVar,
+    Unpack,
     overload,
     type_check_only,
 )
-
-from typing_extensions import LiteralString, Unpack
 
 import numpy as np
 from numpy import _CastingKind, _OrderKACF, ufunc
@@ -36,9 +36,9 @@ _2Tuple: TypeAlias = tuple[_T, _T]
 _3Tuple: TypeAlias = tuple[_T, _T, _T]
 _4Tuple: TypeAlias = tuple[_T, _T, _T, _T]
 
-_2PTuple: TypeAlias = tuple[_T, _T, Unpack[tuple[_T, ...]]]
-_3PTuple: TypeAlias = tuple[_T, _T, _T, Unpack[tuple[_T, ...]]]
-_4PTuple: TypeAlias = tuple[_T, _T, _T, _T, Unpack[tuple[_T, ...]]]
+_2PTuple: TypeAlias = tuple[_T, _T, *tuple[_T, ...]]
+_3PTuple: TypeAlias = tuple[_T, _T, _T, *tuple[_T, ...]]
+_4PTuple: TypeAlias = tuple[_T, _T, _T, _T, *tuple[_T, ...]]
 
 _NTypes = TypeVar("_NTypes", bound=int, covariant=True)
 _IDType = TypeVar("_IDType", covariant=True)

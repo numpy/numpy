@@ -14,9 +14,10 @@ from typing import (
     Final,
     Protocol,
     ClassVar,
+    Unpack,
     type_check_only,
 )
-from typing_extensions import CapsuleType, Unpack
+from typing_extensions import CapsuleType
 
 import numpy as np
 from numpy import (  # type: ignore[attr-defined]

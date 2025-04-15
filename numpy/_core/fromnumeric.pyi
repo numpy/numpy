@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from typing import (
     Any,
     Literal,
+    Never,
     Protocol,
     SupportsIndex,
     TypeAlias,
@@ -12,7 +13,7 @@ from typing import (
 )
 
 from _typeshed import Incomplete
-from typing_extensions import Never, deprecated
+from typing_extensions import deprecated
 
 import numpy as np
 from numpy import (

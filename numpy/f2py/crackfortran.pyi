@@ -1,10 +1,9 @@
 import re
 from collections.abc import Callable, Iterable, Mapping
-from typing import IO, Any, Concatenate, Final, ParamSpec, TypeAlias, overload
+from typing import IO, Any, Concatenate, Final, Never, ParamSpec, TypeAlias, overload
 from typing import Literal as L
 
 from _typeshed import StrOrBytesPath, StrPath
-from typing_extensions import Never
 
 from .__version__ import version
 from .auxfuncs import isintent_dict as isintent_dict

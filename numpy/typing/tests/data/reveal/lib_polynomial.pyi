@@ -1,10 +1,8 @@
-from typing import Any, NoReturn
 from collections.abc import Iterator
+from typing import Any, NoReturn, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 AR_b: npt.NDArray[np.bool]
 AR_u4: npt.NDArray[np.uint32]

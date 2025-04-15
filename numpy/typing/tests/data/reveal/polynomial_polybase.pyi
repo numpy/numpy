@@ -1,13 +1,12 @@
-from fractions import Fraction
 from collections.abc import Sequence
 from decimal import Decimal
-from typing import Any, Literal as L, TypeAlias, TypeVar
+from fractions import Fraction
+from typing import Any, LiteralString, TypeAlias, TypeVar, assert_type
+from typing import Literal as L
 
 import numpy as np
 import numpy.polynomial as npp
 import numpy.typing as npt
-
-from typing_extensions import assert_type, LiteralString
 
 _Ar_x: TypeAlias = npt.NDArray[np.inexact[Any] | np.object_]
 _Ar_f: TypeAlias = npt.NDArray[np.floating[Any]]

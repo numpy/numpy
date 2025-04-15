@@ -1,14 +1,13 @@
 from collections.abc import Sequence
 from decimal import Decimal
 from fractions import Fraction
-from typing import Any, Literal as L, TypeAlias
+from typing import Any, TypeAlias, assert_type
+from typing import Literal as L
 
 import numpy as np
-import numpy.typing as npt
 import numpy.polynomial.polyutils as pu
+import numpy.typing as npt
 from numpy.polynomial._polytypes import _Tuple2
-
-from typing_extensions import assert_type
 
 _ArrFloat1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating[Any]]]
 _ArrComplex1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complexfloating[Any, Any]]]

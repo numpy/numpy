@@ -8,6 +8,7 @@ from typing import (
     Final,
     Generic,
     Literal,
+    LiteralString,
     SupportsIndex,
     TypeAlias,
     TypeGuard,
@@ -41,7 +42,7 @@ from ._polytypes import (
     _ArrayLikeCoef_co,
 )
 
-from typing_extensions import LiteralString, TypeVar
+from typing_extensions import TypeVar
 
 __all__: Final[Sequence[str]] = ("ABCPolyBase",)
 

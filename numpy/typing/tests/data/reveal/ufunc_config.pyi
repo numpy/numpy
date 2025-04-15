@@ -1,12 +1,11 @@
 """Typing tests for `_core._ufunc_config`."""
 
-from _typeshed import SupportsWrite
-from typing import Any
 from collections.abc import Callable
+from typing import Any, assert_type
+
+from _typeshed import SupportsWrite
 
 import numpy as np
-
-from typing_extensions import assert_type
 
 def func(a: str, b: int) -> None: ...
 

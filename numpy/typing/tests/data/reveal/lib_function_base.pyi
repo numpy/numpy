@@ -1,11 +1,9 @@
-from fractions import Fraction
-from typing import Any
 from collections.abc import Callable
+from fractions import Fraction
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 vectorized_func: np.vectorize
 

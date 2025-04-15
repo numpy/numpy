@@ -1,11 +1,9 @@
 from collections.abc import Sequence
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, assert_type
 
 import numpy as np
 import numpy.polynomial as npp
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 _ArrFloat1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating[Any]]]
 _ArrFloat1D64: TypeAlias = np.ndarray[tuple[int], np.dtype[np.float64]]

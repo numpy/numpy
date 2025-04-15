@@ -1,10 +1,8 @@
 from collections.abc import Mapping
-from typing import Any, SupportsIndex
+from typing import Any, SupportsIndex, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 def mode_func(
     ar: npt.NDArray[np.number[Any]],

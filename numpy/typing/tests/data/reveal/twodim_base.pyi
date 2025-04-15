@@ -1,9 +1,7 @@
-from typing import Any, TypeVar
+from typing import Any, TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
 

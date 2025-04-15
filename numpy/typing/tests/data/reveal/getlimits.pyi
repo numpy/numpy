@@ -1,9 +1,7 @@
-from typing import Any
+from typing import Any, LiteralString, assert_type
 
 import numpy as np
 from numpy._typing import _64Bit
-
-from typing_extensions import assert_type, LiteralString
 
 f: float
 f8: np.float64
