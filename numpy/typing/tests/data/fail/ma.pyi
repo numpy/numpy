@@ -94,3 +94,10 @@ m.argpartition(order=lambda: 'cabbage')  # E: No overload variant
 m.argpartition(AR_b)  # E: No overload variant
 
 m >= (lambda x: 'mango') # E: No overload variant
+
+m > (lambda x: 'mango') # E: No overload variant
+
+m <= (lambda x: 'mango') # E: No overload variant
+
+m < (lambda x: 'mango') # E: No overload variant
+
