@@ -293,7 +293,8 @@ class Template:
             else:
                 if len(vars) != len(item):
                     raise ValueError(
-                        f"Need {len(vars)} items to unpack (got {len(item)} items)"
+                        "Need %i items to unpack (got %i items)"
+                        % (len(vars), len(item))
                     )
                 for name, value in zip(vars, item):
                     ns[name] = value
