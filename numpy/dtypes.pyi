@@ -1,9 +1,9 @@
 # ruff: noqa: ANN401
 from types import MemberDescriptorType
-from typing import Any, ClassVar, Generic, NoReturn, TypeAlias, final, type_check_only
+from typing import Any, ClassVar, Generic, LiteralString, NoReturn, Self, TypeAlias, final, type_check_only
 from typing import Literal as L
 
-from typing_extensions import LiteralString, Self, TypeVar
+from typing_extensions import TypeVar
 
 import numpy as np
 

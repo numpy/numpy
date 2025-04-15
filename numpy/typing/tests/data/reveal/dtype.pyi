@@ -2,12 +2,10 @@ import ctypes as ct
 import datetime as dt
 from decimal import Decimal
 from fractions import Fraction
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal, LiteralString, TypeAlias, assert_type
 
 import numpy as np
 from numpy.dtypes import StringDType
-
-from typing_extensions import LiteralString, assert_type
 
 # a combination of likely `object` dtype-like candidates (no `_co`)
 _PyObjectLike: TypeAlias = Decimal | Fraction | dt.datetime | dt.timedelta

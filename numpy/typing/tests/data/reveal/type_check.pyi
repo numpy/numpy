@@ -1,10 +1,8 @@
-from typing import Any, Literal
+from typing import Any, Literal, assert_type
 
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import _16Bit, _32Bit, _64Bit, _128Bit
-
-from typing_extensions import assert_type
 
 f8: np.float64
 f: float

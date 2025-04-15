@@ -1,10 +1,9 @@
 # ruff: noqa: ANN401
 # pyright: reportSelfClsParameterName=false
 from collections.abc import Iterable, Sequence
-from typing import Any, ClassVar, Literal, Protocol, SupportsIndex, TypeAlias, overload, type_check_only
+from typing import Any, ClassVar, Literal, Protocol, SupportsIndex, TypeAlias, TypeVar, overload, type_check_only
 
 from _typeshed import StrOrBytesPath
-from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import _ByteOrder, _OrderKACF, _SupportsBuffer

@@ -1,10 +1,9 @@
-import numpy as np
-from typing_extensions import assert_type
-from typing import Any, TypeAlias, TypeVar
-from numpy._typing import _Shape, NDArray
-from numpy import dtype, generic
 from datetime import datetime, timedelta
+from typing import Any, TypeAlias, TypeVar, assert_type
 
+import numpy as np
+from numpy import dtype, generic
+from numpy._typing import NDArray, _Shape
 
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 MaskedNDArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT_co]]

@@ -1,9 +1,7 @@
-from typing import Any
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 i8: np.int64
 f8: np.float64

@@ -1,10 +1,8 @@
-from typing import TypeVar
+from typing import TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _64Bit, _32Bit
-
-from typing_extensions import assert_type
+from numpy._typing import _32Bit, _64Bit
 
 T1 = TypeVar("T1", bound=npt.NBitBase)
 T2 = TypeVar("T2", bound=npt.NBitBase)
