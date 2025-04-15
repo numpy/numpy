@@ -15,17 +15,12 @@ from numpy import (
     amax,
     amin,
     bool_,
-    datetime64,
     dtype,
     expand_dims,
     float64,
     generic,
-    object_,
-    integer,
     intp,
     ndarray,
-    number,
-    timedelta64,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
@@ -34,10 +29,6 @@ from numpy._typing import (
     _ArrayLike,
     _ArrayLikeInt,
     _ArrayLikeInt_co,
-    _ArrayLikeNumber_co,
-    _ArrayLikeDT64_co,
-    _ArrayLikeObject_co,
-    _ArrayLikeTD64_co,
     _DTypeLikeBool,
     _IntLike_co,
     _ScalarLike_co,
