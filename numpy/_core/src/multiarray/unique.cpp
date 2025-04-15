@@ -3,6 +3,7 @@
 
 #include <Python.h>
 
+#include <string>
 #include <unordered_set>
 #include <functional>
 
@@ -26,7 +27,7 @@ FinalAction<F> finally(F f) {
 
 template<typename T>
 static PyObject*
-unique(PyArrayObject *self)
+unique_int(PyArrayObject *self)
 {
     /* This function takes a numpy array and returns a numpy array containing
     the unique values.
@@ -118,28 +119,126 @@ unique(PyArrayObject *self)
 }
 
 
+template<typename T>
+static PyObject*
+unique_string(PyArrayObject *self)
+{
+    /* This function takes a numpy array and returns a numpy array containing
+    the unique values.
+
+    It assumes the numpy array includes data that can be viewed as fixed-size
+    strings of a certain size (sizeof(T)).
+    */
+    NPY_ALLOW_C_API_DEF;
+    std::unordered_set<std::basic_string<T>> hashset;
+
+    NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
+                                      NPY_ITER_EXTERNAL_LOOP |
+                                      NPY_ITER_REFS_OK |
+                                      NPY_ITER_ZEROSIZE_OK |
+                                      NPY_ITER_GROWINNER,
+                                NPY_KEEPORDER, NPY_NO_CASTING,
+                                NULL);
+    // Making sure the iterator is deallocated when the function returns, with
+    // or w/o an exception
+    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
+    if (iter == NULL) {
+        return NULL;
+    }
+
+    NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) {
+        return NULL;
+    }
+    char **dataptr = NpyIter_GetDataPtrArray(iter);
+    npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
+    npy_intp *innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    // release the GIL
+    PyThreadState *_save;
+    _save = PyEval_SaveThread();
+    // Making sure the GIL is re-acquired when the function returns, with
+    // or w/o an exception
+    auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
+    // first we put the data in a hash map
+
+    // item size for the string type
+    npy_intp itemsize = PyArray_ITEMSIZE(self);
+
+    // the number of characters (For Unicode, itemsize / 4 for UCS4)
+    npy_intp num_chars = itemsize / sizeof(T);
+
+    if (NpyIter_GetIterSize(iter) > 0) {
+        do {
+            char* data = *dataptr;
+            npy_intp stride = *strideptr;
+            npy_intp count = *innersizeptr;
+
+            while (count--) {
+                hasher.emplace((T *)data, num_chars);
+                data += stride;
+            }
+        } while (iternext(iter));
+    }
+
+    npy_intp length = hashset.size();
+
+    NPY_ALLOW_C_API;
+    PyArray_Descr *descr = PyArray_DESCR(self);
+    Py_INCREF(descr);
+    PyObject *res_obj = PyArray_NewFromDescr(
+        &PyArray_Type,
+        descr,
+        1, // ndim
+        &length, // shape
+        NULL, // strides
+        NULL, // data
+        // This flag is needed to be able to call .sort on it.
+        NPY_ARRAY_WRITEABLE, // flags
+        NULL // obj
+    );
+    NPY_DISABLE_C_API;
+
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
+    // then we iterate through the map's keys to get the unique values
+    T * data = (T *)PyArray_DATA((PyArrayObject *)res_obj);
+    auto it = hashset.begin();
+    size_t i = 0;
+    for (; it != hashset.end(); it++, i++) {
+        memcpy(data + i * num_chars, it->c_str(), itemsize);
+    }
+
+    return res_obj;
+}
+
+
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
-    {NPY_BYTE, unique<npy_byte>},
-    {NPY_UBYTE, unique<npy_ubyte>},
-    {NPY_SHORT, unique<npy_short>},
-    {NPY_USHORT, unique<npy_ushort>},
-    {NPY_INT, unique<npy_int>},
-    {NPY_UINT, unique<npy_uint>},
-    {NPY_LONG, unique<npy_long>},
-    {NPY_ULONG, unique<npy_ulong>},
-    {NPY_LONGLONG, unique<npy_longlong>},
-    {NPY_ULONGLONG, unique<npy_ulonglong>},
-    {NPY_INT8, unique<npy_int8>},
-    {NPY_INT16, unique<npy_int16>},
-    {NPY_INT32, unique<npy_int32>},
-    {NPY_INT64, unique<npy_int64>},
-    {NPY_UINT8, unique<npy_uint8>},
-    {NPY_UINT16, unique<npy_uint16>},
-    {NPY_UINT32, unique<npy_uint32>},
-    {NPY_UINT64, unique<npy_uint64>},
-    {NPY_DATETIME, unique<npy_uint64>},
+    {NPY_BYTE, unique_int<npy_byte>},
+    {NPY_UBYTE, unique_int<npy_ubyte>},
+    {NPY_SHORT, unique_int<npy_short>},
+    {NPY_USHORT, unique_int<npy_ushort>},
+    {NPY_INT, unique_int<npy_int>},
+    {NPY_UINT, unique_int<npy_uint>},
+    {NPY_LONG, unique_int<npy_long>},
+    {NPY_ULONG, unique_int<npy_ulong>},
+    {NPY_LONGLONG, unique_int<npy_longlong>},
+    {NPY_ULONGLONG, unique_int<npy_ulonglong>},
+    {NPY_INT8, unique_int<npy_int8>},
+    {NPY_INT16, unique_int<npy_int16>},
+    {NPY_INT32, unique_int<npy_int32>},
+    {NPY_INT64, unique_int<npy_int64>},
+    {NPY_UINT8, unique_int<npy_uint8>},
+    {NPY_UINT16, unique_int<npy_uint16>},
+    {NPY_UINT32, unique_int<npy_uint32>},
+    {NPY_UINT64, unique_int<npy_uint64>},
+    {NPY_DATETIME, unique_int<npy_uint64>},
+    {NPY_STRING, unique_string<char>},
+    {NPY_UNICODE, unique_string<npy_ucs4>},
 };
 
 
