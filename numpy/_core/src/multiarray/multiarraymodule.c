@@ -3583,13 +3583,12 @@ static PyObject *
 array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len)
 {
     npy_intp i, narr = 0, ndtypes = 0;
-    PyArray_Descr **dtypes = NULL;
     PyObject *ret = NULL;
 
     if (len == 0) {
         PyErr_SetString(PyExc_ValueError,
                         "at least one array or dtype is required");
-        goto finish;
+        return NULL;
     }
 
     NPY_ALLOC_WORKSPACE(arr, PyArrayObject *, 2 * 3, 2 * len);
@@ -3599,7 +3598,7 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
     if (arr == NULL) {
         return PyErr_NoMemory();
     }
-    dtypes = (PyArray_Descr**)&arr[len];
+    PyArray_Descr **dtypes = (PyArray_Descr**)&arr[len];
 
     PyObject *previous_obj = NULL;
 
