@@ -3595,17 +3595,15 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
     if (arr == NULL) {
         return NULL;
     }
-    if (arr == NULL) {
-        return PyErr_NoMemory();
-    }
     PyArray_Descr **dtypes = (PyArray_Descr**)&arr[len];
 
     PyObject *previous_obj = NULL;
 
     for (i = 0; i < len; ++i) {
         PyObject *obj = args[i];
-        if (obj == previous_obj)
+        if (obj == previous_obj) {
             continue;
+        }
 
         if (PyArray_Check(obj)) {
             Py_INCREF(obj);

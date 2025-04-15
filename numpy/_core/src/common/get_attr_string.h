@@ -3,7 +3,6 @@
 
 #include <Python.h>
 #include "npy_pycompat.h"
-#include "numpy/ndarraytypes.h"
 
 
 static inline npy_bool
@@ -60,11 +59,6 @@ PyArray_LookupSpecial(
         return 0;
     }
 
-    /* We do not need to check for special attributes on array descriptor types */
-    if (PyObject_TypeCheck(tp, &PyArrayDTypeMeta_Type)) {
-        *res = NULL;
-        return 0;
-    }
     return PyObject_GetOptionalAttr((PyObject *)tp, name_unicode, res);
 }
 
