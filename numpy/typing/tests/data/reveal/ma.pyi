@@ -23,6 +23,8 @@ MAR_i8: MaskedNDArray[np.int64]
 MAR_dt64: MaskedNDArray[np.datetime64]
 MAR_td64: MaskedNDArray[np.timedelta64]
 MAR_o: MaskedNDArray[np.object_]
+MAR_s: MaskedNDArray[np.str_]
+MAR_byte: MaskedNDArray[np.bytes_]
 
 MAR_subclass: MaskedNDArraySubclass
 
@@ -173,3 +175,5 @@ assert_type(MAR_td64 >= AR_td64, MaskedNDArray[np.bool])
 assert_type(MAR_dt64 >= AR_dt64, MaskedNDArray[np.bool])
 assert_type(MAR_o >= AR_o, MaskedNDArray[np.bool])
 assert_type(MAR_1d >= 0, MaskedNDArray[np.bool])
+assert_type(MAR_s >= MAR_s, MaskedNDArray[np.bool])
+assert_type(MAR_byte >= MAR_byte, MaskedNDArray[np.bool])
