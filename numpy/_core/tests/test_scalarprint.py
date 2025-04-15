@@ -56,8 +56,8 @@ class TestRealScalars:
         assert_equal(str(np.half(-1000)), "-1e+03")
         assert_equal(str(np.single(0.000099)), "9.9e-05")
         assert_equal(str(np.single(-0.000100001)), "-0.000100001")
-        assert_equal(str(np.single(9999999)), "9999999.0")
-        assert_equal(str(np.single(-10000000)), "-1e+07")
+        assert_equal(str(np.single(999999)), "999999.0")
+        assert_equal(str(np.single(-1000000)), "-1e+06")
 
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,

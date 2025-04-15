@@ -992,11 +992,7 @@ class FloatingFormat:
         abs_non_zero = absolute(finite_vals[finite_vals != 0])
 
         # consider data type while deciding the max cutoff for exp format
-        exp_cutoff_max = 1.e8
-        if data.dtype == "float16":
-            exp_cutoff_max = 1.e3
-        elif data.dtype == "float32":
-            exp_cutoff_max = 1.e7
+        exp_cutoff_max = 10.**min(8, np.finfo(data.dtype).precision)
 
         if len(abs_non_zero) != 0:
             max_val = np.max(abs_non_zero)

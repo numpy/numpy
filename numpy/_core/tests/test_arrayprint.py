@@ -923,16 +923,16 @@ class TestPrintOptions:
         # test cutoff to exponent notation for half, single, and complex64
         a = np.half([999, 999])
         b = np.half([999, 1000])
-        c = np.single([9999999, 9999999])
-        d = np.single([9999999, -10000000])
-        e = np.complex64([9999999 + 9999999j, 9999999 + 9999999j])
-        f = np.complex64([9999999 + 9999999j, 9999999 + -10000000j])
+        c = np.single([999999, 999999])
+        d = np.single([999999, -1000000])
+        e = np.complex64([999999 + 999999j, 999999 + 999999j])
+        f = np.complex64([999999 + 999999j, 999999 + -1000000j])
         assert_equal(str(a), "[999. 999.]")
         assert_equal(str(b), "[9.99e+02 1.00e+03]")
-        assert_equal(str(c), "[9999999. 9999999.]")
-        assert_equal(str(d), "[ 9.999999e+06 -1.000000e+07]")
-        assert_equal(str(e), "[9999999.+9999999.j 9999999.+9999999.j]")
-        assert_equal(str(f), "[9999999.+9.999999e+06j 9999999.-1.000000e+07j]")
+        assert_equal(str(c), "[999999. 999999.]")
+        assert_equal(str(d), "[ 9.99999e+05 -1.00000e+06]")
+        assert_equal(str(e), "[999999.+999999.j 999999.+999999.j]")
+        assert_equal(str(f), "[999999.+9.99999e+05j 999999.-1.00000e+06j]")
 
     def test_legacy_mode_scalars(self):
         # in legacy mode, str of floats get truncated, and complex scalars

@@ -1304,12 +1304,9 @@ legacy_@name@_format@kind@(npy_@name@ val){
 
 #define IS_@kind@
 
-#define SINGLE_TYPE 0
-#define DOUBLE_TYPE 1
-#define LONG_DOUBLE_TYPE 2
 /**begin repeat1
  * #name = float, double, longdouble#
- * #dtype = 0, 1, 2#
+ * #max_positional = 1.e6L, 1.e16L, 1.e16L#
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  * #n = f, , l#
@@ -1340,11 +1337,7 @@ static PyObject *
     }
     else {
         npy_@name@ absval = val < 0 ? -val : val;
-        #if @dtype@ == SINGLE_TYPE
-            use_positional = absval < 1.e7L && absval >= 1.e-4L;
-        #else
-            use_positional = absval < 1.e16L && absval >= 1.e-4L;
-        #endif
+        use_positional = absval < @max_positional@ && absval >= 1.e-4L;
     }
 
     if (use_positional) {
