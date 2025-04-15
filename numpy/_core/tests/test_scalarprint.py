@@ -59,6 +59,16 @@ class TestRealScalars:
         assert_equal(str(np.single(999999)), "999999.0")
         assert_equal(str(np.single(-1000000)), "-1e+06")
 
+    def test_legacy_2_2_mode(self):
+        # test legacy cutoff to exponent notation for half and single
+        np.set_printoptions(legacy='2.2')
+        a = np.half(65504)
+        b = np.single(1.e15)
+        c = np.single(1.e16)
+        assert_equal(str(a), "65500.0")
+        assert_equal(str(b), "1000000000000000.0")
+        assert_equal(str(c), "1e+16")
+
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
         # see dragon4.c for details.

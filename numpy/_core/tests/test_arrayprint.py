@@ -934,6 +934,23 @@ class TestPrintOptions:
         assert_equal(str(e), "[999999.+999999.j 999999.+999999.j]")
         assert_equal(str(f), "[999999.+9.99999e+05j 999999.-1.00000e+06j]")
 
+    def test_legacy_2_2_mode(self):
+        # test legacy cutoff to exponent notation for half and single
+        np.set_printoptions(legacy='2.2')
+        a = np.half([1.e3, 1.e4, 65504])
+        b = np.single([1.e6, 1.e7])
+        c = np.single([1.e7, 1.e8])
+        assert_equal(str(a), "[ 1000. 10000. 65504.]")
+        assert_equal(str(b), "[ 1000000. 10000000.]")
+        assert_equal(str(c), "[1.e+07 1.e+08]")
+
+    @pytest.mark.parametrize("legacy", ['1.13', '1.21', '1.25', '2.1', '2.2'])
+    def test_legacy_get_options(self, legacy):
+        # test legacy get options works okay
+        np.set_printoptions(legacy=legacy)
+        p_opt = np.get_printoptions()
+        assert_equal(p_opt["legacy"], legacy)
+
     def test_legacy_mode_scalars(self):
         # in legacy mode, str of floats get truncated, and complex scalars
         # use * for non-finite imaginary part
