@@ -101,19 +101,16 @@ done:
     return v;
 }
 
-/*  When compiling it gives off this warnign:
-    ./numpy/_core/src/common/npy_longdouble.c: In function ‘_int_to_ld’:
-    ../numpy/_core/src/common/npy_longdouble.c:117:26: warning: pointer targets in initialization of ‘uint64_t *’ {aka ‘long unsigned int *’} from ‘int64_t *’ {aka ‘long int *’} differ in signedness [-Wpointer-sign]
-    117 |     uint64_t *mantissa = val;
-  
-    This is perfectly normal, I can't really fix the warning
-*/
-// Helper function that combines the mantissa and exponent into a npy_longdouble
+
 npy_longdouble _int_to_ld(uint64_t *mantissa, int exp, int sign) {
     npy_longdouble ld;
     if (exp == LDBL_MAX_EXP && mantissa[0] == 0) {
             ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[1] * powl(2.0L, (npy_longdouble)(exp - 64)) + 
             (npy_longdouble)mantissa[2] * powl(2.0L, (npy_longdouble)(exp - 128)));
+            if (ld == (npy_longdouble)INFINITY || ld == (npy_longdouble)(-INFINITY) || ld == (npy_longdouble)NAN || ld == (npy_longdouble)(-NAN)) {
+                PyErr_SetString(PyExc_OverflowError, "Number too big to be represented as a np.longdouble --This is platform dependent--");
+                return -1;
+            }
     } else if (exp >= LDBL_MAX_EXP) {
         PyErr_SetString(PyExc_OverflowError, "Number too big to be represented as a np.longdouble --This is platform dependent--");
         return -1;
@@ -155,8 +152,8 @@ void _fix_py_num(PyObject* py_int, int64_t* val, int *exp, int *sign) {
     } 
 }
 // The precision and max number is platform dependent, for 80 and 128 bit platforms
-// The largest number that can be converted is arround 2^16384 - 1.
-// In 64 bit platforms the largest number is arround 2^1024 - 1.
+// The largest number that can be converted is 2^16384 - 1.
+// In 64 bit platforms the largest number is 2^1024 - 1.
 // if the number to be converted is too big for a platform, it will give an error
 // In (my personal 80bit platform), I have tested that it converts up to the max
 // Now gives an overflow error if the number is too big (Tested)
