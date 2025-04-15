@@ -2100,9 +2100,9 @@ def postcrack(block, args=None, tab=''):
             mname = 'unknown__user__routines'
         if mname in userisdefined:
             i = 1
-            while '%s_%i' % (mname, i) in userisdefined:
+            while f"{mname}_{i}" in userisdefined:
                 i = i + 1
-            mname = '%s_%i' % (mname, i)
+            mname = f"{mname}_{i}"
         interface = {'block': 'interface', 'body': [],
                      'vars': {}, 'name': name + '_user_interface'}
         for e in block['externals']:

@@ -1408,7 +1408,7 @@ class TestFromTxt(LoadTxtBase):
     def test_skip_footer(self):
         data = [f"# {i}" for i in range(1, 6)]
         data.append("A, B, C")
-        data.extend(["%i,%3.1f,%03s" % (i, i, i) for i in range(51)])
+        data.extend([f"{i},{i:3.1f},{i:03d}" for i in range(51)])
         data[-1] = "99,99"
         kwargs = {"delimiter": ",", "names": True, "skip_header": 5, "skip_footer": 10}
         test = np.genfromtxt(TextIO("\n".join(data)), **kwargs)
@@ -1469,7 +1469,7 @@ class TestFromTxt(LoadTxtBase):
                    np.array([True, False]), ]
         assert_equal(test.dtype.names, ['f0', 'f1', 'f2', 'f3', 'f4'])
         for (i, ctrl) in enumerate(control):
-            assert_equal(test['f%i' % i], ctrl)
+            assert_equal(test[f'f{i}'], ctrl)
 
     def test_auto_dtype_uniform(self):
         # Tests whether the output dtype can be uniformized

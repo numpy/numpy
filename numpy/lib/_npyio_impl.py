@@ -2312,7 +2312,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if nbinvalid > 0:
         nbrows = len(rows) + nbinvalid - skip_footer
         # Construct the error message
-        template = "    Line #%%i (got %%i columns instead of %i)" % nbcols
+        template = f"    Line #%i (got %i columns instead of {nbcols})"
         if skip_footer > 0:
             nbinvalid_skipped = len([_ for _ in invalid
                                      if _[0] > nbrows + skip_header])
