@@ -30,6 +30,7 @@ MAR_subclass: MaskedNDArraySubclass
 
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype[Any]]
 
+b: np.bool
 f4: np.float32
 f: float
 
@@ -167,6 +168,20 @@ assert_type(MAR_f4.partition(1, axis=0, kind='introselect', order='K'), None)
 
 assert_type(MAR_f4.argpartition(1), MaskedNDArray[np.intp])
 assert_type(MAR_1d.argpartition(1, axis=0, kind='introselect', order='K'), MaskedNDArray[np.intp])
+
+assert_type(np.ma.ndim(f4), int)
+assert_type(np.ma.ndim(MAR_b), int)
+assert_type(np.ma.ndim(AR_f4), int)
+
+assert_type(np.ma.size(b), int)
+assert_type(np.ma.size(MAR_f4, axis=0), int)
+assert_type(np.ma.size(AR_f4), int)
+
+assert_type(np.ma.is_masked(MAR_f4), bool)
+
+assert_type(MAR_f4.ids(), tuple[int, int])
+
+assert_type(MAR_f4.iscontiguous(), bool)
 
 assert_type(MAR_f4 >= 3, MaskedNDArray[np.bool])
 assert_type(MAR_i8 >= AR_td64, MaskedNDArray[np.bool])

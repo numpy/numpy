@@ -93,6 +93,10 @@ m.argpartition(kind='cabbage')  # E: No overload variant
 m.argpartition(order=lambda: 'cabbage')  # E: No overload variant
 m.argpartition(AR_b)  # E: No overload variant
 
+np.ma.ndim(lambda: 'lambda')  # E: No overload variant
+
+np.ma.size(AR_b, axis='0')  # E: No overload variant
+
 m >= (lambda x: 'mango') # E: No overload variant
 
 m > (lambda x: 'mango') # E: No overload variant
@@ -100,4 +104,3 @@ m > (lambda x: 'mango') # E: No overload variant
 m <= (lambda x: 'mango') # E: No overload variant
 
 m < (lambda x: 'mango') # E: No overload variant
-
