@@ -200,9 +200,9 @@ class ABCPolyBase(abc.ABC):
 
         """
         return (
-			len(self.coef) == len(other.coef)
-			and np.all(self.coef == other.coef)
-		)
+            len(self.coef) == len(other.coef)
+            and np.all(self.coef == other.coef)
+        )
 
     def has_samedomain(self, other):
         """Check if domains match.

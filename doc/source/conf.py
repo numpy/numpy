@@ -441,7 +441,7 @@ autosummary_generate = True
 # -----------------------------------------------------------------------------
 coverage_ignore_modules = []
 coverage_ignore_functions = [
-	'test($|_)', '(some|all)true', 'bitwise_not', 'cumproduct', 'pkgload', 'generic\\.'
+    'test($|_)', '(some|all)true', 'bitwise_not', 'cumproduct', 'pkgload', 'generic\\.'
 ]
 coverage_ignore_classes = []
 
