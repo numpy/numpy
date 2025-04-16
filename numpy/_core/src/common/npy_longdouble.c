@@ -13,12 +13,13 @@
     #include <float.h>
 #endif
 
-#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
-    #define NPY_LDBL_MAX_EXP DBL_MAX_EXP
-#else
-    #define NPY_LDBL_MAX_EXP LDBL_MAX_EXP
+#ifndef NPY_LDBL_MAX_EXP
+    #if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+        #define NPY_LDBL_MAX_EXP DBL_MAX_EXP
+    #else
+        #define NPY_LDBL_MAX_EXP LDBL_MAX_EXP
+    #endif
 #endif
-
 #define MAX_DBL_TEST 0x10000000000000
 
 /*
@@ -114,6 +115,9 @@ npy_longdouble _ldbl_ovfl_err(void) {
     return -1;
 }
 
+// Since there are many types of long double, 64, 80, 128... 
+// and no consensus, as everything changes platform to platform.
+// For more performance needs to be platform specific
 npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
     uint64_t mantissa[3];
     for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
