@@ -1,8 +1,8 @@
 from types import EllipsisType
-from typing import Any, Generic, SupportsIndex, TypeAlias, TypeVar, overload
+from typing import Any, Generic, Self, SupportsIndex, TypeAlias, TypeVar, overload
 
 from _typeshed import Incomplete
-from typing_extensions import Self, deprecated, override
+from typing_extensions import deprecated, override
 
 import numpy as np
 import numpy.typing as npt

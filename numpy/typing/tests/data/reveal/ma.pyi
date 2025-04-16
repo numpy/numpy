@@ -1,20 +1,37 @@
+from datetime import datetime, timedelta
+from typing import Any, TypeAlias, TypeVar, assert_type
+
 import numpy as np
-from typing_extensions import assert_type
-from typing import Any, TypeAlias, TypeVar
-from numpy._typing import _Shape
 from numpy import dtype, generic
+from numpy._typing import NDArray, _Shape
 
-
-_ScalarType_co = TypeVar("_ScalarType_co", bound=generic, covariant=True)
-MaskedNDArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarType_co]]
+_ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
+MaskedNDArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT_co]]
 
 class MaskedNDArraySubclass(MaskedNDArray[np.complex128]): ...
 
+AR_f4: NDArray[np.float32]
+AR_dt64: NDArray[np.datetime64]
+AR_td64: NDArray[np.timedelta64]
+AR_o: NDArray[np.timedelta64]
+
 MAR_b: MaskedNDArray[np.bool]
 MAR_f4: MaskedNDArray[np.float32]
+MAR_f8: MaskedNDArray[np.float64]
 MAR_i8: MaskedNDArray[np.int64]
+MAR_dt64: MaskedNDArray[np.datetime64]
+MAR_td64: MaskedNDArray[np.timedelta64]
+MAR_o: MaskedNDArray[np.object_]
+MAR_s: MaskedNDArray[np.str_]
+MAR_byte: MaskedNDArray[np.bytes_]
+
 MAR_subclass: MaskedNDArraySubclass
+
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype[Any]]
+
+b: np.bool
+f4: np.float32
+f: float
 
 assert_type(MAR_1d.shape, tuple[int])
 
@@ -118,3 +135,100 @@ assert_type(np.ma.argmax(MAR_f4, axis=0), Any)
 assert_type(np.ma.argmax(MAR_b, keepdims=True), Any)
 assert_type(np.ma.argmax(MAR_f4, out=MAR_subclass), MaskedNDArraySubclass)
 assert_type(np.ma.argmax(MAR_f4, None, None, out=MAR_subclass), MaskedNDArraySubclass)
+
+assert_type(MAR_f4.sort(), None)
+assert_type(MAR_f4.sort(axis=0, kind='quicksort', order='K', endwith=False, fill_value=42., stable=False), None)
+
+assert_type(np.ma.sort(MAR_f4), MaskedNDArray[np.float32])
+assert_type(np.ma.sort(MAR_subclass), MaskedNDArraySubclass)
+assert_type(np.ma.sort([[0, 1], [2, 3]]), NDArray[Any])
+assert_type(np.ma.sort(AR_f4), NDArray[np.float32])
+
+assert_type(MAR_f8.take(0), np.float64)
+assert_type(MAR_1d.take(0), Any)
+assert_type(MAR_f8.take([0]), MaskedNDArray[np.float64])
+assert_type(MAR_f8.take(0, out=MAR_subclass), MaskedNDArraySubclass)
+assert_type(MAR_f8.take([0], out=MAR_subclass), MaskedNDArraySubclass)
+
+assert_type(np.ma.take(f, 0), Any)
+assert_type(np.ma.take(f4, 0), np.float32)
+assert_type(np.ma.take(MAR_f8, 0), np.float64)
+assert_type(np.ma.take(AR_f4, 0), np.float32)
+assert_type(np.ma.take(MAR_1d, 0), Any)
+assert_type(np.ma.take(MAR_f8, [0]), MaskedNDArray[np.float64])
+assert_type(np.ma.take(AR_f4, [0]), MaskedNDArray[np.float32])
+assert_type(np.ma.take(MAR_f8, 0, out=MAR_subclass), MaskedNDArraySubclass)
+assert_type(np.ma.take(MAR_f8, [0], out=MAR_subclass), MaskedNDArraySubclass)
+assert_type(np.ma.take([1], [0]), MaskedNDArray[Any])
+assert_type(np.ma.take(np.eye(2), 1, axis=0), MaskedNDArray[np.float64])
+
+assert_type(MAR_f4.partition(1), None)
+assert_type(MAR_f4.partition(1, axis=0, kind='introselect', order='K'), None)
+
+assert_type(MAR_f4.argpartition(1), MaskedNDArray[np.intp])
+assert_type(MAR_1d.argpartition(1, axis=0, kind='introselect', order='K'), MaskedNDArray[np.intp])
+
+assert_type(np.ma.ndim(f4), int)
+assert_type(np.ma.ndim(MAR_b), int)
+assert_type(np.ma.ndim(AR_f4), int)
+
+assert_type(np.ma.size(b), int)
+assert_type(np.ma.size(MAR_f4, axis=0), int)
+assert_type(np.ma.size(AR_f4), int)
+
+assert_type(np.ma.is_masked(MAR_f4), bool)
+
+assert_type(MAR_f4.ids(), tuple[int, int])
+
+assert_type(MAR_f4.iscontiguous(), bool)
+
+assert_type(MAR_f4 >= 3, MaskedNDArray[np.bool])
+assert_type(MAR_i8 >= AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_b >= AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_td64 >= AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_dt64 >= AR_dt64, MaskedNDArray[np.bool])
+assert_type(MAR_o >= AR_o, MaskedNDArray[np.bool])
+assert_type(MAR_1d >= 0, MaskedNDArray[np.bool])
+assert_type(MAR_s >= MAR_s, MaskedNDArray[np.bool])
+assert_type(MAR_byte >= MAR_byte, MaskedNDArray[np.bool])
+
+assert_type(MAR_f4 > 3, MaskedNDArray[np.bool])
+assert_type(MAR_i8 > AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_b > AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_td64 > AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_dt64 > AR_dt64, MaskedNDArray[np.bool])
+assert_type(MAR_o > AR_o, MaskedNDArray[np.bool])
+assert_type(MAR_1d > 0, MaskedNDArray[np.bool])
+assert_type(MAR_s > MAR_s, MaskedNDArray[np.bool])
+assert_type(MAR_byte > MAR_byte, MaskedNDArray[np.bool])
+
+assert_type(MAR_f4 <= 3, MaskedNDArray[np.bool])
+assert_type(MAR_i8 <= AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_b <= AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_td64 <= AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_dt64 <= AR_dt64, MaskedNDArray[np.bool])
+assert_type(MAR_o <= AR_o, MaskedNDArray[np.bool])
+assert_type(MAR_1d <= 0, MaskedNDArray[np.bool])
+assert_type(MAR_s <= MAR_s, MaskedNDArray[np.bool])
+assert_type(MAR_byte <= MAR_byte, MaskedNDArray[np.bool])
+
+assert_type(MAR_f4 < 3, MaskedNDArray[np.bool])
+assert_type(MAR_i8 < AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_b < AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_td64 < AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_dt64 < AR_dt64, MaskedNDArray[np.bool])
+assert_type(MAR_o < AR_o, MaskedNDArray[np.bool])
+assert_type(MAR_1d < 0, MaskedNDArray[np.bool])
+assert_type(MAR_s < MAR_s, MaskedNDArray[np.bool])
+assert_type(MAR_byte < MAR_byte, MaskedNDArray[np.bool])
+
+assert_type(MAR_f4 <= 3, MaskedNDArray[np.bool])
+assert_type(MAR_i8 <= AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_b <= AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_td64 <= AR_td64, MaskedNDArray[np.bool])
+assert_type(MAR_dt64 <= AR_dt64, MaskedNDArray[np.bool])
+assert_type(MAR_o <= AR_o, MaskedNDArray[np.bool])
+assert_type(MAR_1d <= 0, MaskedNDArray[np.bool])
+assert_type(MAR_s <= MAR_s, MaskedNDArray[np.bool])
+assert_type(MAR_byte <= MAR_byte, MaskedNDArray[np.bool])
+

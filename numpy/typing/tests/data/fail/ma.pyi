@@ -2,8 +2,11 @@ from typing import Any
 
 import numpy as np
 import numpy.ma
+import numpy.typing as npt
 
 m: np.ma.MaskedArray[tuple[int], np.dtype[np.float64]]
+
+AR_b: npt.NDArray[np.bool]
 
 m.shape = (3, 1)  # E: Incompatible types in assignment
 m.dtype = np.bool  # E: Incompatible types in assignment
@@ -59,3 +62,45 @@ np.ma.argmax(m, axis=(0,))  # E: No overload variant
 np.ma.argmax(m, keepdims=1.0)  # E: No overload variant
 np.ma.argmax(m, out=1.0)  # E: No overload variant
 np.ma.argmax(m, fill_value=lambda x: 27)  # E: No overload variant
+
+m.sort(axis=(0,1))  # E: No overload variant
+m.sort(axis=None)  # E: No overload variant
+m.sort(kind='cabbage')  # E: No overload variant
+m.sort(order=lambda: 'cabbage')  # E: No overload variant
+m.sort(endwith='cabbage')  # E: No overload variant
+m.sort(fill_value=lambda: 'cabbage')  # E: No overload variant
+m.sort(stable='cabbage')  # E: No overload variant
+m.sort(stable=True)  # E: No overload variant
+
+m.take(axis=1.0)  # E: No overload variant
+m.take(out=1)  # E: No overload variant
+m.take(mode="bob")  # E: No overload variant
+
+np.ma.take(None)  # E: No overload variant
+np.ma.take(axis=1.0)  # E: No overload variant
+np.ma.take(out=1)  # E: No overload variant
+np.ma.take(mode="bob")  # E: No overload variant
+
+m.partition(['cabbage'])  # E: No overload variant
+m.partition(axis=(0,1))  # E: No overload variant
+m.partition(kind='cabbage')  # E: No overload variant
+m.partition(order=lambda: 'cabbage')  # E: No overload variant
+m.partition(AR_b)  # E: No overload variant
+
+m.argpartition(['cabbage'])  # E: No overload variant
+m.argpartition(axis=(0,1))  # E: No overload variant
+m.argpartition(kind='cabbage')  # E: No overload variant
+m.argpartition(order=lambda: 'cabbage')  # E: No overload variant
+m.argpartition(AR_b)  # E: No overload variant
+
+np.ma.ndim(lambda: 'lambda')  # E: No overload variant
+
+np.ma.size(AR_b, axis='0')  # E: No overload variant
+
+m >= (lambda x: 'mango') # E: No overload variant
+
+m > (lambda x: 'mango') # E: No overload variant
+
+m <= (lambda x: 'mango') # E: No overload variant
+
+m < (lambda x: 'mango') # E: No overload variant

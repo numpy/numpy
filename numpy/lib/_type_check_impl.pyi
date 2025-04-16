@@ -37,7 +37,7 @@ __all__ = [
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
-_SCT = TypeVar("_SCT", bound=generic)
+_ScalarT = TypeVar("_ScalarT", bound=generic)
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 
@@ -73,12 +73,12 @@ def isrealobj(x: _SupportsDType[dtype[Any]] | ArrayLike) -> bool: ...
 
 @overload
 def nan_to_num(  # type: ignore[misc]
-    x: _SCT,
+    x: _ScalarT,
     copy: bool = ...,
     nan: float = ...,
     posinf: None | float = ...,
     neginf: None | float = ...,
-) -> _SCT: ...
+) -> _ScalarT: ...
 @overload
 def nan_to_num(
     x: _ScalarLike_co,
@@ -89,12 +89,12 @@ def nan_to_num(
 ) -> Any: ...
 @overload
 def nan_to_num(
-    x: _ArrayLike[_SCT],
+    x: _ArrayLike[_ScalarT],
     copy: bool = ...,
     nan: float = ...,
     posinf: None | float = ...,
     neginf: None | float = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def nan_to_num(
     x: ArrayLike,
@@ -114,9 +114,9 @@ def real_if_close(  # type: ignore[misc]
 ) -> NDArray[floating[_NBit1]] | NDArray[complexfloating[_NBit1, _NBit1]]: ...
 @overload
 def real_if_close(
-    a: _ArrayLike[_SCT],
+    a: _ArrayLike[_ScalarT],
     tol: float = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def real_if_close(
     a: ArrayLike,

@@ -1,10 +1,9 @@
-from typing import Any, Literal as L, TypeAlias
+from typing import Any, TypeAlias, assert_type
+from typing import Literal as L
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _64Bit, _32Bit
-
-from typing_extensions import assert_type
+from numpy._typing import _32Bit, _64Bit
 
 FalseType: TypeAlias = L[False]
 TrueType: TypeAlias = L[True]

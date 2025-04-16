@@ -36,25 +36,43 @@
 #define NPY__HWCAP  16
 #define NPY__HWCAP2 26
 
-// arch/arm/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_HALF   (1 << 1)
-#define NPY__HWCAP_NEON   (1 << 12)
-#define NPY__HWCAP_VFPv3  (1 << 13)
-#define NPY__HWCAP_VFPv4  (1 << 16)
-#define NPY__HWCAP2_AES   (1 << 0)
-#define NPY__HWCAP2_PMULL (1 << 1)
-#define NPY__HWCAP2_SHA1  (1 << 2)
-#define NPY__HWCAP2_SHA2  (1 << 3)
-#define NPY__HWCAP2_CRC32 (1 << 4)
-// arch/arm64/include/uapi/asm/hwcap.h
-#define NPY__HWCAP_FP       (1 << 0)
-#define NPY__HWCAP_ASIMD    (1 << 1)
-#define NPY__HWCAP_FPHP     (1 << 9)
-#define NPY__HWCAP_ASIMDHP  (1 << 10)
-#define NPY__HWCAP_ASIMDDP  (1 << 20)
-#define NPY__HWCAP_SVE      (1 << 22)
-#define NPY__HWCAP_ASIMDFHM (1 << 23)
-/* 
+#ifdef __arm__
+    // arch/arm/include/uapi/asm/hwcap.h
+    #define NPY__HWCAP_HALF	    (1 << 1)
+    #define NPY__HWCAP_NEON	    (1 << 12)
+    #define NPY__HWCAP_VFPv3	(1 << 13)
+    #define NPY__HWCAP_VFPv4	(1 << 16)
+
+    #define NPY__HWCAP_FPHP	    (1 << 22)
+    #define NPY__HWCAP_ASIMDHP	(1 << 23)
+    #define NPY__HWCAP_ASIMDDP	(1 << 24)
+    #define NPY__HWCAP_ASIMDFHM	(1 << 25)
+
+    #define NPY__HWCAP2_AES	    (1 << 0)
+    #define NPY__HWCAP2_PMULL	(1 << 1)
+    #define NPY__HWCAP2_SHA1	(1 << 2)
+    #define NPY__HWCAP2_SHA2	(1 << 3)
+    #define NPY__HWCAP2_CRC32	(1 << 4)
+#else
+    // arch/arm64/include/uapi/asm/hwcap.h
+    #define NPY__HWCAP_FP		(1 << 0)
+    #define NPY__HWCAP_ASIMD	(1 << 1)
+
+    #define NPY__HWCAP_FPHP		(1 << 9)
+    #define NPY__HWCAP_ASIMDHP	(1 << 10)
+    #define NPY__HWCAP_ASIMDDP	(1 << 20)
+    #define NPY__HWCAP_ASIMDFHM	(1 << 23)
+
+    #define NPY__HWCAP_AES		(1 << 3)
+    #define NPY__HWCAP_PMULL	(1 << 4)
+    #define NPY__HWCAP_SHA1		(1 << 5)
+    #define NPY__HWCAP_SHA2		(1 << 6)
+    #define NPY__HWCAP_CRC32	(1 << 7)
+    #define NPY__HWCAP_SVE		(1 << 22)
+#endif
+
+
+/*
  * Get the size of a file by reading it until the end. This is needed
  * because files under /proc do not always return a valid size when
  * using fseek(0, SEEK_END) + ftell(). Nor can they be mmap()-ed.
@@ -87,7 +105,7 @@ get_file_size(const char* pathname)
     return result;
 }
 
-/* 
+/*
  * Read the content of /proc/cpuinfo into a user-provided buffer.
  * Return the length of the data, or -1 on error. Does *not*
  * zero-terminate the content. Will not read more
@@ -123,7 +141,7 @@ read_file(const char*  pathname, char*  buffer, size_t  buffsize)
     return count;
 }
 
-/* 
+/*
  * Extract the content of a the first occurrence of a given field in
  * the content of /proc/cpuinfo and return it as a heap-allocated
  * string that must be freed by the caller.
@@ -182,7 +200,7 @@ EXIT:
     return result;
 }
 
-/* 
+/*
  * Checks that a space-separated list of items contains one given 'item'.
  * Returns 1 if found, 0 otherwise.
  */
@@ -220,44 +238,51 @@ has_list_item(const char* list, const char* item)
     return 0;
 }
 
-static void setHwcap(char* cpuFeatures, unsigned long* hwcap) {
-    *hwcap |= has_list_item(cpuFeatures, "neon") ? NPY__HWCAP_NEON : 0;
-    *hwcap |= has_list_item(cpuFeatures, "half") ? NPY__HWCAP_HALF : 0;
-    *hwcap |= has_list_item(cpuFeatures, "vfpv3") ? NPY__HWCAP_VFPv3 : 0;
-    *hwcap |= has_list_item(cpuFeatures, "vfpv4") ? NPY__HWCAP_VFPv4 : 0;
+static int
+get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
+    *hwcap = 0;
+    *hwcap2 = 0;
 
-    *hwcap |= has_list_item(cpuFeatures, "asimd") ? NPY__HWCAP_ASIMD : 0;
-    *hwcap |= has_list_item(cpuFeatures, "fp") ? NPY__HWCAP_FP : 0;
+    int cpuinfo_len = get_file_size("/proc/cpuinfo");
+    if (cpuinfo_len < 0) {
+        return 0;
+    }
+    char *cpuinfo = malloc(cpuinfo_len);
+    if (cpuinfo == NULL) {
+        return 0;
+    }
+
+    cpuinfo_len = read_file("/proc/cpuinfo", cpuinfo, cpuinfo_len);
+    char *cpuFeatures = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Features");
+    if (cpuFeatures == NULL) {
+        free(cpuinfo);
+        return 0;
+    }
     *hwcap |= has_list_item(cpuFeatures, "fphp") ? NPY__HWCAP_FPHP : 0;
     *hwcap |= has_list_item(cpuFeatures, "asimdhp") ? NPY__HWCAP_ASIMDHP : 0;
     *hwcap |= has_list_item(cpuFeatures, "asimddp") ? NPY__HWCAP_ASIMDDP : 0;
     *hwcap |= has_list_item(cpuFeatures, "asimdfhm") ? NPY__HWCAP_ASIMDFHM : 0;
-}
-
-static int
-get_feature_from_proc_cpuinfo(unsigned long *hwcap, unsigned long *hwcap2) {
-    char* cpuinfo = NULL;
-    int cpuinfo_len;
-    cpuinfo_len = get_file_size("/proc/cpuinfo");
-    if (cpuinfo_len < 0) {
-        return 0;
-    }
-    cpuinfo = malloc(cpuinfo_len);
-    if (cpuinfo == NULL) {
-        return 0;
-    }
-    cpuinfo_len = read_file("/proc/cpuinfo", cpuinfo, cpuinfo_len);
-    char* cpuFeatures = extract_cpuinfo_field(cpuinfo, cpuinfo_len, "Features");
-    if(cpuFeatures == NULL) {
-        return 0;
-    }
-    setHwcap(cpuFeatures, hwcap);
-    *hwcap2 |= *hwcap;
+#ifdef __arm__
+    *hwcap |= has_list_item(cpuFeatures, "neon") ? NPY__HWCAP_NEON : 0;
+    *hwcap |= has_list_item(cpuFeatures, "half") ? NPY__HWCAP_HALF : 0;
+    *hwcap |= has_list_item(cpuFeatures, "vfpv3") ? NPY__HWCAP_VFPv3 : 0;
+    *hwcap |= has_list_item(cpuFeatures, "vfpv4") ? NPY__HWCAP_VFPv4 : 0;
     *hwcap2 |= has_list_item(cpuFeatures, "aes") ? NPY__HWCAP2_AES : 0;
     *hwcap2 |= has_list_item(cpuFeatures, "pmull") ? NPY__HWCAP2_PMULL : 0;
     *hwcap2 |= has_list_item(cpuFeatures, "sha1") ? NPY__HWCAP2_SHA1 : 0;
     *hwcap2 |= has_list_item(cpuFeatures, "sha2") ? NPY__HWCAP2_SHA2 : 0;
     *hwcap2 |= has_list_item(cpuFeatures, "crc32") ? NPY__HWCAP2_CRC32 : 0;
+#else
+    *hwcap |= has_list_item(cpuFeatures, "asimd") ? NPY__HWCAP_ASIMD : 0;
+    *hwcap |= has_list_item(cpuFeatures, "fp") ? NPY__HWCAP_FP : 0;
+    *hwcap |= has_list_item(cpuFeatures, "aes") ? NPY__HWCAP_AES : 0;
+    *hwcap |= has_list_item(cpuFeatures, "pmull") ? NPY__HWCAP_PMULL : 0;
+    *hwcap |= has_list_item(cpuFeatures, "sha1") ? NPY__HWCAP_SHA1 : 0;
+    *hwcap |= has_list_item(cpuFeatures, "sha2") ? NPY__HWCAP_SHA2 : 0;
+    *hwcap |= has_list_item(cpuFeatures, "crc32") ? NPY__HWCAP_CRC32 : 0;
+#endif
+    free(cpuinfo);
+    free(cpuFeatures);
     return 1;
 }
 #endif  /* NUMPY_CORE_SRC_COMMON_NPY_CPUINFO_PARSER_H_ */

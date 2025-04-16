@@ -8,6 +8,7 @@ from typing import (
     Final,
     Generic,
     Literal,
+    LiteralString,
     SupportsIndex,
     TypeAlias,
     TypeGuard,
@@ -41,7 +42,7 @@ from ._polytypes import (
     _ArrayLikeCoef_co,
 )
 
-from typing_extensions import LiteralString, TypeVar
+from typing_extensions import TypeVar
 
 __all__: Final[Sequence[str]] = ("ABCPolyBase",)
 
@@ -86,7 +87,7 @@ class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
 
     @overload
     def __call__(self, /, arg: _Other) -> _Other: ...
-    # TODO: Once `_ShapeType@ndarray` is covariant and bounded (see #26081),
+    # TODO: Once `_ShapeT@ndarray` is covariant and bounded (see #26081),
     # additionally include 0-d arrays as input types with scalar return type.
     @overload
     def __call__(

@@ -1,14 +1,12 @@
 import datetime as dt
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-from typing_extensions import Unpack, assert_type
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 
-_SCT = TypeVar("_SCT", bound=np.generic, covariant=True)
-
-class SubClass(npt.NDArray[_SCT]): ...
+class SubClass(npt.NDArray[_ScalarT_co]): ...
 
 subclass: SubClass[np.float64]
 
@@ -150,14 +148,14 @@ assert_type(np.frompyfunc(func12, n1, n2).identity, None)
 assert_type(np.frompyfunc(func12, n1, n2).signature, None)
 assert_type(
     np.frompyfunc(func12, n2, n2)(f8, f8),
-    tuple[complex, complex, Unpack[tuple[complex, ...]]],
+    tuple[complex, complex, *tuple[complex, ...]],
 )
 assert_type(
     np.frompyfunc(func12, n2, n2)(AR_f8, f8),
     tuple[
         complex | npt.NDArray[np.object_],
         complex | npt.NDArray[np.object_],
-        Unpack[tuple[complex | npt.NDArray[np.object_], ...]],
+        *tuple[complex | npt.NDArray[np.object_], ...],
     ],
 )
 
