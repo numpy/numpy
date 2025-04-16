@@ -165,7 +165,7 @@ class nd_grid:
                     size.append(int(step))
                 else:
                     size.append(
-                        int(math.ceil((stop - start) / (step * 1.0))))
+                        math.ceil((stop - start) / (step * 1.0)))
                 num_list += [start, stop, step]
             typ = _nx.result_type(*num_list)
             if self.sparse:
