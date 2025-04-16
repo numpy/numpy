@@ -233,9 +233,12 @@ assert_type(MAR_s <= MAR_s, MaskedNDArray[np.bool])
 assert_type(MAR_byte <= MAR_byte, MaskedNDArray[np.bool])
 
 assert_type(MAR_byte.count(), int)
+assert_type(MAR_f4.count(axis=None), int)
 assert_type(MAR_f4.count(axis=0), NDArray[np.int_])
 assert_type(MAR_b.count(axis=(0,1)), NDArray[np.int_])
 assert_type(MAR_o.count(keepdims=True), NDArray[np.int_])
+assert_type(MAR_o.count(axis=None, keepdims=True), NDArray[np.int_])
+assert_type(MAR_o.count(None, True), NDArray[np.int_])
 
 assert_type(np.ma.count(MAR_byte), int)
 assert_type(np.ma.count(MAR_f4, axis=0), NDArray[np.int_])
