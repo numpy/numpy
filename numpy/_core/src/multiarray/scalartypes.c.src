@@ -1330,7 +1330,7 @@ static PyObject *
     if (legacy_print_mode <= 113) {
         return legacy_@name@_format@kind@(val);
     }
-    long max_positional;
+    long double max_positional;
     if (legacy_print_mode <= 202) {
         max_positional = 1.e16L;
     }
@@ -1489,7 +1489,7 @@ halftype_@kind@(PyObject *self)
     if (legacy_print_mode <= 113) {
         return legacy_float_format@kind@(floatval);
     }
-    long max_positional;
+    long double max_positional;
     if (legacy_print_mode <= 202) {
         max_positional = 1.e16L;
     }
