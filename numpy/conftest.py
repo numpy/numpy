@@ -133,13 +133,13 @@ def check_fpu_mode(request):
     new_mode = get_fpu_mode()
 
     if old_mode != new_mode:
-        raise AssertionError("FPU precision mode changed from {0:#x} to {1:#x}"
+        raise AssertionError("FPU precision mode changed from {:#x} to {:#x}"
                              " during the test".format(old_mode, new_mode))
 
     collect_result = _collect_results.get(request.node)
     if collect_result is not None:
         old_mode, new_mode = collect_result
-        raise AssertionError("FPU precision mode changed from {0:#x} to {1:#x}"
+        raise AssertionError("FPU precision mode changed from {:#x} to {:#x}"
                              " when collecting the test".format(old_mode,
                                                                 new_mode))
 
