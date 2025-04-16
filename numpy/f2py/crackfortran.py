@@ -1537,8 +1537,6 @@ def analyzeline(m, case, line):
                     else:
                         rl[l] = l
                     groupcache[groupcounter]['use'][name]['map'] = rl
-            else:
-                pass
         else:
             print(m.groupdict())
             outmess('analyzeline: Could not crack the use statement.\n')
