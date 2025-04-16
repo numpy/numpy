@@ -1621,8 +1621,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             for row in X:
                 row2 = []
                 for number in row:
-                    row2.append(number.real)
-                    row2.append(number.imag)
+                    row2.extend((number.real, number.imag))
                 s = format % tuple(row2) + newline
                 fh.write(s.replace('+-', '-'))
         else:
