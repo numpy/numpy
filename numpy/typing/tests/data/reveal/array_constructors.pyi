@@ -1,12 +1,10 @@
 import sys
-from typing import Any, TypeVar
-from pathlib import Path
 from collections import deque
+from pathlib import Path
+from typing import Any, TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 

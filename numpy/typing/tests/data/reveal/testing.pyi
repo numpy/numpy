@@ -1,17 +1,15 @@
+import contextlib
 import re
 import sys
-import warnings
 import types
 import unittest
-import contextlib
+import warnings
 from collections.abc import Callable
-from typing import Any, TypeVar
 from pathlib import Path
+from typing import Any, TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 AR_f8: npt.NDArray[np.float64]
 AR_i8: npt.NDArray[np.int64]

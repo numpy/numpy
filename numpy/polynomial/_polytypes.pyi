@@ -2,11 +2,13 @@ from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Literal,
+    LiteralString,
     NoReturn,
     Protocol,
     SupportsIndex,
     SupportsInt,
     TypeAlias,
+    TypeVar,
     overload,
     type_check_only,
 )
@@ -28,8 +30,6 @@ from numpy._typing import (
     _ComplexLike_co,
     _NumberLike_co,
 )
-
-from typing_extensions import LiteralString, TypeVar
 
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)

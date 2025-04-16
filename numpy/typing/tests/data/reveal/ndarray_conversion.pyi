@@ -1,9 +1,7 @@
-from typing import Any
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 b1_0d: np.ndarray[tuple[()], np.dtype[np.bool]]
 u2_1d: np.ndarray[tuple[int], np.dtype[np.uint16]]

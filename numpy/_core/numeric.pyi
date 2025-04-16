@@ -1,17 +1,5 @@
 from collections.abc import Callable, Sequence
-from typing import (
-    Any,
-    Final,
-    TypeAlias,
-    overload,
-    TypeVar,
-    Literal as L,
-    SupportsAbs,
-    SupportsIndex,
-    NoReturn,
-    TypeGuard,
-)
-from typing_extensions import Unpack
+from typing import Any, Final, TypeAlias, overload, TypeVar, Literal as L, SupportsAbs, SupportsIndex, NoReturn, TypeGuard, Unpack
 
 import numpy as np
 from numpy import (

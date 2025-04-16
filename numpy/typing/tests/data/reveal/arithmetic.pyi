@@ -1,11 +1,9 @@
 import datetime as dt
-from typing import Any
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import _32Bit, _64Bit, _128Bit
-
-from typing_extensions import assert_type
 
 b: bool
 c: complex

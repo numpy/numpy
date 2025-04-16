@@ -507,8 +507,7 @@ def _get_c_source_file(obj):
         # todo: come up with a better way to generate these
         return None
 
-
-def linkcode_resolve(domain, info):
+def linkcode_resolve(domain, info):   
     """
     Determine the URL corresponding to Python object
     """
@@ -544,6 +543,11 @@ def linkcode_resolve(domain, info):
     # Make a poor effort at linking C extension types
     if isinstance(obj, type) and obj.__module__ == 'numpy':
         fn = _get_c_source_file(obj)
+
+    # This can be removed when removing the decorator set_module. Fix issue #28629
+    if hasattr(obj, '_module_file'):
+        fn = obj._module_file
+        fn = relpath(fn, start=dirname(numpy.__file__))
 
     if fn is None:
         try:

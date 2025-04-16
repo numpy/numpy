@@ -1,10 +1,8 @@
 import io
-from typing import Any
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 AR_i8: npt.NDArray[np.int64]
 REC_AR_V: np.recarray[tuple[int, ...], np.dtype[np.record]]

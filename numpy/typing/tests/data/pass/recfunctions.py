@@ -1,7 +1,6 @@
 """These tests are based on the doctests from `numpy/lib/recfunctions.py`."""
 
-from typing import Any
-from typing_extensions import assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt

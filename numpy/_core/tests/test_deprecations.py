@@ -103,7 +103,7 @@ class _DeprecationTestCase:
                         "expected %s but got: %s" %
                         (self.warning_cls.__name__, warning.category))
         if num is not None and num_found != num:
-            msg = "%i warnings found but %i expected." % (len(self.log), num)
+            msg = f"{len(self.log)} warnings found but {num} expected."
             lst = [str(w) for w in self.log]
             raise AssertionError("\n".join([msg] + lst))
 
