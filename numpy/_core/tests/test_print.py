@@ -129,10 +129,10 @@ def test_float_type_print(tp):
         _test_redirected_print(float(x), tp, _REF[x])
 
     if tp(1e16).itemsize > 4:
-        _test_redirected_print(float(1e16), tp)
+        _test_redirected_print(1e16, tp)
     else:
         ref = '1e+16'
-        _test_redirected_print(float(1e16), tp, ref)
+        _test_redirected_print(1e16, tp, ref)
 
 
 @pytest.mark.parametrize('tp', [np.complex64, np.cdouble, np.clongdouble])
@@ -191,12 +191,12 @@ def test_scalar_format():
 class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
 
     def test_locale_single(self):
-        assert_equal(str(np.float32(1.2)), str(float(1.2)))
+        assert_equal(str(np.float32(1.2)), str(1.2))
 
     def test_locale_double(self):
-        assert_equal(str(np.double(1.2)), str(float(1.2)))
+        assert_equal(str(np.double(1.2)), str(1.2))
 
     @pytest.mark.skipif(IS_MUSL,
                         reason="test flaky on musllinux")
     def test_locale_longdouble(self):
-        assert_equal(str(np.longdouble('1.2')), str(float(1.2)))
+        assert_equal(str(np.longdouble('1.2')), str(1.2))

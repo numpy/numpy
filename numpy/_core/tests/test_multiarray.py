@@ -6123,10 +6123,10 @@ class TestRecord:
         assert_raises(IndexError, a['f1'].__setitem__, b'sf1', 1)
         assert_raises(IndexError, a['f1'].__getitem__, b'sf1')
         b = a.copy()
-        fn1 = str('f1')
+        fn1 = 'f1'
         b[fn1] = 1
         assert_equal(b[fn1], 1)
-        fnn = str('not at all')
+        fnn = 'not at all'
         assert_raises(ValueError, b.__setitem__, fnn, 1)
         assert_raises(ValueError, b.__getitem__, fnn)
         b[0][fn1] = 2
@@ -6135,14 +6135,14 @@ class TestRecord:
         assert_raises(ValueError, b[0].__setitem__, fnn, 1)
         assert_raises(ValueError, b[0].__getitem__, fnn)
         # Subfield
-        fn3 = str('f3')
-        sfn1 = str('sf1')
+        fn3 = 'f3'
+        sfn1 = 'sf1'
         b[fn3][sfn1] = 1
         assert_equal(b[fn3][sfn1], 1)
         assert_raises(ValueError, b[fn3].__setitem__, fnn, 1)
         assert_raises(ValueError, b[fn3].__getitem__, fnn)
         # multiple subfields
-        fn2 = str('f2')
+        fn2 = 'f2'
         b[fn2] = 3
 
         assert_equal(b[['f1', 'f2']][0].tolist(), (2, 3))
