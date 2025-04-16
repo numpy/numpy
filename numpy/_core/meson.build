@@ -128,19 +128,18 @@ if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
 
-use_openmp = not get_option('disable-threading') and get_option('enable-openmp') and cpp.has_argument('-fopenmp')
-summary({
-  'Build with openMP? ' : use_openmp,
-})
+# openMP related settings:
+if get_option('disable-threading') and get_option('enable-openmp')
+  error('Build options `disable-threading` and `enable-openmp` are conflicting. Please set at most one to true.')
+endif
+
+use_openmp = get_option('enable-openmp') and not get_option('disable-threading')
 
 # Setup openmp flags for x86-simd-sort:
-omp_cflags = []
-omp = []
+omp_dep = []
 if use_intel_sort and use_openmp
-  omp = dependency('openmp', required : false)
-  if omp.found()
-    omp_cflags = ['-fopenmp', '-DXSS_USE_OPENMP']
-  endif
+  omp = dependency('openmp', required : true)
+  omp_dep = declare_dependency(dependencies: omp, compile_args: ['-DXSS_USE_OPENMP'])
 endif
 
 if not fs.exists('src/common/pythoncapi-compat')
@@ -890,9 +889,9 @@ foreach gen_mtargets : [
     dispatch: gen_mtargets[2],
     # baseline: CPU_BASELINE, it doesn't provide baseline fallback
     prefix: 'NPY_',
-    dependencies: [py_dep, np_core_dep],
+    dependencies: [py_dep, np_core_dep, omp_dep],
     c_args: c_args_common + max_opt,
-    cpp_args: cpp_args_common + max_opt + omp_cflags,
+    cpp_args: cpp_args_common + max_opt,
     include_directories: [
       'include',
       'src/common',
