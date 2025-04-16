@@ -3,9 +3,10 @@
 
 #include <Python.h>
 
-#include <string>
+#include <iostream>
 #include <unordered_set>
 #include <functional>
+#include <vector>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -24,6 +25,25 @@ template <typename F>
 FinalAction<F> finally(F f) {
     return FinalAction<F>(f);
 }
+
+template <typename T>
+struct VectorHash {
+    std::size_t operator()(const std::vector<T>& v) const {
+        // https://www.boost.org/doc/libs/1_88_0/libs/container_hash/doc/html/hash.html#notes_hash_combine
+        std::size_t h = v.size();
+        for (const T& x : v) {
+            h ^= std::hash<T>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
+        return h;
+    }
+};
+
+template <typename T>
+struct VectorEqual {
+    bool operator()(const std::vector<T>& lhs, const std::vector<T>& rhs) const {
+        return lhs == rhs;
+    }
+};
 
 template<typename T>
 static PyObject*
@@ -130,7 +150,7 @@ unique_string(PyArrayObject *self)
     strings of a certain size (sizeof(T)).
     */
     NPY_ALLOW_C_API_DEF;
-    std::unordered_set<std::basic_string<T>> hashset;
+    std::unordered_set<std::vector<T>, VectorHash<T>, VectorEqual<T>> hashset;
 
     NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
                                       NPY_ITER_EXTERNAL_LOOP |
@@ -175,7 +195,7 @@ unique_string(PyArrayObject *self)
             npy_intp count = *innersizeptr;
 
             while (count--) {
-                hasher.emplace((T *)data, num_chars);
+                hashset.emplace((T *) data, (T *) data + num_chars);
                 data += stride;
             }
         } while (iternext(iter));
@@ -204,11 +224,11 @@ unique_string(PyArrayObject *self)
     }
 
     // then we iterate through the map's keys to get the unique values
-    T * data = (T *)PyArray_DATA((PyArrayObject *)res_obj);
+    T ** data = (T **)PyArray_DATA((PyArrayObject *)res_obj);
     auto it = hashset.begin();
     size_t i = 0;
     for (; it != hashset.end(); it++, i++) {
-        memcpy(data + i * num_chars, it->c_str(), itemsize);
+        memcpy(data + i, it->data(), num_chars);
     }
 
     return res_obj;
@@ -237,7 +257,7 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_UINT32, unique_int<npy_uint32>},
     {NPY_UINT64, unique_int<npy_uint64>},
     {NPY_DATETIME, unique_int<npy_uint64>},
-    {NPY_STRING, unique_string<char>},
+    {NPY_STRING, unique_string<npy_byte>},
     {NPY_UNICODE, unique_string<npy_ucs4>},
 };
 
