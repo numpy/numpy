@@ -1,0 +1,6 @@
+Building NumPy with OpenMP Parallelization
+-------------------------------------------
+NumPy now supports OpenMP parallel processing capabilities when built with the
+``-Denable_openmp=true`` Meson build flag. This feature is disabled by default.
+When enabled, ``np.sort`` and ``np.argsort`` functions can utilize OpenMP for
+parallel thread execution, improving performance for these operations.
