@@ -138,11 +138,9 @@ from ._array_like import (
     _ArrayLikeBytes_co as _ArrayLikeBytes_co,
     _ArrayLikeString_co as _ArrayLikeString_co,
     _ArrayLikeAnyString_co as _ArrayLikeAnyString_co,
-    _ArrayLikeUnknown as _ArrayLikeUnknown,
     _FiniteNestedSequence as _FiniteNestedSequence,
     _SupportsArray as _SupportsArray,
     _SupportsArrayFunc as _SupportsArrayFunc,
-    _UnknownType as _UnknownType,
 )
 
 from ._ufunc import (

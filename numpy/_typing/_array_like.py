@@ -106,14 +106,3 @@ _ArrayLikeComplex128_co: TypeAlias = _DualArrayLike[dtype[__Complex128_co], comp
 
 # NOTE: This includes `builtins.bool`, but not `numpy.bool`.
 _ArrayLikeInt: TypeAlias = _DualArrayLike[dtype[np.integer], int]
-
-# Extra ArrayLike type so that pyright can deal with NDArray[Any]
-# Used as the first overload, should only match NDArray[Any],
-# not any actual types.
-# https://github.com/numpy/numpy/pull/22193
-if sys.version_info >= (3, 11):
-    from typing import Never as _UnknownType
-else:
-    from typing import NoReturn as _UnknownType
-
-_ArrayLikeUnknown: TypeAlias = _DualArrayLike[dtype[_UnknownType], _UnknownType]
