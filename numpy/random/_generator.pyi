@@ -1,29 +1,17 @@
 from collections.abc import Callable
-from typing import Any, TypeAlias, overload, TypeVar, Literal
+from typing import Any, Literal, TypeAlias, TypeVar, overload
 
 import numpy as np
-from numpy import (
-    dtype,
-    float32,
-    float64,
-    int8,
-    int16,
-    int32,
-    int64,
-    int_,
-    uint,
-    uint8,
-    uint16,
-    uint32,
-    uint64,
-)
-from numpy.random import BitGenerator, SeedSequence, RandomState
+from numpy import dtype, float32, float64, int64
 from numpy._typing import (
     ArrayLike,
+    DTypeLike,
     NDArray,
     _ArrayLikeFloat_co,
     _ArrayLikeInt_co,
+    _BoolCodes,
     _DoubleCodes,
+    _DTypeLike,
     _DTypeLikeBool,
     _Float32Codes,
     _Float64Codes,
@@ -32,7 +20,7 @@ from numpy._typing import (
     _Int16Codes,
     _Int32Codes,
     _Int64Codes,
-    _IntCodes,
+    _IntPCodes,
     _ShapeLike,
     _SingleCodes,
     _SupportsDType,
@@ -40,10 +28,11 @@ from numpy._typing import (
     _UInt16Codes,
     _UInt32Codes,
     _UInt64Codes,
-    _UIntCodes,
+    _UIntPCodes,
 )
+from numpy.random import BitGenerator, RandomState, SeedSequence
 
-_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
+_IntegerT = TypeVar("_IntegerT", bound=np.integer)
 
 _DTypeLikeFloat32: TypeAlias = (
     dtype[float32]
@@ -206,243 +195,286 @@ class Generator:
     @overload
     def exponential(self, scale: _FloatLike_co = ..., size: None = ...) -> float: ...  # type: ignore[misc]
     @overload
-    def exponential(
-        self, scale: _ArrayLikeFloat_co = ..., size: None | _ShapeLike = ...
-    ) -> NDArray[float64]: ...
+    def exponential(self, scale: _ArrayLikeFloat_co = ..., size: None | _ShapeLike = ...) -> NDArray[float64]: ...
+
+    #
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
         low: int,
-        high: None | int = ...,
-        size: None = ...,
+        high: int | None = None,
+        size: None = None,
+        dtype: _DTypeLike[np.int64] | _Int64Codes = ...,
+        endpoint: bool = False,
+    ) -> np.int64: ...
+    @overload
+    def integers(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
         *,
-        endpoint: bool = ...,
-    ) -> int: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: type[bool] = ...,
-        endpoint: bool = ...,
+        dtype: type[bool],
+        endpoint: bool = False,
     ) -> bool: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
         low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: type[np.bool] = ...,
-        endpoint: bool = ...,
-    ) -> np.bool: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: type[int] = ...,
-        endpoint: bool = ...,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: type[int],
+        endpoint: bool = False,
     ) -> int: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
         low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[uint8] | type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> uint8: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[uint16] | type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> uint16: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[uint32] | type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> uint32: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[uint] | type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> uint: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[uint64] | type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> uint64: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[int8] | type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> int8: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[int16] | type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> int16: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[int32] | type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> int32: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[int_] | type[int] | type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> int_: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: int,
-        high: None | int = ...,
-        size: None = ...,
-        dtype: dtype[int64] | type[int64] | _Int64Codes | _SupportsDType[dtype[int64]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> int64: ...
-    @overload
-    def integers(  # type: ignore[misc]
-        self,
-        low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
+        high: int | None = None,
+        size: None = None,
         *,
-        endpoint: bool = ...
-    ) -> NDArray[int64]: ...
+        dtype: _DTypeLike[np.bool] | _BoolCodes,
+        endpoint: bool = False,
+    ) -> np.bool: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _DTypeLike[_IntegerT],
+        endpoint: bool = False,
+    ) -> _IntegerT: ...
+    @overload
+    def integers(
         self,
         low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: _DTypeLikeBool = ...,
-        endpoint: bool = ...,
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        dtype: _DTypeLike[np.int64] | _Int64Codes = ...,
+        endpoint: bool = False,
+    ) -> NDArray[np.int64]: ...
+    @overload
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _DTypeLikeBool,
+        endpoint: bool = False,
     ) -> NDArray[np.bool]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
         low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: dtype[int8] | type[int8] | _Int8Codes | _SupportsDType[dtype[int8]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[int8]: ...
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _DTypeLike[_IntegerT],
+        endpoint: bool = False,
+    ) -> NDArray[_IntegerT]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
-        low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: dtype[int16] | type[int16] | _Int16Codes | _SupportsDType[dtype[int16]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[int16]: ...
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _Int8Codes,
+        endpoint: bool = False,
+    ) -> np.int8: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
         low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: dtype[int32] | type[int32] | _Int32Codes | _SupportsDType[dtype[int32]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[int32]: ...
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _Int8Codes,
+        endpoint: bool = False,
+    ) -> NDArray[np.int8]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
-        low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: None | dtype[int64] | type[int64] | _Int64Codes | _SupportsDType[dtype[int64]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[int64]: ...
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _UInt8Codes,
+        endpoint: bool = False,
+    ) -> np.uint8: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
         low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: dtype[uint8] | type[uint8] | _UInt8Codes | _SupportsDType[dtype[uint8]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[uint8]: ...
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _UInt8Codes,
+        endpoint: bool = False,
+    ) -> NDArray[np.uint8]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
-        low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: dtype[uint16] | type[uint16] | _UInt16Codes | _SupportsDType[dtype[uint16]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[uint16]: ...
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _Int16Codes,
+        endpoint: bool = False,
+    ) -> np.int16: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
         low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: dtype[uint32] | type[uint32] | _UInt32Codes | _SupportsDType[dtype[uint32]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[uint32]: ...
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _Int16Codes,
+        endpoint: bool = False,
+    ) -> NDArray[np.int16]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
-        low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: dtype[uint64] | type[uint64] | _UInt64Codes | _SupportsDType[dtype[uint64]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[uint64]: ...
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _UInt16Codes,
+        endpoint: bool = False,
+    ) -> np.uint16: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
         self,
         low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: dtype[int_] | type[int] | type[int_] | _IntCodes | _SupportsDType[dtype[int_]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[int_]: ...
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _UInt16Codes,
+        endpoint: bool = False,
+    ) -> NDArray[np.uint16]: ...
     @overload
-    def integers(  # type: ignore[misc]
+    def integers(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _Int32Codes,
+        endpoint: bool = False,
+    ) -> np.int32: ...
+    @overload
+    def integers(
         self,
         low: _ArrayLikeInt_co,
-        high: None | _ArrayLikeInt_co = ...,
-        size: None | _ShapeLike = ...,
-        dtype: dtype[uint] | type[uint] | _UIntCodes | _SupportsDType[dtype[uint]] = ...,  # noqa: E501
-        endpoint: bool = ...,
-    ) -> NDArray[uint]: ...
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _Int32Codes,
+        endpoint: bool = False,
+    ) -> NDArray[np.int32]: ...
+    @overload
+    def integers(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _UInt32Codes,
+        endpoint: bool = False,
+    ) -> np.uint32: ...
+    @overload
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _UInt32Codes,
+        endpoint: bool = False,
+    ) -> NDArray[np.uint32]: ...
+    @overload
+    def integers(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _UInt64Codes,
+        endpoint: bool = False,
+    ) -> np.uint64: ...
+    @overload
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _UInt64Codes,
+        endpoint: bool = False,
+    ) -> NDArray[np.uint64]: ...
+    @overload
+    def integers(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _IntPCodes,
+        endpoint: bool = False,
+    ) -> np.intp: ...
+    @overload
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _IntPCodes,
+        endpoint: bool = False,
+    ) -> NDArray[np.intp]: ...
+    @overload
+    def integers(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        *,
+        dtype: _UIntPCodes,
+        endpoint: bool = False,
+    ) -> np.uintp: ...
+    @overload
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        *,
+        dtype: _UIntPCodes,
+        endpoint: bool = False,
+    ) -> NDArray[np.uintp]: ...
+    @overload
+    def integers(
+        self,
+        low: int,
+        high: int | None = None,
+        size: None = None,
+        dtype: DTypeLike = ...,
+        endpoint: bool = False,
+    ) -> Any: ...
+    @overload
+    def integers(
+        self,
+        low: _ArrayLikeInt_co,
+        high: _ArrayLikeInt_co | None = None,
+        size: _ShapeLike | None = None,
+        dtype: DTypeLike = ...,
+        endpoint: bool = False,
+    ) -> NDArray[Any]: ...
+
     # TODO: Use a TypeVar _T here to get away from Any output?
     #       Should be int->NDArray[int64], ArrayLike[_T] -> _T | NDArray[Any]
     @overload
