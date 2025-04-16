@@ -1290,8 +1290,7 @@ class poly1d:
 
         def fmt_float(q):
             s = '%.4g' % q
-            if s.endswith('.0000'):
-                s = s[:-5]
+            s = s.removesuffix('.0000')
             return s
 
         for k, coeff in enumerate(coeffs):
