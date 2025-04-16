@@ -3,6 +3,7 @@
 
 #include <Python.h>
 
+#include <algorithm>
 #include <iostream>
 #include <unordered_set>
 #include <functional>
@@ -224,11 +225,15 @@ unique_string(PyArrayObject *self)
     }
 
     // then we iterate through the map's keys to get the unique values
-    T ** data = (T **)PyArray_DATA((PyArrayObject *)res_obj);
+    char* data = PyArray_BYTES((const PyArrayObject *)res_obj);
     auto it = hashset.begin();
     size_t i = 0;
-    for (; it != hashset.end(); it++, i++) {
-        memcpy(data + i, it->data(), num_chars);
+    for (; it != hashset.end(); it++, i++, data += itemsize) {
+        std::size_t byte_to_copy = std::min(it->size() * sizeof(T), (std::size_t)itemsize);
+        memcpy(data, it->data(), byte_to_copy);
+        if (byte_to_copy < (std::size_t)itemsize) {
+            memset(data + byte_to_copy, 0, itemsize - byte_to_copy);
+        }
     }
 
     return res_obj;
@@ -259,6 +264,7 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_DATETIME, unique_int<npy_uint64>},
     {NPY_STRING, unique_string<npy_byte>},
     {NPY_UNICODE, unique_string<npy_ucs4>},
+    {NPY_VSTRING, unique_string<npy_byte>},
 };
 
 
