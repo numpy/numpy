@@ -27,7 +27,6 @@ import operator
 import warnings
 import textwrap
 import re
-from typing import Dict
 
 import numpy as np
 import numpy._core.umath as umath
@@ -185,8 +184,8 @@ for v in ["Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps",
 float_types_list = [np.half, np.single, np.double, np.longdouble,
                     np.csingle, np.cdouble, np.clongdouble]
 
-_minvals: Dict[type, int] = {}
-_maxvals: Dict[type, int] = {}
+_minvals: dict[type, int] = {}
+_maxvals: dict[type, int] = {}
 
 for sctype in ntypes.sctypeDict.values():
     scalar_dtype = np.dtype(sctype)

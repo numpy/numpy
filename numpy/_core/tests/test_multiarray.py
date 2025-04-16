@@ -8977,16 +8977,6 @@ class TestConversion:
             assert_equal(5, int_func(np.bytes_(b'5')))
             assert_equal(6, int_func(np.str_('6')))
 
-            # The delegation of int() to __trunc__ was deprecated in
-            # Python 3.11.
-            if sys.version_info < (3, 11):
-                class HasTrunc:
-                    def __trunc__(self):
-                        return 3
-                assert_equal(3, int_func(np.array(HasTrunc())))
-                with assert_warns(DeprecationWarning):
-                    assert_equal(3, int_func(np.array([HasTrunc()])))
-
             class NotConvertible:
                 def __int__(self):
                     raise NotImplementedError
