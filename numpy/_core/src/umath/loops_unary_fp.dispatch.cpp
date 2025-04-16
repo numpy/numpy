@@ -82,7 +82,7 @@ template <typename T> struct OpSqrt {
 
     HWY_INLINE HWY_ATTR T operator()(T a) const ;
 };
-#if defined(_MSC_VER) && defined(_M_IX86) && !NPY_SIMD
+#if defined(_MSC_VER) && defined(_M_IX86)
 #include <emmintrin.h>
 template <typename T> HWY_INLINE HWY_ATTR T OpSqrt<T>::operator()(T a) const {
     if constexpr (std::is_same_v<T, float>) {
@@ -287,7 +287,8 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
     bool unrolled = false;
 #if NPY_SIMDX
     if constexpr (kSupportLane<T>) {
-        if (!is_mem_overlap(src, src_step, dst, dst_step, len)) {
+        if (!is_mem_overlap(src, src_step, dst, dst_step, len) && alignof(T) == sizeof(T) &&
+                src_step % sizeof(T) == 0 && dst_step % sizeof(T) == 0) {
             const int lsize = sizeof(T);
             const npy_intp ssrc = src_step / lsize;
             const npy_intp sdst = dst_step / lsize;
@@ -323,7 +324,15 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
         }
     }
 
-    npy_clear_floatstatus_barrier((char*)dimensions);
+    if constexpr (std::is_same_v<OP, OpAbs<T>>) {
+        npy_clear_floatstatus_barrier((char*)dimensions);
+    }
+#if defined(_MSC_VER) && defined(_M_IX86)
+    else if constexpr (std::is_same_v<OP, OpRint<T>> || std::is_same_v<OP, OpFloor<T>> ||
+                       std::is_same_v<OP, OpCeil<T>> || std::is_same_v<OP, OpTrunc<T>>) {
+        npy_clear_floatstatus_barrier((char*)dimensions);
+    }
+#endif
 }
 
 } // anonymous namespace
