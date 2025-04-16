@@ -4,13 +4,14 @@ operations.
 """
 
 import sys
+import functools
 import numpy as np
 from numpy import (
     equal, not_equal, less, less_equal, greater, greater_equal,
     add, multiply as _multiply_ufunc,
 )
 from numpy._core.multiarray import _vec_string
-from numpy._core.overrides import set_module
+from numpy._core.overrides import set_module, array_function_dispatch
 from numpy._core.umath import (
     isalpha,
     isdigit,
@@ -83,6 +84,9 @@ __all__ = [
 
 
 MAX = np.iinfo(np.int64).max
+
+array_function_dispatch = functools.partial(
+    array_function_dispatch, module='numpy.strings')
 
 
 def _get_num_chars(a):
@@ -194,7 +198,12 @@ def multiply(a, i):
     return _multiply_ufunc(a, i, out=out)
 
 
+def _mod_dispatcher(a, values):
+    return (a, values)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_mod_dispatcher)
 def mod(a, values):
     """
     Return (a % i), that is pre-Python 2.6 string formatting
@@ -507,7 +516,12 @@ def endswith(a, suffix, start=0, end=None):
     return _endswith_ufunc(a, suffix, start, end)
 
 
+def _code_dispatcher(a, encoding=None, errors=None):
+    return (a,)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_code_dispatcher)
 def decode(a, encoding=None, errors=None):
     r"""
     Calls :meth:`bytes.decode` element-wise.
@@ -556,6 +570,7 @@ def decode(a, encoding=None, errors=None):
 
 
 @set_module("numpy.strings")
+@array_function_dispatch(_code_dispatcher)
 def encode(a, encoding=None, errors=None):
     """
     Calls :meth:`str.encode` element-wise.
@@ -1033,7 +1048,12 @@ def strip(a, chars=None):
     return _strip_chars(a, chars)
 
 
+def _unary_op_dispatcher(a):
+    return (a,)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_unary_op_dispatcher)
 def upper(a):
     """
     Return an array with the elements converted to uppercase.
@@ -1071,6 +1091,7 @@ def upper(a):
 
 
 @set_module("numpy.strings")
+@array_function_dispatch(_unary_op_dispatcher)
 def lower(a):
     """
     Return an array with the elements converted to lowercase.
@@ -1108,6 +1129,7 @@ def lower(a):
 
 
 @set_module("numpy.strings")
+@array_function_dispatch(_unary_op_dispatcher)
 def swapcase(a):
     """
     Return element-wise a copy of the string with
@@ -1148,6 +1170,7 @@ def swapcase(a):
 
 
 @set_module("numpy.strings")
+@array_function_dispatch(_unary_op_dispatcher)
 def capitalize(a):
     """
     Return a copy of ``a`` with only the first character of each element
@@ -1188,6 +1211,7 @@ def capitalize(a):
 
 
 @set_module("numpy.strings")
+@array_function_dispatch(_unary_op_dispatcher)
 def title(a):
     """
     Return element-wise title cased version of string or unicode.
@@ -1293,6 +1317,11 @@ def replace(a, old, new, count=-1):
     return _replace(arr, old, new, counts, out=out)
 
 
+def _join_dispatcher(sep, seq):
+    return (sep, seq)
+
+
+@array_function_dispatch(_join_dispatcher)
 def _join(sep, seq):
     """
     Return a string which is the concatenation of the strings in the
@@ -1329,6 +1358,11 @@ def _join(sep, seq):
         _vec_string(sep, np.object_, 'join', (seq,)), seq)
 
 
+def _split_dispatcher(a, sep=None, maxsplit=None):
+    return (a,)
+
+
+@array_function_dispatch(_split_dispatcher)
 def _split(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
@@ -1373,6 +1407,7 @@ def _split(a, sep=None, maxsplit=None):
         a, np.object_, 'split', [sep] + _clean_args(maxsplit))
 
 
+@array_function_dispatch(_split_dispatcher)
 def _rsplit(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
@@ -1418,6 +1453,11 @@ def _rsplit(a, sep=None, maxsplit=None):
         a, np.object_, 'rsplit', [sep] + _clean_args(maxsplit))
 
 
+def _splitlines_dispatcher(a, keepends=None):
+    return (a,)
+
+
+@array_function_dispatch(_splitlines_dispatcher)
 def _splitlines(a, keepends=None):
     """
     For each element in `a`, return a list of the lines in the
@@ -1592,7 +1632,12 @@ def rpartition(a, sep):
         a, sep, pos, out=(out["f0"], out["f1"], out["f2"]))
 
 
+def _translate_dispatcher(a, table, deletechars=None):
+    return (a,)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_translate_dispatcher)
 def translate(a, table, deletechars=None):
     """
     For each element in `a`, return a copy of the string where all
