@@ -78,7 +78,7 @@ StoreN(const Vec<TLane> &a, TLane *ptr, size_t n)
 
 /// Returns the number of vector lanes based on the lane type.
 template <typename TLane>
-HWY_API constexpr inline size_t
+HWY_API constexpr size_t
 Lanes(TLane tag = 0)
 {
     return hn::Lanes(_Tag<TLane>());
