@@ -136,6 +136,7 @@ endif
 use_openmp = get_option('enable-openmp') and not get_option('disable-threading')
 
 # Setup openmp flags for x86-simd-sort:
+omp = []
 omp_dep = []
 if use_intel_sort and use_openmp
   omp = dependency('openmp', required : true)
