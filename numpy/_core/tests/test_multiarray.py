@@ -10449,7 +10449,7 @@ class TestDevice:
 
 def test_array_interface_excess_dimensions_raises():
     """Regression test for gh-27949: ensure too many dims raises ValueError instead of segfault."""
-    
+
     # Dummy object to hold a custom __array_interface__
     class DummyArray:
         def __init__(self, interface):

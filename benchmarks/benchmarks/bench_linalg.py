@@ -251,14 +251,14 @@ class MatmulStrided(Benchmark):
         }
 
         self.params = [list(self.args_map.keys())]
-    
+
     def setup(self, configuration):
         m, p, n, batch_size = self.args_map[configuration]
 
         self.a1raw = np.random.rand(batch_size * m * 2 * n).reshape(
             (batch_size, m, 2 * n)
         )
-        
+
         self.a1 = self.a1raw[:, :, ::2]
 
         self.a2 = np.random.rand(batch_size * n * p).reshape(

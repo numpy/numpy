@@ -217,21 +217,21 @@ class TestRealScalars:
 
     available_float_dtypes = [np.float16, np.float32, np.float64, np.float128]\
         if hasattr(np, 'float128') else [np.float16, np.float32, np.float64]
-    
+
     @pytest.mark.parametrize("tp", available_float_dtypes)
     def test_dragon4_positional_interface(self, tp):
         # test is flaky for musllinux on np.float128
         if IS_MUSL and tp == np.float128:
             pytest.skip("Skipping flaky test of float128 on musllinux")
-                
+
         fpos = np.format_float_positional
-        
+
         # test padding
         assert_equal(fpos(tp('1.0'), pad_left=4, pad_right=4), "   1.    ")
         assert_equal(fpos(tp('-1.0'), pad_left=4, pad_right=4), "  -1.    ")
         assert_equal(fpos(tp('-10.2'),
                         pad_left=4, pad_right=4), " -10.2   ")
-        
+
         # test fixed (non-unique) mode
         assert_equal(fpos(tp('1.0'), unique=False, precision=4), "1.0000")
 
@@ -240,7 +240,7 @@ class TestRealScalars:
         # test is flaky for musllinux on np.float128
         if IS_MUSL and tp == np.float128:
             pytest.skip("Skipping flaky test of float128 on musllinux")
-                        
+
         fpos = np.format_float_positional
         # test trimming
         # trim of 'k' or '.' only affects non-unique mode, since unique
@@ -265,14 +265,14 @@ class TestRealScalars:
                         "1.2" if tp != np.float16 else "1.2002")
         assert_equal(fpos(tp('1.'), trim='-'), "1")
         assert_equal(fpos(tp('1.001'), precision=1, trim='-'), "1")
-                
+
     @pytest.mark.parametrize("tp", available_float_dtypes)
     @pytest.mark.parametrize("pad_val", [10**5, np.iinfo("int32").max])
     def test_dragon4_positional_interface_overflow(self, tp, pad_val):
         # test is flaky for musllinux on np.float128
         if IS_MUSL and tp == np.float128:
             pytest.skip("Skipping flaky test of float128 on musllinux")
-                
+
         fpos = np.format_float_positional
 
         #gh-28068
@@ -293,7 +293,7 @@ class TestRealScalars:
         # test is flaky for musllinux on np.float128
         if IS_MUSL and tp == np.float128:
             pytest.skip("Skipping flaky test of float128 on musllinux")
-                        
+
         fsci = np.format_float_scientific
 
         # test exp_digits
