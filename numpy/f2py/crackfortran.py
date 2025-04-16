@@ -1635,7 +1635,7 @@ def removespaces(expr):
 
 def markinnerspaces(line):
     """
-    The function replace all spaces in the input variable line which are 
+    The function replace all spaces in the input variable line which are
     surrounded with quotation marks, with the triplet "@_@".
 
     For instance, for the input "a 'b c'" the function returns "a 'b@_@c'"
@@ -1648,7 +1648,7 @@ def markinnerspaces(line):
     -------
     str
 
-    """  
+    """
     fragment = ''
     inside = False
     current_quote = None
@@ -2512,7 +2512,7 @@ def get_parameters(vars, global_params={}):
                 if not selected_kind_re.match(v):
                     v_ = v.split('_')
                     # In case there are additive parameters
-                    if len(v_) > 1: 
+                    if len(v_) > 1:
                         v = ''.join(v_[:-1]).lower().replace(v_[-1].lower(), '')
 
             # Currently this will not work for complex numbers.

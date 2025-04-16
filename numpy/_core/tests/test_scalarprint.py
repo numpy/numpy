@@ -275,16 +275,16 @@ class TestRealScalars:
                 
         fpos = np.format_float_positional
 
-        #gh-28068            
-        with pytest.raises(RuntimeError, 
+        #gh-28068
+        with pytest.raises(RuntimeError,
                            match="Float formatting result too large"):
             fpos(tp('1.047'), unique=False, precision=pad_val)
 
-        with pytest.raises(RuntimeError, 
+        with pytest.raises(RuntimeError,
                            match="Float formatting result too large"):
             fpos(tp('1.047'), precision=2, pad_left=pad_val)
 
-        with pytest.raises(RuntimeError, 
+        with pytest.raises(RuntimeError,
                            match="Float formatting result too large"):
             fpos(tp('1.047'), precision=2, pad_right=pad_val)
 

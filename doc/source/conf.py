@@ -507,7 +507,7 @@ def _get_c_source_file(obj):
         # todo: come up with a better way to generate these
         return None
 
-def linkcode_resolve(domain, info):   
+def linkcode_resolve(domain, info):
     """
     Determine the URL corresponding to Python object
     """
