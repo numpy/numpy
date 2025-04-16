@@ -5,6 +5,13 @@
 #include "simd/simd.hpp"
 #include "common.hpp"
 
+/**
+ * Force use SSE only on x86, even if AVX2 or AVX512F are enabled
+ * through the baseline, since scatter(AVX512F) and gather very costly
+ * to handle non-contiguous memory access comparing with SSE for
+ * such small operations that this file covers.
+*/
+
 namespace {
 using namespace np::simd;
 
@@ -82,6 +89,11 @@ template <typename T> struct OpSqrt {
 
     HWY_INLINE HWY_ATTR T operator()(T a) const ;
 };
+/**
+ * MSVC(32-bit mode) requires a clarified contiguous loop
+ * in order to use SSE, otherwise it uses a soft version of square root
+ * that doesn't raise a domain error.
+ */
 #if defined(_MSC_VER) && defined(_M_IX86)
 #include <emmintrin.h>
 template <typename T> HWY_INLINE HWY_ATTR T OpSqrt<T>::operator()(T a) const {
@@ -112,6 +124,7 @@ template <typename T> struct OpAbs {
 #endif
 
     HWY_INLINE HWY_ATTR T operator()(T a) const {
+        /* add 0 to clear -0.0 */
         return 0 + (a > 0 ? a : -a);
     }
 };
@@ -163,6 +176,16 @@ HWY_INLINE HWY_ATTR void StoreWithStride(Vec<T> vec, T* dst, npy_intp sdst, size
     }
 }
 
+/********************************************************************************
+ ** Defining the SIMD kernels
+ ********************************************************************************/
+/** Notes:
+ * - avoid the use of libmath to unify fp/domain errors
+ *   for both scalars and vectors among all compilers/architectures.
+ * - use intrinsic npyv_load_till_* instead of npyv_load_tillz_
+ *   to fill the remind lanes with 1.0 to avoid divide by zero fp
+ *   exception in reciprocal.
+ */
 template <typename T, typename OP, int STYPE, int DTYPE, int UNROLL>
 HWY_INLINE HWY_ATTR void
 simd_unary_fp(const T *src, npy_intp ssrc, T *dst, npy_intp sdst, npy_intp len) {
@@ -314,6 +337,7 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
         for (; len > 0; --len, src += src_step, dst += dst_step) {
         #if NPY_SIMDX
             if constexpr (kSupportLane<T>) {
+                // to guarantee the same precision and fp/domain errors for both scalars and vectors
                 simd_unary_fp<T, OP, 0, 0, 4>(reinterpret_cast<const T*>(src), 0, reinterpret_cast<T*>(dst), 0, 1);
             } else
         #endif
@@ -324,15 +348,10 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
         }
     }
 
-    if constexpr (std::is_same_v<OP, OpAbs<T>>) {
+    if constexpr (std::is_same_v<OP, OpAbs<T>> || std::is_same_v<OP, OpRint<T>> || std::is_same_v<OP, OpFloor<T>> ||
+                  std::is_same_v<OP, OpCeil<T>> || std::is_same_v<OP, OpTrunc<T>>) {
         npy_clear_floatstatus_barrier((char*)dimensions);
     }
-#if defined(_MSC_VER) && defined(_M_IX86)
-    else if constexpr (std::is_same_v<OP, OpRint<T>> || std::is_same_v<OP, OpFloor<T>> ||
-                       std::is_same_v<OP, OpCeil<T>> || std::is_same_v<OP, OpTrunc<T>>) {
-        npy_clear_floatstatus_barrier((char*)dimensions);
-    }
-#endif
 }
 
 } // anonymous namespace
