@@ -12,6 +12,13 @@
 #ifndef LDBL_MAX_EXP
     #include <float.h>
 #endif
+
+#if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+    #define NPY_LDBL_MAX_EXP DBL_MAX_EXP
+#else
+    #define NPY_LDBL_MAX_EXP LDBL_MAX_EXP
+#endif
+
 #define MAX_DBL_TEST 0x10000000000000
 
 /*
@@ -113,14 +120,14 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
     npy_longdouble ld;
     if (exp == 0) {
         ld = (npy_longdouble)sign * (npy_longdouble)mantissa[0];
-    } else if (exp == LDBL_MAX_EXP && mantissa[0] == 0) {
+    } else if (exp == NPY_LDBL_MAX_EXP && mantissa[0] == 0) {
         ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[1] * powl(2.0L, (npy_longdouble)(exp - 64)) + 
             (npy_longdouble)mantissa[2] * powl(2.0L, (npy_longdouble)(exp - 128)));
             //Sometimes it overflows in weird ways
         if (ld == (npy_longdouble)INFINITY || ld == (npy_longdouble)(-INFINITY) || ld == (npy_longdouble)NAN || ld == (npy_longdouble)(-NAN)) {
             return _ldbl_ovfl_err();
         }
-    } else if (exp >= LDBL_MAX_EXP) {
+    } else if (exp >= NPY_LDBL_MAX_EXP) {
         return _ldbl_ovfl_err();
     } else {
     ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[0] * powl(2.0L, (npy_longdouble)(exp)) + 
