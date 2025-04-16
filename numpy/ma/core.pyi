@@ -19,6 +19,7 @@ from numpy import (
     expand_dims,
     float64,
     generic,
+    int_,
     intp,
     ndarray,
 )
@@ -452,7 +453,13 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @property  # type: ignore[misc]
     def real(self): ...
     get_real: Any
-    def count(self, axis=..., keepdims=...): ...
+
+    # keep in sync with `np.ma.count`
+    @overload
+    def count(self, axis: None = None, keepdims: Literal[False] | _NoValueType = ...) -> int: ...  # type: ignore[overload-overlap]
+    @overload
+    def count(self, axis: _ShapeLike | None = None, keepdims: bool | _NoValueType = ...) -> NDArray[int_]: ...
+
     def ravel(self, order=...): ...
     def reshape(self, *s, **kwargs): ...
     def resize(self, newshape, refcheck=..., order=...): ...
@@ -949,7 +956,11 @@ sum: _frommethod
 swapaxes: _frommethod
 trace: _frommethod
 var: _frommethod
-count: _frommethod
+
+@overload
+def count(self: ArrayLike, axis: None = None, keepdims: Literal[False] | _NoValueType = ...) -> int: ...
+@overload
+def count(self: ArrayLike, axis: _ShapeLike | None = None, keepdims: bool | _NoValueType = ...) -> NDArray[int_]: ...
 
 @overload
 def argmin(
