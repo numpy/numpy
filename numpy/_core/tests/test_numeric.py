@@ -2061,7 +2061,7 @@ def _test_array_equal_parametrizations():
     yield (e1, e1.copy(), False, True)
     yield (e1, e1.copy(), True, True)
 
-    # Non-nanable – those cannot hold nans
+    # Non-nanable - those cannot hold nans
     a12 = np.array([1, 2])
     a12b = a12.copy()
     a123 = np.array([1, 2, 3])
