@@ -2,6 +2,7 @@
 #include "loops_utils.h"
 #include "loops.h"
 
+#include <hwy/highway.h>
 #include "simd/simd.hpp"
 #include "common.hpp"
 
@@ -297,6 +298,8 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
     const npy_intp dst_step = steps[1];
     npy_intp len = dimensions[0];
 
+    bool unrolled = false;
+#if NPY_SIMDX
     if constexpr (kSupportLane<T>) {
         if (!is_mem_overlap(src, src_step, dst, dst_step, len) &&
                 TypeTraits<T>::LoadStrideFunc(src_step) != 0 &&
@@ -316,21 +319,26 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
             else {
                 simd_unary_fp<T, OP, 1, 1, 2>(reinterpret_cast<const T*>(src), ssrc, reinterpret_cast<T*>(dst), sdst, len);
             }
-            goto clear;
+            unrolled = true;
         }
     }
+#endif
+
     // fallback to scalar implementation
-    for (; len > 0; --len, src += src_step, dst += dst_step) {
-        if constexpr (kSupportLane<T>) {
-            simd_unary_fp<T, OP, 0, 0, 4>(reinterpret_cast<const T*>(src), 0, reinterpret_cast<T*>(dst), 0, 1);
-        }
-        else {
-            const T src0 = *reinterpret_cast<const T*>(src);
-            *reinterpret_cast<T*>(dst) = op_func(src0);
+    if (!unrolled) {
+        for (; len > 0; --len, src += src_step, dst += dst_step) {
+        #if NPY_SIMDX
+            if constexpr (kSupportLane<T>) {
+                simd_unary_fp<T, OP, 0, 0, 4>(reinterpret_cast<const T*>(src), 0, reinterpret_cast<T*>(dst), 0, 1);
+            } else
+        #endif
+            {
+                const T src0 = *reinterpret_cast<const T*>(src);
+                *reinterpret_cast<T*>(dst) = op_func(src0);
+            }
         }
     }
 
-clear:;
     if constexpr (std::is_same_v<OP, OpAbs<T>>) {
         npy_clear_floatstatus_barrier((char*)dimensions);
     }
