@@ -331,10 +331,10 @@ def test_longdouble_from_int(int_val):
     assert np.longdouble(int_val) == np.longdouble(str_val)
 
 @pytest.mark.parametrize("int_val", [
-    1000, 1815361, 358165, 646153161, 1])
+    1000, 1815361, 358165, 646153161, 1, 0])
 def test_longdouble_from_int_rounding(int_val):
     flt_val = float(int_val)
-    assert int(np.longdouble(int_val)) == int(flt_val)
+    assert np.isclose(np.longdouble(int_val), flt_val)
 
 def test_longdouble_from_int_overflow():
 

@@ -12,6 +12,7 @@
 #ifndef LDBL_MAX_EXP
     #include <float.h>
 #endif
+#define MAX_DBL_TEST 0x10000000000000
 
 /*
  * Heavily derived from PyLong_FromDouble
@@ -101,19 +102,26 @@ done:
     return v;
 }
 
+npy_longdouble _ldbl_ovfl_err(void) {
+    PyErr_SetString(PyExc_OverflowError, "Number too big to be represented as a np.longdouble --This is platform dependent--");
+    return -1;
+}
 
-npy_longdouble _int_to_ld(uint64_t *mantissa, int exp, int sign) {
+npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
+    uint64_t mantissa[3];
+    for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
     npy_longdouble ld;
-    if (exp == LDBL_MAX_EXP && mantissa[0] == 0) {
-            ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[1] * powl(2.0L, (npy_longdouble)(exp - 64)) + 
+    if (exp == 0) {
+        ld = mantissa[0];
+    } else if (exp == LDBL_MAX_EXP && mantissa[0] == 0) {
+        ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[1] * powl(2.0L, (npy_longdouble)(exp - 64)) + 
             (npy_longdouble)mantissa[2] * powl(2.0L, (npy_longdouble)(exp - 128)));
-            if (ld == (npy_longdouble)INFINITY || ld == (npy_longdouble)(-INFINITY) || ld == (npy_longdouble)NAN || ld == (npy_longdouble)(-NAN)) {
-                PyErr_SetString(PyExc_OverflowError, "Number too big to be represented as a np.longdouble --This is platform dependent--");
-                return -1;
-            }
+            //Sometimes it overflows in weird ways
+        if (ld == (npy_longdouble)INFINITY || ld == (npy_longdouble)(-INFINITY) || ld == (npy_longdouble)NAN || ld == (npy_longdouble)(-NAN)) {
+            return _ldbl_ovfl_err();
+        }
     } else if (exp >= LDBL_MAX_EXP) {
-        PyErr_SetString(PyExc_OverflowError, "Number too big to be represented as a np.longdouble --This is platform dependent--");
-        return -1;
+        return _ldbl_ovfl_err();
     } else {
     ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[0] * powl(2.0L, (npy_longdouble)(exp)) + 
     (npy_longdouble)mantissa[1] * powl(2.0L, (npy_longdouble)(exp - 64)) + 
@@ -151,12 +159,14 @@ void _fix_py_num(PyObject* py_int, int64_t* val, int *exp, int *sign) {
         else {*sign = 1;}
     } 
 }
-// The precision and max number is platform dependent, for 80 and 128 bit platforms
-// The largest number that can be converted is 2^16384 - 1.
-// In 64 bit platforms the largest number is 2^1024 - 1.
-// if the number to be converted is too big for a platform, it will give an error
-// In (my personal 80bit platform), I have tested that it converts up to the max
-// Now gives an overflow error if the number is too big (Tested)
+/*
+The precision and max number is platform dependent, for 80 and 128 bit platforms
+The largest number that can be converted is 2^16384 - 1.
+In 64 bit platforms the largest number is 2^1024 - 1.
+if the number to be converted is too big for a platform, it will give an error
+In (my personal 80bit platform), I have tested that it converts up to the max
+Now gives an overflow error if the number is too big, follows same rules as python's float()
+*/
 NPY_VISIBILITY_HIDDEN npy_longdouble
 npy_longdouble_from_PyLong(PyObject *long_obj) {
 
