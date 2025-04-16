@@ -32,7 +32,7 @@ jobs:
     # Only workflow_dispatch is enabled on forks.
     # To enable this job and subsequent jobs on a fork for other events, comment out:
     if: github.repository == 'numpy/numpy' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     continue-on-error: true
     strategy:
       fail-fast: false
@@ -41,7 +41,7 @@ jobs:
           - [
               "ppc64le",
               "powerpc64le-linux-gnu",
-              "ppc64le/ubuntu:22.04",
+              "ppc64le/ubuntu:24.04",
               "-Dallow-noblas=true",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "ppc64le"
@@ -49,7 +49,7 @@ jobs:
           - [
               "ppc64le - baseline(Power9)",
               "powerpc64le-linux-gnu",
-              "ppc64le/ubuntu:22.04",
+              "ppc64le/ubuntu:24.04",
               "-Dallow-noblas=true -Dcpu-baseline=vsx3",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "ppc64le"
@@ -57,7 +57,7 @@ jobs:
           - [
               "s390x",
               "s390x-linux-gnu",
-              "s390x/ubuntu:22.04",
+              "s390x/ubuntu:24.04",
               "-Dallow-noblas=true",
               # Skipping TestRationalFunctions.test_gcd_overflow test
               # because of a possible qemu bug that appears to be related to int64 overflow in absolute operation.
@@ -68,7 +68,7 @@ jobs:
           - [
               "s390x - baseline(Z13)",
               "s390x-linux-gnu",
-              "s390x/ubuntu:22.04",
+              "s390x/ubuntu:24.04",
               "-Dallow-noblas=true -Dcpu-baseline=vx",
               "(test_kind or test_multiarray or test_simd or test_umath or test_ufunc) and not test_gcd_overflow",
               "s390x"
@@ -76,7 +76,7 @@ jobs:
           - [
               "riscv64",
               "riscv64-linux-gnu",
-              "riscv64/ubuntu:22.04",
+              "riscv64/ubuntu:24.04",
               "-Dallow-noblas=true",
               "test_kind or test_multiarray or test_simd or test_umath or test_ufunc",
               "riscv64"
