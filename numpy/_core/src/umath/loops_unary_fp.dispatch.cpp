@@ -1,4 +1,3 @@
-#include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
 
@@ -164,18 +163,6 @@ HWY_INLINE HWY_ATTR void StoreWithStride(Vec<T> vec, T* dst, npy_intp sdst, size
     }
 }
 
-template<typename T> struct TypeTraits;
-template<> struct TypeTraits<float> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_f32;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_f32;
-};
-#if NPY_SIMDX_F64
-template<> struct TypeTraits<double> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_f64;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_f64;
-};
-#endif
-
 template <typename T, typename OP, int STYPE, int DTYPE, int UNROLL>
 HWY_INLINE HWY_ATTR void
 simd_unary_fp(const T *src, npy_intp ssrc, T *dst, npy_intp sdst, npy_intp len) {
@@ -285,7 +272,6 @@ simd_unary_fp(const T *src, npy_intp ssrc, T *dst, npy_intp sdst, npy_intp len) 
         }
     }
 }
-
 #endif // NPY_SIMDX
 
 template <typename T, typename OP>
@@ -301,9 +287,7 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
     bool unrolled = false;
 #if NPY_SIMDX
     if constexpr (kSupportLane<T>) {
-        if (!is_mem_overlap(src, src_step, dst, dst_step, len) &&
-                TypeTraits<T>::LoadStrideFunc(src_step) != 0 &&
-                TypeTraits<T>::StoreStrideFunc(dst_step) != 0) {
+        if (!is_mem_overlap(src, src_step, dst, dst_step, len)) {
             const int lsize = sizeof(T);
             const npy_intp ssrc = src_step / lsize;
             const npy_intp sdst = dst_step / lsize;
@@ -339,9 +323,7 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
         }
     }
 
-    if constexpr (std::is_same_v<OP, OpAbs<T>>) {
-        npy_clear_floatstatus_barrier((char*)dimensions);
-    }
+    npy_clear_floatstatus_barrier((char*)dimensions);
 }
 
 } // anonymous namespace
