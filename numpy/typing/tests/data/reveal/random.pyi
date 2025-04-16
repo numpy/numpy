@@ -504,8 +504,8 @@ assert_type(def_gen.hypergeometric(I_arr_like_20, I_arr_like_20, I_arr_like_10, 
 
 I_int64_100: npt.NDArray[np.int64] = np.array([100], dtype=np.int64)
 
-assert_type(def_gen.integers(0, 100), int)
-assert_type(def_gen.integers(100), int)
+assert_type(def_gen.integers(0, 100), np.int64)
+assert_type(def_gen.integers(100), np.int64)
 assert_type(def_gen.integers([100]), npt.NDArray[np.int64])
 assert_type(def_gen.integers(0, [100]), npt.NDArray[np.int64])
 
