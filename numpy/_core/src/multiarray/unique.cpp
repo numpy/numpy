@@ -3,7 +3,6 @@
 
 #include <Python.h>
 
-#include <algorithm>
 #include <iostream>
 #include <unordered_set>
 #include <functional>
