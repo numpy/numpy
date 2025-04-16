@@ -323,16 +323,20 @@ class TestCommaDecimalPointLocale(CommaDecimalPointLocale):
 # 2^1023 + 2^1022 + ... + 2^970
 # largest number that can be stored in a double without loosing precision
 # Now gives an overflow error if te number is too big
+@pytest.mark.parametrize("sign", [1, -1])
 @pytest.mark.parametrize("int_val", [
-    2 ** 1023, 0, 10, 3, -(2 ** 1023), 15653215315])
-def test_longdouble_from_int(int_val):
+    2 ** 1023, 0, 10, 3, 15653215315, 5511, 644861])
+def test_longdouble_from_int(sign, int_val):
     # for issue gh-9968
+    int_val *= sign
     str_val = str(int_val)
     assert np.longdouble(int_val) == np.longdouble(str_val)
 
+@pytest.mark.parametrize("sign", [1, -1])
 @pytest.mark.parametrize("int_val", [
-    1000, 1815361, 358165, 646153161, 1, 0])
-def test_longdouble_from_int_rounding(int_val):
+    1000, 1815361, 358165, 646153161, 1])
+def test_longdouble_from_int_rounding(sign, int_val):
+    int_val *= sign
     flt_val = float(int_val)
     assert np.isclose(np.longdouble(int_val), flt_val)
 

@@ -112,7 +112,7 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
     for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
     npy_longdouble ld;
     if (exp == 0) {
-        ld = mantissa[0];
+        ld = (npy_longdouble)sign * (npy_longdouble)mantissa[0];
     } else if (exp == LDBL_MAX_EXP && mantissa[0] == 0) {
         ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[1] * powl(2.0L, (npy_longdouble)(exp - 64)) + 
             (npy_longdouble)mantissa[2] * powl(2.0L, (npy_longdouble)(exp - 128)));
