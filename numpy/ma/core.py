@@ -4698,7 +4698,7 @@ class MaskedArray(ndarray):
                     raise np.exceptions.AxisError(axis=axis, ndim=self.ndim)
                 return 1
             elif axis is None:
-                if kwargs.get('keepdims', False):
+                if kwargs.get('keepdims'):
                     return np.array(self.size, dtype=np.intp, ndmin=self.ndim)
                 return self.size
 
@@ -4707,7 +4707,7 @@ class MaskedArray(ndarray):
             for ax in axes:
                 items *= self.shape[ax]
 
-            if kwargs.get('keepdims', False):
+            if kwargs.get('keepdims'):
                 out_dims = list(self.shape)
                 for a in axes:
                     out_dims[a] = 1
