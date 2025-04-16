@@ -3,6 +3,8 @@
 
 #include <Python.h>
 
+#include <algorithm>
+#include <cstring>
 #include <iostream>
 #include <unordered_set>
 #include <functional>
@@ -227,11 +229,11 @@ unique_string(PyArrayObject *self)
     char* data = PyArray_BYTES((const PyArrayObject *)res_obj);
     auto it = hashset.begin();
     size_t i = 0;
-    for (; it != hashset.end(); it++, i++, data += itemsize) {
+    for (; it != hashset.end(); it++, i++) {
         std::size_t byte_to_copy = std::min(it->size() * sizeof(T), (std::size_t)itemsize);
-        memcpy(data, it->data(), byte_to_copy);
+        std::memcpy(data + i * itemsize, it->data(), byte_to_copy);
         if (byte_to_copy < (std::size_t)itemsize) {
-            memset(data + byte_to_copy, 0, itemsize - byte_to_copy);
+            std::memset(data + i * itemsize + byte_to_copy, 0, itemsize - byte_to_copy);
         }
     }
 
