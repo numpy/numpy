@@ -448,14 +448,7 @@ def test_array_api_entry_point():
     numpy_in_sitepackages = sysconfig.get_path('platlib') in np.__file__
 
     eps = importlib.metadata.entry_points()
-    try:
-        xp_eps = eps.select(group="array_api")
-    except AttributeError:
-        # The select interface for entry_points was introduced in py3.10,
-        # deprecating its dict interface. We fallback to dict keys for finding
-        # Array API entry points so that running this test in <=3.9 will
-        # still work - see https://github.com/numpy/numpy/pull/19800.
-        xp_eps = eps.get("array_api", [])
+    xp_eps = eps.select(group="array_api")
     if len(xp_eps) == 0:
         if numpy_in_sitepackages:
             msg = "No entry points for 'array_api' found"
