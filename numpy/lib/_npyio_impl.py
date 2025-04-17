@@ -1621,8 +1621,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             for row in X:
                 row2 = []
                 for number in row:
-                    row2.append(number.real)
-                    row2.append(number.imag)
+                    row2.extend((number.real, number.imag))
                 s = format % tuple(row2) + newline
                 fh.write(s.replace('+-', '-'))
         else:
@@ -2384,7 +2383,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     column_types[i] = np.bytes_
 
         # Update string types to be the right length
-        sized_column_types = column_types[:]
+        sized_column_types = column_types.copy()
         for i, col_type in enumerate(column_types):
             if np.issubdtype(col_type, np.character):
                 n_chars = max(len(row[i]) for row in data)

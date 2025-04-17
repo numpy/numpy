@@ -58,7 +58,7 @@ _Other = TypeVar("_Other", bound=ABCPolyBase)
 _AnyOther: TypeAlias = ABCPolyBase | _CoefLike_co | _SeriesLikeCoef_co
 _Hundred: TypeAlias = Literal[100]
 
-class ABCPolyBase(Generic[_NameCo], metaclass=abc.ABCMeta):
+class ABCPolyBase(Generic[_NameCo], abc.ABC):
     __hash__: ClassVar[None]  # type: ignore[assignment]
     __array_ufunc__: ClassVar[None]
 

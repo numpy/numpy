@@ -1433,9 +1433,7 @@ def analyzeline(m, case, line):
         vars = groupcache[groupcounter].get('vars', {})
         last_name = None
         for l in ll:
-            l[0], l[1] = l[0].strip(), l[1].strip()
-            if l[0].startswith(','):
-                l[0] = l[0][1:]
+            l[0], l[1] = l[0].strip().removeprefix(','), l[1].strip()
             if l[0].startswith('('):
                 outmess('analyzeline: implied-DO list "%s" is not supported. Skipping.\n' % l[0])
                 continue
