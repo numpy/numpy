@@ -7,6 +7,7 @@ from typing import Any, Literal, SupportsIndex, TypeAlias, TypeVar, overload
 from _typeshed import Incomplete
 from typing_extensions import deprecated
 
+import numpy as np
 from numpy import (
     _ModeKind,
     _OrderKACF,
@@ -681,19 +682,43 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> _ArrayT: ...
 
     #
+    @overload
     def partition(
         self,
+        /,
         kth: _ArrayLikeInt,
         axis: SupportsIndex = -1,
         kind: _PartitionKind = "introselect",
-        order: str | Sequence[str] | None = None
+        order: None = None
     ) -> None: ...
+    @overload
+    def partition(
+        self: _MaskedArray[np.void],
+        /,
+        kth: _ArrayLikeInt,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None,
+    ) -> None: ...
+
+    #
+    @overload
     def argpartition(
         self,
+        /,
         kth: _ArrayLikeInt,
-        axis: SupportsIndex = -1,
+        axis: SupportsIndex | None = -1,
         kind: _PartitionKind = "introselect",
-        order: str | Sequence[str] | None = None
+        order: None = None,
+    ) -> _MaskedArray[intp]: ...
+    @overload
+    def argpartition(
+        self: _MaskedArray[np.void],
+        /,
+        kth: _ArrayLikeInt,
+        axis: SupportsIndex | None = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None,
     ) -> _MaskedArray[intp]: ...
 
     # Keep in-sync with np.ma.take
