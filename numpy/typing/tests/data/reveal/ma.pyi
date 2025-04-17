@@ -247,3 +247,9 @@ assert_type(np.ma.count(MAR_b, axis=(0,1)), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, keepdims=True), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, axis=None, keepdims=True), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, None, True), NDArray[np.int_])
+
+assert_type(MAR_f4.filled(float('nan')), NDArray[np.float32])
+assert_type(MAR_i8.filled(float('nan')), NDArray[np.int64])
+
+assert_type(np.ma.filled(MAR_f4, float('nan')), NDArray[np.float32])
+assert_type(np.ma.filled([[1,2,3]], float('nan')), NDArray[Any])
