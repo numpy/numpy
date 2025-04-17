@@ -3743,8 +3743,8 @@ class TestMethods:
         assert_equal(ac, np.conjugate(a))
 
         a = np.array([1 - 1j, 1, 2.0, 'f'], object)
-        assert_raises(TypeError, lambda: a.conj())
-        assert_raises(TypeError, lambda: a.conjugate())
+        assert_raises(TypeError, a.conj)
+        assert_raises(TypeError, a.conjugate)
 
     def test_conjugate_out(self):
         # Minimal test for the out argument being passed on correctly
