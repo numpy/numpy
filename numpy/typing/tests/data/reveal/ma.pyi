@@ -248,6 +248,16 @@ assert_type(np.ma.count(MAR_o, keepdims=True), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, axis=None, keepdims=True), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, None, True), NDArray[np.int_])
 
+assert_type(MAR_f4.put([0,4,8], [10,20,30]), None)
+assert_type(MAR_f4.put(4, 999), None)
+assert_type(MAR_f4.put(4, 999, mode='clip'), None)
+
+assert_type(np.ma.put(MAR_f4, [0,4,8], [10,20,30]), None)
+assert_type(np.ma.put(MAR_f4, 4, 999), None)
+assert_type(np.ma.put(MAR_f4, 4, 999, mode='clip'), None)
+
+assert_type(np.ma.putmask(MAR_f4, [True, False], [0, 1]), None)
+
 assert_type(MAR_f4.filled(float('nan')), NDArray[np.float32])
 assert_type(MAR_i8.filled(), NDArray[np.int64])
 assert_type(MAR_1d.filled(), np.ndarray[tuple[int], np.dtype[Any]])
