@@ -1434,5 +1434,5 @@ class TestOverride:
         (np.strings.startswith, (), {}),
         (np.strings.str_len, (), {}),
     ])
-    def test_override_ufunc(self, func, kwargs):
-        assert func(self.override, **kwargs) == "ufunc"
+    def test_override_ufunc(self, func, args, kwargs):
+        assert func(self.override, *args, **kwargs) == "ufunc"
