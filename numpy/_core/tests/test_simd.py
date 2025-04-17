@@ -201,7 +201,7 @@ class _SIMD_BOOL(_Test_Utility):
             npyv_pack_b8_b32
             npyv_pack_b8_b64
         """
-        if self.sfx not in ("b16", "b32", "b64"):
+        if self.sfx not in {"b16", "b32", "b64"}:
             return
         # create the vectors
         data = self._data()
@@ -249,7 +249,7 @@ class _SIMD_INT(_Test_Utility):
     To test all integer vector types at once
     """
     def test_operators_shift(self):
-        if self.sfx in ("u8", "s8"):
+        if self.sfx in {"u8", "s8"}:
             return
 
         data_a = self._data(self._int_max() - self.nlanes)
@@ -282,7 +282,7 @@ class _SIMD_INT(_Test_Utility):
             assert shri == data_shr_a
 
     def test_arithmetic_subadd_saturated(self):
-        if self.sfx in ("u32", "s32", "u64", "s64"):
+        if self.sfx in {"u32", "s32", "u64", "s64"}:
             return
 
         data_a = self._data(self._int_max() - self.nlanes)
@@ -1121,7 +1121,7 @@ class _SIMD_ALL(_Test_Utility):
             npyv_expand_u16_u8
             npyv_expand_u32_u16
         """
-        if self.sfx not in ("u8", "u16"):
+        if self.sfx not in {"u8", "u16"}:
             return
         totype = self.sfx[0] + str(int(self.sfx[1:]) * 2)
         expand = getattr(self.npyv, f"expand_{totype}_{self.sfx}")
@@ -1152,7 +1152,7 @@ class _SIMD_ALL(_Test_Utility):
         assert sub == data_sub
 
     def test_arithmetic_mul(self):
-        if self.sfx in ("u64", "s64"):
+        if self.sfx in {"u64", "s64"}:
             return
 
         if self._is_fp():
@@ -1231,7 +1231,7 @@ class _SIMD_ALL(_Test_Utility):
         Test reduce sum intrinsics:
             npyv_sum_##sfx
         """
-        if self.sfx not in ("u32", "u64", "f32", "f64"):
+        if self.sfx not in {"u32", "u64", "f32", "f64"}:
             return
         # reduce sum
         data = self._data()
@@ -1246,7 +1246,7 @@ class _SIMD_ALL(_Test_Utility):
         Test extend reduce sum intrinsics:
             npyv_sumup_##sfx
         """
-        if self.sfx not in ("u8", "u16"):
+        if self.sfx not in {"u8", "u16"}:
             return
         rdata = (0, self.nlanes, self._int_min(), self._int_max() - self.nlanes)
         for r in rdata:

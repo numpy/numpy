@@ -7,7 +7,7 @@ from . import util
 @pytest.mark.slow
 class TestReturnComplex(util.F2PyTest):
     def check_function(self, t, tname):
-        if tname in ["t0", "t8", "s0", "s8"]:
+        if tname in {"t0", "t8", "s0", "s8"}:
             err = 1e-5
         else:
             err = 0.0
@@ -45,7 +45,7 @@ class TestReturnComplex(util.F2PyTest):
 
         try:
             r = t(10**400)
-            assert repr(r) in ["(inf+0j)", "(Infinity+0j)"]
+            assert repr(r) in {"(inf+0j)", "(Infinity+0j)"}
         except OverflowError:
             pass
 

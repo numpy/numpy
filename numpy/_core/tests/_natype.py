@@ -9,7 +9,7 @@ import numbers
 import numpy as np
 
 def _create_binary_propagating_op(name, is_divmod=False):
-    is_cmp = name.strip("_") in ["eq", "ne", "le", "lt", "ge", "gt"]
+    is_cmp = name.strip("_") in {"eq", "ne", "le", "lt", "ge", "gt"}
 
     def method(self, other):
         if (
@@ -38,11 +38,11 @@ def _create_binary_propagating_op(name, is_divmod=False):
             return pd_NA
 
         elif isinstance(other, np.datetime64):
-            if name in ["__sub__", "__rsub__"]:
+            if name in {"__sub__", "__rsub__"}:
                 return pd_NA
 
         elif isinstance(other, np.timedelta64):
-            if name in ["__sub__", "__rsub__", "__add__", "__radd__"]:
+            if name in {"__sub__", "__rsub__", "__add__", "__radd__"}:
                 return pd_NA
 
         return NotImplemented

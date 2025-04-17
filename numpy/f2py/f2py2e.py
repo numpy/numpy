@@ -633,7 +633,7 @@ def run_compile():
     f2py_flags2 = []
     fl = 0
     for a in sys.argv[1:]:
-        if a in ['only:', 'skip:']:
+        if a in {'only:', 'skip:'}:
             fl = 1
         elif a == ':':
             fl = 0

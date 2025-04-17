@@ -54,7 +54,7 @@ def nep_metadata():
                 '(note that — here is a special, elongated dash). Got: '
                 f'    {tags["Title"]!r}')
 
-        if tags['Status'] in ('Accepted', 'Rejected', 'Withdrawn'):
+        if tags['Status'] in {'Accepted', 'Rejected', 'Withdrawn'}:
             if 'Resolution' not in tags:
                 raise RuntimeError(
                     f'NEP {nr} is Accepted/Rejected/Withdrawn but '

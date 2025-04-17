@@ -674,7 +674,7 @@ class TestRegression:
                   np.rec.array([(1, 2), (3, 4)]),
                   np.rec.fromarrays([(1, 2), (3, 4)], "i4,i4"),
                   np.rec.fromarrays([(1, 2), (3, 4)])]:
-            assert_(a.dtype in [dt0, dt1])
+            assert_(a.dtype in {dt0, dt1})
 
     def test_random_shuffle(self):
         # Ticket #374

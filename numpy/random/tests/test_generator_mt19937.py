@@ -527,8 +527,8 @@ class TestIntegers:
 
     def test_repeatability_broadcasting(self, endpoint):
         for dt in self.itype:
-            lbnd = 0 if dt in (bool, np.bool) else np.iinfo(dt).min
-            ubnd = 2 if dt in (bool, np.bool) else np.iinfo(dt).max + 1
+            lbnd = 0 if dt in {bool, np.bool} else np.iinfo(dt).min
+            ubnd = 2 if dt in {bool, np.bool} else np.iinfo(dt).max + 1
             ubnd = ubnd - 1 if endpoint else ubnd
 
             # view as little endian for hash
@@ -1474,7 +1474,7 @@ class TestRandomDist:
 
         # check degenerate samples from singular covariance matrix
         cov = [[1, 1], [1, 1]]
-        if method in ('svd', 'eigh'):
+        if method in {'svd', 'eigh'}:
             samples = random.multivariate_normal(mean, cov, size=(3, 2),
                                                  method=method)
             assert_array_almost_equal(samples[..., 0], samples[..., 1],

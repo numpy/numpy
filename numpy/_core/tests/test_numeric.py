@@ -3286,7 +3286,7 @@ class TestCreationFuncs:
             if isinstance(dtype, np.dtype):
                 assert_equal(arr.dtype, dtype)
             elif isinstance(dtype, type(np.dtype)):
-                if dtype in (np.dtypes.StrDType, np.dtypes.BytesDType):
+                if dtype in {np.dtypes.StrDType, np.dtypes.BytesDType}:
                     dtype_str = np.dtype(dtype.type).str.replace('0', '1')
                     assert_equal(arr.dtype, np.dtype(dtype_str))
                 else:

@@ -15,7 +15,7 @@ from numpy.typing.mypy_plugin import _EXTENDED_PRECISION_LIST
 # Note that these tests tend to take over a minute even on a macOS M1 CPU,
 # and more than that in CI.
 RUN_MYPY = "NPY_RUN_MYPY_IN_TESTSUITE" in os.environ
-if RUN_MYPY and RUN_MYPY not in ('0', '', 'false'):
+if RUN_MYPY and RUN_MYPY not in {'0', '', 'false'}:
     RUN_MYPY = True
 
 # Skips all functions in this file
@@ -122,7 +122,7 @@ def get_test_cases(directory: str) -> Iterator[ParameterSet]:
     for root, _, files in os.walk(directory):
         for fname in files:
             short_fname, ext = os.path.splitext(fname)
-            if ext in (".pyi", ".py"):
+            if ext in {".pyi", ".py"}:
                 fullpath = os.path.join(root, fname)
                 yield pytest.param(fullpath, id=short_fname)
 

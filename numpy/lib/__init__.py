@@ -73,11 +73,11 @@ def __getattr__(attr):
             "numpy.emath.",
             name=None
         )
-    elif attr in (
+    elif attr in {
         "histograms", "type_check", "nanfunctions", "function_base",
         "arraypad", "arraysetops", "ufunclike", "utils", "twodim_base",
         "shape_base", "polynomial", "index_tricks",
-    ):
+    }:
         raise AttributeError(
             f"numpy.lib.{attr} is now private. If you are using a public "
             "function, it should be available in the main numpy namespace, "

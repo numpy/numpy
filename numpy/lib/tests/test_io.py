@@ -2756,7 +2756,7 @@ def test_npzfile_dict():
     assert_('y' in z.keys())
 
     for f, a in z.items():
-        assert_(f in ['x', 'y'])
+        assert_(f in {'x', 'y'})
         assert_equal(a.shape, (3, 3))
 
     for a in z.values():
@@ -2765,7 +2765,7 @@ def test_npzfile_dict():
     assert_(len(z.items()) == 2)
 
     for f in z:
-        assert_(f in ['x', 'y'])
+        assert_(f in {'x', 'y'})
 
     assert_('x' in z.keys())
     assert (z.get('x') == z['x']).all()

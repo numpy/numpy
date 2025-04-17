@@ -43,11 +43,11 @@ def var2fixfortran(vars, a, fa=None, f90mode=None):
         lk = 'len'
     if '*' in selector:
         if f90mode:
-            if selector['*'] in ['*', ':', '(*)']:
+            if selector['*'] in {'*', ':', '(*)'}:
                 vardef = '%s(len=*)' % (vardef)
             else:
                 vardef = '%s(%s=%s)' % (vardef, lk, selector['*'])
-        elif selector['*'] in ['*', ':']:
+        elif selector['*'] in {'*', ':'}:
             vardef = '%s*(%s)' % (vardef, selector['*'])
         else:
             vardef = '%s*%s' % (vardef, selector['*'])

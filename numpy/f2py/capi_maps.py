@@ -312,7 +312,7 @@ def getarrdims(a, var, verbose=0):
         ret['setdims'], i = '', -1
         for d in dim:
             i = i + 1
-            if d not in ['*', ':', '(*)', '(:)']:
+            if d not in {'*', ':', '(*)', '(:)'}:
                 ret['setdims'] = '%s#varname#_Dims[%d]=%s,' % (
                     ret['setdims'], i, d)
         if ret['setdims']:
@@ -320,7 +320,7 @@ def getarrdims(a, var, verbose=0):
         ret['cbsetdims'], i = '', -1
         for d in var['dimension']:
             i = i + 1
-            if d not in ['*', ':', '(*)', '(:)']:
+            if d not in {'*', ':', '(*)', '(:)'}:
                 ret['cbsetdims'] = '%s#varname#_Dims[%d]=%s,' % (
                     ret['cbsetdims'], i, d)
             elif isintent_in(var):

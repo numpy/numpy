@@ -148,7 +148,7 @@ class format_parser:
         attribute """
 
         if names:
-            if type(names) in [list, tuple]:
+            if type(names) in {list, tuple}:
                 pass
             elif isinstance(names, str):
                 names = names.split(',')
@@ -213,7 +213,7 @@ class record(nt.void):
         return super().__str__()
 
     def __getattribute__(self, attr):
-        if attr in ('setfield', 'getfield', 'dtype'):
+        if attr in {'setfield', 'getfield', 'dtype'}:
             return nt.void.__getattribute__(self, attr)
         try:
             return nt.void.__getattribute__(self, attr)
@@ -238,7 +238,7 @@ class record(nt.void):
                     "attribute '%s'" % attr)
 
     def __setattr__(self, attr, val):
-        if attr in ('setfield', 'getfield', 'dtype'):
+        if attr in {'setfield', 'getfield', 'dtype'}:
             raise AttributeError("Cannot set '%s' attribute" % attr)
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr, None)
@@ -820,7 +820,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
     # NumPy 1.19.0, 2020-01-01
     shape = _deprecate_shape_0_as_None(shape)
 
-    if shape in (None, -1):
+    if shape in {None, -1}:
         shape = (len(datastring) - offset) // itemsize
 
     _array = recarray(shape, descr, buf=datastring, offset=offset)

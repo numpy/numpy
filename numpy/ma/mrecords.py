@@ -230,7 +230,7 @@ class MaskedRecords(ma.MaskedArray):
 
         """
         # Should we call __setmask__ first ?
-        if attr in ['mask', 'fieldmask']:
+        if attr in {'mask', 'fieldmask'}:
             self.__setmask__(val)
             return
         # Create a shortcut (so that we don't have to call getattr all the time)

@@ -143,7 +143,7 @@ class RNG:
             assert_(comp_state(jumped_state, rejumped_state))
         else:
             bitgen_name = self.rg.bit_generator.__class__.__name__
-            if bitgen_name not in ('SFC64',):
+            if bitgen_name not in {'SFC64',}:
                 raise AttributeError(f'no "jumped" in {bitgen_name}')
             pytest.skip(f'Jump is not supported by {bitgen_name}')
 

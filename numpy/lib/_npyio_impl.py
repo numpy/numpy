@@ -428,7 +428,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     memmap([4, 5, 6])
 
     """
-    if encoding not in ('ASCII', 'latin1', 'bytes'):
+    if encoding not in {'ASCII', 'latin1', 'bytes'}:
         # The 'encoding' value for pickle also affects what encoding
         # the serialized binary data of NumPy arrays is loaded
         # in. Pickle does not pass on the encoding information to
@@ -808,7 +808,7 @@ def _ensure_ndmin_ndarray_check_param(ndmin):
         e.g. loadtxt, genfromtxt
     """
     # Check correctness of the values of `ndmin`
-    if ndmin not in [0, 1, 2]:
+    if ndmin not in {0, 1, 2}:
         raise ValueError(f"Illegal value of ndmin keyword: {ndmin}")
 
 def _ensure_ndmin_ndarray(a, *, ndmin: int):
@@ -1591,7 +1591,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         iscomplex_X = np.iscomplexobj(X)
         # `fmt` can be a string with multiple insertion points or a
         # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
-        if type(fmt) in (list, tuple):
+        if type(fmt) in {list, tuple}:
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
             format = delimiter.join(fmt)

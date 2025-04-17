@@ -156,7 +156,7 @@ def test_known_types():
     with np.errstate(all='ignore'):
         ld_ma = _discovered_machar(np.longdouble)
     bytes = np.dtype(np.longdouble).itemsize
-    if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
+    if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in {12, 16}:
         # 80-bit extended precision
         assert_ma_equal(ld_ma, _float_ma[80])
     elif (ld_ma.it, ld_ma.maxexp) == (112, 16384) and bytes == 16:
@@ -171,7 +171,7 @@ def test_subnormal_warning():
     bytes = np.dtype(np.longdouble).itemsize
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
-        if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in (12, 16):
+        if (ld_ma.it, ld_ma.maxexp) == (63, 16384) and bytes in {12, 16}:
             # 80-bit extended precision
             ld_ma.smallest_subnormal
             assert len(w) == 0
