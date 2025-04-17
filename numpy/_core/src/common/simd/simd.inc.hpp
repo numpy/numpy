@@ -148,6 +148,6 @@ using hn::Sqrt;
 using hn::Sub;
 using hn::Xor;
 
-} // namespace anonymous
-
 #endif  // NPY_SIMDX
+
+} // namespace anonymous
