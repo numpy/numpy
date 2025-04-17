@@ -247,3 +247,11 @@ assert_type(np.ma.count(MAR_b, axis=(0,1)), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, keepdims=True), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, axis=None, keepdims=True), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, None, True), NDArray[np.int_])
+
+assert_type(MAR_f4.put([0,4,8], [10,20,30]), None)
+assert_type(MAR_f4.put(4, 999), None)
+assert_type(MAR_f4.put(4, 999, mode='clip'), None)
+
+assert_type(np.ma.put(MAR_f4, [0,4,8], [10,20,30]), None)
+assert_type(np.ma.put(MAR_f4, 4, 999), None)
+assert_type(np.ma.put(MAR_f4, 4, 999, mode='clip'), None)

@@ -108,3 +108,7 @@ m < (lambda x: 'mango') # E: No overload variant
 m.count(axis=0.)  # E: No overload variant
 
 np.ma.count(m, axis=0.)  # E: No overload variant
+
+m.put(4, 999, mode='flip')  # E: No overload variant
+
+np.ma.put(m, 4, 999, mode='flip')  # E: No overload variant
