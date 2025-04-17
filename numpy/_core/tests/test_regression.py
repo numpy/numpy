@@ -1804,7 +1804,7 @@ class TestRegression:
         a = np.array(0, dtype=object)
         b = np.array(0, dtype=object)
         a[()] = b
-        assert_equal(int(a), int(0))
+        assert_equal(int(a), int(0))  # noqa: UP018
         assert_equal(float(a), float(0))
 
     def test_object_array_self_copy(self):

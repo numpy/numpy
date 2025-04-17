@@ -563,20 +563,21 @@ def test_functions_single_location():
     Test performs BFS search traversing NumPy's public API. It flags
     any function-like object that is accessible from more that one place.
     """
-    from typing import Any, Callable, Dict, List, Set, Tuple
+    from typing import Any
+    from collections.abc import Callable
     from numpy._core._multiarray_umath import (
         _ArrayFunctionDispatcher as dispatched_function
     )
 
-    visited_modules: Set[types.ModuleType] = {np}
-    visited_functions: Set[Callable[..., Any]] = set()
+    visited_modules: set[types.ModuleType] = {np}
+    visited_functions: set[Callable[..., Any]] = set()
     # Functions often have `__name__` overridden, therefore we need
     # to keep track of locations where functions have been found.
-    functions_original_paths: Dict[Callable[..., Any], str] = {}
+    functions_original_paths: dict[Callable[..., Any], str] = {}
 
     # Here we aggregate functions with more than one location.
     # It must be empty for the test to pass.
-    duplicated_functions: List[Tuple] = []
+    duplicated_functions: list[tuple] = []
 
     modules_queue = [np]
 

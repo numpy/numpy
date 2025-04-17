@@ -156,7 +156,7 @@ class TestHstack:
         with pytest.raises(TypeError, match="arrays to stack must be"):
             hstack(np.arange(3) for _ in range(2))
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            hstack((x for x in np.ones((3, 2))))
+            hstack(x for x in np.ones((3, 2)))
 
     def test_casting_and_dtype(self):
         a = np.array([1, 2, 3])

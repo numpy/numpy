@@ -257,3 +257,13 @@ assert_type(np.ma.put(MAR_f4, 4, 999), None)
 assert_type(np.ma.put(MAR_f4, 4, 999, mode='clip'), None)
 
 assert_type(np.ma.putmask(MAR_f4, [True, False], [0, 1]), None)
+
+assert_type(MAR_f4.filled(float('nan')), NDArray[np.float32])
+assert_type(MAR_i8.filled(), NDArray[np.int64])
+assert_type(MAR_1d.filled(), np.ndarray[tuple[int], np.dtype[Any]])
+
+assert_type(np.ma.filled(MAR_f4, float('nan')), NDArray[np.float32])
+assert_type(np.ma.filled([[1,2,3]]), NDArray[Any])
+# PyRight detects this one correctly, but mypy doesn't.
+# https://github.com/numpy/numpy/pull/28742#discussion_r2048968375
+assert_type(np.ma.filled(MAR_1d), np.ndarray[tuple[int], np.dtype[Any]])  # type: ignore[assert-type]

@@ -160,8 +160,8 @@ def main(token, revision_range):
         if len(title) > 60:
             remainder = re.sub(r"\s.*$", "...", title[60:])
             if len(remainder) > 20:
-                # just use the first 80 characters, with ellipses.
-                # note: this was previously bugged,
+                # just use the first 80 characters, with ellipses.
+                # note: this was previously bugged,
                 # assigning to `remainder` rather than `title`
                 title = title[:80] + "..."
             else:

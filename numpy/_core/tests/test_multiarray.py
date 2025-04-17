@@ -5499,7 +5499,7 @@ class TestIO:
 
     def test_roundtrip_repr(self, x):
         x = x.real.ravel()
-        s = "@".join((repr(x)[11:-1] for x in x))
+        s = "@".join(repr(x)[11:-1] for x in x)
         y = np.fromstring(s, sep="@")
         assert_array_equal(x, y)
 
@@ -6123,10 +6123,10 @@ class TestRecord:
         assert_raises(IndexError, a['f1'].__setitem__, b'sf1', 1)
         assert_raises(IndexError, a['f1'].__getitem__, b'sf1')
         b = a.copy()
-        fn1 = str('f1')
+        fn1 = 'f1'
         b[fn1] = 1
         assert_equal(b[fn1], 1)
-        fnn = str('not at all')
+        fnn = 'not at all'
         assert_raises(ValueError, b.__setitem__, fnn, 1)
         assert_raises(ValueError, b.__getitem__, fnn)
         b[0][fn1] = 2
@@ -6135,14 +6135,14 @@ class TestRecord:
         assert_raises(ValueError, b[0].__setitem__, fnn, 1)
         assert_raises(ValueError, b[0].__getitem__, fnn)
         # Subfield
-        fn3 = str('f3')
-        sfn1 = str('sf1')
+        fn3 = 'f3'
+        sfn1 = 'sf1'
         b[fn3][sfn1] = 1
         assert_equal(b[fn3][sfn1], 1)
         assert_raises(ValueError, b[fn3].__setitem__, fnn, 1)
         assert_raises(ValueError, b[fn3].__getitem__, fnn)
         # multiple subfields
-        fn2 = str('f2')
+        fn2 = 'f2'
         b[fn2] = 3
 
         assert_equal(b[['f1', 'f2']][0].tolist(), (2, 3))
@@ -8976,16 +8976,6 @@ class TestConversion:
             assert_equal(4, int_func(np.array('4')))
             assert_equal(5, int_func(np.bytes_(b'5')))
             assert_equal(6, int_func(np.str_('6')))
-
-            # The delegation of int() to __trunc__ was deprecated in
-            # Python 3.11.
-            if sys.version_info < (3, 11):
-                class HasTrunc:
-                    def __trunc__(self):
-                        return 3
-                assert_equal(3, int_func(np.array(HasTrunc())))
-                with assert_warns(DeprecationWarning):
-                    assert_equal(3, int_func(np.array([HasTrunc()])))
 
             class NotConvertible:
                 def __int__(self):
