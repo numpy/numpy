@@ -3,7 +3,6 @@
 
 #include <Python.h>
 
-#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <unordered_set>
@@ -30,9 +29,9 @@ FinalAction<F> finally(F f) {
 
 template <typename T>
 struct VectorHash {
-    std::size_t operator()(const std::vector<T>& v) const {
+    size_t operator()(const std::vector<T>& v) const {
         // https://www.boost.org/doc/libs/1_88_0/libs/container_hash/doc/html/hash.html#notes_hash_combine
-        std::size_t h = v.size();
+        size_t h = v.size();
         for (const T& x : v) {
             h ^= std::hash<T>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
         }
@@ -230,9 +229,9 @@ unique_string(PyArrayObject *self)
     auto it = hashset.begin();
     size_t i = 0;
     for (; it != hashset.end(); it++, i++) {
-        std::size_t byte_to_copy = std::min(it->size() * sizeof(T), (std::size_t)itemsize);
+        size_t byte_to_copy = it->size() * sizeof(T);
         std::memcpy(data + i * itemsize, it->data(), byte_to_copy);
-        if (byte_to_copy < (std::size_t)itemsize) {
+        if (byte_to_copy < (size_t)itemsize) {
             std::memset(data + i * itemsize + byte_to_copy, 0, itemsize - byte_to_copy);
         }
     }
@@ -265,7 +264,6 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_DATETIME, unique_int<npy_uint64>},
     {NPY_STRING, unique_string<npy_byte>},
     {NPY_UNICODE, unique_string<npy_ucs4>},
-    {NPY_VSTRING, unique_string<npy_byte>},
 };
 
 
