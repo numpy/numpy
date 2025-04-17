@@ -31,7 +31,7 @@ C: SubClass
 assert_type(np.count_nonzero(i8), int)
 assert_type(np.count_nonzero(AR_i8), int)
 assert_type(np.count_nonzero(B), int)
-assert_type(np.count_nonzero(AR_i8, keepdims=True), Any)
+assert_type(np.count_nonzero(AR_i8, keepdims=True), npt.NDArray[np.intp])
 assert_type(np.count_nonzero(AR_i8, axis=0), Any)
 
 assert_type(np.isfortran(i8), bool)
