@@ -638,7 +638,7 @@ class TestAssignment:
         b = np.array([b'done'])
 
         class bad_sequence:
-            def __getitem__(self): pass
+            def __getitem__(self): pass  # noqa: PLE0302
             def __len__(self): raise RuntimeError
 
         assert_raises(ValueError, operator.setitem, u, 0, [])
