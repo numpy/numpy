@@ -70,7 +70,7 @@ jobs:
         python-version: ${{ matrix.version }}
     # TODO: remove cython nightly install when cython does a release
     - name: Install nightly Cython
-      if: matrix.version == '3.13t'
+      if: contains(matrix.version, ['3.13t', '3.14t-dev'])
       run: |
         pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
     - uses: ./.github/meson_actions
