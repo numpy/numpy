@@ -1399,7 +1399,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
         for (a, n, i, j) in zip(seqarrays, fldnames, offset[:-1], offset[1:]):
             names = a.dtype.names
             if names is None:
-                output['f%i' % len(seen)][i:j] = a
+                output[f'f{len(seen)}'][i:j] = a
             else:
                 for name in n:
                     output[name][i:j] = a[name]

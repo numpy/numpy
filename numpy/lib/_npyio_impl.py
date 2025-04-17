@@ -2298,14 +2298,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             try:
                 converter.iterupgrade(current_column)
             except ConverterLockError:
-                errmsg = "Converter #%i is locked and cannot be upgraded: " % i
+                errmsg = f"Converter #{i} is locked and cannot be upgraded: "
                 current_column = map(itemgetter(i), rows)
                 for (j, value) in enumerate(current_column):
                     try:
                         converter.upgrade(value)
                     except (ConverterError, ValueError):
-                        errmsg += "(occurred line #%i for value '%s')"
-                        errmsg %= (j + 1 + skip_header, value)
+                        errmsg += f"(occurred line #{j + 1 + skip_header} for value '{value}')"
                         raise ConverterError(errmsg)
 
     # Check that we don't have invalid values
@@ -2313,7 +2312,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if nbinvalid > 0:
         nbrows = len(rows) + nbinvalid - skip_footer
         # Construct the error message
-        template = "    Line #%%i (got %%i columns instead of %i)" % nbcols
+        template = f"    Line #%i (got %i columns instead of {nbcols})"
         if skip_footer > 0:
             nbinvalid_skipped = len([_ for _ in invalid
                                      if _[0] > nbrows + skip_header])

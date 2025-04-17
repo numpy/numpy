@@ -889,7 +889,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         elif ndtype.names is not None:
             validate = NameValidator(**validationargs)
             # Default initial names : should we change the format ?
-            numbered_names = tuple("f%i" % i for i in range(len(ndtype.names)))
+            numbered_names = tuple(f"f{i}" for i in range(len(ndtype.names)))
             if ((ndtype.names == numbered_names) and (defaultfmt != "f%i")):
                 ndtype.names = validate([''] * len(ndtype.names),
                                         defaultfmt=defaultfmt)
