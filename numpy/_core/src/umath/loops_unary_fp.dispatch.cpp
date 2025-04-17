@@ -158,7 +158,7 @@ template <typename T> struct OpRecip {
 #if NPY_SIMDX
 template <typename T>
 HWY_INLINE HWY_ATTR auto LoadWithStride(const T* src, npy_intp ssrc, size_t n = Lanes<T>(), T val = 0) {
-    constexpr size_t lanes = Lanes<T>();
+    const size_t lanes = Lanes<T>();
     std::vector<T> temp(lanes, val);
     for (size_t ii = 0; ii < lanes && ii < n; ++ii) {
         temp[ii] = src[ii * ssrc];
@@ -168,7 +168,7 @@ HWY_INLINE HWY_ATTR auto LoadWithStride(const T* src, npy_intp ssrc, size_t n = 
 
 template <typename T>
 HWY_INLINE HWY_ATTR void StoreWithStride(Vec<T> vec, T* dst, npy_intp sdst, size_t n = Lanes<T>()) {
-    constexpr size_t lanes = Lanes<T>();
+    const size_t lanes = Lanes<T>();
     std::vector<T> temp(lanes);
     StoreU(vec, temp.data());
     for (size_t ii = 0; ii < lanes && ii < n; ++ii) {
@@ -363,8 +363,7 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                                 \
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)) \
 {                                                                                        \
-    using FixedType = typename np::meta::FixedWidth<T>::Type;                            \
-    unary_fp<FixedType, Op##INTR<FixedType>>(args, dimensions, steps);                   \
+    unary_fp<T, Op##INTR<T>>(args, dimensions, steps);                                   \
 }
 
 DEFINE_UNARY_FP_FUNCTION(FLOAT, rint      , Rint  , npy_float)

@@ -3,6 +3,10 @@
 #define NPY_SIMDX 1 // Prevent editors from graying out the happy branch
 #endif
 
+// Using anonymous namespace instead of inline to ensure each translation unit
+// gets its own copy of constants based on local compilation flags
+namespace {
+
 // NOTE: This file is included by simd.hpp multiple times with different namespaces
 // so avoid including any headers here
 
@@ -13,21 +17,21 @@
  * @tparam TLane The lane type to check for support.
  */
 template <typename TLane>
-constexpr inline bool kSupportLane = NPY_SIMDX != 0;
+constexpr bool kSupportLane = NPY_SIMDX != 0;
 
 #if NPY_SIMDX
 // Define lane type support based on Highway capabilities
 template <>
-constexpr inline bool kSupportLane<hwy::float16_t> = HWY_HAVE_FLOAT16 != 0;
+constexpr bool kSupportLane<hwy::float16_t> = HWY_HAVE_FLOAT16 != 0;
 template <>
-constexpr inline bool kSupportLane<double> = HWY_HAVE_FLOAT64 != 0;
+constexpr bool kSupportLane<double> = HWY_HAVE_FLOAT64 != 0;
 template <>
-constexpr inline bool kSupportLane<long double> =
+constexpr bool kSupportLane<long double> =
         HWY_HAVE_FLOAT64 != 0 && sizeof(long double) == sizeof(double);
 
 /// Maximum number of lanes supported by the SIMD extension for the specified lane type.
 template <typename TLane>
-constexpr inline size_t kMaxLanes = HWY_MAX_LANES_D(_Tag<TLane>);
+constexpr size_t kMaxLanes = HWY_MAX_LANES_D(_Tag<TLane>);
 
 /// Represents an N-lane vector based on the specified lane type.
 /// @tparam TLane The scalar type for each vector lane
@@ -78,7 +82,7 @@ StoreN(const Vec<TLane> &a, TLane *ptr, size_t n)
 
 /// Returns the number of vector lanes based on the lane type.
 template <typename TLane>
-HWY_API constexpr size_t
+HWY_API HWY_LANES_CONSTEXPR size_t
 Lanes(TLane tag = 0)
 {
     return hn::Lanes(_Tag<TLane>());
@@ -143,5 +147,7 @@ using hn::Or;
 using hn::Sqrt;
 using hn::Sub;
 using hn::Xor;
+
+} // namespace anonymous
 
 #endif  // NPY_SIMDX
