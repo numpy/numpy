@@ -149,7 +149,6 @@ class MaskedRecords(ma.MaskedArray):
         self._update_from(obj)
         if _dict['_baseclass'] == np.ndarray:
             _dict['_baseclass'] = np.recarray
-        return
 
     @property
     def _data(self):

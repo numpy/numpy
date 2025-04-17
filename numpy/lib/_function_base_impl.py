@@ -2138,7 +2138,6 @@ def disp(mesg, device=None, linefeed=True):
     else:
         device.write('%s' % mesg)
     device.flush()
-    return
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
