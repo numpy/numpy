@@ -1902,10 +1902,10 @@ class TestRegression:
         data = pickle.loads(blob)
 
         # Check that loads does not clobber interned strings
-        s = re.sub("a(.)", "\x01\\1", "a_")
+        s = re.sub(r"a(.)", "\x01\\1", "a_")
         assert_equal(s[0], "\x01")
         data[0] = 0x6a
-        s = re.sub("a(.)", "\x01\\1", "a_")
+        s = re.sub(r"a(.)", "\x01\\1", "a_")
         assert_equal(s[0], "\x01")
 
     def test_pickle_bytes_overwrite(self):
