@@ -147,7 +147,7 @@ def expand_sub(substr, names):
 
     # convert all lists to named templates
     # new names are constructed as needed
-    substr = list_re.sub(listrepl, substr) 
+    substr = list_re.sub(listrepl, substr)
 
     numsubs = None
     base_rule = None

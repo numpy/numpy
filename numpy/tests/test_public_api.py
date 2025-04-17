@@ -272,10 +272,10 @@ def is_unexpected(name):
     """Check if this needs to be considered."""
     return (
         '._' not in name and '.tests' not in name and '.setup' not in name
-		and name not in PUBLIC_MODULES
-		and name not in PUBLIC_ALIASED_MODULES
-		and name not in PRIVATE_BUT_PRESENT_MODULES
-	)
+        and name not in PUBLIC_MODULES
+        and name not in PUBLIC_ALIASED_MODULES
+        and name not in PRIVATE_BUT_PRESENT_MODULES
+    )
 
 
 if sys.version_info >= (3, 12):

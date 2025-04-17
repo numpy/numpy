@@ -441,7 +441,7 @@ autosummary_generate = True
 # -----------------------------------------------------------------------------
 coverage_ignore_modules = []
 coverage_ignore_functions = [
-	'test($|_)', '(some|all)true', 'bitwise_not', 'cumproduct', 'pkgload', 'generic\\.'
+    'test($|_)', '(some|all)true', 'bitwise_not', 'cumproduct', 'pkgload', 'generic\\.'
 ]
 coverage_ignore_classes = []
 
@@ -507,7 +507,7 @@ def _get_c_source_file(obj):
         # todo: come up with a better way to generate these
         return None
 
-def linkcode_resolve(domain, info):   
+def linkcode_resolve(domain, info):
     """
     Determine the URL corresponding to Python object
     """
