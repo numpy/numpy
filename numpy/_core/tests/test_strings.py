@@ -1367,3 +1367,70 @@ class TestReplaceOnArrays:
                                         dtype=dt))
         r3 = np.strings.replace(a, ["0", "0,0", "0,0,0"], "X")
         assert_array_equal(r3, np.array(["X,X,X", "X,0", "X"], dtype=dt))
+
+
+class TestOverride:
+    @classmethod
+    def setup_class(cls):
+        class Override:
+            def __array_function__(self, *args, **kwargs):
+                return "function"
+            def __array_ufunc__(self, *args, **kwargs):
+                return "ufunc"
+
+        cls.override = Override()
+
+    @pytest.mark.parametrize("func, kwargs", [
+        (np.strings.mod, dict(values=2)),
+        (np.strings.encode, {}),
+        (np.strings.decode, {}),
+        (np.strings.upper, {}),
+        (np.strings.lower, {}),
+        (np.strings.swapcase, {}),
+        (np.strings.capitalize, {}),
+        (np.strings.title, {}),
+        (np.strings.translate, dict(table=None)),
+    ])
+    def test_override_function(self, func, kwargs):
+        assert func(self.override, **kwargs) == "function"
+
+    @pytest.mark.parametrize("func, args, kwargs", [
+        (np.strings.add, (None, ), {}),
+        (np.strings.center, (None, ), {}),
+        (np.strings.expandtabs, (), {}),
+        (np.strings.ljust, (None,), {}),
+        (np.strings.lstrip, (None,), {}),
+        (np.strings.multiply, (None,), {}),
+        (np.strings.partition, (None,), {}),
+        (np.strings.replace, (None, None, ), {}),
+        (np.strings.rjust, (None, ), {}),
+        (np.strings.rpartition, (None, ), {}),
+        (np.strings.rstrip, (), {}),
+        (np.strings.strip, (), {}),
+        (np.strings.zfill, (None, ), {}),
+        (np.strings.equal, (None, ), {}),
+        (np.strings.not_equal, (None, ), {}),
+        (np.strings.greater_equal, (None, ), {}),
+        (np.strings.less_equal, (None, ), {}),
+        (np.strings.greater, (None, ), {}),
+        (np.strings.less, (None, ), {}),
+        (np.strings.count, (None, ), {}),
+        (np.strings.endswith, (None, ), {}),
+        (np.strings.find, (None, ), {}),
+        (np.strings.index, (None, ), {}),
+        (np.strings.isalnum, (), {}),
+        (np.strings.isalpha, (), {}),
+        (np.strings.isdecimal, (), {}),
+        (np.strings.isdigit, (), {}),
+        (np.strings.islower, (), {}),
+        (np.strings.isnumeric, (), {}),
+        (np.strings.isspace, (), {}),
+        (np.strings.istitle, (), {}),
+        (np.strings.isupper, (), {}),
+        (np.strings.rfind, (), {}),
+        (np.strings.rindex, (), {}),
+        (np.strings.startswith, (), {}),
+        (np.strings.str_len, (), {}),
+    ])
+    def test_override_ufunc(self, func, kwargs):
+        assert func(self.override, **kwargs) == "ufunc"
