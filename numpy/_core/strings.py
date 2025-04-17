@@ -134,7 +134,12 @@ def _clean_args(*args):
     return newargs
 
 
+def _multiply_dispatcher(a, i):
+    return (a,)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_multiply_dispatcher)
 def multiply(a, i):
     """
     Return (a * i), that is string multiple concatenation,
@@ -615,7 +620,12 @@ def encode(a, encoding=None, errors=None):
         np.bytes_(b''))
 
 
+def _expandtabs_dispatcher(a, tabsize=None):
+    return (a,)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_expandtabs_dispatcher)
 def expandtabs(a, tabsize=8):
     """
     Return a copy of each string element where all tab characters are
@@ -667,7 +677,12 @@ def expandtabs(a, tabsize=8):
     return _expandtabs(a, tabsize, out=out)
 
 
+def _just_dispatcher(a, width, fillchar=None):
+    return (a,)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_just_dispatcher)
 def center(a, width, fillchar=' '):
     """
     Return a copy of `a` with its elements centered in a string of
@@ -736,6 +751,7 @@ def center(a, width, fillchar=' '):
 
 
 @set_module("numpy.strings")
+@array_function_dispatch(_just_dispatcher)
 def ljust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` left-justified in a
@@ -800,6 +816,7 @@ def ljust(a, width, fillchar=' '):
 
 
 @set_module("numpy.strings")
+@array_function_dispatch(_just_dispatcher)
 def rjust(a, width, fillchar=' '):
     """
     Return an array with the elements of `a` right-justified in a
@@ -863,7 +880,12 @@ def rjust(a, width, fillchar=' '):
     return _rjust(a, width, fillchar, out=out)
 
 
+def _zfill_dispatcher(a, width):
+    return (a,)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_zfill_dispatcher)
 def zfill(a, width):
     """
     Return the numeric string left-filled with zeros. A leading
@@ -1253,7 +1275,12 @@ def title(a):
     return _vec_string(a_arr, a_arr.dtype, 'title')
 
 
+def _replace_dispatcher(a, old, new, count=None):
+    return (a,)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_replace_dispatcher)
 def replace(a, old, new, count=-1):
     """
     For each element in ``a``, return a copy of the string with
@@ -1495,7 +1522,12 @@ def _splitlines(a, keepends=None):
         a, np.object_, 'splitlines', _clean_args(keepends))
 
 
+def _partition_dispatcher(a, sep):
+    return (a,)
+
+
 @set_module("numpy.strings")
+@array_function_dispatch(_partition_dispatcher)
 def partition(a, sep):
     """
     Partition each element in ``a`` around ``sep``.
@@ -1564,6 +1596,7 @@ def partition(a, sep):
 
 
 @set_module("numpy.strings")
+@array_function_dispatch(_partition_dispatcher)
 def rpartition(a, sep):
     """
     Partition (split) each element around the right-most separator.

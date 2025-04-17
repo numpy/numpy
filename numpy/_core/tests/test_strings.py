@@ -1383,33 +1383,32 @@ class TestOverride:
         cls.override = Override()
 
     @pytest.mark.parametrize("func, kwargs", [
-        (np.strings.mod, dict(values=2)),
-        (np.strings.encode, {}),
-        (np.strings.decode, {}),
-        (np.strings.upper, {}),
-        (np.strings.lower, {}),
-        (np.strings.swapcase, {}),
+        (np.strings.center, dict(width=10)),
         (np.strings.capitalize, {}),
+        (np.strings.decode, {}),
+        (np.strings.encode, {}),
+        (np.strings.expandtabs, {}),
+        (np.strings.ljust, dict(width=10)),
+        (np.strings.lower, {}),
+        (np.strings.mod, dict(values=2)),
+        (np.strings.multiply, dict(i=2)),
+        (np.strings.partition, dict(sep="foo")),
+        (np.strings.rjust, dict(width=10)),
+        (np.strings.rpartition, dict(sep="foo")),
+        (np.strings.swapcase, {}),
         (np.strings.title, {}),
         (np.strings.translate, dict(table=None)),
+        (np.strings.upper, {}),
+        (np.strings.zfill, dict(width=10)),
     ])
     def test_override_function(self, func, kwargs):
         assert func(self.override, **kwargs) == "function"
 
     @pytest.mark.parametrize("func, args, kwargs", [
         (np.strings.add, (None, ), {}),
-        (np.strings.center, (10, ), {}),
-        (np.strings.expandtabs, (), {}),
-        (np.strings.ljust, (10,), {}),
         (np.strings.lstrip, (), {}),
-        (np.strings.multiply, (2,), {}),
-        (np.strings.partition, ("foo",), {}),
-        (np.strings.replace, ("foo", "bar", ), {}),
-        (np.strings.rjust, (10, ), {}),
-        (np.strings.rpartition, ("foo", ), {}),
         (np.strings.rstrip, (), {}),
         (np.strings.strip, (), {}),
-        (np.strings.zfill, (10, ), {}),
         (np.strings.equal, (None, ), {}),
         (np.strings.not_equal, (None, ), {}),
         (np.strings.greater_equal, (None, ), {}),

@@ -1,10 +1,18 @@
 Re-enabled the capability to override the following functions:
- * :func:`numpy.strings.mod`
- * :func:`numpy.strings.encode`
- * :func:`numpy.strings.decode`
- * :func:`numpy.strings.upper`
- * :func:`numpy.strings.lower`
- * :func:`numpy.strings.swapcase`
+ * :func:`numpy.strings.center`
  * :func:`numpy.strings.capitalize`
+ * :func:`numpy.strings.decode`
+ * :func:`numpy.strings.encode`
+ * :func:`numpy.strings.expandtabs`
+ * :func:`numpy.strings.lust`
+ * :func:`numpy.strings.lower`
+ * :func:`numpy.strings.mod`
+ * :func:`numpy.strings.multiply`
+ * :func:`numpy.strings.partition`
+ * :func:`numpy.strings.rjust`
+ * :func:`numpy.strings.rpartition`
+ * :func:`numpy.strings.swapcase`
  * :func:`numpy.strings.title`
  * :func:`numpy.strings.translate`
+ * :func:`numpy.strings.upper`
+ * :func:`numpy.strings.zfill`
