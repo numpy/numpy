@@ -122,7 +122,7 @@ check_unique_temporary(PyObject *lhs)
 #if PY_VERSION_HEX >= 0x030E00A7
     // In Python 3.14.0a7 and later, a reference count of one doesn't guarantee
     // that an object is a unique temporary variable. We scan the top of the
-    // interpreter stack to check if the object exists as an "onwned" reference
+    // interpreter stack to check if the object exists as an "owned" reference
     // in the temporary stack.
     PyFrameObject *frame = PyEval_GetFrame();
     if (frame == NULL) {
