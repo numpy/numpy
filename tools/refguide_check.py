@@ -489,11 +489,7 @@ def check_rest(module, names, dots=True):
         List of [(module_name, success_flag, output),...]
     """
 
-    try:
-        skip_types = (dict, str, unicode, float, int)
-    except NameError:
-        # python 3
-        skip_types = (dict, str, float, int)
+    skip_types = (dict, str, float, int)
 
     results = []
 
