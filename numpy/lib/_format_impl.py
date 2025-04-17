@@ -1007,7 +1007,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
     Required as e.g. ZipExtFile in python 2.6 can return less data than
     requested.
     """
-    data = bytes()
+    data = b""
     while True:
         # io files (default in python3) return None or raise on
         # would-block, python2 file will truncate, probably nothing can be

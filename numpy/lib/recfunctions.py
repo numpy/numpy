@@ -263,7 +263,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
                 parents[name] = []
             parents.update(get_fieldstructure(current, name, parents))
         else:
-            lastparent = list((parents.get(lastname, []) or []))
+            lastparent = list(parents.get(lastname, []) or [])
             if lastparent:
                 lastparent.append(lastname)
             elif lastname:

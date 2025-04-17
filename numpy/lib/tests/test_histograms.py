@@ -462,8 +462,8 @@ class TestHistogramOptimBinNums:
             x = np.concatenate((x1, x2))
             for estimator, numbins in expectedResults.items():
                 a, b = np.histogram(x, estimator)
-                assert_equal(len(a), numbins, err_msg="For the {0} estimator "
-                             "with datasize of {1}".format(estimator, testlen))
+                assert_equal(len(a), numbins, err_msg="For the {} estimator "
+                             "with datasize of {}".format(estimator, testlen))
 
     def test_small(self):
         """
@@ -482,8 +482,8 @@ class TestHistogramOptimBinNums:
             testdat = np.arange(testlen).astype(float)
             for estimator, expbins in expectedResults.items():
                 a, b = np.histogram(testdat, estimator)
-                assert_equal(len(a), expbins, err_msg="For the {0} estimator "
-                             "with datasize of {1}".format(estimator, testlen))
+                assert_equal(len(a), expbins, err_msg="For the {} estimator "
+                             "with datasize of {}".format(estimator, testlen))
 
     def test_incorrect_methods(self):
         """
@@ -504,7 +504,7 @@ class TestHistogramOptimBinNums:
 
         for estimator, numbins in novar_resultdict.items():
             a, b = np.histogram(novar_dataset, estimator)
-            assert_equal(len(a), numbins, err_msg="{0} estimator, "
+            assert_equal(len(a), numbins, err_msg="{} estimator, "
                          "No Variance test".format(estimator))
 
     def test_limited_variance(self):
