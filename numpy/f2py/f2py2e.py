@@ -539,7 +539,7 @@ class CombineIncludePaths(argparse.Action):
         include_paths_set = set(getattr(namespace, 'include_paths', []) or [])
         if option_string == "--include_paths":
             outmess("Use --include-paths or -I instead of --include_paths which will be removed")
-        if option_string == "--include-paths" or option_string == "--include_paths":
+        if option_string in {"--include-paths", "--include_paths"}:
             include_paths_set.update(values.split(':'))
         else:
             include_paths_set.add(values)

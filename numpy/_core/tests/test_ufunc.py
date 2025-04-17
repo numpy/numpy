@@ -1476,7 +1476,7 @@ class TestUfunc:
             return ret
 
         def broadcastable(s1, s2):
-            return s1 == s2 or s1 == 1 or s2 == 1
+            return s1 in (s2, 1) or s2 == 1
 
         permute_3 = permute_n(3)
         slice_3 = slice_n(3) + ((slice(None, None, -1),) * 3,)
