@@ -83,7 +83,7 @@ def getargs(co):
     # Which we do not need to support, so remove to avoid importing
     # the dis module.
     for i in range(nargs):
-        if args[i][:1] in ['', '.']:
+        if args[i][:1] in {'', '.'}:
             raise TypeError("tuple function arguments are not supported")
     varargs = None
     if co.co_flags & CO_VARARGS:
@@ -133,7 +133,7 @@ def strseq(object, convert, join=joinseq):
     """Recursively walk a sequence, stringifying each element.
 
     """
-    if type(object) in [list, tuple]:
+    if type(object) in {list, tuple}:
         return join([strseq(_o, convert, join) for _o in object])
     else:
         return convert(object)

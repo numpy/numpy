@@ -749,7 +749,7 @@ class TestUfuncs:
             with np.errstate():
                 if f in f_invalid_ignore:
                     np.seterr(invalid='ignore')
-                if f in ['arctanh', 'log', 'log10']:
+                if f in {'arctanh', 'log', 'log10'}:
                     np.seterr(divide='ignore')
                 ur = uf(*args)
                 mr = mf(*args)

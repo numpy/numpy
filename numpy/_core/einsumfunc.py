@@ -912,7 +912,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
                 # For broadcasting cases we always want the largest dim size
                 if dimension_dict[char] == 1:
                     dimension_dict[char] = dim
-                elif dim not in (1, dimension_dict[char]):
+                elif dim not in {1, dimension_dict[char]}:
                     raise ValueError("Size of label '%s' for operand %d (%d) "
                                      "does not match previous terms (%d)."
                                      % (char, tnum, dimension_dict[char], dim))
@@ -944,7 +944,7 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         path = path_type[1:]
     elif (
         (path_type is False)
-        or (len(input_list) in [1, 2])
+        or (len(input_list) in {1, 2})
         or (indices == output_set)
     ):
         # Nothing to be optimized, leave it to einsum

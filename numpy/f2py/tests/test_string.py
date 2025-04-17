@@ -58,7 +58,7 @@ class TestFixedString(util.F2PyTest):
         return i
 
     def _get_input(self, intent="in"):
-        if intent in ["in"]:
+        if intent in {"in"}:
             yield ""
             yield "1"
             yield "1234"

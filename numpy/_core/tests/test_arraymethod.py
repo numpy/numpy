@@ -78,7 +78,7 @@ class TestClassGetItem:
     @pytest.mark.parametrize("arg_len", range(4))
     def test_subscript_tup(self, cls: type[np.ndarray], arg_len: int) -> None:
         arg_tup = (Any,) * arg_len
-        if arg_len in (1, 2):
+        if arg_len in {1, 2}:
             assert cls[arg_tup]
         else:
             match = f"Too {'few' if arg_len == 0 else 'many'} arguments"

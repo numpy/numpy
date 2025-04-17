@@ -796,7 +796,7 @@ def parse_expr(tokens, name, context=()):
                 name=name,
             )
         return ("py", pos, expr), tokens[1:]
-    elif expr in ("continue", "break"):
+    elif expr in {"continue", "break"}:
         if "for" not in context:
             raise TemplateError("continue outside of for loop", position=pos, name=name)
         return (expr, pos), tokens[1:]
@@ -806,9 +806,9 @@ def parse_expr(tokens, name, context=()):
         raise TemplateError(
             "%s outside of an if block" % expr.split()[0], position=pos, name=name
         )
-    elif expr in ("if", "elif", "for"):
+    elif expr in {"if", "elif", "for"}:
         raise TemplateError("%s with no expression" % expr, position=pos, name=name)
-    elif expr in ("endif", "endfor", "enddef"):
+    elif expr in {"endif", "endfor", "enddef"}:
         raise TemplateError("Unexpected %s" % expr, position=pos, name=name)
     elif expr.startswith("for "):
         return parse_for(tokens, name, context)
@@ -1038,7 +1038,7 @@ def parse_signature(sig_text, name, pos):
                 elif (
                     not nest_count
                     and tok_type == tokenize.OP
-                    and tok_string in ("(", "[", "{")
+                    and tok_string in {"(", "[", "{"}
                 ):
                     nest_type = tok_string
                     nest_count = 1

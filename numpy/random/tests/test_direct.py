@@ -81,7 +81,7 @@ def uniform32_from_uint(x, bits):
 
 
 def uniform_from_uint(x, bits):
-    if bits in (64, 63, 53):
+    if bits in {64, 63, 53}:
         return uniform_from_uint64(x)
     elif bits == 32:
         return uniform_from_uint32(x)
@@ -105,7 +105,7 @@ def uniform_from_dsfmt(x):
 
 
 def gauss_from_uint(x, n, bits):
-    if bits in (64, 63):
+    if bits in {64, 63}:
         doubles = uniform_from_uint64(x)
     elif bits == 32:
         doubles = uniform_from_uint32(x)

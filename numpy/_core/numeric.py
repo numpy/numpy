@@ -1426,7 +1426,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     normalize_axis_index : normalizing a single scalar axis
     """
     # Optimization to speed-up the most common cases.
-    if type(axis) not in (tuple, list):
+    if type(axis) not in {tuple, list}:
         try:
             axis = [operator.index(axis)]
         except TypeError:
@@ -1657,7 +1657,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     b = moveaxis(b, axisb, -1)
     msg = ("incompatible dimensions for cross product\n"
            "(dimension must be 2 or 3)")
-    if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
+    if a.shape[-1] not in {2, 3} or b.shape[-1] not in {2, 3}:
         raise ValueError(msg)
     if a.shape[-1] == 2 or b.shape[-1] == 2:
         # Deprecated in NumPy 2.0, 2023-09-26

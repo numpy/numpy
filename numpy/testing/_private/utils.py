@@ -88,7 +88,7 @@ else:
     if not IS_EDITABLE and np_dist.locate_file('numpy') != NUMPY_ROOT:
         IS_INSTALLED = False
 
-IS_WASM = platform.machine() in ["wasm32", "wasm64"]
+IS_WASM = platform.machine() in {"wasm32", "wasm64"}
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON

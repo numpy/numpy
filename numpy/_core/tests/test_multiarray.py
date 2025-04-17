@@ -1113,7 +1113,7 @@ class TestCreation:
                 pass
 
             def __getitem__(self, ind):
-                if ind in [0, 1]:
+                if ind in {0, 1}:
                     return ind
                 else:
                     raise IndexError
@@ -1994,7 +1994,7 @@ class TestMethods:
                       np.float32, np.float64, np.complex64, np.complex128]:
             a = np.array(ba, ctype)
             a2 = np.array(ba2, ctype)
-            if ctype in ['1', 'b']:
+            if ctype in {'1', 'b'}:
                 assert_raises(ArithmeticError, a.prod)
                 assert_raises(ArithmeticError, a2.prod, axis=1)
             else:

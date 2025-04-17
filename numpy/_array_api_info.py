@@ -171,7 +171,7 @@ class __array_namespace_info__:
          'indexing': numpy.int64}
 
         """
-        if device not in ["cpu", None]:
+        if device not in {"cpu", None}:
             raise ValueError(
                 'Device not understood. Only "cpu" is allowed, but received:'
                 f' {device}'
@@ -238,7 +238,7 @@ class __array_namespace_info__:
          'int64': numpy.int64}
 
         """
-        if device not in ["cpu", None]:
+        if device not in {"cpu", None}:
             raise ValueError(
                 'Device not understood. Only "cpu" is allowed, but received:'
                 f' {device}'

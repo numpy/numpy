@@ -586,7 +586,7 @@ def expand_dims(a, axis):
     else:
         a = asanyarray(a)
 
-    if type(axis) not in (tuple, list):
+    if type(axis) not in {tuple, list}:
         axis = (axis,)
 
     out_ndim = len(axis) + a.ndim

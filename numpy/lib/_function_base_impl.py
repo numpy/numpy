@@ -847,9 +847,9 @@ def select(condlist, choicelist, default=0):
     #       right `result_type` with NEP 50.  Most likely we will grow a better
     #       way to spell this (and this can be replaced).
     choicelist = [
-        choice if type(choice) in (int, float, complex) else np.asarray(choice)
+        choice if type(choice) in {int, float, complex} else np.asarray(choice)
         for choice in choicelist]
-    choicelist.append(default if type(default) in (int, float, complex)
+    choicelist.append(default if type(default) in {int, float, complex}
                       else np.asarray(default))
 
     try:
@@ -5239,7 +5239,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
     ndim = len(xi)
 
-    if indexing not in ['xy', 'ij']:
+    if indexing not in {'xy', 'ij'}:
         raise ValueError(
             "Valid values for `indexing` are 'xy' and 'ij'.")
 

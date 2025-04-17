@@ -728,7 +728,7 @@ class TestProd:
                       np.float32, np.float64, np.complex64, np.complex128]:
             a = np.array(ba, ctype)
             a2 = np.array(ba2, ctype)
-            if ctype in ['1', 'b']:
+            if ctype in {'1', 'b'}:
                 assert_raises(ArithmeticError, np.prod, a)
                 assert_raises(ArithmeticError, np.prod, a2, 1)
             else:
@@ -749,7 +749,7 @@ class TestCumprod:
                       np.float32, np.float64, np.complex64, np.complex128]:
             a = np.array(ba, ctype)
             a2 = np.array(ba2, ctype)
-            if ctype in ['1', 'b']:
+            if ctype in {'1', 'b'}:
                 assert_raises(ArithmeticError, cumprod, a)
                 assert_raises(ArithmeticError, cumprod, a2, 1)
                 assert_raises(ArithmeticError, cumprod, a)
@@ -3295,7 +3295,7 @@ class TestPercentile:
 
         test_function(actual, expected_dtype.type(expected))
 
-        if method in ["inverted_cdf", "closest_observation"]:
+        if method in {"inverted_cdf", "closest_observation"}:
             if input_dtype == "O":
                 np.testing.assert_equal(np.asarray(actual).dtype, np.float64)
             else:
@@ -3929,7 +3929,7 @@ class TestQuantile:
         w = rng.integers(low=0, high=10, size=n) if weights else None
         x = np.quantile(y, alpha, method=method, weights=w)
 
-        if method in ("higher",):
+        if method in {"higher"}:
             # These methods do not fulfill the identification equation.
             assert np.abs(np.mean(self.V(x, y, alpha))) > 0.1 / n
         elif int(n * alpha) == n * alpha and not weights:

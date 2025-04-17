@@ -150,7 +150,7 @@ def _scalar_str(dtype, short):
 
     elif np.issubdtype(dtype, np.number):
         # Short repr with endianness, like '<f8'
-        if short or dtype.byteorder not in ('=', '|'):
+        if short or dtype.byteorder not in {'=', '|'}:
             return "'%s%c%d'" % (byteorder, dtype.kind, dtype.itemsize)
 
         # Longer repr, like 'float64'
@@ -361,7 +361,7 @@ def _name_get(dtype):
         name += f"{dtype.itemsize * 8}"
 
     # append metadata to datetimes
-    if dtype.type in (np.datetime64, np.timedelta64):
+    if dtype.type in {np.datetime64, np.timedelta64}:
         name += _datetime_metadata_str(dtype)
 
     return name

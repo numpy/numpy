@@ -9,7 +9,7 @@ from . import util
 @pytest.mark.slow
 class TestReturnReal(util.F2PyTest):
     def check_function(self, t, tname):
-        if tname in ["t0", "t4", "s0", "s4"]:
+        if tname in {"t0", "t4", "s0", "s4"}:
             err = 1e-5
         else:
             err = 0.0
@@ -28,7 +28,7 @@ class TestReturnReal(util.F2PyTest):
         assert abs(t(array(234, "B")) - 234.0) <= err
         assert abs(t(array(234, "f")) - 234.0) <= err
         assert abs(t(array(234, "d")) - 234.0) <= err
-        if tname in ["t0", "t4", "s0", "s4"]:
+        if tname in {"t0", "t4", "s0", "s4"}:
             assert t(1e200) == t(1e300)  # inf
 
         # pytest.raises(ValueError, t, array([234], 'S1'))
@@ -42,7 +42,7 @@ class TestReturnReal(util.F2PyTest):
 
         try:
             r = t(10**400)
-            assert repr(r) in ["inf", "Infinity"]
+            assert repr(r) in {"inf", "Infinity"}
         except OverflowError:
             pass
 

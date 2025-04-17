@@ -97,7 +97,7 @@ sctypes = {"int": set(), "uint": set(), "float": set(),
            "complex": set(), "others": set()}
 
 for type_info in typeinfo.values():
-    if type_info.kind in ["M", "m"]:  # exclude timedelta and datetime
+    if type_info.kind in {"M", "m"}:  # exclude timedelta and datetime
         continue
 
     concrete_type = type_info.type

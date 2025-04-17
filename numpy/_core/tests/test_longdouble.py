@@ -58,7 +58,7 @@ def test_array_and_stringlike_roundtrip(strtype):
     """
     o = 1 + LD_INFO.eps
 
-    if strtype in (np.bytes_, bytes):
+    if strtype in {np.bytes_, bytes}:
         o_str = strtype(str(o).encode("ascii"))
     else:
         o_str = strtype(str(o))

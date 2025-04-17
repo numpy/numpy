@@ -4153,7 +4153,7 @@ class MaskedArray(ndarray):
         if self._fill_value is None:
             self.fill_value  # initialize fill_value
 
-        if (self._fill_value.dtype.kind in ("S", "U")
+        if (self._fill_value.dtype.kind in {"S", "U"}
                 and self.dtype.kind == self._fill_value.dtype.kind):
             # Allow strings: "N/A" has length 3 so would mismatch.
             fill_repr = repr(self.fill_value.item())
@@ -4208,7 +4208,7 @@ class MaskedArray(ndarray):
         if mask.dtype.names is not None:
             # only == and != are reasonably defined for structured dtypes,
             # so give up early for all other comparisons:
-            if compare not in (operator.eq, operator.ne):
+            if compare not in {operator.eq, operator.ne}:
                 return NotImplemented
             # For possibly masked structured arrays we need to be careful,
             # since the standard structured array comparison will use all
@@ -4236,7 +4236,7 @@ class MaskedArray(ndarray):
             return masked if mask else check
 
         if mask is not nomask:
-            if compare in (operator.eq, operator.ne):
+            if compare in {operator.eq, operator.ne}:
                 # Adjust elements that were masked, which should be treated
                 # as equal if masked in both, unequal if masked in one.
                 # Note that this works automatically for structured arrays too.
@@ -4685,7 +4685,7 @@ class MaskedArray(ndarray):
             # compare to _count_reduce_items in _methods.py
 
             if self.shape == ():
-                if axis not in (None, 0):
+                if axis not in {None, 0}:
                     raise np.exceptions.AxisError(axis=axis, ndim=self.ndim)
                 return 1
             elif axis is None:

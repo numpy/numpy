@@ -173,7 +173,7 @@ def _commonType(*arrays):
 def _to_native_byte_order(*arrays):
     ret = []
     for arr in arrays:
-        if arr.dtype.byteorder not in ('=', '|'):
+        if arr.dtype.byteorder not in {'=', '|'}:
             ret.append(asarray(arr, dtype=arr.dtype.newbyteorder('=')))
         else:
             ret.append(arr)
@@ -1059,8 +1059,8 @@ def qr(a, mode='reduced'):
     array([  1.,   1.])
 
     """
-    if mode not in ('reduced', 'complete', 'r', 'raw'):
-        if mode in ('f', 'full'):
+    if mode not in {'reduced', 'complete', 'r', 'raw'}:
+        if mode in {'f', 'full'}:
             # 2013-04-01, 1.8
             msg = (
                 "The 'full' option is deprecated in favor of 'reduced'.\n"
@@ -1068,7 +1068,7 @@ def qr(a, mode='reduced'):
             )
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             mode = 'reduced'
-        elif mode in ('e', 'economic'):
+        elif mode in {'e', 'economic'}:
             # 2013-04-01, 1.8
             msg = "The 'economic' option is deprecated."
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
@@ -1300,7 +1300,7 @@ def eigvalsh(a, UPLO='L'):
 
     """
     UPLO = UPLO.upper()
-    if UPLO not in ('L', 'U'):
+    if UPLO not in {'L', 'U'}:
         raise ValueError("UPLO argument must be 'L' or 'U'")
 
     if UPLO == 'L':
@@ -1600,7 +1600,7 @@ def eigh(a, UPLO='L'):
 
     """
     UPLO = UPLO.upper()
-    if UPLO not in ('L', 'U'):
+    if UPLO not in {'L', 'U'}:
         raise ValueError("UPLO argument must be 'L' or 'U'")
 
     a, wrap = _makearray(a)
@@ -1959,7 +1959,7 @@ def cond(x, p=None):
     x = asarray(x)  # in case we have a matrix
     if _is_empty_2d(x):
         raise LinAlgError("cond is not defined on empty arrays")
-    if p is None or p in (2, -2):
+    if p is None or p in {2, -2}:
         s = svd(x, compute_uv=False)
         with errstate(all='ignore'):
             if p == -2:
@@ -2721,7 +2721,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
         ndim = x.ndim
         if (
             (ord is None) or
-            (ord in ('f', 'fro') and ndim == 2) or
+            (ord in {'f', 'fro'} and ndim == 2) or
             (ord == 2 and ndim == 1)
         ):
             x = x.ravel(order='K')
@@ -2804,7 +2804,7 @@ def norm(x, ord=None, axis=None, keepdims=False):
             if row_axis > col_axis:
                 row_axis -= 1
             ret = add.reduce(abs(x), axis=col_axis).min(axis=row_axis)
-        elif ord in [None, 'fro', 'f']:
+        elif ord in {None, 'fro', 'f'}:
             ret = sqrt(add.reduce((x.conj() * x).real, axis=axis))
         elif ord == 'nuc':
             ret = _multi_svd_norm(x, row_axis, col_axis, sum, 0)

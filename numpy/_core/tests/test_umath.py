@@ -1015,8 +1015,8 @@ class TestDivisionIntegerOverflowsAndDivideByZero:
         # then, result will be a larger type than dividend and will not
         # result in an overflow for `divmod` and `floor_divide`.
         if np.dtype(dividend_dtype).itemsize >= np.dtype(
-                divisor_dtype).itemsize and operation in (
-                        np.divmod, np.floor_divide, operator.floordiv):
+                divisor_dtype).itemsize and operation in {
+                        np.divmod, np.floor_divide, operator.floordiv}:
             with pytest.warns(
                     RuntimeWarning,
                     match="overflow encountered in"):
@@ -1865,7 +1865,7 @@ class TestSpecialFloats:
         # FIXME: NAN raises FP invalid exception:
         #  - ceil/float16 on MSVC:32-bit
         #  - spacing/float16 on almost all platforms
-        if ufunc in (np.spacing, np.ceil) and dtype == 'e':
+        if ufunc in {np.spacing, np.ceil} and dtype == 'e':
             return
         array = np.array(data, dtype=dtype)
         with assert_no_warnings():
