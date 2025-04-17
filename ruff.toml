@@ -19,6 +19,7 @@ preview = true
 extend-select = [
     "E",
     "W",
+    "PGH",
 ]
 ignore = [
     "F",     # TODO: enable Pyflakes rules
