@@ -20,6 +20,7 @@ extend-select = [
     "E",
     "W",
     "PGH",
+    "PLE",
 ]
 ignore = [
     "F",     # TODO: enable Pyflakes rules
