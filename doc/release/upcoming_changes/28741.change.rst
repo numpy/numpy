@@ -1,0 +1,10 @@
+Re-enabled the capability to override the following functions:
+ * :func:`numpy.strings.mod`
+ * :func:`numpy.strings.encode`
+ * :func:`numpy.strings.decode`
+ * :func:`numpy.strings.upper`
+ * :func:`numpy.strings.lower`
+ * :func:`numpy.strings.swapcase`
+ * :func:`numpy.strings.capitalize`
+ * :func:`numpy.strings.title`
+ * :func:`numpy.strings.translate`
