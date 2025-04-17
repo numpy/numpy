@@ -417,7 +417,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 beginpattern = beginpattern90
             outmess('\tReading file %s (format:%s%s)\n'
                     % (repr(currentfilename), sourcecodeform,
-                       strictf77 and ',strict' or ''))
+                       (strictf77 and ',strict') or ''))
 
         l = l.expandtabs().replace('\xa0', ' ')
         # Get rid of newline characters
@@ -1492,7 +1492,7 @@ def analyzeline(m, case, line):
             line = '//' + line
 
         cl = []
-        [_, bn, ol] = re.split('/', line, maxsplit=2)
+        [_, bn, ol] = re.split('/', line, maxsplit=2)  # noqa: RUF039
         bn = bn.strip()
         if not bn:
             bn = '_BLNK_'

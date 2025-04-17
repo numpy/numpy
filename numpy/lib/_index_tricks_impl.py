@@ -331,7 +331,7 @@ class AxisConcatenator:
 
     For detailed documentation on usage, see `r_`.
     """
-    __slots__ = ('axis', 'matrix', 'trans1d', 'ndmin')
+    __slots__ = ('axis', 'matrix', 'ndmin', 'trans1d')
 
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)

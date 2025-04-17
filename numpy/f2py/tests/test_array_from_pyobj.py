@@ -291,7 +291,7 @@ class Array:
         else:
             self.pyarr = np.array(
                 np.array(obj, dtype=typ.dtypechar).reshape(*dims),
-                order=self.intent.is_intent("c") and "C" or "F",
+                order=(self.intent.is_intent("c") and "C") or "F",
             )
             assert self.pyarr.dtype == typ
         self.pyarr.setflags(write=self.arr.flags["WRITEABLE"])
