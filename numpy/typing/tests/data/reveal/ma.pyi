@@ -24,6 +24,7 @@ MAR_td64: MaskedNDArray[np.timedelta64]
 MAR_o: MaskedNDArray[np.object_]
 MAR_s: MaskedNDArray[np.str_]
 MAR_byte: MaskedNDArray[np.bytes_]
+MAR_V: MaskedNDArray[np.void]
 
 MAR_subclass: MaskedNDArraySubclass
 
@@ -163,7 +164,7 @@ assert_type(np.ma.take([1], [0]), MaskedNDArray[Any])
 assert_type(np.ma.take(np.eye(2), 1, axis=0), MaskedNDArray[np.float64])
 
 assert_type(MAR_f4.partition(1), None)
-assert_type(MAR_f4.partition(1, axis=0, kind='introselect', order='K'), None)
+assert_type(MAR_V.partition(1, axis=0, kind='introselect', order='K'), None)
 
 assert_type(MAR_f4.argpartition(1), MaskedNDArray[np.intp])
 assert_type(MAR_1d.argpartition(1, axis=0, kind='introselect', order='K'), MaskedNDArray[np.intp])
