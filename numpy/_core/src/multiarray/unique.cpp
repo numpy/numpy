@@ -148,7 +148,7 @@ unique_string(PyArrayObject *self)
     the unique values.
 
     It assumes the numpy array includes data that can be viewed as fixed-size
-    strings of a certain size (sizeof(T)).
+    strings of a certain size (itemsize / sizeof(T)).
     */
     NPY_ALLOW_C_API_DEF;
     std::unordered_set<std::vector<T>, VectorHash<T>, VectorEqual<T>> hashset;
