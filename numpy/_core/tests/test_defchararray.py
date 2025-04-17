@@ -379,7 +379,7 @@ class TestMethods:
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
-        assert_(B[0][0] == str(' \\u03a3 ').encode('latin1'))
+        assert_(B[0][0] == ' \\u03a3 '.encode('latin1'))
 
     def test_expandtabs(self):
         T = self.A.expandtabs()
