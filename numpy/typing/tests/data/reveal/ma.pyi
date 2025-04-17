@@ -255,3 +255,5 @@ assert_type(MAR_f4.put(4, 999, mode='clip'), None)
 assert_type(np.ma.put(MAR_f4, [0,4,8], [10,20,30]), None)
 assert_type(np.ma.put(MAR_f4, 4, 999), None)
 assert_type(np.ma.put(MAR_f4, 4, 999, mode='clip'), None)
+
+assert_type(np.ma.putmask(MAR_f4, [True, False], [0, 1]), None)
