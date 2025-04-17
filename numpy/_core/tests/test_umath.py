@@ -269,9 +269,9 @@ class TestOut:
             pass
 
         arr = np.arange(10).view(ArrSubclass)
-
+        orig_refcount = sys.getrefcount(arr)
         arr *= 1
-        assert sys.getrefcount(arr) == 2
+        assert sys.getrefcount(arr) == orig_refcount
 
 
 class TestComparisons:
