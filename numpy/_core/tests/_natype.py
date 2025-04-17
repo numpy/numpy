@@ -183,7 +183,7 @@ class NAType:
         )
         if result is NotImplemented:
             # For a NumPy ufunc that's not a binop, like np.logaddexp
-            index = [i for i, x in enumerate(inputs) if x is pd_NA][0]
+            index = next(i for i, x in enumerate(inputs) if x is pd_NA)
             result = np.broadcast_arrays(*inputs)[index]
             if result.ndim == 0:
                 result = result.item()
