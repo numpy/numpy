@@ -3,7 +3,9 @@
 #include "loops_utils.h"
 
 #include "simd/simd.h"
+#include "simd/simd.hpp" 
 #include <hwy/highway.h>
+
 namespace hn = hwy::HWY_NAMESPACE;
 
 /*

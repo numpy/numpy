@@ -3,6 +3,10 @@
 #define NPY_SIMDX 1 // Prevent editors from graying out the happy branch
 #endif
 
+// Using anonymous namespace instead of inline to ensure each translation unit
+// gets its own copy of constants based on local compilation flags
+namespace {
+
 // NOTE: This file is included by simd.hpp multiple times with different namespaces
 // so avoid including any headers here
 
@@ -57,7 +61,7 @@ StoreU(const Vec<TLane> &a, TLane *ptr)
 
 /// Returns the number of vector lanes based on the lane type.
 template <typename TLane>
-HWY_API constexpr size_t
+HWY_API HWY_LANES_CONSTEXPR size_t
 Lanes(TLane tag = 0)
 {
     return hn::Lanes(_Tag<TLane>());
@@ -124,3 +128,5 @@ using hn::Sub;
 using hn::Xor;
 
 #endif  // NPY_SIMDX
+
+} // namespace anonymous
