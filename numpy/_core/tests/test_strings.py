@@ -1373,8 +1373,10 @@ class TestOverride:
     @classmethod
     def setup_class(cls):
         class Override:
+
             def __array_function__(self, *args, **kwargs):
                 return "function"
+
             def __array_ufunc__(self, *args, **kwargs):
                 return "ufunc"
 
