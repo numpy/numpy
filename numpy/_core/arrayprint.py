@@ -66,7 +66,7 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         raise ValueError("floatmode option must be one of " +
                          ", ".join(f'"{m}"' for m in modes))
 
-    if sign not in [None, '-', '+', ' ']:
+    if sign not in {None, '-', '+', ' '}:
         raise ValueError("sign option must be one of ' ', '+', or '-'")
 
     if legacy is False:
@@ -1048,7 +1048,7 @@ class FloatingFormat:
             self.exp_size = -1
             self.unique = unique
 
-            if self.floatmode in ['fixed', 'maxprec_equal']:
+            if self.floatmode in {'fixed', 'maxprec_equal'}:
                 self.precision = self.min_digits = self.pad_right
                 self.trim = 'k'
             else:

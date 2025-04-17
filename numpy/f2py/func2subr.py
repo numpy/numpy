@@ -43,24 +43,22 @@ def var2fixfortran(vars, a, fa=None, f90mode=None):
         lk = 'len'
     if '*' in selector:
         if f90mode:
-            if selector['*'] in ['*', ':', '(*)']:
+            if selector['*'] in {'*', ':', '(*)'}:
                 vardef = '%s(len=*)' % (vardef)
             else:
                 vardef = '%s(%s=%s)' % (vardef, lk, selector['*'])
+        elif selector['*'] in {'*', ':'}:
+            vardef = '%s*(%s)' % (vardef, selector['*'])
         else:
-            if selector['*'] in ['*', ':']:
-                vardef = '%s*(%s)' % (vardef, selector['*'])
-            else:
-                vardef = '%s*%s' % (vardef, selector['*'])
-    else:
-        if 'len' in selector:
-            vardef = '%s(len=%s' % (vardef, selector['len'])
-            if 'kind' in selector:
-                vardef = '%s,kind=%s)' % (vardef, selector['kind'])
-            else:
-                vardef = '%s)' % (vardef)
-        elif 'kind' in selector:
-            vardef = '%s(kind=%s)' % (vardef, selector['kind'])
+            vardef = '%s*%s' % (vardef, selector['*'])
+    elif 'len' in selector:
+        vardef = '%s(len=%s' % (vardef, selector['len'])
+        if 'kind' in selector:
+            vardef = '%s,kind=%s)' % (vardef, selector['kind'])
+        else:
+            vardef = '%s)' % (vardef)
+    elif 'kind' in selector:
+        vardef = '%s(kind=%s)' % (vardef, selector['kind'])
 
     vardef = '%s %s' % (vardef, fa)
     if 'dimension' in vars[a]:

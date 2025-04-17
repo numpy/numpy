@@ -82,9 +82,9 @@ def normalize_descr(descr):
     for item in descr:
         dtype = item[1]
         if isinstance(dtype, str):
-            if dtype[0] not in ['|', '<', '>']:
+            if dtype[0] not in {'|', '<', '>'}:
                 onebyte = dtype[1:] == "1"
-                if onebyte or dtype[0] in ['S', 'V', 'b']:
+                if onebyte or dtype[0] in {'S', 'V', 'b'}:
                     dtype = "|" + dtype
                 else:
                     dtype = byteorder + dtype

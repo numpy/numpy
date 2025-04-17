@@ -198,7 +198,7 @@ _MAX_HEADER_SIZE = 10000
 
 
 def _check_version(version):
-    if version not in [(1, 0), (2, 0), (3, 0), None]:
+    if version not in {(1, 0), (2, 0), (3, 0), None}:
         msg = "we only support format version (1,0), (2,0), and (3,0), not %s"
         raise ValueError(msg % (version,))
 
@@ -769,14 +769,13 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
                     array, flags=['external_loop', 'buffered', 'zerosize_ok'],
                     buffersize=buffersize, order='F'):
                 fp.write(chunk.tobytes('C'))
+    elif isfileobj(fp):
+        array.tofile(fp)
     else:
-        if isfileobj(fp):
-            array.tofile(fp)
-        else:
-            for chunk in numpy.nditer(
-                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
-                    buffersize=buffersize, order='C'):
-                fp.write(chunk.tobytes('C'))
+        for chunk in numpy.nditer(
+                array, flags=['external_loop', 'buffered', 'zerosize_ok'],
+                buffersize=buffersize, order='C'):
+            fp.write(chunk.tobytes('C'))
 
 
 @set_module("numpy.lib.format")

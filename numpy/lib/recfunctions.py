@@ -1029,7 +1029,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     # we only allow a few types to be unstructured by manipulating the
     # strides, because we know it won't work with, for example, np.matrix nor
     # np.ma.MaskedArray.
-    can_view = type(arr) in (np.ndarray, np.recarray, np.memmap)
+    can_view = type(arr) in {np.ndarray, np.recarray, np.memmap}
     if (not copy) and can_view and all(dt.base == out_dtype for dt in dts):
         # all elements have the right dtype already; if they have a common
         # stride, we can just return a view
@@ -1532,7 +1532,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
 
     """
     # Check jointype
-    if jointype not in ('inner', 'outer', 'leftouter'):
+    if jointype not in {'inner', 'outer', 'leftouter'}:
         raise ValueError(
                 "The 'jointype' argument should be in 'inner', "
                 "'outer' or 'leftouter' (got '%s' instead)" % jointype
@@ -1644,7 +1644,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
             f += r1postfix
         current = output[f]
         current[:r1cmn] = selected[:r1cmn]
-        if jointype in ('outer', 'leftouter'):
+        if jointype in {'outer', 'leftouter'}:
             current[cmn:cmn + r1spc] = selected[r1cmn:]
     for f in r2names:
         selected = s2[f]

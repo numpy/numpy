@@ -31,7 +31,7 @@ class TestReturnInteger(util.F2PyTest):
         pytest.raises(Exception, t, t)
         pytest.raises(Exception, t, {})
 
-        if tname in ["t8", "s8"]:
+        if tname in {"t8", "s8"}:
             pytest.raises(OverflowError, t, 100000000000000000000000)
             pytest.raises(OverflowError, t, 10000000011111111111111.23)
 

@@ -250,7 +250,7 @@ class memmap(ndarray):
                 size = bytes // _dbytes
                 shape = (size,)
             else:
-                if type(shape) not in (tuple, list):
+                if type(shape) not in {tuple, list}:
                     try:
                         shape = [operator.index(shape)]
                     except TypeError:
@@ -262,7 +262,7 @@ class memmap(ndarray):
 
             bytes = int(offset + size * _dbytes)
 
-            if mode in ('w+', 'r+'):
+            if mode in {'w+', 'r+'}:
                 # gh-27723
                 # if bytes == 0, we write out 1 byte to allow empty memmap.
                 bytes = max(bytes, 1)

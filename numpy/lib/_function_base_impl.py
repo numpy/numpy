@@ -847,9 +847,9 @@ def select(condlist, choicelist, default=0):
     #       right `result_type` with NEP 50.  Most likely we will grow a better
     #       way to spell this (and this can be replaced).
     choicelist = [
-        choice if type(choice) in (int, float, complex) else np.asarray(choice)
+        choice if type(choice) in {int, float, complex} else np.asarray(choice)
         for choice in choicelist]
-    choicelist.append(default if type(default) in (int, float, complex)
+    choicelist.append(default if type(default) in {int, float, complex}
                       else np.asarray(default))
 
     try:
@@ -2138,7 +2138,6 @@ def disp(mesg, device=None, linefeed=True):
     else:
         device.write('%s' % mesg)
     device.flush()
-    return
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
@@ -3887,11 +3886,10 @@ def _ureduce(a, func, keepdims=False, **kwargs):
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (-1,))
             kwargs['axis'] = -1
-    else:
-        if keepdims:
-            if out is not None:
-                index_out = (0, ) * nd
-                kwargs['out'] = out[(Ellipsis, ) + index_out]
+    elif keepdims:
+        if out is not None:
+            index_out = (0, ) * nd
+            kwargs['out'] = out[(Ellipsis, ) + index_out]
 
     r = func(a, **kwargs)
 
@@ -4565,9 +4563,8 @@ def _quantile_is_valid(q):
         for i in range(q.size):
             if not (0.0 <= q[i] <= 1.0):
                 return False
-    else:
-        if not (q.min() >= 0 and q.max() <= 1):
-            return False
+    elif not (q.min() >= 0 and q.max() <= 1):
+        return False
     return True
 
 
@@ -4717,14 +4714,13 @@ def _quantile_ureduce_func(
         else:
             arr = a
             wgt = weights
+    elif axis is None:
+        axis = 0
+        arr = a.flatten()
+        wgt = None if weights is None else weights.flatten()
     else:
-        if axis is None:
-            axis = 0
-            arr = a.flatten()
-            wgt = None if weights is None else weights.flatten()
-        else:
-            arr = a.copy()
-            wgt = weights
+        arr = a.copy()
+        wgt = weights
     result = _quantile(arr,
                        quantiles=q,
                        axis=axis,
@@ -5243,7 +5239,7 @@ def meshgrid(*xi, copy=True, sparse=False, indexing='xy'):
     """
     ndim = len(xi)
 
-    if indexing not in ['xy', 'ij']:
+    if indexing not in {'xy', 'ij'}:
         raise ValueError(
             "Valid values for `indexing` are 'xy' and 'ij'.")
 

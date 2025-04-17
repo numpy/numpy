@@ -169,7 +169,7 @@ def set_default_printstyle(style):
     >>> print(f"{p:unicode}")
     1.0 + 2.0·x + 3.0·x²
     """
-    if style not in ('unicode', 'ascii'):
+    if style not in {'unicode', 'ascii'}:
         raise ValueError(
             f"Unsupported format string '{style}'. Valid options are 'ascii' "
             f"and 'unicode'"

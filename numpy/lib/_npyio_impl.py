@@ -428,7 +428,7 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
     memmap([4, 5, 6])
 
     """
-    if encoding not in ('ASCII', 'latin1', 'bytes'):
+    if encoding not in {'ASCII', 'latin1', 'bytes'}:
         # The 'encoding' value for pickle also affects what encoding
         # the serialized binary data of NumPy arrays is loaded
         # in. Pickle does not pass on the encoding information to
@@ -808,7 +808,7 @@ def _ensure_ndmin_ndarray_check_param(ndmin):
         e.g. loadtxt, genfromtxt
     """
     # Check correctness of the values of `ndmin`
-    if ndmin not in [0, 1, 2]:
+    if ndmin not in {0, 1, 2}:
         raise ValueError(f"Illegal value of ndmin keyword: {ndmin}")
 
 def _ensure_ndmin_ndarray(a, *, ndmin: int):
@@ -949,7 +949,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 
     read_dtype_via_object_chunks = None
     if dtype.kind in 'SUM' and (
-            dtype == "S0" or dtype == "U0" or dtype == "M8" or dtype == 'm8'):
+            dtype in {"S0", "U0", "M8", 'm8'}):
         # This is a legacy "flexible" dtype.  We do not truly support
         # parametric dtypes currently (no dtype discovery step in the core),
         # but have to support these for backward compatibility.
@@ -985,13 +985,12 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             if isinstance(comments[0], str) and len(comments[0]) == 1:
                 comment = comments[0]
                 comments = None
-        else:
-            # Input validation if there are multiple comment characters
-            if delimiter in comments:
-                raise TypeError(
-                    f"Comment characters '{comments}' cannot include the "
-                    f"delimiter '{delimiter}'"
-                )
+        # Input validation if there are multiple comment characters
+        elif delimiter in comments:
+            raise TypeError(
+                f"Comment characters '{comments}' cannot include the "
+                f"delimiter '{delimiter}'"
+            )
 
     # comment is now either a 1 or 0 character string or a tuple:
     if comments is not None:
@@ -1592,7 +1591,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         iscomplex_X = np.iscomplexobj(X)
         # `fmt` can be a string with multiple insertion points or a
         # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
-        if type(fmt) in (list, tuple):
+        if type(fmt) in {list, tuple}:
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
             format = delimiter.join(fmt)

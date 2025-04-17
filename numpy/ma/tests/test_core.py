@@ -636,7 +636,7 @@ class TestMaskedArray:
                     a_pickled = pickle.loads(pickle.dumps(a, protocol=proto))
                     assert_equal(a_pickled._mask, a._mask)
                     assert_equal(a_pickled._data, a._data)
-                    if dtype in (object, int):
+                    if dtype in {object, int}:
                         assert_equal(a_pickled.fill_value, 999)
                     else:
                         assert_equal(a_pickled.fill_value, dtype(999))

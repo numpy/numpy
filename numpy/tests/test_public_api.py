@@ -430,7 +430,7 @@ def test_api_importable():
 
 
 @pytest.mark.xfail(
-    sysconfig.get_config_var("Py_DEBUG") not in (None, 0, "0"),
+    sysconfig.get_config_var("Py_DEBUG") not in {None, 0, "0"},
     reason=(
         "NumPy possibly built with `USE_DEBUG=True ./tools/travis-test.sh`, "
         "which does not expose the `array_api` entry point. "
@@ -519,7 +519,7 @@ def test_core_shims_coherence():
         # no need to add it to np.core
         if (
             member_name.startswith("_")
-            or member_name in ["tests", "strings"]
+            or member_name in {"tests", "strings"}
             or f"numpy.{member_name}" in PUBLIC_ALIASED_MODULES
         ):
             continue
@@ -595,7 +595,7 @@ def test_functions_single_location():
                 not member_name.startswith("_") and  # not private
                 "numpy._core" not in member.__name__ and  # outside _core
                 # not a legacy or testing module
-                member_name not in ["f2py", "ma", "testing", "tests"] and
+                member_name not in {"f2py", "ma", "testing", "tests"} and
                 member not in visited_modules  # not visited yet
             ):
                 modules_queue.append(member)
@@ -610,7 +610,7 @@ def test_functions_single_location():
 
                     # skip main namespace functions with aliases
                     if (
-                        member.__name__ in [
+                        member.__name__ in {
                             "absolute",  # np.abs
                             "arccos",  # np.acos
                             "arccosh",  # np.acosh
@@ -628,7 +628,7 @@ def test_functions_single_location():
                             "concatenate",  # np.concat
                             "power",  # np.pow
                             "transpose",  # np.permute_dims
-                        ] and
+                        } and
                         module.__name__ == "numpy"
                     ):
                         continue
@@ -641,7 +641,7 @@ def test_functions_single_location():
                         continue
 
                     # skip ufuncs that are exported in np.strings as well
-                    if member.__name__ in (
+                    if member.__name__ in {
                         "add",
                         "equal",
                         "not_equal",
@@ -649,7 +649,7 @@ def test_functions_single_location():
                         "greater_equal",
                         "less",
                         "less_equal",
-                    ) and module.__name__ == "numpy.strings":
+                    } and module.__name__ == "numpy.strings":
                         continue
 
                     # numpy.char reexports all numpy.strings functions for
@@ -689,11 +689,11 @@ def test___module___attribute():
                 not member_name.startswith("_") and  # not private
                 "numpy._core" not in member.__name__ and  # outside _core
                 # not in a skip module list
-                member_name not in [
+                member_name not in {
                     "char", "core", "f2py", "ma", "lapack_lite", "mrecords",
                     "testing", "tests", "polynomial", "typing", "mtrand",
                     "bit_generator",
-                ] and
+                } and
                 member not in visited_modules  # not visited yet
             ):
                 modules_queue.append(member)
@@ -706,10 +706,10 @@ def test___module___attribute():
                 member not in visited_functions
             ):
                 # skip ufuncs that are exported in np.strings as well
-                if member.__name__ in (
+                if member.__name__ in {
                     "add", "equal", "not_equal", "greater", "greater_equal",
                     "less", "less_equal",
-                ) and module.__name__ == "numpy.strings":
+                } and module.__name__ == "numpy.strings":
                     continue
 
                 # recarray and record are exported in np and np.rec
@@ -721,16 +721,16 @@ def test___module___attribute():
 
                 # ctypeslib exports ctypes c_long/c_longlong
                 if (
-                    member.__name__ in ("c_long", "c_longlong") and
+                    member.__name__ in {"c_long", "c_longlong"} and
                     module.__name__ == "numpy.ctypeslib"
                 ):
                     continue
 
                 # skip cdef classes
-                if member.__name__ in (
+                if member.__name__ in {
                     "BitGenerator", "Generator", "MT19937", "PCG64", "PCG64DXSM",
                     "Philox", "RandomState", "SFC64", "SeedSequence",
-                ):
+                }:
                     continue
 
                 incorrect_entries.append(
@@ -780,13 +780,7 @@ def test___qualname___and___module___attribute():
             member = getattr(module, member_name)
             # first check if we got a module
             if (
-                inspect.ismodule(member) and  # it's a module
-                "numpy" in member.__name__ and  # inside NumPy
-                not member_name.startswith("_") and  # not private
-                member_name != "tests" and
-                member_name != "typing" and  # 2024-12: type names don't match
-                "numpy._core" not in member.__name__ and  # outside _core
-                member not in visited_modules  # not visited yet
+                inspect.ismodule(member) and "numpy" in member.__name__ and not member_name.startswith("_") and member_name not in {"tests", "typing"} and "numpy._core" not in member.__name__ and member not in visited_modules  # not visited yet
             ):
                 modules_queue.append(member)
                 visited_modules.add(member)

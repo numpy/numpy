@@ -43,7 +43,7 @@ old_assert_almost_equal = assert_almost_equal
 
 
 def assert_almost_equal(a, b, single_decimal=6, double_decimal=12, **kw):
-    if asarray(a).dtype.type in (single, csingle):
+    if asarray(a).dtype.type in {single, csingle}:
         decimal = single_decimal
     else:
         decimal = double_decimal
@@ -62,7 +62,7 @@ def get_complex_dtype(dtype):
 
 def get_rtol(dtype):
     # Choose a safe rtol
-    if dtype in (single, csingle):
+    if dtype in {single, csingle}:
         return 1e-5
     else:
         return 1e-11
@@ -888,7 +888,7 @@ class DetCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
         d = linalg.det(a)
         res = linalg.slogdet(a)
         s, ld = res.sign, res.logabsdet
-        if asarray(a).dtype.type in (single, double):
+        if asarray(a).dtype.type in {single, double}:
             ad = asarray(a).astype(double)
         else:
             ad = asarray(a).astype(cdouble)

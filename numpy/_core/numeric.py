@@ -1426,7 +1426,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     normalize_axis_index : normalizing a single scalar axis
     """
     # Optimization to speed-up the most common cases.
-    if type(axis) not in (tuple, list):
+    if type(axis) not in {tuple, list}:
         try:
             axis = [operator.index(axis)]
         except TypeError:
@@ -1657,7 +1657,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
     b = moveaxis(b, axisb, -1)
     msg = ("incompatible dimensions for cross product\n"
            "(dimension must be 2 or 3)")
-    if a.shape[-1] not in (2, 3) or b.shape[-1] not in (2, 3):
+    if a.shape[-1] not in {2, 3} or b.shape[-1] not in {2, 3}:
         raise ValueError(msg)
     if a.shape[-1] == 2 or b.shape[-1] == 2:
         # Deprecated in NumPy 2.0, 2023-09-26
@@ -2098,25 +2098,24 @@ def binary_repr(num, width=None):
         err_if_insufficient(width, binwidth)
         return binary.zfill(outwidth)
 
+    elif width is None:
+        return '-' + bin(-num)[2:]
+
     else:
-        if width is None:
-            return '-' + bin(-num)[2:]
+        poswidth = len(bin(-num)[2:])
 
-        else:
-            poswidth = len(bin(-num)[2:])
+        # See gh-8679: remove extra digit
+        # for numbers at boundaries.
+        if 2**(poswidth - 1) == -num:
+            poswidth -= 1
 
-            # See gh-8679: remove extra digit
-            # for numbers at boundaries.
-            if 2**(poswidth - 1) == -num:
-                poswidth -= 1
+        twocomp = 2**(poswidth + 1) + num
+        binary = bin(twocomp)[2:]
+        binwidth = len(binary)
 
-            twocomp = 2**(poswidth + 1) + num
-            binary = bin(twocomp)[2:]
-            binwidth = len(binary)
-
-            outwidth = builtins.max(binwidth, width)
-            err_if_insufficient(width, binwidth)
-            return '1' * (outwidth - binwidth) + binary
+        outwidth = builtins.max(binwidth, width)
+        err_if_insufficient(width, binwidth)
+        return '1' * (outwidth - binwidth) + binary
 
 
 @set_module('numpy')

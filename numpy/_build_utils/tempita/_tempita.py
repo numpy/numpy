@@ -152,6 +152,7 @@ class Template:
         if default_inherit is not None:
             self.default_inherit = default_inherit
 
+    @classmethod
     def from_filename(
         cls,
         filename,
@@ -171,8 +172,6 @@ class Template:
             default_inherit=default_inherit,
             get_template=get_template,
         )
-
-    from_filename = classmethod(from_filename)
 
     def __repr__(self):
         return "<%s %s name=%r>" % (
@@ -790,15 +789,14 @@ def parse_expr(tokens, name, context=()):
                 expr = expr.replace("\r\n", "\n")
                 expr = expr.replace("\r", "")
             expr += "\n"
-        else:
-            if "\n" in expr:
-                raise TemplateError(
-                    "Multi-line py blocks must start with a newline",
-                    position=pos,
-                    name=name,
-                )
+        elif "\n" in expr:
+            raise TemplateError(
+                "Multi-line py blocks must start with a newline",
+                position=pos,
+                name=name,
+            )
         return ("py", pos, expr), tokens[1:]
-    elif expr in ("continue", "break"):
+    elif expr in {"continue", "break"}:
         if "for" not in context:
             raise TemplateError("continue outside of for loop", position=pos, name=name)
         return (expr, pos), tokens[1:]
@@ -808,9 +806,9 @@ def parse_expr(tokens, name, context=()):
         raise TemplateError(
             "%s outside of an if block" % expr.split()[0], position=pos, name=name
         )
-    elif expr in ("if", "elif", "for"):
+    elif expr in {"if", "elif", "for"}:
         raise TemplateError("%s with no expression" % expr, position=pos, name=name)
-    elif expr in ("endif", "endfor", "enddef"):
+    elif expr in {"endif", "endfor", "enddef"}:
         raise TemplateError("Unexpected %s" % expr, position=pos, name=name)
     elif expr.startswith("for "):
         return parse_for(tokens, name, context)
@@ -980,7 +978,7 @@ def parse_signature(sig_text, name, pos):
         tok_type, tok_string = get_token()
         if tok_type == tokenize.ENDMARKER:
             break
-        if tok_type == tokenize.OP and (tok_string == "*" or tok_string == "**"):
+        if tok_type == tokenize.OP and (tok_string in {"*", "**"}):
             var_arg_type = tok_string
             tok_type, tok_string = get_token()
         if tok_type != tokenize.NAME:
@@ -1040,7 +1038,7 @@ def parse_signature(sig_text, name, pos):
                 elif (
                     not nest_count
                     and tok_type == tokenize.OP
-                    and tok_string in ("(", "[", "{")
+                    and tok_string in {"(", "[", "{"}
                 ):
                     nest_type = tok_string
                     nest_count = 1

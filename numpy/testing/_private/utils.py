@@ -88,7 +88,7 @@ else:
     if not IS_EDITABLE and np_dist.locate_file('numpy') != NUMPY_ROOT:
         IS_INSTALLED = False
 
-IS_WASM = platform.machine() in ["wasm32", "wasm64"]
+IS_WASM = platform.machine() in {"wasm32", "wasm64"}
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
@@ -616,9 +616,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
             if isnan(desired) or isnan(actual):
                 if not (isnan(desired) and isnan(actual)):
                     raise AssertionError(_build_err_msg())
-            else:
-                if not desired == actual:
-                    raise AssertionError(_build_err_msg())
+            elif not desired == actual:
+                raise AssertionError(_build_err_msg())
             return
     except (NotImplementedError, TypeError):
         pass
@@ -716,9 +715,8 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
             if isnan(desired) or isnan(actual):
                 if not (isnan(desired) and isnan(actual)):
                     raise AssertionError(msg)
-            else:
-                if not desired == actual:
-                    raise AssertionError(msg)
+            elif not desired == actual:
+                raise AssertionError(msg)
             return
     except (TypeError, NotImplementedError):
         pass
@@ -1529,7 +1527,6 @@ def decorate_methods(cls, decorator, testmatch=None):
             continue
         if testmatch.search(funcname) and not funcname.startswith('_'):
             setattr(cls, funcname, decorator(function))
-    return
 
 
 def measure(code_str, times=1, label=None):
@@ -1899,9 +1896,8 @@ def _integer_repr(x, vdt, comp):
     rx = x.view(vdt)
     if not (rx.size == 1):
         rx[rx < 0] = comp - rx[rx < 0]
-    else:
-        if rx < 0:
-            rx = comp - rx
+    elif rx < 0:
+        rx = comp - rx
 
     return rx
 

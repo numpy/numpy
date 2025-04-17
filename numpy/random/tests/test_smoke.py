@@ -66,13 +66,12 @@ def comp_state(state1, state2):
             identical &= comp_state(state1[key], state2[key])
     elif type(state1) != type(state2):
         identical &= type(state1) == type(state2)
+    elif (isinstance(state1, (list, tuple, np.ndarray)) and isinstance(
+            state2, (list, tuple, np.ndarray))):
+        for s1, s2 in zip(state1, state2):
+            identical &= comp_state(s1, s2)
     else:
-        if (isinstance(state1, (list, tuple, np.ndarray)) and isinstance(
-                state2, (list, tuple, np.ndarray))):
-            for s1, s2 in zip(state1, state2):
-                identical &= comp_state(s1, s2)
-        else:
-            identical &= state1 == state2
+        identical &= state1 == state2
     return identical
 
 
@@ -144,7 +143,7 @@ class RNG:
             assert_(comp_state(jumped_state, rejumped_state))
         else:
             bitgen_name = self.rg.bit_generator.__class__.__name__
-            if bitgen_name not in ('SFC64',):
+            if bitgen_name not in {'SFC64',}:
                 raise AttributeError(f'no "jumped" in {bitgen_name}')
             pytest.skip(f'Jump is not supported by {bitgen_name}')
 

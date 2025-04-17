@@ -398,7 +398,7 @@ def _info(obj, output=None):
         file=output
         )
     print("byteorder: ", end=' ', file=output)
-    if endian in ['|', '=']:
+    if endian in {'|', '='}:
         print("%s%s%s" % (tic, sys.byteorder, tic), file=output)
         byteswap = False
     elif endian == '>':

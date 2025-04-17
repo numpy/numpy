@@ -229,9 +229,8 @@ def getctype(var):
                         errmess('getctype: "%s(kind=%s)" is mapped to C "%s" (to override define dict(%s = dict(%s="<C typespec>")) in %s/.f2py_f2cmap file).\n'
                                 % (typespec, var['kindselector']['kind'], ctype,
                                    typespec, var['kindselector']['kind'], os.getcwd()))
-    else:
-        if not isexternal(var):
-            errmess('getctype: No C-type found in "%s", assuming void.\n' % var)
+    elif not isexternal(var):
+        errmess('getctype: No C-type found in "%s", assuming void.\n' % var)
     return ctype
 
 
@@ -313,7 +312,7 @@ def getarrdims(a, var, verbose=0):
         ret['setdims'], i = '', -1
         for d in dim:
             i = i + 1
-            if d not in ['*', ':', '(*)', '(:)']:
+            if d not in {'*', ':', '(*)', '(:)'}:
                 ret['setdims'] = '%s#varname#_Dims[%d]=%s,' % (
                     ret['setdims'], i, d)
         if ret['setdims']:
@@ -321,7 +320,7 @@ def getarrdims(a, var, verbose=0):
         ret['cbsetdims'], i = '', -1
         for d in var['dimension']:
             i = i + 1
-            if d not in ['*', ':', '(*)', '(:)']:
+            if d not in {'*', ':', '(*)', '(:)'}:
                 ret['cbsetdims'] = '%s#varname#_Dims[%d]=%s,' % (
                     ret['cbsetdims'], i, d)
             elif isintent_in(var):
@@ -777,10 +776,9 @@ return_value=
 void
 #endif
 """
-    else:
-        if hasnote(rout):
-            ret['note'] = rout['note']
-            rout['note'] = ['See elsewhere.']
+    elif hasnote(rout):
+        ret['note'] = rout['note']
+        rout['note'] = ['See elsewhere.']
     nofargs = 0
     nofoptargs = 0
     if 'args' in rout and 'vars' in rout:

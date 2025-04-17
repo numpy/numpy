@@ -190,16 +190,16 @@ class Expr:
             # (default is 1)
             assert isinstance(data, tuple) and len(data) == 2
             assert (isinstance(data[0], str)
-                    and data[0][::len(data[0]) - 1] in ('""', "''", '@@'))
+                    and data[0][::len(data[0]) - 1] in {'""', "''", '@@'})
             assert isinstance(data[1], (int, str)), data
         elif op is Op.SYMBOL:
             # data is any hashable object
             assert hash(data) is not None
-        elif op in (Op.ARRAY, Op.CONCAT):
+        elif op in {Op.ARRAY, Op.CONCAT}:
             # data is a tuple of expressions
             assert isinstance(data, tuple)
             assert all(isinstance(item, Expr) for item in data), data
-        elif op in (Op.TERMS, Op.FACTORS):
+        elif op in {Op.TERMS, Op.FACTORS}:
             # data is {<term|base>:<coeff|exponent>} where dict values
             # are nonzero Python integers
             assert isinstance(data, dict)
@@ -219,7 +219,7 @@ class Expr:
         elif op is Op.TERNARY:
             # data is (<cond>, <expr1>, <expr2>)
             assert isinstance(data, tuple) and len(data) == 3
-        elif op in (Op.REF, Op.DEREF):
+        elif op in {Op.REF, Op.DEREF}:
             # data is Expr instance
             assert isinstance(data, Expr)
         elif op is Op.RELATIONAL:
@@ -238,7 +238,7 @@ class Expr:
                 and self.data == other.data)
 
     def __hash__(self):
-        if self.op in (Op.TERMS, Op.FACTORS):
+        if self.op in {Op.TERMS, Op.FACTORS}:
             data = tuple(sorted(self.data.items()))
         elif self.op is Op.APPLY:
             data = self.data[:2] + tuple(sorted(self.data[2].items()))
@@ -250,7 +250,7 @@ class Expr:
         if isinstance(other, Expr):
             if self.op is not other.op:
                 return self.op.value < other.op.value
-            if self.op in (Op.TERMS, Op.FACTORS):
+            if self.op in {Op.TERMS, Op.FACTORS}:
                 return (tuple(sorted(self.data.items()))
                         < tuple(sorted(other.data.items())))
             if self.op is Op.APPLY:
@@ -277,7 +277,7 @@ class Expr:
                  language=Language.Fortran):
         """Return a string representation of Expr.
         """
-        if self.op in (Op.INTEGER, Op.REAL):
+        if self.op in {Op.INTEGER, Op.REAL}:
             precedence = (Precedence.SUM if self.data[0] < 0
                           else Precedence.ATOM)
             r = str(self.data[0]) + (f'_{self.data[1]}'
@@ -310,12 +310,11 @@ class Expr:
                     op = ' + '
                 if coeff == 1:
                     term = term.tostring(Precedence.SUM, language=language)
+                elif term == as_number(1):
+                    term = str(coeff)
                 else:
-                    if term == as_number(1):
-                        term = str(coeff)
-                    else:
-                        term = f'{coeff} * ' + term.tostring(
-                            Precedence.PRODUCT, language=language)
+                    term = f'{coeff} * ' + term.tostring(
+                        Precedence.PRODUCT, language=language)
                 if terms:
                     terms.append(op)
                 elif op == ' - ':
@@ -405,7 +404,7 @@ class Expr:
             precedence = Precedence.UNARY
         elif self.op is Op.RELATIONAL:
             rop, left, right = self.data
-            precedence = (Precedence.EQ if rop in (RelOp.EQ, RelOp.NE)
+            precedence = (Precedence.EQ if rop in {RelOp.EQ, RelOp.NE}
                           else Precedence.LT)
             left = left.tostring(precedence, language=language)
             right = right.tostring(precedence, language=language)
@@ -429,7 +428,7 @@ class Expr:
         other = as_expr(other)
         if isinstance(other, Expr):
             if self.op is other.op:
-                if self.op in (Op.INTEGER, Op.REAL):
+                if self.op in {Op.INTEGER, Op.REAL}:
                     return as_number(
                         self.data[0] + other.data[0],
                         max(self.data[1], other.data[1]))
@@ -442,9 +441,9 @@ class Expr:
                     for k, v in other.data.items():
                         _pairs_add(r.data, k, v)
                     return normalize(r)
-            if self.op is Op.COMPLEX and other.op in (Op.INTEGER, Op.REAL):
+            if self.op is Op.COMPLEX and other.op in {Op.INTEGER, Op.REAL}:
                 return self + as_complex(other)
-            elif self.op in (Op.INTEGER, Op.REAL) and other.op is Op.COMPLEX:
+            elif self.op in {Op.INTEGER, Op.REAL} and other.op is Op.COMPLEX:
                 return as_complex(self) + other
             elif self.op is Op.REAL and other.op is Op.INTEGER:
                 return self + as_real(other, kind=self.data[1])
@@ -470,7 +469,7 @@ class Expr:
         other = as_expr(other)
         if isinstance(other, Expr):
             if self.op is other.op:
-                if self.op in (Op.INTEGER, Op.REAL):
+                if self.op in {Op.INTEGER, Op.REAL}:
                     return as_number(self.data[0] * other.data[0],
                                      max(self.data[1], other.data[1]))
                 elif self.op is Op.COMPLEX:
@@ -490,9 +489,9 @@ class Expr:
                             _pairs_add(r.data, t1 * t2, c1 * c2)
                     return normalize(r)
 
-            if self.op is Op.COMPLEX and other.op in (Op.INTEGER, Op.REAL):
+            if self.op is Op.COMPLEX and other.op in {Op.INTEGER, Op.REAL}:
                 return self * as_complex(other)
-            elif other.op is Op.COMPLEX and self.op in (Op.INTEGER, Op.REAL):
+            elif other.op is Op.COMPLEX and self.op in {Op.INTEGER, Op.REAL}:
                 return as_complex(self) * other
             elif self.op is Op.REAL and other.op is Op.INTEGER:
                 return self * as_real(other, kind=self.data[1])
@@ -595,13 +594,13 @@ class Expr:
             if m:
                 # complement to fromstring method
                 items, paren = m.groups()
-                if paren in ['ROUNDDIV', 'SQUARE']:
+                if paren in {'ROUNDDIV', 'SQUARE'}:
                     return as_array(value)
                 assert paren == 'ROUND', (paren, value)
             return value
-        if self.op in (Op.INTEGER, Op.REAL, Op.STRING):
+        if self.op in {Op.INTEGER, Op.REAL, Op.STRING}:
             return self
-        if self.op in (Op.ARRAY, Op.COMPLEX):
+        if self.op in {Op.ARRAY, Op.COMPLEX}:
             return Expr(self.op, tuple(item.substitute(symbols_map)
                                        for item in self.data))
         if self.op is Op.CONCAT:
@@ -648,7 +647,7 @@ class Expr:
         if self.op is Op.TERNARY:
             operands = tuple(a.substitute(symbols_map) for a in self.data)
             return normalize(Expr(self.op, operands))
-        if self.op in (Op.REF, Op.DEREF):
+        if self.op in {Op.REF, Op.DEREF}:
             return normalize(Expr(self.op, self.data.substitute(symbols_map)))
         if self.op is Op.RELATIONAL:
             rop, left, right = self.data
@@ -671,13 +670,13 @@ class Expr:
         if result is not None:
             return result
 
-        if self.op in (Op.INTEGER, Op.REAL, Op.STRING, Op.SYMBOL):
+        if self.op in {Op.INTEGER, Op.REAL, Op.STRING, Op.SYMBOL}:
             return self
-        elif self.op in (Op.COMPLEX, Op.ARRAY, Op.CONCAT, Op.TERNARY):
+        elif self.op in {Op.COMPLEX, Op.ARRAY, Op.CONCAT, Op.TERNARY}:
             return normalize(Expr(self.op, tuple(
                 item.traverse(visit, *args, **kwargs)
                 for item in self.data)))
-        elif self.op in (Op.TERMS, Op.FACTORS):
+        elif self.op in {Op.TERMS, Op.FACTORS}:
             data = {}
             for k, v in self.data.items():
                 k = k.traverse(visit, *args, **kwargs)
@@ -703,7 +702,7 @@ class Expr:
             indices = tuple(index.traverse(visit, *args, **kwargs)
                             for index in self.data[1:])
             return normalize(Expr(self.op, (obj,) + indices))
-        elif self.op in (Op.REF, Op.DEREF):
+        elif self.op in {Op.REF, Op.DEREF}:
             return normalize(Expr(self.op,
                                   self.data.traverse(visit, *args, **kwargs)))
         elif self.op is Op.RELATIONAL:
@@ -752,19 +751,19 @@ class Expr:
                 for b in expr.data:
                     b.traverse(visit)
                 return expr
-            if expr.op in (Op.TERMS, Op.COMPLEX):
+            if expr.op in {Op.TERMS, Op.COMPLEX}:
                 return
             if expr.op is Op.APPLY and isinstance(expr.data[0], ArithOp):
                 if expr.data[0] is ArithOp.POW:
                     expr.data[1][0].traverse(visit)
                     return expr
                 return
-            if expr.op in (Op.INTEGER, Op.REAL):
+            if expr.op in {Op.INTEGER, Op.REAL}:
                 return expr
 
             found.add(expr)
 
-            if expr.op in (Op.INDEXING, Op.APPLY):
+            if expr.op in {Op.INDEXING, Op.APPLY}:
                 return expr
 
         self.traverse(visit)
@@ -827,7 +826,7 @@ def normalize(obj):
                 b = b * (b ** (e - 1))
                 e = 1
 
-            if b.op in (Op.INTEGER, Op.REAL):
+            if b.op in {Op.INTEGER, Op.REAL}:
                 if e == 1:
                     coeff *= b.data[0]
                 elif e > 0:
@@ -892,7 +891,7 @@ def normalize(obj):
         numer = normalize(Expr(Op.FACTORS, numer)) * c1
         denom = normalize(Expr(Op.FACTORS, denom)) * c2
 
-        if denom.op in (Op.INTEGER, Op.REAL) and denom.data[0] == 1:
+        if denom.op in {Op.INTEGER, Op.REAL} and denom.data[0] == 1:
             # TODO: denom kind not used
             return numer
         return as_apply(ArithOp.DIV, numer, denom)
@@ -955,7 +954,7 @@ def as_number(obj, kind=4):
     if isinstance(obj, float):
         return Expr(Op.REAL, (obj, kind))
     if isinstance(obj, Expr):
-        if obj.op in (Op.INTEGER, Op.REAL):
+        if obj.op in {Op.INTEGER, Op.REAL}:
             return obj
     raise OpError(f'cannot convert {obj} to INTEGER or REAL constant')
 
@@ -1118,8 +1117,8 @@ def as_numer_denom(obj):
     """
     if isinstance(obj, Expr):
         obj = normalize(obj)
-        if obj.op in (Op.INTEGER, Op.REAL, Op.COMPLEX, Op.SYMBOL,
-                      Op.INDEXING, Op.TERNARY):
+        if obj.op in {Op.INTEGER, Op.REAL, Op.COMPLEX, Op.SYMBOL,
+                      Op.INDEXING, Op.TERNARY}:
             return obj, as_number(1)
         elif obj.op is Op.APPLY:
             if obj.data[0] is ArithOp.DIV and not obj.data[2]:
@@ -1141,7 +1140,7 @@ def as_numer_denom(obj):
                         n *= denoms[j]
                 numer += n
                 denom *= denoms[i]
-            if denom.op in (Op.INTEGER, Op.REAL) and denom.data[0] < 0:
+            if denom.op in {Op.INTEGER, Op.REAL} and denom.data[0] < 0:
                 numer, denom = -numer, -denom
             return numer, denom
         elif obj.op is Op.FACTORS:
@@ -1478,7 +1477,7 @@ class _FromStringWorker:
             if paren == 'ROUND':
                 if isinstance(items, Expr):
                     return items
-            if paren in ['ROUNDDIV', 'SQUARE']:
+            if paren in {'ROUNDDIV', 'SQUARE'}:
                 # Expression is a array constructor
                 if isinstance(items, Expr):
                     items = (items,)

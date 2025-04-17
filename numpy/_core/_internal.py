@@ -30,7 +30,7 @@ def _makenames_list(adict, align):
 
     for fname, obj in adict.items():
         n = len(obj)
-        if not isinstance(obj, tuple) or n not in (2, 3):
+        if not isinstance(obj, tuple) or n not in {2, 3}:
             raise ValueError("entry not a 2- or 3- tuple")
         if n > 2 and obj[2] == fname:
             continue
@@ -187,7 +187,7 @@ def _commastring(astr):
                     (order1, order2))
             order = order1
 
-        if order in ('|', '=', _nbo):
+        if order in {'|', '=', _nbo}:
             order = ''
         dtype = order + dtype
         if repeats == '':
@@ -694,14 +694,14 @@ def __dtype_from_pep3118(stream, is_subdtype):
             shape = tuple(map(int, shape.split(',')))
 
         # Byte order
-        if stream.next in ('@', '=', '<', '>', '^', '!'):
+        if stream.next in {'@', '=', '<', '>', '^', '!'}:
             byteorder = stream.advance(1)
             if byteorder == '!':
                 byteorder = '>'
             stream.byteorder = byteorder
 
         # Byte order characters also control native vs. standard type sizes
-        if stream.byteorder in ('@', '^'):
+        if stream.byteorder in {'@', '^'}:
             type_map = _pep3118_native_map
             type_map_chars = _pep3118_native_typechars
         else:

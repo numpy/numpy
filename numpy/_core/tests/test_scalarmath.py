@@ -90,7 +90,7 @@ def check_ufunc_scalar_equivalence(op, arr1, arr2):
         comp_ops = {operator.ge, operator.gt, operator.le, operator.lt}
         if op in comp_ops and (np.isnan(scalar1) or np.isnan(scalar2)):
             pytest.xfail("complex comp ufuncs use sort-order, scalars do not.")
-    if op == operator.pow and arr2.item() in [-1, 0, 0.5, 1, 2]:
+    if op == operator.pow and arr2.item() in {-1, 0, 0.5, 1, 2}:
         # array**scalar special case can have different result dtype
         # (Other powers may have issues also, but are not hit here.)
         # TODO: It would be nice to resolve this issue.
@@ -945,7 +945,7 @@ def test_longdouble_with_arrlike(sctype, op):
 def test_longdouble_operators_with_large_int(sctype, op):
     # (See `test_longdouble_operators_with_obj` for why longdouble is special)
     # NEP 50 means that the result is clearly a (c)longdouble here:
-    if sctype == np.clongdouble and op in [operator.mod, operator.floordiv]:
+    if sctype == np.clongdouble and op in {operator.mod, operator.floordiv}:
         # The above operators are not support for complex though...
         with pytest.raises(TypeError):
             op(sctype(3), 2**64)

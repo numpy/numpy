@@ -218,7 +218,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         dst_sources.append(dst)
 
         base, ext = os.path.splitext(dst)
-        if ext in (".f90", ".f95", ".f", ".c", ".pyf"):
+        if ext in {".f90", ".f95", ".f", ".c", ".pyf"}:
             f2py_sources.append(dst)
 
     assert f2py_sources

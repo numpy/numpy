@@ -116,7 +116,7 @@ def isscalar(var):
 
 def iscomplex(var):
     return isscalar(var) and \
-           var.get('typespec') in ['complex', 'double complex']
+           var.get('typespec') in {'complex', 'double complex'}
 
 
 def islogical(var):
@@ -149,7 +149,7 @@ def isint1(var):
 def islong_long(var):
     if not isscalar(var):
         return 0
-    if var.get('typespec') not in ['integer', 'logical']:
+    if var.get('typespec') not in {'integer', 'logical'}:
         return 0
     return get_kind(var) == '8'
 
@@ -210,7 +210,7 @@ def islong_complex(var):
 
 def iscomplexarray(var):
     return isarray(var) and \
-           var.get('typespec') in ['complex', 'double complex']
+           var.get('typespec') in {'complex', 'double complex'}
 
 
 def isint1array(var):
@@ -219,42 +219,42 @@ def isint1array(var):
 
 
 def isunsigned_chararray(var):
-    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+    return isarray(var) and var.get('typespec') in {'integer', 'logical'}\
         and get_kind(var) == '-1'
 
 
 def isunsigned_shortarray(var):
-    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+    return isarray(var) and var.get('typespec') in {'integer', 'logical'}\
         and get_kind(var) == '-2'
 
 
 def isunsignedarray(var):
-    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+    return isarray(var) and var.get('typespec') in {'integer', 'logical'}\
         and get_kind(var) == '-4'
 
 
 def isunsigned_long_longarray(var):
-    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+    return isarray(var) and var.get('typespec') in {'integer', 'logical'}\
         and get_kind(var) == '-8'
 
 
 def issigned_chararray(var):
-    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+    return isarray(var) and var.get('typespec') in {'integer', 'logical'}\
         and get_kind(var) == '1'
 
 
 def issigned_shortarray(var):
-    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+    return isarray(var) and var.get('typespec') in {'integer', 'logical'}\
         and get_kind(var) == '2'
 
 
 def issigned_array(var):
-    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+    return isarray(var) and var.get('typespec') in {'integer', 'logical'}\
         and get_kind(var) == '4'
 
 
 def issigned_long_longarray(var):
-    return isarray(var) and var.get('typespec') in ['integer', 'logical']\
+    return isarray(var) and var.get('typespec') in {'integer', 'logical'}\
         and get_kind(var) == '8'
 
 
@@ -524,7 +524,7 @@ def isprivate(var):
 def isvariable(var):
     # heuristic to find public/private declarations of filtered subroutines
     if len(var) == 1 and 'attrspec' in var and \
-            var['attrspec'][0] in ('public', 'private'):
+            var['attrspec'][0] in {'public', 'private'}:
         is_var = False
     else:
         is_var = True
@@ -537,7 +537,7 @@ def hasinitvalue(var):
 def hasinitvalueasstring(var):
     if not hasinitvalue(var):
         return 0
-    return var['='][0] in ['"', "'"]
+    return var['='][0] in {'"', "'"}
 
 
 def hasnote(var):
@@ -710,9 +710,8 @@ def getcallprotoargument(rout, cb_map={}):
                 pass
             elif isstring(var):
                 pass
-            else:
-                if not isattr_value(var):
-                    ctype = ctype + '*'
+            elif not isattr_value(var):
+                ctype = ctype + '*'
             if (isstring(var)
                  or isarrayofstrings(var)  # obsolete?
                  or isstringarray(var)):
@@ -985,11 +984,10 @@ def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
                 if verbose:
                     outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k, k1, v1))
                 f2cmap_mapped.append(v1)
-            else:
-                if verbose:
-                    errmess(
-                        "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
-                        % (k, k1, v1, v1, list(c2py_map.keys()))
-                    )
+            elif verbose:
+                errmess(
+                    "\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"
+                    % (k, k1, v1, v1, list(c2py_map.keys()))
+                )
 
     return f2cmap_all, f2cmap_mapped

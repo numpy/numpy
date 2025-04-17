@@ -1156,7 +1156,7 @@ def mask_rowcols(a, axis=None):
     a._mask = a._mask.copy()
     if not axis:
         a[np.unique(maskedval[0])] = masked
-    if axis in [None, 1, -1]:
+    if axis in {None, 1, -1}:
         a[:, np.unique(maskedval[1])] = masked
     return a
 

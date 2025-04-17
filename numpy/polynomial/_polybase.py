@@ -329,7 +329,7 @@ class ABCPolyBase(abc.ABC):
     def __format__(self, fmt_str):
         if fmt_str == '':
             return self.__str__()
-        if fmt_str not in ('ascii', 'unicode'):
+        if fmt_str not in {'ascii', 'unicode'}:
             raise ValueError(
                 f"Unsupported format string '{fmt_str}' passed to "
                 f"{self.__class__}.__format__. Valid options are "

@@ -921,7 +921,7 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             f"Invalid kind: '{kind}'. Please use None, 'sort' or 'table'.")
 
     # Can use the table method if all arrays are integers or boolean:
-    is_int_arrays = all(ar.dtype.kind in ("u", "i", "b") for ar in (ar1, ar2))
+    is_int_arrays = all(ar.dtype.kind in {"u", "i", "b"} for ar in (ar1, ar2))
     use_table_method = is_int_arrays and kind in {None, 'table'}
 
     if use_table_method:
