@@ -417,7 +417,7 @@ def readfortrancode(ffile, dowithline=show, istop=1):
                 beginpattern = beginpattern90
             outmess('\tReading file %s (format:%s%s)\n'
                     % (repr(currentfilename), sourcecodeform,
-                       strictf77 and ',strict' or ''))
+                       (strictf77 and ',strict') or ''))
 
         l = l.expandtabs().replace('\xa0', ' ')
         # Get rid of newline characters

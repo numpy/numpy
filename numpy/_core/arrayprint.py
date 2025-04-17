@@ -1594,9 +1594,9 @@ def _array_repr_implementation(
     # Add dtype and shape information if these cannot be inferred from
     # the array string.
     extras = []
-    if (arr.size == 0 and arr.shape != (0,)
-            or current_options['legacy'] > 210
-            and arr.size > current_options['threshold']):
+    if ((arr.size == 0 and arr.shape != (0,))
+            or (current_options['legacy'] > 210
+            and arr.size > current_options['threshold'])):
         extras.append(f"shape={arr.shape}")
     if not dtype_is_implied(arr.dtype) or arr.size == 0:
         extras.append(f"dtype={dtype_short_repr(arr.dtype)}")

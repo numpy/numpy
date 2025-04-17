@@ -1623,9 +1623,9 @@ M   33  21.99
 
     def test_invalid_converter(self):
         strip_rand = lambda x: float((b'r' in x.lower() and x.split()[-1]) or
-                                     (b'r' not in x.lower() and x.strip() or 0.0))
+                                     ((b'r' not in x.lower() and x.strip()) or 0.0))
         strip_per = lambda x: float((b'%' in x.lower() and x.split()[0]) or
-                                    (b'%' not in x.lower() and x.strip() or 0.0))
+                                    ((b'%' not in x.lower() and x.strip()) or 0.0))
         s = TextIO("D01N01,10/1/2003 ,1 %,R 75,400,600\r\n"
                    "L24U05,12/5/2003, 2 %,1,300, 150.5\r\n"
                    "D02N03,10/10/2004,R 1,,7,145.55")
