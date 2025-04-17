@@ -3948,16 +3948,15 @@ class TestBinop:
                     elif ufunc_override_expected:
                         assert_equal(arr_method(obj)[0], "__array_ufunc__",
                                      err_msg)
+                    elif (isinstance(obj, np.ndarray) and
+                        (type(obj).__array_ufunc__ is
+                         np.ndarray.__array_ufunc__)):
+                        # __array__ gets ignored
+                        res = first_out_arg(arr_method(obj))
+                        assert_(res.__class__ is obj.__class__, err_msg)
                     else:
-                        if (isinstance(obj, np.ndarray) and
-                            (type(obj).__array_ufunc__ is
-                             np.ndarray.__array_ufunc__)):
-                            # __array__ gets ignored
-                            res = first_out_arg(arr_method(obj))
-                            assert_(res.__class__ is obj.__class__, err_msg)
-                        else:
-                            assert_raises((TypeError, Coerced),
-                                          arr_method, obj, err_msg=err_msg)
+                        assert_raises((TypeError, Coerced),
+                                      arr_method, obj, err_msg=err_msg)
                     # obj __op__ arr
                     arr_rmethod = getattr(arr, f"__r{op}__")
                     if ufunc_override_expected:
@@ -3965,17 +3964,16 @@ class TestBinop:
                         assert_equal(res[0], "__array_ufunc__",
                                      err_msg=err_msg)
                         assert_equal(res[1], ufunc, err_msg=err_msg)
+                    elif (isinstance(obj, np.ndarray) and
+                            (type(obj).__array_ufunc__ is
+                             np.ndarray.__array_ufunc__)):
+                        # __array__ gets ignored
+                        res = first_out_arg(arr_rmethod(obj))
+                        assert_(res.__class__ is obj.__class__, err_msg)
                     else:
-                        if (isinstance(obj, np.ndarray) and
-                                (type(obj).__array_ufunc__ is
-                                 np.ndarray.__array_ufunc__)):
-                            # __array__ gets ignored
-                            res = first_out_arg(arr_rmethod(obj))
-                            assert_(res.__class__ is obj.__class__, err_msg)
-                        else:
-                            # __array_ufunc__ = "asdf" creates a TypeError
-                            assert_raises((TypeError, Coerced),
-                                          arr_rmethod, obj, err_msg=err_msg)
+                        # __array_ufunc__ = "asdf" creates a TypeError
+                        assert_raises((TypeError, Coerced),
+                                      arr_rmethod, obj, err_msg=err_msg)
 
                     # arr __iop__ obj
                     # array scalars don't have in-place operators
@@ -3990,16 +3988,15 @@ class TestBinop:
                             assert_equal(res[1], ufunc, err_msg)
                             assert_(type(res[-1]["out"]) is tuple, err_msg)
                             assert_(res[-1]["out"][0] is arr, err_msg)
+                        elif (isinstance(obj, np.ndarray) and
+                                (type(obj).__array_ufunc__ is
+                                np.ndarray.__array_ufunc__)):
+                            # __array__ gets ignored
+                            assert_(arr_imethod(obj) is arr, err_msg)
                         else:
-                            if (isinstance(obj, np.ndarray) and
-                                    (type(obj).__array_ufunc__ is
-                                    np.ndarray.__array_ufunc__)):
-                                # __array__ gets ignored
-                                assert_(arr_imethod(obj) is arr, err_msg)
-                            else:
-                                assert_raises((TypeError, Coerced),
-                                              arr_imethod, obj,
-                                              err_msg=err_msg)
+                            assert_raises((TypeError, Coerced),
+                                          arr_imethod, obj,
+                                          err_msg=err_msg)
 
                     op_fn = getattr(operator, op, None)
                     if op_fn is None:

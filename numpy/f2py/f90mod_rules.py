@@ -201,15 +201,14 @@ def buildhooks(pymod):
                     fhooks[0] = fhooks[0] + wrap
                     fargs.append('f2pywrap_%s_%s' % (m['name'], b['name']))
                     ifargs.append(func2subr.createfuncwrapper(b, signature=1))
+                elif wrap:
+                    fhooks[0] = fhooks[0] + wrap
+                    fargs.append('f2pywrap_%s_%s' % (m['name'], b['name']))
+                    ifargs.append(
+                        func2subr.createsubrwrapper(b, signature=1))
                 else:
-                    if wrap:
-                        fhooks[0] = fhooks[0] + wrap
-                        fargs.append('f2pywrap_%s_%s' % (m['name'], b['name']))
-                        ifargs.append(
-                            func2subr.createsubrwrapper(b, signature=1))
-                    else:
-                        fargs.append(b['name'])
-                        mfargs.append(fargs[-1])
+                    fargs.append(b['name'])
+                    mfargs.append(fargs[-1])
                 api['externroutines'] = []
                 ar = applyrules(api, vrd)
                 ar['docs'] = []

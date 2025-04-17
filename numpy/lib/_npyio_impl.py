@@ -985,13 +985,12 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             if isinstance(comments[0], str) and len(comments[0]) == 1:
                 comment = comments[0]
                 comments = None
-        else:
-            # Input validation if there are multiple comment characters
-            if delimiter in comments:
-                raise TypeError(
-                    f"Comment characters '{comments}' cannot include the "
-                    f"delimiter '{delimiter}'"
-                )
+        # Input validation if there are multiple comment characters
+        elif delimiter in comments:
+            raise TypeError(
+                f"Comment characters '{comments}' cannot include the "
+                f"delimiter '{delimiter}'"
+            )
 
     # comment is now either a 1 or 0 character string or a tuple:
     if comments is not None:

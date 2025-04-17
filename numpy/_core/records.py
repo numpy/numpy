@@ -244,12 +244,11 @@ class record(nt.void):
         res = fielddict.get(attr, None)
         if res:
             return self.setfield(val, *res[:2])
+        elif getattr(self, attr, None):
+            return nt.void.__setattr__(self, attr, val)
         else:
-            if getattr(self, attr, None):
-                return nt.void.__setattr__(self, attr, val)
-            else:
-                raise AttributeError("'record' object has no "
-                        "attribute '%s'" % attr)
+            raise AttributeError("'record' object has no "
+                    "attribute '%s'" % attr)
 
     def __getitem__(self, indx):
         obj = nt.void.__getitem__(self, indx)
