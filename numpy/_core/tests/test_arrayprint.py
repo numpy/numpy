@@ -919,6 +919,45 @@ class TestPrintOptions:
         a = np.float64.fromhex('-1p-97')
         assert_equal(np.float64(np.array2string(a, floatmode='unique')), a)
 
+    test_cases_gh_28679 = [
+        (np.half([999, 999]), "[999. 999.]"),
+        (np.half([999, 1000]), "[9.99e+02 1.00e+03]"),
+        (np.single([999999, 999999]), "[999999. 999999.]"),
+        (np.single([999999, -1000000]), "[ 9.99999e+05 -1.00000e+06]"),
+        (
+            np.complex64([999999 + 999999j, 999999 + 999999j]),
+            "[999999.+999999.j 999999.+999999.j]"
+        ),
+        (
+            np.complex64([999999 + 999999j, 999999 + -1000000j]),
+            "[999999.+9.99999e+05j 999999.-1.00000e+06j]"
+        ),
+    ]
+
+    @pytest.mark.parametrize("input_array, expected_str", test_cases_gh_28679)
+    def test_gh_28679(self, input_array, expected_str):
+        # test cutoff to exponent notation for half, single, and complex64
+        assert_equal(str(input_array), expected_str)
+
+    test_cases_legacy_2_2 = [
+        (np.half([1.e3, 1.e4, 65504]), "[ 1000. 10000. 65504.]"),
+        (np.single([1.e6, 1.e7]), "[ 1000000. 10000000.]"),
+        (np.single([1.e7, 1.e8]), "[1.e+07 1.e+08]"),
+    ]
+
+    @pytest.mark.parametrize("input_array, expected_str", test_cases_legacy_2_2)
+    def test_legacy_2_2_mode(self, input_array, expected_str):
+        # test legacy cutoff to exponent notation for half and single
+        with np.printoptions(legacy='2.2'):
+            assert_equal(str(input_array), expected_str)
+
+    @pytest.mark.parametrize("legacy", ['1.13', '1.21', '1.25', '2.1', '2.2'])
+    def test_legacy_get_options(self, legacy):
+        # test legacy get options works okay
+        with np.printoptions(legacy=legacy):
+            p_opt = np.get_printoptions()
+            assert_equal(p_opt["legacy"], legacy)
+
     def test_legacy_mode_scalars(self):
         # in legacy mode, str of floats get truncated, and complex scalars
         # use * for non-finite imaginary part
