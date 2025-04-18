@@ -289,7 +289,7 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"str", "bytes", "object"}
 
-    __array_api_version__ = "2023.12"
+    __array_api_version__ = "2024.12"
 
     from ._array_api_info import __array_namespace_info__
 
