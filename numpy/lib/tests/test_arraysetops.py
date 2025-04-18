@@ -841,7 +841,7 @@ class TestUnique:
 
     def test_unique_byte_string_hash_based(self):
         # test for byte string arrays
-        arr = ['apple', 'banana', 'apple', 'cherry', 'date', 'banana', 'fig', 'grape'] * 2
+        arr = ['apple', 'banana', 'apple', 'cherry', 'date', 'banana', 'fig', 'grape']
         unq_sorted = ['apple', 'banana', 'cherry', 'date', 'fig', 'grape']
 
         a1 = unique(arr, sorted=False)
@@ -851,8 +851,8 @@ class TestUnique:
 
     def test_unique_unicode_string_hash_based(self):
         # test for unicode string arrays
-        arr = ['apple', 'banana', 'apple', 'cherry', 'date', 'banana', 'fig', 'grape'] * 2
-        unq_sorted = ['apple', 'banana', 'cherry', 'date', 'fig', 'grape']
+        arr = ['café', 'cafe', 'café', 'naïve', 'naive', 'résumé', 'naïve', 'resume', 'résumé']
+        unq_sorted = ['cafe', 'café', 'naive', 'naïve', 'resume', 'résumé']
 
         a1 = unique(arr, sorted=False)
         # the result varies depending on the hash function used,
@@ -861,8 +861,8 @@ class TestUnique:
 
     def test_unique_vstring_hash_based(self):
         # test for unicode and nullable string arrays
-        a = np.array(['apple', 'banana', 'apple', None, 'cherry', 'date', 'banana', 'fig', None, 'grape'] * 2, dtype=StringDType(na_object=None))
-        unq_sorted = [None, 'apple', 'banana', 'cherry', 'date', 'fig', 'grape']
+        a = np.array(['straße', None, 'strasse', 'straße', None, 'niño', 'nino', 'élève', 'eleve', 'niño', 'élève'], dtype=StringDType(na_object=None))
+        unq_sorted = [None, 'eleve', 'nino', 'niño', 'strasse', 'straße', 'élève']
 
         a1 = unique(a, sorted=False)
         # the result varies depending on the hash function used,
