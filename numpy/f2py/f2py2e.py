@@ -479,13 +479,14 @@ def run_main(comline_list):
                     isusedby[u] = []
                 isusedby[u].append(plist['name'])
     for plist in postlist:
-        if plist['block'] == 'python module' and '__user__' in plist['name']:
-            if plist['name'] in isusedby:
+        module_name = plist['name']
+        if plist['block'] == 'python module' and '__user__' in module_name:
+            if module_name in isusedby:
                 # if not quiet:
+                usedby = ','.join(f'"{s}"' for s in isusedby[module_name])
                 outmess(
-                    f'Skipping Makefile build for module "{plist["name"]}" '
-                    'which is used by {}\n'.format(
-                        ','.join(f'"{s}"' for s in isusedby[plist['name']])))
+                    f'Skipping Makefile build for module "{module_name}" '
+                    f'which is used by {usedby}\n')
     if 'signsfile' in options:
         if options['verbose'] > 1:
             outmess(
