@@ -1386,8 +1386,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                 if autoconvert:
                     newdescr[nameidx] = (fname, max(fdtype, cdtype))
                 elif fdtype != cdtype:
-                    raise TypeError("Incompatible type '%s' <> '%s'" %
-                                    (cdtype, fdtype))
+                    raise TypeError(f"Incompatible type '{cdtype}' <> '{fdtype}'")
     # Only one field: use concatenate
     if len(newdescr) == 1:
         output = ma.concatenate(seqarrays)
@@ -1544,12 +1543,12 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     # Check the keys
     if len(set(key)) != len(key):
         dup = next(x for n, x in enumerate(key) if x in key[n + 1:])
-        raise ValueError("duplicate join key %r" % dup)
+        raise ValueError(f"duplicate join key {dup!r}")
     for name in key:
         if name not in r1.dtype.names:
-            raise ValueError('r1 does not have key field %r' % name)
+            raise ValueError(f'r1 does not have key field {name!r}')
         if name not in r2.dtype.names:
-            raise ValueError('r2 does not have key field %r' % name)
+            raise ValueError(f'r2 does not have key field {name!r}')
 
     # Make sure we work with ravelled arrays
     r1 = r1.ravel()

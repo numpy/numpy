@@ -134,7 +134,7 @@ def _make_methods(functions, modname):
     methods_table = []
     codes = []
     for funcname, flags, code in functions:
-        cfuncname = "%s_%s" % (modname, funcname)
+        cfuncname = f"{modname}_{funcname}"
         if 'METH_KEYWORDS' in flags:
             signature = '(PyObject *self, PyObject *args, PyObject *kwargs)'
         else:

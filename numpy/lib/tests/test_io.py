@@ -314,7 +314,7 @@ class TestSavezLoad(RoundtripTest):
                     try:
                         np.load(tmp)["data"]
                     except Exception as e:
-                        msg = "Failed to load data from a file: %s" % e
+                        msg = f"Failed to load data from a file: {e}"
                         raise AssertionError(msg)
                     finally:
                         if IS_PYPY:
@@ -907,13 +907,13 @@ class TestLoadTxt(LoadTxtBase):
         bogus_idx = 1.5
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx).__name__,
+            f'^usecols must be.*{type(bogus_idx).__name__}',
             np.loadtxt, c, usecols=bogus_idx
             )
 
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx).__name__,
+            f'^usecols must be.*{type(bogus_idx).__name__}',
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
 
@@ -1029,7 +1029,7 @@ class TestLoadTxt(LoadTxtBase):
             c.seek(0)
             res = np.loadtxt(
                 c, dtype=dt, converters=float.fromhex, encoding="latin1")
-            assert_equal(res, tgt, err_msg="%s" % dt)
+            assert_equal(res, tgt, err_msg=f"{dt}")
 
     @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
                         reason="PyPy bug in error formatting")
@@ -1412,7 +1412,7 @@ class TestFromTxt(LoadTxtBase):
         data[-1] = "99,99"
         kwargs = {"delimiter": ",", "names": True, "skip_header": 5, "skip_footer": 10}
         test = np.genfromtxt(TextIO("\n".join(data)), **kwargs)
-        ctrl = np.array([("%f" % i, "%f" % i, "%f" % i) for i in range(41)],
+        ctrl = np.array([(f"{i:f}", f"{i:f}", f"{i:f}") for i in range(41)],
                         dtype=[(_, float) for _ in "ABC"])
         assert_equal(test, ctrl)
 
@@ -1997,7 +1997,7 @@ M   33  21.99
         data = ["1, 1, 1, 1, -1.1"] * 50
         mdata = TextIO("\n".join(data))
 
-        converters = {4: lambda x: "(%s)" % x.decode()}
+        converters = {4: lambda x: f"({x.decode()})"}
         kwargs = {"delimiter": ",", "converters": converters,
                       "dtype": [(_, int) for _ in 'abcde'], "encoding": "bytes"}
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)

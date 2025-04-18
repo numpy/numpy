@@ -159,8 +159,7 @@ def _commonType(*arrays):
                 result_type = double
             elif rt is None:
                 # unsupported inexact scalar
-                raise TypeError("array type %s is unsupported in linalg" %
-                        (a.dtype.name,))
+                raise TypeError(f"array type {a.dtype.name} is unsupported in linalg")
         else:
             result_type = double
     if is_complex:

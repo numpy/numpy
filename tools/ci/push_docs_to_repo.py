@@ -45,7 +45,7 @@ def run(cmd, stdout=True):
     try:
         subprocess.check_call(cmd, stdout=pipe, stderr=pipe)
     except subprocess.CalledProcessError:
-        print("\n! Error executing: `%s;` aborting" % ' '.join(cmd))
+        print(f"\n! Error executing: `{' '.join(cmd)};` aborting")
         sys.exit(1)
 
 
@@ -60,12 +60,12 @@ run(['git', 'remote', 'add', 'origin',  args.remote])
 run(['git', 'config', '--local', 'user.name', args.committer])
 run(['git', 'config', '--local', 'user.email', args.email])
 
-print('- committing new content: "%s"' % args.message)
+print(f'- committing new content: "{args.message}"')
 run(['cp', '-R', os.path.join(args.dir, '.'), '.'])
 run(['git', 'add', '.'], stdout=False)
 run(['git', 'commit', '--allow-empty', '-m', args.message], stdout=False)
 
-print('- uploading as %s <%s>' % (args.committer, args.email))
+print(f'- uploading as {args.committer} <{args.email}>')
 if args.force:
     run(['git', 'push', 'origin', 'main', '--force'])
 else:

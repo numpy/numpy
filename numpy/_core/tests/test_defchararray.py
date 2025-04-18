@@ -713,8 +713,8 @@ class TestOperations:
         assert_array_equal(A2, (A % [[1, 2], [3, 4]]))
 
     def test_rmod(self):
-        assert_(("%s" % self.A) == str(self.A))
-        assert_(("%r" % self.A) == repr(self.A))
+        assert_(f"{self.A}" == str(self.A))
+        assert_(f"{self.A!r}" == repr(self.A))
 
         for ob in [42, object()]:
             with assert_raises_regex(

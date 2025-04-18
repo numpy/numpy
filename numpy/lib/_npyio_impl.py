@@ -779,7 +779,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         key = 'arr_%d' % i
         if key in namedict.keys():
             raise ValueError(
-                "Cannot use un-named variables and keyword %s" % key)
+                f"Cannot use un-named variables and keyword {key}")
         namedict[key] = val
 
     if compress:
@@ -1594,14 +1594,14 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
         if type(fmt) in (list, tuple):
             if len(fmt) != ncol:
-                raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
+                raise AttributeError(f'fmt has wrong shape.  {str(fmt)}')
             format = delimiter.join(fmt)
         elif isinstance(fmt, str):
             n_fmt_chars = fmt.count('%')
-            error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
+            error = ValueError(f'fmt has wrong number of % formats:  {fmt}')
             if n_fmt_chars == 1:
                 if iscomplex_X:
-                    fmt = [' (%s+%sj)' % (fmt, fmt), ] * ncol
+                    fmt = [f' ({fmt}+{fmt}j)', ] * ncol
                 else:
                     fmt = [fmt, ] * ncol
                 format = delimiter.join(fmt)
@@ -1612,7 +1612,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             else:
                 format = fmt
         else:
-            raise ValueError('invalid fmt: %r' % (fmt,))
+            raise ValueError(f'invalid fmt: {fmt!r}')
 
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
@@ -2027,7 +2027,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             first_line = ''
             first_values = []
             warnings.warn(
-                'genfromtxt: Empty input file: "%s"' % fname, stacklevel=2
+                f'genfromtxt: Empty input file: "{fname}"', stacklevel=2
             )
 
         # Should we take the first values as names ?

@@ -219,7 +219,7 @@ def test_same_as_ufunc():
     ]
     for input_shapes, expected_shape in data:
         assert_same_as_ufunc(input_shapes[0], input_shapes[1],
-                             "Shapes: %s %s" % (input_shapes[0], input_shapes[1]))
+                             f"Shapes: {input_shapes[0]} {input_shapes[1]}")
         # Reverse the input shapes since broadcasting should be symmetric.
         assert_same_as_ufunc(input_shapes[1], input_shapes[0])
         # Try them transposed, too.

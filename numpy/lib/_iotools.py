@@ -304,7 +304,7 @@ class NameValidator:
         elif case_sensitive.startswith('l'):
             self.case_converter = lambda x: x.lower()
         else:
-            msg = 'unrecognized case_sensitive value %s.' % case_sensitive
+            msg = f'unrecognized case_sensitive value {case_sensitive}.'
             raise ValueError(msg)
 
         self.replace_space = replace_space
@@ -698,7 +698,7 @@ class StringConverter:
                 if not self._status:
                     self._checked = False
                 return self.default
-            raise ValueError("Cannot convert string '%s'" % value)
+            raise ValueError(f"Cannot convert string '{value}'")
 
     def __call__(self, value):
         return self._callingfunction(value)

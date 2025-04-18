@@ -37,7 +37,7 @@ __all__ = ['PytestTester']
 def _show_numpy_info():
     import numpy as np
 
-    print("NumPy version %s" % np.__version__)
+    print(f"NumPy version {np.__version__}")
     info = np.lib._utils_impl._opt_info()
     print("NumPy CPU features: ", (info if info else 'nothing enabled'))
 
@@ -182,7 +182,7 @@ class PytestTester:
             pytest_args += ["-m", label]
 
         if durations >= 0:
-            pytest_args += ["--durations=%s" % durations]
+            pytest_args += [f"--durations={durations}"]
 
         if tests is None:
             tests = [self.module_name]

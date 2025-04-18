@@ -410,8 +410,7 @@ else:
             import numpy.char as char
             return char.chararray
 
-        raise AttributeError("module {!r} has no attribute "
-                             "{!r}".format(__name__, attr))
+        raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")
 
     def __dir__():
         public_symbols = (

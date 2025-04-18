@@ -763,10 +763,10 @@ class TestBoolArray:
         for i in list(range(9, 6000, 507)) + [7764, 90021, -10]:
             d = np.array([False] * 100043, dtype=bool)
             d[i] = True
-            assert_(np.any(d), msg="%r" % i)
+            assert_(np.any(d), msg=f"{i!r}")
             e = np.array([True] * 100043, dtype=bool)
             e[i] = False
-            assert_(not np.all(e), msg="%r" % i)
+            assert_(not np.all(e), msg=f"{i!r}")
 
     def test_logical_not_abs(self):
         assert_array_equal(~self.t, self.f)
@@ -962,10 +962,10 @@ class TestFloatExceptions:
         try:
             flop(x, y)
             assert_(False,
-                    "Type %s did not raise fpe error '%s'." % (ftype, fpeerr))
+                    f"Type {ftype} did not raise fpe error '{fpeerr}'.")
         except FloatingPointError as exc:
             assert_(str(exc).find(fpeerr) >= 0,
-                    "Type %s raised wrong fpe error '%s'." % (ftype, exc))
+                    f"Type {ftype} raised wrong fpe error '{exc}'.")
 
     def assert_op_raises_fpe(self, fpeerr, flop, sc1, sc2):
         # Check that fpe exception is raised.
@@ -1145,26 +1145,26 @@ class TestTypes:
         #           shouldn't narrow the float/complex type
         for a in [np.array([True, False]), np.array([-3, 12], dtype=np.int8)]:
             b = 1.234 * a
-            assert_equal(b.dtype, np.dtype('f8'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('f8'), f"array type {a.dtype}")
             b = np.longdouble(1.234) * a
             assert_equal(b.dtype, np.dtype(np.longdouble),
-                         "array type %s" % a.dtype)
+                         f"array type {a.dtype}")
             b = np.float64(1.234) * a
-            assert_equal(b.dtype, np.dtype('f8'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('f8'), f"array type {a.dtype}")
             b = np.float32(1.234) * a
-            assert_equal(b.dtype, np.dtype('f4'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('f4'), f"array type {a.dtype}")
             b = np.float16(1.234) * a
-            assert_equal(b.dtype, np.dtype('f2'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('f2'), f"array type {a.dtype}")
 
             b = 1.234j * a
-            assert_equal(b.dtype, np.dtype('c16'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('c16'), f"array type {a.dtype}")
             b = np.clongdouble(1.234j) * a
             assert_equal(b.dtype, np.dtype(np.clongdouble),
-                         "array type %s" % a.dtype)
+                         f"array type {a.dtype}")
             b = np.complex128(1.234j) * a
-            assert_equal(b.dtype, np.dtype('c16'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('c16'), f"array type {a.dtype}")
             b = np.complex64(1.234j) * a
-            assert_equal(b.dtype, np.dtype('c8'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('c8'), f"array type {a.dtype}")
 
         # The following use-case is problematic, and to resolve its
         # tricky side-effects requires more changes.
@@ -1554,7 +1554,7 @@ class TestFromiter:
         # Raise an exception at the desired index in the iterator.
         for e in range(n):
             if e == eindex:
-                raise NIterError('error at index %s' % eindex)
+                raise NIterError(f'error at index {eindex}')
             yield e
 
     @pytest.mark.parametrize("dtype", [int, object])
@@ -2915,10 +2915,10 @@ class TestAllclose:
         np.seterr(**self.olderr)
 
     def tst_allclose(self, x, y):
-        assert_(np.allclose(x, y), "%s and %s not close" % (x, y))
+        assert_(np.allclose(x, y), f"{x} and {y} not close")
 
     def tst_not_allclose(self, x, y):
-        assert_(not np.allclose(x, y), "%s and %s shouldn't be close" % (x, y))
+        assert_(not np.allclose(x, y), f"{x} and {y} shouldn't be close")
 
     def test_ip_allclose(self):
         # Parametric test factory.
@@ -3077,7 +3077,7 @@ class TestIsclose:
         assert not np.isclose(f32, 2, atol=0, rtol=np.float64(below_one / 2))
 
     def tst_all_isclose(self, x, y):
-        assert_(np.all(np.isclose(x, y)), "%s and %s not close" % (x, y))
+        assert_(np.all(np.isclose(x, y)), f"{x} and {y} not close")
 
     def tst_none_isclose(self, x, y):
         msg = "%s and %s shouldn't be close"

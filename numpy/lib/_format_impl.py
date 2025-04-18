@@ -460,7 +460,7 @@ def _write_array_header(fp, d, version=None):
     header = ["{"]
     for key, value in sorted(d.items()):
         # Need to use repr here, since we eval these when reading
-        header.append("'%s': %s, " % (key, repr(value)))
+        header.append(f"'{key}': {repr(value)}, ")
     header.append("}")
     header = "".join(header)
 

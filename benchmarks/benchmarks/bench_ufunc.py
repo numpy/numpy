@@ -37,7 +37,7 @@ missing_ufuncs = all_ufuncs - bench_ufuncs
 if len(missing_ufuncs) > 0:
     missing_ufunc_names = [f.__name__ for f in missing_ufuncs]
     raise NotImplementedError(
-        "Missing benchmarks for ufuncs %r" % missing_ufunc_names)
+        f"Missing benchmarks for ufuncs {missing_ufunc_names!r}")
 
 
 class ArrayFunctionDispatcher(Benchmark):

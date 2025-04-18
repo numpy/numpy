@@ -212,7 +212,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     f2py_sources = []
     for fn in source_files:
         if not os.path.isfile(fn):
-            raise RuntimeError("%s is not a file" % fn)
+            raise RuntimeError(f"{fn} is not a file")
         dst = os.path.join(d, os.path.basename(fn))
         shutil.copyfile(fn, dst)
         dst_sources.append(dst)
@@ -247,8 +247,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
                              stderr=subprocess.STDOUT)
         out, err = p.communicate()
         if p.returncode != 0:
-            raise RuntimeError("Running f2py failed: %s\n%s" %
-                               (cmd[4:], asunicode(out)))
+            raise RuntimeError(f"Running f2py failed: {cmd[4:]}\n{asunicode(out)}")
     finally:
         os.chdir(cwd)
 
