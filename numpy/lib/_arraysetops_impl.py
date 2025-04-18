@@ -361,6 +361,28 @@ def _unique1d(ar, return_index=False, return_inverse=False,
         # two dimensions for all operations. Coerce to an ndarray in such cases.
         ar = np.asarray(ar).flatten()
 
+    if ar.dtype.kind == 'T':
+        if return_index:
+            raise ValueError(
+                "Currently, `return_index` can only be False dtype is `T` (StringDType)."
+            )
+        if return_inverse:
+            raise ValueError(
+                "Currently, `return_inverse` can only be False dtype is `T` (StringDType)."
+            )
+        if return_counts:
+            raise ValueError(
+                "Currently, `return_counts` can only be False dtype is `T` (StringDType)."
+            )
+        if not equal_nan:
+            raise ValueError(
+                "Currently, `equal_nan` can only be True dtype is `T` (StringDType)."
+            )
+        if sorted:
+            raise ValueError(
+                "Currently, `sorted` can only be False dtype is `T` (StringDType)."
+            )
+
     optional_indices = return_index or return_inverse
 
     # masked arrays are not supported yet.
