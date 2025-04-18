@@ -3,9 +3,11 @@
 
 #include <Python.h>
 
-#include <cstring>
+#include <algorithm>
+#include <iostream>
 #include <unordered_set>
 #include <functional>
+#include <string>
 #include <vector>
 
 #include <numpy/npy_common.h>
@@ -25,25 +27,6 @@ template <typename F>
 FinalAction<F> finally(F f) {
     return FinalAction<F>(f);
 }
-
-template <typename T>
-struct VectorHash {
-    size_t operator()(const std::vector<T>& v) const {
-        // https://www.boost.org/doc/libs/1_88_0/libs/container_hash/doc/html/hash.html#notes_hash_combine
-        size_t h = v.size();
-        for (const T& x : v) {
-            h ^= std::hash<T>{}(x) + 0x9e3779b9 + (h << 6) + (h >> 2);
-        }
-        return h;
-    }
-};
-
-template <typename T>
-struct VectorEqual {
-    bool operator()(const std::vector<T>& lhs, const std::vector<T>& rhs) const {
-        return lhs == rhs;
-    }
-};
 
 template<typename T>
 static PyObject*
@@ -150,7 +133,7 @@ unique_string(PyArrayObject *self)
     strings of a certain size (itemsize / sizeof(T)).
     */
     NPY_ALLOW_C_API_DEF;
-    std::unordered_set<std::vector<T>, VectorHash<T>, VectorEqual<T>> hashset;
+    std::unordered_set<std::basic_string<T>> hashset;
     // reserve the hashset to avoid reallocations
     // reallocations are expensive, especially for string arrays
     hashset.reserve(PyArray_SIZE(self) * 2);
@@ -199,7 +182,8 @@ unique_string(PyArrayObject *self)
             npy_intp count = *innersizeptr;
 
             while (count--) {
-                hashset.emplace((T *) data, (T *) data + num_chars);
+                T * str = reinterpret_cast<T *>(data);
+                hashset.emplace(str, str + num_chars);
                 data += stride;
             }
         } while (iternext(iter));
@@ -233,9 +217,9 @@ unique_string(PyArrayObject *self)
     for (; it != hashset.end(); it++, i++) {
         char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
         size_t byte_to_copy = it->size() * sizeof(T);
-        std::memcpy(data, it->data(), byte_to_copy);
+        memcpy(data, (char *)it->data(), byte_to_copy);
         if (byte_to_copy < (size_t)itemsize) {
-            std::memset(data + byte_to_copy, 0, itemsize - byte_to_copy);
+            memset(data + byte_to_copy, 0, itemsize - byte_to_copy);
         }
     }
 
@@ -253,7 +237,7 @@ unique_vstring(PyArrayObject *self)
     strings (StringDType).
     */
     NPY_ALLOW_C_API_DEF;
-    std::unordered_set<std::vector<npy_byte>, VectorHash<npy_byte>, VectorEqual<npy_byte>> hashset;
+    std::unordered_set<std::string> hashset;
     // reserve the hashset to avoid reallocations
     // reallocations are expensive, especially for string arrays
     hashset.reserve(PyArray_SIZE(self) * 2);
@@ -357,7 +341,7 @@ unique_vstring(PyArrayObject *self)
     for (; it != hashset.end(); it++, i++) {
         char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
         npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
-        NpyString_pack(allocator, packed_string, (const char *)it->data(), it->size());
+        NpyString_pack(allocator, packed_string, it->data(), it->size());
     }
     NPY_DISABLE_C_API;
 
@@ -387,8 +371,8 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_UINT32, unique_int<npy_uint32>},
     {NPY_UINT64, unique_int<npy_uint64>},
     {NPY_DATETIME, unique_int<npy_uint64>},
-    {NPY_STRING, unique_string<npy_byte>},
-    {NPY_UNICODE, unique_string<npy_ucs4>},
+    {NPY_STRING, unique_string<char>},
+    {NPY_UNICODE, unique_string<char32_t>},
     {NPY_VSTRING, unique_vstring},
 };
 
