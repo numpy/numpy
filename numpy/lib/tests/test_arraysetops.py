@@ -839,33 +839,40 @@ class TestUnique:
             bb = Subclass(b.shape, dtype=dt, buffer=b)
             self.check_all(aa, bb, i1, i2, c, dt)
 
-    def test_unique_string(self):
+    def test_unique_byte_string_hash_based(self):
         # test for byte string arrays
-        a = ['apple', 'banana', 'apple', 'cherry', 'date', 'banana', 'fig', 'grape'] * 10
-        b = ['apple', 'banana', 'cherry', 'date', 'fig', 'grape']
-        i1 = [0, 1, 3, 4, 6, 7]
-        i2 = [0, 1, 0, 2, 3, 1, 4, 5] * 10
-        c = np.multiply([2, 2, 1, 1, 1, 1], 10)
-        # test for string types
-        for dt in ['S', 'U']:
-            aa = np.array(a, dt)
-            bb = np.array(b, dt)
-            self.check_all(aa, bb, i1, i2, c, dt)
+        arr = ['apple', 'banana', 'apple', 'cherry', 'date', 'banana', 'fig', 'grape'] * 10
+        unq_sorted = ['apple', 'banana', 'cherry', 'date', 'fig', 'grape']
+
+        a1 = unique(arr, sorted=False)
+        # the result varies depending on the hash function used,
+        # so we check them by sorting
+        a1_sorted = np.sort(a1)
+        assert_array_equal(a1_sorted, unq_sorted)
+
+    def test_unique_unicode_string_hash_based(self):
+        # test for unicode string arrays
+        arr = ['こんにちは', 'こんばんは', 'こんにちは', '😊', 'さようなら', 'こんばんは', '🌸', '😊'] * 10
+        unq_sorted = ['こんにちは', 'こんばんは', 'さようなら', '🌸', '😊']
+
+        a1 = unique(arr, sorted=False)
+        # the result varies depending on the hash function used,
+        # so we check them by sorting
+        a1_sorted = np.sort(a1)
+        assert_array_equal(a1_sorted, unq_sorted)
 
     def test_unique_vstring(self):
         # test for unicode and nullable string arrays
-        a = np.array(['apple', 'banana', 'apple', None, 'cherry', 'date', 'banana', 'fig', None, 'grape'] * 10, dtype=StringDType(na_object=None))
-        unq = np.array([None, 'grape', 'fig', 'date', 'cherry', 'banana', 'apple'], dtype=StringDType(na_object=None))
-        a1 = unique(a, sorted=False)
-        assert_array_equal(a1, unq)
+        a = np.array(['apple', None, 'りんご', '', 'apple', '🍎', None, 'banana', '', 'バナナ', '🍌'], dtype=StringDType(na_object=None))
+        unq_sorted = np.array([None, '', 'apple', 'banana', 'りんご', 'バナナ', '🍌', '🍎'], dtype=StringDType(na_object=None))
 
-    def test_unique_vstring_errors(self):
-        a = np.array(['apple', 'banana', 'apple', None, 'cherry', 'date', 'banana', 'fig', None, 'grape'] * 10, dtype=StringDType(na_object=None))
-        assert_raises(ValueError, unique, a, return_index=True)
-        assert_raises(ValueError, unique, a, return_inverse=True)
-        assert_raises(ValueError, unique, a, return_counts=True)
-        assert_raises(ValueError, unique, a, equal_nan=False)
-        assert_raises(ValueError, unique, a, sorted=True)
+        a1 = unique(a, sorted=False)
+        # the result varies depending on the hash function used,
+        # so we check them by sorting
+
+        # nan
+        assert_equal(a1[0], unq_sorted[0])
+        assert_array_equal(np.sort(a1[1:]), unq_sorted[1:])
 
     @pytest.mark.parametrize("arg", ["return_index", "return_inverse", "return_counts"])
     def test_unsupported_hash_based(self, arg):
