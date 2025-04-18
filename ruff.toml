@@ -24,7 +24,6 @@ extend-select = [
     "UP",
 ]
 ignore = [
-    "F",     # TODO: enable Pyflakes rules
     "E241",
     "E251",
     "E265",
@@ -36,6 +35,10 @@ ignore = [
     "E721",
     "E731",
     "E741",
+    "F403",  # `from ... import *` used; unable to detect undefined names
+    "F405",  # may be undefined, or defined from star imports
+    "F821",  # Undefined name
+    "F841",  # Local variable is assigned to but never used
     "UP015", # Unnecessary mode argument
     "UP031", # TODO: Use format specifiers instead of percent format
 ]
