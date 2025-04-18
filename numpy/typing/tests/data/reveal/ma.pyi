@@ -28,7 +28,7 @@ MAR_V: MaskedNDArray[np.void]
 
 MAR_subclass: MaskedNDArraySubclass
 
-MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype[Any]]
+MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype]
 
 b: np.bool
 f4: np.float32
@@ -249,6 +249,11 @@ assert_type(np.ma.count(MAR_o, keepdims=True), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, axis=None, keepdims=True), NDArray[np.int_])
 assert_type(np.ma.count(MAR_o, None, True), NDArray[np.int_])
 
+assert_type(MAR_f4.compressed(), np.ndarray[tuple[int], np.dtype[np.float32]])
+
+assert_type(np.ma.compressed(MAR_i8), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(np.ma.compressed([[1,2,3]]), np.ndarray[tuple[int], np.dtype])
+
 assert_type(MAR_f4.put([0,4,8], [10,20,30]), None)
 assert_type(MAR_f4.put(4, 999), None)
 assert_type(MAR_f4.put(4, 999, mode='clip'), None)
@@ -261,10 +266,10 @@ assert_type(np.ma.putmask(MAR_f4, [True, False], [0, 1]), None)
 
 assert_type(MAR_f4.filled(float('nan')), NDArray[np.float32])
 assert_type(MAR_i8.filled(), NDArray[np.int64])
-assert_type(MAR_1d.filled(), np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(MAR_1d.filled(), np.ndarray[tuple[int], np.dtype])
 
 assert_type(np.ma.filled(MAR_f4, float('nan')), NDArray[np.float32])
 assert_type(np.ma.filled([[1,2,3]]), NDArray[Any])
 # PyRight detects this one correctly, but mypy doesn't.
 # https://github.com/numpy/numpy/pull/28742#discussion_r2048968375
-assert_type(np.ma.filled(MAR_1d), np.ndarray[tuple[int], np.dtype[Any]])  # type: ignore[assert-type]
+assert_type(np.ma.filled(MAR_1d), np.ndarray[tuple[int], np.dtype])  # type: ignore[assert-type]
