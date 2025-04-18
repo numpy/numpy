@@ -44,12 +44,9 @@ class _UFuncNoLoopError(UFuncTypeError):
 
     def __str__(self):
         return (
-            "ufunc {!r} did not contain a loop with signature matching types "
-            "{!r} -> {!r}"
-        ).format(
-            self.ufunc.__name__,
-            _unpack_tuple(self.dtypes[:self.ufunc.nin]),
-            _unpack_tuple(self.dtypes[self.ufunc.nin:])
+            f"ufunc {self.ufunc.__name__!r} did not contain a loop with signature "
+            f"matching types {_unpack_tuple(self.dtypes[:self.ufunc.nin])!r} "
+            f"-> {_unpack_tuple(self.dtypes[self.ufunc.nin:])!r}"
         )
 
 
@@ -88,10 +85,8 @@ class _UFuncInputCastingError(_UFuncCastingError):
         # only show the number if more than one input exists
         i_str = f"{self.in_i} " if self.ufunc.nin != 1 else ""
         return (
-            "Cannot cast ufunc {!r} input {}from {!r} to {!r} with casting "
-            "rule {!r}"
-        ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+            f"Cannot cast ufunc {self.ufunc.__name__!r} input {i_str}from "
+            f"{self.from_!r} to {self.to!r} with casting rule {self.casting!r}"
         )
 
 
@@ -106,10 +101,8 @@ class _UFuncOutputCastingError(_UFuncCastingError):
         # only show the number if more than one output exists
         i_str = f"{self.out_i} " if self.ufunc.nout != 1 else ""
         return (
-            "Cannot cast ufunc {!r} output {}from {!r} to {!r} with casting "
-            "rule {!r}"
-        ).format(
-            self.ufunc.__name__, i_str, self.from_, self.to, self.casting
+            f"Cannot cast ufunc {self.ufunc.__name__!r} output {i_str}from "
+            f"{self.from_!r} to {self.to!r} with casting rule {self.casting!r}"
         )
 
 

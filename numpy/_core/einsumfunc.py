@@ -1013,8 +1013,8 @@ def einsum_path(*operands, optimize='greedy', einsum_call=False):
         # Explicit "einsum_path" is usually trusted, but we detect this kind of
         # mistake in order to prevent from returning an intermediate value.
         raise RuntimeError(
-            "Invalid einsum_path is specified: {} more operands has to be "
-            "contracted.".format(len(input_list) - 1))
+            f"Invalid einsum_path is specified: {len(input_list) - 1} more "
+            "operands has to be contracted.")
 
     if einsum_call_arg:
         return (operands, contraction_list)

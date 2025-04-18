@@ -267,10 +267,11 @@ def do_generate_api(targets, sources):
     if len(multiarray_api_dict) != len(multiarray_api_index):
         keys_dict = set(multiarray_api_dict.keys())
         keys_index = set(multiarray_api_index.keys())
+        keys_index_dict = keys_index - keys_dict
+        keys_dict_index = keys_dict - keys_index
         raise AssertionError(
-            "Multiarray API size mismatch - "
-            "index has extra keys {}, dict has extra keys {}"
-            .format(keys_index - keys_dict, keys_dict - keys_index)
+            f"Multiarray API size mismatch - index has extra keys {keys_index_dict}, "
+            f"dict has extra keys {keys_dict_index}"
         )
 
     extension_list = []
