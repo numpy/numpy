@@ -222,8 +222,8 @@ __all__ = [
 
 _ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
-_DTypeT = TypeVar("_DTypeT", bound=dtype[Any])
-_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype[Any], covariant=True)
+_DTypeT = TypeVar("_DTypeT", bound=dtype)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
@@ -1157,7 +1157,7 @@ def sort(
 @overload
 def compressed(x: _ArrayLike[_ScalarT_co]) -> ndarray[tuple[int], dtype[_ScalarT_co]]: ...
 @overload
-def compressed(x: ArrayLike) -> ndarray[tuple[int], dtype[Any]]: ...
+def compressed(x: ArrayLike) -> ndarray[tuple[int], dtype]: ...
 def concatenate(arrays, axis=...): ...
 def diag(v, k=...): ...
 def left_shift(a, n): ...
