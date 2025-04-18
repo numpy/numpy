@@ -117,7 +117,7 @@ def unique_key(adict):
     done = False
     n = 1
     while not done:
-        newkey = '__l%s' % (n)
+        newkey = f'__l{n}'
         if newkey in allkeys:
             n += 1
         else:
@@ -135,7 +135,7 @@ def expand_sub(substr, names):
     def listrepl(mobj):
         thelist = conv(mobj.group(1).replace(r'\,', '@comma@'))
         if template_name_re.match(thelist):
-            return "<%s>" % (thelist)
+            return f"<{thelist}>"
         name = None
         for key in lnames.keys():    # see if list is already in dictionary
             if lnames[key] == thelist:
@@ -143,7 +143,7 @@ def expand_sub(substr, names):
         if name is None:      # this list is not in the dictionary yet
             name = unique_key(lnames)
             lnames[name] = thelist
-        return "<%s>" % name
+        return f"<{name}>"
 
     # convert all lists to named templates
     # new names are constructed as needed
@@ -156,7 +156,7 @@ def expand_sub(substr, names):
         if r not in rules:
             thelist = lnames.get(r, names.get(r, None))
             if thelist is None:
-                raise ValueError('No replicates found for <%s>' % (r))
+                raise ValueError(f'No replicates found for <{r}>')
             if r not in names and not thelist.startswith('_'):
                 names[r] = thelist
             rule = [i.replace('@comma@', ',') for i in thelist.split(',')]

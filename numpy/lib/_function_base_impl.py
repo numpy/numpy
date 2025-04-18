@@ -2134,9 +2134,9 @@ def disp(mesg, device=None, linefeed=True):
     if device is None:
         device = sys.stdout
     if linefeed:
-        device.write('%s\n' % mesg)
+        device.write(f'{mesg}\n')
     else:
-        device.write('%s' % mesg)
+        device.write(f'{mesg}')
     device.flush()
     return
 
@@ -2458,7 +2458,7 @@ class vectorize:
         if isinstance(otypes, str):
             for char in otypes:
                 if char not in typecodes['All']:
-                    raise ValueError("Invalid otype specified: %s" % (char,))
+                    raise ValueError(f"Invalid otype specified: {char}")
         elif iterable(otypes):
             otypes = [_get_vectorize_dtype(_nx.dtype(x)) for x in otypes]
         elif otypes is not None:

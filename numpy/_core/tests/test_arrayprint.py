@@ -243,7 +243,7 @@ class TestArray2String:
                 "[. o O]")
         assert_(np.array2string(x, formatter={'int_kind': _format_function}) ==
                 "[. o O]")
-        assert_(np.array2string(x, formatter={'all': lambda x: "%.4f" % x}) ==
+        assert_(np.array2string(x, formatter={'all': lambda x: f"{x:.4f}"}) ==
                 "[0.0000 1.0000 2.0000]")
         assert_equal(np.array2string(x, formatter={'int': lambda x: hex(x)}),
                 x_hex)
@@ -251,9 +251,9 @@ class TestArray2String:
                 x_oct)
 
         x = np.arange(3.)
-        assert_(np.array2string(x, formatter={'float_kind': lambda x: "%.2f" % x}) ==
+        assert_(np.array2string(x, formatter={'float_kind': lambda x: f"{x:.2f}"}) ==
                 "[0.00 1.00 2.00]")
-        assert_(np.array2string(x, formatter={'float': lambda x: "%.2f" % x}) ==
+        assert_(np.array2string(x, formatter={'float': lambda x: f"{x:.2f}"}) ==
                 "[0.00 1.00 2.00]")
 
         s = np.array(['abc', 'def'])
@@ -663,7 +663,7 @@ class TestPrintOptions:
                 ([100.], "100."), ([.2, -1, 122.51], "  0.,  -1., 123."),
                 ([0], "0"), ([-12], "-12"), ([complex(.3, -.7)], "0.-1.j")):
             x = np.array(values)
-            assert_equal(repr(x), "array([%s])" % string)
+            assert_equal(repr(x), f"array([{string}])")
 
     def test_formatter(self):
         x = np.arange(3)

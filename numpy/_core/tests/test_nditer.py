@@ -675,10 +675,10 @@ def test_iter_broadcasting_errors():
         msg = str(e)
         # The message should contain the shape of the 3rd operand
         assert_(msg.find('(2,3)') >= 0,
-                'Message "%s" doesn\'t contain operand shape (2,3)' % msg)
+                f'Message "{msg}" doesn\'t contain operand shape (2,3)')
         # The message should contain the broadcast shape
         assert_(msg.find('(1,2,3)') >= 0,
-                'Message "%s" doesn\'t contain broadcast shape (1,2,3)' % msg)
+                f'Message "{msg}" doesn\'t contain broadcast shape (1,2,3)')
 
     try:
         nditer([arange(6).reshape(2, 3), arange(2)],
@@ -691,13 +691,13 @@ def test_iter_broadcasting_errors():
         msg = str(e)
         # The message should contain "shape->remappedshape" for each operand
         assert_(msg.find('(2,3)->(2,3)') >= 0,
-            'Message "%s" doesn\'t contain operand shape (2,3)->(2,3)' % msg)
+            f'Message "{msg}" doesn\'t contain operand shape (2,3)->(2,3)')
         assert_(msg.find('(2,)->(2,newaxis)') >= 0,
                 ('Message "%s" doesn\'t contain remapped operand shape'
                 '(2,)->(2,newaxis)') % msg)
         # The message should contain the itershape parameter
         assert_(msg.find('(4,3)') >= 0,
-                'Message "%s" doesn\'t contain itershape parameter (4,3)' % msg)
+                f'Message "{msg}" doesn\'t contain itershape parameter (4,3)')
 
     try:
         nditer([np.zeros((2, 1, 1)), np.zeros((2,))],
@@ -708,10 +708,10 @@ def test_iter_broadcasting_errors():
         msg = str(e)
         # The message should contain the shape of the bad operand
         assert_(msg.find('(2,1,1)') >= 0,
-            'Message "%s" doesn\'t contain operand shape (2,1,1)' % msg)
+            f'Message "{msg}" doesn\'t contain operand shape (2,1,1)')
         # The message should contain the broadcast shape
         assert_(msg.find('(2,1,2)') >= 0,
-                'Message "%s" doesn\'t contain the broadcast shape (2,1,2)' % msg)
+                f'Message "{msg}" doesn\'t contain the broadcast shape (2,1,2)')
 
 def test_iter_flags_errors():
     # Check that bad combinations of flags produce errors

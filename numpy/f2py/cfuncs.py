@@ -1439,14 +1439,14 @@ capi_fail:
 def buildcfuncs():
     from .capi_maps import c2capi_map
     for k in c2capi_map.keys():
-        m = 'pyarr_from_p_%s1' % k
+        m = f'pyarr_from_p_{k}1'
         cppmacros[
-            m] = '#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))' % (m, c2capi_map[k])
+            m] = f'#define {m}(v) (PyArray_SimpleNewFromData(0,NULL,{c2capi_map[k]},(char *)v))'
     k = 'string'
-    m = 'pyarr_from_p_%s1' % k
+    m = f'pyarr_from_p_{k}1'
     # NPY_CHAR compatibility, NPY_STRING with itemsize 1
     cppmacros[
-        m] = '#define %s(v,dims) (PyArray_New(&PyArray_Type, 1, dims, NPY_STRING, NULL, v, 1, NPY_ARRAY_CARRAY, NULL))' % (m)
+        m] = f'#define {m}(v,dims) (PyArray_New(&PyArray_Type, 1, dims, NPY_STRING, NULL, v, 1, NPY_ARRAY_CARRAY, NULL))'
 
 
 ############ Auxiliary functions for sorting needs ###################
@@ -1478,7 +1478,7 @@ def append_needs(need, flag=1):
         elif need in commonhooks:
             n = 'commonhooks'
         else:
-            errmess('append_needs: unknown need %s\n' % (repr(need)))
+            errmess(f'append_needs: unknown need {repr(need)}\n')
             return
         if need in outneeds[n]:
             return
@@ -1514,8 +1514,7 @@ def append_needs(need, flag=1):
             tmp[n].append(need)
             return tmp
     else:
-        errmess('append_needs: expected list or string but got :%s\n' %
-                (repr(need)))
+        errmess(f'append_needs: expected list or string but got :{repr(need)}\n')
 
 
 def get_needs():

@@ -121,7 +121,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     num = operator.index(num)
     if num < 0:
         raise ValueError(
-            "Number of samples, %s, must be non-negative." % num
+            f"Number of samples, {num}, must be non-negative."
         )
     div = (num - 1) if endpoint else num
 

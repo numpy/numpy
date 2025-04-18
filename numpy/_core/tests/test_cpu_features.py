@@ -33,23 +33,23 @@ def assert_features_equal(actual, desired, fname):
 
     import textwrap
     error_report = textwrap.indent(
-"""
+f"""
 ###########################################
 ### Extra debugging information
 ###########################################
 -------------------------------------------
 --- NumPy Detections
 -------------------------------------------
-%s
+{detected}
 -------------------------------------------
 --- SYS / CPUINFO
 -------------------------------------------
-%s....
+{cpuinfo}....
 -------------------------------------------
 --- SYS / AUXV
 -------------------------------------------
-%s
-""" % (detected, cpuinfo, auxv), prefix='\r')
+{auxv}
+""", prefix='\r')
 
     raise AssertionError((
         "Failure Detection\n"

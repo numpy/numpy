@@ -138,7 +138,7 @@ class TestRegression:
         # Ticket #79
         ulen = 1
         ucs_value = '\U0010FFFF'
-        ua = np.array([[[ucs_value * ulen] * 2] * 3] * 4, dtype='U%s' % ulen)
+        ua = np.array([[[ucs_value * ulen] * 2] * 3] * 4, dtype=f'U{ulen}')
         ua.view(ua.dtype.newbyteorder())  # Should succeed.
 
     def test_object_array_fill(self):
@@ -1524,7 +1524,7 @@ class TestRegression:
                     if d != 0:
                         failures.append((x, y))
         if failures:
-            raise AssertionError("Failures: %r" % failures)
+            raise AssertionError(f"Failures: {failures!r}")
 
     def test_ticket_1538(self):
         x = np.finfo(np.float32)

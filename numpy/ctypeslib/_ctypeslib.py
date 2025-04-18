@@ -189,17 +189,16 @@ class _ndptr(_ndptr_base):
             raise TypeError("argument must be an ndarray")
         if cls._dtype_ is not None \
                and obj.dtype != cls._dtype_:
-            raise TypeError("array must have data type %s" % cls._dtype_)
+            raise TypeError(f"array must have data type {cls._dtype_}")
         if cls._ndim_ is not None \
                and obj.ndim != cls._ndim_:
             raise TypeError("array must have %d dimension(s)" % cls._ndim_)
         if cls._shape_ is not None \
                and obj.shape != cls._shape_:
-            raise TypeError("array must have shape %s" % str(cls._shape_))
+            raise TypeError(f"array must have shape {str(cls._shape_)}")
         if cls._flags_ is not None \
                and ((obj.flags.num & cls._flags_) != cls._flags_):
-            raise TypeError("array must have flags %s" %
-                    _flags_fromnum(cls._flags_))
+            raise TypeError(f"array must have flags {_flags_fromnum(cls._flags_)}")
         return obj.ctypes
 
 
@@ -344,7 +343,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
     else:
         base = _ndptr
 
-    klass = type("ndpointer_%s" % name, (base,),
+    klass = type(f"ndpointer_{name}", (base,),
                  {"_dtype_": dtype,
                   "_shape_": shape,
                   "_ndim_": ndim,

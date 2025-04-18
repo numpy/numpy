@@ -522,7 +522,7 @@ class SharedNanFunctionsTestsMixin:
                 mat = np.eye(3, dtype=c)
                 tgt = rf(mat, axis=1).dtype.type
                 res = nf(mat, axis=1).dtype.type
-                assert_(res is tgt, "res %s, tgt %s" % (res, tgt))
+                assert_(res is tgt, f"res {res}, tgt {tgt}")
                 # scalar case
                 tgt = rf(mat, axis=None).dtype.type
                 res = nf(mat, axis=None).dtype.type

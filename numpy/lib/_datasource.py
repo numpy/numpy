@@ -57,7 +57,7 @@ def _check_mode(mode, encoding, newline):
     """
     if "t" in mode:
         if "b" in mode:
-            raise ValueError("Invalid mode: %r" % (mode,))
+            raise ValueError(f"Invalid mode: {mode!r}")
     else:
         if encoding is not None:
             raise ValueError("Argument 'encoding' not supported in binary mode")

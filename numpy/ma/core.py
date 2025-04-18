@@ -120,7 +120,7 @@ def doc_note(initialdoc, note):
         return initialdoc
 
     notesplit = re.split(r'\n\s*?Notes\n\s*?-----', inspect.cleandoc(initialdoc))
-    notedoc = "\n\nNotes\n-----\n%s\n" % inspect.cleandoc(note)
+    notedoc = f"\n\nNotes\n-----\n{inspect.cleandoc(note)}\n"
 
     return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
@@ -1797,7 +1797,7 @@ def mask_or(m1, m2, copy=False, shrink=True):
         return _shrink_mask(m1) if shrink else m1
     (dtype1, dtype2) = (getattr(m1, 'dtype', None), getattr(m2, 'dtype', None))
     if dtype1 != dtype2:
-        raise ValueError("Incompatible dtypes '%s'<>'%s'" % (dtype1, dtype2))
+        raise ValueError(f"Incompatible dtypes '{dtype1}'<>'{dtype2}'")
     if dtype1.names is not None:
         # Allocate an output mask array with the properly broadcast shape.
         newmask = np.empty(np.broadcast(m1, m2).shape, dtype1)
@@ -7096,8 +7096,8 @@ class _frommethod:
             getattr(np, self.__name__, None)
         signature = self.__name__ + get_object_signature(meth)
         if meth is not None:
-            doc = """    %s\n%s""" % (
-                signature, getattr(meth, '__doc__', None))
+            doc = f"""    {signature}
+{getattr(meth, '__doc__', None)}"""
             return doc
 
     def __call__(self, a, *args, **params):
@@ -8794,7 +8794,7 @@ class _convert2ma:
             doc = self._replace_return_type(doc, np_ret, np_ma_ret)
             # Add the signature of the function at the beginning of the doc
             if sig:
-                sig = "%s%s\n" % (self._func.__name__, sig)
+                sig = f"{self._func.__name__}{sig}\n"
             doc = sig + doc
         return doc
 

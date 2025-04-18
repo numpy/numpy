@@ -1431,7 +1431,7 @@ def make_arrays(funcdict):
 
                 astype = ''
                 if t.astype is not None:
-                    astype = '_As_%s' % thedict[t.astype]
+                    astype = f'_As_{thedict[t.astype]}'
                 astr = ('%s_functions[%d] = PyUFunc_%s%s;' %
                            (name, k, thedict[t.type], astype))
                 code2list.append(astr)
@@ -1441,7 +1441,7 @@ def make_arrays(funcdict):
                     code2list.append(astr)
                     datalist.append('(void *)NULL')
                 elif t.type == 'P':
-                    datalist.append('(void *)"%s"' % t.func_data)
+                    datalist.append(f'(void *)"{t.func_data}"')
                 else:
                     astr = ('%s_data[%d] = (void *) %s;' %
                                (name, k, t.func_data))
@@ -1460,7 +1460,7 @@ def make_arrays(funcdict):
                 funclist.append('NULL')
 
             for x in t.in_ + t.out:
-                siglist.append('NPY_%s' % (english_upper(chartoname[x]),))
+                siglist.append(f'NPY_{english_upper(chartoname[x])}')
 
         if funclist or siglist or datalist:
             funcnames = ', '.join(funclist)

@@ -1450,7 +1450,7 @@ class TestUfunc:
     def compare_matrix_multiply_results(self, tp):
         d1 = np.array(np.random.rand(2, 3, 4), dtype=tp)
         d2 = np.array(np.random.rand(2, 3, 4), dtype=tp)
-        msg = "matrix multiply on type %s" % d1.dtype.name
+        msg = f"matrix multiply on type {d1.dtype.name}"
 
         def permute_n(n):
             if n == 1:
@@ -1496,8 +1496,7 @@ class TestUfunc:
                                 umt.matrix_multiply(a1, a2),
                                 np.sum(a2[..., np.newaxis].swapaxes(-3, -1) *
                                        a1[..., np.newaxis, :], axis=-1),
-                                err_msg=msg + ' %s %s' % (str(a1.shape),
-                                                          str(a2.shape)))
+                                err_msg=msg + f' {str(a1.shape)} {str(a2.shape)}')
 
         assert_equal(ref, True, err_msg="reference check")
 

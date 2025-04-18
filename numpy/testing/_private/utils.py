@@ -1879,8 +1879,7 @@ def nulp_diff(x, y, dtype=None):
     y[np.isnan(y)] = np.nan
 
     if not x.shape == y.shape:
-        raise ValueError("Arrays do not have the same shape: %s - %s" %
-                         (x.shape, y.shape))
+        raise ValueError(f"Arrays do not have the same shape: {x.shape} - {y.shape}")
 
     def _diff(rx, ry, vdt):
         diff = np.asarray(rx - ry, dtype=vdt)
