@@ -53,7 +53,6 @@ ignore = [
 
 [lint.per-file-ignores]
 "test*.py" = ["E201", "E714"]
-
 "benchmarks/*py" = ["E501"]
 "numpy/_build_utils/*py" = ["E501"]
 "numpy/_core/tests/**" = ["E501"]
@@ -79,3 +78,4 @@ ignore = [
 "numpy/ma/core.pyi" = ["F403", "F405"]
 "numpy/matlib.py" = ["F405"]
 "numpy/matlib.pyi" = ["F811"]
+"_tempita.py" = ["B909"]
