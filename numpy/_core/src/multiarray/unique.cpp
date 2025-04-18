@@ -180,8 +180,8 @@ unique_string(PyArrayObject *self)
             npy_intp count = *innersizeptr;
 
             while (count--) {
-                T * str = reinterpret_cast<T *>(data);
-                hashset.emplace(str, str + num_chars);
+                T * sdata = reinterpret_cast<T *>(data);
+                hashset.emplace(sdata, sdata + num_chars);
                 data += stride;
             }
         } while (iternext(iter));
@@ -296,7 +296,7 @@ unique_vstring(PyArrayObject *self)
                 if (is_null == -1) {
                     return NULL;
                 }
-                if (is_null) {
+                else if (is_null) {
                     contains_null = true;
                 }
                 else {
