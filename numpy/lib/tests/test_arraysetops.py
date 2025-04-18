@@ -6,6 +6,7 @@ import numpy as np
 from numpy import (
     ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, isin
     )
+from numpy.dtypes import StringDType
 from numpy.exceptions import AxisError
 from numpy.testing import (assert_array_equal, assert_equal,
                            assert_raises, assert_raises_regex)
@@ -811,7 +812,9 @@ class TestUnique:
 
     def test_unique_zero_sized(self):
         # test for zero-sized arrays
-        for dt in self.get_types():
+        types = self.get_types()
+        types.extend('SU')
+        for dt in types:
             a = np.array([], dt)
             b = np.array([], dt)
             i1 = np.array([], np.int64)
@@ -835,6 +838,39 @@ class TestUnique:
             aa = Subclass(a.shape, dtype=dt, buffer=a)
             bb = Subclass(b.shape, dtype=dt, buffer=b)
             self.check_all(aa, bb, i1, i2, c, dt)
+
+    def test_unique_byte_string(self):
+        # test for byte string arrays
+        a = ["apple", "banana", "apple", "cherry", "date", "banana", "fig", "grape"] * 10
+        b = ["apple", "banana", "cherry", "date", "fig", "grape"]
+        i1 = [0, 1, 3, 4, 6, 7]
+        i2 = [0, 1, 0, 2, 3, 1, 4, 5] * 10
+        c = np.multiply([2, 2, 1, 1, 1, 1], 10)
+        # test for string types
+        for dt in ['S', 'U']:
+            aa = np.array(a, dt)
+            bb = np.array(b, dt)
+            self.check_all(aa, bb, i1, i2, c, dt)
+
+    def test_unique_unicode_string(self):
+        # test for unicode string arrays
+        a = ["こんにちは", "こんばんは", "こんにちは", "😊", "さようなら", "こんばんは", "🌸", "😊"] * 10
+        b = ['こんにちは', 'こんばんは', 'さようなら', '🌸', '😊']
+        i1 = [0, 1, 4, 6, 3]
+        i2 = [0, 1, 0, 4, 2, 1, 3, 4] * 10
+        c = np.multiply([2, 2, 1, 1, 2], 10)
+        # test for string types
+        for dt in ['U']:
+            aa = np.array(a, dt)
+            bb = np.array(b, dt)
+            self.check_all(aa, bb, i1, i2, c, dt)
+
+    def test_unique_vstring(self):
+        # test for unicode and nullable string arrays
+        a = np.array(["apple", None, "りんご", "", "apple", "🍎", None, "banana", "", "バナナ", "🍌"], dtype=StringDType(na_object=None))
+        unq = np.array([None, 'バナナ', '🍎', '🍌', '', 'りんご', 'banana', 'apple'], dtype=StringDType(na_object=None))
+        a1 = unique(a, sorted=False)
+        assert_array_equal(a1, unq)
 
     @pytest.mark.parametrize("arg", ["return_index", "return_inverse", "return_counts"])
     def test_unsupported_hash_based(self, arg):
