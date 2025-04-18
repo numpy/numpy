@@ -7,6 +7,7 @@ import warnings
 import pytest
 import tempfile
 import re
+import contextlib
 
 import numpy as np
 from numpy.testing import (
@@ -88,10 +89,12 @@ class _DeprecationTestCase:
         if exceptions is np._NoValue:
             exceptions = (self.warning_cls,)
 
-        try:
+        if function_fails:
+            context_manager = contextlib.suppress(Exception)
+        else:
+            context_manager = contextlib.nullcontext()
+        with context_manager:
             function(*args, **kwargs)
-        except (Exception if function_fails else ()):  # noqa: B030
-            pass
 
         # just in case, clear the registry
         num_found = 0
