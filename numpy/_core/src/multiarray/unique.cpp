@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <functional>
 #include <string>
+#include <utility>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -181,7 +182,8 @@ unique_string(PyArrayObject *self)
 
             while (count--) {
                 T * sdata = reinterpret_cast<T *>(data);
-                hashset.emplace(sdata, sdata + num_chars);
+                std::basic_string<T> sdata_str(sdata, num_chars);
+                hashset.emplace(std::move(sdata_str));
                 data += stride;
             }
         } while (iternext(iter));
@@ -300,7 +302,8 @@ unique_vstring(PyArrayObject *self)
                     contains_null = true;
                 }
                 else {
-                    hashset.emplace(sdata.buf, sdata.buf + sdata.size);
+                    std::string sdata_str(sdata.buf, sdata.size);
+                    hashset.emplace(std::move(sdata_str));
                 }
                 data += stride;
             }
