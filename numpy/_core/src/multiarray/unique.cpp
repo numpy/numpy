@@ -151,6 +151,9 @@ unique_string(PyArrayObject *self)
     */
     NPY_ALLOW_C_API_DEF;
     std::unordered_set<std::vector<T>, VectorHash<T>, VectorEqual<T>> hashset;
+    // reserve the hashset to avoid reallocations
+    // reallocations are expensive, especially for string arrays
+    hashset.reserve(PyArray_SIZE(self) * 2);
 
     NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
                                       NPY_ITER_EXTERNAL_LOOP |
@@ -251,6 +254,9 @@ unique_vstring(PyArrayObject *self)
     */
     NPY_ALLOW_C_API_DEF;
     std::unordered_set<std::vector<npy_byte>, VectorHash<npy_byte>, VectorEqual<npy_byte>> hashset;
+    // reserve the hashset to avoid reallocations
+    // reallocations are expensive, especially for string arrays
+    hashset.reserve(PyArray_SIZE(self) * 2);
 
     NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
                                       NPY_ITER_EXTERNAL_LOOP |
