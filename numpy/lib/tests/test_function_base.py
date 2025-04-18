@@ -850,7 +850,7 @@ class TestDiff:
         output = [diff(x, n=n) for n in range(1, 5)]
         expected = [[1, 1], [0], [], []]
         assert_(diff(x, n=0) is x)
-        for n, (expected, out) in enumerate(zip(expected, output), start=1):
+        for n, (expected, out) in enumerate(zip(expected, output), start=1):  # noqa: B020
             assert_(type(out) is np.ndarray)
             assert_array_equal(out, expected)
             assert_equal(out.dtype, np.int_)
