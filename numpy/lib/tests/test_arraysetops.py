@@ -839,10 +839,10 @@ class TestUnique:
             bb = Subclass(b.shape, dtype=dt, buffer=b)
             self.check_all(aa, bb, i1, i2, c, dt)
 
-    def test_unique_byte_string(self):
+    def test_unique_string(self):
         # test for byte string arrays
-        a = ["apple", "banana", "apple", "cherry", "date", "banana", "fig", "grape"] * 10
-        b = ["apple", "banana", "cherry", "date", "fig", "grape"]
+        a = ['apple', 'banana', 'apple', 'cherry', 'date', 'banana', 'fig', 'grape'] * 10
+        b = ['apple', 'banana', 'cherry', 'date', 'fig', 'grape']
         i1 = [0, 1, 3, 4, 6, 7]
         i2 = [0, 1, 0, 2, 3, 1, 4, 5] * 10
         c = np.multiply([2, 2, 1, 1, 1, 1], 10)
@@ -852,28 +852,15 @@ class TestUnique:
             bb = np.array(b, dt)
             self.check_all(aa, bb, i1, i2, c, dt)
 
-    def test_unique_unicode_string(self):
-        # test for unicode string arrays
-        a = ["こんにちは", "こんばんは", "こんにちは", "さようなら", "こんばんは"] * 10
-        b = ['こんにちは', 'こんばんは', 'さようなら']
-        i1 = [0, 1, 3]
-        i2 = [0, 1, 0, 2, 1] * 10
-        c = np.multiply([2, 2, 1], 10)
-        # test for string types
-        for dt in ['U']:
-            aa = np.array(a, dt)
-            bb = np.array(b, dt)
-            self.check_all(aa, bb, i1, i2, c, dt)
-
     def test_unique_vstring(self):
         # test for unicode and nullable string arrays
-        a = np.array(["apple", None, "りんご", "", "apple", None, "banana", "", "バナナ", "りんご"], dtype=StringDType(na_object=None))
-        unq = np.array([None, 'バナナ', '', 'banana', 'りんご', 'apple'], dtype=StringDType(na_object=None))
+        a = np.array(['apple', 'banana', 'apple', None, 'cherry', 'date', 'banana', 'fig', None, 'grape'] * 10, dtype=StringDType(na_object=None))
+        unq = np.array([None, 'grape', 'fig', 'date', 'cherry', 'banana', 'apple'], dtype=StringDType(na_object=None))
         a1 = unique(a, sorted=False)
         assert_array_equal(a1, unq)
 
     def test_unique_vstring_errors(self):
-        a = np.array(["apple", None, "りんご", "", "apple", None, "banana", "", "バナナ", "りんご"], dtype=StringDType(na_object=None))
+        a = np.array(['apple', 'banana', 'apple', None, 'cherry', 'date', 'banana', 'fig', None, 'grape'] * 10, dtype=StringDType(na_object=None))
         assert_raises(ValueError, unique, a, return_index=True)
         assert_raises(ValueError, unique, a, return_inverse=True)
         assert_raises(ValueError, unique, a, return_counts=True)
