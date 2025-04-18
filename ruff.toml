@@ -42,3 +42,4 @@ ignore = [
 
 [lint.per-file-ignores]
 "test*.py" = ["E201", "E714"]
+"__init__.py" = ["F401"]

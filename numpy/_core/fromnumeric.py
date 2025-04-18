@@ -11,7 +11,7 @@ from . import multiarray as mu
 from . import overrides
 from . import umath as um
 from . import numerictypes as nt
-from .multiarray import asarray, array, asanyarray, concatenate
+from .multiarray import asarray, asanyarray, concatenate
 from ._multiarray_umath import _array_converter
 from . import _methods
 

@@ -10,7 +10,7 @@ from numpy import (
     )
 from numpy.exceptions import AxisError
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, assert_warns
+    assert_, assert_equal, assert_array_equal, assert_raises
     )
 
 

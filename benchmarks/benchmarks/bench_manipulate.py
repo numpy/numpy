@@ -1,4 +1,4 @@
-from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
+from .common import Benchmark, TYPES1
 
 import numpy as np
 from collections import deque

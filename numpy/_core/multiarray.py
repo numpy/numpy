@@ -14,9 +14,9 @@ from ._multiarray_umath import *  # noqa: F403
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
 from ._multiarray_umath import (
-    _flagdict, from_dlpack, _place, _reconstruct,
-    _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _get_madvise_hugepage, _set_madvise_hugepage,
+    _flagdict, from_dlpack, _place, _reconstruct,  # noqa: F401
+    _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,  # noqa: F401
+    _get_madvise_hugepage, _set_madvise_hugepage,  # noqa: F401
     )
 
 __all__ = [

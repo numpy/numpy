@@ -10,7 +10,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 
 from numpy._core.function_base import add_newdoc
-from numpy._core.overrides import get_array_function_like_doc
+from numpy._core.overrides import get_array_function_like_doc  # noqa: F401
 
 
 ###############################################################################

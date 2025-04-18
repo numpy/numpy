@@ -4,7 +4,7 @@ from numpy import (
     nan_to_num, isrealobj, iscomplexobj, real_if_close
     )
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises
+    assert_, assert_equal, assert_array_equal
     )
 
 
