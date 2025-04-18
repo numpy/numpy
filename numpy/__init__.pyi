@@ -473,7 +473,6 @@ from numpy.lib._function_base_impl import (
     place,
     asarray_chkfinite,
     average,
-    bincount,
     digitize,
     cov,
     corrcoef,
@@ -545,8 +544,6 @@ from numpy.lib._npyio_impl import (
     save,
     savez,
     savez_compressed,
-    packbits,
-    unpackbits,
     fromregex,
 )
 
