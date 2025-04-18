@@ -144,12 +144,12 @@ unique_string(PyArrayObject *self)
                                       NPY_ITER_GROWINNER,
                                 NPY_KEEPORDER, NPY_NO_CASTING,
                                 NULL);
-    // Making sure the iterator is deallocated when the function returns, with
-    // or w/o an exception
-    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
     if (iter == NULL) {
         return NULL;
     }
+    // Making sure the iterator is deallocated when the function returns, with
+    // or w/o an exception
+    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
 
     NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
     if (iternext == NULL) {
@@ -166,8 +166,10 @@ unique_string(PyArrayObject *self)
     // or w/o an exception
     auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
 
+    NPY_ALLOW_C_API;
     // size of each entries
     npy_intp itemsize = PyArray_ITEMSIZE(self);
+    NPY_DISABLE_C_API;
 
     // the number of characters of each entries
     // (For Unicode, itemsize / 4 for UCS4)
@@ -205,7 +207,6 @@ unique_string(PyArrayObject *self)
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
-    NPY_DISABLE_C_API;
 
     if (res_obj == NULL) {
         return NULL;
@@ -222,6 +223,7 @@ unique_string(PyArrayObject *self)
             memset(data + byte_to_copy, 0, itemsize - byte_to_copy);
         }
     }
+    NPY_DISABLE_C_API;
 
     return res_obj;
 }
@@ -249,12 +251,12 @@ unique_vstring(PyArrayObject *self)
                                       NPY_ITER_GROWINNER,
                                 NPY_KEEPORDER, NPY_NO_CASTING,
                                 NULL);
-    // Making sure the iterator is deallocated when the function returns, with
-    // or w/o an exception
-    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
     if (iter == NULL) {
         return NULL;
     }
+    // Making sure the iterator is deallocated when the function returns, with
+    // or w/o an exception
+    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
 
     NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
     if (iternext == NULL) {
@@ -271,9 +273,12 @@ unique_vstring(PyArrayObject *self)
     // or w/o an exception
     auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
 
+    NPY_ALLOW_C_API;
     // https://numpy.org/doc/stable/reference/c-api/strings.html#loading-a-string
     PyArray_Descr *descr = PyArray_DESCR(self);
     Py_INCREF(descr);
+    NPY_DISABLE_C_API;
+
     npy_string_allocator *allocator = NpyString_acquire_allocator(
         (PyArray_StringDTypeObject *)descr);
     auto allocator_dealloc = finally([&]() {
