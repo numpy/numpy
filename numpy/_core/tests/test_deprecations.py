@@ -87,7 +87,7 @@ class _DeprecationTestCase:
 
         try:
             function(*args, **kwargs)
-        except (Exception if function_fails else ()):
+        except (Exception if function_fails else ()):  # noqa: B030
             pass
 
         # just in case, clear the registry
