@@ -3,6 +3,7 @@
 
 #include <Python.h>
 
+#include <algorithm>
 #include <iostream>
 #include <unordered_set>
 #include <functional>
@@ -184,7 +185,8 @@ unique_string(PyArrayObject *self)
 
             while (count--) {
                 T * sdata = reinterpret_cast<T *>(data);
-                std::basic_string<T> sdata_str(sdata, num_chars);
+                size_t byte_to_copy = std::find(sdata, sdata + num_chars, 0) - sdata;
+                std::basic_string<T> sdata_str(sdata, byte_to_copy);
                 hashset.emplace(std::move(sdata_str));
                 data += stride;
             }
