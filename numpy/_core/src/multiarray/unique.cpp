@@ -4,7 +4,6 @@
 #include <Python.h>
 
 #include <cstring>
-#include <iostream>
 #include <unordered_set>
 #include <functional>
 #include <vector>
