@@ -861,7 +861,7 @@ class TestUnique:
         a1_sorted = np.sort(a1)
         assert_array_equal(a1_sorted, unq_sorted)
 
-    def test_unique_vstring(self):
+    def test_unique_vstring_hash_based(self):
         # test for unicode and nullable string arrays
         a = np.array(['apple', None, 'りんご', '', 'apple', '🍎', None, 'banana', '', 'バナナ', '🍌'], dtype=StringDType(na_object=None))
         unq_sorted = np.array([None, '', 'apple', 'banana', 'りんご', 'バナナ', '🍌', '🍎'], dtype=StringDType(na_object=None))
