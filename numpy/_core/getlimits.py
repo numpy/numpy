@@ -79,8 +79,8 @@ class MachArLike:
         value = self._smallest_subnormal
         if self.ftype(0) == value:
             warnings.warn(
-                'The value of the smallest subnormal for {} type '
-                'is zero.'.format(self.ftype), UserWarning, stacklevel=2)
+                f'The value of the smallest subnormal for {self.ftype} type is zero.',
+                UserWarning, stacklevel=2)
 
         return self._float_to_float(value)
 

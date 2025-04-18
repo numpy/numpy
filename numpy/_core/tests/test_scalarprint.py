@@ -48,6 +48,34 @@ class TestRealScalars:
         check(1e15)
         check(1e16)
 
+    test_cases_gh_28679 = [
+        (np.half, -0.000099, "-9.9e-05"),
+        (np.half, 0.0001, "0.0001"),
+        (np.half, 999, "999.0"),
+        (np.half, -1000, "-1e+03"),
+        (np.single, 0.000099, "9.9e-05"),
+        (np.single, -0.000100001, "-0.000100001"),
+        (np.single, 999999, "999999.0"),
+        (np.single, -1000000, "-1e+06")
+    ]
+
+    @pytest.mark.parametrize("dtype, input_val, expected_str", test_cases_gh_28679)
+    def test_gh_28679(self, dtype, input_val, expected_str):
+        # test cutoff to exponent notation for half and single
+        assert_equal(str(dtype(input_val)), expected_str)
+
+    test_cases_legacy_2_2 = [
+        (np.half(65504), "65500.0"),
+        (np.single(1.e15), "1000000000000000.0"),
+        (np.single(1.e16), "1e+16"),
+    ]
+
+    @pytest.mark.parametrize("input_val, expected_str", test_cases_legacy_2_2)
+    def test_legacy_2_2_mode(self, input_val, expected_str):
+        # test legacy cutoff to exponent notation for half and single
+        with np.printoptions(legacy='2.2'):
+            assert_equal(str(input_val), expected_str)
+
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
         # see dragon4.c for details.

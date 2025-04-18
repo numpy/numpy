@@ -45,8 +45,8 @@ def main():
     ok = check_text(text)
     if not ok:
         print(
-            "ERROR: License text {} does not contain expected "
-            "text fragments\n".format(license_txt)
+            f"ERROR: License text {license_txt} does not contain expected "
+            "text fragments\n"
         )
         print(text)
         sys.exit(1)

@@ -190,7 +190,7 @@ cdef class RandomState:
         self._initialize_bit_generator(bit_generator)
 
     def __repr__(self):
-        return self.__str__() + ' at 0x{:X}'.format(id(self))
+        return f'{self} at 0x{id(self):X}'
 
     def __str__(self):
         _str = self.__class__.__name__
@@ -1387,15 +1387,14 @@ cdef class RandomState:
         """
         if high is None:
             warnings.warn(("This function is deprecated. Please call "
-                           "randint(1, {low} + 1) instead".format(low=low)),
+                           f"randint(1, {low} + 1) instead"),
                           DeprecationWarning)
             high = low
             low = 1
 
         else:
             warnings.warn(("This function is deprecated. Please call "
-                           "randint({low}, {high} + 1) "
-                           "instead".format(low=low, high=high)),
+                           f"randint({low}, {high} + 1) instead"),
                           DeprecationWarning)
 
         return self.randint(low, int(high) + 1, size=size, dtype='l')
