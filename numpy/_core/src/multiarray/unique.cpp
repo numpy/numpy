@@ -295,6 +295,9 @@ unique_vstring(PyArrayObject *self)
                 npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
                 int is_null = NpyString_load(allocator, packed_string, &sdata);
 
+                if (is_null == -1) {
+                    return NULL;
+                }
                 if (is_null) {
                     contains_null = true;
                 }
@@ -335,13 +338,17 @@ unique_vstring(PyArrayObject *self)
         // insert null if original array contains null
         char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
         npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
-        NpyString_pack_null(allocator, packed_string);
+        if (NpyString_pack_null(allocator, packed_string) == -1) {
+            return NULL;
+        }
         i++;
     }
     for (; it != hashset.end(); it++, i++) {
         char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
         npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
-        NpyString_pack(allocator, packed_string, it->data(), it->size());
+        if (NpyString_pack(allocator, packed_string, it->data(), it->size()) == -1) {
+            return NULL;
+        }
     }
     NPY_DISABLE_C_API;
 
