@@ -560,10 +560,9 @@ def main(argv):
     if not args.module_names:
         args.module_names = list(PUBLIC_SUBMODULES) + [BASE_MODULE]
 
-    module_names = list(args.module_names)
-    module_names += [
+    module_names = args.module_names + [
         OTHER_MODULE_DOCS[name]
-        for name in module_names
+        for name in args.module_names
         if name in OTHER_MODULE_DOCS
     ]
     # remove duplicates while maintaining order
