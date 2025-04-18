@@ -182,10 +182,11 @@ unique_string(PyArrayObject *self)
     // or w/o an exception
     auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
 
-    // item size for the string type
+    // size of each entries
     npy_intp itemsize = PyArray_ITEMSIZE(self);
 
-    // the number of characters (For Unicode, itemsize / 4 for UCS4)
+    // the number of characters of each entries
+    // (For Unicode, itemsize / 4 for UCS4)
     npy_intp num_chars = itemsize / sizeof(T);
 
     // first we put the data in a hash map
@@ -225,14 +226,14 @@ unique_string(PyArrayObject *self)
     }
 
     // then we iterate through the map's keys to get the unique values
-    char* data = PyArray_BYTES((const PyArrayObject *)res_obj);
     auto it = hashset.begin();
     size_t i = 0;
     for (; it != hashset.end(); it++, i++) {
+        char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
         size_t byte_to_copy = it->size() * sizeof(T);
-        std::memcpy(data + i * itemsize, it->data(), byte_to_copy);
+        std::memcpy(data, it->data(), byte_to_copy);
         if (byte_to_copy < (size_t)itemsize) {
-            std::memset(data + i * itemsize + byte_to_copy, 0, itemsize - byte_to_copy);
+            std::memset(data + byte_to_copy, 0, itemsize - byte_to_copy);
         }
     }
 
@@ -281,10 +282,14 @@ unique_vstring(PyArrayObject *self)
     // or w/o an exception
     auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
 
-    // https://numpy.org/doc/stable/reference/c-api/strings.html
+    // https://numpy.org/doc/stable/reference/c-api/strings.html#loading-a-string
     PyArray_Descr *descr = PyArray_DESCR(self);
+    Py_INCREF(descr);
     npy_string_allocator *allocator = NpyString_acquire_allocator(
         (PyArray_StringDTypeObject *)descr);
+    auto allocator_dealloc = finally([&]() {
+        NpyString_release_allocator(allocator);
+    });
 
     // whether the array contains null values
     bool contains_null = false;
@@ -302,11 +307,9 @@ unique_vstring(PyArrayObject *self)
                 int is_null = NpyString_load(allocator, packed_string, &sdata);
 
                 if (is_null) {
-                    std::cerr << "add null" << std::endl;
                     contains_null = true;
                 }
                 else {
-                    std::cerr << "add string : " << std::string(sdata.buf, sdata.size) << std::endl;
                     hashset.emplace((npy_byte *)sdata.buf, (npy_byte *)sdata.buf + sdata.size);
                 }
                 data += stride;
@@ -320,7 +323,6 @@ unique_vstring(PyArrayObject *self)
     }
 
     NPY_ALLOW_C_API;
-    Py_INCREF(descr);
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
@@ -332,7 +334,6 @@ unique_vstring(PyArrayObject *self)
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
-    NPY_DISABLE_C_API;
 
     if (res_obj == NULL) {
         return NULL;
@@ -341,19 +342,19 @@ unique_vstring(PyArrayObject *self)
     // then we iterate through the map's keys to get the unique values
     auto it = hashset.begin();
     size_t i = 0;
-    while (i < length) {
-        npy_packed_static_string *packed_string = (npy_packed_static_string *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
-        if (contains_null) {
-            NpyString_pack_null(allocator, packed_string);
-            contains_null = false;
-        } else {
-            NpyString_pack(allocator, packed_string, (const char *)it->data(), it->size());
-            it++;
-        }
+    if (contains_null) {
+        // insert null if original array contains null
+        char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
+        npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
+        NpyString_pack_null(allocator, packed_string);
         i++;
     }
-
-    NpyString_release_allocator(allocator);
+    for (; it != hashset.end(); it++, i++) {
+        char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
+        npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
+        NpyString_pack(allocator, packed_string, (const char *)it->data(), it->size());
+    }
+    NPY_DISABLE_C_API;
 
     return res_obj;
 }
