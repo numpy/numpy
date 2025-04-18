@@ -847,8 +847,7 @@ class TestUnique:
         a1 = unique(arr, sorted=False)
         # the result varies depending on the hash function used,
         # so we check them by sorting
-        a1_sorted = np.sort(a1)
-        assert_array_equal(a1_sorted, unq_sorted)
+        assert_array_equal(sorted(a1.tolist()), unq_sorted)
 
     def test_unique_unicode_string_hash_based(self):
         # test for unicode string arrays
@@ -858,8 +857,7 @@ class TestUnique:
         a1 = unique(arr, sorted=False)
         # the result varies depending on the hash function used,
         # so we check them by sorting
-        a1_sorted = np.sort(a1)
-        assert_array_equal(a1_sorted, unq_sorted)
+        assert_array_equal(sorted(a1.tolist()), unq_sorted)
 
     def test_unique_vstring_hash_based(self):
         # test for unicode and nullable string arrays
@@ -872,7 +870,7 @@ class TestUnique:
 
         # nan
         assert_equal(a1[0], unq_sorted[0])
-        assert_array_equal(np.sort(a1[1:]), unq_sorted[1:])
+        assert_array_equal(sorted(a1[1:].tolist()), unq_sorted[1:])
 
     @pytest.mark.parametrize("arg", ["return_index", "return_inverse", "return_counts"])
     def test_unsupported_hash_based(self, arg):
