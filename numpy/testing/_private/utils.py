@@ -163,7 +163,7 @@ if os.name == 'nt':
                                         win32pdh.PDH_FMT_LONG, None)
 elif sys.platform[:5] == 'linux':
 
-    def memusage(_proc_pid_stat=f'/proc/{os.getpid()}/stat'):
+    def memusage(_proc_pid_stat=f'/proc/{os.getpid()}/stat'):  # noqa: B008
         """
         Return virtual memory size in bytes of the running python.
 
@@ -184,7 +184,7 @@ else:
 
 
 if sys.platform[:5] == 'linux':
-    def jiffies(_proc_pid_stat=f'/proc/{os.getpid()}/stat', _load_time=[]):
+    def jiffies(_proc_pid_stat=f'/proc/{os.getpid()}/stat', _load_time=[]):  # noqa: B008
         """
         Return number of jiffies elapsed.
 

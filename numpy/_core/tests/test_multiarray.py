@@ -8322,7 +8322,7 @@ class TestNewBufferProtocol:
         self._check_roundtrip(x3)
 
     @pytest.mark.valgrind_error(reason="leaks buffer info cache temporarily.")
-    def test_relaxed_strides(self, c=np.ones((1, 10, 10), dtype='i8')):
+    def test_relaxed_strides(self, c=np.ones((1, 10, 10), dtype='i8')):  # noqa: B008
         # Note: c defined as parameter so that it is persistent and leak
         # checks will notice gh-16934 (buffer info cache leak).
         c.strides = (-1, 80, 8)  # strides need to be fixed at export
