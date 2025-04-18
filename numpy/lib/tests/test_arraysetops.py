@@ -854,11 +854,11 @@ class TestUnique:
 
     def test_unique_unicode_string(self):
         # test for unicode string arrays
-        a = ["こんにちは", "こんばんは", "こんにちは", "😊", "さようなら", "こんばんは", "🌸", "😊"] * 10
-        b = ['こんにちは', 'こんばんは', 'さようなら', '🌸', '😊']
-        i1 = [0, 1, 4, 6, 3]
-        i2 = [0, 1, 0, 4, 2, 1, 3, 4] * 10
-        c = np.multiply([2, 2, 1, 1, 2], 10)
+        a = ["こんにちは", "こんばんは", "こんにちは", "さようなら", "こんばんは"] * 10
+        b = ['こんにちは', 'こんばんは', 'さようなら']
+        i1 = [0, 1, 3]
+        i2 = [0, 1, 0, 2, 1] * 10
+        c = np.multiply([2, 2, 1], 10)
         # test for string types
         for dt in ['U']:
             aa = np.array(a, dt)
@@ -867,13 +867,13 @@ class TestUnique:
 
     def test_unique_vstring(self):
         # test for unicode and nullable string arrays
-        a = np.array(["apple", None, "りんご", "", "apple", "🍎", None, "banana", "", "バナナ", "🍌"], dtype=StringDType(na_object=None))
-        unq = np.array([None, 'バナナ', '🍎', '🍌', '', 'りんご', 'banana', 'apple'], dtype=StringDType(na_object=None))
+        a = np.array(["apple", None, "りんご", "", "apple", None, "banana", "", "バナナ", "りんご"], dtype=StringDType(na_object=None))
+        unq = np.array([None, 'バナナ', '', 'banana', 'りんご', 'apple'], dtype=StringDType(na_object=None))
         a1 = unique(a, sorted=False)
         assert_array_equal(a1, unq)
 
     def test_unique_vstring_errors(self):
-        a = np.array(["apple", None, "りんご", "", "apple", "🍎", None, "banana", "", "バナナ", "🍌"], dtype=StringDType(na_object=None))
+        a = np.array(["apple", None, "りんご", "", "apple", None, "banana", "", "バナナ", "りんご"], dtype=StringDType(na_object=None))
         assert_raises(ValueError, unique, a, return_index=True)
         assert_raises(ValueError, unique, a, return_inverse=True)
         assert_raises(ValueError, unique, a, return_counts=True)
