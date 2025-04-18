@@ -19,6 +19,7 @@ line-length = 88
 [lint]
 preview = true
 extend-select = [
+    "B",
     "C4",
     "LOG",
     "G",
@@ -32,6 +33,13 @@ extend-select = [
     "UP",
 ]
 ignore = [
+    "B006",   # Do not use mutable data structures for argument defaults
+    "B007",   # Loop control variable not used within loop body
+    "B011",   # Do not `assert False` (`python -O` removes these calls), raise `AssertionError()`
+    "B023",   # Function definition does not bind loop variable
+    "B028",   # No explicit `stacklevel` keyword argument found
+    "B904",   # Within an `except` clause distinguish raised exceptions from errors in exception handling
+    "B905",   #`zip()` without an explicit `strict=` parameter
     "C408",   # Unnecessary `dict()` call (rewrite as a literal)
     "PIE790", # Unnecessary `pass` statement
     "E241",   # Multiple spaces after comma
@@ -52,7 +60,9 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
-"test*.py" = ["E201", "E714"]
+"_tempita.py" = ["B909"]
+"bench_*.py" = ["B015", "B018"]
+"test*.py" = ["B015", "B018", "E201", "E714"]
 "benchmarks/*py" = ["E501"]
 "numpy/_build_utils/*py" = ["E501"]
 "numpy/_core/tests/**" = ["E501"]
@@ -78,4 +88,3 @@ ignore = [
 "numpy/ma/core.pyi" = ["F403", "F405"]
 "numpy/matlib.py" = ["F405"]
 "numpy/matlib.pyi" = ["F811"]
-"_tempita.py" = ["B909"]
