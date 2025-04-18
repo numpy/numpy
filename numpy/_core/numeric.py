@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 import functools
 import itertools
 import operator

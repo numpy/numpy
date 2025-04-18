@@ -9,7 +9,7 @@ from numpy._core.shape_base import (_block_dispatcher, _block_setup,
                                    _block_concatenate, _block_slicing)
 from numpy.testing import (
     assert_, assert_raises, assert_array_equal, assert_equal,
-    assert_raises_regex, assert_warns, IS_PYPY
+    assert_raises_regex, IS_PYPY
     )
 
 

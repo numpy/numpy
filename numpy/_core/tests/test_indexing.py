@@ -11,7 +11,7 @@ from itertools import product
 from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_warns, HAS_REFCOUNT, IS_WASM
+    assert_array_equal, assert_warns, HAS_REFCOUNT
     )
 
 

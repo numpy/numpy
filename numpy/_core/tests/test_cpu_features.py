@@ -10,7 +10,6 @@ from numpy._core._multiarray_umath import (
     __cpu_baseline__,
     __cpu_dispatch__,
 )
-import numpy as np
 
 def assert_features_equal(actual, desired, fname):
     __tracebackhide__ = True  # Hide traceback for py.test

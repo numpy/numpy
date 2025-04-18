@@ -14,7 +14,7 @@ import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
 
 from numpy.testing import (
-    assert_array_equal, assert_warns, IS_PYPY, IS_64BIT
+    assert_array_equal, IS_PYPY, IS_64BIT
 )
 
 

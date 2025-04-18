@@ -4,7 +4,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_warns, assert_array_equal,
+    assert_, assert_equal, assert_raises, assert_array_equal,
     temppath, IS_MUSL
     )
 from numpy._core.tests._locales import CommaDecimalPointLocale

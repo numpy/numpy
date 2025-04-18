@@ -5,6 +5,7 @@ Our (some-what inadequate) docs for writing PyInstaller hooks are kept here:
 https://pyinstaller.readthedocs.io/en/stable/hooks.html
 
 """
+# ruff: noqa: F401
 from PyInstaller.compat import is_conda, is_pure_conda
 from PyInstaller.utils.hooks import collect_dynamic_libs, is_module_satisfies
 

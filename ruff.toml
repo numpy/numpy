@@ -64,3 +64,4 @@ ignore = [
 "numpy/random/*py" = ["E501"]
 "numpy*pyi" = ["E501"]
 "numpy/f2py/*py" = ["E501"]
+"__init__.py" = ["F401"]

@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 from ._array_utils_impl import (
     __all__,
     __doc__,

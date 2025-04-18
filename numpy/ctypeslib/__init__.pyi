@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 import ctypes
 from ctypes import c_int64 as _c_intp
 

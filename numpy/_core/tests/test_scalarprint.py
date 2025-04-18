@@ -1,15 +1,12 @@
 """ Test printing of scalar types.
 
 """
-import code
 import platform
 import pytest
-import sys
 
-from tempfile import TemporaryFile
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex, IS_MUSL)
+    assert_, assert_equal, assert_raises, IS_MUSL)
 
 class TestRealScalars:
     def test_str(self):

@@ -1,3 +1,4 @@
+# ruff: noqa: F401
 from ._format_impl import (
     __all__,
     __doc__,
