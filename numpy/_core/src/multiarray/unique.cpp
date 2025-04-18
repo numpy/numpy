@@ -181,7 +181,6 @@ unique_string(PyArrayObject *self)
     // Making sure the GIL is re-acquired when the function returns, with
     // or w/o an exception
     auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
-    // first we put the data in a hash map
 
     // item size for the string type
     npy_intp itemsize = PyArray_ITEMSIZE(self);
@@ -189,6 +188,7 @@ unique_string(PyArrayObject *self)
     // the number of characters (For Unicode, itemsize / 4 for UCS4)
     npy_intp num_chars = itemsize / sizeof(T);
 
+    // first we put the data in a hash map
     if (NpyIter_GetIterSize(iter) > 0) {
         do {
             char* data = *dataptr;
@@ -240,6 +240,125 @@ unique_string(PyArrayObject *self)
 }
 
 
+static PyObject*
+unique_vstring(PyArrayObject *self)
+{
+    /* This function takes a numpy array and returns a numpy array containing
+    the unique values.
+
+    It assumes the numpy array includes data that can be viewed as variable width
+    strings (StringDType).
+    */
+    NPY_ALLOW_C_API_DEF;
+    std::unordered_set<std::vector<npy_byte>, VectorHash<npy_byte>, VectorEqual<npy_byte>> hashset;
+
+    NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
+                                      NPY_ITER_EXTERNAL_LOOP |
+                                      NPY_ITER_REFS_OK |
+                                      NPY_ITER_ZEROSIZE_OK |
+                                      NPY_ITER_GROWINNER,
+                                NPY_KEEPORDER, NPY_NO_CASTING,
+                                NULL);
+    // Making sure the iterator is deallocated when the function returns, with
+    // or w/o an exception
+    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
+    if (iter == NULL) {
+        return NULL;
+    }
+
+    NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
+    if (iternext == NULL) {
+        return NULL;
+    }
+    char **dataptr = NpyIter_GetDataPtrArray(iter);
+    npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
+    npy_intp *innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+    // release the GIL
+    PyThreadState *_save;
+    _save = PyEval_SaveThread();
+    // Making sure the GIL is re-acquired when the function returns, with
+    // or w/o an exception
+    auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
+
+    // https://numpy.org/doc/stable/reference/c-api/strings.html
+    PyArray_Descr *descr = PyArray_DESCR(self);
+    npy_string_allocator *allocator = NpyString_acquire_allocator(
+        (PyArray_StringDTypeObject *)descr);
+
+    // whether the array contains null values
+    bool contains_null = false;
+
+    // first we put the data in a hash map
+    if (NpyIter_GetIterSize(iter) > 0) {
+        do {
+            char* data = *dataptr;
+            npy_intp stride = *strideptr;
+            npy_intp count = *innersizeptr;
+
+            while (count--) {
+                npy_static_string sdata = {0, NULL};
+                npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
+                int is_null = NpyString_load(allocator, packed_string, &sdata);
+
+                if (is_null) {
+                    std::cerr << "add null" << std::endl;
+                    contains_null = true;
+                }
+                else {
+                    std::cerr << "add string : " << std::string(sdata.buf, sdata.size) << std::endl;
+                    hashset.emplace((npy_byte *)sdata.buf, (npy_byte *)sdata.buf + sdata.size);
+                }
+                data += stride;
+            }
+        } while (iternext(iter));
+    }
+
+    npy_intp length = hashset.size();
+    if (contains_null) {
+        length++;
+    }
+
+    NPY_ALLOW_C_API;
+    Py_INCREF(descr);
+    PyObject *res_obj = PyArray_NewFromDescr(
+        &PyArray_Type,
+        descr,
+        1, // ndim
+        &length, // shape
+        NULL, // strides
+        NULL, // data
+        // This flag is needed to be able to call .sort on it.
+        NPY_ARRAY_WRITEABLE, // flags
+        NULL // obj
+    );
+    NPY_DISABLE_C_API;
+
+    if (res_obj == NULL) {
+        return NULL;
+    }
+
+    // then we iterate through the map's keys to get the unique values
+    auto it = hashset.begin();
+    size_t i = 0;
+    while (i < length) {
+        npy_packed_static_string *packed_string = (npy_packed_static_string *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
+        if (contains_null) {
+            NpyString_pack_null(allocator, packed_string);
+            contains_null = false;
+        } else {
+            NpyString_pack(allocator, packed_string, (const char *)it->data(), it->size());
+            it++;
+        }
+        i++;
+    }
+
+    NpyString_release_allocator(allocator);
+
+    return res_obj;
+}
+
+
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
@@ -264,6 +383,7 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_DATETIME, unique_int<npy_uint64>},
     {NPY_STRING, unique_string<npy_byte>},
     {NPY_UNICODE, unique_string<npy_ucs4>},
+    {NPY_VSTRING, unique_vstring},
 };
 
 
