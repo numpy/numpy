@@ -3,12 +3,10 @@
 
 #include <Python.h>
 
-#include <algorithm>
 #include <iostream>
 #include <unordered_set>
 #include <functional>
 #include <string>
-#include <vector>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -30,7 +28,7 @@ FinalAction<F> finally(F f) {
 
 template<typename T>
 static PyObject*
-unique_int(PyArrayObject *self)
+unique_integer(PyArrayObject *self)
 {
     /* This function takes a numpy array and returns a numpy array containing
     the unique values.
@@ -217,7 +215,7 @@ unique_string(PyArrayObject *self)
     for (; it != hashset.end(); it++, i++) {
         char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
         size_t byte_to_copy = it->size() * sizeof(T);
-        memcpy(data, (char *)it->data(), byte_to_copy);
+        memcpy(data, it->c_str(), byte_to_copy);
         if (byte_to_copy < (size_t)itemsize) {
             memset(data + byte_to_copy, 0, itemsize - byte_to_copy);
         }
@@ -302,7 +300,7 @@ unique_vstring(PyArrayObject *self)
                     contains_null = true;
                 }
                 else {
-                    hashset.emplace((npy_byte *)sdata.buf, (npy_byte *)sdata.buf + sdata.size);
+                    hashset.emplace(sdata.buf, sdata.buf + sdata.size);
                 }
                 data += stride;
             }
@@ -346,7 +344,7 @@ unique_vstring(PyArrayObject *self)
     for (; it != hashset.end(); it++, i++) {
         char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
         npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
-        if (NpyString_pack(allocator, packed_string, it->data(), it->size()) == -1) {
+        if (NpyString_pack(allocator, packed_string, it->c_str(), it->size()) == -1) {
             return NULL;
         }
     }
@@ -359,25 +357,25 @@ unique_vstring(PyArrayObject *self)
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
-    {NPY_BYTE, unique_int<npy_byte>},
-    {NPY_UBYTE, unique_int<npy_ubyte>},
-    {NPY_SHORT, unique_int<npy_short>},
-    {NPY_USHORT, unique_int<npy_ushort>},
-    {NPY_INT, unique_int<npy_int>},
-    {NPY_UINT, unique_int<npy_uint>},
-    {NPY_LONG, unique_int<npy_long>},
-    {NPY_ULONG, unique_int<npy_ulong>},
-    {NPY_LONGLONG, unique_int<npy_longlong>},
-    {NPY_ULONGLONG, unique_int<npy_ulonglong>},
-    {NPY_INT8, unique_int<npy_int8>},
-    {NPY_INT16, unique_int<npy_int16>},
-    {NPY_INT32, unique_int<npy_int32>},
-    {NPY_INT64, unique_int<npy_int64>},
-    {NPY_UINT8, unique_int<npy_uint8>},
-    {NPY_UINT16, unique_int<npy_uint16>},
-    {NPY_UINT32, unique_int<npy_uint32>},
-    {NPY_UINT64, unique_int<npy_uint64>},
-    {NPY_DATETIME, unique_int<npy_uint64>},
+    {NPY_BYTE, unique_integer<npy_byte>},
+    {NPY_UBYTE, unique_integer<npy_ubyte>},
+    {NPY_SHORT, unique_integer<npy_short>},
+    {NPY_USHORT, unique_integer<npy_ushort>},
+    {NPY_INT, unique_integer<npy_int>},
+    {NPY_UINT, unique_integer<npy_uint>},
+    {NPY_LONG, unique_integer<npy_long>},
+    {NPY_ULONG, unique_integer<npy_ulong>},
+    {NPY_LONGLONG, unique_integer<npy_longlong>},
+    {NPY_ULONGLONG, unique_integer<npy_ulonglong>},
+    {NPY_INT8, unique_integer<npy_int8>},
+    {NPY_INT16, unique_integer<npy_int16>},
+    {NPY_INT32, unique_integer<npy_int32>},
+    {NPY_INT64, unique_integer<npy_int64>},
+    {NPY_UINT8, unique_integer<npy_uint8>},
+    {NPY_UINT16, unique_integer<npy_uint16>},
+    {NPY_UINT32, unique_integer<npy_uint32>},
+    {NPY_UINT64, unique_integer<npy_uint64>},
+    {NPY_DATETIME, unique_integer<npy_uint64>},
     {NPY_STRING, unique_string<char>},
     {NPY_UNICODE, unique_string<char32_t>},
     {NPY_VSTRING, unique_vstring},
