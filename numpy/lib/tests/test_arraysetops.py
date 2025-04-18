@@ -871,7 +871,7 @@ class TestUnique:
         unq = np.array([None, 'バナナ', '🍎', '🍌', '', 'りんご', 'banana', 'apple'], dtype=StringDType(na_object=None))
         a1 = unique(a, sorted=False)
         assert_array_equal(a1, unq)
-    
+
     def test_unique_vstring_errors(self):
         a = np.array(["apple", None, "りんご", "", "apple", "🍎", None, "banana", "", "バナナ", "🍌"], dtype=StringDType(na_object=None))
         assert_raises(ValueError, unique, a, return_index=True)
