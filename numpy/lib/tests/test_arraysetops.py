@@ -872,6 +872,10 @@ class TestUnique:
         assert_equal(a1[0], unq_sorted[0])
         assert_array_equal(sorted(a1[1:].tolist()), unq_sorted[1:])
 
+    def test_unique_vstring_errors(self):
+        a = np.array(['apple', 'banana', 'apple', None, 'cherry', 'date', 'banana'] * 10, dtype=StringDType(na_object=None))
+        assert_raises(ValueError, unique, a, equal_nan=False)
+
     @pytest.mark.parametrize("arg", ["return_index", "return_inverse", "return_counts"])
     def test_unsupported_hash_based(self, arg):
         """These currently never use the hash-based solution.  However,
