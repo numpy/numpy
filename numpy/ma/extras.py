@@ -25,9 +25,9 @@ import warnings
 
 from . import core as ma
 from .core import (
-    MaskedArray, MAError, add, array, asarray, concatenate, filled, count,
+    MaskedArray, MAError, array, asarray, concatenate, filled, count,
     getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
-    nomask, ones, sort, zeros, getdata, get_masked_subclass, dot
+    nomask, sort, zeros, getdata, dot
     )
 
 import numpy as np

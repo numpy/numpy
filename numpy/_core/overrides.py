@@ -2,7 +2,7 @@
 import collections
 import functools
 
-from numpy._utils import set_module
+from numpy._utils import set_module  # noqa: F401
 from numpy._utils._inspect import getargspec
 from numpy._core._multiarray_umath import (
     add_docstring, _get_implementing_args, _ArrayFunctionDispatcher)

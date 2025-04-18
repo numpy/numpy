@@ -11,7 +11,7 @@ import sys
 import warnings
 
 from numpy.exceptions import DTypePromotionError
-from .multiarray import dtype, array, ndarray, promote_types, StringDType
+from .multiarray import dtype, array, promote_types, StringDType
 from numpy import _NoValue
 try:
     import ctypes

@@ -10,7 +10,7 @@ import numpy._core._multiarray_tests as _multiarray_tests
 from numpy import array, arange, nditer, all
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_raises,
-    IS_WASM, HAS_REFCOUNT, suppress_warnings, break_cycles,
+    IS_WASM, HAS_REFCOUNT, suppress_warnings,
     )
 from numpy.testing._private.utils import requires_memory
 
