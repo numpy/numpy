@@ -1396,7 +1396,7 @@ def rundocs(filename=None, raise_on_error=True):
 
     msg = []
     if raise_on_error:
-        out = lambda s: msg.append(s)
+        out = msg.append
     else:
         out = None
 

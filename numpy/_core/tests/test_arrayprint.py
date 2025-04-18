@@ -245,9 +245,9 @@ class TestArray2String:
                 "[. o O]")
         assert_(np.array2string(x, formatter={'all': lambda x: f"{x:.4f}"}) ==
                 "[0.0000 1.0000 2.0000]")
-        assert_equal(np.array2string(x, formatter={'int': lambda x: hex(x)}),
+        assert_equal(np.array2string(x, formatter={'int': hex}),
                 x_hex)
-        assert_equal(np.array2string(x, formatter={'int': lambda x: oct(x)}),
+        assert_equal(np.array2string(x, formatter={'int': oct}),
                 x_oct)
 
         x = np.arange(3.)
