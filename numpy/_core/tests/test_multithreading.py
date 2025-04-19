@@ -30,7 +30,12 @@ def test_parallel_ufunc_execution():
         arr = np.random.random((25,))
         np.isnan(arr)
 
-    run_threaded(func, 500)
+    try:
+        run_threaded(func, 500)
+    except RuntimeError as e:
+        if "can't start new thread" in str(e):
+            pytest.skip("Skipping: RuntimeError: can't start new thread")
+        raise
 
     # see gh-26690
     NUM_THREADS = 50
