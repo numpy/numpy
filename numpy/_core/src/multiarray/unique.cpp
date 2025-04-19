@@ -217,8 +217,10 @@ unique_string(PyArrayObject *self)
     // then we iterate through the map's keys to get the unique values
     auto it = hashset.begin();
     size_t i = 0;
-    for (; it != hashset.end(); it++, i++) {
-        char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
+    char *data = PyArray_BYTES((PyArrayObject *)res_obj);
+    npy_intp stride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+
+    for (; it != hashset.end(); it++, i++, data += stride) {
         size_t byte_to_copy = it->size() * sizeof(T);
         memcpy(data, it->c_str(), byte_to_copy);
         if (byte_to_copy < (size_t)itemsize) {
@@ -342,17 +344,19 @@ unique_vstring(PyArrayObject *self)
     // then we iterate through the map's keys to get the unique values
     auto it = hashset.begin();
     size_t i = 0;
+    char *data = PyArray_BYTES((PyArrayObject *)res_obj);
+    npy_intp stride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+
     if (contains_null) {
         // insert null if original array contains null
-        char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
         npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
         if (NpyString_pack_null(allocator, packed_string) == -1) {
             return NULL;
         }
+        data += stride;
         i++;
     }
-    for (; it != hashset.end(); it++, i++) {
-        char* data = (char *)PyArray_GETPTR1((PyArrayObject *)res_obj, i);
+    for (; it != hashset.end(); it++, i++, data += stride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
         if (NpyString_pack(allocator, packed_string, it->c_str(), it->size()) == -1) {
             return NULL;
