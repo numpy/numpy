@@ -17,6 +17,8 @@ extend-exclude = [
 [lint]
 preview = true
 extend-select = [
+    "PIE",
+    "FLY",
     "E",
     "W",
     "PGH",
@@ -24,14 +26,15 @@ extend-select = [
     "UP",
 ]
 ignore = [
-    "F",     # TODO: enable Pyflakes rules
+    "F",      # TODO: enable Pyflakes rules
+    "PIE790", # Unnecessary `pass` statement
     "E241",
     "E251",
     "E265",
     "E266",
     "E302",
     "E402",
-    "E501",  # TODO: Line too long
+    "E501",   # TODO: Line too long
     "E712",
     "E721",
     "E731",
