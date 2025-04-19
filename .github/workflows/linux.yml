@@ -58,22 +58,19 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.11", "3.12", "3.13", "3.13t"]
+        version: ["3.11", "3.12", "3.13", "3.14-dev", "3.14t-dev"]
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86
+    - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: ${{ matrix.version }}
-        enable-cache: false
-    - run:
-        uv pip install --python=${{ matrix.version }} pip
     # TODO: remove cython nightly install when cython does a release
     - name: Install nightly Cython
-      if: matrix.version == '3.13t'
+      if: matrix.version == '3.14t-dev'
       run: |
         pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
     - uses: ./.github/meson_actions

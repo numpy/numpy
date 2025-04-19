@@ -6791,10 +6791,12 @@ class TestDot:
         v = np.random.random_sample((16, 32))
 
         r = np.empty((1024, 32))
+        if HAS_REFCOUNT:
+            orig_refcount = sys.getrefcount(r)
         for i in range(12):
             dot(f, v, r)
         if HAS_REFCOUNT:
-            assert_equal(sys.getrefcount(r), 2)
+            assert_equal(sys.getrefcount(r), orig_refcount)
         r2 = dot(f, v, out=None)
         assert_array_equal(r2, r)
         assert_(r is dot(f, v, out=r))
