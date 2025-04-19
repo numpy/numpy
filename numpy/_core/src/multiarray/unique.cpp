@@ -58,7 +58,7 @@ unique_integer(PyArrayObject *self)
 
     // As input is 1d, we can use the strides to iterate through the array.
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashset.insert(*((T *) idata));
+        hashset.emplace(*((T *) idata));
     }
 
     npy_intp length = hashset.size();
@@ -130,8 +130,7 @@ unique_string(PyArrayObject *self)
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
         typename T::value_type *sdata = reinterpret_cast<typename T::value_type *>(idata);
         size_t byte_to_copy = std::find(sdata, sdata + num_chars, 0) - sdata;
-        T sdata_str(sdata, byte_to_copy);
-        hashset.emplace(std::move(sdata_str));
+        hashset.emplace(sdata, sdata + byte_to_copy);
     }
 
     npy_intp length = hashset.size();
@@ -219,8 +218,9 @@ unique_vstring(PyArrayObject *self)
             hashset.emplace(std::nullopt);
         }
         else {
-            std::string sdata_str(sdata.buf, sdata.size);
-            hashset.emplace(std::move(sdata_str));
+            hashset.emplace(
+                std::make_optional<std::string>(sdata.buf, sdata.buf + sdata.size)
+            );
         }
     }
 
