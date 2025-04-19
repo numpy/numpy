@@ -560,12 +560,13 @@ def main(argv):
     if not args.module_names:
         args.module_names = list(PUBLIC_SUBMODULES) + [BASE_MODULE]
 
-    module_names = list(args.module_names)
-    for name in module_names:
-        if name in OTHER_MODULE_DOCS:
-            name = OTHER_MODULE_DOCS[name]
-            if name not in module_names:
-                module_names.append(name)
+    module_names = args.module_names + [
+        OTHER_MODULE_DOCS[name]
+        for name in args.module_names
+        if name in OTHER_MODULE_DOCS
+    ]
+    # remove duplicates while maintaining order
+    module_names = list(dict.fromkeys(module_names))
 
     dots = True
     success = True

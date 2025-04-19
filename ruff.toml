@@ -17,6 +17,7 @@ extend-exclude = [
 [lint]
 preview = true
 extend-select = [
+    "B",
     "E",
     "W",
     "PGH",
@@ -25,6 +26,13 @@ extend-select = [
 ]
 ignore = [
     "F",     # TODO: enable Pyflakes rules
+    "B006",  # Do not use mutable data structures for argument defaults
+    "B007",  # Loop control variable not used within loop body
+    "B011",  # Do not `assert False` (`python -O` removes these calls), raise `AssertionError()`
+    "B023",  # Function definition does not bind loop variable
+    "B028",  # No explicit `stacklevel` keyword argument found
+    "B904",  # Within an `except` clause distinguish raised exceptions from errors in exception handling
+    "B905",  #`zip()` without an explicit `strict=` parameter
     "E241",
     "E251",
     "E265",
@@ -41,4 +49,6 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
-"test*.py" = ["E201", "E714"]
+"test*.py" = ["B015", "B018", "E201", "E714"]
+"bench_*.py" = ["B015", "B018"]
+"_tempita.py" = ["B909"]
