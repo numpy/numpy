@@ -348,6 +348,9 @@ NPY_CPU_DISPATCH_DECLARE(NPY_NO_EXPORT void @TYPE@_@func@,
 /**end repeat1**/
 /**end repeat**/
 
+#ifndef NPY_DISABLE_OPTIMIZATION
+    #include "loops_half.dispatch.h"
+#endif
 /**begin repeat
  * #func = sin, cos, tan, exp, exp2, log, log2, log10, expm1, log1p, cbrt, arcsin, arccos, arctan, sinh, cosh, tanh, arcsinh, arccosh, arctanh#
  */
