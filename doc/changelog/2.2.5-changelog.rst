@@ -1,15 +1,3 @@
-.. currentmodule:: numpy
-
-==========================
-NumPy 2.2.5 Release Notes
-==========================
-
-NumPy 2.2.5 is a patch release that fixes bugs found after the 2.2.4 release.
-It has a large number of typing fixes/improvements as well as the normal bug
-fixes and some CI maintenance.
-
-This release supports Python versions 3.10-3.13.
-
 
 Contributors
 ============
@@ -24,7 +12,6 @@ names contributed a patch for the first time.
 * Nicholas Christensen +
 * Sayed Adel
 * karl +
-
 
 Pull requests merged
 ====================
@@ -50,4 +37,3 @@ A total of 19 pull requests were merged for this release.
 * `#28758 <https://github.com/numpy/numpy/pull/28758>`__: TYP: some ``[arg]partition`` fixes
 * `#28772 <https://github.com/numpy/numpy/pull/28772>`__: TYP: fix incorrect ``random.Generator.integers`` return type
 * `#28774 <https://github.com/numpy/numpy/pull/28774>`__: TYP: fix ``count_nonzero`` signature
-
