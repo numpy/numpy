@@ -110,6 +110,7 @@ from numpy._typing import (
     _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
     _ArrayLikeUnknown,
+    _NestedSequence,
 )
 
 __all__ = [
@@ -456,21 +457,19 @@ def full_like(
     device: None | L["cpu"] = ...,
 ) -> NDArray[Any]: ...
 
+#
+@overload
+def count_nonzero(a: ArrayLike, axis: None = None, *, keepdims: L[False] = False) -> int: ...
+@overload
+def count_nonzero(a: _ScalarLike_co, axis: _ShapeLike | None = None, *, keepdims: L[True]) -> np.intp: ...
 @overload
 def count_nonzero(
-    a: ArrayLike,
-    axis: None = ...,
-    *,
-    keepdims: L[False] = ...,
-) -> int: ...
+    a: NDArray[Any] | _NestedSequence[ArrayLike], axis: _ShapeLike | None = None, *, keepdims: L[True]
+) -> NDArray[np.intp]: ...
 @overload
-def count_nonzero(
-    a: ArrayLike,
-    axis: _ShapeLike = ...,
-    *,
-    keepdims: bool = ...,
-) -> Any: ...  # TODO: np.intp or ndarray[np.intp]
+def count_nonzero(a: ArrayLike, axis: _ShapeLike | None = None, *, keepdims: bool = False) -> Any: ...
 
+#
 def isfortran(a: NDArray[Any] | generic) -> bool: ...
 
 def argwhere(a: ArrayLike) -> NDArray[intp]: ...
