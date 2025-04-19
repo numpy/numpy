@@ -4,10 +4,10 @@
 #include <Python.h>
 
 #include <algorithm>
-#include <unordered_set>
 #include <functional>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <utility>
 
 #include <numpy/npy_common.h>
