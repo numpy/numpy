@@ -345,6 +345,7 @@ unique_vstring(PyArrayObject *self)
     size_t i = 0;
     char *data = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp stride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    NPY_DISABLE_C_API;
 
     if (contains_null) {
         // insert null if original array contains null
@@ -361,7 +362,6 @@ unique_vstring(PyArrayObject *self)
             return NULL;
         }
     }
-    NPY_DISABLE_C_API;
 
     return res_obj;
 }
