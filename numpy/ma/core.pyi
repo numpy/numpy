@@ -1,5 +1,5 @@
 # pyright: reportIncompatibleMethodOverride=false
-# ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
+# ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
 from collections.abc import Sequence
 from typing import Any, Literal, SupportsIndex, TypeAlias, TypeVar, overload
@@ -431,10 +431,10 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def compress(self, condition, axis=..., out=...): ...
     def __eq__(self, other): ...
     def __ne__(self, other): ...
-    def __ge__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...
-    def __gt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...
-    def __le__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...
-    def __lt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...
+    def __ge__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
+    def __gt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
+    def __le__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
+    def __lt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
     def __add__(self, other): ...
     def __radd__(self, other): ...
     def __sub__(self, other): ...
@@ -572,7 +572,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> _ArrayT: ...
 
     #
-    def sort(
+    def sort(  # type: ignore[override]
         self,
         axis: SupportsIndex = -1,
         kind: _SortKind | None = None,
@@ -780,8 +780,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def torecords(self) -> Incomplete: ...
     def tolist(self, fill_value: Incomplete | None = None) -> Incomplete: ...
     @deprecated("tostring() is deprecated. Use tobytes() instead.")
-    def tostring(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
-    def tobytes(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def tostring(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]
+    def tobytes(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]
     def tofile(self, /, fid: Incomplete, sep: str = "", format: str = "%s") -> Incomplete: ...
 
     #
@@ -1081,7 +1081,7 @@ minimum: _extrema_operation
 maximum: _extrema_operation
 
 @overload
-def take(  # type: ignore[overload-overlap]
+def take(
     a: _ArrayLike[_ScalarT],
     indices: _IntLike_co,
     axis: None = None,
@@ -1192,7 +1192,7 @@ def fromflex(fxarray): ...
 
 class _convert2ma:
     def __init__(self, /, funcname: str, np_ret: str, np_ma_ret: str, params: dict[str, Any] | None = None) -> None: ...
-    def __call__(self, /, *args: object, **params: object) -> Any: ...  # noqa: ANN401
+    def __call__(self, /, *args: object, **params: object) -> Any: ...
     def getdoc(self, /, np_ret: str, np_ma_ret: str) -> str | None: ...
 
 arange: _convert2ma
