@@ -109,6 +109,7 @@ from numpy._typing import (
     _ArrayLikeComplex_co,
     _ArrayLikeTD64_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUnknown,
     _NestedSequence,
 )
 
