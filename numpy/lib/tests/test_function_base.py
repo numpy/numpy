@@ -2413,7 +2413,7 @@ class TestCorrCoef:
 
     def test_non_array(self):
         assert_almost_equal(np.corrcoef([0, 1, 0], [1, 0, 1]),
-                            [[1., -1.], [-1.,  1.]])
+                            [[1., -1.], [-1., 1.]])
 
     def test_simple(self):
         tgt1 = corrcoef(self.A)
@@ -3401,10 +3401,10 @@ class TestPercentile:
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50), 5.5)
         assert_(np.isscalar(np.percentile(x, 50)))
-        r0 = np.array([4.,  5.,  6.,  7.])
+        r0 = np.array([4., 5., 6., 7.])
         assert_equal(np.percentile(x, 50, axis=0), r0)
         assert_equal(np.percentile(x, 50, axis=0).shape, r0.shape)
-        r1 = np.array([1.5,  5.5,  9.5])
+        r1 = np.array([1.5, 5.5, 9.5])
         assert_almost_equal(np.percentile(x, 50, axis=1), r1)
         assert_equal(np.percentile(x, 50, axis=1).shape, r1.shape)
 
@@ -3422,11 +3422,11 @@ class TestPercentile:
         x = np.arange(12).reshape(3, 4)
         assert_equal(np.percentile(x, 50, method='lower'), 5.)
         assert_(np.isscalar(np.percentile(x, 50)))
-        r0 = np.array([4.,  5.,  6.,  7.])
+        r0 = np.array([4., 5., 6., 7.])
         c0 = np.percentile(x, 50, method='lower', axis=0)
         assert_equal(c0, r0)
         assert_equal(c0.shape, r0.shape)
-        r1 = np.array([1.,  5.,  9.])
+        r1 = np.array([1., 5., 9.])
         c1 = np.percentile(x, 50, method='lower', axis=1)
         assert_almost_equal(c1, r1)
         assert_equal(c1.shape, r1.shape)
@@ -3496,18 +3496,18 @@ class TestPercentile:
             percentile(x, (25, 50), axis=0, out=out, weights=weights), r0
         )
         assert_equal(out, r0)
-        r1 = np.array([[0.75,  4.75,  8.75], [1.5,  5.5,  9.5]])
+        r1 = np.array([[0.75, 4.75, 8.75], [1.5, 5.5, 9.5]])
         out = np.empty((2, 3))
         assert_equal(np.percentile(x, (25, 50), axis=1, out=out), r1)
         assert_equal(out, r1)
 
         # q.dim > 1, int
-        r0 = np.array([[0,  1,  2, 3], [4, 5, 6, 7]])
+        r0 = np.array([[0, 1, 2, 3], [4, 5, 6, 7]])
         out = np.empty((2, 4), dtype=x.dtype)
         c = np.percentile(x, (25, 50), method='lower', axis=0, out=out)
         assert_equal(c, r0)
         assert_equal(out, r0)
-        r1 = np.array([[0,  4,  8], [1,  5,  9]])
+        r1 = np.array([[0, 4, 8], [1, 5, 9]])
         out = np.empty((2, 3), dtype=x.dtype)
         c = np.percentile(x, (25, 50), method='lower', axis=1, out=out)
         assert_equal(c, r1)
@@ -3583,7 +3583,7 @@ class TestPercentile:
 
         d = np.arange(3 * 5 * 7 * 11).reshape((3, 5, 7, 11))
         np.random.shuffle(d.ravel())
-        assert_equal(np.percentile(d, 25,  axis=(0, 1, 2))[0],
+        assert_equal(np.percentile(d, 25, axis=(0, 1, 2))[0],
                      np.percentile(d[:, :, :, 0].flatten(), 25))
         assert_equal(np.percentile(d, [10, 90], axis=(0, 1, 3))[:, 1],
                      np.percentile(d[:, :, 1, :].flatten(), [10, 90]))
@@ -3888,7 +3888,7 @@ class TestQuantile:
         # gh-24710
         arr = [10, 11, 12]
         quantile = np.quantile(arr, q = [0, 1], method=method)
-        assert_equal(quantile,  np.array([10, 12]))
+        assert_equal(quantile, np.array([10, 12]))
 
     @pytest.mark.parametrize("method", quantile_methods)
     def test_quantile_monotonic(self, method):
@@ -4217,7 +4217,7 @@ class TestMedian:
         assert_equal(np.median(a0), 1)
         assert_allclose(np.median(a1), 0.5)
         assert_allclose(np.median(a2), 2.5)
-        assert_allclose(np.median(a2, axis=0), [1.5,  2.5,  3.5])
+        assert_allclose(np.median(a2, axis=0), [1.5, 2.5, 3.5])
         assert_equal(np.median(a2, axis=1), [1, 4])
         assert_allclose(np.median(a2, axis=None), 2.5)
 
@@ -4244,8 +4244,8 @@ class TestMedian:
                 np.median(a, axis=ax)
             assert_array_equal(a, orig)
 
-        assert_allclose(np.median(a3, axis=0), [3,  4])
-        assert_allclose(np.median(a3.T, axis=1), [3,  4])
+        assert_allclose(np.median(a3, axis=0), [3, 4])
+        assert_allclose(np.median(a3.T, axis=1), [3, 4])
         assert_allclose(np.median(a3), 3.5)
         assert_allclose(np.median(a3, axis=None), 3.5)
         assert_allclose(np.median(a3.T), 3.5)
@@ -4261,16 +4261,16 @@ class TestMedian:
         assert_allclose(np.median(a0.copy(), overwrite_input=True), 1)
         assert_allclose(np.median(a1.copy(), overwrite_input=True), 0.5)
         assert_allclose(np.median(a2.copy(), overwrite_input=True), 2.5)
-        assert_allclose(np.median(a2.copy(), overwrite_input=True, axis=0),
-                        [1.5,  2.5,  3.5])
+        assert_allclose(
+            np.median(a2.copy(), overwrite_input=True, axis=0), [1.5, 2.5, 3.5])
         assert_allclose(
             np.median(a2.copy(), overwrite_input=True, axis=1), [1, 4])
         assert_allclose(
             np.median(a2.copy(), overwrite_input=True, axis=None), 2.5)
         assert_allclose(
-            np.median(a3.copy(), overwrite_input=True, axis=0), [3,  4])
-        assert_allclose(np.median(a3.T.copy(), overwrite_input=True, axis=1),
-                        [3,  4])
+            np.median(a3.copy(), overwrite_input=True, axis=0), [3, 4])
+        assert_allclose(
+            np.median(a3.T.copy(), overwrite_input=True, axis=1), [3, 4])
 
         a4 = np.arange(3 * 4 * 5, dtype=np.float32).reshape((3, 4, 5))
         np.random.shuffle(a4.ravel())

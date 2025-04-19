@@ -219,7 +219,7 @@ class TestIndexing:
     def test_boolean_indexing_onedim(self):
         # Indexing a 2-dimensional array with
         # boolean array of length one
-        a = np.array([[0.,  0.,  0.]])
+        a = np.array([[0., 0., 0.]])
         b = np.array([True], dtype=bool)
         assert_equal(a[b], a)
         # boolean assignment
@@ -643,7 +643,7 @@ class TestBroadcastedAssignments:
         a = np.zeros(5)
 
         # Too large and not only ones.
-        assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
+        assert_raises(ValueError, assign, a, s_[...], np.ones((2, 1)))
         assert_raises(ValueError, assign, a, s_[[1, 2, 3],], np.ones((2, 1)))
         assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2, 2, 1)))
 
