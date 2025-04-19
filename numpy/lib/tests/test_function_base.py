@@ -1962,7 +1962,7 @@ class TestVectorize:
 
     def test_bad_input(self):
         with assert_raises(TypeError):
-            A = np.vectorize(pyfunc = 3)
+            A = np.vectorize(pyfunc=3)
 
     def test_no_keywords(self):
         with assert_raises(TypeError):
@@ -3887,7 +3887,7 @@ class TestQuantile:
     def test_q_zero_one(self, method):
         # gh-24710
         arr = [10, 11, 12]
-        quantile = np.quantile(arr, q = [0, 1], method=method)
+        quantile = np.quantile(arr, q=[0, 1], method=method)
         assert_equal(quantile, np.array([10, 12]))
 
     @pytest.mark.parametrize("method", quantile_methods)
@@ -4163,10 +4163,10 @@ class TestLerp:
                                    min_value=0, max_value=1),
                       t1=st.floats(allow_nan=False, allow_infinity=False,
                                    min_value=0, max_value=1),
-                      a = st.floats(allow_nan=False, allow_infinity=False,
-                                    min_value=-1e300, max_value=1e300),
-                      b = st.floats(allow_nan=False, allow_infinity=False,
-                                    min_value=-1e300, max_value=1e300))
+                      a=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300),
+                      b=st.floats(allow_nan=False, allow_infinity=False,
+                                  min_value=-1e300, max_value=1e300))
     def test_linear_interpolation_formula_monotonic(self, t0, t1, a, b):
         l0 = nfb._lerp(a, b, t0)
         l1 = nfb._lerp(a, b, t1)

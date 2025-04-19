@@ -997,8 +997,8 @@ class TestMaskedArray:
         assert_(str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
         assert_(repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
 
-        t_ne = masked_array(data=[(1, (1, 1))],
-                            mask=[(True, (True, False))],
+        t_ne = masked_array(data = [(1, (1, 1))],
+                            mask = [(True, (True, False))],
                             dtype = [('a', '<i4'), ('b', 'i4,i4')])
         assert_(str(t_ne[0]) == "(--, (--, 1))")
         assert_(repr(t_ne[0]) == "(--, (--, 1))")

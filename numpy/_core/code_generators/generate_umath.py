@@ -1570,7 +1570,7 @@ def make_ufuncs(funcdict):
                 typenum=f"NPY_{english_upper(chartoname[c])}",
                 count=uf.nin + uf.nout,
                 name=name,
-                funcname = f"{english_upper(chartoname[c])}_{name}_indexed",
+                funcname=f"{english_upper(chartoname[c])}_{name}_indexed",
             ))
 
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
