@@ -2434,8 +2434,8 @@ class vectorize:
                  excluded=None, cache=False, signature=None):
 
         if (pyfunc != np._NoValue) and (not callable(pyfunc)):
-            #Splitting the error message to keep
-            #the length below 79 characters.
+            # Splitting the error message to keep
+            # the length below 79 characters.
             part1 = "When used as a decorator, "
             part2 = "only accepts keyword arguments."
             raise TypeError(part1 + part2)

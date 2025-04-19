@@ -102,7 +102,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         tr.line("code that re-enables the GIL should do so in a subprocess.")
         pytest.exit("GIL re-enabled during tests", returncode=1)
 
-#FIXME when yield tests are gone.
+# FIXME when yield tests are gone.
 @pytest.hookimpl()
 def pytest_itemcollected(item):
     """

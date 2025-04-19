@@ -492,7 +492,7 @@ class TestIndexing:
         x = x.view(np.dtype("S8"))
         x[...] = np.array("b" * 8, dtype="S")
         b = np.arange(d.size)
-        #trivial
+        # trivial
         assert_equal(d[b], d)
         d[b] = x
         # nontrivial

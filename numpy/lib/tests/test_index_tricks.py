@@ -151,7 +151,7 @@ class TestRavelUnravelIndex:
             ValueError, np.ravel_multi_index, [5, 1, -1, 2], (4, 3, 7, 12))
 
     def test_writeability(self):
-        # See gh-7269
+        # gh-7269
         x, y = np.unravel_index([1, 2, 3], (4, 5))
         assert_(x.flags.writeable)
         assert_(y.flags.writeable)

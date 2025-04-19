@@ -5183,7 +5183,7 @@ class MaskedArray(ndarray):
         """
         (this docstring should be overwritten)
         """
-        #!!!: implement out + test!
+        # !!!: implement out + test!
         m = self._mask
         if m is nomask:
             result = super().trace(offset=offset, axis1=axis1, axis2=axis2,

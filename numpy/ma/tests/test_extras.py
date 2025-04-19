@@ -1717,7 +1717,7 @@ class TestArraySetOps:
         c = isin(a, b)
         assert_(isinstance(c, MaskedArray))
         assert_array_equal(c, ec)
-        #compare results of np.isin to ma.isin
+        # compare results of np.isin to ma.isin
         d = np.isin(a, b[~b.mask]) & ~a.mask
         assert_array_equal(c, d)
 

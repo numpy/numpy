@@ -1034,7 +1034,7 @@ class TestMatrixPower:
     rshft_all = [rshft_0, rshft_1, rshft_2, rshft_3]
     noninv = array([[1, 0], [0, 0]])
     stacked = np.block([[[rshft_0]]] * 2)
-    #FIXME the 'e' dtype might work in future
+    # FIXME the 'e' dtype might work in future
     dtnoinv = [object, np.dtype('e'), np.dtype('g'), np.dtype('G')]
 
     def test_large_power(self, dt):

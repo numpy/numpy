@@ -562,13 +562,13 @@ class TestConversion:
                 assert_(not np.array(1, dtype=dt1)[()] < np.array(0, dtype=dt2)[()],
                         f"type {dt1} and {dt2} failed")
 
-        #Unsigned integers
+        # Unsigned integers
         for dt1 in 'BHILQP':
             assert_(-1 < np.array(1, dtype=dt1)[()], f"type {dt1} failed")
             assert_(not -1 > np.array(1, dtype=dt1)[()], f"type {dt1} failed")
             assert_(-1 != np.array(1, dtype=dt1)[()], f"type {dt1} failed")
 
-            #unsigned vs signed
+            # unsigned vs signed
             for dt2 in 'bhilqp':
                 assert_(np.array(1, dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
                         f"type {dt1} and {dt2} failed")
@@ -577,7 +577,7 @@ class TestConversion:
                 assert_(np.array(1, dtype=dt1)[()] != np.array(-1, dtype=dt2)[()],
                         f"type {dt1} and {dt2} failed")
 
-        #Signed integers and floats
+        # Signed integers and floats
         for dt1 in 'bhlqp' + np.typecodes['Float']:
             assert_(1 > np.array(-1, dtype=dt1)[()], f"type {dt1} failed")
             assert_(not 1 < np.array(-1, dtype=dt1)[()], f"type {dt1} failed")
