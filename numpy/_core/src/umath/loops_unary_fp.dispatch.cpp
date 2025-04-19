@@ -13,7 +13,7 @@
 */
 
 namespace {
-using namespace np::simd128;
+using namespace np::simd;
 
 template <typename T> struct OpRint {
 #if NPY_SIMDX
@@ -23,11 +23,12 @@ template <typename T> struct OpRint {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         if constexpr (std::is_same_v<T, float>) {
             return npy_rintf(a);
+        } else {
+            return npy_rint(a);
         }
-        return npy_rint(a);
     }
 };
 
@@ -39,11 +40,12 @@ template <typename T> struct OpFloor {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         if constexpr (std::is_same_v<T, float>) {
             return npy_floorf(a);
+        } else {
+            return npy_floor(a);
         }
-        return npy_floor(a);
     }
 };
 
@@ -55,11 +57,12 @@ template <typename T> struct OpCeil {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         if constexpr (std::is_same_v<T, float>) {
             return npy_ceilf(a);
+        } else {
+            return npy_ceil(a);
         }
-        return npy_ceil(a);
     }
 };
 
@@ -71,11 +74,12 @@ template <typename T> struct OpTrunc {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         if constexpr (std::is_same_v<T, float>) {
             return npy_truncf(a);
+        } else {
+            return npy_trunc(a);
         }
-        return npy_trunc(a);
     }
 };
 
@@ -87,7 +91,7 @@ template <typename T> struct OpSqrt {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const ;
+    NPY_INLINE T operator()(T a) const ;
 };
 /**
  * MSVC(32-bit mode) requires a clarified contiguous loop
@@ -96,7 +100,7 @@ template <typename T> struct OpSqrt {
  */
 #if defined(_MSC_VER) && defined(_M_IX86)
 #include <emmintrin.h>
-template <typename T> HWY_INLINE HWY_ATTR T OpSqrt<T>::operator()(T a) const {
+template <typename T> NPY_INLINE T OpSqrt<T>::operator()(T a) const {
     if constexpr (std::is_same_v<T, float>) {
         __m128 aa = _mm_load_ss(&a);
         __m128 lower = _mm_sqrt_ss(aa);
@@ -107,11 +111,12 @@ template <typename T> HWY_INLINE HWY_ATTR T OpSqrt<T>::operator()(T a) const {
     return _mm_cvtsd_f64(lower);
 }
 #else
-template <typename T> HWY_INLINE HWY_ATTR T OpSqrt<T>::operator()(T a) const {
+template <typename T> NPY_INLINE T OpSqrt<T>::operator()(T a) const {
     if constexpr (std::is_same_v<T, float>) {
         return npy_sqrtf(a);
+    } else {
+        return npy_sqrt(a);
     }
-    return npy_sqrt(a);
 }
 #endif
 
@@ -123,7 +128,7 @@ template <typename T> struct OpAbs {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         /* add 0 to clear -0.0 */
         return 0 + (a > 0 ? a : -a);
     }
@@ -137,7 +142,7 @@ template <typename T> struct OpSquare {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         return a * a;
     }
 };
@@ -150,7 +155,7 @@ template <typename T> struct OpRecip {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         return static_cast<T>(1) / a;
     }
 };
