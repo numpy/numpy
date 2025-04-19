@@ -11,6 +11,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#include <arm_neon.h>
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
@@ -847,6 +848,26 @@ static NPY_GCC_OPT_3 int
 {
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
+    #if @contig@ && @aligned@ && @is_half1@ && @is_float2@
+        float16_t* input = (float16_t*)src;
+        float* output = (float*)dst;
+        npy_intp i = 0;
+        size_t num_chunks_8 = N / 8;
+
+        for (size_t chunk = 0; chunk < num_chunks_8; ++chunk) {
+            float16x8_t vec_f16 = vld1q_f16(input + i);
+            float16x4_t vec_f16_low_half = vget_low_f16(vec_f16);
+            float16x4_t vec_f16_high_half = vget_high_f16(vec_f16);
+            float32x4_t vec_f32_low = vcvt_f32_f16(vec_f16_low_half);
+            float32x4_t vec_f32_high = vcvt_f32_f16(vec_f16_high_half);
+            vst1q_f32(output + i, vec_f32_low);
+            vst1q_f32(output + i + 4, vec_f32_high);
+            i += 8;
+        }
+        for (; i < N; ++i) {
+            output[i] = (float)input[i];
+        }
+    #else
 #if !@contig@
     npy_intp src_stride = strides[0], dst_stride = strides[1];
 #endif
@@ -930,6 +951,7 @@ static NPY_GCC_OPT_3 int
         src += src_stride;
 #endif
     }
+    #endif
     return 0;
 }
 
