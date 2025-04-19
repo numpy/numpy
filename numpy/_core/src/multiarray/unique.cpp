@@ -43,53 +43,27 @@ unique_integer(PyArrayObject *self)
     custom or complicated dtypes or string values.
     */
     NPY_ALLOW_C_API_DEF;
-    std::unordered_set<T> hashset;
-
-    NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
-                                      NPY_ITER_EXTERNAL_LOOP |
-                                      NPY_ITER_REFS_OK |
-                                      NPY_ITER_ZEROSIZE_OK |
-                                      NPY_ITER_GROWINNER,
-                                NPY_KEEPORDER, NPY_NO_CASTING,
-                                NULL);
-    // Making sure the iterator is deallocated when the function returns, with
-    // or w/o an exception
-    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
-    if (iter == NULL) {
-        return NULL;
-    }
-
-    NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
-    if (iternext == NULL) {
-        return NULL;
-    }
-    char **dataptr = NpyIter_GetDataPtrArray(iter);
-    npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
-    npy_intp *innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
     // release the GIL
-    PyThreadState *_save;
-    _save = PyEval_SaveThread();
-    // Making sure the GIL is re-acquired when the function returns, with
-    // or w/o an exception
-    auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
-    // first we put the data in a hash map
+    PyThreadState *_save1 = PyEval_SaveThread();
 
-    if (NpyIter_GetIterSize(iter) > 0) {
-        do {
-            char* data = *dataptr;
-            npy_intp stride = *strideptr;
-            npy_intp count = *innersizeptr;
+    npy_intp isize = PyArray_SIZE(self);
+    char *idata = PyArray_BYTES(self);
+    npy_intp istride = PyArray_STRIDES(self)[0];
 
-            while (count--) {
-                hashset.insert(*((T *) data));
-                data += stride;
-            }
-        } while (iternext(iter));
+    std::unordered_set<T> hashset;
+    // reserve the hashset to avoid reallocations
+    // reallocations are expensive, especially for string arrays
+    hashset.reserve(isize * 2);
+
+    // As input is 1d, we can use the strides to iterate through the array.
+    for (npy_intp i = 0; i < isize; i++, idata += istride) {
+        hashset.insert(*((T *) idata));
     }
 
     npy_intp length = hashset.size();
 
+    PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
     Py_INCREF(descr);
@@ -104,11 +78,12 @@ unique_integer(PyArrayObject *self)
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
-    NPY_DISABLE_C_API;
 
     if (res_obj == NULL) {
         return NULL;
     }
+    NPY_DISABLE_C_API;
+    PyThreadState *_save2 = PyEval_SaveThread();
 
     // then we iterate through the map's keys to get the unique values
     T* data = (T *)PyArray_DATA((PyArrayObject *)res_obj);
@@ -118,6 +93,7 @@ unique_integer(PyArrayObject *self)
         data[i] = *it;
     }
 
+    PyEval_RestoreThread(_save2);
     return res_obj;
 }
 
@@ -133,68 +109,36 @@ unique_string(PyArrayObject *self)
     strings of a certain size (itemsize / sizeof(T)).
     */
     NPY_ALLOW_C_API_DEF;
-    std::unordered_set<std::basic_string<T>> hashset;
-    // reserve the hashset to avoid reallocations
-    // reallocations are expensive, especially for string arrays
-    hashset.reserve(PyArray_SIZE(self) * 2);
-
-    NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
-                                      NPY_ITER_EXTERNAL_LOOP |
-                                      NPY_ITER_REFS_OK |
-                                      NPY_ITER_ZEROSIZE_OK |
-                                      NPY_ITER_GROWINNER,
-                                NPY_KEEPORDER, NPY_NO_CASTING,
-                                NULL);
-    if (iter == NULL) {
-        return NULL;
-    }
-    // Making sure the iterator is deallocated when the function returns, with
-    // or w/o an exception
-    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
-
-    NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
-    if (iternext == NULL) {
-        return NULL;
-    }
-    char **dataptr = NpyIter_GetDataPtrArray(iter);
-    npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
-    npy_intp *innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
 
     // release the GIL
-    PyThreadState *_save;
-    _save = PyEval_SaveThread();
-    // Making sure the GIL is re-acquired when the function returns, with
-    // or w/o an exception
-    auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
+    PyThreadState *_save1 = PyEval_SaveThread();
 
-    NPY_ALLOW_C_API;
     // size of each entries
     npy_intp itemsize = PyArray_ITEMSIZE(self);
-    NPY_DISABLE_C_API;
-
     // the number of characters of each entries
     // (For Unicode, itemsize / 4 for UCS4)
-    npy_intp num_chars = itemsize / sizeof(T);
+    npy_intp num_chars = itemsize / sizeof(typename T::value_type);
 
-    // first we put the data in a hash map
-    if (NpyIter_GetIterSize(iter) > 0) {
-        do {
-            char* data = *dataptr;
-            npy_intp stride = *strideptr;
-            npy_intp count = *innersizeptr;
+    npy_intp isize = PyArray_SIZE(self);
+    char *idata = PyArray_BYTES(self);
+    npy_intp istride = PyArray_STRIDES(self)[0];
 
-            while (count--) {
-                T * sdata = reinterpret_cast<T *>(data);
-                size_t byte_to_copy = std::find(sdata, sdata + num_chars, 0) - sdata;
-                std::basic_string<T> sdata_str(sdata, byte_to_copy);
-                hashset.emplace(std::move(sdata_str));
-                data += stride;
-            }
-        } while (iternext(iter));
+    std::unordered_set<T> hashset;
+    // reserve the hashset to avoid reallocations
+    // reallocations are expensive, especially for string arrays
+    hashset.reserve(isize * 2);
+
+    // As input is 1d, we can use the strides to iterate through the array.
+    for (npy_intp i = 0; i < isize; i++, idata += istride) {
+        typename T::value_type *sdata = reinterpret_cast<typename T::value_type *>(idata);
+        size_t byte_to_copy = std::find(sdata, sdata + num_chars, 0) - sdata;
+        T sdata_str(sdata, byte_to_copy);
+        hashset.emplace(std::move(sdata_str));
     }
 
     npy_intp length = hashset.size();
 
+    PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
     Py_INCREF(descr);
@@ -213,22 +157,19 @@ unique_string(PyArrayObject *self)
     if (res_obj == NULL) {
         return NULL;
     }
-
-    // then we iterate through the map's keys to get the unique values
-    auto it = hashset.begin();
-    size_t i = 0;
-    char *data = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp stride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
     NPY_DISABLE_C_API;
+    PyThreadState *_save2 = PyEval_SaveThread();
 
-    for (; it != hashset.end(); it++, i++, data += stride) {
-        size_t byte_to_copy = it->size() * sizeof(T);
-        memcpy(data, it->c_str(), byte_to_copy);
-        if (byte_to_copy < (size_t)itemsize) {
-            memset(data + byte_to_copy, 0, itemsize - byte_to_copy);
-        }
+    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+
+    memset(odata, 0, itemsize * length);
+    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+        size_t byte_to_copy = it->size() * sizeof(typename T::value_type);
+        memcpy(odata, it->c_str(), byte_to_copy);
     }
 
+    PyEval_RestoreThread(_save2);
     return res_obj;
 }
 
@@ -243,45 +184,13 @@ unique_vstring(PyArrayObject *self)
     strings (StringDType).
     */
     NPY_ALLOW_C_API_DEF;
-    std::unordered_set<std::optional<std::string>> hashset;
-    // reserve the hashset to avoid reallocations
-    // reallocations are expensive, especially for string arrays
-    hashset.reserve(PyArray_SIZE(self) * 2);
 
-    NpyIter *iter = NpyIter_New(self, NPY_ITER_READONLY |
-                                      NPY_ITER_EXTERNAL_LOOP |
-                                      NPY_ITER_REFS_OK |
-                                      NPY_ITER_ZEROSIZE_OK |
-                                      NPY_ITER_GROWINNER,
-                                NPY_KEEPORDER, NPY_NO_CASTING,
-                                NULL);
-    if (iter == NULL) {
-        return NULL;
-    }
-    // Making sure the iterator is deallocated when the function returns, with
-    // or w/o an exception
-    auto iter_dealloc = finally([&]() { NpyIter_Deallocate(iter); });
-
-    NpyIter_IterNextFunc *iternext = NpyIter_GetIterNext(iter, NULL);
-    if (iternext == NULL) {
-        return NULL;
-    }
-    char **dataptr = NpyIter_GetDataPtrArray(iter);
-    npy_intp *strideptr = NpyIter_GetInnerStrideArray(iter);
-    npy_intp *innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+    PyArray_Descr *descr = PyArray_DESCR(self);
+    // this macro requires the GIL to be held
+    Py_INCREF(descr);
 
     // release the GIL
-    PyThreadState *_save;
-    _save = PyEval_SaveThread();
-    // Making sure the GIL is re-acquired when the function returns, with
-    // or w/o an exception
-    auto grab_gil = finally([&]() { PyEval_RestoreThread(_save); });
-
-    NPY_ALLOW_C_API;
-    // https://numpy.org/doc/stable/reference/c-api/strings.html#loading-a-string
-    PyArray_Descr *descr = PyArray_DESCR(self);
-    Py_INCREF(descr);
-    NPY_DISABLE_C_API;
+    PyThreadState *_save1 = PyEval_SaveThread();
 
     npy_string_allocator *allocator = NpyString_acquire_allocator(
         (PyArray_StringDTypeObject *)descr);
@@ -289,35 +198,37 @@ unique_vstring(PyArrayObject *self)
         NpyString_release_allocator(allocator);
     });
 
-    // first we put the data in a hash map
-    if (NpyIter_GetIterSize(iter) > 0) {
-        do {
-            char* data = *dataptr;
-            npy_intp stride = *strideptr;
-            npy_intp count = *innersizeptr;
+    npy_intp isize = PyArray_SIZE(self);
+    char *idata = PyArray_BYTES(self);
+    npy_intp istride = PyArray_STRIDES(self)[0];
 
-            while (count--) {
-                npy_static_string sdata = {0, NULL};
-                npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
-                int is_null = NpyString_load(allocator, packed_string, &sdata);
+    std::unordered_set<std::optional<std::string>> hashset;
+    // reserve the hashset to avoid reallocations
+    // reallocations are expensive, especially for string arrays
+    hashset.reserve(isize * 2);
 
-                if (is_null == -1) {
-                    return NULL;
-                }
-                else if (is_null) {
-                    hashset.emplace(std::nullopt);
-                }
-                else {
-                    std::string sdata_str(sdata.buf, sdata.size);
-                    hashset.emplace(std::move(sdata_str));
-                }
-                data += stride;
-            }
-        } while (iternext(iter));
+    // As input is 1d, we can use the strides to iterate through the array.
+    for (npy_intp i = 0; i < isize; i++, idata += istride) {
+        // https://numpy.org/doc/stable/reference/c-api/strings.html#loading-a-string
+        npy_static_string sdata = {0, NULL};
+        npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
+        int is_null = NpyString_load(allocator, packed_string, &sdata);
+
+        if (is_null == -1) {
+            return NULL;
+        }
+        else if (is_null) {
+            hashset.emplace(std::nullopt);
+        }
+        else {
+            std::string sdata_str(sdata.buf, sdata.size);
+            hashset.emplace(std::move(sdata_str));
+        }
     }
 
     npy_intp length = hashset.size();
 
+    PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
@@ -334,16 +245,14 @@ unique_vstring(PyArrayObject *self)
     if (res_obj == NULL) {
         return NULL;
     }
-
-    // then we iterate through the map's keys to get the unique values
-    auto it = hashset.begin();
-    size_t i = 0;
-    char *data = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp stride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
     NPY_DISABLE_C_API;
+    PyThreadState *_save2 = PyEval_SaveThread();
 
-    for (; it != hashset.end(); it++, i++, data += stride) {
-        npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
+    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    
+    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+        npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
         if (it->has_value()) {
             std::string str = it->value();
             if (NpyString_pack(allocator, packed_string, str.c_str(), str.size()) == -1) {
@@ -356,6 +265,7 @@ unique_vstring(PyArrayObject *self)
         }
     }
 
+    PyEval_RestoreThread(_save2);
     return res_obj;
 }
 
@@ -382,8 +292,8 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_UINT32, unique_integer<npy_uint32>},
     {NPY_UINT64, unique_integer<npy_uint64>},
     {NPY_DATETIME, unique_integer<npy_uint64>},
-    {NPY_STRING, unique_string<char>},
-    {NPY_UNICODE, unique_string<char32_t>},
+    {NPY_STRING, unique_string<std::string>},
+    {NPY_UNICODE, unique_string<std::u32string>},
     {NPY_VSTRING, unique_vstring},
 };
 
