@@ -11,7 +11,7 @@ import subprocess
 import numpy as np
 from numpy.testing import assert_equal, IS_WASM
 
-is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
+is_inplace = isfile(pathjoin(dirname(np.__file__), '..', 'setup.py'))
 
 
 def find_f2py_commands():
