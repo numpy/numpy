@@ -1240,7 +1240,7 @@ class TestEinsumPath:
         assert_almost_equal(noopt, opt)
 
     def test_path_type_input_internal_trace(self):
-        #gh-20962
+        # gh-20962
         path_test = self.build_operands('cab,cdd->ab')
         exp_path = ['einsum_path', (1,), (0, 1)]
 
@@ -1266,7 +1266,7 @@ class TestEinsumPath:
             RuntimeError, np.einsum_path, *path_test, optimize=exp_path)
 
     def test_spaces(self):
-        #gh-10794
+        # gh-10794
         arr = np.array([[1]])
         for sp in itertools.product(['', ' '], repeat=4):
             # no error for any spacing
@@ -1279,7 +1279,7 @@ def test_overlap():
     # sanity check
     c = np.einsum('ij,jk->ik', a, b)
     assert_equal(c, d)
-    #gh-10080, out overlaps one of the operands
+    # gh-10080, out overlaps one of the operands
     c = np.einsum('ij,jk->ik', a, b, out=b)
     assert_equal(c, d)
 

@@ -339,10 +339,10 @@ class TestNewScalarIndexing:
         assert_equal(x, matrix([[3,  4,  3]]))
         x = a[[1, 0]]
         assert_(isinstance(x, matrix))
-        assert_equal(x, matrix([[3,  4], [1, 2]]))
+        assert_equal(x, matrix([[3, 4], [1, 2]]))
         x = a[[[1], [0]], [[1, 0], [0, 1]]]
         assert_(isinstance(x, matrix))
-        assert_equal(x, matrix([[4,  3], [1,  2]]))
+        assert_equal(x, matrix([[4, 3], [1, 2]]))
 
     def test_matrix_element(self):
         x = matrix([[1, 2, 3], [4, 5, 6]])

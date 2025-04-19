@@ -171,11 +171,11 @@ class TestBaseMath:
 
                 inp2[...] += np.arange(inp2.size, dtype=dt) + 1
                 assert_almost_equal(np.square(inp2),
-                                    np.multiply(inp2, inp2),  err_msg=msg)
+                                    np.multiply(inp2, inp2), err_msg=msg)
                 # skip true divide for ints
                 if dt != np.int32:
                     assert_almost_equal(np.reciprocal(inp2),
-                                        np.divide(1, inp2),  err_msg=msg)
+                                        np.divide(1, inp2), err_msg=msg)
 
                 inp1[...] = np.ones_like(inp1)
                 np.add(inp1, 2, out=out)
@@ -562,13 +562,13 @@ class TestConversion:
                 assert_(not np.array(1, dtype=dt1)[()] < np.array(0, dtype=dt2)[()],
                         f"type {dt1} and {dt2} failed")
 
-        #Unsigned integers
+        # Unsigned integers
         for dt1 in 'BHILQP':
             assert_(-1 < np.array(1, dtype=dt1)[()], f"type {dt1} failed")
             assert_(not -1 > np.array(1, dtype=dt1)[()], f"type {dt1} failed")
             assert_(-1 != np.array(1, dtype=dt1)[()], f"type {dt1} failed")
 
-            #unsigned vs signed
+            # unsigned vs signed
             for dt2 in 'bhilqp':
                 assert_(np.array(1, dtype=dt1)[()] > np.array(-1, dtype=dt2)[()],
                         f"type {dt1} and {dt2} failed")
@@ -577,7 +577,7 @@ class TestConversion:
                 assert_(np.array(1, dtype=dt1)[()] != np.array(-1, dtype=dt2)[()],
                         f"type {dt1} and {dt2} failed")
 
-        #Signed integers and floats
+        # Signed integers and floats
         for dt1 in 'bhlqp' + np.typecodes['Float']:
             assert_(1 > np.array(-1, dtype=dt1)[()], f"type {dt1} failed")
             assert_(not 1 < np.array(-1, dtype=dt1)[()], f"type {dt1} failed")

@@ -1113,7 +1113,7 @@ def test_iter_object_arrays_conversions():
             x[...] += 1
     assert_equal(a, np.arange(6) + 1)
 
-    #Non-contiguous value array
+    # Non-contiguous value array
     a = np.zeros((6,), dtype=[('p', 'i1'), ('a', 'i4')])
     a = a['a']
     a[:] = np.arange(6) + 98172488

@@ -2295,11 +2295,11 @@ class TestMethods:
             arr[::-1].sort()
 
     def test_sort_raises(self):
-        #gh-9404
+        # gh-9404
         arr = np.array([0, datetime.now(), 1], dtype=object)
         for kind in self.sort_kinds:
             assert_raises(TypeError, arr.sort, kind=kind)
-        #gh-3879
+        # gh-3879
 
         class Raiser:
             def raises_anything(*args, **kwargs):
