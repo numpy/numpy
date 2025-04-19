@@ -1873,6 +1873,29 @@ described below.
    pointer. Currently this is used for zero-filling and clearing arrays storing
    embedded references.
 
+.. c:type:: int (PyArray_SortFunc)( \
+                 void *start, npy_intp num, PyArrayMethod_Context *context, \
+                 NpyAuxData *auxdata, NpyAuxData **out_auxdata)
+    
+    A function to sort a buffer of data. The *start* is a pointer to the
+    beginning of the buffer containing *num* elements. A function of this
+    type is returned by the `get_sort_function` function in the DType
+    slots, where *context* is passed in containing the descriptor for the
+    array. Returns 0 on success, -1 on failure.
+
+.. c:type:: int (PyArray_ArgSortFunc)( \
+                 void *start, npy_intp *tosort, npy_intp num, \
+                 PyArrayMethod_Context *context, NpyAuxData *auxdata, \
+                 NpyAuxData **out_auxdata)
+    
+    A function to arg-sort a buffer of data. The *start* is a pointer to the
+    beginning of the buffer containing *num* elements. The *tosort* is a
+    pointer to an array of indices that will be filled in with the
+    indices of the sorted elements. A function of this type is returned by
+    the `get_argsort_function` function in the DType slots, where
+    *context* is passed in containing the descriptor for the array.
+    Returns 0 on success, -1 on failure.
+
 API Functions and Typedefs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -3513,13 +3536,27 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 
 .. c:macro:: NPY_DT_finalize_descr
 
-.. c:type:: PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)( \
-                PyArray_Descr *dtype)
+.. c:macro:: NPY_DT_get_sort_function
 
-   If defined, a function that is called to "finalize" a descriptor
-   instance after an array is created. One use of this function is to
-   force newly created arrays to have a newly created descriptor
-   instance, no matter what input descriptor is provided by a user.
+.. c:type:: int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, \
+        npy_intp sort_kind, int descending, PyArray_SortFunc **out_sort);
+
+    If defined, sets a custom sorting function for the DType for each of
+    the sort kinds numpy implements. Returns 0 on success.
+
+.. c:macro:: NPY_DT_get_argsort_function
+
+.. c:type:: int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, \
+        npy_intp sort_kind, int descending, PyArray_ArgSortFunc **out_argsort);
+
+    If defined, sets a custom argsorting function for the DType for each of
+    the sort kinds numpy implements. Returns 0 on success.
+
+.. c:macro:: NPY_DT_sort_compare
+
+    If defined, sets a custom comparison function for the DType for use in
+    sorting, which will replace `NPY_DT_PyArray_ArrFuncs_compare`. Implements
+    ``PyArray_CompareFunc``.
 
 PyArray_ArrFuncs slots
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -3547,6 +3584,8 @@ DType API slots but for now we have exposed the legacy
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_compare
 
    Computes a comparison for `numpy.sort`, implements ``PyArray_CompareFunc``.
+   If `NPY_DT_sort_compare` is defined, it will be used instead. This slot may
+   be deprecated in the future.
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_argmax
 
@@ -3590,13 +3629,17 @@ DType API slots but for now we have exposed the legacy
 
    An array of PyArray_SortFunc of length ``NPY_NSORTS``. If set, allows
    defining custom sorting implementations for each of the sorting
-   algorithms numpy implements.
+   algorithms numpy implements. If `NPY_DT_get_sort_function` is
+   defined, it will be used instead. This slot may be deprecated in the
+   future.
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_argsort
 
    An array of PyArray_ArgSortFunc of length ``NPY_NSORTS``. If set,
    allows defining custom argsorting implementations for each of the
-   sorting algorithms numpy implements.
+   sorting algorithms numpy implements. If `NPY_DT_get_argsort_function`
+   is defined, it will be used instead. This slot may be deprecated in
+   the future.
 
 Macros and Static Inline Functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
