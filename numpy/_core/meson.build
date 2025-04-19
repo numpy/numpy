@@ -1005,6 +1005,7 @@ foreach gen_mtargets : [
       ASIMD, NEON,
       VXE, VX,
       LSX,
+      RVV,
     ]
   ],
   [

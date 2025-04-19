@@ -13,7 +13,7 @@
 */
 
 namespace {
-using namespace np::simd;
+using namespace np::simd128;
 
 template <typename T> struct OpRint {
 #if NPY_SIMDX
