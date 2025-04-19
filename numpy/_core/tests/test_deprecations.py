@@ -5,23 +5,12 @@ to document how deprecations should eventually be turned into errors.
 """
 import warnings
 import pytest
-import tempfile
 import re
 
 import numpy as np
-from numpy.testing import (
-    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
-    KnownFailureException, break_cycles, temppath
-    )
+from numpy.testing import assert_raises, temppath
 
-from numpy._core._multiarray_tests import fromstring_null_term_c_api
 import numpy._core._struct_ufunc_tests as struct_ufunc
-
-try:
-    import pytz
-    _has_pytz = True
-except ImportError:
-    _has_pytz = False
 
 
 class _DeprecationTestCase:
@@ -47,7 +36,8 @@ class _DeprecationTestCase:
     def teardown_method(self):
         self.warn_ctx.__exit__()
 
-    def assert_deprecated(self, function, num=1, ignore_others=False,
+    def assert_deprecated(self, function, num=1, msg_patterns=None,
+                          ignore_others=False,
                           function_fails=False,
                           exceptions=np._NoValue,
                           args=(), kwargs={}):
@@ -65,6 +55,11 @@ class _DeprecationTestCase:
             The function to test
         num : int
             Number of DeprecationWarnings to expect. This should normally be 1.
+        msg_patterns : str or tuple of str
+            Patterns for which warning messages should match. For `str` each
+            warning should match to the same pattern. For a tuple of `str`
+            each warning should match against the corresponding pattern.
+            For `None` this check is skipped.
         ignore_others : bool
             Whether warnings of the wrong type should be ignored (note that
             the message is not checked)
@@ -96,6 +91,14 @@ class _DeprecationTestCase:
         # just in case, clear the registry
         num_found = 0
         for warning in self.log:
+            if msg_patterns is not None:
+                pattern = (msg_patterns if isinstance(msg_patterns, str) else
+                           msg_patterns[num_found])
+                msg = warning.message.args[0]
+                if re.match(pattern, msg) is None:
+                    raise AssertionError(
+                        "expected %s warning message pattern but got: %s" %
+                        (pattern, msg))
             if warning.category is self.warning_cls:
                 num_found += 1
             elif not ignore_others:
@@ -145,9 +148,17 @@ class TestTestDeprecated:
                       lambda: None)
 
         def foo():
+            warnings.warn("foo bar", category=DeprecationWarning,
+                          stacklevel=2)
+
+        def foo_many():
             warnings.warn("foo", category=DeprecationWarning, stacklevel=2)
+            warnings.warn("bar", category=DeprecationWarning, stacklevel=2)
 
         test_case_instance.assert_deprecated(foo)
+        test_case_instance.assert_deprecated(foo, msg_patterns="foo")
+        test_case_instance.assert_deprecated(foo_many, num=2,
+                                             msg_patterns=("foo", "^bar$"))
         test_case_instance.teardown_method()
 
 
@@ -456,15 +467,18 @@ class TestAddNewdocUFunc(_DeprecationTestCase):
         )
 
 
-def test_deprecated_T_non_2dim():
+class TestDeprecatedTNon2Dim(_DeprecationTestCase):
     # Deprecated in Numpy 2.3, 2025-04
-    with pytest.warns(UserWarning, match="In the future `.T` property for "
-                      "array scalars will raise an error."):
-        np.int64(1).T
-    for shape in [(5,), (2, 3, 4)]:
-        with pytest.warns(
-                UserWarning,
-                match="In the future `.T` property will be "
-                      "supported for 2-dim arrays only. "
-                      f"Received {len(shape)}-dim array."):
-            np.ones(shape).T
+    def test_deprecated(self):
+        self.assert_deprecated(
+            lambda: np.int64(1).T,
+            msg_patterns="In the future `.T` property for "
+                         "array scalars will raise an error."
+        )
+        for shape in [(5,), (2, 3, 4)]:
+            self.assert_deprecated(
+                lambda: np.ones(shape).T,
+                msg_patterns="In the future `.T` property will be "
+                             "supported for 2-dim arrays only. "
+                             f"Received {len(shape)}-dim array."
+            )
