@@ -862,15 +862,18 @@ class TestUnique:
     def test_unique_vstring_hash_based(self):
         # test for unicode and nullable string arrays
         a = np.array(['straße', None, 'strasse', 'straße', None, 'niño', 'nino', 'élève', 'eleve', 'niño', 'élève'], dtype=StringDType(na_object=None))
-        unq_sorted = [None, 'eleve', 'nino', 'niño', 'strasse', 'straße', 'élève']
+        unq_sorted_wo_none = ['eleve', 'nino', 'niño', 'strasse', 'straße', 'élève']
 
         a1 = unique(a, sorted=False)
         # the result varies depending on the hash function used,
         # so we check them by sorting
 
-        # nan
-        #assert_equal(a1[0], unq_sorted[0])
-        assert_array_equal(sorted(a1[1:].tolist()), unq_sorted[1:])
+        # a1 should have exactly one None
+        count_none = sum(x is None for x in a1)
+        assert_equal(count_none, 1)
+
+        a1_wo_none = sorted(x for x in a1 if x is not None)
+        assert_array_equal(a1_wo_none, unq_sorted_wo_none)
 
     def test_unique_vstring_errors(self):
         a = np.array(['apple', 'banana', 'apple', None, 'cherry', 'date', 'banana', 'fig', None, 'grape'] * 2, dtype=StringDType(na_object=None))

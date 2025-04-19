@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -242,7 +243,7 @@ unique_vstring(PyArrayObject *self)
     strings (StringDType).
     */
     NPY_ALLOW_C_API_DEF;
-    std::unordered_set<std::string> hashset;
+    std::unordered_set<std::optional<std::string>> hashset;
     // reserve the hashset to avoid reallocations
     // reallocations are expensive, especially for string arrays
     hashset.reserve(PyArray_SIZE(self) * 2);
@@ -288,9 +289,6 @@ unique_vstring(PyArrayObject *self)
         NpyString_release_allocator(allocator);
     });
 
-    // whether the array contains null values
-    bool contains_null = false;
-
     // first we put the data in a hash map
     if (NpyIter_GetIterSize(iter) > 0) {
         do {
@@ -307,7 +305,7 @@ unique_vstring(PyArrayObject *self)
                     return NULL;
                 }
                 else if (is_null) {
-                    contains_null = true;
+                    hashset.emplace(std::nullopt);
                 }
                 else {
                     std::string sdata_str(sdata.buf, sdata.size);
@@ -319,9 +317,6 @@ unique_vstring(PyArrayObject *self)
     }
 
     npy_intp length = hashset.size();
-    if (contains_null) {
-        length++;
-    }
 
     NPY_ALLOW_C_API;
     PyObject *res_obj = PyArray_NewFromDescr(
@@ -347,19 +342,17 @@ unique_vstring(PyArrayObject *self)
     npy_intp stride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
     NPY_DISABLE_C_API;
 
-    if (contains_null) {
-        // insert null if original array contains null
-        npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
-        if (NpyString_pack_null(allocator, packed_string) == -1) {
-            return NULL;
-        }
-        data += stride;
-        i++;
-    }
     for (; it != hashset.end(); it++, i++, data += stride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)data;
-        if (NpyString_pack(allocator, packed_string, it->c_str(), it->size()) == -1) {
-            return NULL;
+        if (it->has_value()) {
+            std::string str = it->value();
+            if (NpyString_pack(allocator, packed_string, str.c_str(), str.size()) == -1) {
+                return NULL;
+            }
+        } else {
+            if (NpyString_pack_null(allocator, packed_string) == -1) {
+                return NULL;
+            }
         }
     }
 
