@@ -85,12 +85,10 @@ unique_integer(PyArrayObject *self)
     NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
 
-    // then we iterate through the map's keys to get the unique values
-    T* data = (T *)PyArray_DATA((PyArrayObject *)res_obj);
-    auto it = hashset.begin();
-    size_t i = 0;
-    for (; it != hashset.end(); it++, i++) {
-        data[i] = *it;
+    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
+    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+        *reinterpret_cast<T *>(odata) = *it;
     }
 
     PyEval_RestoreThread(_save2);
