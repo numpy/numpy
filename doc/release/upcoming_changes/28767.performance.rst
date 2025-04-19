@@ -7,4 +7,4 @@ the hash-based np.unique completed in roughly 48 seconds,
 compared to 498 seconds with the sort-based method
 – about 10–11× faster for unsorted unique operations on strings.
 This improvement greatly reduces the time to find unique values
-in very large string datasets. (gh-28767)
+in very large string datasets.
