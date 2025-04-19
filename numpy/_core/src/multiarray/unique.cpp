@@ -91,17 +91,14 @@ template <typename T, auto read, auto write>
 static PyObject*
 unique(PyArrayObject *self)
 {
-    /* This function takes a numpy array and returns a numpy array containing
-    the unique values.
-
-    It doesn't need to know the actual type, since it needs to find unique values
-    among binary representations of the input data. This means it won't apply to
-    custom or complicated dtypes or string values.
+    /*
+    * Returns a new NumPy array containing the unique values of the input array.
+    * This function uses hashing to identify uniqueness efficiently.
     */
     NPY_ALLOW_C_API_DEF;
     NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
-    // this operation requires the GIL to be held
+    // NumPy API calls and Python object manipulations require holding the GIL.
     Py_INCREF(descr);
     NPY_DISABLE_C_API;
 
@@ -110,8 +107,8 @@ unique(PyArrayObject *self)
 
     int dtype = PyArray_TYPE(self);
 
-    // This is for NPY_STRING and NPY_UNICODE
-    // size and number of characters of each entries
+    // For NPY_STRING and NPY_UNICODE arrays,
+    // retrieve item size and character count per entry.
     npy_intp itemsize = 0, num_chars = 0;
     if (dtype == NPY_STRING || dtype == NPY_UNICODE) {
         itemsize = PyArray_ITEMSIZE(self);
@@ -127,6 +124,7 @@ unique(PyArrayObject *self)
         allocator = NpyString_acquire_allocator(
             (PyArray_StringDTypeObject *)descr);
     }
+    // Ensure that the allocator is properly released upon function exit.
     auto allocator_dealloc = finally([&]() {
         if (allocator != nullptr) {
             NpyString_release_allocator(allocator);
@@ -138,11 +136,11 @@ unique(PyArrayObject *self)
     npy_intp istride = PyArray_STRIDES(self)[0];
 
     std::unordered_set<T> hashset;
-    // reserve the hashset to avoid reallocations
-    // reallocations are expensive, especially for string arrays
+    // Reserve hashset capacity in advance to minimize reallocations,
+    // which are particularly costly for string-based arrays.
     hashset.reserve(isize * 2);
 
-    // As input is 1d, we can use the strides to iterate through the array.
+    // Input array is one-dimensional, enabling efficient iteration using strides.
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
         T value = read(idata, num_chars, allocator);
         hashset.emplace(std::move(value));
@@ -152,7 +150,7 @@ unique(PyArrayObject *self)
 
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
-    // this operation requires the GIL to be held
+    // NumPy API calls and Python object manipulations require holding the GIL.
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
@@ -173,7 +171,7 @@ unique(PyArrayObject *self)
 
     char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-    // As output is 1d, we can use the strides to iterate through the array.
+    // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
         if (write(odata, *it, itemsize, allocator) == -1) {
             return NULL;
