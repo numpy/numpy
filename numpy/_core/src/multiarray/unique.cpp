@@ -28,206 +28,131 @@ FinalAction<F> finally(F f) {
     return FinalAction<F>(f);
 }
 
-template<typename T>
+template <typename T>
+T read_integer(char *idata, npy_intp num_chars, npy_string_allocator *allocator) {
+    return *(T *)idata;
+};
+
+template <typename T>
+int write_integer(char *odata, const T &value, npy_intp itemsize, npy_string_allocator *allocator) {
+    *reinterpret_cast<T *>(odata) = value;
+    return 0;
+};
+
+template <typename T>
+T read_string(char *idata, npy_intp num_chars, npy_string_allocator *allocator) {
+    typename T::value_type *sdata = reinterpret_cast<typename T::value_type *>(idata);
+    size_t byte_to_copy = std::find(sdata, sdata + num_chars, 0) - sdata;
+    return T(sdata, sdata + byte_to_copy);
+};
+
+template <typename T>
+int write_string(char *odata, const T &value, npy_intp itemsize, npy_string_allocator *allocator) {
+    size_t byte_to_copy = value.size() * sizeof(typename T::value_type);
+    memcpy(odata, value.c_str(), byte_to_copy);
+    if (byte_to_copy < (size_t)itemsize) {
+        memset(odata + byte_to_copy, 0, itemsize - byte_to_copy);
+    }
+    return 0;
+};
+
+template <typename T>
+T read_vstring(char *idata, npy_intp num_chars, npy_string_allocator *allocator) {
+    // https://numpy.org/doc/stable/reference/c-api/strings.html#loading-a-string
+    npy_static_string sdata = {0, NULL};
+    npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
+    int is_null = NpyString_load(allocator, packed_string, &sdata);
+
+    if (is_null == -1 || is_null) {
+        return std::nullopt;
+    }
+    else {
+        return std::make_optional<std::string>(sdata.buf, sdata.buf + sdata.size);
+    }
+};
+
+template <typename T>
+int write_vstring(char *odata, const T &value, npy_intp itemsize, npy_string_allocator *allocator) {
+    npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
+    if (value.has_value()) {
+        std::string str = value.value();
+        if (NpyString_pack(allocator, packed_string, str.c_str(), str.size()) == -1) {
+            return -1;
+        }
+    } else {
+        if (NpyString_pack_null(allocator, packed_string) == -1) {
+            return -1;
+        }
+    }
+    return 0;
+};
+
+template <typename T, auto read, auto write>
 static PyObject*
-unique_integer(PyArrayObject *self)
+unique(PyArrayObject *self)
 {
     /* This function takes a numpy array and returns a numpy array containing
     the unique values.
-
-    It assumes the numpy array includes data that can be viewed as unsigned integers
-    of a certain size (sizeof(T)).
 
     It doesn't need to know the actual type, since it needs to find unique values
     among binary representations of the input data. This means it won't apply to
     custom or complicated dtypes or string values.
     */
     NPY_ALLOW_C_API_DEF;
-
-    // release the GIL
-    PyThreadState *_save1 = PyEval_SaveThread();
-
-    npy_intp isize = PyArray_SIZE(self);
-    char *idata = PyArray_BYTES(self);
-    npy_intp istride = PyArray_STRIDES(self)[0];
-
-    std::unordered_set<T> hashset;
-    // reserve the hashset to avoid reallocations
-    // reallocations are expensive, especially for string arrays
-    hashset.reserve(isize * 2);
-
-    // As input is 1d, we can use the strides to iterate through the array.
-    for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        hashset.emplace(*((T *) idata));
-    }
-
-    npy_intp length = hashset.size();
-
-    PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
+    // this operation requires the GIL to be held
     Py_INCREF(descr);
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
-
-    if (res_obj == NULL) {
-        return NULL;
-    }
     NPY_DISABLE_C_API;
-    PyThreadState *_save2 = PyEval_SaveThread();
-
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        *reinterpret_cast<T *>(odata) = *it;
-    }
-
-    PyEval_RestoreThread(_save2);
-    return res_obj;
-}
-
-
-template<typename T>
-static PyObject*
-unique_string(PyArrayObject *self)
-{
-    /* This function takes a numpy array and returns a numpy array containing
-    the unique values.
-
-    It assumes the numpy array includes data that can be viewed as fixed-size
-    strings of a certain size (itemsize / sizeof(T)).
-    */
-    NPY_ALLOW_C_API_DEF;
 
     // release the GIL
     PyThreadState *_save1 = PyEval_SaveThread();
 
-    // size of each entries
-    npy_intp itemsize = PyArray_ITEMSIZE(self);
-    // the number of characters of each entries
-    // (For Unicode, itemsize / 4 for UCS4)
-    npy_intp num_chars = itemsize / sizeof(typename T::value_type);
+    int dtype = PyArray_TYPE(self);
 
-    npy_intp isize = PyArray_SIZE(self);
-    char *idata = PyArray_BYTES(self);
-    npy_intp istride = PyArray_STRIDES(self)[0];
-
-    std::unordered_set<T> hashset;
-    // reserve the hashset to avoid reallocations
-    // reallocations are expensive, especially for string arrays
-    hashset.reserve(isize * 2);
-
-    // As input is 1d, we can use the strides to iterate through the array.
-    for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        typename T::value_type *sdata = reinterpret_cast<typename T::value_type *>(idata);
-        size_t byte_to_copy = std::find(sdata, sdata + num_chars, 0) - sdata;
-        hashset.emplace(sdata, sdata + byte_to_copy);
+    // This is for NPY_STRING and NPY_UNICODE
+    // size and number of characters of each entries
+    npy_intp itemsize = 0, num_chars = 0;
+    if (dtype == NPY_STRING || dtype == NPY_UNICODE) {
+        itemsize = PyArray_ITEMSIZE(self);
+        if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, std::u32string>) {
+            // (For Unicode, itemsize / 4 for UCS4)
+            num_chars = itemsize / sizeof(typename T::value_type);
+        }
     }
 
-    npy_intp length = hashset.size();
-
-    PyEval_RestoreThread(_save1);
-    NPY_ALLOW_C_API;
-    PyArray_Descr *descr = PyArray_DESCR(self);
-    Py_INCREF(descr);
-    PyObject *res_obj = PyArray_NewFromDescr(
-        &PyArray_Type,
-        descr,
-        1, // ndim
-        &length, // shape
-        NULL, // strides
-        NULL, // data
-        // This flag is needed to be able to call .sort on it.
-        NPY_ARRAY_WRITEABLE, // flags
-        NULL // obj
-    );
-
-    if (res_obj == NULL) {
-        return NULL;
+    // This is for NPY_VSTRING
+    npy_string_allocator *allocator = nullptr;
+    if (dtype == NPY_VSTRING) {
+        allocator = NpyString_acquire_allocator(
+            (PyArray_StringDTypeObject *)descr);
     }
-    NPY_DISABLE_C_API;
-    PyThreadState *_save2 = PyEval_SaveThread();
-
-    char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
-    npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-
-    memset(odata, 0, itemsize * length);
-    for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        size_t byte_to_copy = it->size() * sizeof(typename T::value_type);
-        memcpy(odata, it->c_str(), byte_to_copy);
-    }
-
-    PyEval_RestoreThread(_save2);
-    return res_obj;
-}
-
-
-static PyObject*
-unique_vstring(PyArrayObject *self)
-{
-    /* This function takes a numpy array and returns a numpy array containing
-    the unique values.
-
-    It assumes the numpy array includes data that can be viewed as variable width
-    strings (StringDType).
-    */
-    NPY_ALLOW_C_API_DEF;
-
-    PyArray_Descr *descr = PyArray_DESCR(self);
-    // this macro requires the GIL to be held
-    Py_INCREF(descr);
-
-    // release the GIL
-    PyThreadState *_save1 = PyEval_SaveThread();
-
-    npy_string_allocator *allocator = NpyString_acquire_allocator(
-        (PyArray_StringDTypeObject *)descr);
     auto allocator_dealloc = finally([&]() {
-        NpyString_release_allocator(allocator);
+        if (allocator != nullptr) {
+            NpyString_release_allocator(allocator);
+        }
     });
 
     npy_intp isize = PyArray_SIZE(self);
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
 
-    std::unordered_set<std::optional<std::string>> hashset;
+    std::unordered_set<T> hashset;
     // reserve the hashset to avoid reallocations
     // reallocations are expensive, especially for string arrays
     hashset.reserve(isize * 2);
 
     // As input is 1d, we can use the strides to iterate through the array.
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        // https://numpy.org/doc/stable/reference/c-api/strings.html#loading-a-string
-        npy_static_string sdata = {0, NULL};
-        npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
-        int is_null = NpyString_load(allocator, packed_string, &sdata);
-
-        if (is_null == -1) {
-            return NULL;
-        }
-        else if (is_null) {
-            hashset.emplace(std::nullopt);
-        }
-        else {
-            hashset.emplace(
-                std::make_optional<std::string>(sdata.buf, sdata.buf + sdata.size)
-            );
-        }
+        T value = read(idata, num_chars, allocator);
+        hashset.emplace(std::move(value));
     }
 
     npy_intp length = hashset.size();
 
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
+    // this operation requires the GIL to be held
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
@@ -248,18 +173,10 @@ unique_vstring(PyArrayObject *self)
 
     char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-    
+    // As output is 1d, we can use the strides to iterate through the array.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
-        if (it->has_value()) {
-            std::string str = it->value();
-            if (NpyString_pack(allocator, packed_string, str.c_str(), str.size()) == -1) {
-                return NULL;
-            }
-        } else {
-            if (NpyString_pack_null(allocator, packed_string) == -1) {
-                return NULL;
-            }
+        if (write(odata, *it, itemsize, allocator) == -1) {
+            return NULL;
         }
     }
 
@@ -271,28 +188,28 @@ unique_vstring(PyArrayObject *self)
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
-    {NPY_BYTE, unique_integer<npy_byte>},
-    {NPY_UBYTE, unique_integer<npy_ubyte>},
-    {NPY_SHORT, unique_integer<npy_short>},
-    {NPY_USHORT, unique_integer<npy_ushort>},
-    {NPY_INT, unique_integer<npy_int>},
-    {NPY_UINT, unique_integer<npy_uint>},
-    {NPY_LONG, unique_integer<npy_long>},
-    {NPY_ULONG, unique_integer<npy_ulong>},
-    {NPY_LONGLONG, unique_integer<npy_longlong>},
-    {NPY_ULONGLONG, unique_integer<npy_ulonglong>},
-    {NPY_INT8, unique_integer<npy_int8>},
-    {NPY_INT16, unique_integer<npy_int16>},
-    {NPY_INT32, unique_integer<npy_int32>},
-    {NPY_INT64, unique_integer<npy_int64>},
-    {NPY_UINT8, unique_integer<npy_uint8>},
-    {NPY_UINT16, unique_integer<npy_uint16>},
-    {NPY_UINT32, unique_integer<npy_uint32>},
-    {NPY_UINT64, unique_integer<npy_uint64>},
-    {NPY_DATETIME, unique_integer<npy_uint64>},
-    {NPY_STRING, unique_string<std::string>},
-    {NPY_UNICODE, unique_string<std::u32string>},
-    {NPY_VSTRING, unique_vstring},
+    {NPY_BYTE, unique<npy_byte, read_integer<npy_byte>, write_integer<npy_byte>>},
+    {NPY_UBYTE, unique<npy_ubyte, read_integer<npy_ubyte>, write_integer<npy_ubyte>>},
+    {NPY_SHORT, unique<npy_short, read_integer<npy_short>, write_integer<npy_short>>},
+    {NPY_USHORT, unique<npy_ushort, read_integer<npy_ushort>, write_integer<npy_ushort>>},
+    {NPY_INT, unique<npy_int, read_integer<npy_int>, write_integer<npy_int>>},
+    {NPY_UINT, unique<npy_uint, read_integer<npy_uint>, write_integer<npy_uint>>},
+    {NPY_LONG, unique<npy_long, read_integer<npy_long>, write_integer<npy_long>>},
+    {NPY_ULONG, unique<npy_ulong, read_integer<npy_ulong>, write_integer<npy_ulong>>},
+    {NPY_LONGLONG, unique<npy_longlong, read_integer<npy_longlong>, write_integer<npy_longlong>>},
+    {NPY_ULONGLONG, unique<npy_ulonglong, read_integer<npy_ulonglong>, write_integer<npy_ulonglong>>},
+    {NPY_INT8, unique<npy_int8, read_integer<npy_int8>, write_integer<npy_int8>>},
+    {NPY_INT16, unique<npy_int16, read_integer<npy_int16>, write_integer<npy_int16>>},
+    {NPY_INT32, unique<npy_int32, read_integer<npy_int32>, write_integer<npy_int32>>},
+    {NPY_INT64, unique<npy_int64, read_integer<npy_int64>, write_integer<npy_int64>>},
+    {NPY_UINT8, unique<npy_uint8, read_integer<npy_uint8>, write_integer<npy_uint8>>},
+    {NPY_UINT16, unique<npy_uint16, read_integer<npy_uint16>, write_integer<npy_uint16>>},
+    {NPY_UINT32, unique<npy_uint32, read_integer<npy_uint32>, write_integer<npy_uint32>>},
+    {NPY_UINT64, unique<npy_uint64, read_integer<npy_uint64>, write_integer<npy_uint64>>},
+    {NPY_DATETIME, unique<npy_uint64, read_integer<npy_uint64>, write_integer<npy_uint64>>},
+    {NPY_STRING, unique<std::string, read_string<std::string>, write_string<std::string>>},
+    {NPY_UNICODE, unique<std::u32string, read_string<std::u32string>, write_string<std::u32string>>},
+    {NPY_VSTRING, unique<std::optional<std::string>, read_vstring<std::optional<std::string>>, write_vstring<std::optional<std::string>>>},
 };
 
 
