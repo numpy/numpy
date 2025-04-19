@@ -2104,7 +2104,7 @@ class TestUfunc:
     def test_array_wrap_array_priority(self):
         class ArrayPriorityBase(np.ndarray):
             @classmethod
-            def __array_wrap__(cls, array, context=None, return_scalar = False):
+            def __array_wrap__(cls, array, context=None, return_scalar=False):
                 return cls
 
         class ArrayPriorityMinus0(ArrayPriorityBase):

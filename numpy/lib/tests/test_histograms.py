@@ -588,7 +588,7 @@ class TestHistogramOptimBinNums:
             x3 = np.linspace(-100, -50, testlen)
             x = np.hstack((x1, x2, x3))
             for estimator, numbins in expectedResults.items():
-                a, b = np.histogram(x, estimator, range = (-20, 20))
+                a, b = np.histogram(x, estimator, range=(-20, 20))
                 msg = f"For the {estimator} estimator"
                 msg += f" with datasize of {testlen}"
                 assert_equal(len(a), numbins, err_msg=msg)

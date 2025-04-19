@@ -75,7 +75,7 @@ class TestAccuracy:
                         assert_array_max_ulp(npfunc(inval), outval, maxulperr)
 
     @pytest.mark.skipif(IS_AVX512FP16,
-            reason = "SVML FP16 have slightly higher ULP errors")
+            reason="SVML FP16 have slightly higher ULP errors")
     @pytest.mark.parametrize("ufunc", UNARY_OBJECT_UFUNCS)
     def test_validate_fp16_transcendentals(self, ufunc):
         with np.errstate(all='ignore'):
