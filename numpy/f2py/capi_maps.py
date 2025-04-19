@@ -15,6 +15,7 @@ import os
 from .crackfortran import markoutercomma
 from . import cb_rules
 from ._isocbind import iso_c_binding_map, isoc_c2pycode_map, iso_c2py_map
+from ._isofenv import iso_fortran_env_map, isof_kindmap
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
@@ -130,6 +131,7 @@ f2cmap_all = {'real': {'': 'float', '4': 'float', '8': 'double',
 c2pycode_map.update(isoc_c2pycode_map)
 c2py_map.update(iso_c2py_map)
 f2cmap_all, _ = process_f2cmap_dict(f2cmap_all, iso_c_binding_map, c2py_map)
+f2cmap_all, _ = process_f2cmap_dict(f2cmap_all, iso_fortran_env_map, c2py_map)
 # End ISO_C handling
 f2cmap_default = copy.deepcopy(f2cmap_all)
 
