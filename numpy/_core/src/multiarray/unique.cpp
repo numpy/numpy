@@ -4,7 +4,6 @@
 #include <Python.h>
 
 #include <algorithm>
-#include <iostream>
 #include <unordered_set>
 #include <functional>
 #include <string>
@@ -219,6 +218,7 @@ unique_string(PyArrayObject *self)
     size_t i = 0;
     char *data = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp stride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    NPY_DISABLE_C_API;
 
     for (; it != hashset.end(); it++, i++, data += stride) {
         size_t byte_to_copy = it->size() * sizeof(T);
@@ -227,7 +227,6 @@ unique_string(PyArrayObject *self)
             memset(data + byte_to_copy, 0, itemsize - byte_to_copy);
         }
     }
-    NPY_DISABLE_C_API;
 
     return res_obj;
 }
