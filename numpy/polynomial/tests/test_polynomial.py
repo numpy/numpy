@@ -155,10 +155,10 @@ class TestEvaluation:
     y = poly.polyval(x, [1., 2., 3.])
 
     def test_polyval(self):
-        #check empty input
+        # check empty input
         assert_equal(poly.polyval([], [1]).size, 0)
 
-        #check normal input)
+        # check normal input)
         x = np.linspace(-1, 1)
         y = [x**i for i in range(5)]
         for i in range(5):
@@ -169,7 +169,7 @@ class TestEvaluation:
         res = poly.polyval(x, [0, -1, 0, 1])
         assert_almost_equal(res, tgt)
 
-        #check that shape is preserved
+        # check that shape is preserved
         for i in range(3):
             dims = [2] * i
             x = np.zeros(dims)
@@ -177,13 +177,13 @@ class TestEvaluation:
             assert_equal(poly.polyval(x, [1, 0]).shape, dims)
             assert_equal(poly.polyval(x, [1, 0, 0]).shape, dims)
 
-        #check masked arrays are processed correctly
+        # check masked arrays are processed correctly
         mask = [False, True, False]
         mx = np.ma.array([1, 2, 3], mask=mask)
         res = np.polyval([7, 5, 3], mx)
         assert_array_equal(res.mask, mask)
 
-        #check subtypes of ndarray are preserved
+        # check subtypes of ndarray are preserved
         class C(np.ndarray):
             pass
 
@@ -258,16 +258,16 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test exceptions
+        # test exceptions
         assert_raises_regex(ValueError, 'incompatible',
                             poly.polyval2d, x1, x2[:2], self.c2d)
 
-        #test values
+        # test values
         tgt = y1 * y2
         res = poly.polyval2d(x1, x2, self.c2d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = poly.polyval2d(z, z, self.c2d)
         assert_(res.shape == (2, 3))
@@ -276,16 +276,16 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test exceptions
+        # test exceptions
         assert_raises_regex(ValueError, 'incompatible',
                       poly.polyval3d, x1, x2, x3[:2], self.c3d)
 
-        #test values
+        # test values
         tgt = y1 * y2 * y3
         res = poly.polyval3d(x1, x2, x3, self.c3d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = poly.polyval3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
@@ -294,12 +294,12 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test values
+        # test values
         tgt = np.einsum('i,j->ij', y1, y2)
         res = poly.polygrid2d(x1, x2, self.c2d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = poly.polygrid2d(z, z, self.c2d)
         assert_(res.shape == (2, 3) * 2)
@@ -308,12 +308,12 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test values
+        # test values
         tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
         res = poly.polygrid3d(x1, x2, x3, self.c3d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = poly.polygrid3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3) * 3)
