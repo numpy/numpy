@@ -313,39 +313,39 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
     npy_intp len = dimensions[0];
 
     bool unrolled = false;
-#if NPY_SIMDX
-    if constexpr (kSupportLane<T>) {
-        if (!is_mem_overlap(src, src_step, dst, dst_step, len) && alignof(T) == sizeof(T) &&
-                src_step % sizeof(T) == 0 && dst_step % sizeof(T) == 0) {
-            const int lsize = sizeof(T);
-            const npy_intp ssrc = src_step / lsize;
-            const npy_intp sdst = dst_step / lsize;
-            if (ssrc == 1 && sdst == 1) {
-                simd_unary_fp<T, OP, 0, 0, 4>(reinterpret_cast<const T*>(src), 1, reinterpret_cast<T*>(dst), 1, len);
-            }
-            else if (sdst == 1) {
-                simd_unary_fp<T, OP, 1, 0, 4>(reinterpret_cast<const T*>(src), ssrc, reinterpret_cast<T*>(dst), 1, len);
-            }
-            else if (ssrc == 1) {
-                simd_unary_fp<T, OP, 0, 1, 2>(reinterpret_cast<const T*>(src), 1, reinterpret_cast<T*>(dst), sdst, len);
-            }
-            else {
-                simd_unary_fp<T, OP, 1, 1, 2>(reinterpret_cast<const T*>(src), ssrc, reinterpret_cast<T*>(dst), sdst, len);
-            }
-            unrolled = true;
-        }
-    }
-#endif
+// #if NPY_SIMDX
+//     if constexpr (kSupportLane<T>) {
+//         if (!is_mem_overlap(src, src_step, dst, dst_step, len) && alignof(T) == sizeof(T) &&
+//                 src_step % sizeof(T) == 0 && dst_step % sizeof(T) == 0) {
+//             const int lsize = sizeof(T);
+//             const npy_intp ssrc = src_step / lsize;
+//             const npy_intp sdst = dst_step / lsize;
+//             if (ssrc == 1 && sdst == 1) {
+//                 simd_unary_fp<T, OP, 0, 0, 4>(reinterpret_cast<const T*>(src), 1, reinterpret_cast<T*>(dst), 1, len);
+//             }
+//             else if (sdst == 1) {
+//                 simd_unary_fp<T, OP, 1, 0, 4>(reinterpret_cast<const T*>(src), ssrc, reinterpret_cast<T*>(dst), 1, len);
+//             }
+//             else if (ssrc == 1) {
+//                 simd_unary_fp<T, OP, 0, 1, 2>(reinterpret_cast<const T*>(src), 1, reinterpret_cast<T*>(dst), sdst, len);
+//             }
+//             else {
+//                 simd_unary_fp<T, OP, 1, 1, 2>(reinterpret_cast<const T*>(src), ssrc, reinterpret_cast<T*>(dst), sdst, len);
+//             }
+//             unrolled = true;
+//         }
+//     }
+// #endif
 
     // fallback to scalar implementation
     if (!unrolled) {
         for (; len > 0; --len, src += src_step, dst += dst_step) {
-        #if NPY_SIMDX
-            if constexpr (kSupportLane<T>) {
-                // to guarantee the same precision and fp/domain errors for both scalars and vectors
-                simd_unary_fp<T, OP, 0, 0, 4>(reinterpret_cast<const T*>(src), 0, reinterpret_cast<T*>(dst), 0, 1);
-            } else
-        #endif
+        // #if NPY_SIMDX
+        //     if constexpr (kSupportLane<T>) {
+        //         // to guarantee the same precision and fp/domain errors for both scalars and vectors
+        //         simd_unary_fp<T, OP, 0, 0, 4>(reinterpret_cast<const T*>(src), 0, reinterpret_cast<T*>(dst), 0, 1);
+        //     } else
+        // #endif
             {
                 const T src0 = *reinterpret_cast<const T*>(src);
                 *reinterpret_cast<T*>(dst) = op_func(src0);
