@@ -1,0 +1,13 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.2.6 Release Notes
+==========================
+
+NumPy 2.2.6 is a patch release that fixes bugs found after the 2.2.5 release.
+It has a large number of typing fixes/improvements as well as the normal bug
+fixes and some CI maintenance.
+
+This release supports Python versions 3.10-3.13.
+
+
