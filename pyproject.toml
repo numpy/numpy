@@ -1,7 +1,9 @@
 [build-system]
 build-backend = "mesonpy"
 requires = [
-    "meson-python>=0.15.0",
+    # TODO: Point at an actual meson-python release.
+    # "meson-python>=0.15.0",
+    "meson-python @ git+https://github.com/freakboy3742/meson-python@ios-support",
     "Cython>=3.0.6",  # keep in sync with version check in meson.build
 ]
 
@@ -149,6 +151,23 @@ config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false b
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
+
+[tool.cibuildwheel.ios]
+# The build will use Accelerate on iOS 16.4 or above; but fall back to non-BLAS
+# for older iOS versions (because blas isn't available for iOS).
+config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=true build-dir=build"
+before-test = []
+test-requires = [
+    "hypothesis",
+    "pytest==7.4.0",
+    "pytest-cov==4.1.0",
+    "pytz",
+]
+test-sources = [
+    "numpy/tests",
+]
+test-command = "pytest --pyargs numpy -m 'not slow' -vv"
+xbuild-tools = ["ninja"]
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
