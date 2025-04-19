@@ -5,7 +5,6 @@ in python where it's easier.
 By putting the formatting in `__str__`, we also avoid paying the cost for
 users who silence the exceptions.
 """
-from .._utils import set_module
 
 def _unpack_tuple(tup):
     if len(tup) == 1:

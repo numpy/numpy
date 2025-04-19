@@ -121,6 +121,7 @@ from .hermite import Hermite
 from .hermite_e import HermiteE
 from .laguerre import Laguerre
 
+# ruff: noqa: F822
 __all__ = [
     "set_default_printstyle",
     "polynomial", "Polynomial",

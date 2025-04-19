@@ -193,7 +193,7 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
     """  # noqa: E501
     try:
         # prevent obscure error later
-        import scipy_doctest
+        import scipy_doctest  # noqa: F401
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError("scipy-doctest not installed") from e
 

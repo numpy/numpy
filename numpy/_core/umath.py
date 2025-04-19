@@ -6,6 +6,7 @@ by importing from the extension module.
 
 """
 
+# ruff: noqa: F401
 import numpy
 from . import _multiarray_umath
 from ._multiarray_umath import *  # noqa: F403
