@@ -9053,7 +9053,7 @@ class TestWhere:
         e = float('-Infinity')
         assert_equal(np.where(True, d, e).dtype, np.float32)
         # With NEP 50 adopted, the float will overflow here:
-        e = float(1e150)
+        e = 1e150
         with pytest.warns(RuntimeWarning, match="overflow"):
             res = np.where(True, d, e)
         assert res.dtype == np.float32
