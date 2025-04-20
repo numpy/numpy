@@ -11,7 +11,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#include <arm_neon.h>
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #define _UMATHMODULE
@@ -25,6 +24,64 @@
 #include "usertypes.h"
 
 #include "umathmodule.h"
+
+#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+// Optimized Neon SIMD Routines for fp16<->fp32 casts on ARMv8.2-a+
+
+static NPY_GCC_OPT_3 int neon_cast_f16_to_f32_contig_aligned(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *NPY_UNUSED(strides),
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    const float16_t *src = (const float16_t *)args[0];
+    float *dst = (float *)args[1];
+    npy_intp N = dimensions[0];
+    npy_intp i = 0;
+    size_t num_chunks_8 = N / 8;
+
+    for (size_t chunk = 0; chunk < num_chunks_8; ++chunk) {
+        float16x8_t vec_f16 = vld1q_f16(src + i);
+        float16x4_t vec_f16_low_half = vget_low_f16(vec_f16);
+        float16x4_t vec_f16_high_half = vget_high_f16(vec_f16);
+        float32x4_t vec_f32_low = vcvt_f32_f16(vec_f16_low_half);
+        float32x4_t vec_f32_high = vcvt_f32_f16(vec_f16_high_half);
+        vst1q_f32(dst + i, vec_f32_low);
+        vst1q_f32(dst + i + 4, vec_f32_high);
+        i += 8;
+    }
+    for (; i < N; ++i) {
+        dst[i] = (float)src[i];
+    }
+    return 0;
+}
+
+static NPY_GCC_OPT_3 int neon_cast_f32_to_f16_contig_aligned(
+        PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
+        const npy_intp *dimensions, const npy_intp *NPY_UNUSED(strides),
+        NpyAuxData *NPY_UNUSED(auxdata))
+{
+    const float *src = (const float *)args[0];
+    float16_t *dst = (float16_t *)args[1];
+    npy_intp N = dimensions[0];
+    npy_intp i = 0;
+    size_t num_chunks_8 = N / 8;
+
+    for (size_t chunk = 0; chunk < num_chunks_8; ++chunk) {
+        float32x4_t vec_f32_low = vld1q_f32(src + i);
+        float32x4_t vec_f32_high = vld1q_f32(src + i + 4);
+        float16x4_t vec_f16_low = vcvt_f16_f32(vec_f32_low);
+        float16x4_t vec_f16_high = vcvt_f16_f32(vec_f32_high);
+        float16x8_t vec_f16_combined = vcombine_f16(vec_f16_low, vec_f16_high);
+        vst1q_f16(dst + i, vec_f16_combined);
+        i += 8;
+    }
+    for (; i < N; ++i) {
+        dst[i] = (float16_t)src[i];
+    }
+    return 0;
+}
+#endif
+
 
 /*
  * x86 platform works with unaligned access but the compiler is allowed to
@@ -709,6 +766,14 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 /************* STRIDED CASTING SPECIALIZED FUNCTIONS *************/
 
+#ifdef __ARM_FP16_FORMAT_IEEE
+    #define EMULATED_FP16 0
+    typedef _Float16 _npy_half;
+#else
+    #define EMULATED_FP16 1
+    typedef npy_half _npy_half;
+#endif
+
 /**begin repeat
  *
  * #NAME1 = BOOL,
@@ -724,15 +789,15 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  * #type1 = npy_bool,
  *          npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
  *          npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *          npy_half, npy_float, npy_double, npy_longdouble,
+ *          _npy_half, npy_float, npy_double, npy_longdouble,
  *          npy_cfloat, npy_cdouble, npy_clongdouble#
  * #rtype1 = npy_bool,
  *           npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
  *           npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *           npy_half, npy_float, npy_double, npy_longdouble,
+ *           _npy_half, npy_float, npy_double, npy_longdouble,
  *           npy_float, npy_double, npy_longdouble#
  * #is_bool1 = 1, 0*17#
- * #is_half1 = 0*11, 1, 0*6#
+ * #is_half1 = 0*11, EMULATED_FP16, 0*6#
  * #is_float1 = 0*12, 1, 0, 0, 1, 0, 0#
  * #is_double1 = 0*13, 1, 0, 0, 1, 0#
  * #is_complex1 = 0*15, 1*3#
@@ -753,15 +818,15 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  * #type2 = npy_bool,
  *          npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
  *          npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *          npy_half, npy_float, npy_double, npy_longdouble,
+ *          _npy_half, npy_float, npy_double, npy_longdouble,
  *          npy_cfloat, npy_cdouble, npy_clongdouble#
  * #rtype2 = npy_bool,
  *          npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
  *          npy_byte, npy_short, npy_int, npy_long, npy_longlong,
- *          npy_half, npy_float, npy_double, npy_longdouble,
+ *          _npy_half, npy_float, npy_double, npy_longdouble,
  *          npy_float, npy_double, npy_longdouble#
  * #is_bool2 = 1, 0*17#
- * #is_half2 = 0*11, 1, 0*6#
+ * #is_half2 = 0*11, EMULATED_FP16, 0*6#
  * #is_float2 = 0*12, 1, 0, 0, 1, 0, 0#
  * #is_double2 = 0*13, 1, 0, 0, 1, 0#
  * #is_complex2 = 0*15, 1*3#
@@ -848,26 +913,6 @@ static NPY_GCC_OPT_3 int
 {
     npy_intp N = dimensions[0];
     char *src = args[0], *dst = args[1];
-    #if @contig@ && @aligned@ && @is_half1@ && @is_float2@
-        float16_t* input = (float16_t*)src;
-        float* output = (float*)dst;
-        npy_intp i = 0;
-        size_t num_chunks_8 = N / 8;
-
-        for (size_t chunk = 0; chunk < num_chunks_8; ++chunk) {
-            float16x8_t vec_f16 = vld1q_f16(input + i);
-            float16x4_t vec_f16_low_half = vget_low_f16(vec_f16);
-            float16x4_t vec_f16_high_half = vget_high_f16(vec_f16);
-            float32x4_t vec_f32_low = vcvt_f32_f16(vec_f16_low_half);
-            float32x4_t vec_f32_high = vcvt_f32_f16(vec_f16_high_half);
-            vst1q_f32(output + i, vec_f32_low);
-            vst1q_f32(output + i + 4, vec_f32_high);
-            i += 8;
-        }
-        for (; i < N; ++i) {
-            output[i] = (float)input[i];
-        }
-    #else
 #if !@contig@
     npy_intp src_stride = strides[0], dst_stride = strides[1];
 #endif
@@ -951,7 +996,6 @@ static NPY_GCC_OPT_3 int
         src += src_stride;
 #endif
     }
-    #endif
     return 0;
 }
 
@@ -1016,6 +1060,17 @@ PyArray_GetStridedNumericCastFn(int aligned, npy_intp src_stride,
 
                 case NPY_@NAME2@:
                     /*printf("ret fn %d %d\n", NPY_@NAME1@, NPY_@NAME2@);*/
+                    #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+                        // Check for Half <-> Float, aligned, contiguous
+                        if (aligned && src_stride == sizeof(@type1@) && dst_stride == sizeof(@type2@)) {
+                            if (src_type_num == NPY_HALF && dst_type_num == NPY_FLOAT) {
+                                return &neon_cast_f16_to_f32_contig_aligned;
+                            }
+                            if (src_type_num == NPY_FLOAT && dst_type_num == NPY_HALF) {
+                                return &neon_cast_f32_to_f16_contig_aligned;
+                            }
+                        }
+                    #endif
 #  if NPY_USE_UNALIGNED_ACCESS
                     if (src_stride == sizeof(@type1@) &&
                                 dst_stride == sizeof(@type2@)) {
