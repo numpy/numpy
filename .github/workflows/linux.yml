@@ -213,12 +213,18 @@ jobs:
         fetch-tags: true
         persist-credentials: false
     
-    - name: Creates new container
+    - name: Creates new container with Python 3.13
       run: |
         docker run --name the_container --interactive \
           -v $(pwd):/numpy arm32v7/ubuntu:22.04 /bin/linux32 /bin/bash -c "
           apt update &&
-          apt install -y ninja-build cmake git python3.13 python3.13-dev python3-pip python3-venv &&
+          apt install -y software-properties-common &&
+          add-apt-repository -y ppa:deadsnakes/ppa &&
+          apt update &&
+          apt install -y python3.13 python3.13-venv python3.13-dev python3-pip ninja-build cmake git &&
+          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.13 1 &&
+          update-alternatives --install /usr/bin/python python /usr/bin/python3.13 1 &&
+          python3 --version &&
           python -m pip install -r /numpy/requirements/build_requirements.txt &&
           python -m pip install -r /numpy/requirements/test_requirements.txt
         "
