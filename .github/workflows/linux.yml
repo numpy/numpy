@@ -217,6 +217,7 @@ jobs:
       run: |
         docker run --name the_container --interactive \
           -v $(pwd):/numpy arm32v7/ubuntu:22.04 /bin/linux32 /bin/bash -c "
+          export DEBIAN_FRONTEND=noninteractive && export TZ=Etc/UTC && \
           apt update &&
           apt install -y software-properties-common &&
           add-apt-repository -y ppa:deadsnakes/ppa &&
