@@ -580,7 +580,7 @@ class TestInv(InvCases):
         result = linalg.inv(a, noerr=True)
 
         assert_almost_equal(result[0], np.array([[1.0, 0.0], [0.0, 1.0]]))
-        assert_almost_equal(result[2], np.array([[2/3, -1/3], [-1/3, 2/3]]))
+        assert_almost_equal(result[2], np.array([[2 / 3, -1 / 3], [-1 / 3, 2 / 3]]))
 
         assert_(np.isnan(result[1]).all())
 
