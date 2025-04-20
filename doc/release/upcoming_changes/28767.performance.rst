@@ -1,5 +1,5 @@
 Performance improvements to ``np.unique`` for string dtypes
------------------------------------------
+-----------------------------------------------------------
 The hash-based algorithm for unique extraction provides
 an order-of-magnitude speedup on large string arrays. 
 In an internal benchmark with about 1 billion string elements,

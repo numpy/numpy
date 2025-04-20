@@ -1,5 +1,5 @@
 ``unique_values`` for string dtypes may return unsorted data
-------------------------------------------
+------------------------------------------------------------
 np.unique now supports hash‐based duplicate removal for string dtypes.
 This enhancement extends the hash-table algorithm to byte strings ('S'),
 Unicode strings ('U'), and the experimental string dtype ('T', StringDType).
