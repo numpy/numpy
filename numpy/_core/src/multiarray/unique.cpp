@@ -65,7 +65,9 @@ public:
     }
 };
 
-class VStringReadWrite : public IReadWrite<std::optional<std::string>> {
+// T is std::optional<std::string>
+template <typename T>
+class VStringReadWrite : public IReadWrite<T> {
 private:
     npy_string_allocator *allocator_;
 
@@ -79,7 +81,7 @@ public:
         NpyString_release_allocator(allocator_);
     }
 
-    std::optional<std::string> read(char *idata) const override {
+    T read(char *idata) const override {
         // https://numpy.org/doc/stable/reference/c-api/strings.html#loading-a-string
         npy_static_string sdata = {0, nullptr};
         npy_packed_static_string *packed_string = (npy_packed_static_string *)(idata);
@@ -89,14 +91,14 @@ public:
             return std::nullopt;
         }
         else {
-            return std::make_optional<std::string>(sdata.buf, sdata.buf + sdata.size);
+            return std::make_optional<typename T::value_type>(sdata.buf, sdata.buf + sdata.size);
         }
     }
 
-    int write(char *odata, const std::optional<std::string> &value) const override {
+    int write(char *odata, const T &value) const override {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)(odata);
         if (value.has_value()) {
-            const std::string &str = value.value();
+            const auto &str = value.value();
             return NpyString_pack(allocator_, packed_string, str.c_str(), str.size());
         } else {
             return NpyString_pack_null(allocator_, packed_string);
@@ -201,7 +203,7 @@ std::unordered_map<int, function_type> unique_funcs = {
     {NPY_DATETIME, unique<npy_uint64, IntegerReadWrite<npy_uint64>>},
     {NPY_STRING, unique<std::string, StringReadWrite<std::string>>},
     {NPY_UNICODE, unique<std::u32string, StringReadWrite<std::u32string>>},
-    {NPY_VSTRING, unique<std::optional<std::string>, VStringReadWrite>},
+    {NPY_VSTRING, unique<std::optional<std::string>, VStringReadWrite<std::optional<std::string>>>},
 };
 
 
