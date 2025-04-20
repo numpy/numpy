@@ -13,81 +13,98 @@
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
 
-// This is to use RAII pattern to handle cpp exceptions while avoiding memory leaks.
-// Adapted from https://stackoverflow.com/a/25510879/2536294
-template <typename F>
-struct FinalAction {
-    FinalAction(F f) : clean_{f} {}
-    ~FinalAction() { clean_(); }
-  private:
-    F clean_;
-};
-
-template <typename F>
-FinalAction<F> finally(F f) {
-    return FinalAction<F>(f);
-}
-
 template <typename T>
-T read_integer(char *idata, npy_intp num_chars, npy_string_allocator *allocator) {
-    return *(T *)idata;
+class IReadWrite {
+public:
+    virtual T read(char *idata) const = 0;
+    virtual int write(char *odata, const T &value) const = 0;
+    virtual ~IReadWrite() = default;
 };
 
 template <typename T>
-int write_integer(char *odata, const T &value, npy_intp itemsize, npy_string_allocator *allocator) {
-    *reinterpret_cast<T *>(odata) = value;
-    return 0;
-};
+class IntegerReadWrite : public IReadWrite<T> {
+public:
+    IntegerReadWrite(PyArray_Descr *descr) {}
 
-template <typename T>
-T read_string(char *idata, npy_intp num_chars, npy_string_allocator *allocator) {
-    typename T::value_type *sdata = reinterpret_cast<typename T::value_type *>(idata);
-    size_t byte_to_copy = std::find(sdata, sdata + num_chars, 0) - sdata;
-    return T(sdata, sdata + byte_to_copy);
-};
-
-template <typename T>
-int write_string(char *odata, const T &value, npy_intp itemsize, npy_string_allocator *allocator) {
-    size_t byte_to_copy = value.size() * sizeof(typename T::value_type);
-    memcpy(odata, value.c_str(), byte_to_copy);
-    if (byte_to_copy < (size_t)itemsize) {
-        memset(odata + byte_to_copy, 0, itemsize - byte_to_copy);
+    T read(char *idata) const override {
+        return *(T *)idata;
     }
-    return 0;
-};
 
-template <typename T>
-T read_vstring(char *idata, npy_intp num_chars, npy_string_allocator *allocator) {
-    // https://numpy.org/doc/stable/reference/c-api/strings.html#loading-a-string
-    npy_static_string sdata = {0, NULL};
-    npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
-    int is_null = NpyString_load(allocator, packed_string, &sdata);
-
-    if (is_null == -1 || is_null) {
-        return std::nullopt;
-    }
-    else {
-        return std::make_optional<std::string>(sdata.buf, sdata.buf + sdata.size);
+    int write(char *odata, const T &value) const override {
+        *(T *)(odata) = value;
+        return 0;
     }
 };
 
+// T is a string type (std::string or std::u32string)
 template <typename T>
-int write_vstring(char *odata, const T &value, npy_intp itemsize, npy_string_allocator *allocator) {
-    npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
-    if (value.has_value()) {
-        std::string str = value.value();
-        if (NpyString_pack(allocator, packed_string, str.c_str(), str.size()) == -1) {
-            return -1;
+class StringReadWrite : public IReadWrite<T> {
+private:
+    npy_intp itemsize_;
+    npy_intp num_chars_;
+
+public:
+    StringReadWrite(PyArray_Descr *descr) {
+        itemsize_ = descr->elsize;
+        num_chars_ = itemsize_ / sizeof(typename T::value_type);
+    }
+
+    T read(char *idata) const override {
+        typename T::value_type *sdata = reinterpret_cast<typename T::value_type *>(idata);
+        size_t byte_to_copy = std::find(sdata, sdata + num_chars_, 0) - sdata;
+        return T(sdata, sdata + byte_to_copy);
+    }
+
+    int write(char *odata, const T &value) const override {
+        size_t byte_to_copy = value.size() * sizeof(typename T::value_type);
+        memcpy(odata, value.c_str(), byte_to_copy);
+        if (byte_to_copy < (size_t)itemsize_) {
+            memset(odata + byte_to_copy, 0, itemsize_ - byte_to_copy);
         }
-    } else {
-        if (NpyString_pack_null(allocator, packed_string) == -1) {
-            return -1;
-        }
+        return 0;
     }
-    return 0;
 };
 
-template <typename T, auto read, auto write>
+class VStringReadWrite : public IReadWrite<std::optional<std::string>> {
+private:
+    npy_string_allocator *allocator_;
+
+public:
+    VStringReadWrite(PyArray_Descr *descr) {
+        allocator_ = NpyString_acquire_allocator(
+            (PyArray_StringDTypeObject *)descr);
+    }
+
+    ~VStringReadWrite() {
+        NpyString_release_allocator(allocator_);
+    }
+
+    std::optional<std::string> read(char *idata) const override {
+        // https://numpy.org/doc/stable/reference/c-api/strings.html#loading-a-string
+        npy_static_string sdata = {0, nullptr};
+        npy_packed_static_string *packed_string = (npy_packed_static_string *)(idata);
+        int is_null = NpyString_load(allocator_, packed_string, &sdata);
+
+        if (is_null == -1 || is_null) {
+            return std::nullopt;
+        }
+        else {
+            return std::make_optional<std::string>(sdata.buf, sdata.buf + sdata.size);
+        }
+    }
+
+    int write(char *odata, const std::optional<std::string> &value) const override {
+        npy_packed_static_string *packed_string = (npy_packed_static_string *)(odata);
+        if (value.has_value()) {
+            const std::string &str = value.value();
+            return NpyString_pack(allocator_, packed_string, str.c_str(), str.size());
+        } else {
+            return NpyString_pack_null(allocator_, packed_string);
+        }
+    }
+};
+
+template <typename T, typename ReadWrite>
 static PyObject*
 unique(PyArrayObject *self)
 {
@@ -105,31 +122,8 @@ unique(PyArrayObject *self)
     // release the GIL
     PyThreadState *_save1 = PyEval_SaveThread();
 
-    int dtype = PyArray_TYPE(self);
-
-    // For NPY_STRING and NPY_UNICODE arrays,
-    // retrieve item size and character count per entry.
-    npy_intp itemsize = 0, num_chars = 0;
-    if (dtype == NPY_STRING || dtype == NPY_UNICODE) {
-        itemsize = PyArray_ITEMSIZE(self);
-        if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, std::u32string>) {
-            // (For Unicode, itemsize / 4 for UCS4)
-            num_chars = itemsize / sizeof(typename T::value_type);
-        }
-    }
-
-    // This is for NPY_VSTRING
-    npy_string_allocator *allocator = nullptr;
-    if (dtype == NPY_VSTRING) {
-        allocator = NpyString_acquire_allocator(
-            (PyArray_StringDTypeObject *)descr);
-    }
-    // Ensure that the allocator is properly released upon function exit.
-    auto allocator_dealloc = finally([&]() {
-        if (allocator != nullptr) {
-            NpyString_release_allocator(allocator);
-        }
-    });
+    // ReadWrite is a template class that provides read and write methods
+    ReadWrite read_write = ReadWrite(descr);
 
     npy_intp isize = PyArray_SIZE(self);
     char *idata = PyArray_BYTES(self);
@@ -142,7 +136,7 @@ unique(PyArrayObject *self)
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        T value = read(idata, num_chars, allocator);
+        T value = read_write.read(idata);
         hashset.emplace(std::move(value));
     }
 
@@ -173,7 +167,7 @@ unique(PyArrayObject *self)
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        if (write(odata, *it, itemsize, allocator) == -1) {
+        if (read_write.write(odata, *it) == -1) {
             return NULL;
         }
     }
@@ -186,28 +180,28 @@ unique(PyArrayObject *self)
 // this map contains the functions used for each item size.
 typedef std::function<PyObject *(PyArrayObject *)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
-    {NPY_BYTE, unique<npy_byte, read_integer<npy_byte>, write_integer<npy_byte>>},
-    {NPY_UBYTE, unique<npy_ubyte, read_integer<npy_ubyte>, write_integer<npy_ubyte>>},
-    {NPY_SHORT, unique<npy_short, read_integer<npy_short>, write_integer<npy_short>>},
-    {NPY_USHORT, unique<npy_ushort, read_integer<npy_ushort>, write_integer<npy_ushort>>},
-    {NPY_INT, unique<npy_int, read_integer<npy_int>, write_integer<npy_int>>},
-    {NPY_UINT, unique<npy_uint, read_integer<npy_uint>, write_integer<npy_uint>>},
-    {NPY_LONG, unique<npy_long, read_integer<npy_long>, write_integer<npy_long>>},
-    {NPY_ULONG, unique<npy_ulong, read_integer<npy_ulong>, write_integer<npy_ulong>>},
-    {NPY_LONGLONG, unique<npy_longlong, read_integer<npy_longlong>, write_integer<npy_longlong>>},
-    {NPY_ULONGLONG, unique<npy_ulonglong, read_integer<npy_ulonglong>, write_integer<npy_ulonglong>>},
-    {NPY_INT8, unique<npy_int8, read_integer<npy_int8>, write_integer<npy_int8>>},
-    {NPY_INT16, unique<npy_int16, read_integer<npy_int16>, write_integer<npy_int16>>},
-    {NPY_INT32, unique<npy_int32, read_integer<npy_int32>, write_integer<npy_int32>>},
-    {NPY_INT64, unique<npy_int64, read_integer<npy_int64>, write_integer<npy_int64>>},
-    {NPY_UINT8, unique<npy_uint8, read_integer<npy_uint8>, write_integer<npy_uint8>>},
-    {NPY_UINT16, unique<npy_uint16, read_integer<npy_uint16>, write_integer<npy_uint16>>},
-    {NPY_UINT32, unique<npy_uint32, read_integer<npy_uint32>, write_integer<npy_uint32>>},
-    {NPY_UINT64, unique<npy_uint64, read_integer<npy_uint64>, write_integer<npy_uint64>>},
-    {NPY_DATETIME, unique<npy_uint64, read_integer<npy_uint64>, write_integer<npy_uint64>>},
-    {NPY_STRING, unique<std::string, read_string<std::string>, write_string<std::string>>},
-    {NPY_UNICODE, unique<std::u32string, read_string<std::u32string>, write_string<std::u32string>>},
-    {NPY_VSTRING, unique<std::optional<std::string>, read_vstring<std::optional<std::string>>, write_vstring<std::optional<std::string>>>},
+    {NPY_BYTE, unique<npy_byte, IntegerReadWrite<npy_byte>>},
+    {NPY_UBYTE, unique<npy_ubyte, IntegerReadWrite<npy_ubyte>>},
+    {NPY_SHORT, unique<npy_short, IntegerReadWrite<npy_short>>},
+    {NPY_USHORT, unique<npy_ushort, IntegerReadWrite<npy_ushort>>},
+    {NPY_INT, unique<npy_int, IntegerReadWrite<npy_int>>},
+    {NPY_UINT, unique<npy_uint, IntegerReadWrite<npy_uint>>},
+    {NPY_LONG, unique<npy_long, IntegerReadWrite<npy_long>>},
+    {NPY_ULONG, unique<npy_ulong, IntegerReadWrite<npy_ulong>>},
+    {NPY_LONGLONG, unique<npy_longlong, IntegerReadWrite<npy_longlong>>},
+    {NPY_ULONGLONG, unique<npy_ulonglong, IntegerReadWrite<npy_ulonglong>>},
+    {NPY_INT8, unique<npy_int8, IntegerReadWrite<npy_int8>>},
+    {NPY_INT16, unique<npy_int16, IntegerReadWrite<npy_int16>>},
+    {NPY_INT32, unique<npy_int32, IntegerReadWrite<npy_int32>>},
+    {NPY_INT64, unique<npy_int64, IntegerReadWrite<npy_int64>>},
+    {NPY_UINT8, unique<npy_uint8, IntegerReadWrite<npy_uint8>>},
+    {NPY_UINT16, unique<npy_uint16, IntegerReadWrite<npy_uint16>>},
+    {NPY_UINT32, unique<npy_uint32, IntegerReadWrite<npy_uint32>>},
+    {NPY_UINT64, unique<npy_uint64, IntegerReadWrite<npy_uint64>>},
+    {NPY_DATETIME, unique<npy_uint64, IntegerReadWrite<npy_uint64>>},
+    {NPY_STRING, unique<std::string, StringReadWrite<std::string>>},
+    {NPY_UNICODE, unique<std::u32string, StringReadWrite<std::u32string>>},
+    {NPY_VSTRING, unique<std::optional<std::string>, VStringReadWrite>},
 };
 
 
