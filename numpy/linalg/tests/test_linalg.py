@@ -569,6 +569,21 @@ class TestInv(InvCases):
         assert_equal(a.shape, res.shape)
         assert_(isinstance(res, ArraySubclass))
 
+    def test_noerr(self):
+        # test noerr=True case
+        a = np.array([
+            [[1.0, 0.0], [0.0, 1.0]],  # invertible
+            [[1.0, 1.0], [1.0, 1.0]],  # singular
+            [[2.0, 1.0], [1.0, 2.0]]   # invertible
+        ])
+
+        result = linalg.inv(a, noerr=True)
+
+        assert_almost_equal(result[0], np.array([[1.0, 0.0], [0.0, 1.0]]))
+        assert_almost_equal(result[2], np.array([[2/3, -1/3], [-1/3, 2/3]]))
+
+        assert_(np.isnan(result[1]).all())
+
 
 class EigvalsCases(LinalgSquareTestCase, LinalgGeneralizedSquareTestCase):
 
