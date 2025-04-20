@@ -25,6 +25,10 @@
 
 #include "umathmodule.h"
 
+#ifdef __ARM_NEON
+#include <arm_neon.h>
+#endif
+
 #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
 // Optimized Neon SIMD Routines for fp16<->fp32 casts on ARMv8.2-a+
 
