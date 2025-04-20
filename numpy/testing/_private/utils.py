@@ -2741,6 +2741,10 @@ def run_threaded(func, max_workers=8, pass_count=False,
                 futures = []
                 for arg in all_args:
                     futures.append(tpe.submit(*arg))
+            except RuntimeError as e:
+                if "can't start new thread" in str(e):
+                    import pytest
+                    pytest.skip("Skipping: RuntimeError: can't start new thread")
             finally:
                 if len(futures) < max_workers and pass_barrier:
                     barrier.abort()
