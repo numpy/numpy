@@ -6,10 +6,9 @@ by importing from the extension module.
 
 """
 
-# ruff: noqa: F401
 import numpy
 from . import _multiarray_umath
-from ._multiarray_umath import *  # noqa: F403
+from ._multiarray_umath import *
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-11862
 # _ones_like is semi-public, on purpose not added to __all__

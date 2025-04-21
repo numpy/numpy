@@ -1,4 +1,3 @@
-# ruff: noqa: F401
-from ._npyio_impl import (
+from ._npyio_impl import (  # noqa: F401
     __doc__, DataSource, NpzFile
 )

@@ -37,7 +37,7 @@ from .multiarray import (array, dragon4_positional, dragon4_scientific,
                          datetime_as_string, datetime_data, ndarray)
 from .fromnumeric import any
 from .numeric import concatenate, asarray, errstate
-from .numerictypes import (int_, float64, complex128, flexible)
+from .numerictypes import int_, float64, complex128, flexible
 from .overrides import array_function_dispatch, set_module
 from .printoptions import format_options
 import operator

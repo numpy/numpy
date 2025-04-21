@@ -11,9 +11,9 @@ import numpy as np
 from numpy import ndarray
 import numpy._core.umath as umath
 import numpy.testing
-from numpy.testing import (
-    assert_, assert_allclose, assert_array_almost_equal_nulp,  # noqa: F401
-    assert_raises, build_err_msg  # noqa: F401
+from numpy.testing import (  # noqa: F401
+    assert_, assert_allclose, assert_array_almost_equal_nulp,
+    assert_raises, build_err_msg
     )
 from .core import mask_or, getmask, masked_array, nomask, masked, filled
 
