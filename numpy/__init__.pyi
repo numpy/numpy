@@ -1,4 +1,4 @@
-# ruff: noqa: I001, F401
+# ruff: noqa: I001
 import builtins
 import sys
 import mmap

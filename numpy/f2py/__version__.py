@@ -1,2 +1,1 @@
-# ruff: noqa: F401
-from numpy.version import version
+from numpy.version import version  # noqa: F401

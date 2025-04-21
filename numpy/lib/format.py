@@ -1,5 +1,4 @@
-# ruff: noqa: F401
-from ._format_impl import (
+from ._format_impl import (  # noqa: F401
     __all__,
     __doc__,
     ARRAY_ALIGN,
