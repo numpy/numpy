@@ -1051,6 +1051,11 @@ foreach gen_mtargets : [
       LSX,
     ]
   ],
+  [
+    'loops_half.dispatch.h',
+    src_file.process('src/umath/loops_half.dispatch.c.src'),
+    [AVX512_SPR, AVX512_SKX]
+  ],
 ]
   mtargets = mod_features.multi_targets(
     gen_mtargets[0], umath_gen_headers + gen_mtargets[1],
