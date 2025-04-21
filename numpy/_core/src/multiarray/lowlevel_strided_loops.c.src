@@ -29,8 +29,10 @@
 #include <arm_neon.h>
 #endif
 
-#if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
-// Optimized Neon SIMD Routines for fp16<->fp32 casts on ARMv8.2-a+
+#if defined(__ARM_FP16_FORMAT_IEEE)
+// Use ARM fp16<->fp32 vector intrinsics to optimize casting.
+// Clang/GCC auto-vectorization does not generate optimal code
+// leading to performance degradation.
 
 static NPY_GCC_OPT_3 int neon_cast_f16_to_f32_contig_aligned(
         PyArrayMethod_Context *NPY_UNUSED(context), char *const *args,
@@ -1064,7 +1066,7 @@ PyArray_GetStridedNumericCastFn(int aligned, npy_intp src_stride,
 
                 case NPY_@NAME2@:
                     /*printf("ret fn %d %d\n", NPY_@NAME1@, NPY_@NAME2@);*/
-                    #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
+                    #if defined(__ARM_FP16_FORMAT_IEEE)
                         // Check for Half <-> Float, aligned, contiguous
                         if (aligned && src_stride == sizeof(@type1@) && dst_stride == sizeof(@type2@)) {
                             if (src_type_num == NPY_HALF && dst_type_num == NPY_FLOAT) {
