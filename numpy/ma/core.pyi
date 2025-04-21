@@ -1205,10 +1205,25 @@ identity: _convert2ma
 indices: _convert2ma
 ones: _convert2ma
 ones_like: _convert2ma
-squeeze: _convert2ma
+
+@overload
+def squeeze(
+    a: _ScalarT,
+    axis: _ShapeLike | None = ...,
+) -> _ScalarT: ...
+@overload
+def squeeze(
+    a: _ArrayLike[_ScalarT],
+    axis: _ShapeLike | None = ...,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def squeeze(
+    a: ArrayLike,
+    axis: _ShapeLike | None = ...,
+) -> _MaskedArray[Any]: ...
+
 zeros: _convert2ma
 zeros_like: _convert2ma
 
 def append(a, b, axis=...): ...
 def dot(a, b, strict=..., out=...): ...
-def mask_rowcols(a, axis=...): ...

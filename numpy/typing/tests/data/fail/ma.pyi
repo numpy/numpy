@@ -5,8 +5,8 @@ import numpy.ma
 import numpy.typing as npt
 
 m: np.ma.MaskedArray[tuple[int], np.dtype[np.float64]]
-
 AR_b: npt.NDArray[np.bool]
+MAR_2d_f4: np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]]
 
 m.shape = (3, 1)  # E: Incompatible types in assignment
 m.dtype = np.bool  # E: Incompatible types in assignment
@@ -114,5 +114,13 @@ m.put(4, 999, mode='flip')  # E: No overload variant
 np.ma.put(m, 4, 999, mode='flip')  # E: No overload variant
 
 np.ma.put([1,1,3], 0, 999)  # E: No overload variant
+
+np.ma.squeeze(m, 1.0)  # E: No overload variant
+
+np.ma.mask_rows(MAR_2d_f4, axis=0)  # E: No overload variant
+
+np.ma.mask_cols(MAR_2d_f4, axis=1)  # E: No overload variant
+
+np.ma.mask_rowcols(MAR_2d_f4, axis='broccoli')  # E: No overload variant
 
 np.ma.compressed(lambda: 'compress me')  # E: No overload variant
