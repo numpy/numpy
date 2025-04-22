@@ -25,14 +25,6 @@
 
 #include "umathmodule.h"
 
-#if defined(__clang__) && __clang_major__ >= 12
-#define NPY_IGNORE_FP_EXCEPTIONS_ON  _Pragma("clang fp exceptions(ignore)")
-#define NPY_IGNORE_FP_EXCEPTIONS_OFF _Pragma("clang fp exceptions(strict)")
-#else
-#define NPY_IGNORE_FP_EXCEPTIONS_ON
-#define NPY_IGNORE_FP_EXCEPTIONS_OFF
-#endif
-
 /*
  * x86 platform works with unaligned access but the compiler is allowed to
  * assume all data is aligned to its size by the C standard. This means it can
@@ -859,11 +851,17 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 #endif
 
-#if (@is_native_half1@ || @is_float1@ || @is_double1@) && \
-    (@is_native_half2@ || @is_float2@ || @is_double2@)
-    // Enable Vectorization on Clang for floating point casts
-    NPY_IGNORE_FP_EXCEPTIONS_ON
+// Enable auto-vectorization for floating point casts with clang
+#if @is_native_half1@ || @is_float1@ || @is_double1@
+    #if @is_native_half2@ || @is_float2@ || @is_double2@
+        #if defined(__clang__) && !defined(__EMSCRIPTEN__)
+            #if __clang_major__ >= 12
+                _Pragma("clang fp exceptions(ignore)")
+            #endif
+        #endif
+    #endif
 #endif
+
 static NPY_GCC_OPT_3 int
 @prefix@_cast_@name1@_to_@name2@(
         PyArrayMethod_Context *context, char *const *args,
@@ -957,9 +955,15 @@ static NPY_GCC_OPT_3 int
     }
     return 0;
 }
-#if (@is_native_half1@ || @is_float1@ || @is_double1@) && \
-    (@is_native_half2@ || @is_float2@ || @is_double2@)
-    NPY_IGNORE_FP_EXCEPTIONS_OFF
+
+#if @is_native_half1@ || @is_float1@ || @is_double1@
+    #if @is_native_half2@ || @is_float2@ || @is_double2@
+        #if defined(__clang__) && !defined(__EMSCRIPTEN__)
+            #if __clang_major__ >= 12
+                _Pragma("clang fp exceptions(strict)")
+            #endif
+        #endif
+    #endif
 #endif
 
 #undef _CONVERT_FN
