@@ -1,4 +1,4 @@
-from typing import SupportsIndex, Any, overload
+from typing import Any, SupportsIndex, overload
 
 from _typeshed import Incomplete
 
