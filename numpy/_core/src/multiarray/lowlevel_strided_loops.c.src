@@ -718,9 +718,11 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 #if defined(NPY_HAVE_NEON_FP16) || defined(NPY_HAVE_F16C)
     #define EMULATED_FP16 0
+    #define NATIVE_FP16 1
     typedef _Float16 _npy_half;
 #else
     #define EMULATED_FP16 1
+    #define NATIVE_FP16 0
     typedef npy_half _npy_half;
 #endif
 
@@ -747,7 +749,8 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  *           _npy_half, npy_float, npy_double, npy_longdouble,
  *           npy_float, npy_double, npy_longdouble#
  * #is_bool1 = 1, 0*17#
- * #is_half1 = 0*11, EMULATED_FP16, 0*6#
+ * #is_emu_half1 = 0*11, EMULATED_FP16, 0*6#
+ * #is_native_half1 = 0*11, NATIVE_FP16, 0*6#
  * #is_float1 = 0*12, 1, 0, 0, 1, 0, 0#
  * #is_double1 = 0*13, 1, 0, 0, 1, 0#
  * #is_complex1 = 0*15, 1*3#
@@ -776,7 +779,8 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  *          _npy_half, npy_float, npy_double, npy_longdouble,
  *          npy_float, npy_double, npy_longdouble#
  * #is_bool2 = 1, 0*17#
- * #is_half2 = 0*11, EMULATED_FP16, 0*6#
+ * #is_emu_half2 = 0*11, EMULATED_FP16, 0*6#
+ * #is_native_half2 = 0*11, NATIVE_FP16, 0*6#
  * #is_float2 = 0*12, 1, 0, 0, 1, 0, 0#
  * #is_double2 = 0*13, 1, 0, 0, 1, 0#
  * #is_complex2 = 0*15, 1*3#
@@ -790,8 +794,8 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 #if !(NPY_USE_UNALIGNED_ACCESS && !@aligned@)
 
-/* For half types, don't use actual double/float types in conversion */
-#if @is_half1@ || @is_half2@
+/* For emulated half types, don't use actual double/float types in conversion */
+#if @is_emu_half1@ || @is_emu_half2@
 
 #  if @is_float1@
 #    define _TYPE1 npy_uint32
@@ -817,13 +821,13 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 #endif
 
 /* Determine an appropriate casting conversion function */
-#if @is_half1@
+#if @is_emu_half1@
 
 #  if @is_float2@
 #    define _CONVERT_FN(x) npy_halfbits_to_floatbits(x)
 #  elif @is_double2@
 #    define _CONVERT_FN(x) npy_halfbits_to_doublebits(x)
-#  elif @is_half2@
+#  elif @is_emu_half2@
 #    define _CONVERT_FN(x) (x)
 #  elif @is_bool2@
 #    define _CONVERT_FN(x) ((npy_bool)!npy_half_iszero(x))
@@ -831,13 +835,13 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 #    define _CONVERT_FN(x) ((_TYPE2)npy_half_to_float(x))
 #  endif
 
-#elif @is_half2@
+#elif @is_emu_half2@
 
 #  if @is_float1@
 #    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
 #  elif @is_double1@
 #    define _CONVERT_FN(x) npy_doublebits_to_halfbits(x)
-#  elif @is_half1@
+#  elif @is_emu_half1@
 #    define _CONVERT_FN(x) (x)
 #  elif @is_bool1@
 #    define _CONVERT_FN(x) npy_float_to_half((float)(x!=0))
@@ -855,7 +859,11 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 #endif
 
-NPY_IGNORE_FP_EXCEPTIONS_ON
+#if (@is_native_half1@ || @is_float1@ || @is_double1@) && \
+    (@is_native_half2@ || @is_float2@ || @is_double2@)
+    // Enable Vectorization on Clang for floating point casts
+    NPY_IGNORE_FP_EXCEPTIONS_ON
+#endif
 static NPY_GCC_OPT_3 int
 @prefix@_cast_@name1@_to_@name2@(
         PyArrayMethod_Context *context, char *const *args,
@@ -949,7 +957,10 @@ static NPY_GCC_OPT_3 int
     }
     return 0;
 }
-NPY_IGNORE_FP_EXCEPTIONS_OFF
+#if (@is_native_half1@ || @is_float1@ || @is_double1@) && \
+    (@is_native_half2@ || @is_float2@ || @is_double2@)
+    NPY_IGNORE_FP_EXCEPTIONS_OFF
+#endif
 
 #undef _CONVERT_FN
 #undef _TYPE2
