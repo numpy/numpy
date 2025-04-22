@@ -273,3 +273,10 @@ assert_type(np.ma.filled([[1,2,3]]), NDArray[Any])
 # PyRight detects this one correctly, but mypy doesn't.
 # https://github.com/numpy/numpy/pull/28742#discussion_r2048968375
 assert_type(np.ma.filled(MAR_1d), np.ndarray[tuple[int], np.dtype])  # type: ignore[assert-type]
+
+assert_type(np.ma.allequal(AR_f4, MAR_f4), bool)
+assert_type(np.ma.allequal(AR_f4, MAR_f4, fill_value=False), bool)
+
+assert_type(np.ma.allclose(AR_f4, MAR_f4), bool)
+assert_type(np.ma.allclose(AR_f4, MAR_f4, masked_equal=False), bool)
+assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
