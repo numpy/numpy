@@ -6,14 +6,11 @@ import numpy as np
 from numpy.lib._function_base_impl import average
 from numpy.lib._index_tricks_impl import AxisConcatenator
 from numpy.typing import ArrayLike
-from numpy._typing import _ArrayLike, _ScalarLike_co
+from numpy._typing import _ArrayLike
 
 from .core import (
     MaskedArray,
     dot,
-    _MaskedArray,
-    _ShapeT_co,
-    _DTypeT_co,
     _ScalarT_co,
 )
 
