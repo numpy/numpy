@@ -1164,6 +1164,8 @@ class TestMultiIndexingAutomated:
         """Compare mimicked result to indexing result.
         """
         arr = arr.copy()
+        if HAS_REFCOUNT:
+            startcount = sys.getrefcount(arr)
         indexed_arr = arr[index]
         assert_array_equal(indexed_arr, mimic_get)
         # Check if we got a view, unless its a 0-sized or 0-d array.
@@ -1174,9 +1176,9 @@ class TestMultiIndexingAutomated:
             if HAS_REFCOUNT:
                 if no_copy:
                     # refcount increases by one:
-                    assert_equal(sys.getrefcount(arr), 3)
+                    assert_equal(sys.getrefcount(arr), startcount + 1)
                 else:
-                    assert_equal(sys.getrefcount(arr), 2)
+                    assert_equal(sys.getrefcount(arr), startcount)
 
         # Test non-broadcast setitem:
         b = arr.copy()
