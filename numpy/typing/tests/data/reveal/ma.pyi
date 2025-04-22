@@ -273,18 +273,21 @@ assert_type(np.ma.squeeze(MAR_b), MaskedNDArray[np.bool])
 assert_type(np.ma.squeeze(AR_f4), MaskedNDArray[np.float32])
 
 assert_type(np.ma.mask_rows(MAR_2d_f4), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
-assert_type(np.ma.mask_rows([[1,2,3]]), MaskedNDArray[Any])
+assert_type(np.ma.mask_rows(MAR_f4), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.ma.mask_rows([[1,2,3]]), np.ma.MaskedArray[tuple[int, int], np.dtype])
 # PyRight detects this one correctly, but mypy doesn't.
 assert_type(np.ma.mask_rows(MAR_2d), np.ma.MaskedArray[tuple[int, int], np.dtype])  # type: ignore[assert-type]
 
 assert_type(np.ma.mask_cols(MAR_2d_f4), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
-assert_type(np.ma.mask_cols([[1,2,3]]), MaskedNDArray[Any])
+assert_type(np.ma.mask_cols(MAR_f4), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.ma.mask_cols([[1,2,3]]), np.ma.MaskedArray[tuple[int, int], np.dtype])
 # PyRight detects this one correctly, but mypy doesn't.
 assert_type(np.ma.mask_cols(MAR_2d), np.ma.MaskedArray[tuple[int, int], np.dtype])  # type: ignore[assert-type]
 
 assert_type(np.ma.mask_rowcols(MAR_2d_f4), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+assert_type(np.ma.mask_rowcols(MAR_f4), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(np.ma.mask_rowcols(MAR_2d_f4, axis=0), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
-assert_type(np.ma.mask_rowcols([[1,2,3]]), MaskedNDArray[Any])
+assert_type(np.ma.mask_rowcols([[1,2,3]]), np.ma.MaskedArray[tuple[int, int], np.dtype])
 # PyRight detects this one correctly, but mypy doesn't.
 assert_type(np.ma.mask_rowcols(MAR_2d), np.ma.MaskedArray[tuple[int, int], np.dtype])  # type: ignore[assert-type]
 
