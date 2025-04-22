@@ -1,12 +1,19 @@
+from typing import SupportsIndex, Any, overload
+
 from _typeshed import Incomplete
 
 import numpy as np
-from typing import SupportsIndex, Any, overload
 from numpy.lib._function_base_impl import average
 from numpy.lib._index_tricks_impl import AxisConcatenator
-
-from .core import MaskedArray, dot, _ScalarT_co, _MaskedArray, _ShapeT_co, _DTypeT_co
 from numpy.typing import ArrayLike
+
+from .core import (
+    MaskedArray,
+    dot,
+    _MaskedArray,
+    _ShapeT_co,
+    _DTypeT_co,
+)
 
 __all__ = [
     "apply_along_axis",
