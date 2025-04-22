@@ -9427,8 +9427,7 @@ class TestCTypes:
         np.array([1, 2, 3]),
         np.array([['one', 'two'], ['three', 'four']]),
         np.array((1, 2), dtype='i4,i4'),
-        np.zeros((2,), dtype=
-            np.dtype({
+        np.zeros((2,), dtype=np.dtype({
                 "formats": ['<i4', '<i4'],
                 "names": ['a', 'b'],
                 "offsets": [0, 2],

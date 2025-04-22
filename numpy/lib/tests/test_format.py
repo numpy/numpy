@@ -463,7 +463,7 @@ def test_file_truncated(tmp_path):
             with open(path, 'rb') as f:
                 with pytest.raises(
                     ValueError,
-                    match = (
+                    match=(
                         r"EOF: reading array header, "
                         r"expected (\d+) bytes got (\d+)"
                     ) if arr.size == 0 else (

@@ -764,7 +764,7 @@ class TestEinsum:
                 return 42
 
         objMult = np.array([Mult()])
-        objNULL = np.ndarray(buffer = b'\0' * np.intp(0).itemsize, shape=1, dtype=object)
+        objNULL = np.ndarray(buffer=b'\0' * np.intp(0).itemsize, shape=1, dtype=object)
 
         with pytest.raises(TypeError):
             np.einsum("i,j", [1], objNULL)
