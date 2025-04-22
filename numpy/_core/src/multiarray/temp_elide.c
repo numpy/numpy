@@ -62,7 +62,7 @@
 
 #include <feature_detection_misc.h>
 
-#if PY_VERSION_HEX >= 0x030E00A7
+#if PY_VERSION_HEX >= 0x030E00A7 && !defined(PYPY_VERSION)
 #define Py_BUILD_CORE
 #include "internal/pycore_frame.h"
 #include "internal/pycore_interpframe.h"
@@ -119,7 +119,7 @@ find_addr(void * addresses[], npy_intp naddr, void * addr)
 static int
 check_unique_temporary(PyObject *lhs)
 {
-#if PY_VERSION_HEX >= 0x030E00A7
+#if PY_VERSION_HEX >= 0x030E00A7 && !defined(PYPY_VERSION)
     // In Python 3.14.0a7 and later, a reference count of one doesn't guarantee
     // that an object is a unique temporary variable. We scan the top of the
     // interpreter stack to check if the object exists as an "owned" reference
