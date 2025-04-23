@@ -573,6 +573,31 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     npy_intp dtype_size = dtype->elsize;
     NPY_cast_info cast_info = {.func = NULL};
 
+    if (PyTuple_Check(ind) && PyTuple_GET_SIZE(ind) == 0) {
+        Py_INCREF(self->ao);
+        return (PyObject *)self->ao;
+    }
+
+    if (PyBool_Check(ind)) {
+        int istrue = PyObject_IsTrue(ind);
+        if (istrue < 0) {
+            return NULL;
+        }
+
+        if (istrue) {
+            return PyArray_ToScalar(self->dataptr, self->ao);
+        }
+
+        npy_intp ii = 0;
+        Py_INCREF(dtype);
+        ret = PyArray_NewFromDescr(Py_TYPE(self->ao),
+                                   dtype,
+                                   1, &ii,
+                                   NULL, NULL, 0,
+                                   (PyObject *)self->ao);
+        return ret;
+    }
+
     /* Prepare the indices */
     index_type = prepare_index_noarray(1, &self->size, ind, indices, &index_num,
         &ndim, &fancy_ndim, 1, 1);
@@ -599,24 +624,6 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         ret = iter_subscript(self, ind);
         Py_DECREF(ind);
         goto finish;
-    }
-
-    // Single boolean index
-    else if (indices[0].type == HAS_0D_BOOL) {
-        if (indices[0].value) {
-            ret = PyArray_ToScalar(self->dataptr, self->ao);
-            goto finish;
-        }
-        else { /* empty array */
-            npy_intp ii = 0;
-            Py_INCREF(dtype);
-            ret = PyArray_NewFromDescr(Py_TYPE(self->ao),
-                                       dtype,
-                                       1, &ii,
-                                       NULL, NULL, 0,
-                                       (PyObject *)self->ao);
-            goto finish;
-        }
     }
 
     PyArray_ITER_RESET(self);
