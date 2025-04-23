@@ -381,6 +381,8 @@ class TestMethods:
          None, [3, -1]),
         ("Ae¢☃€ 😊" * 2, "😊", 0, None, 6),
         ("Ae¢☃€ 😊" * 2, "😊", 7, None, 13),
+        pytest.param("A" * (2 ** 17), r"[\w]+\Z", 0, None, -1,
+                     id=r"A*2**17-[\w]+\Z-0-None--1"),
     ])
     def test_find(self, a, sub, start, end, out, dt):
         if "😊" in a and dt == "S":
