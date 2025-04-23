@@ -1125,8 +1125,9 @@ def test_iter_object_arrays_conversions():
             rc = sys.getrefcount(ob)
         for x in i:
             x[...] += 1
-    if HAS_REFCOUNT:
-        assert_(sys.getrefcount(ob) == rc - 1)
+        if HAS_REFCOUNT:
+            newrc = sys.getrefcount(ob)
+            assert_(newrc == rc - 1)
     assert_equal(a, np.arange(6) + 98172489)
 
 def test_iter_common_dtype():

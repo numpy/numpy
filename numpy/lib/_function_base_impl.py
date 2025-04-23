@@ -2549,7 +2549,6 @@ class vectorize:
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
-            args = [asarray(arg) for arg in args]
             if builtins.any(arg.size == 0 for arg in args):
                 raise ValueError('cannot call `vectorize` on size 0 inputs '
                                  'unless `otypes` is set')
@@ -2595,18 +2594,15 @@ class vectorize:
         elif not args:
             res = func()
         else:
+            args = [asanyarray(a, dtype=object) for a in args]
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
-
-            # Convert args to object arrays first
-            inputs = [asanyarray(a, dtype=object) for a in args]
-
-            outputs = ufunc(*inputs)
+            outputs = ufunc(*args, out=...)
 
             if ufunc.nout == 1:
                 res = asanyarray(outputs, dtype=otypes[0])
             else:
                 res = tuple(asanyarray(x, dtype=t)
-                             for x, t in zip(outputs, otypes))
+                            for x, t in zip(outputs, otypes))
         return res
 
     def _vectorize_call_with_signature(self, func, args):

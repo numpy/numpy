@@ -1585,29 +1585,26 @@ class TestRegression:
     def test_fromfile_tofile_seeks(self):
         # On Python 3, tofile/fromfile used to get (#1610) the Python
         # file handle out of sync
-        f0 = tempfile.NamedTemporaryFile()
-        f = f0.file
-        f.write(np.arange(255, dtype='u1').tobytes())
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(np.arange(255, dtype='u1').tobytes())
 
-        f.seek(20)
-        ret = np.fromfile(f, count=4, dtype='u1')
-        assert_equal(ret, np.array([20, 21, 22, 23], dtype='u1'))
-        assert_equal(f.tell(), 24)
+            f.seek(20)
+            ret = np.fromfile(f, count=4, dtype='u1')
+            assert_equal(ret, np.array([20, 21, 22, 23], dtype='u1'))
+            assert_equal(f.tell(), 24)
 
-        f.seek(40)
-        np.array([1, 2, 3], dtype='u1').tofile(f)
-        assert_equal(f.tell(), 43)
+            f.seek(40)
+            np.array([1, 2, 3], dtype='u1').tofile(f)
+            assert_equal(f.tell(), 43)
 
-        f.seek(40)
-        data = f.read(3)
-        assert_equal(data, b"\x01\x02\x03")
+            f.seek(40)
+            data = f.read(3)
+            assert_equal(data, b"\x01\x02\x03")
 
-        f.seek(80)
-        f.read(4)
-        data = np.fromfile(f, dtype='u1', count=4)
-        assert_equal(data, np.array([84, 85, 86, 87], dtype='u1'))
-
-        f.close()
+            f.seek(80)
+            f.read(4)
+            data = np.fromfile(f, dtype='u1', count=4)
+            assert_equal(data, np.array([84, 85, 86, 87], dtype='u1'))
 
     def test_complex_scalar_warning(self):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:

@@ -351,7 +351,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwargs['where'] = where
 
-    if type(a) is np.ndarray and a.dtype != np.object_:
+    if (type(a) is np.ndarray or type(a) is np.memmap) and a.dtype != np.object_:
         # Fast, but not safe for subclasses of ndarray, or object arrays,
         # which do not implement isnan (gh-9009), or fmin correctly (gh-8975)
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
@@ -480,7 +480,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwargs['where'] = where
 
-    if type(a) is np.ndarray and a.dtype != np.object_:
+    if (type(a) is np.ndarray or type(a) is np.memmap) and a.dtype != np.object_:
         # Fast, but not safe for subclasses of ndarray, or object arrays,
         # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
         res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
