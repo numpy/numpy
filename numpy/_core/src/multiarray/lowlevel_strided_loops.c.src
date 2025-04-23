@@ -708,7 +708,7 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 /************* STRIDED CASTING SPECIALIZED FUNCTIONS *************/
 
-#if defined(NPY_HAVE_NEON_FP16) || defined(NPY_HAVE_F16C)
+#if defined(__ARM_FEATURE_FP16_SCALAR_ARITHMETIC) || defined(NPY_HAVE_F16C)
     #define EMULATED_FP16 0
     #define NATIVE_FP16 1
     typedef _Float16 _npy_half;
