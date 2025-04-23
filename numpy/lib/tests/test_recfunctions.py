@@ -314,7 +314,7 @@ class TestRecFunctions:
             return np.dtype((dt, shape))
 
         def structured(*dts):
-            return np.dtype([('x{}'.format(i), dt) for i, dt in enumerate(dts)])
+            return np.dtype([(f'x{i}', dt) for i, dt in enumerate(dts)])
 
         def inspect(dt, dtype=None):
             arr = np.zeros((), dt)

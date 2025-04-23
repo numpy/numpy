@@ -1,0 +1,1 @@
+Re-enable overriding functions in the :mod:`numpy.strings` module.

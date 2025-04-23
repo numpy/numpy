@@ -81,6 +81,3 @@ overall = np.exp(np.log(xplat).mean(0))
 xplat = xplat.T.copy()
 xplat['Overall'] = overall
 print(xplat.T.round(1))
-
-
-

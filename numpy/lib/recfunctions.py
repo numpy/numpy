@@ -263,7 +263,7 @@ def get_fieldstructure(adtype, lastname=None, parents=None,):
                 parents[name] = []
             parents.update(get_fieldstructure(current, name, parents))
         else:
-            lastparent = list((parents.get(lastname, []) or []))
+            lastparent = list(parents.get(lastname, []) or [])
             if lastparent:
                 lastparent.append(lastname)
             elif lastname:
@@ -1009,7 +1009,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
         raise NotImplementedError("arr with no fields is not supported")
 
     dts, counts, offsets = zip(*fields)
-    names = ['f{}'.format(n) for n in range(n_fields)]
+    names = [f'f{n}' for n in range(n_fields)]
 
     if dtype is None:
         out_dtype = np.result_type(*[dt.base for dt in dts])
@@ -1138,7 +1138,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
 
     if dtype is None:
         if names is None:
-            names = ['f{}'.format(n) for n in range(n_elem)]
+            names = [f'f{n}' for n in range(n_elem)]
         out_dtype = np.dtype([(n, arr.dtype) for n in names], align=align)
         fields = _get_fields_and_offsets(out_dtype)
         dts, counts, offsets = zip(*fields)
@@ -1161,7 +1161,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
         if align and not out_dtype.isalignedstruct:
             raise ValueError("align was True but dtype is not aligned")
 
-    names = ['f{}'.format(n) for n in range(len(fields))]
+    names = [f'f{n}' for n in range(len(fields))]
 
     # Use a series of views and casts to convert to a structured array:
 
@@ -1386,8 +1386,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
                 if autoconvert:
                     newdescr[nameidx] = (fname, max(fdtype, cdtype))
                 elif fdtype != cdtype:
-                    raise TypeError("Incompatible type '%s' <> '%s'" %
-                                    (cdtype, fdtype))
+                    raise TypeError(f"Incompatible type '{cdtype}' <> '{fdtype}'")
     # Only one field: use concatenate
     if len(newdescr) == 1:
         output = ma.concatenate(seqarrays)
@@ -1399,7 +1398,7 @@ def stack_arrays(arrays, defaults=None, usemask=True, asrecarray=False,
         for (a, n, i, j) in zip(seqarrays, fldnames, offset[:-1], offset[1:]):
             names = a.dtype.names
             if names is None:
-                output['f%i' % len(seen)][i:j] = a
+                output[f'f{len(seen)}'][i:j] = a
             else:
                 for name in n:
                     output[name][i:j] = a[name]
@@ -1544,12 +1543,12 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     # Check the keys
     if len(set(key)) != len(key):
         dup = next(x for n, x in enumerate(key) if x in key[n + 1:])
-        raise ValueError("duplicate join key %r" % dup)
+        raise ValueError(f"duplicate join key {dup!r}")
     for name in key:
         if name not in r1.dtype.names:
-            raise ValueError('r1 does not have key field %r' % name)
+            raise ValueError(f'r1 does not have key field {name!r}')
         if name not in r2.dtype.names:
-            raise ValueError('r2 does not have key field %r' % name)
+            raise ValueError(f'r2 does not have key field {name!r}')
 
     # Make sure we work with ravelled arrays
     r1 = r1.ravel()

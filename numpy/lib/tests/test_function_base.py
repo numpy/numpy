@@ -272,7 +272,7 @@ class TestCopy:
     def test_order(self):
         # It turns out that people rely on np.copy() preserving order by
         # default; changing this broke scikit-learn:
-        # github.com/scikit-learn/scikit-learn/commit/7842748cf777412c506a8c0ed28090711d3a3783  # noqa
+        # github.com/scikit-learn/scikit-learn/commit/7842748cf777412c506a8c0ed28090711d3a3783
         a = np.array([[1, 2], [3, 4]])
         assert_(a.flags.c_contiguous)
         assert_(not a.flags.f_contiguous)
@@ -945,7 +945,7 @@ class TestDelete:
     def _check_inverse_of_slicing(self, indices):
         a_del = delete(self.a, indices)
         nd_a_del = delete(self.nd_a, indices, axis=1)
-        msg = 'Delete failed for obj: %r' % indices
+        msg = f'Delete failed for obj: {indices!r}'
         assert_array_equal(setxor1d(a_del, self.a[indices, ]), self.a,
                            err_msg=msg)
         xor = setxor1d(nd_a_del[0, :, 0], self.nd_a[0, indices, 0])
@@ -1715,6 +1715,21 @@ class TestVectorize:
         x = np.arange(5)
         assert_array_equal(f(x), x)
 
+    def test_otypes_object_28624(self):
+        # with object otype, the vectorized function should return y
+        # wrapped into an object array
+        y = np.arange(3)
+        f = vectorize(lambda x: y, otypes=[object])
+
+        assert f(None).item() is y
+        assert f([None]).item() is y
+
+        y = [1, 2, 3]
+        f = vectorize(lambda x: y, otypes=[object])
+
+        assert f(None).item() is y
+        assert f([None]).item() is y
+
     def test_parse_gufunc_signature(self):
         assert_equal(nfb._parse_gufunc_signature('(x)->()'), ([('x',)], [()]))
         assert_equal(nfb._parse_gufunc_signature('(x,y)->()'),
@@ -2331,7 +2346,7 @@ class TestSinc:
         expected = sinc(x.astype(np.float64))
         assert_allclose(actual, expected)
         assert actual.dtype == np.float64
-    
+
     @pytest.mark.parametrize(
             'dtype',
             [np.float16, np.float32, np.longdouble, np.complex64, np.complex128]
@@ -3057,7 +3072,7 @@ class TestInterp:
         assert_almost_equal(np.interp(x, xp, fp), [1, 2, np.nan, np.nan, 4])
 
     @pytest.fixture(params=[
-        lambda x: np.float64(x),
+        np.float64,
         lambda x: _make_complex(x, 0),
         lambda x: _make_complex(0, x),
         lambda x: _make_complex(x, np.multiply(x, -2))

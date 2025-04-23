@@ -63,7 +63,6 @@ wheels_upload_task:
   # final upload here. This is because a run may be on different OS for
   # which bash, etc, may not be present.
   depends_on:
-    - linux_aarch64
     - macosx_arm64
   compute_engine_instance:
     image_project: cirrus-images

@@ -19,7 +19,7 @@ class StringConverterTestCase:
     warn = True
 
     def _check_value_error(self, val):
-        pattern = r'\(got {}\)'.format(re.escape(repr(val)))
+        pattern = fr'\(got {re.escape(repr(val))}\)'
         with pytest.raises(ValueError, match=pattern) as exc:
             self.conv(val)
 

@@ -1275,7 +1275,7 @@ class poly1d:
     def __repr__(self):
         vals = repr(self.coeffs)
         vals = vals[6:-1]
-        return "poly1d(%s)" % vals
+        return f"poly1d({vals})"
 
     def __len__(self):
         return self.order
@@ -1289,24 +1289,22 @@ class poly1d:
         N = len(coeffs) - 1
 
         def fmt_float(q):
-            s = '%.4g' % q
-            if s.endswith('.0000'):
-                s = s[:-5]
+            s = f'{q:.4g}'
+            s = s.removesuffix('.0000')
             return s
 
         for k, coeff in enumerate(coeffs):
             if not iscomplex(coeff):
                 coefstr = fmt_float(real(coeff))
             elif real(coeff) == 0:
-                coefstr = '%sj' % fmt_float(imag(coeff))
+                coefstr = f'{fmt_float(imag(coeff))}j'
             else:
-                coefstr = '(%s + %sj)' % (fmt_float(real(coeff)),
-                                          fmt_float(imag(coeff)))
+                coefstr = f'({fmt_float(real(coeff))} + {fmt_float(imag(coeff))}j)'
 
             power = (N - k)
             if power == 0:
                 if coefstr != '0':
-                    newstr = '%s' % (coefstr,)
+                    newstr = f'{coefstr}'
                 else:
                     if k == 0:
                         newstr = '0'
@@ -1318,7 +1316,7 @@ class poly1d:
                 elif coefstr == 'b':
                     newstr = var
                 else:
-                    newstr = '%s %s' % (coefstr, var)
+                    newstr = f'{coefstr} {var}'
             else:
                 if coefstr == '0':
                     newstr = ''
@@ -1330,9 +1328,9 @@ class poly1d:
             if k > 0:
                 if newstr != '':
                     if newstr.startswith('-'):
-                        thestr = "%s - %s" % (thestr, newstr[1:])
+                        thestr = f"{thestr} - {newstr[1:]}"
                     else:
-                        thestr = "%s + %s" % (thestr, newstr)
+                        thestr = f"{thestr} + {newstr}"
             else:
                 thestr = newstr
         return _raise_power(thestr)

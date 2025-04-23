@@ -1,7 +1,6 @@
 import datetime as dt
 from typing import Literal as L
-
-from typing_extensions import assert_type
+from typing import assert_type
 
 import numpy as np
 import numpy.typing as npt

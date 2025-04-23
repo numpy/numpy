@@ -12,10 +12,10 @@ __all__ = [
     "addfield",
 ]
 
-_ShapeType_co = TypeVar("_ShapeType_co", covariant=True, bound=tuple[int, ...])
-_DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", covariant=True, bound=tuple[int, ...])
+_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype[Any], covariant=True)
 
-class MaskedRecords(MaskedArray[_ShapeType_co, _DType_co]):
+class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co]):
     def __new__(
         cls,
         shape,

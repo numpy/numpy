@@ -243,17 +243,17 @@ class TestArray2String:
                 "[. o O]")
         assert_(np.array2string(x, formatter={'int_kind': _format_function}) ==
                 "[. o O]")
-        assert_(np.array2string(x, formatter={'all': lambda x: "%.4f" % x}) ==
+        assert_(np.array2string(x, formatter={'all': lambda x: f"{x:.4f}"}) ==
                 "[0.0000 1.0000 2.0000]")
-        assert_equal(np.array2string(x, formatter={'int': lambda x: hex(x)}),
+        assert_equal(np.array2string(x, formatter={'int': hex}),
                 x_hex)
-        assert_equal(np.array2string(x, formatter={'int': lambda x: oct(x)}),
+        assert_equal(np.array2string(x, formatter={'int': oct}),
                 x_oct)
 
         x = np.arange(3.)
-        assert_(np.array2string(x, formatter={'float_kind': lambda x: "%.2f" % x}) ==
+        assert_(np.array2string(x, formatter={'float_kind': lambda x: f"{x:.2f}"}) ==
                 "[0.00 1.00 2.00]")
-        assert_(np.array2string(x, formatter={'float': lambda x: "%.2f" % x}) ==
+        assert_(np.array2string(x, formatter={'float': lambda x: f"{x:.2f}"}) ==
                 "[0.00 1.00 2.00]")
 
         s = np.array(['abc', 'def'])
@@ -534,7 +534,7 @@ class TestArray2String:
         assert_equal(a[0], text)
         text = text.item()  # use raw python strings for repr below
         # and that np.array2string puts a newline in the expected location
-        expected_repr = "[{0!r} {0!r}\n {0!r}]".format(text)
+        expected_repr = f"[{text!r} {text!r}\n {text!r}]"
         result = np.array2string(a, max_line_width=len(repr(text)) * 2 + 3)
         assert_equal(result, expected_repr)
 
@@ -663,7 +663,7 @@ class TestPrintOptions:
                 ([100.], "100."), ([.2, -1, 122.51], "  0.,  -1., 123."),
                 ([0], "0"), ([-12], "-12"), ([complex(.3, -.7)], "0.-1.j")):
             x = np.array(values)
-            assert_equal(repr(x), "array([%s])" % string)
+            assert_equal(repr(x), f"array([{string}])")
 
     def test_formatter(self):
         x = np.arange(3)
@@ -836,7 +836,7 @@ class TestPrintOptions:
         c = np.array([1.0 + 1.0j, 1.123456789 + 1.123456789j], dtype='c16')
 
         # also make sure 1e23 is right (is between two fp numbers)
-        w = np.array(['1e{}'.format(i) for i in range(25)], dtype=np.float64)
+        w = np.array([f'1e{i}' for i in range(25)], dtype=np.float64)
         # note: we construct w from the strings `1eXX` instead of doing
         # `10.**arange(24)` because it turns out the two are not equivalent in
         # python. On some architectures `1e23 != 10.**23`.
@@ -919,6 +919,45 @@ class TestPrintOptions:
         a = np.float64.fromhex('-1p-97')
         assert_equal(np.float64(np.array2string(a, floatmode='unique')), a)
 
+    test_cases_gh_28679 = [
+        (np.half([999, 999]), "[999. 999.]"),
+        (np.half([999, 1000]), "[9.99e+02 1.00e+03]"),
+        (np.single([999999, 999999]), "[999999. 999999.]"),
+        (np.single([999999, -1000000]), "[ 9.99999e+05 -1.00000e+06]"),
+        (
+            np.complex64([999999 + 999999j, 999999 + 999999j]),
+            "[999999.+999999.j 999999.+999999.j]"
+        ),
+        (
+            np.complex64([999999 + 999999j, 999999 + -1000000j]),
+            "[999999.+9.99999e+05j 999999.-1.00000e+06j]"
+        ),
+    ]
+
+    @pytest.mark.parametrize("input_array, expected_str", test_cases_gh_28679)
+    def test_gh_28679(self, input_array, expected_str):
+        # test cutoff to exponent notation for half, single, and complex64
+        assert_equal(str(input_array), expected_str)
+
+    test_cases_legacy_2_2 = [
+        (np.half([1.e3, 1.e4, 65504]), "[ 1000. 10000. 65504.]"),
+        (np.single([1.e6, 1.e7]), "[ 1000000. 10000000.]"),
+        (np.single([1.e7, 1.e8]), "[1.e+07 1.e+08]"),
+    ]
+
+    @pytest.mark.parametrize("input_array, expected_str", test_cases_legacy_2_2)
+    def test_legacy_2_2_mode(self, input_array, expected_str):
+        # test legacy cutoff to exponent notation for half and single
+        with np.printoptions(legacy='2.2'):
+            assert_equal(str(input_array), expected_str)
+
+    @pytest.mark.parametrize("legacy", ['1.13', '1.21', '1.25', '2.1', '2.2'])
+    def test_legacy_get_options(self, legacy):
+        # test legacy get options works okay
+        with np.printoptions(legacy=legacy):
+            p_opt = np.get_printoptions()
+            assert_equal(p_opt["legacy"], legacy)
+
     def test_legacy_mode_scalars(self):
         # in legacy mode, str of floats get truncated, and complex scalars
         # use * for non-finite imaginary part
@@ -948,10 +987,10 @@ class TestPrintOptions:
 
         styp = '<U4'
         assert_equal(repr(np.ones(3, dtype=styp)),
-            "array(['1', '1', '1'], dtype='{}')".format(styp))
-        assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent("""\
+            f"array(['1', '1', '1'], dtype='{styp}')")
+        assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent(f"""\
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
-                  dtype='{}')""".format(styp)))
+                  dtype='{styp}')"""))
 
     @pytest.mark.parametrize(
         ['native'],

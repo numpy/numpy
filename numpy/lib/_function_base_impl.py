@@ -67,7 +67,7 @@ _QuantileMethods = {
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
     'inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),
+        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),  # noqa: PLW0108
         'fix_gamma': None,  # should never be called
     },
     'averaged_inverted_cdf': {
@@ -79,8 +79,7 @@ _QuantileMethods = {
             where=gamma == 0),
     },
     'closest_observation': {
-        'get_virtual_index': lambda n, quantiles: _closest_observation(n,
-                                                                    quantiles),
+        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),  # noqa: PLW0108
         'fix_gamma': None,  # should never be called
     },
     # Continuous methods
@@ -220,8 +219,7 @@ def rot90(m, k=1, axes=(0, 1)):
 
     if (axes[0] >= m.ndim or axes[0] < -m.ndim
         or axes[1] >= m.ndim or axes[1] < -m.ndim):
-        raise ValueError("Axes={} out of range for array of ndim={}."
-            .format(axes, m.ndim))
+        raise ValueError(f"Axes={axes} out of range for array of ndim={m.ndim}.")
 
     k %= 4
 
@@ -762,8 +760,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         n += 1
     elif n != n2:
         raise ValueError(
-            "with {} condition(s), either {} or {} functions are expected"
-            .format(n, n, n + 1)
+            f"with {n} condition(s), either {n} or {n + 1} functions are expected"
         )
 
     y = zeros_like(x)
@@ -870,7 +867,7 @@ def select(condlist, choicelist, default=0):
     for i, cond in enumerate(condlist):
         if cond.dtype.type is not np.bool:
             raise TypeError(
-                'invalid entry {} in condlist: should be boolean ndarray'.format(i))
+                f'invalid entry {i} in condlist: should be boolean ndarray')
 
     if choicelist[0].ndim == 0:
         # This may be common, so avoid the call.
@@ -2136,19 +2133,19 @@ def disp(mesg, device=None, linefeed=True):
     if device is None:
         device = sys.stdout
     if linefeed:
-        device.write('%s\n' % mesg)
+        device.write(f'{mesg}\n')
     else:
-        device.write('%s' % mesg)
+        device.write(f'{mesg}')
     device.flush()
     return
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
 _DIMENSION_NAME = r'\w+'
-_CORE_DIMENSION_LIST = '(?:{0:}(?:,{0:})*)?'.format(_DIMENSION_NAME)
-_ARGUMENT = r'\({}\)'.format(_CORE_DIMENSION_LIST)
-_ARGUMENT_LIST = '{0:}(?:,{0:})*'.format(_ARGUMENT)
-_SIGNATURE = '^{0:}->{0:}$'.format(_ARGUMENT_LIST)
+_CORE_DIMENSION_LIST = f'(?:{_DIMENSION_NAME}(?:,{_DIMENSION_NAME})*)?'
+_ARGUMENT = fr'\({_CORE_DIMENSION_LIST}\)'
+_ARGUMENT_LIST = f'{_ARGUMENT}(?:,{_ARGUMENT})*'
+_SIGNATURE = f'^{_ARGUMENT_LIST}->{_ARGUMENT_LIST}$'
 
 
 def _parse_gufunc_signature(signature):
@@ -2170,7 +2167,7 @@ def _parse_gufunc_signature(signature):
 
     if not re.match(_SIGNATURE, signature):
         raise ValueError(
-            'not a valid gufunc signature: {}'.format(signature))
+            f'not a valid gufunc signature: {signature}')
     return tuple([tuple(re.findall(_DIMENSION_NAME, arg))
                   for arg in re.findall(_ARGUMENT, arg_list)]
                  for arg_list in signature.split('->'))
@@ -2460,7 +2457,7 @@ class vectorize:
         if isinstance(otypes, str):
             for char in otypes:
                 if char not in typecodes['All']:
-                    raise ValueError("Invalid otype specified: %s" % (char,))
+                    raise ValueError(f"Invalid otype specified: {char}")
         elif iterable(otypes):
             otypes = [_get_vectorize_dtype(_nx.dtype(x)) for x in otypes]
         elif otypes is not None:
@@ -2552,7 +2549,6 @@ class vectorize:
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
-            args = [asarray(arg) for arg in args]
             if builtins.any(arg.size == 0 for arg in args):
                 raise ValueError('cannot call `vectorize` on size 0 inputs '
                                  'unless `otypes` is set')
@@ -2598,18 +2594,15 @@ class vectorize:
         elif not args:
             res = func()
         else:
+            args = [asanyarray(a, dtype=object) for a in args]
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
-
-            # Convert args to object arrays first
-            inputs = [asanyarray(a, dtype=object) for a in args]
-
-            outputs = ufunc(*inputs)
+            outputs = ufunc(*args, out=...)
 
             if ufunc.nout == 1:
                 res = asanyarray(outputs, dtype=otypes[0])
             else:
                 res = tuple(asanyarray(x, dtype=t)
-                             for x, t in zip(outputs, otypes))
+                            for x, t in zip(outputs, otypes))
         return res
 
     def _vectorize_call_with_signature(self, func, args):
@@ -4258,8 +4251,7 @@ def percentile(a,
 
     # Use dtype of array if possible (e.g., if q is a python int or float)
     # by making the divisor have the dtype of the data array.
-    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
-    q = asanyarray(q)  # undo any decay that the ufunc performed (see gh-13105)
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 
@@ -5422,8 +5414,8 @@ def delete(arr, obj, axis=None):
         # optimization for a single value
         if (obj < -N or obj >= N):
             raise IndexError(
-                "index %i is out of bounds for axis %i with "
-                "size %i" % (obj, axis, N))
+                f"index {obj} is out of bounds for axis {axis} with "
+                f"size {N}")
         if (obj < 0):
             obj += N
         newshape[axis] -= 1
@@ -5439,7 +5431,7 @@ def delete(arr, obj, axis=None):
             if obj.shape != (N,):
                 raise ValueError('boolean array argument obj to delete '
                                  'must be one dimensional and match the axis '
-                                 'length of {}'.format(N))
+                                 f'length of {N}')
 
             # optimization, the other branch is slower
             keep = ~obj

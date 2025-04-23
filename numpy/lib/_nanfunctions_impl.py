@@ -351,7 +351,7 @@ def nanmin(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwargs['where'] = where
 
-    if type(a) is np.ndarray and a.dtype != np.object_:
+    if (type(a) is np.ndarray or type(a) is np.memmap) and a.dtype != np.object_:
         # Fast, but not safe for subclasses of ndarray, or object arrays,
         # which do not implement isnan (gh-9009), or fmin correctly (gh-8975)
         res = np.fmin.reduce(a, axis=axis, out=out, **kwargs)
@@ -480,7 +480,7 @@ def nanmax(a, axis=None, out=None, keepdims=np._NoValue, initial=np._NoValue,
     if where is not np._NoValue:
         kwargs['where'] = where
 
-    if type(a) is np.ndarray and a.dtype != np.object_:
+    if (type(a) is np.ndarray or type(a) is np.memmap) and a.dtype != np.object_:
         # Fast, but not safe for subclasses of ndarray, or object arrays,
         # which do not implement isnan (gh-9009), or fmax correctly (gh-8975)
         res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
@@ -1389,9 +1389,7 @@ def nanpercentile(
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
-    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100)
-    # undo any decay that the ufunc performed (see gh-13105)
-    q = np.asanyarray(q)
+    q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 

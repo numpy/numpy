@@ -192,5 +192,3 @@ if __name__ == '__main__':
                 title = f"On {arch_pname}::{pretty_names.get(cc, cc)}"
                 table = Features(arch, cc).table_diff(Features(arch, "gcc"))
                 fd.write(wrapper_section(title, table))
-
-

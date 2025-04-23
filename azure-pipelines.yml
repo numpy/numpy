@@ -19,7 +19,7 @@ stages:
   jobs:
     - job: Skip
       pool:
-        vmImage: 'ubuntu-20.04'
+        vmImage: 'ubuntu-22.04'
       variables:
         DECODE_PERCENTS: 'false'
         RET: 'true'
@@ -40,7 +40,7 @@ stages:
   - job: Lint
     condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
     pool:
-      vmImage: 'ubuntu-20.04'
+      vmImage: 'ubuntu-22.04'
     steps:
     - task: UsePythonVersion@0
       inputs:
@@ -59,7 +59,7 @@ stages:
 
   - job: Linux_Python_311_32bit_full_with_asserts
     pool:
-      vmImage: 'ubuntu-20.04'
+      vmImage: 'ubuntu-22.04'
     steps:
     - script: |
         git submodule update --init

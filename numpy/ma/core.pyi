@@ -1,13 +1,43 @@
 # pyright: reportIncompatibleMethodOverride=false
-# ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204
+# ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
-from typing import Any, SupportsIndex, TypeVar
+from collections.abc import Sequence
+from typing import Any, Literal, SupportsIndex, TypeAlias, TypeVar, overload
 
 from _typeshed import Incomplete
 from typing_extensions import deprecated
 
-from numpy import _OrderKACF, amax, amin, bool_, dtype, expand_dims, float64, ndarray
-from numpy._typing import ArrayLike, _DTypeLikeBool
+import numpy as np
+from numpy import (
+    _ModeKind,
+    _OrderKACF,
+    _PartitionKind,
+    _SortKind,
+    amax,
+    amin,
+    bool_,
+    dtype,
+    expand_dims,
+    float64,
+    generic,
+    int_,
+    intp,
+    ndarray,
+)
+from numpy._globals import _NoValueType
+from numpy._typing import (
+    ArrayLike,
+    NDArray,
+    _ArrayLike,
+    _ArrayLikeBool_co,
+    _ArrayLikeInt,
+    _ArrayLikeInt_co,
+    _DTypeLikeBool,
+    _IntLike_co,
+    _ScalarLike_co,
+    _Shape,
+    _ShapeLike,
+)
 
 __all__ = [
     "MAError",
@@ -190,10 +220,15 @@ __all__ = [
     "zeros_like",
 ]
 
-_ShapeType = TypeVar("_ShapeType", bound=tuple[int, ...])
-_ShapeType_co = TypeVar("_ShapeType_co", bound=tuple[int, ...], covariant=True)
-_DType = TypeVar("_DType", bound=dtype[Any])
-_DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
+_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
+_ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
+_DTypeT = TypeVar("_DTypeT", bound=dtype)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
+_ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
+_ScalarT = TypeVar("_ScalarT", bound=generic)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
+# A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
+_MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
 
 MaskType = bool
 nomask: bool
@@ -207,7 +242,12 @@ def minimum_fill_value(obj): ...
 def maximum_fill_value(obj): ...
 def set_fill_value(a, fill_value): ...
 def common_fill_value(a, b): ...
-def filled(a, fill_value=...): ...
+@overload
+def filled(a: ndarray[_ShapeT_co, _DTypeT_co], fill_value: _ScalarLike_co | None = None) -> ndarray[_ShapeT_co, _DTypeT_co]: ...
+@overload
+def filled(a: _ArrayLike[_ScalarT_co], fill_value: _ScalarLike_co | None = None) -> NDArray[_ScalarT_co]: ...
+@overload
+def filled(a: ArrayLike, fill_value: _ScalarLike_co | None = None) -> NDArray[Any]: ...
 def getdata(a, subok=...): ...
 get_data = getdata
 
@@ -340,7 +380,7 @@ class MaskedIterator:
     def __setitem__(self, index, value): ...
     def __next__(self): ...
 
-class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
+class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     __array_priority__: Any
     def __new__(cls, data=..., mask=..., dtype=..., copy=..., subok=..., ndmin=..., fill_value=..., keep_mask=..., hard_mask=..., shrink=..., order=...): ...
     def __array_finalize__(self, obj): ...
@@ -349,13 +389,13 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def __getitem__(self, indx): ...
     def __setitem__(self, indx, value): ...
     @property
-    def dtype(self) -> _DType_co: ...
+    def dtype(self) -> _DTypeT_co: ...
     @dtype.setter
-    def dtype(self: MaskedArray[Any, _DType], dtype: _DType, /) -> None: ...
+    def dtype(self: MaskedArray[Any, _DTypeT], dtype: _DTypeT, /) -> None: ...
     @property
-    def shape(self) -> _ShapeType_co: ...
+    def shape(self) -> _ShapeT_co: ...
     @shape.setter
-    def shape(self: MaskedArray[_ShapeType, Any], shape: _ShapeType, /) -> None: ...
+    def shape(self: MaskedArray[_ShapeT, Any], shape: _ShapeT, /) -> None: ...
     def __setmask__(self, mask, copy=...): ...
     @property
     def mask(self): ...
@@ -386,15 +426,15 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def fill_value(self, value=...): ...
     get_fill_value: Any
     set_fill_value: Any
-    def filled(self, fill_value=...): ...
-    def compressed(self): ...
+    def filled(self, /, fill_value: _ScalarLike_co | None = None) -> ndarray[_ShapeT_co, _DTypeT_co]: ...
+    def compressed(self) -> ndarray[tuple[int], _DTypeT_co]: ...
     def compress(self, condition, axis=..., out=...): ...
     def __eq__(self, other): ...
     def __ne__(self, other): ...
-    def __ge__(self, other): ...
-    def __gt__(self, other): ...
-    def __le__(self, other): ...
-    def __lt__(self, other): ...
+    def __ge__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
+    def __gt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
+    def __le__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
+    def __lt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
     def __add__(self, other): ...
     def __radd__(self, other): ...
     def __sub__(self, other): ...
@@ -421,13 +461,23 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     @property  # type: ignore[misc]
     def real(self): ...
     get_real: Any
-    def count(self, axis=..., keepdims=...): ...
+
+    # keep in sync with `np.ma.count`
+    @overload
+    def count(self, axis: None = None, keepdims: Literal[False] | _NoValueType = ...) -> int: ...
+    @overload
+    def count(self, axis: _ShapeLike, keepdims: bool | _NoValueType = ...) -> NDArray[int_]: ...
+    @overload
+    def count(self, axis: _ShapeLike | None = ..., *, keepdims: Literal[True]) -> NDArray[int_]: ...
+    @overload
+    def count(self, axis: _ShapeLike | None, keepdims: Literal[True]) -> NDArray[int_]: ...
+
     def ravel(self, order=...): ...
     def reshape(self, *s, **kwargs): ...
     def resize(self, newshape, refcheck=..., order=...): ...
-    def put(self, indices, values, mode=...): ...
-    def ids(self): ...
-    def iscontiguous(self): ...
+    def put(self, indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
+    def ids(self) -> tuple[int, int]: ...
+    def iscontiguous(self) -> bool: ...
     def all(self, axis=..., out=..., keepdims=...): ...
     def any(self, axis=..., out=..., keepdims=...): ...
     def nonzero(self): ...
@@ -444,15 +494,274 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def std(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
     def round(self, decimals=..., out=...): ...
     def argsort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
-    def argmin(self, axis=..., fill_value=..., out=..., *, keepdims=...): ...
-    def argmax(self, axis=..., fill_value=..., out=..., *, keepdims=...): ...
-    def sort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
-    def min(self, axis=..., out=..., fill_value=..., keepdims=...): ...
-    def max(self, axis=..., out=..., fill_value=..., keepdims=...): ...
-    def ptp(self, axis=..., out=..., fill_value=..., keepdims=...): ...
-    def partition(self, *args, **kwargs): ...
-    def argpartition(self, *args, **kwargs): ...
-    def take(self, indices, axis=..., out=..., mode=...): ...
+
+    # Keep in-sync with np.ma.argmin
+    @overload  # type: ignore[override]
+    def argmin(
+        self,
+        axis: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        out: None = None,
+        *,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> intp: ...
+    @overload
+    def argmin(
+        self,
+        axis: SupportsIndex | None = None,
+        fill_value: _ScalarLike_co | None = None,
+        out: None = None,
+        *,
+        keepdims: bool | _NoValueType = ...,
+    ) -> Any: ...
+    @overload
+    def argmin(
+        self,
+        axis: SupportsIndex | None = None,
+        fill_value: _ScalarLike_co | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def argmin(
+        self,
+        axis: SupportsIndex | None,
+        fill_value: _ScalarLike_co | None,
+        out: _ArrayT,
+        *,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+
+    # Keep in-sync with np.ma.argmax
+    @overload  # type: ignore[override]
+    def argmax(
+        self,
+        axis: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        out: None = None,
+        *,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> intp: ...
+    @overload
+    def argmax(
+        self,
+        axis: SupportsIndex | None = None,
+        fill_value: _ScalarLike_co | None = None,
+        out: None = None,
+        *,
+        keepdims: bool | _NoValueType = ...,
+    ) -> Any: ...
+    @overload
+    def argmax(
+        self,
+        axis: SupportsIndex | None = None,
+        fill_value: _ScalarLike_co | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def argmax(
+        self,
+        axis: SupportsIndex | None,
+        fill_value: _ScalarLike_co | None,
+        out: _ArrayT,
+        *,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+
+    #
+    def sort(  # type: ignore[override]
+        self,
+        axis: SupportsIndex = -1,
+        kind: _SortKind | None = None,
+        order: str | Sequence[str] | None = None,
+        endwith: bool | None = True,
+        fill_value: _ScalarLike_co | None = None,
+        *,
+        stable: Literal[False] | None = False,
+    ) -> None: ...
+
+    #
+    @overload  # type: ignore[override]
+    def min(
+        self: _MaskedArray[_ScalarT],
+        axis: None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> _ScalarT: ...
+    @overload
+    def min(
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...
+    ) -> Any: ...
+    @overload
+    def min(
+        self,
+        axis: _ShapeLike | None,
+        out: _ArrayT,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def min(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        out: _ArrayT,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+
+    #
+    @overload  # type: ignore[override]
+    def max(
+        self: _MaskedArray[_ScalarT],
+        axis: None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> _ScalarT: ...
+    @overload
+    def max(
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...
+    ) -> Any: ...
+    @overload
+    def max(
+        self,
+        axis: _ShapeLike | None,
+        out: _ArrayT,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def max(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        out: _ArrayT,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+
+    #
+    @overload
+    def ptp(
+        self: _MaskedArray[_ScalarT],
+        axis: None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: Literal[False] = False,
+    ) -> _ScalarT: ...
+    @overload
+    def ptp(
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool = False,
+    ) -> Any: ...
+    @overload
+    def ptp(
+        self,
+        axis: _ShapeLike | None,
+        out: _ArrayT,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool = False,
+    ) -> _ArrayT: ...
+    @overload
+    def ptp(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        out: _ArrayT,
+        fill_value: _ScalarLike_co | None = None,
+        keepdims: bool = False,
+    ) -> _ArrayT: ...
+
+    #
+    @overload
+    def partition(
+        self,
+        /,
+        kth: _ArrayLikeInt,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: None = None
+    ) -> None: ...
+    @overload
+    def partition(
+        self: _MaskedArray[np.void],
+        /,
+        kth: _ArrayLikeInt,
+        axis: SupportsIndex = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None,
+    ) -> None: ...
+
+    #
+    @overload
+    def argpartition(
+        self,
+        /,
+        kth: _ArrayLikeInt,
+        axis: SupportsIndex | None = -1,
+        kind: _PartitionKind = "introselect",
+        order: None = None,
+    ) -> _MaskedArray[intp]: ...
+    @overload
+    def argpartition(
+        self: _MaskedArray[np.void],
+        /,
+        kth: _ArrayLikeInt,
+        axis: SupportsIndex | None = -1,
+        kind: _PartitionKind = "introselect",
+        order: str | Sequence[str] | None = None,
+    ) -> _MaskedArray[intp]: ...
+
+    # Keep in-sync with np.ma.take
+    @overload
+    def take(  # type: ignore[overload-overlap]
+        self: _MaskedArray[_ScalarT],
+        indices: _IntLike_co,
+        axis: None = None,
+        out: None = None,
+        mode: _ModeKind = 'raise'
+    ) -> _ScalarT: ...
+    @overload
+    def take(
+        self: _MaskedArray[_ScalarT],
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None = None,
+        out: None = None,
+        mode: _ModeKind = 'raise',
+    ) -> _MaskedArray[_ScalarT]: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None,
+        out: _ArrayT,
+        mode: _ModeKind = 'raise',
+    ) -> _ArrayT: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None = None,
+        *,
+        out: _ArrayT,
+        mode: _ModeKind = 'raise',
+    ) -> _ArrayT: ...
 
     copy: Any
     diagonal: Any
@@ -471,15 +780,15 @@ class MaskedArray(ndarray[_ShapeType_co, _DType_co]):
     def torecords(self) -> Incomplete: ...
     def tolist(self, fill_value: Incomplete | None = None) -> Incomplete: ...
     @deprecated("tostring() is deprecated. Use tobytes() instead.")
-    def tostring(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
-    def tobytes(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def tostring(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]
+    def tobytes(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]
     def tofile(self, /, fid: Incomplete, sep: str = "", format: str = "%s") -> Incomplete: ...
 
     #
     def __reduce__(self): ...
     def __deepcopy__(self, memo=...): ...
 
-class mvoid(MaskedArray[_ShapeType_co, _DType_co]):
+class mvoid(MaskedArray[_ShapeT_co, _DTypeT_co]):
     def __new__(
         self,  # pyright: ignore[reportSelfClsParameterName]
         data,
@@ -538,7 +847,7 @@ def array(
     subok=...,
     ndmin=...,
 ): ...
-def is_masked(x): ...
+def is_masked(x: object) -> bool: ...
 
 class _extrema_operation(_MaskedUFunc):
     compare: Any
@@ -550,9 +859,107 @@ class _extrema_operation(_MaskedUFunc):
     def reduce(self, target, axis=...): ...
     def outer(self, a, b): ...
 
-def min(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
-def max(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
-def ptp(obj, axis=..., out=..., fill_value=..., keepdims=...): ...
+@overload
+def min(
+    obj: _ArrayLike[_ScalarT],
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _ScalarT: ...
+@overload
+def min(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...
+) -> Any: ...
+@overload
+def min(
+    obj: ArrayLike,
+    axis: _ShapeLike | None,
+    out: _ArrayT,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
+@overload
+def min(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    out: _ArrayT,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
+
+@overload
+def max(
+    obj: _ArrayLike[_ScalarT],
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _ScalarT: ...
+@overload
+def max(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...
+) -> Any: ...
+@overload
+def max(
+    obj: ArrayLike,
+    axis: _ShapeLike | None,
+    out: _ArrayT,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
+@overload
+def max(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    out: _ArrayT,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
+
+@overload
+def ptp(
+    obj: _ArrayLike[_ScalarT],
+    axis: None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> _ScalarT: ...
+@overload
+def ptp(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    out: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...
+) -> Any: ...
+@overload
+def ptp(
+    obj: ArrayLike,
+    axis: _ShapeLike | None,
+    out: _ArrayT,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
+@overload
+def ptp(
+    obj: ArrayLike,
+    axis: _ShapeLike | None = None,
+    *,
+    out: _ArrayT,
+    fill_value: _ScalarLike_co | None = None,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
 
 class _frommethod:
     __name__: Any
@@ -585,30 +992,184 @@ sum: _frommethod
 swapaxes: _frommethod
 trace: _frommethod
 var: _frommethod
-count: _frommethod
-argmin: _frommethod
-argmax: _frommethod
+
+@overload
+def count(self: ArrayLike, axis: None = None, keepdims: Literal[False] | _NoValueType = ...) -> int: ...
+@overload
+def count(self: ArrayLike, axis: _ShapeLike, keepdims: bool | _NoValueType = ...) -> NDArray[int_]: ...
+@overload
+def count(self: ArrayLike, axis: _ShapeLike | None = ..., *, keepdims: Literal[True]) -> NDArray[int_]: ...
+@overload
+def count(self: ArrayLike, axis: _ShapeLike | None, keepdims: Literal[True]) -> NDArray[int_]: ...
+
+@overload
+def argmin(
+    self: ArrayLike,
+    axis: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> intp: ...
+@overload
+def argmin(
+    self: ArrayLike,
+    axis: SupportsIndex | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    out: None = None,
+    *,
+    keepdims: bool | _NoValueType = ...,
+) -> Any: ...
+@overload
+def argmin(
+    self: ArrayLike,
+    axis: SupportsIndex | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    out: _ArrayT,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
+@overload
+def argmin(
+    self: ArrayLike,
+    axis: SupportsIndex | None,
+    fill_value: _ScalarLike_co | None,
+    out: _ArrayT,
+    *,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
+
+#
+@overload
+def argmax(
+    self: ArrayLike,
+    axis: None = None,
+    fill_value: _ScalarLike_co | None = None,
+    out: None = None,
+    *,
+    keepdims: Literal[False] | _NoValueType = ...,
+) -> intp: ...
+@overload
+def argmax(
+    self: ArrayLike,
+    axis: SupportsIndex | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    out: None = None,
+    *,
+    keepdims: bool | _NoValueType = ...,
+) -> Any: ...
+@overload
+def argmax(
+    self: ArrayLike,
+    axis: SupportsIndex | None = None,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    out: _ArrayT,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
+@overload
+def argmax(
+    self: ArrayLike,
+    axis: SupportsIndex | None,
+    fill_value: _ScalarLike_co | None,
+    out: _ArrayT,
+    *,
+    keepdims: bool | _NoValueType = ...,
+) -> _ArrayT: ...
 
 minimum: _extrema_operation
 maximum: _extrema_operation
 
-def take(a, indices, axis=..., out=..., mode=...): ...
+@overload
+def take(
+    a: _ArrayLike[_ScalarT],
+    indices: _IntLike_co,
+    axis: None = None,
+    out: None = None,
+    mode: _ModeKind = 'raise'
+) -> _ScalarT: ...
+@overload
+def take(
+    a: _ArrayLike[_ScalarT],
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None = None,
+    out: None = None,
+    mode: _ModeKind = 'raise',
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _IntLike_co,
+    axis: SupportsIndex | None = None,
+    out: None = None,
+    mode: _ModeKind = 'raise',
+) -> Any: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None = None,
+    out: None = None,
+    mode: _ModeKind = 'raise',
+) -> _MaskedArray[Any]: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None,
+    out: _ArrayT,
+    mode: _ModeKind = 'raise',
+) -> _ArrayT: ...
+@overload
+def take(
+    a: ArrayLike,
+    indices: _ArrayLikeInt_co,
+    axis: SupportsIndex | None = None,
+    *,
+    out: _ArrayT,
+    mode: _ModeKind = 'raise',
+) -> _ArrayT: ...
+
 def power(a, b, third=...): ...
 def argsort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
-def sort(a, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
-def compressed(x): ...
+@overload
+def sort(
+    a: _ArrayT,
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = True,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: Literal[False] | None = False,
+) -> _ArrayT: ...
+@overload
+def sort(
+    a: ArrayLike,
+    axis: SupportsIndex = -1,
+    kind: _SortKind | None = None,
+    order: str | Sequence[str] | None = None,
+    endwith: bool | None = True,
+    fill_value: _ScalarLike_co | None = None,
+    *,
+    stable: Literal[False] | None = False,
+) -> NDArray[Any]: ...
+@overload
+def compressed(x: _ArrayLike[_ScalarT_co]) -> ndarray[tuple[int], dtype[_ScalarT_co]]: ...
+@overload
+def compressed(x: ArrayLike) -> ndarray[tuple[int], dtype]: ...
 def concatenate(arrays, axis=...): ...
 def diag(v, k=...): ...
 def left_shift(a, n): ...
 def right_shift(a, n): ...
-def put(a, indices, values, mode=...): ...
-def putmask(a, mask, values): ...
+def put(a: NDArray[Any], indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = 'raise') -> None: ...
+def putmask(a: NDArray[Any], mask: _ArrayLikeBool_co, values: ArrayLike) -> None: ...
 def transpose(a, axes=...): ...
 def reshape(a, new_shape, order=...): ...
 def resize(x, new_shape): ...
-def ndim(obj): ...
+def ndim(obj: ArrayLike) -> int: ...
 def shape(obj): ...
-def size(obj, axis=...): ...
+def size(obj: ArrayLike, axis: SupportsIndex | None = None) -> int: ...
 def diff(a, /, n=..., axis=..., prepend=..., append=...): ...
 def where(condition, x=..., y=...): ...
 def choose(indices, choices, out=..., mode=...): ...
@@ -631,7 +1192,7 @@ def fromflex(fxarray): ...
 
 class _convert2ma:
     def __init__(self, /, funcname: str, np_ret: str, np_ma_ret: str, params: dict[str, Any] | None = None) -> None: ...
-    def __call__(self, /, *args: object, **params: object) -> Any: ...  # noqa: ANN401
+    def __call__(self, /, *args: object, **params: object) -> Any: ...
     def getdoc(self, /, np_ret: str, np_ma_ret: str) -> str | None: ...
 
 arange: _convert2ma

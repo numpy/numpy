@@ -9,7 +9,7 @@ abc module from the stdlib, hence it is only available for Python >= 2.6.
 import os
 import abc
 import numbers
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 from . import polyutils as pu
@@ -200,9 +200,9 @@ class ABCPolyBase(abc.ABC):
 
         """
         return (
-			len(self.coef) == len(other.coef)
-			and np.all(self.coef == other.coef)
-		)
+            len(self.coef) == len(other.coef)
+            and np.all(self.coef == other.coef)
+        )
 
     def has_samedomain(self, other):
         """Check if domains match.
@@ -430,7 +430,7 @@ class ABCPolyBase(abc.ABC):
     def _repr_latex_scalar(x, parens=False):
         # TODO: we're stuck with disabling math formatting until we handle
         # exponents in this function
-        return r'\text{{{}}}'.format(pu.format_float(x, parens=parens))
+        return fr'\text{{{pu.format_float(x, parens=parens)}}}'
 
     def _format_term(self, scalar_format: Callable, off: float, scale: float):
         """ Format a single term in the expansion """

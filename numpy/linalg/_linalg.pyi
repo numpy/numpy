@@ -1,14 +1,6 @@
 from collections.abc import Iterable
-from typing import (
-    Literal as L,
-    overload,
-    TypeAlias,
-    TypeVar,
-    Any,
-    SupportsIndex,
-    SupportsInt,
-    NamedTuple,
-)
+from typing import Any, NamedTuple, Never, SupportsIndex, SupportsInt, TypeAlias, TypeVar, overload
+from typing import Literal as L
 
 import numpy as np
 from numpy import (
@@ -33,7 +25,7 @@ from numpy._typing import (
     NDArray,
     ArrayLike,
     DTypeLike,
-    _ArrayLikeUnknown,
+    _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeInt_co,
     _ArrayLikeUInt_co,
@@ -78,7 +70,7 @@ __all__ = [
     "vecdot",
 ]
 
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 _ModeKind: TypeAlias = L["reduced", "complete", "r", "raw"]
 
@@ -182,7 +174,7 @@ def cholesky(a: _ArrayLikeFloat_co, /, *, upper: bool = False) -> NDArray[floati
 def cholesky(a: _ArrayLikeComplex_co, /, *, upper: bool = False) -> NDArray[complexfloating[Any, Any]]: ...
 
 @overload
-def outer(x1: _ArrayLikeUnknown, x2: _ArrayLikeUnknown) -> NDArray[Any]: ...
+def outer(x1: _ArrayLike[Never], x2: _ArrayLike[Never]) -> NDArray[Any]: ...
 @overload
 def outer(x1: _ArrayLikeBool_co, x2: _ArrayLikeBool_co) -> NDArray[np.bool]: ...
 @overload
@@ -208,7 +200,7 @@ def outer(x1: _ArrayLikeObject_co, x2: _ArrayLikeObject_co) -> NDArray[object_]:
 def outer(
     x1: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
     x2: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 @overload
 def qr(a: _ArrayLikeInt_co, mode: _ModeKind = ...) -> QRResult: ...

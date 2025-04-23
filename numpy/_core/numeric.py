@@ -1024,7 +1024,7 @@ def tensordot(a, b, axes=2):
     first tensor, followed by the non-contracted axes of the second.
 
     Examples
-    -------- 
+    --------
     An example on integer_like:
 
     >>> a_0 = np.array([[1, 2], [3, 4]])
@@ -1055,9 +1055,9 @@ def tensordot(a, b, axes=2):
            [4664., 5018.],
            [4796., 5162.],
            [4928., 5306.]])
-           
+
     A slower but equivalent way of computing the same...
-    
+
     >>> d = np.zeros((5,2))
     >>> for i in range(5):
     ...   for j in range(2):
@@ -1435,7 +1435,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     axis = tuple(normalize_axis_index(ax, ndim, argname) for ax in axis)
     if not allow_duplicate and len(set(axis)) != len(axis):
         if argname:
-            raise ValueError('repeated axis in `{}` argument'.format(argname))
+            raise ValueError(f'repeated axis in `{argname}` argument')
         else:
             raise ValueError('repeated axis')
     return axis
@@ -1717,7 +1717,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
             # cp1 = a2 * b0 - a0 * b2
             # cp2 = a0 * b1 - a1 * b0
             multiply(a1, b2, out=cp0)
-            tmp = array(a2 * b1)
+            tmp = np.multiply(a2, b1, out=...)
             cp0 -= tmp
             multiply(a2, b0, out=cp1)
             multiply(a0, b2, out=tmp)
@@ -2091,7 +2091,7 @@ def binary_repr(num, width=None):
         return '0' * (width or 1)
 
     elif num > 0:
-        binary = bin(num)[2:]
+        binary = f'{num:b}'
         binwidth = len(binary)
         outwidth = (binwidth if width is None
                     else builtins.max(binwidth, width))
@@ -2100,10 +2100,10 @@ def binary_repr(num, width=None):
 
     else:
         if width is None:
-            return '-' + bin(-num)[2:]
+            return f'-{-num:b}'
 
         else:
-            poswidth = len(bin(-num)[2:])
+            poswidth = len(f'{-num:b}')
 
             # See gh-8679: remove extra digit
             # for numbers at boundaries.
@@ -2111,7 +2111,7 @@ def binary_repr(num, width=None):
                 poswidth -= 1
 
             twocomp = 2**(poswidth + 1) + num
-            binary = bin(twocomp)[2:]
+            binary = f'{twocomp:b}'
             binwidth = len(binary)
 
             outwidth = builtins.max(binwidth, width)

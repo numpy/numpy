@@ -1,6 +1,10 @@
 from typing import Literal
 
-_BoolCodes = Literal["bool", "bool_", "?", "|?", "=?", "<?", ">?"]
+_BoolCodes = Literal[
+    "bool", "bool_",
+    "?", "|?", "=?", "<?", ">?",
+    "b1", "|b1", "=b1", "<b1", ">b1",
+]  # fmt: skip
 
 _UInt8Codes = Literal["uint8", "u1", "|u1", "=u1", "<u1", ">u1"]
 _UInt16Codes = Literal["uint16", "u2", "|u2", "=u2", "<u2", ">u2"]

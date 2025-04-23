@@ -1,8 +1,6 @@
-from typing import Any
+from typing import Any, assert_type
 
 import numpy as np
-
-from typing_extensions import assert_type
 
 memmap_obj: np.memmap[Any, np.dtype[np.str_]]
 

@@ -156,7 +156,7 @@ class TestHstack:
         with pytest.raises(TypeError, match="arrays to stack must be"):
             hstack(np.arange(3) for _ in range(2))
         with pytest.raises(TypeError, match="arrays to stack must be"):
-            hstack((x for x in np.ones((3, 2))))
+            hstack(x for x in np.ones((3, 2)))
 
     def test_casting_and_dtype(self):
         a = np.array([1, 2, 3])
@@ -261,9 +261,8 @@ class TestConcatenate:
             assert_raises_regex(
                 ValueError,
                 "all the input array dimensions except for the concatenation axis "
-                "must match exactly, but along dimension {}, the array at "
-                "index 0 has size 1 and the array at index 1 has size 2"
-                .format(i),
+                f"must match exactly, but along dimension {i}, the array at "
+                "index 0 has size 1 and the array at index 1 has size 2",
                 np.concatenate, (a, b), axis=axis[1])
             assert_raises(ValueError, np.concatenate, (a, b), axis=axis[2])
             a = np.moveaxis(a, -1, 0)

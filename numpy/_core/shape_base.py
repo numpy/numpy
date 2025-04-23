@@ -552,7 +552,7 @@ def _block_format_index(index):
     """
     Convert a list of indices ``[0, 1, 2]`` into ``"arrays[0][1][2]"``.
     """
-    idx_str = ''.join('[{}]'.format(i) for i in index if i is not None)
+    idx_str = ''.join(f'[{i}]' for i in index if i is not None)
     return 'arrays' + idx_str
 
 
@@ -594,11 +594,9 @@ def _block_check_depths_match(arrays, parent_index=[]):
         #  - horribly confusing behaviour that results when tuples are
         #    treated like ndarray
         raise TypeError(
-            '{} is a tuple. '
+            f'{_block_format_index(parent_index)} is a tuple. '
             'Only lists can be used to arrange blocks, and np.block does '
-            'not allow implicit conversion from tuple to ndarray.'.format(
-                _block_format_index(parent_index)
-            )
+            'not allow implicit conversion from tuple to ndarray.'
         )
     elif type(arrays) is list and len(arrays) > 0:
         idxs_ndims = (_block_check_depths_match(arr, parent_index + [i])
@@ -611,12 +609,9 @@ def _block_check_depths_match(arrays, parent_index=[]):
                 max_arr_ndim = ndim
             if len(index) != len(first_index):
                 raise ValueError(
-                    "List depths are mismatched. First element was at depth "
-                    "{}, but there is an element at depth {} ({})".format(
-                        len(first_index),
-                        len(index),
-                        _block_format_index(index)
-                    )
+                    "List depths are mismatched. First element was at "
+                    f"depth {len(first_index)}, but there is an element at "
+                    f"depth {len(index)} ({_block_format_index(index)})"
                 )
             # propagate our flag that indicates an empty list at the bottom
             if index[-1] is None:
@@ -688,7 +683,7 @@ def _concatenate_shapes(shapes, axis):
     if any(shape[:axis] != first_shape_pre or
            shape[axis + 1:] != first_shape_post for shape in shapes):
         raise ValueError(
-            'Mismatched array shapes in block along axis {}.'.format(axis))
+            f'Mismatched array shapes in block along axis {axis}.')
 
     shape = (first_shape_pre + (sum(shape_at_axis),) + first_shape[axis + 1:])
 
@@ -967,9 +962,7 @@ def _block_setup(arrays):
     list_ndim = len(bottom_index)
     if bottom_index and bottom_index[-1] is None:
         raise ValueError(
-            'List at {} cannot be empty'.format(
-                _block_format_index(bottom_index)
-            )
+            f'List at {_block_format_index(bottom_index)} cannot be empty'
         )
     result_ndim = max(arr_ndim, list_ndim)
     return arrays, list_ndim, result_ndim, final_size

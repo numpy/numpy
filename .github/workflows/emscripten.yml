@@ -79,7 +79,7 @@ jobs:
           merge-multiple: true
 
       - name: Push to Anaconda PyPI index
-        uses: scientific-python/upload-nightly-action@82396a2ed4269ba06c6b2988bb4fd568ef3c3d6b  # v0.6.1
+        uses: scientific-python/upload-nightly-action@b36e8c0c10dbcfd2e05bf95f17ef8c14fd708dbf  # v0.6.2
         with:
           artifacts_path: wheelhouse/
           anaconda_nightly_upload_token: ${{ secrets.NUMPY_NIGHTLY_UPLOAD_TOKEN }}

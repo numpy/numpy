@@ -776,7 +776,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.arccos'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='acos', astype={'e': 'f'}),
           TD(P, f='arccos'),
           ),
@@ -784,7 +784,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.arccosh'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='acosh', astype={'e': 'f'}),
           TD(P, f='arccosh'),
           ),
@@ -792,7 +792,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.arcsin'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='asin', astype={'e': 'f'}),
           TD(P, f='arcsin'),
           ),
@@ -800,7 +800,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.arcsinh'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='asinh', astype={'e': 'f'}),
           TD(P, f='arcsinh'),
           ),
@@ -808,7 +808,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.arctan'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='atan', astype={'e': 'f'}),
           TD(P, f='arctan'),
           ),
@@ -816,7 +816,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.arctanh'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='atanh', astype={'e': 'f'}),
           TD(P, f='arctanh'),
           ),
@@ -824,7 +824,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.cos'),
           None,
-          TD('e', dispatch=[('loops_umath_fp', 'e')]),
+          TD('e', dispatch=[('loops_half', 'e')]),
           TD('f', dispatch=[('loops_trigonometric', 'f')]),
           TD('d', dispatch=[('loops_trigonometric', 'd')]),
           TD('g' + cmplx, f='cos'),
@@ -834,7 +834,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.sin'),
           None,
-          TD('e', dispatch=[('loops_umath_fp', 'e')]),
+          TD('e', dispatch=[('loops_half', 'e')]),
           TD('f', dispatch=[('loops_trigonometric', 'f')]),
           TD('d', dispatch=[('loops_trigonometric', 'd')]),
           TD('g' + cmplx, f='sin'),
@@ -844,7 +844,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.tan'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='tan', astype={'e': 'f'}),
           TD(P, f='tan'),
           ),
@@ -852,7 +852,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.cosh'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='cosh', astype={'e': 'f'}),
           TD(P, f='cosh'),
           ),
@@ -860,7 +860,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.sinh'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='sinh', astype={'e': 'f'}),
           TD(P, f='sinh'),
           ),
@@ -868,7 +868,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.tanh'),
           None,
-          TD('e', dispatch=[('loops_umath_fp', 'e')]),
+          TD('e', dispatch=[('loops_half', 'e')]),
           TD('fd', dispatch=[('loops_hyperbolic', 'fd')]),
           TD(inexact, f='tanh', astype={'e': 'f'}),
           TD(P, f='tanh'),
@@ -877,7 +877,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.exp'),
           None,
-          TD('e', dispatch=[('loops_umath_fp', 'e')]),
+          TD('e', dispatch=[('loops_half', 'e')]),
           TD('fd', dispatch=[('loops_exponent_log', 'fd')]),
           TD('fdg' + cmplx, f='exp'),
           TD(P, f='exp'),
@@ -886,7 +886,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.exp2'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='exp2', astype={'e': 'f'}),
           TD(P, f='exp2'),
           ),
@@ -894,7 +894,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.expm1'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='expm1', astype={'e': 'f'}),
           TD(P, f='expm1'),
           ),
@@ -902,7 +902,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.log'),
           None,
-          TD('e', dispatch=[('loops_umath_fp', 'e')]),
+          TD('e', dispatch=[('loops_half', 'e')]),
           TD('fd', dispatch=[('loops_exponent_log', 'fd')]),
           TD('fdg' + cmplx, f='log'),
           TD(P, f='log'),
@@ -911,7 +911,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.log2'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='log2', astype={'e': 'f'}),
           TD(P, f='log2'),
           ),
@@ -919,7 +919,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.log10'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='log10', astype={'e': 'f'}),
           TD(P, f='log10'),
           ),
@@ -927,7 +927,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.log1p'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(inexact, f='log1p', astype={'e': 'f'}),
           TD(P, f='log1p'),
           ),
@@ -944,7 +944,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy._core.umath.cbrt'),
           None,
-          TD('efd', dispatch=[('loops_umath_fp', 'efd')]),
+          TD('efd', dispatch=[('loops_umath_fp', 'fd'), ('loops_half', 'e')]),
           TD(flts, f='cbrt', astype={'e': 'f'}),
           TD(P, f='cbrt'),
           ),
@@ -1431,7 +1431,7 @@ def make_arrays(funcdict):
 
                 astype = ''
                 if t.astype is not None:
-                    astype = '_As_%s' % thedict[t.astype]
+                    astype = f'_As_{thedict[t.astype]}'
                 astr = ('%s_functions[%d] = PyUFunc_%s%s;' %
                            (name, k, thedict[t.type], astype))
                 code2list.append(astr)
@@ -1441,7 +1441,7 @@ def make_arrays(funcdict):
                     code2list.append(astr)
                     datalist.append('(void *)NULL')
                 elif t.type == 'P':
-                    datalist.append('(void *)"%s"' % t.func_data)
+                    datalist.append(f'(void *)"{t.func_data}"')
                 else:
                     astr = ('%s_data[%d] = (void *) %s;' %
                                (name, k, t.func_data))
@@ -1460,7 +1460,7 @@ def make_arrays(funcdict):
                 funclist.append('NULL')
 
             for x in t.in_ + t.out:
-                siglist.append('NPY_%s' % (english_upper(chartoname[x]),))
+                siglist.append(f'NPY_{english_upper(chartoname[x])}')
 
         if funclist or siglist or datalist:
             funcnames = ', '.join(funclist)
@@ -1499,7 +1499,7 @@ def make_ufuncs(funcdict):
         if uf.signature is None:
             sig = "NULL"
         else:
-            sig = '"{}"'.format(uf.signature)
+            sig = f'"{uf.signature}"'
         fmt = textwrap.dedent("""\
             identity = {identity_expr};
             if ({has_identity} && identity == NULL) {{
