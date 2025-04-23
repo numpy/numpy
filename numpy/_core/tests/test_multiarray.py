@@ -10468,5 +10468,4 @@ def test_array_dunder_array_preserves_dtype_on_none(dtype):
     """
     a = np.array([1], dtype=dtype)
     b = a.__array__(None)
-    assert_equal(a.dtype, b.dtype)
-    assert_array_equal(a, b)
+    assert_array_equal(a, b, strict=True)
