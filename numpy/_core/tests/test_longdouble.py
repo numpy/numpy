@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_warns, assert_array_equal,
-    temppath, IS_MUSL
+    temppath, assert_allclose, IS_MUSL
     )
 from numpy._core.tests._locales import CommaDecimalPointLocale
 
@@ -338,7 +338,7 @@ def test_longdouble_from_int(sign, int_val):
 def test_longdouble_from_int_rounding(sign, int_val):
     int_val *= sign
     flt_val = float(int_val)
-    assert np.isclose(np.longdouble(int_val), flt_val)
+    assert_allclose(np.longdouble(int_val), flt_val)
 
 def test_longdouble_from_int_overflow():
 

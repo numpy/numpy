@@ -101,6 +101,7 @@ done:
     return v;
 }
 
+// Overflow error function
 npy_longdouble _ldbl_ovfl_err(void) {
     PyErr_SetString(PyExc_OverflowError, "Number too big to be represented as a np.longdouble --This is platform dependent--");
     return -1;
@@ -118,6 +119,8 @@ typedef union {
     npy_longdouble d;
 } uint64_double_union;
 
+// Helper fucntion that uses bitwise opperations to transform a mantissa, exponent and sign
+// into a double, by putting the bits in the correct memory locations
 npy_longdouble _int_to_ld(int64_t *val, int e, int s) {
     uint64_t mantissa[3];
     uint64_t exp = (uint64_t)e;
@@ -173,6 +176,8 @@ typedef union {
     uint64_t u64[2]; // Two 64-bit halves
 } ld_128_union;
 
+// Helper fucntion that uses bitwise opperations to transform a mantissa, exponent and sign
+// into a long double, by putting the bits in the correct memory locations
 npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
     uint64_t mantissa[3];
     for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
@@ -225,19 +230,19 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
     #endif
 #endif
 
-// Since there are many types of long double, 64, 80, 128... 
-// and no consensus, as everything changes platform to platform.
-// For more performance needs to be platform specific
+// Uses mathematical opperations to calculate the number, by using the numbers in the
+// mantissa, scaling them approprietly using exp, and then adding them together
 npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
     uint64_t mantissa[3];
     for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
     npy_longdouble ld;
     if (exp == 0) {
         ld = (npy_longdouble)sign * (npy_longdouble)mantissa[0];
+        // Edge case for numbers that may or maynot be too big to be represented
     } else if (exp == NPY_LDBL_MAX_EXP && mantissa[0] == 0) {
         ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[1] * powl(2.0L, (npy_longdouble)(exp - 64)) + 
             (npy_longdouble)mantissa[2] * powl(2.0L, (npy_longdouble)(exp - 128)));
-            //Sometimes it overflows in weird ways
+            // Sometimes it overflows in weird ways
         if (ld == (npy_longdouble)INFINITY || ld == (npy_longdouble)(-INFINITY) || ld == (npy_longdouble)NAN || ld == (npy_longdouble)(-NAN)) {
             return _ldbl_ovfl_err();
         }
@@ -252,18 +257,23 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
 }
 #endif
 
-// Helper functions that get the exponent and mantissa, this works on all platforms
+// Helper function that get the exponent and mantissa, this works on all platforms
+// This function works by getting the bits of the number in increments of 64 bits
+// Since the size of the number is unknown, a while loop is needed.
+// The more significant digits are stored in the smaller indexes
 void _get_num(PyObject* py_int, int64_t* val, int *exp, int *ovf) {
     PyObject* shift = PyLong_FromLong(64);
     while (*ovf != 0) {
         *exp += 64;
-        val[2] = val[1]; //only needed for 128 bit platform
+        val[2] = val[1];
         val[1] = (uint64_t)PyLong_AsUnsignedLongLongMask(py_int);
         py_int = PyNumber_Rshift(py_int, shift);
         val[0] = (uint64_t)PyLong_AsLongLongAndOverflow(py_int, ovf);
     }
 }
 
+// helper function that gets the sign, and if the number is too big to be represented
+// as a int64, calls _get_num to find the exponent and mantissa
 void _fix_py_num(PyObject* py_int, int64_t* val, int *exp, int *sign) {
 
     int overflow;
@@ -287,7 +297,8 @@ The largest number that can be converted is 2^16384 - 1.
 In 64 bit platforms the largest number is 2^1024 - 1.
 if the number to be converted is too big for a platform, it will give an error
 In (my personal 80bit platform), I have tested that it converts up to the max
-Now gives an overflow error if the number is too big, follows same rules as python's float()
+Now gives an overflow error if the number is too big, follows same rounding rules 
+as python's float() function, including overflow.
 */
 NPY_VISIBILITY_HIDDEN npy_longdouble
 npy_longdouble_from_PyLong(PyObject *long_obj) {
@@ -298,7 +309,7 @@ npy_longdouble_from_PyLong(PyObject *long_obj) {
     } else if (PyLong_Check(long_obj)) {
         int sign;
         int E = 0;
-        int64_t val[3]; //needs to be size 3 in 128bit prescision
+        int64_t val[3]; //needs to be size 3 in 80bit prescision
         _fix_py_num(long_obj, val, &E, &sign);
         value = _int_to_ld(val, E, sign);
     } else {
