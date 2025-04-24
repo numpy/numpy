@@ -1,9 +1,16 @@
-#include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
 
+#include <hwy/highway.h>
 #include "simd/simd.hpp"
 #include "common.hpp"
+
+/**
+ * Force use SSE only on x86, even if AVX2 or AVX512F are enabled
+ * through the baseline, since scatter(AVX512F) and gather very costly
+ * to handle non-contiguous memory access comparing with SSE for
+ * such small operations that this file covers.
+*/
 
 namespace {
 using namespace np::simd;
@@ -16,11 +23,12 @@ template <typename T> struct OpRint {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         if constexpr (std::is_same_v<T, float>) {
             return npy_rintf(a);
+        } else {
+            return npy_rint(a);
         }
-        return npy_rint(a);
     }
 };
 
@@ -32,11 +40,12 @@ template <typename T> struct OpFloor {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         if constexpr (std::is_same_v<T, float>) {
             return npy_floorf(a);
+        } else {
+            return npy_floor(a);
         }
-        return npy_floor(a);
     }
 };
 
@@ -48,11 +57,12 @@ template <typename T> struct OpCeil {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         if constexpr (std::is_same_v<T, float>) {
             return npy_ceilf(a);
+        } else {
+            return npy_ceil(a);
         }
-        return npy_ceil(a);
     }
 };
 
@@ -64,11 +74,12 @@ template <typename T> struct OpTrunc {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         if constexpr (std::is_same_v<T, float>) {
             return npy_truncf(a);
+        } else {
+            return npy_trunc(a);
         }
-        return npy_trunc(a);
     }
 };
 
@@ -80,26 +91,32 @@ template <typename T> struct OpSqrt {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const ;
+    NPY_INLINE T operator()(T a) const ;
 };
-#if defined(_MSC_VER) && defined(_M_IX86) && !NPY_SIMD
+/**
+ * MSVC(32-bit mode) requires a clarified contiguous loop
+ * in order to use SSE, otherwise it uses a soft version of square root
+ * that doesn't raise a domain error.
+ */
+#if defined(_MSC_VER) && defined(_M_IX86)
 #include <emmintrin.h>
-template <typename T> HWY_INLINE HWY_ATTR T OpSqrt<T>::operator()(T a) const {
-    if constexpr (std::is_same_v<T, float>) {
-        __m128 aa = _mm_load_ss(&a);
-        __m128 lower = _mm_sqrt_ss(aa);
-        return _mm_cvtss_f32(lower);
-    }
+template <> NPY_INLINE float OpSqrt<float>::operator()(float a) const {
+    __m128 aa = _mm_load_ss(&a);
+    __m128 lower = _mm_sqrt_ss(aa);
+    return _mm_cvtss_f32(lower);
+}
+template <> NPY_INLINE double OpSqrt<double>::operator()(double a) const {
     __m128d aa = _mm_load_sd(&a);
     __m128d lower = _mm_sqrt_pd(aa);
     return _mm_cvtsd_f64(lower);
 }
 #else
-template <typename T> HWY_INLINE HWY_ATTR T OpSqrt<T>::operator()(T a) const {
+template <typename T> NPY_INLINE T OpSqrt<T>::operator()(T a) const {
     if constexpr (std::is_same_v<T, float>) {
         return npy_sqrtf(a);
+    } else {
+        return npy_sqrt(a);
     }
-    return npy_sqrt(a);
 }
 #endif
 
@@ -111,7 +128,8 @@ template <typename T> struct OpAbs {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
+        /* add 0 to clear -0.0 */
         return 0 + (a > 0 ? a : -a);
     }
 };
@@ -124,7 +142,7 @@ template <typename T> struct OpSquare {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         return a * a;
     }
 };
@@ -137,7 +155,7 @@ template <typename T> struct OpRecip {
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) const {
+    NPY_INLINE T operator()(T a) const {
         return static_cast<T>(1) / a;
     }
 };
@@ -145,7 +163,7 @@ template <typename T> struct OpRecip {
 #if NPY_SIMDX
 template <typename T>
 HWY_INLINE HWY_ATTR auto LoadWithStride(const T* src, npy_intp ssrc, size_t n = Lanes<T>(), T val = 0) {
-    constexpr size_t lanes = Lanes<T>();
+    HWY_LANES_CONSTEXPR size_t lanes = Lanes<T>();
     std::vector<T> temp(lanes, val);
     for (size_t ii = 0; ii < lanes && ii < n; ++ii) {
         temp[ii] = src[ii * ssrc];
@@ -155,7 +173,7 @@ HWY_INLINE HWY_ATTR auto LoadWithStride(const T* src, npy_intp ssrc, size_t n = 
 
 template <typename T>
 HWY_INLINE HWY_ATTR void StoreWithStride(Vec<T> vec, T* dst, npy_intp sdst, size_t n = Lanes<T>()) {
-    constexpr size_t lanes = Lanes<T>();
+    HWY_LANES_CONSTEXPR size_t lanes = Lanes<T>();
     std::vector<T> temp(lanes);
     StoreU(vec, temp.data());
     for (size_t ii = 0; ii < lanes && ii < n; ++ii) {
@@ -163,18 +181,16 @@ HWY_INLINE HWY_ATTR void StoreWithStride(Vec<T> vec, T* dst, npy_intp sdst, size
     }
 }
 
-template<typename T> struct TypeTraits;
-template<> struct TypeTraits<float> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_f32;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_f32;
-};
-#if NPY_SIMDX_F64
-template<> struct TypeTraits<double> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_f64;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_f64;
-};
-#endif
-
+/********************************************************************************
+ ** Defining the SIMD kernels
+ ********************************************************************************/
+/** Notes:
+ * - avoid the use of libmath to unify fp/domain errors
+ *   for both scalars and vectors among all compilers/architectures.
+ * - use intrinsic LoadNOr instead of LoadN
+ *   to fill the remind lanes with 1.0 to avoid divide by zero fp
+ *   exception in reciprocal.
+ */
 template <typename T, typename OP, int STYPE, int DTYPE, int UNROLL>
 HWY_INLINE HWY_ATTR void
 simd_unary_fp(const T *src, npy_intp ssrc, T *dst, npy_intp sdst, npy_intp len) {
@@ -284,10 +300,9 @@ simd_unary_fp(const T *src, npy_intp ssrc, T *dst, npy_intp sdst, npy_intp len) 
         }
     }
 }
-
 #endif // NPY_SIMDX
 
-template <typename T, typename OP>
+template <typename T, typename OP, bool SKIP_SIMD>
 HWY_INLINE HWY_ATTR void
 unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
@@ -297,10 +312,11 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
     const npy_intp dst_step = steps[1];
     npy_intp len = dimensions[0];
 
-    if constexpr (kSupportLane<T>) {
-        if (!is_mem_overlap(src, src_step, dst, dst_step, len) &&
-                TypeTraits<T>::LoadStrideFunc(src_step) != 0 &&
-                TypeTraits<T>::StoreStrideFunc(dst_step) != 0) {
+    bool unrolled = false;
+#if NPY_SIMDX
+    if constexpr (!SKIP_SIMD && kSupportLane<T>) {
+        if (!is_mem_overlap(src, src_step, dst, dst_step, len) && alignof(T) == sizeof(T) &&
+                src_step % sizeof(T) == 0 && dst_step % sizeof(T) == 0) {
             const int lsize = sizeof(T);
             const npy_intp ssrc = src_step / lsize;
             const npy_intp sdst = dst_step / lsize;
@@ -316,24 +332,37 @@ unary_fp(char **args, npy_intp const *dimensions, npy_intp const *steps)
             else {
                 simd_unary_fp<T, OP, 1, 1, 2>(reinterpret_cast<const T*>(src), ssrc, reinterpret_cast<T*>(dst), sdst, len);
             }
-            goto clear;
+            unrolled = true;
         }
     }
+#endif
+
     // fallback to scalar implementation
-    for (; len > 0; --len, src += src_step, dst += dst_step) {
-        if constexpr (kSupportLane<T>) {
-            simd_unary_fp<T, OP, 0, 0, 4>(reinterpret_cast<const T*>(src), 0, reinterpret_cast<T*>(dst), 0, 1);
-        }
-        else {
-            const T src0 = *reinterpret_cast<const T*>(src);
-            *reinterpret_cast<T*>(dst) = op_func(src0);
+    if (!unrolled) {
+        for (; len > 0; --len, src += src_step, dst += dst_step) {
+        #if NPY_SIMDX
+            if constexpr (!SKIP_SIMD && kSupportLane<T>) {
+                // to guarantee the same precision and fp/domain errors for both scalars and vectors
+                simd_unary_fp<T, OP, 0, 0, 4>(reinterpret_cast<const T*>(src), 0, reinterpret_cast<T*>(dst), 0, 1);
+            } else
+        #endif
+            {
+                const T src0 = *reinterpret_cast<const T*>(src);
+                *reinterpret_cast<T*>(dst) = op_func(src0);
+            }
         }
     }
 
-clear:;
     if constexpr (std::is_same_v<OP, OpAbs<T>>) {
         npy_clear_floatstatus_barrier((char*)dimensions);
     }
+
+    // MSVC(32-bit mode) bug
+#if defined(_MSC_VER) && defined(_M_IX86)
+    if constexpr (std::is_same_v<OP, OpCeil<T>>) {
+        npy_clear_floatstatus_barrier((char*)dimensions);
+    }
+#endif
 }
 
 } // anonymous namespace
@@ -341,28 +370,29 @@ clear:;
 /*******************************************************************************
  ** Defining ufunc inner functions
  *******************************************************************************/
-#define DEFINE_UNARY_FP_FUNCTION(TYPE, KIND, INTR, T)                                    \
+#define DEFINE_UNARY_FP_FUNCTION(TYPE, KIND, INTR, T, SKIP_SIMD)                         \
 NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TYPE##_##KIND)                                 \
 (char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func)) \
 {                                                                                        \
-    using FixedType = typename np::meta::FixedWidth<T>::Type;                            \
-    unary_fp<FixedType, Op##INTR<FixedType>>(args, dimensions, steps);                   \
+    unary_fp<T, Op##INTR<T>, SKIP_SIMD>(args, dimensions, steps);                        \
 }
+#define X86_SOFTROUND ((HWY_TARGET >= HWY_SSSE3) && (HWY_TARGET <= (1 << HWY_HIGHEST_TARGET_BIT_X86)))
 
-DEFINE_UNARY_FP_FUNCTION(FLOAT, rint      , Rint  , npy_float)
-DEFINE_UNARY_FP_FUNCTION(FLOAT, floor     , Floor , npy_float)
-DEFINE_UNARY_FP_FUNCTION(FLOAT, ceil      , Ceil  , npy_float)
-DEFINE_UNARY_FP_FUNCTION(FLOAT, trunc     , Trunc , npy_float)
-DEFINE_UNARY_FP_FUNCTION(FLOAT, sqrt      , Sqrt  , npy_float)
-DEFINE_UNARY_FP_FUNCTION(FLOAT, absolute  , Abs   , npy_float)
-DEFINE_UNARY_FP_FUNCTION(FLOAT, square    , Square, npy_float)
-DEFINE_UNARY_FP_FUNCTION(FLOAT, reciprocal, Recip , npy_float)
-DEFINE_UNARY_FP_FUNCTION(DOUBLE, rint      , Rint  , npy_double)
-DEFINE_UNARY_FP_FUNCTION(DOUBLE, floor     , Floor , npy_double)
-DEFINE_UNARY_FP_FUNCTION(DOUBLE, ceil      , Ceil  , npy_double)
-DEFINE_UNARY_FP_FUNCTION(DOUBLE, trunc     , Trunc , npy_double)
-DEFINE_UNARY_FP_FUNCTION(DOUBLE, sqrt      , Sqrt  , npy_double)
-DEFINE_UNARY_FP_FUNCTION(DOUBLE, absolute  , Abs   , npy_double)
-DEFINE_UNARY_FP_FUNCTION(DOUBLE, square    , Square, npy_double)
-DEFINE_UNARY_FP_FUNCTION(DOUBLE, reciprocal, Recip , npy_double)
+DEFINE_UNARY_FP_FUNCTION(FLOAT, rint      , Rint  , npy_float, X86_SOFTROUND)
+DEFINE_UNARY_FP_FUNCTION(FLOAT, floor     , Floor , npy_float, X86_SOFTROUND)
+DEFINE_UNARY_FP_FUNCTION(FLOAT, ceil      , Ceil  , npy_float, X86_SOFTROUND)
+DEFINE_UNARY_FP_FUNCTION(FLOAT, trunc     , Trunc , npy_float, X86_SOFTROUND)
+DEFINE_UNARY_FP_FUNCTION(FLOAT, sqrt      , Sqrt  , npy_float, false)
+DEFINE_UNARY_FP_FUNCTION(FLOAT, absolute  , Abs   , npy_float, false)
+DEFINE_UNARY_FP_FUNCTION(FLOAT, square    , Square, npy_float, false)
+DEFINE_UNARY_FP_FUNCTION(FLOAT, reciprocal, Recip , npy_float, HWY_ARCH_WASM)
+DEFINE_UNARY_FP_FUNCTION(DOUBLE, rint      , Rint  , npy_double, X86_SOFTROUND)
+DEFINE_UNARY_FP_FUNCTION(DOUBLE, floor     , Floor , npy_double, X86_SOFTROUND)
+DEFINE_UNARY_FP_FUNCTION(DOUBLE, ceil      , Ceil  , npy_double, X86_SOFTROUND)
+DEFINE_UNARY_FP_FUNCTION(DOUBLE, trunc     , Trunc , npy_double, X86_SOFTROUND)
+DEFINE_UNARY_FP_FUNCTION(DOUBLE, sqrt      , Sqrt  , npy_double, false)
+DEFINE_UNARY_FP_FUNCTION(DOUBLE, absolute  , Abs   , npy_double, false)
+DEFINE_UNARY_FP_FUNCTION(DOUBLE, square    , Square, npy_double, false)
+DEFINE_UNARY_FP_FUNCTION(DOUBLE, reciprocal, Recip , npy_double, HWY_ARCH_WASM)
 #undef DEFINE_UNARY_FP_FUNCTION
+#undef X86_SOFTROUND
