@@ -579,10 +579,16 @@ class TestInv(InvCases):
 
         result = linalg.inv(a, noerr=True)
 
-        assert_almost_equal(result[0], np.array([[1.0, 0.0], [0.0, 1.0]]))
-        assert_(np.isnan(result[1]).all())
-        assert_almost_equal(result[2], np.array([[2 / 3, -1 / 3], [-1 / 3, 2 / 3]]))
+        assert_allclose(
+            result,
+            [
+                [[1.0, 0.0], [0.0, 1.0]],
+                [[np.nan, np.nan], [np.nan, np.nan]],
+                [[2.0 / 3, -1.0 / 3], [-1.0 / 3, 2.0 / 3]],
+            ]
+        )
 
+        # test noerr=False case
         with assert_raises(np.linalg.LinAlgError):
             linalg.inv(a, noerr=False)
 
