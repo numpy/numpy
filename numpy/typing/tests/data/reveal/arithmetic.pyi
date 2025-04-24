@@ -50,7 +50,8 @@ AR_c: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
 AR_O: npt.NDArray[np.object_]
-AR_number: npt.NDArray[np.number[Any]]
+AR_floating: npt.NDArray[np.floating]
+AR_number: npt.NDArray[np.number]
 AR_Any: npt.NDArray[Any]
 
 AR_LIKE_b: list[bool]
@@ -654,3 +655,23 @@ assert_type(AR_f + u4, npt.NDArray[np.float64])
 # Any
 
 assert_type(AR_Any + 2, npt.NDArray[Any])
+
+# regression tests for https://github.com/numpy/numpy/issues/28805
+
+assert_type(AR_floating + f, npt.NDArray[np.floating])
+assert_type(AR_floating - f, npt.NDArray[np.floating])
+assert_type(AR_floating * f, npt.NDArray[np.floating])
+assert_type(AR_floating ** f, npt.NDArray[np.floating])
+assert_type(AR_floating / f, npt.NDArray[np.floating])
+assert_type(AR_floating // f, npt.NDArray[np.floating])
+assert_type(AR_floating % f, npt.NDArray[np.floating])
+assert_type(divmod(AR_floating, f), tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]])
+
+assert_type(f + AR_floating, npt.NDArray[np.floating])
+assert_type(f - AR_floating, npt.NDArray[np.floating])
+assert_type(f * AR_floating, npt.NDArray[np.floating])
+assert_type(f ** AR_floating, npt.NDArray[np.floating])
+assert_type(f / AR_floating, npt.NDArray[np.floating])
+assert_type(f // AR_floating, npt.NDArray[np.floating])
+assert_type(f % AR_floating, npt.NDArray[np.floating])
+assert_type(divmod(f, AR_floating), tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]])
