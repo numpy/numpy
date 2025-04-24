@@ -127,8 +127,8 @@ unique_string(PyArrayObject *self)
     auto hash = [num_chars](const T *value) -> size_t {
         return str_hash(value, num_chars);
     };
-    auto equal = [num_chars](const T *lhs, const T *rhs) -> bool {
-        return std::memcmp(lhs, rhs, num_chars) == 0;
+    auto equal = [itemsize](const T *lhs, const T *rhs) -> bool {
+        return std::memcmp(lhs, rhs, itemsize) == 0;
     };
 
     // Reserve hashset capacity in advance to minimize reallocations.
