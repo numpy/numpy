@@ -708,10 +708,10 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 /************* STRIDED CASTING SPECIALIZED FUNCTIONS *************/
 
-#if defined(__ARM_FP16_FORMAT_IEEE)
+#if defined(NPY_HAVE_NEON_FP16)
     #define EMULATED_FP16 0
     #define NATIVE_FP16 1
-    typedef __fp16 _npy_half;
+    typedef _Float16 _npy_half;
 #else
     #define EMULATED_FP16 1
     #define NATIVE_FP16 0
@@ -862,7 +862,18 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
     #endif
 #endif
 
-static NPY_GCC_OPT_3 int
+// Work around GCC bug for double->half casts. For SVE and
+// OPT_LEVEL > 1, it implements this as double->single->half
+// which is incorrect as it introduces double rounding with
+// narrowing casts.
+#if (@is_double1@ && @is_native_half2@) && \
+    defined(NPY_HAVE_SVE) && defined(__GNUC__)
+    #define GCC_CAST_OPT_LEVEL __attribute__((optimize("O1")))
+#else
+    #define GCC_CAST_OPT_LEVEL NPY_GCC_OPT_3
+#endif
+
+static GCC_CAST_OPT_LEVEL int
 @prefix@_cast_@name1@_to_@name2@(
         PyArrayMethod_Context *context, char *const *args,
         const npy_intp *dimensions, const npy_intp *strides,
@@ -966,6 +977,7 @@ static NPY_GCC_OPT_3 int
     #endif
 #endif
 
+#undef GCC_CAST_OPT_LEVEL
 #undef _CONVERT_FN
 #undef _TYPE2
 #undef _TYPE1
