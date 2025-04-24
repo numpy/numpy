@@ -16,9 +16,9 @@ AR_i8: npt.NDArray[np.int64]
 AR_O: npt.NDArray[np.object_]
 AR_subclass: NDArraySubclass
 AR_m: npt.NDArray[np.timedelta64]
-AR_0d: np.ndarray[tuple[()], np.dtype[Any]]
-AR_1d: np.ndarray[tuple[int], np.dtype[Any]]
-AR_nd: np.ndarray[tuple[int, ...], np.dtype[Any]]
+AR_0d: np.ndarray[tuple[()], np.dtype]
+AR_1d: np.ndarray[tuple[int], np.dtype]
+AR_nd: np.ndarray[tuple[int, ...], np.dtype]
 
 b: np.bool
 f4: np.float32
@@ -37,7 +37,7 @@ assert_type(np.take(AR_f4, [0], out=AR_subclass), NDArraySubclass)
 
 assert_type(np.reshape(b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.reshape(f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
-assert_type(np.reshape(f, 1), np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.reshape(f, 1), np.ndarray[tuple[int], np.dtype])
 assert_type(np.reshape(AR_b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.reshape(AR_f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
 
@@ -102,7 +102,7 @@ assert_type(np.searchsorted(AR_f4[0], [0]), npt.NDArray[np.intp])
 
 assert_type(np.resize(b, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 assert_type(np.resize(f4, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.float32]])
-assert_type(np.resize(f, (5, 5)), np.ndarray[tuple[int, int], np.dtype[Any]])
+assert_type(np.resize(f, (5, 5)), np.ndarray[tuple[int, int], np.dtype])
 assert_type(np.resize(AR_b, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.bool]])
 assert_type(np.resize(AR_f4, (5, 5)), np.ndarray[tuple[int, int], np.dtype[np.float32]])
 

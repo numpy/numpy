@@ -95,7 +95,7 @@ assert_type(np.dtype(np.dtype(np.float64)), np.dtype[np.float64])
 assert_type(np.dtype(dt_inexact), np.dtype[np.inexact[Any]])
 
 # Parameterized dtypes
-assert_type(np.dtype("S8"), np.dtype[Any])
+assert_type(np.dtype("S8"), np.dtype)
 
 # Void
 assert_type(np.dtype(("U", 10)), np.dtype[np.void])
@@ -107,8 +107,8 @@ assert_type(np.dtype("=T"), StringDType)
 assert_type(np.dtype("|T"), StringDType)
 
 # Methods and attributes
-assert_type(dtype_U.base, np.dtype[Any])
-assert_type(dtype_U.subdtype, tuple[np.dtype[Any], tuple[int, ...]] | None)
+assert_type(dtype_U.base, np.dtype)
+assert_type(dtype_U.subdtype, tuple[np.dtype, tuple[int, ...]] | None)
 assert_type(dtype_U.newbyteorder(), np.dtype[np.str_])
 assert_type(dtype_U.type, type[np.str_])
 assert_type(dtype_U.name, LiteralString)
@@ -126,11 +126,11 @@ assert_type(0 * dtype_U, np.dtype[np.str_])
 assert_type(1 * dtype_U, np.dtype[np.str_])
 assert_type(2 * dtype_U, np.dtype[np.str_])
 
-assert_type(0 * dtype_i8, np.dtype[Any])
-assert_type(1 * dtype_i8, np.dtype[Any])
-assert_type(2 * dtype_i8, np.dtype[Any])
+assert_type(0 * dtype_i8, np.dtype)
+assert_type(1 * dtype_i8, np.dtype)
+assert_type(2 * dtype_i8, np.dtype)
 
-assert_type(dtype_V["f0"], np.dtype[Any])
-assert_type(dtype_V[0], np.dtype[Any])
+assert_type(dtype_V["f0"], np.dtype)
+assert_type(dtype_V[0], np.dtype)
 assert_type(dtype_V[["f0", "f1"]], np.dtype[np.void])
 assert_type(dtype_V[["f0"]], np.dtype[np.void])

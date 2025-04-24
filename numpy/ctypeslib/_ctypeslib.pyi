@@ -69,8 +69,8 @@ from numpy._typing import (
 __all__ = ["load_library", "ndpointer", "c_intp", "as_ctypes", "as_array", "as_ctypes_type"]
 
 # TODO: Add a proper `_Shape` bound once we've got variadic typevars
-_DTypeT = TypeVar("_DTypeT", bound=dtype[Any])
-_DTypeOptionalT = TypeVar("_DTypeOptionalT", bound=dtype[Any] | None)
+_DTypeT = TypeVar("_DTypeT", bound=dtype)
+_DTypeOptionalT = TypeVar("_DTypeOptionalT", bound=dtype | None)
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 
 _FlagsKind: TypeAlias = L[
@@ -130,7 +130,7 @@ def ndpointer(
     *,
     shape: _ShapeLike,
     flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
-) -> type[_concrete_ndptr[dtype[Any]]]: ...
+) -> type[_concrete_ndptr[dtype]]: ...
 @overload
 def ndpointer(
     dtype: _DTypeLike[_ScalarT],
@@ -144,7 +144,7 @@ def ndpointer(
     ndim: int = ...,
     shape: None = ...,
     flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
-) -> type[_ndptr[dtype[Any]]]: ...
+) -> type[_ndptr[dtype]]: ...
 
 @overload
 def as_ctypes_type(dtype: _BoolCodes | _DTypeLike[np.bool] | type[ctypes.c_bool]) -> type[ctypes.c_bool]: ...
