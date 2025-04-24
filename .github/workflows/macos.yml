@@ -126,6 +126,7 @@ jobs:
 
     - uses: astral-sh/setup-uv@c7f87aa956e4c323abf06d5dec078e358f6b4d04
       with:
+        activate-environment: true
         python-version: ${{ matrix.version }}
         enable-cache: false
 
