@@ -59,7 +59,7 @@ assert_type(i4_2d.astype(np.uint16), np.ndarray[tuple[int, int], np.dtype[np.uin
 assert_type(np.astype(i4_2d, np.uint16), np.ndarray[tuple[int, int], np.dtype[np.uint16]])
 assert_type(f8_3d.astype(np.int16), np.ndarray[tuple[int, int, int], np.dtype[np.int16]])
 assert_type(np.astype(f8_3d, np.int16), np.ndarray[tuple[int, int, int], np.dtype[np.int16]])
-assert_type(i4_2d.astype(uncertain_dtype), np.ndarray[tuple[int, int], np.dtype[np.generic[Any]]])
+assert_type(i4_2d.astype(uncertain_dtype), np.ndarray[tuple[int, int], np.dtype[np.generic]])
 assert_type(np.astype(i4_2d, uncertain_dtype), np.ndarray[tuple[int, int], np.dtype])
 
 # byteswap

@@ -53,10 +53,10 @@ _2Tuple: TypeAlias = tuple[_T1, _T1]
 _NBit1 = TypeVar("_NBit1", bound=NBitBase)
 _NBit2 = TypeVar("_NBit2", bound=NBitBase)
 
-_IntType = TypeVar("_IntType", bound=integer[Any])
-_FloatType = TypeVar("_FloatType", bound=floating[Any])
-_NumberType = TypeVar("_NumberType", bound=number[Any])
-_NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number[Any])
+_IntType = TypeVar("_IntType", bound=integer)
+_FloatType = TypeVar("_FloatType", bound=floating)
+_NumberType = TypeVar("_NumberType", bound=number)
+_NumberType_co = TypeVar("_NumberType_co", covariant=True, bound=number)
 _GenericType_co = TypeVar("_GenericType_co", covariant=True, bound=generic)
 
 @type_check_only
@@ -166,9 +166,9 @@ class _UnsignedIntBitOp(Protocol[_NBit1]):
     @overload
     def __call__(self, other: bool, /) -> unsignedinteger[_NBit1]: ...
     @overload
-    def __call__(self, other: int, /) -> signedinteger[Any]: ...
+    def __call__(self, other: int, /) -> signedinteger: ...
     @overload
-    def __call__(self, other: signedinteger[Any], /) -> signedinteger[Any]: ...
+    def __call__(self, other: signedinteger, /) -> signedinteger: ...
     @overload
     def __call__(
         self, other: unsignedinteger[_NBit2], /
@@ -179,7 +179,7 @@ class _UnsignedIntMod(Protocol[_NBit1]):
     @overload
     def __call__(self, other: bool, /) -> unsignedinteger[_NBit1]: ...
     @overload
-    def __call__(self, other: int | signedinteger[Any], /) -> Any: ...
+    def __call__(self, other: int | signedinteger, /) -> Any: ...
     @overload
     def __call__(self, other: float, /) -> floating[_NBit1] | float64: ...
     @overload
@@ -192,7 +192,7 @@ class _UnsignedIntDivMod(Protocol[_NBit1]):
     @overload
     def __call__(self, other: bool, /) -> _2Tuple[signedinteger[_NBit1]]: ...
     @overload
-    def __call__(self, other: int | signedinteger[Any], /) -> _2Tuple[Any]: ...
+    def __call__(self, other: int | signedinteger, /) -> _2Tuple[Any]: ...
     @overload
     def __call__(self, other: float, /) -> _2Tuple[floating[_NBit1]] | _2Tuple[float64]: ...
     @overload

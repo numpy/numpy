@@ -24,7 +24,7 @@ __all__ = ["einsum", "einsum_path"]
 
 _ArrayT = TypeVar(
     "_ArrayT",
-    bound=NDArray[np.bool | number[Any]],
+    bound=NDArray[np.bool | number],
 )
 
 _OptimizeKind: TypeAlias = bool | Literal["greedy", "optimal"] | Sequence[Any] | None

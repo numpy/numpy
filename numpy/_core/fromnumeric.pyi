@@ -107,7 +107,7 @@ __all__ = [
 ]
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
-_NumberOrObjectT = TypeVar("_NumberOrObjectT", bound=np.number[Any] | np.object_)
+_NumberOrObjectT = TypeVar("_NumberOrObjectT", bound=np.number | np.object_)
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
 _ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
@@ -1134,7 +1134,7 @@ def prod(
     keepdims: Literal[False] = ...,
     initial: _NumberLike_co = ...,
     where: _ArrayLikeBool_co = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def prod(
     a: _ArrayLikeComplex_co,
@@ -1144,7 +1144,7 @@ def prod(
     keepdims: Literal[False] = ...,
     initial: _NumberLike_co = ...,
     where: _ArrayLikeBool_co = ...,
-) -> complexfloating[Any, Any]: ...
+) -> complexfloating: ...
 @overload
 def prod(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
@@ -1235,14 +1235,14 @@ def cumprod(
     axis: SupportsIndex | None = ...,
     dtype: None = ...,
     out: None = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def cumprod(
     a: _ArrayLikeComplex_co,
     axis: SupportsIndex | None = ...,
     dtype: None = ...,
     out: None = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def cumprod(
     a: _ArrayLikeObject_co,
@@ -1327,7 +1327,7 @@ def cumulative_prod(
     dtype: None = ...,
     out: None = ...,
     include_initial: bool = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def cumulative_prod(
     x: _ArrayLikeComplex_co,
@@ -1337,7 +1337,7 @@ def cumulative_prod(
     dtype: None = ...,
     out: None = ...,
     include_initial: bool = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def cumulative_prod(
     x: _ArrayLikeObject_co,
@@ -1442,7 +1442,7 @@ def mean(
     keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def mean(
     a: _ArrayLikeComplex_co,
@@ -1452,7 +1452,7 @@ def mean(
     keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> complexfloating[Any]: ...
+) -> complexfloating: ...
 @overload
 def mean(
     a: _ArrayLike[np.timedelta64],
@@ -1556,7 +1556,7 @@ def std(
     where: _ArrayLikeBool_co | _NoValueType = ...,
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def std(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
@@ -1648,7 +1648,7 @@ def var(
     where: _ArrayLikeBool_co | _NoValueType = ...,
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def var(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,

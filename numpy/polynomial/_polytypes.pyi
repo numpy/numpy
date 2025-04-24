@@ -35,7 +35,7 @@ from numpy._typing import (
 
 _T = TypeVar("_T")
 _T_contra = TypeVar("_T_contra", contravariant=True)
-_ScalarT = TypeVar("_ScalarT", bound=np.number[Any] | np.bool | np.object_)
+_ScalarT = TypeVar("_ScalarT", bound=np.number | np.bool | np.object_)
 
 # compatible with e.g. int, float, complex, Decimal, Fraction, and ABCPolyBase
 @type_check_only
@@ -57,15 +57,15 @@ class _SupportsCoefOps(Protocol[_T_contra]):
 
 _Series: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
-_FloatSeries: TypeAlias = _Series[np.floating[Any]]
-_ComplexSeries: TypeAlias = _Series[np.complexfloating[Any, Any]]
+_FloatSeries: TypeAlias = _Series[np.floating]
+_ComplexSeries: TypeAlias = _Series[np.complexfloating]
 _ObjectSeries: TypeAlias = _Series[np.object_]
-_CoefSeries: TypeAlias = _Series[np.inexact[Any] | np.object_]
+_CoefSeries: TypeAlias = _Series[np.inexact | np.object_]
 
-_FloatArray: TypeAlias = npt.NDArray[np.floating[Any]]
-_ComplexArray: TypeAlias = npt.NDArray[np.complexfloating[Any, Any]]
+_FloatArray: TypeAlias = npt.NDArray[np.floating]
+_ComplexArray: TypeAlias = npt.NDArray[np.complexfloating]
 _ObjectArray: TypeAlias = npt.NDArray[np.object_]
-_CoefArray: TypeAlias = npt.NDArray[np.inexact[Any] | np.object_]
+_CoefArray: TypeAlias = npt.NDArray[np.inexact | np.object_]
 
 _Tuple2: TypeAlias = tuple[_T, _T]
 _Array1: TypeAlias = np.ndarray[tuple[Literal[1]], np.dtype[_ScalarT]]
@@ -82,15 +82,15 @@ _SeriesLikeBool_co: TypeAlias = (
     | Sequence[bool | np.bool]
 )
 _SeriesLikeInt_co: TypeAlias = (
-    _SupportsArray[np.dtype[np.integer[Any] | np.bool]]
+    _SupportsArray[np.dtype[np.integer | np.bool]]
     | Sequence[_IntLike_co]
 )
 _SeriesLikeFloat_co: TypeAlias = (
-    _SupportsArray[np.dtype[np.floating[Any] | np.integer[Any] | np.bool]]
+    _SupportsArray[np.dtype[np.floating | np.integer | np.bool]]
     | Sequence[_FloatLike_co]
 )
 _SeriesLikeComplex_co: TypeAlias = (
-    _SupportsArray[np.dtype[np.inexact[Any] | np.integer[Any] | np.bool]]
+    _SupportsArray[np.dtype[np.inexact | np.integer | np.bool]]
     | Sequence[_ComplexLike_co]
 )
 _SeriesLikeObject_co: TypeAlias = (
@@ -98,7 +98,7 @@ _SeriesLikeObject_co: TypeAlias = (
     | Sequence[_CoefObjectLike_co]
 )
 _SeriesLikeCoef_co: TypeAlias = (
-    _SupportsArray[np.dtype[np.number[Any] | np.bool | np.object_]]
+    _SupportsArray[np.dtype[np.number | np.bool | np.object_]]
     | Sequence[_CoefLike_co]
 )
 
@@ -108,7 +108,7 @@ _ArrayLikeCoefObject_co: TypeAlias = (
     | _NestedSequence[_SeriesLikeObject_co]
 )
 _ArrayLikeCoef_co: TypeAlias = (
-    npt.NDArray[np.number[Any] | np.bool | np.object_]
+    npt.NDArray[np.number | np.bool | np.object_]
     | _ArrayLikeNumber_co
     | _ArrayLikeCoefObject_co
 )
@@ -310,7 +310,7 @@ class _FuncValFromRoots(_Named[_Name_co], Protocol[_Name_co]):
         x: _FloatLike_co,
         r: _FloatLike_co,
         tensor: bool = ...,
-    ) -> np.floating[Any]: ...
+    ) -> np.floating: ...
     @overload
     def __call__(
         self,
@@ -318,7 +318,7 @@ class _FuncValFromRoots(_Named[_Name_co], Protocol[_Name_co]):
         x: _NumberLike_co,
         r: _NumberLike_co,
         tensor: bool = ...,
-    ) -> np.complexfloating[Any, Any]: ...
+    ) -> np.complexfloating: ...
     @overload
     def __call__(
         self,
@@ -361,7 +361,7 @@ class _FuncVal(_Named[_Name_co], Protocol[_Name_co]):
         x: _FloatLike_co,
         c: _SeriesLikeFloat_co,
         tensor: bool = ...,
-    ) -> np.floating[Any]: ...
+    ) -> np.floating: ...
     @overload
     def __call__(
         self,
@@ -369,7 +369,7 @@ class _FuncVal(_Named[_Name_co], Protocol[_Name_co]):
         x: _NumberLike_co,
         c: _SeriesLikeComplex_co,
         tensor: bool = ...,
-    ) -> np.complexfloating[Any, Any]: ...
+    ) -> np.complexfloating: ...
     @overload
     def __call__(
         self,
@@ -412,7 +412,7 @@ class _FuncVal2D(_Named[_Name_co], Protocol[_Name_co]):
         x: _FloatLike_co,
         y: _FloatLike_co,
         c: _SeriesLikeFloat_co,
-    ) -> np.floating[Any]: ...
+    ) -> np.floating: ...
     @overload
     def __call__(
         self,
@@ -420,7 +420,7 @@ class _FuncVal2D(_Named[_Name_co], Protocol[_Name_co]):
         x: _NumberLike_co,
         y: _NumberLike_co,
         c: _SeriesLikeComplex_co,
-    ) -> np.complexfloating[Any, Any]: ...
+    ) -> np.complexfloating: ...
     @overload
     def __call__(
         self,
@@ -464,7 +464,7 @@ class _FuncVal3D(_Named[_Name_co], Protocol[_Name_co]):
         y: _FloatLike_co,
         z: _FloatLike_co,
         c: _SeriesLikeFloat_co
-    ) -> np.floating[Any]: ...
+    ) -> np.floating: ...
     @overload
     def __call__(
         self,
@@ -473,7 +473,7 @@ class _FuncVal3D(_Named[_Name_co], Protocol[_Name_co]):
         y: _NumberLike_co,
         z: _NumberLike_co,
         c: _SeriesLikeComplex_co,
-    ) -> np.complexfloating[Any, Any]: ...
+    ) -> np.complexfloating: ...
     @overload
     def __call__(
         self,
@@ -525,7 +525,7 @@ class _FuncValND(_Named[_Name_co], Protocol[_Name_co]):
         c: _SeriesLikeFloat_co,
         /,
         *args: _FloatLike_co,
-    ) -> np.floating[Any]: ...
+    ) -> np.floating: ...
     @overload
     def __call__(
         self,
@@ -533,7 +533,7 @@ class _FuncValND(_Named[_Name_co], Protocol[_Name_co]):
         c: _SeriesLikeComplex_co,
         /,
         *args: _NumberLike_co,
-    ) -> np.complexfloating[Any, Any]: ...
+    ) -> np.complexfloating: ...
     @overload
     def __call__(
         self,
@@ -717,7 +717,7 @@ class _FuncVanderND(_Named[_Name_co], Protocol[_Name_co]):
         degrees: Sequence[SupportsIndex],
     ) -> _CoefArray: ...
 
-_FullFitResult: TypeAlias = Sequence[np.inexact[Any] | np.int32]
+_FullFitResult: TypeAlias = Sequence[np.inexact | np.int32]
 
 @type_check_only
 class _FuncFit(_Named[_Name_co], Protocol[_Name_co]):

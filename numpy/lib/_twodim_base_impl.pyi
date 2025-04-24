@@ -195,19 +195,19 @@ def vander(  # type: ignore[misc]
     x: _ArrayLikeInt_co,
     N: int | None = ...,
     increasing: bool = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def vander(  # type: ignore[misc]
     x: _ArrayLikeFloat_co,
     N: int | None = ...,
     increasing: bool = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def vander(
     x: _ArrayLikeComplex_co,
     N: int | None = ...,
     increasing: bool = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def vander(
     x: _ArrayLikeObject_co,

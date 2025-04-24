@@ -21,8 +21,8 @@ FT = TypeVar("FT", bound=Callable[..., Any])
 def func() -> int: ...
 
 def func2(
-    x: npt.NDArray[np.number[Any]],
-    y: npt.NDArray[np.number[Any]],
+    x: npt.NDArray[np.number],
+    y: npt.NDArray[np.number],
 ) -> npt.NDArray[np.bool]: ...
 
 assert_type(np.testing.KnownFailureException(), np.testing.KnownFailureException)

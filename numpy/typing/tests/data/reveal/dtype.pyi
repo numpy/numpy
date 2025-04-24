@@ -30,7 +30,7 @@ cs_number: Literal["=L", "i", "c16"]
 cs_flex: Literal[">V", "S"]
 cs_generic: Literal["H", "U", "h", "|M8[Y]", "?"]
 
-dt_inexact: np.dtype[np.inexact[Any]]
+dt_inexact: np.dtype[np.inexact]
 dt_string: StringDType
 
 assert_type(np.dtype(np.float64), np.dtype[np.float64])
@@ -74,8 +74,8 @@ assert_type(np.dtype("u1"), np.dtype[np.uint8])
 assert_type(np.dtype("l"), np.dtype[np.long])
 assert_type(np.dtype("longlong"), np.dtype[np.longlong])
 assert_type(np.dtype(">g"), np.dtype[np.longdouble])
-assert_type(np.dtype(cs_integer), np.dtype[np.integer[Any]])
-assert_type(np.dtype(cs_number), np.dtype[np.number[Any]])
+assert_type(np.dtype(cs_integer), np.dtype[np.integer])
+assert_type(np.dtype(cs_number), np.dtype[np.number])
 assert_type(np.dtype(cs_flex), np.dtype[np.flexible])
 assert_type(np.dtype(cs_generic), np.dtype[np.generic])
 
@@ -92,7 +92,7 @@ assert_type(np.dtype(None), np.dtype[np.float64])
 
 # Dypes of dtypes
 assert_type(np.dtype(np.dtype(np.float64)), np.dtype[np.float64])
-assert_type(np.dtype(dt_inexact), np.dtype[np.inexact[Any]])
+assert_type(np.dtype(dt_inexact), np.dtype[np.inexact])
 
 # Parameterized dtypes
 assert_type(np.dtype("S8"), np.dtype)

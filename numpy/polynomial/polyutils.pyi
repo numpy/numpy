@@ -73,7 +73,7 @@ _AnyVanderF: TypeAlias = Callable[
 
 @overload
 def as_series(
-    alist: npt.NDArray[np.integer[Any]] | _FloatArray,
+    alist: npt.NDArray[np.integer] | _FloatArray,
     trim: bool = ...,
 ) -> list[_FloatSeries]: ...
 @overload
@@ -88,7 +88,7 @@ def as_series(
 ) -> list[_ObjectSeries]: ...
 @overload
 def as_series(  # type: ignore[overload-overlap]
-    alist: Iterable[_FloatArray | npt.NDArray[np.integer[Any]]],
+    alist: Iterable[_FloatArray | npt.NDArray[np.integer]],
     trim: bool = ...,
 ) -> list[_FloatSeries]: ...
 @overload
@@ -122,7 +122,7 @@ def trimseq(seq: _T_seq) -> _T_seq: ...
 
 @overload
 def trimcoef(  # type: ignore[overload-overlap]
-    c: npt.NDArray[np.integer[Any]] | _FloatArray,
+    c: npt.NDArray[np.integer] | _FloatArray,
     tol: _FloatLike_co = ...,
 ) -> _FloatSeries: ...
 @overload
@@ -153,7 +153,7 @@ def trimcoef(
 
 @overload
 def getdomain(  # type: ignore[overload-overlap]
-    x: _FloatArray | npt.NDArray[np.integer[Any]],
+    x: _FloatArray | npt.NDArray[np.integer],
 ) -> _Array2[np.float64]: ...
 @overload
 def getdomain(
@@ -178,18 +178,18 @@ def getdomain(
 
 @overload
 def mapparms(  # type: ignore[overload-overlap]
-    old: npt.NDArray[np.floating[Any] | np.integer[Any]],
-    new: npt.NDArray[np.floating[Any] | np.integer[Any]],
-) -> _Tuple2[np.floating[Any]]: ...
+    old: npt.NDArray[np.floating | np.integer],
+    new: npt.NDArray[np.floating | np.integer],
+) -> _Tuple2[np.floating]: ...
 @overload
 def mapparms(
-    old: npt.NDArray[np.number[Any]],
-    new: npt.NDArray[np.number[Any]],
-) -> _Tuple2[np.complexfloating[Any, Any]]: ...
+    old: npt.NDArray[np.number],
+    new: npt.NDArray[np.number],
+) -> _Tuple2[np.complexfloating]: ...
 @overload
 def mapparms(
-    old: npt.NDArray[np.object_ | np.number[Any]],
-    new: npt.NDArray[np.object_ | np.number[Any]],
+    old: npt.NDArray[np.object_ | np.number],
+    new: npt.NDArray[np.object_ | np.number],
 ) -> _Tuple2[object]: ...
 @overload
 def mapparms(  # type: ignore[overload-overlap]
@@ -205,12 +205,12 @@ def mapparms(
 def mapparms(
     old: _SeriesLikeFloat_co,
     new: _SeriesLikeFloat_co,
-) -> _Tuple2[np.floating[Any]]: ...
+) -> _Tuple2[np.floating]: ...
 @overload
 def mapparms(
     old: _SeriesLikeComplex_co,
     new: _SeriesLikeComplex_co,
-) -> _Tuple2[np.complexfloating[Any, Any]]: ...
+) -> _Tuple2[np.complexfloating]: ...
 @overload
 def mapparms(
     old: _SeriesLikeCoef_co,
@@ -222,30 +222,30 @@ def mapdomain(  # type: ignore[overload-overlap]
     x: _FloatLike_co,
     old: _SeriesLikeFloat_co,
     new: _SeriesLikeFloat_co,
-) -> np.floating[Any]: ...
+) -> np.floating: ...
 @overload
 def mapdomain(
     x: _NumberLike_co,
     old: _SeriesLikeComplex_co,
     new: _SeriesLikeComplex_co,
-) -> np.complexfloating[Any, Any]: ...
+) -> np.complexfloating: ...
 @overload
 def mapdomain(  # type: ignore[overload-overlap]
-    x: npt.NDArray[np.floating[Any] | np.integer[Any]],
-    old: npt.NDArray[np.floating[Any] | np.integer[Any]],
-    new: npt.NDArray[np.floating[Any] | np.integer[Any]],
+    x: npt.NDArray[np.floating | np.integer],
+    old: npt.NDArray[np.floating | np.integer],
+    new: npt.NDArray[np.floating | np.integer],
 ) -> _FloatSeries: ...
 @overload
 def mapdomain(
-    x: npt.NDArray[np.number[Any]],
-    old: npt.NDArray[np.number[Any]],
-    new: npt.NDArray[np.number[Any]],
+    x: npt.NDArray[np.number],
+    old: npt.NDArray[np.number],
+    new: npt.NDArray[np.number],
 ) -> _ComplexSeries: ...
 @overload
 def mapdomain(
-    x: npt.NDArray[np.object_ | np.number[Any]],
-    old: npt.NDArray[np.object_ | np.number[Any]],
-    new: npt.NDArray[np.object_ | np.number[Any]],
+    x: npt.NDArray[np.object_ | np.number],
+    old: npt.NDArray[np.object_ | np.number],
+    new: npt.NDArray[np.object_ | np.number],
 ) -> _ObjectSeries: ...
 @overload
 def mapdomain(  # type: ignore[overload-overlap]
@@ -413,7 +413,7 @@ def _fit(
     full: Literal[True],
     /,
     w: _SeriesLikeCoef_co | None = ...,
-) -> tuple[_CoefSeries, Sequence[np.inexact[Any] | np.int32]]: ...
+) -> tuple[_CoefSeries, Sequence[np.inexact | np.int32]]: ...
 @overload
 def _fit(
     vander_f: _AnyVanderF,
@@ -425,7 +425,7 @@ def _fit(
     *,
     full: Literal[True],
     w: _SeriesLikeCoef_co | None = ...,
-) -> tuple[_CoefSeries, Sequence[np.inexact[Any] | np.int32]]: ...
+) -> tuple[_CoefSeries, Sequence[np.inexact | np.int32]]: ...
 
 def _as_int(x: SupportsIndex, desc: str) -> int: ...
 def format_float(x: _FloatLike_co, parens: bool = ...) -> str: ...

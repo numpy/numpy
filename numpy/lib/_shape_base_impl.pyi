@@ -69,13 +69,13 @@ class _SupportsArrayWrap(Protocol):
 
 def take_along_axis(
     arr: _ScalarT | NDArray[_ScalarT],
-    indices: NDArray[integer[Any]],
+    indices: NDArray[integer],
     axis: int | None,
 ) -> NDArray[_ScalarT]: ...
 
 def put_along_axis(
     arr: NDArray[_ScalarT],
-    indices: NDArray[integer[Any]],
+    indices: NDArray[integer],
     values: ArrayLike,
     axis: int | None,
 ) -> None: ...
@@ -201,13 +201,13 @@ def get_array_wrap(*args: object) -> _ArrayWrap | None: ...
 @overload
 def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[np.bool]: ...  # type: ignore[misc]
 @overload
-def kron(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co) -> NDArray[unsignedinteger[Any]]: ...  # type: ignore[misc]
+def kron(a: _ArrayLikeUInt_co, b: _ArrayLikeUInt_co) -> NDArray[unsignedinteger]: ...  # type: ignore[misc]
 @overload
-def kron(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> NDArray[signedinteger[Any]]: ...  # type: ignore[misc]
+def kron(a: _ArrayLikeInt_co, b: _ArrayLikeInt_co) -> NDArray[signedinteger]: ...  # type: ignore[misc]
 @overload
-def kron(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...  # type: ignore[misc]
+def kron(a: _ArrayLikeFloat_co, b: _ArrayLikeFloat_co) -> NDArray[floating]: ...  # type: ignore[misc]
 @overload
-def kron(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
+def kron(a: _ArrayLikeComplex_co, b: _ArrayLikeComplex_co) -> NDArray[complexfloating]: ...
 @overload
 def kron(a: _ArrayLikeObject_co, b: Any) -> NDArray[object_]: ...
 @overload

@@ -17,12 +17,12 @@ _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 def fix(  # type: ignore[misc]
     x: _FloatLike_co,
     out: None = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def fix(
     x: _ArrayLikeFloat_co,
     out: None = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def fix(
     x: _ArrayLikeObject_co,
