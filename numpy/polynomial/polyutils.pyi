@@ -275,7 +275,7 @@ def mapdomain(
 def _nth_slice(
     i: SupportsIndex,
     ndim: SupportsIndex,
-) -> tuple[None | slice, ...]: ...
+) -> tuple[slice | None, ...]: ...
 
 _vander_nd: _FuncVanderND[Literal["_vander_nd"]]
 _vander_nd_flat: _FuncVanderND[Literal["_vander_nd_flat"]]
@@ -344,28 +344,28 @@ def _pow(  # type: ignore[overload-overlap]
     mul_f: _AnyMulF,
     c: _SeriesLikeFloat_co,
     pow: _AnyInt,
-    maxpower: None | _AnyInt = ...,
+    maxpower: _AnyInt | None = ...,
 ) -> _FloatSeries: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _SeriesLikeComplex_co,
     pow: _AnyInt,
-    maxpower: None | _AnyInt = ...,
+    maxpower: _AnyInt | None = ...,
 ) -> _ComplexSeries: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _SeriesLikeCoef_co,
     pow: _AnyInt,
-    maxpower: None | _AnyInt = ...,
+    maxpower: _AnyInt | None = ...,
 ) -> _ObjectSeries: ...
 @overload
 def _pow(
     mul_f: _AnyMulF,
     c: _SeriesLikeCoef_co,
     pow: _AnyInt,
-    maxpower: None | _AnyInt = ...,
+    maxpower: _AnyInt | None = ...,
 ) -> _CoefSeries: ...
 
 # keep in sync with `_polytypes._FuncFit`
@@ -375,10 +375,10 @@ def _fit(  # type: ignore[overload-overlap]
     x: _SeriesLikeFloat_co,
     y: _ArrayLikeFloat_co,
     deg: _SeriesLikeInt_co,
-    domain: None | _SeriesLikeFloat_co = ...,
-    rcond: None | _FloatLike_co = ...,
+    domain: _SeriesLikeFloat_co | None = ...,
+    rcond: _FloatLike_co | None = ...,
     full: Literal[False] = ...,
-    w: None | _SeriesLikeFloat_co = ...,
+    w: _SeriesLikeFloat_co | None = ...,
 ) -> _FloatArray: ...
 @overload
 def _fit(
@@ -386,10 +386,10 @@ def _fit(
     x: _SeriesLikeComplex_co,
     y: _ArrayLikeComplex_co,
     deg: _SeriesLikeInt_co,
-    domain: None | _SeriesLikeComplex_co = ...,
-    rcond: None | _FloatLike_co = ...,
+    domain: _SeriesLikeComplex_co | None = ...,
+    rcond: _FloatLike_co | None = ...,
     full: Literal[False] = ...,
-    w: None | _SeriesLikeComplex_co = ...,
+    w: _SeriesLikeComplex_co | None = ...,
 ) -> _ComplexArray: ...
 @overload
 def _fit(
@@ -397,10 +397,10 @@ def _fit(
     x: _SeriesLikeCoef_co,
     y: _ArrayLikeCoef_co,
     deg: _SeriesLikeInt_co,
-    domain: None | _SeriesLikeCoef_co = ...,
-    rcond: None | _FloatLike_co = ...,
+    domain: _SeriesLikeCoef_co | None = ...,
+    rcond: _FloatLike_co | None = ...,
     full: Literal[False] = ...,
-    w: None | _SeriesLikeCoef_co = ...,
+    w: _SeriesLikeCoef_co | None = ...,
 ) -> _CoefArray: ...
 @overload
 def _fit(
@@ -408,11 +408,11 @@ def _fit(
     x: _SeriesLikeCoef_co,
     y: _SeriesLikeCoef_co,
     deg: _SeriesLikeInt_co,
-    domain: None | _SeriesLikeCoef_co,
-    rcond: None | _FloatLike_co,
+    domain: _SeriesLikeCoef_co | None,
+    rcond: _FloatLike_co | None,
     full: Literal[True],
     /,
-    w: None | _SeriesLikeCoef_co = ...,
+    w: _SeriesLikeCoef_co | None = ...,
 ) -> tuple[_CoefSeries, Sequence[np.inexact[Any] | np.int32]]: ...
 @overload
 def _fit(
@@ -420,11 +420,11 @@ def _fit(
     x: _SeriesLikeCoef_co,
     y: _SeriesLikeCoef_co,
     deg: _SeriesLikeInt_co,
-    domain: None | _SeriesLikeCoef_co = ...,
-    rcond: None | _FloatLike_co = ...,
+    domain: _SeriesLikeCoef_co | None = ...,
+    rcond: _FloatLike_co | None = ...,
     *,
     full: Literal[True],
-    w: None | _SeriesLikeCoef_co = ...,
+    w: _SeriesLikeCoef_co | None = ...,
 ) -> tuple[_CoefSeries, Sequence[np.inexact[Any] | np.int32]]: ...
 
 def _as_int(x: SupportsIndex, desc: str) -> int: ...

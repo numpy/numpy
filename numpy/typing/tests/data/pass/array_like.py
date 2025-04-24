@@ -23,7 +23,7 @@ x12: ArrayLike = memoryview(b'foo')
 
 class A:
     def __array__(
-        self, dtype: None | np.dtype[Any] = None
+        self, dtype: np.dtype[Any] | None = None
     ) -> NDArray[np.float64]:
         return np.array([1.0, 2.0, 3.0])
 
