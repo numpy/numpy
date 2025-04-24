@@ -1679,7 +1679,7 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 /*
  * PyDataType_* FLAGS, FLACHK, REFCHK, HASFIELDS, HASSUBARRAY, UNSIZED,
  * SUBARRAY, NAMES, FIELDS, C_METADATA, and METADATA require version specific
- * lookup and are defined in npy_2_compat.h.
+ * lookup and are defined in npy_2_compat.h.
  */
 
 

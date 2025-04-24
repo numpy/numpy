@@ -11,10 +11,10 @@ def assert_raises_fpe(strmatch, callable, *args, **kwargs):
         callable(*args, **kwargs)
     except FloatingPointError as exc:
         assert_(str(exc).find(strmatch) >= 0,
-                "Did not raise floating point %s error" % strmatch)
+                f"Did not raise floating point {strmatch} error")
     else:
         assert_(False,
-                "Did not raise floating point %s error" % strmatch)
+                f"Did not raise floating point {strmatch} error")
 
 class TestHalf:
     def setup_method(self):

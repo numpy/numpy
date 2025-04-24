@@ -267,7 +267,7 @@ def scaninputline(inputline):
         elif l == '--skip-empty-wrappers':
             emptygen = False
         elif l[0] == '-':
-            errmess('Unknown option %s\n' % repr(l))
+            errmess(f'Unknown option {repr(l)}\n')
             sys.exit()
         elif f2:
             f2 = 0
@@ -303,13 +303,13 @@ def scaninputline(inputline):
         sys.exit()
     if not os.path.isdir(buildpath):
         if not verbose:
-            outmess('Creating build directory %s\n' % (buildpath))
+            outmess(f'Creating build directory {buildpath}\n')
         os.mkdir(buildpath)
     if signsfile:
         signsfile = os.path.join(buildpath, signsfile)
     if signsfile and os.path.isfile(signsfile) and 'h-overwrite' not in options:
         errmess(
-            'Signature file "%s" exists!!! Use --overwrite-signature to overwrite.\n' % (signsfile))
+            f'Signature file "{signsfile}" exists!!! Use --overwrite-signature to overwrite.\n')
         sys.exit()
 
     options['emptygen'] = emptygen
@@ -351,7 +351,7 @@ def callcrackfortran(files, options):
     crackfortran.dolowercase = options['do-lower']
     postlist = crackfortran.crackfortran(files)
     if 'signsfile' in options:
-        outmess('Saving signatures to file "%s"\n' % (options['signsfile']))
+        outmess(f"Saving signatures to file \"{options['signsfile']}\"\n")
         pyf = crackfortran.crack2fortran(postlist)
         if options['signsfile'][-6:] == 'stdout':
             sys.stdout.write(pyf)
@@ -360,13 +360,13 @@ def callcrackfortran(files, options):
                 f.write(pyf)
     if options["coutput"] is None:
         for mod in postlist:
-            mod["coutput"] = "%smodule.c" % mod["name"]
+            mod["coutput"] = f"{mod['name']}module.c"
     else:
         for mod in postlist:
             mod["coutput"] = options["coutput"]
     if options["f2py_wrapper_output"] is None:
         for mod in postlist:
-            mod["f2py_wrapper_output"] = "%s-f2pywrappers.f" % mod["name"]
+            mod["f2py_wrapper_output"] = f"{mod['name']}-f2pywrappers.f"
     else:
         for mod in postlist:
             mod["f2py_wrapper_output"] = options["f2py_wrapper_output"]
@@ -479,19 +479,19 @@ def run_main(comline_list):
                     isusedby[u] = []
                 isusedby[u].append(plist['name'])
     for plist in postlist:
-        if plist['block'] == 'python module' and '__user__' in plist['name']:
-            if plist['name'] in isusedby:
+        module_name = plist['name']
+        if plist['block'] == 'python module' and '__user__' in module_name:
+            if module_name in isusedby:
                 # if not quiet:
+                usedby = ','.join(f'"{s}"' for s in isusedby[module_name])
                 outmess(
-                    f'Skipping Makefile build for module "{plist["name"]}" '
-                    'which is used by {}\n'.format(
-                        ','.join(f'"{s}"' for s in isusedby[plist['name']])))
+                    f'Skipping Makefile build for module "{module_name}" '
+                    f'which is used by {usedby}\n')
     if 'signsfile' in options:
         if options['verbose'] > 1:
             outmess(
                 'Stopping. Edit the signature file and then run f2py on the signature file: ')
-            outmess('%s %s\n' %
-                    (os.path.basename(sys.argv[0]), options['signsfile']))
+            outmess(f"{os.path.basename(sys.argv[0])} {options['signsfile']}\n")
         return
     for plist in postlist:
         if plist['block'] != 'python module':
@@ -676,7 +676,7 @@ def run_compile():
                         nv = vmap[ov]
                     except KeyError:
                         if ov not in vmap.values():
-                            print('Unknown vendor: "%s"' % (s[len(v):]))
+                            print(f'Unknown vendor: "{s[len(v):]}"')
                     nv = ov
                 i = flib_flags.index(s)
                 flib_flags[i] = '--fcompiler=' + nv

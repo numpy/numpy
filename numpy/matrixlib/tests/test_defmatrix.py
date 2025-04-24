@@ -298,7 +298,7 @@ class TestMatrixReturn:
                 a.fill(1.0)
                 args = methodargs.get(attrib, ())
                 b = f(*args)
-                assert_(type(b) is matrix, "%s" % attrib)
+                assert_(type(b) is matrix, f"{attrib}")
         assert_(type(a.real) is matrix)
         assert_(type(a.imag) is matrix)
         c, d = matrix([0.0]).nonzero()

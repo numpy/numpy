@@ -1017,8 +1017,8 @@ class TestMaskedArray:
 
     def test_maskedarray_tofile_raises_notimplementederror(self):
         xm = masked_array([1, 2, 3], mask=[False, True, False])
-        # Test case to check the NotImplementedError. 
-        # It is not implemented at this point of time. We can change this in future 
+        # Test case to check the NotImplementedError.
+        # It is not implemented at this point of time. We can change this in future
         with temppath(suffix='.npy') as path:
             with pytest.raises(NotImplementedError):
                 np.save(path, xm)

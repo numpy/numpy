@@ -16,7 +16,13 @@ extend-exclude = [
 
 [lint]
 preview = true
-extend-select = [ "E" ]
+extend-select = [
+    "E",
+    "W",
+    "PGH",
+    "PLE",
+    "UP",
+]
 ignore = [
     "F",     # TODO: enable Pyflakes rules
     "E241",
@@ -30,9 +36,8 @@ ignore = [
     "E721",
     "E731",
     "E741",
-    "W291",
-    "W293",
-    "W391",
+    "UP015", # Unnecessary mode argument
+    "UP031", # TODO: Use format specifiers instead of percent format
 ]
 
 [lint.per-file-ignores]

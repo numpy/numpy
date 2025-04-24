@@ -225,8 +225,7 @@ cdef class PCG64(BitGenerator):
             raise TypeError('state must be a dict')
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
-            raise ValueError('state must be for a {0} '
-                             'RNG'.format(self.__class__.__name__))
+            raise ValueError(f'state must be for a {self.__class__.__name__} RNG')
         state_vec = <np.ndarray>np.empty(4, dtype=np.uint64)
         state_vec[0] = value['state']['state'] // 2 ** 64
         state_vec[1] = value['state']['state'] % 2 ** 64
@@ -460,8 +459,7 @@ cdef class PCG64DXSM(BitGenerator):
             raise TypeError('state must be a dict')
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
-            raise ValueError('state must be for a {0} '
-                             'RNG'.format(self.__class__.__name__))
+            raise ValueError(f'state must be for a {self.__class__.__name__} RNG')
         state_vec = <np.ndarray>np.empty(4, dtype=np.uint64)
         state_vec[0] = value['state']['state'] // 2 ** 64
         state_vec[1] = value['state']['state'] % 2 ** 64

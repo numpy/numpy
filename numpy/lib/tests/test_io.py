@@ -314,7 +314,7 @@ class TestSavezLoad(RoundtripTest):
                     try:
                         np.load(tmp)["data"]
                     except Exception as e:
-                        msg = "Failed to load data from a file: %s" % e
+                        msg = f"Failed to load data from a file: {e}"
                         raise AssertionError(msg)
                     finally:
                         if IS_PYPY:
@@ -907,13 +907,13 @@ class TestLoadTxt(LoadTxtBase):
         bogus_idx = 1.5
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx).__name__,
+            f'^usecols must be.*{type(bogus_idx).__name__}',
             np.loadtxt, c, usecols=bogus_idx
             )
 
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx).__name__,
+            f'^usecols must be.*{type(bogus_idx).__name__}',
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
 
@@ -1029,7 +1029,7 @@ class TestLoadTxt(LoadTxtBase):
             c.seek(0)
             res = np.loadtxt(
                 c, dtype=dt, converters=float.fromhex, encoding="latin1")
-            assert_equal(res, tgt, err_msg="%s" % dt)
+            assert_equal(res, tgt, err_msg=f"{dt}")
 
     @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
                         reason="PyPy bug in error formatting")
@@ -1321,7 +1321,7 @@ class Testfromregex:
             assert_array_equal(x, a)
 
     def test_compiled_bytes(self):
-        regexp = re.compile(b'(\\d)')
+        regexp = re.compile(br'(\d)')
         c = BytesIO(b'123')
         dt = [('num', np.float64)]
         a = np.array([1, 2, 3], dtype=dt)
@@ -1329,7 +1329,7 @@ class Testfromregex:
         assert_array_equal(x, a)
 
     def test_bad_dtype_not_structured(self):
-        regexp = re.compile(b'(\\d)')
+        regexp = re.compile(br'(\d)')
         c = BytesIO(b'123')
         with pytest.raises(TypeError, match='structured datatype'):
             np.fromregex(c, regexp, dtype=np.float64)
@@ -1406,13 +1406,13 @@ class TestFromTxt(LoadTxtBase):
         assert_equal(test, control)
 
     def test_skip_footer(self):
-        data = ["# %i" % i for i in range(1, 6)]
+        data = [f"# {i}" for i in range(1, 6)]
         data.append("A, B, C")
-        data.extend(["%i,%3.1f,%03s" % (i, i, i) for i in range(51)])
+        data.extend([f"{i},{i:3.1f},{i:03d}" for i in range(51)])
         data[-1] = "99,99"
         kwargs = {"delimiter": ",", "names": True, "skip_header": 5, "skip_footer": 10}
         test = np.genfromtxt(TextIO("\n".join(data)), **kwargs)
-        ctrl = np.array([("%f" % i, "%f" % i, "%f" % i) for i in range(41)],
+        ctrl = np.array([(f"{i:f}", f"{i:f}", f"{i:f}") for i in range(41)],
                         dtype=[(_, float) for _ in "ABC"])
         assert_equal(test, ctrl)
 
@@ -1469,7 +1469,7 @@ class TestFromTxt(LoadTxtBase):
                    np.array([True, False]), ]
         assert_equal(test.dtype.names, ['f0', 'f1', 'f2', 'f3', 'f4'])
         for (i, ctrl) in enumerate(control):
-            assert_equal(test['f%i' % i], ctrl)
+            assert_equal(test[f'f{i}'], ctrl)
 
     def test_auto_dtype_uniform(self):
         # Tests whether the output dtype can be uniformized
@@ -1623,9 +1623,9 @@ M   33  21.99
 
     def test_invalid_converter(self):
         strip_rand = lambda x: float((b'r' in x.lower() and x.split()[-1]) or
-                                     (b'r' not in x.lower() and x.strip() or 0.0))
+                                     ((b'r' not in x.lower() and x.strip()) or 0.0))
         strip_per = lambda x: float((b'%' in x.lower() and x.split()[0]) or
-                                    (b'%' not in x.lower() and x.strip() or 0.0))
+                                    ((b'%' not in x.lower() and x.strip()) or 0.0))
         s = TextIO("D01N01,10/1/2003 ,1 %,R 75,400,600\r\n"
                    "L24U05,12/5/2003, 2 %,1,300, 150.5\r\n"
                    "D02N03,10/10/2004,R 1,,7,145.55")
@@ -1997,7 +1997,7 @@ M   33  21.99
         data = ["1, 1, 1, 1, -1.1"] * 50
         mdata = TextIO("\n".join(data))
 
-        converters = {4: lambda x: "(%s)" % x.decode()}
+        converters = {4: lambda x: f"({x.decode()})"}
         kwargs = {"delimiter": ",", "converters": converters,
                       "dtype": [(_, int) for _ in 'abcde'], "encoding": "bytes"}
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)

@@ -19,7 +19,7 @@ from numpy._typing import (
 
 __all__ = ["pad"]
 
-_SCT = TypeVar("_SCT", bound=generic)
+_ScalarT = TypeVar("_ScalarT", bound=generic)
 
 @type_check_only
 class _ModeFunc(Protocol):
@@ -52,7 +52,7 @@ _ModeKind: TypeAlias = L[
 # Expand `**kwargs` into explicit keyword-only arguments
 @overload
 def pad(
-    array: _ArrayLike[_SCT],
+    array: _ArrayLike[_ScalarT],
     pad_width: _ArrayLikeInt,
     mode: _ModeKind = ...,
     *,
@@ -60,7 +60,7 @@ def pad(
     constant_values: ArrayLike = ...,
     end_values: ArrayLike = ...,
     reflect_type: L["odd", "even"] = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def pad(
     array: ArrayLike,
@@ -74,11 +74,11 @@ def pad(
 ) -> NDArray[Any]: ...
 @overload
 def pad(
-    array: _ArrayLike[_SCT],
+    array: _ArrayLike[_ScalarT],
     pad_width: _ArrayLikeInt,
     mode: _ModeFunc,
     **kwargs: Any,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def pad(
     array: ArrayLike,

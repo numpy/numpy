@@ -153,7 +153,7 @@ class format_parser:
             elif isinstance(names, str):
                 names = names.split(',')
             else:
-                raise NameError("illegal input names %s" % repr(names))
+                raise NameError(f"illegal input names {repr(names)}")
 
             self._names = [n.strip() for n in names[:self._nfields]]
         else:
@@ -168,7 +168,7 @@ class format_parser:
         # check for redundant names
         _dup = find_duplicate(self._names)
         if _dup:
-            raise ValueError("Duplicate field names: %s" % _dup)
+            raise ValueError(f"Duplicate field names: {_dup}")
 
         if titles:
             self._titles = [n.strip() for n in titles[:self._nfields]]
@@ -234,12 +234,11 @@ class record(nt.void):
                 return obj.view((self.__class__, obj.dtype))
             return obj
         else:
-            raise AttributeError("'record' object has no "
-                    "attribute '%s'" % attr)
+            raise AttributeError(f"'record' object has no attribute '{attr}'")
 
     def __setattr__(self, attr, val):
         if attr in ('setfield', 'getfield', 'dtype'):
-            raise AttributeError("Cannot set '%s' attribute" % attr)
+            raise AttributeError(f"Cannot set '{attr}' attribute")
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr, None)
         if res:
@@ -248,8 +247,7 @@ class record(nt.void):
             if getattr(self, attr, None):
                 return nt.void.__setattr__(self, attr, val)
             else:
-                raise AttributeError("'record' object has no "
-                        "attribute '%s'" % attr)
+                raise AttributeError(f"'record' object has no attribute '{attr}'")
 
     def __getitem__(self, indx):
         obj = nt.void.__getitem__(self, indx)
@@ -428,7 +426,7 @@ class recarray(ndarray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError) as e:
-            raise AttributeError("recarray has no attribute %s" % attr) from e
+            raise AttributeError(f"recarray has no attribute {attr}") from e
         obj = self.getfield(*res)
 
         # At this point obj will always be a recarray, since (see
@@ -481,7 +479,7 @@ class recarray(ndarray):
             res = fielddict[attr][:2]
         except (TypeError, KeyError) as e:
             raise AttributeError(
-                "record array has no attribute %s" % attr
+                f"record array has no attribute {attr}"
             ) from e
         return self.setfield(val, *res)
 
@@ -531,7 +529,7 @@ class recarray(ndarray):
                 self, separator=', ', prefix=prefix, suffix=',')
         else:
             # show zero-length shape unless it is (0,)
-            lst = "[], shape=%s" % (repr(self.shape),)
+            lst = f"[], shape={repr(self.shape)}"
 
         lf = '\n' + ' ' * len(prefix)
         if _get_legacy_print_mode() <= 113:

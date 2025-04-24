@@ -841,8 +841,7 @@ def parse_cond(tokens, name, context):
 def parse_one_cond(tokens, name, context):
     (first, pos), tokens = tokens[0], tokens[1:]
     content = []
-    if first.endswith(":"):
-        first = first[:-1]
+    first = first.removesuffix(":")
     if first.startswith("if "):
         part = ("if", pos, first[3:].lstrip(), content)
     elif first.startswith("elif "):
@@ -870,8 +869,7 @@ def parse_for(tokens, name, context):
     context = ("for",) + context
     content = []
     assert first.startswith("for "), first
-    if first.endswith(":"):
-        first = first[:-1]
+    first = first.removesuffix(":")
     first = first[3:].strip()
     match = in_re.search(first)
     if not match:
@@ -932,8 +930,7 @@ def parse_def(tokens, name, context):
     tokens = tokens[1:]
     assert first.startswith("def ")
     first = first.split(None, 1)[1]
-    if first.endswith(":"):
-        first = first[:-1]
+    first = first.removesuffix(":")
     if "(" not in first:
         func_name = first
         sig = ((), None, None, {})

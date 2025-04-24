@@ -1,14 +1,12 @@
+import pathlib
 import re
 import zipfile
-import pathlib
-from typing import IO, Any
 from collections.abc import Mapping
+from typing import IO, Any, assert_type
 
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 from numpy.lib._npyio_impl import BagObj
-
-from typing_extensions import assert_type
 
 str_path: str
 pathlib_path: pathlib.Path

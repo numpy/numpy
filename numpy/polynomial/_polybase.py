@@ -9,7 +9,7 @@ abc module from the stdlib, hence it is only available for Python >= 2.6.
 import os
 import abc
 import numbers
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 from . import polyutils as pu
@@ -200,9 +200,9 @@ class ABCPolyBase(abc.ABC):
 
         """
         return (
-			len(self.coef) == len(other.coef)
-			and np.all(self.coef == other.coef)
-		)
+            len(self.coef) == len(other.coef)
+            and np.all(self.coef == other.coef)
+        )
 
     def has_samedomain(self, other):
         """Check if domains match.

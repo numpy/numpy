@@ -165,7 +165,7 @@ class nd_grid:
                     size.append(int(step))
                 else:
                     size.append(
-                        int(math.ceil((stop - start) / (step * 1.0))))
+                        math.ceil((stop - start) / step))
                 num_list += [start, stop, step]
             typ = _nx.result_type(*num_list)
             if self.sparse:
@@ -331,7 +331,7 @@ class AxisConcatenator:
 
     For detailed documentation on usage, see `r_`.
     """
-    __slots__ = ('axis', 'matrix', 'trans1d', 'ndmin')
+    __slots__ = ('axis', 'matrix', 'ndmin', 'trans1d')
 
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)

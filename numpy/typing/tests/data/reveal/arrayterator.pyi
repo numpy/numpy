@@ -1,10 +1,8 @@
-from typing import Any
 from collections.abc import Generator
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 AR_i8: npt.NDArray[np.int64]
 ar_iter = np.lib.Arrayterator(AR_i8)

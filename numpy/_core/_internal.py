@@ -183,8 +183,7 @@ def _commastring(astr):
             order2 = _convorder.get(order2, order2)
             if (order1 != order2):
                 raise ValueError(
-                    'inconsistent byte-order specification %s and %s' %
-                    (order1, order2))
+                    f'inconsistent byte-order specification {order1} and {order2}')
             order = order1
 
         if order in ('|', '=', _nbo):
@@ -742,7 +741,7 @@ def __dtype_from_pep3118(stream, is_subdtype):
                 f"Unrepresentable PEP 3118 data type {stream.next!r} ({desc})")
         else:
             raise ValueError(
-                "Unknown PEP 3118 data type specifier %r" % stream.s
+                f"Unknown PEP 3118 data type specifier {stream.s!r}"
             )
 
         #
@@ -878,15 +877,15 @@ def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     args = inputs + kwargs.get('out', ())
     types_string = ', '.join(repr(type(arg).__name__) for arg in args)
     return ('operand type(s) all returned NotImplemented from '
-            '__array_ufunc__({!r}, {!r}, {}): {}'
-            .format(ufunc, method, args_string, types_string))
+            f'__array_ufunc__({ufunc!r}, {method!r}, {args_string}): {types_string}'
+            )
 
 
 def array_function_errmsg_formatter(public_api, types):
     """ Format the error message for when __array_ufunc__ gives up. """
     func_name = f'{public_api.__module__}.{public_api.__name__}'
-    return ("no implementation found for '{}' on types that implement "
-            '__array_function__: {}'.format(func_name, list(types)))
+    return (f"no implementation found for '{func_name}' on types that implement "
+            f'__array_function__: {list(types)}')
 
 
 def _ufunc_doc_signature_formatter(ufunc):

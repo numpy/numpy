@@ -1,7 +1,5 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, ClassVar, Final, Literal, TypedDict, overload, type_check_only
-
-from typing_extensions import TypeVar, Unpack
+from typing import Any, ClassVar, Final, Literal, TypedDict, TypeVar, Unpack, overload, type_check_only
 
 import numpy as np
 import numpy.typing as npt

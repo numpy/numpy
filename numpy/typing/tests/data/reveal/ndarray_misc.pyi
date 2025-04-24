@@ -6,15 +6,15 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-import operator
 import ctypes as ct
+import operator
 from types import ModuleType
-from typing import Any, Literal
+from typing import Any, Literal, assert_type
+
+from typing_extensions import CapsuleType
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import CapsuleType, assert_type
 
 class SubClass(npt.NDArray[np.object_]): ...
 

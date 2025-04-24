@@ -1,12 +1,14 @@
-from typing import Any
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
 from numpy.linalg._linalg import (
-    QRResult, EigResult, EighResult, SVDResult, SlogdetResult
+    EighResult,
+    EigResult,
+    QRResult,
+    SlogdetResult,
+    SVDResult,
 )
-
-from typing_extensions import assert_type
 
 AR_i8: npt.NDArray[np.int64]
 AR_f8: npt.NDArray[np.float64]

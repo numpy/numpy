@@ -51,10 +51,10 @@ class TestDateTime:
                      'h', 'm', 's', 'ms', 'us',
                      'μs',  # alias for us
                      'ns', 'ps', 'fs', 'as']:
-            dt1 = np.dtype('M8[750%s]' % unit)
-            assert_(dt1 == np.dtype('datetime64[750%s]' % unit))
-            dt2 = np.dtype('m8[%s]' % unit)
-            assert_(dt2 == np.dtype('timedelta64[%s]' % unit))
+            dt1 = np.dtype(f'M8[750{unit}]')
+            assert_(dt1 == np.dtype(f'datetime64[750{unit}]'))
+            dt2 = np.dtype(f'm8[{unit}]')
+            assert_(dt2 == np.dtype(f'timedelta64[{unit}]'))
 
         # Generic units shouldn't add [] to the end
         assert_equal(str(np.dtype("M8")), "datetime64")
@@ -815,7 +815,7 @@ class TestDateTime:
         a = np.array(['2011-03-16T13:55', '1920-01-01T03:12'], dtype='M')
         assert_equal(np.array2string(a, separator=', ',
                     formatter={'datetime': lambda x:
-                            "'%s'" % np.datetime_as_string(x, timezone='UTC')}),
+                            f"'{np.datetime_as_string(x, timezone='UTC')}'"}),
                      "['2011-03-16T13:55Z', '1920-01-01T03:12Z']")
 
         # Check that one NaT doesn't corrupt subsequent entries
@@ -943,7 +943,7 @@ class TestDateTime:
             b[8] = 'NaT'
 
             assert_equal(b.astype(object).astype(unit), b,
-                            "Error roundtripping unit %s" % unit)
+                            f"Error roundtripping unit {unit}")
         # With time units
         for unit in ['M8[as]', 'M8[16fs]', 'M8[ps]', 'M8[us]',
                      'M8[300as]', 'M8[20us]']:
@@ -959,7 +959,7 @@ class TestDateTime:
             b[8] = 'NaT'
 
             assert_equal(b.astype(object).astype(unit), b,
-                            "Error roundtripping unit %s" % unit)
+                            f"Error roundtripping unit {unit}")
 
     def test_month_truncation(self):
         # Make sure that months are truncating correctly
@@ -977,9 +977,9 @@ class TestDateTime:
     def test_different_unit_comparison(self):
         # Check some years with date units
         for unit1 in ['Y', 'M', 'D']:
-            dt1 = np.dtype('M8[%s]' % unit1)
+            dt1 = np.dtype(f'M8[{unit1}]')
             for unit2 in ['Y', 'M', 'D']:
-                dt2 = np.dtype('M8[%s]' % unit2)
+                dt2 = np.dtype(f'M8[{unit2}]')
                 assert_equal(np.array('1945', dtype=dt1),
                              np.array('1945', dtype=dt2))
                 assert_equal(np.array('1970', dtype=dt1),
@@ -998,9 +998,9 @@ class TestDateTime:
                              np.datetime64('10000-01-01', unit2))
         # Check some datetimes with time units
         for unit1 in ['6h', 'h', 'm', 's', '10ms', 'ms', 'us']:
-            dt1 = np.dtype('M8[%s]' % unit1)
+            dt1 = np.dtype(f'M8[{unit1}]')
             for unit2 in ['h', 'm', 's', 'ms', 'us']:
-                dt2 = np.dtype('M8[%s]' % unit2)
+                dt2 = np.dtype(f'M8[{unit2}]')
                 assert_equal(np.array('1945-03-12T18', dtype=dt1),
                              np.array('1945-03-12T18', dtype=dt2))
                 assert_equal(np.array('1970-03-12T18', dtype=dt1),
@@ -1019,9 +1019,9 @@ class TestDateTime:
                              np.datetime64('10000-01-01T00', unit2))
         # Check some days with units that won't overflow
         for unit1 in ['D', '12h', 'h', 'm', 's', '4s', 'ms', 'us']:
-            dt1 = np.dtype('M8[%s]' % unit1)
+            dt1 = np.dtype(f'M8[{unit1}]')
             for unit2 in ['D', 'h', 'm', 's', 'ms', 'us']:
-                dt2 = np.dtype('M8[%s]' % unit2)
+                dt2 = np.dtype(f'M8[{unit2}]')
                 assert_(np.equal(np.array('1932-02-17', dtype='M').astype(dt1),
                      np.array('1932-02-17T00:00:00', dtype='M').astype(dt2),
                      casting='unsafe'))
@@ -1400,7 +1400,7 @@ class TestDateTime:
     @pytest.mark.parametrize("op1, op2", [
         # Y and M are incompatible with all units except Y and M
         (np.timedelta64(1, 'Y'), np.timedelta64(1, 's')),
-        (np.timedelta64(1, 'D'), np.timedelta64(1, 'M')),    
+        (np.timedelta64(1, 'D'), np.timedelta64(1, 'M')),
         ])
     def test_timedelta_divmod_typeerror(self, op1, op2):
         assert_raises(TypeError, np.divmod, op1, op2)
@@ -1762,10 +1762,10 @@ class TestDateTime:
         timesteps = np.array([date], dtype='datetime64[s]')[0].astype(np.int64)
         for unit in ['ms', 'us', 'ns']:
             timesteps *= 1000
-            x = np.array([date], dtype='datetime64[%s]' % unit)
+            x = np.array([date], dtype=f'datetime64[{unit}]')
 
             assert_equal(timesteps, x[0].astype(np.int64),
-                         err_msg='Datetime conversion error for unit %s' % unit)
+                         err_msg=f'Datetime conversion error for unit {unit}')
 
         assert_equal(x[0].astype(np.int64), 322689600000000000)
 
@@ -2460,13 +2460,13 @@ class TestDateTime:
         for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
                      'ns', 'ps', 'fs', 'as']:
-            arr = np.array([123, -321, "NaT"], dtype='<datetime64[%s]' % unit)
+            arr = np.array([123, -321, "NaT"], dtype=f'<datetime64[{unit}]')
             assert_equal(np.isnat(arr), res)
-            arr = np.array([123, -321, "NaT"], dtype='>datetime64[%s]' % unit)
+            arr = np.array([123, -321, "NaT"], dtype=f'>datetime64[{unit}]')
             assert_equal(np.isnat(arr), res)
-            arr = np.array([123, -321, "NaT"], dtype='<timedelta64[%s]' % unit)
+            arr = np.array([123, -321, "NaT"], dtype=f'<timedelta64[{unit}]')
             assert_equal(np.isnat(arr), res)
-            arr = np.array([123, -321, "NaT"], dtype='>timedelta64[%s]' % unit)
+            arr = np.array([123, -321, "NaT"], dtype=f'>timedelta64[{unit}]')
             assert_equal(np.isnat(arr), res)
 
     def test_isnat_error(self):

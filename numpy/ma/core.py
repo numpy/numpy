@@ -27,7 +27,6 @@ import operator
 import warnings
 import textwrap
 import re
-from typing import Dict
 
 import numpy as np
 import numpy._core.umath as umath
@@ -121,7 +120,7 @@ def doc_note(initialdoc, note):
         return initialdoc
 
     notesplit = re.split(r'\n\s*?Notes\n\s*?-----', inspect.cleandoc(initialdoc))
-    notedoc = "\n\nNotes\n-----\n%s\n" % inspect.cleandoc(note)
+    notedoc = f"\n\nNotes\n-----\n{inspect.cleandoc(note)}\n"
 
     return ''.join(notesplit[:1] + [notedoc] + notesplit[1:])
 
@@ -185,8 +184,8 @@ for v in ["Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps",
 float_types_list = [np.half, np.single, np.double, np.longdouble,
                     np.csingle, np.cdouble, np.clongdouble]
 
-_minvals: Dict[type, int] = {}
-_maxvals: Dict[type, int] = {}
+_minvals: dict[type, int] = {}
+_maxvals: dict[type, int] = {}
 
 for sctype in ntypes.sctypeDict.values():
     scalar_dtype = np.dtype(sctype)
@@ -1798,7 +1797,7 @@ def mask_or(m1, m2, copy=False, shrink=True):
         return _shrink_mask(m1) if shrink else m1
     (dtype1, dtype2) = (getattr(m1, 'dtype', None), getattr(m2, 'dtype', None))
     if dtype1 != dtype2:
-        raise ValueError("Incompatible dtypes '%s'<>'%s'" % (dtype1, dtype2))
+        raise ValueError(f"Incompatible dtypes '{dtype1}'<>'{dtype2}'")
     if dtype1.names is not None:
         # Allocate an output mask array with the properly broadcast shape.
         newmask = np.empty(np.broadcast(m1, m2).shape, dtype1)
@@ -2977,9 +2976,8 @@ class MaskedArray(ndarray):
                 elif nm == nd:
                     mask = np.reshape(mask, _data.shape)
                 else:
-                    msg = "Mask and data not compatible: data size is %i, "\
-                          "mask size is %i."
-                    raise MaskError(msg % (nd, nm))
+                    msg = f"Mask and data not compatible: data size is {nd}, mask size is {nm}."
+                    raise MaskError(msg)
                 copy = True
             # Set the mask to the new value
             if _data._mask is nomask:
@@ -4698,7 +4696,7 @@ class MaskedArray(ndarray):
                     raise np.exceptions.AxisError(axis=axis, ndim=self.ndim)
                 return 1
             elif axis is None:
-                if kwargs.get('keepdims', False):
+                if kwargs.get('keepdims'):
                     return np.array(self.size, dtype=np.intp, ndmin=self.ndim)
                 return self.size
 
@@ -4707,7 +4705,7 @@ class MaskedArray(ndarray):
             for ax in axes:
                 items *= self.shape[ax]
 
-            if kwargs.get('keepdims', False):
+            if kwargs.get('keepdims'):
                 out_dims = list(self.shape)
                 for a in axes:
                     out_dims[a] = 1
@@ -6271,7 +6269,7 @@ class MaskedArray(ndarray):
                     mask=[[False, False],
                         [ True, False]],
             fill_value=999999)
-        """ 
+        """
         (_data, _mask) = (self._data, self._mask)
         cls = type(self)
         # Make sure the indices are not masked
@@ -7098,8 +7096,8 @@ class _frommethod:
             getattr(np, self.__name__, None)
         signature = self.__name__ + get_object_signature(meth)
         if meth is not None:
-            doc = """    %s\n%s""" % (
-                signature, getattr(meth, '__doc__', None))
+            doc = f"""    {signature}
+{getattr(meth, '__doc__', None)}"""
             return doc
 
     def __call__(self, a, *args, **params):
@@ -8796,7 +8794,7 @@ class _convert2ma:
             doc = self._replace_return_type(doc, np_ret, np_ma_ret)
             # Add the signature of the function at the beginning of the doc
             if sig:
-                sig = "%s%s\n" % (self._func.__name__, sig)
+                sig = f"{self._func.__name__}{sig}\n"
             doc = sig + doc
         return doc
 

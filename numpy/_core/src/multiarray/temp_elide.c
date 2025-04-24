@@ -62,6 +62,13 @@
 
 #include <feature_detection_misc.h>
 
+#if PY_VERSION_HEX >= 0x030E00A7 && !defined(PYPY_VERSION)
+#define Py_BUILD_CORE
+#include "internal/pycore_frame.h"
+#include "internal/pycore_interpframe.h"
+#undef Py_BUILD_CORE
+#endif
+
 /* 1 prints elided operations, 2 prints stacktraces */
 #define NPY_ELIDE_DEBUG 0
 #define NPY_MAX_STACKSIZE 10
@@ -107,6 +114,41 @@ find_addr(void * addresses[], npy_intp naddr, void * addr)
         }
     }
     return 0;
+}
+
+static int
+check_unique_temporary(PyObject *lhs)
+{
+#if PY_VERSION_HEX >= 0x030E00A7 && !defined(PYPY_VERSION)
+    // In Python 3.14.0a7 and later, a reference count of one doesn't guarantee
+    // that an object is a unique temporary variable. We scan the top of the
+    // interpreter stack to check if the object exists as an "owned" reference
+    // in the temporary stack.
+    PyFrameObject *frame = PyEval_GetFrame();
+    if (frame == NULL) {
+        return 0;
+    }
+    _PyInterpreterFrame *f = frame->f_frame;
+    _PyStackRef *base = _PyFrame_Stackbase(f);
+    _PyStackRef *stackpointer = f->stackpointer;
+    int found_once = 0;
+    while (stackpointer > base) {
+        stackpointer--;
+        PyObject *obj = PyStackRef_AsPyObjectBorrow(*stackpointer);
+        if (obj == lhs) {
+            if (!found_once && PyStackRef_IsHeapSafe(*stackpointer)) {
+                found_once = 1;
+            }
+            else {
+                return 0;
+            }
+        }
+        return found_once;
+    }
+    return 0;
+#else
+    return 1;
+#endif
 }
 
 static int
@@ -295,7 +337,8 @@ can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
             !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
             PyArray_CHKFLAGS(alhs, NPY_ARRAY_WRITEBACKIFCOPY) ||
-            PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
+            PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES ||
+            !check_unique_temporary(olhs)) {
         return 0;
     }
     if (PyArray_CheckExact(orhs) ||
@@ -372,7 +415,8 @@ can_elide_temp_unary(PyArrayObject * m1)
             !PyArray_ISNUMBER(m1) ||
             !PyArray_CHKFLAGS(m1, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(m1) ||
-            PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES) {
+            PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES ||
+            !check_unique_temporary((PyObject *)m1)) {
         return 0;
     }
     if (check_callers(&cannot)) {

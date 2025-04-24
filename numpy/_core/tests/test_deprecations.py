@@ -103,7 +103,7 @@ class _DeprecationTestCase:
                         "expected %s but got: %s" %
                         (self.warning_cls.__name__, warning.category))
         if num is not None and num_found != num:
-            msg = "%i warnings found but %i expected." % (len(self.log), num)
+            msg = f"{len(self.log)} warnings found but {num} expected."
             lst = [str(w) for w in self.log]
             raise AssertionError("\n".join([msg] + lst))
 
@@ -220,7 +220,7 @@ class TestCtypesGetter(_DeprecationTestCase):
     )
     def test_deprecated(self, name: str) -> None:
         func = getattr(self.ctypes, name)
-        self.assert_deprecated(lambda: func())
+        self.assert_deprecated(func)
 
     @pytest.mark.parametrize(
         "name", ["data", "shape", "strides", "_as_parameter_"]
@@ -361,7 +361,7 @@ class TestLibImports(_DeprecationTestCase):
         self.assert_deprecated(lambda: recfromtxt(data_gen(), **kwargs))
 
         self.assert_deprecated(lambda: disp("test"))
-        self.assert_deprecated(lambda: get_array_wrap())
+        self.assert_deprecated(get_array_wrap)
         self.assert_deprecated(lambda: maximum_sctype(int))
 
         self.assert_deprecated(lambda: in1d([1], [1]))

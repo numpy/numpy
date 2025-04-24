@@ -10,12 +10,10 @@ meson
 ninja; sys_platform != "emscripten"
 pytest-xdist
 pytest-timeout
-# for numpy.random.test.test_extending
-cffi; python_version < '3.10'
 # For testing types. Notes on the restrictions:
 # - Mypy relies on C API features not present in PyPy
 # NOTE: Keep mypy in sync with environment.yml
 mypy==1.15.0; platform_python_implementation != "PyPy"
-typing_extensions>=4.2.0
+typing_extensions>=4.5.0
 # for optional f2py encoding detection
 charset-normalizer

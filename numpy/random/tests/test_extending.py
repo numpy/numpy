@@ -94,8 +94,7 @@ def test_cython(tmp_path):
             if txt_to_find in line:
                 break
         else:
-            assert False, ("Could not find '{}' in C file, "
-                           "wrong pxd used".format(txt_to_find))
+            assert False, f"Could not find '{txt_to_find}' in C file, wrong pxd used"
     # import without adding the directory to sys.path
     suffix = sysconfig.get_config_var('EXT_SUFFIX')
 

@@ -1,7 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, Final, overload
-
-from typing_extensions import TypeVar, Unpack
+from typing import Any, Final, TypeVar, overload
 
 import numpy as np
 from numpy import _CastingKind
@@ -10,7 +8,7 @@ from numpy._utils import set_module as set_module
 ###
 
 _T = TypeVar("_T")
-_TupleT = TypeVar("_TupleT", bound=tuple[()] | tuple[Any, Any, Unpack[tuple[Any, ...]]])
+_TupleT = TypeVar("_TupleT", bound=tuple[()] | tuple[Any, Any, *tuple[Any, ...]])
 _ExceptionT = TypeVar("_ExceptionT", bound=Exception)
 
 ###

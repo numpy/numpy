@@ -1,28 +1,33 @@
-#include "highway_qsort.hpp"
+#define VQSORT_ONLY_STATIC 1
+#include "hwy/highway.h"
+#include "hwy/contrib/sort/vqsort-inl.h"
 
+#include "highway_qsort.hpp"
 #include "quicksort.hpp"
 
-#if VQSORT_ENABLED
-
-namespace np { namespace highway { namespace qsort_simd {
-
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(Half *arr, intptr_t size)
+namespace np::highway::qsort_simd {
+template <typename T>
+void NPY_CPU_DISPATCH_CURFX(QSort)(T *arr, npy_intp size)
 {
-#if HWY_HAVE_FLOAT16
-    hwy::HWY_NAMESPACE::VQSortStatic(reinterpret_cast<hwy::float16_t*>(arr), size, hwy::SortAscending());
+#if VQSORT_ENABLED
+    using THwy = std::conditional_t<std::is_same_v<T, Half>, hwy::float16_t, T>;
+    hwy::HWY_NAMESPACE::VQSortStatic(reinterpret_cast<THwy*>(arr), size, hwy::SortAscending());
 #else
     sort::Quick(arr, size);
 #endif
 }
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(uint16_t *arr, intptr_t size)
+#if !HWY_HAVE_FLOAT16
+template <>
+void NPY_CPU_DISPATCH_CURFX(QSort)<Half>(Half *arr, npy_intp size)
 {
-    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
+    sort::Quick(arr, size);
 }
-template<> void NPY_CPU_DISPATCH_CURFX(QSort)(int16_t *arr, intptr_t size)
-{
-    hwy::HWY_NAMESPACE::VQSortStatic(arr, size, hwy::SortAscending());
-}
+#endif // !HWY_HAVE_FLOAT16
 
-} } } // np::highway::qsort_simd
+template void NPY_CPU_DISPATCH_CURFX(QSort)<int16_t>(int16_t*, npy_intp);
+template void NPY_CPU_DISPATCH_CURFX(QSort)<uint16_t>(uint16_t*, npy_intp);
+#if HWY_HAVE_FLOAT16
+template void NPY_CPU_DISPATCH_CURFX(QSort)<Half>(Half*, npy_intp);
+#endif
 
-#endif // VQSORT_ENABLED
+} // np::highway::qsort_simd

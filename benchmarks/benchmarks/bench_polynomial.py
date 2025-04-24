@@ -25,5 +25,3 @@ class Polynomial(Benchmark):
 
     def time_polynomial_addition(self):
         _ = self.polynomial_degree2 + self.polynomial_degree2
-
-

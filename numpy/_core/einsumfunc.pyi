@@ -22,8 +22,8 @@ from numpy._typing import (
 
 __all__ = ["einsum", "einsum_path"]
 
-_ArrayType = TypeVar(
-    "_ArrayType",
+_ArrayT = TypeVar(
+    "_ArrayT",
     bound=NDArray[np.bool | number[Any]],
 )
 
@@ -108,23 +108,23 @@ def einsum(
     subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeComplex_co,
-    out: _ArrayType,
+    out: _ArrayT,
     dtype: None | _DTypeLikeComplex_co = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def einsum(
     subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: Any,
-    out: _ArrayType,
+    out: _ArrayT,
     casting: _CastingUnsafe,
     dtype: None | _DTypeLikeComplex_co = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 @overload
 def einsum(
@@ -153,23 +153,23 @@ def einsum(
     subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: _ArrayLikeObject_co,
-    out: _ArrayType,
+    out: _ArrayT,
     dtype: None | _DTypeLikeObject = ...,
     order: _OrderKACF = ...,
     casting: _CastingSafe = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def einsum(
     subscripts: str | _ArrayLikeInt_co,
     /,
     *operands: Any,
-    out: _ArrayType,
+    out: _ArrayT,
     casting: _CastingUnsafe,
     dtype: None | _DTypeLikeObject = ...,
     order: _OrderKACF = ...,
     optimize: _OptimizeKind = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 # NOTE: `einsum_call` is a hidden kwarg unavailable for public use.
 # It is therefore excluded from the signatures below.

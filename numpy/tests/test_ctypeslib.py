@@ -61,7 +61,7 @@ class TestLoadLibrary:
         # (including extension) does not work.
         try:
             so_ext = sysconfig.get_config_var('EXT_SUFFIX')
-            load_library('_multiarray_umath%s' % so_ext,
+            load_library(f'_multiarray_umath{so_ext}',
                          np._core._multiarray_umath.__file__)
         except ImportError as e:
             msg = ("ctypes is not available on this python: skipping the test"

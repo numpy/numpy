@@ -1,12 +1,7 @@
-import sys
-
 import numpy as np
 from numpy._typing import _80Bit, _96Bit, _128Bit, _256Bit
 
-if sys.version_info >= (3, 11):
-    from typing import assert_type
-else:
-    from typing_extensions import assert_type
+from typing import assert_type
 
 assert_type(np.uint128(), np.unsignedinteger[_128Bit])
 assert_type(np.uint256(), np.unsignedinteger[_256Bit])

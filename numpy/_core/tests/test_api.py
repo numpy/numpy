@@ -56,7 +56,7 @@ def test_array_array():
                  np.ones((), dtype=np.float64))
     assert_equal(np.array("1.0").dtype, U3)
     assert_equal(np.array("1.0", dtype=str).dtype, U3)
-    assert_equal(np.array("1.0", dtype=U2), np.array(str("1.")))
+    assert_equal(np.array("1.0", dtype=U2), np.array("1."))
     assert_equal(np.array("1", dtype=U5), np.ones((), dtype=U5))
 
     builtins = getattr(__builtins__, '__dict__', __builtins__)

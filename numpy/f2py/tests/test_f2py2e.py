@@ -149,7 +149,6 @@ def test_gh22819_cli(capfd, gh22819_cli, monkeypatch):
         assert "blah-f2pywrappers.f" not in gen_paths
         assert "test_22819-f2pywrappers.f" in gen_paths
         assert "test_22819module.c" in gen_paths
-        assert "Ignoring blah"
 
 
 def test_gh22819_many_pyf(capfd, gh22819_cli, monkeypatch):

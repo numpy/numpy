@@ -1399,10 +1399,10 @@ class TestPickling:
     @pytest.mark.parametrize('unit', ['', 'Y', 'M', 'W', 'D', 'h', 'm', 's',
                                       'ms', 'us', 'ns', 'ps', 'fs', 'as'])
     def test_datetime(self, base, unit):
-        dt = np.dtype('%s[%s]' % (base, unit) if unit else base)
+        dt = np.dtype(f'{base}[{unit}]' if unit else base)
         self.check_pickling(dt)
         if unit:
-            dt = np.dtype('%s[7%s]' % (base, unit))
+            dt = np.dtype(f'{base}[7{unit}]')
             self.check_pickling(dt)
 
     def test_metadata(self):
@@ -1922,9 +1922,10 @@ class TestUserDType:
         if HAS_REFCOUNT:
             # Create an array and test that memory gets cleaned up (gh-25949)
             o = object()
+            startcount = sys.getrefcount(o)
             a = np.array([o], dtype=dt)
             del a
-            assert sys.getrefcount(o) == 2
+            assert sys.getrefcount(o) == startcount
 
     def test_custom_structured_dtype_errors(self):
         class mytype:

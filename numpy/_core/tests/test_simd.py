@@ -1104,8 +1104,8 @@ class _SIMD_ALL(_Test_Utility):
 
     def test_conversion_boolean(self):
         bsfx = "b" + self.sfx[1:]
-        to_boolean = getattr(self.npyv, "cvt_%s_%s" % (bsfx, self.sfx))
-        from_boolean = getattr(self.npyv, "cvt_%s_%s" % (self.sfx, bsfx))
+        to_boolean = getattr(self.npyv, f"cvt_{bsfx}_{self.sfx}")
+        from_boolean = getattr(self.npyv, f"cvt_{self.sfx}_{bsfx}")
 
         false_vb = to_boolean(self.setall(0))
         true_vb = self.cmpeq(self.setall(0), self.setall(0))

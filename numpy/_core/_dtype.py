@@ -121,7 +121,7 @@ def _scalar_str(dtype, short):
 
     elif dtype.type == np.str_:
         if _isunsized(dtype):
-            return "'%sU'" % byteorder
+            return f"'{byteorder}U'"
         else:
             return "'%sU%d'" % (byteorder, dtype.itemsize / 4)
 
@@ -140,10 +140,10 @@ def _scalar_str(dtype, short):
             return "'V%d'" % dtype.itemsize
 
     elif dtype.type == np.datetime64:
-        return "'%sM8%s'" % (byteorder, _datetime_metadata_str(dtype))
+        return f"'{byteorder}M8{_datetime_metadata_str(dtype)}'"
 
     elif dtype.type == np.timedelta64:
-        return "'%sm8%s'" % (byteorder, _datetime_metadata_str(dtype))
+        return f"'{byteorder}m8{_datetime_metadata_str(dtype)}'"
 
     elif dtype.isbuiltin == 2:
         return dtype.type.__name__
@@ -217,17 +217,17 @@ def _struct_dict_str(dtype, includealignedflag):
     ret += fieldsep.join(repr(name) for name in names)
 
     # Second, the formats
-    ret += "], 'formats'%s[" % colon
+    ret += f"], 'formats'{colon}["
     ret += fieldsep.join(
         _construction_repr(fld_dtype, short=True) for fld_dtype in fld_dtypes)
 
     # Third, the offsets
-    ret += "], 'offsets'%s[" % colon
+    ret += f"], 'offsets'{colon}["
     ret += fieldsep.join("%d" % offset for offset in offsets)
 
     # Fourth, the titles
     if any(title is not None for title in titles):
-        ret += "], 'titles'%s[" % colon
+        ret += f"], 'titles'{colon}["
         ret += fieldsep.join(repr(title) for title in titles)
 
     # Fifth, the itemsize

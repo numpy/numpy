@@ -126,7 +126,7 @@ class MesonTemplate:
             node()
         template = Template(self.meson_build_template())
         meson_build = template.substitute(self.substitutions)
-        meson_build = re.sub(r",,", ",", meson_build)
+        meson_build = meson_build.replace(",,", ",")
         return meson_build
 
 

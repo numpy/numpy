@@ -63,7 +63,7 @@ def _check_assignment(srcidx, dstidx):
     arr[dstidx] = arr[srcidx]
 
     assert_(np.all(arr == cpy),
-            'assigning arr[%s] = arr[%s]' % (dstidx, srcidx))
+            f'assigning arr[{dstidx}] = arr[{srcidx}]')
 
 
 def test_overlapping_assignments():
@@ -168,13 +168,13 @@ def check_may_share_memory_exact(a, b):
     err_msg = ""
     if got != exact:
         err_msg = "    " + "\n    ".join([
-            "base_a - base_b = %r" % (a.__array_interface__['data'][0] - b.__array_interface__['data'][0],),
-            "shape_a = %r" % (a.shape,),
-            "shape_b = %r" % (b.shape,),
-            "strides_a = %r" % (a.strides,),
-            "strides_b = %r" % (b.strides,),
-            "size_a = %r" % (a.size,),
-            "size_b = %r" % (b.size,)
+            f"base_a - base_b = {a.__array_interface__['data'][0] - b.__array_interface__['data'][0]!r}",
+            f"shape_a = {a.shape!r}",
+            f"shape_b = {b.shape!r}",
+            f"strides_a = {a.strides!r}",
+            f"strides_b = {b.strides!r}",
+            f"size_a = {a.size!r}",
+            f"size_b = {b.size!r}"
         ])
 
     assert_equal(got, exact, err_msg=err_msg)

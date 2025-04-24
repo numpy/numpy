@@ -1,16 +1,14 @@
 import sys
-from typing import Any, TypeVar
-from pathlib import Path
 from collections import deque
+from pathlib import Path
+from typing import Any, TypeVar, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-from typing_extensions import assert_type
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 
-_SCT = TypeVar("_SCT", bound=np.generic, covariant=True)
-
-class SubClass(npt.NDArray[_SCT]): ...
+class SubClass(npt.NDArray[_ScalarT_co]): ...
 
 i8: np.int64
 

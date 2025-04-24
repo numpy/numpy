@@ -1,12 +1,10 @@
-import sys
 import ctypes as ct
-from typing import Any
+import sys
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
 from numpy import ctypeslib
-
-from typing_extensions import assert_type
 
 AR_bool: npt.NDArray[np.bool]
 AR_ubyte: npt.NDArray[np.ubyte]

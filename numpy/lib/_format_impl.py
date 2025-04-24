@@ -460,7 +460,7 @@ def _write_array_header(fp, d, version=None):
     header = ["{"]
     for key, value in sorted(d.items()):
         # Need to use repr here, since we eval these when reading
-        header.append("'%s': %s, " % (key, repr(value)))
+        header.append(f"'{key}': {repr(value)}, ")
     header.append("}")
     header = "".join(header)
 
@@ -872,7 +872,7 @@ def read_array(fp, allow_pickle=False, pickle_kwargs=None, *,
                     data = _read_bytes(fp, read_size, "array data")
                     array[i:i + read_count] = numpy.frombuffer(data, dtype=dtype,
                                                              count=read_count)
-        
+
         if array.size != count:
             raise ValueError(
                 "Failed to read all data for array. "
@@ -1007,7 +1007,7 @@ def _read_bytes(fp, size, error_template="ran out of data"):
     Required as e.g. ZipExtFile in python 2.6 can return less data than
     requested.
     """
-    data = bytes()
+    data = b""
     while True:
         # io files (default in python3) return None or raise on
         # would-block, python2 file will truncate, probably nothing can be

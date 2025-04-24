@@ -116,7 +116,7 @@ class TestEinsum:
         # Additional Check: Ensure dimensions correspond correctly to indices
         # Generate expected mapping of dimensions to indices
         expected_indices = [
-            chr(i + ord('A')) if i < 26 else chr(i - 26 + ord('a')) 
+            chr(i + ord('A')) if i < 26 else chr(i - 26 + ord('a'))
             for i in range(n2)
         ]
         assert_equal(

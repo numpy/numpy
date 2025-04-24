@@ -46,4 +46,3 @@ def doxy_config(root_path):
 
 if __name__ == "__main__":
     main()
-

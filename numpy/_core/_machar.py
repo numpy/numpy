@@ -103,7 +103,7 @@ class MachAr:
 
     def __init__(self, float_conv=float, int_conv=int,
                  float_to_float=float,
-                 float_to_str=lambda v: '%24.16e' % v,
+                 float_to_str=lambda v: f'{v:24.16e}',
                  title='Python floating point number'):
         """
 

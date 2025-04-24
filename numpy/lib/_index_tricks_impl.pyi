@@ -1,9 +1,9 @@
 from collections.abc import Sequence
-from typing import Any, ClassVar, Final, Generic, SupportsIndex, final, overload
+from typing import Any, ClassVar, Final, Generic, Self, SupportsIndex, final, overload
 from typing import Literal as L
 
 from _typeshed import Incomplete
-from typing_extensions import Self, TypeVar, deprecated
+from typing_extensions import TypeVar, deprecated
 
 import numpy as np
 from numpy._core.multiarray import ravel_multi_index, unravel_index
