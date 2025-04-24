@@ -2741,6 +2741,11 @@ def run_threaded(func, max_workers=8, pass_count=False,
                 futures = []
                 for arg in all_args:
                     futures.append(tpe.submit(*arg))
+            except RuntimeError as e:
+                import pytest
+                pytest.skip(f"Spawning {max_workers} threads failed with "
+                            f"error {e!r} (likely due to resource limits on the "
+                            "system running the tests)")
             finally:
                 if len(futures) < max_workers and pass_barrier:
                     barrier.abort()
