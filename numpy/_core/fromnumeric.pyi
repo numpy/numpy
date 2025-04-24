@@ -122,7 +122,7 @@ class _SupportsShape(Protocol[_ShapeT_co]):
 _T = TypeVar("_T")
 _PyArray: TypeAlias = list[_T] | tuple[_T, ...]
 # `int` also covers `bool`
-_PyScalar: TypeAlias = float | complex | bytes | str
+_PyScalar: TypeAlias = complex | bytes | str
 
 @overload
 def take(

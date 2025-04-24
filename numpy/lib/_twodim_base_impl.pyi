@@ -269,8 +269,8 @@ def histogram2d(
 ]: ...
 @overload
 def histogram2d(
-    x: _ArrayLike1DInt_co | Sequence[float | int],
-    y: _ArrayLike1DInt_co | Sequence[float | int],
+    x: _ArrayLike1DInt_co | Sequence[float],
+    y: _ArrayLike1DInt_co | Sequence[float],
     bins: int | Sequence[int] = ...,
     range: _ArrayLike2DFloat_co | None = ...,
     density: bool | None = ...,
@@ -282,8 +282,8 @@ def histogram2d(
 ]: ...
 @overload
 def histogram2d(
-    x: Sequence[complex | float | int],
-    y: Sequence[complex | float | int],
+    x: Sequence[complex],
+    y: Sequence[complex],
     bins: int | Sequence[int] = ...,
     range: _ArrayLike2DFloat_co | None = ...,
     density: bool | None = ...,
@@ -321,8 +321,8 @@ def histogram2d(
 ]: ...
 @overload
 def histogram2d(
-    x: _ArrayLike1DInt_co | Sequence[float | int],
-    y: _ArrayLike1DInt_co | Sequence[float | int],
+    x: _ArrayLike1DInt_co | Sequence[float],
+    y: _ArrayLike1DInt_co | Sequence[float],
     bins: Sequence[_ArrayLike1D[_NumberCoT] | int],
     range: _ArrayLike2DFloat_co | None = ...,
     density: bool | None = ...,
@@ -334,8 +334,8 @@ def histogram2d(
 ]: ...
 @overload
 def histogram2d(
-    x: Sequence[complex | float | int],
-    y: Sequence[complex | float | int],
+    x: Sequence[complex],
+    y: Sequence[complex],
     bins: Sequence[_ArrayLike1D[_NumberCoT] | int],
     range: _ArrayLike2DFloat_co | None = ...,
     density: bool | None = ...,
@@ -362,7 +362,7 @@ def histogram2d(
 def histogram2d(
     x: _ArrayLike1DNumber_co,
     y: _ArrayLike1DNumber_co,
-    bins: Sequence[Sequence[int | bool]],
+    bins: Sequence[Sequence[int]],
     range: _ArrayLike2DFloat_co | None = ...,
     density: bool | None = ...,
     weights: _ArrayLike1DFloat_co | None = ...,
@@ -375,7 +375,7 @@ def histogram2d(
 def histogram2d(
     x: _ArrayLike1DNumber_co,
     y: _ArrayLike1DNumber_co,
-    bins: Sequence[Sequence[float | int | bool]],
+    bins: Sequence[Sequence[float]],
     range: _ArrayLike2DFloat_co | None = ...,
     density: bool | None = ...,
     weights: _ArrayLike1DFloat_co | None = ...,
@@ -388,7 +388,7 @@ def histogram2d(
 def histogram2d(
     x: _ArrayLike1DNumber_co,
     y: _ArrayLike1DNumber_co,
-    bins: Sequence[Sequence[complex | float | int | bool]],
+    bins: Sequence[Sequence[complex]],
     range: _ArrayLike2DFloat_co | None = ...,
     density: bool | None = ...,
     weights: _ArrayLike1DFloat_co | None = ...,
