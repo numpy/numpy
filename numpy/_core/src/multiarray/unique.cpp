@@ -202,8 +202,6 @@ unique_vstring(PyArrayObject *self)
     auto allocator_dealloc = finally([&]() {
         NpyString_release_allocator(allocator);
     });
-    // unpacked_strings need to be allocated outside of the loop because of lifetime.
-    std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
     auto hash = [](const npy_static_string *value) -> size_t {
         if (value->buf == NULL) {
             return 0;
@@ -231,6 +229,8 @@ unique_vstring(PyArrayObject *self)
     // Input array is one-dimensional, enabling efficient iteration using strides.
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
+    // unpacked_strings need to be allocated outside of the loop because of the lifetime problem.
+    std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
         NpyString_load(allocator, packed_string, &unpacked_strings[i]);
