@@ -4535,10 +4535,11 @@ def quantile(a,
         if axis is not None:
             axis = _nx.normalize_axis_tuple(axis, a.ndim, argname="axis")
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
-        if np.any(weights < 0):
-            raise ValueError("Weights must be non-negative.")
-        elif np.all(weights == 0):
-            raise ValueError("At least one weight must be non-zero.")
+        if np.any(weights <= 0):
+            if np.any(weights < 0):
+                raise ValueError("Weights must be non-negative.")
+            elif np.all(weights == 0):
+                raise ValueError("At least one weight must be non-zero.")
     return _quantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
 
