@@ -195,7 +195,7 @@ def _test_fail(
     path: str,
     expression: str,
     error: str,
-    expected_error: None | str,
+    expected_error: str | None,
     lineno: int,
 ) -> None:
     if expected_error is None:

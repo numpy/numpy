@@ -35,10 +35,10 @@ def func(
 
 assert_type(vectorized_func.pyfunc, Callable[..., Any])
 assert_type(vectorized_func.cache, bool)
-assert_type(vectorized_func.signature, None | str)
-assert_type(vectorized_func.otypes, None | str)
+assert_type(vectorized_func.signature, str | None)
+assert_type(vectorized_func.otypes, str | None)
 assert_type(vectorized_func.excluded, set[int | str])
-assert_type(vectorized_func.__doc__, None | str)
+assert_type(vectorized_func.__doc__, str | None)
 assert_type(vectorized_func([1]), Any)
 assert_type(np.vectorize(int), np.vectorize)
 assert_type(

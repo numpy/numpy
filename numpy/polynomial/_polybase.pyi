@@ -80,8 +80,8 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         self,
         /,
         coef: _SeriesLikeCoef_co,
-        domain: None | _SeriesLikeCoef_co = ...,
-        window: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = ...,
         symbol: str = ...,
     ) -> None: ...
 
@@ -162,27 +162,27 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     @overload
     def convert(
         self,
-        domain: None | _SeriesLikeCoef_co,
+        domain: _SeriesLikeCoef_co | None,
         kind: type[_Other],
         /,
-        window: None | _SeriesLikeCoef_co = ...,
+        window: _SeriesLikeCoef_co | None = ...,
     ) -> _Other: ...
     @overload
     def convert(
         self,
         /,
-        domain: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
         *,
         kind: type[_Other],
-        window: None | _SeriesLikeCoef_co = ...,
+        window: _SeriesLikeCoef_co | None = ...,
     ) -> _Other: ...
     @overload
     def convert(
         self: _Self,
         /,
-        domain: None | _SeriesLikeCoef_co = ...,
-        kind: None | type[_Self] = ...,
-        window: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
+        kind: type[_Self] | None = ...,
+        window: _SeriesLikeCoef_co | None = ...,
     ) -> _Self: ...
 
     def mapparms(self, /) -> _Tuple2[Any]: ...
@@ -191,7 +191,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         self: _Self, /,
         m: SupportsIndex = ...,
         k: _CoefLike_co | _SeriesLikeCoef_co = ...,
-        lbnd: None | _CoefLike_co = ...,
+        lbnd: _CoefLike_co | None = ...,
     ) -> _Self: ...
 
     def deriv(self: _Self, /, m: SupportsIndex = ...) -> _Self: ...
@@ -201,7 +201,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     def linspace(
         self, /,
         n: SupportsIndex = ...,
-        domain: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
     ) -> _Tuple2[_Series[np.float64 | np.complex128]]: ...
 
     @overload
@@ -211,11 +211,11 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         x: _SeriesLikeCoef_co,
         y: _SeriesLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
-        domain: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
         rcond: _FloatLike_co = ...,
         full: Literal[False] = ...,
-        w: None | _SeriesLikeCoef_co = ...,
-        window: None | _SeriesLikeCoef_co = ...,
+        w: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = ...,
         symbol: str = ...,
     ) -> _Self: ...
     @overload
@@ -225,12 +225,12 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         x: _SeriesLikeCoef_co,
         y: _SeriesLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
-        domain: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
         rcond: _FloatLike_co = ...,
         *,
         full: Literal[True],
-        w: None | _SeriesLikeCoef_co = ...,
-        window: None | _SeriesLikeCoef_co = ...,
+        w: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = ...,
         symbol: str = ...,
     ) -> tuple[_Self, Sequence[np.inexact[Any] | np.int32]]: ...
     @overload
@@ -240,11 +240,11 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         x: _SeriesLikeCoef_co,
         y: _SeriesLikeCoef_co,
         deg: int | _SeriesLikeInt_co,
-        domain: None | _SeriesLikeCoef_co,
+        domain: _SeriesLikeCoef_co | None,
         rcond: _FloatLike_co,
         full: Literal[True], /,
-        w: None | _SeriesLikeCoef_co = ...,
-        window: None | _SeriesLikeCoef_co = ...,
+        w: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = ...,
         symbol: str = ...,
     ) -> tuple[_Self, Sequence[np.inexact[Any] | np.int32]]: ...
 
@@ -252,16 +252,16 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     def fromroots(
         cls: type[_Self], /,
         roots: _ArrayLikeCoef_co,
-        domain: None | _SeriesLikeCoef_co = ...,
-        window: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = ...,
         symbol: str = ...,
     ) -> _Self: ...
 
     @classmethod
     def identity(
         cls: type[_Self], /,
-        domain: None | _SeriesLikeCoef_co = ...,
-        window: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = ...,
         symbol: str = ...,
     ) -> _Self: ...
 
@@ -269,8 +269,8 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     def basis(
         cls: type[_Self], /,
         deg: _AnyInt,
-        domain: None | _SeriesLikeCoef_co = ...,
-        window: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = ...,
         symbol: str = ...,
     ) -> _Self: ...
 
@@ -278,8 +278,8 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     def cast(
         cls: type[_Self], /,
         series: ABCPolyBase,
-        domain: None | _SeriesLikeCoef_co = ...,
-        window: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
+        window: _SeriesLikeCoef_co | None = ...,
     ) -> _Self: ...
 
     @classmethod

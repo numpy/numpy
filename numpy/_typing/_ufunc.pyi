@@ -105,38 +105,38 @@ class _UFunc_Nin1_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         __x1: _ScalarLike_co,
         out: None = ...,
         *,
-        where: None | _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _2Tuple[None | str] = ...,
+        signature: str | _2Tuple[str | None] = ...,
     ) -> Any: ...
     @overload
     def __call__(
         self,
         __x1: ArrayLike,
-        out: None | NDArray[Any] | tuple[NDArray[Any]] = ...,
+        out: NDArray[Any] | tuple[NDArray[Any]] | None = ...,
         *,
-        where: None | _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _2Tuple[None | str] = ...,
+        signature: str | _2Tuple[str | None] = ...,
     ) -> NDArray[Any]: ...
     @overload
     def __call__(
         self,
         __x1: _SupportsArrayUFunc,
-        out: None | NDArray[Any] | tuple[NDArray[Any]] = ...,
+        out: NDArray[Any] | tuple[NDArray[Any]] | None = ...,
         *,
-        where: None | _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _2Tuple[None | str] = ...,
+        signature: str | _2Tuple[str | None] = ...,
     ) -> Any: ...
 
     def at(
@@ -237,9 +237,9 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
     def reduce(
         self,
         array: ArrayLike,
-        axis: None | _ShapeLike = ...,
+        axis: _ShapeLike | None = ...,
         dtype: DTypeLike = ...,
-        out: None | NDArray[Any] = ...,
+        out: NDArray[Any] | None = ...,
         keepdims: bool = ...,
         initial: Any = ...,
         where: _ArrayLikeBool_co = ...,
@@ -250,7 +250,7 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         array: ArrayLike,
         axis: SupportsIndex = ...,
         dtype: DTypeLike = ...,
-        out: None | NDArray[Any] = ...,
+        out: NDArray[Any] | None = ...,
     ) -> NDArray[Any]: ...
 
     def reduceat(
@@ -259,7 +259,7 @@ class _UFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex = ...,
         dtype: DTypeLike = ...,
-        out: None | NDArray[Any] = ...,
+        out: NDArray[Any] | None = ...,
     ) -> NDArray[Any]: ...
 
     @overload  # (scalar, scalar) -> scalar
@@ -344,42 +344,42 @@ class _UFunc_Nin1_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         __out1: None = ...,
         __out2: None = ...,
         *,
-        where: None | _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _3Tuple[None | str] = ...,
+        signature: str | _3Tuple[str | None] = ...,
     ) -> _2Tuple[Any]: ...
     @overload
     def __call__(
         self,
         __x1: ArrayLike,
-        __out1: None | NDArray[Any] = ...,
-        __out2: None | NDArray[Any] = ...,
+        __out1: NDArray[Any] | None = ...,
+        __out2: NDArray[Any] | None = ...,
         *,
         out: _2Tuple[NDArray[Any]] = ...,
-        where: None | _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _3Tuple[None | str] = ...,
+        signature: str | _3Tuple[str | None] = ...,
     ) -> _2Tuple[NDArray[Any]]: ...
     @overload
     def __call__(
         self,
         __x1: _SupportsArrayUFunc,
-        __out1: None | NDArray[Any] = ...,
-        __out2: None | NDArray[Any] = ...,
+        __out1: NDArray[Any] | None = ...,
+        __out2: NDArray[Any] | None = ...,
         *,
         out: _2Tuple[NDArray[Any]] = ...,
-        where: None | _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _3Tuple[None | str] = ...,
+        signature: str | _3Tuple[str | None] = ...,
     ) -> _2Tuple[Any]: ...
 
     def at(self, *args, **kwargs) -> NoReturn: ...
@@ -415,28 +415,28 @@ class _UFunc_Nin2_Nout2(ufunc, Generic[_NameType, _NTypes, _IDType]):  # type: i
         __out1: None = ...,
         __out2: None = ...,
         *,
-        where: None | _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _4Tuple[None | str] = ...,
+        signature: str | _4Tuple[str | None] = ...,
     ) -> _2Tuple[Any]: ...
     @overload
     def __call__(
         self,
         __x1: ArrayLike,
         __x2: ArrayLike,
-        __out1: None | NDArray[Any] = ...,
-        __out2: None | NDArray[Any] = ...,
+        __out1: NDArray[Any] | None = ...,
+        __out2: NDArray[Any] | None = ...,
         *,
         out: _2Tuple[NDArray[Any]] = ...,
-        where: None | _ArrayLikeBool_co = ...,
+        where: _ArrayLikeBool_co | None = ...,
         casting: _CastingKind = ...,
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _4Tuple[None | str] = ...,
+        signature: str | _4Tuple[str | None] = ...,
     ) -> _2Tuple[NDArray[Any]]: ...
 
     def at(self, *args, **kwargs) -> NoReturn: ...
@@ -476,7 +476,7 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType, _Signature]
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _3Tuple[None | str] = ...,
+        signature: str | _3Tuple[str | None] = ...,
         axes: list[_2Tuple[SupportsIndex]] = ...,
     ) -> Any: ...
     @overload
@@ -490,7 +490,7 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType, _Signature]
         order: _OrderKACF = ...,
         dtype: DTypeLike = ...,
         subok: bool = ...,
-        signature: str | _3Tuple[None | str] = ...,
+        signature: str | _3Tuple[str | None] = ...,
         axes: list[_2Tuple[SupportsIndex]] = ...,
     ) -> NDArray[Any]: ...
 
@@ -502,7 +502,7 @@ class _GUFunc_Nin2_Nout1(ufunc, Generic[_NameType, _NTypes, _IDType, _Signature]
 
 @type_check_only
 class _PyFunc_Kwargs_Nargs2(TypedDict, total=False):
-    where: None | _ArrayLikeBool_co
+    where: _ArrayLikeBool_co | None
     casting: _CastingKind
     order: _OrderKACF
     dtype: DTypeLike
@@ -511,7 +511,7 @@ class _PyFunc_Kwargs_Nargs2(TypedDict, total=False):
 
 @type_check_only
 class _PyFunc_Kwargs_Nargs3(TypedDict, total=False):
-    where: None | _ArrayLikeBool_co
+    where: _ArrayLikeBool_co | None
     casting: _CastingKind
     order: _OrderKACF
     dtype: DTypeLike
@@ -520,7 +520,7 @@ class _PyFunc_Kwargs_Nargs3(TypedDict, total=False):
 
 @type_check_only
 class _PyFunc_Kwargs_Nargs3P(TypedDict, total=False):
-    where: None | _ArrayLikeBool_co
+    where: _ArrayLikeBool_co | None
     casting: _CastingKind
     order: _OrderKACF
     dtype: DTypeLike
@@ -529,7 +529,7 @@ class _PyFunc_Kwargs_Nargs3P(TypedDict, total=False):
 
 @type_check_only
 class _PyFunc_Kwargs_Nargs4P(TypedDict, total=False):
-    where: None | _ArrayLikeBool_co
+    where: _ArrayLikeBool_co | None
     casting: _CastingKind
     order: _OrderKACF
     dtype: DTypeLike
@@ -580,7 +580,7 @@ class _PyFunc_Nin1_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         self,
         x1: _SupportsArrayUFunc,
         /,
-        out: None | NDArray[Any] | tuple[NDArray[Any]] = ...,
+        out: NDArray[Any] | tuple[NDArray[Any]] | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs2],
     ) -> Any: ...
 
@@ -638,7 +638,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         x1: _SupportsArrayUFunc,
         x2: _SupportsArrayUFunc | ArrayLike,
         /,
-        out: None | NDArray[Any] | tuple[NDArray[Any]] = ...,
+        out: NDArray[Any] | tuple[NDArray[Any]] | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
     ) -> Any: ...
     @overload
@@ -647,7 +647,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         x1: ArrayLike,
         x2: _SupportsArrayUFunc,
         /,
-        out: None | NDArray[Any] | tuple[NDArray[Any]] = ...,
+        out: NDArray[Any] | tuple[NDArray[Any]] | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3],
     ) -> Any: ...
 
@@ -657,7 +657,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
     def reduce(
         self,
         array: ArrayLike,
-        axis: None | _ShapeLike,
+        axis: _ShapeLike | None,
         dtype: DTypeLike,
         out: _ArrayT,
         /,
@@ -670,7 +670,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         self,
         /,
         array: ArrayLike,
-        axis: None | _ShapeLike = ...,
+        axis: _ShapeLike | None = ...,
         dtype: DTypeLike = ...,
         *,
         out: _ArrayT | tuple[_ArrayT],
@@ -683,7 +683,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         self,
         /,
         array: ArrayLike,
-        axis: None | _ShapeLike = ...,
+        axis: _ShapeLike | None = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
         *,
@@ -696,7 +696,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         self,
         /,
         array: ArrayLike,
-        axis: None | _ShapeLike = ...,
+        axis: _ShapeLike | None = ...,
         dtype: DTypeLike = ...,
         out: None = ...,
         keepdims: bool = ...,
@@ -743,7 +743,7 @@ class _PyFunc_Nin2_Nout1(ufunc, Generic[_ReturnType_co, _IDType]):  # type: igno
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex = ...,
         dtype: DTypeLike = ...,
-        out: None | NDArray[Any] | tuple[NDArray[Any]] = ...,
+        out: NDArray[Any] | tuple[NDArray[Any]] | None = ...,
     ) -> Any: ...
 
     @overload
@@ -874,7 +874,7 @@ class _PyFunc_Nin3P_Nout1(ufunc, Generic[_ReturnType_co, _IDType, _NIn]):  # typ
         x3: _SupportsArrayUFunc | ArrayLike,
         /,
         *xs: _SupportsArrayUFunc | ArrayLike,
-        out: None | NDArray[Any] | tuple[NDArray[Any]] = ...,
+        out: NDArray[Any] | tuple[NDArray[Any]] | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs4P],
     ) -> Any: ...
 
@@ -930,7 +930,7 @@ class _PyFunc_Nin1P_Nout2P(ufunc, Generic[_ReturnType_co, _IDType, _NIn, _NOut])
         x1: _SupportsArrayUFunc | ArrayLike,
         /,
         *xs: _SupportsArrayUFunc | ArrayLike,
-        out: None | _2PTuple[NDArray[Any]] = ...,
+        out: _2PTuple[NDArray[Any]] | None = ...,
         **kwargs: Unpack[_PyFunc_Kwargs_Nargs3P],
     ) -> Any: ...
 

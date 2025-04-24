@@ -55,7 +55,7 @@ class _ArrayWrap(Protocol):
     def __call__(
         self,
         array: NDArray[Any],
-        context: None | tuple[ufunc, tuple[Any, ...], int] = ...,
+        context: tuple[ufunc, tuple[Any, ...], int] | None = ...,
         return_scalar: bool = ...,
         /,
     ) -> Any: ...
@@ -70,14 +70,14 @@ class _SupportsArrayWrap(Protocol):
 def take_along_axis(
     arr: _ScalarT | NDArray[_ScalarT],
     indices: NDArray[integer[Any]],
-    axis: None | int,
+    axis: int | None,
 ) -> NDArray[_ScalarT]: ...
 
 def put_along_axis(
     arr: NDArray[_ScalarT],
     indices: NDArray[integer[Any]],
     values: ArrayLike,
-    axis: None | int,
+    axis: int | None,
 ) -> None: ...
 
 @overload
@@ -196,7 +196,7 @@ def dsplit(
 @overload
 def get_array_wrap(*args: _SupportsArrayWrap) -> _ArrayWrap: ...
 @overload
-def get_array_wrap(*args: object) -> None | _ArrayWrap: ...
+def get_array_wrap(*args: object) -> _ArrayWrap | None: ...
 
 @overload
 def kron(a: _ArrayLikeBool_co, b: _ArrayLikeBool_co) -> NDArray[np.bool]: ...  # type: ignore[misc]
