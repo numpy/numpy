@@ -4145,7 +4145,7 @@ class TestBroadcast:
         #gh-13455
         arrs = [np.empty((5, 6, 7))]
         mit = np.broadcast(*arrs)
-        mit2 = np.broadcast(*arrs, **{})
+        mit2 = np.broadcast(*arrs, **{})  # noqa: PIE804
         assert_equal(mit.shape, mit2.shape)
         assert_equal(mit.ndim, mit2.ndim)
         assert_equal(mit.nd, mit2.nd)
