@@ -446,7 +446,6 @@ from numpy import (
     tan,
     tanh,
     tensordot,
-    test,
     testing,
     tile,
     timedelta64,
@@ -503,6 +502,7 @@ from numpy import (
     zeros_like,
 )
 from numpy._typing import _ArrayLike, _DTypeLike
+from . import test
 
 __all__ = ["rand", "randn", "repmat"]
 __all__ += np.__all__
