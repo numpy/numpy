@@ -47,8 +47,8 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
 
     basis_name: _NameCo
     coef: _CoefSeries
-    domain: _Array2[np.inexact[Any] | np.object_]
-    window: _Array2[np.inexact[Any] | np.object_]
+    domain: _Array2[np.inexact | np.object_]
+    window: _Array2[np.inexact | np.object_]
 
     _symbol: LiteralString
     @property
@@ -119,7 +119,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
     def __rmod__(self, x: _AnyOther, /) -> Self: ...
     def __rdivmod__(self, x: _AnyOther, /) -> _Tuple2[Self]: ...
     def __len__(self, /) -> int: ...
-    def __iter__(self, /) -> Iterator[np.inexact[Any] | object]: ...
+    def __iter__(self, /) -> Iterator[np.inexact | object]: ...
     def __getstate__(self, /) -> dict[str, Any]: ...
     def __setstate__(self, dict: dict[str, Any], /) -> None: ...
 
@@ -212,7 +212,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         w: _SeriesLikeCoef_co | None = ...,
         window: _SeriesLikeCoef_co | None = ...,
         symbol: str = ...,
-    ) -> tuple[Self, Sequence[np.inexact[Any] | np.int32]]: ...
+    ) -> tuple[Self, Sequence[np.inexact | np.int32]]: ...
     @overload
     @classmethod
     def fit(
@@ -226,7 +226,7 @@ class ABCPolyBase(Generic[_NameCo], abc.ABC):
         w: _SeriesLikeCoef_co | None = ...,
         window: _SeriesLikeCoef_co | None = ...,
         symbol: str = ...,
-    ) -> tuple[Self, Sequence[np.inexact[Any] | np.int32]]: ...
+    ) -> tuple[Self, Sequence[np.inexact | np.int32]]: ...
 
     @classmethod
     def fromroots(

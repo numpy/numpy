@@ -84,9 +84,9 @@ assert_type(np.dot(AR_u1, 1), Any)
 assert_type(np.dot(1.5j, 1), Any)
 assert_type(np.dot(AR_u1, 1, out=AR_f8), npt.NDArray[np.float64])
 
-assert_type(np.vdot(AR_LIKE_f, AR_i8), np.floating[Any])
-assert_type(np.vdot(AR_u1, 1), np.signedinteger[Any])
-assert_type(np.vdot(1.5j, 1), np.complexfloating[Any, Any])
+assert_type(np.vdot(AR_LIKE_f, AR_i8), np.floating)
+assert_type(np.vdot(AR_u1, 1), np.signedinteger)
+assert_type(np.vdot(1.5j, 1), np.complexfloating)
 
 assert_type(np.bincount(AR_i8), npt.NDArray[np.intp])
 

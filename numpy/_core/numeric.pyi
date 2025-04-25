@@ -450,25 +450,25 @@ def correlate(
     a: _ArrayLikeUInt_co,
     v: _ArrayLikeUInt_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+) -> NDArray[unsignedinteger]: ...
 @overload
 def correlate(
     a: _ArrayLikeInt_co,
     v: _ArrayLikeInt_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def correlate(
     a: _ArrayLikeFloat_co,
     v: _ArrayLikeFloat_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def correlate(
     a: _ArrayLikeComplex_co,
     v: _ArrayLikeComplex_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def correlate(
     a: _ArrayLikeTD64_co,
@@ -499,25 +499,25 @@ def convolve(
     a: _ArrayLikeUInt_co,
     v: _ArrayLikeUInt_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+) -> NDArray[unsignedinteger]: ...
 @overload
 def convolve(
     a: _ArrayLikeInt_co,
     v: _ArrayLikeInt_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def convolve(
     a: _ArrayLikeFloat_co,
     v: _ArrayLikeFloat_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def convolve(
     a: _ArrayLikeComplex_co,
     v: _ArrayLikeComplex_co,
     mode: _CorrelateMode = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def convolve(
     a: _ArrayLikeTD64_co,
@@ -548,25 +548,25 @@ def outer(
     a: _ArrayLikeUInt_co,
     b: _ArrayLikeUInt_co,
     out: None = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+) -> NDArray[unsignedinteger]: ...
 @overload
 def outer(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
     out: None = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def outer(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
     out: None = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def outer(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
     out: None = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def outer(
     a: _ArrayLikeTD64_co,
@@ -603,25 +603,25 @@ def tensordot(
     a: _ArrayLikeUInt_co,
     b: _ArrayLikeUInt_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+) -> NDArray[unsignedinteger]: ...
 @overload
 def tensordot(
     a: _ArrayLikeInt_co,
     b: _ArrayLikeInt_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def tensordot(
     a: _ArrayLikeFloat_co,
     b: _ArrayLikeFloat_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def tensordot(
     a: _ArrayLikeComplex_co,
     b: _ArrayLikeComplex_co,
     axes: int | tuple[_ShapeLike, _ShapeLike] = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def tensordot(
     a: _ArrayLikeTD64_co,
@@ -686,7 +686,7 @@ def cross(
     axisb: int = ...,
     axisc: int = ...,
     axis: int | None = ...,
-) -> NDArray[unsignedinteger[Any]]: ...
+) -> NDArray[unsignedinteger]: ...
 @overload
 def cross(
     a: _ArrayLikeInt_co,
@@ -695,7 +695,7 @@ def cross(
     axisb: int = ...,
     axisc: int = ...,
     axis: int | None = ...,
-) -> NDArray[signedinteger[Any]]: ...
+) -> NDArray[signedinteger]: ...
 @overload
 def cross(
     a: _ArrayLikeFloat_co,
@@ -704,7 +704,7 @@ def cross(
     axisb: int = ...,
     axisc: int = ...,
     axis: int | None = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def cross(
     a: _ArrayLikeComplex_co,
@@ -713,7 +713,7 @@ def cross(
     axisb: int = ...,
     axisc: int = ...,
     axis: int | None = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def cross(
     a: _ArrayLikeObject_co,
