@@ -363,7 +363,7 @@ def _unique1d(ar, return_index=False, return_inverse=False,
 
     if ar.dtype.kind == 'T' and not equal_nan:
         raise ValueError(
-            "Currently, `equal_nan` can only be True dtype is `T` (StringDType)."
+            "Currently, `equal_nan` can only be True if dtype is `T` (StringDType)."
         )
 
     optional_indices = return_index or return_inverse
