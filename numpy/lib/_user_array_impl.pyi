@@ -13,8 +13,8 @@ from numpy._typing import _ArrayLike, _ArrayLikeBool_co, _ArrayLikeInt_co, _DTyp
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
 _ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], default=Any, covariant=True)
-_DTypeT = TypeVar("_DTypeT", bound=np.dtype[Any])
-_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype[Any], default=np.dtype[Any], covariant=True)
+_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
 
 _BoolArrayT = TypeVar("_BoolArrayT", bound=container[Any, np.dtype[np.bool]])
 _IntegralArrayT = TypeVar("_IntegralArrayT", bound=container[Any, np.dtype[np.bool | np.integer | np.object_]])
@@ -95,7 +95,7 @@ class container(Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __getitem__(self: container[Any, np.dtype[np.void]], key: list[str], /) -> container[_ShapeT_co, np.dtype[np.void]]: ...
     @overload
-    def __getitem__(self: container[Any, np.dtype[np.void]], key: str, /) -> container[_ShapeT_co, np.dtype[Any]]: ...
+    def __getitem__(self: container[Any, np.dtype[np.void]], key: str, /) -> container[_ShapeT_co, np.dtype]: ...
 
     # keep in sync with np.ndarray
     @overload

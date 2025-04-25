@@ -72,12 +72,12 @@ assert_type(np.can_cast(np.dtype("i8"), int), bool)
 assert_type(np.can_cast(AR_f8, "f8"), bool)
 assert_type(np.can_cast(AR_f8, np.complex128, casting="unsafe"), bool)
 
-assert_type(np.min_scalar_type([1]), np.dtype[Any])
-assert_type(np.min_scalar_type(AR_f8), np.dtype[Any])
+assert_type(np.min_scalar_type([1]), np.dtype)
+assert_type(np.min_scalar_type(AR_f8), np.dtype)
 
-assert_type(np.result_type(int, [1]), np.dtype[Any])
-assert_type(np.result_type(AR_f8, AR_u1), np.dtype[Any])
-assert_type(np.result_type(AR_f8, np.complex128), np.dtype[Any])
+assert_type(np.result_type(int, [1]), np.dtype)
+assert_type(np.result_type(AR_f8, AR_u1), np.dtype)
+assert_type(np.result_type(AR_f8, np.complex128), np.dtype)
 
 assert_type(np.dot(AR_LIKE_f, AR_i8), Any)
 assert_type(np.dot(AR_u1, 1), Any)
@@ -105,8 +105,8 @@ assert_type(np.shares_memory(AR_f8, AR_f8, max_work=1), bool)
 assert_type(np.may_share_memory(1, 2), bool)
 assert_type(np.may_share_memory(AR_f8, AR_f8, max_work=1), bool)
 
-assert_type(np.promote_types(np.int32, np.int64), np.dtype[Any])
-assert_type(np.promote_types("f4", float), np.dtype[Any])
+assert_type(np.promote_types(np.int32, np.int64), np.dtype)
+assert_type(np.promote_types("f4", float), np.dtype)
 
 assert_type(np.frompyfunc(func11, n1, n1).nin, Literal[1])
 assert_type(np.frompyfunc(func11, n1, n1).nout, Literal[1])

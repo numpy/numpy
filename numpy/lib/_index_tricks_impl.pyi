@@ -39,7 +39,7 @@ __all__ = [  # noqa: RUF022
 _T = TypeVar("_T")
 _TupleT = TypeVar("_TupleT", bound=tuple[Any, ...])
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
-_DTypeT = TypeVar("_DTypeT", bound=np.dtype[Any])
+_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 _BoolT_co = TypeVar("_BoolT_co", bound=bool, default=bool, covariant=True)
@@ -116,7 +116,7 @@ class OGridClass(nd_grid[L[True]]):
 class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]):
     __slots__ = "axis", "matrix", "ndmin", "trans1d"
 
-    makemat: ClassVar[type[np.matrix[tuple[int, int], np.dtype[Any]]]]
+    makemat: ClassVar[type[np.matrix[tuple[int, int], np.dtype]]]
 
     axis: _AxisT_co
     matrix: _MatrixT_co

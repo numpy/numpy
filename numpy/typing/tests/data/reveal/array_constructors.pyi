@@ -117,8 +117,8 @@ assert_type(np.arange(0, np.timedelta64(10)), np.ndarray[tuple[int], np.dtype[np
 assert_type(np.arange(np.datetime64("0"), np.datetime64("10")), np.ndarray[tuple[int], np.dtype[np.datetime64]])
 assert_type(np.arange(10, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
 assert_type(np.arange(0, 10, step=2, dtype=np.int16), np.ndarray[tuple[int], np.dtype[np.int16]])
-assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype[Any]])
-assert_type(np.arange(0, 10, dtype="f8"), np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.arange(10, dtype=int), np.ndarray[tuple[int], np.dtype])
+assert_type(np.arange(0, 10, dtype="f8"), np.ndarray[tuple[int], np.dtype])
 
 assert_type(np.require(A), npt.NDArray[np.float64])
 assert_type(np.require(B), SubClass[np.float64])
@@ -191,9 +191,9 @@ assert_type(np.full(_shape_2d, i8), np.ndarray[tuple[int, int], np.dtype[np.int6
 assert_type(np.full(_shape_like, i8), npt.NDArray[np.int64])
 assert_type(np.full(_shape_like, 42), npt.NDArray[Any])
 assert_type(np.full(_size, i8, dtype=np.float64), np.ndarray[tuple[int], np.dtype[np.float64]])
-assert_type(np.full(_size, i8, dtype=float), np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.full(_size, i8, dtype=float), np.ndarray[tuple[int], np.dtype])
 assert_type(np.full(_shape_like, 42, dtype=float), npt.NDArray[Any])
-assert_type(np.full(_shape_0d, i8, dtype=object), np.ndarray[tuple[()], np.dtype[Any]])
+assert_type(np.full(_shape_0d, i8, dtype=object), np.ndarray[tuple[()], np.dtype])
 
 assert_type(np.indices([1, 2, 3]), npt.NDArray[np.int_])
 assert_type(np.indices([1, 2, 3], sparse=True), tuple[npt.NDArray[np.int_], ...])

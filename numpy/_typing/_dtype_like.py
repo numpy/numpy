@@ -26,7 +26,7 @@ from ._char_codes import (
 )
 
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_DTypeT_co = TypeVar("_DTypeT_co", covariant=True, bound=np.dtype[Any])
+_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, covariant=True)
 
 _DTypeLikeNested: TypeAlias = Any  # TODO: wait for support for recursive types
 

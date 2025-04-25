@@ -178,7 +178,7 @@ __all__ = [
 
 _T = TypeVar("_T")
 _ScalarT = TypeVar("_ScalarT", bound=generic)
-_DTypeT = TypeVar("_DTypeT", bound=np.dtype[Any])
+_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
 _ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 
@@ -849,7 +849,7 @@ def array_equiv(a1: ArrayLike, a2: ArrayLike) -> bool: ...
 
 @overload
 def astype(
-    x: ndarray[_ShapeT, dtype[Any]],
+    x: ndarray[_ShapeT, dtype],
     dtype: _DTypeLike[_ScalarT],
     /,
     *,
@@ -858,10 +858,10 @@ def astype(
 ) -> ndarray[_ShapeT, dtype[_ScalarT]]: ...
 @overload
 def astype(
-    x: ndarray[_ShapeT, dtype[Any]],
+    x: ndarray[_ShapeT, dtype],
     dtype: DTypeLike,
     /,
     *,
     copy: bool = ...,
     device: L["cpu"] | None = ...,
-) -> ndarray[_ShapeT, dtype[Any]]: ...
+) -> ndarray[_ShapeT, dtype]: ...
