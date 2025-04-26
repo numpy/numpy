@@ -30,6 +30,7 @@ MAR_V: MaskedNDArray[np.void]
 MAR_subclass: MaskedNDArraySubclass
 
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype]
+MAR_2d_f4: np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]]
 
 b: np.bool
 f4: np.float32
@@ -281,6 +282,14 @@ assert_type(np.ma.allequal(AR_f4, MAR_f4, fill_value=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, masked_equal=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
+
+assert_type(np.ma.getmask(MAR_f4), NDArray[np.bool] | np.bool)
+# PyRight detects this one correctly, but mypy doesn't:
+# `Revealed type is "Union[numpy.ndarray[Any, Any], numpy.bool[Any]]"`
+assert_type(np.ma.getmask(MAR_1d), np.ndarray[tuple[int], np.dtype[np.bool]] | np.bool)  # type: ignore[assert-type]
+assert_type(np.ma.getmask(MAR_2d_f4), np.ndarray[tuple[int, int], np.dtype[np.bool]] | np.bool)
+assert_type(np.ma.getmask([1,2]), NDArray[np.bool] | np.bool)
+assert_type(np.ma.getmask(np.int64(1)), np.bool)
 
 assert_type(np.ma.is_mask(MAR_1d), bool)
 assert_type(np.ma.is_mask(AR_b), bool)
