@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, TypeAlias, TypeVar, assert_type
+from typing import Any, Literal, TypeAlias, TypeVar, assert_type
 
 import numpy as np
 from numpy import dtype, generic
@@ -10,6 +10,7 @@ MaskedNDArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT_co]]
 
 class MaskedNDArraySubclass(MaskedNDArray[np.complex128]): ...
 
+AR_b: NDArray[np.bool]
 AR_f4: NDArray[np.float32]
 AR_dt64: NDArray[np.datetime64]
 AR_td64: NDArray[np.timedelta64]
@@ -289,3 +290,16 @@ assert_type(np.ma.getmask(MAR_1d), np.ndarray[tuple[int], np.dtype[np.bool]] | n
 assert_type(np.ma.getmask(MAR_2d_f4), np.ndarray[tuple[int, int], np.dtype[np.bool]] | np.bool)
 assert_type(np.ma.getmask([1,2]), NDArray[np.bool] | np.bool)
 assert_type(np.ma.getmask(np.int64(1)), np.bool)
+
+assert_type(np.ma.is_mask(MAR_1d), bool)
+assert_type(np.ma.is_mask(AR_b), bool)
+
+def func(x: object) -> None:
+    if np.ma.is_mask(x):
+        assert_type(x, NDArray[np.bool])
+    else:
+        assert_type(x, object)
+
+assert_type(np.ma.nomask, np.bool[Literal[False]])
+# https://github.com/python/mypy/issues/18974
+assert_type(np.ma.MaskType, type[np.bool])  # type: ignore[assert-type]
