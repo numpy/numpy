@@ -29,6 +29,7 @@ MAR_V: MaskedNDArray[np.void]
 MAR_subclass: MaskedNDArraySubclass
 
 MAR_1d: np.ma.MaskedArray[tuple[int], np.dtype]
+MAR_2d_f4: np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]]
 
 b: np.bool
 f4: np.float32
@@ -280,3 +281,8 @@ assert_type(np.ma.allequal(AR_f4, MAR_f4, fill_value=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, masked_equal=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
+
+assert_type(np.ma.getmask(MAR_f4), NDArray[np.bool] | np.bool)
+assert_type(np.ma.getmask(MAR_1d), NDArray[np.bool] | np.bool)
+assert_type(np.ma.getmask(MAR_2d_f4), NDArray[np.bool] | np.bool)
+assert_type(np.ma.getmask([1,2]), NDArray[np.bool] | np.bool)
