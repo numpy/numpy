@@ -230,8 +230,8 @@ _ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
 
-MaskType = bool
-nomask: bool
+MaskType: TypeAlias = bool_
+nomask: bool_
 
 class MaskedArrayFutureWarning(FutureWarning): ...
 class MAError(Exception): ...

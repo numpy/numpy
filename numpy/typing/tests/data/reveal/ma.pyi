@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, TypeAlias, TypeVar, assert_type
+from typing import Any, Literal, TypeAlias, TypeVar, assert_type
 
 import numpy as np
 from numpy import dtype, generic
@@ -280,3 +280,7 @@ assert_type(np.ma.allequal(AR_f4, MAR_f4, fill_value=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, masked_equal=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
+
+assert_type(np.ma.nomask, np.bool)
+# https://github.com/python/mypy/issues/18974
+assert_type(np.ma.MaskType, type[np.bool])  # type: ignore[assert-type]
