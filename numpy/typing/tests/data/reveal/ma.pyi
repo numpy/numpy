@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, TypeAlias, TypeVar, assert_type
+from typing import Any, Literal, TypeAlias, TypeVar, assert_type
 
 import numpy as np
 from numpy import dtype, generic
@@ -290,3 +290,7 @@ def func(x: object) -> None:
         assert_type(x, NDArray[np.bool])
     else:
         assert_type(x, object)
+
+assert_type(np.ma.nomask, np.bool[Literal[False]])
+# https://github.com/python/mypy/issues/18974
+assert_type(np.ma.MaskType, type[np.bool])  # type: ignore[assert-type]
