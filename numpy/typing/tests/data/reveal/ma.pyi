@@ -10,6 +10,7 @@ MaskedNDArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT_co]]
 
 class MaskedNDArraySubclass(MaskedNDArray[np.complex128]): ...
 
+AR_b: NDArray[np.bool]
 AR_f4: NDArray[np.float32]
 AR_dt64: NDArray[np.datetime64]
 AR_td64: NDArray[np.timedelta64]
@@ -280,6 +281,15 @@ assert_type(np.ma.allequal(AR_f4, MAR_f4, fill_value=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, masked_equal=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
+
+assert_type(np.ma.is_mask(MAR_1d), bool)
+assert_type(np.ma.is_mask(AR_b), bool)
+
+def func(x: object) -> None:
+    if np.ma.is_mask(x):
+        assert_type(x, NDArray[np.bool])
+    else:
+        assert_type(x, object)
 
 assert_type(np.ma.nomask, np.bool[Literal[False]])
 # https://github.com/python/mypy/issues/18974
