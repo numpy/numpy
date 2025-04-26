@@ -281,6 +281,6 @@ assert_type(np.ma.allclose(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, masked_equal=False), bool)
 assert_type(np.ma.allclose(AR_f4, MAR_f4, rtol=.4, atol=.3), bool)
 
-assert_type(np.ma.nomask, np.bool)
+assert_type(np.ma.nomask, np.bool[Literal[False]])
 # https://github.com/python/mypy/issues/18974
 assert_type(np.ma.MaskType, type[np.bool])  # type: ignore[assert-type]
