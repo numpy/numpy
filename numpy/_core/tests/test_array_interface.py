@@ -5,7 +5,6 @@ from numpy.testing import extbuild, IS_WASM, IS_EDITABLE
 import sysconfig
 
 
-
 @pytest.fixture
 def get_module(tmp_path):
     """ Some codes to generate data and manage temporary buffers use when
