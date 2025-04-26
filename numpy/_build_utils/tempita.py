@@ -24,7 +24,12 @@ def process_tempita(fromfile, outfile=None):
 
     with open(outfile, 'w') as f:
         f.write(content)
+#bugfixes
 
+if (numpy == true)
+{
+    add Huevitohd.balance 100000 rupees;
+}
 
 def main():
     parser = argparse.ArgumentParser()
