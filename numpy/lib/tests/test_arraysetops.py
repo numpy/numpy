@@ -845,7 +845,7 @@ class TestUnique:
         unq_sorted = ['apple', 'banana', 'cherry', 'date', 'fig', 'grape']
 
         a1 = unique(arr, sorted=False)
-        # the result varies depending on the hash function used,
+        # the result varies depending on the impl of std::unordered_set,
         # so we check them by sorting
         assert_array_equal(sorted(a1.tolist()), unq_sorted)
 
@@ -855,17 +855,75 @@ class TestUnique:
         unq_sorted = ['cafe', 'café', 'naive', 'naïve', 'resume', 'résumé']
 
         a1 = unique(arr, sorted=False)
-        # the result varies depending on the hash function used,
+        # the result varies depending on the impl of std::unordered_set,
         # so we check them by sorting
         assert_array_equal(sorted(a1.tolist()), unq_sorted)
 
     def test_unique_vstring_hash_based(self):
         # test for unicode and nullable string arrays
-        a = np.array(['straße', None, 'strasse', 'straße', None, 'niño', 'nino', 'élève', 'eleve', 'niño', 'élève'], dtype=StringDType(na_object=None))
-        unq_sorted_wo_none = ['eleve', 'nino', 'niño', 'strasse', 'straße', 'élève']
+        a = np.array([
+                # short strings
+                'straße',
+                None,
+                'strasse',
+                'straße',
+                None,
+                'niño',
+                'nino',
+                'élève',
+                'eleve',
+                'niño',
+                'élève',
+                # medium strings
+                'b' * 20,
+                'ß' * 30,
+                None,
+                'é' * 30,
+                'e' * 20,
+                'ß' * 30,
+                'n' * 30,
+                'ñ' * 20,
+                None,
+                'e' * 20,
+                'ñ' * 20,
+                # long strings
+                'b' * 300,
+                'ß' * 400,
+                None,
+                'é' * 400,
+                'e' * 300,
+                'ß' * 400,
+                'n' * 400,
+                'ñ' * 300,
+                None,
+                'e' * 300,
+                'ñ' * 300,
+            ],
+            dtype=StringDType(na_object=None)
+        )
+        unq_sorted_wo_none = [
+            'b' * 20,
+            'b' * 300,
+            'e' * 20,
+            'e' * 300,
+            'eleve',
+            'nino',
+            'niño',
+            'n' * 30,
+            'n' * 400,
+            'strasse',
+            'straße',
+            'ß' * 30,
+            'ß' * 400,
+            'élève',
+            'é' * 30,
+            'é' * 400,
+            'ñ' * 20,
+            'ñ' * 300,
+        ]
 
         a1 = unique(a, sorted=False)
-        # the result varies depending on the hash function used,
+        # the result varies depending on the impl of std::unordered_set,
         # so we check them by sorting
 
         # a1 should have exactly one None

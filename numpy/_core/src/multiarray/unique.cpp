@@ -198,9 +198,9 @@ unique_vstring(PyArrayObject *self)
     npy_intp isize = PyArray_SIZE(self);
 
     // variables for the vstring
-    npy_string_allocator *allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr);
-    auto allocator_dealloc = finally([&]() {
-        NpyString_release_allocator(allocator);
+    npy_string_allocator *in_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr);
+    auto in_allocator_dealloc = finally([&]() {
+        NpyString_release_allocator(in_allocator);
     });
     auto hash = [](const npy_static_string *value) -> size_t {
         if (value->buf == NULL) {
@@ -233,7 +233,7 @@ unique_vstring(PyArrayObject *self)
     std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
-        NpyString_load(allocator, packed_string, &unpacked_strings[i]);
+        NpyString_load(in_allocator, packed_string, &unpacked_strings[i]);
         hashset.insert(&unpacked_strings[i]);
     }
 
@@ -257,18 +257,25 @@ unique_vstring(PyArrayObject *self)
     if (res_obj == NULL) {
         return NULL;
     }
+    PyArray_Descr *res_descr = PyArray_DESCR((PyArrayObject *)res_obj);
+    // NumPy API calls and Python object manipulations require holding the GIL.
+    Py_INCREF(res_descr);
     NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
 
+    npy_string_allocator *out_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)res_descr);
+    auto out_allocator_dealloc = finally([&]() {
+        NpyString_release_allocator(out_allocator);
+    });
     char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
         if ((*it)->buf == NULL) {
-            NpyString_pack_null(allocator, packed_string);
+            NpyString_pack_null(out_allocator, packed_string);
         } else {
-            NpyString_pack(allocator, packed_string, (*it)->buf, (*it)->size);
+            NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
         }
     }
 
