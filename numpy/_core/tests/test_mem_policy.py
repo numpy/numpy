@@ -3,6 +3,7 @@ import gc
 import os
 import sys
 import threading
+import sysconfig
 
 import pytest
 
@@ -220,6 +221,8 @@ def get_module(tmp_path):
     except ImportError:
         pass
     # if it does not exist, build and load it
+    if sysconfig.get_platform() == "win-arm64":
+        pytest.skip("Meson unable to find MSVC linker on win-arm64")
     return extbuild.build_and_import_extension('mem_policy',
                                                functions,
                                                prologue=prologue,
