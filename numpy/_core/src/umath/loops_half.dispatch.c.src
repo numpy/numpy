@@ -6,7 +6,11 @@
 #include "fast_loop_macros.h"
 
 
-#define NPY__SVML_IS_ENABLED (NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML))
+#if NPY_SIMD && defined(NPY_HAVE_AVX512_SKX) && defined(NPY_CAN_LINK_SVML)
+  #define NPY__SVML_IS_ENABLED 1
+#else
+  #define NPY__SVML_IS_ENABLED 0
+#endif
 
 #if NPY__SVML_IS_ENABLED && !defined(NPY_HAVE_AVX512_SPR)
 
