@@ -24,7 +24,6 @@ from numpy import (
     intp,
     ndarray,
 )
-from numpy._core.fromnumeric import _Array1D
 from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
@@ -227,10 +226,10 @@ _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _ScalarT = TypeVar("_ScalarT", bound=generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
-_MaskedArray1D: TypeAlias = MaskedArray[tuple[int], dtype[_ScalarT]]
+_Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
