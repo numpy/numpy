@@ -355,18 +355,6 @@ move towards now that DType classes are importable from the ``np.dtypes``
 namespace, so we will include an explicit instantiation of a ``StringDType``
 object in the documentation even if it is not strictly necessary.
 
-We propose associating the python ``str`` builtin as the DType's scalar type:
-
-  >>> StringDType.type
-  <class 'str'>
-
-While this does create an API wart in that the mapping from builtin DType
-classes to scalars in NumPy will no longer be one-to-one (the ``unicode``
-DType's scalar type is ``str``), this avoids needing to define, optimize, or
-maintain a ``str`` subclass for this purpose or other hacks to maintain this
-one-to-one mapping. To maintain backward compatibility, the DType detected for a
-list of python strings will remain a fixed-width unicode string.
-
 As described below, ``StringDType`` supports two parameters that can adjust the
 runtime behavior of the DType. We will not attempt to support parameters for the
 dtype via a character code. If users need an instance of the DType that does not
@@ -390,6 +378,24 @@ version of ``StringDType`` that can re-use the ``"T"`` character code with
 length or encoding modifiers. This will allow a migration to a more flexible
 text dtype for use with structured arrays and other use-cases with a fixed-width
 string is a better fit than a variable-width string.
+
+Scalar type
+***********
+
+We propose a dedicated ``np.vstr`` scalar type as the DType's scalar type:
+
+  >>> StringDType.type
+  <class 'numpy.vstr'>
+
+Each scalar instance will own a copy of the full encoded string it wraps, and
+it won't use allocation mechanisms offered by ``StringDType`` instance paired
+with the scalar.
+
+Compared to using e.g. ``str`` as the scalar type, our approach complies with
+the existing dtypes and scalars convention, where each dtype has an associated
+NumPy scalar type. It also allows better typing capabilities and avoids
+converting to and from UTF-8 when interacting between ``StringDType`` arrays
+and builtin ``str`` strings as scalars.
 
 Missing Data Support
 ********************
