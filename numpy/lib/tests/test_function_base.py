@@ -4141,8 +4141,8 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:8], q, method=m))
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
-    
-    @pytest.mark.parametrize(["err_msg", "weight"], 
+
+    @pytest.mark.parametrize(["err_msg", "weight"],
                              [("Weights must be finite.", [1, np.inf, 1, 1]),
                               ("Weights must be non-negative.", [1, -np.inf, 1, 1]),
                               ("Weights must be finite.", [1, np.inf, 1, np.inf]),
@@ -4163,7 +4163,7 @@ class TestQuantile:
 
         m = "inverted_cdf"
         q = 0.5
-        arr = [1, 2, 3, 4] 
+        arr = [1, 2, 3, 4]
         wgts = np.array(weight, dtype=dty)
         with pytest.raises(err):
             a = np.quantile(arr, q, weights=wgts, method=m)
