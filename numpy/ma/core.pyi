@@ -16,6 +16,8 @@ from numpy import (
     amax,
     amin,
     bool_,
+    bytes_,
+    complex128,
     dtype,
     expand_dims,
     float64,
@@ -23,6 +25,7 @@ from numpy import (
     int_,
     intp,
     ndarray,
+    str_,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
@@ -33,6 +36,7 @@ from numpy._typing import (
     _ArrayLikeInt,
     _ArrayLikeInt_co,
     _DTypeLikeBool,
+    _NestedSequence,
     _IntLike_co,
     _ScalarLike_co,
     _Shape,
@@ -229,6 +233,7 @@ _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
+_MaskedArray1D: TypeAlias = MaskedArray[tuple[int], dtype[_ScalarT]]
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
@@ -483,7 +488,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def count(self, axis: _ShapeLike | None, keepdims: Literal[True]) -> NDArray[int_]: ...
 
-    def ravel(self, order=...): ...
+    def ravel(self, order: _OrderKACF = "C") -> MaskedArray[tuple[int], _DTypeT_co]: ...
     def reshape(self, *s, **kwargs): ...
     def resize(self, newshape, refcheck=..., order=...): ...
     def put(self, indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
@@ -995,7 +1000,28 @@ mean: _frommethod
 nonzero: _frommethod
 prod: _frommethod
 product: _frommethod
-ravel: _frommethod
+
+# Keep in sync with `np.ravel`
+@overload
+def ravel(self: _ArrayLike[_ScalarT_co], /, order: _OrderKACF = "C") -> MaskedArray[tuple[int], dtype[_ScalarT_co]]: ...
+@overload
+def ravel(a: bytes | _NestedSequence[bytes], order: _OrderKACF = "C") -> _MaskedArray1D[bytes_]: ...
+@overload
+def ravel(a: str | _NestedSequence[str], order: _OrderKACF = "C") -> _MaskedArray1D[str_]: ...
+@overload
+def ravel(a: bool | _NestedSequence[bool], order: _OrderKACF = "C") -> _MaskedArray1D[bool_]: ...
+@overload
+def ravel(a: int | _NestedSequence[int], order: _OrderKACF = "C") -> _MaskedArray1D[int_ | bool_]: ...
+@overload
+def ravel(a: float | _NestedSequence[float], order: _OrderKACF = "C") -> _MaskedArray1D[float64 | int_ | bool_]: ...
+@overload
+def ravel(
+    a: complex | _NestedSequence[complex],
+    order: _OrderKACF = "C",
+) -> _MaskedArray1D[complex128 | float64 | int_ | bool_]: ...
+@overload
+def ravel(self: ArrayLike, /, order: _OrderKACF = "C") -> MaskedArray[tuple[int], dtype]: ...
+
 repeat: _frommethod
 soften_mask: _frommethod
 std: _frommethod
