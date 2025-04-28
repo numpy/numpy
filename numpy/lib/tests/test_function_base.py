@@ -4158,9 +4158,7 @@ class TestQuantile:
             a = np.quantile(arr, q, weights=wgts, method=m)
 
     @pytest.mark.parametrize("weight", [[1, np.nan, 1, 1], [1, np.nan, np.nan, 1]])
-    @pytest.mark.parametrize(["err", "dty"],
-                             [(ValueError, "f8"),
-                              ((RuntimeWarning, ValueError), "O")])
+    @pytest.mark.parametrize(["err", "dty"], [(ValueError, "f8"), ((RuntimeWarning, ValueError), "O")])
     def test_nan_err(self, err, dty, weight):
 
         m = "inverted_cdf"
@@ -4170,7 +4168,6 @@ class TestQuantile:
         with pytest.raises(err):
             a = np.quantile(arr, q, weights=wgts, method=m)
 
-     
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
                                    min_value=0, max_value=1),
