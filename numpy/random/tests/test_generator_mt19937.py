@@ -1899,7 +1899,7 @@ class TestBroadcast:
         scale = [1]
         bad_scale = [-1]
         random = Generator(MT19937(self.seed))
-        desired = np.array([-0.38736406738527,  0.79594375042255,  0.0197076236097])
+        desired = np.array([-0.38736406738527, 0.79594375042255, 0.0197076236097])
 
         random = Generator(MT19937(self.seed))
         actual = random.normal(loc * 3, scale)

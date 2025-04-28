@@ -117,7 +117,7 @@ class AbstractTest:
 
 @pytest.mark.skipif(
     sys.platform == 'emscripten',
-    reason= (
+    reason=(
         "The subprocess module is not available on WASM platforms and"
         " therefore this test class cannot be properly executed."
     ),

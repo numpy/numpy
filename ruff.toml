@@ -28,19 +28,19 @@ extend-select = [
 ignore = [
     "F",      # TODO: enable Pyflakes rules
     "PIE790", # Unnecessary `pass` statement
-    "E241",
-    "E251",
-    "E265",
-    "E266",
-    "E302",
-    "E402",
+    "E241",   # Multiple spaces after comma
+    "E251",   # Unexpected spaces around keyword / parameter equals
+    "E265",   # Block comment should start with `# `
+    "E266",   # Too many leading `#` before block comment
+    "E302",   # TODO: Expected 2 blank lines, found 1
+    "E402",   # Module level import not at top of file
     "E501",   # TODO: Line too long
-    "E712",
-    "E721",
-    "E731",
-    "E741",
-    "UP015", # Unnecessary mode argument
-    "UP031", # TODO: Use format specifiers instead of percent format
+    "E712",   # Avoid equality comparisons to `True` or `False`
+    "E721",   # TODO: Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance check
+    "E731",   # Do not assign a `lambda` expression, use a `def`
+    "E741",   # Ambiguous variable name
+    "UP015",  # Unnecessary mode argument
+    "UP031",  # TODO: Use format specifiers instead of percent format
 ]
 
 [lint.per-file-ignores]

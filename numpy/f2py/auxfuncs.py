@@ -923,7 +923,7 @@ def getuseblocks(pymod):
                 all_uses.extend([x for x in modblock.get("use").keys() if "__" not in x])
     return all_uses
 
-def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose = False):
+def process_f2cmap_dict(f2cmap_all, new_map, c2py_map, verbose=False):
     """
     Update the Fortran-to-C type mapping dictionary with new mappings and
     return a list of successfully mapped C types.

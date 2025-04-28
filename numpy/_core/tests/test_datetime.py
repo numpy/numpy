@@ -2492,7 +2492,7 @@ class TestDateTime:
         '''check isfinite, isinf, isnan for all units of <M, >M, <m, >m dtypes
         '''
         arr_val = [123, -321, "NaT"]
-        arr = np.array(arr_val,  dtype= dstr % unit)
+        arr = np.array(arr_val, dtype=(dstr % unit))
         pos = np.array([True, True, False])
         neg = np.array([False, False, True])
         false = np.array([False, False, False])
