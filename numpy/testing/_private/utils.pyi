@@ -66,7 +66,6 @@ __all__ = [  # noqa: RUF022
     "build_err_msg",
     "decorate_methods",
     "jiffies",
-    "memusage",
     "print_assert_equal",
     "rundocs",
     "runstring",
@@ -159,15 +158,6 @@ class suppress_warnings:
     #
     def filter(self, /, category: type[Warning] = ..., message: str = "", module: types.ModuleType | None = None) -> None: ...
     def record(self, /, category: type[Warning] = ..., message: str = "", module: types.ModuleType | None = None) -> _WarnLog: ...
-
-# Contrary to runtime we can't do `os.name` checks while type checking,
-# only `sys.platform` checks
-if sys.platform == "win32" or sys.platform == "cygwin":
-    def memusage(processName: str = ..., instance: int = ...) -> int: ...
-elif sys.platform == "linux":
-    def memusage(_proc_pid_stat: StrOrBytesPath = ...) -> int | None: ...
-else:
-    def memusage() -> NoReturn: ...
 
 if sys.platform == "linux":
     def jiffies(_proc_pid_stat: StrOrBytesPath = ..., _load_time: list[float] = []) -> int: ...
