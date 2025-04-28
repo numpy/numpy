@@ -777,7 +777,13 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     copy: Any
     diagonal: Any
     flatten: Any
-    repeat: Any
+
+    def repeat(
+        self,
+        repeats: _ArrayLikeInt_co,
+        axis: SupportsIndex | None = ...,
+    ) -> MaskedArray[_Shape, _DTypeT_co]: ...
+
     squeeze: Any
     swapaxes: Any
     T: Any
@@ -996,7 +1002,20 @@ nonzero: _frommethod
 prod: _frommethod
 product: _frommethod
 ravel: _frommethod
-repeat: _frommethod
+
+@overload
+def repeat(
+    a: _ArrayLike[_ScalarT],
+    repeats: _ArrayLikeInt_co,
+    axis: SupportsIndex | None = ...,
+) -> _MaskedArray[_ScalarT]: ...
+@overload
+def repeat(
+    a: ArrayLike,
+    repeats: _ArrayLikeInt_co,
+    axis: SupportsIndex | None = ...,
+) -> _MaskedArray[Any]: ...
+
 soften_mask: _frommethod
 std: _frommethod
 sum: _frommethod
