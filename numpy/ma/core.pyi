@@ -24,6 +24,7 @@ from numpy import (
     intp,
     ndarray,
 )
+from numpy._core.fromnumeric import _Array1D
 from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
@@ -229,6 +230,7 @@ _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
+_MaskedArray1D: TypeAlias = MaskedArray[tuple[int], dtype[_ScalarT]]
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
@@ -1166,9 +1168,9 @@ def sort(
     stable: Literal[False] | None = False,
 ) -> NDArray[Any]: ...
 @overload
-def compressed(x: _ArrayLike[_ScalarT_co]) -> ndarray[tuple[int], dtype[_ScalarT_co]]: ...
+def compressed(x: _ArrayLike[_ScalarT_co]) -> _Array1D[_ScalarT_co]: ...
 @overload
-def compressed(x: ArrayLike) -> ndarray[tuple[int], dtype]: ...
+def compressed(x: ArrayLike) -> _Array1D[Any]: ...
 def concatenate(arrays, axis=...): ...
 def diag(v, k=...): ...
 def left_shift(a, n): ...
