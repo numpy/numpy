@@ -266,24 +266,34 @@ unique_vstring(PyArrayObject *self)
     Py_INCREF(res_descr);
     NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
-    auto save2_dealloc = finally([&]() {
-        PyEval_RestoreThread(_save2);
-    });
 
     npy_string_allocator *out_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)res_descr);
     auto out_allocator_dealloc = finally([&]() {
         NpyString_release_allocator(out_allocator);
     });
+
     char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    int pack_status = 0;
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
         if ((*it)->buf == NULL) {
-            NpyString_pack_null(out_allocator, packed_string);
+            pack_status = NpyString_pack_null(out_allocator, packed_string);
         } else {
-            NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
+            pack_status = NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
         }
+        if (pack_status == -1) {
+            // string packing failed
+            break;
+        }
+    }
+
+    PyEval_RestoreThread(_save2);
+    if (pack_status == -1) {
+        // PyErr_SetString requires holding the GIL.
+        PyErr_SetString(PyExc_TypeError, "string packing failed");
+        return NULL;
     }
 
     return res_obj;
