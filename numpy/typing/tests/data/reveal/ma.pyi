@@ -279,7 +279,7 @@ assert_type(np.ma.filled(MAR_1d), np.ndarray[tuple[int], np.dtype])  # type: ign
 assert_type(MAR_b.repeat(3), np.ma.MaskedArray[tuple[int], np.dtype[np.bool]])
 assert_type(MAR_2d_f4.repeat(MAR_i8), np.ma.MaskedArray[tuple[int], np.dtype[np.float32]])
 assert_type(MAR_2d_f4.repeat(MAR_i8, axis=None), np.ma.MaskedArray[tuple[int], np.dtype[np.float32]])
-assert_type(MAR_2d_f4.repeat(MAR_i8, axis=0), MaskedNDArray[np.float32])
+assert_type(MAR_2d_f4.repeat(MAR_i8, axis=0), MaskedArray[np.float32])
 
 assert_type(np.ma.allequal(AR_f4, MAR_f4), bool)
 assert_type(np.ma.allequal(AR_f4, MAR_f4, fill_value=False), bool)
