@@ -56,7 +56,7 @@ unique_integer(PyArrayObject *self)
     // number of elements in the input array
     npy_intp isize = PyArray_SIZE(self);
 
-    // Reserve hashset capacity in advance to minimize reallocations.
+    // Reserve enough hashset capacity in advance to avoid reallocations and reduce collisions.
     std::unordered_set<T> hashset(isize * 2);
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
@@ -131,7 +131,7 @@ unique_string(PyArrayObject *self)
         return std::memcmp(lhs, rhs, itemsize) == 0;
     };
 
-    // Reserve hashset capacity in advance to minimize reallocations.
+    // Reserve enough hashset capacity in advance to avoid reallocations and reduce collisions.
     std::unordered_set<T *, decltype(hash), decltype(equal)> hashset(
         isize * 2, hash, equal
     );
@@ -221,7 +221,7 @@ unique_vstring(PyArrayObject *self)
         return std::memcmp(lhs->buf, rhs->buf, lhs->size) == 0;
     };
 
-    // Reserve hashset capacity in advance to minimize reallocations.
+     // Reserve enough hashset capacity in advance to avoid reallocations and reduce collisions.
     std::unordered_set<npy_static_string *, decltype(hash), decltype(equal)> hashset(
         isize * 2, hash, equal
     );
