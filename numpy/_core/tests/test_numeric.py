@@ -4142,7 +4142,7 @@ class TestBroadcast:
                 assert_equal(mit.numiter, j)
 
     def test_broadcast_error_kwargs(self):
-        #gh-13455
+        # gh-13455
         arrs = [np.empty((5, 6, 7))]
         mit = np.broadcast(*arrs)
         mit2 = np.broadcast(*arrs, **{})  # noqa: PIE804

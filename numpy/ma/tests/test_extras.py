@@ -1205,10 +1205,10 @@ class TestMedian:
 
     def test_special(self):
         for inf in [np.inf, -np.inf]:
-            a = np.array([[inf,  np.nan], [np.nan, np.nan]])
+            a = np.array([[inf, np.nan], [np.nan, np.nan]])
             a = np.ma.masked_array(a, mask=np.isnan(a))
-            assert_equal(np.ma.median(a, axis=0), [inf,  np.nan])
-            assert_equal(np.ma.median(a, axis=1), [inf,  np.nan])
+            assert_equal(np.ma.median(a, axis=0), [inf, np.nan])
+            assert_equal(np.ma.median(a, axis=1), [inf, np.nan])
             assert_equal(np.ma.median(a), inf)
 
             a = np.array([[np.nan, np.nan, inf], [np.nan, np.nan, inf]])
@@ -1717,7 +1717,7 @@ class TestArraySetOps:
         c = isin(a, b)
         assert_(isinstance(c, MaskedArray))
         assert_array_equal(c, ec)
-        #compare results of np.isin to ma.isin
+        # compare results of np.isin to ma.isin
         d = np.isin(a, b[~b.mask]) & ~a.mask
         assert_array_equal(c, d)
 

@@ -228,7 +228,7 @@ class record(nt.void):
             try:
                 dt = obj.dtype
             except AttributeError:
-                #happens if field is Object type
+                # happens if field is Object type
                 return obj
             if dt.names is not None:
                 return obj.view((self.__class__, obj.dtype))

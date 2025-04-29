@@ -136,7 +136,7 @@ if os.name == 'nt':
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
         # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
-        #(dead link)
+        # (dead link)
         # My older explanation for this was that the "AddCounter" process
         # forced the CPU to 100%, but the above makes more sense :)
         import win32pdh
@@ -2081,7 +2081,7 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 inp1 = lambda: arange(s, dtype=dtype)[o:]
                 inp2 = lambda: arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
-                yield out, inp1(), inp2(),  bfmt % \
+                yield out, inp1(), inp2(), bfmt % \
                     (o, o, o, s, dtype, 'out of place')
                 d = inp1()
                 yield d, d, inp2(), bfmt % \

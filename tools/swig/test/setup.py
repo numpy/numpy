@@ -46,16 +46,16 @@ _Tensor = Extension("_Tensor",
                     )
 
 _Fortran = Extension("_Fortran",
-                    ["Fortran_wrap.cxx",
-                     "Fortran.cxx"],
-                    include_dirs = [numpy_include],
-                    )
+                     ["Fortran_wrap.cxx",
+                      "Fortran.cxx"],
+                     include_dirs = [numpy_include],
+                     )
 
 _Flat = Extension("_Flat",
-                    ["Flat_wrap.cxx",
-                     "Flat.cxx"],
-                    include_dirs = [numpy_include],
-                    )
+                  ["Flat_wrap.cxx",
+                   "Flat.cxx"],
+                  include_dirs = [numpy_include],
+                  )
 
 # NumyTypemapTests setup
 setup(name = "NumpyTypemapTests",

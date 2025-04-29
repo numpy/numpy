@@ -53,7 +53,7 @@ class TestNegativeBounds(util.F2PyTest):
             return xh - xl + 1
         rval = self.module.foo(is_=xlow, ie_=xhigh,
                         arr=xvec[:ubound(xlow, xhigh)])
-        expval = np.arange(11, dtype = np.float32)
+        expval = np.arange(11, dtype=np.float32)
         assert np.allclose(rval, expval)
 
 
