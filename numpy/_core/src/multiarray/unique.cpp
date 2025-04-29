@@ -88,6 +88,9 @@ unique_integer(PyArrayObject *self)
     }
     NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
+    auto save2_dealloc = finally([&]() {
+        PyEval_RestoreThread(_save2);
+    });
 
     char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
@@ -96,7 +99,6 @@ unique_integer(PyArrayObject *self)
         *(T *)odata = *it;
     }
 
-    PyEval_RestoreThread(_save2);
     return res_obj;
 }
 
@@ -165,6 +167,9 @@ unique_string(PyArrayObject *self)
     }
     NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
+    auto save2_dealloc = finally([&]() {
+        PyEval_RestoreThread(_save2);
+    });
 
     char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
@@ -173,7 +178,6 @@ unique_string(PyArrayObject *self)
         std::memcpy(odata, *it, itemsize);
     }
 
-    PyEval_RestoreThread(_save2);
     return res_obj;
 }
 
@@ -262,6 +266,9 @@ unique_vstring(PyArrayObject *self)
     Py_INCREF(res_descr);
     NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
+    auto save2_dealloc = finally([&]() {
+        PyEval_RestoreThread(_save2);
+    });
 
     npy_string_allocator *out_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)res_descr);
     auto out_allocator_dealloc = finally([&]() {
@@ -279,7 +286,6 @@ unique_vstring(PyArrayObject *self)
         }
     }
 
-    PyEval_RestoreThread(_save2);
     return res_obj;
 }
 
