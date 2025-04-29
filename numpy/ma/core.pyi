@@ -778,10 +778,17 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     diagonal: Any
     flatten: Any
 
+    @overload
     def repeat(
         self,
         repeats: _ArrayLikeInt_co,
-        axis: SupportsIndex | None = ...,
+        axis: None = None,
+    ) -> MaskedArray[tuple[int], _DTypeT_co]: ...
+    @overload
+    def repeat(
+        self,
+        repeats: _ArrayLikeInt_co,
+        axis: SupportsIndex,
     ) -> MaskedArray[_Shape, _DTypeT_co]: ...
 
     squeeze: Any

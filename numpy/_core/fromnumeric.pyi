@@ -277,13 +277,25 @@ def choose(
 def repeat(
     a: _ArrayLike[_ScalarT],
     repeats: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = ...,
+    axis: None = None,
+) -> np.ndarray[tuple[int], np.dtype[_ScalarT]]: ...
+@overload
+def repeat(
+    a: _ArrayLike[_ScalarT],
+    repeats: _ArrayLikeInt_co,
+    axis: SupportsIndex,
 ) -> NDArray[_ScalarT]: ...
 @overload
 def repeat(
     a: ArrayLike,
     repeats: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = ...,
+    axis: None = None,
+) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+@overload
+def repeat(
+    a: ArrayLike,
+    repeats: _ArrayLikeInt_co,
+    axis: SupportsIndex,
 ) -> NDArray[Any]: ...
 
 def put(
