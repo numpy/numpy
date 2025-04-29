@@ -35,7 +35,7 @@ __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
         'assert_array_equal', 'assert_array_less', 'assert_string_equal',
         'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
-        'decorate_methods', 'jiffies', 'print_assert_equal',
+        'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
         'rundocs', 'runstring', 'verbose', 'measure',
         'assert_', 'assert_array_almost_equal_nulp', 'assert_raises_regex',
         'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
@@ -123,6 +123,65 @@ def assert_(val, msg=''):
         except TypeError:
             smsg = msg
         raise AssertionError(smsg)
+
+
+if os.name == 'nt':
+    # Code "stolen" from enthought/debug/memusage.py
+    def GetPerformanceAttributes(object, counter, instance=None,
+                                 inum=-1, format=None, machine=None):
+        # NOTE: Many counters require 2 samples to give accurate results,
+        # including "% Processor Time" (as by definition, at any instant, a
+        # thread's CPU usage is either 0 or 100).  To read counters like this,
+        # you should copy this function, but keep the counter open, and call
+        # CollectQueryData() each time you need to know.
+        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
+        # (dead link)
+        # My older explanation for this was that the "AddCounter" process
+        # forced the CPU to 100%, but the above makes more sense :)
+        import win32pdh
+        if format is None:
+            format = win32pdh.PDH_FMT_LONG
+        path = win32pdh.MakeCounterPath((machine, object, instance, None,
+                                         inum, counter))
+        hq = win32pdh.OpenQuery()
+        try:
+            hc = win32pdh.AddCounter(hq, path)
+            try:
+                win32pdh.CollectQueryData(hq)
+                type, val = win32pdh.GetFormattedCounterValue(hc, format)
+                return val
+            finally:
+                win32pdh.RemoveCounter(hc)
+        finally:
+            win32pdh.CloseQuery(hq)
+
+    def memusage(processName="python", instance=0):
+        # from win32pdhutil, part of the win32all package
+        import win32pdh
+        return GetPerformanceAttributes("Process", "Virtual Bytes",
+                                        processName, instance,
+                                        win32pdh.PDH_FMT_LONG, None)
+elif sys.platform[:5] == 'linux':
+
+    def memusage(_proc_pid_stat=None):
+        """
+        Return virtual memory size in bytes of the running python.
+
+        """
+        _proc_pid_stat = _proc_pid_stat or f'/proc/{os.getpid()}/stat'
+        try:
+            with open(_proc_pid_stat) as f:
+                l = f.readline().split(' ')
+            return int(l[22])
+        except Exception:
+            return
+else:
+    def memusage():
+        """
+        Return memory usage of running python. [Not implemented]
+
+        """
+        raise NotImplementedError
 
 
 if sys.platform[:5] == 'linux':
