@@ -73,6 +73,11 @@ assert_type(np.testing.HAS_LAPACK64, bool)
 assert_type(np.testing.assert_(1, msg="test"), None)
 assert_type(np.testing.assert_(2, msg=lambda: "test"), None)
 
+if sys.platform == "win32" or sys.platform == "cygwin":
+    assert_type(np.testing.memusage(), int)
+elif sys.platform == "linux":
+    assert_type(np.testing.memusage(), int | None)
+
 assert_type(np.testing.jiffies(), int)
 
 assert_type(np.testing.build_err_msg([0, 1, 2], "test"), str)
