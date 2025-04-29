@@ -604,7 +604,7 @@ class AliasedOptionError(DistutilsError):
 
 class AtlasNotFoundError(NotFoundError):
     """
-    Atlas (https://github.com/math-atlas/math-atlas) libraries not found.
+    Atlas (http://github.com/math-atlas/math-atlas) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [atlas]) or by setting
     the ATLAS environment variable."""
@@ -612,14 +612,14 @@ class AtlasNotFoundError(NotFoundError):
 
 class FlameNotFoundError(NotFoundError):
     """
-    FLAME (https://shpc.oden.utexas.edu/libFLAME.html) libraries not found.
+    FLAME (http://www.cs.utexas.edu/~flame/web/) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [flame])."""
 
 
 class LapackNotFoundError(NotFoundError):
     """
-    Lapack (https://www.netlib.org/lapack/) libraries not found.
+    Lapack (http://www.netlib.org/lapack/) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [lapack]) or by setting
     the LAPACK environment variable."""
@@ -627,7 +627,7 @@ class LapackNotFoundError(NotFoundError):
 
 class LapackSrcNotFoundError(LapackNotFoundError):
     """
-    Lapack (https://www.netlib.org/lapack/) sources not found.
+    Lapack (http://www.netlib.org/lapack/) sources not found.
     Directories to search for the sources can be specified in the
     numpy/distutils/site.cfg file (section [lapack_src]) or by setting
     the LAPACK_SRC environment variable."""
@@ -649,7 +649,7 @@ class BlasOptNotFoundError(NotFoundError):
 
 class BlasNotFoundError(NotFoundError):
     """
-    Blas (https://www.netlib.org/blas/) libraries not found.
+    Blas (http://www.netlib.org/blas/) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [blas]) or by setting
     the BLAS environment variable."""
@@ -663,7 +663,7 @@ class BlasILP64NotFoundError(NotFoundError):
 
 class BlasSrcNotFoundError(BlasNotFoundError):
     """
-    Blas (https://www.netlib.org/blas/) sources not found.
+    Blas (http://www.netlib.org/blas/) sources not found.
     Directories to search for the sources can be specified in the
     numpy/distutils/site.cfg file (section [blas_src]) or by setting
     the BLAS_SRC environment variable."""
@@ -671,7 +671,7 @@ class BlasSrcNotFoundError(BlasNotFoundError):
 
 class FFTWNotFoundError(NotFoundError):
     """
-    FFTW (https://www.fftw.org/) libraries not found.
+    FFTW (http://www.fftw.org/) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [fftw]) or by setting
     the FFTW environment variable."""
