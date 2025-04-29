@@ -633,11 +633,16 @@ PyArray_Descr *
 stringdtype_finalize_descr(PyArray_Descr *dtype)
 {
     PyArray_StringDTypeObject *sdtype = (PyArray_StringDTypeObject *)dtype;
+    // acquire the allocator lock in case the descriptor we want to finalize
+    // is shared between threads, see gh-28813
+    npy_string_allocator *allocator = NpyString_acquire_allocator(sdtype);
     if (sdtype->array_owned == 0) {
         sdtype->array_owned = 1;
+        NpyString_release_allocator(allocator);
         Py_INCREF(dtype);
         return dtype;
     }
+    NpyString_release_allocator(allocator);
     PyArray_StringDTypeObject *ret = (PyArray_StringDTypeObject *)new_stringdtype_instance(
             sdtype->na_object, sdtype->coerce);
     ret->array_owned = 1;
