@@ -226,9 +226,9 @@ _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _ScalarT = TypeVar("_ScalarT", bound=generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
-_MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
+_MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT_co]]
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
