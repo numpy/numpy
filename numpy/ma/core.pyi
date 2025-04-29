@@ -16,8 +16,6 @@ from numpy import (
     amax,
     amin,
     bool_,
-    bytes_,
-    complex128,
     dtype,
     expand_dims,
     float64,
@@ -25,7 +23,6 @@ from numpy import (
     int_,
     intp,
     ndarray,
-    str_,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
@@ -36,7 +33,6 @@ from numpy._typing import (
     _ArrayLikeInt,
     _ArrayLikeInt_co,
     _DTypeLikeBool,
-    _NestedSequence,
     _IntLike_co,
     _ScalarLike_co,
     _Shape,
@@ -999,7 +995,7 @@ mean: _frommethod
 nonzero: _frommethod
 prod: _frommethod
 product: _frommethod
-ravel = _frommethod
+ravel: _frommethod
 repeat: _frommethod
 soften_mask: _frommethod
 std: _frommethod
