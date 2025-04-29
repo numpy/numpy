@@ -5,8 +5,8 @@ import numpy as np
 from numpy import dtype, generic
 from numpy._typing import NDArray, _Shape
 
-_ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
-MaskedArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT_co]]
+_ScalarT = TypeVar("_ScalarT", bound=generic)
+MaskedArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT]]
 
 class MaskedArraySubclass(MaskedArray[np.complex128]): ...
 
