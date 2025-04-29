@@ -1002,20 +1002,7 @@ nonzero: _frommethod
 prod: _frommethod
 product: _frommethod
 ravel: _frommethod
-
-@overload
-def repeat(
-    a: _ArrayLike[_ScalarT],
-    repeats: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = ...,
-) -> _MaskedArray[_ScalarT]: ...
-@overload
-def repeat(
-    a: ArrayLike,
-    repeats: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = ...,
-) -> _MaskedArray[Any]: ...
-
+repeat: _frommethod
 soften_mask: _frommethod
 std: _frommethod
 sum: _frommethod
