@@ -46,11 +46,13 @@ assert_type(np.choose([1], [True, True]), npt.NDArray[Any])
 assert_type(np.choose([1], AR_b), npt.NDArray[np.bool])
 assert_type(np.choose([1], AR_b, out=AR_f4), npt.NDArray[np.float32])
 
-assert_type(np.repeat(b, 1), npt.NDArray[np.bool])
-assert_type(np.repeat(f4, 1), npt.NDArray[np.float32])
-assert_type(np.repeat(f, 1), npt.NDArray[Any])
-assert_type(np.repeat(AR_b, 1), npt.NDArray[np.bool])
-assert_type(np.repeat(AR_f4, 1), npt.NDArray[np.float32])
+assert_type(np.repeat(b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.repeat(b, 1, axis=0), npt.NDArray[np.bool])
+assert_type(np.repeat(f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.repeat(f, 1), np.ndarray[tuple[int], np.dtype[Any]])
+assert_type(np.repeat(AR_b, 1), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(np.repeat(AR_f4, 1), np.ndarray[tuple[int], np.dtype[np.float32]])
+assert_type(np.repeat(AR_f4, 1, axis=0), npt.NDArray[np.float32])
 
 # TODO: array_bdd tests for np.put()
 
