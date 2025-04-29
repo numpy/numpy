@@ -56,8 +56,12 @@ unique_integer(PyArrayObject *self)
     // number of elements in the input array
     npy_intp isize = PyArray_SIZE(self);
 
-    // Reserve enough hashset capacity in advance to avoid reallocations and reduce collisions.
-    std::unordered_set<T> hashset(isize * 2);
+    // Reserve hashset capacity in advance to minimize reallocations and collisions.
+    // We use min(isize, 1024) as the initial bucket count:
+    // - Reserving for all elements (isize) may over-allocate when there are few unique values.
+    // - Using a moderate upper bound (1024) keeps memory usage reasonable (4 KiB for pointers).
+    // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
+    std::unordered_set<T> hashset(min(isize, 1024));
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
     char *idata = PyArray_BYTES(self);
@@ -133,9 +137,13 @@ unique_string(PyArrayObject *self)
         return std::memcmp(lhs, rhs, itemsize) == 0;
     };
 
-    // Reserve enough hashset capacity in advance to avoid reallocations and reduce collisions.
+    // Reserve hashset capacity in advance to minimize reallocations and collisions.
+    // We use min(isize, 1024) as the initial bucket count:
+    // - Reserving for all elements (isize) may over-allocate when there are few unique values.
+    // - Using a moderate upper bound (1024) keeps memory usage reasonable (4 KiB for pointers).
+    // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     std::unordered_set<T *, decltype(hash), decltype(equal)> hashset(
-        isize * 2, hash, equal
+        min(isize, 1024), hash, equal
     );
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
@@ -225,9 +233,13 @@ unique_vstring(PyArrayObject *self)
         return std::memcmp(lhs->buf, rhs->buf, lhs->size) == 0;
     };
 
-     // Reserve enough hashset capacity in advance to avoid reallocations and reduce collisions.
+    // Reserve hashset capacity in advance to minimize reallocations and collisions.
+    // We use min(isize, 1024) as the initial bucket count:
+    // - Reserving for all elements (isize) may over-allocate when there are few unique values.
+    // - Using a moderate upper bound (1024) keeps memory usage reasonable (4 KiB for pointers).
+    // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     std::unordered_set<npy_static_string *, decltype(hash), decltype(equal)> hashset(
-        isize * 2, hash, equal
+        min(isize, 1024), hash, equal
     );
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
