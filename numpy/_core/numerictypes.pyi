@@ -1,10 +1,5 @@
 import builtins
-from typing import (
-    Any,
-    Literal as L,
-    TypedDict,
-    type_check_only,
-)
+from typing import Any, Literal as L, TypedDict, type_check_only
 
 import numpy as np
 from numpy import (
@@ -177,7 +172,7 @@ class _TypeCodes(TypedDict):
     Datetime: L['Mm']
     All: L['?bhilqnpBHILQNPefdgFDGSUVOMm']
 
-def isdtype(dtype: dtype[Any] | type[Any], kind: DTypeLike | tuple[DTypeLike, ...]) -> builtins.bool: ...
+def isdtype(dtype: dtype | type[Any], kind: DTypeLike | tuple[DTypeLike, ...]) -> builtins.bool: ...
 
 def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> builtins.bool: ...
 

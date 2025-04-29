@@ -3027,8 +3027,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
     >>> from typing import Any
     >>> import numpy as np
 
-    >>> np.ndarray[Any, np.dtype[Any]]
-    numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]
+    >>> np.ndarray[Any, np.dtype[np.uint8]]
+    numpy.ndarray[typing.Any, numpy.dtype[numpy.uint8]]
 
     See Also
     --------

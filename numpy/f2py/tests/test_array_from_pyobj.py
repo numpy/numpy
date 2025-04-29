@@ -33,7 +33,7 @@ def setup_module():
         src = [
             get_testdir() / "wrapmodule.c",
         ]
-        wrap = util.build_meson(src, module_name = "test_array_from_pyobj_ext")
+        wrap = util.build_meson(src, module_name="test_array_from_pyobj_ext")
 
 
 def flags_info(arr):

@@ -396,7 +396,7 @@ record_arrays = [
 ]
 
 
-#BytesIO that reads a random number of bytes at a time
+# BytesIO that reads a random number of bytes at a time
 class BytesIOSRandomSize(BytesIO):
     def read(self, size=None):
         import random
@@ -423,7 +423,7 @@ def roundtrip_randsize(arr):
 def roundtrip_truncated(arr):
     f = BytesIO()
     format.write_array(f, arr)
-    #BytesIO is one byte short
+    # BytesIO is one byte short
     f2 = BytesIO(f.getvalue()[0:-1])
     arr2 = format.read_array(f2)
     return arr2
@@ -456,14 +456,14 @@ def test_file_truncated(tmp_path):
         if arr.dtype != object:
             with open(path, 'wb') as f:
                 format.write_array(f, arr)
-            #truncate the file by one byte
+            # truncate the file by one byte
             with open(path, 'rb+') as f:
                 f.seek(-1, os.SEEK_END)
                 f.truncate()
             with open(path, 'rb') as f:
                 with pytest.raises(
                     ValueError,
-                    match = (
+                    match=(
                         r"EOF: reading array header, "
                         r"expected (\d+) bytes got (\d+)"
                     ) if arr.size == 0 else (

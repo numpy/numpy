@@ -4337,9 +4337,7 @@ set_typeinfo(PyObject *dict)
     PyObject *cobj, *key;
 
     // SIMD runtime dispatching
-    #ifndef NPY_DISABLE_OPTIMIZATION
-        #include "argfunc.dispatch.h"
-    #endif
+    #include "argfunc.dispatch.h"
     /**begin repeat
      * #FROM = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
      *         LONG, ULONG, LONGLONG, ULONGLONG,

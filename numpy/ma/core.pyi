@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from typing import Any, Literal, SupportsIndex, TypeAlias, TypeVar, overload
 
 from _typeshed import Incomplete
-from typing_extensions import deprecated
+from typing_extensions import TypeIs, deprecated
 
 import numpy as np
 from numpy import (
@@ -230,8 +230,8 @@ _ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
 
-MaskType = bool
-nomask: bool
+MaskType = bool_
+nomask: bool_[Literal[False]]
 
 class MaskedArrayFutureWarning(FutureWarning): ...
 class MAError(Exception): ...
@@ -337,11 +337,22 @@ fmod: _DomainedBinaryOperation
 mod: _DomainedBinaryOperation
 
 def make_mask_descr(ndtype): ...
-def getmask(a): ...
+
+@overload
+def getmask(a: _ScalarLike_co) -> bool_: ...
+@overload
+def getmask(a: MaskedArray[_ShapeT_co, Any]) -> np.ndarray[_ShapeT_co, dtype[bool_]] | bool_: ...
+@overload
+def getmask(a: ArrayLike) -> NDArray[bool_] | bool_: ...
+
 get_mask = getmask
 
 def getmaskarray(arr): ...
-def is_mask(m): ...
+
+# It's sufficient for `m` to have dtype with type: `type[np.bool_]`,
+# which isn't necessarily a ndarray. Please open an issue if this causes issues.
+def is_mask(m: object) -> TypeIs[NDArray[bool_]]: ...
+
 def make_mask(m, copy=..., shrink=..., dtype=...): ...
 def make_mask_none(newshape, dtype=...): ...
 def mask_or(m1, m2, copy=..., shrink=...): ...

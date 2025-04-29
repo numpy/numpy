@@ -411,14 +411,14 @@ class TestMRecordsImport:
     def test_fromrecords(self):
         # Test construction from records.
         (mrec, nrec, ddtype) = self.data
-        #......
+        # ......
         palist = [(1, 'abc', 3.7000002861022949, 0),
                   (2, 'xy', 6.6999998092651367, 1),
                   (0, ' ', 0.40000000596046448, 0)]
         pa = recfromrecords(palist, names='c1, c2, c3, c4')
         mpa = fromrecords(palist, names='c1, c2, c3, c4')
         assert_equal_records(pa, mpa)
-        #.....
+        # .....
         _mrec = fromrecords(nrec)
         assert_equal(_mrec.dtype, mrec.dtype)
         for field in _mrec.dtype.names:

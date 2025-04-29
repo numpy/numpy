@@ -320,8 +320,8 @@ class TestArray2String:
         assert_equal(np.array2string(array_scalar), "(1., 2.12345679, 3.)")
 
     def test_unstructured_void_repr(self):
-        a = np.array([27, 91, 50, 75,  7, 65, 10,  8,
-                      27, 91, 51, 49, 109, 82, 101, 100], dtype='u1').view('V8')
+        a = np.array([27, 91, 50, 75, 7, 65, 10, 8, 27, 91, 51, 49, 109, 82, 101, 100],
+                      dtype='u1').view('V8')
         assert_equal(repr(a[0]),
             r"np.void(b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08')")
         assert_equal(str(a[0]), r"b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08'")

@@ -2295,11 +2295,11 @@ class TestMethods:
             arr[::-1].sort()
 
     def test_sort_raises(self):
-        #gh-9404
+        # gh-9404
         arr = np.array([0, datetime.now(), 1], dtype=object)
         for kind in self.sort_kinds:
             assert_raises(TypeError, arr.sort, kind=kind)
-        #gh-3879
+        # gh-3879
 
         class Raiser:
             def raises_anything(*args, **kwargs):
@@ -9427,8 +9427,7 @@ class TestCTypes:
         np.array([1, 2, 3]),
         np.array([['one', 'two'], ['three', 'four']]),
         np.array((1, 2), dtype='i4,i4'),
-        np.zeros((2,), dtype=
-            np.dtype({
+        np.zeros((2,), dtype=np.dtype({
                 "formats": ['<i4', '<i4'],
                 "names": ['a', 'b'],
                 "offsets": [0, 2],
@@ -10459,3 +10458,13 @@ def test_array_interface_excess_dimensions_raises():
     # Now, using np.asanyarray on this dummy should trigger a ValueError (not segfault)
     with pytest.raises(ValueError, match="dimensions must be within"):
         np.asanyarray(dummy)
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.uint32, np.complex128])
+def test_array_dunder_array_preserves_dtype_on_none(dtype):
+    """
+    Regression test for: https://github.com/numpy/numpy/issues/27407
+    Ensure that __array__(None) returns an array of the same dtype.
+    """
+    a = np.array([1], dtype=dtype)
+    b = a.__array__(None)
+    assert_array_equal(a, b, strict=True)

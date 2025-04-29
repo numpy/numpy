@@ -342,7 +342,7 @@ class UFuncSmall(Benchmark):
         self.f(self.array_5)
 
     def time_ufunc_small_array_inplace(self, ufuncname):
-        self.f(self.array_5, out = self.array_5)
+        self.f(self.array_5, out=self.array_5)
 
     def time_ufunc_small_int_array(self, ufuncname):
         self.f(self.array_int_3)
@@ -432,7 +432,7 @@ class CustomScalar(Benchmark):
 
 
 class CustomComparison(Benchmark):
-    params = (np.int8,  np.int16,  np.int32,  np.int64, np.uint8, np.uint16,
+    params = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
               np.uint32, np.uint64, np.float32, np.float64, np.bool)
     param_names = ['dtype']
 
