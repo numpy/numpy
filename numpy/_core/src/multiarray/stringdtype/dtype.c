@@ -852,14 +852,17 @@ init_string_dtype(void)
         return -1;
     }
 
-    PyArray_Descr *singleton =
-            NPY_DT_CALL_default_descr(&PyArray_StringDType);
+    PyArray_StringDTypeObject *singleton =
+            (PyArray_StringDTypeObject *)NPY_DT_CALL_default_descr(&PyArray_StringDType);
 
     if (singleton == NULL) {
         return -1;
     }
 
-    PyArray_StringDType.singleton = singleton;
+    // never associate the singleton with an array
+    singleton->array_owned = 1;
+
+    PyArray_StringDType.singleton = (PyArray_Descr *)singleton;
     PyArray_StringDType.type_num = NPY_VSTRING;
 
     for (int i = 0; PyArray_StringDType_casts[i] != NULL; i++) {
