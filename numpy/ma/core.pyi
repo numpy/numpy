@@ -233,7 +233,6 @@ _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
-_MaskedArray1D: TypeAlias = MaskedArray[tuple[int], dtype[_ScalarT]]
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
@@ -1000,28 +999,7 @@ mean: _frommethod
 nonzero: _frommethod
 prod: _frommethod
 product: _frommethod
-
-# Keep in sync with `np.ravel`
-@overload
-def ravel(self: _ArrayLike[_ScalarT_co], /, order: _OrderKACF = "C") -> MaskedArray[tuple[int], dtype[_ScalarT_co]]: ...
-@overload
-def ravel(a: bytes | _NestedSequence[bytes], order: _OrderKACF = "C") -> _MaskedArray1D[bytes_]: ...
-@overload
-def ravel(a: str | _NestedSequence[str], order: _OrderKACF = "C") -> _MaskedArray1D[str_]: ...
-@overload
-def ravel(a: bool | _NestedSequence[bool], order: _OrderKACF = "C") -> _MaskedArray1D[bool_]: ...
-@overload
-def ravel(a: int | _NestedSequence[int], order: _OrderKACF = "C") -> _MaskedArray1D[int_ | bool_]: ...
-@overload
-def ravel(a: float | _NestedSequence[float], order: _OrderKACF = "C") -> _MaskedArray1D[float64 | int_ | bool_]: ...
-@overload
-def ravel(
-    a: complex | _NestedSequence[complex],
-    order: _OrderKACF = "C",
-) -> _MaskedArray1D[complex128 | float64 | int_ | bool_]: ...
-@overload
-def ravel(self: ArrayLike, /, order: _OrderKACF = "C") -> MaskedArray[tuple[int], dtype]: ...
-
+ravel = _frommethod
 repeat: _frommethod
 soften_mask: _frommethod
 std: _frommethod
