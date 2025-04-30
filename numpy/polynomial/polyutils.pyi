@@ -1,6 +1,5 @@
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
-    Any,
     Final,
     Literal,
     SupportsIndex,

@@ -2,7 +2,7 @@ import abc
 import decimal
 import numbers
 from collections.abc import Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Final, Generic, Literal, LiteralString, Self, SupportsIndex, TypeAlias, overload
+from typing import Any, ClassVar, Generic, Literal, LiteralString, Self, SupportsIndex, TypeAlias, overload
 
 from typing_extensions import TypeIs, TypeVar
 
