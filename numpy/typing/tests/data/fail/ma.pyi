@@ -122,3 +122,5 @@ np.ma.allequal(m, [1,2,3], fill_value=1.5)  # E: No overload variant
 np.ma.allclose(m, [1,2,3], masked_equal=4.5)  # E: No overload variant
 np.ma.allclose(m, [1,2,3], rtol='.4')  # E: No overload variant
 np.ma.allclose(m, [1,2,3], atol='.5')  # E: No overload variant
+
+m.__setmask__('mask')  # E: No overload variant

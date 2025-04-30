@@ -3737,7 +3737,8 @@ class MaskedArray(ndarray):
 
         Returns
         -------
-        None
+        result : MaskedArray
+            A :class:`~ma.MaskedArray` object.
 
         Examples
         --------
