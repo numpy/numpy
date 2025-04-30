@@ -62,7 +62,7 @@ unique_integer(PyArrayObject *self)
     // - Reserving for all elements (isize) may over-allocate when there are few unique values.
     // - Using a moderate upper bound (1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
-    std::unordered_set<T> hashset(std::min(isize, 1024));
+    std::unordered_set<T> hashset(std::min(isize, (npy_intp)1024));
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
     char *idata = PyArray_BYTES(self);
@@ -144,7 +144,7 @@ unique_string(PyArrayObject *self)
     // - Using a moderate upper bound (1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     std::unordered_set<T *, decltype(hash), decltype(equal)> hashset(
-        std::min(isize, 1024), hash, equal
+        std::min(isize, (npy_intp)1024), hash, equal
     );
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
@@ -240,7 +240,7 @@ unique_vstring(PyArrayObject *self)
     // - Using a moderate upper bound (1024) keeps memory usage reasonable (4 KiB for pointers).
     // See discussion: https://github.com/numpy/numpy/pull/28767#discussion_r2064267631
     std::unordered_set<npy_static_string *, decltype(hash), decltype(equal)> hashset(
-        std::min(isize, 1024), hash, equal
+        std::min(isize, (npy_intp)1024), hash, equal
     );
 
     // Input array is one-dimensional, enabling efficient iteration using strides.
