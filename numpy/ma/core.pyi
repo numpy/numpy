@@ -793,7 +793,14 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> MaskedArray[_Shape, _DTypeT_co]: ...
 
     squeeze: Any
-    swapaxes: Any
+
+    def swapaxes(
+        self,
+        axis1: SupportsIndex,
+        axis2: SupportsIndex,
+        /
+    ) -> MaskedArray[_Shape, _DTypeT_co]: ...
+
     T: Any
     transpose: Any
 
