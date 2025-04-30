@@ -226,9 +226,10 @@ _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _ScalarT = TypeVar("_ScalarT", bound=generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=generic)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
+_Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 MaskType = bool_
 nomask: bool_[Literal[False]]
@@ -483,7 +484,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def count(self, axis: _ShapeLike | None, keepdims: Literal[True]) -> NDArray[int_]: ...
 
-    def ravel(self, order=...): ...
+    def ravel(self, order: _OrderKACF = "C") -> MaskedArray[tuple[int], _DTypeT_co]: ...
     def reshape(self, *s, **kwargs): ...
     def resize(self, newshape, refcheck=..., order=...): ...
     def put(self, indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
@@ -777,7 +778,20 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     copy: Any
     diagonal: Any
     flatten: Any
-    repeat: Any
+
+    @overload
+    def repeat(
+        self,
+        repeats: _ArrayLikeInt_co,
+        axis: None = None,
+    ) -> MaskedArray[tuple[int], _DTypeT_co]: ...
+    @overload
+    def repeat(
+        self,
+        repeats: _ArrayLikeInt_co,
+        axis: SupportsIndex,
+    ) -> MaskedArray[_Shape, _DTypeT_co]: ...
+
     squeeze: Any
 
     def swapaxes(
@@ -1173,9 +1187,9 @@ def sort(
     stable: Literal[False] | None = False,
 ) -> NDArray[Any]: ...
 @overload
-def compressed(x: _ArrayLike[_ScalarT_co]) -> ndarray[tuple[int], dtype[_ScalarT_co]]: ...
+def compressed(x: _ArrayLike[_ScalarT_co]) -> _Array1D[_ScalarT_co]: ...
 @overload
-def compressed(x: ArrayLike) -> ndarray[tuple[int], dtype]: ...
+def compressed(x: ArrayLike) -> _Array1D[Any]: ...
 def concatenate(arrays, axis=...): ...
 def diag(v, k=...): ...
 def left_shift(a, n): ...
