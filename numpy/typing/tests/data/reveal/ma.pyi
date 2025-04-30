@@ -308,8 +308,8 @@ def func(x: object) -> None:
     else:
         assert_type(x, object)
 
-assert_type(MAR_b.swapaxes(0, 1), MaskedNDArray[np.bool])
-assert_type(MAR_2d_f4.swapaxes(1, 0), MaskedNDArray[np.float32])
+assert_type(MAR_b.swapaxes(0, 1), MaskedArray[np.bool])
+assert_type(MAR_2d_f4.swapaxes(1, 0), MaskedArray[np.float32])
 
 assert_type(np.ma.nomask, np.bool[Literal[False]])
 # https://github.com/python/mypy/issues/18974
