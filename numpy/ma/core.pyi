@@ -784,6 +784,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         self,
         axis1: SupportsIndex,
         axis2: SupportsIndex,
+        /
     ) -> MaskedArray[_Shape, _DTypeT_co]: ...
 
     T: Any
