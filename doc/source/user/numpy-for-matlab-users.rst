@@ -810,7 +810,7 @@ Links
 =====
 
 Another somewhat outdated MATLAB/NumPy cross-reference can be found at
-http://mathesaurus.sf.net/
+https://mathesaurus.sf.net/
 
 An extensive list of tools for scientific work with Python can be
 found in the `topical software page <https://projects.scipy.org/topical-software.html>`__.

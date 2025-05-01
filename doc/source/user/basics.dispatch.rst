@@ -7,8 +7,8 @@ Writing custom array containers
 Numpy's dispatch mechanism, introduced in numpy version v1.16 is the
 recommended approach for writing custom N-dimensional array containers that are
 compatible with the numpy API and provide custom implementations of numpy
-functionality. Applications include `dask <http://dask.pydata.org>`_ arrays, an
-N-dimensional array distributed across multiple nodes, and `cupy
+functionality. Applications include `dask <https://docs.dask.org/en/stable/>`_
+arrays, an N-dimensional array distributed across multiple nodes, and `cupy
 <https://docs-cupy.chainer.org/en/stable/>`_ arrays, an N-dimensional array on
 a GPU.
 
