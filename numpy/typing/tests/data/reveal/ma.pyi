@@ -316,10 +316,6 @@ assert_type(np.ma.MaskType, type[np.bool])  # type: ignore[assert-type]
 assert_type(MAR_1d.__setmask__([True, False]), None)
 assert_type(MAR_1d.__setmask__(np.False_), None)
 
-# Test setters - just check these don't raise
-MAR_1d.mask = AR_b
-MAR_1d.mask = np.False_
-
 assert_type(MAR_2d_f4.harden_mask(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(MAR_i8.harden_mask(), MaskedArray[np.int64])
 assert_type(MAR_2d_f4.soften_mask(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])

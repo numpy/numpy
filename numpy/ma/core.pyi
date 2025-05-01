@@ -2,10 +2,10 @@
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
 from collections.abc import Sequence
-from typing import Any, Literal, SupportsIndex, TypeAlias, TypeVar, overload
+from typing import Any, Literal, Self, SupportsIndex, TypeAlias, TypeVar, overload
 
 from _typeshed import Incomplete
-from typing_extensions import Self, TypeIs, deprecated
+from typing_extensions import TypeIs, deprecated
 
 import numpy as np
 from numpy import (
@@ -410,9 +410,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def shape(self: MaskedArray[_ShapeT, Any], shape: _ShapeT, /) -> None: ...
     def __setmask__(self, mask: _ArrayLikeBool_co, copy: bool = False) -> None: ...
     @property
-    def mask(self) -> NDArray[bool_] | MaskType: ...
+    def mask(self) -> NDArray[MaskType] | MaskType: ...
     @mask.setter
-    def mask(self, value: _ArrayLikeBool_co) -> None: ...
+    def mask(self, value: _ArrayLikeBool_co, /) -> None: ...
     @property
     def recordmask(self): ...
     @recordmask.setter
