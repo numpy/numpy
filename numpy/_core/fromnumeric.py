@@ -6,7 +6,7 @@ import types
 import warnings
 
 import numpy as np
-from .._utils import set_module
+from numpy._utils import set_module
 from . import multiarray as mu
 from . import overrides
 from . import umath as um
