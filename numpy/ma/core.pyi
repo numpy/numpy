@@ -2,10 +2,10 @@
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
 from collections.abc import Sequence
-from typing import Any, Literal, SupportsIndex, TypeAlias, TypeVar, overload
+from typing import Any, Literal, Self, SupportsIndex, TypeAlias, TypeVar, overload
 
 from _typeshed import Incomplete
-from typing_extensions import Self, TypeIs, deprecated
+from typing_extensions import TypeIs, deprecated
 
 import numpy as np
 from numpy import (
@@ -800,9 +800,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     T: Any
     transpose: Any
-
-    @property  # type: ignore[misc]
-    def mT(self) -> Self: ...
 
     #
     def toflex(self) -> Incomplete: ...
