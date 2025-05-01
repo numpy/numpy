@@ -1466,13 +1466,11 @@ def make_arrays(funcdict):
             funcnames = ', '.join(funclist)
             signames = ', '.join(siglist)
             datanames = ', '.join(datalist)
-            code1list.append(
-                "static PyUFuncGenericFunction %s_functions[] = {%s};"
-                % (name, funcnames))
-            code1list.append("static void * %s_data[] = {%s};"
-                            % (name, datanames))
-            code1list.append("static const char %s_signatures[] = {%s};"
-                            % (name, signames))
+            code1list.extend((
+                f"static PyUFuncGenericFunction {name}_functions[] = {{{funcnames}}};",
+                f"static void * {name}_data[] = {{{datanames}}};",
+                f"static const char {name}_signatures[] = {{{signames}}};",
+            ))
             uf.empty = False
         else:
             uf.empty = True
@@ -1573,8 +1571,10 @@ def make_ufuncs(funcdict):
                 funcname=f"{english_upper(chartoname[c])}_{name}_indexed",
             ))
 
-        mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
-        mlist.append(r"""Py_DECREF(f);""")
+        mlist.extend((
+            f'PyDict_SetItemString(dictionary, "{name}", f);',
+            "Py_DECREF(f);",
+        ))
         code3list.append('\n'.join(mlist))
     return '\n'.join(code3list)
 

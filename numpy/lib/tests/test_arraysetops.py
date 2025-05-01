@@ -688,8 +688,7 @@ class TestUnique:
         types = []
         types.extend(np.typecodes['AllInteger'])
         types.extend(np.typecodes['AllFloat'])
-        types.append('datetime64[D]')
-        types.append('timedelta64[D]')
+        types.extend(('datetime64[D]', 'timedelta64[D]'))
         return types
 
     def test_unique_1d(self):
@@ -871,10 +870,7 @@ class TestUnique:
         types = []
         types.extend(np.typecodes['AllInteger'])
         types.extend(np.typecodes['AllFloat'])
-        types.append('datetime64[D]')
-        types.append('timedelta64[D]')
-        types.append([('a', int), ('b', int)])
-        types.append([('a', int), ('b', float)])
+        types.extend(('datetime64[D]', 'timedelta64[D]', [('a', int), ('b', int)], [('a', int), ('b', float)]))
 
         for dtype in types:
             self._run_axis_tests(dtype)
