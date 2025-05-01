@@ -9,12 +9,16 @@ class NBitBase:
     """
     A type representing `numpy.number` precision during static type checking.
 
-    Used exclusively for the purpose static type checking, `NBitBase`
+    Used exclusively for the purpose of static type checking, `NBitBase`
     represents the base of a hierarchical set of subclasses.
     Each subsequent subclass is herein used for representing a lower level
     of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
 
     .. versionadded:: 1.20
+
+    .. deprecated:: 2.3
+        Use ``@typing.overload`` or a ``TypeVar`` with a scalar-type as upper
+        bound, instead.
 
     Examples
     --------
@@ -48,6 +52,7 @@ class NBitBase:
         ...     # note:     out: numpy.floating[numpy.typing._64Bit*]
 
     """
+    # Deprecated in NumPy 2.3, 2025-05-01
 
     def __init_subclass__(cls) -> None:
         allowed_names = {
