@@ -15,6 +15,7 @@ import importlib.util
 import textwrap
 
 from os.path import join
+from itertools import starmap
 
 
 def get_processor():
@@ -152,7 +153,7 @@ class Function:
             return typename + ' ' + name
 
     def __str__(self):
-        argstr = ', '.join([self._format_arg(*a) for a in self.args])
+        argstr = ', '.join(list(starmap(self._format_arg, self.args)))
         if self.doc:
             doccomment = f'/* {self.doc} */\n'
         else:

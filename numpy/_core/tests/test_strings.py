@@ -1,9 +1,10 @@
 import sys
+import operator
+from itertools import starmap
+
 import pytest
 
-import operator
 import numpy as np
-
 from numpy.testing import assert_array_equal, assert_raises, IS_PYPY
 from numpy.testing._private.utils import requires_memory
 
@@ -65,7 +66,7 @@ def test_string_comparisons(op, ufunc, sym, dtypes, aligned):
     np.random.shuffle(arr2)
     arr[0] = arr2[0]  # make sure one matches
 
-    expected = [op(d1, d2) for d1, d2 in zip(arr.tolist(), arr2.tolist())]
+    expected = list(starmap(op, zip(arr.tolist(), arr2.tolist())))
     assert_array_equal(op(arr, arr2), expected)
     assert_array_equal(ufunc(arr, arr2), expected)
     assert_array_equal(

@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 import pytest
+from itertools import starmap
 
 import numpy as np
 from numpy.testing import assert_array_equal, IS_WASM, IS_EDITABLE
@@ -278,8 +279,7 @@ def test_npyiter_api(install_temp):
         x is y for x, y in zip(checks.get_npyiter_operands(it), it.operands)
     )
     assert all(
-        np.allclose(x, y)
-        for x, y in zip(checks.get_npyiter_itviews(it), it.itviews)
+        starmap(np.allclose, zip(checks.get_npyiter_itviews(it), it.itviews))
     )
 
 

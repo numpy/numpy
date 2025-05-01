@@ -314,7 +314,7 @@ class TestModulus:
         dividend = nlst + [0] + plst
         divisor = nlst + plst
         arg = list(itertools.product(dividend, divisor))
-        tgt = [divmod(*t) for t in arg]
+        tgt = list(itertools.starmap(divmod, arg))
 
         a, b = np.array(arg, dtype=int).T
         # convert exact integer results from Python to float so that
@@ -329,7 +329,7 @@ class TestModulus:
                 fa = a.astype(dt)
                 fb = b.astype(dt)
                 # use list comprehension so a_ and b_ are scalars
-                div, rem = zip(*[op(a_, b_) for a_, b_ in zip(fa, fb)])
+                div, rem = zip(*list(itertools.starmap(op, zip(fa, fb))))
                 assert_equal(div, tgtdiv, err_msg=msg)
                 assert_equal(rem, tgtrem, err_msg=msg)
 

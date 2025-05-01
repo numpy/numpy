@@ -2,6 +2,7 @@
 Generate CPU features tables from CCompilerOpt
 """
 from os import path
+from itertools import starmap
 from numpy.distutils.ccompiler_opt import CCompilerOpt
 
 class FakeCCompilerOpt(CCompilerOpt):
@@ -122,7 +123,7 @@ class Features:
         cformat = ' '.join('{:<%d}' % i for i in cls_len)
         border = cformat.format(*['=' * i for i in cls_len])
 
-        rows = [cformat.format(*row) for row in rows]
+        rows = list(starmap(cformat.format, rows))
         # header
         rows = [border, cformat.format(*field_names), border] + rows
         # footer
