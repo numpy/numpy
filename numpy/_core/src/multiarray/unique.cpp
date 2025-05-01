@@ -227,7 +227,11 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
     };
     auto equal = [equal_nan](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
         if (lhs->buf == NULL && rhs->buf == NULL) {
-            return equal_nan;
+            if (equal_nan) {
+                return true;
+            } else {
+                return lhs == rhs;
+            }
         }
         if (lhs->buf == NULL || rhs->buf == NULL) {
             return false;
