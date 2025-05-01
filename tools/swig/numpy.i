@@ -128,32 +128,33 @@
    */
   const char* typecode_string(int typecode)
   {
-    static const char* type_names[25] = {"bool",
-                                         "byte",
-                                         "unsigned byte",
-                                         "short",
-                                         "unsigned short",
-                                         "int",
-                                         "unsigned int",
-                                         "long",
-                                         "unsigned long",
-                                         "long long",
-                                         "unsigned long long",
-                                         "float",
-                                         "double",
-                                         "long double",
-                                         "complex float",
-                                         "complex double",
-                                         "complex long double",
-                                         "object",
-                                         "string",
-                                         "unicode",
-                                         "void",
-                                         "ntypes",
-                                         "notype",
-                                         "char",
-                                         "unknown"};
-    return typecode < 24 ? type_names[typecode] : type_names[24];
+    static const char* type_names[] = {"bool",
+                                       "byte",
+                                       "unsigned byte",
+                                       "short",
+                                       "unsigned short",
+                                       "int",
+                                       "unsigned int",
+                                       "long",
+                                       "unsigned long",
+                                       "long long",
+                                       "unsigned long long",
+                                       "float",
+                                       "double",
+                                       "long double",
+                                       "complex float",
+                                       "complex double",
+                                       "complex long double",
+                                       "object",
+                                       "string",
+                                       "unicode",
+                                       "void",
+                                       "ntypes",
+                                       "notype",
+                                       "char",
+                                       "unknown"};
+    const size_t LAST_TYPE_NAME = sizeof(type_names) / sizeof(type_names[0]) - 1;
+    return typecode < LAST_TYPE_NAME ? type_names[typecode] : type_names[LAST_TYPE_NAME];
   }
 
   /* Make sure input has correct numpy type.  This now just calls
