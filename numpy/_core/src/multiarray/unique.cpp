@@ -307,10 +307,6 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
         } else {
             pack_status = NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
         }
-        if (pack_status == -1) {
-            // string packing failed
-            return NULL;
-        }
     }
 
     return res_obj;
