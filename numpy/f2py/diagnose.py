@@ -2,6 +2,12 @@
 import os
 import sys
 import tempfile
+import warnings
+
+# NumPy 2.3.0, 2025-05-01
+warnings.warn('The module numpy.f2py.diagnose is deprecated since NumPy 2.3.0.',
+              DeprecationWarning,
+              stacklevel=2)
 
 
 def run_command(cmd):
