@@ -8,7 +8,7 @@ import contextlib
 import contextvars
 import functools
 
-from .._utils import set_module
+from numpy._utils import set_module
 from .umath import _make_extobj, _get_extobj_dict, _extobj_contextvar
 
 __all__ = [

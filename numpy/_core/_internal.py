@@ -10,7 +10,7 @@ import re
 import sys
 import warnings
 
-from ..exceptions import DTypePromotionError
+from numpy.exceptions import DTypePromotionError
 from .multiarray import dtype, array, ndarray, promote_types, StringDType
 from numpy import _NoValue
 try:
