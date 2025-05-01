@@ -3,6 +3,7 @@ Generate CPU features tables from CCompilerOpt
 """
 from os import path
 from itertools import starmap
+
 from numpy.distutils.ccompiler_opt import CCompilerOpt
 
 class FakeCCompilerOpt(CCompilerOpt):
