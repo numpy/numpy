@@ -104,9 +104,9 @@ def compile_extension_module(
     dirname = builddir / name
     dirname.mkdir(exist_ok=True)
     cfile = _convert_str_to_file(source_string, dirname)
-    include_dirs = include_dirs if include_dirs else []
-    libraries = libraries if libraries else []
-    library_dirs = library_dirs if library_dirs else []
+    include_dirs = include_dirs or []
+    libraries = libraries or []
+    library_dirs = library_dirs or []
 
     return _c_compile(
         cfile, outputfilename=dirname / modname,
