@@ -142,9 +142,9 @@ typedef struct npy_static_pydata_struct {
     /*
      * Used in from_dlpack
      */
-    PyObject *call_kwnames;
+    PyObject *dl_call_kwnames;
     PyObject *dl_cpu_device_tuple;
-    PyObject *max_version;
+    PyObject *dl_max_version;
 } npy_static_pydata_struct;
 
 

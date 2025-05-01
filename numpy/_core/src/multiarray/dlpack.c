@@ -509,7 +509,7 @@ from_dlpack(PyObject *NPY_UNUSED(self),
      * our max_version. `device` is always passed as `None`, but if the user
      * provided a device, we will replace it with the "cpu": (1, 0).
      */
-    PyObject *call_args[] = {obj, Py_None, copy, npy_static_pydata.max_version};
+    PyObject *call_args[] = {obj, Py_None, copy, npy_static_pydata.dl_max_version};
     Py_ssize_t nargsf = 1 | PY_VECTORCALL_ARGUMENTS_OFFSET;
 
     /* If device is passed it must be "cpu" and replace it with (1, 0) */
@@ -526,7 +526,7 @@ from_dlpack(PyObject *NPY_UNUSED(self),
 
     PyObject *capsule = PyObject_VectorcallMethod(
             npy_interned_str.__dlpack__, call_args, nargsf,
-            npy_static_pydata.call_kwnames);
+            npy_static_pydata.dl_call_kwnames);
     if (capsule == NULL) {
         /*
          * TODO: This path should be deprecated in NumPy 2.1.  Once deprecated

@@ -184,9 +184,9 @@ initialize_static_globals(void)
         return -1;
     }
 
-    npy_static_pydata.call_kwnames =
+    npy_static_pydata.dl_call_kwnames =
             Py_BuildValue("(sss)", "dl_device", "copy", "max_version");
-    if (npy_static_pydata.call_kwnames == NULL) {
+    if (npy_static_pydata.dl_call_kwnames == NULL) {
         return -1;
     }
 
@@ -195,8 +195,8 @@ initialize_static_globals(void)
         return -1;
     }
 
-    npy_static_pydata.max_version = Py_BuildValue("(i,i)", 1, 0);
-    if (npy_static_pydata.max_version == NULL) {
+    npy_static_pydata.dl_max_version = Py_BuildValue("(i,i)", 1, 0);
+    if (npy_static_pydata.dl_max_version == NULL) {
         return -1;
     }
 
