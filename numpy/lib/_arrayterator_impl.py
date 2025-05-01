@@ -9,7 +9,6 @@ a user-specified number of elements.
 """
 from operator import mul
 from functools import reduce
-from itertools import starmap
 
 __all__ = ['Arrayterator']
 
@@ -134,7 +133,8 @@ class Arrayterator:
         Return corresponding data.
 
         """
-        slice_ = tuple(starmap(slice, zip(self.start, self.stop, self.step)))
+        slice_ = tuple(slice(*t) for t in zip(
+                self.start, self.stop, self.step))
         return self.var[slice_]
 
     @property
@@ -210,7 +210,7 @@ class Arrayterator:
                 count = count // self.shape[i]
 
             # yield a block
-            slice_ = tuple(starmap(slice, zip(start, stop, step)))
+            slice_ = tuple(slice(*t) for t in zip(start, stop, step))
             yield self.var[slice_]
 
             # Update start position, taking care of overflow to

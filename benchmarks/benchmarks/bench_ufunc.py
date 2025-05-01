@@ -61,7 +61,7 @@ class ArrayFunctionDispatcher(Benchmark):
             self.args.append(arg)
 
     def time_afdn_types(self, ufuncname):
-        list(itertools.starmap(self.afdn, self.args))
+        [self.afdn(*arg) for arg in self.args]
 
 
 class Broadcast(Benchmark):
@@ -108,7 +108,7 @@ class UFunc(Benchmark):
             self.args.append(arg)
 
     def time_ufunc_types(self, ufuncname):
-        list(itertools.starmap(self.ufn, self.args))
+        [self.ufn(*arg) for arg in self.args]
 
 
 class MethodsV0(Benchmark):

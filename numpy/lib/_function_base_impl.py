@@ -4,7 +4,6 @@ import functools
 import re
 import sys
 import warnings
-from itertools import starmap
 
 import numpy as np
 import numpy._core.numeric as _nx
@@ -1972,7 +1971,7 @@ def trim_zeros(filt, trim='fb', axis=None):
         sl = slice(start[0], stop[0])
     elif axis is None:
         # trim all axes
-        sl = tuple(starmap(slice, zip(start, stop)))
+        sl = tuple(slice(*x) for x in zip(start, stop))
     else:
         # only trim single axis
         axis = normalize_axis_index(axis, filt_.ndim)

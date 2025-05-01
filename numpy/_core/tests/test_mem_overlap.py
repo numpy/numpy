@@ -281,7 +281,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
         steps = tuple(rng.randint(1, 11, dtype=np.intp)
                       if rng.randint(0, 5, dtype=np.intp) == 0 else 1
                       for j in range(x.ndim))
-        s1 = tuple(itertools.starmap(random_slice, zip(x.shape, steps)))
+        s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
 
         t1 = np.arange(x.ndim)
         rng.shuffle(t1)
@@ -301,7 +301,8 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
             steps2 = tuple(rng.randint(1, max(2, p // (1 + pa)))
                            if rng.randint(0, 5) == 0 else 1
                            for p, s, pa in zip(x.shape, s1, a.shape))
-            s2 = tuple(itertools.starmap(random_slice_fixed_size, zip(x.shape, steps2, a.shape)))
+            s2 = tuple(random_slice_fixed_size(p, s, pa)
+                       for p, s, pa in zip(x.shape, steps2, a.shape))
         elif same_steps:
             steps2 = steps
         else:
@@ -310,7 +311,7 @@ def iter_random_view_pairs(x, same_steps=True, equal_size=False):
                            for j in range(x.ndim))
 
         if not equal_size:
-            s2 = tuple(itertools.starmap(random_slice, zip(x.shape, steps2)))
+            s2 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps2))
 
         a = a.transpose(t1)
         b = x[s2].transpose(t2)
@@ -441,7 +442,7 @@ def test_internal_overlap_slices():
                       for j in range(x.ndim))
         t1 = np.arange(x.ndim)
         rng.shuffle(t1)
-        s1 = tuple(itertools.starmap(random_slice, zip(x.shape, steps)))
+        s1 = tuple(random_slice(p, s) for p, s in zip(x.shape, steps))
         a = x[s1].transpose(t1)
 
         assert_(not internal_overlap(a))

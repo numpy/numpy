@@ -2183,12 +2183,13 @@ def _ezclump(mask):
             return [slice(0, mask.size)]
 
         r = [slice(0, idx[0])]
-        r.extend(itertools.starmap(slice, zip(idx[1:-1:2], idx[2::2])))
+        r.extend((slice(left, right)
+                  for left, right in zip(idx[1:-1:2], idx[2::2])))
     else:
         if len(idx) == 0:
             return []
 
-        r = list(itertools.starmap(slice, zip(idx[:-1:2], idx[1::2])))
+        r = [slice(left, right) for left, right in zip(idx[:-1:2], idx[1::2])]
 
     if mask[-1]:
         r.append(slice(idx[-1], mask.size))

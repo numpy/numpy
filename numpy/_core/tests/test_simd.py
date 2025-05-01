@@ -302,11 +302,11 @@ class _SIMD_INT(_Test_Utility):
         data_b = self._data(self.nlanes)
         vdata_a, vdata_b = self.load(data_a), self.load(data_b)
 
-        data_max = list(itertools.starmap(max, zip(data_a, data_b)))
+        data_max = [max(a, b) for a, b in zip(data_a, data_b)]
         simd_max = self.max(vdata_a, vdata_b)
         assert simd_max == data_max
 
-        data_min = list(itertools.starmap(min, zip(data_a, data_b)))
+        data_min = [min(a, b) for a, b in zip(data_a, data_b)]
         simd_min = self.min(vdata_a, vdata_b)
         assert simd_min == data_min
 
@@ -613,7 +613,7 @@ class _SIMD_FP(_Test_Utility):
             vdata_a = self.setall(case_operand1)
             vdata_b = self.setall(case_operand2)
             vcmp = to_bool(intrin(vdata_a, vdata_b))
-            data_cmp = list(itertools.starmap(py_comp, zip(data_a, data_b)))
+            data_cmp = [py_comp(a, b) for a, b in zip(data_a, data_b)]
             assert vcmp == data_cmp
 
     @pytest.mark.parametrize("intrin", ["any", "all"])
@@ -1036,7 +1036,7 @@ class _SIMD_ALL(_Test_Utility):
         def to_bool(vector):
             return [lane == mask_true for lane in vector]
 
-        data_cmp = list(itertools.starmap(func, zip(data_a, data_b)))
+        data_cmp = [func(a, b) for a, b in zip(data_a, data_b)]
         cmp = to_bool(intrin(vdata_a, vdata_b))
         assert cmp == data_cmp
 

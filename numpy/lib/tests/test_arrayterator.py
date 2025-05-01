@@ -1,6 +1,5 @@
 from operator import mul
 from functools import reduce
-from itertools import starmap
 
 import numpy as np
 from numpy.random import randint
@@ -32,7 +31,7 @@ def test():
     start = [randint(dim) for dim in shape]
     stop = [randint(dim) + 1 for dim in shape]
     step = [randint(dim) + 1 for dim in shape]
-    slice_ = tuple(starmap(slice, zip(start, stop, step)))
+    slice_ = tuple(slice(*t) for t in zip(start, stop, step))
     c = b[slice_]
     d = a[slice_]
 

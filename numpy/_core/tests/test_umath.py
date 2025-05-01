@@ -508,7 +508,7 @@ class TestDivision:
             ac = a.copy()
             ac //= b
             div_ab = a // b
-        div_lst = list(itertools.starmap(c_div, zip(a_lst, b_lst)))
+        div_lst = [c_div(x, y) for x, y in zip(a_lst, b_lst)]
 
         msg = "Integer arrays floor division check (//)"
         assert all(div_ab == div_lst), msg
@@ -740,7 +740,7 @@ class TestRemainder:
         dividend = nlst + [0] + plst
         divisor = nlst + plst
         arg = list(itertools.product(dividend, divisor))
-        tgt = list(itertools.starmap(divmod, arg))
+        tgt = [divmod(*t) for t in arg]
 
         a, b = np.array(arg, dtype=int).T
         # convert exact integer results from Python to float so that

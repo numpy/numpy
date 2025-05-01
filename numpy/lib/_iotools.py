@@ -181,7 +181,7 @@ class LineSplitter:
         elif hasattr(delimiter, '__iter__'):
             _handyman = self._variablewidth_splitter
             idx = np.cumsum([0] + list(delimiter))
-            delimiter = list(itertools.starmap(slice, itertools.pairwise(idx)))
+            delimiter = [slice(i, j) for (i, j) in itertools.pairwise(idx)]
         # Delimiter is a single integer
         elif int(delimiter):
             (_handyman, delimiter) = (
