@@ -500,6 +500,21 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         self,
         axis: _ShapeLike | None = None,
         out: None = None,
+        *,
+        keepdims: Literal[True],
+    ) -> _MaskedArray[bool_]: ...
+    @overload
+    def all(
+        self,
+        axis: _ShapeLike | None,
+        out: None,
+        keepdims: Literal[True],
+    ) -> _MaskedArray[bool_]: ...
+    @overload
+    def all(
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
         keepdims: bool | _NoValueType = ...,
     ) -> bool_ | _MaskedArray[bool_]: ...
     @overload
@@ -525,6 +540,21 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         out: None = None,
         keepdims: Literal[False] | _NoValueType = ...,
     ) -> bool_: ...
+    @overload
+    def any(
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        *,
+        keepdims: Literal[True],
+    ) -> _MaskedArray[bool_]: ...
+    @overload
+    def any(
+        self,
+        axis: _ShapeLike | None,
+        out: None,
+        keepdims: Literal[True],
+    ) -> _MaskedArray[bool_]: ...
     @overload
     def any(
         self,
