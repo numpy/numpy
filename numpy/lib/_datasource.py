@@ -36,7 +36,7 @@ Example::
 """
 import os
 
-from .._utils import set_module
+from numpy._utils import set_module
 
 
 _open = open

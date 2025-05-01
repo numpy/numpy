@@ -10,7 +10,7 @@ import functools
 import re
 import warnings
 
-from .._utils import set_module
+from numpy._utils import set_module
 import numpy._core.numeric as NX
 
 from numpy._core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,

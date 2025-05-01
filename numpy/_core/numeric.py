@@ -26,7 +26,7 @@ from . import shape_base
 from .overrides import finalize_array_function_like, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
-from ..exceptions import AxisError
+from numpy.exceptions import AxisError
 from ._ufunc_config import errstate
 
 bitwise_not = invert

@@ -17,7 +17,11 @@ extend-exclude = [
 [lint]
 preview = true
 extend-select = [
+    "C4",
+    "LOG",
+    "G",
     "PIE",
+    "TID",
     "FLY",
     "E",
     "W",
@@ -27,6 +31,7 @@ extend-select = [
 ]
 ignore = [
     "F",      # TODO: enable Pyflakes rules
+    "C408",   # Unnecessary `dict()` call (rewrite as a literal)
     "PIE790", # Unnecessary `pass` statement
     "E241",   # Multiple spaces after comma
     "E251",   # Unexpected spaces around keyword / parameter equals
