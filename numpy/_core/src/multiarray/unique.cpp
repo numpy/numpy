@@ -7,6 +7,7 @@
 #include <cstring>
 #include <functional>
 #include <unordered_set>
+#include <iostream>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -251,16 +252,21 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
         std::min(isize, (npy_intp)1024), hash, equal
     );
 
+    std::cerr << "Entered unique_vstring" << std::endl;
+    std::cerr << "array size (isize): " << isize << std::endl;
     // Input array is one-dimensional, enabling efficient iteration using strides.
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
+    std::cerr << "initial idata: " << (void*)idata << ", istride: " << istride << std::endl;
     // unpacked_strings need to be allocated outside of the loop because of the lifetime problem.
     std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
+        std::cerr << "  loop index i: " << i << ", idata: " << (void*)idata << std::endl;
         npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
         NpyString_load(in_allocator, packed_string, &unpacked_strings[i]);
         hashset.insert(&unpacked_strings[i]);
     }
+    std::cerr << "Insertion loop completed successfully." << std::endl;
 
     npy_intp length = hashset.size();
 
@@ -298,15 +304,23 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
 
     char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
+    std::cerr << "output array odata: " << (void*)odata << ", ostride: " << ostride << std::endl;
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
+        std::cerr << "odata: " << (void*)odata << std::endl;
         npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
+        int pack_status = 0;
         if ((*it)->buf == NULL) {
-            NpyString_pack_null(out_allocator, packed_string);
+            pack_status = NpyString_pack_null(out_allocator, packed_string);
         } else {
-            NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
+            pack_status = NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
+        }
+        if (pack_status == -1) {
+            // string packing failed
+            return NULL;
         }
     }
+    std::cerr << "Packing loop completed successfully." << std::endl;
 
     return res_obj;
 }
