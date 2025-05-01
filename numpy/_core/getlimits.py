@@ -6,7 +6,7 @@ __all__ = ['finfo', 'iinfo']
 import types
 import warnings
 
-from .._utils import set_module
+from numpy._utils import set_module
 from ._machar import MachAr
 from . import numeric
 from . import numerictypes as ntypes

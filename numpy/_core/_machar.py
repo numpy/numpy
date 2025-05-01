@@ -9,7 +9,7 @@ __all__ = ['MachAr']
 
 from .fromnumeric import any
 from ._ufunc_config import errstate
-from .._utils import set_module
+from numpy._utils import set_module
 
 # Need to speed this up...especially for longdouble
 

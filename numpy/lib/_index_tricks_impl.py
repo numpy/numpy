@@ -4,7 +4,7 @@ import math
 import warnings
 
 import numpy as np
-from .._utils import set_module
+from numpy._utils import set_module
 import numpy._core.numeric as _nx
 from numpy._core.numeric import ScalarType, array
 from numpy._core.numerictypes import issubdtype
