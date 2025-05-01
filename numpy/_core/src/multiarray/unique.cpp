@@ -301,11 +301,10 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
-        int pack_status = 0;
         if ((*it)->buf == NULL) {
-            pack_status = NpyString_pack_null(out_allocator, packed_string);
+            NpyString_pack_null(out_allocator, packed_string);
         } else {
-            pack_status = NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
+            NpyString_pack(out_allocator, packed_string, (*it)->buf, (*it)->size);
         }
     }
 
