@@ -175,11 +175,7 @@ class Template:
     from_filename = classmethod(from_filename)
 
     def __repr__(self):
-        return "<%s %s name=%r>" % (
-            self.__class__.__name__,
-            hex(id(self))[2:],
-            self.name,
-        )
+        return f"<{self.__class__.__name__} {id(self):x} name={self.name!r}>"
 
     def substitute(self, *args, **kw):
         if args:
