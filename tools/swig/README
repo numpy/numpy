@@ -3,9 +3,7 @@ Notes for the numpy/tools/swig directory
 
 This set of files is for developing and testing file numpy.i, which is
 intended to be a set of typemaps for helping SWIG interface between C
-and C++ code that uses C arrays and the python module NumPy.  It is
-ultimately hoped that numpy.i will be included as part of the SWIG
-distribution.
+and C++ code that uses C arrays and the python module NumPy.
 
 Documentation
 -------------
