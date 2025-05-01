@@ -859,8 +859,8 @@ class TestUnique:
         # so we check them by sorting
         assert_array_equal(sorted(a1.tolist()), unq_sorted)
 
-    def test_unique_vstring_hash_based(self):
-        # test for unicode and nullable string arrays
+    def test_unique_vstring_hash_based_equal_nan(self):
+        # test for unicode and nullable string arrays (equal_nan=True)
         a = np.array([
                 # short strings
                 'straße',
@@ -922,13 +922,87 @@ class TestUnique:
             'ñ' * 300,
         ]
 
-        a1 = unique(a, sorted=False)
+        a1 = unique(a, sorted=False, equal_nan=True)
         # the result varies depending on the impl of std::unordered_set,
         # so we check them by sorting
 
         # a1 should have exactly one None
         count_none = sum(x is None for x in a1)
         assert_equal(count_none, 1)
+
+        a1_wo_none = sorted(x for x in a1 if x is not None)
+        assert_array_equal(a1_wo_none, unq_sorted_wo_none)
+
+    def test_unique_vstring_hash_based_not_equal_nan(self):
+        # test for unicode and nullable string arrays (equal_nan=False)
+        a = np.array([
+                # short strings
+                'straße',
+                None,
+                'strasse',
+                'straße',
+                None,
+                'niño',
+                'nino',
+                'élève',
+                'eleve',
+                'niño',
+                'élève',
+                # medium strings
+                'b' * 20,
+                'ß' * 30,
+                None,
+                'é' * 30,
+                'e' * 20,
+                'ß' * 30,
+                'n' * 30,
+                'ñ' * 20,
+                None,
+                'e' * 20,
+                'ñ' * 20,
+                # long strings
+                'b' * 300,
+                'ß' * 400,
+                None,
+                'é' * 400,
+                'e' * 300,
+                'ß' * 400,
+                'n' * 400,
+                'ñ' * 300,
+                None,
+                'e' * 300,
+                'ñ' * 300,
+            ],
+            dtype=StringDType(na_object=None)
+        )
+        unq_sorted_wo_none = [
+            'b' * 20,
+            'b' * 300,
+            'e' * 20,
+            'e' * 300,
+            'eleve',
+            'nino',
+            'niño',
+            'n' * 30,
+            'n' * 400,
+            'strasse',
+            'straße',
+            'ß' * 30,
+            'ß' * 400,
+            'élève',
+            'é' * 30,
+            'é' * 400,
+            'ñ' * 20,
+            'ñ' * 300,
+        ]
+
+        a1 = unique(a, sorted=False, equal_nan=False)
+        # the result varies depending on the impl of std::unordered_set,
+        # so we check them by sorting
+
+        # a1 should have exactly one None
+        count_none = sum(x is None for x in a1)
+        assert_equal(count_none, 6)
 
         a1_wo_none = sorted(x for x in a1 if x is not None)
         assert_array_equal(a1_wo_none, unq_sorted_wo_none)

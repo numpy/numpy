@@ -38,7 +38,7 @@ size_t str_hash(const T *str, npy_intp num_chars) {
 
 template <typename T>
 static PyObject*
-unique_integer(PyArrayObject *self)
+unique_integer(PyArrayObject *self, bool equal_nan)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array of integer.
@@ -109,7 +109,7 @@ unique_integer(PyArrayObject *self)
 
 template <typename T>
 static PyObject*
-unique_string(PyArrayObject *self)
+unique_string(PyArrayObject *self, bool equal_nan)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array of fixed size strings.
@@ -191,7 +191,7 @@ unique_string(PyArrayObject *self)
 }
 
 static PyObject*
-unique_vstring(PyArrayObject *self)
+unique_vstring(PyArrayObject *self, bool equal_nan)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array.
@@ -215,15 +215,19 @@ unique_vstring(PyArrayObject *self)
     auto in_allocator_dealloc = finally([&]() {
         NpyString_release_allocator(in_allocator);
     });
-    auto hash = [](const npy_static_string *value) -> size_t {
+    auto hash = [equal_nan](const npy_static_string *value) -> size_t {
         if (value->buf == NULL) {
-            return 0;
+            if (equal_nan) {
+                return 0;
+            } else {
+                return std::hash<const npy_static_string *>{}(value);
+            }
         }
         return str_hash(value->buf, value->size);
     };
-    auto equal = [](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
+    auto equal = [equal_nan](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
         if (lhs->buf == NULL && rhs->buf == NULL) {
-            return true;
+            return equal_nan;
         }
         if (lhs->buf == NULL || rhs->buf == NULL) {
             return false;
@@ -310,7 +314,7 @@ unique_vstring(PyArrayObject *self)
 
 
 // this map contains the functions used for each item size.
-typedef std::function<PyObject *(PyArrayObject *)> function_type;
+typedef std::function<PyObject *(PyArrayObject *, bool)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
     {NPY_BYTE, unique_integer<npy_byte>},
     {NPY_UBYTE, unique_integer<npy_ubyte>},
@@ -348,8 +352,17 @@ std::unordered_map<int, function_type> unique_funcs = {
  * type is unsupported or `NULL` with an error set.
  */
 extern "C" NPY_NO_EXPORT PyObject *
-array__unique_hash(PyObject *NPY_UNUSED(module), PyObject *arr_obj)
+array__unique_hash(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwargs)
 {
+    static const char *kwlist[] = {"arr", "equal_nan", NULL};
+    PyObject *arr_obj;
+    int equal_nan = true;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|p:_unique_hash", (char **)kwlist,
+                                     &arr_obj, &equal_nan)) {
+        return NULL;
+    }
+
     if (!PyArray_Check(arr_obj)) {
         PyErr_SetString(PyExc_TypeError,
                 "_unique_hash() requires a NumPy array input.");
@@ -364,7 +377,7 @@ array__unique_hash(PyObject *NPY_UNUSED(module), PyObject *arr_obj)
             Py_RETURN_NOTIMPLEMENTED;
         }
 
-        return unique_funcs[type](arr);
+        return unique_funcs[type](arr, equal_nan);
     }
     catch (const std::bad_alloc &e) {
         PyErr_NoMemory();
