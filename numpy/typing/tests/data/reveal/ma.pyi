@@ -17,6 +17,7 @@ AR_dt64: NDArray[np.datetime64]
 AR_td64: NDArray[np.timedelta64]
 AR_o: NDArray[np.timedelta64]
 
+MAR_c16: MaskedArray[np.complex128]
 MAR_b: MaskedArray[np.bool]
 MAR_f4: MaskedArray[np.float32]
 MAR_f8: MaskedArray[np.float64]
@@ -308,6 +309,13 @@ def func(x: object) -> None:
         assert_type(x, NDArray[np.bool])
     else:
         assert_type(x, object)
+
+assert_type(MAR_2d_f4.mT, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+
+assert_type(MAR_c16.real, MaskedArray[np.float64])
+assert_type(MAR_c16.imag, MaskedArray[np.float64])
+
+assert_type(MAR_2d_f4.baseclass, type[NDArray[Any]])
 
 assert_type(MAR_b.swapaxes(0, 1), MaskedArray[np.bool])
 assert_type(MAR_2d_f4.swapaxes(1, 0), MaskedArray[np.float32])
