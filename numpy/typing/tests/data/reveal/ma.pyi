@@ -7,6 +7,7 @@ from numpy._typing import NDArray, _Shape
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 MaskedArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT]]
+_Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 class MaskedArraySubclass(MaskedArray[np.complex128]): ...
 
@@ -314,3 +315,6 @@ assert_type(MAR_2d_f4.swapaxes(1, 0), MaskedArray[np.float32])
 assert_type(np.ma.nomask, np.bool[Literal[False]])
 # https://github.com/python/mypy/issues/18974
 assert_type(np.ma.MaskType, type[np.bool])  # type: ignore[assert-type]
+
+assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]])
+assert_type(MAR_2d_f4.nonzero()[0], _Array1D[np.intp])
