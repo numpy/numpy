@@ -123,7 +123,8 @@ def gauss_from_uint(x, n, bits):
             loc += 2
 
         f = np.sqrt(-2.0 * np.log(r2) / r2)
-        gauss.extend((f * x2, f * x1))
+        gauss.append(f * x2)
+        gauss.append(f * x1)
 
     return gauss[:n]
 
