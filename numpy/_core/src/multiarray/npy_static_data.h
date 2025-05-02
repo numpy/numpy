@@ -138,6 +138,13 @@ typedef struct npy_static_pydata_struct {
     PyObject *GenericToVoidMethod;
     PyObject *ObjectToGenericMethod;
     PyObject *GenericToObjectMethod;
+
+    /*
+     * Used in from_dlpack
+     */
+    PyObject *dl_call_kwnames;
+    PyObject *dl_cpu_device_tuple;
+    PyObject *dl_max_version;
 } npy_static_pydata_struct;
 
 
