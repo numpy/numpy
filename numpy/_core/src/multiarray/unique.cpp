@@ -11,6 +11,9 @@
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
+extern "C" {
+    #include "npy_argparse.h"
+}
 
 // This is to use RAII pattern to handle cpp exceptions while avoiding memory leaks.
 // Adapted from https://stackoverflow.com/a/25510879/2536294
@@ -365,23 +368,21 @@ std::unordered_map<int, function_type> unique_funcs = {
  * type is unsupported or `NULL` with an error set.
  */
 extern "C" NPY_NO_EXPORT PyObject *
-array__unique_hash(PyObject *NPY_UNUSED(module), PyObject *args, PyObject *kwargs)
+array__unique_hash(PyObject *NPY_UNUSED(module),
+                   PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    static const char *kwlist[] = {"arr", "equal_nan", NULL};
-    PyObject *arr_obj;
-    int equal_nan = true;
+    PyArrayObject *arr = NULL;
+    npy_bool equal_nan = NPY_TRUE;  // default to True
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|p:_unique_hash", (char **)kwlist,
-                                     &arr_obj, &equal_nan)) {
+    NPY_PREPARE_ARGPARSER;
+    if (npy_parse_arguments("_unique_hash", args, len_args, kwnames,
+                            "arr", &PyArray_Converter, &arr,
+                            "|equal_nan",  &PyArray_BoolConverter, &equal_nan,
+                            NULL, NULL, NULL
+                            ) < 0
+    ) {
         return NULL;
     }
-
-    if (!PyArray_Check(arr_obj)) {
-        PyErr_SetString(PyExc_TypeError,
-                "_unique_hash() requires a NumPy array input.");
-        return NULL;
-    }
-    PyArrayObject *arr = (PyArrayObject *)arr_obj;
 
     try {
         auto type = PyArray_TYPE(arr);
