@@ -122,6 +122,7 @@ typedef union {
 // Helper fucntion that uses bitwise opperations to transform a mantissa, exponent and sign
 // into a double, by putting the bits in the correct memory locations
 npy_longdouble _int_to_ld(int64_t *val, int e, int s) {
+    if (PyErr_Occurred()) { return -1; }
     uint64_t mantissa[3];
     uint64_t exp = (uint64_t)e;
     uint64_t sign = (uint64_t)s;
@@ -179,6 +180,7 @@ typedef union {
 // Helper fucntion that uses bitwise opperations to transform a mantissa, exponent and sign
 // into a long double, by putting the bits in the correct memory locations
 npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
+    if (PyErr_Occurred()) { return -1; }
     uint64_t mantissa[3];
     for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
 
@@ -197,7 +199,7 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
                 break;
             }
         }
-        guard = (mantissa[1] >> (foo + 1)) & 1;
+        guard = (mantissa[1] >> (foo - 1)) & 1;
     }
     exp += foo - 1;
     value.u64[0] = (mantissa[1] >> foo) | (mantissa[0] << (64 - foo));
@@ -233,6 +235,7 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
 // Uses mathematical opperations to calculate the number, by using the numbers in the
 // mantissa, scaling them approprietly using exp, and then adding them together
 npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
+    if (PyErr_Occurred()) { return -1; }
     uint64_t mantissa[3];
     for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
     npy_longdouble ld;
@@ -240,8 +243,8 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
         ld = (npy_longdouble)sign * (npy_longdouble)mantissa[0];
         // Edge case for numbers that may or maynot be too big to be represented
     } else if (exp == NPY_LDBL_MAX_EXP && mantissa[0] == 0) {
-        ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[1] * powl(2.0L, (npy_longdouble)(exp - 64)) + 
-            (npy_longdouble)mantissa[2] * powl(2.0L, (npy_longdouble)(exp - 128)));
+        ld = (npy_longdouble)sign * (ldexpl((npy_longdouble)mantissa[1], exp - 64) +
+            ldexpl((npy_longdouble)mantissa[2], exp - 128))
             // Sometimes it overflows in weird ways
         if (ld == (npy_longdouble)INFINITY || ld == (npy_longdouble)(-INFINITY) || ld == (npy_longdouble)NAN || ld == (npy_longdouble)(-NAN)) {
             return _ldbl_ovfl_err();
@@ -249,9 +252,9 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
     } else if (exp >= NPY_LDBL_MAX_EXP) {
         return _ldbl_ovfl_err();
     } else {
-    ld = (npy_longdouble)sign * ((npy_longdouble)mantissa[0] * powl(2.0L, (npy_longdouble)(exp)) + 
-    (npy_longdouble)mantissa[1] * powl(2.0L, (npy_longdouble)(exp - 64)) + 
-    (npy_longdouble)mantissa[2] * powl(2.0L, (npy_longdouble)(exp - 128)));
+    ld = (npy_longdouble)sign * (ldexpl((npy_longdouble)mantissa[0], exp) +
+        ldexpl((npy_longdouble)mantissa[1], exp - 64) +
+        ldexpl((npy_longdouble)mantissa[2], exp - 128));
     }
     return ld;
 }
@@ -263,33 +266,41 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
 // The more significant digits are stored in the smaller indexes
 void _get_num(PyObject* py_int, int64_t* val, int *exp, int *ovf) {
     PyObject* shift = PyLong_FromLong(64);
+    PyObject* temp = py_int;
     while (*ovf != 0) {
         *exp += 64;
         val[2] = val[1];
         val[1] = (uint64_t)PyLong_AsUnsignedLongLongMask(py_int);
-        py_int = PyNumber_Rshift(py_int, shift);
+        temp = PyNumber_Rshift(py_int, shift);
+        if (temp != py_int) {  // Check if a new object was created
+            Py_DECREF(py_int); // Decrement refcount of the old py_int
+            py_int = temp;     // Update py_int to the new object
+        }
         val[0] = (uint64_t)PyLong_AsLongLongAndOverflow(py_int, ovf);
     }
+    Py_DECREF(shift);
+    Py_DECREF(temp);
 }
 
 // helper function that gets the sign, and if the number is too big to be represented
 // as a int64, calls _get_num to find the exponent and mantissa
 void _fix_py_num(PyObject* py_int, int64_t* val, int *exp, int *sign) {
-
     int overflow;
     val[0] = PyLong_AsLongLongAndOverflow(py_int, &overflow);
     if (overflow == 1) {
         *sign = NPY_LGDB_SIGN_POS;
-        _get_num(py_int, val, exp, &overflow);
+        PyObject* copy_int = PyNumber_Absolute(py_int);
+        _get_num(copy_int, val, exp, &overflow);
     } else if (overflow == -1) {
         *sign = NPY_LGDB_SIGN_NEG;
-        py_int = PyNumber_Negative(py_int);
-        _get_num(py_int, val, exp, &overflow);
+        PyObject* copy_int = PyNumber_Negative(py_int); //create new PyLongObject
+        _get_num(copy_int, val, exp, &overflow);
     } else {
         if (val[0] == 0) {*sign = 0;}
         else if (val[0] < 0) { val[0] = -val[0]; *sign = NPY_LGDB_SIGN_NEG;}
         else {*sign = NPY_LGDB_SIGN_POS;}
     } 
+    
 }
 /*
 The precision and max number is platform dependent, for 80 and 128 bit platforms
@@ -311,14 +322,13 @@ npy_longdouble_from_PyLong(PyObject *long_obj) {
         int E = 0;
         int64_t val[3]; //needs to be size 3 in 80bit prescision
         _fix_py_num(long_obj, val, &E, &sign);
+        if (PyErr_Occurred()) { return -1; }
         value = _int_to_ld(val, E, sign);
     } else {
         PyErr_SetString(PyExc_TypeError, "Expected a number (int or float)");
         return -1;
     }
 
-    if (PyErr_Occurred()) {
-        return -1;
-    }
+    if (PyErr_Occurred()) { return -1; }
     return value;
 }
