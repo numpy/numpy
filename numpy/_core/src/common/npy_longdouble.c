@@ -244,7 +244,7 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
         // Edge case for numbers that may or maynot be too big to be represented
     } else if (exp == NPY_LDBL_MAX_EXP && mantissa[0] == 0) {
         ld = (npy_longdouble)sign * (ldexpl((npy_longdouble)mantissa[1], exp - 64) +
-            ldexpl((npy_longdouble)mantissa[2], exp - 128))
+            ldexpl((npy_longdouble)mantissa[2], exp - 128));
             // Sometimes it overflows in weird ways
         if (ld == (npy_longdouble)INFINITY || ld == (npy_longdouble)(-INFINITY) || ld == (npy_longdouble)NAN || ld == (npy_longdouble)(-NAN)) {
             return _ldbl_ovfl_err();
