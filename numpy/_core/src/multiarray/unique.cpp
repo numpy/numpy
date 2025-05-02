@@ -273,6 +273,7 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
 
     npy_intp length = hashset.size();
 
+    std::cerr << "hashset size: " << length << std::endl;
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
     // NumPy API calls and Python object manipulations require holding the GIL.
@@ -287,23 +288,30 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
-
+    std::cerr << "res_obj: " << (void*)res_obj << std::endl;
     if (res_obj == NULL) {
         return NULL;
     }
+    std::cerr << "res_obj created successfully." << std::endl;
     PyArray_Descr *res_descr = PyArray_DESCR((PyArrayObject *)res_obj);
+    std::cerr << "res_descr: " << (void*)res_descr << std::endl;
     // NumPy API calls and Python object manipulations require holding the GIL.
     Py_INCREF(res_descr);
+    std::cerr << "res_descr incremented successfully." << std::endl;
     NPY_DISABLE_C_API;
     PyThreadState *_save2 = PyEval_SaveThread();
+    std::cerr << "save2: " << (void*)_save2 << std::endl;
     auto save2_dealloc = finally([&]() {
         PyEval_RestoreThread(_save2);
     });
+    std::cerr << "save2_dealloc completed successfully." << std::endl;
 
     npy_string_allocator *out_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)res_descr);
+    std::cerr << "out_allocator: " << (void*)out_allocator << std::endl;
     auto out_allocator_dealloc = finally([&]() {
         NpyString_release_allocator(out_allocator);
     });
+    std::cerr << "out_allocator_dealloc completed successfully." << std::endl;
 
     char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
