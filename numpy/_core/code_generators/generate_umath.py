@@ -1403,7 +1403,7 @@ def make_arrays(funcdict):
         sub = 0
 
         for k, t in enumerate(uf.type_descriptions):
-            cfunc_alias = t.cfunc_alias if t.cfunc_alias else name
+            cfunc_alias = t.cfunc_alias or name
             cfunc_fname = None
             if t.func_data is FullTypeDescr:
                 tname = english_upper(chartoname[t.type])

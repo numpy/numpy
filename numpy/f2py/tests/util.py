@@ -384,7 +384,7 @@ class F2PyTest:
         if self.module is not None:
             return
 
-        codes = self.sources if self.sources else []
+        codes = self.sources or []
         if self.code:
             codes.append(self.suffix)
 
