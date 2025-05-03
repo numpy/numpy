@@ -249,18 +249,10 @@ def test_code_runs(path: str) -> None:
 
 
 LINENO_MAPPING = {
-    6: "uint128",
-    7: "uint256",
-    9: "int128",
-    10: "int256",
-    12: "float80",
-    13: "float96",
-    14: "float128",
-    15: "float256",
-    17: "complex160",
-    18: "complex192",
-    19: "complex256",
-    20: "complex512",
+    6: "float96",
+    7: "float128",
+    8: "complex192",
+    9: "complex256",
 }
 
 
