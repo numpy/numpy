@@ -41,7 +41,7 @@ size_t str_hash(const T *str, npy_intp num_chars) {
     #endif
     const unsigned char* bytes = reinterpret_cast<const unsigned char*>(str);
     size_t hash = FNV_OFFSET_BASIS;
-    for (npy_intp i = 0; i < num_chars * sizeof(T); ++i) {
+    for (npy_intp i = 0; i < num_chars * (npy_intp)sizeof(T); ++i) {
         hash ^= bytes[i];
         hash *= FNV_PRIME;
     }
