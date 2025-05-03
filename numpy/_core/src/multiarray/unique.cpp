@@ -7,7 +7,6 @@
 #include <cstring>
 #include <functional>
 #include <unordered_set>
-#include <iostream>
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
@@ -252,29 +251,22 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
         std::min(isize, (npy_intp)1024), hash, equal
     );
 
-    std::cerr << "Entered unique_vstring" << std::endl;
-    std::cerr << "array size (isize): " << isize << std::endl;
     // Input array is one-dimensional, enabling efficient iteration using strides.
     char *idata = PyArray_BYTES(self);
     npy_intp istride = PyArray_STRIDES(self)[0];
-    std::cerr << "initial idata: " << (void*)idata << ", istride: " << istride << std::endl;
     // unpacked_strings need to be allocated outside of the loop because of the lifetime problem.
     std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
-        std::cerr << "  loop index i: " << i << ", idata: " << (void*)idata << std::endl;
         npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
         NpyString_load(in_allocator, packed_string, &unpacked_strings[i]);
         hashset.insert(&unpacked_strings[i]);
     }
-    std::cerr << "Insertion loop completed successfully." << std::endl;
-
-    npy_intp length = hashset.size();
-
-    std::cerr << "hashset size: " << length << std::endl;
 
     // allocator need to be released before operations requiring the GIL.
     // https://github.com/numpy/numpy/blob/49056192330487ff49a142e5280e24461b638723/numpy/_core/src/multiarray/stringdtype/static_string.c#L286-L306
     NpyString_release_allocator(in_allocator);
+
+    npy_intp length = hashset.size();
 
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
@@ -290,37 +282,29 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
         NPY_ARRAY_WRITEABLE, // flags
         NULL // obj
     );
-    std::cerr << "res_obj: " << (void*)res_obj << std::endl;
     if (res_obj == NULL) {
         return NULL;
     }
-    std::cerr << "res_obj created successfully." << std::endl;
     PyArray_Descr *res_descr = PyArray_DESCR((PyArrayObject *)res_obj);
-    std::cerr << "res_descr: " << (void*)res_descr << std::endl;
     // NumPy API calls and Python object manipulations require holding the GIL.
     Py_INCREF(res_descr);
-    std::cerr << "res_descr incremented successfully." << std::endl;
     NPY_DISABLE_C_API;
+
+    // release the GIL
     PyThreadState *_save2 = PyEval_SaveThread();
-    std::cerr << "save2: " << (void*)_save2 << std::endl;
     auto save2_dealloc = finally([&]() {
         PyEval_RestoreThread(_save2);
     });
-    std::cerr << "save2_dealloc completed successfully." << std::endl;
 
     npy_string_allocator *out_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)res_descr);
-    std::cerr << "out_allocator: " << (void*)out_allocator << std::endl;
     auto out_allocator_dealloc = finally([&]() {
         NpyString_release_allocator(out_allocator);
     });
-    std::cerr << "out_allocator_dealloc completed successfully." << std::endl;
 
     char *odata = PyArray_BYTES((PyArrayObject *)res_obj);
     npy_intp ostride = PyArray_STRIDES((PyArrayObject *)res_obj)[0];
-    std::cerr << "output array odata: " << (void*)odata << ", ostride: " << ostride << std::endl;
     // Output array is one-dimensional, enabling efficient iteration using strides.
     for (auto it = hashset.begin(); it != hashset.end(); it++, odata += ostride) {
-        std::cerr << "odata: " << (void*)odata << std::endl;
         npy_packed_static_string *packed_string = (npy_packed_static_string *)odata;
         int pack_status = 0;
         if ((*it)->buf == NULL) {
@@ -333,7 +317,6 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
             return NULL;
         }
     }
-    std::cerr << "Packing loop completed successfully." << std::endl;
 
     return res_obj;
 }
