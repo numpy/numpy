@@ -312,3 +312,36 @@ dimensions in the broadcast increases.
     than height because of the larger values. In practice, it is important to
     normalize the height and weight, often by their standard deviation across the
     data set, so that both have equal influence on the distance calculation.
+
+.. rubric:: Additional example: (3,1) and (1,4) broadcasting
+
+The following example shows how a (3,1) array and a (1,4) array are broadcast to a (3,4) shape:
+
+.. code-block:: python
+    import numpy as np
+    a = np.arange(3).reshape(3, 1)
+    b = np.arange(4).reshape(1, 4)
+    c = a + b
+    print(c)
+    # Output:
+    # [[0 1 2 3]
+    #  [1 2 3 4]
+    #  [2 3 4 5]]
+.. rubric:: Additional example: broadcasting between 3D and 2D arrays
+
+This example shows how a (2, 3, 1) array can be broadcast with a (3, 4) array to produce a (2, 3, 4) result.
+
+.. code-block:: python
+    import numpy as np
+    a = np.arange(6).reshape(2, 3, 1)    # shape: (2, 3, 1)
+    b = np.arange(12).reshape(3, 4)      # shape: (3, 4)
+    c = a + b                            # shape: (2, 3, 4)
+    print(c)
+    # Output:
+    # [[[  0   1   2   3]
+    #   [  4   5   6   7]
+    #   [  8   9  10  11]]
+    #
+    #  [[ 12  13  14  15]
+    #   [ 16  17  18  19]
+    #   [ 20  21  22  23]]]
