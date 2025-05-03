@@ -216,9 +216,6 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
 
     // variables for the vstring
     npy_string_allocator *in_allocator = NpyString_acquire_allocator((PyArray_StringDTypeObject *)descr);
-    auto in_allocator_dealloc = finally([&]() {
-        NpyString_release_allocator(in_allocator);
-    });
     auto hash = [equal_nan](const npy_static_string *value) -> size_t {
         if (value->buf == NULL) {
             if (equal_nan) {
@@ -274,6 +271,10 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
     npy_intp length = hashset.size();
 
     std::cerr << "hashset size: " << length << std::endl;
+
+    // allocator need to be released before operations requiring the GIL
+    NpyString_release_allocator(in_allocator);
+
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
     // NumPy API calls and Python object manipulations require holding the GIL.
