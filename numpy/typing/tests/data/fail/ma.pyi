@@ -63,6 +63,14 @@ np.ma.argmax(m, keepdims=1.0)  # E: No overload variant
 np.ma.argmax(m, out=1.0)  # E: No overload variant
 np.ma.argmax(m, fill_value=lambda x: 27)  # E: No overload variant
 
+m.all(axis=1.0)  # E: No overload variant
+m.all(keepdims=1.0)  # E: No overload variant
+m.all(out=1.0)  # E: No overload variant
+
+m.any(axis=1.0)  # E: No overload variant
+m.any(keepdims=1.0)  # E: No overload variant
+m.any(out=1.0)  # E: No overload variant
+
 m.sort(axis=(0,1))  # E: No overload variant
 m.sort(axis=None)  # E: No overload variant
 m.sort(kind='cabbage')  # E: No overload variant

@@ -487,8 +487,97 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def put(self, indices: _ArrayLikeInt_co, values: ArrayLike, mode: _ModeKind = "raise") -> None: ...
     def ids(self) -> tuple[int, int]: ...
     def iscontiguous(self) -> bool: ...
-    def all(self, axis=..., out=..., keepdims=...): ...
-    def any(self, axis=..., out=..., keepdims=...): ...
+
+    @overload
+    def all(
+        self,
+        axis: None = None,
+        out: None = None,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> bool_: ...
+    @overload
+    def all(
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        *,
+        keepdims: Literal[True],
+    ) -> _MaskedArray[bool_]: ...
+    @overload
+    def all(
+        self,
+        axis: _ShapeLike | None,
+        out: None,
+        keepdims: Literal[True],
+    ) -> _MaskedArray[bool_]: ...
+    @overload
+    def all(
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> bool_ | _MaskedArray[bool_]: ...
+    @overload
+    def all(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def all(
+        self,
+        axis: _ShapeLike | None,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+
+    @overload
+    def any(
+        self,
+        axis: None = None,
+        out: None = None,
+        keepdims: Literal[False] | _NoValueType = ...,
+    ) -> bool_: ...
+    @overload
+    def any(
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        *,
+        keepdims: Literal[True],
+    ) -> _MaskedArray[bool_]: ...
+    @overload
+    def any(
+        self,
+        axis: _ShapeLike | None,
+        out: None,
+        keepdims: Literal[True],
+    ) -> _MaskedArray[bool_]: ...
+    @overload
+    def any(
+        self,
+        axis: _ShapeLike | None = None,
+        out: None = None,
+        keepdims: bool | _NoValueType = ...,
+    ) -> bool_ | _MaskedArray[bool_]: ...
+    @overload
+    def any(
+        self,
+        axis: _ShapeLike | None = None,
+        *,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def any(
+        self,
+        axis: _ShapeLike | None,
+        out: _ArrayT,
+        keepdims: bool | _NoValueType = ...,
+    ) -> _ArrayT: ...
+
     def nonzero(self) -> tuple[_Array1D[intp], *tuple[_Array1D[intp], ...]]: ...
     def trace(self, offset=..., axis1=..., axis2=..., dtype=..., out=...): ...
     def dot(self, b, out=..., strict=...): ...
