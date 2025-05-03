@@ -31,12 +31,21 @@ FinalAction<F> finally(F f) {
 // function to caluculate the hash of a string
 template <typename T>
 size_t str_hash(const T *str, npy_intp num_chars) {
-    // https://www.boost.org/doc/libs/1_88_0/libs/container_hash/doc/html/hash.html#notes_hash_combine
-    size_t h = 0;
-    for (npy_intp i = 0; i < num_chars; ++i) {
-        h ^= std::hash<T>{}(str[i]) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    // http://www.isthe.com/chongo/tech/comp/fnv/#FNV-1a
+    #if NPY_SIZEOF_INTP == 4
+        static const size_t FNV_OFFSET_BASIS = 2166136261U;
+        static const size_t FNV_PRIME = 16777619U;
+    #else // NPY_SIZEOF_INTP == 8
+        static const size_t FNV_OFFSET_BASIS = 14695981039346656037ULL;
+        static const size_t FNV_PRIME = 1099511628211ULL;
+    #endif
+    const unsigned char* bytes = reinterpret_cast<const unsigned char*>(str);
+    size_t hash = FNV_OFFSET_BASIS;
+    for (npy_intp i = 0; i < num_chars * sizeof(T); ++i) {
+        hash ^= bytes[i];
+        hash *= FNV_PRIME;
     }
-    return h;
+    return hash;
 }
 
 template <typename T>
