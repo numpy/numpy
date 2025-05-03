@@ -289,6 +289,7 @@ assert_type(np.ma.put(MAR_f4, 4, 999), None)
 assert_type(np.ma.put(MAR_f4, 4, 999, mode='clip'), None)
 
 assert_type(np.ma.putmask(MAR_f4, [True, False], [0, 1]), None)
+assert_type(np.ma.putmask(MAR_f4, np.False_, [0, 1]), None)
 
 assert_type(MAR_f4.filled(float('nan')), NDArray[np.float32])
 assert_type(MAR_i8.filled(), NDArray[np.int64])
@@ -345,6 +346,19 @@ assert_type(MAR_2d_f4.swapaxes(1, 0), MaskedArray[np.float32])
 assert_type(np.ma.nomask, np.bool[Literal[False]])
 # https://github.com/python/mypy/issues/18974
 assert_type(np.ma.MaskType, type[np.bool])  # type: ignore[assert-type]
+
+assert_type(MAR_1d.__setmask__([True, False]), None)
+assert_type(MAR_1d.__setmask__(np.False_), None)
+
+assert_type(MAR_2d_f4.harden_mask(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+assert_type(MAR_i8.harden_mask(), MaskedArray[np.int64])
+assert_type(MAR_2d_f4.soften_mask(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+assert_type(MAR_i8.soften_mask(), MaskedArray[np.int64])
+assert_type(MAR_f4.unshare_mask(), MaskedArray[np.float32])
+assert_type(MAR_b.shrink_mask(), MaskedArray[np.bool_])
+
+assert_type(MAR_i8.hardmask, bool)
+assert_type(MAR_i8.sharedmask, bool)
 
 assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]])
 assert_type(MAR_2d_f4.nonzero()[0], _Array1D[np.intp])
