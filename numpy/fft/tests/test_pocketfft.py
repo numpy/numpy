@@ -466,21 +466,22 @@ class TestFFT1D:
         assert_array_equal(result, expected)
 
     def test_fftn_with_out_and_s():
-        # fftn works correctly with both out and s parameters 
+        # fftn works correctly with both out and s parameters
+        rng = np.random.RandomState(42)
         x = np.random.rand(4, 4, 4) + 1j * np.random.rand(4, 4, 4)
         s = (6, 6, 6)  # Different shape than input
         out = np.zeros(s, dtype=complex)
-        
+
         result = np.fft.fftn(x, s=s, out=out)
-        
+
         expected = np.fft.fftn(x, s=s)
-        assert result is out  # out was used
-        np.testing.assert_allclose(result, expected)
-        
-        x2 = np.random.rand(5, 5) + 1j * np.random.rand(5, 5)
+        assert result is out
+        assert_allclose(result, expected)
+
+        x2 = np.random.rand(5, 5) + 1j * rng.random((5, 5))
         s2 = (8, 3)
         out2 = np.zeros(s2, dtype=complex)
-        
+
         result2 = np.fft.fftn(x2, s=s2, out=out2)
         expected2 = np.fft.fftn(x2, s=s2)
         assert result2 is out2

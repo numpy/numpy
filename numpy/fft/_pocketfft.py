@@ -749,8 +749,6 @@ def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None, out=None):
             a = function(a, n=s[ii], axis=axes[ii], norm=norm, out=out)
         else:
             a = function(a, n=s[ii], axis=axes[ii], norm=norm, out=intermediate_out)
-    
-        
     return a
 
 
