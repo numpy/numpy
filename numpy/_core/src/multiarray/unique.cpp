@@ -50,7 +50,7 @@ size_t str_hash(const T *str, npy_intp num_chars) {
 
 template <typename T>
 static PyObject*
-unique_integer(PyArrayObject *self, bool equal_nan)
+unique_integer(PyArrayObject *self, npy_bool equal_nan)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array of integer.
@@ -121,7 +121,7 @@ unique_integer(PyArrayObject *self, bool equal_nan)
 
 template <typename T>
 static PyObject*
-unique_string(PyArrayObject *self, bool equal_nan)
+unique_string(PyArrayObject *self, npy_bool equal_nan)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array of fixed size strings.
@@ -203,7 +203,7 @@ unique_string(PyArrayObject *self, bool equal_nan)
 }
 
 static PyObject*
-unique_vstring(PyArrayObject *self, bool equal_nan)
+unique_vstring(PyArrayObject *self, npy_bool equal_nan)
 {
     /*
     * Returns a new NumPy array containing the unique values of the input array.
@@ -332,7 +332,7 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
 
 
 // this map contains the functions used for each item size.
-typedef std::function<PyObject *(PyArrayObject *, bool)> function_type;
+typedef std::function<PyObject *(PyArrayObject *, npy_bool)> function_type;
 std::unordered_map<int, function_type> unique_funcs = {
     {NPY_BYTE, unique_integer<npy_byte>},
     {NPY_UBYTE, unique_integer<npy_ubyte>},
