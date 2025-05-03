@@ -57,10 +57,8 @@ from numpy._typing import (
     NBitBase,
     # NOTE: Do not remove the extended precision bit-types even if seemingly unused;
     # they're used by the mypy plugin
-    _256Bit,
     _128Bit,
     _96Bit,
-    _80Bit,
     _64Bit,
     _32Bit,
     _16Bit,
@@ -160,21 +158,12 @@ from numpy._typing._callable import (
     _ComparisonOpGE,
 )
 
-# NOTE: Numpy's mypy plugin is used for removing the types unavailable
-# to the specific platform
+# NOTE: Numpy's mypy plugin is used for removing the types unavailable to the specific platform
 from numpy._typing._extended_precision import (
-    uint128,
-    uint256,
-    int128,
-    int256,
-    float80,
     float96,
     float128,
-    float256,
-    complex160,
     complex192,
     complex256,
-    complex512,
 )
 
 from numpy._array_api_info import __array_namespace_info__
@@ -698,8 +687,7 @@ __all__ = [  # noqa: RUF022
     "uint8", "ubyte", "int16", "short", "uint16", "ushort", "int32", "intc", "uint32",
     "uintc", "int64", "long", "uint64", "ulong", "longlong", "ulonglong", "intp",
     "uintp", "double", "cdouble", "single", "csingle", "half", "bool_", "int_", "uint",
-    "uint128", "uint256", "int128", "int256", "float80", "float96", "float128",
-    "float256", "complex160", "complex192", "complex256", "complex512",
+    "float96", "float128", "complex192", "complex256",
     "array2string", "array_str", "array_repr", "set_printoptions", "get_printoptions",
     "printoptions", "format_float_positional", "format_float_scientific", "require",
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",

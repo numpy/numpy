@@ -68,20 +68,7 @@ from .multiarray import (
 )
 
 from numpy._typing import DTypeLike
-from numpy._typing._extended_precision import (
-    uint128,
-    uint256,
-    int128,
-    int256,
-    float80,
-    float96,
-    float128,
-    float256,
-    complex160,
-    complex192,
-    complex256,
-    complex512,
-)
+from numpy._typing._extended_precision import float96, float128, complex192, complex256
 
 __all__ = [
     "ScalarType",
@@ -146,18 +133,10 @@ __all__ = [
     "bool_",
     "int_",
     "uint",
-    "uint128",
-    "uint256",
-    "int128",
-    "int256",
-    "float80",
     "float96",
     "float128",
-    "float256",
-    "complex160",
     "complex192",
     "complex256",
-    "complex512",
 ]
 
 @type_check_only
