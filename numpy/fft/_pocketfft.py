@@ -734,11 +734,23 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
 
 def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None, out=None):
     a = asarray(a)
-    s, axes = _cook_nd_args(a, s, axes)
+    s, axes = _cook_nd_args(a, s, axes, function is irfft)
+
+    if out is not None and s is not None and any(s[i] != a.shape[axes[i]] for i in range(len(axes))):
+        intermediate_out = None
+    else:
+        intermediate_out = out
+
     itl = list(range(len(axes)))
     itl.reverse()
-    for ii in itl:
-        a = function(a, n=s[ii], axis=axes[ii], norm=norm, out=out)
+
+    for i, ii in enumerate(itl):
+        if i == len(itl) - 1:
+            a = function(a, n=s[ii], axis=axes[ii], norm=norm, out=out)
+        else:
+            a = function(a, n=s[ii], axis=axes[ii], norm=norm, out=intermediate_out)
+    
+        
     return a
 
 
