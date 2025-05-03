@@ -272,7 +272,8 @@ unique_vstring(PyArrayObject *self, bool equal_nan)
 
     std::cerr << "hashset size: " << length << std::endl;
 
-    // allocator need to be released before operations requiring the GIL
+    // allocator need to be released before operations requiring the GIL.
+    // https://github.com/numpy/numpy/blob/49056192330487ff49a142e5280e24461b638723/numpy/_core/src/multiarray/stringdtype/static_string.c#L286-L306
     NpyString_release_allocator(in_allocator);
 
     PyEval_RestoreThread(_save1);
