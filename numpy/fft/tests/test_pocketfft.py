@@ -465,7 +465,7 @@ class TestFFT1D:
         assert result is out
         assert_array_equal(result, expected)
 
-    def test_fftn_with_out_and_s():
+    def test_fftn_with_out_and_s(self):
         # fftn works correctly with both out and s parameters
         rng = np.random.RandomState(42)
         x = np.random.rand(4, 4, 4) + 1j * np.random.rand(4, 4, 4)
