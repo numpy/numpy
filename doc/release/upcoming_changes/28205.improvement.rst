@@ -1,0 +1,6 @@
+Added warnings to `np.isclose`
+---------------------------------
+Added warning messages if at least one of atol or rtol are
+either `np.nan` or `np.inf` within `np.isclose`
+
+* Warnings follow the user's `np.seterr` settings
