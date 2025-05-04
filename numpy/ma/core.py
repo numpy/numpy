@@ -8176,8 +8176,13 @@ def round_(a, decimals=0, out=None):
         return out
 
 
-round = round_
-
+def round_(*args, **kwargs):
+    warnings.warn(
+        "`ma.round_` is deprecated and will be removed in a future release. Use `ma.round` instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return round(*args, **kwargs)
 
 def _mask_propagate(a, axis):
     """
