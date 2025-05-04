@@ -26,8 +26,10 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_FMA4              = 12,
     NPY_CPU_FEATURE_FMA3              = 13,
     NPY_CPU_FEATURE_AVX2              = 14,
-    NPY_CPU_FEATURE_FMA               = 15, // AVX2 & FMA3, provides backward compatibility
-
+    NPY_CPU_FEATURE_AES               = 16,
+    NPY_CPU_FEATURE_PCLMULQDQ         = 17,
+    NPY_CPU_FEATURE_BMI1              = 18,
+    NPY_CPU_FEATURE_BMI2              = 19,
     NPY_CPU_FEATURE_AVX512F           = 30,
     NPY_CPU_FEATURE_AVX512CD          = 31,
     NPY_CPU_FEATURE_AVX512ER          = 32,
@@ -60,6 +62,10 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_AVX512_ICL        = 106,
     // Sapphire Rapids (Ice Lake, AVX512FP16)
     NPY_CPU_FEATURE_AVX512_SPR        = 107,
+    // Common SSE4 features (SSE4.1, SSE4.2, POPCNT, AES, CLMUL)
+    NPY_CPU_FEATURE_SSE4_COMMON       = 108,
+    // AVX2 Common features (AVX2, F16C, FMA3, BMI1, BMI2)
+    NPY_CPU_FEATURE_AVX2_COMMON       = 109,
 
     // IBM/POWER VSX
     // POWER7

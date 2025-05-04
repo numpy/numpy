@@ -9,7 +9,7 @@ def test_dispatcher():
     Testing the utilities of the CPU dispatcher
     """
     targets = (
-        "SSE2", "SSE41", "AVX2",
+        "SSE41", "SSE4_COMMON", "AVX2_COMMON",
         "VSX", "VSX2", "VSX3",
         "NEON", "ASIMD", "ASIMDHP",
         "VX", "VXE", "LSX"

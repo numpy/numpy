@@ -80,12 +80,18 @@ static struct {
                 {NPY_CPU_FEATURE_SSE41, "SSE41"},
                 {NPY_CPU_FEATURE_POPCNT, "POPCNT"},
                 {NPY_CPU_FEATURE_SSE42, "SSE42"},
+                {NPY_CPU_FEATURE_SSE4_COMMON, "SSE4_COMMON"},
                 {NPY_CPU_FEATURE_AVX, "AVX"},
                 {NPY_CPU_FEATURE_F16C, "F16C"},
                 {NPY_CPU_FEATURE_XOP, "XOP"},
                 {NPY_CPU_FEATURE_FMA4, "FMA4"},
                 {NPY_CPU_FEATURE_FMA3, "FMA3"},
                 {NPY_CPU_FEATURE_AVX2, "AVX2"},
+                {NPY_CPU_FEATURE_PCLMULQDQ, "PCLMULQDQ"},
+                {NPY_CPU_FEATURE_AES, "AES"},
+                {NPY_CPU_FEATURE_BMI1, "BMI1"},
+                {NPY_CPU_FEATURE_BMI2, "BMI2"},
+                {NPY_CPU_FEATURE_AVX2_COMMON, "AVX2_COMMON"},
                 {NPY_CPU_FEATURE_AVX512F, "AVX512F"},
                 {NPY_CPU_FEATURE_AVX512CD, "AVX512CD"},
                 {NPY_CPU_FEATURE_AVX512ER, "AVX512ER"},
@@ -454,6 +460,13 @@ npy__cpu_init_features(void)
     npy__cpu_have[NPY_CPU_FEATURE_POPCNT] = (reg[2] & (1 << 23)) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_SSE42]  = (reg[2] & (1 << 20)) != 0;
     npy__cpu_have[NPY_CPU_FEATURE_F16C]   = (reg[2] & (1 << 29)) != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_AES]    = (reg[2] & (1 << 25)) != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_PCLMULQDQ]  = (reg[2] & (1 << 1))  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_SSE4_COMMON] = npy__cpu_have[NPY_CPU_FEATURE_SSE41] &&
+                                                 npy__cpu_have[NPY_CPU_FEATURE_SSE42] &&
+                                                 npy__cpu_have[NPY_CPU_FEATURE_POPCNT] &&
+                                                 npy__cpu_have[NPY_CPU_FEATURE_AES] &&
+                                                 npy__cpu_have[NPY_CPU_FEATURE_PCLMULQDQ];
 
     // check OSXSAVE
     if ((reg[2] & (1 << 27)) == 0)
@@ -474,15 +487,18 @@ npy__cpu_init_features(void)
 
     // third call to the cpuid to get extended AVX2 & AVX512 feature bits
     npy__cpu_cpuid(reg, 7);
-    npy__cpu_have[NPY_CPU_FEATURE_AVX2]   = (reg[1] & (1 << 5))  != 0;
-    npy__cpu_have[NPY_CPU_FEATURE_AVX2]   = npy__cpu_have[NPY_CPU_FEATURE_AVX2] &&
-                                            npy__cpu_have[NPY_CPU_FEATURE_FMA3];
+    npy__cpu_have[NPY_CPU_FEATURE_AVX2]  = (reg[1] & (1 << 5))  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_BMI1]  = (reg[1] & (1 << 3))  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_BMI2]  = (reg[1] & (1 << 8))  != 0;
+
     if (!npy__cpu_have[NPY_CPU_FEATURE_AVX2])
         return;
-    // detect AVX2 & FMA3
-    npy__cpu_have[NPY_CPU_FEATURE_FMA]    = npy__cpu_have[NPY_CPU_FEATURE_FMA3];
+    npy__cpu_have[NPY_CPU_FEATURE_AVX2_COMMON] = npy__cpu_have[NPY_CPU_FEATURE_SSE4_COMMON] &&
+                                                 npy__cpu_have[NPY_CPU_FEATURE_F16C] &&
+                                                 npy__cpu_have[NPY_CPU_FEATURE_FMA3] &&
+                                                 npy__cpu_have[NPY_CPU_FEATURE_BMI1] &&
+                                                 npy__cpu_have[NPY_CPU_FEATURE_BMI2];
 
-    // check AVX512 OS support
     int avx512_os = (xcr & 0xe6) == 0xe6;
 #if defined(__APPLE__) && defined(__x86_64__)
     /**
@@ -528,7 +544,8 @@ npy__cpu_init_features(void)
         npy__cpu_have[NPY_CPU_FEATURE_AVX512DQ]        = (reg[1] & (1 << 17)) != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX512BW]        = (reg[1] & (1 << 30)) != 0;
         npy__cpu_have[NPY_CPU_FEATURE_AVX512VL]        = (reg[1] & (1 << 31)) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_AVX512_SKX]      = npy__cpu_have[NPY_CPU_FEATURE_AVX512BW] &&
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512_SKX]      = npy__cpu_have[NPY_CPU_FEATURE_AVX2_COMMON] &&
+                                                         npy__cpu_have[NPY_CPU_FEATURE_AVX512BW] &&
                                                          npy__cpu_have[NPY_CPU_FEATURE_AVX512DQ] &&
                                                          npy__cpu_have[NPY_CPU_FEATURE_AVX512VL];
         // Cascade Lake

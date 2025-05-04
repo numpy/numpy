@@ -9,8 +9,8 @@ The following options are mainly used to change the default behavior of optimiza
 that target certain CPU features:
 
 - ``cpu-baseline``: minimal set of required CPU features.
-   Default value is ``min`` which provides the minimum CPU features that can
-   safely run on a wide range of platforms within the processor family.
+   Default value is ``min`` which provides the minimum CPU features that are considered 
+   by NumPy to safely run on a wide range of platforms within the processor family.
 
    .. note::
 
@@ -18,8 +18,7 @@ that target certain CPU features:
      are not supported by the target CPU (raises Python runtime error).
 
 - ``cpu-dispatch``: dispatched set of additional CPU features.
-   Default value is ``max -xop -fma4`` which enables all CPU
-   features, except for AMD legacy features (in case of X86).
+   Default value is ``max`` which enables all supported CPU features.
 
    .. note::
 
@@ -35,7 +34,7 @@ perform a series of procedures.
 
 To customize CPU/build options::
 
-    pip install . -Csetup-args=-Dcpu-baseline="avx2 fma3" -Csetup-args=-Dcpu-dispatch="max"
+    pip install . -Csetup-args=-Dcpu-baseline="avx2" -Csetup-args=-Dcpu-dispatch="max"
 
 Quick start
 -----------
@@ -87,9 +86,9 @@ Since most of the CPUs nowadays support at least ``AVX``, ``F16C`` features, you
 I'm facing the same case above but with ppc64 architecture
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Then raise the ceiling of the baseline features to Power8::
+Then raise the ceiling of the baseline features to Power9::
 
-    python -m build --wheel -Csetup-args=-Dcpu-baseline="vsx2"
+    python -m build --wheel -Csetup-args=-Dcpu-baseline="vsx3"
 
 Having issues with AVX512 features?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,8 +96,7 @@ Having issues with AVX512 features?
 You may have some reservations about including of ``AVX512`` or
 any other CPU feature and you want to exclude from the dispatched features::
 
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512f -avx512cd \
-    -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl -avx512_spr"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512_skx -avx512_icl -avx512_spr"
 
 .. _opt-supported-features:
 
@@ -111,9 +109,9 @@ as shown in the following tables supported depend on the lowest interest:
 .. note::
 
     The following features may not be supported by all compilers,
-    also some compilers may produce different set of implied features
-    when it comes to features like ``AVX512``, ``AVX2``, and ``FMA3``.
-    See :ref:`opt-platform-differences` for more details.
+    during the configuration phase, compile-time checks are performed
+    to determine the supported features by the compiler and the target platform.
+
 
 .. include:: generated_tables/cpu_features.inc
 
@@ -135,13 +133,11 @@ Special options
       ======================================  =======================================
        For Arch                               Implies
       ======================================  =======================================
-       x86 (32-bit mode)                      ``SSE`` ``SSE2``
-       x86_64                                 ``SSE`` ``SSE2`` ``SSE3``
+       x86/x86_64                             ``SSE41``
        IBM/POWER (big-endian mode)            ``NONE``
-       IBM/POWER (little-endian mode)         ``VSX`` ``VSX2``
+       IBM/POWER (little-endian mode)         ``VSX2``
        ARMHF                                  ``NONE``
-       ARM64 A.K. AARCH64                     ``NEON`` ``NEON_FP16`` ``NEON_VFPV4``
-                                              ``ASIMD``
+       ARM64 A.K. AARCH64                     ``ASIMD``
        IBM/ZSYSTEM(S390X)                     ``NONE``
       ======================================  =======================================
 
@@ -154,22 +150,22 @@ Behaviors
 
 - CPU features and other options are case-insensitive, for example::
 
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch="SSE41 avx2 FMA3"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="SSE41 avx2"
 
 - The order of the requested optimizations doesn't matter::
 
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch="SSE41 AVX2 FMA3"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="SSE41 AVX2"
     # equivalent to
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch="FMA3 AVX2 SSE41"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="AVX2 SSE41"
 
 - Either commas or spaces or '+' can be used as a separator,
   for example::
 
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch="avx2 avx512f"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="avx2 avx512_skx"
     # or
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch=avx2,avx512f
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch=avx2,avx512_skx
     # or
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch="avx2+avx512f"
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch="avx2+avx512_skx"
 
   all works but arguments should be enclosed in quotes or escaped
   by backslash if any spaces are used.
@@ -178,7 +174,7 @@ Behaviors
 
     python -m build --wheel -Csetup-args=-Dcpu-baseline=sse42
     # equivalent to
-    python -m build --wheel -Csetup-args=-Dcpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
+    python -m build --wheel -Csetup-args=-Dcpu-baseline="sse41 popcnt sse42"
 
 - ``cpu-baseline`` will be treated as "native" if compiler native flag
   ``-march=native`` or ``-xHost`` or ``/QxHost`` is enabled through environment variable
@@ -198,18 +194,18 @@ Behaviors
        supported of implied features will be enabled rather than escape all of them.
        For example::
 
-          # Requesting `AVX2,FMA3` but the compiler only support **SSE** features
-          python -m build --wheel -Csetup-args=-Dcpu-baseline="avx2 fma3"
+          # Requesting `AVX2` but the compiler only support **SSE** features
+          python -m build --wheel -Csetup-args=-Dcpu-baseline="avx2"
           # is equivalent to
-          python -m build --wheel -Csetup-args=-Dcpu-baseline="sse sse2 sse3 ssse3 sse41 popcnt sse42"
+          python -m build --wheel -Csetup-args=-Dcpu-baseline="sse41 popcnt sse42"
 
 - ``cpu-dispatch`` does not combine any of implied CPU features,
   so you must add them unless you want to disable one or all of them::
 
-    # Only dispatches AVX2 and FMA3
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch=avx2,fma3
+    # Only dispatches AVX2
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch=avx2
     # Dispatches AVX and SSE features
-    python -m build --wheel -Csetup-args=-Dcpu-dispatch=ssse3,sse41,sse42,avx,avx2,fma3
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch=avx2
 
 - ``cpu-dispatch`` escapes any specified baseline features and also escapes
   any features not supported by the target platform or compiler without raising
@@ -233,8 +229,6 @@ These conditions can be divided into two parts, as follows:
 The need to align certain CPU features that are assured to be supported by
 successive generations of the same architecture, some cases:
 
-- On ppc64le ``VSX(ISA 2.06)`` and ``VSX2(ISA 2.07)`` both imply one another since the
-  first generation that supports little-endian mode is Power-8`(ISA 2.07)`
 - On AArch64 ``NEON NEON_FP16 NEON_VFPV4 ASIMD`` implies each other since they are part of the
   hardware baseline.
 
@@ -251,42 +245,6 @@ For example::
     Please take a deep look at :ref:`opt-supported-features`,
     in order to determine the features that imply one another.
 
-**Compilation compatibility**
-
-Some compilers don't provide independent support for all CPU features. For instance
-**Intel**'s compiler doesn't provide separated flags for ``AVX2`` and ``FMA3``,
-it makes sense since all Intel CPUs that comes with ``AVX2`` also support ``FMA3``,
-but this approach is incompatible with other **x86** CPUs from **AMD** or **VIA**.
-
-For example::
-
-    # Specify AVX2 will force enables FMA3 on Intel compilers
-    python -m build --wheel -Csetup-args=-Dcpu-baseline=avx2
-    # which is equivalent to
-    python -m build --wheel -Csetup-args=-Dcpu-baseline="avx2 fma3"
-
-
-The following tables only show the differences imposed by some compilers from the
-general context that been shown in the :ref:`opt-supported-features` tables:
-
-.. note::
-
-    Features names with strikeout represent the unsupported CPU features.
-
-.. raw:: html
-
-    <style>
-        .enabled-feature {color:green; font-weight:bold;}
-        .disabled-feature {color:red; text-decoration: line-through;}
-    </style>
-
-.. role:: enabled
-    :class: enabled-feature
-
-.. role:: disabled
-    :class: disabled-feature
-
-.. include:: generated_tables/compilers-diff.inc
 
 .. _opt-build-report:
 
@@ -378,25 +336,25 @@ For example::
      "absolute": {
        "dd": {
          "current": "SSE41",
-         "available": "SSE41 baseline(SSE SSE2 SSE3)"
+         "available": "SSE41 baseline(SSE41)"
        },
        "Ff": {
-         "current": "FMA3__AVX2",
-         "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+         "current": "AVX2",
+         "available": "AVX512_SKX AVX2 baseline(SSE41)"
        },
        "Dd": {
-         "current": "FMA3__AVX2",
-         "available": "AVX512F FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+         "current": "AVX2",
+         "available": "AVX512_SKX AVX2 baseline(SSE41)"
        }
      },
      "add": {
        "ddd": {
-         "current": "FMA3__AVX2",
-         "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+         "current": "AVX2",
+         "available": "AVX2 baseline(SSE41)"
        },
        "FFF": {
-         "current": "FMA3__AVX2",
-         "available": "FMA3__AVX2 baseline(SSE SSE2 SSE3)"
+         "current": "AVX2",
+         "available": "AVX2 baseline(SSE41)"
        }
     }
   }
