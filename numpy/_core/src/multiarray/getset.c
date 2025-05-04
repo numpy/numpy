@@ -85,7 +85,7 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
         /* Free old dimensions and strides */
         npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->nd = nd;
-        ((PyArrayObject_fields *)self)->dimensions = _dimensions; 
+        ((PyArrayObject_fields *)self)->dimensions = _dimensions;
         ((PyArrayObject_fields *)self)->strides = _dimensions + nd;
 
         if (nd) {
@@ -95,7 +95,7 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
     }
     else {
         /* Free old dimensions and strides */
-        npy_free_cache_dim_array(self);        
+        npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->nd = 0;
         ((PyArrayObject_fields *)self)->dimensions = NULL;
         ((PyArrayObject_fields *)self)->strides = NULL;
@@ -123,6 +123,11 @@ array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
     npy_intp lower_offset = 0;
     npy_intp upper_offset = 0;
     Py_buffer view;
+
+    /* DEPRECATED 2025-05-04, NumPy 2.3 */
+    PyErr_WarnEx(PyExc_DeprecationWarning,
+                "Setting the strides on a Numpy array has been deprecated in Numpy 2.3.\n",
+                1);
 
     if (obj == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -371,6 +376,12 @@ static int
 array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
 {
     PyArray_Descr *newtype = NULL;
+
+    /* DEPRECATED 2025-05-04, NumPy 2.3 */
+    PyErr_WarnEx(PyExc_DeprecationWarning,
+                "Setting the dtype on a Numpy array has been deprecated in Numpy 2.3.\n"
+                "Instead of changing the dtype on an array x, create a new array with numpy.frombuffer(x, dtype=new_dtype)",
+                1);
 
     if (arg == NULL) {
         PyErr_SetString(PyExc_AttributeError,
