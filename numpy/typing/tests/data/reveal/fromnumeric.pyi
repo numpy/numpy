@@ -25,6 +25,10 @@ f4: np.float32
 i8: np.int64
 f: float
 
+# integer‑dtype subclass for argmin/argmax
+class NDArrayIntSubclass(npt.NDArray[np.intp]): ...
+AR_sub_i: NDArrayIntSubclass
+
 assert_type(np.take(b, 0), np.bool)
 assert_type(np.take(f4, 0), np.float32)
 assert_type(np.take(f, 0), Any)
@@ -89,13 +93,13 @@ assert_type(np.argmax(AR_b), np.intp)
 assert_type(np.argmax(AR_f4), np.intp)
 assert_type(np.argmax(AR_b, axis=0), Any)
 assert_type(np.argmax(AR_f4, axis=0), Any)
-assert_type(np.argmax(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.argmax(AR_f4, out=AR_sub_i), NDArrayIntSubclass)
 
 assert_type(np.argmin(AR_b), np.intp)
 assert_type(np.argmin(AR_f4), np.intp)
 assert_type(np.argmin(AR_b, axis=0), Any)
 assert_type(np.argmin(AR_f4, axis=0), Any)
-assert_type(np.argmin(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.argmin(AR_f4, out=AR_sub_i), NDArrayIntSubclass)
 
 assert_type(np.searchsorted(AR_b[0], 0), np.intp)
 assert_type(np.searchsorted(AR_f4[0], 0), np.intp)
