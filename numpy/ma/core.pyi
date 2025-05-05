@@ -887,9 +887,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         /
     ) -> MaskedArray[_Shape, _DTypeT_co]: ...
 
-    T: Any
-    transpose: Any
-
     #
     def toflex(self) -> Incomplete: ...
     def torecords(self) -> Incomplete: ...
