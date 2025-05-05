@@ -433,7 +433,7 @@ static inline void npy_csetreall(npy_clongdouble *z, const longdouble_t r)
 static inline npy_longdouble npy_cimagl(const npy_clongdouble z)
 {
 #if defined(__cplusplus)
-    return z._Val[1];
+    return (npy_longdouble)z._Val[1];
 #else
     return cimagl(z);
 #endif
