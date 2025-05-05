@@ -7,6 +7,9 @@ import warnings
 import pytest
 import tempfile
 import re
+import numpy.ma as ma
+
+
 
 import numpy as np
 from numpy.testing import (
@@ -454,3 +457,8 @@ class TestAddNewdocUFunc(_DeprecationTestCase):
                 struct_ufunc.add_triplet, "new docs"
             )
         )
+
+
+def test_ma_round_deprecation():
+    with pytest.deprecated_call(match="deprecated"):
+        ma.round_([1.234, 2.345])
