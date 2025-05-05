@@ -80,20 +80,18 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
         // General case with floor division semantics
         const auto vec_scalar = hn::Set(d, scalar);
         const auto vec_zero = hn::Zero(d);
+        const auto one = hn::Set(d, static_cast<T>(1));
         size_t i = 0;
         
         for (; i + N <= static_cast<size_t>(len); i += N) {
             const auto vec_src = hn::LoadU(d, src + i);
             auto vec_div = hn::Div(vec_src, vec_scalar);
             const auto vec_mul = hn::Mul(vec_div, vec_scalar);
-            const auto has_remainder = hn::Ne(vec_src, vec_mul);
-            const auto src_sign = hn::Lt(vec_src, vec_zero);
-            const auto scalar_sign = hn::Lt(vec_scalar, vec_zero); 
-            const auto different_signs = hn::Xor(src_sign, scalar_sign);
+            const auto eq_mask = hn::Eq(vec_src, vec_mul);
+            const auto diff_signs = hn::Lt(hn::Xor(vec_src, vec_scalar), vec_zero);
+            const auto adjust = hn::AndNot(eq_mask, diff_signs);
             
-            auto adjustment = hn::And(different_signs, has_remainder);
-            vec_div = hn::IfThenElse(adjustment, hn::Sub(vec_div, hn::Set(d, static_cast<T>(1))), vec_div);
-            
+            vec_div = hn::MaskedSubOr(vec_div, adjust, vec_div, one);
             hn::StoreU(vec_div, d, dst + i);
         }
         
@@ -102,7 +100,7 @@ void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len)
             T n = src[i];
             T r = n / scalar;
             if (((n > 0) != (scalar > 0)) && ((r * scalar) != n)) {
-                r--;
+                --r;
             }
             dst[i] = r;
         }
@@ -162,7 +160,7 @@ T floor_div(T n, T d) {
     }
     T r = n / d;
     if (((n > 0) != (d > 0)) && ((r * d) != n)) {
-        r--;
+        --r;
     }
     return r;
 }
