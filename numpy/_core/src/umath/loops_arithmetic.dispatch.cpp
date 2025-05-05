@@ -2,14 +2,18 @@
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
+#include "numpy/npy_common.h"
+#include "numpy/npy_math.h"
+
 #include "loops_utils.h"
 #include "loops.h"
-#include <cstring> // for memcpy
 #include "fast_loop_macros.h"
-#include <limits>
 #include "simd/simd.h"
 #include "lowlevel_strided_loops.h"
-#include "numpy/npy_math.h"
+#include "common.hpp"
+
+#include <cstring> // for memcpy
+#include <limits>
 #include <cstdio>
 
 #include <hwy/highway.h>
@@ -308,6 +312,7 @@ int TYPE_divide_unsigned_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
     return 0;
 }
 
+// Macro to define the dispatch functions for signed types
 #define DEFINE_DIVIDE_FUNCTION(TYPE, SCALAR_TYPE) \
     extern "C" { \
         NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TYPE##_divide)(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func) { \
@@ -318,24 +323,7 @@ int TYPE_divide_unsigned_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
         } \
     } // extern "C"
 
-
-#ifdef NPY_CPU_DISPATCH_CURFX
-// On Linux and macOS (LP64 model), long is 64 bits, but on 32-bit Windows (LLP64 model), long is 32 bits. Meanwhile, long long is guaranteed at least 64 bits
-#if defined(_WIN32) || defined(__EMSCRIPTEN__) || (defined(__arm__) && !defined(__aarch64__)) || (defined(__linux__) && ((defined(__i386__) || defined(__i686__))))
-    DEFINE_DIVIDE_FUNCTION(BYTE, int8_t)
-    DEFINE_DIVIDE_FUNCTION(SHORT, int16_t)  
-    DEFINE_DIVIDE_FUNCTION(INT, int32_t)
-    DEFINE_DIVIDE_FUNCTION(LONG, int32_t)  // LONG is 32-bit on 32-bit platforms
-    DEFINE_DIVIDE_FUNCTION(LONGLONG, int64_t)
-#else
-    DEFINE_DIVIDE_FUNCTION(BYTE, int8_t)
-    DEFINE_DIVIDE_FUNCTION(SHORT, int16_t)
-    DEFINE_DIVIDE_FUNCTION(INT, int32_t)
-    DEFINE_DIVIDE_FUNCTION(LONG, int64_t)  // LONG is 64-bit on 64-bit platforms
-    DEFINE_DIVIDE_FUNCTION(LONGLONG, int64_t)
-#endif
-#endif
-
+// Macro to define the dispatch functions for unsigned types
 #define DEFINE_DIVIDE_FUNCTION_UNSIGNED(TYPE, SCALAR_TYPE) \
     extern "C" { \
         NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(TYPE##_divide)(char **args, npy_intp const *dimensions, npy_intp const *steps, void *func) { \
@@ -344,22 +332,31 @@ int TYPE_divide_unsigned_indexed(PyArrayMethod_Context *NPY_UNUSED(context),
         NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(TYPE##_divide_indexed)(PyArrayMethod_Context *context, char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *func) { \
             return TYPE_divide_unsigned_indexed<SCALAR_TYPE>(context, args, dimensions, steps, func); \
         } \
-    }
+    } // extern "C"
+
 
 #ifdef NPY_CPU_DISPATCH_CURFX
-#if defined(_WIN32) || defined(__EMSCRIPTEN__) || (defined(__arm__) && !defined(__aarch64__)) || (defined(__linux__) && ((defined(__i386__) || defined(__i686__))))
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UBYTE, uint8_t)
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(USHORT, uint16_t)
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UINT, uint32_t)
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONG, uint32_t)  // ULONG is 32-bit on 32-bit platforms
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONGLONG, uint64_t)
-#else
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UBYTE, uint8_t)
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(USHORT, uint16_t)
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UINT, uint32_t)
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONG, uint64_t)  // ULONG is 64-bit on 64-bit platforms
-    DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONGLONG, uint64_t)
+    DEFINE_DIVIDE_FUNCTION(BYTE, int8_t)
+    DEFINE_DIVIDE_FUNCTION(SHORT, int16_t)
+    DEFINE_DIVIDE_FUNCTION(INT, int32_t)
+    #if NPY_SIZEOF_LONG == 4
+        DEFINE_DIVIDE_FUNCTION(LONG, int32_t)
+    #elif NPY_SIZEOF_LONG == 8
+        DEFINE_DIVIDE_FUNCTION(LONG, int64_t)
+    #endif
+    DEFINE_DIVIDE_FUNCTION(LONGLONG, int64_t)
 #endif
+
+#ifdef NPY_CPU_DISPATCH_CURFX
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UBYTE, uint8_t)
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(USHORT, uint16_t)
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(UINT, uint32_t)
+    #if NPY_SIZEOF_LONG == 4
+        DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONG, uint32_t)
+    #elif NPY_SIZEOF_LONG == 8
+        DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONG, uint64_t)
+    #endif
+    DEFINE_DIVIDE_FUNCTION_UNSIGNED(ULONGLONG, uint64_t)
 #endif
 
 #undef DEFINE_DIVIDE_FUNCTION
