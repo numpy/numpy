@@ -36,6 +36,7 @@ from numpy.testing._private.utils import requires_memory, _no_tracing
 from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.lib.recfunctions import repack_fields
 from numpy._core.multiarray import _get_ndarray_c_version, dot
+from numpy.lib import stride_tricks
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta, datetime
@@ -358,6 +359,7 @@ class TestAttributes:
         make_array(0, 0, 10)
 
     def test_set_stridesattr(self):
+        # gh-28901: setting strides has been deprecated
         x = self.one
 
         def make_array(size, offset, strides):
@@ -3636,7 +3638,9 @@ class TestMethods:
 
         # 1-element tidy strides test:
         a = np.array([[1]])
-        a.strides = (123, 432)
+        with warnings.catch_warnings(): # gh-28901
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            a.strides = (123, 432)
         if np.ones(1).strides == (8,):
             assert_(np.may_share_memory(a.ravel('K'), a))
             assert_equal(a.ravel('K').strides, (a.dtype.itemsize,))

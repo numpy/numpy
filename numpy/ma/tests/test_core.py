@@ -2126,7 +2126,11 @@ class TestMaskedArrayAttributes:
         a = np.zeros(4, dtype='f4,i4')
 
         m = np.ma.array(a)
-        m.dtype = np.dtype('f4')
+        with warnings.catch_warnings():
+            # gh-28901
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+            m.dtype = np.dtype('f4')
         repr(m)  # raises?
         assert_equal(m.dtype, np.dtype('f4'))
 
@@ -2143,7 +2147,11 @@ class TestMaskedArrayAttributes:
         # check that nomask is preserved
         a = np.zeros(4, dtype='f4')
         m = np.ma.array(a)
-        m.dtype = np.dtype('f4,i4')
+        with warnings.catch_warnings():
+            # gh-28901
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+            m.dtype = np.dtype('f4,i4')
         assert_equal(m.dtype, np.dtype('f4,i4'))
         assert_equal(m._mask, np.ma.nomask)
 
