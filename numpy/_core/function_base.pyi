@@ -1,8 +1,8 @@
+from _typeshed import Incomplete
 from typing import (
     Literal as L,
     TypeAlias,
     overload,
-    Any,
     SupportsIndex,
     TypeVar,
 )
@@ -95,7 +95,7 @@ def linspace(
     axis: SupportsIndex = 0,
     *,
     device: L["cpu"] | None = None,
-) -> NDArray[Any]: ...
+) -> NDArray[Incomplete]: ...
 @overload
 def linspace(
     start: _ToArrayFloat64,
@@ -155,7 +155,7 @@ def linspace(
     dtype: DTypeLike | None = None,
     axis: SupportsIndex = 0,
     device: L["cpu"] | None = None,
-) -> tuple[NDArray[Any], Any]: ...
+) -> tuple[NDArray[Incomplete], Incomplete]: ...
 
 @overload
 def logspace(
@@ -217,7 +217,7 @@ def logspace(
     base: _ArrayLikeComplex_co = 10.0,
     dtype: DTypeLike | None = None,
     axis: SupportsIndex = 0,
-) -> NDArray[Any]: ...
+) -> NDArray[Incomplete]: ...
 
 @overload
 def geomspace(
@@ -273,7 +273,7 @@ def geomspace(
     endpoint: bool = True,
     dtype: DTypeLike | None = None,
     axis: SupportsIndex = 0,
-) -> NDArray[Any]: ...
+) -> NDArray[Incomplete]: ...
 
 def add_newdoc(
     place: str,
