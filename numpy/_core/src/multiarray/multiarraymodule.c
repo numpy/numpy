@@ -1205,6 +1205,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
         goto clean_ret;
     }
 
+    int needs_pyapi = PyDataType_FLAGCHK(PyArray_DESCR(ret), NPY_NEEDS_PYAPI);
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ret));
     is1 = PyArray_STRIDES(ap1)[0];
     is2 = PyArray_STRIDES(ap2)[0];
@@ -1215,6 +1216,9 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
     n = n - n_left;
     for (i = 0; i < n_left; i++) {
         dot(ip1, is1, ip2, is2, op, n, ret);
+        if (needs_pyapi && PyErr_Occurred()) {
+            goto done;
+        }
         n++;
         ip2 -= is2;
         op += os;
@@ -1226,19 +1230,21 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
         op += os * (n1 - n2 + 1);
     }
     else {
-        for (i = 0; i < (n1 - n2 + 1); i++) {
+        for (i = 0; i < (n1 - n2 + 1) && (!needs_pyapi || !PyErr_Occurred());
+             i++) {
             dot(ip1, is1, ip2, is2, op, n, ret);
             ip1 += is1;
             op += os;
         }
     }
-    for (i = 0; i < n_right; i++) {
+    for (i = 0; i < n_right && (!needs_pyapi || !PyErr_Occurred()); i++) {
         n--;
         dot(ip1, is1, ip2, is2, op, n, ret);
         ip1 += is1;
         op += os;
     }
 
+done:
     NPY_END_THREADS_DESCR(PyArray_DESCR(ret));
     if (PyErr_Occurred()) {
         goto clean_ret;
