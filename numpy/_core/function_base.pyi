@@ -1,11 +1,13 @@
 from typing import (
     Literal as L,
+    TypeAlias,
     overload,
     Any,
     SupportsIndex,
     TypeVar,
 )
 
+import numpy as np
 from numpy import floating, complexfloating, generic
 from numpy._typing import (
     NDArray,
@@ -14,11 +16,26 @@ from numpy._typing import (
     _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
 )
+from numpy._typing._array_like import _DualArrayLike
 
 __all__ = ["logspace", "linspace", "geomspace"]
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 
+_ToArrayFloat64: TypeAlias = _DualArrayLike[np.dtype[np.float64 | np.integer | np.bool], float]
+
+@overload
+def linspace(
+    start: _ToArrayFloat64,
+    stop: _ToArrayFloat64,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    retstep: L[False] = ...,
+    dtype: None = ...,
+    axis: SupportsIndex = ...,
+    *,
+    device: L["cpu"] | None = ...,
+) -> NDArray[np.float64]: ...
 @overload
 def linspace(
     start: _ArrayLikeFloat_co,
@@ -81,6 +98,18 @@ def linspace(
 ) -> NDArray[Any]: ...
 @overload
 def linspace(
+    start: _ToArrayFloat64,
+    stop: _ToArrayFloat64,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    *,
+    retstep: L[True],
+    dtype: None = ...,
+    axis: SupportsIndex = ...,
+    device: L["cpu"] | None = ...,
+) -> tuple[NDArray[np.float64], np.float64]: ...
+@overload
+def linspace(
     start: _ArrayLikeFloat_co,
     stop: _ArrayLikeFloat_co,
     num: SupportsIndex = ...,
@@ -128,6 +157,16 @@ def linspace(
     device: L["cpu"] | None = ...,
 ) -> tuple[NDArray[Any], Any]: ...
 
+@overload
+def logspace(
+    start: _ToArrayFloat64,
+    stop: _ToArrayFloat64,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    base: _ToArrayFloat64 = ...,
+    dtype: None = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[np.float64]: ...
 @overload
 def logspace(
     start: _ArrayLikeFloat_co,
@@ -180,6 +219,15 @@ def logspace(
     axis: SupportsIndex = ...,
 ) -> NDArray[Any]: ...
 
+@overload
+def geomspace(
+    start: _ToArrayFloat64,
+    stop: _ToArrayFloat64,
+    num: SupportsIndex = ...,
+    endpoint: bool = ...,
+    dtype: None = ...,
+    axis: SupportsIndex = ...,
+) -> NDArray[np.float64]: ...
 @overload
 def geomspace(
     start: _ArrayLikeFloat_co,
