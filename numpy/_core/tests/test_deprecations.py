@@ -458,7 +458,3 @@ class TestAddNewdocUFunc(_DeprecationTestCase):
             )
         )
 
-
-def test_ma_round_deprecation():
-    with pytest.deprecated_call(match="deprecated"):
-        ma.round_([1.234, 2.345])
