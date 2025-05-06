@@ -1,23 +1,13 @@
+from typing import Literal as L
+from typing import SupportsIndex, TypeAlias, TypeVar, overload
+
 from _typeshed import Incomplete
-from typing import (
-    Literal as L,
-    TypeAlias,
-    overload,
-    SupportsIndex,
-    TypeVar,
-)
 
 import numpy as np
-from numpy._typing import (
-    NDArray,
-    DTypeLike,
-    _DTypeLike,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-)
+from numpy._typing import DTypeLike, NDArray, _ArrayLikeComplex_co, _ArrayLikeFloat_co, _DTypeLike
 from numpy._typing._array_like import _DualArrayLike
 
-__all__ = ["logspace", "linspace", "geomspace"]
+__all__ = ["geomspace", "linspace", "logspace"]
 
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
 
