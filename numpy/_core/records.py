@@ -410,7 +410,10 @@ class recarray(ndarray):
         if self.dtype.type is not record and self.dtype.names is not None:
             # if self.dtype is not np.record, invoke __setattr__ which will
             # convert it to a record if it is a void dtype.
-            self.dtype = self.dtype
+            with warnings.catch_warnings():
+                # gh-28901
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                self.dtype = self.dtype
 
     def __getattribute__(self, attr):
         # See if ndarray has this attr, and return it if so. (note that this
@@ -459,7 +462,13 @@ class recarray(ndarray):
 
         newattr = attr not in self.__dict__
         try:
-            ret = object.__setattr__(self, attr, val)
+            if attr == 'dtype':
+                with warnings.catch_warnings():
+                    # gh-28901
+                    warnings.filterwarnings("ignore", category=DeprecationWarning)
+                    ret = object.__setattr__(self, attr, val)
+            else:
+                ret = object.__setattr__(self, attr, val)
         except Exception:
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}
             if attr not in fielddict:

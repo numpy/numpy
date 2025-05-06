@@ -4,6 +4,7 @@ Utilities that manipulate strides to achieve desirable effects.
 An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
 """
+import warnings
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._core.overrides import array_function_dispatch, set_module
@@ -101,7 +102,10 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     array = np.asarray(DummyArray(interface, base=x))
     # The route via `__interface__` does not preserve structured
     # dtypes. Since dtype should remain unchanged, we set it explicitly.
-    array.dtype = x.dtype
+    with warnings.catch_warnings():
+        # gh-28901
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        array.dtype = x.dtype
 
     view = _maybe_view_as_subclass(x, array)
 

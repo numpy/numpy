@@ -125,9 +125,12 @@ array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
     Py_buffer view;
 
     /* DEPRECATED 2025-05-04, NumPy 2.3 */
-    PyErr_WarnEx(PyExc_DeprecationWarning,
-                "Setting the strides on a Numpy array has been deprecated in Numpy 2.3.\n",
+    int ret = PyErr_WarnEx(PyExc_DeprecationWarning,
+                "Setting the strides on a NumPy array has been deprecated in NumPy 2.3.\n",
                 1);
+    if (ret) {
+        return -1;
+    }
 
     if (obj == NULL) {
         PyErr_SetString(PyExc_AttributeError,
@@ -375,13 +378,22 @@ array_nbytes_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static int
 array_descr_set(PyArrayObject *self, PyObject *arg, void *NPY_UNUSED(ignored))
 {
-    PyArray_Descr *newtype = NULL;
+    // to be replaced with PyUnstable_Object_IsUniquelyReferenced https://github.com/python/cpython/pull/133144
+    int unique_reference = (Py_REFCNT(self) == 1);
 
-    /* DEPRECATED 2025-05-04, NumPy 2.3 */
-    PyErr_WarnEx(PyExc_DeprecationWarning,
-                "Setting the dtype on a Numpy array has been deprecated in Numpy 2.3.\n"
-                "Instead of changing the dtype on an array x, create a new array with numpy.frombuffer(x, dtype=new_dtype)",
-                1);
+    if (!unique_reference) {
+        // this will not emit deprecation warnings for all cases, but for most it will
+        /* DEPRECATED 2025-05-04, NumPy 2.3 */
+        int ret = PyErr_WarnEx(PyExc_DeprecationWarning,
+                    "Setting the dtype on a NumPy array has been deprecated in NumPy 2.3.\n"
+                    "Instead of changing the dtype on an array x, create a new array with x.view(new_dtype)",
+                    1);
+        if (ret) {
+            return -1;
+        }
+    }
+
+    PyArray_Descr *newtype = NULL;
 
     if (arg == NULL) {
         PyErr_SetString(PyExc_AttributeError,
