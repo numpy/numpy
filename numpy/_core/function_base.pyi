@@ -8,7 +8,6 @@ from typing import (
 )
 
 import numpy as np
-from numpy import floating, complexfloating, generic
 from numpy._typing import (
     NDArray,
     DTypeLike,
@@ -20,7 +19,7 @@ from numpy._typing._array_like import _DualArrayLike
 
 __all__ = ["logspace", "linspace", "geomspace"]
 
-_ScalarT = TypeVar("_ScalarT", bound=generic)
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
 
 _ToArrayFloat64: TypeAlias = _DualArrayLike[np.dtype[np.float64 | np.integer | np.bool], float]
 
@@ -47,7 +46,7 @@ def linspace(
     axis: SupportsIndex = 0,
     *,
     device: L["cpu"] | None = None,
-) -> NDArray[floating]: ...
+) -> NDArray[np.floating]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -59,7 +58,7 @@ def linspace(
     axis: SupportsIndex = 0,
     *,
     device: L["cpu"] | None = None,
-) -> NDArray[complexfloating]: ...
+) -> NDArray[np.complexfloating]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -119,7 +118,7 @@ def linspace(
     dtype: None = None,
     axis: SupportsIndex = 0,
     device: L["cpu"] | None = None,
-) -> tuple[NDArray[floating], floating]: ...
+) -> tuple[NDArray[np.floating], np.floating]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -131,7 +130,7 @@ def linspace(
     dtype: None = None,
     axis: SupportsIndex = 0,
     device: L["cpu"] | None = None,
-) -> tuple[NDArray[complexfloating], complexfloating]: ...
+) -> tuple[NDArray[np.complexfloating], np.complexfloating]: ...
 @overload
 def linspace(
     start: _ArrayLikeComplex_co,
@@ -176,7 +175,7 @@ def logspace(
     base: _ArrayLikeFloat_co = 10.0,
     dtype: None = None,
     axis: SupportsIndex = 0,
-) -> NDArray[floating]: ...
+) -> NDArray[np.floating]: ...
 @overload
 def logspace(
     start: _ArrayLikeComplex_co,
@@ -186,7 +185,7 @@ def logspace(
     base: _ArrayLikeComplex_co = 10.0,
     dtype: None = None,
     axis: SupportsIndex = 0,
-) -> NDArray[complexfloating]: ...
+) -> NDArray[np.complexfloating]: ...
 @overload
 def logspace(
     start: _ArrayLikeComplex_co,
@@ -236,7 +235,7 @@ def geomspace(
     endpoint: bool = True,
     dtype: None = None,
     axis: SupportsIndex = 0,
-) -> NDArray[floating]: ...
+) -> NDArray[np.floating]: ...
 @overload
 def geomspace(
     start: _ArrayLikeComplex_co,
@@ -245,7 +244,7 @@ def geomspace(
     endpoint: bool = True,
     dtype: None = None,
     axis: SupportsIndex = 0,
-) -> NDArray[complexfloating]: ...
+) -> NDArray[np.complexfloating]: ...
 @overload
 def geomspace(
     start: _ArrayLikeComplex_co,
