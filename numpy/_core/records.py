@@ -412,7 +412,7 @@ class recarray(ndarray):
             # convert it to a record if it is a void dtype.
             with warnings.catch_warnings():
                 # gh-28901
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                warnings.filterwarnings(action="ignore", category=DeprecationWarning)
                 self.dtype = self.dtype
 
     def __getattribute__(self, attr):
