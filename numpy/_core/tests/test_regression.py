@@ -7,6 +7,7 @@ from os import path
 from io import BytesIO
 from itertools import chain
 import pickle
+import warnings
 
 import numpy as np
 from numpy.exceptions import AxisError, ComplexWarning
@@ -427,7 +428,7 @@ class TestRegression:
         xs = np.array([], dtype='i8')
         assert np.lexsort((xs,)).shape[0] == 0  # Works
 
-        with warnings.catch_warnings(): # gh-28901
+        with warnings.catch_warnings():  # gh-28901
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             xs.strides = (16,)
         assert np.lexsort((xs,)).shape[0] == 0  # Was: MemoryError
@@ -436,13 +437,13 @@ class TestRegression:
         xs = np.array([], dtype='i8')
 
         xs.shape = (0, 2)
-        with warnings.catch_warnings(): # gh-28901
+        with warnings.catch_warnings():  # gh-28901
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             xs.strides = (16, 16)
         assert np.lexsort((xs,), axis=0).shape[0] == 0
 
         xs.shape = (2, 0)
-        with warnings.catch_warnings(): # gh-28901
+        with warnings.catch_warnings():  # gh-28901
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             xs.strides = (16, 16)
         assert np.lexsort((xs,), axis=0).shape[0] == 2
@@ -1652,7 +1653,7 @@ class TestRegression:
 
     def test_nonzero_byteswap(self):
         a = np.array([0x80000000, 0x00000080, 0], dtype=np.uint32)
-        a.dtype = np.float32
+        a = a.view(dtype = np.float32)
         assert_equal(a.nonzero()[0], [1])
         a = a.byteswap()
         a = a.view(a.dtype.newbyteorder())
@@ -1876,7 +1877,7 @@ class TestRegression:
         # Check that alignment flag is updated on stride setting
         a = np.arange(10)
         assert_(a.flags.aligned)
-        with warnings.catch_warnings(): # gh-28901
+        with warnings.catch_warnings():  # gh-28901
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             a.strides = 3
         assert_(not a.flags.aligned)
