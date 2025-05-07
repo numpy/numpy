@@ -6,6 +6,7 @@ import gc
 import types
 from typing import Any
 import pickle
+import warnings
 
 import numpy as np
 import numpy.dtypes
@@ -1215,7 +1216,8 @@ class TestDtypeAttributes:
         arr = np.broadcast_to(arr, 10)
         assert arr.strides == (0,)
         with pytest.raises(ValueError):
-            with pytest.warns(DeprecationWarning):
+            with warnings.catch_warnings():  # gh-28901
+                warnings.filterwarnings(action="ignore", category=DeprecationWarning)
                 arr.dtype = "i1"
 
 class TestDTypeMakeCanonical:
