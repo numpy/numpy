@@ -9,6 +9,10 @@
 
 #include "numpyos.h"
 
+#ifndef LDBL_MAX_EXP
+    #include <float.h>
+#endif
+
 /*
  * Heavily derived from PyLong_FromDouble
  * Notably, we can't set the digits directly, so have to shift and or instead.
@@ -97,79 +101,234 @@ done:
     return v;
 }
 
-/* Helper function to get unicode(PyLong).encode('utf8') */
-static PyObject *
-_PyLong_Bytes(PyObject *long_obj) {
-    PyObject *bytes;
-    PyObject *unicode = PyObject_Str(long_obj);
-    if (unicode == NULL) {
-        return NULL;
-    }
-    bytes = PyUnicode_AsUTF8String(unicode);
-    Py_DECREF(unicode);
-    return bytes;
+// Overflow error function
+npy_longdouble _ldbl_ovfl_err(void) {
+    PyErr_SetString(PyExc_OverflowError, "Number too big to be represented as a np.longdouble --This is platform dependent--");
+    return -1;
 }
 
+// When Double is the same as the long double, and it is little endian
+// It then (thanfully) follows IEEE 754, so it is possible to do bitwise operations
+#if LDBL_MANT_DIG == 53 && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 
-/**
- * TODO: currently a hack that converts the long through a string. This is
- * correct, but slow.
- *
- * Another approach would be to do this numerically, in a similar way to
- * PyLong_AsDouble.
- * However, in order to respect rounding modes correctly, this needs to know
- * the size of the mantissa, which is platform-dependent.
- */
+#define NPY_LGDB_SIGN_POS 0
+#define NPY_LGDB_SIGN_NEG 1
+
+typedef union {
+    uint64_t u64;
+    npy_longdouble d;
+} uint64_double_union;
+
+// Helper fucntion that uses bitwise opperations to transform a mantissa, exponent and sign
+// into a double, by putting the bits in the correct memory locations
+npy_longdouble _int_to_ld(int64_t *val, int e, int s) {
+    if (PyErr_Occurred()) { return -1; }
+    uint64_t mantissa[3];
+    uint64_t exp = (uint64_t)e;
+    uint64_t sign = (uint64_t)s;
+    for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
+    int foo = 0;
+    uint64_double_union value;
+
+    if (exp == 0) {
+        s = (sign == 1) ? -1 : 1;
+        return (npy_longdouble)s*(npy_longdouble)mantissa[0];
+    } else if (mantissa[0] == 0) {
+        mantissa[1] <<= 1;
+        exp--;
+    } else {
+        for (int i = 63; i >= 0; i--) {
+            if ((mantissa[0] >> i) & 1) {
+                foo = i;
+                break;
+            }
+        }
+    }
+    exp += foo;
+    mantissa[0] = (mantissa[1] >> foo) | (mantissa[0] << (64 - foo));
+    uint64_t guard = (mantissa[0] >> 11) & 1;
+    mantissa[0] >>= 12;
+    // Rounding (round to nearest even)
+    if (guard) {
+        mantissa[0]++;
+        if (mantissa[0] == 0x10000000000000) {
+            mantissa[0] = 0;
+            exp++;
+        }
+    }
+    if (exp >= DBL_MAX_EXP) {
+        return _ldbl_ovfl_err();
+    }
+    sign <<= 63;
+    exp += 1023;
+    exp <<= 52;
+    value.u64 = mantissa[0] | exp | sign;
+    return value.d; 
+}
+
+// For 80bit platforms (x86 architectures), if it is little endian the layout of the longdouble is known
+#elif LDBL_MANT_DIG == 64 && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+
+#define NPY_LGDB_SIGN_POS 0
+#define NPY_LGDB_SIGN_NEG 1
+
+typedef union {
+    npy_longdouble ld;
+    uint64_t u64[2]; // Two 64-bit halves
+} ld_128_union;
+
+// Helper fucntion that uses bitwise opperations to transform a mantissa, exponent and sign
+// into a long double, by putting the bits in the correct memory locations
+npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
+    if (PyErr_Occurred()) { return -1; }
+    uint64_t mantissa[3];
+    for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
+
+    ld_128_union value;
+    uint64_t guard;
+    int foo = 0;
+    if (exp == 0) {
+        sign = (sign == 1) ? -1 : 1;
+        return (npy_longdouble)sign*(npy_longdouble)mantissa[0];
+    } else if (mantissa[0] == 0) {
+        guard = (mantissa[2] >> 63) & 1;
+    } else {
+        for (int i = 63; i >= 0; i--) {
+            if ((mantissa[0] >> i) & 1) {
+                foo = i + 1;
+                break;
+            }
+        }
+        guard = (mantissa[1] >> (foo - 1)) & 1;
+    }
+    exp += foo - 1;
+    value.u64[0] = (mantissa[1] >> foo) | (mantissa[0] << (64 - foo));
+    
+    // Rounding (round to nearest even)
+    if (guard) {
+        value.u64[0]++;
+        if (value.u64[0] == 0) {
+            value.u64[0] = 0x8000000000000000;
+            exp++;
+        }
+    }
+    if (exp >= LDBL_MAX_EXP) {
+        return _ldbl_ovfl_err();
+    }
+    value.u64[1] = (uint64_t)(exp + 16383) | (uint64_t)(sign << 15);
+    return value.ld;
+    
+}
+#else
+
+#define NPY_LGDB_SIGN_POS 1
+#define NPY_LGDB_SIGN_NEG -1
+
+#ifndef NPY_LDBL_MAX_EXP
+    #if NPY_SIZEOF_LONGDOUBLE == NPY_SIZEOF_DOUBLE
+        #define NPY_LDBL_MAX_EXP DBL_MAX_EXP
+    #else
+        #define NPY_LDBL_MAX_EXP LDBL_MAX_EXP
+    #endif
+#endif
+
+// Uses mathematical opperations to calculate the number, by using the numbers in the
+// mantissa, scaling them approprietly using exp, and then adding them together
+npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
+    if (PyErr_Occurred()) { return -1; }
+    uint64_t mantissa[3];
+    for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
+    npy_longdouble ld;
+    if (exp == 0) {
+        ld = (npy_longdouble)sign * (npy_longdouble)mantissa[0];
+        // Edge case for numbers that may or maynot be too big to be represented
+    } else if (exp == NPY_LDBL_MAX_EXP && mantissa[0] == 0) {
+        ld = (npy_longdouble)sign * (ldexpl((npy_longdouble)mantissa[1], exp - 64) +
+            ldexpl((npy_longdouble)mantissa[2], exp - 128));
+            // Sometimes it overflows in weird ways
+        if (ld == (npy_longdouble)INFINITY || ld == (npy_longdouble)(-INFINITY) || ld == (npy_longdouble)NAN || ld == (npy_longdouble)(-NAN)) {
+            return _ldbl_ovfl_err();
+        }
+    } else if (exp >= NPY_LDBL_MAX_EXP) {
+        return _ldbl_ovfl_err();
+    } else {
+    ld = (npy_longdouble)sign * (ldexpl((npy_longdouble)mantissa[0], exp) +
+        ldexpl((npy_longdouble)mantissa[1], exp - 64) +
+        ldexpl((npy_longdouble)mantissa[2], exp - 128));
+    }
+    return ld;
+}
+#endif
+
+// Helper function that get the exponent and mantissa, this works on all platforms
+// This function works by getting the bits of the number in increments of 64 bits
+// Since the size of the number is unknown, a while loop is needed.
+// The more significant digits are stored in the smaller indexes
+void _get_num(PyObject* py_int, int64_t* val, int *exp, int *ovf) {
+    PyObject* shift = PyLong_FromLong(64);
+    PyObject* temp = py_int;
+    while (*ovf != 0) {
+        *exp += 64;
+        val[2] = val[1];
+        val[1] = (uint64_t)PyLong_AsUnsignedLongLongMask(py_int);
+        temp = PyNumber_Rshift(py_int, shift);
+        if (temp != py_int) {  // Check if a new object was created
+            Py_DECREF(py_int); // Decrement refcount of the old py_int
+            py_int = temp;     // Update py_int to the new object
+        }
+        val[0] = (uint64_t)PyLong_AsLongLongAndOverflow(py_int, ovf);
+    }
+    Py_DECREF(shift);
+    Py_DECREF(temp);
+}
+
+// helper function that gets the sign, and if the number is too big to be represented
+// as a int64, calls _get_num to find the exponent and mantissa
+void _fix_py_num(PyObject* py_int, int64_t* val, int *exp, int *sign) {
+    int overflow;
+    val[0] = PyLong_AsLongLongAndOverflow(py_int, &overflow);
+    if (overflow == 1) {
+        *sign = NPY_LGDB_SIGN_POS;
+        PyObject* copy_int = PyNumber_Absolute(py_int);
+        _get_num(copy_int, val, exp, &overflow);
+    } else if (overflow == -1) {
+        *sign = NPY_LGDB_SIGN_NEG;
+        PyObject* copy_int = PyNumber_Negative(py_int); //create new PyLongObject
+        _get_num(copy_int, val, exp, &overflow);
+    } else {
+        if (val[0] == 0) {*sign = 0;}
+        else if (val[0] < 0) { val[0] = -val[0]; *sign = NPY_LGDB_SIGN_NEG;}
+        else {*sign = NPY_LGDB_SIGN_POS;}
+    } 
+    
+}
+/*
+The precision and max number is platform dependent, for 80 and 128 bit platforms
+The largest number that can be converted is 2^16384 - 1.
+In 64 bit platforms the largest number is 2^1024 - 1.
+if the number to be converted is too big for a platform, it will give an error
+In (my personal 80bit platform), I have tested that it converts up to the max
+Now gives an overflow error if the number is too big, follows same rounding rules 
+as python's float() function, including overflow.
+*/
 NPY_VISIBILITY_HIDDEN npy_longdouble
 npy_longdouble_from_PyLong(PyObject *long_obj) {
-    npy_longdouble result = 1234;
-    char *end;
-    char *cstr;
-    PyObject *bytes;
 
-    /* convert the long to a string */
-    bytes = _PyLong_Bytes(long_obj);
-    if (bytes == NULL) {
+    npy_longdouble value;
+    if (PyFloat_Check(long_obj)) {
+        value = (npy_longdouble)PyFloat_AsDouble(long_obj);
+    } else if (PyLong_Check(long_obj)) {
+        int sign;
+        int E = 0;
+        int64_t val[3]; //needs to be size 3 in 80bit prescision
+        _fix_py_num(long_obj, val, &E, &sign);
+        if (PyErr_Occurred()) { return -1; }
+        value = _int_to_ld(val, E, sign);
+    } else {
+        PyErr_SetString(PyExc_TypeError, "Expected a number (int or float)");
         return -1;
     }
 
-    cstr = PyBytes_AsString(bytes);
-    if (cstr == NULL) {
-        goto fail;
-    }
-    end = NULL;
-
-    /* convert the string to a long double and capture errors */
-    errno = 0;
-    result = NumPyOS_ascii_strtold(cstr, &end);
-    if (errno == ERANGE) {
-        /* strtold returns INFINITY of the correct sign. */
-        if (PyErr_Warn(PyExc_RuntimeWarning,
-                "overflow encountered in conversion from python long") < 0) {
-            goto fail;
-        }
-    }
-    else if (errno) {
-        PyErr_Format(PyExc_RuntimeError,
-                     "Could not parse python long as longdouble: %s (%s)",
-                     cstr,
-                     strerror(errno));
-        goto fail;
-    }
-
-    /* Extra characters at the end of the string, or nothing parsed */
-    if (end == cstr || *end != '\0') {
-        PyErr_Format(PyExc_RuntimeError,
-                     "Could not parse long as longdouble: %s",
-                     cstr);
-        goto fail;
-    }
-
-    /* finally safe to decref now that we're done with `end` */
-    Py_DECREF(bytes);
-    return result;
-
-fail:
-    Py_DECREF(bytes);
-    return -1;
+    if (PyErr_Occurred()) { return -1; }
+    return value;
 }
