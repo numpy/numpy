@@ -368,7 +368,11 @@ class TestAttributes:
                                offset=offset * x.itemsize)
             except Exception as e:
                 raise RuntimeError(e)
-            r.strides = strides = strides * x.itemsize
+
+            with warnings.catch_warnings():  # gh-28901
+                warnings.filterwarnings(action="ignore", category=DeprecationWarning)
+
+                r.strides = strides * x.itemsize
             return r
 
         assert_equal(make_array(4, 4, -1), np.array([4, 3, 2, 1]))
@@ -381,7 +385,9 @@ class TestAttributes:
         x = np.lib.stride_tricks.as_strided(np.arange(1), (10, 10), (0, 0))
 
         def set_strides(arr, strides):
-            arr.strides = strides
+            with warnings.catch_warnings():  # gh-28901
+                warnings.filterwarnings(action="ignore", category=DeprecationWarning)
+                arr.strides = strides
 
         assert_raises(ValueError, set_strides, x, (10 * x.itemsize, x.itemsize))
 
@@ -390,12 +396,16 @@ class TestAttributes:
                                                     shape=(10,), strides=(-1,))
         assert_raises(ValueError, set_strides, x[::-1], -1)
         a = x[::-1]
-        a.strides = 1
-        a[::2].strides = 2
+
+        with warnings.catch_warnings():  # gh-28901
+            warnings.filterwarnings(action="ignore", category=DeprecationWarning)
+
+            a.strides = 1
+            a[::2].strides = 2
 
         # test 0d
         arr_0d = np.array(0)
-        arr_0d.strides = ()
+        arr_0d = np.lib.stride_tricks.as_strided(arr_0d, strides = ())
         assert_raises(TypeError, set_strides, arr_0d, None)
 
     def test_fill(self):
@@ -3616,7 +3626,7 @@ class TestMethods:
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
-        a.strides = strides
+        a = stride_tricks.as_strided(a, strides = strides)
         assert_(a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel('K'), np.arange(0, 15, 2))
 
@@ -3625,7 +3635,7 @@ class TestMethods:
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
-        a.strides = strides
+        a = stride_tricks.as_strided(a, strides = strides)
         assert_(np.may_share_memory(a.ravel(order='K'), a))
         assert_equal(a.ravel(order='K'), np.arange(2**3))
 
@@ -3638,9 +3648,7 @@ class TestMethods:
 
         # 1-element tidy strides test:
         a = np.array([[1]])
-        with warnings.catch_warnings(): # gh-28901
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            a.strides = (123, 432)
+        a = stride_tricks.as_strided(a, strides = (123, 432))
         if np.ones(1).strides == (8,):
             assert_(np.may_share_memory(a.ravel('K'), a))
             assert_equal(a.ravel('K').strides, (a.dtype.itemsize,))
@@ -4494,7 +4502,8 @@ class TestPickling:
         original = np.array([['2015-02-24T00:00:00.000000000']], dtype='datetime64[ns]')
 
         original_byte_reversed = original.copy(order='K')
-        original_byte_reversed.dtype = original_byte_reversed.dtype.newbyteorder('S')
+        new_dtype = original_byte_reversed.dtype.newbyteorder('S')
+        original_byte_reversed = original_byte_reversed.view(dtype = new_dtype)
         original_byte_reversed.byteswap(inplace=True)
 
         new = pickle.loads(pickle.dumps(original_byte_reversed))
@@ -8294,7 +8303,10 @@ class TestNewBufferProtocol:
     def test_relaxed_strides(self, c=np.ones((1, 10, 10), dtype='i8')):
         # Note: c defined as parameter so that it is persistent and leak
         # checks will notice gh-16934 (buffer info cache leak).
-        c.strides = (-1, 80, 8)  # strides need to be fixed at export
+        with warnings.catch_warnings():  # gh-28901
+            warnings.filterwarnings(action="ignore", category=DeprecationWarning)
+
+            c.strides = (-1, 80, 8)  # strides need to be fixed at export
 
         assert_(memoryview(c).strides == (800, 80, 8))
 
@@ -8716,9 +8728,15 @@ class TestArrayAttributeDeletion:
     def test_multiarray_writable_attributes_deletion(self):
         # ticket #2046, should not seqfault, raise AttributeError
         a = np.ones(2)
-        attr = ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
+        attr = ['shape', 'data', 'real', 'imag', 'flat']
         with suppress_warnings() as sup:
             sup.filter(DeprecationWarning, "Assigning the 'data' attribute")
+            for s in attr:
+                assert_raises(AttributeError, delattr, a, s)
+        attr = ['strides', 'dtype']
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning, "Assigning the 'data' attribute")
+            sup.filter(DeprecationWarning, "Setting the ")
             for s in attr:
                 assert_raises(AttributeError, delattr, a, s)
 

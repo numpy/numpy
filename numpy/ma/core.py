@@ -3495,6 +3495,7 @@ class MaskedArray(ndarray):
         with warnings.catch_warnings():
             # gh-28901
             warnings.filterwarnings(action="ignore", category=DeprecationWarning)
+
             super(MaskedArray, type(self)).dtype.__set__(self, dtype)
         if self._mask is not nomask:
             self._mask = self._mask.view(make_mask_descr(dtype), ndarray)
