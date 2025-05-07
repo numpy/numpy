@@ -22,6 +22,9 @@ fi
 if [[ $(python -c"import sys; print(sys.maxsize)") < $(python -c"import sys; print(2**33)") ]]; then
     echo "No BLAS used for 32-bit wheels"
     export INSTALL_OPENBLAS=false
+elif [[ $(python -c"import sysconfig; print(sysconfig.get_platform())") == "win-arm64" ]]; then
+    echo "No BLAS used for ARM64 wheels"
+    export INSTALL_OPENBLAS=false
 elif [ -z $INSTALL_OPENBLAS ]; then
     # the macos_arm64 build might not set this variable
     export INSTALL_OPENBLAS=true

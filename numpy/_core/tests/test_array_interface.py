@@ -2,6 +2,7 @@ import sys
 import pytest
 import numpy as np
 from numpy.testing import extbuild, IS_WASM, IS_EDITABLE
+import sysconfig
 
 
 @pytest.fixture
@@ -123,6 +124,8 @@ def get_module(tmp_path):
         pass
 
     # if it does not exist, build and load it
+    if sysconfig.get_platform() == "win-arm64":
+        pytest.skip("Meson unable to find MSVC linker on win-arm64")
     return extbuild.build_and_import_extension('array_interface_testing',
                                                functions,
                                                prologue=prologue,

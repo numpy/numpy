@@ -54,6 +54,7 @@ else:
 )
 @pytest.mark.skipif(IS_WASM, reason="Can't start subprocess")
 @pytest.mark.skipif(cython is None, reason="requires cython")
+@pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64', reason='Meson unable to find MSVC linker on win-arm64')
 @pytest.mark.slow
 def test_cython(tmp_path):
     import glob
