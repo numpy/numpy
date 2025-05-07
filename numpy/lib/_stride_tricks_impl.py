@@ -104,7 +104,7 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     # dtypes. Since dtype should remain unchanged, we set it explicitly.
     with warnings.catch_warnings():
         # gh-28901
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        warnings.filterwarnings(action="ignore", category=DeprecationWarning)
         array.dtype = x.dtype
 
     view = _maybe_view_as_subclass(x, array)
