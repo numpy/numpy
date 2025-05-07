@@ -20,7 +20,6 @@ from numpy.testing import (
     IS_PYPY, HAS_REFCOUNT
     )
 from numpy.testing._private.utils import _glibc_older_than
-from numpy.matrixlib.tests.test_defmatrix import create_matrix
 
 UFUNCS = [obj for obj in np._core.umath.__dict__.values()
          if isinstance(obj, np.ufunc)]
@@ -4783,8 +4782,8 @@ def test_signaling_nan_exceptions():
 
 @pytest.mark.parametrize("arr", [
     np.arange(2),
-    create_matrix([0, 1]),
-    create_matrix([[0, 1], [2, 5]]),
+    np.matrix([0, 1]),
+    np.matrix([[0, 1], [2, 5]]),
     ])
 def test_outer_subclass_preserve(arr):
     # for gh-8661
