@@ -465,7 +465,7 @@ class recarray(ndarray):
             if attr == 'dtype':
                 with warnings.catch_warnings():
                     # gh-28901
-                    warnings.filterwarnings("ignore", category=DeprecationWarning)
+                    warnings.filterwarnings(action="ignore", category=DeprecationWarning)
                     ret = object.__setattr__(self, attr, val)
             else:
                 ret = object.__setattr__(self, attr, val)
