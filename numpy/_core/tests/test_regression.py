@@ -429,7 +429,7 @@ class TestRegression:
         assert np.lexsort((xs,)).shape[0] == 0  # Works
 
         with warnings.catch_warnings():  # gh-28901
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings(action="ignore", category=DeprecationWarning)
             xs.strides = (16,)
         assert np.lexsort((xs,)).shape[0] == 0  # Was: MemoryError
 
@@ -438,13 +438,13 @@ class TestRegression:
 
         xs.shape = (0, 2)
         with warnings.catch_warnings():  # gh-28901
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings(action="ignore", category=DeprecationWarning)
             xs.strides = (16, 16)
         assert np.lexsort((xs,), axis=0).shape[0] == 0
 
         xs.shape = (2, 0)
         with warnings.catch_warnings():  # gh-28901
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings(action="ignore", category=DeprecationWarning)
             xs.strides = (16, 16)
         assert np.lexsort((xs,), axis=0).shape[0] == 2
 
@@ -1878,7 +1878,7 @@ class TestRegression:
         a = np.arange(10)
         assert_(a.flags.aligned)
         with warnings.catch_warnings():  # gh-28901
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings(action="ignore", category=DeprecationWarning)
             a.strides = 3
         assert_(not a.flags.aligned)
 

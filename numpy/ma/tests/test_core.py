@@ -2128,7 +2128,7 @@ class TestMaskedArrayAttributes:
         m = np.ma.array(a)
         with warnings.catch_warnings():
             # gh-28901
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings(action="ignore", category=DeprecationWarning)
 
             m.dtype = np.dtype('f4')
         repr(m)  # raises?
@@ -2149,7 +2149,7 @@ class TestMaskedArrayAttributes:
         m = np.ma.array(a)
         with warnings.catch_warnings():
             # gh-28901
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            warnings.filterwarnings(action="ignore", category=DeprecationWarning)
 
             m.dtype = np.dtype('f4,i4')
         assert_equal(m.dtype, np.dtype('f4,i4'))
