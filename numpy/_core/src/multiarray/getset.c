@@ -116,6 +116,10 @@ array_strides_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static int
 array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
 {
+    if( DEPRECATE("Setting the strides on a NumPy array has been deprecated in NumPy 2.3.") < 0 ) {
+        return -1;        
+    }
+
     PyArray_Dims newstrides = {NULL, -1};
     PyArrayObject *new;
     npy_intp numbytes = 0;
