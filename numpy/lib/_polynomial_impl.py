@@ -1382,23 +1382,19 @@ class poly1d:
         other = poly1d(other)
         return poly1d(polysub(other.coeffs, self.coeffs))
 
-    def __div__(self, other):
+    def __truediv__(self, other):
         if isscalar(other):
             return poly1d(self.coeffs / other)
         else:
             other = poly1d(other)
             return polydiv(self, other)
 
-    __truediv__ = __div__
-
-    def __rdiv__(self, other):
+    def __rtruediv__(self, other):
         if isscalar(other):
             return poly1d(other / self.coeffs)
         else:
             other = poly1d(other)
             return polydiv(other, self)
-
-    __rtruediv__ = __rdiv__
 
     def __eq__(self, other):
         if not isinstance(other, poly1d):
