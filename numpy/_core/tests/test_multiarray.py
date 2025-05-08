@@ -19,6 +19,23 @@ import warnings
 import weakref
 from contextlib import contextmanager
 
+import numpy as np
+import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._rational_tests import rational
+from numpy.exceptions import AxisError, ComplexWarning
+from numpy.testing import (
+    assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
+    assert_array_equal, assert_raises_regex, assert_array_almost_equal,
+    assert_allclose, IS_PYPY, IS_WASM, IS_PYSTON, HAS_REFCOUNT,
+    assert_array_less, runstring, temppath, suppress_warnings, break_cycles,
+    check_support_sve, assert_array_compare, IS_64BIT
+    )
+from numpy.testing._private.utils import requires_memory, _no_tracing
+from numpy._core.tests._locales import CommaDecimalPointLocale
+from numpy.lib.recfunctions import repack_fields
+from numpy._core.multiarray import _get_ndarray_c_version, dot
+from numpy.lib import stride_tricks
+
 # Need to test an object that does not fully implement math interface
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -383,7 +400,8 @@ class TestAttributes:
                                offset=offset * x.itemsize)
             except Exception as e:
                 raise RuntimeError(e)
-            r.strides = strides = strides * x.itemsize
+            with pytest.warns(DeprecationWarning):
+                r.strides = strides * x.itemsize
             return r
 
         assert_equal(make_array(4, 4, -1), np.array([4, 3, 2, 1]))
@@ -405,12 +423,15 @@ class TestAttributes:
                                                     shape=(10,), strides=(-1,))
         assert_raises(ValueError, set_strides, x[::-1], -1)
         a = x[::-1]
-        a.strides = 1
-        a[::2].strides = 2
+        with pytest.warns(DeprecationWarning):
+            a.strides = 1
+        with pytest.warns(DeprecationWarning):
+            a[::2].strides = 2
 
         # test 0d
         arr_0d = np.array(0)
-        arr_0d.strides = ()
+        with pytest.warns(DeprecationWarning):
+            arr_0d.strides = ()
         assert_raises(TypeError, set_strides, arr_0d, None)
 
     def test_fill(self):
@@ -3631,7 +3652,7 @@ class TestMethods:
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
-        a.strides = strides
+        a = stride_tricks.as_strided(a, strides = strides)
         assert_(a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel('K'), np.arange(0, 15, 2))
 
@@ -3640,7 +3661,7 @@ class TestMethods:
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
-        a.strides = strides
+        a = stride_tricks.as_strided(a, strides = strides)
         assert_(np.may_share_memory(a.ravel(order='K'), a))
         assert_equal(a.ravel(order='K'), np.arange(2**3))
 
@@ -3653,7 +3674,7 @@ class TestMethods:
 
         # 1-element tidy strides test:
         a = np.array([[1]])
-        a.strides = (123, 432)
+        a = stride_tricks.as_strided(a, strides = (123, 432))
         if np.ones(1).strides == (8,):
             assert_(np.may_share_memory(a.ravel('K'), a))
             assert_equal(a.ravel('K').strides, (a.dtype.itemsize,))
@@ -4542,7 +4563,8 @@ class TestPickling:
         original = np.array([['2015-02-24T00:00:00.000000000']], dtype='datetime64[ns]')
 
         original_byte_reversed = original.copy(order='K')
-        original_byte_reversed.dtype = original_byte_reversed.dtype.newbyteorder('S')
+        new_dtype = original_byte_reversed.dtype.newbyteorder('S')
+        original_byte_reversed = original_byte_reversed.view(dtype = new_dtype)
         original_byte_reversed.byteswap(inplace=True)
 
         new = pickle.loads(pickle.dumps(original_byte_reversed))
@@ -8340,7 +8362,8 @@ class TestNewBufferProtocol:
     def test_relaxed_strides(self, c=np.ones((1, 10, 10), dtype='i8')):
         # Note: c defined as parameter so that it is persistent and leak
         # checks will notice gh-16934 (buffer info cache leak).
-        c.strides = (-1, 80, 8)  # strides need to be fixed at export
+        with pytest.warns(DeprecationWarning):
+            c.strides = (-1, 80, 8)  # strides need to be fixed at export
 
         assert_(memoryview(c).strides == (800, 80, 8))
 
@@ -8762,11 +8785,18 @@ class TestArrayAttributeDeletion:
     def test_multiarray_writable_attributes_deletion(self):
         # ticket #2046, should not seqfault, raise AttributeError
         a = np.ones(2)
-        attr = ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
+        attr = ['shape', 'data', 'dtype', 'real', 'imag', 'flat']
         with suppress_warnings() as sup:
             sup.filter(DeprecationWarning, "Assigning the 'data' attribute")
             for s in attr:
                 assert_raises(AttributeError, delattr, a, s)
+
+        attr = ['strides']
+        with suppress_warnings() as sup:
+            sup.filter(DeprecationWarning, "Assigning the 'data' attribute")
+            for s in attr:
+                with pytest.warns(DeprecationWarning):
+                    assert_raises(AttributeError, delattr, a, s)
 
     def test_multiarray_not_writable_attributes_deletion(self):
         a = np.ones(2)

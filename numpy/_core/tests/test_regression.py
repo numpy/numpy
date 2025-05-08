@@ -438,18 +438,21 @@ class TestRegression:
         xs = np.array([], dtype='i8')
         assert np.lexsort((xs,)).shape[0] == 0  # Works
 
-        xs.strides = (16,)
+        with pytest.warns(DeprecationWarning):
+            xs.strides = (16,)
         assert np.lexsort((xs,)).shape[0] == 0  # Was: MemoryError
 
     def test_lexsort_zerolen_custom_strides_2d(self):
         xs = np.array([], dtype='i8')
 
         xs.shape = (0, 2)
-        xs.strides = (16, 16)
+        with pytest.warns(DeprecationWarning):
+            xs.strides = (16, 16)
         assert np.lexsort((xs,), axis=0).shape[0] == 0
 
         xs.shape = (2, 0)
-        xs.strides = (16, 16)
+        with pytest.warns(DeprecationWarning):
+            xs.strides = (16, 16)
         assert np.lexsort((xs,), axis=0).shape[0] == 2
 
     def test_lexsort_invalid_axis(self):
@@ -1656,7 +1659,7 @@ class TestRegression:
 
     def test_nonzero_byteswap(self):
         a = np.array([0x80000000, 0x00000080, 0], dtype=np.uint32)
-        a.dtype = np.float32
+        a = a.view(np.float32)
         assert_equal(a.nonzero()[0], [1])
         a = a.byteswap()
         a = a.view(a.dtype.newbyteorder())
@@ -1880,7 +1883,8 @@ class TestRegression:
         # Check that alignment flag is updated on stride setting
         a = np.arange(10)
         assert_(a.flags.aligned)
-        a.strides = 3
+        with pytest.warns(DeprecationWarning):
+            a.strides = 3
         assert_(not a.flags.aligned)
 
     def test_ticket_1770(self):
