@@ -414,7 +414,7 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
 
     def test_deprecated_strides_set(self):
         x = np.eye(2)
-        self.assert_deprecated(setattr, x, 'strides', x.strides)
+        self.assert_deprecated(setattr, args=(x, 'strides', x.strides))
 
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):

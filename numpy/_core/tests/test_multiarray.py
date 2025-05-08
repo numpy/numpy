@@ -414,7 +414,8 @@ class TestAttributes:
         x = np.lib.stride_tricks.as_strided(np.arange(1), (10, 10), (0, 0))
 
         def set_strides(arr, strides):
-            arr.strides = strides
+            with pytest.warns(DeprecationWarning):
+                arr.strides = strides
 
         assert_raises(ValueError, set_strides, x, (10 * x.itemsize, x.itemsize))
 
