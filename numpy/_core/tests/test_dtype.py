@@ -1174,6 +1174,10 @@ class TestString:
         assert_equal(str(dt), "(numpy.record, [('a', '<u2')])")
         assert_equal(dt.name, 'record16')
 
+    def test_custom_dtype_str(self):
+        dt = np.dtypes.StringDType()
+        assert_equal(dt.str, "StringDType()")
+
 
 class TestDtypeAttributeDeletion:
 
