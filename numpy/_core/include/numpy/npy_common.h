@@ -410,9 +410,6 @@ typedef longdouble_t _Complex npy_clongdouble;
 #define NPY_MAX_INT128 NPY_LONGLONG_SUFFIX(85070591730234615865843651857942052864)
 #define NPY_MIN_INT128 (-NPY_MAX_INT128 - NPY_LONGLONG_SUFFIX(1))
 #define NPY_MAX_UINT128 NPY_ULONGLONG_SUFFIX(170141183460469231731687303715884105728)
-#define NPY_MAX_INT256 NPY_LONGLONG_SUFFIX(57896044618658097711785492504343953926634992332820282019728792003956564819967)
-#define NPY_MIN_INT256 (-NPY_MAX_INT256 - NPY_LONGLONG_SUFFIX(1))
-#define NPY_MAX_UINT256 NPY_ULONGLONG_SUFFIX(115792089237316195423570985008687907853269984665640564039457584007913129639935)
 #define NPY_MIN_DATETIME NPY_MIN_INT64
 #define NPY_MAX_DATETIME NPY_MAX_INT64
 #define NPY_MIN_TIMEDELTA NPY_MIN_INT64
@@ -611,20 +608,6 @@ typedef longdouble_t _Complex npy_clongdouble;
 #  define NPY_MAX_LONGLONG NPY_MAX_INT128
 #  define NPY_MIN_LONGLONG NPY_MIN_INT128
 #  define NPY_MAX_ULONGLONG NPY_MAX_UINT128
-#elif NPY_BITSOF_LONGLONG == 256
-#  define NPY_INT256 NPY_LONGLONG
-#  define NPY_UINT256 NPY_ULONGLONG
-        typedef npy_longlong npy_int256;
-        typedef npy_ulonglong npy_uint256;
-#  define PyInt256ScalarObject PyLongLongScalarObject
-#  define PyInt256ArrType_Type PyLongLongArrType_Type
-#  define PyUInt256ScalarObject PyULongLongScalarObject
-#  define PyUInt256ArrType_Type PyULongLongArrType_Type
-#define NPY_INT256_FMT NPY_LONGLONG_FMT
-#define NPY_UINT256_FMT NPY_ULONGLONG_FMT
-#  define NPY_MAX_LONGLONG NPY_MAX_INT256
-#  define NPY_MIN_LONGLONG NPY_MIN_INT256
-#  define NPY_MAX_ULONGLONG NPY_MAX_UINT256
 #endif
 
 #if NPY_BITSOF_INT == 8
@@ -1046,17 +1029,6 @@ typedef npy_half npy_float16;
 #define NPY_FLOAT128_FMT NPY_LONGDOUBLE_FMT
 #define NPY_COMPLEX256_FMT NPY_CLONGDOUBLE_FMT
 #endif
-#elif NPY_BITSOF_LONGDOUBLE == 256
-#define NPY_FLOAT256 NPY_LONGDOUBLE
-#define NPY_COMPLEX512 NPY_CLONGDOUBLE
-        typedef npy_longdouble npy_float256;
-        typedef npy_clongdouble npy_complex512;
-#    define PyFloat256ScalarObject PyLongDoubleScalarObject
-#    define PyComplex512ScalarObject PyCLongDoubleScalarObject
-#    define PyFloat256ArrType_Type PyLongDoubleArrType_Type
-#    define PyComplex512ArrType_Type PyCLongDoubleArrType_Type
-#define NPY_FLOAT256_FMT NPY_LONGDOUBLE_FMT
-#define NPY_COMPLEX512_FMT NPY_CLONGDOUBLE_FMT
 #endif
 
 /* datetime typedefs */
