@@ -62,13 +62,6 @@
 
 #include <feature_detection_misc.h>
 
-#if PY_VERSION_HEX >= 0x030E00A7 && !defined(PYPY_VERSION)
-#define Py_BUILD_CORE
-#include "internal/pycore_frame.h"
-#include "internal/pycore_interpframe.h"
-#undef Py_BUILD_CORE
-#endif
-
 /* 1 prints elided operations, 2 prints stacktraces */
 #define NPY_ELIDE_DEBUG 0
 #define NPY_MAX_STACKSIZE 10
@@ -119,33 +112,11 @@ find_addr(void * addresses[], npy_intp naddr, void * addr)
 static int
 check_unique_temporary(PyObject *lhs)
 {
-#if PY_VERSION_HEX >= 0x030E00A7 && !defined(PYPY_VERSION)
-    // In Python 3.14.0a7 and later, a reference count of one doesn't guarantee
-    // that an object is a unique temporary variable. We scan the top of the
-    // interpreter stack to check if the object exists as an "owned" reference
-    // in the temporary stack.
-    PyFrameObject *frame = PyEval_GetFrame();
-    if (frame == NULL) {
-        return 0;
-    }
-    _PyInterpreterFrame *f = frame->f_frame;
-    _PyStackRef *base = _PyFrame_Stackbase(f);
-    _PyStackRef *stackpointer = f->stackpointer;
-    int found_once = 0;
-    while (stackpointer > base) {
-        stackpointer--;
-        PyObject *obj = PyStackRef_AsPyObjectBorrow(*stackpointer);
-        if (obj == lhs) {
-            if (!found_once && PyStackRef_IsHeapSafe(*stackpointer)) {
-                found_once = 1;
-            }
-            else {
-                return 0;
-            }
-        }
-        return found_once;
-    }
-    return 0;
+#if PY_VERSION_HEX == 0x030E00A7 && !defined(PYPY_VERSION)
+#error "NumPy is broken on CPython 3.14.0a7, please update to a newer version"
+#elif PY_VERSION_HEX >= 0x030E00B1 && !defined(PYPY_VERSION)
+    // see https://github.com/python/cpython/issues/133164
+    return PyUnstable_Object_IsUniqueReferencedTemporary(lhs);
 #else
     return 1;
 #endif
