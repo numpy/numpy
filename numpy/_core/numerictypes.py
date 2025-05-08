@@ -12,8 +12,8 @@ Exported symbols include:
 
     Bit-width names
 
-    int8 int16 int32 int64 int128
-    uint8 uint16 uint32 uint64 uint128
+    int8 int16 int32 int64
+    uint8 uint16 uint32 uint64
     float16 float32 float64 float96 float128
     complex64 complex128 complex192 complex256
     datetime64 timedelta64
@@ -113,7 +113,7 @@ from builtins import bool, int, float, complex, object, str, bytes  # noqa: F401
 generic = allTypes['generic']
 
 genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
-                   'int32', 'uint32', 'int64', 'uint64', 'int128', 'uint128',
+                   'int32', 'uint32', 'int64', 'uint64',
                    'float16', 'float32', 'float64', 'float96', 'float128',
                    'complex64', 'complex128', 'complex192', 'complex256',
                    'object']

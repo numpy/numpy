@@ -512,17 +512,6 @@ typedef longdouble_t _Complex npy_clongdouble;
 #define NPY_UINT64_FMT NPY_ULONG_FMT
 #define MyPyLong_FromInt64 PyLong_FromLong
 #define MyPyLong_AsInt64 PyLong_AsLong
-#elif NPY_BITSOF_LONG == 128
-#define NPY_INT128 NPY_LONG
-#define NPY_UINT128 NPY_ULONG
-        typedef long npy_int128;
-        typedef unsigned long npy_uint128;
-#define PyInt128ScalarObject PyLongScalarObject
-#define PyInt128ArrType_Type PyLongArrType_Type
-#define PyUInt128ScalarObject PyULongScalarObject
-#define PyUInt128ArrType_Type PyULongArrType_Type
-#define NPY_INT128_FMT NPY_LONG_FMT
-#define NPY_UINT128_FMT NPY_ULONG_FMT
 #endif
 
 #if NPY_BITSOF_LONGLONG == 8
@@ -592,22 +581,6 @@ typedef longdouble_t _Complex npy_clongdouble;
 #  define NPY_MAX_LONGLONG NPY_MAX_INT64
 #  define NPY_MIN_LONGLONG NPY_MIN_INT64
 #  define NPY_MAX_ULONGLONG NPY_MAX_UINT64
-#elif NPY_BITSOF_LONGLONG == 128
-#  ifndef NPY_INT128
-#    define NPY_INT128 NPY_LONGLONG
-#    define NPY_UINT128 NPY_ULONGLONG
-        typedef npy_longlong npy_int128;
-        typedef npy_ulonglong npy_uint128;
-#    define PyInt128ScalarObject PyLongLongScalarObject
-#    define PyInt128ArrType_Type PyLongLongArrType_Type
-#    define PyUInt128ScalarObject PyULongLongScalarObject
-#    define PyUInt128ArrType_Type PyULongLongArrType_Type
-#define NPY_INT128_FMT NPY_LONGLONG_FMT
-#define NPY_UINT128_FMT NPY_ULONGLONG_FMT
-#  endif
-#  define NPY_MAX_LONGLONG NPY_MAX_INT128
-#  define NPY_MIN_LONGLONG NPY_MIN_INT128
-#  define NPY_MAX_ULONGLONG NPY_MAX_UINT128
 #endif
 
 #if NPY_BITSOF_INT == 8
@@ -665,19 +638,6 @@ typedef longdouble_t _Complex npy_clongdouble;
 #    define MyPyLong_FromInt64 PyLong_FromLong
 #    define MyPyLong_AsInt64 PyLong_AsLong
 #endif
-#elif NPY_BITSOF_INT == 128
-#ifndef NPY_INT128
-#define NPY_INT128 NPY_INT
-#define NPY_UINT128 NPY_UINT
-        typedef int npy_int128;
-        typedef unsigned int npy_uint128;
-#    define PyInt128ScalarObject PyIntScalarObject
-#    define PyInt128ArrType_Type PyIntArrType_Type
-#    define PyUInt128ScalarObject PyUIntScalarObject
-#    define PyUInt128ArrType_Type PyUIntArrType_Type
-#define NPY_INT128_FMT NPY_INT_FMT
-#define NPY_UINT128_FMT NPY_UINT_FMT
-#endif
 #endif
 
 #if NPY_BITSOF_SHORT == 8
@@ -734,19 +694,6 @@ typedef longdouble_t _Complex npy_clongdouble;
 #define NPY_UINT64_FMT NPY_USHORT_FMT
 #    define MyPyLong_FromInt64 PyLong_FromLong
 #    define MyPyLong_AsInt64 PyLong_AsLong
-#endif
-#elif NPY_BITSOF_SHORT == 128
-#ifndef NPY_INT128
-#define NPY_INT128 NPY_SHORT
-#define NPY_UINT128 NPY_USHORT
-        typedef short npy_int128;
-        typedef unsigned short npy_uint128;
-#    define PyInt128ScalarObject PyShortScalarObject
-#    define PyInt128ArrType_Type PyShortArrType_Type
-#    define PyUInt128ScalarObject PyUShortScalarObject
-#    define PyUInt128ArrType_Type PyUShortArrType_Type
-#define NPY_INT128_FMT NPY_SHORT_FMT
-#define NPY_UINT128_FMT NPY_USHORT_FMT
 #endif
 #endif
 
@@ -807,18 +754,6 @@ typedef longdouble_t _Complex npy_clongdouble;
 #    define MyPyLong_AsInt64 PyLong_AsLong
 #endif
 #elif NPY_BITSOF_CHAR == 128
-#ifndef NPY_INT128
-#define NPY_INT128 NPY_BYTE
-#define NPY_UINT128 NPY_UBYTE
-        typedef signed char npy_int128;
-        typedef unsigned char npy_uint128;
-#    define PyInt128ScalarObject PyByteScalarObject
-#    define PyInt128ArrType_Type PyByteArrType_Type
-#    define PyUInt128ScalarObject PyUByteScalarObject
-#    define PyUInt128ArrType_Type PyUByteArrType_Type
-#define NPY_INT128_FMT NPY_BYTE_FMT
-#define NPY_UINT128_FMT NPY_UBYTE_FMT
-#endif
 #endif
 
 
