@@ -1010,13 +1010,14 @@ foreach gen_mtargets : [
   ],
   [
     'loops_unary_fp.dispatch.h',
-    src_file.process('src/umath/loops_unary_fp.dispatch.c.src'),
+    'src/umath/loops_unary_fp.dispatch.cpp',
     [
       SSE41, SSE2,
       VSX2,
       ASIMD, NEON,
       VXE, VX,
       LSX,
+      RVV,
     ]
   ],
   [
