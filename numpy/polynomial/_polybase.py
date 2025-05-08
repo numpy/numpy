@@ -611,10 +611,6 @@ class ABCPolyBase(abc.ABC):
             return NotImplemented
         return self.__class__(coef, self.domain, self.window, self.symbol)
 
-    def __rdiv__(self, other):
-        # set to __floordiv__ /.
-        return self.__rfloordiv__(other)
-
     def __rtruediv__(self, other):
         # An instance of ABCPolyBase is not considered a
         # Number.
