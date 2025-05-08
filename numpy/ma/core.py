@@ -4358,15 +4358,6 @@ class MaskedArray(ndarray):
         # we get here from `other * self`.
         return multiply(other, self)
 
-    def __div__(self, other):
-        """
-        Divide other into self, and return a new masked array.
-
-        """
-        if self._delegate_binop(other):
-            return NotImplemented
-        return divide(self, other)
-
     def __truediv__(self, other):
         """
         Divide other into self, and return a new masked array.
@@ -4465,25 +4456,6 @@ class MaskedArray(ndarray):
         other_data = getdata(other)
         other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
         self._data.__imul__(other_data)
-        return self
-
-    def __idiv__(self, other):
-        """
-        Divide self by other in-place.
-
-        """
-        other_data = getdata(other)
-        dom_mask = _DomainSafeDivide().__call__(self._data, other_data)
-        other_mask = getmask(other)
-        new_mask = mask_or(other_mask, dom_mask)
-        # The following 4 lines control the domain filling
-        if dom_mask.any():
-            (_, fval) = ufunc_fills[np.divide]
-            other_data = np.where(
-                    dom_mask, other_data.dtype.type(fval), other_data)
-        self._mask |= new_mask
-        other_data = np.where(self._mask, other_data.dtype.type(1), other_data)
-        self._data.__idiv__(other_data)
         return self
 
     def __ifloordiv__(self, other):
