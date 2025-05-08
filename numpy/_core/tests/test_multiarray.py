@@ -4170,8 +4170,8 @@ class TestBinop:
             def __mul__(self, other):
                 raise AssertionError('__mul__ should not be called')
 
-            def __div__(self, other):
-                raise AssertionError('__div__ should not be called')
+            def __truediv__(self, other):
+                raise AssertionError('__truediv__ should not be called')
 
             def __pow__(self, exp):
                 return SomeClass(num=self.num ** exp)
@@ -9260,7 +9260,6 @@ class TestArrayPriority:
         __sub__ = __rsub__ = _all
         __mul__ = __rmul__ = _all
         __pow__ = __rpow__ = _all
-        __div__ = __rdiv__ = _all
         __mod__ = __rmod__ = _all
         __truediv__ = __rtruediv__ = _all
         __floordiv__ = __rfloordiv__ = _all
