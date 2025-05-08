@@ -2589,10 +2589,8 @@ class TestUfuncs:
             def __rmul__(self, other):
                 return "Me2rmul"
 
-            def __rdiv__(self, other):
+            def __rtruediv__(self, other):
                 return "Me2rdiv"
-
-            __rtruediv__ = __rdiv__
 
         me_too = MyClass2()
         assert_(a.__mul__(me_too) is NotImplemented)
