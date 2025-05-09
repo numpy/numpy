@@ -131,7 +131,7 @@ def get_test_cases(*directories: str) -> Iterator[ParameterSet]:
 
 
 _FAIL_INDENT = " " * 4
-_FAIL_SEP = "\n" + "_" * 79 +  "\n\n"
+_FAIL_SEP = "\n" + "_" * 79 + "\n\n"
 
 _FAIL_MSG_REVEAL = """{}:{} - reveal mismatch:
 
@@ -166,7 +166,6 @@ def test_pass(path) -> None:
 
     if messages:
         pytest.fail("\n".join(messages), pytrace=False)
-
 
 
 @pytest.mark.slow
