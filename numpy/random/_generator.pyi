@@ -850,6 +850,17 @@ class Generator:
         self, x: ArrayLike, *, axis: int | None = ..., out: NDArray[Any] | None = ...
     ) -> NDArray[Any]: ...
     def shuffle(self, x: ArrayLike, axis: int = ...) -> None: ...
+    def select(
+        self,
+        /,
+        items: ArrayLike,
+        *,
+        nsample: int | None = None,
+        p: ArrayLike | None = None,
+        size: int | None = None,
+        axis: int | None = None,
+        out: NDArray[Any] | None = None,
+    ) -> NDArray[Any]: ...
 
 def default_rng(
     seed: _ArrayLikeInt_co | SeedSequence | BitGenerator | Generator | RandomState | None = ...
