@@ -423,16 +423,16 @@ def validate_rst_syntax(text, name, dots=True):
 
     docutils.core.publish_doctree(
         text, token,
-        settings_overrides = {'halt_level': 5,
-                                  'traceback': True,
-                                  'default_reference_context': 'title-reference',
-                                  'default_role': 'emphasis',
-                                  'link_base': '',
-                                  'resolve_name': resolve,
-                                  'stylesheet_path': '',
-                                  'raw_enabled': 0,
-                                  'file_insertion_enabled': 0,
-                                  'warning_stream': error_stream})
+        settings_overrides={'halt_level': 5,
+                            'traceback': True,
+                            'default_reference_context': 'title-reference',
+                            'default_role': 'emphasis',
+                            'link_base': '',
+                            'resolve_name': resolve,
+                            'stylesheet_path': '',
+                            'raw_enabled': 0,
+                            'file_insertion_enabled': 0,
+                            'warning_stream': error_stream})
 
     # Print errors, disregarding unimportant ones
     error_msg = error_stream.getvalue()
