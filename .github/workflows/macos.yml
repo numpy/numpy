@@ -115,7 +115,7 @@ jobs:
         build_runner:
           - [ macos-13, "macos_x86_64" ]
           - [ macos-14, "macos_arm64" ]
-        version: ["3.11", "3.13t"]
+        version: ["3.11", "3.14t"]
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -137,12 +137,6 @@ jobs:
       if: ${{ matrix.build_runner[0] == 'macos-13' }}
       with:
         xcode-version: '14.3'
-
-    # TODO: remove cython nightly install when cython does a release
-    - name: Install nightly Cython
-      if: matrix.version == '3.13t'
-      run: |
-        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
 
     - name: Install dependencies
       run: |

@@ -174,12 +174,6 @@ jobs:
             echo "CIBW_ENVIRONMENT_MACOS=$CIBW PKG_CONFIG_PATH=$PKG_CONFIG_PATH DYLD_LIBRARY_PATH=$DYLD" >> "$GITHUB_ENV"
           fi
 
-      - name: Set up free-threaded build
-        if: matrix.python == 'cp313t'
-        shell: bash -el {0}
-        run: |
-          echo "CIBW_BUILD_FRONTEND=pip; args: --no-build-isolation" >> "$GITHUB_ENV"
-
       - name: Build wheels
         uses: pypa/cibuildwheel@faf86a6ed7efa889faf6996aa23820831055001a  # v2.23.3
         env:

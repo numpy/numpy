@@ -24,7 +24,7 @@ jobs:
       matrix:
         compiler-pyversion:
           - ["MSVC", "3.11"]
-          - ["Clang-cl", "3.13t"]
+          - ["Clang-cl", "3.14t"]
 
     steps:
     - name: Checkout
@@ -43,12 +43,6 @@ jobs:
 
     - run:
         uv pip install --python=${{ matrix.version }} pip
-
-    # TODO: remove cython nightly install when cython does a release
-    - name: Install nightly Cython
-      if: matrix.compiler-pyversion[1] == '3.13t'
-      run: |
-        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
 
     - name: Install build dependencies from PyPI
       run: |
