@@ -78,7 +78,7 @@ jobs:
     if: github.repository == 'numpy/numpy'
     runs-on: ubuntu-latest
     container:
-        image: ghcr.io/nascheme/numpy-tsan:3.14t-dev
+        image: ghcr.io/nascheme/numpy-tsan:3.14t
         options: --shm-size=2g # increase memory for large matrix ops
       
     steps:
