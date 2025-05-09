@@ -136,7 +136,7 @@ if os.name == 'nt':
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
         # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
-        #(dead link)
+        # (dead link)
         # My older explanation for this was that the "AddCounter" process
         # forced the CPU to 100%, but the above makes more sense :)
         import win32pdh
@@ -1396,7 +1396,7 @@ def rundocs(filename=None, raise_on_error=True):
 
     msg = []
     if raise_on_error:
-        out = lambda s: msg.append(s)
+        out = msg.append
     else:
         out = None
 
@@ -1879,8 +1879,7 @@ def nulp_diff(x, y, dtype=None):
     y[np.isnan(y)] = np.nan
 
     if not x.shape == y.shape:
-        raise ValueError("Arrays do not have the same shape: %s - %s" %
-                         (x.shape, y.shape))
+        raise ValueError(f"Arrays do not have the same shape: {x.shape} - {y.shape}")
 
     def _diff(rx, ry, vdt):
         diff = np.asarray(rx - ry, dtype=vdt)
@@ -2082,7 +2081,7 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 inp1 = lambda: arange(s, dtype=dtype)[o:]
                 inp2 = lambda: arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
-                yield out, inp1(), inp2(),  bfmt % \
+                yield out, inp1(), inp2(), bfmt % \
                     (o, o, o, s, dtype, 'out of place')
                 d = inp1()
                 yield d, d, inp2(), bfmt % \
@@ -2742,6 +2741,11 @@ def run_threaded(func, max_workers=8, pass_count=False,
                 futures = []
                 for arg in all_args:
                     futures.append(tpe.submit(*arg))
+            except RuntimeError as e:
+                import pytest
+                pytest.skip(f"Spawning {max_workers} threads failed with "
+                            f"error {e!r} (likely due to resource limits on the "
+                            "system running the tests)")
             finally:
                 if len(futures) < max_workers and pass_barrier:
                     barrier.abort()

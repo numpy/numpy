@@ -1,16 +1,14 @@
-from typing import Any
 from collections.abc import Generator
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 AR_i8: npt.NDArray[np.int64]
 ar_iter = np.lib.Arrayterator(AR_i8)
 
 assert_type(ar_iter.var, npt.NDArray[np.int64])
-assert_type(ar_iter.buf_size, None | int)
+assert_type(ar_iter.buf_size, int | None)
 assert_type(ar_iter.start, list[int])
 assert_type(ar_iter.stop, list[int])
 assert_type(ar_iter.step, list[int])

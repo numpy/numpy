@@ -85,12 +85,14 @@ def _make_options_dict(precision=None, threshold=None, edgeitems=None,
         options['legacy'] = 125
     elif legacy == '2.1':
         options['legacy'] = 201
+    elif legacy == '2.2':
+        options['legacy'] = 202
     elif legacy is None:
         pass  # OK, do nothing.
     else:
         warnings.warn(
             "legacy printing option can currently only be '1.13', '1.21', "
-            "'1.25', '2.1, or `False`", stacklevel=3)
+            "'1.25', '2.1', '2.2' or `False`", stacklevel=3)
 
     if threshold is not None:
         # forbid the bad threshold arg suggested by stack overflow, gh-12351
@@ -218,6 +220,10 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
         If set to ``'2.1'``, shape information is not given when arrays are
         summarized (i.e., multiple elements replaced with ``...``).
+
+        If set to ``'2.2'``, the transition to use scientific notation for
+        printing ``np.float16`` and ``np.float32`` types may happen later or
+        not at all for larger values.
 
         If set to `False`, disables legacy mode.
 
@@ -359,7 +365,8 @@ def get_printoptions():
     """
     opts = format_options.get().copy()
     opts['legacy'] = {
-        113: '1.13', 121: '1.21', 125: '1.25', sys.maxsize: False,
+        113: '1.13', 121: '1.21', 125: '1.25', 201: '2.1',
+        202: '2.2', sys.maxsize: False,
     }[opts['legacy']]
     return opts
 
@@ -993,8 +1000,13 @@ class FloatingFormat:
         if len(abs_non_zero) != 0:
             max_val = np.max(abs_non_zero)
             min_val = np.min(abs_non_zero)
+            if self._legacy <= 202:
+                exp_cutoff_max = 1.e8
+            else:
+                # consider data type while deciding the max cutoff for exp format
+                exp_cutoff_max = 10.**min(8, np.finfo(data.dtype).precision)
             with errstate(over='ignore'):  # division can overflow
-                if max_val >= 1.e8 or (not self.suppress_small and
+                if max_val >= exp_cutoff_max or (not self.suppress_small and
                         (min_val < 0.0001 or max_val / min_val > 1000.)):
                     self.exp_format = True
 
@@ -1552,14 +1564,14 @@ def dtype_short_repr(dtype):
         return str(dtype)
     elif issubclass(dtype.type, flexible):
         # handle these separately so they don't give garbage like str256
-        return "'%s'" % str(dtype)
+        return f"'{str(dtype)}'"
 
     typename = dtype.name
     if not dtype.isnative:
         # deal with cases like dtype('<u2') that are identical to an
         # established dtype (in this case uint16)
         # except that they have a different endianness.
-        return "'%s'" % str(dtype)
+        return f"'{str(dtype)}'"
     # quote typenames which can't be represented as python variable names
     if typename and not (typename[0].isalpha() and typename.isalnum()):
         typename = repr(typename)
@@ -1594,9 +1606,9 @@ def _array_repr_implementation(
     # Add dtype and shape information if these cannot be inferred from
     # the array string.
     extras = []
-    if (arr.size == 0 and arr.shape != (0,)
-            or current_options['legacy'] > 210
-            and arr.size > current_options['threshold']):
+    if ((arr.size == 0 and arr.shape != (0,))
+            or (current_options['legacy'] > 210
+            and arr.size > current_options['threshold'])):
         extras.append(f"shape={arr.shape}")
     if not dtype_is_implied(arr.dtype) or arr.size == 0:
         extras.append(f"dtype={dtype_short_repr(arr.dtype)}")

@@ -1,31 +1,30 @@
-from fractions import Fraction
 from collections.abc import Sequence
 from decimal import Decimal
-from typing import Any, Literal as L, TypeAlias, TypeVar
+from fractions import Fraction
+from typing import Any, LiteralString, TypeAlias, TypeVar, assert_type
+from typing import Literal as L
 
 import numpy as np
 import numpy.polynomial as npp
 import numpy.typing as npt
 
-from typing_extensions import assert_type, LiteralString
-
-_Ar_x: TypeAlias = npt.NDArray[np.inexact[Any] | np.object_]
-_Ar_f: TypeAlias = npt.NDArray[np.floating[Any]]
-_Ar_c: TypeAlias = npt.NDArray[np.complexfloating[Any, Any]]
+_Ar_x: TypeAlias = npt.NDArray[np.inexact | np.object_]
+_Ar_f: TypeAlias = npt.NDArray[np.floating]
+_Ar_c: TypeAlias = npt.NDArray[np.complexfloating]
 _Ar_O: TypeAlias = npt.NDArray[np.object_]
 
-_Ar_x_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.inexact[Any] | np.object_]]
-_Ar_f_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating[Any]]]
-_Ar_c_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complexfloating[Any, Any]]]
+_Ar_x_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.inexact | np.object_]]
+_Ar_f_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating]]
+_Ar_c_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
 _Ar_O_n: TypeAlias = np.ndarray[tuple[int], np.dtype[np.object_]]
 
-_Ar_x_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.inexact[Any] | np.object_]]
-_Ar_f_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.floating[Any]]]
-_Ar_c_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.complexfloating[Any, Any]]]
+_Ar_x_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.inexact | np.object_]]
+_Ar_f_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.floating]]
+_Ar_c_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.complexfloating]]
 _Ar_O_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.object_]]
 
-_SCT = TypeVar("_SCT", bound=np.generic)
-_Ar_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[_SCT]]
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+_Ar_1d: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 _BasisName: TypeAlias = L["X"]
 
@@ -43,7 +42,7 @@ AR_f_co: npt.NDArray[np.float64] | npt.NDArray[np.int_]
 AR_c: npt.NDArray[np.complex128]
 AR_c_co: npt.NDArray[np.complex128] | npt.NDArray[np.float64] | npt.NDArray[np.int_]
 AR_O: npt.NDArray[np.object_]
-AR_O_co: npt.NDArray[np.object_ | np.number[Any]]
+AR_O_co: npt.NDArray[np.object_ | np.number]
 
 SQ_i: Sequence[int]
 SQ_f: Sequence[float]
@@ -161,7 +160,7 @@ assert_type(PS_poly.fit(AR_c_co, SQ_c, SQ_i), npp.Polynomial)
 assert_type(PS_lag.fit(SQ_c, SQ_c, SQ_i, full=False), npp.Laguerre)
 assert_type(
     PS_herme.fit(SQ_c, AR_c_co, SC_i_co, full=True),
-    tuple[npp.HermiteE, Sequence[np.inexact[Any] | np.int32]],
+    tuple[npp.HermiteE, Sequence[np.inexact | np.int32]],
 )
 
 # custom operations
@@ -174,7 +173,7 @@ assert_type(repr(PS_all), str)
 assert_type(format(PS_all), str)
 
 assert_type(len(PS_all), int)
-assert_type(next(iter(PS_all)), np.inexact[Any] | object)
+assert_type(next(iter(PS_all)), np.inexact | object)
 
 assert_type(PS_all(SC_f_co), np.float64 | np.complex128)
 assert_type(PS_all(SC_c_co), np.complex128)

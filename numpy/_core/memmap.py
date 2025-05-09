@@ -1,7 +1,7 @@
 from contextlib import nullcontext
 import operator
 import numpy as np
-from .._utils import set_module
+from numpy._utils import set_module
 from .numeric import uint8, ndarray, dtype
 
 __all__ = ['memmap']

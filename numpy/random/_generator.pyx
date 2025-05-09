@@ -207,12 +207,10 @@ cdef class Generator:
         self.lock = bit_generator.lock
 
     def __repr__(self):
-        return self.__str__() + ' at 0x{:X}'.format(id(self))
+        return f'{self} at 0x{id(self):X}'
 
     def __str__(self):
-        _str = self.__class__.__name__
-        _str += '(' + self.bit_generator.__class__.__name__ + ')'
-        return _str
+        return f'{self.__class__.__name__}({self.bit_generator.__class__.__name__})'
 
     # Pickling support:
     def __getstate__(self):

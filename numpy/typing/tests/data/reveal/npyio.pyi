@@ -1,14 +1,12 @@
+import pathlib
 import re
 import zipfile
-import pathlib
-from typing import IO, Any
 from collections.abc import Mapping
+from typing import IO, Any, assert_type
 
-import numpy.typing as npt
 import numpy as np
+import numpy.typing as npt
 from numpy.lib._npyio_impl import BagObj
-
-from typing_extensions import assert_type
 
 str_path: str
 pathlib_path: pathlib.Path
@@ -31,10 +29,10 @@ bytes_writer: BytesWriter
 bytes_reader: BytesReader
 
 assert_type(npz_file.zip, zipfile.ZipFile)
-assert_type(npz_file.fid, None | IO[str])
+assert_type(npz_file.fid, IO[str] | None)
 assert_type(npz_file.files, list[str])
 assert_type(npz_file.allow_pickle, bool)
-assert_type(npz_file.pickle_kwargs, None | Mapping[str, Any])
+assert_type(npz_file.pickle_kwargs, Mapping[str, Any] | None)
 assert_type(npz_file.f, BagObj[np.lib.npyio.NpzFile])
 assert_type(npz_file["test"], npt.NDArray[Any])
 assert_type(len(npz_file), int)

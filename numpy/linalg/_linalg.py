@@ -159,8 +159,7 @@ def _commonType(*arrays):
                 result_type = double
             elif rt is None:
                 # unsupported inexact scalar
-                raise TypeError("array type %s is unsupported in linalg" %
-                        (a.dtype.name,))
+                raise TypeError(f"array type {a.dtype.name} is unsupported in linalg")
         else:
             result_type = double
     if is_complex:
@@ -3396,7 +3395,12 @@ def matrix_transpose(x, /):
     return _core_matrix_transpose(x)
 
 
-matrix_transpose.__doc__ = _core_matrix_transpose.__doc__
+matrix_transpose.__doc__ = f"""{_core_matrix_transpose.__doc__}
+
+    Notes
+    -----
+    This function is an alias of `numpy.matrix_transpose`.
+"""
 
 
 # matrix_norm

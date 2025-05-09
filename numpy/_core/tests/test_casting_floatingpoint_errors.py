@@ -151,4 +151,3 @@ def test_floatingpoint_errors_casting(dtype, value):
         with np.errstate(all="raise"):
             with pytest.raises(FloatingPointError, match=match):
                 operation()
-

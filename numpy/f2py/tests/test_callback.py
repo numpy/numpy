@@ -61,7 +61,7 @@ class TestF77Callback(util.F2PyTest):
         assert r == 6
         r = t(lambda a: 5 + a, fun_extra_args=(7, ))
         assert r == 12
-        r = t(lambda a: math.degrees(a), fun_extra_args=(math.pi, ))
+        r = t(math.degrees, fun_extra_args=(math.pi, ))
         assert r == 180
         r = t(math.degrees, fun_extra_args=(math.pi, ))
         assert r == 180

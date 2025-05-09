@@ -13,8 +13,8 @@ This module is deprecated since 1.26.0 and will be removed in future versions.
 
 import warnings
 
-from .._utils import _inspect
-from .._utils._inspect import getargspec, formatargspec
+from numpy._utils import _inspect
+from numpy._utils._inspect import getargspec, formatargspec
 from . import py3k
 from .py3k import *
 

@@ -15,7 +15,7 @@ else:
 
 # Add the distutils-generated build directory to the python search path and then
 # import the extension module
-libDir = "lib.{}-{}.{}".format(get_platform(), *sys.version_info[:2])
+libDir = f"lib.{get_platform()}-{sys.version_info[0]}.{sys.version_info[1]}"
 sys.path.insert(0, os.path.join("build", libDir))
 import Farray
 

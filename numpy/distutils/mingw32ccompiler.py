@@ -262,6 +262,7 @@ def generate_def(dll, dfile):
 def find_dll(dll_name):
 
     arch = {'AMD64' : 'amd64',
+            'ARM64' : 'arm64',
             'Intel' : 'x86'}[get_build_architecture()]
 
     def _find_dll_in_winsxs(dll_name):
@@ -351,6 +352,8 @@ def build_import_library():
     arch = get_build_architecture()
     if arch == 'AMD64':
         return _build_import_library_amd64()
+    if arch == 'ARM64':
+        return _build_import_library_arm64()
     elif arch == 'Intel':
         return _build_import_library_x86()
     else:
@@ -401,6 +404,26 @@ def _build_import_library_amd64():
     # get the runtime dll for which we are building import library
     dll_file = find_python_dll()
     log.info('Building import library (arch=AMD64): "%s" (from %s)' %
+             (out_file, dll_file))
+
+    # generate symbol list from this library
+    def_name = "python%d%d.def" % tuple(sys.version_info[:2])
+    def_file = os.path.join(sys.prefix, 'libs', def_name)
+    generate_def(dll_file, def_file)
+
+    # generate import library from this symbol list
+    cmd = ['dlltool', '-d', def_file, '-l', out_file]
+    subprocess.check_call(cmd)
+
+def _build_import_library_arm64():
+    out_exists, out_file = _check_for_import_lib()
+    if out_exists:
+        log.debug('Skip building import library: "%s" exists', out_file)
+        return
+
+    # get the runtime dll for which we are building import library
+    dll_file = find_python_dll()
+    log.info('Building import library (arch=ARM64): "%s" (from %s)' %
              (out_file, dll_file))
 
     # generate symbol list from this library

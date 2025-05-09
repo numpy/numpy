@@ -22,9 +22,9 @@ class _PhiloxState(TypedDict):
 class Philox(BitGenerator):
     def __init__(
         self,
-        seed: None | _ArrayLikeInt_co | SeedSequence = ...,
-        counter: None | _ArrayLikeInt_co = ...,
-        key: None | _ArrayLikeInt_co = ...,
+        seed: _ArrayLikeInt_co | SeedSequence | None = ...,
+        counter: _ArrayLikeInt_co | None = ...,
+        key: _ArrayLikeInt_co | None = ...,
     ) -> None: ...
     @property
     def state(

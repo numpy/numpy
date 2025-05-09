@@ -594,11 +594,9 @@ def _block_check_depths_match(arrays, parent_index=[]):
         #  - horribly confusing behaviour that results when tuples are
         #    treated like ndarray
         raise TypeError(
-            '{} is a tuple. '
+            f'{_block_format_index(parent_index)} is a tuple. '
             'Only lists can be used to arrange blocks, and np.block does '
-            'not allow implicit conversion from tuple to ndarray.'.format(
-                _block_format_index(parent_index)
-            )
+            'not allow implicit conversion from tuple to ndarray.'
         )
     elif type(arrays) is list and len(arrays) > 0:
         idxs_ndims = (_block_check_depths_match(arr, parent_index + [i])
@@ -611,12 +609,9 @@ def _block_check_depths_match(arrays, parent_index=[]):
                 max_arr_ndim = ndim
             if len(index) != len(first_index):
                 raise ValueError(
-                    "List depths are mismatched. First element was at depth "
-                    "{}, but there is an element at depth {} ({})".format(
-                        len(first_index),
-                        len(index),
-                        _block_format_index(index)
-                    )
+                    "List depths are mismatched. First element was at "
+                    f"depth {len(first_index)}, but there is an element at "
+                    f"depth {len(index)} ({_block_format_index(index)})"
                 )
             # propagate our flag that indicates an empty list at the bottom
             if index[-1] is None:

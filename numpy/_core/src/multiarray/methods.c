@@ -928,7 +928,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&$O&:__array__", kwlist,
-                                     PyArray_DescrConverter, &newtype,
+                                     PyArray_DescrConverter2, &newtype,
                                      PyArray_CopyConverter, &copy)) {
         Py_XDECREF(newtype);
         return NULL;

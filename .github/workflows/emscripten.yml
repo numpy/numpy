@@ -49,7 +49,7 @@ jobs:
           fetch-tags: true
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@d04cacbc9866d432033b1d09142936e6a0e2121a  # 2.23.2
+      - uses: pypa/cibuildwheel@faf86a6ed7efa889faf6996aa23820831055001a  # 2.23.3
         env:
           CIBW_PLATFORM: pyodide
 
@@ -73,7 +73,7 @@ jobs:
       (github.event_name == 'schedule')
     steps:
       - name: Download wheel artifact(s)
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e  # v4.2.1
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
         with:
           path: wheelhouse/
           merge-multiple: true

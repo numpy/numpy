@@ -19,4 +19,4 @@ These things are all available after the configure stage of the build (i.e.,
 information, rather than running the build and reading the full build log.
 
 For more details on this topic, see the
-`SciPy doc page on build introspection <http://scipy.github.io/devdocs/building/introspecting_a_build.html>`__.
+`SciPy doc page on build introspection <https://scipy.github.io/devdocs/building/introspecting_a_build.html>`__.

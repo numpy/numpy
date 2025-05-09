@@ -50,19 +50,23 @@ class TestTake:
 
     def test_refcounting(self):
         objects = [object() for i in range(10)]
+        if HAS_REFCOUNT:
+            orig_rcs = [sys.getrefcount(o) for o in objects]
         for mode in ('raise', 'clip', 'wrap'):
             a = np.array(objects)
             b = np.array([2, 2, 4, 5, 3, 5])
             a.take(b, out=a[:6], mode=mode)
             del a
             if HAS_REFCOUNT:
-                assert_(all(sys.getrefcount(o) == 3 for o in objects))
+                assert_(all(sys.getrefcount(o) == rc + 1
+                            for o, rc in zip(objects, orig_rcs)))
             # not contiguous, example:
             a = np.array(objects * 2)[::2]
             a.take(b, out=a[:6], mode=mode)
             del a
             if HAS_REFCOUNT:
-                assert_(all(sys.getrefcount(o) == 3 for o in objects))
+                assert_(all(sys.getrefcount(o) == rc + 1
+                            for o, rc in zip(objects, orig_rcs)))
 
     def test_unicode_mode(self):
         d = np.arange(10)

@@ -144,7 +144,7 @@ written C-code.
 Cython
 ======
 
-`Cython <http://cython.org>`_ is a compiler for a Python dialect that adds
+`Cython <https://cython.org>`_ is a compiler for a Python dialect that adds
 (optional) static typing for speed, and allows mixing C or C++ code
 into your modules. It produces C or C++ extensions that can be compiled
 and imported in Python code.

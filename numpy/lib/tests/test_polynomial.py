@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.polynomial.polynomial as poly
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose
@@ -120,6 +121,17 @@ class TestPolynomial:
 
     def test_roots(self):
         assert_array_equal(np.roots([1, 0, 0]), [0, 0])
+
+        # Testing for larger root values
+        for i in np.logspace(10, 25, num = 1000, base = 10):
+            tgt = np.array([-1, 1, i])
+            res = np.sort(np.roots(poly.polyfromroots(tgt)[::-1]))
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))    # Adapting the expected precision according to the root value, to take into account numerical calculation error
+
+        for i in np.logspace(10, 25, num = 1000, base = 10):
+            tgt = np.array([-1, 1.01, i])
+            res = np.sort(np.roots(poly.polyfromroots(tgt)[::-1]))
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))    # Adapting the expected precision according to the root value, to take into account numerical calculation error
 
     def test_str_leading_zeros(self):
         p = np.poly1d([4, 3, 2, 1])

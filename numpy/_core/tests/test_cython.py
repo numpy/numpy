@@ -3,6 +3,7 @@ import os
 import subprocess
 import sys
 import pytest
+import sysconfig
 
 import numpy as np
 from numpy.testing import assert_array_equal, IS_WASM, IS_EDITABLE
@@ -53,6 +54,8 @@ def install_temp(tmpdir_factory):
         subprocess.check_call(["meson", "--version"])
     except FileNotFoundError:
         pytest.skip("No usable 'meson' found")
+    if sysconfig.get_platform() == "win-arm64":
+        pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
                                "--buildtype=release",
@@ -341,6 +344,7 @@ def test_npystring_allocators_other_dtype(install_temp):
     assert checks.npystring_allocators_other_types(arr1, arr2) == 0
 
 
+@pytest.mark.skipif(sysconfig.get_platform() == 'win-arm64', reason='no checks module on win-arm64')
 def test_npy_uintp_type_enum():
     import checks
     assert checks.check_npy_uintp_type_enum()

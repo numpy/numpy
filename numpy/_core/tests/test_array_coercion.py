@@ -46,7 +46,7 @@ def arraylikes():
         def __len__(self):
             raise TypeError
 
-        def __getitem__(self):
+        def __getitem__(self, _, /):
             raise TypeError
 
     # Array-interface
@@ -636,7 +636,7 @@ class TestBadSequences:
                 obj[0][0] = 2  # replace with a different list.
                 raise ValueError("not actually a sequence!")
 
-            def __getitem__(self):
+            def __getitem__(self, _, /):
                 pass
 
         # Runs into a corner case in the new code, the `array(2)` is cached
@@ -758,7 +758,7 @@ class TestArrayLikes:
             def __len__(self):
                 raise error
 
-            def __getitem__(self):
+            def __getitem__(self, _, /):
                 # must have getitem to be a Sequence
                 return 1
 

@@ -323,7 +323,7 @@ def test_truediv(Poly):
         s = stype(5, 0)
         assert_poly_almost_equal(op.truediv(p2, s), p1)
         assert_raises(TypeError, op.truediv, s, p2)
-    for s in [(), [], {}, bool(), np.array([1])]:
+    for s in [(), [], {}, False, np.array([1])]:
         assert_raises(TypeError, op.truediv, p2, s)
         assert_raises(TypeError, op.truediv, s, p2)
     for ptype in classes:

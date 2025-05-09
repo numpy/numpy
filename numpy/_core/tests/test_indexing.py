@@ -219,7 +219,7 @@ class TestIndexing:
     def test_boolean_indexing_onedim(self):
         # Indexing a 2-dimensional array with
         # boolean array of length one
-        a = np.array([[0.,  0.,  0.]])
+        a = np.array([[0., 0., 0.]])
         b = np.array([True], dtype=bool)
         assert_equal(a[b], a)
         # boolean assignment
@@ -492,7 +492,7 @@ class TestIndexing:
         x = x.view(np.dtype("S8"))
         x[...] = np.array("b" * 8, dtype="S")
         b = np.arange(d.size)
-        #trivial
+        # trivial
         assert_equal(d[b], d)
         d[b] = x
         # nontrivial
@@ -643,7 +643,7 @@ class TestBroadcastedAssignments:
         a = np.zeros(5)
 
         # Too large and not only ones.
-        assert_raises(ValueError, assign, a, s_[...],  np.ones((2, 1)))
+        assert_raises(ValueError, assign, a, s_[...], np.ones((2, 1)))
         assert_raises(ValueError, assign, a, s_[[1, 2, 3],], np.ones((2, 1)))
         assert_raises(ValueError, assign, a, s_[[[1], [2]],], np.ones((2, 2, 1)))
 
@@ -1164,6 +1164,8 @@ class TestMultiIndexingAutomated:
         """Compare mimicked result to indexing result.
         """
         arr = arr.copy()
+        if HAS_REFCOUNT:
+            startcount = sys.getrefcount(arr)
         indexed_arr = arr[index]
         assert_array_equal(indexed_arr, mimic_get)
         # Check if we got a view, unless its a 0-sized or 0-d array.
@@ -1174,9 +1176,9 @@ class TestMultiIndexingAutomated:
             if HAS_REFCOUNT:
                 if no_copy:
                     # refcount increases by one:
-                    assert_equal(sys.getrefcount(arr), 3)
+                    assert_equal(sys.getrefcount(arr), startcount + 1)
                 else:
-                    assert_equal(sys.getrefcount(arr), 2)
+                    assert_equal(sys.getrefcount(arr), startcount)
 
         # Test non-broadcast setitem:
         b = arr.copy()

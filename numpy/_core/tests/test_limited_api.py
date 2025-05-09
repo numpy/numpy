@@ -52,6 +52,8 @@ def install_temp(tmpdir_factory):
         subprocess.check_call(["meson", "--version"])
     except FileNotFoundError:
         pytest.skip("No usable 'meson' found")
+    if sysconfig.get_platform() == "win-arm64":
+        pytest.skip("Meson unable to find MSVC linker on win-arm64")
     if sys.platform == "win32":
         subprocess.check_call(["meson", "setup",
                                "--werror",

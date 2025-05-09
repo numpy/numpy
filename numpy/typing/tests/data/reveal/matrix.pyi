@@ -1,9 +1,7 @@
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 _Shape2D: TypeAlias = tuple[int, int]
 

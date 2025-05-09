@@ -52,7 +52,7 @@ your system.
     * BLAS and LAPACK libraries. `OpenBLAS <https://github.com/OpenMathLib/OpenBLAS/>`__
       is the NumPy default; other variants include Apple Accelerate,
       `MKL <https://software.intel.com/en-us/intel-mkl>`__,
-      `ATLAS <http://math-atlas.sourceforge.net/>`__ and
+      `ATLAS <https://math-atlas.sourceforge.net/>`__ and
       `Netlib <https://www.netlib.org/lapack/index.html>`__ (or "Reference")
       BLAS and LAPACK.
 

@@ -84,7 +84,7 @@ def run_mypy() -> None:
     """
     if (
         os.path.isdir(CACHE_DIR)
-        and bool(os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True))
+        and bool(os.environ.get("NUMPY_TYPING_TEST_CLEAR_CACHE", True))  # noqa: PLW1508
     ):
         shutil.rmtree(CACHE_DIR)
 
@@ -195,7 +195,7 @@ def _test_fail(
     path: str,
     expression: str,
     error: str,
-    expected_error: None | str,
+    expected_error: str | None,
     lineno: int,
 ) -> None:
     if expected_error is None:
@@ -249,18 +249,10 @@ def test_code_runs(path: str) -> None:
 
 
 LINENO_MAPPING = {
-    11: "uint128",
-    12: "uint256",
-    14: "int128",
-    15: "int256",
-    17: "float80",
-    18: "float96",
-    19: "float128",
-    20: "float256",
-    22: "complex160",
-    23: "complex192",
-    24: "complex256",
-    25: "complex512",
+    6: "float96",
+    7: "float128",
+    8: "complex192",
+    9: "complex256",
 }
 
 

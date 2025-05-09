@@ -39,10 +39,10 @@ class PhysicalQuantity(float):
         return PhysicalQuantity(float(x) * float(self))
     __rmul__ = __mul__
 
-    def __div__(self, x):
+    def __truediv__(self, x):
         return PhysicalQuantity(float(self) / float(x))
 
-    def __rdiv__(self, x):
+    def __rtruediv__(self, x):
         return PhysicalQuantity(float(x) / float(self))
 
 

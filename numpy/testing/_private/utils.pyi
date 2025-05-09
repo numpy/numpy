@@ -14,8 +14,11 @@ from typing import (
     Final,
     Generic,
     NoReturn,
+    ParamSpec,
+    Self,
     SupportsIndex,
     TypeAlias,
+    TypeVarTuple,
     overload,
     type_check_only,
 )
@@ -23,7 +26,7 @@ from typing import Literal as L
 from unittest.case import SkipTest
 
 from _typeshed import ConvertibleToFloat, GenericPath, StrOrBytesPath, StrPath
-from typing_extensions import ParamSpec, Self, TypeVar, TypeVarTuple, Unpack
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy._typing import (
@@ -471,22 +474,22 @@ def run_threaded(
 ) -> None: ...
 @overload
 def run_threaded(
-    func: Callable[[Unpack[_Ts]], None],
+    func: Callable[[*_Ts], None],
     max_workers: int,
     pass_count: bool,
     pass_barrier: bool,
     outer_iterations: int,
-    prepare_args: tuple[Unpack[_Ts]],
+    prepare_args: tuple[*_Ts],
 ) -> None: ...
 @overload
 def run_threaded(
-    func: Callable[[Unpack[_Ts]], None],
+    func: Callable[[*_Ts], None],
     max_workers: int = 8,
     pass_count: bool = False,
     pass_barrier: bool = False,
     outer_iterations: int = 1,
     *,
-    prepare_args: tuple[Unpack[_Ts]],
+    prepare_args: tuple[*_Ts],
 ) -> None: ...
 
 #

@@ -779,7 +779,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         key = 'arr_%d' % i
         if key in namedict.keys():
             raise ValueError(
-                "Cannot use un-named variables and keyword %s" % key)
+                f"Cannot use un-named variables and keyword {key}")
         namedict[key] = val
 
     if compress:
@@ -1594,14 +1594,14 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
         if type(fmt) in (list, tuple):
             if len(fmt) != ncol:
-                raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
+                raise AttributeError(f'fmt has wrong shape.  {str(fmt)}')
             format = delimiter.join(fmt)
         elif isinstance(fmt, str):
             n_fmt_chars = fmt.count('%')
-            error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
+            error = ValueError(f'fmt has wrong number of % formats:  {fmt}')
             if n_fmt_chars == 1:
                 if iscomplex_X:
-                    fmt = [' (%s+%sj)' % (fmt, fmt), ] * ncol
+                    fmt = [f' ({fmt}+{fmt}j)', ] * ncol
                 else:
                     fmt = [fmt, ] * ncol
                 format = delimiter.join(fmt)
@@ -1612,7 +1612,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             else:
                 format = fmt
         else:
-            raise ValueError('invalid fmt: %r' % (fmt,))
+            raise ValueError(f'invalid fmt: {fmt!r}')
 
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
@@ -1621,8 +1621,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             for row in X:
                 row2 = []
                 for number in row:
-                    row2.append(number.real)
-                    row2.append(number.imag)
+                    row2.extend((number.real, number.imag))
                 s = format % tuple(row2) + newline
                 fh.write(s.replace('+-', '-'))
         else:
@@ -2028,7 +2027,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             first_line = ''
             first_values = []
             warnings.warn(
-                'genfromtxt: Empty input file: "%s"' % fname, stacklevel=2
+                f'genfromtxt: Empty input file: "{fname}"', stacklevel=2
             )
 
         # Should we take the first values as names ?
@@ -2298,14 +2297,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             try:
                 converter.iterupgrade(current_column)
             except ConverterLockError:
-                errmsg = "Converter #%i is locked and cannot be upgraded: " % i
+                errmsg = f"Converter #{i} is locked and cannot be upgraded: "
                 current_column = map(itemgetter(i), rows)
                 for (j, value) in enumerate(current_column):
                     try:
                         converter.upgrade(value)
                     except (ConverterError, ValueError):
-                        errmsg += "(occurred line #%i for value '%s')"
-                        errmsg %= (j + 1 + skip_header, value)
+                        errmsg += f"(occurred line #{j + 1 + skip_header} for value '{value}')"
                         raise ConverterError(errmsg)
 
     # Check that we don't have invalid values
@@ -2313,7 +2311,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if nbinvalid > 0:
         nbrows = len(rows) + nbinvalid - skip_footer
         # Construct the error message
-        template = "    Line #%%i (got %%i columns instead of %i)" % nbcols
+        template = f"    Line #%i (got %i columns instead of {nbcols})"
         if skip_footer > 0:
             nbinvalid_skipped = len([_ for _ in invalid
                                      if _[0] > nbrows + skip_header])
@@ -2385,7 +2383,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     column_types[i] = np.bytes_
 
         # Update string types to be the right length
-        sized_column_types = column_types[:]
+        sized_column_types = column_types.copy()
         for i, col_type in enumerate(column_types):
             if np.issubdtype(col_type, np.character):
                 n_chars = max(len(row[i]) for row in data)

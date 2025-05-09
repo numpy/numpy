@@ -31,7 +31,7 @@ class TestNumpyConfig:
 
     def test_configtool_cflags(self):
         stdout = self.check_numpyconfig('--cflags')
-        assert f'-I{os.fspath(INCLUDE_DIR)}'
+        assert f'-I{os.fspath(INCLUDE_DIR)}' in stdout
 
     def test_configtool_pkgconfigdir(self):
         stdout = self.check_numpyconfig('--pkgconfigdir')

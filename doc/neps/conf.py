@@ -97,7 +97,7 @@ html_theme_options = {
   "show_prev_next": False,
 }
 
-html_title = "%s" % (project)
+html_title = f"{project}"
 html_static_path = ['../source/_static']
 html_last_updated_fmt = '%b %d, %Y'
 

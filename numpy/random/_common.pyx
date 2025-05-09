@@ -224,8 +224,7 @@ cdef np.ndarray int_to_array(object value, object name, object bits, object uint
         value = int(value)
         upper = int(2)**int(bits)
         if value < 0 or value >= upper:
-            raise ValueError('{name} must be positive and '
-                             'less than 2**{bits}.'.format(name=name, bits=bits))
+            raise ValueError(f'{name} must be positive and less than 2**{bits}.')
 
         out = np.empty(len, dtype=dtype)
         for i in range(len):
@@ -234,8 +233,7 @@ cdef np.ndarray int_to_array(object value, object name, object bits, object uint
     else:
         out = value.astype(dtype)
         if out.shape != (len,):
-            raise ValueError('{name} must have {len} elements when using '
-                             'array form'.format(name=name, len=len))
+            raise ValueError(f'{name} must have {len} elements when using array form')
     return out
 
 
@@ -283,7 +281,7 @@ cdef check_output(object out, object dtype, object size, bint require_c_array):
         )
     if out_array.dtype != dtype:
         raise TypeError('Supplied output array has the wrong type. '
-                        'Expected {0}, got {1}'.format(np.dtype(dtype), out_array.dtype))
+                        f'Expected {np.dtype(dtype)}, got {out_array.dtype}')
     if size is not None:
         try:
             tup_size = tuple(size)
@@ -386,43 +384,43 @@ cdef int _check_array_cons_bounded_0_1(np.ndarray val, object name) except -1:
 cdef int check_array_constraint(np.ndarray val, object name, constraint_type cons) except -1:
     if cons == CONS_NON_NEGATIVE:
         if np.any(np.logical_and(np.logical_not(np.isnan(val)), np.signbit(val))):
-            raise ValueError(name + " < 0")
+            raise ValueError(f"{name} < 0")
     elif cons == CONS_POSITIVE or cons == CONS_POSITIVE_NOT_NAN:
         if cons == CONS_POSITIVE_NOT_NAN and np.any(np.isnan(val)):
-            raise ValueError(name + " must not be NaN")
+            raise ValueError(f"{name} must not be NaN")
         elif np.any(np.less_equal(val, 0)):
-            raise ValueError(name + " <= 0")
+            raise ValueError(f"{name} <= 0")
     elif cons == CONS_BOUNDED_0_1:
         return _check_array_cons_bounded_0_1(val, name)
     elif cons == CONS_BOUNDED_GT_0_1:
         if not np.all(np.greater(val, 0)) or not np.all(np.less_equal(val, 1)):
-            raise ValueError("{0} <= 0, {0} > 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} <= 0, {name} > 1 or {name} contains NaNs")
     elif cons == CONS_BOUNDED_LT_0_1:
         if not np.all(np.greater_equal(val, 0)) or not np.all(np.less(val, 1)):
-            raise ValueError("{0} < 0, {0} >= 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} < 0, {name} >= 1 or {name} contains NaNs")
     elif cons == CONS_GT_1:
         if not np.all(np.greater(val, 1)):
-            raise ValueError("{0} <= 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} <= 1 or {name} contains NaNs")
     elif cons == CONS_GTE_1:
         if not np.all(np.greater_equal(val, 1)):
-            raise ValueError("{0} < 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} < 1 or {name} contains NaNs")
     elif cons == CONS_POISSON:
         if not np.all(np.less_equal(val, POISSON_LAM_MAX)):
-            raise ValueError("{0} value too large".format(name))
+            raise ValueError(f"{name} value too large")
         elif not np.all(np.greater_equal(val, 0.0)):
-            raise ValueError("{0} < 0 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} < 0 or {name} contains NaNs")
     elif cons == LEGACY_CONS_POISSON:
         if not np.all(np.less_equal(val, LEGACY_POISSON_LAM_MAX)):
-            raise ValueError("{0} value too large".format(name))
+            raise ValueError(f"{name} value too large")
         elif not np.all(np.greater_equal(val, 0.0)):
-            raise ValueError("{0} < 0 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} < 0 or {name} contains NaNs")
     elif cons == LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG:
         # Note, we assume that array is integral:
         if not np.all(val >= 0):
-            raise ValueError(name + " < 0")
+            raise ValueError(f"{name} < 0")
         elif not np.all(val <= int(LONG_MAX)):
             raise ValueError(
-                    name + " is out of bounds for long, consider using "
+                    f"{name} is out of bounds for long, consider using "
                     "the new generator API for 64bit integers.")
 
     return 0
@@ -432,44 +430,44 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
     cdef bint is_nan
     if cons == CONS_NON_NEGATIVE:
         if not isnan(val) and signbit(val):
-            raise ValueError(name + " < 0")
+            raise ValueError(f"{name} < 0")
     elif cons == CONS_POSITIVE or cons == CONS_POSITIVE_NOT_NAN:
         if cons == CONS_POSITIVE_NOT_NAN and isnan(val):
-            raise ValueError(name + " must not be NaN")
+            raise ValueError(f"{name} must not be NaN")
         elif val <= 0:
-            raise ValueError(name + " <= 0")
+            raise ValueError(f"{name} <= 0")
     elif cons == CONS_BOUNDED_0_1:
         if not (val >= 0) or not (val <= 1):
-            raise ValueError("{0} < 0, {0} > 1 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 0, {name} > 1 or {name} is NaN")
     elif cons == CONS_BOUNDED_GT_0_1:
         if not val >0 or not val <= 1:
-            raise ValueError("{0} <= 0, {0} > 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} <= 0, {name} > 1 or {name} contains NaNs")
     elif cons == CONS_BOUNDED_LT_0_1:
         if not (val >= 0) or not (val < 1):
-            raise ValueError("{0} < 0, {0} >= 1 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 0, {name} >= 1 or {name} is NaN")
     elif cons == CONS_GT_1:
         if not (val > 1):
-            raise ValueError("{0} <= 1 or {0} is NaN".format(name))
+            raise ValueError(f"{name} <= 1 or {name} is NaN")
     elif cons == CONS_GTE_1:
         if not (val >= 1):
-            raise ValueError("{0} < 1 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 1 or {name} is NaN")
     elif cons == CONS_POISSON:
         if not (val >= 0):
-            raise ValueError("{0} < 0 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 0 or {name} is NaN")
         elif not (val <= POISSON_LAM_MAX):
-            raise ValueError(name + " value too large")
+            raise ValueError(f"{name} value too large")
     elif cons == LEGACY_CONS_POISSON:
         if not (val >= 0):
-            raise ValueError("{0} < 0 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 0 or {name} is NaN")
         elif not (val <= LEGACY_POISSON_LAM_MAX):
-            raise ValueError(name + " value too large")
+            raise ValueError(f"{name} value too large")
     elif cons == LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG:
         # Note: Assume value is integral (double of LONG_MAX should work out)
         if val < 0:
-            raise ValueError(name + " < 0")
+            raise ValueError(f"{name} < 0")
         elif val > <double> LONG_MAX:
             raise ValueError(
-                    name + " is out of bounds for long, consider using "
+                    f"{name} is out of bounds for long, consider using "
                     "the new generator API for 64bit integers.")
 
     return 0

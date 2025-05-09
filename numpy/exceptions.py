@@ -171,7 +171,7 @@ class AxisError(ValueError, IndexError):
 
     """
 
-    __slots__ = ("axis", "ndim", "_msg")
+    __slots__ = ("_msg", "axis", "ndim")
 
     def __init__(self, axis, ndim=None, msg_prefix=None):
         if ndim is msg_prefix is None:
@@ -243,5 +243,5 @@ class DTypePromotionError(TypeError):
     DTypePromotionError: field names `('field1', 'field2')` and `('field1',)`
     mismatch.
 
-    """  # NOQA
+    """
     pass

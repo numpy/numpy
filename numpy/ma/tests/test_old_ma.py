@@ -651,7 +651,7 @@ class TestMa:
 
     def test_testScalarArithmetic(self):
         xm = array(0, mask=1)
-        #TODO FIXME: Find out what the following raises a warning in r8247
+        # TODO FIXME: Find out what the following raises a warning in r8247
         with np.errstate(divide='ignore'):
             assert_((1 / array(0)).mask)
         assert_((1 + xm).mask)

@@ -1,6 +1,7 @@
 from typing import (
     ClassVar,
     Literal,
+    Never,
     TypeAlias,
     TypedDict,
     TypeVar,
@@ -8,12 +9,11 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing_extensions import Never
 
 import numpy as np
 
 _Device: TypeAlias = Literal["cpu"]
-_DeviceLike: TypeAlias = None | _Device
+_DeviceLike: TypeAlias = _Device | None
 
 _Capabilities = TypedDict(
     "_Capabilities",

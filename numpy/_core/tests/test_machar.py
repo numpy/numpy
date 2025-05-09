@@ -26,5 +26,5 @@ class TestMachAr:
             try:
                 self._run_machar_highprec()
             except FloatingPointError as e:
-                msg = "Caught %s exception, should not have been raised." % e
+                msg = f"Caught {e} exception, should not have been raised."
                 raise AssertionError(msg)

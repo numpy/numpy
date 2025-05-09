@@ -129,7 +129,7 @@ What is released
 ================
 
 * **Wheels**
-  We currently support Python 3.8-3.10 on Windows, OSX, and Linux.
+  We currently support Python 3.10-3.13 on Windows, OSX, and Linux.
 
   * Windows: 32-bit and 64-bit wheels built using Github actions;
   * OSX: x64_86 and arm64 OSX wheels built using Github actions;

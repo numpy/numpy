@@ -1,9 +1,9 @@
 import types
 from collections.abc import Callable, Mapping
-from typing import Any, Final, TypeAlias, overload
+from typing import Any, Final, TypeAlias, TypeVar, overload
 
 from _typeshed import SupportsLenAndGetItem
-from typing_extensions import TypeIs, TypeVar
+from typing_extensions import TypeIs
 
 __all__ = ["formatargspec", "getargspec"]
 

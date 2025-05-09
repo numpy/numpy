@@ -1,9 +1,8 @@
-import numpy as np
-import numpy.typing as npt
-import numpy._typing as np_t
+from typing import TypeAlias, assert_type
 
-from typing_extensions import assert_type
-from typing import TypeAlias
+import numpy as np
+import numpy._typing as np_t
+import numpy.typing as npt
 
 AR_U: npt.NDArray[np.str_]
 AR_S: npt.NDArray[np.bytes_]

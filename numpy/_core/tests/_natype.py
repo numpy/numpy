@@ -15,7 +15,7 @@ def _create_binary_propagating_op(name, is_divmod=False):
         if (
             other is pd_NA
             or isinstance(other, (str, bytes, numbers.Number, np.bool))
-            or isinstance(other, np.ndarray) and not other.shape
+            or (isinstance(other, np.ndarray) and not other.shape)
         ):
             # Need the other.shape clause to handle NumPy scalars,
             # since we do a setitem on `out` below, which
@@ -183,7 +183,7 @@ class NAType:
         )
         if result is NotImplemented:
             # For a NumPy ufunc that's not a binop, like np.logaddexp
-            index = [i for i, x in enumerate(inputs) if x is pd_NA][0]
+            index = next(i for i, x in enumerate(inputs) if x is pd_NA)
             result = np.broadcast_arrays(*inputs)[index]
             if result.ndim == 0:
                 result = result.item()

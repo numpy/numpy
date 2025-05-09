@@ -1306,6 +1306,7 @@ legacy_@name@_format@kind@(npy_@name@ val){
 
 /**begin repeat1
  * #name = float, double, longdouble#
+ * #max_positional = 1.e6L, 1.e16L, 1.e16L#
  * #Name = Float, Double, LongDouble#
  * #NAME = FLOAT, DOUBLE, LONGDOUBLE#
  * #n = f, , l#
@@ -1329,6 +1330,13 @@ static PyObject *
     if (legacy_print_mode <= 113) {
         return legacy_@name@_format@kind@(val);
     }
+    long double max_positional;
+    if (legacy_print_mode <= 202) {
+        max_positional = 1.e16L;
+    }
+    else {
+        max_positional = @max_positional@;
+    }
 
     int use_positional;
     if (npy_isnan(val) || val == 0) {
@@ -1336,7 +1344,7 @@ static PyObject *
     }
     else {
         npy_@name@ absval = val < 0 ? -val : val;
-        use_positional = absval < 1.e16L && absval >= 1.e-4L;
+        use_positional = absval < max_positional && absval >= 1.e-4L;
     }
 
     if (use_positional) {
@@ -1481,11 +1489,18 @@ halftype_@kind@(PyObject *self)
     if (legacy_print_mode <= 113) {
         return legacy_float_format@kind@(floatval);
     }
+    long double max_positional;
+    if (legacy_print_mode <= 202) {
+        max_positional = 1.e16L;
+    }
+    else {
+        max_positional = 1.e3L;
+    }
 
     absval = floatval < 0 ? -floatval : floatval;
 
     PyObject *string;
-    if (absval == 0 || (absval < 1.e16 && absval >= 1.e-4) ) {
+    if (absval == 0 || (absval < max_positional && absval >= 1.e-4) ) {
         string = format_half(val, 0, -1, 0, TrimMode_LeaveOneZero, -1, -1, -1);
     }
     else {

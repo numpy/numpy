@@ -9,6 +9,7 @@ in ``numpy._core``.
 """
 
 import functools
+import sys
 import warnings
 from ._convertions import asunicode, asbytes
 
@@ -26,6 +27,12 @@ def set_module(module):
     """
     def decorator(func):
         if module is not None:
+            if isinstance(func, type):
+                try:
+                    func._module_file = sys.modules.get(func.__module__).__file__
+                except (AttributeError, KeyError):
+                    pass
+
             func.__module__ = module
         return func
     return decorator

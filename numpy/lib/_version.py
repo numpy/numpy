@@ -152,4 +152,4 @@ class NumpyVersion:
         return self._compare(other) >= 0
 
     def __repr__(self):
-        return "NumpyVersion(%s)" % self.vstring
+        return f"NumpyVersion({self.vstring})"
