@@ -85,7 +85,7 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
         /* Free old dimensions and strides */
         npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->nd = nd;
-        ((PyArrayObject_fields *)self)->dimensions = _dimensions; 
+        ((PyArrayObject_fields *)self)->dimensions = _dimensions;
         ((PyArrayObject_fields *)self)->strides = _dimensions + nd;
 
         if (nd) {
@@ -95,7 +95,7 @@ array_shape_set(PyArrayObject *self, PyObject *val, void* NPY_UNUSED(ignored))
     }
     else {
         /* Free old dimensions and strides */
-        npy_free_cache_dim_array(self);        
+        npy_free_cache_dim_array(self);
         ((PyArrayObject_fields *)self)->nd = 0;
         ((PyArrayObject_fields *)self)->dimensions = NULL;
         ((PyArrayObject_fields *)self)->strides = NULL;
@@ -116,8 +116,14 @@ array_strides_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static int
 array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
 {
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array strides");
+        return -1;
+    }
+
     if( DEPRECATE("Setting the strides on a NumPy array has been deprecated in NumPy 2.3.") < 0 ) {
-        return -1;        
+        return -1;
     }
 
     PyArray_Dims newstrides = {NULL, -1};
@@ -128,11 +134,6 @@ array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
     npy_intp upper_offset = 0;
     Py_buffer view;
 
-    if (obj == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array strides");
-        return -1;
-    }
     if (!PyArray_OptionalIntpConverter(obj, &newstrides) ||
         newstrides.len == -1) {
         PyErr_SetString(PyExc_TypeError, "invalid strides");
