@@ -8786,18 +8786,11 @@ class TestArrayAttributeDeletion:
     def test_multiarray_writable_attributes_deletion(self):
         # ticket #2046, should not seqfault, raise AttributeError
         a = np.ones(2)
-        attr = ['shape', 'data', 'dtype', 'real', 'imag', 'flat']
+        attr = ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
         with suppress_warnings() as sup:
             sup.filter(DeprecationWarning, "Assigning the 'data' attribute")
             for s in attr:
                 assert_raises(AttributeError, delattr, a, s)
-
-        attr = ['strides']
-        with suppress_warnings() as sup:
-            sup.filter(DeprecationWarning, "Assigning the 'data' attribute")
-            for s in attr:
-                with pytest.warns(DeprecationWarning):
-                    assert_raises(AttributeError, delattr, a, s)
 
     def test_multiarray_not_writable_attributes_deletion(self):
         a = np.ones(2)
