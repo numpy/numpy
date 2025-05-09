@@ -1,5 +1,5 @@
 from collections.abc import Collection
-from typing import Any, Final, Literal as L, TypeAlias, TypedDict, type_check_only
+from typing import Final, Literal as L, TypeAlias, TypedDict, type_check_only
 
 import numpy as np
 

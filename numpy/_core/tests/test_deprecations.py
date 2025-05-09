@@ -5,20 +5,17 @@ to document how deprecations should eventually be turned into errors.
 """
 import warnings
 import pytest
-import tempfile
-import re
 
 import numpy as np
 from numpy.testing import (
-    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
-    KnownFailureException, break_cycles, temppath
+    assert_raises, temppath
     )
 
-from numpy._core._multiarray_tests import fromstring_null_term_c_api
+from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
 import numpy._core._struct_ufunc_tests as struct_ufunc
 
 try:
-    import pytz
+    import pytz  # noqa: F401
     _has_pytz = True
 except ImportError:
     _has_pytz = False

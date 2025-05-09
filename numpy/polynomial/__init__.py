@@ -121,7 +121,7 @@ from .hermite import Hermite
 from .hermite_e import HermiteE
 from .laguerre import Laguerre
 
-__all__ = [
+__all__ = [  # noqa: F822
     "set_default_printstyle",
     "polynomial", "Polynomial",
     "chebyshev", "Chebyshev",

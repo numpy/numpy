@@ -10,7 +10,7 @@ import math
 import numpy as np
 from . import multiarray
 from . import numerictypes as nt
-from .multiarray import (
+from .multiarray import (  # noqa: F401
     ALLOW_THREADS, BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT,
     RAISE, WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
     asfortranarray, broadcast, can_cast, concatenate, copyto, dot, dtype,

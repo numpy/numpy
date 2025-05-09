@@ -7,14 +7,14 @@ import math
 from decimal import Decimal
 
 import numpy as np
-from numpy._core import umath, sctypes
+from numpy._core import sctypes
 from numpy._core.numerictypes import obj2sctype
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_raises_regex,
     assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_warns, assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
+    assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
     )
 from numpy._core._rational_tests import rational
 from numpy import ma

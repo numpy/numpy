@@ -13,7 +13,6 @@ from numpy._core import multiarray as mu
 from numpy._core import umath as um
 from numpy._core.multiarray import asanyarray
 from numpy._core import numerictypes as nt
-from numpy._core import _exceptions
 from numpy._globals import _NoValue
 
 # save those O(100) nanoseconds!

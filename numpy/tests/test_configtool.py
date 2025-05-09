@@ -3,7 +3,6 @@ import importlib.metadata
 import os
 import pathlib
 import subprocess
-import sysconfig
 
 import pytest
 import numpy as np

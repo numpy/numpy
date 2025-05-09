@@ -33,7 +33,7 @@ import numpy._core.umath as umath
 import numpy._core.numerictypes as ntypes
 from numpy._core import multiarray as mu
 from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue, angle
-from numpy import array as narray, expand_dims, iinfo, finfo
+from numpy import array as narray, expand_dims, iinfo, finfo  # noqa: F401
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils._inspect import getargspec, formatargspec
 from numpy._utils import set_module

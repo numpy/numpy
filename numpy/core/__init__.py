@@ -21,7 +21,7 @@ def _ufunc_reconstruct(module, name):
 
 # force lazy-loading of submodules to ensure a warning is printed
 
-__all__ = ["arrayprint", "defchararray", "_dtype_ctypes", "_dtype",
+__all__ = ["arrayprint", "defchararray", "_dtype_ctypes", "_dtype",  # noqa: F822
            "einsumfunc", "fromnumeric", "function_base", "getlimits",
            "_internal", "multiarray", "_multiarray_umath", "numeric",
            "numerictypes", "overrides", "records", "shape_base", "umath"]
