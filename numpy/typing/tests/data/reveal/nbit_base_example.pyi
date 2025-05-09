@@ -4,8 +4,8 @@ import numpy as np
 import numpy.typing as npt
 from numpy._typing import _32Bit, _64Bit
 
-T1 = TypeVar("T1", bound=npt.NBitBase)
-T2 = TypeVar("T2", bound=npt.NBitBase)
+T1 = TypeVar("T1", bound=npt.NBitBase)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+T2 = TypeVar("T2", bound=npt.NBitBase)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 
 def add(a: np.floating[T1], b: np.integer[T2]) -> np.floating[T1 | T2]:
     return a + b
