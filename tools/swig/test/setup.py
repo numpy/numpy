@@ -62,7 +62,7 @@ setup(name="NumpyTypemapTests",
       description="Functions that work on arrays",
       author="Bill Spotz",
       py_modules=["Array", "Farray", "Vector", "Matrix", "Tensor",
-                     "Fortran", "Flat"],
+                  "Fortran", "Flat"],
       ext_modules=[_Array, _Farray, _Vector, _Matrix, _Tensor,
                      _Fortran, _Flat]
       )
