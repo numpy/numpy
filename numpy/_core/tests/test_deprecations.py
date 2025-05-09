@@ -9,8 +9,6 @@ import tempfile
 import re
 import numpy.ma as ma
 
-
-
 import numpy as np
 from numpy.testing import (
     assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
