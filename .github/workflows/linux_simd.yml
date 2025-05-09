@@ -212,7 +212,7 @@ jobs:
         python -m pip install pytest pytest-xdist hypothesis typing_extensions
 
     - name: Build
-      run: CC=gcc-13 CXX=g++-13 spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_skx -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
+      run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=avx512_skx -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
 
     - name: Meson Log
       if: always()
@@ -263,7 +263,7 @@ jobs:
         python -m pip install pytest pytest-xdist hypothesis typing_extensions
 
     - name: Build
-      run: CC=gcc-13 CXX=g++-13 spin build -- -Dallow-noblas=true -Dcpu-baseline=avx512_spr
+      run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=avx512_spr
 
     - name: Meson Log
       if: always()

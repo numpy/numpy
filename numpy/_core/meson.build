@@ -128,6 +128,21 @@ if use_intel_sort and not fs.exists('src/npysort/x86-simd-sort/README.md')
   error('Missing the `x86-simd-sort` git submodule! Run `git submodule update --init` to fix this.')
 endif
 
+# openMP related settings:
+if get_option('disable-threading') and get_option('enable-openmp')
+  error('Build options `disable-threading` and `enable-openmp` are conflicting. Please set at most one to true.')
+endif
+
+use_openmp = get_option('enable-openmp') and not get_option('disable-threading')
+
+# Setup openmp flags for x86-simd-sort:
+omp = []
+omp_dep = []
+if use_intel_sort and use_openmp
+  omp = dependency('openmp', required : true)
+  omp_dep = declare_dependency(dependencies: omp, compile_args: ['-DXSS_USE_OPENMP'])
+endif
+
 if not fs.exists('src/common/pythoncapi-compat')
   error('Missing the `pythoncapi-compat` git submodule! ' +
         'Run `git submodule update --init` to fix this.')
@@ -867,12 +882,15 @@ foreach gen_mtargets : [
     ] : []
   ],
 ]
+
+
+
   mtargets = mod_features.multi_targets(
     gen_mtargets[0], multiarray_gen_headers + gen_mtargets[1],
     dispatch: gen_mtargets[2],
     # baseline: CPU_BASELINE, it doesn't provide baseline fallback
     prefix: 'NPY_',
-    dependencies: [py_dep, np_core_dep],
+    dependencies: [py_dep, np_core_dep, omp_dep],
     c_args: c_args_common + max_opt,
     cpp_args: cpp_args_common + max_opt,
     include_directories: [
@@ -1286,7 +1304,7 @@ py.extension_module('_multiarray_umath',
     'src/umath',
     'src/highway'
   ],
-  dependencies: [blas_dep],
+  dependencies: [blas_dep, omp],
   link_with: [
     npymath_lib,
     unique_hash_so,
