@@ -1,3 +1,2 @@
 * Setting the ``strides`` attribute on a NumPy array has been deprecated. See ``np.lib.stride_tricks.strided_window_view`` and ``np.lib.stride_tricks.as_strided`` as an alternative.
 
-
