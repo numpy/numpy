@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import importlib
+from copy import copy
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from datetime import datetime
@@ -539,14 +540,15 @@ def linkcode_resolve(domain, info):
     fn = None
     lineno = None
 
-    # Make a poor effort at linking C extension types
-    if isinstance(obj, type) and obj.__module__ == 'numpy':
-        fn = _get_c_source_file(obj)
+    if isinstance(obj, type):
+        # Make a poor effort at linking C extension types
+        if obj.__module__ == 'numpy':
+            fn = _get_c_source_file(obj)
 
-    # This can be removed when removing the decorator set_module. Fix issue #28629
-    if hasattr(obj, '_module_file'):
-        fn = obj._module_file
-        fn = relpath(fn, start=dirname(numpy.__file__))
+        # This can be removed when removing the decorator set_module. Fix issue #28629
+        if hasattr(obj, '_module_source'):
+            obj = copy(obj)
+            obj.__module__ = obj._module_source
 
     if fn is None:
         try:
