@@ -6,13 +6,11 @@ Array API standard compatibility
 
 NumPy's main namespace as well as the `numpy.fft` and `numpy.linalg` namespaces
 are compatible with the
-`2023.12 version <https://data-apis.org/array-api/2023.12/index.html>`__
+`2024.12 version <https://data-apis.org/array-api/2024.12/index.html>`__
 of the Python array API standard.
 
-NumPy aims to implement support for the
-`2024.12 version <https://data-apis.org/array-api/2024.12/index.html>`__
-(in progress) and future versions of the standard - assuming that those future
-versions can be upgraded to given NumPy's
+NumPy aims to implement support for the future versions of the standard
+- assuming that those future versions can be upgraded to given NumPy's
 :ref:`backwards compatibility policy <NEP23>`.
 
 For usage guidelines for downstream libraries and end users who want to write
@@ -33,7 +31,7 @@ rather than anything NumPy-specific, the `array-api-strict
     standard, via a separate ``numpy.array_api`` submodule. This module was
     marked as experimental (it emitted a warning on import) and removed in
     NumPy 2.0 because full support (2022.12 version [1]_) was included in
-    the main namespace (with 2023.12 version support in NumPy 2.1).
+    the main namespace.
     :ref:`NEP 47 <NEP47>` and
     :ref:`NEP 56 <NEP56>`
     describe the motivation and scope for implementing the array API standard
