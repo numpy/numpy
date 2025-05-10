@@ -1215,11 +1215,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 8:
                     newtype = NPY_INT64;
                     break;
-#ifdef NPY_INT128
-                case 16:
-                    newtype = NPY_INT128;
-                    break;
-#endif
             }
             break;
 
@@ -1237,11 +1232,6 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 8:
                     newtype = NPY_UINT64;
                     break;
-#ifdef NPY_INT128
-                case 16:
-                    newtype = NPY_UINT128;
-                    break;
-#endif
             }
             break;
 
