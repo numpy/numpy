@@ -50,12 +50,12 @@ def _make_along_axis_idx(arr_shape, indices, axis):
     return tuple(fancy_index)
 
 
-def _take_along_axis_dispatcher(arr, indices, axis):
+def _take_along_axis_dispatcher(arr, indices, axis=None):
     return (arr, indices)
 
 
 @array_function_dispatch(_take_along_axis_dispatcher)
-def take_along_axis(arr, indices, axis):
+def take_along_axis(arr, indices, axis=-1):
     """
     Take values from the input array by matching 1d index and data slices.
 
@@ -71,13 +71,16 @@ def take_along_axis(arr, indices, axis):
     arr : ndarray (Ni..., M, Nk...)
         Source array
     indices : ndarray (Ni..., J, Nk...)
-        Indices to take along each 1d slice of `arr`. This must match the
-        dimension of arr, but dimensions Ni and Nj only need to broadcast
-        against `arr`.
-    axis : int
+        Indices to take along each 1d slice of ``arr``. This must match the
+        dimension of ``arr``, but dimensions Ni and Nj only need to broadcast
+        against ``arr``.
+    axis : int or None, optional
         The axis to take 1d slices along. If axis is None, the input array is
         treated as if it had first been flattened to 1d, for consistency with
         `sort` and `argsort`.
+
+        .. versionchanged:: 2.3
+            The default value is now ``-1``.
 
     Returns
     -------

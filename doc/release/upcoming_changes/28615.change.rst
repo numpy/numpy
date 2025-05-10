@@ -1,0 +1,5 @@
+* NumPy's ``__array_api_version__`` was upgraded from ``2023.12`` to ``2024.12``.
+* `numpy.count_nonzero` for ``axis=None`` (default) now returns a NumPy scalar
+  instead of a Python integer.
+* The parameter ``axis`` in `numpy.take_along_axis` function has now a default
+  value of ``-1``.
