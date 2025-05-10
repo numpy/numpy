@@ -1031,13 +1031,14 @@ foreach gen_mtargets : [
   ],
   [
     'loops_unary_complex.dispatch.h',
-    src_file.process('src/umath/loops_unary_complex.dispatch.c.src'),
+    'src/umath/loops_unary_complex.dispatch.cpp',
     [
       AVX512F, [AVX2, FMA3], SSE2,
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,
       LSX,
+      RVV,
     ]
   ],
   [
