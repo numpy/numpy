@@ -155,6 +155,12 @@ class TestIndexing:
         actual_vals = arr[10:]
         assert_equal(actual_vals, expected_vals)
 
+    def test_gh_26844(self):
+        expected = [0, 1, 3, 3, 3]
+        a = np.arange(5)
+        a[2:][a[:-2]] = 3
+        assert_equal(a, expected)
+
     def test_ellipsis_index(self):
         a = np.array([[1, 2, 3],
                       [4, 5, 6],
