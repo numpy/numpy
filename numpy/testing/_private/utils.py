@@ -27,7 +27,6 @@ from numpy._core import (
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy import isfinite, isnan, isinf
 import numpy.linalg._umath_linalg
-from numpy._core.tests._natype import pd_NA
 
 from io import StringIO
 
@@ -2751,11 +2750,3 @@ def run_threaded(func, max_workers=8, pass_count=False,
                     barrier.abort()
             for f in futures:
                 f.result()
-
-
-def get_stringdtype_dtype(na_object, coerce=True):
-    # explicit is check for pd_NA because != with pd_NA returns pd_NA
-    if na_object is pd_NA or na_object != "unset":
-        return np.dtypes.StringDType(na_object=na_object, coerce=coerce)
-    else:
-        return np.dtypes.StringDType(coerce=coerce)
