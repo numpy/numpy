@@ -15,7 +15,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
+from datetime import datetime
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -48,7 +48,8 @@ master_doc = 'content'
 
 # General information about the project.
 project = 'NumPy Enhancement Proposals'
-copyright = '2017-2018, NumPy Developers'
+year = datetime.now().year
+copyright = f'2017-{year}, NumPy Developers'
 author = 'NumPy Developers'
 title = 'NumPy Enhancement Proposals Documentation'
 
@@ -66,7 +67,7 @@ release = ''
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -85,22 +86,18 @@ todo_include_todos = False
 
 html_theme = 'pydata_sphinx_theme'
 
-html_logo = '../source/_static/numpylogo.svg'
-
 html_favicon = '../source/_static/favicon/favicon.ico'
 
 html_theme_options = {
+  "logo": {
+    "image_light": "_static/numpylogo.svg",
+    "image_dark": "_static/numpylogo_dark.svg",
+  },
   "github_url": "https://github.com/numpy/numpy",
-  "twitter_url": "https://twitter.com/numpy_team",
-  "external_links": [
-      {"name": "Wishlist",
-       "url": "https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22",
-      },
-  ],
   "show_prev_next": False,
 }
 
-html_title = "%s" % (project)
+html_title = f"{project}"
 html_static_path = ['../source/_static']
 html_last_updated_fmt = '%b %d, %Y'
 
@@ -115,7 +112,6 @@ if 'sphinx.ext.pngmath' in extensions:
 
 plot_html_show_formats = False
 plot_html_show_source_link = False
-
 
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -183,4 +179,3 @@ intersphinx_mapping = {
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org', None)
 }
-

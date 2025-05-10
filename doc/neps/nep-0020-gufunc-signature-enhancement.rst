@@ -225,7 +225,7 @@ strongest use case. The frozen dimensions has a very simple implementation and
 its meaning is obvious. The ability to broadcast is simple too, once the
 flexible dimensions are supported.
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] Identified needs and suggestions for the implementation are not all by

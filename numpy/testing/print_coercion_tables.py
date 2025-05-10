@@ -3,6 +3,7 @@
 
 """
 import numpy as np
+from numpy._core.numerictypes import obj2sctype
 from collections import namedtuple
 
 # Generic object that can be added, but doesn't do anything else
@@ -39,7 +40,8 @@ def print_cancast_table(ntypes):
             print(cast, end=' ')
         print()
 
-def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, use_promote_types=False):
+def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray,
+                         use_promote_types=False):
     print('+', end=' ')
     for char in ntypes:
         print(char, end=' ')
@@ -48,14 +50,14 @@ def print_coercion_table(ntypes, inputfirstvalue, inputsecondvalue, firstarray, 
         if row == 'O':
             rowtype = GenericObject
         else:
-            rowtype = np.obj2sctype(row)
+            rowtype = obj2sctype(row)
 
         print(row, end=' ')
         for col in ntypes:
             if col == 'O':
                 coltype = GenericObject
             else:
-                coltype = np.obj2sctype(col)
+                coltype = obj2sctype(col)
             try:
                 if firstarray:
                     rowvalue = np.array([rowtype(inputfirstvalue)], dtype=rowtype)
@@ -84,7 +86,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     """Prints new casts, the values given are default "can-cast" values, not
     actual ones.
     """
-    from numpy.core._multiarray_tests import get_all_cast_information
+    from numpy._core._multiarray_tests import get_all_cast_information
 
     cast_table = {
         -1: " ",
@@ -95,7 +97,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
         4: ".",  # unsafe casting
     }
     flags_table = {
-        0 : "▗", 7: "█",
+        0: "▗", 7: "█",
         1: "▚", 2: "▐", 4: "▄",
                 3: "▜", 5: "▙",
                         6: "▟",
@@ -131,6 +133,7 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
     # The np.dtype(x.type) is a bit strange, because dtype classes do
     # not expose much yet.
     types = np.typecodes["All"]
+
     def sorter(x):
         # This is a bit weird hack, to get a table as close as possible to
         # the one printing all typecodes (but expecting user-dtypes).
@@ -170,8 +173,10 @@ def print_new_cast_table(*, can_cast=True, legacy=False, flags=False):
 
     if flags:
         print()
-        print(f"{flags_table[0]}: no flags, {flags_table[1]}: PyAPI, "
-              f"{flags_table[2]}: supports unaligned, {flags_table[4]}: no-float-errors")
+        print(f"{flags_table[0]}: no flags, "
+              f"{flags_table[1]}: PyAPI, "
+              f"{flags_table[2]}: supports unaligned, "
+              f"{flags_table[4]}: no-float-errors")
         print()
         print_table("flags")
 

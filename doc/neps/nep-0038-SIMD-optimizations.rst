@@ -5,7 +5,7 @@ NEP 38 — Using SIMD optimization instructions for performance
 =============================================================
 
 :Author: Sayed Adel, Matti Picus, Ralf Gommers
-:Status: Accepted
+:Status: Final
 :Type: Standards
 :Created: 2019-11-25
 :Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/thread/PVWJ74UVBRZ5ZWF6MDU7EUSJXVNILAQB/#PVWJ74UVBRZ5ZWF6MDU7EUSJXVNILAQB
@@ -36,7 +36,7 @@ architectures.  The steps proposed are to:
   the possible code paths accordingly.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 Traditionally NumPy has depended on compilers to generate optimal code
@@ -85,7 +85,7 @@ specifically available CPU features at runtime, currently used for ``avx2``,
 universal intrinsics would extend the generated code to include more loop
 variants.
 
-Usage and Impact
+Usage and impact
 ----------------
 
 The end user will be able to get a list of intrinsics available for their
@@ -238,7 +238,7 @@ When importing the ufuncs, the available compiled loops' required features are
 matched to the ones discovered. The loop with the best match is marked to be
 called by the ufunc.
 
-Related Work
+Related work
 ------------
 
 - `Pixman`_ is the library used by Cairo and X to manipulate pixels. It uses
@@ -302,7 +302,7 @@ both on the mailing list and in `gh-15228`_ and resolved as follows:
   architecture-specific code helps one architecture but harms performance
   on another? (answered in the tradeoffs_ part of the workflow).
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. _`build alternative loops`: https://github.com/numpy/numpy/blob/v1.17.4/numpy/core/code_generators/generate_umath.py#L50

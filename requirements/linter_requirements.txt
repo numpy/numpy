@@ -1,0 +1,2 @@
+ruff==0.8.3
+GitPython>=3.1.30

@@ -54,9 +54,10 @@ def iscode(object):
         co_nlocals      number of local variables
         co_stacksize    virtual machine stack space required
         co_varnames     tuple of names of arguments and local variables
-        
+
     """
     return isinstance(object, types.CodeType)
+
 
 # ------------------------------------------------ argument list extraction
 # These constants are from Python's compile.h.
@@ -117,7 +118,7 @@ def getargvalues(frame):
     'args' is a list of the argument names (it may contain nested lists).
     'varargs' and 'varkw' are the names of the * and ** arguments or None.
     'locals' is the locals dictionary of the given frame.
-    
+
     """
     args, varargs, varkw = getargs(frame.f_code)
     return args, varargs, varkw, frame.f_locals

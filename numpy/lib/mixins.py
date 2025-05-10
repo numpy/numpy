@@ -1,6 +1,6 @@
-"""Mixin classes for custom array types that don't inherit from ndarray."""
-from numpy.core import umath as um
-
+"""
+Mixin classes for custom array types that don't inherit from ndarray.
+"""
 
 __all__ = ['NDArrayOperatorsMixin']
 
@@ -19,7 +19,7 @@ def _binary_method(ufunc, name):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(self, other)
-    func.__name__ = '__{}__'.format(name)
+    func.__name__ = f'__{name}__'
     return func
 
 
@@ -29,7 +29,7 @@ def _reflected_binary_method(ufunc, name):
         if _disables_array_ufunc(other):
             return NotImplemented
         return ufunc(other, self)
-    func.__name__ = '__r{}__'.format(name)
+    func.__name__ = f'__r{name}__'
     return func
 
 
@@ -37,7 +37,7 @@ def _inplace_binary_method(ufunc, name):
     """Implement an in-place binary method with a ufunc, e.g., __iadd__."""
     def func(self, other):
         return ufunc(self, other, out=(self,))
-    func.__name__ = '__i{}__'.format(name)
+    func.__name__ = f'__i{name}__'
     return func
 
 
@@ -52,7 +52,7 @@ def _unary_method(ufunc, name):
     """Implement a unary special method with a ufunc."""
     def func(self):
         return ufunc(self)
-    func.__name__ = '__{}__'.format(name)
+    func.__name__ = f'__{name}__'
     return func
 
 
@@ -67,52 +67,55 @@ class NDArrayOperatorsMixin:
 
     It is useful for writing classes that do not inherit from `numpy.ndarray`,
     but that should support arithmetic and numpy universal functions like
-    arrays as described in `A Mechanism for Overriding Ufuncs
-    <https://numpy.org/neps/nep-0013-ufunc-overrides.html>`_.
+    arrays as described in :external+neps:doc:`nep-0013-ufunc-overrides`.
 
     As an trivial example, consider this implementation of an ``ArrayLike``
     class that simply wraps a NumPy array and ensures that the result of any
-    arithmetic operation is also an ``ArrayLike`` object::
+    arithmetic operation is also an ``ArrayLike`` object:
 
-        class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
-            def __init__(self, value):
-                self.value = np.asarray(value)
-
-            # One might also consider adding the built-in list type to this
-            # list, to support operations like np.add(array_like, list)
-            _HANDLED_TYPES = (np.ndarray, numbers.Number)
-
-            def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-                out = kwargs.get('out', ())
-                for x in inputs + out:
-                    # Only support operations with instances of _HANDLED_TYPES.
-                    # Use ArrayLike instead of type(self) for isinstance to
-                    # allow subclasses that don't override __array_ufunc__ to
-                    # handle ArrayLike objects.
-                    if not isinstance(x, self._HANDLED_TYPES + (ArrayLike,)):
-                        return NotImplemented
-
-                # Defer to the implementation of the ufunc on unwrapped values.
-                inputs = tuple(x.value if isinstance(x, ArrayLike) else x
-                               for x in inputs)
-                if out:
-                    kwargs['out'] = tuple(
-                        x.value if isinstance(x, ArrayLike) else x
-                        for x in out)
-                result = getattr(ufunc, method)(*inputs, **kwargs)
-
-                if type(result) is tuple:
-                    # multiple return values
-                    return tuple(type(self)(x) for x in result)
-                elif method == 'at':
-                    # no return value
-                    return None
-                else:
-                    # one return value
-                    return type(self)(result)
-
-            def __repr__(self):
-                return '%s(%r)' % (type(self).__name__, self.value)
+        >>> import numbers
+        >>> class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
+        ...     def __init__(self, value):
+        ...         self.value = np.asarray(value)
+        ...
+        ...     # One might also consider adding the built-in list type to this
+        ...     # list, to support operations like np.add(array_like, list)
+        ...     _HANDLED_TYPES = (np.ndarray, numbers.Number)
+        ...
+        ...     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        ...         out = kwargs.get('out', ())
+        ...         for x in inputs + out:
+        ...             # Only support operations with instances of
+        ...             # _HANDLED_TYPES. Use ArrayLike instead of type(self)
+        ...             # for isinstance to allow subclasses that don't
+        ...             # override __array_ufunc__ to handle ArrayLike objects.
+        ...             if not isinstance(
+        ...                 x, self._HANDLED_TYPES + (ArrayLike,)
+        ...             ):
+        ...                 return NotImplemented
+        ...
+        ...         # Defer to the implementation of the ufunc
+        ...         # on unwrapped values.
+        ...         inputs = tuple(x.value if isinstance(x, ArrayLike) else x
+        ...                     for x in inputs)
+        ...         if out:
+        ...             kwargs['out'] = tuple(
+        ...                 x.value if isinstance(x, ArrayLike) else x
+        ...                 for x in out)
+        ...         result = getattr(ufunc, method)(*inputs, **kwargs)
+        ...
+        ...         if type(result) is tuple:
+        ...             # multiple return values
+        ...             return tuple(type(self)(x) for x in result)
+        ...         elif method == 'at':
+        ...             # no return value
+        ...             return None
+        ...         else:
+        ...             # one return value
+        ...             return type(self)(result)
+        ...
+        ...     def __repr__(self):
+        ...         return '%s(%r)' % (type(self).__name__, self.value)
 
     In interactions between ``ArrayLike`` objects and numbers or numpy arrays,
     the result is always another ``ArrayLike``:
@@ -131,8 +134,9 @@ class NDArrayOperatorsMixin:
     with arbitrary, unrecognized types. This ensures that interactions with
     ArrayLike preserve a well-defined casting hierarchy.
 
-    .. versionadded:: 1.13
     """
+    from numpy._core import umath as um
+
     __slots__ = ()
     # Like np.ndarray, this mixin class implements "Option 1" from the ufunc
     # overrides NEP.
@@ -151,7 +155,6 @@ class NDArrayOperatorsMixin:
     __mul__, __rmul__, __imul__ = _numeric_methods(um.multiply, 'mul')
     __matmul__, __rmatmul__, __imatmul__ = _numeric_methods(
         um.matmul, 'matmul')
-    # Python 3 does not use __div__, __rdiv__, or __idiv__
     __truediv__, __rtruediv__, __itruediv__ = _numeric_methods(
         um.true_divide, 'truediv')
     __floordiv__, __rfloordiv__, __ifloordiv__ = _numeric_methods(

@@ -26,7 +26,7 @@ a performance bottleneck, custom allocation strategies to guarantee data
 alignment or pinning allocations to specialized memory hardware can enable
 hardware-specific optimizations. The other allocations remain unchanged.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 Users may wish to override the internal data memory routines with ones of their
@@ -66,7 +66,7 @@ is to create a flexible enough interface without burdening normative users.
 .. _`BPO 18835`: https://bugs.python.org/issue18835
 .. _`PEP 445`: https://www.python.org/dev/peps/pep-0445/
 
-Usage and Impact
+Usage and impact
 ----------------
 
 The new functions can only be accessed via the NumPy C-API. An example is
@@ -301,7 +301,7 @@ the ``sz`` argument is correct.
         }
     };
 
-Related Work
+Related work
 ------------
 
 This NEP is being tracked by the pnumpy_ project and a `comment in the PR`_
@@ -332,7 +332,7 @@ with a ``context`` field like :c:type:`PyMemAllocatorEx` but with a different
 signature for ``free``.
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] Each NEP must either be explicitly labeled as placed in the public domain (see

@@ -29,4 +29,3 @@ doctest.OutputChecker = SkipMatplotlibOutputChecker
 def add_np(doctest_namespace):
     numpy.random.seed(1)
     doctest_namespace['np'] = numpy
-

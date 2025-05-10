@@ -72,44 +72,58 @@ class Eindot(Benchmark):
 
 
 class Linalg(Benchmark):
-    params = [['svd', 'pinv', 'det', 'norm'],
-              TYPES1]
-    param_names = ['op', 'type']
+    params = sorted(set(TYPES1) - {'float16'})
+    param_names = ['dtype']
 
-    def setup(self, op, typename):
+    def setup(self, typename):
         np.seterr(all='ignore')
+        self.a = get_squares_()[typename]
 
-        self.func = getattr(np.linalg, op)
+    def time_svd(self, typename):
+        np.linalg.svd(self.a)
 
-        if op == 'cholesky':
-            # we need a positive definite
-            self.a = np.dot(get_squares_()[typename],
-                            get_squares_()[typename].T)
-        else:
-            self.a = get_squares_()[typename]
+    def time_pinv(self, typename):
+        np.linalg.pinv(self.a)
 
-        # check that dtype is supported at all
-        try:
-            self.func(self.a[:2, :2])
-        except TypeError as e:
-            raise NotImplementedError() from e
+    def time_det(self, typename):
+        np.linalg.det(self.a)
 
-    def time_op(self, op, typename):
-        self.func(self.a)
+
+class LinalgNorm(Benchmark):
+    params = TYPES1
+    param_names = ['dtype']
+
+    def setup(self, typename):
+        self.a = get_squares_()[typename]
+
+    def time_norm(self, typename):
+        np.linalg.norm(self.a)
 
 
 class LinalgSmallArrays(Benchmark):
     """ Test overhead of linalg methods for small arrays """
     def setup(self):
+        self.array_3_3 = np.eye(3) + np.arange(9.).reshape((3, 3))
+        self.array_3 = np.arange(3.)
         self.array_5 = np.arange(5.)
-        self.array_5_5 = np.arange(5.)
+        self.array_5_5 = np.reshape(np.arange(25.), (5, 5))
 
     def time_norm_small_array(self):
         np.linalg.norm(self.array_5)
 
     def time_det_small_array(self):
         np.linalg.det(self.array_5_5)
-        
+
+    def time_det_3x3(self):
+        np.linalg.det(self.array_3_3)
+
+    def time_solve_3x3(self):
+        np.linalg.solve(self.array_3_3, self.array_3)
+
+    def time_eig_3x3(self):
+        np.linalg.eig(self.array_3_3)
+
+
 class Lstsq(Benchmark):
     def setup(self):
         self.a = get_squares_()['float64']
@@ -121,13 +135,14 @@ class Lstsq(Benchmark):
 class Einsum(Benchmark):
     param_names = ['dtype']
     params = [[np.float32, np.float64]]
+
     def setup(self, dtype):
         self.one_dim_small = np.arange(600, dtype=dtype)
         self.one_dim = np.arange(3000, dtype=dtype)
         self.one_dim_big = np.arange(480000, dtype=dtype)
         self.two_dim_small = np.arange(1200, dtype=dtype).reshape(30, 40)
         self.two_dim = np.arange(240000, dtype=dtype).reshape(400, 600)
-        self.three_dim_small = np.arange(10000, dtype=dtype).reshape(10,100,10)
+        self.three_dim_small = np.arange(10000, dtype=dtype).reshape(10, 100, 10)
         self.three_dim = np.arange(24000, dtype=dtype).reshape(20, 30, 40)
         # non_contiguous arrays
         self.non_contiguous_dim1_small = np.arange(1, 80, 2, dtype=dtype)
@@ -141,7 +156,7 @@ class Einsum(Benchmark):
 
     # multiply(a, b):trigger sum_of_products_contig_two
     def time_einsum_multiply(self, dtype):
-        np.einsum("..., ...", self.two_dim_small, self.three_dim , optimize=True)
+        np.einsum("..., ...", self.two_dim_small, self.three_dim, optimize=True)
 
     # sum and multiply:trigger sum_of_products_contig_stride0_outstride0_two
     def time_einsum_sum_mul(self, dtype):
@@ -187,6 +202,68 @@ class Einsum(Benchmark):
     def time_einsum_noncon_contig_contig(self, dtype):
         np.einsum("ji,i->", self.non_contiguous_dim2, self.non_contiguous_dim1_small, optimize=True)
 
-    # sum_of_products_contig_outstride0_one：non_contiguous arrays
+    # sum_of_products_contig_outstride0_one: non_contiguous arrays
     def time_einsum_noncon_contig_outstride0(self, dtype):
         np.einsum("i->", self.non_contiguous_dim1, optimize=True)
+
+
+class LinAlgTransposeVdot(Benchmark):
+    # Smaller for speed
+    # , (128, 128), (256, 256), (512, 512),
+    # (1024, 1024)
+    params = [[(16, 16), (32, 32),
+               (64, 64)], TYPES1]
+    param_names = ['shape', 'npdtypes']
+
+    def setup(self, shape, npdtypes):
+        self.xarg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
+        self.xarg = self.xarg.astype(npdtypes)
+        self.x2arg = np.random.uniform(-1, 1, np.dot(*shape)).reshape(shape)
+        self.x2arg = self.x2arg.astype(npdtypes)
+        if npdtypes.startswith('complex'):
+            self.xarg += self.xarg.T * 1j
+            self.x2arg += self.x2arg.T * 1j
+
+    def time_transpose(self, shape, npdtypes):
+        np.transpose(self.xarg)
+
+    def time_vdot(self, shape, npdtypes):
+        np.vdot(self.xarg, self.x2arg)
+
+
+class MatmulStrided(Benchmark):
+    # some interesting points selected from
+    # https://github.com/numpy/numpy/pull/23752#issuecomment-2629521597
+    # (m, p, n, batch_size)
+    args = [
+        (2, 2, 2, 1), (2, 2, 2, 10), (5, 5, 5, 1), (5, 5, 5, 10),
+        (10, 10, 10, 1), (10, 10, 10, 10), (20, 20, 20, 1), (20, 20, 20, 10),
+        (50, 50, 50, 1), (50, 50, 50, 10),
+        (150, 150, 100, 1), (150, 150, 100, 10),
+        (400, 400, 100, 1), (400, 400, 100, 10)
+    ]
+
+    param_names = ['configuration']
+
+    def __init__(self):
+        self.args_map = {
+            'matmul_m%03d_p%03d_n%03d_bs%02d' % arg: arg for arg in self.args
+        }
+
+        self.params = [list(self.args_map.keys())]
+
+    def setup(self, configuration):
+        m, p, n, batch_size = self.args_map[configuration]
+
+        self.a1raw = np.random.rand(batch_size * m * 2 * n).reshape(
+            (batch_size, m, 2 * n)
+        )
+
+        self.a1 = self.a1raw[:, :, ::2]
+
+        self.a2 = np.random.rand(batch_size * n * p).reshape(
+            (batch_size, n, p)
+        )
+
+    def time_matmul(self, configuration):
+        return np.matmul(self.a1, self.a2)

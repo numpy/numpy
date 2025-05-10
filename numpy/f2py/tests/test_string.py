@@ -1,6 +1,4 @@
-import os
 import pytest
-import textwrap
 import numpy as np
 from . import util
 

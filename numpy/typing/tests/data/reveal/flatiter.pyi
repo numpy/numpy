@@ -1,22 +1,46 @@
-from typing import Any
+from typing import Literal, TypeAlias, assert_type
+
 import numpy as np
+import numpy.typing as npt
 
-a: np.flatiter[np.ndarray[Any, np.dtype[np.str_]]]
+a: np.flatiter[npt.NDArray[np.str_]]
+a_1d: np.flatiter[np.ndarray[tuple[int], np.dtype[np.bytes_]]]
 
-reveal_type(a.base)  # E: ndarray[Any, dtype[str_]]
-reveal_type(a.copy())  # E: ndarray[Any, dtype[str_]]
-reveal_type(a.coords)  # E: tuple[builtins.int, ...]
-reveal_type(a.index)  # E: int
-reveal_type(iter(a))  # E: Any
-reveal_type(next(a))  # E: str_
-reveal_type(a[0])  # E: str_
-reveal_type(a[[0, 1, 2]])  # E: ndarray[Any, dtype[str_]]
-reveal_type(a[...])  # E: ndarray[Any, dtype[str_]]
-reveal_type(a[:])  # E: ndarray[Any, dtype[str_]]
-reveal_type(a[(...,)])  # E: ndarray[Any, dtype[str_]]
-reveal_type(a[(0,)])  # E: str_
-reveal_type(a.__array__())  # E: ndarray[Any, dtype[str_]]
-reveal_type(a.__array__(np.dtype(np.float64)))  # E: ndarray[Any, dtype[{float64}]]
+Size: TypeAlias = Literal[42]
+a_1d_fixed: np.flatiter[np.ndarray[tuple[Size], np.dtype[np.object_]]]
+
+assert_type(a.base, npt.NDArray[np.str_])
+assert_type(a.copy(), npt.NDArray[np.str_])
+assert_type(a.coords, tuple[int, ...])
+assert_type(a.index, int)
+assert_type(iter(a), np.flatiter[npt.NDArray[np.str_]])
+assert_type(next(a), np.str_)
+assert_type(a[0], np.str_)
+assert_type(a[[0, 1, 2]], npt.NDArray[np.str_])
+assert_type(a[...], npt.NDArray[np.str_])
+assert_type(a[:], npt.NDArray[np.str_])
+assert_type(a[(...,)], npt.NDArray[np.str_])
+assert_type(a[(0,)], np.str_)
+
+assert_type(a.__array__(), npt.NDArray[np.str_])
+assert_type(a.__array__(np.dtype(np.float64)), npt.NDArray[np.float64])
+assert_type(
+    a_1d.__array__(),
+    np.ndarray[tuple[int], np.dtype[np.bytes_]],
+)
+assert_type(
+    a_1d.__array__(np.dtype(np.float64)),
+    np.ndarray[tuple[int], np.dtype[np.float64]],
+)
+assert_type(
+    a_1d_fixed.__array__(),
+    np.ndarray[tuple[Size], np.dtype[np.object_]],
+)
+assert_type(
+    a_1d_fixed.__array__(np.dtype(np.float64)),
+    np.ndarray[tuple[Size], np.dtype[np.float64]],
+)
+
 a[0] = "a"
 a[:5] = "a"
 a[...] = "a"

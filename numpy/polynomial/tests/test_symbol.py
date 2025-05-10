@@ -4,7 +4,7 @@ Tests related to the ``symbol`` attribute of the ABCPolyBase class.
 
 import pytest
 import numpy.polynomial as poly
-from numpy.core import array
+from numpy._core import array
 from numpy.testing import assert_equal, assert_raises, assert_
 
 
@@ -195,7 +195,7 @@ def test_composition():
 
 
 def test_fit():
-    x, y = (range(10),)*2
+    x, y = (range(10),) * 2
     p = poly.Polynomial.fit(x, y, deg=1, symbol='z')
     assert_equal(p.symbol, 'z')
 

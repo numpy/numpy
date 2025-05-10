@@ -1,6 +1,0 @@
-Fix ``np.ma.diff`` not preserving the mask when called with arguments prepend/append.
--------------------------------------------------------------------------------------
-Calling ``np.ma.diff`` with arguments prepend and/or append now returns a 
-``MaskedArray`` with the input mask preserved.
-
-Previously, a ``MaskedArray`` without the mask was returned.

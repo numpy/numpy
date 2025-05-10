@@ -1,0 +1,42 @@
+option('blas', type: 'string', value: 'auto',
+        description: 'Option for BLAS library selection. By default, try to find any in the order given by `blas-order`')
+option('lapack', type: 'string', value: 'auto',
+        description: 'Option for LAPACK library selection. By default, try to find any in the order given by `lapack-order`')
+option('allow-noblas', type: 'boolean', value: true,
+        description: 'If set to true, allow building with (slow!) internal fallback routines')
+option('blas-order', type: 'array', value: ['auto'],
+       description: 'Order of BLAS libraries to search for. E.g.: mkl,openblas,blis,blas')
+option('lapack-order', type: 'array', value: ['auto'],
+       description: 'Order of LAPACK libraries to search for. E.g.: mkl,openblas,lapack')
+option('use-ilp64', type: 'boolean', value: false,
+       description: 'Use ILP64 (64-bit integer) BLAS and LAPACK interfaces')
+option('blas-symbol-suffix', type: 'string', value: 'auto',
+        description: 'BLAS and LAPACK symbol suffix to use, if any')
+option('mkl-threading', type: 'string', value: 'auto',
+        description: 'MKL threading method, one of: `seq`, `iomp`, `gomp`, `tbb`')
+option('disable-svml', type: 'boolean', value: false,
+        description: 'Disable building against SVML')
+option('disable-highway', type: 'boolean', value: false,
+        description: 'Disables SIMD-optimized operations related to Google Highway')
+option('disable-intel-sort', type: 'boolean', value: false,
+        description: 'Disables SIMD-optimized operations related to Intel x86-simd-sort')
+option('disable-threading', type: 'boolean', value: false,
+        description: 'Disable threading support (see `NPY_ALLOW_THREADS` docs)')
+option('disable-optimization', type: 'boolean', value: false,
+        description: 'Disable CPU optimized code (dispatch,simd,unroll...)')
+option('cpu-baseline', type: 'string', value: 'min',
+        description: 'Minimal set of required CPU features')
+option('cpu-dispatch', type: 'string', value: 'max -xop -fma4',
+        description: 'Dispatched set of additional CPU features')
+option('test-simd', type: 'array',
+        value: [
+          'BASELINE', 'SSE2', 'SSE42', 'XOP', 'FMA4',
+          'AVX2', 'FMA3', 'AVX2,FMA3', 'AVX512F', 'AVX512_SKX',
+          'VSX', 'VSX2', 'VSX3', 'VSX4',
+          'NEON', 'ASIMD',
+          'VX', 'VXE', 'VXE2',
+          'LSX',
+        ],
+        description: 'Specify a list of CPU features to be tested against NumPy SIMD interface')
+option('test-simd-args', type: 'string', value: '',
+        description: 'Extra args to be passed to the `_simd` module that is used for testing the NumPy SIMD interface')

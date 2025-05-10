@@ -6,10 +6,10 @@
 Internal organization of NumPy arrays
 *************************************
 
-It helps to understand a bit about how NumPy arrays are handled under the covers
-to help understand NumPy better. This section will not go into great detail.
-Those wishing to understand the full details are requested to refer to Travis
-Oliphant's book `Guide to NumPy <http://web.mit.edu/dvp/Public/numpybook.pdf>`_.
+It helps to learn a bit about how NumPy arrays are handled under the covers
+to understand NumPy better. This section provides a brief explanation.
+More details are available in Travis Oliphant's book
+`Guide to NumPy <https://web.mit.edu/dvp/Public/numpybook.pdf>`_.
 
 NumPy arrays consist of two major components: the raw array data (from now on,
 referred to as the data buffer), and the information about the raw array data.
@@ -19,21 +19,21 @@ items. NumPy also contains a significant set of data that describes how to
 interpret the data in the data buffer. This extra information contains (among
 other things):
 
- 1) The basic data element's size in bytes.
- 2) The start of the data within the data buffer (an offset relative to the
-    beginning of the data buffer).
- 3) The number of :term:`dimensions <dimension>` and the size of each dimension.
- 4) The separation between elements for each dimension (the :term:`stride`).
-    This does not have to be a multiple of the element size.
- 5) The byte order of the data (which may not be the native byte order).
- 6) Whether the buffer is read-only.
- 7) Information (via the :class:`dtype` object) about the interpretation of the
-    basic data element. The basic data element may be as simple as an int or a
-    float, or it may be a compound object (e.g.,
-    :term:`struct-like <structured data type>`), a fixed character field,
-    or Python object pointers.
- 8) Whether the array is to be interpreted as :term:`C-order <C order>`
-    or :term:`Fortran-order <Fortran order>`.
+1. The basic data element's size in bytes.
+2. The start of the data within the data buffer (an offset relative to the
+   beginning of the data buffer).
+3. The number of :term:`dimensions <dimension>` and the size of each dimension.
+4. The separation between elements for each dimension (the :term:`stride`).
+   This does not have to be a multiple of the element size.
+5. The byte order of the data (which may not be the native byte order).
+6. Whether the buffer is read-only.
+7. Information (via the :class:`dtype` object) about the interpretation of the
+   basic data element. The basic data element may be as simple as an int or a
+   float, or it may be a compound object (e.g.,
+   :term:`struct-like <structured data type>`), a fixed character field,
+   or Python object pointers.
+8. Whether the array is to be interpreted as :term:`C-order <C order>`
+   or :term:`Fortran-order <Fortran order>`.
 
 This arrangement allows for the very flexible use of arrays. One thing that it
 allows is simple changes to the metadata to change the interpretation of the
@@ -49,7 +49,7 @@ strides, etc) but shares the same data bytes. Many operations in NumPy do just
 this such as :term:`slicing <python:slice>`. Other operations, such as
 transpose, don't move data elements around in the array, but rather change the
 information about the shape and strides so that the indexing of the array
-changes, but the data in the doesn't move.
+changes, but the data in the array doesn't move.
 
 Typically these new versions of the array metadata but the same data buffer are
 new views into the data buffer. There is a different :class:`ndarray` object,

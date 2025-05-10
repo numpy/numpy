@@ -1,0 +1,51 @@
+extend-exclude = [
+    "numpy/__config__.py",
+    "numpy/distutils",
+    "numpy/typing/_char_codes.py",
+    "numpy/typing/tests/data",
+    "spin/cmds.py",
+    # Submodules.
+    "doc/source/_static/scipy-mathjax",
+    "vendored-meson/meson",
+    "numpy/fft/pocketfft",
+    "numpy/_core/src/umath/svml",
+    "numpy/_core/src/npysort/x86-simd-sort",
+    "numpy/_core/src/highway",
+    "numpy/_core/src/common/pythoncapi-compat",
+]
+
+[lint]
+preview = true
+extend-select = [
+    "C4",
+    "LOG",
+    "G",
+    "PIE",
+    "TID",
+    "FLY",
+    "E",
+    "W",
+    "PGH",
+    "PLE",
+    "UP",
+]
+ignore = [
+    "F",      # TODO: enable Pyflakes rules
+    "C408",   # Unnecessary `dict()` call (rewrite as a literal)
+    "PIE790", # Unnecessary `pass` statement
+    "E241",   # Multiple spaces after comma
+    "E265",   # Block comment should start with `# `
+    "E266",   # Too many leading `#` before block comment
+    "E302",   # TODO: Expected 2 blank lines, found 1
+    "E402",   # Module level import not at top of file
+    "E501",   # TODO: Line too long
+    "E712",   # Avoid equality comparisons to `True` or `False`
+    "E721",   # TODO: Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance check
+    "E731",   # Do not assign a `lambda` expression, use a `def`
+    "E741",   # Ambiguous variable name
+    "UP015",  # Unnecessary mode argument
+    "UP031",  # TODO: Use format specifiers instead of percent format
+]
+
+[lint.per-file-ignores]
+"test*.py" = ["E201", "E714"]

@@ -1,47 +1,22 @@
-from typing import Any, TypeVar, overload
+from typing import Any
+from typing import Literal as L
 
-from numpy import generic, integer, floating, complexfloating
-from numpy._typing import (
-    NDArray,
-    ArrayLike,
-    _ShapeLike,
-    _ArrayLike,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-)
+from typing_extensions import deprecated
 
-_SCT = TypeVar("_SCT", bound=generic)
+import numpy as np
+from numpy._typing import ArrayLike, NDArray, _ShapeLike
 
-__all__: list[str]
+from ._helper import integer_types as integer_types
 
-@overload
-def fftshift(x: _ArrayLike[_SCT], axes: None | _ShapeLike = ...) -> NDArray[_SCT]: ...
-@overload
-def fftshift(x: ArrayLike, axes: None | _ShapeLike = ...) -> NDArray[Any]: ...
+__all__ = ["fftfreq", "fftshift", "ifftshift", "rfftfreq"]
 
-@overload
-def ifftshift(x: _ArrayLike[_SCT], axes: None | _ShapeLike = ...) -> NDArray[_SCT]: ...
-@overload
-def ifftshift(x: ArrayLike, axes: None | _ShapeLike = ...) -> NDArray[Any]: ...
+###
 
-@overload
-def fftfreq(
-    n: int | integer[Any],
-    d: _ArrayLikeFloat_co = ...,
-) -> NDArray[floating[Any]]: ...
-@overload
-def fftfreq(
-    n: int | integer[Any],
-    d: _ArrayLikeComplex_co = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
-
-@overload
-def rfftfreq(
-    n: int | integer[Any],
-    d: _ArrayLikeFloat_co = ...,
-) -> NDArray[floating[Any]]: ...
-@overload
-def rfftfreq(
-    n: int | integer[Any],
-    d: _ArrayLikeComplex_co = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+@deprecated("Please use `numpy.fft.fftshift` instead.")
+def fftshift(x: ArrayLike, axes: _ShapeLike | None = None) -> NDArray[Any]: ...
+@deprecated("Please use `numpy.fft.ifftshift` instead.")
+def ifftshift(x: ArrayLike, axes: _ShapeLike | None = None) -> NDArray[Any]: ...
+@deprecated("Please use `numpy.fft.fftfreq` instead.")
+def fftfreq(n: int | np.integer, d: ArrayLike = 1.0, device: L["cpu"] | None = None) -> NDArray[Any]: ...
+@deprecated("Please use `numpy.fft.rfftfreq` instead.")
+def rfftfreq(n: int | np.integer, d: ArrayLike = 1.0, device: L["cpu"] | None = None) -> NDArray[Any]: ...

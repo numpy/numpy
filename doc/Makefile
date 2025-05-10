@@ -11,13 +11,13 @@ PYVER:=$(shell python3 -c 'from sys import version_info as v; print("{0}.{1}".fo
 PYTHON = python$(PYVER)
 
 # You can set these variables from the command line.
-SPHINXOPTS    ?=
+SPHINXOPTS    ?= -W
 SPHINXBUILD   ?= LANG=C sphinx-build
 PAPER         ?=
 DOXYGEN       ?= doxygen
 # For merging a documentation archive into a git checkout of numpy/doc
 # Turn a tag like v1.18.0 into 1.18
-# Use sed -n -e 's/patttern/match/p' to return a blank value if no match
+# Use sed -n -e 's/pattern/match/p' to return a blank value if no match
 TAG ?= $(shell git describe --tag | sed -n -e's,v\([1-9]\.[0-9]*\)\.[0-9].*,\1,p')
 
 FILES=
@@ -25,7 +25,7 @@ FILES=
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -WT --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
+ALLSPHINXOPTS   = -T --keep-going -d build/doctrees $(PAPEROPT_$(PAPER)) \
                   $(SPHINXOPTS) source
 
 .PHONY: help clean html web htmlhelp latex changes linkcheck \
@@ -50,17 +50,9 @@ help:
 
 clean:
 	-rm -rf build/*
+	-rm -rf source/.jupyterlite.doit.db
+	-rm -rf source/contents/*.ipynb
 	find . -name generated -type d -prune -exec rm -rf "{}" ";"
-
-docenv:
-	$(PYTHON) -mvenv docenv
-	( \
-            . docenv/bin/activate; \
-            pip install -q --upgrade pip; \
-            pip install -q  -r ../test_requirements.txt; \
-            pip install -q  -r ../doc_requirements.txt; \
-            pip install -q ..; \
-	)
 
 gitwash-update:
 	rm -rf source/dev/gitwash
@@ -81,8 +73,8 @@ gitwash-update:
 #
 
 #SPHINXBUILD="LANG=C sphinx-build"
-NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:10])" 2>/dev/null)
-GITVER ?= $(shell cd ..; $(PYTHON) -c "import versioneer as v; print(v.get_versions()['full-revisionid'][:10])")
+NUMPYVER:=$(shell $(PYTHON) -c "import numpy; print(numpy.version.git_revision[:7])" 2>/dev/null)
+GITVER ?= $(shell (cd ..; set -o pipefail && git rev-parse HEAD 2>/dev/null | cut -c1-7) || echo Unknown)
 
 version-check:
 ifeq "$(GITVER)" "Unknown"
@@ -128,12 +120,14 @@ endif
 	tar -C build/merge/$(TAG) -xf build/dist.tar.gz
 	git -C build/merge add $(TAG)
 	@# For now, the user must do this. If it is onerous, automate it and change
-	@# the instructions in doc/HOWTO_RELEASE.rst
+	@# the instructions in doc/RELEASE_WALKTHROUGH.rst
 	@echo " "
 	@echo New documentation archive added to ./build/merge.
 	@echo Now add/modify the appropriate section after
 	@echo "    <!-- insert here -->"
 	@echo in build/merge/index.html,
+	@echo change _static/versions.json,
+	@echo and run \"python3 update.py\"
 	@echo then \"git commit\", \"git push\"
 
 

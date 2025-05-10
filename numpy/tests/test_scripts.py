@@ -11,13 +11,13 @@ import subprocess
 import numpy as np
 from numpy.testing import assert_equal, IS_WASM
 
-is_inplace = isfile(pathjoin(dirname(np.__file__),  '..', 'setup.py'))
+is_inplace = isfile(pathjoin(dirname(np.__file__), '..', 'setup.py'))
 
 
 def find_f2py_commands():
     if sys.platform == 'win32':
         exe_dir = dirname(sys.executable)
-        if exe_dir.endswith('Scripts'): # virtualenv
+        if exe_dir.endswith('Scripts'):  # virtualenv
             return [os.path.join(exe_dir, 'f2py')]
         else:
             return [os.path.join(exe_dir, "Scripts", 'f2py')]

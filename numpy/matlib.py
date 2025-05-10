@@ -18,8 +18,8 @@ from numpy import *  # noqa: F403
 
 __version__ = np.__version__
 
-__all__ = np.__all__[:] # copy numpy namespace
-__all__ += ['rand', 'randn', 'repmat']
+__all__ = ['rand', 'randn', 'repmat']
+__all__ += np.__all__
 
 def empty(shape, dtype=None, order='C'):
     """Return a new matrix of given shape and type, without initializing entries.
@@ -37,14 +37,17 @@ def empty(shape, dtype=None, order='C'):
 
     See Also
     --------
-    empty_like, zeros
+    numpy.empty : Equivalent array function.
+    matlib.zeros : Return a matrix of zeros.
+    matlib.ones : Return a matrix of ones.
 
     Notes
     -----
-    `empty`, unlike `zeros`, does not set the matrix values to zero,
-    and may therefore be marginally faster.  On the other hand, it requires
-    the user to manually set all the values in the array, and should be
-    used with caution.
+    Unlike other matrix creation functions (e.g. `matlib.zeros`,
+    `matlib.ones`), `matlib.empty` does not initialize the values of the
+    matrix, and may therefore be marginally faster. However, the values
+    stored in the newly allocated matrix are arbitrary. For reproducible
+    behavior, be sure to set each element of the matrix before reading.
 
     Examples
     --------
@@ -148,7 +151,7 @@ def zeros(shape, dtype=None, order='C'):
     a.fill(0)
     return a
 
-def identity(n,dtype=None):
+def identity(n, dtype=None):
     """
     Returns the square identity matrix of given size.
 
@@ -179,12 +182,12 @@ def identity(n,dtype=None):
             [0, 0, 1]])
 
     """
-    a = array([1]+n*[0], dtype=dtype)
+    a = array([1] + n * [0], dtype=dtype)
     b = empty((n, n), dtype=dtype)
     b.flat = a
     return b
 
-def eye(n,M=None, k=0, dtype=float, order='C'):
+def eye(n, M=None, k=0, dtype=float, order='C'):
     """
     Return a matrix with ones on the diagonal and zeros elsewhere.
 
@@ -203,8 +206,6 @@ def eye(n,M=None, k=0, dtype=float, order='C'):
     order : {'C', 'F'}, optional
         Whether the output should be stored in row-major (C-style) or
         column-major (Fortran-style) order in memory.
-
-        .. versionadded:: 1.14.0
 
     Returns
     -------

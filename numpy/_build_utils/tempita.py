@@ -3,10 +3,7 @@ import sys
 import os
 import argparse
 
-from Cython import Tempita as tempita
-
-# XXX: If this import ever fails (does it really?), vendor either
-# cython.tempita or numpy/npy_tempita.
+import tempita
 
 
 def process_tempita(fromfile, outfile=None):

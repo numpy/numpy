@@ -1,12 +1,12 @@
 =====================================
-Roadmap & NumPy Enhancement Proposals
+Roadmap & NumPy enhancement proposals
 =====================================
 
 This page provides an overview of development priorities for NumPy.
 Specifically, it contains a roadmap with a higher-level overview, as
 well as NumPy Enhancement Proposals (NEPs)—suggested changes
-to the library—in various stages of discussion or completion (see `NEP
-0 <nep-0000>`__).
+to the library—in various stages of discussion or completion.
+See :doc:`nep-0000` for more informations about NEPs.
 
 Roadmap
 -------
@@ -15,9 +15,8 @@ Roadmap
 
    The Scope of NumPy <scope>
    Current roadmap <roadmap>
-   Wish list <https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22>
 
-NumPy Enhancement Proposals (NEPs)
+NumPy enhancement proposals (NEPs)
 ----------------------------------
 
 .. toctree::

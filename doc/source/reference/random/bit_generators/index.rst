@@ -1,6 +1,8 @@
 .. currentmodule:: numpy.random
 
-Bit Generators
+.. _random-bit-generators:
+
+Bit generators
 ==============
 
 The random values produced by :class:`~Generator`
@@ -32,9 +34,9 @@ The included BitGenerators are:
   fastest generator of the four. See the `SFC author's page`_ for (a little)
   more detail.
 
-.. _`PCG author's page`: http://www.pcg-random.org/
+.. _`PCG author's page`: https://www.pcg-random.org/
 .. _`Random123`: https://www.deshawresearch.com/resources_random123.html
-.. _`SFC author's page`: http://pracrand.sourceforge.net/RNG_engines.txt
+.. _`SFC author's page`: https://pracrand.sourceforge.net/RNG_engines.txt
 
 .. autosummary::
     :toctree: generated/
@@ -52,7 +54,7 @@ The included BitGenerators are:
 
 .. _seeding_and_entropy:
 
-Seeding and Entropy
+Seeding and entropy
 ===================
 
 A BitGenerator provides a stream of random values. In order to generate
@@ -89,7 +91,7 @@ user, which is up to you.
     # If the user did not provide a seed, it should return `None`.
     seed = get_user_seed()
     ss = SeedSequence(seed)
-    print('seed = {}'.format(ss.entropy))
+    print(f'seed = {ss.entropy}')
     bg = PCG64(ss)
 
 .. end_block

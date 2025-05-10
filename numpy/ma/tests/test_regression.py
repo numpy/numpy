@@ -21,15 +21,15 @@ class TestRegression:
         a = np.zeros((1, 1))
         b = np.zeros(a.shape, MaskType)
         c = masked_where(b, a)
-        a-c
+        a - c
 
     def test_masked_array_multiply(self):
         # Ticket #254
         a = np.ma.zeros((4, 1))
         a[2, 0] = np.ma.masked
         b = np.zeros((4, 2))
-        a*b
-        b*a
+        a * b
+        b * a
 
     def test_masked_array_repeat(self):
         # Ticket #271
@@ -87,7 +87,7 @@ class TestRegression:
         assert_array_equal(ma[[]], ma[:0])
 
     def test_masked_array_tobytes_fortran(self):
-        ma = np.ma.arange(4).reshape((2,2))
+        ma = np.ma.arange(4).reshape((2, 2))
         assert_array_equal(ma.tobytes(order='F'), ma.T.tobytes())
 
     def test_structured_array(self):

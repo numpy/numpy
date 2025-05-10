@@ -6,7 +6,7 @@ NEP 21 — Simplified and explicit advanced indexing
 
 :Author: Sebastian Berg
 :Author: Stephan Hoyer <shoyer@google.com>
-:Status: Draft
+:Status: Deferred
 :Type: Standards Track
 :Created: 2015-08-27
 
@@ -198,7 +198,7 @@ motivational use-cases for the general ideas and is likely a good start for
 anyone not intimately familiar with advanced indexing.
 
 
-Detailed Description
+Detailed description
 --------------------
 
 Proposed rules
@@ -219,7 +219,7 @@ be deduced:
    no transposing should be done. The axes created by the integer array
    indices are always inserted at the front, even for a single index.
 
-4. Boolean indexing is conceptionally outer indexing. Broadcasting
+4. Boolean indexing is conceptually outer indexing. Broadcasting
    together with other advanced indices in the manner of legacy
    indexing is generally not helpful or well defined.
    A user who wishes the "``nonzero``" plus broadcast behaviour can thus
@@ -377,7 +377,7 @@ instead of ``arr.oindex[indices]``). Functionally, this would be equivalent,
 but indexing is such a common operation that we think it is important to
 minimize syntax and worth implementing it directly on `ndarray` objects
 themselves. Indexing attributes also define a clear interface that is easier
-for alternative array implementations to copy, nonwithstanding ongoing
+for alternative array implementations to copy, notwithstanding ongoing
 efforts to make it easier to override NumPy functions [2]_.
 
 Discussion
@@ -649,15 +649,14 @@ eventualities.
 Copyright
 ---------
 
-This document is placed under the CC0 1.0 Universell (CC0 1.0) Public Domain Dedication [1]_.
+This document is placed under the CC0 1.0 Universal (CC0 1.0) Public Domain Dedication [1]_.
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] To the extent possible under law, the person who associated CC0 
    with this work has waived all copyright and related or neighboring
    rights to this work. The CC0 license may be found at
    https://creativecommons.org/publicdomain/zero/1.0/
-.. [2] e.g., see NEP 18,
-   http://www.numpy.org/neps/nep-0018-array-function-protocol.html
+.. [2] e.g., see :doc:`nep-0018-array-function-protocol`

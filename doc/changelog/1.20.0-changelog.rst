@@ -320,7 +320,7 @@ A total of 716 pull requests were merged for this release.
 * `#16472 <https://github.com/numpy/numpy/pull/16472>`__: DOC: Fixes for 18 broken links
 * `#16474 <https://github.com/numpy/numpy/pull/16474>`__: MAINT: use zip instead of range in piecewise
 * `#16476 <https://github.com/numpy/numpy/pull/16476>`__: ENH: add ``norm=forward,backward`` to numpy.fft functions
-* `#16482 <https://github.com/numpy/numpy/pull/16482>`__: SIMD: Optimize the performace of np.packbits in ARM-based machine.
+* `#16482 <https://github.com/numpy/numpy/pull/16482>`__: SIMD: Optimize the performance of np.packbits in ARM-based machine.
 * `#16485 <https://github.com/numpy/numpy/pull/16485>`__: BUG: Fix result when a gufunc output broadcasts the inputs.
 * `#16500 <https://github.com/numpy/numpy/pull/16500>`__: DOC: Point Contributing page to new NEP 45
 * `#16501 <https://github.com/numpy/numpy/pull/16501>`__: MAINT: make Py_SET_SIZE and Py_SET_TYPE macros a bit safer
@@ -487,7 +487,7 @@ A total of 716 pull requests were merged for this release.
 * `#16890 <https://github.com/numpy/numpy/pull/16890>`__: TST, BUG: Re-raise MemoryError exception in test_large_zip's...
 * `#16894 <https://github.com/numpy/numpy/pull/16894>`__: DOC: Fix wrong markups in ``arrays.dtypes``
 * `#16896 <https://github.com/numpy/numpy/pull/16896>`__: DOC: Remove links for C codes
-* `#16897 <https://github.com/numpy/numpy/pull/16897>`__: DOC: Fix the declarations of C fuctions
+* `#16897 <https://github.com/numpy/numpy/pull/16897>`__: DOC: Fix the declarations of C functions
 * `#16899 <https://github.com/numpy/numpy/pull/16899>`__: MNT: also use Py_SET_REFCNT instead of Py_REFCNT
 * `#16900 <https://github.com/numpy/numpy/pull/16900>`__: MAINT: Chaining exceptions in numpy/__init__.py
 * `#16907 <https://github.com/numpy/numpy/pull/16907>`__: DOC: update val to be scalar or array like optional closes #16901
@@ -737,7 +737,7 @@ A total of 716 pull requests were merged for this release.
 * `#17493 <https://github.com/numpy/numpy/pull/17493>`__: DOC: New round of NEP 42 edits
 * `#17497 <https://github.com/numpy/numpy/pull/17497>`__: DOC: Use consistent lowercase on docs landing page
 * `#17498 <https://github.com/numpy/numpy/pull/17498>`__: MAINT: fix incompatible type comparison in numpy.lib.utils.info
-* `#17501 <https://github.com/numpy/numpy/pull/17501>`__: BUG: Fix failures in master related to userdtype registeration
+* `#17501 <https://github.com/numpy/numpy/pull/17501>`__: BUG: Fix failures in master related to userdtype registration
 * `#17502 <https://github.com/numpy/numpy/pull/17502>`__: BUG: remove ``sys`` from the type stubs
 * `#17503 <https://github.com/numpy/numpy/pull/17503>`__: DOC: Fix empty 'C style guide' page
 * `#17504 <https://github.com/numpy/numpy/pull/17504>`__: DOC: Rename 'Quickstart tutorial'
@@ -902,7 +902,7 @@ A total of 716 pull requests were merged for this release.
 * `#18127 <https://github.com/numpy/numpy/pull/18127>`__: REL: Update 1.20.x after 1.19.5 release.
 * `#18130 <https://github.com/numpy/numpy/pull/18130>`__: BUG: Fix promotion of half and string
 * `#18146 <https://github.com/numpy/numpy/pull/18146>`__: BUG, MAINT: improve avx512 mask logical operations
-* `#18154 <https://github.com/numpy/numpy/pull/18154>`__: BUG: Promotion between strings and objects was assymetric
+* `#18154 <https://github.com/numpy/numpy/pull/18154>`__: BUG: Promotion between strings and objects was asymmetric
 * `#18192 <https://github.com/numpy/numpy/pull/18192>`__: MAINT: Use explicit reexports for numpy.typing objects
 * `#18201 <https://github.com/numpy/numpy/pull/18201>`__: BUG: Keep ignoring most errors during array-protocol lookup
 * `#18219 <https://github.com/numpy/numpy/pull/18219>`__: MAINT: random shuffle: warn on unrecognized objects, fix empty...

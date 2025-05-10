@@ -7,11 +7,10 @@ c: tuple[str, ...]
 d: int
 e: str
 
-def func(a: _NestedSequence[int]) -> None:
-    ...
+def func(a: _NestedSequence[int]) -> None: ...
 
-reveal_type(func(a))  # E: incompatible type
-reveal_type(func(b))  # E: incompatible type
-reveal_type(func(c))  # E: incompatible type
-reveal_type(func(d))  # E: incompatible type
-reveal_type(func(e))  # E: incompatible type
+reveal_type(func(a))  # type: ignore[arg-type, misc]
+reveal_type(func(b))  # type: ignore[arg-type, misc]
+reveal_type(func(c))  # type: ignore[arg-type, misc]
+reveal_type(func(d))  # type: ignore[arg-type, misc]
+reveal_type(func(e))  # type: ignore[arg-type, misc]

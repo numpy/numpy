@@ -1,16 +1,21 @@
 from typing import Any, TypeVar
 
 from numpy import dtype
-from numpy.ma import MaskedArray
+from . import MaskedArray
 
-__all__: list[str]
+__all__ = [
+    "MaskedRecords",
+    "mrecarray",
+    "fromarrays",
+    "fromrecords",
+    "fromtextfile",
+    "addfield",
+]
 
-# TODO: Set the `bound` to something more suitable once we
-# have proper shape support
-_ShapeType = TypeVar("_ShapeType", bound=Any)
-_DType_co = TypeVar("_DType_co", bound=dtype[Any], covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", covariant=True, bound=tuple[int, ...])
+_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
 
-class MaskedRecords(MaskedArray[_ShapeType, _DType_co]):
+class MaskedRecords(MaskedArray[_ShapeT_co, _DTypeT_co]):
     def __new__(
         cls,
         shape,

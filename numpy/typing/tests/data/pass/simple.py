@@ -2,18 +2,18 @@
 import operator
 
 import numpy as np
+import numpy.typing as npt
 from collections.abc import Iterable
 
 # Basic checks
 array = np.array([1, 2])
 
 
-def ndarray_func(x):
-    # type: (np.ndarray) -> np.ndarray
+def ndarray_func(x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     return x
 
 
-ndarray_func(np.array([1, 2]))
+ndarray_func(np.array([1, 2], dtype=np.float64))
 array == 1
 array.dtype == float
 
@@ -56,13 +56,12 @@ np.dtype(float) > np.dtype(float)
 np.dtype(float) >= np.dtype(("U", 10))
 
 # Iteration and indexing
-def iterable_func(x):
-    # type: (Iterable) -> Iterable
+def iterable_func(x: Iterable[object]) -> Iterable[object]:
     return x
 
 
 iterable_func(array)
-[element for element in array]
+list(array)
 iter(array)
 zip(array, array)
 array[1]
@@ -72,8 +71,13 @@ array[:] = 0
 
 array_2d = np.ones((3, 3))
 array_2d[:2, :2]
-array_2d[..., 0]
 array_2d[:2, :2] = 0
+array_2d[..., 0]
+array_2d[..., 0] = 2
+array_2d[-1, -1] = None
+
+array_obj = np.zeros(1, dtype=np.object_)
+array_obj[0] = slice(None)
 
 # Other special methods
 len(array)
@@ -81,8 +85,7 @@ str(array)
 array_scalar = np.array(1)
 int(array_scalar)
 float(array_scalar)
-# currently does not work due to https://github.com/python/typeshed/issues/1904
-# complex(array_scalar)
+complex(array_scalar)
 bytes(array_scalar)
 operator.index(array_scalar)
 bool(array_scalar)

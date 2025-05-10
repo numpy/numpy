@@ -1,4 +1,4 @@
-"""Tests for :mod:`numpy.core.fromnumeric`."""
+"""Tests for :mod:`numpy._core.fromnumeric`."""
 
 import numpy as np
 
@@ -7,7 +7,7 @@ B = np.array(1.0, ndmin=2, dtype=np.float32)
 A.setflags(write=False)
 B.setflags(write=False)
 
-a = np.bool_(True)
+a = np.bool(True)
 b = np.float32(1.0)
 c = 1.0
 d = np.array(1.0, dtype=np.float32)  # writeable
@@ -159,6 +159,12 @@ np.cumsum(c)
 np.cumsum(A)
 np.cumsum(B)
 
+np.cumulative_sum(a)
+np.cumulative_sum(b)
+np.cumulative_sum(c)
+np.cumulative_sum(A, axis=0)
+np.cumulative_sum(B, axis=0)
+
 np.ptp(b)
 np.ptp(c)
 np.ptp(B)
@@ -204,6 +210,12 @@ np.cumprod(b)
 np.cumprod(c)
 np.cumprod(A)
 np.cumprod(B)
+
+np.cumulative_prod(a)
+np.cumulative_prod(b)
+np.cumulative_prod(c)
+np.cumulative_prod(A, axis=0)
+np.cumulative_prod(B, axis=0)
 
 np.ndim(a)
 np.ndim(b)

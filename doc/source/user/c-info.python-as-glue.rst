@@ -2,6 +2,11 @@
 Using Python as glue
 ====================
 
+.. warning::
+   This was written in 2008 as part of the original
+   `Guide to NumPy <https://archive.org/details/NumPyBook>`_ book
+   by Travis E. Oliphant and is out of date.
+
 |    There is no conversation more boring than the one where everybody
 |    agrees.
 |    --- *Michel de Montaigne*
@@ -106,10 +111,10 @@ distributed with NumPy and allows easy integration with Fortran and
 next section.
 
 
-f2py
+F2PY
 ====
 
-F2py allows you to automatically construct an extension module that
+F2PY allows you to automatically construct an extension module that
 interfaces to routines in Fortran 77/90/95 code. It has the ability to
 parse Fortran 77/90/95 code and automatically generate Python
 signatures for the subroutines it encounters, or you can guide how the
@@ -139,7 +144,7 @@ written C-code.
 Cython
 ======
 
-`Cython <http://cython.org>`_ is a compiler for a Python dialect that adds
+`Cython <https://cython.org>`_ is a compiler for a Python dialect that adds
 (optional) static typing for speed, and allows mixing C or C++ code
 into your modules. It produces C or C++ extensions that can be compiled
 and imported in Python code.
@@ -328,7 +333,7 @@ C or Fortran code.
 ctypes
 ======
 
-`Ctypes <https://docs.python.org/3/library/ctypes.html>`_
+`ctypes <https://docs.python.org/3/library/ctypes.html>`_
 is a Python extension module, included in the stdlib, that
 allows you to call an arbitrary function in a shared library directly
 from Python. This approach allows you to interface with C-code directly
@@ -762,7 +767,7 @@ C-code. Its advantages for extending Python include
 
     - no need to learn a new syntax except Python and C
 
-    - allows re-use of C code
+    - allows reuse of C code
 
     - functionality in shared libraries written for other purposes can be
       obtained with a simple Python wrapper and search for the library.
@@ -826,7 +831,7 @@ file that defines the interface. Often, however, this ``.i`` file can
 be parts of the header itself. The interface usually needs a bit of
 tweaking to be very useful. This ability to parse C/C++ headers and
 auto-generate the interface still makes SWIG a useful approach to
-adding functionalilty from C/C++ into Python, despite the other
+adding functionality from C/C++ into Python, despite the other
 methods that have emerged that are more targeted to Python. SWIG can
 actually target extensions for several languages, but the typemaps
 usually have to be language-specific. Nonetheless, with modifications
@@ -879,10 +884,10 @@ need to be integrated cleanly into Python, consider learning about and using
 Boost.Python.
 
 
-PyFort
+Pyfort
 ------
 
-PyFort is a nice tool for wrapping Fortran and Fortran-like C-code
+Pyfort is a nice tool for wrapping Fortran and Fortran-like C-code
 into Python with support for Numeric arrays. It was written by Paul
 Dubois, a distinguished computer scientist and the very first
 maintainer of Numeric (now retired). It is worth mentioning in the

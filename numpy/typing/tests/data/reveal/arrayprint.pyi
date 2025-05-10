@@ -1,20 +1,25 @@
+import contextlib
 from collections.abc import Callable
-from typing import Any
+from typing import Any, assert_type
+
 import numpy as np
+import numpy.typing as npt
+from numpy._core.arrayprint import _FormatOptions
 
-AR: np.ndarray[Any, Any]
-func_float: Callable[[np.floating[Any]], str]
-func_int: Callable[[np.integer[Any]], str]
+AR: npt.NDArray[np.int64]
+func_float: Callable[[np.floating], str]
+func_int: Callable[[np.integer], str]
 
-reveal_type(np.get_printoptions())  # E: TypedDict
-reveal_type(np.array2string(  # E: str
-    AR, formatter={'float_kind': func_float, 'int_kind': func_int}
-))
-reveal_type(np.format_float_scientific(1.0))  # E: str
-reveal_type(np.format_float_positional(1))  # E: str
-reveal_type(np.array_repr(AR))  # E: str
-reveal_type(np.array_str(AR))  # E: str
+assert_type(np.get_printoptions(), _FormatOptions)
+assert_type(
+    np.array2string(AR, formatter={'float_kind': func_float, 'int_kind': func_int}),
+    str,
+)
+assert_type(np.format_float_scientific(1.0), str)
+assert_type(np.format_float_positional(1), str)
+assert_type(np.array_repr(AR), str)
+assert_type(np.array_str(AR), str)
 
-reveal_type(np.printoptions())  # E: contextlib._GeneratorContextManager
+assert_type(np.printoptions(), contextlib._GeneratorContextManager[_FormatOptions])
 with np.printoptions() as dct:
-    reveal_type(dct)  # E: TypedDict
+    assert_type(dct, _FormatOptions)

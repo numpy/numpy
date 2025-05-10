@@ -1,6 +1,0 @@
-Changed error message and type for bad ``axes`` argument to ``ufunc``
----------------------------------------------------------------------
-The error message and type when a wrong ``axes`` value is passed to
-``ufunc(..., axes=[...])``` has changed. The message is now more indicative of
-the problem, and if the value is mismatched an ``AxisError`` will be raised.
-A ``TypeError`` will still be raised for invalid input types.

@@ -1,4 +1,4 @@
-NumPy/SciPy Testing Guidelines
+NumPy/SciPy testing guidelines
 ==============================
 
 .. contents::
@@ -56,23 +56,41 @@ messages about which modules don't have tests::
   >>> numpy.test(label='full', verbose=2)  # or numpy.test('full', 2)
 
 Finally, if you are only interested in testing a subset of NumPy, for
-example, the ``core`` module, use the following::
+example, the ``_core`` module, use the following::
 
-  >>> numpy.core.test()
+  >>> numpy._core.test()
 
 Running tests from the command line
 -----------------------------------
 
-If you want to build NumPy in order to work on NumPy itself, use
-``runtests.py``.To run NumPy's full test suite::
+If you want to build NumPy in order to work on NumPy itself, use the ``spin``
+utility. To run NumPy's full test suite::
 
-  $ python runtests.py
+  $ spin test -m full
 
 Testing a subset of NumPy::
 
-  $python runtests.py -t numpy/core/tests
+  $ spin test -t numpy/_core/tests
 
 For detailed info on testing, see :ref:`testing-builds`
+
+
+Running doctests
+----------------
+
+NumPy documentation contains code examples, "doctests". To check that the examples
+are correct, install the ``scipy-doctest`` package::
+
+  $ pip install scipy-doctest
+
+and run one of::
+
+  $ spin check-docs -v
+  $ spin check-docs numpy/linalg
+  $ spin check-docs -- -k 'det and not slogdet'
+
+Note that the doctests are not run when you use ``spin test``.
+
 
 Other methods of running tests
 ------------------------------
@@ -82,8 +100,8 @@ Run tests using your favourite IDE such as `vscode`_ or `pycharm`_
 Writing your own tests
 ''''''''''''''''''''''
 
-If you are writing a package that you'd like to become part of NumPy,
-please write the tests as you develop the package.
+If you are writing code that you'd like to become part of NumPy,
+please write the tests as you develop your code.
 Every Python module, extension module, or subpackage in the NumPy
 package directory should have a corresponding ``test_<name>.py`` file.
 Pytest examines these files for test methods (named ``test*``) and test
@@ -114,10 +132,25 @@ a test class::
           with pytest.raises(ValueError, match='.*some matching regex.*'):
               ...
 
-Within these test methods, ``assert`` and related functions are used to test
-whether a certain assumption is valid. If the assertion fails, the test fails.
-``pytest`` internally rewrites the ``assert`` statement to give informative
-output when it fails, so should be preferred over the legacy variant
+Within these test methods, the ``assert`` statement or a specialized assertion
+function is used to test whether a certain assumption is valid. If the
+assertion fails, the test fails. Common assertion functions include:
+
+- :func:`numpy.testing.assert_equal` for testing exact elementwise equality
+  between a result array and a reference,
+- :func:`numpy.testing.assert_allclose` for testing near elementwise equality
+  between a result array and a reference (i.e. with specified relative and
+  absolute tolerances), and
+- :func:`numpy.testing.assert_array_less` for testing (strict) elementwise
+  ordering between a result array and a reference.
+
+By default, these assertion functions only compare the numerical values in the
+arrays. Consider using the ``strict=True`` option to check the array dtype
+and shape, too.
+
+When you need custom assertions, use the Python ``assert`` statement. Note that
+``pytest`` internally rewrites ``assert`` statements to give informative
+output when it fails, so it should be preferred over the legacy variant
 ``numpy.testing.assert_``. Whereas plain ``assert`` statements are ignored
 when running Python in optimized mode with ``-O``, this is not an issue when
 running tests with pytest.
@@ -125,16 +158,17 @@ running tests with pytest.
 Similarly, the pytest functions :func:`pytest.raises` and :func:`pytest.warns`
 should be preferred over their legacy counterparts
 :func:`numpy.testing.assert_raises` and :func:`numpy.testing.assert_warns`,
-since the pytest variants are more broadly used and allow more explicit
-targeting of warnings and errors when used with the ``match`` regex.
-
+which are more broadly used. These versions also accept a ``match``
+parameter, which should always be used to precisely target the intended
+warning or error.
 
 Note that ``test_`` functions or methods should not have a docstring, because
 that makes it hard to identify the test from the output of running the test
 suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
-(``#``) if necessary.
+(``#``) to describe the intent of the test and help the unfamiliar reader to
+interpret the code.
 
-Also since much of NumPy is legacy code that was
+Also, since much of NumPy is legacy code that was
 originally written without unit tests, there are still several modules
 that don't have tests yet. Please feel free to choose one of these
 modules and develop tests for it.
@@ -209,9 +243,21 @@ automatically via special arguments.  For example,  the special argument name
 Parametric tests
 ----------------
 
-One very nice feature of testing is allowing easy testing across a range
-of parameters - a nasty problem for standard unit tests. Use the
-``pytest.mark.parametrize`` decorator.
+One very nice feature of ``pytest`` is the ease of testing across a range
+of parameter values using the ``pytest.mark.parametrize`` decorator. For example,
+suppose you wish to test ``linalg.solve`` for all combinations of three
+array sizes and two data types::
+
+  @pytest.mark.parametrize('dimensionality', [3, 10, 25])
+  @pytest.mark.parametrize('dtype', [np.float32, np.float64])
+  def test_solve(dimensionality, dtype):
+      np.random.seed(842523)
+      A = np.random.random(size=(dimensionality, dimensionality)).astype(dtype)
+      b = np.random.random(size=dimensionality).astype(dtype)
+      x = np.linalg.solve(A, b)
+      eps = np.finfo(dtype).eps
+      assert_allclose(A @ x, b, rtol=eps*1e2, atol=0)
+      assert x.dtype == np.dtype(dtype)
 
 Doctests
 --------
@@ -293,46 +339,6 @@ found and run::
 
 Tips & Tricks
 '''''''''''''
-
-Creating many similar tests
----------------------------
-
-If you have a collection of tests that must be run multiple times with
-minor variations, it can be helpful to create a base class containing
-all the common tests, and then create a subclass for each variation.
-Several examples of this technique exist in NumPy; below are excerpts
-from one in `numpy/linalg/tests/test_linalg.py
-<https://github.com/numpy/numpy/blob/main/numpy/linalg/tests/test_linalg.py>`__::
-
-  class LinalgTestCase:
-      def test_single(self):
-          a = array([[1., 2.], [3., 4.]], dtype=single)
-          b = array([2., 1.], dtype=single)
-          self.do(a, b)
-
-      def test_double(self):
-          a = array([[1., 2.], [3., 4.]], dtype=double)
-          b = array([2., 1.], dtype=double)
-          self.do(a, b)
-
-      ...
-
-  class TestSolve(LinalgTestCase):
-      def do(self, a, b):
-          x = linalg.solve(a, b)
-          assert_allclose(b, dot(a, x))
-          assert imply(isinstance(b, matrix), isinstance(x, matrix))
-
-  class TestInv(LinalgTestCase):
-      def do(self, a, b):
-          a_inv = linalg.inv(a)
-          assert_allclose(dot(a, a_inv), identity(asarray(a).shape[0]))
-          assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
-
-In this case, we wanted to test solving a linear algebra problem using
-matrices of several data types, using ``linalg.solve`` and
-``linalg.inv``.  The common test cases (for single-precision,
-double-precision, etc. matrices) are collected in ``LinalgTestCase``.
 
 Known failures & skipping tests
 -------------------------------

@@ -45,12 +45,22 @@ body:
 
 - type: textarea
   attributes:
-    label: "Runtime information:"
+    label: "Python and NumPy Versions:"
     description: >
-      Output from `import sys, numpy; print(numpy.__version__); print(sys.version)`
-      If you are running NumPy 1.24+, also show `print(numpy.show_runtime())`
+      Output from `import sys, numpy; print(numpy.__version__); print(sys.version)`.
   validations:
     required: true
+
+- type: textarea
+  attributes:
+    label: "Runtime Environment:"
+    description: |
+      1. Install `threadpoolctl` (e.g. with `pip` or `conda`)
+      2. Paste the output of `import numpy; numpy.show_runtime()`.
+
+      Note: Only valid for NumPy 1.24 or newer.
+  validations:
+    required: false
 
 - type: textarea
   attributes:

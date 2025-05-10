@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import sys
 from typing import (
     get_type_hints,
     Union,
@@ -21,13 +20,10 @@ import numpy._typing as _npt
 class TypeTup(NamedTuple):
     typ: type
     args: tuple[type, ...]
-    origin: None | type
+    origin: type | None
 
 
-if sys.version_info >= (3, 9):
-    NDArrayTup = TypeTup(npt.NDArray, npt.NDArray.__args__, np.ndarray)
-else:
-    NDArrayTup = TypeTup(npt.NDArray, (), None)
+NDArrayTup = TypeTup(npt.NDArray, npt.NDArray.__args__, np.ndarray)
 
 TYPES = {
     "ArrayLike": TypeTup(npt.ArrayLike, npt.ArrayLike.__args__, Union),

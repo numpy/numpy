@@ -31,17 +31,18 @@ class Indexing(Benchmark):
     params = [[True, False],
               [1, 2],
               [10, 100, 1000]]
+
     def setup(self, masked, ndim, size):
         x = np.arange(size**ndim).reshape(ndim * (size,))
 
         if masked:
-            self.m = np.ma.array(x, mask=x%2 == 0)
+            self.m = np.ma.array(x, mask=x % 2 == 0)
         else:
             self.m = np.ma.array(x)
 
-        self.idx_scalar = (size//2,) * ndim
-        self.idx_0d = (size//2,) * ndim + (Ellipsis,)
-        self.idx_1d = (size//2,) * (ndim - 1)
+        self.idx_scalar = (size // 2,) * ndim
+        self.idx_0d = (size // 2,) * ndim + (Ellipsis,)
+        self.idx_1d = (size // 2,) * (ndim - 1)
 
     def time_scalar(self, masked, ndim, size):
         self.m[self.idx_scalar]
@@ -65,8 +66,8 @@ class UFunc(Benchmark):
         self.a_scalar = np.ma.masked if a_masked else 5
         self.b_scalar = np.ma.masked if b_masked else 3
 
-        self.a_1d = np.ma.array(x, mask=x%2 == 0 if a_masked else np.ma.nomask)
-        self.b_1d = np.ma.array(x, mask=x%3 == 0 if b_masked else np.ma.nomask)
+        self.a_1d = np.ma.array(x, mask=x % 2 == 0 if a_masked else np.ma.nomask)
+        self.b_1d = np.ma.array(x, mask=x % 3 == 0 if b_masked else np.ma.nomask)
 
         self.a_2d = self.a_1d.reshape(1, -1)
         self.b_2d = self.a_1d.reshape(-1, 1)
@@ -128,10 +129,10 @@ class MAFunctions1v(Benchmark):
               ['small', 'big']]
 
     def setup(self, mtype, func, msize):
-        xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        xs = 2.0 + np.random.uniform(-1, 1, 6).reshape(2, 3)
         m1 = [[True, False, False], [False, False, True]]
-        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
-        maskx = xl > 0.8
+        xl = 2.0 + np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
+        maskx = xl > 2.8
         self.nmxs = np.ma.array(xs, mask=m1)
         self.nmxl = np.ma.array(xl, mask=maskx)
 
@@ -152,7 +153,7 @@ class MAMethod0v(Benchmark):
     def setup(self, method, msize):
         xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
         m1 = [[True, False, False], [False, False, True]]
-        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        xl = np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
         maskx = xl > 0.8
         self.nmxs = np.ma.array(xs, mask=m1)
         self.nmxl = np.ma.array(xl, mask=maskx)
@@ -173,17 +174,17 @@ class MAFunctions2v(Benchmark):
 
     def setup(self, mtype, func, msize):
         # Small arrays
-        xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
-        ys = np.random.uniform(-1, 1, 6).reshape(2, 3)
+        xs = 2.0 + np.random.uniform(-1, 1, 6).reshape(2, 3)
+        ys = 2.0 + np.random.uniform(-1, 1, 6).reshape(2, 3)
         m1 = [[True, False, False], [False, False, True]]
         m2 = [[True, False, True], [False, False, True]]
         self.nmxs = np.ma.array(xs, mask=m1)
         self.nmys = np.ma.array(ys, mask=m2)
         # Big arrays
-        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
-        yl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
-        maskx = xl > 0.8
-        masky = yl < -0.8
+        xl = 2.0 + np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
+        yl = 2.0 + np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
+        maskx = xl > 2.8
+        masky = yl < 1.8
         self.nmxl = np.ma.array(xl, mask=maskx)
         self.nmyl = np.ma.array(yl, mask=masky)
 
@@ -203,7 +204,7 @@ class MAMethodGetItem(Benchmark):
     def setup(self, margs, msize):
         xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
         m1 = [[True, False, False], [False, False, True]]
-        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        xl = np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
         maskx = xl > 0.8
         self.nmxs = np.ma.array(xs, mask=m1)
         self.nmxl = np.ma.array(xl, mask=maskx)
@@ -213,7 +214,7 @@ class MAMethodGetItem(Benchmark):
             mdat = self.nmxs
         elif msize == 'big':
             mdat = self.nmxl
-        getattr(mdat, '__getitem__')(margs)
+        mdat.__getitem__(margs)
 
 
 class MAMethodSetItem(Benchmark):
@@ -225,7 +226,7 @@ class MAMethodSetItem(Benchmark):
     def setup(self, margs, mset, msize):
         xs = np.random.uniform(-1, 1, 6).reshape(2, 3)
         m1 = [[True, False, False], [False, False, True]]
-        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        xl = np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
         maskx = xl > 0.8
         self.nmxs = np.ma.array(xs, mask=m1)
         self.nmxl = np.ma.array(xl, mask=maskx)
@@ -235,7 +236,7 @@ class MAMethodSetItem(Benchmark):
             mdat = self.nmxs
         elif msize == 'big':
             mdat = self.nmxl
-        getattr(mdat, '__setitem__')(margs, mset)
+        mdat.__setitem__(margs, mset)
 
 
 class Where(Benchmark):
@@ -252,8 +253,8 @@ class Where(Benchmark):
         self.nmxs = np.ma.array(xs, mask=m1)
         self.nmys = np.ma.array(ys, mask=m2)
         # Big arrays
-        xl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
-        yl = np.random.uniform(-1, 1, 100*100).reshape(100, 100)
+        xl = np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
+        yl = np.random.uniform(-1, 1, 100 * 100).reshape(100, 100)
         maskx = xl > 0.8
         masky = yl < -0.8
         self.nmxl = np.ma.array(xl, mask=maskx)
@@ -265,3 +266,47 @@ class Where(Benchmark):
             fun(self.nmxs > 2, self.nmxs, self.nmys)
         elif msize == 'big':
             fun(self.nmxl > 2, self.nmxl, self.nmyl)
+
+
+class Cov(Benchmark):
+    param_names = ["size"]
+    params = [["small", "large"]]
+
+    def setup(self, size):
+        # Set the proportion of masked values.
+        prop_mask = 0.2
+        # Set up a "small" array with 10 vars and 10 obs.
+        rng = np.random.default_rng()
+        data = rng.random((10, 10), dtype=np.float32)
+        self.small = np.ma.array(data, mask=(data <= prop_mask))
+        # Set up a "large" array with 100 vars and 100 obs.
+        data = rng.random((100, 100), dtype=np.float32)
+        self.large = np.ma.array(data, mask=(data <= prop_mask))
+
+    def time_cov(self, size):
+        if size == "small":
+            np.ma.cov(self.small)
+        if size == "large":
+            np.ma.cov(self.large)
+
+
+class Corrcoef(Benchmark):
+    param_names = ["size"]
+    params = [["small", "large"]]
+
+    def setup(self, size):
+        # Set the proportion of masked values.
+        prop_mask = 0.2
+        # Set up a "small" array with 10 vars and 10 obs.
+        rng = np.random.default_rng()
+        data = rng.random((10, 10), dtype=np.float32)
+        self.small = np.ma.array(data, mask=(data <= prop_mask))
+        # Set up a "large" array with 100 vars and 100 obs.
+        data = rng.random((100, 100), dtype=np.float32)
+        self.large = np.ma.array(data, mask=(data <= prop_mask))
+
+    def time_corrcoef(self, size):
+        if size == "small":
+            np.ma.corrcoef(self.small)
+        if size == "large":
+            np.ma.corrcoef(self.large)

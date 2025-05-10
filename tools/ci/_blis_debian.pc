@@ -1,0 +1,8 @@
+libdir=/usr/lib/x86_64-linux-gnu/blis-pthread/
+includedir=/usr/include/x86_64-linux-gnu/blis-pthread
+
+Name: BLIS
+Description: BLAS-like Library Instantiation Software Framework - specific to NumPy CI job, needed until Debian ships blis.pc (see .github/workflows/linux_blas.yml)
+Version: 0.9.0-numpy-ci
+Libs: -L${libdir} -lblis
+Cflags: -I${includedir}

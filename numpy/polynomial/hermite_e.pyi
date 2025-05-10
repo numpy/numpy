@@ -1,46 +1,106 @@
-from typing import Any
+from typing import Any, Final, Literal as L, TypeVar
 
-from numpy import ndarray, dtype, int_
-from numpy.polynomial._polybase import ABCPolyBase
-from numpy.polynomial.polyutils import trimcoef
+import numpy as np
 
-__all__: list[str]
+from ._polybase import ABCPolyBase
+from ._polytypes import (
+    _Array1,
+    _Array2,
+    _FuncBinOp,
+    _FuncCompanion,
+    _FuncDer,
+    _FuncFit,
+    _FuncFromRoots,
+    _FuncGauss,
+    _FuncInteg,
+    _FuncLine,
+    _FuncPoly2Ortho,
+    _FuncPow,
+    _FuncRoots,
+    _FuncUnOp,
+    _FuncVal,
+    _FuncVal2D,
+    _FuncVal3D,
+    _FuncValFromRoots,
+    _FuncVander,
+    _FuncVander2D,
+    _FuncVander3D,
+    _FuncWeight,
+)
+from .polyutils import trimcoef as hermetrim
 
-hermetrim = trimcoef
+__all__ = [
+    "hermezero",
+    "hermeone",
+    "hermex",
+    "hermedomain",
+    "hermeline",
+    "hermeadd",
+    "hermesub",
+    "hermemulx",
+    "hermemul",
+    "hermediv",
+    "hermepow",
+    "hermeval",
+    "hermeder",
+    "hermeint",
+    "herme2poly",
+    "poly2herme",
+    "hermefromroots",
+    "hermevander",
+    "hermefit",
+    "hermetrim",
+    "hermeroots",
+    "HermiteE",
+    "hermeval2d",
+    "hermeval3d",
+    "hermegrid2d",
+    "hermegrid3d",
+    "hermevander2d",
+    "hermevander3d",
+    "hermecompanion",
+    "hermegauss",
+    "hermeweight",
+]
 
-def poly2herme(pol): ...
-def herme2poly(c): ...
+poly2herme: _FuncPoly2Ortho[L["poly2herme"]]
+herme2poly: _FuncUnOp[L["herme2poly"]]
 
-hermedomain: ndarray[Any, dtype[int_]]
-hermezero: ndarray[Any, dtype[int_]]
-hermeone: ndarray[Any, dtype[int_]]
-hermex: ndarray[Any, dtype[int_]]
+hermedomain: Final[_Array2[np.float64]]
+hermezero: Final[_Array1[np.int_]]
+hermeone: Final[_Array1[np.int_]]
+hermex: Final[_Array2[np.int_]]
 
-def hermeline(off, scl): ...
-def hermefromroots(roots): ...
-def hermeadd(c1, c2): ...
-def hermesub(c1, c2): ...
-def hermemulx(c): ...
-def hermemul(c1, c2): ...
-def hermediv(c1, c2): ...
-def hermepow(c, pow, maxpower=...): ...
-def hermeder(c, m=..., scl=..., axis=...): ...
-def hermeint(c, m=..., k = ..., lbnd=..., scl=..., axis=...): ...
-def hermeval(x, c, tensor=...): ...
-def hermeval2d(x, y, c): ...
-def hermegrid2d(x, y, c): ...
-def hermeval3d(x, y, z, c): ...
-def hermegrid3d(x, y, z, c): ...
-def hermevander(x, deg): ...
-def hermevander2d(x, y, deg): ...
-def hermevander3d(x, y, z, deg): ...
-def hermefit(x, y, deg, rcond=..., full=..., w=...): ...
-def hermecompanion(c): ...
-def hermeroots(c): ...
-def hermegauss(deg): ...
-def hermeweight(x): ...
+hermeline: _FuncLine[L["hermeline"]]
+hermefromroots: _FuncFromRoots[L["hermefromroots"]]
+hermeadd: _FuncBinOp[L["hermeadd"]]
+hermesub: _FuncBinOp[L["hermesub"]]
+hermemulx: _FuncUnOp[L["hermemulx"]]
+hermemul: _FuncBinOp[L["hermemul"]]
+hermediv: _FuncBinOp[L["hermediv"]]
+hermepow: _FuncPow[L["hermepow"]]
+hermeder: _FuncDer[L["hermeder"]]
+hermeint: _FuncInteg[L["hermeint"]]
+hermeval: _FuncVal[L["hermeval"]]
+hermeval2d: _FuncVal2D[L["hermeval2d"]]
+hermeval3d: _FuncVal3D[L["hermeval3d"]]
+hermevalfromroots: _FuncValFromRoots[L["hermevalfromroots"]]
+hermegrid2d: _FuncVal2D[L["hermegrid2d"]]
+hermegrid3d: _FuncVal3D[L["hermegrid3d"]]
+hermevander: _FuncVander[L["hermevander"]]
+hermevander2d: _FuncVander2D[L["hermevander2d"]]
+hermevander3d: _FuncVander3D[L["hermevander3d"]]
+hermefit: _FuncFit[L["hermefit"]]
+hermecompanion: _FuncCompanion[L["hermecompanion"]]
+hermeroots: _FuncRoots[L["hermeroots"]]
 
-class HermiteE(ABCPolyBase):
-    domain: Any
-    window: Any
-    basis_name: Any
+_ND = TypeVar("_ND", bound=Any)
+def _normed_hermite_e_n(
+    x: np.ndarray[_ND, np.dtype[np.float64]],
+    n: int | np.intp,
+) -> np.ndarray[_ND, np.dtype[np.float64]]: ...
+
+hermegauss: _FuncGauss[L["hermegauss"]]
+hermeweight: _FuncWeight[L["hermeweight"]]
+
+class HermiteE(ABCPolyBase[L["He"]]): ...

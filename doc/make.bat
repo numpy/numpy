@@ -47,8 +47,8 @@ Rem 	python -mvenv docenv
 Rem 	( \
 Rem             . docenv/bin/activate; \
 Rem             pip install -q --upgrade pip; \
-Rem             pip install -q  -r ../test_requirements.txt; \
-Rem             pip install -q  -r ../doc_requirements.txt; \
+Rem             pip install -q  -r ../requirements/test_requirements.txt; \
+Rem             pip install -q  -r ../requirements/doc_requirements.txt; \
 Rem             pip install -q ..; \
 Rem 	)
 goto end

@@ -7,9 +7,11 @@ import struct
 
 # Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
-if major == 0: BadListError = TypeError
-else:          BadListError = ValueError
+major, minor = [int(d) for d in np.__version__.split(".")[:2]]
+if major == 0:
+    BadListError = TypeError
+else:
+    BadListError = ValueError
 
 import Flat
 
@@ -19,7 +21,7 @@ class FlatTestCase(unittest.TestCase):
 
     def __init__(self, methodName="runTest"):
         unittest.TestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
     # Test the (type* INPLACE_ARRAY_FLAT, int DIM_FLAT) typemap
@@ -29,11 +31,11 @@ class FlatTestCase(unittest.TestCase):
         process = Flat.__dict__[self.typeStr + "Process"]
         pack_output = b''
         for i in range(10):
-            pack_output += struct.pack(self.typeCode,i)
+            pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
         y = x.copy()
         process(y)
-        self.assertEqual(np.all((x+1)==y),True)
+        self.assertEqual(np.all((x + 1) == y), True)
 
     def testProcess3D(self):
         "Test Process function 3D array"
@@ -41,12 +43,12 @@ class FlatTestCase(unittest.TestCase):
         process = Flat.__dict__[self.typeStr + "Process"]
         pack_output = b''
         for i in range(24):
-            pack_output += struct.pack(self.typeCode,i)
+            pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2,3,4)
+        x.shape = (2, 3, 4)
         y = x.copy()
         process(y)
-        self.assertEqual(np.all((x+1)==y),True)
+        self.assertEqual(np.all((x + 1) == y), True)
 
     def testProcess3DTranspose(self):
         "Test Process function 3D array, FORTRAN order"
@@ -54,12 +56,12 @@ class FlatTestCase(unittest.TestCase):
         process = Flat.__dict__[self.typeStr + "Process"]
         pack_output = b''
         for i in range(24):
-            pack_output += struct.pack(self.typeCode,i)
+            pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2,3,4)
+        x.shape = (2, 3, 4)
         y = x.copy()
         process(y.T)
-        self.assertEqual(np.all((x.T+1)==y.T),True)
+        self.assertEqual(np.all((x.T + 1) == y.T), True)
 
     def testProcessNoncontiguous(self):
         "Test Process function with non-contiguous array, which should raise an error"
@@ -67,10 +69,10 @@ class FlatTestCase(unittest.TestCase):
         process = Flat.__dict__[self.typeStr + "Process"]
         pack_output = b''
         for i in range(24):
-            pack_output += struct.pack(self.typeCode,i)
+            pack_output += struct.pack(self.typeCode, i)
         x = np.frombuffer(pack_output, dtype=self.typeCode)
-        x.shape = (2,3,4)
-        self.assertRaises(TypeError, process, x[:,:,0])
+        x.shape = (2, 3, 4)
+        self.assertRaises(TypeError, process, x[:, :, 0])
 
 
 ######################################################################
@@ -78,7 +80,7 @@ class FlatTestCase(unittest.TestCase):
 class scharTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "schar"
+        self.typeStr = "schar"
         self.typeCode = "b"
 
 ######################################################################
@@ -86,7 +88,7 @@ class scharTestCase(FlatTestCase):
 class ucharTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "uchar"
+        self.typeStr = "uchar"
         self.typeCode = "B"
 
 ######################################################################
@@ -94,7 +96,7 @@ class ucharTestCase(FlatTestCase):
 class shortTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "short"
+        self.typeStr = "short"
         self.typeCode = "h"
 
 ######################################################################
@@ -102,7 +104,7 @@ class shortTestCase(FlatTestCase):
 class ushortTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "ushort"
+        self.typeStr = "ushort"
         self.typeCode = "H"
 
 ######################################################################
@@ -110,7 +112,7 @@ class ushortTestCase(FlatTestCase):
 class intTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "int"
+        self.typeStr = "int"
         self.typeCode = "i"
 
 ######################################################################
@@ -118,7 +120,7 @@ class intTestCase(FlatTestCase):
 class uintTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "uint"
+        self.typeStr = "uint"
         self.typeCode = "I"
 
 ######################################################################
@@ -126,7 +128,7 @@ class uintTestCase(FlatTestCase):
 class longTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "long"
+        self.typeStr = "long"
         self.typeCode = "l"
 
 ######################################################################
@@ -134,7 +136,7 @@ class longTestCase(FlatTestCase):
 class ulongTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "ulong"
+        self.typeStr = "ulong"
         self.typeCode = "L"
 
 ######################################################################
@@ -142,7 +144,7 @@ class ulongTestCase(FlatTestCase):
 class longLongTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "longLong"
+        self.typeStr = "longLong"
         self.typeCode = "q"
 
 ######################################################################
@@ -150,7 +152,7 @@ class longLongTestCase(FlatTestCase):
 class ulongLongTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "ulongLong"
+        self.typeStr = "ulongLong"
         self.typeCode = "Q"
 
 ######################################################################
@@ -158,7 +160,7 @@ class ulongLongTestCase(FlatTestCase):
 class floatTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "float"
+        self.typeStr = "float"
         self.typeCode = "f"
 
 ######################################################################
@@ -166,10 +168,11 @@ class floatTestCase(FlatTestCase):
 class doubleTestCase(FlatTestCase):
     def __init__(self, methodName="runTest"):
         FlatTestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
 ######################################################################
+
 
 if __name__ == "__main__":
 

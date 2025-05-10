@@ -50,6 +50,7 @@ Views are created when elements can be addressed with offsets and strides
 in the original array. Hence, basic indexing always creates views.
 For example::
 
+    >>> import numpy as np
     >>> x = np.arange(10)
     >>> x
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -60,13 +61,14 @@ For example::
     >>> x
     array([ 0, 10, 11,  3,  4,  5,  6,  7,  8,  9])
     >>> y
-    array([10, 11])  
+    array([10, 11])
 
 Here, ``y`` gets changed when ``x`` is changed because it is a view.
 
 :ref:`advanced-indexing`, on the other hand, always creates copies.
 For example::
 
+    >>> import numpy as np
     >>> x = np.arange(9).reshape(3, 3)
     >>> x
     array([[0, 1, 2],
@@ -93,7 +95,7 @@ which in turn will not affect ``y`` at all::
            [6, 7, 8]])
 
 It must be noted here that during the assignment of ``x[[1, 2]]`` no view
-or copy is created as the assignment happens in-place. 
+or copy is created as the assignment happens in-place.
 
 
 Other operations
@@ -107,6 +109,7 @@ the reshaping cannot be done by modifying strides and requires a copy.
 In these cases, we can raise an error by assigning the new shape to the
 shape attribute of the array. For example::
 
+    >>> import numpy as np
     >>> x = np.ones((2, 3))
     >>> y = x.T  # makes the array non-contiguous
     >>> y
@@ -132,6 +135,7 @@ The :attr:`base <.ndarray.base>` attribute of the ndarray makes it easy
 to tell if an array is a view or a copy. The base attribute of a view returns
 the original array while it returns ``None`` for a copy.
 
+    >>> import numpy as np
     >>> x = np.arange(9)
     >>> x
     array([0, 1, 2, 3, 4, 5, 6, 7, 8])

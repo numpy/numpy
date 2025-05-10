@@ -54,7 +54,7 @@ There are three kinds of NEPs:
    Any meta-NEP is also considered a Process NEP.
 
 
-NEP Workflow
+NEP workflow
 ------------
 
 The NEP process begins with a new idea for NumPy.  It is highly
@@ -97,7 +97,7 @@ to be made available as PR to the NumPy repo (making sure to appropriately
 mark the PR as a WIP).
 
 
-Review and Resolution
+Review and resolution
 ^^^^^^^^^^^^^^^^^^^^^
 
 NEPs are discussed on the mailing list.  The possible paths of the
@@ -146,13 +146,14 @@ thread in the mailing list archives.
 
 NEPs can also be ``Superseded`` by a different NEP, rendering the
 original obsolete.  The ``Replaced-By`` and ``Replaces`` headers
-should be added to the original and new NEPs respectively.
+containing references to the original and new NEPs, like
+``:ref:`NEP#number``` should be added respectively.
 
 Process NEPs may also have a status of ``Active`` if they are never
 meant to be completed, e.g. NEP 0 (this NEP).
 
 
-How a NEP becomes Accepted
+How a NEP becomes accepted
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A NEP is ``Accepted`` by consensus of all interested contributors. We
@@ -220,7 +221,7 @@ to development practices and other details. The precise process followed in
 these cases will depend on the nature and purpose of the NEP being updated.
 
 
-Format and Template
+Format and template
 -------------------
 
 NEPs are UTF-8 encoded text files using the reStructuredText_ format.  Please
@@ -273,7 +274,7 @@ Discussion
 - https://mail.python.org/pipermail/numpy-discussion/2017-December/077481.html
 
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. [1] This historical record is available by the normal git commands

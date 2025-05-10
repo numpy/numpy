@@ -4,6 +4,7 @@ from numpy import array
 from . import util
 
 
+@pytest.mark.slow
 class TestReturnComplex(util.F2PyTest):
     def check_function(self, t, tname):
         if tname in ["t0", "t8", "s0", "s8"]:
@@ -33,7 +34,7 @@ class TestReturnComplex(util.F2PyTest):
         assert abs(t(array([234 + 3j], "F")) - (234 + 3j)) <= err
         assert abs(t(array([234], "D")) - 234.0) <= err
 
-        # pytest.raises(TypeError, t, array([234], 'a1'))
+        # pytest.raises(TypeError, t, array([234], 'S1'))
         pytest.raises(TypeError, t, "abc")
 
         pytest.raises(IndexError, t, [])
@@ -55,11 +56,11 @@ class TestFReturnComplex(TestReturnComplex):
         util.getpath("tests", "src", "return_complex", "foo90.f90"),
     ]
 
-    @pytest.mark.parametrize("name", "t0,t8,t16,td,s0,s8,s16,sd".split(","))
+    @pytest.mark.parametrize("name", ["t0", "t8", "t16", "td", "s0", "s8", "s16", "sd"])
     def test_all_f77(self, name):
         self.check_function(getattr(self.module, name), name)
 
-    @pytest.mark.parametrize("name", "t0,t8,t16,td,s0,s8,s16,sd".split(","))
+    @pytest.mark.parametrize("name", ["t0", "t8", "t16", "td", "s0", "s8", "s16", "sd"])
     def test_all_f90(self, name):
         self.check_function(getattr(self.module.f90_return_complex, name),
                             name)

@@ -41,7 +41,7 @@ of also more complicated arrangements of data.
    arrays.ndarray
    arrays.scalars
    arrays.dtypes
-   arrays.indexing
+   arrays.promotion
    arrays.nditer
    arrays.classes
    maskedarray

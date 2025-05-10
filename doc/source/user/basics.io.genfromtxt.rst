@@ -58,7 +58,7 @@ Quite often, a single character marks the separation between columns.  For
 example, comma-separated files (CSV) use a comma (``,``) or a semicolon
 (``;``) as delimiter::
 
-   >>> data = u"1, 2, 3\n4, 5, 6"
+   >>> data = "1, 2, 3\n4, 5, 6"
    >>> np.genfromtxt(StringIO(data), delimiter=",")
    array([[1.,  2.,  3.],
           [4.,  5.,  6.]])
@@ -74,12 +74,12 @@ defined as a given number of characters.  In that case, we need to set
 ``delimiter`` to a single integer (if all the columns have the same
 size) or to a sequence of integers (if columns can have different sizes)::
 
-   >>> data = u"  1  2  3\n  4  5 67\n890123  4"
+   >>> data = "  1  2  3\n  4  5 67\n890123  4"
    >>> np.genfromtxt(StringIO(data), delimiter=3)
    array([[  1.,    2.,    3.],
           [  4.,    5.,   67.],
           [890.,  123.,    4.]])
-   >>> data = u"123456789\n   4  7 9\n   4567 9"
+   >>> data = "123456789\n   4  7 9\n   4567 9"
    >>> np.genfromtxt(StringIO(data), delimiter=(4, 3, 2))
    array([[1234.,   567.,    89.],
           [   4.,     7.,     9.],
@@ -94,7 +94,7 @@ individual entries are not stripped of leading nor trailing white spaces.
 This behavior can be overwritten by setting the optional argument
 ``autostrip`` to a value of ``True``::
 
-   >>> data = u"1, abc , 2\n 3, xxx, 4"
+   >>> data = "1, abc , 2\n 3, xxx, 4"
    >>> # Without autostrip
    >>> np.genfromtxt(StringIO(data), delimiter=",", dtype="|U5")
    array([['1', ' abc ', ' 2'],
@@ -114,7 +114,7 @@ string that marks the beginning of a comment.  By default,
 occur anywhere on the line.  Any character present after the comment
 marker(s) is simply ignored::
 
-   >>> data = u"""#
+   >>> data = """#
    ... # Skip me !
    ... # Skip me too !
    ... 1, 2
@@ -130,10 +130,6 @@ marker(s) is simply ignored::
           [5., 6.],
           [7., 8.],
           [9., 0.]])
-
-.. versionadded:: 1.7.0
-
-    When ``comments`` is set to ``None``, no lines are treated as comments.
 
 .. note::
 
@@ -154,7 +150,7 @@ of lines to skip at the beginning of the file, before any other action is
 performed.  Similarly, we can skip the last ``n`` lines of the file by
 using the ``skip_footer`` attribute and giving it a value of ``n``::
 
-   >>> data = u"\n".join(str(i) for i in range(10))
+   >>> data = "\n".join(str(i) for i in range(10))
    >>> np.genfromtxt(StringIO(data),)
    array([0.,  1.,  2.,  3.,  4.,  5.,  6.,  7.,  8.,  9.])
    >>> np.genfromtxt(StringIO(data),
@@ -178,7 +174,7 @@ integers behave the same as regular Python negative indexes.
 For example, if we want to import only the first and the last columns, we
 can use ``usecols=(0, -1)``::
 
-   >>> data = u"1 2 3\n4 5 6"
+   >>> data = "1 2 3\n4 5 6"
    >>> np.genfromtxt(StringIO(data), usecols=(0, -1))
    array([[1.,  3.],
           [4.,  6.]])
@@ -187,7 +183,7 @@ If the columns have names, we can also select which columns to import by
 giving their name to the ``usecols`` argument, either as a sequence
 of strings or a comma-separated string::
 
-   >>> data = u"1 2 3\n4 5 6"
+   >>> data = "1 2 3\n4 5 6"
    >>> np.genfromtxt(StringIO(data),
    ...               names="a, b, c", usecols=("a", "c"))
    array([(1., 3.), (4., 6.)], dtype=[('a', '<f8'), ('c', '<f8')])
@@ -330,20 +326,20 @@ correspond to the name of a standard attribute (like ``size`` or
 ``shape``), which would confuse the interpreter.  :func:`~numpy.genfromtxt`
 accepts three optional arguments that provide a finer control on the names:
 
-   ``deletechars``
-      Gives a string combining all the characters that must be deleted from
-      the name. By default, invalid characters are
-      ``~!@#$%^&*()-=+~\|]}[{';:
-      /?.>,<``.
-   ``excludelist``
-      Gives a list of the names to exclude, such as ``return``, ``file``,
-      ``print``...  If one of the input name is part of this list, an
-      underscore character (``'_'``) will be appended to it.
-   ``case_sensitive``
-      Whether the names should be case-sensitive (``case_sensitive=True``),
-      converted to upper case (``case_sensitive=False`` or
-      ``case_sensitive='upper'``) or to lower case
-      (``case_sensitive='lower'``).
+``deletechars``
+   Gives a string combining all the characters that must be deleted from
+   the name. By default, invalid characters are
+   ``~!@#$%^&*()-=+~\|]}[{';:
+   /?.>,<``.
+``excludelist``
+   Gives a list of the names to exclude, such as ``return``, ``file``,
+   ``print``...  If one of the input name is part of this list, an
+   underscore character (``'_'``) will be appended to it.
+``case_sensitive``
+   Whether the names should be case-sensitive (``case_sensitive=True``),
+   converted to upper case (``case_sensitive=False`` or
+   ``case_sensitive='upper'``) or to lower case
+   (``case_sensitive='lower'``).
 
 
 
@@ -370,8 +366,8 @@ single element of the wanted type.
 In the following example, the second column is converted from as string
 representing a percentage to a float between 0 and 1::
 
-   >>> convertfunc = lambda x: float(x.strip(b"%"))/100.
-   >>> data = u"1, 2.3%, 45.\n6, 78.9%, 0"
+   >>> convertfunc = lambda x: float(x.strip("%"))/100.
+   >>> data = "1, 2.3%, 45.\n6, 78.9%, 0"
    >>> names = ("i", "p", "n")
    >>> # General case .....
    >>> np.genfromtxt(StringIO(data), delimiter=",", names=names)
@@ -405,7 +401,7 @@ string into the corresponding float or into -999 if the string is empty.
 We need to explicitly strip the string from white spaces as it is not done
 by default::
 
-   >>> data = u"1, , 3\n 4, 5, 6"
+   >>> data = "1, , 3\n 4, 5, 6"
    >>> convert = lambda x: float(x.strip() or -999)
    >>> np.genfromtxt(StringIO(data), delimiter=",",
    ...               converters={1: convert})
@@ -436,16 +432,16 @@ more complex strings, such as ``"N/A"`` or ``"???"`` to represent missing
 or invalid data.  The ``missing_values`` argument accepts three kinds
 of values:
 
-   a string or a comma-separated string
-      This string will be used as the marker for missing data for all the
-      columns
-   a sequence of strings
-      In that case, each item is associated to a column, in order.
-   a dictionary
-      Values of the dictionary are strings or sequence of strings.  The
-      corresponding keys can be column indices (integers) or column names
-      (strings). In addition, the special key ``None`` can be used to
-      define a default applicable to all columns.
+a string or a comma-separated string
+   This string will be used as the marker for missing data for all the
+   columns
+a sequence of strings
+   In that case, each item is associated to a column, in order.
+a dictionary
+   Values of the dictionary are strings or sequence of strings.  The
+   corresponding keys can be column indices (integers) or column names
+   (strings). In addition, the special key ``None`` can be used to
+   define a default applicable to all columns.
 
 
 ``filling_values``
@@ -469,21 +465,21 @@ We can get a finer control on the conversion of missing values with the
 ``filling_values`` optional argument.  Like
 ``missing_values``, this argument accepts different kind of values:
 
-   a single value
-      This will be the default for all columns
-   a sequence of values
-      Each entry will be the default for the corresponding column
-   a dictionary
-      Each key can be a column index or a column name, and the
-      corresponding value should be a single object.  We can use the
-      special key ``None`` to define a default for all columns.
+a single value
+   This will be the default for all columns
+a sequence of values
+   Each entry will be the default for the corresponding column
+a dictionary
+   Each key can be a column index or a column name, and the
+   corresponding value should be a single object.  We can use the
+   special key ``None`` to define a default for all columns.
 
 In the following example, we suppose that the missing values are flagged
 with ``"N/A"`` in the first column and by ``"???"`` in the third column.
 We wish to transform these missing values to 0 if they occur in the first
 and second column, and to -999 if they occur in the last column::
 
-    >>> data = u"N/A, 2, 3\n4, ,???"
+    >>> data = "N/A, 2, 3\n4, ,???"
     >>> kwargs = dict(delimiter=",",
     ...               dtype=int,
     ...               names="a,b,c",
@@ -505,20 +501,3 @@ output array will then be a :class:`~numpy.ma.MaskedArray`.
 
 
 .. unpack=None, loose=True, invalid_raise=True)
-
-
-Shortcut functions
-==================
-
-In addition to :func:`~numpy.genfromtxt`, the ``numpy.lib.npyio`` module
-provides several convenience functions derived from
-:func:`~numpy.genfromtxt`.  These functions work the same way as the
-original, but they have different default values.
-
-``numpy.lib.npyio.recfromtxt``
-   Returns a standard :class:`numpy.recarray` (if ``usemask=False``) or a
-   ``numpy.ma.mrecords.MaskedRecords`` array (if ``usemaske=True``).  The
-   default dtype is ``dtype=None``, meaning that the types of each column
-   will be automatically determined.
-``numpy.lib.npyio.recfromcsv``
-   Like ``numpy.lib.npyio.recfromtxt``, but with a default ``delimiter=","``.

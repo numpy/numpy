@@ -1,5 +1,5 @@
 =====================================
-Roadmap & NumPy Enhancement Proposals
+Roadmap & NumPy enhancement proposals
 =====================================
 
 This page provides an overview of development priorities for NumPy.
@@ -16,10 +16,7 @@ Roadmap
    Index <index>
    The Scope of NumPy <scope>
    Current roadmap <roadmap>
-   Wishlist (opens new window) |wishlist_link|
+   Wishlist <https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22>
 
-.. |wishlist_link| raw:: html
-
-   <a href="https://github.com/numpy/numpy/issues?q=is%3Aopen+is%3Aissue+label%3A%2223+-+Wish+List%22" target=" blank">WishList</a>
 
 

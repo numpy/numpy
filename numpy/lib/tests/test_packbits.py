@@ -90,7 +90,6 @@ def test_packbits_large(bitorder):
         assert_array_equal(b, [128, 128, 128, 31, 30, 28, 24, 16, 0, 0, 0, 199,
                                198, 196, 192])
 
-
         arr = arr.reshape(36, 25)
         b = np.packbits(arr, axis=0)
         assert_equal(b.dtype, np.uint8)
@@ -196,7 +195,6 @@ def test_packbits_large(bitorder):
                                [ 74,  90, 131, 170, 192],
                                [ 88,  18, 163, 168, 128]])
 
-
     # result is the same if input is multiplied with a nonzero value
     for dtype in 'bBhHiIlLqQ':
         arr = np.array(a, dtype=dtype)
@@ -237,11 +235,10 @@ def test_pack_unpack_order():
     b_big = np.unpackbits(a, axis=1, bitorder='big')
     assert_array_equal(b, b_big)
     assert_array_equal(a, np.packbits(b_little, axis=1, bitorder='little'))
-    assert_array_equal(b[:,::-1], b_little)
+    assert_array_equal(b[:, ::-1], b_little)
     assert_array_equal(a, np.packbits(b_big, axis=1, bitorder='big'))
     assert_raises(ValueError, np.unpackbits, a, bitorder='r')
     assert_raises(TypeError, np.unpackbits, a, bitorder=10)
-
 
 
 def test_unpackbits_empty():
@@ -282,7 +279,7 @@ def test_unpackbits_large():
     assert_array_equal(np.packbits(np.unpackbits(d, axis=0), axis=0), d)
 
 
-class TestCount():
+class TestCount:
     x = np.array([
         [1, 0, 1, 0, 0, 1, 0],
         [0, 1, 1, 1, 0, 0, 0],
@@ -345,9 +342,9 @@ class TestCount():
 
     @pytest.mark.parametrize('kwargs', [
                     {}, {'count': None},
-                    {'bitorder' : 'little'},
+                    {'bitorder': 'little'},
                     {'bitorder': 'little', 'count': None},
-                    {'bitorder' : 'big'},
+                    {'bitorder': 'big'},
                     {'bitorder': 'big', 'count': None},
                     ])
     def test_axis_count(self, kwargs):

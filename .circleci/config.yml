@@ -8,12 +8,8 @@ version: 2.1
 _defaults: &defaults
   docker:
     # CircleCI maintains a library of pre-built images
-    # documented at https://circleci.com/docs/2.1/circleci-images/
-    # circleci/python3.8 images come with old versions of Doxygen(1.6.x),
-    # therefore a new base image chose instead to guarantee to
-    # have a newer version >= 1.8.10 to avoid warnings
-    # that related to the default behaviors or non-exist config options
-    - image: cimg/python:3.9
+    # documented at https://circleci.com/developer/images/image/cimg/python
+    - image: cimg/python:3.11.10
   working_directory: ~/repo
 
 
@@ -24,7 +20,7 @@ jobs:
       - checkout
 
       - run:
-          name: Check-skip
+          name: check skip
           command: |
             export git_log=$(git log --max-count=1 --pretty=format:"%B" | tr "\n" " ")
             echo "Got commit message:"
@@ -44,52 +40,36 @@ jobs:
       - run:
           name: update submodules
           command: |
-            git submodule init
-            git submodule update
+            git submodule update --init
 
       - run:
-          name: create virtual environment, install dependencies
+          name: install system dependencies
           command: |
             sudo apt-get update
-            #sudo apt-get install -y python3.9 python3.9-dev python3-venv graphviz texlive-fonts-recommended texlive-latex-recommended \
             sudo apt-get install -y graphviz texlive-fonts-recommended texlive-latex-recommended \
               texlive-latex-extra latexmk texlive-xetex texlive-lang-chinese doxygen
-            python3.9 -m venv venv
-            . venv/bin/activate
 
       - run:
-          name: build numpy
+          name: build NumPy
           command: |
+            python3.11 -m venv venv
             . venv/bin/activate
-            pip install --progress-bar=off --upgrade pip 'setuptools<49.2.0'
-            pip install --progress-bar=off -r test_requirements.txt
-            pip install --progress-bar=off -r doc_requirements.txt
-            pip install .
-
-      - run:
-          name: create release notes
-          command: |
-            . venv/bin/activate
-            VERSION=$(python -c "import setup; print(setup.VERSION)")
-            towncrier build --version $VERSION --yes
-            ./tools/ci/test_all_newsfragments_used.py
-
-      - run:
-          name: run doctests on documentation
-          command: |
-            . venv/bin/activate
-            (cd doc ; git submodule update --init)
-            python tools/refguide_check.py --rst
+            pip install --progress-bar=off -r requirements/test_requirements.txt \
+               -r requirements/build_requirements.txt \
+               -r requirements/ci_requirements.txt
+            # get newer, pre-release versions of critical packages
+            pip install --progress-bar=off --pre -r requirements/doc_requirements.txt
+            # then install numpy HEAD, which will override the version installed above
+            spin build --with-scipy-openblas=64 -j 2
 
       - run:
           name: build devdocs w/ref warnings
           command: |
             . venv/bin/activate
-            cd doc
             # Don't use -q, show warning summary"
-            SPHINXOPTS="-j2 -n" make -e html || echo "ignoring errors for now, see gh-13114"
-            if [[ $(find build/html -type f | wc -l) -lt 1000 ]]; then
-                echo "doc build failed: build/html is empty"
+            SPHINXOPTS="-W -n" spin docs
+            if [[ $(find doc/build/html -type f | wc -l) -lt 1000 ]]; then
+                echo "doc build failed: doc/build/html is empty"
                 exit -1
             fi
 
@@ -98,7 +78,7 @@ jobs:
           command: |
             . venv/bin/activate
             cd doc/neps
-            SPHINXOPTS="-j2 -q" make -e html
+            SPHINXOPTS="-n" make -e html || echo "ignoring errors for now"
 
       - store_artifacts:
           path: doc/build/html/
@@ -106,6 +86,19 @@ jobs:
       - store_artifacts:
           path: doc/neps/_build/html/
      #      destination: neps
+
+      - run:
+          name: check doctests
+          command: |
+            . venv/bin/activate
+            spin check-docs -v
+            spin check-tutorials -v
+            # Currently, this does two checks not done by check-docs:
+            #  - validates ReST blocks (via validate_rst_syntax)
+            #  - checks that all of a module's `__all__` is reflected in the
+            #    module-level docstring autosummary
+            echo calling python3 tools/refguide_check.py -v
+            python3 tools/refguide_check.py -v
 
       - persist_to_workspace:
           root: ~/repo

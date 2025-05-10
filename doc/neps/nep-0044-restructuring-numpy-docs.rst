@@ -19,7 +19,7 @@ This document proposes a restructuring of the NumPy Documentation, both in form
 and content, with the goal of making it more organized and discoverable for
 beginners and experienced users.
 
-Motivation and Scope
+Motivation and scope
 ====================
 
 See `here <https://numpy.org/devdocs/>`_ for the front page of the latest docs.
@@ -32,7 +32,7 @@ are mixed). We propose the following:
 - Adding an Explanations section for key concepts and techniques that require
   deeper descriptions, some of which will be rearranged from the Reference Guide.
 
-Usage and Impact
+Usage and impact
 ================
 
 The documentation is a fundamental part of any software project, especially
@@ -86,7 +86,8 @@ up-to-date official documentation that can be easily updated.
 Status and ideas of each type of doc content
 --------------------------------------------
 
-**Reference guide**
+Reference guide
+^^^^^^^^^^^^^^^
 
 NumPy has a quite complete reference guide. All functions are documented, most
 have examples, and most are cross-linked well with *See Also* sections. Further
@@ -94,7 +95,8 @@ improving the reference guide is incremental work that can be done (and is being
 done) by many people. There are, however, many explanations in the reference
 guide. These can be moved to a more dedicated Explanations section on the docs.
 
-**How-to guides**
+How-to guides
+^^^^^^^^^^^^^
 
 NumPy does not have many how-to's. The subclassing and array ducktyping section
 may be an example of a how-to. Others that could be added are:
@@ -106,7 +108,8 @@ may be an example of a how-to. Others that could be added are:
 - Performance (memory layout, profiling, use with Numba, Cython, or Pythran)
 - Writing generic code that works with NumPy, Dask, CuPy, pydata/sparse, etc.
 
-**Explanations**
+Explanations
+^^^^^^^^^^^^
 
 There is a reasonable amount of content on fundamental NumPy concepts such as
 indexing, vectorization, broadcasting, (g)ufuncs, and dtypes. This could be
@@ -114,7 +117,7 @@ organized better and clarified to ensure it's really about explaining the concep
 and not mixed with tutorial or how-to like content.
 
 There are few explanations about anything other than those fundamental NumPy
-concepts. 
+concepts.
 
 Some examples of concepts that could be expanded:
 
@@ -125,7 +128,8 @@ Some examples of concepts that could be expanded:
 In addition, there are many explanations in the Reference Guide, which should be
 moved to this new dedicated Explanations section.
 
-**Tutorials**
+Tutorials
+^^^^^^^^^
 
 There's a lot of scope for writing better tutorials. We have a new *NumPy for
 absolute beginners tutorial* [3]_ (GSoD project of Anne Bonner). In addition we
@@ -154,21 +158,17 @@ propose a *How to write a tutorial* document, which would help users contribute
 new high-quality content to the documentation.
 
 Data sets
----------
+~~~~~~~~~
 
 Using interesting data in the NumPy docs requires giving all users access to
 that data, either inside NumPy or in a separate package. The former is not the
 best idea, since it's hard to do without increasing the size of NumPy
-significantly. Even for SciPy there has so far been no consensus on this (see
-`scipy PR 8707 <https://github.com/scipy/scipy/pull/8707>`_ on adding a new
-``scipy.datasets`` subpackage).
+significantly.
 
-So we'll aim for a new (pure Python) package, named ``numpy-datasets`` or
-``scipy-datasets`` or something similar. That package can take some lessons from
-how, e.g., scikit-learn ships data sets. Small data sets can be included in the
-repo, large data sets can be accessed via a downloader class or function.
+Whenever possible, documentation pages should use examples from the
+:mod:`scipy.datasets` package.
 
-Related Work
+Related work
 ============
 
 Some examples of documentation organization in other projects:
@@ -230,7 +230,7 @@ Discussion around this NEP can be found on the NumPy mailing list:
 
 - https://mail.python.org/pipermail/numpy-discussion/2020-February/080419.html
 
-References and Footnotes
+References and footnotes
 ========================
 
 .. [1] `Diátaxis - A systematic framework for technical documentation authoring <https://diataxis.fr/>`_

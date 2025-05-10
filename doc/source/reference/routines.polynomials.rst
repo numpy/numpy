@@ -18,14 +18,14 @@ Therefore :mod:`numpy.polynomial` is recommended for new coding.
 .. note:: **Terminology**
 
    The term *polynomial module* refers to the old API defined in
-   `numpy.lib.polynomial`, which includes the :class:`numpy.poly1d` class and
+   ``numpy.lib.polynomial``, which includes the :class:`numpy.poly1d` class and
    the polynomial functions prefixed with *poly* accessible from the `numpy`
    namespace (e.g. `numpy.polyadd`, `numpy.polyval`, `numpy.polyfit`, etc.).
 
    The term *polynomial package* refers to the new API defined in 
    `numpy.polynomial`, which includes the convenience classes for the
-   different kinds of polynomials (`numpy.polynomial.Polynomial`,
-   `numpy.polynomial.Chebyshev`, etc.).
+   different kinds of polynomials (:class:`~numpy.polynomial.polynomial.Polynomial`,
+   :class:`~numpy.polynomial.chebyshev.Chebyshev`, etc.).
 
 Transitioning from `numpy.poly1d` to `numpy.polynomial`
 -------------------------------------------------------
@@ -83,21 +83,25 @@ convert from the legacy polynomial API to the new.
 For example, the following demonstrates how you would convert a `numpy.poly1d`
 instance representing the expression :math:`x^{2} + 2x + 3` to a
 `~numpy.polynomial.polynomial.Polynomial` instance representing the same
-expression::
+expression:
+
+.. try_examples::
+
+    >>> import numpy as np
 
     >>> p1d = np.poly1d([1, 2, 3])
     >>> p = np.polynomial.Polynomial(p1d.coef[::-1])
 
-In addition to the ``coef`` attribute, polynomials from the polynomial
-package also have ``domain`` and ``window`` attributes.
-These attributes are most relevant when fitting
-polynomials to data, though it should be noted that polynomials with
-different ``domain`` and ``window`` attributes are not considered equal, and
-can't be mixed in arithmetic::
+    In addition to the ``coef`` attribute, polynomials from the polynomial
+    package also have ``domain`` and ``window`` attributes.
+    These attributes are most relevant when fitting
+    polynomials to data, though it should be noted that polynomials with
+    different ``domain`` and ``window`` attributes are not considered equal, and
+    can't be mixed in arithmetic:
 
     >>> p1 = np.polynomial.Polynomial([1, 2, 3])
     >>> p1
-    Polynomial([1., 2., 3.], domain=[-1,  1], window=[-1,  1], symbol='x')
+    Polynomial([1., 2., 3.], domain=[-1.,  1.], window=[-1.,  1.], symbol='x')
     >>> p2 = np.polynomial.Polynomial([1, 2, 3], domain=[-2, 2])
     >>> p1 == p2
     False
@@ -146,7 +150,7 @@ coefficients in the unscaled data domain.
 
     p_fitted.convert()
 
-Documentation for the `~numpy.polynomial` Package
+Documentation for the `~numpy.polynomial` package
 -------------------------------------------------
 
 In addition to standard power series polynomials, the polynomial package
@@ -177,7 +181,7 @@ polynomial individually can be found in the corresponding module documentation:
    routines.polynomials.polyutils
 
 
-Documentation for Legacy Polynomials
+Documentation for legacy polynomials
 ------------------------------------
 
 .. toctree::

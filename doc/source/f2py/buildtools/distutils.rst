@@ -4,6 +4,12 @@
 Using via `numpy.distutils`
 =============================
 
+.. legacy::
+
+   ``distutils`` has been removed in favor of ``meson`` see
+   :ref:`distutils-status-migration`.
+
+
 .. currentmodule:: numpy.distutils.core
 
 :mod:`numpy.distutils` is part of NumPy, and extends the standard Python
@@ -75,4 +81,4 @@ Extensions to ``distutils``
 
   .. code-block:: bash
 
-     python -m numpy.f2py -c --help-fcompiler
+     python -m numpy.f2py -c --backend distutils --help-fcompiler

@@ -132,16 +132,16 @@ Unlike ``__array_ufunc__``, there are no high-level guarantees about the
 type of ``func``, or about which of ``args`` and ``kwargs`` may contain objects
 implementing the array API.
 
-As a convenience for ``__array_function__`` implementors, ``types`` provides all
+As a convenience for ``__array_function__`` implementers, ``types`` provides all
 argument types with an ``'__array_function__'`` attribute. This
-allows implementors to quickly identify cases where they should defer to
+allows implementers to quickly identify cases where they should defer to
 ``__array_function__`` implementations on other arguments.
 The type of ``types`` is intentionally vague:
 ``frozenset`` would most closely match intended use, but we may use ``tuple``
 instead for performance reasons. In any case, ``__array_function__``
 implementations should not rely on the iteration order of ``types``, which
 would violate a well-defined "Type casting hierarchy" (as described in
-`NEP-13 <https://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_).
+:ref:`NEP-13 <NEP13>`).
 
 Example for a project implementing the NumPy API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,7 +300,7 @@ are valid then which has precedence?
 
 For the most part, the rules for dispatch with ``__array_function__``
 match those for ``__array_ufunc__`` (see
-`NEP-13 <https://www.numpy.org/neps/nep-0013-ufunc-overrides.html>`_).
+:ref:`NEP-13 <NEP13>`).
 In particular:
 
 -  NumPy will gather implementations of ``__array_function__`` from all
@@ -487,7 +487,7 @@ gymnastics when we decided to add new optional arguments, e.g., the new
             kwargs['keepdims'] = keepdims
         return array.sum(..., **kwargs)
 
-For ``__array_function__`` implementors, this also means that it is possible
+For ``__array_function__`` implementers, this also means that it is possible
 to implement even existing optional arguments incrementally, and only in cases
 where it makes sense. For example, a library implementing immutable arrays
 would not be required to explicitly include an unsupported ``out`` argument in
@@ -819,7 +819,7 @@ don't think it makes sense to do so now, because code generation involves
 tradeoffs and NumPy's experience with type annotations is still
 `quite limited <https://github.com/numpy/numpy-stubs>`_. Even if NumPy
 was Python 3 only (which will happen
-`sometime in 2019 <http://www.numpy.org/neps/nep-0014-dropping-python2.7-proposal.html>`_),
+:ref:`sometime in 2019 <NEP14>`),
 we aren't ready to annotate NumPy's codebase directly yet.
 
 Support for implementation-specific arguments

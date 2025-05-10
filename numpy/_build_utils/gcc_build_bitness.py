@@ -3,7 +3,7 @@
 """
 
 import re
-from subprocess import run, PIPE
+from subprocess import run
 
 
 def main():

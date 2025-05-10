@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # System imports
-from   math           import sqrt
+from math import sqrt
 import sys
 import unittest
 
 # Import NumPy
 import numpy as np
-major, minor = [ int(d) for d in np.__version__.split(".")[:2] ]
-if major == 0: BadListError = TypeError
-else:          BadListError = ValueError
+major, minor = [int(d) for d in np.__version__.split(".")[:2]]
+if major == 0:
+    BadListError = TypeError
+else:
+    BadListError = ValueError
 
 import Tensor
 
@@ -18,9 +20,9 @@ class TensorTestCase(unittest.TestCase):
 
     def __init__(self, methodName="runTests"):
         unittest.TestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
-        self.result   = sqrt(28.0/8)
+        self.result = sqrt(28.0 / 8)
 
     # Test (type IN_ARRAY3[ANY][ANY][ANY]) typemap
     def testNorm(self):
@@ -270,97 +272,97 @@ class TensorTestCase(unittest.TestCase):
 class scharTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "schar"
+        self.typeStr = "schar"
         self.typeCode = "b"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class ucharTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "uchar"
+        self.typeStr = "uchar"
         self.typeCode = "B"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class shortTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "short"
+        self.typeStr = "short"
         self.typeCode = "h"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class ushortTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "ushort"
+        self.typeStr = "ushort"
         self.typeCode = "H"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class intTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "int"
+        self.typeStr = "int"
         self.typeCode = "i"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class uintTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "uint"
+        self.typeStr = "uint"
         self.typeCode = "I"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class longTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "long"
+        self.typeStr = "long"
         self.typeCode = "l"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class ulongTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "ulong"
+        self.typeStr = "ulong"
         self.typeCode = "L"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class longLongTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "longLong"
+        self.typeStr = "longLong"
         self.typeCode = "q"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class ulongLongTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "ulongLong"
+        self.typeStr = "ulongLong"
         self.typeCode = "Q"
-        self.result   = int(self.result)
+        self.result = int(self.result)
 
 ######################################################################
 
 class floatTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "float"
+        self.typeStr = "float"
         self.typeCode = "f"
 
 ######################################################################
@@ -368,10 +370,11 @@ class floatTestCase(TensorTestCase):
 class doubleTestCase(TensorTestCase):
     def __init__(self, methodName="runTest"):
         TensorTestCase.__init__(self, methodName)
-        self.typeStr  = "double"
+        self.typeStr = "double"
         self.typeCode = "d"
 
 ######################################################################
+
 
 if __name__ == "__main__":
 

@@ -27,7 +27,7 @@ typedef CBLAS_INT        fortran_int;
 #else
 #error No compatible 64-bit integer size. \
        Please contact NumPy maintainers and give detailed information about your \
-       compiler and platform, or set NPY_USE_BLAS64_=0
+       compiler and platform, or dont try to use ILP64 BLAS
 #endif
 
 #else
@@ -400,13 +400,18 @@ PyMODINIT_FUNC PyInit_lapack_lite(void)
     }
     import_array();
     d = PyModule_GetDict(m);
-    LapackError = PyErr_NewException("lapack_lite.LapackError", NULL, NULL);
+    LapackError = PyErr_NewException("numpy.linalg.lapack_lite.LapackError", NULL, NULL);
     PyDict_SetItemString(d, "LapackError", LapackError);
 
 #ifdef HAVE_BLAS_ILP64
     PyDict_SetItemString(d, "_ilp64", Py_True);
 #else
     PyDict_SetItemString(d, "_ilp64", Py_False);
+#endif
+
+#if Py_GIL_DISABLED
+    // signal this module supports running with the GIL disabled
+    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif
 
     return m;

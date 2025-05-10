@@ -13,14 +13,9 @@ Useful info can be found in the following locations:
 
 * **NumPy docs**
 
-  - https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst
-  - https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst
-  - https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst
-
-* **Release scripts**
-
-  - https://github.com/numpy/numpy-vendor
-
+  - `HOWTO_RELEASE.rst <https://github.com/numpy/numpy/blob/main/doc/HOWTO_RELEASE.rst>`_
+  - `RELEASE_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/RELEASE_WALKTHROUGH.rst>`_
+  - `BRANCH_WALKTHROUGH.rst <https://github.com/numpy/numpy/blob/main/doc/BRANCH_WALKTHROUGH.rst>`_
 
 Supported platforms and versions
 ================================
@@ -47,7 +42,7 @@ installers may be available for a subset of these versions (see below).
 
 * **Linux**
 
-  We build and ship `manylinux2014 <https://www.python.org/dev/peps/pep-0513>`_
+  We build and ship `manylinux_2_28 <https://www.python.org/dev/peps/pep-0600>`_
   wheels for NumPy.  Many Linux distributions include their own binary builds
   of NumPy.
 
@@ -134,7 +129,7 @@ What is released
 ================
 
 * **Wheels**
-  We currently support Python 3.8-3.10 on Windows, OSX, and Linux.
+  We currently support Python 3.10-3.13 on Windows, OSX, and Linux.
 
   * Windows: 32-bit and 64-bit wheels built using Github actions;
   * OSX: x64_86 and arm64 OSX wheels built using Github actions;
@@ -188,23 +183,23 @@ Check the C API version number
 ------------------------------
 The C API version needs to be tracked in three places
 
-- numpy/core/setup_common.py
-- numpy/core/code_generators/cversions.txt
-- numpy/core/include/numpy/numpyconfig.h
+- numpy/_core/meson.build
+- numpy/_core/code_generators/cversions.txt
+- numpy/_core/include/numpy/numpyconfig.h
 
 There are three steps to the process.
 
-1. If the API has changed, increment the C_API_VERSION in setup_common.py. The
-   API is unchanged only if any code compiled against the current API will be
-   backward compatible with the last released NumPy version. Any changes to
-   C structures or additions to the public interface will make the new API
-   not backward compatible.
+1. If the API has changed, increment the C_API_VERSION in
+   numpy/core/meson.build. The API is unchanged only if any code compiled
+   against the current API will be backward compatible with the last released
+   NumPy version. Any changes to C structures or additions to the public
+   interface will make the new API not backward compatible.
 
 2. If the C_API_VERSION in the first step has changed, or if the hash of
    the API has changed, the cversions.txt file needs to be updated. To check
-   the hash, run the script numpy/core/cversions.py and note the API hash that
+   the hash, run the script numpy/_core/cversions.py and note the API hash that
    is printed. If that hash does not match the last hash in
-   numpy/core/code_generators/cversions.txt the hash has changed. Using both
+   numpy/_core/code_generators/cversions.txt the hash has changed. Using both
    the appropriate C_API_VERSION and hash, add a new entry to cversions.txt.
    If the API version was not changed, but the hash differs, you will need to
    comment out the previous entry for that API version. For instance, in NumPy
@@ -215,21 +210,21 @@ There are three steps to the process.
    If steps 1 and 2 are done correctly, compiling the release should not give
    a warning "API mismatch detect at the beginning of the build".
 
-3. The numpy/core/include/numpy/numpyconfig.h will need a new
+3. The numpy/_core/include/numpy/numpyconfig.h will need a new
    NPY_X_Y_API_VERSION macro, where X and Y are the major and minor version
    numbers of the release. The value given to that macro only needs to be
    increased from the previous version if some of the functions or macros in
    the include files were deprecated.
 
-The C ABI version number in numpy/core/setup_common.py should only be
-updated for a major release.
+The C ABI version number in numpy/_core/meson.build should only be updated
+for a major release.
 
 
 Check the release notes
 -----------------------
 Use `towncrier`_ to build the release note and
 commit the changes. This will remove all the fragments from
-``doc/release/upcoming_changes`` and add ``doc/release/<version>-note.rst``.
+``doc/release/upcoming_changes`` and add ``doc/release/<version>-note.rst``.::
 
     towncrier build --version "<version>"
     git commit -m"Create release note"

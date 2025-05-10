@@ -5,13 +5,14 @@
 :contact: pierregm_at_uga_dot_edu
 
 """
+import pickle
+
 import numpy as np
 import numpy.ma as ma
-from numpy import recarray
 from numpy.ma import masked, nomask
 from numpy.testing import temppath
-from numpy.core.records import (
-    fromrecords as recfromrecords, fromarrays as recfromarrays
+from numpy._core.records import (
+    recarray, fromrecords as recfromrecords, fromarrays as recfromarrays
     )
 from numpy.ma.mrecords import (
     MaskedRecords, mrecarray, fromarrays, fromtextfile, fromrecords,
@@ -21,7 +22,6 @@ from numpy.ma.testutils import (
     assert_, assert_equal,
     assert_equal_records,
     )
-from numpy.compat import pickle
 
 
 class TestMRecords:
@@ -70,7 +70,7 @@ class TestMRecords:
         assert_equal(mbase_last.recordmask, True)
         assert_equal(mbase_last._mask.item(), (True, True, True))
         assert_equal(mbase_last['a'], mbase['a'][-1])
-        assert_((mbase_last['a'] is masked))
+        assert_(mbase_last['a'] is masked)
         # as slice ..........
         mbase_sl = mbase[:2]
         assert_(isinstance(mbase_sl, mrecarray))
@@ -97,10 +97,10 @@ class TestMRecords:
         assert_equal(mbase['a']._mask, [0, 1, 0, 0, 1])
         # Change the elements, and the mask will follow
         mbase.a = 1
-        assert_equal(mbase['a']._data, [1]*5)
-        assert_equal(ma.getmaskarray(mbase['a']), [0]*5)
+        assert_equal(mbase['a']._data, [1] * 5)
+        assert_equal(ma.getmaskarray(mbase['a']), [0] * 5)
         # Use to be _mask, now it's recordmask
-        assert_equal(mbase.recordmask, [False]*5)
+        assert_equal(mbase.recordmask, [False] * 5)
         assert_equal(mbase._mask.tolist(),
                      np.array([(0, 0, 0),
                                (0, 1, 1),
@@ -111,10 +111,10 @@ class TestMRecords:
         # Set a field to mask ........................
         mbase.c = masked
         # Use to be mask, and now it's still mask !
-        assert_equal(mbase.c.mask, [1]*5)
-        assert_equal(mbase.c.recordmask, [1]*5)
-        assert_equal(ma.getmaskarray(mbase['c']), [1]*5)
-        assert_equal(ma.getdata(mbase['c']), [b'N/A']*5)
+        assert_equal(mbase.c.mask, [1] * 5)
+        assert_equal(mbase.c.recordmask, [1] * 5)
+        assert_equal(ma.getmaskarray(mbase['c']), [1] * 5)
+        assert_equal(ma.getdata(mbase['c']), [b'N/A'] * 5)
         assert_equal(mbase._mask.tolist(),
                      np.array([(0, 0, 1),
                                (0, 1, 1),
@@ -160,16 +160,16 @@ class TestMRecords:
         mbase = base.view(mrecarray)
         # Set the mask to True .......................
         mbase.mask = masked
-        assert_equal(ma.getmaskarray(mbase['b']), [1]*5)
+        assert_equal(ma.getmaskarray(mbase['b']), [1] * 5)
         assert_equal(mbase['a']._mask, mbase['b']._mask)
         assert_equal(mbase['a']._mask, mbase['c']._mask)
         assert_equal(mbase._mask.tolist(),
-                     np.array([(1, 1, 1)]*5, dtype=bool))
+                     np.array([(1, 1, 1)] * 5, dtype=bool))
         # Delete the mask ............................
         mbase.mask = nomask
-        assert_equal(ma.getmaskarray(mbase['c']), [0]*5)
+        assert_equal(ma.getmaskarray(mbase['c']), [0] * 5)
         assert_equal(mbase._mask.tolist(),
-                     np.array([(0, 0, 0)]*5, dtype=bool))
+                     np.array([(0, 0, 0)] * 5, dtype=bool))
 
     def test_set_mask_fromarray(self):
         base = self.base.copy()
@@ -411,14 +411,14 @@ class TestMRecordsImport:
     def test_fromrecords(self):
         # Test construction from records.
         (mrec, nrec, ddtype) = self.data
-        #......
+        # ......
         palist = [(1, 'abc', 3.7000002861022949, 0),
                   (2, 'xy', 6.6999998092651367, 1),
                   (0, ' ', 0.40000000596046448, 0)]
         pa = recfromrecords(palist, names='c1, c2, c3, c4')
         mpa = fromrecords(palist, names='c1, c2, c3, c4')
         assert_equal_records(pa, mpa)
-        #.....
+        # .....
         _mrec = fromrecords(nrec)
         assert_equal(_mrec.dtype, mrec.dtype)
         for field in _mrec.dtype.names:

@@ -1,7 +1,0 @@
-NumPy now has an ``np.exceptions`` namespace
---------------------------------------------
-NumPy now has a dedicated namespace making most exceptions
-and warnings available.  All of these remain available in the
-main namespace, although some may be moved slowly in the future.
-The main reason for this is to increase discoverably and add
-future exceptions.

@@ -1,9 +1,0 @@
-``np.pad`` with ``mode=wrap`` pads with strict multiples of original data
--------------------------------------------------------------------------
-
-Code based on earlier version of ``pad`` that uses  ``mode="wrap"`` will return
-different results when the padding size is larger than initial array.
-
-``np.pad`` with ``mode=wrap`` now always fills the space with 
-strict multiples of original data even if the padding size is larger than the
-initial array.

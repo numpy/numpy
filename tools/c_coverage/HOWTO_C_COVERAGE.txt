@@ -8,10 +8,10 @@ using valgrind's callgrind tool.
 Prerequisites
 -------------
 
- * `Valgrind <http://www.valgrind.org/>`_ (3.5.0 tested, earlier
+ * `Valgrind <https://valgrind.org/>`_ (3.5.0 tested, earlier
    versions may work)
 
- * `Pygments <http://www.pygments.org/>`_ (0.11 or later required)
+ * `Pygments <https://pygments.org/>`_ (0.11 or later required)
 
 C code-coverage
 ---------------

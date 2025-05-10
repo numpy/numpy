@@ -257,7 +257,7 @@ the option was initially introduced to allow a smoother transition.
 
 (`gh-20220 <https://github.com/numpy/numpy/pull/20220>`__)
 
-``np.loadtxt`` has recieved several changes
+``np.loadtxt`` has received several changes
 -------------------------------------------
 
 The row counting of ``numpy.loadtxt`` was fixed.  ``loadtxt`` ignores fully

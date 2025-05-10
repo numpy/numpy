@@ -1,7 +1,10 @@
-import sys
+from typing import Any, Literal, TypeAlias, assert_type
+
 import numpy as np
 
-b: np.bool_
+_1: TypeAlias = Literal[1]
+
+b: np.bool
 u8: np.uint64
 i8: np.int64
 f8: np.float64
@@ -11,148 +14,178 @@ m: np.timedelta64
 U: np.str_
 S: np.bytes_
 V: np.void
+O: np.object_  # cannot exists at runtime
 
-reveal_type(c8.real)  # E: {float32}
-reveal_type(c8.imag)  # E: {float32}
+array_nd: np.ndarray[Any, Any]
+array_0d: np.ndarray[tuple[()], Any]
+array_2d_2x2: np.ndarray[tuple[Literal[2], Literal[2]], Any]
 
-reveal_type(c8.real.real)  # E: {float32}
-reveal_type(c8.real.imag)  # E: {float32}
+assert_type(c8.real, np.float32)
+assert_type(c8.imag, np.float32)
 
-reveal_type(c8.itemsize)  # E: int
-reveal_type(c8.shape)  # E: Tuple[]
-reveal_type(c8.strides)  # E: Tuple[]
+assert_type(c8.real.real, np.float32)
+assert_type(c8.real.imag, np.float32)
 
-reveal_type(c8.ndim)  # E: Literal[0]
-reveal_type(c8.size)  # E: Literal[1]
+assert_type(c8.itemsize, int)
+assert_type(c8.shape, tuple[()])
+assert_type(c8.strides, tuple[()])
 
-reveal_type(c8.squeeze())  # E: {complex64}
-reveal_type(c8.byteswap())  # E: {complex64}
-reveal_type(c8.transpose())  # E: {complex64}
+assert_type(c8.ndim, Literal[0])
+assert_type(c8.size, Literal[1])
 
-reveal_type(c8.dtype)  # E: dtype[{complex64}]
+assert_type(c8.squeeze(), np.complex64)
+assert_type(c8.byteswap(), np.complex64)
+assert_type(c8.transpose(), np.complex64)
 
-reveal_type(c8.real)  # E: {float32}
-reveal_type(c16.imag)  # E: {float64}
+assert_type(c8.dtype, np.dtype[np.complex64])
 
-reveal_type(np.unicode_('foo'))  # E: str_
+assert_type(c8.real, np.float32)
+assert_type(c16.imag, np.float64)
 
-reveal_type(V[0])  # E: Any
-reveal_type(V["field1"])  # E: Any
-reveal_type(V[["field1", "field2"]])  # E: void
+assert_type(np.str_('foo'), np.str_)
+
+assert_type(V[0], Any)
+assert_type(V["field1"], Any)
+assert_type(V[["field1", "field2"]], np.void)
 V[0] = 5
 
 # Aliases
-reveal_type(np.unicode_())  # E: str_
-reveal_type(np.string_())  # E: bytes_
+assert_type(np.bool_(), np.bool[Literal[False]])
+assert_type(np.byte(), np.byte)
+assert_type(np.short(), np.short)
+assert_type(np.intc(), np.intc)
+assert_type(np.intp(), np.intp)
+assert_type(np.int_(), np.int_)
+assert_type(np.long(), np.long)
+assert_type(np.longlong(), np.longlong)
 
-reveal_type(np.byte())  # E: {byte}
-reveal_type(np.short())  # E: {short}
-reveal_type(np.intc())  # E: {intc}
-reveal_type(np.intp())  # E: {intp}
-reveal_type(np.int_())  # E: {int_}
-reveal_type(np.longlong())  # E: {longlong}
+assert_type(np.ubyte(), np.ubyte)
+assert_type(np.ushort(), np.ushort)
+assert_type(np.uintc(), np.uintc)
+assert_type(np.uintp(), np.uintp)
+assert_type(np.uint(), np.uint)
+assert_type(np.ulong(), np.ulong)
+assert_type(np.ulonglong(), np.ulonglong)
 
-reveal_type(np.ubyte())  # E: {ubyte}
-reveal_type(np.ushort())  # E: {ushort}
-reveal_type(np.uintc())  # E: {uintc}
-reveal_type(np.uintp())  # E: {uintp}
-reveal_type(np.uint())  # E: {uint}
-reveal_type(np.ulonglong())  # E: {ulonglong}
+assert_type(np.half(), np.half)
+assert_type(np.single(), np.single)
+assert_type(np.double(), np.double)
+assert_type(np.longdouble(), np.longdouble)
 
-reveal_type(np.half())  # E: {half}
-reveal_type(np.single())  # E: {single}
-reveal_type(np.double())  # E: {double}
-reveal_type(np.float_())  # E: {double}
-reveal_type(np.longdouble())  # E: {longdouble}
-reveal_type(np.longfloat())  # E: {longdouble}
+assert_type(np.csingle(), np.csingle)
+assert_type(np.cdouble(), np.cdouble)
+assert_type(np.clongdouble(), np.clongdouble)
 
-reveal_type(np.csingle())  # E: {csingle}
-reveal_type(np.singlecomplex())  # E: {csingle}
-reveal_type(np.cdouble())  # E: {cdouble}
-reveal_type(np.complex_())  # E: {cdouble}
-reveal_type(np.cfloat())  # E: {cdouble}
-reveal_type(np.clongdouble())  # E: {clongdouble}
-reveal_type(np.clongfloat())  # E: {clongdouble}
-reveal_type(np.longcomplex())  # E: {clongdouble}
+assert_type(b.item(), bool)
+assert_type(i8.item(), int)
+assert_type(u8.item(), int)
+assert_type(f8.item(), float)
+assert_type(c16.item(), complex)
+assert_type(U.item(), str)
+assert_type(S.item(), bytes)
 
-reveal_type(b.item())  # E: bool
-reveal_type(i8.item())  # E: int
-reveal_type(u8.item())  # E: int
-reveal_type(f8.item())  # E: float
-reveal_type(c16.item())  # E: complex
-reveal_type(U.item())  # E: str
-reveal_type(S.item())  # E: bytes
+assert_type(b.tolist(), bool)
+assert_type(i8.tolist(), int)
+assert_type(u8.tolist(), int)
+assert_type(f8.tolist(), float)
+assert_type(c16.tolist(), complex)
+assert_type(U.tolist(), str)
+assert_type(S.tolist(), bytes)
 
-reveal_type(b.tolist())  # E: bool
-reveal_type(i8.tolist())  # E: int
-reveal_type(u8.tolist())  # E: int
-reveal_type(f8.tolist())  # E: float
-reveal_type(c16.tolist())  # E: complex
-reveal_type(U.tolist())  # E: str
-reveal_type(S.tolist())  # E: bytes
+assert_type(b.ravel(), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(i8.ravel(), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(u8.ravel(), np.ndarray[tuple[int], np.dtype[np.uint64]])
+assert_type(f8.ravel(), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(c16.ravel(), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(U.ravel(), np.ndarray[tuple[int], np.dtype[np.str_]])
+assert_type(S.ravel(), np.ndarray[tuple[int], np.dtype[np.bytes_]])
 
-reveal_type(b.ravel())  # E: ndarray[Any, dtype[bool_]]
-reveal_type(i8.ravel())  # E: ndarray[Any, dtype[{int64}]]
-reveal_type(u8.ravel())  # E: ndarray[Any, dtype[{uint64}]]
-reveal_type(f8.ravel())  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(c16.ravel())  # E: ndarray[Any, dtype[{complex128}]]
-reveal_type(U.ravel())  # E: ndarray[Any, dtype[str_]]
-reveal_type(S.ravel())  # E: ndarray[Any, dtype[bytes_]]
+assert_type(b.flatten(), np.ndarray[tuple[int], np.dtype[np.bool]])
+assert_type(i8.flatten(), np.ndarray[tuple[int], np.dtype[np.int64]])
+assert_type(u8.flatten(), np.ndarray[tuple[int], np.dtype[np.uint64]])
+assert_type(f8.flatten(), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(c16.flatten(), np.ndarray[tuple[int], np.dtype[np.complex128]])
+assert_type(U.flatten(), np.ndarray[tuple[int], np.dtype[np.str_]])
+assert_type(S.flatten(), np.ndarray[tuple[int], np.dtype[np.bytes_]])
 
-reveal_type(b.flatten())  # E: ndarray[Any, dtype[bool_]]
-reveal_type(i8.flatten())  # E: ndarray[Any, dtype[{int64}]]
-reveal_type(u8.flatten())  # E: ndarray[Any, dtype[{uint64}]]
-reveal_type(f8.flatten())  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(c16.flatten())  # E: ndarray[Any, dtype[{complex128}]]
-reveal_type(U.flatten())  # E: ndarray[Any, dtype[str_]]
-reveal_type(S.flatten())  # E: ndarray[Any, dtype[bytes_]]
+assert_type(b.reshape(()), np.bool)
+assert_type(i8.reshape([]), np.int64)
+assert_type(b.reshape(1), np.ndarray[tuple[_1], np.dtype[np.bool]])
+assert_type(i8.reshape(-1), np.ndarray[tuple[_1], np.dtype[np.int64]])
+assert_type(u8.reshape(1, 1), np.ndarray[tuple[_1, _1], np.dtype[np.uint64]])
+assert_type(f8.reshape(1, -1), np.ndarray[tuple[_1, _1], np.dtype[np.float64]])
+assert_type(c16.reshape(1, 1, 1), np.ndarray[tuple[_1, _1, _1], np.dtype[np.complex128]])
+assert_type(U.reshape(1, 1, 1, 1), np.ndarray[tuple[_1, _1, _1, _1], np.dtype[np.str_]])
+assert_type(
+    S.reshape(1, 1, 1, 1, 1),
+    np.ndarray[
+        # len(shape) >= 5
+        tuple[_1, _1, _1, _1, _1, *tuple[_1, ...]],
+        np.dtype[np.bytes_],
+    ],
+)
 
-reveal_type(b.reshape(1))  # E: ndarray[Any, dtype[bool_]]
-reveal_type(i8.reshape(1))  # E: ndarray[Any, dtype[{int64}]]
-reveal_type(u8.reshape(1))  # E: ndarray[Any, dtype[{uint64}]]
-reveal_type(f8.reshape(1))  # E: ndarray[Any, dtype[{float64}]]
-reveal_type(c16.reshape(1))  # E: ndarray[Any, dtype[{complex128}]]
-reveal_type(U.reshape(1))  # E: ndarray[Any, dtype[str_]]
-reveal_type(S.reshape(1))  # E: ndarray[Any, dtype[bytes_]]
+assert_type(i8.astype(float), Any)
+assert_type(i8.astype(np.float64), np.float64)
 
-reveal_type(i8.astype(float))  # E: Any
-reveal_type(i8.astype(np.float64))  # E: {float64}
+assert_type(i8.view(), np.int64)
+assert_type(i8.view(np.float64), np.float64)
+assert_type(i8.view(float), Any)
+assert_type(i8.view(np.float64, np.ndarray), np.float64)
 
-reveal_type(i8.view())  # E: {int64}
-reveal_type(i8.view(np.float64))  # E: {float64}
-reveal_type(i8.view(float))  # E: Any
-reveal_type(i8.view(np.float64, np.ndarray))  # E: {float64}
+assert_type(i8.getfield(float), Any)
+assert_type(i8.getfield(np.float64), np.float64)
+assert_type(i8.getfield(np.float64, 8), np.float64)
 
-reveal_type(i8.getfield(float))  # E: Any
-reveal_type(i8.getfield(np.float64))  # E: {float64}
-reveal_type(i8.getfield(np.float64, 8))  # E: {float64}
+assert_type(f8.as_integer_ratio(), tuple[int, int])
+assert_type(f8.is_integer(), bool)
+assert_type(f8.__trunc__(), int)
+assert_type(f8.__getformat__("float"), str)
+assert_type(f8.hex(), str)
+assert_type(np.float64.fromhex("0x0.0p+0"), np.float64)
 
-reveal_type(f8.as_integer_ratio())  # E: Tuple[builtins.int, builtins.int]
-reveal_type(f8.is_integer())  # E: bool
-reveal_type(f8.__trunc__())  # E: int
-reveal_type(f8.__getformat__("float"))  # E: str
-reveal_type(f8.hex())  # E: str
-reveal_type(np.float64.fromhex("0x0.0p+0"))  # E: {float64}
+assert_type(f8.__getnewargs__(), tuple[float])
+assert_type(c16.__getnewargs__(), tuple[float, float])
 
-reveal_type(f8.__getnewargs__())  # E: Tuple[builtins.float]
-reveal_type(c16.__getnewargs__())  # E: Tuple[builtins.float, builtins.float]
+assert_type(i8.numerator, np.int64)
+assert_type(i8.denominator, Literal[1])
+assert_type(u8.numerator, np.uint64)
+assert_type(u8.denominator, Literal[1])
+assert_type(m.numerator, np.timedelta64)
+assert_type(m.denominator, Literal[1])
 
-reveal_type(i8.numerator)  # E: {int64}
-reveal_type(i8.denominator)  # E: Literal[1]
-reveal_type(u8.numerator)  # E: {uint64}
-reveal_type(u8.denominator)  # E: Literal[1]
-reveal_type(m.numerator)  # E: timedelta64
-reveal_type(m.denominator)  # E: Literal[1]
+assert_type(round(i8), int)
+assert_type(round(i8, 3), np.int64)
+assert_type(round(u8), int)
+assert_type(round(u8, 3), np.uint64)
+assert_type(round(f8), int)
+assert_type(round(f8, 3), np.float64)
 
-reveal_type(round(i8))  # E: int
-reveal_type(round(i8, 3))  # E: {int64}
-reveal_type(round(u8))  # E: int
-reveal_type(round(u8, 3))  # E: {uint64}
-reveal_type(round(f8))  # E: int
-reveal_type(round(f8, 3))  # E: {float64}
+assert_type(f8.__ceil__(), int)
+assert_type(f8.__floor__(), int)
 
-if sys.version_info >= (3, 9):
-    reveal_type(f8.__ceil__())  # E: int
-    reveal_type(f8.__floor__())  # E: int
+assert_type(i8.is_integer(), Literal[True])
 
-reveal_type(i8.is_integer())  # E: Literal[True]
+assert_type(O.real, np.object_)
+assert_type(O.imag, np.object_)
+assert_type(int(O), int)
+assert_type(float(O), float)
+assert_type(complex(O), complex)
+
+# These fail fail because of a mypy __new__ bug:
+# https://github.com/python/mypy/issues/15182
+# According to the typing spec, the following statements are valid, see
+# https://typing.readthedocs.io/en/latest/spec/constructors.html#new-method
+
+# assert_type(np.object_(), None)
+# assert_type(np.object_(None), None)
+# assert_type(np.object_(array_nd), np.ndarray[Any, np.dtype[np.object_]])
+# assert_type(np.object_([]), npt.NDArray[np.object_])
+# assert_type(np.object_(()), npt.NDArray[np.object_])
+# assert_type(np.object_(range(4)), npt.NDArray[np.object_])
+# assert_type(np.object_(+42), int)
+# assert_type(np.object_(1 / 137), float)
+# assert_type(np.object_('Developers! ' * (1 << 6)), str)
+# assert_type(np.object_(object()), object)
+# assert_type(np.object_({False, True, NotADirectoryError}), set[Any])
+# assert_type(np.object_({'spam': 'food', 'ham': 'food'}), dict[str, str])

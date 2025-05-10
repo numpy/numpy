@@ -1,6 +1,6 @@
 """
-Exceptions and Warnings (:mod:`numpy.exceptions`)
-=================================================
+Exceptions and Warnings
+=======================
 
 General exceptions used by NumPy.  Note that some exceptions may be module
 specific, such as linear algebra errors.
@@ -19,6 +19,7 @@ Warnings
 
    ComplexWarning             Given when converting complex to real.
    VisibleDeprecationWarning  Same as a DeprecationWarning, but more visible.
+   RankWarning                Issued when the design matrix is rank deficient.
 
 Exceptions
 ----------
@@ -60,7 +61,7 @@ class ModuleDeprecationWarning(DeprecationWarning):
 
     .. warning::
 
-        This warning should not be used, since nose testing is not relvant
+        This warning should not be used, since nose testing is not relevant
         anymore.
 
     The nose tester turns ordinary Deprecation warnings into test failures.
@@ -69,6 +70,7 @@ class ModuleDeprecationWarning(DeprecationWarning):
     nose tester will let pass without making tests fail.
 
     """
+    pass
 
 
 class VisibleDeprecationWarning(UserWarning):
@@ -79,19 +81,28 @@ class VisibleDeprecationWarning(UserWarning):
     the usage is most likely a user bug.
 
     """
+    pass
+
+
+class RankWarning(RuntimeWarning):
+    """Matrix rank warning.
+
+    Issued by polynomial functions when the design matrix is rank deficient.
+
+    """
+    pass
 
 
 # Exception used in shares_memory()
 class TooHardError(RuntimeError):
-    """max_work was exceeded.
+    """``max_work`` was exceeded.
 
     This is raised whenever the maximum number of candidate solutions
     to consider specified by the ``max_work`` parameter is exceeded.
-    Assigning a finite number to max_work may have caused the operation
+    Assigning a finite number to ``max_work`` may have caused the operation
     to fail.
 
     """
-
     pass
 
 
@@ -101,11 +112,10 @@ class AxisError(ValueError, IndexError):
     This is raised whenever an ``axis`` parameter is specified that is larger
     than the number of array dimensions.
     For compatibility with code written against older numpy versions, which
-    raised a mixture of `ValueError` and `IndexError` for this situation, this
-    exception subclasses both to ensure that ``except ValueError`` and
-    ``except IndexError`` statements continue to catch `AxisError`.
-
-    .. versionadded:: 1.13
+    raised a mixture of :exc:`ValueError` and :exc:`IndexError` for this
+    situation, this exception subclasses both to ensure that
+    ``except ValueError`` and ``except IndexError`` statements continue
+    to catch ``AxisError``.
 
     Parameters
     ----------
@@ -134,6 +144,7 @@ class AxisError(ValueError, IndexError):
 
     Examples
     --------
+    >>> import numpy as np
     >>> array_1d = np.arange(10)
     >>> np.cumsum(array_1d, axis=1)
     Traceback (most recent call last):
@@ -150,17 +161,17 @@ class AxisError(ValueError, IndexError):
     The class constructor generally takes the axis and arrays'
     dimensionality as arguments:
 
-    >>> print(np.AxisError(2, 1, msg_prefix='error'))
+    >>> print(np.exceptions.AxisError(2, 1, msg_prefix='error'))
     error: axis 2 is out of bounds for array of dimension 1
 
     Alternatively, a custom exception message can be passed:
 
-    >>> print(np.AxisError('Custom error message'))
+    >>> print(np.exceptions.AxisError('Custom error message'))
     Custom error message
 
     """
 
-    __slots__ = ("axis", "ndim", "_msg")
+    __slots__ = ("_msg", "axis", "ndim")
 
     def __init__(self, axis, ndim=None, msg_prefix=None):
         if ndim is msg_prefix is None:
@@ -210,7 +221,10 @@ class DTypePromotionError(TypeError):
     Datetimes and complex numbers are incompatible classes and cannot be
     promoted:
 
-    >>> np.result_type(np.dtype("M8[s]"), np.complex128)
+    >>> import numpy as np
+    >>> np.result_type(np.dtype("M8[s]"), np.complex128)  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+     ...
     DTypePromotionError: The DType <class 'numpy.dtype[datetime64]'> could not
     be promoted by <class 'numpy.dtype[complex128]'>. This means that no common
     DType exists for the given inputs. For example they cannot be stored in a
@@ -223,7 +237,9 @@ class DTypePromotionError(TypeError):
 
     >>> dtype1 = np.dtype([("field1", np.float64), ("field2", np.int64)])
     >>> dtype2 = np.dtype([("field1", np.float64)])
-    >>> np.promote_types(dtype1, dtype2)
+    >>> np.promote_types(dtype1, dtype2)  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+     ...
     DTypePromotionError: field names `('field1', 'field2')` and `('field1',)`
     mismatch.
 

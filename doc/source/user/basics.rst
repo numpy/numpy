@@ -15,5 +15,6 @@ fundamental NumPy ideas and philosophy.
    basics.types
    basics.broadcasting
    basics.copies
+   basics.strings
    basics.rec
    basics.ufuncs

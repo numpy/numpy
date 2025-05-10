@@ -1,10 +1,11 @@
 from functools import reduce
+import pickle
 
 import pytest
 
 import numpy as np
-import numpy.core.umath as umath
-import numpy.core.fromnumeric as fromnumeric
+import numpy._core.umath as umath
+import numpy._core.fromnumeric as fromnumeric
 from numpy.testing import (
     assert_, assert_raises, assert_equal,
     )
@@ -21,7 +22,6 @@ from numpy.ma import (
     repeat, resize, shape, sin, sinh, sometrue, sort, sqrt, subtract, sum,
     take, tan, tanh, transpose, where, zeros,
     )
-from numpy.compat import pickle
 
 pi = np.pi
 
@@ -36,7 +36,7 @@ def eq(v, w, msg=''):
 class TestMa:
 
     def setup_method(self):
-        x = np.array([1., 1., 1., -2., pi/2.0, 4., 5., -10., 10., 1., 2., 3.])
+        x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
@@ -58,8 +58,8 @@ class TestMa:
         assert_equal(shape(xm), s)
         assert_equal(xm.shape, s)
         assert_equal(xm.dtype, x.dtype)
-        assert_equal(xm.size, reduce(lambda x, y:x * y, s))
-        assert_equal(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
+        assert_equal(xm.size, reduce(lambda x, y: x * y, s))
+        assert_equal(count(xm), len(m1) - reduce(lambda x, y: x + y, m1))
         assert_(eq(xm, xf))
         assert_(eq(filled(xm, 1.e20), xf))
         assert_(eq(x, xm))
@@ -594,12 +594,12 @@ class TestMa:
                                  np.add.reduce(np.arange(6)) * 3. / 12.))
         assert_(allclose(average(y, axis=0), np.arange(6) * 3. / 2.))
         assert_(allclose(average(y, axis=1),
-                                 [average(x, axis=0), average(x, axis=0)*2.0]))
+                                 [average(x, axis=0), average(x, axis=0) * 2.0]))
         assert_(allclose(average(y, None, weights=w2), 20. / 6.))
         assert_(allclose(average(y, axis=0, weights=w2),
                                  [0., 1., 2., 3., 4., 10.]))
         assert_(allclose(average(y, axis=1),
-                                 [average(x, axis=0), average(x, axis=0)*2.0]))
+                                 [average(x, axis=0), average(x, axis=0) * 2.0]))
         m1 = zeros(6)
         m2 = [0, 0, 1, 1, 0, 0]
         m3 = [[0, 0, 1, 1, 0, 0], [0, 1, 1, 1, 1, 0]]
@@ -651,7 +651,7 @@ class TestMa:
 
     def test_testScalarArithmetic(self):
         xm = array(0, mask=1)
-        #TODO FIXME: Find out what the following raises a warning in r8247
+        # TODO FIXME: Find out what the following raises a warning in r8247
         with np.errstate(divide='ignore'):
             assert_((1 / array(0)).mask)
         assert_((1 + xm).mask)
@@ -821,13 +821,15 @@ class TestArrayMethods:
     def test_ptp(self):
         (x, X, XX, m, mx, mX, mXX,) = self.d
         (n, m) = X.shape
-        assert_equal(mx.ptp(), mx.compressed().ptp())
-        rows = np.zeros(n, np.float_)
-        cols = np.zeros(m, np.float_)
+        # print(type(mx), mx.compressed())
+        # raise Exception()
+        assert_equal(mx.ptp(), np.ptp(mx.compressed()))
+        rows = np.zeros(n, np.float64)
+        cols = np.zeros(m, np.float64)
         for k in range(m):
-            cols[k] = mX[:, k].compressed().ptp()
+            cols[k] = np.ptp(mX[:, k].compressed())
         for k in range(n):
-            rows[k] = mX[k].compressed().ptp()
+            rows[k] = np.ptp(mX[k].compressed())
         assert_(eq(mX.ptp(0), cols))
         assert_(eq(mX.ptp(1), rows))
 

@@ -7,10 +7,23 @@ NEP 47 — Adopting the array API standard
 :Author: Ralf Gommers <ralf.gommers@gmail.com>
 :Author: Stephan Hoyer <shoyer@gmail.com>
 :Author: Aaron Meurer <asmeurer@gmail.com>
-:Status: Draft
+:Status: Superseded
+:Replaced-By: :ref:`NEP56`
 :Type: Standards Track
 :Created: 2021-01-21
-:Resolution:
+:Resolution: https://mail.python.org/archives/list/numpy-discussion@python.org/message/Z6AA5CL47NHBNEPTFWYOTSUVSRDGHYPN/
+
+.. note::
+
+   This NEP was implemented and released under an experimental label (it
+   emitted a warning on import) in NumPy 1.22.0-1.26.x. It was removed before
+   NumPy 2.0.0, which is when NumPy gained support for the array API standard
+   in its main namespace (see :ref:`NEP56`). The code for ``numpy.array_api``
+   was moved to a standalone package: `array-api-strict
+   <https://github.com/data-apis/array-api-strict>`__. For a detailed overview
+   of the differences between the last version of the ``numpy.array_api``
+   module with ``numpy``, see `this table in the 1.26.x docs
+   <https://numpy.org/doc/1.26/reference/array_api.html#table-of-differences-between-numpy-array-api-and-numpy>`__.
 
 
 Abstract
@@ -32,7 +45,7 @@ other array/tensor libraries that adopt this standard.
     itself.
 
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 Python users have a wealth of choice for libraries and frameworks for
@@ -81,7 +94,7 @@ Out of scope for this NEP are:
   subsequently updated.
 
 
-Usage and Impact
+Usage and impact
 ----------------
 
 *This section will be fleshed out later, for now we refer to the use cases given
@@ -610,7 +623,7 @@ TODO - this can only be done after trying out some use cases
 Leo Fang (CuPy): *"My impression is for CuPy we could simply take this new array object and s/numpy/cupy"*
 
 
-Related Work
+Related work
 ------------
 
 :ref:`NEP37` contains a similar mechanism to retrieve a NumPy-like namespace.
@@ -673,7 +686,7 @@ Discussion
 - `PR #18585 implementing numpy.array_api
   <https://github.com/numpy/numpy/pull/18585>`_
 
-References and Footnotes
+References and footnotes
 ------------------------
 
 .. _Python array API standard: https://data-apis.github.io/array-api/latest

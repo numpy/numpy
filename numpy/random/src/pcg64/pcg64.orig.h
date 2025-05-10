@@ -766,7 +766,7 @@ inline void pcg_setseq_128_srandom_r(struct pcg_state_setseq_128 *rng,
  *     such as raw LCGs do better using a technique based on division.)
  *     Empricical tests show that division is preferable to modulus for
  *     reducting the range of an RNG.  It's faster, and sometimes it can
- *     even be statistically prefereable.
+ *     even be statistically preferable.
  */
 
 /* Generation functions for XSH RS */

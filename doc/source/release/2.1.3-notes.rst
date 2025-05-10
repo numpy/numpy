@@ -1,0 +1,81 @@
+.. currentmodule:: numpy
+
+==========================
+NumPy 2.1.3 Release Notes
+==========================
+
+NumPy 2.1.3 is a maintenance release that fixes bugs and regressions
+discovered after the 2.1.2 release.
+
+The Python versions supported by this release are 3.10-3.13.
+
+
+Improvements
+============
+
+* Fixed a number of issues around promotion for string ufuncs with StringDType
+  arguments. Mixing StringDType and the fixed-width DTypes using the string
+  ufuncs should now generate much more uniform results.
+
+  (`gh-27636 <https://github.com/numpy/numpy/pull/27636>`__)
+
+
+Changes
+=======
+
+* `numpy.fix` now won't perform casting to a floating data-type for integer
+  and boolean data-type input arrays.
+
+  (`gh-26766 <https://github.com/numpy/numpy/pull/26766>`__)
+
+
+Contributors
+============
+
+A total of 15 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Abhishek Kumar +
+* Austin +
+* Benjamin A. Beasley +
+* Charles Harris
+* Christian Lorentzen
+* Marcel Telka +
+* Matti Picus
+* Michael Davidsaver +
+* Nathan Goldbaum
+* Peter Hawkins
+* Raghuveer Devulapalli
+* Ralf Gommers
+* Sebastian Berg
+* dependabot[bot]
+* kp2pml30 +
+
+
+Pull requests merged
+====================
+
+A total of 21 pull requests were merged for this release.
+
+* `#27512 <https://github.com/numpy/numpy/pull/27512>`__: MAINT: prepare 2.1.x for further development
+* `#27537 <https://github.com/numpy/numpy/pull/27537>`__: MAINT: Bump actions/cache from 4.0.2 to 4.1.1
+* `#27538 <https://github.com/numpy/numpy/pull/27538>`__: MAINT: Bump pypa/cibuildwheel from 2.21.2 to 2.21.3
+* `#27539 <https://github.com/numpy/numpy/pull/27539>`__: MAINT: MSVC does not support #warning directive
+* `#27543 <https://github.com/numpy/numpy/pull/27543>`__: BUG: Fix user dtype can-cast with python scalar during promotion
+* `#27561 <https://github.com/numpy/numpy/pull/27561>`__: DEV: bump ``python`` to 3.12 in environment.yml
+* `#27562 <https://github.com/numpy/numpy/pull/27562>`__: BLD: update vendored Meson to 1.5.2
+* `#27563 <https://github.com/numpy/numpy/pull/27563>`__: BUG: weighted quantile for some zero weights (#27549)
+* `#27565 <https://github.com/numpy/numpy/pull/27565>`__: MAINT: Use miniforge for macos conda test.
+* `#27566 <https://github.com/numpy/numpy/pull/27566>`__: BUILD: satisfy gcc-13 pendantic errors
+* `#27569 <https://github.com/numpy/numpy/pull/27569>`__: BUG: handle possible error for PyTraceMallocTrack
+* `#27570 <https://github.com/numpy/numpy/pull/27570>`__: BLD: start building Windows free-threaded wheels [wheel build]
+* `#27571 <https://github.com/numpy/numpy/pull/27571>`__: BUILD: vendor tempita from Cython
+* `#27574 <https://github.com/numpy/numpy/pull/27574>`__: BUG: Fix warning "differs in levels of indirection" in npy_atomic.h...
+* `#27592 <https://github.com/numpy/numpy/pull/27592>`__: MAINT: Update Highway to latest
+* `#27593 <https://github.com/numpy/numpy/pull/27593>`__: BUG: Adjust numpy.i for SWIG 4.3 compatibility
+* `#27616 <https://github.com/numpy/numpy/pull/27616>`__: BUG: Fix Linux QEMU CI workflow
+* `#27668 <https://github.com/numpy/numpy/pull/27668>`__: BLD: Do not set __STDC_VERSION__ to zero during build
+* `#27669 <https://github.com/numpy/numpy/pull/27669>`__: ENH: fix wasm32 runtime type error in numpy._core
+* `#27672 <https://github.com/numpy/numpy/pull/27672>`__: BUG: Fix a reference count leak in npy_find_descr_for_scalar.
+* `#27673 <https://github.com/numpy/numpy/pull/27673>`__: BUG: fixes for StringDType/unicode promoters
+

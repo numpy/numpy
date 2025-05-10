@@ -1,7 +1,8 @@
 """
 Generate CPU features tables from CCompilerOpt
 """
-from os import sys, path
+from os import path
+
 from numpy.distutils.ccompiler_opt import CCompilerOpt
 
 class FakeCCompilerOpt(CCompilerOpt):
@@ -114,13 +115,13 @@ class Features:
         return self.gen_rst_table(fields, rows, **kwargs)
 
     def gen_rst_table(self, field_names, rows, tab_size=4):
-        assert(not rows or len(field_names) == len(rows[0]))
+        assert not rows or len(field_names) == len(rows[0])
         rows.append(field_names)
         fld_len = len(field_names)
         cls_len = [max(len(c[i]) for c in rows) for i in range(fld_len)]
         del rows[-1]
         cformat = ' '.join('{:<%d}' % i for i in cls_len)
-        border = cformat.format(*['='*i for i in cls_len])
+        border = cformat.format(*['=' * i for i in cls_len])
 
         rows = [cformat.format(*row) for row in rows]
         # header
@@ -132,17 +133,17 @@ class Features:
         return '\n'.join(rows)
 
 def wrapper_section(title, content, tab_size=4):
-    tab = ' '*tab_size
+    tab = ' ' * tab_size
     if content:
         return (
-            f"{title}\n{'~'*len(title)}"
+            f"{title}\n{'~' * len(title)}"
             f"\n.. table::\n{tab}:align: left\n\n"
             f"{content}\n\n"
         )
     return ''
 
 def wrapper_tab(title, table, tab_size=4):
-    tab = ' '*tab_size
+    tab = ' ' * tab_size
     if table:
         ('\n' + tab).join((
             '.. tab:: ' + title,
@@ -168,7 +169,7 @@ if __name__ == '__main__':
     gen_path = path.join(
         path.dirname(path.realpath(__file__)), "generated_tables"
     )
-    with open(path.join(gen_path, 'cpu_features.inc'), 'wt') as fd:
+    with open(path.join(gen_path, 'cpu_features.inc'), 'w') as fd:
         fd.write(f'.. generated via {__file__}\n\n')
         for arch in (
             ("x86", "PPC64", "PPC64LE", "ARMHF", "AARCH64", "S390X")
@@ -177,7 +178,7 @@ if __name__ == '__main__':
             table = Features(arch, 'gcc').table()
             fd.write(wrapper_section(title, table))
 
-    with open(path.join(gen_path, 'compilers-diff.inc'), 'wt') as fd:
+    with open(path.join(gen_path, 'compilers-diff.inc'), 'w') as fd:
         fd.write(f'.. generated via {__file__}\n\n')
         for arch, cc_names in (
             ("x86", ("clang", "ICC", "MSVC")),
@@ -192,5 +193,3 @@ if __name__ == '__main__':
                 title = f"On {arch_pname}::{pretty_names.get(cc, cc)}"
                 table = Features(arch, cc).table_diff(Features(arch, "gcc"))
                 fd.write(wrapper_section(title, table))
-
-

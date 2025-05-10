@@ -9,26 +9,22 @@
 # Mark some files as vendored
 numpy/linalg/lapack_lite/f2c.c linguist-vendored
 numpy/linalg/lapack_lite/f2c.h linguist-vendored
-tools/npy_tempita/* linguist-vendored
-numpy/core/include/numpy/libdivide/* linguist-vendored
-numpy/core/src/umath/svml/* linguist-vendored
-numpy/core/src/common/dlpack/dlpack.h linguist-vendored
+numpy/_core/include/numpy/libdivide/* linguist-vendored
+numpy/_core/src/umath/svml/* linguist-vendored
+numpy/_core/src/common/dlpack/dlpack.h linguist-vendored
 
 # Mark some files as generated
 numpy/linalg/lapack_lite/f2c_*.c linguist-generated
 numpy/linalg/lapack_lite/lapack_lite_names.h linguist-generated
-numpy/_version.py linguist-generated
 
-# versioneer config
-numpy/_version.py export-subst
+# version generated from pyproject.toml during build
+numpy/version.py linguist-generated
 
 # Configuration files
 *.ini text
 *.cfg text
-./MANIFEST.in text
-./numpy/core/npymath.ini.in text
-./numpy/core/mlib.ini.in text
-./site.cfg.example text
+./numpy/_core/npymath.ini.in text
+./numpy/_core/mlib.ini.in text
 
 # Python sources
 *.py    text diff=python
@@ -58,7 +54,6 @@ numpy/_version.py export-subst
 # F2py
 ./doc/source/f2py/*.pyf text
 ./doc/source/f2py/*.dat text
-./numpy/f2py/tests/src/module_data/mod.mod binary
 
 # Documents
 *.md    text diff=markdown
@@ -107,8 +102,7 @@ numpy/_version.py export-subst
 ./doc/neps/index.rst.tmpl text
 ./benchmarks/asv_compare.conf.json.tpl text
 ./tools/swig/test/*.i text
-./tools/gitpod/gitpod.Dockerfile text
 ./doc/source/dev/gitwash/git_links.inc text
 ./doc/source/reference/simd/*.inc text
-./numpy/core/src/_simd/*.inc text diff=c
+./numpy/_core/src/_simd/*.inc text diff=c
 

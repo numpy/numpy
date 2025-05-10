@@ -68,7 +68,7 @@ class Block(Benchmark):
 
 
 class Block2D(Benchmark):
-    params = [[(16, 16), (32, 32), (64, 64), (128, 128), (256, 256), (512, 512), (1024, 1024)],
+    params = [[(16, 16), (64, 64), (256, 256), (1024, 1024)],
               ['uint8', 'uint16', 'uint32', 'uint64'],
               [(2, 2), (4, 4)]]
     param_names = ['shape', 'dtype', 'n_chunks']
@@ -76,7 +76,7 @@ class Block2D(Benchmark):
     def setup(self, shape, dtype, n_chunks):
 
         self.block_list = [
-             [np.full(shape=[s//n_chunk for s, n_chunk in zip(shape, n_chunks)],
+             [np.full(shape=[s // n_chunk for s, n_chunk in zip(shape, n_chunks)],
                      fill_value=1, dtype=dtype) for _ in range(n_chunks[1])]
             for _ in range(n_chunks[0])
         ]
@@ -141,7 +141,7 @@ class Kron(Benchmark):
 
     def setup(self):
         self.large_arr = np.random.random((10,) * 4)
-        self.large_mat = np.mat(np.random.random((100, 100)))
+        self.large_mat = np.asmatrix(np.random.random((100, 100)))
         self.scalar = 7
 
     def time_arr_kron(self):
@@ -152,3 +152,19 @@ class Kron(Benchmark):
 
     def time_mat_kron(self):
         np.kron(self.large_mat, self.large_mat)
+
+class AtLeast1D(Benchmark):
+    """Benchmarks for np.atleast_1d"""
+
+    def setup(self):
+        self.x = np.array([1, 2, 3])
+        self.zero_d = np.float64(1.)
+
+    def time_atleast_1d(self):
+        np.atleast_1d(self.x, self.x, self.x)
+
+    def time_atleast_1d_reshape(self):
+        np.atleast_1d(self.zero_d, self.zero_d, self.zero_d)
+
+    def time_atleast_1d_single_argument(self):
+        np.atleast_1d(self.x)

@@ -90,7 +90,7 @@ arbitrary numbers. Therefore, the possibility of encountering misaligned
 data must be recognized and taken into account if necessary.
 
 
-N-D Iterators
+N-D iterators
 =============
 
 .. seealso:: :ref:`arrays.nditer`
@@ -181,7 +181,7 @@ and the :c:func:`PyArray_Broadcast` call implements the
 :ref:`general-broadcasting-rules`.
 
 
-Array Scalars
+Array scalars
 =============
 
 .. seealso:: :ref:`arrays.scalars`
@@ -270,7 +270,7 @@ has three different branches and one special case:
   as if there is no subarray but needs some care during setup.
 
 Deciding what case applies, checking broadcasting, and determining the kind
-of transposition needed are all done in :c:func:`PyArray_MapIterNew`. After
+of transposition needed are all done in ``PyArray_MapIterNew``. After
 setting up, there are two cases. If there is no subarray or it only has one
 element, no subarray iteration is necessary and an iterator is prepared
 which iterates all indexing arrays *as well as* the result or value array.
@@ -282,8 +282,8 @@ the start of the subarray, which then allows restarting the subarray
 iteration.
 
 When advanced indices are next to each other transposing may be necessary.
-All necessary transposing is handled by :c:func:`PyArray_MapIterSwapAxes` and
-has to be handled by the caller unless :c:func:`PyArray_MapIterNew` is asked to
+All necessary transposing is handled by ``PyArray_MapIterSwapAxes`` and
+has to be handled by the caller unless ``PyArray_MapIterNew`` is asked to
 allocate the result.
 
 After preparation, getting and setting are relatively straightforward,

@@ -3,6 +3,7 @@ import shutil
 import pytest
 from tempfile import mkstemp, mkdtemp
 from subprocess import Popen, PIPE
+import importlib.metadata
 from distutils.errors import DistutilsError
 
 from numpy.testing import assert_, assert_equal, assert_raises
@@ -11,6 +12,16 @@ from numpy.distutils.system_info import system_info, ConfigParser, mkl_info
 from numpy.distutils.system_info import AliasedOptionError
 from numpy.distutils.system_info import default_lib_dirs, default_include_dirs
 from numpy.distutils import _shell_utils
+
+
+try:
+    if importlib.metadata.version('setuptools') >= '60':
+        # pkg-resources gives deprecation warnings, and there may be more
+        # issues. We only support setuptools <60
+        pytest.skip("setuptools is too new", allow_module_level=True)
+except importlib.metadata.PackageNotFoundError:
+    # we don't require `setuptools`; if it is not found, continue
+    pass
 
 
 def get_class(name, notfound_action=1):
@@ -141,14 +152,14 @@ class TestSystemInfoReading:
         self._lib2 = os.path.join(self._dir2, 'libbar.so')
         # Update local site.cfg
         global simple_site, site_cfg
-        site_cfg = simple_site.format(**{
-            'dir1': self._dir1,
-            'lib1': self._lib1,
-            'dir2': self._dir2,
-            'lib2': self._lib2,
-            'pathsep': os.pathsep,
-            'lib2_escaped': _shell_utils.NativeParser.join([self._lib2])
-        })
+        site_cfg = simple_site.format(
+            dir1=self._dir1,
+            lib1=self._lib1,
+            dir2=self._dir2,
+            lib2=self._lib2,
+            pathsep=os.pathsep,
+            lib2_escaped=_shell_utils.NativeParser.join([self._lib2])
+        )
         # Write site.cfg
         fd, self._sitecfg = mkstemp()
         os.close(fd)
@@ -271,7 +282,7 @@ class TestSystemInfoReading:
 
             # But if we copy the values to a '[mkl]' section the value
             # is correct
-            with open(cfg, 'r') as fid:
+            with open(cfg) as fid:
                 mkl = fid.read().replace('[ALL]', '[mkl]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(mkl)
@@ -279,7 +290,7 @@ class TestSystemInfoReading:
             assert info.get_lib_dirs() == lib_dirs
 
             # Also, the values will be taken from a section named '[DEFAULT]'
-            with open(cfg, 'r') as fid:
+            with open(cfg) as fid:
                 dflt = fid.read().replace('[mkl]', '[DEFAULT]', 1)
             with open(cfg, 'w') as fid:
                 fid.write(dflt)

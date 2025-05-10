@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, assert_type
 
 from numpy._typing import _NestedSequence
 
@@ -12,15 +12,14 @@ f: tuple[int, ...]
 g: list[int]
 h: Sequence[Any]
 
-def func(a: _NestedSequence[int]) -> None:
-    ...
+def func(a: _NestedSequence[int]) -> None: ...
 
-reveal_type(func(a))  # E: None
-reveal_type(func(b))  # E: None
-reveal_type(func(c))  # E: None
-reveal_type(func(d))  # E: None
-reveal_type(func(e))  # E: None
-reveal_type(func(f))  # E: None
-reveal_type(func(g))  # E: None
-reveal_type(func(h))  # E: None
-reveal_type(func(range(15)))  # E: None
+assert_type(func(a), None)
+assert_type(func(b), None)
+assert_type(func(c), None)
+assert_type(func(d), None)
+assert_type(func(e), None)
+assert_type(func(f), None)
+assert_type(func(g), None)
+assert_type(func(h), None)
+assert_type(func(range(15)), None)

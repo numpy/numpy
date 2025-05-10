@@ -1,7 +1,8 @@
+.. _routines.testing:
 .. module:: numpy.testing
 
-Test Support (:mod:`numpy.testing`)
-===================================
+Test support
+============
 
 .. currentmodule:: numpy.testing
 
@@ -53,7 +54,7 @@ Decorators
 
    decorate_methods
 
-Test Running
+Test running
 ------------
 .. autosummary::
    :toctree: generated/
@@ -62,6 +63,25 @@ Test Running
    measure
    rundocs
    suppress_warnings
+
+.. module:: numpy.testing.overrides
+
+Testing custom array containers (:mod:`numpy.testing.overrides`)
+----------------------------------------------------------------
+
+These functions can be useful when testing custom array container
+implementations which make use of ``__array_ufunc__``/``__array_function__``.
+
+.. currentmodule:: numpy.testing.overrides
+
+.. autosummary::
+   :toctree: generated/
+
+   allows_array_function_override
+   allows_array_ufunc_override
+   get_overridable_numpy_ufuncs
+   get_overridable_numpy_array_functions
+
 
 Guidelines
 ----------

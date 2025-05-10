@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.polynomial.polynomial as poly
 from numpy.testing import (
     assert_, assert_equal, assert_array_equal, assert_almost_equal,
     assert_array_almost_equal, assert_raises, assert_allclose
@@ -6,7 +7,7 @@ from numpy.testing import (
 
 import pytest
 
-# `poly1d` has some support for `bool_` and `timedelta64`,
+# `poly1d` has some support for `np.bool` and `np.timedelta64`,
 # but it is limited and they are therefore excluded here
 TYPE_CODES = np.typecodes["AllInteger"] + np.typecodes["AllFloat"] + "O"
 
@@ -46,9 +47,9 @@ class TestPolynomial:
         # here we use some simple coeffs to make calculations easier
         p = np.poly1d([1., 2, 4])
         q = np.poly1d([4., 2, 1])
-        assert_equal(p/q, (np.poly1d([0.25]), np.poly1d([1.5, 3.75])))
-        assert_equal(p.integ(), np.poly1d([1/3, 1., 4., 0.]))
-        assert_equal(p.integ(1), np.poly1d([1/3, 1., 4., 0.]))
+        assert_equal(p / q, (np.poly1d([0.25]), np.poly1d([1.5, 3.75])))
+        assert_equal(p.integ(), np.poly1d([1 / 3, 1., 4., 0.]))
+        assert_equal(p.integ(1), np.poly1d([1 / 3, 1., 4., 0.]))
 
         p = np.poly1d([1., 2, 3])
         q = np.poly1d([3., 2, 1])
@@ -104,10 +105,10 @@ class TestPolynomial:
 
         # Should produce real output for perfect conjugates
         assert_(np.isrealobj(np.poly([+1.082j, +2.613j, -2.613j, -1.082j])))
-        assert_(np.isrealobj(np.poly([0+1j, -0+-1j, 1+2j,
-                                      1-2j, 1.+3.5j, 1-3.5j])))
-        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j, 1+3j, 1-3.j])))
-        assert_(np.isrealobj(np.poly([1j, -1j, 1+2j, 1-2j])))
+        assert_(np.isrealobj(np.poly([0 + 1j, -0 + -1j, 1 + 2j,
+                                      1 - 2j, 1. + 3.5j, 1 - 3.5j])))
+        assert_(np.isrealobj(np.poly([1j, -1j, 1 + 2j, 1 - 2j, 1 + 3j, 1 - 3.j])))
+        assert_(np.isrealobj(np.poly([1j, -1j, 1 + 2j, 1 - 2j])))
         assert_(np.isrealobj(np.poly([1j, -1j, 2j, -2j])))
         assert_(np.isrealobj(np.poly([1j, -1j])))
         assert_(np.isrealobj(np.poly([1, -1])))
@@ -115,11 +116,22 @@ class TestPolynomial:
         assert_(np.iscomplexobj(np.poly([1j, -1.0000001j])))
 
         np.random.seed(42)
-        a = np.random.randn(100) + 1j*np.random.randn(100)
+        a = np.random.randn(100) + 1j * np.random.randn(100)
         assert_(np.isrealobj(np.poly(np.concatenate((a, np.conjugate(a))))))
 
     def test_roots(self):
         assert_array_equal(np.roots([1, 0, 0]), [0, 0])
+
+        # Testing for larger root values
+        for i in np.logspace(10, 25, num=1000, base=10):
+            tgt = np.array([-1, 1, i])
+            res = np.sort(np.roots(poly.polyfromroots(tgt)[::-1]))
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))    # Adapting the expected precision according to the root value, to take into account numerical calculation error
+
+        for i in np.logspace(10, 25, num=1000, base=10):
+            tgt = np.array([-1, 1.01, i])
+            res = np.sort(np.roots(poly.polyfromroots(tgt)[::-1]))
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))    # Adapting the expected precision according to the root value, to take into account numerical calculation error
 
     def test_str_leading_zeros(self):
         p = np.poly1d([4, 3, 2, 1])
@@ -138,7 +150,7 @@ class TestPolynomial:
         x = np.linspace(0, 2, 7)
         y = np.polyval(c, x)
         err = [1, -1, 1, -1, 1, -1, 1]
-        weights = np.arange(8, 1, -1)**2/7.0
+        weights = np.arange(8, 1, -1)**2 / 7.0
 
         # Check exception when too few points for variance estimate. Note that
         # the estimate requires the number of data points to exceed
@@ -147,25 +159,25 @@ class TestPolynomial:
                       [1], [1], deg=0, cov=True)
 
         # check 1D case
-        m, cov = np.polyfit(x, y+err, 2, cov=True)
+        m, cov = np.polyfit(x, y + err, 2, cov=True)
         est = [3.8571, 0.2857, 1.619]
         assert_almost_equal(est, m, decimal=4)
         val0 = [[ 1.4694, -2.9388,  0.8163],
                 [-2.9388,  6.3673, -2.1224],
-                [ 0.8163, -2.1224,  1.161 ]]
+                [ 0.8163, -2.1224,  1.161 ]]  # noqa: E202
         assert_almost_equal(val0, cov, decimal=4)
 
-        m2, cov2 = np.polyfit(x, y+err, 2, w=weights, cov=True)
+        m2, cov2 = np.polyfit(x, y + err, 2, w=weights, cov=True)
         assert_almost_equal([4.8927, -1.0177, 1.7768], m2, decimal=4)
         val = [[ 4.3964, -5.0052,  0.4878],
                [-5.0052,  6.8067, -0.9089],
                [ 0.4878, -0.9089,  0.3337]]
         assert_almost_equal(val, cov2, decimal=4)
 
-        m3, cov3 = np.polyfit(x, y+err, 2, w=weights, cov="unscaled")
+        m3, cov3 = np.polyfit(x, y + err, 2, w=weights, cov="unscaled")
         assert_almost_equal([4.8927, -1.0177, 1.7768], m3, decimal=4)
         val = [[ 0.1473, -0.1677,  0.0163],
-               [-0.1677,  0.228 , -0.0304],
+               [-0.1677,  0.228 , -0.0304],  # noqa: E203
                [ 0.0163, -0.0304,  0.0112]]
         assert_almost_equal(val, cov3, decimal=4)
 
@@ -197,7 +209,7 @@ class TestPolynomial:
         assert_allclose(mean.std(), 0.5, atol=0.01)
         assert_almost_equal(np.sqrt(cov.mean()), 0.5)
         # If we estimate our errors wrong, no change with scaling:
-        w = np.full(y.shape[0], 1./0.5)
+        w = np.full(y.shape[0], 1. / 0.5)
         mean, cov = np.polyfit(np.zeros(y.shape[0]), y, w=w, deg=0, cov=True)
         assert_allclose(mean.std(), 0.5, atol=0.01)
         assert_allclose(np.sqrt(cov.mean()), 0.5, atol=0.01)
@@ -233,7 +245,7 @@ class TestPolynomial:
         p = np.poly1d([3, 2, 1])
         p2 = p.integ(3, k=[9, 7, 6])
         assert_(
-            (p2.coeffs == [1/4./5., 1/3./4., 1/2./3., 9/1./2., 7, 6]).all())
+            (p2.coeffs == [1 / 4. / 5., 1 / 3. / 4., 1 / 2. / 3., 9 / 1. / 2., 7, 6]).all())
 
     def test_zero_dims(self):
         try:
@@ -265,19 +277,19 @@ class TestPolynomial:
     def test_poly_eq(self):
         p = np.poly1d([1, 2, 3])
         p2 = np.poly1d([1, 2, 4])
-        assert_equal(p == None, False)
-        assert_equal(p != None, True)
+        assert_equal(p == None, False)  # noqa: E711
+        assert_equal(p != None, True)  # noqa: E711
         assert_equal(p == p, True)
         assert_equal(p == p2, False)
         assert_equal(p != p2, True)
 
     def test_polydiv(self):
         b = np.poly1d([2, 6, 6, 1])
-        a = np.poly1d([-1j, (1+2j), -(2+1j), 1])
+        a = np.poly1d([-1j, (1 + 2j), -(2 + 1j), 1])
         q, r = np.polydiv(b, a)
         assert_equal(q.coeffs.dtype, np.complex128)
         assert_equal(r.coeffs.dtype, np.complex128)
-        assert_equal(q*a + r, b)
+        assert_equal(q * a + r, b)
 
         c = [1, 2, 3]
         d = np.poly1d([1, 2, 3])

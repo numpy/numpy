@@ -3,17 +3,16 @@ Set routines
 
 .. currentmodule:: numpy
 
-.. autosummary::
-   :toctree: generated/
-
-   lib.arraysetops
-
 Making proper sets
 ------------------
 .. autosummary::
    :toctree: generated/
 
    unique
+   unique_all
+   unique_counts
+   unique_inverse
+   unique_values
 
 Boolean operations
 ------------------

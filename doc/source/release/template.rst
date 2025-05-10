@@ -1,45 +1,21 @@
 :orphan:
 
+.. currentmodule:: numpy
+
 ==========================
-NumPy 1.xx.x Release Notes
+NumPy 2.xx.x Release Notes
 ==========================
 
 
 Highlights
 ==========
 
-
-New functions
-=============
+*We'll choose highlights for this release near the end of the release cycle.*
 
 
-Deprecations
-============
+.. if release snippets have been incorporated already, uncomment the follow
+   line (leave the `.. include:: directive)
 
+.. **Content from release note snippets in doc/release/upcoming_changes:**
 
-Future Changes
-==============
-
-
-Expired deprecations
-====================
-
-
-Compatibility notes
-===================
-
-
-C API changes
-=============
-
-
-New Features
-============
-
-
-Improvements
-============
-
-
-Changes
-=======
+.. include:: notes-towncrier.rst

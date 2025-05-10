@@ -147,13 +147,18 @@ class TestSetState:
         # arguments without truncation.
         self.prng.negative_binomial(0.5, 0.5)
 
+    def test_set_invalid_state(self):
+        # gh-25402
+        with pytest.raises(IndexError):
+            self.prng.set_state(())
+
 
 class TestRandint:
 
     rfunc = np.random.randint
 
     # valid integer/boolean types
-    itype = [np.bool_, np.int8, np.uint8, np.int16, np.uint16,
+    itype = [np.bool, np.int8, np.uint8, np.int16, np.uint16,
              np.int32, np.uint32, np.int64, np.uint64]
 
     def test_unsupported_type(self):
@@ -161,8 +166,8 @@ class TestRandint:
 
     def test_bounds_checking(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
             assert_raises(ValueError, self.rfunc, lbnd - 1, ubnd, dtype=dt)
             assert_raises(ValueError, self.rfunc, lbnd, ubnd + 1, dtype=dt)
             assert_raises(ValueError, self.rfunc, ubnd, lbnd, dtype=dt)
@@ -170,8 +175,8 @@ class TestRandint:
 
     def test_rng_zero_and_extremes(self):
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             tgt = ubnd - 1
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
@@ -179,15 +184,15 @@ class TestRandint:
             tgt = lbnd
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
-            tgt = (lbnd + ubnd)//2
+            tgt = (lbnd + ubnd) // 2
             assert_equal(self.rfunc(tgt, tgt + 1, size=1000, dtype=dt), tgt)
 
     def test_full_range(self):
         # Test for ticket #1690
 
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             try:
                 self.rfunc(lbnd, ubnd, dtype=dt)
@@ -206,7 +211,7 @@ class TestRandint:
                 assert_(vals.max() < ubnd)
                 assert_(vals.min() >= 2)
 
-        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool_)
+        vals = self.rfunc(0, 2, size=2**16, dtype=np.bool)
 
         assert_(vals.max() < 2)
         assert_(vals.min() >= 0)
@@ -216,15 +221,15 @@ class TestRandint:
         # We use a sha256 hash of generated sequences of 1000 samples
         # in the range [0, 6) for all but bool, where the range
         # is [0, 2). Hashes are for little endian numbers.
-        tgt = {'bool': '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',
-               'int16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
-               'int32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
-               'int64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
-               'int8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',
-               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',
-               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',
-               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',
-               'uint8': '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}
+        tgt = {'bool':   '509aea74d792fb931784c4b0135392c65aec64beee12b0cc167548a2c3d31e71',  # noqa: E501
+               'int16':  '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',  # noqa: E501
+               'int32':  'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',  # noqa: E501
+               'int64':  '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',  # noqa: E501
+               'int8':   '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404',  # noqa: E501
+               'uint16': '7b07f1a920e46f6d0fe02314155a2330bcfd7635e708da50e536c5ebb631a7d4',  # noqa: E501
+               'uint32': 'e577bfed6c935de944424667e3da285012e741892dcb7051a8f1ce68ab05c92f',  # noqa: E501
+               'uint64': '0fbead0b06759df2cfb55e43148822d4a1ff953c7eb19a5b08445a63bb64fa9e',  # noqa: E501
+               'uint8':  '001aac3a5acb935a9b186cbe14a1ca064b8bb2dd0b045d48abeacf74d0203404'}  # noqa: E501
 
         for dt in self.itype[1:]:
             np.random.seed(1234)
@@ -270,15 +275,16 @@ class TestRandint:
     def test_respect_dtype_singleton(self):
         # See gh-7203
         for dt in self.itype:
-            lbnd = 0 if dt is np.bool_ else np.iinfo(dt).min
-            ubnd = 2 if dt is np.bool_ else np.iinfo(dt).max + 1
+            lbnd = 0 if dt is np.bool else np.iinfo(dt).min
+            ubnd = 2 if dt is np.bool else np.iinfo(dt).max + 1
 
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
             assert_equal(sample.dtype, np.dtype(dt))
 
-        for dt in (bool, int, np.compat.long):
-            lbnd = 0 if dt is bool else np.iinfo(dt).min
-            ubnd = 2 if dt is bool else np.iinfo(dt).max + 1
+        for dt in (bool, int):
+            # The legacy rng uses "long" as the default integer:
+            lbnd = 0 if dt is bool else np.iinfo("long").min
+            ubnd = 2 if dt is bool else np.iinfo("long").max + 1
 
             # gh-7284: Ensure that we get Python data types
             sample = self.rfunc(lbnd, ubnd, dtype=dt)
@@ -430,7 +436,7 @@ class TestRandomDist:
         assert_(np.random.choice(arr, replace=True) is a)
 
         # Check 0-d array
-        s = tuple()
+        s = ()
         assert_(not np.isscalar(np.random.choice(2, s, replace=True)))
         assert_(not np.isscalar(np.random.choice(2, s, replace=False)))
         assert_(not np.isscalar(np.random.choice(2, s, replace=True, p=p)))
@@ -750,7 +756,7 @@ class TestRandomDist:
 
     def test_multinomial(self):
         np.random.seed(self.seed)
-        actual = np.random.multinomial(20, [1/6.]*6, size=(3, 2))
+        actual = np.random.multinomial(20, [1 / 6.] * 6, size=(3, 2))
         desired = np.array([[[4, 3, 5, 4, 2, 2],
                              [5, 2, 8, 2, 2, 1]],
                             [[3, 4, 3, 6, 0, 4],
@@ -876,9 +882,9 @@ class TestRandomDist:
         lambig = np.iinfo('l').max
         lamneg = -1
         assert_raises(ValueError, np.random.poisson, lamneg)
-        assert_raises(ValueError, np.random.poisson, [lamneg]*10)
+        assert_raises(ValueError, np.random.poisson, [lamneg] * 10)
         assert_raises(ValueError, np.random.poisson, lambig)
-        assert_raises(ValueError, np.random.poisson, [lambig]*10)
+        assert_raises(ValueError, np.random.poisson, [lambig] * 10)
 
     def test_power(self):
         np.random.seed(self.seed)
@@ -1655,7 +1661,7 @@ class TestThread:
 
     def test_multinomial(self):
         def gen_random(state, out):
-            out[...] = state.multinomial(10, [1/6.]*6, size=10000)
+            out[...] = state.multinomial(10, [1 / 6.] * 6, size=10000)
         self.check_function(gen_random, sz=(10000, 6))
 
 

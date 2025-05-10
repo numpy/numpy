@@ -20,7 +20,7 @@ as described by NEP 18 [1]_. The ``like=`` keyword argument will create an
 instance of the argument's type, enabling direct creation of non-NumPy arrays.
 The target array type must implement the ``__array_function__`` protocol.
 
-Motivation and Scope
+Motivation and scope
 --------------------
 
 Many libraries implement the NumPy API, such as Dask for graph
@@ -86,7 +86,7 @@ of the keyword-only argument standard described in PEP-3102 [2]_ to implement
 
 .. _neps.like-kwarg.usage-and-impact:
 
-Usage and Impact
+Usage and impact
 ----------------
 
 NumPy users who don't use other arrays from downstream libraries can continue
@@ -192,7 +192,7 @@ alone. Combining Dask's internal handling of meta arrays and the proposed
 of non-NumPy arrays, which is likely the heaviest limitation Dask currently
 faces from the ``__array_function__`` protocol.
 
-Backward Compatibility
+Backward compatibility
 ----------------------
 
 This proposal does not raise any backward compatibility issues within NumPy,
@@ -430,17 +430,17 @@ Discussion
 References
 ----------
 
-.. [1] `NEP 18 - A dispatch mechanism for NumPy's high level array functions <https://numpy.org/neps/nep-0018-array-function-protocol.html>`_.
+.. [1] :ref:`NEP18`.
 
 .. [2] `PEP 3102 — Keyword-Only Arguments <https://www.python.org/dev/peps/pep-3102/>`_.
 
-.. [3] `NEP 30 — Duck Typing for NumPy Arrays - Implementation <https://numpy.org/neps/nep-0030-duck-array-protocol.html>`_.
+.. [3] :ref:`NEP30`.
 
-.. [4] `NEP 31 — Context-local and global overrides of the NumPy API <https://github.com/numpy/numpy/pull/14389>`_.
+.. [4] :ref:`NEP31`.
 
 .. [5] `Array creation routines <https://docs.scipy.org/doc/numpy-1.17.0/reference/routines.array-creation.html>`_.
 
-.. [6] `NEP 37 — A dispatch protocol for NumPy-like modules <https://numpy.org/neps/nep-0037-array-module.html>`_.
+.. [6] :ref:`NEP37`.
 
 .. [7] `Implementation's pull request on GitHub <https://github.com/numpy/numpy/pull/16935>`_
 

@@ -2,8 +2,8 @@
 
 .. module:: numpy.linalg
 
-Linear algebra (:mod:`numpy.linalg`)
-====================================
+Linear algebra
+==============
 
 The NumPy linear algebra functions rely on BLAS and LAPACK to provide efficient
 low level implementations of standard linear algebra algorithms. Those
@@ -56,14 +56,23 @@ Matrix and vector products
    dot
    linalg.multi_dot
    vdot
+   vecdot
+   linalg.vecdot
    inner
    outer
+   linalg.outer
    matmul
+   linalg.matmul (Array API compatible location)
+   matvec
+   vecmat
    tensordot
+   linalg.tensordot (Array API compatible location)
    einsum
    einsum_path
    linalg.matrix_power
    kron
+   linalg.cross
+   
 
 Decompositions
 --------------
@@ -73,6 +82,7 @@ Decompositions
    linalg.cholesky
    linalg.qr
    linalg.svd
+   linalg.svdvals
 
 Matrix eigenvalues
 ------------------
@@ -90,11 +100,14 @@ Norms and other numbers
    :toctree: generated/
 
    linalg.norm
+   linalg.matrix_norm (Array API compatible)
+   linalg.vector_norm (Array API compatible)
    linalg.cond
    linalg.det
    linalg.matrix_rank
    linalg.slogdet
    trace
+   linalg.trace (Array API compatible)
 
 Solving equations and inverting matrices
 ----------------------------------------
@@ -108,6 +121,15 @@ Solving equations and inverting matrices
    linalg.pinv
    linalg.tensorinv
 
+Other matrix operations
+-----------------------
+.. autosummary::
+   :toctree: generated/
+
+   diagonal
+   linalg.diagonal (Array API compatible)
+   linalg.matrix_transpose (Array API compatible)
+
 Exceptions
 ----------
 .. autosummary::
@@ -119,8 +141,6 @@ Exceptions
 
 Linear algebra on several matrices at once
 ------------------------------------------
-
-.. versionadded:: 1.8.0
 
 Several of the linear algebra routines listed above are able to
 compute results for several matrices at once, if they are stacked into

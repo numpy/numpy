@@ -1,7 +1,7 @@
 .. _c-api.generalized-ufuncs:
 
 ==================================
-Generalized Universal Function API
+Generalized universal function API
 ==================================
 
 There is a general need for looping over not only functions on scalars
@@ -17,7 +17,7 @@ what the "core" dimensionality of the inputs is, as well as the
 corresponding dimensionality of the outputs (the element-wise ufuncs
 have zero core dimensions).  The list of the core dimensions for all
 arguments is called the "signature" of a ufunc.  For example, the
-ufunc numpy.add has signature ``(),()->()`` defining two scalar inputs
+ufunc ``numpy.add`` has signature ``(),()->()`` defining two scalar inputs
 and one scalar output.
 
 Another example is the function ``inner1d(a, b)`` with a signature of
@@ -57,10 +57,12 @@ taken when calling such a function. An example would be the function
 ``euclidean_pdist(a)``, with signature ``(n,d)->(p)``, that given an array of
 ``n`` ``d``-dimensional vectors, computes all unique pairwise Euclidean
 distances among them. The output dimension ``p`` must therefore be equal to
-``n * (n - 1) / 2``, but it is the caller's responsibility to pass in an
-output array of the right size. If the size of a core dimension of an output
+``n * (n - 1) / 2``, but by default, it is the caller's responsibility to pass
+in an output array of the right size. If the size of a core dimension of an output
 cannot be determined from a passed in input or output array, an error will be
-raised.
+raised.  This can be changed by defining a ``PyUFunc_ProcessCoreDimsFunc`` function
+and assigning it to the ``proces_core_dims_func`` field of the ``PyUFuncObject``
+structure.  See below for more details.
 
 Note: Prior to NumPy 1.10.0, less strict checks were in place: missing core
 dimensions were created by prepending 1's to the shape as necessary, core
@@ -77,7 +79,7 @@ Elementary Function
     (e.g. adding two numbers is the most basic operation in adding two
     arrays).  The ufunc applies the elementary function multiple times
     on different parts of the arrays.  The input/output of elementary
-    functions can be vectors; e.g., the elementary function of inner1d
+    functions can be vectors; e.g., the elementary function of ``inner1d``
     takes two vectors as input.
 
 Signature
@@ -103,7 +105,7 @@ Dimension Index
 
 .. _details-of-signature:
 
-Details of Signature
+Details of signature
 --------------------
 
 The signature defines "core" dimensionality of input and output
@@ -178,7 +180,7 @@ Here are some examples of signatures:
 The last is an instance of freezing a core dimension and can be used to
 improve ufunc performance
 
-C-API for implementing Elementary Functions
+C-API for implementing elementary functions
 -------------------------------------------
 
 The current interface remains unchanged, and ``PyUFunc_FromFuncAndData``
@@ -214,3 +216,116 @@ input/output arrays ``a``, ``b``, ``c``.  Furthermore, ``dimensions`` will be
 ``[N, I, J]`` to define the size of ``N`` of the loop and the sizes ``I`` and ``J``
 for the core dimensions ``i`` and ``j``.  Finally, ``steps`` will be
 ``[a_N, b_N, c_N, a_i, a_j, b_i]``, containing all necessary strides.
+
+Customizing core dimension size processing
+------------------------------------------
+
+The optional function of type ``PyUFunc_ProcessCoreDimsFunc``, stored
+on the ``process_core_dims_func`` attribute of the ufunc, provides the
+author of the ufunc a "hook" into the processing of the core dimensions
+of the arrays that were passed to the ufunc.  The two primary uses of
+this "hook" are:
+
+* Check that constraints on the core dimensions required
+  by the ufunc are satisfied (and set an exception if they are not).
+* Compute output shapes for any output core dimensions that were not
+  determined by the input arrays.
+
+As an example of the first use, consider the generalized ufunc ``minmax``
+with signature ``(n)->(2)`` that simultaneously computes the minimum and
+maximum of a sequence.  It should require that ``n > 0``, because
+the minimum and maximum of a sequence with length 0 is not meaningful.
+In this case, the ufunc author might define the function like this:
+
+    .. code-block:: c
+
+        int minmax_process_core_dims(PyUFuncObject ufunc,
+                                     npy_intp *core_dim_sizes)
+        {
+            npy_intp n = core_dim_sizes[0];
+            if (n == 0) {
+                PyExc_SetString("minmax requires the core dimension "
+                                "to be at least 1.");
+                return -1;
+            }
+            return 0;
+        }
+
+In this case, the length of the array ``core_dim_sizes`` will be 2.
+The second value in the array will always be 2, so there is no need
+for the function to inspect it.  The core dimension ``n`` is stored
+in the first element.  The function sets an exception and returns -1
+if it finds that ``n`` is 0.
+
+The second use for the "hook" is to compute the size of output arrays
+when the output arrays are not provided by the caller and one or more
+core dimension of the output is not also an input core dimension.
+If the ufunc does not have a function defined on the
+``process_core_dims_func`` attribute, an unspecified output core
+dimension size will result in an exception being raised.  With the
+"hook" provided by ``process_core_dims_func``, the author of the ufunc
+can set the output size to whatever is appropriate for the ufunc.
+
+In the array passed to the "hook" function, core dimensions that
+were not determined by the input are indicating by having the value -1
+in the ``core_dim_sizes`` array.  The function can replace the -1 with
+whatever value is appropriate for the ufunc, based on the core dimensions
+that occurred in the input arrays.
+
+.. warning::
+    The function must never change a value in ``core_dim_sizes`` that
+    is not -1 on input.  Changing a value that was not -1 will generally
+    result in incorrect output from the ufunc, and could result in the
+    Python interpreter crashing.
+
+For example, consider the generalized ufunc ``conv1d`` for which
+the elementary function computes the "full" convolution of two
+one-dimensional arrays ``x`` and ``y`` with lengths ``m`` and ``n``,
+respectively.  The output of this convolution has length ``m + n - 1``.
+To implement this as a generalized ufunc, the signature is set to
+``(m),(n)->(p)``, and in the "hook" function, if the core dimension
+``p`` is found to be -1, it is replaced with ``m + n - 1``.  If ``p``
+is *not* -1, it must be verified that the given value equals ``m + n - 1``.
+If it does not, the function must set an exception and return -1.
+For a meaningful result, the operation also requires that ``m + n``
+is at least 1, i.e. both inputs can't have length 0.
+
+Here's how that might look in code:
+
+    .. code-block:: c
+
+        int conv1d_process_core_dims(PyUFuncObject *ufunc,
+                                     npy_intp *core_dim_sizes)
+        {
+            // core_dim_sizes will hold the core dimensions [m, n, p].
+            // p will be -1 if the caller did not provide the out argument.
+            npy_intp m = core_dim_sizes[0];
+            npy_intp n = core_dim_sizes[1];
+            npy_intp p = core_dim_sizes[2];
+            npy_intp required_p = m + n - 1;
+
+            if (m == 0 && n == 0) {
+                // Disallow both inputs having length 0.
+                PyErr_SetString(PyExc_ValueError,
+                    "conv1d: both inputs have core dimension 0; the function "
+                    "requires that at least one input has size greater than 0.");
+                return -1;
+            }
+            if (p == -1) {
+                // Output array was not given in the call of the ufunc.
+                // Set the correct output size here.
+                core_dim_sizes[2] = required_p;
+                return 0;
+            }
+            // An output array *was* given.  Validate its core dimension.
+            if (p != required_p) {
+                PyErr_Format(PyExc_ValueError,
+                        "conv1d: the core dimension p of the out parameter "
+                        "does not equal m + n - 1, where m and n are the "
+                        "core dimensions of the inputs x and y; got m=%zd "
+                        "and n=%zd so p must be %zd, but got p=%zd.",
+                        m, n, required_p, p);
+                return -1;
+            }
+            return 0;
+        }

@@ -4,19 +4,13 @@ import sys
 import tempfile
 
 
-def run_command(cmd):
-    print('Running %r:' % (cmd))
-    os.system(cmd)
-    print('------')
-
-
 def run():
     _path = os.getcwd()
     os.chdir(tempfile.gettempdir())
     print('------')
-    print('os.name=%r' % (os.name))
+    print(f'os.name={os.name!r}')
     print('------')
-    print('sys.platform=%r' % (sys.platform))
+    print(f'sys.platform={sys.platform!r}')
     print('------')
     print('sys.version:')
     print(sys.version)
@@ -24,21 +18,21 @@ def run():
     print('sys.prefix:')
     print(sys.prefix)
     print('------')
-    print('sys.path=%r' % (':'.join(sys.path)))
+    print(f"sys.path={':'.join(sys.path)!r}")
     print('------')
 
     try:
         import numpy
         has_newnumpy = 1
-    except ImportError:
-        print('Failed to import new numpy:', sys.exc_info()[1])
+    except ImportError as e:
+        print('Failed to import new numpy:', e)
         has_newnumpy = 0
 
     try:
         from numpy.f2py import f2py2e
         has_f2py2e = 1
-    except ImportError:
-        print('Failed to import f2py2e:', sys.exc_info()[1])
+    except ImportError as e:
+        print('Failed to import f2py2e:', e)
         has_f2py2e = 0
 
     try:
@@ -48,14 +42,13 @@ def run():
         try:
             import numpy_distutils
             has_numpy_distutils = 1
-        except ImportError:
-            print('Failed to import numpy_distutils:', sys.exc_info()[1])
+        except ImportError as e:
+            print('Failed to import numpy_distutils:', e)
             has_numpy_distutils = 0
 
     if has_newnumpy:
         try:
-            print('Found new numpy version %r in %s' %
-                  (numpy.__version__, numpy.__file__))
+            print(f'Found new numpy version {numpy.__version__!r} in {numpy.__file__}')
         except Exception as msg:
             print('error:', msg)
             print('------')
@@ -100,7 +93,7 @@ def run():
                     print('------')
         except Exception as msg:
             print(
-                'error:', msg, '(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)')
+                'error:', msg, '(ignore it, build_flib is obsolete for numpy.distutils 0.2.2 and up)')
             print('------')
         try:
             if has_numpy_distutils == 2:
@@ -150,5 +143,7 @@ def run():
             print('error:', msg)
             print('------')
     os.chdir(_path)
+
+
 if __name__ == "__main__":
     run()

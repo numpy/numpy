@@ -26,41 +26,45 @@ changes made in one :class:`ndarray` may be visible in another. That
 is, an ndarray can be a *"view"* to another ndarray, and the data it
 is referring to is taken care of by the *"base"* ndarray. ndarrays can
 also be views to memory owned by Python :class:`strings <str>` or
-objects implementing the :class:`buffer` or :ref:`array
+objects implementing the :class:`memoryview` or :ref:`array
 <arrays.interface>` interfaces.
 
 
 .. admonition:: Example
 
-   A 2-dimensional array of size 2 x 3, composed of 4-byte integer
-   elements:
+   .. try_examples::
 
-   >>> x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
-   >>> type(x)
-   <class 'numpy.ndarray'>
-   >>> x.shape
-   (2, 3)
-   >>> x.dtype
-   dtype('int32')
+      A 2-dimensional array of size 2 x 3, composed of 4-byte integer
+      elements:
 
-   The array can be indexed using Python container-like syntax:
+      >>> import numpy as np
 
-   >>> # The element of x in the *second* row, *third* column, namely, 6.
-   >>> x[1, 2]
-   6
+      >>> x = np.array([[1, 2, 3], [4, 5, 6]], np.int32)
+      >>> type(x)
+      <class 'numpy.ndarray'>
+      >>> x.shape
+      (2, 3)
+      >>> x.dtype
+      dtype('int32')
 
-   For example :ref:`slicing <arrays.indexing>` can produce views of
-   the array:
+      The array can be indexed using Python container-like syntax:
 
-   >>> y = x[:,1]
-   >>> y
-   array([2, 5], dtype=int32)
-   >>> y[0] = 9 # this also changes the corresponding element in x
-   >>> y
-   array([9, 5], dtype=int32)
-   >>> x
-   array([[1, 9, 3],
-          [4, 5, 6]], dtype=int32)
+      >>> # The element of x in the *second* row, *third* column, namely, 6.
+      >>> x[1, 2]
+         6
+
+      For example :ref:`slicing <arrays.indexing>` can produce views of
+      the array:
+
+      >>> y = x[:,1]
+      >>> y
+      array([2, 5], dtype=int32)
+      >>> y[0] = 9 # this also changes the corresponding element in x
+      >>> y
+      array([9, 5], dtype=int32)
+      >>> x
+      array([[1, 9, 3],
+             [4, 5, 6]], dtype=int32)
 
 
 Constructing arrays
@@ -135,20 +139,20 @@ memory block can be accessed by some combination of the indices.
 
 .. note::
 
-    `Contiguous arrays` and `single-segment arrays` are synonymous
+    *Contiguous arrays* and *single-segment arrays* are synonymous
     and are used interchangeably throughout the documentation.
 
 While a C-style and Fortran-style contiguous array, which has the corresponding
 flags set, can be addressed with the above strides, the actual strides may be
 different. This can happen in two cases:
 
-    1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
-       This means that in the formula for the offset :math:`n_k = 0` and thus
-       :math:`s_k n_k = 0` and the value of :math:`s_k` `= self.strides[k]` is
-       arbitrary.
-    2. If an array has no elements (``self.size == 0``) there is no legal
-       index and the strides are never used. Any array with no elements may be
-       considered C-style and Fortran-style contiguous.
+1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
+   This means that in the formula for the offset :math:`n_k = 0` and thus
+   :math:`s_k n_k = 0` and the value of :math:`s_k` `= self.strides[k]` is
+   arbitrary.
+2. If an array has no elements (``self.size == 0``) there is no legal
+   index and the strides are never used. Any array with no elements may be
+   considered C-style and Fortran-style contiguous.
 
 Point 1. means that ``self`` and ``self.squeeze()`` always have the same
 contiguity and ``aligned`` flags value. This also means
@@ -158,17 +162,14 @@ contiguous at the same time.
 .. index:: aligned
 
 An array is considered aligned if the memory offsets for all elements and the
-base offset itself is a multiple of `self.itemsize`. Understanding
-`memory-alignment` leads to better performance on most hardware.
+base offset itself is a multiple of `self.itemsize <ndarray.itemsize>`. Understanding
+*memory-alignment* leads to better performance on most hardware.
 
 .. warning::
 
     It does *not* generally hold that ``self.strides[-1] == self.itemsize``
     for C-style contiguous arrays or ``self.strides[0] == self.itemsize`` for
     Fortran-style contiguous arrays is true.
-
-    ``NPY_RELAXED_STRIDES_DEBUG=1`` can be used to help find errors when
-    incorrectly relying on the strides in C-extension code (see below warning).
 
 Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major` (C)
 order, unless otherwise specified, but, for example, :ref:`basic
@@ -276,7 +277,7 @@ For the following methods there are also corresponding functions in
 :func:`clip`, :func:`compress`, :func:`copy`, :func:`cumprod`,
 :func:`cumsum`, :func:`diagonal`, :func:`imag`, :func:`max <amax>`,
 :func:`mean`, :func:`min <amin>`, :func:`nonzero`, :func:`partition`,
-:func:`prod`, :func:`ptp`, :func:`put`, :func:`ravel`, :func:`real`,
+:func:`prod`, :func:`put`, :func:`ravel`, :func:`real`,
 :func:`repeat`, :func:`reshape`, :func:`round <around>`,
 :func:`searchsorted`, :func:`sort`, :func:`squeeze`, :func:`std`,
 :func:`sum`, :func:`swapaxes`, :func:`take`, :func:`trace`,
@@ -290,8 +291,6 @@ Array conversion
 
    ndarray.item
    ndarray.tolist
-   ndarray.itemset
-   ndarray.tostring
    ndarray.tobytes
    ndarray.tofile
    ndarray.dump
@@ -364,36 +363,40 @@ Many of these methods take an argument named *axis*. In such cases,
 
 .. admonition:: Example of the *axis* argument
 
-   A 3-dimensional array of size 3 x 3 x 3, summed over each of its
-   three axes
+   .. try_examples::
 
-   >>> x = np.arange(27).reshape((3,3,3))
-   >>> x
-   array([[[ 0,  1,  2],
-           [ 3,  4,  5],
-           [ 6,  7,  8]],
-          [[ 9, 10, 11],
-           [12, 13, 14],
-           [15, 16, 17]],
-          [[18, 19, 20],
-           [21, 22, 23],
-           [24, 25, 26]]])
-   >>> x.sum(axis=0)
-   array([[27, 30, 33],
-          [36, 39, 42],
-          [45, 48, 51]])
-   >>> # for sum, axis is the first keyword, so we may omit it,
-   >>> # specifying only its value
-   >>> x.sum(0), x.sum(1), x.sum(2)
-   (array([[27, 30, 33],
-           [36, 39, 42],
-           [45, 48, 51]]),
-    array([[ 9, 12, 15],
-           [36, 39, 42],
-           [63, 66, 69]]),
-    array([[ 3, 12, 21],
-           [30, 39, 48],
-           [57, 66, 75]]))
+      A 3-dimensional array of size 3 x 3 x 3, summed over each of its
+      three axes:
+
+      >>> import numpy as np
+
+      >>> x = np.arange(27).reshape((3,3,3))
+      >>> x
+      array([[[ 0,  1,  2],
+            [ 3,  4,  5],
+            [ 6,  7,  8]],
+            [[ 9, 10, 11],
+            [12, 13, 14],
+            [15, 16, 17]],
+            [[18, 19, 20],
+            [21, 22, 23],
+            [24, 25, 26]]])
+      >>> x.sum(axis=0)
+      array([[27, 30, 33],
+            [36, 39, 42],
+            [45, 48, 51]])
+      >>> # for sum, axis is the first keyword, so we may omit it,
+      >>> # specifying only its value
+      >>> x.sum(0), x.sum(1), x.sum(2)
+      (array([[27, 30, 33],
+            [36, 39, 42],
+            [45, 48, 51]]),
+      array([[ 9, 12, 15],
+            [36, 39, 42],
+            [63, 66, 69]]),
+      array([[ 3, 12, 21],
+            [30, 39, 48],
+            [57, 66, 75]]))
 
 The parameter *dtype* specifies the data type over which a reduction
 operation (like summing) should take place. The default reduce data
@@ -413,7 +416,6 @@ be performed.
    ndarray.argmax
    ndarray.min
    ndarray.argmin
-   ndarray.ptp
    ndarray.clip
    ndarray.conj
    ndarray.round
@@ -468,11 +470,11 @@ Truth value of an array (:class:`bool() <bool>`):
 
    Truth-value testing of an array invokes
    :meth:`ndarray.__bool__`, which raises an error if the number of
-   elements in the array is larger than 1, because the truth value
+   elements in the array is not 1, because the truth value
    of such arrays is ambiguous. Use :meth:`.any() <ndarray.any>` and
    :meth:`.all() <ndarray.all>` instead to be clear about what is meant
-   in such cases. (If the number of elements is 0, the array evaluates
-   to ``False``.)
+   in such cases. (If you wish to check for whether an array is empty,
+   use for example ``.size > 0``.)
 
 
 Unary operations:
