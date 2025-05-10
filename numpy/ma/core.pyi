@@ -2,10 +2,10 @@
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
 from collections.abc import Sequence
-from typing import Any, Literal, Self, SupportsIndex, TypeAlias, TypeVar, overload
+from typing import Any, Literal, Self, SupportsIndex, TypeAlias, overload
 
 from _typeshed import Incomplete
-from typing_extensions import TypeIs, deprecated
+from typing_extensions import TypeIs, TypeVar, deprecated
 
 import numpy as np
 from numpy import (
@@ -221,10 +221,10 @@ __all__ = [
     "zeros_like",
 ]
 
-_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
-_ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
+_ShapeT = TypeVar("_ShapeT", bound=_Shape)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_Shape, covariant=True)
 _DTypeT = TypeVar("_DTypeT", bound=dtype)
-_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)

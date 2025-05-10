@@ -2,11 +2,11 @@ from typing import (
     Literal as L,
     overload,
     TypeAlias,
-    TypeVar,
     Any,
     SupportsIndex,
     SupportsInt,
 )
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import (
@@ -89,10 +89,10 @@ __all__ = [
     "chararray",
 ]
 
-_ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_Shape, covariant=True)
 _CharacterT = TypeVar("_CharacterT", bound=np.character)
-_CharDTypeT_co = TypeVar("_CharDTypeT_co", bound=dtype[np.character], covariant=True)
-_CharArray: TypeAlias = chararray[tuple[int, ...], dtype[_CharacterT]]
+_CharDTypeT_co = TypeVar("_CharDTypeT_co", bound=dtype[np.character], default=dtype, covariant=True)
+_CharArray: TypeAlias = chararray[_Shape, dtype[_CharacterT]]
 
 _StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
 _StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
