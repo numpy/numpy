@@ -7,6 +7,7 @@ import warnings
 import pytest
 import tempfile
 import re
+import numpy.ma as ma
 
 import numpy as np
 from numpy.testing import (
@@ -454,3 +455,4 @@ class TestAddNewdocUFunc(_DeprecationTestCase):
                 struct_ufunc.add_triplet, "new docs"
             )
         )
+
