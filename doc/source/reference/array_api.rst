@@ -4,8 +4,8 @@
 Array API standard compatibility
 ********************************
 
-NumPy's main namespace as well as the `numpy.fft` and `numpy.linalg` namespaces
-are compatible with the
+The NumPy 2.3.0 main namespace as well as the `numpy.fft` and `numpy.linalg`
+namespaces are compatible with the
 `2024.12 version <https://data-apis.org/array-api/2024.12/index.html>`__
 of the Python array API standard.
 
