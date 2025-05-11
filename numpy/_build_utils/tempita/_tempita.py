@@ -152,6 +152,7 @@ class Template:
         if default_inherit is not None:
             self.default_inherit = default_inherit
 
+    @classmethod
     def from_filename(
         cls,
         filename,
@@ -171,8 +172,6 @@ class Template:
             default_inherit=default_inherit,
             get_template=get_template,
         )
-
-    from_filename = classmethod(from_filename)
 
     def __repr__(self):
         return f"<{self.__class__.__name__} {id(self):x} name={self.name!r}>"
