@@ -1177,15 +1177,14 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
     element, test_elements = conv.as_arrays(subok=False, pyscalars="convert")
 
     dt = conv.result_type()
-    test_elements = test_elements.astype(dt, copy=False)
-    element = element.astype(dt, copy=False)
+    # TODO(seberg): I had added this cast once, but it seems like that was a bad idea?
+    # test_elements = test_elements.astype(dt, copy=False)
+    # element = element.astype(dt, copy=False)
 
     result = _in1d(element, test_elements, assume_unique=assume_unique,
                    invert=invert, kind=kind).reshape(element.shape)
-    if conv.scalar_input[0]:
-        return result[()]
-    return result
 
+    return conv.wrap(result, to_scalar=conv.scalar_input[0])
 
 def _union1d_dispatcher(ar1, ar2):
     return (ar1, ar2)

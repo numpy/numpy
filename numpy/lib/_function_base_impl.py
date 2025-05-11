@@ -768,7 +768,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
     n2 = len(funclist)
 
     # undocumented: single condition is promoted to a list of one condition
-    if isscalar(condlist) or (
+    # TODO(seberg): Made this even worse as a work-around, this needs improvement!
+    if isscalar(condlist) or (np.ndim(condlist) == 0) or (
             not isinstance(condlist[0], (list, ndarray)) and x.ndim != 0):
         condlist = [condlist]
 
