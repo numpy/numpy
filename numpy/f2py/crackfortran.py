@@ -1250,8 +1250,7 @@ def analyzeline(m, case, line):
                     continue
             else:
                 k = rmbadname1(m1.group('name'))
-            if case in ['public', 'private'] and \
-               (k == 'operator' or k == 'assignment'):
+            if case in ['public', 'private'] and k in {'operator', 'assignment'}:
                 k += m1.group('after')
             if k not in edecl:
                 edecl[k] = {}

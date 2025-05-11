@@ -1624,7 +1624,7 @@ class TestDTypeClasses:
         assert type(dtype) is not np.dtype
         if dtype.type.__name__ != "rational":
             dt_name = type(dtype).__name__.lower().removesuffix("dtype")
-            if dt_name == "uint" or dt_name == "int":
+            if dt_name in {"uint", "int"}:
                 # The scalar names has a `c` attached because "int" is Python
                 # int and that is long...
                 dt_name += "c"

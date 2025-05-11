@@ -972,7 +972,7 @@ def parse_signature(sig_text, name, pos):
         tok_type, tok_string = get_token()
         if tok_type == tokenize.ENDMARKER:
             break
-        if tok_type == tokenize.OP and (tok_string == "*" or tok_string == "**"):
+        if tok_type == tokenize.OP and tok_string in {"*", "**"}:
             var_arg_type = tok_string
             tok_type, tok_string = get_token()
         if tok_type != tokenize.NAME:

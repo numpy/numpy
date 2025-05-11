@@ -945,7 +945,7 @@ class TestMultiIndexingAutomated:
                 except ValueError:
                     raise IndexError
                 in_indices[i] = indx
-            elif indx.dtype.kind != 'b' and indx.dtype.kind != 'i':
+            elif indx.dtype.kind not in 'bi':
                 raise IndexError('arrays used as indices must be of '
                                  'integer (or boolean) type')
             if indx.ndim != 0:
