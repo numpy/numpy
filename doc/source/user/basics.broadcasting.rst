@@ -318,6 +318,7 @@ dimensions in the broadcast increases.
 The following example shows how a (3,1) array and a (1,4) array are broadcast to a (3,4) shape:
 
 .. code-block:: python
+
     import numpy as np
     a = np.arange(3).reshape(3, 1)
     b = np.arange(4).reshape(1, 4)
@@ -332,6 +333,7 @@ The following example shows how a (3,1) array and a (1,4) array are broadcast to
 This example shows how a (2, 3, 1) array can be broadcast with a (3, 4) array to produce a (2, 3, 4) result.
 
 .. code-block:: python
+
     import numpy as np
     a = np.arange(6).reshape(2, 3, 1)    # shape: (2, 3, 1)
     b = np.arange(12).reshape(3, 4)      # shape: (3, 4)
