@@ -954,7 +954,7 @@ def bincount(x, weights=None, minlength=None):
         values, or if `minlength` is negative.
     TypeError
         If the type of the input is float or complex, or larger than the
-        native array index type.
+        native array index type (which is equivalent to `np.intp`).
 
     See Also
     --------
