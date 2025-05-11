@@ -1567,7 +1567,6 @@ def appendmultiline(group, context_name, ml):
     if context_name not in d:
         d[context_name] = []
     d[context_name].append(ml)
-    return
 
 
 def cracktypespec0(typespec, ll):

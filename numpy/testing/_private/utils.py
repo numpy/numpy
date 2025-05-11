@@ -1528,7 +1528,6 @@ def decorate_methods(cls, decorator, testmatch=None):
             continue
         if testmatch.search(funcname) and not funcname.startswith('_'):
             setattr(cls, funcname, decorator(function))
-    return
 
 
 def measure(code_str, times=1, label=None):

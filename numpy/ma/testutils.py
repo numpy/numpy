@@ -91,7 +91,6 @@ def _assert_equal_on_sequences(actual, desired, err_msg=''):
     assert_equal(len(actual), len(desired), err_msg)
     for k in range(len(desired)):
         assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}')
-    return
 
 
 def assert_equal_records(a, b):
@@ -106,7 +105,6 @@ def assert_equal_records(a, b):
         (af, bf) = (operator.getitem(a, f), operator.getitem(b, f))
         if not (af is masked) and not (bf is masked):
             assert_equal(operator.getitem(a, f), operator.getitem(b, f))
-    return
 
 
 def assert_equal(actual, desired, err_msg=''):

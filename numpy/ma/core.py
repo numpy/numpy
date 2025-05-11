@@ -571,7 +571,6 @@ def set_fill_value(a, fill_value):
     """
     if isinstance(a, MaskedArray):
         a.set_fill_value(fill_value)
-    return
 
 
 def get_fill_value(a):
@@ -2498,7 +2497,6 @@ def _recursive_printoption(result, mask, printopt):
             _recursive_printoption(curdata, curmask, printopt)
     else:
         np.copyto(result, printopt, where=mask)
-    return
 
 
 # For better or worse, these end in a newline
@@ -3041,7 +3039,6 @@ class MaskedArray(ndarray):
                      '_basedict': _optinfo}
         self.__dict__.update(_dict)
         self.__dict__.update(_optinfo)
-        return
 
     def __array_finalize__(self, obj):
         """
@@ -7599,7 +7596,6 @@ def putmask(a, mask, values):  # , mode='raise'):
             valmask = getmaskarray(values)
         np.copyto(a._mask, valmask, where=mask)
     np.copyto(a._data, valdata, where=mask)
-    return
 
 
 def transpose(a, axes=None):

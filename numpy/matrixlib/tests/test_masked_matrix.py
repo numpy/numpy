@@ -19,7 +19,6 @@ class MMatrix(MaskedArray, np.matrix,):
     def __array_finalize__(self, obj):
         np.matrix.__array_finalize__(self, obj)
         MaskedArray.__array_finalize__(self, obj)
-        return
 
     @property
     def _series(self):

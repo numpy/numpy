@@ -1425,7 +1425,6 @@ class poly1d:
             self._coeffs = NX.concatenate((zr, self.coeffs))
             ind = 0
         self._coeffs[ind] = val
-        return
 
     def __iter__(self):
         return iter(self.coeffs)
