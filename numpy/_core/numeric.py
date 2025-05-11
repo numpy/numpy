@@ -2098,25 +2098,24 @@ def binary_repr(num, width=None):
         err_if_insufficient(width, binwidth)
         return binary.zfill(outwidth)
 
+    elif width is None:
+        return f'-{-num:b}'
+
     else:
-        if width is None:
-            return f'-{-num:b}'
+        poswidth = len(f'{-num:b}')
 
-        else:
-            poswidth = len(f'{-num:b}')
+        # See gh-8679: remove extra digit
+        # for numbers at boundaries.
+        if 2**(poswidth - 1) == -num:
+            poswidth -= 1
 
-            # See gh-8679: remove extra digit
-            # for numbers at boundaries.
-            if 2**(poswidth - 1) == -num:
-                poswidth -= 1
+        twocomp = 2**(poswidth + 1) + num
+        binary = f'{twocomp:b}'
+        binwidth = len(binary)
 
-            twocomp = 2**(poswidth + 1) + num
-            binary = f'{twocomp:b}'
-            binwidth = len(binary)
-
-            outwidth = builtins.max(binwidth, width)
-            err_if_insufficient(width, binwidth)
-            return '1' * (outwidth - binwidth) + binary
+        outwidth = builtins.max(binwidth, width)
+        err_if_insufficient(width, binwidth)
+        return '1' * (outwidth - binwidth) + binary
 
 
 @set_module('numpy')

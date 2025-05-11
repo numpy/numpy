@@ -157,11 +157,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                 y *= delta
             else:
                 y = y * delta
+        elif _mult_inplace:
+            y *= step
         else:
-            if _mult_inplace:
-                y *= step
-            else:
-                y = y * step
+            y = y * step
     else:
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step

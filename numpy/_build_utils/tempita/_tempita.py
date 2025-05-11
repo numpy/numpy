@@ -785,13 +785,12 @@ def parse_expr(tokens, name, context=()):
                 expr = expr.replace("\r\n", "\n")
                 expr = expr.replace("\r", "")
             expr += "\n"
-        else:
-            if "\n" in expr:
-                raise TemplateError(
-                    "Multi-line py blocks must start with a newline",
-                    position=pos,
-                    name=name,
-                )
+        elif "\n" in expr:
+            raise TemplateError(
+                "Multi-line py blocks must start with a newline",
+                position=pos,
+                name=name,
+            )
         return ("py", pos, expr), tokens[1:]
     elif expr in ("continue", "break"):
         if "for" not in context:

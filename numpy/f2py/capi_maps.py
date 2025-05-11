@@ -229,9 +229,8 @@ def getctype(var):
                         errmess('getctype: "%s(kind=%s)" is mapped to C "%s" (to override define dict(%s = dict(%s="<C typespec>")) in %s/.f2py_f2cmap file).\n'
                                 % (typespec, var['kindselector']['kind'], ctype,
                                    typespec, var['kindselector']['kind'], os.getcwd()))
-    else:
-        if not isexternal(var):
-            errmess(f'getctype: No C-type found in "{var}", assuming void.\n')
+    elif not isexternal(var):
+        errmess(f'getctype: No C-type found in "{var}", assuming void.\n')
     return ctype
 
 
@@ -767,10 +766,9 @@ return_value=
 void
 #endif
 """
-    else:
-        if hasnote(rout):
-            ret['note'] = rout['note']
-            rout['note'] = ['See elsewhere.']
+    elif hasnote(rout):
+        ret['note'] = rout['note']
+        rout['note'] = ['See elsewhere.']
     nofargs = 0
     nofoptargs = 0
     if 'args' in rout and 'vars' in rout:
