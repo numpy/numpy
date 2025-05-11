@@ -411,7 +411,7 @@ class TestAttributes:
         assert_raises(RuntimeError, make_array, 8, 3, 1)
         # Check that the true extent of the array is used.
         # Test relies on as_strided base not exposing a buffer.
-        x = np.lib.stride_tricks.as_strided(np.arange(1), (10, 10), (0, 0))
+        x = stride_tricks.as_strided(np.arange(1), (10, 10), (0, 0))
 
         def set_strides(arr, strides):
             with pytest.warns(DeprecationWarning):
@@ -420,7 +420,7 @@ class TestAttributes:
         assert_raises(ValueError, set_strides, x, (10 * x.itemsize, x.itemsize))
 
         # Test for offset calculations:
-        x = np.lib.stride_tricks.as_strided(np.arange(10, dtype=np.int8)[-1],
+        x = stride_tricks.as_strided(np.arange(10, dtype=np.int8)[-1],
                                                     shape=(10,), strides=(-1,))
         assert_raises(ValueError, set_strides, x[::-1], -1)
         a = x[::-1]
@@ -8360,11 +8360,13 @@ class TestNewBufferProtocol:
         self._check_roundtrip(x3)
 
     @pytest.mark.valgrind_error(reason="leaks buffer info cache temporarily.")
-    def test_relaxed_strides(self, c=np.ones((1, 10, 10), dtype='i8')):
+    def test_relaxed_strides(self, c=stride_tricks.as_strided(
+                                              np.ones((1, 10, 10), dtype='i8'),
+                                              strides=(-1, 80, 8)
+                                              )
+                                  ):
         # Note: c defined as parameter so that it is persistent and leak
         # checks will notice gh-16934 (buffer info cache leak).
-        with pytest.warns(DeprecationWarning):
-            c.strides = (-1, 80, 8)  # strides need to be fixed at export
 
         assert_(memoryview(c).strides == (800, 80, 8))
 
