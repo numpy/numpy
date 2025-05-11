@@ -2676,10 +2676,14 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('flat',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('nbytes',
     """
-    Total bytes consumed by the elements of the array.
+    Total number of bytes the array's data would consume if stored
+    contiguously in memory.
 
     Notes
     -----
+    If the array is a view, this shows how much memory it *would* use
+    if it were copied into a separate array.
+    
     Does not include memory consumed by non-element attributes of the
     array object.
 
@@ -2697,6 +2701,17 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nbytes',
     480
     >>> np.prod(x.shape) * x.itemsize
     480
+
+    >>> import numpy as np
+    >>> arr = np.arange(100).reshape(10, 10, 1)
+    >>> arr_1 = np.broadcast_to(arr, (10, 10, 1000))
+    >>> arr_2 = np.lib.stride_tricks.sliding_window_view(arr, 5, 0)
+    >>> arr.nbytes
+    800
+    >>> arr_1.nbytes
+    800000
+    >>> arr_2.nbytes
+    2400
 
     """))
 
