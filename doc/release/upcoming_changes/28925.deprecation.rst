@@ -1,2 +1,11 @@
-* Setting the ``strides`` attribute on a NumPy array has been deprecated. See ``np.lib.stride_tricks.strided_window_view`` and ``np.lib.stride_tricks.as_strided`` as an alternative.
+Setting the ``strides`` attribute is deprecated
+-----------------------------------------------
+Setting the strides attribute is now deprecated since mutating
+an array is unsafe if an array is shared, especially by multiple
+threads.  As an alternative, you can create a new view (no copy) via:
+* `np.lib.stride_tricks.strided_window_view` if applicable,
+* `np.lib.stride_tricks.as_strided` for the general case,
+* or the `np.ndarray` constructor (``buffer`` is the original array) for a light-weight version.
+
+Manually setting strides can be useful but needs to be done with care as it can lead to unsafe memory use.
 
