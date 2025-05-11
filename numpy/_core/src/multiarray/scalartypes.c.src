@@ -338,7 +338,7 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
         }
         Py_DECREF(other_op);
         /* Bug convert back to scalar (TODO: It would be nice to signal this) */
-        return PyArray_Return(res);
+        return PyArray_Return((PyArrayObject *)res);
     }
     else {
         assert(other_op == NULL);
@@ -499,7 +499,7 @@ gentype_@name@(PyObject *m1)
     }
     ret = Py_TYPE(arr)->tp_as_number->nb_@name@(arr);
     Py_DECREF(arr);
-    return PyArray_Return(ret);
+    return PyArray_Return((PyArrayObject *)ret);
 }
 /**end repeat**/
 
