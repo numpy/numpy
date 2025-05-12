@@ -14,6 +14,8 @@ extend-exclude = [
     "numpy/_core/src/common/pythoncapi-compat",
 ]
 
+line-length = 88
+
 [lint]
 preview = true
 extend-select = [
@@ -38,7 +40,6 @@ ignore = [
     "E266",   # Too many leading `#` before block comment
     "E302",   # TODO: Expected 2 blank lines, found 1
     "E402",   # Module level import not at top of file
-    "E501",   # TODO: Line too long
     "E712",   # Avoid equality comparisons to `True` or `False`
     "E721",   # TODO: Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance check
     "E731",   # Do not assign a `lambda` expression, use a `def`
@@ -49,3 +50,17 @@ ignore = [
 
 [lint.per-file-ignores]
 "test*.py" = ["E201", "E714"]
+"benchmarks/*py" = ["E501"]
+"numpy/_build_utils/*py" = ["E501"]
+"numpy/__init__.py" = ["E501"]
+"numpy/_core/**" = ["E501"]
+"numpy/core/**" = ["E501"]
+"numpy/_typing/*py" = ["E501"]
+"numpy/lib/*py" = ["E501"]
+"numpy/linalg/*py" = ["E501"]
+"numpy/ma/*py" = ["E501"]
+"numpy/polynomial/*py" = ["E501"]
+"numpy/tests/*py" = ["E501"]
+"numpy/random/*py" = ["E501"]
+"numpy*pyi" = ["E501"]
+"numpy/f2py/*py" = ["E501"]

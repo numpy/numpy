@@ -20,7 +20,8 @@ def replace_scalar_type_names():
     """ Rename numpy types to use the canonical names to make sphinx behave """
     import ctypes
 
-    Py_ssize_t = ctypes.c_int64 if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_int32
+    sizeof_void_p = ctypes.sizeof(ctypes.c_void_p)
+    Py_ssize_t = ctypes.c_int64 if sizeof_void_p == 8 else ctypes.c_int32
 
     class PyObject(ctypes.Structure):
         pass

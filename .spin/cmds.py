@@ -615,7 +615,8 @@ def notes(version_override):
     )
 
     try:
-        test_notes = _get_numpy_tools(pathlib.Path('ci', 'test_all_newsfragments_used.py'))
+        cmd = pathlib.Path('ci', 'test_all_newsfragments_used.py')
+        test_notes = _get_numpy_tools(cmd)
     except ModuleNotFoundError as e:
         raise click.ClickException(
             f"{e.msg}. Install the missing packages to use this command."

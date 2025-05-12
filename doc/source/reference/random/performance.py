@@ -74,7 +74,8 @@ rel = rel.T
 print(rel.to_csv(float_format='%0d'))
 
 # Cross-platform table
-rows = ['32-bit Unsigned Ints', '64-bit Unsigned Ints', 'Uniforms', 'Normals', 'Exponentials']
+rows = ['32-bit Unsigned Ints', '64-bit Unsigned Ints', 'Uniforms',
+        'Normals', 'Exponentials']
 xplat = rel.reindex(rows, axis=0)
 xplat = 100 * (xplat / xplat.MT19937.values[:, None])
 overall = np.exp(np.log(xplat).mean(0))
