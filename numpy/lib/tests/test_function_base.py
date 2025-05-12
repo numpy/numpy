@@ -2126,32 +2126,23 @@ class TestUnwrap:
         assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 430])
         assert sm_discont.dtype == wrap_uneven.dtype
 
-    def test_unwrap_object_array(self):
-        # basic test with large numbers
-        arr = np.arange(0, 30, 5).astype(np.object_) + (10**50)
-        unwrapped = np.unwrap(arr, period=4)
+    @pytest.mark.parametrize("arr, period", [
+        (np.arange(0, 30, 5).astype(np.object_) + (10**50), 4),
+        (np.arange(0, 30, 5).astype(np.object_) + (10**50), 6),
+        (np.arange(0, 50, 5).astype(np.object_) + (10**50), 4),
+        (np.arange(0, 30, 5).astype(np.object_) + (10**50), 4),
+        (np.arange(0, 30, 5).astype(np.object_) + (10**100), 4),
+    ])
+
+    def test_unwrap_object_array(self, arr, period):
+        # keep a copy for verification
+        arr_copy = arr.copy()
+        unwrapped = np.unwrap(arr, period=period)
+        # assert the differences are as expected
         assert_array_equal(np.diff(unwrapped), 1)
-        # test with negative numbers
-        arr_neg = -np.arange(0, 30, 5).astype(np.object_) - (10**50) 
-        unwrapped_neg = np.unwrap(arr_neg, period=4)
-        assert_array_equal(np.diff(unwrapped_neg), 1)
-        # test with different period values
-        arr2 = np.arange(0, 30, 5).astype(np.object_) + (10**50)
-        unwrapped2 = np.unwrap(arr2, period=6)
-        assert_array_equal(np.diff(unwrapped2), 1)
-        # test with different array sizes
-        arr3 = np.arange(0, 50, 5).astype(np.object_) + (10**50)
-        unwrapped3 = np.unwrap(arr3, period=4)
-        assert_array_equal(np.diff(unwrapped3), 1)
-        # test preservation of original array
-        arr4 = np.arange(0, 30, 5).astype(np.object_) + (10**50)
-        arr4_copy = arr4.copy()
-        unwrapped4 = np.unwrap(arr4, period=4)
-        assert_array_equal(arr4, arr4_copy)
-        # test with different magnitudes
-        arr6 = np.arange(0, 30, 5).astype(np.object_) + (10**100)
-        unwrapped6 = np.unwrap(arr6, period=4)
-        assert_array_equal(np.diff(unwrapped6), 1)
+        # assert original array was preserved
+        assert_array_equal(arr, arr_copy)
+
 
 
 @pytest.mark.parametrize(

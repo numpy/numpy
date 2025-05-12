@@ -1799,7 +1799,7 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
         boundary_ambiguous = True
     
     interval_low = -interval_high
-    ddmod = np.mod(dd - interval_low, period) + interval_low
+    ddmod = mod(dd - interval_low, period) + interval_low
     
     if boundary_ambiguous:
         np.copyto(ddmod, interval_high, 
