@@ -8092,7 +8092,7 @@ def choose(indices, choices, out=None, mode='raise'):
     return d
 
 
-def round_(a, decimals=0, out=None):
+def round(a, decimals=0, out=None):
     """
     Return a copy of a, rounded to 'decimals' places.
 
@@ -8148,8 +8148,13 @@ def round_(a, decimals=0, out=None):
         return out
 
 
-round = round_
-
+def round_(*args, **kwargs):
+    warnings.warn(
+        "`ma.round_` is deprecated and will be removed in a future release. Use `ma.round` instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return round(*args, **kwargs)
 
 def _mask_propagate(a, axis):
     """
