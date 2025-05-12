@@ -484,8 +484,8 @@ class TestUfunc:
         np.add(3, 4, signature=(float_dtype, float_dtype, None))
 
     @pytest.mark.parametrize("get_kwarg", [
-            lambda dt: {"dtype": dt},
-            lambda dt: {"signature": (dt, None, None)}])
+            param(lambda dt: {"dtype": dt}, id="dtype"),
+            param(lambda dt: {"signature": (dt, None, None)}, id="signature")])
     def test_signature_dtype_instances_allowed(self, get_kwarg):
         # We allow certain dtype instances when there is a clear singleton
         # and the given one is equivalent; mainly for backcompat.
@@ -495,13 +495,9 @@ class TestUfunc:
         assert int64 is not int64_2
 
         assert np.add(1, 2, **get_kwarg(int64_2)).dtype == int64
-        td = np.timedelta(2, "s")
+        td = np.timedelta64(2, "s")
         assert np.add(td, td, **get_kwarg("m8")).dtype == "m8[s]"
 
-    @pytest.mark.parametrize("get_kwarg", [
-            param(lambda x: {"dtype": x}, id="dtype"),
-            param(lambda x: {"signature": (x, None, None)}, id="signature")])
-    def test_signature_dtype_instances_allowed(self, get_kwarg):
         msg = "The `dtype` and `signature` arguments to ufuncs"
 
         with pytest.raises(TypeError, match=msg):

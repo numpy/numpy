@@ -141,7 +141,7 @@ class PytestTester:
                 # Filter out distutils cpu warnings (could be localized to
                 # distutils tests). ASV has problems with top level import,
                 # so fetch module for suppression here.
-                from numpy.distutils import cpuinfo
+                from numpy.distutils import cpuinfo  # noqa: F401
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.

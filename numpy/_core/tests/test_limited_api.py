@@ -96,6 +96,6 @@ def test_limited_api(install_temp):
     and building a cython extension with the limited API
     """
 
-    import limited_api1  # Earliest (3.6)
-    import limited_api_latest  # Latest version (current Python)
-    import limited_api2  # cython
+    import limited_api1  # Earliest (3.6)  # noqa: F401
+    import limited_api_latest  # Latest version (current Python)  # noqa: F401
+    import limited_api2  # cython  # noqa: F401
