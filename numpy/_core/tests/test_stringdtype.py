@@ -9,9 +9,8 @@ import numpy as np
 import pytest
 
 from numpy.dtypes import StringDType
-from numpy._core.tests._natype import pd_NA
+from numpy._core.tests._natype import pd_NA, get_stringdtype_dtype as get_dtype
 from numpy.testing import assert_array_equal, IS_PYPY
-from numpy.testing._private.utils import get_stringdtype_dtype as get_dtype
 
 
 @pytest.fixture

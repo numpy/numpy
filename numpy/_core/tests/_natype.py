@@ -194,3 +194,11 @@ class NAType:
 
 
 pd_NA = NAType()
+
+
+def get_stringdtype_dtype(na_object, coerce=True):
+    # explicit is check for pd_NA because != with pd_NA returns pd_NA
+    if na_object is pd_NA or na_object != "unset":
+        return np.dtypes.StringDType(na_object=na_object, coerce=coerce)
+    else:
+        return np.dtypes.StringDType(coerce=coerce)

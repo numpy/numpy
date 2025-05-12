@@ -70,7 +70,7 @@ class _SupportsArrayWrap(Protocol):
 def take_along_axis(
     arr: _ScalarT | NDArray[_ScalarT],
     indices: NDArray[integer],
-    axis: int | None,
+    axis: int | None = ...,
 ) -> NDArray[_ScalarT]: ...
 
 def put_along_axis(

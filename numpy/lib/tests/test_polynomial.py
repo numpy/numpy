@@ -123,12 +123,12 @@ class TestPolynomial:
         assert_array_equal(np.roots([1, 0, 0]), [0, 0])
 
         # Testing for larger root values
-        for i in np.logspace(10, 25, num = 1000, base = 10):
+        for i in np.logspace(10, 25, num=1000, base=10):
             tgt = np.array([-1, 1, i])
             res = np.sort(np.roots(poly.polyfromroots(tgt)[::-1]))
             assert_almost_equal(res, tgt, 14 - int(np.log10(i)))    # Adapting the expected precision according to the root value, to take into account numerical calculation error
 
-        for i in np.logspace(10, 25, num = 1000, base = 10):
+        for i in np.logspace(10, 25, num=1000, base=10):
             tgt = np.array([-1, 1.01, i])
             res = np.sort(np.roots(poly.polyfromroots(tgt)[::-1]))
             assert_almost_equal(res, tgt, 14 - int(np.log10(i)))    # Adapting the expected precision according to the root value, to take into account numerical calculation error

@@ -34,7 +34,6 @@ ignore = [
     "C408",   # Unnecessary `dict()` call (rewrite as a literal)
     "PIE790", # Unnecessary `pass` statement
     "E241",   # Multiple spaces after comma
-    "E251",   # Unexpected spaces around keyword / parameter equals
     "E265",   # Block comment should start with `# `
     "E266",   # Too many leading `#` before block comment
     "E302",   # TODO: Expected 2 blank lines, found 1

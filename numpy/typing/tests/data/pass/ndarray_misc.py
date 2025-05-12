@@ -188,10 +188,10 @@ A_void["yap"] = A_float[:, 1]
 # deprecated
 
 with np.testing.assert_warns(DeprecationWarning):
-    ctypes_obj.get_data()  # pyright: ignore[reportDeprecated]
+    ctypes_obj.get_data()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 with np.testing.assert_warns(DeprecationWarning):
-    ctypes_obj.get_shape()  # pyright: ignore[reportDeprecated]
+    ctypes_obj.get_shape()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 with np.testing.assert_warns(DeprecationWarning):
-    ctypes_obj.get_strides()  # pyright: ignore[reportDeprecated]
+    ctypes_obj.get_strides()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 with np.testing.assert_warns(DeprecationWarning):
-    ctypes_obj.get_as_parameter()  # pyright: ignore[reportDeprecated]
+    ctypes_obj.get_as_parameter()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
