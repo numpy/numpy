@@ -2683,8 +2683,10 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nbytes',
     -----
     If the array is a view, this shows how much memory it *would* use
     if it were copied into a separate array.
-    Does not include memory consumed by non-element attributes of the
-    array object.
+    The number of bytes does not include:
+        - Memory consumed by non-element attributes or the array object.
+        - Memory indirectly held by the elements, e.g. in arrays storing
+        python objects or `StringDType`.
 
     See Also
     --------
@@ -2701,16 +2703,13 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nbytes',
     >>> np.prod(x.shape) * x.itemsize
     480
 
-    >>> import numpy as np
-    >>> arr = np.arange(100).reshape(10, 10, 1)
-    >>> arr_1 = np.broadcast_to(arr, (10, 10, 1000))
-    >>> arr_2 = np.lib.stride_tricks.sliding_window_view(arr, 5, 0)
+    Although an array and its view share the same data buffer, their `nbytes` are different:
+    >>> arr = np.arange(10)
+    >>> view = arr[::2]
     >>> arr.nbytes
-    800
-    >>> arr_1.nbytes
-    800000
-    >>> arr_2.nbytes
-    2400
+    80
+    >>> view.nbytes
+    40
 
     """))
 
