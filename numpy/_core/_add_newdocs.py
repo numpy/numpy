@@ -2683,7 +2683,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nbytes',
     -----
     If the array is a view, this shows how much memory it *would* use
     if it were copied into a separate array.
-    
     Does not include memory consumed by non-element attributes of the
     array object.
 
