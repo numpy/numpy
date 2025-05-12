@@ -162,12 +162,12 @@ jobs:
           ]
           - [
             "without avx512",
-            "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3",
+            "-Dallow-noblas=true -Dcpu-dispatch=max-x86_v4",
             "3.11"
           ]
           - [
             "without avx512/avx2/fma3",
-            "-Dallow-noblas=true -Dcpu-dispatch=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C",
+            "-Dallow-noblas=true -Dcpu-dispatch=max-x86_v3",
             "3.11"
           ]
 
@@ -212,7 +212,7 @@ jobs:
         python -m pip install pytest pytest-xdist hypothesis typing_extensions
 
     - name: Build
-      run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=avx512_skx -Dtest-simd='BASELINE,AVX512_KNL,AVX512_KNM,AVX512_SKX,AVX512_CLX,AVX512_CNL,AVX512_ICL,AVX512_SPR'
+      run: CC=gcc-13 CXX=g++-13 spin build -- -Denable-openmp=true -Dallow-noblas=true -Dcpu-baseline=X86_V4 -Dtest-simd='BASELINE,AVX512_ICL,AVX512_SPR'
 
     - name: Meson Log
       if: always()
