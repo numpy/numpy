@@ -2683,10 +2683,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nbytes',
     -----
     If the array is a view, this shows how much memory it *would* use
     if it were copied into a separate array.
-    The number of bytes does not include:
-        - Memory consumed by non-element attributes of the array object.
-        - Memory indirectly held by the elements, e.g. in arrays storing
-        python objects or `StringDType`.
+    The number of bytes does not include overhead from non-element attributes and memory
+    indirectly held by elements such as Python objects or `StringDType`.
 
     See Also
     --------
