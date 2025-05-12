@@ -409,7 +409,7 @@ if ctypes is not None:
         # ctypes doesn't care about field order
         field_data = sorted(field_data, key=lambda f: f[0])
 
-        if len(field_data) > 1 and all(offset == 0 for offset, name, ctype in field_data):
+        if len(field_data) > 1 and all(offset == 0 for offset, _, _ in field_data):
             # union, if multiple fields all at address 0
             size = 0
             _fields_ = []

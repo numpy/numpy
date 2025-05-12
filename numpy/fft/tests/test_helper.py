@@ -84,7 +84,7 @@ class TestFFTShift:
         assert_array_almost_equal(fft.ifftshift(shift_dim_both), freqs)
 
     def test_equal_to_original(self):
-        """ Test that the new (>=v1.15) implementation (see #10073) is equal to the original (<=v1.14) """
+        """ Test the new (>=v1.15) and old implementations are equal (see #10073) """
         from numpy._core import asarray, concatenate, arange, take
 
         def original_fftshift(x, axes=None):
