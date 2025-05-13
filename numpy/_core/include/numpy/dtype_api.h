@@ -485,16 +485,16 @@ typedef int (PyArray_CompareFuncWithDescr)(const void *, const void *,
                                            PyArray_Descr *);
 typedef int (PyArray_SortCompareFunc)(const void *, const void *,
                                            PyArray_Descr *);                              
-typedef int (PyArray_SortFunc)(void *, npy_intp, 
-                               PyArrayMethod_Context *, NpyAuxData *,
-                               NpyAuxData **);
-typedef int (PyArray_ArgSortFunc)(void *, npy_intp *, npy_intp, 
-                                  PyArrayMethod_Context *, NpyAuxData *,
-                                  NpyAuxData **);
+typedef int (PyArray_SortFunc)(PyArrayMethod_Context *, 
+                               void *, npy_intp, 
+                               NpyAuxData *);
+typedef int (PyArray_ArgSortFunc)(PyArrayMethod_Context *, 
+                                  void *, npy_intp *, npy_intp, 
+                                  NpyAuxData *);
 
 typedef int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, 
-        npy_intp, int, PyArray_SortFunc **);
+        npy_intp, int, PyArray_SortFunc **, NpyAuxData **);
 typedef int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, 
-        npy_intp, int, PyArray_ArgSortFunc **);
+        npy_intp, int, PyArray_ArgSortFunc **, NpyAuxData **);
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */
