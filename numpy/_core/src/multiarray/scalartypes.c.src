@@ -2479,6 +2479,12 @@ static PyObject *
  *             npy_longdouble_to_PyLong#
  *  #
  */
+static PyObject *
+@name@_trunc(PyObject *self, PyObject *NPY_UNUSED(args))
+{
+    return @convert@(PyArrayScalar_VAL(self, @Name@));
+}
+
 /* Heavily copied from the builtin float.as_integer_ratio */
 static PyObject *
 @name@_as_integer_ratio(PyObject *self, PyObject *NPY_UNUSED(args))
@@ -2885,6 +2891,9 @@ static PyMethodDef @name@type_methods[] = {
         METH_NOARGS, NULL},
     {"is_integer",
         (PyCFunction)@name@_is_integer,
+        METH_NOARGS, NULL},
+    {"__trunc__",
+        (PyCFunction)@name@_trunc,
         METH_NOARGS, NULL},
     /* for typing */
     {"__class_getitem__",
