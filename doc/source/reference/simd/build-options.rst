@@ -26,6 +26,15 @@ that target certain CPU features:
       During the runtime, NumPy modules will skip any specified features
       that are not available in the target CPU.
 
+- ``cpu-dispatch-default``: if specified this controls which of the dispatched
+   CPU features are enabled by default.
+
+   .. note::
+
+      This option can be useful if you want to automatically enable
+      CPU features like AVX2 by default if detected, but want to make advanced
+      CPU features like AVX512 opt in only via ``NPY_ENABLE_CPU_FEATURES``.
+
 These options are accessible at build time by passing setup arguments to meson-python
 via the build frontend (e.g., ``pip`` or ``build``).
 They accept a set of :ref:`CPU features <opt-supported-features>`
@@ -36,6 +45,7 @@ perform a series of procedures.
 To customize CPU/build options::
 
     pip install . -Csetup-args=-Dcpu-baseline="avx2 fma3" -Csetup-args=-Dcpu-dispatch="max"
+
 
 Quick start
 -----------
@@ -99,6 +109,23 @@ any other CPU feature and you want to exclude from the dispatched features::
 
     python -m build --wheel -Csetup-args=-Dcpu-dispatch="max -avx512f -avx512cd \
     -avx512_knl -avx512_knm -avx512_skx -avx512_clx -avx512_cnl -avx512_icl -avx512_spr"
+
+Another option would be to use the ``cpu-dispatch-default`` option to enable
+dispatching of all non-AVX512 features by default::
+
+    python -m build --wheel -Csetup-args=-Dcpu-dispatch-default="avx2"
+
+This will enable all non-AVX512 features by default if supported::
+
+    python -c 'from numpy._core._multiarray_umath import __cpu_dispatch__, __cpu_features__; print({feat: __cpu_features__[feat] for feat in __cpu_dispatch__})'
+    {'SSSE3': True, 'SSE41': True, 'POPCNT': True, 'SSE42': True, 'AVX': True, 'F16C': True, 'FMA3': True, 'AVX2': True, 'AVX512F': False, 'AVX512CD': False, 'AVX512_KNL': False, 'AVX512_KNM': False, 'AVX512_SKX': False, 'AVX512_CLX': False, 'AVX512_CNL': False, 'AVX512_ICL': False}
+
+In this case users can still opt-in to AVX512 features by setting the
+``NPY_ENABLE_CPU_FEATURES`` environment variable to a list of features
+they want to enable::
+
+    NPY_ENABLE_CPU_FEATURES="AVX512F AVX512CD" python -c 'from numpy._core._multiarray_umath import __cpu_dispatch__, __cpu_features__; print({feat: __cpu_features__[feat] for feat in __cpu_dispatch__})'
+    {'SSSE3': True, 'SSE41': True, 'POPCNT': True, 'SSE42': True, 'AVX': True, 'F16C': True, 'FMA3': True, 'AVX2': True, 'AVX512F': True, 'AVX512CD': True, 'AVX512_KNL': False, 'AVX512_KNM': False, 'AVX512_SKX': False, 'AVX512_CLX': False, 'AVX512_CNL': False, 'AVX512_ICL': False}
 
 .. _opt-supported-features:
 
@@ -362,6 +389,37 @@ this will disable ``AVX2`` and ``FMA3``::
     NPY_DISABLE_CPU_FEATURES="AVX2,FMA3"
 
 If the feature is not available, a warning will be emitted.
+
+Similarly, the ``NPY_ENABLE_CPU_FEATURES`` environment variable can be used
+to control which of the dispatched CPU features should be enabled when detected.
+
+For example, consider an Icelake processor which supports a subset of AVX512 instructions
+and a numpy build where ``cpu-dispatch-default`` was not specified:
+
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+CPU Feature                                                         SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+no environment variables                                            ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ✅      ✅       ❌         ❌         ✅         ✅         ❌         ❌
+NPY_DISABLE_CPU_FEATURES=AVX512_SKX,AVX512_CLX                      ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ✅      ✅       ❌         ❌         ❌         ❌         ❌         ❌
+NPY_ENABLE_CPU_FEATURES=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3 ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ❌      ❌       ❌         ❌         ❌         ❌         ❌         ❌
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+
+If ``cpu-dispatch-default`` is specified then the behavior of ``NPY_DISABLE_CPU_FEATURES``
+and ``NPY_ENABLE_CPU_FEATURES`` disables/enables features starting from the specified
+default features. For example, if ``cpu-dispatch-default`` is set to::
+
+    cpu-dispatch-default=SSSE3,SSE41,POPCNT,SSE42,AVX,F16C,AVX2,FMA3
+
+then
+
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+CPU Feature                                                         SSSE3 SSE41 POPCNT SSE42 AVX F16C FMA3 AVX2 AVX512F AVX512CD AVX512_KNL AVX512_KNM AVX512_SKX AVX512_CLX AVX512_CNL AVX512_ICL
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+no environment variables                                            ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ❌      ❌       ❌         ❌         ❌         ❌         ❌         ❌
+NPY_DISABLE_CPU_FEATURES=FMA3,AVX2                                  ✅    ✅    ✅     ✅    ✅  ✅   ❌   ❌   ❌      ❌       ❌         ❌         ❌         ❌         ❌         ❌
+NPY_ENABLE_CPU_FEATURES=AVX512F,AVX512CD                            ✅    ✅    ✅     ✅    ✅  ✅   ✅   ✅   ✅      ✅       ❌         ❌         ❌         ❌         ❌         ❌
+=================================================================== ===== ===== ====== ===== === ==== ==== ==== ======= ======== ========== ========== ========== ========== ========== ==========
+
 
 Tracking dispatched functions
 -----------------------------

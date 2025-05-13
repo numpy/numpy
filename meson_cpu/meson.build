@@ -30,6 +30,10 @@
 #                         runtime, specified by the build option
 #                         `-Dcpu-dispatch`.
 #
+# - `CPU_DISPATCH_DEFAULT_NAMES`: A set of dispatched CPU feature names which should
+#                                 be enabled by default, specified by the build option
+#                                 `-Dcpu-dispatch-default`.
+#
 # - `CPU_FEATURES`: A dictionary containing all supported CPU feature objects.
 #
 # Additionally, this script exposes a set of variables that represent each
@@ -45,6 +49,7 @@ if get_option('disable-optimization')
   add_project_arguments('-D' + CPU_CONF_PREFIX + 'DISABLE_OPTIMIZATION', language: ['c', 'cpp'])
   CPU_CONF_BASELINE = 'none'
   CPU_CONF_DISPATCH = 'none'
+  CPU_CONF_DISPATCH_DEFAULT = 'none'
 else
   baseline_detect = false
   c_args = get_option('c_args')
@@ -67,6 +72,8 @@ else
   endif
   # The required dispatched set of additional CPU features.
   CPU_CONF_DISPATCH = get_option('cpu-dispatch')
+  # The dispatched features enabled for dispatching by default.
+  CPU_CONF_DISPATCH_DEFAULT = get_option('cpu-dispatch-default')
 endif
 
 # Initialize the CPU features Export the X86 features objects 'SSE', 'AVX',
@@ -125,15 +132,18 @@ if max_features.length() == 0
   message('Disabling CPU feature detection due to unsupported architecture: "' + cpu_family + '"')
   CPU_CONF_BASELINE = 'none'
   CPU_CONF_DISPATCH = 'none'
+  CPU_CONF_DISPATCH_DEFAULT = 'none'
 endif
 
 parse_options = {
   'cpu-baseline': CPU_CONF_BASELINE,
-  'cpu-dispatch': CPU_CONF_DISPATCH
+  'cpu-dispatch': CPU_CONF_DISPATCH,
+  'cpu-dispatch-default': CPU_CONF_DISPATCH_DEFAULT
 }
 parse_result = {
   'cpu-baseline': [],
-  'cpu-dispatch': []
+  'cpu-dispatch': [],
+  'cpu-dispatch-default': []
 }
 mod_features = import('features')
 foreach opt_name, conf : parse_options
@@ -275,6 +285,24 @@ foreach fet_obj : parse_result['cpu-dispatch']
   endif
   CPU_DISPATCH_NAMES += [fet_obj.get('name')]
 endforeach
+
+CPU_DISPATCH_DEFAULT_NAMES = []
+ignored = []
+foreach fet_obj : parse_result['cpu-dispatch-default']
+  # check if feature is part of dispatched features
+  if fet_obj.get('name') in CPU_DISPATCH_NAMES
+    CPU_DISPATCH_DEFAULT_NAMES += [fet_obj.get('name')]
+  else
+    ignored += [fet_obj.get('name')]
+  endif
+endforeach
+if ignored.length() > 0
+  message(
+    'The following default CPU dispatch features were ignored because ' +
+    'they are not part of the dispatched features:\n"' + ' '.join(ignored) + '"'
+  )
+endif
+
 # Generate main configuration header see 'main_config.h.in' for more
 # clarification.
 main_config = {
@@ -283,6 +311,8 @@ main_config = {
   'WITH_CPU_BASELINE_N': CPU_BASELINE_NAMES.length(),
   'WITH_CPU_DISPATCH': ' '.join(CPU_DISPATCH_NAMES),
   'WITH_CPU_DISPATCH_N': CPU_DISPATCH_NAMES.length(),
+  'WITH_CPU_DISPATCH_DEFAULT': ' '.join(CPU_DISPATCH_DEFAULT_NAMES),
+  'WITH_CPU_DISPATCH_DEFAULT_N': CPU_DISPATCH_DEFAULT_NAMES.length(),
 }
 clines = []
 macro_tpl = '@0@_CPU_EXPAND(EXEC_CB(@1@, __VA_ARGS__)) \\'
@@ -295,6 +325,11 @@ foreach fet : CPU_DISPATCH_NAMES
   clines += macro_tpl.format(CPU_CONF_PREFIX, fet)
 endforeach
 main_config += {'WITH_CPU_DISPATCH_CALL': '\n'.join(clines)}
+clines = []
+foreach fet : CPU_DISPATCH_DEFAULT_NAMES
+  clines += macro_tpl.format(CPU_CONF_PREFIX, fet)
+endforeach
+main_config += {'WITH_CPU_DISPATCH_DEFAULT_CALL': '\n'.join(clines)}
 
 configure_file(
   input : 'main_config.h.in',
@@ -315,8 +350,12 @@ CPU Optimization Options
   dispatch:
     Requested : @2@
     Enabled   : @3@
+  dispatch default:
+    Requested : @4@
+    Enabled   : @5@
 '''.format(
     CPU_CONF_BASELINE, ' '.join(CPU_BASELINE_NAMES),
-    CPU_CONF_DISPATCH, ' '.join(CPU_DISPATCH_NAMES)
+    CPU_CONF_DISPATCH, ' '.join(CPU_DISPATCH_NAMES),
+    CPU_CONF_DISPATCH_DEFAULT, ' '.join(CPU_DISPATCH_DEFAULT_NAMES)
   )
 )
