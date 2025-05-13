@@ -369,6 +369,24 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
         False
         """))
 
+    add_newdoc('numpy._core.numerictypes', float_name, ('__trunc__',
+        f"""
+        {float_name}.__trunc__() -> int
+
+        Return the floating point number with the fractional part removed,
+        leaving the integer part.
+
+        .. versionadded:: 2.3
+
+        Examples
+        --------
+        >>> np.{float_name}(np.pi).__trunc__()
+        3
+        >>> import math
+        >>> math.trunc(np.{float_name}(-np.pi))
+        -3
+        """))
+
 for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
         'int64', 'uint64', 'int64', 'uint64', 'int64', 'uint64'):
     # Add negative examples for signed cases by checking typecode
