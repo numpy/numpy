@@ -852,10 +852,10 @@ array_transpose_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
     if (ndim != 2) {
         /* Deprecated 2025-04-19, NumPy 2.3 */
         if (PyErr_WarnFormat(PyExc_DeprecationWarning, 1,
-                "In the future `.T` property will be supported for "
-                "2-dim arrays only. Received %d-dim array. Either "
-                "`arr.transpose()` or `.mT` (which swaps the last "
-                "two axes only) should be used instead."
+                "In the future, the `.T` property will be supported for "
+                "2-dimensional arrays only. Received %d-dimensional "
+                "array. Either `arr.transpose()` or `.mT` (which swaps "
+                "the last two axes only) should be used instead."
                 "(Deprecated NumPy 2.3)", ndim) < 0) {
             return NULL;
         }

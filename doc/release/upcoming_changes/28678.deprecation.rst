@@ -1,4 +1,4 @@
-* ``arr.T`` property has been deprecated for array scalars and arrays with dimensionality
+* The ``arr.T`` property has been deprecated for array scalars and arrays with dimensionality
   different than ``2`` to be compatible with the Array API standard. To achieve similar
   behavior when ``arr.ndim != 2``, either ``arr.transpose()``, or ``arr.mT`` (swaps
   the last two axes only), or ``np.permute_dims(arr, range(arr.ndim)[::-1])`` (compatible
