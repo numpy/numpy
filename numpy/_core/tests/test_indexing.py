@@ -1004,9 +1004,10 @@ class TestMultiIndexingAutomated:
                     raise IndexError
             # If the index is a singleton, the bounds check is done
             # before the broadcasting. This used to be different in <1.9
-            elif indx.ndim == 0:
-                if indx >= arr.shape[ax] or indx < -arr.shape[ax]:
-                    raise IndexError
+            elif indx.ndim == 0 and not (
+                -arr.shape[ax] <= indx < arr.shape[ax]
+            ):
+                raise IndexError
             if indx.ndim == 0:
                 # The index is a scalar. This used to be two fold, but if
                 # fancy indexing was active, the check was done later,
