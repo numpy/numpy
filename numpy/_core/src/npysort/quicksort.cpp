@@ -506,21 +506,19 @@ string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, void *varr)
  */
 
 NPY_NO_EXPORT int
-npy_quicksort_with_context(void *start, npy_intp num,
-                           PyArrayMethod_Context *context, NpyAuxData *auxdata,
-                           NpyAuxData **out_auxdata)
+npy_quicksort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
+                           NpyAuxData *auxdata)
 {
-    return handle_npysort_with_context(start, num, context, auxdata,
-                                       out_auxdata, &npy_quicksort);
+    return handle_npysort_with_context(context, start, num, auxdata,
+                                       &npy_quicksort);
 }
 
 NPY_NO_EXPORT int
-npy_aquicksort_with_context(void *vv, npy_intp *tosort, npy_intp num,
-                           PyArrayMethod_Context *context, NpyAuxData *auxdata,
-                           NpyAuxData **out_auxdata)
+npy_aquicksort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
+                            npy_intp num, NpyAuxData *auxdata)
 {
-    return handle_npyasort_with_context(vv, tosort, num, context, auxdata,
-                                        out_auxdata, &npy_aquicksort);
+    return handle_npyasort_with_context(context, vv, tosort, num, auxdata,
+                                        &npy_aquicksort);
 }
 
 NPY_NO_EXPORT int

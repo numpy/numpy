@@ -18,20 +18,16 @@ extern "C" {
  */
 
 static inline int
-handle_npysort_with_context(void *start, npy_intp num,
-                            PyArrayMethod_Context *context, NpyAuxData *auxdata,
-                            NpyAuxData **out_auxdata,
-                            PyArray_SortFuncWithArray *sort)
+handle_npysort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
+                            NpyAuxData *auxdata, PyArray_SortFuncWithArray *sort)
 {
     PyArray_Descr *descr = context->descriptors[0];
     return sort(start, num, descr);
 }
 
 static inline int
-handle_npyasort_with_context(void *vv, npy_intp *tosort, npy_intp num,
-                             PyArrayMethod_Context *context, NpyAuxData *auxdata,
-                             NpyAuxData **out_auxdata,
-                             PyArray_ArgSortFuncWithArray *asort)
+handle_npyasort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
+                             npy_intp num, NpyAuxData *auxdata, PyArray_ArgSortFuncWithArray *asort)
 {
     PyArray_Descr *descr = context->descriptors[0];
     return asort(vv, tosort, num, descr);

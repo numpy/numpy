@@ -98,22 +98,22 @@ NPY_NO_EXPORT int atimsort_@suff@(void *vec, npy_intp *ind, npy_intp cnt, void *
  *****************************************************************************
  */
 
-NPY_NO_EXPORT int npy_quicksort_with_context(void *vec, npy_intp cnt,
-    PyArrayMethod_Context *context, NpyAuxData *auxdata, NpyAuxData **auxdata_out);
-NPY_NO_EXPORT int npy_heapsort_with_context(void *vec, npy_intp cnt,
-    PyArrayMethod_Context *context, NpyAuxData *auxdata, NpyAuxData **auxdata_out);
-NPY_NO_EXPORT int npy_mergesort_with_context(void *vec, npy_intp cnt,
-    PyArrayMethod_Context *context, NpyAuxData *auxdata, NpyAuxData **auxdata_out);
-NPY_NO_EXPORT int npy_timsort_with_context(void *vec, npy_intp cnt,
-    PyArrayMethod_Context *context, NpyAuxData *auxdata, NpyAuxData **auxdata_out);
-NPY_NO_EXPORT int npy_aquicksort_with_context(void *vec, npy_intp *ind, npy_intp cnt,
-    PyArrayMethod_Context *context, NpyAuxData *auxdata, NpyAuxData **auxdata_out);
-NPY_NO_EXPORT int npy_aheapsort_with_context(void *vec, npy_intp *ind, npy_intp cnt,
-    PyArrayMethod_Context *context, NpyAuxData *auxdata, NpyAuxData **auxdata_out);
-NPY_NO_EXPORT int npy_amergesort_with_context(void *vec, npy_intp *ind, npy_intp cnt,
-    PyArrayMethod_Context *context, NpyAuxData *auxdata, NpyAuxData **auxdata_out);
-NPY_NO_EXPORT int npy_atimsort_with_context(void *vec, npy_intp *ind, npy_intp cnt,
-    PyArrayMethod_Context *context, NpyAuxData *auxdata, NpyAuxData **auxdata_out);
+NPY_NO_EXPORT int npy_quicksort_with_context(PyArrayMethod_Context *context, void *vec,
+    npy_intp cnt, NpyAuxData *auxdata);
+NPY_NO_EXPORT int npy_heapsort_with_context(PyArrayMethod_Context *context, void *vec,
+    npy_intp cnt, NpyAuxData *auxdata);
+NPY_NO_EXPORT int npy_mergesort_with_context(PyArrayMethod_Context *context, void *vec,
+    npy_intp cnt, NpyAuxData *auxdata);
+NPY_NO_EXPORT int npy_timsort_with_context(PyArrayMethod_Context *context, void *vec,
+    npy_intp cnt, NpyAuxData *auxdata);
+NPY_NO_EXPORT int npy_aquicksort_with_context(PyArrayMethod_Context *context, void *vec,
+    npy_intp *ind, npy_intp cnt, NpyAuxData *auxdata);
+NPY_NO_EXPORT int npy_aheapsort_with_context(PyArrayMethod_Context *context, void *vec,
+    npy_intp *ind, npy_intp cnt, NpyAuxData *auxdata);
+NPY_NO_EXPORT int npy_amergesort_with_context(PyArrayMethod_Context *context, void *vec,
+    npy_intp *ind, npy_intp cnt, NpyAuxData *auxdata);
+NPY_NO_EXPORT int npy_atimsort_with_context(PyArrayMethod_Context *context, void *vec,
+    npy_intp *ind, npy_intp cnt, NpyAuxData *auxdata);
 
 NPY_NO_EXPORT int npy_quicksort(void *vec, npy_intp cnt, void *arr);
 NPY_NO_EXPORT int npy_heapsort(void *vec, npy_intp cnt, void *arr);

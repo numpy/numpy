@@ -50,21 +50,19 @@
  */
 
 NPY_NO_EXPORT int
-npy_heapsort_with_context(void *start, npy_intp num,
-                          PyArrayMethod_Context *context, NpyAuxData *auxdata,
-                          NpyAuxData **out_auxdata)
+npy_heapsort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
+                          NpyAuxData *auxdata)
 {
-    return handle_npysort_with_context(start, num, context, auxdata,
-                                       out_auxdata, &npy_heapsort);
+    return handle_npysort_with_context(context, start, num, auxdata,
+                                       &npy_heapsort);
 }
 
 NPY_NO_EXPORT int
-npy_aheapsort_with_context(void *vv, npy_intp *tosort, npy_intp num,
-                           PyArrayMethod_Context *context, NpyAuxData *auxdata,
-                           NpyAuxData **out_auxdata)
+npy_aheapsort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
+                           npy_intp num, NpyAuxData *auxdata)
 {
-    return handle_npyasort_with_context(vv, tosort, num, context, auxdata,
-                                        out_auxdata, &npy_aheapsort);
+    return handle_npyasort_with_context(context, vv, tosort, num, auxdata,
+                                        &npy_aheapsort);
 }
 
 NPY_NO_EXPORT int

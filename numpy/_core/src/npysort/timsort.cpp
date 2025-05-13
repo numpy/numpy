@@ -1852,21 +1852,19 @@ cleanup:
  */
 
 NPY_NO_EXPORT int
-npy_timsort_with_context(void *start, npy_intp num,
-                         PyArrayMethod_Context *context, NpyAuxData *auxdata,
-                         NpyAuxData **out_auxdata)
+npy_timsort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
+                         NpyAuxData *auxdata)
 {
-    return handle_npysort_with_context(start, num, context, auxdata,
-                                       out_auxdata, &npy_timsort);
+    return handle_npysort_with_context(context, start, num, auxdata,
+                                       &npy_timsort);
 }
 
 NPY_NO_EXPORT int
-npy_atimsort_with_context(void *vv, npy_intp *tosort, npy_intp num,
-                          PyArrayMethod_Context *context, NpyAuxData *auxdata,
-                          NpyAuxData **out_auxdata)
+npy_atimsort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
+                          npy_intp num, NpyAuxData *auxdata)
 {
-    return handle_npyasort_with_context(vv, tosort, num, context, auxdata,
-                                        out_auxdata, &npy_atimsort);
+    return handle_npyasort_with_context(context, vv, tosort, num, auxdata,
+                                        &npy_atimsort);
 }
 
 typedef struct {

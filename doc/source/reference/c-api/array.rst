@@ -1874,8 +1874,8 @@ described below.
    embedded references.
 
 .. c:type:: int (PyArray_SortFunc)( \
-                 void *start, npy_intp num, PyArrayMethod_Context *context, \
-                 NpyAuxData *auxdata, NpyAuxData **out_auxdata)
+                 PyArrayMethod_Context *data, void *start, \
+                 npy_intp num, NpyAuxData *auxdata)
     
     A function to sort a buffer of data. The *start* is a pointer to the
     beginning of the buffer containing *num* elements. A function of this
@@ -1884,9 +1884,8 @@ described below.
     array. Returns 0 on success, -1 on failure.
 
 .. c:type:: int (PyArray_ArgSortFunc)( \
-                 void *start, npy_intp *tosort, npy_intp num, \
-                 PyArrayMethod_Context *context, NpyAuxData *auxdata, \
-                 NpyAuxData **out_auxdata)
+                 PyArrayMethod_Context *data, void *start, \
+                 npy_intp *tosort, npy_intp num, NpyAuxData *auxdata)
     
     A function to arg-sort a buffer of data. The *start* is a pointer to the
     beginning of the buffer containing *num* elements. The *tosort* is a
@@ -3539,7 +3538,8 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 .. c:macro:: NPY_DT_get_sort_function
 
 .. c:type:: int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, \
-        npy_intp sort_kind, int descending, PyArray_SortFunc **out_sort);
+        npy_intp sort_kind, int descending, PyArray_SortFunc **out_sort,
+        NpyAuxData **out_auxdata)
 
     If defined, sets a custom sorting function for the DType for each of
     the sort kinds numpy implements. Returns 0 on success.
@@ -3547,7 +3547,8 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 .. c:macro:: NPY_DT_get_argsort_function
 
 .. c:type:: int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, \
-        npy_intp sort_kind, int descending, PyArray_ArgSortFunc **out_argsort);
+        npy_intp sort_kind, int descending, PyArray_ArgSortFunc **out_argsort,
+        NpyAuxData **out_auxdata)
 
     If defined, sets a custom argsorting function for the DType for each of
     the sort kinds numpy implements. Returns 0 on success.

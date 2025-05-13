@@ -1192,7 +1192,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
  */
 static int
 _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
-              PyArray_SortFuncWithArray *sort_with_array,
+              PyArray_SortFuncWithArray *sort_with_array, NpyAuxData *auxdata,
               PyArray_PartitionFunc *part, npy_intp const *kth, npy_intp nkth)
 {
     npy_intp N = PyArray_DIM(op, axis);
@@ -1299,7 +1299,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
 
         if (part == NULL) {
             if (sort != NULL) {
-                ret = sort(bufptr, N, &context, NULL, NULL);
+                ret = sort(&context, bufptr, N, auxdata);
             }
             else {
                 ret = sort_with_array(bufptr, N, op);
@@ -1370,7 +1370,7 @@ fail:
 static PyObject*
 _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
                  PyArray_ArgSortFuncWithArray *argsort_with_array,
-                 PyArray_ArgPartitionFunc *argpart,
+                 NpyAuxData *auxdata, PyArray_ArgPartitionFunc *argpart,
                  npy_intp const *kth, npy_intp nkth)
 {
     npy_intp N = PyArray_DIM(op, axis);
@@ -1499,7 +1499,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
         if (argpart == NULL) {
             if (argsort != NULL) {
-                ret = argsort(valptr, idxptr, N, &context, NULL, NULL);
+                ret = argsort(&context, valptr, idxptr, N, auxdata);
             }
             else {
                 ret = argsort_with_array(valptr, idxptr, N, op);
@@ -1577,6 +1577,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_SortFunc *sort = NULL;
     PyArray_SortFuncWithArray *sort_with_array = NULL;
 
+    NpyAuxData *auxdata = NULL;
+
     int n = PyArray_NDIM(op);
 
     if (check_and_adjust_axis(&axis, n) < 0) {
@@ -1592,7 +1594,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return -1;
     }
 
-    PyArray_GetSortFunction(PyArray_DESCR(op), which, 0, &sort);
+    PyArray_GetSortFunction(PyArray_DESCR(op), which, 0, &sort, &auxdata);
 
     if (sort == NULL) {
         sort_with_array = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort[which];
@@ -1637,7 +1639,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         }
     }
 
-    return _new_sortlike(op, axis, sort, sort_with_array, NULL, NULL, 0);
+    return _new_sortlike(op, axis, sort, sort_with_array, auxdata, NULL, NULL, 0);
 }
 
 
@@ -1745,7 +1747,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
         return -1;
     }
 
-    ret = _new_sortlike(op, axis, NULL, sort, part,
+    ret = _new_sortlike(op, axis, NULL, sort, NULL, part,
                         PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl));
 
     Py_DECREF(kthrvl);
@@ -1765,7 +1767,9 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_ArgSortFuncWithArray *argsort_with_array = NULL;
     PyObject *ret;
 
-    PyArray_GetArgSortFunction(PyArray_DESCR(op), which, 0, &argsort);
+    NpyAuxData *auxdata = NULL;
+
+    PyArray_GetArgSortFunction(PyArray_DESCR(op), which, 0, &argsort, &auxdata);
 
     if (argsort == NULL) {
         argsort_with_array = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort[which];
@@ -1815,7 +1819,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return NULL;
     }
 
-    ret = _new_argsortlike(op2, axis, argsort, argsort_with_array, NULL, NULL, 0);
+    ret = _new_argsortlike(op2, axis, argsort, argsort_with_array, auxdata, NULL, NULL, 0);
 
     Py_DECREF(op2);
     return ret;
@@ -1869,7 +1873,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
         return NULL;
     }
 
-    ret = _new_argsortlike(op2, axis, NULL, argsort, argpart,
+    ret = _new_argsortlike(op2, axis, NULL, argsort, NULL, argpart,
                            PyArray_DATA(kthrvl), PyArray_SIZE(kthrvl));
 
     Py_DECREF(kthrvl);
