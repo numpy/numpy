@@ -10,50 +10,50 @@ from numpy._typing import (
     _ArrayLike
 )
 
-_SCT = TypeVar("_SCT", bound=generic)
+__all__ = ["broadcast_to", "broadcast_arrays", "broadcast_shapes"]
 
-__all__: list[str]
+_ScalarT = TypeVar("_ScalarT", bound=generic)
 
 class DummyArray:
     __array_interface__: dict[str, Any]
-    base: None | NDArray[Any]
+    base: NDArray[Any] | None
     def __init__(
         self,
         interface: dict[str, Any],
-        base: None | NDArray[Any] = ...,
+        base: NDArray[Any] | None = ...,
     ) -> None: ...
 
 @overload
 def as_strided(
-    x: _ArrayLike[_SCT],
-    shape: None | Iterable[int] = ...,
-    strides: None | Iterable[int] = ...,
+    x: _ArrayLike[_ScalarT],
+    shape: Iterable[int] | None = ...,
+    strides: Iterable[int] | None = ...,
     subok: bool = ...,
     writeable: bool = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def as_strided(
     x: ArrayLike,
-    shape: None | Iterable[int] = ...,
-    strides: None | Iterable[int] = ...,
+    shape: Iterable[int] | None = ...,
+    strides: Iterable[int] | None = ...,
     subok: bool = ...,
     writeable: bool = ...,
 ) -> NDArray[Any]: ...
 
 @overload
 def sliding_window_view(
-    x: _ArrayLike[_SCT],
+    x: _ArrayLike[_ScalarT],
     window_shape: int | Iterable[int],
-    axis: None | SupportsIndex = ...,
+    axis: SupportsIndex | None = ...,
     *,
     subok: bool = ...,
     writeable: bool = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def sliding_window_view(
     x: ArrayLike,
     window_shape: int | Iterable[int],
-    axis: None | SupportsIndex = ...,
+    axis: SupportsIndex | None = ...,
     *,
     subok: bool = ...,
     writeable: bool = ...,
@@ -61,10 +61,10 @@ def sliding_window_view(
 
 @overload
 def broadcast_to(
-    array: _ArrayLike[_SCT],
+    array: _ArrayLike[_ScalarT],
     shape: int | Iterable[int],
     subok: bool = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def broadcast_to(
     array: ArrayLike,

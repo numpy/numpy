@@ -18,9 +18,24 @@ from numpy.lib._function_base_impl import (
     quantile,
 )
 
-__all__: list[str]
+__all__ = [
+    "nansum",
+    "nanmax",
+    "nanmin",
+    "nanargmax",
+    "nanargmin",
+    "nanmean",
+    "nanmedian",
+    "nanpercentile",
+    "nanvar",
+    "nanstd",
+    "nanprod",
+    "nancumsum",
+    "nancumprod",
+    "nanquantile",
+]
 
-# NOTE: In reaility these functions are not aliases but distinct functions
+# NOTE: In reality these functions are not aliases but distinct functions
 # with identical signatures.
 nanmin = amin
 nanmax = amax

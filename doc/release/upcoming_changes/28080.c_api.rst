@@ -1,0 +1,1 @@
+* ``NpyIter`` now has no limit on the number of operands it supports.

@@ -81,9 +81,9 @@ For example::
     >>> y.base is None
     True
 
-    Here, ``y`` is a copy, as signified by the :attr:`base <.ndarray.base>`
-    attribute. We can also confirm this by assigning new values to ``x[[1, 2]]``
-    which in turn will not affect ``y`` at all::
+Here, ``y`` is a copy, as signified by the :attr:`base <.ndarray.base>`
+attribute. We can also confirm this by assigning new values to ``x[[1, 2]]``
+which in turn will not affect ``y`` at all::
 
     >>> x[[1, 2]] = [[10, 11, 12], [13, 14, 15]]
     >>> x

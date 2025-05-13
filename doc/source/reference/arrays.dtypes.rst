@@ -68,6 +68,8 @@ Sub-arrays always have a C-contiguous memory layout.
    A simple data type containing a 32-bit big-endian integer:
    (see :ref:`arrays.dtypes.constructing` for details on construction)
 
+   .. try_examples::
+
       >>> import numpy as np
 
       >>> dt = np.dtype('>i4')
@@ -87,6 +89,8 @@ Sub-arrays always have a C-contiguous memory layout.
    A structured data type containing a 16-character string (in field 'name')
    and a sub-array of two 64-bit floating-point number (in field 'grades'):
 
+    .. try_examples::
+
       >>> import numpy as np
 
       >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
@@ -97,6 +101,8 @@ Sub-arrays always have a C-contiguous memory layout.
 
    Items of an array of this data type are wrapped in an :ref:`array
    scalar <arrays.scalars>` type that also has two fields:
+
+   .. try_examples::
 
       >>> import numpy as np
 
@@ -154,6 +160,8 @@ Array-scalar types
 
     .. admonition:: Example
 
+      .. try_examples::
+
          >>> import numpy as np
 
          >>> dt = np.dtype(np.int32)      # 32-bit integer
@@ -179,11 +187,14 @@ Generic types
         to an array of ``float64``, even though ``float32`` is a subdtype of
         ``np.floating``.
 
+.. _dtype-constructing-from-python-types:
 
 Built-in Python types
-    Several python types are equivalent to a corresponding
+    Several Python types are equivalent to a corresponding
     array scalar when used to generate a :class:`dtype` object:
 
+    ===================      ===============
+    Python type              NumPy type
     ===================      ===============
     :class:`int`             :class:`int\_`
     :class:`bool`            :class:`bool\_`
@@ -198,6 +209,8 @@ Built-in Python types
     Note that ``str_`` corresponds to UCS4 encoded unicode strings.
 
     .. admonition:: Example
+
+      .. try_examples::
 
          >>> import numpy as np
 
@@ -228,6 +241,8 @@ One-character strings
     (the updated Numeric typecodes), that uniquely identifies it.
 
     .. admonition:: Example
+
+      .. try_examples::
 
          >>> import numpy as np
 
@@ -261,6 +276,8 @@ Array-protocol type strings (see :ref:`arrays.interface`)
 
    .. admonition:: Example
 
+      .. try_examples::
+
          >>> import numpy as np
 
          >>> dt = np.dtype('i4')   # 32-bit signed integer
@@ -274,7 +291,7 @@ Array-protocol type strings (see :ref:`arrays.interface`)
    .. admonition:: Note on string types
 
     For backward compatibility with existing code originally written to support
-    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes. 
+    Python 2, ``S`` and ``a`` typestrings are zero-terminated bytes.
     For unicode strings, use ``U``, `numpy.str_`.  For signed bytes that do not
     need zero-termination ``b`` or ``i1`` can be used.
 
@@ -293,6 +310,8 @@ String with comma-separated fields
    then the data-type for the corresponding field describes a sub-array.
 
    .. admonition:: Example
+
+      .. try_examples::
 
       - field named ``f0`` containing a 32-bit integer
       - field named ``f1`` containing a 2 x 3 sub-array
@@ -316,6 +335,8 @@ Type strings
 
    .. admonition:: Example
 
+      .. try_examples::
+
          >>> import numpy as np
 
          >>> dt = np.dtype('uint32')   # 32-bit unsigned integer
@@ -330,6 +351,8 @@ Type strings
     an integer providing the desired itemsize.
 
     .. admonition:: Example
+
+      .. try_examples::
 
          >>> import numpy as np
 
@@ -349,6 +372,8 @@ Type strings
     shape.
 
     .. admonition:: Example
+
+      .. try_examples::
 
          >>> import numpy as np
 
@@ -383,6 +408,8 @@ Type strings
    for by the array interface description.
 
    .. admonition:: Example
+
+      .. try_examples::
 
          Data-type with fields ``big`` (big-endian 32-bit integer) and
          ``little`` (little-endian 32-bit integer):
@@ -425,6 +452,8 @@ Type strings
 
     .. admonition:: Example
 
+      .. try_examples::
+
          Data type with fields ``r``, ``g``, ``b``, ``a``, each being
          an 8-bit unsigned integer:
 
@@ -456,6 +485,8 @@ Type strings
 
     .. admonition:: Example
 
+      .. try_examples::
+
          Data type containing field ``col1`` (10-character string at
          byte position 0), ``col2`` (32-bit float at byte position 10),
          and ``col3`` (integers at byte position 14):
@@ -481,6 +512,8 @@ Type strings
 
     .. admonition:: Example
 
+      .. try_examples::
+
          32-bit integer, whose first two bytes are interpreted as an integer
          via field ``real``, and the following two bytes via field ``imag``.
 
@@ -505,6 +538,8 @@ When checking for a specific data type, use ``==`` comparison.
 
 .. admonition:: Example
 
+   .. try_examples::
+
       >>> import numpy as np
 
       >>> a = np.array([1, 2], dtype=np.float32)
@@ -518,6 +553,8 @@ the :class:`dtype` constructor) as equivalent to the data type object itself.
 This equivalence can only be handled through ``==``, not through ``is``.
 
 .. admonition:: Example
+
+   .. try_examples::
 
       A :class:`dtype` object is equal to all data type specifications that are
       equivalent to it.
@@ -539,6 +576,8 @@ This equivalence can only be handled through ``==``, not through ``is``.
 Second, there is no guarantee that data type objects are singletons.
 
 .. admonition:: Example
+
+   .. try_examples::
 
       Do not use ``is`` because data type objects may or may not be singletons.
 

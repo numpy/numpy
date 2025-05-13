@@ -623,7 +623,7 @@ NPYV_IMPL_VEC_REST_PARTIAL_TYPES_PAIR(u64, s64)
 NPYV_IMPL_VEC_REST_PARTIAL_TYPES_PAIR(f64, s64)
 
 /************************************************************
- *  de-interlave load / interleave contiguous store
+ *  de-interleave load / interleave contiguous store
  ************************************************************/
 // two channels
 #define NPYV_IMPL_VEC_MEM_INTERLEAVE(SFX)                                \

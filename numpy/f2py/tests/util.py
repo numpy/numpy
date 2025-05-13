@@ -57,7 +57,6 @@ def check_language(lang, code_snippet=None):
         return runmeson.returncode == 0
     finally:
         shutil.rmtree(tmpdir)
-    return False
 
 
 fortran77_code = '''
@@ -102,6 +101,7 @@ class CompilerChecker:
                 self.has_f90 = futures[2].result()
 
             self.compilers_checked = True
+
 
 if not IS_WASM:
     checker = CompilerChecker()
@@ -212,7 +212,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     f2py_sources = []
     for fn in source_files:
         if not os.path.isfile(fn):
-            raise RuntimeError("%s is not a file" % fn)
+            raise RuntimeError(f"{fn} is not a file")
         dst = os.path.join(d, os.path.basename(fn))
         shutil.copyfile(fn, dst)
         dst_sources.append(dst)
@@ -247,8 +247,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
                              stderr=subprocess.STDOUT)
         out, err = p.communicate()
         if p.returncode != 0:
-            raise RuntimeError("Running f2py failed: %s\n%s" %
-                               (cmd[4:], asunicode(out)))
+            raise RuntimeError(f"Running f2py failed: {cmd[4:]}\n{asunicode(out)}")
     finally:
         os.chdir(cwd)
 
@@ -262,7 +261,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         # need to change to record how big each module is, rather than
         # relying on rebase being able to find that from the files.
         _module_list.extend(
-            glob.glob(os.path.join(d, "{:s}*".format(module_name)))
+            glob.glob(os.path.join(d, f"{module_name:s}*"))
         )
         subprocess.check_call(
             ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"]
@@ -370,7 +369,7 @@ class F2PyTest:
     @property
     def module_name(self):
         cls = type(self)
-        return f'_{cls.__module__.rsplit(".",1)[-1]}_{cls.__name__}_ext_module'
+        return f'_{cls.__module__.rsplit(".", 1)[-1]}_{cls.__name__}_ext_module'
 
     @classmethod
     def setup_class(cls):
@@ -385,7 +384,7 @@ class F2PyTest:
         if self.module is not None:
             return
 
-        codes = self.sources if self.sources else []
+        codes = self.sources or []
         if self.code:
             codes.append(self.suffix)
 

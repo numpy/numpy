@@ -1,7 +1,4 @@
-import sys
-from typing import Final, TypeAlias
-
-from typing_extensions import LiteralString
+from typing import Final, LiteralString
 
 __all__ = (
     '__version__',

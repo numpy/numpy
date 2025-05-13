@@ -6,15 +6,13 @@ from ._nested_sequence import (
     _NestedSequence as _NestedSequence,
 )
 from ._nbit_base import (
-    NBitBase as NBitBase,
+    NBitBase as NBitBase,  # pyright: ignore[reportDeprecated]
     _8Bit as _8Bit,
     _16Bit as _16Bit,
     _32Bit as _32Bit,
     _64Bit as _64Bit,
-    _80Bit as _80Bit,
     _96Bit as _96Bit,
     _128Bit as _128Bit,
-    _256Bit as _256Bit,
 )
 from ._nbit import (
     _NBitByte as _NBitByte,
@@ -121,15 +119,14 @@ from ._array_like import (
     NDArray as NDArray,
     ArrayLike as ArrayLike,
     _ArrayLike as _ArrayLike,
-    _FiniteNestedSequence as _FiniteNestedSequence,
-    _SupportsArray as _SupportsArray,
-    _SupportsArrayFunc as _SupportsArrayFunc,
     _ArrayLikeInt as _ArrayLikeInt,
     _ArrayLikeBool_co as _ArrayLikeBool_co,
     _ArrayLikeUInt_co as _ArrayLikeUInt_co,
     _ArrayLikeInt_co as _ArrayLikeInt_co,
     _ArrayLikeFloat_co as _ArrayLikeFloat_co,
+    _ArrayLikeFloat64_co as _ArrayLikeFloat64_co,
     _ArrayLikeComplex_co as _ArrayLikeComplex_co,
+    _ArrayLikeComplex128_co as _ArrayLikeComplex128_co,
     _ArrayLikeNumber_co as _ArrayLikeNumber_co,
     _ArrayLikeTD64_co as _ArrayLikeTD64_co,
     _ArrayLikeDT64_co as _ArrayLikeDT64_co,
@@ -137,8 +134,11 @@ from ._array_like import (
     _ArrayLikeVoid_co as _ArrayLikeVoid_co,
     _ArrayLikeStr_co as _ArrayLikeStr_co,
     _ArrayLikeBytes_co as _ArrayLikeBytes_co,
-    _ArrayLikeUnknown as _ArrayLikeUnknown,
-    _UnknownType as _UnknownType,
+    _ArrayLikeString_co as _ArrayLikeString_co,
+    _ArrayLikeAnyString_co as _ArrayLikeAnyString_co,
+    _FiniteNestedSequence as _FiniteNestedSequence,
+    _SupportsArray as _SupportsArray,
+    _SupportsArrayFunc as _SupportsArrayFunc,
 )
 
 from ._ufunc import (

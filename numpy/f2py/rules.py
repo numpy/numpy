@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 
 Rules for building C/API module with f2py2e.
@@ -246,6 +245,11 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
     if (! PyErr_Occurred())
         on_exit(f2py_report_on_exit,(void*)\"#modulename#\");
 #endif
+
+    if (PyType_Ready(&PyFortran_Type) < 0) {
+        return NULL;
+    }
+
     return m;
 }
 #ifdef __cplusplus
@@ -460,7 +464,7 @@ rout_rules = [
     {
       extern #ctype# #F_FUNC#(#name_lower#,#NAME#)(void);
       PyObject* o = PyDict_GetItemString(d,"#name#");
-      tmp = F2PyCapsule_FromVoidPtr((void*)#F_FUNC#(#name_lower#,#NAME#),NULL);
+      tmp = F2PyCapsule_FromVoidPtr((void*)#F_WRAPPEDFUNC#(#name_lower#,#NAME#),NULL);
       PyObject_SetAttrString(o,"_cpointer", tmp);
       Py_DECREF(tmp);
       s = PyUnicode_FromString("#name#");
@@ -604,21 +608,20 @@ rout_rules = [
                         },
         'decl': ['    #ctype# #name#_return_value = NULL;',
                  '    int #name#_return_value_len = 0;'],
-        'callfortran':'#name#_return_value,#name#_return_value_len,',
-        'callfortranroutine':['    #name#_return_value_len = #rlength#;',
-                              '    if ((#name#_return_value = (string)malloc('
-                              + '#name#_return_value_len+1) == NULL) {',
-                              '        PyErr_SetString(PyExc_MemoryError, \"out of memory\");',
-                              '        f2py_success = 0;',
-                              '    } else {',
-                              "        (#name#_return_value)[#name#_return_value_len] = '\\0';",
-                              '    }',
-                              '    if (f2py_success) {',
-                              {hasexternals: """\
+        'callfortran': '#name#_return_value,#name#_return_value_len,',
+        'callfortranroutine': ['    #name#_return_value_len = #rlength#;',
+                               '    if ((#name#_return_value = (string)malloc(#name#_return_value_len+1) == NULL) {',
+                               '        PyErr_SetString(PyExc_MemoryError, \"out of memory\");',
+                               '        f2py_success = 0;',
+                               '    } else {',
+                               "        (#name#_return_value)[#name#_return_value_len] = '\\0';",
+                               '    }',
+                               '    if (f2py_success) {',
+                               {hasexternals: """\
         if (#setjmpbuf#) {
             f2py_success = 0;
         } else {"""},
-                              {isthreadsafe: '        Py_BEGIN_ALLOW_THREADS'},
+                               {isthreadsafe: '        Py_BEGIN_ALLOW_THREADS'},
                               """\
 #ifdef USESCOMPAQFORTRAN
         (*f2py_func)(#callcompaqfortran#);
@@ -626,17 +629,17 @@ rout_rules = [
         (*f2py_func)(#callfortran#);
 #endif
 """,
-                              {isthreadsafe: '        Py_END_ALLOW_THREADS'},
-                              {hasexternals: '        }'},
-                              {debugcapi:
+                               {isthreadsafe: '        Py_END_ALLOW_THREADS'},
+                               {hasexternals: '        }'},
+                               {debugcapi:
                                   '        fprintf(stderr,"#routdebugshowvalue#\\n",#name#_return_value_len,#name#_return_value);'},
-                              '    } /* if (f2py_success) after (string)malloc */',
+                               '    } /* if (f2py_success) after (string)malloc */',
                               ],
         'returnformat': '#rformat#',
         'return': ',#name#_return_value',
         'freemem': '    STRINGFREE(#name#_return_value);',
         'need': ['F_FUNC', '#ctype#', 'STRINGFREE'],
-        '_check':l_and(isstringfunction, l_not(isfunction_wrap))  # ???obsolete
+        '_check': l_and(isstringfunction, l_not(isfunction_wrap))  # ???obsolete
     },
     {  # Debugging
         'routdebugenter': '    fprintf(stderr,"debug-capi:Python C/API function #modulename#.#name#(#docsignature#)\\n");',
@@ -698,8 +701,8 @@ aux_rules = [
         'decl': ['    #ctype# #varname# = NULL;',
                  '    int slen(#varname#);',
                  ],
-        'need':['len..'],
-        '_check':isstring
+        'need': ['len..'],
+        '_check': isstring
     },
     # Array
     {  # Common
@@ -707,7 +710,7 @@ aux_rules = [
                  '    npy_intp #varname#_Dims[#rank#] = {#rank*[-1]#};',
                  '    const int #varname#_Rank = #rank#;',
                  ],
-        'need':['len..', {hasinitvalue: 'forcomb'}, {hasinitvalue: 'CFUNCSMESS'}],
+        'need': ['len..', {hasinitvalue: 'forcomb'}, {hasinitvalue: 'CFUNCSMESS'}],
         '_check': isarray
     },
     # Scalararray
@@ -816,7 +819,7 @@ arg_rules = [
         'setjmpbuf': '(setjmp(#varname#_cb.jmpbuf))',
         'callfortran': {l_not(isintent_callback): '#varname#_cptr,'},
         'need': ['#cbname#', 'setjmp.h'],
-        '_check':isexternal
+        '_check': isexternal
     },
     {
         'frompyobj': [{l_not(isintent_callback): """\
@@ -870,8 +873,8 @@ if (#varname#_cb.capi==Py_None) {
         Py_DECREF(#varname#_cb.args_capi);
     }""",
         'need': ['SWAP', 'create_cb_arglist'],
-        '_check':isexternal,
-        '_depend':''
+        '_check': isexternal,
+        '_depend': ''
     },
     # Scalars (not complex)
     {  # Common
@@ -989,9 +992,9 @@ if (#varname#_cb.capi==Py_None) {
         'decl': ['    #ctype# #varname# = NULL;',
                  '    int slen(#varname#);',
                  '    PyObject *#varname#_capi = Py_None;'],
-        'callfortran':'#varname#,',
-        'callfortranappend':'slen(#varname#),',
-        'pyobjfrom':[
+        'callfortran': '#varname#,',
+        'callfortranappend': 'slen(#varname#),',
+        'pyobjfrom': [
             {debugcapi:
              '    fprintf(stderr,'
              '"#vardebugshowvalue#\\n",slen(#varname#),#varname#);'},
@@ -1020,8 +1023,8 @@ if (#varname#_cb.capi==Py_None) {
     }  /*if (f2py_success) of #varname#*/""",
         'need': ['#ctype#_from_pyobj', 'len..', 'STRINGFREE',
                  {l_not(isintent_c): 'STRINGPADN'}],
-        '_check':isstring,
-        '_depend':''
+        '_check': isstring,
+        '_depend': ''
     }, {  # Not hidden
         'argformat': {isrequired: 'O'},
         'keyformat': {isoptional: 'O'},
@@ -1054,7 +1057,7 @@ if (#varname#_cb.capi==Py_None) {
                  '    int capi_#varname#_intent = 0;',
                  {isstringarray: '    int slen(#varname#) = 0;'},
                  ],
-        'callfortran':'#varname#,',
+        'callfortran': '#varname#,',
         'callfortranappend': {isstringarray: 'slen(#varname#),'},
         'return': {isintent_out: ',capi_#varname#_as_array'},
         'need': 'len..',
@@ -1248,7 +1251,7 @@ def buildmodule(m, um):
     """
     Return
     """
-    outmess('    Building module "%s"...\n' % (m['name']))
+    outmess(f"    Building module \"{m['name']}\"...\n")
     ret = {}
     mod_rules = defmod_rules[:]
     vrd = capi_maps.modsign2map(m)
@@ -1268,7 +1271,7 @@ def buildmodule(m, um):
 
         if not nb:
             print(
-                'buildmodule: Could not find the body of interfaced routine "%s". Skipping.\n' % (n), file=sys.stderr)
+                f'buildmodule: Could not find the body of interfaced routine "{n}". Skipping.\n', file=sys.stderr)
             continue
         nb_list = [nb]
         if 'entry' in nb:
@@ -1327,7 +1330,7 @@ def buildmodule(m, um):
 
     needs = cfuncs.get_needs()
     # Add mapped definitions
-    needs['typedefs'] += [cvar for cvar in capi_maps.f2cmap_mapped #
+    needs['typedefs'] += [cvar for cvar in capi_maps.f2cmap_mapped  #
                           if cvar in typedef_need_dict.values()]
     code = {}
     for n in needs.keys():
@@ -1355,7 +1358,7 @@ def buildmodule(m, um):
             elif k in cfuncs.commonhooks:
                 c = cfuncs.commonhooks[k]
             else:
-                errmess('buildmodule: unknown need %s.\n' % (repr(k)))
+                errmess(f'buildmodule: unknown need {repr(k)}.\n')
                 continue
             code[n].append(c)
     mod_rules.append(code)
@@ -1369,7 +1372,7 @@ def buildmodule(m, um):
     ret['csrc'] = fn
     with open(fn, 'w') as f:
         f.write(ar['modulebody'].replace('\t', 2 * ' '))
-    outmess('    Wrote C/API module "%s" to file "%s"\n' % (m['name'], fn))
+    outmess(f"    Wrote C/API module \"{m['name']}\" to file \"{fn}\"\n")
 
     if options['dorestdoc']:
         fn = os.path.join(
@@ -1385,7 +1388,7 @@ def buildmodule(m, um):
         ret['ltx'] = fn
         with open(fn, 'w') as f:
             f.write(
-                '%% This file is auto-generated with f2py (version:%s)\n' % (f2py_version))
+                f'% This file is auto-generated with f2py (version:{f2py_version})\n')
             if 'shortlatex' not in options:
                 f.write(
                     '\\documentclass{article}\n\\usepackage{a4wide}\n\\begin{document}\n\\tableofcontents\n\n')
@@ -1400,7 +1403,7 @@ def buildmodule(m, um):
         with open(wn, 'w') as f:
             f.write('C     -*- fortran -*-\n')
             f.write(
-                'C     This file is autogenerated with f2py (version:%s)\n' % (f2py_version))
+                f'C     This file is autogenerated with f2py (version:{f2py_version})\n')
             f.write(
                 'C     It contains Fortran 77 wrappers to fortran functions.\n')
             lines = []
@@ -1417,15 +1420,15 @@ def buildmodule(m, um):
                     lines.append(l + '\n')
             lines = ''.join(lines).replace('\n     &\n', '\n')
             f.write(lines)
-        outmess('    Fortran 77 wrappers are saved to "%s"\n' % (wn))
+        outmess(f'    Fortran 77 wrappers are saved to "{wn}\"\n')
     if funcwrappers2:
         wn = os.path.join(
-            options['buildpath'], '%s-f2pywrappers2.f90' % (vrd['modulename']))
+            options['buildpath'], f"{vrd['modulename']}-f2pywrappers2.f90")
         ret['fsrc'] = wn
         with open(wn, 'w') as f:
             f.write('!     -*- f90 -*-\n')
             f.write(
-                '!     This file is autogenerated with f2py (version:%s)\n' % (f2py_version))
+                f'!     This file is autogenerated with f2py (version:{f2py_version})\n')
             f.write(
                 '!     It contains Fortran 90 wrappers to fortran functions.\n')
             lines = []
@@ -1444,10 +1447,11 @@ def buildmodule(m, um):
                     lines.append(l + '\n')
             lines = ''.join(lines).replace('\n     &\n', '\n')
             f.write(lines)
-        outmess('    Fortran 90 wrappers are saved to "%s"\n' % (wn))
+        outmess(f'    Fortran 90 wrappers are saved to "{wn}\"\n')
     return ret
 
 ################## Build C/API function #############
+
 
 stnd = {1: 'st', 2: 'nd', 3: 'rd', 4: 'th', 5: 'th',
         6: 'th', 7: 'th', 8: 'th', 9: 'th', 0: 'th'}
@@ -1463,7 +1467,7 @@ def buildapi(rout):
         outmess('            Constructing wrapper function "%s.%s"...\n' %
                 (rout['modulename'], rout['name']))
     else:
-        outmess('        Constructing wrapper function "%s"...\n' % (rout['name']))
+        outmess(f"        Constructing wrapper function \"{rout['name']}\"...\n")
     # Routine
     vrd = capi_maps.routsign2map(rout)
     rd = dictappend({}, vrd)
@@ -1565,9 +1569,9 @@ def buildapi(rout):
 
     ar = applyrules(routine_rules, rd)
     if ismoduleroutine(rout):
-        outmess('              %s\n' % (ar['docshort']))
+        outmess(f"              {ar['docshort']}\n")
     else:
-        outmess('          %s\n' % (ar['docshort']))
+        outmess(f"          {ar['docshort']}\n")
     return ar, wrap
 
 

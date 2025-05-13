@@ -219,7 +219,7 @@ be deduced:
    no transposing should be done. The axes created by the integer array
    indices are always inserted at the front, even for a single index.
 
-4. Boolean indexing is conceptionally outer indexing. Broadcasting
+4. Boolean indexing is conceptually outer indexing. Broadcasting
    together with other advanced indices in the manner of legacy
    indexing is generally not helpful or well defined.
    A user who wishes the "``nonzero``" plus broadcast behaviour can thus
@@ -649,7 +649,7 @@ eventualities.
 Copyright
 ---------
 
-This document is placed under the CC0 1.0 Universell (CC0 1.0) Public Domain Dedication [1]_.
+This document is placed under the CC0 1.0 Universal (CC0 1.0) Public Domain Dedication [1]_.
 
 
 References and footnotes
@@ -659,5 +659,4 @@ References and footnotes
    with this work has waived all copyright and related or neighboring
    rights to this work. The CC0 license may be found at
    https://creativecommons.org/publicdomain/zero/1.0/
-.. [2] e.g., see NEP 18,
-   http://www.numpy.org/neps/nep-0018-array-function-protocol.html
+.. [2] e.g., see :doc:`nep-0018-array-function-protocol`

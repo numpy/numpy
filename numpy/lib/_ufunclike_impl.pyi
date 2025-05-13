@@ -9,20 +9,20 @@ from numpy._typing import (
     _ArrayLikeObject_co,
 )
 
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+__all__ = ["fix", "isneginf", "isposinf"]
 
-__all__: list[str]
+_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
 @overload
 def fix(  # type: ignore[misc]
     x: _FloatLike_co,
     out: None = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def fix(
     x: _ArrayLikeFloat_co,
     out: None = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def fix(
     x: _ArrayLikeObject_co,
@@ -31,8 +31,8 @@ def fix(
 @overload
 def fix(
     x: _ArrayLikeFloat_co | _ArrayLikeObject_co,
-    out: _ArrayType,
-) -> _ArrayType: ...
+    out: _ArrayT,
+) -> _ArrayT: ...
 
 @overload
 def isposinf(  # type: ignore[misc]
@@ -47,8 +47,8 @@ def isposinf(
 @overload
 def isposinf(
     x: _ArrayLikeFloat_co,
-    out: _ArrayType,
-) -> _ArrayType: ...
+    out: _ArrayT,
+) -> _ArrayT: ...
 
 @overload
 def isneginf(  # type: ignore[misc]
@@ -63,5 +63,5 @@ def isneginf(
 @overload
 def isneginf(
     x: _ArrayLikeFloat_co,
-    out: _ArrayType,
-) -> _ArrayType: ...
+    out: _ArrayT,
+) -> _ArrayT: ...

@@ -73,7 +73,7 @@ NbufferT = [
     ]
 
 
-byteorder = {'little':'<', 'big':'>'}[sys.byteorder]
+byteorder = {'little': '<', 'big': '>'}[sys.byteorder]
 
 def normalize_descr(descr):
     "Normalize a description adding the platform byteorder."
@@ -97,8 +97,7 @@ def normalize_descr(descr):
             l = normalize_descr(dtype)
             out.append((item[0], l))
         else:
-            raise ValueError("Expected a str or list and got %s" %
-                             (type(item)))
+            raise ValueError(f"Expected a str or list and got {type(item)}")
     return out
 
 

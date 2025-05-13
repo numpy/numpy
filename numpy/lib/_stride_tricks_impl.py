@@ -3,12 +3,6 @@ Utilities that manipulate strides to achieve desirable effects.
 
 An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
-Functions
----------
-
-.. autosummary::
-   :toctree: generated/
-
 """
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
@@ -56,12 +50,8 @@ def as_strided(x, shape=None, strides=None, subok=False, writeable=True):
     strides : sequence of int, optional
         The strides of the new array. Defaults to ``x.strides``.
     subok : bool, optional
-        .. versionadded:: 1.10
-
         If True, subclasses are preserved.
     writeable : bool, optional
-        .. versionadded:: 1.12
-
         If set to False, the returned array will always be readonly.
         Otherwise it will be writable if the original array was. It
         is advisable to set this to False if possible (see Notes).
@@ -407,10 +397,6 @@ def broadcast_to(array, shape, subok=False):
     broadcast
     broadcast_arrays
     broadcast_shapes
-
-    Notes
-    -----
-    .. versionadded:: 1.10.0
 
     Examples
     --------

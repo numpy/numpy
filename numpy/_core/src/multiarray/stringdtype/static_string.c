@@ -17,9 +17,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
-// work around Python 3.10 and earlier issue, see
-// the commit message of 82fd2b8 for more details
-// also needed for the allocator mutex
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 

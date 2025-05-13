@@ -55,13 +55,14 @@
 /********** PRINTF DEBUG TRACING **************/
 #define NPY_IT_DBG_TRACING 0
 
+/* TODO: Can remove the n-args macros, old C89 didn't have variadic macros. */
 #if NPY_IT_DBG_TRACING
-#define NPY_IT_DBG_PRINT(s) printf("%s", s)
-#define NPY_IT_DBG_PRINT1(s, p1) printf(s, p1)
-#define NPY_IT_DBG_PRINT2(s, p1, p2) printf(s, p1, p2)
-#define NPY_IT_DBG_PRINT3(s, p1, p2, p3) printf(s, p1, p2, p3)
+#define NPY_IT_DBG_PRINT(...) printf(__VA_ARGS__)
+#define NPY_IT_DBG_PRINT1(s, p1) NPY_IT_DBG_PRINT(s, p1)
+#define NPY_IT_DBG_PRINT2(s, p1, p2) NPY_IT_DBG_PRINT(s, p1, p2)
+#define NPY_IT_DBG_PRINT3(s, p1, p2, p3) NPY_IT_DBG_PRINT(s, p1, p2, p3)
 #else
-#define NPY_IT_DBG_PRINT(s)
+#define NPY_IT_DBG_PRINT(...)
 #define NPY_IT_DBG_PRINT1(s, p1)
 #define NPY_IT_DBG_PRINT2(s, p1, p2)
 #define NPY_IT_DBG_PRINT3(s, p1, p2, p3)
@@ -99,12 +100,10 @@
 #define NPY_ITFLAG_ONEITERATION (1 << 9)
 /* Delay buffer allocation until first Reset* call */
 #define NPY_ITFLAG_DELAYBUF     (1 << 10)
-/* Iteration needs API access during iternext */
-#define NPY_ITFLAG_NEEDSAPI     (1 << 11)
 /* Iteration includes one or more operands being reduced */
-#define NPY_ITFLAG_REDUCE       (1 << 12)
+#define NPY_ITFLAG_REDUCE       (1 << 11)
 /* Reduce iteration doesn't need to recalculate reduce loops next time */
-#define NPY_ITFLAG_REUSE_REDUCE_LOOPS (1 << 13)
+#define NPY_ITFLAG_REUSE_REDUCE_LOOPS (1 << 12)
 /*
  * Offset of (combined) ArrayMethod flags for all transfer functions.
  * For now, we use the top 8 bits.
@@ -119,22 +118,27 @@
 #define NPY_OP_ITFLAG_READ         0x0002
 /* The operand needs type conversion/byte swapping/alignment */
 #define NPY_OP_ITFLAG_CAST         0x0004
-/* The operand never needs buffering */
+/* The operand never needs buffering (implies BUF_SINGLESTRIDE) */
 #define NPY_OP_ITFLAG_BUFNEVER     0x0008
-/* The operand is aligned */
-#define NPY_OP_ITFLAG_ALIGNED      0x0010
+/* Whether the buffer filling can use a single stride (minus reduce if reduce) */
+#define NPY_OP_ITFLAG_BUF_SINGLESTRIDE 0x0010
 /* The operand is being reduced */
 #define NPY_OP_ITFLAG_REDUCE       0x0020
 /* The operand is for temporary use, does not have a backing array */
 #define NPY_OP_ITFLAG_VIRTUAL      0x0040
 /* The operand requires masking when copying buffer -> array */
 #define NPY_OP_ITFLAG_WRITEMASKED  0x0080
-/* The operand's data pointer is pointing into its buffer */
-#define NPY_OP_ITFLAG_USINGBUFFER  0x0100
+/*
+ * Whether the buffer is *fully* filled and thus ready for reuse.
+ * (Must check if the start pointer matches until copy-from-buffer checks)
+ */
+#define NPY_OP_ITFLAG_BUF_REUSABLE 0x0100
 /* The operand must be copied (with UPDATEIFCOPY if also ITFLAG_WRITE) */
 #define NPY_OP_ITFLAG_FORCECOPY    0x0200
 /* The operand has temporary data, write it back at dealloc */
 #define NPY_OP_ITFLAG_HAS_WRITEBACK 0x0400
+/* Whether the user requested a contiguous operand */
+#define NPY_OP_ITFLAG_CONTIG 0x0800
 
 /*
  * The data layout of the iterator is fully specified by
@@ -148,8 +152,8 @@
 struct NpyIter_InternalOnly {
     /* Initial fixed position data */
     npy_uint32 itflags;
-    npy_uint8 ndim, nop;
-    npy_int8 maskop;
+    npy_uint8 ndim;
+    int nop, maskop;
     npy_intp itersize, iterstart, iterend;
     /* iterindex is only used if RANGED or BUFFERED is set */
     npy_intp iterindex;
@@ -176,9 +180,13 @@ typedef npy_int16 npyiter_opitflags;
         ((NPY_SIZEOF_PY_INTPTR_T)*(nop))
 #define NIT_OPITFLAGS_SIZEOF(itflags, ndim, nop) \
         (NPY_PTR_ALIGNED(sizeof(npyiter_opitflags) * nop))
+#define NIT_DATAPTRS_SIZEOF(itflags, ndim, nop) \
+        ((NPY_SIZEOF_PY_INTPTR_T)*(nop+1))
+#define NIT_USERPTRS_SIZEOF(itflags, ndim, nop) \
+        ((NPY_SIZEOF_PY_INTPTR_T)*(nop+1))
 #define NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop) \
         ((itflags&NPY_ITFLAG_BUFFER) ? ( \
-            (NPY_SIZEOF_PY_INTPTR_T)*(6 + 5*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
+            (NPY_SIZEOF_PY_INTPTR_T)*(8 + 4*nop) + sizeof(NpyIter_TransferInfo) * nop) : 0)
 
 /* Byte offsets of the iterator members starting from iter->iter_flexdata */
 #define NIT_PERM_OFFSET() \
@@ -201,9 +209,15 @@ typedef npy_int16 npyiter_opitflags;
 #define NIT_BUFFERDATA_OFFSET(itflags, ndim, nop) \
         (NIT_OPITFLAGS_OFFSET(itflags, ndim, nop) + \
          NIT_OPITFLAGS_SIZEOF(itflags, ndim, nop))
-#define NIT_AXISDATA_OFFSET(itflags, ndim, nop) \
+#define NIT_DATAPTRS_OFFSET(itflags, ndim, nop) + \
         (NIT_BUFFERDATA_OFFSET(itflags, ndim, nop) + \
          NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop))
+#define NIT_USERPTRS_OFFSET(itflags, ndim, nop) + \
+        (NIT_DATAPTRS_OFFSET(itflags, ndim, nop) + \
+         NIT_DATAPTRS_SIZEOF(itflags, ndim, nop))
+#define NIT_AXISDATA_OFFSET(itflags, ndim, nop) \
+        (NIT_USERPTRS_OFFSET(itflags, ndim, nop) + \
+         NIT_USERPTRS_SIZEOF(itflags, ndim, nop))
 
 /* Internal-only ITERATOR DATA MEMBER ACCESS */
 #define NIT_ITFLAGS(iter) \
@@ -236,6 +250,10 @@ typedef npy_int16 npyiter_opitflags;
         iter->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop)))
 #define NIT_BUFFERDATA(iter) ((NpyIter_BufferData *)( \
         iter->iter_flexdata + NIT_BUFFERDATA_OFFSET(itflags, ndim, nop)))
+#define NIT_DATAPTRS(iter) ((char **)( \
+        iter->iter_flexdata + NIT_DATAPTRS_OFFSET(itflags, ndim, nop)))
+#define NIT_USERPTRS(iter) ((char **)( \
+        iter->iter_flexdata + NIT_USERPTRS_OFFSET(itflags, ndim, nop)))
 #define NIT_AXISDATA(iter) ((NpyIter_AxisData *)( \
         iter->iter_flexdata + NIT_AXISDATA_OFFSET(itflags, ndim, nop)))
 
@@ -251,7 +269,7 @@ struct NpyIter_TransferInfo_tag {
 
 struct NpyIter_BufferData_tag {
     npy_intp buffersize, size, bufiterend,
-             reduce_pos, reduce_outersize, reduce_outerdim;
+             reduce_pos, coresize, outersize, coreoffset, outerdim;
     Py_intptr_t bd_flexdata;
 };
 
@@ -259,20 +277,20 @@ struct NpyIter_BufferData_tag {
 #define NBF_SIZE(bufferdata) ((bufferdata)->size)
 #define NBF_BUFITEREND(bufferdata) ((bufferdata)->bufiterend)
 #define NBF_REDUCE_POS(bufferdata) ((bufferdata)->reduce_pos)
-#define NBF_REDUCE_OUTERSIZE(bufferdata) ((bufferdata)->reduce_outersize)
-#define NBF_REDUCE_OUTERDIM(bufferdata) ((bufferdata)->reduce_outerdim)
+#define NBF_CORESIZE(bufferdata) ((bufferdata)->coresize)
+#define NBF_COREOFFSET(bufferdata) ((bufferdata)->coreoffset)
+#define NBF_REDUCE_OUTERSIZE(bufferdata) ((bufferdata)->outersize)
+#define NBF_OUTERDIM(bufferdata) ((bufferdata)->outerdim)
 #define NBF_STRIDES(bufferdata) ( \
         &(bufferdata)->bd_flexdata + 0)
-#define NBF_PTRS(bufferdata) ((char **) \
-        (&(bufferdata)->bd_flexdata + 1*(nop)))
 #define NBF_REDUCE_OUTERSTRIDES(bufferdata) ( \
-        (&(bufferdata)->bd_flexdata + 2*(nop)))
+        (&(bufferdata)->bd_flexdata + 1*(nop)))
 #define NBF_REDUCE_OUTERPTRS(bufferdata) ((char **) \
-        (&(bufferdata)->bd_flexdata + 3*(nop)))
+        (&(bufferdata)->bd_flexdata + 2*(nop)))
 #define NBF_BUFFERS(bufferdata) ((char **) \
-        (&(bufferdata)->bd_flexdata + 4*(nop)))
+        (&(bufferdata)->bd_flexdata + 3*(nop)))
 #define NBF_TRANSFERINFO(bufferdata) ((NpyIter_TransferInfo *) \
-        (&(bufferdata)->bd_flexdata + 5*(nop)))
+        (&(bufferdata)->bd_flexdata + 4*(nop)))
 
 /* Internal-only AXISDATA MEMBER ACCESS. */
 struct NpyIter_AxisData_tag {
@@ -283,8 +301,6 @@ struct NpyIter_AxisData_tag {
 #define NAD_INDEX(axisdata) ((axisdata)->index)
 #define NAD_STRIDES(axisdata) ( \
         &(axisdata)->ad_flexdata + 0)
-#define NAD_PTRS(axisdata) ((char **) \
-        (&(axisdata)->ad_flexdata + 1*(nop+1)))
 
 #define NAD_NSTRIDES() \
         ((nop) + ((itflags&NPY_ITFLAG_HASINDEX) ? 1 : 0))
@@ -296,7 +312,7 @@ struct NpyIter_AxisData_tag {
         /* intp index */ \
         1 + \
         /* intp stride[nop+1] AND char* ptr[nop+1] */ \
-        2*((nop)+1) \
+        1*((nop)+1) \
         )*(size_t)NPY_SIZEOF_PY_INTPTR_T)
 
 /*
@@ -363,13 +379,5 @@ NPY_NO_EXPORT int
 npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs);
 NPY_NO_EXPORT void
 npyiter_clear_buffers(NpyIter *iter);
-
-/*
- * Function to get the ArrayMethod flags of the transfer functions.
- * TODO: This function should be public and removed from `nditer_impl.h`, but
- *       this requires making the ArrayMethod flags public API first.
- */
-NPY_NO_EXPORT int
-NpyIter_GetTransferFlags(NpyIter *iter);
 
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY_NDITER_IMPL_H_ */

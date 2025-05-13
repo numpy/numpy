@@ -384,11 +384,11 @@ cb_arg_rules = [
                        '    if (capi_j>capi_i)\n        GETSCALARFROMPYTUPLE(capi_return,capi_i++,#varname_i#_cb_capi,#ctype#,"#ctype#_from_pyobj failed in converting argument #varname# of call-back function #name# to C #ctype#\\n");'},
                       {l_and(debugcapi, l_and(l_not(iscomplex), isintent_c)):
                           '    fprintf(stderr,"#showvalueformat#.\\n",#varname_i#);'},
-                      {l_and(debugcapi, l_and(l_not(iscomplex), l_not( isintent_c))):
+                      {l_and(debugcapi, l_and(l_not(iscomplex), l_not(isintent_c))):
                           '    fprintf(stderr,"#showvalueformat#.\\n",*#varname_i#_cb_capi);'},
                       {l_and(debugcapi, l_and(iscomplex, isintent_c)):
                           '    fprintf(stderr,"#showvalueformat#.\\n",(#varname_i#).r,(#varname_i#).i);'},
-                      {l_and(debugcapi, l_and(iscomplex, l_not( isintent_c))):
+                      {l_and(debugcapi, l_and(iscomplex, l_not(isintent_c))):
                           '    fprintf(stderr,"#showvalueformat#.\\n",(*#varname_i#_cb_capi).r,(*#varname_i#_cb_capi).i);'},
                       ],
         'need': [{isintent_out: ['#ctype#_from_pyobj', 'GETSCALARFROMPYTUPLE']},
@@ -513,14 +513,13 @@ def buildcallbacks(m):
                 if b:
                     buildcallback(b, m['name'])
                 else:
-                    errmess('warning: empty body for %s\n' % (m['name']))
+                    errmess(f"warning: empty body for {m['name']}\n")
 
 
 def buildcallback(rout, um):
     from . import capi_maps
 
-    outmess('    Constructing call-back function "cb_%s_in_%s"\n' %
-            (rout['name'], um))
+    outmess(f"    Constructing call-back function \"cb_{rout['name']}_in_{um}\"\n")
     args, depargs = getargs(rout)
     capi_maps.depargs = depargs
     var = rout['vars']
@@ -639,6 +638,6 @@ def buildcallback(rout, um):
                                       'latexdocstr': ar['latexdocstr'],
                                       'argname': rd['argname']
                                       }
-    outmess('      %s\n' % (ar['docstrshort']))
+    outmess(f"      {ar['docstrshort']}\n")
     return
 ################## Build call-back function #############

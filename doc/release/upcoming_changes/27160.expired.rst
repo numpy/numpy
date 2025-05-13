@@ -1,2 +1,0 @@
-* ``bool(np.array([]))`` and other empty arrays will now raise an error.
-  Use ``arr.size > 0`` instead to check whether an array has no elements.

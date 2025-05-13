@@ -14,7 +14,7 @@ Prerequisites
 
 Building NumPy requires the following installed software:
 
-1) Python__ 3.10.x or newer.
+1) Python__ 3.11.x or newer.
 
    Please note that the Python development headers also need to be installed,
    e.g., on Debian/Ubuntu one needs to install both `python3` and

@@ -56,7 +56,7 @@ def test_multi_fortran_libs_link(tmp_path):
                 from numpy.distutils.core import setup
                 setup(**configuration(top_path="").todict())'''))
 
-    # build the test extensino and "install" into a temporary directory
+    # build the test extension and "install" into a temporary directory
     build_dir = tmp_path
     subprocess.check_call([sys.executable, 'setup.py', 'build', 'install',
                            '--prefix', str(tmp_path / 'installdir'),

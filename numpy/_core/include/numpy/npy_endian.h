@@ -49,6 +49,7 @@
             || defined(NPY_CPU_PPC64LE)       \
             || defined(NPY_CPU_ARCEL)         \
             || defined(NPY_CPU_RISCV64)       \
+            || defined(NPY_CPU_RISCV32)       \
             || defined(NPY_CPU_LOONGARCH)     \
             || defined(NPY_CPU_WASM)
         #define NPY_BYTE_ORDER NPY_LITTLE_ENDIAN

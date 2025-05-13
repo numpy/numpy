@@ -1,44 +1,73 @@
-from numpy.linalg._linalg import (
-    matrix_power as matrix_power,
-    solve as solve,
-    tensorsolve as tensorsolve,
-    tensorinv as tensorinv,
-    inv as inv,
-    cholesky as cholesky,
-    outer as outer,
-    eigvals as eigvals,
-    eigvalsh as eigvalsh,
-    pinv as pinv,
-    slogdet as slogdet,
-    det as det,
-    svd as svd,
-    svdvals as svdvals,
-    eig as eig,
-    eigh as eigh,
-    lstsq as lstsq,
-    norm as norm,
-    matrix_norm as matrix_norm,
-    vector_norm as vector_norm,
-    qr as qr,
-    cond as cond,
-    matrix_rank as matrix_rank,
-    multi_dot as multi_dot,
-    matmul as matmul,
-    trace as trace,
-    diagonal as diagonal,
-    cross as cross,
+from . import _linalg as _linalg
+from . import _umath_linalg as _umath_linalg
+from . import linalg as linalg
+from ._linalg import (
+    cholesky,
+    cond,
+    cross,
+    det,
+    diagonal,
+    eig,
+    eigh,
+    eigvals,
+    eigvalsh,
+    inv,
+    lstsq,
+    matmul,
+    matrix_norm,
+    matrix_power,
+    matrix_rank,
+    matrix_transpose,
+    multi_dot,
+    norm,
+    outer,
+    pinv,
+    qr,
+    slogdet,
+    solve,
+    svd,
+    svdvals,
+    tensordot,
+    tensorinv,
+    tensorsolve,
+    trace,
+    vecdot,
+    vector_norm,
 )
 
-from numpy._core.fromnumeric import (
-    matrix_transpose as matrix_transpose
-)
-from numpy._core.numeric import (
-    tensordot as tensordot, vecdot as vecdot
-)
+__all__ = [
+    "LinAlgError",
+    "cholesky",
+    "cond",
+    "cross",
+    "det",
+    "diagonal",
+    "eig",
+    "eigh",
+    "eigvals",
+    "eigvalsh",
+    "inv",
+    "lstsq",
+    "matmul",
+    "matrix_norm",
+    "matrix_power",
+    "matrix_rank",
+    "matrix_transpose",
+    "multi_dot",
+    "norm",
+    "outer",
+    "pinv",
+    "qr",
+    "slogdet",
+    "solve",
+    "svd",
+    "svdvals",
+    "tensordot",
+    "tensorinv",
+    "tensorsolve",
+    "trace",
+    "vecdot",
+    "vector_norm",
+]
 
-from numpy._pytesttester import PytestTester
-
-__all__: list[str]
-test: PytestTester
-
-class LinAlgError(Exception): ...
+class LinAlgError(ValueError): ...

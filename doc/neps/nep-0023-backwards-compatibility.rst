@@ -224,8 +224,7 @@ Functionality with more strict deprecation policies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - ``numpy.random`` has its own backwards compatibility policy with additional
-  requirements on top of the ones in this NEP, see
-  `NEP 19 <http://www.numpy.org/neps/nep-0019-rng-policy.html>`_.
+  requirements on top of the ones in this NEP, see :doc:`nep-0019-rng-policy`.
 - The file format of ``.npy`` and ``.npz`` files is strictly versioned
   independent of the NumPy version; existing format versions must remain
   backwards compatible even if a newer format version is introduced.

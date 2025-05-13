@@ -224,8 +224,7 @@ cdef np.ndarray int_to_array(object value, object name, object bits, object uint
         value = int(value)
         upper = int(2)**int(bits)
         if value < 0 or value >= upper:
-            raise ValueError('{name} must be positive and '
-                             'less than 2**{bits}.'.format(name=name, bits=bits))
+            raise ValueError(f'{name} must be positive and less than 2**{bits}.')
 
         out = np.empty(len, dtype=dtype)
         for i in range(len):
@@ -234,8 +233,7 @@ cdef np.ndarray int_to_array(object value, object name, object bits, object uint
     else:
         out = value.astype(dtype)
         if out.shape != (len,):
-            raise ValueError('{name} must have {len} elements when using '
-                             'array form'.format(name=name, len=len))
+            raise ValueError(f'{name} must have {len} elements when using array form')
     return out
 
 
@@ -283,7 +281,7 @@ cdef check_output(object out, object dtype, object size, bint require_c_array):
         )
     if out_array.dtype != dtype:
         raise TypeError('Supplied output array has the wrong type. '
-                        'Expected {0}, got {1}'.format(np.dtype(dtype), out_array.dtype))
+                        f'Expected {np.dtype(dtype)}, got {out_array.dtype}')
     if size is not None:
         try:
             tup_size = tuple(size)
@@ -386,43 +384,43 @@ cdef int _check_array_cons_bounded_0_1(np.ndarray val, object name) except -1:
 cdef int check_array_constraint(np.ndarray val, object name, constraint_type cons) except -1:
     if cons == CONS_NON_NEGATIVE:
         if np.any(np.logical_and(np.logical_not(np.isnan(val)), np.signbit(val))):
-            raise ValueError(name + " < 0")
+            raise ValueError(f"{name} < 0")
     elif cons == CONS_POSITIVE or cons == CONS_POSITIVE_NOT_NAN:
         if cons == CONS_POSITIVE_NOT_NAN and np.any(np.isnan(val)):
-            raise ValueError(name + " must not be NaN")
+            raise ValueError(f"{name} must not be NaN")
         elif np.any(np.less_equal(val, 0)):
-            raise ValueError(name + " <= 0")
+            raise ValueError(f"{name} <= 0")
     elif cons == CONS_BOUNDED_0_1:
         return _check_array_cons_bounded_0_1(val, name)
     elif cons == CONS_BOUNDED_GT_0_1:
         if not np.all(np.greater(val, 0)) or not np.all(np.less_equal(val, 1)):
-            raise ValueError("{0} <= 0, {0} > 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} <= 0, {name} > 1 or {name} contains NaNs")
     elif cons == CONS_BOUNDED_LT_0_1:
         if not np.all(np.greater_equal(val, 0)) or not np.all(np.less(val, 1)):
-            raise ValueError("{0} < 0, {0} >= 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} < 0, {name} >= 1 or {name} contains NaNs")
     elif cons == CONS_GT_1:
         if not np.all(np.greater(val, 1)):
-            raise ValueError("{0} <= 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} <= 1 or {name} contains NaNs")
     elif cons == CONS_GTE_1:
         if not np.all(np.greater_equal(val, 1)):
-            raise ValueError("{0} < 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} < 1 or {name} contains NaNs")
     elif cons == CONS_POISSON:
         if not np.all(np.less_equal(val, POISSON_LAM_MAX)):
-            raise ValueError("{0} value too large".format(name))
+            raise ValueError(f"{name} value too large")
         elif not np.all(np.greater_equal(val, 0.0)):
-            raise ValueError("{0} < 0 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} < 0 or {name} contains NaNs")
     elif cons == LEGACY_CONS_POISSON:
         if not np.all(np.less_equal(val, LEGACY_POISSON_LAM_MAX)):
-            raise ValueError("{0} value too large".format(name))
+            raise ValueError(f"{name} value too large")
         elif not np.all(np.greater_equal(val, 0.0)):
-            raise ValueError("{0} < 0 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} < 0 or {name} contains NaNs")
     elif cons == LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG:
         # Note, we assume that array is integral:
         if not np.all(val >= 0):
-            raise ValueError(name + " < 0")
+            raise ValueError(f"{name} < 0")
         elif not np.all(val <= int(LONG_MAX)):
             raise ValueError(
-                    name + " is out of bounds for long, consider using "
+                    f"{name} is out of bounds for long, consider using "
                     "the new generator API for 64bit integers.")
 
     return 0
@@ -432,44 +430,44 @@ cdef int check_constraint(double val, object name, constraint_type cons) except 
     cdef bint is_nan
     if cons == CONS_NON_NEGATIVE:
         if not isnan(val) and signbit(val):
-            raise ValueError(name + " < 0")
+            raise ValueError(f"{name} < 0")
     elif cons == CONS_POSITIVE or cons == CONS_POSITIVE_NOT_NAN:
         if cons == CONS_POSITIVE_NOT_NAN and isnan(val):
-            raise ValueError(name + " must not be NaN")
+            raise ValueError(f"{name} must not be NaN")
         elif val <= 0:
-            raise ValueError(name + " <= 0")
+            raise ValueError(f"{name} <= 0")
     elif cons == CONS_BOUNDED_0_1:
         if not (val >= 0) or not (val <= 1):
-            raise ValueError("{0} < 0, {0} > 1 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 0, {name} > 1 or {name} is NaN")
     elif cons == CONS_BOUNDED_GT_0_1:
         if not val >0 or not val <= 1:
-            raise ValueError("{0} <= 0, {0} > 1 or {0} contains NaNs".format(name))
+            raise ValueError(f"{name} <= 0, {name} > 1 or {name} contains NaNs")
     elif cons == CONS_BOUNDED_LT_0_1:
         if not (val >= 0) or not (val < 1):
-            raise ValueError("{0} < 0, {0} >= 1 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 0, {name} >= 1 or {name} is NaN")
     elif cons == CONS_GT_1:
         if not (val > 1):
-            raise ValueError("{0} <= 1 or {0} is NaN".format(name))
+            raise ValueError(f"{name} <= 1 or {name} is NaN")
     elif cons == CONS_GTE_1:
         if not (val >= 1):
-            raise ValueError("{0} < 1 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 1 or {name} is NaN")
     elif cons == CONS_POISSON:
         if not (val >= 0):
-            raise ValueError("{0} < 0 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 0 or {name} is NaN")
         elif not (val <= POISSON_LAM_MAX):
-            raise ValueError(name + " value too large")
+            raise ValueError(f"{name} value too large")
     elif cons == LEGACY_CONS_POISSON:
         if not (val >= 0):
-            raise ValueError("{0} < 0 or {0} is NaN".format(name))
+            raise ValueError(f"{name} < 0 or {name} is NaN")
         elif not (val <= LEGACY_POISSON_LAM_MAX):
-            raise ValueError(name + " value too large")
+            raise ValueError(f"{name} value too large")
     elif cons == LEGACY_CONS_NON_NEGATIVE_INBOUNDS_LONG:
         # Note: Assume value is integral (double of LONG_MAX should work out)
         if val < 0:
-            raise ValueError(name + " < 0")
-        elif val > LONG_MAX:
+            raise ValueError(f"{name} < 0")
+        elif val > <double> LONG_MAX:
             raise ValueError(
-                    name + " is out of bounds for long, consider using "
+                    f"{name} is out of bounds for long, consider using "
                     "the new generator API for 64bit integers.")
 
     return 0
@@ -603,13 +601,13 @@ cdef object cont(void *func, void *state, object size, object lock, int narg,
     cdef bint is_scalar = True
     check_output(out, np.float64, size, narg > 0)
     if narg > 0:
-        a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
     if narg > 1:
-        b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
     if narg == 3:
-        c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(c_arr) == 0
 
     if not is_scalar:
@@ -879,23 +877,23 @@ cdef object disc(void *func, void *state, object size, object lock,
     cdef int64_t _ia = 0, _ib = 0, _ic = 0
     cdef bint is_scalar = True
     if narg_double > 0:
-        a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ALIGNED)
+        a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
         is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
         if narg_double > 1:
-            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_DOUBLE, np.NPY_ALIGNED)
+            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_DOUBLE, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
         elif narg_int64 == 1:
-            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ALIGNED)
+            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
     else:
         if narg_int64 > 0:
-            a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_INT64, np.NPY_ALIGNED)
+            a_arr = <np.ndarray>np.PyArray_FROM_OTF(a, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(a_arr) == 0
         if narg_int64 > 1:
-            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ALIGNED)
+            b_arr = <np.ndarray>np.PyArray_FROM_OTF(b, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(b_arr) == 0
         if narg_int64 > 2:
-            c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_INT64, np.NPY_ALIGNED)
+            c_arr = <np.ndarray>np.PyArray_FROM_OTF(c, np.NPY_INT64, np.NPY_ARRAY_ALIGNED)
             is_scalar = is_scalar and np.PyArray_NDIM(c_arr) == 0
 
     if not is_scalar:
@@ -918,31 +916,33 @@ cdef object disc(void *func, void *state, object size, object lock,
         else:
             raise NotImplementedError("No vector path available")
 
+    # At this point, we know is_scalar is True.
+
     if narg_double > 0:
         _da = PyFloat_AsDouble(a)
-        if a_constraint != CONS_NONE and is_scalar:
+        if a_constraint != CONS_NONE:
             check_constraint(_da, a_name, a_constraint)
 
         if narg_double > 1:
             _db = PyFloat_AsDouble(b)
-            if b_constraint != CONS_NONE and is_scalar:
+            if b_constraint != CONS_NONE:
                 check_constraint(_db, b_name, b_constraint)
         elif narg_int64 == 1:
             _ib = <int64_t>b
-            if b_constraint != CONS_NONE and is_scalar:
+            if b_constraint != CONS_NONE:
                 check_constraint(<double>_ib, b_name, b_constraint)
     else:
         if narg_int64 > 0:
             _ia = <int64_t>a
-            if a_constraint != CONS_NONE and is_scalar:
+            if a_constraint != CONS_NONE:
                 check_constraint(<double>_ia, a_name, a_constraint)
         if narg_int64 > 1:
             _ib = <int64_t>b
-            if b_constraint != CONS_NONE and is_scalar:
+            if b_constraint != CONS_NONE:
                 check_constraint(<double>_ib, b_name, b_constraint)
         if narg_int64 > 2:
             _ic = <int64_t>c
-            if c_constraint != CONS_NONE and is_scalar:
+            if c_constraint != CONS_NONE:
                 check_constraint(<double>_ic, c_name, c_constraint)
 
     if size is None:
@@ -1050,7 +1050,7 @@ cdef object cont_f(void *func, bitgen_t *state, object size, object lock,
     cdef np.ndarray a_arr, b_arr, c_arr
     cdef float _a
     cdef bint is_scalar = True
-    cdef int requirements = np.NPY_ALIGNED | np.NPY_FORCECAST
+    cdef int requirements = np.NPY_ARRAY_ALIGNED | np.NPY_ARRAY_FORCECAST
     check_output(out, np.float32, size, True)
     a_arr = <np.ndarray>np.PyArray_FROMANY(a, np.NPY_FLOAT32, 0, 0, requirements)
     is_scalar = np.PyArray_NDIM(a_arr) == 0

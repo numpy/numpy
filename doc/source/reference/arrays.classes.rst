@@ -52,8 +52,6 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array_ufunc__(ufunc, method, *inputs, **kwargs)
 
-   .. versionadded:: 1.13
-
    Any class, ndarray subclass or not, can define this method or set it to
    None in order to override the behavior of NumPy's ufuncs. This works
    quite similarly to Python's ``__mul__`` and other binary operation routines.
@@ -155,8 +153,6 @@ NumPy provides several hooks that classes can customize:
         :ref:`Subclassing ndarray <basics.subclassing>` for details.
 
 .. py:method:: class.__array_function__(func, types, args, kwargs)
-
-   .. versionadded:: 1.16
 
    -  ``func`` is an arbitrary callable exposed by NumPy's public API,
       which was called in the form ``func(*args, **kwargs)``.
@@ -292,7 +288,7 @@ NumPy provides several hooks that classes can customize:
 
    .. note::
       It is hoped to eventually deprecate this method in favour of
-      func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
+      :func:`__array_ufunc__` for ufuncs (and :func:`__array_function__`
       for a few other functions like :func:`numpy.squeeze`).
 
 .. py:attribute:: class.__array_priority__
@@ -307,19 +303,31 @@ NumPy provides several hooks that classes can customize:
 
 .. py:method:: class.__array__(dtype=None, copy=None)
 
-   If defined on an object, should return an ``ndarray``.
-   This method is called by array-coercion functions like np.array()
+   If defined on an object, it must return a NumPy ``ndarray``.
+   This method is called by array-coercion functions like ``np.array()``
    if an object implementing this interface is passed to those functions.
-   The third-party implementations of ``__array__`` must take ``dtype`` and
-   ``copy`` keyword arguments, as ignoring them might break third-party code
-   or NumPy itself.
 
-   - ``dtype`` is a data type of the returned array.
-   - ``copy`` is an optional boolean that indicates whether a copy should be
-     returned. For ``True`` a copy should always be made, for ``None`` only
-     if required (e.g. due to passed ``dtype`` value), and for ``False`` a copy
-     should never be made (if a copy is still required, an appropriate exception
-     should be raised).
+   Third-party implementations of ``__array__`` must take ``dtype`` and
+   ``copy`` arguments.
+
+   .. deprecated:: NumPy 2.0
+      Not implementing ``copy`` and ``dtype`` is deprecated as of NumPy 2.
+      When adding them, you must ensure correct behavior for ``copy``.
+
+   - ``dtype`` is the requested data type of the returned array and is passed
+     by NumPy positionally (only if requested by the user).
+     It is acceptable to ignore the ``dtype`` because NumPy will check the
+     result and cast to ``dtype`` if necessary.  If it is more efficient to
+     coerce the data to the requested dtype without relying on NumPy,
+     you should handle it in your library.
+   - ``copy`` is a boolean passed by keyword.  If ``copy=True`` you *must*
+     return a copy. Returning a view into existing data will lead to incorrect
+     user code.
+     If ``copy=False`` the user requested that a copy is never made and you *must*
+     raise an error unless no copy is made and the returned array is a view into
+     existing data.  It is valid to always raise an error for ``copy=False``.
+     The default ``copy=None`` (not passed) allows for the result to either be a
+     view or a copy.  However, a view return should be preferred when possible.
 
    Please refer to :ref:`Interoperability with NumPy <basics.interoperability>`
    for the protocol hierarchy, of which ``__array__`` is the oldest and least
@@ -409,14 +417,18 @@ alias for "matrix "in NumPy.
 
 Example 1: Matrix creation from a string
 
+.. try_examples::
+
   >>> import numpy as np
   >>> a = np.asmatrix('1 2 3; 4 5 3')
   >>> print((a*a.T).I)
     [[ 0.29239766 -0.13450292]
-     [-0.13450292  0.08187135]]
+    [-0.13450292  0.08187135]]
 
 
 Example 2: Matrix creation from a nested sequence
+
+.. try_examples::
 
   >>> import numpy as np
   >>> np.asmatrix([[1,5,10],[1.0,3,4j]])
@@ -424,6 +436,8 @@ Example 2: Matrix creation from a nested sequence
           [  1.+0.j,   3.+0.j,   0.+4.j]])
 
 Example 3: Matrix creation from an array
+
+.. try_examples::
 
   >>> import numpy as np
   >>> np.asmatrix(np.random.rand(3,3)).T
@@ -460,6 +474,8 @@ array actually get written to disk.
    memmap.flush
 
 Example:
+
+.. try_examples::
 
   >>> import numpy as np
 
@@ -609,6 +625,8 @@ This default iterator selects a sub-array of dimension :math:`N-1`
 from the array. This can be a useful construct for defining recursive
 algorithms. To loop over the entire array requires :math:`N` for-loops.
 
+.. try_examples::
+
   >>> import numpy as np
   >>> a = np.arange(24).reshape(3,2,4) + 10
   >>> for val in a:
@@ -633,8 +651,9 @@ As mentioned previously, the flat attribute of ndarray objects returns
 an iterator that will cycle over the entire array in C-style
 contiguous order.
 
+.. try_examples::
+
   >>> import numpy as np
-  >>> a = np.arange(24).reshape(3,2,4) + 10
   >>> for i, val in enumerate(a.flat):
   ...     if i%5 == 0: print(i, val)
   0 10
@@ -658,9 +677,12 @@ N-dimensional enumeration
 Sometimes it may be useful to get the N-dimensional index while
 iterating. The ndenumerate iterator can achieve this.
 
+.. try_examples::
+
   >>> import numpy as np
   >>> for i, val in np.ndenumerate(a):
-  ...     if sum(i)%5 == 0: print(i, val)
+  ...     if sum(i)%5 == 0:
+              print(i, val)
   (0, 0, 0) 10
   (1, 1, 3) 25
   (2, 0, 3) 29
@@ -680,6 +702,8 @@ using the :class:`broadcast` iterator. This object takes :math:`N`
 objects as inputs and returns an iterator that returns tuples
 providing each of the input sequence elements in the broadcasted
 result.
+
+.. try_examples::
 
   >>> import numpy as np
   >>> for val in np.broadcast([[1, 0], [2, 3]], [0, 1]):

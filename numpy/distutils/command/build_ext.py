@@ -360,8 +360,8 @@ class build_ext (old_build_ext):
         sources = ext.sources
         if sources is None or not is_sequence(sources):
             raise DistutilsSetupError(
-                ("in 'ext_modules' option (extension '%s'), " +
-                 "'sources' must be present and must be " +
+                ("in 'ext_modules' option (extension '%s'), "
+                 "'sources' must be present and must be "
                  "a list of source filenames") % ext.name)
         sources = list(sources)
 

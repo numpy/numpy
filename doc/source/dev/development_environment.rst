@@ -199,12 +199,12 @@ To run lint checks before committing new code, run::
 
 To check all changes in newly added Python code of current branch with target branch, run::
 
-    $ python tools/linter.py --branch main
+    $ python tools/linter.py
 
 If there are no errors, the script exits with no message. In case of errors,
 check the error message for details::
 
-    $ python tools/linter.py --branch main
+    $ python tools/linter.py
     ./numpy/_core/tests/test_scalarmath.py:34:5: E303 too many blank lines (3)
     1       E303 too many blank lines (3)
 

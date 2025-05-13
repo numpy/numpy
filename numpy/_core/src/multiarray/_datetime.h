@@ -328,4 +328,10 @@ find_object_datetime_type(PyObject *obj, int type_num);
 NPY_NO_EXPORT int
 PyArray_InitializeDatetimeCasts(void);
 
+NPY_NO_EXPORT npy_hash_t
+datetime_hash(PyArray_DatetimeMetaData *meta, npy_datetime dt);
+
+NPY_NO_EXPORT npy_hash_t
+timedelta_hash(PyArray_DatetimeMetaData *meta, npy_timedelta td);
+
 #endif  /* NUMPY_CORE_SRC_MULTIARRAY__DATETIME_H_ */

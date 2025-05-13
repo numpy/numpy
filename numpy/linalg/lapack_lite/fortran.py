@@ -11,6 +11,7 @@ def isComment(line):
 def isContinuation(line):
     return line[5] != ' '
 
+
 COMMENT, STATEMENT, CONTINUATION = 0, 1, 2
 def lineType(line):
     """Return the type of a line of Fortran code."""

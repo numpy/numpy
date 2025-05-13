@@ -1,8 +1,7 @@
-from typing import Any
+from typing import Any, LiteralString, assert_type
 
 import numpy as np
-
-from typing_extensions import assert_type, LiteralString
+from numpy._typing import _64Bit
 
 f: float
 f8: np.float64
@@ -15,10 +14,10 @@ u4: np.uint32
 finfo_f8: np.finfo[np.float64]
 iinfo_i8: np.iinfo[np.int64]
 
-assert_type(np.finfo(f), np.finfo[np.double])
-assert_type(np.finfo(f8), np.finfo[np.float64])
+assert_type(np.finfo(f), np.finfo[np.float64])
+assert_type(np.finfo(f8), np.finfo[np.floating[_64Bit]])
 assert_type(np.finfo(c8), np.finfo[np.float32])
-assert_type(np.finfo('f2'), np.finfo[np.floating[Any]])
+assert_type(np.finfo('f2'), np.finfo[np.floating])
 
 assert_type(finfo_f8.dtype, np.dtype[np.float64])
 assert_type(finfo_f8.bits, int)

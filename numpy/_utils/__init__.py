@@ -9,6 +9,7 @@ in ``numpy._core``.
 """
 
 import functools
+import sys
 import warnings
 from ._convertions import asunicode, asbytes
 
@@ -26,6 +27,12 @@ def set_module(module):
     """
     def decorator(func):
         if module is not None:
+            if isinstance(func, type):
+                try:
+                    func._module_file = sys.modules.get(func.__module__).__file__
+                except (AttributeError, KeyError):
+                    pass
+
             func.__module__ = module
         return func
     return decorator
@@ -66,6 +73,7 @@ def _rename_parameter(old_names, new_names, dep_version=None):
     def decorator(fun):
         @functools.wraps(fun)
         def wrapper(*args, **kwargs):
+            __tracebackhide__ = True  # Hide traceback for py.test
             for old_name, new_name in zip(old_names, new_names):
                 if old_name in kwargs:
                     if dep_version:

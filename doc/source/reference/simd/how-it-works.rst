@@ -201,7 +201,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
       #define NPY__CPU_TARGET_AVX2
       #define NPY__CPU_TARGET_AVX512F
       // our dispatch-able source
-      #include "/the/absuolate/path/of/hello.dispatch.c"
+      #include "/the/absolute/path/of/hello.dispatch.c"
 
 - **(D) Dispatch-able configuration header**: The infrastructure
   generates a config header for each dispatch-able source, this header
@@ -234,7 +234,7 @@ through ``--cpu-dispatch``, but it can also represent other options such as:
           // the additional optimizations, so it could be SSE42 or AVX512F
         #define CURRENT_TARGET(X) NPY_CAT(NPY_CAT(X, _), NPY__CPU_TARGET_CURRENT)
       #endif
-      // Macro 'CURRENT_TARGET' adding the current target as suffux to the exported symbols,
+      // Macro 'CURRENT_TARGET' adding the current target as suffix to the exported symbols,
       // to avoid linking duplications, NumPy already has a macro called
       // 'NPY_CPU_DISPATCH_CURFX' similar to it, located at
       // numpy/numpy/_core/src/common/npy_cpu_dispatch.h

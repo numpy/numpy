@@ -33,7 +33,7 @@ class TestArrayRepr:
             '     [3, 4]])')
 
         # two dimensional with flexible dtype
-        xstruct = np.ones((2,2), dtype=[('a', '<i4')]).view(sub)
+        xstruct = np.ones((2, 2), dtype=[('a', '<i4')]).view(sub)
         assert_equal(repr(xstruct),
             "sub([[(1,), (1,)],\n"
             "     [(1,), (1,)]], dtype=[('a', '<i4')])"
@@ -144,7 +144,7 @@ class TestArrayRepr:
         first[()] = 0  # resolve circular references for garbage collector
 
     def test_containing_list(self):
-        # printing square brackets directly would be ambiguuous
+        # printing square brackets directly would be ambiguous
         arr1d = np.array([None, None])
         arr1d[0] = [1, 2]
         arr1d[1] = [3]
@@ -239,25 +239,25 @@ class TestArray2String:
         x = np.arange(3)
         x_hex = "[0x0 0x1 0x2]"
         x_oct = "[0o0 0o1 0o2]"
-        assert_(np.array2string(x, formatter={'all':_format_function}) ==
+        assert_(np.array2string(x, formatter={'all': _format_function}) ==
                 "[. o O]")
-        assert_(np.array2string(x, formatter={'int_kind':_format_function}) ==
+        assert_(np.array2string(x, formatter={'int_kind': _format_function}) ==
                 "[. o O]")
-        assert_(np.array2string(x, formatter={'all':lambda x: "%.4f" % x}) ==
+        assert_(np.array2string(x, formatter={'all': lambda x: f"{x:.4f}"}) ==
                 "[0.0000 1.0000 2.0000]")
-        assert_equal(np.array2string(x, formatter={'int':lambda x: hex(x)}),
+        assert_equal(np.array2string(x, formatter={'int': hex}),
                 x_hex)
-        assert_equal(np.array2string(x, formatter={'int':lambda x: oct(x)}),
+        assert_equal(np.array2string(x, formatter={'int': oct}),
                 x_oct)
 
         x = np.arange(3.)
-        assert_(np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x}) ==
+        assert_(np.array2string(x, formatter={'float_kind': lambda x: f"{x:.2f}"}) ==
                 "[0.00 1.00 2.00]")
-        assert_(np.array2string(x, formatter={'float':lambda x: "%.2f" % x}) ==
+        assert_(np.array2string(x, formatter={'float': lambda x: f"{x:.2f}"}) ==
                 "[0.00 1.00 2.00]")
 
         s = np.array(['abc', 'def'])
-        assert_(np.array2string(s, formatter={'numpystr':lambda s: s*2}) ==
+        assert_(np.array2string(s, formatter={'numpystr': lambda s: s * 2}) ==
                 '[abcabc defdef]')
 
     def test_structure_format_mixed(self):
@@ -320,8 +320,8 @@ class TestArray2String:
         assert_equal(np.array2string(array_scalar), "(1., 2.12345679, 3.)")
 
     def test_unstructured_void_repr(self):
-        a = np.array([27, 91, 50, 75,  7, 65, 10,  8,
-                      27, 91, 51, 49,109, 82,101,100], dtype='u1').view('V8')
+        a = np.array([27, 91, 50, 75, 7, 65, 10, 8, 27, 91, 51, 49, 109, 82, 101, 100],
+                      dtype='u1').view('V8')
         assert_equal(repr(a[0]),
             r"np.void(b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08')")
         assert_equal(str(a[0]), r"b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08'")
@@ -330,7 +330,7 @@ class TestArray2String:
             r"       b'\x1B\x5B\x33\x31\x6D\x52\x65\x64'], dtype='|V8')")
 
         assert_equal(eval(repr(a), vars(np)), a)
-        assert_equal(eval(repr(a[0]), dict(np=np)), a[0])
+        assert_equal(eval(repr(a[0]), {'np': np}), a[0])
 
     def test_edgeitems_kwarg(self):
         # previously the global print options would be taken over the kwarg
@@ -346,7 +346,13 @@ class TestArray2String:
         assert_equal(str(A), strA)
 
         reprA = 'array([   0,    1,    2, ...,  998,  999, 1000])'
-        assert_equal(repr(A), reprA)
+        try:
+            np.set_printoptions(legacy='2.1')
+            assert_equal(repr(A), reprA)
+        finally:
+            np.set_printoptions(legacy=False)
+
+        assert_equal(repr(A), reprA.replace(')', ', shape=(1001,))'))
 
     def test_summarize_2d(self):
         A = np.arange(1002).reshape(2, 501)
@@ -356,6 +362,23 @@ class TestArray2String:
 
         reprA = 'array([[   0,    1,    2, ...,  498,  499,  500],\n' \
                 '       [ 501,  502,  503, ...,  999, 1000, 1001]])'
+        try:
+            np.set_printoptions(legacy='2.1')
+            assert_equal(repr(A), reprA)
+        finally:
+            np.set_printoptions(legacy=False)
+
+        assert_equal(repr(A), reprA.replace(')', ', shape=(2, 501))'))
+
+    def test_summarize_2d_dtype(self):
+        A = np.arange(1002, dtype='i2').reshape(2, 501)
+        strA = '[[   0    1    2 ...  498  499  500]\n' \
+               ' [ 501  502  503 ...  999 1000 1001]]'
+        assert_equal(str(A), strA)
+
+        reprA = ('array([[   0,    1,    2, ...,  498,  499,  500],\n'
+                 '       [ 501,  502,  503, ...,  999, 1000, 1001]],\n'
+                 '      shape=(2, 501), dtype=int16)')
         assert_equal(repr(A), reprA)
 
     def test_summarize_structure(self):
@@ -402,7 +425,7 @@ class TestArray2String:
         assert_equal(make_str(a, 5), '[111\n'
                                      ' 111]')
 
-        b = a[None,None,:]
+        b = a[None, None, :]
 
         assert_equal(make_str(b, 12, legacy='1.13'), '[[[111111]]]')
         assert_equal(make_str(b,  9, legacy='1.13'), '[[[111111]]]')
@@ -511,7 +534,7 @@ class TestArray2String:
         assert_equal(a[0], text)
         text = text.item()  # use raw python strings for repr below
         # and that np.array2string puts a newline in the expected location
-        expected_repr = "[{0!r} {0!r}\n {0!r}]".format(text)
+        expected_repr = f"[{text!r} {text!r}\n {text!r}]"
         result = np.array2string(a, max_line_width=len(repr(text)) * 2 + 3)
         assert_equal(result, expected_repr)
 
@@ -640,34 +663,34 @@ class TestPrintOptions:
                 ([100.], "100."), ([.2, -1, 122.51], "  0.,  -1., 123."),
                 ([0], "0"), ([-12], "-12"), ([complex(.3, -.7)], "0.-1.j")):
             x = np.array(values)
-            assert_equal(repr(x), "array([%s])" % string)
+            assert_equal(repr(x), f"array([{string}])")
 
     def test_formatter(self):
         x = np.arange(3)
-        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'all': lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1, 0, 1])")
 
     def test_formatter_reset(self):
         x = np.arange(3)
-        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'all': lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1, 0, 1])")
-        np.set_printoptions(formatter={'int':None})
+        np.set_printoptions(formatter={'int': None})
         assert_equal(repr(x), "array([0, 1, 2])")
 
-        np.set_printoptions(formatter={'all':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'all': lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1, 0, 1])")
-        np.set_printoptions(formatter={'all':None})
+        np.set_printoptions(formatter={'all': None})
         assert_equal(repr(x), "array([0, 1, 2])")
 
-        np.set_printoptions(formatter={'int':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'int': lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1, 0, 1])")
-        np.set_printoptions(formatter={'int_kind':None})
+        np.set_printoptions(formatter={'int_kind': None})
         assert_equal(repr(x), "array([0, 1, 2])")
 
         x = np.arange(3.)
-        np.set_printoptions(formatter={'float':lambda x: str(x-1)})
+        np.set_printoptions(formatter={'float': lambda x: str(x - 1)})
         assert_equal(repr(x), "array([-1.0, 0.0, 1.0])")
-        np.set_printoptions(formatter={'float_kind':None})
+        np.set_printoptions(formatter={'float_kind': None})
         assert_equal(repr(x), "array([0., 1., 2.])")
 
     def test_override_repr(self):
@@ -699,7 +722,7 @@ class TestPrintOptions:
 
         # repr of 0d arrays is affected by printoptions
         x = np.array(1)
-        np.set_printoptions(formatter={'all':lambda x: "test"})
+        np.set_printoptions(formatter={'all': lambda x: "test"})
         assert_equal(repr(x), "array(test)")
         # str is unaffected
         assert_equal(str(x), "1")
@@ -737,7 +760,7 @@ class TestPrintOptions:
         assert_equal(repr(z), 'array([       inf,  1.12e+000, -1.00e+120])')
 
     def test_bool_spacing(self):
-        assert_equal(repr(np.array([True,  True])),
+        assert_equal(repr(np.array([True, True])),
                      'array([ True,  True])')
         assert_equal(repr(np.array([True, False])),
                      'array([ True, False])')
@@ -809,11 +832,11 @@ class TestPrintOptions:
                       0.7326538397312751, 0.3459503329096204,
                       0.0862072768214508, 0.39112753029631175],
                       dtype=np.float64)
-        z = np.arange(6, dtype=np.float16)/10
+        z = np.arange(6, dtype=np.float16) / 10
         c = np.array([1.0 + 1.0j, 1.123456789 + 1.123456789j], dtype='c16')
 
         # also make sure 1e23 is right (is between two fp numbers)
-        w = np.array(['1e{}'.format(i) for i in range(25)], dtype=np.float64)
+        w = np.array([f'1e{i}' for i in range(25)], dtype=np.float64)
         # note: we construct w from the strings `1eXX` instead of doing
         # `10.**arange(24)` because it turns out the two are not equivalent in
         # python. On some architectures `1e23 != 10.**23`.
@@ -896,6 +919,45 @@ class TestPrintOptions:
         a = np.float64.fromhex('-1p-97')
         assert_equal(np.float64(np.array2string(a, floatmode='unique')), a)
 
+    test_cases_gh_28679 = [
+        (np.half([999, 999]), "[999. 999.]"),
+        (np.half([999, 1000]), "[9.99e+02 1.00e+03]"),
+        (np.single([999999, 999999]), "[999999. 999999.]"),
+        (np.single([999999, -1000000]), "[ 9.99999e+05 -1.00000e+06]"),
+        (
+            np.complex64([999999 + 999999j, 999999 + 999999j]),
+            "[999999.+999999.j 999999.+999999.j]"
+        ),
+        (
+            np.complex64([999999 + 999999j, 999999 + -1000000j]),
+            "[999999.+9.99999e+05j 999999.-1.00000e+06j]"
+        ),
+    ]
+
+    @pytest.mark.parametrize("input_array, expected_str", test_cases_gh_28679)
+    def test_gh_28679(self, input_array, expected_str):
+        # test cutoff to exponent notation for half, single, and complex64
+        assert_equal(str(input_array), expected_str)
+
+    test_cases_legacy_2_2 = [
+        (np.half([1.e3, 1.e4, 65504]), "[ 1000. 10000. 65504.]"),
+        (np.single([1.e6, 1.e7]), "[ 1000000. 10000000.]"),
+        (np.single([1.e7, 1.e8]), "[1.e+07 1.e+08]"),
+    ]
+
+    @pytest.mark.parametrize("input_array, expected_str", test_cases_legacy_2_2)
+    def test_legacy_2_2_mode(self, input_array, expected_str):
+        # test legacy cutoff to exponent notation for half and single
+        with np.printoptions(legacy='2.2'):
+            assert_equal(str(input_array), expected_str)
+
+    @pytest.mark.parametrize("legacy", ['1.13', '1.21', '1.25', '2.1', '2.2'])
+    def test_legacy_get_options(self, legacy):
+        # test legacy get options works okay
+        with np.printoptions(legacy=legacy):
+            p_opt = np.get_printoptions()
+            assert_equal(p_opt["legacy"], legacy)
+
     def test_legacy_mode_scalars(self):
         # in legacy mode, str of floats get truncated, and complex scalars
         # use * for non-finite imaginary part
@@ -917,18 +979,18 @@ class TestPrintOptions:
 
     def test_dtype_linewidth_wrapping(self):
         np.set_printoptions(linewidth=75)
-        assert_equal(repr(np.arange(10,20., dtype='f4')),
+        assert_equal(repr(np.arange(10, 20., dtype='f4')),
             "array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19.], dtype=float32)")
-        assert_equal(repr(np.arange(10,23., dtype='f4')), textwrap.dedent("""\
+        assert_equal(repr(np.arange(10, 23., dtype='f4')), textwrap.dedent("""\
             array([10., 11., 12., 13., 14., 15., 16., 17., 18., 19., 20., 21., 22.],
                   dtype=float32)"""))
 
         styp = '<U4'
         assert_equal(repr(np.ones(3, dtype=styp)),
-            "array(['1', '1', '1'], dtype='{}')".format(styp))
-        assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent("""\
+            f"array(['1', '1', '1'], dtype='{styp}')")
+        assert_equal(repr(np.ones(12, dtype=styp)), textwrap.dedent(f"""\
             array(['1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1', '1'],
-                  dtype='{}')""".format(styp)))
+                  dtype='{styp}')"""))
 
     @pytest.mark.parametrize(
         ['native'],
@@ -1040,7 +1102,7 @@ class TestPrintOptions:
 
                    [[18, ..., 20],
                     ...,
-                    [24, ..., 26]]])""")
+                    [24, ..., 26]]], shape=(3, 3, 3))""")
         )
 
         b = np.zeros((3, 3, 1, 1))
@@ -1061,44 +1123,41 @@ class TestPrintOptions:
 
                     ...,
 
-                    [[0.]]]])""")
+                    [[0.]]]], shape=(3, 3, 1, 1))""")
         )
 
         # 1.13 had extra trailing spaces, and was missing newlines
-        np.set_printoptions(legacy='1.13')
-
-        assert_equal(
-            repr(a),
-            textwrap.dedent("""\
-            array([[[ 0, ...,  2],
-                    ..., 
-                    [ 6, ...,  8]],
-
-                   ..., 
-                   [[18, ..., 20],
-                    ..., 
-                    [24, ..., 26]]])""")
-        )
-
-        assert_equal(
-            repr(b),
-            textwrap.dedent("""\
-            array([[[[ 0.]],
-
-                    ..., 
-                    [[ 0.]]],
-
-
-                   ..., 
-                   [[[ 0.]],
-
-                    ..., 
-                    [[ 0.]]]])""")
-        )
+        try:
+            np.set_printoptions(legacy='1.13')
+            assert_equal(repr(a), (
+                "array([[[ 0, ...,  2],\n"
+                "        ..., \n"
+                "        [ 6, ...,  8]],\n"
+                "\n"
+                "       ..., \n"
+                "       [[18, ..., 20],\n"
+                "        ..., \n"
+                "        [24, ..., 26]]])")
+            )
+            assert_equal(repr(b), (
+                "array([[[[ 0.]],\n"
+                "\n"
+                "        ..., \n"
+                "        [[ 0.]]],\n"
+                "\n"
+                "\n"
+                "       ..., \n"
+                "       [[[ 0.]],\n"
+                "\n"
+                "        ..., \n"
+                "        [[ 0.]]]])")
+            )
+        finally:
+            np.set_printoptions(legacy=False)
 
     def test_edgeitems_structured(self):
         np.set_printoptions(edgeitems=1, threshold=1)
-        A = np.arange(5*2*3, dtype="<i8").view([('i', "<i8", (5, 2, 3))])
+        A = np.arange(5 * 2 * 3, dtype="<i8").view([('i', "<i8", (5, 2, 3))])
         reprA = (
             "array([([[[ 0, ...,  2], [ 3, ...,  5]], ..., "
             "[[24, ..., 26], [27, ..., 29]]],)],\n"
@@ -1128,7 +1187,7 @@ class TestContextManager:
         assert_equal(s, '[0.67]')
 
     def test_ctx_mgr_restores(self):
-        # test that print options are actually restrored
+        # test that print options are actually restored
         opts = np.get_printoptions()
         with np.printoptions(precision=opts['precision'] - 1,
                              linewidth=opts['linewidth'] - 4):

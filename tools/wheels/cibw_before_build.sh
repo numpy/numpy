@@ -22,6 +22,9 @@ fi
 if [[ $(python -c"import sys; print(sys.maxsize)") < $(python -c"import sys; print(2**33)") ]]; then
     echo "No BLAS used for 32-bit wheels"
     export INSTALL_OPENBLAS=false
+elif [[ $(python -c"import sysconfig; print(sysconfig.get_platform())") == "win-arm64" ]]; then
+    echo "No BLAS used for ARM64 wheels"
+    export INSTALL_OPENBLAS=false
 elif [ -z $INSTALL_OPENBLAS ]; then
     # the macos_arm64 build might not set this variable
     export INSTALL_OPENBLAS=true
@@ -51,13 +54,4 @@ fi
 if [[ $RUNNER_OS == "Windows" ]]; then
     # delvewheel is the equivalent of delocate/auditwheel for windows.
     python -m pip install delvewheel wheel
-fi
-
-# TODO: delete along with enabling build isolation by unsetting
-# CIBW_BUILD_FRONTEND when numpy is buildable under free-threaded
-# python with a released version of cython
-FREE_THREADED_BUILD="$(python -c"import sysconfig; print(bool(sysconfig.get_config_var('Py_GIL_DISABLED')))")"
-if [[ $FREE_THREADED_BUILD == "True" ]]; then
-    python -m pip install meson-python ninja
-    python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
 fi

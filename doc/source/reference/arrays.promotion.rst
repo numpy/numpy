@@ -149,7 +149,7 @@ Note the following specific rules and observations:
 
 1. When a Python ``float`` or ``complex`` interacts with a NumPy integer
    the result will be ``float64`` or ``complex128`` (yellow border).
-   NumPy booleans will also be cast to the default integer.[#default-int]
+   NumPy booleans will also be cast to the default integer [#default-int]_.
    This is not relevant when additionally NumPy floating point values are
    involved.
 2. The precision is drawn such that ``float16 < int16 < uint16`` because
@@ -172,7 +172,7 @@ would give.
 
 Behavior of ``sum`` and ``prod``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**``np.sum`` and ``np.prod``:** Will always return the default integer type
+``np.sum`` and ``np.prod`` will always return the default integer type
 when summing over integer values (or booleans).  This is usually an ``int64``.
 The reason for this is that integer summations are otherwise very likely
 to overflow and give confusing results.
@@ -200,6 +200,27 @@ This leads to what may appear as "exceptions" to the rules:
 
 In principle, some of these exceptions may make sense for other functions.
 Please raise an issue if you feel this is the case.
+
+Notable behavior with Python builtin type classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When combining Python's builtin scalar *types* (i.e., ``float``, ``int``,
+or ``complex``, not scalar *values*), the promotion rules can appear
+surprising:
+
+  >>> np.result_type(7, np.array([1], np.float32))
+  dtype('float32')  # The scalar value '7' does not impact type promotion
+  >>> np.result_type(type(7), np.array([1], np.float32))
+  dtype('float64')  # The *type* of the scalar value '7' does impact promotion
+  # Similar situations happen with Python's float and complex types
+
+The reason for this behavior is that NumPy converts ``int`` to its default
+integer type, and uses that type for promotion:
+
+  >>> np.result_type(int)
+  dtype('int64')
+
+See also :ref:`dtype-constructing-from-python-types` for more details.
 
 Promotion of non-numerical datatypes
 ------------------------------------
@@ -236,7 +257,9 @@ such as byte-order, metadata, string length, or exact structured dtype layout.
 While the string length or field names of a structured dtype are important,
 NumPy considers byte-order, metadata, and the exact layout of a structured
 dtype as storage details.
+
 During promotion NumPy does *not* take these storage details into account:
+
 * Byte-order is converted to native byte-order.
 * Metadata attached to the dtype may or may not be preserved.
 * Resulting structured dtypes will be packed (but aligned if inputs were).
@@ -247,7 +270,7 @@ could drastically slow down evaluation.
 
 
 .. [#hist-reasons] To a large degree, this may just be for choices made early
-   on in NumPy's predecessors.  For more details, see `NEP 50 <NEP50>`.
+   on in NumPy's predecessors.  For more details, see :ref:`NEP 50 <NEP50>`.
 
 .. [#NEP50] See also :ref:`NEP 50 <NEP50>` which changed the rules for
    NumPy 2.0. Previous versions of NumPy would sometimes return higher
@@ -256,4 +279,4 @@ could drastically slow down evaluation.
    precision of NumPy scalars or 0-D arrays for promotion purposes.
 
 .. [#default-int] The default integer is marked as ``int64`` in the schema
-   but is ``int32`` on 32bit platforms.  However, normal PCs are 64bit.
+   but is ``int32`` on 32bit platforms.  However, most modern systems are 64bit.

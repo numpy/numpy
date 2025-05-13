@@ -24,6 +24,7 @@ py.install_sources(
     '_helper.py',
     '_helper.pyi',
     'helper.py',
+    'helper.pyi',
   ],
   subdir: 'numpy/fft'
 )

@@ -358,7 +358,6 @@ class TestNanFunctions_ArgminArgmax:
             assert ret == reference
 
 
-
 _TEST_ARRAYS = {
     "0d": np.array(5),
     "1d": np.array([127, 39, 93, 87, 46])
@@ -523,7 +522,7 @@ class SharedNanFunctionsTestsMixin:
                 mat = np.eye(3, dtype=c)
                 tgt = rf(mat, axis=1).dtype.type
                 res = nf(mat, axis=1).dtype.type
-                assert_(res is tgt, "res %s, tgt %s" % (res, tgt))
+                assert_(res is tgt, f"res {res}, tgt {tgt}")
                 # scalar case
                 tgt = rf(mat, axis=None).dtype.type
                 res = nf(mat, axis=None).dtype.type
@@ -586,7 +585,7 @@ class TestNanFunctions_SumProd(SharedNanFunctionsTestsMixin):
     def test_empty(self):
         for f, tgt_value in zip([np.nansum, np.nanprod], [0, 1]):
             mat = np.zeros((0, 3))
-            tgt = [tgt_value]*3
+            tgt = [tgt_value] * 3
             res = f(mat, axis=0)
             assert_equal(res, tgt)
             tgt = []
@@ -645,7 +644,7 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
     def test_empty(self):
         for f, tgt_value in zip(self.nanfuncs, [0, 1]):
             mat = np.zeros((0, 3))
-            tgt = tgt_value*np.ones((0, 3))
+            tgt = tgt_value * np.ones((0, 3))
             res = f(mat, axis=0)
             assert_equal(res, tgt)
             tgt = mat
@@ -679,7 +678,7 @@ class TestNanFunctions_CumSumProd(SharedNanFunctionsTestsMixin):
             tgt = np.cumprod(_ndat_ones, axis=axis)
             res = np.nancumprod(_ndat, axis=axis)
             assert_almost_equal(res, tgt)
-            tgt = np.cumsum(_ndat_zeros,axis=axis)
+            tgt = np.cumsum(_ndat_zeros, axis=axis)
             res = np.nancumsum(_ndat, axis=axis)
             assert_almost_equal(res, tgt)
 
@@ -826,6 +825,7 @@ class TestNanFunctions_MeanVarStd(SharedNanFunctionsTestsMixin):
         assert std_old.shape == mean.shape
         assert_almost_equal(std, std_old)
 
+
 _TIME_UNITS = (
     "Y", "M", "W", "D", "h", "m", "s", "ms", "us", "ns", "ps", "fs", "as"
 )
@@ -923,7 +923,7 @@ class TestNanFunctions_Median:
             # Randomly set some elements to NaN:
             w = np.random.randint(0, d.size, size=d.size // 5)
             d.ravel()[w] = np.nan
-            d[:,0] = 1.  # ensure at least one good value
+            d[:, 0] = 1.  # ensure at least one good value
             # use normal median without nans to compare
             tgt = []
             for x in d:
@@ -933,9 +933,9 @@ class TestNanFunctions_Median:
             assert_array_equal(np.nanmedian(d, axis=-1), tgt)
 
     def test_result_values(self):
-            tgt = [np.median(d) for d in _rdat]
-            res = np.nanmedian(_ndat, axis=1)
-            assert_almost_equal(res, tgt)
+        tgt = [np.median(d) for d in _rdat]
+        res = np.nanmedian(_ndat, axis=1)
+        assert_almost_equal(res, tgt)
 
     @pytest.mark.parametrize("axis", [None, 0, 1])
     @pytest.mark.parametrize("dtype", _TYPE_CODES)
@@ -1021,7 +1021,7 @@ class TestNanFunctions_Median:
                     assert_equal(np.nanmedian(a), -2.5)
                 assert_equal(np.nanmedian(a, axis=-1), [-1., -2.5, inf])
 
-                for i in range(0, 10):
+                for i in range(10):
                     for j in range(1, 10):
                         a = np.array([([np.nan] * i) + ([inf] * j)] * 2)
                         assert_equal(np.nanmedian(a), inf)
@@ -1115,8 +1115,8 @@ class TestNanFunctions_Percentile:
                 "weights": np.ones_like(nan_mat), "method": "inverted_cdf"
             }
         else:
-            w_args = dict()
-            nan_w_args = dict()
+            w_args = {}
+            nan_w_args = {}
         tgt = np.percentile(mat, 42, axis=1, **w_args)
         res = np.nanpercentile(nan_mat, 42, axis=1, out=resout, **nan_w_args)
         assert_almost_equal(res, resout)
@@ -1136,11 +1136,11 @@ class TestNanFunctions_Percentile:
         assert_almost_equal(res, tgt)
 
     def test_complex(self):
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='D')
         assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='F')
         assert_raises(TypeError, np.nanpercentile, arr_c, 0.5)
 
     @pytest.mark.parametrize("weighted", [False, True])
@@ -1309,7 +1309,7 @@ class TestNanFunctions_Quantile:
         if weighted:
             w_args = {"weights": np.ones_like(ar), "method": "inverted_cdf"}
         else:
-            w_args = dict()
+            w_args = {}
 
         assert_equal(np.nanquantile(ar, q=0.5, **w_args),
                      np.nanpercentile(ar, q=50, **w_args))
@@ -1329,11 +1329,11 @@ class TestNanFunctions_Quantile:
         assert_equal(np.nanquantile(x, 0.5), 1.75)
 
     def test_complex(self):
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='G')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='G')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='D')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='D')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
-        arr_c = np.array([0.5+3.0j, 2.1+0.5j, 1.6+2.3j], dtype='F')
+        arr_c = np.array([0.5 + 3.0j, 2.1 + 0.5j, 1.6 + 2.3j], dtype='F')
         assert_raises(TypeError, np.nanquantile, arr_c, 0.5)
 
     def test_no_p_overwrite(self):
@@ -1416,3 +1416,18 @@ def test__replace_nan():
         assert result_nan is not arr_nan
         assert_equal(result_nan, np.array([0, 1, 2]))
         assert np.isnan(arr_nan[-1])
+
+
+def test_memmap_takes_fast_route(tmpdir):
+    # We want memory mapped arrays to take the fast route through nanmax,
+    # which avoids creating a mask by using fmax.reduce (see gh-28721). So we
+    # check that on bad input, the error is from fmax (rather than maximum).
+    a = np.arange(10., dtype=float)
+    with open(tmpdir.join("data.bin"), "w+b") as fh:
+        fh.write(a.tobytes())
+        mm = np.memmap(fh, dtype=a.dtype, shape=a.shape)
+        with pytest.raises(ValueError, match="reduction operation fmax"):
+            np.nanmax(mm, out=np.zeros(2))
+        # For completeness, same for nanmin.
+        with pytest.raises(ValueError, match="reduction operation fmin"):
+            np.nanmin(mm, out=np.zeros(2))

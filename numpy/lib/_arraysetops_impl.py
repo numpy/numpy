@@ -21,6 +21,7 @@ from typing import NamedTuple
 import numpy as np
 from numpy._core import overrides
 from numpy._core._multiarray_umath import _array_converter
+from numpy._core._multiarray_umath import _unique_hash
 
 
 array_function_dispatch = functools.partial(
@@ -138,13 +139,15 @@ def _unpack_tuple(x):
 
 
 def _unique_dispatcher(ar, return_index=None, return_inverse=None,
-                       return_counts=None, axis=None, *, equal_nan=None):
+                       return_counts=None, axis=None, *, equal_nan=None,
+                       sorted=True):
     return (ar,)
 
 
 @array_function_dispatch(_unique_dispatcher)
 def unique(ar, return_index=False, return_inverse=False,
-           return_counts=False, axis=None, *, equal_nan=True):
+           return_counts=False, axis=None, *, equal_nan=True,
+           sorted=True):
     """
     Find the unique elements of an array.
 
@@ -177,12 +180,17 @@ def unique(ar, return_index=False, return_inverse=False,
         that contain objects are not supported if the `axis` kwarg is used. The
         default is None.
 
-        .. versionadded:: 1.13.0
-
     equal_nan : bool, optional
         If True, collapses multiple NaN values in the return array into one.
 
         .. versionadded:: 1.24
+
+    sorted : bool, optional
+        If True, the unique elements are sorted. Elements may be sorted in
+        practice even if ``sorted=False``, but this could change without
+        notice.
+
+        .. versionadded:: 2.3
 
     Returns
     -------
@@ -198,11 +206,10 @@ def unique(ar, return_index=False, return_inverse=False,
         The number of times each of the unique values comes up in the
         original array. Only provided if `return_counts` is True.
 
-        .. versionadded:: 1.9.0
-
     See Also
     --------
     repeat : Repeat elements of an array.
+    sort : Return a sorted copy of an array.
 
     Notes
     -----
@@ -216,17 +223,15 @@ def unique(ar, return_index=False, return_inverse=False,
     flattened subarrays are sorted in lexicographic order starting with the
     first element.
 
-    .. versionchanged: 1.21
-        If nan values are in the input array, a single nan is put
-        to the end of the sorted unique values.
-
-        Also for complex arrays all NaN values are considered equivalent
+    .. versionchanged:: 1.21
+        Like np.sort, NaN will sort to the end of the values.
+        For complex arrays all NaN values are considered equivalent
         (no matter whether the NaN is in the real or imaginary part).
         As the representant for the returned array the smallest one in the
         lexicographical order is chosen - see np.sort for how the lexicographical
         order is defined for complex arrays.
 
-    .. versionchanged: 2.0
+    .. versionchanged:: 2.0
         For multi-dimensional inputs, ``unique_inverse`` is reshaped
         such that the input can be reconstructed using
         ``np.take(unique, unique_inverse, axis=axis)``. The result is
@@ -289,7 +294,8 @@ def unique(ar, return_index=False, return_inverse=False,
     ar = np.asanyarray(ar)
     if axis is None:
         ret = _unique1d(ar, return_index, return_inverse, return_counts,
-                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None)
+                        equal_nan=equal_nan, inverse_shape=ar.shape, axis=None,
+                        sorted=sorted)
         return _unpack_tuple(ret)
 
     # axis was specified and not None
@@ -305,7 +311,7 @@ def unique(ar, return_index=False, return_inverse=False,
     orig_shape, orig_dtype = ar.shape, ar.dtype
     ar = ar.reshape(orig_shape[0], np.prod(orig_shape[1:], dtype=np.intp))
     ar = np.ascontiguousarray(ar)
-    dtype = [('f{i}'.format(i=i), ar.dtype) for i in range(ar.shape[1])]
+    dtype = [(f'f{i}', ar.dtype) for i in range(ar.shape[1])]
 
     # At this point, `ar` has shape `(n, m)`, and `dtype` is a structured
     # data type with `m` fields where each field has the data type of `ar`.
@@ -336,21 +342,41 @@ def unique(ar, return_index=False, return_inverse=False,
     output = _unique1d(consolidated, return_index,
                        return_inverse, return_counts,
                        equal_nan=equal_nan, inverse_shape=inverse_shape,
-                       axis=axis)
+                       axis=axis, sorted=sorted)
     output = (reshape_uniq(output[0]),) + output[1:]
     return _unpack_tuple(output)
 
 
 def _unique1d(ar, return_index=False, return_inverse=False,
               return_counts=False, *, equal_nan=True, inverse_shape=None,
-              axis=None):
+              axis=None, sorted=True):
     """
     Find the unique elements of an array, ignoring shape.
+
+    Uses a hash table to find the unique elements if possible.
     """
     ar = np.asanyarray(ar).flatten()
+    if len(ar.shape) != 1:
+        # np.matrix, and maybe some other array subclasses, insist on keeping
+        # two dimensions for all operations. Coerce to an ndarray in such cases.
+        ar = np.asarray(ar).flatten()
 
     optional_indices = return_index or return_inverse
 
+    # masked arrays are not supported yet.
+    if not optional_indices and not return_counts and not np.ma.is_masked(ar):
+        # First we convert the array to a numpy array, later we wrap it back
+        # in case it was a subclass of numpy.ndarray.
+        conv = _array_converter(ar)
+        ar_, = conv
+
+        if (hash_unique := _unique_hash(ar_)) is not NotImplemented:
+            if sorted:
+                hash_unique.sort()
+            # We wrap the result back in case it was a subclass of numpy.ndarray.
+            return (conv.wrap(hash_unique),)
+
+    # If we don't use the hash map, we use the slower sorting method.
     if optional_indices:
         perm = ar.argsort(kind='mergesort' if return_index else 'quicksort')
         aux = ar[perm]
@@ -413,14 +439,18 @@ def _unique_all_dispatcher(x, /):
 @array_function_dispatch(_unique_all_dispatcher)
 def unique_all(x):
     """
-    Find the unique elements of an array, and counts, inverse and indices.
+    Find the unique elements of an array, and counts, inverse, and indices.
 
-    This function is an Array API compatible alternative to:
+    This function is an Array API compatible alternative to::
 
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, return_index=True, return_inverse=True,
-    ...           return_counts=True, equal_nan=False)
-    (array([1, 2]), array([0, 2]), array([0, 0, 1]), array([2, 1]))
+        np.unique(x, return_index=True, return_inverse=True,
+                  return_counts=True, equal_nan=False, sorted=False)
+
+    but returns a namedtuple for easier access to each output.
+
+    .. note::
+        This function currently always returns a sorted result, however,
+        this could change in any NumPy minor release.
 
     Parameters
     ----------
@@ -445,19 +475,23 @@ def unique_all(x):
     Examples
     --------
     >>> import numpy as np
-    >>> np.unique_all([1, 1, 2])
-    UniqueAllResult(values=array([1, 2]),
-                    indices=array([0, 2]),
-                    inverse_indices=array([0, 0, 1]),
-                    counts=array([2, 1]))
-
+    >>> x = [1, 1, 2]
+    >>> uniq = np.unique_all(x)
+    >>> uniq.values
+    array([1, 2])
+    >>> uniq.indices
+    array([0, 2])
+    >>> uniq.inverse_indices
+    array([0, 0, 1])
+    >>> uniq.counts
+    array([2, 1])
     """
     result = unique(
         x,
         return_index=True,
         return_inverse=True,
         return_counts=True,
-        equal_nan=False
+        equal_nan=False,
     )
     return UniqueAllResult(*result)
 
@@ -471,11 +505,15 @@ def unique_counts(x):
     """
     Find the unique elements and counts of an input array `x`.
 
-    This function is an Array API compatible alternative to:
+    This function is an Array API compatible alternative to::
 
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, return_counts=True, equal_nan=False)
-    (array([1, 2]), array([2, 1]))
+        np.unique(x, return_counts=True, equal_nan=False, sorted=False)
+
+    but returns a namedtuple for easier access to each output.
+
+    .. note::
+        This function currently always returns a sorted result, however,
+        this could change in any NumPy minor release.
 
     Parameters
     ----------
@@ -497,16 +535,19 @@ def unique_counts(x):
     Examples
     --------
     >>> import numpy as np
-    >>> np.unique_counts([1, 1, 2])
-    UniqueCountsResult(values=array([1, 2]), counts=array([2, 1]))
-
+    >>> x = [1, 1, 2]
+    >>> uniq = np.unique_counts(x)
+    >>> uniq.values
+    array([1, 2])
+    >>> uniq.counts
+    array([2, 1])
     """
     result = unique(
         x,
         return_index=False,
         return_inverse=False,
         return_counts=True,
-        equal_nan=False
+        equal_nan=False,
     )
     return UniqueCountsResult(*result)
 
@@ -520,11 +561,15 @@ def unique_inverse(x):
     """
     Find the unique elements of `x` and indices to reconstruct `x`.
 
-    This function is Array API compatible alternative to:
+    This function is an Array API compatible alternative to::
 
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, return_inverse=True, equal_nan=False)
-    (array([1, 2]), array([0, 0, 1]))
+        np.unique(x, return_inverse=True, equal_nan=False, sorted=False)
+
+    but returns a namedtuple for easier access to each output.
+
+    .. note::
+        This function currently always returns a sorted result, however,
+        this could change in any NumPy minor release.
 
     Parameters
     ----------
@@ -547,16 +592,19 @@ def unique_inverse(x):
     Examples
     --------
     >>> import numpy as np
-    >>> np.unique_inverse([1, 1, 2])
-    UniqueInverseResult(values=array([1, 2]), inverse_indices=array([0, 0, 1]))
-
+    >>> x = [1, 1, 2]
+    >>> uniq = np.unique_inverse(x)
+    >>> uniq.values
+    array([1, 2])
+    >>> uniq.inverse_indices
+    array([0, 0, 1])
     """
     result = unique(
         x,
         return_index=False,
         return_inverse=True,
         return_counts=False,
-        equal_nan=False
+        equal_nan=False,
     )
     return UniqueInverseResult(*result)
 
@@ -570,11 +618,13 @@ def unique_values(x):
     """
     Returns the unique elements of an input array `x`.
 
-    This function is Array API compatible alternative to:
+    This function is an Array API compatible alternative to::
 
-    >>> x = np.array([1, 1, 2])
-    >>> np.unique(x, equal_nan=False)
-    array([1, 2])
+        np.unique(x, equal_nan=False, sorted=False)
+
+    .. versionchanged:: 2.3
+       The algorithm was changed to a faster one that does not rely on
+       sorting, and hence the results are no longer implicitly sorted.
 
     Parameters
     ----------
@@ -594,7 +644,7 @@ def unique_values(x):
     --------
     >>> import numpy as np
     >>> np.unique_values([1, 1, 2])
-    array([1, 2])
+    array([1, 2])  # may vary
 
     """
     return unique(
@@ -602,7 +652,8 @@ def unique_values(x):
         return_index=False,
         return_inverse=False,
         return_counts=False,
-        equal_nan=False
+        equal_nan=False,
+        sorted=False,
     )
 
 
@@ -631,8 +682,6 @@ def intersect1d(ar1, ar2, assume_unique=False, return_indices=False):
         If True, the indices which correspond to the intersection of the two
         arrays are returned. The first instance of a value is used if there are
         multiple. Default is False.
-
-        .. versionadded:: 1.15.0
 
     Returns
     -------
@@ -804,8 +853,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
           'table' may be faster in most cases. If 'table' is chosen,
           `assume_unique` will have no effect.
 
-        .. versionadded:: 1.8.0
-
     Returns
     -------
     in1d : (M,) ndarray, bool
@@ -832,8 +879,6 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     but may use greater memory. The default value for `kind` will
     be automatically selected based only on memory usage, so one may
     manually set ``kind='table'`` if memory constraints can be relaxed.
-
-    .. versionadded:: 1.4.0
 
     Examples
     --------
@@ -966,7 +1011,6 @@ def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
             "Please select 'sort' or None for kind."
         )
 
-
     # Check if one of the arrays may contain arbitrary objects
     contains_object = ar1.dtype.hasobject or ar2.dtype.hasobject
 
@@ -1069,7 +1113,6 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
 
     Notes
     -----
-
     `isin` is an element-wise function version of the python keyword `in`.
     ``isin(a, b)`` is roughly equivalent to
     ``np.array([item in b for item in a])`` if `a` and `b` are 1-D sequences.
@@ -1088,8 +1131,6 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
     but may use greater memory. The default value for `kind` will
     be automatically selected based only on memory usage, so one may
     manually set ``kind='table'`` if memory constraints can be relaxed.
-
-    .. versionadded:: 1.13.0
 
     Examples
     --------

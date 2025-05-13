@@ -144,7 +144,7 @@ written C-code.
 Cython
 ======
 
-`Cython <http://cython.org>`_ is a compiler for a Python dialect that adds
+`Cython <https://cython.org>`_ is a compiler for a Python dialect that adds
 (optional) static typing for speed, and allows mixing C or C++ code
 into your modules. It produces C or C++ extensions that can be compiled
 and imported in Python code.
@@ -831,7 +831,7 @@ file that defines the interface. Often, however, this ``.i`` file can
 be parts of the header itself. The interface usually needs a bit of
 tweaking to be very useful. This ability to parse C/C++ headers and
 auto-generate the interface still makes SWIG a useful approach to
-adding functionalilty from C/C++ into Python, despite the other
+adding functionality from C/C++ into Python, despite the other
 methods that have emerged that are more targeted to Python. SWIG can
 actually target extensions for several languages, but the typemaps
 usually have to be language-specific. Nonetheless, with modifications

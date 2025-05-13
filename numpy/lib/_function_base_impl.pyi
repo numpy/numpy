@@ -1,82 +1,131 @@
-from collections.abc import Sequence, Iterator, Callable, Iterable
+# ruff: noqa: ANN401
+from collections.abc import Callable, Iterable, Sequence
 from typing import (
-    Concatenate,
-    Literal as L,
     Any,
+    Concatenate,
     ParamSpec,
-    TypeVar,
-    overload,
     Protocol,
     SupportsIndex,
     SupportsInt,
-    TypeGuard
+    TypeAlias,
+    TypeVar,
+    overload,
+    type_check_only,
 )
+from typing import Literal as L
 
+from _typeshed import Incomplete
+from typing_extensions import TypeIs, deprecated
+
+import numpy as np
 from numpy import (
-    vectorize as vectorize,
+    _OrderKACF,
+    bool_,
+    complex128,
+    complexfloating,
+    datetime64,
+    float64,
+    floating,
     generic,
     integer,
-    floating,
-    complexfloating,
     intp,
-    float64,
-    complex128,
-    timedelta64,
-    datetime64,
     object_,
-    bool as bool_,
-    _OrderKACF,
+    timedelta64,
+    vectorize,
 )
-
+from numpy._core.multiarray import bincount
+from numpy._globals import _NoValueType
 from numpy._typing import (
-    NDArray,
     ArrayLike,
     DTypeLike,
-    _ShapeLike,
-    _ScalarLike_co,
-    _DTypeLike,
+    NDArray,
     _ArrayLike,
     _ArrayLikeBool_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
     _ArrayLikeDT64_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
+    _ArrayLikeNumber_co,
     _ArrayLikeObject_co,
-    _FloatLike_co,
+    _ArrayLikeTD64_co,
     _ComplexLike_co,
+    _DTypeLike,
+    _FloatLike_co,
+    _NestedSequence,
+    _NumberLike_co,
+    _ScalarLike_co,
+    _ShapeLike,
 )
 
-from numpy._core.multiarray import (
-    bincount as bincount,
-)
+__all__ = [
+    "select",
+    "piecewise",
+    "trim_zeros",
+    "copy",
+    "iterable",
+    "percentile",
+    "diff",
+    "gradient",
+    "angle",
+    "unwrap",
+    "sort_complex",
+    "flip",
+    "rot90",
+    "extract",
+    "place",
+    "vectorize",
+    "asarray_chkfinite",
+    "average",
+    "bincount",
+    "digitize",
+    "cov",
+    "corrcoef",
+    "median",
+    "sinc",
+    "hamming",
+    "hanning",
+    "bartlett",
+    "blackman",
+    "kaiser",
+    "trapezoid",
+    "trapz",
+    "i0",
+    "meshgrid",
+    "delete",
+    "insert",
+    "append",
+    "interp",
+    "quantile",
+]
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
 # The `{}ss` suffix refers to the Python 3.12 syntax: `**P`
 _Pss = ParamSpec("_Pss")
-_SCT = TypeVar("_SCT", bound=generic)
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_ScalarT = TypeVar("_ScalarT", bound=generic)
+_ScalarT1 = TypeVar("_ScalarT1", bound=generic)
+_ScalarT2 = TypeVar("_ScalarT2", bound=generic)
+_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
-_2Tuple = tuple[_T, _T]
+_2Tuple: TypeAlias = tuple[_T, _T]
+_MeshgridIdx: TypeAlias = L['ij', 'xy']
 
+@type_check_only
 class _TrimZerosSequence(Protocol[_T_co]):
-    def __len__(self) -> int: ...
+    def __len__(self, /) -> int: ...
+    @overload
+    def __getitem__(self, key: int, /) -> object: ...
+    @overload
     def __getitem__(self, key: slice, /) -> _T_co: ...
-    def __iter__(self) -> Iterator[Any]: ...
 
-class _SupportsWriteFlush(Protocol):
-    def write(self, s: str, /) -> object: ...
-    def flush(self) -> object: ...
-
-__all__: list[str]
+###
 
 @overload
 def rot90(
-    m: _ArrayLike[_SCT],
+    m: _ArrayLike[_ScalarT],
     k: int = ...,
     axes: tuple[int, int] = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def rot90(
     m: ArrayLike,
@@ -85,87 +134,77 @@ def rot90(
 ) -> NDArray[Any]: ...
 
 @overload
-def flip(m: _SCT, axis: None = ...) -> _SCT: ...
+def flip(m: _ScalarT, axis: None = ...) -> _ScalarT: ...
 @overload
 def flip(m: _ScalarLike_co, axis: None = ...) -> Any: ...
 @overload
-def flip(m: _ArrayLike[_SCT], axis: None | _ShapeLike = ...) -> NDArray[_SCT]: ...
+def flip(m: _ArrayLike[_ScalarT], axis: _ShapeLike | None = ...) -> NDArray[_ScalarT]: ...
 @overload
-def flip(m: ArrayLike, axis: None | _ShapeLike = ...) -> NDArray[Any]: ...
+def flip(m: ArrayLike, axis: _ShapeLike | None = ...) -> NDArray[Any]: ...
 
-def iterable(y: object) -> TypeGuard[Iterable[Any]]: ...
+def iterable(y: object) -> TypeIs[Iterable[Any]]: ...
 
 @overload
 def average(
     a: _ArrayLikeFloat_co,
-    axis: None = ...,
-    weights: None | _ArrayLikeFloat_co= ...,
-    returned: L[False] = ...,
-    keepdims: L[False] = ...,
-) -> floating[Any]: ...
-@overload
-def average(
-    a: _ArrayLikeComplex_co,
-    axis: None = ...,
-    weights: None | _ArrayLikeComplex_co = ...,
-    returned: L[False] = ...,
-    keepdims: L[False] = ...,
-) -> complexfloating[Any, Any]: ...
-@overload
-def average(
-    a: _ArrayLikeObject_co,
-    axis: None = ...,
-    weights: None | Any = ...,
-    returned: L[False] = ...,
-    keepdims: L[False] = ...,
-) -> Any: ...
+    axis: None = None,
+    weights: _ArrayLikeFloat_co | None = None,
+    returned: L[False] = False,
+    *,
+    keepdims: L[False] | _NoValueType = ...,
+) -> floating: ...
 @overload
 def average(
     a: _ArrayLikeFloat_co,
-    axis: None = ...,
-    weights: None | _ArrayLikeFloat_co= ...,
-    returned: L[True] = ...,
-    keepdims: L[False] = ...,
-) -> _2Tuple[floating[Any]]: ...
+    axis: None = None,
+    weights: _ArrayLikeFloat_co | None = None,
+    *,
+    returned: L[True],
+    keepdims: L[False] | _NoValueType = ...,
+) -> _2Tuple[floating]: ...
 @overload
 def average(
     a: _ArrayLikeComplex_co,
-    axis: None = ...,
-    weights: None | _ArrayLikeComplex_co = ...,
-    returned: L[True] = ...,
-    keepdims: L[False] = ...,
-) -> _2Tuple[complexfloating[Any, Any]]: ...
+    axis: None = None,
+    weights: _ArrayLikeComplex_co | None = None,
+    returned: L[False] = False,
+    *,
+    keepdims: L[False] | _NoValueType = ...,
+) -> complexfloating: ...
 @overload
 def average(
-    a: _ArrayLikeObject_co,
-    axis: None = ...,
-    weights: None | Any = ...,
-    returned: L[True] = ...,
-    keepdims: L[False] = ...,
-) -> _2Tuple[Any]: ...
-@overload
-def average(
-    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: None | _ShapeLike = ...,
-    weights: None | Any = ...,
-    returned: L[False] = ...,
-    keepdims: bool = ...,
-) -> Any: ...
+    a: _ArrayLikeComplex_co,
+    axis: None = None,
+    weights: _ArrayLikeComplex_co | None = None,
+    *,
+    returned: L[True],
+    keepdims: L[False] | _NoValueType = ...,
+) -> _2Tuple[complexfloating]: ...
 @overload
 def average(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
-    axis: None | _ShapeLike = ...,
-    weights: None | Any = ...,
-    returned: L[True] = ...,
-    keepdims: bool = ...,
-) -> _2Tuple[Any]: ...
+    axis: _ShapeLike | None = None,
+    weights: object | None = None,
+    *,
+    returned: L[True],
+    keepdims: bool | bool_ | _NoValueType = ...,
+) -> _2Tuple[Incomplete]: ...
+@overload
+def average(
+    a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
+    axis: _ShapeLike | None = None,
+    weights: object | None = None,
+    returned: bool | bool_ = False,
+    *,
+    keepdims: bool | bool_ | _NoValueType = ...,
+) -> Incomplete: ...
 
 @overload
 def asarray_chkfinite(
-    a: _ArrayLike[_SCT],
+    a: _ArrayLike[_ScalarT],
     dtype: None = ...,
     order: _OrderKACF = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def asarray_chkfinite(
     a: object,
@@ -175,9 +214,9 @@ def asarray_chkfinite(
 @overload
 def asarray_chkfinite(
     a: Any,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     order: _OrderKACF = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def asarray_chkfinite(
     a: Any,
@@ -187,16 +226,16 @@ def asarray_chkfinite(
 
 @overload
 def piecewise(
-    x: _ArrayLike[_SCT],
+    x: _ArrayLike[_ScalarT],
     condlist: _ArrayLike[bool_] | Sequence[_ArrayLikeBool_co],
     funclist: Sequence[
-        Callable[Concatenate[NDArray[_SCT], _Pss], NDArray[_SCT | Any]]
-        | _SCT | object
+        Callable[Concatenate[NDArray[_ScalarT], _Pss], NDArray[_ScalarT | Any]]
+        | _ScalarT | object
     ],
     /,
     *args: _Pss.args,
     **kw: _Pss.kwargs,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def piecewise(
     x: ArrayLike,
@@ -218,23 +257,23 @@ def select(
 
 @overload
 def copy(
-    a: _ArrayType,
+    a: _ArrayT,
     order: _OrderKACF,
     subok: L[True],
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def copy(
-    a: _ArrayType,
+    a: _ArrayT,
     order: _OrderKACF = ...,
     *,
     subok: L[True],
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def copy(
-    a: _ArrayLike[_SCT],
+    a: _ArrayLike[_ScalarT],
     order: _OrderKACF = ...,
     subok: L[False] = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def copy(
     a: ArrayLike,
@@ -245,7 +284,7 @@ def copy(
 def gradient(
     f: ArrayLike,
     *varargs: ArrayLike,
-    axis: None | _ShapeLike = ...,
+    axis: _ShapeLike | None = ...,
     edge_order: L[1, 2] = ...,
 ) -> Any: ...
 
@@ -266,52 +305,115 @@ def diff(
     append: ArrayLike = ...,
 ) -> NDArray[Any]: ...
 
-@overload
+@overload  # float scalar
+def interp(
+    x: _FloatLike_co,
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLikeFloat_co,
+    left: _FloatLike_co | None = None,
+    right: _FloatLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> float64: ...
+@overload  # float array
+def interp(
+    x: NDArray[floating | integer | np.bool] | _NestedSequence[_FloatLike_co],
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLikeFloat_co,
+    left: _FloatLike_co | None = None,
+    right: _FloatLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[float64]: ...
+@overload  # float scalar or array
 def interp(
     x: _ArrayLikeFloat_co,
     xp: _ArrayLikeFloat_co,
     fp: _ArrayLikeFloat_co,
-    left: None | _FloatLike_co = ...,
-    right: None | _FloatLike_co = ...,
-    period: None | _FloatLike_co = ...,
-) -> NDArray[float64]: ...
-@overload
+    left: _FloatLike_co | None = None,
+    right: _FloatLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[float64] | float64: ...
+@overload  # complex scalar
+def interp(
+    x: _FloatLike_co,
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLike[complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> complex128: ...
+@overload  # complex or float scalar
+def interp(
+    x: _FloatLike_co,
+    xp: _ArrayLikeFloat_co,
+    fp: Sequence[complex | complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> complex128 | float64: ...
+@overload  # complex array
+def interp(
+    x: NDArray[floating | integer | np.bool] | _NestedSequence[_FloatLike_co],
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLike[complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[complex128]: ...
+@overload  # complex or float array
+def interp(
+    x: NDArray[floating | integer | np.bool] | _NestedSequence[_FloatLike_co],
+    xp: _ArrayLikeFloat_co,
+    fp: Sequence[complex | complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[complex128 | float64]: ...
+@overload  # complex scalar or array
 def interp(
     x: _ArrayLikeFloat_co,
     xp: _ArrayLikeFloat_co,
-    fp: _ArrayLikeComplex_co,
-    left: None | _ComplexLike_co = ...,
-    right: None | _ComplexLike_co = ...,
-    period: None | _FloatLike_co = ...,
-) -> NDArray[complex128]: ...
+    fp: _ArrayLike[complexfloating],
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[complex128] | complex128: ...
+@overload  # complex or float scalar or array
+def interp(
+    x: _ArrayLikeFloat_co,
+    xp: _ArrayLikeFloat_co,
+    fp: _ArrayLikeNumber_co,
+    left: _NumberLike_co | None = None,
+    right: _NumberLike_co | None = None,
+    period: _FloatLike_co | None = None,
+) -> NDArray[complex128 | float64] | complex128 | float64: ...
 
 @overload
-def angle(z: _ComplexLike_co, deg: bool = ...) -> floating[Any]: ...
+def angle(z: _ComplexLike_co, deg: bool = ...) -> floating: ...
 @overload
 def angle(z: object_, deg: bool = ...) -> Any: ...
 @overload
-def angle(z: _ArrayLikeComplex_co, deg: bool = ...) -> NDArray[floating[Any]]: ...
+def angle(z: _ArrayLikeComplex_co, deg: bool = ...) -> NDArray[floating]: ...
 @overload
 def angle(z: _ArrayLikeObject_co, deg: bool = ...) -> NDArray[object_]: ...
 
 @overload
 def unwrap(
     p: _ArrayLikeFloat_co,
-    discont: None | float = ...,
+    discont: float | None = ...,
     axis: int = ...,
     *,
     period: float = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def unwrap(
     p: _ArrayLikeObject_co,
-    discont: None | float = ...,
+    discont: float | None = ...,
     axis: int = ...,
     *,
     period: float = ...,
 ) -> NDArray[object_]: ...
 
-def sort_complex(a: ArrayLike) -> NDArray[complexfloating[Any, Any]]: ...
+def sort_complex(a: ArrayLike) -> NDArray[complexfloating]: ...
 
 def trim_zeros(
     filt: _TrimZerosSequence[_T],
@@ -319,7 +421,7 @@ def trim_zeros(
 ) -> _T: ...
 
 @overload
-def extract(condition: ArrayLike, arr: _ArrayLike[_SCT]) -> NDArray[_SCT]: ...
+def extract(condition: ArrayLike, arr: _ArrayLike[_ScalarT]) -> NDArray[_ScalarT]: ...
 @overload
 def extract(condition: ArrayLike, arr: ArrayLike) -> NDArray[Any]: ...
 
@@ -328,109 +430,117 @@ def place(arr: NDArray[Any], mask: ArrayLike, vals: Any) -> None: ...
 @overload
 def cov(
     m: _ArrayLikeFloat_co,
-    y: None | _ArrayLikeFloat_co = ...,
+    y: _ArrayLikeFloat_co | None = ...,
     rowvar: bool = ...,
     bias: bool = ...,
-    ddof: None | SupportsIndex | SupportsInt = ...,
-    fweights: None | ArrayLike = ...,
-    aweights: None | ArrayLike = ...,
+    ddof: SupportsIndex | SupportsInt | None = ...,
+    fweights: ArrayLike | None = ...,
+    aweights: ArrayLike | None = ...,
     *,
     dtype: None = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def cov(
     m: _ArrayLikeComplex_co,
-    y: None | _ArrayLikeComplex_co = ...,
+    y: _ArrayLikeComplex_co | None = ...,
     rowvar: bool = ...,
     bias: bool = ...,
-    ddof: None | SupportsIndex | SupportsInt = ...,
-    fweights: None | ArrayLike = ...,
-    aweights: None | ArrayLike = ...,
+    ddof: SupportsIndex | SupportsInt | None = ...,
+    fweights: ArrayLike | None = ...,
+    aweights: ArrayLike | None = ...,
     *,
     dtype: None = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def cov(
     m: _ArrayLikeComplex_co,
-    y: None | _ArrayLikeComplex_co = ...,
+    y: _ArrayLikeComplex_co | None = ...,
     rowvar: bool = ...,
     bias: bool = ...,
-    ddof: None | SupportsIndex | SupportsInt = ...,
-    fweights: None | ArrayLike = ...,
-    aweights: None | ArrayLike = ...,
+    ddof: SupportsIndex | SupportsInt | None = ...,
+    fweights: ArrayLike | None = ...,
+    aweights: ArrayLike | None = ...,
     *,
-    dtype: _DTypeLike[_SCT],
-) -> NDArray[_SCT]: ...
+    dtype: _DTypeLike[_ScalarT],
+) -> NDArray[_ScalarT]: ...
 @overload
 def cov(
     m: _ArrayLikeComplex_co,
-    y: None | _ArrayLikeComplex_co = ...,
+    y: _ArrayLikeComplex_co | None = ...,
     rowvar: bool = ...,
     bias: bool = ...,
-    ddof: None | SupportsIndex | SupportsInt = ...,
-    fweights: None | ArrayLike = ...,
-    aweights: None | ArrayLike = ...,
+    ddof: SupportsIndex | SupportsInt | None = ...,
+    fweights: ArrayLike | None = ...,
+    aweights: ArrayLike | None = ...,
     *,
     dtype: DTypeLike,
 ) -> NDArray[Any]: ...
 
-# NOTE `bias` and `ddof` have been deprecated
+# NOTE `bias` and `ddof` are deprecated and ignored
 @overload
 def corrcoef(
     m: _ArrayLikeFloat_co,
-    y: None | _ArrayLikeFloat_co = ...,
-    rowvar: bool = ...,
+    y: _ArrayLikeFloat_co | None = None,
+    rowvar: bool = True,
+    bias: _NoValueType = ...,
+    ddof: _NoValueType = ...,
     *,
-    dtype: None = ...,
-) -> NDArray[floating[Any]]: ...
+    dtype: None = None,
+) -> NDArray[floating]: ...
 @overload
 def corrcoef(
     m: _ArrayLikeComplex_co,
-    y: None | _ArrayLikeComplex_co = ...,
-    rowvar: bool = ...,
+    y: _ArrayLikeComplex_co | None = None,
+    rowvar: bool = True,
+    bias: _NoValueType = ...,
+    ddof: _NoValueType = ...,
     *,
-    dtype: None = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+    dtype: None = None,
+) -> NDArray[complexfloating]: ...
 @overload
 def corrcoef(
     m: _ArrayLikeComplex_co,
-    y: None | _ArrayLikeComplex_co = ...,
-    rowvar: bool = ...,
+    y: _ArrayLikeComplex_co | None = None,
+    rowvar: bool = True,
+    bias: _NoValueType = ...,
+    ddof: _NoValueType = ...,
     *,
-    dtype: _DTypeLike[_SCT],
-) -> NDArray[_SCT]: ...
+    dtype: _DTypeLike[_ScalarT],
+) -> NDArray[_ScalarT]: ...
 @overload
 def corrcoef(
     m: _ArrayLikeComplex_co,
-    y: None | _ArrayLikeComplex_co = ...,
-    rowvar: bool = ...,
+    y: _ArrayLikeComplex_co | None = None,
+    rowvar: bool = True,
+    bias: _NoValueType = ...,
+    ddof: _NoValueType = ...,
     *,
-    dtype: DTypeLike,
+    dtype: DTypeLike | None = None,
 ) -> NDArray[Any]: ...
 
-def blackman(M: _FloatLike_co) -> NDArray[floating[Any]]: ...
+def blackman(M: _FloatLike_co) -> NDArray[floating]: ...
 
-def bartlett(M: _FloatLike_co) -> NDArray[floating[Any]]: ...
+def bartlett(M: _FloatLike_co) -> NDArray[floating]: ...
 
-def hanning(M: _FloatLike_co) -> NDArray[floating[Any]]: ...
+def hanning(M: _FloatLike_co) -> NDArray[floating]: ...
 
-def hamming(M: _FloatLike_co) -> NDArray[floating[Any]]: ...
+def hamming(M: _FloatLike_co) -> NDArray[floating]: ...
 
-def i0(x: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
+def i0(x: _ArrayLikeFloat_co) -> NDArray[floating]: ...
 
 def kaiser(
     M: _FloatLike_co,
     beta: _FloatLike_co,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 
 @overload
-def sinc(x: _FloatLike_co) -> floating[Any]: ...
+def sinc(x: _FloatLike_co) -> floating: ...
 @overload
-def sinc(x: _ComplexLike_co) -> complexfloating[Any, Any]: ...
+def sinc(x: _ComplexLike_co) -> complexfloating: ...
 @overload
-def sinc(x: _ArrayLikeFloat_co) -> NDArray[floating[Any]]: ...
+def sinc(x: _ArrayLikeFloat_co) -> NDArray[floating]: ...
 @overload
-def sinc(x: _ArrayLikeComplex_co) -> NDArray[complexfloating[Any, Any]]: ...
+def sinc(x: _ArrayLikeComplex_co) -> NDArray[complexfloating]: ...
 
 @overload
 def median(
@@ -439,7 +549,7 @@ def median(
     out: None = ...,
     overwrite_input: bool = ...,
     keepdims: L[False] = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def median(
     a: _ArrayLikeComplex_co,
@@ -447,7 +557,7 @@ def median(
     out: None = ...,
     overwrite_input: bool = ...,
     keepdims: L[False] = ...,
-) -> complexfloating[Any, Any]: ...
+) -> complexfloating: ...
 @overload
 def median(
     a: _ArrayLikeTD64_co,
@@ -467,7 +577,7 @@ def median(
 @overload
 def median(
     a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-    axis: None | _ShapeLike = ...,
+    axis: _ShapeLike | None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
     keepdims: bool = ...,
@@ -475,21 +585,20 @@ def median(
 @overload
 def median(
     a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-    axis: None | _ShapeLike,
-    out: _ArrayType,
-    /,
+    axis: _ShapeLike | None,
+    out: _ArrayT,
     overwrite_input: bool = ...,
     keepdims: bool = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 @overload
 def median(
     a: _ArrayLikeFloat_co | _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
-    axis: None | _ShapeLike = ...,
+    axis: _ShapeLike | None = ...,
     *,
-    out: _ArrayType,
+    out: _ArrayT,
     overwrite_input: bool = ...,
     keepdims: bool = ...,
-) -> _ArrayType: ...
+) -> _ArrayT: ...
 
 _MethodKind = L[
     "inverted_cdf",
@@ -517,8 +626,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
-) -> floating[Any]: ...
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> floating: ...
 @overload
 def percentile(
     a: _ArrayLikeComplex_co,
@@ -529,8 +638,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
-) -> complexfloating[Any, Any]: ...
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> complexfloating: ...
 @overload
 def percentile(
     a: _ArrayLikeTD64_co,
@@ -541,7 +650,7 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
+    weights: _ArrayLikeFloat_co | None = ...,
 ) -> timedelta64: ...
 @overload
 def percentile(
@@ -553,7 +662,7 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
+    weights: _ArrayLikeFloat_co | None = ...,
 ) -> datetime64: ...
 @overload
 def percentile(
@@ -565,7 +674,7 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
+    weights: _ArrayLikeFloat_co | None = ...,
 ) -> Any: ...
 @overload
 def percentile(
@@ -577,8 +686,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
-) -> NDArray[floating[Any]]: ...
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> NDArray[floating]: ...
 @overload
 def percentile(
     a: _ArrayLikeComplex_co,
@@ -589,8 +698,8 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> NDArray[complexfloating]: ...
 @overload
 def percentile(
     a: _ArrayLikeTD64_co,
@@ -601,7 +710,7 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
+    weights: _ArrayLikeFloat_co | None = ...,
 ) -> NDArray[timedelta64]: ...
 @overload
 def percentile(
@@ -613,7 +722,7 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
+    weights: _ArrayLikeFloat_co | None = ...,
 ) -> NDArray[datetime64]: ...
 @overload
 def percentile(
@@ -625,54 +734,52 @@ def percentile(
     method: _MethodKind = ...,
     keepdims: L[False] = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
+    weights: _ArrayLikeFloat_co | None = ...,
 ) -> NDArray[object_]: ...
 @overload
 def percentile(
-    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
-    axis: None | _ShapeLike = ...,
+    axis: _ShapeLike | None = ...,
     out: None = ...,
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
+    weights: _ArrayLikeFloat_co | None = ...,
 ) -> Any: ...
 @overload
 def percentile(
-    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
-    axis: None | _ShapeLike,
-    out: _ArrayType,
-    /,
+    axis: _ShapeLike | None,
+    out: _ArrayT,
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
     *,
-    weights: None | _ArrayLikeFloat_co = ...,
-) -> _ArrayType: ...
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> _ArrayT: ...
 @overload
 def percentile(
-    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
+    a: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeDT64_co | _ArrayLikeObject_co,
     q: _ArrayLikeFloat_co,
-    axis: None | _ShapeLike = ...,
+    axis: _ShapeLike | None = ...,
     *,
-    out: _ArrayType,
+    out: _ArrayT,
     overwrite_input: bool = ...,
     method: _MethodKind = ...,
     keepdims: bool = ...,
-    weights: None | _ArrayLikeFloat_co = ...,
-) -> _ArrayType: ...
+    weights: _ArrayLikeFloat_co | None = ...,
+) -> _ArrayT: ...
 
 # NOTE: Not an alias, but they do have identical signatures
 # (that we can reuse)
 quantile = percentile
 
-
-_SCT_fm = TypeVar(
-    "_SCT_fm",
-    bound=floating[Any] | complexfloating[Any, Any] | timedelta64,
+_ScalarT_fm = TypeVar(
+    "_ScalarT_fm",
+    bound=floating | complexfloating | timedelta64,
 )
 
 class _SupportsRMulFloat(Protocol[_T_co]):
@@ -694,8 +801,8 @@ def trapezoid(
 ) -> complex128: ...
 @overload
 def trapezoid(
-    y: _ArrayLike[bool_ | integer[Any]],
-    x: _ArrayLike[bool_ | integer[Any]] | None = ...,
+    y: _ArrayLike[bool_ | integer],
+    x: _ArrayLike[bool_ | integer] | None = ...,
     dx: float = ...,
     axis: SupportsIndex = ...,
 ) -> float64 | NDArray[float64]: ...
@@ -708,11 +815,11 @@ def trapezoid(  # type: ignore[overload-overlap]
 ) -> float | NDArray[object_]: ...
 @overload
 def trapezoid(
-    y: _ArrayLike[_SCT_fm],
-    x: _ArrayLike[_SCT_fm] | _ArrayLikeInt_co | None = ...,
+    y: _ArrayLike[_ScalarT_fm],
+    x: _ArrayLike[_ScalarT_fm] | _ArrayLikeInt_co | None = ...,
     dx: float = ...,
     axis: SupportsIndex = ...,
-) -> _SCT_fm | NDArray[_SCT_fm]: ...
+) -> _ScalarT_fm | NDArray[_ScalarT_fm]: ...
 @overload
 def trapezoid(
     y: Sequence[_SupportsRMulFloat[_T]],
@@ -727,49 +834,141 @@ def trapezoid(
     dx: float = ...,
     axis: SupportsIndex = ...,
 ) -> (
-    floating[Any] | complexfloating[Any, Any] | timedelta64
-    | NDArray[floating[Any] | complexfloating[Any, Any] | timedelta64 | object_]
+    floating | complexfloating | timedelta64
+    | NDArray[floating | complexfloating | timedelta64 | object_]
 ): ...
 
+@deprecated("Use 'trapezoid' instead")
+def trapz(y: ArrayLike, x: ArrayLike | None = None, dx: float = 1.0, axis: int = -1) -> generic | NDArray[generic]: ...
+
+@overload
+def meshgrid(
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[()]: ...
+@overload
+def meshgrid(
+    x1: _ArrayLike[_ScalarT],
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[_ScalarT]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any]]: ...
+@overload
+def meshgrid(
+    x1: _ArrayLike[_ScalarT1],
+    x2: _ArrayLike[_ScalarT2],
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[_ScalarT1], NDArray[_ScalarT2]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    x2: _ArrayLike[_ScalarT],
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any], NDArray[_ScalarT]]: ...
+@overload
+def meshgrid(
+    x1: _ArrayLike[_ScalarT],
+    x2: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[_ScalarT], NDArray[Any]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    x2: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any], NDArray[Any]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    x2: ArrayLike,
+    x3: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any]]: ...
+@overload
+def meshgrid(
+    x1: ArrayLike,
+    x2: ArrayLike,
+    x3: ArrayLike,
+    x4: ArrayLike,
+    /,
+    *,
+    copy: bool = ...,
+    sparse: bool = ...,
+    indexing: _MeshgridIdx = ...,
+) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any], NDArray[Any]]: ...
+@overload
 def meshgrid(
     *xi: ArrayLike,
     copy: bool = ...,
     sparse: bool = ...,
-    indexing: L["xy", "ij"] = ...,
+    indexing: _MeshgridIdx = ...,
 ) -> tuple[NDArray[Any], ...]: ...
 
 @overload
 def delete(
-    arr: _ArrayLike[_SCT],
+    arr: _ArrayLike[_ScalarT],
     obj: slice | _ArrayLikeInt_co,
-    axis: None | SupportsIndex = ...,
-) -> NDArray[_SCT]: ...
+    axis: SupportsIndex | None = ...,
+) -> NDArray[_ScalarT]: ...
 @overload
 def delete(
     arr: ArrayLike,
     obj: slice | _ArrayLikeInt_co,
-    axis: None | SupportsIndex = ...,
+    axis: SupportsIndex | None = ...,
 ) -> NDArray[Any]: ...
 
 @overload
 def insert(
-    arr: _ArrayLike[_SCT],
+    arr: _ArrayLike[_ScalarT],
     obj: slice | _ArrayLikeInt_co,
     values: ArrayLike,
-    axis: None | SupportsIndex = ...,
-) -> NDArray[_SCT]: ...
+    axis: SupportsIndex | None = ...,
+) -> NDArray[_ScalarT]: ...
 @overload
 def insert(
     arr: ArrayLike,
     obj: slice | _ArrayLikeInt_co,
     values: ArrayLike,
-    axis: None | SupportsIndex = ...,
+    axis: SupportsIndex | None = ...,
 ) -> NDArray[Any]: ...
 
 def append(
     arr: ArrayLike,
     values: ArrayLike,
-    axis: None | SupportsIndex = ...,
+    axis: SupportsIndex | None = ...,
 ) -> NDArray[Any]: ...
 
 @overload

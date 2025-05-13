@@ -84,6 +84,7 @@ class Permutation(Benchmark):
     def time_permutation_int(self):
         np.random.permutation(self.n)
 
+
 nom_size = 100000
 
 class RNG(Benchmark):
@@ -155,21 +156,21 @@ class Bounded(Benchmark):
         self.rg.random()
 
     def time_bounded(self, bitgen, args):
-            """
-            Timer for 8-bit bounded values.
+        """
+        Timer for 8-bit bounded values.
 
-            Parameters (packed as args)
-            ----------
-            dt : {uint8, uint16, uint32, unit64}
-                output dtype
-            max : int
-                Upper bound for range. Lower is always 0.  Must be <= 2**bits.
-            """
-            dt, max = args
-            if bitgen == 'numpy':
-                self.rg.randint(0, max + 1, nom_size, dtype=dt)
-            else:
-                self.rg.integers(0, max + 1, nom_size, dtype=dt)
+        Parameters (packed as args)
+        ----------
+        dt : {uint8, uint16, uint32, unit64}
+              output dtype
+        max : int
+              Upper bound for range. Lower is always 0.  Must be <= 2**bits.
+        """
+        dt, max = args
+        if bitgen == 'numpy':
+            self.rg.randint(0, max + 1, nom_size, dtype=dt)
+        else:
+            self.rg.integers(0, max + 1, nom_size, dtype=dt)
 
 class Choice(Benchmark):
     params = [1e3, 1e6, 1e8]

@@ -4,6 +4,7 @@ Utility function to facilitate testing.
 """
 import os
 import sys
+import pathlib
 import platform
 import re
 import gc
@@ -18,15 +19,17 @@ from warnings import WarningMessage
 import pprint
 import sysconfig
 import concurrent.futures
+import threading
+import importlib.metadata
 
 import numpy as np
 from numpy._core import (
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy import isfinite, isnan, isinf
 import numpy.linalg._umath_linalg
-from numpy._utils import _rename_parameter
 
 from io import StringIO
+
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
@@ -40,8 +43,8 @@ __all__ = [
         'SkipTest', 'KnownFailureException', 'temppath', 'tempdir', 'IS_PYPY',
         'HAS_REFCOUNT', "IS_WASM", 'suppress_warnings', 'assert_array_compare',
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
-        'IS_MUSL', '_SUPPORTS_SVE', 'NOGIL_BUILD',
-        'IS_EDITABLE', 'run_threaded',
+        'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
+        'IS_EDITABLE', 'IS_INSTALLED', 'NUMPY_ROOT', 'run_threaded', 'IS_64BIT',
         ]
 
 
@@ -53,10 +56,40 @@ class KnownFailureException(Exception):
 KnownFailureTest = KnownFailureException  # backwards compat
 verbose = 0
 
+NUMPY_ROOT = pathlib.Path(np.__file__).parent
+
+try:
+    np_dist = importlib.metadata.distribution('numpy')
+except importlib.metadata.PackageNotFoundError:
+    IS_INSTALLED = IS_EDITABLE = False
+else:
+    IS_INSTALLED = True
+    try:
+        if sys.version_info >= (3, 13):
+            IS_EDITABLE = np_dist.origin.dir_info.editable
+        else:
+            # Backport importlib.metadata.Distribution.origin
+            import json, types  # noqa: E401
+            origin = json.loads(
+                np_dist.read_text('direct_url.json') or '{}',
+                object_hook=lambda data: types.SimpleNamespace(**data),
+            )
+            IS_EDITABLE = origin.dir_info.editable
+    except AttributeError:
+        IS_EDITABLE = False
+
+    # spin installs numpy directly via meson, instead of using meson-python, and
+    # runs the module by setting PYTHONPATH. This is problematic because the
+    # resulting installation lacks the Python metadata (.dist-info), and numpy
+    # might already be installed on the environment, causing us to find its
+    # metadata, even though we are not actually loading that package.
+    # Work around this issue by checking if the numpy root matches.
+    if not IS_EDITABLE and np_dist.locate_file('numpy') != NUMPY_ROOT:
+        IS_INSTALLED = False
+
 IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
-IS_EDITABLE = not bool(np.__path__) or 'editable' in np.__path__[0]
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 
@@ -70,6 +103,7 @@ if 'musl' in _v:
     IS_MUSL = True
 
 NOGIL_BUILD = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
+IS_64BIT = np.dtype(np.intp).itemsize == 8
 
 def assert_(val, msg=''):
     """
@@ -100,14 +134,15 @@ if os.name == 'nt':
         # thread's CPU usage is either 0 or 100).  To read counters like this,
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
-        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp (dead link)
+        # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
+        # (dead link)
         # My older explanation for this was that the "AddCounter" process
         # forced the CPU to 100%, but the above makes more sense :)
         import win32pdh
         if format is None:
             format = win32pdh.PDH_FMT_LONG
-        path = win32pdh.MakeCounterPath( (machine, object, instance, None,
-                                          inum, counter))
+        path = win32pdh.MakeCounterPath((machine, object, instance, None,
+                                         inum, counter))
         hq = win32pdh.OpenQuery()
         try:
             hc = win32pdh.AddCounter(hq, path)
@@ -165,7 +200,7 @@ if sys.platform[:5] == 'linux':
                 l = f.readline().split(' ')
             return int(l[13])
         except Exception:
-            return int(100*(time.time()-_load_time[0]))
+            return int(100 * (time.time() - _load_time[0]))
 else:
     # os.getpid is not in all platforms available.
     # Using time is safe but inaccurate, especially when process
@@ -181,7 +216,7 @@ else:
         import time
         if not _load_time:
             _load_time.append(time.time())
-        return int(100*(time.time()-_load_time[0]))
+        return int(100 * (time.time() - _load_time[0]))
 
 
 def build_err_msg(arrays, err_msg, header='Items are not equal:',
@@ -189,7 +224,7 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
     msg = ['\n' + header]
     err_msg = str(err_msg)
     if err_msg:
-        if err_msg.find('\n') == -1 and len(err_msg) < 79-len(header):
+        if err_msg.find('\n') == -1 and len(err_msg) < 79 - len(header):
             msg = [msg[0] + ' ' + err_msg]
         else:
             msg.append(err_msg)
@@ -658,14 +693,14 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
     # Normalized the numbers to be in range (-10.0,10.0)
     # scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
     with np.errstate(invalid='ignore'):
-        scale = 0.5*(np.abs(desired) + np.abs(actual))
+        scale = 0.5 * (np.abs(desired) + np.abs(actual))
         scale = np.power(10, np.floor(np.log10(scale)))
     try:
-        sc_desired = desired/scale
+        sc_desired = desired / scale
     except ZeroDivisionError:
         sc_desired = 0.0
     try:
-        sc_actual = actual/scale
+        sc_actual = actual / scale
     except ZeroDivisionError:
         sc_actual = 0.0
     msg = build_err_msg(
@@ -686,7 +721,7 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
             return
     except (TypeError, NotImplementedError):
         pass
-    if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant-1)):
+    if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant - 1)):
         raise AssertionError(msg)
 
 
@@ -829,9 +864,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             n_mismatch = reduced.size - reduced.sum(dtype=intp)
             n_elements = flagged.size if flagged.ndim != 0 else reduced.size
             percent_mismatch = 100 * n_mismatch / n_elements
-            remarks = [
-                'Mismatched elements: {} / {} ({:.3g}%)'.format(
-                    n_mismatch, n_elements, percent_mismatch)]
+            remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
+                       f'({percent_mismatch:.3g}%)']
 
             with errstate(all='ignore'):
                 # ignore errors for non-numeric types
@@ -892,7 +926,6 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         raise ValueError(msg)
 
 
-@_rename_parameter(['x', 'y'], ['actual', 'desired'], dep_version='2.0.0')
 def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
                        strict=False):
     """
@@ -1022,7 +1055,6 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
                          strict=strict)
 
 
-@_rename_parameter(['x', 'y'], ['actual', 'desired'], dep_version='2.0.0')
 def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
                               verbose=True):
     """
@@ -1363,7 +1395,7 @@ def rundocs(filename=None, raise_on_error=True):
 
     msg = []
     if raise_on_error:
-        out = lambda s: msg.append(s)
+        out = msg.append
     else:
         out = None
 
@@ -1374,21 +1406,24 @@ def rundocs(filename=None, raise_on_error=True):
         raise AssertionError("Some doctests failed:\n%s" % "\n".join(msg))
 
 
-def check_support_sve():
+def check_support_sve(__cache=[]):
     """
     gh-22982
     """
+
+    if __cache:
+        return __cache[0]
 
     import subprocess
     cmd = 'lscpu'
     try:
         output = subprocess.run(cmd, capture_output=True, text=True)
-        return 'sve' in output.stdout
-    except OSError:
-        return False
+        result = 'sve' in output.stdout
+    except (OSError, subprocess.SubprocessError):
+        result = False
+    __cache.append(result)
+    return __cache[0]
 
-
-_SUPPORTS_SVE = check_support_sve()
 
 #
 # assert_raises and assert_raises_regex are taken from unittest.
@@ -1444,11 +1479,6 @@ def assert_raises_regex(exception_class, expected_regexp, *args, **kwargs):
     args and keyword arguments kwargs.
 
     Alternatively, can be used as a context manager like `assert_raises`.
-
-    Notes
-    -----
-    .. versionadded:: 1.9.0
-
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     return _d.assertRaisesRegex(exception_class, expected_regexp, *args, **kwargs)
@@ -1544,7 +1574,7 @@ def measure(code_str, times=1, label=None):
         i += 1
         exec(code, globs, locs)
     elapsed = jiffies() - elapsed
-    return 0.01*elapsed
+    return 0.01 * elapsed
 
 
 def _assert_valid_refcount(op):
@@ -1558,7 +1588,7 @@ def _assert_valid_refcount(op):
     import gc
     import numpy as np
 
-    b = np.arange(100*100).reshape(100, 100)
+    b = np.arange(100 * 100).reshape(100, 100)
     c = b
     i = 1
 
@@ -1588,8 +1618,6 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
     that ``allclose`` has different default values). It compares the difference
     between `actual` and `desired` to ``atol + rtol * abs(desired)``.
-
-    .. versionadded:: 1.5.0
 
     Parameters
     ----------
@@ -1738,7 +1766,7 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     ax = np.abs(x)
     ay = np.abs(y)
     ref = nulp * np.spacing(np.where(ax > ay, ax, ay))
-    if not np.all(np.abs(x-y) <= ref):
+    if not np.all(np.abs(x - y) <= ref):
         if np.iscomplexobj(x) or np.iscomplexobj(y):
             msg = f"Arrays are not equal to {nulp} ULP"
         else:
@@ -1850,11 +1878,10 @@ def nulp_diff(x, y, dtype=None):
     y[np.isnan(y)] = np.nan
 
     if not x.shape == y.shape:
-        raise ValueError("Arrays do not have the same shape: %s - %s" %
-                         (x.shape, y.shape))
+        raise ValueError(f"Arrays do not have the same shape: {x.shape} - {y.shape}")
 
     def _diff(rx, ry, vdt):
-        diff = np.asarray(rx-ry, dtype=vdt)
+        diff = np.asarray(rx - ry, dtype=vdt)
         return np.abs(diff)
 
     rx = integer_repr(x)
@@ -1917,8 +1944,6 @@ def assert_warns(warning_class, *args, **kwargs):
             do_something()
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
-
-    .. versionadded:: 1.4.0
 
     Parameters
     ----------
@@ -1984,8 +2009,6 @@ def assert_no_warnings(*args, **kwargs):
             do_something()
 
     The ability to be used as a context manager is new in NumPy v1.11.0.
-
-    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -2057,7 +2080,7 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 inp1 = lambda: arange(s, dtype=dtype)[o:]
                 inp2 = lambda: arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
-                yield out, inp1(), inp2(),  bfmt % \
+                yield out, inp1(), inp2(), bfmt % \
                     (o, o, o, s, dtype, 'out of place')
                 d = inp1()
                 yield d, d, inp2(), bfmt % \
@@ -2526,8 +2549,6 @@ def assert_no_gc_cycles(*args, **kwargs):
         with assert_no_gc_cycles():
             do_something()
 
-    .. versionadded:: 1.15.0
-
     Parameters
     ----------
     func : callable
@@ -2605,7 +2626,7 @@ def check_free_memory(free_bytes):
         except ValueError as exc:
             raise ValueError(f'Invalid environment variable {env_var}: {exc}')
 
-        msg = (f'{free_bytes/1e9} GB memory required, but environment variable '
+        msg = (f'{free_bytes / 1e9} GB memory required, but environment variable '
                f'NPY_AVAILABLE_MEM={env_value} set')
     else:
         mem_free = _get_mem_available()
@@ -2616,7 +2637,9 @@ def check_free_memory(free_bytes):
                    "the test.")
             mem_free = -1
         else:
-            msg = f'{free_bytes/1e9} GB memory required, but {mem_free/1e9} GB available'
+            free_bytes_gb = free_bytes / 1e9
+            mem_free_gb = mem_free / 1e9
+            msg = f'{free_bytes_gb} GB memory required, but {mem_free_gb} GB available'
 
     return msg if mem_free < free_bytes else None
 
@@ -2628,8 +2651,9 @@ def _parse_size(size_str):
                 'kb': 1000, 'mb': 1000**2, 'gb': 1000**3, 'tb': 1000**4,
                 'kib': 1024, 'mib': 1024**2, 'gib': 1024**3, 'tib': 1024**4}
 
-    size_re = re.compile(r'^\s*(\d+|\d+\.\d+)\s*({0})\s*$'.format(
-        '|'.join(suffixes.keys())), re.I)
+    pipe_suffixes = "|".join(suffixes.keys())
+
+    size_re = re.compile(fr'^\s*(\d+|\d+\.\d+)\s*({pipe_suffixes})\s*$', re.I)
 
     m = size_re.match(size_str.lower())
     if not m or m.group(2) not in suffixes:
@@ -2694,12 +2718,35 @@ _glibcver = _get_glibc_version()
 _glibc_older_than = lambda x: (_glibcver != '0.0' and _glibcver < x)
 
 
-def run_threaded(func, iters, pass_count=False):
+def run_threaded(func, max_workers=8, pass_count=False,
+                 pass_barrier=False, outer_iterations=1,
+                 prepare_args=None):
     """Runs a function many times in parallel"""
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as tpe:
-        if pass_count:
-            futures = [tpe.submit(func, i) for i in range(iters)]
-        else:
-            futures = [tpe.submit(func) for _ in range(iters)]
-        for f in futures:
-            f.result()
+    for _ in range(outer_iterations):
+        with (concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+              as tpe):
+            if prepare_args is None:
+                args = []
+            else:
+                args = prepare_args()
+            if pass_barrier:
+                barrier = threading.Barrier(max_workers)
+                args.append(barrier)
+            if pass_count:
+                all_args = [(func, i, *args) for i in range(max_workers)]
+            else:
+                all_args = [(func, *args) for i in range(max_workers)]
+            try:
+                futures = []
+                for arg in all_args:
+                    futures.append(tpe.submit(*arg))
+            except RuntimeError as e:
+                import pytest
+                pytest.skip(f"Spawning {max_workers} threads failed with "
+                            f"error {e!r} (likely due to resource limits on the "
+                            "system running the tests)")
+            finally:
+                if len(futures) < max_workers and pass_barrier:
+                    barrier.abort()
+            for f in futures:
+                f.result()

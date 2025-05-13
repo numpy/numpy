@@ -1,7 +1,6 @@
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, cast
 
 import numpy as np
-from typing_extensions import assert_type
 
 
 # Subtype of tuple[int, int]
@@ -9,10 +8,12 @@ class XYGrid(NamedTuple):
     x_axis: int
     y_axis: int
 
-arr: np.ndarray[XYGrid, Any] = np.empty(XYGrid(2, 2))
-
-# Test variance of _ShapeType_co
+# Test variance of _ShapeT_co
 def accepts_2d(a: np.ndarray[tuple[int, int], Any]) -> None:
     return None
 
-accepts_2d(arr)
+
+accepts_2d(np.empty(XYGrid(2, 2)))
+accepts_2d(np.zeros(XYGrid(2, 2), dtype=int))
+accepts_2d(np.ones(XYGrid(2, 2), dtype=int))
+accepts_2d(np.full(XYGrid(2, 2), fill_value=5, dtype=int))

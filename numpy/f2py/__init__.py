@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Fortran to Python Interface Generator.
 
 Copyright 1999 -- 2011 Pearu Peterson all rights reserved.
@@ -80,8 +79,7 @@ def __getattr__(attr):
         return test
 
     else:
-        raise AttributeError("module {!r} has no attribute "
-                              "{!r}".format(__name__, attr))
+        raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")
 
 
 def __dir__():

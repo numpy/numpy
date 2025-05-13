@@ -863,7 +863,7 @@ ndarray_from_pyobj(const int type_num,
      * dtype('S<width>'). In addition, there is also dtype('c'), that
      * appears as dtype('S1') (these have the same type_num value),
      * but is actually different (.char attribute is either 'S' or
-     * 'c', respecitely).
+     * 'c', respectively).
      *
      * In Fortran, character arrays and strings are different
      * concepts.  The relation between Fortran types, NumPy dtypes,

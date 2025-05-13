@@ -243,6 +243,13 @@ In Python:
 .. literalinclude:: ./code/results/extcallback_session.dat
   :language: python
 
+.. note::
+
+   When using modified Fortran code via ``callstatement`` or other directives,
+   the wrapped Python function must be called as a callback, otherwise only the
+   bare Fortran routine will be used. For more details, see
+   https://github.com/numpy/numpy/issues/26681#issuecomment-2466460943
+
 Resolving arguments to call-back functions
 ------------------------------------------
 

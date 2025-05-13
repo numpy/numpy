@@ -3,6 +3,7 @@ from typing import (
     Literal as L,
     Any,
     SupportsIndex,
+    TypeAlias,
 )
 
 from numpy._typing import (
@@ -10,7 +11,9 @@ from numpy._typing import (
     ArrayLike,
 )
 
-_BinKind = L[
+__all__ = ["histogram", "histogramdd", "histogram_bin_edges"]
+
+_BinKind: TypeAlias = L[
     "stone",
     "auto",
     "doane",
@@ -21,27 +24,25 @@ _BinKind = L[
     "sturges",
 ]
 
-__all__: list[str]
-
 def histogram_bin_edges(
     a: ArrayLike,
     bins: _BinKind | SupportsIndex | ArrayLike = ...,
-    range: None | tuple[float, float] = ...,
-    weights: None | ArrayLike = ...,
+    range: tuple[float, float] | None = ...,
+    weights: ArrayLike | None = ...,
 ) -> NDArray[Any]: ...
 
 def histogram(
     a: ArrayLike,
     bins: _BinKind | SupportsIndex | ArrayLike = ...,
-    range: None | tuple[float, float] = ...,
+    range: tuple[float, float] | None = ...,
     density: bool = ...,
-    weights: None | ArrayLike = ...,
+    weights: ArrayLike | None = ...,
 ) -> tuple[NDArray[Any], NDArray[Any]]: ...
 
 def histogramdd(
     sample: ArrayLike,
     bins: SupportsIndex | ArrayLike = ...,
     range: Sequence[tuple[float, float]] = ...,
-    density: None | bool = ...,
-    weights: None | ArrayLike = ...,
+    density: bool | None = ...,
+    weights: ArrayLike | None = ...,
 ) -> tuple[NDArray[Any], tuple[NDArray[Any], ...]]: ...

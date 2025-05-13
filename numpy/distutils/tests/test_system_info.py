@@ -152,14 +152,14 @@ class TestSystemInfoReading:
         self._lib2 = os.path.join(self._dir2, 'libbar.so')
         # Update local site.cfg
         global simple_site, site_cfg
-        site_cfg = simple_site.format(**{
-            'dir1': self._dir1,
-            'lib1': self._lib1,
-            'dir2': self._dir2,
-            'lib2': self._lib2,
-            'pathsep': os.pathsep,
-            'lib2_escaped': _shell_utils.NativeParser.join([self._lib2])
-        })
+        site_cfg = simple_site.format(
+            dir1=self._dir1,
+            lib1=self._lib1,
+            dir2=self._dir2,
+            lib2=self._lib2,
+            pathsep=os.pathsep,
+            lib2_escaped=_shell_utils.NativeParser.join([self._lib2])
+        )
         # Write site.cfg
         fd, self._sitecfg = mkstemp()
         os.close(fd)

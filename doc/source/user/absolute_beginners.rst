@@ -42,6 +42,10 @@ enter in a script or at a Python prompt. Everything else is **output**, the
 results of running your code. Note that ``>>>`` and ``...`` are not part of the
 code and may cause an error if entered at a Python prompt.
 
+To run the code in the examples, you can copy and paste it into a Python script or
+REPL, or use the experimental interactive examples in the browser provided in various
+locations in the documentation.
+
 Why use NumPy?
 --------------
 
@@ -430,7 +434,7 @@ With ``np.reshape``, you can specify a few optional parameters::
 
 ``a`` is the array to be reshaped.
 
-``newshape`` is the new shape you want. You can specify an integer or a tuple of
+``shape`` is the new shape you want. You can specify an integer or a tuple of
 integers. If you specify an integer, the result will be an array of that length.
 The shape should be compatible with the original shape.
 
@@ -552,7 +556,7 @@ it's straightforward with NumPy.
 
 For example, if you start with this array::
 
-  >>> a = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> a = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can easily print all of the values in the array that are less than 5. ::
 
@@ -664,7 +668,10 @@ where you want to slice your array. ::
   array([4, 5, 6, 7, 8])
 
 Here, you grabbed a section of your array from index position 3 through index
-position 8.
+position 8 but not including position 8 itself.
+
+*Reminder: Array indexes begin at 0. This means the first element of the array is at index 0,
+the second element is at index 1, and so on.*
 
 You can also stack two existing arrays, both vertically and horizontally. Let's
 say you have two arrays, ``a1`` and ``a2``::
@@ -1274,7 +1281,7 @@ Since ``ravel`` does not create a copy, it's memory efficient.
 
 If you start with this array::
 
-  >>> x = np.array([[1 , 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+  >>> x = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
 You can use ``flatten`` to flatten your array into a 1D array. ::
 

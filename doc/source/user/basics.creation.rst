@@ -87,7 +87,7 @@ you create the array.
 ===========================================
 
 ..
-  40 functions seems like a small number, but the routies.array-creation
+  40 functions seems like a small number, but the routines.array-creation
   has ~47. I'm sure there are more. 
 
 NumPy has over 40 built-in functions for creating arrays as laid

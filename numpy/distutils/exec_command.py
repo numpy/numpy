@@ -306,7 +306,7 @@ def _quote_arg(arg):
     """
     Quote the argument for safe use in a shell command line.
     """
-    # If there is a quote in the string, assume relevants parts of the
+    # If there is a quote in the string, assume relevant parts of the
     # string are already quoted (e.g. '-I"C:\\Program Files\\..."')
     if '"' not in arg and ' ' in arg:
         return '"%s"' % arg

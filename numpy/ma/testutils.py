@@ -11,7 +11,7 @@ import numpy as np
 from numpy import ndarray
 import numpy._core.umath as umath
 import numpy.testing
-from numpy.testing import (
+from numpy.testing import (  # noqa: F401
     assert_, assert_allclose, assert_array_almost_equal_nulp,
     assert_raises, build_err_msg
     )
@@ -29,13 +29,13 @@ __all__masked = [
 # have mistakenly included them from this file. SciPy is one. That is
 # unfortunate, as some of these functions are not intended to work with
 # masked arrays. But there was no way to tell before.
-from unittest import TestCase
+from unittest import TestCase  # noqa: F401
 __some__from_testing = [
     'TestCase', 'assert_', 'assert_allclose', 'assert_array_almost_equal_nulp',
     'assert_raises'
     ]
 
-__all__ = __all__masked + __some__from_testing
+__all__ = __all__masked + __some__from_testing  # noqa: PLE0605
 
 
 def approx(a, b, fill_value=True, rtol=1e-5, atol=1e-8):

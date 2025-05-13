@@ -71,7 +71,7 @@ class TestRegression:
             random.seed(i)
             m.seed(4321)
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10) / 10.), res)
 
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.
@@ -99,7 +99,7 @@ class TestRegression:
             probs = np.array(counts, dtype=dt) / sum(counts)
             c = random.choice(a, p=probs)
             assert_(c in a)
-            assert_raises(ValueError, random.choice, a, p=probs*0.9)
+            assert_raises(ValueError, random.choice, a, p=probs * 0.9)
 
     def test_shuffle_of_array_of_different_length_strings(self):
         # Test that permuting an array of different length strings
@@ -166,9 +166,9 @@ class TestRegression:
 
     def test_choice_retun_dtype(self):
         # GH 9867, now long since the NumPy default changed.
-        c = np.random.choice(10, p=[.1]*10, size=2)
+        c = np.random.choice(10, p=[.1] * 10, size=2)
         assert c.dtype == np.dtype(np.long)
-        c = np.random.choice(10, p=[.1]*10, replace=False, size=2)
+        c = np.random.choice(10, p=[.1] * 10, replace=False, size=2)
         assert c.dtype == np.dtype(np.long)
         c = np.random.choice(10, size=2)
         assert c.dtype == np.dtype(np.long)

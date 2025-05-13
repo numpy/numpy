@@ -36,7 +36,7 @@ from paver.easy import Bunch, options, task, sh
 #-----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/source/release/2.2.0-notes.rst'
+RELEASE_NOTES = 'doc/source/release/2.3.0-notes.rst'
 
 
 #-------------------------------------------------------
@@ -69,7 +69,7 @@ def _compute_hash(idirs, hashfunc):
         with open(fpath, 'rb') as fin:
             fhash = hashfunc(fin.read())
             checksums.append(
-                '%s  %s' % (fhash.hexdigest(), os.path.basename(fpath)))
+                f'{fhash.hexdigest()}  {os.path.basename(fpath)}')
     return checksums
 
 

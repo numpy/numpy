@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 C declarations, CPP macros, and C functions for f2py2e.
 Only required declarations/macros/functions will be used.
@@ -28,6 +27,7 @@ def errmess(s: str) -> None:
         sys.stderr.write(s)
 
 ##################### Definitions ##################
+
 
 outneeds = {'includes0': [], 'includes': [], 'typedefs': [], 'typedefs_generated': [],
             'userincludes': [],
@@ -549,24 +549,32 @@ cppmacros['OLDPYNUM'] = """
 #error You need to install NumPy version 0.13 or higher. See https://scipy.org/install.html
 #endif
 """
+
+# Defining the correct value to indicate thread-local storage in C without
+# running a compile-time check (which we have no control over in generated
+# code used outside of NumPy) is hard. Therefore we support overriding this
+# via an external define - the f2py-using package can then use the same
+# compile-time checks as we use for `NPY_TLS` when building NumPy (see
+# scipy#21860 for an example of that).
+#
+# __STDC_NO_THREADS__ should not be coupled to the availability of _Thread_local.
+# In case we get a bug report, guard it with __STDC_NO_THREADS__ after all.
+#
+# `thread_local` has become a keyword in C23, but don't try to use that yet
+# (too new, doing so while C23 support is preliminary will likely cause more
+#  problems than it solves).
+#
+# Note: do not try to use `threads.h`, its availability is very low
+# *and* threads.h isn't actually used where `F2PY_THREAD_LOCAL_DECL` is
+# in the generated code. See gh-27718 for more details.
 cppmacros["F2PY_THREAD_LOCAL_DECL"] = """
 #ifndef F2PY_THREAD_LOCAL_DECL
 #if defined(_MSC_VER)
 #define F2PY_THREAD_LOCAL_DECL __declspec(thread)
 #elif defined(NPY_OS_MINGW)
 #define F2PY_THREAD_LOCAL_DECL __thread
-#elif defined(__STDC_VERSION__) \\
-      && (__STDC_VERSION__ >= 201112L) \\
-      && !defined(__STDC_NO_THREADS__) \\
-      && (!defined(__GLIBC__) || __GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 12)) \\
-      && !defined(NPY_OS_OPENBSD) && !defined(NPY_OS_HAIKU)
-/* __STDC_NO_THREADS__ was first defined in a maintenance release of glibc 2.12,
-   see https://lists.gnu.org/archive/html/commit-hurd/2012-07/msg00180.html,
-   so `!defined(__STDC_NO_THREADS__)` may give false positive for the existence
-   of `threads.h` when using an older release of glibc 2.12
-   See gh-19437 for details on OpenBSD */
-#include <threads.h>
-#define F2PY_THREAD_LOCAL_DECL thread_local
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#define F2PY_THREAD_LOCAL_DECL _Thread_local
 #elif defined(__GNUC__) \\
       && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 4)))
 #define F2PY_THREAD_LOCAL_DECL __thread
@@ -1431,14 +1439,14 @@ capi_fail:
 def buildcfuncs():
     from .capi_maps import c2capi_map
     for k in c2capi_map.keys():
-        m = 'pyarr_from_p_%s1' % k
+        m = f'pyarr_from_p_{k}1'
         cppmacros[
-            m] = '#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))' % (m, c2capi_map[k])
+            m] = f'#define {m}(v) (PyArray_SimpleNewFromData(0,NULL,{c2capi_map[k]},(char *)v))'
     k = 'string'
-    m = 'pyarr_from_p_%s1' % k
+    m = f'pyarr_from_p_{k}1'
     # NPY_CHAR compatibility, NPY_STRING with itemsize 1
     cppmacros[
-        m] = '#define %s(v,dims) (PyArray_New(&PyArray_Type, 1, dims, NPY_STRING, NULL, v, 1, NPY_ARRAY_CARRAY, NULL))' % (m)
+        m] = f'#define {m}(v,dims) (PyArray_New(&PyArray_Type, 1, dims, NPY_STRING, NULL, v, 1, NPY_ARRAY_CARRAY, NULL))'
 
 
 ############ Auxiliary functions for sorting needs ###################
@@ -1470,7 +1478,7 @@ def append_needs(need, flag=1):
         elif need in commonhooks:
             n = 'commonhooks'
         else:
-            errmess('append_needs: unknown need %s\n' % (repr(need)))
+            errmess(f'append_needs: unknown need {repr(need)}\n')
             return
         if need in outneeds[n]:
             return
@@ -1506,8 +1514,7 @@ def append_needs(need, flag=1):
             tmp[n].append(need)
             return tmp
     else:
-        errmess('append_needs: expected list or string but got :%s\n' %
-                (repr(need)))
+        errmess(f'append_needs: expected list or string but got :{repr(need)}\n')
 
 
 def get_needs():

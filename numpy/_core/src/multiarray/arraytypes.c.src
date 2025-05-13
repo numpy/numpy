@@ -632,10 +632,33 @@ UNICODE_getitem(void *ip, void *vap)
 {
     PyArrayObject *ap = vap;
     Py_ssize_t size = PyArray_ITEMSIZE(ap);
+    Py_ssize_t ucs4len = size / sizeof(npy_ucs4);
     int swap = PyArray_ISBYTESWAPPED(ap);
     int align = !PyArray_ISALIGNED(ap);
+    npy_ucs4 const *src = (npy_ucs4 const*)ip;
+    npy_ucs4 *buf = NULL;
 
-    return (PyObject *)PyUnicode_FromUCS4(ip, size, swap, align);
+    /* swap and align if needed */
+    if (swap || align) {
+        buf = (npy_ucs4 *)malloc(size);
+        if (buf == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        memcpy(buf, src, size);
+        if (swap) {
+            byte_swap_vector(buf, ucs4len, sizeof(npy_ucs4));
+        }
+        src = buf;
+    }
+
+    /* trim trailing zeros */
+    while (ucs4len > 0 && src[ucs4len - 1] == 0) {
+        ucs4len--;
+    }
+    PyObject *ret = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, src, ucs4len);
+    free(buf);
+    return ret;
 }
 
 static int
@@ -2513,6 +2536,42 @@ static npy_bool
 
 /**begin repeat
  *
+ * #name = BOOL, BYTE, UBYTE, USHORT, SHORT, UINT, INT, ULONG, LONG, FLOAT, DOUBLE#
+ * #type = npy_bool, npy_byte, npy_byte, npy_uint16, npy_int16, npy_uint32, npy_int32, npy_uint64, npy_int64, npy_float, npy_double#
+ * #nonzero = _NONZERO*11#
+ */
+static npy_intp
+count_nonzero_trivial_@name@(npy_intp count, const char *data, npy_int stride)
+{
+    npy_intp nonzero_count = 0;
+    while (count--) {
+        @type@ *ptmp = (@type@ *)data;
+        nonzero_count += (npy_bool) @nonzero@(*ptmp);
+        data += stride;
+    }
+    return nonzero_count;
+}
+/**end repeat**/
+
+NPY_NO_EXPORT npy_intp
+count_nonzero_trivial_dispatcher(npy_intp count, const char* data, npy_intp stride, int dtype_num) { 
+    switch(dtype_num) {
+        /**begin repeat
+         *
+         * #dtypeID = NPY_BOOL, NPY_UINT8, NPY_INT8, NPY_UINT16, NPY_INT16, NPY_UINT32, NPY_INT32, NPY_UINT64, NPY_INT64, NPY_FLOAT32, NPY_FLOAT64#
+         * #name = BOOL, BYTE, UBYTE, USHORT, SHORT, UINT, INT, ULONG, LONG, FLOAT, DOUBLE#
+         */
+        case @dtypeID@:
+        {
+            return count_nonzero_trivial_@name@(count, data, stride);
+        }
+        /**end repeat**/
+    }
+    return -1;
+}
+
+/**begin repeat
+ *
  * #fname = CFLOAT, CDOUBLE, CLONGDOUBLE#
  * #type = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #suffix = f, , l#
@@ -4278,9 +4337,7 @@ set_typeinfo(PyObject *dict)
     PyObject *cobj, *key;
 
     // SIMD runtime dispatching
-    #ifndef NPY_DISABLE_OPTIMIZATION
-        #include "argfunc.dispatch.h"
-    #endif
+    #include "argfunc.dispatch.h"
     /**begin repeat
      * #FROM = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
      *         LONG, ULONG, LONGLONG, ULONGLONG,

@@ -937,7 +937,7 @@ convert_to_@name@(PyObject *value, @type@ *result, npy_bool *may_need_deferring)
     if (PyArray_IsScalar(value, @Name@)) {
         *result = PyArrayScalar_VAL(value, @Name@);
         /*
-         * In principle special, assyemetric, handling could be possible for
+         * In principle special, asymmetric, handling could be possible for
          * explicit subclasses.
          * In practice, we just check the normal deferring logic.
          */
@@ -1354,7 +1354,7 @@ static PyObject *
      */
     PyObject *ret;
     npy_float64 arg1, arg2, other_val;
-    @type@ other_val_conv;
+    @type@ other_val_conv = 0;
 
     int is_forward;
     if (Py_TYPE(a) == &Py@Name@ArrType_Type) {

@@ -74,36 +74,28 @@ npy_forward_method(
         PyObject *callable, PyObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
-    PyObject *args_buffer[NPY_MAXARGS];
-    /* Practically guaranteed NPY_MAXARGS is enough. */
-    PyObject **new_args = args_buffer;
-
     /*
      * `PY_VECTORCALL_ARGUMENTS_OFFSET` seems never set, probably `args[-1]`
      * is always `self` but do not rely on it unless Python documents that.
      */
     npy_intp len_kwargs = kwnames != NULL ? PyTuple_GET_SIZE(kwnames) : 0;
-    size_t original_arg_size = (len_args + len_kwargs) * sizeof(PyObject *);
+    npy_intp total_nargs = (len_args + len_kwargs);
 
-    if (NPY_UNLIKELY(len_args + len_kwargs > NPY_MAXARGS)) {
-        new_args = (PyObject **)PyMem_MALLOC(original_arg_size + sizeof(PyObject *));
-        if (new_args == NULL) {
-            /*
-             * If this fails Python uses `PY_VECTORCALL_ARGUMENTS_OFFSET` and
-             * we should probably add a fast-path for that (hopefully almost)
-             * always taken.
-             */
-            return PyErr_NoMemory();
-        }
+    NPY_ALLOC_WORKSPACE(new_args, PyObject *, 14, total_nargs + 1);
+    if (new_args == NULL) {
+        /*
+         * This may fail if Python starts passing `PY_VECTORCALL_ARGUMENTS_OFFSET`
+         * and we should probably add a fast-path for that (hopefully almost)
+         * always taken.
+         */
+        return NULL;
     }
 
     new_args[0] = self;
-    memcpy(&new_args[1], args, original_arg_size);
+    memcpy(&new_args[1], args, total_nargs * sizeof(PyObject *));
     PyObject *res = PyObject_Vectorcall(callable, new_args, len_args+1, kwnames);
 
-    if (NPY_UNLIKELY(len_args + len_kwargs > NPY_MAXARGS)) {
-        PyMem_FREE(new_args);
-    }
+    npy_free_workspace(new_args);
     return res;
 }
 
@@ -618,22 +610,6 @@ array_tobytes(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_ToString(self, order);
 }
 
-static PyObject *
-array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
-{
-    NPY_ORDER order = NPY_CORDER;
-    static char *kwlist[] = {"order", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&:tostring", kwlist,
-                                     PyArray_OrderConverter, &order)) {
-        return NULL;
-    }
-    /* 2020-03-30, NumPy 1.19 */
-    if (DEPRECATE("tostring() is deprecated. Use tobytes() instead.") < 0) {
-        return NULL;
-    }
-    return PyArray_ToString(self, order);
-}
 
 /* Like PyArray_ToFile but takes the file as a python object */
 static int
@@ -888,28 +864,39 @@ array_finalizearray(PyArrayObject *self, PyObject *obj)
 }
 
 
+/*
+ * Default `__array_wrap__` implementation.
+ *
+ * If `self` is not a base class, we always create a new view, even if
+ * `return_scalar` is set. This way we preserve the (presumably important)
+ * subclass information.
+ * If the type is a base class array, we honor `return_scalar` and call
+ * PyArray_Return to convert any array with ndim=0 to scalar.
+ *
+ * By default, do not return a scalar (because this was always the default).
+ */
 static PyObject *
 array_wraparray(PyArrayObject *self, PyObject *args)
 {
     PyArrayObject *arr;
-    PyObject *obj;
+    PyObject *UNUSED = NULL;  /* for the context argument */
+    int return_scalar = 0;
 
-    if (PyTuple_Size(args) < 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "only accepts 1 argument");
+    if (!PyArg_ParseTuple(args, "O!|OO&:__array_wrap__",
+                &PyArray_Type, &arr, &UNUSED,
+                &PyArray_OptionalBoolConverter, &return_scalar)) {
         return NULL;
     }
-    obj = PyTuple_GET_ITEM(args, 0);
-    if (obj == NULL) {
-        return NULL;
-    }
-    if (!PyArray_Check(obj)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "can only be called with ndarray object");
-        return NULL;
-    }
-    arr = (PyArrayObject *)obj;
 
+    if (return_scalar && Py_TYPE(self) == &PyArray_Type && PyArray_NDIM(arr) == 0) {
+        /* Strict scalar return here (but go via PyArray_Return anyway) */
+        Py_INCREF(arr);
+        return PyArray_Return(arr);
+    }
+
+    /*
+     * Return an array, but should ensure it has the type of self
+     */
     if (Py_TYPE(self) != Py_TYPE(arr)) {
         PyArray_Descr *dtype = PyArray_DESCR(arr);
         Py_INCREF(dtype);
@@ -919,7 +906,7 @@ array_wraparray(PyArrayObject *self, PyObject *args)
                 PyArray_NDIM(arr),
                 PyArray_DIMS(arr),
                 PyArray_STRIDES(arr), PyArray_DATA(arr),
-                PyArray_FLAGS(arr), (PyObject *)self, obj);
+                PyArray_FLAGS(arr), (PyObject *)self, (PyObject *)arr);
     }
     else {
         /*
@@ -941,7 +928,7 @@ array_getarray(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&$O&:__array__", kwlist,
-                                     PyArray_DescrConverter, &newtype,
+                                     PyArray_DescrConverter2, &newtype,
                                      PyArray_CopyConverter, &copy)) {
         Py_XDECREF(newtype);
         return NULL;
@@ -1120,7 +1107,14 @@ array_function(PyArrayObject *NPY_UNUSED(self), PyObject *c_args, PyObject *c_kw
             &func, &types, &args, &kwargs)) {
         return NULL;
     }
-
+    if (!PyTuple_CheckExact(args)) {
+        PyErr_SetString(PyExc_TypeError, "args must be a tuple.");
+        return NULL;
+    }
+    if (!PyDict_CheckExact(kwargs)) {
+        PyErr_SetString(PyExc_TypeError, "kwargs must be a dict.");
+        return NULL;
+    }
     types = PySequence_Fast(
         types,
         "types argument to ndarray.__array_function__ must be iterable");
@@ -1587,7 +1581,7 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
             }
         }
     }
-    else {
+    else if (PyDataType_ISOBJECT(dtype)) {
         PyObject *itemp, *otemp;
         PyObject *res;
         memcpy(&itemp, iptr, sizeof(itemp));
@@ -2715,12 +2709,10 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 if ((PyArray_BASE(self) == NULL) &&
                             !PyArray_CHKFLAGS(self, NPY_ARRAY_OWNDATA) &&
                             !PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
-                    /* 2017-05-03, NumPy 1.17.0 */
-                    if (DEPRECATE("making a non-writeable array writeable "
-                                  "is deprecated for arrays without a base "
-                                  "which do not own their data.") < 0) {
-                        return NULL;
-                    }
+                    PyErr_SetString(PyExc_ValueError,
+                        "Cannot make a non-writeable array writeable "
+                        "for arrays with a base that do not own their data.");
+                    return NULL;
                 }
                 PyArray_ENABLEFLAGS(self, NPY_ARRAY_WRITEABLE);
                 PyArray_CLEARFLAGS(self, NPY_ARRAY_WARN_ON_WRITE);
@@ -3005,9 +2997,6 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"tolist",
         (PyCFunction)array_tolist,
         METH_VARARGS, NULL},
-    {"tostring",
-        (PyCFunction)array_tostring,
-        METH_VARARGS | METH_KEYWORDS, NULL},
     {"trace",
         (PyCFunction)array_trace,
         METH_FASTCALL | METH_KEYWORDS, NULL},

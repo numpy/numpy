@@ -55,8 +55,8 @@ def byte_bounds(a):
     else:
         for shape, stride in zip(ashape, astrides):
             if stride < 0:
-                a_low += (shape-1)*stride
+                a_low += (shape - 1) * stride
             else:
-                a_high += (shape-1)*stride
+                a_high += (shape - 1) * stride
         a_high += bytes_a
     return a_low, a_high

@@ -63,6 +63,7 @@ intern_strings(void)
     INTERN_STRING(__dlpack__, "__dlpack__");
     INTERN_STRING(pyvals_name, "UFUNC_PYVALS_NAME");
     INTERN_STRING(legacy, "legacy");
+    INTERN_STRING(__doc__, "__doc__");
     return 0;
 }
 
@@ -180,6 +181,22 @@ initialize_static_globals(void)
 
     npy_static_pydata.zero_obj = PyLong_FromLong((long) 0);
     if (npy_static_pydata.zero_obj == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.dl_call_kwnames =
+            Py_BuildValue("(sss)", "dl_device", "copy", "max_version");
+    if (npy_static_pydata.dl_call_kwnames == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.dl_cpu_device_tuple = Py_BuildValue("(i,i)", 1, 0);
+    if (npy_static_pydata.dl_cpu_device_tuple == NULL) {
+        return -1;
+    }
+
+    npy_static_pydata.dl_max_version = Py_BuildValue("(i,i)", 1, 0);
+    if (npy_static_pydata.dl_max_version == NULL) {
         return -1;
     }
 

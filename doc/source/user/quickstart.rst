@@ -881,7 +881,7 @@ creates a new array object that looks at the same data.
     >>> c.flags.owndata
     False
     >>>
-    >>> c = c.reshape((2, 6))  # a's shape doesn't change
+    >>> c = c.reshape((2, 6))  # a's shape doesn't change, reassigned c is still a view of a
     >>> a.shape
     (3, 4)
     >>> c[0, 4] = 1234         # a's data changes
@@ -928,6 +928,8 @@ a small fraction of ``a``, a deep copy should be made when constructing ``b`` wi
 
 If ``b = a[:100]`` is used instead, ``a`` is referenced by ``b`` and will persist in memory
 even if ``del a`` is executed.
+
+See also :ref:`basics.copies-and-views`.
 
 Functions and methods overview
 ------------------------------

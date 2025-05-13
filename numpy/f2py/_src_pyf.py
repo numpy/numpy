@@ -68,16 +68,17 @@ def parse_structure(astr):
         if function_start_re.match(astr, start, m.end()):
             while True:
                 i = astr.rfind('\n', ind, start)
-                if i==-1:
+                if i == -1:
                     break
                 start = i
-                if astr[i:i+7]!='\n     $':
+                if astr[i:i + 7] != '\n     $':
                     break
         start += 1
         m = routine_end_re.search(astr, m.end())
-        ind = end = m and m.end()-1 or len(astr)
+        ind = end = (m and m.end() - 1) or len(astr)
         spanlist.append((start, end))
     return spanlist
+
 
 template_re = re.compile(r"<\s*(\w[\w\d]*)\s*>")
 named_re = re.compile(r"<\s*(\w[\w\d]*)\s*=\s*(.*?)\s*>")
@@ -98,6 +99,7 @@ def find_and_remove_repl_patterns(astr):
     astr = re.subn(named_re, '', astr)[0]
     return astr, names
 
+
 item_re = re.compile(r"\A\\(?P<index>\d+)\Z")
 def conv(astr):
     b = astr.split(',')
@@ -115,7 +117,7 @@ def unique_key(adict):
     done = False
     n = 1
     while not done:
-        newkey = '__l%s' % (n)
+        newkey = f'__l{n}'
         if newkey in allkeys:
             n += 1
         else:
@@ -133,7 +135,7 @@ def expand_sub(substr, names):
     def listrepl(mobj):
         thelist = conv(mobj.group(1).replace(r'\,', '@comma@'))
         if template_name_re.match(thelist):
-            return "<%s>" % (thelist)
+            return f"<{thelist}>"
         name = None
         for key in lnames.keys():    # see if list is already in dictionary
             if lnames[key] == thelist:
@@ -141,10 +143,11 @@ def expand_sub(substr, names):
         if name is None:      # this list is not in the dictionary yet
             name = unique_key(lnames)
             lnames[name] = thelist
-        return "<%s>" % name
+        return f"<{name}>"
 
-    substr = list_re.sub(listrepl, substr) # convert all lists to named templates
-                                           # newnames are constructed as needed
+    # convert all lists to named templates
+    # new names are constructed as needed
+    substr = list_re.sub(listrepl, substr)
 
     numsubs = None
     base_rule = None
@@ -153,7 +156,7 @@ def expand_sub(substr, names):
         if r not in rules:
             thelist = lnames.get(r, names.get(r, None))
             if thelist is None:
-                raise ValueError('No replicates found for <%s>' % (r))
+                raise ValueError(f'No replicates found for <{r}>')
             if r not in names and not thelist.startswith('_'):
                 names[r] = thelist
             rule = [i.replace('@comma@', ',') for i in thelist.split(',')]
@@ -166,14 +169,16 @@ def expand_sub(substr, names):
             elif num == numsubs:
                 rules[r] = rule
             else:
-                print("Mismatch in number of replacements (base <{}={}>) "
-                      "for <{}={}>. Ignoring.".format(base_rule, ','.join(rules[base_rule]), r, thelist))
+                rules_base_rule = ','.join(rules[base_rule])
+                print("Mismatch in number of replacements "
+                      f"(base <{base_rule}={rules_base_rule}>) "
+                      f"for <{r}={thelist}>. Ignoring.")
     if not rules:
         return substr
 
     def namerepl(mobj):
         name = mobj.group(1)
-        return rules.get(name, (k+1)*[name])[k]
+        return rules.get(name, (k + 1) * [name])[k]
 
     newstr = ''
     for k in range(numsubs):
@@ -197,10 +202,11 @@ def process_str(allstr):
         writestr += cleanedstr
         names.update(defs)
         writestr += expand_sub(newstr[sub[0]:sub[1]], names)
-        oldend =  sub[1]
+        oldend = sub[1]
     writestr += newstr[oldend:]
 
     return writestr
+
 
 include_src_re = re.compile(r"(\n|\A)\s*include\s*['\"](?P<name>[\w\d./\\]+\.src)['\"]", re.I)
 
@@ -225,6 +231,7 @@ def resolve_includes(source):
 def process_file(source):
     lines = resolve_includes(source)
     return process_str(''.join(lines))
+
 
 _special_names = find_repl_patterns('''
 <_c=s,d,c,z>

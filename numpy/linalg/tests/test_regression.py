@@ -40,9 +40,9 @@ class TestRegression:
         # Ticket 662.
         rvals = [68.60568999, 89.57756725, 106.67185574]
 
-        cov = array([[77.70273908,   3.51489954,  15.64602427],
-                     [3.51489954,  88.97013878,  -1.07431931],
-                     [15.64602427,  -1.07431931,  98.18223512]])
+        cov = array([[77.70273908,  3.51489954, 15.64602427],
+                     [ 3.51489954, 88.97013878, -1.07431931],
+                     [15.64602427, -1.07431931, 98.18223512]])
 
         vals, vecs = linalg.eigh(cov)
         assert_array_almost_equal(vals, rvals)
@@ -64,8 +64,8 @@ class TestRegression:
 
     def test_lapack_endian(self):
         # For bug #1482
-        a = array([[5.7998084,  -2.1825367],
-                   [-2.1825367,   9.85910595]], dtype='>f8')
+        a = array([[ 5.7998084, -2.1825367],
+                   [-2.1825367,  9.85910595]], dtype='>f8')
         b = array(a, dtype='<f8')
 
         ap = linalg.cholesky(a)
@@ -166,9 +166,9 @@ class TestRegression:
         # Test whether matrix multiplication involving a large matrix always
         # gives the same (correct) answer
         x = np.arange(500000, dtype=np.float64)
-        src = np.vstack((x, -10*x)).T
+        src = np.vstack((x, -10 * x)).T
         matrix = np.array([[0, 1], [1, 0]])
-        expected = np.vstack((-10*x, x)).T  # src @ matrix
+        expected = np.vstack((-10 * x, x)).T  # src @ matrix
         for i in range(200):
             result = src @ matrix
             mismatches = (~np.isclose(result, expected)).sum()

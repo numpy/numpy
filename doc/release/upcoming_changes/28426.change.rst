@@ -1,0 +1,6 @@
+Changes to automatic bin selection in numpy.histogram
+-----------------------------------------------------
+The automatic bin selection algorithm in ``numpy.histogram`` has been modified
+to avoid out-of-memory errors for samples with low variation.
+For full control over the selected bins the user can use set
+the ``bin`` or ``range`` parameters of ``numpy.histogram``.

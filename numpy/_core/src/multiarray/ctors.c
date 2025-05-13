@@ -941,21 +941,6 @@ PyArray_NewFromDescr_int(
         else if (func == npy_static_pydata.ndarray_array_finalize) {
             Py_DECREF(func);
         }
-        else if (func == Py_None) {
-            Py_DECREF(func);
-            /*
-             * 2022-01-08, NumPy 1.23; when deprecation period is over, remove this
-             * whole stanza so one gets a "NoneType object is not callable" TypeError.
-             */
-            if (DEPRECATE(
-                    "Setting __array_finalize__ = None to indicate no finalization"
-                    "should be done is deprecated.  Instead, just inherit from "
-                    "ndarray or, if that is not possible, explicitly set to "
-                    "ndarray.__array_function__; this will raise a TypeError "
-                    "in the future. (Deprecated since NumPy 1.23)") < 0) {
-                goto fail;
-            }
-        }
         else {
             if (PyCapsule_CheckExact(func)) {
                 /* A C-function is stored here */
@@ -1416,7 +1401,7 @@ fail:
  * * an object with an __array__ function.
  *
  * @param op The object to convert to an array
- * @param requested_type a requested dtype instance, may be NULL; The result
+ * @param requested_dtype a requested dtype instance, may be NULL; The result
  *                       DType may be used, but is not enforced.
  * @param writeable whether the result must be writeable.
  * @param context Unused parameter, must be NULL (should be removed later).
@@ -1821,32 +1806,30 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
  * Internal version of PyArray_CheckFromAny that accepts a dtypemeta. Borrows
  * references to the descriptor and dtype.
  */
-
 NPY_NO_EXPORT PyObject *
 PyArray_CheckFromAny_int(PyObject *op, PyArray_Descr *in_descr,
                          PyArray_DTypeMeta *in_DType, int min_depth,
                          int max_depth, int requires, PyObject *context)
 {
     PyObject *obj;
+    Py_XINCREF(in_descr);  /* take ownership as we may replace it */
     if (requires & NPY_ARRAY_NOTSWAPPED) {
-        if (!in_descr && PyArray_Check(op) &&
-                PyArray_ISBYTESWAPPED((PyArrayObject* )op)) {
-            in_descr = PyArray_DescrNew(PyArray_DESCR((PyArrayObject *)op));
+        if (!in_descr && PyArray_Check(op)) {
+            in_descr = PyArray_DESCR((PyArrayObject *)op);
+            Py_INCREF(in_descr);
+        }
+        if (in_descr) {
+            PyArray_DESCR_REPLACE_CANONICAL(in_descr);
             if (in_descr == NULL) {
                 return NULL;
             }
-        }
-        else if (in_descr && !PyArray_ISNBO(in_descr->byteorder)) {
-            PyArray_DESCR_REPLACE(in_descr);
-        }
-        if (in_descr && in_descr->byteorder != NPY_IGNORE) {
-            in_descr->byteorder = NPY_NATIVE;
         }
     }
 
     int was_scalar;
     obj = PyArray_FromAny_int(op, in_descr, in_DType, min_depth,
                               max_depth, requires, context, &was_scalar);
+    Py_XDECREF(in_descr);
     if (obj == NULL) {
         return NULL;
     }
@@ -2155,7 +2138,7 @@ PyArray_FromInterface(PyObject *origin)
     PyArray_Descr *dtype = NULL;
     char *data = NULL;
     Py_buffer view;
-    int i, n;
+    Py_ssize_t i, n;
     npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
@@ -2271,6 +2254,12 @@ PyArray_FromInterface(PyObject *origin)
     /* Get dimensions from shape tuple */
     else {
         n = PyTuple_GET_SIZE(attr);
+        if (n > NPY_MAXDIMS) {
+            PyErr_Format(PyExc_ValueError,
+                         "number of dimensions must be within [0, %d], got %d",
+                         NPY_MAXDIMS, n);
+            goto fail;
+        }
         for (i = 0; i < n; i++) {
             PyObject *tmp = PyTuple_GET_ITEM(attr, i);
             dims[i] = PyArray_PyIntAsIntp(tmp);
@@ -2476,7 +2465,10 @@ check_or_clear_and_warn_error_if_due_to_copy_kwarg(PyObject *kwnames)
         Py_XDECREF(traceback);
         if (DEPRECATE("__array__ implementation doesn't accept a copy keyword, "
                       "so passing copy=False failed. __array__ must implement "
-                      "'dtype' and 'copy' keyword arguments.") < 0) {
+                      "'dtype' and 'copy' keyword arguments. "
+                      "To learn more, see the migration guide "
+                      "https://numpy.org/devdocs/numpy_2_0_migration_guide.html"
+                      "#adapting-to-changes-in-the-copy-keyword") < 0) {
             return -1;
         }
         return 0;
@@ -2693,7 +2685,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 
     npy_intp dst_count, src_count, count;
     npy_intp dst_size, src_size;
-    int needs_api;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -2754,13 +2745,13 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     /* Get all the values needed for the inner loop */
     dst_iternext = NpyIter_GetIterNext(dst_iter, NULL);
     dst_dataptr = NpyIter_GetDataPtrArray(dst_iter);
-    /* Since buffering is disabled, we can cache the stride */
+    /* The inner stride is also the fixed stride for the whole iteration. */
     dst_stride = NpyIter_GetInnerStrideArray(dst_iter)[0];
     dst_countptr = NpyIter_GetInnerLoopSizePtr(dst_iter);
 
     src_iternext = NpyIter_GetIterNext(src_iter, NULL);
     src_dataptr = NpyIter_GetDataPtrArray(src_iter);
-    /* Since buffering is disabled, we can cache the stride */
+    /* The inner stride is also the fixed stride for the whole iteration. */
     src_stride = NpyIter_GetInnerStrideArray(src_iter)[0];
     src_countptr = NpyIter_GetInnerLoopSizePtr(src_iter);
 
@@ -2770,15 +2761,6 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         return -1;
     }
 
-    needs_api = NpyIter_IterationNeedsAPI(dst_iter) ||
-                NpyIter_IterationNeedsAPI(src_iter);
-
-    /*
-     * Because buffering is disabled in the iterator, the inner loop
-     * strides will be the same throughout the iteration loop.  Thus,
-     * we can pass them to this function to take advantage of
-     * contiguous strides, etc.
-     */
     NPY_cast_info cast_info;
     NPY_ARRAYMETHOD_FLAGS flags;
     if (PyArray_GetDTypeTransferFunction(
@@ -2792,7 +2774,8 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         NpyIter_Deallocate(src_iter);
         return -1;
     }
-    needs_api |= (flags & NPY_METH_REQUIRES_PYAPI) != 0;
+    /* No need to worry about API use in unbuffered iterator */
+    int needs_api = (flags & NPY_METH_REQUIRES_PYAPI) != 0;
     if (!(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier((char *)src_iter);
     }
@@ -3633,12 +3616,9 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char const *sep, size_t *nre
             Py_DECREF(r);
             return NULL;
         }
-        /* 2019-09-12, NumPy 1.18 */
-        if (DEPRECATE(
-                "string or file could not be read to its end due to unmatched "
-                "data; this will raise a ValueError in the future.") < 0) {
-            goto fail;
-        }
+        PyErr_SetString(PyExc_ValueError,
+            "string or file could not be read to its end due to unmatched data");
+        goto fail;
     }
 
 fail:

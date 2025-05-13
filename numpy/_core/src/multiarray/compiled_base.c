@@ -150,8 +150,12 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
         }
         if (PyArray_SIZE(tmp1) > 0) {
             /* The input is not empty, so convert it to NPY_INTP. */
-            lst = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)tmp1,
-                                                             NPY_INTP, 1, 1);
+            int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
+            if (PyArray_ISINTEGER(tmp1)) {
+                flags = flags | NPY_ARRAY_FORCECAST;
+            }
+            PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
+            lst = (PyArrayObject *)PyArray_FromAny((PyObject *)tmp1, local_dtype, 1, 1, flags, NULL);
             Py_DECREF(tmp1);
             if (lst == NULL) {
                 /* Failed converting to NPY_INTP. */
@@ -177,7 +181,13 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     }
 
     if (lst == NULL) {
-        lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
+        int flags = NPY_ARRAY_WRITEABLE | NPY_ARRAY_ALIGNED | NPY_ARRAY_C_CONTIGUOUS;
+        if (PyArray_Check((PyObject *)list) &&
+            PyArray_ISINTEGER((PyArrayObject *)list)) {
+            flags = flags | NPY_ARRAY_FORCECAST;
+        }
+        PyArray_Descr* local_dtype = PyArray_DescrFromType(NPY_INTP);
+        lst = (PyArrayObject *)PyArray_FromAny(list, local_dtype, 1, 1, flags, NULL);
         if (lst == NULL) {
             goto fail;
         }
@@ -185,15 +195,12 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *const *args,
     len = PyArray_SIZE(lst);
 
     /*
-     * This if/else if can be removed by changing the argspec to O|On above,
-     * once we retire the deprecation
+     * This if/else if can be removed by changing the argspec above,
      */
     if (mlength == Py_None) {
-        /* NumPy 1.14, 2017-06-01 */
-        if (DEPRECATE("0 should be passed as minlength instead of None; "
-                      "this will error in future.") < 0) {
-            goto fail;
-        }
+        PyErr_SetString(PyExc_TypeError,
+             "use 0 instead of None for minlength");
+        goto fail;
     }
     else if (mlength != NULL) {
         minlength = PyArray_PyIntAsIntp(mlength);

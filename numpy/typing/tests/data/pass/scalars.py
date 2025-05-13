@@ -3,7 +3,7 @@ import datetime as dt
 import pytest
 import numpy as np
 
-b =  np.bool()
+b = np.bool()
 b_ = np.bool_()
 u8 = np.uint64()
 i8 = np.int64()
@@ -89,9 +89,18 @@ np.datetime64(0, ('ms', 3))
 np.datetime64("2019")
 np.datetime64(b"2019")
 np.datetime64("2019", "D")
+np.datetime64("2019", "us")
+np.datetime64("2019", "as")
+np.datetime64(np.datetime64())
 np.datetime64(np.datetime64())
 np.datetime64(dt.datetime(2000, 5, 3))
+np.datetime64(dt.datetime(2000, 5, 3), "D")
+np.datetime64(dt.datetime(2000, 5, 3), "us")
+np.datetime64(dt.datetime(2000, 5, 3), "as")
 np.datetime64(dt.date(2000, 5, 3))
+np.datetime64(dt.date(2000, 5, 3), "D")
+np.datetime64(dt.date(2000, 5, 3), "us")
+np.datetime64(dt.date(2000, 5, 3), "as")
 np.datetime64(None)
 np.datetime64(None, "D")
 

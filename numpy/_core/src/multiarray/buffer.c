@@ -26,7 +26,7 @@
 /*************************************************************************
  * PEP 3118 buffer protocol
  *
- * Implementing PEP 3118 is somewhat convoluted because of the desirata:
+ * Implementing PEP 3118 is somewhat convoluted because of the requirements:
  *
  * - Don't add new members to ndarray or descr structs, to preserve binary
  *   compatibility. (Also, adding the items is actually not very useful,

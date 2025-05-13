@@ -78,7 +78,7 @@ Using Eclipse/PyDev with Anaconda Python (or environments)
 ----------------------------------------------------------
 
 Please see the
-`Anaconda Documentation <https://docs.anaconda.com/anaconda/user-guide/tasks/integration/eclipse-pydev/>`_
+`Anaconda Documentation <https://docs.anaconda.com/working-with-conda/ide-tutorials/eclipse-pydev/>`_
 on how to properly configure Eclipse/PyDev to use Anaconda Python with specific
 conda environments.
 

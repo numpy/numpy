@@ -343,6 +343,6 @@ storage.
 
    >>> import os
    >>> # list all files created in testsetup. If needed there are
-   >>> # convenienes in e.g. astroquery to do this more automatically
+   >>> # conveniences in e.g. astroquery to do this more automatically
    >>> for filename in ['csv.txt', 'fixedwidth.txt', 'nan.txt', 'skip.txt', 'tabs.txt']:
    ...     os.remove(filename)

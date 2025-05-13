@@ -11,7 +11,7 @@ from xml.sax.saxutils import quoteattr, escape
 
 try:
     import pygments
-    if tuple([int(x) for x in pygments.__version__.split('.')]) < (0, 11):
+    if tuple(int(x) for x in pygments.__version__.split('.')) < (0, 11):
         raise ImportError
     from pygments import highlight
     from pygments.lexers import CLexer
@@ -30,7 +30,7 @@ class FunctionHtmlFormatter(HtmlFormatter):
 
     def wrap(self, source, outfile):
         for i, (c, t) in enumerate(HtmlFormatter.wrap(self, source, outfile)):
-            as_functions = self.lines.get(i-1, None)
+            as_functions = self.lines.get(i - 1, None)
             if as_functions is not None:
                 yield 0, ('<div title=%s style="background: #ccffcc">[%2d]' %
                           (quoteattr('as ' + ', '.join(as_functions)),
@@ -123,13 +123,13 @@ def collect_stats(files, fd, pattern):
     current_file = None
     current_function = None
     for line in fd:
-        if re.match("f[lie]=.+", line):
+        if re.match(r"f[lie]=.+", line):
             path = line.split('=', 2)[1].strip()
             if os.path.exists(path) and re.search(pattern, path):
                 current_file = files.get_file(path)
             else:
                 current_file = None
-        elif re.match("fn=.+", line):
+        elif re.match(r"fn=.+", line):
             current_function = line.split('=', 2)[1].strip()
         elif current_file is not None:
             for regex in line_regexs:

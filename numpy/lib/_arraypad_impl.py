@@ -210,7 +210,7 @@ def _get_linear_ramps(padded, axis, width_pair, end_value_pair):
     left_ramp, right_ramp = (
         np.linspace(
             start=end_value,
-            stop=edge.squeeze(axis), # Dimension is replaced by linspace
+            stop=edge.squeeze(axis),  # Dimension is replaced by linspace
             num=width,
             endpoint=False,
             dtype=padded.dtype,
@@ -595,8 +595,6 @@ def pad(array, pad_width, mode='constant', **kwargs):
         'empty'
             Pads with undefined values.
 
-            .. versionadded:: 1.17
-
         <function>
             Padding function, see Notes.
     stat_length : sequence or int, optional
@@ -655,8 +653,6 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     Notes
     -----
-    .. versionadded:: 1.7.0
-
     For an array with rank greater than 1, some of the padding of later
     axes is calculated from padding of previous axes.  This is easiest to
     think about with a rank 2 array where the corners of the padded array
@@ -798,10 +794,10 @@ def pad(array, pad_width, mode='constant', **kwargs):
     try:
         unsupported_kwargs = set(kwargs) - set(allowed_kwargs[mode])
     except KeyError:
-        raise ValueError("mode '{}' is not supported".format(mode)) from None
+        raise ValueError(f"mode '{mode}' is not supported") from None
     if unsupported_kwargs:
-        raise ValueError("unsupported keyword arguments for mode '{}': {}"
-                         .format(mode, unsupported_kwargs))
+        raise ValueError("unsupported keyword arguments for mode "
+                         f"'{mode}': {unsupported_kwargs}")
 
     stat_functions = {"maximum": np.amax, "minimum": np.amin,
                       "mean": np.mean, "median": np.median}
@@ -830,8 +826,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
         for axis, width_pair in zip(axes, pad_width):
             if array.shape[axis] == 0 and any(width_pair):
                 raise ValueError(
-                    "can't extend empty axis {} using modes other than "
-                    "'constant' or 'empty'".format(axis)
+                    f"can't extend empty axis {axis} using modes other than "
+                    "'constant' or 'empty'"
                 )
         # passed, don't need to do anything more as _pad_simple already
         # returned the correct result
@@ -852,7 +848,7 @@ def pad(array, pad_width, mode='constant', **kwargs):
 
     elif mode in stat_functions:
         func = stat_functions[mode]
-        length = kwargs.get("stat_length", None)
+        length = kwargs.get("stat_length")
         length = _as_pairs(length, padded.ndim, as_index=True)
         for axis, width_pair, length_pair in zip(axes, pad_width, length):
             roi = _view_roi(padded, original_area_slice, axis)

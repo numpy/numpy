@@ -1,11 +1,11 @@
 """
-Discrete Fourier Transform (:mod:`numpy.fft`)
-=============================================
+Discrete Fourier Transform
+==========================
 
 .. currentmodule:: numpy.fft
 
 The SciPy module `scipy.fft` is a more comprehensive superset
-of ``numpy.fft``, which includes only a basic set of routines.
+of `numpy.fft`, which includes only a basic set of routines.
 
 Standard FFTs
 -------------
@@ -207,7 +207,7 @@ from . import helper
 from ._pocketfft import *
 from ._helper import *
 
-__all__ = _pocketfft.__all__.copy()
+__all__ = _pocketfft.__all__.copy()  # noqa: PLE0605
 __all__ += _helper.__all__
 
 from numpy._pytesttester import PytestTester

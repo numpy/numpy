@@ -20,7 +20,7 @@ import numpy._typing as _npt
 class TypeTup(NamedTuple):
     typ: type
     args: tuple[type, ...]
-    origin: None | type
+    origin: type | None
 
 
 NDArrayTup = TypeTup(npt.NDArray, npt.NDArray.__args__, np.ndarray)

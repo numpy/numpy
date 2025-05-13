@@ -1,0 +1,2 @@
+* A spelling error in the error message returned when converting a string to a float with the
+  method ``np.format_float_positional`` has been fixed.

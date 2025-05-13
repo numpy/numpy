@@ -61,7 +61,7 @@ class GnuFCompiler(FCompiler):
                 r'GNU Fortran.*?\-?([0-9-.]+\.[0-9-.]+)', version_string)
             if m:
                 v = m.group(1)
-                if v.startswith('0') or v.startswith('2') or v.startswith('3'):
+                if v.startswith(('0', '2', '3')):
                     # the '0' is for early g77's
                     return ('g77', v)
                 else:
