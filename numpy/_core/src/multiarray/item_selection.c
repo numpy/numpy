@@ -1594,9 +1594,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return -1;
     }
 
-    PyArray_GetSortFunction(PyArray_DESCR(op), which, 0, &sort, &auxdata);
-
-    if (sort == NULL) {
+    if (PyArray_GetSortFunction(PyArray_DESCR(op), which, 0, &sort, &auxdata) < 0) {
         sort_with_array = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort[which];
     }
 
@@ -1769,9 +1767,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
     NpyAuxData *auxdata = NULL;
 
-    PyArray_GetArgSortFunction(PyArray_DESCR(op), which, 0, &argsort, &auxdata);
-
-    if (argsort == NULL) {
+    if (PyArray_GetArgSortFunction(PyArray_DESCR(op), which, 0, &argsort, &auxdata) < 0) {
         argsort_with_array = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort[which];
     }
 
