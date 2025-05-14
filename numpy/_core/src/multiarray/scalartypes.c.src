@@ -2482,7 +2482,10 @@ static PyObject *
 static PyObject *
 @name@_trunc(PyObject *self, PyObject *NPY_UNUSED(args))
 {
-    return @convert@(PyArrayScalar_VAL(self, @Name@));
+    return @convert@(@is_half@ ?
+        npy_half_to_double(PyArrayScalar_VAL(self, @Name@)) :
+        PyArrayScalar_VAL(self, @Name@)
+    );
 }
 
 /* Heavily copied from the builtin float.as_integer_ratio */
