@@ -192,7 +192,7 @@ _import_array(void)
 #endif
 
 #endif
-"""
+"""  # noqa: E501
 
 
 c_template = r"""
