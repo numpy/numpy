@@ -15,10 +15,7 @@ The array interface protocol
    :c:func:`The Revised Buffer Protocol <PyObject_GetBuffer>` introduces
    similar, standardized API for any extension module to use. Cython__'s
    buffer array support uses the :pep:`3118` API; see the `Cython NumPy
-   tutorial`__. Cython provides a way to write code that supports the buffer
-   protocol of Python versions older than 2.6 because it has a
-   backward-compatible implementation utilizing the array interface
-   described here.
+   tutorial`__.
 
 __ https://cython.org/
 __ https://github.com/cython/cython/wiki/tutorials-numpy
