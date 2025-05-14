@@ -89,13 +89,13 @@ jobs:
           # targeting macos >= 14. Could probably build on macos-14, but it would be a cross-compile
           - [macos-13, macosx_x86_64, accelerate]
           - [macos-14, macosx_arm64, accelerate]  # always use accelerate
-          - [windows-2019, win_amd64, ""]
-          - [windows-2019, win32, ""]
+          - [windows-2022, win_amd64, ""]
+          - [windows-2022, win32, ""]
           - [windows-11-arm, win_arm64, ""]
         python: ["cp311", "cp312", "cp313", "cp313t", "cp314", "cp314t", "pp311"]
         exclude:
           # Don't build PyPy 32-bit windows
-          - buildplat: [windows-2019, win32, ""]
+          - buildplat: [windows-2022, win32, ""]
             python: "pp311"
           # Don't build PyPy arm64 windows
           - buildplat: [windows-11-arm, win_arm64, ""]
