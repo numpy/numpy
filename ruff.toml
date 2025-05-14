@@ -64,7 +64,6 @@ ignore = [
 "numpy/lib/*py" = ["E501"]
 "numpy/linalg/*py" = ["E501"]
 "numpy/ma/*py" = ["E501"]
-"numpy/polynomial/*py" = ["E501"]
 "numpy/tests/*py" = ["E501"]
 "numpy/random/*py" = ["E501"]
 "numpy*pyi" = ["E501"]
