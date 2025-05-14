@@ -949,7 +949,7 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
 
     read_dtype_via_object_chunks = None
     if dtype.kind in 'SUM' and dtype in {
-            np.dtype("S0"), np.dtype("U0"), np.dtype("M8"), np.dtype('m8')}:
+            np.dtype("S0"), np.dtype("U0"), np.dtype("M8"), np.dtype("m8")}:
         # This is a legacy "flexible" dtype.  We do not truly support
         # parametric dtypes currently (no dtype discovery step in the core),
         # but have to support these for backward compatibility.
