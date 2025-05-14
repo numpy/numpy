@@ -137,13 +137,6 @@ _FAIL_MSG_REVEAL = """{}:{} - reveal mismatch:
 
 {}"""
 
-_FAIL_MSG_MISC = """{}:{} - error mismatch:
-
-Expression: {}
-Expected error: {}
-Observed error: {}
-"""
-
 
 @pytest.mark.slow
 @pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
@@ -190,49 +183,6 @@ def test_reveal(path: str) -> None:
         error_msg = textwrap.indent(error_msg, _FAIL_INDENT)
         reason = _FAIL_MSG_REVEAL.format(relpath, lineno, error_msg)
         failures.append(reason)
-
-    if failures:
-        reasons = _FAIL_SEP.join(failures)
-        pytest.fail(reasons, pytrace=False)
-
-
-LINENO_MAPPING = {
-    6: "float96",
-    7: "float128",
-    8: "complex192",
-    9: "complex256",
-}
-
-
-@pytest.mark.slow
-@pytest.mark.skipif(NO_MYPY, reason="Mypy is not installed")
-def test_extended_precision() -> None:
-    from numpy.typing.mypy_plugin import _EXTENDED_PRECISION_LIST
-
-    path = os.path.join(MISC_DIR, "extended_precision.pyi")
-    output_mypy = OUTPUT_MYPY
-    assert path in output_mypy
-
-    expected_msg = 'Expression is of type "Any"'
-
-    with open(path) as f:
-        expression_list = f.readlines()
-
-    failures = []
-    for _msg in output_mypy[path]:
-        lineno, error_msg = _strip_filename(_msg)
-        expr = expression_list[lineno - 1].rstrip("\n")
-
-        if LINENO_MAPPING[lineno] in _EXTENDED_PRECISION_LIST:
-            raise AssertionError(_FAIL_MSG_REVEAL.format(lineno, error_msg))
-        if "error" in error_msg or expected_msg not in error_msg:
-            continue
-
-        if "\n" in error_msg:
-            error_msg = "\n" + textwrap.indent(error_msg, _FAIL_INDENT)
-        relpath = os.path.relpath(path)
-        failure = _FAIL_MSG_MISC.format(relpath, lineno, expr, expected_msg, error_msg)
-        failures.append(failure)
 
     if failures:
         reasons = _FAIL_SEP.join(failures)
