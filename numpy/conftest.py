@@ -166,7 +166,6 @@ if HAVE_SCPDT:
                 "msvccompiler",
                 "Deprecated call",
                 "numpy.core",
-                "`np.compat`",
                 "Importing from numpy.matlib",
                 "This function is deprecated.",    # random_integers
                 "Data type alias 'a'",     # numpy.rec.fromfile
@@ -229,7 +228,6 @@ if HAVE_SCPDT:
         'numpy/_core/cversions.py',
         'numpy/_pyinstaller',
         'numpy/random/_examples',
-        'numpy/compat',
         'numpy/f2py/_backends/_distutils.py',
     ]
 

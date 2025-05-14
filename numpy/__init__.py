@@ -418,7 +418,7 @@ else:
         )
         public_symbols -= {
             "matrixlib", "matlib", "tests", "conftest", "version",
-            "compat", "distutils", "array_api"
+            "distutils", "array_api"
         }
         return list(public_symbols)
 

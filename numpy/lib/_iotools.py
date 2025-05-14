@@ -12,8 +12,7 @@ import itertools
 def _decode_line(line, encoding=None):
     """Decode bytes from binary input streams.
 
-    Defaults to decoding from 'latin1'. That differs from the behavior of
-    np.compat.asunicode that decodes from 'ascii'.
+    Defaults to decoding from 'latin1'.
 
     Parameters
     ----------
