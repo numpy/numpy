@@ -10329,6 +10329,21 @@ def test_argsort_int(N, dtype):
     arr[N - 1] = maxv
     assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
 
+# Test large arrays that leverage openMP implementations from x86-simd-sort:
+@pytest.mark.parametrize("dtype", [np.float16, np.float32, np.float64])
+def test_sort_largearrays(dtype):
+    N = 1000000
+    rnd = np.random.RandomState(1100710816)
+    arr = -0.5 + rnd.random(N).astype(dtype)
+    assert_equal(np.sort(arr, kind='quick'), np.sort(arr, kind='heap'))
+
+# Test large arrays that leverage openMP implementations from x86-simd-sort:
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_argsort_largearrays(dtype):
+    N = 1000000
+    rnd = np.random.RandomState(1100710816)
+    arr = -0.5 + rnd.random(N).astype(dtype)
+    assert_arg_sorted(arr, np.argsort(arr, kind='quick'))
 
 @pytest.mark.skipif(not HAS_REFCOUNT, reason="Python lacks refcounts")
 def test_gh_22683():
