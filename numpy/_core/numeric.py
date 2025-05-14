@@ -1921,9 +1921,10 @@ _fromfunction_with_like = array_function_dispatch()(fromfunction)
 
 
 def _frombuffer(buf, dtype, shape, order, axis_order=None):
+    array = frombuffer(buf, dtype=dtype)
     if order == 'K' and axis_order is not None:
-        return frombuffer(buf, dtype=dtype).reshape(shape, order='C').transpose(axis_order)
-    return frombuffer(buf, dtype=dtype).reshape(shape, order=order)
+        return array.reshape(shape, order='C').transpose(axis_order)
+    return array.reshape(shape, order=order)
 
 
 @set_module('numpy')

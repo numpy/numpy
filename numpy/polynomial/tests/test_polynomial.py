@@ -547,12 +547,15 @@ class TestMisc:
         for i in np.logspace(10, 25, num=1000, base=10):
             tgt = np.array([-1, 1, i])
             res = poly.polyroots(poly.polyfromroots(tgt))
-            assert_almost_equal(res, tgt, 15 - int(np.log10(i)))    # Adapting the expected precision according to the root value, to take into account numerical calculation error
-
+            # Adapting the expected precision according to the root value,
+            # to take into account numerical calculation error.
+            assert_almost_equal(res, tgt, 15 - int(np.log10(i)))
         for i in np.logspace(10, 25, num=1000, base=10):
             tgt = np.array([-1, 1.01, i])
             res = poly.polyroots(poly.polyfromroots(tgt))
-            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))    # Adapting the expected precision according to the root value, to take into account numerical calculation error
+            # Adapting the expected precision according to the root value,
+            # to take into account numerical calculation error.
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))
 
     def test_polyfit(self):
         def f(x):
