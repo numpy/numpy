@@ -555,7 +555,7 @@ class TestMisc:
             res = poly.polyroots(poly.polyfromroots(tgt))
             # Adapting the expected precision according to the root value,
             # to take into account numerical calculation error.
-            assert_almost_equal(res, tgt, 14 - int(np.log10(i))) 
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))
 
     def test_polyfit(self):
         def f(x):
