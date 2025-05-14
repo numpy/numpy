@@ -75,7 +75,7 @@ stages:
   - job: Windows
     timeoutInMinutes: 120
     pool:
-      vmImage: 'windows-2019'
+      vmImage: 'windows-2022'
     strategy:
       maxParallel: 3
       matrix:
