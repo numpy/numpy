@@ -2,6 +2,7 @@
 Test the scalar constructors, which also do type-coercion
 """
 import fractions
+import math
 import platform
 import types
 from typing import Any
@@ -133,6 +134,22 @@ class TestIsInteger:
                 continue
             assert not value.is_integer()
 
+class TestFloatTrunc:
+    @pytest.mark.parametrize("code", np.typecodes["Float"])
+    @pytest.mark.parametrize("value", [0, -0, np.pi, -np.pi])
+    def test_basic(self, code, value):
+        dtype_value = np.dtype(code).type(value)
+        assert math.trunc(value) == math.trunc(dtype_value)
+
+    @pytest.mark.parametrize("str_value, exception_class, match", [
+        ("inf", OverflowError, "cannot convert (float|longdouble) infinity to integer"),
+        ("-inf", OverflowError, "cannot convert (float|longdouble) infinity to integer"),
+        ("nan", ValueError, "cannot convert (float|longdouble) NaN to integer"),
+    ])
+    @pytest.mark.parametrize("code", np.typecodes["Float"])
+    def test_special(self, str_value, exception_class, match, code):
+        with pytest.raises(exception_class, match=match):
+            math.trunc(np.dtype(code).type(str_value))
 
 class TestClassGetItem:
     @pytest.mark.parametrize("cls", [
