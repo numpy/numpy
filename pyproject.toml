@@ -156,9 +156,6 @@ manylinux-aarch64-image = "manylinux_2_28"
 musllinux-x86_64-image = "musllinux_1_2"
 musllinux-aarch64-image = "musllinux_1_2"
 
-[tool.cibuildwheel.pyodide]
-config-settings = "build-dir=build setup-args=--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross setup-args=-Dblas=none setup-args=-Dlapack=none"
-
 [tool.cibuildwheel.linux.environment]
 # RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
 RUNNER_OS="Linux"
