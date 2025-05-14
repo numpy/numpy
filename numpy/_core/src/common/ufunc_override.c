@@ -93,7 +93,7 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
         *out_kwd_obj = NULL;
         return -1;
     }
-    int result = PyDict_GetItemStringRef(kwds, "out", out_kwd_obj);
+    int result = PyDict_GetItemStringRef(kwds, "out", out_kwd_obj); // noqa: borrowed-ref OK
     if (result == -1) {
         return -1;
     }
@@ -108,7 +108,7 @@ PyUFuncOverride_GetOutObjects(PyObject *kwds, PyObject **out_kwd_obj, PyObject *
          * PySequence_Fast* functions. This is required for PyPy
          */
         PyObject *seq;
-        seq = PySequence_Fast(*out_kwd_obj,
+        seq = PySequence_Fast(*out_kwd_obj, // noqa: borrowed-ref OK
                               "Could not convert object to sequence");
         if (seq == NULL) {
             Py_CLEAR(*out_kwd_obj);
