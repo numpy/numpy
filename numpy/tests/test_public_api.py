@@ -162,8 +162,6 @@ PUBLIC_ALIASED_MODULES = [
 
 
 PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
-    "compat",
-    "compat.py3k",
     "conftest",
     "core",
     "core.multiarray",
@@ -284,8 +282,6 @@ else:
     SKIP_LIST = ["numpy.distutils.msvc9compiler"]
 
 
-# suppressing warnings from deprecated modules
-@pytest.mark.filterwarnings("ignore:.*np.compat.*:DeprecationWarning")
 def test_all_modules_are_expected():
     """
     Test that we don't add anything that looks like a new public module by
