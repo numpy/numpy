@@ -31,7 +31,7 @@ inline void set_float_status(bool overflow, bool divbyzero) {
         npy_set_floatstatus_divbyzero();
     }
 }
-
+#if NPY_SIMD
 // Signed integer division
 template <typename T>
 void simd_divide_by_scalar_contig_signed(T* src, T scalar, T* dst, npy_intp len) {
@@ -144,7 +144,7 @@ void simd_divide_by_scalar_contig_unsigned(T* src, T scalar, T* dst, npy_intp le
 
     set_float_status(false, raise_divbyzero);
 }
-
+#endif // NPY_SIMD
 // Floor division for signed integers
 template <typename T>
 T floor_div(T n, T d) {
@@ -183,7 +183,8 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
         }
         *reinterpret_cast<T*>(iop1) = io1;
         return;
-    }    
+    }
+#if NPY_SIMD   
     if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
         *reinterpret_cast<T*>(args[1]) != 0)
     {
@@ -196,6 +197,7 @@ void TYPE_divide(char **args, npy_intp const *dimensions, npy_intp const *steps,
             return;
         }
     }
+#endif // NPY_SIMD
 
     // Fallback for non-blockable, in-place, or zero divisor cases
     BINARY_LOOP {
@@ -231,6 +233,7 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
         *reinterpret_cast<T*>(iop1) = io1;
         return;
     }
+#if NPY_SIMD
     if (IS_BLOCKABLE_BINARY_SCALAR2(sizeof(T), NPY_SIMD_WIDTH) &&
         *reinterpret_cast<T*>(args[1]) != 0)
     {
@@ -243,6 +246,8 @@ void TYPE_divide_unsigned(char **args, npy_intp const *dimensions, npy_intp cons
             return;
         }
     }
+#endif // NPY_SIMD
+
     // Fallback for non-blockable, in-place, or zero divisor cases
     BINARY_LOOP {
         const T in1 = *reinterpret_cast<T*>(ip1);
