@@ -53,11 +53,13 @@ ignore = [
 
 [lint.per-file-ignores]
 "test*.py" = ["E201", "E714"]
+
 "benchmarks/*py" = ["E501"]
 "numpy/_build_utils/*py" = ["E501"]
-"numpy/__init__.py" = ["E501"]
-"numpy/_core/**" = ["E501"]
-"numpy/core/**" = ["E501"]
+"numpy/_core/tests/**" = ["E501"]
+"numpy/_core/_add_newdocs.py" = ["E501"]
+"numpy/_core/_add_newdocs_scalars.py" = ["E501"]
+"numpy/_core/code_generators/generate_umath.py" = ["E501"]
 "numpy/_typing/*py" = ["E501"]
 "numpy/lib/*py" = ["E501"]
 "numpy/linalg/*py" = ["E501"]
