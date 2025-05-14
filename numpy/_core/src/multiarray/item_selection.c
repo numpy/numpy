@@ -1484,7 +1484,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
         if (argpart == NULL) {
             ret = argsort(valptr, idxptr, N, op);
-            /* Object comparisons may raise an exception in Python 3 */
+            /* Object comparisons may raise an exception */
             if (needs_api && PyErr_Occurred()) {
                 ret = -1;
             }
@@ -1498,7 +1498,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
             for (i = 0; i < nkth; ++i) {
                 ret = argpart(valptr, idxptr, N, kth[i], pivots, &npiv, nkth, op);
-                /* Object comparisons may raise an exception in Python 3 */
+                /* Object comparisons may raise an exception */
                 if (needs_api && PyErr_Occurred()) {
                     ret = -1;
                 }

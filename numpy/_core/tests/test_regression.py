@@ -1583,8 +1583,7 @@ class TestRegression:
         assert_equal(c1, c2)
 
     def test_fromfile_tofile_seeks(self):
-        # On Python 3, tofile/fromfile used to get (#1610) the Python
-        # file handle out of sync
+        # tofile/fromfile used to get (#1610) the Python file handle out of sync
         with tempfile.NamedTemporaryFile() as f:
             f.write(np.arange(255, dtype='u1').tobytes())
 

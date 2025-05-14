@@ -2156,7 +2156,7 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     This makes it possible to trigger any warning afresh inside the context
     manager without disturbing the state of warnings outside.
 
-    For compatibility with Python 3.0, please consider all arguments to be
+    For compatibility with Python, please consider all arguments to be
     keyword-only.
 
     Parameters

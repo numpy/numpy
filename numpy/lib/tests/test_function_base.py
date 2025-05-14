@@ -2009,8 +2009,8 @@ class TestLeaks:
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
         # class.attribute = np.frompyfunc(<method>) creates a
-        # reference cycle if <method> is a bound class method. It requires a
-        # gc collection cycle to break the cycle (on CPython 3)
+        # reference cycle if <method> is a bound class method.
+        # It requires a gc collection cycle to break the cycle.
         import gc
         A_func = getattr(self.A, name)
         gc.disable()

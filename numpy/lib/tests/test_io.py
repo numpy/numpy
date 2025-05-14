@@ -305,7 +305,7 @@ class TestSavezLoad(RoundtripTest):
             np.savez(tmp, data='LOVELY LOAD')
             # We need to check if the garbage collector can properly close
             # numpy npz file returned by np.load when their reference count
-            # goes to zero.  Python 3 running in debug mode raises a
+            # goes to zero.  Python running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
             # collector, so we catch the warnings.
             with suppress_warnings() as sup:
@@ -625,7 +625,7 @@ class TestSaveTxt:
 
         # Since Python 3.8, the default start method for multiprocessing has
         # been changed from 'fork' to 'spawn' on macOS, causing inconsistency
-        # on memory sharing model, lead to failed test for check_large_zip
+        # on memory sharing model, leading to failed test for check_large_zip
         ctx = get_context('fork')
         p = ctx.Process(target=check_large_zip, args=(memoryerror_raised,))
         p.start()
