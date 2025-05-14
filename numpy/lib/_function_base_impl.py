@@ -2137,7 +2137,6 @@ def disp(mesg, device=None, linefeed=True):
     else:
         device.write(f'{mesg}')
     device.flush()
-    return
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
@@ -3865,11 +3864,10 @@ def _ureduce(a, func, keepdims=False, **kwargs):
     if axis is not None:
         axis = _nx.normalize_axis_tuple(axis, nd)
 
-        if keepdims:
-            if out is not None:
-                index_out = tuple(
-                    0 if i in axis else slice(None) for i in range(nd))
-                kwargs['out'] = out[(Ellipsis, ) + index_out]
+        if keepdims and out is not None:
+            index_out = tuple(
+                0 if i in axis else slice(None) for i in range(nd))
+            kwargs['out'] = out[(Ellipsis, ) + index_out]
 
         if len(axis) == 1:
             kwargs['axis'] = axis[0]
@@ -3882,11 +3880,9 @@ def _ureduce(a, func, keepdims=False, **kwargs):
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (-1,))
             kwargs['axis'] = -1
-    else:
-        if keepdims:
-            if out is not None:
-                index_out = (0, ) * nd
-                kwargs['out'] = out[(Ellipsis, ) + index_out]
+    elif keepdims and out is not None:
+        index_out = (0, ) * nd
+        kwargs['out'] = out[(Ellipsis, ) + index_out]
 
     r = func(a, **kwargs)
 
@@ -4560,9 +4556,8 @@ def _quantile_is_valid(q):
         for i in range(q.size):
             if not (0.0 <= q[i] <= 1.0):
                 return False
-    else:
-        if not (q.min() >= 0 and q.max() <= 1):
-            return False
+    elif not (q.min() >= 0 and q.max() <= 1):
+        return False
     return True
 
 
@@ -4712,14 +4707,13 @@ def _quantile_ureduce_func(
         else:
             arr = a
             wgt = weights
+    elif axis is None:
+        axis = 0
+        arr = a.flatten()
+        wgt = None if weights is None else weights.flatten()
     else:
-        if axis is None:
-            axis = 0
-            arr = a.flatten()
-            wgt = None if weights is None else weights.flatten()
-        else:
-            arr = a.copy()
-            wgt = weights
+        arr = a.copy()
+        wgt = weights
     result = _quantile(arr,
                        quantiles=q,
                        axis=axis,

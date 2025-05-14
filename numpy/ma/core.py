@@ -489,22 +489,21 @@ def _check_fill_value(fill_value, ndtype):
             fill_value = np.asarray(fill_value, dtype=object)
             fill_value = np.array(_recursive_set_fill_value(fill_value, ndtype),
                                   dtype=ndtype)
+    elif isinstance(fill_value, str) and (ndtype.char not in 'OSVU'):
+        # Note this check doesn't work if fill_value is not a scalar
+        err_msg = "Cannot set fill value of string with array of dtype %s"
+        raise TypeError(err_msg % ndtype)
     else:
-        if isinstance(fill_value, str) and (ndtype.char not in 'OSVU'):
-            # Note this check doesn't work if fill_value is not a scalar
-            err_msg = "Cannot set fill value of string with array of dtype %s"
-            raise TypeError(err_msg % ndtype)
-        else:
-            # In case we want to convert 1e20 to int.
-            # Also in case of converting string arrays.
-            try:
-                fill_value = np.asarray(fill_value, dtype=ndtype)
-            except (OverflowError, ValueError) as e:
-                # Raise TypeError instead of OverflowError or ValueError.
-                # OverflowError is seldom used, and the real problem here is
-                # that the passed fill_value is not compatible with the ndtype.
-                err_msg = "Cannot convert fill_value %s to dtype %s"
-                raise TypeError(err_msg % (fill_value, ndtype)) from e
+        # In case we want to convert 1e20 to int.
+        # Also in case of converting string arrays.
+        try:
+            fill_value = np.asarray(fill_value, dtype=ndtype)
+        except (OverflowError, ValueError) as e:
+            # Raise TypeError instead of OverflowError or ValueError.
+            # OverflowError is seldom used, and the real problem here is
+            # that the passed fill_value is not compatible with the ndtype.
+            err_msg = "Cannot convert fill_value %s to dtype %s"
+            raise TypeError(err_msg % (fill_value, ndtype)) from e
     return np.array(fill_value)
 
 
@@ -571,7 +570,6 @@ def set_fill_value(a, fill_value):
     """
     if isinstance(a, MaskedArray):
         a.set_fill_value(fill_value)
-    return
 
 
 def get_fill_value(a):
@@ -2498,7 +2496,6 @@ def _recursive_printoption(result, mask, printopt):
             _recursive_printoption(curdata, curmask, printopt)
     else:
         np.copyto(result, printopt, where=mask)
-    return
 
 
 # For better or worse, these end in a newline
@@ -2983,25 +2980,24 @@ class MaskedArray(ndarray):
             if _data._mask is nomask:
                 _data._mask = mask
                 _data._sharedmask = not copy
+            elif not keep_mask:
+                _data._mask = mask
+                _data._sharedmask = not copy
             else:
-                if not keep_mask:
-                    _data._mask = mask
-                    _data._sharedmask = not copy
-                else:
-                    if _data.dtype.names is not None:
-                        def _recursive_or(a, b):
-                            "do a|=b on each field of a, recursively"
-                            for name in a.dtype.names:
-                                (af, bf) = (a[name], b[name])
-                                if af.dtype.names is not None:
-                                    _recursive_or(af, bf)
-                                else:
-                                    af |= bf
+                if _data.dtype.names is not None:
+                    def _recursive_or(a, b):
+                        "do a|=b on each field of a, recursively"
+                        for name in a.dtype.names:
+                            (af, bf) = (a[name], b[name])
+                            if af.dtype.names is not None:
+                                _recursive_or(af, bf)
+                            else:
+                                af |= bf
 
-                        _recursive_or(_data._mask, mask)
-                    else:
-                        _data._mask = np.logical_or(mask, _data._mask)
-                    _data._sharedmask = False
+                    _recursive_or(_data._mask, mask)
+                else:
+                    _data._mask = np.logical_or(mask, _data._mask)
+                _data._sharedmask = False
 
         # Update fill_value.
         if fill_value is None:
@@ -3041,7 +3037,6 @@ class MaskedArray(ndarray):
                      '_basedict': _optinfo}
         self.__dict__.update(_dict)
         self.__dict__.update(_optinfo)
-        return
 
     def __array_finalize__(self, obj):
         """
@@ -3362,11 +3357,10 @@ class MaskedArray(ndarray):
                     return dout
 
             # Just a scalar
+            elif mout:
+                return masked
             else:
-                if mout:
-                    return masked
-                else:
-                    return dout
+                return dout
         else:
             # Force dout to MA
             dout = dout.view(type(self))
@@ -4416,9 +4410,8 @@ class MaskedArray(ndarray):
             if m is not nomask and m.any():
                 self._mask = make_mask_none(self.shape, self.dtype)
                 self._mask += m
-        else:
-            if m is not nomask:
-                self._mask += m
+        elif m is not nomask:
+            self._mask += m
         other_data = getdata(other)
         other_data = np.where(self._mask, other_data.dtype.type(0), other_data)
         self._data.__iadd__(other_data)
@@ -7599,7 +7592,6 @@ def putmask(a, mask, values):  # , mode='raise'):
             valmask = getmaskarray(values)
         np.copyto(a._mask, valmask, where=mask)
     np.copyto(a._data, valdata, where=mask)
-    return
 
 
 def transpose(a, axes=None):

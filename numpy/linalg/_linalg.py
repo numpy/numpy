@@ -1958,7 +1958,7 @@ def cond(x, p=None):
     x = asarray(x)  # in case we have a matrix
     if _is_empty_2d(x):
         raise LinAlgError("cond is not defined on empty arrays")
-    if p is None or p == 2 or p == -2:
+    if p is None or p in {2, -2}:
         s = svd(x, compute_uv=False)
         with errstate(all='ignore'):
             if p == -2:

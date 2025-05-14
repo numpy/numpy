@@ -643,16 +643,15 @@ class TestUFunc:
                                 sl = [slice(0, 1)] + [0] * (ndim - 1)
                             else:
                                 sl = [slice(0, outsize)] + [0] * (ndim - 1)
-                        else:
-                            if outsize is None:
-                                k = b.shape[axis] // 2
-                                if ndim == 1:
-                                    sl[axis] = slice(k, k + 1)
-                                else:
-                                    sl[axis] = k
+                        elif outsize is None:
+                            k = b.shape[axis] // 2
+                            if ndim == 1:
+                                sl[axis] = slice(k, k + 1)
                             else:
-                                assert b.shape[axis] >= outsize
-                                sl[axis] = slice(0, outsize)
+                                sl[axis] = k
+                        else:
+                            assert b.shape[axis] >= outsize
+                            sl[axis] = slice(0, outsize)
                         b_out = b[tuple(sl)]
 
                         if scalarize:

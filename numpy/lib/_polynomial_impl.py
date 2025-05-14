@@ -1305,11 +1305,10 @@ class poly1d:
             if power == 0:
                 if coefstr != '0':
                     newstr = f'{coefstr}'
+                elif k == 0:
+                    newstr = '0'
                 else:
-                    if k == 0:
-                        newstr = '0'
-                    else:
-                        newstr = ''
+                    newstr = ''
             elif power == 1:
                 if coefstr == '0':
                     newstr = ''
@@ -1317,13 +1316,12 @@ class poly1d:
                     newstr = var
                 else:
                     newstr = f'{coefstr} {var}'
+            elif coefstr == '0':
+                newstr = ''
+            elif coefstr == 'b':
+                newstr = '%s**%d' % (var, power,)
             else:
-                if coefstr == '0':
-                    newstr = ''
-                elif coefstr == 'b':
-                    newstr = '%s**%d' % (var, power,)
-                else:
-                    newstr = '%s %s**%d' % (coefstr, var, power)
+                newstr = '%s %s**%d' % (coefstr, var, power)
 
             if k > 0:
                 if newstr != '':
@@ -1425,7 +1423,6 @@ class poly1d:
             self._coeffs = NX.concatenate((zr, self.coeffs))
             ind = 0
         self._coeffs[ind] = val
-        return
 
     def __iter__(self):
         return iter(self.coeffs)

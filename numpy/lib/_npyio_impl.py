@@ -948,8 +948,8 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
     dtype = np.dtype(dtype)
 
     read_dtype_via_object_chunks = None
-    if dtype.kind in 'SUM' and (
-            dtype == "S0" or dtype == "U0" or dtype == "M8" or dtype == 'm8'):
+    if dtype.kind in 'SUM' and dtype in {
+            np.dtype("S0"), np.dtype("U0"), np.dtype("M8"), np.dtype("m8")}:
         # This is a legacy "flexible" dtype.  We do not truly support
         # parametric dtypes currently (no dtype discovery step in the core),
         # but have to support these for backward compatibility.
@@ -985,13 +985,12 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             if isinstance(comments[0], str) and len(comments[0]) == 1:
                 comment = comments[0]
                 comments = None
-        else:
-            # Input validation if there are multiple comment characters
-            if delimiter in comments:
-                raise TypeError(
-                    f"Comment characters '{comments}' cannot include the "
-                    f"delimiter '{delimiter}'"
-                )
+        # Input validation if there are multiple comment characters
+        elif delimiter in comments:
+            raise TypeError(
+                f"Comment characters '{comments}' cannot include the "
+                f"delimiter '{delimiter}'"
+            )
 
     # comment is now either a 1 or 0 character string or a tuple:
     if comments is not None:

@@ -459,7 +459,7 @@ class TestCasting:
         orig_arr = values.view(from_dt)
         orig_out = np.empty_like(expected_out)
 
-        if casting == Casting.unsafe and (to_dt == "m8" or to_dt == "M8"):
+        if casting == Casting.unsafe and (to_dt == "m8" or to_dt == "M8"):  # noqa: PLR1714
             # Casting from non-generic to generic units is an error and should
             # probably be reported as an invalid cast earlier.
             with pytest.raises(ValueError):

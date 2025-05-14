@@ -250,7 +250,7 @@ class memmap(ndarray):
                 size = bytes // _dbytes
                 shape = (size,)
             else:
-                if type(shape) not in (tuple, list):
+                if not isinstance(shape, (tuple, list)):
                     try:
                         shape = [operator.index(shape)]
                     except TypeError:

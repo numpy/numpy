@@ -769,14 +769,13 @@ def write_array(fp, array, version=None, allow_pickle=True, pickle_kwargs=None):
                     array, flags=['external_loop', 'buffered', 'zerosize_ok'],
                     buffersize=buffersize, order='F'):
                 fp.write(chunk.tobytes('C'))
+    elif isfileobj(fp):
+        array.tofile(fp)
     else:
-        if isfileobj(fp):
-            array.tofile(fp)
-        else:
-            for chunk in numpy.nditer(
-                    array, flags=['external_loop', 'buffered', 'zerosize_ok'],
-                    buffersize=buffersize, order='C'):
-                fp.write(chunk.tobytes('C'))
+        for chunk in numpy.nditer(
+                array, flags=['external_loop', 'buffered', 'zerosize_ok'],
+                buffersize=buffersize, order='C'):
+            fp.write(chunk.tobytes('C'))
 
 
 @set_module("numpy.lib.format")
