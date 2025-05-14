@@ -24,6 +24,8 @@
  */
 #define INT_left_shift_needs_clear_floatstatus
 #define UINT_left_shift_needs_clear_floatstatus
+#define LONG_left_shift_needs_clear_floatstatus
+#define ULONG_left_shift_needs_clear_floatstatus
 
 /**begin repeat
  * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
