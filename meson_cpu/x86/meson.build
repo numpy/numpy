@@ -4,7 +4,11 @@ cpu_family = host_machine.cpu_family()
 mod_features = import('features')
 
 HWY_SSE4_FLAGS = ['-DHWY_WANT_SSE4', '-DHWY_DISABLE_PCLMUL_AES']
-X86_64_V2_FLAGS = cpu_family == 'x86'? [] : ['-mcx16']
+# Use SSE for floating-point on x86-32 to ensure numeric consistency.
+# The x87 FPU's 80-bit internal precision causes unpredictable rounding
+# and overflow behavior when converting to smaller types. SSE maintains
+# strict 32/64-bit precision throughout all calculations.
+X86_64_V2_FLAGS = cpu_family == 'x86'? ['-mfpmath=sse'] : ['-mcx16']
 X86_64_V2_NAMES = cpu_family == 'x86'? [] : ['CX16']
 X86_V2 = mod_features.new(
   'X86_V2', 1, args: ['-msse', '-msse2', '-msse3', '-mssse3', '-msse4.1', '-msse4.2',
