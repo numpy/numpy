@@ -1,4 +1,3 @@
-# pylint: disable-msg=W0611, W0612, W0511,R0201
 """Tests suite for MaskedArray & subclassing.
 
 :author: Pierre Gerard-Marchant
