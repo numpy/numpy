@@ -2479,7 +2479,20 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     elif isinstance(y, int):
         y = float(y)
 
+    # atol and rtol can be arrays
+    if not (np.all(np.isfinite(atol)) and np.all(np.isfinite(rtol))):
+        err_s = np.geterr()["invalid"]
+        err_msg = f"One of rtol or atol is not valid, atol: {atol}, rtol: {rtol}"
+
+        if err_s == "warn":
+            warnings.warn(err_msg, RuntimeWarning, stacklevel=2)
+        elif err_s == "raise":
+            raise FloatingPointError(err_msg)
+        elif err_s == "print":
+            print(err_msg)
+              
     with errstate(invalid='ignore'):
+  
         result = (less_equal(abs(x - y), atol + rtol * abs(y))
                   & isfinite(y)
                   | (x == y))

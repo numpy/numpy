@@ -3213,6 +3213,24 @@ class TestIsclose:
         assert np.allclose(a, a, atol=0, equal_nan=True)
         assert np.allclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True)
 
+    def test_tol_warnings(self):
+        a = np.array([1, 2, 3])
+        b = np.array([np.inf, np.nan, 1])
+
+        for i in b:
+            for j in b:
+                # Making sure that i and j are not both numbers, because that won't create a warning
+                if (i == 1) and (j == 1):
+                    continue
+                
+                with warnings.catch_warnings(record=True) as w:
+
+                    warnings.simplefilter("always")
+                    c = np.isclose(a, a, atol=i, rtol=j)
+                    assert len(w) == 1
+                    assert issubclass(w[-1].category, RuntimeWarning)
+                    assert f"One of rtol or atol is not valid, atol: {i}, rtol: {j}" in str(w[-1].message)
+
 
 class TestStdVar:
     def setup_method(self):
