@@ -136,7 +136,7 @@ class NpzFile(Mapping):
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass on to pickle.load.
         These are only useful when loading object arrays saved on
-        Python 2 when using Python 3.
+        Python 2.
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
@@ -338,13 +338,13 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         execute arbitrary code. If pickles are disallowed, loading object
         arrays will fail. Default: False
     fix_imports : bool, optional
-        Only useful when loading Python 2 generated pickled files on Python 3,
+        Only useful when loading Python 2 generated pickled files,
         which includes npy/npz files containing object arrays. If `fix_imports`
         is True, pickle will try to map the old Python 2 names to the new names
         used in Python 3.
     encoding : str, optional
         What encoding to use when reading Python 2 strings. Only useful when
-        loading Python 2 generated pickled files in Python 3, which includes
+        loading Python 2 generated pickled files, which includes
         npy/npz files containing object arrays. Values other than 'latin1',
         'ASCII', and 'bytes' are not allowed, as they can corrupt numerical
         data. Default: 'ASCII'
@@ -526,7 +526,7 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
 
         .. deprecated:: 2.1
             This flag is ignored since NumPy 1.17 and was only needed to
-            support loading some files in Python 2 written in Python 3.
+            support loading in Python 2 some files written in Python 3.
 
     See Also
     --------
