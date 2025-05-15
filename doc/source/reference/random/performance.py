@@ -3,7 +3,7 @@ from timeit import repeat
 import pandas as pd
 
 import numpy as np
-from numpy.random import MT19937, PCG64, PCG64DXSM, Philox, SFC64
+from numpy.random import MT19937, PCG64, PCG64DXSM, SFC64, Philox
 
 PRNGS = [MT19937, PCG64, PCG64DXSM, Philox, SFC64]
 

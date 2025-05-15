@@ -1,6 +1,6 @@
 import builtins
 from collections.abc import Callable
-from typing import Any, overload, Literal
+from typing import Any, Literal, overload
 
 import numpy as np
 from numpy import (
@@ -12,14 +12,13 @@ from numpy import (
     int64,
     int_,
     long,
+    uint,
     uint8,
     uint16,
     uint32,
     uint64,
-    uint,
     ulong,
 )
-from numpy.random.bit_generator import BitGenerator
 from numpy._typing import (
     ArrayLike,
     NDArray,
@@ -41,6 +40,7 @@ from numpy._typing import (
     _UIntCodes,
     _ULongCodes,
 )
+from numpy.random.bit_generator import BitGenerator
 
 class RandomState:
     _bit_generator: BitGenerator

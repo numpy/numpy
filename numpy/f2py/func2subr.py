@@ -11,13 +11,23 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 import copy
 
+from ._isocbind import isoc_kindmap
 from .auxfuncs import (
-    getfortranname, isexternal, isfunction, isfunction_wrap, isintent_in,
-    isintent_out, islogicalfunction, ismoduleroutine, isscalar,
-    issubroutine, issubroutine_wrap, outmess, show
+    getfortranname,
+    isexternal,
+    isfunction,
+    isfunction_wrap,
+    isintent_in,
+    isintent_out,
+    islogicalfunction,
+    ismoduleroutine,
+    isscalar,
+    issubroutine,
+    issubroutine_wrap,
+    outmess,
+    show,
 )
 
-from ._isocbind import isoc_kindmap
 
 def var2fixfortran(vars, a, fa=None, f90mode=None):
     if fa is None:

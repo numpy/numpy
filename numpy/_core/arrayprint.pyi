@@ -3,7 +3,16 @@ from collections.abc import Callable
 # Using a private class is by no means ideal, but it is simply a consequence
 # of a `contextlib.context` returning an instance of aforementioned class
 from contextlib import _GeneratorContextManager
-from typing import Any, Final, Literal, SupportsIndex, TypeAlias, TypedDict, overload, type_check_only
+from typing import (
+    Any,
+    Final,
+    Literal,
+    SupportsIndex,
+    TypeAlias,
+    TypedDict,
+    overload,
+    type_check_only,
+)
 
 from typing_extensions import deprecated
 

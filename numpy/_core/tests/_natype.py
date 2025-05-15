@@ -8,6 +8,7 @@ import numbers
 
 import numpy as np
 
+
 def _create_binary_propagating_op(name, is_divmod=False):
     is_cmp = name.strip("_") in ["eq", "ne", "le", "lt", "ge", "gt"]
 

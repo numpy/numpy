@@ -4,7 +4,13 @@ from typing import Literal as L
 from typing_extensions import TypeVar, deprecated
 
 import numpy as np
-from numpy._typing import ArrayLike, NDArray, _ArrayLike, _ArrayLikeBool_co, _ArrayLikeNumber_co
+from numpy._typing import (
+    ArrayLike,
+    NDArray,
+    _ArrayLike,
+    _ArrayLikeBool_co,
+    _ArrayLikeNumber_co,
+)
 
 __all__ = [
     "ediff1d",

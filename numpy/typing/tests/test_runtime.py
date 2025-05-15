@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 from typing import (
-    get_type_hints,
-    Union,
+    Any,
     NamedTuple,
+    Union,
     get_args,
     get_origin,
-    Any,
+    get_type_hints,
 )
 
 import pytest
+
 import numpy as np
-import numpy.typing as npt
 import numpy._typing as _npt
+import numpy.typing as npt
 
 
 class TypeTup(NamedTuple):

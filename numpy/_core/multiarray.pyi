@@ -1,105 +1,106 @@
 # TODO: Sort out any and all missing functions in this namespace
 import datetime as dt
-from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
-from collections.abc import Sequence, Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from typing import (
-    Literal as L,
     Any,
-    TypeAlias,
-    overload,
-    TypeVar,
-    TypedDict,
-    SupportsIndex,
-    final,
+    ClassVar,
     Final,
     Protocol,
-    ClassVar,
+    SupportsIndex,
+    TypeAlias,
+    TypedDict,
+    TypeVar,
     Unpack,
+    final,
+    overload,
     type_check_only,
 )
+from typing import (
+    Literal as L,
+)
+
+from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
 from typing_extensions import CapsuleType
 
 import numpy as np
 from numpy import (  # type: ignore[attr-defined]
+    _AnyShapeT,
+    _CastingKind,
+    _CopyMode,
+    _ModeKind,
+    _NDIterFlagsKind,
+    _NDIterFlagsOp,
+    _OrderCF,
+    _OrderKACF,
+    _SupportsBuffer,
+    _SupportsFileMethods,
+    broadcast,
     # Re-exports
     busdaycalendar,
-    broadcast,
+    complexfloating,
     correlate,
     count_nonzero,
+    datetime64,
     dtype,
-    einsum as c_einsum,
     flatiter,
+    float64,
+    floating,
     from_dlpack,
+    generic,
+    int_,
     interp,
+    intp,
     matmul,
     ndarray,
     nditer,
-    vecdot,
-
+    signedinteger,
+    str_,
+    timedelta64,
     # The rest
     ufunc,
-    str_,
     uint8,
-    intp,
-    int_,
-    float64,
-    timedelta64,
-    datetime64,
-    generic,
     unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    _AnyShapeT,
-    _OrderKACF,
-    _OrderCF,
-    _CastingKind,
-    _ModeKind,
-    _SupportsBuffer,
-    _SupportsFileMethods,
-    _CopyMode,
-    _NDIterFlagsKind,
-    _NDIterFlagsOp,
+    vecdot,
 )
-from numpy.lib._array_utils_impl import normalize_axis_index
-
+from numpy import (
+    einsum as c_einsum,
+)
 from numpy._typing import (
-    # Shapes
-    _ShapeLike,
-
+    ArrayLike,
     # DTypes
     DTypeLike,
-    _DTypeLike,
-    _SupportsDType,
-
     # Arrays
     NDArray,
-    ArrayLike,
     _ArrayLike,
-    _SupportsArrayFunc,
-    _NestedSequence,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
+    _ArrayLikeBytes_co,
     _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
     _ArrayLikeDT64_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
     _ArrayLikeStr_co,
-    _ArrayLikeBytes_co,
-    _ScalarLike_co,
-    _IntLike_co,
+    _ArrayLikeTD64_co,
+    _ArrayLikeUInt_co,
+    _DTypeLike,
     _FloatLike_co,
+    _IntLike_co,
+    _NestedSequence,
+    _ScalarLike_co,
+    # Shapes
+    _ShapeLike,
+    _SupportsArrayFunc,
+    _SupportsDType,
     _TD64Like_co,
 )
 from numpy._typing._ufunc import (
     _2PTuple,
     _PyFunc_Nin1_Nout1,
+    _PyFunc_Nin1P_Nout2P,
     _PyFunc_Nin2_Nout1,
     _PyFunc_Nin3P_Nout1,
-    _PyFunc_Nin1P_Nout2P,
 )
+from numpy.lib._array_utils_impl import normalize_axis_index
 
 __all__ = [
     "_ARRAY_API",

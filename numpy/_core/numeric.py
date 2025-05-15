@@ -1,33 +1,67 @@
+import builtins
 import functools
 import itertools
+import math
+import numbers
 import operator
 import sys
 import warnings
-import numbers
-import builtins
-import math
 
 import numpy as np
-from . import multiarray
-from . import numerictypes as nt
-from .multiarray import (  # noqa: F401
-    ALLOW_THREADS, BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT,
-    RAISE, WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
-    asfortranarray, broadcast, can_cast, concatenate, copyto, dot, dtype,
-    empty, empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
-    fromstring, inner, lexsort, matmul, may_share_memory, min_scalar_type,
-    ndarray, nditer, nested_iters, promote_types, putmask, result_type,
-    shares_memory, vdot, where, zeros, normalize_axis_index, vecdot
-)
-
-from . import overrides
-from . import umath
-from . import shape_base
-from .overrides import finalize_array_function_like, set_module
-from .umath import (multiply, invert, sin, PINF, NAN)
-from . import numerictypes
 from numpy.exceptions import AxisError
+
+from . import multiarray, numerictypes, overrides, shape_base, umath
+from . import numerictypes as nt
 from ._ufunc_config import errstate
+from .multiarray import (  # noqa: F401
+    ALLOW_THREADS,
+    BUFSIZE,
+    CLIP,
+    MAXDIMS,
+    MAY_SHARE_BOUNDS,
+    MAY_SHARE_EXACT,
+    RAISE,
+    WRAP,
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    ascontiguousarray,
+    asfortranarray,
+    broadcast,
+    can_cast,
+    concatenate,
+    copyto,
+    dot,
+    dtype,
+    empty,
+    empty_like,
+    flatiter,
+    from_dlpack,
+    frombuffer,
+    fromfile,
+    fromiter,
+    fromstring,
+    inner,
+    lexsort,
+    matmul,
+    may_share_memory,
+    min_scalar_type,
+    ndarray,
+    nditer,
+    nested_iters,
+    normalize_axis_index,
+    promote_types,
+    putmask,
+    result_type,
+    shares_memory,
+    vdot,
+    vecdot,
+    where,
+    zeros,
+)
+from .overrides import finalize_array_function_like, set_module
+from .umath import NAN, PINF, invert, multiply, sin
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -2697,16 +2731,14 @@ def extend_all(module):
             __all__.append(a)
 
 
-from .umath import *
-from .numerictypes import *
-from . import fromnumeric
-from .fromnumeric import *
-from . import arrayprint
-from .arrayprint import *
-from . import _asarray
+from . import _asarray, _ufunc_config, arrayprint, fromnumeric
 from ._asarray import *
-from . import _ufunc_config
 from ._ufunc_config import *
+from .arrayprint import *
+from .fromnumeric import *
+from .numerictypes import *
+from .umath import *
+
 extend_all(fromnumeric)
 extend_all(umath)
 extend_all(numerictypes)

@@ -1,10 +1,11 @@
+import importlib
 import os
 import re
 import sys
-import importlib
+from datetime import datetime
+
 from docutils import nodes
 from docutils.parsers.rst import Directive
-from datetime import datetime
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '4.3'
@@ -67,6 +68,7 @@ replace_scalar_type_names()
 # As of NumPy 1.25, a deprecation of `str`/`bytes` attributes happens.
 # For some reasons, the doc build accesses these, so ignore them.
 import warnings
+
 warnings.filterwarnings("ignore", "In the future.*NumPy scalar", FutureWarning)
 
 
@@ -123,6 +125,7 @@ copyright = f'2008-{year}, NumPy Developers'
 # other places throughout the built documents.
 #
 import numpy
+
 # The short X.Y version (including .devXXXX, rcX, b1 suffixes if present)
 version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
 version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
@@ -461,6 +464,7 @@ plot_include_source = True
 plot_formats = [('png', 100), 'pdf']
 
 import math
+
 phi = (math.sqrt(5) + 1) / 2
 
 plot_rcparams = {
@@ -485,7 +489,7 @@ plot_rcparams = {
 # -----------------------------------------------------------------------------
 
 import inspect
-from os.path import relpath, dirname
+from os.path import dirname, relpath
 
 for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
     try:
@@ -581,9 +585,10 @@ def linkcode_resolve(domain, info):
            numpy.__version__, fn, linespec)
 
 
-from pygments.lexers import CLexer
 from pygments.lexer import inherit
+from pygments.lexers import CLexer
 from pygments.token import Comment
+
 
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'

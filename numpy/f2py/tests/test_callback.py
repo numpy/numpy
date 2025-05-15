@@ -1,14 +1,16 @@
 import math
-import textwrap
-import sys
-import pytest
-import threading
-import traceback
-import time
 import platform
+import sys
+import textwrap
+import threading
+import time
+import traceback
+
+import pytest
 
 import numpy as np
 from numpy.testing import IS_PYPY
+
 from . import util
 
 

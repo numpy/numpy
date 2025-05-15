@@ -1,16 +1,23 @@
 """Tests for polynomial module.
 
 """
-from functools import reduce
+import pickle
+from copy import deepcopy
 from fractions import Fraction
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.polynomial as poly
 import numpy.polynomial.polyutils as pu
-import pickle
-from copy import deepcopy
 from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    assert_array_equal, assert_raises_regex, assert_warns)
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+)
 
 
 def trim(x):

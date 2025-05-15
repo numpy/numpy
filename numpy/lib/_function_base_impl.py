@@ -7,30 +7,51 @@ import warnings
 
 import numpy as np
 import numpy._core.numeric as _nx
-from numpy._core import transpose, overrides
-from numpy._core.numeric import (
-    ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
-    ndarray, take, dot, where, intp, integer, isscalar, absolute
-    )
-from numpy._core.umath import (
-    pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, not_equal, subtract, minimum
-    )
-from numpy._core.fromnumeric import (
-    ravel, nonzero, partition, mean, any, sum
-    )
-from numpy._core.numerictypes import typecodes
-from numpy.lib._twodim_base_impl import diag
-from numpy._core.multiarray import (
-    _place, bincount, normalize_axis_index, _monotonicity,
-    interp as compiled_interp, interp_complex as compiled_interp_complex
-    )
+from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
+from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
+from numpy._core.multiarray import _monotonicity, _place, bincount, normalize_axis_index
+from numpy._core.multiarray import interp as compiled_interp
+from numpy._core.multiarray import interp_complex as compiled_interp_complex
+from numpy._core.numeric import (
+    absolute,
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    concatenate,
+    dot,
+    empty,
+    integer,
+    intp,
+    isscalar,
+    ndarray,
+    ones,
+    take,
+    where,
+    zeros_like,
+)
+from numpy._core.numerictypes import typecodes
+from numpy._core.umath import (
+    add,
+    arctan2,
+    cos,
+    exp,
+    frompyfunc,
+    less_equal,
+    minimum,
+    mod,
+    not_equal,
+    pi,
+    sin,
+    sqrt,
+    subtract,
+)
 from numpy._utils import set_module
 
 # needed in this module for compatibility
 from numpy.lib._histograms_impl import histogram, histogramdd  # noqa: F401
-
+from numpy.lib._twodim_base_impl import diag
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')

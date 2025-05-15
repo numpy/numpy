@@ -1,9 +1,9 @@
 """Benchmarks for `numpy.lib`."""
 
 
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Pad(Benchmark):

@@ -1,18 +1,18 @@
 import functools
-import sys
-import sysconfig
-import subprocess
-import pkgutil
-import types
 import importlib
 import inspect
+import pkgutil
+import subprocess
+import sys
+import sysconfig
+import types
 import warnings
 
-import numpy as np
-import numpy
-from numpy.testing import IS_WASM
-
 import pytest
+
+import numpy
+import numpy as np
+from numpy.testing import IS_WASM
 
 try:
     import ctypes
@@ -559,10 +559,11 @@ def test_functions_single_location():
     Test performs BFS search traversing NumPy's public API. It flags
     any function-like object that is accessible from more that one place.
     """
-    from typing import Any
     from collections.abc import Callable
+    from typing import Any
+
     from numpy._core._multiarray_umath import (
-        _ArrayFunctionDispatcher as dispatched_function
+        _ArrayFunctionDispatcher as dispatched_function,
     )
 
     visited_modules: set[types.ModuleType] = {np}

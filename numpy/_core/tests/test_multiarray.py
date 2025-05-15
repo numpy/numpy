@@ -1,44 +1,61 @@
 from __future__ import annotations
 
+import builtins
 import collections.abc
-import tempfile
-import sys
-import warnings
-import operator
+import ctypes
+import functools
+import gc
 import io
 import itertools
-import functools
-import ctypes
-import os
-import gc
-import re
-import weakref
-import pytest
-from contextlib import contextmanager
-import pickle
-import pathlib
-import builtins
-from decimal import Decimal
 import mmap
-
-import numpy as np
-import numpy._core._multiarray_tests as _multiarray_tests
-from numpy._core._rational_tests import rational
-from numpy.exceptions import AxisError, ComplexWarning
-from numpy.testing import (
-    assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
-    assert_array_equal, assert_raises_regex, assert_array_almost_equal,
-    assert_allclose, IS_PYPY, IS_WASM, IS_PYSTON, HAS_REFCOUNT,
-    assert_array_less, runstring, temppath, suppress_warnings, break_cycles,
-    check_support_sve, assert_array_compare, IS_64BIT
-    )
-from numpy.testing._private.utils import requires_memory, _no_tracing
-from numpy._core.tests._locales import CommaDecimalPointLocale
-from numpy.lib.recfunctions import repack_fields
-from numpy._core.multiarray import _get_ndarray_c_version, dot
+import operator
+import os
+import pathlib
+import pickle
+import re
+import sys
+import tempfile
+import warnings
+import weakref
+from contextlib import contextmanager
 
 # Need to test an object that does not fully implement math interface
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
+from decimal import Decimal
+
+import numpy._core._multiarray_tests as _multiarray_tests
+import pytest
+from numpy._core._rational_tests import rational
+
+import numpy as np
+from numpy._core.multiarray import _get_ndarray_c_version, dot
+from numpy._core.tests._locales import CommaDecimalPointLocale
+from numpy.exceptions import AxisError, ComplexWarning
+from numpy.lib.recfunctions import repack_fields
+from numpy.testing import (
+    HAS_REFCOUNT,
+    IS_64BIT,
+    IS_PYPY,
+    IS_PYSTON,
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_compare,
+    assert_array_equal,
+    assert_array_less,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    break_cycles,
+    check_support_sve,
+    runstring,
+    suppress_warnings,
+    temppath,
+)
+from numpy.testing._private.utils import _no_tracing, requires_memory
 
 
 def assert_arg_sorted(arr, arg):
@@ -9585,7 +9602,8 @@ class TestWritebackIfCopy:
 
     def test_view_assign(self):
         from numpy._core._multiarray_tests import (
-            npy_create_writebackifcopy, npy_resolve
+            npy_create_writebackifcopy,
+            npy_resolve,
         )
 
         arr = np.arange(9).reshape(3, 3).T
@@ -9615,7 +9633,8 @@ class TestWritebackIfCopy:
 
     def test_view_discard_refcount(self):
         from numpy._core._multiarray_tests import (
-            npy_create_writebackifcopy, npy_discard
+            npy_create_writebackifcopy,
+            npy_discard,
         )
 
         arr = np.arange(9).reshape(3, 3).T
@@ -10024,7 +10043,12 @@ def test_npymath_complex(fun, npfun, x, y, test_dtype):
 def test_npymath_real():
     # Smoketest npymath functions
     from numpy._core._multiarray_tests import (
-        npy_log10, npy_cosh, npy_sinh, npy_tan, npy_tanh)
+        npy_cosh,
+        npy_log10,
+        npy_sinh,
+        npy_tan,
+        npy_tanh,
+    )
 
     funcs = {npy_log10: np.log10,
              npy_cosh: np.cosh,

@@ -6,12 +6,13 @@ for the various polynomial classes. It operates as a mixin, but uses the
 abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
-import os
 import abc
 import numbers
+import os
 from collections.abc import Callable
 
 import numpy as np
+
 from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']

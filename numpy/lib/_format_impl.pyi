@@ -1,4 +1,4 @@
-from typing import Literal, Final
+from typing import Final, Literal
 
 from numpy.lib._utils_impl import drop_metadata  # noqa: F401
 

@@ -1,15 +1,25 @@
-from typing import overload, TypeAlias
+from typing import TypeAlias, overload
 
 import numpy as np
 from numpy._typing import (
     NDArray,
-    _ArrayLikeStr_co as U_co,
-    _ArrayLikeBytes_co as S_co,
-    _ArrayLikeInt_co as i_co,
-    _ArrayLikeString_co as T_co,
-    _ArrayLikeAnyString_co as UST_co,
     _Shape,
     _SupportsArray,
+)
+from numpy._typing import (
+    _ArrayLikeAnyString_co as UST_co,
+)
+from numpy._typing import (
+    _ArrayLikeBytes_co as S_co,
+)
+from numpy._typing import (
+    _ArrayLikeInt_co as i_co,
+)
+from numpy._typing import (
+    _ArrayLikeStr_co as U_co,
+)
+from numpy._typing import (
+    _ArrayLikeString_co as T_co,
 )
 
 __all__ = [

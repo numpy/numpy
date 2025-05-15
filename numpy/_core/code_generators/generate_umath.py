@@ -3,10 +3,10 @@ Generate the code to build all the internal ufuncs. At the base is the defdict:
 a dictionary ofUfunc classes. This is fed to make_code to generate
 __umath_generated.c
 """
+import argparse
 import os
 import re
 import textwrap
-import argparse
 
 # identity objects
 Zero = "PyLong_FromLong(0)"
@@ -226,6 +226,7 @@ class Ufunc:
 # String-handling utilities to avoid locale-dependence.
 
 import string
+
 UPPER_TABLE = bytes.maketrans(bytes(string.ascii_lowercase, "ascii"),
                               bytes(string.ascii_uppercase, "ascii"))
 

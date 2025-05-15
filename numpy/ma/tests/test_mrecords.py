@@ -9,19 +9,24 @@ import pickle
 
 import numpy as np
 import numpy.ma as ma
+from numpy._core.records import fromarrays as recfromarrays
+from numpy._core.records import fromrecords as recfromrecords
+from numpy._core.records import recarray
 from numpy.ma import masked, nomask
-from numpy.testing import temppath
-from numpy._core.records import (
-    recarray, fromrecords as recfromrecords, fromarrays as recfromarrays
-    )
 from numpy.ma.mrecords import (
-    MaskedRecords, mrecarray, fromarrays, fromtextfile, fromrecords,
-    addfield
-    )
+    MaskedRecords,
+    addfield,
+    fromarrays,
+    fromrecords,
+    fromtextfile,
+    mrecarray,
+)
 from numpy.ma.testutils import (
-    assert_, assert_equal,
+    assert_,
+    assert_equal,
     assert_equal_records,
-    )
+)
+from numpy.testing import temppath
 
 
 class TestMRecords:

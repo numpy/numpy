@@ -1,12 +1,19 @@
-import numpy as np
-
-from numpy import histogram, histogramdd, histogram_bin_edges
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_array_max_ulp, assert_raises_regex, suppress_warnings,
-    )
 import pytest
+
+import numpy as np
+from numpy import histogram, histogram_bin_edges, histogramdd
+from numpy.testing import (
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    suppress_warnings,
+)
 
 
 class TestHistogram:

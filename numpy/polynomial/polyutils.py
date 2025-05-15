@@ -18,12 +18,11 @@ Functions
    mapparms     parameters of the linear map between domains.
 
 """
-import operator
 import functools
+import operator
 import warnings
 
 import numpy as np
-
 from numpy._core.multiarray import dragon4_positional, dragon4_scientific
 from numpy.exceptions import RankWarning
 

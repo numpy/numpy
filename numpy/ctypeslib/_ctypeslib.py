@@ -53,6 +53,7 @@ __all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
            'as_ctypes_type']
 
 import os
+
 import numpy as np
 import numpy._core.multiarray as mu
 from numpy._utils import set_module

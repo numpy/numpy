@@ -1,26 +1,34 @@
-import warnings
-import itertools
-import sys
 import ctypes as ct
+import itertools
 import pickle
+import sys
+import warnings
 
+import numpy._core._operand_flag_tests as opflag_tests
+import numpy._core._rational_tests as _rational_tests
+import numpy._core._umath_tests as umt
 import pytest
 from pytest import param
 
 import numpy as np
 import numpy._core.umath as ncu
-import numpy._core._umath_tests as umt
 import numpy.linalg._umath_linalg as uml
-import numpy._core._operand_flag_tests as opflag_tests
-import numpy._core._rational_tests as _rational_tests
 from numpy.exceptions import AxisError
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM, IS_PYPY,
-    )
+    HAS_REFCOUNT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+    suppress_warnings,
+)
 from numpy.testing._private.utils import requires_memory
-
 
 UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values()
                     if isinstance(obj, np.ufunc)]

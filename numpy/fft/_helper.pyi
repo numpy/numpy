@@ -2,7 +2,14 @@ from typing import Any, Final, TypeVar, overload
 from typing import Literal as L
 
 from numpy import complexfloating, floating, generic, integer
-from numpy._typing import ArrayLike, NDArray, _ArrayLike, _ArrayLikeComplex_co, _ArrayLikeFloat_co, _ShapeLike
+from numpy._typing import (
+    ArrayLike,
+    NDArray,
+    _ArrayLike,
+    _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ShapeLike,
+)
 
 __all__ = ["fftfreq", "fftshift", "ifftshift", "rfftfreq"]
 

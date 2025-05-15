@@ -1,6 +1,7 @@
 
 import numpy as np
-from numpy.testing import assert_, assert_equal, assert_array_equal
+from numpy.testing import assert_, assert_array_equal, assert_equal
+
 
 def buffer_length(arr):
     if isinstance(arr, str):

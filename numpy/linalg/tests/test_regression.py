@@ -4,10 +4,14 @@
 import pytest
 
 import numpy as np
-from numpy import linalg, arange, float64, array, dot, transpose
+from numpy import arange, array, dot, float64, linalg, transpose
 from numpy.testing import (
-    assert_, assert_raises, assert_equal, assert_array_equal,
-    assert_array_almost_equal, assert_array_less
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_less,
+    assert_equal,
+    assert_raises,
 )
 
 

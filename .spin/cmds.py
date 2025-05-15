@@ -1,6 +1,6 @@
+import importlib
 import os
 import pathlib
-import importlib
 import shutil
 import subprocess
 import sys
@@ -48,8 +48,8 @@ def changelog(token, revision_range):
     $ spin authors -t $GH_TOKEN --revision-range v1.25.0..v1.26.0
     """
     try:
-        from github.GithubException import GithubException
         from git.exc import GitError
+        from github.GithubException import GithubException
         changelog = _get_numpy_tools(pathlib.Path('changelog.py'))
     except ModuleNotFoundError as e:
         raise click.ClickException(
@@ -263,6 +263,7 @@ def _set_mem_rlimit(max_mem=None):
     Set address space rlimit
     """
     import resource
+
     import psutil
 
     mem = psutil.virtual_memory()

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Literal as L, Any
+from typing import Any
+from typing import Literal as L
 
 from numpy import ufunc
 

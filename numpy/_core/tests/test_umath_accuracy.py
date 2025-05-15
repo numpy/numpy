@@ -1,12 +1,14 @@
-import numpy as np
 import os
-from os import path
 import sys
+from ctypes import POINTER, c_double, c_float, c_int, c_longlong, cast, pointer
+from os import path
+
 import pytest
-from ctypes import c_longlong, c_double, c_float, c_int, cast, pointer, POINTER
+from numpy._core._multiarray_umath import __cpu_features__
+
+import numpy as np
 from numpy.testing import assert_array_max_ulp
 from numpy.testing._private.utils import _glibc_older_than
-from numpy._core._multiarray_umath import __cpu_features__
 
 UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values() if
         isinstance(obj, np.ufunc)]

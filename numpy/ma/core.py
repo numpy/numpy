@@ -24,20 +24,30 @@ import builtins
 import functools
 import inspect
 import operator
-import warnings
-import textwrap
 import re
+import textwrap
+import warnings
 
 import numpy as np
-import numpy._core.umath as umath
 import numpy._core.numerictypes as ntypes
+import numpy._core.umath as umath
+from numpy import (
+    _NoValue,
+    amax,
+    amin,
+    angle,
+    bool_,
+    expand_dims,
+    finfo,  # noqa: F401
+    iinfo,  # noqa: F401
+    iscomplexobj,
+    ndarray,
+)
+from numpy import array as narray  # noqa: F401
 from numpy._core import multiarray as mu
-from numpy import ndarray, amax, amin, iscomplexobj, bool_, _NoValue, angle
-from numpy import array as narray, expand_dims, iinfo, finfo  # noqa: F401
 from numpy._core.numeric import normalize_axis_tuple
-from numpy._utils._inspect import getargspec, formatargspec
 from numpy._utils import set_module
-
+from numpy._utils._inspect import formatargspec, getargspec
 
 __all__ = [
     'MAError', 'MaskError', 'MaskType', 'MaskedArray', 'abs', 'absolute',
