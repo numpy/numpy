@@ -6,7 +6,6 @@ import subprocess
 import sys
 
 import pytest
-
 from numpy._core._multiarray_umath import (
     __cpu_baseline__,
     __cpu_dispatch__,
