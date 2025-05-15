@@ -1,23 +1,23 @@
 from collections.abc import Sequence
-from typing import TypeAlias, TypeVar, Any, overload, Literal
+from typing import Any, Literal, TypeAlias, TypeVar, overload
 
 import numpy as np
-from numpy import number, _OrderKACF
+from numpy import _OrderKACF, number
 from numpy._typing import (
     NDArray,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUInt_co,
     _DTypeLikeBool,
-    _DTypeLikeUInt,
-    _DTypeLikeInt,
-    _DTypeLikeFloat,
     _DTypeLikeComplex,
     _DTypeLikeComplex_co,
+    _DTypeLikeFloat,
+    _DTypeLikeInt,
     _DTypeLikeObject,
+    _DTypeLikeUInt,
 )
 
 __all__ = ["einsum", "einsum_path"]

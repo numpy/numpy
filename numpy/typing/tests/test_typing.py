@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-
 # Only trigger a full `mypy` run if this environment variable is set
 # Note that these tests tend to take over a minute even on a macOS M1 CPU,
 # and more than that in CI.
@@ -34,6 +33,7 @@ else:
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
     # We need this as annotation, but it's located in a private namespace.
     # As a compromise, do *not* import it during runtime
     from _pytest.mark.structures import ParameterSet

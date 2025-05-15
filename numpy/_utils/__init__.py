@@ -11,7 +11,8 @@ in ``numpy._core``.
 import functools
 import sys
 import warnings
-from ._convertions import asunicode, asbytes
+
+from ._convertions import asbytes, asunicode
 
 
 def set_module(module):

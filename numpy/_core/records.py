@@ -7,6 +7,7 @@ from collections import Counter
 from contextlib import nullcontext
 
 from numpy._utils import set_module
+
 from . import numeric as sb
 from . import numerictypes as nt
 from .arrayprint import _get_legacy_print_mode

@@ -1,37 +1,52 @@
 from typing import (
-    Literal as L,
-    overload,
-    TypeAlias,
     Any,
     SupportsIndex,
     SupportsInt,
+    TypeAlias,
+    overload,
 )
+from typing import (
+    Literal as L,
+)
+
 from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import (
-    ndarray,
-    dtype,
-    str_,
-    bytes_,
-    int_,
-    object_,
     _OrderKACF,
+    _SupportsArray,
     _SupportsBuffer,
-    _SupportsArray
+    bytes_,
+    dtype,
+    int_,
+    ndarray,
+    object_,
+    str_,
 )
+from numpy._core.multiarray import compare_chararrays
 from numpy._typing import (
     NDArray,
     _Shape,
     _ShapeLike,
-    _ArrayLikeStr_co as U_co,
-    _ArrayLikeBytes_co as S_co,
-    _ArrayLikeString_co as T_co,
+)
+from numpy._typing import (
     _ArrayLikeAnyString_co as UST_co,
-    _ArrayLikeInt_co as i_co,
+)
+from numpy._typing import (
     _ArrayLikeBool_co as b_co,
 )
-from numpy._core.multiarray import compare_chararrays
+from numpy._typing import (
+    _ArrayLikeBytes_co as S_co,
+)
+from numpy._typing import (
+    _ArrayLikeInt_co as i_co,
+)
+from numpy._typing import (
+    _ArrayLikeStr_co as U_co,
+)
+from numpy._typing import (
+    _ArrayLikeString_co as T_co,
+)
 
 __all__ = [
     "equal",

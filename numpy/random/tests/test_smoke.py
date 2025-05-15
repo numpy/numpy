@@ -1,10 +1,12 @@
 import pickle
 from functools import partial
 
-import numpy as np
 import pytest
-from numpy.testing import assert_equal, assert_, assert_array_equal
-from numpy.random import (Generator, MT19937, PCG64, PCG64DXSM, Philox, SFC64)
+
+import numpy as np
+from numpy.random import MT19937, PCG64, PCG64DXSM, SFC64, Generator, Philox
+from numpy.testing import assert_, assert_array_equal, assert_equal
+
 
 @pytest.fixture(scope='module',
                 params=(np.bool, np.int8, np.int16, np.int32, np.int64,

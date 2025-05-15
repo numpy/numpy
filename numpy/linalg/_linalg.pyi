@@ -1,39 +1,47 @@
 from collections.abc import Iterable
-from typing import Any, NamedTuple, Never, SupportsIndex, SupportsInt, TypeAlias, TypeVar, overload
+from typing import (
+    Any,
+    NamedTuple,
+    Never,
+    SupportsIndex,
+    SupportsInt,
+    TypeAlias,
+    TypeVar,
+    overload,
+)
 from typing import Literal as L
 
 import numpy as np
 from numpy import (
-    # re-exports
-    vecdot,
-
+    complex128,
+    complexfloating,
+    float64,
     # other
     floating,
-    complexfloating,
-    signedinteger,
-    unsignedinteger,
-    timedelta64,
-    object_,
     int32,
-    float64,
-    complex128,
+    object_,
+    signedinteger,
+    timedelta64,
+    unsignedinteger,
+    # re-exports
+    vecdot,
 )
-from numpy.linalg import LinAlgError
 from numpy._core.fromnumeric import matrix_transpose
 from numpy._core.numeric import tensordot
 from numpy._typing import (
-    NDArray,
     ArrayLike,
     DTypeLike,
+    NDArray,
     _ArrayLike,
     _ArrayLikeBool_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
+    _ArrayLikeTD64_co,
+    _ArrayLikeUInt_co,
 )
+from numpy.linalg import LinAlgError
 
 __all__ = [
     "matrix_power",

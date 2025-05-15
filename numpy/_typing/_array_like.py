@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Collection, Callable, Sequence
-from typing import Any, Protocol, TypeAlias, TypeVar, runtime_checkable, TYPE_CHECKING
+from collections.abc import Callable, Collection, Sequence
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar, runtime_checkable
 
 import numpy as np
 from numpy import dtype
+
 from ._nbit_base import _32Bit, _64Bit
 from ._nested_sequence import _NestedSequence
 from ._shape import _Shape

@@ -25,6 +25,7 @@ extend-select = [
     "PIE",
     "TID",
     "FLY",
+    "I",
     "E",
     "W",
     "PGH",
@@ -55,15 +56,14 @@ ignore = [
 "test*.py" = ["E201", "E714"]
 
 "benchmarks/*py" = ["E501"]
-"numpy/_build_utils/*py" = ["E501"]
 "numpy/_core/tests/**" = ["E501"]
 "numpy/_core/_add_newdocs.py" = ["E501"]
 "numpy/_core/_add_newdocs_scalars.py" = ["E501"]
 "numpy/_core/code_generators/generate_umath.py" = ["E501"]
 "numpy/_typing/*py" = ["E501"]
-"numpy/lib/*py" = ["E501"]
+"numpy/lib/tests/*py" = ["E501"]
 "numpy/linalg/tests/*py" = ["E501"]
-"numpy/ma/*py" = ["E501"]
+"numpy/ma/tests/*py" = ["E501"]
 "numpy/tests/*py" = ["E501"]
 "numpy*pyi" = ["E501"]
 "numpy/f2py/*py" = ["E501"]

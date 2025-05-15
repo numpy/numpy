@@ -10,18 +10,24 @@ import functools
 import re
 import warnings
 
-from numpy._utils import set_module
 import numpy._core.numeric as NX
-
-from numpy._core import (isscalar, abs, finfo, atleast_1d, hstack, dot, array,
-                        ones)
-from numpy._core import overrides
+from numpy._core import (
+    abs,
+    array,
+    atleast_1d,
+    dot,
+    finfo,
+    hstack,
+    isscalar,
+    ones,
+    overrides,
+)
+from numpy._utils import set_module
 from numpy.exceptions import RankWarning
-from numpy.lib._twodim_base_impl import diag, vander
 from numpy.lib._function_base_impl import trim_zeros
-from numpy.lib._type_check_impl import iscomplex, real, imag, mintypecode
-from numpy.linalg import eigvals, lstsq, inv
-
+from numpy.lib._twodim_base_impl import diag, vander
+from numpy.lib._type_check_impl import imag, iscomplex, mintypecode, real
+from numpy.linalg import eigvals, inv, lstsq
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')

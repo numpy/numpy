@@ -1,31 +1,41 @@
 from collections.abc import Callable, Sequence
 from typing import (
-    TypeVar,
     Any,
-    overload,
-    SupportsIndex,
-    Protocol,
-    ParamSpec,
     Concatenate,
+    ParamSpec,
+    Protocol,
+    SupportsIndex,
+    TypeVar,
+    overload,
     type_check_only,
 )
 
 from typing_extensions import deprecated
 
 import numpy as np
-from numpy import _CastingKind, generic, integer, ufunc, unsignedinteger, signedinteger, floating, complexfloating, object_
+from numpy import (
+    _CastingKind,
+    complexfloating,
+    floating,
+    generic,
+    integer,
+    object_,
+    signedinteger,
+    ufunc,
+    unsignedinteger,
+)
 from numpy._typing import (
     ArrayLike,
     DTypeLike,
     NDArray,
-    _ShapeLike,
     _ArrayLike,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUInt_co,
+    _ShapeLike,
 )
 
 __all__ = [

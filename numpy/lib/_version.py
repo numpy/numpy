@@ -7,7 +7,6 @@ work; they don't recognize anything like alpha/beta/rc/dev versions.
 """
 import re
 
-
 __all__ = ['NumpyVersion']
 
 

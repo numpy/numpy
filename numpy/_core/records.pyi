@@ -1,13 +1,30 @@
 # ruff: noqa: ANN401
 # pyright: reportSelfClsParameterName=false
 from collections.abc import Iterable, Sequence
-from typing import Any, ClassVar, Literal, Protocol, SupportsIndex, TypeAlias, TypeVar, overload, type_check_only
+from typing import (
+    Any,
+    ClassVar,
+    Literal,
+    Protocol,
+    SupportsIndex,
+    TypeAlias,
+    TypeVar,
+    overload,
+    type_check_only,
+)
 
 from _typeshed import StrOrBytesPath
 
 import numpy as np
 from numpy import _ByteOrder, _OrderKACF, _SupportsBuffer
-from numpy._typing import ArrayLike, DTypeLike, NDArray, _ArrayLikeVoid_co, _NestedSequence, _ShapeLike
+from numpy._typing import (
+    ArrayLike,
+    DTypeLike,
+    NDArray,
+    _ArrayLikeVoid_co,
+    _NestedSequence,
+    _ShapeLike,
+)
 
 __all__ = [
     "array",

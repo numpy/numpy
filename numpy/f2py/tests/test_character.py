@@ -1,8 +1,10 @@
-import pytest
 import textwrap
-from numpy.testing import assert_array_equal, assert_equal, assert_raises
+
+import pytest
+
 import numpy as np
 from numpy.f2py.tests import util
+from numpy.testing import assert_array_equal, assert_equal, assert_raises
 
 
 @pytest.mark.slow

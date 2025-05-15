@@ -274,20 +274,26 @@ Test the header writing.
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
-import sys
 import os
+import sys
 import warnings
-import pytest
 from io import BytesIO
 
-import numpy as np
-from numpy.testing import (
-    assert_, assert_array_equal, assert_raises, assert_raises_regex,
-    assert_warns, IS_PYPY, IS_WASM, IS_64BIT
-    )
-from numpy.testing._private.utils import requires_memory
-from numpy.lib import format
+import pytest
 
+import numpy as np
+from numpy.lib import format
+from numpy.testing import (
+    IS_64BIT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+)
+from numpy.testing._private.utils import requires_memory
 
 # Generate some basic arrays to test with.
 scalars = [

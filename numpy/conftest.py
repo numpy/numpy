@@ -5,16 +5,16 @@ import os
 import string
 import sys
 import tempfile
-from contextlib import contextmanager
 import warnings
+from contextlib import contextmanager
 
 import hypothesis
 import pytest
+
 import numpy
 import numpy as np
-
 from numpy._core._multiarray_tests import get_fpu_mode
-from numpy._core.tests._natype import pd_NA, get_stringdtype_dtype
+from numpy._core.tests._natype import get_stringdtype_dtype, pd_NA
 from numpy.testing._private.utils import NOGIL_BUILD
 
 try:

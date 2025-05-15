@@ -1,4 +1,5 @@
-from typing import Final, Literal as L
+from typing import Final
+from typing import Literal as L
 
 import numpy as np
 

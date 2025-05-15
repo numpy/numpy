@@ -33,12 +33,19 @@ __all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
 import functools
 import warnings
 
+from numpy._core import (
+    asarray,
+    conjugate,
+    empty_like,
+    overrides,
+    reciprocal,
+    result_type,
+    sqrt,
+    take,
+)
 from numpy.lib.array_utils import normalize_axis_index
-from numpy._core import (asarray, empty_like, result_type,
-                         conjugate, take, sqrt, reciprocal)
-from . import _pocketfft_umath as pfu
-from numpy._core import overrides
 
+from . import _pocketfft_umath as pfu
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy.fft')

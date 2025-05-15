@@ -1,20 +1,22 @@
 import inspect
-import sys
 import os
+import pickle
+import sys
 import tempfile
 from io import StringIO
 from unittest import mock
-import pickle
 
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex)
-from numpy.testing.overrides import get_overridable_numpy_array_functions
 from numpy._core.overrides import (
-    _get_implementing_args, array_function_dispatch,
-    verify_matching_signatures)
+    _get_implementing_args,
+    array_function_dispatch,
+    verify_matching_signatures,
+)
+from numpy.testing import assert_, assert_equal, assert_raises, assert_raises_regex
+from numpy.testing.overrides import get_overridable_numpy_array_functions
+
 
 def _return_not_implemented(self, *args, **kwargs):
     return NotImplemented

@@ -3,9 +3,7 @@ import sys
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_raises, assert_array_equal, HAS_REFCOUNT
-    )
+from numpy.testing import HAS_REFCOUNT, assert_, assert_array_equal, assert_raises
 
 
 class TestTake:

@@ -2,34 +2,31 @@
 Utility function to facilitate testing.
 
 """
+import concurrent.futures
+import contextlib
+import gc
+import importlib.metadata
+import operator
 import os
-import sys
 import pathlib
 import platform
+import pprint
 import re
-import gc
-import operator
+import shutil
+import sys
+import sysconfig
+import threading
 import warnings
 from functools import partial, wraps
-import shutil
-import contextlib
+from io import StringIO
 from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
 from warnings import WarningMessage
-import pprint
-import sysconfig
-import concurrent.futures
-import threading
-import importlib.metadata
 
 import numpy as np
-from numpy._core import (
-     intp, float32, empty, arange, array_repr, ndarray, isnat, array)
-from numpy import isfinite, isnan, isinf
 import numpy.linalg._umath_linalg
-
-from io import StringIO
-
+from numpy import isfinite, isinf, isnan
+from numpy._core import arange, array, array_repr, empty, float32, intp, isnat, ndarray
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
@@ -69,7 +66,8 @@ else:
             IS_EDITABLE = np_dist.origin.dir_info.editable
         else:
             # Backport importlib.metadata.Distribution.origin
-            import json, types  # noqa: E401
+            import json  # noqa: E401
+            import types
             origin = json.loads(
                 np_dist.read_text('direct_url.json') or '{}',
                 object_hook=lambda data: types.SimpleNamespace(**data),
@@ -364,8 +362,8 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
             assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}',
                          verbose)
         return
-    from numpy._core import ndarray, isscalar, signbit
-    from numpy import iscomplexobj, real, imag
+    from numpy import imag, iscomplexobj, real
+    from numpy._core import isscalar, ndarray, signbit
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose,
                                   strict=strict)
@@ -569,8 +567,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
+    from numpy import imag, iscomplexobj, real
     from numpy._core import ndarray
-    from numpy import iscomplexobj, real, imag
 
     # Handle complex numbers: separate into real/imag to handle
     # nan/inf/negative zero correctly
@@ -727,8 +725,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False, names=('ACTUAL', 'DESIRED')):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy._core import (array2string, isnan, inf, errstate,
-                            all, max, object_)
+    from numpy._core import all, array2string, errstate, inf, isnan, max, object_
 
     x = np.asanyarray(x)
     y = np.asanyarray(y)
@@ -1133,8 +1130,8 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy._core import number, result_type
-    from numpy._core.numerictypes import issubdtype
     from numpy._core.fromnumeric import any as npany
+    from numpy._core.numerictypes import issubdtype
 
     def compare(x, y):
         try:
@@ -1380,8 +1377,9 @@ def rundocs(filename=None, raise_on_error=True):
 
     >>> np.lib.test(doctests=True)  # doctest: +SKIP
     """
-    from numpy.distutils.misc_util import exec_mod_from_location
     import doctest
+
+    from numpy.distutils.misc_util import exec_mod_from_location
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
@@ -1583,6 +1581,7 @@ def _assert_valid_refcount(op):
         return True
 
     import gc
+
     import numpy as np
 
     b = np.arange(100 * 100).reshape(100, 100)

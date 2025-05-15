@@ -1,23 +1,30 @@
 import contextlib
-import sys
-import warnings
 import itertools
 import operator
 import platform
-from numpy._utils import _pep440
+import sys
+import warnings
+
 import pytest
 from hypothesis import given, settings
-from hypothesis.strategies import sampled_from
 from hypothesis.extra import numpy as hynp
+from hypothesis.strategies import sampled_from
+from numpy._core._rational_tests import rational
 
 import numpy as np
+from numpy._utils import _pep440
 from numpy.exceptions import ComplexWarning
-from numpy._core._rational_tests import rational
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_almost_equal,
-    assert_array_equal, IS_PYPY, suppress_warnings, _gen_alignment_data,
+    IS_PYPY,
+    _gen_alignment_data,
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
     check_support_sve,
-    )
+    suppress_warnings,
+)
 
 types = [np.bool, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
          np.int_, np.uint, np.longlong, np.ulonglong,
