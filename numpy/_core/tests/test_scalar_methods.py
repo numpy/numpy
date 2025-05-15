@@ -153,7 +153,7 @@ class TestTruncate:
     def test_edgcases_float(self, code, limit):
         dtype = np.dtype(code).type
         value = getattr(np.finfo(dtype), limit)
-        assert math.trunc(dtype(value)) == math.trunc(float(value))
+        assert math.trunc(dtype(value)) == int(value)
 
     @pytest.mark.parametrize("str_value, exception_class, match", [
         ("inf", OverflowError, "cannot convert (float|longdouble) infinity to integer"),
