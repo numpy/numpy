@@ -29,9 +29,9 @@ can use ``__name='tmpl.html'`` to set the name of the template.
 If there are syntax errors ``TemplateError`` will be raised.
 """
 
+import os
 import re
 import sys
-import os
 import tokenize
 from io import StringIO
 
@@ -726,7 +726,7 @@ def parse(s, name=None, line_offset=0, delimiters=None):
         >>> parse('{{py:x=1}}')
         [('py', (1, 3), 'x=1')]
         >>> parse('{{if x}}a{{elif y}}b{{else}}c{{endif}}')
-        [('cond', (1, 3), ('if', (1, 3), 'x', ['a']), ('elif', (1, 12), 'y', ['b']), ('else', (1, 23), None, ['c']))]  # noqa: E501
+        [('cond', (1, 3), ('if', (1, 3), 'x', ['a']), ('elif', (1, 12), 'y', ['b']), ('else', (1, 23), None, ['c']))]
 
     Some exceptions::
 
@@ -758,7 +758,7 @@ def parse(s, name=None, line_offset=0, delimiters=None):
         Traceback (most recent call last):
             ...
         TemplateError: Multi-line py blocks must start with a newline at line 1 column 3
-    """
+    """   # noqa: E501
     if delimiters is None:
         delimiters = (
             Template.default_namespace["start_braces"],
@@ -1064,10 +1064,11 @@ strings.
 
 
 def fill_command(args=None):
-    import sys
     import optparse
-    import pkg_resources
     import os
+    import sys
+
+    import pkg_resources
 
     if args is None:
         args = sys.argv[1:]

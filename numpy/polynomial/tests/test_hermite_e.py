@@ -7,8 +7,11 @@ import numpy as np
 import numpy.polynomial.hermite_e as herme
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+    assert_,
+    assert_almost_equal,
+    assert_equal,
+    assert_raises,
+)
 
 He0 = np.array([1])
 He1 = np.array([0, 1])

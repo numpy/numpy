@@ -20,9 +20,7 @@ from typing import NamedTuple
 
 import numpy as np
 from numpy._core import overrides
-from numpy._core._multiarray_umath import _array_converter
-from numpy._core._multiarray_umath import _unique_hash
-
+from numpy._core._multiarray_umath import _array_converter, _unique_hash
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')

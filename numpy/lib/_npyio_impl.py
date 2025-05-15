@@ -1,33 +1,41 @@
 """
 IO related functions.
 """
-import os
-import re
+import contextlib
 import functools
 import itertools
+import operator
+import os
+import pickle
+import re
 import warnings
 import weakref
-import contextlib
-import operator
-from operator import itemgetter
 from collections.abc import Mapping
-import pickle
+from operator import itemgetter
 
 import numpy as np
+from numpy._core import overrides
+from numpy._core._multiarray_umath import _load_from_filelike
+from numpy._core.multiarray import packbits, unpackbits
+from numpy._core.overrides import finalize_array_function_like, set_module
+from numpy._utils import asbytes, asunicode
+
 from . import format
 from ._datasource import DataSource  # noqa: F401
 from ._format_impl import _MAX_HEADER_SIZE
-from numpy._core import overrides
-from numpy._core.multiarray import packbits, unpackbits
-from numpy._core._multiarray_umath import _load_from_filelike
-from numpy._core.overrides import finalize_array_function_like, set_module
 from ._iotools import (
-    LineSplitter, NameValidator, StringConverter, ConverterError,
-    ConverterLockError, ConversionWarning, _is_string_like,
-    has_nested_fields, flatten_dtype, easy_dtype, _decode_line
-    )
-from numpy._utils import asunicode, asbytes
-
+    ConversionWarning,
+    ConverterError,
+    ConverterLockError,
+    LineSplitter,
+    NameValidator,
+    StringConverter,
+    _decode_line,
+    _is_string_like,
+    easy_dtype,
+    flatten_dtype,
+    has_nested_fields,
+)
 
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'load', 'save', 'savez',
@@ -2302,7 +2310,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     try:
                         converter.upgrade(value)
                     except (ConverterError, ValueError):
-                        errmsg += f"(occurred line #{j + 1 + skip_header} for value '{value}')"
+                        line_number = j + 1 + skip_header
+                        errmsg += f"(occurred line #{line_number} for value '{value}')"
                         raise ConverterError(errmsg)
 
     # Check that we don't have invalid values

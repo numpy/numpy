@@ -1,15 +1,21 @@
+import sys
 import warnings
 
 import pytest
 
 import numpy as np
-from numpy.testing import (
-        assert_, assert_raises, assert_equal, assert_warns,
-        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings, IS_WASM
-        )
 from numpy import random
-import sys
+from numpy.testing import (
+    IS_WASM,
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+    assert_warns,
+    suppress_warnings,
+)
 
 
 class TestSeed:

@@ -2,18 +2,22 @@ import functools
 import warnings
 
 import numpy._core.numeric as _nx
-from numpy._core.numeric import asarray, zeros, zeros_like, array, asanyarray
+from numpy._core import atleast_3d, overrides, vstack
+from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import reshape, transpose
 from numpy._core.multiarray import normalize_axis_index
-from numpy._core._multiarray_umath import _array_converter
-from numpy._core import overrides
-from numpy._core import vstack, atleast_3d
-from numpy._core.numeric import normalize_axis_tuple
+from numpy._core.numeric import (
+    array,
+    asanyarray,
+    asarray,
+    normalize_axis_tuple,
+    zeros,
+    zeros_like,
+)
 from numpy._core.overrides import set_module
 from numpy._core.shape_base import _arrays_for_stack_dispatcher
 from numpy.lib._index_tricks_impl import ndindex
 from numpy.matrixlib.defmatrix import matrix  # this raises all the right alarm bells
-
 
 __all__ = [
     'column_stack', 'row_stack', 'dstack', 'array_split', 'split',

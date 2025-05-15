@@ -1,13 +1,12 @@
-import itertools
 import contextlib
+import itertools
 import operator
+
+import numpy._core._multiarray_tests as mt
 import pytest
 
 import numpy as np
-import numpy._core._multiarray_tests as mt
-
-from numpy.testing import assert_raises, assert_equal
-
+from numpy.testing import assert_equal, assert_raises
 
 INT64_MAX = np.iinfo(np.int64).max
 INT64_MIN = np.iinfo(np.int64).min

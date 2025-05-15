@@ -1,8 +1,9 @@
 import sys
+
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal, IS_PYPY
+from numpy.testing import IS_PYPY, assert_array_equal
 
 
 def new_and_old_dlpack():

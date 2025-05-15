@@ -1,12 +1,13 @@
-from datetime import datetime
 import os
 import subprocess
 import sys
-import pytest
 import sysconfig
+from datetime import datetime
+
+import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal, IS_WASM, IS_EDITABLE
+from numpy.testing import IS_EDITABLE, IS_WASM, assert_array_equal
 
 # This import is copied from random.tests.test_extending
 try:

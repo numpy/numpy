@@ -123,8 +123,9 @@ def _hist_bin_stone(x, range):
     """
     Histogram bin estimator based on minimizing the estimated integrated squared error (ISE).
 
-    The number of bins is chosen by minimizing the estimated ISE against the unknown true distribution.
-    The ISE is estimated using cross-validation and can be regarded as a generalization of Scott's rule.
+    The number of bins is chosen by minimizing the estimated ISE against the unknown
+    true distribution. The ISE is estimated using cross-validation and can be regarded
+    as a generalization of Scott's rule.
     https://en.wikipedia.org/wiki/Histogram#Scott.27s_normal_reference_rule
 
     This paper by Stone appears to be the origination of this rule.
@@ -141,7 +142,7 @@ def _hist_bin_stone(x, range):
     Returns
     -------
     h : An estimate of the optimal bin width for the given data.
-    """
+    """  # noqa: E501
 
     n = x.size
     ptp_x = _ptp(x)
@@ -405,7 +406,8 @@ def _get_bin_edges(a, bins, range, weights):
             if width:
                 if np.issubdtype(a.dtype, np.integer) and width < 1:
                     width = 1
-                n_equal_bins = int(np.ceil(_unsigned_subtract(last_edge, first_edge) / width))
+                delta = _unsigned_subtract(last_edge, first_edge)
+                n_equal_bins = int(np.ceil(delta / width))
             else:
                 # Width can be zero for some estimators, e.g. FD when
                 # the IQR of the data is zero.

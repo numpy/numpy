@@ -1,69 +1,69 @@
 # NOTE: Numpy's mypy plugin is used for importing the correct
 # platform-specific `ctypes._SimpleCData[int]` sub-type
 import ctypes
-from ctypes import c_int64 as _c_intp
-
-from _typeshed import StrOrBytesPath
 from collections.abc import Iterable, Sequence
+from ctypes import c_int64 as _c_intp
 from typing import (
-    Literal as L,
     Any,
+    ClassVar,
+    Generic,
     TypeAlias,
     TypeVar,
-    Generic,
     overload,
-    ClassVar,
 )
+from typing import (
+    Literal as L,
+)
+
+from _typeshed import StrOrBytesPath
 
 import numpy as np
 from numpy import (
-    ndarray,
+    byte,
+    double,
     dtype,
     generic,
-    byte,
-    short,
     intc,
     long,
+    longdouble,
     longlong,
+    ndarray,
+    short,
+    single,
     ubyte,
-    ushort,
     uintc,
     ulong,
     ulonglong,
-    single,
-    double,
-    longdouble,
+    ushort,
     void,
 )
 from numpy._core._internal import _ctypes
 from numpy._core.multiarray import flagsobj
 from numpy._typing import (
+    # DTypes
+    DTypeLike,
     # Arrays
     NDArray,
     _ArrayLike,
-
+    _BoolCodes,
+    _ByteCodes,
+    _DoubleCodes,
+    _DTypeLike,
+    _IntCCodes,
+    _LongCodes,
+    _LongDoubleCodes,
+    _LongLongCodes,
     # Shapes
     _Shape,
     _ShapeLike,
-
-    # DTypes
-    DTypeLike,
-    _DTypeLike,
-    _VoidDTypeLike,
-    _BoolCodes,
+    _ShortCodes,
+    _SingleCodes,
     _UByteCodes,
-    _UShortCodes,
     _UIntCCodes,
     _ULongCodes,
     _ULongLongCodes,
-    _ByteCodes,
-    _ShortCodes,
-    _IntCCodes,
-    _LongCodes,
-    _LongLongCodes,
-    _SingleCodes,
-    _DoubleCodes,
-    _LongDoubleCodes,
+    _UShortCodes,
+    _VoidDTypeLike,
 )
 
 __all__ = ["load_library", "ndpointer", "c_intp", "as_ctypes", "as_array", "as_ctypes_type"]

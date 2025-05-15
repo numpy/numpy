@@ -2,13 +2,28 @@ import abc
 import decimal
 import numbers
 from collections.abc import Iterator, Mapping, Sequence
-from typing import Any, ClassVar, Generic, Literal, LiteralString, Self, SupportsIndex, TypeAlias, overload
+from typing import (
+    Any,
+    ClassVar,
+    Generic,
+    Literal,
+    LiteralString,
+    Self,
+    SupportsIndex,
+    TypeAlias,
+    overload,
+)
 
 from typing_extensions import TypeIs, TypeVar
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _ArrayLikeComplex_co, _ArrayLikeFloat_co, _FloatLike_co, _NumberLike_co
+from numpy._typing import (
+    _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _FloatLike_co,
+    _NumberLike_co,
+)
 
 from ._polytypes import (
     _AnyInt,

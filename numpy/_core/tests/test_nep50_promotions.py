@@ -6,13 +6,12 @@ is adopted in the main test suite.  A few may be moved elsewhere.
 
 import operator
 
-import numpy as np
-
-import pytest
 import hypothesis
+import pytest
 from hypothesis import strategies
 
-from numpy.testing import assert_array_equal, IS_WASM
+import numpy as np
+from numpy.testing import IS_WASM, assert_array_equal
 
 
 @pytest.mark.skipif(IS_WASM, reason="wasm doesn't have support for fp errors")

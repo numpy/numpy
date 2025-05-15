@@ -8,7 +8,6 @@ from numpy.testing import (
     )
 from numpy._core.tests._locales import CommaDecimalPointLocale
 
-
 LD_INFO = np.finfo(np.longdouble)
 longdouble_longer_than_double = (LD_INFO.eps < np.finfo(np.double).eps)
 

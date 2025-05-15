@@ -22,12 +22,12 @@ Functions
 """
 import functools
 import warnings
+
 import numpy as np
 import numpy._core.numeric as _nx
+from numpy._core import overrides
 from numpy.lib import _function_base_impl as fnb
 from numpy.lib._function_base_impl import _weights_are_valid
-from numpy._core import overrides
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')

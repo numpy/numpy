@@ -3,10 +3,11 @@
 """
 __docformat__ = "restructuredtext en"
 
+import itertools
+
 import numpy as np
 import numpy._core.numeric as nx
 from numpy._utils import asbytes, asunicode
-import itertools
 
 
 def _decode_line(line, encoding=None):

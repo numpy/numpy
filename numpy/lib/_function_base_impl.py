@@ -7,30 +7,51 @@ import warnings
 
 import numpy as np
 import numpy._core.numeric as _nx
-from numpy._core import transpose, overrides
-from numpy._core.numeric import (
-    ones, zeros_like, arange, concatenate, array, asarray, asanyarray, empty,
-    ndarray, take, dot, where, intp, integer, isscalar, absolute
-    )
-from numpy._core.umath import (
-    pi, add, arctan2, frompyfunc, cos, less_equal, sqrt, sin,
-    mod, exp, not_equal, subtract, minimum
-    )
-from numpy._core.fromnumeric import (
-    ravel, nonzero, partition, mean, any, sum
-    )
-from numpy._core.numerictypes import typecodes
-from numpy.lib._twodim_base_impl import diag
-from numpy._core.multiarray import (
-    _place, bincount, normalize_axis_index, _monotonicity,
-    interp as compiled_interp, interp_complex as compiled_interp_complex
-    )
+from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
+from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
+from numpy._core.multiarray import _monotonicity, _place, bincount, normalize_axis_index
+from numpy._core.multiarray import interp as compiled_interp
+from numpy._core.multiarray import interp_complex as compiled_interp_complex
+from numpy._core.numeric import (
+    absolute,
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    concatenate,
+    dot,
+    empty,
+    integer,
+    intp,
+    isscalar,
+    ndarray,
+    ones,
+    take,
+    where,
+    zeros_like,
+)
+from numpy._core.numerictypes import typecodes
+from numpy._core.umath import (
+    add,
+    arctan2,
+    cos,
+    exp,
+    frompyfunc,
+    less_equal,
+    minimum,
+    mod,
+    not_equal,
+    pi,
+    sin,
+    sqrt,
+    subtract,
+)
 from numpy._utils import set_module
 
 # needed in this module for compatibility
 from numpy.lib._histograms_impl import histogram, histogramdd  # noqa: F401
-
+from numpy.lib._twodim_base_impl import diag
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -996,7 +1017,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
            the corresponding dimension
         4. Any combination of N scalars/arrays with the meaning of 2. and 3.
 
-        If `axis` is given, the number of varargs must equal the number of axes specified in the axis parameter.
+        If `axis` is given, the number of varargs must equal the number of axes
+        specified in the axis parameter.
         Default: 1. (see Examples below).
 
     edge_order : {1, 2}, optional
@@ -1292,7 +1314,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             shape[axis] = -1
             a.shape = b.shape = c.shape = shape
             # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
+                                                + c * f[tuple(slice4)]
 
         # Numerical differentiation: 1st order edges
         if edge_order == 1:
@@ -1327,7 +1350,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 b = (dx1 + dx2) / (dx1 * dx2)
                 c = - dx1 / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[0] = a * f[0] + b * f[1] + c * f[2]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
+                                                        + c * f[tuple(slice4)]
 
             slice1[axis] = -1
             slice2[axis] = -3
@@ -1344,7 +1368,8 @@ def gradient(f, *varargs, axis=None, edge_order=1):
                 b = - (dx2 + dx1) / (dx1 * dx2)
                 c = (2. * dx2 + dx1) / (dx2 * (dx1 + dx2))
             # 1D equivalent -- out[-1] = a * f[-3] + b * f[-2] + c * f[-1]
-            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] + c * f[tuple(slice4)]
+            out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
+                                                        + c * f[tuple(slice4)]
 
         outvals.append(out)
 

@@ -1,11 +1,11 @@
-import numpy as np
-import pytest
-from numpy.random import random
-from numpy.testing import (
-        assert_array_equal, assert_raises, assert_allclose, IS_WASM
-        )
-import threading
 import queue
+import threading
+
+import pytest
+
+import numpy as np
+from numpy.random import random
+from numpy.testing import IS_WASM, assert_allclose, assert_array_equal, assert_raises
 
 
 def fft1(x):

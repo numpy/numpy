@@ -11,40 +11,33 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import (
+    _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
     _FloatLike_co,
     _NumberLike_co,
-
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
 )
 
 from ._polytypes import (
     _AnyInt,
-    _CoefLike_co,
-
     _Array2,
-    _Tuple2,
-
-    _FloatSeries,
-    _CoefSeries,
-    _ComplexSeries,
-    _ObjectSeries,
-
-    _ComplexArray,
-    _FloatArray,
-    _CoefArray,
-    _ObjectArray,
-
-    _SeriesLikeInt_co,
-    _SeriesLikeFloat_co,
-    _SeriesLikeComplex_co,
-    _SeriesLikeCoef_co,
-
     _ArrayLikeCoef_co,
-
+    _CoefArray,
+    _CoefLike_co,
+    _CoefSeries,
+    _ComplexArray,
+    _ComplexSeries,
+    _FloatArray,
+    _FloatSeries,
     _FuncBinOp,
     _FuncValND,
     _FuncVanderND,
+    _ObjectArray,
+    _ObjectSeries,
+    _SeriesLikeCoef_co,
+    _SeriesLikeComplex_co,
+    _SeriesLikeFloat_co,
+    _SeriesLikeInt_co,
+    _Tuple2,
 )
 
 __all__: Final[Sequence[str]] = [

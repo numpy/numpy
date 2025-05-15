@@ -1,26 +1,34 @@
+import itertools
+import math
+import platform
 import sys
 import warnings
-import itertools
-import platform
-import pytest
-import math
 from decimal import Decimal
 
+import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis.extra import numpy as hynp
+from numpy._core._rational_tests import rational
+
 import numpy as np
+from numpy import ma
 from numpy._core import sctypes
 from numpy._core.numerictypes import obj2sctype
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
-    )
-from numpy._core._rational_tests import rational
-from numpy import ma
-
-from hypothesis import given, strategies as st
-from hypothesis.extra import numpy as hynp
+    HAS_REFCOUNT,
+    IS_WASM,
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestResize:

@@ -7,13 +7,13 @@ import warnings
 
 import numpy as np
 from numpy._utils import set_module
+
+from . import _methods, overrides
 from . import multiarray as mu
-from . import overrides
-from . import umath as um
 from . import numerictypes as nt
-from .multiarray import asarray, asanyarray, concatenate
+from . import umath as um
 from ._multiarray_umath import _array_converter
-from . import _methods
+from .multiarray import asanyarray, asarray, concatenate
 
 _dt_ = nt.sctype2char
 
