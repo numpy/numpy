@@ -356,13 +356,13 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
         for k, i in desired.items():
             if k not in actual:
                 raise AssertionError(repr(k))
-            assert_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}',
+            assert_equal(actual[k], i, f'key={k!r}\n{err_msg}',
                          verbose)
         return
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
         assert_equal(len(actual), len(desired), err_msg, verbose)
-        for k in range(len(desired)):
-            assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}',
+        for k, i in enumerate(desired):
+            assert_equal(actual[k], i, f'item={k!r}\n{err_msg}',
                          verbose)
         return
     from numpy import imag, iscomplexobj, real

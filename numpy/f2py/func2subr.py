@@ -77,7 +77,7 @@ def var2fixfortran(vars, a, fa=None, f90mode=None):
 
 def useiso_c_binding(rout):
     useisoc = False
-    for key, value in rout['vars'].items():
+    for value in rout['vars'].values():
         kind_value = value.get('kindselector', {}).get('kind')
         if kind_value in isoc_kindmap:
             return True

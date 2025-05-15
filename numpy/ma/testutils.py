@@ -124,7 +124,7 @@ def assert_equal(actual, desired, err_msg=''):
         for k, i in desired.items():
             if k not in actual:
                 raise AssertionError(f"{k} not in {actual}")
-            assert_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}')
+            assert_equal(actual[k], i, f'key={k!r}\n{err_msg}')
         return
     # Case #2: lists .....
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
@@ -162,12 +162,12 @@ def fail_if_equal(actual, desired, err_msg='',):
         for k, i in desired.items():
             if k not in actual:
                 raise AssertionError(repr(k))
-            fail_if_equal(actual[k], desired[k], f'key={k!r}\n{err_msg}')
+            fail_if_equal(actual[k], i, f'key={k!r}\n{err_msg}')
         return
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
         fail_if_equal(len(actual), len(desired), err_msg)
-        for k in range(len(desired)):
-            fail_if_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}')
+        for k, i in enumerate(desired):
+            fail_if_equal(actual[k], i, f'item={k!r}\n{err_msg}')
         return
     if isinstance(actual, np.ndarray) or isinstance(desired, np.ndarray):
         return fail_if_array_equal(actual, desired, err_msg)
