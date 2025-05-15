@@ -10,13 +10,14 @@ import ctypes
 import enum
 import random
 import textwrap
+import warnings
 
 import pytest
 
 import numpy as np
 from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 from numpy.lib.stride_tricks import as_strided
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_equal
 
 # Simple skips object, parametric and long double (unsupported by struct)
 simple_dtypes = "?bhilqBHILQefdFD"
@@ -76,6 +77,7 @@ class Casting(enum.IntEnum):
     safe = 2
     same_kind = 3
     unsafe = 4
+    same_value = 5
 
 
 def _get_cancast_table():
@@ -815,3 +817,43 @@ class TestCasting:
         res = nonstandard_bools.astype(dtype)
         expected = [0, 1, 1]
         assert_array_equal(res, expected)
+
+    @pytest.mark.parametrize("to_dtype",
+            # cast to complex (AllFloat)
+            np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
+    @pytest.mark.parametrize("from_dtype",
+            np.typecodes["AllInteger"] + np.typecodes["Float"])
+    def test_same_value(self, from_dtype, to_dtype):
+        if from_dtype == to_dtype:
+            return
+        top1 = 0
+        top2 = 0
+        try:
+            top1 = np.iinfo(from_dtype).max
+        except ValueError:
+            top1 = np.finfo(from_dtype).max
+        try:
+            top2 = np.iinfo(to_dtype).max
+        except ValueError:
+            top2 = np.finfo(to_dtype).max
+        # No need to test if top2 > top1, since the test will also do the reverse dtype matching.
+        # Catch then warning if the comparison warns, i.e. np.int16(65535) < np.float16(6.55e4)
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always", RuntimeWarning)
+            if top2 >= top1:
+                # will be tested when the dtypes are reversed
+                return
+        # Happy path
+        arr1 = np.array([0] * 10, dtype=from_dtype)
+        arr2 = np.array([0] * 10, dtype=to_dtype)
+        assert_equal(arr1.astype(to_dtype, casting='same_value'), arr2, strict=True)
+        arr1[0] = top1
+        if 1:
+        # with pytest.raises(ValueError):
+            # Casting float to float with overflow should raise RuntimeWarning (fperror)
+            # Casting float to int with overflow sometimes raises RuntimeWarning (fperror)
+            # Casting with overflow  and 'same_value', should raise ValueError
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always", RuntimeWarning)
+                arr1.astype(to_dtype, casting='same_value')
+            assert len(w) < 2

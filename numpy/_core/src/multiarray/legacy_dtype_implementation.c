@@ -399,7 +399,7 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
          * casting; this is not correct, but needed since the treatment in can_cast
          * below got out of sync with astype; see gh-13667.
          */
-        if ((casting == NPY_UNSAFE_CASTING || (casting == NPY_SAME_VALUE_CASTING)) {
+        if (casting == NPY_UNSAFE_CASTING || casting == NPY_SAME_VALUE_CASTING) {
             return 1;
         }
     }
@@ -408,14 +408,14 @@ PyArray_LegacyCanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
          * If "from" is a simple data type and "to" has fields, then only
          * unsafe casting works (and that works always, even to multiple fields).
          */
-        return ((casting == NPY_UNSAFE_CASTING || (casting == NPY_SAME_VALUE_CASTING));
+        return (casting == NPY_UNSAFE_CASTING || casting == NPY_SAME_VALUE_CASTING);
     }
     /*
      * Everything else we consider castable for unsafe for now.
      * FIXME: ensure what we do here is consistent with "astype",
      * i.e., deal more correctly with subarrays and user-defined dtype.
      */
-    else if ((casting == NPY_UNSAFE_CASTING || (casting == NPY_SAME_VALUE_CASTING)) {
+    else if (casting == NPY_UNSAFE_CASTING || casting == NPY_SAME_VALUE_CASTING) {
         return 1;
     }
     /*

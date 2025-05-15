@@ -965,7 +965,7 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
     return string_converter_helper(
         obj, (void *)casting, casting_parser, "casting",
             "must be one of 'no', 'equiv', 'safe', "
-            "'same_kind', "same_value", or 'unsafe'");
+            "'same_kind', 'unsafe', or 'same_value'");
     return 0;
 }
 
