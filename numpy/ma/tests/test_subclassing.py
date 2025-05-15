@@ -3,7 +3,6 @@
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: test_subclassing.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
 import numpy as np

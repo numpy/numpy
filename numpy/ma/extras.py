@@ -5,7 +5,6 @@ A collection of utilities for `numpy.ma`.
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
 __all__ = [
