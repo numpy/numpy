@@ -63,7 +63,7 @@ table = table.reindex(list(funcs), axis=0)
 print(table.to_csv(float_format='%0.1f'))
 
 
-rel = table.loc[:, ['RandomState']].values @ np.ones(
+rel = table.loc[:, ['RandomState']].to_numpy() @ np.ones(
     (1, table.shape[1])) / table
 rel.pop('RandomState')
 rel = rel.T
@@ -77,7 +77,7 @@ print(rel.to_csv(float_format='%0d'))
 rows = ['32-bit Unsigned Ints', '64-bit Unsigned Ints', 'Uniforms',
         'Normals', 'Exponentials']
 xplat = rel.reindex(rows, axis=0)
-xplat = 100 * (xplat / xplat.MT19937.values[:, None])
+xplat = 100 * (xplat / xplat.MT19937.to_numpy()[:, None])
 overall = np.exp(np.log(xplat).mean(0))
 xplat = xplat.T.copy()
 xplat['Overall'] = overall
