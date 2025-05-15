@@ -215,13 +215,8 @@ from typing import (
 # if not available at runtime. This is because the `typeshed` stubs for the standard
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
-<<<<<<< HEAD
 from _typeshed import Incomplete, StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, TypeVar
-=======
-from _typeshed import StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
 from typing_extensions import deprecated, CapsuleType, TypeVar
->>>>>>> 10ccc58f0b (DEP: Deprecate setting the strides attribute of a numpy array)
 
 from numpy import (
     char,

@@ -19,35 +19,19 @@ import warnings
 import weakref
 from contextlib import contextmanager
 
-import numpy as np
-import numpy._core._multiarray_tests as _multiarray_tests
-from numpy._core._rational_tests import rational
-from numpy.exceptions import AxisError, ComplexWarning
-from numpy.testing import (
-    assert_, assert_raises, assert_warns, assert_equal, assert_almost_equal,
-    assert_array_equal, assert_raises_regex, assert_array_almost_equal,
-    assert_allclose, IS_PYPY, IS_WASM, IS_PYSTON, HAS_REFCOUNT,
-    assert_array_less, runstring, temppath, suppress_warnings, break_cycles,
-    check_support_sve, assert_array_compare, IS_64BIT
-    )
-from numpy.testing._private.utils import requires_memory, _no_tracing
-from numpy._core.tests._locales import CommaDecimalPointLocale
-from numpy.lib.recfunctions import repack_fields
-from numpy._core.multiarray import _get_ndarray_c_version, dot
-from numpy.lib import stride_tricks
-
 # Need to test an object that does not fully implement math interface
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-import numpy._core._multiarray_tests as _multiarray_tests
 import pytest
-from numpy._core._rational_tests import rational
 
 import numpy as np
+import numpy._core._multiarray_tests as _multiarray_tests
+from numpy._core._rational_tests import rational
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.exceptions import AxisError, ComplexWarning
+from numpy.lib import stride_tricks
 from numpy.lib.recfunctions import repack_fields
 from numpy.testing import (
     HAS_REFCOUNT,

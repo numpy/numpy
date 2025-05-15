@@ -32,6 +32,7 @@ from numpy.testing import (
 )
 from numpy.testing._private.utils import _no_tracing, requires_memory
 
+
 class TestRegression:
     def test_invalid_round(self):
         # Ticket #3
