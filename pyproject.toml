@@ -189,6 +189,11 @@ config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=b
 repair-wheel-command = ""
 
 [[tool.cibuildwheel.overrides]]
+select = "*-win_arm64"
+config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=build"
+repair-wheel-command = ""
+
+[[tool.cibuildwheel.overrides]]
 select = "*pyodide*"
 before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
 # Pyodide ensures that the wheels are already repaired by auditwheel-emscripten

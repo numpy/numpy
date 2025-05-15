@@ -20,14 +20,14 @@ nxs, nys = 100, 100
 TYPES1 = [
     'int16', 'float16',
     'int32', 'float32',
-    'int64', 'float64',  'complex64',
+    'int64', 'float64', 'complex64',
     'complex128',
 ]
 
 DLPACK_TYPES = [
     'int16', 'float16',
     'int32', 'float32',
-    'int64', 'float64',  'complex64',
+    'int64', 'float64', 'complex64',
     'complex128', 'bool',
 ]
 

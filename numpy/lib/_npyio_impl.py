@@ -15,7 +15,7 @@ import pickle
 
 import numpy as np
 from . import format
-from ._datasource import DataSource
+from ._datasource import DataSource  # noqa: F401
 from ._format_impl import _MAX_HEADER_SIZE
 from numpy._core import overrides
 from numpy._core.multiarray import packbits, unpackbits
@@ -136,7 +136,7 @@ class NpzFile(Mapping):
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass on to pickle.load.
         These are only useful when loading object arrays saved on
-        Python 2 when using Python 3.
+        Python 2.
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
@@ -338,13 +338,13 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         execute arbitrary code. If pickles are disallowed, loading object
         arrays will fail. Default: False
     fix_imports : bool, optional
-        Only useful when loading Python 2 generated pickled files on Python 3,
+        Only useful when loading Python 2 generated pickled files,
         which includes npy/npz files containing object arrays. If `fix_imports`
         is True, pickle will try to map the old Python 2 names to the new names
         used in Python 3.
     encoding : str, optional
         What encoding to use when reading Python 2 strings. Only useful when
-        loading Python 2 generated pickled files in Python 3, which includes
+        loading Python 2 generated pickled files, which includes
         npy/npz files containing object arrays. Values other than 'latin1',
         'ASCII', and 'bytes' are not allowed, as they can corrupt numerical
         data. Default: 'ASCII'
@@ -526,7 +526,7 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
 
         .. deprecated:: 2.1
             This flag is ignored since NumPy 1.17 and was only needed to
-            support loading some files in Python 2 written in Python 3.
+            support loading in Python 2 some files written in Python 3.
 
     See Also
     --------
@@ -779,7 +779,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):
         key = 'arr_%d' % i
         if key in namedict.keys():
             raise ValueError(
-                "Cannot use un-named variables and keyword %s" % key)
+                f"Cannot use un-named variables and keyword {key}")
         namedict[key] = val
 
     if compress:
@@ -948,8 +948,8 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
     dtype = np.dtype(dtype)
 
     read_dtype_via_object_chunks = None
-    if dtype.kind in 'SUM' and (
-            dtype == "S0" or dtype == "U0" or dtype == "M8" or dtype == 'm8'):
+    if dtype.kind in 'SUM' and dtype in {
+            np.dtype("S0"), np.dtype("U0"), np.dtype("M8"), np.dtype("m8")}:
         # This is a legacy "flexible" dtype.  We do not truly support
         # parametric dtypes currently (no dtype discovery step in the core),
         # but have to support these for backward compatibility.
@@ -985,13 +985,12 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             if isinstance(comments[0], str) and len(comments[0]) == 1:
                 comment = comments[0]
                 comments = None
-        else:
-            # Input validation if there are multiple comment characters
-            if delimiter in comments:
-                raise TypeError(
-                    f"Comment characters '{comments}' cannot include the "
-                    f"delimiter '{delimiter}'"
-                )
+        # Input validation if there are multiple comment characters
+        elif delimiter in comments:
+            raise TypeError(
+                f"Comment characters '{comments}' cannot include the "
+                f"delimiter '{delimiter}'"
+            )
 
     # comment is now either a 1 or 0 character string or a tuple:
     if comments is not None:
@@ -1594,14 +1593,14 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
         if type(fmt) in (list, tuple):
             if len(fmt) != ncol:
-                raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
+                raise AttributeError(f'fmt has wrong shape.  {str(fmt)}')
             format = delimiter.join(fmt)
         elif isinstance(fmt, str):
             n_fmt_chars = fmt.count('%')
-            error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
+            error = ValueError(f'fmt has wrong number of % formats:  {fmt}')
             if n_fmt_chars == 1:
                 if iscomplex_X:
-                    fmt = [' (%s+%sj)' % (fmt, fmt), ] * ncol
+                    fmt = [f' ({fmt}+{fmt}j)', ] * ncol
                 else:
                     fmt = [fmt, ] * ncol
                 format = delimiter.join(fmt)
@@ -1612,7 +1611,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             else:
                 format = fmt
         else:
-            raise ValueError('invalid fmt: %r' % (fmt,))
+            raise ValueError(f'invalid fmt: {fmt!r}')
 
         if len(header) > 0:
             header = header.replace('\n', '\n' + comments)
@@ -1621,8 +1620,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             for row in X:
                 row2 = []
                 for number in row:
-                    row2.append(number.real)
-                    row2.append(number.imag)
+                    row2.extend((number.real, number.imag))
                 s = format % tuple(row2) + newline
                 fh.write(s.replace('+-', '-'))
         else:
@@ -2028,7 +2026,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             first_line = ''
             first_values = []
             warnings.warn(
-                'genfromtxt: Empty input file: "%s"' % fname, stacklevel=2
+                f'genfromtxt: Empty input file: "{fname}"', stacklevel=2
             )
 
         # Should we take the first values as names ?
@@ -2298,14 +2296,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             try:
                 converter.iterupgrade(current_column)
             except ConverterLockError:
-                errmsg = "Converter #%i is locked and cannot be upgraded: " % i
+                errmsg = f"Converter #{i} is locked and cannot be upgraded: "
                 current_column = map(itemgetter(i), rows)
                 for (j, value) in enumerate(current_column):
                     try:
                         converter.upgrade(value)
                     except (ConverterError, ValueError):
-                        errmsg += "(occurred line #%i for value '%s')"
-                        errmsg %= (j + 1 + skip_header, value)
+                        errmsg += f"(occurred line #{j + 1 + skip_header} for value '{value}')"
                         raise ConverterError(errmsg)
 
     # Check that we don't have invalid values
@@ -2313,7 +2310,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     if nbinvalid > 0:
         nbrows = len(rows) + nbinvalid - skip_footer
         # Construct the error message
-        template = "    Line #%%i (got %%i columns instead of %i)" % nbcols
+        template = f"    Line #%i (got %i columns instead of {nbcols})"
         if skip_footer > 0:
             nbinvalid_skipped = len([_ for _ in invalid
                                      if _[0] > nbrows + skip_header])
@@ -2385,7 +2382,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     column_types[i] = np.bytes_
 
         # Update string types to be the right length
-        sized_column_types = column_types[:]
+        sized_column_types = column_types.copy()
         for i, col_type in enumerate(column_types):
             if np.issubdtype(col_type, np.character):
                 n_chars = max(len(row[i]) for row in data)

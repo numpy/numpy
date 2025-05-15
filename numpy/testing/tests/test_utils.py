@@ -1526,7 +1526,7 @@ def assert_warn_len_equal(mod, n_in_context):
     num_warns = len(mod_warns)
 
     if 'version' in mod_warns:
-        # Python 3 adds a 'version' entry to the registry,
+        # Python adds a 'version' entry to the registry,
         # do not count it.
         num_warns -= 1
 

@@ -198,8 +198,7 @@ def fft(a, n=None, axis=-1, norm=None, out=None):
     >>> t = np.arange(256)
     >>> sp = np.fft.fft(np.sin(t))
     >>> freq = np.fft.fftfreq(t.shape[-1])
-    >>> plt.plot(freq, sp.real, freq, sp.imag)
-    [<matplotlib.lines.Line2D object at 0x...>, <matplotlib.lines.Line2D object at 0x...>]
+    >>> _ = plt.plot(freq, sp.real, freq, sp.imag)
     >>> plt.show()
 
     """

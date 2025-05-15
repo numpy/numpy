@@ -13,7 +13,7 @@ from ._multiarray_umath import *  # noqa: F403
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
-from ._multiarray_umath import (
+from ._multiarray_umath import (  # noqa: F401
     _flagdict, from_dlpack, _place, _reconstruct,
     _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
     _get_madvise_hugepage, _set_madvise_hugepage,
@@ -173,7 +173,7 @@ def empty_like(
     array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
-    """   # NOQA
+    """
     return (prototype,)
 
 

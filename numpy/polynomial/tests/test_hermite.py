@@ -120,10 +120,10 @@ class TestEvaluation:
     y = polyval(x, [1., 2., 3.])
 
     def test_hermval(self):
-        #check empty input
+        # check empty input
         assert_equal(herm.hermval([], [1]).size, 0)
 
-        #check normal input)
+        # check normal input)
         x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Hlist]
         for i in range(10):
@@ -132,7 +132,7 @@ class TestEvaluation:
             res = herm.hermval(x, [0] * i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)
 
-        #check that shape is preserved
+        # check that shape is preserved
         for i in range(3):
             dims = [2] * i
             x = np.zeros(dims)
@@ -144,15 +144,15 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test exceptions
+        # test exceptions
         assert_raises(ValueError, herm.hermval2d, x1, x2[:2], self.c2d)
 
-        #test values
+        # test values
         tgt = y1 * y2
         res = herm.hermval2d(x1, x2, self.c2d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = herm.hermval2d(z, z, self.c2d)
         assert_(res.shape == (2, 3))
@@ -161,15 +161,15 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test exceptions
+        # test exceptions
         assert_raises(ValueError, herm.hermval3d, x1, x2, x3[:2], self.c3d)
 
-        #test values
+        # test values
         tgt = y1 * y2 * y3
         res = herm.hermval3d(x1, x2, x3, self.c3d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = herm.hermval3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
@@ -178,12 +178,12 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test values
+        # test values
         tgt = np.einsum('i,j->ij', y1, y2)
         res = herm.hermgrid2d(x1, x2, self.c2d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = herm.hermgrid2d(z, z, self.c2d)
         assert_(res.shape == (2, 3) * 2)
@@ -192,12 +192,12 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test values
+        # test values
         tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
         res = herm.hermgrid3d(x1, x2, x3, self.c3d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = herm.hermgrid3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3) * 3)

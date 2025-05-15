@@ -5,14 +5,10 @@
 
 namespace np::highway::qsort_simd {
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "highway_qsort.dispatch.h"
-#endif
+#include "highway_qsort.dispatch.h"
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size))
 
-#ifndef NPY_DISABLE_OPTIMIZATION
-    #include "highway_qsort_16bit.dispatch.h"
-#endif
+#include "highway_qsort_16bit.dispatch.h"
 NPY_CPU_DISPATCH_DECLARE(template <typename T> void QSort, (T *arr, npy_intp size))
 
 } // np::highway::qsort_simd

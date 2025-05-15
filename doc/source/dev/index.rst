@@ -256,6 +256,7 @@ The rest of the story
    howto_build_docs
    development_workflow
    development_advanced_debugging
+   development_ghcodespaces
    reviewer_guidelines
    ../benchmarking
    NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>

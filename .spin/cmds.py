@@ -193,7 +193,7 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
     """  # noqa: E501
     try:
         # prevent obscure error later
-        import scipy_doctest
+        import scipy_doctest  # noqa: F401
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError("scipy-doctest not installed") from e
 
@@ -615,7 +615,8 @@ def notes(version_override):
     )
 
     try:
-        test_notes = _get_numpy_tools(pathlib.Path('ci', 'test_all_newsfragments_used.py'))
+        cmd = pathlib.Path('ci', 'test_all_newsfragments_used.py')
+        test_notes = _get_numpy_tools(cmd)
     except ModuleNotFoundError as e:
         raise click.ClickException(
             f"{e.msg}. Install the missing packages to use this command."

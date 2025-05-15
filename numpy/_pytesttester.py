@@ -37,9 +37,9 @@ __all__ = ['PytestTester']
 def _show_numpy_info():
     import numpy as np
 
-    print("NumPy version %s" % np.__version__)
+    print(f"NumPy version {np.__version__}")
     info = np.lib._utils_impl._opt_info()
-    print("NumPy CPU features: ", (info if info else 'nothing enabled'))
+    print("NumPy CPU features: ", (info or 'nothing enabled'))
 
 
 class PytestTester:
@@ -141,7 +141,7 @@ class PytestTester:
                 # Filter out distutils cpu warnings (could be localized to
                 # distutils tests). ASV has problems with top level import,
                 # so fetch module for suppression here.
-                from numpy.distutils import cpuinfo
+                from numpy.distutils import cpuinfo  # noqa: F401
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.
@@ -182,7 +182,7 @@ class PytestTester:
             pytest_args += ["-m", label]
 
         if durations >= 0:
-            pytest_args += ["--durations=%s" % durations]
+            pytest_args += [f"--durations={durations}"]
 
         if tests is None:
             tests = [self.module_name]

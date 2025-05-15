@@ -162,8 +162,6 @@ PUBLIC_ALIASED_MODULES = [
 
 
 PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
-    "compat",
-    "compat.py3k",
     "conftest",
     "core",
     "core.multiarray",
@@ -272,10 +270,10 @@ def is_unexpected(name):
     """Check if this needs to be considered."""
     return (
         '._' not in name and '.tests' not in name and '.setup' not in name
-		and name not in PUBLIC_MODULES
-		and name not in PUBLIC_ALIASED_MODULES
-		and name not in PRIVATE_BUT_PRESENT_MODULES
-	)
+        and name not in PUBLIC_MODULES
+        and name not in PUBLIC_ALIASED_MODULES
+        and name not in PRIVATE_BUT_PRESENT_MODULES
+    )
 
 
 if sys.version_info >= (3, 12):
@@ -284,8 +282,6 @@ else:
     SKIP_LIST = ["numpy.distutils.msvc9compiler"]
 
 
-# suppressing warnings from deprecated modules
-@pytest.mark.filterwarnings("ignore:.*np.compat.*:DeprecationWarning")
 def test_all_modules_are_expected():
     """
     Test that we don't add anything that looks like a new public module by
@@ -378,7 +374,7 @@ def test_all_modules_are_expected_2():
 
     if unexpected_members:
         raise AssertionError("Found unexpected object(s) that look like "
-                             "modules: {}".format(unexpected_members))
+                             f"modules: {unexpected_members}")
 
 
 def test_api_importable():
@@ -404,7 +400,7 @@ def test_api_importable():
 
     if module_names:
         raise AssertionError("Modules in the public API that cannot be "
-                             "imported: {}".format(module_names))
+                             f"imported: {module_names}")
 
     for module_name in PUBLIC_ALIASED_MODULES:
         try:
@@ -414,7 +410,7 @@ def test_api_importable():
 
     if module_names:
         raise AssertionError("Modules in the public API that were not "
-                             "found: {}".format(module_names))
+                             f"found: {module_names}")
 
     with warnings.catch_warnings(record=True) as w:
         warnings.filterwarnings('always', category=DeprecationWarning)
@@ -426,7 +422,7 @@ def test_api_importable():
     if module_names:
         raise AssertionError("Modules that are not really public but looked "
                              "public and can not be imported: "
-                             "{}".format(module_names))
+                             f"{module_names}")
 
 
 @pytest.mark.xfail(
@@ -448,14 +444,7 @@ def test_array_api_entry_point():
     numpy_in_sitepackages = sysconfig.get_path('platlib') in np.__file__
 
     eps = importlib.metadata.entry_points()
-    try:
-        xp_eps = eps.select(group="array_api")
-    except AttributeError:
-        # The select interface for entry_points was introduced in py3.10,
-        # deprecating its dict interface. We fallback to dict keys for finding
-        # Array API entry points so that running this test in <=3.9 will
-        # still work - see https://github.com/numpy/numpy/pull/19800.
-        xp_eps = eps.get("array_api", [])
+    xp_eps = eps.select(group="array_api")
     if len(xp_eps) == 0:
         if numpy_in_sitepackages:
             msg = "No entry points for 'array_api' found"
@@ -570,20 +559,21 @@ def test_functions_single_location():
     Test performs BFS search traversing NumPy's public API. It flags
     any function-like object that is accessible from more that one place.
     """
-    from typing import Any, Callable, Dict, List, Set, Tuple
+    from typing import Any
+    from collections.abc import Callable
     from numpy._core._multiarray_umath import (
         _ArrayFunctionDispatcher as dispatched_function
     )
 
-    visited_modules: Set[types.ModuleType] = {np}
-    visited_functions: Set[Callable[..., Any]] = set()
+    visited_modules: set[types.ModuleType] = {np}
+    visited_functions: set[Callable[..., Any]] = set()
     # Functions often have `__name__` overridden, therefore we need
     # to keep track of locations where functions have been found.
-    functions_original_paths: Dict[Callable[..., Any], str] = {}
+    functions_original_paths: dict[Callable[..., Any], str] = {}
 
     # Here we aggregate functions with more than one location.
     # It must be empty for the test to pass.
-    duplicated_functions: List[Tuple] = []
+    duplicated_functions: list[tuple] = []
 
     modules_queue = [np]
 
@@ -789,8 +779,7 @@ def test___qualname___and___module___attribute():
                 inspect.ismodule(member) and  # it's a module
                 "numpy" in member.__name__ and  # inside NumPy
                 not member_name.startswith("_") and  # not private
-                member_name != "tests" and
-                member_name != "typing" and  # 2024-12: type names don't match
+                member_name not in {"tests", "typing"} and  # 2024-12: type names don't match
                 "numpy._core" not in member.__name__ and  # outside _core
                 member not in visited_modules  # not visited yet
             ):

@@ -137,7 +137,7 @@ add_newdoc('NDArray', repr(NDArray),
         >>> import numpy.typing as npt
 
         >>> print(npt.NDArray)
-        numpy.ndarray[tuple[int, ...], numpy.dtype[+_ScalarT_co]]
+        numpy.ndarray[tuple[int, ...], numpy.dtype[~_ScalarT]]
 
         >>> print(npt.NDArray[np.float64])
         numpy.ndarray[tuple[int, ...], numpy.dtype[numpy.float64]]

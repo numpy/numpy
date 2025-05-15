@@ -20,7 +20,8 @@ def replace_scalar_type_names():
     """ Rename numpy types to use the canonical names to make sphinx behave """
     import ctypes
 
-    Py_ssize_t = ctypes.c_int64 if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_int32
+    sizeof_void_p = ctypes.sizeof(ctypes.c_void_p)
+    Py_ssize_t = ctypes.c_int64 if sizeof_void_p == 8 else ctypes.c_int32
 
     class PyObject(ctypes.Structure):
         pass
@@ -127,7 +128,7 @@ version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
 version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
 # The full version, including alpha/beta/rc tags.
 release = numpy.__version__
-print("%s %s" % (version, release))
+print(f"{version} {release}")
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -235,8 +236,7 @@ html_theme = 'pydata_sphinx_theme'
 html_favicon = '_static/favicon/favicon.ico'
 
 # Set up the version switcher.  The versions.json is stored in the doc repo.
-if os.environ.get('CIRCLE_JOB', False) and \
-        os.environ.get('CIRCLE_BRANCH', '') != 'main':
+if os.environ.get('CIRCLE_JOB') and os.environ['CIRCLE_BRANCH'] != 'main':
     # For PR, name is set to its ref
     switcher_version = os.environ['CIRCLE_BRANCH']
 elif ".dev" in version:
@@ -271,7 +271,7 @@ html_theme_options = {
     "show_version_warning_banner": True,
 }
 
-html_title = "%s v%s Manual" % (project, version)
+html_title = f"{project} v{version} Manual"
 html_static_path = ['_static']
 html_last_updated_fmt = '%b %d, %Y'
 html_css_files = ["numpy.css"]
@@ -441,7 +441,7 @@ autosummary_generate = True
 # -----------------------------------------------------------------------------
 coverage_ignore_modules = []
 coverage_ignore_functions = [
-	'test($|_)', '(some|all)true', 'bitwise_not', 'cumproduct', 'pkgload', 'generic\\.'
+    'test($|_)', '(some|all)true', 'bitwise_not', 'cumproduct', 'pkgload', 'generic\\.'
 ]
 coverage_ignore_classes = []
 
@@ -507,7 +507,6 @@ def _get_c_source_file(obj):
         # todo: come up with a better way to generate these
         return None
 
-
 def linkcode_resolve(domain, info):
     """
     Determine the URL corresponding to Python object
@@ -545,6 +544,11 @@ def linkcode_resolve(domain, info):
     if isinstance(obj, type) and obj.__module__ == 'numpy':
         fn = _get_c_source_file(obj)
 
+    # This can be removed when removing the decorator set_module. Fix issue #28629
+    if hasattr(obj, '_module_file'):
+        fn = obj._module_file
+        fn = relpath(fn, start=dirname(numpy.__file__))
+
     if fn is None:
         try:
             fn = inspect.getsourcefile(obj)
@@ -571,8 +575,7 @@ def linkcode_resolve(domain, info):
         linespec = ""
 
     if 'dev' in numpy.__version__:
-        return "https://github.com/numpy/numpy/blob/main/numpy/%s%s" % (
-           fn, linespec)
+        return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"
     else:
         return "https://github.com/numpy/numpy/blob/v%s/numpy/%s%s" % (
            numpy.__version__, fn, linespec)

@@ -47,6 +47,9 @@ class TestSFloat:
         # Check the repr, mainly to cover the code paths:
         assert repr(SF(scaling=1.)) == "_ScaledFloatTestDType(scaling=1.0)"
 
+    def test_dtype_str(self):
+        assert SF(1.).str == "_ScaledFloatTestDType(scaling=1.0)"
+
     def test_dtype_name(self):
         assert SF(1.).name == "_ScaledFloatTestDType64"
 

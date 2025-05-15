@@ -6,12 +6,12 @@ import types
 import warnings
 
 import numpy as np
-from .._utils import set_module
+from numpy._utils import set_module
 from . import multiarray as mu
 from . import overrides
 from . import umath as um
 from . import numerictypes as nt
-from .multiarray import asarray, array, asanyarray, concatenate
+from .multiarray import asarray, asanyarray, concatenate
 from ._multiarray_umath import _array_converter
 from . import _methods
 
@@ -565,8 +565,7 @@ def put(a, ind, v, mode='raise'):
     try:
         put = a.put
     except AttributeError as e:
-        raise TypeError("argument 1 must be numpy.ndarray, "
-                        "not {name}".format(name=type(a).__name__)) from e
+        raise TypeError(f"argument 1 must be numpy.ndarray, not {type(a)}") from e
 
     return put(ind, v, mode=mode)
 

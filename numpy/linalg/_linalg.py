@@ -159,8 +159,7 @@ def _commonType(*arrays):
                 result_type = double
             elif rt is None:
                 # unsupported inexact scalar
-                raise TypeError("array type %s is unsupported in linalg" %
-                        (a.dtype.name,))
+                raise TypeError(f"array type {a.dtype.name} is unsupported in linalg")
         else:
             result_type = double
     if is_complex:
@@ -1959,7 +1958,7 @@ def cond(x, p=None):
     x = asarray(x)  # in case we have a matrix
     if _is_empty_2d(x):
         raise LinAlgError("cond is not defined on empty arrays")
-    if p is None or p == 2 or p == -2:
+    if p is None or p in {2, -2}:
         s = svd(x, compute_uv=False)
         with errstate(all='ignore'):
             if p == -2:
@@ -2904,7 +2903,7 @@ def multi_dot(arrays, *, out=None):
             return A.shape[0] * A.shape[1] * B.shape[1]
 
     Assume we have three matrices
-    :math:`A_{10x100}, B_{100x5}, C_{5x50}`.
+    :math:`A_{10 \times 100}, B_{100 \times 5}, C_{5 \times 50}`.
 
     The costs for the two different parenthesizations are as follows::
 

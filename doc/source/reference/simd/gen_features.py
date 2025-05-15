@@ -2,6 +2,7 @@
 Generate CPU features tables from CCompilerOpt
 """
 from os import path
+
 from numpy.distutils.ccompiler_opt import CCompilerOpt
 
 class FakeCCompilerOpt(CCompilerOpt):
@@ -192,5 +193,3 @@ if __name__ == '__main__':
                 title = f"On {arch_pname}::{pretty_names.get(cc, cc)}"
                 table = Features(arch, cc).table_diff(Features(arch, "gcc"))
                 fd.write(wrapper_section(title, table))
-
-
