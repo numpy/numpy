@@ -2302,7 +2302,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     try:
                         converter.upgrade(value)
                     except (ConverterError, ValueError):
-                        errmsg += f"(occurred line #{j + 1 + skip_header} for value '{value}')"
+                        line_number = j + 1 + skip_header
+                        errmsg += f"(occurred line #{line_number} for value '{value}')"
                         raise ConverterError(errmsg)
 
     # Check that we don't have invalid values

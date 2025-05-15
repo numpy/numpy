@@ -2973,7 +2973,8 @@ class MaskedArray(ndarray):
                 elif nm == nd:
                     mask = np.reshape(mask, _data.shape)
                 else:
-                    msg = f"Mask and data not compatible: data size is {nd}, mask size is {nm}."
+                    msg = (f"Mask and data not compatible:"
+                           f" data size is {nd}, mask size is {nm}.")
                     raise MaskError(msg)
                 copy = True
             # Set the mask to the new value
@@ -6785,16 +6786,17 @@ class MaskedConstant(MaskedArray):
             return object.__repr__(self)
 
     def __format__(self, format_spec):
-        # Replace ndarray.__format__ with the default, which supports no format characters.
-        # Supporting format characters is unwise here, because we do not know what type
-        # the user was expecting - better to not guess.
+        # Replace ndarray.__format__ with the default, which supports no
+        # format characters.
+        # Supporting format characters is unwise here, because we do not know
+        # what type the user was expecting - better to not guess.
         try:
             return object.__format__(self, format_spec)
         except TypeError:
             # 2020-03-23, NumPy 1.19.0
             warnings.warn(
-                "Format strings passed to MaskedConstant are ignored, but in future may "
-                "error or produce different behavior",
+                "Format strings passed to MaskedConstant are ignored,"
+                " but in future may error or produce different behavior",
                 FutureWarning, stacklevel=2
             )
             return object.__format__(self, "")
@@ -6949,10 +6951,11 @@ class _extrema_operation(_MaskedUFunc):
         m = getmask(target)
 
         if axis is np._NoValue and target.ndim > 1:
+            name = self.__name__
             # 2017-05-06, Numpy 1.13.0: warn on axis default
             warnings.warn(
-                f"In the future the default for ma.{self.__name__}.reduce will be axis=0, "
-                f"not the current None, to match np.{self.__name__}.reduce. "
+                f"In the future the default for ma.{name}.reduce will be axis=0, "
+                f"not the current None, to match np.{name}.reduce. "
                 "Explicitly pass 0 or None to silence this warning.",
                 MaskedArrayFutureWarning, stacklevel=2)
             axis = None
@@ -8315,9 +8318,9 @@ def correlate(a, v, mode='valid', propagate_mask=True):
         Refer to the `np.convolve` docstring.  Note that the default
         is 'valid', unlike `convolve`, which uses 'full'.
     propagate_mask : bool
-        If True, then a result element is masked if any masked element contributes towards it.
-        If False, then a result element is only masked if no non-masked element
-        contribute towards it
+        If True, then a result element is masked if any masked element contributes
+        towards it. If False, then a result element is only masked if no non-masked
+        element contribute towards it
 
     Returns
     -------

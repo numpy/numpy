@@ -996,7 +996,7 @@ def structured_to_unstructured(arr, dtype=None, copy=False, casting='unsafe'):
     >>> np.mean(rfn.structured_to_unstructured(b[['x', 'z']]), axis=-1)
     array([ 3. ,  5.5,  9. , 11. ])
 
-    """
+    """  # noqa: E501
     if arr.dtype.names is None:
         raise ValueError('arr must be a structured array')
 
@@ -1128,7 +1128,7 @@ def unstructured_to_structured(arr, dtype=None, names=None, align=False,
            (10, (11., 12), [13., 14.]), (15, (16., 17), [18., 19.])],
           dtype=[('a', '<i4'), ('b', [('f0', '<f4'), ('f1', '<u2')]), ('c', '<f4', (2,))])
 
-    """
+    """  # noqa: E501
     if arr.shape == ():
         raise ValueError('arr must have at least one dimension')
     n_elem = arr.shape[-1]
