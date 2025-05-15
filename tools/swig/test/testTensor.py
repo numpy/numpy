@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-# System imports
 import sys
 import unittest
 from math import sqrt
 
-# Import NumPy
 import numpy as np
 
 major, minor = [int(d) for d in np.__version__.split(".")[:2]]
