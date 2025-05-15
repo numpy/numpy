@@ -107,120 +107,6 @@ npy_longdouble _ldbl_ovfl_err(void) {
     return -1;
 }
 
-// When Double is the same as the long double, and it is little endian
-// It then (thanfully) follows IEEE 754, so it is possible to do bitwise operations
-#if LDBL_MANT_DIG == 53 && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-
-#define NPY_LGDB_SIGN_POS 0
-#define NPY_LGDB_SIGN_NEG 1
-
-typedef union {
-    uint64_t u64;
-    npy_longdouble d;
-} uint64_double_union;
-
-// Helper fucntion that uses bitwise opperations to transform a mantissa, exponent and sign
-// into a double, by putting the bits in the correct memory locations
-npy_longdouble _int_to_ld(int64_t *val, int e, int s) {
-    if (PyErr_Occurred()) { return -1; }
-    uint64_t mantissa[3];
-    uint64_t exp = (uint64_t)e;
-    uint64_t sign = (uint64_t)s;
-    for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
-    int foo = 0;
-    uint64_double_union value;
-
-    if (exp == 0) {
-        s = (sign == 1) ? -1 : 1;
-        return (npy_longdouble)s*(npy_longdouble)mantissa[0];
-    } else if (mantissa[0] == 0) {
-        mantissa[1] <<= 1;
-        exp--;
-    } else {
-        for (int i = 63; i >= 0; i--) {
-            if ((mantissa[0] >> i) & 1) {
-                foo = i;
-                break;
-            }
-        }
-    }
-    exp += foo;
-    mantissa[0] = (mantissa[1] >> foo) | (mantissa[0] << (64 - foo));
-    uint64_t guard = (mantissa[0] >> 11) & 1;
-    mantissa[0] >>= 12;
-    // Rounding (round to nearest even)
-    if (guard) {
-        mantissa[0]++;
-        if (mantissa[0] == 0x10000000000000) {
-            mantissa[0] = 0;
-            exp++;
-        }
-    }
-    if (exp >= DBL_MAX_EXP) {
-        return _ldbl_ovfl_err();
-    }
-    sign <<= 63;
-    exp += 1023;
-    exp <<= 52;
-    value.u64 = mantissa[0] | exp | sign;
-    return value.d; 
-}
-
-// For 80bit platforms (x86 architectures), if it is little endian the layout of the longdouble is known
-#elif LDBL_MANT_DIG == 64 && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-
-#define NPY_LGDB_SIGN_POS 0
-#define NPY_LGDB_SIGN_NEG 1
-
-typedef union {
-    npy_longdouble ld;
-    uint64_t u64[2]; // Two 64-bit halves
-} ld_128_union;
-
-// Helper fucntion that uses bitwise opperations to transform a mantissa, exponent and sign
-// into a long double, by putting the bits in the correct memory locations
-npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
-    if (PyErr_Occurred()) { return -1; }
-    uint64_t mantissa[3];
-    for (int i = 0; i < 3; i++) { mantissa[i] = (uint64_t)val[i]; }
-
-    ld_128_union value;
-    uint64_t guard;
-    int foo = 0;
-    if (exp == 0) {
-        sign = (sign == 1) ? -1 : 1;
-        return (npy_longdouble)sign*(npy_longdouble)mantissa[0];
-    } else if (mantissa[0] == 0) {
-        guard = (mantissa[2] >> 63) & 1;
-    } else {
-        for (int i = 63; i >= 0; i--) {
-            if ((mantissa[0] >> i) & 1) {
-                foo = i + 1;
-                break;
-            }
-        }
-        guard = (mantissa[1] >> (foo - 1)) & 1;
-    }
-    exp += foo - 1;
-    value.u64[0] = (mantissa[1] >> foo) | (mantissa[0] << (64 - foo));
-    
-    // Rounding (round to nearest even)
-    if (guard) {
-        value.u64[0]++;
-        if (value.u64[0] == 0) {
-            value.u64[0] = 0x8000000000000000;
-            exp++;
-        }
-    }
-    if (exp >= LDBL_MAX_EXP) {
-        return _ldbl_ovfl_err();
-    }
-    value.u64[1] = (uint64_t)(exp + 16383) | (uint64_t)(sign << 15);
-    return value.ld;
-    
-}
-#else
-
 #define NPY_LGDB_SIGN_POS 1
 #define NPY_LGDB_SIGN_NEG -1
 
@@ -258,7 +144,6 @@ npy_longdouble _int_to_ld(int64_t *val, int exp, int sign) {
     }
     return ld;
 }
-#endif
 
 // Helper function that get the exponent and mantissa, this works on all platforms
 // This function works by getting the bits of the number in increments of 64 bits
