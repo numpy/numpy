@@ -333,7 +333,8 @@ class TestArray2String:
             r"np.void(b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08')")
         assert_equal(str(a[0]), r"b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08'")
         assert_equal(repr(a),
-            r"array([b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08'," "\n"
+            r"array([b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08',"
+            "\n"
             r"       b'\x1B\x5B\x33\x31\x6D\x52\x65\x64'], dtype='|V8')")
 
         assert_equal(eval(repr(a), vars(np)), a)

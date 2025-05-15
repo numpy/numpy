@@ -20,6 +20,7 @@ line-length = 88
 preview = true
 extend-select = [
     "C4",
+    "ISC",
     "LOG",
     "G",
     "PIE",
@@ -34,6 +35,7 @@ extend-select = [
 ]
 ignore = [
     "C408",   # Unnecessary `dict()` call (rewrite as a literal)
+    "ISC002", # Implicitly concatenated string literals over multiple lines
     "PIE790", # Unnecessary `pass` statement
     "E241",   # Multiple spaces after comma
     "E265",   # Block comment should start with `# `
