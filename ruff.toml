@@ -55,7 +55,6 @@ ignore = [
 "test*.py" = ["E201", "E714"]
 
 "benchmarks/*py" = ["E501"]
-"numpy/_build_utils/*py" = ["E501"]
 "numpy/_core/tests/**" = ["E501"]
 "numpy/_core/_add_newdocs.py" = ["E501"]
 "numpy/_core/_add_newdocs_scalars.py" = ["E501"]
