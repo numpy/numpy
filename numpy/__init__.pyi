@@ -784,19 +784,19 @@ _ImagT_co = TypeVar("_ImagT_co", covariant=True)
 _CallableT = TypeVar("_CallableT", bound=Callable[..., object])
 
 _DTypeT = TypeVar("_DTypeT", bound=dtype)
-_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, covariant=True)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
 _FlexDTypeT = TypeVar("_FlexDTypeT", bound=dtype[flexible])
 
-_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
-_ArrayT_co = TypeVar("_ArrayT_co", bound=NDArray[Any], covariant=True)
+_ArrayT = TypeVar("_ArrayT", bound=ndarray)
+_ArrayT_co = TypeVar("_ArrayT_co", bound=ndarray, default=ndarray, covariant=True)
 _IntegralArrayT = TypeVar("_IntegralArrayT", bound=NDArray[integer | np.bool | object_])
 _RealArrayT = TypeVar("_RealArrayT", bound=NDArray[floating | integer | timedelta64 | np.bool | object_])
 _NumericArrayT = TypeVar("_NumericArrayT", bound=NDArray[number | timedelta64 | object_])
 
 _ShapeT = TypeVar("_ShapeT", bound=_Shape)
-_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_Shape, covariant=True)
 _1DShapeT = TypeVar("_1DShapeT", bound=_1D)
-_2DShapeT_co = TypeVar("_2DShapeT_co", bound=_2D, covariant=True)
+_2DShapeT_co = TypeVar("_2DShapeT_co", bound=_2D, default=_2D, covariant=True)
 _1NShapeT = TypeVar("_1NShapeT", bound=tuple[L[1], *tuple[L[1], ...]])  # (1,) | (1, 1) | (1, 1, 1) | ...
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
@@ -807,9 +807,9 @@ _FloatingT_co = TypeVar("_FloatingT_co", bound=floating, default=floating, covar
 _IntegerT = TypeVar("_IntegerT", bound=integer)
 _IntegerT_co = TypeVar("_IntegerT_co", bound=integer, default=integer, covariant=True)
 
-_NBit = TypeVar("_NBit", bound=NBitBase, default=Any)
-_NBit1 = TypeVar("_NBit1", bound=NBitBase, default=Any)
-_NBit2 = TypeVar("_NBit2", bound=NBitBase, default=_NBit1)
+_NBit = TypeVar("_NBit", bound=NBitBase, default=Any)  # pyright: ignore[reportDeprecated]
+_NBit1 = TypeVar("_NBit1", bound=NBitBase, default=Any)  # pyright: ignore[reportDeprecated]
+_NBit2 = TypeVar("_NBit2", bound=NBitBase, default=_NBit1)  # pyright: ignore[reportDeprecated]
 
 _ItemT_co = TypeVar("_ItemT_co", default=Any, covariant=True)
 _BoolItemT = TypeVar("_BoolItemT", bound=builtins.bool)
