@@ -1822,7 +1822,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     True
 
     """
-    import numpy as _nx
+    import numpy as np
     a, wrap = _makearray(a)
 
     if hermitian:
@@ -1834,9 +1834,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             sgn = sign(s)
             s = abs(s)
             sidx = argsort(s)[..., ::-1]
-            sgn = _nx.take_along_axis(sgn, sidx, axis=-1)
-            s = _nx.take_along_axis(s, sidx, axis=-1)
-            u = _nx.take_along_axis(u, sidx[..., None, :], axis=-1)
+            sgn = np.take_along_axis(sgn, sidx, axis=-1)
+            s = np.take_along_axis(s, sidx, axis=-1)
+            u = np.take_along_axis(u, sidx[..., None, :], axis=-1)
             # singular values are unsigned, move the sign into v
             vt = transpose(u * sgn[..., None, :]).conjugate()
             return SVDResult(wrap(u), s, wrap(vt))
