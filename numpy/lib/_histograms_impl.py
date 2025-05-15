@@ -407,7 +407,7 @@ def _get_bin_edges(a, bins, range, weights):
                 if np.issubdtype(a.dtype, np.integer) and width < 1:
                     width = 1
                 delta = _unsigned_subtract(last_edge, first_edge)
-                n_equal_bins = int(np.ceil(delta) / width)
+                n_equal_bins = int(np.ceil(delta / width))
             else:
                 # Width can be zero for some estimators, e.g. FD when
                 # the IQR of the data is zero.
