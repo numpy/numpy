@@ -609,7 +609,7 @@ class TestStringOptionalInOut(util.F2PyTest):
         a = np.array('hi', dtype='S32')
         self.module.string_inout_optional(a)
         assert "output string" in a.tobytes().decode()
-        with pytest.raises(Exception):
+        with pytest.raises(Exception):  # noqa: B017
             aa = "Hi"
             self.module.string_inout_optional(aa)
 

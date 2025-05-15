@@ -322,18 +322,18 @@ class TestScalarDiscovery:
                 cast = np.array(scalar).astype(dtype)
             except (TypeError, ValueError, RuntimeError):
                 # coercion should also raise (error type may change)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array(scalar, dtype=dtype)
 
                 if (isinstance(scalar, rational) and
                         np.issubdtype(dtype, np.signedinteger)):
                     return
 
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array([scalar], dtype=dtype)
                 # assignment should also raise
                 res = np.zeros((), dtype=dtype)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     res[()] = scalar
 
                 return

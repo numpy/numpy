@@ -3,6 +3,7 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
+import contextlib
 import warnings
 
 import numpy._core._struct_ufunc_tests as struct_ufunc
@@ -83,10 +84,12 @@ class _DeprecationTestCase:
         if exceptions is np._NoValue:
             exceptions = (self.warning_cls,)
 
-        try:
+        if function_fails:
+            context_manager = contextlib.suppress(Exception)
+        else:
+            context_manager = contextlib.nullcontext()
+        with context_manager:
             function(*args, **kwargs)
-        except (Exception if function_fails else ()):
-            pass
 
         # just in case, clear the registry
         num_found = 0

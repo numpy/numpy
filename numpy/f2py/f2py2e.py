@@ -682,7 +682,7 @@ def run_compile():
                             print(f'Unknown vendor: "{s[len(v):]}"')
                     nv = ov
                 i = flib_flags.index(s)
-                flib_flags[i] = '--fcompiler=' + nv
+                flib_flags[i] = '--fcompiler=' + nv  # noqa: B909
                 continue
     for s in del_list:
         i = flib_flags.index(s)

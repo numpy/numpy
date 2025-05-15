@@ -1967,9 +1967,9 @@ class TestNonzero:
     def test_nonzero_byteorder(self):
         values = [0., -0., 1, float('nan'), 0, 1,
                   np.float16(0), np.float16(12.3)]
-        expected = [0, 0, 1, 1, 0, 1, 0, 1]
+        expected_values = [0, 0, 1, 1, 0, 1, 0, 1]
 
-        for value, expected in zip(values, expected):
+        for value, expected in zip(values, expected_values):
             A = np.array([value])
             A_byteswapped = (A.view(A.dtype.newbyteorder()).byteswap()).copy()
 
