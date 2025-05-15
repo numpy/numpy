@@ -1,5 +1,7 @@
 import pytest
+
 from numpy._core._simd import targets
+
 """
 This testing unit only for checking the sanity of common functionality,
 therefore all we need is just to take one submodule that represents any

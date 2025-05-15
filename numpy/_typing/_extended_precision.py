@@ -6,6 +6,7 @@ that they can be imported conditionally via the numpy's mypy plugin.
 """
 
 import numpy as np
+
 from . import _96Bit, _128Bit
 
 float96 = np.floating[_96Bit]

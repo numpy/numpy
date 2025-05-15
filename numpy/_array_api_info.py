@@ -8,21 +8,21 @@ more details.
 
 """
 from numpy._core import (
-    dtype,
     bool,
-    intp,
+    complex64,
+    complex128,
+    dtype,
+    float32,
+    float64,
     int8,
     int16,
     int32,
     int64,
+    intp,
     uint8,
     uint16,
     uint32,
     uint64,
-    float32,
-    float64,
-    complex64,
-    complex128,
 )
 
 

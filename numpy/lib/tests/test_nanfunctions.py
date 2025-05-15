@@ -1,17 +1,22 @@
-import warnings
-import pytest
 import inspect
+import warnings
 from functools import partial
+
+import pytest
 
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
 from numpy.testing import (
-    assert_, assert_equal, assert_almost_equal, assert_raises,
-    assert_raises_regex, assert_array_equal, suppress_warnings
-    )
-
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    suppress_warnings,
+)
 
 # Test data
 _ndat = np.array([[0.6244, np.nan, 0.2692, 0.0116, np.nan, 0.1170],

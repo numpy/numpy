@@ -1,12 +1,12 @@
-from typing import Any, overload, TypeVar
+from typing import Any, TypeVar, overload
 
 import numpy as np
 from numpy import floating, object_
 from numpy._typing import (
     NDArray,
-    _FloatLike_co,
     _ArrayLikeFloat_co,
     _ArrayLikeObject_co,
+    _FloatLike_co,
 )
 
 __all__ = ["fix", "isneginf", "isposinf"]

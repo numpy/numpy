@@ -1,6 +1,6 @@
-from .common import Benchmark, get_data
-
 import numpy as np
+
+from .common import Benchmark, get_data
 
 UFUNCS = [obj for obj in np._core.umath.__dict__.values() if
           isinstance(obj, np.ufunc)]

@@ -1,25 +1,31 @@
-import sys
-import operator
-import pytest
 import ctypes
 import gc
+import operator
+import pickle
+import random
+import sys
 import types
+from itertools import permutations
 from typing import Any
 import pickle
 import warnings
+import hypothesis
+import pytest
+from hypothesis.extra import numpy as hynp
+from numpy._core._multiarray_tests import create_custom_field_dtype
+from numpy._core._rational_tests import rational
 
 import numpy as np
 import numpy.dtypes
-from numpy._core._rational_tests import rational
-from numpy._core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
-    IS_PYSTON, IS_WASM)
-from itertools import permutations
-import random
-
-import hypothesis
-from hypothesis.extra import numpy as hynp
+    HAS_REFCOUNT,
+    IS_PYSTON,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 
 def assert_dtype_equal(a, b):
@@ -1175,6 +1181,10 @@ class TestString:
         assert_equal(str(dt), "(numpy.record, [('a', '<u2')])")
         assert_equal(dt.name, 'record16')
 
+    def test_custom_dtype_str(self):
+        dt = np.dtypes.StringDType()
+        assert_equal(dt.str, "StringDType()")
+
 
 class TestDtypeAttributeDeletion:
 
@@ -1623,7 +1633,7 @@ class TestDTypeClasses:
         assert type(dtype) is not np.dtype
         if dtype.type.__name__ != "rational":
             dt_name = type(dtype).__name__.lower().removesuffix("dtype")
-            if dt_name == "uint" or dt_name == "int":
+            if dt_name in {"uint", "int"}:
                 # The scalar names has a `c` attached because "int" is Python
                 # int and that is long...
                 dt_name += "c"

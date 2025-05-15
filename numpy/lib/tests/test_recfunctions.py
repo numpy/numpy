@@ -1,14 +1,27 @@
 
 import numpy as np
 import numpy.ma as ma
+from numpy.lib.recfunctions import (
+    append_fields,
+    apply_along_fields,
+    assign_fields_by_name,
+    drop_fields,
+    find_duplicates,
+    get_fieldstructure,
+    join_by,
+    merge_arrays,
+    recursive_fill_fields,
+    rename_fields,
+    repack_fields,
+    require_fields,
+    stack_arrays,
+    structured_to_unstructured,
+    unstructured_to_structured,
+)
 from numpy.ma.mrecords import MaskedRecords
 from numpy.ma.testutils import assert_equal
 from numpy.testing import assert_, assert_raises
-from numpy.lib.recfunctions import (
-    drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
-    find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
-    repack_fields, unstructured_to_structured, structured_to_unstructured,
-    apply_along_fields, require_fields, assign_fields_by_name)
+
 get_fieldspec = np.lib.recfunctions._get_fieldspec
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat

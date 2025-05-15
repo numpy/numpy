@@ -14,14 +14,13 @@ f2py_version = 'See `f2py -v`'
 
 import numpy as np
 
-from . import capi_maps
-from . import func2subr
-from .crackfortran import undo_rmbadname, undo_rmbadname1
+from . import capi_maps, func2subr
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
+from .crackfortran import undo_rmbadname, undo_rmbadname1
 
 options = {}
 
@@ -199,15 +198,14 @@ def buildhooks(pymod):
                     fhooks[0] = fhooks[0] + wrap
                     fargs.append(f"f2pywrap_{m['name']}_{b['name']}")
                     ifargs.append(func2subr.createfuncwrapper(b, signature=1))
+                elif wrap:
+                    fhooks[0] = fhooks[0] + wrap
+                    fargs.append(f"f2pywrap_{m['name']}_{b['name']}")
+                    ifargs.append(
+                        func2subr.createsubrwrapper(b, signature=1))
                 else:
-                    if wrap:
-                        fhooks[0] = fhooks[0] + wrap
-                        fargs.append(f"f2pywrap_{m['name']}_{b['name']}")
-                        ifargs.append(
-                            func2subr.createsubrwrapper(b, signature=1))
-                    else:
-                        fargs.append(b['name'])
-                        mfargs.append(fargs[-1])
+                    fargs.append(b['name'])
+                    mfargs.append(fargs[-1])
                 api['externroutines'] = []
                 ar = applyrules(api, vrd)
                 ar['docs'] = []

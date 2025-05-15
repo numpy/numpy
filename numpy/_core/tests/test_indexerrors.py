@@ -1,7 +1,8 @@
 import numpy as np
 from numpy.testing import (
-        assert_raises, assert_raises_regex,
-        )
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestIndexErrors:

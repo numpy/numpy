@@ -1,6 +1,6 @@
-from typing import Literal, Final
+from typing import Final, Literal
 
-from numpy.lib._utils_impl import drop_metadata
+from numpy.lib._utils_impl import drop_metadata  # noqa: F401
 
 __all__: list[str] = []
 

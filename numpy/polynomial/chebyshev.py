@@ -438,7 +438,7 @@ def cheb2poly(c):
     array([-2.,  -8.,   4.,  12.])
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from .polynomial import polyadd, polymulx, polysub
 
     [c] = pu.as_series([c])
     n = len(c)

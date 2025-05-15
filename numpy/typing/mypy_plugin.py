@@ -99,9 +99,9 @@ try:
         from mypy.typeanal import TypeAnalyser
 
     import mypy.types
-    from mypy.plugin import Plugin, AnalyzeTypeContext
-    from mypy.nodes import MypyFile, ImportFrom, Statement
     from mypy.build import PRI_MED
+    from mypy.nodes import ImportFrom, MypyFile, Statement
+    from mypy.plugin import AnalyzeTypeContext, Plugin
 
 except ModuleNotFoundError as e:
 

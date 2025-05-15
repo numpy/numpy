@@ -1,17 +1,24 @@
-import sys
 import gc
+import sys
+import textwrap
+
+import pytest
 from hypothesis import given
 from hypothesis.extra import numpy as hynp
-import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_warns, HAS_REFCOUNT,
-    assert_raises_regex, IS_WASM
-    )
-from numpy.testing._private.utils import run_threaded
 from numpy._core.arrayprint import _typelessdata
-import textwrap
+from numpy.testing import (
+    HAS_REFCOUNT,
+    IS_WASM,
+    assert_,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+)
+from numpy.testing._private.utils import run_threaded
+
 
 class TestArrayRepr:
     def test_nan_inf(self):
@@ -326,7 +333,8 @@ class TestArray2String:
             r"np.void(b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08')")
         assert_equal(str(a[0]), r"b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08'")
         assert_equal(repr(a),
-            r"array([b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08'," "\n"
+            r"array([b'\x1B\x5B\x32\x4B\x07\x41\x0A\x08',"
+            "\n"
             r"       b'\x1B\x5B\x33\x31\x6D\x52\x65\x64'], dtype='|V8')")
 
         assert_equal(eval(repr(a), vars(np)), a)

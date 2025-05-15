@@ -2,12 +2,14 @@
 Tests which scan for certain occurrences in the code, they may not find
 all of these occurrences but should catch almost all.
 """
-import pytest
-
-from pathlib import Path
 import ast
 import tokenize
+from pathlib import Path
+
+import pytest
+
 import numpy
+
 
 class ParseCall(ast.NodeVisitor):
     def __init__(self):

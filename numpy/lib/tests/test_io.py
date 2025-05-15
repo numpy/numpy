@@ -1,35 +1,47 @@
-import sys
 import gc
 import gzip
+import locale
 import os
+import re
+import sys
 import threading
 import time
 import warnings
-import re
-import pytest
+from ctypes import c_bool
+from datetime import datetime
+from io import BytesIO, StringIO
+from multiprocessing import Value, get_context
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from io import BytesIO, StringIO
-from datetime import datetime
-import locale
-from multiprocessing import Value, get_context
-from ctypes import c_bool
+
+import pytest
 
 import numpy as np
 import numpy.ma as ma
+from numpy._utils import asbytes
 from numpy.exceptions import VisibleDeprecationWarning
-from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.lib import _npyio_impl
+from numpy.lib._iotools import ConversionWarning, ConverterError
 from numpy.lib._npyio_impl import recfromcsv, recfromtxt
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    assert_warns, assert_, assert_raises_regex, assert_raises,
-    assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings,
-    break_cycles, IS_WASM
-    )
+    HAS_REFCOUNT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_array_equal,
+    assert_no_gc_cycles,
+    assert_no_warnings,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    break_cycles,
+    suppress_warnings,
+    tempdir,
+    temppath,
+)
 from numpy.testing._private.utils import requires_memory
-from numpy._utils import asbytes
 
 
 class TextIO(BytesIO):
@@ -305,7 +317,7 @@ class TestSavezLoad(RoundtripTest):
             np.savez(tmp, data='LOVELY LOAD')
             # We need to check if the garbage collector can properly close
             # numpy npz file returned by np.load when their reference count
-            # goes to zero.  Python 3 running in debug mode raises a
+            # goes to zero.  Python running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
             # collector, so we catch the warnings.
             with suppress_warnings() as sup:
@@ -625,7 +637,7 @@ class TestSaveTxt:
 
         # Since Python 3.8, the default start method for multiprocessing has
         # been changed from 'fork' to 'spawn' on macOS, causing inconsistency
-        # on memory sharing model, lead to failed test for check_large_zip
+        # on memory sharing model, leading to failed test for check_large_zip
         ctx = get_context('fork')
         p = ctx.Process(target=check_large_zip, args=(memoryerror_raised,))
         p.start()

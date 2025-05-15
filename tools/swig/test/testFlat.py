@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-# System imports
+import struct
 import sys
 import unittest
 
-import struct
-
-# Import NumPy
 import numpy as np
+
 major, minor = [int(d) for d in np.__version__.split(".")[:2]]
 if major == 0:
     BadListError = TypeError

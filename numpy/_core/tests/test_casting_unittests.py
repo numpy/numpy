@@ -6,18 +6,17 @@ Unlike most tests in NumPy, these are closer to unit-tests rather
 than integration tests.
 """
 
-import pytest
-import textwrap
+import ctypes
 import enum
 import random
-import ctypes
+import textwrap
+
+import pytest
+from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-
 from numpy.testing import assert_array_equal
-from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
-
 
 # Simple skips object, parametric and long double (unsupported by struct)
 simple_dtypes = "?bhilqBHILQefdFD"
@@ -459,7 +458,7 @@ class TestCasting:
         orig_arr = values.view(from_dt)
         orig_out = np.empty_like(expected_out)
 
-        if casting == Casting.unsafe and (to_dt == "m8" or to_dt == "M8"):
+        if casting == Casting.unsafe and (to_dt == "m8" or to_dt == "M8"):  # noqa: PLR1714
             # Casting from non-generic to generic units is an error and should
             # probably be reported as an invalid cast earlier.
             with pytest.raises(ValueError):

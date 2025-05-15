@@ -19,18 +19,18 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 from numpy._typing import (
+    _ArrayLikeComplex_co,
     # array-likes
     _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
     _ArrayLikeNumber_co,
     _ArrayLikeObject_co,
-    _NestedSequence,
-    _SupportsArray,
+    _ComplexLike_co,
+    _FloatLike_co,
     # scalar-likes
     _IntLike_co,
-    _FloatLike_co,
-    _ComplexLike_co,
+    _NestedSequence,
     _NumberLike_co,
+    _SupportsArray,
 )
 
 _T = TypeVar("_T")

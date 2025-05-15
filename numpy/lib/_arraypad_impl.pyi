@@ -1,20 +1,21 @@
 from typing import (
-    Literal as L,
     Any,
-    TypeAlias,
-    overload,
-    TypeVar,
     Protocol,
+    TypeAlias,
+    TypeVar,
+    overload,
     type_check_only,
+)
+from typing import (
+    Literal as L,
 )
 
 from numpy import generic
-
 from numpy._typing import (
     ArrayLike,
     NDArray,
-    _ArrayLikeInt,
     _ArrayLike,
+    _ArrayLikeInt,
 )
 
 __all__ = ["pad"]

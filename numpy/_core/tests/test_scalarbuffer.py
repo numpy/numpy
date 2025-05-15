@@ -1,11 +1,11 @@
 """
 Test scalar buffer interface adheres to PEP 3118
 """
-import numpy as np
-from numpy._core._rational_tests import rational
-from numpy._core._multiarray_tests import get_buffer_info
 import pytest
+from numpy._core._multiarray_tests import get_buffer_info
+from numpy._core._rational_tests import rational
 
+import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
 
 # PEP3118 format strings for native (standard alignment and byteorder) types

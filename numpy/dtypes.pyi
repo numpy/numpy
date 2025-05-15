@@ -1,5 +1,16 @@
 # ruff: noqa: ANN401
-from typing import Any, Generic, LiteralString, Never, NoReturn, Self, TypeAlias, final, overload, type_check_only
+from typing import (
+    Any,
+    Generic,
+    LiteralString,
+    Never,
+    NoReturn,
+    Self,
+    TypeAlias,
+    final,
+    overload,
+    type_check_only,
+)
 from typing import Literal as L
 
 from typing_extensions import TypeVar

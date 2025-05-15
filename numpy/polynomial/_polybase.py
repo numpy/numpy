@@ -6,12 +6,13 @@ for the various polynomial classes. It operates as a mixin, but uses the
 abc module from the stdlib, hence it is only available for Python >= 2.6.
 
 """
-import os
 import abc
 import numbers
+import os
 from collections.abc import Callable
 
 import numpy as np
+
 from . import polyutils as pu
 
 __all__ = ['ABCPolyBase']
@@ -610,10 +611,6 @@ class ABCPolyBase(abc.ABC):
         except Exception:
             return NotImplemented
         return self.__class__(coef, self.domain, self.window, self.symbol)
-
-    def __rdiv__(self, other):
-        # set to __floordiv__ /.
-        return self.__rfloordiv__(other)
 
     def __rtruediv__(self, other):
         # An instance of ABCPolyBase is not considered a

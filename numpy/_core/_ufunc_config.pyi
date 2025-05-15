@@ -1,6 +1,7 @@
-from _typeshed import SupportsWrite
 from collections.abc import Callable
 from typing import Any, Literal, TypeAlias, TypedDict, type_check_only
+
+from _typeshed import SupportsWrite
 
 from numpy import errstate as errstate
 
