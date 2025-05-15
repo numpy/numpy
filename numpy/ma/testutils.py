@@ -2,7 +2,6 @@
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: testutils.py 3529 2007-11-13 08:01:14Z jarrod.millman $
 
 """
 import operator
