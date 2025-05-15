@@ -72,6 +72,11 @@ AR_i // AR_LIKE_m  # E: Unsupported operand types
 AR_f // AR_LIKE_m  # E: Unsupported operand types
 AR_c // AR_LIKE_m  # E: Unsupported operand types
 
+# regression tests for https://github.com/numpy/numpy/issues/28957
+AR_c // 2  # type: ignore[operator]
+AR_c // AR_i  # type: ignore[operator]
+AR_c // AR_c  # type: ignore[operator]
+
 # Array multiplication
 
 AR_b *= AR_LIKE_u  # E: incompatible type
