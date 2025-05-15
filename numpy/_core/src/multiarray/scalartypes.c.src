@@ -2921,6 +2921,9 @@ static PyMethodDef @name@type_methods[] = {
     {"bit_count",
         (PyCFunction)npy_@name@_bit_count,
         METH_NOARGS, NULL},
+    {"__trunc__",
+        (PyCFunction)gentype_int,
+        METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 /**end repeat**/

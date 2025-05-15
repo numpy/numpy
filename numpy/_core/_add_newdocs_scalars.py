@@ -405,3 +405,15 @@ for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
         >>> np.{int_name}(-127).bit_count()
         7
         """ if dtype(int_name).char.islower() else "")))
+
+    add_newdoc('numpy._core.numerictypes', int_name, ('__trunc__',
+        f"""
+        {int_name}.__trunc__() -> int
+
+        Truncating an Integral returns itself.
+
+        Examples
+        --------
+        >>> np.{int_name}(127).__trunc__()
+        127
+        """))
