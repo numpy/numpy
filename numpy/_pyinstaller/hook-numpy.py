@@ -5,8 +5,8 @@ Our (some-what inadequate) docs for writing PyInstaller hooks are kept here:
 https://pyinstaller.readthedocs.io/en/stable/hooks.html
 
 """
-from PyInstaller.compat import is_conda, is_pure_conda
-from PyInstaller.utils.hooks import collect_dynamic_libs, is_module_satisfies
+from PyInstaller.compat import is_pure_conda
+from PyInstaller.utils.hooks import collect_dynamic_libs
 
 # Collect all DLLs inside numpy's installation folder, dump them into built
 # app's root.

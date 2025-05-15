@@ -69,7 +69,7 @@ def _compute_hash(idirs, hashfunc):
         with open(fpath, 'rb') as fin:
             fhash = hashfunc(fin.read())
             checksums.append(
-                '%s  %s' % (fhash.hexdigest(), os.path.basename(fpath)))
+                f'{fhash.hexdigest()}  {os.path.basename(fpath)}')
     return checksums
 
 

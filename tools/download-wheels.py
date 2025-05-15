@@ -115,7 +115,7 @@ if __name__ == "__main__":
              "[defaults to <cwd>/release/installers]")
     parser.add_argument(
         "-t", "--test",
-        action = 'store_true',
+        action='store_true',
         help="only list available wheels, do not download")
 
     args = parser.parse_args()

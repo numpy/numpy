@@ -289,7 +289,7 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"str", "bytes", "object"}
 
-    __array_api_version__ = "2023.12"
+    __array_api_version__ = "2024.12"
 
     from ._array_api_info import __array_namespace_info__
 
@@ -410,8 +410,7 @@ else:
             import numpy.char as char
             return char.chararray
 
-        raise AttributeError("module {!r} has no attribute "
-                             "{!r}".format(__name__, attr))
+        raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")
 
     def __dir__():
         public_symbols = (
@@ -419,7 +418,7 @@ else:
         )
         public_symbols -= {
             "matrixlib", "matlib", "tests", "conftest", "version",
-            "compat", "distutils", "array_api"
+            "distutils", "array_api"
         }
         return list(public_symbols)
 
@@ -471,21 +470,22 @@ else:
         from . import exceptions
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
-            # Throw runtime error, if the test failed Check for warning and error_message
+            # Throw runtime error, if the test failed
+            # Check for warning and report the error_message
             if len(w) > 0:
                 for _wn in w:
                     if _wn.category is exceptions.RankWarning:
-                        # Ignore other warnings, they may not be relevant (see gh-25433).
+                        # Ignore other warnings, they may not be relevant (see gh-25433)
                         error_message = (
                             f"{_wn.category.__name__}: {_wn.message}"
                         )
                         msg = (
                             "Polyfit sanity test emitted a warning, most likely due "
                             "to using a buggy Accelerate backend."
-                            "\nIf you compiled yourself, more information is available at:"
+                            "\nIf you compiled yourself, more information is available at:"  # noqa: E501
                             "\nhttps://numpy.org/devdocs/building/index.html"
                             "\nOtherwise report this to the vendor "
-                            "that provided NumPy.\n\n{}\n".format(error_message))
+                            f"that provided NumPy.\n\n{error_message}\n")
                         raise RuntimeError(msg)
                 del _wn
             del w

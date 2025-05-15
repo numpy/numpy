@@ -9,9 +9,8 @@ import numpy as np
 import pytest
 
 from numpy.dtypes import StringDType
-from numpy._core.tests._natype import pd_NA
+from numpy._core.tests._natype import pd_NA, get_stringdtype_dtype as get_dtype
 from numpy.testing import assert_array_equal, IS_PYPY
-from numpy.testing._private.utils import get_stringdtype_dtype as get_dtype
 
 
 @pytest.fixture
@@ -1306,11 +1305,10 @@ def test_unary(string_array, unicode_array, function_name):
             # to avoid these errors we'd need to add NA support to _vec_string
             with pytest.raises((ValueError, TypeError)):
                 func(na_arr)
+        elif function_name == "splitlines":
+            assert func(na_arr)[0] == func(dtype.na_object)[()]
         else:
-            if function_name == "splitlines":
-                assert func(na_arr)[0] == func(dtype.na_object)[()]
-            else:
-                assert func(na_arr)[0] == func(dtype.na_object)
+            assert func(na_arr)[0] == func(dtype.na_object)
         return
     if function_name == "str_len" and not is_str:
         # str_len always errors for any non-string null, even NA ones because

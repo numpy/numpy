@@ -5,20 +5,17 @@ to document how deprecations should eventually be turned into errors.
 """
 import warnings
 import pytest
-import tempfile
-import re
 
 import numpy as np
 from numpy.testing import (
-    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
-    KnownFailureException, break_cycles, temppath
+    assert_raises, temppath
     )
 
-from numpy._core._multiarray_tests import fromstring_null_term_c_api
+from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
 import numpy._core._struct_ufunc_tests as struct_ufunc
 
 try:
-    import pytz
+    import pytz  # noqa: F401
     _has_pytz = True
 except ImportError:
     _has_pytz = False
@@ -220,7 +217,7 @@ class TestCtypesGetter(_DeprecationTestCase):
     )
     def test_deprecated(self, name: str) -> None:
         func = getattr(self.ctypes, name)
-        self.assert_deprecated(lambda: func())
+        self.assert_deprecated(func)
 
     @pytest.mark.parametrize(
         "name", ["data", "shape", "strides", "_as_parameter_"]
@@ -361,7 +358,7 @@ class TestLibImports(_DeprecationTestCase):
         self.assert_deprecated(lambda: recfromtxt(data_gen(), **kwargs))
 
         self.assert_deprecated(lambda: disp("test"))
-        self.assert_deprecated(lambda: get_array_wrap())
+        self.assert_deprecated(get_array_wrap)
         self.assert_deprecated(lambda: maximum_sctype(int))
 
         self.assert_deprecated(lambda: in1d([1], [1]))

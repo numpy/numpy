@@ -37,7 +37,7 @@ missing_ufuncs = all_ufuncs - bench_ufuncs
 if len(missing_ufuncs) > 0:
     missing_ufunc_names = [f.__name__ for f in missing_ufuncs]
     raise NotImplementedError(
-        "Missing benchmarks for ufuncs %r" % missing_ufunc_names)
+        f"Missing benchmarks for ufuncs {missing_ufunc_names!r}")
 
 
 class ArrayFunctionDispatcher(Benchmark):
@@ -342,7 +342,7 @@ class UFuncSmall(Benchmark):
         self.f(self.array_5)
 
     def time_ufunc_small_array_inplace(self, ufuncname):
-        self.f(self.array_5, out = self.array_5)
+        self.f(self.array_5, out=self.array_5)
 
     def time_ufunc_small_int_array(self, ufuncname):
         self.f(self.array_int_3)
@@ -432,7 +432,7 @@ class CustomScalar(Benchmark):
 
 
 class CustomComparison(Benchmark):
-    params = (np.int8,  np.int16,  np.int32,  np.int64, np.uint8, np.uint16,
+    params = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
               np.uint32, np.uint64, np.float32, np.float64, np.bool)
     param_names = ['dtype']
 

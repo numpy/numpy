@@ -1,10 +1,9 @@
 # ruff: noqa: ANN401
 # pyright: reportSelfClsParameterName=false
 from collections.abc import Iterable, Sequence
-from typing import Any, ClassVar, Literal, Protocol, SupportsIndex, TypeAlias, overload, type_check_only
+from typing import Any, ClassVar, Literal, Protocol, SupportsIndex, TypeAlias, TypeVar, overload, type_check_only
 
 from _typeshed import StrOrBytesPath
-from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import _ByteOrder, _OrderKACF, _SupportsBuffer
@@ -24,7 +23,7 @@ __all__ = [
 
 _T = TypeVar("_T")
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype[Any], covariant=True)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, covariant=True)
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
 
 _RecArray: TypeAlias = recarray[Any, np.dtype[_ScalarT]]

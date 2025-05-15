@@ -88,16 +88,6 @@ class container:
         multiply(self.array, other, self.array)
         return self
 
-    def __div__(self, other):
-        return self._rc(divide(self.array, asarray(other)))
-
-    def __rdiv__(self, other):
-        return self._rc(divide(asarray(other), self.array))
-
-    def __idiv__(self, other):
-        divide(self.array, other, self.array)
-        return self
-
     def __mod__(self, other):
         return self._rc(remainder(self.array, other))
 

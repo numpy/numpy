@@ -1,7 +1,7 @@
 from contextlib import nullcontext
 import operator
 import numpy as np
-from .._utils import set_module
+from numpy._utils import set_module
 from .numeric import uint8, ndarray, dtype
 
 __all__ = ['memmap']
@@ -250,13 +250,13 @@ class memmap(ndarray):
                 size = bytes // _dbytes
                 shape = (size,)
             else:
-                if type(shape) not in (tuple, list):
+                if not isinstance(shape, (tuple, list)):
                     try:
                         shape = [operator.index(shape)]
                     except TypeError:
                         pass
                 shape = tuple(shape)
-                size = np.intp(1)  # avoid default choice of np.int_, which might overflow
+                size = np.intp(1)  # avoid overflows
                 for k in shape:
                     size *= k
 

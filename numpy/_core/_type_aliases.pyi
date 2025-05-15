@@ -1,5 +1,5 @@
 from collections.abc import Collection
-from typing import Any, Final, Literal as L, TypeAlias, TypedDict, type_check_only
+from typing import Final, Literal as L, TypeAlias, TypedDict, type_check_only
 
 import numpy as np
 
@@ -87,10 +87,10 @@ _extra_aliases: Final[_ExtraAliasesType]
 
 @type_check_only
 class _SCTypes(TypedDict):
-    int: Collection[type[np.signedinteger[Any]]]
-    uint: Collection[type[np.unsignedinteger[Any]]]
-    float: Collection[type[np.floating[Any]]]
-    complex: Collection[type[np.complexfloating[Any, Any]]]
+    int: Collection[type[np.signedinteger]]
+    uint: Collection[type[np.unsignedinteger]]
+    float: Collection[type[np.floating]]
+    complex: Collection[type[np.complexfloating]]
     others: Collection[type[np.flexible | np.bool | np.object_]]
 
 sctypes: Final[_SCTypes]

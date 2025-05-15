@@ -18,8 +18,8 @@ from numpy import *  # noqa: F403
 
 __version__ = np.__version__
 
-__all__ = np.__all__[:]  # copy numpy namespace
-__all__ += ['rand', 'randn', 'repmat']
+__all__ = ['rand', 'randn', 'repmat']
+__all__ += np.__all__
 
 def empty(shape, dtype=None, order='C'):
     """Return a new matrix of given shape and type, without initializing entries.

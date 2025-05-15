@@ -121,7 +121,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
     num = operator.index(num)
     if num < 0:
         raise ValueError(
-            "Number of samples, %s, must be non-negative." % num
+            f"Number of samples, {num}, must be non-negative."
         )
     div = (num - 1) if endpoint else num
 
@@ -157,11 +157,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                 y *= delta
             else:
                 y = y * delta
+        elif _mult_inplace:
+            y *= step
         else:
-            if _mult_inplace:
-                y *= step
-            else:
-                y = y * step
+            y = y * step
     else:
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step
@@ -473,9 +472,8 @@ def _needs_add_docstring(obj):
 def _add_docstring(obj, doc, warn_on_python):
     if warn_on_python and not _needs_add_docstring(obj):
         warnings.warn(
-            "add_newdoc was used on a pure-python object {}. "
-            "Prefer to attach it directly to the source."
-            .format(obj),
+            f"add_newdoc was used on a pure-python object {obj}. "
+            "Prefer to attach it directly to the source.",
             UserWarning,
             stacklevel=3)
     try:

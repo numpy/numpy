@@ -1205,6 +1205,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
         goto clean_ret;
     }
 
+    int needs_pyapi = PyDataType_FLAGCHK(PyArray_DESCR(ret), NPY_NEEDS_PYAPI);
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ret));
     is1 = PyArray_STRIDES(ap1)[0];
     is2 = PyArray_STRIDES(ap2)[0];
@@ -1215,6 +1216,9 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
     n = n - n_left;
     for (i = 0; i < n_left; i++) {
         dot(ip1, is1, ip2, is2, op, n, ret);
+        if (needs_pyapi && PyErr_Occurred()) {
+            goto done;
+        }
         n++;
         ip2 -= is2;
         op += os;
@@ -1226,19 +1230,21 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
         op += os * (n1 - n2 + 1);
     }
     else {
-        for (i = 0; i < (n1 - n2 + 1); i++) {
+        for (i = 0; i < (n1 - n2 + 1) && (!needs_pyapi || !PyErr_Occurred());
+             i++) {
             dot(ip1, is1, ip2, is2, op, n, ret);
             ip1 += is1;
             op += os;
         }
     }
-    for (i = 0; i < n_right; i++) {
+    for (i = 0; i < n_right && (!needs_pyapi || !PyErr_Occurred()); i++) {
         n--;
         dot(ip1, is1, ip2, is2, op, n, ret);
         ip1 += is1;
         op += os;
     }
 
+done:
     NPY_END_THREADS_DESCR(PyArray_DESCR(ret));
     if (PyErr_Occurred()) {
         goto clean_ret;
@@ -2274,14 +2280,18 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *const *args, Py_ssize_
         return NULL;
     }
 
-    count =  PyArray_CountNonzero(array);
-
+    count = PyArray_CountNonzero(array);
     Py_DECREF(array);
 
     if (count == -1) {
         return NULL;
     }
-    return PyLong_FromSsize_t(count);
+
+    PyArray_Descr *descr = PyArray_DescrFromType(NPY_INTP);
+    if (descr == NULL) {
+        return NULL;
+    }
+    return PyArray_Scalar(&count, descr, NULL);
 }
 
 static PyObject *
@@ -3583,24 +3593,28 @@ static PyObject *
 array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t len)
 {
     npy_intp i, narr = 0, ndtypes = 0;
-    PyArrayObject **arr = NULL;
-    PyArray_Descr **dtypes = NULL;
     PyObject *ret = NULL;
 
     if (len == 0) {
         PyErr_SetString(PyExc_ValueError,
                         "at least one array or dtype is required");
-        goto finish;
+        return NULL;
     }
 
-    arr = PyArray_malloc(2 * len * sizeof(void *));
+    NPY_ALLOC_WORKSPACE(arr, PyArrayObject *, 2 * 3, 2 * len);
     if (arr == NULL) {
-        return PyErr_NoMemory();
+        return NULL;
     }
-    dtypes = (PyArray_Descr**)&arr[len];
+    PyArray_Descr **dtypes = (PyArray_Descr**)&arr[len];
+
+    PyObject *previous_obj = NULL;
 
     for (i = 0; i < len; ++i) {
         PyObject *obj = args[i];
+        if (obj == previous_obj) {
+            continue;
+        }
+
         if (PyArray_Check(obj)) {
             Py_INCREF(obj);
             arr[narr] = (PyArrayObject *)obj;
@@ -3636,7 +3650,7 @@ finish:
     for (i = 0; i < ndtypes; ++i) {
         Py_DECREF(dtypes[i]);
     }
-    PyArray_free(arr);
+    npy_free_workspace(arr);
     return ret;
 }
 

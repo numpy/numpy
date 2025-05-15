@@ -1,7 +1,6 @@
 import pickle
 
 import numpy as np
-from numpy.testing import assert_warns
 from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
                                 assert_array_equal)
 from numpy.ma.core import (masked_array, masked_values, masked, allequal,
@@ -20,7 +19,6 @@ class MMatrix(MaskedArray, np.matrix,):
     def __array_finalize__(self, obj):
         np.matrix.__array_finalize__(self, obj)
         MaskedArray.__array_finalize__(self, obj)
-        return
 
     @property
     def _series(self):

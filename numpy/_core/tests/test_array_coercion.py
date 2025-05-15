@@ -14,7 +14,7 @@ import numpy._core._multiarray_umath as ncu
 from numpy._core._rational_tests import rational
 
 from numpy.testing import (
-    assert_array_equal, assert_warns, IS_PYPY, IS_64BIT
+    assert_array_equal, IS_PYPY, IS_64BIT
 )
 
 
@@ -46,7 +46,7 @@ def arraylikes():
         def __len__(self):
             raise TypeError
 
-        def __getitem__(self):
+        def __getitem__(self, _, /):
             raise TypeError
 
     # Array-interface
@@ -636,7 +636,7 @@ class TestBadSequences:
                 obj[0][0] = 2  # replace with a different list.
                 raise ValueError("not actually a sequence!")
 
-            def __getitem__(self):
+            def __getitem__(self, _, /):
                 pass
 
         # Runs into a corner case in the new code, the `array(2)` is cached
@@ -758,7 +758,7 @@ class TestArrayLikes:
             def __len__(self):
                 raise error
 
-            def __getitem__(self):
+            def __getitem__(self, _, /):
                 # must have getitem to be a Sequence
                 return 1
 
@@ -848,7 +848,7 @@ class TestSpecialAttributeLookupFailure:
 
     class WeirdArrayLike:
         @property
-        def __array__(self, dtype=None, copy=None):
+        def __array__(self, dtype=None, copy=None):  # noqa: PLR0206
             raise RuntimeError("oops!")
 
     class WeirdArrayInterface:

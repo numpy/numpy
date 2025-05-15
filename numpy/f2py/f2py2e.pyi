@@ -4,7 +4,8 @@ from collections.abc import Hashable, Iterable, Mapping, MutableMapping, Sequenc
 from types import ModuleType
 from typing import Any, Final, TypedDict, type_check_only
 
-from typing_extensions import NotRequired, TypeVar, override
+from typing_extensions import TypeVar, override
+from typing import NotRequired
 
 from .__version__ import version
 from .auxfuncs import _Bool

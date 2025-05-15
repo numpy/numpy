@@ -10,7 +10,7 @@ import math
 import numpy as np
 from . import multiarray
 from . import numerictypes as nt
-from .multiarray import (
+from .multiarray import (  # noqa: F401
     ALLOW_THREADS, BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT,
     RAISE, WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
     asfortranarray, broadcast, can_cast, concatenate, copyto, dot, dtype,
@@ -26,7 +26,7 @@ from . import shape_base
 from .overrides import finalize_array_function_like, set_module
 from .umath import (multiply, invert, sin, PINF, NAN)
 from . import numerictypes
-from ..exceptions import AxisError
+from numpy.exceptions import AxisError
 from ._ufunc_config import errstate
 
 bitwise_not = invert
@@ -1024,7 +1024,7 @@ def tensordot(a, b, axes=2):
     first tensor, followed by the non-contracted axes of the second.
 
     Examples
-    -------- 
+    --------
     An example on integer_like:
 
     >>> a_0 = np.array([[1, 2], [3, 4]])
@@ -1055,9 +1055,9 @@ def tensordot(a, b, axes=2):
            [4664., 5018.],
            [4796., 5162.],
            [4928., 5306.]])
-           
+
     A slower but equivalent way of computing the same...
-    
+
     >>> d = np.zeros((5,2))
     >>> for i in range(5):
     ...   for j in range(2):
@@ -1426,7 +1426,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     normalize_axis_index : normalizing a single scalar axis
     """
     # Optimization to speed-up the most common cases.
-    if type(axis) not in (tuple, list):
+    if not isinstance(axis, (tuple, list)):
         try:
             axis = [operator.index(axis)]
         except TypeError:
@@ -1920,8 +1920,11 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 _fromfunction_with_like = array_function_dispatch()(fromfunction)
 
 
-def _frombuffer(buf, dtype, shape, order):
-    return frombuffer(buf, dtype=dtype).reshape(shape, order=order)
+def _frombuffer(buf, dtype, shape, order, axis_order=None):
+    array = frombuffer(buf, dtype=dtype)
+    if order == 'K' and axis_order is not None:
+        return array.reshape(shape, order='C').transpose(axis_order)
+    return array.reshape(shape, order=order)
 
 
 @set_module('numpy')
@@ -2091,32 +2094,31 @@ def binary_repr(num, width=None):
         return '0' * (width or 1)
 
     elif num > 0:
-        binary = bin(num)[2:]
+        binary = f'{num:b}'
         binwidth = len(binary)
         outwidth = (binwidth if width is None
                     else builtins.max(binwidth, width))
         err_if_insufficient(width, binwidth)
         return binary.zfill(outwidth)
 
+    elif width is None:
+        return f'-{-num:b}'
+
     else:
-        if width is None:
-            return '-' + bin(-num)[2:]
+        poswidth = len(f'{-num:b}')
 
-        else:
-            poswidth = len(bin(-num)[2:])
+        # See gh-8679: remove extra digit
+        # for numbers at boundaries.
+        if 2**(poswidth - 1) == -num:
+            poswidth -= 1
 
-            # See gh-8679: remove extra digit
-            # for numbers at boundaries.
-            if 2**(poswidth - 1) == -num:
-                poswidth -= 1
+        twocomp = 2**(poswidth + 1) + num
+        binary = f'{twocomp:b}'
+        binwidth = len(binary)
 
-            twocomp = 2**(poswidth + 1) + num
-            binary = bin(twocomp)[2:]
-            binwidth = len(binary)
-
-            outwidth = builtins.max(binwidth, width)
-            err_if_insufficient(width, binwidth)
-            return '1' * (outwidth - binwidth) + binary
+        outwidth = builtins.max(binwidth, width)
+        err_if_insufficient(width, binwidth)
+        return '1' * (outwidth - binwidth) + binary
 
 
 @set_module('numpy')

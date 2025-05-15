@@ -1,9 +1,7 @@
-from typing import Any
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 i8: np.int64
 f8: np.float64
@@ -44,8 +42,8 @@ assert_type(np.dsplit(AR_i8, [3, 5, 6, 10]), list[npt.NDArray[np.int64]])
 assert_type(np.dsplit(AR_LIKE_f8, [3, 5, 6, 10]), list[npt.NDArray[Any]])
 
 assert_type(np.kron(AR_b, AR_b), npt.NDArray[np.bool])
-assert_type(np.kron(AR_b, AR_i8), npt.NDArray[np.signedinteger[Any]])
-assert_type(np.kron(AR_f8, AR_f8), npt.NDArray[np.floating[Any]])
+assert_type(np.kron(AR_b, AR_i8), npt.NDArray[np.signedinteger])
+assert_type(np.kron(AR_f8, AR_f8), npt.NDArray[np.floating])
 
 assert_type(np.tile(AR_i8, 5), npt.NDArray[np.int64])
 assert_type(np.tile(AR_LIKE_f8, [2, 2]), npt.NDArray[Any])

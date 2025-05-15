@@ -3,7 +3,6 @@ import importlib.metadata
 import os
 import pathlib
 import subprocess
-import sysconfig
 
 import pytest
 import numpy as np
@@ -31,7 +30,7 @@ class TestNumpyConfig:
 
     def test_configtool_cflags(self):
         stdout = self.check_numpyconfig('--cflags')
-        assert f'-I{os.fspath(INCLUDE_DIR)}'
+        assert f'-I{os.fspath(INCLUDE_DIR)}' in stdout
 
     def test_configtool_pkgconfigdir(self):
         stdout = self.check_numpyconfig('--pkgconfigdir')

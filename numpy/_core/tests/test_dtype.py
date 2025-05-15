@@ -742,7 +742,7 @@ class TestSubarray:
         assert_raises(ValueError, np.dtype, [('a', 'f4', (-1, -1))])
 
     def test_alignment(self):
-        #Check that subarrays are aligned
+        # Check that subarrays are aligned
         t1 = np.dtype('(1,)i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
@@ -1174,6 +1174,10 @@ class TestString:
         assert_equal(str(dt), "(numpy.record, [('a', '<u2')])")
         assert_equal(dt.name, 'record16')
 
+    def test_custom_dtype_str(self):
+        dt = np.dtypes.StringDType()
+        assert_equal(dt.str, "StringDType()")
+
 
 class TestDtypeAttributeDeletion:
 
@@ -1399,10 +1403,10 @@ class TestPickling:
     @pytest.mark.parametrize('unit', ['', 'Y', 'M', 'W', 'D', 'h', 'm', 's',
                                       'ms', 'us', 'ns', 'ps', 'fs', 'as'])
     def test_datetime(self, base, unit):
-        dt = np.dtype('%s[%s]' % (base, unit) if unit else base)
+        dt = np.dtype(f'{base}[{unit}]' if unit else base)
         self.check_pickling(dt)
         if unit:
-            dt = np.dtype('%s[7%s]' % (base, unit))
+            dt = np.dtype(f'{base}[7{unit}]')
             self.check_pickling(dt)
 
     def test_metadata(self):
@@ -1620,7 +1624,7 @@ class TestDTypeClasses:
         assert type(dtype) is not np.dtype
         if dtype.type.__name__ != "rational":
             dt_name = type(dtype).__name__.lower().removesuffix("dtype")
-            if dt_name == "uint" or dt_name == "int":
+            if dt_name in {"uint", "int"}:
                 # The scalar names has a `c` attached because "int" is Python
                 # int and that is long...
                 dt_name += "c"
@@ -1922,9 +1926,10 @@ class TestUserDType:
         if HAS_REFCOUNT:
             # Create an array and test that memory gets cleaned up (gh-25949)
             o = object()
+            startcount = sys.getrefcount(o)
             a = np.array([o], dtype=dt)
             del a
-            assert sys.getrefcount(o) == 2
+            assert sys.getrefcount(o) == startcount
 
     def test_custom_structured_dtype_errors(self):
         class mytype:

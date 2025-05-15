@@ -67,7 +67,7 @@ _QuantileMethods = {
     # --- HYNDMAN and FAN METHODS
     # Discrete methods
     'inverted_cdf': {
-        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),
+        'get_virtual_index': lambda n, quantiles: _inverted_cdf(n, quantiles),  # noqa: PLW0108
         'fix_gamma': None,  # should never be called
     },
     'averaged_inverted_cdf': {
@@ -79,8 +79,7 @@ _QuantileMethods = {
             where=gamma == 0),
     },
     'closest_observation': {
-        'get_virtual_index': lambda n, quantiles: _closest_observation(n,
-                                                                    quantiles),
+        'get_virtual_index': lambda n, quantiles: _closest_observation(n, quantiles),  # noqa: PLW0108
         'fix_gamma': None,  # should never be called
     },
     # Continuous methods
@@ -2134,11 +2133,10 @@ def disp(mesg, device=None, linefeed=True):
     if device is None:
         device = sys.stdout
     if linefeed:
-        device.write('%s\n' % mesg)
+        device.write(f'{mesg}\n')
     else:
-        device.write('%s' % mesg)
+        device.write(f'{mesg}')
     device.flush()
-    return
 
 
 # See https://docs.scipy.org/doc/numpy/reference/c-api.generalized-ufuncs.html
@@ -2435,8 +2433,8 @@ class vectorize:
                  excluded=None, cache=False, signature=None):
 
         if (pyfunc != np._NoValue) and (not callable(pyfunc)):
-            #Splitting the error message to keep
-            #the length below 79 characters.
+            # Splitting the error message to keep
+            # the length below 79 characters.
             part1 = "When used as a decorator, "
             part2 = "only accepts keyword arguments."
             raise TypeError(part1 + part2)
@@ -2458,7 +2456,7 @@ class vectorize:
         if isinstance(otypes, str):
             for char in otypes:
                 if char not in typecodes['All']:
-                    raise ValueError("Invalid otype specified: %s" % (char,))
+                    raise ValueError(f"Invalid otype specified: {char}")
         elif iterable(otypes):
             otypes = [_get_vectorize_dtype(_nx.dtype(x)) for x in otypes]
         elif otypes is not None:
@@ -2550,7 +2548,6 @@ class vectorize:
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
-            args = [asarray(arg) for arg in args]
             if builtins.any(arg.size == 0 for arg in args):
                 raise ValueError('cannot call `vectorize` on size 0 inputs '
                                  'unless `otypes` is set')
@@ -2596,18 +2593,15 @@ class vectorize:
         elif not args:
             res = func()
         else:
+            args = [asanyarray(a, dtype=object) for a in args]
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
-
-            # Convert args to object arrays first
-            inputs = [asanyarray(a, dtype=object) for a in args]
-
-            outputs = ufunc(*inputs)
+            outputs = ufunc(*args, out=...)
 
             if ufunc.nout == 1:
                 res = asanyarray(outputs, dtype=otypes[0])
             else:
                 res = tuple(asanyarray(x, dtype=t)
-                             for x, t in zip(outputs, otypes))
+                            for x, t in zip(outputs, otypes))
         return res
 
     def _vectorize_call_with_signature(self, func, args):
@@ -3870,11 +3864,10 @@ def _ureduce(a, func, keepdims=False, **kwargs):
     if axis is not None:
         axis = _nx.normalize_axis_tuple(axis, nd)
 
-        if keepdims:
-            if out is not None:
-                index_out = tuple(
-                    0 if i in axis else slice(None) for i in range(nd))
-                kwargs['out'] = out[(Ellipsis, ) + index_out]
+        if keepdims and out is not None:
+            index_out = tuple(
+                0 if i in axis else slice(None) for i in range(nd))
+            kwargs['out'] = out[(Ellipsis, ) + index_out]
 
         if len(axis) == 1:
             kwargs['axis'] = axis[0]
@@ -3887,11 +3880,9 @@ def _ureduce(a, func, keepdims=False, **kwargs):
             # merge reduced axis
             a = a.reshape(a.shape[:nkeep] + (-1,))
             kwargs['axis'] = -1
-    else:
-        if keepdims:
-            if out is not None:
-                index_out = (0, ) * nd
-                kwargs['out'] = out[(Ellipsis, ) + index_out]
+    elif keepdims and out is not None:
+        index_out = (0, ) * nd
+        kwargs['out'] = out[(Ellipsis, ) + index_out]
 
     r = func(a, **kwargs)
 
@@ -4565,9 +4556,8 @@ def _quantile_is_valid(q):
         for i in range(q.size):
             if not (0.0 <= q[i] <= 1.0):
                 return False
-    else:
-        if not (q.min() >= 0 and q.max() <= 1):
-            return False
+    elif not (q.min() >= 0 and q.max() <= 1):
+        return False
     return True
 
 
@@ -4717,14 +4707,13 @@ def _quantile_ureduce_func(
         else:
             arr = a
             wgt = weights
+    elif axis is None:
+        axis = 0
+        arr = a.flatten()
+        wgt = None if weights is None else weights.flatten()
     else:
-        if axis is None:
-            axis = 0
-            arr = a.flatten()
-            wgt = None if weights is None else weights.flatten()
-        else:
-            arr = a.copy()
-            wgt = weights
+        arr = a.copy()
+        wgt = weights
     result = _quantile(arr,
                        quantiles=q,
                        axis=axis,
@@ -5419,8 +5408,8 @@ def delete(arr, obj, axis=None):
         # optimization for a single value
         if (obj < -N or obj >= N):
             raise IndexError(
-                "index %i is out of bounds for axis %i with "
-                "size %i" % (obj, axis, N))
+                f"index {obj} is out of bounds for axis {axis} with "
+                f"size {N}")
         if (obj < 0):
             obj += N
         newshape[axis] -= 1
@@ -5436,7 +5425,7 @@ def delete(arr, obj, axis=None):
             if obj.shape != (N,):
                 raise ValueError('boolean array argument obj to delete '
                                  'must be one dimensional and match the axis '
-                                 'length of {}'.format(N))
+                                 f'length of {N}')
 
             # optimization, the other branch is slower
             keep = ~obj

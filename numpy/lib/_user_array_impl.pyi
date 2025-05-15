@@ -1,8 +1,8 @@
 from types import EllipsisType
-from typing import Any, Generic, SupportsIndex, TypeAlias, TypeVar, overload
+from typing import Any, Generic, Self, SupportsIndex, TypeAlias, TypeVar, overload
 
 from _typeshed import Incomplete
-from typing_extensions import Self, deprecated, override
+from typing_extensions import deprecated, override
 
 import numpy as np
 import numpy.typing as npt
@@ -13,8 +13,8 @@ from numpy._typing import _ArrayLike, _ArrayLikeBool_co, _ArrayLikeInt_co, _DTyp
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
 _ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], default=Any, covariant=True)
-_DTypeT = TypeVar("_DTypeT", bound=np.dtype[Any])
-_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype[Any], default=np.dtype[Any], covariant=True)
+_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
 
 _BoolArrayT = TypeVar("_BoolArrayT", bound=container[Any, np.dtype[np.bool]])
 _IntegralArrayT = TypeVar("_IntegralArrayT", bound=container[Any, np.dtype[np.bool | np.integer | np.object_]])
@@ -95,7 +95,7 @@ class container(Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __getitem__(self: container[Any, np.dtype[np.void]], key: list[str], /) -> container[_ShapeT_co, np.dtype[np.void]]: ...
     @overload
-    def __getitem__(self: container[Any, np.dtype[np.void]], key: str, /) -> container[_ShapeT_co, np.dtype[Any]]: ...
+    def __getitem__(self: container[Any, np.dtype[np.void]], key: str, /) -> container[_ShapeT_co, np.dtype]: ...
 
     # keep in sync with np.ndarray
     @overload
@@ -136,11 +136,6 @@ class container(Generic[_ShapeT_co, _DTypeT_co]):
     def __mul__(self, other: npt.ArrayLike, /) -> Incomplete: ...
     def __rmul__(self, other: npt.ArrayLike, /) -> Incomplete: ...
     def __imul__(self, other: npt.ArrayLike, /) -> Self: ...
-
-    #
-    def __div__(self, other: npt.ArrayLike, /) -> Incomplete: ...
-    def __rdiv__(self, other: npt.ArrayLike, /) -> Incomplete: ...
-    def __idiv__(self, other: npt.ArrayLike, /) -> Self: ...
 
     #
     def __mod__(self, other: npt.ArrayLike, /) -> Incomplete: ...

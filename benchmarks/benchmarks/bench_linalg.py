@@ -202,7 +202,7 @@ class Einsum(Benchmark):
     def time_einsum_noncon_contig_contig(self, dtype):
         np.einsum("ji,i->", self.non_contiguous_dim2, self.non_contiguous_dim1_small, optimize=True)
 
-    # sum_of_products_contig_outstride0_one：non_contiguous arrays
+    # sum_of_products_contig_outstride0_one: non_contiguous arrays
     def time_einsum_noncon_contig_outstride0(self, dtype):
         np.einsum("i->", self.non_contiguous_dim1, optimize=True)
 
@@ -251,14 +251,14 @@ class MatmulStrided(Benchmark):
         }
 
         self.params = [list(self.args_map.keys())]
-    
+
     def setup(self, configuration):
         m, p, n, batch_size = self.args_map[configuration]
 
         self.a1raw = np.random.rand(batch_size * m * 2 * n).reshape(
             (batch_size, m, 2 * n)
         )
-        
+
         self.a1 = self.a1raw[:, :, ::2]
 
         self.a2 = np.random.rand(batch_size * n * p).reshape(

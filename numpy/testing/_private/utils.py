@@ -27,7 +27,6 @@ from numpy._core import (
      intp, float32, empty, arange, array_repr, ndarray, isnat, array)
 from numpy import isfinite, isnan, isinf
 import numpy.linalg._umath_linalg
-from numpy._core.tests._natype import pd_NA
 
 from io import StringIO
 
@@ -136,7 +135,7 @@ if os.name == 'nt':
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
         # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
-        #(dead link)
+        # (dead link)
         # My older explanation for this was that the "AddCounter" process
         # forced the CPU to 100%, but the above makes more sense :)
         import win32pdh
@@ -616,9 +615,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
             if isnan(desired) or isnan(actual):
                 if not (isnan(desired) and isnan(actual)):
                     raise AssertionError(_build_err_msg())
-            else:
-                if not desired == actual:
-                    raise AssertionError(_build_err_msg())
+            elif not desired == actual:
+                raise AssertionError(_build_err_msg())
             return
     except (NotImplementedError, TypeError):
         pass
@@ -716,9 +714,8 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
             if isnan(desired) or isnan(actual):
                 if not (isnan(desired) and isnan(actual)):
                     raise AssertionError(msg)
-            else:
-                if not desired == actual:
-                    raise AssertionError(msg)
+            elif not desired == actual:
+                raise AssertionError(msg)
             return
     except (TypeError, NotImplementedError):
         pass
@@ -1396,7 +1393,7 @@ def rundocs(filename=None, raise_on_error=True):
 
     msg = []
     if raise_on_error:
-        out = lambda s: msg.append(s)
+        out = msg.append
     else:
         out = None
 
@@ -1529,7 +1526,6 @@ def decorate_methods(cls, decorator, testmatch=None):
             continue
         if testmatch.search(funcname) and not funcname.startswith('_'):
             setattr(cls, funcname, decorator(function))
-    return
 
 
 def measure(code_str, times=1, label=None):
@@ -1879,8 +1875,7 @@ def nulp_diff(x, y, dtype=None):
     y[np.isnan(y)] = np.nan
 
     if not x.shape == y.shape:
-        raise ValueError("Arrays do not have the same shape: %s - %s" %
-                         (x.shape, y.shape))
+        raise ValueError(f"Arrays do not have the same shape: {x.shape} - {y.shape}")
 
     def _diff(rx, ry, vdt):
         diff = np.asarray(rx - ry, dtype=vdt)
@@ -1899,9 +1894,8 @@ def _integer_repr(x, vdt, comp):
     rx = x.view(vdt)
     if not (rx.size == 1):
         rx[rx < 0] = comp - rx[rx < 0]
-    else:
-        if rx < 0:
-            rx = comp - rx
+    elif rx < 0:
+        rx = comp - rx
 
     return rx
 
@@ -2082,7 +2076,7 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 inp1 = lambda: arange(s, dtype=dtype)[o:]
                 inp2 = lambda: arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
-                yield out, inp1(), inp2(),  bfmt % \
+                yield out, inp1(), inp2(), bfmt % \
                     (o, o, o, s, dtype, 'out of place')
                 d = inp1()
                 yield d, d, inp2(), bfmt % \
@@ -2162,7 +2156,7 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     This makes it possible to trigger any warning afresh inside the context
     manager without disturbing the state of warnings outside.
 
-    For compatibility with Python 3.0, please consider all arguments to be
+    For compatibility with Python, please consider all arguments to be
     keyword-only.
 
     Parameters
@@ -2742,16 +2736,13 @@ def run_threaded(func, max_workers=8, pass_count=False,
                 futures = []
                 for arg in all_args:
                     futures.append(tpe.submit(*arg))
+            except RuntimeError as e:
+                import pytest
+                pytest.skip(f"Spawning {max_workers} threads failed with "
+                            f"error {e!r} (likely due to resource limits on the "
+                            "system running the tests)")
             finally:
                 if len(futures) < max_workers and pass_barrier:
                     barrier.abort()
             for f in futures:
                 f.result()
-
-
-def get_stringdtype_dtype(na_object, coerce=True):
-    # explicit is check for pd_NA because != with pd_NA returns pd_NA
-    if na_object is pd_NA or na_object != "unset":
-        return np.dtypes.StringDType(na_object=na_object, coerce=coerce)
-    else:
-        return np.dtypes.StringDType(coerce=coerce)

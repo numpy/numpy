@@ -24,7 +24,7 @@ import itertools
 import warnings
 
 from . import core as ma
-from .core import (
+from .core import (  # noqa: F401
     MaskedArray, MAError, add, array, asarray, concatenate, filled, count,
     getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
     nomask, ones, sort, zeros, getdata, get_masked_subclass, dot

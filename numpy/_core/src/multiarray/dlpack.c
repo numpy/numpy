@@ -504,36 +504,12 @@ from_dlpack(PyObject *NPY_UNUSED(self),
         return NULL;
     }
 
-    /* Prepare the arguments to call objects __dlpack__() method */
-    static PyObject *call_kwnames = NULL;
-    static PyObject *dl_cpu_device_tuple = NULL;
-    static PyObject *max_version = NULL;
-
-    if (call_kwnames == NULL) {
-        call_kwnames = Py_BuildValue("(sss)", "dl_device", "copy", "max_version");
-        if (call_kwnames == NULL) {
-            return NULL;
-        }
-    }
-    if (dl_cpu_device_tuple == NULL) {
-        dl_cpu_device_tuple = Py_BuildValue("(i,i)", 1, 0);
-        if (dl_cpu_device_tuple == NULL) {
-            return NULL;
-        }
-    }
-    if (max_version == NULL) {
-        max_version = Py_BuildValue("(i,i)", 1, 0);
-        if (max_version == NULL) {
-            return NULL;
-        }
-    }
-
     /* 
      * Prepare arguments for the full call. We always forward copy and pass
      * our max_version. `device` is always passed as `None`, but if the user
      * provided a device, we will replace it with the "cpu": (1, 0).
      */
-    PyObject *call_args[] = {obj, Py_None, copy, max_version};
+    PyObject *call_args[] = {obj, Py_None, copy, npy_static_pydata.dl_max_version};
     Py_ssize_t nargsf = 1 | PY_VECTORCALL_ARGUMENTS_OFFSET;
 
     /* If device is passed it must be "cpu" and replace it with (1, 0) */
@@ -544,12 +520,13 @@ from_dlpack(PyObject *NPY_UNUSED(self),
             return NULL;
         }
         assert(device_request == NPY_DEVICE_CPU);
-        call_args[1] = dl_cpu_device_tuple;
+        call_args[1] = npy_static_pydata.dl_cpu_device_tuple;
     }
 
 
     PyObject *capsule = PyObject_VectorcallMethod(
-            npy_interned_str.__dlpack__, call_args, nargsf, call_kwnames);
+            npy_interned_str.__dlpack__, call_args, nargsf,
+            npy_static_pydata.dl_call_kwnames);
     if (capsule == NULL) {
         /*
          * TODO: This path should be deprecated in NumPy 2.1.  Once deprecated

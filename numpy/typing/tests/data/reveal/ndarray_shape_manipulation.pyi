@@ -1,7 +1,7 @@
+from typing import assert_type
+
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 nd: npt.NDArray[np.int64]
 

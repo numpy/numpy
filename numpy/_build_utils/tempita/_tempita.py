@@ -152,6 +152,7 @@ class Template:
         if default_inherit is not None:
             self.default_inherit = default_inherit
 
+    @classmethod
     def from_filename(
         cls,
         filename,
@@ -172,14 +173,8 @@ class Template:
             get_template=get_template,
         )
 
-    from_filename = classmethod(from_filename)
-
     def __repr__(self):
-        return "<%s %s name=%r>" % (
-            self.__class__.__name__,
-            hex(id(self))[2:],
-            self.name,
-        )
+        return f"<{self.__class__.__name__} {id(self):x} name={self.name!r}>"
 
     def substitute(self, *args, **kw):
         if args:
@@ -790,13 +785,12 @@ def parse_expr(tokens, name, context=()):
                 expr = expr.replace("\r\n", "\n")
                 expr = expr.replace("\r", "")
             expr += "\n"
-        else:
-            if "\n" in expr:
-                raise TemplateError(
-                    "Multi-line py blocks must start with a newline",
-                    position=pos,
-                    name=name,
-                )
+        elif "\n" in expr:
+            raise TemplateError(
+                "Multi-line py blocks must start with a newline",
+                position=pos,
+                name=name,
+            )
         return ("py", pos, expr), tokens[1:]
     elif expr in ("continue", "break"):
         if "for" not in context:
@@ -841,8 +835,7 @@ def parse_cond(tokens, name, context):
 def parse_one_cond(tokens, name, context):
     (first, pos), tokens = tokens[0], tokens[1:]
     content = []
-    if first.endswith(":"):
-        first = first[:-1]
+    first = first.removesuffix(":")
     if first.startswith("if "):
         part = ("if", pos, first[3:].lstrip(), content)
     elif first.startswith("elif "):
@@ -870,8 +863,7 @@ def parse_for(tokens, name, context):
     context = ("for",) + context
     content = []
     assert first.startswith("for "), first
-    if first.endswith(":"):
-        first = first[:-1]
+    first = first.removesuffix(":")
     first = first[3:].strip()
     match = in_re.search(first)
     if not match:
@@ -932,8 +924,7 @@ def parse_def(tokens, name, context):
     tokens = tokens[1:]
     assert first.startswith("def ")
     first = first.split(None, 1)[1]
-    if first.endswith(":"):
-        first = first[:-1]
+    first = first.removesuffix(":")
     if "(" not in first:
         func_name = first
         sig = ((), None, None, {})
@@ -980,7 +971,7 @@ def parse_signature(sig_text, name, pos):
         tok_type, tok_string = get_token()
         if tok_type == tokenize.ENDMARKER:
             break
-        if tok_type == tokenize.OP and (tok_string == "*" or tok_string == "**"):
+        if tok_type == tokenize.OP and tok_string in {"*", "**"}:
             var_arg_type = tok_string
             tok_type, tok_string = get_token()
         if tok_type != tokenize.NAME:
