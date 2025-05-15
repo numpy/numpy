@@ -1,18 +1,25 @@
+import hashlib
 import os.path
 import sys
-import hashlib
 
 import pytest
 
 import numpy as np
 from numpy.exceptions import AxisError
 from numpy.linalg import LinAlgError
+from numpy.random import MT19937, Generator, RandomState, SeedSequence
 from numpy.testing import (
-    assert_, assert_raises, assert_equal, assert_allclose,
-    assert_warns, assert_no_warnings, assert_array_equal,
-    assert_array_almost_equal, suppress_warnings, IS_WASM)
-
-from numpy.random import Generator, MT19937, SeedSequence, RandomState
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+    assert_warns,
+    suppress_warnings,
+)
 
 random = Generator(MT19937())
 
@@ -2780,8 +2787,8 @@ def test_pickle_preserves_seed_sequence():
 @pytest.mark.parametrize("version", [121, 126])
 def test_legacy_pickle(version):
     # Pickling format was changes in 1.22.x and in 2.0.x
-    import pickle
     import gzip
+    import pickle
 
     base_path = os.path.split(os.path.abspath(__file__))[0]
     pkl_file = os.path.join(

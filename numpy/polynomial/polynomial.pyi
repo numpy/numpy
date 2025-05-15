@@ -1,12 +1,12 @@
-from typing import Final, Literal as L
+from typing import Final
+from typing import Literal as L
 
 import numpy as np
+
 from ._polybase import ABCPolyBase
 from ._polytypes import (
     _Array1,
     _Array2,
-    _FuncVal2D,
-    _FuncVal3D,
     _FuncBinOp,
     _FuncCompanion,
     _FuncDer,
@@ -18,10 +18,12 @@ from ._polytypes import (
     _FuncRoots,
     _FuncUnOp,
     _FuncVal,
+    _FuncVal2D,
+    _FuncVal3D,
+    _FuncValFromRoots,
     _FuncVander,
     _FuncVander2D,
     _FuncVander3D,
-    _FuncValFromRoots,
 )
 from .polyutils import trimcoef as polytrim
 

@@ -1,11 +1,16 @@
+import pytest
+
 import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose
-    )
-
-import pytest
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 # `poly1d` has some support for `np.bool` and `np.timedelta64`,
 # but it is limited and they are therefore excluded here

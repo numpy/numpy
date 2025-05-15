@@ -1,18 +1,23 @@
-import sys
-import warnings
 import functools
 import operator
+import sys
+import warnings
+from itertools import product
 
 import pytest
+from numpy._core._multiarray_tests import array_indexing
 
 import numpy as np
-from numpy._core._multiarray_tests import array_indexing
-from itertools import product
 from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_warns, HAS_REFCOUNT
-    )
+    HAS_REFCOUNT,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+)
 
 
 class TestIndexing:

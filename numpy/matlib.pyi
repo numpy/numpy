@@ -2,7 +2,6 @@ from typing import Any, Literal, TypeAlias, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt
-
 from numpy import (  # noqa: F401
     False_,
     ScalarType,

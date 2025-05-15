@@ -1,8 +1,8 @@
 from typing import TypedDict, type_check_only
 
 from numpy import uint64
-from numpy.random.bit_generator import BitGenerator, SeedSequence
 from numpy._typing import NDArray, _ArrayLikeInt_co
+from numpy.random.bit_generator import BitGenerator, SeedSequence
 
 @type_check_only
 class _SFC64Internal(TypedDict):

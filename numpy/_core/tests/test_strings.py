@@ -1,10 +1,10 @@
+import operator
 import sys
+
 import pytest
 
-import operator
 import numpy as np
-
-from numpy.testing import assert_array_equal, assert_raises, IS_PYPY
+from numpy.testing import IS_PYPY, assert_array_equal, assert_raises
 from numpy.testing._private.utils import requires_memory
 
 COMPARISONS = [

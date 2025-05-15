@@ -1,15 +1,15 @@
-from importlib.util import spec_from_file_location, module_from_spec
 import os
-import pytest
 import shutil
 import subprocess
 import sys
 import sysconfig
 import warnings
+from importlib.util import module_from_spec, spec_from_file_location
+
+import pytest
 
 import numpy as np
-from numpy.testing import IS_WASM, IS_EDITABLE
-
+from numpy.testing import IS_EDITABLE, IS_WASM
 
 try:
     import cffi

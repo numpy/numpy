@@ -13,7 +13,6 @@ import numpy.ma.mrecords as mrec
 from numpy._core.overrides import array_function_dispatch
 from numpy.lib._iotools import _is_string_like
 
-
 __all__ = [
     'append_fields', 'apply_along_fields', 'assign_fields_by_name',
     'drop_fields', 'find_duplicates', 'flatten_descr',

@@ -7,7 +7,8 @@ This provides helpers which wrap `_get_extobj_dict` and `_make_extobj`, and
 import functools
 
 from numpy._utils import set_module
-from .umath import _make_extobj, _get_extobj_dict, _extobj_contextvar
+
+from .umath import _extobj_contextvar, _get_extobj_dict, _make_extobj
 
 __all__ = [
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",

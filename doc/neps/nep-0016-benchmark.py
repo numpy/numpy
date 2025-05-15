@@ -1,6 +1,9 @@
-import perf
 import abc
+
+import perf
+
 import numpy as np
+
 
 class NotArray:
     pass

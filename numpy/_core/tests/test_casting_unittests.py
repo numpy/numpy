@@ -6,18 +6,17 @@ Unlike most tests in NumPy, these are closer to unit-tests rather
 than integration tests.
 """
 
-import pytest
-import textwrap
+import ctypes
 import enum
 import random
-import ctypes
+import textwrap
+
+import pytest
+from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-
 from numpy.testing import assert_array_equal
-from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
-
 
 # Simple skips object, parametric and long double (unsupported by struct)
 simple_dtypes = "?bhilqBHILQefdFD"

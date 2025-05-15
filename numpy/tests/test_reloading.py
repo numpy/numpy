@@ -1,18 +1,18 @@
-import sys
+import pickle
 import subprocess
+import sys
 import textwrap
 from importlib import reload
-import pickle
 
 import pytest
 
 import numpy.exceptions as ex
 from numpy.testing import (
-    assert_raises,
-    assert_warns,
+    IS_WASM,
     assert_,
     assert_equal,
-    IS_WASM,
+    assert_raises,
+    assert_warns,
 )
 
 

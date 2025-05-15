@@ -1,18 +1,34 @@
-import sys
 import platform
+import sys
+
 import pytest
 
 import numpy as np
 from numpy import (
-    logspace, linspace, geomspace, dtype, array, arange, isnan,
-    ndarray, sqrt, nextafter, stack, errstate
-    )
+    arange,
+    array,
+    dtype,
+    errstate,
+    geomspace,
+    isnan,
+    linspace,
+    logspace,
+    ndarray,
+    nextafter,
+    sqrt,
+    stack,
+)
 from numpy._core import sctypes
 from numpy._core.function_base import add_newdoc
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
-    IS_PYPY
-    )
+    IS_PYPY,
+    assert_,
+    assert_allclose,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
+
 
 def _is_armhf():
     # Check if the current platform is ARMHF (32-bit ARM architecture)

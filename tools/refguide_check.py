@@ -33,17 +33,17 @@ import os
 import re
 import sys
 import warnings
-import docutils.core
 from argparse import ArgumentParser
 
+import docutils.core
 from docutils.parsers.rst import directives
-
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
 from numpydoc.docscrape_sphinx import get_doc_object
 
 # Enable specific Sphinx directives
-from sphinx.directives.other import SeeAlso, Only
+from sphinx.directives.other import Only, SeeAlso
+
 directives.register_directive('seealso', SeeAlso)
 directives.register_directive('only', Only)
 

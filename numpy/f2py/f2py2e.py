@@ -10,22 +10,25 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-import sys
+import argparse
 import os
 import pprint
 import re
-import argparse
+import sys
 
-from . import crackfortran
-from . import rules
-from . import cb_rules
-from . import auxfuncs
-from . import cfuncs
-from . import f90mod_rules
-from . import __version__
-from . import capi_maps
-from .cfuncs import errmess
 from numpy.f2py._backends import f2py_build_generator
+
+from . import (
+    __version__,
+    auxfuncs,
+    capi_maps,
+    cb_rules,
+    cfuncs,
+    crackfortran,
+    f90mod_rules,
+    rules,
+)
+from .cfuncs import errmess
 
 f2py_version = __version__.version
 numpy_version = __version__.version

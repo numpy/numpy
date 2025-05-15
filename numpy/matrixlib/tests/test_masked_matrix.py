@@ -1,12 +1,22 @@
 import pickle
 
 import numpy as np
-from numpy.ma.testutils import (assert_, assert_equal, assert_raises,
-                                assert_array_equal)
-from numpy.ma.core import (masked_array, masked_values, masked, allequal,
-                           MaskType, getmask, MaskedArray, nomask,
-                           log, add, hypot, divide)
+from numpy.ma.core import (
+    MaskedArray,
+    MaskType,
+    add,
+    allequal,
+    divide,
+    getmask,
+    hypot,
+    log,
+    masked,
+    masked_array,
+    masked_values,
+    nomask,
+)
 from numpy.ma.extras import mr_
+from numpy.ma.testutils import assert_, assert_array_equal, assert_equal, assert_raises
 
 
 class MMatrix(MaskedArray, np.matrix,):

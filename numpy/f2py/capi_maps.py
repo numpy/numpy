@@ -7,19 +7,21 @@ terms of the NumPy License.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 from . import __version__
+
 f2py_version = __version__.version
 
 import copy
-import re
 import os
-from .crackfortran import markoutercomma
+import re
+
 from . import cb_rules
-from ._isocbind import iso_c_binding_map, isoc_c2pycode_map, iso_c2py_map
+from ._isocbind import iso_c2py_map, iso_c_binding_map, isoc_c2pycode_map
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
+from .crackfortran import markoutercomma
 
 __all__ = [
     'getctype', 'getstrlength', 'getarrdims', 'getpydocsign',

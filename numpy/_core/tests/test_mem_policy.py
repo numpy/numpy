@@ -2,14 +2,14 @@ import asyncio
 import gc
 import os
 import sys
-import threading
 import sysconfig
+import threading
 
 import pytest
 
 import numpy as np
-from numpy.testing import extbuild, assert_warns, IS_WASM, IS_EDITABLE
 from numpy._core.multiarray import get_handler_name
+from numpy.testing import IS_EDITABLE, IS_WASM, assert_warns, extbuild
 
 
 @pytest.fixture

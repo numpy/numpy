@@ -196,5 +196,6 @@ if __doc__ is not None:
     del _docstrings
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

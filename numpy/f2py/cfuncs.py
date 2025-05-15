@@ -9,8 +9,8 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-import sys
 import copy
+import sys
 
 from . import __version__
 

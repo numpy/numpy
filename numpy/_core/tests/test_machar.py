@@ -3,9 +3,9 @@ Test machar. Given recent changes to hardcode type data, we might want to get
 rid of both MachAr and this test at some point.
 
 """
-from numpy._core._machar import MachAr
 import numpy._core.numerictypes as ntypes
-from numpy import errstate, array
+from numpy import array, errstate
+from numpy._core._machar import MachAr
 
 
 class TestMachAr:

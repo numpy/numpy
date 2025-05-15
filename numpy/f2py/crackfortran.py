@@ -136,27 +136,27 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-import sys
-import string
-import fileinput
-import re
-import os
-import copy
-import platform
 import codecs
+import copy
+import fileinput
+import os
+import platform
+import re
+import string
+import sys
 from pathlib import Path
+
 try:
     import charset_normalizer
 except ImportError:
     charset_normalizer = None
 
-from . import __version__
+from . import __version__, symbolic
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
-from . import symbolic
 
 f2py_version = __version__.version
 

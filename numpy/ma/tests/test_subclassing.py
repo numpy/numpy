@@ -8,12 +8,23 @@
 """
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
-from numpy.testing import assert_, assert_raises
-from numpy.ma.testutils import assert_equal
 from numpy.ma.core import (
-    array, arange, masked, MaskedArray, masked_array, log, add, hypot,
-    divide, asarray, asanyarray, nomask
-    )
+    MaskedArray,
+    add,
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    divide,
+    hypot,
+    log,
+    masked,
+    masked_array,
+    nomask,
+)
+from numpy.ma.testutils import assert_equal
+from numpy.testing import assert_, assert_raises
+
 # from numpy.ma.core import (
 
 def assert_startswith(a, b):

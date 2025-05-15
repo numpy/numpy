@@ -29,9 +29,9 @@ can use ``__name='tmpl.html'`` to set the name of the template.
 If there are syntax errors ``TemplateError`` will be raised.
 """
 
+import os
 import re
 import sys
-import os
 import tokenize
 from io import StringIO
 
@@ -1064,10 +1064,11 @@ strings.
 
 
 def fill_command(args=None):
-    import sys
     import optparse
-    import pkg_resources
     import os
+    import sys
+
+    import pkg_resources
 
     if args is None:
         args = sys.argv[1:]

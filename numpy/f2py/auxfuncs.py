@@ -9,13 +9,12 @@ terms of the NumPy (BSD style) LICENSE.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 import pprint
-import sys
 import re
+import sys
 import types
 from functools import reduce
 
-from . import __version__
-from . import cfuncs
+from . import __version__, cfuncs
 from .cfuncs import errmess
 
 __all__ = [

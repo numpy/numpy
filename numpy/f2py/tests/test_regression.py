@@ -1,6 +1,7 @@
 import os
-import pytest
 import platform
+
+import pytest
 
 import numpy as np
 import numpy.testing as npt

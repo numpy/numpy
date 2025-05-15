@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from typing import (
-    Any,
-    TypeVar,
-    Protocol,
-    runtime_checkable,
     TYPE_CHECKING,
+    Any,
+    Protocol,
+    TypeVar,
+    runtime_checkable,
 )
 
 if TYPE_CHECKING:

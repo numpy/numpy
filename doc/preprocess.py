@@ -2,6 +2,7 @@
 import os
 from string import Template
 
+
 def main():
     doxy_gen(os.path.abspath(os.path.join('..')))
 

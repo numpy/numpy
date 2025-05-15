@@ -1,35 +1,47 @@
-import sys
 import gc
 import gzip
+import locale
 import os
+import re
+import sys
 import threading
 import time
 import warnings
-import re
-import pytest
+from ctypes import c_bool
+from datetime import datetime
+from io import BytesIO, StringIO
+from multiprocessing import Value, get_context
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from io import BytesIO, StringIO
-from datetime import datetime
-import locale
-from multiprocessing import Value, get_context
-from ctypes import c_bool
+
+import pytest
 
 import numpy as np
 import numpy.ma as ma
+from numpy._utils import asbytes
 from numpy.exceptions import VisibleDeprecationWarning
-from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.lib import _npyio_impl
+from numpy.lib._iotools import ConversionWarning, ConverterError
 from numpy.lib._npyio_impl import recfromcsv, recfromtxt
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    assert_warns, assert_, assert_raises_regex, assert_raises,
-    assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings,
-    break_cycles, IS_WASM
-    )
+    HAS_REFCOUNT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_array_equal,
+    assert_no_gc_cycles,
+    assert_no_warnings,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    break_cycles,
+    suppress_warnings,
+    tempdir,
+    temppath,
+)
 from numpy.testing._private.utils import requires_memory
-from numpy._utils import asbytes
 
 
 class TextIO(BytesIO):

@@ -5,7 +5,6 @@ String handling is much easier to do correctly in python.
 """
 import numpy as np
 
-
 _kind_to_stem = {
     'u': 'uint',
     'i': 'int',

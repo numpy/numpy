@@ -3,10 +3,10 @@ Tests for numpy/_core/src/multiarray/conversion_utils.c
 """
 import re
 
+import numpy._core._multiarray_tests as mt
 import pytest
 
-import numpy._core._multiarray_tests as mt
-from numpy._core.multiarray import CLIP, WRAP, RAISE
+from numpy._core.multiarray import CLIP, RAISE, WRAP
 from numpy.testing import assert_raises
 
 

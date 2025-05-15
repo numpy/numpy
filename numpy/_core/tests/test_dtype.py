@@ -1,24 +1,30 @@
-import sys
-import operator
-import pytest
 import ctypes
 import gc
-import types
-from typing import Any
+import operator
 import pickle
+import random
+import sys
+import types
+from itertools import permutations
+from typing import Any
+
+import hypothesis
+import pytest
+from hypothesis.extra import numpy as hynp
+from numpy._core._multiarray_tests import create_custom_field_dtype
+from numpy._core._rational_tests import rational
 
 import numpy as np
 import numpy.dtypes
-from numpy._core._rational_tests import rational
-from numpy._core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
-    IS_PYSTON, IS_WASM)
-from itertools import permutations
-import random
-
-import hypothesis
-from hypothesis.extra import numpy as hynp
+    HAS_REFCOUNT,
+    IS_PYSTON,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 
 def assert_dtype_equal(a, b):

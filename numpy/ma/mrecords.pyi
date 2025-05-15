@@ -1,6 +1,7 @@
 from typing import Any, TypeVar
 
 from numpy import dtype
+
 from . import MaskedArray
 
 __all__ = [

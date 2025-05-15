@@ -7,7 +7,6 @@ import numpy as np
 from numpy._core.overrides import array_function_dispatch
 from numpy.lib._index_tricks_impl import ndindex
 
-
 __all__ = ['pad']
 
 
