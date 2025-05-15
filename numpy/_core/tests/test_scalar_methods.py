@@ -134,12 +134,26 @@ class TestIsInteger:
                 continue
             assert not value.is_integer()
 
-class TestFloatTrunc:
+class TestTruncate:
     @pytest.mark.parametrize("code", np.typecodes["Float"])
     @pytest.mark.parametrize("value", [0, -0, np.pi, -np.pi])
-    def test_basic(self, code, value):
+    def test_basic_float(self, code, value):
         dtype_value = np.dtype(code).type(value)
         assert math.trunc(value) == math.trunc(dtype_value)
+
+    @pytest.mark.parametrize("code", np.typecodes["AllInteger"])
+    @pytest.mark.parametrize("limit", ["min", "max"])
+    def test_edgcases_integer(self, code, limit):
+        dtype = np.dtype(code).type
+        value = getattr(np.iinfo(dtype), limit)
+        assert math.trunc(dtype(value)) == math.trunc(int(value))
+
+    @pytest.mark.parametrize("code", np.typecodes["Float"])
+    @pytest.mark.parametrize("limit", ["min", "max"])
+    def test_edgcases_float(self, code, limit):
+        dtype = np.dtype(code).type
+        value = getattr(np.finfo(dtype), limit)
+        assert math.trunc(dtype(value)) == math.trunc(float(value))
 
     @pytest.mark.parametrize("str_value, exception_class, match", [
         ("inf", OverflowError, "cannot convert (float|longdouble) infinity to integer"),
@@ -147,7 +161,7 @@ class TestFloatTrunc:
         ("nan", ValueError, "cannot convert (float|longdouble) NaN to integer"),
     ])
     @pytest.mark.parametrize("code", np.typecodes["Float"])
-    def test_special(self, str_value, exception_class, match, code):
+    def test_special_float(self, str_value, exception_class, match, code):
         with pytest.raises(exception_class, match=match):
             math.trunc(np.dtype(code).type(str_value))
 
