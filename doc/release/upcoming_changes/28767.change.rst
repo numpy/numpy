@@ -1,0 +1,10 @@
+``unique_values`` for string dtypes may return unsorted data
+------------------------------------------------------------
+np.unique now supports hash‐based duplicate removal for string dtypes.
+This enhancement extends the hash-table algorithm to byte strings ('S'),
+Unicode strings ('U'), and the experimental string dtype ('T', StringDType).
+As a result, calling np.unique() on an array of strings will use
+the faster hash-based method to obtain unique values.
+Note that this hash-based method does not guarantee that the returned unique values will be sorted.
+This also works for StringDType arrays containing None (missing values)
+when using equal_nan=True (treating missing values as equal).
