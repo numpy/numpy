@@ -25,6 +25,7 @@ extend-select = [
     "PIE",
     "TID",
     "FLY",
+    "I",
     "E",
     "W",
     "PGH",
