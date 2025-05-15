@@ -116,7 +116,7 @@ array_strides_get(PyArrayObject *self, void *NPY_UNUSED(ignored))
 static int
 array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
 {
-    if (obj == NULL || 1) {
+    if (obj == NULL) {
         PyErr_SetString(PyExc_AttributeError,
                 "Cannot delete array strides");
         return -1;
