@@ -10,6 +10,47 @@
 extern "C" {
 #endif
 
+
+/*
+ *****************************************************************************
+ **                        NEW SORTFUNC HANDLERS                            **
+ *****************************************************************************
+ */
+
+static inline int
+handle_npysort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
+                            NpyAuxData *auxdata, PyArray_SortFuncWithArray *sort)
+{
+    PyArray_Descr *descr = context->descriptors[0];
+    return sort(start, num, descr);
+}
+
+static inline int
+handle_npyasort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
+                             npy_intp num, NpyAuxData *auxdata, PyArray_ArgSortFuncWithArray *asort)
+{
+    PyArray_Descr *descr = context->descriptors[0];
+    return asort(vv, tosort, num, descr);
+}
+
+static inline void
+fill_sort_data_from_arr_or_descr(void *arr_or_descr, void **out_arr_or_descr,
+                                 npy_intp *elsize, PyArray_CompareFunc **out_cmp)
+{
+    if (PyArray_Check(arr_or_descr)) {
+        PyArrayObject *arr = (PyArrayObject *)arr_or_descr;
+        *out_arr_or_descr = arr;
+        *elsize = PyArray_ITEMSIZE(arr);
+        *out_cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    }
+    else {
+        PyArray_Descr *descr = (PyArray_Descr *)arr_or_descr;
+        *out_arr_or_descr = descr;
+        *elsize = PyDataType_ELSIZE(descr);
+        *out_cmp = (PyArray_CompareFunc *)PyArray_GetSortCompareFunction(descr);
+    }
+}
+
 /*
  *****************************************************************************
  **                        SWAP MACROS                                      **
