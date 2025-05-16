@@ -26,6 +26,7 @@ from ._array_like import _FiniteNestedSequence as _FiniteNestedSequence
 from ._array_like import _SupportsArray as _SupportsArray
 from ._array_like import _SupportsArrayFunc as _SupportsArrayFunc
 
+#
 from ._char_codes import _BoolCodes as _BoolCodes
 from ._char_codes import _ByteCodes as _ByteCodes
 from ._char_codes import _BytesCodes as _BytesCodes
@@ -79,6 +80,7 @@ from ._char_codes import _UnsignedIntegerCodes as _UnsignedIntegerCodes
 from ._char_codes import _UShortCodes as _UShortCodes
 from ._char_codes import _VoidCodes as _VoidCodes
 
+#
 from ._dtype_like import DTypeLike as DTypeLike
 from ._dtype_like import _DTypeLike as _DTypeLike
 from ._dtype_like import _DTypeLikeBool as _DTypeLikeBool
@@ -96,6 +98,7 @@ from ._dtype_like import _DTypeLikeVoid as _DTypeLikeVoid
 from ._dtype_like import _SupportsDType as _SupportsDType
 from ._dtype_like import _VoidDTypeLike as _VoidDTypeLike
 
+#
 from ._nbit import _NBitByte as _NBitByte
 from ._nbit import _NBitDouble as _NBitDouble
 from ._nbit import _NBitHalf as _NBitHalf
@@ -108,7 +111,10 @@ from ._nbit import _NBitLongLong as _NBitLongLong
 from ._nbit import _NBitShort as _NBitShort
 from ._nbit import _NBitSingle as _NBitSingle
 
-from ._nbit_base import NBitBase as NBitBase  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+#
+from ._nbit_base import (
+    NBitBase as NBitBase,  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+)
 from ._nbit_base import _8Bit as _8Bit
 from ._nbit_base import _16Bit as _16Bit
 from ._nbit_base import _32Bit as _32Bit
@@ -116,8 +122,10 @@ from ._nbit_base import _64Bit as _64Bit
 from ._nbit_base import _96Bit as _96Bit
 from ._nbit_base import _128Bit as _128Bit
 
+#
 from ._nested_sequence import _NestedSequence as _NestedSequence
 
+#
 from ._scalars import _BoolLike_co as _BoolLike_co
 from ._scalars import _CharLike_co as _CharLike_co
 from ._scalars import _ComplexLike_co as _ComplexLike_co
@@ -129,9 +137,11 @@ from ._scalars import _TD64Like_co as _TD64Like_co
 from ._scalars import _UIntLike_co as _UIntLike_co
 from ._scalars import _VoidLike_co as _VoidLike_co
 
+#
 from ._shape import _Shape as _Shape
 from ._shape import _ShapeLike as _ShapeLike
 
+#
 from ._ufunc import _GUFunc_Nin2_Nout1 as _GUFunc_Nin2_Nout1
 from ._ufunc import _UFunc_Nin1_Nout1 as _UFunc_Nin1_Nout1
 from ._ufunc import _UFunc_Nin1_Nout2 as _UFunc_Nin1_Nout2
