@@ -6,7 +6,13 @@ from typing_extensions import TypeVar, deprecated, override
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _AnyShape, _ArrayLike, _ArrayLikeBool_co, _ArrayLikeInt_co, _DTypeLike
+from numpy._typing import (
+    _AnyShape,
+    _ArrayLike,
+    _ArrayLikeBool_co,
+    _ArrayLikeInt_co,
+    _DTypeLike,
+)
 
 ###
 
