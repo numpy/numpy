@@ -49,8 +49,8 @@ def assert_same_as_ufunc(shape0, shape1, transposed=False, flipped=False):
     n = int(np.multiply.reduce(shape1))
     x1 = np.arange(n).reshape(shape1)
     if transposed:
-        x0 = x0.transpose()
-        x1 = x1.transpose()
+        x0 = x0.T
+        x1 = x1.T
     if flipped:
         x0 = x0[::-1]
         x1 = x1[::-1]

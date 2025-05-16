@@ -673,7 +673,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     scale = NX.sqrt((lhs * lhs).sum(axis=0))
     lhs /= scale
     c, resids, rank, s = lstsq(lhs, rhs, rcond)
-    c = (c.transpose() / scale).transpose()  # broadcast scale coefficients
+    c = (c.T / scale).T  # broadcast scale coefficients
 
     # warn on rank reduction, which indicates an ill conditioned matrix
     if rank != order and not full:

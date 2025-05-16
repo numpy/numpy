@@ -621,8 +621,8 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
         van = vander_f(x, lmax)[:, deg]
 
     # set up the least squares matrices in transposed form
-    lhs = van.transpose()
-    rhs = y.transpose()
+    lhs = van.T
+    rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
         if w.ndim != 1:
@@ -646,9 +646,8 @@ def _fit(vander_f, x, y, deg, rcond=None, full=False, w=None):
     scl[scl == 0] = 1
 
     # Solve the least squares problem.
-    c, resids, rank, s = np.linalg.lstsq(lhs.transpose() / scl,
-                                         rhs.transpose(), rcond)
-    c = (c.transpose() / scl).transpose()
+    c, resids, rank, s = np.linalg.lstsq(lhs.T / scl, rhs.T, rcond)
+    c = (c.T / scl).T
 
     # Expand c to include non-fitted coefficients which are set to zero
     if deg.ndim > 0:

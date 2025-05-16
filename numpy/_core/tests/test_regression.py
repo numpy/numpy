@@ -887,7 +887,7 @@ class TestRegression:
 
     def test_copy_detection_zero_dim(self):
         # Ticket #658
-        np.indices((0, 3, 4)).transpose().reshape(-1, 3)
+        np.indices((0, 3, 4)).T.reshape(-1, 3)
 
     def test_flat_byteorder(self):
         # Ticket #657
@@ -906,7 +906,7 @@ class TestRegression:
 
     def test_copy_detection_corner_case(self):
         # Ticket #658
-        np.indices((0, 3, 4)).transpose().reshape(-1, 3)
+        np.indices((0, 3, 4)).T.reshape(-1, 3)
 
     def test_object_array_refcounting(self):
         # Ticket #633

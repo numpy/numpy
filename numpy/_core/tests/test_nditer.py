@@ -104,7 +104,7 @@ def test_iter_best_order():
             i = nditer(aview, [], [['readonly']])
             assert_equal(list(i), a)
             # Fortran-order
-            i = nditer(aview.transpose(), [], [['readonly']])
+            i = nditer(aview.T, [], [['readonly']])
             assert_equal(list(i), a)
             # Other order
             if len(shape) > 2:
@@ -130,8 +130,8 @@ def test_iter_c_order():
             i = nditer(aview, order='C')
             assert_equal(list(i), aview.ravel(order='C'))
             # Fortran-order
-            i = nditer(aview.transpose(), order='C')
-            assert_equal(list(i), aview.transpose().ravel(order='C'))
+            i = nditer(aview.T, order='C')
+            assert_equal(list(i), aview.T.ravel(order='C'))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), order='C')
@@ -157,8 +157,8 @@ def test_iter_f_order():
             i = nditer(aview, order='F')
             assert_equal(list(i), aview.ravel(order='F'))
             # Fortran-order
-            i = nditer(aview.transpose(), order='F')
-            assert_equal(list(i), aview.transpose().ravel(order='F'))
+            i = nditer(aview.T, order='F')
+            assert_equal(list(i), aview.T.ravel(order='F'))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), order='F')
@@ -184,8 +184,8 @@ def test_iter_c_or_f_order():
             i = nditer(aview, order='A')
             assert_equal(list(i), aview.ravel(order='A'))
             # Fortran-order
-            i = nditer(aview.transpose(), order='A')
-            assert_equal(list(i), aview.transpose().ravel(order='A'))
+            i = nditer(aview.T, order='A')
+            assert_equal(list(i), aview.T.ravel(order='A'))
             # Other order
             if len(shape) > 2:
                 i = nditer(aview.swapaxes(0, 1), order='A')
@@ -471,7 +471,7 @@ def test_iter_no_inner_full_coalesce():
             assert_equal(i.ndim, 1)
             assert_equal(i[0].shape, (size,))
             # Fortran-order
-            i = nditer(aview.transpose(), ['external_loop'], [['readonly']])
+            i = nditer(aview.T, ['external_loop'], [['readonly']])
             assert_equal(i.ndim, 1)
             assert_equal(i[0].shape, (size,))
             # Other order
@@ -519,26 +519,26 @@ def test_iter_dim_coalescing():
     assert_equal(i.ndim, 1)
     i = nditer(a3d.swapaxes(0, 1), ['c_index'], [['readonly']])
     assert_equal(i.ndim, 3)
-    i = nditer(a3d.transpose(), ['c_index'], [['readonly']])
+    i = nditer(a3d.T, ['c_index'], [['readonly']])
     assert_equal(i.ndim, 3)
-    i = nditer(a3d.transpose(), ['f_index'], [['readonly']])
+    i = nditer(a3d.T, ['f_index'], [['readonly']])
     assert_equal(i.ndim, 1)
-    i = nditer(a3d.transpose().swapaxes(0, 1), ['f_index'], [['readonly']])
+    i = nditer(a3d.T.swapaxes(0, 1), ['f_index'], [['readonly']])
     assert_equal(i.ndim, 3)
 
     # When C or F order is forced, coalescing may still occur
     a3d = arange(24).reshape(2, 3, 4)
     i = nditer(a3d, order='C')
     assert_equal(i.ndim, 1)
-    i = nditer(a3d.transpose(), order='C')
+    i = nditer(a3d.T, order='C')
     assert_equal(i.ndim, 3)
     i = nditer(a3d, order='F')
     assert_equal(i.ndim, 3)
-    i = nditer(a3d.transpose(), order='F')
+    i = nditer(a3d.T, order='F')
     assert_equal(i.ndim, 1)
     i = nditer(a3d, order='A')
     assert_equal(i.ndim, 1)
-    i = nditer(a3d.transpose(), order='A')
+    i = nditer(a3d.T, order='A')
     assert_equal(i.ndim, 1)
 
 def test_iter_broadcasting():
@@ -804,7 +804,7 @@ def test_iter_slice():
         assert_equal(i[0:2], [3, 12])
 
 def test_iter_assign_mapping():
-    a = np.arange(24, dtype='f8').reshape(2, 3, 4).transpose()
+    a = np.arange(24, dtype='f8').reshape(2, 3, 4).T
     it = np.nditer(a, [], [['readwrite', 'updateifcopy']],
                        casting='same_kind', op_dtypes=[np.dtype('f4')])
     with it:
@@ -923,7 +923,7 @@ def test_iter_array_cast():
     assert_equal(i.operands[0].strides, (96, 8, 32))
 
     # Same-kind cast 'f8' -> 'f4' -> 'f8'
-    a = np.arange(24, dtype='f8').reshape(2, 3, 4).transpose()
+    a = np.arange(24, dtype='f8').reshape(2, 3, 4).T
     with nditer(a, [],
             [['readwrite', 'updateifcopy']],
             casting='same_kind',
@@ -1297,8 +1297,7 @@ def test_iter_op_axes():
     i = nditer([a, a.T], [], [['readonly']] * 2, op_axes=[[0, 1], [1, 0]])
     assert_(all([x == y for (x, y) in i]))
     a = arange(24).reshape(2, 3, 4)
-    i = nditer([a.transpose(), a], [], [['readonly']] * 2,
-               op_axes=[[2, 1, 0], None])
+    i = nditer([a.T, a], [], [['readonly']] * 2, op_axes=[[2, 1, 0], None])
     assert_(all([x == y for (x, y) in i]))
 
     # Broadcast 1D to any dimension
@@ -1533,7 +1532,7 @@ def test_iter_allocate_output_itorder():
     assert_equal(i.operands[1].strides, a.strides)
     assert_equal(i.operands[1].dtype, np.dtype('f4'))
     # F-order input, best iteration order
-    a = arange(24, dtype='i4').reshape(2, 3, 4).transpose()
+    a = arange(24, dtype='i4').reshape(2, 3, 4).T
     i = nditer([a, None], [], [['readonly'], ['writeonly', 'allocate']],
                         op_dtypes=[None, np.dtype('f4')])
     assert_equal(i.operands[1].shape, a.shape)
@@ -1797,7 +1796,7 @@ def test_iter_buffering():
     # Test buffering with several buffer sizes and types
     arrays = []
     # F-order swapped array
-    _tmp = np.arange(24, dtype='c16').reshape(2, 3, 4).transpose()
+    _tmp = np.arange(24, dtype='c16').reshape(2, 3, 4).T
     _tmp = _tmp.view(_tmp.dtype.newbyteorder()).byteswap()
     arrays.append(_tmp)
     # Contiguous 1-dimensional array
@@ -1808,7 +1807,7 @@ def test_iter_buffering():
     a[:] = np.arange(16, dtype='i4')
     arrays.append(a)
     # 4-D F-order array
-    arrays.append(np.arange(120, dtype='i4').reshape(5, 3, 2, 4).transpose())
+    arrays.append(np.arange(120, dtype='i4').reshape(5, 3, 2, 4).T)
     for a in arrays:
         for buffersize in (1, 2, 3, 5, 8, 11, 16, 1024):
             vals = []
@@ -1827,7 +1826,7 @@ def test_iter_write_buffering():
     # Test that buffering of writes is working
 
     # F-order swapped array
-    a = np.arange(24).reshape(2, 3, 4).transpose()
+    a = np.arange(24).reshape(2, 3, 4).T
     a = a.view(a.dtype.newbyteorder()).byteswap()
     i = nditer(a, ['buffered'],
                    [['readwrite', 'nbo', 'aligned']],

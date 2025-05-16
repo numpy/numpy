@@ -331,8 +331,8 @@ class TestIndexing:
         a = np.full((3, 4, 2), -1)
         b = np.full((3, 4, 2), -1)
 
-        a[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).transpose()
-        b[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).transpose().copy()
+        a[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).T
+        b[[0, 1]] = np.arange(2 * 4 * 2).reshape(2, 4, 2).T.copy()
 
         assert_equal(a, b)
 

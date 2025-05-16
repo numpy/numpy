@@ -13,6 +13,12 @@ from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F4
 import numpy as np
 from numpy.testing import assert_raises, temppath
 
+try:
+    import pytz  # noqa: F401
+    _has_pytz = True
+except ImportError:
+    _has_pytz = False
+
 
 class _DeprecationTestCase:
     # Just as warning: warnings uses re.match, so the start of this message
@@ -446,22 +452,3 @@ class TestAddNewdocUFunc(_DeprecationTestCase):
                 struct_ufunc.add_triplet, "new docs"
             )
         )
-
-
-class TestDeprecatedTPropScalar(_DeprecationTestCase):
-    # Deprecated in Numpy 2.3, 2025-05
-    message = ("In the future, the `.T` property for array scalars will "
-               "raise an error.")
-
-    def test_deprecated(self):
-        self.assert_deprecated(lambda: np.int64(1).T)
-
-
-class TestDeprecatedTPropNon2Dim(_DeprecationTestCase):
-    # Deprecated in Numpy 2.3, 2025-05
-    message = ("In the future, the `.T` property will be supported for "
-               r"2-dimensional arrays only. Received \d+-dimensional array.")
-
-    def test_deprecated(self):
-        for shape in [(5,), (2, 3, 4)]:
-            self.assert_deprecated(lambda: np.ones(shape).T)
