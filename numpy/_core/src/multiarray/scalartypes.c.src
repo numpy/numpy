@@ -1925,6 +1925,16 @@ gentype_flat_get(PyObject *self, void *NPY_UNUSED(ignored))
 static PyObject *
 gentype_transpose_get(PyObject *self, void *NPY_UNUSED(ignored))
 {
+    /* Deprecated 2025-04-19, NumPy 2.3 */
+    if (DEPRECATE(
+            "In the future, the `.T` property for array scalars will "
+            "raise an error. If you called `.T` on an array scalar "
+            "intentionally, you can safely drop it. In other cases, "
+            "`arr.transpose()` or `.mT` (which swaps the last "
+            "two axes only) should be used instead. "
+            "(Deprecated NumPy 2.3)") < 0) {
+        return NULL;
+    }
     Py_INCREF(self);
     return self;
 }

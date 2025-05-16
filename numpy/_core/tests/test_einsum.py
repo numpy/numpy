@@ -441,9 +441,9 @@ class TestEinsum:
             a = np.arange(n * 3 * 2, dtype=dtype).reshape(n, 3, 2)
             b = np.arange(n, dtype=dtype)
             assert_equal(np.einsum("i..., i...", a, b, optimize=do_opt),
-                         np.inner(a.T, b.T).T)
+                         np.inner(a.transpose(), b.transpose()).transpose())
             assert_equal(np.einsum(a, [0, Ellipsis], b, [0, Ellipsis], optimize=do_opt),
-                         np.inner(a.T, b.T).T)
+                         np.inner(a.transpose(), b.transpose()).transpose())
 
         # outer(a,b)
         for n in range(1, 17):
@@ -483,22 +483,22 @@ class TestEinsum:
             for n in range(1, 17):
                 a = np.arange(4 * n, dtype=dtype).reshape(4, n)
                 b = np.arange(n, dtype=dtype)
-                assert_equal(np.einsum("ji,j", a.T, b.T, optimize=do_opt),
-                             np.dot(b.T, a.T))
-                assert_equal(np.einsum(a.T, [1, 0], b.T, [1], optimize=do_opt),
-                             np.dot(b.T, a.T))
+                assert_equal(np.einsum("ji,j", a.T, b, optimize=do_opt),
+                             np.dot(b, a.T))
+                assert_equal(np.einsum(a.T, [1, 0], b, [1], optimize=do_opt),
+                             np.dot(b, a.T))
 
                 c = np.arange(4, dtype=dtype)
-                np.einsum("ji,j", a.T, b.T, out=c,
+                np.einsum("ji,j", a.T, b, out=c,
                           dtype='f8', casting='unsafe', optimize=do_opt)
                 assert_equal(c,
-                             np.dot(b.T.astype('f8'),
+                             np.dot(b.astype('f8'),
                                     a.T.astype('f8')).astype(dtype))
                 c[...] = 0
-                np.einsum(a.T, [1, 0], b.T, [1], out=c,
+                np.einsum(a.T, [1, 0], b, [1], out=c,
                           dtype='f8', casting='unsafe', optimize=do_opt)
                 assert_equal(c,
-                             np.dot(b.T.astype('f8'),
+                             np.dot(b.astype('f8'),
                                     a.T.astype('f8')).astype(dtype))
 
             # matmat(a,b) / a.dot(b) where a is matrix, b is matrix

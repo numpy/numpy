@@ -2887,7 +2887,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('T',
     """
     View of the transposed array.
 
-    Same as ``self.transpose()``.
+    Same as ``self.transpose()`` except that it requires
+    the array to be 2-dimensional.
 
     Examples
     --------
@@ -2899,12 +2900,6 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('T',
     >>> a.T
     array([[1, 3],
            [2, 4]])
-
-    >>> a = np.array([1, 2, 3, 4])
-    >>> a
-    array([1, 2, 3, 4])
-    >>> a.T
-    array([1, 2, 3, 4])
 
     See Also
     --------

@@ -358,7 +358,10 @@ class TestConcatenate:
         a2 = res[..., 6:]
         assert_array_equal(concatenate((a0, a1, a2), 2), res)
         assert_array_equal(concatenate((a0, a1, a2), -1), res)
-        assert_array_equal(concatenate((a0.T, a1.T, a2.T), 0), res.T)
+        assert_array_equal(
+            concatenate((a0.transpose(), a1.transpose(), a2.transpose()), 0),
+            res.transpose(),
+        )
 
         out = res.copy()
         rout = concatenate((a0, a1, a2), 2, out=out)
