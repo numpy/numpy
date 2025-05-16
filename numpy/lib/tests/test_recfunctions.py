@@ -563,7 +563,6 @@ class TestMergeArrays:
         #                   dtype=[('A', '|S3'), ('B', float), ('C', int)])
         #assert_equal(test, control)
 
-        # Hack to avoid pyflakes warnings about unused variables
         merge_arrays((z, np.array([10, 20, 30]).view([('C', int)])))
         np.array([('A', 1., 10), ('B', 2., 20), ('-1', -1, 20)],
                  dtype=[('A', '|S3'), ('B', float), ('C', int)])
@@ -836,7 +835,6 @@ class TestJoinBy:
         #                          ('c', int), ('d', int)])
         #assert_equal(test, control)
 
-        # Hack to avoid pyflakes unused variable warnings
         join_by(('a', 'b'), a, b)
         np.array([(5, 55, 105, 100), (6, 56, 106, 101),
                   (7, 57, 107, 102), (8, 58, 108, 103),

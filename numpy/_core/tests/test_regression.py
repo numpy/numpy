@@ -1009,8 +1009,6 @@ class TestRegression:
         assert_(cnt(a) == cnt0_a + 5 + 2)
         assert_(cnt(b) == cnt0_b + 5 + 3)
 
-        del tmp  # Avoid pyflakes unused variable warning
-
     def test_mem_custom_float_to_array(self):
         # Ticket 702
         class MyFloat:

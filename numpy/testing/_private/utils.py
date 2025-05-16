@@ -1599,7 +1599,6 @@ def _assert_valid_refcount(op):
         assert_(sys.getrefcount(i) >= rc)
     finally:
         gc.enable()
-    del d  # for pyflakes
 
 
 def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,

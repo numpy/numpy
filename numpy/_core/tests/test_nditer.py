@@ -84,8 +84,6 @@ def test_iter_refcount():
     assert_equal(sys.getrefcount(a), rc_a)
     assert_equal(sys.getrefcount(dt), rc_dt)
 
-    del it2  # avoid pyflakes unused variable warning
-
 def test_iter_best_order():
     # The iterator should always find the iteration order
     # with increasing memory addresses
