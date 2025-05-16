@@ -833,10 +833,12 @@ make_s2type_name(NPY_TYPES typenum) {
         return NULL;
     }
 
-    // memcpy instead of strcpy to avoid stringop-truncation warning, since
-    // we are not including the trailing null character
-    memcpy(buf, prefix, plen);
-    strncat(buf, type_name, nlen);
+    // memcpy instead of strcpy/strncat to avoid stringop-truncation warning,
+    // since we are not including the trailing null character
+    char *p = buf;
+    memcpy(p, prefix, plen);
+    p += plen;
+    memcpy(p, type_name, nlen);
     return buf;
 }
 
@@ -853,11 +855,14 @@ make_type2s_name(NPY_TYPES typenum) {
 
     char *buf = (char *)PyMem_RawCalloc(sizeof(char), plen + nlen + slen + 1);
 
-    // memcpy instead of strcpy to avoid stringop-truncation warning, since
-    // we are not including the trailing null character
-    memcpy(buf, prefix, plen);
-    strncat(buf, type_name, nlen);
-    strncat(buf, suffix, slen);
+    // memcpy instead of strcpy/strncat to avoid stringop-truncation warning,
+    // since we are not including the trailing null character
+    char *p = buf;
+    memcpy(p, prefix, plen);
+    p += plen;
+    memcpy(p, type_name, nlen);
+    p += nlen;
+    memcpy(p, suffix, slen);
     return buf;
 }
 
