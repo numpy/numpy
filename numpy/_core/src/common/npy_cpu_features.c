@@ -277,7 +277,7 @@ npy__cpu_check_env(int disable, const char *env) {
     char *notsupp_cur = &notsupp[0];
 
     //comma and space including (htab, vtab, CR, LF, FF)
-    const char *delim = ", \t\v\r\n\f";
+    const char delim[] = ", \t\v\r\n\f";
     char *feature = strtok(features, delim);
     while (feature) {
         if (npy__cpu_baseline_fid(feature) > 0){
