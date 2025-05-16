@@ -4684,6 +4684,8 @@ def _lerp(a, b, t, out=None):
     out : array_like
         Output array.
     """
+    if out is None:
+        out = ...  # explicitly preserve arrays within _lerp.
     diff_b_a = subtract(b, a)
     lerp_interpolation = add(a, diff_b_a * t, out=out)
     subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5)

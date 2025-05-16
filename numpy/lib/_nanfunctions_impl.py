@@ -1419,7 +1419,7 @@ def nanpercentile(
     result = _nanquantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
     # If no broadcasting happened, and q was a scalar, return a scalar:
-    return conv.wrap(result, to_scalar=conv.scalar_input[1])
+    return conv.wrap(result, to_scalar=conv.scalar_input[1], old_scalar=True)
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,

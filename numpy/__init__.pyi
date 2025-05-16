@@ -380,6 +380,8 @@ from numpy._core.multiarray import (
     frompyfunc,
     nested_iters,
     flagsobj,
+    _get_preserve_0d_arrays,
+    _set_preserve_0d_arrays,
 )
 
 from numpy._core.numeric import (

@@ -4325,6 +4325,36 @@ normalize_axis_index(PyObject *NPY_UNUSED(self),
 
 
 static PyObject *
+_get_preserve_0d_arrays(PyObject *NPY_UNUSED(mod), PyObject *NPY_UNUSED(arg))
+{
+    if (npy_thread_unsafe_state.preserve_0d_arrays) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
+}
+
+
+static PyObject *
+_set_preserve_0d_arrays(PyObject *NPY_UNUSED(mod), PyObject *arg)
+{
+    int new = PyObject_IsTrue(arg);
+    if (error_converting(new)) {
+        return NULL;
+    }
+    npy_bool old_state = npy_thread_unsafe_state.preserve_0d_arrays;
+    npy_thread_unsafe_state.preserve_0d_arrays = (npy_bool)new;
+    if (old_state) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
+}
+
+
+static PyObject *
 _set_numpy_warn_if_no_mem_policy(PyObject *NPY_UNUSED(self), PyObject *arg)
 {
     int res = PyObject_IsTrue(arg);
@@ -4580,6 +4610,10 @@ static struct PyMethodDef array_module_methods[] = {
         METH_NOARGS, NULL},
     {"_set_madvise_hugepage", (PyCFunction)_set_madvise_hugepage,
         METH_O, NULL},
+    {"_get_preserve_0d_arrays", (PyCFunction)_get_preserve_0d_arrays,
+        METH_NOARGS, NULL},
+    {"_set_preserve_0d_arrays", (PyCFunction)_set_preserve_0d_arrays,
+        METH_O, NULL},
     {"_reload_guard", (PyCFunction)_reload_guard,
         METH_NOARGS,
         "Give a warning on reload and big warning in sub-interpreters."},
@@ -4768,6 +4802,14 @@ initialize_thread_unsafe_state(void) {
     }
     else {
         npy_thread_unsafe_state.warn_if_no_mem_policy = 0;
+    }
+
+    env = getenv("NUMPY_PRESERVE_0D_ARRAYS");
+    if ((env != NULL) && (strncmp(env, "1", 1) == 0)) {
+        npy_thread_unsafe_state.preserve_0d_arrays = NPY_TRUE;
+    }
+    else {
+        npy_thread_unsafe_state.preserve_0d_arrays = NPY_FALSE;
     }
 
     return 0;

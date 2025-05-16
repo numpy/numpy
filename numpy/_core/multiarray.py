@@ -23,6 +23,8 @@ from ._multiarray_umath import (  # noqa: F401
     _place,
     _reconstruct,
     _set_madvise_hugepage,
+    _get_preserve_0d_arrays,
+    _set_preserve_0d_arrays,
     _vec_string,
     from_dlpack,
 )
@@ -47,7 +49,8 @@ __all__ = [
     'normalize_axis_index', 'packbits', 'promote_types', 'putmask',
     'ravel_multi_index', 'result_type', 'scalar', 'set_datetimeparse_function',
     'set_typeDict', 'shares_memory', 'typeinfo',
-    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros']
+    'unpackbits', 'unravel_index', 'vdot', 'where', 'zeros',
+    '_get_preserve_0d_arrays', '_set_preserve_0d_arrays']
 
 # For backward compatibility, make sure pickle imports
 # these functions from here
@@ -76,6 +79,8 @@ zeros.__module__ = 'numpy'
 normalize_axis_index.__module__ = 'numpy.lib.array_utils'
 add_docstring.__module__ = 'numpy.lib'
 compare_chararrays.__module__ = 'numpy.char'
+_get_preserve_0d_arrays.__module__ = 'numpy'
+_set_preserve_0d_arrays.__module__ = 'numpy'
 
 
 def _override___module__():

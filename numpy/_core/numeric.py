@@ -59,6 +59,8 @@ from .multiarray import (  # noqa: F401
     vecdot,
     where,
     zeros,
+    _get_preserve_0d_arrays,
+    _set_preserve_0d_arrays,
 )
 from .overrides import finalize_array_function_like, set_module
 from .umath import NAN, PINF, invert, multiply, sin
@@ -87,7 +89,8 @@ __all__ = [
     'identity', 'allclose', 'putmask',
     'flatnonzero', 'inf', 'nan', 'False_', 'True_', 'bitwise_not',
     'full', 'full_like', 'matmul', 'vecdot', 'shares_memory',
-    'may_share_memory']
+    'may_share_memory', '_get_preserve_0d_arrays', '_set_preserve_0d_arrays'
+]
 
 
 def _zeros_like_dispatcher(

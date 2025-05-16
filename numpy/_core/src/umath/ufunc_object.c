@@ -3764,7 +3764,8 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc,
     /* TODO: Data is mutated, so force_wrap like a normal ufunc call does */
     PyObject *wrapped_result = npy_apply_wrap(
             (PyObject *)ret, out_obj, wrap, wrap_type, NULL,
-            axes_obj == Py_None  && return_scalar, NPY_FALSE);
+            return_scalar && (axes_obj == Py_None || !npy_thread_unsafe_state.preserve_0d_arrays),
+            NPY_FALSE);
 
     Py_DECREF(ret);
     Py_DECREF(wrap);
@@ -4600,7 +4601,9 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
     }
     /* The following steals the references to the outputs: */
     PyObject *result = replace_with_wrapped_result_and_return(ufunc,
-            full_args, subok, operands+nin, all_inputs_were_scalars && return_scalar);
+            full_args, subok, operands+nin,
+            return_scalar && (
+                all_inputs_were_scalars || !npy_thread_unsafe_state.preserve_0d_arrays));
     Py_XDECREF(full_args.in);
     Py_XDECREF(full_args.out);
 

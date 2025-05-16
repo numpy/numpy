@@ -443,6 +443,8 @@ else:
         where,
         zeros,
         zeros_like,
+        _get_preserve_0d_arrays,
+        _set_preserve_0d_arrays,
     )
 
     # NOTE: It's still under discussion whether these aliases
