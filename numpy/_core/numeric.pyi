@@ -18,7 +18,6 @@ import numpy as np
 from numpy import (
     False_,
     True_,
-    _AnyShapeT,
     _OrderCF,
     _OrderKACF,
     # re-exports
@@ -63,26 +62,17 @@ from numpy._typing import (
     _DTypeLike,
     _NestedSequence,
     _ScalarLike_co,
+    _Shape,
     _ShapeLike,
     _SupportsArrayFunc,
     _SupportsDType,
 )
 
-from .fromnumeric import (
-    all as all,
-)
-from .fromnumeric import (
-    any as any,
-)
-from .fromnumeric import (
-    argpartition as argpartition,
-)
-from .fromnumeric import (
-    matrix_transpose as matrix_transpose,
-)
-from .fromnumeric import (
-    mean as mean,
-)
+from .fromnumeric import all as all
+from .fromnumeric import any as any
+from .fromnumeric import argpartition as argpartition
+from .fromnumeric import matrix_transpose as matrix_transpose
+from .fromnumeric import mean as mean
 from .multiarray import (
     # other
     _Array,
@@ -198,7 +188,16 @@ _T = TypeVar("_T")
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
-_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
+_ShapeT = TypeVar("_ShapeT", bound=_Shape)
+_AnyShapeT = TypeVar(
+    "_AnyShapeT",
+    tuple[()],
+    tuple[int],
+    tuple[int, int],
+    tuple[int, int, int],
+    tuple[int, int, int, int],
+    tuple[int, ...],
+)
 
 _CorrelateMode: TypeAlias = L["valid", "same", "full"]
 
