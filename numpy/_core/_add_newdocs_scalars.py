@@ -412,6 +412,8 @@ for int_name in ('int8', 'uint8', 'int16', 'uint16', 'int32', 'uint32',
 
         Truncating an Integral returns itself.
 
+        .. versionadded:: 2.3
+
         Examples
         --------
         >>> np.{int_name}(127).__trunc__()
