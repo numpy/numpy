@@ -246,7 +246,7 @@ npy__cpu_validate_baseline(void)
 static int
 npy__cpu_check_env(int disable, const char *env) {
 
-    static const char *names[] = {
+    static const char *const names[] = {
         "enable", "disable",
         "NPY_ENABLE_CPU_FEATURES", "NPY_DISABLE_CPU_FEATURES",
         "During parsing environment variable: 'NPY_ENABLE_CPU_FEATURES':\n",
