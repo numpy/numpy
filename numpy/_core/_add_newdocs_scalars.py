@@ -375,9 +375,7 @@ for float_name in ('half', 'single', 'double', 'longdouble'):
 
         Return the floating point number with the fractional part removed,
         leaving the integer part.
-
-        .. versionadded:: 2.3
-
+        {'\n        .. versionadded:: 2.3\n' if float_name != 'double' else ''}
         Examples
         --------
         >>> np.{float_name}(np.pi).__trunc__()
