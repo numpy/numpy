@@ -1,10 +1,13 @@
-from typing import Any, assert_type
+from typing import Any, TypeAlias, assert_type
 
 import numpy as np
 import numpy.typing as npt
 
-AR_U: np.char.chararray[tuple[int, ...], np.dtype[np.str_]]
-AR_S: np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]]
+_BytesCharArray: TypeAlias = np.char.chararray[tuple[Any, ...], np.dtype[np.bytes_]]
+_StrCharArray: TypeAlias = np.char.chararray[tuple[Any, ...], np.dtype[np.str_]]
+
+AR_U: _StrCharArray
+AR_S: _BytesCharArray
 
 assert_type(AR_U == AR_U, npt.NDArray[np.bool])
 assert_type(AR_S == AR_S, npt.NDArray[np.bool])
@@ -24,46 +27,46 @@ assert_type(AR_S > AR_S, npt.NDArray[np.bool])
 assert_type(AR_U < AR_U, npt.NDArray[np.bool])
 assert_type(AR_S < AR_S, npt.NDArray[np.bool])
 
-assert_type(AR_U * 5, np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S * [5], np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U * 5, _StrCharArray)
+assert_type(AR_S * [5], _BytesCharArray)
 
-assert_type(AR_U % "test", np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S % b"test", np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U % "test", _StrCharArray)
+assert_type(AR_S % b"test", _BytesCharArray)
 
-assert_type(AR_U.capitalize(), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.capitalize(), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.capitalize(), _StrCharArray)
+assert_type(AR_S.capitalize(), _BytesCharArray)
 
-assert_type(AR_U.center(5), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.center([2, 3, 4], b"a"), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.center(5), _StrCharArray)
+assert_type(AR_S.center([2, 3, 4], b"a"), _BytesCharArray)
 
-assert_type(AR_U.encode(), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
-assert_type(AR_S.decode(), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
+assert_type(AR_U.encode(), _BytesCharArray)
+assert_type(AR_S.decode(), _StrCharArray)
 
-assert_type(AR_U.expandtabs(), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.expandtabs(tabsize=4), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.expandtabs(), _StrCharArray)
+assert_type(AR_S.expandtabs(tabsize=4), _BytesCharArray)
 
-assert_type(AR_U.join("_"), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.join([b"_", b""]), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.join("_"), _StrCharArray)
+assert_type(AR_S.join([b"_", b""]), _BytesCharArray)
 
-assert_type(AR_U.ljust(5), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.ljust([4, 3, 1], fillchar=[b"a", b"b", b"c"]), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
-assert_type(AR_U.rjust(5), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.rjust([4, 3, 1], fillchar=[b"a", b"b", b"c"]), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.ljust(5), _StrCharArray)
+assert_type(AR_S.ljust([4, 3, 1], fillchar=[b"a", b"b", b"c"]), _BytesCharArray)
+assert_type(AR_U.rjust(5), _StrCharArray)
+assert_type(AR_S.rjust([4, 3, 1], fillchar=[b"a", b"b", b"c"]), _BytesCharArray)
 
-assert_type(AR_U.lstrip(), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.lstrip(chars=b"_"), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
-assert_type(AR_U.rstrip(), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.rstrip(chars=b"_"), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
-assert_type(AR_U.strip(), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.strip(chars=b"_"), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.lstrip(), _StrCharArray)
+assert_type(AR_S.lstrip(chars=b"_"), _BytesCharArray)
+assert_type(AR_U.rstrip(), _StrCharArray)
+assert_type(AR_S.rstrip(chars=b"_"), _BytesCharArray)
+assert_type(AR_U.strip(), _StrCharArray)
+assert_type(AR_S.strip(chars=b"_"), _BytesCharArray)
 
-assert_type(AR_U.partition("\n"), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.partition([b"a", b"b", b"c"]), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
-assert_type(AR_U.rpartition("\n"), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.rpartition([b"a", b"b", b"c"]), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.partition("\n"), _StrCharArray)
+assert_type(AR_S.partition([b"a", b"b", b"c"]), _BytesCharArray)
+assert_type(AR_U.rpartition("\n"), _StrCharArray)
+assert_type(AR_S.rpartition([b"a", b"b", b"c"]), _BytesCharArray)
 
-assert_type(AR_U.replace("_", "-"), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.replace([b"_", b""], [b"a", b"b"]), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.replace("_", "-"), _StrCharArray)
+assert_type(AR_S.replace([b"_", b""], [b"a", b"b"]), _BytesCharArray)
 
 assert_type(AR_U.split("_"), npt.NDArray[np.object_])
 assert_type(AR_S.split(maxsplit=[1, 2, 3]), npt.NDArray[np.object_])
@@ -73,17 +76,17 @@ assert_type(AR_S.rsplit(maxsplit=[1, 2, 3]), npt.NDArray[np.object_])
 assert_type(AR_U.splitlines(), npt.NDArray[np.object_])
 assert_type(AR_S.splitlines(keepends=[True, True, False]), npt.NDArray[np.object_])
 
-assert_type(AR_U.swapcase(), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.swapcase(), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.swapcase(), _StrCharArray)
+assert_type(AR_S.swapcase(), _BytesCharArray)
 
-assert_type(AR_U.title(), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.title(), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.title(), _StrCharArray)
+assert_type(AR_S.title(), _BytesCharArray)
 
-assert_type(AR_U.upper(), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.upper(), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.upper(), _StrCharArray)
+assert_type(AR_S.upper(), _BytesCharArray)
 
-assert_type(AR_U.zfill(5), np.char.chararray[tuple[int, ...], np.dtype[np.str_]])
-assert_type(AR_S.zfill([2, 3, 4]), np.char.chararray[tuple[int, ...], np.dtype[np.bytes_]])
+assert_type(AR_U.zfill(5), _StrCharArray)
+assert_type(AR_S.zfill([2, 3, 4]), _BytesCharArray)
 
 assert_type(AR_U.count("a", start=[1, 2, 3]), npt.NDArray[np.int_])
 assert_type(AR_S.count([b"a", b"b", b"c"], end=9), npt.NDArray[np.int_])
