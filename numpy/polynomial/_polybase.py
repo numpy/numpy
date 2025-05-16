@@ -1016,7 +1016,7 @@ class ABCPolyBase(abc.ABC):
             if domain[0] == domain[1]:
                 domain[0] -= 1
                 domain[1] += 1
-        elif type(domain) is list and len(domain) == 0:
+        elif isinstance(domain, list) and len(domain) == 0:
             domain = cls.domain
 
         if window is None:
@@ -1064,7 +1064,7 @@ class ABCPolyBase(abc.ABC):
         [roots] = pu.as_series([roots], trim=False)
         if domain is None:
             domain = pu.getdomain(roots)
-        elif type(domain) is list and len(domain) == 0:
+        elif isinstance(domain, list) and len(domain) == 0:
             domain = cls.domain
 
         if window is None:

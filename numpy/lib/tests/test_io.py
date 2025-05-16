@@ -82,7 +82,7 @@ def strptime(s, fmt=None):
     2.5.
 
     """
-    if type(s) == bytes:
+    if isinstance(s, bytes):
         s = s.decode("latin1")
     return datetime(*time.strptime(s, fmt)[:3])
 
