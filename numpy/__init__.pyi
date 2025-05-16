@@ -1121,6 +1121,8 @@ class _RoundMixin:
     def __round__(self, /, ndigits: None = None) -> int: ...
     @overload
     def __round__(self, /, ndigits: SupportsIndex) -> Self: ...
+    @overload
+    def __trunc__(self, /) -> int: ...
 
 @type_check_only
 class _IntegralMixin(_RealMixin):
@@ -4129,8 +4131,6 @@ class floating(_RealMixin, _RoundMixin, inexact[_NBit1, float]):
     __rmod__: _FloatMod[_NBit1]
     __divmod__: _FloatDivMod[_NBit1]
     __rdivmod__: _FloatDivMod[_NBit1]
-
-    def __trunc__(self, /) -> int: ...
 
     # NOTE: `is_integer` and `as_integer_ratio` are technically defined in the concrete subtypes
     def is_integer(self, /) -> builtins.bool: ...
