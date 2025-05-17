@@ -17,10 +17,13 @@ from numpy import (
     amax,
     amin,
     bool_,
+    bytes_,
+    character,
     complex128,
     complexfloating,
     datetime64,
     dtype,
+    dtypes,
     expand_dims,
     float64,
     floating,
@@ -30,6 +33,7 @@ from numpy import (
     ndarray,
     object_,
     signedinteger,
+    str_,
     timedelta64,
     unsignedinteger,
 )
@@ -39,10 +43,13 @@ from numpy._typing import (
     NDArray,
     _ArrayLike,
     _ArrayLikeBool_co,
+    _ArrayLikeBytes_co,
     _ArrayLikeComplex_co,
     _ArrayLikeFloat_co,
     _ArrayLikeInt,
     _ArrayLikeInt_co,
+    _ArrayLikeStr_co,
+    _ArrayLikeString_co,
     _ArrayLikeTD64_co,
     _ArrayLikeUInt_co,
     _DTypeLikeBool,
@@ -470,7 +477,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __rpow__(self, other, mod: None = None, /): ...
 
     # Keep in sync with `ndarray.__iadd__`, except that `_MaskedArray[unsignedinteger]` does not accept
-    # _IntLake_co for `other`.
+    # _IntLike_co for `other`.
     @overload
     def __iadd__(
         self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, /
@@ -494,6 +501,14 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __iadd__(
         self: _MaskedArray[timedelta64 | datetime64], other: _ArrayLikeTD64_co, /
+    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
+    @overload
+    def __iadd__(self: _MaskedArray[bytes_], other: _ArrayLikeBytes_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
+    @overload
+    def __iadd__(
+        self: MaskedArray[Any, dtype[str_] | dtypes.StringDType],
+        other: _ArrayLikeStr_co | _ArrayLikeString_co,
+        /,
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __iadd__(
@@ -539,7 +554,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __imul__(
-        self: _MaskedArray[signedinteger], other: _ArrayLikeInt_co, /
+        self: MaskedArray[Any, dtype[signedinteger] | dtype[character] | dtypes.StringDType],
+        other: _ArrayLikeInt_co, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __imul__(
@@ -632,6 +648,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __ipow__(
         self: _MaskedArray[object_], other: Any, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
+
+    #
     @property  # type: ignore[misc]
     def imag(self: _HasDTypeWithRealAndImag[object, _ScalarT], /) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
     get_imag: Any

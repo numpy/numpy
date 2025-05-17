@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import Any, TypeAlias, TypeVar
+from typing import Any, TypeAlias, TypeVar, cast
 
 import numpy as np
 import numpy.ma
@@ -25,6 +23,9 @@ MAR_f: MaskedArray[np.float64] = np.ma.MaskedArray([1.0])
 MAR_c: MaskedArray[np.complex128] = np.ma.MaskedArray([1j])
 MAR_td64: MaskedArray[np.timedelta64] = np.ma.MaskedArray([np.timedelta64(1, "D")])
 MAR_M_dt64: MaskedArray[np.datetime64] = np.ma.MaskedArray([np.datetime64(1, "D")])
+MAR_S: MaskedArray[np.bytes_] = np.ma.MaskedArray([b'foo'], dtype=np.bytes_)
+MAR_U: MaskedArray[np.str_] = np.ma.MaskedArray(['foo'], dtype=np.str_)
+MAR_T = cast(np.ma.MaskedArray[Any, np.dtypes.StringDType], np.ma.MaskedArray(["a"], "T"))
 
 AR_LIKE_b = [True]
 AR_LIKE_u = [np.uint32(1)]
@@ -65,6 +66,10 @@ MAR_M_dt64 += AR_LIKE_b
 MAR_M_dt64 += AR_LIKE_u
 MAR_M_dt64 += AR_LIKE_i
 MAR_M_dt64 += AR_LIKE_m
+
+MAR_S += b'snakes'
+MAR_U += 'snakes'
+MAR_T += 'snakes'
 
 # Inplace subtraction
 
@@ -147,6 +152,10 @@ MAR_td64 *= AR_LIKE_b
 MAR_td64 *= AR_LIKE_u
 MAR_td64 *= AR_LIKE_i
 MAR_td64 *= AR_LIKE_f
+
+MAR_S *= 2
+MAR_U *= 2
+MAR_T *= 2
 
 # Inplace power
 
