@@ -1,20 +1,11 @@
 from typing import Any, TypeAlias, TypeVar, cast
 
 import numpy as np
-import numpy.ma
-import numpy.typing as npt
 from numpy import dtype, generic
 from numpy._typing import _Shape
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 MaskedArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT]]
-ar_b: npt.NDArray[np.bool] = np.array([True, False, True])
-m: np.ma.MaskedArray[Any, np.dtype[np.float64]] = np.ma.masked_array(
-    [1.5, 2, 3], mask=[True, False, True]
-)
-
-m.mask = ar_b
-m.mask = np.False_
 
 MAR_b: MaskedArray[np.bool] = np.ma.MaskedArray([True])
 MAR_u: MaskedArray[np.uint32] = np.ma.MaskedArray([1], dtype=np.uint32)
@@ -34,6 +25,9 @@ AR_LIKE_f = [1.0]
 AR_LIKE_c = [1j]
 AR_LIKE_m = [np.timedelta64(1, "D")]
 AR_LIKE_M = [np.datetime64(1, "D")]
+
+MAR_f.mask = AR_LIKE_b
+MAR_f.mask = np.False_
 
 # Inplace addition
 
