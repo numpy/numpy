@@ -2886,6 +2886,9 @@ static PyMethodDef @name@type_methods[] = {
     {"is_integer",
         (PyCFunction)@name@_is_integer,
         METH_NOARGS, NULL},
+    {"__trunc__",
+        (PyCFunction)gentype_int,
+        METH_NOARGS, NULL},
     /* for typing */
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
@@ -2917,6 +2920,9 @@ static PyMethodDef @name@type_methods[] = {
         METH_CLASS | METH_O, NULL},
     {"bit_count",
         (PyCFunction)npy_@name@_bit_count,
+        METH_NOARGS, NULL},
+    {"__trunc__",
+        (PyCFunction)gentype_int,
         METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL} /* sentinel */
 };
