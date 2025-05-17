@@ -7,6 +7,7 @@ A = np.array(True, ndmin=2, dtype=bool)
 A.setflags(write=False)
 AR_U: npt.NDArray[np.str_]
 AR_M: npt.NDArray[np.datetime64]
+AR_f4: npt.NDArray[np.float32]
 
 a = np.bool(True)
 
@@ -50,9 +51,11 @@ np.argsort(A, order=range(5))  # type: ignore[arg-type]
 
 np.argmax(A, axis="bob")  # type: ignore[call-overload]
 np.argmax(A, kind="bob")  # type: ignore[call-overload]
+np.argmax(A, out=AR_f4)  # type: ignore[type-var]
 
 np.argmin(A, axis="bob")  # type: ignore[call-overload]
 np.argmin(A, kind="bob")  # type: ignore[call-overload]
+np.argmin(A, out=AR_f4)  # type: ignore[type-var]
 
 np.searchsorted(A[0], 0, side="bob")  # type: ignore[call-overload]
 np.searchsorted(A[0], 0, sorter=1.0)  # type: ignore[call-overload]

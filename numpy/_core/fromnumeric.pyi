@@ -111,6 +111,7 @@ _NumberOrObjectT = TypeVar("_NumberOrObjectT", bound=np.number | np.object_)
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
 _ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
+_BoolOrIntArrayT = TypeVar("_BoolOrIntArrayT", bound=NDArray[np.integer | np.bool])
 
 @type_check_only
 class _SupportsShape(Protocol[_ShapeT_co]):
@@ -418,18 +419,18 @@ def argmax(
 def argmax(
     a: ArrayLike,
     axis: SupportsIndex | None,
-    out: _ArrayT,
+    out: _BoolOrIntArrayT,
     *,
     keepdims: bool = ...,
-) -> _ArrayT: ...
+) -> _BoolOrIntArrayT: ...
 @overload
 def argmax(
     a: ArrayLike,
     axis: SupportsIndex | None = ...,
     *,
-    out: _ArrayT,
+    out: _BoolOrIntArrayT,
     keepdims: bool = ...,
-) -> _ArrayT: ...
+) -> _BoolOrIntArrayT: ...
 
 @overload
 def argmin(
@@ -451,18 +452,18 @@ def argmin(
 def argmin(
     a: ArrayLike,
     axis: SupportsIndex | None,
-    out: _ArrayT,
+    out: _BoolOrIntArrayT,
     *,
     keepdims: bool = ...,
-) -> _ArrayT: ...
+) -> _BoolOrIntArrayT: ...
 @overload
 def argmin(
     a: ArrayLike,
     axis: SupportsIndex | None = ...,
     *,
-    out: _ArrayT,
+    out: _BoolOrIntArrayT,
     keepdims: bool = ...,
-) -> _ArrayT: ...
+) -> _BoolOrIntArrayT: ...
 
 @overload
 def searchsorted(
