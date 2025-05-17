@@ -252,6 +252,13 @@ AR_m // AR_LIKE_m
 
 AR_LIKE_m // AR_m
 
+AR_m /= f
+AR_m //= f
+AR_m /= AR_f
+AR_m /= AR_LIKE_f
+AR_m //= AR_f
+AR_m //= AR_LIKE_f
+
 AR_O // AR_LIKE_b
 AR_O // AR_LIKE_u
 AR_O // AR_LIKE_i
