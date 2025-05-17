@@ -1,7 +1,16 @@
+from typing import TypeAlias, TypeVar
+
 import numpy as np
 import numpy.typing as npt
+from numpy._typing import _Shape
+
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+MaskedArray: TypeAlias = np.ma.MaskedArray[_Shape, np.dtype[_ScalarT]]
 
 MAR_1d_f8: np.ma.MaskedArray[tuple[int], np.dtype[np.float64]]
+MAR_b: MaskedArray[np.bool]
+MAR_c: MaskedArray[np.complex128]
+MAR_td64: MaskedArray[np.timedelta64]
 
 AR_b: npt.NDArray[np.bool]
 
@@ -126,5 +135,9 @@ np.ma.allclose(MAR_1d_f8, [1,2,3], rtol='.4')  # type: ignore[arg-type]
 np.ma.allclose(MAR_1d_f8, [1,2,3], atol='.5')  # type: ignore[arg-type]
 
 MAR_1d_f8.__setmask__('mask')  # type: ignore[arg-type]
+
+MAR_b *= 2  # type: ignore[arg-type]
+MAR_c //= 2  # type: ignore[misc]
+MAR_td64 **= 2  # type: ignore[misc]
 
 MAR_1d_f8.swapaxes(axis1=1, axis2=0)  # type: ignore[call-arg]
