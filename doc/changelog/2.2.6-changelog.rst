@@ -1,0 +1,32 @@
+
+Contributors
+============
+
+A total of 8 people contributed to this release.  People with a "+" by their
+names contributed a patch for the first time.
+
+* Charles Harris
+* Ilhan Polat
+* Joren Hammudoglu
+* Marco Gorelli +
+* Matti Picus
+* Nathan Goldbaum
+* Peter Hawkins
+* Sayed Adel
+
+Pull requests merged
+====================
+
+A total of 11 pull requests were merged for this release.
+
+* `#28778 <https://github.com/numpy/numpy/pull/28778>`__: MAINT: Prepare 2.2.x for further development
+* `#28851 <https://github.com/numpy/numpy/pull/28851>`__: BLD: Update vendor-meson to fix module_feature conflicts arguments...
+* `#28852 <https://github.com/numpy/numpy/pull/28852>`__: BUG: fix heap buffer overflow in np.strings.find
+* `#28853 <https://github.com/numpy/numpy/pull/28853>`__: TYP: fix ``NDArray[floating] + float`` return type
+* `#28864 <https://github.com/numpy/numpy/pull/28864>`__: BUG: fix stringdtype singleton thread safety
+* `#28865 <https://github.com/numpy/numpy/pull/28865>`__: MAINT: use OpenBLAS 0.3.29
+* `#28889 <https://github.com/numpy/numpy/pull/28889>`__: MAINT: from_dlpack thread safety fixes (#28883)
+* `#28913 <https://github.com/numpy/numpy/pull/28913>`__: TYP: Fix non-existent ``CanIndex`` annotation in ``ndarray.setfield``
+* `#28915 <https://github.com/numpy/numpy/pull/28915>`__: MAINT: Avoid dereferencing/strict aliasing warnings
+* `#28916 <https://github.com/numpy/numpy/pull/28916>`__: BUG: Fix missing check for PyErr_Occurred() in _pyarray_correlate.
+* `#28966 <https://github.com/numpy/numpy/pull/28966>`__: TYP: reject complex scalar types in ndarray.__ifloordiv__
