@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import builtins
 import collections.abc
 import ctypes

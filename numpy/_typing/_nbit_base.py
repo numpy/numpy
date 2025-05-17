@@ -30,7 +30,6 @@ class NBitBase:
 
     .. code-block:: python
 
-        >>> from __future__ import annotations
         >>> from typing import TypeVar, TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt
