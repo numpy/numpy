@@ -19,7 +19,6 @@ from numpy import (
     bool_,
     bytes_,
     character,
-    complex128,
     complexfloating,
     datetime64,
     dtype,
@@ -559,23 +558,11 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __imul__(
-        self: _MaskedArray[float64], other: _ArrayLikeFloat_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __imul__(
-        self: _MaskedArray[floating], other: _ArrayLikeFloat_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __imul__(
-        self: _MaskedArray[complex128], other: _ArrayLikeComplex_co, /
+        self: _MaskedArray[floating | timedelta64], other: _ArrayLikeFloat_co, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __imul__(
         self: _MaskedArray[complexfloating], other: _ArrayLikeComplex_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __imul__(
-        self: _MaskedArray[timedelta64], other: _ArrayLikeFloat_co, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __imul__(
