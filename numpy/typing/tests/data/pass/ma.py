@@ -2,6 +2,7 @@ from typing import Any, TypeAlias, TypeVar, cast
 
 import numpy as np
 from numpy import dtype, generic
+import numpy.typing as npt
 from numpy._typing import _Shape
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
@@ -18,6 +19,8 @@ MAR_S: MaskedArray[np.bytes_] = np.ma.MaskedArray([b'foo'], dtype=np.bytes_)
 MAR_U: MaskedArray[np.str_] = np.ma.MaskedArray(['foo'], dtype=np.str_)
 MAR_T = cast(np.ma.MaskedArray[Any, np.dtypes.StringDType], np.ma.MaskedArray(["a"], "T"))
 
+AR_b: npt.NDArray[np.bool] = np.array([True, False, True])
+
 AR_LIKE_b = [True]
 AR_LIKE_u = [np.uint32(1)]
 AR_LIKE_i = [1]
@@ -26,7 +29,7 @@ AR_LIKE_c = [1j]
 AR_LIKE_m = [np.timedelta64(1, "D")]
 AR_LIKE_M = [np.datetime64(1, "D")]
 
-MAR_f.mask = AR_LIKE_b
+MAR_f.mask = AR_b
 MAR_f.mask = np.False_
 
 # Inplace addition
