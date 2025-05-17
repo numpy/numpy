@@ -1,6 +1,6 @@
-#ifndef NPY_SIMDX
+#ifndef NPY_HWY
 #error "This is not a standalone header. Include simd.hpp instead."
-#define NPY_SIMDX 1 // Prevent editors from graying out the happy branch
+#define NPY_HWY 1  // Prevent editors from graying out the happy branch
 #endif
 
 // Using anonymous namespace instead of inline to ensure each translation unit
@@ -17,9 +17,9 @@ namespace {
  * @tparam TLane The lane type to check for support.
  */
 template <typename TLane>
-constexpr bool kSupportLane = NPY_SIMDX != 0;
+constexpr bool kSupportLane = NPY_HWY != 0;
 
-#if NPY_SIMDX
+#if NPY_HWY
 // Define lane type support based on Highway capabilities
 template <>
 constexpr bool kSupportLane<hwy::float16_t> = HWY_HAVE_FLOAT16 != 0;
@@ -127,6 +127,6 @@ using hn::Sqrt;
 using hn::Sub;
 using hn::Xor;
 
-#endif  // NPY_SIMDX
+#endif  // NPY_HWY
 
-} // namespace anonymous
+}  // namespace

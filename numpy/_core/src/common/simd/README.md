@@ -45,19 +45,19 @@ StoreU(v128, data);
 #include "simd/simd.hpp"
 
 // Check if SIMD is enabled
-#if NPY_SIMDX
+#if NPY_HWY
     // SIMD code
 #else
     // Scalar fallback code
 #endif
 
 // Check for float64 support
-#if NPY_SIMDX_F64
+#if NPY_HWY_F64
     // Use float64 SIMD operations
 #endif
 
 // Check for FMA support
-#if NPY_SIMDX_FMA
+#if NPY_HWY_FMA
     // Use FMA operations
 #endif
 ```
@@ -70,9 +70,9 @@ The wrapper provides type constraints to help with SFINAE (Substitution Failure 
   ```cpp
   // Base template - always defined, even when SIMD is not enabled (for SFINAE)
   template <typename TLane>
-  constexpr bool kSupportLane = NPY_SIMDX != 0;
+  constexpr bool kSupportLane = NPY_HWY != 0;
   template <>
-  constexpr bool kSupportLane<double> = NPY_SIMDX_F64 != 0;
+  constexpr bool kSupportLane<double> = NPY_HWY_F64 != 0;
   ```
 
 - `kMaxLanes<TLane>`: Maximum number of lanes supported by the SIMD extension for the specified lane type.
@@ -175,15 +175,15 @@ The SIMD wrapper automatically disables SIMD operations when optimizations are d
 
 2. **Legacy Universal Intrinsics**
    - The older universal intrinsics C interface (in `simd.h` and accessible via `NPY_SIMD` macros) is deprecated
-   - All new SIMD code should use this Highway-based wrapper (accessible via `NPY_SIMDX` macros) 
+   - All new SIMD code should use this Highway-based wrapper (accessible via `NPY_HWY` macros) 
    - The legacy code is maintained for compatibility but will eventually be removed
    
 3. **Feature Detection Constants vs. Highway Constants**
-   - NumPy-specific constants (`NPY_SIMDX_F16`, `NPY_SIMDX_F64`, `NPY_SIMDX_FMA`) provide additional safety beyond raw Highway constants
+   - NumPy-specific constants (`NPY_HWY_F16`, `NPY_HWY_F64`, `NPY_HWY_FMA`) provide additional safety beyond raw Highway constants
    - Highway constants (e.g., `HWY_HAVE_FLOAT16`) only check platform capabilities but don't consider NumPy's build configuration
    - Our constants combine both checks:
      ```cpp
-     #define NPY_SIMDX_F16 (NPY_SIMDX && HWY_HAVE_FLOAT16)
+     #define NPY_HWY_F16 (NPY_HWY && HWY_HAVE_FLOAT16)
      ```
    - This ensures SIMD features won't be used when:
      - Platform supports it but NumPy optimization is disabled via meson option:
