@@ -1,12 +1,11 @@
-from datetime import datetime, timedelta
 from typing import Any, Literal, TypeAlias, TypeVar, assert_type
 
 import numpy as np
 from numpy import dtype, generic
-from numpy._typing import NDArray, _Shape
+from numpy._typing import NDArray, _AnyShape
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
-MaskedArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT]]
+MaskedArray: TypeAlias = np.ma.MaskedArray[_AnyShape, dtype[_ScalarT]]
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 class MaskedArraySubclass(MaskedArray[np.complex128]): ...

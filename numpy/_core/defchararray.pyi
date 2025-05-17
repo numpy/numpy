@@ -1,20 +1,11 @@
-from typing import (
-    Any,
-    SupportsIndex,
-    SupportsInt,
-    TypeAlias,
-    overload,
-)
-from typing import (
-    Literal as L,
-)
+from typing import Any, Self, SupportsIndex, SupportsInt, TypeAlias, overload
+from typing import Literal as L
 
 from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import (
     _OrderKACF,
-    _SupportsArray,
     _SupportsBuffer,
     bytes_,
     dtype,
@@ -24,29 +15,13 @@ from numpy import (
     str_,
 )
 from numpy._core.multiarray import compare_chararrays
-from numpy._typing import (
-    NDArray,
-    _Shape,
-    _ShapeLike,
-)
-from numpy._typing import (
-    _ArrayLikeAnyString_co as UST_co,
-)
-from numpy._typing import (
-    _ArrayLikeBool_co as b_co,
-)
-from numpy._typing import (
-    _ArrayLikeBytes_co as S_co,
-)
-from numpy._typing import (
-    _ArrayLikeInt_co as i_co,
-)
-from numpy._typing import (
-    _ArrayLikeStr_co as U_co,
-)
-from numpy._typing import (
-    _ArrayLikeString_co as T_co,
-)
+from numpy._typing import NDArray, _AnyShape, _Shape, _ShapeLike, _SupportsArray
+from numpy._typing import _ArrayLikeAnyString_co as UST_co
+from numpy._typing import _ArrayLikeBool_co as b_co
+from numpy._typing import _ArrayLikeBytes_co as S_co
+from numpy._typing import _ArrayLikeInt_co as i_co
+from numpy._typing import _ArrayLikeStr_co as U_co
+from numpy._typing import _ArrayLikeString_co as T_co
 
 __all__ = [
     "equal",
@@ -104,14 +79,15 @@ __all__ = [
     "chararray",
 ]
 
-_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_Shape, covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 _CharacterT = TypeVar("_CharacterT", bound=np.character)
 _CharDTypeT_co = TypeVar("_CharDTypeT_co", bound=dtype[np.character], default=dtype, covariant=True)
-_CharArray: TypeAlias = chararray[_Shape, dtype[_CharacterT]]
 
-_StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
+_CharArray: TypeAlias = chararray[_AnyShape, dtype[_CharacterT]]
+
+_StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
+_StringDTypeOrUnicodeArray: TypeAlias = _StringDTypeArray | NDArray[np.str_]
 _StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
-_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_Shape, np.dtype[np.str_]] | np.ndarray[_Shape, np.dtypes.StringDType]
 
 class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     @overload
@@ -124,7 +100,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         offset: SupportsIndex = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
-    ) -> chararray[_Shape, dtype[bytes_]]: ...
+    ) -> _CharArray[bytes_]: ...
     @overload
     def __new__(
         subtype,
@@ -135,12 +111,12 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         offset: SupportsIndex = ...,
         strides: _ShapeLike = ...,
         order: _OrderKACF = ...,
-    ) -> chararray[_Shape, dtype[str_]]: ...
+    ) -> _CharArray[str_]: ...
 
     def __array_finalize__(self, obj: object) -> None: ...
-    def __mul__(self, other: i_co) -> chararray[_Shape, _CharDTypeT_co]: ...
-    def __rmul__(self, other: i_co) -> chararray[_Shape, _CharDTypeT_co]: ...
-    def __mod__(self, i: Any) -> chararray[_Shape, _CharDTypeT_co]: ...
+    def __mul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...
+    def __rmul__(self, other: i_co) -> chararray[_AnyShape, _CharDTypeT_co]: ...
+    def __mod__(self, i: Any) -> chararray[_AnyShape, _CharDTypeT_co]: ...
 
     @overload
     def __eq__(
@@ -288,7 +264,7 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
     def expandtabs(
         self,
         tabsize: i_co = ...,
-    ) -> chararray[_Shape, _CharDTypeT_co]: ...
+    ) -> Self: ...
 
     @overload
     def find(
@@ -513,12 +489,12 @@ class chararray(ndarray[_ShapeT_co, _CharDTypeT_co]):
         deletechars: S_co | None = ...,
     ) -> _CharArray[bytes_]: ...
 
-    def zfill(self, width: i_co) -> chararray[_Shape, _CharDTypeT_co]: ...
-    def capitalize(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
-    def title(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
-    def swapcase(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
-    def lower(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
-    def upper(self) -> chararray[_ShapeT_co, _CharDTypeT_co]: ...
+    def zfill(self, width: i_co) -> Self: ...
+    def capitalize(self) -> Self: ...
+    def title(self) -> Self: ...
+    def swapcase(self) -> Self: ...
+    def lower(self) -> Self: ...
+    def upper(self) -> Self: ...
     def isalnum(self) -> ndarray[_ShapeT_co, dtype[np.bool]]: ...
     def isalpha(self) -> ndarray[_ShapeT_co, dtype[np.bool]]: ...
     def isdigit(self) -> ndarray[_ShapeT_co, dtype[np.bool]]: ...

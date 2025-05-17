@@ -108,7 +108,7 @@ assert_type(np.dtype("|T"), StringDType)
 
 # Methods and attributes
 assert_type(dtype_U.base, np.dtype)
-assert_type(dtype_U.subdtype, tuple[np.dtype, tuple[int, ...]] | None)
+assert_type(dtype_U.subdtype, tuple[np.dtype, tuple[Any, ...]] | None)
 assert_type(dtype_U.newbyteorder(), np.dtype[np.str_])
 assert_type(dtype_U.type, type[np.str_])
 assert_type(dtype_U.name, LiteralString)

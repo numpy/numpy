@@ -136,6 +136,7 @@ from ._scalars import _UIntLike_co as _UIntLike_co
 from ._scalars import _VoidLike_co as _VoidLike_co
 
 #
+from ._shape import _AnyShape as _AnyShape
 from ._shape import _Shape as _Shape
 from ._shape import _ShapeLike as _ShapeLike
 

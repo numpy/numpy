@@ -7,7 +7,7 @@ from numpy import dtype
 
 from ._nbit_base import _32Bit, _64Bit
 from ._nested_sequence import _NestedSequence
-from ._shape import _Shape
+from ._shape import _AnyShape
 
 if TYPE_CHECKING:
     StringDType = np.dtypes.StringDType
@@ -21,7 +21,7 @@ _ScalarT = TypeVar("_ScalarT", bound=np.generic)
 _DTypeT = TypeVar("_DTypeT", bound=dtype[Any])
 _DTypeT_co = TypeVar("_DTypeT_co", covariant=True, bound=dtype[Any])
 
-NDArray: TypeAlias = np.ndarray[_Shape, dtype[_ScalarT]]
+NDArray: TypeAlias = np.ndarray[_AnyShape, dtype[_ScalarT]]
 
 # The `_SupportsArray` protocol only cares about the default dtype
 # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
