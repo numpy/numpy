@@ -1521,7 +1521,7 @@ init_string_ufuncs(PyObject *umath)
     dtypes[0] = NPY_OBJECT;
     dtypes[1] = NPY_BOOL;
 
-    const char *unary_buffer_method_names[] = {
+    const char *const unary_buffer_method_names[] = {
         "isalpha", "isalnum", "isdigit", "isspace", "islower",
         "isupper", "istitle", "isdecimal", "isnumeric",
     };
@@ -1635,7 +1635,7 @@ init_string_ufuncs(PyObject *umath)
     dtypes[2] = dtypes[3] = NPY_INT64;
     dtypes[4] = NPY_BOOL;
 
-    const char *startswith_endswith_names[] = {
+    const char *const startswith_endswith_names[] = {
         "startswith", "endswith"
     };
 
@@ -1664,7 +1664,7 @@ init_string_ufuncs(PyObject *umath)
 
     dtypes[0] = dtypes[1] = NPY_OBJECT;
 
-    const char *strip_whitespace_names[] = {
+    const char *const strip_whitespace_names[] = {
         "_lstrip_whitespace", "_rstrip_whitespace", "_strip_whitespace"
     };
 
@@ -1691,7 +1691,7 @@ init_string_ufuncs(PyObject *umath)
 
     dtypes[0] = dtypes[1] = dtypes[2] = NPY_OBJECT;
 
-    const char *strip_chars_names[] = {
+    const char *const strip_chars_names[] = {
         "_lstrip_chars", "_rstrip_chars", "_strip_chars"
     };
 
@@ -1750,7 +1750,7 @@ init_string_ufuncs(PyObject *umath)
 
     dtypes[1] = NPY_INT64;
 
-    const char *center_ljust_rjust_names[] = {
+    const char *const center_ljust_rjust_names[] = {
         "_center", "_ljust", "_rjust"
     };
 
@@ -1827,7 +1827,7 @@ init_string_ufuncs(PyObject *umath)
     dtypes[0] = dtypes[1] = dtypes[3] = dtypes[4] = dtypes[5] = NPY_OBJECT;
     dtypes[2] = NPY_INT64;
 
-    const char *partition_names[] = {"_partition_index", "_rpartition_index"};
+    const char *const partition_names[] = {"_partition_index", "_rpartition_index"};
 
     static STARTPOSITION partition_startpositions[] = {
         STARTPOSITION::FRONT, STARTPOSITION::BACK

@@ -1154,7 +1154,7 @@ if (#varname#_cb.capi==Py_None) {
         'frompyobj': [
             '    #setdims#;',
             '    capi_#varname#_intent |= #intent#;',
-            ('    const char * capi_errmess = "#modulename#.#pyname#:'
+            ('    const char capi_errmess[] = "#modulename#.#pyname#:'
              ' failed to create array from the #nth# `#varname#`";'),
             {isintent_hide:
              '    capi_#varname#_as_array = ndarray_from_pyobj('

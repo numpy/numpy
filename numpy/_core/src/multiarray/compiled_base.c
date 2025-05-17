@@ -920,11 +920,11 @@ fail:
     return NULL;
 }
 
-static const char *EMPTY_SEQUENCE_ERR_MSG = "indices must be integral: the provided " \
+static const char EMPTY_SEQUENCE_ERR_MSG[] = "indices must be integral: the provided " \
     "empty sequence was inferred as float. Wrap it with " \
     "'np.array(indices, dtype=np.intp)'";
 
-static const char *NON_INTEGRAL_ERROR_MSG = "only int indices permitted";
+static const char NON_INTEGRAL_ERROR_MSG[] = "only int indices permitted";
 
 /* Convert obj to an ndarray with integer dtype or fail */
 static PyArrayObject *
@@ -1465,7 +1465,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
     PyObject *obj;
     PyObject *str;
     const char *docstr;
-    static char *msg = "already has a different docstring";
+    static const char msg[] = "already has a different docstring";
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
