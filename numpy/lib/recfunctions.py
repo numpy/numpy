@@ -1552,9 +1552,7 @@ def join_by(key, r1, r2, jointype='inner', r1postfix='1', r2postfix='2',
     # Make sure we work with ravelled arrays
     r1 = r1.ravel()
     r2 = r2.ravel()
-    # Fixme: nb2 below is never used. Commenting out for pyflakes.
-    # (nb1, nb2) = (len(r1), len(r2))
-    nb1 = len(r1)
+    (nb1, nb2) = (len(r1), len(r2))
     (r1names, r2names) = (r1.dtype.names, r2.dtype.names)
 
     # Check the names for collision

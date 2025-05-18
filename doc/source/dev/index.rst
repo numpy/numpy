@@ -190,8 +190,8 @@ Stylistic guidelines
 --------------------
 
 * Set up your editor to follow `PEP 8 <https://www.python.org/dev/peps/
-  pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code with
-  pyflakes / flake8.
+  pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code
+  with ruff.
 
 * Use NumPy data types instead of strings (``np.uint8`` instead of
   ``"uint8"``).

@@ -887,11 +887,11 @@ class TestDiff:
         output = [diff(x, n=n) for n in range(1, 5)]
         expected = [[1, 1], [0], [], []]
         assert_(diff(x, n=0) is x)
-        for n, (expected, out) in enumerate(zip(expected, output), start=1):
-            assert_(type(out) is np.ndarray)
-            assert_array_equal(out, expected)
-            assert_equal(out.dtype, np.int_)
-            assert_equal(len(out), max(0, len(x) - n))
+        for n, (expected_n, output_n) in enumerate(zip(expected, output), start=1):
+            assert_(type(output_n) is np.ndarray)
+            assert_array_equal(output_n, expected_n)
+            assert_equal(output_n.dtype, np.int_)
+            assert_equal(len(output_n), max(0, len(x) - n))
 
     def test_times(self):
         x = np.arange('1066-10-13', '1066-10-16', dtype=np.datetime64)

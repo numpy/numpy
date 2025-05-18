@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import builtins
 import collections.abc
 import ctypes
@@ -6038,7 +6036,6 @@ class TestResize:
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         y = x
         assert_raises(ValueError, x.resize, (5, 1))
-        del y  # avoid pyflakes unused variable warning.
 
     @_no_tracing
     def test_int_shape(self):
@@ -6117,7 +6114,6 @@ class TestResize:
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         xref = weakref.ref(x)
         assert_raises(ValueError, x.resize, (5, 1))
-        del xref  # avoid pyflakes unused variable warning.
 
 
 class TestRecord:
@@ -8322,7 +8318,6 @@ class TestNewBufferProtocol:
         if HAS_REFCOUNT:
             count_2 = sys.getrefcount(np._core._internal)
             assert_equal(count_1, count_2)
-        del c  # avoid pyflakes unused variable warning.
 
     def test_padded_struct_array(self):
         dt1 = np.dtype(
@@ -8345,7 +8340,7 @@ class TestNewBufferProtocol:
 
     @pytest.mark.valgrind_error(reason="leaks buffer info cache temporarily.")
     def test_relaxed_strides(self, c=stride_tricks.as_strided(
-                                              np.ones((1, 10, 10), dtype='i8'),
+                                              np.ones((1, 10, 10), dtype='i8'), # noqa: B008
                                               strides=(-1, 80, 8)
                                               )
                                   ):

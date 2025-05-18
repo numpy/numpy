@@ -82,7 +82,7 @@ def strptime(s, fmt=None):
     2.5.
 
     """
-    if type(s) == bytes:
+    if isinstance(s, bytes):
         s = s.decode("latin1")
     return datetime(*time.strptime(s, fmt)[:3])
 
@@ -229,7 +229,6 @@ class TestSavezLoad(RoundtripTest):
             npfile = np.load(tmp)
             a = npfile['a']  # Should succeed
             npfile.close()
-            del a  # Avoid pyflakes unused variable warning.
 
     def test_multiple_arrays(self):
         a = np.array([[1, 2], [3, 4]], float)

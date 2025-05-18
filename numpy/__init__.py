@@ -98,7 +98,7 @@ from .version import __version__
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
 try:
-    __NUMPY_SETUP__
+    __NUMPY_SETUP__  # noqa: B018
 except NameError:
     __NUMPY_SETUP__ = False
 

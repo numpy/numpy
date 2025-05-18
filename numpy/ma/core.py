@@ -4162,7 +4162,7 @@ class MaskedArray(ndarray):
             suffix=',')
 
         if self._fill_value is None:
-            self.fill_value  # initialize fill_value
+            self.fill_value  # initialize fill_value  # noqa: B018
 
         if (self._fill_value.dtype.kind in ("S", "U")
                 and self.dtype.kind == self._fill_value.dtype.kind):

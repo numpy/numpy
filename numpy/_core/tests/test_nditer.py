@@ -84,8 +84,6 @@ def test_iter_refcount():
     assert_equal(sys.getrefcount(a), rc_a)
     assert_equal(sys.getrefcount(dt), rc_dt)
 
-    del it2  # avoid pyflakes unused variable warning
-
 def test_iter_best_order():
     # The iterator should always find the iteration order
     # with increasing memory addresses
@@ -1488,7 +1486,7 @@ def test_iter_copy_casts_structured2():
     # Array of two structured scalars:
     for res in res1, res2:
         # Cast to tuple by getitem, which may be weird and changeable?:
-        assert type(res["a"][0]) == tuple
+        assert isinstance(res["a"][0], tuple)
         assert res["a"][0] == (1, 1)
 
     for res in res1, res2:

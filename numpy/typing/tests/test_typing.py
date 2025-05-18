@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import importlib.util
 import os
 import re
@@ -118,7 +116,7 @@ def run_mypy() -> None:
                 filename = None
 
 
-def get_test_cases(*directories: str) -> Iterator[ParameterSet]:
+def get_test_cases(*directories: str) -> "Iterator[ParameterSet]":
     for directory in directories:
         for root, _, files in os.walk(directory):
             for fname in files:

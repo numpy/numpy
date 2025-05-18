@@ -3566,16 +3566,16 @@ def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
         new_result = []
         for index, value in enumerate(obj):
             new_index, new_item = traverse((index, value), visit,
-                                           parents=parents + [parent],
-                                           result=result, *args, **kwargs)
+                                           parents + [parent], result,
+                                           *args, **kwargs)
             if new_index is not None:
                 new_result.append(new_item)
     elif isinstance(obj, dict):
         new_result = {}
         for key, value in obj.items():
             new_key, new_value = traverse((key, value), visit,
-                                          parents=parents + [parent],
-                                          result=result, *args, **kwargs)
+                                          parents + [parent], result,
+                                          *args, **kwargs)
             if new_key is not None:
                 new_result[new_key] = new_value
     else:

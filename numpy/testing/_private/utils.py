@@ -161,11 +161,12 @@ if os.name == 'nt':
                                         win32pdh.PDH_FMT_LONG, None)
 elif sys.platform[:5] == 'linux':
 
-    def memusage(_proc_pid_stat=f'/proc/{os.getpid()}/stat'):
+    def memusage(_proc_pid_stat=None):
         """
         Return virtual memory size in bytes of the running python.
 
         """
+        _proc_pid_stat = _proc_pid_stat or f'/proc/{os.getpid()}/stat'
         try:
             with open(_proc_pid_stat) as f:
                 l = f.readline().split(' ')
@@ -182,7 +183,7 @@ else:
 
 
 if sys.platform[:5] == 'linux':
-    def jiffies(_proc_pid_stat=f'/proc/{os.getpid()}/stat', _load_time=[]):
+    def jiffies(_proc_pid_stat=None, _load_time=None):
         """
         Return number of jiffies elapsed.
 
@@ -190,6 +191,8 @@ if sys.platform[:5] == 'linux':
         process has been scheduled in user mode. See man 5 proc.
 
         """
+        _proc_pid_stat = _proc_pid_stat or f'/proc/{os.getpid()}/stat'
+        _load_time = _load_time or []
         import time
         if not _load_time:
             _load_time.append(time.time())
@@ -1596,7 +1599,6 @@ def _assert_valid_refcount(op):
         assert_(sys.getrefcount(i) >= rc)
     finally:
         gc.enable()
-    del d  # for pyflakes
 
 
 def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
