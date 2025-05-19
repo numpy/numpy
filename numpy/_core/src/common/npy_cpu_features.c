@@ -113,6 +113,7 @@ static struct {
                 {NPY_CPU_FEATURE_AVX512VBMI2, "AVX512VBMI2"},
                 {NPY_CPU_FEATURE_AVX512BITALG, "AVX512BITALG"},
                 {NPY_CPU_FEATURE_AVX512FP16 , "AVX512FP16"},
+                {NPY_CPU_FEATURE_AVX512BF16 , "AVX512BF16"},
                 {NPY_CPU_FEATURE_AVX512_KNL, "AVX512_KNL"},
                 {NPY_CPU_FEATURE_AVX512_KNM, "AVX512_KNM"},
                 {NPY_CPU_FEATURE_AVX512_SKX, "AVX512_SKX"},
@@ -410,12 +411,18 @@ npy__cpu_getxcr0(void)
 }
 
 static void
-npy__cpu_cpuid(int reg[4], int func_id)
+npy__cpu_cpuid_count(int reg[4], int func_id, int count)
 {
 #if defined(_MSC_VER)
-    __cpuidex(reg, func_id, 0);
+    __cpuidex(reg, func_id, count);
 #elif defined(__INTEL_COMPILER)
     __cpuid(reg, func_id);
+    // classic Intel compilers do not support count
+    if (count != 0) {
+        for (int i = 0; i < 4; i++) {
+            reg[i] = 0;
+        }
+    }
 #elif defined(__GNUC__) || defined(__clang__)
     #if defined(NPY_CPU_X86) && defined(__PIC__)
         // %ebx may be the PIC register
@@ -424,18 +431,24 @@ npy__cpu_cpuid(int reg[4], int func_id)
                 "xchg{l}\t{%%}ebx, %1\n\t"
                 : "=a" (reg[0]), "=r" (reg[1]), "=c" (reg[2]),
                   "=d" (reg[3])
-                : "a" (func_id), "c" (0)
+                : "a" (func_id), "c" (count)
         );
     #else
         __asm__("cpuid\n\t"
                 : "=a" (reg[0]), "=b" (reg[1]), "=c" (reg[2]),
                   "=d" (reg[3])
-                : "a" (func_id), "c" (0)
+                : "a" (func_id), "c" (count)
         );
     #endif
 #else
     reg[0] = 0;
 #endif
+}
+
+static void
+npy__cpu_cpuid(int reg[4], int func_id)
+{
+    return npy__cpu_cpuid_count(reg, func_id, 0);
 }
 
 static void
@@ -552,6 +565,8 @@ npy__cpu_init_features(void)
         npy__cpu_have[NPY_CPU_FEATURE_AVX512BITALG]    = (reg[2] & (1 << 12)) != 0;
         // Sapphire Rapids
         npy__cpu_have[NPY_CPU_FEATURE_AVX512FP16]      = (reg[3] & (1 << 23)) != 0;
+        npy__cpu_cpuid_count(reg, 7, 1);
+        npy__cpu_have[NPY_CPU_FEATURE_AVX512BF16]      = (reg[0] & (1 << 5)) != 0;
     }
 
     // Groups
@@ -598,7 +613,9 @@ npy__cpu_init_features(void)
                                                 npy__cpu_have[NPY_CPU_FEATURE_VPCLMULQDQ];
 
     npy__cpu_have[NPY_CPU_FEATURE_AVX512_SPR] = npy__cpu_have[NPY_CPU_FEATURE_AVX512_ICL] &&
-                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512FP16];
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512FP16] &&
+                                                npy__cpu_have[NPY_CPU_FEATURE_AVX512BF16];
+
 
 
     // Legacy groups

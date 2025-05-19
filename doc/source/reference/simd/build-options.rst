@@ -261,7 +261,7 @@ Enables all features supported by the host CPU.
 
 Detects the features enabled by the compiler. This option is appended by default
 to ``cpu-baseline`` if ``-march``, ``-mcpu``, ``-xhost``, or ``/QxHost`` is set in 
-the environment variable ``CFLAGS``.
+the environment variable ``CFLAGS`` unless ``cpu-baseline-detect`` is ``disabled``.
 
 ``MIN``
 ~~~~~~~
@@ -303,13 +303,7 @@ Remove or add specific features, useful with ``MAX``, ``MIN``, and ``NATIVE``:
 - Adding a feature (``+``) includes all implied features
 - Removing a feature (``-``) excludes all successor features that imply the removed feature
 
-<<<<<<< HEAD
-- ``cpu-baseline`` will be treated as "native" if compiler native flag
-  ``-march=native`` or ``-xHost`` or ``/QxHost`` is enabled through environment variable
-  ``CFLAGS`` and ``cpu-baseline-detect`` is not ``disabled``::
-=======
 Examples::
->>>>>>> f68e178f88 (ENH: Modulate dispatched x86 CPU features)
 
   python -m build --wheel -Csetup-args=-Dcpu-dispatch="max-X86_V4"
   python -m build --wheel -Csetup-args=-Dcpu-baseline="min+X86_V4"

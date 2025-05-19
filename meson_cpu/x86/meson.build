@@ -47,8 +47,8 @@ AVX512_ICL = mod_features.new(
 )
 AVX512_SPR = mod_features.new(
   'AVX512_SPR', 35, implies: AVX512_ICL, 
-  args: ['-mavx512fp16'],
-  group: ['AVX512FP16'],
+  args: ['-mavx512fp16', '-mavx512bf16'],
+  group: ['AVX512FP16', 'AVX512BF16'],
   detect: 'AVX512_SPR',
   test_code: files(source_root + '/numpy/distutils/checks/cpu_avx512_spr.c')[0]
 )
@@ -77,13 +77,19 @@ if compiler_id == 'intel'
 endif
 
 if compiler_id == 'msvc'
+  cc_ver = cc.version()
   MSVC_SSE4 = cpu_family == 'x86' ? ['/arch:SSE2'] : []
-  MSVC_SSE4 = cc.version().version_compare('>=19.40') ? ['/arch:SSE4.2'] : MSVC_SSE4 
-  X86_V2.update(args: MSVC_SSE4 + HWY_SSE4_FLAGS + ['/fp:contract'])
+  MSVC_SSE4 = cc_ver.version_compare('>=19.40') ? ['/arch:SSE4.2'] : MSVC_SSE4 
+  MSVC_SSE4 = cc_ver.version_compare('>=19.30') ? MSVC_SSE4 + ['/fp:contract'] : MSVC_SSE4 
+  X86_V2.update(args: MSVC_SSE4)
   clear_arch = '/arch:.*'
   X86_V3.update(args: {'val': '/arch:AVX2', 'match': clear_arch})
-  X86_V4.update(args: {'val': '/arch:AVX512', 'match': clear_arch})
-  AVX512_ICL.update(args: '')
+  # FIXME: After completing transition from universal intrinsics to Highway,
+  # investigate which MSVC versions are incompatible with Highway's AVX-512 implementation.
+  X86_V4.update(disable: 'Considered broken by Highway on MSVC')
+  # To force enable AVX-512, use:
+  # X86_V4.update(args: [{'val': '/arch:AVX512', 'match': clear_arch}, '-DHWY_BROKEN_MSVC=0'])
+  AVX512_ICL.update(disable: 'unsupported by Highway on MSVC')
 endif
 
 # legacy CPU features 

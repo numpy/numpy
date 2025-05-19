@@ -358,7 +358,7 @@ class Test_X86_Features(AbstractTest):
         "AVX512VBMI2", "AVX512BITALG", "AVX512VPOPCNTDQ",
         "VAES", "VPCLMULQDQ", "GFNI"
     ]
-    features_groups["AVX512_SPR"] = features_groups["AVX512_ICL"] + ["AVX512FP16"]
+    features_groups["AVX512_SPR"] = features_groups["AVX512_ICL"] + ["AVX512FP16", "AVX512BF16"]
 
     features_map = {
         "SSE3": "PNI", "SSE41": "SSE4_1", "SSE42": "SSE4_2", "FMA3": "FMA",
@@ -366,7 +366,7 @@ class Test_X86_Features(AbstractTest):
         "AVX512VNNI": "AVX512_VNNI", "AVX512BITALG": "AVX512_BITALG",
         "AVX512VBMI2": "AVX512_VBMI2", "AVX5124FMAPS": "AVX512_4FMAPS",
         "AVX5124VNNIW": "AVX512_4VNNIW", "AVX512VPOPCNTDQ": "AVX512_VPOPCNTDQ",
-        "AVX512FP16": "AVX512_FP16",
+        "AVX512FP16": "AVX512_FP16", "AVX512BF16": "AVX512_BF16"
     }
 
     def load_flags(self):

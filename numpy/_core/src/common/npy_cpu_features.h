@@ -51,6 +51,7 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_AVX512VBMI2       = 43,
     NPY_CPU_FEATURE_AVX512BITALG      = 44,
     NPY_CPU_FEATURE_AVX512FP16        = 45,
+    NPY_CPU_FEATURE_AVX512BF16        = 46,
 
 
     // X86 CPU Groups
@@ -66,7 +67,7 @@ enum npy_cpu_features
     NPY_CPU_FEATURE_AVX512_CNL        = 105,
     // Ice Lake        (F,CD,BW,DQ,VL,IFMA,VBMI,VNNI,VBMI2,BITALG,VPOPCNTDQ,GFNI,VPCLMULDQ,VAES)
     NPY_CPU_FEATURE_AVX512_ICL        = 106,
-    // Sapphire Rapids (Ice Lake, AVX512FP16)
+    // Sapphire Rapids (Ice Lake, AVX512FP16, AVX512BF16)
     NPY_CPU_FEATURE_AVX512_SPR        = 107,
     // x86-64-v2 microarchitectures (SSE[1-4.*], POPCNT, LAHF, CX16)
     // On 32-bit, cx16 is not available so it is not included
