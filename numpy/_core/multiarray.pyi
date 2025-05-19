@@ -88,6 +88,7 @@ from numpy._typing import (
     _NestedSequence,
     _ScalarLike_co,
     # Shapes
+    _Shape,
     _ShapeLike,
     _SupportsArrayFunc,
     _SupportsDType,
@@ -207,7 +208,7 @@ _IDType = TypeVar("_IDType")
 _Nin = TypeVar("_Nin", bound=int)
 _Nout = TypeVar("_Nout", bound=int)
 
-_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
+_ShapeT = TypeVar("_ShapeT", bound=_Shape)
 _Array: TypeAlias = ndarray[_ShapeT, dtype[_ScalarT]]
 _Array1D: TypeAlias = ndarray[tuple[int], dtype[_ScalarT]]
 

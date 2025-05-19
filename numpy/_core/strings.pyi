@@ -1,26 +1,12 @@
 from typing import TypeAlias, overload
 
 import numpy as np
-from numpy._typing import (
-    NDArray,
-    _Shape,
-    _SupportsArray,
-)
-from numpy._typing import (
-    _ArrayLikeAnyString_co as UST_co,
-)
-from numpy._typing import (
-    _ArrayLikeBytes_co as S_co,
-)
-from numpy._typing import (
-    _ArrayLikeInt_co as i_co,
-)
-from numpy._typing import (
-    _ArrayLikeStr_co as U_co,
-)
-from numpy._typing import (
-    _ArrayLikeString_co as T_co,
-)
+from numpy._typing import NDArray, _AnyShape, _SupportsArray
+from numpy._typing import _ArrayLikeAnyString_co as UST_co
+from numpy._typing import _ArrayLikeBytes_co as S_co
+from numpy._typing import _ArrayLikeInt_co as i_co
+from numpy._typing import _ArrayLikeStr_co as U_co
+from numpy._typing import _ArrayLikeString_co as T_co
 
 __all__ = [
     "add",
@@ -70,9 +56,9 @@ __all__ = [
     "zfill",
 ]
 
-_StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
+_StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
 _StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
-_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_Shape, np.dtype[np.str_]] | _StringDTypeArray
+_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_AnyShape, np.dtype[np.str_]] | _StringDTypeArray
 
 @overload
 def equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...

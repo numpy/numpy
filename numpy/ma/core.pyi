@@ -29,6 +29,7 @@ from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
     NDArray,
+    _AnyShape,
     _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeInt,
@@ -222,14 +223,14 @@ __all__ = [
 ]
 
 _ShapeT = TypeVar("_ShapeT", bound=_Shape)
-_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_Shape, covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 _DTypeT = TypeVar("_DTypeT", bound=dtype)
 _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
-_MaskedArray: TypeAlias = MaskedArray[_Shape, dtype[_ScalarT]]
+_MaskedArray: TypeAlias = MaskedArray[_AnyShape, dtype[_ScalarT]]
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 MaskType = bool_
@@ -874,7 +875,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         self,
         repeats: _ArrayLikeInt_co,
         axis: SupportsIndex,
-    ) -> MaskedArray[_Shape, _DTypeT_co]: ...
+    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
     squeeze: Any
 
@@ -883,7 +884,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         axis1: SupportsIndex,
         axis2: SupportsIndex,
         /
-    ) -> MaskedArray[_Shape, _DTypeT_co]: ...
+    ) -> MaskedArray[_AnyShape, _DTypeT_co]: ...
 
     #
     def toflex(self) -> Incomplete: ...
@@ -902,7 +903,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @property
     def dtype(self) -> _DTypeT_co: ...
     @dtype.setter
-    def dtype(self: MaskedArray[Any, _DTypeT], dtype: _DTypeT, /) -> None: ...
+    def dtype(self: MaskedArray[_AnyShape, _DTypeT], dtype: _DTypeT, /) -> None: ...
 
 class mvoid(MaskedArray[_ShapeT_co, _DTypeT_co]):
     def __new__(
@@ -927,7 +928,7 @@ isarray = isMaskedArray
 isMA = isMaskedArray
 
 # 0D float64 array
-class MaskedConstant(MaskedArray[Any, dtype[float64]]):
+class MaskedConstant(MaskedArray[_AnyShape, dtype[float64]]):
     def __new__(cls): ...
     __class__: Any
     def __array_finalize__(self, obj): ...

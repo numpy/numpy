@@ -8,12 +8,12 @@ from typing import (
     Protocol,
     SupportsIndex,
     TypeAlias,
-    TypeVar,
     overload,
     type_check_only,
 )
 
 from _typeshed import StrOrBytesPath
+from typing_extensions import TypeVar
 
 import numpy as np
 from numpy import _ByteOrder, _OrderKACF, _SupportsBuffer
@@ -21,8 +21,10 @@ from numpy._typing import (
     ArrayLike,
     DTypeLike,
     NDArray,
+    _AnyShape,
     _ArrayLikeVoid_co,
     _NestedSequence,
+    _Shape,
     _ShapeLike,
 )
 
@@ -40,10 +42,10 @@ __all__ = [
 
 _T = TypeVar("_T")
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, covariant=True)
-_ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
+_DTypeT_co = TypeVar("_DTypeT_co", bound=np.dtype, default=np.dtype, covariant=True)
+_ShapeT_co = TypeVar("_ShapeT_co", bound=_Shape, default=_AnyShape, covariant=True)
 
-_RecArray: TypeAlias = recarray[Any, np.dtype[_ScalarT]]
+_RecArray: TypeAlias = recarray[_AnyShape, np.dtype[_ScalarT]]
 
 @type_check_only
 class _SupportsReadInto(Protocol):
