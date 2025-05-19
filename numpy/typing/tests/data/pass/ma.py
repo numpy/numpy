@@ -1,12 +1,11 @@
 from typing import Any, TypeAlias, TypeVar, cast
 
 import numpy as np
-from numpy import dtype, generic
 import numpy.typing as npt
 from numpy._typing import _Shape
 
-_ScalarT = TypeVar("_ScalarT", bound=generic)
-MaskedArray: TypeAlias = np.ma.MaskedArray[_Shape, dtype[_ScalarT]]
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+MaskedArray: TypeAlias = np.ma.MaskedArray[_Shape, np.dtype[_ScalarT]]
 
 MAR_b: MaskedArray[np.bool] = np.ma.MaskedArray([True])
 MAR_u: MaskedArray[np.uint32] = np.ma.MaskedArray([1], dtype=np.uint32)
