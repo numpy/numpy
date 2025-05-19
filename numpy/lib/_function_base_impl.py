@@ -5870,8 +5870,23 @@ def rms(x, axis=None, keepdims=False):
     """
     x = np.asanyarray(x)
     return np.sqrt(np.mean(np.square(x), axis=axis, keepdims=keepdims))
+<<<<<<< HEAD
 import numpy as np
 
 a = np.array([3, 4])
 print(rms(a))  # Output: 3.5355339059327378
+=======
+def _rms_dispatcher(x, axis=None, keepdims=None):
+    return (x,)
+
+@array_function_dispatch(_rms_dispatcher)
+def rms(x, axis=None, keepdims=False):
+    x = np.asanyarray(x)
+    return np.sqrt(np.mean(np.square(x), axis=axis, keepdims=keepdims))
+
+""" import numpy as np
+
+# a = np.array([3, 4])
+# print(rms(a))  # Output: 3.5355339059327378 """
+>>>>>>> 4cfc3e07ae2fe06364c5107ae650efba2ff29b25
 
