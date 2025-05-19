@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import sys
 from collections.abc import Callable, Collection, Sequence
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar, runtime_checkable
@@ -20,7 +18,6 @@ else:
 
 _T = TypeVar("_T")
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 _DTypeT = TypeVar("_DTypeT", bound=dtype[Any])
 _DTypeT_co = TypeVar("_DTypeT_co", covariant=True, bound=dtype[Any])
 

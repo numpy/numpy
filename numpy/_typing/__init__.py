@@ -1,7 +1,5 @@
 """Private counterpart of ``numpy.typing``."""
 
-from __future__ import annotations
-
 from ._array_like import ArrayLike as ArrayLike
 from ._array_like import NDArray as NDArray
 from ._array_like import _ArrayLike as _ArrayLike
