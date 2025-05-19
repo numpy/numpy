@@ -1051,7 +1051,7 @@ foreach gen_mtargets : [
     'loops_unary_complex.dispatch.h',
     src_file.process('src/umath/loops_unary_complex.dispatch.c.src'),
     [
-      X86_V3, X86_V2,
+      X86_V4, X86_V3, X86_V2,
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,

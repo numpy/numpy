@@ -82,8 +82,12 @@ if compiler_id == 'msvc'
   X86_V2.update(args: MSVC_SSE4 + HWY_SSE4_FLAGS)
   clear_arch = '/arch:.*'
   X86_V3.update(args: {'val': '/arch:AVX2', 'match': clear_arch})
-  X86_V4.update(args: {'val': '/arch:AVX512', 'match': clear_arch})
-  AVX512_ICL.update(args: '')
+  # FIXME: After completing transition from universal intrinsics to Highway,
+  # investigate which MSVC versions are incompatible with Highway's AVX-512 implementation.
+  X86_V4.update(disable: 'considered broken by Highway on MSVC')
+  # To force enable AVX-512, use:
+  # X86_V4.update(args: [{'val': '/arch:AVX512', 'match': clear_arch}, '-DHWY_BROKEN_MSVC=0'])
+  AVX512_ICL.update(disable: 'unsupported by Highway on MSVC')
 endif
 
 # legacy CPU features 
