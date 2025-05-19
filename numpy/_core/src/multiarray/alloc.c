@@ -99,6 +99,20 @@ indicate_hugepages(void *p, size_t size) {
 }
 
 
+/* Do not enable the alloc cache if the GIL is disabled, or if ASAN or MSAN
+ * instrumentation is enabled. The cache makes ASAN use-after-free or MSAN
+ * use-of-uninitialized-memory warnings less useful. */
+#ifdef Py_GIL_DISABLED
+#define USE_ALLOC_CACHE 0
+#elif defined(__has_feature)
+# if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
+# define USE_ALLOC_CACHE 0
+# endif
+#else
+#define USE_ALLOC_CACHE 1
+#endif
+
+
 /* as the cache is managed in global variables verify the GIL is held */
 
 /*
@@ -115,7 +129,7 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
     assert((esz == 1 && cache == datacache) ||
            (esz == sizeof(npy_intp) && cache == dimcache));
     assert(PyGILState_Check());
-#ifndef Py_GIL_DISABLED
+#if USE_ALLOC_CACHE
     if (nelem < msz) {
         if (cache[nelem].available > 0) {
             return cache[nelem].ptrs[--(cache[nelem].available)];
@@ -141,7 +155,7 @@ _npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
                 cache_bucket * cache, void (*dealloc)(void *))
 {
     assert(PyGILState_Check());
-#ifndef Py_GIL_DISABLED
+#if USE_ALLOC_CACHE
     if (p != NULL && nelem < msz) {
         if (cache[nelem].available < NCACHE) {
             cache[nelem].ptrs[cache[nelem].available++] = p;
