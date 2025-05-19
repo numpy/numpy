@@ -581,11 +581,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __ifloordiv__(
-        self: _MaskedArray[floating], other: _ArrayLikeFloat_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __ifloordiv__(
-        self: _MaskedArray[timedelta64], other: _ArrayLikeInt, /
+        self: _MaskedArray[floating | timedelta64], other: _ArrayLikeFloat_co, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __ifloordiv__(
@@ -596,17 +592,13 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     # _IntLike_co for `other`.
     @overload
     def __itruediv__(
-        self: _MaskedArray[floating], other: _ArrayLikeFloat_co, /
+        self: _MaskedArray[floating | timedelta64], other: _ArrayLikeFloat_co, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __itruediv__(
         self: _MaskedArray[complexfloating],
         other: _ArrayLikeComplex_co,
         /,
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __itruediv__(
-        self: _MaskedArray[timedelta64], other: _ArrayLikeInt, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __itruediv__(
