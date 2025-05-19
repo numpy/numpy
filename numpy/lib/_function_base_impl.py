@@ -5878,8 +5878,8 @@ def rms(x, axis=None, keepdims=False):
     x = np.asanyarray(x)
     return np.sqrt(np.mean(np.square(x), axis=axis, keepdims=keepdims))
 
-import numpy as np
+""" import numpy as np
 
-a = np.array([3, 4])
-print(rms(a))  # Output: 3.5355339059327378
+# a = np.array([3, 4])
+# print(rms(a))  # Output: 3.5355339059327378 """
 
