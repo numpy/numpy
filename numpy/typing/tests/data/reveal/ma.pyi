@@ -502,6 +502,7 @@ assert_type(AR_LIKE_dt64 + MAR_o, Any)
 assert_type(AR_LIKE_o + MAR_o, Any)
 
 # Masked Array subtraction
+# Keep in sync with numpy/typing/tests/data/reveal/arithmetic.pyi
 
 assert_type(MAR_number - AR_number, MaskedArray[np.number])
 
