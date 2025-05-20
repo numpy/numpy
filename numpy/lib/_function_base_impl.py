@@ -65,7 +65,7 @@ __all__ = [
     'median', 'sinc', 'hamming', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapezoid', 'trapz', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
-    'quantile','rms'
+    'quantile','softmax'
     ]
 
 # _QuantileMethods is a dictionary listing all the supported methods to
@@ -5852,8 +5852,3 @@ def softmax(x):
         return exp_x / np.sum(exp_x, axis=1, keepdims=True)
     else:
         raise ValueError("Input must be 1D or 2D")
-
-# Test example
-'''input_array = [1.0, 2.0, 3.0]
-output = softmax(input_array)
-print("Softmax Output:", output)'''
