@@ -3222,7 +3222,7 @@ class TestIsclose:
                 # Making sure that i and j are not both numbers, because that won't create a warning
                 if (i == 1) and (j == 1):
                     continue
-                
+
                 with warnings.catch_warnings(record=True) as w:
 
                     warnings.simplefilter("always")

@@ -2490,9 +2490,9 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
             raise FloatingPointError(err_msg)
         elif err_s == "print":
             print(err_msg)
-              
+
     with errstate(invalid='ignore'):
-  
+
         result = (less_equal(abs(x - y), atol + rtol * abs(y))
                   & isfinite(y)
                   | (x == y))
