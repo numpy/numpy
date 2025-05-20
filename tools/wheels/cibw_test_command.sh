@@ -4,9 +4,7 @@ set -xe
 
 PROJECT_DIR="$1"
 
-if [ -d tools ]; then
-   cd tools
-fi
+export PYTHONSAFEPATH=1
 
 python -m pip install threadpoolctl
 python -c "import numpy; numpy.show_config()"
