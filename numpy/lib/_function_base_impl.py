@@ -5840,53 +5840,20 @@ def digitize(x, bins, right=False):
         return len(bins) - _nx.searchsorted(bins[::-1], x, side=side)
     else:
         return _nx.searchsorted(bins, x, side=side)
-def rms(x, axis=None, keepdims=False):
-    """
-    Compute the root mean square of an array.
+def softmax(x):
+    x = np.asarray(x)
+    if x.ndim == 1:
+        x = x - np.max(x)  # for numerical stability
+        exp_x = np.exp(x)
+        return exp_x / np.sum(exp_x)
+    elif x.ndim == 2:
+        x = x - np.max(x, axis=1, keepdims=True)  # for each row
+        exp_x = np.exp(x)
+        return exp_x / np.sum(exp_x, axis=1, keepdims=True)
+    else:
+        raise ValueError("Input must be 1D or 2D")
 
-    Parameters
-    ----------
-    x : array_like
-        Input array.
-    axis : None or int or tuple of ints, optional
-        Axis or axes along which to compute the RMS. The default (None) is to compute
-        the RMS of the flattened array.
-    keepdims : bool, optional
-        If True, the axes which are reduced are left in the result as dimensions with size one.
-
-    Returns
-    -------
-    rms : ndarray or scalar
-        The root mean square of the array elements.
-    
-    Examples
-    --------
-    >>> import numpy as np
-    >>> a = np.array([1, 2, 3])
-    >>> rms(a)
-    2.160246899469287
-    >>> rms(a, keepdims=True)
-    array([2.1602469])
-    """
-    x = np.asanyarray(x)
-    return np.sqrt(np.mean(np.square(x), axis=axis, keepdims=keepdims))
-<<<<<<< HEAD
-import numpy as np
-
-a = np.array([3, 4])
-print(rms(a))  # Output: 3.5355339059327378
-=======
-def _rms_dispatcher(x, axis=None, keepdims=None):
-    return (x,)
-
-@array_function_dispatch(_rms_dispatcher)
-def rms(x, axis=None, keepdims=False):
-    x = np.asanyarray(x)
-    return np.sqrt(np.mean(np.square(x), axis=axis, keepdims=keepdims))
-
-""" import numpy as np
-
-# a = np.array([3, 4])
-# print(rms(a))  # Output: 3.5355339059327378 """
->>>>>>> 4cfc3e07ae2fe06364c5107ae650efba2ff29b25
-
+# Test example
+'''input_array = [1.0, 2.0, 3.0]
+output = softmax(input_array)
+print("Softmax Output:", output)'''
