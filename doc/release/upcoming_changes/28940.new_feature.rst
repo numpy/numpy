@@ -1,6 +1,0 @@
-* Static type-checkers now interpret:
-
-  - ``_: np.ndarray`` as ``_: npt.NDArray[typing.Any]``.
-  - ``_: np.flatiter`` as ``_: np.flatiter[np.ndarray]``.
-
-  This is because their type parameters now have default values.
