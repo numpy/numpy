@@ -21,20 +21,11 @@ static PyMethodDef _simd_methods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-PyMODINIT_FUNC PyInit__simd(void)
+static int
+_simd_exec(PyObject *m)
 {
-    static struct PyModuleDef defs = {
-        .m_base = PyModuleDef_HEAD_INIT,
-        .m_name = "numpy._core._simd",
-        .m_size = -1,
-        .m_methods = _simd_methods
-    };
     if (npy_cpu_init() < 0) {
-        return NULL;
-    }
-    PyObject *m = PyModule_Create(&defs);
-    if (m == NULL) {
-        return NULL;
+        return -1;
     }
     PyObject *targets = PyDict_New();
     if (targets == NULL) {
@@ -88,13 +79,31 @@ PyMODINIT_FUNC PyInit__simd(void)
     NPY_MTARGETS_CONF_DISPATCH(NPY_CPU_HAVE, ATTACH_MODULE, MAKE_MSVC_HAPPY)
     NPY_MTARGETS_CONF_BASELINE(ATTACH_BASELINE_MODULE, MAKE_MSVC_HAPPY)
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
-
-    return m;
+    return 0;
 err:
-    Py_DECREF(m);
-    return NULL;
+    return -1;
+}
+
+static struct PyModuleDef_Slot _simd_slots[] = {
+    {Py_mod_exec, _simd_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef defs = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "numpy._core._simd",
+    .m_size = 0,
+    .m_methods = _simd_methods,
+    .m_slots = _simd_slots,
+};
+
+PyMODINIT_FUNC PyInit__simd(void) {
+    return PyModuleDef_Init(&defs);
 }
