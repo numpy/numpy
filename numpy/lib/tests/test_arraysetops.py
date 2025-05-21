@@ -3,7 +3,6 @@
 """
 import pytest
 
-
 import numpy as np
 from numpy import ediff1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
 from numpy.dtypes import StringDType
