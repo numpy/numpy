@@ -859,39 +859,22 @@ static PyMethodDef UMath_TestsMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_umath_tests",
-        NULL,
-        -1,
-        UMath_TestsMethods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
-
 /* Initialization function for the module */
-PyMODINIT_FUNC PyInit__umath_tests(void) {
-    PyObject *m;
+static int
+_umath_tests_exec(PyObject *m) {
     PyObject *d;
     PyObject *version;
 
     // Initialize CPU features
     if (npy_cpu_init() < 0) {
-        return NULL;
-    }
-
-    m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        return NULL;
+        return -1;
     }
 
     if (PyArray_ImportNumPyAPI() < 0) {
-        return NULL;
+        return -1;
     }
     if (PyUFunc_ImportUFuncAPI() < 0) {
-        return NULL;
+        return -1;
     }
 
     d = PyModule_GetDict(m);
@@ -906,7 +889,7 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
         PyErr_Print();
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _umath_tests module.");
-        return NULL;
+        return -1;
     }
 
     if (add_INT32_negative_indexed(m, d) < 0) {
@@ -914,7 +897,7 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
         PyErr_Print();
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load _umath_tests module.");
-        return NULL;
+        return -1;
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -931,7 +914,7 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
                                 0, "(m),(n)->(p)");
     if (gufunc == NULL) {
         Py_DECREF(m);
-        return NULL;
+        return -1;
     }
     gufunc->process_core_dims_func = &conv1d_full_process_core_dims;
 
@@ -939,15 +922,34 @@ PyMODINIT_FUNC PyInit__umath_tests(void) {
     if (status == -1) {
         Py_DECREF(gufunc);
         Py_DECREF(m);
-        return NULL;
+        return -1;
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
+    return 0;
+}
 
-    return m;
+static struct PyModuleDef_Slot _umath_tests_slots[] = {
+    {Py_mod_exec, _umath_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_umath_tests",
+    .m_size = 0,
+    .m_methods = UMath_TestsMethods,
+    .m_slots = _umath_tests_slots,
+};
+
+PyMODINIT_FUNC PyInit__umath_tests(void) {
+    return PyModuleDef_Init(&moduledef);
 }
