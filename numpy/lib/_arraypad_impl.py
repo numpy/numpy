@@ -7,7 +7,6 @@ import numpy as np
 from numpy._core.overrides import array_function_dispatch
 from numpy.lib._index_tricks_impl import ndindex
 
-
 __all__ = ['pad']
 
 
@@ -826,8 +825,8 @@ def pad(array, pad_width, mode='constant', **kwargs):
         for axis, width_pair in zip(axes, pad_width):
             if array.shape[axis] == 0 and any(width_pair):
                 raise ValueError(
-                    "can't extend empty axis {} using modes other than "
-                    "'constant' or 'empty'".format(axis)
+                    f"can't extend empty axis {axis} using modes other than "
+                    "'constant' or 'empty'"
                 )
         # passed, don't need to do anything more as _pad_simple already
         # returned the correct result

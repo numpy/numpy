@@ -7,7 +7,6 @@ work; they don't recognize anything like alpha/beta/rc/dev versions.
 """
 import re
 
-
 __all__ = ['NumpyVersion']
 
 
@@ -152,4 +151,4 @@ class NumpyVersion:
         return self._compare(other) >= 0
 
     def __repr__(self):
-        return "NumpyVersion(%s)" % self.vstring
+        return f"NumpyVersion({self.vstring})"

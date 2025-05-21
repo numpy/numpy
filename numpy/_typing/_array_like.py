@@ -1,14 +1,13 @@
-from __future__ import annotations
-
 import sys
-from collections.abc import Collection, Callable, Sequence
-from typing import Any, Protocol, TypeAlias, TypeVar, runtime_checkable, TYPE_CHECKING
+from collections.abc import Callable, Collection, Sequence
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar, runtime_checkable
 
 import numpy as np
 from numpy import dtype
+
 from ._nbit_base import _32Bit, _64Bit
 from ._nested_sequence import _NestedSequence
-from ._shape import _Shape
+from ._shape import _AnyShape
 
 if TYPE_CHECKING:
     StringDType = np.dtypes.StringDType
@@ -19,11 +18,10 @@ else:
 
 _T = TypeVar("_T")
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
-_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 _DTypeT = TypeVar("_DTypeT", bound=dtype[Any])
 _DTypeT_co = TypeVar("_DTypeT_co", covariant=True, bound=dtype[Any])
 
-NDArray: TypeAlias = np.ndarray[_Shape, dtype[_ScalarT_co]]
+NDArray: TypeAlias = np.ndarray[_AnyShape, dtype[_ScalarT]]
 
 # The `_SupportsArray` protocol only cares about the default dtype
 # (i.e. `dtype=None` or no `dtype` parameter at all) of the to-be returned
@@ -106,14 +104,3 @@ _ArrayLikeComplex128_co: TypeAlias = _DualArrayLike[dtype[__Complex128_co], comp
 
 # NOTE: This includes `builtins.bool`, but not `numpy.bool`.
 _ArrayLikeInt: TypeAlias = _DualArrayLike[dtype[np.integer], int]
-
-# Extra ArrayLike type so that pyright can deal with NDArray[Any]
-# Used as the first overload, should only match NDArray[Any],
-# not any actual types.
-# https://github.com/numpy/numpy/pull/22193
-if sys.version_info >= (3, 11):
-    from typing import Never as _UnknownType
-else:
-    from typing import NoReturn as _UnknownType
-
-_ArrayLikeUnknown: TypeAlias = _DualArrayLike[dtype[_UnknownType], _UnknownType]

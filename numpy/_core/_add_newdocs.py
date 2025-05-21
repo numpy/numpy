@@ -10,8 +10,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
 """
 
 from numpy._core.function_base import add_newdoc
-from numpy._core.overrides import get_array_function_like_doc
-
+from numpy._core.overrides import get_array_function_like_doc  # noqa: F401
 
 ###############################################################################
 #
@@ -3027,8 +3026,8 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('__class_getitem__',
     >>> from typing import Any
     >>> import numpy as np
 
-    >>> np.ndarray[Any, np.dtype[Any]]
-    numpy.ndarray[typing.Any, numpy.dtype[typing.Any]]
+    >>> np.ndarray[Any, np.dtype[np.uint8]]
+    numpy.ndarray[typing.Any, numpy.dtype[numpy.uint8]]
 
     See Also
     --------

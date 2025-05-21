@@ -1,8 +1,7 @@
 from collections.abc import Callable, Iterable
-from typing import Protocol, overload, type_check_only
+from typing import Protocol, TypeVar, overload, type_check_only
 
 from _typeshed import IdentityFunction
-from typing_extensions import TypeVar
 
 from ._convertions import asbytes as asbytes
 from ._convertions import asunicode as asunicode
@@ -21,7 +20,7 @@ class _HasModule(Protocol):
 @overload
 def set_module(module: None) -> IdentityFunction: ...
 @overload
-def set_module(module: _HasModuleT) -> _HasModuleT: ...
+def set_module(module: str) -> Callable[[_HasModuleT], _HasModuleT]: ...
 
 #
 def _rename_parameter(

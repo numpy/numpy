@@ -2,9 +2,9 @@ import argparse
 import pprint
 from collections.abc import Hashable, Iterable, Mapping, MutableMapping, Sequence
 from types import ModuleType
-from typing import Any, Final, TypedDict, type_check_only
+from typing import Any, Final, NotRequired, TypedDict, type_check_only
 
-from typing_extensions import NotRequired, TypeVar, override
+from typing_extensions import TypeVar, override
 
 from .__version__ import version
 from .auxfuncs import _Bool

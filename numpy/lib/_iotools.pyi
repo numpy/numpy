@@ -1,7 +1,15 @@
 from collections.abc import Callable, Iterable, Sequence
-from typing import Any, ClassVar, Final, Literal, TypedDict, overload, type_check_only
-
-from typing_extensions import TypeVar, Unpack
+from typing import (
+    Any,
+    ClassVar,
+    Final,
+    Literal,
+    TypedDict,
+    TypeVar,
+    Unpack,
+    overload,
+    type_check_only,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -97,7 +105,7 @@ def str2bool(value: Literal["true", "True", "TRUE"]) -> Literal[True]: ...
 
 #
 def has_nested_fields(ndtype: np.dtype[np.void]) -> bool: ...
-def flatten_dtype(ndtype: np.dtype[np.void], flatten_base: bool = False) -> type[np.dtype[Any]]: ...
+def flatten_dtype(ndtype: np.dtype[np.void], flatten_base: bool = False) -> type[np.dtype]: ...
 def easy_dtype(
     ndtype: npt.DTypeLike,
     names: Iterable[str] | None = None,

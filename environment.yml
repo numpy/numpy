@@ -24,7 +24,7 @@ dependencies:
   - pytest-xdist
   - hypothesis
   # For type annotations
-  - typing_extensions>=4.2.0  # needed for python < 3.10
+  - typing_extensions>=4.5.0
   - mypy=1.15.0
   - orjson  # makes mypy faster
   # For building docs
@@ -45,7 +45,7 @@ dependencies:
   # NOTE: breathe 4.33.0 collides with sphinx.ext.graphviz
   - breathe>4.33.0
   # For linting
-  - ruff=0.8.3
+  - ruff=0.11.9
   - gitpython
   # Used in some tests
   - cffi

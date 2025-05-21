@@ -670,16 +670,8 @@ preprocess(CheckedIndexer<char_type> needle, Py_ssize_t len_needle,
     assert(p->period + p->cut <= len_needle);
 
     // Compare parts of the needle to check for periodicity.
-    int cmp;
-    if (std::is_same<char_type, npy_ucs4>::value) {
-        cmp = memcmp(needle.buffer,
-                needle.buffer + (p->period * sizeof(npy_ucs4)),
-                (size_t) p->cut);
-    }
-    else {
-        cmp = memcmp(needle.buffer, needle.buffer + p->period,
-                (size_t) p->cut);
-    }
+    int cmp = memcmp(needle.buffer, needle.buffer + p->period,
+                     (size_t) p->cut);
     p->is_periodic = (0 == cmp);
 
     // If periodic, gap is unused; otherwise, calculate period and gap.

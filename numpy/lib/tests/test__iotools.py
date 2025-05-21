@@ -2,13 +2,20 @@ import time
 from datetime import date
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_allclose, assert_raises,
-    )
 from numpy.lib._iotools import (
-    LineSplitter, NameValidator, StringConverter,
-    has_nested_fields, easy_dtype, flatten_dtype
-    )
+    LineSplitter,
+    NameValidator,
+    StringConverter,
+    easy_dtype,
+    flatten_dtype,
+    has_nested_fields,
+)
+from numpy.testing import (
+    assert_,
+    assert_allclose,
+    assert_equal,
+    assert_raises,
+)
 
 
 class TestLineSplitter:

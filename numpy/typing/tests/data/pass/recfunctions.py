@@ -1,7 +1,6 @@
 """These tests are based on the doctests from `numpy/lib/recfunctions.py`."""
 
-from typing import Any
-from typing_extensions import assert_type
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
@@ -38,7 +37,7 @@ def test_get_names_flat() -> None:
 
 def test_flatten_descr() -> None:
     ndtype = np.dtype([("a", "<i4"), ("b", [("b_a", "<f8"), ("b_b", "<i4")])])
-    assert_type(rfn.flatten_descr(ndtype), tuple[tuple[str, np.dtype[Any]]])
+    assert_type(rfn.flatten_descr(ndtype), tuple[tuple[str, np.dtype]])
 
 
 def test_get_fieldstructure() -> None:
@@ -144,7 +143,7 @@ def test_stack_arrays() -> None:
     zz = np.ones((int(2),), [("A", "|S3"), ("B", np.float64), ("C", np.float64)])
     assert_type(
         rfn.stack_arrays((z, zz)),
-        np.ma.MaskedArray[tuple[int, ...], np.dtype[np.void]],
+        np.ma.MaskedArray[tuple[Any, ...], np.dtype[np.void]],
     )
 
 

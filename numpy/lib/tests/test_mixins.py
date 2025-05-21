@@ -4,7 +4,6 @@ import operator
 import numpy as np
 from numpy.testing import assert_, assert_equal, assert_raises
 
-
 # NOTE: This class should be kept as an exact copy of the example from the
 # docstring for NDArrayOperatorsMixin.
 
@@ -46,7 +45,7 @@ class ArrayLike(np.lib.mixins.NDArrayOperatorsMixin):
             return type(self)(result)
 
     def __repr__(self):
-        return '%s(%r)' % (type(self).__name__, self.value)
+        return f'{type(self).__name__}({self.value!r})'
 
 
 def wrap_array_like(result):

@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 try:
     # SkipNotImplemented is available since 6.0
@@ -376,4 +376,3 @@ class Where(Benchmark):
 
     def time_interleaved_ones_x8(self):
         np.where(self.rep_ones_8)
-

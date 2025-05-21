@@ -1,24 +1,35 @@
 import copy
-import sys
 import gc
+import pickle
+import sys
 import tempfile
-import pytest
-from os import path
 from io import BytesIO
 from itertools import chain
-import pickle
+from os import path
+
+import pytest
 
 import numpy as np
+from numpy._utils import asbytes, asunicode
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.testing import (
-        assert_, assert_equal, IS_PYPY, assert_almost_equal,
-        assert_array_equal, assert_array_almost_equal, assert_raises,
-        assert_raises_regex, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM,
-        IS_64BIT,
-        )
+    HAS_REFCOUNT,
+    IS_64BIT,
+    IS_PYPY,
+    IS_PYSTON,
+    IS_WASM,
+    _assert_valid_refcount,
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    suppress_warnings,
+)
 from numpy.testing._private.utils import _no_tracing, requires_memory
-from numpy._utils import asbytes, asunicode
 
 
 class TestRegression:
@@ -138,7 +149,7 @@ class TestRegression:
         # Ticket #79
         ulen = 1
         ucs_value = '\U0010FFFF'
-        ua = np.array([[[ucs_value * ulen] * 2] * 3] * 4, dtype='U%s' % ulen)
+        ua = np.array([[[ucs_value * ulen] * 2] * 3] * 4, dtype=f'U{ulen}')
         ua.view(ua.dtype.newbyteorder())  # Should succeed.
 
     def test_object_array_fill(self):
@@ -171,7 +182,7 @@ class TestRegression:
         net[2] = 0.605202
         max_net = net.max()
         test = np.where(net <= 0., max_net, net)
-        correct = np.array([0.60520202,  0.00458849,  0.60520202])
+        correct = np.array([0.60520202, 0.00458849, 0.60520202])
         assert_array_almost_equal(test, correct)
 
     def test_endian_recarray(self):
@@ -460,17 +471,17 @@ class TestRegression:
             # (original, py2_pickle)
             (
                 np.str_('\u6f2c'),
-                b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n."  # noqa
+                b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\ntp6\nbS',o\\x00\\x00'\np7\ntp8\nRp9\n."
             ),
 
             (
                 np.array([9e123], dtype=np.float64),
-                b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14\nb."  # noqa
+                b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'f8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'<'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np13\ntp14\nb."
             ),
 
             (
                 np.array([(9e123,)], dtype=[('name', float)]),
-                b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'V8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'name'\np12\ntp13\n(dp14\ng12\n(g7\n(S'f8'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'<'\np18\nNNNI-1\nI-1\nI0\ntp19\nbI0\ntp20\nsI8\nI1\nI0\ntp21\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb."  # noqa
+                b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'V8'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nN(S'name'\np12\ntp13\n(dp14\ng12\n(g7\n(S'f8'\np15\nI0\nI1\ntp16\nRp17\n(I3\nS'<'\np18\nNNNI-1\nI-1\nI0\ntp19\nbI0\ntp20\nsI8\nI1\nI0\ntp21\nbI00\nS'O\\x81\\xb7Z\\xaa:\\xabY'\np22\ntp23\nb."
             ),
         ]
 
@@ -998,8 +1009,6 @@ class TestRegression:
         assert_(cnt(a) == cnt0_a + 5 + 2)
         assert_(cnt(b) == cnt0_b + 5 + 3)
 
-        del tmp  # Avoid pyflakes unused variable warning
-
     def test_mem_custom_float_to_array(self):
         # Ticket 702
         class MyFloat:
@@ -1243,18 +1252,18 @@ class TestRegression:
         assert_(arr[0][1] == 4)
 
     def test_void_scalar_constructor(self):
-        #Issue #1550
+        # Issue #1550
 
-        #Create test string data, construct void scalar from data and assert
-        #that void scalar contains original data.
+        # Create test string data, construct void scalar from data and assert
+        # that void scalar contains original data.
         test_string = np.array("test")
         test_string_void_scalar = np._core.multiarray.scalar(
             np.dtype(("V", test_string.dtype.itemsize)), test_string.tobytes())
 
         assert_(test_string_void_scalar.view(test_string.dtype) == test_string)
 
-        #Create record scalar, construct from data and assert that
-        #reconstructed scalar is correct.
+        # Create record scalar, construct from data and assert that
+        # reconstructed scalar is correct.
         test_record = np.ones((), "i,i")
         test_record_void_scalar = np._core.multiarray.scalar(
             test_record.dtype, test_record.tobytes())
@@ -1524,7 +1533,7 @@ class TestRegression:
                     if d != 0:
                         failures.append((x, y))
         if failures:
-            raise AssertionError("Failures: %r" % failures)
+            raise AssertionError(f"Failures: {failures!r}")
 
     def test_ticket_1538(self):
         x = np.finfo(np.float32)
@@ -1583,31 +1592,27 @@ class TestRegression:
         assert_equal(c1, c2)
 
     def test_fromfile_tofile_seeks(self):
-        # On Python 3, tofile/fromfile used to get (#1610) the Python
-        # file handle out of sync
-        f0 = tempfile.NamedTemporaryFile()
-        f = f0.file
-        f.write(np.arange(255, dtype='u1').tobytes())
+        # tofile/fromfile used to get (#1610) the Python file handle out of sync
+        with tempfile.NamedTemporaryFile() as f:
+            f.write(np.arange(255, dtype='u1').tobytes())
 
-        f.seek(20)
-        ret = np.fromfile(f, count=4, dtype='u1')
-        assert_equal(ret, np.array([20, 21, 22, 23], dtype='u1'))
-        assert_equal(f.tell(), 24)
+            f.seek(20)
+            ret = np.fromfile(f, count=4, dtype='u1')
+            assert_equal(ret, np.array([20, 21, 22, 23], dtype='u1'))
+            assert_equal(f.tell(), 24)
 
-        f.seek(40)
-        np.array([1, 2, 3], dtype='u1').tofile(f)
-        assert_equal(f.tell(), 43)
+            f.seek(40)
+            np.array([1, 2, 3], dtype='u1').tofile(f)
+            assert_equal(f.tell(), 43)
 
-        f.seek(40)
-        data = f.read(3)
-        assert_equal(data, b"\x01\x02\x03")
+            f.seek(40)
+            data = f.read(3)
+            assert_equal(data, b"\x01\x02\x03")
 
-        f.seek(80)
-        f.read(4)
-        data = np.fromfile(f, dtype='u1', count=4)
-        assert_equal(data, np.array([84, 85, 86, 87], dtype='u1'))
-
-        f.close()
+            f.seek(80)
+            f.read(4)
+            data = np.fromfile(f, dtype='u1', count=4)
+            assert_equal(data, np.array([84, 85, 86, 87], dtype='u1'))
 
     def test_complex_scalar_warning(self):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
@@ -1804,7 +1809,7 @@ class TestRegression:
         a = np.array(0, dtype=object)
         b = np.array(0, dtype=object)
         a[()] = b
-        assert_equal(int(a), int(0))
+        assert_equal(int(a), int(0))  # noqa: UP018
         assert_equal(float(a), float(0))
 
     def test_object_array_self_copy(self):
@@ -1902,10 +1907,10 @@ class TestRegression:
         data = pickle.loads(blob)
 
         # Check that loads does not clobber interned strings
-        s = re.sub("a(.)", "\x01\\1", "a_")
+        s = re.sub(r"a(.)", "\x01\\1", "a_")
         assert_equal(s[0], "\x01")
         data[0] = 0x6a
-        s = re.sub("a(.)", "\x01\\1", "a_")
+        s = re.sub(r"a(.)", "\x01\\1", "a_")
         assert_equal(s[0], "\x01")
 
     def test_pickle_bytes_overwrite(self):
@@ -1921,7 +1926,7 @@ class TestRegression:
         # encoding='latin1' work correctly.
 
         # Python2 output for pickle.dumps(numpy.array([129], dtype='b'))
-        data = b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\np13\ntp14\nb."  # noqa
+        data = b"cnumpy.core.multiarray\n_reconstruct\np0\n(cnumpy\nndarray\np1\n(I0\ntp2\nS'b'\np3\ntp4\nRp5\n(I1\n(I1\ntp6\ncnumpy\ndtype\np7\n(S'i1'\np8\nI0\nI1\ntp9\nRp10\n(I3\nS'|'\np11\nNNNI-1\nI-1\nI0\ntp12\nbI00\nS'\\x81'\np13\ntp14\nb."
         # This should work:
         result = pickle.loads(data, encoding='latin1')
         assert_array_equal(result, np.array([129]).astype('b'))
@@ -1936,16 +1941,16 @@ class TestRegression:
         datas = [
             # (original, python2_pickle, koi8r_validity)
             (np.str_('\u6bd2'),
-             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\ntp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n.",  # noqa
+             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'U1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI4\nI4\nI0\ntp6\nbS'\\xd2k\\x00\\x00'\np7\ntp8\nRp9\n.",
              'invalid'),
 
             (np.float64(9e123),
-             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'f8'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\nI0\ntp6\nbS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n.",  # noqa
+             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'f8'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'<'\np5\nNNNI-1\nI-1\nI0\ntp6\nbS'O\\x81\\xb7Z\\xaa:\\xabY'\np7\ntp8\nRp9\n.",
              'invalid'),
 
             # different 8-bit code point in KOI8-R vs latin1
             (np.bytes_(b'\x9c'),
-             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\ntp8\nRp9\n.",  # noqa
+             b"cnumpy.core.multiarray\nscalar\np0\n(cnumpy\ndtype\np1\n(S'S1'\np2\nI0\nI1\ntp3\nRp4\n(I3\nS'|'\np5\nNNNI1\nI1\nI0\ntp6\nbS'\\x9c'\np7\ntp8\nRp9\n.",
              'different'),
         ]
         for original, data, koi8r_validity in datas:
@@ -2049,7 +2054,7 @@ class TestRegression:
         # get consistent results
         v = np.array(([0] * 5 + [1] * 6 + [2] * 6) * 4)
         res = np.unique(v, return_index=True)
-        tgt = (np.array([0, 1, 2]), np.array([0,  5, 11]))
+        tgt = (np.array([0, 1, 2]), np.array([0, 5, 11]))
         assert_equal(res, tgt)
 
     def test_unicode_alloc_dealloc_match(self):
@@ -2459,7 +2464,7 @@ class TestRegression:
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1, reason='overflows 32-bit python')
     def test_to_ctypes(self):
-        #gh-14214
+        # gh-14214
         arr = np.zeros((2 ** 31 + 1,), 'b')
         assert arr.size * arr.itemsize > 2 ** 31
         c_arr = np.ctypeslib.as_ctypes(arr)
@@ -2558,7 +2563,7 @@ class TestRegression:
         # ufuncs are pickled with a semi-private path in
         # numpy.core._multiarray_umath and must be loadable without warning
         # despite np.core being deprecated.
-        test_data = b'\x80\x04\x95(\x00\x00\x00\x00\x00\x00\x00\x8c\x1cnumpy.core._multiarray_umath\x94\x8c\x03add\x94\x93\x94.'  # noqa
+        test_data = b'\x80\x04\x95(\x00\x00\x00\x00\x00\x00\x00\x8c\x1cnumpy.core._multiarray_umath\x94\x8c\x03add\x94\x93\x94.'
         result = pickle.loads(test_data, encoding='bytes')
         assert result is np.add
 
@@ -2573,21 +2578,23 @@ class TestRegression:
         assert xp is np
         xp = arr.__array_namespace__(api_version="2023.12")
         assert xp is np
+        xp = arr.__array_namespace__(api_version="2024.12")
+        assert xp is np
         xp = arr.__array_namespace__(api_version=None)
         assert xp is np
 
         with pytest.raises(
             ValueError,
-            match="Version \"2024.12\" of the Array API Standard "
+            match="Version \"2025.12\" of the Array API Standard "
                   "is not supported."
         ):
-            arr.__array_namespace__(api_version="2024.12")
+            arr.__array_namespace__(api_version="2025.12")
 
         with pytest.raises(
             ValueError,
             match="Only None and strings are allowed as the Array API version"
         ):
-            arr.__array_namespace__(api_version=2023)
+            arr.__array_namespace__(api_version=2024)
 
     def test_isin_refcnt_bug(self):
         # gh-25295

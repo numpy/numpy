@@ -1,18 +1,24 @@
-import sys
-import pytest
-
-import textwrap
 import subprocess
+import sys
+import textwrap
+
+import numpy._core._multiarray_tests as _multiarray_tests
+import pytest
 
 import numpy as np
 import numpy._core.umath as ncu
-import numpy._core._multiarray_tests as _multiarray_tests
-from numpy import array, arange, nditer, all
+from numpy import all, arange, array, nditer
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises,
-    IS_WASM, HAS_REFCOUNT, suppress_warnings, break_cycles,
-    )
+    HAS_REFCOUNT,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    suppress_warnings,
+)
 from numpy.testing._private.utils import requires_memory
+
 
 def iter_multi_index(i):
     ret = []
@@ -77,8 +83,6 @@ def test_iter_refcount():
     it2 = None
     assert_equal(sys.getrefcount(a), rc_a)
     assert_equal(sys.getrefcount(dt), rc_dt)
-
-    del it2  # avoid pyflakes unused variable warning
 
 def test_iter_best_order():
     # The iterator should always find the iteration order
@@ -675,10 +679,10 @@ def test_iter_broadcasting_errors():
         msg = str(e)
         # The message should contain the shape of the 3rd operand
         assert_(msg.find('(2,3)') >= 0,
-                'Message "%s" doesn\'t contain operand shape (2,3)' % msg)
+                f'Message "{msg}" doesn\'t contain operand shape (2,3)')
         # The message should contain the broadcast shape
         assert_(msg.find('(1,2,3)') >= 0,
-                'Message "%s" doesn\'t contain broadcast shape (1,2,3)' % msg)
+                f'Message "{msg}" doesn\'t contain broadcast shape (1,2,3)')
 
     try:
         nditer([arange(6).reshape(2, 3), arange(2)],
@@ -691,13 +695,13 @@ def test_iter_broadcasting_errors():
         msg = str(e)
         # The message should contain "shape->remappedshape" for each operand
         assert_(msg.find('(2,3)->(2,3)') >= 0,
-            'Message "%s" doesn\'t contain operand shape (2,3)->(2,3)' % msg)
+            f'Message "{msg}" doesn\'t contain operand shape (2,3)->(2,3)')
         assert_(msg.find('(2,)->(2,newaxis)') >= 0,
                 ('Message "%s" doesn\'t contain remapped operand shape'
                 '(2,)->(2,newaxis)') % msg)
         # The message should contain the itershape parameter
         assert_(msg.find('(4,3)') >= 0,
-                'Message "%s" doesn\'t contain itershape parameter (4,3)' % msg)
+                f'Message "{msg}" doesn\'t contain itershape parameter (4,3)')
 
     try:
         nditer([np.zeros((2, 1, 1)), np.zeros((2,))],
@@ -708,10 +712,10 @@ def test_iter_broadcasting_errors():
         msg = str(e)
         # The message should contain the shape of the bad operand
         assert_(msg.find('(2,1,1)') >= 0,
-            'Message "%s" doesn\'t contain operand shape (2,1,1)' % msg)
+            f'Message "{msg}" doesn\'t contain operand shape (2,1,1)')
         # The message should contain the broadcast shape
         assert_(msg.find('(2,1,2)') >= 0,
-                'Message "%s" doesn\'t contain the broadcast shape (2,1,2)' % msg)
+                f'Message "{msg}" doesn\'t contain the broadcast shape (2,1,2)')
 
 def test_iter_flags_errors():
     # Check that bad combinations of flags produce errors
@@ -1113,7 +1117,7 @@ def test_iter_object_arrays_conversions():
             x[...] += 1
     assert_equal(a, np.arange(6) + 1)
 
-    #Non-contiguous value array
+    # Non-contiguous value array
     a = np.zeros((6,), dtype=[('p', 'i1'), ('a', 'i4')])
     a = a['a']
     a[:] = np.arange(6) + 98172488
@@ -1125,8 +1129,9 @@ def test_iter_object_arrays_conversions():
             rc = sys.getrefcount(ob)
         for x in i:
             x[...] += 1
-    if HAS_REFCOUNT:
-        assert_(sys.getrefcount(ob) == rc - 1)
+        if HAS_REFCOUNT:
+            newrc = sys.getrefcount(ob)
+            assert_(newrc == rc - 1)
     assert_equal(a, np.arange(6) + 98172489)
 
 def test_iter_common_dtype():
@@ -1481,7 +1486,7 @@ def test_iter_copy_casts_structured2():
     # Array of two structured scalars:
     for res in res1, res2:
         # Cast to tuple by getitem, which may be weird and changeable?:
-        assert type(res["a"][0]) == tuple
+        assert isinstance(res["a"][0], tuple)
         assert res["a"][0] == (1, 1)
 
     for res in res1, res2:

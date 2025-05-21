@@ -36,8 +36,7 @@ Example::
 """
 import os
 
-from .._utils import set_module
-
+from numpy._utils import set_module
 
 _open = open
 
@@ -57,7 +56,7 @@ def _check_mode(mode, encoding, newline):
     """
     if "t" in mode:
         if "b" in mode:
-            raise ValueError("Invalid mode: %r" % (mode,))
+            raise ValueError(f"Invalid mode: {mode!r}")
     else:
         if encoding is not None:
             raise ValueError("Argument 'encoding' not supported in binary mode")
@@ -462,8 +461,8 @@ class DataSource:
 
         # We import this here because importing urllib is slow and
         # a significant fraction of numpy's total import time.
-        from urllib.request import urlopen
         from urllib.error import URLError
+        from urllib.request import urlopen
 
         # Test cached url
         upath = self.abspath(path)

@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from typing import (
     Any,
     Literal,
+    Never,
     Protocol,
     SupportsIndex,
     TypeAlias,
@@ -12,51 +13,51 @@ from typing import (
 )
 
 from _typeshed import Incomplete
-from typing_extensions import Never, deprecated
+from typing_extensions import deprecated
 
 import numpy as np
 from numpy import (
-    number,
-    uint64,
-    int_,
-    int64,
-    intp,
-    float16,
-    floating,
-    complexfloating,
-    timedelta64,
-    object_,
-    generic,
     _AnyShapeT,
-    _OrderKACF,
-    _OrderACF,
+    _CastingKind,
     _ModeKind,
+    _OrderACF,
+    _OrderKACF,
     _PartitionKind,
     _SortKind,
     _SortSide,
-    _CastingKind,
+    complexfloating,
+    float16,
+    floating,
+    generic,
+    int64,
+    int_,
+    intp,
+    object_,
+    timedelta64,
+    uint64,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
-    DTypeLike,
-    _DTypeLike,
     ArrayLike,
-    _ArrayLike,
+    DTypeLike,
     NDArray,
-    _NestedSequence,
-    _ShapeLike,
+    _AnyShape,
+    _ArrayLike,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
-    _ArrayLikeTD64_co,
-    _IntLike_co,
+    _ArrayLikeUInt_co,
     _BoolLike_co,
     _ComplexLike_co,
+    _DTypeLike,
+    _IntLike_co,
+    _NestedSequence,
     _NumberLike_co,
     _ScalarLike_co,
+    _ShapeLike,
 )
 
 __all__ = [
@@ -107,10 +108,11 @@ __all__ = [
 ]
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
-_NumberOrObjectT = TypeVar("_NumberOrObjectT", bound=np.number[Any] | np.object_)
+_NumberOrObjectT = TypeVar("_NumberOrObjectT", bound=np.number | np.object_)
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
 _ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
 _ShapeT_co = TypeVar("_ShapeT_co", bound=tuple[int, ...], covariant=True)
+_BoolOrIntArrayT = TypeVar("_BoolOrIntArrayT", bound=NDArray[np.integer | np.bool])
 
 @type_check_only
 class _SupportsShape(Protocol[_ShapeT_co]):
@@ -122,7 +124,7 @@ class _SupportsShape(Protocol[_ShapeT_co]):
 _T = TypeVar("_T")
 _PyArray: TypeAlias = list[_T] | tuple[_T, ...]
 # `int` also covers `bool`
-_PyScalar: TypeAlias = float | complex | bytes | str
+_PyScalar: TypeAlias = complex | bytes | str
 
 @overload
 def take(
@@ -209,7 +211,7 @@ def reshape(
     order: _OrderACF = "C",
     *,
     copy: bool | None = None,
-) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+) -> np.ndarray[tuple[int], np.dtype]: ...
 @overload
 def reshape(  # shape: (int, ...) @ _AnyShapeT
     a: ArrayLike,
@@ -218,7 +220,7 @@ def reshape(  # shape: (int, ...) @ _AnyShapeT
     order: _OrderACF = "C",
     *,
     copy: bool | None = None,
-) -> np.ndarray[_AnyShapeT, np.dtype[Any]]: ...
+) -> np.ndarray[_AnyShapeT, np.dtype]: ...
 @overload  # shape: Sequence[index]
 def reshape(
     a: ArrayLike,
@@ -277,13 +279,25 @@ def choose(
 def repeat(
     a: _ArrayLike[_ScalarT],
     repeats: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = ...,
+    axis: None = None,
+) -> np.ndarray[tuple[int], np.dtype[_ScalarT]]: ...
+@overload
+def repeat(
+    a: _ArrayLike[_ScalarT],
+    repeats: _ArrayLikeInt_co,
+    axis: SupportsIndex,
 ) -> NDArray[_ScalarT]: ...
 @overload
 def repeat(
     a: ArrayLike,
     repeats: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = ...,
+    axis: None = None,
+) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+@overload
+def repeat(
+    a: ArrayLike,
+    repeats: _ArrayLikeInt_co,
+    axis: SupportsIndex,
 ) -> NDArray[Any]: ...
 
 def put(
@@ -322,31 +336,42 @@ def matrix_transpose(x: _ArrayLike[_ScalarT], /) -> NDArray[_ScalarT]: ...
 @overload
 def matrix_transpose(x: ArrayLike, /) -> NDArray[Any]: ...
 
+#
 @overload
 def partition(
     a: _ArrayLike[_ScalarT],
-    kth: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = ...,
-    kind: _PartitionKind = ...,
-    order: str | Sequence[str] | None = ...,
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind = "introselect",
+    order: None = None,
 ) -> NDArray[_ScalarT]: ...
 @overload
 def partition(
+    a: _ArrayLike[np.void],
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind = "introselect",
+    order: str | Sequence[str] | None = None,
+) -> NDArray[np.void]: ...
+@overload
+def partition(
     a: ArrayLike,
-    kth: _ArrayLikeInt_co,
-    axis: SupportsIndex | None = ...,
-    kind: _PartitionKind = ...,
-    order: str | Sequence[str] | None = ...,
+    kth: _ArrayLikeInt,
+    axis: SupportsIndex | None = -1,
+    kind: _PartitionKind = "introselect",
+    order: str | Sequence[str] | None = None,
 ) -> NDArray[Any]: ...
 
+#
 def argpartition(
     a: ArrayLike,
-    kth: _ArrayLikeInt_co,
+    kth: _ArrayLikeInt,
     axis: SupportsIndex | None = -1,
-    kind: _PartitionKind = ...,
-    order: str | Sequence[str] | None = ...,
+    kind: _PartitionKind = "introselect",
+    order: str | Sequence[str] | None = None,
 ) -> NDArray[intp]: ...
 
+#
 @overload
 def sort(
     a: _ArrayLike[_ScalarT],
@@ -395,18 +420,18 @@ def argmax(
 def argmax(
     a: ArrayLike,
     axis: SupportsIndex | None,
-    out: _ArrayT,
+    out: _BoolOrIntArrayT,
     *,
     keepdims: bool = ...,
-) -> _ArrayT: ...
+) -> _BoolOrIntArrayT: ...
 @overload
 def argmax(
     a: ArrayLike,
     axis: SupportsIndex | None = ...,
     *,
-    out: _ArrayT,
+    out: _BoolOrIntArrayT,
     keepdims: bool = ...,
-) -> _ArrayT: ...
+) -> _BoolOrIntArrayT: ...
 
 @overload
 def argmin(
@@ -428,18 +453,18 @@ def argmin(
 def argmin(
     a: ArrayLike,
     axis: SupportsIndex | None,
-    out: _ArrayT,
+    out: _BoolOrIntArrayT,
     *,
     keepdims: bool = ...,
-) -> _ArrayT: ...
+) -> _BoolOrIntArrayT: ...
 @overload
 def argmin(
     a: ArrayLike,
     axis: SupportsIndex | None = ...,
     *,
-    out: _ArrayT,
+    out: _BoolOrIntArrayT,
     keepdims: bool = ...,
-) -> _ArrayT: ...
+) -> _BoolOrIntArrayT: ...
 
 @overload
 def searchsorted(
@@ -464,9 +489,9 @@ def resize(a: _ArrayLike[_ScalarT], new_shape: _AnyShapeT) -> np.ndarray[_AnySha
 @overload
 def resize(a: _ArrayLike[_ScalarT], new_shape: _ShapeLike) -> NDArray[_ScalarT]: ...
 @overload
-def resize(a: ArrayLike, new_shape: SupportsIndex | tuple[SupportsIndex]) -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+def resize(a: ArrayLike, new_shape: SupportsIndex | tuple[SupportsIndex]) -> np.ndarray[tuple[int], np.dtype]: ...
 @overload
-def resize(a: ArrayLike, new_shape: _AnyShapeT) -> np.ndarray[_AnyShapeT, np.dtype[Any]]: ...
+def resize(a: ArrayLike, new_shape: _AnyShapeT) -> np.ndarray[_AnyShapeT, np.dtype]: ...
 @overload
 def resize(a: ArrayLike, new_shape: _ShapeLike) -> NDArray[Any]: ...
 
@@ -550,13 +575,13 @@ def ravel(
     order: _OrderKACF = "C",
 ) -> _Array1D[np.complex128 | np.float64 | np.int_ | np.bool]: ...
 @overload
-def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[tuple[int], np.dtype[Any]]: ...
+def ravel(a: ArrayLike, order: _OrderKACF = "C") -> np.ndarray[tuple[int], np.dtype]: ...
 
 def nonzero(a: _ArrayLike[Any]) -> tuple[NDArray[intp], ...]: ...
 
 # this prevents `Any` from being returned with Pyright
 @overload
-def shape(a: _SupportsShape[Never]) -> tuple[int, ...]: ...
+def shape(a: _SupportsShape[Never]) -> _AnyShape: ...
 @overload
 def shape(a: _SupportsShape[_ShapeT]) -> _ShapeT: ...
 @overload
@@ -571,7 +596,7 @@ def shape(a: _PyArray[_PyArray[_PyScalar]]) -> tuple[int, int]: ...
 @overload
 def shape(a: memoryview | bytearray) -> tuple[int]: ...
 @overload
-def shape(a: ArrayLike) -> tuple[int, ...]: ...
+def shape(a: ArrayLike) -> _AnyShape: ...
 
 @overload
 def compress(
@@ -1123,7 +1148,7 @@ def prod(
     keepdims: Literal[False] = ...,
     initial: _NumberLike_co = ...,
     where: _ArrayLikeBool_co = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def prod(
     a: _ArrayLikeComplex_co,
@@ -1133,7 +1158,7 @@ def prod(
     keepdims: Literal[False] = ...,
     initial: _NumberLike_co = ...,
     where: _ArrayLikeBool_co = ...,
-) -> complexfloating[Any, Any]: ...
+) -> complexfloating: ...
 @overload
 def prod(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
@@ -1224,14 +1249,14 @@ def cumprod(
     axis: SupportsIndex | None = ...,
     dtype: None = ...,
     out: None = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def cumprod(
     a: _ArrayLikeComplex_co,
     axis: SupportsIndex | None = ...,
     dtype: None = ...,
     out: None = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def cumprod(
     a: _ArrayLikeObject_co,
@@ -1316,7 +1341,7 @@ def cumulative_prod(
     dtype: None = ...,
     out: None = ...,
     include_initial: bool = ...,
-) -> NDArray[floating[Any]]: ...
+) -> NDArray[floating]: ...
 @overload
 def cumulative_prod(
     x: _ArrayLikeComplex_co,
@@ -1326,7 +1351,7 @@ def cumulative_prod(
     dtype: None = ...,
     out: None = ...,
     include_initial: bool = ...,
-) -> NDArray[complexfloating[Any, Any]]: ...
+) -> NDArray[complexfloating]: ...
 @overload
 def cumulative_prod(
     x: _ArrayLikeObject_co,
@@ -1431,7 +1456,7 @@ def mean(
     keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def mean(
     a: _ArrayLikeComplex_co,
@@ -1441,7 +1466,7 @@ def mean(
     keepdims: Literal[False] | _NoValueType = ...,
     *,
     where: _ArrayLikeBool_co | _NoValueType = ...,
-) -> complexfloating[Any]: ...
+) -> complexfloating: ...
 @overload
 def mean(
     a: _ArrayLike[np.timedelta64],
@@ -1545,7 +1570,7 @@ def std(
     where: _ArrayLikeBool_co | _NoValueType = ...,
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def std(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,
@@ -1637,7 +1662,7 @@ def var(
     where: _ArrayLikeBool_co | _NoValueType = ...,
     mean: _ArrayLikeComplex_co | _NoValueType = ...,
     correction: float | _NoValueType = ...,
-) -> floating[Any]: ...
+) -> floating: ...
 @overload
 def var(
     a: _ArrayLikeComplex_co | _ArrayLikeObject_co,

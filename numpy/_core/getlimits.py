@@ -6,12 +6,13 @@ __all__ = ['finfo', 'iinfo']
 import types
 import warnings
 
-from .._utils import set_module
-from ._machar import MachAr
+from numpy._utils import set_module
+
 from . import numeric
 from . import numerictypes as ntypes
+from ._machar import MachAr
 from .numeric import array, inf, nan
-from .umath import log10, exp2, nextafter, isnan
+from .umath import exp2, isnan, log10, nextafter
 
 
 def _fr0(a):
@@ -79,8 +80,8 @@ class MachArLike:
         value = self._smallest_subnormal
         if self.ftype(0) == value:
             warnings.warn(
-                'The value of the smallest subnormal for {} type '
-                'is zero.'.format(self.ftype), UserWarning, stacklevel=2)
+                f'The value of the smallest subnormal for {self.ftype} type is zero.',
+                UserWarning, stacklevel=2)
 
         return self._float_to_float(value)
 
@@ -522,7 +523,7 @@ class finfo:
             dtypes.append(newdtype)
             dtype = newdtype
         if not issubclass(dtype, numeric.inexact):
-            raise ValueError("data type %r not inexact" % (dtype))
+            raise ValueError(f"data type {dtype!r} not inexact")
         obj = cls._finfo_cache.get(dtype)
         if obj is not None:
             return obj
@@ -703,7 +704,7 @@ class iinfo:
         self.bits = self.dtype.itemsize * 8
         self.key = "%s%d" % (self.kind, self.bits)
         if self.kind not in 'iu':
-            raise ValueError("Invalid integer data type %r." % (self.kind,))
+            raise ValueError(f"Invalid integer data type {self.kind!r}.")
 
     @property
     def min(self):

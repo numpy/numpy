@@ -1,12 +1,6 @@
 from collections.abc import Callable, Iterable
-from typing import (
-    Any,
-    Concatenate,
-    Final,
-    Literal as L,
-    TypeVar,
-    overload,
-)
+from typing import Any, Concatenate, Final, Self, TypeVar, overload
+from typing import Literal as L
 
 import numpy as np
 import numpy.typing as npt
@@ -14,9 +8,7 @@ from numpy._typing import _IntLike_co
 
 from ._polybase import ABCPolyBase
 from ._polytypes import (
-    _SeriesLikeCoef_co,
     _Array1,
-    _Series,
     _Array2,
     _CoefSeries,
     _FuncBinOp,
@@ -40,6 +32,8 @@ from ._polytypes import (
     _FuncVander2D,
     _FuncVander3D,
     _FuncWeight,
+    _Series,
+    _SeriesLikeCoef_co,
 )
 from .polyutils import trimcoef as chebtrim
 
@@ -80,7 +74,7 @@ __all__ = [
     "chebinterpolate",
 ]
 
-_NumberOrObjectT = TypeVar("_NumberOrObjectT", bound=np.number[Any] | np.object_)
+_NumberOrObjectT = TypeVar("_NumberOrObjectT", bound=np.number | np.object_)
 def _cseries_to_zseries(c: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
 def _zseries_to_cseries(zs: npt.NDArray[_NumberOrObjectT]) -> _Series[_NumberOrObjectT]: ...
 def _zseries_mul(
@@ -130,7 +124,7 @@ chebpts1: _FuncPts[L["chebpts1"]]
 chebpts2: _FuncPts[L["chebpts2"]]
 
 # keep in sync with `Chebyshev.interpolate`
-_RT = TypeVar("_RT", bound=np.number[Any] | np.bool | np.object_)
+_RT = TypeVar("_RT", bound=np.number | np.bool | np.object_)
 @overload
 def chebinterpolate(
     func: np.ufunc,
@@ -150,43 +144,38 @@ def chebinterpolate(
     args: Iterable[Any],
 ) -> npt.NDArray[_RT]: ...
 
-_Self = TypeVar("_Self", bound=object)
-
 class Chebyshev(ABCPolyBase[L["T"]]):
     @overload
     @classmethod
     def interpolate(
-        cls: type[_Self],
-        /,
+        cls,
         func: Callable[[npt.NDArray[np.float64]], _CoefSeries],
         deg: _IntLike_co,
-        domain: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
         args: tuple[()] = ...,
-    ) -> _Self: ...
+    ) -> Self: ...
     @overload
     @classmethod
     def interpolate(
-        cls: type[_Self],
-        /,
+        cls,
         func: Callable[
             Concatenate[npt.NDArray[np.float64], ...],
             _CoefSeries,
         ],
         deg: _IntLike_co,
-        domain: None | _SeriesLikeCoef_co = ...,
+        domain: _SeriesLikeCoef_co | None = ...,
         *,
         args: Iterable[Any],
-    ) -> _Self: ...
+    ) -> Self: ...
     @overload
     @classmethod
     def interpolate(
-        cls: type[_Self],
+        cls,
         func: Callable[
             Concatenate[npt.NDArray[np.float64], ...],
             _CoefSeries,
         ],
         deg: _IntLike_co,
-        domain: None | _SeriesLikeCoef_co,
+        domain: _SeriesLikeCoef_co | None,
         args: Iterable[Any],
-        /,
-    ) -> _Self: ...
+    ) -> Self: ...

@@ -1,67 +1,66 @@
 import builtins
-from typing import (
-    Any,
-    Literal as L,
-    TypedDict,
-    type_check_only,
-)
+from typing import Any, TypedDict, type_check_only
+from typing import Literal as L
 
 import numpy as np
 from numpy import (
-    dtype,
-    generic,
     bool,
     bool_,
-    uint8,
-    uint16,
-    uint32,
-    uint64,
-    ubyte,
-    ushort,
-    uintc,
-    ulong,
-    ulonglong,
-    uintp,
-    uint,
+    byte,
+    bytes_,
+    cdouble,
+    character,
+    clongdouble,
+    complex64,
+    complex128,
+    complexfloating,
+    csingle,
+    datetime64,
+    double,
+    dtype,
+    flexible,
+    float16,
+    float32,
+    float64,
+    floating,
+    generic,
+    half,
+    inexact,
     int8,
     int16,
     int32,
     int64,
-    byte,
-    short,
-    intc,
-    long,
-    longlong,
-    intp,
     int_,
-    float16,
-    float32,
-    float64,
-    half,
-    single,
-    double,
-    longdouble,
-    complex64,
-    complex128,
-    csingle,
-    cdouble,
-    clongdouble,
-    datetime64,
-    timedelta64,
-    object_,
-    str_,
-    bytes_,
-    void,
-    unsignedinteger,
-    character,
-    inexact,
-    number,
+    intc,
     integer,
-    flexible,
-    complexfloating,
+    intp,
+    long,
+    longdouble,
+    longlong,
+    number,
+    object_,
+    short,
     signedinteger,
-    floating,
+    single,
+    str_,
+    timedelta64,
+    ubyte,
+    uint,
+    uint8,
+    uint16,
+    uint32,
+    uint64,
+    uintc,
+    uintp,
+    ulong,
+    ulonglong,
+    unsignedinteger,
+    ushort,
+    void,
 )
+from numpy._typing import DTypeLike
+from numpy._typing._extended_precision import complex192, complex256, float96, float128
+
 from ._type_aliases import sctypeDict  # noqa: F401
 from .multiarray import (
     busday_count,
@@ -70,22 +69,6 @@ from .multiarray import (
     datetime_as_string,
     datetime_data,
     is_busday,
-)
-
-from numpy._typing import DTypeLike
-from numpy._typing._extended_precision import (
-    uint128,
-    uint256,
-    int128,
-    int256,
-    float80,
-    float96,
-    float128,
-    float256,
-    complex160,
-    complex192,
-    complex256,
-    complex512,
 )
 
 __all__ = [
@@ -151,18 +134,10 @@ __all__ = [
     "bool_",
     "int_",
     "uint",
-    "uint128",
-    "uint256",
-    "int128",
-    "int256",
-    "float80",
     "float96",
     "float128",
-    "float256",
-    "complex160",
     "complex192",
     "complex256",
-    "complex512",
 ]
 
 @type_check_only
@@ -177,7 +152,7 @@ class _TypeCodes(TypedDict):
     Datetime: L['Mm']
     All: L['?bhilqnpBHILQNPefdgFDGSUVOMm']
 
-def isdtype(dtype: dtype[Any] | type[Any], kind: DTypeLike | tuple[DTypeLike, ...]) -> builtins.bool: ...
+def isdtype(dtype: dtype | type[Any], kind: DTypeLike | tuple[DTypeLike, ...]) -> builtins.bool: ...
 
 def issubdtype(arg1: DTypeLike, arg2: DTypeLike) -> builtins.bool: ...
 

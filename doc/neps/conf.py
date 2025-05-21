@@ -16,6 +16,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 from datetime import datetime
+
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -97,7 +98,7 @@ html_theme_options = {
   "show_prev_next": False,
 }
 
-html_title = "%s" % (project)
+html_title = f"{project}"
 html_static_path = ['../source/_static']
 html_last_updated_fmt = '%b %d, %Y'
 

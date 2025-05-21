@@ -127,4 +127,3 @@ class TestParameters(util.F2PyTest):
     def test_constant_array_delims(self):
         x = self.module.foo_array_delims()
         assert x == 9
-

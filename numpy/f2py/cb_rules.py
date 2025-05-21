@@ -8,16 +8,39 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-from . import __version__
+from . import __version__, cfuncs
 from .auxfuncs import (
-    applyrules, debugcapi, dictappend, errmess, getargs, hasnote, isarray,
-    iscomplex, iscomplexarray, iscomplexfunction, isfunction, isintent_c,
-    isintent_hide, isintent_in, isintent_inout, isintent_nothide,
-    isintent_out, isoptional, isrequired, isscalar, isstring,
-    isstringfunction, issubroutine, l_and, l_not, l_or, outmess, replace,
-    stripcomma, throw_error
+    applyrules,
+    debugcapi,
+    dictappend,
+    errmess,
+    getargs,
+    hasnote,
+    isarray,
+    iscomplex,
+    iscomplexarray,
+    iscomplexfunction,
+    isfunction,
+    isintent_c,
+    isintent_hide,
+    isintent_in,
+    isintent_inout,
+    isintent_nothide,
+    isintent_out,
+    isoptional,
+    isrequired,
+    isscalar,
+    isstring,
+    isstringfunction,
+    issubroutine,
+    l_and,
+    l_not,
+    l_or,
+    outmess,
+    replace,
+    stripcomma,
+    throw_error,
 )
-from . import cfuncs
 
 f2py_version = __version__.version
 
@@ -513,14 +536,13 @@ def buildcallbacks(m):
                 if b:
                     buildcallback(b, m['name'])
                 else:
-                    errmess('warning: empty body for %s\n' % (m['name']))
+                    errmess(f"warning: empty body for {m['name']}\n")
 
 
 def buildcallback(rout, um):
     from . import capi_maps
 
-    outmess('    Constructing call-back function "cb_%s_in_%s"\n' %
-            (rout['name'], um))
+    outmess(f"    Constructing call-back function \"cb_{rout['name']}_in_{um}\"\n")
     args, depargs = getargs(rout)
     capi_maps.depargs = depargs
     var = rout['vars']
@@ -639,6 +661,5 @@ def buildcallback(rout, um):
                                       'latexdocstr': ar['latexdocstr'],
                                       'argname': rd['argname']
                                       }
-    outmess('      %s\n' % (ar['docstrshort']))
-    return
+    outmess(f"      {ar['docstrshort']}\n")
 ################## Build call-back function #############

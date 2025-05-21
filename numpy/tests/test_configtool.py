@@ -3,15 +3,13 @@ import importlib.metadata
 import os
 import pathlib
 import subprocess
-import sysconfig
 
 import pytest
+
 import numpy as np
 import numpy._core.include
 import numpy._core.lib.pkgconfig
-
-from numpy.testing import IS_WASM, IS_INSTALLED, IS_EDITABLE, NUMPY_ROOT
-
+from numpy.testing import IS_EDITABLE, IS_INSTALLED, IS_WASM, NUMPY_ROOT
 
 INCLUDE_DIR = NUMPY_ROOT / '_core' / 'include'
 PKG_CONFIG_DIR = NUMPY_ROOT / '_core' / 'lib' / 'pkgconfig'
@@ -31,7 +29,7 @@ class TestNumpyConfig:
 
     def test_configtool_cflags(self):
         stdout = self.check_numpyconfig('--cflags')
-        assert f'-I{os.fspath(INCLUDE_DIR)}'
+        assert f'-I{os.fspath(INCLUDE_DIR)}' in stdout
 
     def test_configtool_pkgconfigdir(self):
         stdout = self.check_numpyconfig('--pkgconfigdir')

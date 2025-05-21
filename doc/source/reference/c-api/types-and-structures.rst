@@ -36,10 +36,10 @@ New types are defined in C by two basic steps:
 
 Instead of special method names which define behavior for Python
 classes, there are "function tables" which point to functions that
-implement the desired results. Since Python 2.2, the PyTypeObject
-itself has become dynamic which allows C types that can be "sub-typed
-"from other C-types in C, and sub-classed in Python. The children
-types inherit the attributes and methods from their parent(s).
+implement the desired results. The PyTypeObject itself is dynamic
+which allows C types that can be "sub-typed" from other C-types in C,
+and sub-classed in Python. The children types inherit the attributes
+and methods from their parent(s).
 
 There are two major new types: the ndarray ( :c:data:`PyArray_Type` )
 and the ufunc ( :c:data:`PyUFunc_Type` ). Additional types play a

@@ -1,14 +1,23 @@
+import pytest
+
 import numpy as np
 from numpy._core._rational_tests import rational
-from numpy.testing import (
-    assert_equal, assert_array_equal, assert_raises, assert_,
-    assert_raises_regex, assert_warns,
-    )
 from numpy.lib._stride_tricks_impl import (
-    as_strided, broadcast_arrays, _broadcast_shape, broadcast_to,
-    broadcast_shapes, sliding_window_view,
-    )
-import pytest
+    _broadcast_shape,
+    as_strided,
+    broadcast_arrays,
+    broadcast_shapes,
+    broadcast_to,
+    sliding_window_view,
+)
+from numpy.testing import (
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+)
 
 
 def assert_shapes_correct(input_shapes, expected_shape):
@@ -219,7 +228,7 @@ def test_same_as_ufunc():
     ]
     for input_shapes, expected_shape in data:
         assert_same_as_ufunc(input_shapes[0], input_shapes[1],
-                             "Shapes: %s %s" % (input_shapes[0], input_shapes[1]))
+                             f"Shapes: {input_shapes[0]} {input_shapes[1]}")
         # Reverse the input shapes since broadcasting should be symmetric.
         assert_same_as_ufunc(input_shapes[1], input_shapes[0])
         # Try them transposed, too.

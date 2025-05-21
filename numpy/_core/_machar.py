@@ -7,9 +7,8 @@ Author: Pearu Peterson, September 2003
 """
 __all__ = ['MachAr']
 
-from .fromnumeric import any
 from ._ufunc_config import errstate
-from .._utils import set_module
+from .fromnumeric import any
 
 # Need to speed this up...especially for longdouble
 
@@ -103,7 +102,7 @@ class MachAr:
 
     def __init__(self, float_conv=float, int_conv=int,
                  float_to_float=float,
-                 float_to_str=lambda v: '%24.16e' % v,
+                 float_to_str=lambda v: f'{v:24.16e}',
                  title='Python floating point number'):
         """
 

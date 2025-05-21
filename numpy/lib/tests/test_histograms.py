@@ -1,12 +1,19 @@
-import numpy as np
-
-from numpy import histogram, histogramdd, histogram_bin_edges
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_array_max_ulp, assert_raises_regex, suppress_warnings,
-    )
 import pytest
+
+import numpy as np
+from numpy import histogram, histogram_bin_edges, histogramdd
+from numpy.testing import (
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    suppress_warnings,
+)
 
 
 class TestHistogram:
@@ -462,8 +469,8 @@ class TestHistogramOptimBinNums:
             x = np.concatenate((x1, x2))
             for estimator, numbins in expectedResults.items():
                 a, b = np.histogram(x, estimator)
-                assert_equal(len(a), numbins, err_msg="For the {0} estimator "
-                             "with datasize of {1}".format(estimator, testlen))
+                assert_equal(len(a), numbins, err_msg=f"For the {estimator} estimator "
+                             f"with datasize of {testlen}")
 
     def test_small(self):
         """
@@ -482,8 +489,8 @@ class TestHistogramOptimBinNums:
             testdat = np.arange(testlen).astype(float)
             for estimator, expbins in expectedResults.items():
                 a, b = np.histogram(testdat, estimator)
-                assert_equal(len(a), expbins, err_msg="For the {0} estimator "
-                             "with datasize of {1}".format(estimator, testlen))
+                assert_equal(len(a), expbins, err_msg=f"For the {estimator} estimator "
+                             f"with datasize of {testlen}")
 
     def test_incorrect_methods(self):
         """
@@ -504,8 +511,8 @@ class TestHistogramOptimBinNums:
 
         for estimator, numbins in novar_resultdict.items():
             a, b = np.histogram(novar_dataset, estimator)
-            assert_equal(len(a), numbins, err_msg="{0} estimator, "
-                         "No Variance test".format(estimator))
+            assert_equal(len(a), numbins,
+                         err_msg=f"{estimator} estimator, No Variance test")
 
     def test_limited_variance(self):
         """
@@ -588,7 +595,7 @@ class TestHistogramOptimBinNums:
             x3 = np.linspace(-100, -50, testlen)
             x = np.hstack((x1, x2, x3))
             for estimator, numbins in expectedResults.items():
-                a, b = np.histogram(x, estimator, range = (-20, 20))
+                a, b = np.histogram(x, estimator, range=(-20, 20))
                 msg = f"For the {estimator} estimator"
                 msg += f" with datasize of {testlen}"
                 assert_equal(len(a), numbins, err_msg=msg)
