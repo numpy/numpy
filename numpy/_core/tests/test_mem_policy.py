@@ -214,7 +214,7 @@ def get_module(tmp_path):
             free(obj);
         };
         '''
-    more_init = "import_array();"
+    more_init = "import_array1(-1);"
     try:
         import mem_policy
         return mem_policy
