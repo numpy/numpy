@@ -377,28 +377,11 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
     { NULL,NULL,0, NULL}
 };
 
-
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "lapack_lite",
-        NULL,
-        -1,
-        lapack_lite_module_methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
-
-/* Initialization function for the module */
-PyMODINIT_FUNC PyInit_lapack_lite(void)
+static int
+lapack_lite_exec(PyObject *m)
 {
-    PyObject *m,*d;
-    m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        return NULL;
-    }
-    import_array();
+    PyObject *d;
+    import_array1(-1);
     d = PyModule_GetDict(m);
     LapackError = PyErr_NewException("numpy.linalg.lapack_lite.LapackError", NULL, NULL);
     PyDict_SetItemString(d, "LapackError", LapackError);
@@ -409,10 +392,29 @@ PyMODINIT_FUNC PyInit_lapack_lite(void)
     PyDict_SetItemString(d, "_ilp64", Py_False);
 #endif
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
+    return 0;
+}
 
-    return m;
+static struct PyModuleDef_Slot lapack_lite_slots[] = {
+    {Py_mod_exec, lapack_lite_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "lapack_lite",
+    .m_size = 0,
+    .m_methods = lapack_lite_module_methods,
+    .m_slots = lapack_lite_slots,
+};
+
+PyMODINIT_FUNC PyInit_lapack_lite(void) {
+    return PyModuleDef_Init(&moduledef);
 }
