@@ -78,5 +78,6 @@
 # Version 19 (NumPy 2.1.0) Only header additions
 # Version 19 (NumPy 2.2.0) No change
 0x00000013 = 2b8f1f4da822491ff030b2b37dff07e3
-# Version 19 (NumPy 2.3.0)
+# Version 20 (NumPy 2.3.0)
+# Version 20 (NumPy 2.4.0) No change
 0x00000014 = e56b74d32a934d085e7c3414cb9999b8,
