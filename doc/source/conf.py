@@ -544,14 +544,14 @@ def linkcode_resolve(domain, info):
     fn = None
     lineno = None
 
-    # Make a poor effort at linking C extension types
-    if isinstance(obj, type) and obj.__module__ == 'numpy':
-        fn = _get_c_source_file(obj)
+    if isinstance(obj, type):
+        # Make a poor effort at linking C extension types
+        if obj.__module__ == 'numpy':
+            fn = _get_c_source_file(obj)
 
-    # This can be removed when removing the decorator set_module. Fix issue #28629
-    if hasattr(obj, '_module_file'):
-        fn = obj._module_file
-        fn = relpath(fn, start=dirname(numpy.__file__))
+        # This can be removed when removing the decorator set_module. Fix issue #28629
+        if hasattr(obj, '_module_source'):
+            obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if fn is None:
         try:
@@ -577,6 +577,9 @@ def linkcode_resolve(domain, info):
         linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
     else:
         linespec = ""
+
+    if isinstance(obj, type) and hasattr(obj, '_module_source'):
+        obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if 'dev' in numpy.__version__:
         return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"

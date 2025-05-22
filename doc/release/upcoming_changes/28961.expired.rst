@@ -1,1 +1,0 @@
-* Removed the ``np.compat`` package source code (removed in 2.0)
