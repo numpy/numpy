@@ -4688,11 +4688,21 @@ static PyMethodDef UMath_LinAlgMethods[] = {
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
+static int module_loaded = 0;
+
 static int
 _umath_linalg_exec(PyObject *m)
 {
     PyObject *d;
     PyObject *version;
+
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
+    }
+    module_loaded = 1;
 
     import_array1(-1);
     import_umath1(-1);
