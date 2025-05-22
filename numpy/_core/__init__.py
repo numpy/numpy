@@ -24,11 +24,15 @@ except ImportError as exc:
     import sys
 
     # Basically always, the problem should be that the C module is wrong/missing...
-    if isinstance(exc, ModuleNotFoundError) and exc.name == "numpy._core._multiarray_umath":
+    if (
+        isinstance(exc, ModuleNotFoundError)
+        and exc.name == "numpy._core._multiarray_umath"
+    ):
         import sys
         candidates = []
         for path in __path__:
-            candidates.extend(f for f in os.listdir(path) if f.startswith("_multiarray_umath"))
+            candidates.extend(
+                f for f in os.listdir(path) if f.startswith("_multiarray_umath"))
         if len(candidates) == 0:
             bad_c_module_info = (
                 "We found no compiled module, was NumPy build successfully?\n")
