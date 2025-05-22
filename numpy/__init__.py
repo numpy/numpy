@@ -117,6 +117,7 @@ else:
             its source directory; please exit the numpy source tree, and relaunch
             your python interpreter from there."""
             raise ImportError(msg) from e
+        raise
 
     from . import _core
     from ._core import (
