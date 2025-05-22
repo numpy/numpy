@@ -180,8 +180,6 @@ jobs:
         uses: pypa/cibuildwheel@90a0ddeff0f23eebc21630e65d66d0f4955e9b94  # v3.0.0b1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
-          # delete when we switch 3.14(t)-dev to 3.14(t)
-          CIBW_ENABLE: cpython-prerelease
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
