@@ -27,9 +27,21 @@
 #endif
 #endif
 
-#define NBUCKETS 1024 /* number of buckets for data*/
-#define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
-#define NCACHE 7 /* number of cache entries per bucket */
+/* Do not enable the alloc cache if the GIL is disabled, or if ASAN or MSAN
+ * instrumentation is enabled. The cache makes ASAN use-after-free or MSAN
+ * use-of-uninitialized-memory warnings less useful. */
+#define USE_ALLOC_CACHE 1
+#ifdef Py_GIL_DISABLED
+# define USE_ALLOC_CACHE 0
+#elif defined(__has_feature)
+# if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
+#  define USE_ALLOC_CACHE 0
+# endif
+#endif
+
+# define NBUCKETS 1024 /* number of buckets for data*/
+# define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
+# define NCACHE 7 /* number of cache entries per bucket */
 /* this structure fits neatly into a cacheline */
 typedef struct {
     npy_uintp available; /* number of cached pointers */
@@ -37,7 +49,6 @@ typedef struct {
 } cache_bucket;
 static cache_bucket datacache[NBUCKETS];
 static cache_bucket dimcache[NBUCKETS_DIM];
-
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
@@ -97,20 +108,6 @@ indicate_hugepages(void *p, size_t size) {
     }
 #endif
 }
-
-
-/* Do not enable the alloc cache if the GIL is disabled, or if ASAN or MSAN
- * instrumentation is enabled. The cache makes ASAN use-after-free or MSAN
- * use-of-uninitialized-memory warnings less useful. */
-#ifdef Py_GIL_DISABLED
-#define USE_ALLOC_CACHE 0
-#elif defined(__has_feature)
-# if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
-# define USE_ALLOC_CACHE 0
-# endif
-#else
-#define USE_ALLOC_CACHE 1
-#endif
 
 
 /* as the cache is managed in global variables verify the GIL is held */
