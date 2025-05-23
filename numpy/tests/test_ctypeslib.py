@@ -7,7 +7,13 @@ import pytest
 
 import numpy as np
 from numpy.ctypeslib import as_array, load_library, ndpointer
-from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
+from numpy.testing import (
+    IS_PYPY,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 try:
     import ctypes
@@ -204,6 +210,8 @@ class TestAsArray:
         assert_equal(a.shape, (3, 2))
         assert_array_equal(a, np.array([[1, 2], [3, 4], [5, 6]]))
 
+    @pytest.mark.xfail(
+        IS_PYPY, reason="Test is flaky on pypy, see pypy/pypy#5247")
     def test_pointer(self):
         from ctypes import POINTER, c_int, cast
 
