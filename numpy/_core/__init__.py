@@ -35,7 +35,7 @@ except ImportError as exc:
                 f for f in os.listdir(path) if f.startswith("_multiarray_umath"))
         if len(candidates) == 0:
             bad_c_module_info = (
-                "We found no compiled module, was NumPy build successfully?\n")
+                "We found no compiled module, did NumPy build successfully?\n")
         else:
             candidate_str = '\n  * '.join(candidates)
             # cache_tag is documented to be possibly None, so just use name if it is
