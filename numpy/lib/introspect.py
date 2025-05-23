@@ -81,13 +81,14 @@ def opt_func_info(func_name=None, signature=None):
         sig_pattern = re.compile(signature)
         matching_sigs = {}
         for k, v in matching_funcs.items():
-            matching_chars = {}
-            for chars, targets in v.items():
+            matching_chars = {
+                chars: targets
+                for chars, targets in v.items()
                 if any(
                     sig_pattern.search(c) or sig_pattern.search(dtype(c).name)
                     for c in chars
-                ):
-                    matching_chars[chars] = targets
+                )
+            }
             if matching_chars:
                 matching_sigs[k] = matching_chars
     else:
