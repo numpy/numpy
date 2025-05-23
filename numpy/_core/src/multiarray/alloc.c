@@ -39,7 +39,6 @@
 # endif
 #endif
 
-#if USE_ALLOC_CACHE
 # define NBUCKETS 1024 /* number of buckets for data*/
 # define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
 # define NCACHE 7 /* number of cache entries per bucket */
@@ -50,7 +49,6 @@ typedef struct {
 } cache_bucket;
 static cache_bucket datacache[NBUCKETS];
 static cache_bucket dimcache[NBUCKETS_DIM];
-#endif  /* USE_ALLOC_CACHE */
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
