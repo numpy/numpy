@@ -61,7 +61,7 @@ create_conv_funcs(
     Py_ssize_t pos = 0;
     int error = 0;
     Py_BEGIN_CRITICAL_SECTION(converters);
-    while (PyDict_Next(converters, &pos, &key, &value)) {
+    while (PyDict_Next(converters, &pos, &key, &value)) { // noqa: borrowed-ref OK
         Py_ssize_t column = PyNumber_AsSsize_t(key, PyExc_IndexError);
         if (column == -1 && PyErr_Occurred()) {
             PyErr_Format(PyExc_TypeError,
