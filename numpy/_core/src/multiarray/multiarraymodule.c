@@ -4773,28 +4773,9 @@ initialize_thread_unsafe_state(void) {
     return 0;
 }
 
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_multiarray_umath",
-        NULL,
-        -1,
-        array_module_methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
-
-/* Initialization function for the module */
-PyMODINIT_FUNC PyInit__multiarray_umath(void) {
-    PyObject *m, *d, *s;
-    PyObject *c_api;
-
-    /* Create the module and add the functions */
-    m = PyModule_Create(&moduledef);
-    if (!m) {
-        return NULL;
-    }
+static int
+_multiarray_umath_exec(PyObject *m) {
+    PyObject *d, *s, *c_api;
 
     /* Initialize CPU features */
     if (npy_cpu_init() < 0) {
@@ -5135,18 +5116,32 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
         goto err;
     }
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
-
-    return m;
+    return 0;
 
  err:
-    if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load multiarray module.");
-    }
-    Py_DECREF(m);
-    return NULL;
+    return -1;
+}
+
+static struct PyModuleDef_Slot _multiarray_umath_slots[] = {
+    {Py_mod_exec, _multiarray_umath_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_multiarray_umath",
+    .m_size = 0,
+    .m_methods = array_module_methods,
+    .m_slots = _multiarray_umath_slots,
+};
+
+PyMODINIT_FUNC PyInit__multiarray_umath(void) {
+    return PyModuleDef_Init(&moduledef);
 }
