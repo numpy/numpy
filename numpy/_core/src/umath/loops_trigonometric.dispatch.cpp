@@ -3,7 +3,9 @@
 #include "loops_utils.h"
 
 #include "simd/simd.h"
+#include "simd/simd.hpp" 
 #include <hwy/highway.h>
+
 namespace hn = hwy::HWY_NAMESPACE;
 
 /*
@@ -184,7 +186,7 @@ simd_sincos_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst,
                           "larger than 256 bits.");
             simd_maski = ((uint8_t *)&simd_maski)[0];
 #endif
-            float NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) ip_fback[hn::Lanes(f32)];
+            float NPY_DECL_ALIGNED(NPY_SIMD_WIDTH) ip_fback[hn::MaxLanes(f32)];
             hn::Store(x_in, f32, ip_fback);
 
             // process elements using libc for large elements
