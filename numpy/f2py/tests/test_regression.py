@@ -44,7 +44,7 @@ class TestModuleWithDerivedType(util.F2PyTest):
     @pytest.mark.slow
     def test_mtypes(self):
         assert self.module.no_type_subroutine(10) == 110
-        assert self.module.type_subroutine(10) == 210     
+        assert self.module.type_subroutine(10) == 210
 
 
 class TestNegativeBounds(util.F2PyTest):
