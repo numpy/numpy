@@ -525,7 +525,7 @@ stringdtype_sort_compare(void *a, void *b, PyArray_Descr *descr) {
 
 int
 _stringdtype_sort(PyArrayMethod_Context *context, void *start, npy_intp num,
-                  NpyAuxData *auxdata, PyArray_SortFunc *sort) {
+                  NpyAuxData *auxdata, PyArray_SortFuncWithContext *sort) {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
 
     NpyString_acquire_allocator(descr);
@@ -558,7 +558,7 @@ _stringdtype_timsort(PyArrayMethod_Context *context, void *start, npy_intp num,
 
 int
 stringdtype_get_sort_function(PyArray_Descr *descr,
-    NPY_SORTKIND sort_kind, int descending, PyArray_SortFunc **out_sort,
+    NPY_SORTKIND sort_kind, int descending, PyArray_SortFuncWithContext **out_sort,
     NpyAuxData **NPY_UNUSED(out_auxdata)) {
     
     switch (sort_kind) {
@@ -579,7 +579,7 @@ stringdtype_get_sort_function(PyArray_Descr *descr,
 
 int
 _stringdtype_argsort(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
-                     npy_intp num, NpyAuxData *auxdata, PyArray_ArgSortFunc *argsort) {
+                     npy_intp num, NpyAuxData *auxdata, PyArray_ArgSortFuncWithContext *argsort) {
     PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptors[0];
 
     NpyString_acquire_allocator(descr);
@@ -612,7 +612,7 @@ _stringdtype_atimsort(PyArrayMethod_Context *context, void *vv, npy_intp *tosort
 
 int
 stringdtype_get_argsort_function(PyArray_Descr *descr, 
-    NPY_SORTKIND sort_kind, int descending, PyArray_ArgSortFunc **out_argsort) {
+    NPY_SORTKIND sort_kind, int descending, PyArray_ArgSortFuncWithContext **out_argsort) {
     
     switch (sort_kind) {
         default:
