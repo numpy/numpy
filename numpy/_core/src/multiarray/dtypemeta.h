@@ -300,7 +300,7 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 
 static inline int
 PyArray_GetSortFunction(PyArray_Descr *descr, 
-    NPY_SORTKIND which, int descending, PyArray_SortFunc **out_sort,
+    NPY_SORTKIND which, int descending, PyArray_SortFuncWithContext **out_sort,
     NpyAuxData **out_auxdata)
 {
     if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function == NULL) {
@@ -314,7 +314,7 @@ PyArray_GetSortFunction(PyArray_Descr *descr,
 
 static inline int
 PyArray_GetArgSortFunction(PyArray_Descr *descr, 
-    NPY_SORTKIND which, int descending, PyArray_ArgSortFunc **out_argsort,
+    NPY_SORTKIND which, int descending, PyArray_ArgSortFuncWithContext **out_argsort,
     NpyAuxData **out_auxdata)
 {
     if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function == NULL) {

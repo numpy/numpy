@@ -19,7 +19,7 @@ extern "C" {
 
 static inline int
 handle_npysort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
-                            NpyAuxData *auxdata, PyArray_SortFuncWithArray *sort)
+                            NpyAuxData *auxdata, PyArray_SortFunc *sort)
 {
     PyArray_Descr *descr = context->descriptors[0];
     return sort(start, num, descr);
@@ -27,7 +27,7 @@ handle_npysort_with_context(PyArrayMethod_Context *context, void *start, npy_int
 
 static inline int
 handle_npyasort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
-                             npy_intp num, NpyAuxData *auxdata, PyArray_ArgSortFuncWithArray *asort)
+                             npy_intp num, NpyAuxData *auxdata, PyArray_ArgSortFunc *asort)
 {
     PyArray_Descr *descr = context->descriptors[0];
     return asort(vv, tosort, num, descr);

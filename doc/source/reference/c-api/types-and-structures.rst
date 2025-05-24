@@ -494,8 +494,8 @@ PyArray_ArrFuncs
            PyArray_NonzeroFunc *nonzero;
            PyArray_FillFunc *fill;
            PyArray_FillWithScalarFunc *fillwithscalar;
-           PyArray_SortFunc *sort[NPY_NSORTS];
-           PyArray_ArgSortFunc *argsort[NPY_NSORTS];
+           PyArray_SortFuncWithContext *sort[NPY_NSORTS];
+           PyArray_ArgSortFuncWithContext *argsort[NPY_NSORTS];
            PyObject *castdict;
            PyArray_ScalarKindFunc *scalarkind;
            int **cancastscalarkindto;

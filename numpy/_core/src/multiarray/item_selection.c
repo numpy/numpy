@@ -1191,8 +1191,8 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
  * over all but the desired sorting axis.
  */
 static int
-_new_sortlike(PyArrayObject *op, int axis, PyArray_SortFunc *sort,
-              PyArray_SortFuncWithArray *sort_with_array, NpyAuxData *auxdata,
+_new_sortlike(PyArrayObject *op, int axis, PyArray_SortFuncWithContext *sort,
+              PyArray_SortFunc *sort_with_array, NpyAuxData *auxdata,
               PyArray_PartitionFunc *part, npy_intp const *kth, npy_intp nkth)
 {
     npy_intp N = PyArray_DIM(op, axis);
@@ -1368,8 +1368,8 @@ fail:
 }
 
 static PyObject*
-_new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
-                 PyArray_ArgSortFuncWithArray *argsort_with_array,
+_new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFuncWithContext *argsort,
+                 PyArray_ArgSortFunc *argsort_with_array,
                  NpyAuxData *auxdata, PyArray_ArgPartitionFunc *argpart,
                  npy_intp const *kth, npy_intp nkth)
 {
@@ -1574,8 +1574,8 @@ fail:
 NPY_NO_EXPORT int
 PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
-    PyArray_SortFunc *sort = NULL;
-    PyArray_SortFuncWithArray *sort_with_array = NULL;
+    PyArray_SortFuncWithContext *sort = NULL;
+    PyArray_SortFunc *sort_with_array = NULL;
 
     NpyAuxData *auxdata = NULL;
 
@@ -1710,7 +1710,7 @@ PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis,
 {
     PyArrayObject *kthrvl;
     PyArray_PartitionFunc *part;
-    PyArray_SortFuncWithArray *sort;
+    PyArray_SortFunc *sort;
     int n = PyArray_NDIM(op);
     int ret;
 
@@ -1761,8 +1761,8 @@ NPY_NO_EXPORT PyObject *
 PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
     PyArrayObject *op2;
-    PyArray_ArgSortFunc *argsort = NULL;
-    PyArray_ArgSortFuncWithArray *argsort_with_array = NULL;
+    PyArray_ArgSortFuncWithContext *argsort = NULL;
+    PyArray_ArgSortFunc *argsort_with_array = NULL;
     PyObject *ret;
 
     NpyAuxData *auxdata = NULL;
@@ -1831,7 +1831,7 @@ PyArray_ArgPartition(PyArrayObject *op, PyArrayObject *ktharray, int axis,
 {
     PyArrayObject *op2, *kthrvl;
     PyArray_ArgPartitionFunc *argpart;
-    PyArray_ArgSortFuncWithArray *argsort;
+    PyArray_ArgSortFunc *argsort;
     PyObject *ret;
 
     /*
@@ -1901,7 +1901,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     int elsize;
     int maxelsize;
     int object = 0;
-    PyArray_ArgSortFuncWithArray *argsort;
+    PyArray_ArgSortFunc *argsort;
     NPY_BEGIN_THREADS_DEF;
 
     if (!PySequence_Check(sort_keys)
