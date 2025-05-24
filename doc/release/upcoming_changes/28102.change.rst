@@ -1,6 +1,0 @@
-The minimum supported GCC version is now 9.3.0
-----------------------------------------------
-The minimum supported version was updated from 8.4.0 to 9.3.0,
-primarily in order to reduce the chance of platform-specific bugs in old GCC
-versions from causing issues.
-

@@ -1,7 +1,0 @@
-Performance improvements to ``np.sort`` and ``np.argsort``
-----------------------------------------------------------
-``np.sort`` and ``np.argsort`` functions now can leverage OpenMP for parallel
-thread execution, resulting in up to 3.5x speedups on x86 architectures with
-AVX2 or AVX-512 instructions. This opt-in feature requires NumPy to be built
-with the -Denable_openmp Meson flag. Users can control the number of threads
-used by setting the OMP_NUM_THREADS environment variable.

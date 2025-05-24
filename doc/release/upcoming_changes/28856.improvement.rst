@@ -1,5 +1,0 @@
-* ``np.dtypes.StringDType`` is now a
-  `generic type <https://typing.python.org/en/latest/spec/generics.html>`_ which
-  accepts a type argument for ``na_object`` that defaults to ``typing.Never``.
-  For example, ``StringDType(na_object=None)`` returns a ``StringDType[None]``,
-  and ``StringDType()`` returns a ``StringDType[typing.Never]``.

@@ -1,7 +1,0 @@
-``unique_values`` may return unsorted data
-------------------------------------------
-The relatively new function (added in NumPy 2.0) ``unique_values`` may now
-return unsorted results.  Just as ``unique_counts`` and ``unique_all``
-these never guaranteed a sorted result, however, the result
-was sorted until now.  In cases where these do return a sorted result, this
-may change in future releases to improve performance.
