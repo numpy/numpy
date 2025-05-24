@@ -1874,20 +1874,20 @@ described below.
    embedded references.
 
 .. c:type:: int (PyArray_SortFuncWithContext)( \
-                 PyArrayMethod_Context *data, void *start, \
+                 PyArrayMethod_Context *context, void *data, \
                  npy_intp num, NpyAuxData *auxdata)
     
-    A function to sort a buffer of data. The *start* is a pointer to the
+    A function to sort a buffer of data. The *data* is a pointer to the
     beginning of the buffer containing *num* elements. A function of this
     type is returned by the `get_sort_function` function in the DType
     slots, where *context* is passed in containing the descriptor for the
     array. Returns 0 on success, -1 on failure.
 
 .. c:type:: int (PyArray_ArgSortFuncWithContext)( \
-                 PyArrayMethod_Context *data, void *start, \
+                 PyArrayMethod_Context *context, void *data, \
                  npy_intp *tosort, npy_intp num, NpyAuxData *auxdata)
-    
-    A function to arg-sort a buffer of data. The *start* is a pointer to the
+
+    A function to arg-sort a buffer of data. The *data* is a pointer to the
     beginning of the buffer containing *num* elements. The *tosort* is a
     pointer to an array of indices that will be filled in with the
     indices of the sorted elements. A function of this type is returned by
