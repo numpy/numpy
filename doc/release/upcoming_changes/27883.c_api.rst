@@ -1,4 +1,0 @@
-* `NpyIter_GetTransferFlags` is now available to check if
-  the iterator needs the Python API or if casts may cause floating point
-  errors (FPE).  FPEs can for example be set when casting ``float64(1e300)``
-  to ``float32`` (overflow to infinity) or a NaN to an integer (invalid value).
