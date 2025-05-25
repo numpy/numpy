@@ -36,6 +36,7 @@ from numpy._core.strings import (
     rjust,
     rpartition,
     rstrip,
+    slice,
     startswith,
     str_len,
     strip,
@@ -92,4 +93,5 @@ __all__ = [
     "decode",
     "encode",
     "translate",
+    "slice",
 ]

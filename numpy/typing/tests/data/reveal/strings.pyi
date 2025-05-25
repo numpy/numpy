@@ -190,3 +190,7 @@ assert_type(np.strings.str_len(AR_T), npt.NDArray[np.int_])
 assert_type(np.strings.translate(AR_U, ""), npt.NDArray[np.str_])
 assert_type(np.strings.translate(AR_S, ""), npt.NDArray[np.bytes_])
 assert_type(np.strings.translate(AR_T, ""), AR_T_alias)
+
+assert_type(np.strings.slice(AR_U, 1, 5, 2), npt.NDArray[np.str_])
+assert_type(np.strings.slice(AR_S, 1, 5, 2), npt.NDArray[np.bytes_])
+assert_type(np.strings.slice(AR_T, 1, 5, 2), AR_T_alias)
