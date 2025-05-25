@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from typing import Any, Literal, Self, SupportsIndex, TypeAlias, overload
 
 from _typeshed import Incomplete
-from typing_extensions import TypeIs, TypeVar, deprecated
+from typing_extensions import TypeIs, TypeVar
 
 import numpy as np
 from numpy import (
@@ -1057,8 +1057,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def toflex(self) -> Incomplete: ...
     def torecords(self) -> Incomplete: ...
     def tolist(self, fill_value: Incomplete | None = None) -> Incomplete: ...
-    @deprecated("tostring() is deprecated. Use tobytes() instead.")
-    def tostring(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]
     def tobytes(self, /, fill_value: Incomplete | None = None, order: _OrderKACF = "C") -> bytes: ...  # type: ignore[override]
     def tofile(self, /, fid: Incomplete, sep: str = "", format: str = "%s") -> Incomplete: ...
 
