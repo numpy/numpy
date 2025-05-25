@@ -29,20 +29,28 @@ fi
 
 # Install Openblas from scipy-openblas64
 if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
-    echo PKG_CONFIG_PATH $PKG_CONFIG_PATH
+    # by default, use scipy-openblas64
+    OPENBLAS=openblas64
+    if [[ $RUNNER_ARCH != "X64" ]] ; then
+        # Possible values in github are X86, X64, ARM, or ARM64
+        # On macos-arm64 and win32 we do not use OpenBLAS
+        # On win-arm64 we use # 32-bit interfaces (scipy_openblas32)
+        OPENBLAS=openblas32
+    fi
+    echo PKG_CONFIG_PATH is $PKG_CONFIG_PATH, OPENBLAS is ${OPENBLAS}
     PKG_CONFIG_PATH=$PROJECT_DIR/.openblas
     rm -rf $PKG_CONFIG_PATH
     mkdir -p $PKG_CONFIG_PATH
     python -m pip install -r requirements/ci_requirements.txt
-    python -c "import scipy_openblas64; print(scipy_openblas64.get_pkg_config())" > $PKG_CONFIG_PATH/scipy-openblas.pc
+    python -c "import scipy_openblas64; print(scipy_${OPENBLAS}.get_pkg_config())" > $PKG_CONFIG_PATH/scipy-openblas.pc
     # Copy the shared objects to a path under $PKG_CONFIG_PATH, the build
     # will point $LD_LIBRARY_PATH there and then auditwheel/delocate-wheel will
     # pull these into the wheel. Use python to avoid windows/posix problems
     python <<EOF
-import os, scipy_openblas64, shutil
-srcdir = os.path.join(os.path.dirname(scipy_openblas64.__file__), "lib")
+import os, scipy_${OPENBLAS}, shutil
+srcdir = os.path.join(os.path.dirname(scipy_${OPENBLAS}.__file__), "lib")
 shutil.copytree(srcdir, os.path.join("$PKG_CONFIG_PATH", "lib"))
-srcdir = os.path.join(os.path.dirname(scipy_openblas64.__file__), ".dylibs")
+srcdir = os.path.join(os.path.dirname(scipy_${OPENBLAS}.__file__), ".dylibs")
 if os.path.exists(srcdir):  # macosx delocate
     shutil.copytree(srcdir, os.path.join("$PKG_CONFIG_PATH", ".dylibs"))
 EOF

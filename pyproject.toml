@@ -184,6 +184,11 @@ config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=false build-dir=
 repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
 
 [[tool.cibuildwheel.overrides]]
+select = "*-win32"
+config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=build"
+repair-wheel-command = ""
+
+[[tool.cibuildwheel.overrides]]
 select = "*-win_arm64"
 config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=build"
 repair-wheel-command = ""
