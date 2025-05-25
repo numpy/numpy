@@ -186,7 +186,8 @@ jobs:
           name: ${{ matrix.python }}-${{ matrix.buildplat[1] }}-${{ matrix.buildplat[2] }}
           path: ./wheelhouse/*.whl
 
-      - uses: mamba-org/setup-micromamba@0dea6379afdaffa5d528b3d1dabc45da37f443fc
+      - name: install micromamba
+        uses: mamba-org/setup-micromamba@0dea6379afdaffa5d528b3d1dabc45da37f443fc
         if: ${{ matrix.buildplat[1] != 'win_arm64' }} # unsupported platform at the moment
         with:
           # for installation of anaconda-client, required for upload to
@@ -199,6 +200,16 @@ jobs:
           environment-name: upload-env
           create-args: >-
             anaconda-client
+
+      - name: win-arm64 install anaconda client
+        if: ${{ matrix.buildplat[1] == 'win_arm64' }}
+        run: |
+          # Rust installation needed for rpds-py.
+          Invoke-WebRequest https://static.rust-lang.org/rustup/dist/aarch64-pc-windows-msvc/rustup-init.exe -UseBasicParsing -Outfile rustup-init.exe
+          .\rustup-init.exe -y
+          $env:PATH="$env:PATH;$env:USERPROFILE\.cargo\bin"
+          pip install anaconda-client
+
 
       - name: Upload wheels
         if: success() && github.repository == 'numpy/numpy'
