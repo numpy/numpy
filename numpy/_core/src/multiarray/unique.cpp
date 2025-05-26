@@ -29,8 +29,7 @@ FinalAction<F> finally(F f) {
 }
 
 // function to caluculate the hash of a string
-template <typename T>
-size_t str_hash(const T *str, npy_intp num_chars) {
+size_t str_hash(const void *buf, size_t len) {
     // http://www.isthe.com/chongo/tech/comp/fnv/#FNV-1a
     #if NPY_SIZEOF_INTP == 4
         static const size_t FNV_OFFSET_BASIS = 2166136261U;
@@ -39,12 +38,16 @@ size_t str_hash(const T *str, npy_intp num_chars) {
         static const size_t FNV_OFFSET_BASIS = 14695981039346656037ULL;
         static const size_t FNV_PRIME = 1099511628211ULL;
     #endif
-    const unsigned char* bytes = reinterpret_cast<const unsigned char*>(str);
+
+    unsigned char *bp = (unsigned char *)buf;	/* start of buffer */
+    unsigned char *be = bp + len;		/* beyond end of buffer */
+
     size_t hash = FNV_OFFSET_BASIS;
-    for (npy_intp i = 0; i < num_chars * (npy_intp)sizeof(T); ++i) {
-        hash ^= bytes[i];
+    while (bp < be) {
+        hash ^= *bp++;
         hash *= FNV_PRIME;
     }
+
     return hash;
 }
 
@@ -144,7 +147,7 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
     npy_intp itemsize = descr->elsize;
     npy_intp num_chars = itemsize / sizeof(T);
     auto hash = [num_chars](const T *value) -> size_t {
-        return str_hash(value, num_chars);
+        return str_hash(value, num_chars * sizeof(T));
     };
     auto equal = [itemsize](const T *lhs, const T *rhs) -> bool {
         return std::memcmp(lhs, rhs, itemsize) == 0;
@@ -232,7 +235,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
                 return std::hash<const npy_static_string *>{}(value);
             }
         }
-        return str_hash(value->buf, value->size);
+        return str_hash(value->buf, value->size * sizeof(char));
     };
     auto equal = [equal_nan](const npy_static_string *lhs, const npy_static_string *rhs) -> bool {
         if (lhs->buf == NULL && rhs->buf == NULL) {
