@@ -1017,8 +1017,8 @@ class TestMaskedArray:
 
     def test_maskedarray_tofile_raises_notimplementederror(self):
         xm = masked_array([1, 2, 3], mask=[False, True, False])
-        # Test case to check the NotImplementedError. 
-        # It is not implemented at this point of time. We can change this in future 
+        # Test case to check the NotImplementedError.
+        # It is not implemented at this point of time. We can change this in future
         with pytest.raises(NotImplementedError):
             np.save('xm.np', xm)
 
@@ -5497,10 +5497,12 @@ class TestMaskedWhereAliases:
 
 
 def test_masked_array():
+    """Test np.argwhere with masked arrays."""
     a = np.ma.array([0, 1, 2, 3], mask=[0, 0, 1, 0])
     assert_equal(np.argwhere(a), [[1], [3]])
 
 def test_masked_array_no_copy():
+    """Test in-place masking operations with copy=False."""
     # check nomask array is updated in place
     a = np.ma.array([1, 2, 3, 4])
     _ = np.ma.masked_where(a == 3, a, copy=False)
@@ -5539,6 +5541,7 @@ def test_append_masked_array():
 
 
 def test_append_masked_array_along_axis():
+    """Test np.ma.append with axis parameter and shape validation."""
     a = np.ma.masked_equal([1,2,3], value=2)
     b = np.ma.masked_values([[4, 5, 6], [7, 8, 9]], 7)
 
@@ -5553,11 +5556,13 @@ def test_append_masked_array_along_axis():
     assert_array_equal(result.mask, expected.mask)
 
 def test_default_fill_value_complex():
+    """Test default fill value for complex numbers (regression test)."""
     # regression test for Python 3, where 'unicode' was not defined
     assert_(default_fill_value(1 + 1j) == 1.e20 + 0.0j)
 
 
 def test_ufunc_with_output():
+    """Test ufunc output argument behavior with masked arrays."""
     # check that giving an output argument always returns that output.
     # Regression test for gh-8416.
     x = array([1., 2., 3.], mask=[0, 0, 1])
@@ -5566,7 +5571,7 @@ def test_ufunc_with_output():
 
 
 def test_ufunc_with_out_varied():
-    """ Test that masked arrays are immune to gh-10459 """
+    """Test that masked arrays are immune to gh-10459."""
     # the mask of the output should not affect the result, however it is passed
     a        = array([ 1,  2,  3], mask=[1, 0, 0])
     b        = array([10, 20, 30], mask=[1, 0, 0])
@@ -5591,6 +5596,7 @@ def test_ufunc_with_out_varied():
 
 
 def test_astype_mask_ordering():
+    """Test astype with structured arrays and mask ordering."""
     descr = np.dtype([('v', int, 3), ('x', [('y', float)])])
     x = array([
         [([1, 2, 3], (1.0,)),  ([1, 2, 3], (2.0,))],
@@ -5626,6 +5632,7 @@ def test_astype_mask_ordering():
 @pytest.mark.parametrize('dt2', num_dts, ids=num_ids)
 @pytest.mark.filterwarnings('ignore::numpy.exceptions.ComplexWarning')
 def test_astype_basic(dt1, dt2):
+    """Test basic astype functionality with fill values (regression test for gh-12070)."""
     # See gh-12070
     src = np.ma.array(ones(3, dt1), fill_value=1)
     dst = src.astype(dt2)
@@ -5642,6 +5649,7 @@ def test_astype_basic(dt1, dt2):
 
 
 def test_fieldless_void():
+    """Test masked arrays with fieldless void dtypes."""
     dt = np.dtype([])  # a void dtype with no fields
     x = np.empty(4, dt)
 
@@ -5657,6 +5665,7 @@ def test_fieldless_void():
 
 
 def test_mask_shape_assignment_does_not_break_masked():
+    """Test that mask shape assignment doesn't break np.ma.masked."""
     a = np.ma.masked
     b = np.ma.array(1, mask=a.mask)
     b.shape = (1,)
@@ -5665,6 +5674,7 @@ def test_mask_shape_assignment_does_not_break_masked():
 @pytest.mark.skipif(sys.flags.optimize > 1,
                     reason="no docstrings present to inspect when PYTHONOPTIMIZE/Py_OptimizeFlag > 1")
 def test_doc_note():
+    """Test the doc_note function for docstring manipulation."""
     def method(self):
         """This docstring
 
@@ -5694,6 +5704,7 @@ original note"""
 
 
 def test_gh_22556():
+    """Test deepcopy with object arrays (regression test for gh-22556)."""
     source = np.ma.array([0, [0, 1, 2]], dtype=object)
     deepcopy = copy.deepcopy(source)
     deepcopy[1].append('this should not appear in source')
@@ -5701,6 +5712,7 @@ def test_gh_22556():
 
 
 def test_gh_21022():
+    """Test deepcopy operations don't raise errors (regression test for gh-21022)."""
     # testing for absence of reported error
     source = np.ma.masked_array(data=[-1, -1], mask=True, dtype=np.float64)
     axis = np.array(0)
@@ -5713,6 +5725,7 @@ def test_gh_21022():
 
 
 def test_deepcopy_2d_obj():
+    """Test deepcopy with 2D object arrays."""
     source = np.ma.array([[0, "dog"],
                           [1, 1],
                           [[1, 2], "cat"]],
@@ -5730,6 +5743,7 @@ def test_deepcopy_2d_obj():
 
 
 def test_deepcopy_0d_obj():
+    """Test deepcopy with 0D object arrays."""
     source = np.ma.array(0, mask=[0], dtype=object)
     deepcopy = copy.deepcopy(source)
     deepcopy[...] = 17
