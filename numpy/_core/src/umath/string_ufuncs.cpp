@@ -751,11 +751,18 @@ string_multiply_resolve_descriptors(
 {
     if (given_descrs[2] == NULL) {
         PyErr_SetString(
-            PyExc_TypeError,
-            "The 'out' kwarg is necessary. Use numpy.strings.multiply without it.");
+                PyExc_TypeError,
+                "The 'out' kwarg is necessary when using the string multiply ufunc "
+                "directly. Use numpy.strings.multiply to multiply strings without specifying "
+                "'out'.");
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
-
+    else if (given_descrs[0] == given_descrs[2]) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Cannot use arithmetic operators to in-place multiply a "
+                        "fixed-width string. Use np.strings.multiply instead.");
+        return _NPY_ERROR_OCCURRED_IN_CAST;
+    }
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
         return _NPY_ERROR_OCCURRED_IN_CAST;

@@ -227,6 +227,14 @@ class TestMethods:
         with pytest.raises(MemoryError):
             np.strings.multiply(np.array("abc", dtype=dt), sys.maxsize)
 
+        arr = np.array(['foo', 'bar'], dtype=dt)
+        if dt != "T":
+            with pytest.raises(TypeError):
+                arr *= 2
+        else:
+            arr *= 2
+            assert_array_equal(arr, ['foofoo', 'barbar'])
+
     @pytest.mark.parametrize("i_dt", [np.int8, np.int16, np.int32,
                                       np.int64, np.int_])
     def test_multiply_integer_dtypes(self, i_dt, dt):
