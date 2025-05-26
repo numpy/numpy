@@ -31,10 +31,15 @@ fi
 if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     # by default, use scipy-openblas64
     OPENBLAS=openblas64
-    if [[ $RUNNER_ARCH != "X64" ]] ; then
-        # Possible values in github are X86, X64, ARM, or ARM64
-        # On macos-arm64 and win32 we do not use OpenBLAS
-        # On win-arm64 we use # 32-bit interfaces (scipy_openblas32)
+    # Possible values for RUNNER_ARCH in github are
+    # X86, X64, ARM, or ARM64
+    # TODO: should we detect a missing RUNNER_ARCH and use platform.machine()
+    #    when wheel build is run outside github?
+    # On 32-bit platforms, use scipy_openblas32
+    # On win-arm64 use scipy_openblas32
+    if [[ $RUNNER_ARCH == "X86" || $RUNNER_ARCH == "ARM" ]] ; then
+        OPENBLAS=openblas32
+    elif [[ $RUNNER_ARCH == "ARM64" && $RUNNER_OS == "Windows" ]] ; then
         OPENBLAS=openblas32
     fi
     echo PKG_CONFIG_PATH is $PKG_CONFIG_PATH, OPENBLAS is ${OPENBLAS}
@@ -42,7 +47,7 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     rm -rf $PKG_CONFIG_PATH
     mkdir -p $PKG_CONFIG_PATH
     python -m pip install -r requirements/ci_requirements.txt
-    python -c "import scipy_openblas64; print(scipy_${OPENBLAS}.get_pkg_config())" > $PKG_CONFIG_PATH/scipy-openblas.pc
+    python -c "import scipy_${OPENBLAS}; print(scipy_${OPENBLAS}.get_pkg_config())" > $PKG_CONFIG_PATH/scipy-openblas.pc
     # Copy the shared objects to a path under $PKG_CONFIG_PATH, the build
     # will point $LD_LIBRARY_PATH there and then auditwheel/delocate-wheel will
     # pull these into the wheel. Use python to avoid windows/posix problems
