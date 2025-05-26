@@ -7,6 +7,3 @@ threads.  As an alternative, you can create a new view (no copy) via:
 * `np.lib.stride_tricks.as_strided` for the general case,
 * or the `np.ndarray` constructor (``buffer`` is the original array) for a light-weight version.
 
-Manually setting the strides attribute on a NumPy array can be useful, but needs to be done
-with care as it can lead to unsafe memory use.
-
