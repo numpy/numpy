@@ -175,6 +175,12 @@ string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
         return;
     }
 
+    size_t width = out.buffer_width();
+    size_t pad = 0;
+    if (width < len1*reps) {
+        reps = width / len1;
+        pad = width % len1;
+    }
     if (len1 == 1) {
         out.buffer_memset(*buf1, reps);
         out.buffer_fill_with_zeros_after_index(reps);
@@ -184,6 +190,8 @@ string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
             buf1.buffer_memcpy(out, len1);
             out += len1;
         }
+        buf1.buffer_memcpy(out, pad);
+        out += pad;
         out.buffer_fill_with_zeros_after_index(0);
     }
 }
@@ -752,10 +760,11 @@ string_multiply_resolve_descriptors(
     if (given_descrs[2] == NULL) {
         PyErr_SetString(
             PyExc_TypeError,
-            "The 'out' kwarg is necessary. Use numpy.strings.multiply without it.");
+            "The 'out' kwarg is necessary when using the string multiply ufunc "
+            "directly. Use numpy.strings.multiply to multiply strings without "
+            "specifying 'out'.");
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
-
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
         return _NPY_ERROR_OCCURRED_IN_CAST;
