@@ -4560,10 +4560,10 @@ def quantile(a,
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
 
-    res = _quantile_unchecked(
+    result = _quantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
     # If no broadcasting happened, and q was a scalar, return a scalar:
-    return conv.wrap(res, to_scalar=conv.scalar_input[1])
+    return conv.wrap(result, to_scalar=conv.scalar_input[1])
 
 
 def _quantile_unchecked(a,

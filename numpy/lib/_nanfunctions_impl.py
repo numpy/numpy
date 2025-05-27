@@ -1589,7 +1589,7 @@ def nanquantile(
 
     # Use dtype of array if possible (e.g., if q is a python int or float).
     if isinstance(q, (int, float)) and a.dtype.kind == "f":
-        q = np.asanyarray(q, dtype=a.dtype)
+        q = np.asarray(q, dtype=a.dtype)
     else:
         q = q_arr
 

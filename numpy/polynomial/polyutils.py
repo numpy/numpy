@@ -355,8 +355,7 @@ def mapdomain(x, old, new):
     """
     off, scl = mapparms(old, new)
 
-    if (type(x) in (int, float, complex)
-            or isinstance(x, np.generic) or isinstance(x, ABCPolyBase)):
+    if type(x) in (int, float, complex) or isinstance(x, (np.generic, ABCPolyBase)):
         # Avoid ufunc for scalars and polynomial instances (they reject ufuncs)
         return off + scl * x
 
