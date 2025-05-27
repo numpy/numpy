@@ -56,7 +56,7 @@ def run_pyright_with_coverage(
     try:
         data = json.loads(result.stdout)
     except json.decoder.JSONDecodeError:
-        sys.stdout.write(result.stderr)
+        sys.stdout.write(result.stdout)
         sys.stderr.write(result.stderr)
         return 1
 
@@ -78,6 +78,7 @@ def run_pyright_with_coverage(
             f"Coverage {cov_percent:.1f}% is below minimum required "
             f"{cov_fail_under:.1f}%"
         )
+        sys.stdout.write(result.stdout)
         return 1
     sys.stdout.write(
         f"Coverage {cov_percent:.1f}% is at or above minimum required "
