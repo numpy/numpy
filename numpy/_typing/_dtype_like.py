@@ -55,7 +55,7 @@ class _SupportsDType(Protocol[_DTypeT_co]):
 
 
 # A subset of `npt.DTypeLike` that can be parametrized w.r.t. `np.generic`
-_DTypeLike: TypeAlias = type[_ScalarT] | np.dtype[_ScalarT] | _SupportsDType[np.dtype[_ScalarT]]
+_DTypeLike: TypeAlias = type[_ScalarT] | np.dtype[_ScalarT] | _SupportsDType[np.dtype[_ScalarT]]  # noqa: E501
 
 
 # Would create a dtype[np.void]
