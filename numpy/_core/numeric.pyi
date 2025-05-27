@@ -107,7 +107,7 @@ from .multiarray import (
     where,
     zeros,
     _get_preserve_0d_arrays,
-    _set_preserve_0d_arrays
+    _set_preserve_0d_arrays,
 )
 
 __all__ = [
@@ -183,8 +183,8 @@ __all__ = [
     "vecdot",
     "shares_memory",
     "may_share_memory",
-    '_get_preserve_0d_arrays',
-    '_set_preserve_0d_arrays',
+    "_get_preserve_0d_arrays",
+    "_set_preserve_0d_arrays",
 ]
 
 _T = TypeVar("_T")
