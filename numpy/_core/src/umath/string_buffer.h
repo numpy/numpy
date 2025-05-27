@@ -297,6 +297,18 @@ struct Buffer {
         return num_codepoints;
     }
 
+    inline size_t
+    buffer_width()
+    {
+        switch (enc) {
+            case ENCODING::ASCII:
+            case ENCODING::UTF8:
+                return after - buf;
+            case ENCODING::UTF32:
+                return (after - buf) / sizeof(npy_ucs4);
+        }
+    }
+
     inline Buffer<enc>&
     operator+=(npy_int64 rhs)
     {
