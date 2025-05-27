@@ -54,6 +54,7 @@ __all__ = [
     "translate",
     "upper",
     "zfill",
+    "slice",
 ]
 
 _StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
@@ -493,4 +494,18 @@ def translate(
     a: T_co,
     table: str,
     deletechars: str | None = None,
+) -> _StringDTypeOrUnicodeArray: ...
+
+#
+@overload
+def slice(a: U_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /) -> NDArray[np.str_]: ...  # type: ignore[overload-overlap]
+@overload
+def slice(a: S_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /) -> NDArray[np.bytes_]: ...
+@overload
+def slice(
+    a: _StringDTypeSupportsArray, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /
+) -> _StringDTypeArray: ...
+@overload
+def slice(
+    a: T_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /
 ) -> _StringDTypeOrUnicodeArray: ...

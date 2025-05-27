@@ -2,7 +2,7 @@ from types import EllipsisType
 from typing import Any, Generic, Self, SupportsIndex, TypeAlias, overload
 
 from _typeshed import Incomplete
-from typing_extensions import TypeVar, deprecated, override
+from typing_extensions import TypeVar, override
 
 import numpy as np
 import numpy.typing as npt
@@ -220,8 +220,6 @@ class container(Generic[_ShapeT_co, _DTypeT_co]):
 
     #
     def copy(self, /) -> Self: ...
-    @deprecated("tostring() is deprecated. Use tobytes() instead.")
-    def tostring(self, /) -> bytes: ...
     def tobytes(self, /) -> bytes: ...
     def byteswap(self, /) -> Self: ...
     def astype(self, /, typecode: _DTypeLike[_ScalarT]) -> container[_ShapeT_co, np.dtype[_ScalarT]]: ...

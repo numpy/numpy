@@ -22,29 +22,60 @@ try:
     from . import multiarray
 except ImportError as exc:
     import sys
-    msg = """
+
+    # Basically always, the problem should be that the C module is wrong/missing...
+    if (
+        isinstance(exc, ModuleNotFoundError)
+        and exc.name == "numpy._core._multiarray_umath"
+    ):
+        import sys
+        candidates = []
+        for path in __path__:
+            candidates.extend(
+                f for f in os.listdir(path) if f.startswith("_multiarray_umath"))
+        if len(candidates) == 0:
+            bad_c_module_info = (
+                "We found no compiled module, did NumPy build successfully?\n")
+        else:
+            candidate_str = '\n  * '.join(candidates)
+            # cache_tag is documented to be possibly None, so just use name if it is
+            # this guesses at cache_tag being the same as the extension module scheme
+            tag = sys.implementation.cache_tag or sys.implementation.name
+            bad_c_module_info = (
+                f"The following compiled module files exist, but seem incompatible\n"
+                f"with with either python '{tag}' or the "
+                f"platform '{sys.platform}':\n\n  * {candidate_str}\n"
+            )
+    else:
+        bad_c_module_info = ""
+
+    major, minor, *_ = sys.version_info
+    msg = f"""
 
 IMPORTANT: PLEASE READ THIS FOR ADVICE ON HOW TO SOLVE THIS ISSUE!
 
 Importing the numpy C-extensions failed. This error can happen for
 many reasons, often due to issues with your setup or how NumPy was
 installed.
-
+{bad_c_module_info}
 We have compiled some common reasons and troubleshooting tips at:
 
     https://numpy.org/devdocs/user/troubleshooting-importerror.html
 
 Please note and check the following:
 
-  * The Python version is: Python%d.%d from "%s"
-  * The NumPy version is: "%s"
+  * The Python version is: Python {major}.{minor} from "{sys.executable}"
+  * The NumPy version is: "{__version__}"
 
 and make sure that they are the versions you expect.
-Please carefully study the documentation linked above for further help.
 
-Original error was: %s
-""" % (sys.version_info[0], sys.version_info[1], sys.executable,
-        __version__, exc)
+Please carefully study the information and documentation linked above.
+This is unlikely to be a NumPy issue but will be caused by a bad install
+or environment on your machine.
+
+Original error was: {exc}
+"""
+
     raise ImportError(msg) from exc
 finally:
     for envkey in env_added:

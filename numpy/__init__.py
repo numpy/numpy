@@ -111,10 +111,13 @@ else:
     try:
         from numpy.__config__ import show_config
     except ImportError as e:
-        msg = """Error importing numpy: you should not try to import numpy from
-        its source directory; please exit the numpy source tree, and relaunch
-        your python interpreter from there."""
-        raise ImportError(msg) from e
+        if isinstance(e, ModuleNotFoundError) and e.name == "numpy.__config__":
+            # The __config__ module itself was not found, so add this info:
+            msg = """Error importing numpy: you should not try to import numpy from
+            its source directory; please exit the numpy source tree, and relaunch
+            your python interpreter from there."""
+            raise ImportError(msg) from e
+        raise
 
     from . import _core
     from ._core import (

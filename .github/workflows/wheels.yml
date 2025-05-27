@@ -92,7 +92,7 @@ jobs:
           - [windows-2019, win_amd64, ""]
           - [windows-2019, win32, ""]
           - [windows-11-arm, win_arm64, ""]
-        python: ["cp311", "cp312", "cp313", "cp313t", "pp311"]
+        python: ["cp311", "cp312", "cp313", "cp313t", "cp314", "cp314t", "pp311"]
         exclude:
           # Don't build PyPy 32-bit windows
           - buildplat: [windows-2019, win32, ""]
@@ -107,6 +107,8 @@ jobs:
             python: "pp311"
           - buildplat: [ macos13, macosx_x86_64, openblas ]
             python: "cp313t"
+          - buildplat: [ macos13, macosx_x86_64, openblas ]
+            python: "cp314t"
 
     env:
       IS_32_BIT: ${{ matrix.buildplat[1] == 'win32' }}
@@ -175,7 +177,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@faf86a6ed7efa889faf6996aa23820831055001a  # v2.23.3
+        uses: pypa/cibuildwheel@90a0ddeff0f23eebc21630e65d66d0f4955e9b94  # v3.0.0b1
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
