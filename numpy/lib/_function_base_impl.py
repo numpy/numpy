@@ -4279,12 +4279,6 @@ def percentile(a,
     # by making the divisor have the dtype of the data array.
     q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
 
-    # TODO(seberg): from rebase, maybe the following was an improvement?
-    # if isinstance(q, (int, float)) and a.dtype.kind == "f":
-    #     q = np.true_divide(q, np.array(100, dtype=a.dtype))
-    # else:
-    #     q = q_arr / 100
-
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 

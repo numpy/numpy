@@ -910,7 +910,8 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     result = _in1d(ar1, ar2, assume_unique=assume_unique,
                    invert=invert, kind=kind)
 
-    return conv.wrap(result, to_scalar=conv.scalar_input[0], old_scalar=False)
+    # `in1d` always returns 1-d arrays (so no need for scalar logic)
+    return conv.wrap(result, to_scalar=False)
 
 
 def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
@@ -1192,7 +1193,12 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
     result = _in1d(element, test_elements, assume_unique=assume_unique,
                    invert=invert, kind=kind).reshape(element.shape)
 
-    return conv.wrap(result, to_scalar=conv.scalar_input[0])
+    # isin used to always return arrays, but in the "preserve 0d array" future
+    # we return a scalar if the element was a scalar.
+    return conv.wrap(
+        result,
+        to_scalar=conv.scalar_input[0] if np._get_preserve_0d_arrays() else False
+    )
 
 def _union1d_dispatcher(ar1, ar2):
     return (ar1, ar2)

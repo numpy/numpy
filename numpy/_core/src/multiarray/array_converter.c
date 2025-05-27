@@ -281,7 +281,6 @@ array_converter_wrap(PyArrayArrayConverterObject *self,
 {
     PyObject *obj;
     int ensure_scalar = (self->flags & NPY_CH_ALL_SCALARS) != 0;
-    int old_scalar = 1;  /* by default apply old-scalar rules! */
 
     if (find_wrap(self) < 0) {
         return NULL;
@@ -292,13 +291,8 @@ array_converter_wrap(PyArrayArrayConverterObject *self,
             "", NULL, &obj,
             /* Three-way "bool", if `None` inspect input to decide. */
             "$to_scalar", &PyArray_OptionalBoolConverter, &ensure_scalar,
-            "$old_scalar", &PyArray_OptionalBoolConverter, &old_scalar,
             NULL, NULL, NULL) < 0) {
         return NULL;
-    }
-    if ((old_scalar != -1) && npy_thread_unsafe_state.preserve_0d_arrays) {
-        /* keep using old behavior and ignore `to_scalar` */
-        ensure_scalar = old_scalar;
     }
 
     return npy_apply_wrap(
@@ -404,10 +398,9 @@ static PyMethodDef array_converter_methods[] = {
     {"wrap",
         (PyCFunction)array_converter_wrap,
         METH_FASTCALL | METH_KEYWORDS,
-        "Apply array-wrap.  Supports `to_scalar=None/True/False` and "
-        "`old_scalar=True/False/None`, default None (were all inputs scalars?).\n"
-        "Old scalar decides scalar return (if wrapped is 0-D) without "
-        "`NUMPY_PRESERVE_0D_ARRAYS`, default True."},
+        "Apply array-wrap.  Supports `to_scalar=None/True/False` where "
+        "the default of None uses the same logic as ufuncs which depends on "
+        "`NUMPY_PRESERVE_0D_ARRAYS`."},
     {NULL, NULL, 0, NULL}
 };
 

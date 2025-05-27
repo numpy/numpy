@@ -12,6 +12,7 @@ from numpy.exceptions import AxisError
 
 from . import multiarray, numerictypes, overrides, shape_base, umath
 from . import numerictypes as nt
+from ._multiarray_umath import _array_converter
 from ._ufunc_config import errstate
 from .multiarray import (  # noqa: F401
     ALLOW_THREADS,
@@ -22,6 +23,8 @@ from .multiarray import (  # noqa: F401
     MAY_SHARE_EXACT,
     RAISE,
     WRAP,
+    _get_preserve_0d_arrays,
+    _set_preserve_0d_arrays,
     arange,
     array,
     asanyarray,
@@ -59,12 +62,9 @@ from .multiarray import (  # noqa: F401
     vecdot,
     where,
     zeros,
-    _get_preserve_0d_arrays,
-    _set_preserve_0d_arrays,
 )
 from .overrides import finalize_array_function_like, set_module
 from .umath import NAN, PINF, invert, multiply, sin
-from ._multiarray_umath import _array_converter
 
 bitwise_not = invert
 ufunc = type(sin)

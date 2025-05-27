@@ -178,24 +178,32 @@ gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
  *   - < 0 error return.
  *   - self_op is filled in: Retry the Python operator.
  *   - other_op is filled in: Use the array operator (goes into ufuncs)
+ *     The return value may indicate that the result should be wrapped in
+ *     a `PyArray_Return()` call.
  *     (This may be the original generic if it is one.)
  *   - neither is filled in: Return NotImplemented.
  *
  * It is not possible for both to be filled.  If `other` is also a generics,
  * it is returned.
+ * If `other_op` is it is ready for an operation and the `to_scalar` return
+ * indicates if the result should be converted to a scalar. For comparisons
+ * we currently use the `array.tp_richcompare` so we ensure converting the
+ * other operand.
  */
 static inline int
 find_binary_operation_path(
-    PyObject *self, PyObject *other, PyObject **self_op, PyObject **other_op)
+    PyObject *self, PyObject *other, PyObject **self_op, PyObject **other_op,
+    npy_bool ensure_array)
 {
     *other_op = NULL;
     *self_op = NULL;
 
-    if (PyArray_IsScalar(other, Generic) ||
-            PyLong_CheckExact(other) ||
-            PyFloat_CheckExact(other) ||
-            PyComplex_CheckExact(other) ||
-            PyBool_Check(other) ||
+    if ((!ensure_array && (
+                PyArray_IsScalar(other, Generic) ||
+                PyLong_CheckExact(other) ||
+                PyFloat_CheckExact(other) ||
+                PyComplex_CheckExact(other) ||
+                PyBool_Check(other))) ||
             PyArray_Check(other)) {
         /*
          * The other operand is ready for the operation already.  Must pass on
@@ -239,13 +247,10 @@ find_binary_operation_path(
          * if the other object has the identical `__array_priority__` and
          * additionally already deferred back to us.
          * (`obj + scalar` and `scalar + obj` are not symmetric.)
-         *
-         * NOTE: Future NumPy may need to distinguish scalars here, one option
-         *       could be marking the array.
          */
          // TODO: To get future behavior right, need that scalar information!
          *other_op = (PyObject *)arr;
-         return 0;
+         return was_scalar;
     }
     Py_DECREF(arr);
 
@@ -302,6 +307,7 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
 {
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_@name@, gentype_@name@);
 
+    int to_scalar;
     PyObject *self = NULL;
     PyObject *other = NULL;
     PyObject *self_op, *other_op;
@@ -314,7 +320,8 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
         self = m2;
         other = m1;
     }
-    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+    if ((to_scalar = find_binary_operation_path(
+            self, other, &self_op, &other_op, /* ensure_array */ NPY_FALSE)) < 0) {
         return NULL;
     }
     if (self_op != NULL) {
@@ -338,6 +345,9 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
             res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.@ufunc@);
         }
         Py_DECREF(other_op);
+        if (to_scalar && npy_thread_unsafe_state.preserve_0d_arrays) {
+            return PyArray_Return((PyArrayObject *)res);
+        }
         return res;
     }
     else {
@@ -412,6 +422,7 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
 
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_power, gentype_power);
 
+    int to_scalar;
     PyObject *self = NULL;
     PyObject *other = NULL;
     PyObject *self_op, *other_op;
@@ -424,7 +435,8 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
         self = m2;
         other = m1;
     }
-    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+    if ((to_scalar = find_binary_operation_path(
+            self, other, &self_op, &other_op, /* ensure_array */ NPY_FALSE)) < 0) {
         return NULL;
     }
     if (self_op != NULL) {
@@ -453,6 +465,9 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
             res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.power);
         }
         Py_DECREF(other_op);
+        if (to_scalar && npy_thread_unsafe_state.preserve_0d_arrays) {
+            return PyArray_Return((PyArrayObject *)res);
+        }
         return res;
     }
     else {
@@ -1601,15 +1616,17 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
 
    RICHCMP_GIVE_UP_IF_NEEDED(self, other);
 
+    int to_scalar;
     PyObject *self_op;
     PyObject *other_op;
-    if (find_binary_operation_path(self, other, &self_op, &other_op) < 0) {
+    if ((to_scalar = find_binary_operation_path(
+            self, other, &self_op, &other_op, /* ensure_array */ NPY_TRUE)) < 0) {
         return NULL;
     }
 
     /* We can always just call RichCompare again */
     if (other_op != NULL) {
-        /* If we use richcompare again, need to ensure that one op is array */
+        /* Use richcompare again, this time we should have only arrays */
         self_op = PyArray_FromScalar(self, NULL);
         if (self_op == NULL) {
             Py_DECREF(other_op);
@@ -1618,6 +1635,9 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
         PyObject *res = PyObject_RichCompare(self_op, other_op, cmp_op);
         Py_DECREF(self_op);
         Py_DECREF(other_op);
+        if (to_scalar && npy_thread_unsafe_state.preserve_0d_arrays) {
+            return PyArray_Return((PyArrayObject *)res);
+        }
         return res;
     }
     else if (self_op != NULL) {

@@ -30,7 +30,6 @@ from numpy._core._multiarray_umath import _array_converter
 from numpy.lib import _function_base_impl as fnb
 from numpy.lib._function_base_impl import _weights_are_valid
 
-
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
 
@@ -1394,14 +1393,6 @@ def nanpercentile(
 
     q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
 
-    # TODO(seberg): Again this change might have made sense but should be meaningless for now
-    # # Use dtype of array if possible (e.g., if q is a python int or float)
-    # # by making the divisor have the dtype of the data array.
-    # if isinstance(q, (int, float)) and a.dtype.kind == "f":
-    #     q = np.true_divide(q, np.array(100, dtype=a.dtype))
-    # else:
-    #     q = q_arr / 100
-
     if not fnb._quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 
@@ -1418,8 +1409,12 @@ def nanpercentile(
 
     result = _nanquantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
-    # If no broadcasting happened, and q was a scalar, return a scalar:
-    return conv.wrap(result, to_scalar=conv.scalar_input[1], old_scalar=True)
+    # If no broadcasting happened, and q was a scalar we return a scalar
+    # when ufuncs would do so as well.
+    return conv.wrap(
+        result,
+        to_scalar=conv.scalar_input[1] if np._get_preserve_0d_arrays() else True
+    )
 
 
 def _nanquantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
