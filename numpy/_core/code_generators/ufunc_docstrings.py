@@ -2963,7 +2963,7 @@ add_newdoc('numpy._core.umath', 'matvec',
     matrix-vector product is defined as:
 
     .. math::
-       \\mathbf{A} \\cdot \\mathbf{b} = \\sum_{j=0}^{n-1} A_{ij} v_j
+       \\mathbf{A} \\cdot \\mathbf{v} = \\sum_{j=0}^{n-1} A_{ij} v_j
 
     where the sum is over the last dimensions in ``x1`` and ``x2``
     (unless ``axes`` is specified).  (For a matrix-vector product with the
