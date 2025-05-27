@@ -193,6 +193,8 @@ __all__ = [
     "vdot",
     "where",
     "zeros",
+    '_get_preserve_0d_arrays',
+    '_set_preserve_0d_arrays',
 ]
 
 _ScalarT = TypeVar("_ScalarT", bound=generic)
