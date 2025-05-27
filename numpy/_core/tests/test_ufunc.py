@@ -1680,7 +1680,10 @@ class TestUfunc:
         # axis=None indicates a scalar return
         assert type(np.any(0, axis=None)) is np.bool_
         # Not a NumPy scalar (no odd __array_wrap__) and not axis=None:
-        assert type(np.any(0, axis=0)) is np.ndarray
+        if np._get_preserve_0d_arrays():
+            assert type(np.any(0, axis=0)) is np.ndarray
+        else:
+            assert type(np.any(0, axis=0)) is np.bool_
 
         # assert that 0-d arrays get wrapped
         class MyArray(np.ndarray):

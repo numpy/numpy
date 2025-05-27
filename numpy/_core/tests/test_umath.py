@@ -2813,7 +2813,10 @@ class TestBitwiseUFuncs:
         # Non-empty object arrays do not use the identity
         for f in binary_funcs:
             btype = np.array([True], dtype=object)
-            assert f.reduce(btype).dtype == btype.dtype
+            if np._get_preserve_0d_arrays():
+                assert f.reduce(btype).dtype == btype.dtype
+            else:
+                assert type(f.reduce(btype)) is bool
             assert type(f.reduce(btype, axis=None)) is bool
 
     @pytest.mark.parametrize("input_dtype_obj, bitsize",

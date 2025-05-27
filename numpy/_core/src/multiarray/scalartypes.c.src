@@ -243,6 +243,7 @@ find_binary_operation_path(
          * NOTE: Future NumPy may need to distinguish scalars here, one option
          *       could be marking the array.
          */
+         // TODO: To get future behavior right, need that scalar information!
          *other_op = (PyObject *)arr;
          return 0;
     }
@@ -337,8 +338,7 @@ gentype_@name@@suff@(PyObject *m1, PyObject *m2)
             res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.@ufunc@);
         }
         Py_DECREF(other_op);
-        /* Bug convert back to scalar (TODO: It would be nice to signal this) */
-        return PyArray_Return((PyArrayObject *)res);
+        return res;
     }
     else {
         assert(other_op == NULL);
@@ -453,8 +453,7 @@ gentype_power(PyObject *m1, PyObject *m2, PyObject *modulo)
             res = PyArray_GenericBinaryFunction(other_op, m2, n_ops.power);
         }
         Py_DECREF(other_op);
-        /* Bug convert back to scalar (TODO: It would be nice to signal this) */
-        return PyArray_Return(res);
+        return res;
     }
     else {
         assert(other_op == NULL);
@@ -1619,8 +1618,7 @@ gentype_richcompare(PyObject *self, PyObject *other, int cmp_op)
         PyObject *res = PyObject_RichCompare(self_op, other_op, cmp_op);
         Py_DECREF(self_op);
         Py_DECREF(other_op);
-        /* assume if other was an array-like, we deferred above. */
-        return PyArray_Return(res);
+        return res;
     }
     else if (self_op != NULL) {
         /* Try again, since other is an object scalar and this one mutated */

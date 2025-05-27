@@ -901,8 +901,16 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         DeprecationWarning,
         stacklevel=2
     )
+    # See isin for any details, this only removes the reshape
+    conv = _array_converter(ar1, ar2)
+    ar1, ar2 = conv.as_arrays(subok=False, pyscalars="convert")
 
-    return _in1d(ar1, ar2, assume_unique, invert, kind=kind)
+    dt = conv.result_type()
+
+    result = _in1d(ar1, ar2, assume_unique=assume_unique,
+                   invert=invert, kind=kind)
+
+    return conv.wrap(result, to_scalar=conv.scalar_input[0], old_scalar=False)
 
 
 def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
