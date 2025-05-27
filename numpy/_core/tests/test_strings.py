@@ -224,7 +224,7 @@ class TestMethods:
         with pytest.raises(TypeError, match="unsupported type"):
             np.strings.multiply(np.array("abc", dtype=dt), 3.14)
 
-        with pytest.raises(MemoryError):
+        with pytest.raises(OverflowError):
             np.strings.multiply(np.array("abc", dtype=dt), sys.maxsize)
 
     def test_inplace_multiply(self, dt):
@@ -234,6 +234,9 @@ class TestMethods:
             assert_array_equal(arr, np.array(['foo ', 'barb'], dtype=dt))
         else:
             assert_array_equal(arr, ['foo foo ', 'barbar'])
+
+        with pytest.raises(OverflowError):
+            arr *= sys.maxsize
 
     @pytest.mark.parametrize("i_dt", [np.int8, np.int16, np.int32,
                                       np.int64, np.int_])

@@ -137,9 +137,9 @@ static int multiply_loop_core(
         size_t newsize;
         int overflowed = npy_mul_with_overflow_size_t(
                 &newsize, cursize, factor);
-        if (overflowed) {
-            npy_gil_error(PyExc_MemoryError,
-                      "Failed to allocate string in string multiply");
+        if (overflowed || newsize > PY_SSIZE_T_MAX) {
+            npy_gil_error(PyExc_OverflowError,
+                      "Overflow encountered in string multiply");
             goto fail;
         }
 

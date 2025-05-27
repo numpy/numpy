@@ -15,6 +15,7 @@
 #include "dtypemeta.h"
 #include "convert_datatype.h"
 #include "gil_utils.h"
+#include "templ_common.h" /* for npy_mul_size_with_overflow_size_t */
 
 #include "string_ufuncs.h"
 #include "string_fastsearch.h"
@@ -166,34 +167,44 @@ string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
 
 
 template <ENCODING enc>
-static inline void
+static inline int
 string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
 {
     size_t len1 = buf1.num_codepoints();
     if (reps < 1 || len1 == 0) {
         out.buffer_fill_with_zeros_after_index(0);
-        return;
+        return 0;
     }
 
     size_t width = out.buffer_width();
-    size_t pad = 0;
-    if (width < len1*reps) {
-        reps = width / len1;
-        pad = width % len1;
-    }
     if (len1 == 1) {
         out.buffer_memset(*buf1, reps);
         out.buffer_fill_with_zeros_after_index(reps);
+        return 0;
     }
-    else {
-        for (npy_int64 i = 0; i < reps; i++) {
-            buf1.buffer_memcpy(out, len1);
-            out += len1;
-        }
-        buf1.buffer_memcpy(out, pad);
-        out += pad;
-        out.buffer_fill_with_zeros_after_index(0);
+
+    size_t newlen;
+    if (NPY_UNLIKELY(npy_mul_with_overflow_size_t(&newlen, reps, len1) < 0) || newlen > PY_SSIZE_T_MAX) {
+        return -1;
     }
+
+    size_t pad = 0;
+    if (width < newlen) {
+        reps = width / len1;
+        pad = width % len1;
+    }
+
+    for (npy_int64 i = 0; i < reps; i++) {
+        buf1.buffer_memcpy(out, len1);
+        out += len1;
+    }
+
+    buf1.buffer_memcpy(out, pad);
+    out += pad;
+
+    out.buffer_fill_with_zeros_after_index(0);
+
+    return 0;
 }
 
 
@@ -246,7 +257,9 @@ string_multiply_strint_loop(PyArrayMethod_Context *context,
     while (N--) {
         Buffer<enc> buf(in1, elsize);
         Buffer<enc> outbuf(out, outsize);
-        string_multiply<enc>(buf, *(npy_int64 *)in2, outbuf);
+        if (NPY_UNLIKELY(string_multiply<enc>(buf, *(npy_int64 *)in2, outbuf) < 0)) {
+            npy_gil_error(PyExc_OverflowError, "Overflow detected in string multiply");
+        }
 
         in1 += strides[0];
         in2 += strides[1];
@@ -275,7 +288,9 @@ string_multiply_intstr_loop(PyArrayMethod_Context *context,
     while (N--) {
         Buffer<enc> buf(in2, elsize);
         Buffer<enc> outbuf(out, outsize);
-        string_multiply<enc>(buf, *(npy_int64 *)in1, outbuf);
+        if (NPY_UNLIKELY(string_multiply<enc>(buf, *(npy_int64 *)in1, outbuf) < 0)) {
+            npy_gil_error(PyExc_OverflowError, "Overflow detected in string multiply");
+        }
 
         in1 += strides[0];
         in2 += strides[1];
