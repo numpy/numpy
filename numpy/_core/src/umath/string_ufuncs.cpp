@@ -184,7 +184,7 @@ string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
     }
 
     size_t newlen;
-    if (NPY_UNLIKELY(npy_mul_with_overflow_size_t(&newlen, reps, len1) < 0) || newlen > PY_SSIZE_T_MAX) {
+    if (NPY_UNLIKELY(npy_mul_with_overflow_size_t(&newlen, reps, len1) != 0) || newlen > PY_SSIZE_T_MAX) {
         return -1;
     }
 
