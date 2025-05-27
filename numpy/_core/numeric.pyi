@@ -77,7 +77,9 @@ from .multiarray import (
     # other
     _Array,
     _ConstructorEmpty,
+    _get_preserve_0d_arrays,
     _KwargsEmpty,
+    _set_preserve_0d_arrays,
     arange,
     array,
     asanyarray,
@@ -106,8 +108,6 @@ from .multiarray import (
     vdot,
     where,
     zeros,
-    _get_preserve_0d_arrays,
-    _set_preserve_0d_arrays,
 )
 
 __all__ = [
