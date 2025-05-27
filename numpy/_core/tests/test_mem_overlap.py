@@ -166,7 +166,7 @@ def check_may_share_memory_exact(a, b):
     err_msg = ""
     if got != exact:
         err_msg = "    " + "\n    ".join([
-            f"base_a - base_b = {a.__array_interface__['data'][0] - b.__array_interface__['data'][0]!r}",
+            f"base_a - base_b = {a.__array_interface__['data'][0] - b.__array_interface__['data'][0]!r}",  # noqa: E501
             f"shape_a = {a.shape!r}",
             f"shape_b = {b.shape!r}",
             f"strides_a = {a.strides!r}",
@@ -402,7 +402,7 @@ def test_internal_overlap_diophantine():
             exists = (X is not None)
 
         if X is not None:
-            assert_(sum(a * x for a, x in zip(A, X)) == sum(a * u // 2 for a, u in zip(A, U)))
+            assert_(sum(a * x for a, x in zip(A, X)) == sum(a * u // 2 for a, u in zip(A, U)))  # noqa: E501
             assert_(all(0 <= x <= u for x, u in zip(X, U)))
             assert_(any(x != u // 2 for x, u in zip(X, U)))
 
