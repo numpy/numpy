@@ -73,6 +73,7 @@ def run_pyright_with_coverage(
         cov_percent = data["typeCompleteness"]["completenessScore"] * 100
 
     sys.stderr.write(result.stderr)
+    sys.stdout.write(result.stdout)
     if cov_percent < cov_fail_under:
         sys.stdout.write(
             f"Coverage {cov_percent:.1f}% is below minimum required "
@@ -83,7 +84,6 @@ def run_pyright_with_coverage(
         f"Coverage {cov_percent:.1f}% is at or above minimum required "
         f"{cov_fail_under:.1f}%"
     )
-    sys.stdout.write(result.stdout)
     return 0
 
 
