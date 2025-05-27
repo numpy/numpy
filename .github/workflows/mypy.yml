@@ -73,5 +73,7 @@ jobs:
       run: |
         spin mypy
     - name: Check Pyright's type compelteness is above 80%
+      # Pyright reports different percentages on different platforms
+      if: runner.os == 'Linux'
       run: |
         spin run python tools/pyright_cov.py --verifytypes numpy --ignoreexternal --fail-under 80 --exclude-like '*.tests.*'
