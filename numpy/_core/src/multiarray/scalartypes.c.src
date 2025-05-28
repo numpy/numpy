@@ -2483,14 +2483,12 @@ static PyObject *
 static PyObject *
 @name@_from_number(PyObject *cls, PyObject *arg)
 {
-#if @is_half@
-    npy_@name@ x = npy_double_to_half(PyFloat_AsDouble(arg));
-#else
-    npy_@name@ x = (npy_@name@)PyFloat_AsDouble(arg);
-#endif
-    if (x == -1.0 && PyErr_Occurred()) {
+    npy_double val = PyFloat_AsDouble(arg);
+    if (val == -1.0 && PyErr_Occurred()) {
         return NULL;
     }
+
+    npy_@name@ x = @is_half@ ? npy_double_to_half(val) : (npy_@name@)(val);
 
     PyObject *result = PyArrayScalar_New(@Name@);
     PyArrayScalar_ASSIGN(result, @Name@, x);
