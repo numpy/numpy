@@ -1578,6 +1578,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_SortFunc *sort_with_array = NULL;
 
     NpyAuxData *auxdata = NULL;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
 
     int n = PyArray_NDIM(op);
 
@@ -1594,7 +1595,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return -1;
     }
 
-    if (PyArray_GetSortFunction(PyArray_DESCR(op), which, 0, &sort, &auxdata) < 0) {
+    if (PyArray_GetSortFunction(PyArray_DESCR(op), which, 0, &sort, &auxdata, &flags) < 0) {
         sort_with_array = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort[which];
     }
 
@@ -1766,8 +1767,9 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyObject *ret;
 
     NpyAuxData *auxdata = NULL;
+    NPY_ARRAYMETHOD_FLAGS flags = 0;
 
-    if (PyArray_GetArgSortFunction(PyArray_DESCR(op), which, 0, &argsort, &auxdata) < 0) {
+    if (PyArray_GetArgSortFunction(PyArray_DESCR(op), which, 0, &argsort, &auxdata, &flags) < 0) {
         argsort_with_array = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort[which];
     }
 

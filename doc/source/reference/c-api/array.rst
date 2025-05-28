@@ -3539,7 +3539,7 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 
 .. c:type:: int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, \
         npy_intp sort_kind, int descending, PyArray_SortFuncWithContext **out_sort, \
-        NpyAuxData **out_auxdata)
+        NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 
     If defined, sets a custom sorting function for the DType for each of
     the sort kinds numpy implements. Returns 0 on success.
@@ -3548,7 +3548,7 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 
 .. c:type:: int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, \
         npy_intp sort_kind, int descending, PyArray_ArgSortFuncWithContext **out_argsort, \
-        NpyAuxData **out_auxdata)
+        NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 
     If defined, sets a custom argsorting function for the DType for each of
     the sort kinds numpy implements. Returns 0 on success.

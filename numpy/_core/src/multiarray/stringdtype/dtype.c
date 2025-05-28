@@ -559,7 +559,7 @@ _stringdtype_timsort(PyArrayMethod_Context *context, void *start, npy_intp num,
 int
 stringdtype_get_sort_function(PyArray_Descr *descr,
     NPY_SORTKIND sort_kind, int descending, PyArray_SortFuncWithContext **out_sort,
-    NpyAuxData **NPY_UNUSED(out_auxdata)) {
+    NpyAuxData **NPY_UNUSED(out_auxdata), NPY_ARRAYMETHOD_FLAGS *out_flags) {
     
     switch (sort_kind) {
         default:
@@ -573,7 +573,7 @@ stringdtype_get_sort_function(PyArray_Descr *descr,
             *out_sort = &_stringdtype_timsort;
             break;
     }
-
+    *out_flags = NPY_METH_REQUIRES_PYAPI;
     return 0;
 }
 
@@ -612,7 +612,8 @@ _stringdtype_atimsort(PyArrayMethod_Context *context, void *vv, npy_intp *tosort
 
 int
 stringdtype_get_argsort_function(PyArray_Descr *descr, 
-    NPY_SORTKIND sort_kind, int descending, PyArray_ArgSortFuncWithContext **out_argsort) {
+    NPY_SORTKIND sort_kind, int descending, PyArray_ArgSortFuncWithContext **out_argsort,
+    NpyAuxData **NPY_UNUSED(out_auxdata), NPY_ARRAYMETHOD_FLAGS *out_flags) {
     
     switch (sort_kind) {
         default:
@@ -626,6 +627,7 @@ stringdtype_get_argsort_function(PyArray_Descr *descr,
             *out_argsort = &_stringdtype_atimsort;
             break;
     }
+    *out_flags = NPY_METH_REQUIRES_PYAPI;
 
     return 0;
 }

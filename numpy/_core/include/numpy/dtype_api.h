@@ -493,8 +493,10 @@ typedef int (PyArray_ArgSortFuncWithContext)(PyArrayMethod_Context *,
                                   NpyAuxData *);
 
 typedef int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, 
-        npy_intp, int, PyArray_SortFuncWithContext **, NpyAuxData **);
+        npy_intp, int, PyArray_SortFuncWithContext **, NpyAuxData **,
+        NPY_ARRAYMETHOD_FLAGS *out_flags);
 typedef int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, 
-        npy_intp, int, PyArray_ArgSortFuncWithContext **, NpyAuxData **);
+        npy_intp, int, PyArray_ArgSortFuncWithContext **, NpyAuxData **,
+        NPY_ARRAYMETHOD_FLAGS *out_flags);
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */
