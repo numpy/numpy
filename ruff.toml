@@ -68,6 +68,7 @@ ignore = [
 "_tempita.py" = ["B909"]
 "bench_*.py" = ["B015", "B018"]
 "test*.py" = ["B015", "B018", "E201", "E714"]
+
 "benchmarks/benchmarks/bench_linalg.py" = ["E501"]
 "numpy/_core/tests/test_api.py" = ["E501"]
 "numpy/_core/tests/test_arrayprint.py" = ["E501"]
@@ -90,15 +91,18 @@ ignore = [
 "numpy/_core/_add_newdocs.py" = ["E501"]
 "numpy/_core/_add_newdocs_scalars.py" = ["E501"]
 "numpy/_core/code_generators/generate_umath.py" = ["E501"]
-"numpy/_typing/_array_like.py" = ["E501"]
 "numpy/lib/tests/test_function_base.py" = ["E501"]
 "numpy/lib/tests/test_format.py" = ["E501"]
 "numpy/lib/tests/test_io.py" = ["E501"]
 "numpy/lib/tests/test_polynomial.py" = ["E501"]
 "numpy/linalg/tests/test_linalg.py" = ["E501"]
 "numpy/tests/test_configtool.py" = ["E501"]
-"numpy*pyi" = ["E501"]
 "numpy/f2py/*py" = ["E501"]
+# for typing related files we follow https://typing.python.org/en/latest/guides/writing_stubs.html#maximum-line-length
+"numpy/_typing/_array_like.py" = ["E501"]
+"numpy/_typing/_dtype_like.py" = ["E501"]
+"numpy*pyi" = ["E501"]
+
 "__init__.py" = ["F401", "F403", "F405"]
 "__init__.pyi" = ["F401"]
 "numpy/_core/defchararray.py" = ["F403", "F405"]
