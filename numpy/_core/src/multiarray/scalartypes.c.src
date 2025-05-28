@@ -2479,6 +2479,25 @@ static PyObject *
  *             npy_longdouble_to_PyLong#
  *  #
  */
+/* Loosely based on builtin float.from_number */
+static PyObject *
+@name@_from_number(PyObject *cls, PyObject *arg)
+{
+#if @is_half@
+    npy_@name@ x = npy_double_to_half(PyFloat_AsDouble(arg));
+#else
+    npy_@name@ x = (npy_@name@)PyFloat_AsDouble(arg);
+#endif
+    if (x == -1.0 && PyErr_Occurred()) {
+        return NULL;
+    }
+
+    PyObject *result = PyArrayScalar_New(@Name@);
+    PyArrayScalar_ASSIGN(result, @Name@, x);
+
+    return result;
+}
+
 /* Heavily copied from the builtin float.as_integer_ratio */
 static PyObject *
 @name@_as_integer_ratio(PyObject *self, PyObject *NPY_UNUSED(args))
@@ -2890,6 +2909,9 @@ static PyMethodDef @name@type_methods[] = {
     {"__class_getitem__",
         (PyCFunction)numbertype_class_getitem,
         METH_CLASS | METH_O, NULL},
+    {"from_number",
+         (PyCFunction)@name@_from_number,
+         METH_CLASS | METH_O, NULL},
     {NULL, NULL, 0, NULL}
 };
 /**end repeat**/
