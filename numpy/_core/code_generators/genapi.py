@@ -466,7 +466,7 @@ def order_dict(d):
 def merge_api_dicts(dicts):
     ret = {}
     for d in dicts:
-        ret.update(dict(d.items()))
+        ret.update(d)
 
     return ret
 
