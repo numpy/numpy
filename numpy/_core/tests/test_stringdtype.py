@@ -128,8 +128,8 @@ def test_null_roundtripping():
 
 def test_string_too_large_error():
     arr = np.array(["a", "b", "c"], dtype=StringDType())
-    with pytest.raises(MemoryError):
-        arr * (2**63 - 2)
+    with pytest.raises(OverflowError):
+        arr * (sys.maxsize + 1)
 
 
 @pytest.mark.parametrize(

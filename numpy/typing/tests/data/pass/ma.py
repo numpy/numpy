@@ -16,7 +16,8 @@ MAR_td64: MaskedArray[np.timedelta64] = np.ma.MaskedArray([np.timedelta64(1, "D"
 MAR_M_dt64: MaskedArray[np.datetime64] = np.ma.MaskedArray([np.datetime64(1, "D")])
 MAR_S: MaskedArray[np.bytes_] = np.ma.MaskedArray([b'foo'], dtype=np.bytes_)
 MAR_U: MaskedArray[np.str_] = np.ma.MaskedArray(['foo'], dtype=np.str_)
-MAR_T = cast(np.ma.MaskedArray[Any, np.dtypes.StringDType], np.ma.MaskedArray(["a"], "T"))
+MAR_T = cast(np.ma.MaskedArray[Any, np.dtypes.StringDType],
+             np.ma.MaskedArray(["a"], dtype="T"))
 
 AR_b: npt.NDArray[np.bool] = np.array([True, False, True])
 
