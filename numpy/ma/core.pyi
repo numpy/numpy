@@ -2,7 +2,7 @@
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
 from collections.abc import Sequence
-from typing import Any, Literal, Self, SupportsIndex, TypeAlias, overload
+from typing import Any, Literal, NoReturn, Self, SupportsIndex, TypeAlias, overload
 
 from _typeshed import Incomplete
 from typing_extensions import TypeIs, TypeVar
@@ -19,17 +19,23 @@ from numpy import (
     bool_,
     bytes_,
     character,
+    complex128,
     complexfloating,
     datetime64,
     dtype,
     dtypes,
     expand_dims,
+    float16,
+    float32,
     float64,
     floating,
     generic,
+    inexact,
     int_,
+    integer,
     intp,
     ndarray,
+    number,
     object_,
     signedinteger,
     str_,
@@ -40,14 +46,21 @@ from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
     NDArray,
+    _32Bit,
+    _64Bit,
     _AnyShape,
     _ArrayLike,
     _ArrayLikeBool_co,
     _ArrayLikeBytes_co,
+    _ArrayLikeComplex128_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeDT64_co,
+    _ArrayLikeFloat64_co,
     _ArrayLikeFloat_co,
     _ArrayLikeInt,
     _ArrayLikeInt_co,
+    _ArrayLikeNumber_co,
+    _ArrayLikeObject_co,
     _ArrayLikeStr_co,
     _ArrayLikeString_co,
     _ArrayLikeTD64_co,
@@ -247,8 +260,18 @@ _DTypeT_co = TypeVar("_DTypeT_co", bound=dtype, default=dtype, covariant=True)
 _ArrayT = TypeVar("_ArrayT", bound=ndarray[Any, Any])
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=generic, covariant=True)
+_NumberT = TypeVar("_NumberT", bound=number)
 # A subset of `MaskedArray` that can be parametrized w.r.t. `np.generic`
 _MaskedArray: TypeAlias = MaskedArray[_AnyShape, dtype[_ScalarT]]
+
+_MaskedArrayUInt_co: TypeAlias = _MaskedArray[unsignedinteger | np.bool]
+_MaskedArrayInt_co: TypeAlias = _MaskedArray[integer | np.bool]
+_MaskedArrayComplex_co: TypeAlias = _MaskedArray[inexact | integer | np.bool]
+_MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
+_MaskedArrayFloat64_co: TypeAlias = _MaskedArray[floating[_64Bit] | float32 | float16 | integer | np.bool]
+_MaskedArrayComplex128_co: TypeAlias = _MaskedArray[number[_64Bit] | number[_32Bit] | float16 | integer | np.bool]
+_MaskedArrayFloat_co: TypeAlias = _MaskedArray[floating | integer | np.bool]
+
 _Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 MaskType = bool_
@@ -463,10 +486,179 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __gt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
     def __le__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
     def __lt__(self, other: ArrayLike, /) -> _MaskedArray[bool_]: ...  # type: ignore[override]
-    def __add__(self, other): ...
-    def __radd__(self, other): ...
-    def __sub__(self, other): ...
-    def __rsub__(self, other): ...
+
+    # Keep in sync with `ndarray.__add__`
+    @overload
+    def __add__(self: _MaskedArray[_NumberT], other: int | np.bool, /) -> MaskedArray[_ShapeT_co, dtype[_NumberT]]: ...
+    @overload
+    def __add__(self: _MaskedArray[_NumberT], other: _ArrayLikeBool_co, /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __add__(self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, /) -> _MaskedArray[np.bool]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __add__(self: _MaskedArray[np.bool], other: _ArrayLike[_NumberT], /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __add__(self: _MaskedArray[float64], other: _ArrayLikeFloat64_co, /) -> _MaskedArray[float64]: ...
+    @overload
+    def __add__(self: _MaskedArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], /) -> _MaskedArray[float64]: ...
+    @overload
+    def __add__(self: _MaskedArray[complex128], other: _ArrayLikeComplex128_co, /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __add__(self: _MaskedArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __add__(self: _MaskedArrayUInt_co, other: _ArrayLikeUInt_co, /) -> _MaskedArray[unsignedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __add__(self: _MaskedArrayInt_co, other: _ArrayLikeInt_co, /) -> _MaskedArray[signedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __add__(self: _MaskedArrayFloat_co, other: _ArrayLikeFloat_co, /) -> _MaskedArray[floating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __add__(self: _MaskedArrayComplex_co, other: _ArrayLikeComplex_co, /) -> _MaskedArray[complexfloating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __add__(self: _MaskedArray[number], other: _ArrayLikeNumber_co, /) -> _MaskedArray[number]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __add__(self: _MaskedArrayTD64_co, other: _ArrayLikeTD64_co, /) -> _MaskedArray[timedelta64]: ...
+    @overload
+    def __add__(self: _MaskedArrayTD64_co, other: _ArrayLikeDT64_co, /) -> _MaskedArray[datetime64]: ...
+    @overload
+    def __add__(self: _MaskedArray[datetime64], other: _ArrayLikeTD64_co, /) -> _MaskedArray[datetime64]: ...
+    @overload
+    def __add__(self: _MaskedArray[bytes_], other: _ArrayLikeBytes_co, /) -> _MaskedArray[bytes_]: ...
+    @overload
+    def __add__(self: _MaskedArray[str_], other: _ArrayLikeStr_co, /) -> _MaskedArray[str_]: ...
+    @overload
+    def __add__(
+        self: MaskedArray[Any, dtypes.StringDType],
+        other: _ArrayLikeStr_co | _ArrayLikeString_co,
+        /,
+    ) -> MaskedArray[_AnyShape, dtypes.StringDType]: ...
+    @overload
+    def __add__(self: _MaskedArray[object_], other: Any, /) -> Any: ...
+    @overload
+    def __add__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+
+    # Keep in sync with `ndarray.__radd__`
+    @overload  # signature equivalent to __add__
+    def __radd__(self: _MaskedArray[_NumberT], other: int | np.bool, /) -> MaskedArray[_ShapeT_co, dtype[_NumberT]]: ...
+    @overload
+    def __radd__(self: _MaskedArray[_NumberT], other: _ArrayLikeBool_co, /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __radd__(self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, /) -> _MaskedArray[np.bool]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __radd__(self: _MaskedArray[np.bool], other: _ArrayLike[_NumberT], /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __radd__(self: _MaskedArray[float64], other: _ArrayLikeFloat64_co, /) -> _MaskedArray[float64]: ...
+    @overload
+    def __radd__(self: _MaskedArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], /) -> _MaskedArray[float64]: ...
+    @overload
+    def __radd__(self: _MaskedArray[complex128], other: _ArrayLikeComplex128_co, /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __radd__(self: _MaskedArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __radd__(self: _MaskedArrayUInt_co, other: _ArrayLikeUInt_co, /) -> _MaskedArray[unsignedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __radd__(self: _MaskedArrayInt_co, other: _ArrayLikeInt_co, /) -> _MaskedArray[signedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __radd__(self: _MaskedArrayFloat_co, other: _ArrayLikeFloat_co, /) -> _MaskedArray[floating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __radd__(self: _MaskedArrayComplex_co, other: _ArrayLikeComplex_co, /) -> _MaskedArray[complexfloating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __radd__(self: _MaskedArray[number], other: _ArrayLikeNumber_co, /) -> _MaskedArray[number]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __radd__(self: _MaskedArrayTD64_co, other: _ArrayLikeTD64_co, /) -> _MaskedArray[timedelta64]: ...
+    @overload
+    def __radd__(self: _MaskedArrayTD64_co, other: _ArrayLikeDT64_co, /) -> _MaskedArray[datetime64]: ...
+    @overload
+    def __radd__(self: _MaskedArray[datetime64], other: _ArrayLikeTD64_co, /) -> _MaskedArray[datetime64]: ...
+    @overload
+    def __radd__(self: _MaskedArray[bytes_], other: _ArrayLikeBytes_co, /) -> _MaskedArray[bytes_]: ...
+    @overload
+    def __radd__(self: _MaskedArray[str_], other: _ArrayLikeStr_co, /) -> _MaskedArray[str_]: ...
+    @overload
+    def __radd__(
+        self: MaskedArray[Any, dtypes.StringDType],
+        other: _ArrayLikeStr_co | _ArrayLikeString_co,
+        /,
+    ) -> MaskedArray[_AnyShape, dtypes.StringDType]: ...
+    @overload
+    def __radd__(self: _MaskedArray[object_], other: Any, /) -> Any: ...
+    @overload
+    def __radd__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+
+    # Keep in sync with `ndarray.__sub__`
+    @overload
+    def __sub__(self: _MaskedArray[_NumberT], other: int | np.bool, /) -> MaskedArray[_ShapeT_co, dtype[_NumberT]]: ...
+    @overload
+    def __sub__(self: _MaskedArray[_NumberT], other: _ArrayLikeBool_co, /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __sub__(self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, /) -> NoReturn: ...
+    @overload
+    def __sub__(self: _MaskedArray[np.bool], other: _ArrayLike[_NumberT], /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __sub__(self: _MaskedArray[float64], other: _ArrayLikeFloat64_co, /) -> _MaskedArray[float64]: ...
+    @overload
+    def __sub__(self: _MaskedArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], /) -> _MaskedArray[float64]: ...
+    @overload
+    def __sub__(self: _MaskedArray[complex128], other: _ArrayLikeComplex128_co, /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __sub__(self: _MaskedArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __sub__(self: _MaskedArrayUInt_co, other: _ArrayLikeUInt_co, /) -> _MaskedArray[unsignedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __sub__(self: _MaskedArrayInt_co, other: _ArrayLikeInt_co, /) -> _MaskedArray[signedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __sub__(self: _MaskedArrayFloat_co, other: _ArrayLikeFloat_co, /) -> _MaskedArray[floating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __sub__(self: _MaskedArrayComplex_co, other: _ArrayLikeComplex_co, /) -> _MaskedArray[complexfloating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __sub__(self: _MaskedArray[number], other: _ArrayLikeNumber_co, /) -> _MaskedArray[number]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __sub__(self: _MaskedArrayTD64_co, other: _ArrayLikeTD64_co, /) -> _MaskedArray[timedelta64]: ...
+    @overload
+    def __sub__(self: _MaskedArray[datetime64], other: _ArrayLikeTD64_co, /) -> _MaskedArray[datetime64]: ...
+    @overload
+    def __sub__(self: _MaskedArray[datetime64], other: _ArrayLikeDT64_co, /) -> _MaskedArray[timedelta64]: ...
+    @overload
+    def __sub__(self: _MaskedArray[object_], other: Any, /) -> Any: ...
+    @overload
+    def __sub__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+
+    # Keep in sync with `ndarray.__rsub__`
+    @overload
+    def __rsub__(self: _MaskedArray[_NumberT], other: int | np.bool, /) -> MaskedArray[_ShapeT_co, dtype[_NumberT]]: ...
+    @overload
+    def __rsub__(self: _MaskedArray[_NumberT], other: _ArrayLikeBool_co, /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rsub__(self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, /) -> NoReturn: ...
+    @overload
+    def __rsub__(self: _MaskedArray[np.bool], other: _ArrayLike[_NumberT], /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rsub__(self: _MaskedArray[float64], other: _ArrayLikeFloat64_co, /) -> _MaskedArray[float64]: ...
+    @overload
+    def __rsub__(self: _MaskedArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], /) -> _MaskedArray[float64]: ...
+    @overload
+    def __rsub__(self: _MaskedArray[complex128], other: _ArrayLikeComplex128_co, /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __rsub__(self: _MaskedArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __rsub__(self: _MaskedArrayUInt_co, other: _ArrayLikeUInt_co, /) -> _MaskedArray[unsignedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rsub__(self: _MaskedArrayInt_co, other: _ArrayLikeInt_co, /) -> _MaskedArray[signedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rsub__(self: _MaskedArrayFloat_co, other: _ArrayLikeFloat_co, /) -> _MaskedArray[floating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rsub__(self: _MaskedArrayComplex_co, other: _ArrayLikeComplex_co, /) -> _MaskedArray[complexfloating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rsub__(self: _MaskedArray[number], other: _ArrayLikeNumber_co, /) -> _MaskedArray[number]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rsub__(self: _MaskedArrayTD64_co, other: _ArrayLikeTD64_co, /) -> _MaskedArray[timedelta64]: ...
+    @overload
+    def __rsub__(self: _MaskedArrayTD64_co, other: _ArrayLikeDT64_co, /) -> _MaskedArray[datetime64]: ...
+    @overload
+    def __rsub__(self: _MaskedArray[datetime64], other: _ArrayLikeDT64_co, /) -> _MaskedArray[timedelta64]: ...
+    @overload
+    def __rsub__(self: _MaskedArray[object_], other: Any, /) -> Any: ...
+    @overload
+    def __rsub__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
+
     def __mul__(self, other): ...
     def __rmul__(self, other): ...
     def __truediv__(self, other): ...
