@@ -23,6 +23,10 @@ try:
 except ImportError as exc:
     import sys
 
+    # Bypass for the module re-initialization opt-out
+    if exc.msg == "cannot load module more than once per process":
+        raise
+
     # Basically always, the problem should be that the C module is wrong/missing...
     if (
         isinstance(exc, ModuleNotFoundError)
