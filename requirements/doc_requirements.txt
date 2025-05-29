@@ -19,7 +19,7 @@ toml
 
 
 # for doctests, also needs pytz which is in test_requirements
-scipy-doctest==1.6.0
+scipy-doctest>=1.8.0
 
 # interactive documentation utilities
 # see https://github.com/jupyterlite/pyodide-kernel#compatibility
