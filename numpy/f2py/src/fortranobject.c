@@ -363,6 +363,8 @@ fortran_getattr(PyFortranObject *fp, char *name)
 {
     int i, j, k, flag;
     if (fp->dict != NULL) {
+        // python 3.13 added PyDict_GetItemRef
+#if PY_VERSION_HEX < 0x030D0000
         PyObject *v = _PyDict_GetItemStringWithError(fp->dict, name);
         if (v == NULL && PyErr_Occurred()) {
             return NULL;
@@ -371,6 +373,17 @@ fortran_getattr(PyFortranObject *fp, char *name)
             Py_INCREF(v);
             return v;
         }
+#else
+        PyObject *v;
+        int result = PyDict_GetItemStringRef(fp->dict, name, &v);
+        if (result == -1) {
+            return NULL;
+        }
+        else if (result == 1) {
+            return v;
+        }
+#endif
+
     }
     for (i = 0, j = 1; i < fp->len && (j = strcmp(name, fp->defs[i].name));
          i++)
