@@ -524,9 +524,8 @@ class TestMergeArrays:
         assert_equal(test, control)
 
         test = merge_arrays((x, w), flatten=False)
-        controldtype = [('f0', int),
-                                ('f1', [('a', int),
-                                        ('b', [('ba', float), ('bb', int), ('bc', [])])])]
+        f1_descr = [('a', int), ('b', [('ba', float), ('bb', int), ('bc', [])])]
+        controldtype = [('f0', int), ('f1', f1_descr)]
         control = np.array([(1., (1, (2, 3.0, ()))), (2, (4, (5, 6.0, ())))],
                            dtype=controldtype)
         assert_equal(test, control)

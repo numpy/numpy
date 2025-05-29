@@ -32,7 +32,8 @@ from numpy.testing import (
 
 def _is_armhf():
     # Check if the current platform is ARMHF (32-bit ARM architecture)
-    return platform.machine().startswith('arm') and platform.architecture()[0] == '32bit'
+    architecture = platform.architecture()
+    return platform.machine().startswith('arm') and architecture[0] == '32bit'
 
 class PhysicalQuantity(float):
     def __new__(cls, value):

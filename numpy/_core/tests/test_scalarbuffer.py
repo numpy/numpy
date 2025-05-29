@@ -128,8 +128,8 @@ class TestScalarPEP3118:
         s = np.str_(s)  # only our subclass implements the buffer protocol
 
         # all the same, characters always encode as ucs4
-        expected = {'strides': (), 'itemsize': 8, 'ndim': 0, 'shape': (), 'format': '2w',
-                        'readonly': True}
+        expected = {'strides': (), 'itemsize': 8, 'ndim': 0, 'shape': (),
+                    'format': '2w', 'readonly': True}
 
         v = memoryview(s)
         assert self._as_dict(v) == expected
