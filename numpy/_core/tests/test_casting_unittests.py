@@ -848,8 +848,7 @@ class TestCasting:
         arr2 = np.array([0] * 10, dtype=to_dtype)
         assert_equal(arr1.astype(to_dtype, casting='same_value'), arr2, strict=True)
         arr1[0] = top1
-        if 1:
-        # with pytest.raises(ValueError):
+        with pytest.raises(ValueError):
             # Casting float to float with overflow should raise RuntimeWarning (fperror)
             # Casting float to int with overflow sometimes raises RuntimeWarning (fperror)
             # Casting with overflow  and 'same_value', should raise ValueError

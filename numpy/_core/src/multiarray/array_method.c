@@ -797,6 +797,7 @@ boundarraymethod__simple_strided_call(
             .caller = NULL,
             .method = self->method,
             .descriptors = descrs,
+            .flags = 0,
     };
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     NpyAuxData *loop_data = NULL;

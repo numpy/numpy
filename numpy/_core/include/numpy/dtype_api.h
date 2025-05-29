@@ -107,6 +107,12 @@ typedef struct PyArrayMethod_Context_tag {
 
     /* Operand descriptors, filled in by resolve_descriptors */
     PyArray_Descr *const *descriptors;
+    void * padding;
+    /* 
+     * Optional flag to pass information into the inner loop
+     * If set, it will be NPY_CASTING
+     */
+    uint64_t flags;
     /* Structure may grow (this is harmless for DType authors) */
 } PyArrayMethod_Context;
 
@@ -143,6 +149,11 @@ typedef struct {
 #define NPY_METH_unaligned_contiguous_loop 8
 #define NPY_METH_contiguous_indexed_loop 9
 #define _NPY_METH_static_data 10
+
+/*
+ * Constants for same_value casting
+ */
+#define NPY_SAME_VALUE_OVERFLOW -31
 
 
 /*

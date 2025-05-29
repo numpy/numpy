@@ -131,6 +131,10 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
         npy_clear_floatstatus_barrier((char*)&src_data);
     }
 
+    if (same_value_cast) {
+        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
+    }
+
     /* Ensure number of elements exceeds threshold for threading */
     if (!(method_flags & NPY_METH_REQUIRES_PYAPI)) {
         npy_intp nitems = 1, i;
@@ -149,6 +153,9 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
                                 args, &shape_it[0], strides,
                                 cast_info.auxdata);
         if (result < 0) {
+            if (result == NPY_SAME_VALUE_OVERFLOW) {
+                goto same_value_overflow;
+            }
             goto fail;
         }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
@@ -166,6 +173,8 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     }
 
     return 0;
+same_value_overflow:
+    PyErr_SetString(PyExc_ValueError, "overflow in 'same_value' cast");
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);

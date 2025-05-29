@@ -44,6 +44,9 @@ NPY_cast_info_init(NPY_cast_info *cast_info)
 
     // TODO: Delete this again probably maybe create a new minimal init macro
     cast_info->context.caller = NULL;
+
+    cast_info->context.padding = NULL;
+    cast_info->context.flags = 0;
 }
 
 

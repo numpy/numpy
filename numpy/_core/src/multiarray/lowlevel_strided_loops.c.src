@@ -899,6 +899,7 @@ static GCC_CAST_OPT_LEVEL int
 #endif
 
     /*printf("@prefix@_cast_@name1@_to_@name2@\n");*/
+    int same_value_casting = ((context->flags & NPY_SAME_VALUE_CASTING) == NPY_SAME_VALUE_CASTING);
 
     while (N--) {
 #if @aligned@
@@ -939,7 +940,12 @@ static GCC_CAST_OPT_LEVEL int
 #  elif !@aligned@
     dst_value = _CONVERT_FN(src_value);
 #  else
-    *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
+        *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
+        if (same_value_casting) {
+            if (*(_TYPE2 *)dst != *(_TYPE1 *)src) {
+                return NPY_SAME_VALUE_OVERFLOW;
+            }
+    }
 #  endif
 #endif
 
