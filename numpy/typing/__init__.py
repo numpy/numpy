@@ -169,7 +169,7 @@ __DIR_SET = frozenset(__DIR)
 def __dir__() -> list[str]:
     return __DIR
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> object:
     if name == "NBitBase":
         import warnings
 
@@ -196,5 +196,6 @@ if __doc__ is not None:
     del _docstrings
 
 from numpy._pytesttester import PytestTester
+
 test = PytestTester(__name__)
 del PytestTester

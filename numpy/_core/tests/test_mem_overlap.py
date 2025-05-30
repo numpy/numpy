@@ -1,14 +1,12 @@
 import itertools
+
 import pytest
+from numpy._core._multiarray_tests import internal_overlap, solve_diophantine
 
 import numpy as np
-from numpy._core._multiarray_tests import solve_diophantine, internal_overlap
 from numpy._core import _umath_tests
 from numpy.lib.stride_tricks import as_strided
-from numpy.testing import (
-    assert_, assert_raises, assert_equal, assert_array_equal
-    )
-
+from numpy.testing import assert_, assert_array_equal, assert_equal, assert_raises
 
 ndims = 2
 size = 10
@@ -167,8 +165,9 @@ def check_may_share_memory_exact(a, b):
 
     err_msg = ""
     if got != exact:
+        base_delta = a.__array_interface__['data'][0] - b.__array_interface__['data'][0]
         err_msg = "    " + "\n    ".join([
-            f"base_a - base_b = {a.__array_interface__['data'][0] - b.__array_interface__['data'][0]!r}",
+            f"base_a - base_b = {base_delta!r}",
             f"shape_a = {a.shape!r}",
             f"shape_b = {b.shape!r}",
             f"strides_a = {a.strides!r}",
@@ -404,7 +403,9 @@ def test_internal_overlap_diophantine():
             exists = (X is not None)
 
         if X is not None:
-            assert_(sum(a * x for a, x in zip(A, X)) == sum(a * u // 2 for a, u in zip(A, U)))
+            sum_ax = sum(a * x for a, x in zip(A, X))
+            sum_au_half = sum(a * u // 2 for a, u in zip(A, U))
+            assert_(sum_ax == sum_au_half)
             assert_(all(0 <= x <= u for x, u in zip(X, U)))
             assert_(any(x != u // 2 for x, u in zip(X, U)))
 
@@ -643,16 +644,15 @@ class TestUFunc:
                                 sl = [slice(0, 1)] + [0] * (ndim - 1)
                             else:
                                 sl = [slice(0, outsize)] + [0] * (ndim - 1)
-                        else:
-                            if outsize is None:
-                                k = b.shape[axis] // 2
-                                if ndim == 1:
-                                    sl[axis] = slice(k, k + 1)
-                                else:
-                                    sl[axis] = k
+                        elif outsize is None:
+                            k = b.shape[axis] // 2
+                            if ndim == 1:
+                                sl[axis] = slice(k, k + 1)
                             else:
-                                assert b.shape[axis] >= outsize
-                                sl[axis] = slice(0, outsize)
+                                sl[axis] = k
+                        else:
+                            assert b.shape[axis] >= outsize
+                            sl[axis] = slice(0, outsize)
                         b_out = b[tuple(sl)]
 
                         if scalarize:

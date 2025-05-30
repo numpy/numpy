@@ -1,33 +1,67 @@
+import builtins
 import functools
 import itertools
+import math
+import numbers
 import operator
 import sys
 import warnings
-import numbers
-import builtins
-import math
 
 import numpy as np
-from . import multiarray
-from . import numerictypes as nt
-from .multiarray import (
-    ALLOW_THREADS, BUFSIZE, CLIP, MAXDIMS, MAY_SHARE_BOUNDS, MAY_SHARE_EXACT,
-    RAISE, WRAP, arange, array, asarray, asanyarray, ascontiguousarray,
-    asfortranarray, broadcast, can_cast, concatenate, copyto, dot, dtype,
-    empty, empty_like, flatiter, frombuffer, from_dlpack, fromfile, fromiter,
-    fromstring, inner, lexsort, matmul, may_share_memory, min_scalar_type,
-    ndarray, nditer, nested_iters, promote_types, putmask, result_type,
-    shares_memory, vdot, where, zeros, normalize_axis_index, vecdot
-)
-
-from . import overrides
-from . import umath
-from . import shape_base
-from .overrides import finalize_array_function_like, set_module
-from .umath import (multiply, invert, sin, PINF, NAN)
-from . import numerictypes
 from numpy.exceptions import AxisError
+
+from . import multiarray, numerictypes, overrides, shape_base, umath
+from . import numerictypes as nt
 from ._ufunc_config import errstate
+from .multiarray import (  # noqa: F401
+    ALLOW_THREADS,
+    BUFSIZE,
+    CLIP,
+    MAXDIMS,
+    MAY_SHARE_BOUNDS,
+    MAY_SHARE_EXACT,
+    RAISE,
+    WRAP,
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    ascontiguousarray,
+    asfortranarray,
+    broadcast,
+    can_cast,
+    concatenate,
+    copyto,
+    dot,
+    dtype,
+    empty,
+    empty_like,
+    flatiter,
+    from_dlpack,
+    frombuffer,
+    fromfile,
+    fromiter,
+    fromstring,
+    inner,
+    lexsort,
+    matmul,
+    may_share_memory,
+    min_scalar_type,
+    ndarray,
+    nditer,
+    nested_iters,
+    normalize_axis_index,
+    promote_types,
+    putmask,
+    result_type,
+    shares_memory,
+    vdot,
+    vecdot,
+    where,
+    zeros,
+)
+from .overrides import finalize_array_function_like, set_module
+from .umath import NAN, PINF, invert, multiply, sin
 
 bitwise_not = invert
 ufunc = type(sin)
@@ -1426,7 +1460,7 @@ def normalize_axis_tuple(axis, ndim, argname=None, allow_duplicate=False):
     normalize_axis_index : normalizing a single scalar axis
     """
     # Optimization to speed-up the most common cases.
-    if type(axis) not in (tuple, list):
+    if not isinstance(axis, (tuple, list)):
         try:
             axis = [operator.index(axis)]
         except TypeError:
@@ -1920,8 +1954,11 @@ def fromfunction(function, shape, *, dtype=float, like=None, **kwargs):
 _fromfunction_with_like = array_function_dispatch()(fromfunction)
 
 
-def _frombuffer(buf, dtype, shape, order):
-    return frombuffer(buf, dtype=dtype).reshape(shape, order=order)
+def _frombuffer(buf, dtype, shape, order, axis_order=None):
+    array = frombuffer(buf, dtype=dtype)
+    if order == 'K' and axis_order is not None:
+        return array.reshape(shape, order='C').transpose(axis_order)
+    return array.reshape(shape, order=order)
 
 
 @set_module('numpy')
@@ -2098,25 +2135,24 @@ def binary_repr(num, width=None):
         err_if_insufficient(width, binwidth)
         return binary.zfill(outwidth)
 
+    elif width is None:
+        return f'-{-num:b}'
+
     else:
-        if width is None:
-            return f'-{-num:b}'
+        poswidth = len(f'{-num:b}')
 
-        else:
-            poswidth = len(f'{-num:b}')
+        # See gh-8679: remove extra digit
+        # for numbers at boundaries.
+        if 2**(poswidth - 1) == -num:
+            poswidth -= 1
 
-            # See gh-8679: remove extra digit
-            # for numbers at boundaries.
-            if 2**(poswidth - 1) == -num:
-                poswidth -= 1
+        twocomp = 2**(poswidth + 1) + num
+        binary = f'{twocomp:b}'
+        binwidth = len(binary)
 
-            twocomp = 2**(poswidth + 1) + num
-            binary = f'{twocomp:b}'
-            binwidth = len(binary)
-
-            outwidth = builtins.max(binwidth, width)
-            err_if_insufficient(width, binwidth)
-            return '1' * (outwidth - binwidth) + binary
+        outwidth = builtins.max(binwidth, width)
+        err_if_insufficient(width, binwidth)
+        return '1' * (outwidth - binwidth) + binary
 
 
 @set_module('numpy')
@@ -2443,7 +2479,20 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     elif isinstance(y, int):
         y = float(y)
 
+    # atol and rtol can be arrays
+    if not (np.all(np.isfinite(atol)) and np.all(np.isfinite(rtol))):
+        err_s = np.geterr()["invalid"]
+        err_msg = f"One of rtol or atol is not valid, atol: {atol}, rtol: {rtol}"
+
+        if err_s == "warn":
+            warnings.warn(err_msg, RuntimeWarning, stacklevel=2)
+        elif err_s == "raise":
+            raise FloatingPointError(err_msg)
+        elif err_s == "print":
+            print(err_msg)
+
     with errstate(invalid='ignore'):
+
         result = (less_equal(abs(x - y), atol + rtol * abs(y))
                   & isfinite(y)
                   | (x == y))
@@ -2695,16 +2744,14 @@ def extend_all(module):
             __all__.append(a)
 
 
-from .umath import *
-from .numerictypes import *
-from . import fromnumeric
-from .fromnumeric import *
-from . import arrayprint
-from .arrayprint import *
-from . import _asarray
+from . import _asarray, _ufunc_config, arrayprint, fromnumeric
 from ._asarray import *
-from . import _ufunc_config
 from ._ufunc_config import *
+from .arrayprint import *
+from .fromnumeric import *
+from .numerictypes import *
+from .umath import *
+
 extend_all(fromnumeric)
 extend_all(umath)
 extend_all(numerictypes)

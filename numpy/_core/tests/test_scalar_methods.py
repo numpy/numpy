@@ -7,10 +7,10 @@ import types
 from typing import Any
 
 import pytest
-import numpy as np
 
+import numpy as np
 from numpy._core import sctypes
-from numpy.testing import assert_equal, assert_raises, IS_MUSL
+from numpy.testing import assert_equal, assert_raises
 
 
 class TestAsIntegerRatio:

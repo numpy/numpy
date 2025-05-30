@@ -22,21 +22,20 @@ TODO
     - fix bdist_mpkg: we build the same source twice -> how to make sure we use
       the same underlying python for egg install in venv and for bdist_mpkg
 """
-import os
 import hashlib
+import os
 import textwrap
 
 # The paver package needs to be installed to run tasks
 import paver
-from paver.easy import Bunch, options, task, sh
-
+from paver.easy import Bunch, options, sh, task
 
 #-----------------------------------
 # Things to be changed for a release
 #-----------------------------------
 
 # Path to the release notes
-RELEASE_NOTES = 'doc/source/release/2.3.0-notes.rst'
+RELEASE_NOTES = 'doc/source/release/2.4.0-notes.rst'
 
 
 #-------------------------------------------------------

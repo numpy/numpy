@@ -7,9 +7,14 @@ import numpy
 import numpy as np
 from numpy.testing import (
     IS_WASM,
-    assert_, assert_equal, assert_raises, assert_warns, suppress_warnings,
-    assert_raises_regex, assert_array_equal,
-    )
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    suppress_warnings,
+)
 
 # Use pytz to test out various time zones if available
 try:

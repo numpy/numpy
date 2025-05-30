@@ -11,16 +11,11 @@ macosx_arm64_task:
       CIRRUS_CLONE_SUBMODULES: true
   macos_instance:
     matrix:
-      image: ghcr.io/cirruslabs/macos-monterey-xcode
+      image: ghcr.io/cirruslabs/macos-runner:sonoma
 
   matrix:
     - env:
-        CIBW_BUILD: cp311-* cp312*
-    - env:
-        CIBW_BUILD: cp313-*
-    - env:
-        CIBW_BUILD: cp313t-*
-        CIBW_BUILD_FRONTEND: "pip; args: --no-build-isolation"
+        CIBW_BUILD: cp311-* cp312* cp313*
   env:
     PATH: /usr/local/lib:/usr/local/include:$PATH
     CIBW_ARCHS: arm64

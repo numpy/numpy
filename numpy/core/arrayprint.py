@@ -1,5 +1,6 @@
 def __getattr__(attr_name):
     from numpy._core import arrayprint
+
     from ._utils import _raise_warning
     ret = getattr(arrayprint, attr_name, None)
     if ret is None:

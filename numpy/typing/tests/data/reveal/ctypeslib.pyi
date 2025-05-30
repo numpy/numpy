@@ -1,5 +1,4 @@
 import ctypes as ct
-import sys
 from typing import Any, assert_type
 
 import numpy as np
@@ -74,18 +73,9 @@ assert_type(np.ctypeslib.as_array(AR_ubyte), npt.NDArray[np.ubyte])
 assert_type(np.ctypeslib.as_array(1), npt.NDArray[Any])
 assert_type(np.ctypeslib.as_array(pointer), npt.NDArray[Any])
 
-if sys.platform == "win32":
-    # Mainly on windows int is the same size as long but gets picked first:
-    assert_type(np.ctypeslib.as_ctypes_type(np.long), type[ct.c_int])
-    assert_type(np.ctypeslib.as_ctypes_type(np.ulong), type[ct.c_uint])
-    assert_type(np.ctypeslib.as_ctypes(AR_ulong), ct.Array[ct.c_uint])
-    assert_type(np.ctypeslib.as_ctypes(AR_long), ct.Array[ct.c_int])
-    assert_type(np.ctypeslib.as_ctypes(AR_long.take(0)), ct.c_int)
-    assert_type(np.ctypeslib.as_ctypes(AR_ulong.take(0)), ct.c_uint)
-else:
-    assert_type(np.ctypeslib.as_ctypes_type(np.long), type[ct.c_long])
-    assert_type(np.ctypeslib.as_ctypes_type(np.ulong), type[ct.c_ulong])
-    assert_type(np.ctypeslib.as_ctypes(AR_ulong), ct.Array[ct.c_ulong])
-    assert_type(np.ctypeslib.as_ctypes(AR_long), ct.Array[ct.c_long])
-    assert_type(np.ctypeslib.as_ctypes(AR_long.take(0)), ct.c_long)
-    assert_type(np.ctypeslib.as_ctypes(AR_ulong.take(0)), ct.c_ulong)
+assert_type(np.ctypeslib.as_ctypes_type(np.long), type[ct.c_long])
+assert_type(np.ctypeslib.as_ctypes_type(np.ulong), type[ct.c_ulong])
+assert_type(np.ctypeslib.as_ctypes(AR_ulong), ct.Array[ct.c_ulong])
+assert_type(np.ctypeslib.as_ctypes(AR_long), ct.Array[ct.c_long])
+assert_type(np.ctypeslib.as_ctypes(AR_long.take(0)), ct.c_long)
+assert_type(np.ctypeslib.as_ctypes(AR_ulong.take(0)), ct.c_ulong)

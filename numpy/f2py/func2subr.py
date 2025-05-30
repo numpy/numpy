@@ -11,13 +11,23 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 import copy
 
+from ._isocbind import isoc_kindmap
 from .auxfuncs import (
-    getfortranname, isexternal, isfunction, isfunction_wrap, isintent_in,
-    isintent_out, islogicalfunction, ismoduleroutine, isscalar,
-    issubroutine, issubroutine_wrap, outmess, show
+    getfortranname,
+    isexternal,
+    isfunction,
+    isfunction_wrap,
+    isintent_in,
+    isintent_out,
+    islogicalfunction,
+    ismoduleroutine,
+    isscalar,
+    issubroutine,
+    issubroutine_wrap,
+    outmess,
+    show,
 )
 
-from ._isocbind import isoc_kindmap
 
 def var2fixfortran(vars, a, fa=None, f90mode=None):
     if fa is None:
@@ -47,20 +57,18 @@ def var2fixfortran(vars, a, fa=None, f90mode=None):
                 vardef = f'{vardef}(len=*)'
             else:
                 vardef = f"{vardef}({lk}={selector['*']})"
+        elif selector['*'] in ['*', ':']:
+            vardef = f"{vardef}*({selector['*']})"
         else:
-            if selector['*'] in ['*', ':']:
-                vardef = f"{vardef}*({selector['*']})"
-            else:
-                vardef = f"{vardef}*{selector['*']}"
-    else:
-        if 'len' in selector:
-            vardef = f"{vardef}(len={selector['len']}"
-            if 'kind' in selector:
-                vardef = f"{vardef},kind={selector['kind']})"
-            else:
-                vardef = f'{vardef})'
-        elif 'kind' in selector:
-            vardef = f"{vardef}(kind={selector['kind']})"
+            vardef = f"{vardef}*{selector['*']}"
+    elif 'len' in selector:
+        vardef = f"{vardef}(len={selector['len']}"
+        if 'kind' in selector:
+            vardef = f"{vardef},kind={selector['kind']})"
+        else:
+            vardef = f'{vardef})'
+    elif 'kind' in selector:
+        vardef = f"{vardef}(kind={selector['kind']})"
 
     vardef = f'{vardef} {fa}'
     if 'dimension' in vars[a]:

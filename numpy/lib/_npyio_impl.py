@@ -1,33 +1,41 @@
 """
 IO related functions.
 """
-import os
-import re
+import contextlib
 import functools
 import itertools
+import operator
+import os
+import pickle
+import re
 import warnings
 import weakref
-import contextlib
-import operator
-from operator import itemgetter
 from collections.abc import Mapping
-import pickle
+from operator import itemgetter
 
 import numpy as np
-from . import format
-from ._datasource import DataSource
-from ._format_impl import _MAX_HEADER_SIZE
 from numpy._core import overrides
-from numpy._core.multiarray import packbits, unpackbits
 from numpy._core._multiarray_umath import _load_from_filelike
+from numpy._core.multiarray import packbits, unpackbits
 from numpy._core.overrides import finalize_array_function_like, set_module
-from ._iotools import (
-    LineSplitter, NameValidator, StringConverter, ConverterError,
-    ConverterLockError, ConversionWarning, _is_string_like,
-    has_nested_fields, flatten_dtype, easy_dtype, _decode_line
-    )
-from numpy._utils import asunicode, asbytes
+from numpy._utils import asbytes, asunicode
 
+from . import format
+from ._datasource import DataSource  # noqa: F401
+from ._format_impl import _MAX_HEADER_SIZE
+from ._iotools import (
+    ConversionWarning,
+    ConverterError,
+    ConverterLockError,
+    LineSplitter,
+    NameValidator,
+    StringConverter,
+    _decode_line,
+    _is_string_like,
+    easy_dtype,
+    flatten_dtype,
+    has_nested_fields,
+)
 
 __all__ = [
     'savetxt', 'loadtxt', 'genfromtxt', 'load', 'save', 'savez',
@@ -136,7 +144,7 @@ class NpzFile(Mapping):
     pickle_kwargs : dict, optional
         Additional keyword arguments to pass on to pickle.load.
         These are only useful when loading object arrays saved on
-        Python 2 when using Python 3.
+        Python 2.
     max_header_size : int, optional
         Maximum allowed size of the header.  Large headers may not be safe
         to load securely and thus require explicitly passing a larger value.
@@ -338,13 +346,13 @@ def load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,
         execute arbitrary code. If pickles are disallowed, loading object
         arrays will fail. Default: False
     fix_imports : bool, optional
-        Only useful when loading Python 2 generated pickled files on Python 3,
+        Only useful when loading Python 2 generated pickled files,
         which includes npy/npz files containing object arrays. If `fix_imports`
         is True, pickle will try to map the old Python 2 names to the new names
         used in Python 3.
     encoding : str, optional
         What encoding to use when reading Python 2 strings. Only useful when
-        loading Python 2 generated pickled files in Python 3, which includes
+        loading Python 2 generated pickled files, which includes
         npy/npz files containing object arrays. Values other than 'latin1',
         'ASCII', and 'bytes' are not allowed, as they can corrupt numerical
         data. Default: 'ASCII'
@@ -526,7 +534,7 @@ def save(file, arr, allow_pickle=True, fix_imports=np._NoValue):
 
         .. deprecated:: 2.1
             This flag is ignored since NumPy 1.17 and was only needed to
-            support loading some files in Python 2 written in Python 3.
+            support loading in Python 2 some files written in Python 3.
 
     See Also
     --------
@@ -948,8 +956,8 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
     dtype = np.dtype(dtype)
 
     read_dtype_via_object_chunks = None
-    if dtype.kind in 'SUM' and (
-            dtype == "S0" or dtype == "U0" or dtype == "M8" or dtype == 'm8'):
+    if dtype.kind in 'SUM' and dtype in {
+            np.dtype("S0"), np.dtype("U0"), np.dtype("M8"), np.dtype("m8")}:
         # This is a legacy "flexible" dtype.  We do not truly support
         # parametric dtypes currently (no dtype discovery step in the core),
         # but have to support these for backward compatibility.
@@ -985,13 +993,12 @@ def _read(fname, *, delimiter=',', comment='#', quote='"',
             if isinstance(comments[0], str) and len(comments[0]) == 1:
                 comment = comments[0]
                 comments = None
-        else:
-            # Input validation if there are multiple comment characters
-            if delimiter in comments:
-                raise TypeError(
-                    f"Comment characters '{comments}' cannot include the "
-                    f"delimiter '{delimiter}'"
-                )
+        # Input validation if there are multiple comment characters
+        elif delimiter in comments:
+            raise TypeError(
+                f"Comment characters '{comments}' cannot include the "
+                f"delimiter '{delimiter}'"
+            )
 
     # comment is now either a 1 or 0 character string or a tuple:
     if comments is not None:
@@ -1750,7 +1757,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                skip_header=0, skip_footer=0, converters=None,
                missing_values=None, filling_values=None, usecols=None,
                names=None, excludelist=None,
-               deletechars=''.join(sorted(NameValidator.defaultdeletechars)),
+               deletechars=''.join(sorted(NameValidator.defaultdeletechars)),  # noqa: B008
                replace_space='_', autostrip=False, case_sensitive=True,
                defaultfmt="f%i", unpack=None, usemask=False, loose=True,
                invalid_raise=True, max_rows=None, encoding=None,
@@ -2303,7 +2310,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     try:
                         converter.upgrade(value)
                     except (ConverterError, ValueError):
-                        errmsg += f"(occurred line #{j + 1 + skip_header} for value '{value}')"
+                        line_number = j + 1 + skip_header
+                        errmsg += f"(occurred line #{line_number} for value '{value}')"
                         raise ConverterError(errmsg)
 
     # Check that we don't have invalid values

@@ -1,24 +1,35 @@
 import copy
-import sys
 import gc
+import pickle
+import sys
 import tempfile
-import pytest
-from os import path
 from io import BytesIO
 from itertools import chain
-import pickle
+from os import path
+
+import pytest
 
 import numpy as np
+from numpy._utils import asbytes, asunicode
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.testing import (
-        assert_, assert_equal, IS_PYPY, assert_almost_equal,
-        assert_array_equal, assert_array_almost_equal, assert_raises,
-        assert_raises_regex, assert_warns, suppress_warnings,
-        _assert_valid_refcount, HAS_REFCOUNT, IS_PYSTON, IS_WASM,
-        IS_64BIT,
-        )
+    HAS_REFCOUNT,
+    IS_64BIT,
+    IS_PYPY,
+    IS_PYSTON,
+    IS_WASM,
+    _assert_valid_refcount,
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    suppress_warnings,
+)
 from numpy.testing._private.utils import _no_tracing, requires_memory
-from numpy._utils import asbytes, asunicode
 
 
 class TestRegression:
@@ -998,8 +1009,6 @@ class TestRegression:
         assert_(cnt(a) == cnt0_a + 5 + 2)
         assert_(cnt(b) == cnt0_b + 5 + 3)
 
-        del tmp  # Avoid pyflakes unused variable warning
-
     def test_mem_custom_float_to_array(self):
         # Ticket 702
         class MyFloat:
@@ -1583,8 +1592,7 @@ class TestRegression:
         assert_equal(c1, c2)
 
     def test_fromfile_tofile_seeks(self):
-        # On Python 3, tofile/fromfile used to get (#1610) the Python
-        # file handle out of sync
+        # tofile/fromfile used to get (#1610) the Python file handle out of sync
         with tempfile.NamedTemporaryFile() as f:
             f.write(np.arange(255, dtype='u1').tobytes())
 
@@ -2570,21 +2578,23 @@ class TestRegression:
         assert xp is np
         xp = arr.__array_namespace__(api_version="2023.12")
         assert xp is np
+        xp = arr.__array_namespace__(api_version="2024.12")
+        assert xp is np
         xp = arr.__array_namespace__(api_version=None)
         assert xp is np
 
         with pytest.raises(
             ValueError,
-            match="Version \"2024.12\" of the Array API Standard "
+            match="Version \"2025.12\" of the Array API Standard "
                   "is not supported."
         ):
-            arr.__array_namespace__(api_version="2024.12")
+            arr.__array_namespace__(api_version="2025.12")
 
         with pytest.raises(
             ValueError,
             match="Only None and strings are allowed as the Array API version"
         ):
-            arr.__array_namespace__(api_version=2023)
+            arr.__array_namespace__(api_version=2024)
 
     def test_isin_refcnt_bug(self):
         # gh-25295

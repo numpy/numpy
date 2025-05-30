@@ -2,13 +2,11 @@
 Tests for numpy/_core/src/multiarray/conversion_utils.c
 """
 import re
-import sys
 
+import numpy._core._multiarray_tests as mt
 import pytest
 
-import numpy as np
-import numpy._core._multiarray_tests as mt
-from numpy._core.multiarray import CLIP, WRAP, RAISE
+from numpy._core.multiarray import CLIP, RAISE, WRAP
 from numpy.testing import assert_raises
 
 

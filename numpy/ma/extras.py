@@ -5,7 +5,6 @@ A collection of utilities for `numpy.ma`.
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
 __all__ = [
@@ -23,18 +22,37 @@ __all__ = [
 import itertools
 import warnings
 
-from . import core as ma
-from .core import (
-    MaskedArray, MAError, add, array, asarray, concatenate, filled, count,
-    getmask, getmaskarray, make_mask_descr, masked, masked_array, mask_or,
-    nomask, ones, sort, zeros, getdata, get_masked_subclass, dot
-    )
-
 import numpy as np
-from numpy import ndarray, array as nxarray
-from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
+from numpy import array as nxarray
+from numpy import ndarray
 from numpy.lib._function_base_impl import _ureduce
 from numpy.lib._index_tricks_impl import AxisConcatenator
+from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
+
+from . import core as ma
+from .core import (  # noqa: F401
+    MAError,
+    MaskedArray,
+    add,
+    array,
+    asarray,
+    concatenate,
+    count,
+    dot,
+    filled,
+    get_masked_subclass,
+    getdata,
+    getmask,
+    getmaskarray,
+    make_mask_descr,
+    mask_or,
+    masked,
+    masked_array,
+    nomask,
+    ones,
+    sort,
+    zeros,
+)
 
 
 def issequence(seq):

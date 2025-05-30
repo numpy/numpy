@@ -1,55 +1,88 @@
 from collections.abc import Callable, Sequence
-from typing import Any, Final, Never, NoReturn, SupportsAbs, SupportsIndex, TypeAlias, TypeGuard, TypeVar, Unpack, overload
+from typing import (
+    Any,
+    Final,
+    Never,
+    NoReturn,
+    SupportsAbs,
+    SupportsIndex,
+    TypeAlias,
+    TypeGuard,
+    TypeVar,
+    Unpack,
+    overload,
+)
 from typing import Literal as L
 
 import numpy as np
 from numpy import (
-    # re-exports
-    bitwise_not,
     False_,
     True_,
+    _OrderCF,
+    _OrderKACF,
+    # re-exports
+    bitwise_not,
     broadcast,
+    complexfloating,
     dtype,
     flatiter,
+    float64,
+    floating,
     from_dlpack,
+    # other
+    generic,
     inf,
+    int_,
+    intp,
     little_endian,
     matmul,
-    vecdot,
     nan,
     ndarray,
     nditer,
     newaxis,
-    ufunc,
-
-    # other
-    generic,
-    unsignedinteger,
-    signedinteger,
-    floating,
-    complexfloating,
-    int_,
-    intp,
-    float64,
-    timedelta64,
     object_,
-    _AnyShapeT,
-    _OrderKACF,
-    _OrderCF,
+    signedinteger,
+    timedelta64,
+    ufunc,
+    unsignedinteger,
+    vecdot,
 )
-from .fromnumeric import (
-    all as all,
-    any as any,
-    argpartition as argpartition,
-    matrix_transpose as matrix_transpose,
-    mean as mean,
+from numpy._typing import (
+    ArrayLike,
+    DTypeLike,
+    NDArray,
+    _ArrayLike,
+    _ArrayLikeBool_co,
+    _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
+    _ArrayLikeObject_co,
+    _ArrayLikeTD64_co,
+    _ArrayLikeUInt_co,
+    _DTypeLike,
+    _NestedSequence,
+    _ScalarLike_co,
+    _Shape,
+    _ShapeLike,
+    _SupportsArrayFunc,
+    _SupportsDType,
 )
+
+from .fromnumeric import all as all
+from .fromnumeric import any as any
+from .fromnumeric import argpartition as argpartition
+from .fromnumeric import matrix_transpose as matrix_transpose
+from .fromnumeric import mean as mean
 from .multiarray import (
+    # other
+    _Array,
+    _ConstructorEmpty,
+    _KwargsEmpty,
     # re-exports
     arange,
     array,
-    asarray,
     asanyarray,
+    asarray,
     ascontiguousarray,
     asfortranarray,
     can_cast,
@@ -67,38 +100,13 @@ from .multiarray import (
     may_share_memory,
     min_scalar_type,
     nested_iters,
-    putmask,
     promote_types,
+    putmask,
     result_type,
     shares_memory,
     vdot,
     where,
     zeros,
-
-    # other
-    _Array,
-    _ConstructorEmpty,
-    _KwargsEmpty,
-)
-
-from numpy._typing import (
-    ArrayLike,
-    NDArray,
-    DTypeLike,
-    _SupportsDType,
-    _ShapeLike,
-    _DTypeLike,
-    _ArrayLike,
-    _SupportsArrayFunc,
-    _ScalarLike_co,
-    _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
-    _ArrayLikeComplex_co,
-    _ArrayLikeTD64_co,
-    _ArrayLikeObject_co,
-    _NestedSequence,
 )
 
 __all__ = [
@@ -180,7 +188,16 @@ _T = TypeVar("_T")
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 _ArrayT = TypeVar("_ArrayT", bound=np.ndarray[Any, Any])
-_ShapeT = TypeVar("_ShapeT", bound=tuple[int, ...])
+_ShapeT = TypeVar("_ShapeT", bound=_Shape)
+_AnyShapeT = TypeVar(
+    "_AnyShapeT",
+    tuple[()],
+    tuple[int],
+    tuple[int, int],
+    tuple[int, int, int],
+    tuple[int, int, int, int],
+    tuple[int, ...],
+)
 
 _CorrelateMode: TypeAlias = L["valid", "same", "full"]
 
@@ -416,7 +433,7 @@ def full_like(
 
 #
 @overload
-def count_nonzero(a: ArrayLike, axis: None = None, *, keepdims: L[False] = False) -> int: ...
+def count_nonzero(a: ArrayLike, axis: None = None, *, keepdims: L[False] = False) -> np.intp: ...
 @overload
 def count_nonzero(a: _ScalarLike_co, axis: _ShapeLike | None = None, *, keepdims: L[True]) -> np.intp: ...
 @overload

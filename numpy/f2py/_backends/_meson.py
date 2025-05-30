@@ -1,16 +1,14 @@
-from __future__ import annotations
-
-import os
 import errno
+import os
+import re
 import shutil
 import subprocess
 import sys
-import re
+from itertools import chain
 from pathlib import Path
+from string import Template
 
 from ._backend import Backend
-from string import Template
-from itertools import chain
 
 
 class MesonTemplate:

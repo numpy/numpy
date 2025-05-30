@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 try:
     # SkipNotImplemented is available since 6.0
@@ -241,7 +241,8 @@ class Sort(Benchmark):
     def setup(self, kind, dtype, array_type):
         rnd = np.random.RandomState(507582308)
         array_class = array_type[0]
-        self.arr = getattr(SortGenerator, array_class)(self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
+        generate_array_method = getattr(SortGenerator, array_class)
+        self.arr = generate_array_method(self.ARRAY_SIZE, dtype, *array_type[1:], rnd)
 
     def time_sort(self, kind, dtype, array_type):
         # Using np.sort(...) instead of arr.sort(...) because it makes a copy.

@@ -10,16 +10,15 @@ pathlib_path: pathlib.Path
 str_file: IO[str]
 AR_i8: npt.NDArray[np.int64]
 
-np.load(str_file)  # E: incompatible type
+np.load(str_file)  # type: ignore[arg-type]
 
-np.save(bytes_path, AR_i8)  # E: No overload variant
-# https://github.com/python/mypy/issues/16111
-# np.save(str_path, AR_i8, fix_imports=True)  # W: deprecated
+np.save(bytes_path, AR_i8)  # type: ignore[call-overload]
+np.save(str_path, AR_i8, fix_imports=True)  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
 
-np.savez(bytes_path, AR_i8)  # E: incompatible type
+np.savez(bytes_path, AR_i8)  # type: ignore[arg-type]
 
-np.savez_compressed(bytes_path, AR_i8)  # E: incompatible type
+np.savez_compressed(bytes_path, AR_i8)  # type: ignore[arg-type]
 
-np.loadtxt(bytes_path)  # E: incompatible type
+np.loadtxt(bytes_path)  # type: ignore[arg-type]
 
-np.fromregex(bytes_path, ".", np.int64)  # E: No overload variant
+np.fromregex(bytes_path, ".", np.int64)  # type: ignore[call-overload]

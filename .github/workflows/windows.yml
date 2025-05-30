@@ -24,7 +24,7 @@ jobs:
       matrix:
         compiler-pyversion:
           - ["MSVC", "3.11"]
-          - ["Clang-cl", "3.13t"]
+          - ["Clang-cl", "3.14t-dev"]
 
     steps:
     - name: Checkout
@@ -35,20 +35,9 @@ jobs:
         persist-credentials: false
 
     - name: Setup Python
-      uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
-        activate-environment: true
         python-version: ${{ matrix.compiler-pyversion[1] }}
-        enable-cache: false
-
-    - run:
-        uv pip install --python=${{ matrix.version }} pip
-
-    # TODO: remove cython nightly install when cython does a release
-    - name: Install nightly Cython
-      if: matrix.compiler-pyversion[1] == '3.13t'
-      run: |
-        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
 
     - name: Install build dependencies from PyPI
       run: |
@@ -96,9 +85,17 @@ jobs:
       run: |
         spin test -- --timeout=600 --durations=10
 
-  msvc_32bit_python_no_openblas:
-    name: MSVC, 32-bit Python, no BLAS
-    runs-on: windows-2019
+  msvc_python_no_openblas:
+    name: MSVC, ${{ matrix.architecture }} Python , no BLAS
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2019
+            architecture: x86
+          - os: windows-11-arm
+            architecture: arm64
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     steps:
@@ -109,16 +106,16 @@ jobs:
           fetch-tags: true
           persist-credentials: false
 
-      - name: Setup Python (32-bit)
+      - name: Setup Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.11'
-          architecture: 'x86'
+          architecture: ${{ matrix.architecture }}
 
-      - name: Setup MSVC (32-bit)
+      - name: Setup MSVC
         uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
         with:
-          architecture: 'x86'
+          architecture: ${{ matrix.architecture }}
 
       - name: Build and install
         run: |

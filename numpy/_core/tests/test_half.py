@@ -1,9 +1,10 @@
 import platform
+
 import pytest
 
 import numpy as np
-from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal, IS_WASM
+from numpy import float16, float32, float64, uint16
+from numpy.testing import IS_WASM, assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -530,7 +531,7 @@ class TestHalf:
             assert_raises_fpe('overflow', lambda a, b: a - b,
                                              float16(-65504), float16(17))
             assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
-            assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))
+            assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))  # noqa: E501
             assert_raises_fpe('overflow', np.spacing, float16(65504))
 
             # Invalid value errors

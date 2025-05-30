@@ -1,6 +1,7 @@
 """A module with the precisions of generic `~numpy.number` types."""
-from numpy._utils import set_module
 from typing import final
+
+from numpy._utils import set_module
 
 
 @final  # Disallow the creation of arbitrary `NBitBase` subclasses
@@ -29,7 +30,6 @@ class NBitBase:
 
     .. code-block:: python
 
-        >>> from __future__ import annotations
         >>> from typing import TypeVar, TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt

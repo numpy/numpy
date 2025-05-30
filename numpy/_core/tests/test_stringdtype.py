@@ -5,13 +5,13 @@ import pickle
 import sys
 import tempfile
 
-import numpy as np
 import pytest
 
-from numpy.dtypes import StringDType
+import numpy as np
+from numpy._core.tests._natype import get_stringdtype_dtype as get_dtype
 from numpy._core.tests._natype import pd_NA
-from numpy.testing import assert_array_equal, IS_PYPY
-from numpy.testing._private.utils import get_stringdtype_dtype as get_dtype
+from numpy.dtypes import StringDType
+from numpy.testing import IS_PYPY, assert_array_equal
 
 
 @pytest.fixture
@@ -128,8 +128,8 @@ def test_null_roundtripping():
 
 def test_string_too_large_error():
     arr = np.array(["a", "b", "c"], dtype=StringDType())
-    with pytest.raises(MemoryError):
-        arr * (2**63 - 2)
+    with pytest.raises(OverflowError):
+        arr * (sys.maxsize + 1)
 
 
 @pytest.mark.parametrize(
@@ -1306,11 +1306,10 @@ def test_unary(string_array, unicode_array, function_name):
             # to avoid these errors we'd need to add NA support to _vec_string
             with pytest.raises((ValueError, TypeError)):
                 func(na_arr)
+        elif function_name == "splitlines":
+            assert func(na_arr)[0] == func(dtype.na_object)[()]
         else:
-            if function_name == "splitlines":
-                assert func(na_arr)[0] == func(dtype.na_object)[()]
-            else:
-                assert func(na_arr)[0] == func(dtype.na_object)
+            assert func(na_arr)[0] == func(dtype.na_object)
         return
     if function_name == "str_len" and not is_str:
         # str_len always errors for any non-string null, even NA ones because

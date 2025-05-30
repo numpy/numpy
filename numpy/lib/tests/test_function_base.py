@@ -1,32 +1,69 @@
-import operator
-import warnings
-import sys
 import decimal
-from fractions import Fraction
 import math
-import pytest
-import hypothesis
-from hypothesis.extra.numpy import arrays
-import hypothesis.strategies as st
+import operator
+import sys
+import warnings
+from fractions import Fraction
 from functools import partial
 
+import hypothesis
+import hypothesis.strategies as st
+import pytest
+from hypothesis.extra.numpy import arrays
+
 import numpy as np
-from numpy import (
-    ma, angle, average, bartlett, blackman, corrcoef, cov,
-    delete, diff, digitize, extract, flipud, gradient, hamming, hanning,
-    i0, insert, interp, kaiser, meshgrid, piecewise, place, rot90,
-    select, setxor1d, sinc, trapezoid, trim_zeros, unwrap, unique, vectorize
-    )
-from numpy.exceptions import AxisError
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_warns, assert_raises_regex, suppress_warnings, HAS_REFCOUNT,
-    IS_WASM, NOGIL_BUILD
-    )
 import numpy.lib._function_base_impl as nfb
-from numpy.random import rand
+from numpy import (
+    angle,
+    average,
+    bartlett,
+    blackman,
+    corrcoef,
+    cov,
+    delete,
+    diff,
+    digitize,
+    extract,
+    flipud,
+    gradient,
+    hamming,
+    hanning,
+    i0,
+    insert,
+    interp,
+    kaiser,
+    ma,
+    meshgrid,
+    piecewise,
+    place,
+    rot90,
+    select,
+    setxor1d,
+    sinc,
+    trapezoid,
+    trim_zeros,
+    unique,
+    unwrap,
+    vectorize,
+)
 from numpy._core.numeric import normalize_axis_tuple
+from numpy.exceptions import AxisError
+from numpy.random import rand
+from numpy.testing import (
+    HAS_REFCOUNT,
+    IS_WASM,
+    NOGIL_BUILD,
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    suppress_warnings,
+)
 
 
 def get_mat(n):
@@ -850,11 +887,11 @@ class TestDiff:
         output = [diff(x, n=n) for n in range(1, 5)]
         expected = [[1, 1], [0], [], []]
         assert_(diff(x, n=0) is x)
-        for n, (expected, out) in enumerate(zip(expected, output), start=1):
-            assert_(type(out) is np.ndarray)
-            assert_array_equal(out, expected)
-            assert_equal(out.dtype, np.int_)
-            assert_equal(len(out), max(0, len(x) - n))
+        for n, (expected_n, output_n) in enumerate(zip(expected, output), start=1):
+            assert_(type(output_n) is np.ndarray)
+            assert_array_equal(output_n, expected_n)
+            assert_equal(output_n.dtype, np.int_)
+            assert_equal(len(output_n), max(0, len(x) - n))
 
     def test_times(self):
         x = np.arange('1066-10-13', '1066-10-16', dtype=np.datetime64)
@@ -2009,8 +2046,8 @@ class TestLeaks:
         # exposed in gh-11867 as np.vectorized, but the problem stems from
         # frompyfunc.
         # class.attribute = np.frompyfunc(<method>) creates a
-        # reference cycle if <method> is a bound class method. It requires a
-        # gc collection cycle to break the cycle (on CPython 3)
+        # reference cycle if <method> is a bound class method.
+        # It requires a gc collection cycle to break the cycle.
         import gc
         A_func = getattr(self.A, name)
         gc.disable()

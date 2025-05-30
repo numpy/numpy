@@ -1,14 +1,15 @@
 import functools
-import warnings
 import operator
 import types
+import warnings
 
 import numpy as np
-from . import numeric as _nx
-from .numeric import result_type, nan, asanyarray, ndim
-from numpy._core.multiarray import add_docstring
-from numpy._core._multiarray_umath import _array_converter
 from numpy._core import overrides
+from numpy._core._multiarray_umath import _array_converter
+from numpy._core.multiarray import add_docstring
+
+from . import numeric as _nx
+from .numeric import asanyarray, nan, ndim, result_type
 
 __all__ = ['logspace', 'linspace', 'geomspace']
 
@@ -157,11 +158,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
                 y *= delta
             else:
                 y = y * delta
+        elif _mult_inplace:
+            y *= step
         else:
-            if _mult_inplace:
-                y *= step
-            else:
-                y = y * step
+            y = y * step
     else:
         # sequences with 0 items or 1 item with endpoint=True (i.e. div <= 0)
         # have an undefined step

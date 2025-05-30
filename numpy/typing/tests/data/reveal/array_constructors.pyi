@@ -51,7 +51,7 @@ assert_type(np.empty([1, 5, 6], dtype='c16'), npt.NDArray[Any])
 assert_type(np.empty(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.concatenate(A), npt.NDArray[np.float64])
-assert_type(np.concatenate([A, A]), npt.NDArray[Any])
+assert_type(np.concatenate([A, A]), Any)  # pyright correctly infers this as NDArray[float64]
 assert_type(np.concatenate([[1], A]), npt.NDArray[Any])
 assert_type(np.concatenate([[1], [1]]), npt.NDArray[Any])
 assert_type(np.concatenate((A, A)), npt.NDArray[np.float64])
@@ -132,21 +132,21 @@ assert_type(np.require(B, requirements="W"), SubClass[np.float64])
 assert_type(np.require(B, requirements="A"), SubClass[np.float64])
 assert_type(np.require(C), npt.NDArray[Any])
 
-assert_type(np.linspace(0, 10), npt.NDArray[np.floating])
+assert_type(np.linspace(0, 10), npt.NDArray[np.float64])
 assert_type(np.linspace(0, 10j), npt.NDArray[np.complexfloating])
 assert_type(np.linspace(0, 10, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.linspace(0, 10, dtype=int), npt.NDArray[Any])
-assert_type(np.linspace(0, 10, retstep=True), tuple[npt.NDArray[np.floating], np.floating])
+assert_type(np.linspace(0, 10, retstep=True), tuple[npt.NDArray[np.float64], np.float64])
 assert_type(np.linspace(0j, 10, retstep=True), tuple[npt.NDArray[np.complexfloating], np.complexfloating])
 assert_type(np.linspace(0, 10, retstep=True, dtype=np.int64), tuple[npt.NDArray[np.int64], np.int64])
 assert_type(np.linspace(0j, 10, retstep=True, dtype=int), tuple[npt.NDArray[Any], Any])
 
-assert_type(np.logspace(0, 10), npt.NDArray[np.floating])
+assert_type(np.logspace(0, 10), npt.NDArray[np.float64])
 assert_type(np.logspace(0, 10j), npt.NDArray[np.complexfloating])
 assert_type(np.logspace(0, 10, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.logspace(0, 10, dtype=int), npt.NDArray[Any])
 
-assert_type(np.geomspace(0, 10), npt.NDArray[np.floating])
+assert_type(np.geomspace(0, 10), npt.NDArray[np.float64])
 assert_type(np.geomspace(0, 10j), npt.NDArray[np.complexfloating])
 assert_type(np.geomspace(0, 10, dtype=np.int64), npt.NDArray[np.int64])
 assert_type(np.geomspace(0, 10, dtype=int), npt.NDArray[Any])
@@ -220,22 +220,22 @@ assert_type(np.atleast_3d(A), npt.NDArray[np.float64])
 assert_type(np.atleast_3d(A, A), tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]])
 assert_type(np.atleast_3d(A, A, A), tuple[npt.NDArray[np.float64], ...])
 
-assert_type(np.vstack([A, A]), npt.NDArray[np.float64])
+assert_type(np.vstack([A, A]), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.vstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 assert_type(np.vstack([A, C]), npt.NDArray[Any])
 assert_type(np.vstack([C, C]), npt.NDArray[Any])
 
-assert_type(np.hstack([A, A]), npt.NDArray[np.float64])
+assert_type(np.hstack([A, A]), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.hstack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 
-assert_type(np.stack([A, A]), npt.NDArray[np.float64])
+assert_type(np.stack([A, A]), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.stack([A, A], dtype=np.float32), npt.NDArray[np.float32])
 assert_type(np.stack([A, C]), npt.NDArray[Any])
 assert_type(np.stack([C, C]), npt.NDArray[Any])
-assert_type(np.stack([A, A], axis=0), npt.NDArray[np.float64])
+assert_type(np.stack([A, A], axis=0), np.ndarray[Any, Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.stack([A, A], out=B), SubClass[np.float64])
 
-assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])
+assert_type(np.block([[A, A], [A, A]]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.block(C), npt.NDArray[Any])
 
 if sys.version_info >= (3, 12):

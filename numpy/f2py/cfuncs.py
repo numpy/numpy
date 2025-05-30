@@ -9,8 +9,8 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-import sys
 import copy
+import sys
 
 from . import __version__
 
@@ -1047,9 +1047,12 @@ long_double_from_pyobj(long_double* v, PyObject *obj, const char *errmess)
             PyArray_ScalarAsCtype(obj, v);
             return 1;
         }
-        else if (PyArray_Check(obj) && PyArray_TYPE(obj) == NPY_LONGDOUBLE) {
-            (*v) = *((npy_longdouble *)PyArray_DATA(obj));
-            return 1;
+        else if (PyArray_Check(obj)) {
+            PyArrayObject *arr = (PyArrayObject *)obj;
+            if (PyArray_TYPE(arr) == NPY_LONGDOUBLE) {
+                (*v) = *((npy_longdouble *)PyArray_DATA(arr));
+                return 1;
+            }
         }
     }
     if (double_from_pyobj(&d, obj, errmess)) {
@@ -1131,10 +1134,13 @@ complex_long_double_from_pyobj(complex_long_double* v, PyObject *obj, const char
             PyArray_ScalarAsCtype(obj, v);
             return 1;
         }
-        else if (PyArray_Check(obj) && PyArray_TYPE(obj)==NPY_CLONGDOUBLE) {
-            (*v).r = npy_creall(*(((npy_clongdouble *)PyArray_DATA(obj))));
-            (*v).i = npy_cimagl(*(((npy_clongdouble *)PyArray_DATA(obj))));
-            return 1;
+        else if (PyArray_Check(obj)) {
+            PyArrayObject *arr = (PyArrayObject *)obj;
+            if (PyArray_TYPE(arr)==NPY_CLONGDOUBLE) {
+                (*v).r = npy_creall(*(((npy_clongdouble *)PyArray_DATA(arr))));
+                (*v).i = npy_cimagl(*(((npy_clongdouble *)PyArray_DATA(arr))));
+                return 1;
+            }
         }
     }
     if (complex_double_from_pyobj(&cd,obj,errmess)) {

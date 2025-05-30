@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-import os
 import argparse
+import os
 
 import genapi
-from genapi import \
-        TypeApi, GlobalVarApi, FunctionApi, BoolValuesApi
-
 import numpy_api
+from genapi import BoolValuesApi, FunctionApi, GlobalVarApi, TypeApi
 
 # use annotated api when running under cpychecker
 h_template = r"""
@@ -192,7 +190,7 @@ _import_array(void)
 #endif
 
 #endif
-"""
+"""  # noqa: E501
 
 
 c_template = r"""

@@ -7,13 +7,23 @@ import operator as op
 from numbers import Number
 
 import pytest
+
 import numpy as np
-from numpy.polynomial import (
-    Polynomial, Legendre, Chebyshev, Laguerre, Hermite, HermiteE)
-from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
 from numpy.exceptions import RankWarning
+from numpy.polynomial import (
+    Chebyshev,
+    Hermite,
+    HermiteE,
+    Laguerre,
+    Legendre,
+    Polynomial,
+)
+from numpy.testing import (
+    assert_,
+    assert_almost_equal,
+    assert_equal,
+    assert_raises,
+)
 
 #
 # fixtures

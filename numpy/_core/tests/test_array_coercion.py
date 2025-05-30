@@ -6,16 +6,13 @@ are tested (sometimes indirectly) elsewhere.
 
 from itertools import permutations, product
 
+import numpy._core._multiarray_umath as ncu
 import pytest
+from numpy._core._rational_tests import rational
 from pytest import param
 
 import numpy as np
-import numpy._core._multiarray_umath as ncu
-from numpy._core._rational_tests import rational
-
-from numpy.testing import (
-    assert_array_equal, assert_warns, IS_PYPY, IS_64BIT
-)
+from numpy.testing import IS_64BIT, IS_PYPY, assert_array_equal
 
 
 def arraylikes():
@@ -325,18 +322,18 @@ class TestScalarDiscovery:
                 cast = np.array(scalar).astype(dtype)
             except (TypeError, ValueError, RuntimeError):
                 # coercion should also raise (error type may change)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array(scalar, dtype=dtype)
 
                 if (isinstance(scalar, rational) and
                         np.issubdtype(dtype, np.signedinteger)):
                     return
 
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     np.array([scalar], dtype=dtype)
                 # assignment should also raise
                 res = np.zeros((), dtype=dtype)
-                with pytest.raises(Exception):
+                with pytest.raises(Exception):  # noqa: B017
                     res[()] = scalar
 
                 return
@@ -848,7 +845,7 @@ class TestSpecialAttributeLookupFailure:
 
     class WeirdArrayLike:
         @property
-        def __array__(self, dtype=None, copy=None):
+        def __array__(self, dtype=None, copy=None):  # noqa: PLR0206
             raise RuntimeError("oops!")
 
     class WeirdArrayInterface:

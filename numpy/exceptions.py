@@ -243,5 +243,5 @@ class DTypePromotionError(TypeError):
     DTypePromotionError: field names `('field1', 'field2')` and `('field1',)`
     mismatch.
 
-    """
+    """  # noqa: E501
     pass

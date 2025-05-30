@@ -1,6 +1,6 @@
-from .common import Benchmark, get_data
-
 import numpy as np
+
+from .common import Benchmark, get_data
 
 UFUNCS = [obj for obj in np._core.umath.__dict__.values() if
           isinstance(obj, np.ufunc)]
@@ -208,8 +208,9 @@ class LogisticRegression(Benchmark):
         for epoch in range(max_epoch):
             z = np.matmul(self.X_train, self.W)
             A = 1 / (1 + np.exp(-z))  # sigmoid(z)
-            loss = -np.mean(self.Y_train * np.log(A) + (1 - self.Y_train) * np.log(1 - A))
-            dz = A - self.Y_train
+            Y_train = self.Y_train
+            loss = -np.mean(Y_train * np.log(A) + (1 - Y_train) * np.log(1 - A))
+            dz = A - Y_train
             dw = (1 / self.size) * np.matmul(self.X_train.T, dz)
             self.W = self.W - self.alpha * dw
 

@@ -16,14 +16,18 @@ AR_i8: npt.NDArray[np.int64]
 AR_O: npt.NDArray[np.object_]
 AR_subclass: NDArraySubclass
 AR_m: npt.NDArray[np.timedelta64]
-AR_0d: np.ndarray[tuple[()], np.dtype]
-AR_1d: np.ndarray[tuple[int], np.dtype]
-AR_nd: np.ndarray[tuple[int, ...], np.dtype]
+AR_0d: np.ndarray[tuple[()]]
+AR_1d: np.ndarray[tuple[int]]
+AR_nd: np.ndarray
 
 b: np.bool
 f4: np.float32
 i8: np.int64
 f: float
+
+# integer‑dtype subclass for argmin/argmax
+class NDArrayIntSubclass(npt.NDArray[np.intp]): ...
+AR_sub_i: NDArrayIntSubclass
 
 assert_type(np.take(b, 0), np.bool)
 assert_type(np.take(f4, 0), np.float32)
@@ -89,13 +93,13 @@ assert_type(np.argmax(AR_b), np.intp)
 assert_type(np.argmax(AR_f4), np.intp)
 assert_type(np.argmax(AR_b, axis=0), Any)
 assert_type(np.argmax(AR_f4, axis=0), Any)
-assert_type(np.argmax(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.argmax(AR_f4, out=AR_sub_i), NDArrayIntSubclass)
 
 assert_type(np.argmin(AR_b), np.intp)
 assert_type(np.argmin(AR_f4), np.intp)
 assert_type(np.argmin(AR_b, axis=0), Any)
 assert_type(np.argmin(AR_f4, axis=0), Any)
-assert_type(np.argmin(AR_f4, out=AR_subclass), NDArraySubclass)
+assert_type(np.argmin(AR_f4, out=AR_sub_i), NDArrayIntSubclass)
 
 assert_type(np.searchsorted(AR_b[0], 0), np.intp)
 assert_type(np.searchsorted(AR_f4[0], 0), np.intp)
@@ -136,9 +140,9 @@ assert_type(np.shape(b), tuple[()])
 assert_type(np.shape(f), tuple[()])
 assert_type(np.shape([1]), tuple[int])
 assert_type(np.shape([[2]]), tuple[int, int])
-assert_type(np.shape([[[3]]]), tuple[int, ...])
-assert_type(np.shape(AR_b), tuple[int, ...])
-assert_type(np.shape(AR_nd), tuple[int, ...])
+assert_type(np.shape([[[3]]]), tuple[Any, ...])
+assert_type(np.shape(AR_b), tuple[Any, ...])
+assert_type(np.shape(AR_nd), tuple[Any, ...])
 # these fail on mypy, but it works as expected with pyright/pylance
 # assert_type(np.shape(AR_0d), tuple[()])
 # assert_type(np.shape(AR_1d), tuple[int])

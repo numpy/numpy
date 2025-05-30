@@ -1,10 +1,11 @@
-from .common import Benchmark, get_squares_, TYPES1, DLPACK_TYPES
-
-import numpy as np
 import itertools
-from packaging import version
 import operator
 
+from packaging import version
+
+import numpy as np
+
+from .common import DLPACK_TYPES, TYPES1, Benchmark, get_squares_
 
 ufuncs = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
           'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_count', 'bitwise_not',

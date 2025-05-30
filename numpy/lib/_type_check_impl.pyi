@@ -6,7 +6,17 @@ from _typeshed import Incomplete
 from typing_extensions import TypeVar
 
 import numpy as np
-from numpy._typing import ArrayLike, NDArray, _16Bit, _32Bit, _64Bit, _ArrayLike, _NestedSequence, _ScalarLike_co, _SupportsArray
+from numpy._typing import (
+    ArrayLike,
+    NDArray,
+    _16Bit,
+    _32Bit,
+    _64Bit,
+    _ArrayLike,
+    _NestedSequence,
+    _ScalarLike_co,
+    _SupportsArray,
+)
 
 __all__ = [
     "common_type",

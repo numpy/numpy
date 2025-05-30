@@ -19,26 +19,85 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
 import functools
 import operator
 import warnings
-from typing import NamedTuple, Any
+from typing import Any, NamedTuple
 
-from numpy._utils import set_module
 from numpy._core import (
-    array, asarray, zeros, empty, empty_like, intc, single, double,
-    csingle, cdouble, inexact, complexfloating, newaxis, all, inf, dot,
-    add, multiply, sqrt, sum, isfinite, finfo, errstate, moveaxis, amin,
-    amax, prod, abs, atleast_2d, intp, asanyarray, object_,
-    swapaxes, divide, count_nonzero, isnan, sign, argsort, sort,
-    reciprocal, overrides, diagonal as _core_diagonal, trace as _core_trace,
-    cross as _core_cross, outer as _core_outer, tensordot as _core_tensordot,
-    matmul as _core_matmul, matrix_transpose as _core_matrix_transpose,
-    transpose as _core_transpose, vecdot as _core_vecdot,
+    abs,
+    add,
+    all,
+    amax,
+    amin,
+    argsort,
+    array,
+    asanyarray,
+    asarray,
+    atleast_2d,
+    cdouble,
+    complexfloating,
+    count_nonzero,
+    csingle,
+    divide,
+    dot,
+    double,
+    empty,
+    empty_like,
+    errstate,
+    finfo,
+    inexact,
+    inf,
+    intc,
+    intp,
+    isfinite,
+    isnan,
+    moveaxis,
+    multiply,
+    newaxis,
+    object_,
+    overrides,
+    prod,
+    reciprocal,
+    sign,
+    single,
+    sort,
+    sqrt,
+    sum,
+    swapaxes,
+    zeros,
+)
+from numpy._core import (
+    cross as _core_cross,
+)
+from numpy._core import (
+    diagonal as _core_diagonal,
+)
+from numpy._core import (
+    matmul as _core_matmul,
+)
+from numpy._core import (
+    matrix_transpose as _core_matrix_transpose,
+)
+from numpy._core import (
+    outer as _core_outer,
+)
+from numpy._core import (
+    tensordot as _core_tensordot,
+)
+from numpy._core import (
+    trace as _core_trace,
+)
+from numpy._core import (
+    transpose as _core_transpose,
+)
+from numpy._core import (
+    vecdot as _core_vecdot,
 )
 from numpy._globals import _NoValue
-from numpy.lib._twodim_base_impl import triu, eye
+from numpy._typing import NDArray
+from numpy._utils import set_module
+from numpy.lib._twodim_base_impl import eye, triu
 from numpy.lib.array_utils import normalize_axis_index, normalize_axis_tuple
 from numpy.linalg import _umath_linalg
 
-from numpy._typing import NDArray
 
 class EigResult(NamedTuple):
     eigenvalues: NDArray[Any]
@@ -1763,7 +1822,7 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
     True
 
     """
-    import numpy as _nx
+    import numpy as np
     a, wrap = _makearray(a)
 
     if hermitian:
@@ -1775,9 +1834,9 @@ def svd(a, full_matrices=True, compute_uv=True, hermitian=False):
             sgn = sign(s)
             s = abs(s)
             sidx = argsort(s)[..., ::-1]
-            sgn = _nx.take_along_axis(sgn, sidx, axis=-1)
-            s = _nx.take_along_axis(s, sidx, axis=-1)
-            u = _nx.take_along_axis(u, sidx[..., None, :], axis=-1)
+            sgn = np.take_along_axis(sgn, sidx, axis=-1)
+            s = np.take_along_axis(s, sidx, axis=-1)
+            u = np.take_along_axis(u, sidx[..., None, :], axis=-1)
             # singular values are unsigned, move the sign into v
             vt = transpose(u * sgn[..., None, :]).conjugate()
             return SVDResult(wrap(u), s, wrap(vt))
@@ -1958,7 +2017,7 @@ def cond(x, p=None):
     x = asarray(x)  # in case we have a matrix
     if _is_empty_2d(x):
         raise LinAlgError("cond is not defined on empty arrays")
-    if p is None or p == 2 or p == -2:
+    if p is None or p in {2, -2}:
         s = svd(x, compute_uv=False)
         with errstate(all='ignore'):
             if p == -2:
@@ -2903,7 +2962,7 @@ def multi_dot(arrays, *, out=None):
             return A.shape[0] * A.shape[1] * B.shape[1]
 
     Assume we have three matrices
-    :math:`A_{10x100}, B_{100x5}, C_{5x50}`.
+    :math:`A_{10 \times 100}, B_{100 \times 5}, C_{5 \times 50}`.
 
     The costs for the two different parenthesizations are as follows::
 

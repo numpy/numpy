@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-import subprocess
-import tempfile
 import os
-import sys
 import shutil
-
+import subprocess
+import sys
+import tempfile
 
 parser = argparse.ArgumentParser(
     description='Upload files to a remote repo, replacing existing content'

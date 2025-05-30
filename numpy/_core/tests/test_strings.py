@@ -1,10 +1,10 @@
+import operator
 import sys
+
 import pytest
 
-import operator
 import numpy as np
-
-from numpy.testing import assert_array_equal, assert_raises, IS_PYPY
+from numpy.testing import IS_PYPY, assert_array_equal, assert_raises
 from numpy.testing._private.utils import requires_memory
 
 COMPARISONS = [
@@ -224,8 +224,19 @@ class TestMethods:
         with pytest.raises(TypeError, match="unsupported type"):
             np.strings.multiply(np.array("abc", dtype=dt), 3.14)
 
-        with pytest.raises(MemoryError):
+        with pytest.raises(OverflowError):
             np.strings.multiply(np.array("abc", dtype=dt), sys.maxsize)
+
+    def test_inplace_multiply(self, dt):
+        arr = np.array(['foo ', 'bar'], dtype=dt)
+        arr *= 2
+        if dt != "T":
+            assert_array_equal(arr, np.array(['foo ', 'barb'], dtype=dt))
+        else:
+            assert_array_equal(arr, ['foo foo ', 'barbar'])
+
+        with pytest.raises(OverflowError):
+            arr *= sys.maxsize
 
     @pytest.mark.parametrize("i_dt", [np.int8, np.int16, np.int32,
                                       np.int64, np.int_])

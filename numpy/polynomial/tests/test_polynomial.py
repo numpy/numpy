@@ -1,16 +1,23 @@
 """Tests for polynomial module.
 
 """
-from functools import reduce
+import pickle
+from copy import deepcopy
 from fractions import Fraction
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.polynomial as poly
 import numpy.polynomial.polyutils as pu
-import pickle
-from copy import deepcopy
 from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    assert_array_equal, assert_raises_regex, assert_warns)
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+)
 
 
 def trim(x):
@@ -543,6 +550,20 @@ class TestMisc:
             res = poly.polyroots(poly.polyfromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))
 
+        # Testing for larger root values
+        for i in np.logspace(10, 25, num=1000, base=10):
+            tgt = np.array([-1, 1, i])
+            res = poly.polyroots(poly.polyfromroots(tgt))
+            # Adapting the expected precision according to the root value,
+            # to take into account numerical calculation error.
+            assert_almost_equal(res, tgt, 15 - int(np.log10(i)))
+        for i in np.logspace(10, 25, num=1000, base=10):
+            tgt = np.array([-1, 1.01, i])
+            res = poly.polyroots(poly.polyfromroots(tgt))
+            # Adapting the expected precision according to the root value,
+            # to take into account numerical calculation error.
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))
+
     def test_polyfit(self):
         def f(x):
             return x * (x - 1) * (x - 2)
@@ -646,3 +667,25 @@ class TestMisc:
 
         arr = np.polydiv(1, np.float32(1))
         assert_equal(arr[0].dtype, np.float64)
+
+class ArrayFunctionInterceptor:
+    def __init__(self):
+        self.called = False
+
+    def __array_function__(self, func, types, args, kwargs):
+        self.called = True
+        return "intercepted"
+
+def test_polyval2d_array_function_hook():
+    x = ArrayFunctionInterceptor()
+    y = ArrayFunctionInterceptor()
+    c = ArrayFunctionInterceptor()
+    result = np.polynomial.polynomial.polyval2d(x, y, c)
+    assert result == "intercepted"
+
+def test_polygrid2d_array_function_hook():
+    x = ArrayFunctionInterceptor()
+    y = ArrayFunctionInterceptor()
+    c = ArrayFunctionInterceptor()
+    result = np.polynomial.polynomial.polygrid2d(x, y, c)
+    assert result == "intercepted"

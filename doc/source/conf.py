@@ -1,10 +1,11 @@
+import importlib
 import os
 import re
 import sys
-import importlib
+from datetime import datetime
+
 from docutils import nodes
 from docutils.parsers.rst import Directive
-from datetime import datetime
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '4.3'
@@ -20,7 +21,8 @@ def replace_scalar_type_names():
     """ Rename numpy types to use the canonical names to make sphinx behave """
     import ctypes
 
-    Py_ssize_t = ctypes.c_int64 if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_int32
+    sizeof_void_p = ctypes.sizeof(ctypes.c_void_p)
+    Py_ssize_t = ctypes.c_int64 if sizeof_void_p == 8 else ctypes.c_int32
 
     class PyObject(ctypes.Structure):
         pass
@@ -66,6 +68,7 @@ replace_scalar_type_names()
 # As of NumPy 1.25, a deprecation of `str`/`bytes` attributes happens.
 # For some reasons, the doc build accesses these, so ignore them.
 import warnings
+
 warnings.filterwarnings("ignore", "In the future.*NumPy scalar", FutureWarning)
 
 
@@ -122,6 +125,7 @@ copyright = f'2008-{year}, NumPy Developers'
 # other places throughout the built documents.
 #
 import numpy
+
 # The short X.Y version (including .devXXXX, rcX, b1 suffixes if present)
 version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
 version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
@@ -460,6 +464,7 @@ plot_include_source = True
 plot_formats = [('png', 100), 'pdf']
 
 import math
+
 phi = (math.sqrt(5) + 1) / 2
 
 plot_rcparams = {
@@ -484,7 +489,7 @@ plot_rcparams = {
 # -----------------------------------------------------------------------------
 
 import inspect
-from os.path import relpath, dirname
+from os.path import dirname, relpath
 
 for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
     try:
@@ -539,14 +544,14 @@ def linkcode_resolve(domain, info):
     fn = None
     lineno = None
 
-    # Make a poor effort at linking C extension types
-    if isinstance(obj, type) and obj.__module__ == 'numpy':
-        fn = _get_c_source_file(obj)
+    if isinstance(obj, type):
+        # Make a poor effort at linking C extension types
+        if obj.__module__ == 'numpy':
+            fn = _get_c_source_file(obj)
 
-    # This can be removed when removing the decorator set_module. Fix issue #28629
-    if hasattr(obj, '_module_file'):
-        fn = obj._module_file
-        fn = relpath(fn, start=dirname(numpy.__file__))
+        # This can be removed when removing the decorator set_module. Fix issue #28629
+        if hasattr(obj, '_module_source'):
+            obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if fn is None:
         try:
@@ -573,6 +578,9 @@ def linkcode_resolve(domain, info):
     else:
         linespec = ""
 
+    if isinstance(obj, type) and hasattr(obj, '_module_source'):
+        obj.__module__, obj._module_source = obj._module_source, obj.__module__
+
     if 'dev' in numpy.__version__:
         return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"
     else:
@@ -580,9 +588,10 @@ def linkcode_resolve(domain, info):
            numpy.__version__, fn, linespec)
 
 
-from pygments.lexers import CLexer
 from pygments.lexer import inherit
+from pygments.lexers import CLexer
 from pygments.token import Comment
+
 
 class NumPyLexer(CLexer):
     name = 'NUMPYLEXER'

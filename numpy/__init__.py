@@ -89,18 +89,16 @@ import os
 import sys
 import warnings
 
-from ._globals import _NoValue, _CopyMode
-from ._expired_attrs_2_0 import __expired_attributes__
-
-
 # If a version with git hash was stored, use that instead
 from . import version
+from ._expired_attrs_2_0 import __expired_attributes__
+from ._globals import _CopyMode, _NoValue
 from .version import __version__
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
 try:
-    __NUMPY_SETUP__
+    __NUMPY_SETUP__  # noqa: B018
 except NameError:
     __NUMPY_SETUP__ = False
 
@@ -113,60 +111,338 @@ else:
     try:
         from numpy.__config__ import show_config
     except ImportError as e:
-        msg = """Error importing numpy: you should not try to import numpy from
-        its source directory; please exit the numpy source tree, and relaunch
-        your python interpreter from there."""
-        raise ImportError(msg) from e
+        if isinstance(e, ModuleNotFoundError) and e.name == "numpy.__config__":
+            # The __config__ module itself was not found, so add this info:
+            msg = """Error importing numpy: you should not try to import numpy from
+            its source directory; please exit the numpy source tree, and relaunch
+            your python interpreter from there."""
+            raise ImportError(msg) from e
+        raise
 
     from . import _core
     from ._core import (
-        False_, ScalarType, True_,
-        abs, absolute, acos, acosh, add, all, allclose,
-        amax, amin, any, arange, arccos, arccosh, arcsin, arcsinh,
-        arctan, arctan2, arctanh, argmax, argmin, argpartition, argsort,
-        argwhere, around, array, array2string, array_equal, array_equiv,
-        array_repr, array_str, asanyarray, asarray, ascontiguousarray,
-        asfortranarray, asin, asinh, atan, atanh, atan2, astype, atleast_1d,
-        atleast_2d, atleast_3d, base_repr, binary_repr, bitwise_and,
-        bitwise_count, bitwise_invert, bitwise_left_shift, bitwise_not,
-        bitwise_or, bitwise_right_shift, bitwise_xor, block, bool, bool_,
-        broadcast, busday_count, busday_offset, busdaycalendar, byte, bytes_,
-        can_cast, cbrt, cdouble, ceil, character, choose, clip, clongdouble,
-        complex128, complex64, complexfloating, compress, concat, concatenate,
-        conj, conjugate, convolve, copysign, copyto, correlate, cos, cosh,
-        count_nonzero, cross, csingle, cumprod, cumsum, cumulative_prod,
-        cumulative_sum, datetime64, datetime_as_string, datetime_data,
-        deg2rad, degrees, diagonal, divide, divmod, dot, double, dtype, e,
-        einsum, einsum_path, empty, empty_like, equal, errstate, euler_gamma,
-        exp, exp2, expm1, fabs, finfo, flatiter, flatnonzero, flexible,
-        float16, float32, float64, float_power, floating, floor, floor_divide,
-        fmax, fmin, fmod, format_float_positional, format_float_scientific,
-        frexp, from_dlpack, frombuffer, fromfile, fromfunction, fromiter,
-        frompyfunc, fromstring, full, full_like, gcd, generic, geomspace,
-        get_printoptions, getbufsize, geterr, geterrcall, greater,
-        greater_equal, half, heaviside, hstack, hypot, identity, iinfo,
-        indices, inexact, inf, inner, int16, int32, int64, int8, int_, intc,
-        integer, intp, invert, is_busday, isclose, isdtype, isfinite,
-        isfortran, isinf, isnan, isnat, isscalar, issubdtype, lcm, ldexp,
-        left_shift, less, less_equal, lexsort, linspace, little_endian, log,
-        log10, log1p, log2, logaddexp, logaddexp2, logical_and, logical_not,
-        logical_or, logical_xor, logspace, long, longdouble, longlong, matmul,
-        matvec, matrix_transpose, max, maximum, may_share_memory, mean, memmap,
-        min, min_scalar_type, minimum, mod, modf, moveaxis, multiply, nan,
-        ndarray, ndim, nditer, negative, nested_iters, newaxis, nextafter,
-        nonzero, not_equal, number, object_, ones, ones_like, outer, partition,
-        permute_dims, pi, positive, pow, power, printoptions, prod,
-        promote_types, ptp, put, putmask, rad2deg, radians, ravel, recarray,
-        reciprocal, record, remainder, repeat, require, reshape, resize,
-        result_type, right_shift, rint, roll, rollaxis, round, sctypeDict,
-        searchsorted, set_printoptions, setbufsize, seterr, seterrcall, shape,
-        shares_memory, short, sign, signbit, signedinteger, sin, single, sinh,
-        size, sort, spacing, sqrt, square, squeeze, stack, std,
-        str_, subtract, sum, swapaxes, take, tan, tanh, tensordot,
-        timedelta64, trace, transpose, true_divide, trunc, typecodes, ubyte,
-        ufunc, uint, uint16, uint32, uint64, uint8, uintc, uintp, ulong,
-        ulonglong, unsignedinteger, unstack, ushort, var, vdot, vecdot,
-        vecmat, void, vstack, where, zeros, zeros_like
+        False_,
+        ScalarType,
+        True_,
+        abs,
+        absolute,
+        acos,
+        acosh,
+        add,
+        all,
+        allclose,
+        amax,
+        amin,
+        any,
+        arange,
+        arccos,
+        arccosh,
+        arcsin,
+        arcsinh,
+        arctan,
+        arctan2,
+        arctanh,
+        argmax,
+        argmin,
+        argpartition,
+        argsort,
+        argwhere,
+        around,
+        array,
+        array2string,
+        array_equal,
+        array_equiv,
+        array_repr,
+        array_str,
+        asanyarray,
+        asarray,
+        ascontiguousarray,
+        asfortranarray,
+        asin,
+        asinh,
+        astype,
+        atan,
+        atan2,
+        atanh,
+        atleast_1d,
+        atleast_2d,
+        atleast_3d,
+        base_repr,
+        binary_repr,
+        bitwise_and,
+        bitwise_count,
+        bitwise_invert,
+        bitwise_left_shift,
+        bitwise_not,
+        bitwise_or,
+        bitwise_right_shift,
+        bitwise_xor,
+        block,
+        bool,
+        bool_,
+        broadcast,
+        busday_count,
+        busday_offset,
+        busdaycalendar,
+        byte,
+        bytes_,
+        can_cast,
+        cbrt,
+        cdouble,
+        ceil,
+        character,
+        choose,
+        clip,
+        clongdouble,
+        complex64,
+        complex128,
+        complexfloating,
+        compress,
+        concat,
+        concatenate,
+        conj,
+        conjugate,
+        convolve,
+        copysign,
+        copyto,
+        correlate,
+        cos,
+        cosh,
+        count_nonzero,
+        cross,
+        csingle,
+        cumprod,
+        cumsum,
+        cumulative_prod,
+        cumulative_sum,
+        datetime64,
+        datetime_as_string,
+        datetime_data,
+        deg2rad,
+        degrees,
+        diagonal,
+        divide,
+        divmod,
+        dot,
+        double,
+        dtype,
+        e,
+        einsum,
+        einsum_path,
+        empty,
+        empty_like,
+        equal,
+        errstate,
+        euler_gamma,
+        exp,
+        exp2,
+        expm1,
+        fabs,
+        finfo,
+        flatiter,
+        flatnonzero,
+        flexible,
+        float16,
+        float32,
+        float64,
+        float_power,
+        floating,
+        floor,
+        floor_divide,
+        fmax,
+        fmin,
+        fmod,
+        format_float_positional,
+        format_float_scientific,
+        frexp,
+        from_dlpack,
+        frombuffer,
+        fromfile,
+        fromfunction,
+        fromiter,
+        frompyfunc,
+        fromstring,
+        full,
+        full_like,
+        gcd,
+        generic,
+        geomspace,
+        get_printoptions,
+        getbufsize,
+        geterr,
+        geterrcall,
+        greater,
+        greater_equal,
+        half,
+        heaviside,
+        hstack,
+        hypot,
+        identity,
+        iinfo,
+        indices,
+        inexact,
+        inf,
+        inner,
+        int8,
+        int16,
+        int32,
+        int64,
+        int_,
+        intc,
+        integer,
+        intp,
+        invert,
+        is_busday,
+        isclose,
+        isdtype,
+        isfinite,
+        isfortran,
+        isinf,
+        isnan,
+        isnat,
+        isscalar,
+        issubdtype,
+        lcm,
+        ldexp,
+        left_shift,
+        less,
+        less_equal,
+        lexsort,
+        linspace,
+        little_endian,
+        log,
+        log1p,
+        log2,
+        log10,
+        logaddexp,
+        logaddexp2,
+        logical_and,
+        logical_not,
+        logical_or,
+        logical_xor,
+        logspace,
+        long,
+        longdouble,
+        longlong,
+        matmul,
+        matrix_transpose,
+        matvec,
+        max,
+        maximum,
+        may_share_memory,
+        mean,
+        memmap,
+        min,
+        min_scalar_type,
+        minimum,
+        mod,
+        modf,
+        moveaxis,
+        multiply,
+        nan,
+        ndarray,
+        ndim,
+        nditer,
+        negative,
+        nested_iters,
+        newaxis,
+        nextafter,
+        nonzero,
+        not_equal,
+        number,
+        object_,
+        ones,
+        ones_like,
+        outer,
+        partition,
+        permute_dims,
+        pi,
+        positive,
+        pow,
+        power,
+        printoptions,
+        prod,
+        promote_types,
+        ptp,
+        put,
+        putmask,
+        rad2deg,
+        radians,
+        ravel,
+        recarray,
+        reciprocal,
+        record,
+        remainder,
+        repeat,
+        require,
+        reshape,
+        resize,
+        result_type,
+        right_shift,
+        rint,
+        roll,
+        rollaxis,
+        round,
+        sctypeDict,
+        searchsorted,
+        set_printoptions,
+        setbufsize,
+        seterr,
+        seterrcall,
+        shape,
+        shares_memory,
+        short,
+        sign,
+        signbit,
+        signedinteger,
+        sin,
+        single,
+        sinh,
+        size,
+        sort,
+        spacing,
+        sqrt,
+        square,
+        squeeze,
+        stack,
+        std,
+        str_,
+        subtract,
+        sum,
+        swapaxes,
+        take,
+        tan,
+        tanh,
+        tensordot,
+        timedelta64,
+        trace,
+        transpose,
+        true_divide,
+        trunc,
+        typecodes,
+        ubyte,
+        ufunc,
+        uint,
+        uint8,
+        uint16,
+        uint32,
+        uint64,
+        uintc,
+        uintp,
+        ulong,
+        ulonglong,
+        unsignedinteger,
+        unstack,
+        ushort,
+        var,
+        vdot,
+        vecdot,
+        vecmat,
+        void,
+        vstack,
+        where,
+        zeros,
+        zeros_like,
     )
 
     # NOTE: It's still under discussion whether these aliases
@@ -179,67 +455,176 @@ else:
     del ta
 
     from . import lib
+    from . import matrixlib as _mat
     from .lib import scimath as emath
-    from .lib._histograms_impl import (
-        histogram, histogram_bin_edges, histogramdd
-    )
-    from .lib._nanfunctions_impl import (
-        nanargmax, nanargmin, nancumprod, nancumsum, nanmax, nanmean,
-        nanmedian, nanmin, nanpercentile, nanprod, nanquantile, nanstd,
-        nansum, nanvar
+    from .lib._arraypad_impl import pad
+    from .lib._arraysetops_impl import (
+        ediff1d,
+        in1d,
+        intersect1d,
+        isin,
+        setdiff1d,
+        setxor1d,
+        union1d,
+        unique,
+        unique_all,
+        unique_counts,
+        unique_inverse,
+        unique_values,
     )
     from .lib._function_base_impl import (
-        select, piecewise, trim_zeros, copy, iterable, percentile, diff,
-        gradient, angle, unwrap, sort_complex, flip, rot90, extract, place,
-        vectorize, asarray_chkfinite, average, bincount, digitize, cov,
-        corrcoef, median, sinc, hamming, hanning, bartlett, blackman,
-        kaiser, trapezoid, trapz, i0, meshgrid, delete, insert, append,
-        interp, quantile
+        angle,
+        append,
+        asarray_chkfinite,
+        average,
+        bartlett,
+        bincount,
+        blackman,
+        copy,
+        corrcoef,
+        cov,
+        delete,
+        diff,
+        digitize,
+        extract,
+        flip,
+        gradient,
+        hamming,
+        hanning,
+        i0,
+        insert,
+        interp,
+        iterable,
+        kaiser,
+        median,
+        meshgrid,
+        percentile,
+        piecewise,
+        place,
+        quantile,
+        rot90,
+        select,
+        sinc,
+        sort_complex,
+        trapezoid,
+        trapz,
+        trim_zeros,
+        unwrap,
+        vectorize,
     )
-    from .lib._twodim_base_impl import (
-        diag, diagflat, eye, fliplr, flipud, tri, triu, tril, vander,
-        histogram2d, mask_indices, tril_indices, tril_indices_from,
-        triu_indices, triu_indices_from
+    from .lib._histograms_impl import histogram, histogram_bin_edges, histogramdd
+    from .lib._index_tricks_impl import (
+        c_,
+        diag_indices,
+        diag_indices_from,
+        fill_diagonal,
+        index_exp,
+        ix_,
+        mgrid,
+        ndenumerate,
+        ndindex,
+        ogrid,
+        r_,
+        ravel_multi_index,
+        s_,
+        unravel_index,
     )
-    from .lib._shape_base_impl import (
-        apply_over_axes, apply_along_axis, array_split, column_stack, dsplit,
-        dstack, expand_dims, hsplit, kron, put_along_axis, row_stack, split,
-        take_along_axis, tile, vsplit
-    )
-    from .lib._type_check_impl import (
-        iscomplexobj, isrealobj, imag, iscomplex, isreal, nan_to_num, real,
-        real_if_close, typename, mintypecode, common_type
-    )
-    from .lib._arraysetops_impl import (
-        ediff1d, in1d, intersect1d, isin, setdiff1d, setxor1d, union1d,
-        unique, unique_all, unique_counts, unique_inverse, unique_values
-    )
-    from .lib._ufunclike_impl import fix, isneginf, isposinf
-    from .lib._arraypad_impl import pad
-    from .lib._utils_impl import (
-        show_runtime, get_include, info
-    )
-    from .lib._stride_tricks_impl import (
-        broadcast_arrays, broadcast_shapes, broadcast_to
-    )
-    from .lib._polynomial_impl import (
-        poly, polyint, polyder, polyadd, polysub, polymul, polydiv, polyval,
-        polyfit, poly1d, roots
+    from .lib._nanfunctions_impl import (
+        nanargmax,
+        nanargmin,
+        nancumprod,
+        nancumsum,
+        nanmax,
+        nanmean,
+        nanmedian,
+        nanmin,
+        nanpercentile,
+        nanprod,
+        nanquantile,
+        nanstd,
+        nansum,
+        nanvar,
     )
     from .lib._npyio_impl import (
-        savetxt, loadtxt, genfromtxt, load, save, savez, packbits,
-        savez_compressed, unpackbits, fromregex
+        fromregex,
+        genfromtxt,
+        load,
+        loadtxt,
+        packbits,
+        save,
+        savetxt,
+        savez,
+        savez_compressed,
+        unpackbits,
     )
-    from .lib._index_tricks_impl import (
-        diag_indices_from, diag_indices, fill_diagonal, ndindex, ndenumerate,
-        ix_, c_, r_, s_, ogrid, mgrid, unravel_index, ravel_multi_index,
-        index_exp
+    from .lib._polynomial_impl import (
+        poly,
+        poly1d,
+        polyadd,
+        polyder,
+        polydiv,
+        polyfit,
+        polyint,
+        polymul,
+        polysub,
+        polyval,
+        roots,
     )
-
-    from . import matrixlib as _mat
-    from .matrixlib import (
-        asmatrix, bmat, matrix
+    from .lib._shape_base_impl import (
+        apply_along_axis,
+        apply_over_axes,
+        array_split,
+        column_stack,
+        dsplit,
+        dstack,
+        expand_dims,
+        hsplit,
+        kron,
+        put_along_axis,
+        row_stack,
+        split,
+        take_along_axis,
+        tile,
+        vsplit,
     )
+    from .lib._stride_tricks_impl import (
+        broadcast_arrays,
+        broadcast_shapes,
+        broadcast_to,
+    )
+    from .lib._twodim_base_impl import (
+        diag,
+        diagflat,
+        eye,
+        fliplr,
+        flipud,
+        histogram2d,
+        mask_indices,
+        tri,
+        tril,
+        tril_indices,
+        tril_indices_from,
+        triu,
+        triu_indices,
+        triu_indices_from,
+        vander,
+    )
+    from .lib._type_check_impl import (
+        common_type,
+        imag,
+        iscomplex,
+        iscomplexobj,
+        isreal,
+        isrealobj,
+        mintypecode,
+        nan_to_num,
+        real,
+        real_if_close,
+        typename,
+    )
+    from .lib._ufunclike_impl import fix, isneginf, isposinf
+    from .lib._utils_impl import get_include, info, show_runtime
+    from .matrixlib import asmatrix, bmat, matrix
 
     # public submodules are imported lazily, therefore are accessible from
     # __getattr__. Note that `distutils` (deprecated) and `array_api`
@@ -289,7 +674,7 @@ else:
     # import with `from numpy import *`.
     __future_scalars__ = {"str", "bytes", "object"}
 
-    __array_api_version__ = "2023.12"
+    __array_api_version__ = "2024.12"
 
     from ._array_api_info import __array_namespace_info__
 
@@ -418,7 +803,7 @@ else:
         )
         public_symbols -= {
             "matrixlib", "matlib", "tests", "conftest", "version",
-            "compat", "distutils", "array_api"
+            "distutils", "array_api"
         }
         return list(public_symbols)
 
@@ -470,18 +855,19 @@ else:
         from . import exceptions
         with warnings.catch_warnings(record=True) as w:
             _mac_os_check()
-            # Throw runtime error, if the test failed Check for warning and error_message
+            # Throw runtime error, if the test failed
+            # Check for warning and report the error_message
             if len(w) > 0:
                 for _wn in w:
                     if _wn.category is exceptions.RankWarning:
-                        # Ignore other warnings, they may not be relevant (see gh-25433).
+                        # Ignore other warnings, they may not be relevant (see gh-25433)
                         error_message = (
                             f"{_wn.category.__name__}: {_wn.message}"
                         )
                         msg = (
                             "Polyfit sanity test emitted a warning, most likely due "
                             "to using a buggy Accelerate backend."
-                            "\nIf you compiled yourself, more information is available at:"
+                            "\nIf you compiled yourself, more information is available at:"  # noqa: E501
                             "\nhttps://numpy.org/devdocs/building/index.html"
                             "\nOtherwise report this to the vendor "
                             f"that provided NumPy.\n\n{error_message}\n")

@@ -7,10 +7,10 @@ and that it appears to contain text prevalent for a NumPy binary
 distribution.
 
 """
-import sys
-import re
 import argparse
 import pathlib
+import re
+import sys
 
 
 def check_text(text):

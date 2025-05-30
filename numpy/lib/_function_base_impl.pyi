@@ -105,7 +105,7 @@ _Pss = ParamSpec("_Pss")
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT1 = TypeVar("_ScalarT1", bound=generic)
 _ScalarT2 = TypeVar("_ScalarT2", bound=generic)
-_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
+_ArrayT = TypeVar("_ArrayT", bound=np.ndarray)
 
 _2Tuple: TypeAlias = tuple[_T, _T]
 _MeshgridIdx: TypeAlias = L['ij', 'xy']

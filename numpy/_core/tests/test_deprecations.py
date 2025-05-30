@@ -3,23 +3,24 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 
 """
+import contextlib
 import warnings
+
+import numpy._core._struct_ufunc_tests as struct_ufunc
 import pytest
+
 import tempfile
 import re
 import numpy.ma as ma
 
-import numpy as np
-from numpy.testing import (
-    assert_raises, assert_warns, assert_, assert_array_equal, SkipTest,
-    KnownFailureException, break_cycles, temppath
-    )
+from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
 
-from numpy._core._multiarray_tests import fromstring_null_term_c_api
-import numpy._core._struct_ufunc_tests as struct_ufunc
+
+import numpy as np
+from numpy.testing import assert_raises, temppath
 
 try:
-    import pytz
+    import pytz  # noqa: F401
     _has_pytz = True
 except ImportError:
     _has_pytz = False
@@ -89,10 +90,12 @@ class _DeprecationTestCase:
         if exceptions is np._NoValue:
             exceptions = (self.warning_cls,)
 
-        try:
+        if function_fails:
+            context_manager = contextlib.suppress(Exception)
+        else:
+            context_manager = contextlib.nullcontext()
+        with context_manager:
             function(*args, **kwargs)
-        except (Exception if function_fails else ()):
-            pass
 
         # just in case, clear the registry
         num_found = 0
@@ -346,13 +349,13 @@ class TestMathAlias(_DeprecationTestCase):
 class TestLibImports(_DeprecationTestCase):
     # Deprecated in Numpy 1.26.0, 2023-09
     def test_lib_functions_deprecation_call(self):
-        from numpy.lib._utils_impl import safe_eval
-        from numpy.lib._npyio_impl import recfromcsv, recfromtxt
-        from numpy.lib._function_base_impl import disp
-        from numpy.lib._shape_base_impl import get_array_wrap
-        from numpy._core.numerictypes import maximum_sctype
-        from numpy.lib.tests.test_io import TextIO
         from numpy import in1d, row_stack, trapz
+        from numpy._core.numerictypes import maximum_sctype
+        from numpy.lib._function_base_impl import disp
+        from numpy.lib._npyio_impl import recfromcsv, recfromtxt
+        from numpy.lib._shape_base_impl import get_array_wrap
+        from numpy.lib._utils_impl import safe_eval
+        from numpy.lib.tests.test_io import TextIO
 
         self.assert_deprecated(lambda: safe_eval("None"))
 

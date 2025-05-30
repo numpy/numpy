@@ -1,37 +1,38 @@
 from typing import (
-    Literal as L,
-    TypeAlias,
-    overload,
     Any,
-    SupportsInt,
-    SupportsIndex,
-    TypeVar,
     NoReturn,
+    SupportsIndex,
+    SupportsInt,
+    TypeAlias,
+    TypeVar,
+    overload,
+)
+from typing import (
+    Literal as L,
 )
 
 import numpy as np
 from numpy import (
-    poly1d,
-    unsignedinteger,
-    signedinteger,
-    floating,
+    complex128,
     complexfloating,
+    float64,
+    floating,
     int32,
     int64,
-    float64,
-    complex128,
     object_,
+    poly1d,
+    signedinteger,
+    unsignedinteger,
 )
-
 from numpy._typing import (
-    NDArray,
     ArrayLike,
+    NDArray,
     _ArrayLikeBool_co,
-    _ArrayLikeUInt_co,
-    _ArrayLikeInt_co,
-    _ArrayLikeFloat_co,
     _ArrayLikeComplex_co,
+    _ArrayLikeFloat_co,
+    _ArrayLikeInt_co,
     _ArrayLikeObject_co,
+    _ArrayLikeUInt_co,
 )
 
 _T = TypeVar("_T")
