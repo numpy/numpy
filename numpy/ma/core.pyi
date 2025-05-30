@@ -668,20 +668,13 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __pow__(self, other, mod: None = None, /): ...
     def __rpow__(self, other, mod: None = None, /): ...
 
-    # Keep in sync with `ndarray.__iadd__`, except that `_MaskedArray[unsignedinteger]` does not accept
-    # _IntLike_co for `other`.
+    # Keep in sync with `ndarray.__iadd__`
     @overload
     def __iadd__(
         self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
-    def __iadd__(
-        self: _MaskedArray[unsignedinteger], other: _ArrayLikeUInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __iadd__(
-        self: _MaskedArray[signedinteger], other: _ArrayLikeInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
+    def __iadd__(self: _MaskedArray[integer], other: _ArrayLikeInt_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __iadd__(
         self: _MaskedArray[floating], other: _ArrayLikeFloat_co, /
@@ -707,16 +700,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         self: _MaskedArray[object_], other: Any, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
 
-    # Keep in sync with `ndarray.__isub__`, except that `_MaskedArray[unsignedinteger]` does not accept
-    # _IntLike_co for `other`.
+    # Keep in sync with `ndarray.__isub__`
     @overload
-    def __isub__(
-        self: _MaskedArray[unsignedinteger], other: _ArrayLikeUInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __isub__(
-        self: _MaskedArray[signedinteger], other: _ArrayLikeInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
+    def __isub__(self: _MaskedArray[integer], other: _ArrayLikeInt_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __isub__(
         self: _MaskedArray[floating], other: _ArrayLikeFloat_co, /
@@ -734,20 +720,14 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         self: _MaskedArray[object_], other: Any, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
 
-    # Keep in sync with `ndarray.__imul__`, except that `_MaskedArray[unsignedinteger]` does not accept
-    # _IntLike_co for `other`.
+    # Keep in sync with `ndarray.__imul__`
     @overload
     def __imul__(
         self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __imul__(
-        self: _MaskedArray[unsignedinteger], other: _ArrayLikeUInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __imul__(
-        self: MaskedArray[Any, dtype[signedinteger] | dtype[character] | dtypes.StringDType],
-        other: _ArrayLikeInt_co, /
+        self: MaskedArray[Any, dtype[integer] | dtype[character] | dtypes.StringDType], other: _ArrayLikeInt_co, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __imul__(
@@ -762,16 +742,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         self: _MaskedArray[object_], other: Any, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
 
-    # Keep in sync with `ndarray.__ifloordiv__`, except that `_MaskedArray[unsignedinteger]` does not accept
-    # _IntLike_co for `other`.
+    # Keep in sync with `ndarray.__ifloordiv__`
     @overload
-    def __ifloordiv__(
-        self: _MaskedArray[unsignedinteger], other: _ArrayLikeUInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __ifloordiv__(
-        self: _MaskedArray[signedinteger], other: _ArrayLikeInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
+    def __ifloordiv__(self: _MaskedArray[integer], other: _ArrayLikeInt_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __ifloordiv__(
         self: _MaskedArray[floating | timedelta64], other: _ArrayLikeFloat_co, /
@@ -781,8 +754,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         self: _MaskedArray[object_], other: Any, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
 
-    # Keep in sync with `ndarray.__itruediv__`, except that `_MaskedArray[unsignedinteger]` does not accept
-    # _IntLike_co for `other`.
+    # Keep in sync with `ndarray.__itruediv__`
     @overload
     def __itruediv__(
         self: _MaskedArray[floating | timedelta64], other: _ArrayLikeFloat_co, /
@@ -798,16 +770,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
         self: _MaskedArray[object_], other: Any, /
     ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
 
-    # Keep in sync with `ndarray.__ipow__`, except that `_MaskedArray[unsignedinteger]` does not accept
-    # _IntLike_co for `other`.
+    # Keep in sync with `ndarray.__ipow__`
     @overload
-    def __ipow__(
-        self: _MaskedArray[unsignedinteger], other: _ArrayLikeUInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
-    @overload
-    def __ipow__(
-        self: _MaskedArray[signedinteger], other: _ArrayLikeInt_co, /
-    ) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
+    def __ipow__(self: _MaskedArray[integer], other: _ArrayLikeInt_co, /) -> MaskedArray[_ShapeT_co, _DTypeT_co]: ...
     @overload
     def __ipow__(
         self: _MaskedArray[floating], other: _ArrayLikeFloat_co, /
