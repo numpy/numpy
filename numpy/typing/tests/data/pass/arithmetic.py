@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 import numpy as np
 import numpy.typing as npt
 import pytest
@@ -61,6 +61,7 @@ class Object:
 AR_b: npt.NDArray[np.bool] = np.array([True])
 AR_u: npt.NDArray[np.uint32] = np.array([1], dtype=np.uint32)
 AR_i: npt.NDArray[np.int64] = np.array([1])
+AR_integer: npt.NDArray[np.integer] = cast(npt.NDArray[np.integer], AR_i)
 AR_f: npt.NDArray[np.float64] = np.array([1.0])
 AR_c: npt.NDArray[np.complex128] = np.array([1j])
 AR_m: npt.NDArray[np.timedelta64] = np.array([np.timedelta64(1, "D")])
@@ -282,6 +283,10 @@ AR_i *= AR_LIKE_b
 AR_i *= AR_LIKE_u
 AR_i *= AR_LIKE_i
 
+AR_integer *= AR_LIKE_b
+AR_integer *= AR_LIKE_u
+AR_integer *= AR_LIKE_i
+
 AR_f *= AR_LIKE_b
 AR_f *= AR_LIKE_u
 AR_f *= AR_LIKE_i
@@ -313,6 +318,10 @@ AR_u **= AR_LIKE_u
 AR_i **= AR_LIKE_b
 AR_i **= AR_LIKE_u
 AR_i **= AR_LIKE_i
+
+AR_integer **= AR_LIKE_b
+AR_integer **= AR_LIKE_u
+AR_integer **= AR_LIKE_i
 
 AR_f **= AR_LIKE_b
 AR_f **= AR_LIKE_u
