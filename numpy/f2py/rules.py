@@ -1184,9 +1184,10 @@ if (#varname#_cb.capi==Py_None) {
                 """\
         int *_i,capi_i=0;
         CFUNCSMESS(\"#name#: Initializing #varname#=#init#\\n\");
-        if (initforcomb(PyArray_DIMS(capi_#varname#_as_array),
+        struct ForcombCache cache;
+        if (initforcomb(&cache, PyArray_DIMS(capi_#varname#_as_array),
                         PyArray_NDIM(capi_#varname#_as_array),1)) {
-            while ((_i = nextforcomb()))
+            while ((_i = nextforcomb(&cache)))
                 #varname#[capi_i++] = #init#; /* fortran way */
         } else {
             PyObject *exc, *val, *tb;
