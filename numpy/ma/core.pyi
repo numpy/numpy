@@ -28,13 +28,12 @@ from numpy import (
     floating,
     generic,
     int_,
+    integer,
     intp,
     ndarray,
     object_,
-    signedinteger,
     str_,
     timedelta64,
-    unsignedinteger,
 )
 from numpy._globals import _NoValueType
 from numpy._typing import (
@@ -51,7 +50,6 @@ from numpy._typing import (
     _ArrayLikeStr_co,
     _ArrayLikeString_co,
     _ArrayLikeTD64_co,
-    _ArrayLikeUInt_co,
     _DTypeLikeBool,
     _IntLike_co,
     _ScalarLike_co,
