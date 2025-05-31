@@ -16,7 +16,7 @@ permissions:
 jobs:
   python64bit_openblas:
     name: x86-64, LP64 OpenBLAS
-    runs-on: windows-2019
+    runs-on: windows-2022
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     strategy:
@@ -61,7 +61,10 @@ jobs:
       if: matrix.compiler-pyversion[0] == 'MSVC'
       run: |
         pip install -r requirements/ci_requirements.txt
-        spin build --with-scipy-openblas=32 -j2 -- --vsenv
+      run: >-
+        spin build --with-scipy-openblas=32 -j2 -- --vsenv 
+                   -Dc_args="/fp:contract" 
+                   -Dcpp_args="/fp:contract"
 
     - name: Install NumPy (Clang-cl)
       if: matrix.compiler-pyversion[0] == 'Clang-cl'
@@ -92,7 +95,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-2019
+          - os: windows-2022
             architecture: x86
           - os: windows-11-arm
             architecture: arm64
@@ -118,8 +121,11 @@ jobs:
           architecture: ${{ matrix.architecture }}
 
       - name: Build and install
-        run: |
-          python -m pip install . -v -Ccompile-args="-j2" -Csetup-args="-Dallow-noblas=true"
+        run: >-
+          python -m pip install . -v -Ccompile-args="-j2" 
+              -Csetup-args="-Dallow-noblas=true" 
+              -Csetup-args="-Dc_args=/fp:contract" 
+              -Csetup-args="-Dcpp_args=/fp:contract"
 
       - name: Install test dependencies
         run: |
