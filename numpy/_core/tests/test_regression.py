@@ -12,6 +12,7 @@ import pytest
 import numpy as np
 from numpy._utils import asbytes, asunicode
 from numpy.exceptions import AxisError, ComplexWarning
+from numpy.lib.stride_tricks import as_strided
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
@@ -208,7 +209,7 @@ class TestRegression:
         # Dummy array to detect bad memory access:
         _z = np.ones(10)
         _dummy = np.empty((0, 10))
-        z = np.lib.stride_tricks.as_strided(_z, _dummy.shape, _dummy.strides)
+        z = as_strided(_z, _dummy.shape, _dummy.strides)
         np.dot(x, np.transpose(y), out=z)
         assert_equal(_z, np.ones(10))
         # Do the same for the built-in dot:
@@ -438,19 +439,16 @@ class TestRegression:
         xs = np.array([], dtype='i8')
         assert np.lexsort((xs,)).shape[0] == 0  # Works
 
-        xs.strides = (16,)
+        xs = as_strided(xs, strides=(16,))
         assert np.lexsort((xs,)).shape[0] == 0  # Was: MemoryError
 
     def test_lexsort_zerolen_custom_strides_2d(self):
         xs = np.array([], dtype='i8')
+        xt = as_strided(xs, shape=(0, 2), strides=(16, 16))
+        assert np.lexsort((xt,), axis=0).shape[0] == 0
 
-        xs.shape = (0, 2)
-        xs.strides = (16, 16)
-        assert np.lexsort((xs,), axis=0).shape[0] == 0
-
-        xs.shape = (2, 0)
-        xs.strides = (16, 16)
-        assert np.lexsort((xs,), axis=0).shape[0] == 2
+        xt = as_strided(xs, shape=(2, 0), strides=(16, 16))
+        assert np.lexsort((xt,), axis=0).shape[0] == 2
 
     def test_lexsort_invalid_axis(self):
         assert_raises(AxisError, np.lexsort, (np.arange(1),), axis=2)
@@ -644,7 +642,7 @@ class TestRegression:
     def test_reshape_zero_strides(self):
         # Issue #380, test reshaping of zero strided arrays
         a = np.ones(1)
-        a = np.lib.stride_tricks.as_strided(a, shape=(5,), strides=(0,))
+        a = as_strided(a, shape=(5,), strides=(0,))
         assert_(a.reshape(5, 1).strides[0] == 0)
 
     def test_reshape_zero_size(self):
@@ -1654,7 +1652,7 @@ class TestRegression:
 
     def test_nonzero_byteswap(self):
         a = np.array([0x80000000, 0x00000080, 0], dtype=np.uint32)
-        a.dtype = np.float32
+        a = a.view(np.float32)
         assert_equal(a.nonzero()[0], [1])
         a = a.byteswap()
         a = a.view(a.dtype.newbyteorder())
@@ -1878,7 +1876,8 @@ class TestRegression:
         # Check that alignment flag is updated on stride setting
         a = np.arange(10)
         assert_(a.flags.aligned)
-        a.strides = 3
+        with pytest.warns(DeprecationWarning):
+            a.strides = 3
         assert_(not a.flags.aligned)
 
     def test_ticket_1770(self):
