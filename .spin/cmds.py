@@ -196,6 +196,8 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
         import scipy_doctest  # noqa: F401
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError("scipy-doctest not installed") from e
+    if scipy_doctest.__version__ < '1.8.0':
+        raise ModuleNotFoundError("please update scipy_doctests to >= 1.8.0")
 
     if (not pytest_args):
         pytest_args = ('--pyargs', 'numpy')
@@ -203,6 +205,7 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
     # turn doctesting on:
     doctest_args = (
         '--doctest-modules',
+        '--doctest-only-doctests=true',
         '--doctest-collect=api'
     )
 
