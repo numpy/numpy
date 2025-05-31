@@ -2862,6 +2862,9 @@ static PyMethodDef floatingtype_methods[] = {
     {"__round__",
         (PyCFunction)floatingtype_dunder_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"__trunc__",
+        (PyCFunction)gentype_int,
+        METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 
@@ -2872,6 +2875,9 @@ static PyMethodDef integertype_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"is_integer",
         (PyCFunction)integer_is_integer,
+        METH_NOARGS, NULL},
+    {"__trunc__",
+        (PyCFunction)gentype_int,
         METH_NOARGS, NULL},
     {NULL, NULL, 0, NULL} /* sentinel */
 };
