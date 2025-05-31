@@ -2178,6 +2178,24 @@ class TestUnwrap:
         assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 430])
         assert sm_discont.dtype == wrap_uneven.dtype
 
+    @pytest.mark.parametrize("arr, period", [
+        (np.arange(0, 30, 5).astype(np.object_) + (10**50), 4),
+        (np.arange(0, 30, 5).astype(np.object_) + (10**50), 6),
+        (np.arange(0, 50, 5).astype(np.object_) + (10**50), 4),
+        (np.arange(0, 30, 5).astype(np.object_) + (10**50), 4),
+        (np.arange(0, 30, 5).astype(np.object_) + (10**100), 4),
+    ])
+
+    def test_unwrap_object_array(self, arr, period):
+        # keep a copy for verification
+        arr_copy = arr.copy()
+        unwrapped = np.unwrap(arr, period=period)
+        # assert the differences are as expected
+        assert_array_equal(np.diff(unwrapped), 1)
+        # assert original array was preserved
+        assert_array_equal(arr, arr_copy)
+
+
 
 @pytest.mark.parametrize(
     "dtype", "O" + np.typecodes["AllInteger"] + np.typecodes["Float"]
