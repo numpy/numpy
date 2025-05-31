@@ -122,7 +122,7 @@ class TestSFloat:
         a = self._get_array(2.)
         # Addition reduction works (as of writing requires to pass initial
         # because setting a scaled-float from the default `0` fails).
-        res = np.add.reduce(a, initial=0.)
+        res = np.add.reduce(a, initial=0., axis=None)
         assert res == a.astype(np.float64).sum()
 
         # But each multiplication changes the factor, so a reduction is not

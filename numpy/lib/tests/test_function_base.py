@@ -3875,7 +3875,7 @@ class TestQuantile:
 
         q = np.quantile(x, .5)
         assert_equal(q, 1.75)
-        assert_equal(type(q), np.float64)
+        assert_equal(type(q), float)
 
         q = np.quantile(x, Fraction(1, 2))
         assert_equal(q, Fraction(7, 4))

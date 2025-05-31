@@ -77,6 +77,11 @@ typedef struct npy_thread_unsafe_state_struct {
      */
     int warn_if_no_mem_policy;
 
+    /*
+     * Enable 0-D array preservation for testing purposes
+     */
+    npy_bool preserve_0d_arrays;
+
 } npy_thread_unsafe_state_struct;
 
 

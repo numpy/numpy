@@ -768,7 +768,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
     n2 = len(funclist)
 
     # undocumented: single condition is promoted to a list of one condition
-    if isscalar(condlist) or (
+    # TODO(seberg): Made this even worse as a work-around, this needs improvement!
+    if isscalar(condlist) or (np.ndim(condlist) == 0) or (
             not isinstance(condlist[0], (list, ndarray)) and x.ndim != 0):
         condlist = [condlist]
 
@@ -4055,15 +4056,17 @@ def _median(a, axis=None, out=None, overwrite_input=False):
         # make 0-D arrays work
         return part.item()
     if axis is None:
-        axis = 0
+        paxis = 0
+    else:
+        paxis = axis
 
     indexer = [slice(None)] * part.ndim
-    index = part.shape[axis] // 2
-    if part.shape[axis] % 2 == 1:
+    index = part.shape[paxis] // 2
+    if part.shape[paxis] % 2 == 1:
         # index with slice to allow mean (below) to work
-        indexer[axis] = slice(index, index + 1)
+        indexer[paxis] = slice(index, index + 1)
     else:
-        indexer[axis] = slice(index - 1, index + 1)
+        indexer[paxis] = slice(index - 1, index + 1)
     indexer = tuple(indexer)
 
     # Use mean in both odd and even case to coerce data type,
@@ -4071,7 +4074,7 @@ def _median(a, axis=None, out=None, overwrite_input=False):
     rout = mean(part[indexer], axis=axis, out=out)
     if supports_nans and sz > 0:
         # If nans are possible, warn and replace by nans like mean would.
-        rout = np.lib._utils_impl._median_nancheck(part, rout, axis)
+        rout = np.lib._utils_impl._median_nancheck(part, rout, paxis)
 
     return rout
 
@@ -4266,13 +4269,16 @@ def percentile(a,
         method = _check_interpolation_as_method(
             method, interpolation, "percentile")
 
-    a = np.asanyarray(a)
+    conv = _array_converter(a, q)
+    a, q_arr = conv.as_arrays(pyscalars="convert")
+
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
     # Use dtype of array if possible (e.g., if q is a python int or float)
     # by making the divisor have the dtype of the data array.
     q = np.true_divide(q, a.dtype.type(100) if a.dtype.kind == "f" else 100, out=...)
+
     if not _quantile_is_valid(q):
         raise ValueError("Percentiles must be in the range [0, 100]")
 
@@ -4287,8 +4293,10 @@ def percentile(a,
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
 
-    return _quantile_unchecked(
+    result = _quantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
+    # If no broadcasting happened, and q was a scalar, return a scalar:
+    return conv.wrap(result, to_scalar=conv.scalar_input[1])
 
 
 def _quantile_dispatcher(a, q, axis=None, out=None, overwrite_input=None,
@@ -4527,15 +4535,16 @@ def quantile(a,
         method = _check_interpolation_as_method(
             method, interpolation, "quantile")
 
-    a = np.asanyarray(a)
+    conv = _array_converter(a, q)
+    a, q_arr = conv.as_arrays(pyscalars="convert")
     if a.dtype.kind == "c":
         raise TypeError("a must be an array of real numbers")
 
     # Use dtype of array if possible (e.g., if q is a python int or float).
     if isinstance(q, (int, float)) and a.dtype.kind == "f":
-        q = np.asanyarray(q, dtype=a.dtype)
+        q = np.asarray(q, dtype=a.dtype)
     else:
-        q = np.asanyarray(q)
+        q = q_arr
 
     if not _quantile_is_valid(q):
         raise ValueError("Quantiles must be in the range [0, 1]")
@@ -4551,8 +4560,10 @@ def quantile(a,
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
 
-    return _quantile_unchecked(
+    result = _quantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)
+    # If no broadcasting happened, and q was a scalar, return a scalar:
+    return conv.wrap(result, to_scalar=conv.scalar_input[1])
 
 
 def _quantile_unchecked(a,
@@ -4656,23 +4667,23 @@ def _lerp(a, b, t, out=None):
     """
     Compute the linear interpolation weighted by gamma on each point of
     two same shape array.
+    Function is meant to be used with arrays not scalars.
 
-    a : array_like
+    a : array
         Left bound.
-    b : array_like
+    b : array
         Right bound.
-    t : array_like
+    t : array
         The interpolation weight.
     out : array_like
         Output array.
     """
+    if out is None:
+        out = ...  # explicitly preserve arrays within _lerp.
     diff_b_a = subtract(b, a)
-    # asanyarray is a stop-gap until gh-13105
-    lerp_interpolation = asanyarray(add(a, diff_b_a * t, out=out))
-    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5,
-             casting='unsafe', dtype=type(lerp_interpolation.dtype))
-    if lerp_interpolation.ndim == 0 and out is None:
-        lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
+    lerp_interpolation = add(a, diff_b_a * t, out=out)
+    subtract(b, diff_b_a * (1 - t), out=lerp_interpolation, where=t >= 0.5)
+
     return lerp_interpolation
 
 
@@ -4864,9 +4875,9 @@ def _quantile(
                 slices_having_nans = np.isnan(arr[-1, ...])
             else:
                 slices_having_nans = None
-            # --- Get values from indexes
-            previous = arr[previous_indexes]
-            next = arr[next_indexes]
+            # --- Get values from indexes (ensure array result)
+            previous = arr[previous_indexes, ...]
+            next = arr[next_indexes, ...]
             # --- Linear interpolation
             gamma = _get_gamma(virtual_indexes, previous_indexes, method_props)
             result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)

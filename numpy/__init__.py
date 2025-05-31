@@ -124,6 +124,8 @@ else:
         False_,
         ScalarType,
         True_,
+        _get_preserve_0d_arrays,
+        _set_preserve_0d_arrays,
         abs,
         absolute,
         acos,

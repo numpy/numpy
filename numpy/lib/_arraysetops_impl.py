@@ -901,14 +901,21 @@ def in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
         DeprecationWarning,
         stacklevel=2
     )
+    # See isin for any details, this only removes the reshape
+    conv = _array_converter(ar1, ar2)
+    ar1, ar2 = conv.as_arrays(subok=False, pyscalars="convert")
 
-    return _in1d(ar1, ar2, assume_unique, invert, kind=kind)
+    result = _in1d(ar1, ar2, assume_unique=assume_unique,
+                   invert=invert, kind=kind)
+
+    # `in1d` always returns 1-d arrays (so no need for scalar logic)
+    return conv.wrap(result, to_scalar=False)
 
 
 def _in1d(ar1, ar2, assume_unique=False, invert=False, *, kind=None):
     # Ravel both arrays, behavior for the first array could be different
-    ar1 = np.asarray(ar1).ravel()
-    ar2 = np.asarray(ar2).ravel()
+    ar1 = ar1.ravel()
+    ar2 = ar2.ravel()
 
     # Ensure that iteration through object arrays yields size-1 arrays
     if ar2.dtype == object:
@@ -1173,10 +1180,18 @@ def isin(element, test_elements, assume_unique=False, invert=False, *,
     array([[False,  True],
            [ True, False]])
     """
-    element = np.asarray(element)
-    return _in1d(element, test_elements, assume_unique=assume_unique,
-                 invert=invert, kind=kind).reshape(element.shape)
+    conv = _array_converter(element, test_elements)
+    element, test_elements = conv.as_arrays(subok=False, pyscalars="convert")
 
+    result = _in1d(element, test_elements, assume_unique=assume_unique,
+                   invert=invert, kind=kind).reshape(element.shape)
+
+    # isin used to always return arrays, but in the "preserve 0d array" future
+    # we return a scalar if the element was a scalar.
+    return conv.wrap(
+        result,
+        to_scalar=conv.scalar_input[0] if np._get_preserve_0d_arrays() else False
+    )
 
 def _union1d_dispatcher(ar1, ar2):
     return (ar1, ar2)
@@ -1254,6 +1269,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
     """
     if assume_unique:
         ar1 = np.asarray(ar1).ravel()
+        ar2 = np.asarray(ar2)
     else:
         ar1 = unique(ar1)
         ar2 = unique(ar2)

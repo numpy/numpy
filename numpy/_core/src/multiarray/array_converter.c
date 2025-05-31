@@ -20,9 +20,11 @@
 #include "npy_argparse.h"
 #include "abstractdtypes.h"
 #include "convert_datatype.h"
+#include "conversion_utils.h"
 #include "descriptor.h"
 #include "npy_static_data.h"
 #include "ctors.h"
+#include "multiarraymodule.h"
 
 #include "npy_config.h"
 
@@ -278,8 +280,7 @@ array_converter_wrap(PyArrayArrayConverterObject *self,
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *obj;
-    PyObject *to_scalar = Py_None;
-    npy_bool ensure_scalar;
+    int ensure_scalar = (self->flags & NPY_CH_ALL_SCALARS) != 0;
 
     if (find_wrap(self) < 0) {
         return NULL;
@@ -289,17 +290,9 @@ array_converter_wrap(PyArrayArrayConverterObject *self,
     if (npy_parse_arguments("wrap", args, len_args, kwnames,
             "", NULL, &obj,
             /* Three-way "bool", if `None` inspect input to decide. */
-            "$to_scalar", NULL, &to_scalar,
+            "$to_scalar", &PyArray_OptionalBoolConverter, &ensure_scalar,
             NULL, NULL, NULL) < 0) {
         return NULL;
-    }
-    if (to_scalar == Py_None) {
-        ensure_scalar = self->flags & NPY_CH_ALL_SCALARS;
-    }
-    else {
-        if (!PyArray_BoolConverter(to_scalar, &ensure_scalar)) {
-            return NULL;
-        }
     }
 
     return npy_apply_wrap(
@@ -404,7 +397,10 @@ static PyMethodDef array_converter_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"wrap",
         (PyCFunction)array_converter_wrap,
-        METH_FASTCALL | METH_KEYWORDS, NULL},
+        METH_FASTCALL | METH_KEYWORDS,
+        "Apply array-wrap.  Supports `to_scalar=None/True/False` where "
+        "the default of None uses the same logic as ufuncs which depends on "
+        "`NUMPY_PRESERVE_0D_ARRAYS`."},
     {NULL, NULL, 0, NULL}
 };
 

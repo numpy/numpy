@@ -77,8 +77,9 @@ from .multiarray import (
     # other
     _Array,
     _ConstructorEmpty,
+    _get_preserve_0d_arrays,
     _KwargsEmpty,
-    # re-exports
+    _set_preserve_0d_arrays,
     arange,
     array,
     asanyarray,
@@ -182,6 +183,8 @@ __all__ = [
     "vecdot",
     "shares_memory",
     "may_share_memory",
+    "_get_preserve_0d_arrays",
+    "_set_preserve_0d_arrays",
 ]
 
 _T = TypeVar("_T")
