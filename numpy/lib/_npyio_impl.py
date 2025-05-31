@@ -195,16 +195,13 @@ class NpzFile(Mapping):
         # Import is postponed to here since zipfile depends on gzip, an
         # optional component of the so-called standard library.
         _zip = zipfile_factory(fid)
-        self._files = _zip.namelist()
-        self.files = []
+        _files = _zip.namelist()
+        self.files = [name.removesuffix(".npy") for name in _files]
+        self._files = dict(zip(self.files, _files))
+        self._files.update(zip(_files, _files))
         self.allow_pickle = allow_pickle
         self.max_header_size = max_header_size
         self.pickle_kwargs = pickle_kwargs
-        for x in self._files:
-            if x.endswith('.npy'):
-                self.files.append(x[:-4])
-            else:
-                self.files.append(x)
         self.zip = _zip
         self.f = BagObj(self)
         if own_fid:
@@ -240,37 +237,34 @@ class NpzFile(Mapping):
         return len(self.files)
 
     def __getitem__(self, key):
-        # FIXME: This seems like it will copy strings around
-        #   more than is strictly necessary.  The zipfile
-        #   will read the string and then
-        #   the format.read_array will copy the string
-        #   to another place in memory.
-        #   It would be better if the zipfile could read
-        #   (or at least uncompress) the data
-        #   directly into the array memory.
-        member = False
-        if key in self._files:
-            member = True
-        elif key in self.files:
-            member = True
-            key += '.npy'
-        if member:
-            bytes = self.zip.open(key)
-            magic = bytes.read(len(format.MAGIC_PREFIX))
-            bytes.close()
-            if magic == format.MAGIC_PREFIX:
-                bytes = self.zip.open(key)
-                return format.read_array(bytes,
-                                         allow_pickle=self.allow_pickle,
-                                         pickle_kwargs=self.pickle_kwargs,
-                                         max_header_size=self.max_header_size)
-            else:
-                return self.zip.read(key)
+        try:
+            key = self._files[key]
+        except KeyError:
+            raise KeyError(f"{key} is not a file in the archive") from None
         else:
-            raise KeyError(f"{key} is not a file in the archive")
+            with self.zip.open(key) as bytes:
+                magic = bytes.read(len(format.MAGIC_PREFIX))
+                bytes.seek(0)
+                if magic == format.MAGIC_PREFIX:
+                    # FIXME: This seems like it will copy strings around
+                    #   more than is strictly necessary.  The zipfile
+                    #   will read the string and then
+                    #   the format.read_array will copy the string
+                    #   to another place in memory.
+                    #   It would be better if the zipfile could read
+                    #   (or at least uncompress) the data
+                    #   directly into the array memory.
+                    return format.read_array(
+                        bytes,
+                        allow_pickle=self.allow_pickle,
+                        pickle_kwargs=self.pickle_kwargs,
+                        max_header_size=self.max_header_size
+                    )
+                else:
+                    return bytes.read(key)
 
     def __contains__(self, key):
-        return (key in self._files or key in self.files)
+        return (key in self._files)
 
     def __repr__(self):
         # Get filename or default to `object`
