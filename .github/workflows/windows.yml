@@ -16,7 +16,7 @@ permissions:
 jobs:
   python64bit_openblas:
     name: x86-64, LP64 OpenBLAS
-    runs-on: windows-2019
+    runs-on: windows-2022
     # To enable this job on a fork, comment out:
     if: github.repository == 'numpy/numpy'
     strategy:
@@ -92,7 +92,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-2019
+          - os: windows-2022
             architecture: x86
           - os: windows-11-arm
             architecture: arm64
