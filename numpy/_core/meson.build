@@ -920,13 +920,14 @@ umath_gen_headers = [
 foreach gen_mtargets : [
   [
     'loops_arithm_fp.dispatch.h',
-    src_file.process('src/umath/loops_arithm_fp.dispatch.c.src'),
+    src_file.process('src/umath/loops_arithm_fp.dispatch.cpp.src'),
     [
       [AVX2, FMA3], SSE2,
       ASIMD, NEON,
       VSX3, VSX2,
       VXE, VX,
       LSX,
+      RVV,
     ]
   ],
   [
