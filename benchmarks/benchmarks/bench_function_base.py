@@ -236,7 +236,7 @@ class Sort(Benchmark):
     param_names = ['kind', 'dtype', 'array_type']
 
     # The size of the benchmarked arrays.
-    ARRAY_SIZE = 10000
+    ARRAY_SIZE = 1000000
 
     def setup(self, kind, dtype, array_type):
         rnd = np.random.RandomState(507582308)
