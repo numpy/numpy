@@ -797,25 +797,6 @@ PyArrayMethod_Context and PyArrayMethod_Spec
 PyArrayMethod_SortContext
 -------------------------
 
-.. c:enum:: NPY_SORT_NAN_POSITION
-
-   An enum used to indicate the position of NaN values in sorting.
-
-   .. code-block:: c
-
-      typedef enum {
-          NPY_SORT_NAN_FIRST,
-          NPY_SORT_NAN_LAST,
-      } NPY_SORT_NAN_POSITION
-
-   .. c:member:: NPY_SORT_NAN_FIRST
-
-      Indicates that NaN values should be sorted first.
-
-   .. c:member:: NPY_SORT_NAN_LAST
-
-      Indicates that NaN values should be sorted last.
-
 .. c:type:: PyArrayMethod_SortContext
 
    A struct used to provide context for sorting methods.

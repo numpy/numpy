@@ -4384,6 +4384,17 @@ Enumerated Types
        :c:data:`NPY_STABLESORT` are aliased to each other and may refer to one
        of several stable sorting algorithms depending on the data type.
 
+.. c:enum:: NPY_SORT_NAN_POSITION
+
+   An enum used to indicate the position of NaN values in sorting.
+
+   .. c:enumerator:: NPY_SORT_NAN_FIRST
+
+      Indicates that NaN values should be sorted first.
+
+   .. c:enumerator:: NPY_SORT_NAN_LAST
+
+      Indicates that NaN values should be sorted last.
 
 .. c:enum:: NPY_SCALARKIND
 
