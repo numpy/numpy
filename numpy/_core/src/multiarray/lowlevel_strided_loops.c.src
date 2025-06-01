@@ -981,12 +981,14 @@ static GCC_CAST_OPT_LEVEL int
     dst_value = _CONVERT_FN(src_value);
 #   if !@is_bool2@
     if (same_value_casting) {
-        if (src_value > @type2max@ || src_value < @type2min@) {
+        if (_TO_RTYPE1(src_value) > @type2max@) {
             return NPY_SAME_VALUE_OVERFLOW;
         }
-        if (dst_value != src_value){
+#       if !@is_unsigned1@
+        if (_TO_RTYPE1(src_value) < @type2min@) {
             return NPY_SAME_VALUE_OVERFLOW;
         }
+#       endif
     }
 #   endif // @is_bool2@
 #  else

@@ -848,6 +848,9 @@ class TestCasting:
         arr2 = np.array([0] * 10, dtype=to_dtype)
         assert_equal(arr1.astype(to_dtype, casting='same_value'), arr2, strict=True)
         arr1[0] = top1
+        aligned = np.empty(arr1.itemsize * arr1.size + 1, 'uint8')
+        unaligned = aligned[1:].view(arr1.dtype)
+        unaligned[:] = arr1
         with pytest.raises(ValueError):
             # Casting float to float with overflow should raise RuntimeWarning (fperror)
             # Casting float to int with overflow sometimes raises RuntimeWarning (fperror)
@@ -855,4 +858,10 @@ class TestCasting:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always", RuntimeWarning)
                 arr1.astype(to_dtype, casting='same_value')
+            assert len(w) < 2
+        with pytest.raises(ValueError):
+            # again, unaligned
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always", RuntimeWarning)
+                unaligned.astype(to_dtype, casting='same_value')
             assert len(w) < 2
