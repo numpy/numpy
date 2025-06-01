@@ -367,6 +367,10 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
 #define NPY_DT_finalize_descr 11
+#define NPY_DT_get_sort_function 12
+#define NPY_DT_get_argsort_function 13
+#define NPY_DT_compare 14
+#define NPY_DT_sort_compare 15
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -476,5 +480,48 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtyp
  */
 typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
+
+typedef enum {
+        NPY_LESS = -1,
+        NPY_EQUAL = 0,
+        NPY_GREATER = 1,
+        NPY_UNORDERED_LEFT = 2,
+        NPY_UNORDERED_RIGHT = 3,
+        NPY_UNORDERED_BOTH = 4,
+} NPY_COMPARE_RESULT;
+
+typedef struct PyArrayMethod_SortContext_tag PyArrayMethod_SortContext;
+
+typedef NPY_COMPARE_RESULT (PyArray_CompareFuncWithContext)(
+        const void *a, const void *b, PyArrayMethod_SortContext *context);
+typedef NPY_COMPARE_RESULT (PyArray_SortCompareFunc)(
+        const void *a, const void *b, PyArrayMethod_SortContext *context);
+
+typedef enum {
+    NPY_SORT_NAN_FIRST = 0,
+    NPY_SORT_NAN_LAST = 1,
+} NPY_SORT_NAN_POSITION;
+
+struct PyArrayMethod_SortContext_tag {
+    PyArray_Descr *descriptor;
+    PyArrayObject *array;  /* NULL if using new-style context */
+    PyArray_SortCompareFunc *compare;
+    int reversed;
+    NPY_SORT_NAN_POSITION nan_position;
+};
+
+typedef int (PyArray_SortFuncWithContext)(PyArrayMethod_SortContext *,
+                               void *, npy_intp,
+                               NpyAuxData *);
+typedef int (PyArray_ArgSortFuncWithContext)(PyArrayMethod_SortContext *, 
+                                  void *, npy_intp *, npy_intp, 
+                                  NpyAuxData *);
+
+typedef int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, 
+        npy_intp, int, PyArray_SortFuncWithContext **, NpyAuxData **,
+        NPY_ARRAYMETHOD_FLAGS *out_flags);
+typedef int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, 
+        npy_intp, int, PyArray_ArgSortFuncWithContext **, NpyAuxData **,
+        NPY_ARRAYMETHOD_FLAGS *out_flags);
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */
