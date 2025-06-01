@@ -819,10 +819,9 @@ class TestCasting:
         assert_array_equal(res, expected)
 
     @pytest.mark.parametrize("to_dtype",
-            # cast to complex (AllFloat)
             np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
     @pytest.mark.parametrize("from_dtype",
-            np.typecodes["AllInteger"] + np.typecodes["Float"])
+            np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
     def test_same_value(self, from_dtype, to_dtype):
         if from_dtype == to_dtype:
             return
@@ -846,7 +845,12 @@ class TestCasting:
         # Happy path
         arr1 = np.array([0] * 10, dtype=from_dtype)
         arr2 = np.array([0] * 10, dtype=to_dtype)
-        assert_equal(arr1.astype(to_dtype, casting='same_value'), arr2, strict=True)
+        with warnings.catch_warnings(record=True) as w:
+            # complex -> non-complex will warn
+            warnings.simplefilter("always", RuntimeWarning)
+            arr1_astype = arr1.astype(to_dtype, casting='same_value')
+        assert_equal(arr1_astype, arr2, strict=True)
+        # Make it overflow, both aligned and unaligned
         arr1[0] = top1
         aligned = np.empty(arr1.itemsize * arr1.size + 1, 'uint8')
         unaligned = aligned[1:].view(arr1.dtype)
