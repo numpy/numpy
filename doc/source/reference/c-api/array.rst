@@ -3535,6 +3535,14 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 
 .. c:macro:: NPY_DT_finalize_descr
 
+.. c:type:: PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)( \
+                PyArray_Descr *dtype)
+
+   If defined, a function that is called to "finalize" a descriptor
+   instance after an array is created. One use of this function is to
+   force newly created arrays to have a newly created descriptor
+   instance, no matter what input descriptor is provided by a user.
+
 .. c:macro:: NPY_DT_get_sort_function
 
 .. c:type:: int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, \
