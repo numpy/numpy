@@ -4231,11 +4231,10 @@ class TestQuantile:
         assert isinstance(r, Fraction)
 
     def test_float16_gh_29003(self):
-        a = np.arange(50_001, dtype = np.float16)
+        a = np.arange(50_001, dtype=np.float16)
         q = .999
         value = np.quantile(a, q)
         assert value == q * 50_000
-
 
 
 class TestLerp:
