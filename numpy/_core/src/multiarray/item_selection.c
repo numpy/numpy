@@ -1219,6 +1219,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFuncWithContext *sort,
     PyArrayMethod_SortContext context = {
         .descriptor = descr,
         .reversed = 0,
+        .descending = 0,
         .nan_position = NPY_SORT_NAN_FIRST
     };
 
@@ -1406,6 +1407,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFuncWithContext *ar
     PyArrayMethod_SortContext context = {
         .descriptor = descr,
         .reversed = 0,
+        .descending = 0,
         .nan_position = NPY_SORT_NAN_FIRST,
     };
 

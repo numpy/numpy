@@ -505,6 +505,7 @@ typedef enum {
 struct PyArrayMethod_SortContext_tag {
     PyArray_Descr *descriptor;
     PyArray_SortCompareFunc *compare;
+    int descending;
     int reversed;
     NPY_SORT_NAN_POSITION nan_position;
 };
