@@ -4622,7 +4622,7 @@ def _compute_virtual_index(n, quantiles, alpha: float, beta: float):
     ) - 1
 
 
-def _get_gamma(virtual_indexes, previous_indexes, method, dtype=None):
+def _get_gamma(virtual_indexes, previous_indexes, method, dtype):
     """
     Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
     of quantiles.
