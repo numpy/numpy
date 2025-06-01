@@ -506,28 +506,38 @@ string_aquicksort_(type *vv, npy_intp *tosort, npy_intp num, void *varr)
  */
 
 NPY_NO_EXPORT int
-npy_quicksort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
+npy_quicksort_with_context(PyArrayMethod_SortContext *context, void *start, npy_intp num,
                            NpyAuxData *auxdata)
 {
-    return handle_npysort_with_context(context, start, num, auxdata,
-                                       &npy_quicksort);
+    return npy_quicksort_impl(start, num, NULL, context);
 }
 
 NPY_NO_EXPORT int
-npy_aquicksort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
+npy_aquicksort_with_context(PyArrayMethod_SortContext *context, void *vv, npy_intp *tosort,
                             npy_intp num, NpyAuxData *auxdata)
 {
-    return handle_npyasort_with_context(context, vv, tosort, num, auxdata,
-                                        &npy_aquicksort);
+    return npy_aquicksort_impl(vv, tosort, num, NULL, context);
 }
 
 NPY_NO_EXPORT int
 npy_quicksort(void *start, npy_intp num, void *varr)
 {
+    return npy_quicksort_impl(start, num, varr, NULL);
+}
+
+NPY_NO_EXPORT int
+npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
+{
+    return npy_aquicksort_impl(vv, tosort, num, varr, NULL);
+}
+
+NPY_NO_EXPORT int
+npy_quicksort_impl(void *start, npy_intp num, void *varr, PyArrayMethod_SortContext *context)
+{
     void *arr;
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_from_arr_or_descr(varr, &arr, &elsize, &cmp);
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &elsize, &cmp);
 
     char *vp;
     char *pl = (char *)start;
@@ -629,13 +639,13 @@ npy_quicksort(void *start, npy_intp num, void *varr)
 }
 
 NPY_NO_EXPORT int
-npy_aquicksort(void *vv, npy_intp *tosort, npy_intp num, void *varr)
+npy_aquicksort_impl(void *vv, npy_intp *tosort, npy_intp num, void *varr, PyArrayMethod_SortContext *context)
 {
     char *v = (char *)vv;
     void *arr;
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_from_arr_or_descr(varr, &arr, &elsize, &cmp);
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &elsize, &cmp);
     
     char *vp;
     npy_intp *pl = tosort;

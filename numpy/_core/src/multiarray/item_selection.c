@@ -1216,9 +1216,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFuncWithContext *sort,
     NPY_cast_info to_cast_info = {.func = NULL};
     NPY_cast_info from_cast_info = {.func = NULL};
 
-    PyArrayMethod_Context context = {
-        .descriptors = &descr
-    };
+    PyArrayMethod_SortContext context = {};
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -1299,6 +1297,11 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFuncWithContext *sort,
 
         if (part == NULL) {
             if (sort != NULL) {
+                context.compare = PyArray_GetSortCompareFunction(descr);
+                context.descriptor = descr;
+                context.reversed = 0;
+                context.nan_position = NPY_SORT_NAN_FIRST;
+
                 ret = sort(&context, bufptr, N, auxdata);
             }
             else {
@@ -1399,9 +1402,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFuncWithContext *ar
     NPY_ARRAYMETHOD_FLAGS transfer_flags;
     NPY_cast_info cast_info = {.func = NULL};
 
-    PyArrayMethod_Context context = {
-        .descriptors = &descr
-    };
+    PyArrayMethod_SortContext context = {};
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -1499,6 +1500,11 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFuncWithContext *ar
 
         if (argpart == NULL) {
             if (argsort != NULL) {
+                context.compare = PyArray_GetSortCompareFunction(descr);
+                context.descriptor = descr;
+                context.reversed = 0;
+                context.nan_position = NPY_SORT_NAN_FIRST;
+
                 ret = argsort(&context, valptr, idxptr, N, auxdata);
             }
             else {

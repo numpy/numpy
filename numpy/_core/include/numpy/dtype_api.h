@@ -481,14 +481,39 @@ typedef PyArray_Descr *(PyArrayDTypeMeta_FinalizeDescriptor)(PyArray_Descr *dtyp
 typedef int(PyArrayDTypeMeta_SetItem)(PyArray_Descr *, PyObject *, char *);
 typedef PyObject *(PyArrayDTypeMeta_GetItem)(PyArray_Descr *, char *);
 
-typedef int (PyArray_CompareFuncWithDescr)(const void *, const void *,
-                                           PyArray_Descr *);
-typedef int (PyArray_SortCompareFunc)(const void *, const void *,
-                                           PyArray_Descr *);                              
-typedef int (PyArray_SortFuncWithContext)(PyArrayMethod_Context *, 
-                               void *, npy_intp, 
+typedef enum {
+        NPY_LESS = -1,
+        NPY_EQUAL = 0,
+        NPY_GREATER = 1,
+        NPY_UNORDERED_LEFT = 2,
+        NPY_UNORDERED_RIGHT = 3,
+        NPY_UNORDERED_BOTH = 4,
+} NPY_COMPARE_RESULT;
+
+typedef struct PyArrayMethod_SortContext_tag PyArrayMethod_SortContext;
+
+typedef NPY_COMPARE_RESULT (PyArray_CompareFuncWithContext)(
+        const void *a, const void *b, PyArrayMethod_SortContext *context);
+typedef NPY_COMPARE_RESULT (PyArray_SortCompareFunc)(
+        const void *a, const void *b, PyArrayMethod_SortContext *context);
+
+typedef enum {
+    NPY_SORT_NAN_FIRST = 0,
+    NPY_SORT_NAN_LAST = 1,
+} NPY_SORT_NAN_POSITION;
+
+struct PyArrayMethod_SortContext_tag {
+    PyArray_Descr *descriptor;
+    PyArrayObject *array;  /* NULL if using new-style context */
+    PyArray_SortCompareFunc *compare;
+    int reversed;
+    NPY_SORT_NAN_POSITION nan_position;
+};
+
+typedef int (PyArray_SortFuncWithContext)(PyArrayMethod_SortContext *,
+                               void *, npy_intp,
                                NpyAuxData *);
-typedef int (PyArray_ArgSortFuncWithContext)(PyArrayMethod_Context *, 
+typedef int (PyArray_ArgSortFuncWithContext)(PyArrayMethod_SortContext *, 
                                   void *, npy_intp *, npy_intp, 
                                   NpyAuxData *);
 

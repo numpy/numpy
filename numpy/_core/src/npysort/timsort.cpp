@@ -1852,19 +1852,29 @@ cleanup:
  */
 
 NPY_NO_EXPORT int
-npy_timsort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
+npy_timsort_with_context(PyArrayMethod_SortContext *context, void *start, npy_intp num,
                          NpyAuxData *auxdata)
 {
-    return handle_npysort_with_context(context, start, num, auxdata,
-                                       &npy_timsort);
+    return npy_timsort_impl(start, num, NULL, context);
 }
 
 NPY_NO_EXPORT int
-npy_atimsort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
+npy_atimsort_with_context(PyArrayMethod_SortContext *context, void *vv, npy_intp *tosort,
                           npy_intp num, NpyAuxData *auxdata)
 {
-    return handle_npyasort_with_context(context, vv, tosort, num, auxdata,
-                                        &npy_atimsort);
+    return npy_atimsort_impl(vv, tosort, num, NULL, context);
+}
+
+NPY_NO_EXPORT int
+npy_timsort(void *start, npy_intp num, void *varr)
+{
+    return npy_timsort_impl(start, num, varr, NULL);
+}
+
+NPY_NO_EXPORT int
+npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
+{
+    return npy_atimsort_impl(start, tosort, num, varr, NULL);
 }
 
 typedef struct {
@@ -2262,12 +2272,12 @@ npy_force_collapse(char *arr, run *stack, npy_intp *stack_ptr,
 }
 
 NPY_NO_EXPORT int
-npy_timsort(void *start, npy_intp num, void *varr)
+npy_timsort_impl(void *start, npy_intp num, void *varr, PyArrayMethod_SortContext *context)
 {
     void *arr;
     npy_intp len;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_from_arr_or_descr(varr, &arr, &len, &cmp);
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &len, &cmp);
     
     int ret;
     npy_intp l, n, stack_ptr, minrun;
@@ -2700,12 +2710,12 @@ npy_aforce_collapse(char *arr, npy_intp *tosort, run *stack,
 }
 
 NPY_NO_EXPORT int
-npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
+npy_atimsort_impl(void *start, npy_intp *tosort, npy_intp num, void *varr, PyArrayMethod_SortContext *context)
 {
     void *arr;
     npy_intp len;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_from_arr_or_descr(varr, &arr, &len, &cmp);
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &len, &cmp);
 
     int ret;
     npy_intp l, n, stack_ptr, minrun;
