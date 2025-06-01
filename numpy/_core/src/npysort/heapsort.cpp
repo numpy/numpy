@@ -50,28 +50,38 @@
  */
 
 NPY_NO_EXPORT int
-npy_heapsort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
+npy_heapsort_with_context(PyArrayMethod_SortContext *context, void *start, npy_intp num,
                           NpyAuxData *auxdata)
 {
-    return handle_npysort_with_context(context, start, num, auxdata,
-                                       &npy_heapsort);
+    return npy_heapsort_impl(start, num, NULL, context);
 }
 
 NPY_NO_EXPORT int
-npy_aheapsort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
+npy_aheapsort_with_context(PyArrayMethod_SortContext *context, void *vv, npy_intp *tosort,
                            npy_intp num, NpyAuxData *auxdata)
 {
-    return handle_npyasort_with_context(context, vv, tosort, num, auxdata,
-                                        &npy_aheapsort);
+    return npy_aheapsort_impl(vv, tosort, num, NULL, context);
 }
 
 NPY_NO_EXPORT int
 npy_heapsort(void *start, npy_intp num, void *varr)
 {
+    return npy_heapsort_impl(start, num, varr, NULL);
+}
+
+NPY_NO_EXPORT int
+npy_aheapsort(void *vv, npy_intp *tosort, npy_intp n, void *varr)
+{
+    return npy_aheapsort_impl(vv, tosort, n, varr, NULL);
+}
+
+NPY_NO_EXPORT int
+npy_heapsort_impl(void *start, npy_intp num, void *varr, PyArrayMethod_SortContext *context)
+{
     void *arr;
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_from_arr_or_descr(varr, &arr, &elsize, &cmp);
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &elsize, &cmp);
 
     if (elsize == 0) {
         return 0;  /* no need for sorting elements of no size */
@@ -129,13 +139,13 @@ npy_heapsort(void *start, npy_intp num, void *varr)
 }
 
 NPY_NO_EXPORT int
-npy_aheapsort(void *vv, npy_intp *tosort, npy_intp n, void *varr)
+npy_aheapsort_impl(void *vv, npy_intp *tosort, npy_intp n, void *varr, PyArrayMethod_SortContext *context)
 {
     char *v = (char *)vv;
     void *arr;
     npy_intp elsize;
     PyArray_CompareFunc *cmp;
-    fill_sort_data_from_arr_or_descr(varr, &arr, &elsize, &cmp);
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &elsize, &cmp);
 
     npy_intp *a, i, j, l, tmp;
 

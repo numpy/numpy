@@ -1874,7 +1874,7 @@ described below.
    embedded references.
 
 .. c:type:: int (PyArray_SortFuncWithContext)( \
-                 PyArrayMethod_Context *context, void *data, \
+                 PyArrayMethod_SortContext *context, void *data, \
                  npy_intp num, NpyAuxData *auxdata)
     
     A function to sort a buffer of data. The *data* is a pointer to the
@@ -1884,7 +1884,7 @@ described below.
     array. Returns 0 on success, -1 on failure.
 
 .. c:type:: int (PyArray_ArgSortFuncWithContext)( \
-                 PyArrayMethod_Context *context, void *data, \
+                 PyArrayMethod_SortContext *context, void *data, \
                  npy_intp *tosort, npy_intp num, NpyAuxData *auxdata)
 
     A function to arg-sort a buffer of data. The *data* is a pointer to the

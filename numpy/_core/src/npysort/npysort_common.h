@@ -18,36 +18,68 @@ extern "C" {
  */
 
 static inline int
-handle_npysort_with_context(PyArrayMethod_Context *context, void *start, npy_intp num,
-                            NpyAuxData *auxdata, PyArray_SortFunc *sort)
+compare_from_context(const void *a, const void *b, void *context)
 {
-    PyArray_Descr *descr = context->descriptors[0];
-    return sort(start, num, descr);
-}
+    PyArrayMethod_SortContext *sort_context = (PyArrayMethod_SortContext *)context;
+    PyArray_SortCompareFunc *cmp = sort_context->compare;
+    int nan_position = sort_context->nan_position;
 
-static inline int
-handle_npyasort_with_context(PyArrayMethod_Context *context, void *vv, npy_intp *tosort,
-                             npy_intp num, NpyAuxData *auxdata, PyArray_ArgSortFunc *asort)
-{
-    PyArray_Descr *descr = context->descriptors[0];
-    return asort(vv, tosort, num, descr);
+    NPY_COMPARE_RESULT result = cmp(a, b, sort_context);
+
+    if (result == NPY_LESS) {
+        return -1;
+    }
+    else if (result == NPY_GREATER) {
+        return 1;
+    }
+    else if (result == NPY_EQUAL) {
+        return 0;
+    }
+    else {
+        if (nan_position == NPY_SORT_NAN_FIRST) {
+            if (result == NPY_UNORDERED_LEFT) {
+                return -1;
+            }
+            else if (result == NPY_UNORDERED_RIGHT) {
+                return 1;
+            }
+            else if (result == NPY_UNORDERED_BOTH) {
+                return 0;
+            }
+        }
+        else if (nan_position == NPY_SORT_NAN_LAST) {
+            if (result == NPY_UNORDERED_LEFT) {
+                return 1;
+            }
+            else if (result == NPY_UNORDERED_RIGHT) {
+                return -1;
+            }
+            else if (result == NPY_UNORDERED_BOTH) {
+                return 0;
+            }
+        }
+    }
+
+    /* This should never happen, but just in case */
+    PyErr_SetString(PyExc_RuntimeError, "Unexpected comparison result in sort function");
+    return -1;  /* Indicate an error */
 }
 
 static inline void
-fill_sort_data_from_arr_or_descr(void *arr_or_descr, void **out_arr_or_descr,
-                                 npy_intp *elsize, PyArray_CompareFunc **out_cmp)
+fill_sort_data_from_arr_or_context(void *array, PyArrayMethod_SortContext *context,
+                                   void **out_arr_or_context, npy_intp *elsize,
+                                   PyArray_CompareFunc **out_cmp)
 {
-    if (PyArray_Check(arr_or_descr)) {
-        PyArrayObject *arr = (PyArrayObject *)arr_or_descr;
-        *out_arr_or_descr = arr;
-        *elsize = PyArray_ITEMSIZE(arr);
-        *out_cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    if (context != NULL) {
+        *out_arr_or_context = (void *)context;
+        *elsize = PyDataType_ELSIZE(context->descriptor);
+        *out_cmp = &compare_from_context;
     }
     else {
-        PyArray_Descr *descr = (PyArray_Descr *)arr_or_descr;
-        *out_arr_or_descr = descr;
-        *elsize = PyDataType_ELSIZE(descr);
-        *out_cmp = (PyArray_CompareFunc *)PyArray_GetSortCompareFunction(descr);
+        PyArrayObject *arr = (PyArrayObject *)array;
+        *out_arr_or_context = (void *)arr;
+        *elsize = PyArray_ITEMSIZE(arr);
+        *out_cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     }
 }
 
