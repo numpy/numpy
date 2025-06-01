@@ -843,11 +843,6 @@ array_astype(PyArrayObject *self,
     int success;
     if (casting == NPY_SAME_VALUE_CASTING) {
         success = PyArray_AssignArray(ret, self, NULL, casting);
-        if (success < 0) {
-            printf("error in PyArray_AssignArray\n");
-            //PyErr_SetString(PyExc_RuntimeError, "error when casting");
-            //npy_set_invalid_cast_error(PyArray_DESCR(self), dtype, casting, 0);
-        }
     } else {
         success = PyArray_AssignArray(ret, self, NULL, NPY_UNSAFE_CASTING);
     }
