@@ -409,8 +409,8 @@ This new default changes the float output relative to numpy 1.13. The old
 behavior can be obtained in 1.13 "legacy" printing mode, see compatibility
 notes above.
 
-``hermitian`` option added to``np.linalg.matrix_rank``
-------------------------------------------------------
+``hermitian`` option added to ``np.linalg.matrix_rank``
+-------------------------------------------------------
 The new ``hermitian`` option allows choosing between standard SVD based matrix
 rank calculation and the more efficient eigenvalue based method for
 symmetric/hermitian matrices.

@@ -157,7 +157,7 @@ the module.
             return m;
         }
 
-To use the ``setup.py file``, place ``setup.py`` and ``spammodule.c``
+To use the ``setup.py`` file, place ``setup.py`` and ``spammodule.c``
 in the same folder. Then ``python setup.py build`` will build the module to
 import, or ``python setup.py install`` will install the module to your
 site-packages directory.
@@ -240,8 +240,8 @@ and then the ``setup.py`` file used to create the module containing the
 ufunc.
 
 The place in the code corresponding to the actual computations for
-the ufunc are marked with ``/\* BEGIN main ufunc computation \*/`` and
-``/\* END main ufunc computation \*/``. The code in between those lines is
+the ufunc are marked with ``/* BEGIN main ufunc computation */`` and
+``/* END main ufunc computation */``. The code in between those lines is
 the primary thing that must be changed to create your own ufunc.
 
     .. code-block:: c
@@ -339,7 +339,7 @@ the primary thing that must be changed to create your own ufunc.
             return m;
         }
 
-This is a ``setup.py file`` for the above code. As before, the module
+This is a ``setup.py`` file for the above code. As before, the module
 can be build via calling ``python setup.py build`` at the command prompt,
 or installed to site-packages via ``python setup.py install``. The module
 can also be placed into a local folder e.g. ``npufunc_directory`` below
@@ -408,8 +408,8 @@ sections we first give the ``.c`` file and then the corresponding
 ``setup.py`` file.
 
 The places in the code corresponding to the actual computations for
-the ufunc are marked with ``/\* BEGIN main ufunc computation \*/`` and
-``/\* END main ufunc computation \*/``. The code in between those lines
+the ufunc are marked with ``/* BEGIN main ufunc computation */`` and
+``/* END main ufunc computation */``. The code in between those lines
 is the primary thing that must be changed to create your own ufunc.
 
 

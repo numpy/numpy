@@ -66,7 +66,7 @@ attributes and methods are described in more details in the
 
 .. try_examples::
 
-The :mod:`numpy.ma` module can be used as an addition to :mod:`numpy`:
+   The :mod:`numpy.ma` module can be used as an addition to :mod:`numpy`:
 
    >>> import numpy as np
    >>> import numpy.ma as ma
@@ -521,7 +521,7 @@ Numerical operations
 --------------------
 
 Numerical operations can be easily performed without worrying about missing
-values, dividing by zero, square roots of negative numbers, etc.::
+values, dividing by zero, square roots of negative numbers, etc.:
 
 .. try_examples::
 

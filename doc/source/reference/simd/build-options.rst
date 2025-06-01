@@ -234,7 +234,7 @@ The need to align certain CPU features that are assured to be supported by
 successive generations of the same architecture, some cases:
 
 - On ppc64le ``VSX(ISA 2.06)`` and ``VSX2(ISA 2.07)`` both imply one another since the
-  first generation that supports little-endian mode is Power-8`(ISA 2.07)`
+  first generation that supports little-endian mode is ``Power-8(ISA 2.07)``
 - On AArch64 ``NEON NEON_FP16 NEON_VFPV4 ASIMD`` implies each other since they are part of the
   hardware baseline.
 

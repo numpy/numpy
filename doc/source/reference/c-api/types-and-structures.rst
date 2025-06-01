@@ -1618,7 +1618,7 @@ NumPy C-API and C complex
 When you use the NumPy C-API, you will have access to complex real declarations
 ``npy_cdouble`` and ``npy_cfloat``, which are declared in terms of the C
 standard types from ``complex.h``. Unfortunately, ``complex.h`` contains
-`#define I ...`` (where the actual definition depends on the compiler), which
+``#define I ...`` (where the actual definition depends on the compiler), which
 means that any downstream user that does ``#include <numpy/arrayobject.h>``
 could get ``I`` defined, and using something like declaring ``double I;`` in
 their code will result in an obscure compiler error like
