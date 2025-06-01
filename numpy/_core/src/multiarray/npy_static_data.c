@@ -64,6 +64,8 @@ intern_strings(void)
     INTERN_STRING(pyvals_name, "UFUNC_PYVALS_NAME");
     INTERN_STRING(legacy, "legacy");
     INTERN_STRING(__doc__, "__doc__");
+    INTERN_STRING(real, "real");
+    INTERN_STRING(imag, "imag");
     return 0;
 }
 

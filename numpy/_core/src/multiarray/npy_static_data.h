@@ -43,6 +43,8 @@ typedef struct npy_interned_str_struct {
     PyObject *pyvals_name;
     PyObject *legacy;
     PyObject *__doc__;
+    PyObject *real;
+    PyObject *imag;
 } npy_interned_str_struct;
 
 /*
