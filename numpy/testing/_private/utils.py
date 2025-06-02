@@ -864,6 +864,16 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             percent_mismatch = 100 * n_mismatch / n_elements
             remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
                        f'({percent_mismatch:.3g}%)']
+            positions = np.argwhere(np.reshape(invalids, ox.shape))
+            s = "\n".join(
+                [
+                    f"{p.tolist()}: {ox[tuple(p)]} != {oy[tuple(p)]}"
+                    for p in positions[:5]
+                ]
+            )
+            remarks.append(
+                f"Differences at indices (only showing the first 5 differences):\n{s}"
+            )
 
             with errstate(all='ignore'):
                 # ignore errors for non-numeric types
