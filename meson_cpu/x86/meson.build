@@ -212,6 +212,7 @@ if compiler_id == 'msvc'
     endif
   endforeach
   FMA3.update(args: {'val': '/arch:AVX2', 'match': clear_arch})
+  FMA3.update(args: {'val': '/fp:contract'})
   AVX2.update(args: {'val': '/arch:AVX2', 'match': clear_arch})
   AVX512_SKX.update(args: {'val': '/arch:AVX512', 'match': clear_arch})
 endif
