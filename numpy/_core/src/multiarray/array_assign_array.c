@@ -174,7 +174,7 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
 
     return 0;
 same_value_overflow:
-    PyErr_SetString(PyExc_ValueError, "overflow in 'same_value' cast");
+    PyErr_SetString(PyExc_ValueError, "overflow in 'same_value' casting");
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
@@ -256,6 +256,9 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
         }
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
+    if (same_value_cast) {
+        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
+    }
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
@@ -269,6 +272,9 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
                             (npy_bool *)wheremask_data, wheremask_strides_it[0],
                             cast_info.auxdata);
         if (result < 0) {
+            if (result == NPY_SAME_VALUE_OVERFLOW) {
+                goto same_value_overflow;
+            }
             goto fail;
         }
     } NPY_RAW_ITER_THREE_NEXT(idim, ndim, coord, shape_it,
@@ -288,6 +294,8 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
 
     return 0;
 
+same_value_overflow:
+    PyErr_SetString(PyExc_ValueError, "overflow in 'same_value' casting");
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
@@ -314,7 +322,6 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
                     NPY_CASTING casting)
 {
     int copied_src = 0;
-
     npy_intp src_strides[NPY_MAXDIMS];
 
     /* Use array_assign_scalar if 'src' NDIM is 0 */

@@ -25,15 +25,6 @@
  * variable is misnamed, but it's part of the public API so I'm not sure we
  * can just change it. Maybe someone should try and see if anyone notices.
  */
-/*
- * In numpy 1.6 and earlier, this was NPY_UNSAFE_CASTING. In a future
- * release, it will become NPY_SAME_KIND_CASTING.  Right now, during the
- * transitional period, we continue to follow the NPY_UNSAFE_CASTING rules (to
- * avoid breaking people's code), but we also check for whether the cast would
- * be allowed under the NPY_SAME_KIND_CASTING rules, and if not we issue a
- * warning (that people's code will be broken in a future release.)
- */
-
 NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_SAME_KIND_CASTING;
 
 

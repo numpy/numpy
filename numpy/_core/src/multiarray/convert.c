@@ -429,7 +429,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     int retcode = raw_array_assign_scalar(
             PyArray_NDIM(arr), PyArray_DIMS(arr), descr,
             PyArray_BYTES(arr), PyArray_STRIDES(arr),
-            descr, (void *)value);
+            descr, (void *)value, NPY_UNSAFE_CASTING);
 
     if (PyDataType_REFCHK(descr)) {
         PyArray_ClearBuffer(descr, (void *)value, 0, 1, 1);
