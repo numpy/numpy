@@ -830,6 +830,12 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
         return NULL;
     }
 
+    if (casting == NPY_SAME_VALUE_CASTING) {
+        PyErr_SetString(PyExc_NotImplementedError,
+            "einsum with casting='same_value' not implemented yet");
+        return NULL;
+    }
+
     /* Parse the subscripts string into label_counts and op_labels */
     memset(label_counts, 0, sizeof(label_counts));
     for (iop = 0; iop < nop; ++iop) {

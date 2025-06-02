@@ -1236,7 +1236,6 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
     switch (casting) {
         /* Allow anything with unsafe casting */
         case NPY_UNSAFE_CASTING:
-        case NPY_SAME_VALUE_CASTING:
             return 1;
 
         /*
@@ -1262,6 +1261,8 @@ can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
                 return (src_unit <= dst_unit);
             }
 
+        case NPY_SAME_VALUE_CASTING:
+            return 0;
         /* Enforce equality with 'no' or 'equiv' casting */
         default:
             return src_unit == dst_unit;

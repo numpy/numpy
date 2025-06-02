@@ -245,6 +245,12 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
                         &cast_info, &method_flags) != NPY_SUCCEED) {
         return -1;
     }
+    if (same_value_cast) {
+        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
+        PyErr_SetString(PyExc_NotImplementedError,
+            "raw_array_wheremasked_assign_array with 'same_value' casting not implemented yet");
+        return -1;
+    }
 
     if (!(method_flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {
         npy_clear_floatstatus_barrier(src_data);
@@ -256,9 +262,7 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
         }
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
-    if (same_value_cast) {
-        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
-    }
+
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
