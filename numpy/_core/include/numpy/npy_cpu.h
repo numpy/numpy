@@ -111,8 +111,9 @@
     #endif
 #elif defined(__loongarch_lp64)
     #define NPY_CPU_LOONGARCH64
-#elif defined(__EMSCRIPTEN__)
+#elif defined(__EMSCRIPTEN__) || defined(__wasm__)
     /* __EMSCRIPTEN__ is defined by emscripten: an LLVM-to-Web compiler */
+    /* __wasm__ is defined by clang when targeting wasm */
     #define NPY_CPU_WASM
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
