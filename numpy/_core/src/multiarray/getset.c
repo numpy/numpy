@@ -123,7 +123,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj, void *NPY_UNUSED(ignored))
     }
 
     /* Deprecated NumPy 2.4, 2025-05-11 */
-    if( DEPRECATE("Setting the strides on a NumPy array has been deprecated in NumPy 2.4.\n"
+    if (DEPRECATE("Setting the strides on a NumPy array has been deprecated in NumPy 2.4.\n"
                   "As an alternative, you can create a new view using np.lib.stride_tricks.as_strided."
                  ) < 0 ) {
         return -1;
