@@ -1,0 +1,615 @@
+#include "loops_utils.h"
+#include "loops.h"
+// Provides the various *_LOOP macros
+#include "fast_loop_macros.h"
+
+#include <hwy/highway.h>
+#include "simd/simd.hpp"
+using namespace np::simd;
+
+/**
+ * TODO:
+ *  - Improve the implementation of SIMD complex absolute,
+ *    current one kinda slow and it can be optimized by
+ *    at least avoiding the division and keep sqrt.
+ *  - Vectorize reductions
+ *  - Add support for ASIMD/VCMLA through universal intrinsics.
+ */
+
+//###############################################################################
+//## Real Single/Double precision
+//###############################################################################
+/********************************************************************************
+ ** Defining ufunc inner functions
+ ********************************************************************************/
+/**begin repeat
+ * Float types
+ *  #type = npy_float, npy_double#
+ *  #TYPE = FLOAT, DOUBLE#
+ *  #c = f, #
+ *  #C = F, #
+ *  #VECTOR = NPY_HWY, (NPY_HWY && HWY_HAVE_FLOAT64)#
+ */
+/**begin repeat1
+ * Arithmetic
+ * # kind = add, subtract, multiply, divide#
+ * # intrin = Add, Sub, Mul, Div#
+ * # OP = +, -, *, /#
+ * # PW = 1, 0, 0, 0#
+ * # is_div = 0*3, 1#
+ * # is_mul = 0*2, 1, 0#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    using T = @type@;
+    npy_intp len = dimensions[0];
+    char *src0 = args[0], *src1 = args[1], *dst = args[2];
+    npy_intp ssrc0 = steps[0], ssrc1 = steps[1], sdst = steps[2];
+    // reduce
+    if (ssrc0 == 0 && ssrc0 == sdst && src0 == dst) {
+    #if @PW@
+        *((T*)src0) @OP@= @TYPE@_pairwise_sum(src1, len, ssrc1);
+    #else
+        T acc = *((T*)src0);
+        if (ssrc1 == sizeof(T)) {
+            for (; len > 0; --len, src1 += sizeof(T)) {
+                acc @OP@= *(T *)src1;
+            }
+        } else {
+            for (; len > 0; --len, src1 += ssrc1) {
+                acc @OP@= *(T *)src1;
+            }
+        }
+        *((T*)src0) = acc;
+    #endif
+        return;
+    }
+#if @is_div@ && HWY_HAVE_NEON_FP && !HWY_HAVE_FLOAT64
+    /**
+     * The SIMD branch is disabled on armhf(armv7) due to the absence of native SIMD
+     * support for single-precision floating-point division. Only scalar division is
+     * supported natively, and without hardware for performance and accuracy comparison,
+     * it's challenging to evaluate the benefits of emulated SIMD intrinsic versus
+     * native scalar division.
+     *
+     * The `npyv_div_f32` universal intrinsic emulates the division operation using an
+     * approximate reciprocal combined with 3 Newton-Raphson iterations for enhanced
+     * precision. However, this approach has limitations:
+     *
+     * - It can cause unexpected floating-point overflows in special cases, such as when
+     *   the divisor is subnormal (refer: https://github.com/numpy/numpy/issues/25097).
+     *
+     * - The precision may vary between the emulated SIMD and scalar division due to
+     *   non-uniform branches (non-contiguous) in the code, leading to precision
+     *   inconsistencies.
+     *
+     * - Considering the necessity of multiple Newton-Raphson iterations, the performance
+     *   gain may not sufficiently offset these drawbacks.
+     */
+#elif @VECTOR@
+    if (static_cast<size_t>(len) > Lanes<T>()*2 &&
+        !is_mem_overlap(src0, ssrc0, dst, sdst, len) &&
+        !is_mem_overlap(src1, ssrc1, dst, sdst, len)
+    ) {
+        const int vstep = Lanes<uint8_t>();
+        const int wstep = vstep * 2;
+        const int hstep = Lanes<T>();
+        const int lstep = hstep * 2;
+        // lots of specializations, to squeeze out max performance
+        if (ssrc0 == sizeof(T) && ssrc0 == ssrc1 && ssrc0 == sdst) {
+            for (; len >= lstep; len -= lstep, src0 += wstep, src1 += wstep, dst += wstep) {
+                auto a0 = LoadU<T>((const T*)src0);
+                auto a1 = LoadU<T>((const T*)(src0 + vstep));
+                auto b0 = LoadU<T>((const T*)src1);
+                auto b1 = LoadU<T>((const T*)(src1 + vstep));
+                auto r0 = @intrin@(a0, b0);
+                auto r1 = @intrin@(a1, b1);
+                StoreU<T>(r0, (T*)dst);
+                StoreU<T>(r1, (T*)(dst + vstep));
+            }
+            for (; len > 0; len -= hstep, src0 += vstep, src1 += vstep, dst += vstep) {
+            #if @is_div@
+                auto a = hn::LoadNOr(Set<T>(1.0@c@), _Tag<T>(), (const T*)src0, len);
+                auto b = hn::LoadNOr(Set<T>(1.0@c@), _Tag<T>(), (const T*)src1, len);
+            #else
+                auto a = hn::LoadN(_Tag<T>(), (const T*)src0, len);
+                auto b = hn::LoadN(_Tag<T>(), (const T*)src1, len);
+            #endif
+                auto r = @intrin@(a, b);
+                hn::StoreN(r, _Tag<T>(), (T*)dst, len);
+            }
+        }
+        else if (ssrc0 == 0 && ssrc1 == sizeof(T) && sdst == ssrc1) {
+            auto a = Set<T>(*((T*)src0));
+            for (; len >= lstep; len -= lstep, src1 += wstep, dst += wstep) {
+                auto b0 = LoadU<T>((const T*)src1);
+                auto b1 = LoadU<T>((const T*)(src1 + vstep));
+                auto r0 = @intrin@(a, b0);
+                auto r1 = @intrin@(a, b1);
+                StoreU<T>(r0, (T*)dst);
+                StoreU<T>(r1, (T*)(dst + vstep));
+            }
+            for (; len > 0; len -= hstep, src1 += vstep, dst += vstep) {
+            #if @is_div@ || @is_mul@
+                auto b = hn::LoadNOr(Set<T>(1.0@c@), _Tag<T>(), (const T*)src1, len);
+            #else
+                auto b = hn::LoadN(_Tag<T>(), (const T*)src1, len);
+            #endif
+                auto r = @intrin@(a, b);
+                hn::StoreN(r, _Tag<T>(), (T*)dst, len);
+            }
+        }
+        else if (ssrc1 == 0 && ssrc0 == sizeof(T) && sdst == ssrc0) {
+            auto b = Set<T>(*((T*)src1));
+            for (; len >= lstep; len -= lstep, src0 += wstep, dst += wstep) {
+                auto a0 = LoadU<T>((const T*)src0);
+                auto a1 = LoadU<T>((const T*)(src0 + vstep));
+                auto r0 = @intrin@(a0, b);
+                auto r1 = @intrin@(a1, b);
+                StoreU<T>(r0, (T*)dst);
+                StoreU<T>(r1, (T*)(dst + vstep));
+            }
+            for (; len > 0; len -= hstep, src0 += vstep, dst += vstep) {
+            #if @is_mul@
+                auto a = hn::LoadNOr(Set<T>(1.0@c@), _Tag<T>(), (const T*)src0, len);
+            #elif @is_div@
+                auto a = hn::LoadNOr(Set<T>(NPY_NAN@C@), _Tag<T>(), (const T*)src0, len);
+            #else
+                auto a = hn::LoadN(_Tag<T>(), (const T*)src0, len);
+            #endif
+                auto r = @intrin@(a, b);
+                hn::StoreN(r, _Tag<T>(), (T*)dst, len);
+            }
+        } else {
+            goto loop_scalar;
+        }
+        return;
+    }
+loop_scalar:
+#endif
+    for (; len > 0; --len, src0 += ssrc0, src1 += ssrc1, dst += sdst) {
+        const T a = *((T*)src0);
+        const T b = *((T*)src1);
+        *((T*)dst) = a @OP@ b;
+    }
+}
+
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
+(PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    char *ip1 = args[0];
+    char *indxp = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    @type@ *indexed;
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (@type@ *)(ip1 + is1 * indx);
+        *indexed = *indexed @OP@ *(@type@ *)value;
+    }
+    return 0;
+}
+
+/**end repeat1**/
+/**end repeat**/
+
+//###############################################################################
+//## Complex Single/Double precision
+//###############################################################################
+
+/********************************************************************************
+ ** Defining ufunc inner functions
+ ********************************************************************************/
+/**begin repeat
+ * complex types
+ * #TYPE = CFLOAT, CDOUBLE#
+ * #ftype = npy_float, npy_double#
+ * #sfx = f32, f64#
+ * #c = f, #
+ * #C = F, #
+ * #VECTOR = NPY_HWY, (NPY_HWY && HWY_HAVE_FLOAT64)#
+ */
+/**begin repeat1
+ * arithmetic
+ * #kind = add, subtract, multiply#
+ * #intrin = Add, Sub, MulComplex#
+ * #OP = +, -, *#
+ * #PW = 1, 0, 0#
+ * #is_mul = 0*2, 1#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    using T = @ftype@;
+    using D = std::conditional_t<sizeof(T) == 8, int64_t, int32_t>;
+    npy_intp len = dimensions[0];
+    char *b_src0 = args[0], *b_src1 = args[1], *b_dst = args[2];
+    npy_intp b_ssrc0 = steps[0], b_ssrc1 = steps[1], b_sdst = steps[2];
+#if @PW@
+    // reduce
+    if (b_ssrc0 == 0 && b_ssrc0 == b_sdst && b_src0 == b_dst &&
+        b_ssrc1 % (sizeof(T)*2) == 0
+    ) {
+        T *rl_im = (T *)b_src0;
+        T rr, ri;
+        @TYPE@_pairwise_sum(&rr, &ri, b_src1, len * 2, b_ssrc1 / 2);
+        rl_im[0] @OP@= rr;
+        rl_im[1] @OP@= ri;
+        return;
+    }
+#endif
+#if @VECTOR@
+    // Certain versions of Apple clang (commonly used in CI images) produce
+    // non-deterministic output in the mul path with AVX2 enabled on x86_64.
+    // Work around by scalarising.
+    #if @is_mul@ \
+            && defined(NPY_CPU_AMD64) && defined(__clang__) \
+            && defined(__apple_build_version__) \
+            && __apple_build_version__ >= 14000000 \
+            && __apple_build_version__ < 14030000
+        goto loop_scalar;
+    #endif  // end affected Apple clang.
+
+    if (!is_mem_overlap(b_src0, b_ssrc0, b_dst, b_sdst, len) &&
+        !is_mem_overlap(b_src1, b_ssrc1, b_dst, b_sdst, len) &&
+        sizeof(T) == alignof(T) && b_ssrc0 % sizeof(T) == 0 && b_ssrc1 % sizeof(T) == 0 && 
+        b_sdst % sizeof(T) == 0 && b_sdst != 0
+    ) {
+        const T *src0 = (T*)b_src0;
+        const T *src1 = (T*)b_src1;
+              T *dst  = (T*)b_dst;
+
+        const npy_intp ssrc0 = b_ssrc0 / sizeof(T);
+        const npy_intp ssrc1 = b_ssrc1 / sizeof(T);
+        const npy_intp sdst  = b_sdst / sizeof(T);
+
+        const int vstep = Lanes<T>();
+        const int wstep = vstep * 2;
+        const int hstep = vstep / 2;
+
+        // lots**lots of specializations, to squeeze out max performance
+        // contig
+        if (ssrc0 == 2 && ssrc0 == ssrc1 && ssrc0 == sdst) {
+            for (; len >= vstep; len -= vstep, src0 += wstep, src1 += wstep, dst += wstep) {
+                auto a0 = LoadU<T>(src0);
+                auto a1 = LoadU<T>(src0 + vstep);
+                auto b0 = LoadU<T>(src1);
+                auto b1 = LoadU<T>(src1 + vstep);
+                auto r0 = hn::@intrin@(a0, b0);
+                auto r1 = hn::@intrin@(a1, b1);
+                StoreU(r0, dst);
+                StoreU(r1, dst + vstep);
+            }
+            for (; len > 0; len -= hstep, src0 += vstep, src1 += vstep, dst += vstep) {
+                auto a = hn::LoadN(_Tag<T>(), src0, len*2);
+                auto b = hn::LoadN(_Tag<T>(), src1, len*2);
+                auto r = hn::@intrin@(a, b);
+                hn::StoreN(r, _Tag<T>(), dst, len*2);
+            }
+        }
+        // scalar 0
+        else if (ssrc0 == 0) {
+            auto a = hn::OddEven(Set<T>(src0[1]), Set<T>(src0[0]));
+            // contig
+            if (ssrc1 == 2 && sdst == ssrc1) {
+                for (; len >= vstep; len -= vstep, src1 += wstep, dst += wstep) {
+                    auto b0 = LoadU<T>(src1);
+                    auto b1 = LoadU<T>(src1 + vstep);
+                    auto r0 = hn::@intrin@(a, b0);
+                    auto r1 = hn::@intrin@(a, b1);
+                    StoreU(r0, dst);
+                    StoreU(r1, dst + vstep);
+                }
+                for (; len > 0; len -= hstep, src1 += vstep, dst += vstep) {
+                #if @is_mul@
+                    auto b = hn::LoadNOr(Set<T>(1.0@c@), _Tag<T>(), src1, len*2);
+                #else
+                    auto b = hn::LoadN(_Tag<T>(), src1, len*2);
+                #endif
+                    auto r = hn::@intrin@(a, b);
+                    hn::StoreN(r, _Tag<T>(), dst, len*2);
+                }
+            }
+            // non-contig
+            else if (static_cast<D>(ssrc1) >= 0 && static_cast<D>(sdst) >= 0) {
+                auto i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
+                auto i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+                i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
+                i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
+                for (; len >= vstep; len -= vstep, src1 += ssrc1*vstep, dst += sdst*vstep) {
+                    auto b0 = hn::GatherIndex(_Tag<T>(), src1, i0);
+                    auto b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i0);
+                    auto r0 = hn::@intrin@(a, b0);
+                    auto r1 = hn::@intrin@(a, b1);
+                    hn::ScatterIndex(r0, _Tag<T>(), dst, i1);
+                    hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i1);
+                }
+                for (; len > 0; len -= hstep, src1 += ssrc1*hstep, dst += sdst*hstep) {
+                #if @is_mul@
+                    auto b = hn::MaskedGatherIndexOr(Set<T>(1.0@c@), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i0);
+                #else
+                    auto b = hn::GatherIndexN(_Tag<T>(), src1, i0, len*2);
+                #endif
+                    auto r = hn::@intrin@(a, b);
+                    hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                }
+            }
+            else {
+                goto loop_scalar;
+            }
+        }
+        // scalar 1
+        else if (ssrc1 == 0) {
+            auto b = hn::OddEven(Set<T>(src1[1]), Set<T>(src1[0]));
+            if (ssrc0 == 2 && sdst == ssrc0) {
+                for (; len >= vstep; len -= vstep, src0 += wstep, dst += wstep) {
+                    auto a0 = LoadU<T>(src0);
+                    auto a1 = LoadU<T>(src0 + vstep);
+                    auto r0 = hn::@intrin@(a0, b);
+                    auto r1 = hn::@intrin@(a1, b);
+                    StoreU<T>(r0, dst);
+                    StoreU<T>(r1, dst + vstep);
+                }
+                for (; len > 0; len -= hstep, src0 += vstep, dst += vstep) {
+                #if @is_mul@
+                    auto a = hn::LoadNOr(Set<T>(1.0@c@), _Tag<T>(), src0, len*2);
+                #else
+                    auto a = hn::LoadN(_Tag<T>(), src0, len*2);
+                #endif
+                    auto r = hn::@intrin@(a, b);
+                    hn::StoreN(r, _Tag<T>(), dst, len*2);
+                }
+            }
+            // non-contig
+            else if (static_cast<D>(ssrc0) >= 0 && static_cast<D>(sdst) >= 0) {
+                auto i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
+                auto i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+                i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
+                i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
+                for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep, dst += sdst*vstep) {
+                    auto a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
+                    auto a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
+                    auto r0 = hn::@intrin@(a0, b);
+                    auto r1 = hn::@intrin@(a1, b);
+                    hn::ScatterIndex(r0, _Tag<T>(), dst, i1);
+                    hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i1);
+                }
+                for (; len > 0; len -= hstep, src0 += ssrc0*hstep, dst += sdst*hstep) {
+                #if @is_mul@
+                    auto a = hn::MaskedGatherIndexOr(Set<T>(1.0@c@), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
+                #else
+                    auto a = hn::GatherIndexN(_Tag<T>(), src0, i0, len*2);
+                #endif
+                    auto r = hn::@intrin@(a, b);
+                    hn::ScatterIndexN(r, _Tag<T>(), dst, i1, len*2);
+                }
+            }
+            else {
+                goto loop_scalar;
+            }
+        }
+        #if @is_mul@
+        // non-contig
+        else if (static_cast<D>(ssrc0) >= 0 && static_cast<D>(ssrc1) >= 0 && static_cast<D>(sdst) >= 0) {
+            auto i0 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc0));
+            auto i1 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc1));
+            auto i2 = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+            i0 = hn::OddEven(Add(i0, Set<D>(1)), i0);
+            i1 = hn::OddEven(Add(i1, Set<D>(1)), i1);
+            i2 = hn::OddEven(Add(i2, Set<D>(1)), i2);
+            for (; len >= vstep; len -= vstep, src0 += ssrc0*vstep,
+                                src1 += ssrc1*vstep, dst += sdst*vstep
+            ) {
+                auto a0 = hn::GatherIndex(_Tag<T>(), src0, i0);
+                auto a1 = hn::GatherIndex(_Tag<T>(), src0 + ssrc0*hstep, i0);
+                auto b0 = hn::GatherIndex(_Tag<T>(), src1, i1);
+                auto b1 = hn::GatherIndex(_Tag<T>(), src1 + ssrc1*hstep, i1);
+                auto r0 = hn::@intrin@(a0, b0);
+                auto r1 = hn::@intrin@(a1, b1);
+                hn::ScatterIndex(r0, _Tag<T>(), dst, i2);
+                hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i2);
+            }
+            for (; len > 0; len -= hstep, src0 += ssrc0*hstep,
+                           src1 += ssrc1*hstep, dst += sdst*hstep
+            ) {
+            #if @is_mul@
+                auto a = hn::MaskedGatherIndexOr(Set<T>(1.0@c@), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src0, i0);
+                auto b = hn::MaskedGatherIndexOr(Set<T>(1.0@c@), hn::FirstN(_Tag<T>(), len*2), _Tag<T>(), src1, i1);
+            #else
+                auto a = hn::GatherIndexN(_Tag<T>(), src0, i0, len*2);
+                auto b = hn::GatherIndexN(_Tag<T>(), src1, i1, len*2);
+            #endif
+                auto r = hn::@intrin@(a, b);
+                hn::ScatterIndexN(r, _Tag<T>(), dst, i2, len*2);
+            }
+        }
+        #else  /* @is_mul@ */
+        else {
+            // Only multiply is vectorized for the generic non-contig case.
+            goto loop_scalar;
+        }
+        #endif  /* @is_mul@ */
+
+        return;
+    }
+
+loop_scalar:
+#endif
+    for (; len > 0; --len, b_src0 += b_ssrc0, b_src1 += b_ssrc1, b_dst += b_sdst) {
+        const T a_r = ((T *)b_src0)[0];
+        const T a_i = ((T *)b_src0)[1];
+        const T b_r = ((T *)b_src1)[0];
+        const T b_i = ((T *)b_src1)[1];
+    #if @is_mul@
+        ((T *)b_dst)[0] = a_r*b_r - a_i*b_i;
+        ((T *)b_dst)[1] = a_r*b_i + a_i*b_r;
+    #else
+        ((T *)b_dst)[0] = a_r @OP@ b_r;
+        ((T *)b_dst)[1] = a_i @OP@ b_i;
+    #endif
+    }
+}
+
+NPY_NO_EXPORT int NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@_indexed)
+(PyArrayMethod_Context *NPY_UNUSED(context), char * const*args, npy_intp const *dimensions, npy_intp const *steps, NpyAuxData *NPY_UNUSED(func))
+{
+    using T = @ftype@;
+    char *ip1 = args[0];
+    char *indxp = args[1];
+    char *value = args[2];
+    npy_intp is1 = steps[0], isindex = steps[1], isb = steps[2];
+    npy_intp shape = steps[3];
+    npy_intp n = dimensions[0];
+    npy_intp i;
+    T *indexed;
+    for(i = 0; i < n; i++, indxp += isindex, value += isb) {
+        npy_intp indx = *(npy_intp *)indxp;
+        if (indx < 0) {
+            indx += shape;
+        }
+        indexed = (T *)(ip1 + is1 * indx);
+        const T b_r = ((T *)value)[0];
+        const T b_i = ((T *)value)[1];
+    #if @is_mul@
+        const T a_r = indexed[0];
+        const T a_i = indexed[1];
+        indexed[0] = a_r*b_r - a_i*b_i;
+        indexed[1] = a_r*b_i + a_i*b_r;
+    #else
+        indexed[0] @OP@= b_r;
+        indexed[1] @OP@= b_i;
+    #endif
+    }
+    return 0;
+}
+/**end repeat1**/
+
+/**begin repeat1
+ *  #kind = conjugate, square#
+ *  #is_square = 0, 1#
+ */
+NPY_NO_EXPORT void NPY_CPU_DISPATCH_CURFX(@TYPE@_@kind@)
+(char **args, npy_intp const *dimensions, npy_intp const *steps, void *NPY_UNUSED(func))
+{
+    using T = @ftype@;
+    using D = std::conditional_t<sizeof(T) == 8, int64_t, int32_t>;
+    npy_intp len = dimensions[0];
+    char *b_src = args[0], *b_dst = args[1];
+    npy_intp b_ssrc = steps[0], b_sdst = steps[1];
+#if @VECTOR@
+    if (!is_mem_overlap(b_src, b_ssrc, b_dst, b_sdst, len) && sizeof(T) == alignof(T) &&
+        b_ssrc % sizeof(T) == 0 && b_sdst % sizeof(T) == 0) {
+        const T *src  = (T*)b_src;
+              T *dst  = (T*)b_dst;
+        const npy_intp ssrc = b_ssrc / sizeof(T);
+        const npy_intp sdst = b_sdst / sizeof(T);
+
+        const int vstep = Lanes<T>();
+        const int wstep = vstep * 2;
+        const int hstep = vstep / 2;
+
+        if (ssrc == 2 && ssrc == sdst) {
+            for (; len >= vstep; len -= vstep, src += wstep, dst += wstep) {
+                auto a0 = LoadU<T>(src);
+                auto a1 = LoadU<T>(src + vstep);
+            #if @is_square@
+                auto r0 = hn::MulComplex(a0, a0);
+                auto r1 = hn::MulComplex(a1, a1);
+            #else
+                auto r0 = hn::ComplexConj(a0);
+                auto r1 = hn::ComplexConj(a1);
+            #endif
+                StoreU<T>(r0, dst);
+                StoreU<T>(r1, dst + vstep);
+            }
+            for (; len > 0; len -= hstep, src += vstep, dst += vstep) {
+                auto a = hn::LoadN(_Tag<T>(), src, len*2);
+            #if @is_square@
+                auto r = hn::MulComplex(a, a);
+            #else
+                auto r = hn::ComplexConj(a);
+            #endif
+                hn::StoreN(r, _Tag<T>(), dst, len*2);
+            }
+        }
+        else if (ssrc == 2 && static_cast<D>(sdst) >= 0) {
+            auto i = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(sdst));
+            i = hn::OddEven(Add(i, Set<D>(1)), i);
+            for (; len >= vstep; len -= vstep, src += wstep, dst += sdst*vstep) {
+                auto a0 = LoadU<T>(src);
+                auto a1 = LoadU<T>(src + vstep);
+            #if @is_square@
+                auto r0 = hn::MulComplex(a0, a0);
+                auto r1 = hn::MulComplex(a1, a1);
+            #else
+                auto r0 = hn::ComplexConj(a0);
+                auto r1 = hn::ComplexConj(a1);
+            #endif
+                hn::ScatterIndex(r0, _Tag<T>(), dst, i);
+                hn::ScatterIndex(r1, _Tag<T>(), dst + sdst*hstep, i);
+            }
+            for (; len > 0; len -= hstep, src += vstep, dst += sdst*hstep) {
+                auto a = hn::LoadN(_Tag<T>(), src, len*2);
+            #if @is_square@
+                auto r = hn::MulComplex(a, a);
+            #else
+                auto r = hn::ComplexConj(a);
+            #endif
+                hn::ScatterIndexN(r, _Tag<T>(), dst, i, len*2);
+            }
+        }
+        else if (sdst == 2 && static_cast<D>(ssrc) >= 0) {
+            auto i = Mul(hn::ShiftRight<1>(hn::Iota(_Tag<D>(), 0)), Set<D>(ssrc));
+            i = hn::OddEven(Add(i, Set<D>(1)), i);
+            for (; len >= vstep; len -= vstep, src += ssrc*vstep, dst += wstep) {
+                auto a0 = hn::GatherIndex(_Tag<T>(), src, i);
+                auto a1 = hn::GatherIndex(_Tag<T>(), src + ssrc*hstep, i);
+            #if @is_square@
+                auto r0 = hn::MulComplex(a0, a0);
+                auto r1 = hn::MulComplex(a1, a1);
+            #else
+                auto r0 = hn::ComplexConj(a0);
+                auto r1 = hn::ComplexConj(a1);
+            #endif
+                StoreU<T>(r0, dst);
+                StoreU<T>(r1, dst + vstep);
+            }
+            for (; len > 0; len -= hstep, src += ssrc*hstep, dst += vstep) {
+                auto a = hn::GatherIndexN(_Tag<T>(), src, i, len*2);
+            #if @is_square@
+                auto r = hn::MulComplex(a, a);
+            #else
+                auto r = hn::ComplexConj(a);
+            #endif
+                hn::StoreN(r, _Tag<T>(), dst, len*2);
+            }
+        }
+        else {
+            goto loop_scalar;
+        }
+        return;
+    }
+
+loop_scalar:
+#endif
+    for (; len > 0; --len, b_src += b_ssrc, b_dst += b_sdst) {
+        const T rl = ((T *)b_src)[0];
+        const T im = ((T *)b_src)[1];
+    #if @is_square@
+        ((T *)b_dst)[0] = rl*rl - im*im;
+        ((T *)b_dst)[1] = rl*im + im*rl;
+    #else
+        ((T *)b_dst)[0] = rl;
+        ((T *)b_dst)[1] = -im;
+    #endif
+    }
+}
+/**end repeat1**/
+/**end repeat**/
