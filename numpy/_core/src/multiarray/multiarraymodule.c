@@ -530,8 +530,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
                                    NPY_ORDER order, PyArrayObject *ret,
-                                   PyArray_Descr *dtype, NPY_CASTING casting,
-                                   npy_bool casting_not_passed)
+                                   PyArray_Descr *dtype, NPY_CASTING casting)
 {
     int iarrays;
     npy_intp shape = 0;
@@ -647,12 +646,11 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
  * @param ret output array to fill
  * @param dtype Forced output array dtype (cannot be combined with ret)
  * @param casting Casting mode used
- * @param casting_not_passed Deprecation helper
  */
 NPY_NO_EXPORT PyObject *
 PyArray_ConcatenateInto(PyObject *op,
         int axis, PyArrayObject *ret, PyArray_Descr *dtype,
-        NPY_CASTING casting, npy_bool casting_not_passed)
+        NPY_CASTING casting)
 {
     int iarrays, narrays;
     PyArrayObject **arrays;
@@ -698,7 +696,7 @@ PyArray_ConcatenateInto(PyObject *op,
     if (axis == NPY_RAVEL_AXIS) {
         ret = PyArray_ConcatenateFlattenedArrays(
                 narrays, arrays, NPY_CORDER, ret, dtype,
-                casting, casting_not_passed);
+                casting);
     }
     else {
         ret = PyArray_ConcatenateArrays(
@@ -743,7 +741,7 @@ PyArray_Concatenate(PyObject *op, int axis)
         casting = NPY_SAME_KIND_CASTING;
     }
     return PyArray_ConcatenateInto(
-            op, axis, NULL, NULL, casting, 0);
+            op, axis, NULL, NULL, casting);
 }
 
 static int
@@ -2489,7 +2487,6 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
     PyObject *out = NULL;
     PyArray_Descr *dtype = NULL;
     NPY_CASTING casting = NPY_SAME_KIND_CASTING;
-    PyObject *casting_obj = NULL;
     PyObject *res;
     int axis = 0;
 
@@ -2499,20 +2496,8 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
             "|axis", &PyArray_AxisConverter, &axis,
             "|out", NULL, &out,
             "$dtype", &PyArray_DescrConverter2, &dtype,
-            "$casting", NULL, &casting_obj,
+            "$casting", &PyArray_CastingConverter, &casting,
             NULL, NULL, NULL) < 0) {
-        return NULL;
-    }
-    int casting_not_passed = 0;
-    if (casting_obj == NULL) {
-        /*
-         * Casting was not passed in, needed for deprecation only.
-         * This should be simplified once the deprecation is finished.
-         */
-        casting_not_passed = 1;
-    }
-    else if (!PyArray_CastingConverter(casting_obj, &casting)) {
-        Py_XDECREF(dtype);
         return NULL;
     }
     if (out != NULL) {
@@ -2526,7 +2511,7 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
         }
     }
     res = PyArray_ConcatenateInto(a0, axis, (PyArrayObject *)out, dtype,
-            casting, casting_not_passed);
+            casting);
     Py_XDECREF(dtype);
     return res;
 }
