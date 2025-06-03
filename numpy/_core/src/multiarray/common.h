@@ -11,6 +11,7 @@
 #include "npy_static_data.h"
 #include "npy_import.h"
 #include <limits.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -230,15 +231,6 @@ npy_uint_alignment(int itemsize)
  * compared to memchr it returns one stride past end instead of NULL if needle
  * is not found.
  */
-#ifdef __clang__
-    /*
-     * The code below currently makes use of !NPY_ALIGNMENT_REQUIRED, which
-     * should be OK but causes the clang sanitizer to warn.  It may make
-     * sense to modify the code to avoid this "unaligned" access but
-     * it would be good to carefully check the performance changes.
-     */
-    __attribute__((no_sanitize("alignment")))
-#endif
 static inline char *
 npy_memchr(char * haystack, char needle,
            npy_intp stride, npy_intp size, npy_intp * psubloopsize, int invert)
@@ -259,11 +251,12 @@ npy_memchr(char * haystack, char needle,
     }
     else {
         /* usually find elements to skip path */
-        if (!NPY_ALIGNMENT_REQUIRED && needle == 0 && stride == 1) {
+        if (needle == 0 && stride == 1) {
             /* iterate until last multiple of 4 */
             char * block_end = haystack + size - (size % sizeof(unsigned int));
             while (p < block_end) {
-                unsigned int  v = *(unsigned int*)p;
+                unsigned int v;
+                memcpy(&v, p, sizeof(v));
                 if (v != 0) {
                     break;
                 }
