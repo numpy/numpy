@@ -135,8 +135,8 @@ For best performance, a development package providing BLAS and CBLAS should be
 installed.  Some of the options available are:
 
 - ``libblas-dev``: reference BLAS (not very optimized)
-- ``libopenblas-base``: (recommended) OpenBLAS is performant, and is what all
-  the NumPy wheels on PyPI are built with
+- ``libopenblas-base``: (recommended) OpenBLAS is performant, and used
+  in the NumPy wheels on PyPI except where Apple's Accelerate is tuned better for Apple hardware
 
 The package linked to when numpy is loaded can be chosen after installation via
 the alternatives mechanism::
