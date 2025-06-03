@@ -864,16 +864,21 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             percent_mismatch = 100 * n_mismatch / n_elements
             remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
                        f'({percent_mismatch:.3g}%)']
-            positions = np.argwhere(np.reshape(invalids, ox.shape))
-            s = "\n".join(
-                [
-                    f"{p.tolist()}: {ox[tuple(p)]} != {oy[tuple(p)]}"
-                    for p in positions[:5]
-                ]
-            )
-            remarks.append(
-                f"Differences at indices (only showing the first 5 differences):\n{s}"
-            )
+            if (ox.ndim != 0) and (oy.ndim != 0) and (invalids.ndim != 0):
+                if flagged.ndim > 0:
+                    positions = np.argwhere(~flagged)[invalids]
+                else:
+                    positions = np.argwhere(invalids)
+                print(f'positions: {positions}')
+                s = "\n".join(
+                    [
+                        f"{p.tolist()}: {ox[tuple(p)]} ({names[0]}), {oy[tuple(p)]} ({names[1]})"
+                        for p in positions[:5]
+                    ]
+                )
+                remarks.append(
+                    f"Failure at indices (only showing the first 5 failures):\n{s}"
+                )
 
             with errstate(all='ignore'):
                 # ignore errors for non-numeric types
