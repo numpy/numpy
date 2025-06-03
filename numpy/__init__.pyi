@@ -4784,19 +4784,17 @@ arctan: _UFunc_Nin1_Nout1[L['arctan'], L[8], None]
 arctanh: _UFunc_Nin1_Nout1[L['arctanh'], L[8], None]
 bitwise_and: _UFunc_Nin2_Nout1[L['bitwise_and'], L[12], L[-1]]
 bitwise_count: _UFunc_Nin1_Nout1[L['bitwise_count'], L[11], None]
-bitwise_not: _UFunc_Nin1_Nout1[L['invert'], L[12], None]
 bitwise_or: _UFunc_Nin2_Nout1[L['bitwise_or'], L[12], L[0]]
 bitwise_xor: _UFunc_Nin2_Nout1[L['bitwise_xor'], L[12], L[0]]
 cbrt: _UFunc_Nin1_Nout1[L['cbrt'], L[5], None]
 ceil: _UFunc_Nin1_Nout1[L['ceil'], L[7], None]
-conj: _UFunc_Nin1_Nout1[L['conjugate'], L[18], None]
 conjugate: _UFunc_Nin1_Nout1[L['conjugate'], L[18], None]
 copysign: _UFunc_Nin2_Nout1[L['copysign'], L[4], None]
 cos: _UFunc_Nin1_Nout1[L['cos'], L[9], None]
 cosh: _UFunc_Nin1_Nout1[L['cosh'], L[8], None]
 deg2rad: _UFunc_Nin1_Nout1[L['deg2rad'], L[5], None]
 degrees: _UFunc_Nin1_Nout1[L['degrees'], L[5], None]
-divide: _UFunc_Nin2_Nout1[L['true_divide'], L[11], None]
+divide: _UFunc_Nin2_Nout1[L['divide'], L[11], None]
 divmod: _UFunc_Nin2_Nout2[L['divmod'], L[15], None]
 equal: _UFunc_Nin2_Nout1[L['equal'], L[23], None]
 exp2: _UFunc_Nin1_Nout1[L['exp2'], L[8], None]
@@ -4839,7 +4837,6 @@ matmul: _GUFunc_Nin2_Nout1[L['matmul'], L[19], None, L["(n?,k),(k,m?)->(n?,m?)"]
 matvec: _GUFunc_Nin2_Nout1[L['matvec'], L[19], None, L["(m,n),(n)->(m)"]]
 maximum: _UFunc_Nin2_Nout1[L['maximum'], L[21], None]
 minimum: _UFunc_Nin2_Nout1[L['minimum'], L[21], None]
-mod: _UFunc_Nin2_Nout1[L['remainder'], L[16], None]
 modf: _UFunc_Nin1_Nout2[L['modf'], L[4], None]
 multiply: _UFunc_Nin2_Nout1[L['multiply'], L[23], L[1]]
 negative: _UFunc_Nin1_Nout1[L['negative'], L[19], None]
@@ -4863,7 +4860,6 @@ square: _UFunc_Nin1_Nout1[L['square'], L[18], None]
 subtract: _UFunc_Nin2_Nout1[L['subtract'], L[21], None]
 tan: _UFunc_Nin1_Nout1[L['tan'], L[8], None]
 tanh: _UFunc_Nin1_Nout1[L['tanh'], L[8], None]
-true_divide: _UFunc_Nin2_Nout1[L['true_divide'], L[11], None]
 trunc: _UFunc_Nin1_Nout1[L['trunc'], L[7], None]
 vecdot: _GUFunc_Nin2_Nout1[L['vecdot'], L[19], None, L["(n),(n)->()"]]
 vecmat: _GUFunc_Nin2_Nout1[L['vecmat'], L[19], None, L["(n),(n,m)->(m)"]]
@@ -4878,10 +4874,14 @@ atanh = arctanh
 atan2 = arctan2
 concat = concatenate
 bitwise_left_shift = left_shift
+bitwise_not = invert
 bitwise_invert = invert
 bitwise_right_shift = right_shift
+conj = conjugate
+mod = remainder
 permute_dims = transpose
 pow = power
+true_divide = divide
 
 class errstate:
     def __init__(
