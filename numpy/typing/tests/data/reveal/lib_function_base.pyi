@@ -131,7 +131,7 @@ assert_type(np.corrcoef(AR_f8, dtype=float), npt.NDArray[Any])
 
 assert_type(np.blackman(5), npt.NDArray[np.floating])
 assert_type(np.bartlett(6), npt.NDArray[np.floating])
-assert_type(np.hanning(4.5), npt.NDArray[np.floating])
+assert_type(np.hann(4.5), npt.NDArray[np.floating])
 assert_type(np.hamming(0), npt.NDArray[np.floating])
 assert_type(np.i0(AR_i8), npt.NDArray[np.floating])
 assert_type(np.kaiser(4, 5.9), npt.NDArray[np.floating])

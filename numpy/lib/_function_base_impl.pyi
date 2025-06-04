@@ -83,6 +83,7 @@ __all__ = [
     "median",
     "sinc",
     "hamming",
+    "hann",
     "hanning",
     "bartlett",
     "blackman",
@@ -522,6 +523,8 @@ def blackman(M: _FloatLike_co) -> NDArray[floating]: ...
 
 def bartlett(M: _FloatLike_co) -> NDArray[floating]: ...
 
+def hann(M: _FloatLike_co) -> NDArray[floating]: ...
+@deprecated("Use 'hann' instead")
 def hanning(M: _FloatLike_co) -> NDArray[floating]: ...
 
 def hamming(M: _FloatLike_co) -> NDArray[floating]: ...
