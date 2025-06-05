@@ -3392,7 +3392,7 @@ def hanning(M):
     """
     # Deprecated in NumPy 2.3, 2025-06-04
     warnings.warn(
-        "`hanning` is deprecated. Use `hann` instead.",
+        "`hanning` is deprecated. Use `hann` instead. (Deprecated NumPy 2.4)",
         DeprecationWarning,
         stacklevel=2
     )
