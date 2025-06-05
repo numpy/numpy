@@ -1,1 +1,1 @@
-* np.hanning is deprecated. Use np.hann instead.
+* `np.hanning` is deprecated. Use `np.hann` instead.
