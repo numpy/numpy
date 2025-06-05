@@ -6,19 +6,17 @@ NumPy 2.3.0 Release Notes
 
 The NumPy 2.3.0 release continues the work to improve free threaded Python
 support and annotations together with the usual set of bug fixes. It is unusual
-in the number of expired deprecations and the number of code modernizations and
-style cleanups. The latter may not be visible to users, but is important for
-code maintenance over the long term. Note that we have also upgraded from
-manylinux2014 to manylinux_2_28.
+in the number of expired deprecations, code modernizations, and style cleanups.
+The latter may not be visible to users, but is important for code maintenance
+over the long term. Note that we have also upgraded from manylinux2014 to
+manylinux_2_28.
 
-There are known test failures in the rc1 release involving MyPy and PyPy. The
-cause of both has been determined and fixes will be applied before the final
-release. The current Windows on ARM wheels also lack OpenBLAS, but they should
-suffice for initial downstream testing. OpenBLAS will be incorporated in those
-wheels when it becomes available.
+Users running on a Mac having an M4 cpu might see various warnings about
+invalid values and such. The warnings are a known problem with Accelerate.
+They are annoying, but otherwise harmless. Apple promises to fix them.
 
-This release supports Python versions 3.11-3.13, Python 3.14 will
-be supported when it is released.
+This release supports Python versions 3.11-3.13, Python 3.14 will be supported
+when it is released.
 
 
 Highlights
@@ -448,6 +446,12 @@ Changes
   A new legacy ``np.printoptions`` mode ``'2.2'`` has been added for backwards compatibility.
 
   (`gh-28703 <https://github.com/numpy/numpy/pull/28703>`__)
+
+* Multiplication between a string and integer now raises OverflowError instead
+  of MemoryError if the result of the multiplication would create a string that
+  is too large to be represented. This follows Python's behavior.
+
+  (`gh-29060 <https://github.com/numpy/numpy/pull/29060>`__)
 
 ``unique_values`` may return unsorted data
 ------------------------------------------
