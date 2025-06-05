@@ -1101,29 +1101,17 @@ PyMethodDef module_methods[] = {
     {0} /* sentinel */
 };
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_rational_tests",
-    NULL,
-    -1,
-    module_methods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-PyMODINIT_FUNC PyInit__rational_tests(void) {
-    PyObject *m = NULL;
+static int
+_rational_tests_exec(PyObject *m) {
     PyObject* numpy_str;
     PyObject* numpy;
     int npy_rational;
 
-    import_array();
+    import_array1(-1);
     if (PyErr_Occurred()) {
         goto fail;
     }
-    import_umath();
+    import_umath1(-1);
     if (PyErr_Occurred()) {
         goto fail;
     }
@@ -1258,13 +1246,6 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     REGISTER_UFUNC_UNARY(reciprocal)
     REGISTER_UFUNC_UNARY(sign)
 
-    /* Create module */
-    m = PyModule_Create(&moduledef);
-
-    if (!m) {
-        goto fail;
-    }
-
     /* Add rational type */
     Py_INCREF(&PyRational_Type);
     PyModule_AddObject(m,"rational",(PyObject*)&PyRational_Type);
@@ -1355,21 +1336,32 @@ PyMODINIT_FUNC PyInit__rational_tests(void) {
     GCD_LCM_UFUNC(gcd,NPY_INT64,"greatest common denominator of two integers");
     GCD_LCM_UFUNC(lcm,NPY_INT64,"least common multiple of two integers");
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
-
-    return m;
+    return 0;
 
 fail:
-    if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load _rational_tests module.");
-    }
-    if (m) {
-        Py_DECREF(m);
-        m = NULL;
-    }
-    return m;
+    return -1;
+}
+
+static struct PyModuleDef_Slot _rational_tests_slots[] = {
+    {Py_mod_exec, _rational_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_rational_tests",
+    .m_size = 0,
+    .m_methods = module_methods,
+    .m_slots = _rational_tests_slots,
+};
+
+PyMODINIT_FUNC PyInit__rational_tests(void) {
+    return PyModuleDef_Init(&moduledef);
 }
