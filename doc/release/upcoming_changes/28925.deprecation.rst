@@ -1,0 +1,9 @@
+Setting the ``strides`` attribute is deprecated
+-----------------------------------------------
+Setting the strides attribute is now deprecated since mutating
+an array is unsafe if an array is shared, especially by multiple
+threads.  As an alternative, you can create a new view (no copy) via:
+* `np.lib.stride_tricks.strided_window_view` if applicable,
+* `np.lib.stride_tricks.as_strided` for the general case,
+* or the `np.ndarray` constructor (``buffer`` is the original array) for a light-weight version.
+
