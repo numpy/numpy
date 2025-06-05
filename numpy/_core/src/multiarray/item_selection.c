@@ -2525,7 +2525,7 @@ count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
         len  -= len_m;
         count = len_m - zcount;
     #else
-        if (!NPY_ALIGNMENT_REQUIRED || npy_is_aligned(data, sizeof(npy_uint64))) {
+        if (npy_is_aligned(data, sizeof(npy_uint64))) {
             int step = 6 * sizeof(npy_uint64);
             int left_bytes = len % step;
             for (const char *end = data + len; data < end - left_bytes; data += step) {

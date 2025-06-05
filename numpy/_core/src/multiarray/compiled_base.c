@@ -1620,8 +1620,7 @@ pack_inner(const char *inptr,
             bb[1] = npyv_tobits_b8(npyv_cmpneq_u8(v1, v_zero));
             bb[2] = npyv_tobits_b8(npyv_cmpneq_u8(v2, v_zero));
             bb[3] = npyv_tobits_b8(npyv_cmpneq_u8(v3, v_zero));
-            if(out_stride == 1 && 
-                (!NPY_ALIGNMENT_REQUIRED || isAligned)) {
+            if(out_stride == 1 && isAligned) {
                 npy_uint64 *ptr64 = (npy_uint64*)outptr;
             #if NPY_SIMD_WIDTH == 16
                 npy_uint64 bcomp = bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48);
