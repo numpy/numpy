@@ -2088,6 +2088,7 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
         .caller = (PyObject *)ufunc,
         .method = ufuncimpl,
         .descriptors = operation_descrs,
+        .flags = 0,
     };
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -2207,6 +2208,7 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
         .caller = (PyObject *)ufunc,
         .method = ufuncimpl,
         .descriptors = operation_descrs,
+        .flags = 0,
     };
 
     /* Do the ufunc loop */
@@ -2557,6 +2559,7 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         .caller = (PyObject *)ufunc,
         .method = ufuncimpl,
         .descriptors = descrs,
+        .flags = 0,
     };
 
     PyArrayObject *result = PyUFunc_ReduceWrapper(&context,
@@ -2633,6 +2636,7 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         .caller = (PyObject *)ufunc,
         .method = ufuncimpl,
         .descriptors = descrs,
+        .flags = 0,
     };
 
     ndim = PyArray_NDIM(arr);
@@ -3065,6 +3069,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         .caller = (PyObject *)ufunc,
         .method = ufuncimpl,
         .descriptors = descrs,
+        .flags = 0,
     };
 
     ndim = PyArray_NDIM(arr);
@@ -4533,6 +4538,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             full_args.in, casting) < 0) {
         goto fail;
     }
+    if (casting == NPY_SAME_VALUE_CASTING) {
+        PyErr_SetString(PyExc_NotImplementedError,
+            "ufunc with 'same_value' casting not implemented yet");
+    }
 
     /*
      * Do the final preparations and call the inner-loop.
@@ -5898,9 +5907,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     }
 
     PyArrayMethod_Context context = {
-            .caller = (PyObject *)ufunc,
-            .method = ufuncimpl,
-            .descriptors = operation_descrs,
+        .caller = (PyObject *)ufunc,
+        .method = ufuncimpl,
+        .descriptors = operation_descrs,
+        .flags = 0,
     };
 
     /* Use contiguous strides; if there is such a loop it may be faster */

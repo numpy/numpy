@@ -1840,6 +1840,10 @@ class TestDateTime:
                             '2032-07-18')
         assert_equal(np.datetime_as_string(a, unit='D', casting='unsafe'),
                             '2032-07-18')
+
+        with pytest.raises(TypeError):
+            np.datetime_as_string(a, unit='Y', casting='same_value')
+
         assert_equal(np.datetime_as_string(a, unit='h'), '2032-07-18T12')
         assert_equal(np.datetime_as_string(a, unit='m'),
                             '2032-07-18T12:23')
@@ -1885,6 +1889,7 @@ class TestDateTime:
         assert_equal(np.datetime_as_string(
                 np.datetime64('2032-01-01T00:00:00', 'us'), unit='auto'),
                 '2032-01-01')
+
 
     @pytest.mark.skipif(not _has_pytz, reason="The pytz module is not available.")
     def test_datetime_as_string_timezone(self):
