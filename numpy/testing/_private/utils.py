@@ -1160,7 +1160,8 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
         if not issubdtype(z.dtype, number):
             z = z.astype(np.float64)  # handle object arrays
 
-        return z < 1.5 * 10.0**(-decimal)
+        # the float64 ensures at least double precision for the comparison.
+        return z < np.float64(1.5) * 10.0**(-decimal)
 
     assert_array_compare(compare, actual, desired, err_msg=err_msg,
                          verbose=verbose,
