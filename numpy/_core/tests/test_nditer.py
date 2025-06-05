@@ -858,7 +858,7 @@ def test_iter_nbo_align_contig():
 
     # Unaligned input
     a = np.zeros((6 * 4 + 1,), dtype='i1')[1:]
-    a.dtype = 'f4'
+    a = a.view('f4')
     a[:] = np.arange(6, dtype='f4')
     assert_(not a.flags.aligned)
     # Without 'aligned', shouldn't copy
@@ -1803,7 +1803,7 @@ def test_iter_buffering():
     arrays.append(np.arange(10, dtype='f4'))
     # Unaligned array
     a = np.zeros((4 * 16 + 1,), dtype='i1')[1:]
-    a.dtype = 'i4'
+    a = a.view('i4')
     a[:] = np.arange(16, dtype='i4')
     arrays.append(a)
     # 4-D F-order array
