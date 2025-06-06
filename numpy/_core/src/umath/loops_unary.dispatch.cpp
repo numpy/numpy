@@ -6,180 +6,91 @@
 #include "fast_loop_macros.h"
 #include "numpy/npy_common.h"
 #include "common.hpp"
-#include <hwy/highway.h>
-#include <vector>
+#include "simd/simd.hpp"
+
+#if defined(__riscv)
+// Only required by AVX2/AVX512
+#define npyv_cleanup() ((void)0)
+#endif
 
 namespace {
-namespace hn = hwy::HWY_NAMESPACE;
-
-const hn::ScalableTag<uint8_t>  u8;
-const hn::ScalableTag<int8_t>   s8;
-const hn::ScalableTag<uint16_t> u16;
-const hn::ScalableTag<int16_t>  s16;
-const hn::ScalableTag<uint32_t> u32;
-const hn::ScalableTag<int32_t>  s32;
-const hn::ScalableTag<uint64_t> u64;
-const hn::ScalableTag<int64_t>  s64;
-const hn::ScalableTag<float>    f32;
-const hn::ScalableTag<double>   f64;
-
-using vec_u8  = hn::Vec<decltype(u8)>;
-using vec_s8  = hn::Vec<decltype(s8)>;
-using vec_u16 = hn::Vec<decltype(u16)>;
-using vec_s16 = hn::Vec<decltype(s16)>;
-using vec_u32 = hn::Vec<decltype(u32)>;
-using vec_s32 = hn::Vec<decltype(s32)>;
-using vec_u64 = hn::Vec<decltype(u64)>;
-using vec_s64 = hn::Vec<decltype(s64)>;
-using vec_f32 = hn::Vec<decltype(f32)>;
-using vec_f64 = hn::Vec<decltype(f64)>;
-
-template<typename T>
-struct TagSelector;
-
-template<> struct TagSelector<uint8_t>  { static constexpr const auto& value() { return u8;  } };
-template<> struct TagSelector<int8_t>   { static constexpr const auto& value() { return s8;  } };
-template<> struct TagSelector<uint16_t> { static constexpr const auto& value() { return u16; } };
-template<> struct TagSelector<int16_t>  { static constexpr const auto& value() { return s16; } };
-template<> struct TagSelector<uint32_t> { static constexpr const auto& value() { return u32; } };
-template<> struct TagSelector<int32_t>  { static constexpr const auto& value() { return s32; } };
-template<> struct TagSelector<uint64_t> { static constexpr const auto& value() { return u64; } };
-template<> struct TagSelector<int64_t>  { static constexpr const auto& value() { return s64; } };
-template<> struct TagSelector<float>    { static constexpr const auto& value() { return f32; } };
-template<> struct TagSelector<double>   { static constexpr const auto& value() { return f64; } };
-
-template<typename T>
-constexpr const auto& GetTag() {
-    return TagSelector<T>::value();
-}
-
-template <typename T>
-constexpr bool kSupportLane = false;
-
-template <> constexpr bool kSupportLane<uint8_t>  = true;
-template <> constexpr bool kSupportLane<int8_t>   = true;
-template <> constexpr bool kSupportLane<uint16_t> = true;
-template <> constexpr bool kSupportLane<int16_t>  = true;
-template <> constexpr bool kSupportLane<uint32_t> = true;
-template <> constexpr bool kSupportLane<int32_t>  = true;
-template <> constexpr bool kSupportLane<uint64_t> = true;
-template <> constexpr bool kSupportLane<int64_t>  = true;
-template <> constexpr bool kSupportLane<float>    = true;
-template <> constexpr bool kSupportLane<double>   = true;
+using namespace np::simd;
 
 template <typename T>
 struct OpNegative {
-#if NPY_SIMD
+#if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V& v) {
+    HWY_INLINE  auto operator()(const V& v) {
         if constexpr (std::is_same_v<T, float> || std::is_same_v<T, double>) {
                 // (v ^ signmask)
-                const auto signmask = hn::Set(GetTag<T>(), static_cast<T>(-0.));
+                const auto signmask = Set(static_cast<T>(-0.));
                 return hn::Xor(v, signmask);
         } else {
-                const auto m1 = hn::Set(GetTag<T>(), static_cast<T>(-1));
+                const auto m1 = Set(static_cast<T>(-1));
                 return hn::Sub(hn::Xor(v, m1), m1);
         }
     }
 #endif
 
-    HWY_INLINE HWY_ATTR T operator()(T a) {
+    HWY_INLINE  T operator()(T a) {
         return -a;
     }
 };
 
 template <>
 struct OpNegative<long double> {
-    HWY_INLINE HWY_ATTR long double operator()(long double a) {
+    HWY_INLINE  long double operator()(long double a) {
         return -a;
     }
 };
 
+#if NPY_HWY
 template <typename T>
-HWY_INLINE HWY_ATTR auto LoadWithStride(const T* src, npy_intp istride) {
-    const size_t lanes = hn::Lanes(GetTag<T>());
+HWY_INLINE  auto LoadWithStride(const T* src, npy_intp istride) {
+    HWY_LANES_CONSTEXPR size_t lanes = Lanes<T>();
     std::vector<T> temp(lanes);
     for (size_t ii = 0; ii < lanes; ++ii) {
         temp[ii] = src[ii * istride];
     }
-    return hn::LoadU(GetTag<T>(), temp.data());
+    return LoadU(temp.data());
 }
 
 template <typename T>
-HWY_INLINE HWY_ATTR void StoreWithStride(hn::Vec<hn::ScalableTag<T>> vec,
-                                         T* dst, npy_intp sdst) {
-    const size_t lanes = hn::Lanes(GetTag<T>());
+HWY_INLINE  void StoreWithStride(Vec<T> vec, T* dst, npy_intp sdst) {
+    HWY_LANES_CONSTEXPR size_t lanes = Lanes<T>();
     std::vector<T> temp(lanes);
-    hn::StoreU(vec, GetTag<T>(), temp.data());
+    StoreU(vec, temp.data());
     for (size_t ii = 0; ii < lanes; ++ii) {
         dst[ii * sdst] = temp[ii];
     }
 }
 
-#if NPY_SIMD
-template<typename T>
-struct TypeTraits;
-
-template<>
-struct TypeTraits<uint32_t> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_u32;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_u32;
-};
-
-template<>
-struct TypeTraits<int32_t> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_s32;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_s32;
-};
-
-template<>
-struct TypeTraits<uint64_t> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_u64;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_u64;
-};
-
-template<>
-struct TypeTraits<int64_t> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_s64;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_s64;
-};
-
-template<>
-struct TypeTraits<float> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_f32;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_f32;
-};
-
-#if NPY_SIMD_F64
-template<>
-struct TypeTraits<double> {
-    static constexpr auto LoadStrideFunc = npyv_loadable_stride_f64;
-    static constexpr auto StoreStrideFunc = npyv_storable_stride_f64;
-};
-#endif
-
 template <typename T>
-HWY_INLINE HWY_ATTR void
+HWY_INLINE  void
 simd_unary_cc_negative(const T *ip, T *op, npy_intp len) {
     OpNegative<T> op_func;
-    constexpr int UNROLL = (NPY_SIMD == 128 ? 4 : 2);
-    const int vstep = hn::Lanes(GetTag<T>());
-    const int wstep = vstep * UNROLL;
+    constexpr int kUnrollSize = kMaxLanes<uint8_t> == 16 ? 4 : 2;
+    const int vstep = Lanes<T>();
+    const int wstep = vstep * kUnrollSize;
 
     // unrolled vector loop
     for (; len >= wstep; len -= wstep, ip += wstep, op += wstep) {
-        for (int u = 0; u < UNROLL; ++u) {
-            auto v = hn::LoadU(GetTag<T>(), ip + u * vstep);
-            auto r = op_func(v);
-            hn::StoreU(r, GetTag<T>(), op + u * vstep);
+        if constexpr (kUnrollSize >= 4) {
+            auto v0 = LoadU(ip + 0 * vstep); StoreU(op_func(v0), op + 0 * vstep);
+            auto v1 = LoadU(ip + 1 * vstep); StoreU(op_func(v1), op + 1 * vstep);
+            auto v2 = LoadU(ip + 2 * vstep); StoreU(op_func(v2), op + 2 * vstep);
+            auto v3 = LoadU(ip + 3 * vstep); StoreU(op_func(v3), op + 3 * vstep);
+        } else if constexpr (kUnrollSize >= 2) {
+            auto v0 = LoadU(ip + 0 * vstep); StoreU(op_func(v0), op + 0 * vstep);
+            auto v1 = LoadU(ip + 1 * vstep); StoreU(op_func(v1), op + 1 * vstep);
         }
     }
 
     // single vector loop
     for (; len >= vstep; len -= vstep, ip += vstep, op += vstep) {
-        auto v = hn::LoadU(GetTag<T>(), ip);
+        auto v = LoadU(ip);
         auto r = op_func(v);
-        hn::StoreU(r, GetTag<T>(), op);
+        StoreU(r, op);
     }
 
     // scalar finish up any remaining iterations
@@ -189,25 +100,35 @@ simd_unary_cc_negative(const T *ip, T *op, npy_intp len) {
 }
 
 template <typename T>
-HWY_INLINE HWY_ATTR void
+HWY_INLINE  void
 simd_unary_cn_negative(const T *ip, T *op, npy_intp ostride, npy_intp len) {
     OpNegative<T> op_func;
-    constexpr int UNROLL = (NPY_SIMD == 128 ? 4 : 2);
-    const int vstep = hn::Lanes(GetTag<T>());
-    const int wstep = vstep * UNROLL;
+    constexpr int kUnrollSize = kMaxLanes<uint8_t> == 16 ? 4 : 2;
+    const int vstep = Lanes<T>();
+    const int wstep = vstep * kUnrollSize;
 
     // unrolled vector loop
     for (; len >= wstep; len -= wstep, ip += wstep, op += ostride*wstep) {
-        for (int u = 0; u < UNROLL; ++u) {
-            auto v = hn::LoadU(GetTag<T>(), ip + u * vstep);
-            auto r = op_func(v);
-            StoreWithStride<T>(r, op + u * vstep * ostride, ostride);
+        if constexpr (kUnrollSize >= 4) {
+            auto v0 = LoadU(ip + 0 * vstep);
+            auto v1 = LoadU(ip + 1 * vstep);
+            auto v2 = LoadU(ip + 2 * vstep);
+            auto v3 = LoadU(ip + 3 * vstep);
+            StoreWithStride<T>(op_func(v0), op + 0 * vstep* ostride, ostride);
+            StoreWithStride<T>(op_func(v1), op + 1 * vstep* ostride, ostride);
+            StoreWithStride<T>(op_func(v2), op + 2 * vstep* ostride, ostride);
+            StoreWithStride<T>(op_func(v3), op + 3 * vstep* ostride, ostride);
+        } else if constexpr (kUnrollSize >= 2) {
+            auto v0 = LoadU(ip + 0 * vstep);
+            auto v1 = LoadU(ip + 1 * vstep);
+            StoreWithStride<T>(op_func(v0), op + 0 * vstep* ostride, ostride);
+            StoreWithStride<T>(op_func(v1), op + 1 * vstep* ostride, ostride);
         }
     }
 
     // single vector loop
     for (; len >= vstep; len -= vstep, ip += vstep, op += ostride*vstep) {
-        auto v = hn::LoadU(GetTag<T>(), ip);
+        auto v = LoadU(ip);
         auto r = op_func(v);
         StoreWithStride<T>(r, op, ostride);
     }
@@ -219,19 +140,29 @@ simd_unary_cn_negative(const T *ip, T *op, npy_intp ostride, npy_intp len) {
 }
 
 template <typename T>
-HWY_INLINE HWY_ATTR void
+HWY_INLINE  void
 simd_unary_nc_negative(const T *ip, npy_intp istride, T *op, npy_intp len) {
     OpNegative<T> op_func;
-    constexpr int UNROLL = (NPY_SIMD == 128 ? 4 : 2);
-    const int vstep = hn::Lanes(GetTag<T>());
-    const int wstep = vstep * UNROLL;
+    constexpr int kUnrollSize = kMaxLanes<uint8_t> == 16 ? 4 : 2;
+    const int vstep = Lanes<T>();
+    const int wstep = vstep * kUnrollSize;
 
     // unrolled vector loop
     for (; len >= wstep; len -= wstep, ip += istride*wstep, op += wstep) {
-        for (int u = 0; u < UNROLL; ++u) {
-            auto v = LoadWithStride<T>(ip + u * vstep * istride, istride);
-            auto r = op_func(v);
-            hn::StoreU(r, GetTag<T>(), op + u * vstep);
+        if constexpr (kUnrollSize >= 4) {
+            auto v0 = LoadWithStride<T>(ip + 0 * vstep * istride, istride);
+            auto v1 = LoadWithStride<T>(ip + 1 * vstep * istride, istride);
+            auto v2 = LoadWithStride<T>(ip + 2 * vstep * istride, istride);
+            auto v3 = LoadWithStride<T>(ip + 3 * vstep * istride, istride);
+            StoreU(op_func(v0), op + 0 * vstep);
+            StoreU(op_func(v1), op + 1 * vstep);
+            StoreU(op_func(v2), op + 2 * vstep);
+            StoreU(op_func(v3), op + 3 * vstep);
+        } else if constexpr (kUnrollSize >= 2) {
+            auto v0 = LoadWithStride<T>(ip + 0 * vstep * istride, istride);
+            auto v1 = LoadWithStride<T>(ip + 1 * vstep * istride, istride);
+            StoreU(op_func(v0), op + 0 * vstep);
+            StoreU(op_func(v1), op + 1 * vstep);
         }
     }
 
@@ -239,7 +170,7 @@ simd_unary_nc_negative(const T *ip, npy_intp istride, T *op, npy_intp len) {
     for (; len >= vstep; len -= vstep, ip += istride*vstep, op += vstep) {
         auto v = LoadWithStride<T>(ip, istride);
         auto r = op_func(v);
-        hn::StoreU(r, GetTag<T>(), op);
+        StoreU(r, op);
     }
 
     // scalar finish up any remaining iterations
@@ -251,21 +182,20 @@ simd_unary_nc_negative(const T *ip, npy_intp istride, T *op, npy_intp len) {
 // X86 does better with unrolled scalar for heavy non-contiguous
 #ifndef NPY_HAVE_SSE2
 template <typename T>
-HWY_INLINE HWY_ATTR void
+HWY_INLINE  void
 simd_unary_nn_negative(const T *ip, npy_intp istride, T *op, npy_intp ostride, npy_intp len) {
     OpNegative<T> op_func;
     // non-contiguous input and output ; limit UNROLL to 2x
     constexpr int UNROLL = 2;
-    const int vstep = hn::Lanes(GetTag<T>());
+    const int vstep = Lanes<T>();
     const int wstep = vstep * UNROLL;
 
     // unrolled vector loop
     for (; len >= wstep; len -= wstep, ip += istride*wstep, op += ostride*wstep) {
-        for (int u = 0; u < UNROLL; ++u) {
-            auto v = LoadWithStride<T>(ip + u * vstep * istride, istride);
-            auto r = op_func(v);
-            StoreWithStride<T>(r, op + u * vstep * ostride, ostride);
-        }
+        auto v0 = LoadWithStride<T>(ip + 0 * vstep * istride, istride);
+        auto v1 = LoadWithStride<T>(ip + 1 * vstep * istride, istride);
+        StoreWithStride<T>(op_func(v0), op + 0 * vstep * ostride, ostride);
+        StoreWithStride<T>(op_func(v1), op + 1 * vstep * ostride, ostride);
     }
 
     for (; len >= vstep; len -= vstep, ip += istride*vstep, op += ostride*vstep) {
@@ -281,10 +211,10 @@ simd_unary_nn_negative(const T *ip, npy_intp istride, T *op, npy_intp ostride, n
 }
 #endif // NPY_HAVE_SSE2
 
-#endif // NPY_SIMD
+#endif // NPY_HWY
 
 template <typename T>
-HWY_INLINE HWY_ATTR void
+HWY_INLINE  void
 unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
 {
     OpNegative<T> op_func;
@@ -293,13 +223,8 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
 
     bool need_scalar = true;
 
-#if NPY_SIMD
-
-#if defined(__arm__)
-    if constexpr (kSupportLane<T> && !std::is_same_v<T, double>) {
-#else
+#if NPY_HWY
     if constexpr (kSupportLane<T>) {
-#endif
         if (!is_mem_overlap(ip, istep, op, ostep, len)) {
             if (IS_UNARY_CONT(T, T)) {
                 // No overlap and operands are contiguous
@@ -308,8 +233,7 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
             }
 
             if constexpr (sizeof(T) > sizeof(uint16_t)){
-                using Traits = TypeTraits<T>;
-                if (Traits::LoadStrideFunc(istep) && Traits::StoreStrideFunc(ostep)){
+                  if (alignof(T) == sizeof(T) && istep % sizeof(T) == 0 && ostep % sizeof(T) == 0){
                     const npy_intp istride = istep / sizeof(T);
                     const npy_intp ostride = ostep / sizeof(T);
 
@@ -348,10 +272,14 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
      */
     constexpr int UNROLL = 8;
     for (; len >= UNROLL; len -= UNROLL, ip += istep*UNROLL, op += ostep*UNROLL) {
-        for (int u = 0; u < UNROLL; ++u) {
-            const T in = *((const T *)(ip + u * istep));
-            *((T *)(op + u * ostep)) = op_func(in);
-        }
+        const T in0 = *((const T *)(ip + 0 * istep)); *reinterpret_cast<T*>(op + 0 * ostep) = op_func(in0);
+        const T in1 = *((const T *)(ip + 1 * istep)); *reinterpret_cast<T*>(op + 1 * ostep) = op_func(in1);
+        const T in2 = *((const T *)(ip + 2 * istep)); *reinterpret_cast<T*>(op + 2 * ostep) = op_func(in2);
+        const T in3 = *((const T *)(ip + 3 * istep)); *reinterpret_cast<T*>(op + 3 * ostep) = op_func(in3);
+        const T in4 = *((const T *)(ip + 4 * istep)); *reinterpret_cast<T*>(op + 4 * ostep) = op_func(in4);
+        const T in5 = *((const T *)(ip + 5 * istep)); *reinterpret_cast<T*>(op + 5 * ostep) = op_func(in5);
+        const T in6 = *((const T *)(ip + 6 * istep)); *reinterpret_cast<T*>(op + 6 * ostep) = op_func(in6);
+        const T in7 = *((const T *)(ip + 7 * istep)); *reinterpret_cast<T*>(op + 7 * ostep) = op_func(in7);
     }
 #endif  // NPY_DISABLE_OPTIMIZATION
 
@@ -360,12 +288,8 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
         }
     }
 
-#if NPY_SIMD
-#if defined(__arm__)
-    if constexpr (kSupportLane<T> && !std::is_same_v<T, double>) {
-#else
+#if NPY_HWY
     if constexpr (kSupportLane<T>) {
-#endif
         npyv_cleanup();
     }
 #endif
@@ -381,13 +305,13 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
  ** Defining ufunc inner functions
  *******************************************************************************/
 template <typename T>
-HWY_INLINE HWY_ATTR void dispatch_negative(char **args, npy_intp const *dimensions, npy_intp const *steps) {
+HWY_INLINE void dispatch_negative(char **args, npy_intp const *dimensions, npy_intp const *steps) {
     using FixedType = typename np::meta::FixedWidth<T>::Type;
     unary_negative<FixedType>(args, dimensions, steps);
 }
 
 template <>
-HWY_INLINE HWY_ATTR void dispatch_negative<npy_longdouble>(char **args, npy_intp const *dimensions, npy_intp const *steps) {
+HWY_INLINE void dispatch_negative<npy_longdouble>(char **args, npy_intp const *dimensions, npy_intp const *steps) {
     unary_negative<long double>(args, dimensions, steps);
 }
 
@@ -413,4 +337,3 @@ DEFINE_NEGATIVE_FUNCTION(LONGLONG, npy_longlong)
 DEFINE_NEGATIVE_FUNCTION(FLOAT,      npy_float)
 DEFINE_NEGATIVE_FUNCTION(DOUBLE,     npy_double)
 DEFINE_NEGATIVE_FUNCTION(LONGDOUBLE, npy_longdouble)
-
