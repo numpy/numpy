@@ -1597,13 +1597,12 @@ PyArray_ResultType(
         return NULL;
     }
 
-    PyArray_DTypeMeta **all_DTypes = (PyArray_DTypeMeta **)workspace;
+    PyArray_DTypeMeta **all_DTypes = (PyArray_DTypeMeta **)workspace; // borrowed references
     PyArray_Descr **all_descriptors = (PyArray_Descr **)(&all_DTypes[narrs+ndtypes]);
 
     /* Copy all dtypes into a single array defining non-value-based behaviour */
     for (npy_intp i=0; i < ndtypes; i++) {
         all_DTypes[i] = NPY_DTYPE(descrs[i]);
-        Py_INCREF(all_DTypes[i]);
         all_descriptors[i] = descrs[i];
     }
 
@@ -1628,14 +1627,10 @@ PyArray_ResultType(
             all_descriptors[i_all] = PyArray_DTYPE(arrs[i]);
             all_DTypes[i_all] = NPY_DTYPE(all_descriptors[i_all]);
         }
-        Py_INCREF(all_DTypes[i_all]);
     }
 
     PyArray_DTypeMeta *common_dtype = PyArray_PromoteDTypeSequence(
             narrs+ndtypes, all_DTypes);
-    for (npy_intp i=0; i < narrs+ndtypes; i++) {
-        Py_DECREF(all_DTypes[i]);
-    }
     if (common_dtype == NULL) {
         goto error;
     }

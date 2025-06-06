@@ -4,13 +4,13 @@ Test the scalar constructors, which also do type-coercion
 import fractions
 import platform
 import types
-from typing import Any, Type
+from typing import Any
 
 import pytest
-import numpy as np
 
+import numpy as np
 from numpy._core import sctypes
-from numpy.testing import assert_equal, assert_raises, IS_MUSL
+from numpy.testing import assert_equal, assert_raises
 
 
 class TestAsIntegerRatio:
@@ -105,7 +105,7 @@ class TestAsIntegerRatio:
                 # the values may not fit in any float type
                 pytest.skip("longdouble too small on this platform")
 
-            assert_equal(nf / df, f, "{}/{}".format(n, d))
+            assert_equal(nf / df, f, f"{n}/{d}")
 
 
 class TestIsInteger:
@@ -143,7 +143,7 @@ class TestClassGetItem:
         np.signedinteger,
         np.floating,
     ])
-    def test_abc(self, cls: Type[np.number]) -> None:
+    def test_abc(self, cls: type[np.number]) -> None:
         alias = cls[Any]
         assert isinstance(alias, types.GenericAlias)
         assert alias.__origin__ is cls
@@ -164,7 +164,7 @@ class TestClassGetItem:
                 np.complexfloating[arg_tup]
 
     @pytest.mark.parametrize("cls", [np.generic, np.flexible, np.character])
-    def test_abc_non_numeric(self, cls: Type[np.generic]) -> None:
+    def test_abc_non_numeric(self, cls: type[np.generic]) -> None:
         with pytest.raises(TypeError):
             cls[Any]
 
@@ -194,7 +194,7 @@ class TestBitCount:
     def test_small(self, itype):
         for a in range(max(np.iinfo(itype).min, 0), 128):
             msg = f"Smoke test for {itype}({a}).bit_count()"
-            assert itype(a).bit_count() == bin(a).count("1"), msg
+            assert itype(a).bit_count() == a.bit_count(), msg
 
     def test_bit_count(self):
         for exp in [10, 17, 63]:

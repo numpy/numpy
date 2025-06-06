@@ -3,8 +3,9 @@ This file is separate from ``_add_newdocs.py`` so that it can be mocked out by
 our sphinx ``conf.py`` during doc builds, where we want to avoid showing
 platform-dependent information.
 """
-import sys
 import os
+import sys
+
 from numpy._core import dtype
 from numpy._core import numerictypes as _numerictypes
 from numpy._core.function_base import add_newdoc
@@ -337,20 +338,20 @@ add_newdoc('numpy._core.numerictypes', "integer", ('is_integer',
 # TODO: work out how to put this on the base class, np.floating
 for float_name in ('half', 'single', 'double', 'longdouble'):
     add_newdoc('numpy._core.numerictypes', float_name, ('as_integer_ratio',
-        """
-        {ftype}.as_integer_ratio() -> (int, int)
+        f"""
+        {float_name}.as_integer_ratio() -> (int, int)
 
         Return a pair of integers, whose ratio is exactly equal to the original
         floating point number, and with a positive denominator.
         Raise `OverflowError` on infinities and a `ValueError` on NaNs.
 
-        >>> np.{ftype}(10.0).as_integer_ratio()
+        >>> np.{float_name}(10.0).as_integer_ratio()
         (10, 1)
-        >>> np.{ftype}(0.0).as_integer_ratio()
+        >>> np.{float_name}(0.0).as_integer_ratio()
         (0, 1)
-        >>> np.{ftype}(-.25).as_integer_ratio()
+        >>> np.{float_name}(-.25).as_integer_ratio()
         (-1, 4)
-        """.format(ftype=float_name)))
+        """))
 
     add_newdoc('numpy._core.numerictypes', float_name, ('is_integer',
         f"""

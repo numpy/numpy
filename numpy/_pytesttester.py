@@ -28,8 +28,8 @@ This module is imported by every numpy subpackage, so lies at the top level to
 simplify circular import issues. For the same reason, it contains no numpy
 imports at module scope, instead importing numpy within function calls.
 """
-import sys
 import os
+import sys
 
 __all__ = ['PytestTester']
 
@@ -37,9 +37,9 @@ __all__ = ['PytestTester']
 def _show_numpy_info():
     import numpy as np
 
-    print("NumPy version %s" % np.__version__)
+    print(f"NumPy version {np.__version__}")
     info = np.lib._utils_impl._opt_info()
-    print("NumPy CPU features: ", (info if info else 'nothing enabled'))
+    print("NumPy CPU features: ", (info or 'nothing enabled'))
 
 
 class PytestTester:
@@ -123,8 +123,9 @@ class PytestTester:
         True
 
         """
-        import pytest
         import warnings
+
+        import pytest
 
         module = sys.modules[self.module_name]
         module_path = os.path.abspath(module.__path__[0])
@@ -141,7 +142,7 @@ class PytestTester:
                 # Filter out distutils cpu warnings (could be localized to
                 # distutils tests). ASV has problems with top level import,
                 # so fetch module for suppression here.
-                from numpy.distutils import cpuinfo
+                from numpy.distutils import cpuinfo  # noqa: F401
 
         # Filter out annoying import messages. Want these in both develop and
         # release mode.
@@ -182,7 +183,7 @@ class PytestTester:
             pytest_args += ["-m", label]
 
         if durations >= 0:
-            pytest_args += ["--durations=%s" % durations]
+            pytest_args += [f"--durations={durations}"]
 
         if tests is None:
             tests = [self.module_name]

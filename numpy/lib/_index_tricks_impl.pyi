@@ -1,18 +1,18 @@
 from collections.abc import Sequence
-from typing import Any, ClassVar, Final, Generic, SupportsIndex, final, overload
+from typing import Any, ClassVar, Final, Generic, Self, SupportsIndex, final, overload
 from typing import Literal as L
 
 from _typeshed import Incomplete
-from typing_extensions import Self, TypeVar, deprecated
+from typing_extensions import TypeVar, deprecated
 
 import numpy as np
 from numpy._core.multiarray import ravel_multi_index, unravel_index
 from numpy._typing import (
     ArrayLike,
     NDArray,
+    _AnyShape,
     _FiniteNestedSequence,
     _NestedSequence,
-    _Shape,
     _SupportsArray,
     _SupportsDType,
 )
@@ -39,7 +39,7 @@ __all__ = [  # noqa: RUF022
 _T = TypeVar("_T")
 _TupleT = TypeVar("_TupleT", bound=tuple[Any, ...])
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
-_DTypeT = TypeVar("_DTypeT", bound=np.dtype[Any])
+_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
 _ScalarT = TypeVar("_ScalarT", bound=np.generic)
 _ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
 _BoolT_co = TypeVar("_BoolT_co", bound=bool, default=bool, covariant=True)
@@ -74,11 +74,11 @@ class ndenumerate(Generic[_ScalarT_co]):
     def __next__(
         self: ndenumerate[np.bool | np.number | np.flexible | np.datetime64 | np.timedelta64],
         /,
-    ) -> tuple[tuple[int, ...], _ScalarT_co]: ...
+    ) -> tuple[_AnyShape, _ScalarT_co]: ...
     @overload
-    def __next__(self: ndenumerate[np.object_], /) -> tuple[tuple[int, ...], Any]: ...
+    def __next__(self: ndenumerate[np.object_], /) -> tuple[_AnyShape, Incomplete]: ...
     @overload
-    def __next__(self, /) -> tuple[tuple[int, ...], _ScalarT_co]: ...
+    def __next__(self, /) -> tuple[_AnyShape, _ScalarT_co]: ...
 
     #
     def __iter__(self) -> Self: ...
@@ -91,7 +91,7 @@ class ndindex:
 
     #
     def __iter__(self) -> Self: ...
-    def __next__(self) -> tuple[int, ...]: ...
+    def __next__(self) -> _AnyShape: ...
 
     #
     @deprecated("Deprecated since 1.20.0.")
@@ -101,9 +101,9 @@ class nd_grid(Generic[_BoolT_co]):
     sparse: _BoolT_co
     def __init__(self, sparse: _BoolT_co = ...) -> None: ...
     @overload
-    def __getitem__(self: nd_grid[L[False]], key: slice | Sequence[slice]) -> NDArray[Any]: ...
+    def __getitem__(self: nd_grid[L[False]], key: slice | Sequence[slice]) -> NDArray[Incomplete]: ...
     @overload
-    def __getitem__(self: nd_grid[L[True]], key: slice | Sequence[slice]) -> tuple[NDArray[Any], ...]: ...
+    def __getitem__(self: nd_grid[L[True]], key: slice | Sequence[slice]) -> tuple[NDArray[Incomplete], ...]: ...
 
 @final
 class MGridClass(nd_grid[L[False]]):
@@ -116,7 +116,7 @@ class OGridClass(nd_grid[L[True]]):
 class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]):
     __slots__ = "axis", "matrix", "ndmin", "trans1d"
 
-    makemat: ClassVar[type[np.matrix[tuple[int, int], np.dtype[Any]]]]
+    makemat: ClassVar[type[np.matrix[tuple[int, int], np.dtype]]]
 
     axis: _AxisT_co
     matrix: _MatrixT_co
@@ -143,7 +143,7 @@ class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]
     def concatenate(*a: ArrayLike, axis: SupportsIndex | None = 0, out: _ArrayT) -> _ArrayT: ...
     @staticmethod
     @overload
-    def concatenate(*a: ArrayLike, axis: SupportsIndex | None = 0, out: None = None) -> NDArray[Any]: ...
+    def concatenate(*a: ArrayLike, axis: SupportsIndex | None = 0, out: None = None) -> NDArray[Incomplete]: ...
 
 @final
 class RClass(AxisConcatenator[L[0], L[False], L[1], L[-1]]):
@@ -164,7 +164,7 @@ class IndexExpression(Generic[_BoolT_co]):
     def __getitem__(self: IndexExpression[L[False]], item: _T) -> _T: ...
 
 @overload
-def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DTypeT]]) -> tuple[np.ndarray[_Shape, _DTypeT], ...]: ...
+def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DTypeT]]) -> tuple[np.ndarray[_AnyShape, _DTypeT], ...]: ...
 @overload
 def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[np.str_], ...]: ...
 @overload

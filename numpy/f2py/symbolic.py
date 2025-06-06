@@ -310,12 +310,11 @@ class Expr:
                     op = ' + '
                 if coeff == 1:
                     term = term.tostring(Precedence.SUM, language=language)
+                elif term == as_number(1):
+                    term = str(coeff)
                 else:
-                    if term == as_number(1):
-                        term = str(coeff)
-                    else:
-                        term = f'{coeff} * ' + term.tostring(
-                            Precedence.PRODUCT, language=language)
+                    term = f'{coeff} * ' + term.tostring(
+                        Precedence.PRODUCT, language=language)
                 if terms:
                     terms.append(op)
                 elif op == ' - ':

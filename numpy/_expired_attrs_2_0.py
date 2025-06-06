@@ -25,7 +25,6 @@ __expired_attributes__ = {
         "It's still available as `np.lib.add_docstring`.",
     "add_newdoc_ufunc":
         "It's an internal function and doesn't have a replacement.",
-    "compat": "There's no replacement, as Python 2 is no longer supported.",
     "safe_eval": "Use `ast.literal_eval` instead.",
     "float_": "Use `np.float64` instead.",
     "complex_": "Use `np.complex128` instead.",

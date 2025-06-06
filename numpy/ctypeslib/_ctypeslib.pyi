@@ -1,77 +1,72 @@
 # NOTE: Numpy's mypy plugin is used for importing the correct
 # platform-specific `ctypes._SimpleCData[int]` sub-type
 import ctypes
-from ctypes import c_int64 as _c_intp
-
-from _typeshed import StrOrBytesPath
 from collections.abc import Iterable, Sequence
+from ctypes import c_int64 as _c_intp
 from typing import (
-    Literal as L,
     Any,
+    ClassVar,
+    Generic,
     TypeAlias,
     TypeVar,
-    Generic,
     overload,
-    ClassVar,
 )
+from typing import Literal as L
+
+from _typeshed import StrOrBytesPath
 
 import numpy as np
 from numpy import (
-    ndarray,
+    byte,
+    double,
     dtype,
     generic,
-    byte,
-    short,
     intc,
     long,
+    longdouble,
     longlong,
+    ndarray,
+    short,
+    single,
     ubyte,
-    ushort,
     uintc,
     ulong,
     ulonglong,
-    single,
-    double,
-    longdouble,
+    ushort,
     void,
 )
 from numpy._core._internal import _ctypes
 from numpy._core.multiarray import flagsobj
 from numpy._typing import (
-    # Arrays
-    NDArray,
-    _ArrayLike,
-
-    # Shapes
-    _Shape,
-    _ShapeLike,
-
-    # DTypes
     DTypeLike,
-    _DTypeLike,
-    _VoidDTypeLike,
+    NDArray,
+    _AnyShape,
+    _ArrayLike,
     _BoolCodes,
+    _ByteCodes,
+    _DoubleCodes,
+    _DTypeLike,
+    _IntCCodes,
+    _LongCodes,
+    _LongDoubleCodes,
+    _LongLongCodes,
+    _ShapeLike,
+    _ShortCodes,
+    _SingleCodes,
     _UByteCodes,
-    _UShortCodes,
     _UIntCCodes,
     _ULongCodes,
     _ULongLongCodes,
-    _ByteCodes,
-    _ShortCodes,
-    _IntCCodes,
-    _LongCodes,
-    _LongLongCodes,
-    _SingleCodes,
-    _DoubleCodes,
-    _LongDoubleCodes,
+    _UShortCodes,
+    _VoidDTypeLike,
 )
 
 __all__ = ["load_library", "ndpointer", "c_intp", "as_ctypes", "as_array", "as_ctypes_type"]
 
 # TODO: Add a proper `_Shape` bound once we've got variadic typevars
-_DType = TypeVar("_DType", bound=dtype[Any])
-_DTypeOptional = TypeVar("_DTypeOptional", bound=None | dtype[Any])
-_SCT = TypeVar("_SCT", bound=generic)
+_DTypeT = TypeVar("_DTypeT", bound=dtype)
+_DTypeOptionalT = TypeVar("_DTypeOptionalT", bound=dtype | None)
+_ScalarT = TypeVar("_ScalarT", bound=generic)
 
 _FlagsKind: TypeAlias = L[
     'C_CONTIGUOUS', 'CONTIGUOUS', 'C',
@@ -83,26 +78,26 @@ _FlagsKind: TypeAlias = L[
 ]
 
 # TODO: Add a shape typevar once we have variadic typevars (PEP 646)
-class _ndptr(ctypes.c_void_p, Generic[_DTypeOptional]):
+class _ndptr(ctypes.c_void_p, Generic[_DTypeOptionalT]):
     # In practice these 4 classvars are defined in the dynamic class
     # returned by `ndpointer`
-    _dtype_: ClassVar[_DTypeOptional]
+    _dtype_: ClassVar[_DTypeOptionalT]
     _shape_: ClassVar[None]
-    _ndim_: ClassVar[None | int]
-    _flags_: ClassVar[None | list[_FlagsKind]]
+    _ndim_: ClassVar[int | None]
+    _flags_: ClassVar[list[_FlagsKind] | None]
 
     @overload
     @classmethod
     def from_param(cls: type[_ndptr[None]], obj: NDArray[Any]) -> _ctypes[Any]: ...
     @overload
     @classmethod
-    def from_param(cls: type[_ndptr[_DType]], obj: ndarray[Any, _DType]) -> _ctypes[Any]: ...
+    def from_param(cls: type[_ndptr[_DTypeT]], obj: ndarray[Any, _DTypeT]) -> _ctypes[Any]: ...
 
-class _concrete_ndptr(_ndptr[_DType]):
-    _dtype_: ClassVar[_DType]
-    _shape_: ClassVar[tuple[int, ...]]
+class _concrete_ndptr(_ndptr[_DTypeT]):
+    _dtype_: ClassVar[_DTypeT]
+    _shape_: ClassVar[_AnyShape]
     @property
-    def contents(self) -> ndarray[_Shape, _DType]: ...
+    def contents(self) -> ndarray[_AnyShape, _DTypeT]: ...
 
 def load_library(libname: StrOrBytesPath, loader_path: StrOrBytesPath) -> ctypes.CDLL: ...
 
@@ -112,39 +107,39 @@ c_intp = _c_intp
 def ndpointer(
     dtype: None = ...,
     ndim: int = ...,
-    shape: None | _ShapeLike = ...,
-    flags: None | _FlagsKind | Iterable[_FlagsKind] | int | flagsobj = ...,
+    shape: _ShapeLike | None = ...,
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
 ) -> type[_ndptr[None]]: ...
 @overload
 def ndpointer(
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     ndim: int = ...,
     *,
     shape: _ShapeLike,
-    flags: None | _FlagsKind | Iterable[_FlagsKind] | int | flagsobj = ...,
-) -> type[_concrete_ndptr[dtype[_SCT]]]: ...
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+) -> type[_concrete_ndptr[dtype[_ScalarT]]]: ...
 @overload
 def ndpointer(
     dtype: DTypeLike,
     ndim: int = ...,
     *,
     shape: _ShapeLike,
-    flags: None | _FlagsKind | Iterable[_FlagsKind] | int | flagsobj = ...,
-) -> type[_concrete_ndptr[dtype[Any]]]: ...
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+) -> type[_concrete_ndptr[dtype]]: ...
 @overload
 def ndpointer(
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     ndim: int = ...,
     shape: None = ...,
-    flags: None | _FlagsKind | Iterable[_FlagsKind] | int | flagsobj = ...,
-) -> type[_ndptr[dtype[_SCT]]]: ...
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+) -> type[_ndptr[dtype[_ScalarT]]]: ...
 @overload
 def ndpointer(
     dtype: DTypeLike,
     ndim: int = ...,
     shape: None = ...,
-    flags: None | _FlagsKind | Iterable[_FlagsKind] | int | flagsobj = ...,
-) -> type[_ndptr[dtype[Any]]]: ...
+    flags: _FlagsKind | Iterable[_FlagsKind] | int | flagsobj | None = ...,
+) -> type[_ndptr[dtype]]: ...
 
 @overload
 def as_ctypes_type(dtype: _BoolCodes | _DTypeLike[np.bool] | type[ctypes.c_bool]) -> type[ctypes.c_bool]: ...
@@ -184,9 +179,9 @@ def as_ctypes_type(dtype: str) -> type[Any]: ...
 @overload
 def as_array(obj: ctypes._PointerLike, shape: Sequence[int]) -> NDArray[Any]: ...
 @overload
-def as_array(obj: _ArrayLike[_SCT], shape: None | _ShapeLike = ...) -> NDArray[_SCT]: ...
+def as_array(obj: _ArrayLike[_ScalarT], shape: _ShapeLike | None = ...) -> NDArray[_ScalarT]: ...
 @overload
-def as_array(obj: object, shape: None | _ShapeLike = ...) -> NDArray[Any]: ...
+def as_array(obj: object, shape: _ShapeLike | None = ...) -> NDArray[Any]: ...
 
 @overload
 def as_ctypes(obj: np.bool) -> ctypes.c_bool: ...

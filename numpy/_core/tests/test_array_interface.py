@@ -1,7 +1,10 @@
 import sys
+import sysconfig
+
 import pytest
+
 import numpy as np
-from numpy.testing import extbuild, IS_WASM, IS_EDITABLE
+from numpy.testing import IS_EDITABLE, IS_WASM, extbuild
 
 
 @pytest.fixture
@@ -123,6 +126,8 @@ def get_module(tmp_path):
         pass
 
     # if it does not exist, build and load it
+    if sysconfig.get_platform() == "win-arm64":
+        pytest.skip("Meson unable to find MSVC linker on win-arm64")
     return extbuild.build_and_import_extension('array_interface_testing',
                                                functions,
                                                prologue=prologue,
@@ -167,9 +172,8 @@ def test_cstruct(get_module):
     # share the data
     stderr.write(' ---- share data via the array interface protocol ---- \n')
     arr = np.array(buf, copy=False)
-    stderr.write('arr.__array_interface___ = %s\n' % (
-                 str(arr.__array_interface__)))
-    stderr.write('arr.base = %s\n' % (str(arr.base)))
+    stderr.write(f'arr.__array_interface___ = {str(arr.__array_interface__)}\n')
+    stderr.write(f'arr.base = {str(arr.base)}\n')
     stderr.write(' ---- OK!\n\n')
 
     # release the source of the shared data. this will not release the data
@@ -188,7 +192,7 @@ def test_cstruct(get_module):
     # called then reading the values here may cause a SEGV and will be reported
     # as invalid reads by valgrind
     stderr.write(' ---- read shared data ---- \n')
-    stderr.write('arr = %s\n' % (str(arr)))
+    stderr.write(f'arr = {str(arr)}\n')
     stderr.write(' ---- OK!\n\n')
 
     # write to the shared buffer. If the shared data was prematurely deleted
@@ -196,15 +200,14 @@ def test_cstruct(get_module):
     stderr.write(' ---- modify shared data ---- \n')
     arr *= multiplier
     expected_value *= multiplier
-    stderr.write('arr.__array_interface___ = %s\n' % (
-                 str(arr.__array_interface__)))
-    stderr.write('arr.base = %s\n' % (str(arr.base)))
+    stderr.write(f'arr.__array_interface___ = {str(arr.__array_interface__)}\n')
+    stderr.write(f'arr.base = {str(arr.base)}\n')
     stderr.write(' ---- OK!\n\n')
 
     # read the data. If the shared data was prematurely deleted this
     # will may cause a SEGV and valgrind will report invalid reads
     stderr.write(' ---- read modified shared data ---- \n')
-    stderr.write('arr = %s\n' % (str(arr)))
+    stderr.write(f'arr = {str(arr)}\n')
     stderr.write(' ---- OK!\n\n')
 
     # check that we got the expected data. If the PyCapsule destructor we

@@ -2,11 +2,27 @@ import types
 import zipfile
 from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 from re import Pattern
-from typing import IO, Any, ClassVar, Generic, Protocol, TypeAlias, overload, type_check_only
+from typing import (
+    IO,
+    Any,
+    ClassVar,
+    Generic,
+    Protocol,
+    Self,
+    TypeAlias,
+    overload,
+    type_check_only,
+)
 from typing import Literal as L
 
-from _typeshed import StrOrBytesPath, StrPath, SupportsKeysAndGetItem, SupportsRead, SupportsWrite
-from typing_extensions import Self, TypeVar, deprecated, override
+from _typeshed import (
+    StrOrBytesPath,
+    StrPath,
+    SupportsKeysAndGetItem,
+    SupportsRead,
+    SupportsWrite,
+)
+from typing_extensions import TypeVar, deprecated, override
 
 import numpy as np
 from numpy._core.multiarray import packbits, unpackbits
@@ -29,13 +45,13 @@ __all__ = [
 ]
 
 _T_co = TypeVar("_T_co", covariant=True)
-_SCT = TypeVar("_SCT", bound=np.generic)
-_SCT_co = TypeVar("_SCT_co", bound=np.generic, default=Any, covariant=True)
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, default=Any, covariant=True)
 
 _FName: TypeAlias = StrPath | Iterable[str] | Iterable[bytes]
 _FNameRead: TypeAlias = StrPath | SupportsRead[str] | SupportsRead[bytes]
 _FNameWriteBytes: TypeAlias = StrPath | SupportsWrite[bytes]
-_FNameWrite: TypeAlias = _FNameWriteBytes | SupportsWrite[bytes]
+_FNameWrite: TypeAlias = _FNameWriteBytes | SupportsWrite[str]
 
 @type_check_only
 class _SupportsReadSeek(SupportsRead[_T_co], Protocol[_T_co]):
@@ -46,7 +62,7 @@ class BagObj(Generic[_T_co]):
     def __getattribute__(self, key: str, /) -> _T_co: ...
     def __dir__(self) -> list[str]: ...
 
-class NpzFile(Mapping[str, NDArray[_SCT_co]]):
+class NpzFile(Mapping[str, NDArray[_ScalarT_co]]):
     _MAX_REPR_ARRAY_COUNT: ClassVar[int] = 5
 
     zip: zipfile.ZipFile
@@ -54,7 +70,7 @@ class NpzFile(Mapping[str, NDArray[_SCT_co]]):
     files: list[str]
     allow_pickle: bool
     pickle_kwargs: Mapping[str, Any] | None
-    f: BagObj[NpzFile[_SCT_co]]
+    f: BagObj[NpzFile[_ScalarT_co]]
 
     #
     def __init__(
@@ -75,7 +91,7 @@ class NpzFile(Mapping[str, NDArray[_SCT_co]]):
     @override
     def __iter__(self) -> Iterator[str]: ...
     @override
-    def __getitem__(self, key: str, /) -> NDArray[_SCT_co]: ...
+    def __getitem__(self, key: str, /) -> NDArray[_ScalarT_co]: ...
     def close(self) -> None: ...
 
 # NOTE: Returns a `NpzFile` if file is a zip file;
@@ -127,7 +143,7 @@ def loadtxt(
 @overload
 def loadtxt(
     fname: _FName,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     comments: str | Sequence[str] | None = "#",
     delimiter: str | None = None,
     converters: Mapping[int | str, Callable[[str], Any]] | Callable[[str], Any] | None = None,
@@ -140,7 +156,7 @@ def loadtxt(
     *,
     quotechar: str | None = None,
     like: _SupportsArrayFunc | None = None,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def loadtxt(
     fname: _FName,
@@ -160,7 +176,7 @@ def loadtxt(
 ) -> NDArray[Any]: ...
 
 def savetxt(
-    fname: StrPath | _FNameWrite,
+    fname: _FNameWrite,
     X: ArrayLike,
     fmt: str | Sequence[str] = "%.18e",
     delimiter: str = " ",
@@ -175,9 +191,9 @@ def savetxt(
 def fromregex(
     file: _FNameRead,
     regexp: str | bytes | Pattern[Any],
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     encoding: str | None = None,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def fromregex(
     file: _FNameRead,
@@ -218,7 +234,7 @@ def genfromtxt(
 @overload
 def genfromtxt(
     fname: _FName,
-    dtype: _DTypeLike[_SCT],
+    dtype: _DTypeLike[_ScalarT],
     comments: str = ...,
     delimiter: str | int | Iterable[int] | None = ...,
     skip_header: int = ...,
@@ -243,7 +259,7 @@ def genfromtxt(
     *,
     ndmin: L[0, 1, 2] = ...,
     like: _SupportsArrayFunc | None = ...,
-) -> NDArray[_SCT]: ...
+) -> NDArray[_ScalarT]: ...
 @overload
 def genfromtxt(
     fname: _FName,

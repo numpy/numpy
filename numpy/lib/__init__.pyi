@@ -1,9 +1,17 @@
-from numpy._core.multiarray import add_docstring, tracemalloc_domain
 from numpy._core.function_base import add_newdoc
+from numpy._core.multiarray import add_docstring, tracemalloc_domain
 
-from . import array_utils, format, introspect, mixins, npyio, scimath, stride_tricks  # noqa: F401
-from ._version import NumpyVersion
+from . import (  # noqa: F401
+    array_utils,
+    format,
+    introspect,
+    mixins,
+    npyio,
+    scimath,
+    stride_tricks,
+)
 from ._arrayterator_impl import Arrayterator
+from ._version import NumpyVersion
 
 __all__ = [
     "Arrayterator",

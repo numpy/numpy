@@ -10,9 +10,11 @@ import re
 import sys
 import warnings
 
-from ..exceptions import DTypePromotionError
-from .multiarray import dtype, array, ndarray, promote_types, StringDType
 from numpy import _NoValue
+from numpy.exceptions import DTypePromotionError
+
+from .multiarray import StringDType, array, dtype, promote_types
+
 try:
     import ctypes
 except ImportError:
@@ -183,8 +185,7 @@ def _commastring(astr):
             order2 = _convorder.get(order2, order2)
             if (order1 != order2):
                 raise ValueError(
-                    'inconsistent byte-order specification %s and %s' %
-                    (order1, order2))
+                    f'inconsistent byte-order specification {order1} and {order2}')
             order = order1
 
         if order in ('|', '=', _nbo):
@@ -739,11 +740,10 @@ def __dtype_from_pep3118(stream, is_subdtype):
         elif stream.next in _pep3118_unsupported_map:
             desc = _pep3118_unsupported_map[stream.next]
             raise NotImplementedError(
-                "Unrepresentable PEP 3118 data type {!r} ({})"
-                .format(stream.next, desc))
+                f"Unrepresentable PEP 3118 data type {stream.next!r} ({desc})")
         else:
             raise ValueError(
-                "Unknown PEP 3118 data type specifier %r" % stream.s
+                f"Unknown PEP 3118 data type specifier {stream.s!r}"
             )
 
         #
@@ -873,21 +873,21 @@ def _lcm(a, b):
 
 def array_ufunc_errmsg_formatter(dummy, ufunc, method, *inputs, **kwargs):
     """ Format the error message for when __array_ufunc__ gives up. """
-    args_string = ', '.join(['{!r}'.format(arg) for arg in inputs] +
-                            ['{}={!r}'.format(k, v)
+    args_string = ', '.join([f'{arg!r}' for arg in inputs] +
+                            [f'{k}={v!r}'
                              for k, v in kwargs.items()])
     args = inputs + kwargs.get('out', ())
     types_string = ', '.join(repr(type(arg).__name__) for arg in args)
     return ('operand type(s) all returned NotImplemented from '
-            '__array_ufunc__({!r}, {!r}, {}): {}'
-            .format(ufunc, method, args_string, types_string))
+            f'__array_ufunc__({ufunc!r}, {method!r}, {args_string}): {types_string}'
+            )
 
 
 def array_function_errmsg_formatter(public_api, types):
     """ Format the error message for when __array_ufunc__ gives up. """
-    func_name = '{}.{}'.format(public_api.__module__, public_api.__name__)
-    return ("no implementation found for '{}' on types that implement "
-            '__array_function__: {}'.format(func_name, list(types)))
+    func_name = f'{public_api.__module__}.{public_api.__name__}'
+    return (f"no implementation found for '{func_name}' on types that implement "
+            f'__array_function__: {list(types)}')
 
 
 def _ufunc_doc_signature_formatter(ufunc):
@@ -911,7 +911,7 @@ def _ufunc_doc_signature_formatter(ufunc):
     else:
         out_args = '[, {positional}], / [, out={default}]'.format(
             positional=', '.join(
-                'out{}'.format(i + 1) for i in range(ufunc.nout)),
+                f'out{i + 1}' for i in range(ufunc.nout)),
             default=repr((None,) * ufunc.nout)
         )
 
@@ -930,12 +930,7 @@ def _ufunc_doc_signature_formatter(ufunc):
         kwargs += "[, signature, axes, axis]"
 
     # join all the parts together
-    return '{name}({in_args}{out_args}, *{kwargs})'.format(
-        name=ufunc.__name__,
-        in_args=in_args,
-        out_args=out_args,
-        kwargs=kwargs
-    )
+    return f'{ufunc.__name__}({in_args}{out_args}, *{kwargs})'
 
 
 def npy_ctypes_check(cls):

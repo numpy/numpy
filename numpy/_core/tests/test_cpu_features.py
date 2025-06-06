@@ -1,16 +1,17 @@
 import os
-import re
-import sys
 import pathlib
 import platform
+import re
 import subprocess
+import sys
+
 import pytest
 from numpy._core._multiarray_umath import (
-    __cpu_features__,
     __cpu_baseline__,
     __cpu_dispatch__,
+    __cpu_features__,
 )
-import numpy as np
+
 
 def assert_features_equal(actual, desired, fname):
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -33,23 +34,23 @@ def assert_features_equal(actual, desired, fname):
 
     import textwrap
     error_report = textwrap.indent(
-"""
+f"""
 ###########################################
 ### Extra debugging information
 ###########################################
 -------------------------------------------
 --- NumPy Detections
 -------------------------------------------
-%s
+{detected}
 -------------------------------------------
 --- SYS / CPUINFO
 -------------------------------------------
-%s....
+{cpuinfo}....
 -------------------------------------------
 --- SYS / AUXV
 -------------------------------------------
-%s
-""" % (detected, cpuinfo, auxv), prefix='\r')
+{auxv}
+""", prefix='\r')
 
     raise AssertionError((
         "Failure Detection\n"
@@ -117,7 +118,7 @@ class AbstractTest:
 
 @pytest.mark.skipif(
     sys.platform == 'emscripten',
-    reason= (
+    reason=(
         "The subprocess module is not available on WASM platforms and"
         " therefore this test class cannot be properly executed."
     ),
@@ -156,7 +157,6 @@ if __name__ == "__main__":
         file /= "_runtime_detect.py"
         file.write_text(self.SCRIPT)
         self.file = file
-        return
 
     def _run(self):
         return subprocess.run(
@@ -189,7 +189,6 @@ if __name__ == "__main__":
     def setup_method(self):
         """Ensure that the environment is reset"""
         self.env = os.environ.copy()
-        return
 
     def test_runtime_feature_selection(self):
         """
@@ -228,7 +227,6 @@ if __name__ == "__main__":
         # Ensure that both features are enabled, and they are exactly the ones
         # specified by `NPY_ENABLE_CPU_FEATURES`
         assert set(enabled_features) == set(non_baseline_features)
-        return
 
     @pytest.mark.parametrize("enabled, disabled",
     [
@@ -334,7 +332,7 @@ if __name__ == "__main__":
 is_linux = sys.platform.startswith('linux')
 is_cygwin = sys.platform.startswith('cygwin')
 machine = platform.machine()
-is_x86 = re.match("^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
+is_x86 = re.match(r"^(amd64|x86|i386|i686)", machine, re.IGNORECASE)
 @pytest.mark.skipif(
     not (is_linux or is_cygwin) or not is_x86, reason="Only for Linux and x86"
 )
@@ -373,7 +371,7 @@ class Test_X86_Features(AbstractTest):
         self.load_flags_cpuinfo("flags")
 
 
-is_power = re.match("^(powerpc|ppc)64", machine, re.IGNORECASE)
+is_power = re.match(r"^(powerpc|ppc)64", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_power, reason="Only for Linux and Power")
 class Test_POWER_Features(AbstractTest):
     features = ["VSX", "VSX2", "VSX3", "VSX4"]
@@ -383,7 +381,7 @@ class Test_POWER_Features(AbstractTest):
         self.load_flags_auxv()
 
 
-is_zarch = re.match("^(s390x)", machine, re.IGNORECASE)
+is_zarch = re.match(r"^(s390x)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_zarch,
                     reason="Only for Linux and IBM Z")
 class Test_ZARCH_Features(AbstractTest):
@@ -393,7 +391,7 @@ class Test_ZARCH_Features(AbstractTest):
         self.load_flags_auxv()
 
 
-is_arm = re.match("^(arm|aarch64)", machine, re.IGNORECASE)
+is_arm = re.match(r"^(arm|aarch64)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_arm, reason="Only for Linux and ARM")
 class Test_ARM_Features(AbstractTest):
     features = [
@@ -407,9 +405,12 @@ class Test_ARM_Features(AbstractTest):
     def load_flags(self):
         self.load_flags_cpuinfo("Features")
         arch = self.get_cpuinfo_item("CPU architecture")
-        # in case of mounting virtual filesystem of aarch64 kernel
-        is_rootfs_v8 = int('0' + next(iter(arch))) > 7 if arch else 0
-        if re.match("^(aarch64|AARCH64)", machine) or is_rootfs_v8:
+        # in case of mounting virtual filesystem of aarch64 kernel without linux32
+        is_rootfs_v8 = (
+            not re.match(r"^armv[0-9]+l$", machine) and
+            (int('0' + next(iter(arch))) > 7 if arch else 0)
+        )
+        if re.match(r"^(aarch64|AARCH64)", machine) or is_rootfs_v8:
             self.features_map = {
                 "NEON": "ASIMD", "HALF": "ASIMD", "VFPV4": "ASIMD"
             }
@@ -422,7 +423,7 @@ class Test_ARM_Features(AbstractTest):
             }
 
 
-is_loongarch = re.match("^(loongarch)", machine, re.IGNORECASE)
+is_loongarch = re.match(r"^(loongarch)", machine, re.IGNORECASE)
 @pytest.mark.skipif(not is_linux or not is_loongarch, reason="Only for Linux and LoongArch")
 class Test_LOONGARCH_Features(AbstractTest):
     features = ["LSX"]

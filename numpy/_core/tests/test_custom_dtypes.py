@@ -1,12 +1,13 @@
 from tempfile import NamedTemporaryFile
 
 import pytest
+from numpy._core._multiarray_umath import (
+    _discover_array_parameters as discover_array_params,
+)
+from numpy._core._multiarray_umath import _get_sfloat_dtype
 
 import numpy as np
 from numpy.testing import assert_array_equal
-from numpy._core._multiarray_umath import (
-    _discover_array_parameters as discover_array_params, _get_sfloat_dtype)
-
 
 SF = _get_sfloat_dtype()
 
@@ -46,6 +47,9 @@ class TestSFloat:
     def test_repr(self):
         # Check the repr, mainly to cover the code paths:
         assert repr(SF(scaling=1.)) == "_ScaledFloatTestDType(scaling=1.0)"
+
+    def test_dtype_str(self):
+        assert SF(1.).str == "_ScaledFloatTestDType(scaling=1.0)"
 
     def test_dtype_name(self):
         assert SF(1.).name == "_ScaledFloatTestDType64"

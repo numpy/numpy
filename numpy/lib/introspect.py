@@ -34,7 +34,7 @@ def opt_func_info(func_name=None, signature=None):
     ...     func_name="add|abs", signature="float64|complex64"
     ... )
     >>> import json
-    >>> print(json.dumps(dict, indent=2))
+    >>> print(json.dumps(dict, indent=2))   # may vary (architecture)
         {
           "absolute": {
             "dd": {
@@ -64,9 +64,9 @@ def opt_func_info(func_name=None, signature=None):
 
     """
     import re
-    from numpy._core._multiarray_umath import (
-        __cpu_targets_info__ as targets, dtype
-    )
+
+    from numpy._core._multiarray_umath import __cpu_targets_info__ as targets
+    from numpy._core._multiarray_umath import dtype
 
     if func_name is not None:
         func_pattern = re.compile(func_name)

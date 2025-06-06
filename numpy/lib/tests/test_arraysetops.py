@@ -1,15 +1,17 @@
 """Test functions for 1D array set operations.
 
 """
-import numpy as np
-
-from numpy import (
-    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, isin
-    )
-from numpy.exceptions import AxisError
-from numpy.testing import (assert_array_equal, assert_equal,
-                           assert_raises, assert_raises_regex)
 import pytest
+
+import numpy as np
+from numpy import ediff1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+from numpy.exceptions import AxisError
+from numpy.testing import (
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestSetOps:
@@ -170,7 +172,7 @@ class TestSetOps:
         # specifically, raise an appropriate
         # Exception when attempting to append or
         # prepend with an incompatible type
-        msg = 'dtype of `{}` must be compatible'.format(expected)
+        msg = f'dtype of `{expected}` must be compatible'
         with assert_raises_regex(TypeError, msg):
             ediff1d(ary=ary,
                     to_end=append,

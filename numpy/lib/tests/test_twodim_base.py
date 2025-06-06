@@ -1,18 +1,36 @@
 """Test functions for matrix module
 
 """
-from numpy.testing import (
-    assert_equal, assert_array_equal, assert_array_max_ulp,
-    assert_array_almost_equal, assert_raises, assert_
-)
-from numpy import (
-    arange, add, fliplr, flipud, zeros, ones, eye, array, diag, histogram2d,
-    tri, mask_indices, triu_indices, triu_indices_from, tril_indices,
-    tril_indices_from, vander,
-)
-import numpy as np
-
 import pytest
+
+import numpy as np
+from numpy import (
+    add,
+    arange,
+    array,
+    diag,
+    eye,
+    fliplr,
+    flipud,
+    histogram2d,
+    mask_indices,
+    ones,
+    tri,
+    tril_indices,
+    tril_indices_from,
+    triu_indices,
+    triu_indices_from,
+    vander,
+    zeros,
+)
+from numpy.testing import (
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+)
 
 
 def get_mat(n):

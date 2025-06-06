@@ -246,7 +246,7 @@ npy__cpu_validate_baseline(void)
 static int
 npy__cpu_check_env(int disable, const char *env) {
 
-    static const char *names[] = {
+    static const char *const names[] = {
         "enable", "disable",
         "NPY_ENABLE_CPU_FEATURES", "NPY_DISABLE_CPU_FEATURES",
         "During parsing environment variable: 'NPY_ENABLE_CPU_FEATURES':\n",
@@ -277,7 +277,7 @@ npy__cpu_check_env(int disable, const char *env) {
     char *notsupp_cur = &notsupp[0];
 
     //comma and space including (htab, vtab, CR, LF, FF)
-    const char *delim = ", \t\v\r\n\f";
+    const char delim[] = ", \t\v\r\n\f";
     char *feature = strtok(features, delim);
     while (feature) {
         if (npy__cpu_baseline_fid(feature) > 0){
@@ -772,34 +772,33 @@ npy__cpu_init_features_linux(void)
     #endif
     }
 #ifdef __arm__
+    npy__cpu_have[NPY_CPU_FEATURE_NEON]       = (hwcap & NPY__HWCAP_NEON)   != 0;
+    if (npy__cpu_have[NPY_CPU_FEATURE_NEON]) {
+        npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & NPY__HWCAP_HALF) != 0;
+        npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & NPY__HWCAP_VFPv4) != 0;
+    }
     // Detect Arm8 (aarch32 state)
     if ((hwcap2 & NPY__HWCAP2_AES)  || (hwcap2 & NPY__HWCAP2_SHA1)  ||
         (hwcap2 & NPY__HWCAP2_SHA2) || (hwcap2 & NPY__HWCAP2_PMULL) ||
         (hwcap2 & NPY__HWCAP2_CRC32))
     {
-        hwcap = hwcap2;
-#else
-    if (1)
-    {
-        if (!(hwcap & (NPY__HWCAP_FP | NPY__HWCAP_ASIMD))) {
-            // Is this could happen? maybe disabled by kernel
-            // BTW this will break the baseline of AARCH64
-            return 1;
-        }
-#endif
-        npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = (hwcap & NPY__HWCAP_FPHP)     != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = (hwcap & NPY__HWCAP_ASIMDHP)  != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = (hwcap & NPY__HWCAP_ASIMDDP)  != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM]   = (hwcap & NPY__HWCAP_ASIMDFHM) != 0;
-        npy__cpu_have[NPY_CPU_FEATURE_SVE]        = (hwcap & NPY__HWCAP_SVE)      != 0;
-        npy__cpu_init_features_arm8();
-    } else {
-        npy__cpu_have[NPY_CPU_FEATURE_NEON]       = (hwcap & NPY__HWCAP_NEON)   != 0;
-        if (npy__cpu_have[NPY_CPU_FEATURE_NEON]) {
-            npy__cpu_have[NPY_CPU_FEATURE_NEON_FP16]  = (hwcap & NPY__HWCAP_HALF) != 0;
-            npy__cpu_have[NPY_CPU_FEATURE_NEON_VFPV4] = (hwcap & NPY__HWCAP_VFPv4) != 0;
-        }
+        npy__cpu_have[NPY_CPU_FEATURE_ASIMD] = npy__cpu_have[NPY_CPU_FEATURE_NEON];
     }
+#else
+    if (!(hwcap & (NPY__HWCAP_FP | NPY__HWCAP_ASIMD))) {
+        // Is this could happen? maybe disabled by kernel
+        // BTW this will break the baseline of AARCH64
+        return 1;
+    }
+    npy__cpu_init_features_arm8();
+#endif
+    npy__cpu_have[NPY_CPU_FEATURE_FPHP]       = (hwcap & NPY__HWCAP_FPHP)     != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDHP]    = (hwcap & NPY__HWCAP_ASIMDHP)  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDDP]    = (hwcap & NPY__HWCAP_ASIMDDP)  != 0;
+    npy__cpu_have[NPY_CPU_FEATURE_ASIMDFHM]   = (hwcap & NPY__HWCAP_ASIMDFHM) != 0;
+#ifndef __arm__
+    npy__cpu_have[NPY_CPU_FEATURE_SVE]        = (hwcap & NPY__HWCAP_SVE)      != 0;
+#endif
     return 1;
 }
 #endif

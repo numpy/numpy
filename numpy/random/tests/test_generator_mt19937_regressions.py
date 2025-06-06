@@ -1,7 +1,8 @@
-from numpy.testing import (assert_, assert_array_equal)
-import numpy as np
 import pytest
-from numpy.random import Generator, MT19937
+
+import numpy as np
+from numpy.random import MT19937, Generator
+from numpy.testing import assert_, assert_array_equal
 
 
 class TestRegression:

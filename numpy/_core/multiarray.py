@@ -7,17 +7,25 @@ namespace by importing from the extension module.
 """
 
 import functools
-from . import overrides
-from . import _multiarray_umath
+
+from . import _multiarray_umath, overrides
 from ._multiarray_umath import *  # noqa: F403
+
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
-from ._multiarray_umath import (
-    _flagdict, from_dlpack, _place, _reconstruct,
-    _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _get_madvise_hugepage, _set_madvise_hugepage,
-    )
+from ._multiarray_umath import (  # noqa: F401
+    _ARRAY_API,
+    _flagdict,
+    _get_madvise_hugepage,
+    _get_ndarray_c_version,
+    _monotonicity,
+    _place,
+    _reconstruct,
+    _set_madvise_hugepage,
+    _vec_string,
+    from_dlpack,
+)
 
 __all__ = [
     '_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
@@ -173,7 +181,7 @@ def empty_like(
     array([[ -2.00000715e+000,   1.48219694e-323,  -2.00000572e+000], # uninitialized
            [  4.38791518e-305,  -2.00000715e+000,   4.17269252e-309]])
 
-    """   # NOQA
+    """
     return (prototype,)
 
 

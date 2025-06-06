@@ -1,26 +1,34 @@
-import warnings
-import itertools
-import sys
 import ctypes as ct
+import itertools
 import pickle
+import sys
+import warnings
 
+import numpy._core._operand_flag_tests as opflag_tests
+import numpy._core._rational_tests as _rational_tests
+import numpy._core._umath_tests as umt
 import pytest
 from pytest import param
 
 import numpy as np
 import numpy._core.umath as ncu
-import numpy._core._umath_tests as umt
 import numpy.linalg._umath_linalg as uml
-import numpy._core._operand_flag_tests as opflag_tests
-import numpy._core._rational_tests as _rational_tests
 from numpy.exceptions import AxisError
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_array_almost_equal, assert_no_warnings,
-    assert_allclose, HAS_REFCOUNT, suppress_warnings, IS_WASM, IS_PYPY,
-    )
+    HAS_REFCOUNT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+    suppress_warnings,
+)
 from numpy.testing._private.utils import requires_memory
-
 
 UNARY_UFUNCS = [obj for obj in np._core.umath.__dict__.values()
                     if isinstance(obj, np.ufunc)]
@@ -484,8 +492,8 @@ class TestUfunc:
         np.add(3, 4, signature=(float_dtype, float_dtype, None))
 
     @pytest.mark.parametrize("get_kwarg", [
-            lambda dt: {"dtype": dt},
-            lambda dt: {"signature": (dt, None, None)}])
+            param(lambda dt: {"dtype": dt}, id="dtype"),
+            param(lambda dt: {"signature": (dt, None, None)}, id="signature")])
     def test_signature_dtype_instances_allowed(self, get_kwarg):
         # We allow certain dtype instances when there is a clear singleton
         # and the given one is equivalent; mainly for backcompat.
@@ -495,13 +503,9 @@ class TestUfunc:
         assert int64 is not int64_2
 
         assert np.add(1, 2, **get_kwarg(int64_2)).dtype == int64
-        td = np.timedelta(2, "s")
+        td = np.timedelta64(2, "s")
         assert np.add(td, td, **get_kwarg("m8")).dtype == "m8[s]"
 
-    @pytest.mark.parametrize("get_kwarg", [
-            param(lambda x: {"dtype": x}, id="dtype"),
-            param(lambda x: {"signature": (x, None, None)}, id="signature")])
-    def test_signature_dtype_instances_allowed(self, get_kwarg):
         msg = "The `dtype` and `signature` arguments to ufuncs"
 
         with pytest.raises(TypeError, match=msg):
@@ -1066,6 +1070,49 @@ class TestUfunc:
         np.vecdot(a, b, out=c[..., 0])
         assert_array_equal(c[..., 0], np.sum(a * b, axis=-1), err_msg=msg)
 
+    @pytest.mark.parametrize("arg", ["array", "scalar", "subclass"])
+    def test_output_ellipsis(self, arg):
+        class subclass(np.ndarray):
+            def __array_wrap__(self, obj, context=None, return_value=None):
+                return super().__array_wrap__(obj, context, return_value)
+
+        if arg == "scalar":
+            one = 1
+            expected_type = np.ndarray
+        elif arg == "array":
+            one = np.array(1)
+            expected_type = np.ndarray
+        elif arg == "subclass":
+            one = np.array(1).view(subclass)
+            expected_type = subclass
+
+        assert type(np.add(one, 2, out=...)) is expected_type
+        assert type(np.add.reduce(one, out=...)) is expected_type
+        res1, res2 = np.divmod(one, 2, out=...)
+        assert type(res1) is type(res2) is expected_type
+
+    def test_output_ellipsis_errors(self):
+        with pytest.raises(TypeError,
+                match=r"out=\.\.\. is only allowed as a keyword argument."):
+            np.add(1, 2, ...)
+
+        with pytest.raises(TypeError,
+                match=r"out=\.\.\. is only allowed as a keyword argument."):
+            np.add.reduce(1, (), None, ...)
+
+        with pytest.raises(TypeError,
+                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+            np.negative(1, out=(...,))
+
+        with pytest.raises(TypeError,
+                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+            # We only allow out=... not individual args for now
+            np.divmod(1, 2, out=(np.empty(()), ...))
+
+        with pytest.raises(TypeError,
+                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+            np.add.reduce(1, out=(...,))
+
     def test_axes_argument(self):
         # vecdot signature: '(n),(n)->()'
         a = np.arange(27.).reshape((3, 3, 3))
@@ -1407,7 +1454,7 @@ class TestUfunc:
     def compare_matrix_multiply_results(self, tp):
         d1 = np.array(np.random.rand(2, 3, 4), dtype=tp)
         d2 = np.array(np.random.rand(2, 3, 4), dtype=tp)
-        msg = "matrix multiply on type %s" % d1.dtype.name
+        msg = f"matrix multiply on type {d1.dtype.name}"
 
         def permute_n(n):
             if n == 1:
@@ -1433,7 +1480,7 @@ class TestUfunc:
             return ret
 
         def broadcastable(s1, s2):
-            return s1 == s2 or s1 == 1 or s2 == 1
+            return s1 == s2 or 1 in {s1, s2}
 
         permute_3 = permute_n(3)
         slice_3 = slice_n(3) + ((slice(None, None, -1),) * 3,)
@@ -1453,8 +1500,7 @@ class TestUfunc:
                                 umt.matrix_multiply(a1, a2),
                                 np.sum(a2[..., np.newaxis].swapaxes(-3, -1) *
                                        a1[..., np.newaxis, :], axis=-1),
-                                err_msg=msg + ' %s %s' % (str(a1.shape),
-                                                          str(a2.shape)))
+                                err_msg=msg + f' {str(a1.shape)} {str(a2.shape)}')
 
         assert_equal(ref, True, err_msg="reference check")
 
@@ -2062,7 +2108,7 @@ class TestUfunc:
     def test_array_wrap_array_priority(self):
         class ArrayPriorityBase(np.ndarray):
             @classmethod
-            def __array_wrap__(cls, array, context=None, return_scalar = False):
+            def __array_wrap__(cls, array, context=None, return_scalar=False):
                 return cls
 
         class ArrayPriorityMinus0(ArrayPriorityBase):

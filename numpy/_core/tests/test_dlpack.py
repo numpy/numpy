@@ -1,8 +1,9 @@
 import sys
+
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal, IS_PYPY
+from numpy.testing import IS_PYPY, assert_array_equal
 
 
 def new_and_old_dlpack():
@@ -22,9 +23,9 @@ class TestDLPack:
     def test_dunder_dlpack_refcount(self, max_version):
         x = np.arange(5)
         y = x.__dlpack__(max_version=max_version)
-        assert sys.getrefcount(x) == 3
+        startcount = sys.getrefcount(x)
         del y
-        assert sys.getrefcount(x) == 2
+        assert startcount - sys.getrefcount(x) == 1
 
     def test_dunder_dlpack_stream(self):
         x = np.arange(5)
@@ -58,9 +59,9 @@ class TestDLPack:
     def test_from_dlpack_refcount(self, arr):
         arr = arr.copy()
         y = np.from_dlpack(arr)
-        assert sys.getrefcount(arr) == 3
+        startcount = sys.getrefcount(arr)
         del y
-        assert sys.getrefcount(arr) == 2
+        assert startcount - sys.getrefcount(arr) == 1
 
     @pytest.mark.parametrize("dtype", [
         np.bool,
@@ -142,6 +143,17 @@ class TestDLPack:
 
         # But works fine if we try with version
         y = np.from_dlpack(x)
+        assert not y.flags.writeable
+
+    def test_writeable(self):
+        x_new, x_old = new_and_old_dlpack()
+
+        # new dlpacks respect writeability
+        y = np.from_dlpack(x_new)
+        assert y.flags.writeable
+
+        # old dlpacks are not writeable for backwards compatibility
+        y = np.from_dlpack(x_old)
         assert not y.flags.writeable
 
     def test_ndim0(self):

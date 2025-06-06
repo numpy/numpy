@@ -1,10 +1,3 @@
-/*@targets
- ** $maxopt baseline
- ** sse2 (avx2 fma3)
- ** neon asimd
- ** vsx2 vsx3
- ** vx vxe
- **/
 #define _UMATHMODULE
 #define _MULTIARRAYMODULE
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION

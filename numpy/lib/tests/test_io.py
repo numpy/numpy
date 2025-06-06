@@ -1,35 +1,47 @@
-import sys
 import gc
 import gzip
+import locale
 import os
+import re
+import sys
 import threading
 import time
 import warnings
-import re
-import pytest
+from ctypes import c_bool
+from datetime import datetime
+from io import BytesIO, StringIO
+from multiprocessing import Value, get_context
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from io import BytesIO, StringIO
-from datetime import datetime
-import locale
-from multiprocessing import Value, get_context
-from ctypes import c_bool
+
+import pytest
 
 import numpy as np
 import numpy.ma as ma
+from numpy._utils import asbytes
 from numpy.exceptions import VisibleDeprecationWarning
-from numpy.lib._iotools import ConverterError, ConversionWarning
 from numpy.lib import _npyio_impl
+from numpy.lib._iotools import ConversionWarning, ConverterError
 from numpy.lib._npyio_impl import recfromcsv, recfromtxt
 from numpy.ma.testutils import assert_equal
 from numpy.testing import (
-    assert_warns, assert_, assert_raises_regex, assert_raises,
-    assert_allclose, assert_array_equal, temppath, tempdir, IS_PYPY,
-    HAS_REFCOUNT, suppress_warnings, assert_no_gc_cycles, assert_no_warnings,
-    break_cycles, IS_WASM
-    )
+    HAS_REFCOUNT,
+    IS_PYPY,
+    IS_WASM,
+    assert_,
+    assert_allclose,
+    assert_array_equal,
+    assert_no_gc_cycles,
+    assert_no_warnings,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+    break_cycles,
+    suppress_warnings,
+    tempdir,
+    temppath,
+)
 from numpy.testing._private.utils import requires_memory
-from numpy._utils import asbytes
 
 
 class TextIO(BytesIO):
@@ -70,7 +82,7 @@ def strptime(s, fmt=None):
     2.5.
 
     """
-    if type(s) == bytes:
+    if isinstance(s, bytes):
         s = s.decode("latin1")
     return datetime(*time.strptime(s, fmt)[:3])
 
@@ -217,7 +229,6 @@ class TestSavezLoad(RoundtripTest):
             npfile = np.load(tmp)
             a = npfile['a']  # Should succeed
             npfile.close()
-            del a  # Avoid pyflakes unused variable warning.
 
     def test_multiple_arrays(self):
         a = np.array([[1, 2], [3, 4]], float)
@@ -305,7 +316,7 @@ class TestSavezLoad(RoundtripTest):
             np.savez(tmp, data='LOVELY LOAD')
             # We need to check if the garbage collector can properly close
             # numpy npz file returned by np.load when their reference count
-            # goes to zero.  Python 3 running in debug mode raises a
+            # goes to zero.  Python running in debug mode raises a
             # ResourceWarning when file closing is left to the garbage
             # collector, so we catch the warnings.
             with suppress_warnings() as sup:
@@ -314,7 +325,7 @@ class TestSavezLoad(RoundtripTest):
                     try:
                         np.load(tmp)["data"]
                     except Exception as e:
-                        msg = "Failed to load data from a file: %s" % e
+                        msg = f"Failed to load data from a file: {e}"
                         raise AssertionError(msg)
                     finally:
                         if IS_PYPY:
@@ -625,7 +636,7 @@ class TestSaveTxt:
 
         # Since Python 3.8, the default start method for multiprocessing has
         # been changed from 'fork' to 'spawn' on macOS, causing inconsistency
-        # on memory sharing model, lead to failed test for check_large_zip
+        # on memory sharing model, leading to failed test for check_large_zip
         ctx = get_context('fork')
         p = ctx.Process(target=check_large_zip, args=(memoryerror_raised,))
         p.start()
@@ -907,13 +918,13 @@ class TestLoadTxt(LoadTxtBase):
         bogus_idx = 1.5
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx).__name__,
+            f'^usecols must be.*{type(bogus_idx).__name__}',
             np.loadtxt, c, usecols=bogus_idx
             )
 
         assert_raises_regex(
             TypeError,
-            '^usecols must be.*%s' % type(bogus_idx).__name__,
+            f'^usecols must be.*{type(bogus_idx).__name__}',
             np.loadtxt, c, usecols=[0, bogus_idx, 0]
             )
 
@@ -1029,7 +1040,7 @@ class TestLoadTxt(LoadTxtBase):
             c.seek(0)
             res = np.loadtxt(
                 c, dtype=dt, converters=float.fromhex, encoding="latin1")
-            assert_equal(res, tgt, err_msg="%s" % dt)
+            assert_equal(res, tgt, err_msg=f"{dt}")
 
     @pytest.mark.skipif(IS_PYPY and sys.implementation.version <= (7, 3, 8),
                         reason="PyPy bug in error formatting")
@@ -1321,7 +1332,7 @@ class Testfromregex:
             assert_array_equal(x, a)
 
     def test_compiled_bytes(self):
-        regexp = re.compile(b'(\\d)')
+        regexp = re.compile(br'(\d)')
         c = BytesIO(b'123')
         dt = [('num', np.float64)]
         a = np.array([1, 2, 3], dtype=dt)
@@ -1329,7 +1340,7 @@ class Testfromregex:
         assert_array_equal(x, a)
 
     def test_bad_dtype_not_structured(self):
-        regexp = re.compile(b'(\\d)')
+        regexp = re.compile(br'(\d)')
         c = BytesIO(b'123')
         with pytest.raises(TypeError, match='structured datatype'):
             np.fromregex(c, regexp, dtype=np.float64)
@@ -1406,13 +1417,13 @@ class TestFromTxt(LoadTxtBase):
         assert_equal(test, control)
 
     def test_skip_footer(self):
-        data = ["# %i" % i for i in range(1, 6)]
+        data = [f"# {i}" for i in range(1, 6)]
         data.append("A, B, C")
-        data.extend(["%i,%3.1f,%03s" % (i, i, i) for i in range(51)])
+        data.extend([f"{i},{i:3.1f},{i:03d}" for i in range(51)])
         data[-1] = "99,99"
         kwargs = {"delimiter": ",", "names": True, "skip_header": 5, "skip_footer": 10}
         test = np.genfromtxt(TextIO("\n".join(data)), **kwargs)
-        ctrl = np.array([("%f" % i, "%f" % i, "%f" % i) for i in range(41)],
+        ctrl = np.array([(f"{i:f}", f"{i:f}", f"{i:f}") for i in range(41)],
                         dtype=[(_, float) for _ in "ABC"])
         assert_equal(test, ctrl)
 
@@ -1469,7 +1480,7 @@ class TestFromTxt(LoadTxtBase):
                    np.array([True, False]), ]
         assert_equal(test.dtype.names, ['f0', 'f1', 'f2', 'f3', 'f4'])
         for (i, ctrl) in enumerate(control):
-            assert_equal(test['f%i' % i], ctrl)
+            assert_equal(test[f'f{i}'], ctrl)
 
     def test_auto_dtype_uniform(self):
         # Tests whether the output dtype can be uniformized
@@ -1623,9 +1634,9 @@ M   33  21.99
 
     def test_invalid_converter(self):
         strip_rand = lambda x: float((b'r' in x.lower() and x.split()[-1]) or
-                                     (b'r' not in x.lower() and x.strip() or 0.0))
+                                     ((b'r' not in x.lower() and x.strip()) or 0.0))
         strip_per = lambda x: float((b'%' in x.lower() and x.split()[0]) or
-                                    (b'%' not in x.lower() and x.strip() or 0.0))
+                                    ((b'%' not in x.lower() and x.strip()) or 0.0))
         s = TextIO("D01N01,10/1/2003 ,1 %,R 75,400,600\r\n"
                    "L24U05,12/5/2003, 2 %,1,300, 150.5\r\n"
                    "D02N03,10/10/2004,R 1,,7,145.55")
@@ -1997,7 +2008,7 @@ M   33  21.99
         data = ["1, 1, 1, 1, -1.1"] * 50
         mdata = TextIO("\n".join(data))
 
-        converters = {4: lambda x: "(%s)" % x.decode()}
+        converters = {4: lambda x: f"({x.decode()})"}
         kwargs = {"delimiter": ",", "converters": converters,
                       "dtype": [(_, int) for _ in 'abcde'], "encoding": "bytes"}
         assert_raises(ValueError, np.genfromtxt, mdata, **kwargs)
@@ -2359,7 +2370,7 @@ M   33  21.99
         assert_(isinstance(test, np.recarray))
         assert_equal(test, control)
 
-        #gh-10394
+        # gh-10394
         data = TextIO('color\n"red"\n"blue"')
         test = recfromcsv(data, converters={0: lambda x: x.strip('\"')})
         control = np.array([('red',), ('blue',)], dtype=[('color', (str, 4))])

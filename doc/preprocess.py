@@ -2,6 +2,7 @@
 import os
 from string import Template
 
+
 def main():
     doxy_gen(os.path.abspath(os.path.join('..')))
 
@@ -46,4 +47,3 @@ def doxy_config(root_path):
 
 if __name__ == "__main__":
     main()
-

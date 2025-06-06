@@ -1,13 +1,18 @@
-import sys
 import platform
+import sys
+
+# import the c-extension module directly since _arg is not exported via umath
+import numpy._core._multiarray_umath as ncu
 import pytest
 
 import numpy as np
-# import the c-extension module directly since _arg is not exported via umath
-import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
-    assert_raises, assert_equal, assert_array_equal, assert_almost_equal, assert_array_max_ulp
-    )
+    assert_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+)
 
 # TODO: branch cuts (use Pauli code)
 # TODO: conj 'symmetry'
@@ -16,7 +21,7 @@ from numpy.testing import (
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
-#FIXME: this will probably change when we require full C99 compatibility
+# FIXME: this will probably change when we require full C99 compatibility
 with np.errstate(all='ignore'):
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(ncu.NZERO, 0)).imag != np.pi))
@@ -333,7 +338,7 @@ class TestCsqrt:
         def _check_ninf_nan(dummy):
             msgform = "csqrt(-inf, nan) is (%f, %f), expected (nan, +-inf)"
             z = np.sqrt(np.array(complex(-np.inf, np.nan)))
-            #Fixme: ugly workaround for isinf bug.
+            # FIXME: ugly workaround for isinf bug.
             with np.errstate(invalid='ignore'):
                 if not (np.isnan(z.real) and np.isinf(z.imag)):
                     raise AssertionError(msgform % (z.real, z.imag))

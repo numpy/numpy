@@ -1,4 +1,5 @@
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from numpy import generic
 from numpy.typing import NDArray
@@ -14,12 +15,12 @@ def byte_bounds(a: generic | NDArray[Any]) -> tuple[int, int]: ...
 def normalize_axis_tuple(
     axis: int | Iterable[int],
     ndim: int = ...,
-    argname: None | str = ...,
-    allow_duplicate: None | bool = ...,
+    argname: str | None = ...,
+    allow_duplicate: bool | None = ...,
 ) -> tuple[int, int]: ...
 
 def normalize_axis_index(
     axis: int = ...,
     ndim: int = ...,
-    msg_prefix: None | str = ...,
+    msg_prefix: str | None = ...,
 ) -> int: ...

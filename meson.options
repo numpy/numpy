@@ -22,6 +22,8 @@ option('disable-intel-sort', type: 'boolean', value: false,
         description: 'Disables SIMD-optimized operations related to Intel x86-simd-sort')
 option('disable-threading', type: 'boolean', value: false,
         description: 'Disable threading support (see `NPY_ALLOW_THREADS` docs)')
+option('enable-openmp', type: 'boolean', value: false,
+        description: 'Enable building NumPy with openmp support')
 option('disable-optimization', type: 'boolean', value: false,
         description: 'Disable CPU optimized code (dispatch,simd,unroll...)')
 option('cpu-baseline', type: 'string', value: 'min',

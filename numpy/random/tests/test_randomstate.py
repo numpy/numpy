@@ -3,16 +3,22 @@ import pickle
 import sys
 import warnings
 
-import numpy as np
 import pytest
-from numpy.testing import (
-        assert_, assert_raises, assert_equal, assert_warns,
-        assert_no_warnings, assert_array_equal, assert_array_almost_equal,
-        suppress_warnings, IS_WASM
-        )
 
-from numpy.random import MT19937, PCG64
+import numpy as np
 from numpy import random
+from numpy.random import MT19937, PCG64
+from numpy.testing import (
+    IS_WASM,
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+    assert_warns,
+    suppress_warnings,
+)
 
 INT_FUNCS = {'binomial': (100.0, 0.6),
              'geometric': (.5,),

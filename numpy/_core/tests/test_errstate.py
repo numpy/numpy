@@ -1,8 +1,9 @@
-import pytest
 import sysconfig
 
+import pytest
+
 import numpy as np
-from numpy.testing import assert_, assert_raises, IS_WASM
+from numpy.testing import IS_WASM, assert_raises
 
 # The floating point emulation on ARM EABI systems lacking a hardware FPU is
 # known to be buggy. This is an attempt to identify these hosts. It may not
