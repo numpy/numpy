@@ -225,7 +225,7 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
     bool need_scalar = true;
 
 #if NPY_HWY
-    if constexpr (kSupportLane<T>) {
+    if constexpr (kSupportLane<T> && sizeof(long double) != sizeof(double)) {
         if (!is_mem_overlap(ip, istep, op, ostep, len)) {
             if (IS_UNARY_CONT(T, T)) {
                 // No overlap and operands are contiguous
@@ -290,7 +290,7 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
     }
 
 #if NPY_HWY
-    if constexpr (kSupportLane<T>) {
+    if constexpr (kSupportLane<T> && sizeof(long double) != sizeof(double)) {
         npyv_cleanup();
     }
 #endif
