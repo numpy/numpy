@@ -7,6 +7,7 @@
 #include "numpy/npy_common.h"
 #include "common.hpp"
 #include "simd/simd.hpp"
+#include <hwy/highway.h>
 
 #if defined(__riscv)
 // Only required by AVX2/AVX512
