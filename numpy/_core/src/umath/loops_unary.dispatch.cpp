@@ -9,11 +9,6 @@
 #include "simd/simd.hpp"
 #include <hwy/highway.h>
 
-#if defined(__riscv)
-// Only required by AVX2/AVX512
-#define npyv_cleanup() ((void)0)
-#endif
-
 namespace {
 using namespace np::simd;
 
@@ -288,12 +283,6 @@ unary_negative(char **args, npy_intp const *dimensions, npy_intp const *steps)
             *((T *)op) = op_func(*(const T *)ip);
         }
     }
-
-#if NPY_HWY
-    if constexpr (kSupportLane<T> && sizeof(long double) != sizeof(double)) {
-        npyv_cleanup();
-    }
-#endif
 
     if constexpr (std::is_floating_point_v<T>) {
         npy_clear_floatstatus_barrier((char*)dimensions);
