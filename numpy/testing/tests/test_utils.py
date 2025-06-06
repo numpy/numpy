@@ -702,7 +702,7 @@ class TestAlmostEqual(_GenericTest):
                         ' DESIRED: array([1.00000000002, 2.00000000003, '
                         '3.00004      ])')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
-            self._assert_func(x, y, decimal=12)
+            self._assert_func(x, y, decimal=12, precision=11)
 
         # With the default value of decimal digits, only the 3rd element
         # differs. Note that we only check for the formatting of the arrays
