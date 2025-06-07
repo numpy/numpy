@@ -1,0 +1,29 @@
+.. currentmodule:: numpy
+
+=========================
+NumPy 2.3.1 Release Notes
+=========================
+
+The NumPy 2.3.1 release is a patch release fixes bug found after the 2.3.0
+release.
+
+Users running on a Mac having an M4 cpu might see various warnings about
+invalid values and such. The warnings are a known problem with Accelerate.
+They are annoying, but otherwise harmless. Apple promises to fix them.
+
+This release supports Python versions 3.11-3.13, Python 3.14 will be supported
+when it is released.
+
+
+Highlights
+==========
+
+*We'll choose highlights for this release near the end of the release cycle.*
+
+
+.. if release snippets have been incorporated already, uncomment the follow
+   line (leave the `.. include:: directive)
+
+.. **Content from release note snippets in doc/release/upcoming_changes:**
+
+.. include:: notes-towncrier.rst
