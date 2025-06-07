@@ -1,0 +1,5 @@
+* For integer arrays, ``numpy.round`` function now returns a copy of input. Previously,
+  it returned a view for integer inputs and a copy for floating-point inputs. The change
+  brings ``round`` in line with ``ceil``, ``floor`` and ``trunc``--- all of which always
+  return a copy. 
+
