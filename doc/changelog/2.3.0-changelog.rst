@@ -2,13 +2,18 @@
 Contributors
 ============
 
-A total of 132 people contributed to this release.  People with a "+" by their
+A total of 134 people contributed to this release.  People with a "+" by their
 names contributed a patch for the first time.
 
 * !DWesl
+* !EarlMilktea +
+* !amotzop +
 * !fengluoqiuwu
 * !h-vetinari
+* !karl3wm +
 * !partev
+* !samir539 +
+* !wenlong2 +
 * Aarni Koskela +
 * Abdu Zoghbi +
 * Abhishek Kumar
@@ -50,6 +55,7 @@ names contributed a patch for the first time.
 * GUAN MING
 * Giovanni Del Monte
 * Guan Ming(Wesley) Chiu +
+* Guido Imperiale +
 * Gyeongjae Choi +
 * Halle Loveday +
 * Hannah Wheeler +
@@ -64,6 +70,7 @@ names contributed a patch for the first time.
 * Jake VanderPlas
 * Jiachen An +
 * Jiuding Tan (谭九鼎)
+* Joe Rickerby +
 * John Kirkham
 * John Stilley +
 * Jonathan Albrecht +
@@ -109,7 +116,6 @@ names contributed a patch for the first time.
 * Rohit Goswami
 * Ross Barnowski
 * Roy Smart
-* S.S. +
 * Saransh Chopra
 * Saraswathy Kalaiselvan +
 * Sayed Adel
@@ -127,21 +133,17 @@ names contributed a patch for the first time.
 * Wang Yang (杨旺) +
 * Warren Weckesser
 * Warrick Ball
-* Wenlong +
 * William Andrea
 * Yakov Danishevsky +
 * Yichi Zhang +
-* Your Name +
 * Yuvraj Pradhan +
 * dependabot[bot]
 * hfloveday12 +
-* karl +
-* samir539 +
 
 Pull requests merged
 ====================
 
-A total of 543 pull requests were merged for this release.
+A total of 556 pull requests were merged for this release.
 
 * `#22718 <https://github.com/numpy/numpy/pull/22718>`__: DOC: Add docs on using GitHub Codespaces for NumPy development
 * `#25675 <https://github.com/numpy/numpy/pull/25675>`__: ENH: add matvec and vecmat gufuncs
@@ -686,4 +688,17 @@ A total of 543 pull requests were merged for this release.
 * `#29043 <https://github.com/numpy/numpy/pull/29043>`__: BUG: Avoid compile errors in f2py modules
 * `#29044 <https://github.com/numpy/numpy/pull/29044>`__: BUG: Fix f2py derived types in modules
 * `#29046 <https://github.com/numpy/numpy/pull/29046>`__: BUG: Fix cache use regression
+* `#29047 <https://github.com/numpy/numpy/pull/29047>`__: REL: Prepare for the NumPy 2.3.0rc1 release [wheel build]
+* `#29070 <https://github.com/numpy/numpy/pull/29070>`__: TYP: Various typing fixes.
+* `#29072 <https://github.com/numpy/numpy/pull/29072>`__: MAINT: use pypy 3.11 nightly which has a fix for ctypeslib
+* `#29073 <https://github.com/numpy/numpy/pull/29073>`__: BLD: use sonoma image on Cirrus for wheel build
+* `#29074 <https://github.com/numpy/numpy/pull/29074>`__: BUG: add bounds-checking to in-place string multiply
+* `#29082 <https://github.com/numpy/numpy/pull/29082>`__: BLD: bump OpenBLAS version, use OpenBLAS for win-arm64 [wheel...
+* `#29089 <https://github.com/numpy/numpy/pull/29089>`__: MNT: Avoid use of deprecated _PyDict_GetItemStringWithError in...
+* `#29099 <https://github.com/numpy/numpy/pull/29099>`__: BUG: f2py: thread-safe forcomb (#29091)
+* `#29100 <https://github.com/numpy/numpy/pull/29100>`__: TYP: fix NDArray[integer] inplace operator mypy issue
+* `#29101 <https://github.com/numpy/numpy/pull/29101>`__: PERF: Make NpzFile member existence constant time
+* `#29116 <https://github.com/numpy/numpy/pull/29116>`__: MAINT: Update to vs2022 in NumPy 2.3.x [wheel build]
+* `#29118 <https://github.com/numpy/numpy/pull/29118>`__: MAINT: fix SPDX license expressions for LAPACK, GCC runtime libs
+* `#29132 <https://github.com/numpy/numpy/pull/29132>`__: MAINT: Fix for segfaults with GCC 15
 
