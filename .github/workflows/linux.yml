@@ -156,7 +156,7 @@ jobs:
         # TODO: gcov
       env:
         PYTHONOPTIMIZE: 2
-    
+
 
   aarch64_test:
     needs: [smoke_test]
@@ -204,7 +204,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    
+
     - name: Creates new container
       run: |
         docker run --name the_container --interactive \
@@ -221,7 +221,7 @@ jobs:
         docker run --rm -e "TERM=xterm-256color" \
           -v $(pwd):/numpy the_container \
           /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
-            cd /numpy && spin build 
+            cd /numpy && spin build
           '"
 
     - name: Meson Log
@@ -324,7 +324,7 @@ jobs:
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         repository: data-apis/array-api-tests
-        ref: 'c48410f96fc58e02eea844e6b7f6cc01680f77ce'  # Latest commit as of 2025-04-01
+        ref: '3c273cd34d51c64ed893737306d36adab23a94a1'  # v2025.05.23
         submodules: 'true'
         path: 'array-api-tests'
         persist-credentials: false
