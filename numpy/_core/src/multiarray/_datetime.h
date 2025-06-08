@@ -174,8 +174,8 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
                                         npy_bool from_pickle);
 
 /*
- * Gets a tzoffset in minutes by calling the fromutc() function on
- * the Python datetime.tzinfo object.
+ * Gets a tzoffset in minutes by calling the astimezone() function on
+ * the Python datetime.datetime object.
  */
 NPY_NO_EXPORT int
 get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts);

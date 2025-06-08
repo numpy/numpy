@@ -49,4 +49,4 @@ dependencies:
   - gitpython
   # Used in some tests
   - cffi
-  - pytz
+  - tzdata
