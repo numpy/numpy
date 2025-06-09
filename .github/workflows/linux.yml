@@ -346,7 +346,7 @@ jobs:
         PYTHONWARNINGS: 'ignore::UserWarning::,ignore::DeprecationWarning::,ignore::RuntimeWarning::'
       run: |
         cd ${GITHUB_WORKSPACE}/array-api-tests
-        pytest array_api_tests -v -c pytest.ini --ci --max-examples=500 --derandomize --disable-deadline --xfails-file ${GITHUB_WORKSPACE}/tools/ci/array-api-xfails.txt
+        pytest array_api_tests -v -c pytest.ini -n 4 --max-examples=1000 --derandomize --disable-deadline --xfails-file ${GITHUB_WORKSPACE}/tools/ci/array-api-xfails.txt
 
   custom_checks:
     needs: [smoke_test]
