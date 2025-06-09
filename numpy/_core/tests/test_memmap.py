@@ -249,6 +249,7 @@ class TestMemmap:
     def test_threads_share_fh(self):
         """Multiple threads create a memmap on an already-opened file handle
         of size 0."""
+
         def func():
             fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+', shape=self.shape)
             fp[:] = self.data[:]
@@ -261,6 +262,7 @@ class TestMemmap:
         opening its own file handle.
         """
         tmpname = tmp_path / 'mmap'
+
         def func():
             fp = memmap(tmpname, dtype=self.dtype, mode='w+', shape=self.shape)
             fp[:] = self.data[:]
