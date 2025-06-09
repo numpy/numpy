@@ -4215,9 +4215,9 @@ class float64(floating[_64Bit], float):  # type: ignore[misc]
     def __divmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[override]
     def __rdivmod__(self, other: _Float64_co, /) -> _2Tuple[float64]: ...  # type: ignore[override]
 
-half: TypeAlias = floating[_NBitHalf]
-single: TypeAlias = floating[_NBitSingle]
-double: TypeAlias = floating[_NBitDouble]
+half: TypeAlias = float16
+single: TypeAlias = float32
+double: TypeAlias = float64
 longdouble: TypeAlias = floating[_NBitLongDouble]
 
 # The main reason for `complexfloating` having two typevars is cosmetic.
@@ -4315,7 +4315,7 @@ class complexfloating(inexact[_NBit1, complex], Generic[_NBit1, _NBit2]):
         self, other: number[_NBit], mod: None = None, /
     ) -> complexfloating[_NBit1, _NBit2] | complexfloating[_NBit, _NBit]: ...
 
-complex64: TypeAlias = complexfloating[_32Bit, _32Bit]
+complex64: TypeAlias = complexfloating[_32Bit]
 
 class complex128(complexfloating[_64Bit, _64Bit], complex):  # type: ignore[misc]
     @overload
@@ -4376,9 +4376,9 @@ class complex128(complexfloating[_64Bit, _64Bit], complex):  # type: ignore[misc
     ) -> complexfloating[_NBit1 | _64Bit, _NBit2 | _64Bit]: ...
     def __rpow__(self, other: _Complex128_co, mod: None = None, /) -> complex128: ...
 
-csingle: TypeAlias = complexfloating[_NBitSingle, _NBitSingle]
-cdouble: TypeAlias = complexfloating[_NBitDouble, _NBitDouble]
-clongdouble: TypeAlias = complexfloating[_NBitLongDouble, _NBitLongDouble]
+csingle: TypeAlias = complex64
+cdouble: TypeAlias = complex128
+clongdouble: TypeAlias = complexfloating[_NBitLongDouble]
 
 class timedelta64(_IntegralMixin, generic[_TD64ItemT_co], Generic[_TD64ItemT_co]):
     @property
