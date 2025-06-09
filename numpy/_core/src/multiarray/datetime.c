@@ -1283,7 +1283,6 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
     switch (casting) {
         /* Allow anything with unsafe casting */
         case NPY_UNSAFE_CASTING:
-        case NPY_SAME_VALUE_CASTING:
             return 1;
 
         /*
@@ -1305,6 +1304,7 @@ can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
          * 'safe' casting.
          */
         case NPY_SAFE_CASTING:
+        case NPY_SAME_VALUE_CASTING:
             if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
                 return src_unit == NPY_FR_GENERIC;
             }
@@ -1330,7 +1330,6 @@ can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
 {
     switch (casting) {
         case NPY_UNSAFE_CASTING:
-        case NPY_SAME_VALUE_CASTING:
             return 1;
 
         case NPY_SAME_KIND_CASTING:
@@ -1338,6 +1337,7 @@ can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
                                              casting);
 
         case NPY_SAFE_CASTING:
+        case NPY_SAME_VALUE_CASTING:
             return can_cast_datetime64_units(src_meta->base, dst_meta->base,
                                                              casting) &&
                    datetime_metadata_divides(src_meta, dst_meta, 0);
@@ -1358,7 +1358,6 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
 {
     switch (casting) {
         case NPY_UNSAFE_CASTING:
-        case NPY_SAME_VALUE_CASTING:
             return 1;
 
         case NPY_SAME_KIND_CASTING:
@@ -1366,6 +1365,7 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
                                              casting);
 
         case NPY_SAFE_CASTING:
+        case NPY_SAME_VALUE_CASTING:
             return can_cast_timedelta64_units(src_meta->base, dst_meta->base,
                                                              casting) &&
                    datetime_metadata_divides(src_meta, dst_meta, 1);
@@ -2466,7 +2466,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
      * With unsafe casting, convert unrecognized objects into NaT
      * and with same_kind casting, convert None into NaT
      */
-    if (casting == NPY_UNSAFE_CASTING || (casting == NPY_SAME_VALUE_CASTING) ||
+    if (casting == NPY_UNSAFE_CASTING ||
             (obj == Py_None && casting == NPY_SAME_KIND_CASTING)) {
         if (meta->base == NPY_FR_ERROR) {
             meta->base = NPY_FR_GENERIC;
@@ -2734,7 +2734,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
      * With unsafe casting, convert unrecognized objects into NaT
      * and with same_kind casting, convert None into NaT
      */
-    if (casting == NPY_UNSAFE_CASTING || (casting == NPY_SAME_VALUE_CASTING) ||
+    if (casting == NPY_UNSAFE_CASTING ||
             (obj == Py_None && casting == NPY_SAME_KIND_CASTING)) {
         if (meta->base == NPY_FR_ERROR) {
             meta->base = NPY_FR_GENERIC;

@@ -39,6 +39,7 @@
 #include "convert_datatype.h"
 #include "common.h"
 #include "numpy/ufuncobject.h"
+#include "dtype_transfer.h"
 
 
 /*
@@ -793,12 +794,10 @@ boundarraymethod__simple_strided_call(
         return NULL;
     }
 
-    PyArrayMethod_Context context = {
-            .caller = NULL,
-            .method = self->method,
-            .descriptors = descrs,
-            .flags = 0,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.method = self->method;
+
     PyArrayMethod_StridedLoop *strided_loop = NULL;
     NpyAuxData *loop_data = NULL;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
@@ -986,3 +985,12 @@ NPY_NO_EXPORT PyTypeObject PyBoundArrayMethod_Type = {
     .tp_methods = boundarraymethod_methods,
     .tp_getset = boundarraymethods_getters,
 };
+
+int HandleArrayMethodError(int result, const char * name , int method_flags)
+{
+    if (result == NPY_SAME_VALUE_FAILURE) {
+        PyErr_Format(PyExc_ValueError, "'same_value' casting failure in %s", name);
+    }
+    return result;
+}
+

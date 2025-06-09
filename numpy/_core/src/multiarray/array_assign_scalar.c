@@ -85,19 +85,22 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
         }
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
+
     if (casting == NPY_SAME_VALUE_CASTING) {
-        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
+        /* cast_info.context.flags |= NPY_SAME_VALUE_CASTING; */
         PyErr_SetString(PyExc_NotImplementedError, "'same_value' casting not implemented yet");
         return -1;
     }
 
     npy_intp strides[2] = {0, dst_strides_it[0]};
 
+    int result = 0;
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
         char *args[2] = {src_data, dst_data};
-        if (cast_info.func(&cast_info.context,
-                args, &shape_it[0], strides, cast_info.auxdata) < 0) {
+        result = cast_info.func(&cast_info.context,
+                args, &shape_it[0], strides, cast_info.auxdata);
+        if (result < 0) {
             goto fail;
         }
     } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord,
@@ -117,6 +120,7 @@ raw_array_assign_scalar(int ndim, npy_intp const *shape,
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
+    HandleArrayMethodError(result, "cast", flags); 
     return -1;
 }
 
@@ -183,12 +187,13 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
         NPY_BEGIN_THREADS_THRESHOLDED(nitems);
     }
     if (casting == NPY_SAME_VALUE_CASTING) {
-        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
+        /* cast_info.context.flags |= NPY_SAME_VALUE_CASTING; */
         PyErr_SetString(PyExc_NotImplementedError, "'same_value' casting not implemented yet");
         return -1;
     }
 
     npy_intp strides[2] = {0, dst_strides_it[0]};
+    int result = 0;
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
@@ -196,10 +201,11 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
         stransfer = (PyArray_MaskedStridedUnaryOp *)cast_info.func;
 
         char *args[2] = {src_data, dst_data};
-        if (stransfer(&cast_info.context,
+        result = stransfer(&cast_info.context,
                 args, &shape_it[0], strides,
                 (npy_bool *)wheremask_data, wheremask_strides_it[0],
-                cast_info.auxdata) < 0) {
+                cast_info.auxdata);
+        if (result < 0) {
             goto fail;
         }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
@@ -221,6 +227,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp const *shape,
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
+    HandleArrayMethodError(result, "cast", flags); 
     return -1;
 }
 

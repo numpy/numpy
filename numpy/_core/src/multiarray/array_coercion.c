@@ -418,9 +418,12 @@ npy_cast_raw_scalar_item(
     char *args[2] = {from_item, to_item};
     const npy_intp strides[2] = {0, 0};
     const npy_intp length = 1;
-    if (cast_info.func(&cast_info.context,
-            args, &length, strides, cast_info.auxdata) < 0) {
+    int result = 0;
+    result = cast_info.func(&cast_info.context,
+            args, &length, strides, cast_info.auxdata);
+    if (result < 0) {
         NPY_cast_info_xfree(&cast_info);
+        HandleArrayMethodError(result, "cast", flags); 
         return -1;
     }
     NPY_cast_info_xfree(&cast_info);

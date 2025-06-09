@@ -132,7 +132,12 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     }
 
     if (same_value_cast) {
+ #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
         cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
+ #else
+        PyErr_SetString(PyExc_NotImplementedError, 
+            "raw_array_assign_array with 'same_value' casting not implemented yet");
+ #endif
     }
 
     /* Ensure number of elements exceeds threshold for threading */
@@ -146,16 +151,14 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
 
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
+    int result = 0;
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         /* Process the innermost dimension */
         char *args[2] = {src_data, dst_data};
-        int result = cast_info.func(&cast_info.context,
+        result = cast_info.func(&cast_info.context,
                                 args, &shape_it[0], strides,
                                 cast_info.auxdata);
         if (result < 0) {
-            if (result == NPY_SAME_VALUE_OVERFLOW) {
-                goto same_value_overflow;
-            }
             goto fail;
         }
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
@@ -173,11 +176,10 @@ raw_array_assign_array(int ndim, npy_intp const *shape,
     }
 
     return 0;
-same_value_overflow:
-    PyErr_SetString(PyExc_ValueError, "overflow in 'same_value' casting");
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
+    HandleArrayMethodError(result, "astype", method_flags); 
     return -1;
 }
 
@@ -246,7 +248,7 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
         return -1;
     }
     if (same_value_cast) {
-        cast_info.context.flags |= NPY_SAME_VALUE_CASTING;
+        /* cast_info.context.flags |= NPY_SAME_VALUE_CASTING; */
         PyErr_SetString(PyExc_NotImplementedError,
             "raw_array_wheremasked_assign_array with 'same_value' casting not implemented yet");
         return -1;
@@ -265,20 +267,18 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
 
     npy_intp strides[2] = {src_strides_it[0], dst_strides_it[0]};
 
+    int result = 0;
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
         PyArray_MaskedStridedUnaryOp *stransfer;
         stransfer = (PyArray_MaskedStridedUnaryOp *)cast_info.func;
 
         /* Process the innermost dimension */
         char *args[2] = {src_data, dst_data};
-        int result = stransfer(&cast_info.context,
+        result = stransfer(&cast_info.context,
                             args, &shape_it[0], strides,
                             (npy_bool *)wheremask_data, wheremask_strides_it[0],
                             cast_info.auxdata);
         if (result < 0) {
-            if (result == NPY_SAME_VALUE_OVERFLOW) {
-                goto same_value_overflow;
-            }
             goto fail;
         }
     } NPY_RAW_ITER_THREE_NEXT(idim, ndim, coord, shape_it,
@@ -295,14 +295,11 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp const *shape,
             return -1;
         }
     }
-
     return 0;
-
-same_value_overflow:
-    PyErr_SetString(PyExc_ValueError, "overflow in 'same_value' casting");
 fail:
     NPY_END_THREADS;
     NPY_cast_info_xfree(&cast_info);
+    HandleArrayMethodError(result, "astype", method_flags); 
     return -1;
 }
 

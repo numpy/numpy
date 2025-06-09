@@ -306,6 +306,7 @@ class TestCasting:
             to_dt = to_dt.values[0]
             cast = get_castingimpl(type(from_dt), type(to_dt))
 
+            print("from_dt", from_dt, "to_dt", to_dt)
             casting, (from_res, to_res), view_off = cast._resolve_descriptors(
                 (from_dt, to_dt))
 
@@ -319,7 +320,9 @@ class TestCasting:
 
             arr1, arr2, values = self.get_data(from_dt, to_dt)
 
+            print("2", arr1, arr2, cast)
             cast._simple_strided_call((arr1, arr2))
+            print("3")
 
             # Check via python list
             assert arr2.tolist() == values
@@ -835,8 +838,9 @@ class TestCasting:
             top2 = np.iinfo(to_dtype).max
         except ValueError:
             top2 = np.finfo(to_dtype).max
-        # No need to test if top2 > top1, since the test will also do the reverse dtype matching.
-        # Catch then warning if the comparison warns, i.e. np.int16(65535) < np.float16(6.55e4)
+        # No need to test if top2 > top1, since the test will also do the
+        # reverse dtype matching. Catch then warning if the comparison warns,
+        # i.e. np.int16(65535) < np.float16(6.55e4)
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always", RuntimeWarning)
             if top2 >= top1:
@@ -856,8 +860,10 @@ class TestCasting:
         unaligned = aligned[1:].view(arr1.dtype)
         unaligned[:] = arr1
         with pytest.raises(ValueError):
-            # Casting float to float with overflow should raise RuntimeWarning (fperror)
-            # Casting float to int with overflow sometimes raises RuntimeWarning (fperror)
+            # Casting float to float with overflow should raise
+            # RuntimeWarning (fperror)
+            # Casting float to int with overflow sometimes raises
+            # RuntimeWarning (fperror)
             # Casting with overflow  and 'same_value', should raise ValueError
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always", RuntimeWarning)

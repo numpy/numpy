@@ -914,7 +914,11 @@ static GCC_CAST_OPT_LEVEL int
 
     /*printf("@prefix@_cast_@name1@_to_@name2@\n");*/
 #if !@is_bool2@
+ #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
     int same_value_casting = ((context->flags & NPY_SAME_VALUE_CASTING) == NPY_SAME_VALUE_CASTING);
+ #else
+    int same_value_casting = 0;
+ #endif
 #endif
 
     while (N--) {
@@ -934,7 +938,7 @@ static GCC_CAST_OPT_LEVEL int
     dst_value[1] = _CONVERT_FN(src_value[1]);
     if (same_value_casting) {
         if ((dst_value[0] != src_value[0]) || (dst_value[1] != src_value[1])){
-            return NPY_SAME_VALUE_OVERFLOW;
+            return NPY_SAME_VALUE_FAILURE;
         }
     }
 #  elif !@aligned@
@@ -944,7 +948,7 @@ static GCC_CAST_OPT_LEVEL int
        dst_value = _CONVERT_FN(src_value[0]);
        if (same_value_casting) {
            if (dst_value != src_value[0]){
-                return NPY_SAME_VALUE_OVERFLOW;
+                return NPY_SAME_VALUE_FAILURE;
             }
        }
 #    endif
@@ -955,7 +959,7 @@ static GCC_CAST_OPT_LEVEL int
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
        if (same_value_casting) {
            if (*(_TYPE2 *)dst != src_value[0]){
-                return NPY_SAME_VALUE_OVERFLOW;
+                return NPY_SAME_VALUE_FAILURE;
             }
        }
 #    endif
@@ -974,7 +978,7 @@ static GCC_CAST_OPT_LEVEL int
 #    else
         if ((@rtype2@)dst_value[0] != *((_TYPE1 *)src)){
 #    endif
-            return NPY_SAME_VALUE_OVERFLOW;
+            return NPY_SAME_VALUE_FAILURE;
         }
     }
 #  elif !@aligned@
@@ -982,11 +986,11 @@ static GCC_CAST_OPT_LEVEL int
 #   if !@is_bool2@
     if (same_value_casting) {
         if (_TO_RTYPE1(src_value) > @type2max@) {
-            return NPY_SAME_VALUE_OVERFLOW;
+            return NPY_SAME_VALUE_FAILURE;
         }
 #       if !@is_unsigned1@
         if (_TO_RTYPE1(src_value) < @type2min@) {
-            return NPY_SAME_VALUE_OVERFLOW;
+            return NPY_SAME_VALUE_FAILURE;
         }
 #       endif
     }
@@ -996,11 +1000,11 @@ static GCC_CAST_OPT_LEVEL int
 #   if !@is_bool2@
     if (same_value_casting) {
         if (_TO_RTYPE1(*((_TYPE1 *)src)) > @type2max@) {
-            return NPY_SAME_VALUE_OVERFLOW;
+            return NPY_SAME_VALUE_FAILURE;
         }
 #       if !@is_unsigned1@
         if (_TO_RTYPE1(*((_TYPE1 *)src)) < @type2min@) {
-            return NPY_SAME_VALUE_OVERFLOW;
+            return NPY_SAME_VALUE_FAILURE;
         }
 #       endif
     }

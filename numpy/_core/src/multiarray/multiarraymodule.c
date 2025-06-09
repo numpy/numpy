@@ -1956,7 +1956,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
     }
     if (casting == NPY_SAME_VALUE_CASTING) {
         PyErr_SetString(PyExc_NotImplementedError,
-            "raw_array_wheremasked_assign_array with 'same_value' casting not implemented yet");
+            "array_copyto with 'same_value' casting not implemented yet");
         goto fail;
     }
 
