@@ -1,3 +1,5 @@
+I'm happy to be making my first edit!
+
 # NumPy SIMD Wrapper for Highway
 
 This directory contains a lightweight C++ wrapper over Google's [Highway](https://github.com/google/highway) SIMD library, designed specifically for NumPy's needs.
@@ -16,7 +18,6 @@ The wrapper consists of two main headers:
 2. `simd.inc.hpp`: Implementation details included by `simd.hpp` multiple times for different namespaces
 
 Additionally, this directory contains legacy C interface files for universal intrinsics (`simd.h` and related files) which are deprecated and should not be used for new code. All new SIMD code should use the Highway wrapper.
-
 
 ## Usage
 
@@ -67,6 +68,7 @@ StoreU(v128, data);
 The wrapper provides type constraints to help with SFINAE (Substitution Failure Is Not An Error) and compile-time type checking:
 
 - `kSupportLane<TLane>`: Determines whether the specified lane type is supported by the SIMD extension.
+
   ```cpp
   // Base template - always defined, even when SIMD is not enabled (for SFINAE)
   template <typename TLane>
@@ -100,25 +102,20 @@ The wrapper provides the following common operations that are used in NumPy:
   - `Zero`: Returns a vector with all lanes set to zero
   - `Set`: Returns a vector with all lanes set to the given value
   - `Undefined`: Returns an uninitialized vector
-  
 - Memory operations:
   - `LoadU`: Unaligned load of a vector from memory
   - `StoreU`: Unaligned store of a vector to memory
-  
 - Vector information:
   - `Lanes`: Returns the number of vector lanes based on the lane type
-  
 - Type conversion:
   - `BitCast`: Reinterprets a vector to a different type without modifying the underlying data
   - `VecFromMask`: Converts a mask to a vector
-  
 - Comparison operations:
   - `Eq`: Element-wise equality comparison
   - `Le`: Element-wise less than or equal comparison
   - `Lt`: Element-wise less than comparison
   - `Gt`: Element-wise greater than comparison
   - `Ge`: Element-wise greater than or equal comparison
-  
 - Arithmetic operations:
   - `Add`: Element-wise addition
   - `Sub`: Element-wise subtraction
@@ -128,7 +125,6 @@ The wrapper provides the following common operations that are used in NumPy:
   - `Max`: Element-wise maximum
   - `Abs`: Element-wise absolute value
   - `Sqrt`: Element-wise square root
-  
 - Logical operations:
   - `And`: Bitwise AND
   - `Or`: Bitwise OR
@@ -142,12 +138,14 @@ Additional Highway operations can be accessed via the `hn` namespace alias insid
 To add more operations from Highway:
 
 1. Import them in the `simd.inc.hpp` file using the `using` directive if they don't require a tag:
+
    ```cpp
    // For operations that don't require a tag
    using hn::FunctionName;
    ```
 
 2. Define wrapper functions for intrinsics that require a class tag:
+
    ```cpp
    // For operations that require a tag
    template <typename TLane>
@@ -157,7 +155,6 @@ To add more operations from Highway:
    ```
 
 3. Add appropriate documentation and SFINAE constraints if needed
-
 
 ## Build Configuration
 
@@ -170,6 +167,7 @@ The SIMD wrapper automatically disables SIMD operations when optimizations are d
 ## Design Notes
 
 1. **Why avoid Highway scalar operations?**
+
    - NumPy already provides kernels for scalar operations
    - Compilers can better optimize standard library implementations
    - Not all Highway intrinsics are fully supported in scalar mode
@@ -178,10 +176,10 @@ The SIMD wrapper automatically disables SIMD operations when optimizations are d
 
 2. **Legacy Universal Intrinsics**
    - The older universal intrinsics C interface (in `simd.h` and accessible via `NPY_SIMD` macros) is deprecated
-   - All new SIMD code should use this Highway-based wrapper (accessible via `NPY_HWY` macros) 
+   - All new SIMD code should use this Highway-based wrapper (accessible via `NPY_HWY` macros)
    - The legacy code is maintained for compatibility but will eventually be removed
-   
 3. **Feature Detection Constants vs. Highway Constants**
+
    - NumPy-specific constants (`NPY_HWY_F16`, `NPY_HWY_F64`, `NPY_HWY_FMA`) provide additional safety beyond raw Highway constants
    - Highway constants (e.g., `HWY_HAVE_FLOAT16`) only check platform capabilities but don't consider NumPy's build configuration
    - Our constants combine both checks:
@@ -199,62 +197,66 @@ The SIMD wrapper automatically disables SIMD operations when optimizations are d
    - Without this additional layer, code might incorrectly try to use SIMD paths in scalar mode
 
 4. **Namespace Design**
+
    - `np::simd`: Maximum width SIMD operations (scalable)
    - `np::simd128`: Fixed 128-bit SIMD operations
    - `hn`: Highway namespace alias (available within the SIMD namespaces)
 
 5. **Why Namespaces and Why Not Just Use Highway Directly?**
+
    - Highway's design uses class tag types as template parameters (e.g., `Vec<ScalableTag<float>>`) when defining vector types
    - Many Highway functions require explicitly passing a tag instance as the first parameter
    - This class tag-based approach increases verbosity and complexity in user code
    - Our wrapper eliminates this by internally managing tags through namespaces, letting users directly use types e.g. `Vec<float>`
    - Simple example with raw Highway:
+
      ```cpp
      // Highway's approach
      float *data = /* ... */;
-     
+
      namespace hn = hwy::HWY_NAMESPACE;
      using namespace hn;
-     
+
      // Full-width operations
      ScalableTag<float> df;  // Create a tag instance
      Vec<decltype(df)> v = LoadU(df, data);  // LoadU requires a tag instance
      StoreU(v, df, data);  // StoreU requires a tag instance
-     
+
      // 128-bit operations
      Full128<float> df128;  // Create a 128-bit tag instance
      Vec<decltype(df128)> v128 = LoadU(df128, data);  // LoadU requires a tag instance
      StoreU(v128, df128, data);  // StoreU requires a tag instance
      ```
-  
+
    - Simple example with our wrapper:
+
      ```cpp
      // Our wrapper approach
      float *data = /* ... */;
-     
+
      // Full-width operations
      using namespace np::simd;
      Vec<float> v = LoadU(data);  // Full-width vector load
      StoreU(v, data);
-     
+
      // 128-bit operations
      using namespace np::simd128;
      Vec<float> v128 = LoadU(data);  // 128-bit vector load
      StoreU(v128, data);
      ```
-   
+
    - The namespaced approach simplifies code, reduces errors, and provides a more intuitive interface
    - It preserves all Highway operations benefits while reducing cognitive overhead
 
-5. **Why Namespaces Are Essential for This Design?**
+6. **Why Namespaces Are Essential for This Design?**
+
    - Namespaces allow us to define different internal tag types (`hn::ScalableTag<TLane>` in `np::simd` vs `hn::Full128<TLane>` in `np::simd128`)
    - This provides a consistent type-based interface (`Vec<float>`) without requiring users to manually create tags
    - Enables using the same function names (like `LoadU`) with different implementations based on SIMD width
    - Without namespaces, we'd have to either reintroduce tags (defeating the purpose of the wrapper) or create different function names for each variant (e.g., `LoadU` vs `LoadU128`)
 
-6. **Template Type Parameters**
+7. **Template Type Parameters**
    - `TLane`: The scalar type for each vector lane (e.g., uint8_t, float, double)
-
 
 ## Requirements
 
