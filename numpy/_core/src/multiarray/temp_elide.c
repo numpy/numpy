@@ -110,6 +110,19 @@ find_addr(void * addresses[], npy_intp naddr, void * addr)
 }
 
 static int
+check_unique_temporary(PyObject *lhs)
+{
+#if PY_VERSION_HEX == 0x030E00A7 && !defined(PYPY_VERSION)
+#error "NumPy is broken on CPython 3.14.0a7, please update to a newer version"
+#elif PY_VERSION_HEX >= 0x030E00B1 && !defined(PYPY_VERSION)
+    // see https://github.com/python/cpython/issues/133164
+    return PyUnstable_Object_IsUniqueReferencedTemporary(lhs);
+#else
+    return 1;
+#endif
+}
+
+static int
 check_callers(int * cannot)
 {
     /*
@@ -295,7 +308,8 @@ can_elide_temp(PyObject *olhs, PyObject *orhs, int *cannot)
             !PyArray_CHKFLAGS(alhs, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(alhs) ||
             PyArray_CHKFLAGS(alhs, NPY_ARRAY_WRITEBACKIFCOPY) ||
-            PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES) {
+            PyArray_NBYTES(alhs) < NPY_MIN_ELIDE_BYTES ||
+            !check_unique_temporary(olhs)) {
         return 0;
     }
     if (PyArray_CheckExact(orhs) ||
@@ -372,7 +386,8 @@ can_elide_temp_unary(PyArrayObject * m1)
             !PyArray_ISNUMBER(m1) ||
             !PyArray_CHKFLAGS(m1, NPY_ARRAY_OWNDATA) ||
             !PyArray_ISWRITEABLE(m1) ||
-            PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES) {
+            PyArray_NBYTES(m1) < NPY_MIN_ELIDE_BYTES ||
+            !check_unique_temporary((PyObject *)m1)) {
         return 0;
     }
     if (check_callers(&cannot)) {

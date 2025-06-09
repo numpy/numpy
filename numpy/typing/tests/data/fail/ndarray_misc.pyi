@@ -16,28 +16,21 @@ AR_b: npt.NDArray[np.bool]
 
 ctypes_obj = AR_f8.ctypes
 
-reveal_type(ctypes_obj.get_data())  # E: has no attribute
-reveal_type(ctypes_obj.get_shape())  # E: has no attribute
-reveal_type(ctypes_obj.get_strides())  # E: has no attribute
-reveal_type(ctypes_obj.get_as_parameter())  # E: has no attribute
+f8.argpartition(0)  # type: ignore[attr-defined]
+f8.diagonal()  # type: ignore[attr-defined]
+f8.dot(1)  # type: ignore[attr-defined]
+f8.nonzero()  # type: ignore[attr-defined]
+f8.partition(0)  # type: ignore[attr-defined]
+f8.put(0, 2)  # type: ignore[attr-defined]
+f8.setfield(2, np.float64)  # type: ignore[attr-defined]
+f8.sort()  # type: ignore[attr-defined]
+f8.trace()  # type: ignore[attr-defined]
 
-f8.argpartition(0)  # E: has no attribute
-f8.diagonal()  # E: has no attribute
-f8.dot(1)  # E: has no attribute
-f8.nonzero()  # E: has no attribute
-f8.partition(0)  # E: has no attribute
-f8.put(0, 2)  # E: has no attribute
-f8.setfield(2, np.float64)  # E: has no attribute
-f8.sort()  # E: has no attribute
-f8.trace()  # E: has no attribute
+AR_M.__complex__()  # type: ignore[misc]
+AR_b.__index__()  # type: ignore[misc]
 
-AR_M.__int__()  # E: Invalid self argument
-AR_M.__float__()  # E: Invalid self argument
-AR_M.__complex__()  # E: Invalid self argument
-AR_b.__index__()  # E: Invalid self argument
+AR_f8[1.5]  # type: ignore[call-overload]
+AR_f8["field_a"]  # type: ignore[call-overload]
+AR_f8[["field_a", "field_b"]]  # type: ignore[index]
 
-AR_f8[1.5]  # E: No overload variant
-AR_f8["field_a"]  # E: No overload variant
-AR_f8[["field_a", "field_b"]]  # E: Invalid index type
-
-AR_f8.__array_finalize__(object())  # E: incompatible type
+AR_f8.__array_finalize__(object())  # type: ignore[arg-type]

@@ -2116,6 +2116,10 @@ arraydescr_subdescr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 NPY_NO_EXPORT PyObject *
 arraydescr_protocol_typestr_get(PyArray_Descr *self, void *NPY_UNUSED(ignored))
 {
+    if (!PyDataType_ISLEGACY(NPY_DTYPE(self))) {
+        return (PyObject *) Py_TYPE(self)->tp_str((PyObject *)self);
+    }
+
     char basic_ = self->kind;
     char endian = self->byteorder;
     int size = self->elsize;

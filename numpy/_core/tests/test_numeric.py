@@ -1,26 +1,34 @@
+import itertools
+import math
+import platform
 import sys
 import warnings
-import itertools
-import platform
-import pytest
-import math
 from decimal import Decimal
 
+import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+from hypothesis.extra import numpy as hynp
+from numpy._core._rational_tests import rational
+
 import numpy as np
-from numpy._core import umath, sctypes
+from numpy import ma
+from numpy._core import sctypes
 from numpy._core.numerictypes import obj2sctype
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_warns, assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
-    )
-from numpy._core._rational_tests import rational
-from numpy import ma
-
-from hypothesis import given, strategies as st
-from hypothesis.extra import numpy as hynp
+    HAS_REFCOUNT,
+    IS_WASM,
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestResize:
@@ -763,10 +771,10 @@ class TestBoolArray:
         for i in list(range(9, 6000, 507)) + [7764, 90021, -10]:
             d = np.array([False] * 100043, dtype=bool)
             d[i] = True
-            assert_(np.any(d), msg="%r" % i)
+            assert_(np.any(d), msg=f"{i!r}")
             e = np.array([True] * 100043, dtype=bool)
             e[i] = False
-            assert_(not np.all(e), msg="%r" % i)
+            assert_(not np.all(e), msg=f"{i!r}")
 
     def test_logical_not_abs(self):
         assert_array_equal(~self.t, self.f)
@@ -962,10 +970,10 @@ class TestFloatExceptions:
         try:
             flop(x, y)
             assert_(False,
-                    "Type %s did not raise fpe error '%s'." % (ftype, fpeerr))
+                    f"Type {ftype} did not raise fpe error '{fpeerr}'.")
         except FloatingPointError as exc:
             assert_(str(exc).find(fpeerr) >= 0,
-                    "Type %s raised wrong fpe error '%s'." % (ftype, exc))
+                    f"Type {ftype} raised wrong fpe error '{exc}'.")
 
     def assert_op_raises_fpe(self, fpeerr, flop, sc1, sc2):
         # Check that fpe exception is raised.
@@ -1145,26 +1153,26 @@ class TestTypes:
         #           shouldn't narrow the float/complex type
         for a in [np.array([True, False]), np.array([-3, 12], dtype=np.int8)]:
             b = 1.234 * a
-            assert_equal(b.dtype, np.dtype('f8'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('f8'), f"array type {a.dtype}")
             b = np.longdouble(1.234) * a
             assert_equal(b.dtype, np.dtype(np.longdouble),
-                         "array type %s" % a.dtype)
+                         f"array type {a.dtype}")
             b = np.float64(1.234) * a
-            assert_equal(b.dtype, np.dtype('f8'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('f8'), f"array type {a.dtype}")
             b = np.float32(1.234) * a
-            assert_equal(b.dtype, np.dtype('f4'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('f4'), f"array type {a.dtype}")
             b = np.float16(1.234) * a
-            assert_equal(b.dtype, np.dtype('f2'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('f2'), f"array type {a.dtype}")
 
             b = 1.234j * a
-            assert_equal(b.dtype, np.dtype('c16'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('c16'), f"array type {a.dtype}")
             b = np.clongdouble(1.234j) * a
             assert_equal(b.dtype, np.dtype(np.clongdouble),
-                         "array type %s" % a.dtype)
+                         f"array type {a.dtype}")
             b = np.complex128(1.234j) * a
-            assert_equal(b.dtype, np.dtype('c16'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('c16'), f"array type {a.dtype}")
             b = np.complex64(1.234j) * a
-            assert_equal(b.dtype, np.dtype('c8'), "array type %s" % a.dtype)
+            assert_equal(b.dtype, np.dtype('c8'), f"array type {a.dtype}")
 
         # The following use-case is problematic, and to resolve its
         # tricky side-effects requires more changes.
@@ -1554,7 +1562,7 @@ class TestFromiter:
         # Raise an exception at the desired index in the iterator.
         for e in range(n):
             if e == eindex:
-                raise NIterError('error at index %s' % eindex)
+                raise NIterError(f'error at index {eindex}')
             yield e
 
     @pytest.mark.parametrize("dtype", [int, object])
@@ -1956,6 +1964,34 @@ class TestNonzero:
         a = np.array([[ThrowsAfter(15)]] * 10)
         assert_raises(ValueError, np.nonzero, a)
 
+    def test_nonzero_byteorder(self):
+        values = [0., -0., 1, float('nan'), 0, 1,
+                  np.float16(0), np.float16(12.3)]
+        expected_values = [0, 0, 1, 1, 0, 1, 0, 1]
+
+        for value, expected in zip(values, expected_values):
+            A = np.array([value])
+            A_byteswapped = (A.view(A.dtype.newbyteorder()).byteswap()).copy()
+
+            assert np.count_nonzero(A) == expected
+            assert np.count_nonzero(A_byteswapped) == expected
+
+    def test_count_nonzero_non_aligned_array(self):
+        # gh-27523
+        b = np.zeros(64 + 1, dtype=np.int8)[1:]
+        b = b.view(int)
+        b[:] = np.arange(b.size)
+        b[::2] = 0
+        assert b.flags.aligned is False
+        assert np.count_nonzero(b) == b.size / 2
+
+        b = np.zeros(64 + 1, dtype=np.float16)[1:]
+        b = b.view(float)
+        b[:] = np.arange(b.size)
+        b[::2] = 0
+        assert b.flags.aligned is False
+        assert np.count_nonzero(b) == b.size / 2
+
 
 class TestIndex:
     def test_boolean(self):
@@ -2061,7 +2097,7 @@ def _test_array_equal_parametrizations():
     yield (e1, e1.copy(), False, True)
     yield (e1, e1.copy(), True, True)
 
-    # Non-nanable – those cannot hold nans
+    # Non-nanable - those cannot hold nans
     a12 = np.array([1, 2])
     a12b = a12.copy()
     a123 = np.array([1, 2, 3])
@@ -2915,10 +2951,10 @@ class TestAllclose:
         np.seterr(**self.olderr)
 
     def tst_allclose(self, x, y):
-        assert_(np.allclose(x, y), "%s and %s not close" % (x, y))
+        assert_(np.allclose(x, y), f"{x} and {y} not close")
 
     def tst_not_allclose(self, x, y):
-        assert_(not np.allclose(x, y), "%s and %s shouldn't be close" % (x, y))
+        assert_(not np.allclose(x, y), f"{x} and {y} shouldn't be close")
 
     def test_ip_allclose(self):
         # Parametric test factory.
@@ -3077,7 +3113,7 @@ class TestIsclose:
         assert not np.isclose(f32, 2, atol=0, rtol=np.float64(below_one / 2))
 
     def tst_all_isclose(self, x, y):
-        assert_(np.all(np.isclose(x, y)), "%s and %s not close" % (x, y))
+        assert_(np.all(np.isclose(x, y)), f"{x} and {y} not close")
 
     def tst_none_isclose(self, x, y):
         msg = "%s and %s shouldn't be close"
@@ -3176,6 +3212,24 @@ class TestIsclose:
         assert np.isclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True).all()
         assert np.allclose(a, a, atol=0, equal_nan=True)
         assert np.allclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True)
+
+    def test_tol_warnings(self):
+        a = np.array([1, 2, 3])
+        b = np.array([np.inf, np.nan, 1])
+
+        for i in b:
+            for j in b:
+                # Making sure that i and j are not both numbers, because that won't create a warning
+                if (i == 1) and (j == 1):
+                    continue
+
+                with warnings.catch_warnings(record=True) as w:
+
+                    warnings.simplefilter("always")
+                    c = np.isclose(a, a, atol=i, rtol=j)
+                    assert len(w) == 1
+                    assert issubclass(w[-1].category, RuntimeWarning)
+                    assert f"One of rtol or atol is not valid, atol: {i}, rtol: {j}" in str(w[-1].message)
 
 
 class TestStdVar:
@@ -4114,10 +4168,10 @@ class TestBroadcast:
                 assert_equal(mit.numiter, j)
 
     def test_broadcast_error_kwargs(self):
-        #gh-13455
+        # gh-13455
         arrs = [np.empty((5, 6, 7))]
         mit = np.broadcast(*arrs)
-        mit2 = np.broadcast(*arrs, **{})
+        mit2 = np.broadcast(*arrs, **{})  # noqa: PIE804
         assert_equal(mit.shape, mit2.shape)
         assert_equal(mit.ndim, mit2.ndim)
         assert_equal(mit.nd, mit2.nd)

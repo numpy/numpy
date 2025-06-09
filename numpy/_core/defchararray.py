@@ -18,23 +18,36 @@ The preferred alias for `defchararray` is `numpy.char`.
 import functools
 
 import numpy as np
-from .._utils import set_module
-from .numerictypes import bytes_, str_, character
-from .numeric import ndarray, array as narray, asarray as asnarray
-from numpy._core.multiarray import compare_chararrays
 from numpy._core import overrides
-from numpy.strings import *
-from numpy.strings import (
-    multiply as strings_multiply,
-    partition as strings_partition,
-    rpartition as strings_rpartition,
+from numpy._core.multiarray import compare_chararrays
+from numpy._core.strings import (
+    _join as join,
+)
+from numpy._core.strings import (
+    _rsplit as rsplit,
 )
 from numpy._core.strings import (
     _split as split,
-    _rsplit as rsplit,
-    _splitlines as splitlines,
-    _join as join,
 )
+from numpy._core.strings import (
+    _splitlines as splitlines,
+)
+from numpy._utils import set_module
+from numpy.strings import *
+from numpy.strings import (
+    multiply as strings_multiply,
+)
+from numpy.strings import (
+    partition as strings_partition,
+)
+from numpy.strings import (
+    rpartition as strings_rpartition,
+)
+
+from .numeric import array as narray
+from .numeric import asarray as asnarray
+from .numeric import ndarray
+from .numerictypes import bytes_, character, str_
 
 __all__ = [
     'equal', 'not_equal', 'greater_equal', 'less_equal',

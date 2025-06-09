@@ -1,9 +1,7 @@
-from typing import Any
+from typing import Any, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 b1_0d: np.ndarray[tuple[()], np.dtype[np.bool]]
 u2_1d: np.ndarray[tuple[int], np.dtype[np.uint16]]
@@ -30,8 +28,15 @@ assert_type(b1_0d.tolist(), bool)
 assert_type(u2_1d.tolist(), list[int])
 assert_type(i4_2d.tolist(), list[list[int]])
 assert_type(f8_3d.tolist(), list[list[list[float]]])
-assert_type(cG_4d.tolist(), complex | list[complex] | list[list[complex]] | list[list[list[Any]]])
-assert_type(i0_nd.tolist(), int | list[int] | list[list[int]] | list[list[list[Any]]])
+assert_type(cG_4d.tolist(), Any)
+assert_type(i0_nd.tolist(), Any)
+
+# regression tests for numpy/numpy#27944
+any_dtype: np.ndarray[Any, Any]
+any_sctype: np.ndarray[Any, Any]
+assert_type(any_dtype.tolist(), Any)
+assert_type(any_sctype.tolist(), Any)
+
 
 # itemset does not return a value
 # tobytes is pretty simple
@@ -54,8 +59,8 @@ assert_type(i4_2d.astype(np.uint16), np.ndarray[tuple[int, int], np.dtype[np.uin
 assert_type(np.astype(i4_2d, np.uint16), np.ndarray[tuple[int, int], np.dtype[np.uint16]])
 assert_type(f8_3d.astype(np.int16), np.ndarray[tuple[int, int, int], np.dtype[np.int16]])
 assert_type(np.astype(f8_3d, np.int16), np.ndarray[tuple[int, int, int], np.dtype[np.int16]])
-assert_type(i4_2d.astype(uncertain_dtype), np.ndarray[tuple[int, int], np.dtype[np.generic[Any]]])
-assert_type(np.astype(i4_2d, uncertain_dtype), np.ndarray[tuple[int, int], np.dtype[Any]])
+assert_type(i4_2d.astype(uncertain_dtype), np.ndarray[tuple[int, int], np.dtype[np.generic]])
+assert_type(np.astype(i4_2d, uncertain_dtype), np.ndarray[tuple[int, int], np.dtype])
 
 # byteswap
 assert_type(i0_nd.byteswap(), npt.NDArray[np.int_])

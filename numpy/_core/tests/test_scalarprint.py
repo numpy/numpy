@@ -1,15 +1,13 @@
 """ Test printing of scalar types.
 
 """
-import code
 import platform
-import pytest
-import sys
 
-from tempfile import TemporaryFile
+import pytest
+
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex, IS_MUSL)
+from numpy.testing import IS_MUSL, assert_, assert_equal, assert_raises
+
 
 class TestRealScalars:
     def test_str(self):
@@ -26,7 +24,7 @@ class TestRealScalars:
 
         for wants, val in zip(wanted, svals):
             for want, styp in zip(wants, styps):
-                msg = 'for str({}({}))'.format(np.dtype(styp).name, repr(val))
+                msg = f'for str({np.dtype(styp).name}({val!r}))'
                 assert_equal(str(styp(val)), want, err_msg=msg)
 
     def test_scalar_cutoffs(self):
@@ -47,6 +45,34 @@ class TestRealScalars:
         check(1e-4)
         check(1e15)
         check(1e16)
+
+    test_cases_gh_28679 = [
+        (np.half, -0.000099, "-9.9e-05"),
+        (np.half, 0.0001, "0.0001"),
+        (np.half, 999, "999.0"),
+        (np.half, -1000, "-1e+03"),
+        (np.single, 0.000099, "9.9e-05"),
+        (np.single, -0.000100001, "-0.000100001"),
+        (np.single, 999999, "999999.0"),
+        (np.single, -1000000, "-1e+06")
+    ]
+
+    @pytest.mark.parametrize("dtype, input_val, expected_str", test_cases_gh_28679)
+    def test_gh_28679(self, dtype, input_val, expected_str):
+        # test cutoff to exponent notation for half and single
+        assert_equal(str(dtype(input_val)), expected_str)
+
+    test_cases_legacy_2_2 = [
+        (np.half(65504), "65500.0"),
+        (np.single(1.e15), "1000000000000000.0"),
+        (np.single(1.e16), "1e+16"),
+    ]
+
+    @pytest.mark.parametrize("input_val, expected_str", test_cases_legacy_2_2)
+    def test_legacy_2_2_mode(self, input_val, expected_str):
+        # test legacy cutoff to exponent notation for half and single
+        with np.printoptions(legacy='2.2'):
+            assert_equal(str(input_val), expected_str)
 
     def test_dragon4(self):
         # these tests are adapted from Ryan Juckett's dragon4 implementation,
@@ -217,21 +243,21 @@ class TestRealScalars:
 
     available_float_dtypes = [np.float16, np.float32, np.float64, np.float128]\
         if hasattr(np, 'float128') else [np.float16, np.float32, np.float64]
-    
+
     @pytest.mark.parametrize("tp", available_float_dtypes)
     def test_dragon4_positional_interface(self, tp):
         # test is flaky for musllinux on np.float128
         if IS_MUSL and tp == np.float128:
             pytest.skip("Skipping flaky test of float128 on musllinux")
-                
+
         fpos = np.format_float_positional
-        
+
         # test padding
         assert_equal(fpos(tp('1.0'), pad_left=4, pad_right=4), "   1.    ")
         assert_equal(fpos(tp('-1.0'), pad_left=4, pad_right=4), "  -1.    ")
         assert_equal(fpos(tp('-10.2'),
                         pad_left=4, pad_right=4), " -10.2   ")
-        
+
         # test fixed (non-unique) mode
         assert_equal(fpos(tp('1.0'), unique=False, precision=4), "1.0000")
 
@@ -240,7 +266,7 @@ class TestRealScalars:
         # test is flaky for musllinux on np.float128
         if IS_MUSL and tp == np.float128:
             pytest.skip("Skipping flaky test of float128 on musllinux")
-                        
+
         fpos = np.format_float_positional
         # test trimming
         # trim of 'k' or '.' only affects non-unique mode, since unique
@@ -265,27 +291,27 @@ class TestRealScalars:
                         "1.2" if tp != np.float16 else "1.2002")
         assert_equal(fpos(tp('1.'), trim='-'), "1")
         assert_equal(fpos(tp('1.001'), precision=1, trim='-'), "1")
-                
+
     @pytest.mark.parametrize("tp", available_float_dtypes)
     @pytest.mark.parametrize("pad_val", [10**5, np.iinfo("int32").max])
     def test_dragon4_positional_interface_overflow(self, tp, pad_val):
         # test is flaky for musllinux on np.float128
         if IS_MUSL and tp == np.float128:
             pytest.skip("Skipping flaky test of float128 on musllinux")
-                
+
         fpos = np.format_float_positional
 
-        #gh-28068            
-        with pytest.raises(RuntimeError, 
-                           match="Float formating result too large"):
+        # gh-28068
+        with pytest.raises(RuntimeError,
+                           match="Float formatting result too large"):
             fpos(tp('1.047'), unique=False, precision=pad_val)
 
-        with pytest.raises(RuntimeError, 
-                           match="Float formating result too large"):
+        with pytest.raises(RuntimeError,
+                           match="Float formatting result too large"):
             fpos(tp('1.047'), precision=2, pad_left=pad_val)
 
-        with pytest.raises(RuntimeError, 
-                           match="Float formating result too large"):
+        with pytest.raises(RuntimeError,
+                           match="Float formatting result too large"):
             fpos(tp('1.047'), precision=2, pad_right=pad_val)
 
     @pytest.mark.parametrize("tp", available_float_dtypes)
@@ -293,7 +319,7 @@ class TestRealScalars:
         # test is flaky for musllinux on np.float128
         if IS_MUSL and tp == np.float128:
             pytest.skip("Skipping flaky test of float128 on musllinux")
-                        
+
         fsci = np.format_float_scientific
 
         # test exp_digits

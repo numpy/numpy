@@ -1,16 +1,23 @@
 """Tests for polynomial module.
 
 """
-from functools import reduce
+import pickle
+from copy import deepcopy
 from fractions import Fraction
+from functools import reduce
+
 import numpy as np
 import numpy.polynomial.polynomial as poly
 import numpy.polynomial.polyutils as pu
-import pickle
-from copy import deepcopy
 from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    assert_array_equal, assert_raises_regex, assert_warns)
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    assert_warns,
+)
 
 
 def trim(x):
@@ -155,10 +162,10 @@ class TestEvaluation:
     y = poly.polyval(x, [1., 2., 3.])
 
     def test_polyval(self):
-        #check empty input
+        # check empty input
         assert_equal(poly.polyval([], [1]).size, 0)
 
-        #check normal input)
+        # check normal input)
         x = np.linspace(-1, 1)
         y = [x**i for i in range(5)]
         for i in range(5):
@@ -169,7 +176,7 @@ class TestEvaluation:
         res = poly.polyval(x, [0, -1, 0, 1])
         assert_almost_equal(res, tgt)
 
-        #check that shape is preserved
+        # check that shape is preserved
         for i in range(3):
             dims = [2] * i
             x = np.zeros(dims)
@@ -177,13 +184,13 @@ class TestEvaluation:
             assert_equal(poly.polyval(x, [1, 0]).shape, dims)
             assert_equal(poly.polyval(x, [1, 0, 0]).shape, dims)
 
-        #check masked arrays are processed correctly
+        # check masked arrays are processed correctly
         mask = [False, True, False]
         mx = np.ma.array([1, 2, 3], mask=mask)
         res = np.polyval([7, 5, 3], mx)
         assert_array_equal(res.mask, mask)
 
-        #check subtypes of ndarray are preserved
+        # check subtypes of ndarray are preserved
         class C(np.ndarray):
             pass
 
@@ -258,16 +265,16 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test exceptions
+        # test exceptions
         assert_raises_regex(ValueError, 'incompatible',
                             poly.polyval2d, x1, x2[:2], self.c2d)
 
-        #test values
+        # test values
         tgt = y1 * y2
         res = poly.polyval2d(x1, x2, self.c2d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = poly.polyval2d(z, z, self.c2d)
         assert_(res.shape == (2, 3))
@@ -276,16 +283,16 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test exceptions
+        # test exceptions
         assert_raises_regex(ValueError, 'incompatible',
                       poly.polyval3d, x1, x2, x3[:2], self.c3d)
 
-        #test values
+        # test values
         tgt = y1 * y2 * y3
         res = poly.polyval3d(x1, x2, x3, self.c3d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = poly.polyval3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
@@ -294,12 +301,12 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test values
+        # test values
         tgt = np.einsum('i,j->ij', y1, y2)
         res = poly.polygrid2d(x1, x2, self.c2d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = poly.polygrid2d(z, z, self.c2d)
         assert_(res.shape == (2, 3) * 2)
@@ -308,12 +315,12 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test values
+        # test values
         tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
         res = poly.polygrid3d(x1, x2, x3, self.c3d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = poly.polygrid3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3) * 3)
@@ -543,6 +550,20 @@ class TestMisc:
             res = poly.polyroots(poly.polyfromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))
 
+        # Testing for larger root values
+        for i in np.logspace(10, 25, num=1000, base=10):
+            tgt = np.array([-1, 1, i])
+            res = poly.polyroots(poly.polyfromroots(tgt))
+            # Adapting the expected precision according to the root value,
+            # to take into account numerical calculation error.
+            assert_almost_equal(res, tgt, 15 - int(np.log10(i)))
+        for i in np.logspace(10, 25, num=1000, base=10):
+            tgt = np.array([-1, 1.01, i])
+            res = poly.polyroots(poly.polyfromroots(tgt))
+            # Adapting the expected precision according to the root value,
+            # to take into account numerical calculation error.
+            assert_almost_equal(res, tgt, 14 - int(np.log10(i)))
+
     def test_polyfit(self):
         def f(x):
             return x * (x - 1) * (x - 2)
@@ -646,3 +667,25 @@ class TestMisc:
 
         arr = np.polydiv(1, np.float32(1))
         assert_equal(arr[0].dtype, np.float64)
+
+class ArrayFunctionInterceptor:
+    def __init__(self):
+        self.called = False
+
+    def __array_function__(self, func, types, args, kwargs):
+        self.called = True
+        return "intercepted"
+
+def test_polyval2d_array_function_hook():
+    x = ArrayFunctionInterceptor()
+    y = ArrayFunctionInterceptor()
+    c = ArrayFunctionInterceptor()
+    result = np.polynomial.polynomial.polyval2d(x, y, c)
+    assert result == "intercepted"
+
+def test_polygrid2d_array_function_hook():
+    x = ArrayFunctionInterceptor()
+    y = ArrayFunctionInterceptor()
+    c = ArrayFunctionInterceptor()
+    result = np.polynomial.polynomial.polygrid2d(x, y, c)
+    assert result == "intercepted"

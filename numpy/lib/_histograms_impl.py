@@ -123,8 +123,9 @@ def _hist_bin_stone(x, range):
     """
     Histogram bin estimator based on minimizing the estimated integrated squared error (ISE).
 
-    The number of bins is chosen by minimizing the estimated ISE against the unknown true distribution.
-    The ISE is estimated using cross-validation and can be regarded as a generalization of Scott's rule.
+    The number of bins is chosen by minimizing the estimated ISE against the unknown
+    true distribution. The ISE is estimated using cross-validation and can be regarded
+    as a generalization of Scott's rule.
     https://en.wikipedia.org/wiki/Histogram#Scott.27s_normal_reference_rule
 
     This paper by Stone appears to be the origination of this rule.
@@ -141,7 +142,7 @@ def _hist_bin_stone(x, range):
     Returns
     -------
     h : An estimate of the optimal bin width for the given data.
-    """
+    """  # noqa: E501
 
     n = x.size
     ptp_x = _ptp(x)
@@ -228,9 +229,10 @@ def _hist_bin_fd(x, range):
 
 def _hist_bin_auto(x, range):
     """
-    Histogram bin estimator that uses the minimum width of the
-    Freedman-Diaconis and Sturges estimators if the FD bin width is non-zero.
-    If the bin width from the FD estimator is 0, the Sturges estimator is used.
+    Histogram bin estimator that uses the minimum width of a relaxed
+    Freedman-Diaconis and Sturges estimators if the FD bin width does
+    not result in a large number of bins. The relaxed Freedman-Diaconis estimator
+    limits the bin width to half the sqrt estimated to avoid small bins.
 
     The FD estimator is usually the most robust method, but its width
     estimate tends to be too large for small `x` and bad for data with limited
@@ -238,18 +240,13 @@ def _hist_bin_auto(x, range):
     and is the default in the R language. This method gives good off-the-shelf
     behaviour.
 
-    If there is limited variance the IQR can be 0, which results in the
-    FD bin width being 0 too. This is not a valid bin width, so
-    ``np.histogram_bin_edges`` chooses 1 bin instead, which may not be optimal.
-    If the IQR is 0, it's unlikely any variance-based estimators will be of
-    use, so we revert to the Sturges estimator, which only uses the size of the
-    dataset in its calculation.
 
     Parameters
     ----------
     x : array_like
         Input data that is to be histogrammed, trimmed to range. May not
         be empty.
+    range : Tuple with range for the histogram
 
     Returns
     -------
@@ -261,12 +258,10 @@ def _hist_bin_auto(x, range):
     """
     fd_bw = _hist_bin_fd(x, range)
     sturges_bw = _hist_bin_sturges(x, range)
-    del range  # unused
-    if fd_bw:
-        return min(fd_bw, sturges_bw)
-    else:
-        # limited variance, so we return a len dependent bw estimator
-        return sturges_bw
+    sqrt_bw = _hist_bin_sqrt(x, range)
+    # heuristic to limit the maximal number of bins
+    fd_bw_corrected = max(fd_bw, sqrt_bw / 2)
+    return min(fd_bw_corrected, sturges_bw)
 
 
 # Private dict initialized at module load time
@@ -286,9 +281,8 @@ def _ravel_and_check_weights(a, weights):
 
     # Ensure that the array is a "subtractable" dtype
     if a.dtype == np.bool:
-        warnings.warn("Converting input from {} to {} for compatibility."
-                      .format(a.dtype, np.uint8),
-                      RuntimeWarning, stacklevel=3)
+        msg = f"Converting input from {a.dtype} to {np.uint8} for compatibility."
+        warnings.warn(msg, RuntimeWarning, stacklevel=3)
         a = a.astype(np.uint8)
 
     if weights is not None:
@@ -313,7 +307,7 @@ def _get_outer_edges(a, range):
                 'max must be larger than min in range parameter.')
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
-                "supplied range of [{}, {}] is not finite".format(first_edge, last_edge))
+                f"supplied range of [{first_edge}, {last_edge}] is not finite")
     elif a.size == 0:
         # handle empty arrays. Can't determine range, so use 0-1.
         first_edge, last_edge = 0, 1
@@ -321,7 +315,7 @@ def _get_outer_edges(a, range):
         first_edge, last_edge = a.min(), a.max()
         if not (np.isfinite(first_edge) and np.isfinite(last_edge)):
             raise ValueError(
-                "autodetected range of [{}, {}] is not finite".format(first_edge, last_edge))
+                f"autodetected range of [{first_edge}, {last_edge}] is not finite")
 
     # expand empty range to avoid divide by zero
     if first_edge == last_edge:
@@ -390,7 +384,7 @@ def _get_bin_edges(a, bins, range, weights):
         # this will replace it with the number of bins calculated
         if bin_name not in _hist_bin_selectors:
             raise ValueError(
-                "{!r} is not a valid estimator for `bins`".format(bin_name))
+                f"{bin_name!r} is not a valid estimator for `bins`")
         if weights is not None:
             raise TypeError("Automated estimation of the number of "
                             "bins is not supported for weighted data")
@@ -412,7 +406,8 @@ def _get_bin_edges(a, bins, range, weights):
             if width:
                 if np.issubdtype(a.dtype, np.integer) and width < 1:
                     width = 1
-                n_equal_bins = int(np.ceil(_unsigned_subtract(last_edge, first_edge) / width))
+                delta = _unsigned_subtract(last_edge, first_edge)
+                n_equal_bins = int(np.ceil(delta / width))
             else:
                 # Width can be zero for some estimators, e.g. FD when
                 # the IQR of the data is zero.
@@ -1018,14 +1013,14 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
         if np.ndim(bins[i]) == 0:
             if bins[i] < 1:
                 raise ValueError(
-                    '`bins[{}]` must be positive, when an integer'.format(i))
+                    f'`bins[{i}]` must be positive, when an integer')
             smin, smax = _get_outer_edges(sample[:, i], range[i])
             try:
                 n = operator.index(bins[i])
 
             except TypeError as e:
                 raise TypeError(
-                    "`bins[{}]` must be an integer, when a scalar".format(i)
+                    f"`bins[{i}]` must be an integer, when a scalar"
                 ) from e
 
             edges[i] = np.linspace(smin, smax, n + 1)
@@ -1033,11 +1028,10 @@ def histogramdd(sample, bins=10, range=None, density=None, weights=None):
             edges[i] = np.asarray(bins[i])
             if np.any(edges[i][:-1] > edges[i][1:]):
                 raise ValueError(
-                    '`bins[{}]` must be monotonically increasing, when an array'
-                    .format(i))
+                    f'`bins[{i}]` must be monotonically increasing, when an array')
         else:
             raise ValueError(
-                '`bins[{}]` must be a scalar or 1d array'.format(i))
+                f'`bins[{i}]` must be a scalar or 1d array')
 
         nbin[i] = len(edges[i]) + 1  # includes an outlier on each end
         dedges[i] = np.diff(edges[i])

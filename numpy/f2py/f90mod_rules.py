@@ -14,14 +14,13 @@ f2py_version = 'See `f2py -v`'
 
 import numpy as np
 
-from . import capi_maps
-from . import func2subr
-from .crackfortran import undo_rmbadname, undo_rmbadname1
+from . import capi_maps, func2subr
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
+from .crackfortran import undo_rmbadname, undo_rmbadname1
 
 options = {}
 
@@ -90,11 +89,11 @@ def buildhooks(pymod):
     fhooks = ['']
 
     def fadd(line, s=fhooks):
-        s[0] = '%s\n      %s' % (s[0], line)
+        s[0] = f'{s[0]}\n      {line}'
     doc = ['']
 
     def dadd(line, s=doc):
-        s[0] = '%s\n%s' % (s[0], line)
+        s[0] = f'{s[0]}\n{line}'
 
     usenames = getuseblocks(pymod)
     for m in findf90modules(pymod):
@@ -112,8 +111,7 @@ def buildhooks(pymod):
             if (n not in notvars and isvariable(var)) and (not l_or(isintent_hide, isprivate)(var)):
                 onlyvars.append(n)
                 mfargs.append(n)
-        outmess('\t\tConstructing F90 module support for "%s"...\n' %
-                (m['name']))
+        outmess(f"\t\tConstructing F90 module support for \"{m['name']}\"...\n")
         if len(onlyvars) == 0 and len(notvars) == 1 and m['name'] in notvars:
             outmess(f"\t\t\tSkipping {m['name']} since there are no public vars/func in this module...\n")
             continue
@@ -122,16 +120,20 @@ def buildhooks(pymod):
         if m['name'] in usenames and containscommon(m):
             outmess(f"\t\t\tSkipping {m['name']} since it is in 'use' and contains a common block...\n")
             continue
+        # skip modules with derived types
+        if m['name'] in usenames and containsderivedtypes(m):
+            outmess(f"\t\t\tSkipping {m['name']} since it is in 'use' and contains a derived type...\n")
+            continue
         if onlyvars:
-            outmess('\t\t  Variables: %s\n' % (' '.join(onlyvars)))
+            outmess(f"\t\t  Variables: {' '.join(onlyvars)}\n")
         chooks = ['']
 
         def cadd(line, s=chooks):
-            s[0] = '%s\n%s' % (s[0], line)
+            s[0] = f'{s[0]}\n{line}'
         ihooks = ['']
 
         def iadd(line, s=ihooks):
-            s[0] = '%s\n%s' % (s[0], line)
+            s[0] = f'{s[0]}\n{line}'
 
         vrd = capi_maps.modsign2map(m)
         cadd('static FortranDataDef f2py_%s_def[] = {' % (m['name']))
@@ -163,29 +165,28 @@ def buildhooks(pymod):
                 note = var['note']
                 if isinstance(note, list):
                     note = '\n'.join(note)
-                dadd('--- %s' % (note))
+                dadd(f'--- {note}')
             if isallocatable(var):
-                fargs.append('f2py_%s_getdims_%s' % (m['name'], n))
+                fargs.append(f"f2py_{m['name']}_getdims_{n}")
                 efargs.append(fargs[-1])
                 sargs.append(
-                    'void (*%s)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)' % (n))
+                    f'void (*{n})(int*,npy_intp*,void(*)(char*,npy_intp*),int*)')
                 sargsp.append('void (*)(int*,npy_intp*,void(*)(char*,npy_intp*),int*)')
-                iadd('\tf2py_%s_def[i_f2py++].func = %s;' % (m['name'], n))
-                fadd('subroutine %s(r,s,f2pysetdata,flag)' % (fargs[-1]))
-                fadd('use %s, only: d => %s\n' %
-                     (m['name'], undo_rmbadname1(n)))
+                iadd(f"\tf2py_{m['name']}_def[i_f2py++].func = {n};")
+                fadd(f'subroutine {fargs[-1]}(r,s,f2pysetdata,flag)')
+                fadd(f"use {m['name']}, only: d => {undo_rmbadname1(n)}\n")
                 fadd('integer flag\n')
                 fhooks[0] = fhooks[0] + fgetdims1
                 dms = range(1, int(dm['rank']) + 1)
                 fadd(' allocate(d(%s))\n' %
                      (','.join(['s(%s)' % i for i in dms])))
                 fhooks[0] = fhooks[0] + use_fgetdims2
-                fadd('end subroutine %s' % (fargs[-1]))
+                fadd(f'end subroutine {fargs[-1]}')
             else:
                 fargs.append(n)
-                sargs.append('char *%s' % (n))
+                sargs.append(f'char *{n}')
                 sargsp.append('char*')
-                iadd('\tf2py_%s_def[i_f2py++].data = %s;' % (m['name'], n))
+                iadd(f"\tf2py_{m['name']}_def[i_f2py++].data = {n};")
         if onlyvars:
             dadd('\\end{description}')
         if hasbody(m):
@@ -194,22 +195,21 @@ def buildhooks(pymod):
                     outmess("f90mod_rules.buildhooks:"
                             f" skipping {b['block']} {b['name']}\n")
                     continue
-                modobjs.append('%s()' % (b['name']))
+                modobjs.append(f"{b['name']}()")
                 b['modulename'] = m['name']
                 api, wrap = rules.buildapi(b)
                 if isfunction(b):
                     fhooks[0] = fhooks[0] + wrap
-                    fargs.append('f2pywrap_%s_%s' % (m['name'], b['name']))
+                    fargs.append(f"f2pywrap_{m['name']}_{b['name']}")
                     ifargs.append(func2subr.createfuncwrapper(b, signature=1))
+                elif wrap:
+                    fhooks[0] = fhooks[0] + wrap
+                    fargs.append(f"f2pywrap_{m['name']}_{b['name']}")
+                    ifargs.append(
+                        func2subr.createsubrwrapper(b, signature=1))
                 else:
-                    if wrap:
-                        fhooks[0] = fhooks[0] + wrap
-                        fargs.append('f2pywrap_%s_%s' % (m['name'], b['name']))
-                        ifargs.append(
-                            func2subr.createsubrwrapper(b, signature=1))
-                    else:
-                        fargs.append(b['name'])
-                        mfargs.append(fargs[-1])
+                    fargs.append(b['name'])
+                    mfargs.append(fargs[-1])
                 api['externroutines'] = []
                 ar = applyrules(api, vrd)
                 ar['docs'] = []
@@ -219,10 +219,9 @@ def buildhooks(pymod):
                       'f2py_rout_#modulename#_%s_%s,'
                       'doc_f2py_rout_#modulename#_%s_%s},')
                      % (b['name'], m['name'], b['name'], m['name'], b['name']))
-                sargs.append('char *%s' % (b['name']))
+                sargs.append(f"char *{b['name']}")
                 sargsp.append('char *')
-                iadd('\tf2py_%s_def[i_f2py++].data = %s;' %
-                     (m['name'], b['name']))
+                iadd(f"\tf2py_{m['name']}_def[i_f2py++].data = {b['name']};")
         cadd('\t{NULL}\n};\n')
         iadd('}')
         ihooks[0] = 'static void f2py_setup_%s(%s) {\n\tint i_f2py=0;%s' % (
@@ -241,26 +240,25 @@ def buildhooks(pymod):
         ret['initf90modhooks'] = ['\tPyDict_SetItemString(d, "%s", PyFortranObject_New(f2py_%s_def,f2py_init_%s));' % (
             m['name'], m['name'], m['name'])] + ret['initf90modhooks']
         fadd('')
-        fadd('subroutine f2pyinit%s(f2pysetupfunc)' % (m['name']))
+        fadd(f"subroutine f2pyinit{m['name']}(f2pysetupfunc)")
         if mfargs:
             for a in undo_rmbadname(mfargs):
-                fadd('use %s, only : %s' % (m['name'], a))
+                fadd(f"use {m['name']}, only : {a}")
         if ifargs:
             fadd(' '.join(['interface'] + ifargs))
             fadd('end interface')
         fadd('external f2pysetupfunc')
         if efargs:
             for a in undo_rmbadname(efargs):
-                fadd('external %s' % (a))
-        fadd('call f2pysetupfunc(%s)' % (','.join(undo_rmbadname(fargs))))
-        fadd('end subroutine f2pyinit%s\n' % (m['name']))
+                fadd(f'external {a}')
+        fadd(f"call f2pysetupfunc({','.join(undo_rmbadname(fargs))})")
+        fadd(f"end subroutine f2pyinit{m['name']}\n")
 
         dadd('\n'.join(ret['latexdoc']).replace(
             r'\subsection{', r'\subsubsection{'))
 
         ret['latexdoc'] = []
-        ret['docs'].append('"\t%s --- %s"' % (m['name'],
-                                              ','.join(undo_rmbadname(modobjs))))
+        ret['docs'].append(f"\"\t{m['name']} --- {','.join(undo_rmbadname(modobjs))}\"")
 
     ret['routine_defs'] = ''
     ret['doc'] = []

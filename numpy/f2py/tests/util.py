@@ -6,23 +6,24 @@ Utility functions for
 - determining paths to tests
 
 """
+import atexit
+import concurrent.futures
+import contextlib
 import glob
 import os
-import sys
-import subprocess
-import tempfile
 import shutil
-import atexit
-import pytest
-import contextlib
-import numpy
-import concurrent.futures
-
-from pathlib import Path
-from numpy._utils import asunicode
-from numpy.testing import temppath, IS_WASM
+import subprocess
+import sys
+import tempfile
 from importlib import import_module
+from pathlib import Path
+
+import pytest
+
+import numpy
+from numpy._utils import asunicode
 from numpy.f2py._backends._meson import MesonBackend
+from numpy.testing import IS_WASM, temppath
 
 #
 # Check if compilers are available at all...
@@ -212,7 +213,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
     f2py_sources = []
     for fn in source_files:
         if not os.path.isfile(fn):
-            raise RuntimeError("%s is not a file" % fn)
+            raise RuntimeError(f"{fn} is not a file")
         dst = os.path.join(d, os.path.basename(fn))
         shutil.copyfile(fn, dst)
         dst_sources.append(dst)
@@ -247,8 +248,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
                              stderr=subprocess.STDOUT)
         out, err = p.communicate()
         if p.returncode != 0:
-            raise RuntimeError("Running f2py failed: %s\n%s" %
-                               (cmd[4:], asunicode(out)))
+            raise RuntimeError(f"Running f2py failed: {cmd[4:]}\n{asunicode(out)}")
     finally:
         os.chdir(cwd)
 
@@ -262,7 +262,7 @@ def build_module(source_files, options=[], skip=[], only=[], module_name=None):
         # need to change to record how big each module is, rather than
         # relying on rebase being able to find that from the files.
         _module_list.extend(
-            glob.glob(os.path.join(d, "{:s}*".format(module_name)))
+            glob.glob(os.path.join(d, f"{module_name:s}*"))
         )
         subprocess.check_call(
             ["/usr/bin/rebase", "--database", "--oblivious", "--verbose"]
@@ -385,7 +385,7 @@ class F2PyTest:
         if self.module is not None:
             return
 
-        codes = self.sources if self.sources else []
+        codes = self.sources or []
         if self.code:
             codes.append(self.suffix)
 

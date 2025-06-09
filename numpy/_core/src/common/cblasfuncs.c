@@ -3,6 +3,7 @@
  * inner product and dot for numpy arrays
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
+#define _UMATHMODULE
 #define _MULTIARRAYMODULE
 
 #define PY_SSIZE_T_CLEAN
@@ -10,6 +11,7 @@
 
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
+#include "numpy/ufuncobject.h"
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
@@ -375,6 +377,8 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
             return PyArray_Return(result);
     }
 
+    npy_clear_floatstatus_barrier((char *) out_buf);
+
     if (ap2shape == _scalar) {
         /*
          * Multiplication by a scalar -- Level 1 BLAS
@@ -689,6 +693,10 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         NPY_END_ALLOW_THREADS;
     }
 
+    int fpes = npy_get_floatstatus_barrier((char *) result);
+    if (fpes && PyUFunc_GiveFloatingpointErrors("dot", fpes) < 0) {
+        goto fail;
+    }
 
     Py_DECREF(ap1);
     Py_DECREF(ap2);

@@ -1,4 +1,3 @@
-# pylint: disable-msg=W0400,W0511,W0611,W0612,W0614,R0201,E1102
 """Tests suite for MaskedArray & subclassing.
 
 :author: Pierre Gerard-Marchant
@@ -6,50 +5,148 @@
 """
 __author__ = "Pierre GF Gerard-Marchant"
 
-import sys
-import warnings
 import copy
-import operator
 import itertools
-import textwrap
+import operator
 import pickle
+import sys
+import textwrap
+import warnings
 from functools import reduce
 
 import pytest
 
 import numpy as np
-import numpy.ma.core
 import numpy._core.fromnumeric as fromnumeric
 import numpy._core.umath as umath
-from numpy.exceptions import AxisError
-from numpy.testing import (
-    assert_raises, assert_warns, suppress_warnings, IS_WASM, temppath
-    )
-from numpy.testing._private.utils import requires_memory
+import numpy.ma.core
 from numpy import ndarray
 from numpy._utils import asbytes
-from numpy.ma.testutils import (
-    assert_, assert_array_equal, assert_equal, assert_almost_equal,
-    assert_equal_records, fail_if_equal, assert_not_equal,
-    assert_mask_equal
-    )
+from numpy.exceptions import AxisError
 from numpy.ma.core import (
-    MAError, MaskError, MaskType, MaskedArray, abs, absolute, add, all,
-    allclose, allequal, alltrue, angle, anom, arange, arccos, arccosh, arctan2,
-    arcsin, arctan, argsort, array, asarray, choose, concatenate,
-    conjugate, cos, cosh, count, default_fill_value, diag, divide, doc_note,
-    empty, empty_like, equal, exp, flatten_mask, filled, fix_invalid,
-    flatten_structured_array, fromflex, getmask, getmaskarray, greater,
-    greater_equal, identity, inner, isMaskedArray, less, less_equal, log,
-    log10, make_mask, make_mask_descr, mask_or, masked, masked_array,
-    masked_equal, masked_greater, masked_greater_equal, masked_inside,
-    masked_less, masked_less_equal, masked_not_equal, masked_outside,
-    masked_print_option, masked_values, masked_where, max, maximum,
-    maximum_fill_value, min, minimum, minimum_fill_value, mod, multiply,
-    mvoid, nomask, not_equal, ones, ones_like, outer, power, product, put,
-    putmask, ravel, repeat, reshape, resize, shape, sin, sinh, sometrue, sort,
-    sqrt, subtract, sum, take, tan, tanh, transpose, where, zeros, zeros_like,
-    )
+    MAError,
+    MaskedArray,
+    MaskError,
+    MaskType,
+    abs,
+    absolute,
+    add,
+    all,
+    allclose,
+    allequal,
+    alltrue,
+    angle,
+    anom,
+    arange,
+    arccos,
+    arccosh,
+    arcsin,
+    arctan,
+    arctan2,
+    argsort,
+    array,
+    asarray,
+    choose,
+    concatenate,
+    conjugate,
+    cos,
+    cosh,
+    count,
+    default_fill_value,
+    diag,
+    divide,
+    empty,
+    empty_like,
+    equal,
+    exp,
+    filled,
+    fix_invalid,
+    flatten_mask,
+    flatten_structured_array,
+    fromflex,
+    getmask,
+    getmaskarray,
+    greater,
+    greater_equal,
+    identity,
+    inner,
+    isMaskedArray,
+    less,
+    less_equal,
+    log,
+    log10,
+    make_mask,
+    make_mask_descr,
+    mask_or,
+    masked,
+    masked_array,
+    masked_equal,
+    masked_greater,
+    masked_greater_equal,
+    masked_inside,
+    masked_less,
+    masked_less_equal,
+    masked_not_equal,
+    masked_outside,
+    masked_print_option,
+    masked_values,
+    masked_where,
+    max,
+    maximum,
+    maximum_fill_value,
+    min,
+    minimum,
+    minimum_fill_value,
+    mod,
+    multiply,
+    mvoid,
+    nomask,
+    not_equal,
+    ones,
+    ones_like,
+    outer,
+    power,
+    product,
+    put,
+    putmask,
+    ravel,
+    repeat,
+    reshape,
+    resize,
+    shape,
+    sin,
+    sinh,
+    sometrue,
+    sort,
+    sqrt,
+    subtract,
+    sum,
+    take,
+    tan,
+    tanh,
+    transpose,
+    where,
+    zeros,
+    zeros_like,
+)
+from numpy.ma.testutils import (
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_equal_records,
+    assert_mask_equal,
+    assert_not_equal,
+    fail_if_equal,
+)
+from numpy.testing import (
+    IS_WASM,
+    assert_raises,
+    assert_warns,
+    suppress_warnings,
+    temppath,
+)
+from numpy.testing._private.utils import requires_memory
 
 pi = np.pi
 
@@ -856,13 +953,13 @@ class TestMaskedArray:
         assert_equal(str(test), control)
 
         # Test 0-d array with multi-dimensional dtype
-        t_2d0 = masked_array(data = (0, [[0.0, 0.0, 0.0],
-                                        [0.0, 0.0, 0.0]],
-                                    0.0),
-                             mask = (False, [[True, False, True],
-                                             [False, False, True]],
-                                     False),
-                             dtype = "int, (2,3)float, float")
+        t_2d0 = masked_array(data=(0, [[0.0, 0.0, 0.0],
+                                       [0.0, 0.0, 0.0]],
+                                   0.0),
+                             mask=(False, [[True, False, True],
+                                           [False, False, True]],
+                                   False),
+                             dtype="int, (2,3)float, float")
         control = "(0, [[--, 0.0, --], [0.0, 0.0, --]], 0.0)"
         assert_equal(str(t_2d0), control)
 
@@ -970,36 +1067,36 @@ class TestMaskedArray:
     def test_mvoid_multidim_print(self):
 
         # regression test for gh-6019
-        t_ma = masked_array(data = [([1, 2, 3],)],
-                            mask = [([False, True, False],)],
-                            fill_value = ([999999, 999999, 999999],),
-                            dtype = [('a', '<i4', (3,))])
+        t_ma = masked_array(data=[([1, 2, 3],)],
+                            mask=[([False, True, False],)],
+                            fill_value=([999999, 999999, 999999],),
+                            dtype=[('a', '<i4', (3,))])
         assert_(str(t_ma[0]) == "([1, --, 3],)")
         assert_(repr(t_ma[0]) == "([1, --, 3],)")
 
         # additional tests with structured arrays
 
-        t_2d = masked_array(data = [([[1, 2], [3, 4]],)],
-                            mask = [([[False, True], [True, False]],)],
-                            dtype = [('a', '<i4', (2, 2))])
+        t_2d = masked_array(data=[([[1, 2], [3, 4]],)],
+                            mask=[([[False, True], [True, False]],)],
+                            dtype=[('a', '<i4', (2, 2))])
         assert_(str(t_2d[0]) == "([[1, --], [--, 4]],)")
         assert_(repr(t_2d[0]) == "([[1, --], [--, 4]],)")
 
-        t_0d = masked_array(data = [(1, 2)],
-                            mask = [(True, False)],
-                            dtype = [('a', '<i4'), ('b', '<i4')])
+        t_0d = masked_array(data=[(1, 2)],
+                            mask=[(True, False)],
+                            dtype=[('a', '<i4'), ('b', '<i4')])
         assert_(str(t_0d[0]) == "(--, 2)")
         assert_(repr(t_0d[0]) == "(--, 2)")
 
-        t_2d = masked_array(data = [([[1, 2], [3, 4]], 1)],
-                            mask = [([[False, True], [True, False]], False)],
-                            dtype = [('a', '<i4', (2, 2)), ('b', float)])
+        t_2d = masked_array(data=[([[1, 2], [3, 4]], 1)],
+                            mask=[([[False, True], [True, False]], False)],
+                            dtype=[('a', '<i4', (2, 2)), ('b', float)])
         assert_(str(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
         assert_(repr(t_2d[0]) == "([[1, --], [--, 4]], 1.0)")
 
         t_ne = masked_array(data=[(1, (1, 1))],
                             mask=[(True, (True, False))],
-                            dtype = [('a', '<i4'), ('b', 'i4,i4')])
+                            dtype=[('a', '<i4'), ('b', 'i4,i4')])
         assert_(str(t_ne[0]) == "(--, (--, 1))")
         assert_(repr(t_ne[0]) == "(--, (--, 1))")
 
@@ -1017,8 +1114,8 @@ class TestMaskedArray:
 
     def test_maskedarray_tofile_raises_notimplementederror(self):
         xm = masked_array([1, 2, 3], mask=[False, True, False])
-        # Test case to check the NotImplementedError. 
-        # It is not implemented at this point of time. We can change this in future 
+        # Test case to check the NotImplementedError.
+        # It is not implemented at this point of time. We can change this in future
         with temppath(suffix='.npy') as path:
             with pytest.raises(NotImplementedError):
                 np.save(path, xm)
@@ -2589,10 +2686,8 @@ class TestUfuncs:
             def __rmul__(self, other):
                 return "Me2rmul"
 
-            def __rdiv__(self, other):
+            def __rtruediv__(self, other):
                 return "Me2rdiv"
-
-            __rtruediv__ = __rdiv__
 
         me_too = MyClass2()
         assert_(a.__mul__(me_too) is NotImplemented)

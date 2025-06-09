@@ -1,15 +1,17 @@
 """Test functions for 1D array set operations.
 
 """
-import numpy as np
-
-from numpy import (
-    ediff1d, intersect1d, setxor1d, union1d, setdiff1d, unique, isin
-    )
-from numpy.exceptions import AxisError
-from numpy.testing import (assert_array_equal, assert_equal,
-                           assert_raises, assert_raises_regex)
 import pytest
+
+import numpy as np
+from numpy import ediff1d, intersect1d, isin, setdiff1d, setxor1d, union1d, unique
+from numpy.exceptions import AxisError
+from numpy.testing import (
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestSetOps:
@@ -170,7 +172,7 @@ class TestSetOps:
         # specifically, raise an appropriate
         # Exception when attempting to append or
         # prepend with an incompatible type
-        msg = 'dtype of `{}` must be compatible'.format(expected)
+        msg = f'dtype of `{expected}` must be compatible'
         with assert_raises_regex(TypeError, msg):
             ediff1d(ary=ary,
                     to_end=append,
@@ -838,14 +840,19 @@ class TestUnique:
 
     @pytest.mark.parametrize("arg", ["return_index", "return_inverse", "return_counts"])
     def test_unsupported_hash_based(self, arg):
-        """Test that hash based unique is not supported when either of
-        return_index, return_inverse, or return_counts is True.
+        """These currently never use the hash-based solution.  However,
+        it seems easier to just allow it.
 
-        This is WIP and the above will gradually be supported in the future.
+        When the hash-based solution is added, this test should fail and be
+        replaced with something more comprehensive.
         """
-        msg = "Currently, `sorted` can only be False"
-        with pytest.raises(ValueError, match=msg):
-            np.unique([1, 1], sorted=False, **{arg: True})
+        a = np.array([1, 5, 2, 3, 4, 8, 199, 1, 3, 5])
+
+        res_not_sorted = np.unique([1, 1], sorted=False, **{arg: True})
+        res_sorted = np.unique([1, 1], sorted=True, **{arg: True})
+        # The following should fail without first sorting `res_not_sorted`.
+        for arr, expected in zip(res_not_sorted, res_sorted):
+            assert_array_equal(arr, expected)
 
     def test_unique_axis_errors(self):
         assert_raises(TypeError, self._run_axis_tests, object)

@@ -3,9 +3,12 @@ import pytest
 import numpy as np
 from numpy._core.multiarray import _vec_string
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises,
-    assert_raises_regex
-    )
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 kw_unicode_true = {'unicode': True}  # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
@@ -379,7 +382,7 @@ class TestMethods:
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
-        assert_(B[0][0] == str(' \\u03a3 ').encode('latin1'))
+        assert_(B[0][0] == ' \\u03a3 '.encode('latin1'))
 
     def test_expandtabs(self):
         T = self.A.expandtabs()
@@ -713,8 +716,8 @@ class TestOperations:
         assert_array_equal(A2, (A % [[1, 2], [3, 4]]))
 
     def test_rmod(self):
-        assert_(("%s" % self.A) == str(self.A))
-        assert_(("%r" % self.A) == repr(self.A))
+        assert_(f"{self.A}" == str(self.A))
+        assert_(f"{self.A!r}" == repr(self.A))
 
         for ob in [42, object()]:
             with assert_raises_regex(

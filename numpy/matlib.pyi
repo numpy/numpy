@@ -2,9 +2,7 @@ from typing import Any, Literal, TypeAlias, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt
-
-# ruff: noqa: F401
-from numpy import (
+from numpy import (  # noqa: F401
     False_,
     ScalarType,
     True_,
@@ -70,6 +68,7 @@ from numpy import (
     bitwise_invert,
     bitwise_left_shift,
     bitwise_not,
+    bitwise_or,
     bitwise_right_shift,
     bitwise_xor,
     blackman,
@@ -89,6 +88,7 @@ from numpy import (
     c_,
     can_cast,
     cbrt,
+    cdouble,
     ceil,
     char,
     character,
@@ -160,6 +160,7 @@ from numpy import (
     expand_dims,
     expm1,
     extract,
+    f2py,
     fabs,
     fft,
     fill_diagonal,
@@ -209,6 +210,7 @@ from numpy import (
     greater_equal,
     half,
     hamming,
+    hanning,
     heaviside,
     histogram,
     histogram2d,
@@ -220,6 +222,7 @@ from numpy import (
     i0,
     iinfo,
     imag,
+    in1d,
     index_exp,
     indices,
     inexact,
@@ -394,7 +397,7 @@ from numpy import (
     roots,
     rot90,
     round,
-    # row_stack,
+    row_stack,
     s_,
     save,
     savetxt,
@@ -425,9 +428,11 @@ from numpy import (
     sort,
     sort_complex,
     spacing,
+    split,
     sqrt,
     square,
     squeeze,
+    stack,
     std,
     str_,
     strings,
@@ -459,6 +464,7 @@ from numpy import (
     trunc,
     typecodes,
     typename,
+    typing,
     ubyte,
     ufunc,
     uint,
@@ -506,8 +512,6 @@ _Matrix: TypeAlias = np.matrix[tuple[int, int], np.dtype[_T]]
 _Order: TypeAlias = Literal["C", "F"]
 
 ###
-
-# ruff: noqa: F811
 
 #
 @overload

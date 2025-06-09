@@ -1,10 +1,8 @@
 from types import EllipsisType
-from typing import Any, Literal
+from typing import Any, Literal, assert_type
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import assert_type
 
 AR_LIKE_b: list[bool]
 AR_LIKE_i: list[int]
@@ -18,28 +16,22 @@ AR_O: npt.NDArray[np.object_]
 assert_type(np.ndenumerate(AR_i8), np.ndenumerate[np.int64])
 assert_type(np.ndenumerate(AR_LIKE_f), np.ndenumerate[np.float64])
 assert_type(np.ndenumerate(AR_LIKE_U), np.ndenumerate[np.str_])
-assert_type(np.ndenumerate(AR_LIKE_O), np.ndenumerate[np.object_])
+assert_type(np.ndenumerate(AR_LIKE_O), np.ndenumerate[Any])
 
-assert_type(np.ndenumerate(AR_i8).iter, np.flatiter[npt.NDArray[np.int64]])
-assert_type(np.ndenumerate(AR_LIKE_f).iter, np.flatiter[npt.NDArray[np.float64]])
-assert_type(np.ndenumerate(AR_LIKE_U).iter, np.flatiter[npt.NDArray[np.str_]])
-assert_type(np.ndenumerate(AR_LIKE_O).iter, np.flatiter[npt.NDArray[np.object_]])
-
-assert_type(next(np.ndenumerate(AR_i8)), tuple[tuple[int, ...], np.int64])
-assert_type(next(np.ndenumerate(AR_LIKE_f)), tuple[tuple[int, ...], np.float64])
-assert_type(next(np.ndenumerate(AR_LIKE_U)), tuple[tuple[int, ...], np.str_])
-# this fails due to an unknown mypy bug
-# assert_type(next(np.ndenumerate(AR_LIKE_O)), tuple[tuple[int, ...], Any])
+assert_type(next(np.ndenumerate(AR_i8)), tuple[tuple[Any, ...], np.int64])
+assert_type(next(np.ndenumerate(AR_LIKE_f)), tuple[tuple[Any, ...], np.float64])
+assert_type(next(np.ndenumerate(AR_LIKE_U)), tuple[tuple[Any, ...], np.str_])
+assert_type(next(np.ndenumerate(AR_LIKE_O)), tuple[tuple[Any, ...], Any])
 
 assert_type(iter(np.ndenumerate(AR_i8)), np.ndenumerate[np.int64])
 assert_type(iter(np.ndenumerate(AR_LIKE_f)), np.ndenumerate[np.float64])
 assert_type(iter(np.ndenumerate(AR_LIKE_U)), np.ndenumerate[np.str_])
-assert_type(iter(np.ndenumerate(AR_LIKE_O)), np.ndenumerate[np.object_])
+assert_type(iter(np.ndenumerate(AR_LIKE_O)), np.ndenumerate[Any])
 
 assert_type(np.ndindex(1, 2, 3), np.ndindex)
 assert_type(np.ndindex((1, 2, 3)), np.ndindex)
 assert_type(iter(np.ndindex(1, 2, 3)), np.ndindex)
-assert_type(next(np.ndindex(1, 2, 3)), tuple[int, ...])
+assert_type(next(np.ndindex(1, 2, 3)), tuple[Any, ...])
 
 assert_type(np.unravel_index([22, 41, 37], (7, 6)), tuple[npt.NDArray[np.intp], ...])
 assert_type(np.unravel_index([31, 41, 13], (7, 6), order="F"), tuple[npt.NDArray[np.intp], ...])

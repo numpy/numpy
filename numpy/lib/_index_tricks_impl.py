@@ -1,20 +1,18 @@
 import functools
-import sys
 import math
+import sys
 import warnings
 
 import numpy as np
-from .._utils import set_module
 import numpy._core.numeric as _nx
+import numpy.matrixlib as matrixlib
+from numpy._core import linspace, overrides
+from numpy._core.multiarray import ravel_multi_index, unravel_index
 from numpy._core.numeric import ScalarType, array
 from numpy._core.numerictypes import issubdtype
-
-import numpy.matrixlib as matrixlib
-from numpy._core.multiarray import ravel_multi_index, unravel_index
-from numpy._core import overrides, linspace
-from numpy.lib.stride_tricks import as_strided
+from numpy._utils import set_module
 from numpy.lib._function_base_impl import diff
-
+from numpy.lib.stride_tricks import as_strided
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -165,7 +163,7 @@ class nd_grid:
                     size.append(int(step))
                 else:
                     size.append(
-                        int(math.ceil((stop - start) / (step * 1.0))))
+                        math.ceil((stop - start) / step))
                 num_list += [start, stop, step]
             typ = _nx.result_type(*num_list)
             if self.sparse:
@@ -331,7 +329,7 @@ class AxisConcatenator:
 
     For detailed documentation on usage, see `r_`.
     """
-    __slots__ = ('axis', 'matrix', 'trans1d', 'ndmin')
+    __slots__ = ('axis', 'matrix', 'ndmin', 'trans1d')
 
     # allow ma.mr_ to override this
     concatenate = staticmethod(_nx.concatenate)
@@ -399,7 +397,7 @@ class AxisConcatenator:
                         continue
                     except Exception as e:
                         raise ValueError(
-                            "unknown special directive {!r}".format(item)
+                            f"unknown special directive {item!r}"
                         ) from e
                 try:
                     axis = int(item)

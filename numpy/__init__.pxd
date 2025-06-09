@@ -60,15 +60,11 @@ cdef extern from "numpy/arrayobject.h":
     ctypedef signed short       npy_int16
     ctypedef signed int         npy_int32
     ctypedef signed long long   npy_int64
-    ctypedef signed long long   npy_int96
-    ctypedef signed long long   npy_int128
 
     ctypedef unsigned char      npy_uint8
     ctypedef unsigned short     npy_uint16
     ctypedef unsigned int       npy_uint32
     ctypedef unsigned long long npy_uint64
-    ctypedef unsigned long long npy_uint96
-    ctypedef unsigned long long npy_uint128
 
     ctypedef float        npy_float32
     ctypedef double       npy_float64
@@ -137,28 +133,21 @@ cdef extern from "numpy/arrayobject.h":
         NPY_INT16
         NPY_INT32
         NPY_INT64
-        NPY_INT128
-        NPY_INT256
         NPY_UINT8
         NPY_UINT16
         NPY_UINT32
         NPY_UINT64
-        NPY_UINT128
-        NPY_UINT256
         NPY_FLOAT16
         NPY_FLOAT32
         NPY_FLOAT64
         NPY_FLOAT80
         NPY_FLOAT96
         NPY_FLOAT128
-        NPY_FLOAT256
-        NPY_COMPLEX32
         NPY_COMPLEX64
         NPY_COMPLEX128
         NPY_COMPLEX160
         NPY_COMPLEX192
         NPY_COMPLEX256
-        NPY_COMPLEX512
 
         NPY_INTP
         NPY_UINTP
@@ -670,15 +659,11 @@ ctypedef npy_int8       int8_t
 ctypedef npy_int16      int16_t
 ctypedef npy_int32      int32_t
 ctypedef npy_int64      int64_t
-#ctypedef npy_int96      int96_t
-#ctypedef npy_int128     int128_t
 
 ctypedef npy_uint8      uint8_t
 ctypedef npy_uint16     uint16_t
 ctypedef npy_uint32     uint32_t
 ctypedef npy_uint64     uint64_t
-#ctypedef npy_uint96     uint96_t
-#ctypedef npy_uint128    uint128_t
 
 ctypedef npy_float32    float32_t
 ctypedef npy_float64    float64_t
@@ -740,6 +725,13 @@ cdef extern from "numpy/ndarraytypes.h":
         int64_t year
         int32_t month, day, hour, min, sec, us, ps, as
 
+    # Iterator API added in v1.6
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
+    # https://github.com/cython/cython/issues/6720
+    ctypedef int (*NpyIter_IterNextFunc "NpyIter_IterNextFunc *")(NpyIter* it) noexcept nogil
+    ctypedef void (*NpyIter_GetMultiIndexFunc "NpyIter_GetMultiIndexFunc *")(NpyIter* it, npy_intp* outcoords) noexcept nogil
 
 cdef extern from "numpy/arrayscalars.h":
 
@@ -997,10 +989,6 @@ cdef inline NPY_DATETIMEUNIT get_datetime64_unit(object obj) nogil:
     return <NPY_DATETIMEUNIT>(<PyDatetimeScalarObject*>obj).obmeta.base
 
 
-# Iterator API added in v1.6
-ctypedef int (*NpyIter_IterNextFunc)(NpyIter* it) noexcept nogil
-ctypedef void (*NpyIter_GetMultiIndexFunc)(NpyIter* it, npy_intp* outcoords) noexcept nogil
-
 cdef extern from "numpy/arrayobject.h":
 
     ctypedef struct NpyIter:
@@ -1118,6 +1106,9 @@ cdef extern from "numpy/arrayobject.h":
                                         npy_intp* outstrides) except NPY_FAIL
     npy_bool NpyIter_IsFirstVisit(NpyIter* it, int iop) nogil
     # functions for iterating an NpyIter object
+    #
+    # These don't match the definition in the C API because Cython can't wrap
+    # function pointers that return functions.
     NpyIter_IterNextFunc* NpyIter_GetIterNext(NpyIter* it, char** errmsg) except NULL
     NpyIter_GetMultiIndexFunc* NpyIter_GetGetMultiIndex(NpyIter* it,
                                                         char** errmsg) except NULL

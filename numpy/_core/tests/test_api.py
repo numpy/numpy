@@ -1,13 +1,18 @@
 import sys
 
+import pytest
+from numpy._core._rational_tests import rational
+
 import numpy as np
 import numpy._core.umath as ncu
-from numpy._core._rational_tests import rational
-import pytest
 from numpy.testing import (
-     assert_, assert_equal, assert_array_equal, assert_raises, assert_warns,
-     HAS_REFCOUNT
-    )
+    HAS_REFCOUNT,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_warns,
+)
 
 
 def test_array_array():
@@ -56,7 +61,7 @@ def test_array_array():
                  np.ones((), dtype=np.float64))
     assert_equal(np.array("1.0").dtype, U3)
     assert_equal(np.array("1.0", dtype=str).dtype, U3)
-    assert_equal(np.array("1.0", dtype=U2), np.array(str("1.")))
+    assert_equal(np.array("1.0", dtype=U2), np.array("1."))
     assert_equal(np.array("1", dtype=U5), np.ones((), dtype=U5))
 
     builtins = getattr(__builtins__, '__dict__', __builtins__)
@@ -82,8 +87,8 @@ def test_array_array():
                  dtype=[('f0', int), ('f1', float), ('f2', str)])
     o = type("o", (object,),
              {"__array_struct__": a.__array_struct__})
-    ## wasn't what I expected... is np.array(o) supposed to equal a ?
-    ## instead we get a array([...], dtype=">V18")
+    # wasn't what I expected... is np.array(o) supposed to equal a ?
+    # instead we get a array([...], dtype=">V18")
     assert_equal(bytes(np.array(o).data), bytes(a.data))
 
     # test array

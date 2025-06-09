@@ -1,8 +1,7 @@
 import os
-import sys
 import subprocess
+import sys
 from argparse import ArgumentParser
-
 
 CWD = os.path.abspath(os.path.dirname(__file__))
 

@@ -7,8 +7,11 @@ import numpy as np
 import numpy.polynomial.laguerre as lag
 from numpy.polynomial.polynomial import polyval
 from numpy.testing import (
-    assert_almost_equal, assert_raises, assert_equal, assert_,
-    )
+    assert_,
+    assert_almost_equal,
+    assert_equal,
+    assert_raises,
+)
 
 L0 = np.array([1]) / 1
 L1 = np.array([1, -1]) / 1
@@ -117,10 +120,10 @@ class TestEvaluation:
     y = polyval(x, [1., 2., 3.])
 
     def test_lagval(self):
-        #check empty input
+        # check empty input
         assert_equal(lag.lagval([], [1]).size, 0)
 
-        #check normal input)
+        # check normal input)
         x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Llist]
         for i in range(7):
@@ -129,7 +132,7 @@ class TestEvaluation:
             res = lag.lagval(x, [0] * i + [1])
             assert_almost_equal(res, tgt, err_msg=msg)
 
-        #check that shape is preserved
+        # check that shape is preserved
         for i in range(3):
             dims = [2] * i
             x = np.zeros(dims)
@@ -141,15 +144,15 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test exceptions
+        # test exceptions
         assert_raises(ValueError, lag.lagval2d, x1, x2[:2], self.c2d)
 
-        #test values
+        # test values
         tgt = y1 * y2
         res = lag.lagval2d(x1, x2, self.c2d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = lag.lagval2d(z, z, self.c2d)
         assert_(res.shape == (2, 3))
@@ -158,15 +161,15 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test exceptions
+        # test exceptions
         assert_raises(ValueError, lag.lagval3d, x1, x2, x3[:2], self.c3d)
 
-        #test values
+        # test values
         tgt = y1 * y2 * y3
         res = lag.lagval3d(x1, x2, x3, self.c3d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = lag.lagval3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
@@ -175,12 +178,12 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test values
+        # test values
         tgt = np.einsum('i,j->ij', y1, y2)
         res = lag.laggrid2d(x1, x2, self.c2d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = lag.laggrid2d(z, z, self.c2d)
         assert_(res.shape == (2, 3) * 2)
@@ -189,12 +192,12 @@ class TestEvaluation:
         x1, x2, x3 = self.x
         y1, y2, y3 = self.y
 
-        #test values
+        # test values
         tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
         res = lag.laggrid3d(x1, x2, x3, self.c3d)
         assert_almost_equal(res, tgt)
 
-        #test shape
+        # test shape
         z = np.ones((2, 3))
         res = lag.laggrid3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3) * 3)

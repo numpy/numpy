@@ -44,15 +44,11 @@ inline bool quickselect_dispatch(T* v, npy_intp num, npy_intp kth)
         using TF = typename np::meta::FixedWidth<T>::Type;
         void (*dispfunc)(TF*, npy_intp, npy_intp) = nullptr;
         if constexpr (sizeof(T) == sizeof(uint16_t)) {
-            #ifndef NPY_DISABLE_OPTIMIZATION
-                #include "x86_simd_qsort_16bit.dispatch.h"
-            #endif
+            #include "x86_simd_qsort_16bit.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
         }
         else if constexpr (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t)) {
-            #ifndef NPY_DISABLE_OPTIMIZATION
-                #include "x86_simd_qsort.dispatch.h"
-            #endif
+            #include "x86_simd_qsort.dispatch.h"
             NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template QSelect, <TF>);
         }
         if (dispfunc) {
@@ -76,9 +72,7 @@ inline bool argquickselect_dispatch(T* v, npy_intp* arg, npy_intp num, npy_intp 
         (std::is_integral_v<T> || std::is_floating_point_v<T>) &&
         (sizeof(T) == sizeof(uint32_t) || sizeof(T) == sizeof(uint64_t))) {
         using TF = typename np::meta::FixedWidth<T>::Type;
-        #ifndef NPY_DISABLE_OPTIMIZATION
-            #include "x86_simd_argsort.dispatch.h"
-        #endif
+        #include "x86_simd_argsort.dispatch.h"
         void (*dispfunc)(TF*, npy_intp*, npy_intp, npy_intp) = nullptr;
         NPY_CPU_DISPATCH_CALL_XB(dispfunc = np::qsort_simd::template ArgQSelect, <TF>);
         if (dispfunc) {

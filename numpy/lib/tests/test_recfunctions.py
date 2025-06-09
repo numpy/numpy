@@ -1,14 +1,27 @@
 
 import numpy as np
 import numpy.ma as ma
+from numpy.lib.recfunctions import (
+    append_fields,
+    apply_along_fields,
+    assign_fields_by_name,
+    drop_fields,
+    find_duplicates,
+    get_fieldstructure,
+    join_by,
+    merge_arrays,
+    recursive_fill_fields,
+    rename_fields,
+    repack_fields,
+    require_fields,
+    stack_arrays,
+    structured_to_unstructured,
+    unstructured_to_structured,
+)
 from numpy.ma.mrecords import MaskedRecords
 from numpy.ma.testutils import assert_equal
 from numpy.testing import assert_, assert_raises
-from numpy.lib.recfunctions import (
-    drop_fields, rename_fields, get_fieldstructure, recursive_fill_fields,
-    find_duplicates, merge_arrays, append_fields, stack_arrays, join_by,
-    repack_fields, unstructured_to_structured, structured_to_unstructured,
-    apply_along_fields, require_fields, assign_fields_by_name)
+
 get_fieldspec = np.lib.recfunctions._get_fieldspec
 get_names = np.lib.recfunctions.get_names
 get_names_flat = np.lib.recfunctions.get_names_flat
@@ -314,7 +327,7 @@ class TestRecFunctions:
             return np.dtype((dt, shape))
 
         def structured(*dts):
-            return np.dtype([('x{}'.format(i), dt) for i, dt in enumerate(dts)])
+            return np.dtype([(f'x{i}', dt) for i, dt in enumerate(dts)])
 
         def inspect(dt, dtype=None):
             arr = np.zeros((), dt)
@@ -511,9 +524,8 @@ class TestMergeArrays:
         assert_equal(test, control)
 
         test = merge_arrays((x, w), flatten=False)
-        controldtype = [('f0', int),
-                                ('f1', [('a', int),
-                                        ('b', [('ba', float), ('bb', int), ('bc', [])])])]
+        f1_descr = [('a', int), ('b', [('ba', float), ('bb', int), ('bc', [])])]
+        controldtype = [('f0', int), ('f1', f1_descr)]
         control = np.array([(1., (1, (2, 3.0, ()))), (2, (4, (5, 6.0, ())))],
                            dtype=controldtype)
         assert_equal(test, control)
@@ -550,7 +562,6 @@ class TestMergeArrays:
         #                   dtype=[('A', '|S3'), ('B', float), ('C', int)])
         #assert_equal(test, control)
 
-        # Hack to avoid pyflakes warnings about unused variables
         merge_arrays((z, np.array([10, 20, 30]).view([('C', int)])))
         np.array([('A', 1., 10), ('B', 2., 20), ('-1', -1, 20)],
                  dtype=[('A', '|S3'), ('B', float), ('C', int)])
@@ -823,7 +834,6 @@ class TestJoinBy:
         #                          ('c', int), ('d', int)])
         #assert_equal(test, control)
 
-        # Hack to avoid pyflakes unused variable warnings
         join_by(('a', 'b'), a, b)
         np.array([(5, 55, 105, 100), (6, 56, 106, 101),
                   (7, 57, 107, 102), (8, 58, 108, 103),

@@ -3,136 +3,82 @@
 #include "simd/simd.h"
 #include "loops_utils.h"
 #include "loops.h"
+#include "simd/simd.hpp"
 #include <hwy/highway.h>
 
 namespace {
 
-namespace hn = hwy::HWY_NAMESPACE;
-
-const hn::ScalableTag<uint8_t>  u8;
-const hn::ScalableTag<int8_t>   s8;
-const hn::ScalableTag<uint16_t> u16;
-const hn::ScalableTag<int16_t>  s16;
-const hn::ScalableTag<uint32_t> u32;
-const hn::ScalableTag<int32_t>  s32;
-const hn::ScalableTag<uint64_t> u64;
-const hn::ScalableTag<int64_t>  s64;
-const hn::ScalableTag<float>    f32;
-const hn::ScalableTag<double>   f64;
-
-using vec_u8  = hn::Vec<decltype(u8)>;
-using vec_s8  = hn::Vec<decltype(s8)>;
-using vec_u16 = hn::Vec<decltype(u16)>;
-using vec_s16 = hn::Vec<decltype(s16)>;
-using vec_u32 = hn::Vec<decltype(u32)>;
-using vec_s32 = hn::Vec<decltype(s32)>;
-using vec_u64 = hn::Vec<decltype(u64)>;
-using vec_s64 = hn::Vec<decltype(s64)>;
-using vec_f32 = hn::Vec<decltype(f32)>;
-using vec_f64 = hn::Vec<decltype(f64)>;
-
-template<typename T>
-struct TagSelector;
-
-template<> struct TagSelector<uint8_t>  { static const auto& value() { return u8;  } };
-template<> struct TagSelector<int8_t>   { static const auto& value() { return s8;  } };
-template<> struct TagSelector<uint16_t> { static const auto& value() { return u16; } };
-template<> struct TagSelector<int16_t>  { static const auto& value() { return s16; } };
-template<> struct TagSelector<uint32_t> { static const auto& value() { return u32; } };
-template<> struct TagSelector<int32_t>  { static const auto& value() { return s32; } };
-template<> struct TagSelector<uint64_t> { static const auto& value() { return u64; } };
-template<> struct TagSelector<int64_t>  { static const auto& value() { return s64; } };
-template<> struct TagSelector<float>    { static const auto& value() { return f32; } };
-template<> struct TagSelector<double>   { static const auto& value() { return f64; } };
-
-template<typename T>
-constexpr const auto& GetTag() {
-    return TagSelector<T>::value();
-}
-
-template <typename T>
-constexpr bool kSupportLane = false;
-
-template <> constexpr bool kSupportLane<uint8_t>  = true;
-template <> constexpr bool kSupportLane<int8_t>   = true;
-template <> constexpr bool kSupportLane<uint16_t> = true;
-template <> constexpr bool kSupportLane<int16_t>  = true;
-template <> constexpr bool kSupportLane<uint32_t> = true;
-template <> constexpr bool kSupportLane<int32_t>  = true;
-template <> constexpr bool kSupportLane<uint64_t> = true;
-template <> constexpr bool kSupportLane<int64_t>  = true;
-template <> constexpr bool kSupportLane<float>    = true;
-template <> constexpr bool kSupportLane<double>   = true;
+using namespace np::simd;
 
 template <typename T>
 struct OpEq {
-#if NPY_SIMD
+#if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &v)
+    HWY_INLINE  auto operator()(const V &v)
     { return v; }
 
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b)
+    HWY_INLINE  auto operator()(const V &a, const V &b)
     { return hn::Eq(a, b); }
 #endif
-    HWY_INLINE HWY_ATTR T operator()(T a)
+    HWY_INLINE  T operator()(T a)
     { return a; }
 
-    HWY_INLINE HWY_ATTR npy_bool operator()(T a, T b)
+    HWY_INLINE  npy_bool operator()(T a, T b)
     { return a == b; }
 };
 
 template <typename T>
 struct OpNe {
-#if NPY_SIMD
+#if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &v)
+    HWY_INLINE  auto operator()(const V &v)
     { return v; }
 
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b)
+    HWY_INLINE  auto operator()(const V &a, const V &b)
     { return hn::Ne(a, b); }
 #endif
-    HWY_INLINE HWY_ATTR T operator()(T a)
+    HWY_INLINE  T operator()(T a)
     { return a; }
 
-    HWY_INLINE HWY_ATTR npy_bool operator()(T a, T b)
+    HWY_INLINE  npy_bool operator()(T a, T b)
     { return a != b; }
 };
 
 template <typename T>
 struct OpLt {
-#if NPY_SIMD
+#if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &v)
+    HWY_INLINE  auto operator()(const V &v)
     { return v; }
 
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b)
+    HWY_INLINE  auto operator()(const V &a, const V &b)
     { return hn::Lt(a, b); }
 #endif
-    HWY_INLINE HWY_ATTR T operator()(T a)
+    HWY_INLINE  T operator()(T a)
     { return a; }
 
-    HWY_INLINE HWY_ATTR npy_bool operator()(T a, T b)
+    HWY_INLINE  npy_bool operator()(T a, T b)
     { return a < b; }
 };
 
 template <typename T>
 struct OpLe {
-#if NPY_SIMD
+#if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &v)
+    HWY_INLINE  auto operator()(const V &v)
     { return v; }
 
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &a, const V &b)
+    HWY_INLINE  auto operator()(const V &a, const V &b)
     { return hn::Le(a, b); }
 #endif
-    HWY_INLINE HWY_ATTR T operator()(T a)
+    HWY_INLINE  T operator()(T a)
     { return a; }
 
-    HWY_INLINE HWY_ATTR npy_bool operator()(T a, T b)
+    HWY_INLINE  npy_bool operator()(T a, T b)
     { return a <= b; }
 };
 
@@ -144,43 +90,43 @@ struct OpGe {};
 
 template <typename T>
 struct OpEqBool {
-#if NPY_SIMD
+#if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &v)
+    HWY_INLINE  auto operator()(const V &v)
     {
-        const auto zero = hn::Set(u8, 0x0);
+        const auto zero = Zero<uint8_t>();
         return hn::Eq(v, zero);
     }
 
     template <typename M, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const M &a, const M &b)
+    HWY_INLINE  auto operator()(const M &a, const M &b)
     { return hn::Not(hn::Xor(a, b)); }
 #endif
-    HWY_INLINE HWY_ATTR bool operator()(T v)
+    HWY_INLINE  bool operator()(T v)
     { return v != 0; }
 
-    HWY_INLINE HWY_ATTR npy_bool operator()(bool a, bool b)
+    HWY_INLINE  npy_bool operator()(bool a, bool b)
     { return a == b; }
 };
 
 template <typename T>
 struct OpNeBool {
-#if NPY_SIMD
+#if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &v)
+    HWY_INLINE  auto operator()(const V &v)
     {
-        const auto zero = hn::Set(u8, 0x0);
+        const auto zero = Zero<uint8_t>();
         return hn::Eq(v, zero);
     }
 
     template <typename M, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const M &a, const M &b)
+    HWY_INLINE  auto operator()(const M &a, const M &b)
     { return hn::Xor(a, b); }
 #endif
-    HWY_INLINE HWY_ATTR bool operator()(T v)
+    HWY_INLINE  bool operator()(T v)
     { return v != 0; }
 
-    HWY_INLINE HWY_ATTR npy_bool operator()(bool a, bool b)
+    HWY_INLINE  npy_bool operator()(bool a, bool b)
     {
         return a != b;
     }
@@ -188,43 +134,43 @@ struct OpNeBool {
 
 template <typename T>
 struct OpLtBool {
-#if NPY_SIMD
+#if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &v)
+    HWY_INLINE  auto operator()(const V &v)
     {
-        const auto zero = hn::Set(u8, 0x0);
+        const auto zero = Zero<uint8_t>();
         return hn::Eq(v, zero);
     }
 
     template <typename M, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const M &a, const M &b)
+    HWY_INLINE  auto operator()(const M &a, const M &b)
     { return hn::AndNot(b, a); }
 #endif
-    HWY_INLINE HWY_ATTR bool operator()(T v)
+    HWY_INLINE  bool operator()(T v)
     { return v != 0; }
 
-    HWY_INLINE HWY_ATTR npy_bool operator()(bool a, bool b)
+    HWY_INLINE  npy_bool operator()(bool a, bool b)
     { return a < b; }
 };
 
 template <typename T>
 struct OpLeBool {
-#if NPY_SIMD
+#if NPY_HWY
     template <typename V, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const V &v)
+    HWY_INLINE  auto operator()(const V &v)
     {
-        const auto zero = hn::Set(u8, 0x0);
+        const auto zero = Zero<uint8_t>();
         return hn::Eq(v, zero);
     }
 
     template <typename M, typename = std::enable_if_t<kSupportLane<T>>>
-    HWY_INLINE HWY_ATTR auto operator()(const M &a, const M &b)
+    HWY_INLINE  auto operator()(const M &a, const M &b)
     { return hn::Or(a, hn::Not(b)); }
 #endif
-    HWY_INLINE HWY_ATTR bool operator()(T v)
+    HWY_INLINE  bool operator()(T v)
     { return v != 0; }
 
-    HWY_INLINE HWY_ATTR npy_bool operator()(bool a, bool b)
+    HWY_INLINE  npy_bool operator()(bool a, bool b)
     { return a <= b; }
 };
 
@@ -234,24 +180,23 @@ struct OpGtBool {};
 template <typename T=uint8_t>
 struct OpGeBool {};
 
-#if !defined(__s390x__) && !defined(__arm__) && !defined(__loongarch64) && !defined(__loongarch64__)
-#if NPY_SIMD
-HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b16(vec_u16 a, vec_u16 b) {
-    return hn::OrderedTruncate2To(u8, a, b);
+#if NPY_HWY
+HWY_INLINE  Vec<uint8_t> simd_pack_b8_b16(Vec<uint16_t> a, Vec<uint16_t> b) {
+    return hn::OrderedDemote2To(_Tag<uint8_t>(), a, b);
 }
 
-HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b32(vec_u32 a, vec_u32 b, vec_u32 c, vec_u32 d) {
-    auto ab = hn::OrderedTruncate2To(u16, a, b);
-    auto cd = hn::OrderedTruncate2To(u16, c, d);
+HWY_INLINE  Vec<uint8_t> simd_pack_b8_b32(Vec<uint32_t> a, Vec<uint32_t> b, Vec<uint32_t> c, Vec<uint32_t> d) {
+    auto ab = hn::OrderedDemote2To(_Tag<uint16_t>(), a, b);
+    auto cd = hn::OrderedDemote2To(_Tag<uint16_t>(), c, d);
     return simd_pack_b8_b16(ab, cd);
 }
 
-HWY_INLINE HWY_ATTR vec_u8 simd_pack_b8_b64(vec_u64 a, vec_u64 b, vec_u64 c, vec_u64 d,
-                                     vec_u64 e, vec_u64 f, vec_u64 g, vec_u64 h) {
-    auto ab = hn::OrderedTruncate2To(u32, a, b);
-    auto cd = hn::OrderedTruncate2To(u32, c, d);
-    auto ef = hn::OrderedTruncate2To(u32, e, f);
-    auto gh = hn::OrderedTruncate2To(u32, g, h);
+HWY_INLINE  Vec<uint8_t> simd_pack_b8_b64(Vec<uint64_t> a, Vec<uint64_t> b, Vec<uint64_t> c, Vec<uint64_t> d,
+                                     Vec<uint64_t> e, Vec<uint64_t> f, Vec<uint64_t> g, Vec<uint64_t> h) {
+    auto ab = hn::OrderedDemote2To(_Tag<uint32_t>(), a, b);
+    auto cd = hn::OrderedDemote2To(_Tag<uint32_t>(), c, d);
+    auto ef = hn::OrderedDemote2To(_Tag<uint32_t>(), e, f);
+    auto gh = hn::OrderedDemote2To(_Tag<uint32_t>(), g, h);
     return simd_pack_b8_b32(ab, cd, ef, gh);
 }
 #endif
@@ -262,80 +207,79 @@ inline void binary(char **args, size_t len)
     OP op;
     const T *src1 = reinterpret_cast<T*>(args[0]);
     const T *src2 = reinterpret_cast<T*>(args[1]);
-    npy_bool *dst  = reinterpret_cast<npy_bool*>(args[2]);
-#if NPY_SIMD
+    npy_bool *dst = reinterpret_cast<npy_bool*>(args[2]);
+#if NPY_HWY
     if constexpr (kSupportLane<T> && sizeof(npy_bool) == sizeof(uint8_t)) {
-        const int vstep = hn::Lanes(u8);
-        const size_t nlanes = hn::Lanes(GetTag<T>());
-        const vec_u8 truemask = hn::Set(u8, 0x1);
-        vec_u8 ret = hn::Undefined(u8);
+        const int vstep = Lanes<uint8_t>();
+        const size_t nlanes = Lanes<T>();
+        const Vec<uint8_t> truemask = Set(uint8_t(0x1));
+        Vec<uint8_t> ret = Undefined<uint8_t>();
 
         for (; len >= vstep; len -= vstep, src1 += vstep, src2 += vstep, dst += vstep) {
-            auto a1 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 0));
-            auto b1 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 0));
+            auto a1 = op(LoadU(src1 + nlanes * 0));
+            auto b1 = op(LoadU(src2 + nlanes * 0));
             auto m1 = op(a1, b1);
-            auto m1_vec = hn::VecFromMask(GetTag<T>(), m1);
+            auto m1_vec = VecFromMask<T>(m1);
             if constexpr (sizeof(T) >= 2) {
-                auto a2 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 1));
-                auto b2 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 1));
+                auto a2 = op(LoadU(src1 + nlanes * 1));
+                auto b2 = op(LoadU(src2 + nlanes * 1));
                 auto m2 = op(a2, b2);
-                auto m2_vec = hn::VecFromMask(GetTag<T>(), m2);
+                auto m2_vec = VecFromMask<T>(m2);
                 if constexpr (sizeof(T) >= 4) {
-                    auto a3 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 2));
-                    auto b3 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 2));
-                    auto a4 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 3));
-                    auto b4 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 3));
+                    auto a3 = op(LoadU(src1 + nlanes * 2));
+                    auto b3 = op(LoadU(src2 + nlanes * 2));
+                    auto a4 = op(LoadU(src1 + nlanes * 3));
+                    auto b4 = op(LoadU(src2 + nlanes * 3));
                     auto m3 = op(a3, b3);
                     auto m4 = op(a4, b4);
-                    auto m3_vec = hn::VecFromMask(GetTag<T>(), m3);
-                    auto m4_vec = hn::VecFromMask(GetTag<T>(), m4);
+                    auto m3_vec = VecFromMask<T>(m3);
+                    auto m4_vec = VecFromMask<T>(m4);
                     if constexpr (sizeof(T) == 8) {
-                        auto a5 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 4));
-                        auto b5 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 4));
-                        auto a6 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 5));
-                        auto b6 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 5));
-                        auto a7 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 6));
-                        auto b7 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 6));
-                        auto a8 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 7));
-                        auto b8 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 7));
+                        auto a5 = op(LoadU(src1 + nlanes * 4));
+                        auto b5 = op(LoadU(src2 + nlanes * 4));
+                        auto a6 = op(LoadU(src1 + nlanes * 5));
+                        auto b6 = op(LoadU(src2 + nlanes * 5));
+                        auto a7 = op(LoadU(src1 + nlanes * 6));
+                        auto b7 = op(LoadU(src2 + nlanes * 6));
+                        auto a8 = op(LoadU(src1 + nlanes * 7));
+                        auto b8 = op(LoadU(src2 + nlanes * 7));
                         auto m5 = op(a5, b5);
                         auto m6 = op(a6, b6);
                         auto m7 = op(a7, b7);
                         auto m8 = op(a8, b8);
-                        auto m5_vec = hn::VecFromMask(GetTag<T>(), m5);
-                        auto m6_vec = hn::VecFromMask(GetTag<T>(), m6);
-                        auto m7_vec = hn::VecFromMask(GetTag<T>(), m7);
-                        auto m8_vec = hn::VecFromMask(GetTag<T>(), m8);
+                        auto m5_vec = VecFromMask<T>(m5);
+                        auto m6_vec = VecFromMask<T>(m6);
+                        auto m7_vec = VecFromMask<T>(m7);
+                        auto m8_vec = VecFromMask<T>(m8);
                         ret = simd_pack_b8_b64(
-                            hn::BitCast(u64, m1_vec),
-                            hn::BitCast(u64, m2_vec),
-                            hn::BitCast(u64, m3_vec),
-                            hn::BitCast(u64, m4_vec),
-                            hn::BitCast(u64, m5_vec),
-                            hn::BitCast(u64, m6_vec),
-                            hn::BitCast(u64, m7_vec),
-                            hn::BitCast(u64, m8_vec)
+                            BitCast<uint64_t>(m1_vec),
+                            BitCast<uint64_t>(m2_vec),
+                            BitCast<uint64_t>(m3_vec),
+                            BitCast<uint64_t>(m4_vec),
+                            BitCast<uint64_t>(m5_vec),
+                            BitCast<uint64_t>(m6_vec),
+                            BitCast<uint64_t>(m7_vec),
+                            BitCast<uint64_t>(m8_vec)
                         );
                     }
                     else {
                         ret = simd_pack_b8_b32(
-                            hn::BitCast(u32, m1_vec),
-                            hn::BitCast(u32, m2_vec),
-                            hn::BitCast(u32, m3_vec),
-                            hn::BitCast(u32, m4_vec)
+                            BitCast<uint32_t>(m1_vec),
+                            BitCast<uint32_t>(m2_vec),
+                            BitCast<uint32_t>(m3_vec),
+                            BitCast<uint32_t>(m4_vec)
                         );
                     }
                 }
                 else {
-                    ret = simd_pack_b8_b16(hn::BitCast(u16, m1_vec), hn::BitCast(u16, m2_vec));
+                    ret = simd_pack_b8_b16(BitCast<uint16_t>(m1_vec), BitCast<uint16_t>(m2_vec));
                 }
             }
             else {
-                ret = hn::BitCast(u8, m1_vec);
+                ret = BitCast<uint8_t>(m1_vec);
             }
-            hn::StoreU(hn::And(ret, truemask), u8, dst);
+            StoreU(And(ret, truemask), dst);
         }
-        npyv_cleanup();
     }
 #endif
     for (; len > 0; --len, ++src1, ++src2, ++dst) {
@@ -351,73 +295,72 @@ inline void binary_scalar1(char **args, size_t len)
     OP op;
     const T *src1 = reinterpret_cast<T*>(args[0]);
     const T *src2 = reinterpret_cast<T*>(args[1]);
-    npy_bool *dst  = reinterpret_cast<npy_bool*>(args[2]);
-#if NPY_SIMD
+    npy_bool *dst = reinterpret_cast<npy_bool*>(args[2]);
+#if NPY_HWY
     if constexpr (kSupportLane<T> && sizeof(npy_bool) == sizeof(uint8_t)) {
-        const int vstep = hn::Lanes(u8);
-        const size_t nlanes = hn::Lanes(GetTag<T>());
-        const vec_u8 truemask = hn::Set(u8, 0x1);
-        const auto a1  = op(hn::Set(GetTag<T>(), *src1));
-        vec_u8 ret = hn::Undefined(u8);
+        const int vstep = Lanes<uint8_t>();
+        const size_t nlanes = Lanes<T>();
+        const Vec<uint8_t> truemask = Set(uint8_t(0x1));
+        const auto a1 = op(Set(T(*src1) ));
+        Vec<uint8_t> ret = Undefined<uint8_t>();
 
         for (; len >= vstep; len -= vstep, src2 += vstep, dst += vstep) {
-            auto b1 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 0));
+            auto b1 = op(LoadU(src2 + nlanes * 0));
             auto m1 = op(a1, b1);
-            auto m1_vec = hn::VecFromMask(GetTag<T>(), m1);
+            auto m1_vec = VecFromMask<T>(m1);
             if constexpr (sizeof(T) >= 2) {
-                auto b2 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 1));
+                auto b2 = op(LoadU(src2 + nlanes * 1));
                 auto m2 = op(a1, b2);
-                auto m2_vec = hn::VecFromMask(GetTag<T>(), m2);
+                auto m2_vec = VecFromMask<T>(m2);
                 if constexpr (sizeof(T) >= 4) {
-                    auto b3 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 2));
-                    auto b4 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 3));
+                    auto b3 = op(LoadU(src2 + nlanes * 2));
+                    auto b4 = op(LoadU(src2 + nlanes * 3));
                     auto m3 = op(a1, b3);
                     auto m4 = op(a1, b4);
-                    auto m3_vec = hn::VecFromMask(GetTag<T>(), m3);
-                    auto m4_vec = hn::VecFromMask(GetTag<T>(), m4);
+                    auto m3_vec = VecFromMask<T>(m3);
+                    auto m4_vec = VecFromMask<T>(m4);
                     if constexpr (sizeof(T) == 8) {
-                        auto b5 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 4));
-                        auto b6 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 5));
-                        auto b7 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 6));
-                        auto b8 = op(hn::LoadU(GetTag<T>(), src2 + nlanes * 7));
+                        auto b5 = op(LoadU(src2 + nlanes * 4));
+                        auto b6 = op(LoadU(src2 + nlanes * 5));
+                        auto b7 = op(LoadU(src2 + nlanes * 6));
+                        auto b8 = op(LoadU(src2 + nlanes * 7));
                         auto m5 = op(a1, b5);
                         auto m6 = op(a1, b6);
                         auto m7 = op(a1, b7);
                         auto m8 = op(a1, b8);
-                        auto m5_vec = hn::VecFromMask(GetTag<T>(), m5);
-                        auto m6_vec = hn::VecFromMask(GetTag<T>(), m6);
-                        auto m7_vec = hn::VecFromMask(GetTag<T>(), m7);
-                        auto m8_vec = hn::VecFromMask(GetTag<T>(), m8);
+                        auto m5_vec = VecFromMask<T>(m5);
+                        auto m6_vec = VecFromMask<T>(m6);
+                        auto m7_vec = VecFromMask<T>(m7);
+                        auto m8_vec = VecFromMask<T>(m8);
                         ret = simd_pack_b8_b64(
-                            hn::BitCast(u64, m1_vec),
-                            hn::BitCast(u64, m2_vec),
-                            hn::BitCast(u64, m3_vec),
-                            hn::BitCast(u64, m4_vec),
-                            hn::BitCast(u64, m5_vec),
-                            hn::BitCast(u64, m6_vec),
-                            hn::BitCast(u64, m7_vec),
-                            hn::BitCast(u64, m8_vec)
+                            BitCast<uint64_t>(m1_vec),
+                            BitCast<uint64_t>(m2_vec),
+                            BitCast<uint64_t>(m3_vec),
+                            BitCast<uint64_t>(m4_vec),
+                            BitCast<uint64_t>(m5_vec),
+                            BitCast<uint64_t>(m6_vec),
+                            BitCast<uint64_t>(m7_vec),
+                            BitCast<uint64_t>(m8_vec)
                         );
                     }
                     else {
                         ret = simd_pack_b8_b32(
-                            hn::BitCast(u32, m1_vec),
-                            hn::BitCast(u32, m2_vec),
-                            hn::BitCast(u32, m3_vec),
-                            hn::BitCast(u32, m4_vec)
+                            BitCast<uint32_t>(m1_vec),
+                            BitCast<uint32_t>(m2_vec),
+                            BitCast<uint32_t>(m3_vec),
+                            BitCast<uint32_t>(m4_vec)
                         );
                     }
                 }
                 else {
-                    ret = simd_pack_b8_b16(hn::BitCast(u16, m1_vec), hn::BitCast(u16, m2_vec));
+                    ret = simd_pack_b8_b16(BitCast<uint16_t>(m1_vec), BitCast<uint16_t>(m2_vec));
                 }
             }
             else {
-                ret = hn::BitCast(u8, m1_vec);
+                ret = BitCast<uint8_t>(m1_vec);
             }
-            hn::StoreU(hn::And(ret, truemask), u8, dst);
+            StoreU(And(ret, truemask), dst);
         }
-        npyv_cleanup();
     }
 #endif
     const auto a = op(*src1);
@@ -434,72 +377,71 @@ inline void binary_scalar2(char **args, size_t len)
     const T *src1 = reinterpret_cast<T*>(args[0]);
     const T *src2 = reinterpret_cast<T*>(args[1]);
     npy_bool *dst  = reinterpret_cast<npy_bool*>(args[2]);
-#if NPY_SIMD
+#if NPY_HWY
     if constexpr (kSupportLane<T> && sizeof(npy_bool) == sizeof(uint8_t)) {
-        const int vstep = hn::Lanes(u8);
-        const size_t nlanes = hn::Lanes(GetTag<T>());
-        const vec_u8 truemask = hn::Set(u8, 0x1);
-        const auto b1  = op(hn::Set(GetTag<T>(), *src2));
-        vec_u8 ret = hn::Undefined(u8);
+        const int vstep = Lanes<uint8_t>();
+        const size_t nlanes = Lanes<T>();
+        const Vec<uint8_t> truemask = Set(uint8_t(0x1));
+        const auto b1 = op(Set(T(*src2) ));
+        Vec<uint8_t> ret = Undefined<uint8_t>();
 
         for (; len >= vstep; len -= vstep, src1 += vstep, dst += vstep) {
-            auto a1 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 0));
+            auto a1 = op(LoadU(src1 + nlanes * 0));
             auto m1 = op(a1, b1);
-            auto m1_vec = hn::VecFromMask(GetTag<T>(), m1);
+            auto m1_vec = VecFromMask<T>(m1);
             if constexpr (sizeof(T) >= 2) {
-                auto a2 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 1));
+                auto a2 = op(LoadU(src1 + nlanes * 1));
                 auto m2 = op(a2, b1);
-                auto m2_vec = hn::VecFromMask(GetTag<T>(), m2);
+                auto m2_vec = VecFromMask<T>(m2);
                 if constexpr (sizeof(T) >= 4) {
-                    auto a3 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 2));
-                    auto a4 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 3));
+                    auto a3 = op(LoadU(src1 + nlanes * 2));
+                    auto a4 = op(LoadU(src1 + nlanes * 3));
                     auto m3 = op(a3, b1);
                     auto m4 = op(a4, b1);
-                    auto m3_vec = hn::VecFromMask(GetTag<T>(), m3);
-                    auto m4_vec = hn::VecFromMask(GetTag<T>(), m4);
+                    auto m3_vec = VecFromMask<T>(m3);
+                    auto m4_vec = VecFromMask<T>(m4);
                     if constexpr (sizeof(T) == 8) {
-                        auto a5 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 4));
-                        auto a6 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 5));
-                        auto a7 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 6));
-                        auto a8 = op(hn::LoadU(GetTag<T>(), src1 + nlanes * 7));
+                        auto a5 = op(LoadU(src1 + nlanes * 4));
+                        auto a6 = op(LoadU(src1 + nlanes * 5));
+                        auto a7 = op(LoadU(src1 + nlanes * 6));
+                        auto a8 = op(LoadU(src1 + nlanes * 7));
                         auto m5 = op(a5, b1);
                         auto m6 = op(a6, b1);
                         auto m7 = op(a7, b1);
                         auto m8 = op(a8, b1);
-                        auto m5_vec = hn::VecFromMask(GetTag<T>(), m5);
-                        auto m6_vec = hn::VecFromMask(GetTag<T>(), m6);
-                        auto m7_vec = hn::VecFromMask(GetTag<T>(), m7);
-                        auto m8_vec = hn::VecFromMask(GetTag<T>(), m8);
+                        auto m5_vec = VecFromMask<T>(m5);
+                        auto m6_vec = VecFromMask<T>(m6);
+                        auto m7_vec = VecFromMask<T>(m7);
+                        auto m8_vec = VecFromMask<T>(m8);
                         ret = simd_pack_b8_b64(
-                            hn::BitCast(u64, m1_vec),
-                            hn::BitCast(u64, m2_vec),
-                            hn::BitCast(u64, m3_vec),
-                            hn::BitCast(u64, m4_vec),
-                            hn::BitCast(u64, m5_vec),
-                            hn::BitCast(u64, m6_vec),
-                            hn::BitCast(u64, m7_vec),
-                            hn::BitCast(u64, m8_vec)
+                            BitCast<uint64_t>(m1_vec),
+                            BitCast<uint64_t>(m2_vec),
+                            BitCast<uint64_t>(m3_vec),
+                            BitCast<uint64_t>(m4_vec),
+                            BitCast<uint64_t>(m5_vec),
+                            BitCast<uint64_t>(m6_vec),
+                            BitCast<uint64_t>(m7_vec),
+                            BitCast<uint64_t>(m8_vec)
                         );
                     }
                     else {
                         ret = simd_pack_b8_b32(
-                            hn::BitCast(u32, m1_vec),
-                            hn::BitCast(u32, m2_vec),
-                            hn::BitCast(u32, m3_vec),
-                            hn::BitCast(u32, m4_vec)
+                            BitCast<uint32_t>(m1_vec),
+                            BitCast<uint32_t>(m2_vec),
+                            BitCast<uint32_t>(m3_vec),
+                            BitCast<uint32_t>(m4_vec)
                         );
                     }
                 }
                 else {
-                    ret = simd_pack_b8_b16(hn::BitCast(u16, m1_vec), hn::BitCast(u16, m2_vec));
+                    ret = simd_pack_b8_b16(BitCast<uint16_t>(m1_vec), BitCast<uint16_t>(m2_vec));
                 }
             }
             else {
-                ret = hn::BitCast(u8, m1_vec);
+                ret = BitCast<uint8_t>(m1_vec);
             }
-            hn::StoreU(hn::And(ret, truemask), u8, dst);
+            StoreU(And(ret, truemask), dst);
         }
-        npyv_cleanup();
     }
 #endif
     const auto b = op(*src2);
@@ -508,7 +450,6 @@ inline void binary_scalar2(char **args, size_t len)
         *dst = op(a, b);
     }
 }
-#endif
 
 template <typename T, typename OP>
 static void cmp_binary_branch(char **args, npy_intp const *dimensions, npy_intp const *steps)
@@ -517,10 +458,9 @@ static void cmp_binary_branch(char **args, npy_intp const *dimensions, npy_intp 
     npy_intp is1 = steps[0], is2 = steps[1], os1 = steps[2];
     npy_intp n = dimensions[0];
 
-#if !defined(__s390x__) && !defined(__arm__) && !defined(__loongarch64) && !defined(__loongarch64__)
+#if NPY_HWY
     if (!is_mem_overlap(ip1, is1, op1, os1, n) &&
-        !is_mem_overlap(ip2, is2, op1, os1, n)
-    ) {
+        !is_mem_overlap(ip2, is2, op1, os1, n)) {
         assert(n >= 0);
         size_t len = static_cast<size_t>(n);
         // argument one scalar

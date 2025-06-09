@@ -1,7 +1,9 @@
 import pytest
-from . import util
+
 from numpy.f2py import crackfortran
 from numpy.testing import IS_WASM
+
+from . import util
 
 
 @pytest.mark.skipif(IS_WASM, reason="Cannot start subprocess")

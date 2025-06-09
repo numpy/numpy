@@ -179,7 +179,7 @@ def herme2poly(c):
     array([0.,  1.,  2.,  3.])
 
     """
-    from .polynomial import polyadd, polysub, polymulx
+    from .polynomial import polyadd, polymulx, polysub
 
     [c] = pu.as_series([c])
     n = len(c)

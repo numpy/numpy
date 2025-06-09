@@ -1,24 +1,30 @@
-import sys
-import operator
-import pytest
 import ctypes
 import gc
-import types
-from typing import Any
+import operator
 import pickle
+import random
+import sys
+import types
+from itertools import permutations
+from typing import Any
+
+import hypothesis
+import pytest
+from hypothesis.extra import numpy as hynp
+from numpy._core._multiarray_tests import create_custom_field_dtype
+from numpy._core._rational_tests import rational
 
 import numpy as np
 import numpy.dtypes
-from numpy._core._rational_tests import rational
-from numpy._core._multiarray_tests import create_custom_field_dtype
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_raises, HAS_REFCOUNT,
-    IS_PYSTON)
-from itertools import permutations
-import random
-
-import hypothesis
-from hypothesis.extra import numpy as hynp
+    HAS_REFCOUNT,
+    IS_PYSTON,
+    IS_WASM,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 
 def assert_dtype_equal(a, b):
@@ -742,7 +748,7 @@ class TestSubarray:
         assert_raises(ValueError, np.dtype, [('a', 'f4', (-1, -1))])
 
     def test_alignment(self):
-        #Check that subarrays are aligned
+        # Check that subarrays are aligned
         t1 = np.dtype('(1,)i4', align=True)
         t2 = np.dtype('2i4', align=True)
         assert_equal(t1.alignment, t2.alignment)
@@ -970,6 +976,7 @@ class TestMonsterType:
         assert_dtype_equal(c, d)
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_list_recursion(self):
         l = []
         l.append(('f', l))
@@ -977,6 +984,7 @@ class TestMonsterType:
             np.dtype(l)
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_tuple_recursion(self):
         d = np.int32
         for i in range(100000):
@@ -985,6 +993,7 @@ class TestMonsterType:
             np.dtype(d)
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_dict_recursion(self):
         d = {"names": ['self'], "formats": [None], "offsets": [0]}
         d['formats'][0] = d
@@ -1170,6 +1179,10 @@ class TestString:
         assert_equal(repr(dt), "dtype((numpy.record, [('a', '<u2')]))")
         assert_equal(str(dt), "(numpy.record, [('a', '<u2')])")
         assert_equal(dt.name, 'record16')
+
+    def test_custom_dtype_str(self):
+        dt = np.dtypes.StringDType()
+        assert_equal(dt.str, "StringDType()")
 
 
 class TestDtypeAttributeDeletion:
@@ -1396,10 +1409,10 @@ class TestPickling:
     @pytest.mark.parametrize('unit', ['', 'Y', 'M', 'W', 'D', 'h', 'm', 's',
                                       'ms', 'us', 'ns', 'ps', 'fs', 'as'])
     def test_datetime(self, base, unit):
-        dt = np.dtype('%s[%s]' % (base, unit) if unit else base)
+        dt = np.dtype(f'{base}[{unit}]' if unit else base)
         self.check_pickling(dt)
         if unit:
-            dt = np.dtype('%s[7%s]' % (base, unit))
+            dt = np.dtype(f'{base}[7{unit}]')
             self.check_pickling(dt)
 
     def test_metadata(self):
@@ -1568,6 +1581,7 @@ class TestFromDTypeAttribute:
         assert np.dtype(dt()) == np.float64
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_recursion(self):
         class dt:
             pass
@@ -1592,6 +1606,7 @@ class TestFromDTypeAttribute:
         np.dtype(dt(1))
 
     @pytest.mark.skipif(IS_PYSTON, reason="Pyston disables recursion checking")
+    @pytest.mark.skipif(IS_WASM, reason="Pyodide/WASM has limited stack size")
     def test_void_subtype_recursion(self):
         class vdt(np.void):
             pass
@@ -1615,7 +1630,7 @@ class TestDTypeClasses:
         assert type(dtype) is not np.dtype
         if dtype.type.__name__ != "rational":
             dt_name = type(dtype).__name__.lower().removesuffix("dtype")
-            if dt_name == "uint" or dt_name == "int":
+            if dt_name in {"uint", "int"}:
                 # The scalar names has a `c` attached because "int" is Python
                 # int and that is long...
                 dt_name += "c"
@@ -1917,9 +1932,10 @@ class TestUserDType:
         if HAS_REFCOUNT:
             # Create an array and test that memory gets cleaned up (gh-25949)
             o = object()
+            startcount = sys.getrefcount(o)
             a = np.array([o], dtype=dt)
             del a
-            assert sys.getrefcount(o) == 2
+            assert sys.getrefcount(o) == startcount
 
     def test_custom_structured_dtype_errors(self):
         class mytype:

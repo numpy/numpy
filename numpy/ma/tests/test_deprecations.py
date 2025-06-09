@@ -1,13 +1,16 @@
 """Test deprecation and future warnings.
 
 """
-import pytest
-import numpy as np
-from numpy.testing import assert_warns
-from numpy.ma.testutils import assert_equal
-from numpy.ma.core import MaskedArrayFutureWarning
 import io
 import textwrap
+
+import pytest
+
+import numpy as np
+from numpy.ma.core import MaskedArrayFutureWarning
+from numpy.ma.testutils import assert_equal
+from numpy.testing import assert_warns
+
 
 class TestArgsort:
     """ gh-8701 """

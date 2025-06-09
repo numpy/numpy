@@ -38,7 +38,7 @@ jobs:
         submodules: recursive
         fetch-depth: 0
         persist-credentials: false
-    - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.11'
     - name: Install linter requirements
@@ -58,24 +58,16 @@ jobs:
       MESON_ARGS: "-Dallow-noblas=true -Dcpu-baseline=none -Dcpu-dispatch=none"
     strategy:
       matrix:
-        version: ["3.11", "3.12", "3.13", "3.13t"]
+        version: ["3.11", "3.12", "3.13", "3.14-dev", "3.14t-dev"]
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: astral-sh/setup-uv@f94ec6bedd8674c4426838e6b50417d36b6ab231
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: ${{ matrix.version }}
-        enable-cache: false
-    - run:
-        uv pip install --python=${{ matrix.version }} pip
-    # TODO: remove cython nightly install when cython does a release
-    - name: Install nightly Cython
-      if: matrix.version == '3.13t'
-      run: |
-        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
     - uses: ./.github/meson_actions
 
   pypy:
@@ -88,9 +80,9 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
-        python-version: 'pypy3.11-v7.3.19'
+        python-version: 'pypy3.11-nightly'
     - name: Setup using scipy-openblas
       run: |
         python -m pip install -r requirements/ci_requirements.txt
@@ -137,7 +129,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI
@@ -177,7 +169,7 @@ jobs:
         fetch-tags: true
         persist-credentials: false
 
-    - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.11'
 
@@ -199,6 +191,51 @@ jobs:
       run: |
         spin test -j2 -m full -- --timeout=600 --durations=10
 
+
+  armhf_test:
+    # Tests NumPy on 32-bit ARM hard-float (armhf) via compatibility mode
+    # running on aarch64 (ARM 64-bit) GitHub runners.
+    needs: [smoke_test]
+    if: github.repository == 'numpy/numpy'
+    runs-on: ubuntu-22.04-arm
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: recursive
+        fetch-tags: true
+        persist-credentials: false
+    
+    - name: Creates new container
+      run: |
+        docker run --name the_container --interactive \
+          -v $(pwd):/numpy arm32v7/ubuntu:22.04 /bin/linux32 /bin/bash -c "
+          apt update &&
+          apt install -y ninja-build cmake git python3 python-is-python3 python3-dev python3-pip python3-venv &&
+          python -m pip install -r /numpy/requirements/build_requirements.txt &&
+          python -m pip install -r /numpy/requirements/test_requirements.txt
+        "
+        docker commit the_container the_container
+
+    - name: Meson Build
+      run: |
+        docker run --rm -e "TERM=xterm-256color" \
+          -v $(pwd):/numpy the_container \
+          /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
+            cd /numpy && spin build 
+          '"
+
+    - name: Meson Log
+      if: always()
+      run: 'cat build/meson-logs/meson-log.txt'
+
+    - name: Run Tests
+      run: |
+        docker run --rm -e "TERM=xterm-256color" \
+          -v $(pwd):/numpy the_container \
+          /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
+            cd /numpy && spin test -m full -- --timeout=600 --durations=10
+          '"
+
   benchmark:
     needs: [smoke_test]
     runs-on: ubuntu-latest
@@ -209,7 +246,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.11'
     - name: Install build and benchmarking dependencies
@@ -234,7 +271,7 @@ jobs:
     # - name: Check docstests
     #   shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
     #   run: |
-    #     pip install scipy-doctest==1.6.0 hypothesis==6.104.1 matplotlib scipy pytz pandas
+    #     pip install scipy-doctest>=1.8.0 hypothesis==6.104.1 matplotlib scipy pytz pandas
     #     spin check-docs -v
     #     spin check-tutorials -v
 
@@ -248,7 +285,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.11'
     - name: Install gfortran and setup OpenBLAS (sdist build)
@@ -287,12 +324,12 @@ jobs:
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         repository: data-apis/array-api-tests
-        ref: '827edd804bcace9d64176b8115138d29ae3e8dec'  # Latest commit as of 2024-07-30
+        ref: 'c48410f96fc58e02eea844e6b7f6cc01680f77ce'  # Latest commit as of 2025-04-01
         submodules: 'true'
         path: 'array-api-tests'
         persist-credentials: false
     - name: Set up Python
-      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI
@@ -321,7 +358,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.11'
     - name: Install build and test dependencies from PyPI

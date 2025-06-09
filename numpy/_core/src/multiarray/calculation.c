@@ -308,7 +308,7 @@ PyArray_Ptp(PyArrayObject *ap, int axis, PyArrayObject *out)
 
 
 /*NUMPY_API
- * Set variance to 1 to by-pass square-root calculation and return variance
+ * Set variance to 1 to bypass square-root calculation and return variance
  * Std
  */
 NPY_NO_EXPORT PyObject *

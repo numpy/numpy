@@ -1,45 +1,23 @@
 from collections.abc import Sequence
-from typing import (
-    Any,
-    TypeVar,
-    Generic,
-    overload,
-    Literal,
-    SupportsIndex,
-)
+from typing import Any, ClassVar, Final, Generic, Self, SupportsIndex, final, overload
+from typing import Literal as L
+
+from _typeshed import Incomplete
+from typing_extensions import TypeVar, deprecated
 
 import numpy as np
-from numpy import (
-    # Circumvent a naming conflict with `AxisConcatenator.matrix`
-    matrix as _Matrix,
-    ndenumerate,
-    ndindex,
-    ndarray,
-    dtype,
-    str_,
-    bytes_,
-    int_,
-    float64,
-    complex128,
-)
+from numpy._core.multiarray import ravel_multi_index, unravel_index
 from numpy._typing import (
-    # Arrays
     ArrayLike,
-    _NestedSequence,
-    _FiniteNestedSequence,
     NDArray,
-
-    # DTypes
-    DTypeLike,
+    _AnyShape,
+    _FiniteNestedSequence,
+    _NestedSequence,
+    _SupportsArray,
     _SupportsDType,
-
-    # Shapes
-    _Shape,
 )
 
-from numpy._core.multiarray import unravel_index, ravel_multi_index
-
-__all__ = [
+__all__ = [  # noqa: RUF022
     "ravel_multi_index",
     "unravel_index",
     "mgrid",
@@ -56,114 +34,163 @@ __all__ = [
     "diag_indices_from",
 ]
 
+###
+
 _T = TypeVar("_T")
-_DType = TypeVar("_DType", bound=dtype[Any])
-_BoolType = TypeVar("_BoolType", Literal[True], Literal[False])
-_TupType = TypeVar("_TupType", bound=tuple[Any, ...])
-_ArrayType = TypeVar("_ArrayType", bound=NDArray[Any])
+_TupleT = TypeVar("_TupleT", bound=tuple[Any, ...])
+_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
+_DTypeT = TypeVar("_DTypeT", bound=np.dtype)
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+_ScalarT_co = TypeVar("_ScalarT_co", bound=np.generic, covariant=True)
+_BoolT_co = TypeVar("_BoolT_co", bound=bool, default=bool, covariant=True)
+
+_AxisT_co = TypeVar("_AxisT_co", bound=int, default=L[0], covariant=True)
+_MatrixT_co = TypeVar("_MatrixT_co", bound=bool, default=L[False], covariant=True)
+_NDMinT_co = TypeVar("_NDMinT_co", bound=int, default=L[1], covariant=True)
+_Trans1DT_co = TypeVar("_Trans1DT_co", bound=int, default=L[-1], covariant=True)
+
+###
+
+class ndenumerate(Generic[_ScalarT_co]):
+    @overload
+    def __new__(cls, arr: _FiniteNestedSequence[_SupportsArray[np.dtype[_ScalarT]]]) -> ndenumerate[_ScalarT]: ...
+    @overload
+    def __new__(cls, arr: str | _NestedSequence[str]) -> ndenumerate[np.str_]: ...
+    @overload
+    def __new__(cls, arr: bytes | _NestedSequence[bytes]) -> ndenumerate[np.bytes_]: ...
+    @overload
+    def __new__(cls, arr: bool | _NestedSequence[bool]) -> ndenumerate[np.bool]: ...
+    @overload
+    def __new__(cls, arr: int | _NestedSequence[int]) -> ndenumerate[np.intp]: ...
+    @overload
+    def __new__(cls, arr: float | _NestedSequence[float]) -> ndenumerate[np.float64]: ...
+    @overload
+    def __new__(cls, arr: complex | _NestedSequence[complex]) -> ndenumerate[np.complex128]: ...
+    @overload
+    def __new__(cls, arr: object) -> ndenumerate[Any]: ...
+
+    # The first overload is a (semi-)workaround for a mypy bug (tested with v1.10 and v1.11)
+    @overload
+    def __next__(
+        self: ndenumerate[np.bool | np.number | np.flexible | np.datetime64 | np.timedelta64],
+        /,
+    ) -> tuple[_AnyShape, _ScalarT_co]: ...
+    @overload
+    def __next__(self: ndenumerate[np.object_], /) -> tuple[_AnyShape, Incomplete]: ...
+    @overload
+    def __next__(self, /) -> tuple[_AnyShape, _ScalarT_co]: ...
+
+    #
+    def __iter__(self) -> Self: ...
+
+class ndindex:
+    @overload
+    def __init__(self, shape: tuple[SupportsIndex, ...], /) -> None: ...
+    @overload
+    def __init__(self, /, *shape: SupportsIndex) -> None: ...
+
+    #
+    def __iter__(self) -> Self: ...
+    def __next__(self) -> _AnyShape: ...
+
+    #
+    @deprecated("Deprecated since 1.20.0.")
+    def ndincr(self, /) -> None: ...
+
+class nd_grid(Generic[_BoolT_co]):
+    sparse: _BoolT_co
+    def __init__(self, sparse: _BoolT_co = ...) -> None: ...
+    @overload
+    def __getitem__(self: nd_grid[L[False]], key: slice | Sequence[slice]) -> NDArray[Incomplete]: ...
+    @overload
+    def __getitem__(self: nd_grid[L[True]], key: slice | Sequence[slice]) -> tuple[NDArray[Incomplete], ...]: ...
+
+@final
+class MGridClass(nd_grid[L[False]]):
+    def __init__(self) -> None: ...
+
+@final
+class OGridClass(nd_grid[L[True]]):
+    def __init__(self) -> None: ...
+
+class AxisConcatenator(Generic[_AxisT_co, _MatrixT_co, _NDMinT_co, _Trans1DT_co]):
+    __slots__ = "axis", "matrix", "ndmin", "trans1d"
+
+    makemat: ClassVar[type[np.matrix[tuple[int, int], np.dtype]]]
+
+    axis: _AxisT_co
+    matrix: _MatrixT_co
+    ndmin: _NDMinT_co
+    trans1d: _Trans1DT_co
+
+    #
+    def __init__(
+        self,
+        /,
+        axis: _AxisT_co = ...,
+        matrix: _MatrixT_co = ...,
+        ndmin: _NDMinT_co = ...,
+        trans1d: _Trans1DT_co = ...,
+    ) -> None: ...
+
+    # TODO(jorenham): annotate this
+    def __getitem__(self, key: Incomplete, /) -> Incomplete: ...
+    def __len__(self, /) -> L[0]: ...
+
+    #
+    @staticmethod
+    @overload
+    def concatenate(*a: ArrayLike, axis: SupportsIndex | None = 0, out: _ArrayT) -> _ArrayT: ...
+    @staticmethod
+    @overload
+    def concatenate(*a: ArrayLike, axis: SupportsIndex | None = 0, out: None = None) -> NDArray[Incomplete]: ...
+
+@final
+class RClass(AxisConcatenator[L[0], L[False], L[1], L[-1]]):
+    def __init__(self, /) -> None: ...
+
+@final
+class CClass(AxisConcatenator[L[-1], L[False], L[2], L[0]]):
+    def __init__(self, /) -> None: ...
+
+class IndexExpression(Generic[_BoolT_co]):
+    maketuple: _BoolT_co
+    def __init__(self, maketuple: _BoolT_co) -> None: ...
+    @overload
+    def __getitem__(self, item: _TupleT) -> _TupleT: ...
+    @overload
+    def __getitem__(self: IndexExpression[L[True]], item: _T) -> tuple[_T]: ...
+    @overload
+    def __getitem__(self: IndexExpression[L[False]], item: _T) -> _T: ...
 
 @overload
-def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DType]]) -> tuple[ndarray[_Shape, _DType], ...]: ...
+def ix_(*args: _FiniteNestedSequence[_SupportsDType[_DTypeT]]) -> tuple[np.ndarray[_AnyShape, _DTypeT], ...]: ...
 @overload
-def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[str_], ...]: ...
+def ix_(*args: str | _NestedSequence[str]) -> tuple[NDArray[np.str_], ...]: ...
 @overload
-def ix_(*args: bytes | _NestedSequence[bytes]) -> tuple[NDArray[bytes_], ...]: ...
+def ix_(*args: bytes | _NestedSequence[bytes]) -> tuple[NDArray[np.bytes_], ...]: ...
 @overload
 def ix_(*args: bool | _NestedSequence[bool]) -> tuple[NDArray[np.bool], ...]: ...
 @overload
-def ix_(*args: int | _NestedSequence[int]) -> tuple[NDArray[int_], ...]: ...
+def ix_(*args: int | _NestedSequence[int]) -> tuple[NDArray[np.intp], ...]: ...
 @overload
-def ix_(*args: float | _NestedSequence[float]) -> tuple[NDArray[float64], ...]: ...
+def ix_(*args: float | _NestedSequence[float]) -> tuple[NDArray[np.float64], ...]: ...
 @overload
-def ix_(*args: complex | _NestedSequence[complex]) -> tuple[NDArray[complex128], ...]: ...
+def ix_(*args: complex | _NestedSequence[complex]) -> tuple[NDArray[np.complex128], ...]: ...
 
-class nd_grid(Generic[_BoolType]):
-    sparse: _BoolType
-    def __init__(self, sparse: _BoolType = ...) -> None: ...
-    @overload
-    def __getitem__(
-        self: nd_grid[Literal[False]],
-        key: slice | Sequence[slice],
-    ) -> NDArray[Any]: ...
-    @overload
-    def __getitem__(
-        self: nd_grid[Literal[True]],
-        key: slice | Sequence[slice],
-    ) -> tuple[NDArray[Any], ...]: ...
+#
+def fill_diagonal(a: NDArray[Any], val: object, wrap: bool = ...) -> None: ...
 
-class MGridClass(nd_grid[Literal[False]]):
-    def __init__(self) -> None: ...
+#
+def diag_indices(n: int, ndim: int = ...) -> tuple[NDArray[np.intp], ...]: ...
+def diag_indices_from(arr: ArrayLike) -> tuple[NDArray[np.intp], ...]: ...
 
-mgrid: MGridClass
+#
+mgrid: Final[MGridClass] = ...
+ogrid: Final[OGridClass] = ...
 
-class OGridClass(nd_grid[Literal[True]]):
-    def __init__(self) -> None: ...
+r_: Final[RClass] = ...
+c_: Final[CClass] = ...
 
-ogrid: OGridClass
-
-class AxisConcatenator:
-    axis: int
-    matrix: bool
-    ndmin: int
-    trans1d: int
-    def __init__(
-        self,
-        axis: int = ...,
-        matrix: bool = ...,
-        ndmin: int = ...,
-        trans1d: int = ...,
-    ) -> None: ...
-    @staticmethod
-    @overload
-    def concatenate(  # type: ignore[misc]
-        *a: ArrayLike, axis: SupportsIndex = ..., out: None = ...
-    ) -> NDArray[Any]: ...
-    @staticmethod
-    @overload
-    def concatenate(
-        *a: ArrayLike, axis: SupportsIndex = ..., out: _ArrayType = ...
-    ) -> _ArrayType: ...
-    @staticmethod
-    def makemat(
-        data: ArrayLike, dtype: DTypeLike = ..., copy: bool = ...
-    ) -> _Matrix[Any, Any]: ...
-
-    # TODO: Sort out this `__getitem__` method
-    def __getitem__(self, key: Any) -> Any: ...
-
-class RClass(AxisConcatenator):
-    axis: Literal[0]
-    matrix: Literal[False]
-    ndmin: Literal[1]
-    trans1d: Literal[-1]
-    def __init__(self) -> None: ...
-
-r_: RClass
-
-class CClass(AxisConcatenator):
-    axis: Literal[-1]
-    matrix: Literal[False]
-    ndmin: Literal[2]
-    trans1d: Literal[0]
-    def __init__(self) -> None: ...
-
-c_: CClass
-
-class IndexExpression(Generic[_BoolType]):
-    maketuple: _BoolType
-    def __init__(self, maketuple: _BoolType) -> None: ...
-    @overload
-    def __getitem__(self, item: _TupType) -> _TupType: ...  # type: ignore[misc]
-    @overload
-    def __getitem__(self: IndexExpression[Literal[True]], item: _T) -> tuple[_T]: ...
-    @overload
-    def __getitem__(self: IndexExpression[Literal[False]], item: _T) -> _T: ...
-
-index_exp: IndexExpression[Literal[True]]
-s_: IndexExpression[Literal[False]]
-
-def fill_diagonal(a: NDArray[Any], val: Any, wrap: bool = ...) -> None: ...
-def diag_indices(n: int, ndim: int = ...) -> tuple[NDArray[int_], ...]: ...
-def diag_indices_from(arr: ArrayLike) -> tuple[NDArray[int_], ...]: ...
-
-# NOTE: see `numpy/__init__.pyi` for `ndenumerate` and `ndindex`
+index_exp: Final[IndexExpression[L[True]]] = ...
+s_: Final[IndexExpression[L[False]]] = ...

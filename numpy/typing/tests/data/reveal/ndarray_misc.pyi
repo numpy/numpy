@@ -6,15 +6,15 @@ function-based counterpart in `../from_numeric.py`.
 
 """
 
-import operator
 import ctypes as ct
+import operator
 from types import ModuleType
-from typing import Any, Literal
+from typing import Any, Literal, assert_type
+
+from typing_extensions import CapsuleType
 
 import numpy as np
 import numpy.typing as npt
-
-from typing_extensions import CapsuleType, assert_type
 
 class SubClass(npt.NDArray[np.object_]): ...
 
@@ -58,12 +58,12 @@ assert_type(AR_f8.any(out=B), SubClass)
 assert_type(f8.argmax(), np.intp)
 assert_type(AR_f8.argmax(), np.intp)
 assert_type(AR_f8.argmax(axis=0), Any)
-assert_type(AR_f8.argmax(out=B), SubClass)
+assert_type(AR_f8.argmax(out=AR_i8), npt.NDArray[np.intp])
 
 assert_type(f8.argmin(), np.intp)
 assert_type(AR_f8.argmin(), np.intp)
 assert_type(AR_f8.argmin(axis=0), Any)
-assert_type(AR_f8.argmin(out=B), SubClass)
+assert_type(AR_f8.argmin(out=AR_i8), npt.NDArray[np.intp])
 
 assert_type(f8.argsort(), npt.NDArray[Any])
 assert_type(AR_f8.argsort(), npt.NDArray[Any])
@@ -126,9 +126,12 @@ assert_type(f8.round(), np.float64)
 assert_type(AR_f8.round(), npt.NDArray[np.float64])
 assert_type(AR_f8.round(out=B), SubClass)
 
-assert_type(f8.repeat(1), npt.NDArray[np.float64])
-assert_type(AR_f8.repeat(1), npt.NDArray[np.float64])
-assert_type(B.repeat(1), npt.NDArray[np.object_])
+assert_type(f8.repeat(1), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(f8.repeat(1, axis=0), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8.repeat(1), np.ndarray[tuple[int], np.dtype[np.float64]])
+assert_type(AR_f8.repeat(1, axis=0), npt.NDArray[np.float64])
+assert_type(B.repeat(1), np.ndarray[tuple[int], np.dtype[np.object_]])
+assert_type(B.repeat(1, axis=0), npt.NDArray[np.object_])
 
 assert_type(f8.std(), Any)
 assert_type(AR_f8.std(), Any)

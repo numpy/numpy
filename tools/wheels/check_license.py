@@ -7,10 +7,10 @@ and that it appears to contain text prevalent for a NumPy binary
 distribution.
 
 """
-import sys
-import re
 import argparse
 import pathlib
+import re
+import sys
 
 
 def check_text(text):
@@ -35,7 +35,7 @@ def main():
 
     # LICENSE.txt is installed in the .dist-info directory, so find it there
     sitepkgs = pathlib.Path(mod.__file__).parent.parent
-    distinfo_path = list(sitepkgs.glob("numpy-*.dist-info"))[0]
+    distinfo_path = next(iter(sitepkgs.glob("numpy-*.dist-info")))
 
     # Check license text
     license_txt = distinfo_path / "LICENSE.txt"
@@ -45,8 +45,8 @@ def main():
     ok = check_text(text)
     if not ok:
         print(
-            "ERROR: License text {} does not contain expected "
-            "text fragments\n".format(license_txt)
+            f"ERROR: License text {license_txt} does not contain expected "
+            "text fragments\n"
         )
         print(text)
         sys.exit(1)

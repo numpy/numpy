@@ -2,12 +2,10 @@ import ctypes as ct
 import datetime as dt
 from decimal import Decimal
 from fractions import Fraction
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal, LiteralString, TypeAlias, assert_type
 
 import numpy as np
 from numpy.dtypes import StringDType
-
-from typing_extensions import assert_type
 
 # a combination of likely `object` dtype-like candidates (no `_co`)
 _PyObjectLike: TypeAlias = Decimal | Fraction | dt.datetime | dt.timedelta
@@ -16,9 +14,9 @@ dtype_U: np.dtype[np.str_]
 dtype_V: np.dtype[np.void]
 dtype_i8: np.dtype[np.int64]
 
-py_int_co: type[int | bool]
-py_float_co: type[float | int | bool]
-py_complex_co: type[complex | float | int | bool]
+py_int_co: type[int]
+py_float_co: type[float]
+py_complex_co: type[complex]
 py_object: type[_PyObjectLike]
 py_character: type[str | bytes]
 py_flexible: type[str | bytes | memoryview]
@@ -32,7 +30,7 @@ cs_number: Literal["=L", "i", "c16"]
 cs_flex: Literal[">V", "S"]
 cs_generic: Literal["H", "U", "h", "|M8[Y]", "?"]
 
-dt_inexact: np.dtype[np.inexact[Any]]
+dt_inexact: np.dtype[np.inexact]
 dt_string: StringDType
 
 assert_type(np.dtype(np.float64), np.dtype[np.float64])
@@ -70,12 +68,14 @@ assert_type(np.dtype(Decimal), np.dtype[np.object_])
 assert_type(np.dtype(Fraction), np.dtype[np.object_])
 
 # char-codes
+assert_type(np.dtype("?"), np.dtype[np.bool])
+assert_type(np.dtype("|b1"), np.dtype[np.bool])
 assert_type(np.dtype("u1"), np.dtype[np.uint8])
 assert_type(np.dtype("l"), np.dtype[np.long])
 assert_type(np.dtype("longlong"), np.dtype[np.longlong])
 assert_type(np.dtype(">g"), np.dtype[np.longdouble])
-assert_type(np.dtype(cs_integer), np.dtype[np.integer[Any]])
-assert_type(np.dtype(cs_number), np.dtype[np.number[Any]])
+assert_type(np.dtype(cs_integer), np.dtype[np.integer])
+assert_type(np.dtype(cs_number), np.dtype[np.number])
 assert_type(np.dtype(cs_flex), np.dtype[np.flexible])
 assert_type(np.dtype(cs_generic), np.dtype[np.generic])
 
@@ -92,10 +92,10 @@ assert_type(np.dtype(None), np.dtype[np.float64])
 
 # Dypes of dtypes
 assert_type(np.dtype(np.dtype(np.float64)), np.dtype[np.float64])
-assert_type(np.dtype(dt_inexact), np.dtype[np.inexact[Any]])
+assert_type(np.dtype(dt_inexact), np.dtype[np.inexact])
 
 # Parameterized dtypes
-assert_type(np.dtype("S8"), np.dtype[Any])
+assert_type(np.dtype("S8"), np.dtype)
 
 # Void
 assert_type(np.dtype(("U", 10)), np.dtype[np.void])
@@ -107,12 +107,12 @@ assert_type(np.dtype("=T"), StringDType)
 assert_type(np.dtype("|T"), StringDType)
 
 # Methods and attributes
-assert_type(dtype_U.base, np.dtype[Any])
-assert_type(dtype_U.subdtype, None | tuple[np.dtype[Any], tuple[int, ...]])
+assert_type(dtype_U.base, np.dtype)
+assert_type(dtype_U.subdtype, tuple[np.dtype, tuple[Any, ...]] | None)
 assert_type(dtype_U.newbyteorder(), np.dtype[np.str_])
 assert_type(dtype_U.type, type[np.str_])
-assert_type(dtype_U.name, str)
-assert_type(dtype_U.names, None | tuple[str, ...])
+assert_type(dtype_U.name, LiteralString)
+assert_type(dtype_U.names, tuple[str, ...] | None)
 
 assert_type(dtype_U * 0, np.dtype[np.str_])
 assert_type(dtype_U * 1, np.dtype[np.str_])
@@ -126,11 +126,11 @@ assert_type(0 * dtype_U, np.dtype[np.str_])
 assert_type(1 * dtype_U, np.dtype[np.str_])
 assert_type(2 * dtype_U, np.dtype[np.str_])
 
-assert_type(0 * dtype_i8, np.dtype[Any])
-assert_type(1 * dtype_i8, np.dtype[Any])
-assert_type(2 * dtype_i8, np.dtype[Any])
+assert_type(0 * dtype_i8, np.dtype)
+assert_type(1 * dtype_i8, np.dtype)
+assert_type(2 * dtype_i8, np.dtype)
 
-assert_type(dtype_V["f0"], np.dtype[Any])
-assert_type(dtype_V[0], np.dtype[Any])
+assert_type(dtype_V["f0"], np.dtype)
+assert_type(dtype_V[0], np.dtype)
 assert_type(dtype_V[["f0", "f1"]], np.dtype[np.void])
 assert_type(dtype_V[["f0"]], np.dtype[np.void])

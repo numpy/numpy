@@ -15,15 +15,18 @@ import numpy as np
 import numpy.typing as npt
 
 class SubClass(npt.NDArray[np.float64]): ...
-
+class IntSubClass(npt.NDArray[np.intp]): ...
 
 i4 = np.int32(1)
 A: np.ndarray[Any, np.dtype[np.int32]] = np.array([[1]], dtype=np.int32)
 B0 = np.empty((), dtype=np.int32).view(SubClass)
 B1 = np.empty((1,), dtype=np.int32).view(SubClass)
 B2 = np.empty((1, 1), dtype=np.int32).view(SubClass)
+B_int0: IntSubClass = np.empty((), dtype=np.intp).view(IntSubClass)
 C: np.ndarray[Any, np.dtype[np.int32]] = np.array([0, 1, 2], dtype=np.int32)
 D = np.ones(3).view(SubClass)
+
+ctypes_obj = A.ctypes
 
 i4.all()
 A.all()
@@ -40,12 +43,12 @@ A.any(out=B0)
 i4.argmax()
 A.argmax()
 A.argmax(axis=0)
-A.argmax(out=B0)
+A.argmax(out=B_int0)
 
 i4.argmin()
 A.argmin()
 A.argmin(axis=0)
-A.argmin(out=B0)
+A.argmin(out=B_int0)
 
 i4.argsort()
 A.argsort()
@@ -182,3 +185,14 @@ A_float = np.array([[1, 5], [2, 4], [np.nan, np.nan]])
 A_void: npt.NDArray[np.void] = np.empty(3, [("yop", float), ("yap", float)])
 A_void["yop"] = A_float[:, 0]
 A_void["yap"] = A_float[:, 1]
+
+# deprecated
+
+with np.testing.assert_warns(DeprecationWarning):
+    ctypes_obj.get_data()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+with np.testing.assert_warns(DeprecationWarning):
+    ctypes_obj.get_shape()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+with np.testing.assert_warns(DeprecationWarning):
+    ctypes_obj.get_strides()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]
+with np.testing.assert_warns(DeprecationWarning):
+    ctypes_obj.get_as_parameter()  # type: ignore[deprecated]  # pyright: ignore[reportDeprecated]

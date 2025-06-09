@@ -1,20 +1,65 @@
-from typing import Any, overload, TypeAlias
+from typing import TypeAlias, overload
 
 import numpy as np
-from numpy._typing import (
-    NDArray,
-    _ArrayLikeStr_co as U_co,
-    _ArrayLikeBytes_co as S_co,
-    _ArrayLikeInt_co as i_co,
-    _ArrayLikeString_co as T_co,
-    _ArrayLikeAnyString_co as UST_co,
-    _Shape,
-    _SupportsArray,
-)
+from numpy._typing import NDArray, _AnyShape, _SupportsArray
+from numpy._typing import _ArrayLikeAnyString_co as UST_co
+from numpy._typing import _ArrayLikeBytes_co as S_co
+from numpy._typing import _ArrayLikeInt_co as i_co
+from numpy._typing import _ArrayLikeStr_co as U_co
+from numpy._typing import _ArrayLikeString_co as T_co
 
-_StringDTypeArray: TypeAlias = np.ndarray[_Shape, np.dtypes.StringDType]
+__all__ = [
+    "add",
+    "capitalize",
+    "center",
+    "count",
+    "decode",
+    "encode",
+    "endswith",
+    "equal",
+    "expandtabs",
+    "find",
+    "greater",
+    "greater_equal",
+    "index",
+    "isalnum",
+    "isalpha",
+    "isdecimal",
+    "isdigit",
+    "islower",
+    "isnumeric",
+    "isspace",
+    "istitle",
+    "isupper",
+    "less",
+    "less_equal",
+    "ljust",
+    "lower",
+    "lstrip",
+    "mod",
+    "multiply",
+    "not_equal",
+    "partition",
+    "replace",
+    "rfind",
+    "rindex",
+    "rjust",
+    "rpartition",
+    "rstrip",
+    "startswith",
+    "str_len",
+    "strip",
+    "swapcase",
+    "title",
+    "translate",
+    "upper",
+    "zfill",
+    "slice",
+]
+
+_StringDTypeArray: TypeAlias = np.ndarray[_AnyShape, np.dtypes.StringDType]
 _StringDTypeSupportsArray: TypeAlias = _SupportsArray[np.dtypes.StringDType]
-_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_Shape, np.dtype[np.str_]] | np.ndarray[_Shape, np.dtypes.StringDType]
+_StringDTypeOrUnicodeArray: TypeAlias = np.ndarray[_AnyShape, np.dtype[np.str_]] | _StringDTypeArray
 
 @overload
 def equal(x1: U_co, x2: U_co) -> NDArray[np.bool]: ...
@@ -65,7 +110,7 @@ def add(x1: S_co, x2: S_co) -> NDArray[np.bytes_]: ...
 @overload
 def add(x1: _StringDTypeSupportsArray, x2: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
 @overload
-def add(x1: T_co, T_co) -> _StringDTypeOrUnicodeArray: ...
+def add(x1: T_co, x2: T_co) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
 def multiply(a: U_co, i: i_co) -> NDArray[np.str_]: ...
@@ -77,13 +122,13 @@ def multiply(a: _StringDTypeSupportsArray, i: i_co) -> _StringDTypeArray: ...
 def multiply(a: T_co, i: i_co) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def mod(a: U_co, value: Any) -> NDArray[np.str_]: ...
+def mod(a: U_co, value: object) -> NDArray[np.str_]: ...
 @overload
-def mod(a: S_co, value: Any) -> NDArray[np.bytes_]: ...
+def mod(a: S_co, value: object) -> NDArray[np.bytes_]: ...
 @overload
-def mod(a: _StringDTypeSupportsArray, value: Any) -> _StringDTypeArray: ...
+def mod(a: _StringDTypeSupportsArray, value: object) -> _StringDTypeArray: ...
 @overload
-def mod(a: T_co, value: Any) -> _StringDTypeOrUnicodeArray: ...
+def mod(a: T_co, value: object) -> _StringDTypeOrUnicodeArray: ...
 
 def isalpha(x: UST_co) -> NDArray[np.bool]: ...
 def isalnum(a: UST_co) -> NDArray[np.bool]: ...
@@ -146,14 +191,14 @@ def index(
     a: U_co,
     sub: U_co,
     start: i_co = ...,
-    end: None | i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def index(
     a: S_co,
     sub: S_co,
     start: i_co = ...,
-    end: None | i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def index(
@@ -168,14 +213,14 @@ def rindex(
     a: U_co,
     sub: U_co,
     start: i_co = ...,
-    end: None | i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def rindex(
     a: S_co,
     sub: S_co,
     start: i_co = ...,
-    end: None | i_co = ...,
+    end: i_co | None = ...,
 ) -> NDArray[np.int_]: ...
 @overload
 def rindex(
@@ -224,7 +269,7 @@ def startswith(
 @overload
 def startswith(
     a: T_co,
-    suffix: T_co,
+    prefix: T_co,
     start: i_co = ...,
     end: i_co | None = ...,
 ) -> NDArray[np.bool]: ...
@@ -253,13 +298,13 @@ def endswith(
 
 def decode(
     a: S_co,
-    encoding: None | str = ...,
-    errors: None | str = ...,
+    encoding: str | None = None,
+    errors: str | None = None,
 ) -> NDArray[np.str_]: ...
 def encode(
     a: U_co | T_co,
-    encoding: None | str = ...,
-    errors: None | str = ...,
+    encoding: str | None = None,
+    errors: str | None = None,
 ) -> NDArray[np.bytes_]: ...
 
 @overload
@@ -272,74 +317,58 @@ def expandtabs(a: _StringDTypeSupportsArray, tabsize: i_co = ...) -> _StringDTyp
 def expandtabs(a: T_co, tabsize: i_co = ...) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def center(a: U_co, width: i_co, fillchar: U_co = ...) -> NDArray[np.str_]: ...
+def center(a: U_co, width: i_co, fillchar: UST_co = " ") -> NDArray[np.str_]: ...
 @overload
-def center(a: S_co, width: i_co, fillchar: S_co = ...) -> NDArray[np.bytes_]: ...
+def center(a: S_co, width: i_co, fillchar: UST_co = " ") -> NDArray[np.bytes_]: ...
 @overload
-def center(a: _StringDTypeSupportsArray, width: i_co, fillchar: _StringDTypeSupportsArray = ...) -> _StringDTypeArray: ...
+def center(a: _StringDTypeSupportsArray, width: i_co, fillchar: UST_co = " ") -> _StringDTypeArray: ...
 @overload
-def center(a: T_co, width: i_co, fillchar: T_co = ...) -> _StringDTypeOrUnicodeArray: ...
+def center(a: T_co, width: i_co, fillchar: UST_co = " ") -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def ljust(a: U_co, width: i_co, fillchar: U_co = ...) -> NDArray[np.str_]: ...
+def ljust(a: U_co, width: i_co, fillchar: UST_co = " ") -> NDArray[np.str_]: ...
 @overload
-def ljust(a: S_co, width: i_co, fillchar: S_co = ...) -> NDArray[np.bytes_]: ...
+def ljust(a: S_co, width: i_co, fillchar: UST_co = " ") -> NDArray[np.bytes_]: ...
 @overload
-def ljust(a: _StringDTypeSupportsArray, width: i_co, fillchar: _StringDTypeSupportsArray = ...) -> _StringDTypeArray: ...
+def ljust(a: _StringDTypeSupportsArray, width: i_co, fillchar: UST_co = " ") -> _StringDTypeArray: ...
 @overload
-def ljust(a: T_co, width: i_co, fillchar: T_co = ...) -> _StringDTypeOrUnicodeArray: ...
+def ljust(a: T_co, width: i_co, fillchar: UST_co = " ") -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def rjust(
-    a: U_co,
-    width: i_co,
-    fillchar: U_co = ...,
-) -> NDArray[np.str_]: ...
+def rjust(a: U_co, width: i_co, fillchar: UST_co = " ") -> NDArray[np.str_]: ...
 @overload
-def rjust(
-    a: S_co,
-    width: i_co,
-    fillchar: S_co = ...,
-) -> NDArray[np.bytes_]: ...
+def rjust(a: S_co, width: i_co, fillchar: UST_co = " ") -> NDArray[np.bytes_]: ...
 @overload
-def rjust(
-    a: _StringDTypeSupportsArray,
-    width: i_co,
-    fillchar: _StringDTypeSupportsArray = ...,
-) -> _StringDTypeArray: ...
+def rjust(a: _StringDTypeSupportsArray, width: i_co, fillchar: UST_co = " ") -> _StringDTypeArray: ...
 @overload
-def rjust(
-    a: T_co,
-    width: i_co,
-    fillchar: T_co = ...,
-) -> _StringDTypeOrUnicodeArray: ...
+def rjust(a: T_co, width: i_co, fillchar: UST_co = " ") -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def lstrip(a: U_co, chars: None | U_co = ...) -> NDArray[np.str_]: ...
+def lstrip(a: U_co, chars: U_co | None = None) -> NDArray[np.str_]: ...
 @overload
-def lstrip(a: S_co, chars: None | S_co = ...) -> NDArray[np.bytes_]: ...
+def lstrip(a: S_co, chars: S_co | None = None) -> NDArray[np.bytes_]: ...
 @overload
-def lstrip(a: _StringDTypeSupportsArray, chars: None | _StringDTypeSupportsArray = ...) -> _StringDTypeArray: ...
+def lstrip(a: _StringDTypeSupportsArray, chars: T_co | None = None) -> _StringDTypeArray: ...
 @overload
-def lstrip(a: T_co, chars: None | T_co = ...) -> _StringDTypeOrUnicodeArray: ...
+def lstrip(a: T_co, chars: T_co | None = None) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def rstrip(a: U_co, char: None | U_co = ...) -> NDArray[np.str_]: ...
+def rstrip(a: U_co, chars: U_co | None = None) -> NDArray[np.str_]: ...
 @overload
-def rstrip(a: S_co, char: None | S_co = ...) -> NDArray[np.bytes_]: ...
+def rstrip(a: S_co, chars: S_co | None = None) -> NDArray[np.bytes_]: ...
 @overload
-def rstrip(a: _StringDTypeSupportsArray, chars: None | _StringDTypeSupportsArray = ...) -> _StringDTypeArray: ...
+def rstrip(a: _StringDTypeSupportsArray, chars: T_co | None = None) -> _StringDTypeArray: ...
 @overload
-def rstrip(a: T_co, chars: None | T_co = ...) -> _StringDTypeOrUnicodeArray: ...
+def rstrip(a: T_co, chars: T_co | None = None) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def strip(a: U_co, chars: None | U_co = ...) -> NDArray[np.str_]: ...
+def strip(a: U_co, chars: U_co | None = None) -> NDArray[np.str_]: ...
 @overload
-def strip(a: S_co, chars: None | S_co = ...) -> NDArray[np.bytes_]: ...
+def strip(a: S_co, chars: S_co | None = None) -> NDArray[np.bytes_]: ...
 @overload
-def strip(a: _StringDTypeSupportsArray, chars: None | _StringDTypeSupportsArray = ...) -> _StringDTypeArray: ...
+def strip(a: _StringDTypeSupportsArray, chars: T_co | None = None) -> _StringDTypeArray: ...
 @overload
-def strip(a: T_co, chars: None | T_co = ...) -> _StringDTypeOrUnicodeArray: ...
+def strip(a: T_co, chars: T_co | None = None) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
 def zfill(a: U_co, width: i_co) -> NDArray[np.str_]: ...
@@ -425,15 +454,6 @@ def replace(
 ) -> _StringDTypeOrUnicodeArray: ...
 
 @overload
-def join(sep: U_co, seq: U_co) -> NDArray[np.str_]: ...
-@overload
-def join(sep: S_co, seq: S_co) -> NDArray[np.bytes_]: ...
-@overload
-def join(sep: _StringDTypeSupportsArray, seq: _StringDTypeSupportsArray) -> _StringDTypeArray: ...
-@overload
-def join(sep: T_co, seq: T_co) -> _StringDTypeOrUnicodeArray: ...
-
-@overload
 def partition(a: U_co, sep: U_co) -> NDArray[np.str_]: ...
 @overload
 def partition(a: S_co, sep: S_co) -> NDArray[np.bytes_]: ...
@@ -455,23 +475,37 @@ def rpartition(a: T_co, sep: T_co) -> _StringDTypeOrUnicodeArray: ...
 def translate(
     a: U_co,
     table: str,
-    deletechars: None | str = ...,
+    deletechars: str | None = None,
 ) -> NDArray[np.str_]: ...
 @overload
 def translate(
     a: S_co,
     table: str,
-    deletechars: None | str = ...,
+    deletechars: str | None = None,
 ) -> NDArray[np.bytes_]: ...
 @overload
 def translate(
     a: _StringDTypeSupportsArray,
     table: str,
-    deletechars: None | str = ...,
+    deletechars: str | None = None,
 ) -> _StringDTypeArray: ...
 @overload
 def translate(
     a: T_co,
     table: str,
-    deletechars: None | str = ...,
+    deletechars: str | None = None,
+) -> _StringDTypeOrUnicodeArray: ...
+
+#
+@overload
+def slice(a: U_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /) -> NDArray[np.str_]: ...  # type: ignore[overload-overlap]
+@overload
+def slice(a: S_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /) -> NDArray[np.bytes_]: ...
+@overload
+def slice(
+    a: _StringDTypeSupportsArray, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /
+) -> _StringDTypeArray: ...
+@overload
+def slice(
+    a: T_co, start: i_co | None = None, stop: i_co | None = None, step: i_co | None = None, /
 ) -> _StringDTypeOrUnicodeArray: ...

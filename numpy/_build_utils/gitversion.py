@@ -22,8 +22,8 @@ def git_version(version):
     # Append last commit date and hash to dev version information,
     # if available
 
-    import subprocess
     import os.path
+    import subprocess
 
     git_hash = ''
     try:

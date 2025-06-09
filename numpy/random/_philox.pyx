@@ -238,8 +238,7 @@ cdef class Philox(BitGenerator):
             raise TypeError('state must be a dict')
         bitgen = value.get('bit_generator', '')
         if bitgen != self.__class__.__name__:
-            raise ValueError('state must be for a {0} '
-                             'PRNG'.format(self.__class__.__name__))
+            raise ValueError(f'state must be for a {self.__class__.__name__} PRNG')
         for i in range(4):
             self.rng_state.ctr.v[i] = <uint64_t> value['state']['counter'][i]
             if i < 2:

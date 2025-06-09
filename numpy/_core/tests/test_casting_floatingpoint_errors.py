@@ -1,7 +1,8 @@
 import pytest
 from pytest import param
-from numpy.testing import IS_WASM
+
 import numpy as np
+from numpy.testing import IS_WASM
 
 
 def values_and_dtypes():
@@ -151,4 +152,3 @@ def test_floatingpoint_errors_casting(dtype, value):
         with np.errstate(all="raise"):
             with pytest.raises(FloatingPointError, match=match):
                 operation()
-

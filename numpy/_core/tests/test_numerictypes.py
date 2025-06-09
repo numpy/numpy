@@ -1,14 +1,17 @@
-import sys
 import itertools
+import sys
 
 import pytest
+
 import numpy as np
 import numpy._core.numerictypes as nt
-from numpy._core.numerictypes import (
-    issctype, sctype2char, maximum_sctype, sctypes
-)
+from numpy._core.numerictypes import issctype, maximum_sctype, sctype2char, sctypes
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex, IS_PYPY
+    IS_PYPY,
+    assert_,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
 )
 
 # This is the structure of the table used for plain objects:
@@ -97,8 +100,7 @@ def normalize_descr(descr):
             l = normalize_descr(dtype)
             out.append((item[0], l))
         else:
-            raise ValueError("Expected a str or list and got %s" %
-                             (type(item)))
+            raise ValueError(f"Expected a str or list and got {type(item)}")
     return out
 
 

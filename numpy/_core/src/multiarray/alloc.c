@@ -27,9 +27,21 @@
 #endif
 #endif
 
-#define NBUCKETS 1024 /* number of buckets for data*/
-#define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
-#define NCACHE 7 /* number of cache entries per bucket */
+/* Do not enable the alloc cache if the GIL is disabled, or if ASAN or MSAN
+ * instrumentation is enabled. The cache makes ASAN use-after-free or MSAN
+ * use-of-uninitialized-memory warnings less useful. */
+#define USE_ALLOC_CACHE 1
+#ifdef Py_GIL_DISABLED
+# define USE_ALLOC_CACHE 0
+#elif defined(__has_feature)
+# if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
+#  define USE_ALLOC_CACHE 0
+# endif
+#endif
+
+# define NBUCKETS 1024 /* number of buckets for data*/
+# define NBUCKETS_DIM 16 /* number of buckets for dimensions/strides */
+# define NCACHE 7 /* number of cache entries per bucket */
 /* this structure fits neatly into a cacheline */
 typedef struct {
     npy_uintp available; /* number of cached pointers */
@@ -37,7 +49,6 @@ typedef struct {
 } cache_bucket;
 static cache_bucket datacache[NBUCKETS];
 static cache_bucket dimcache[NBUCKETS_DIM];
-
 
 /*
  * This function tells whether NumPy attempts to call `madvise` with
@@ -115,7 +126,7 @@ _npy_alloc_cache(npy_uintp nelem, npy_uintp esz, npy_uint msz,
     assert((esz == 1 && cache == datacache) ||
            (esz == sizeof(npy_intp) && cache == dimcache));
     assert(PyGILState_Check());
-#ifndef Py_GIL_DISABLED
+#if USE_ALLOC_CACHE
     if (nelem < msz) {
         if (cache[nelem].available > 0) {
             return cache[nelem].ptrs[--(cache[nelem].available)];
@@ -141,7 +152,7 @@ _npy_free_cache(void * p, npy_uintp nelem, npy_uint msz,
                 cache_bucket * cache, void (*dealloc)(void *))
 {
     assert(PyGILState_Check());
-#ifndef Py_GIL_DISABLED
+#if USE_ALLOC_CACHE
     if (p != NULL && nelem < msz) {
         if (cache[nelem].available < NCACHE) {
             cache[nelem].ptrs[cache[nelem].available++] = p;

@@ -1,19 +1,39 @@
+import platform
 import sys
 
 import pytest
 
 import numpy as np
 from numpy import (
-    logspace, linspace, geomspace, dtype, array, arange, isnan,
-    ndarray, sqrt, nextafter, stack, errstate
-    )
+    arange,
+    array,
+    dtype,
+    errstate,
+    geomspace,
+    isnan,
+    linspace,
+    logspace,
+    ndarray,
+    nextafter,
+    sqrt,
+    stack,
+)
 from numpy._core import sctypes
 from numpy._core.function_base import add_newdoc
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal, assert_allclose,
-    IS_PYPY
-    )
+    IS_PYPY,
+    assert_,
+    assert_allclose,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
+
+def _is_armhf():
+    # Check if the current platform is ARMHF (32-bit ARM architecture)
+    architecture = platform.architecture()
+    return platform.machine().startswith('arm') and architecture[0] == '32bit'
 
 class PhysicalQuantity(float):
     def __new__(cls, value):
@@ -36,10 +56,10 @@ class PhysicalQuantity(float):
         return PhysicalQuantity(float(x) * float(self))
     __rmul__ = __mul__
 
-    def __div__(self, x):
+    def __truediv__(self, x):
         return PhysicalQuantity(float(self) / float(x))
 
-    def __rdiv__(self, x):
+    def __rtruediv__(self, x):
         return PhysicalQuantity(float(x) / float(self))
 
 
@@ -414,6 +434,9 @@ class TestLinspace:
 
         assert_equal(linspace(one, five), linspace(1, 5))
 
+    # even when not explicitly enabled via FPSCR register
+    @pytest.mark.xfail(_is_armhf(),
+                       reason="ARMHF/AArch32 platforms seem to FTZ subnormals")
     def test_denormal_numbers(self):
         # Regression test for gh-5437. Will probably fail when compiled
         # with ICC, which flushes denormals to zero

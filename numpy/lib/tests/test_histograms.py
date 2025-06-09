@@ -1,12 +1,19 @@
-import numpy as np
-
-from numpy import histogram, histogramdd, histogram_bin_edges
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_allclose,
-    assert_array_max_ulp, assert_raises_regex, suppress_warnings,
-    )
 import pytest
+
+import numpy as np
+from numpy import histogram, histogram_bin_edges, histogramdd
+from numpy.testing import (
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    suppress_warnings,
+)
 
 
 class TestHistogram:
@@ -416,6 +423,13 @@ class TestHistogram:
         expected_hist = np.array([1, 0])
         assert_array_equal(hist, expected_hist)
 
+    def test_gh_28400(self):
+        e = 1 + 1e-12
+        Z = [0, 1, 1, 1, 1, 1, e, e, e, e, e, e, 2]
+        counts, edges = np.histogram(Z, bins="auto")
+        assert len(counts) < 10
+        assert edges[0] == Z[0]
+        assert edges[-1] == Z[-1]
 
 class TestHistogramOptimBinNums:
     """
@@ -455,8 +469,8 @@ class TestHistogramOptimBinNums:
             x = np.concatenate((x1, x2))
             for estimator, numbins in expectedResults.items():
                 a, b = np.histogram(x, estimator)
-                assert_equal(len(a), numbins, err_msg="For the {0} estimator "
-                             "with datasize of {1}".format(estimator, testlen))
+                assert_equal(len(a), numbins, err_msg=f"For the {estimator} estimator "
+                             f"with datasize of {testlen}")
 
     def test_small(self):
         """
@@ -475,8 +489,8 @@ class TestHistogramOptimBinNums:
             testdat = np.arange(testlen).astype(float)
             for estimator, expbins in expectedResults.items():
                 a, b = np.histogram(testdat, estimator)
-                assert_equal(len(a), expbins, err_msg="For the {0} estimator "
-                             "with datasize of {1}".format(estimator, testlen))
+                assert_equal(len(a), expbins, err_msg=f"For the {estimator} estimator "
+                             f"with datasize of {testlen}")
 
     def test_incorrect_methods(self):
         """
@@ -497,20 +511,21 @@ class TestHistogramOptimBinNums:
 
         for estimator, numbins in novar_resultdict.items():
             a, b = np.histogram(novar_dataset, estimator)
-            assert_equal(len(a), numbins, err_msg="{0} estimator, "
-                         "No Variance test".format(estimator))
+            assert_equal(len(a), numbins,
+                         err_msg=f"{estimator} estimator, No Variance test")
 
     def test_limited_variance(self):
         """
-        Check when IQR is 0, but variance exists, we return the sturges value
-        and not the fd value.
+        Check when IQR is 0, but variance exists, we return a reasonable value.
         """
         lim_var_data = np.ones(1000)
         lim_var_data[:3] = 0
         lim_var_data[-4:] = 100
 
         edges_auto = histogram_bin_edges(lim_var_data, 'auto')
-        assert_equal(edges_auto, np.linspace(0, 100, 12))
+        assert_equal(edges_auto[0], 0)
+        assert_equal(edges_auto[-1], 100.)
+        assert len(edges_auto) < 100
 
         edges_fd = histogram_bin_edges(lim_var_data, 'fd')
         assert_equal(edges_fd, np.array([0, 100]))
@@ -539,7 +554,8 @@ class TestHistogramOptimBinNums:
             assert_equal(len(a), numbins)
 
     def test_scott_vs_stone(self):
-        """Verify that Scott's rule and Stone's rule converges for normally distributed data"""
+        # Verify that Scott's rule and Stone's rule converges for normally
+        # distributed data
 
         def nbins_ratio(seed, size):
             rng = np.random.RandomState(seed)
@@ -547,10 +563,11 @@ class TestHistogramOptimBinNums:
             a, b = len(np.histogram(x, 'stone')[0]), len(np.histogram(x, 'scott')[0])
             return a / (a + b)
 
-        ll = [[nbins_ratio(seed, size) for size in np.geomspace(start=10, stop=100, num=4).round().astype(int)]
-              for seed in range(10)]
+        geom_space = np.geomspace(start=10, stop=100, num=4).round().astype(int)
+        ll = [[nbins_ratio(seed, size) for size in geom_space] for seed in range(10)]
 
-        # the average difference between the two methods decreases as the dataset size increases.
+        # the average difference between the two methods decreases as the dataset
+        # size increases.
         avg = abs(np.mean(ll, axis=0) - 0.5)
         assert_almost_equal(avg, [0.15, 0.09, 0.08, 0.03], decimal=2)
 
@@ -580,9 +597,9 @@ class TestHistogramOptimBinNums:
             x3 = np.linspace(-100, -50, testlen)
             x = np.hstack((x1, x2, x3))
             for estimator, numbins in expectedResults.items():
-                a, b = np.histogram(x, estimator, range = (-20, 20))
-                msg = "For the {0} estimator".format(estimator)
-                msg += " with datasize of {0}".format(testlen)
+                a, b = np.histogram(x, estimator, range=(-20, 20))
+                msg = f"For the {estimator} estimator"
+                msg += f" with datasize of {testlen}"
                 assert_equal(len(a), numbins, err_msg=msg)
 
     @pytest.mark.parametrize("bins", ['auto', 'fd', 'doane', 'scott',

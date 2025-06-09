@@ -33,17 +33,17 @@ import os
 import re
 import sys
 import warnings
-import docutils.core
 from argparse import ArgumentParser
 
+import docutils.core
 from docutils.parsers.rst import directives
-
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'doc', 'sphinxext'))
 from numpydoc.docscrape_sphinx import get_doc_object
 
 # Enable specific Sphinx directives
-from sphinx.directives.other import SeeAlso, Only
+from sphinx.directives.other import Only, SeeAlso
+
 directives.register_directive('seealso', SeeAlso)
 directives.register_directive('only', Only)
 
@@ -341,8 +341,8 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
 
     output = ""
 
-    output += "Non-deprecated objects in __all__: %i\n" % num_all
-    output += "Objects in refguide: %i\n\n" % num_ref
+    output += f"Non-deprecated objects in __all__: {num_all}\n"
+    output += f"Objects in refguide: {num_ref}\n\n"
 
     only_all, only_ref, missing = compare(all_dict, others, names, module_name)
     dep_in_ref = only_ref.intersection(deprecated)
@@ -359,7 +359,7 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
         return [(None, True, output)]
     else:
         if len(only_all) > 0:
-            output += "ERROR: objects in %s.__all__ but not in refguide::\n\n" % module_name  # noqa: E501
+            output += f"ERROR: objects in {module_name}.__all__ but not in refguide::\n\n"  # noqa: E501
             for name in sorted(only_all):
                 output += "    " + name + "\n"
 
@@ -367,7 +367,7 @@ def check_items(all_dict, names, deprecated, others, module_name, dots=True):
             output += "the function listing in __init__.py for this module\n"
 
         if len(only_ref) > 0:
-            output += "ERROR: objects in refguide but not in %s.__all__::\n\n" % module_name  # noqa: E501
+            output += f"ERROR: objects in refguide but not in {module_name}.__all__::\n\n"  # noqa: E501
             for name in sorted(only_ref):
                 output += "    " + name + "\n"
 
@@ -404,7 +404,7 @@ def validate_rst_syntax(text, name, dots=True):
     if text is None:
         if dots:
             output_dot('E')
-        return False, "ERROR: %s: no documentation" % (name,)
+        return False, f"ERROR: {name}: no documentation"
 
     ok_unknown_items = {
         'mod', 'doc', 'currentmodule', 'autosummary', 'data', 'attr',
@@ -423,16 +423,16 @@ def validate_rst_syntax(text, name, dots=True):
 
     docutils.core.publish_doctree(
         text, token,
-        settings_overrides = {'halt_level': 5,
-                                  'traceback': True,
-                                  'default_reference_context': 'title-reference',
-                                  'default_role': 'emphasis',
-                                  'link_base': '',
-                                  'resolve_name': resolve,
-                                  'stylesheet_path': '',
-                                  'raw_enabled': 0,
-                                  'file_insertion_enabled': 0,
-                                  'warning_stream': error_stream})
+        settings_overrides={'halt_level': 5,
+                            'traceback': True,
+                            'default_reference_context': 'title-reference',
+                            'default_role': 'emphasis',
+                            'link_base': '',
+                            'resolve_name': resolve,
+                            'stylesheet_path': '',
+                            'raw_enabled': 0,
+                            'file_insertion_enabled': 0,
+                            'warning_stream': error_stream})
 
     # Print errors, disregarding unimportant ones
     error_msg = error_stream.getvalue()
@@ -489,11 +489,7 @@ def check_rest(module, names, dots=True):
         List of [(module_name, success_flag, output),...]
     """
 
-    try:
-        skip_types = (dict, str, unicode, float, int)
-    except NameError:
-        # python 3
-        skip_types = (dict, str, float, int)
+    skip_types = (dict, str, float, int)
 
     results = []
 
@@ -507,7 +503,7 @@ def check_rest(module, names, dots=True):
         obj = getattr(module, name, None)
 
         if obj is None:
-            results.append((full_name, False, "%s has no docstring" % (full_name,)))
+            results.append((full_name, False, f"{full_name} has no docstring"))
             continue
         elif isinstance(obj, skip_types):
             continue
@@ -524,7 +520,7 @@ def check_rest(module, names, dots=True):
                                 traceback.format_exc()))
                 continue
 
-        m = re.search("([\x00-\x09\x0b-\x1f])", text)
+        m = re.search("([\x00-\x09\x0b-\x1f])", text)  # noqa: RUF039
         if m:
             msg = ("Docstring contains a non-printable character %r! "
                    "Maybe forgot r\"\"\"?" % (m.group(1),))
@@ -564,12 +560,13 @@ def main(argv):
     if not args.module_names:
         args.module_names = list(PUBLIC_SUBMODULES) + [BASE_MODULE]
 
-    module_names = list(args.module_names)
-    for name in module_names:
-        if name in OTHER_MODULE_DOCS:
-            name = OTHER_MODULE_DOCS[name]
-            if name not in module_names:
-                module_names.append(name)
+    module_names = args.module_names + [
+        OTHER_MODULE_DOCS[name]
+        for name in args.module_names
+        if name in OTHER_MODULE_DOCS
+    ]
+    # remove duplicates while maintaining order
+    module_names = list(dict.fromkeys(module_names))
 
     dots = True
     success = True
@@ -596,7 +593,7 @@ def main(argv):
             modules.append(module)
 
     if modules:
-        print("Running checks for %d modules:" % (len(modules),))
+        print(f"Running checks for {len(modules)} modules:")
         for module in modules:
             if dots:
                 sys.stderr.write(module.__name__ + ' ')

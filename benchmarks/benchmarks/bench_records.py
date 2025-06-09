@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class Records(Benchmark):
@@ -12,7 +12,7 @@ class Records(Benchmark):
         self.formats_str = ','.join(self.formats)
         self.dtype_ = np.dtype(
             [
-                ('field_{}'.format(i), self.l50.dtype.str)
+                (f'field_{i}', self.l50.dtype.str)
                 for i in range(self.fields_number)
             ]
         )
