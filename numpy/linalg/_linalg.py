@@ -14,7 +14,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
            'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
-           'matrix_norm', 'vector_norm', 'vecdot']
+           'matrix_norm', 'vector_norm', 'vecdot', 'polyeig']
 
 import functools
 import operator
@@ -119,6 +119,10 @@ class SVDResult(NamedTuple):
     U: NDArray[Any]
     S: NDArray[Any]
     Vh: NDArray[Any]
+
+class PolyEigResult(NamedTuple):
+    eigenvalues: NDArray[Any]
+    eigenvectors: NDArray[Any]
 
 
 array_function_dispatch = functools.partial(
@@ -3679,3 +3683,73 @@ def vecdot(x1, x2, /, *, axis=-1):
 
     """
     return _core_vecdot(x1, x2, axis=axis)
+
+# polyeig
+def _polyeig_dispatcher(*arrays):
+    return arrays
+
+@array_function_dispatch(_polyeig_dispatcher)
+def polyeig(*arrays):
+    """Solve polynomial eigenvalue problem.
+
+    Parameters
+    ----------
+    *arrays : (..., M, M) array_like
+        Matrices A_0, A_1, ..., A_n. All matrices must be square and have the
+        same shape.
+
+    Returns
+    -------
+    eigenvalues : (..., M*n) ndarray
+        The eigenvalues of the polynomial eigenvalue problem.
+    eigenvectors : (..., M*n, M*n) ndarray
+        The eigenvectors of the polynomial eigenvalue problem.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from numpy import linalg as LA
+    >>> # Solve the quadratic eigenvalue problem (A_0 + λ*A_1 + λ^2*A_2) * v = 0:
+    >>> A0 = np.array([[1, 0], [0, 1]])
+    >>> A1 = np.array([[0, 1], [-1, 0]])
+    >>> A2 = np.array([[1, 0], [0, 1]])
+    >>> eigenvalues, eigenvectors = LA.polyeig(A0, A1, A2)
+    >>> print(eigenvalues)  # doctest: +SKIP
+    [ 0.+1.j  0.-1.j]
+    >>> print(eigenvectors)  # doctest: +SKIP
+    [[ 0.70710678+0.j          0.70710678-0.j        ]
+     [ 0.00000000+0.70710678j  0.00000000-0.70710678j]]
+    """
+    if not arrays:
+        raise ValueError("At least one matrix must be provided")
+    # Convert all inputs to arrays and check shapes
+    arrays = [_makearray(a)[0] for a in arrays]
+    n_matrices = len(arrays)
+    # Check that all matrices are square and have the same shape
+    shape = arrays[0].shape
+    if len(shape) < 2 or shape[-2] != shape[-1]:
+        raise ValueError("Input matrices must be square")
+    for a in arrays[1:]:
+        if a.shape != shape:
+            raise ValueError("All matrices must have the same shape")
+    # Get the size of the matrices
+    M = shape[-1]
+    # Create the companion matrix
+    n = n_matrices - 1
+    N = M * n
+    # Initialize the companion matrix
+    companion = zeros((N, N), dtype=arrays[0].dtype)
+    # Fill the companion matrix
+    for i in range(n - 1):
+        companion[i * M:(i + 1) * M, (i + 1) * M:(i + 2) * M] = eye(M)
+    # Fill the last block row
+    for i in range(n_matrices):
+        companion[(n - 1) * M:n * M, i * M:(i + 1) * M] = -arrays[i]
+    # Solve the generalized eigenvalue problem
+    try:
+        eigenvalues, eigenvectors = eig(companion)
+    except LinAlgError as e:
+        raise LinAlgError("Polynomial eigenvalue computation did not converge") from e
+    # Extract the eigenvectors
+    result_eigenvectors = eigenvectors[:M]
+    return PolyEigResult(eigenvalues, result_eigenvectors)

@@ -76,6 +76,7 @@ __all__ = [
     "matrix_norm",
     "vector_norm",
     "vecdot",
+    "polyeig",
 ]
 
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
@@ -108,6 +109,10 @@ class SVDResult(NamedTuple):
     U: NDArray[Any]
     S: NDArray[Any]
     Vh: NDArray[Any]
+
+class PolyEigResult(NamedTuple):
+    eigenvalues: NDArray[Any]
+    eigenvectors: NDArray[Any]
 
 @overload
 def tensorsolve(
@@ -480,3 +485,10 @@ def matmul(
     x1: _ArrayLikeComplex_co,
     x2: _ArrayLikeComplex_co,
 ) -> NDArray[complexfloating]: ...
+
+@overload
+def polyeig(*arrays: _ArrayLikeInt_co) -> PolyEigResult: ...
+@overload
+def polyeig(*arrays: _ArrayLikeFloat_co) -> PolyEigResult: ...
+@overload
+def polyeig(*arrays: _ArrayLikeComplex_co) -> PolyEigResult: ...
