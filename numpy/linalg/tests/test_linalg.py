@@ -2428,3 +2428,42 @@ def test_vector_norm_empty():
         assert_equal(np.linalg.vector_norm(x, ord=1), 0)
         assert_equal(np.linalg.vector_norm(x, ord=2), 0)
         assert_equal(np.linalg.vector_norm(x, ord=np.inf), 0)
+
+class TestPolyEig:
+    def test_empty_input(self):
+        # Test that empty input raises ValueError
+        from numpy import linalg
+        from numpy.testing import assert_raises
+        assert_raises(ValueError, linalg.polyeig)
+
+    def test_non_square_matrix(self):
+        # Test that non-square matrices raise ValueError
+        import numpy as np
+        from numpy import linalg
+        from numpy.testing import assert_raises
+        A0 = np.array([[1, 2, 3], [4, 5, 6]])
+        A1 = np.array([[1, 2], [3, 4]])
+        assert_raises(ValueError, linalg.polyeig, A0, A1)
+
+    def test_inconsistent_shapes(self):
+        # Test that matrices with inconsistent shapes raise ValueError
+        import numpy as np
+        from numpy import linalg
+        from numpy.testing import assert_raises
+        A0 = np.array([[1, 0], [0, 1]])
+        A1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        assert_raises(ValueError, linalg.polyeig, A0, A1)
+
+class TestGeneig:
+    def test_matrix_size_validation(self):
+        """Test that geneig properly validates matrix sizes."""
+        import numpy as np
+        from numpy import linalg
+        from numpy.testing import assert_raises
+
+        # Test non-square matrices
+        A_nonsquare = np.array([[1, 2, 3], [4, 5, 6]])  # 2x3
+        B_nonsquare = np.array([[1, 2], [3, 4]])        # 2x2
+        assert_raises(ValueError, linalg.geneig, A_nonsquare, B_nonsquare)
+
+        

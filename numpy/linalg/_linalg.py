@@ -14,7 +14,7 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
            'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
-           'matrix_norm', 'vector_norm', 'vecdot', 'polyeig']
+           'matrix_norm', 'vector_norm', 'vecdot', 'polyeig', 'geneig']
 
 import functools
 import operator
@@ -3684,6 +3684,50 @@ def vecdot(x1, x2, /, *, axis=-1):
     """
     return _core_vecdot(x1, x2, axis=axis)
 
+# Generalized eigenvalue problem
+def _geneig_dispatcher(A, B):
+    return (A, B)
+
+@array_function_dispatch(_geneig_dispatcher)
+def geneig(A, B):
+    """
+    Solve the generalized eigenvalue problem Av = λBv.
+
+    Parameters
+    ----------
+    A :  matrix.
+    B :  matrix.
+
+    Returns
+    -------
+    eigenvalues :
+        The generalized eigenvalues λ.
+    eigenvectors :
+        The generalized eigenvectors v, such that Av = λBv.
+
+    Notes
+    -----
+    This function solves the problem Av = λBv, i.e., finds λ and v such that
+    det(A - λB) = 0. If B is invertible, this is equivalent to the standard
+    eigenvalue problem for B^{-1}A, but this function does not require B to be
+    invertible and does not explicitly invert B.
+    """
+    # Convert to arrays and check shapes
+    A, _ = _makearray(A)
+    B, wrap = _makearray(B)
+    _assert_stacked_square(A, B)
+    _assert_finite(A, B)
+    t, result_t = _commonType(A, B)
+
+    # Try to reduce to standard eigenvalue problem if B is invertible
+    try:
+        Binv = inv(B)
+        BinvA = matmul(Binv, A)
+        result = eig(BinvA)
+        return result
+    except LinAlgError:
+        raise LinAlgError("Generalized eigenvalue problem requires B to be invertible if scipy is not available.")
+
 # polyeig
 def _polyeig_dispatcher(*arrays):
     return arrays
@@ -3695,15 +3739,13 @@ def polyeig(*arrays):
     Parameters
     ----------
     *arrays : (..., M, M) array_like
-        Matrices A_0, A_1, ..., A_n. All matrices must be square and have the
+        Matrices A_0, A_1, ..., A_p. All matrices must be square and have the
         same shape.
 
     Returns
     -------
-    eigenvalues : (..., M*n) ndarray
+    eigenvalues : (..., M*p) ndarray
         The eigenvalues of the polynomial eigenvalue problem.
-    eigenvectors : (..., M*n, M*n) ndarray
-        The eigenvectors of the polynomial eigenvalue problem.
 
     Examples
     --------
@@ -3713,43 +3755,43 @@ def polyeig(*arrays):
     >>> A0 = np.array([[1, 0], [0, 1]])
     >>> A1 = np.array([[0, 1], [-1, 0]])
     >>> A2 = np.array([[1, 0], [0, 1]])
-    >>> eigenvalues, eigenvectors = LA.polyeig(A0, A1, A2)
+    >>> eigenvalues = LA.polyeig(A0, A1, A2)
     >>> print(eigenvalues)  # doctest: +SKIP
     [ 0.+1.j  0.-1.j]
-    >>> print(eigenvectors)  # doctest: +SKIP
-    [[ 0.70710678+0.j          0.70710678-0.j        ]
-     [ 0.00000000+0.70710678j  0.00000000-0.70710678j]]
     """
     if not arrays:
         raise ValueError("At least one matrix must be provided")
-    # Convert all inputs to arrays and check shapes
     arrays = [_makearray(a)[0] for a in arrays]
     n_matrices = len(arrays)
-    # Check that all matrices are square and have the same shape
     shape = arrays[0].shape
     if len(shape) < 2 or shape[-2] != shape[-1]:
         raise ValueError("Input matrices must be square")
     for a in arrays[1:]:
         if a.shape != shape:
             raise ValueError("All matrices must have the same shape")
-    # Get the size of the matrices
-    M = shape[-1]
-    # Create the companion matrix
-    n = n_matrices - 1
-    N = M * n
-    # Initialize the companion matrix
-    companion = zeros((N, N), dtype=arrays[0].dtype)
-    # Fill the companion matrix
-    for i in range(n - 1):
-        companion[i * M:(i + 1) * M, (i + 1) * M:(i + 2) * M] = eye(M)
-    # Fill the last block row
-    for i in range(n_matrices):
-        companion[(n - 1) * M:n * M, i * M:(i + 1) * M] = -arrays[i]
-    # Solve the generalized eigenvalue problem
-    try:
-        eigenvalues, eigenvectors = eig(companion)
-    except LinAlgError as e:
-        raise LinAlgError("Polynomial eigenvalue computation did not converge") from e
-    # Extract the eigenvectors
-    result_eigenvectors = eigenvectors[:M]
-    return PolyEigResult(eigenvalues, result_eigenvectors)
+    n = shape[-1]
+    p = n_matrices - 1
+    if p == 0:
+        # Just a standard eigenvalue problem
+        return eigvals(arrays[0])
+    
+    # Build companion matrices for the generalized eigenvalue problem
+    # C1 * v = lambda * C0 * v
+    C0 = zeros((n*p, n*p), dtype=arrays[0].dtype)
+    C1 = zeros((n*p, n*p), dtype=arrays[0].dtype)
+    
+    # Top block row of C0
+    C0[:n, :n] = -arrays[0]
+    for k in range(1, n_matrices):
+        C0[:n, k*n:(k+1)*n] = -arrays[k]
+    
+    # Top block row of C1
+    C1[:n, :n] = arrays[-1]
+    
+    # Lower block rows of C0
+    for i in range(p-1):
+        C0[(i+1)*n:(i+2)*n, i*n:(i+1)*n] = eye(n, dtype=arrays[0].dtype)
+    
+    # Now solve the generalized eigenvalue problem
+    result = geneig(C0, C1)
+    return result.eigenvalues

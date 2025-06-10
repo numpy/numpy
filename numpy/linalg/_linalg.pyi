@@ -77,6 +77,7 @@ __all__ = [
     "vector_norm",
     "vecdot",
     "polyeig",
+    "geneig",
 ]
 
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])

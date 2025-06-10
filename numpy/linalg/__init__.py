@@ -48,6 +48,7 @@ Matrix eigenvalues
    eigh
    eigvals
    eigvalsh
+   geneig
    polyeig
 
 Norms and other numbers
