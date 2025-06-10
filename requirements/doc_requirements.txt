@@ -17,8 +17,6 @@ pickleshare
 towncrier
 toml
 
-
-# for doctests, also needs pytz which is in test_requirements
 scipy-doctest>=1.8.0
 
 # interactive documentation utilities

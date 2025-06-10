@@ -1,6 +1,6 @@
 import datetime
 import pickle
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import pytest
 
@@ -22,6 +22,11 @@ try:
 except NameError:
     RecursionError = RuntimeError  # python < 3.5
 
+try:
+    ZoneInfo("US/Central")
+    _has_tz = True
+except ZoneInfoNotFoundError:
+    _has_tz = False
 
 def _assert_equal_hash(v1, v2):
     assert v1 == v2
@@ -1880,6 +1885,7 @@ class TestDateTime:
                 np.datetime64('2032-01-01T00:00:00', 'us'), unit='auto'),
                 '2032-01-01')
 
+    @pytest.mark.skipif(not _has_tz, reason="The tzdata module is not available.")
     def test_datetime_as_string_timezone(self):
         # timezone='local' vs 'UTC'
         a = np.datetime64('2010-03-15T06:30', 'm')
