@@ -11,6 +11,7 @@ from ._linalg import (
     eigh,
     eigvals,
     eigvalsh,
+    geneig,
     inv,
     lstsq,
     matmul,
@@ -22,7 +23,6 @@ from ._linalg import (
     norm,
     outer,
     pinv,
-    geneig,
     polyeig,
     qr,
     slogdet,
@@ -38,7 +38,6 @@ from ._linalg import (
 )
 
 __all__ = [
-    "LinAlgError",
     "cholesky",
     "cond",
     "cross",
@@ -48,6 +47,7 @@ __all__ = [
     "eigh",
     "eigvals",
     "eigvalsh",
+    "geneig",
     "inv",
     "lstsq",
     "matmul",
@@ -59,7 +59,6 @@ __all__ = [
     "norm",
     "outer",
     "pinv",
-    "geneig",
     "polyeig",
     "qr",
     "slogdet",

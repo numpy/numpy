@@ -3726,7 +3726,9 @@ def geneig(A, B):
         result = eig(BinvA)
         return result
     except LinAlgError:
-        raise LinAlgError("Generalized eigenvalue problem requires B to be invertible if scipy is not available.")
+        raise LinAlgError(
+            "B must be invertible"
+        )
 
 # polyeig
 def _polyeig_dispatcher(*arrays):
@@ -3774,24 +3776,26 @@ def polyeig(*arrays):
     if p == 0:
         # Just a standard eigenvalue problem
         return eigvals(arrays[0])
-    
+
     # Build companion matrices for the generalized eigenvalue problem
     # C1 * v = lambda * C0 * v
-    C0 = zeros((n*p, n*p), dtype=arrays[0].dtype)
-    C1 = zeros((n*p, n*p), dtype=arrays[0].dtype)
-    
-    # Top block row of C0
-    C0[:n, :n] = -arrays[0]
-    for k in range(1, n_matrices):
-        C0[:n, k*n:(k+1)*n] = -arrays[k]
-    
-    # Top block row of C1
-    C1[:n, :n] = arrays[-1]
-    
-    # Lower block rows of C0
-    for i in range(p-1):
-        C0[(i+1)*n:(i+2)*n, i*n:(i+1)*n] = eye(n, dtype=arrays[0].dtype)
-    
+    C0 = zeros((n * p, n * p), dtype=arrays[0].dtype)
+    C1 = zeros((n * p, n * p), dtype=arrays[0].dtype)
+
+    # Top block row of C0: -A0, -A1, ..., -A_{p-1}
+    for k in range(p):
+        C0[:n, k * n:(k + 1) * n] = -arrays[k]
+    # Top block row of C1: A_p in the last block
+    C1[:n, (p - 1) * n:p * n] = arrays[-1]
+    # Lower block rows of C0: identity matrices on the subdiagonal
+    for i in range(1, p):
+        C0[i * n:(i + 1) * n, (i - 1) * n:i * n] = eye(n, dtype=arrays[0].dtype)
     # Now solve the generalized eigenvalue problem
-    result = geneig(C0, C1)
-    return result.eigenvalues
+    try:
+        result = geneig(C0, C1)
+        return result.eigenvalues
+    except LinAlgError:
+        raise LinAlgError(
+            "The polynomial eigenvalue problem could not be solved. "
+            "The companion matrices are singular."
+        )

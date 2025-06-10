@@ -2465,5 +2465,3 @@ class TestGeneig:
         A_nonsquare = np.array([[1, 2, 3], [4, 5, 6]])  # 2x3
         B_nonsquare = np.array([[1, 2], [3, 4]])        # 2x2
         assert_raises(ValueError, linalg.geneig, A_nonsquare, B_nonsquare)
-
-        
