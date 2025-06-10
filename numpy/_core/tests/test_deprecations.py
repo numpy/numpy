@@ -13,12 +13,6 @@ from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F4
 import numpy as np
 from numpy.testing import assert_raises, temppath
 
-try:
-    import pytz  # noqa: F401
-    _has_pytz = True
-except ImportError:
-    _has_pytz = False
-
 
 class _DeprecationTestCase:
     # Just as warning: warnings uses re.match, so the start of this message
