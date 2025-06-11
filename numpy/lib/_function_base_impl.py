@@ -4784,12 +4784,12 @@ def _get_indexes(arr, virtual_indexes, valid_values_count):
 
 
 def _quantile(
-    arr: np.typing.ArrayLike,
+    arr: "np.typing.ArrayLike",
     quantiles: np.ndarray,
     axis: int = -1,
     method: str = "linear",
     out: np.ndarray | None = None,
-    weights: np.typing.ArrayLike | None = None,
+    weights: "np.typing.ArrayLike | None" = None,
 ) -> np.ndarray:
     """
     Private function that doesn't support extended axis or keepdims.
