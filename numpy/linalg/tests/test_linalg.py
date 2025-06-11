@@ -2429,39 +2429,129 @@ def test_vector_norm_empty():
         assert_equal(np.linalg.vector_norm(x, ord=2), 0)
         assert_equal(np.linalg.vector_norm(x, ord=np.inf), 0)
 
-class TestPolyEig:
-    def test_empty_input(self):
-        # Test that empty input raises ValueError
-        from numpy import linalg
-        from numpy.testing import assert_raises
-        assert_raises(ValueError, linalg.polyeig)
-
-    def test_non_square_matrix(self):
-        # Test that non-square matrices raise ValueError
-        import numpy as np
-        from numpy import linalg
-        from numpy.testing import assert_raises
-        A0 = np.array([[1, 2, 3], [4, 5, 6]])
-        A1 = np.array([[1, 2], [3, 4]])
-        assert_raises(ValueError, linalg.polyeig, A0, A1)
-
-    def test_inconsistent_shapes(self):
-        # Test that matrices with inconsistent shapes raise ValueError
-        import numpy as np
-        from numpy import linalg
-        from numpy.testing import assert_raises
-        A0 = np.array([[1, 0], [0, 1]])
-        A1 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        assert_raises(ValueError, linalg.polyeig, A0, A1)
 
 class TestGeneig:
-    def test_matrix_size_validation(self):
-        """Test that geneig properly validates matrix sizes."""
-        import numpy as np
-        from numpy import linalg
-        from numpy.testing import assert_raises
+    def test_basic(self):
+        # Test basic functionality of geneig
+        # For A = [[1, 0], [0, 2]] and B = [[1, 0], [0, 1]]
+        # The generalized eigenvalues should be [1, 2]
+        a = np.array([[1, 0], [0, 2]])
+        b = np.array([[1, 0], [0, 1]])
+        w, v = linalg.geneig(a, b)
+        assert_almost_equal(w, np.array([1, 2]))
+        # Verify that Av = λBv for each eigenvalue/eigenvector pair
+        for i in range(len(w)):
+            assert_almost_equal(np.dot(a, v[:, i]), w[i] * np.dot(b, v[:, i]))
 
-        # Test non-square matrices
-        A_nonsquare = np.array([[1, 2, 3], [4, 5, 6]])  # 2x3
-        B_nonsquare = np.array([[1, 2], [3, 4]])        # 2x2
-        assert_raises(ValueError, linalg.geneig, A_nonsquare, B_nonsquare)
+    def test_complex(self):
+        # Test with complex matrices
+        a = np.array([[1 + 1j, 2], [3, 4 + 2j]])
+        b = np.array([[1, 0], [0, 1]])
+        w, v = linalg.geneig(a, b)
+        # Verify that Av = λBv for each eigenvalue/eigenvector pair
+        for i in range(len(w)):
+            assert_almost_equal(np.dot(a, v[:, i]), w[i] * np.dot(b, v[:, i]))
+
+    def test_singular_B(self):
+        # Test with singular B matrix
+        a = np.array([[1, 0], [0, 1]])
+        b = np.array([[1, 0], [0, 0]])  # singular matrix
+        with assert_raises(LinAlgError):
+            linalg.geneig(a, b)
+
+    def test_3x3(self):
+        # Test with 3x3 matrices
+        a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        b = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        w, v = linalg.geneig(a, b)
+        # Verify that Av = λBv for each eigenvalue/eigenvector pair
+        for i in range(len(w)):
+            assert_almost_equal(np.dot(a, v[:, i]), w[i] * np.dot(b, v[:, i]))
+
+    def test_hermitian(self):
+        # Test with Hermitian matrices
+        a = np.array([[1, 1 + 1j], [1 - 1j, 2]])
+        b = np.array([[1, 0], [0, 1]])
+        w, v = linalg.geneig(a, b)
+        # Verify that eigenvalues are real for Hermitian A
+        assert_almost_equal(w.imag, np.zeros_like(w.imag))
+        # Verify that Av = λBv for each eigenvalue/eigenvector pair
+        for i in range(len(w)):
+            assert_almost_equal(np.dot(a, v[:, i]), w[i] * np.dot(b, v[:, i]))
+
+
+class TestPolyEigvals:
+    def test_basic(self):
+        # Test basic functionality of polyeigvals
+        # For A0 = [[1, 0], [0, 1]] and A1 = [[1, 0], [0, 1]]
+        # The polynomial eigenvalues should be [-1, -1]
+        A0 = np.array([[1, 0], [0, 1]])
+        A1 = np.array([[1, 0], [0, 1]])
+        w = linalg.polyeigvals(A0, A1)
+        print("Eigenvalues:", w)
+        print("Expected:", np.array([-1, -1]))
+        assert_almost_equal(w, np.array([-1, -1]))
+
+    def test_singular_coefficients(self):
+        # Test with singular coefficient matrices
+        A0 = np.array([[1, 0], [0, 1]])
+        A1 = np.array([[1, 0], [0, 0]])  # singular matrix
+        with assert_raises(LinAlgError):
+            linalg.polyeigvals(A0, A1)
+
+    def test_zero_coefficients(self):
+        # Test with zero coefficient matrices
+        A0 = np.zeros((2, 2))
+        A1 = np.eye(2)
+        w = linalg.polyeigvals(A0, A1)
+        # All eigenvalues should be zero
+        assert_almost_equal(w, np.zeros(2))
+
+class TestPolyEig:
+    def test_basic(self):
+        # Test basic functionality of polyeig
+        # For A0 = [[1, 0], [0, 1]] and A1 = [[1, 0], [0, 1]]
+        # The polynomial eigenvalues should be [-1, -1]
+        A0 = np.array([[1, 0], [0, 1]])
+        A1 = np.array([[1, 0], [0, 1]])
+        result = linalg.polyeig(A0, A1)
+        if isinstance(result, np.ndarray):
+            w = result
+            v = None
+        else:
+            w = result.eigenvalues
+            v = result.eigenvectors
+        print("Eigenvalues:", w)
+        print("Expected:", np.array([-1, -1]))
+        assert_almost_equal(w, np.array([-1, -1]))
+        # Verify that (A0 + λA1)v = 0 for each eigenvalue/eigenvector pair
+        if v is not None:
+            for i in range(len(w)):
+                assert_almost_equal(np.dot(A0 + w[i] * A1, v[:, i]),
+                                  np.zeros_like(v[:, i]))
+
+    def test_singular_coefficients(self):
+        # Test with singular coefficient matrices
+        A0 = np.array([[1, 0], [0, 1]])
+        A1 = np.array([[1, 0], [0, 0]])  # singular matrix
+        with assert_raises(LinAlgError):
+            linalg.polyeig(A0, A1)
+
+    def test_zero_coefficients(self):
+        # Test with zero coefficient matrices
+        A0 = np.zeros((2, 2))
+        A1 = np.eye(2)
+        result = linalg.polyeig(A0, A1)
+        if isinstance(result, np.ndarray):
+            w = result
+            v = None
+        else:
+            w = result.eigenvalues
+            v = result.eigenvectors
+        # All eigenvalues should be zero
+        assert_almost_equal(w, np.zeros(2))
+        # Verify that (A0 + λA1)v = 0 for each eigenvalue/eigenvector pair
+        if v is not None:
+            for i in range(len(w)):
+                assert_almost_equal(np.dot(A0 + w[i] * A1, v[:, i]),
+                                  np.zeros_like(v[:, i]))

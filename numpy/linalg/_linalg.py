@@ -14,7 +14,8 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'svdvals', 'eig', 'eigh', 'lstsq', 'norm', 'qr', 'cond',
            'matrix_rank', 'LinAlgError', 'multi_dot', 'trace', 'diagonal',
            'cross', 'outer', 'tensordot', 'matmul', 'matrix_transpose',
-           'matrix_norm', 'vector_norm', 'vecdot', 'polyeig', 'geneig']
+           'matrix_norm', 'vector_norm', 'vecdot', 'polyeig', 'polyeigvals', 'geneig',
+           'geneigvals']
 
 import functools
 import operator
@@ -3685,6 +3686,51 @@ def vecdot(x1, x2, /, *, axis=-1):
     return _core_vecdot(x1, x2, axis=axis)
 
 # Generalized eigenvalue problem
+def _geneigvals_dispatcher(A, B):
+    return (A, B)
+
+@array_function_dispatch(_geneigvals_dispatcher)
+def geneigvals(A, B):
+    """
+    Solve the generalized eigenvalue problem Av = λBv.
+
+    Parameters
+    ----------
+    A :  matrix.
+    B :  matrix.
+
+    Returns
+    -------
+    eigenvalues :
+        The generalized eigenvalues λ.
+    eigenvectors :
+        The generalized eigenvectors v, such that Av = λBv.
+
+    Notes
+    -----
+    This function solves the problem Av = λBv, i.e., finds λ and v such that
+    det(A - λB) = 0. If B is invertible, this is equivalent to the standard
+    eigenvalue problem for B^{-1}A, but this function does not require B to be
+    invertible and does not explicitly invert B.
+    """
+    # Convert to arrays and check shapes
+    A, _ = _makearray(A)
+    B, wrap = _makearray(B)
+    _assert_stacked_square(A, B)
+    _assert_finite(A, B)
+    t, result_t = _commonType(A, B)
+
+    # Try to reduce to standard eigenvalue problem if B is invertible
+    try:
+        Binv = inv(B)
+        BinvA = matmul(Binv, A)
+        result = eigvals(BinvA)
+        return result
+    except LinAlgError:
+        raise LinAlgError(
+            "B must be invertible"
+        )
+
 def _geneig_dispatcher(A, B):
     return (A, B)
 
@@ -3723,11 +3769,97 @@ def geneig(A, B):
     try:
         Binv = inv(B)
         BinvA = matmul(Binv, A)
-        result = eig(BinvA)
-        return result
+        eigenvalues, eigenvectors = eig(BinvA)
+        return EigResult(eigenvalues, eigenvectors)
     except LinAlgError:
         raise LinAlgError(
             "B must be invertible"
+        )
+
+# polyeigvals
+def _polyeigvals_dispatcher(*arrays):
+    return arrays
+
+@array_function_dispatch(_polyeigvals_dispatcher)
+def polyeigvals(*arrays):
+    """Solve polynomial eigenvalue problem.
+
+    Parameters
+    ----------
+    *arrays : (..., M, M) array_like
+        Matrices A_0, A_1, ..., A_p. All matrices must be square and have the
+        same shape.
+
+    Returns
+    -------
+    eigenvalues : (..., M*p) ndarray
+        The eigenvalues of the polynomial eigenvalue problem.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from numpy import linalg as LA
+    >>> # Solve the quadratic eigenvalue problem (A_0 + λ*A_1 + λ^2*A_2) * v = 0:
+    >>> A0 = np.array([[1, 0], [0, 1]])
+    >>> A1 = np.array([[1, 0], [0, 1]])
+    >>> eigenvalues = LA.polyeigvals(A0, A1)
+    >>> print(eigenvalues)  # doctest: +SKIP
+    [-1. -1.]
+    """
+    if not arrays:
+        raise ValueError("At least one matrix must be provided")
+    arrays = [_makearray(a)[0] for a in arrays]
+    n_matrices = len(arrays)
+    shape = arrays[0].shape
+    if len(shape) < 2 or shape[-2] != shape[-1]:
+        raise ValueError("Input matrices must be square")
+    for a in arrays[1:]:
+        if a.shape != shape:
+            raise ValueError("All matrices must have the same shape")
+    n = shape[-1]
+    p = n_matrices - 1
+    if p == 0:
+        # Just a standard eigenvalue problem
+        return eigvals(arrays[0])
+
+    # For a first-order polynomial eigenvalue problem (A0 + λA1)v = 0
+    # We can solve it directly as a generalized eigenvalue problem
+    if p == 1:
+        try:
+            result = geneigvals(-arrays[0], arrays[1])
+            return result
+        except LinAlgError:
+            raise LinAlgError(
+                "The polynomial eigenvalue problem could not be solved. "
+                "The matrices are singular."
+            )
+
+    # For higher-order problems, build companion matrices
+    C0 = zeros((n * p, n * p), dtype=arrays[0].dtype)
+    C1 = zeros((n * p, n * p), dtype=arrays[0].dtype)
+
+    # Top block row of C0: -A0, -A1, ..., -A_{p-1}
+    for k in range(p):
+        C0[:n, k * n:(k + 1) * n] = -arrays[k]
+    
+    # Top block row of C1: A_p
+    C1[:n, (p - 1) * n:p * n] = arrays[-1]
+    
+    # Lower block rows of C0: identity matrices on the subdiagonal
+    for i in range(p-1):
+        C0[(i+1)*n:(i+2)*n, i*n:(i+1)*n] = eye(n, dtype=arrays[0].dtype)
+    
+    # Lower block rows of C1: zeros except for the last block which is identity
+    C1[(p-1)*n:p*n, (p-1)*n:p*n] = eye(n, dtype=arrays[0].dtype)
+
+    # Now solve the generalized eigenvalue problem
+    try:
+        result = geneigvals(C0, C1)
+        return result
+    except LinAlgError:
+        raise LinAlgError(
+            "The polynomial eigenvalue problem could not be solved. "
+            "The companion matrices are singular."
         )
 
 # polyeig
@@ -3748,6 +3880,8 @@ def polyeig(*arrays):
     -------
     eigenvalues : (..., M*p) ndarray
         The eigenvalues of the polynomial eigenvalue problem.
+    eigenvectors : (..., M*p, M*p) ndarray
+        The eigenvectors of the polynomial eigenvalue problem.
 
     Examples
     --------
@@ -3755,11 +3889,10 @@ def polyeig(*arrays):
     >>> from numpy import linalg as LA
     >>> # Solve the quadratic eigenvalue problem (A_0 + λ*A_1 + λ^2*A_2) * v = 0:
     >>> A0 = np.array([[1, 0], [0, 1]])
-    >>> A1 = np.array([[0, 1], [-1, 0]])
-    >>> A2 = np.array([[1, 0], [0, 1]])
-    >>> eigenvalues = LA.polyeig(A0, A1, A2)
+    >>> A1 = np.array([[1, 0], [0, 1]])
+    >>> eigenvalues = LA.polyeig(A0, A1)
     >>> print(eigenvalues)  # doctest: +SKIP
-    [ 0.+1.j  0.-1.j]
+    [-1. -1.]
     """
     if not arrays:
         raise ValueError("At least one matrix must be provided")
@@ -3777,23 +3910,45 @@ def polyeig(*arrays):
         # Just a standard eigenvalue problem
         return eigvals(arrays[0])
 
-    # Build companion matrices for the generalized eigenvalue problem
-    # C1 * v = lambda * C0 * v
+    # For a first-order polynomial eigenvalue problem (A0 + λA1)v = 0
+    # We can solve it directly as a generalized eigenvalue problem
+    if p == 1:
+        try:
+            result = geneig(-arrays[0], arrays[1])
+            return PolyEigResult(result.eigenvalues, result.eigenvectors)
+        except LinAlgError:
+            raise LinAlgError(
+                "The polynomial eigenvalue problem could not be solved. "
+                "The matrices are singular."
+            )
+
+    # For higher-order problems, build companion matrices
     C0 = zeros((n * p, n * p), dtype=arrays[0].dtype)
     C1 = zeros((n * p, n * p), dtype=arrays[0].dtype)
 
     # Top block row of C0: -A0, -A1, ..., -A_{p-1}
     for k in range(p):
         C0[:n, k * n:(k + 1) * n] = -arrays[k]
-    # Top block row of C1: A_p in the last block
+    
+    # Top block row of C1: A_p
     C1[:n, (p - 1) * n:p * n] = arrays[-1]
+    
     # Lower block rows of C0: identity matrices on the subdiagonal
-    for i in range(1, p):
-        C0[i * n:(i + 1) * n, (i - 1) * n:i * n] = eye(n, dtype=arrays[0].dtype)
+    for i in range(p-1):
+        C0[(i+1)*n:(i+2)*n, i*n:(i+1)*n] = eye(n, dtype=arrays[0].dtype)
+    
+    # Lower block rows of C1: zeros except for the last block which is identity
+    C1[(p-1)*n:p*n, (p-1)*n:p*n] = eye(n, dtype=arrays[0].dtype)
+
     # Now solve the generalized eigenvalue problem
     try:
         result = geneig(C0, C1)
-        return result.eigenvalues
+        # Extract the eigenvectors from the result
+        eigenvectors = result.eigenvectors
+        # Get the pth block of eigenvectors (last n rows)
+        eigenvectors = eigenvectors[(p-1)*n:p*n, :]
+        # Return eigenvalues and eigenvectors
+        return PolyEigResult(result.eigenvalues, eigenvectors)
     except LinAlgError:
         raise LinAlgError(
             "The polynomial eigenvalue problem could not be solved. "

@@ -49,7 +49,9 @@ Matrix eigenvalues
    eigvals
    eigvalsh
    geneig
+   geneigvals
    polyeig
+   polyeigvals
 
 Norms and other numbers
 -----------------------

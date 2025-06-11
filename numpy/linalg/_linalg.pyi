@@ -76,8 +76,9 @@ __all__ = [
     "matrix_norm",
     "vector_norm",
     "vecdot",
-    "polyeig",
+    "polyeigvals",
     "geneig",
+    "geneigvals",
 ]
 
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
@@ -488,11 +489,7 @@ def matmul(
 ) -> NDArray[complexfloating]: ...
 
 @overload
-def polyeig(*arrays: _ArrayLikeInt_co) -> PolyEigResult: ...
-@overload
-def polyeig(*arrays: _ArrayLikeFloat_co) -> PolyEigResult: ...
-@overload
-def polyeig(*arrays: _ArrayLikeComplex_co) -> PolyEigResult: ...
+def polyeigvals(*arrays: ArrayLike) -> NDArray[Any]: ...
 
 @overload
 def geneig(
