@@ -22,29 +22,11 @@ from numpy import (
     _OrderCF,
     _OrderKACF,
     bitwise_not,
-    broadcast,
-    complexfloating,
-    dtype,
-    flatiter,
-    float64,
-    floating,
-    from_dlpack,
-    generic,
     inf,
-    int_,
-    intp,
     little_endian,
-    matmul,
     nan,
-    ndarray,
-    nditer,
     newaxis,
-    object_,
-    signedinteger,
-    timedelta64,
     ufunc,
-    unsignedinteger,
-    vecdot,
 )
 from numpy._typing import (
     ArrayLike,
@@ -69,7 +51,15 @@ from numpy._typing import (
 from numpy.lib._array_utils_impl import normalize_axis_tuple as normalize_axis_tuple
 
 from ._asarray import require
-from ._ufunc_config import errstate, getbufsize, geterr, geterrcall, setbufsize, seterr, seterrcall
+from ._ufunc_config import (
+    errstate,
+    getbufsize,
+    geterr,
+    geterrcall,
+    setbufsize,
+    seterr,
+    seterrcall,
+)
 from .arrayprint import (
     array2string,
     array_repr,
@@ -630,7 +620,6 @@ __all__ = [
     "ushort",
     "var",
     "vdot",
-    "vecdot",
     "vecdot",
     "vecmat",
     "void",

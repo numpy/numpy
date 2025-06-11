@@ -65,7 +65,14 @@ from numpy import (
 from numpy._typing import DTypeLike
 
 from ._type_aliases import sctypeDict as sctypeDict
-from .multiarray import busday_count, busday_offset, busdaycalendar, datetime_as_string, datetime_data, is_busday
+from .multiarray import (
+    busday_count,
+    busday_offset,
+    busdaycalendar,
+    datetime_as_string,
+    datetime_data,
+    is_busday,
+)
 
 __all__ = [
     "ScalarType",
