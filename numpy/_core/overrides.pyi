@@ -1,13 +1,11 @@
 from collections.abc import Callable, Iterable
 from typing import Any, Final, NamedTuple, ParamSpec, TypeAlias, TypeVar
 
-from numpy._typing import _SupportsArrayFunc
-
 _T = TypeVar("_T")
 _Tss = ParamSpec("_Tss")
 _FuncLikeT = TypeVar("_FuncLikeT", bound=type | Callable[..., object])
 
-_Dispatcher: TypeAlias = Callable[_Tss, Iterable[_SupportsArrayFunc | None]]
+_Dispatcher: TypeAlias = Callable[_Tss, Iterable[object]]
 
 ###
 
