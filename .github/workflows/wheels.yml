@@ -177,7 +177,7 @@ jobs:
           fi
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@cf078b0954f3fd08b8445a7bf2c3fb83ab3bb971  # v3.0.0b4
+        uses: pypa/cibuildwheel@5f22145df44122af0f5a201f93cf0207171beca7  # v3.0.0
         env:
           CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
 
