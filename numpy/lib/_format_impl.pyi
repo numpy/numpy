@@ -1,7 +1,6 @@
 import os
-from typing import Any, BinaryIO, Final, TypeAlias, TypeGuard
-
 from _typeshed import SupportsRead, SupportsWrite
+from typing import Any, BinaryIO, Final, TypeAlias, TypeGuard
 
 import numpy as np
 import numpy.typing as npt

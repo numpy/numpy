@@ -1,6 +1,5 @@
 from typing import Any, Self, SupportsIndex, SupportsInt, TypeAlias, overload
 from typing import Literal as L
-
 from typing_extensions import TypeVar
 
 import numpy as np

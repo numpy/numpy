@@ -1,4 +1,5 @@
 # ruff: noqa: ANN401
+from _typeshed import Incomplete
 from collections.abc import Sequence
 from typing import (
     Any,
@@ -11,8 +12,6 @@ from typing import (
     overload,
     type_check_only,
 )
-
-from _typeshed import Incomplete
 from typing_extensions import deprecated
 
 import numpy as np

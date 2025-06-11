@@ -1,10 +1,9 @@
 # pyright: reportIncompatibleMethodOverride=false
 # ruff: noqa: ANN001, ANN002, ANN003, ANN201, ANN202 ANN204, ANN401
 
+from _typeshed import Incomplete
 from collections.abc import Sequence
 from typing import Any, Literal, NoReturn, Self, SupportsIndex, TypeAlias, overload
-
-from _typeshed import Incomplete
 from typing_extensions import TypeIs, TypeVar
 
 import numpy as np

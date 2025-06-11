@@ -5,9 +5,9 @@ import warnings
 from itertools import product
 
 import pytest
-from numpy._core._multiarray_tests import array_indexing
 
 import numpy as np
+from numpy._core._multiarray_tests import array_indexing
 from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
     HAS_REFCOUNT,
