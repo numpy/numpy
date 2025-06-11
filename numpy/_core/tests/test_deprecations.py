@@ -8,7 +8,13 @@ import warnings
 
 import numpy._core._struct_ufunc_tests as struct_ufunc
 import pytest
+
+import tempfile
+import re
+import numpy.ma as ma
+
 from numpy._core._multiarray_tests import fromstring_null_term_c_api  # noqa: F401
+
 
 import numpy as np
 from numpy.testing import assert_raises, temppath
@@ -446,3 +452,4 @@ class TestAddNewdocUFunc(_DeprecationTestCase):
                 struct_ufunc.add_triplet, "new docs"
             )
         )
+
