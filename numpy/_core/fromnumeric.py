@@ -8,10 +8,7 @@ import warnings
 import numpy as np
 from numpy._utils import set_module
 
-from . import _methods, overrides
-from . import multiarray as mu
-from . import numerictypes as nt
-from . import umath as um
+from . import _methods, multiarray as mu, numerictypes as nt, overrides, umath as um
 from ._multiarray_umath import _array_converter
 from .multiarray import asanyarray, asarray, concatenate
 

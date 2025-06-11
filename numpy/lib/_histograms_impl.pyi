@@ -1,17 +1,7 @@
 from collections.abc import Sequence
-from typing import (
-    Any,
-    SupportsIndex,
-    TypeAlias,
-)
-from typing import (
-    Literal as L,
-)
+from typing import Any, Literal as L, SupportsIndex, TypeAlias
 
-from numpy._typing import (
-    ArrayLike,
-    NDArray,
-)
+from numpy._typing import ArrayLike, NDArray
 
 __all__ = ["histogram", "histogramdd", "histogram_bin_edges"]
 

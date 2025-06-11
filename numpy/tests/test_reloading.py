@@ -7,13 +7,7 @@ from importlib import reload
 import pytest
 
 import numpy.exceptions as ex
-from numpy.testing import (
-    IS_WASM,
-    assert_,
-    assert_equal,
-    assert_raises,
-    assert_warns,
-)
+from numpy.testing import IS_WASM, assert_, assert_equal, assert_raises, assert_warns
 
 
 def test_numpy_reloading():

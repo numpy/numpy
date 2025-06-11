@@ -1,14 +1,12 @@
 from typing import (
     Any,
+    Literal as L,
     NoReturn,
     SupportsIndex,
     SupportsInt,
     TypeAlias,
     TypeVar,
     overload,
-)
-from typing import (
-    Literal as L,
 )
 
 import numpy as np
