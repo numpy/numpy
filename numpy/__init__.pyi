@@ -380,6 +380,8 @@ from numpy._core.multiarray import (
     frompyfunc,
     nested_iters,
     flagsobj,
+    _get_preserve_0d_arrays as _get_preserve_0d_arrays,
+    _set_preserve_0d_arrays as _set_preserve_0d_arrays,
 )
 
 from numpy._core.numeric import (
@@ -689,7 +691,8 @@ __all__ = [  # noqa: RUF022
     "array2string", "array_str", "array_repr", "set_printoptions", "get_printoptions",
     "printoptions", "format_float_positional", "format_float_scientific", "require",
     "seterr", "geterr", "setbufsize", "getbufsize", "seterrcall", "geterrcall",
-    "errstate",
+    "errstate", "_get_preserve_0d_arrays", "_set_preserve_0d_arrays",
+
     # _core.function_base.__all__
     "logspace", "linspace", "geomspace",
     # _core.getlimits.__all__

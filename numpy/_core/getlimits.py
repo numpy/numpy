@@ -18,17 +18,15 @@ from .umath import exp2, isnan, log10, nextafter
 def _fr0(a):
     """fix rank-0 --> rank-1"""
     if a.ndim == 0:
-        a = a.copy()
-        a.shape = (1,)
+        return a.reshape(1)
     return a
 
 
 def _fr1(a):
     """fix rank > 0 --> rank-0"""
     if a.size == 1:
-        a = a.copy()
-        a.shape = ()
-    return a
+        return a.reshape(())
+    return a[()]
 
 
 class MachArLike:

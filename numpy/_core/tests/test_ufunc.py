@@ -660,7 +660,7 @@ class TestUfunc:
                     tgt = float(x) / float(y)
 
                 res = np.true_divide(x, y)
-                rtol = max(np.finfo(res).resolution, 1e-15)
+                rtol = max(np.finfo(res.dtype).resolution, 1e-15)
                 assert_allclose(res, tgt, rtol=rtol)
 
                 if tc in 'bhilqBHILQ':
@@ -1668,20 +1668,28 @@ class TestUfunc:
         # Check scalar behaviour for ufuncs without an identity
         assert_equal(np.power.reduce(3), 3)
 
-        # Make sure that scalars are coming out from this operation
-        assert_(type(np.prod(np.float32(2.5), axis=0)) is np.float32)
-        assert_(type(np.sum(np.float32(2.5), axis=0)) is np.float32)
-        assert_(type(np.max(np.float32(2.5), axis=0)) is np.float32)
-        assert_(type(np.min(np.float32(2.5), axis=0)) is np.float32)
+        # If axis=None, scalars should be produced
+        assert type(np.prod(np.float32(2.5), axis=None)) is np.float32
+        assert type(np.sum(np.float32(2.5), axis=None)) is np.float32
+        assert type(np.max(np.float32(2.5), axis=None)) is np.float32
+        assert type(np.min(np.float32(2.5), axis=None)) is np.float32
+        # TODO: In a sense should return an array, but this is axis=0 is
+        #       arguably invalid.
+        assert type(np.prod(np.float32(2.5), axis=0)) is np.float32
 
-        # check if scalars/0-d arrays get cast
-        assert_(type(np.any(0, axis=0)) is np.bool)
+        # axis=None indicates a scalar return
+        assert type(np.any(0, axis=None)) is np.bool_
+        # Not a NumPy scalar (no odd __array_wrap__) and not axis=None:
+        if np._get_preserve_0d_arrays():
+            assert type(np.any(0, axis=0)) is np.ndarray
+        else:
+            assert type(np.any(0, axis=0)) is np.bool_
 
         # assert that 0-d arrays get wrapped
         class MyArray(np.ndarray):
             pass
         a = np.array(1).view(MyArray)
-        assert_(type(np.any(a)) is MyArray)
+        assert type(np.any(a)) is MyArray
 
     def test_casting_out_param(self):
         # Test that it's possible to do casts on output
@@ -1805,7 +1813,7 @@ class TestUfunc:
         necessarily the output (only relevant for object arrays).
         """
         # For an object loop, the default value 0 with type int is used:
-        assert type(np.add.reduce([], dtype=object)) is int
+        assert type(np.add.reduce([], dtype=object, axis=None)) is int
         out = np.array(None, dtype=object)
         # When the loop is float64 but `out` is object this does not happen,
         # the result is float64 cast to object (which gives Python `float`).
