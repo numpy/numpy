@@ -1,7 +1,6 @@
+from _typeshed import Incomplete
 from types import EllipsisType
 from typing import Any, Generic, Self, SupportsIndex, TypeAlias, overload
-
-from _typeshed import Incomplete
 from typing_extensions import TypeVar, override
 
 import numpy as np

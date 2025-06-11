@@ -9,11 +9,11 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 from hypothesis.extra import numpy as hynp
-from numpy._core._rational_tests import rational
 
 import numpy as np
 from numpy import ma
 from numpy._core import sctypes
+from numpy._core._rational_tests import rational
 from numpy._core.numerictypes import obj2sctype
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn

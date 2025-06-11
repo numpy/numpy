@@ -1,6 +1,5 @@
-from typing import LiteralString
-
 from _typeshed import SupportsWrite
+from typing import LiteralString
 from typing_extensions import TypeVar
 
 import numpy as np

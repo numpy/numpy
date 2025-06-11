@@ -1,5 +1,6 @@
 # TODO: Sort out any and all missing functions in this namespace
 import datetime as dt
+from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Any,
@@ -18,8 +19,6 @@ from typing import (
 from typing import (
     Literal as L,
 )
-
-from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
 from typing_extensions import CapsuleType
 
 import numpy as np
