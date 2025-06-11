@@ -7272,6 +7272,10 @@ class TestMatmul(MatmulCommon):
         assert_array_equal(c, tgt_mv)
         c = self.matmul(v, a.T, out=out[:, 0, 0])
         assert_array_equal(c, tgt_mv)
+        # issue 29164
+        out_f = np.zeros((10, 4), dtype=float)
+        c = self.matmul(a, b, out=out_f[::-2, ::-2])
+        assert_array_equal(c, tgt)
 
         # test out contiguous in only last dim
         out = np.ones((10, 2), dtype=float)
