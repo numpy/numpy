@@ -1,0 +1,6 @@
+Improve matmul performance when operands are non-contiguous
+-----------------------------------------------------------
+
+Enable using BLAS for matmul even when operands are non-contiguous by copying
+if needed. This performance enhancement's original implementation had a bug
+that was fixed for v2.3.1
