@@ -4,7 +4,6 @@ setuptools==65.5.1 ; python_version < '3.12'
 setuptools         ; python_version >= '3.12'
 hypothesis==6.104.1
 pytest==7.4.0
-pytz==2023.3.post1
 pytest-cov==4.1.0
 meson
 ninja; sys_platform != "emscripten"
@@ -17,3 +16,5 @@ mypy==1.16.0; platform_python_implementation != "PyPy"
 typing_extensions>=4.5.0
 # for optional f2py encoding detection
 charset-normalizer
+tzdata
+
