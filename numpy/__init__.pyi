@@ -432,6 +432,8 @@ from numpy._core.shape_base import (
 )
 
 from ._expired_attrs_2_0 import __expired_attributes__ as __expired_attributes__
+from ._globals import _CopyMode as _CopyMode
+from ._globals import _NoValue as _NoValue
 
 from numpy.lib import (
     scimath as emath,
@@ -494,8 +496,6 @@ from numpy.lib._function_base_impl import (
     interp,
     quantile,
 )
-
-from numpy._globals import _CopyMode
 
 from numpy.lib._histograms_impl import (
     histogram_bin_edges,
