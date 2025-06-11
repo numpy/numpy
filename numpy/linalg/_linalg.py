@@ -3841,17 +3841,13 @@ def polyeigvals(*arrays):
     # Top block row of C0: -A0, -A1, ..., -A_{p-1}
     for k in range(p):
         C0[:n, k * n:(k + 1) * n] = -arrays[k]
-    
     # Top block row of C1: A_p
     C1[:n, (p - 1) * n:p * n] = arrays[-1]
-    
     # Lower block rows of C0: identity matrices on the subdiagonal
-    for i in range(p-1):
-        C0[(i+1)*n:(i+2)*n, i*n:(i+1)*n] = eye(n, dtype=arrays[0].dtype)
-    
+    for i in range(p - 1):
+        C0[(i + 1) * n:(i + 2) * n, i * n:(i + 1) * n] = eye(n, dtype=arrays[0].dtype)
     # Lower block rows of C1: zeros except for the last block which is identity
-    C1[(p-1)*n:p*n, (p-1)*n:p*n] = eye(n, dtype=arrays[0].dtype)
-
+    C1[(p - 1) * n:p * n, (p - 1) * n:p * n] = eye(n, dtype=arrays[0].dtype)
     # Now solve the generalized eigenvalue problem
     try:
         result = geneigvals(C0, C1)
@@ -3921,24 +3917,19 @@ def polyeig(*arrays):
                 "The polynomial eigenvalue problem could not be solved. "
                 "The matrices are singular."
             )
-
     # For higher-order problems, build companion matrices
     C0 = zeros((n * p, n * p), dtype=arrays[0].dtype)
     C1 = zeros((n * p, n * p), dtype=arrays[0].dtype)
-
     # Top block row of C0: -A0, -A1, ..., -A_{p-1}
     for k in range(p):
         C0[:n, k * n:(k + 1) * n] = -arrays[k]
-    
     # Top block row of C1: A_p
     C1[:n, (p - 1) * n:p * n] = arrays[-1]
-    
     # Lower block rows of C0: identity matrices on the subdiagonal
-    for i in range(p-1):
-        C0[(i+1)*n:(i+2)*n, i*n:(i+1)*n] = eye(n, dtype=arrays[0].dtype)
-    
+    for i in range(p - 1):
+        C0[(i + 1) * n:(i + 2) * n, i * n:(i + 1) * n] = eye(n, dtype=arrays[0].dtype)
     # Lower block rows of C1: zeros except for the last block which is identity
-    C1[(p-1)*n:p*n, (p-1)*n:p*n] = eye(n, dtype=arrays[0].dtype)
+    C1[(p - 1) * n:p * n, (p - 1) * n:p * n] = eye(n, dtype=arrays[0].dtype)
 
     # Now solve the generalized eigenvalue problem
     try:
@@ -3946,7 +3937,7 @@ def polyeig(*arrays):
         # Extract the eigenvectors from the result
         eigenvectors = result.eigenvectors
         # Get the pth block of eigenvectors (last n rows)
-        eigenvectors = eigenvectors[(p-1)*n:p*n, :]
+        eigenvectors = eigenvectors[(p - 1) * n:p * n, :]
         # Return eigenvalues and eigenvectors
         return PolyEigResult(result.eigenvalues, eigenvectors)
     except LinAlgError:
