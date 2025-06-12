@@ -414,6 +414,12 @@ the best performance.
 
 (`gh-28769 <https://github.com/numpy/numpy/pull/28769>`__)
 
+Performance improvements for ``np.matmul``
+------------------------------------------
+Enable using BLAS for ``matmul`` even when operands are non-contiguous by copying
+if needed.
+
+(`gh-23752 <https://github.com/numpy/numpy/pull/23752>`__)
 
 Changes
 =======
