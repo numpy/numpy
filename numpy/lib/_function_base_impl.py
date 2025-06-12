@@ -2618,8 +2618,11 @@ class vectorize:
         elif not args:
             res = func()
         else:
-            args = [asanyarray(a, dtype=object) for a in args]
+            args = [asanyarray(a) for a in args]
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
+            # note: this second cast is here to match the legacy behavior of vectorize
+            # and should be eventually removed.
+            args = [asanyarray(a, dtype=object) for a in args]
             outputs = ufunc(*args, out=...)
 
             if ufunc.nout == 1:
