@@ -7272,10 +7272,6 @@ class TestMatmul(MatmulCommon):
         assert_array_equal(c, tgt_mv)
         c = self.matmul(v, a.T, out=out[:, 0, 0])
         assert_array_equal(c, tgt_mv)
-        # issue 29164
-        out_f = np.zeros((10, 4), dtype=float)
-        c = self.matmul(a, b, out=out_f[::-2, ::-2])
-        assert_array_equal(c, tgt)
 
         # test out contiguous in only last dim
         out = np.ones((10, 2), dtype=float)
@@ -7320,6 +7316,12 @@ class TestMatmul(MatmulCommon):
 
         r3 = np.matmul(args[0].copy(), args[1].copy())
         assert_equal(r1, r3)
+
+        # matrix matrix, issue 29164
+        if [len(args[0].shape), len(args[1].shape)] == [2, 2]:
+            out_f = np.zeros((r2.shape[0] * 2, r2.shape[1] * 2), order='F')
+            r4 = np.matmul(*args, out=out_f[::2, ::2])
+            assert_equal(r2, r4)
 
     def test_matmul_object(self):
         import fractions
