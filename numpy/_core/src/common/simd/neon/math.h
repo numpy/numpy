@@ -261,8 +261,8 @@ NPY_FINLINE npyv_s64 npyv_min_s64(npyv_s64 a, npyv_s64 b)
 #define NPY_IMPL_NEON_REDUCE_MINMAX(INTRIN, STYPE, SFX, OP)       \
     NPY_FINLINE STYPE npyv_reduce_##INTRIN##_##SFX(npyv_##SFX a)  \
     {                                                             \
-        STYPE al = (STYPE)vget_low_##SFX(a);                      \
-        STYPE ah = (STYPE)vget_high_##SFX(a);                     \
+        STYPE al = (STYPE)vgetq_lane_##SFX(a, 0);                 \
+        STYPE ah = (STYPE)vgetq_lane_##SFX(a, 1);                 \
         return al OP ah ? al : ah;                                \
     }
 NPY_IMPL_NEON_REDUCE_MINMAX(max, npy_uint64, u64, >)
