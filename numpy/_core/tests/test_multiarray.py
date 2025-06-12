@@ -7317,11 +7317,33 @@ class TestMatmul(MatmulCommon):
         r3 = np.matmul(args[0].copy(), args[1].copy())
         assert_equal(r1, r3)
 
-        # matrix matrix, issue 29164
-        if [len(args[0].shape), len(args[1].shape)] == [2, 2]:
-            out_f = np.zeros((r2.shape[0] * 2, r2.shape[1] * 2), order='F')
-            r4 = np.matmul(*args, out=out_f[::2, ::2])
-            assert_equal(r2, r4)
+    # issue 29164 with extra checks
+    @pytest.mark.parametrize('dtype', (
+        np.float32, np.float64, np.complex64, np.complex128
+    ))
+    def test_dot_equivalent_matrix_matrix_blastypes(self, dtype):
+        modes = list(itertools.product(['C', 'F'], [True, False]))
+
+        def apply_mode(m, mode):
+            order, is_contiguous = mode
+            if is_contiguous:
+                return m.copy() if order == 'C' else m.T.copy().T
+
+            retval = np.zeros(
+                (m.shape[0] * 2, m.shape[1] * 2), dtype=m.dtype, order=order
+            )[::2, ::2]
+            retval[...] = m
+            return retval    
+
+        is_complex = np.issubdtype(dtype, np.complexfloating)
+        m1 = self.m1.astype(dtype) + (1j if is_complex else 0)
+        m2 = self.m2.astype(dtype) + (1j if is_complex else 0)
+        dot_res = np.dot(m1, m2)
+        mo = np.zeros_like(dot_res)
+
+        for mode in itertools.product(*[modes]*3):
+            m1_, m2_, mo_ = [apply_mode(*x) for x in zip([m1, m2, mo], mode)]
+            assert_equal(np.matmul(m1_, m2_, out=mo_), dot_res)
 
     def test_matmul_object(self):
         import fractions
