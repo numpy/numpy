@@ -7317,6 +7317,12 @@ class TestMatmul(MatmulCommon):
         r3 = np.matmul(args[0].copy(), args[1].copy())
         assert_equal(r1, r3)
 
+        # matrix matrix, issue 29164
+        if [len(args[0].shape), len(args[1].shape)] == [2, 2]:
+            out_f = np.zeros((r2.shape[0] * 2, r2.shape[1] * 2), order='F')
+            r4 = np.matmul(*args, out=out_f[::2, ::2])
+            assert_equal(r2, r4)
+
     def test_matmul_object(self):
         import fractions
 
