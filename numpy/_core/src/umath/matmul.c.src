@@ -596,7 +596,7 @@ NPY_NO_EXPORT void
              * Use transpose equivalence:
              * matmul(a, b, o) == matmul(b.T, a.T, o.T)
              */
-            if (o_f_blasable) {
+            if (o_transpose) {
                 @TYPE@_matmul_matrixmatrix(
                     ip2_, is2_p_, is2_n_,
                     ip1_, is1_n_, is1_m_,
