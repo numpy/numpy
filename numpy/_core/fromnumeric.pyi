@@ -819,9 +819,10 @@ def sum(
     where: _ArrayLikeBool_co = ...,
 ) -> _ArrayT: ...
 
+# keep in sync with `any`
 @overload
 def all(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: None = None,
     out: None = None,
     keepdims: Literal[False, 0] | _NoValueType = ...,
@@ -830,7 +831,7 @@ def all(
 ) -> np.bool: ...
 @overload
 def all(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     keepdims: _BoolLike_co | _NoValueType = ...,
@@ -839,7 +840,7 @@ def all(
 ) -> Incomplete: ...
 @overload
 def all(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None,
     out: _ArrayT,
     keepdims: _BoolLike_co | _NoValueType = ...,
@@ -848,7 +849,7 @@ def all(
 ) -> _ArrayT: ...
 @overload
 def all(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
     *,
     out: _ArrayT,
@@ -856,9 +857,10 @@ def all(
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> _ArrayT: ...
 
+# keep in sync with `all`
 @overload
 def any(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: None = None,
     out: None = None,
     keepdims: Literal[False, 0] | _NoValueType = ...,
@@ -867,7 +869,7 @@ def any(
 ) -> np.bool: ...
 @overload
 def any(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
     out: None = None,
     keepdims: _BoolLike_co | _NoValueType = ...,
@@ -876,7 +878,7 @@ def any(
 ) -> Incomplete: ...
 @overload
 def any(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None,
     out: _ArrayT,
     keepdims: _BoolLike_co | _NoValueType = ...,
@@ -885,7 +887,7 @@ def any(
 ) -> _ArrayT: ...
 @overload
 def any(
-    a: ArrayLike,
+    a: ArrayLike | None,
     axis: int | tuple[int, ...] | None = None,
     *,
     out: _ArrayT,
@@ -893,6 +895,7 @@ def any(
     where: _ArrayLikeBool_co | _NoValueType = ...,
 ) -> _ArrayT: ...
 
+#
 @overload
 def cumsum(
     a: _ArrayLike[_ScalarT],
