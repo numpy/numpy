@@ -227,8 +227,15 @@ typedef enum {
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
         NPY_UNSAFE_CASTING=4,
-        /* Allow any casts, check that no values overflow/change */
-        NPY_SAME_VALUE_CASTING=5,
+        /*
+         * Allow any casts, check that no values overflow/change. For users
+         * we only accept same-value casting, but array methods (cast impls)
+         * we need to know if same-value is supported on a same-kind cast.
+         * Safe, equiv, and no-casts are assumed to always be same-value safe.
+         */
+        _NPY_SAME_VALUE_CASTING_FLAG = 8,  // Use one bit to indicate same-value
+        NPY_SAME_VALUE_SAME_KIND_CASTING=(_NPY_SAME_VALUE_CASTING_FLAG | NPY_SAME_KIND_CASTING),
+        NPY_SAME_VALUE_CASTING=(_NPY_SAME_VALUE_CASTING_FLAG | NPY_UNSAFE_CASTING),
 } NPY_CASTING;
 
 typedef enum {

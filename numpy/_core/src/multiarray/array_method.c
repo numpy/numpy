@@ -192,6 +192,7 @@ validate_spec(PyArrayMethod_Spec *spec)
         case NPY_SAME_KIND_CASTING:
         case NPY_UNSAFE_CASTING:
         case NPY_SAME_VALUE_CASTING:
+        case NPY_SAME_VALUE_SAME_KIND_CASTING:
             break;
         default:
             if (spec->casting != -1) {

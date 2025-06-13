@@ -77,8 +77,11 @@ class Casting(enum.IntEnum):
     safe = 2
     same_kind = 3
     unsafe = 4
-    same_value = 5
+    same_value_same_kind = 8 | 3
+    same_value = 8 | 4
 
+
+same_value_dtypes = tuple(type(np.dtype(c)) for c in "bhilqBHILQefdgFDG")
 
 def _get_cancast_table():
     table = textwrap.dedent("""
@@ -119,6 +122,12 @@ def _get_cancast_table():
         cancast[from_dt] = {}
         for to_dt, c in zip(dtypes, row[2::2]):
             cancast[from_dt][to_dt] = convert_cast[c]
+            # Of the types checked, numeric cast support same-value
+            if from_dt in same_value_dtypes and to_dt in same_value_dtypes:
+                if cancast[from_dt][to_dt] == Casting.unsafe:
+                    cancast[from_dt][to_dt] = Casting.same_value
+                if cancast[from_dt][to_dt] == Casting.same_kind:
+                    cancast[from_dt][to_dt] = Casting.same_value_same_kind
 
     return cancast
 
