@@ -566,3 +566,123 @@ def test_ndindex():
     # Make sure 0-sized ndindex works correctly
     x = list(ndindex(*[0]))
     assert_equal(x, [])
+
+
+
+# ndindex test cases for reimplementation of ndindex using itertools 
+# 1.  Empty Shapes and Zero Dimensions
+def test_ndindex_empty_and_zero_dimensions():
+    # Empty shape
+    assert list(np.ndindex()) == [()]
+    assert list(np.ndindex(())) == [()]
+
+    # Single dimension
+    assert list(np.ndindex(4)) == [(0,), (1,), (2,), (3,)]
+
+    # Zero dimensions should produce empty iterator
+    assert list(np.ndindex(0, 3)) == []
+    assert list(np.ndindex(3, 0, 2)) == []
+
+# 2. Non-Integer Dimensions Raise TypeError
+def test_ndindex_non_integer_dimensions():
+    """Test that non-integer dimensions raise TypeError."""
+    with pytest.raises(TypeError):
+        list(np.ndindex(2.5))
+    with pytest.raises(TypeError):
+        list(np.ndindex("2"))
+    with pytest.raises(TypeError):
+        list(np.ndindex([2, 3]))
+    with pytest.raises(TypeError):
+        list(np.ndindex((2.0, 3)))
+
+# 3. StopIteration Behavior
+def test_ndindex_stop_iteration_behavior():
+    """Test that StopIteration is raised properly after exhaustion."""
+    it = np.ndindex(2, 2)
+    # Exhaust the iterator
+    list(it)
+    # Should raise StopIteration on subsequent calls
+    with pytest.raises(StopIteration):
+        next(it)
+
+# 4. Iterator Independence
+def test_ndindex_iterator_independence():
+    """Test that each ndindex instance creates independent iterators."""
+    shape = (2, 3)
+    iter1 = np.ndindex(*shape)
+    iter2 = np.ndindex(*shape)
+
+    next(iter1)
+    next(iter1)
+
+    assert_equal(next(iter2), (0, 0))
+    assert_equal(next(iter1), (0, 2))
+
+# 5. Tuple vs. Arguments Consistency
+def test_ndindex_tuple_vs_args_consistency():
+    """Test that ndindex(shape) and ndindex(*shape) produce same results."""
+    # Single dimension
+    assert_equal(list(np.ndindex(5)), list(np.ndindex((5,))))
+
+    # Multiple dimensions 
+    assert_equal(list(np.ndindex(2, 3)), list(np.ndindex((2, 3))))
+
+    # Complex shape
+    shape = (2, 1, 4)
+    assert_equal(list(np.ndindex(*shape)), list(np.ndindex(shape)))
+
+# 6. Compatibility with ndenumerate
+def test_ndindex_against_ndenumerate_compatibility():
+
+    """Test ndindex produces same indices as ndenumerate."""
+    for shape in [(1, 2, 3), (3,), (2, 2), ()]:
+        ndindex_result = list(np.ndindex(shape))
+        ndenumerate_indices = [ix for ix, _ in np.ndenumerate(np.zeros(shape))]
+        assert_array_equal(ndindex_result, ndenumerate_indices)
+
+
+# 7. Multidimensional Correctness
+def test_ndindex_multidimensional_correctness():
+    """Test ndindex produces correct indices for multidimensional arrays."""
+    shape = (2, 1, 3)
+    result = list(np.ndindex(*shape))
+    expected = [
+        (0, 0, 0), (0, 0, 1), (0, 0, 2),
+        (1, 0, 0), (1, 0, 1), (1, 0, 2),
+    ]
+    assert_equal(result, expected)
+
+# 8. Large Dimensions Behavior
+def test_ndindex_large_dimensions_behavior(): 
+    """Test ndindex behaves correctly when initialized with large dimensions."""
+    large_shape = (1000, 1000)
+    iter_obj = np.ndindex(*large_shape)
+    first_element = next(iter_obj)
+    assert_equal(first_element, (0, 0))
+
+# 9. Empty Iterator Behavior
+def test_ndindex_empty_iterator_behavior():
+    """Test detailed behavior of empty iterators."""
+    empty_iter = np.ndindex(0, 5)
+    assert_equal(list(empty_iter), [])
+
+    empty_iter2 = np.ndindex(3, 0, 2)
+    with pytest.raises(StopIteration):
+        next(empty_iter2)
+
+# 10. Performance Regression
+def test_ndindex_performance_regression():
+    """Basic performance test to ensure no major regressions."""
+    import time
+
+    shape = (20, 30, 40)
+
+    start_time = time.perf_counter()
+    count = sum(1 for _ in np.ndindex(*shape))
+    elapsed_time = time.perf_counter() - start_time
+
+    expected_count = 20 * 30 * 40
+    assert_equal(count, expected_count)
+
+    assert elapsed_time < 1.0, f"ndindex took {elapsed_time:.3f}s, which seems slow"
+
