@@ -554,9 +554,9 @@ NPY_NO_EXPORT void
         } else {
             /* matrix @ matrix 
              * copy if not blasable, see gh-12365 & gh-23588 */
-            npy_bool i1_transpose = is1_m < is1_n,
-                     i2_transpose = is2_n < is2_p,
-                     o_transpose = os_m < os_p;
+            npy_bool i1_transpose = labs(is1_m) < labs(is1_n),
+                     i2_transpose = labs(is2_n) < labs(is2_p),
+                     o_transpose = labs(os_m) < labs(os_p);
 
             npy_intp tmp_is1_m = i1_transpose ? sz : sz*dn,
                      tmp_is1_n = i1_transpose ? sz*dm : sz,
