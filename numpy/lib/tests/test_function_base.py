@@ -1732,7 +1732,7 @@ class TestVectorize:
         s = '0123456789' * 10
         assert_equal(s, f(s))
 
-    def test_dtype_promotion_ticket_29189(self):
+    def test_dtype_promotion_gh_29189(self):
         # dtype should not be silently promoted (int32 -> int64)
         dtypes = [np.int16, np.int32, np.int64, np.float16, np.float32, np.float64]
 
