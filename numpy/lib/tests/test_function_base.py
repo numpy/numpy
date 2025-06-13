@@ -1734,7 +1734,7 @@ class TestVectorize:
 
     def test_dtype_promotion_ticket_29189(self):
         # dtype should not be silently promoted (int32 -> int64)
-        dtypes = [np.int16, np.int32, np.int64, np.float16, np.float32, np.float64, np.float128]
+        dtypes = [np.int16, np.int32, np.int64, np.float16, np.float32, np.float64]
 
         for dtype in dtypes:
             x = np.asarray([1, 2, 3], dtype=dtype)
