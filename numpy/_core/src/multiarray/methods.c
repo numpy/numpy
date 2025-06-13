@@ -840,7 +840,12 @@ array_astype(PyArrayObject *self,
         ((PyArrayObject_fields *)ret)->nd = PyArray_NDIM(self);
         ((PyArrayObject_fields *)ret)->descr = dtype;
     }
-    int success = PyArray_CopyInto(ret, self);
+    int success;
+    if (casting == NPY_SAME_VALUE_CASTING) {
+        success = PyArray_AssignArray(ret, self, NULL, casting);
+    } else {
+        success = PyArray_AssignArray(ret, self, NULL, NPY_UNSAFE_CASTING);
+    }
 
     Py_DECREF(dtype);
     ((PyArrayObject_fields *)ret)->nd = out_ndim;
