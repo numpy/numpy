@@ -1738,7 +1738,7 @@ class TestVectorize:
 
         for dtype in dtypes:
             x = np.asarray([1, 2, 3], dtype=dtype)
-            y = np.vectorize(lambda x: x + x, x)
+            y = np.vectorize(lambda x: x + x)(x)
             assert x.dtype == y.dtype
 
     def test_cache(self):
