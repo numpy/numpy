@@ -1,5 +1,12 @@
-from typing import Any, Generic, NamedTuple, SupportsIndex, TypeAlias, overload
-from typing import Literal as L
+from typing import (
+    Any,
+    Generic,
+    Literal as L,
+    NamedTuple,
+    SupportsIndex,
+    TypeAlias,
+    overload,
+)
 from typing_extensions import TypeVar, deprecated
 
 import numpy as np

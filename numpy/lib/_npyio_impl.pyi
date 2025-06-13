@@ -14,13 +14,13 @@ from typing import (
     Any,
     ClassVar,
     Generic,
+    Literal as L,
     Protocol,
     Self,
     TypeAlias,
     overload,
     type_check_only,
 )
-from typing import Literal as L
 from typing_extensions import TypeVar, deprecated, override
 
 import numpy as np

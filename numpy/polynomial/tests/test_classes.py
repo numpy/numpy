@@ -18,12 +18,7 @@ from numpy.polynomial import (
     Legendre,
     Polynomial,
 )
-from numpy.testing import (
-    assert_,
-    assert_almost_equal,
-    assert_equal,
-    assert_raises,
-)
+from numpy.testing import assert_, assert_almost_equal, assert_equal, assert_raises
 
 #
 # fixtures

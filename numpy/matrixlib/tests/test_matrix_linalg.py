@@ -12,13 +12,13 @@ from numpy.linalg.tests.test_linalg import (
     PinvCases,
     SolveCases,
     SVDCases,
+    TestQR as _TestQR,
     _TestNorm2D,
     _TestNormDoubleBase,
     _TestNormInt64Base,
     _TestNormSingleBase,
     apply_tag,
 )
-from numpy.linalg.tests.test_linalg import TestQR as _TestQR
 
 CASES = []
 
