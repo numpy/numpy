@@ -2573,6 +2573,7 @@ class vectorize:
             # the subsequent call when the ufunc is evaluated.
             # Assumes that ufunc first evaluates the 0th elements in the input
             # arrays (the input values are not checked to ensure this)
+            args = [asarray(a) for a in args]
             if builtins.any(arg.size == 0 for arg in args):
                 raise ValueError('cannot call `vectorize` on size 0 inputs '
                                  'unless `otypes` is set')
@@ -2618,10 +2619,8 @@ class vectorize:
         elif not args:
             res = func()
         else:
-            args = [asanyarray(a) for a in args]
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
-            # note: this second cast is here to match the legacy behavior of vectorize
-            # and should be eventually removed.
+            # gh-29196: `dtype=object` should eventually be removed
             args = [asanyarray(a, dtype=object) for a in args]
             outputs = ufunc(*args, out=...)
 
