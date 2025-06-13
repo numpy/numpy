@@ -733,6 +733,7 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
                "the default for its `n` parameter. To use the default "
                "behaviour for every axis, the `s` argument can be omitted.")
         warnings.warn(msg, DeprecationWarning, stacklevel=3)
+        s = [a.shape[_a] if _s is None else _s for _s, _a in zip(s, axes)]
     # use the whole input array along axis `i` if `s[i] == -1`
     s = [a.shape[_a] if _s == -1 else _s for _s, _a in zip(s, axes)]
     return s, axes
@@ -741,10 +742,32 @@ def _cook_nd_args(a, s=None, axes=None, invreal=0):
 def _raw_fftnd(a, s=None, axes=None, function=fft, norm=None, out=None):
     a = asarray(a)
     s, axes = _cook_nd_args(a, s, axes)
-    itl = list(range(len(axes)))
-    itl.reverse()
-    for ii in itl:
-        a = function(a, n=s[ii], axis=axes[ii], norm=norm, out=out)
+    # Combine the two, but in reverse, to end with the first axis given.
+    axes_and_s = list(zip(axes, s))[::-1]
+    # We try to use in-place calculations where possible, which is
+    # everywhere except when the size changes after the first FFT.
+    size_changes = [axis for axis, n in axes_and_s[1:] if a.shape[axis] != n]
+    # If there are any size changes, we cannot use out
+    # TODO: in principle, could see if out if bigger than required.
+    this_out = None if size_changes else out
+    for axis, n in axes_and_s:
+        if axis in size_changes:
+            if axis == size_changes[-1]:
+                # Last size change, so any output should now be OK
+                # (an error will be raised if not), and if no output is
+                # required, we want a freshly allocated array of the right size.
+                this_out = out
+            elif this_out is not None and n < this_out.shape[axis]:
+                # For an intermediate step where we return fewer elements, we
+                # can use a smaller view of the previous array.
+                this_out = this_out[(slice(None,),)*(axis-1) + (slice(n),)]
+            else:
+                # If we need more elements, we need a new array.
+                # TODO: in principle, could see if out if big enough.
+                this_out = None
+        a = function(a, n=n, axis=axis, norm=norm, out=this_out)
+        # Default output for next iteration.
+        this_out = a
     return a
 
 
