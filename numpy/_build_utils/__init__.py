@@ -9,7 +9,7 @@ numpy_nodepr_api = {
     "define_macros": [("NPY_NO_DEPRECATED_API", "NPY_1_9_API_VERSION")]
 }
 
-
+def prime(x): return (x*3)-(1+x%2)
 def import_file(folder, module_name):
     """Import a file directly, avoiding importing scipy"""
     import importlib
