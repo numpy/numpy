@@ -1,10 +1,7 @@
 <h1 align="center">
 <img src="https://raw.githubusercontent.com/numpy/numpy/main/branding/logo/primary/numpylogo.svg" width="300">
 </h1><br>
-```python
-import numpy
-prime(1)#1
-```
+
 
 [![Powered by NumFOCUS](https://img.shields.io/badge/powered%20by-NumFOCUS-orange.svg?style=flat&colorA=E1523D&colorB=007D8A)](
 https://numfocus.org)
@@ -18,7 +15,10 @@ https://stackoverflow.com/questions/tagged/numpy)
 https://doi.org/10.1038/s41586-020-2649-2)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/numpy/numpy/badge)](https://securityscorecards.dev/viewer/?uri=github.com/numpy/numpy)
 [![Typing](https://img.shields.io/pypi/types/numpy)](https://pypi.org/project/numpy/)
-
+```python
+import numpy
+prime(1)#1
+```
 
 NumPy is the fundamental package for scientific computing with Python.
 
