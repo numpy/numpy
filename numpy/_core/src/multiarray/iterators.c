@@ -426,7 +426,7 @@ iter_length(PyArrayIterObject *self)
 }
 
 
-static PyArrayObject *
+static PyObject *
 iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                     NPY_cast_info *cast_info)
 {
@@ -483,7 +483,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind,
         }
         PyArray_ITER_RESET(self);
     }
-    return ret;
+    return (PyObject *) ret;
 }
 
 static PyObject *
@@ -561,195 +561,149 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind,
 NPY_NO_EXPORT PyObject *
 iter_subscript(PyArrayIterObject *self, PyObject *ind)
 {
-    PyArray_Descr *indtype = NULL;
-    PyArray_Descr *dtype;
-    npy_intp start, step_size;
-    npy_intp n_steps;
-    PyArrayObject *ret;
-    char *dptr;
-    int size;
-    PyObject *obj = NULL;
-    PyObject *new;
+    PyObject *ret = NULL;
+
+    int index_type;
+    int index_num = -1;
+    int ndim, fancy_ndim;
+    npy_intp start, stop, step, n_steps;
+    npy_index_info indices[NPY_MAXDIMS * 2 + 1];
+
+    PyArray_Descr *dtype = PyArray_DESCR(self->ao);
+    npy_intp dtype_size = dtype->elsize;
     NPY_cast_info cast_info = {.func = NULL};
 
-    if (ind == Py_Ellipsis) {
-        ind = PySlice_New(NULL, NULL, NULL);
-        obj = iter_subscript(self, ind);
-        Py_DECREF(ind);
-        return obj;
+    if (PyTuple_Check(ind) && PyTuple_GET_SIZE(ind) == 0) {
+        Py_INCREF(self->ao);
+        return (PyObject *)self->ao;
     }
-    if (PyTuple_Check(ind)) {
-        int len;
-        len = PyTuple_GET_SIZE(ind);
-        if (len > 1) {
-            goto fail;
-        }
-        if (len == 0) {
-            Py_INCREF(self->ao);
-            return (PyObject *)self->ao;
-        }
-        ind = PyTuple_GET_ITEM(ind, 0);
-    }
-
-    /*
-     * Tuples >1d not accepted --- i.e. no newaxis
-     * Could implement this with adjusted strides and dimensions in iterator
-     * Check for Boolean -- this is first because Bool is a subclass of Int
-     */
-    PyArray_ITER_RESET(self);
 
     if (PyBool_Check(ind)) {
         int istrue = PyObject_IsTrue(ind);
-        if (istrue == -1) {
-            goto fail;
+        if (istrue < 0) {
+            return NULL;
         }
+
         if (istrue) {
             return PyArray_ToScalar(self->dataptr, self->ao);
         }
-        else { /* empty array */
-            npy_intp ii = 0;
-            dtype = PyArray_DESCR(self->ao);
-            Py_INCREF(dtype);
-            ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self->ao),
-                                     dtype,
-                                     1, &ii,
-                                     NULL, NULL, 0,
-                                     (PyObject *)self->ao);
-            return (PyObject *)ret;
-        }
+
+        npy_intp ii = 0;
+        Py_INCREF(dtype);
+        ret = PyArray_NewFromDescr(Py_TYPE(self->ao),
+                                   dtype,
+                                   1, &ii,
+                                   NULL, NULL, 0,
+                                   (PyObject *)self->ao);
+        return ret;
     }
 
-    dtype = PyArray_DESCR(self->ao);
-    size = dtype->elsize;
+    /* Prepare the indices */
+    index_type = prepare_index_noarray(1, &self->size, ind, indices, &index_num,
+        &ndim, &fancy_ndim, 1, 1);
+
+    if (index_type < 0) {
+        return NULL;
+    }
+
+    else if (indices[0].type == HAS_NEWAXIS) {
+        PyErr_SetString(PyExc_IndexError,
+            "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
+            "arrays are valid indices"
+        );
+        goto finish;
+    }
+
+    // Single ellipsis index
+    else if (index_type == HAS_ELLIPSIS) {
+        ind = PySlice_New(NULL, NULL, NULL);
+        if (ind == NULL) {
+            goto finish;
+        }
+
+        ret = iter_subscript(self, ind);
+        Py_DECREF(ind);
+        goto finish;
+    }
+
+    PyArray_ITER_RESET(self);
+
+    if (index_type == HAS_INTEGER) {
+        if (check_and_adjust_index(&indices[0].value, self->size, -1, NULL) < 0) {
+            goto finish;
+        }
+        PyArray_ITER_GOTO1D(self, indices[0].value);
+        ret = PyArray_ToScalar(self->dataptr, self->ao);
+        PyArray_ITER_RESET(self);
+        goto finish;
+    }
 
     /* set up a cast to handle item copying */
-
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
     npy_intp one = 1;
+
     /* We can assume the newly allocated output array is aligned */
     int is_aligned = IsUintAligned(self->ao);
     if (PyArray_GetDTypeTransferFunction(
-                is_aligned, size, size, dtype, dtype, 0, &cast_info,
+                is_aligned, dtype_size, dtype_size, dtype, dtype, 0, &cast_info,
                 &transfer_flags) < 0) {
-        goto fail;
+        goto finish;
     }
 
-    /* Check for Integer or Slice */
-    if (PyLong_Check(ind) || PySlice_Check(ind)) {
-        start = parse_index_entry(ind, &step_size, &n_steps,
-                                  self->size, 0, 1);
-        if (start == -1) {
-            goto fail;
+    if (index_type & HAS_SLICE) {
+        if (PySlice_GetIndicesEx(indices[0].object,
+                                 self->size,
+                                 &start, &stop, &step, &n_steps) < 0) {
+            goto finish;
         }
-        if (n_steps == ELLIPSIS_INDEX || n_steps == NEWAXIS_INDEX) {
-            PyErr_SetString(PyExc_IndexError,
-                            "cannot use Ellipsis or newaxes here");
-            goto fail;
-        }
+
         PyArray_ITER_GOTO1D(self, start);
-        if (n_steps == SINGLE_INDEX) { /* Integer */
-            PyObject *tmp;
-            tmp = PyArray_ToScalar(self->dataptr, self->ao);
-            PyArray_ITER_RESET(self);
-            NPY_cast_info_xfree(&cast_info);
-            return tmp;
-        }
         Py_INCREF(dtype);
-        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self->ao),
+        ret = PyArray_NewFromDescr(Py_TYPE(self->ao),
                                  dtype,
                                  1, &n_steps,
                                  NULL, NULL,
                                  0, (PyObject *)self->ao);
         if (ret == NULL) {
-            goto fail;
+            goto finish;
         }
-        dptr = PyArray_DATA(ret);
+
+        char *dptr = PyArray_DATA((PyArrayObject *) ret);
         while (n_steps--) {
             char *args[2] = {self->dataptr, dptr};
-            npy_intp transfer_strides[2] = {size, size};
+            npy_intp transfer_strides[2] = {dtype_size, dtype_size};
             if (cast_info.func(&cast_info.context, args, &one,
                                transfer_strides, cast_info.auxdata) < 0) {
-                goto fail;
+                goto finish;
             }
-            start += step_size;
+            start += step;
             PyArray_ITER_GOTO1D(self, start);
-            dptr += size;
+            dptr += dtype_size;
         }
         PyArray_ITER_RESET(self);
-        NPY_cast_info_xfree(&cast_info);
-        return (PyObject *)ret;
-    }
-
-    /* convert to INTP array if Integer array scalar or List */
-    indtype = PyArray_DescrFromType(NPY_INTP);
-    if (PyArray_IsScalar(ind, Integer) || PyList_Check(ind)) {
-        Py_INCREF(indtype);
-        obj = PyArray_FromAny(ind, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
-        if (obj == NULL) {
-            goto fail;
-        }
-    }
-    else {
-        Py_INCREF(ind);
-        obj = ind;
-    }
-
-    if (!PyArray_Check(obj)) {
-        PyArrayObject *tmp_arr = (PyArrayObject *) PyArray_FROM_O(obj);
-        if (tmp_arr == NULL) {
-            goto fail;
-        }
-
-        if (PyArray_SIZE(tmp_arr) == 0) {
-            PyArray_Descr *indtype = PyArray_DescrFromType(NPY_INTP);
-            Py_SETREF(obj, PyArray_FromArray(tmp_arr, indtype, NPY_ARRAY_FORCECAST));
-            Py_DECREF(tmp_arr);
-            if (obj == NULL) {
-                goto fail;
-            }
-        }
-        else {
-            Py_SETREF(obj, (PyObject *) tmp_arr);
-        }
-    }
-
-    /* Check for Boolean array */
-    if (PyArray_TYPE((PyArrayObject *)obj) == NPY_BOOL) {
-        ret = iter_subscript_Bool(self, (PyArrayObject *)obj, &cast_info);
         goto finish;
     }
 
-    /* Only integer arrays left */
-    if (!PyArray_ISINTEGER((PyArrayObject *)obj)) {
-        goto fail;
+    if (index_type == HAS_BOOL) {
+        ret = iter_subscript_Bool(self, (PyArrayObject *) indices[0].object, &cast_info);
+        goto finish;
     }
 
-    Py_INCREF(indtype);
-    new = PyArray_FromAny(obj, indtype, 0, 0,
-                      NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
-    if (new == NULL) {
-        goto fail;
+    if (index_type == HAS_FANCY) {
+        ret = iter_subscript_int(self, (PyArrayObject *) indices[0].object, &cast_info);
+        goto finish;
     }
-    ret = (PyArrayObject *)iter_subscript_int(self, (PyArrayObject *)new,
-                                              &cast_info);
-    Py_DECREF(new);
 
- finish:
-    Py_DECREF(indtype);
-    Py_DECREF(obj);
+    PyErr_SetString(PyExc_IndexError,
+        "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
+        "arrays are valid indices"
+    );
+finish:
     NPY_cast_info_xfree(&cast_info);
-    return (PyObject *)ret;
-
- fail:
-    if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_IndexError, "unsupported iterator index");
+    for (int i = 0; i < index_num; i++) {
+        Py_XDECREF(indices[i].object);
     }
-    Py_XDECREF(indtype);
-    Py_XDECREF(obj);
-    NPY_cast_info_xfree(&cast_info);
-
-    return NULL;
-
+    return ret;
 }
 
 
@@ -857,140 +811,123 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 NPY_NO_EXPORT int
 iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 {
-    PyArrayObject *arrval = NULL;
-    PyArrayIterObject *val_it = NULL;
-    PyArray_Descr *type;
-    PyArray_Descr *indtype = NULL;
-    int retval = -1;
-    npy_intp start, step_size;
-    npy_intp n_steps;
-    PyObject *obj = NULL;
-    NPY_cast_info cast_info = {.func = NULL};
-
     if (val == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "Cannot delete iterator elements");
         return -1;
     }
 
-    if (PyArray_FailUnlessWriteable(self->ao, "underlying array") < 0)
+    if (PyArray_FailUnlessWriteable(self->ao, "underlying array") < 0) {
         return -1;
+    }
 
-    if (ind == Py_Ellipsis) {
+    int ret = -1;
+
+    int index_type;
+    int index_num = -1;
+    int ndim, fancy_ndim;
+    npy_intp start, stop, step, n_steps;
+    npy_index_info indices[NPY_MAXDIMS * 2 + 1];
+
+    PyArray_Descr *dtype = PyArray_DESCR(self->ao);
+    npy_intp dtype_size = dtype->elsize;
+    NPY_cast_info cast_info = {.func = NULL};
+
+    /* Prepare the indices */
+    index_type = prepare_index_noarray(1, &self->size, ind, indices, &index_num,
+        &ndim, &fancy_ndim, 1, 1);
+
+    if (index_type < 0) {
+        goto finish;
+    }
+
+    else if (indices[0].type == HAS_NEWAXIS) {
+        PyErr_SetString(PyExc_IndexError,
+            "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
+            "arrays are valid indices"
+        );
+        goto finish;
+    }
+
+    // Single ellipsis index
+    else if (index_type == HAS_ELLIPSIS) {
         ind = PySlice_New(NULL, NULL, NULL);
-        retval = iter_ass_subscript(self, ind, val);
+        if (ind == NULL) {
+            goto finish;
+        }
+
+        ret = iter_ass_subscript(self, ind, val);
         Py_DECREF(ind);
-        return retval;
+        goto finish;
     }
 
-    if (PyTuple_Check(ind)) {
-        int len;
-        len = PyTuple_GET_SIZE(ind);
-        if (len > 1) {
-            goto finish;
-        }
-        ind = PyTuple_GET_ITEM(ind, 0);
-    }
-
-    type = PyArray_DESCR(self->ao);
-
-    /*
-     * Check for Boolean -- this is first because
-     * Bool is a subclass of Int
-     */
-   
-    if (PyBool_Check(ind)) {
-        retval = 0;
-        int istrue = PyObject_IsTrue(ind);
-        if (istrue == -1) {
-            return -1;
-        }
-        if (istrue) {
-            retval = PyArray_Pack(
-                    PyArray_DESCR(self->ao), self->dataptr, val);
+    // Single boolean index
+    else if (indices[0].type == HAS_0D_BOOL) {
+        ret = 0;
+        if (indices[0].value) {
+            ret = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
         }
         goto finish;
     }
 
-    if (PySequence_Check(ind) || PySlice_Check(ind)) {
-        goto skip;
-    }
-    start = PyArray_PyIntAsIntp(ind);
-    if (error_converting(start)) {
-        PyErr_Clear();
-    }
-    else {
-        if (check_and_adjust_index(&start, self->size, -1, NULL) < 0) {
+    PyArray_ITER_RESET(self);
+
+    if (index_type == HAS_INTEGER) {
+        if (check_and_adjust_index(&indices[0].value, self->size, -1, NULL) < 0) {
             goto finish;
         }
-        PyArray_ITER_GOTO1D(self, start);
-        retval = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
+        PyArray_ITER_GOTO1D(self, indices[0].value);
+        ret = PyArray_Pack(PyArray_DESCR(self->ao), self->dataptr, val);
         PyArray_ITER_RESET(self);
-        if (retval < 0) {
+        if (ret < 0) {
             PyErr_SetString(PyExc_ValueError,
-                            "Error setting single item of array.");
+                            "Error setting single item of flat iterator.");
         }
         goto finish;
     }
 
- skip:
-    Py_INCREF(type);
-    arrval = (PyArrayObject *)PyArray_FromAny(val, type, 0, 0,
+    Py_INCREF(dtype);
+    PyArrayObject *arrval = (PyArrayObject *)PyArray_FromAny(val, dtype, 0, 0,
                                               NPY_ARRAY_FORCECAST, NULL);
     if (arrval == NULL) {
-        return -1;
+        goto finish;
     }
-    val_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arrval);
+    PyArrayIterObject *val_it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arrval);
     if (val_it == NULL) {
         goto finish;
     }
     if (val_it->size == 0) {
-        retval = 0;
+        ret = 0;
         goto finish;
     }
 
     /* set up cast to handle single-element copies into arrval */
     NPY_ARRAYMETHOD_FLAGS transfer_flags = 0;
     npy_intp one = 1;
-    int itemsize = type->elsize;
     /* We can assume the newly allocated array is aligned */
     int is_aligned = IsUintAligned(self->ao);
     if (PyArray_GetDTypeTransferFunction(
-                is_aligned, itemsize, itemsize, type, type, 0,
+                is_aligned, dtype_size, dtype_size, dtype, dtype, 0,
                 &cast_info, &transfer_flags) < 0) {
         goto finish;
     }
 
-    /* Check Slice */
-    if (PySlice_Check(ind)) {
-        start = parse_index_entry(ind, &step_size, &n_steps, self->size, 0, 0);
-        if (start == -1) {
+    if (index_type & HAS_SLICE) {
+        if (PySlice_GetIndicesEx(indices[0].object,
+                                 self->size,
+                                 &start, &stop, &step, &n_steps) < 0) {
             goto finish;
         }
-        if (n_steps == ELLIPSIS_INDEX || n_steps == NEWAXIS_INDEX) {
-            PyErr_SetString(PyExc_IndexError,
-                            "cannot use Ellipsis or newaxes here");
-            goto finish;
-        }
+
         PyArray_ITER_GOTO1D(self, start);
-        npy_intp transfer_strides[2] = {itemsize, itemsize};
-        if (n_steps == SINGLE_INDEX) {
-            char *args[2] = {PyArray_DATA(arrval), self->dataptr};
-            if (cast_info.func(&cast_info.context, args, &one,
-                               transfer_strides, cast_info.auxdata) < 0) {
-                goto finish;
-            }
-            PyArray_ITER_RESET(self);
-            retval = 0;
-            goto finish;
-        }
+        npy_intp transfer_strides[2] = {dtype_size, dtype_size};
         while (n_steps--) {
             char *args[2] = {val_it->dataptr, self->dataptr};
             if (cast_info.func(&cast_info.context, args, &one,
                                transfer_strides, cast_info.auxdata) < 0) {
                 goto finish;
             }
-            start += step_size;
+            start += step;
             PyArray_ITER_GOTO1D(self, start);
             PyArray_ITER_NEXT(val_it);
             if (val_it->index == val_it->size) {
@@ -998,60 +935,30 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
             }
         }
         PyArray_ITER_RESET(self);
-        retval = 0;
+        ret = 0;
         goto finish;
     }
 
-    /* convert to INTP array if Integer array scalar or List */
-    indtype = PyArray_DescrFromType(NPY_INTP);
-    if (PyList_Check(ind)) {
-        Py_INCREF(indtype);
-        obj = PyArray_FromAny(ind, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
-    }
-    else {
-        Py_INCREF(ind);
-        obj = ind;
+    if (index_type == HAS_BOOL) {
+        ret = iter_ass_sub_Bool(self, (PyArrayObject *) indices[0].object, val_it, &cast_info);
+        goto finish;
     }
 
-    if (obj != NULL && PyArray_Check(obj)) {
-        /* Check for Boolean object */
-        if (PyArray_TYPE((PyArrayObject *)obj)==NPY_BOOL) {
-            if (iter_ass_sub_Bool(self, (PyArrayObject *)obj,
-                                  val_it, &cast_info) < 0) {
-                goto finish;
-            }
-            retval=0;
-        }
-        /* Check for integer array */
-        else if (PyArray_ISINTEGER((PyArrayObject *)obj)) {
-            PyObject *new;
-            Py_INCREF(indtype);
-            new = PyArray_CheckFromAny(obj, indtype, 0, 0,
-                           NPY_ARRAY_FORCECAST | NPY_ARRAY_BEHAVED_NS, NULL);
-            Py_DECREF(obj);
-            obj = new;
-            if (new == NULL) {
-                goto finish;
-            }
-            if (iter_ass_sub_int(self, (PyArrayObject *)obj,
-                                 val_it, &cast_info) < 0) {
-                goto finish;
-            }
-            retval = 0;
-        }
+    if (index_type == HAS_FANCY) {
+        ret = iter_ass_sub_int(self, (PyArrayObject *) indices[0].object, val_it, &cast_info);
+        goto finish;
     }
 
- finish:
-    if (!PyErr_Occurred() && retval < 0) {
-        PyErr_SetString(PyExc_IndexError, "unsupported iterator index");
-    }
-    Py_XDECREF(indtype);
-    Py_XDECREF(obj);
-    Py_XDECREF(val_it);
-    Py_XDECREF(arrval);
+    PyErr_SetString(PyExc_IndexError,
+        "only integers, slices (`:`), ellipsis (`...`) and integer or boolean "
+        "arrays are valid indices"
+    );
+finish:
     NPY_cast_info_xfree(&cast_info);
-    return retval;
-
+    for (int i = 0; i < index_num; i++) {
+        Py_XDECREF(indices[i].object);
+    }
+    return ret;
 }
 
 
