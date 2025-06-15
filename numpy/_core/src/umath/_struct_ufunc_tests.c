@@ -104,33 +104,16 @@ static PyMethodDef StructUfuncTestMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_struct_ufunc_tests",
-    NULL,
-    -1,
-    StructUfuncTestMethods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
+static int
+_struct_ufunc_tests_exec(PyObject *m)
 {
-    PyObject *m, *add_triplet, *d;
+    PyObject *add_triplet, *d;
     PyObject *dtype_dict;
     PyArray_Descr *dtype;
     PyArray_Descr *dtypes[3];
 
-    m = PyModule_Create(&moduledef);
-
-    if (m == NULL) {
-        return NULL;
-    }
-
-    import_array();
-    import_umath();
+    import_array1(-1);
+    import_umath1(-1);
 
     add_triplet = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 2, 1,
                                           PyUFunc_None, "add_triplet",
@@ -157,10 +140,29 @@ PyMODINIT_FUNC PyInit__struct_ufunc_tests(void)
     PyDict_SetItemString(d, "add_triplet", add_triplet);
     Py_DECREF(add_triplet);
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
+    return 0;
+}
 
-    return m;
+static struct PyModuleDef_Slot _struct_ufunc_tests_slots[] = {
+    {Py_mod_exec, _struct_ufunc_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_struct_ufunc_tests",
+    .m_size = 0,
+    .m_methods = StructUfuncTestMethods,
+    .m_slots = _struct_ufunc_tests_slots,
+};
+
+PyMODINIT_FUNC PyInit__struct_ufunc_tests(void) {
+    return PyModuleDef_Init(&moduledef);
 }

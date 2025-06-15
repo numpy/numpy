@@ -40,30 +40,13 @@ static const char types[2] = {NPY_INTP, NPY_INTP};
 
 static void *const data[1] = {NULL};
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_operand_flag_tests",
-    NULL,
-    -1,
-    TestMethods,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-
-PyMODINIT_FUNC PyInit__operand_flag_tests(void)
+static int
+_operand_flag_tests_exec(PyObject *m)
 {
-    PyObject *m = NULL;
     PyObject *ufunc;
 
-    m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        goto fail;
-    }
-
-    import_array();
-    import_umath();
+    import_array1(-1);
+    import_umath1(-1);
 
     ufunc = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 0,
                                     PyUFunc_None, "inplace_add",
@@ -77,21 +60,29 @@ PyMODINIT_FUNC PyInit__operand_flag_tests(void)
     ((PyUFuncObject*)ufunc)->iter_flags = NPY_ITER_REDUCE_OK;
     PyModule_AddObject(m, "inplace_add", (PyObject*)ufunc);
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+    return 0;
+}
+
+static struct PyModuleDef_Slot _operand_flag_tests_slots[] = {
+    {Py_mod_exec, _operand_flag_tests_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
 #endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
 
-    return m;
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_operand_flag_tests",
+    .m_size = 0,
+    .m_methods = TestMethods,
+    .m_slots = _operand_flag_tests_slots,
+};
 
-fail:
-    if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load _operand_flag_tests module.");
-    }
-    if (m) {
-        Py_DECREF(m);
-        m = NULL;
-    }
-    return m;
+PyMODINIT_FUNC PyInit__operand_flag_tests(void) {
+    return PyModuleDef_Init(&moduledef);
 }
