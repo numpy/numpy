@@ -3,6 +3,7 @@ from collections.abc import Callable, Sequence
 from typing import (
     Any,
     Final,
+    Literal as L,
     Never,
     NoReturn,
     SupportsAbs,
@@ -13,7 +14,6 @@ from typing import (
     Unpack,
     overload,
 )
-from typing import Literal as L
 
 import numpy as np
 from numpy import (
@@ -116,15 +116,15 @@ from .fromnumeric import (
     transpose,
     var,
 )
-from .multiarray import ALLOW_THREADS as ALLOW_THREADS
-from .multiarray import BUFSIZE as BUFSIZE
-from .multiarray import CLIP as CLIP
-from .multiarray import MAXDIMS as MAXDIMS
-from .multiarray import MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS
-from .multiarray import MAY_SHARE_EXACT as MAY_SHARE_EXACT
-from .multiarray import RAISE as RAISE
-from .multiarray import WRAP as WRAP
 from .multiarray import (
+    ALLOW_THREADS as ALLOW_THREADS,
+    BUFSIZE as BUFSIZE,
+    CLIP as CLIP,
+    MAXDIMS as MAXDIMS,
+    MAY_SHARE_BOUNDS as MAY_SHARE_BOUNDS,
+    MAY_SHARE_EXACT as MAY_SHARE_EXACT,
+    RAISE as RAISE,
+    WRAP as WRAP,
     _Array,
     _ConstructorEmpty,
     _KwargsEmpty,
@@ -156,6 +156,7 @@ from .multiarray import (
     ndarray,
     nditer,
     nested_iters,
+    normalize_axis_index as normalize_axis_index,
     promote_types,
     putmask,
     result_type,
@@ -164,7 +165,6 @@ from .multiarray import (
     where,
     zeros,
 )
-from .multiarray import normalize_axis_index as normalize_axis_index
 from .numerictypes import (
     ScalarType,
     bool,

@@ -35,6 +35,7 @@ from numpy import (
     amax,
     amin,
     angle,
+    array as narray,  # noqa: F401
     bool_,
     expand_dims,
     finfo,  # noqa: F401
@@ -42,7 +43,6 @@ from numpy import (
     iscomplexobj,
     ndarray,
 )
-from numpy import array as narray  # noqa: F401
 from numpy._core import multiarray as mu
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils import set_module

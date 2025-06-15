@@ -1,5 +1,4 @@
-from typing import Final
-from typing import Literal as L
+from typing import Final, Literal as L
 
 import numpy as np
 from numpy._typing._ufunc import _GUFunc_Nin2_Nout1

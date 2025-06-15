@@ -6,8 +6,7 @@ import warnings
 from decimal import Decimal
 
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
+from hypothesis import given, strategies as st
 from hypothesis.extra import numpy as hynp
 
 import numpy as np

@@ -8,8 +8,7 @@ from contextlib import nullcontext
 
 from numpy._utils import set_module
 
-from . import numeric as sb
-from . import numerictypes as nt
+from . import numeric as sb, numerictypes as nt
 from .arrayprint import _get_legacy_print_mode
 
 # All of the functions allow formats to be a dtype

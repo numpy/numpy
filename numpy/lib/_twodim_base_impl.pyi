@@ -1,13 +1,5 @@
 from collections.abc import Callable, Sequence
-from typing import (
-    Any,
-    TypeAlias,
-    TypeVar,
-    overload,
-)
-from typing import (
-    Literal as L,
-)
+from typing import Any, Literal as L, TypeAlias, TypeVar, overload
 
 import numpy as np
 from numpy import (

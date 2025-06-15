@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from typing import (
     Any,
+    Literal as L,
     NamedTuple,
     Never,
     SupportsIndex,
@@ -9,7 +10,6 @@ from typing import (
     TypeVar,
     overload,
 )
-from typing import Literal as L
 
 import numpy as np
 from numpy import (

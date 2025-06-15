@@ -5,8 +5,6 @@ import pytest
 
 from numpy.f2py.crackfortran import (
     _selected_int_kind_func as selected_int_kind,
-)
-from numpy.f2py.crackfortran import (
     _selected_real_kind_func as selected_real_kind,
 )
 

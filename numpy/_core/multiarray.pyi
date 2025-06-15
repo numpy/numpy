@@ -6,6 +6,7 @@ from typing import (
     Any,
     ClassVar,
     Final,
+    Literal as L,
     Protocol,
     SupportsIndex,
     TypeAlias,
@@ -15,9 +16,6 @@ from typing import (
     final,
     overload,
     type_check_only,
-)
-from typing import (
-    Literal as L,
 )
 from typing_extensions import CapsuleType
 
@@ -41,6 +39,7 @@ from numpy import (  # type: ignore[attr-defined]
     count_nonzero,
     datetime64,
     dtype,
+    einsum as c_einsum,
     flatiter,
     float64,
     floating,
@@ -60,9 +59,6 @@ from numpy import (  # type: ignore[attr-defined]
     uint8,
     unsignedinteger,
     vecdot,
-)
-from numpy import (
-    einsum as c_einsum,
 )
 from numpy._typing import (
     ArrayLike,

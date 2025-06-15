@@ -8,8 +8,7 @@ import warnings
 
 from numpy._utils import set_module
 
-from . import numeric
-from . import numerictypes as ntypes
+from . import numeric, numerictypes as ntypes
 from ._machar import MachAr
 from .numeric import array, inf, nan
 from .umath import exp2, isnan, log10, nextafter
