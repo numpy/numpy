@@ -515,6 +515,29 @@ def _check_fill_value(fill_value, ndtype):
             raise TypeError(err_msg % (fill_value, ndtype)) from e
     return np.array(fill_value)
 
+def _force_fill_value_cast(fill_value, ndtype, fallback=None):
+    """
+    Wraps `_check_fill_value` to cast the given `fill_value` into the specified dtype.
+
+    If the `fill_value` cannot be cast into the given dtype, it returns the provided
+    fallback value. The result is always a 0-dimensional array if the casting is
+    successful.
+
+    Parameters:
+    fill_value: The value to be cast.
+    ndtype: The target data type for casting.
+    fallback: The value to return if casting fails
+              (default is None, which will return default value).
+
+    Returns:
+    A 0-dimensional array if casting is successful; otherwise, the fallback value.
+    """
+    try:
+        result = _check_fill_value(fill_value, ndtype)
+    except Exception:
+        result = fallback
+    return result
+
 
 def set_fill_value(a, fill_value):
     """
@@ -3136,7 +3159,8 @@ class MaskedArray(ndarray):
 
         # Finalize the fill_value
         if self._fill_value is not None:
-            self._fill_value = _check_fill_value(self._fill_value, self.dtype)
+            self._fill_value = _force_fill_value_cast(self._fill_value,
+                                                      self.dtype)
         elif self.dtype.names is not None:
             # Finalize the default fill_value for structured arrays
             self._fill_value = _check_fill_value(None, self.dtype)
@@ -4266,11 +4290,7 @@ class MaskedArray(ndarray):
         # Cast fill value to np.bool if needed. If it cannot be cast, the
         # default boolean fill value is used.
         if check._fill_value is not None:
-            try:
-                fill = _check_fill_value(check._fill_value, np.bool)
-            except (TypeError, ValueError):
-                fill = _check_fill_value(None, np.bool)
-            check._fill_value = fill
+            check._fill_value = _force_fill_value_cast(check._fill_value, np.bool)
 
         return check
 
