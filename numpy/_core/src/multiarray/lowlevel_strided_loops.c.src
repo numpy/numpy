@@ -17,6 +17,7 @@
 #include <numpy/arrayobject.h>
 #include <numpy/npy_cpu.h>
 #include <numpy/halffloat.h>
+#include <float.h>
 
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
@@ -742,6 +743,7 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  * #is_float1 = 0*12, 1, 0, 0, 1, 0, 0#
  * #is_double1 = 0*13, 1, 0, 0, 1, 0#
  * #is_complex1 = 0*15, 1*3#
+ * #is_unsigned1 = 1*6, 0*12#
  */
 
 /**begin repeat1
@@ -766,6 +768,16 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
  *          npy_byte, npy_short, npy_int, npy_long, npy_longlong,
  *          _npy_half, npy_float, npy_double, npy_longdouble,
  *          npy_float, npy_double, npy_longdouble#
+ * #type2max = 0,
+ *          UCHAR_MAX, USHRT_MAX, UINT_MAX, ULONG_MAX, ULLONG_MAX,
+ *          SCHAR_MAX,  SHRT_MAX,  INT_MAX,  LONG_MAX,  LLONG_MAX,
+ *          65500, FLT_MAX, DBL_MAX, LDBL_MAX,
+ *          FLT_MAX, DBL_MAX, LDBL_MAX#
+ * #type2min = 0,
+ *          0, 0, 0, 0, 0,
+ *           CHAR_MIN,  SHRT_MIN,  INT_MIN,  LONG_MIN,  LLONG_MIN,
+ *          -65500, -FLT_MAX, -DBL_MAX, -LDBL_MAX,
+ *          -FLT_MAX, -DBL_MAX, -LDBL_MAX#
  * #is_bool2 = 1, 0*17#
  * #is_emu_half2 = 0*11, EMULATED_FP16, 0*6#
  * #is_native_half2 = 0*11, NATIVE_FP16, 0*6#
@@ -810,7 +822,7 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 
 /* Determine an appropriate casting conversion function */
 #if @is_emu_half1@
-
+#  define _TO_RTYPE1(x) npy_half_to_float(x)
 #  if @is_float2@
 #    define _CONVERT_FN(x) npy_halfbits_to_floatbits(x)
 #  elif @is_double2@
@@ -824,6 +836,7 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 #  endif
 
 #elif @is_emu_half2@
+#  define _TO_RTYPE1(x) (@rtype1@)(x)
 
 #  if @is_float1@
 #    define _CONVERT_FN(x) npy_floatbits_to_halfbits(x)
@@ -838,6 +851,7 @@ NPY_NO_EXPORT PyArrayMethod_StridedLoop *
 #  endif
 
 #else
+#  define _TO_RTYPE1(x) (@rtype1@)(x)
 
 #  if @is_bool2@ || @is_bool1@
 #    define _CONVERT_FN(x) ((npy_bool)(x != 0))
@@ -899,6 +913,13 @@ static GCC_CAST_OPT_LEVEL int
 #endif
 
     /*printf("@prefix@_cast_@name1@_to_@name2@\n");*/
+#if !@is_bool2@
+ #if NPY_FEATURE_VERSION > NPY_2_3_API_VERSION
+    int same_value_casting = ((context->flags & NPY_SAME_VALUE_CASTING) == NPY_SAME_VALUE_CASTING);
+ #else
+    int same_value_casting = 0;
+ #endif
+#endif
 
     while (N--) {
 #if @aligned@
@@ -915,20 +936,35 @@ static GCC_CAST_OPT_LEVEL int
 #  if @is_complex2@
     dst_value[0] = _CONVERT_FN(src_value[0]);
     dst_value[1] = _CONVERT_FN(src_value[1]);
+    if (same_value_casting) {
+        if ((dst_value[0] != src_value[0]) || (dst_value[1] != src_value[1])){
+            return NPY_SAME_VALUE_FAILURE;
+        }
+    }
 #  elif !@aligned@
 #    if @is_bool2@
        dst_value = _CONVERT_FN(src_value[0]) || _CONVERT_FN(src_value[1]);
 #    else
        dst_value = _CONVERT_FN(src_value[0]);
+       if (same_value_casting) {
+           if (dst_value != src_value[0]){
+                return NPY_SAME_VALUE_FAILURE;
+            }
+       }
 #    endif
 #  else
 #    if @is_bool2@
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]) || _CONVERT_FN(src_value[1]);
 #    else
        *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
+       if (same_value_casting) {
+           if (*(_TYPE2 *)dst != src_value[0]){
+                return NPY_SAME_VALUE_FAILURE;
+            }
+       }
 #    endif
 #  endif
-#else
+#else // @is_complex1@
 #  if @is_complex2@
 #    if !@aligned@
     dst_value[0] = _CONVERT_FN(src_value);
@@ -936,10 +972,43 @@ static GCC_CAST_OPT_LEVEL int
     dst_value[0] = _CONVERT_FN(*(_TYPE1 *)src);
 #    endif
     dst_value[1] = 0;
+    if (same_value_casting) {
+#    if !@aligned@
+        if ((@rtype2@)dst_value[0] != src_value){
+#    else
+        if ((@rtype2@)dst_value[0] != *((_TYPE1 *)src)){
+#    endif
+            return NPY_SAME_VALUE_FAILURE;
+        }
+    }
 #  elif !@aligned@
     dst_value = _CONVERT_FN(src_value);
+#   if !@is_bool2@
+    if (same_value_casting) {
+        if (_TO_RTYPE1(src_value) > @type2max@) {
+            return NPY_SAME_VALUE_FAILURE;
+        }
+#       if !@is_unsigned1@
+        if (_TO_RTYPE1(src_value) < @type2min@) {
+            return NPY_SAME_VALUE_FAILURE;
+        }
+#       endif
+    }
+#   endif // @is_bool2@
 #  else
     *(_TYPE2 *)dst = _CONVERT_FN(*(_TYPE1 *)src);
+#   if !@is_bool2@
+    if (same_value_casting) {
+        if (_TO_RTYPE1(*((_TYPE1 *)src)) > @type2max@) {
+            return NPY_SAME_VALUE_FAILURE;
+        }
+#       if !@is_unsigned1@
+        if (_TO_RTYPE1(*((_TYPE1 *)src)) < @type2min@) {
+            return NPY_SAME_VALUE_FAILURE;
+        }
+#       endif
+    }
+#   endif // @is_bool2@
 #  endif
 #endif
 
@@ -977,6 +1046,7 @@ static GCC_CAST_OPT_LEVEL int
 #undef _CONVERT_FN
 #undef _TYPE2
 #undef _TYPE1
+#undef _TO_RTYPE1
 
 #endif
 

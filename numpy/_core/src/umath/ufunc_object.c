@@ -2084,11 +2084,10 @@ PyUFunc_GeneralizedFunctionInternal(PyUFuncObject *ufunc,
                                     NPY_SIZEOF_INTP * nop);
 
     /* Final preparation of the arraymethod call */
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = operation_descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, operation_descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
     PyArrayMethod_StridedLoop *strided_loop;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
 
@@ -2203,11 +2202,10 @@ PyUFunc_GenericFunctionInternal(PyUFuncObject *ufunc,
     }
 
     /* Final preparation of the arraymethod call */
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = operation_descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, operation_descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
 
     /* Do the ufunc loop */
     if (wheremask != NULL) {
@@ -2553,11 +2551,10 @@ PyUFunc_Reduce(PyUFuncObject *ufunc,
         return NULL;
     }
 
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
 
     PyArrayObject *result = PyUFunc_ReduceWrapper(&context,
             arr, out, wheremask, axis_flags, keepdims,
@@ -2629,12 +2626,10 @@ PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     assert(PyArray_EquivTypes(descrs[0], descrs[1])
            && PyArray_EquivTypes(descrs[0], descrs[2]));
 
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = descrs,
-    };
-
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc,
+    context.method = ufuncimpl,
     ndim = PyArray_NDIM(arr);
 
 #if NPY_UF_DBG_TRACING
@@ -3061,12 +3056,10 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
         goto fail;
     }
 
-    PyArrayMethod_Context context = {
-        .caller = (PyObject *)ufunc,
-        .method = ufuncimpl,
-        .descriptors = descrs,
-    };
-
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, descrs);
+    context.caller = (PyObject *)ufunc,
+    context.method = ufuncimpl,
     ndim = PyArray_NDIM(arr);
 
 #if NPY_UF_DBG_TRACING
@@ -4533,6 +4526,10 @@ ufunc_generic_fastcall(PyUFuncObject *ufunc,
             full_args.in, casting) < 0) {
         goto fail;
     }
+    if (casting == NPY_SAME_VALUE_CASTING) {
+        PyErr_SetString(PyExc_NotImplementedError,
+            "ufunc with 'same_value' casting not implemented yet");
+    }
 
     /*
      * Do the final preparations and call the inner-loop.
@@ -5897,11 +5894,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
 
-    PyArrayMethod_Context context = {
-            .caller = (PyObject *)ufunc,
-            .method = ufuncimpl,
-            .descriptors = operation_descrs,
-    };
+    PyArrayMethod_Context context;
+    NPY_context_init(&context, operation_descrs);
+    context.caller = (PyObject *)ufunc;
+    context.method = ufuncimpl;
 
     /* Use contiguous strides; if there is such a loop it may be faster */
     npy_intp strides[3] = {
