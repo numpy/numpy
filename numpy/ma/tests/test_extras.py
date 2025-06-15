@@ -1758,6 +1758,16 @@ class TestArraySetOps:
         # compare results of np.isin to ma.isin
         d = np.isin(a, b[~b.mask]) & ~a.mask
         assert_array_equal(c, d)
+        # test case in gh-19877
+        a = MaskedArray([[1, 2, 3], [4, 5, 6]],
+                        [[True, False, False],
+                         [False, False, False]])
+        ta = array([1, 4, 5])
+        ex = MaskedArray([[True, False, False],
+                          [True, True, False]],
+                         [[True, False, False],
+                          [False, False, False]])
+        assert_array_equal(isin(a, ta), ex)
 
     def test_in1d(self):
         # Test in1d
@@ -1772,6 +1782,21 @@ class TestArraySetOps:
         assert_equal(test, [True, True, False, True, True])
         #
         assert_array_equal([], in1d([], []))
+
+    def test_isin_edge_cases(self):
+        # test cases in gh-19877
+        w = masked_array(np.arange(5), mask=[0, 1, 0, 0, 1])
+        res = isin(w, [])
+        ex = masked_array(5*[False], w.mask)
+        assert_array_equal(res, ex)
+
+        res = isin(w, [2])
+        ex = masked_array([False, False, True, False, False], w.mask)
+        assert_array_equal(res, ex)
+
+        res = isin(w, [2, 3, 4])
+        ex = masked_array([False, False, True, True, True], w.mask)
+        assert_array_equal(res, ex)
 
     def test_in1d_invert(self):
         # Test in1d's invert parameter
