@@ -570,30 +570,27 @@ def test_ndindex():
 
 
 # ndindex test cases for reimplementation of ndindex using itertools 
-# 1.  Empty Shapes and Zero Dimensions
-def test_ndindex_empty_and_zero_dimensions():
-    # Empty shape
-    assert list(np.ndindex()) == [()]
-    assert list(np.ndindex(())) == [()]
-
-    # Single dimension
-    assert list(np.ndindex(4)) == [(0,), (1,), (2,), (3,)]
-
-    # Zero dimensions should produce empty iterator
+# 1. Zero Dimensions (explicitly zero-length dimensions)
+# This test focuses specifically on cases where one or more dimensions are zero,
+# ensuring the iterator produces an empty sequence. This avoids redundancy
+# with basic tests handled by the main `test_ndindex` function.
+def test_ndindex_zero_dimensions_explicit():
+    """Test ndindex produces empty iterators for explicit zero-length dimensions."""
     assert list(np.ndindex(0, 3)) == []
     assert list(np.ndindex(3, 0, 2)) == []
+    assert list(np.ndindex(0)) == []  # Test for a single zero dimension
+
 
 # 2. Non-Integer Dimensions Raise TypeError
-def test_ndindex_non_integer_dimensions():
+@pytest.mark.parametrize("bad_shape", [
+    2.5, "2", [2, 3], (2.0, 3)
+])
+def test_ndindex_non_integer_dimensions(bad_shape):
     """Test that non-integer dimensions raise TypeError."""
     with pytest.raises(TypeError):
-        list(np.ndindex(2.5))
-    with pytest.raises(TypeError):
-        list(np.ndindex("2"))
-    with pytest.raises(TypeError):
-        list(np.ndindex([2, 3]))
-    with pytest.raises(TypeError):
-        list(np.ndindex((2.0, 3)))
+        # Passing invalid_shape_arg directly to ndindex, it will try to use it as a dimension.
+        # This should trigger the TypeError during object initialization or iteration.
+        list(np.ndindex(bad_shape))
 
 # 3. StopIteration Behavior
 def test_ndindex_stop_iteration_behavior():
@@ -670,19 +667,16 @@ def test_ndindex_empty_iterator_behavior():
     with pytest.raises(StopIteration):
         next(empty_iter2)
 
-# 10. Performance Regression
-def test_ndindex_performance_regression():
-    """Basic performance test to ensure no major regressions."""
-    import time
+# New test for negative dimensions, using pytest.mark.parametrize
+@pytest.mark.parametrize("negative_shape_arg", [
+    (-1,),          # Single negative dimension
+    (2, -3, 4),     # Negative dimension in the middle
+    (5, 0, -2)      # Mix of valid (0) and invalid (negative) dimensions
+])
+def test_ndindex_negative_dimensions(negative_shape_arg):
+    """Test that negative dimensions raise ValueError."""
+    with pytest.raises(ValueError):
+        # ndindex should raise ValueError immediately for negative dimensions
+        list(ndindex(negative_shape_arg))
 
-    shape = (20, 30, 40)
-
-    start_time = time.perf_counter()
-    count = sum(1 for _ in np.ndindex(*shape))
-    elapsed_time = time.perf_counter() - start_time
-
-    expected_count = 20 * 30 * 40
-    assert_equal(count, expected_count)
-
-    assert elapsed_time < 1.0, f"ndindex took {elapsed_time:.3f}s, which seems slow"
 

@@ -687,10 +687,9 @@ class ndindex:
     
     Notes
     -----
-    New in version X.Y.Z.
-    As of NumPy 2.3.0.dev0, this iterator is implemented using `itertools.product`
+    As of NumPy 2.4.0.dev0, this iterator is implemented using `itertools.product`
     from Python's standard library. This change provides significant improvements
-    in both performance and and memory efficiency, particularly for large iteration
+    in both performance and memory efficiency, particularly for large iteration
     spaces, while maintaining the original behavior and interface.
 
     """
@@ -701,6 +700,7 @@ class ndindex:
             shape = shape[0]
         self.shape = shape
         self._iter = product(*(range(s) for s in shape))
+        
 
 
     def __iter__(self):
@@ -734,7 +734,7 @@ class ndindex:
             iteration.
 
         """
-        return next(self.iter)
+        return next(self._iter)
 
 
 # You can do all this with slice() plus a few special objects,
