@@ -7333,7 +7333,7 @@ class TestMatmul(MatmulCommon):
                 (m.shape[0] * 2, m.shape[1] * 2), dtype=m.dtype, order=order
             )[::2, ::2]
             retval[...] = m
-            return retval    
+            return retval
 
         is_complex = np.issubdtype(dtype, np.complexfloating)
         m1 = self.m1.astype(dtype) + (1j if is_complex else 0)
@@ -7341,7 +7341,7 @@ class TestMatmul(MatmulCommon):
         dot_res = np.dot(m1, m2)
         mo = np.zeros_like(dot_res)
 
-        for mode in itertools.product(*[modes]*3):
+        for mode in itertools.product(*[modes] * 3):
             m1_, m2_, mo_ = [apply_mode(*x) for x in zip([m1, m2, mo], mode)]
             assert_equal(np.matmul(m1_, m2_, out=mo_), dot_res)
 
