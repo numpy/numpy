@@ -6,8 +6,8 @@ import operator
 import re
 
 import pytest
-from numpy._core._multiarray_umath import __cpu_baseline__
 
+from numpy._core._multiarray_umath import __cpu_baseline__
 from numpy._core._simd import clear_floatstatus, get_floatstatus, targets
 
 

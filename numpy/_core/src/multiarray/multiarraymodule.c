@@ -530,8 +530,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis,
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
                                    NPY_ORDER order, PyArrayObject *ret,
-                                   PyArray_Descr *dtype, NPY_CASTING casting,
-                                   npy_bool casting_not_passed)
+                                   PyArray_Descr *dtype, NPY_CASTING casting)
 {
     int iarrays;
     npy_intp shape = 0;
@@ -647,12 +646,11 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
  * @param ret output array to fill
  * @param dtype Forced output array dtype (cannot be combined with ret)
  * @param casting Casting mode used
- * @param casting_not_passed Deprecation helper
  */
 NPY_NO_EXPORT PyObject *
 PyArray_ConcatenateInto(PyObject *op,
         int axis, PyArrayObject *ret, PyArray_Descr *dtype,
-        NPY_CASTING casting, npy_bool casting_not_passed)
+        NPY_CASTING casting)
 {
     int iarrays, narrays;
     PyArrayObject **arrays;
@@ -698,7 +696,7 @@ PyArray_ConcatenateInto(PyObject *op,
     if (axis == NPY_RAVEL_AXIS) {
         ret = PyArray_ConcatenateFlattenedArrays(
                 narrays, arrays, NPY_CORDER, ret, dtype,
-                casting, casting_not_passed);
+                casting);
     }
     else {
         ret = PyArray_ConcatenateArrays(
@@ -743,7 +741,7 @@ PyArray_Concatenate(PyObject *op, int axis)
         casting = NPY_SAME_KIND_CASTING;
     }
     return PyArray_ConcatenateInto(
-            op, axis, NULL, NULL, casting, 0);
+            op, axis, NULL, NULL, casting);
 }
 
 static int
@@ -2489,7 +2487,6 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
     PyObject *out = NULL;
     PyArray_Descr *dtype = NULL;
     NPY_CASTING casting = NPY_SAME_KIND_CASTING;
-    PyObject *casting_obj = NULL;
     PyObject *res;
     int axis = 0;
 
@@ -2499,20 +2496,8 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
             "|axis", &PyArray_AxisConverter, &axis,
             "|out", NULL, &out,
             "$dtype", &PyArray_DescrConverter2, &dtype,
-            "$casting", NULL, &casting_obj,
+            "$casting", &PyArray_CastingConverter, &casting,
             NULL, NULL, NULL) < 0) {
-        return NULL;
-    }
-    int casting_not_passed = 0;
-    if (casting_obj == NULL) {
-        /*
-         * Casting was not passed in, needed for deprecation only.
-         * This should be simplified once the deprecation is finished.
-         */
-        casting_not_passed = 1;
-    }
-    else if (!PyArray_CastingConverter(casting_obj, &casting)) {
-        Py_XDECREF(dtype);
         return NULL;
     }
     if (out != NULL) {
@@ -2526,7 +2511,7 @@ array_concatenate(PyObject *NPY_UNUSED(dummy),
         }
     }
     res = PyArray_ConcatenateInto(a0, axis, (PyArrayObject *)out, dtype,
-            casting, casting_not_passed);
+            casting);
     Py_XDECREF(dtype);
     return res;
 }
@@ -4773,36 +4758,27 @@ initialize_thread_unsafe_state(void) {
     return 0;
 }
 
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_multiarray_umath",
-        NULL,
-        -1,
-        array_module_methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
+static int module_loaded = 0;
 
-/* Initialization function for the module */
-PyMODINIT_FUNC PyInit__multiarray_umath(void) {
-    PyObject *m, *d, *s;
-    PyObject *c_api;
+static int
+_multiarray_umath_exec(PyObject *m) {
+    PyObject *d, *s, *c_api;
 
-    /* Create the module and add the functions */
-    m = PyModule_Create(&moduledef);
-    if (!m) {
-        return NULL;
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
     }
+    module_loaded = 1;
 
     /* Initialize CPU features */
     if (npy_cpu_init() < 0) {
-        goto err;
+        return -1;
     }
     /* Initialize CPU dispatch tracer */
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
-        goto err;
+        return -1;
     }
 
 #if defined(MS_WIN64) && defined(__GNUC__)
@@ -4818,62 +4794,62 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     numpy_pydatetime_import();
 
     if (PyErr_Occurred()) {
-        goto err;
+        return -1;
     }
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
     if (!d) {
-        goto err;
+        return -1;
     }
 
     if (intern_strings() < 0) {
-        goto err;
+        return -1;
     }
 
     if (initialize_static_globals() < 0) {
-        goto err;
+        return -1;
     }
 
     if (initialize_thread_unsafe_state() < 0) {
-        goto err;
+        return -1;
     }
 
     if (init_import_mutex() < 0) {
-        goto err;
+        return -1;
     }
 
     if (init_extobj() < 0) {
-        goto err;
+        return -1;
     }
 
     if (PyType_Ready(&PyUFunc_Type) < 0) {
-        goto err;
+        return -1;
     }
 
     PyArrayDTypeMeta_Type.tp_base = &PyType_Type;
     if (PyType_Ready(&PyArrayDTypeMeta_Type) < 0) {
-        goto err;
+        return -1;
     }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
     Py_SET_TYPE(&PyArrayDescr_Type, &PyArrayDTypeMeta_Type);
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
-        goto err;
+        return -1;
     }
 
     initialize_casting_tables();
     initialize_numeric_types();
 
     if (initscalarmath(m) < 0) {
-        goto err;
+        return -1;
     }
 
     if (PyType_Ready(&PyArray_Type) < 0) {
-        goto err;
+        return -1;
     }
     if (setup_scalartypes(d) < 0) {
-        goto err;
+        return -1;
     }
 
     PyArrayIter_Type.tp_iter = PyObject_SelfIter;
@@ -4881,28 +4857,28 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyArrayMultiIter_Type.tp_iter = PyObject_SelfIter;
     PyArrayMultiIter_Type.tp_free = PyArray_free;
     if (PyType_Ready(&PyArrayIter_Type) < 0) {
-        goto err;
+        return -1;
     }
     if (PyType_Ready(&PyArrayMapIter_Type) < 0) {
-        goto err;
+        return -1;
     }
     if (PyType_Ready(&PyArrayMultiIter_Type) < 0) {
-        goto err;
+        return -1;
     }
     PyArrayNeighborhoodIter_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&PyArrayNeighborhoodIter_Type) < 0) {
-        goto err;
+        return -1;
     }
     if (PyType_Ready(&NpyIter_Type) < 0) {
-        goto err;
+        return -1;
     }
 
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
-        goto err;
+        return -1;
     }
     NpyBusDayCalendar_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
-        goto err;
+        return -1;
     }
 
     /*
@@ -4923,43 +4899,43 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     s = npy_cpu_features_dict();
     if (s == NULL) {
-        goto err;
+        return -1;
     }
     if (PyDict_SetItemString(d, "__cpu_features__", s) < 0) {
         Py_DECREF(s);
-        goto err;
+        return -1;
     }
     Py_DECREF(s);
 
     s = npy_cpu_baseline_list();
     if (s == NULL) {
-        goto err;
+        return -1;
     }
     if (PyDict_SetItemString(d, "__cpu_baseline__", s) < 0) {
         Py_DECREF(s);
-        goto err;
+        return -1;
     }
     Py_DECREF(s);
 
     s = npy_cpu_dispatch_list();
     if (s == NULL) {
-        goto err;
+        return -1;
     }
     if (PyDict_SetItemString(d, "__cpu_dispatch__", s) < 0) {
         Py_DECREF(s);
-        goto err;
+        return -1;
     }
     Py_DECREF(s);
 
     s = PyCapsule_New((void *)_datetime_strings, NULL, NULL);
     if (s == NULL) {
-        goto err;
+        return -1;
     }
     PyDict_SetItemString(d, "DATETIMEUNITS", s);
     Py_DECREF(s);
 
 #define ADDCONST(NAME)                          \
-    s = PyLong_FromLong(NPY_##NAME);             \
+    s = PyLong_FromLong(NPY_##NAME);            \
     PyDict_SetItemString(d, #NAME, s);          \
     Py_DECREF(s)
 
@@ -4999,39 +4975,39 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
 
     /* Finalize scalar types and expose them via namespace or typeinfo dict */
     if (set_typeinfo(d) != 0) {
-        goto err;
+        return -1;
     }
 
     if (PyType_Ready(&PyArrayFunctionDispatcher_Type) < 0) {
-        goto err;
+        return -1;
     }
     PyDict_SetItemString(
             d, "_ArrayFunctionDispatcher",
             (PyObject *)&PyArrayFunctionDispatcher_Type);
 
     if (PyType_Ready(&PyArrayArrayConverter_Type) < 0) {
-        goto err;
+        return -1;
     }
     PyDict_SetItemString(
             d, "_array_converter",
             (PyObject *)&PyArrayArrayConverter_Type);
 
     if (PyType_Ready(&PyArrayMethod_Type) < 0) {
-        goto err;
+        return -1;
     }
     if (PyType_Ready(&PyBoundArrayMethod_Type) < 0) {
-        goto err;
+        return -1;
     }
     if (initialize_and_map_pytypes_to_dtypes() < 0) {
-        goto err;
+        return -1;
     }
 
     if (PyArray_InitializeCasts() < 0) {
-        goto err;
+        return -1;
     }
 
     if (init_string_dtype() < 0) {
-        goto err;
+        return -1;
     }
 
     /*
@@ -5040,7 +5016,7 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     PyDataMem_DefaultHandler = PyCapsule_New(
             &default_handler, MEM_HANDLER_CAPSULE_NAME, NULL);
     if (PyDataMem_DefaultHandler == NULL) {
-        goto err;
+        return -1;
     }
 
     /*
@@ -5049,32 +5025,32 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
      */
     current_handler = PyContextVar_New("current_allocator", PyDataMem_DefaultHandler);
     if (current_handler == NULL) {
-        goto err;
+        return -1;
     }
 
     if (initumath(m) != 0) {
-        goto err;
+        return -1;
     }
 
     if (set_matmul_flags(d) < 0) {
-        goto err;
+        return -1;
     }
 
     // initialize static references to ndarray.__array_*__ special methods
     npy_static_pydata.ndarray_array_finalize = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_finalize__");
     if (npy_static_pydata.ndarray_array_finalize == NULL) {
-        goto err;
+        return -1;
     }
     npy_static_pydata.ndarray_array_ufunc = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_ufunc__");
     if (npy_static_pydata.ndarray_array_ufunc == NULL) {
-        goto err;
+        return -1;
     }
     npy_static_pydata.ndarray_array_function = PyObject_GetAttrString(
             (PyObject *)&PyArray_Type, "__array_function__");
     if (npy_static_pydata.ndarray_array_function == NULL) {
-        goto err;
+        return -1;
     }
 
     /*
@@ -5090,13 +5066,13 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     if (npy_cache_import_runtime(
             "numpy.dtypes", "_add_dtype_helper",
             &npy_runtime_imports._add_dtype_helper) == -1) {
-        goto err;
+        return -1;
     }
 
     if (PyObject_CallFunction(
             npy_runtime_imports._add_dtype_helper,
             "Os", (PyObject *)&PyArray_StringDType, NULL) == NULL) {
-        goto err;
+        return -1;
     }
     PyDict_SetItemString(d, "StringDType", (PyObject *)&PyArray_StringDType);
 
@@ -5104,13 +5080,13 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     npy_static_pydata.zero_pyint_like_arr = PyArray_ZEROS(
             0, NULL, NPY_DEFAULT_INT, NPY_FALSE);
     if (npy_static_pydata.zero_pyint_like_arr == NULL) {
-        goto err;
+        return -1;
     }
     ((PyArrayObject_fields *)npy_static_pydata.zero_pyint_like_arr)->flags |=
             (NPY_ARRAY_WAS_PYTHON_INT|NPY_ARRAY_WAS_INT_AND_REPLACED);
 
     if (verify_static_structs_initialized() < 0) {
-        goto err;
+        return -1;
     }
 
     /*
@@ -5120,33 +5096,44 @@ PyMODINIT_FUNC PyInit__multiarray_umath(void) {
     /* The dtype API is not auto-filled/generated via Python scripts: */
     _fill_dtype_api(PyArray_API);
     if (c_api == NULL) {
-        goto err;
+        return -1;
     }
     PyDict_SetItemString(d, "_ARRAY_API", c_api);
     Py_DECREF(c_api);
 
     c_api = PyCapsule_New((void *)PyUFunc_API, NULL, NULL);
     if (c_api == NULL) {
-        goto err;
+        return -1;
     }
     PyDict_SetItemString(d, "_UFUNC_API", c_api);
     Py_DECREF(c_api);
     if (PyErr_Occurred()) {
-        goto err;
+        return -1;
     }
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+    return 0;
+}
+
+static struct PyModuleDef_Slot _multiarray_umath_slots[] = {
+    {Py_mod_exec, _multiarray_umath_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
 #endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
 
-    return m;
+static struct PyModuleDef moduledef = {
+    .m_base = PyModuleDef_HEAD_INIT,
+    .m_name = "_multiarray_umath",
+    .m_size = 0,
+    .m_methods = array_module_methods,
+    .m_slots = _multiarray_umath_slots,
+};
 
- err:
-    if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load multiarray module.");
-    }
-    Py_DECREF(m);
-    return NULL;
+PyMODINIT_FUNC PyInit__multiarray_umath(void) {
+    return PyModuleDef_Init(&moduledef);
 }

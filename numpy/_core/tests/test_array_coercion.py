@@ -6,12 +6,12 @@ are tested (sometimes indirectly) elsewhere.
 
 from itertools import permutations, product
 
-import numpy._core._multiarray_umath as ncu
 import pytest
-from numpy._core._rational_tests import rational
 from pytest import param
 
 import numpy as np
+import numpy._core._multiarray_umath as ncu
+from numpy._core._rational_tests import rational
 from numpy.testing import IS_64BIT, IS_PYPY, assert_array_equal
 
 

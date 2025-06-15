@@ -34,7 +34,7 @@ def opt_func_info(func_name=None, signature=None):
     ...     func_name="add|abs", signature="float64|complex64"
     ... )
     >>> import json
-    >>> print(json.dumps(dict, indent=2))
+    >>> print(json.dumps(dict, indent=2))   # may vary (architecture)
         {
           "absolute": {
             "dd": {

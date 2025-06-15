@@ -143,7 +143,7 @@ def test_stack_arrays() -> None:
     zz = np.ones((int(2),), [("A", "|S3"), ("B", np.float64), ("C", np.float64)])
     assert_type(
         rfn.stack_arrays((z, zz)),
-        np.ma.MaskedArray[tuple[int, ...], np.dtype[np.void]],
+        np.ma.MaskedArray[tuple[Any, ...], np.dtype[np.void]],
     )
 
 

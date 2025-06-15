@@ -150,8 +150,26 @@ default_role = "autolink"
 exclude_dirs = []
 
 exclude_patterns = []
+suppress_warnings = []
+nitpick_ignore = []
+
 if sys.version_info[:2] >= (3, 12):
-    exclude_patterns += ["reference/distutils.rst"]
+    exclude_patterns += [
+        "reference/distutils.rst",
+        "reference/distutils/misc_util.rst",
+    ]
+    suppress_warnings += [
+        'toc.excluded',  # Suppress warnings about excluded toctree entries
+    ]
+    nitpicky = True
+    nitpick_ignore += [
+        ('ref', 'numpy-distutils-refguide'),
+        # The first ignore is not catpured without nitpicky = True.
+        # These three ignores are required once nitpicky = True is set.
+        ('py:mod', 'numpy.distutils'),
+        ('py:class', 'Extension'),
+        ('py:class', 'numpy.distutils.misc_util.Configuration'),
+    ]
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -544,14 +562,14 @@ def linkcode_resolve(domain, info):
     fn = None
     lineno = None
 
-    # Make a poor effort at linking C extension types
-    if isinstance(obj, type) and obj.__module__ == 'numpy':
-        fn = _get_c_source_file(obj)
+    if isinstance(obj, type):
+        # Make a poor effort at linking C extension types
+        if obj.__module__ == 'numpy':
+            fn = _get_c_source_file(obj)
 
-    # This can be removed when removing the decorator set_module. Fix issue #28629
-    if hasattr(obj, '_module_file'):
-        fn = obj._module_file
-        fn = relpath(fn, start=dirname(numpy.__file__))
+        # This can be removed when removing the decorator set_module. Fix issue #28629
+        if hasattr(obj, '_module_source'):
+            obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if fn is None:
         try:
@@ -577,6 +595,9 @@ def linkcode_resolve(domain, info):
         linespec = "#L%d-L%d" % (lineno, lineno + len(source) - 1)
     else:
         linespec = ""
+
+    if isinstance(obj, type) and hasattr(obj, '_module_source'):
+        obj.__module__, obj._module_source = obj._module_source, obj.__module__
 
     if 'dev' in numpy.__version__:
         return f"https://github.com/numpy/numpy/blob/main/numpy/{fn}{linespec}"
@@ -609,7 +630,7 @@ breathe_default_project = "numpy"
 breathe_default_members = ("members", "undoc-members", "protected-members")
 
 # See https://github.com/breathe-doc/breathe/issues/696
-nitpick_ignore = [
+nitpick_ignore += [
     ('c:identifier', 'FILE'),
     ('c:identifier', 'size_t'),
     ('c:identifier', 'PyHeapTypeObject'),

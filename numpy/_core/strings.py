@@ -218,7 +218,7 @@ def multiply(a, i):
 
     # Ensure we can do a_len * i without overflow.
     if np.any(a_len > sys.maxsize / np.maximum(i, 1)):
-        raise MemoryError("repeated string is too long")
+        raise OverflowError("Overflow encountered in string multiply")
 
     buffersizes = a_len * i
     out_dtype = f"{a.dtype.char}{buffersizes.max()}"

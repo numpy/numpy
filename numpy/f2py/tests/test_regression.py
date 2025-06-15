@@ -37,6 +37,16 @@ class TestDataOnlyMultiModule(util.F2PyTest):
         assert self.module.simple_subroutine(5) == 1014
 
 
+class TestModuleWithDerivedType(util.F2PyTest):
+    # Check that modules with derived types work
+    sources = [util.getpath("tests", "src", "regression", "mod_derived_types.f90")]
+
+    @pytest.mark.slow
+    def test_mtypes(self):
+        assert self.module.no_type_subroutine(10) == 110
+        assert self.module.type_subroutine(10) == 210
+
+
 class TestNegativeBounds(util.F2PyTest):
     # Check that negative bounds work correctly
     sources = [util.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]

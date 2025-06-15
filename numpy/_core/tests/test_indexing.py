@@ -5,9 +5,9 @@ import warnings
 from itertools import product
 
 import pytest
-from numpy._core._multiarray_tests import array_indexing
 
 import numpy as np
+from numpy._core._multiarray_tests import array_indexing
 from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
 from numpy.testing import (
     HAS_REFCOUNT,
@@ -1352,7 +1352,8 @@ class TestBooleanIndexing:
             "size of axis is 3 but size of corresponding boolean axis is 1",
             lambda: a[idx1])
 
-        # This used to incorrectly give a ValueError: operands could not be broadcast together
+        # This used to incorrectly give a ValueError: operands could not be
+        # broadcast together
         idx2 = np.array([[False] * 8 + [True]])
         assert_raises_regex(IndexError,
             "boolean index did not match indexed array along axis 0; "

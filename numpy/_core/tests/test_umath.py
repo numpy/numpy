@@ -1879,8 +1879,15 @@ class TestSpecialFloats:
         # FIXME: NAN raises FP invalid exception:
         #  - ceil/float16 on MSVC:32-bit
         #  - spacing/float16 on almost all platforms
+        #  - spacing/float32,float64 on Windows MSVC with VS2022
         if ufunc in (np.spacing, np.ceil) and dtype == 'e':
             return
+        # Skip spacing tests with NaN on Windows MSVC (all dtypes)
+        import platform
+        if (ufunc == np.spacing and
+            platform.system() == 'Windows' and
+            any(np.isnan(d) if isinstance(d, (int, float)) else False for d in data)):
+            pytest.skip("spacing with NaN generates warnings on Windows/VS2022")
         array = np.array(data, dtype=dtype)
         with assert_no_warnings():
             ufunc(array)

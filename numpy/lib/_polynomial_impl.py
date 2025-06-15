@@ -520,9 +520,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
 
         - residuals -- sum of squared residuals of the least squares fit
         - rank -- the effective rank of the scaled Vandermonde
-           coefficient matrix
+          coefficient matrix
         - singular_values -- singular values of the scaled Vandermonde
-           coefficient matrix
+          coefficient matrix
         - rcond -- value of `rcond`.
 
         For more details, see `numpy.linalg.lstsq`.
