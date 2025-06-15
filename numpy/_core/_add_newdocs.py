@@ -2675,12 +2675,15 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('flat',
 
 add_newdoc('numpy._core.multiarray', 'ndarray', ('nbytes',
     """
-    Total bytes consumed by the elements of the array.
+    Total number of bytes the array's data would consume if stored
+    contiguously in memory.
 
     Notes
     -----
-    Does not include memory consumed by non-element attributes of the
-    array object.
+    If the array is a view, this shows how much memory it *would* use
+    if it were copied into a separate array.
+    The number of bytes does not include overhead from non-element attributes and memory
+    indirectly held by elements such as Python objects or `StringDType`.
 
     See Also
     --------
@@ -2696,6 +2699,14 @@ add_newdoc('numpy._core.multiarray', 'ndarray', ('nbytes',
     480
     >>> np.prod(x.shape) * x.itemsize
     480
+
+    Although an array and its view share the same data buffer, their `nbytes` are different:
+    >>> arr = np.arange(10)
+    >>> view = arr[::2]
+    >>> arr.nbytes
+    80
+    >>> view.nbytes
+    40
 
     """))
 
