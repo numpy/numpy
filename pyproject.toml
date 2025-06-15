@@ -7,7 +7,7 @@ requires = [
 
 [project]
 name = "numpy"
-version = "2.3.0.dev0"
+version = "2.4.0.dev0"
 # TODO: add `license-files` once PEP 639 is accepted (see meson-python#88)
 license = {file = "LICENSE.txt"}
 
@@ -142,13 +142,16 @@ tracker = "https://github.com/numpy/numpy/issues"
 # build wheels for in CI are controlled in `.github/workflows/wheels.yml` and
 # `tools/ci/cirrus_wheels.yml`.
 build-frontend = "build"
-skip = "*_i686 *_ppc64le *_s390x *_universal2"
+skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
 before-build = "bash {project}/tools/wheels/cibw_before_build.sh {project}"
-# The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
-config-settings = "setup-args=-Duse-ilp64=true setup-args=-Dallow-noblas=false build-dir=build"
 before-test = "pip install -r {project}/requirements/test_requirements.txt"
 test-command = "bash {project}/tools/wheels/cibw_test_command.sh {project}"
 enable = ["cpython-freethreading", "pypy", "cpython-prerelease"]
+
+# The build will use openblas64 everywhere, except on arm64 macOS >=14.0 (uses Accelerate)
+[tool.cibuildwheel.config-settings]
+setup-args = ["-Duse-ilp64=true", "-Dallow-noblas=false"]
+build-dir = "build"
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
@@ -157,7 +160,14 @@ musllinux-x86_64-image = "musllinux_1_2"
 musllinux-aarch64-image = "musllinux_1_2"
 
 [tool.cibuildwheel.pyodide]
-config-settings = "build-dir=build setup-args=--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross setup-args=-Dblas=none setup-args=-Dlapack=none"
+before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
+# Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
+repair-wheel-command = ""
+test-command = "python -m pytest --pyargs numpy -m 'not slow'"
+
+[tool.cibuildwheel.pyodide.config-settings]
+build-dir = "build"
+setup-args = ["--cross-file=$PWD/tools/ci/emscripten/emscripten.meson.cross", "-Dblas=none", "-Dlapack=none"]
 
 [tool.cibuildwheel.linux.environment]
 # RUNNER_OS is a GitHub Actions specific env var; define it here so it works on Cirrus CI too
@@ -178,27 +188,16 @@ repair-wheel-command = [
 ]
 
 [tool.cibuildwheel.windows]
+config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=false"], build-dir="build"}
+repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
 # This does not work, use CIBW_ENVIRONMENT_WINDOWS
 environment = {PKG_CONFIG_PATH="./.openblas"}
-config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=false build-dir=build"
-repair-wheel-command = "bash -el ./tools/wheels/repair_windows.sh {wheel} {dest_dir}"
 
 [[tool.cibuildwheel.overrides]]
-select = "*-win32"
-config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=build"
+select = ["*-win32"]
+config-settings = {setup-args = ["--vsenv", "-Dallow-noblas=true"], build-dir="build"}
 repair-wheel-command = ""
 
-[[tool.cibuildwheel.overrides]]
-select = "*-win_arm64"
-config-settings = "setup-args=--vsenv setup-args=-Dallow-noblas=true build-dir=build"
-repair-wheel-command = ""
-
-[[tool.cibuildwheel.overrides]]
-select = "*pyodide*"
-before-test = "pip install -r {project}/requirements/emscripten_test_requirements.txt"
-# Pyodide ensures that the wheels are already repaired by auditwheel-emscripten
-repair-wheel-command = ""
-test-command = "python -m pytest --pyargs numpy -m 'not slow'"
 
 [tool.meson-python]
 meson = 'vendored-meson/meson/meson.py'

@@ -667,3 +667,25 @@ class TestMisc:
 
         arr = np.polydiv(1, np.float32(1))
         assert_equal(arr[0].dtype, np.float64)
+
+class ArrayFunctionInterceptor:
+    def __init__(self):
+        self.called = False
+
+    def __array_function__(self, func, types, args, kwargs):
+        self.called = True
+        return "intercepted"
+
+def test_polyval2d_array_function_hook():
+    x = ArrayFunctionInterceptor()
+    y = ArrayFunctionInterceptor()
+    c = ArrayFunctionInterceptor()
+    result = np.polynomial.polynomial.polyval2d(x, y, c)
+    assert result == "intercepted"
+
+def test_polygrid2d_array_function_hook():
+    x = ArrayFunctionInterceptor()
+    y = ArrayFunctionInterceptor()
+    c = ArrayFunctionInterceptor()
+    result = np.polynomial.polynomial.polygrid2d(x, y, c)
+    assert result == "intercepted"

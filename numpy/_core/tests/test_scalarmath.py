@@ -9,9 +9,9 @@ import pytest
 from hypothesis import given, settings
 from hypothesis.extra import numpy as hynp
 from hypothesis.strategies import sampled_from
-from numpy._core._rational_tests import rational
 
 import numpy as np
+from numpy._core._rational_tests import rational
 from numpy._utils import _pep440
 from numpy.exceptions import ComplexWarning
 from numpy.testing import (

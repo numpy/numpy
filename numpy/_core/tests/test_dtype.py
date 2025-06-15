@@ -11,11 +11,11 @@ from typing import Any
 import hypothesis
 import pytest
 from hypothesis.extra import numpy as hynp
-from numpy._core._multiarray_tests import create_custom_field_dtype
-from numpy._core._rational_tests import rational
 
 import numpy as np
 import numpy.dtypes
+from numpy._core._multiarray_tests import create_custom_field_dtype
+from numpy._core._rational_tests import rational
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_PYSTON,

@@ -85,7 +85,6 @@ AR_b *= AR_LIKE_f  # type: ignore[arg-type]
 AR_b *= AR_LIKE_c  # type: ignore[arg-type]
 AR_b *= AR_LIKE_m  # type: ignore[arg-type]
 
-AR_u *= AR_LIKE_i  # type: ignore[arg-type]
 AR_u *= AR_LIKE_f  # type: ignore[arg-type]
 AR_u *= AR_LIKE_c  # type: ignore[arg-type]
 AR_u *= AR_LIKE_m  # type: ignore[arg-type]
@@ -105,7 +104,6 @@ AR_b **= AR_LIKE_i  # type: ignore[misc]
 AR_b **= AR_LIKE_f  # type: ignore[misc]
 AR_b **= AR_LIKE_c  # type: ignore[misc]
 
-AR_u **= AR_LIKE_i  # type: ignore[arg-type]
 AR_u **= AR_LIKE_f  # type: ignore[arg-type]
 AR_u **= AR_LIKE_c  # type: ignore[arg-type]
 

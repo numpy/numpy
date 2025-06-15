@@ -165,6 +165,7 @@ The SIMD wrapper automatically disables SIMD operations when optimizations are d
 
 - When `NPY_DISABLE_OPTIMIZATION` is defined, SIMD operations are disabled
 - SIMD is enabled only when the Highway target is not scalar (`HWY_TARGET != HWY_SCALAR`)
+  and not EMU128 (`HWY_TARGET != HWY_EMU128`)
 
 ## Design Notes
 
@@ -172,6 +173,8 @@ The SIMD wrapper automatically disables SIMD operations when optimizations are d
    - NumPy already provides kernels for scalar operations
    - Compilers can better optimize standard library implementations
    - Not all Highway intrinsics are fully supported in scalar mode
+   - For strict IEEE 754 floating-point compliance requirements, direct scalar
+     implementations offer more predictable behavior than EMU128
 
 2. **Legacy Universal Intrinsics**
    - The older universal intrinsics C interface (in `simd.h` and accessible via `NPY_SIMD` macros) is deprecated

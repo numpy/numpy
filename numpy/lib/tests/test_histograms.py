@@ -554,7 +554,8 @@ class TestHistogramOptimBinNums:
             assert_equal(len(a), numbins)
 
     def test_scott_vs_stone(self):
-        """Verify that Scott's rule and Stone's rule converges for normally distributed data"""
+        # Verify that Scott's rule and Stone's rule converges for normally
+        # distributed data
 
         def nbins_ratio(seed, size):
             rng = np.random.RandomState(seed)
@@ -562,10 +563,11 @@ class TestHistogramOptimBinNums:
             a, b = len(np.histogram(x, 'stone')[0]), len(np.histogram(x, 'scott')[0])
             return a / (a + b)
 
-        ll = [[nbins_ratio(seed, size) for size in np.geomspace(start=10, stop=100, num=4).round().astype(int)]
-              for seed in range(10)]
+        geom_space = np.geomspace(start=10, stop=100, num=4).round().astype(int)
+        ll = [[nbins_ratio(seed, size) for size in geom_space] for seed in range(10)]
 
-        # the average difference between the two methods decreases as the dataset size increases.
+        # the average difference between the two methods decreases as the dataset
+        # size increases.
         avg = abs(np.mean(ll, axis=0) - 0.5)
         assert_almost_equal(avg, [0.15, 0.09, 0.08, 0.03], decimal=2)
 

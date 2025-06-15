@@ -13,7 +13,6 @@ from typing import (
     overload,
     type_check_only,
 )
-
 from typing_extensions import deprecated
 
 import numpy as np

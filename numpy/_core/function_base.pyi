@@ -1,7 +1,6 @@
+from _typeshed import Incomplete
 from typing import Literal as L
 from typing import SupportsIndex, TypeAlias, TypeVar, overload
-
-from _typeshed import Incomplete
 
 import numpy as np
 from numpy._typing import (

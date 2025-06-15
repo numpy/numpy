@@ -605,7 +605,7 @@ load_non_nullable_string(char *in, int has_null, const npy_static_string *defaul
     const npy_packed_static_string *ps = (npy_packed_static_string *)in;
     int isnull = NpyString_load(allocator, ps, string_to_load);
     if (isnull == -1) {
-        const char *msg = "Failed to load string for conversion to a non-nullable type";
+        const char msg[] = "Failed to load string for conversion to a non-nullable type";
         if (has_gil)
         {
             PyErr_SetString(PyExc_MemoryError, msg);
@@ -617,7 +617,7 @@ load_non_nullable_string(char *in, int has_null, const npy_static_string *defaul
     }
     else if (isnull) {
         if (has_null) {
-            const char *msg = "Arrays with missing data cannot be converted to a non-nullable type";
+            const char msg[] = "Arrays with missing data cannot be converted to a non-nullable type";
             if (has_gil)
             {
                 PyErr_SetString(PyExc_ValueError, msg);
@@ -821,8 +821,8 @@ static PyType_Slot s2int_slots[] = {
 
 static const char *
 make_s2type_name(NPY_TYPES typenum) {
-    const char *prefix = "cast_StringDType_to_";
-    size_t plen = strlen(prefix);
+    const char prefix[] = "cast_StringDType_to_";
+    size_t plen = sizeof(prefix)/sizeof(char) - 1;
 
     const char *type_name = typenum_to_cstr(typenum);
     size_t nlen = strlen(type_name);
@@ -833,31 +833,36 @@ make_s2type_name(NPY_TYPES typenum) {
         return NULL;
     }
 
-    // memcpy instead of strcpy to avoid stringop-truncation warning, since
-    // we are not including the trailing null character
-    memcpy(buf, prefix, plen);
-    strncat(buf, type_name, nlen);
+    // memcpy instead of strcpy/strncat to avoid stringop-truncation warning,
+    // since we are not including the trailing null character
+    char *p = buf;
+    memcpy(p, prefix, plen);
+    p += plen;
+    memcpy(p, type_name, nlen);
     return buf;
 }
 
 static const char *
 make_type2s_name(NPY_TYPES typenum) {
-    const char *prefix = "cast_";
-    size_t plen = strlen(prefix);
+    const char prefix[] = "cast_";
+    size_t plen = sizeof(prefix)/sizeof(char) - 1;
 
     const char *type_name = typenum_to_cstr(typenum);
     size_t nlen = strlen(type_name);
 
-    const char *suffix = "_to_StringDType";
-    size_t slen = strlen(suffix);
+    const char suffix[] = "_to_StringDType";
+    size_t slen = sizeof(prefix)/sizeof(char) - 1;
 
     char *buf = (char *)PyMem_RawCalloc(sizeof(char), plen + nlen + slen + 1);
 
-    // memcpy instead of strcpy to avoid stringop-truncation warning, since
-    // we are not including the trailing null character
-    memcpy(buf, prefix, plen);
-    strncat(buf, type_name, nlen);
-    strncat(buf, suffix, slen);
+    // memcpy instead of strcpy/strncat to avoid stringop-truncation warning,
+    // since we are not including the trailing null character
+    char *p = buf;
+    memcpy(p, prefix, plen);
+    p += plen;
+    memcpy(p, type_name, nlen);
+    p += nlen;
+    memcpy(p, suffix, slen);
     return buf;
 }
 

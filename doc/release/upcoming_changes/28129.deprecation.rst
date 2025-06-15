@@ -1,4 +1,0 @@
-* The ``numpy.typing.mypy_plugin`` has been deprecated in favor of platform-agnostic
-  static type inference. Please remove ``numpy.typing.mypy_plugin`` from the ``plugins``
-  section of your mypy configuration. If this change results in new errors being
-  reported, kindly open an issue.
