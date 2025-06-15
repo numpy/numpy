@@ -22,14 +22,20 @@
 
 /**
  * We avoid using Highway scalar operations for the following reasons:
- * 1. We already provide kernels for scalar operations, so falling back to
- *    the NumPy implementation is more appropriate. Compilers can often
- *    optimize these better since they rely on standard libraries.
- * 2. Not all Highway intrinsics are fully supported in scalar mode.
  *
- * Therefore, we only enable SIMD when the Highway target is not scalar.
+ * 1. NumPy already provides optimized kernels for scalar operations. Using these
+ *    existing implementations is more consistent with NumPy's architecture and
+ *    allows for compiler optimizations specific to standard library calls.
+ *
+ * 2. Not all Highway intrinsics are fully supported in scalar mode, which could
+ *    lead to compilation errors or unexpected behavior for certain operations.
+ *
+ * 3. For NumPy's strict IEEE 754 floating-point compliance requirements, direct scalar
+ *    implementations offer more predictable behavior than EMU128.
+ *
+ * Therefore, we only enable Highway SIMD when targeting actual SIMD instruction sets.
  */
-#define NPY_HWY (HWY_TARGET != HWY_SCALAR)
+#define NPY_HWY ((HWY_TARGET != HWY_SCALAR) && (HWY_TARGET != HWY_EMU128))
 
 // Indicates if the SIMD operations are available for float16.
 #define NPY_HWY_F16 (NPY_HWY && HWY_HAVE_FLOAT16)

@@ -4,9 +4,9 @@ from ctypes import POINTER, c_double, c_float, c_int, c_longlong, cast, pointer
 from os import path
 
 import pytest
-from numpy._core._multiarray_umath import __cpu_features__
 
 import numpy as np
+from numpy._core._multiarray_umath import __cpu_features__
 from numpy.testing import assert_array_max_ulp
 from numpy.testing._private.utils import _glibc_older_than
 

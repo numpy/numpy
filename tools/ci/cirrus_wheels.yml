@@ -11,7 +11,7 @@ macosx_arm64_task:
       CIRRUS_CLONE_SUBMODULES: true
   macos_instance:
     matrix:
-      image: ghcr.io/cirruslabs/macos-monterey-xcode
+      image: ghcr.io/cirruslabs/macos-runner:sonoma
 
   matrix:
     - env:
