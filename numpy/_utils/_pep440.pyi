@@ -13,7 +13,6 @@ from typing import (
 from typing import (
     Literal as L,
 )
-
 from typing_extensions import TypeIs
 
 __all__ = ["VERSION_PATTERN", "InvalidVersion", "LegacyVersion", "Version", "parse"]

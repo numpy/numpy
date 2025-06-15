@@ -123,7 +123,7 @@ with shape ``(1,)``, not a 2D sub-matrix with shape ``(1, 1)``.
 Mixed indexing seems so tricky that it is tempting to say that it never should
 be used. However, it is not easy to avoid, because NumPy implicitly adds full
 slices if there are fewer indices than the full dimensionality of the indexed
-array. This means that indexing a 2D array like `x[[0, 1]]`` is equivalent to
+array. This means that indexing a 2D array like ``x[[0, 1]]`` is equivalent to
 ``x[[0, 1], :]``. These cases are not surprising, but they constrain the
 behavior of mixed indexing.
 
@@ -236,7 +236,7 @@ be deduced:
    For the beginning, this probably means cases where ``arr[ind]`` and
    ``arr.oindex[ind]`` return different results give deprecation warnings.
    This includes every use of vectorized indexing with multiple integer arrays.
-   Due to the transposing behaviour, this means that``arr[0, :, index_arr]``
+   Due to the transposing behaviour, this means that ``arr[0, :, index_arr]``
    will be deprecated, but ``arr[:, 0, index_arr]`` will not for the time being.
 
 7. To ensure that existing subclasses of `ndarray` that override indexing
@@ -285,7 +285,7 @@ Open Questions
   Copying always "fixes" this possible inconsistency.
 
 * The final state to morph plain indexing in is not fixed in this PEP.
-  It is for example possible that `arr[index]`` will be equivalent to
+  It is for example possible that ``arr[index]`` will be equivalent to
   ``arr.oindex`` at some point in the future.
   Since such a change will take years, it seems unnecessary to make
   specific decisions at this time.

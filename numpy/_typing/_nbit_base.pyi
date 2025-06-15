@@ -3,7 +3,6 @@
 # mypy: disable-error-code=misc
 
 from typing import final
-
 from typing_extensions import deprecated
 
 # Deprecated in NumPy 2.3, 2025-05-01

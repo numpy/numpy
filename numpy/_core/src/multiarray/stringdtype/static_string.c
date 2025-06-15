@@ -404,7 +404,7 @@ NpyString_release_allocators(size_t length, npy_string_allocator *allocators[])
     }
 }
 
-static const char * const EMPTY_STRING = "";
+static const char EMPTY_STRING[] = "";
 
 /*NUMPY_API
  * Extract the packed contents of *packed_string* into *unpacked_string*.

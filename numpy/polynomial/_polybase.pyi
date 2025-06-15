@@ -13,7 +13,6 @@ from typing import (
     TypeAlias,
     overload,
 )
-
 from typing_extensions import TypeIs, TypeVar
 
 import numpy as np

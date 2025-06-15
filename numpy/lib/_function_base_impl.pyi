@@ -1,4 +1,5 @@
 # ruff: noqa: ANN401
+from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Any,
@@ -13,8 +14,6 @@ from typing import (
     type_check_only,
 )
 from typing import Literal as L
-
-from _typeshed import Incomplete
 from typing_extensions import TypeIs, deprecated
 
 import numpy as np
@@ -105,7 +104,7 @@ _Pss = ParamSpec("_Pss")
 _ScalarT = TypeVar("_ScalarT", bound=generic)
 _ScalarT1 = TypeVar("_ScalarT1", bound=generic)
 _ScalarT2 = TypeVar("_ScalarT2", bound=generic)
-_ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
+_ArrayT = TypeVar("_ArrayT", bound=np.ndarray)
 
 _2Tuple: TypeAlias = tuple[_T, _T]
 _MeshgridIdx: TypeAlias = L['ij', 'xy']

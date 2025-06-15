@@ -205,7 +205,7 @@ New Features
   - ``np.int16``, ``np.uint16``,
   - ``np.int32``, ``np.uint32``,
   - ``np.int64``, ``np.uint64``,
-  - ``np.int_ ``, ``np.intp``
+  - ``np.int_``, ``np.intp``
 
   The specification is by precision rather than by C type. Hence, on some
   platforms ``np.int64`` may be a ``long`` instead of ``long long`` even if
