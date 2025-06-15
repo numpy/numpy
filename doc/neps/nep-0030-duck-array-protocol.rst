@@ -102,14 +102,14 @@ a complete implementation would look like the following:
 The implementation above exemplifies the simplest case, but the overall idea
 is that libraries will implement a ``__duckarray__`` method that returns the
 original object, and an ``__array__`` method that either creates and returns an
-appropriate NumPy array, or raises a``TypeError`` to prevent unintentional use
+appropriate NumPy array, or raises a ``TypeError`` to prevent unintentional use
 as an object in a NumPy array (if ``np.asarray`` is called on an arbitrary
 object that does not implement ``__array__``, it will create a NumPy array
 scalar).
 
 In case of existing libraries that don't already implement ``__array__`` but
 would like to use duck array typing, it is advised that they introduce
-both ``__array__`` and``__duckarray__`` methods.
+both ``__array__`` and ``__duckarray__`` methods.
 
 Usage
 -----

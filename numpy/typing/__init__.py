@@ -169,7 +169,7 @@ __DIR_SET = frozenset(__DIR)
 def __dir__() -> list[str]:
     return __DIR
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> object:
     if name == "NBitBase":
         import warnings
 

@@ -4,6 +4,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <string.h>
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
@@ -2525,11 +2526,13 @@ count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
         len  -= len_m;
         count = len_m - zcount;
     #else
-        if (!NPY_ALIGNMENT_REQUIRED || npy_is_aligned(data, sizeof(npy_uint64))) {
+        if (npy_is_aligned(data, sizeof(npy_uint64))) {
             int step = 6 * sizeof(npy_uint64);
             int left_bytes = len % step;
             for (const char *end = data + len; data < end - left_bytes; data += step) {
-                 count += count_nonzero_bytes_384((const npy_uint64 *)data);
+                npy_uint64 arr[6];
+                memcpy(arr, data, step);
+                count += count_nonzero_bytes_384(arr);
             }
             len = left_bytes;
         }

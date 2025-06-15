@@ -1,6 +1,7 @@
 # NOTE: Numpy's mypy plugin is used for importing the correct
 # platform-specific `ctypes._SimpleCData[int]` sub-type
 import ctypes
+from _typeshed import StrOrBytesPath
 from collections.abc import Iterable, Sequence
 from ctypes import c_int64 as _c_intp
 from typing import (
@@ -11,11 +12,7 @@ from typing import (
     TypeVar,
     overload,
 )
-from typing import (
-    Literal as L,
-)
-
-from _typeshed import StrOrBytesPath
+from typing import Literal as L
 
 import numpy as np
 from numpy import (
@@ -40,10 +37,9 @@ from numpy import (
 from numpy._core._internal import _ctypes
 from numpy._core.multiarray import flagsobj
 from numpy._typing import (
-    # DTypes
     DTypeLike,
-    # Arrays
     NDArray,
+    _AnyShape,
     _ArrayLike,
     _BoolCodes,
     _ByteCodes,
@@ -53,8 +49,6 @@ from numpy._typing import (
     _LongCodes,
     _LongDoubleCodes,
     _LongLongCodes,
-    # Shapes
-    _Shape,
     _ShapeLike,
     _ShortCodes,
     _SingleCodes,
@@ -100,9 +94,9 @@ class _ndptr(ctypes.c_void_p, Generic[_DTypeOptionalT]):
 
 class _concrete_ndptr(_ndptr[_DTypeT]):
     _dtype_: ClassVar[_DTypeT]
-    _shape_: ClassVar[tuple[int, ...]]
+    _shape_: ClassVar[_AnyShape]
     @property
-    def contents(self) -> ndarray[_Shape, _DTypeT]: ...
+    def contents(self) -> ndarray[_AnyShape, _DTypeT]: ...
 
 def load_library(libname: StrOrBytesPath, loader_path: StrOrBytesPath) -> ctypes.CDLL: ...
 

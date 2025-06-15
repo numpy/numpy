@@ -384,9 +384,6 @@ Ndescr = [
     ('z', 'u1')]
 
 NbufferT = [
-    # x     Info                                                color info        y                  z
-    #       value y2 Info2                            name z2         Name Value
-    #                name   value    y3       z3
     ([3, 2], (6j, 6., ('nn', [6j, 4j], [6., 4.], [1, 2]), 'NN', True),
      'cc', ('NN', 6j), [[6., 4.], [6., 4.]], 8),
     ([4, 3], (7j, 7., ('oo', [7j, 5j], [7., 5.], [2, 1]), 'OO', False),
