@@ -8,7 +8,8 @@ help us grow.
 
 Pull requests (PRs) are always welcome, but making a PR is just the
 start. Please respond to comments and requests for changes to help
-move the process forward. Please follow our
+Skip asking for assignments—just contribute and say, "Here's my work, review it." It makes collaboration and support much easier.
+Please follow our
 `Code of Conduct <https://numpy.org/code-of-conduct/>`__, which applies
 to all interactions, including issues and PRs.
 
