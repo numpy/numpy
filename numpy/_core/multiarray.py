@@ -465,6 +465,35 @@ def where(condition, x=None, y=None):
 
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.lexsort)
+def _general_lexsort(keys, axis=None):
+    """
+    Unspecialized code path for lexsort.
+
+    Parameters
+    ----------
+    keys : (k, m, n, ...) array-like
+        The `k` keys to be sorted. The *last* key (e.g, the last
+        row if `keys` is a 2D array) is the primary sort key.
+        Each element of `keys` along the zeroth axis must be
+        an array-like object of the same shape.
+    axis : int, optional
+        Axis to be indirectly sorted. By default, sort over the last axis
+        of each sequence. Separate slices along `axis` sorted over
+        independently; see last example.
+
+    Returns
+    -------
+    indices : (m, n, ...) ndarray of ints
+        Array of indices that sort the keys along the specified axis.
+
+    """
+
+    if isinstance(keys, tuple):
+        return keys
+    else:
+        return (keys,)
+
+
 def lexsort(keys, axis=None):
     """
     lexsort(keys, axis=-1)
@@ -579,11 +608,102 @@ def lexsort(keys, axis=None):
     [1 0 3 2]
 
     """
-    if isinstance(keys, tuple):
-        return keys
-    else:
-        return (keys,)
 
+    import numpy as np
+    import warnings
+
+    if np.ndim(keys[0]) == 0:
+        # Weird case, each level is actually a scalar, to be interpreted as a
+        # level of length 1:
+        if axis:
+            msg = f"axis {axis} is out of bounds for array of dimension 0"
+            raise np.exceptions.AxisError(msg)
+        return 0
+
+    # Check the size of each level - the int fast path has overhead that makes
+    # it not convenient for less than 1000:
+    if len(keys[0]) > 1000:
+        n_layers = len(keys)
+
+        def _is_int_ndarray(a):
+            """
+            Return True if and only if a is an array of (any) integer dtype.
+            """
+            return (isinstance(a, np.ndarray) and
+                    np.issubdtype(a.dtype, np.integer))
+
+        # Check if we are only dealing with ndarrays of (any) integer type:
+        if all(_is_int_ndarray(a) for a in keys):
+            # Get extreme values for each level:
+            m_m = [[keys[i].min(), keys[i].max()]
+                         for i in range(n_layers)]
+            # ... and their difference:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                # This overflows np.int, but not np.uint, to which this is
+                # immediately casted... so it's fine.
+                ranges = np.array([(v[1] - v[0]) for v in m_m],
+                                  dtype=np.uint)
+
+            # Calculate the number of bits needed to represent values in each
+            # layer, once reparametrized between 0 and range[i] (hence
+            # ranges[i]+1 values).
+            layers_bits = np.ceil(np.log2(ranges + 1))
+            # Note that if a level is constant, it is assigned 0 bits, and it
+            # is correct, since it is irrelevant for the sorting.
+
+            # Compute cumulated bit shifts.
+            # Note that lexsort starts from the last level, so the first level
+            # is the less relevant one, and hence has offset 0 because it does
+            # not need to be shifted - each level is shifted by the number of
+            # bits required to store the previous levels:
+            offsets = np.cumsum(np.insert(layers_bits, 0, 0))
+            # The last level is shifted by offsets[-2]; offsets[-1] actually
+            # represents the bits required to store all levels.
+
+            # Check if the levels can be compressed in a single uint array:
+            if offsets[-1] <= np.iinfo(np.uint).bits:
+                # OK, we can take the fast path.
+
+                # For instance: if 3 levels have respectively 3, 6 and 1
+                # possible values, then their labels can be represented using
+                # respectively 2, 3 and 1 bits, as follows:
+                #  _ _ _ _____ _ __ __ __
+                # |0|0|0| ... |0| 0|a1|a0| -> offset 0 (first level)
+                #  — — — ————— — —— —— ——
+                # |0|0|0| ... |0|b2|b1|b0| -> offset 2 (bits for 1 level)
+                #  — — — ————— — —— —— ——
+                # |0|0|0| ... |0| 0| 0|c0| -> offset 5 (bits for levels 1-2)
+                #  ‾ ‾ ‾ ‾‾‾‾‾ ‾ ‾‾ ‾‾ ‾‾
+                # and the resulting unsigned integer representation will be:
+                #  _ _ _ _____ _ __ __ __ __ __ __
+                # |0|0|0| ... |0|c0|b2|b1|b0|a1|a0|
+                #  ‾ ‾ ‾ ‾‾‾‾‾ ‾ ‾‾ ‾‾ ‾‾ ‾‾ ‾‾ ‾‾
+
+                # We want to first subtract minima in order to obtain positive
+                # values only.
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    # The first "astype" will underflow if the initial array
+                    # has negative elements, but this is fine because adding
+                    # the shift will overflow and produce the correct result:
+                    arr = [keys[i].astype(np.uint) - m_m[i][0].astype(np.uint)
+                           for i in range(n_layers)]
+
+                # Now use offsets to shift each layer's representations:
+                reprs = [arr[i] << int(offsets[i]) for i in range(n_layers)]
+
+                # ... and combine them into a single layer:
+                shifted = np.bitwise_or.reduce(reprs)
+
+                # Sort the resulting "summary" numbers:
+                return np.argsort(shifted, axis=axis, kind='stable')
+
+    # Fall back to general code path:
+    return _general_lexsort(keys, axis=axis or -1)
+
+
+lexsort.__module__ = 'numpy'
 
 @array_function_from_c_func_and_dispatcher(_multiarray_umath.can_cast)
 def can_cast(from_, to, casting=None):
