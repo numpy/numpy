@@ -963,7 +963,7 @@ foreach gen_mtargets : [
     'src/umath/loops_hyperbolic.dispatch.cpp',
     [
       AVX512_SKX, [AVX2, FMA3],
-      VSX4, VSX2,
+      VSX2,
       NEON_VFPV4,
       VXE,
       LSX,

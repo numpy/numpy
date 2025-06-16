@@ -8,7 +8,7 @@
 namespace {
 using namespace np::simd;
 
-#if HWY_NATIVE_FMA // native support
+#if NPY_HWY_FMA // native support
 
 /*
  * NOTE: The following implementation of tanh(_Tag<float>(), _Tag<double>()) have been converted from
@@ -701,14 +701,14 @@ simd_tanh_f32(const float *src, npy_intp ssrc, float *dst, npy_intp sdst, npy_in
     }
 }
 
-#endif // HWY_NATIVE_FMA
+#endif // NPY_HWY_FMA
 
 template<typename T>
 struct tanh_ops;
 
 template<>
 struct tanh_ops<float> {
-#if HWY_NATIVE_FMA
+#if NPY_HWY_FMA
     static HWY_INLINE void simd_func(const float *src, npy_intp src_stride, float *dst, npy_intp dst_stride, npy_intp len) {
         simd_tanh_f32(src, src_stride, dst, dst_stride, len);
     }
@@ -720,7 +720,7 @@ struct tanh_ops<float> {
 
 template<>
 struct tanh_ops<double> {
-#if (HWY_NATIVE_FMA && NPY_HWY_F64)
+#if (NPY_HWY_FMA && NPY_HWY_F64)
     static HWY_INLINE void simd_func(const double *src, npy_intp src_stride, double *dst, npy_intp dst_stride, npy_intp len) {
         simd_tanh_f64(src, src_stride, dst, dst_stride, len);
     }
@@ -740,7 +740,7 @@ unary_tanh(char **args, npy_intp const *dimensions, npy_intp const *steps)
     const npy_intp dst_step = steps[1];
     npy_intp len = dimensions[0];
 
-    if constexpr (HWY_NATIVE_FMA && (std::is_same_v<T, float> || NPY_HWY_F64)){
+    if constexpr (NPY_HWY_FMA && (std::is_same_v<T, float> || NPY_HWY_F64)){
         if (is_mem_overlap(args[0], steps[0], args[1], steps[1], len) ||
             !(alignof(T) == sizeof(T) && src_step % sizeof(T) == 0) ||
             !(alignof(T) == sizeof(T) && dst_step % sizeof(T) == 0)
