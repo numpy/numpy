@@ -1857,7 +1857,7 @@ gentype_real_get(PyObject *self, void *NPY_UNUSED(ignored))
     }
     else if (PyArray_IsScalar(self, Object)) {
         PyObject *obj = PyArrayScalar_VAL(self, Object);
-        ret = PyObject_GetAttrString(obj, "real");
+        ret = PyObject_GetAttr(obj, npy_interned_str.real);
         if (ret != NULL) {
             return ret;
         }
@@ -1883,7 +1883,7 @@ gentype_imag_get(PyObject *self, void *NPY_UNUSED(ignored))
     else if (PyArray_IsScalar(self, Object)) {
         PyObject *obj = PyArrayScalar_VAL(self, Object);
         PyArray_Descr *newtype;
-        ret = PyObject_GetAttrString(obj, "imag");
+        ret = PyObject_GetAttr(obj, npy_interned_str.imag);
         if (ret == NULL) {
             PyErr_Clear();
             obj = PyLong_FromLong(0);
