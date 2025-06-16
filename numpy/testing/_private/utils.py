@@ -563,8 +563,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     Arrays are not almost equal to 9 decimals
     <BLANKLINE>
     Mismatched elements: 1 / 2 (50%)
-    Failure at indices (only showing the first 5 failures):
-    [1]: 2.3333333333333 (ACTUAL), 2.33333334 (DESIRED)
+    First 5 mismatches are at indices:
+     [1]: 2.3333333333333 (ACTUAL), 2.33333334 (DESIRED)
     Max absolute difference among violations: 6.66669964e-09
     Max relative difference among violations: 2.85715698e-09
      ACTUAL: array([1.         , 2.333333333])
@@ -873,14 +873,14 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     positions = np.argwhere(np.asarray(invalids))
                 s = "\n".join(
                     [
-                        f"{p.tolist()}: {ox if ox.ndim==0 else ox[tuple(p)]} "
-                        f"({names[0]}), {oy if oy.ndim==0 else oy[tuple(p)]} "
+                        f" {p.tolist()}: {ox if ox.ndim == 0 else ox[tuple(p)]} "
+                        f"({names[0]}), {oy if oy.ndim == 0 else oy[tuple(p)]} "
                         f"({names[1]})"
                         for p in positions[:5]
                     ]
                 )
                 remarks.append(
-                    f"Failure at indices (only showing the first 5 failures):\n{s}"
+                    f"First 5 mismatches are at indices:\n{s}"
                 )
 
             with errstate(all='ignore'):
@@ -1019,8 +1019,8 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
     Arrays are not equal
     <BLANKLINE>
     Mismatched elements: 1 / 3 (33.3%)
-    Failure at indices (only showing the first 5 failures):
-    [1]: 3.141592653589793 (ACTUAL), 3.1415926535897927 (DESIRED)
+    First 5 mismatches are at indices:
+     [1]: 3.141592653589793 (ACTUAL), 3.1415926535897927 (DESIRED)
     Max absolute difference among violations: 4.4408921e-16
     Max relative difference among violations: 1.41357986e-16
      ACTUAL: array([1.      , 3.141593,      nan])
@@ -1134,8 +1134,8 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
     Arrays are not almost equal to 5 decimals
     <BLANKLINE>
     Mismatched elements: 1 / 3 (33.3%)
-    Failure at indices (only showing the first 5 failures):
-    [1]: 2.33333 (ACTUAL), 2.33339 (DESIRED)
+    First 5 mismatches are at indices:
+     [1]: 2.33333 (ACTUAL), 2.33339 (DESIRED)
     Max absolute difference among violations: 6.e-05
     Max relative difference among violations: 2.57136612e-05
      ACTUAL: array([1.     , 2.33333,     nan])
@@ -1257,8 +1257,8 @@ def assert_array_less(x, y, err_msg='', verbose=True, *, strict=False):
     Arrays are not strictly ordered `x < y`
     <BLANKLINE>
     Mismatched elements: 1 / 3 (33.3%)
-    Failure at indices (only showing the first 5 failures):
-    [0]: 1.0 (x), 1.0 (y)
+    First 5 mismatches are at indices:
+     [0]: 1.0 (x), 1.0 (y)
     Max absolute difference among violations: 0.
     Max relative difference among violations: 0.
      x: array([ 1.,  1., nan])
