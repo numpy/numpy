@@ -494,8 +494,8 @@ PyArray_ArrFuncs
            PyArray_NonzeroFunc *nonzero;
            PyArray_FillFunc *fill;
            PyArray_FillWithScalarFunc *fillwithscalar;
-           PyArray_SortFunc *sort[NPY_NSORTS];
-           PyArray_ArgSortFunc *argsort[NPY_NSORTS];
+           PyArray_SortFuncWithContext *sort[NPY_NSORTS];
+           PyArray_ArgSortFuncWithContext *argsort[NPY_NSORTS];
            PyObject *castdict;
            PyArray_ScalarKindFunc *scalarkind;
            int **cancastscalarkindto;
@@ -791,6 +791,40 @@ PyArrayMethod_Context and PyArrayMethod_Spec
 
       An array of slots for the method. Slot IDs must be one of the values
       below.
+
+.. _arraymethod-sort-context:
+
+PyArrayMethod_SortContext
+-------------------------
+
+.. c:type:: PyArrayMethod_SortContext
+
+   A struct used to provide context for sorting methods.
+
+   .. code-block:: c
+
+      typedef struct {
+          PyArray_Descr *descriptor;
+          PyArray_SortCompareFunc *compare;
+          int reversed;
+          NPY_SORT_NAN_POSITION nan_position;
+      } PyArrayMethod_SortContext
+
+    .. c:member:: PyArray_Descr *descriptor
+
+       The descriptor for the data type being sorted.
+
+    .. c:member:: PyArray_SortCompareFunc *compare
+
+       A pointer to the comparison function used for sorting.
+
+    .. c:member:: int reversed
+
+       A flag indicating whether the sort is reversed.
+
+    .. c:member:: NPY_SORT_NAN_POSITION nan_position
+
+       The position of NaN values in the sort order.
 
 .. _dtypemeta:
 
