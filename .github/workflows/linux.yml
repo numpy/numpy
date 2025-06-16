@@ -82,7 +82,7 @@ jobs:
         persist-credentials: false
     - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
-        python-version: 'pypy3.11-v7.3.19'
+        python-version: 'pypy3.11-nightly'
     - name: Setup using scipy-openblas
       run: |
         python -m pip install -r requirements/ci_requirements.txt
@@ -156,7 +156,7 @@ jobs:
         # TODO: gcov
       env:
         PYTHONOPTIMIZE: 2
-    
+
 
   aarch64_test:
     needs: [smoke_test]
@@ -204,7 +204,7 @@ jobs:
         submodules: recursive
         fetch-tags: true
         persist-credentials: false
-    
+
     - name: Creates new container
       run: |
         docker run --name the_container --interactive \
@@ -221,7 +221,7 @@ jobs:
         docker run --rm -e "TERM=xterm-256color" \
           -v $(pwd):/numpy the_container \
           /bin/script -e -q -c "/bin/linux32 /bin/bash --noprofile --norc -eo pipefail -c '
-            cd /numpy && spin build 
+            cd /numpy && spin build
           '"
 
     - name: Meson Log
@@ -271,7 +271,7 @@ jobs:
     # - name: Check docstests
     #   shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
     #   run: |
-    #     pip install scipy-doctest==1.6.0 hypothesis==6.104.1 matplotlib scipy pytz pandas
+    #     pip install scipy-doctest>=1.8.0 hypothesis==6.104.1 matplotlib scipy pandas
     #     spin check-docs -v
     #     spin check-tutorials -v
 
@@ -324,7 +324,7 @@ jobs:
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         repository: data-apis/array-api-tests
-        ref: 'c48410f96fc58e02eea844e6b7f6cc01680f77ce'  # Latest commit as of 2025-04-01
+        ref: '3c273cd34d51c64ed893737306d36adab23a94a1'  # v2025.05.23
         submodules: 'true'
         path: 'array-api-tests'
         persist-credentials: false
@@ -346,7 +346,7 @@ jobs:
         PYTHONWARNINGS: 'ignore::UserWarning::,ignore::DeprecationWarning::,ignore::RuntimeWarning::'
       run: |
         cd ${GITHUB_WORKSPACE}/array-api-tests
-        pytest array_api_tests -v -c pytest.ini --ci --max-examples=100 --derandomize --disable-deadline --xfails-file ${GITHUB_WORKSPACE}/tools/ci/array-api-xfails.txt
+        pytest array_api_tests -v -c pytest.ini -n 4 --max-examples=1000 --derandomize --disable-deadline --xfails-file ${GITHUB_WORKSPACE}/tools/ci/array-api-xfails.txt
 
   custom_checks:
     needs: [smoke_test]

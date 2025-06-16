@@ -1,7 +1,6 @@
+from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Any, Literal, TypeAlias, overload
-
-from _typeshed import Incomplete
 from typing_extensions import TypeVar
 
 import numpy as np

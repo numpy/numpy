@@ -1,5 +1,6 @@
 # TODO: Sort out any and all missing functions in this namespace
 import datetime as dt
+from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
 from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Any,
@@ -18,8 +19,6 @@ from typing import (
 from typing import (
     Literal as L,
 )
-
-from _typeshed import StrOrBytesPath, SupportsLenAndGetItem
 from typing_extensions import CapsuleType
 
 import numpy as np
@@ -499,33 +498,27 @@ def array(
     like: _SupportsArrayFunc | None = ...,
 ) -> NDArray[Any]: ...
 
+#
 @overload
-def unravel_index(  # type: ignore[misc]
-    indices: _IntLike_co,
-    shape: _ShapeLike,
-    order: _OrderCF = ...,
-) -> tuple[intp, ...]: ...
-@overload
-def unravel_index(
-    indices: _ArrayLikeInt_co,
-    shape: _ShapeLike,
-    order: _OrderCF = ...,
-) -> tuple[NDArray[intp], ...]: ...
-
-@overload
-def ravel_multi_index(  # type: ignore[misc]
-    multi_index: Sequence[_IntLike_co],
-    dims: Sequence[SupportsIndex],
-    mode: _ModeKind | tuple[_ModeKind, ...] = ...,
-    order: _OrderCF = ...,
+def ravel_multi_index(
+    multi_index: SupportsLenAndGetItem[_IntLike_co],
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
 ) -> intp: ...
 @overload
 def ravel_multi_index(
-    multi_index: Sequence[_ArrayLikeInt_co],
-    dims: Sequence[SupportsIndex],
-    mode: _ModeKind | tuple[_ModeKind, ...] = ...,
-    order: _OrderCF = ...,
+    multi_index: SupportsLenAndGetItem[_ArrayLikeInt_co],
+    dims: _ShapeLike,
+    mode: _ModeKind | tuple[_ModeKind, ...] = "raise",
+    order: _OrderCF = "C",
 ) -> NDArray[intp]: ...
+
+#
+@overload
+def unravel_index(indices: _IntLike_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[intp, ...]: ...
+@overload
+def unravel_index(indices: _ArrayLikeInt_co, shape: _ShapeLike, order: _OrderCF = "C") -> tuple[NDArray[intp], ...]: ...
 
 # NOTE: Allow any sequence of array-like objects
 @overload

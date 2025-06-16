@@ -1,11 +1,12 @@
 import platform
 import sys
 
-# import the c-extension module directly since _arg is not exported via umath
-import numpy._core._multiarray_umath as ncu
 import pytest
 
 import numpy as np
+
+# import the c-extension module directly since _arg is not exported via umath
+import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
     assert_almost_equal,
     assert_array_equal,
