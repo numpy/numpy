@@ -286,7 +286,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 #initcommonhooks#
 #interface_usercode#
 
-#if Py_GIL_DISABLED
+#ifdef Py_GIL_DISABLED
     // signal whether this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m , #gil_used#);
 #endif
