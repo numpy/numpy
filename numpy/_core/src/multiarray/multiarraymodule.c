@@ -4782,7 +4782,9 @@ _multiarray_umath_exec(PyObject *m) {
         return -1;
     }
 
+#if NPY_BLAS_CHECK_FPE_SUPPORT
     npy_blas_init();
+#endif
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,

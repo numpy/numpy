@@ -31,12 +31,12 @@ from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib.recfunctions import repack_fields
 from numpy.testing import (
+    BLAS_SUPPORTS_FPE,
     HAS_REFCOUNT,
     IS_64BIT,
     IS_PYPY,
     IS_PYSTON,
     IS_WASM,
-    BLAS_SUPPORTS_FPE,
     assert_,
     assert_allclose,
     assert_almost_equal,

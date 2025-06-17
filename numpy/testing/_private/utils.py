@@ -96,7 +96,7 @@ if platform.system() == 'Darwin' or platform.machine() == 'arm64':
         blas = np.__config__.CONFIG['Build Dependencies']['blas']
         if blas['name'] == 'accelerate':
             BLAS_SUPPORTS_FPE = False
-    except:
+    except KeyError:
         pass
 
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
