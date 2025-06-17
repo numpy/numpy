@@ -127,11 +127,9 @@ jobs:
         with:
           architecture: 'x86'
 
-      - name: Setup MSVC arm64
+      - name: Setup LLVM for Windows ARM64
         if: ${{ matrix.buildplat[1] == 'win_arm64' }}
-        uses: bus1/cabuild/action/msdevshell@e22aba57d6e74891d059d66501b6b5aed8123c4d  # v1
-        with:
-          architecture: 'arm64'
+        uses: ./.github/windows_arm64_steps
 
       - name: pkg-config-for-win
         run: |
