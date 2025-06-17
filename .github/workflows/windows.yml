@@ -128,8 +128,7 @@ jobs:
 
     - name: Install Clang-cl
       if: matrix.compiler-pyversion[0] == 'Clang-cl'
-      run: |
-        uses: ./.github/windows_arm64_steps
+      uses: ./.github/windows_arm64_steps
 
     - name: Install NumPy (MSVC)
       if: matrix.compiler-pyversion[0] == 'MSVC'
