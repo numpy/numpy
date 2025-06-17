@@ -16,6 +16,7 @@
 
 
 
+#include "blas_utils.h"
 #include "npy_cblas.h"
 #include "arraytypes.h" /* For TYPE_dot functions */
 
@@ -120,7 +121,7 @@ static inline void
     }
 }
 
-NPY_NO_EXPORT void
+static void
 @name@_gemv(void *ip1, npy_intp is1_m, npy_intp is1_n,
             void *ip2, npy_intp is2_n,
             void *op, npy_intp op_m,
@@ -156,7 +157,7 @@ NPY_NO_EXPORT void
                                      is2_n / sizeof(@typ@), @step0@, op, op_m / sizeof(@typ@));
 }
 
-NPY_NO_EXPORT void
+static void
 @name@_matmul_matrixmatrix(void *ip1, npy_intp is1_m, npy_intp is1_n,
                            void *ip2, npy_intp is2_n, npy_intp is2_p,
                            void *op, npy_intp os_m, npy_intp os_p,
@@ -260,7 +261,7 @@ NPY_NO_EXPORT void
  * #IS_HALF = 0, 0, 0, 1, 0*13#
  */
 
-NPY_NO_EXPORT void
+static void
 @TYPE@_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
@@ -318,7 +319,7 @@ NPY_NO_EXPORT void
 }
 
 /**end repeat**/
-NPY_NO_EXPORT void
+static void
 BOOL_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
@@ -357,7 +358,7 @@ BOOL_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
     }
 }
 
-NPY_NO_EXPORT void
+static void
 OBJECT_matmul_inner_noblas(void *_ip1, npy_intp is1_m, npy_intp is1_n,
                            void *_ip2, npy_intp is2_n, npy_intp is2_p,
                            void *_op, npy_intp os_m, npy_intp os_p,
@@ -629,6 +630,11 @@ NPY_NO_EXPORT void
 #endif
     }
 #if @USEBLAS@ && defined(HAVE_CBLAS)
+#if NPY_BLAS_CHECK_FPE_SUPPORT
+    if (!npy_blas_supports_fpe()) {
+        npy_clear_floatstatus_barrier((char*)args);
+    }
+#endif
     if (allocate_buffer) free(tmp_ip12op);
 #endif
 }
@@ -653,7 +659,7 @@ NPY_NO_EXPORT void
  * #prefix = c, z, 0#
  * #USE_BLAS = 1, 1, 0#
  */
-NPY_NO_EXPORT void
+static void
 @name@_dotc(char *ip1, npy_intp is1, char *ip2, npy_intp is2,
             char *op, npy_intp n, void *NPY_UNUSED(ignore))
 {
@@ -749,6 +755,7 @@ OBJECT_dotc(char *ip1, npy_intp is1, char *ip2, npy_intp is2, char *op, npy_intp
  *          CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT#
  *  #DOT = dot*15, dotc*4#
  *  #CHECK_PYERR = 0*18, 1#
+ *  #CHECK_BLAS = 1*2, 0*13, 1*2, 0*2#
  */
 NPY_NO_EXPORT void
 @TYPE@_vecdot(char **args, npy_intp const *dimensions, npy_intp const *steps,
@@ -772,6 +779,11 @@ NPY_NO_EXPORT void
         }
 #endif
     }
+#if @CHECK_BLAS@ && NPY_BLAS_CHECK_FPE_SUPPORT
+    if (!npy_blas_supports_fpe()) {
+        npy_clear_floatstatus_barrier((char*)args);
+    }
+#endif
 }
 /**end repeat**/
 
@@ -787,7 +799,7 @@ NPY_NO_EXPORT void
  * #step1 = &oneF, &oneD#
  * #step0 = &zeroF, &zeroD#
  */
-NPY_NO_EXPORT void
+static void
 @name@_vecmat_via_gemm(void *ip1, npy_intp is1_n,
                        void *ip2, npy_intp is2_n, npy_intp is2_m,
                        void *op, npy_intp os_m,
@@ -878,6 +890,11 @@ NPY_NO_EXPORT void
 #endif
         }
     }
+#if @USEBLAS@ && NPY_BLAS_CHECK_FPE_SUPPORT
+    if (!npy_blas_supports_fpe()) {
+        npy_clear_floatstatus_barrier((char*)args);
+    }
+#endif
 }
 /**end repeat**/
 
@@ -943,5 +960,10 @@ NPY_NO_EXPORT void
 #endif
         }
     }
+#if @USEBLAS@ && NPY_BLAS_CHECK_FPE_SUPPORT
+    if (!npy_blas_supports_fpe()) {
+        npy_clear_floatstatus_barrier((char*)args);
+    }
+#endif
 }
 /**end repeat**/
