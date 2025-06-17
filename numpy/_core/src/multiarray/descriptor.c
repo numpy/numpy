@@ -2095,7 +2095,7 @@ static PyMemberDef arraydescr_members[] = {
     {"alignment",
         T_PYSSIZET, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-#if NPY_ULONGLONG == NPY_UINT64
+#if NPY_SIZEOF_LONGLONG == 8
         T_ULONGLONG, offsetof(PyArray_Descr, flags), READONLY, NULL},
 #else
     #error Assuming long long is 64bit, if not replace with getter function.
