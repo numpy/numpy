@@ -2,10 +2,10 @@ import subprocess
 import sys
 import textwrap
 
-import numpy._core._multiarray_tests as _multiarray_tests
 import pytest
 
 import numpy as np
+import numpy._core._multiarray_tests as _multiarray_tests
 import numpy._core.umath as ncu
 from numpy import all, arange, array, nditer
 from numpy.testing import (

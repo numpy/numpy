@@ -1,11 +1,11 @@
 import sys
 
 import pytest
-from numpy._core._rational_tests import rational
 
 import numpy as np
 import numpy._core.umath as ncu
 from numpy.lib import stride_tricks
+from numpy._core._rational_tests import rational
 from numpy.testing import (
     HAS_REFCOUNT,
     assert_,

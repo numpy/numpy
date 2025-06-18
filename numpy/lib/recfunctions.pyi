@@ -1,12 +1,11 @@
+from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Any, Literal, TypeAlias, overload
-
-from _typeshed import Incomplete
 from typing_extensions import TypeVar
 
 import numpy as np
 import numpy.typing as npt
-from numpy._typing import _DTypeLike, _DTypeLikeVoid
+from numpy._typing import _AnyShape, _DTypeLike, _DTypeLikeVoid
 from numpy.ma.mrecords import MaskedRecords
 
 __all__ = [
@@ -87,7 +86,7 @@ def merge_arrays(
     flatten: bool = False,
     usemask: bool = False,
     asrecarray: bool = False,
-) -> np.recarray[Any, np.dtype[np.void]]: ...
+) -> np.recarray[_AnyShape, np.dtype[np.void]]: ...
 
 #
 @overload
@@ -319,7 +318,7 @@ def stack_arrays(
     usemask: Literal[False],
     asrecarray: Literal[True],
     autoconvert: bool = False,
-) -> np.recarray[tuple[int, ...], np.dtype[np.void]]: ...
+) -> np.recarray[_AnyShape, np.dtype[np.void]]: ...
 @overload
 def stack_arrays(
     arrays: Sequence[npt.NDArray[Any]],
@@ -327,7 +326,7 @@ def stack_arrays(
     usemask: Literal[True] = True,
     asrecarray: Literal[False] = False,
     autoconvert: bool = False,
-) -> np.ma.MaskedArray[tuple[int, ...], np.dtype[np.void]]: ...
+) -> np.ma.MaskedArray[_AnyShape, np.dtype[np.void]]: ...
 @overload
 def stack_arrays(
     arrays: Sequence[npt.NDArray[Any]],
@@ -335,7 +334,7 @@ def stack_arrays(
     usemask: Literal[True],
     asrecarray: Literal[True],
     autoconvert: bool = False,
-) -> MaskedRecords[tuple[int, ...], np.dtype[np.void]]: ...
+) -> MaskedRecords[_AnyShape, np.dtype[np.void]]: ...
 @overload
 def stack_arrays(
     arrays: Sequence[npt.NDArray[Any]],
@@ -344,7 +343,7 @@ def stack_arrays(
     *,
     asrecarray: Literal[True],
     autoconvert: bool = False,
-) -> MaskedRecords[tuple[int, ...], np.dtype[np.void]]: ...
+) -> MaskedRecords[_AnyShape, np.dtype[np.void]]: ...
 
 #
 @overload

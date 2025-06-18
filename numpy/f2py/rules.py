@@ -286,7 +286,7 @@ PyMODINIT_FUNC PyInit_#modulename#(void) {
 #initcommonhooks#
 #interface_usercode#
 
-#if Py_GIL_DISABLED
+#ifdef Py_GIL_DISABLED
     // signal whether this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m , #gil_used#);
 #endif
@@ -1154,7 +1154,7 @@ if (#varname#_cb.capi==Py_None) {
         'frompyobj': [
             '    #setdims#;',
             '    capi_#varname#_intent |= #intent#;',
-            ('    const char * capi_errmess = "#modulename#.#pyname#:'
+            ('    const char capi_errmess[] = "#modulename#.#pyname#:'
              ' failed to create array from the #nth# `#varname#`";'),
             {isintent_hide:
              '    capi_#varname#_as_array = ndarray_from_pyobj('
@@ -1184,9 +1184,10 @@ if (#varname#_cb.capi==Py_None) {
                 """\
         int *_i,capi_i=0;
         CFUNCSMESS(\"#name#: Initializing #varname#=#init#\\n\");
-        if (initforcomb(PyArray_DIMS(capi_#varname#_as_array),
+        struct ForcombCache cache;
+        if (initforcomb(&cache, PyArray_DIMS(capi_#varname#_as_array),
                         PyArray_NDIM(capi_#varname#_as_array),1)) {
-            while ((_i = nextforcomb()))
+            while ((_i = nextforcomb(&cache)))
                 #varname#[capi_i++] = #init#; /* fortran way */
         } else {
             PyObject *exc, *val, *tb;

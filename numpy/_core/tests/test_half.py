@@ -531,7 +531,7 @@ class TestHalf:
             assert_raises_fpe('overflow', lambda a, b: a - b,
                                              float16(-65504), float16(17))
             assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
-            assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))
+            assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))  # noqa: E501
             assert_raises_fpe('overflow', np.spacing, float16(65504))
 
             # Invalid value errors
