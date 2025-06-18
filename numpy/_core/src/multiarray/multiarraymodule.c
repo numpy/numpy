@@ -43,6 +43,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "arraytypes.h"
 #include "arrayobject.h"
 #include "array_converter.h"
+#include "blas_utils.h"
 #include "hashdescr.h"
 #include "descriptor.h"
 #include "dragon4.h"
@@ -4780,6 +4781,10 @@ _multiarray_umath_exec(PyObject *m) {
     if (npy_cpu_dispatch_tracer_init(m) < 0) {
         return -1;
     }
+
+#if NPY_BLAS_CHECK_FPE_SUPPORT
+    npy_blas_init();
+#endif
 
 #if defined(MS_WIN64) && defined(__GNUC__)
   PyErr_WarnEx(PyExc_Warning,
