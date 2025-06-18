@@ -27,6 +27,8 @@
  *****************************************************************************
  */
 
+#define ABS(x) ((x) < 0 ? -(x) : (x))
+
 #if defined(HAVE_CBLAS)
 /*
  * -1 to be conservative, in case blas internally uses a for loop with an
@@ -554,9 +556,9 @@ NPY_NO_EXPORT void
         } else {
             /* matrix @ matrix 
              * copy if not blasable, see gh-12365 & gh-23588 */
-            npy_bool i1_transpose = is1_m < is1_n,
-                     i2_transpose = is2_n < is2_p,
-                     o_transpose = os_m < os_p;
+            npy_bool i1_transpose = ABS(is1_m) < ABS(is1_n),
+                     i2_transpose = ABS(is2_n) < ABS(is2_p),
+                     o_transpose = ABS(os_m) < ABS(os_p);
 
             npy_intp tmp_is1_m = i1_transpose ? sz : sz*dn,
                      tmp_is1_n = i1_transpose ? sz*dm : sz,
