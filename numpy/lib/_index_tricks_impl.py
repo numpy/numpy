@@ -2,6 +2,7 @@ import functools
 import math
 import sys
 import warnings
+from itertools import product
 
 import numpy as np
 import numpy._core.numeric as _nx
@@ -12,9 +13,6 @@ from numpy._core.numeric import ScalarType, array
 from numpy._core.numerictypes import issubdtype
 from numpy._utils import set_module
 from numpy.lib._function_base_impl import diff
-from numpy.lib.stride_tricks import as_strided
-from itertools import product
-
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')
@@ -684,24 +682,19 @@ class ndindex:
     (1, 1, 0)
     (2, 0, 0)
     (2, 1, 0)
-    
-    Notes
+
+     Notes
     -----
     As of NumPy 2.4.0.dev0, this iterator is implemented using `itertools.product`
     from Python's standard library. This change provides significant improvements
     in both performance and memory efficiency, particularly for large iteration
     spaces, while maintaining the original behavior and interface.
-
-    """
-
-
+     """
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
         self.shape = shape
-        self._iter = product(*(range(s) for s in shape))
-        
-
+        self._iter = product(*map(range, shape))
 
     def __iter__(self):
         return self

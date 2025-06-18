@@ -568,8 +568,7 @@ def test_ndindex():
     assert_equal(x, [])
 
 
-
-# ndindex test cases for reimplementation of ndindex using itertools 
+# ndindex test cases for reimplementation of ndindex using itertools
 # 1. Zero Dimensions (explicitly zero-length dimensions)
 # This test focuses specifically on cases where one or more dimensions are zero,
 # ensuring the iterator produces an empty sequence. This avoids redundancy
@@ -621,7 +620,7 @@ def test_ndindex_tuple_vs_args_consistency():
     # Single dimension
     assert_equal(list(np.ndindex(5)), list(np.ndindex((5,))))
 
-    # Multiple dimensions 
+    # Multiple dimensions
     assert_equal(list(np.ndindex(2, 3)), list(np.ndindex((2, 3))))
 
     # Complex shape
@@ -650,7 +649,7 @@ def test_ndindex_multidimensional_correctness():
     assert_equal(result, expected)
 
 # 8. Large Dimensions Behavior
-def test_ndindex_large_dimensions_behavior(): 
+def test_ndindex_large_dimensions_behavior():
     """Test ndindex behaves correctly when initialized with large dimensions."""
     large_shape = (1000, 1000)
     iter_obj = np.ndindex(*large_shape)
@@ -678,5 +677,3 @@ def test_ndindex_negative_dimensions(negative_shape_arg):
     with pytest.raises(ValueError):
         # ndindex should raise ValueError immediately for negative dimensions
         list(ndindex(negative_shape_arg))
-
-
