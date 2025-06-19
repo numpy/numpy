@@ -29,6 +29,7 @@ from numpy.testing import (
     assert_raises,
     assert_raises_regex,
 )
+from numpy.testing._private.utils import requires_memory
 
 
 class TestAtleast1d:
@@ -289,6 +290,16 @@ class TestConcatenate:
 
         # No arrays to concatenate raises ValueError
         assert_raises(ValueError, concatenate, ())
+
+    @pytest.mark.slow
+    @requires_memory(2 * np.iinfo(np.intc).max)
+    def test_huge_list_error(self):
+        a = np.array([1])
+        max_int = np.iinfo(np.intc).max
+        arrs = (a,) * (max_int + 1)
+        msg = fr"concatenate\(\) only supports up to {max_int} arrays but got {max_int + 1}."
+        with pytest.raises(ValueError, match=msg):
+            np.concatenate(arrs)
 
     def test_concatenate_axis_None(self):
         a = np.arange(4, dtype=np.float64).reshape((2, 2))
