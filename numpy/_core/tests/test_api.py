@@ -5,7 +5,6 @@ from numpy._core._rational_tests import rational
 
 import numpy as np
 import numpy._core.umath as ncu
-from numpy._core._rational_tests import rational
 from numpy.lib import stride_tricks
 from numpy.testing import (
     HAS_REFCOUNT,
@@ -560,7 +559,7 @@ def test_copy_order():
 
 def test_contiguous_flags():
     a = np.ones((4, 4, 1))[::2, :, :]
-    a = stride_tricks.as_strided(a, strides = a.strides[:2] + (-123,))
+    a = stride_tricks.as_strided(a, strides=a.strides[:2] + (-123,))
     b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 
     def check_contig(a, ccontig, fcontig):

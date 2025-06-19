@@ -31,12 +31,10 @@ import numpy as np
 from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy._core.tests._locales import CommaDecimalPointLocale
 from numpy.exceptions import AxisError, ComplexWarning
-from numpy.lib.recfunctions import repack_fields
-from numpy._core.multiarray import _get_ndarray_c_version, dot
 from numpy.lib import stride_tricks
+from numpy.lib.recfunctions import repack_fields
 
 # Need to test an object that does not fully implement math interface
-from datetime import timedelta, datetime
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_64BIT,
@@ -426,7 +424,7 @@ class TestAttributes:
 
         # test 0d
         arr_0d = np.array(0)
-        arr_0d = np.lib.stride_tricks.as_strided(arr_0d, strides = ())
+        arr_0d = np.lib.stride_tricks.as_strided(arr_0d, strides=())
         assert_raises(TypeError, set_strides, arr_0d, None)
 
     def test_fill(self):
@@ -3647,7 +3645,7 @@ class TestMethods:
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
-        a = stride_tricks.as_strided(a, strides = strides)
+        a = stride_tricks.as_strided(a, strides=strides)
         assert_(a.ravel(order='K').flags.owndata)
         assert_equal(a.ravel('K'), np.arange(0, 15, 2))
 
@@ -3656,7 +3654,7 @@ class TestMethods:
         a = a.reshape(2, 1, 2, 2).swapaxes(-1, -2)
         strides = list(a.strides)
         strides[1] = 123
-        a = stride_tricks.as_strided(a, strides = strides)
+        a = stride_tricks.as_strided(a, strides=strides)
         assert_(np.may_share_memory(a.ravel(order='K'), a))
         assert_equal(a.ravel(order='K'), np.arange(2**3))
 
@@ -3669,7 +3667,7 @@ class TestMethods:
 
         # 1-element tidy strides test:
         a = np.array([[1]])
-        a = stride_tricks.as_strided(a, strides = (123, 432))
+        a = stride_tricks.as_strided(a, strides=(123, 432))
         if np.ones(1).strides == (8,):
             assert_(np.may_share_memory(a.ravel('K'), a))
             assert_equal(a.ravel('K').strides, (a.dtype.itemsize,))
@@ -4559,7 +4557,7 @@ class TestPickling:
 
         original_byte_reversed = original.copy(order='K')
         new_dtype = original_byte_reversed.dtype.newbyteorder('S')
-        original_byte_reversed = original_byte_reversed.view(dtype = new_dtype)
+        original_byte_reversed = original_byte_reversed.view(dtype=new_dtype)
         original_byte_reversed.byteswap(inplace=True)
 
         new = pickle.loads(pickle.dumps(original_byte_reversed))

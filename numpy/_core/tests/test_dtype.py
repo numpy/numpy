@@ -5,10 +5,10 @@ import pickle
 import random
 import sys
 import types
+import warnings
 from itertools import permutations
 from typing import Any
-import pickle
-import warnings
+
 import hypothesis
 import pytest
 from hypothesis.extra import numpy as hynp

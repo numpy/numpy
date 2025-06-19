@@ -5,6 +5,7 @@ An explanation of strides can be found in the :ref:`arrays.ndarray`.
 
 """
 import warnings
+
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._core.overrides import array_function_dispatch, set_module

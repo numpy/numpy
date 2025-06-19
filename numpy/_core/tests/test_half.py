@@ -218,7 +218,7 @@ class TestHalf:
                       0x0001, 0x8001,
                       0x0000, 0x8000,
                       0x7c00, 0xfc00], dtype=uint16)
-        b = b.view(dtype = float16)
+        b = b.view(dtype=float16)
         assert_equal(a, b)
 
     def test_half_rounding(self):

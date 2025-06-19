@@ -3,11 +3,11 @@ import gc
 import pickle
 import sys
 import tempfile
+import warnings
 from io import BytesIO
 from itertools import chain
-import pickle
-import warnings
 from os import path
+
 import pytest
 
 import numpy as np
@@ -1663,7 +1663,7 @@ class TestRegression:
 
     def test_nonzero_byteswap(self):
         a = np.array([0x80000000, 0x00000080, 0], dtype=np.uint32)
-        a = a.view(dtype = np.float32)
+        a = a.view(dtype=np.float32)
         assert_equal(a.nonzero()[0], [1])
         a = a.byteswap()
         a = a.view(a.dtype.newbyteorder())
