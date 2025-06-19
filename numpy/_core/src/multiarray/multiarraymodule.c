@@ -669,10 +669,17 @@ PyArray_ConcatenateInto(PyObject *op,
     }
 
     /* Convert the input list into arrays */
-    narrays = PySequence_Size(op);
-    if (narrays < 0) {
+    Py_ssize_t narrays_true = PySequence_Size(op);
+    if (narrays_true < 0) {
         return NULL;
     }
+    else if (narrays_true > NPY_MAX_INT) {
+        PyErr_Format(PyExc_ValueError,
+            "concatenate() only supports up to %d arrays but got %zd.",
+            NPY_MAX_INT, narrays_true);
+        return NULL;
+    }
+    narrays = (int)narrays_true;
     arrays = PyArray_malloc(narrays * sizeof(arrays[0]));
     if (arrays == NULL) {
         PyErr_NoMemory();
