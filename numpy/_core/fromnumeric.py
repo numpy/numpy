@@ -1607,7 +1607,8 @@ def resize(a, new_shape):
         # First case must zero fill. The second would have repeats == 0.
         return np.zeros_like(a, shape=new_shape)
 
-    repeats = -(-new_size // a.size)  # ceil division
+    # ceiling division without negating new_size
+    repeats = (new_size + a.size - 1) // a.size
     a = concatenate((a,) * repeats)[:new_size]
 
     return reshape(a, new_shape)
