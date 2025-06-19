@@ -249,7 +249,11 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     std::vector<npy_static_string> unpacked_strings(isize, {0, NULL});
     for (npy_intp i = 0; i < isize; i++, idata += istride) {
         npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
-        NpyString_load(in_allocator, packed_string, &unpacked_strings[i]);
+        int is_null = NpyString_load(in_allocator, packed_string, &unpacked_strings[i]);
+        if (is_null == -1) {
+            // failed to load string
+            return NULL;
+        }
         hashset.insert(&unpacked_strings[i]);
     }
 
