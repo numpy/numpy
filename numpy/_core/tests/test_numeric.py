@@ -79,6 +79,13 @@ class TestResize:
         with pytest.raises(ValueError, match=r"negative"):
             np.resize(A, new_shape=new_shape)
 
+    def test_unsigned_resize(self):
+        # ensure unsigned integer sizes don't lead to underflows
+        for dt_pair in [(np.int32, np.uint32), (np.int64, np.uint64)]:
+            arr = np.array([[23, 95], [66, 37]])
+            assert_array_equal(np.resize(arr, dt_pair[0](1)),
+                               np.resize(arr, dt_pair[1](1)))
+
     def test_subclass(self):
         class MyArray(np.ndarray):
             __array_priority__ = 1.
