@@ -11,6 +11,7 @@
 
 #include <numpy/npy_common.h>
 #include "numpy/arrayobject.h"
+#include "gil_utils.h"
 extern "C" {
     #include "fnv.h"
     #include "npy_argparse.h"
@@ -243,7 +244,7 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
         int is_null = NpyString_load(in_allocator, packed_string, &unpacked_strings[i]);
         if (is_null == -1) {
-            PyErr_SetString(PyExc_RuntimeError,
+            npy_gil_error(PyExc_RuntimeError,
                 "Failed to load string from packed static string. ");
             return NULL;
         }
