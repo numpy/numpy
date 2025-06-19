@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 import numpy as np
@@ -292,6 +294,7 @@ class TestConcatenate:
         assert_raises(ValueError, concatenate, ())
 
     @pytest.mark.slow
+    @pytest.mark.skipif(sys.maxsize < 2**32, reason="only problematic on 64bit platforms")
     @requires_memory(2 * np.iinfo(np.intc).max)
     def test_huge_list_error(self):
         a = np.array([1])
