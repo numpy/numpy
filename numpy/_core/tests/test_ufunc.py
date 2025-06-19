@@ -2123,9 +2123,9 @@ class TestUfunc:
         class ArrayPriorityMinus2000(ArrayPriorityBase):
             __array_priority__ = -2000
 
-        x = ArrayPriorityMinus1000(2)
-        xb = ArrayPriorityMinus1000b(2)
-        y = ArrayPriorityMinus2000(2)
+        x = np.ones(2).view(ArrayPriorityMinus1000)
+        xb = np.ones(2).view(ArrayPriorityMinus1000b)
+        y = np.ones(2).view(ArrayPriorityMinus2000)
 
         assert np.add(x, y) is ArrayPriorityMinus1000
         assert np.add(y, x) is ArrayPriorityMinus1000
