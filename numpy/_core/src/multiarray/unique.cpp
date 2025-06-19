@@ -41,11 +41,9 @@ unique_integer(PyArrayObject *self, npy_bool equal_nan)
     NPY_ALLOW_C_API_DEF;
     NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
-    // NumPy API calls and Python object manipulations require holding the GIL.
     Py_INCREF(descr);
     NPY_DISABLE_C_API;
 
-    // release the GIL
     PyThreadState *_save1 = PyEval_SaveThread();
 
     // number of elements in the input array
@@ -69,7 +67,6 @@ unique_integer(PyArrayObject *self, npy_bool equal_nan)
 
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
-    // NumPy API calls and Python object manipulations require holding the GIL.
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
@@ -112,11 +109,9 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
     NPY_ALLOW_C_API_DEF;
     NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
-    // NumPy API calls and Python object manipulations require holding the GIL.
     Py_INCREF(descr);
     NPY_DISABLE_C_API;
 
-    // release the GIL
     PyThreadState *_save1 = PyEval_SaveThread();
 
     // number of elements in the input array
@@ -152,7 +147,6 @@ unique_string(PyArrayObject *self, npy_bool equal_nan)
 
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
-    // NumPy API calls and Python object manipulations require holding the GIL.
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
@@ -194,11 +188,9 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
     NPY_ALLOW_C_API_DEF;
     NPY_ALLOW_C_API;
     PyArray_Descr *descr = PyArray_DESCR(self);
-    // NumPy API calls and Python object manipulations require holding the GIL.
     Py_INCREF(descr);
     NPY_DISABLE_C_API;
 
-    // release the GIL
     PyThreadState *_save1 = PyEval_SaveThread();
 
     // number of elements in the input array
@@ -257,15 +249,12 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         hashset.insert(&unpacked_strings[i]);
     }
 
-    // allocator need to be released before operations requiring the GIL.
-    // https://github.com/numpy/numpy/blob/49056192330487ff49a142e5280e24461b638723/numpy/_core/src/multiarray/stringdtype/static_string.c#L286-L306
     NpyString_release_allocator(in_allocator);
 
     npy_intp length = hashset.size();
 
     PyEval_RestoreThread(_save1);
     NPY_ALLOW_C_API;
-    // NumPy API calls and Python object manipulations require holding the GIL.
     PyObject *res_obj = PyArray_NewFromDescr(
         &PyArray_Type,
         descr,
@@ -281,11 +270,9 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         return NULL;
     }
     PyArray_Descr *res_descr = PyArray_DESCR((PyArrayObject *)res_obj);
-    // NumPy API calls and Python object manipulations require holding the GIL.
     Py_INCREF(res_descr);
     NPY_DISABLE_C_API;
 
-    // release the GIL
     PyThreadState *_save2 = PyEval_SaveThread();
     auto save2_dealloc = finally([&]() {
         PyEval_RestoreThread(_save2);
