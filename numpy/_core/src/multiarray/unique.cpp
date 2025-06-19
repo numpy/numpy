@@ -243,7 +243,8 @@ unique_vstring(PyArrayObject *self, npy_bool equal_nan)
         npy_packed_static_string *packed_string = (npy_packed_static_string *)idata;
         int is_null = NpyString_load(in_allocator, packed_string, &unpacked_strings[i]);
         if (is_null == -1) {
-            // failed to load string
+            PyErr_SetString(PyExc_RuntimeError,
+                "Failed to load string from packed static string. ");
             return NULL;
         }
         hashset.insert(&unpacked_strings[i]);
