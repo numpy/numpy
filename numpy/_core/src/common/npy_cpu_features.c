@@ -846,22 +846,30 @@ npy__cpu_init_features(void)
 
 #elif defined(__riscv) && __riscv_xlen == 64
 
-#include <sys/auxv.h>
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+    #include <sys/auxv.h>
 
-#ifndef HWCAP_RVV
-    // https://github.com/torvalds/linux/blob/v6.8/arch/riscv/include/uapi/asm/hwcap.h#L24
-    #define COMPAT_HWCAP_ISA_V	(1 << ('V' - 'A'))
+    #ifndef HWCAP_RVV
+        // https://github.com/torvalds/linux/blob/v6.8/arch/riscv/include/uapi/asm/hwcap.h#L24
+        #define COMPAT_HWCAP_ISA_V (1 << ('V' - 'A'))
+    #endif
 #endif
 
 static void
 npy__cpu_init_features(void)
 {
     memset(npy__cpu_have, 0, sizeof(npy__cpu_have[0]) * NPY_CPU_FEATURE_MAX);
-
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#ifdef __linux__
     unsigned int hwcap = getauxval(AT_HWCAP);
+#else
+    unsigned long hwcap;
+    elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
+#endif
     if (hwcap & COMPAT_HWCAP_ISA_V) {
         npy__cpu_have[NPY_CPU_FEATURE_RVV]  = 1;
     }
+#endif
 }
 
 /*********** Unsupported ARCH ***********/
