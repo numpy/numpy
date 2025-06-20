@@ -1226,7 +1226,7 @@ class TestDtypeAttributes:
         arr = np.broadcast_to(arr, 10)
         assert arr.strides == (0,)
         with pytest.raises(ValueError):
-            with warnings.catch_warnings(): # gh-28901
+            with warnings.catch_warnings():  # gh-28901
                 warnings.filterwarnings(action="ignore",
                                         category=DeprecationWarning)
                 arr.dtype = "i1"
