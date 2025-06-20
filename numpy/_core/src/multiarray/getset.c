@@ -379,12 +379,7 @@ int
 array_descr_set_internal(PyArrayObject *self, PyObject *arg)
 {
     PyArray_Descr *newtype = NULL;
-
-    if (arg == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete array dtype");
-        return -1;
-    }
+    assert(arg);
 
     if (!(PyArray_DescrConverter(arg, &newtype)) ||
         newtype == NULL) {
@@ -525,6 +520,12 @@ array_descr_set_internal(PyArrayObject *self, PyObject *arg)
 int
 array_descr_set(PyArrayObject *self, PyObject *arg)
 {
+    if (arg == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array dtype");
+        return -1;
+    }
+
     // to be replaced with PyUnstable_Object_IsUniquelyReferenced https://github.com/python/cpython/pull/133144
     int unique_reference = (Py_REFCNT(self) == 1);
 
