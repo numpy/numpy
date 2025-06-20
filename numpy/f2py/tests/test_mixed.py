@@ -2,16 +2,15 @@ import textwrap
 
 import pytest
 
+from numpy.f2py import _testutils
 from numpy.testing import IS_PYPY
 
-from . import util
 
-
-class TestMixed(util.F2PyTest):
+class TestMixed(_testutils.F2PyTest):
     sources = [
-        util.getpath("tests", "src", "mixed", "foo.f"),
-        util.getpath("tests", "src", "mixed", "foo_fixed.f90"),
-        util.getpath("tests", "src", "mixed", "foo_free.f90"),
+        _testutils.getpath("tests", "src", "mixed", "foo.f"),
+        _testutils.getpath("tests", "src", "mixed", "foo_fixed.f90"),
+        _testutils.getpath("tests", "src", "mixed", "foo_free.f90"),
     ]
 
     @pytest.mark.slow

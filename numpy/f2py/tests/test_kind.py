@@ -3,6 +3,7 @@ import sys
 
 import pytest
 
+from numpy.f2py import _testutils
 from numpy.f2py.crackfortran import (
     _selected_int_kind_func as selected_int_kind,
 )
@@ -10,11 +11,9 @@ from numpy.f2py.crackfortran import (
     _selected_real_kind_func as selected_real_kind,
 )
 
-from . import util
 
-
-class TestKind(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "kind", "foo.f90")]
+class TestKind(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "kind", "foo.f90")]
 
     @pytest.mark.skipif(sys.maxsize < 2 ** 31 + 1,
                         reason="Fails for 32 bit machines")

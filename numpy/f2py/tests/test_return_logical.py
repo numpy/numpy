@@ -1,11 +1,10 @@
 import pytest
 
 from numpy import array
+from numpy.f2py import _testutils
 
-from . import util
 
-
-class TestReturnLogical(util.F2PyTest):
+class TestReturnLogical(_testutils.F2PyTest):
     def check_function(self, t):
         assert t(True) == 1
         assert t(False) == 0
@@ -49,8 +48,8 @@ class TestReturnLogical(util.F2PyTest):
 
 class TestFReturnLogical(TestReturnLogical):
     sources = [
-        util.getpath("tests", "src", "return_logical", "foo77.f"),
-        util.getpath("tests", "src", "return_logical", "foo90.f90"),
+        _testutils.getpath("tests", "src", "return_logical", "foo77.f"),
+        _testutils.getpath("tests", "src", "return_logical", "foo90.f90"),
     ]
 
     @pytest.mark.slow

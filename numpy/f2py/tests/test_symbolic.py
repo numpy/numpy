@@ -1,5 +1,6 @@
 import pytest
 
+from numpy.f2py import _testutils
 from numpy.f2py.symbolic import (
     ArithOp,
     Expr,
@@ -30,10 +31,8 @@ from numpy.f2py.symbolic import (
     normalize,
 )
 
-from . import util
 
-
-class TestSymbolic(util.F2PyTest):
+class TestSymbolic(_testutils.F2PyTest):
     def test_eliminate_quotes(self):
         def worker(s):
             r, d = eliminate_quotes(s)

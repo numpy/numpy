@@ -2,15 +2,14 @@ import textwrap
 
 import pytest
 
+from numpy.f2py import _testutils
 from numpy.testing import IS_PYPY
-
-from . import util
 
 
 @pytest.mark.slow
-class TestModuleFilterPublicEntities(util.F2PyTest):
+class TestModuleFilterPublicEntities(_testutils.F2PyTest):
     sources = [
-        util.getpath(
+        _testutils.getpath(
             "tests", "src", "modules", "gh26920",
             "two_mods_with_one_public_routine.f90"
         )
@@ -24,9 +23,9 @@ class TestModuleFilterPublicEntities(util.F2PyTest):
 
 
 @pytest.mark.slow
-class TestModuleWithoutPublicEntities(util.F2PyTest):
+class TestModuleWithoutPublicEntities(_testutils.F2PyTest):
     sources = [
-        util.getpath(
+        _testutils.getpath(
             "tests", "src", "modules", "gh26920",
             "two_mods_with_no_public_entities.f90"
         )
@@ -39,8 +38,8 @@ class TestModuleWithoutPublicEntities(util.F2PyTest):
 
 
 @pytest.mark.slow
-class TestModuleDocString(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "modules", "module_data_docstring.f90")]
+class TestModuleDocString(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "modules", "module_data_docstring.f90")]
 
     @pytest.mark.xfail(IS_PYPY, reason="PyPy cannot modify tp_doc after PyType_Ready")
     def test_module_docstring(self):
@@ -56,11 +55,11 @@ class TestModuleDocString(util.F2PyTest):
 
 
 @pytest.mark.slow
-class TestModuleAndSubroutine(util.F2PyTest):
+class TestModuleAndSubroutine(_testutils.F2PyTest):
     module_name = "example"
     sources = [
-        util.getpath("tests", "src", "modules", "gh25337", "data.f90"),
-        util.getpath("tests", "src", "modules", "gh25337", "use_data.f90"),
+        _testutils.getpath("tests", "src", "modules", "gh25337", "data.f90"),
+        _testutils.getpath("tests", "src", "modules", "gh25337", "use_data.f90"),
     ]
 
     def test_gh25337(self):
@@ -69,10 +68,10 @@ class TestModuleAndSubroutine(util.F2PyTest):
 
 
 @pytest.mark.slow
-class TestUsedModule(util.F2PyTest):
+class TestUsedModule(_testutils.F2PyTest):
     module_name = "fmath"
     sources = [
-        util.getpath("tests", "src", "modules", "use_modules.f90"),
+        _testutils.getpath("tests", "src", "modules", "use_modules.f90"),
     ]
 
     def test_gh25867(self):

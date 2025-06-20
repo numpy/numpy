@@ -1,12 +1,11 @@
 import pytest
 
 from numpy import array
-
-from . import util
+from numpy.f2py import _testutils
 
 
 @pytest.mark.slow
-class TestReturnInteger(util.F2PyTest):
+class TestReturnInteger(_testutils.F2PyTest):
     def check_function(self, t, tname):
         assert t(123) == 123
         assert t(123.6) == 123
@@ -39,8 +38,8 @@ class TestReturnInteger(util.F2PyTest):
 
 class TestFReturnInteger(TestReturnInteger):
     sources = [
-        util.getpath("tests", "src", "return_integer", "foo77.f"),
-        util.getpath("tests", "src", "return_integer", "foo90.f90"),
+        _testutils.getpath("tests", "src", "return_integer", "foo77.f"),
+        _testutils.getpath("tests", "src", "return_integer", "foo90.f90"),
     ]
 
     @pytest.mark.parametrize("name",

@@ -1,12 +1,11 @@
 import pytest
 
 import numpy as np
+from numpy.f2py import _testutils
 
-from . import util
 
-
-class TestSizeSumExample(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "size", "foo.f90")]
+class TestSizeSumExample(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "size", "foo.f90")]
 
     @pytest.mark.slow
     def test_all(self):

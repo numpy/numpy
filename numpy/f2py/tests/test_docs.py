@@ -3,9 +3,8 @@ from pathlib import Path
 import pytest
 
 import numpy as np
+from numpy.f2py import _testutils
 from numpy.testing import assert_array_equal, assert_equal
-
-from . import util
 
 
 def get_docdir():
@@ -33,7 +32,7 @@ def _path(*args):
     return get_docdir().joinpath(*args)
 
 @pytest.mark.slow
-class TestDocAdvanced(util.F2PyTest):
+class TestDocAdvanced(_testutils.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/build-f2py']
     sources = [_path('asterisk1.f90'), _path('asterisk2.f90'),
                _path('ftype.f')]

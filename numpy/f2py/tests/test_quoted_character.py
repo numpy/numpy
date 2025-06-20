@@ -5,11 +5,11 @@ import sys
 
 import pytest
 
-from . import util
+from numpy.f2py import _testutils
 
 
-class TestQuotedCharacter(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "quoted_character", "foo.f")]
+class TestQuotedCharacter(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "quoted_character", "foo.f")]
 
     @pytest.mark.skipif(sys.platform == "win32",
                         reason="Fails with MinGW64 Gfortran (Issue #9673)")

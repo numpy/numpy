@@ -1,19 +1,18 @@
 import pytest
 
 import numpy as np
+from numpy.f2py import _testutils
 
-from . import util
 
-
-class TestParameters(util.F2PyTest):
+class TestParameters(_testutils.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
     sources = [
-        util.getpath("tests", "src", "parameter", "constant_real.f90"),
-        util.getpath("tests", "src", "parameter", "constant_integer.f90"),
-        util.getpath("tests", "src", "parameter", "constant_both.f90"),
-        util.getpath("tests", "src", "parameter", "constant_compound.f90"),
-        util.getpath("tests", "src", "parameter", "constant_non_compound.f90"),
-        util.getpath("tests", "src", "parameter", "constant_array.f90"),
+        _testutils.getpath("tests", "src", "parameter", "constant_real.f90"),
+        _testutils.getpath("tests", "src", "parameter", "constant_integer.f90"),
+        _testutils.getpath("tests", "src", "parameter", "constant_both.f90"),
+        _testutils.getpath("tests", "src", "parameter", "constant_compound.f90"),
+        _testutils.getpath("tests", "src", "parameter", "constant_non_compound.f90"),
+        _testutils.getpath("tests", "src", "parameter", "constant_array.f90"),
     ]
 
     @pytest.mark.slow

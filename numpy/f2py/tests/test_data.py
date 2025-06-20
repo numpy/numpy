@@ -1,13 +1,12 @@
 import pytest
 
 import numpy as np
+from numpy.f2py import _testutils
 from numpy.f2py.crackfortran import crackfortran
 
-from . import util
 
-
-class TestData(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "crackfortran", "data_stmts.f90")]
+class TestData(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "crackfortran", "data_stmts.f90")]
 
     # For gh-23276
     @pytest.mark.slow
@@ -35,8 +34,8 @@ class TestData(util.F2PyTest):
         assert mod[0]['vars']['my_array']['='] == '(/(1.0d0, 2.0d0), (-3.0d0, 4.0d0)/)'
         assert mod[0]['vars']['z']['='] == '(/3.5,  7.0/)'
 
-class TestDataF77(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "crackfortran", "data_common.f")]
+class TestDataF77(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "crackfortran", "data_common.f")]
 
     # For gh-23276
     def test_data_stmts(self):
@@ -48,8 +47,8 @@ class TestDataF77(util.F2PyTest):
         assert mod[0]['vars']['mydata']['='] == '0'
 
 
-class TestDataMultiplierF77(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "crackfortran", "data_multiplier.f")]
+class TestDataMultiplierF77(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "crackfortran", "data_multiplier.f")]
 
     # For gh-23276
     def test_data_stmts(self):
@@ -60,8 +59,8 @@ class TestDataMultiplierF77(util.F2PyTest):
         assert self.module.mycom.evar5 == 0
 
 
-class TestDataWithCommentsF77(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "crackfortran", "data_with_comments.f")]
+class TestDataWithCommentsF77(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "crackfortran", "data_with_comments.f")]
 
     # For gh-23276
     def test_data_stmts(self):

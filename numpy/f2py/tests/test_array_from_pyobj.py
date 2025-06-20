@@ -7,8 +7,7 @@ import pytest
 
 import numpy as np
 from numpy._core._type_aliases import c_names_dict as _c_names_dict
-
-from . import util
+from numpy.f2py import _testutils
 
 wrap = None
 
@@ -34,7 +33,7 @@ def setup_module():
         src = [
             get_testdir() / "wrapmodule.c",
         ]
-        wrap = util.build_meson(src, module_name="test_array_from_pyobj_ext")
+        wrap = _testutils.build_meson(src, module_name="test_array_from_pyobj_ext")
 
 
 def flags_info(arr):

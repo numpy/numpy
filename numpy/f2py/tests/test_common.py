@@ -1,13 +1,12 @@
 import pytest
 
 import numpy as np
-
-from . import util
+from numpy.f2py import _testutils
 
 
 @pytest.mark.slow
-class TestCommonBlock(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "common", "block.f")]
+class TestCommonBlock(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "common", "block.f")]
 
     def test_common_block(self):
         self.module.initcb()
@@ -16,8 +15,8 @@ class TestCommonBlock(util.F2PyTest):
         assert self.module.block.ok == np.array(3, dtype=np.int32)
 
 
-class TestCommonWithUse(util.F2PyTest):
-    sources = [util.getpath("tests", "src", "common", "gh19161.f90")]
+class TestCommonWithUse(_testutils.F2PyTest):
+    sources = [_testutils.getpath("tests", "src", "common", "gh19161.f90")]
 
     def test_common_gh19161(self):
         assert self.module.data.x == 0

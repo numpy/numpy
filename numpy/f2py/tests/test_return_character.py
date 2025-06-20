@@ -3,14 +3,13 @@ import platform
 import pytest
 
 from numpy import array
-
-from . import util
+from numpy.f2py import _testutils
 
 IS_S390X = platform.machine() == "s390x"
 
 
 @pytest.mark.slow
-class TestReturnCharacter(util.F2PyTest):
+class TestReturnCharacter(_testutils.F2PyTest):
     def check_function(self, t, tname):
         if tname in ["t0", "t1", "s0", "s1"]:
             assert t("23") == b"2"
@@ -33,8 +32,8 @@ class TestReturnCharacter(util.F2PyTest):
 
 class TestFReturnCharacter(TestReturnCharacter):
     sources = [
-        util.getpath("tests", "src", "return_character", "foo77.f"),
-        util.getpath("tests", "src", "return_character", "foo90.f90"),
+        _testutils.getpath("tests", "src", "return_character", "foo77.f"),
+        _testutils.getpath("tests", "src", "return_character", "foo90.f90"),
     ]
 
     @pytest.mark.xfail(IS_S390X, reason="callback returns ' '")
