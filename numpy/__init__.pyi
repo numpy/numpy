@@ -217,7 +217,7 @@ from typing import (
 # library include `typing_extensions` stubs:
 # https://github.com/python/typeshed/blob/main/stdlib/typing_extensions.pyi
 from _typeshed import Incomplete, StrOrBytesPath, SupportsFlush, SupportsLenAndGetItem, SupportsWrite
-from typing_extensions import CapsuleType, TypeVar
+from typing_extensions import CapsuleType, TypeVar, deprecated
 
 from numpy import (
     char,
@@ -2169,6 +2169,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def shape(self, value: _ShapeLike) -> None: ...
     @property
     def strides(self) -> _Shape: ...
+    @deprecated("Setting the strides on a NumPy array has been deprecated in NumPy 2.4")
     @strides.setter
     def strides(self, value: _ShapeLike) -> None: ...
     def byteswap(self, inplace: builtins.bool = ...) -> Self: ...

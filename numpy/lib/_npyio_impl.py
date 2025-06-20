@@ -1730,7 +1730,7 @@ def fromregex(file, regexp, dtype, encoding=None):
             #   re-interpret as a single-field structured array.
             newdtype = np.dtype(dtype[dtype.names[0]])
             output = np.array(seq, dtype=newdtype)
-            output.dtype = dtype
+            output = output.view(dtype)
         else:
             output = np.array(seq, dtype=dtype)
 

@@ -406,6 +406,13 @@ class TestDeprecatedArrayWrap(_DeprecationTestCase):
         self.assert_deprecated(lambda: np.negative(test2))
         assert test2.called
 
+class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
+    message = "Setting the .*on a NumPy array has been deprecated.*"
+
+    def test_deprecated_strides_set(self):
+        x = np.eye(2)
+        self.assert_deprecated(setattr, args=(x, 'strides', x.strides))
+
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     message = "Passing in a parenthesized single number"
