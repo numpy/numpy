@@ -117,7 +117,7 @@ def get_module(tmp_path):
         """)
         ]
 
-    more_init = "import_array();"
+    more_init = "import_array1(-1);"
 
     try:
         import array_interface_testing
