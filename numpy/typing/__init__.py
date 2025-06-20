@@ -64,7 +64,7 @@ or explicitly type the array like object as `~typing.Any`:
 ndarray
 ~~~~~~~
 
-It's possible to mutate the dtype of an array at runtime. For example,
+It's possible (but deprecated) to mutate the dtype of an array at runtime. For example,
 the following code is valid:
 
 .. code-block:: python

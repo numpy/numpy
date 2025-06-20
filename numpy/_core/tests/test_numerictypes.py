@@ -341,7 +341,7 @@ class TestReadValuesNestedMultiple(ReadValuesNested):
 class TestEmptyField:
     def test_assign(self):
         a = np.arange(10, dtype=np.float32)
-        a.dtype = [("int",   "<0i4"), ("float", "<2f4")]
+        a = a.view(dtype=[("int", "<0i4"), ("float", "<2f4")])
         assert_(a['int'].shape == (5, 0))
         assert_(a['float'].shape == (5, 2))
 

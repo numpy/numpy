@@ -25,6 +25,7 @@
 #include "dtypemeta.h"
 #include "item_selection.h"
 #include "conversion_utils.h"
+#include "getset.h"
 #include "shape.h"
 #include "strfuncs.h"
 #include "array_assign.h"
@@ -2580,6 +2581,15 @@ array_trace(PyArrayObject *self,
 
 #undef _CHKTYPENUM
 
+static PyObject* array__set_dtype(PyObject *self, PyObject *args)
+{
+    int r = array_descr_set_internal((PyArrayObject *)self, args);
+
+    if (r) {
+        return NULL;
+    }
+    Py_RETURN_NONE;
+}
 
 static PyObject *
 array_clip(PyArrayObject *self,
@@ -3066,6 +3076,9 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
     {"to_device",
         (PyCFunction)array_to_device,
         METH_VARARGS | METH_KEYWORDS, NULL},
-
+    // For dtype setting deprecation
+    {"_set_dtype",
+        (PyCFunction)array__set_dtype,
+        METH_O, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
