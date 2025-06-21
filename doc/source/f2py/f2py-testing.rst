@@ -23,12 +23,12 @@ The directory of the test suite looks like the following::
 	├── test_array_from_pyobj.py
 	├── // ... several test files
 	├── test_symbolic.py
-	└── util.py
+	testutils.py
 
 Files starting with ``test_`` contain tests for various aspects of f2py from parsing
 Fortran files to checking modules' documentation. ``src`` directory contains the
-Fortran source files upon which we do the testing. ``util.py`` contains utility 
-functions for building and importing Fortran modules during test time using a 
+Fortran source files upon which we do the testing. ``testutils.py`` contains utility
+functions for building and importing Fortran modules during test time using a
 temporary location.
 
 Adding a test
@@ -36,14 +36,14 @@ Adding a test
 
 F2PY's current test suite predates ``pytest`` and therefore does not use fixtures.
 Instead, the test files contain test classes that inherit from ``F2PyTest``
-class present in ``util.py``.
+class present in ``testutils.py``.
 
-.. literalinclude:: ../../../numpy/f2py/tests/util.py
+.. literalinclude:: ../../../numpy/f2py/testutils.py
    :language: python
    :lines:  327-336
    :linenos:
 
-This class many helper functions for parsing and compiling test source files. Its child 
+This class many helper functions for parsing and compiling test source files. Its child
 classes can override its ``sources`` data member to provide their own source files.
 This superclass will then compile the added source files upon object creation and their
 functions will be appended to ``self.module`` data member. Thus, the child classes will
@@ -70,13 +70,13 @@ Consider the following subroutines, contained in a file named :file:`add-test.f`
    :language: fortran
 
 The first routine `addb` simply takes an array and increases its elements by 1.
-The second subroutine `addc` assigns a new array `k` with elements greater that 
+The second subroutine `addc` assigns a new array `k` with elements greater that
 the elements of the input array `w` by 1.
 
 A test can be implemented as follows::
 
-	class TestAdd(util.F2PyTest):
-	    sources = [util.getpath("add-test.f")]
+	class TestAdd(testutils.F2PyTest):
+	    sources = [testutils.getpath("add-test.f")]
 
 	    def test_module(self):
 	        k = np.array([1, 2, 3], dtype=np.float64)
