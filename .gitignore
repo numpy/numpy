@@ -69,6 +69,7 @@ build-*
 .mesonpy-native-file.ini
 # sphinx build directory
 _build
+_contents
 # dist directory is where sdist/wheel end up
 dist
 doc/build

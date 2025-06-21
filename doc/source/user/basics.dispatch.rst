@@ -46,6 +46,21 @@ array([[1., 0., 0., 0., 0.],
        [0., 0., 0., 1., 0.],
        [0., 0., 0., 0., 1.]])
 
+The ``__array__`` method can optionally accept a `dtype` argument. If provided,
+this argument specifies the desired data type for the resulting NumPy array.
+Your implementation should attempt to convert the data to this `dtype`
+if possible. If the conversion is not supported, it's generally best
+to fall back to a default type or raise a `TypeError` or `ValueError`.
+
+Here's an example demonstrating its use with `dtype` specification:
+
+>>> np.asarray(arr, dtype=np.float32)
+array([[1., 0., 0., 0., 0.],
+       [0., 1., 0., 0., 0.],
+       [0., 0., 1., 0., 0.],
+       [0., 0., 0., 1., 0.],
+       [0., 0., 0., 0., 1.]], dtype=float32)
+
 If we operate on ``arr`` with a numpy function, numpy will again use the
 ``__array__`` interface to convert it to an array and then apply the function
 in the usual way.
