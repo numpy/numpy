@@ -3,12 +3,12 @@ import textwrap
 import pytest
 
 import numpy as np
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 from numpy.testing import assert_array_equal, assert_equal, assert_raises
 
 
 @pytest.mark.slow
-class TestCharacterString(_testutils.F2PyTest):
+class TestCharacterString(testutils.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
     fprefix = 'test_character_string'
@@ -134,7 +134,7 @@ class TestCharacterString(_testutils.F2PyTest):
         assert_array_equal(f(a), expected)
 
 
-class TestCharacter(_testutils.F2PyTest):
+class TestCharacter(testutils.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
     fprefix = 'test_character'
@@ -432,7 +432,7 @@ class TestCharacter(_testutils.F2PyTest):
         assert_equal(f(b'B'), b"B")
 
 
-class TestMiscCharacter(_testutils.F2PyTest):
+class TestMiscCharacter(testutils.F2PyTest):
     # options = ['--debug-capi', '--build-dir', '/tmp/test-build-f2py']
     suffix = '.f90'
     fprefix = 'test_misc_character'
@@ -575,8 +575,8 @@ class TestMiscCharacter(_testutils.F2PyTest):
         assert_raises(Exception, lambda: f(b'c'))
 
 
-class TestStringScalarArr(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "string", "scalar_string.f90")]
+class TestStringScalarArr(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "string", "scalar_string.f90")]
 
     def test_char(self):
         for out in (self.module.string_test.string,
@@ -594,15 +594,15 @@ class TestStringScalarArr(_testutils.F2PyTest):
             expected = '|S12'
             assert out.dtype == expected
 
-class TestStringAssumedLength(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "string", "gh24008.f")]
+class TestStringAssumedLength(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "string", "gh24008.f")]
 
     def test_gh24008(self):
         self.module.greet("joe", "bob")
 
 @pytest.mark.slow
-class TestStringOptionalInOut(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "string", "gh24662.f90")]
+class TestStringOptionalInOut(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "string", "gh24662.f90")]
 
     def test_gh24662(self):
         self.module.string_inout_optional()
@@ -615,11 +615,11 @@ class TestStringOptionalInOut(_testutils.F2PyTest):
 
 
 @pytest.mark.slow
-class TestNewCharHandling(_testutils.F2PyTest):
+class TestNewCharHandling(testutils.F2PyTest):
     # from v1.24 onwards, gh-19388
     sources = [
-        _testutils.getpath("tests", "src", "string", "gh25286.pyf"),
-        _testutils.getpath("tests", "src", "string", "gh25286.f90")
+        testutils.getpath("tests", "src", "string", "gh25286.pyf"),
+        testutils.getpath("tests", "src", "string", "gh25286.f90")
     ]
     module_name = "_char_handling_test"
 
@@ -628,11 +628,11 @@ class TestNewCharHandling(_testutils.F2PyTest):
         assert info == 2
 
 @pytest.mark.slow
-class TestBCCharHandling(_testutils.F2PyTest):
+class TestBCCharHandling(testutils.F2PyTest):
     # SciPy style, "incorrect" bindings with a hook
     sources = [
-        _testutils.getpath("tests", "src", "string", "gh25286_bc.pyf"),
-        _testutils.getpath("tests", "src", "string", "gh25286.f90")
+        testutils.getpath("tests", "src", "string", "gh25286_bc.pyf"),
+        testutils.getpath("tests", "src", "string", "gh25286.f90")
     ]
     module_name = "_char_handling_test"
 

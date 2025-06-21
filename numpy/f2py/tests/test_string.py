@@ -1,11 +1,11 @@
 import pytest
 
 import numpy as np
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 
 
-class TestString(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "string", "char.f90")]
+class TestString(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "string", "char.f90")]
 
     @pytest.mark.slow
     def test_char(self):
@@ -18,8 +18,8 @@ class TestString(_testutils.F2PyTest):
         assert out == pytest.approx(expected)
 
 
-class TestDocStringArguments(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "string", "string.f")]
+class TestDocStringArguments(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "string", "string.f")]
 
     def test_example(self):
         a = np.array(b"123\0\0")
@@ -35,8 +35,8 @@ class TestDocStringArguments(_testutils.F2PyTest):
         assert d.tobytes() == b"D23"
 
 
-class TestFixedString(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "string", "fixed_string.f90")]
+class TestFixedString(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "string", "fixed_string.f90")]
 
     @staticmethod
     def _sint(s, start=0, end=None):

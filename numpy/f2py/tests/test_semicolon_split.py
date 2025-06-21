@@ -2,7 +2,7 @@ import platform
 
 import pytest
 
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 from numpy.testing import IS_64BIT
 
 
@@ -14,7 +14,7 @@ from numpy.testing import IS_64BIT
 @pytest.mark.skipif(
     not IS_64BIT, reason="32-bit builds are buggy"
 )
-class TestMultiline(_testutils.F2PyTest):
+class TestMultiline(testutils.F2PyTest):
     suffix = ".pyf"
     module_name = "multiline"
     code = f"""
@@ -47,7 +47,7 @@ end python module {module_name}
     not IS_64BIT, reason="32-bit builds are buggy"
 )
 @pytest.mark.slow
-class TestCallstatement(_testutils.F2PyTest):
+class TestCallstatement(testutils.F2PyTest):
     suffix = ".pyf"
     module_name = "callstatement"
     code = f"""

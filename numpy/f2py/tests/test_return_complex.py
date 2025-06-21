@@ -1,11 +1,11 @@
 import pytest
 
 from numpy import array
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 
 
 @pytest.mark.slow
-class TestReturnComplex(_testutils.F2PyTest):
+class TestReturnComplex(testutils.F2PyTest):
     def check_function(self, t, tname):
         if tname in ["t0", "t8", "s0", "s8"]:
             err = 1e-5
@@ -52,8 +52,8 @@ class TestReturnComplex(_testutils.F2PyTest):
 
 class TestFReturnComplex(TestReturnComplex):
     sources = [
-        _testutils.getpath("tests", "src", "return_complex", "foo77.f"),
-        _testutils.getpath("tests", "src", "return_complex", "foo90.f90"),
+        testutils.getpath("tests", "src", "return_complex", "foo77.f"),
+        testutils.getpath("tests", "src", "return_complex", "foo90.f90"),
     ]
 
     @pytest.mark.parametrize("name", ["t0", "t8", "t16", "td", "s0", "s8", "s16", "sd"])

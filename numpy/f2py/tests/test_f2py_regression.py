@@ -5,12 +5,12 @@ import pytest
 
 import numpy as np
 import numpy.testing as npt
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 
 
-class TestIntentInOut(_testutils.F2PyTest):
+class TestIntentInOut(testutils.F2PyTest):
     # Check that intent(in out) translates as intent(inout)
-    sources = [_testutils.getpath("tests", "src", "regression", "inout.f90")]
+    sources = [testutils.getpath("tests", "src", "regression", "inout.f90")]
 
     @pytest.mark.slow
     def test_inout(self):
@@ -24,9 +24,9 @@ class TestIntentInOut(_testutils.F2PyTest):
         assert np.allclose(x, [3, 1, 2])
 
 
-class TestDataOnlyMultiModule(_testutils.F2PyTest):
+class TestDataOnlyMultiModule(testutils.F2PyTest):
     # Check that modules without subroutines work
-    sources = [_testutils.getpath("tests", "src", "regression", "datonly.f90")]
+    sources = [testutils.getpath("tests", "src", "regression", "datonly.f90")]
 
     @pytest.mark.slow
     def test_mdat(self):
@@ -36,9 +36,9 @@ class TestDataOnlyMultiModule(_testutils.F2PyTest):
         assert self.module.simple_subroutine(5) == 1014
 
 
-class TestModuleWithDerivedType(_testutils.F2PyTest):
+class TestModuleWithDerivedType(testutils.F2PyTest):
     # Check that modules with derived types work
-    sources = [_testutils.getpath("tests", "src", "regression", "mod_derived_types.f90")]
+    sources = [testutils.getpath("tests", "src", "regression", "mod_derived_types.f90")]
 
     @pytest.mark.slow
     def test_mtypes(self):
@@ -46,9 +46,9 @@ class TestModuleWithDerivedType(_testutils.F2PyTest):
         assert self.module.type_subroutine(10) == 210
 
 
-class TestNegativeBounds(_testutils.F2PyTest):
+class TestNegativeBounds(testutils.F2PyTest):
     # Check that negative bounds work correctly
-    sources = [_testutils.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
+    sources = [testutils.getpath("tests", "src", "negative_bounds", "issue_20853.f90")]
 
     @pytest.mark.slow
     def test_negbound(self):
@@ -67,10 +67,10 @@ class TestNegativeBounds(_testutils.F2PyTest):
         assert np.allclose(rval, expval)
 
 
-class TestNumpyVersionAttribute(_testutils.F2PyTest):
+class TestNumpyVersionAttribute(testutils.F2PyTest):
     # Check that th attribute __f2py_numpy_version__ is present
     # in the compiled module and that has the value np.__version__.
-    sources = [_testutils.getpath("tests", "src", "regression", "inout.f90")]
+    sources = [testutils.getpath("tests", "src", "regression", "inout.f90")]
 
     @pytest.mark.slow
     def test_numpy_version_attribute(self):
@@ -92,10 +92,10 @@ def test_include_path():
         assert fname in fnames_in_dir
 
 
-class TestIncludeFiles(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "regression", "incfile.f90")]
-    options = [f"-I{_testutils.getpath('tests', 'src', 'regression')}",
-               f"--include-paths {_testutils.getpath('tests', 'src', 'regression')}"]
+class TestIncludeFiles(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "regression", "incfile.f90")]
+    options = [f"-I{testutils.getpath('tests', 'src', 'regression')}",
+               f"--include-paths {testutils.getpath('tests', 'src', 'regression')}"]
 
     @pytest.mark.slow
     def test_gh25344(self):
@@ -103,9 +103,9 @@ class TestIncludeFiles(_testutils.F2PyTest):
         res = self.module.add(3.0, 4.0)
         assert exp == res
 
-class TestF77Comments(_testutils.F2PyTest):
+class TestF77Comments(testutils.F2PyTest):
     # Check that comments are stripped from F77 continuation lines
-    sources = [_testutils.getpath("tests", "src", "regression", "f77comments.f")]
+    sources = [testutils.getpath("tests", "src", "regression", "f77comments.f")]
 
     @pytest.mark.slow
     def test_gh26148(self):
@@ -122,9 +122,9 @@ class TestF77Comments(_testutils.F2PyTest):
         res = self.module.testsub2()
         npt.assert_allclose(expected, res)
 
-class TestF90Contiuation(_testutils.F2PyTest):
+class TestF90Contiuation(testutils.F2PyTest):
     # Check that comments are stripped from F90 continuation lines
-    sources = [_testutils.getpath("tests", "src", "regression", "f90continuation.f90")]
+    sources = [testutils.getpath("tests", "src", "regression", "f90continuation.f90")]
 
     @pytest.mark.slow
     def test_gh26148b(self):
@@ -134,9 +134,9 @@ class TestF90Contiuation(_testutils.F2PyTest):
         assert res[0] == 8
         assert res[1] == 15
 
-class TestLowerF2PYDirectives(_testutils.F2PyTest):
+class TestLowerF2PYDirectives(testutils.F2PyTest):
     # Check variables are cased correctly
-    sources = [_testutils.getpath("tests", "src", "regression", "lower_f2py_fortran.f90")]
+    sources = [testutils.getpath("tests", "src", "regression", "lower_f2py_fortran.f90")]
 
     @pytest.mark.slow
     def test_gh28014(self):
@@ -147,8 +147,8 @@ class TestLowerF2PYDirectives(_testutils.F2PyTest):
 def test_gh26623():
     # Including libraries with . should not generate an incorrect meson.build
     try:
-        aa = _testutils.build_module(
-            [_testutils.getpath("tests", "src", "regression", "f90continuation.f90")],
+        aa = testutils.build_module(
+            [testutils.getpath("tests", "src", "regression", "f90continuation.f90")],
             ["-lfoo.bar"],
             module_name="Blah",
         )
@@ -161,8 +161,8 @@ def test_gh26623():
 def test_gh25784():
     # Compile dubious file using passed flags
     try:
-        aa = _testutils.build_module(
-            [_testutils.getpath("tests", "src", "regression", "f77fixedform.f95")],
+        aa = testutils.build_module(
+            [testutils.getpath("tests", "src", "regression", "f77fixedform.f95")],
             options=[
                 # Meson will collect and dedup these to pass to fortran_args:
                 "--f77flags='-ffixed-form -O2'",
@@ -175,9 +175,9 @@ def test_gh25784():
 
 
 @pytest.mark.slow
-class TestAssignmentOnlyModules(_testutils.F2PyTest):
+class TestAssignmentOnlyModules(testutils.F2PyTest):
     # Ensure that variables are exposed without functions or subroutines in a module
-    sources = [_testutils.getpath("tests", "src", "regression", "assignOnlyModule.f90")]
+    sources = [testutils.getpath("tests", "src", "regression", "assignOnlyModule.f90")]
 
     @pytest.mark.slow
     def test_gh27167(self):

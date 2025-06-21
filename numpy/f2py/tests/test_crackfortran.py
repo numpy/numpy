@@ -7,14 +7,14 @@ import time
 import pytest
 
 import numpy as np
-from numpy.f2py import _testutils, crackfortran
+from numpy.f2py import crackfortran, testutils
 from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
 
 
-class TestNoSpace(_testutils.F2PyTest):
+class TestNoSpace(testutils.F2PyTest):
     # issue gh-15035: add handling for endsubroutine, endfunction with no space
     # between "end" and the block name
-    sources = [_testutils.getpath("tests", "src", "crackfortran", "gh15035.f")]
+    sources = [testutils.getpath("tests", "src", "crackfortran", "gh15035.f")]
 
     def test_module(self):
         k = np.array([1, 2, 3], dtype=np.float64)
@@ -28,7 +28,7 @@ class TestNoSpace(_testutils.F2PyTest):
 
 class TestPublicPrivate:
     def test_defaultPrivate(self):
-        fpath = _testutils.getpath("tests", "src", "crackfortran", "privatemod.f90")
+        fpath = testutils.getpath("tests", "src", "crackfortran", "privatemod.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         mod = mod[0]
@@ -40,7 +40,7 @@ class TestPublicPrivate:
         assert "public" in mod["vars"]["seta"]["attrspec"]
 
     def test_defaultPublic(self, tmp_path):
-        fpath = _testutils.getpath("tests", "src", "crackfortran", "publicmod.f90")
+        fpath = testutils.getpath("tests", "src", "crackfortran", "publicmod.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         mod = mod[0]
@@ -50,7 +50,7 @@ class TestPublicPrivate:
         assert "public" in mod["vars"]["seta"]["attrspec"]
 
     def test_access_type(self, tmp_path):
-        fpath = _testutils.getpath("tests", "src", "crackfortran", "accesstype.f90")
+        fpath = testutils.getpath("tests", "src", "crackfortran", "accesstype.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         tt = mod[0]['vars']
@@ -59,7 +59,7 @@ class TestPublicPrivate:
         assert set(tt['c']['attrspec']) == {'public'}
 
     def test_nowrap_private_proceedures(self, tmp_path):
-        fpath = _testutils.getpath("tests", "src", "crackfortran", "gh23879.f90")
+        fpath = testutils.getpath("tests", "src", "crackfortran", "gh23879.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         pyf = crackfortran.crack2fortran(mod)
@@ -67,7 +67,7 @@ class TestPublicPrivate:
 
 class TestModuleProcedure:
     def test_moduleOperators(self, tmp_path):
-        fpath = _testutils.getpath("tests", "src", "crackfortran", "operators.f90")
+        fpath = testutils.getpath("tests", "src", "crackfortran", "operators.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         mod = mod[0]
@@ -85,7 +85,7 @@ class TestModuleProcedure:
             ["get_int", "get_real"]
 
     def test_notPublicPrivate(self, tmp_path):
-        fpath = _testutils.getpath("tests", "src", "crackfortran", "pubprivmod.f90")
+        fpath = testutils.getpath("tests", "src", "crackfortran", "pubprivmod.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         mod = mod[0]
@@ -94,9 +94,9 @@ class TestModuleProcedure:
         assert mod['vars']['seta']['attrspec'] == ['public', ]
 
 
-class TestExternal(_testutils.F2PyTest):
+class TestExternal(testutils.F2PyTest):
     # issue gh-17859: add external attribute support
-    sources = [_testutils.getpath("tests", "src", "crackfortran", "gh17859.f")]
+    sources = [testutils.getpath("tests", "src", "crackfortran", "gh17859.f")]
 
     def test_external_as_statement(self):
         def incr(x):
@@ -113,10 +113,10 @@ class TestExternal(_testutils.F2PyTest):
         assert r == 123
 
 
-class TestCrackFortran(_testutils.F2PyTest):
+class TestCrackFortran(testutils.F2PyTest):
     # gh-2848: commented lines between parameters in subroutine parameter lists
-    sources = [_testutils.getpath("tests", "src", "crackfortran", "gh2848.f90"),
-               _testutils.getpath("tests", "src", "crackfortran", "common_with_division.f")
+    sources = [testutils.getpath("tests", "src", "crackfortran", "gh2848.f90"),
+               testutils.getpath("tests", "src", "crackfortran", "common_with_division.f")
               ]
 
     def test_gh2848(self):
@@ -147,7 +147,7 @@ class TestMarkinnerspaces:
         assert markinnerspaces(r'a "b c" "d e"') == r'a "b@_@c" "d@_@e"'
 
 
-class TestDimSpec(_testutils.F2PyTest):
+class TestDimSpec(testutils.F2PyTest):
     """This test suite tests various expressions that are used as dimension
     specifications.
 
@@ -252,13 +252,13 @@ class TestDimSpec(_testutils.F2PyTest):
 
 class TestModuleDeclaration:
     def test_dependencies(self, tmp_path):
-        fpath = _testutils.getpath("tests", "src", "crackfortran", "foo_deps.f90")
+        fpath = testutils.getpath("tests", "src", "crackfortran", "foo_deps.f90")
         mod = crackfortran.crackfortran([str(fpath)])
         assert len(mod) == 1
         assert mod[0]["vars"]["abar"]["="] == "bar('abar')"
 
 
-class TestEval(_testutils.F2PyTest):
+class TestEval(testutils.F2PyTest):
     def test_eval_scalar(self):
         eval_scalar = crackfortran._eval_scalar
 
@@ -268,7 +268,7 @@ class TestEval(_testutils.F2PyTest):
         assert eval_scalar('"123"', {}) == "'123'"
 
 
-class TestFortranReader(_testutils.F2PyTest):
+class TestFortranReader(testutils.F2PyTest):
     @pytest.mark.parametrize("encoding",
                              ['ascii', 'utf-8', 'utf-16', 'utf-32'])
     def test_input_encoding(self, tmp_path, encoding):
@@ -284,8 +284,8 @@ class TestFortranReader(_testutils.F2PyTest):
 
 
 @pytest.mark.slow
-class TestUnicodeComment(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
+class TestUnicodeComment(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "crackfortran", "unicode_comment.f90")]
 
     @pytest.mark.skipif(
         (importlib.util.find_spec("charset_normalizer") is None),
@@ -331,8 +331,8 @@ class TestNameArgsPatternBacktracking:
             good_version_of_adversary = repeated_adversary + '@)@'
             assert nameargspattern.search(good_version_of_adversary)
 
-class TestFunctionReturn(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "crackfortran", "gh23598.f90")]
+class TestFunctionReturn(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "crackfortran", "gh23598.f90")]
 
     @pytest.mark.slow
     def test_function_rettype(self):
@@ -340,10 +340,10 @@ class TestFunctionReturn(_testutils.F2PyTest):
         assert self.module.intproduct(3, 4) == 12
 
 
-class TestFortranGroupCounters(_testutils.F2PyTest):
+class TestFortranGroupCounters(testutils.F2PyTest):
     def test_end_if_comment(self):
         # gh-23533
-        fpath = _testutils.getpath("tests", "src", "crackfortran", "gh23533.f")
+        fpath = testutils.getpath("tests", "src", "crackfortran", "gh23533.f")
         try:
             crackfortran.crackfortran([str(fpath)])
         except Exception as exc:
@@ -352,7 +352,7 @@ class TestFortranGroupCounters(_testutils.F2PyTest):
 
 class TestF77CommonBlockReader:
     def test_gh22648(self, tmp_path):
-        fpath = _testutils.getpath("tests", "src", "crackfortran", "gh22648.pyf")
+        fpath = testutils.getpath("tests", "src", "crackfortran", "gh22648.pyf")
         with contextlib.redirect_stdout(io.StringIO()) as stdout_f2py:
             mod = crackfortran.crackfortran([str(fpath)])
         assert "Mismatch" not in stdout_f2py.getvalue()
@@ -410,8 +410,8 @@ class TestParamEval:
                       dimspec=dimspec)
 
 @pytest.mark.slow
-class TestLowerF2PYDirective(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "crackfortran", "gh27697.f90")]
+class TestLowerF2PYDirective(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "crackfortran", "gh27697.f90")]
     options = ['--lower']
 
     def test_no_lower_fail(self):

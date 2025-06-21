@@ -1,10 +1,10 @@
 import pytest
 
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 
 
-class TestValueAttr(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "value_attrspec", "gh21665.f90")]
+class TestValueAttr(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "value_attrspec", "gh21665.f90")]
 
     # gh-21665
     @pytest.mark.slow

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 from numpy.f2py.f2py2e import main as f2pycli
 from numpy.testing._private.utils import NOGIL_BUILD
 
@@ -20,7 +20,7 @@ from numpy.testing._private.utils import NOGIL_BUILD
 # Tests for CLI commands which call meson will fail if no compilers are present, these are to be skipped
 
 def compiler_check_f2pycli():
-    if not _testutils.has_fortran_compiler():
+    if not testutils.has_fortran_compiler():
         pytest.skip("CLI command needs a Fortran compiler")
     else:
         f2pycli()
@@ -75,7 +75,7 @@ def get_io_paths(fname_inp, mname="untitled"):
 @pytest.fixture(scope="session")
 def hello_world_f90(tmpdir_factory):
     """Generates a single f90 file for testing"""
-    fdat = _testutils.getpath("tests", "src", "cli", "hiworld.f90").read_text()
+    fdat = testutils.getpath("tests", "src", "cli", "hiworld.f90").read_text()
     fn = tmpdir_factory.getbasetemp() / "hello.f90"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -84,7 +84,7 @@ def hello_world_f90(tmpdir_factory):
 @pytest.fixture(scope="session")
 def gh23598_warn(tmpdir_factory):
     """F90 file for testing warnings in gh23598"""
-    fdat = _testutils.getpath("tests", "src", "crackfortran", "gh23598Warn.f90").read_text()
+    fdat = testutils.getpath("tests", "src", "crackfortran", "gh23598Warn.f90").read_text()
     fn = tmpdir_factory.getbasetemp() / "gh23598Warn.f90"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -93,7 +93,7 @@ def gh23598_warn(tmpdir_factory):
 @pytest.fixture(scope="session")
 def gh22819_cli(tmpdir_factory):
     """F90 file for testing disallowed CLI arguments in ghff819"""
-    fdat = _testutils.getpath("tests", "src", "cli", "gh_22819.pyf").read_text()
+    fdat = testutils.getpath("tests", "src", "cli", "gh_22819.pyf").read_text()
     fn = tmpdir_factory.getbasetemp() / "gh_22819.pyf"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -102,7 +102,7 @@ def gh22819_cli(tmpdir_factory):
 @pytest.fixture(scope="session")
 def hello_world_f77(tmpdir_factory):
     """Generates a single f77 file for testing"""
-    fdat = _testutils.getpath("tests", "src", "cli", "hi77.f").read_text()
+    fdat = testutils.getpath("tests", "src", "cli", "hi77.f").read_text()
     fn = tmpdir_factory.getbasetemp() / "hello.f"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -111,7 +111,7 @@ def hello_world_f77(tmpdir_factory):
 @pytest.fixture(scope="session")
 def retreal_f77(tmpdir_factory):
     """Generates a single f77 file for testing"""
-    fdat = _testutils.getpath("tests", "src", "return_real", "foo77.f").read_text()
+    fdat = testutils.getpath("tests", "src", "return_real", "foo77.f").read_text()
     fn = tmpdir_factory.getbasetemp() / "foo.f"
     fn.write_text(fdat, encoding="ascii")
     return fn
@@ -119,8 +119,8 @@ def retreal_f77(tmpdir_factory):
 @pytest.fixture(scope="session")
 def f2cmap_f90(tmpdir_factory):
     """Generates a single f90 file for testing"""
-    fdat = _testutils.getpath("tests", "src", "f2cmap", "isoFortranEnvMap.f90").read_text()
-    f2cmap = _testutils.getpath("tests", "src", "f2cmap", ".f2py_f2cmap").read_text()
+    fdat = testutils.getpath("tests", "src", "f2cmap", "isoFortranEnvMap.f90").read_text()
+    f2cmap = testutils.getpath("tests", "src", "f2cmap", ".f2py_f2cmap").read_text()
     fn = tmpdir_factory.getbasetemp() / "f2cmap.f90"
     fmap = tmpdir_factory.getbasetemp() / "mapfile"
     fn.write_text(fdat, encoding="ascii")
@@ -141,7 +141,7 @@ def test_gh22819_cli(capfd, gh22819_cli, monkeypatch):
     """
     ipath = Path(gh22819_cli)
     monkeypatch.setattr(sys, "argv", f"f2py -m blah {ipath}".split())
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         gen_paths = [item.name for item in ipath.parent.rglob("*") if item.is_file()]
         assert "blahmodule.c" not in gen_paths  # shouldn't be generated
@@ -157,7 +157,7 @@ def test_gh22819_many_pyf(capfd, gh22819_cli, monkeypatch):
     """
     ipath = Path(gh22819_cli)
     monkeypatch.setattr(sys, "argv", f"f2py -m blah {ipath} hello.pyf".split())
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         with pytest.raises(ValueError, match="Only one .pyf file per call"):
             f2pycli()
 
@@ -169,7 +169,7 @@ def test_gh23598_warn(capfd, gh23598_warn, monkeypatch):
         sys, "argv",
         f'f2py {ipath} -m test'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()  # Generate files
         wrapper = foutl.wrap90.read_text()
         assert "intproductf2pywrap, intpr" not in wrapper
@@ -183,7 +183,7 @@ def test_gen_pyf(capfd, hello_world_f90, monkeypatch):
     opath = Path(hello_world_f90).stem + ".pyf"
     monkeypatch.setattr(sys, "argv", f'f2py -h {opath} {ipath}'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()  # Generate wrappers
         out, _ = capfd.readouterr()
         assert "Saving signatures to file" in out
@@ -196,7 +196,7 @@ def test_gen_pyf_stdout(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     monkeypatch.setattr(sys, "argv", f'f2py -h stdout {ipath}'.split())
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Saving signatures to file" in out
@@ -210,7 +210,7 @@ def test_gen_pyf_no_overwrite(capfd, hello_world_f90, monkeypatch):
     ipath = Path(hello_world_f90)
     monkeypatch.setattr(sys, "argv", f'f2py -h faker.pyf {ipath}'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         Path("faker.pyf").write_text("Fake news", encoding="ascii")
         with pytest.raises(SystemExit):
             f2pycli()  # Refuse to overwrite
@@ -226,7 +226,7 @@ def test_untitled_cli(capfd, hello_world_f90, monkeypatch):
     """
     ipath = Path(hello_world_f90)
     monkeypatch.setattr(sys, "argv", f"f2py --backend meson -c {ipath}".split())
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         compiler_check_f2pycli()
         out, _ = capfd.readouterr()
         assert "untitledmodule.c" in out
@@ -243,14 +243,14 @@ def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(
         sys, "argv", f"f2py {ipath} -c --fcompiler=gfortran -m {MNAME}".split()
     )
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         compiler_check_f2pycli()
         out, _ = capfd.readouterr()
         assert "--fcompiler cannot be used with meson" in out
     monkeypatch.setattr(
         sys, "argv", ["f2py", "--help-link"]
     )
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Use --dep for meson builds" in out
@@ -258,7 +258,7 @@ def test_no_py312_distutils_fcompiler(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(
         sys, "argv", f"f2py {ipath} -c -m {MNAME} --backend distutils".split()
     )
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Cannot use distutils backend with Python>=3.12" in out
@@ -277,7 +277,7 @@ def test_f2py_skip(capfd, retreal_f77, monkeypatch):
         sys, "argv",
         f'f2py {ipath} -m test skip: {toskip}'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, err = capfd.readouterr()
         for skey in toskip.split():
@@ -300,7 +300,7 @@ def test_f2py_only(capfd, retreal_f77, monkeypatch):
         sys, "argv",
         f'f2py {ipath} -m test only: {tokeep}'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, err = capfd.readouterr()
         for skey in toskip.split():
@@ -330,7 +330,7 @@ def test_file_processing_switch(capfd, hello_world_f90, retreal_f77,
         ),
     )
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, err = capfd.readouterr()
         for skey in toskip.split():
@@ -349,7 +349,7 @@ def test_mod_gen_f77(capfd, hello_world_f90, monkeypatch):
     foutl = get_io_paths(hello_world_f90, mname=MNAME)
     ipath = foutl.f90inp
     monkeypatch.setattr(sys, "argv", f'f2py {ipath} -m {MNAME}'.split())
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
 
     # Always generate C module
@@ -367,7 +367,7 @@ def test_mod_gen_gh25263(capfd, hello_world_f77, monkeypatch):
     foutl = get_io_paths(hello_world_f77, mname=MNAME)
     ipath = foutl.finp
     monkeypatch.setattr(sys, "argv", f'f2py {ipath} -m {MNAME} -h hi.pyf'.split())
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         with Path('hi.pyf').open() as hipyf:
             pyfdat = hipyf.read()
@@ -385,7 +385,7 @@ def test_lower_cmod(capfd, hello_world_f77, monkeypatch):
     capslo = re.compile(r"hi\(\)")
     # Case I: --lower is passed
     monkeypatch.setattr(sys, "argv", f'f2py {ipath} -m test --lower'.split())
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert capslo.search(out) is not None
@@ -393,7 +393,7 @@ def test_lower_cmod(capfd, hello_world_f77, monkeypatch):
     # Case II: --no-lower is passed
     monkeypatch.setattr(sys, "argv",
                         f'f2py {ipath} -m test --no-lower'.split())
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert capslo.search(out) is None
@@ -418,7 +418,7 @@ def test_lower_sig(capfd, hello_world_f77, monkeypatch):
         f'f2py {ipath} -h {foutl.pyf} -m test --overwrite-signature'.split(),
     )
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert capslo.search(out) is not None
@@ -432,7 +432,7 @@ def test_lower_sig(capfd, hello_world_f77, monkeypatch):
         .split(),
     )
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert capslo.search(out) is None
@@ -450,7 +450,7 @@ def test_build_dir(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(sys, "argv",
                         f'f2py -m {mname} {ipath} --build-dir {odir}'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert f"Wrote C/API module \"{mname}\"" in out
@@ -466,7 +466,7 @@ def test_overwrite(capfd, hello_world_f90, monkeypatch):
         sys, "argv",
         f'f2py -h faker.pyf {ipath} --overwrite-signature'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         Path("faker.pyf").write_text("Fake news", encoding="ascii")
         f2pycli()
         out, _ = capfd.readouterr()
@@ -483,7 +483,7 @@ def test_latexdoc(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(sys, "argv",
                         f'f2py -m {mname} {ipath} --latex-doc'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Documentation is saved to file" in out
@@ -501,7 +501,7 @@ def test_nolatexdoc(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(sys, "argv",
                         f'f2py -m {mname} {ipath} --no-latex-doc'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Documentation is saved to file" not in out
@@ -521,7 +521,7 @@ def test_shortlatex(capfd, hello_world_f90, monkeypatch):
         f'f2py -m {mname} {ipath} --latex-doc --short-latex'.split(),
     )
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Documentation is saved to file" in out
@@ -539,7 +539,7 @@ def test_restdoc(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(sys, "argv",
                         f'f2py -m {mname} {ipath} --rest-doc'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "ReST Documentation is saved to file" in out
@@ -557,7 +557,7 @@ def test_norestexdoc(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(sys, "argv",
                         f'f2py -m {mname} {ipath} --no-rest-doc'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "ReST Documentation is saved to file" not in out
@@ -573,7 +573,7 @@ def test_debugcapi(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(sys, "argv",
                         f'f2py -m {mname} {ipath} --debug-capi'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         with Path(f"./{mname}module.c").open() as ocmod:
             assert r"#define DEBUGCFUNCS" in ocmod.read()
@@ -590,7 +590,7 @@ def test_debugcapi_bld(hello_world_f90, monkeypatch):
     monkeypatch.setattr(sys, "argv",
                         f'f2py -m {mname} {ipath} -c --debug-capi'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         cmd_run = shlex.split(f"{sys.executable} -c \"import blah; blah.hi()\"")
         rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
@@ -619,7 +619,7 @@ def test_wrapfunc_def(capfd, hello_world_f90, monkeypatch):
     mname = "blah"
     monkeypatch.setattr(sys, "argv", f'f2py -m {mname} {ipath}'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
     out, _ = capfd.readouterr()
     assert r"Fortran 77 wrappers are saved to" in out
@@ -628,7 +628,7 @@ def test_wrapfunc_def(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(sys, "argv",
                         f'f2py -m {mname} {ipath} --wrap-functions'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert r"Fortran 77 wrappers are saved to" in out
@@ -644,7 +644,7 @@ def test_nowrapfunc(capfd, hello_world_f90, monkeypatch):
     monkeypatch.setattr(sys, "argv",
                         f'f2py -m {mname} {ipath} --no-wrap-functions'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert r"Fortran 77 wrappers are saved to" not in out
@@ -665,7 +665,7 @@ def test_inclheader(capfd, hello_world_f90, monkeypatch):
         split(),
     )
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         with Path(f"./{mname}module.c").open() as ocmod:
             ocmr = ocmod.read()
@@ -699,7 +699,7 @@ def test_f2cmap(capfd, f2cmap_f90, monkeypatch):
     ipath = Path(f2cmap_f90)
     monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} --f2cmap mapfile'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "Reading f2cmap from 'mapfile' ..." in out
@@ -717,7 +717,7 @@ def test_quiet(capfd, hello_world_f90, monkeypatch):
     ipath = Path(hello_world_f90)
     monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} --quiet'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert len(out) == 0
@@ -731,7 +731,7 @@ def test_verbose(capfd, hello_world_f90, monkeypatch):
     ipath = Path(hello_world_f90)
     monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} --verbose'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         out, _ = capfd.readouterr()
         assert "analyzeline" in out
@@ -759,7 +759,7 @@ def test_npdistop(hello_world_f90, monkeypatch):
     ipath = Path(hello_world_f90)
     monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         f2pycli()
         cmd_run = shlex.split(f"{sys.executable} -c \"import blah; blah.hi()\"")
         rout = subprocess.run(cmd_run, capture_output=True, encoding='UTF-8')
@@ -776,7 +776,7 @@ def test_no_freethreading_compatible(hello_world_f90, monkeypatch):
     ipath = Path(hello_world_f90)
     monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c --no-freethreading-compatible'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         compiler_check_f2pycli()
         cmd = f"{sys.executable} -c \"import blah; blah.hi();"
         if NOGIL_BUILD:
@@ -801,7 +801,7 @@ def test_freethreading_compatible(hello_world_f90, monkeypatch):
     ipath = Path(hello_world_f90)
     monkeypatch.setattr(sys, "argv", f'f2py -m blah {ipath} -c --freethreading-compatible'.split())
 
-    with _testutils.switchdir(ipath.parent):
+    with testutils.switchdir(ipath.parent):
         compiler_check_f2pycli()
         cmd = f"{sys.executable} -c \"import blah; blah.hi();"
         if NOGIL_BUILD:

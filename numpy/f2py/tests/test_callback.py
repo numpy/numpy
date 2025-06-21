@@ -9,12 +9,12 @@ import traceback
 import pytest
 
 import numpy as np
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 from numpy.testing import IS_PYPY
 
 
-class TestF77Callback(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "callback", "foo.f")]
+class TestF77Callback(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "callback", "foo.f")]
 
     @pytest.mark.parametrize("name", ["t", "t2"])
     @pytest.mark.slow
@@ -205,8 +205,8 @@ class TestF77CallbackPythonTLS(TestF77Callback):
     options = ["-DF2PY_USE_PYTHON_TLS"]
 
 
-class TestF90Callback(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "callback", "gh17797.f90")]
+class TestF90Callback(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "callback", "gh17797.f90")]
 
     @pytest.mark.slow
     def test_gh17797(self):
@@ -218,13 +218,13 @@ class TestF90Callback(_testutils.F2PyTest):
         assert r == 123 + 1 + 2 + 3
 
 
-class TestGH18335(_testutils.F2PyTest):
+class TestGH18335(testutils.F2PyTest):
     """The reproduction of the reported issue requires specific input that
     extensions may break the issue conditions, so the reproducer is
     implemented as a separate test class. Do not extend this test with
     other tests!
     """
-    sources = [_testutils.getpath("tests", "src", "callback", "gh18335.f90")]
+    sources = [testutils.getpath("tests", "src", "callback", "gh18335.f90")]
 
     @pytest.mark.slow
     def test_gh18335(self):
@@ -235,9 +235,9 @@ class TestGH18335(_testutils.F2PyTest):
         assert r == 123 + 1
 
 
-class TestGH25211(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "callback", "gh25211.f"),
-               _testutils.getpath("tests", "src", "callback", "gh25211.pyf")]
+class TestGH25211(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "callback", "gh25211.f"),
+               testutils.getpath("tests", "src", "callback", "gh25211.pyf")]
     module_name = "callback2"
 
     def test_gh25211(self):
@@ -252,8 +252,8 @@ class TestGH25211(_testutils.F2PyTest):
 @pytest.mark.xfail(condition=(platform.system().lower() == 'darwin'),
                    run=False,
                    reason="Callback aborts cause CI failures on macOS")
-class TestCBFortranCallstatement(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "callback", "gh26681.f90")]
+class TestCBFortranCallstatement(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "callback", "gh26681.f90")]
     options = ['--lower']
 
     def test_callstatement_fortran(self):

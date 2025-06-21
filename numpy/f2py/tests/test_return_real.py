@@ -3,12 +3,12 @@ import platform
 import pytest
 
 from numpy import array
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 from numpy.testing import IS_64BIT
 
 
 @pytest.mark.slow
-class TestReturnReal(_testutils.F2PyTest):
+class TestReturnReal(testutils.F2PyTest):
     def check_function(self, t, tname):
         if tname in ["t0", "t4", "s0", "s4"]:
             err = 1e-5
@@ -95,8 +95,8 @@ end python module c_ext_return_real
 
 class TestFReturnReal(TestReturnReal):
     sources = [
-        _testutils.getpath("tests", "src", "return_real", "foo77.f"),
-        _testutils.getpath("tests", "src", "return_real", "foo90.f90"),
+        testutils.getpath("tests", "src", "return_real", "foo77.f"),
+        testutils.getpath("tests", "src", "return_real", "foo90.f90"),
     ]
 
     @pytest.mark.parametrize("name", ["t0", "t4", "t8", "td", "s0", "s4", "s8", "sd"])

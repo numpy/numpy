@@ -1,13 +1,13 @@
 import pytest
 
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 
 
 @pytest.mark.slow
-class TestRenamedFunc(_testutils.F2PyTest):
+class TestRenamedFunc(testutils.F2PyTest):
     sources = [
-        _testutils.getpath("tests", "src", "routines", "funcfortranname.f"),
-        _testutils.getpath("tests", "src", "routines", "funcfortranname.pyf"),
+        testutils.getpath("tests", "src", "routines", "funcfortranname.f"),
+        testutils.getpath("tests", "src", "routines", "funcfortranname.pyf"),
     ]
     module_name = "funcfortranname"
 
@@ -17,10 +17,10 @@ class TestRenamedFunc(_testutils.F2PyTest):
 
 
 @pytest.mark.slow
-class TestRenamedSubroutine(_testutils.F2PyTest):
+class TestRenamedSubroutine(testutils.F2PyTest):
     sources = [
-        _testutils.getpath("tests", "src", "routines", "subrout.f"),
-        _testutils.getpath("tests", "src", "routines", "subrout.pyf"),
+        testutils.getpath("tests", "src", "routines", "subrout.f"),
+        testutils.getpath("tests", "src", "routines", "subrout.pyf"),
     ]
     module_name = "subrout"
 

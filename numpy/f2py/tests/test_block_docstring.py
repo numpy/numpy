@@ -2,13 +2,13 @@ import sys
 
 import pytest
 
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 from numpy.testing import IS_PYPY
 
 
 @pytest.mark.slow
-class TestBlockDocString(_testutils.F2PyTest):
-    sources = [_testutils.getpath("tests", "src", "block_docstring", "foo.f")]
+class TestBlockDocString(testutils.F2PyTest):
+    sources = [testutils.getpath("tests", "src", "block_docstring", "foo.f")]
 
     @pytest.mark.skipif(sys.platform == "win32",
                         reason="Fails with MinGW64 Gfortran (Issue #9673)")

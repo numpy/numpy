@@ -1,13 +1,13 @@
 import pytest
 
 import numpy as np
-from numpy.f2py import _testutils
+from numpy.f2py import testutils
 from numpy.testing import assert_allclose
 
 
-class TestISOC(_testutils.F2PyTest):
+class TestISOC(testutils.F2PyTest):
     sources = [
-        _testutils.getpath("tests", "src", "isocintrin", "isoCtests.f90"),
+        testutils.getpath("tests", "src", "isocintrin", "isoCtests.f90"),
     ]
 
     # gh-24553
