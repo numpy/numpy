@@ -8,8 +8,8 @@ import tempfile
 import pytest
 
 import numpy as np
-from numpy._core.tests._natype import get_stringdtype_dtype as get_dtype
-from numpy._core.tests._natype import pd_NA
+from numpy._core._testutils_natype import get_stringdtype_dtype as get_dtype
+from numpy._core._testutils_natype import pd_NA
 from numpy.dtypes import StringDType
 from numpy.testing import IS_PYPY, assert_array_equal
 

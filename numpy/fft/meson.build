@@ -31,7 +31,6 @@ py.install_sources(
 
 py.install_sources(
   [
-    'tests/__init__.py',
     'tests/test_helper.py',
     'tests/test_pocketfft.py',
   ],

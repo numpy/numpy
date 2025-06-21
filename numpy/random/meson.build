@@ -120,15 +120,14 @@ py.install_sources(
 
 py.install_sources(
   [
-    'tests/__init__.py',
     'tests/test_direct.py',
     'tests/test_extending.py',
     'tests/test_generator_mt19937.py',
     'tests/test_generator_mt19937_regressions.py',
     'tests/test_random.py',
+    'tests/test_random_regression.py',
     'tests/test_randomstate.py',
     'tests/test_randomstate_regression.py',
-    'tests/test_regression.py',
     'tests/test_seed_sequence.py',
     'tests/test_smoke.py',
   ],

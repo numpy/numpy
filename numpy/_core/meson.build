@@ -1394,6 +1394,8 @@ python_sources = [
   '_simd.pyi',
   '_string_helpers.py',
   '_string_helpers.pyi',
+  '_testutils_locales.py',
+  '_testutils_natype.py',
   '_type_aliases.py',
   '_type_aliases.pyi',
   '_ufunc_config.py',

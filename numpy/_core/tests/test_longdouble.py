@@ -4,7 +4,7 @@ import warnings
 import pytest
 
 import numpy as np
-from numpy._core.tests._locales import CommaDecimalPointLocale
+from numpy._core._testutils_locales import CommaDecimalPointLocale
 from numpy.testing import (
     IS_MUSL,
     assert_,

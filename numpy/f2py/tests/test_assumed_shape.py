@@ -3,16 +3,16 @@ import tempfile
 
 import pytest
 
-from . import util
+from numpy.f2py import testutils
 
 
-class TestAssumedShapeSumExample(util.F2PyTest):
+class TestAssumedShapeSumExample(testutils.F2PyTest):
     sources = [
-        util.getpath("tests", "src", "assumed_shape", "foo_free.f90"),
-        util.getpath("tests", "src", "assumed_shape", "foo_use.f90"),
-        util.getpath("tests", "src", "assumed_shape", "precision.f90"),
-        util.getpath("tests", "src", "assumed_shape", "foo_mod.f90"),
-        util.getpath("tests", "src", "assumed_shape", ".f2py_f2cmap"),
+        testutils.getpath("tests", "src", "assumed_shape", "foo_free.f90"),
+        testutils.getpath("tests", "src", "assumed_shape", "foo_use.f90"),
+        testutils.getpath("tests", "src", "assumed_shape", "precision.f90"),
+        testutils.getpath("tests", "src", "assumed_shape", "foo_mod.f90"),
+        testutils.getpath("tests", "src", "assumed_shape", ".f2py_f2cmap"),
     ]
 
     @pytest.mark.slow

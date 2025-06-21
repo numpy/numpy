@@ -14,7 +14,7 @@ import pytest
 import numpy
 import numpy as np
 from numpy._core._multiarray_tests import get_fpu_mode
-from numpy._core.tests._natype import get_stringdtype_dtype, pd_NA
+from numpy._core._testutils_natype import get_stringdtype_dtype, pd_NA
 from numpy.testing._private.utils import NOGIL_BUILD
 
 try:
