@@ -949,6 +949,10 @@ static int casting_parser(char const *str, Py_ssize_t length, void *data)
             *casting = NPY_SAME_KIND_CASTING;
             return 0;
         }
+        if (length == 10 && strcmp(str, "same_value") == 0) {
+            *casting = NPY_SAME_VALUE_CASTING;
+            return 0;
+        }
         break;
     case 's':
         if (length == 6 && strcmp(str, "unsafe") == 0) {
@@ -969,7 +973,7 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
     return string_converter_helper(
         obj, (void *)casting, casting_parser, "casting",
             "must be one of 'no', 'equiv', 'safe', "
-            "'same_kind', or 'unsafe'");
+            "'same_kind', 'unsafe', or 'same_value'");
     return 0;
 }
 

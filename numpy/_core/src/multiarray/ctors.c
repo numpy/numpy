@@ -2789,12 +2789,13 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     npy_intp strides[2] = {src_stride, dst_stride};
 
     int res = 0;
+    int result = 0;
     for(;;) {
         /* Transfer the biggest amount that fits both */
         count = (src_count < dst_count) ? src_count : dst_count;
-        if (cast_info.func(&cast_info.context,
-                args, &count, strides, cast_info.auxdata) < 0) {
-            res = -1;
+        result = cast_info.func(&cast_info.context,
+                args, &count, strides, cast_info.auxdata);
+        if (result < 0) {
             break;
         }
 
@@ -2835,6 +2836,10 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
     }
     if (!NpyIter_Deallocate(src_iter)) {
         res = -1;
+    }
+    if (result < 0) {
+        HandleArrayMethodError(result, "cast", flags);
+        res = result;
     }
 
     if (res == 0 && !(flags & NPY_METH_NO_FLOATINGPOINT_ERRORS)) {

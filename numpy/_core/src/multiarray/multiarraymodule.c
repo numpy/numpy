@@ -667,6 +667,12 @@ PyArray_ConcatenateInto(PyObject *op,
                 "argument, but both were provided.");
         return NULL;
     }
+    if (casting == NPY_SAME_VALUE_CASTING) {
+        PyErr_SetString(PyExc_NotImplementedError,
+            "concatenate with casting='same_value' not implemented yet");
+        return NULL;
+    }
+
 
     /* Convert the input list into arrays */
     Py_ssize_t narrays_true = PySequence_Size(op);
@@ -1946,6 +1952,11 @@ array_copyto(PyObject *NPY_UNUSED(ignored),
             "|casting", &PyArray_CastingConverter, &casting,
             "|where", NULL, &wheremask_in,
             NULL, NULL, NULL) < 0) {
+        goto fail;
+    }
+    if (casting == NPY_SAME_VALUE_CASTING) {
+        PyErr_SetString(PyExc_NotImplementedError,
+            "array_copyto with 'same_value' casting not implemented yet");
         goto fail;
     }
 

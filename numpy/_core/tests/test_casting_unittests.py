@@ -10,13 +10,14 @@ import ctypes
 import enum
 import random
 import textwrap
+import warnings
 
 import pytest
 
 import numpy as np
 from numpy._core._multiarray_umath import _get_castingimpl as get_castingimpl
 from numpy.lib.stride_tricks import as_strided
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_equal
 
 # Simple skips object, parametric and long double (unsupported by struct)
 simple_dtypes = "?bhilqBHILQefdFD"
@@ -76,6 +77,7 @@ class Casting(enum.IntEnum):
     safe = 2
     same_kind = 3
     unsafe = 4
+    same_value = 5
 
 
 def _get_cancast_table():
@@ -304,6 +306,7 @@ class TestCasting:
             to_dt = to_dt.values[0]
             cast = get_castingimpl(type(from_dt), type(to_dt))
 
+            print("from_dt", from_dt, "to_dt", to_dt)
             casting, (from_res, to_res), view_off = cast._resolve_descriptors(
                 (from_dt, to_dt))
 
@@ -317,7 +320,9 @@ class TestCasting:
 
             arr1, arr2, values = self.get_data(from_dt, to_dt)
 
+            print("2", arr1, arr2, cast)
             cast._simple_strided_call((arr1, arr2))
+            print("3")
 
             # Check via python list
             assert arr2.tolist() == values
@@ -815,3 +820,58 @@ class TestCasting:
         res = nonstandard_bools.astype(dtype)
         expected = [0, 1, 1]
         assert_array_equal(res, expected)
+
+    @pytest.mark.parametrize("to_dtype",
+            np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
+    @pytest.mark.parametrize("from_dtype",
+            np.typecodes["AllInteger"] + np.typecodes["AllFloat"])
+    def test_same_value(self, from_dtype, to_dtype):
+        if from_dtype == to_dtype:
+            return
+        top1 = 0
+        top2 = 0
+        try:
+            top1 = np.iinfo(from_dtype).max
+        except ValueError:
+            top1 = np.finfo(from_dtype).max
+        try:
+            top2 = np.iinfo(to_dtype).max
+        except ValueError:
+            top2 = np.finfo(to_dtype).max
+        # No need to test if top2 > top1, since the test will also do the
+        # reverse dtype matching. Catch then warning if the comparison warns,
+        # i.e. np.int16(65535) < np.float16(6.55e4)
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always", RuntimeWarning)
+            if top2 >= top1:
+                # will be tested when the dtypes are reversed
+                return
+        # Happy path
+        arr1 = np.array([0] * 10, dtype=from_dtype)
+        arr2 = np.array([0] * 10, dtype=to_dtype)
+        with warnings.catch_warnings(record=True) as w:
+            # complex -> non-complex will warn
+            warnings.simplefilter("always", RuntimeWarning)
+            arr1_astype = arr1.astype(to_dtype, casting='same_value')
+        assert_equal(arr1_astype, arr2, strict=True)
+        # Make it overflow, both aligned and unaligned
+        arr1[0] = top1
+        aligned = np.empty(arr1.itemsize * arr1.size + 1, 'uint8')
+        unaligned = aligned[1:].view(arr1.dtype)
+        unaligned[:] = arr1
+        with pytest.raises(ValueError):
+            # Casting float to float with overflow should raise
+            # RuntimeWarning (fperror)
+            # Casting float to int with overflow sometimes raises
+            # RuntimeWarning (fperror)
+            # Casting with overflow  and 'same_value', should raise ValueError
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always", RuntimeWarning)
+                arr1.astype(to_dtype, casting='same_value')
+            assert len(w) < 2
+        with pytest.raises(ValueError):
+            # again, unaligned
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always", RuntimeWarning)
+                unaligned.astype(to_dtype, casting='same_value')
+            assert len(w) < 2

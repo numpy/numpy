@@ -227,6 +227,8 @@ typedef enum {
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
         NPY_UNSAFE_CASTING=4,
+        /* Allow any casts, check that no values overflow/change */
+        NPY_SAME_VALUE_CASTING=5,
 } NPY_CASTING;
 
 typedef enum {

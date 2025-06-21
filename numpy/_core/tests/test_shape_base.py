@@ -379,6 +379,11 @@ class TestConcatenate:
         assert_(out is rout)
         assert_equal(res, rout)
 
+    def test_concatenate_same_value(self):
+        r4 = list(range(4))
+        with pytest.raises(NotImplementedError):
+            concatenate([r4, r4], casting="same_value")
+
     @pytest.mark.skipif(IS_PYPY, reason="PYPY handles sq_concat, nb_add differently than cpython")
     def test_operator_concat(self):
         import operator
