@@ -26,6 +26,7 @@ from numpy.testing import (
     assert_array_equal,
     assert_equal,
     break_cycles,
+    run_threaded,
     suppress_warnings,
 )
 
@@ -244,3 +245,27 @@ class TestMemmap:
         memmap(self.tmpfp, shape=self.shape, mode='w+')
         memmap(self.tmpfp, shape=list(self.shape), mode='w+')
         memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
+
+    def test_threads_share_fh(self):
+        """Multiple threads create a memmap on an already-opened file handle
+        of size 0."""
+
+        def func():
+            fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+', shape=self.shape)
+            fp[:] = self.data[:]
+            assert_array_equal(fp, self.data)
+
+        run_threaded(func)
+
+    def test_threads_share_fname(self, tmp_path):
+        """Multiple threads create a memmap on the same file name, each
+        opening its own file handle.
+        """
+        tmpname = tmp_path / 'mmap'
+
+        def func():
+            fp = memmap(tmpname, dtype=self.dtype, mode='w+', shape=self.shape)
+            fp[:] = self.data[:]
+            assert_array_equal(fp, self.data)
+
+        run_threaded(func)
