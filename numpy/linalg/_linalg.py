@@ -35,7 +35,9 @@ from numpy._core import (
     cdouble,
     complexfloating,
     count_nonzero,
+    cross as _core_cross,
     csingle,
+    diagonal as _core_diagonal,
     divide,
     dot,
     double,
@@ -49,10 +51,13 @@ from numpy._core import (
     intp,
     isfinite,
     isnan,
+    matmul as _core_matmul,
+    matrix_transpose as _core_matrix_transpose,
     moveaxis,
     multiply,
     newaxis,
     object_,
+    outer as _core_outer,
     overrides,
     prod,
     reciprocal,
@@ -62,34 +67,11 @@ from numpy._core import (
     sqrt,
     sum,
     swapaxes,
-    zeros,
-)
-from numpy._core import (
-    cross as _core_cross,
-)
-from numpy._core import (
-    diagonal as _core_diagonal,
-)
-from numpy._core import (
-    matmul as _core_matmul,
-)
-from numpy._core import (
-    matrix_transpose as _core_matrix_transpose,
-)
-from numpy._core import (
-    outer as _core_outer,
-)
-from numpy._core import (
     tensordot as _core_tensordot,
-)
-from numpy._core import (
     trace as _core_trace,
-)
-from numpy._core import (
     transpose as _core_transpose,
-)
-from numpy._core import (
     vecdot as _core_vecdot,
+    zeros,
 )
 from numpy._globals import _NoValue
 from numpy._typing import NDArray

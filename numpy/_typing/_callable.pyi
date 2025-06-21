@@ -38,11 +38,7 @@ from . import NBitBase
 from ._array_like import NDArray
 from ._nbit import _NBitInt
 from ._nested_sequence import _NestedSequence
-from ._scalars import (
-    _BoolLike_co,
-    _IntLike_co,
-    _NumberLike_co,
-)
+from ._scalars import _BoolLike_co, _IntLike_co, _NumberLike_co
 
 _T1 = TypeVar("_T1")
 _T2 = TypeVar("_T2")

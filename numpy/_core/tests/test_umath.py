@@ -12,8 +12,7 @@ import pytest
 
 import numpy as np
 import numpy._core.umath as ncu
-from numpy._core import _umath_tests as ncu_tests
-from numpy._core import sctypes
+from numpy._core import _umath_tests as ncu_tests, sctypes
 from numpy.testing import (
     HAS_REFCOUNT,
     IS_MUSL,

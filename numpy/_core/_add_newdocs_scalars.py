@@ -6,8 +6,7 @@ platform-dependent information.
 import os
 import sys
 
-from numpy._core import dtype
-from numpy._core import numerictypes as _numerictypes
+from numpy._core import dtype, numerictypes as _numerictypes
 from numpy._core.function_base import add_newdoc
 
 ##############################################################################

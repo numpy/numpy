@@ -2,6 +2,7 @@
 from typing import (
     Any,
     Generic,
+    Literal as L,
     LiteralString,
     Never,
     NoReturn,
@@ -11,7 +12,6 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing import Literal as L
 from typing_extensions import TypeVar
 
 import numpy as np
