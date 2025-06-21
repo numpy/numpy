@@ -413,6 +413,10 @@ class TestDeprecatedArrayAttributeSetting(_DeprecationTestCase):
         x = np.eye(2)
         self.assert_deprecated(setattr, args=(x, 'strides', x.strides))
 
+    def test_deprecated_dtype_set(self):
+        x = np.eye(2)
+        self.assert_deprecated(setattr, args=(x, "dtype", int))
+
 
 class TestDeprecatedDTypeParenthesizedRepeatCount(_DeprecationTestCase):
     message = "Passing in a parenthesized single number"
