@@ -56,8 +56,8 @@ py.install_sources(
 py.install_sources(
   [
     'tests/test_linalg.py',
-    'tests/test_linalg_deprecations.py',
-    'tests/test_linalg_regression.py',
+    'tests/test_deprecations.py',
+    'tests/test_regression.py',
   ],
   subdir: 'numpy/linalg/tests',
   install_tag: 'tests'
