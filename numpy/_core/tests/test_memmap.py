@@ -247,19 +247,14 @@ class TestMemmap:
         memmap(self.tmpfp, shape=list(self.shape), mode='w+')
         memmap(self.tmpfp, shape=asarray(self.shape), mode='w+')
 
+    @pytest.mark.skipif(not hasattr(mmap, "MADV_NORMAL") and hasattr(mmap, "madvise"),
+                        reason="mmap.MADV_NORMAL is not available on this system.")
     def test_madvise_normal(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
         fp[:] = self.data[:]
         # This should not raise an error
-        try:
-            fp.madvise(mmap.MADV_NORMAL)
-        except NotImplementedError:
-            pytest.skip("mmap.madvise is not available on this system.")
-        except OSError as e:
-            pytest.fail(f"madvise failed with OSError: {e}")
-        finally:
-            del fp
+        fp.madvise(mmap.MADV_NORMAL)
 
     def test_madvise_no_mmap(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
@@ -269,7 +264,6 @@ class TestMemmap:
         expected_err_msg = "madvise cannot be used: the memory map is not backed by any memory."
         with pytest.raises(TypeError, match=expected_err_msg):
             fp.madvise(mmap.MADV_NORMAL)
-        del fp
 
     def test_madvise_on_view(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
@@ -278,4 +272,3 @@ class TestMemmap:
         expected_err_msg = "madvise cannot be used on a view of a memmap object. Please use it on the original memmap object."
         with pytest.raises(TypeError, match=expected_err_msg):
             view.madvise(mmap.MADV_NORMAL)
-        del fp
