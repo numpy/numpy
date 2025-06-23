@@ -254,8 +254,8 @@ class TestPolynomial:
     def test_integ_coeffs(self):
         p = np.poly1d([3, 2, 1])
         p2 = p.integ(3, k=[9, 7, 6])
-        expected = [1 / 4. / 5., 1 / 3. / 4., 1 / 2. / 3., 9 / 1. / 2., 7, 6]
-        assert_( (p2.coeffs == expected).all())
+        expected = [1 / 4 / 5, 1 / 3 / 4, 1 / 2 / 3, 9 / 1 / 2, 7, 6]
+        assert_((p2.coeffs == expected).all())
 
     def test_zero_dims(self):
         try:

@@ -310,7 +310,7 @@ class TestCopy:
     def test_order(self):
         # It turns out that people rely on np.copy() preserving order by
         # default; changing this broke scikit-learn:
-        # github.com/scikit-learn/scikit-learn/commit/7842748cf777412c506a8c0ed28090711d3a3783 # noqa: E501
+        # github.com/scikit-learn/scikit-learn/commit/7842748
         a = np.array([[1, 2], [3, 4]])
         assert_(a.flags.c_contiguous)
         assert_(not a.flags.f_contiguous)
@@ -3145,9 +3145,9 @@ class TestInterp:
         """ Test that interp between opposite infs gives nan """
         inf = np.inf
         nan = np.nan
-        assert_equal(np.interp(0.5, [-inf, +inf], sc([      0,      10])), sc(nan))
-        assert_equal(np.interp(0.5, [      0,       1], sc([-inf, +inf])), sc(nan))
-        assert_equal(np.interp(0.5, [      0,       1], sc([+inf, -inf])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf, +inf], sc([   0,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [   0,    1], sc([-inf, +inf])), sc(nan))
+        assert_equal(np.interp(0.5, [   0,    1], sc([+inf, -inf])), sc(nan))
 
         # unless the y values are equal
         assert_equal(np.interp(0.5, [-np.inf, +np.inf], sc([     10,      10])), sc(10))
@@ -3156,14 +3156,14 @@ class TestInterp:
         """ Test that interp where both axes have a bound at inf gives nan """
         inf = np.inf
         nan = np.nan
-        assert_equal(np.interp(0.5, [-inf,       1], sc([-inf,      10])), sc(nan))
-        assert_equal(np.interp(0.5, [-inf,       1], sc([+inf,      10])), sc(nan))
-        assert_equal(np.interp(0.5, [-inf,       1], sc([      0, -inf])), sc(nan))
-        assert_equal(np.interp(0.5, [-inf,       1], sc([      0, +inf])), sc(nan))
-        assert_equal(np.interp(0.5, [      0, +inf], sc([-inf,      10])), sc(nan))
-        assert_equal(np.interp(0.5, [      0, +inf], sc([+inf,      10])), sc(nan))
-        assert_equal(np.interp(0.5, [      0, +inf], sc([      0, -inf])), sc(nan))
-        assert_equal(np.interp(0.5, [      0, +inf], sc([      0, +inf])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([-inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([+inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([   0, -inf])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([   0, +inf])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([-inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([+inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([   0, -inf])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([   0, +inf])), sc(nan))
 
     def test_non_finite_half_inf_x(self, sc):
         """ Test interp where the x axis has a bound at inf """
