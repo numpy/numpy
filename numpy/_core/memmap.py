@@ -392,9 +392,7 @@ class memmap(ndarray):
             self._mmap.madvise(option)
         except AttributeError:
             # This can happen if mmap.madvise is not available on the system
-            raise NotImplementedError(
-                "mmap.madvise is not available on this system."
-            )
+            raise NotImplementedError("mmap.madvise is not available on this system.")
         except OSError as e:
             raise OSError(e.errno, e.strerror + ". Check if 'option' is valid.") from e
 

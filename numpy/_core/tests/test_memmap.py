@@ -250,25 +250,27 @@ class TestMemmap:
     @pytest.mark.skipif(not hasattr(mmap, "MADV_NORMAL") and hasattr(mmap, "madvise"),
                         reason="mmap.MADV_NORMAL is not available on this system.")
     def test_madvise_normal(self):
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
-                    shape=self.shape)
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+', shape=self.shape)
         fp[:] = self.data[:]
         # This should not raise an error
         fp.madvise(mmap.MADV_NORMAL)
 
     def test_madvise_no_mmap(self):
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
-                    shape=self.shape)
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+', shape=self.shape)
         # Manually set _mmap to None to simulate a closed/unbacked memmap
         fp._mmap = None
-        expected_err_msg = "madvise cannot be used: the memory map is not backed by any memory."
+        expected_err_msg = (
+            "madvise cannot be used: the memory map is not backed by any memory."
+        )
         with pytest.raises(TypeError, match=expected_err_msg):
             fp.madvise(mmap.MADV_NORMAL)
 
     def test_madvise_on_view(self):
-        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
-                    shape=self.shape)
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+', shape=self.shape)
         view = fp[1:]  # Create a view
-        expected_err_msg = "madvise cannot be used on a view of a memmap object. Please use it on the original memmap object."
+        expected_err_msg = (
+            "madvise cannot be used on a view of a memmap object. "
+            "Please use it on the original memmap object."
+        )
         with pytest.raises(TypeError, match=expected_err_msg):
             view.madvise(mmap.MADV_NORMAL)
