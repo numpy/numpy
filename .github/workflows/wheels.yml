@@ -121,7 +121,7 @@ jobs:
           - buildplat: [macos, macos-13, macosx_x86_64, openblas]
             python: "cp314t"
 
-          # iOS builds are only supported for 3.13+, non free-threaded
+          # iOS builds are only supported for 3.13, non free-threaded
           - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, ""]
             python: "cp311"
           - buildplat: [ios, macos-13, ios_x86_64_iphonesimulator, accelerate]
