@@ -339,6 +339,65 @@ class memmap(ndarray):
         if self.base is not None and hasattr(self.base, 'flush'):
             self.base.flush()
 
+    def madvise(self, option):
+        """
+        Give advice about the memory region corresponding to this array.
+
+        Parameters
+        ----------
+        option : int
+            One of the `madvise` options, e.g., `mmap.MADV_NORMAL`,
+            `mmap.MADV_RANDOM`, `mmap.MADV_SEQUENTIAL`, `mmap.MADV_WILLNEED`,
+            `mmap.MADV_DONTNEED`, `mmap.MADV_FREE`, `mmap.MADV_REMOVE`,
+            `mmap.MADV_DONTFORK`, `mmap.MADV_DOFORK`, `mmap.MADV_MERGEABLE`,
+            `mmap.MADV_UNMERGEABLE`, `mmap.MADV_HUGEPAGE`,
+            `mmap.MADV_NOHUGEPAGE`, `mmap.MADV_SOFT_OFFLINE`,
+            `mmap.MADV_COLD`, `mmap.MADV_PAGEOUT`, `mmap.MADV_POPULATE`.
+
+        Raises
+        ------
+        TypeError
+            If the memory map is not backed by any memory (e.g., already closed)
+            or if `madvise` is called on a view of a memmap.
+        OSError
+            If the underlying `mmap.madvise` call fails.
+        NotImplementedError
+            If `mmap.madvise` is not available on the current system or Python version.
+
+        Notes
+        -----
+        This method is only available on Python 3.8+ and systems that support
+        the `madvise` system call.
+
+        See Also
+        --------
+        mmap.madvise : The underlying `mmap` method.
+
+        """
+        if self._mmap is None:
+            raise TypeError(
+                "madvise cannot be used: the memory map is not backed by any memory."
+            )
+
+        # Reject madvise on views for simplicity, as their memory range might not
+        # align with page boundaries and behavior can be complex.
+        # TODO: support madvise on view of mmap
+        if self.base is not self._mmap:
+            raise TypeError(
+                "madvise cannot be used on a view of a memmap object. "
+                "Please use it on the original memmap object."
+            )
+
+        try:
+            self._mmap.madvise(option)
+        except AttributeError:
+            # This can happen if mmap.madvise is not available on the system
+            raise NotImplementedError(
+                "mmap.madvise is not available on this system."
+            )
+        except OSError as e:
+            raise OSError(e.errno, e.strerror + ". Check if 'option' is valid.") from e
+
     def __array_wrap__(self, arr, context=None, return_scalar=False):
         arr = super().__array_wrap__(arr, context)
 
