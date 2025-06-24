@@ -22,6 +22,9 @@ TODO
     - fix bdist_mpkg: we build the same source twice -> how to make sure we use
       the same underlying python for egg install in venv and for bdist_mpkg
 """
+
+# I will be back here as a contributor and pioneer a new way of doing releases. Leaving a mark here to return soon!
+
 import hashlib
 import os
 import textwrap
