@@ -691,7 +691,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def __mul__(self: _MaskedArrayFloat_co, other: _ArrayLike[timedelta64], /) -> _MaskedArray[timedelta64]: ...
     @overload
     def __mul__(
-        self: ndarray[Any, dtype[character] | dtypes.StringDType],
+        self: MaskedArray[Any, dtype[character] | dtypes.StringDType],
         other: _ArrayLikeInt,
         /,
     ) -> MaskedArray[tuple[Any, ...], _DTypeT_co]: ...
