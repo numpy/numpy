@@ -2362,7 +2362,23 @@ get_fields_transfer_function(int NPY_UNUSED(aligned),
     }
 
     /* 2. dst is non-structured. Allow transfer from single-field src to dst */
-    if (!PyDataType_HASFIELDS(dst_dtype)) {
+    /* Shortcut: if there are no references and the data types are equivalent and builtin, return a simple copy */
+    int is_builtin = src_dtype->type_num < NPY_NTYPES_LEGACY && dst_dtype->type_num < NPY_NTYPES_LEGACY;
+    if (PyArray_EquivTypes(src_dtype, dst_dtype) &&
+            !PyDataType_REFCHK(src_dtype) && !PyDataType_REFCHK(dst_dtype) &&
+            ( !PyDataType_HASFIELDS(dst_dtype) ||
+              is_dtype_struct_simple_unaligned_layout(dst_dtype)) &&
+              is_builtin) {
+        *out_stransfer = PyArray_GetStridedCopyFn(0,
+                                        src_stride, dst_stride,
+                                        src_dtype->elsize);
+        if (out_stransfer == NULL) {
+            return NPY_FAIL;
+        }
+        *out_transferdata = NULL;
+        return NPY_SUCCEED;
+    }
+    else if (!PyDataType_HASFIELDS(dst_dtype)) {
         if (PyTuple_GET_SIZE(PyDataType_NAMES(src_dtype)) != 1) {
             PyErr_SetString(PyExc_ValueError,
                     "Can't cast from structure to non-structure, except if the "
