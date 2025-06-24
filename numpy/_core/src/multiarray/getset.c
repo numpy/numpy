@@ -526,6 +526,8 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         return -1;
     }
 
+#if !defined(PYPY_VERSION)
+    // On PyPy we skip the warning because we cannot rely on reference counts
     // to be replaced with PyUnstable_Object_IsUniquelyReferenced https://github.com/python/cpython/pull/133144
     int unique_reference = (Py_REFCNT(self) == 1);
 
@@ -540,6 +542,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
             return -1;
         }
     }
+#endif
     return array_descr_set_internal(self, arg);
 }
 
