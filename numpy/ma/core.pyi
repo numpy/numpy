@@ -271,7 +271,7 @@ _MaskedArrayInt_co: TypeAlias = _MaskedArray[integer | np.bool]
 _MaskedArrayFloat64_co: TypeAlias = _MaskedArray[floating[_64Bit] | float32 | float16 | integer | np.bool]
 _MaskedArrayFloat_co: TypeAlias = _MaskedArray[floating | integer | np.bool]
 _MaskedArrayComplex128_co: TypeAlias = _MaskedArray[number[_64Bit] | number[_32Bit] | float16 | integer | np.bool]
-_MaskedArrayComplex_co: TypeAlias = _MaskedArrayNumber_co
+_MaskedArrayComplex_co: TypeAlias = _MaskedArray[inexact | integer | np.bool]
 _MaskedArrayNumber_co: TypeAlias = _MaskedArray[number | np.bool]
 _MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
 
