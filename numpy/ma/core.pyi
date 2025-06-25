@@ -270,8 +270,8 @@ _MaskedArrayUInt_co: TypeAlias = _MaskedArray[unsignedinteger | np.bool]
 _MaskedArrayInt_co: TypeAlias = _MaskedArray[integer | np.bool]
 _MaskedArrayFloat64_co: TypeAlias = _MaskedArray[floating[_64Bit] | float32 | float16 | integer | np.bool]
 _MaskedArrayFloat_co: TypeAlias = _MaskedArray[floating | integer | np.bool]
-_MaskedArrayComplex_co: TypeAlias = _MaskedArray[inexact | integer | np.bool]
 _MaskedArrayComplex128_co: TypeAlias = _MaskedArray[number[_64Bit] | number[_32Bit] | float16 | integer | np.bool]
+_MaskedArrayComplex_co: TypeAlias = _MaskedArrayNumber_co
 _MaskedArrayNumber_co: TypeAlias = _MaskedArray[number | np.bool]
 _MaskedArrayTD64_co: TypeAlias = _MaskedArray[timedelta64 | integer | np.bool]
 
@@ -746,6 +746,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __rmul__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `ndarray.__truediv__`
     @overload
     def __truediv__(self: _MaskedArrayInt_co | _MaskedArray[float64], other: _ArrayLikeFloat64_co, /) -> _MaskedArray[float64]: ...
     @overload
@@ -777,6 +778,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __truediv__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `ndarray.__rtruediv__`
     @overload
     def __rtruediv__(self: _MaskedArrayInt_co | _MaskedArray[float64], other: _ArrayLikeFloat64_co, /) -> _MaskedArray[float64]: ...
     @overload
@@ -806,6 +808,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __rtruediv__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `ndarray.__floordiv__`
     @overload
     def __floordiv__(self: _MaskedArray[_RealNumberT], other: int | np.bool, /) -> MaskedArray[_ShapeT_co, dtype[_RealNumberT]]: ...
     @overload
@@ -835,6 +838,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __floordiv__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `ndarray.__rfloordiv__`
     @overload
     def __rfloordiv__(self: _MaskedArray[_RealNumberT], other: int | np.bool, /) -> MaskedArray[_ShapeT_co, dtype[_RealNumberT]]: ...
     @overload
