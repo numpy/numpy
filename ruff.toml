@@ -130,3 +130,5 @@ builtins-allowed-modules = ["random", "typing"]
 # these are treated as stdlib within .pyi stubs
 extra-standard-library = ["_typeshed", "typing_extensions"]
 known-first-party = ["numpy"]
+combine-as-imports = true
+split-on-trailing-comma = false

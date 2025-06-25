@@ -1,12 +1,5 @@
 from collections.abc import Sequence  # noqa: F811
-from typing import (
-    Any,
-    Protocol,
-    TypeAlias,
-    TypedDict,
-    TypeVar,
-    runtime_checkable,
-)
+from typing import Any, Protocol, TypeAlias, TypedDict, TypeVar, runtime_checkable
 
 import numpy as np
 

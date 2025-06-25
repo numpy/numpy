@@ -4,11 +4,7 @@ import pytest
 
 import numpy as np
 from numpy import random
-from numpy.testing import (
-    assert_,
-    assert_array_equal,
-    assert_raises,
-)
+from numpy.testing import assert_, assert_array_equal, assert_raises
 
 
 class TestRegression:

@@ -4,6 +4,7 @@ from collections.abc import Callable, Iterable, Sequence
 from typing import (
     Any,
     Concatenate,
+    Literal as L,
     ParamSpec,
     Protocol,
     SupportsIndex,
@@ -13,7 +14,6 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing import Literal as L
 from typing_extensions import TypeIs, deprecated
 
 import numpy as np

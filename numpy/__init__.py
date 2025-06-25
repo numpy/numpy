@@ -454,8 +454,7 @@ else:
             pass
     del ta
 
-    from . import lib
-    from . import matrixlib as _mat
+    from . import lib, matrixlib as _mat
     from .lib import scimath as emath
     from .lib._arraypad_impl import pad
     from .lib._arraysetops_impl import (
