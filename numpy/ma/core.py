@@ -43,6 +43,7 @@ from numpy import (
     ndarray,
 )
 from numpy import array as narray  # noqa: F401
+from numpy._core import arrayprint
 from numpy._core import multiarray as mu
 from numpy._core.numeric import normalize_axis_tuple
 from numpy._utils import set_module
@@ -4085,8 +4086,207 @@ class MaskedArray(ndarray):
             res = self.filled(self.fill_value)
         return res
 
+    def _flatten(self, x):
+        # prevent infinite recursion
+        if isinstance(x, np.matrix):
+            x = np.asarray(x)
+
+        # handle structured scalar (np.void)
+        if isinstance(x, np.void):
+            return [item for name in x.dtype.names for item in self._flatten(x[name])]
+
+        # handle 0d structured arrays (e.g., array(..., dtype=[(...)]) )
+        if isinstance(x, np.ndarray) and x.ndim == 0 and x.dtype.names:
+            return self._flatten(x.item())
+
+        # handle masked scalars and arrays
+        if isinstance(x, (MaskedArray, MaskedConstant)):
+            if hasattr(x, 'ndim') and x.ndim == 0:
+                return [x.item()]
+            else:
+                return [item for sub in x for item in self._flatten(sub)]
+
+        # handle lists and tuples
+        if isinstance(x, (list, tuple)):
+            return [item for sub in x for item in self._flatten(sub)]
+
+        # handle non-scalar ndarrays
+        if isinstance(x, np.ndarray) and x.ndim > 0:
+            return [item for sub in x for item in self._flatten(sub)]
+
+        # base case: scalar value
+        return [x]
+
+    def _replacer(self, match, data_iter, exp_format):
+        """
+        Replace matched tokens in a string with corresponding data from an iterator.
+
+        Parameters
+        ----------
+        match : re.Match
+            The regular expression match object containing the token to be replaced.
+        data_iter : iterator
+            An iterator providing the data to replace the matched tokens.
+        Returns
+        -------
+        str
+            The string with the matched token replaced by the appropriate data.
+        """
+        token = match.group(0)
+        # handle ellipsis in legacy printing
+        if token == '...':
+            value = next(data_iter)  # consume from iterator to keep alignment
+            return '...'
+        # compute decimal precision from token
+        if '.' in token:
+            decimal_places = len(token.split(".")[1])
+        else:
+            decimal_places = 0
+
+        width = len(token)
+        float_format = f"{{:>{width}.{decimal_places}f}}"
+        value = next(data_iter)
+        # handle masked values
+        if (
+            value is masked or
+            isinstance(value, _MaskedPrintOption) or
+            is_masked(value)
+        ):
+            return '--'.center(width)
+
+        opts = np.get_printoptions()
+        suppress = opts.get('suppress')
+        precision = opts.get('precision')
+
+        if not suppress and isinstance(value, float) and exp_format:
+            return arrayprint.format_float_scientific(
+                value,
+                precision=precision,
+                min_digits=builtins.min(decimal_places, precision),
+                sign=False,
+            )
+
+        # trim trailing .0 in floats if template does so
+        if token.endswith('.') and str(value).endswith('.0'):
+            return str(value)[:-1].rjust(width)
+
+        return float_format.format(float(value))
+
+    def _list_to_string(self, template, data):
+        """
+        Convert a data structure into a formatted string based on a template.
+
+        Parameters
+        ----------
+        template : str
+            The string template that dictates the formatting.
+        data : array-like
+            The data to be formatted into the string.
+
+        Returns
+        -------
+        str
+            The formatted string representation of the data.
+        """
+        # handle scalar object arrays
+        if (isinstance(data, np.ndarray)
+            and data.dtype == object
+            and data.shape == ()):
+            return str(data.item())
+
+        # apply truncation before flattening, if legacy and 1D MaskedArray
+        legacy = np.get_printoptions().get('legacy') == '1.13'
+        if legacy and data.ndim == 1 and data.size > 10:
+            head = data[:3].tolist()
+            tail = data[-3:].tolist()
+            data = head + ['...'] + tail  # insert ellipsis marker in the data
+
+        flat_data = self._flatten(data)
+        data_iter = iter(flat_data)
+        # match numbers, masked token, or ellipsis
+        pattern = (
+            r"-?\d+\.\d*(?:[eE][+-]?\d+)?|"
+            r"-?\d+(?:[eE][+-]?\d+)?|--|\.\.\."
+        )
+
+        opts = np.get_printoptions()
+        suppress = opts.get('suppress')
+        precision = opts.get('precision')
+        legacy = opts.get('legacy')
+        floatmode = opts.get('floatmode')
+
+        # flatten the original masked array to extract all scalar elements
+        flat_data = self._flatten(self.data)
+
+        # collect all float elements to analyze formatting needs
+        float_values = [x for x in flat_data if isinstance(x, float)]
+
+        # convert to a NumPy array (empty if no float values)
+        if float_values:
+            float_array = np.array(float_values, dtype=float)
+        else:
+            float_array = np.array([], dtype=float)
+
+        exp_format = False
+        if not suppress:
+            # normalize legacy printoption to an integer (e.g., "1.13" → 113)
+            if isinstance(legacy, str):
+                legacy_val = int(legacy.replace('.', ''))
+            else:
+                legacy_val = legacy
+
+            # determine whether exponential format should be used
+            exp_format = arrayprint.FloatingFormat(
+                float_array, precision, floatmode, suppress, legacy=legacy_val
+            ).exp_format
+
+        # prepare replacement function for regex substitution
+        replacer_fn = lambda match: self._replacer(
+            match, data_iter, exp_format
+        )
+
+        # substitute matched tokens with formatted values
+        return re.sub(pattern, replacer_fn, template)
+
+    def _masked_array_to_string(self, masked_data):
+        """
+        Process a masked array and return its string representation.
+
+        Parameters
+        ----------
+        masked_data : numpy.ma.MaskedArray
+            The masked array to process.
+
+        Returns
+        -------
+        str
+            The string representation of the masked array.
+        """
+        # get formatted string using array2string
+        formatted_str = np.array2string(self.data)
+
+        # if legacy mode is enabled, normalize whitespace
+        legacy = np.get_printoptions().get('legacy') == '1.13'
+        if legacy:
+            formatted_str = re.sub(r"\s{2,}", " ", formatted_str)
+            formatted_str = re.sub(r"(?<=\[)\s+", "", formatted_str)
+
+        return self._list_to_string(formatted_str, masked_data)
+
     def __str__(self):
-        return str(self._insert_masked_print())
+        # handle 0-dimensional unmasked arrays by returning the scalar value
+        if self.shape == () and not self.mask:
+            return str(self.item())
+
+        masked_data = self._insert_masked_print()
+        # if the masked data has a custom __str__, use it
+        if (type(masked_data) is not np.ndarray
+            and hasattr(masked_data, '__str__')
+            and type(masked_data).__str__ is not np.ndarray.__str__):
+            return masked_data.__str__()
+
+        # process the array using our method
+        return self._masked_array_to_string(masked_data)
 
     def __repr__(self):
         """

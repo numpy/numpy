@@ -949,7 +949,7 @@ class TestMaskedArray:
         test = array([(1, (2, 3.0)), (4, (5, 6.0))],
                      mask=[(1, (0, 1)), (0, (1, 0))],
                      dtype=fancydtype)
-        control = "[(--, (2, --)) (4, (--, 6.0))]"
+        control = "[(--, (2, --)) (4, (--, 6.))]"
         assert_equal(str(test), control)
 
         # Test 0-d array with multi-dimensional dtype
@@ -960,8 +960,60 @@ class TestMaskedArray:
                                            [False, False, True]],
                                    False),
                              dtype="int, (2,3)float, float")
-        control = "(0, [[--, 0.0, --], [0.0, 0.0, --]], 0.0)"
+        control = "(0, [[--, 0., --], [0., 0., --]], 0.)"
         assert_equal(str(t_2d0), control)
+
+    def test_floatmode_printoption(self):
+        # Test printing a masked array w/ different float modes and precise print options. Issue #28685
+        with np.printoptions(precision=2, suppress=True, floatmode='fixed'):
+            # Create a masked array with a lower triangular mask
+            mask = np.tri(5, dtype=bool)
+            masked_array = np.ma.MaskedArray(np.ones((5, 5)) * 0.0001, mask=mask)
+            control = (
+                "[[ --  0.00 0.00 0.00 0.00]\n"
+                " [ --   --  0.00 0.00 0.00]\n"
+                " [ --   --   --  0.00 0.00]\n"
+                " [ --   --   --   --  0.00]\n"
+                " [ --   --   --   --   -- ]]"
+            )
+            assert_equal(str(masked_array), control)
+
+        with np.printoptions(precision=2, suppress=True, floatmode='unique'):
+            control = (
+                "[[  --   0.0001 0.0001 0.0001 0.0001]\n"
+                " [  --     --   0.0001 0.0001 0.0001]\n"
+                " [  --     --     --   0.0001 0.0001]\n"
+                " [  --     --     --     --   0.0001]\n"
+                " [  --     --     --     --     --  ]]"
+            )
+            assert_equal(str(masked_array), control)
+
+        with np.printoptions(precision=2, suppress=False, floatmode='maxprec'):
+            mask = np.array([
+                [True, False, False, False],
+                [False, True, False, False],
+                [False, False, True, False]
+            ])
+            data = np.array([
+                [0.12345678, 0.00001234, 1.0, 100.0],
+                [0.5, 0.025, 0.333333, 0.999999],
+                [0.0, 1.5, 2.25, 3.125]
+            ])
+            masked_array = np.ma.MaskedArray(data, mask=mask)
+            control = (
+                "[[   --    1.23e-05 1.00e+00 1.00e+02]\n"
+                " [5.00e-01    --    3.33e-01 1.00e+00]\n"
+                " [0.00e+00 1.50e+00    --    3.12e+00]]"
+            )
+            assert_equal(str(masked_array), control)
+
+        with np.printoptions(precision=3, suppress=True, floatmode='maxprec_equal'):
+            control = (
+                "[[    --    0.000   1.000 100.000]\n"
+                " [  0.500     --    0.333   1.000]\n"
+                " [  0.000   1.500     --    3.125]]"
+            )
+            assert_equal(str(masked_array), control)
 
     def test_flatten_structured_array(self):
         # Test flatten_structured_array on arrays
