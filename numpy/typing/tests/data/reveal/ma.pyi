@@ -623,3 +623,100 @@ assert_type(AR_LIKE_c - MAR_o, Any)
 assert_type(AR_LIKE_td64 - MAR_o, Any)
 assert_type(AR_LIKE_dt64 - MAR_o, Any)
 assert_type(AR_LIKE_o - MAR_o, Any)
+
+# Masked Array multiplication
+
+assert_type(MAR_b * AR_LIKE_u, MaskedArray[np.uint32])
+assert_type(MAR_b * AR_LIKE_i, MaskedArray[np.signedinteger])
+assert_type(MAR_b * AR_LIKE_f, MaskedArray[np.floating])
+assert_type(MAR_b * AR_LIKE_c, MaskedArray[np.complexfloating])
+assert_type(MAR_b * AR_LIKE_td64, MaskedArray[np.timedelta64])
+assert_type(MAR_b * AR_LIKE_o, Any)
+
+# Ignore due to https://github.com/python/mypy/issues/19341
+assert_type(AR_LIKE_u * MAR_b, MaskedArray[np.uint32])  # type: ignore[assert-type]
+assert_type(AR_LIKE_i * MAR_b, MaskedArray[np.signedinteger])  # type: ignore[assert-type]
+assert_type(AR_LIKE_f * MAR_b, MaskedArray[np.floating])  # type: ignore[assert-type]
+assert_type(AR_LIKE_c * MAR_b, MaskedArray[np.complexfloating])  # type: ignore[assert-type]
+assert_type(AR_LIKE_td64 * MAR_b, MaskedArray[np.timedelta64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_o * MAR_b, Any)  # type: ignore[assert-type]
+
+assert_type(MAR_u4 * AR_LIKE_b, MaskedArray[np.uint32])
+assert_type(MAR_u4 * AR_LIKE_u, MaskedArray[np.unsignedinteger])
+assert_type(MAR_u4 * AR_LIKE_i, MaskedArray[np.signedinteger])
+assert_type(MAR_u4 * AR_LIKE_f, MaskedArray[np.floating])
+assert_type(MAR_u4 * AR_LIKE_c, MaskedArray[np.complexfloating])
+assert_type(MAR_u4 * AR_LIKE_td64, MaskedArray[np.timedelta64])
+assert_type(MAR_u4 * AR_LIKE_o, Any)
+
+assert_type(MAR_i8 * AR_LIKE_b, MaskedArray[np.int64])
+assert_type(MAR_i8 * AR_LIKE_u, MaskedArray[np.signedinteger])
+assert_type(MAR_i8 * AR_LIKE_i, MaskedArray[np.signedinteger])
+assert_type(MAR_i8 * AR_LIKE_f, MaskedArray[np.floating])
+assert_type(MAR_i8 * AR_LIKE_c, MaskedArray[np.complexfloating])
+assert_type(MAR_i8 * AR_LIKE_td64, MaskedArray[np.timedelta64])
+assert_type(MAR_i8 * AR_LIKE_o, Any)
+
+assert_type(MAR_f8 * AR_LIKE_b, MaskedArray[np.float64])
+assert_type(MAR_f8 * AR_LIKE_u, MaskedArray[np.float64])
+assert_type(MAR_f8 * AR_LIKE_i, MaskedArray[np.float64])
+assert_type(MAR_f8 * AR_LIKE_f, MaskedArray[np.float64])
+assert_type(MAR_f8 * AR_LIKE_c, MaskedArray[np.complexfloating])
+assert_type(MAR_f8 * AR_LIKE_o, Any)
+
+# Ignore due to https://github.com/python/mypy/issues/19341
+assert_type(AR_LIKE_b * MAR_f8, MaskedArray[np.float64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_u * MAR_f8, MaskedArray[np.float64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_i * MAR_f8, MaskedArray[np.float64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_f * MAR_f8, MaskedArray[np.float64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_c * MAR_f8, MaskedArray[np.complexfloating])  # type: ignore[assert-type]
+assert_type(AR_LIKE_o * MAR_f8, Any)  # type: ignore[assert-type]
+
+assert_type(MAR_c16 * AR_LIKE_b, MaskedArray[np.complex128])
+assert_type(MAR_c16 * AR_LIKE_u, MaskedArray[np.complex128])
+assert_type(MAR_c16 * AR_LIKE_i, MaskedArray[np.complex128])
+assert_type(MAR_c16 * AR_LIKE_f, MaskedArray[np.complex128])
+assert_type(MAR_c16 * AR_LIKE_c, MaskedArray[np.complex128])
+assert_type(MAR_c16 * AR_LIKE_o, Any)
+
+# Ignore due to https://github.com/python/mypy/issues/19341
+assert_type(AR_LIKE_b * MAR_c16, MaskedArray[np.complex128])  # type: ignore[assert-type]
+assert_type(AR_LIKE_u * MAR_c16, MaskedArray[np.complex128])  # type: ignore[assert-type]
+assert_type(AR_LIKE_i * MAR_c16, MaskedArray[np.complex128])  # type: ignore[assert-type]
+assert_type(AR_LIKE_f * MAR_c16, MaskedArray[np.complex128])  # type: ignore[assert-type]
+assert_type(AR_LIKE_c * MAR_c16, MaskedArray[np.complex128])  # type: ignore[assert-type]
+assert_type(AR_LIKE_o * MAR_c16, Any)  # type: ignore[assert-type]
+
+assert_type(MAR_td64 * AR_LIKE_b, MaskedArray[np.timedelta64])
+assert_type(MAR_td64 * AR_LIKE_u, MaskedArray[np.timedelta64])
+assert_type(MAR_td64 * AR_LIKE_i, MaskedArray[np.timedelta64])
+assert_type(MAR_td64 * AR_LIKE_o, Any)
+
+# Ignore due to https://github.com/python/mypy/issues/19341
+assert_type(AR_LIKE_b * MAR_td64, MaskedArray[np.timedelta64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_u * MAR_td64, MaskedArray[np.timedelta64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_i * MAR_td64, MaskedArray[np.timedelta64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_td64 * MAR_td64, MaskedArray[np.timedelta64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_dt64 * MAR_td64, MaskedArray[np.datetime64])  # type: ignore[assert-type]
+assert_type(AR_LIKE_o * MAR_td64, Any)  # type: ignore[assert-type]
+
+assert_type(AR_LIKE_o * MAR_dt64, Any)  # type: ignore[assert-type]
+
+assert_type(MAR_o * AR_LIKE_b, Any)
+assert_type(MAR_o * AR_LIKE_u, Any)
+assert_type(MAR_o * AR_LIKE_i, Any)
+assert_type(MAR_o * AR_LIKE_f, Any)
+assert_type(MAR_o * AR_LIKE_c, Any)
+assert_type(MAR_o * AR_LIKE_td64, Any)
+assert_type(MAR_o * AR_LIKE_dt64, Any)
+assert_type(MAR_o * AR_LIKE_o, Any)
+
+# Ignore due to https://github.com/python/mypy/issues/19341
+assert_type(AR_LIKE_b * MAR_o, Any)  # type: ignore[assert-type]
+assert_type(AR_LIKE_u * MAR_o, Any)  # type: ignore[assert-type]
+assert_type(AR_LIKE_i * MAR_o, Any)  # type: ignore[assert-type]
+assert_type(AR_LIKE_f * MAR_o, Any)  # type: ignore[assert-type]
+assert_type(AR_LIKE_c * MAR_o, Any)  # type: ignore[assert-type]
+assert_type(AR_LIKE_td64 * MAR_o, Any)  # type: ignore[assert-type]
+assert_type(AR_LIKE_dt64 * MAR_o, Any)  # type: ignore[assert-type]
+assert_type(AR_LIKE_o * MAR_o, Any)  # type: ignore[assert-type]
