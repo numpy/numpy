@@ -14,6 +14,7 @@ from typing import (
     ClassVar,
     Final,
     Generic,
+    Literal as L,
     NoReturn,
     ParamSpec,
     Self,
@@ -23,7 +24,6 @@ from typing import (
     overload,
     type_check_only,
 )
-from typing import Literal as L
 from typing_extensions import TypeVar
 from unittest.case import SkipTest
 

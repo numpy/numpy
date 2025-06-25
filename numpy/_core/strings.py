@@ -14,10 +14,8 @@ from numpy import (
     greater_equal,
     less,
     less_equal,
-    not_equal,
-)
-from numpy import (
     multiply as _multiply_ufunc,
+    not_equal,
 )
 from numpy._core.multiarray import _vec_string
 from numpy._core.overrides import array_function_dispatch, set_module
@@ -40,6 +38,10 @@ from numpy._core.umath import (
     _strip_chars,
     _strip_whitespace,
     _zfill,
+    count as _count_ufunc,
+    endswith as _endswith_ufunc,
+    find as _find_ufunc,
+    index as _index_ufunc,
     isalnum,
     isalpha,
     isdecimal,
@@ -49,28 +51,10 @@ from numpy._core.umath import (
     isspace,
     istitle,
     isupper,
-    str_len,
-)
-from numpy._core.umath import (
-    count as _count_ufunc,
-)
-from numpy._core.umath import (
-    endswith as _endswith_ufunc,
-)
-from numpy._core.umath import (
-    find as _find_ufunc,
-)
-from numpy._core.umath import (
-    index as _index_ufunc,
-)
-from numpy._core.umath import (
     rfind as _rfind_ufunc,
-)
-from numpy._core.umath import (
     rindex as _rindex_ufunc,
-)
-from numpy._core.umath import (
     startswith as _startswith_ufunc,
+    str_len,
 )
 
 

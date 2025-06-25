@@ -10,8 +10,7 @@ import warnings
 import numpy as np
 from numpy.exceptions import AxisError
 
-from . import multiarray, numerictypes, overrides, shape_base, umath
-from . import numerictypes as nt
+from . import multiarray, numerictypes, numerictypes as nt, overrides, shape_base, umath
 from ._ufunc_config import errstate
 from .multiarray import (  # noqa: F401
     ALLOW_THREADS,

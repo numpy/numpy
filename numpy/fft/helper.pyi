@@ -1,5 +1,4 @@
-from typing import Any
-from typing import Literal as L
+from typing import Any, Literal as L
 from typing_extensions import deprecated
 
 import numpy as np

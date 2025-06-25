@@ -1,6 +1,5 @@
 from builtins import bool as py_bool
-from typing import Final, TypedDict, type_check_only
-from typing import Literal as L
+from typing import Final, Literal as L, TypedDict, type_check_only
 
 import numpy as np
 from numpy import (

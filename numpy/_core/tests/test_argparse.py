@@ -18,8 +18,6 @@ import pytest
 import numpy as np
 from numpy._core._multiarray_tests import (
     argparse_example_function as func,
-)
-from numpy._core._multiarray_tests import (
     threaded_argparse_example_function as thread_func,
 )
 from numpy.testing import IS_WASM
