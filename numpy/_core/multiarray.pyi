@@ -528,7 +528,6 @@ def concatenate(  # type: ignore[misc]
     casting: _CastingKind | None = ...
 ) -> NDArray[_ScalarT]: ...
 @overload
-@overload
 def concatenate(  # type: ignore[misc]
     arrays: SupportsLenAndGetItem[ArrayLike],
     /,
