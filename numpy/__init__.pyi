@@ -2425,7 +2425,16 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = ...,
-        out: _ArrayT = ...,
+        *,
+        out: _ArrayT,
+        mode: _ModeKind = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None,
+        out: _ArrayT,
         mode: _ModeKind = ...,
     ) -> _ArrayT: ...
 
@@ -3655,7 +3664,16 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         self,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = ...,
-        out: _ArrayT = ...,
+        *,
+        out: _ArrayT,
+        mode: _ModeKind = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None,
+        out: _ArrayT,
         mode: _ModeKind = ...,
     ) -> _ArrayT: ...
 
