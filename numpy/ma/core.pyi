@@ -866,8 +866,73 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def __rfloordiv__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
-    def __pow__(self, other, mod: None = None, /): ...
-    def __rpow__(self, other, mod: None = None, /): ...
+    # Keep in sync with `ndarray.__pow__`
+    @overload
+    def __pow__(self: _MaskedArray[_NumberT], other: int | np.bool, mod: None = None, /) -> MaskedArray[_ShapeT_co, dtype[_NumberT]]: ...
+    @overload
+    def __pow__(self: _MaskedArray[_NumberT], other: _ArrayLikeBool_co, mod: None = None, /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __pow__(self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, mod: None = None, /) -> _MaskedArray[int8]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __pow__(self: _MaskedArray[np.bool], other: _ArrayLike[_NumberT], mod: None = None, /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __pow__(self: _MaskedArray[float64], other: _ArrayLikeFloat64_co, mod: None = None, /) -> _MaskedArray[float64]: ...
+    @overload
+    def __pow__(self: _MaskedArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], mod: None = None, /) -> _MaskedArray[float64]: ...
+    @overload
+    def __pow__(self: _MaskedArray[complex128], other: _ArrayLikeComplex128_co, mod: None = None, /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __pow__(
+        self: _MaskedArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], mod: None = None, /
+    ) -> _MaskedArray[complex128]: ...
+    @overload
+    def __pow__(self: _MaskedArrayUInt_co, other: _ArrayLikeUInt_co, mod: None = None, /) -> _MaskedArray[unsignedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __pow__(self: _MaskedArrayInt_co, other: _ArrayLikeInt_co, mod: None = None, /) -> _MaskedArray[signedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __pow__(self: _MaskedArrayFloat_co, other: _ArrayLikeFloat_co, mod: None = None, /) -> _MaskedArray[floating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __pow__(self: _MaskedArrayComplex_co, other: _ArrayLikeComplex_co, mod: None = None, /) -> _MaskedArray[complexfloating]: ...
+    @overload
+    def __pow__(self: _MaskedArray[number], other: _ArrayLikeNumber_co, mod: None = None, /) -> _MaskedArray[number]: ...
+    @overload
+    def __pow__(self: _MaskedArray[object_], other: Any, mod: None = None, /) -> Any: ...
+    @overload
+    def __pow__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, mod: None = None, /) -> Any: ...
+
+    # Keep in sync with `ndarray.__rpow__`
+    @overload
+    def __rpow__(self: _MaskedArray[_NumberT], other: int | np.bool, mod: None = None, /) -> MaskedArray[_ShapeT_co, dtype[_NumberT]]: ...
+    @overload
+    def __rpow__(self: _MaskedArray[_NumberT], other: _ArrayLikeBool_co, mod: None = None, /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rpow__(self: _MaskedArray[np.bool], other: _ArrayLikeBool_co, mod: None = None, /) -> _MaskedArray[int8]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rpow__(self: _MaskedArray[np.bool], other: _ArrayLike[_NumberT], mod: None = None, /) -> _MaskedArray[_NumberT]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rpow__(self: _MaskedArray[float64], other: _ArrayLikeFloat64_co, mod: None = None, /) -> _MaskedArray[float64]: ...
+    @overload
+    def __rpow__(self: _MaskedArrayFloat64_co, other: _ArrayLike[floating[_64Bit]], mod: None = None, /) -> _MaskedArray[float64]: ...
+    @overload
+    def __rpow__(self: _MaskedArray[complex128], other: _ArrayLikeComplex128_co, mod: None = None, /) -> _MaskedArray[complex128]: ...
+    @overload
+    def __rpow__(
+        self: _MaskedArrayComplex128_co, other: _ArrayLike[complexfloating[_64Bit]], mod: None = None, /
+    ) -> _MaskedArray[complex128]: ...
+    @overload
+    def __rpow__(self: _MaskedArrayUInt_co, other: _ArrayLikeUInt_co, mod: None = None, /) -> _MaskedArray[unsignedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rpow__(self: _MaskedArrayInt_co, other: _ArrayLikeInt_co, mod: None = None, /) -> _MaskedArray[signedinteger]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rpow__(self: _MaskedArrayFloat_co, other: _ArrayLikeFloat_co, mod: None = None, /) -> _MaskedArray[floating]: ...  # type: ignore[overload-overlap]
+    @overload
+    def __rpow__(self: _MaskedArrayComplex_co, other: _ArrayLikeComplex_co, mod: None = None, /) -> _MaskedArray[complexfloating]: ...
+    @overload
+    def __rpow__(self: _MaskedArray[number], other: _ArrayLikeNumber_co, mod: None = None, /) -> _MaskedArray[number]: ...
+    @overload
+    def __rpow__(self: _MaskedArray[object_], other: Any, mod: None = None, /) -> Any: ...
+    @overload
+    def __rpow__(self: _MaskedArray[Any], other: _ArrayLikeObject_co, mod: None = None, /) -> Any: ...
 
     # Keep in sync with `ndarray.__iadd__`
     @overload

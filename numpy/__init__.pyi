@@ -3211,6 +3211,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __rfloordiv__(self: NDArray[Any], other: _ArrayLikeObject_co, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__pow__`
     @overload
     def __pow__(self: NDArray[_NumberT], other: int | np.bool, mod: None = None, /) -> ndarray[_ShapeT_co, dtype[_NumberT]]: ...
     @overload
@@ -3244,6 +3245,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     @overload
     def __pow__(self: NDArray[Any], other: _ArrayLikeObject_co, mod: None = None, /) -> Any: ...
 
+    # Keep in sync with `MaskedArray.__rpow__`
     @overload
     def __rpow__(self: NDArray[_NumberT], other: int | np.bool, mod: None = None, /) -> ndarray[_ShapeT_co, dtype[_NumberT]]: ...
     @overload
