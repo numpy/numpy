@@ -1741,6 +1741,7 @@ class _ArrayOrScalarCommon:
     @overload
     def argmin(self, /, axis: SupportsIndex | None = None, *, out: _BoolOrIntArrayT, keepdims: builtins.bool = False) -> _BoolOrIntArrayT: ...
 
+    # Keep in sync with `MaskedArray.round`
     @overload  # out=None (default)
     def round(self, /, decimals: SupportsIndex = 0, out: None = None) -> Self: ...
     @overload  # out=ndarray
@@ -2385,6 +2386,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         stable: bool | None = ...,
     ) -> None: ...
 
+    # Keep in sync with `MaskedArray.trace`
     @overload
     def trace(
         self,  # >= 2D array
