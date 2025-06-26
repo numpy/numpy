@@ -24,14 +24,16 @@ def doxy_gen(root_path):
 class DoxyTpl(Template):
     delimiter = '@'
 
+
 # Do not look for doxygen commented code in these directories
-skiplist=[
+skiplist = [
     'numpy/build',
     'numpy/vendored-meson',
     'numpy/.git',
     'numpy/doc/build',
     'numpy/benchmarks/env',  # gh-29274
 ]
+
 
 def doxy_config(root_path):
     """
@@ -45,7 +47,7 @@ def doxy_config(root_path):
         confs.append(conf.substitute(CUR_DIR=dsrc_path, **sub))
 
     for dpath, _, files in os.walk(root_path):
-        if any([s in dpath for s in skiplist]):
+        if any(s in dpath for s in skiplist):
             continue
         if ".doxyfile" not in files:
             continue
