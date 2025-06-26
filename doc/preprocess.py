@@ -4,7 +4,7 @@ from string import Template
 
 
 def main():
-    doxy_gen(os.path.abspath(os.path.join('..')))
+    doxy_gen(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def doxy_gen(root_path):
     """
@@ -24,6 +24,15 @@ def doxy_gen(root_path):
 class DoxyTpl(Template):
     delimiter = '@'
 
+# Do not look for doxygen commented code in these directories
+skiplist=[
+    'numpy/build',
+    'numpy/vendored-meson',
+    'numpy/.git',
+    'numpy/doc/build',
+    'numpy/benchmarks/env',  # gh-29274
+]
+
 def doxy_config(root_path):
     """
     Fetch all Doxygen sub-config files and gather it with the main config file.
@@ -36,6 +45,8 @@ def doxy_config(root_path):
         confs.append(conf.substitute(CUR_DIR=dsrc_path, **sub))
 
     for dpath, _, files in os.walk(root_path):
+        if any([s in dpath for s in skiplist]):
+            continue
         if ".doxyfile" not in files:
             continue
         conf_path = os.path.join(dpath, ".doxyfile")
