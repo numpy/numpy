@@ -25,16 +25,6 @@ class DoxyTpl(Template):
     delimiter = '@'
 
 
-# Do not look for doxygen commented code in these directories
-skiplist = [
-    'numpy/build',
-    'numpy/vendored-meson',
-    'numpy/.git',
-    'numpy/doc/build',
-    'numpy/benchmarks/env',  # gh-29274
-]
-
-
 def doxy_config(root_path):
     """
     Fetch all Doxygen sub-config files and gather it with the main config file.
@@ -46,15 +36,14 @@ def doxy_config(root_path):
         conf = DoxyTpl(fd.read())
         confs.append(conf.substitute(CUR_DIR=dsrc_path, **sub))
 
-    for dpath, _, files in os.walk(root_path):
-        if any(s in dpath for s in skiplist):
-            continue
-        if ".doxyfile" not in files:
-            continue
-        conf_path = os.path.join(dpath, ".doxyfile")
-        with open(conf_path) as fd:
-            conf = DoxyTpl(fd.read())
-            confs.append(conf.substitute(CUR_DIR=dpath, **sub))
+    for subdir in ["doc", "numpy"]:
+        for dpath, _, files in os.walk(os.path.join(root_path, subdir)):
+            if ".doxyfile" not in files:
+                continue
+            conf_path = os.path.join(dpath, ".doxyfile")
+            with open(conf_path) as fd:
+                conf = DoxyTpl(fd.read())
+                confs.append(conf.substitute(CUR_DIR=dpath, **sub))
     return confs
 
 
