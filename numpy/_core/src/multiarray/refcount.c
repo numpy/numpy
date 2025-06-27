@@ -2,6 +2,13 @@
  * This module corresponds to the `Special functions for NPY_OBJECT`
  * section in the numpy reference for C-API.
  */
+
+/* Any file that includes Python.h must include it before any other files */
+/* https://docs.python.org/3/extending/extending.html#a-simple-example */
+/* npy_common.h includes Python.h so it also counts in this list */
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #include "array_method.h"
 #include "dtype_traversal.h"
 #include "lowlevel_strided_loops.h"
@@ -9,8 +16,6 @@
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 
-#define PY_SSIZE_T_CLEAN
-#include <Python.h>
 #include <structmember.h>
 
 #include "numpy/arrayobject.h"

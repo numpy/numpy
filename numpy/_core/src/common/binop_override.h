@@ -1,8 +1,12 @@
 #ifndef NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_
 #define NUMPY_CORE_SRC_COMMON_BINOP_OVERRIDE_H_
 
-#include <string.h>
+/* Any file that includes Python.h must include it before any other files */
+/* https://docs.python.org/3/extending/extending.html#a-simple-example */
+/* npy_common.h includes Python.h so it also counts in this list */
 #include <Python.h>
+
+#include <string.h>
 #include "numpy/arrayobject.h"
 
 #include "get_attr_string.h"
