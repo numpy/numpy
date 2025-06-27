@@ -830,6 +830,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 precision=precision)
             raise AssertionError(msg)
 
+    def error2string(error):
+        return (
+            str(error) if getattr(error, 'dtype', object_) == object_
+            else array2string(error)
+        )
+
     try:
         if strict:
             cond = x.shape == y.shape and x.dtype == y.dtype
@@ -948,14 +954,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
                     reduced_error = error[invalids]
                     max_abs_error = max(reduced_error)
-                    if getattr(error, 'dtype', object_) == object_:
-                        remarks.append(
-                            'Max absolute difference among violations: '
-                            + str(max_abs_error))
-                    else:
-                        remarks.append(
-                            'Max absolute difference among violations: '
-                            + array2string(max_abs_error))
+                    remarks.append('Max absolute difference among violations: '
+                        + error2string(max_abs_error))
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
@@ -972,14 +972,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         max_rel_error = max(nonzero_invalid_error
                                             / abs(nonzero_invalid_y))
 
-                    if getattr(error, 'dtype', object_) == object_:
-                        remarks.append(
-                            'Max relative difference among violations: '
-                            + str(max_rel_error))
-                    else:
-                        remarks.append(
-                            'Max relative difference among violations: '
-                            + array2string(max_rel_error))
+                    remarks.append('Max relative difference among violations: '
+                        + error2string(max_rel_error))
             err_msg = str(err_msg)
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
