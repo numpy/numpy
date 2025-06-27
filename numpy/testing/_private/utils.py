@@ -25,7 +25,7 @@ from warnings import WarningMessage
 
 import numpy as np
 import numpy.linalg._umath_linalg
-from numpy import isfinite, isinf, isnan
+from numpy import isfinite, isnan
 from numpy._core import arange, array, array_repr, empty, float32, intp, isnat, ndarray
 
 __all__ = [
@@ -1183,24 +1183,9 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy._core import number, result_type
-    from numpy._core.fromnumeric import any as npany
     from numpy._core.numerictypes import issubdtype
 
     def compare(x, y):
-        try:
-            if npany(isinf(x)) or npany(isinf(y)):
-                xinfid = isinf(x)
-                yinfid = isinf(y)
-                if not (xinfid == yinfid).all():
-                    return False
-                # if one item, x and y is +- inf
-                if x.size == y.size == 1:
-                    return x == y
-                x = x[~xinfid]
-                y = y[~yinfid]
-        except (TypeError, NotImplementedError):
-            pass
-
         # make sure y is an inexact type to avoid abs(MIN_INT); will cause
         # casting of x later.
         dtype = result_type(y, 1.)
