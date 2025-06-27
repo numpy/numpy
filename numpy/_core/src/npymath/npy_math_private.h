@@ -18,6 +18,9 @@
 #ifndef _NPY_MATH_PRIVATE_H_
 #define _NPY_MATH_PRIVATE_H_
 
+/* Any file that includes Python.h must include it before any other files */
+/* https://docs.python.org/3/extending/extending.html#a-simple-example */
+/* npy_common.h includes Python.h so it also counts in this list */
 #include <Python.h>
 #ifdef __cplusplus
 #include <cmath>

@@ -2,6 +2,9 @@
 #ifndef NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_
 #define NUMPY_CORE_SRC_MULTIARRAY_TEXTREADING_FIELD_TYPES_H_
 
+/* Any file that includes Python.h must include it before any other files */
+/* https://docs.python.org/3/extending/extending.html#a-simple-example */
+/* npy_common.h includes Python.h so it also counts in this list */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
