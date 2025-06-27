@@ -898,18 +898,17 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
         if isinstance(val, bool):
             cond = val
-            reduced = array([val])
+            val = array([val])
         else:
-            reduced = val.ravel()
-            cond = reduced.all()
+            cond = val.all()
 
         # The below comparison is a hack to ensure that fully masked
-        # results, for which val.ravel().all() returns np.ma.masked,
+        # results, for which val.all() returns np.ma.masked,
         # do not trigger a failure (np.ma.masked != True evaluates as
         # np.ma.masked, which is falsy).
         if cond != True:
-            n_mismatch = reduced.size - reduced.sum(dtype=intp)
-            n_elements = flagged.size if flagged.ndim != 0 else reduced.size
+            n_mismatch = val.size - val.sum(dtype=intp)
+            n_elements = flagged.size if flagged.ndim != 0 else val.size
             percent_mismatch = 100 * n_mismatch / n_elements
             remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
                        f'({percent_mismatch:.3g}%)']
