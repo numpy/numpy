@@ -969,8 +969,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         nonzero_invalid_error = error[nonzero_and_invalid]
                         broadcasted_y = np.broadcast_to(y, error.shape)
                         nonzero_invalid_y = broadcasted_y[nonzero_and_invalid]
-                        max_rel_error = max(nonzero_invalid_error
-                                            / abs(nonzero_invalid_y))
+                        reduced_rel_error = (
+                            nonzero_invalid_error / abs(nonzero_invalid_y)
+                        )
+                        max_rel_error = max(reduced_rel_error)
 
                     remarks.append('Max relative difference among violations: '
                         + error2string(max_rel_error))
