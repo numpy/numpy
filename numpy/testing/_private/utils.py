@@ -25,7 +25,7 @@ from warnings import WarningMessage
 
 import numpy as np
 import numpy.linalg._umath_linalg
-from numpy import isfinite, isnan
+from numpy import isfinite, isnan, s_
 from numpy._core import arange, array, array_repr, empty, float32, intp, isnat, ndarray
 
 __all__ = [
@@ -257,6 +257,10 @@ def build_err_msg(arrays, err_msg, header='Items are not equal:',
                 r += '...'
             msg.append(f' {names[i]}: {r}')
     return '\n'.join(msg)
+
+
+def argmax_indices(x):
+    return np.unravel_index(np.argmax(x), x.shape)
 
 
 def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
@@ -577,7 +581,10 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     Mismatch at index:
      [1]: 2.3333333333333 (ACTUAL), 2.33333334 (DESIRED)
     Max absolute difference among violations: 6.66669964e-09
+     |2.33333333 - 2.33333334| at index [1]
     Max relative difference among violations: 2.85715698e-09
+     |2.33333333 - 2.33333334| / |2.33333334| at index [1]
+    <BLANKLINE>
      ACTUAL: array([1.         , 2.333333333])
      DESIRED: array([1.        , 2.33333334])
 
@@ -741,7 +748,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False, names=('ACTUAL', 'DESIRED')):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy._core import all, array2string, errstate, inf, isnan, max, object_
+    from numpy._core import all, array2string, errstate, inf, isnan, object_
 
     x = np.asanyarray(x)
     y = np.asanyarray(y)
@@ -836,6 +843,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             else array2string(error)
         )
 
+    def max_error_detail_string(calc_str, index):
+        index_str = f' at index {index.tolist()}' if index is not None else ''
+        return f' {calc_str}{index_str}'
+
     try:
         if strict:
             cond = x.shape == y.shape and x.dtype == y.dtype
@@ -914,7 +925,12 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         # np.ma.masked, which is falsy).
         if cond != True:
             n_mismatch = val.size - val.sum(dtype=intp)
-            n_elements = flagged.size if flagged.ndim != 0 else val.size
+            if flagged.ndim != 0:
+                n_elements = flagged.size
+                xy_indices = np.indices(flagged.shape)[:, ~flagged]
+            else:
+                n_elements = val.size
+                xy_indices = np.indices(val.shape)
             percent_mismatch = 100 * n_mismatch / n_elements
             remarks = [f'Mismatched elements: {n_mismatch} / {n_elements} '
                        f'({percent_mismatch:.3g}%)']
@@ -948,6 +964,8 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 # ignore errors for non-numeric types
                 with contextlib.suppress(TypeError):
                     error = abs(x - y)
+                    broadcasted_x = np.broadcast_to(x, np.shape(error))
+                    broadcasted_y = np.broadcast_to(y, np.shape(error))
                     if np.issubdtype(x.dtype, np.unsignedinteger):
                         error2 = abs(y - x)
                         np.minimum(error, error2, out=error)
@@ -956,9 +974,22 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                         # Avoids unintentionally adding a dimension
                         invalids = np.ones_like(error, dtype=bool)
                     reduced_error = error[invalids]
-                    max_abs_error = max(reduced_error)
+                    abs_error_argmax = argmax_indices(reduced_error)
+                    max_abs_error = reduced_error[abs_error_argmax]
+                    max_abs_error_x = broadcasted_x[invalids][abs_error_argmax]
+                    max_abs_error_y = broadcasted_y[invalids][abs_error_argmax]
+                    max_abs_error_index = np.hstack(
+                        xy_indices[:, invalids][(s_[:], *abs_error_argmax)]
+                    ) if xy_indices.size > 0 else None
+
                     remarks.append('Max absolute difference among violations: '
                         + error2string(max_abs_error))
+                    if verbose:
+                        calc = (
+                            f'|{error2string(max_abs_error_x)} -'
+                            f' {error2string(max_abs_error_y)}|')
+                        remarks.append(max_error_detail_string(
+                            calc, max_abs_error_index))
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
@@ -968,17 +999,39 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
                     if all(~nonzero_and_invalid):
                         max_rel_error = array(inf)
+                        max_rel_error_x = broadcasted_x[invalids].flat[0]
+                        max_rel_error_y = broadcasted_y[invalids].flat[0]
+                        max_rel_error_index = np.hstack(
+                            xy_indices[:, invalids][(
+                                s_[:], *((0,) * (xy_indices.ndim - 1))
+                            )]
+                         ) if xy_indices.size > 0 else None
                     else:
                         nonzero_invalid_error = error[nonzero_and_invalid]
-                        broadcasted_y = np.broadcast_to(y, error.shape)
                         nonzero_invalid_y = broadcasted_y[nonzero_and_invalid]
                         reduced_rel_error = (
                             nonzero_invalid_error / abs(nonzero_invalid_y)
                         )
-                        max_rel_error = max(reduced_rel_error)
+                        rel_error_argmax = argmax_indices(reduced_rel_error)
+                        max_rel_error = reduced_rel_error[rel_error_argmax]
+                        max_rel_error_x = (
+                            broadcasted_x[nonzero_and_invalid][rel_error_argmax])
+                        max_rel_error_y = (
+                            broadcasted_y[nonzero_and_invalid][rel_error_argmax])
+                        max_rel_error_index = np.hstack(
+                            xy_indices[:, nonzero_and_invalid][(
+                                s_[:], *rel_error_argmax
+                            )]
+                        ) if xy_indices.size > 0 else None
 
                     remarks.append('Max relative difference among violations: '
                         + error2string(max_rel_error))
+                    if verbose:
+                        calc = (f'|{error2string(max_rel_error_x)} -'
+                                f' {error2string(max_rel_error_y)}| / '
+                                f'|{error2string(max_rel_error_y)}|')
+                        remarks.append(max_error_detail_string(
+                            calc, max_rel_error_index) + '\n')
             err_msg = str(err_msg)
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
@@ -1077,7 +1130,10 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
     Mismatch at index:
      [1]: 3.141592653589793 (ACTUAL), 3.1415926535897927 (DESIRED)
     Max absolute difference among violations: 4.4408921e-16
+     |3.14159265 - 3.14159265| at index [1]
     Max relative difference among violations: 1.41357986e-16
+     |3.14159265 - 3.14159265| / |3.14159265| at index [1]
+    <BLANKLINE>
      ACTUAL: array([1.      , 3.141593,      nan])
      DESIRED: array([1.      , 3.141593,      nan])
 
@@ -1192,7 +1248,10 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
     Mismatch at index:
      [1]: 2.33333 (ACTUAL), 2.33339 (DESIRED)
     Max absolute difference among violations: 6.e-05
+     |2.33333 - 2.33339| at index [1]
     Max relative difference among violations: 2.57136612e-05
+     |2.33333 - 2.33339| / |2.33339| at index [1]
+    <BLANKLINE>
      ACTUAL: array([1.     , 2.33333,     nan])
      DESIRED: array([1.     , 2.33339,     nan])
 
@@ -1300,7 +1359,10 @@ def assert_array_less(x, y, err_msg='', verbose=True, *, strict=False):
     Mismatch at index:
      [0]: 1.0 (x), 1.0 (y)
     Max absolute difference among violations: 0.
+     |1. - 1.| at index [0]
     Max relative difference among violations: 0.
+     |1. - 1.| / |1.| at index [0]
+    <BLANKLINE>
      x: array([ 1.,  1., nan])
      y: array([ 1.,  2., nan])
 
@@ -1821,7 +1883,7 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
     >>> np.testing.assert_array_almost_equal_nulp(x, x*eps + x)
     Traceback (most recent call last):
       ...
-    AssertionError: Arrays are not equal to 1 ULP (max is 2)
+    AssertionError: Arrays are not equal to 1 ULP (max is 2 at index [1])
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
@@ -1833,8 +1895,13 @@ def assert_array_almost_equal_nulp(x, y, nulp=1):
         if np.iscomplexobj(x) or np.iscomplexobj(y):
             msg = f"Arrays are not equal to {nulp} ULP"
         else:
-            max_nulp = np.max(nulp_diff(x, y))
-            msg = f"Arrays are not equal to {nulp} ULP (max is {max_nulp:g})"
+            result = nulp_diff(x, y)
+            argmax_nulp = argmax_indices(result)
+            max_nulp = result[argmax_nulp]
+            index_str = (
+                f" at index {np.array(argmax_nulp).tolist()}" if argmax_nulp else "")
+            msg = (f"Arrays are not equal to {nulp} ULP "
+                   f"(max is {max_nulp:g}{index_str})")
         raise AssertionError(msg)
 
 
@@ -1884,9 +1951,13 @@ def assert_array_max_ulp(a, b, maxulp=1, dtype=None):
     import numpy as np
     ret = nulp_diff(a, b, dtype)
     if not np.all(ret <= maxulp):
+        argmax_nulp = argmax_indices(ret)
+        max_nulp = ret[argmax_nulp]
+        index_str = (
+            f" at index {np.array(argmax_nulp).tolist()}" if argmax_nulp else "")
         raise AssertionError("Arrays are not almost equal up to %g "
-                             "ULP (max difference is %g ULP)" %
-                             (maxulp, np.max(ret)))
+                             "ULP (max difference is %g ULP%s)" %
+                             (maxulp, max_nulp, index_str))
     return ret
 
 
