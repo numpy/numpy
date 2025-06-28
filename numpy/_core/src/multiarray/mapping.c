@@ -3013,6 +3013,8 @@ PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type,
         if (extra_op == NULL) {
             goto fail;
         }
+        // extra_op_dtype might have been replaced, so get a new reference
+        extra_op_dtype = PyArray_DESCR(extra_op);
     }
 
     /*
