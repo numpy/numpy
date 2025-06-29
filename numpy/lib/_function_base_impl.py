@@ -67,7 +67,7 @@ __all__ = [
     'diff', 'gradient', 'angle', 'unwrap', 'sort_complex', 'flip',
     'rot90', 'extract', 'place', 'vectorize', 'asarray_chkfinite', 'average',
     'bincount', 'digitize', 'cov', 'corrcoef',
-    'median', 'sinc', 'hamming', 'hanning', 'bartlett',
+    'median', 'sinc', 'hamming', 'hann', 'hanning', 'bartlett',
     'blackman', 'kaiser', 'trapezoid', 'trapz', 'i0',
     'meshgrid', 'delete', 'insert', 'append', 'interp',
     'quantile'
@@ -3104,7 +3104,7 @@ def blackman(M):
 
     See Also
     --------
-    bartlett, hamming, hanning, kaiser
+    bartlett, hamming, hann, kaiser
 
     Notes
     -----
@@ -3205,7 +3205,7 @@ def bartlett(M):
 
     See Also
     --------
-    blackman, hamming, hanning, kaiser
+    blackman, hamming, hann, kaiser
 
     Notes
     -----
@@ -3288,11 +3288,11 @@ def bartlett(M):
 
 
 @set_module('numpy')
-def hanning(M):
+def hann(M):
     """
-    Return the Hanning window.
+    Return the Hann window.
 
-    The Hanning window is a taper formed by using a weighted cosine.
+    The Hann window is a taper formed by using a weighted cosine.
 
     Parameters
     ----------
@@ -3312,17 +3312,19 @@ def hanning(M):
 
     Notes
     -----
-    The Hanning window is defined as
+    The Hann window is defined as
 
     .. math::  w(n) = 0.5 - 0.5\\cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
-    The Hanning was named for Julius von Hann, an Austrian meteorologist.
-    It is also known as the Cosine Bell. Some authors prefer that it be
-    called a Hann window, to help avoid confusion with the very similar
-    Hamming window.
+    The Hann window was named for Julius von Hann, an Austrian meteorologist.
+    It is also known as the Hanning window, which is a misnomer.
+    However, the term Hanning function is also conventionally used, derived
+    from the paper in which the term hanning a signal was used to mean applying
+    the Hann window to it. It is distinct from the similarly-named Hamming
+    function, named after Richard Hamming.
 
-    Most references to the Hanning window come from the signal processing
+    Most references to the Hann window come from the signal processing
     literature, where it is used as one of many windowing functions for
     smoothing values.  It is also known as an apodization (which means
     "removing the foot", i.e. smoothing discontinuities at the beginning
@@ -3342,7 +3344,7 @@ def hanning(M):
     Examples
     --------
     >>> import numpy as np
-    >>> np.hanning(12)
+    >>> np.hann(12)
     array([0.        , 0.07937323, 0.29229249, 0.57115742, 0.82743037,
            0.97974649, 0.97974649, 0.82743037, 0.57115742, 0.29229249,
            0.07937323, 0.        ])
@@ -3354,7 +3356,7 @@ def hanning(M):
 
         import matplotlib.pyplot as plt
         from numpy.fft import fft, fftshift
-        window = np.hanning(51)
+        window = np.hann(51)
         plt.plot(window)
         plt.title("Hann window")
         plt.ylabel("Amplitude")
@@ -3388,6 +3390,20 @@ def hanning(M):
     n = arange(1 - M, M, 2)
     return 0.5 + 0.5 * cos(pi * n / (M - 1))
 
+@set_module('numpy')
+def hanning(M):
+    """
+    `hanning` is deprecated in NumPy 2.3.
+
+    Please use `hann` instead.
+    """
+    # Deprecated in NumPy 2.3, 2025-06-04
+    warnings.warn(
+        "`hanning` is deprecated. Use `hann` instead. (Deprecated NumPy 2.4)",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return hann(M)
 
 @set_module('numpy')
 def hamming(M):
@@ -3410,7 +3426,7 @@ def hamming(M):
 
     See Also
     --------
-    bartlett, blackman, hanning, kaiser
+    bartlett, blackman, hann, kaiser
 
     Notes
     -----
@@ -3662,7 +3678,7 @@ def kaiser(M, beta):
 
     See Also
     --------
-    bartlett, blackman, hamming, hanning
+    bartlett, blackman, hamming, hann
 
     Notes
     -----
@@ -3691,7 +3707,7 @@ def kaiser(M, beta):
     ====  =======================
     0     Rectangular
     5     Similar to a Hamming
-    6     Similar to a Hanning
+    6     Similar to a Hann
     8.6   Similar to a Blackman
     ====  =======================
 

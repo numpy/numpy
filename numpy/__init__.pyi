@@ -482,6 +482,7 @@ from numpy.lib._function_base_impl import (
     median,
     sinc,
     hamming,
+    hann,
     hanning,
     bartlett,
     blackman,
@@ -711,7 +712,7 @@ __all__ = [  # noqa: RUF022
     "select", "piecewise", "trim_zeros", "copy", "iterable", "percentile", "diff",
     "gradient", "angle", "unwrap", "sort_complex", "flip", "rot90", "extract", "place",
     "vectorize", "asarray_chkfinite", "average", "bincount", "digitize", "cov",
-    "corrcoef", "median", "sinc", "hamming", "hanning", "bartlett", "blackman",
+    "corrcoef", "median", "sinc", "hamming", "hann", "hanning", "bartlett", "blackman",
     "kaiser", "trapezoid", "trapz", "i0", "meshgrid", "delete", "insert", "append",
     "interp", "quantile",
     # lib._twodim_base_impl.__all__
