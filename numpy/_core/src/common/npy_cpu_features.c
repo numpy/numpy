@@ -593,11 +593,12 @@ npy__cpu_init_features(void)
 
     hwcap = getauxval(AT_HWCAP2);
 #else
-    unsigned long hwcap;
+    unsigned long hwcap = 0;
     elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
     if ((hwcap & PPC_FEATURE_HAS_VSX) == 0)
         return;
 
+    hwcap = 0;
     elf_aux_info(AT_HWCAP2, &hwcap, sizeof(hwcap));
 #endif // __linux__
     if (hwcap & PPC_FEATURE2_ARCH_3_1)
@@ -863,7 +864,7 @@ npy__cpu_init_features(void)
 #ifdef __linux__
     unsigned int hwcap = getauxval(AT_HWCAP);
 #else
-    unsigned long hwcap;
+    unsigned long hwcap = 0;
     elf_aux_info(AT_HWCAP, &hwcap, sizeof(hwcap));
 #endif
     if (hwcap & COMPAT_HWCAP_ISA_V) {
