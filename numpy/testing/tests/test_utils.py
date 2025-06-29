@@ -566,7 +566,7 @@ class TestArrayAlmostEqual(_GenericTest):
                         ' [2]: 5498.42354 (ACTUAL), 0.0 (DESIRED)\n'
                         'Max absolute difference among violations: '
                         '5498.42354\n'
-                        'Max relative difference among violations: 5.4722099')
+                        'Max relative difference among violations: 5.47220991')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(b, a, decimal=9)
 
@@ -675,7 +675,7 @@ class TestArrayAlmostEqual(_GenericTest):
                         'Mismatch at index:\n'
                         ' [1]: 2.0 (ACTUAL), 202.0 (DESIRED)\n'
                         'Max absolute difference among violations: 200.\n'
-                        'Max relative difference among violations: 0.99009')
+                        'Max relative difference among violations: 0.99009901')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(a, b)
 
@@ -1031,7 +1031,7 @@ class TestArrayAssertLess:
                         'Max absolute difference among violations: '
                         '999087.0864\n'
                         'Max relative difference among violations: '
-                        '289288.5934676')
+                        '289288.59346769')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(y, x)
 
