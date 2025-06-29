@@ -36,10 +36,7 @@ if [[ "$INSTALL_OPENBLAS" = "true" ]] ; then
     # TODO: should we detect a missing RUNNER_ARCH and use platform.machine()
     #    when wheel build is run outside github?
     # On 32-bit platforms, use scipy_openblas32
-    # On win-arm64 use scipy_openblas32
     if [[ $RUNNER_ARCH == "X86" || $RUNNER_ARCH == "ARM" ]] ; then
-        OPENBLAS=openblas32
-    elif [[ $RUNNER_ARCH == "ARM64" && $RUNNER_OS == "Windows" ]] ; then
         OPENBLAS=openblas32
     fi
     echo PKG_CONFIG_PATH is $PKG_CONFIG_PATH, OPENBLAS is ${OPENBLAS}
