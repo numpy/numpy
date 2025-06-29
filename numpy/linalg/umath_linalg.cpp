@@ -818,7 +818,14 @@ static fortran_int getrf(fortran_int *m, fortran_int *n, f2c_complex a[], fortra
 }
 static fortran_int getrf(fortran_int *m, fortran_int *n, f2c_doublecomplex a[], fortran_int
 *lda, fortran_int ipiv[], fortran_int *info) {
- return LAPACK(zgetrf)(m, n, a, lda, ipiv, info);
+ // printf("calling zgetrf m=%d, n=%d, lda=%d\n", m[0], n[0], lda[0]);
+ fortran_int ret = LAPACK(zgetrf)(m, n, a, lda, ipiv, info);
+#if defined(__aarch64__) && (defined(__apple__) || defined(__APPLE__))
+  // See gh-29280: this call sets the floating point error registers
+  // even when no FPE occurs
+  npy_clear_floatstatus_barrier((char*)&ret);
+#endif
+ return ret;
 }
 
 /*
