@@ -3,6 +3,9 @@
 
 /* stringlib: fastsearch implementation taken from CPython */
 
+/* Any file that includes Python.h must include it before any other files */
+/* https://docs.python.org/3/extending/extending.html#a-simple-example */
+/* npy_common.h includes Python.h so it also counts in this list */
 #include <Python.h>
 #include <limits.h>
 #include <string.h>
