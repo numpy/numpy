@@ -50,11 +50,39 @@
  */
 
 NPY_NO_EXPORT int
+npy_heapsort_with_context(PyArrayMethod_SortContext *context, void *start, npy_intp num,
+                          NpyAuxData *auxdata)
+{
+    return npy_heapsort_impl(start, num, NULL, context);
+}
+
+NPY_NO_EXPORT int
+npy_aheapsort_with_context(PyArrayMethod_SortContext *context, void *vv, npy_intp *tosort,
+                           npy_intp num, NpyAuxData *auxdata)
+{
+    return npy_aheapsort_impl(vv, tosort, num, NULL, context);
+}
+
+NPY_NO_EXPORT int
 npy_heapsort(void *start, npy_intp num, void *varr)
 {
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    return npy_heapsort_impl(start, num, varr, NULL);
+}
+
+NPY_NO_EXPORT int
+npy_aheapsort(void *vv, npy_intp *tosort, npy_intp n, void *varr)
+{
+    return npy_aheapsort_impl(vv, tosort, n, varr, NULL);
+}
+
+NPY_NO_EXPORT int
+npy_heapsort_impl(void *start, npy_intp num, void *varr, PyArrayMethod_SortContext *context)
+{
+    void *arr;
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &elsize, &cmp);
+
     if (elsize == 0) {
         return 0;  /* no need for sorting elements of no size */
     }
@@ -111,12 +139,14 @@ npy_heapsort(void *start, npy_intp num, void *varr)
 }
 
 NPY_NO_EXPORT int
-npy_aheapsort(void *vv, npy_intp *tosort, npy_intp n, void *varr)
+npy_aheapsort_impl(void *vv, npy_intp *tosort, npy_intp n, void *varr, PyArrayMethod_SortContext *context)
 {
     char *v = (char *)vv;
-    PyArrayObject *arr = (PyArrayObject *)varr;
-    npy_intp elsize = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr;
+    npy_intp elsize;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &elsize, &cmp);
+
     npy_intp *a, i, j, l, tmp;
 
     /* The array needs to be offset by one for heapsort indexing */

@@ -1843,6 +1843,32 @@ cleanup:
  *****************************************************************************
  */
 
+NPY_NO_EXPORT int
+npy_timsort_with_context(PyArrayMethod_SortContext *context, void *start, npy_intp num,
+                         NpyAuxData *auxdata)
+{
+    return npy_timsort_impl(start, num, NULL, context);
+}
+
+NPY_NO_EXPORT int
+npy_atimsort_with_context(PyArrayMethod_SortContext *context, void *vv, npy_intp *tosort,
+                          npy_intp num, NpyAuxData *auxdata)
+{
+    return npy_atimsort_impl(vv, tosort, num, NULL, context);
+}
+
+NPY_NO_EXPORT int
+npy_timsort(void *start, npy_intp num, void *varr)
+{
+    return npy_timsort_impl(start, num, varr, NULL);
+}
+
+NPY_NO_EXPORT int
+npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
+{
+    return npy_atimsort_impl(start, tosort, num, varr, NULL);
+}
+
 typedef struct {
     char *pw;
     npy_intp size;
@@ -1870,7 +1896,7 @@ resize_buffer_char(buffer_char *buffer, npy_intp new_size)
 
 static npy_intp
 npy_count_run(char *arr, npy_intp l, npy_intp num, npy_intp minrun, char *vp,
-              size_t len, PyArray_CompareFunc *cmp, PyArrayObject *py_arr)
+              size_t len, PyArray_CompareFunc *cmp, void *py_arr)
 {
     npy_intp sz;
     char *pl, *pi, *pj, *pr;
@@ -1931,7 +1957,7 @@ npy_count_run(char *arr, npy_intp l, npy_intp num, npy_intp minrun, char *vp,
 
 static npy_intp
 npy_gallop_right(const char *arr, const npy_intp size, const char *key,
-                 size_t len, PyArray_CompareFunc *cmp, PyArrayObject *py_arr)
+                 size_t len, PyArray_CompareFunc *cmp, void *py_arr)
 {
     npy_intp last_ofs, ofs, m;
 
@@ -1976,7 +2002,7 @@ npy_gallop_right(const char *arr, const npy_intp size, const char *key,
 
 static npy_intp
 npy_gallop_left(const char *arr, const npy_intp size, const char *key,
-                size_t len, PyArray_CompareFunc *cmp, PyArrayObject *py_arr)
+                size_t len, PyArray_CompareFunc *cmp, void *py_arr)
 {
     npy_intp last_ofs, ofs, l, m, r;
 
@@ -2023,7 +2049,7 @@ npy_gallop_left(const char *arr, const npy_intp size, const char *key,
 
 static void
 npy_merge_left(char *p1, npy_intp l1, char *p2, npy_intp l2, char *p3,
-               size_t len, PyArray_CompareFunc *cmp, PyArrayObject *py_arr)
+               size_t len, PyArray_CompareFunc *cmp, void *py_arr)
 {
     char *end = p2 + l2 * len;
     memcpy(p3, p1, sizeof(char) * l1 * len);
@@ -2052,7 +2078,7 @@ npy_merge_left(char *p1, npy_intp l1, char *p2, npy_intp l2, char *p3,
 
 static void
 npy_merge_right(char *p1, npy_intp l1, char *p2, npy_intp l2, char *p3,
-                size_t len, PyArray_CompareFunc *cmp, PyArrayObject *py_arr)
+                size_t len, PyArray_CompareFunc *cmp, void *py_arr)
 {
     npy_intp ofs;
     char *start = p1 - len;
@@ -2087,7 +2113,7 @@ npy_merge_right(char *p1, npy_intp l1, char *p2, npy_intp l2, char *p3,
 static int
 npy_merge_at(char *arr, const run *stack, const npy_intp at,
              buffer_char *buffer, size_t len, PyArray_CompareFunc *cmp,
-             PyArrayObject *py_arr)
+             void *py_arr)
 {
     int ret;
     npy_intp s1, l1, s2, l2, k;
@@ -2137,7 +2163,7 @@ npy_merge_at(char *arr, const run *stack, const npy_intp at,
 static int
 npy_try_collapse(char *arr, run *stack, npy_intp *stack_ptr,
                  buffer_char *buffer, size_t len, PyArray_CompareFunc *cmp,
-                 PyArrayObject *py_arr)
+                 void *py_arr)
 {
     int ret;
     npy_intp A, B, C, top;
@@ -2197,7 +2223,7 @@ npy_try_collapse(char *arr, run *stack, npy_intp *stack_ptr,
 static int
 npy_force_collapse(char *arr, run *stack, npy_intp *stack_ptr,
                    buffer_char *buffer, size_t len, PyArray_CompareFunc *cmp,
-                   PyArrayObject *py_arr)
+                   void *py_arr)
 {
     int ret;
     npy_intp top = *stack_ptr;
@@ -2238,11 +2264,13 @@ npy_force_collapse(char *arr, run *stack, npy_intp *stack_ptr,
 }
 
 NPY_NO_EXPORT int
-npy_timsort(void *start, npy_intp num, void *varr)
+npy_timsort_impl(void *start, npy_intp num, void *varr, PyArrayMethod_SortContext *context)
 {
-    PyArrayObject *arr = reinterpret_cast<PyArrayObject *>(varr);
-    size_t len = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr;
+    npy_intp len;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &len, &cmp);
+    
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     run stack[RUN_STACK_SIZE];
@@ -2305,7 +2333,7 @@ cleanup:
 static npy_intp
 npy_acount_run(char *arr, npy_intp *tosort, npy_intp l, npy_intp num,
                npy_intp minrun, size_t len, PyArray_CompareFunc *cmp,
-               PyArrayObject *py_arr)
+               void *py_arr)
 {
     npy_intp sz;
     npy_intp vi;
@@ -2371,7 +2399,7 @@ npy_acount_run(char *arr, npy_intp *tosort, npy_intp l, npy_intp num,
 static npy_intp
 npy_agallop_left(const char *arr, const npy_intp *tosort, const npy_intp size,
                  const char *key, size_t len, PyArray_CompareFunc *cmp,
-                 PyArrayObject *py_arr)
+                 void *py_arr)
 {
     npy_intp last_ofs, ofs, l, m, r;
 
@@ -2420,7 +2448,7 @@ npy_agallop_left(const char *arr, const npy_intp *tosort, const npy_intp size,
 static npy_intp
 npy_agallop_right(const char *arr, const npy_intp *tosort, const npy_intp size,
                   const char *key, size_t len, PyArray_CompareFunc *cmp,
-                  PyArrayObject *py_arr)
+                  void *py_arr)
 {
     npy_intp last_ofs, ofs, m;
 
@@ -2466,7 +2494,7 @@ npy_agallop_right(const char *arr, const npy_intp *tosort, const npy_intp size,
 static void
 npy_amerge_left(char *arr, npy_intp *p1, npy_intp l1, npy_intp *p2,
                 npy_intp l2, npy_intp *p3, size_t len,
-                PyArray_CompareFunc *cmp, PyArrayObject *py_arr)
+                PyArray_CompareFunc *cmp, void *py_arr)
 {
     npy_intp *end = p2 + l2;
     memcpy(p3, p1, sizeof(npy_intp) * l1);
@@ -2490,7 +2518,7 @@ npy_amerge_left(char *arr, npy_intp *p1, npy_intp l1, npy_intp *p2,
 static void
 npy_amerge_right(char *arr, npy_intp *p1, npy_intp l1, npy_intp *p2,
                  npy_intp l2, npy_intp *p3, size_t len,
-                 PyArray_CompareFunc *cmp, PyArrayObject *py_arr)
+                 PyArray_CompareFunc *cmp, void *py_arr)
 {
     npy_intp ofs;
     npy_intp *start = p1 - 1;
@@ -2519,7 +2547,7 @@ npy_amerge_right(char *arr, npy_intp *p1, npy_intp l1, npy_intp *p2,
 static int
 npy_amerge_at(char *arr, npy_intp *tosort, const run *stack, const npy_intp at,
               buffer_intp *buffer, size_t len, PyArray_CompareFunc *cmp,
-              PyArrayObject *py_arr)
+              void *py_arr)
 {
     int ret;
     npy_intp s1, l1, s2, l2, k;
@@ -2569,7 +2597,7 @@ npy_amerge_at(char *arr, npy_intp *tosort, const run *stack, const npy_intp at,
 static int
 npy_atry_collapse(char *arr, npy_intp *tosort, run *stack, npy_intp *stack_ptr,
                   buffer_intp *buffer, size_t len, PyArray_CompareFunc *cmp,
-                  PyArrayObject *py_arr)
+                  void *py_arr)
 {
     int ret;
     npy_intp A, B, C, top;
@@ -2630,7 +2658,7 @@ npy_atry_collapse(char *arr, npy_intp *tosort, run *stack, npy_intp *stack_ptr,
 static int
 npy_aforce_collapse(char *arr, npy_intp *tosort, run *stack,
                     npy_intp *stack_ptr, buffer_intp *buffer, size_t len,
-                    PyArray_CompareFunc *cmp, PyArrayObject *py_arr)
+                    PyArray_CompareFunc *cmp, void *py_arr)
 {
     int ret;
     npy_intp top = *stack_ptr;
@@ -2674,11 +2702,13 @@ npy_aforce_collapse(char *arr, npy_intp *tosort, run *stack,
 }
 
 NPY_NO_EXPORT int
-npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
+npy_atimsort_impl(void *start, npy_intp *tosort, npy_intp num, void *varr, PyArrayMethod_SortContext *context)
 {
-    PyArrayObject *arr = reinterpret_cast<PyArrayObject *>(varr);
-    size_t len = PyArray_ITEMSIZE(arr);
-    PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
+    void *arr;
+    npy_intp len;
+    PyArray_CompareFunc *cmp;
+    fill_sort_data_from_arr_or_context(varr, context, &arr, &len, &cmp);
+
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     run stack[RUN_STACK_SIZE];
