@@ -39,6 +39,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         integer ``dtype`` is specified. The old behavior can
         still be obtained with ``np.linspace(start, stop, num).astype(int)``
 
+    .. versionchanged:: 2.4.0
+        Values are rounded towards ``+inf`` instead of ``-inf`` when an
+        integer ``dtype`` and a descending interval with ``stop`` < ``start``
+        are specified
+
     Parameters
     ----------
     start : array_like
@@ -178,7 +183,11 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None,
         y = _nx.moveaxis(y, 0, axis)
 
     if integer_dtype:
-        _nx.floor(y, out=y)
+        # Round towards `start`
+        if delta < 0:
+            _nx.ceil(y, out=y)
+        else:
+            _nx.floor(y, out=y)
 
     y = conv.wrap(y.astype(dtype, copy=False))
     if retstep:
