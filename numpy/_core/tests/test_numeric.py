@@ -3633,6 +3633,25 @@ class TestCorrelate:
         with assert_raises(TypeError):
             np.correlate(d, k, mode=None)
 
+    def test_out(self):
+        self._setup(float)
+        out = np.zeros(self.z1.shape)
+        res = np.correlate(self.x, self.y, 'full', out=out)
+        assert_equal(res, out)
+        assert_array_almost_equal(out, self.z1)
+        out = np.zeros(self.z2.shape)
+        res = np.correlate(self.y, self.x, 'full', out=out)
+        assert_equal(res, out)
+        assert_array_almost_equal(out, self.z2)
+        out = np.zeros(self.z1r.shape)
+        res = np.correlate(self.x[::-1], self.y, 'full', out=out)
+        assert_equal(res, out)
+        assert_array_almost_equal(out, self.z1r)
+        out = np.zeros(self.z2r.shape)
+        res = np.correlate(self.y, self.x[::-1], 'full', out=out)
+        assert_equal(res, out)
+        assert_array_almost_equal(out, self.z2r)
+
 
 class TestConvolve:
     def test_object(self):
@@ -3660,6 +3679,14 @@ class TestConvolve:
         # illegal arguments
         with assert_raises(TypeError):
             np.convolve(d, k, mode=None)
+
+    def test_out(self):
+        d = np.ones(100)
+        k = np.ones(3)
+        out = np.zeros(98)
+        res = np.convolve(d, k, mode='valid', out=out)
+        assert_equal(res, out)
+        assert_array_almost_equal(out, np.full(98, 3))
 
 
 class TestArgwhere:

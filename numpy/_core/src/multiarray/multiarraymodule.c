@@ -1140,10 +1140,10 @@ fail:
  * inverted is set to 1 if computed correlate(ap2, ap1), 0 otherwise
  */
 static PyArrayObject*
-_pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
+_pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, PyArrayObject *ret, int typenum,
                    int mode, int *inverted)
 {
-    PyArrayObject *ret;
+    PyArrayObject *tmp;
     npy_intp length;
     npy_intp i, n1, n2, n, n_left, n_right;
     npy_intp is1, is2, os;
@@ -1163,10 +1163,10 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
         return NULL;
     }
     if (n1 < n2) {
-        ret = ap1;
+        tmp = ap1;
         ap1 = ap2;
-        ap2 = ret;
-        ret = NULL;
+        ap2 = tmp;
+        tmp = NULL;
         i = n1;
         n1 = n2;
         n2 = i;
@@ -1200,9 +1200,24 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
      * Need to choose an output array that can hold a sum
      * -- use priority to determine which subtype.
      */
-    ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typenum, NULL);
-    if (ret == NULL) {
-        return NULL;
+    if (ret != NULL) {
+        if (PyArray_NDIM(ret) != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array has wrong dimensionality");
+            return NULL;
+        }
+        if (PyArray_DIMS(ret)[0] != length) {
+            PyErr_SetString(PyExc_ValueError,
+                            "Output array is the wrong shape");
+            return NULL;
+        }
+        Py_INCREF(ret);
+    }
+    else {
+        ret = new_array_for_sum(ap1, ap2, NULL, 1, &length, typenum, NULL);
+        if (ret == NULL) {
+            return NULL;
+        }
     }
     dot = PyDataType_GetArrFuncs(PyArray_DESCR(ret))->dotfunc;
     if (dot == NULL) {
@@ -1317,7 +1332,7 @@ _pyarray_revert(PyArrayObject *ret)
  * correlate(a2, a1), and conjugate the second argument for complex inputs
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
+PyArray_Correlate2(PyObject *op1, PyObject *op2, PyArrayObject *out, int mode)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
     int typenum;
@@ -1358,7 +1373,7 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
         ap2 = cap2;
     }
 
-    ret = _pyarray_correlate(ap1, ap2, typenum, mode, &inverted);
+    ret = _pyarray_correlate(ap1, ap2, out, typenum, mode, &inverted);
     if (ret == NULL) {
         goto clean_ap2;
     }
@@ -1391,7 +1406,7 @@ clean_ap1:
  * Numeric.correlate(a1,a2,mode)
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
+PyArray_Correlate(PyObject *op1, PyObject *op2, PyArrayObject *out, int mode)
 {
     PyArrayObject *ap1, *ap2, *ret = NULL;
     int typenum;
@@ -1421,7 +1436,7 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
         goto fail;
     }
 
-    ret = _pyarray_correlate(ap1, ap2, typenum, mode, &unused);
+    ret = _pyarray_correlate(ap1, ap2, out, typenum, mode, &unused);
     if (ret == NULL) {
         goto fail;
     }
@@ -3011,17 +3026,28 @@ array_correlate(PyObject *NPY_UNUSED(dummy),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *shape, *a0;
+    PyObject *out;
     int mode = 0;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("correlate", args, len_args, kwnames,
             "a", NULL, &a0,
             "v", NULL, &shape,
+            "|out", NULL, &out,
             "|mode", &PyArray_CorrelatemodeConverter, &mode,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
-    return PyArray_Correlate(a0, shape, mode);
+    if (out != NULL) {
+        if (out == Py_None) {
+            out = NULL;
+        }
+        else if (!PyArray_Check(out)) {
+            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+            return NULL;
+        }
+    }
+    return PyArray_Correlate(a0, shape, (PyArrayObject *)out, mode);
 }
 
 static PyObject*
@@ -3029,17 +3055,28 @@ array_correlate2(PyObject *NPY_UNUSED(dummy),
         PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames)
 {
     PyObject *shape, *a0;
+    PyObject *out;
     int mode = 0;
     NPY_PREPARE_ARGPARSER;
 
     if (npy_parse_arguments("correlate2", args, len_args, kwnames,
             "a", NULL, &a0,
             "v", NULL, &shape,
+            "|out", NULL, &out,
             "|mode", &PyArray_CorrelatemodeConverter, &mode,
             NULL, NULL, NULL) < 0) {
         return NULL;
     }
-    return PyArray_Correlate2(a0, shape, mode);
+    if (out != NULL) {
+        if (out == Py_None) {
+            out = NULL;
+        }
+        else if (!PyArray_Check(out)) {
+            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
+            return NULL;
+        }
+    }
+    return PyArray_Correlate2(a0, shape, (PyArrayObject *)out, mode);
 }
 
 static PyObject *
