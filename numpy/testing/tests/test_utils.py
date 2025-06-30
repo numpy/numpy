@@ -705,8 +705,7 @@ class TestAlmostEqual(_GenericTest):
             self._assert_func(x, y, decimal=12)
 
         # With the default value of decimal digits, only the 3rd element
-        # differs. Note that we only check for the formatting of the arrays
-        # themselves.
+        # differs.
         expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
                         'Max absolute difference among violations: 1.e-05\n'
                         'Max relative difference among violations: '
