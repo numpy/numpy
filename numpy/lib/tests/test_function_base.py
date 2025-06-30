@@ -2188,6 +2188,87 @@ class TestUnwrap:
         assert_array_equal(sm_discont, [0, 75, 150, 225, 300, 430])
         assert sm_discont.dtype == wrap_uneven.dtype
 
+    @pytest.mark.parametrize("seed, arr_dtype, period, discont, axis", (
+        (1337, np.int64, 4, 3, 1),  # regular test
+        (1337, np.int64, 4, 3, 0),  # test axis
+        (1337, np.int64, 4, None, 1),  # test None discont
+        (1337, np.int64, -4, 3, 1),  # test negative period
+        pytest.param(1337, np.object_, 4, 7, 1,
+            marks=pytest.mark.xfail(
+                reason="gh-27686: np.unwrap returns incorrect values for bigints"
+        )),  # test bigints
+        pytest.param(1337, np.float64, 2*np.pi, 1e7, 1,
+            marks=pytest.mark.xfail(
+                reason="gh-27609: np.lib.unwrap accumulates rounding errors"
+        )),  # test inexact floats
+        (1337, np.float32, 1.5, 5, 1)  # test exact floats
+    ))
+    def test_unwrap_general(self, seed, arr_dtype, period, discont, axis):
+        def gen_array(seed, arr_dtype):
+            randState = np.random.RandomState(seed=seed)
+            match arr_dtype:
+                case np.int64:
+                    return randState.randint(-32, 32, 1 << 20).reshape(16, -1, 16)
+                case np.object_:
+                    arr = randState.randint(-32, 32, 1 << 20).reshape(16, -1, 16)
+                    return arr.astype(np.object_) + (10**100)
+                case np.float64:
+                    return randState.uniform(-1e9, 1e9, 1 << 20).reshape(16, -1, 16)
+                case np.float32:
+                    arr = randState.randint(-32, 32, 1 << 20).reshape(16, -1, 16)
+                    return 0.25 * arr.astype(np.float32)
+                case _:
+                    raise NotImplementedError(f"dtype {arr_dtype} not supported")
+
+        arr = gen_array(seed, arr_dtype)
+        isinexact = np.issubdtype(arr_dtype, np.inexact)
+        out_arr = unwrap(
+            arr, period=period, discont=discont, axis=axis
+        )
+
+        implies = lambda cond1, cond2: (~cond1) | cond2
+        iff = lambda cond1, cond2: implies(cond1, cond2) & implies(cond2, cond1)
+
+        if isinexact:
+            half_period = period / 2
+            tol = 1e-6  # seems reasonable for current tests
+            is_equal = lambda x, y: np.isclose(x, y, atol=tol)
+        else:
+            half_period = np.divmod(period, 2)[0]
+            tol = 0
+            is_equal = np.equal
+
+        if discont is None:
+            discont = half_period
+
+        assert np.all(
+            is_equal(arr.take(0, axis=axis), out_arr.take(0, axis=axis))
+        )
+        assert np.all(
+            is_equal(np.mod(arr - out_arr, period), 0)
+        )
+
+        assert np.all(implies(
+            np.abs(np.diff(arr, axis=axis)) < discont - tol,
+            is_equal(np.diff(out_arr, axis=axis), np.diff(arr, axis=axis))
+        ))
+        assert np.all(implies(
+            np.abs(np.diff(arr, axis=axis)) >= discont + tol,
+            np.abs(np.diff(out_arr, axis=axis)) <= abs(half_period) + tol
+        ))
+        relevant_inds = (np.abs(np.diff(arr, axis=axis)) >= discont + tol)
+        relevant_inds &= (np.mod(np.diff(arr, axis=axis), period) == half_period)
+
+        if period > 0:
+            sign = 1
+        else:
+            # probably not intentional
+            sign = -1
+        assert np.all(iff(
+            np.diff(out_arr, axis=axis) > 0,
+            sign * np.diff(arr, axis=axis) > 0
+        ), where=relevant_inds)
+
 
 @pytest.mark.parametrize(
     "dtype", "O" + np.typecodes["AllInteger"] + np.typecodes["Float"]

@@ -1777,6 +1777,18 @@ def unwrap(p, discont=None, axis=-1, *, period=2 * pi):
     but larger than `discont`, no unwrapping is done because taking
     the complement would only make the discontinuity larger.
 
+    Output `q` satisfies:
+
+    * ``q[0] == p[0]``.
+    * :math:`\forall i`. ``(p[i] - q[i]) % period == 0``.
+    * :math:`\forall i>0`. ``abs(p[i] - p[i-1]) < discont`` ->
+      ``q[i] - q[i-1] == p[i] - p[i-1]``.
+    * :math:`\forall i>0`. ``abs(p[i] - p[i-1]) >= discont`` ->
+        * ``abs(q[i] - q[i-1]) <= abs(period/2)``.
+        * ``(p[i] - p[i-1]) % period == (period/2)`` ->
+            * ``period > 0`` -> ``diff(q)`` and ``diff(p)`` have the same sign.
+            * ``period < 0`` -> ``diff(q)`` and ``diff(p)`` have opposite signs.
+
     Examples
     --------
     >>> import numpy as np
