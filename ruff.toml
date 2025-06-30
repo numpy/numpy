@@ -32,6 +32,7 @@ extend-select = [
     "FLY",
     "I",
     "PD",
+    "PERF",
     "E",
     "W",
     "PGH",
@@ -39,32 +40,33 @@ extend-select = [
     "UP",
 ]
 ignore = [
-    "B006",   # Do not use mutable data structures for argument defaults
-    "B007",   # Loop control variable not used within loop body
-    "B011",   # Do not `assert False` (`python -O` removes these calls), raise `AssertionError()`
-    "B023",   # Function definition does not bind loop variable
-    "B028",   # No explicit `stacklevel` keyword argument found
-    "B904",   # Within an `except` clause distinguish raised exceptions from errors in exception handling
-    "B905",   #`zip()` without an explicit `strict=` parameter
-    "C408",   # Unnecessary `dict()` call (rewrite as a literal)
-    "ISC002", # Implicitly concatenated string literals over multiple lines
-    "PIE790", # Unnecessary `pass` statement
-    "PD901",  # Avoid using the generic variable name `df` for DataFrames
-    "E241",   # Multiple spaces after comma
-    "E265",   # Block comment should start with `# `
-    "E266",   # Too many leading `#` before block comment
-    "E302",   # TODO: Expected 2 blank lines, found 1
-    "E402",   # Module level import not at top of file
-    "E712",   # Avoid equality comparisons to `True` or `False`
-    "E721",   # TODO: Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance check
-    "E731",   # Do not assign a `lambda` expression, use a `def`
-    "E741",   # Ambiguous variable name
-    "F403",   # `from ... import *` used; unable to detect undefined names
-    "F405",   # may be undefined, or defined from star imports
-    "F821",   # Undefined name
-    "F841",   # Local variable is assigned to but never used
-    "UP015",  # Unnecessary mode argument
-    "UP031",  # TODO: Use format specifiers instead of percent format
+    "B006",    # Do not use mutable data structures for argument defaults
+    "B007",    # Loop control variable not used within loop body
+    "B011",    # Do not `assert False` (`python -O` removes these calls), raise `AssertionError()`
+    "B023",    # Function definition does not bind loop variable
+    "B028",    # No explicit `stacklevel` keyword argument found
+    "B904",    # Within an `except` clause distinguish raised exceptions from errors in exception handling
+    "B905",    #`zip()` without an explicit `strict=` parameter
+    "C408",    # Unnecessary `dict()` call (rewrite as a literal)
+    "ISC002",  # Implicitly concatenated string literals over multiple lines
+    "PIE790",  # Unnecessary `pass` statement
+    "PD901",   # Avoid using the generic variable name `df` for DataFrames
+    "PERF401", # Use a list comprehension to create a transformed list
+    "E241",    # Multiple spaces after comma
+    "E265",    # Block comment should start with `# `
+    "E266",    # Too many leading `#` before block comment
+    "E302",    # TODO: Expected 2 blank lines, found 1
+    "E402",    # Module level import not at top of file
+    "E712",    # Avoid equality comparisons to `True` or `False`
+    "E721",    # TODO: Use `is` and `is not` for type comparisons, or `isinstance()` for isinstance check
+    "E731",    # Do not assign a `lambda` expression, use a `def`
+    "E741",    # Ambiguous variable name
+    "F403",    # `from ... import *` used; unable to detect undefined names
+    "F405",    # may be undefined, or defined from star imports
+    "F821",    # Undefined name
+    "F841",    # Local variable is assigned to but never used
+    "UP015" ,  # Unnecessary mode argument
+    "UP031",   # TODO: Use format specifiers instead of percent format
 ]
 
 [lint.per-file-ignores]
