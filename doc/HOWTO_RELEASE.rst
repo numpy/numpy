@@ -190,7 +190,7 @@ The C API version needs to be tracked in three places
 There are three steps to the process.
 
 1. If the API has changed, increment the C_API_VERSION in
-   numpy/core/meson.build. The API is unchanged only if any code compiled
+   numpy/_core/meson.build. The API is unchanged only if any code compiled
    against the current API will be backward compatible with the last released
    NumPy version. Any changes to C structures or additions to the public
    interface will make the new API not backward compatible.
