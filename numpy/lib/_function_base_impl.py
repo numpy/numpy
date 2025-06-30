@@ -4557,6 +4557,8 @@ def quantile(a,
         weights = _weights_are_valid(weights=weights, a=a, axis=axis)
         if np.any(weights < 0):
             raise ValueError("Weights must be non-negative.")
+        if np.all(weights == 0):
+            raise ValueError("Weights must contain non-zero value.")
 
     return _quantile_unchecked(
         a, q, axis, out, overwrite_input, method, keepdims, weights)

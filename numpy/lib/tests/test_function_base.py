@@ -4177,6 +4177,13 @@ class TestQuantile:
         with pytest.raises(ValueError, match="Weights must be non-negative"):
             np.quantile(y, 0.5, weights=w, method="inverted_cdf")
 
+    def test_quantile_weights_raises_all_zeros_weights(self):
+        y = [1, 2]
+        w = [0, 0]
+        with pytest.raises(ValueError, match="Weights must contain non-zero value."):
+            np.quantile(y, 0.5, weights=w, method="inverted_cdf")
+
+
     @pytest.mark.parametrize(
             "method",
             sorted(set(quantile_methods) - set(methods_supporting_weights)),
