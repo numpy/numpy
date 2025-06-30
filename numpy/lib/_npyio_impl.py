@@ -108,20 +108,13 @@ def zipfile_factory(file, *args, **kwargs):
     if not hasattr(file, 'read'):
         file = os.fspath(file)
     import zipfile
-    import sys
-    
+
     # Handle compression parameters
     compresslevel = kwargs.pop('compresslevel', None)
     compression = kwargs.pop('compression', zipfile.ZIP_STORED)
-    
-    # Backward compatibility for Python <3.7
-    if sys.version_info < (3, 7):
-        if compresslevel is not None:
-            warnings.warn("compresslevel is ignored for Python <3.7", RuntimeWarning)
-        return zipfile.ZipFile(file, *args, compression=compression, **kwargs)
-    
+
     # Modern Python versions support compresslevel
-    return zipfile.ZipFile(file, *args, compression=compression, 
+    return zipfile.ZipFile(file, *args, compression=compression,
                            compresslevel=compresslevel, **kwargs)
 
 
@@ -790,14 +783,14 @@ def savez_compressed(file, *args, allow_pickle=True, compression="deflated",
     True
 
     """
-    _savez(file, args, kwds, True, allow_pickle=allow_pickle, 
+    _savez(file, args, kwds, True, allow_pickle=allow_pickle,
            compression=compression, compression_opts=compression_opts)
 
 
-def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None, 
+def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
            compression="deflated", compression_opts=None):
-    import zipfile
     import sys
+    import zipfile
 
     if not hasattr(file, 'write'):
         file = os.fspath(file)
@@ -841,7 +834,7 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
         compression_val = zipfile.ZIP_STORED
 
     # Create ZipFile with appropriate settings
-    zipf = zipfile_factory(file, mode="w", compression=compression_val, 
+    zipf = zipfile_factory(file, mode="w", compression=compression_val,
                            compresslevel=compression_opts)
 
     try:

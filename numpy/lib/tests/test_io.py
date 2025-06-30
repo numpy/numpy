@@ -366,10 +366,10 @@ class TestSavezCompressed(RoundtripTest):
         RoundtripTest.roundtrip(self, np.savez_compressed, *args, **kwargs)
 
     @pytest.mark.parametrize("method,opts", [
-        ("stored",    None),
-        ("deflated",  None),
-        ("bzip2",     None),
-        ("lzma",      None),
+        ("stored", None),
+        ("deflated", None),
+        ("bzip2", None),
+        ("lzma", None),
     ])
     def test_basic_compression(self, method, opts):
         a = np.arange(10)
@@ -402,11 +402,11 @@ class TestSavezCompressed(RoundtripTest):
             data.close()
 
     def test_mixed_data_types(self):
-        empty  = np.array([])
+        empty = np.array([])
         struct = np.array([(1, 2.3), (4, 5.6)],
-                          dtype=[("a","i4"),("b","f4")])
-        obj    = np.array([{"key":"value"}, [1,2,3]], dtype=object)
-        strs   = np.array(["hello","numpy","compression"])
+                          dtype=[("a", "i4"), ("b", "f4")])
+        obj = np.array([{"key": "value"}, [1, 2, 3]], dtype=object)
+        strs = np.array(["hello", "numpy", "compression"])
         with temppath(suffix=".npz") as tmp:
             np.savez_compressed(tmp,
                                 empty=empty,
@@ -479,7 +479,7 @@ class TestSavezCompressed(RoundtripTest):
     @pytest.mark.slow
     def test_performance(self):
         data = np.random.rand(1_000_000)
-        for method in ("stored","deflated"):
+        for method in ("stored", "deflated"):
             with temppath(suffix=".npz") as tmp:
                 # just ensure it runs without error
                 np.savez_compressed(tmp, data, compression=method)
