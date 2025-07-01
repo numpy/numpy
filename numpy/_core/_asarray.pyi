@@ -1,7 +1,7 @@
 from collections.abc import Iterable
-from typing import Any, TypeAlias, TypeVar, overload, Literal
+from typing import Any, Literal, TypeAlias, TypeVar, overload
 
-from numpy._typing import NDArray, DTypeLike, _SupportsArrayFunc
+from numpy._typing import DTypeLike, NDArray, _SupportsArrayFunc
 
 _ArrayT = TypeVar("_ArrayT", bound=NDArray[Any])
 
@@ -19,7 +19,7 @@ _RequirementsWithE: TypeAlias = _Requirements | _E
 def require(
     a: _ArrayT,
     dtype: None = ...,
-    requirements: None | _Requirements | Iterable[_Requirements] = ...,
+    requirements: _Requirements | Iterable[_Requirements] | None = ...,
     *,
     like: _SupportsArrayFunc = ...
 ) -> _ArrayT: ...
@@ -35,7 +35,7 @@ def require(
 def require(
     a: object,
     dtype: DTypeLike = ...,
-    requirements: None | _Requirements | Iterable[_Requirements] = ...,
+    requirements: _Requirements | Iterable[_Requirements] | None = ...,
     *,
     like: _SupportsArrayFunc = ...
 ) -> NDArray[Any]: ...

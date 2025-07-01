@@ -4,15 +4,16 @@ by C code.
 These tests complement those found in `test_io.py`.
 """
 
-import sys
 import os
-import pytest
-from tempfile import NamedTemporaryFile, mkstemp
+import sys
 from io import StringIO
+from tempfile import NamedTemporaryFile, mkstemp
+
+import pytest
 
 import numpy as np
 from numpy.ma.testutils import assert_equal
-from numpy.testing import assert_array_equal, HAS_REFCOUNT, IS_PYPY
+from numpy.testing import HAS_REFCOUNT, IS_PYPY, assert_array_equal
 
 
 def test_scientific_notation():

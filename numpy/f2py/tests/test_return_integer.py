@@ -1,6 +1,7 @@
 import pytest
 
 from numpy import array
+
 from . import util
 
 

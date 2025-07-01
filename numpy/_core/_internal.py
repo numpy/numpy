@@ -10,9 +10,11 @@ import re
 import sys
 import warnings
 
-from ..exceptions import DTypePromotionError
-from .multiarray import dtype, array, ndarray, promote_types, StringDType
 from numpy import _NoValue
+from numpy.exceptions import DTypePromotionError
+
+from .multiarray import StringDType, array, dtype, promote_types
+
 try:
     import ctypes
 except ImportError:

@@ -15,6 +15,7 @@
 #include "dtypemeta.h"
 #include "convert_datatype.h"
 #include "gil_utils.h"
+#include "templ_common.h" /* for npy_mul_size_with_overflow_size_t */
 
 #include "string_ufuncs.h"
 #include "string_fastsearch.h"
@@ -166,26 +167,44 @@ string_add(Buffer<enc> buf1, Buffer<enc> buf2, Buffer<enc> out)
 
 
 template <ENCODING enc>
-static inline void
+static inline int
 string_multiply(Buffer<enc> buf1, npy_int64 reps, Buffer<enc> out)
 {
     size_t len1 = buf1.num_codepoints();
     if (reps < 1 || len1 == 0) {
         out.buffer_fill_with_zeros_after_index(0);
-        return;
+        return 0;
     }
 
     if (len1 == 1) {
         out.buffer_memset(*buf1, reps);
         out.buffer_fill_with_zeros_after_index(reps);
+        return 0;
     }
-    else {
-        for (npy_int64 i = 0; i < reps; i++) {
-            buf1.buffer_memcpy(out, len1);
-            out += len1;
-        }
-        out.buffer_fill_with_zeros_after_index(0);
+
+    size_t newlen;
+    if (NPY_UNLIKELY(npy_mul_with_overflow_size_t(&newlen, reps, len1) != 0) || newlen > PY_SSIZE_T_MAX) {
+        return -1;
     }
+
+    size_t pad = 0;
+    size_t width = out.buffer_width();
+    if (width < newlen) {
+        reps = width / len1;
+        pad = width % len1;
+    }
+
+    for (npy_int64 i = 0; i < reps; i++) {
+        buf1.buffer_memcpy(out, len1);
+        out += len1;
+    }
+
+    buf1.buffer_memcpy(out, pad);
+    out += pad;
+
+    out.buffer_fill_with_zeros_after_index(0);
+
+    return 0;
 }
 
 
@@ -238,7 +257,9 @@ string_multiply_strint_loop(PyArrayMethod_Context *context,
     while (N--) {
         Buffer<enc> buf(in1, elsize);
         Buffer<enc> outbuf(out, outsize);
-        string_multiply<enc>(buf, *(npy_int64 *)in2, outbuf);
+        if (NPY_UNLIKELY(string_multiply<enc>(buf, *(npy_int64 *)in2, outbuf) < 0)) {
+            npy_gil_error(PyExc_OverflowError, "Overflow detected in string multiply");
+        }
 
         in1 += strides[0];
         in2 += strides[1];
@@ -267,7 +288,9 @@ string_multiply_intstr_loop(PyArrayMethod_Context *context,
     while (N--) {
         Buffer<enc> buf(in2, elsize);
         Buffer<enc> outbuf(out, outsize);
-        string_multiply<enc>(buf, *(npy_int64 *)in1, outbuf);
+        if (NPY_UNLIKELY(string_multiply<enc>(buf, *(npy_int64 *)in1, outbuf) < 0)) {
+            npy_gil_error(PyExc_OverflowError, "Overflow detected in string multiply");
+        }
 
         in1 += strides[0];
         in2 += strides[1];
@@ -752,10 +775,11 @@ string_multiply_resolve_descriptors(
     if (given_descrs[2] == NULL) {
         PyErr_SetString(
             PyExc_TypeError,
-            "The 'out' kwarg is necessary. Use numpy.strings.multiply without it.");
+            "The 'out' kwarg is necessary when using the string multiply ufunc "
+            "directly. Use numpy.strings.multiply to multiply strings without "
+            "specifying 'out'.");
         return _NPY_ERROR_OCCURRED_IN_CAST;
     }
-
     loop_descrs[0] = NPY_DT_CALL_ensure_canonical(given_descrs[0]);
     if (loop_descrs[0] == NULL) {
         return _NPY_ERROR_OCCURRED_IN_CAST;
@@ -1521,7 +1545,7 @@ init_string_ufuncs(PyObject *umath)
     dtypes[0] = NPY_OBJECT;
     dtypes[1] = NPY_BOOL;
 
-    const char *unary_buffer_method_names[] = {
+    const char *const unary_buffer_method_names[] = {
         "isalpha", "isalnum", "isdigit", "isspace", "islower",
         "isupper", "istitle", "isdecimal", "isnumeric",
     };
@@ -1635,7 +1659,7 @@ init_string_ufuncs(PyObject *umath)
     dtypes[2] = dtypes[3] = NPY_INT64;
     dtypes[4] = NPY_BOOL;
 
-    const char *startswith_endswith_names[] = {
+    const char *const startswith_endswith_names[] = {
         "startswith", "endswith"
     };
 
@@ -1664,7 +1688,7 @@ init_string_ufuncs(PyObject *umath)
 
     dtypes[0] = dtypes[1] = NPY_OBJECT;
 
-    const char *strip_whitespace_names[] = {
+    const char *const strip_whitespace_names[] = {
         "_lstrip_whitespace", "_rstrip_whitespace", "_strip_whitespace"
     };
 
@@ -1691,7 +1715,7 @@ init_string_ufuncs(PyObject *umath)
 
     dtypes[0] = dtypes[1] = dtypes[2] = NPY_OBJECT;
 
-    const char *strip_chars_names[] = {
+    const char *const strip_chars_names[] = {
         "_lstrip_chars", "_rstrip_chars", "_strip_chars"
     };
 
@@ -1750,7 +1774,7 @@ init_string_ufuncs(PyObject *umath)
 
     dtypes[1] = NPY_INT64;
 
-    const char *center_ljust_rjust_names[] = {
+    const char *const center_ljust_rjust_names[] = {
         "_center", "_ljust", "_rjust"
     };
 
@@ -1827,7 +1851,7 @@ init_string_ufuncs(PyObject *umath)
     dtypes[0] = dtypes[1] = dtypes[3] = dtypes[4] = dtypes[5] = NPY_OBJECT;
     dtypes[2] = NPY_INT64;
 
-    const char *partition_names[] = {"_partition_index", "_rpartition_index"};
+    const char *const partition_names[] = {"_partition_index", "_rpartition_index"};
 
     static STARTPOSITION partition_startpositions[] = {
         STARTPOSITION::FRONT, STARTPOSITION::BACK

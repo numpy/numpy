@@ -9,14 +9,14 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 __all__ = ['run_main', 'get_include']
 
-import sys
-import subprocess
 import os
+import subprocess
+import sys
 import warnings
 
 from numpy.exceptions import VisibleDeprecationWarning
-from . import f2py2e
-from . import diagnose
+
+from . import diagnose, f2py2e
 
 run_main = f2py2e.run_main
 main = f2py2e.main

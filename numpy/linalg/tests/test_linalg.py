@@ -1,28 +1,50 @@
 """ Test functions for linalg module
 
 """
-import os
-import sys
 import itertools
+import os
+import subprocess
+import sys
+import textwrap
 import threading
 import traceback
-import textwrap
-import subprocess
+
 import pytest
 
 import numpy as np
-from numpy import array, single, double, csingle, cdouble, dot, identity, matmul
+from numpy import (
+    array,
+    asarray,
+    atleast_2d,
+    cdouble,
+    csingle,
+    dot,
+    double,
+    identity,
+    inf,
+    linalg,
+    matmul,
+    multiply,
+    single,
+)
 from numpy._core import swapaxes
 from numpy.exceptions import AxisError
-from numpy import multiply, atleast_2d, inf, asarray
-from numpy import linalg
-from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
+from numpy.linalg import LinAlgError, matrix_power, matrix_rank, multi_dot, norm
 from numpy.linalg._linalg import _multi_dot_matrix_chain_order
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_array_equal,
-    assert_almost_equal, assert_allclose, suppress_warnings,
-    assert_raises_regex, HAS_LAPACK64, IS_WASM, NOGIL_BUILD,
-    )
+    HAS_LAPACK64,
+    IS_WASM,
+    NOGIL_BUILD,
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    suppress_warnings,
+)
+
 try:
     import numpy.linalg.lapack_lite
 except ImportError:
@@ -1034,7 +1056,7 @@ class TestMatrixPower:
     rshft_all = [rshft_0, rshft_1, rshft_2, rshft_3]
     noninv = array([[1, 0], [0, 0]])
     stacked = np.block([[[rshft_0]]] * 2)
-    #FIXME the 'e' dtype might work in future
+    # FIXME the 'e' dtype might work in future
     dtnoinv = [object, np.dtype('e'), np.dtype('g'), np.dtype('G')]
 
     def test_large_power(self, dt):

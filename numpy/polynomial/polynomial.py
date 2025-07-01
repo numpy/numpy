@@ -82,6 +82,7 @@ __all__ = [
 
 import numpy as np
 import numpy.linalg as la
+from numpy._core.overrides import array_function_dispatch
 from numpy.lib.array_utils import normalize_axis_index
 
 from . import polyutils as pu
@@ -841,7 +842,13 @@ def polyvalfromroots(x, r, tensor=True):
             raise ValueError("x.ndim must be < r.ndim when tensor == False")
     return np.prod(x - r, axis=0)
 
+def _polyval2d_dispatcher(x, y, c):
+    return (x, y, c)
 
+def _polygrid2d_dispatcher(x, y, c):
+    return (x, y, c)
+
+@array_function_dispatch(_polyval2d_dispatcher)
 def polyval2d(x, y, c):
     """
     Evaluate a 2-D polynomial at points (x, y).
@@ -893,7 +900,7 @@ def polyval2d(x, y, c):
     """
     return pu._valnd(polyval, c, x, y)
 
-
+@array_function_dispatch(_polygrid2d_dispatcher)
 def polygrid2d(x, y, c):
     """
     Evaluate a 2-D polynomial on the Cartesian product of x and y.
@@ -1535,8 +1542,7 @@ def polyroots(c):
     if len(c) == 2:
         return np.array([-c[0] / c[1]])
 
-    # rotated companion matrix reduces error
-    m = polycompanion(c)[::-1, ::-1]
+    m = polycompanion(c)
     r = la.eigvals(m)
     r.sort()
     return r

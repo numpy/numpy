@@ -4,17 +4,30 @@
 import functools
 import operator
 
+from numpy._core import iinfo, overrides
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.numeric import (
-    asanyarray, arange, zeros, greater_equal, multiply, ones,
-    asarray, where, int8, int16, int32, int64, intp, empty, promote_types,
-    diagonal, nonzero, indices
-    )
+    arange,
+    asanyarray,
+    asarray,
+    diagonal,
+    empty,
+    greater_equal,
+    indices,
+    int8,
+    int16,
+    int32,
+    int64,
+    intp,
+    multiply,
+    nonzero,
+    ones,
+    promote_types,
+    where,
+    zeros,
+)
 from numpy._core.overrides import finalize_array_function_like, set_module
-from numpy._core import overrides
-from numpy._core import iinfo
 from numpy.lib._stride_tricks_impl import broadcast_to
-
 
 __all__ = [
     'diag', 'diagflat', 'eye', 'fliplr', 'flipud', 'tri', 'triu',
@@ -815,7 +828,7 @@ def histogram2d(x, y, bins=10, range=None, density=None, weights=None):
     except TypeError:
         N = 1
 
-    if N != 1 and N != 2:
+    if N not in {1, 2}:
         xedges = yedges = asarray(bins)
         bins = [xedges, yedges]
     hist, edges = histogramdd([x, y], bins, range, density, weights)

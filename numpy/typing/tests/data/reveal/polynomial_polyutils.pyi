@@ -9,8 +9,8 @@ import numpy.polynomial.polyutils as pu
 import numpy.typing as npt
 from numpy.polynomial._polytypes import _Tuple2
 
-_ArrFloat1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating[Any]]]
-_ArrComplex1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complexfloating[Any, Any]]]
+_ArrFloat1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.floating]]
+_ArrComplex1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.complexfloating]]
 _ArrObject1D: TypeAlias = np.ndarray[tuple[int], np.dtype[np.object_]]
 
 _ArrFloat1D_2: TypeAlias = np.ndarray[tuple[L[2]], np.dtype[np.float64]]
@@ -156,31 +156,31 @@ assert_type(pu.mapparms(seq_num_complex, seq_num_complex), _Tuple2[complex])
 assert_type(pu.mapparms(seq_num_complex, seq_num_object), _Tuple2[object])
 assert_type(pu.mapparms(seq_num_object, seq_num_object), _Tuple2[object])
 
-assert_type(pu.mapparms(seq_sct_int, seq_sct_int), _Tuple2[np.floating[Any]])
-assert_type(pu.mapparms(seq_sct_int, seq_sct_float), _Tuple2[np.floating[Any]])
+assert_type(pu.mapparms(seq_sct_int, seq_sct_int), _Tuple2[np.floating])
+assert_type(pu.mapparms(seq_sct_int, seq_sct_float), _Tuple2[np.floating])
 assert_type(pu.mapparms(seq_sct_float, seq_sct_float), _Tuple2[float])
 assert_type(pu.mapparms(seq_sct_float, seq_sct_complex), _Tuple2[complex])
 assert_type(pu.mapparms(seq_sct_complex, seq_sct_complex), _Tuple2[complex])
 assert_type(pu.mapparms(seq_sct_complex, seq_sct_object), _Tuple2[object])
 assert_type(pu.mapparms(seq_sct_object, seq_sct_object), _Tuple2[object])
 
-assert_type(pu.mapparms(arr_int, arr_int), _Tuple2[np.floating[Any]])
-assert_type(pu.mapparms(arr_int, arr_float), _Tuple2[np.floating[Any]])
-assert_type(pu.mapparms(arr_float, arr_float), _Tuple2[np.floating[Any]])
-assert_type(pu.mapparms(arr_float, arr_complex), _Tuple2[np.complexfloating[Any, Any]])
-assert_type(pu.mapparms(arr_complex, arr_complex), _Tuple2[np.complexfloating[Any, Any]])
+assert_type(pu.mapparms(arr_int, arr_int), _Tuple2[np.floating])
+assert_type(pu.mapparms(arr_int, arr_float), _Tuple2[np.floating])
+assert_type(pu.mapparms(arr_float, arr_float), _Tuple2[np.floating])
+assert_type(pu.mapparms(arr_float, arr_complex), _Tuple2[np.complexfloating])
+assert_type(pu.mapparms(arr_complex, arr_complex), _Tuple2[np.complexfloating])
 assert_type(pu.mapparms(arr_complex, arr_object), _Tuple2[object])
 assert_type(pu.mapparms(arr_object, arr_object), _Tuple2[object])
 
 # mapdomain
 
-assert_type(pu.mapdomain(num_int, seq_num_int, seq_num_int), np.floating[Any])
-assert_type(pu.mapdomain(num_int, seq_num_int, seq_num_float), np.floating[Any])
-assert_type(pu.mapdomain(num_int, seq_num_float, seq_num_float), np.floating[Any])
-assert_type(pu.mapdomain(num_float, seq_num_float, seq_num_float), np.floating[Any])
-assert_type(pu.mapdomain(num_float, seq_num_float, seq_num_complex), np.complexfloating[Any, Any])
-assert_type(pu.mapdomain(num_float, seq_num_complex, seq_num_complex), np.complexfloating[Any, Any])
-assert_type(pu.mapdomain(num_complex, seq_num_complex, seq_num_complex), np.complexfloating[Any, Any])
+assert_type(pu.mapdomain(num_int, seq_num_int, seq_num_int), np.floating)
+assert_type(pu.mapdomain(num_int, seq_num_int, seq_num_float), np.floating)
+assert_type(pu.mapdomain(num_int, seq_num_float, seq_num_float), np.floating)
+assert_type(pu.mapdomain(num_float, seq_num_float, seq_num_float), np.floating)
+assert_type(pu.mapdomain(num_float, seq_num_float, seq_num_complex), np.complexfloating)
+assert_type(pu.mapdomain(num_float, seq_num_complex, seq_num_complex), np.complexfloating)
+assert_type(pu.mapdomain(num_complex, seq_num_complex, seq_num_complex), np.complexfloating)
 assert_type(pu.mapdomain(num_complex, seq_num_complex, seq_num_object), object)
 assert_type(pu.mapdomain(num_complex, seq_num_object, seq_num_object), object)
 assert_type(pu.mapdomain(num_object, seq_num_object, seq_num_object), object)

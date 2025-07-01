@@ -6,14 +6,11 @@ import types
 import warnings
 
 import numpy as np
-from .._utils import set_module
-from . import multiarray as mu
-from . import overrides
-from . import umath as um
-from . import numerictypes as nt
-from .multiarray import asarray, array, asanyarray, concatenate
+from numpy._utils import set_module
+
+from . import _methods, multiarray as mu, numerictypes as nt, overrides, umath as um
 from ._multiarray_umath import _array_converter
-from . import _methods
+from .multiarray import asanyarray, asarray, concatenate
 
 _dt_ = nt.sctype2char
 
@@ -1607,7 +1604,8 @@ def resize(a, new_shape):
         # First case must zero fill. The second would have repeats == 0.
         return np.zeros_like(a, shape=new_shape)
 
-    repeats = -(-new_size // a.size)  # ceil division
+    # ceiling division without negating new_size
+    repeats = (new_size + a.size - 1) // a.size
     a = concatenate((a,) * repeats)[:new_size]
 
     return reshape(a, new_shape)

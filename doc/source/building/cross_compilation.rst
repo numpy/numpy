@@ -2,10 +2,10 @@ Cross compilation
 =================
 
 Cross compilation is a complex topic, we only add some hopefully helpful hints
-here (for now). As of May 2023, cross-compilation based on ``crossenv`` is
-known to work, as used (for example) in conda-forge. Cross-compilation without
-``crossenv`` requires some manual overrides. You instruct these overrides by
-passing options to ``meson setup`` via `meson-python`_.
+here (for now). As of May 2025, cross-compilation with a Meson cross file as
+well as cross-compilation based on ``crossenv`` are known to work. Conda-forge
+uses the latter method. Cross-compilation without ``crossenv`` requires passing
+build options to ``meson setup`` via `meson-python`_.
 
 .. _meson-python: https://meson-python.readthedocs.io/en/latest/how-to-guides/meson-args.html
 
@@ -33,9 +33,18 @@ your *cross file*:
     [properties]
     longdouble_format = 'IEEE_DOUBLE_LE'
 
+For an example of a cross file needed to cross-compile NumPy, see
+`numpy#288861 <https://github.com/numpy/numpy/issues/28861#issuecomment-2844257091>`__.
+Putting that together, invoking a cross build with such a cross file, looks like:
+
+.. code:: bash
+
+   $ python -m build --wheel -Csetup-args="--cross-file=aarch64-myos-cross-file.txt"
+
 For more details and the current status around cross compilation, see:
 
 - The state of cross compilation in Python:
   `pypackaging-native key issue page <https://pypackaging-native.github.io/key-issues/cross_compilation/>`__
+- The `set of NumPy issues with the "Cross compilation" label <https://github.com/numpy/numpy/issues?q=state%3Aclosed%20label%3A%2238%20-%20Cross%20compilation%22>`__
 - Tracking issue for SciPy cross-compilation needs and issues:
   `scipy#14812 <https://github.com/scipy/scipy/issues/14812>`__

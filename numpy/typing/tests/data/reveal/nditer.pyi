@@ -10,7 +10,7 @@ assert_type(np.nditer([0, 1], op_flags=[["readonly", "readonly"]]), np.nditer)
 assert_type(np.nditer([0, 1], op_dtypes=np.int_), np.nditer)
 assert_type(np.nditer([0, 1], order="C", casting="no"), np.nditer)
 
-assert_type(nditer_obj.dtypes, tuple[np.dtype[Any], ...])
+assert_type(nditer_obj.dtypes, tuple[np.dtype, ...])
 assert_type(nditer_obj.finished, bool)
 assert_type(nditer_obj.has_delayed_bufalloc, bool)
 assert_type(nditer_obj.has_index, bool)

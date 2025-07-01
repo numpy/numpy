@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-# System imports
 import sys
 import unittest
 
-# Import NumPy
 import numpy as np
+
 major, minor = [int(d) for d in np.__version__.split(".")[:2]]
 if major == 0:
     BadListError = TypeError
@@ -29,8 +28,8 @@ class SuperTensorTestCase(unittest.TestCase):
         norm = SuperTensor.__dict__[self.typeStr + "Norm"]
         supertensor = np.arange(2 * 2 * 2 * 2,
                                 dtype=self.typeCode).reshape((2, 2, 2, 2))
-        #Note: cludge to get an answer of the same type as supertensor.
-        #Answer is simply sqrt(sum(supertensor*supertensor)/16)
+        # Note: cludge to get an answer of the same type as supertensor.
+        # Answer is simply sqrt(sum(supertensor*supertensor)/16)
         answer = np.array([np.sqrt(np.sum(supertensor.astype('d') * supertensor) / 16.)], dtype=self.typeCode)[0]  # noqa: E501
         self.assertAlmostEqual(norm(supertensor), answer, 6)
 

@@ -1,14 +1,14 @@
+import functools
 import os
+import platform
 import sys
 import textwrap
 import types
 import warnings
-import functools
-import platform
 
+import numpy as np
 from numpy._core import ndarray
 from numpy._utils import set_module
-import numpy as np
 
 __all__ = [
     'get_include', 'info', 'show_runtime'
@@ -36,10 +36,13 @@ def show_runtime():
        ``__cpu_baseline__`` and ``__cpu_dispatch__``
 
     """
-    from numpy._core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
-    )
     from pprint import pprint
+
+    from numpy._core._multiarray_umath import (
+        __cpu_baseline__,
+        __cpu_dispatch__,
+        __cpu_features__,
+    )
     config_found = [{
         "numpy_version": np.__version__,
         "python": sys.version,
@@ -476,8 +479,8 @@ def info(object=None, maxwidth=76, output=None, toplevel='numpy'):
     """
     global _namedict, _dictlist
     # Local import to speed up numpy's import time.
-    import pydoc
     import inspect
+    import pydoc
 
     if (hasattr(object, '_ppimport_importer') or
            hasattr(object, '_ppimport_module')):
@@ -696,7 +699,9 @@ def _opt_info():
         str: A formatted string indicating the supported CPU features.
     """
     from numpy._core._multiarray_umath import (
-        __cpu_features__, __cpu_baseline__, __cpu_dispatch__
+        __cpu_baseline__,
+        __cpu_dispatch__,
+        __cpu_features__,
     )
 
     if len(__cpu_baseline__) == 0 and len(__cpu_dispatch__) == 0:

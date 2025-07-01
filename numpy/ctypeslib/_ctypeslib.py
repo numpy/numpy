@@ -53,6 +53,7 @@ __all__ = ['load_library', 'ndpointer', 'c_intp', 'as_ctypes', 'as_array',
            'as_ctypes_type']
 
 import os
+
 import numpy as np
 import numpy._core.multiarray as mu
 from numpy._utils import set_module
@@ -158,9 +159,9 @@ else:
                 try:
                     return ctypes.cdll[libpath]
                 except OSError:
-                    ## defective lib file
+                    # defective lib file
                     raise
-        ## if no successful return in the libname_ext loop:
+        # if no successful return in the libname_ext loop:
         raise OSError("no file with expected extension")
 
 
@@ -409,7 +410,7 @@ if ctypes is not None:
         # ctypes doesn't care about field order
         field_data = sorted(field_data, key=lambda f: f[0])
 
-        if len(field_data) > 1 and all(offset == 0 for offset, name, ctype in field_data):
+        if len(field_data) > 1 and all(offset == 0 for offset, _, _ in field_data):
             # union, if multiple fields all at address 0
             size = 0
             _fields_ = []

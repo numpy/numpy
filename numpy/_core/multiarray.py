@@ -7,17 +7,25 @@ namespace by importing from the extension module.
 """
 
 import functools
-from . import overrides
-from . import _multiarray_umath
+
+from . import _multiarray_umath, overrides
 from ._multiarray_umath import *  # noqa: F403
+
 # These imports are needed for backward compatibility,
 # do not change them. issue gh-15518
 # _get_ndarray_c_version is semi-public, on purpose not added to __all__
-from ._multiarray_umath import (
-    _flagdict, from_dlpack, _place, _reconstruct,
-    _vec_string, _ARRAY_API, _monotonicity, _get_ndarray_c_version,
-    _get_madvise_hugepage, _set_madvise_hugepage,
-    )
+from ._multiarray_umath import (  # noqa: F401
+    _ARRAY_API,
+    _flagdict,
+    _get_madvise_hugepage,
+    _get_ndarray_c_version,
+    _monotonicity,
+    _place,
+    _reconstruct,
+    _set_madvise_hugepage,
+    _vec_string,
+    from_dlpack,
+)
 
 __all__ = [
     '_ARRAY_API', 'ALLOW_THREADS', 'BUFSIZE', 'CLIP', 'DATETIMEUNITS',
@@ -1715,7 +1723,7 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
     Examples
     --------
     >>> import numpy as np
-    >>> import pytz
+    >>> from zoneinfo import ZoneInfo
     >>> d = np.arange('2002-10-27T04:30', 4*60, 60, dtype='M8[m]')
     >>> d
     array(['2002-10-27T04:30', '2002-10-27T05:30', '2002-10-27T06:30',
@@ -1728,9 +1736,9 @@ def datetime_as_string(arr, unit=None, timezone=None, casting=None):
            '2002-10-27T07:30Z'], dtype='<U35')
 
     Note that we picked datetimes that cross a DST boundary. Passing in a
-    ``pytz`` timezone object will print the appropriate offset
+    ``ZoneInfo`` object will print the appropriate offset
 
-    >>> np.datetime_as_string(d, timezone=pytz.timezone('US/Eastern'))
+    >>> np.datetime_as_string(d, timezone=ZoneInfo('US/Eastern'))
     array(['2002-10-27T00:30-0400', '2002-10-27T01:30-0400',
            '2002-10-27T01:30-0500', '2002-10-27T02:30-0500'], dtype='<U39')
 

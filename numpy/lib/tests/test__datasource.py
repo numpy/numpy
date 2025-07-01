@@ -1,14 +1,14 @@
 import os
-import pytest
-from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
+import urllib.request as urllib_request
 from shutil import rmtree
+from tempfile import NamedTemporaryFile, mkdtemp, mkstemp
+from urllib.error import URLError
+from urllib.parse import urlparse
+
+import pytest
 
 import numpy.lib._datasource as datasource
 from numpy.testing import assert_, assert_equal, assert_raises
-
-import urllib.request as urllib_request
-from urllib.parse import urlparse
-from urllib.error import URLError
 
 
 def urlopen_stub(url, data=None):

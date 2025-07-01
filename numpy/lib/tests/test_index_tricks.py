@@ -1,14 +1,29 @@
 import pytest
 
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_almost_equal,
-    assert_array_almost_equal, assert_raises, assert_raises_regex,
-    )
 from numpy.lib._index_tricks_impl import (
-    mgrid, ogrid, ndenumerate, fill_diagonal, diag_indices, diag_indices_from,
-    index_exp, ndindex, c_, r_, s_, ix_
-    )
+    c_,
+    diag_indices,
+    diag_indices_from,
+    fill_diagonal,
+    index_exp,
+    ix_,
+    mgrid,
+    ndenumerate,
+    ndindex,
+    ogrid,
+    r_,
+    s_,
+)
+from numpy.testing import (
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestRavelUnravelIndex:
@@ -151,7 +166,7 @@ class TestRavelUnravelIndex:
             ValueError, np.ravel_multi_index, [5, 1, -1, 2], (4, 3, 7, 12))
 
     def test_writeability(self):
-        # See gh-7269
+        # gh-7269
         x, y = np.unravel_index([1, 2, 3], (4, 5))
         assert_(x.flags.writeable)
         assert_(y.flags.writeable)

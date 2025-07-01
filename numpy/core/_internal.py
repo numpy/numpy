@@ -1,5 +1,6 @@
 from numpy._core import _internal
 
+
 # Build a new array from the information in a pickle.
 # Note that the name numpy.core._internal._reconstruct is embedded in
 # pickles of ndarrays made with NumPy before release 1.0
@@ -16,6 +17,7 @@ _dtype_from_pep3118 = _internal._dtype_from_pep3118
 
 def __getattr__(attr_name):
     from numpy._core import _internal
+
     from ._utils import _raise_warning
     ret = getattr(_internal, attr_name, None)
     if ret is None:

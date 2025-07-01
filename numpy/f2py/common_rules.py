@@ -9,13 +9,11 @@ terms of the NumPy License
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
 from . import __version__
+
 f2py_version = __version__.version
 
-from .auxfuncs import (
-    hasbody, hascommon, hasnote, isintent_hide, outmess, getuseblocks
-)
-from . import capi_maps
-from . import func2subr
+from . import capi_maps, func2subr
+from .auxfuncs import getuseblocks, hasbody, hascommon, hasnote, isintent_hide, outmess
 from .crackfortran import rmbadname
 
 

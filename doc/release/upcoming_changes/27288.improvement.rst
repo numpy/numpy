@@ -1,3 +1,0 @@
-* Scalar comparisons between non-comparable dtypes such as
-  `np.array(1) == np.array('s')` now return a NumPy bool instead of
-  a Python bool. 

@@ -1,36 +1,74 @@
-# pylint: disable-msg=W0611, W0612, W0511
 """Tests suite for MaskedArray.
 Adapted from the original test_ma by Pierre Gerard-Marchant
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: test_extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
-import warnings
 import itertools
+import warnings
+
 import pytest
 
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
-from numpy.testing import (
-    assert_warns, suppress_warnings
-    )
-from numpy.ma.testutils import (
-    assert_, assert_array_equal, assert_equal, assert_almost_equal
-    )
 from numpy.ma.core import (
-    array, arange, masked, MaskedArray, masked_array, getmaskarray, shape,
-    nomask, ones, zeros, count
-    )
+    MaskedArray,
+    arange,
+    array,
+    count,
+    getmaskarray,
+    masked,
+    masked_array,
+    nomask,
+    ones,
+    shape,
+    zeros,
+)
 from numpy.ma.extras import (
-    atleast_1d, atleast_2d, atleast_3d, mr_, dot, polyfit, cov, corrcoef,
-    median, average, unique, setxor1d, setdiff1d, union1d, intersect1d, in1d,
-    ediff1d, apply_over_axes, apply_along_axis, compress_nd, compress_rowcols,
-    mask_rowcols, clump_masked, clump_unmasked, flatnotmasked_contiguous,
-    notmasked_contiguous, notmasked_edges, masked_all, masked_all_like, isin,
-    diagflat, ndenumerate, stack, vstack, _covhelper
-    )
+    _covhelper,
+    apply_along_axis,
+    apply_over_axes,
+    atleast_1d,
+    atleast_2d,
+    atleast_3d,
+    average,
+    clump_masked,
+    clump_unmasked,
+    compress_nd,
+    compress_rowcols,
+    corrcoef,
+    cov,
+    diagflat,
+    dot,
+    ediff1d,
+    flatnotmasked_contiguous,
+    in1d,
+    intersect1d,
+    isin,
+    mask_rowcols,
+    masked_all,
+    masked_all_like,
+    median,
+    mr_,
+    ndenumerate,
+    notmasked_contiguous,
+    notmasked_edges,
+    polyfit,
+    setdiff1d,
+    setxor1d,
+    stack,
+    union1d,
+    unique,
+    vstack,
+)
+from numpy.ma.testutils import (
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+)
+from numpy.testing import assert_warns, suppress_warnings
 
 
 class TestGeneric:
@@ -1205,10 +1243,10 @@ class TestMedian:
 
     def test_special(self):
         for inf in [np.inf, -np.inf]:
-            a = np.array([[inf,  np.nan], [np.nan, np.nan]])
+            a = np.array([[inf, np.nan], [np.nan, np.nan]])
             a = np.ma.masked_array(a, mask=np.isnan(a))
-            assert_equal(np.ma.median(a, axis=0), [inf,  np.nan])
-            assert_equal(np.ma.median(a, axis=1), [inf,  np.nan])
+            assert_equal(np.ma.median(a, axis=0), [inf, np.nan])
+            assert_equal(np.ma.median(a, axis=1), [inf, np.nan])
             assert_equal(np.ma.median(a), inf)
 
             a = np.array([[np.nan, np.nan, inf], [np.nan, np.nan, inf]])
@@ -1717,7 +1755,7 @@ class TestArraySetOps:
         c = isin(a, b)
         assert_(isinstance(c, MaskedArray))
         assert_array_equal(c, ec)
-        #compare results of np.isin to ma.isin
+        # compare results of np.isin to ma.isin
         d = np.isin(a, b[~b.mask]) & ~a.mask
         assert_array_equal(c, d)
 

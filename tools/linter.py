@@ -1,8 +1,7 @@
 import os
-import sys
 import subprocess
+import sys
 from argparse import ArgumentParser
-
 
 CWD = os.path.abspath(os.path.dirname(__file__))
 
@@ -38,7 +37,8 @@ class DiffLinter:
 
         # Running borrowed ref checker
         print("Running C API borrow-reference linter...")
-        borrowed_ref_script = os.path.join(self.repository_root, "tools", "ci", "check_c_api_usage.sh")
+        borrowed_ref_script = os.path.join(self.repository_root, "tools", "ci",
+                                           "check_c_api_usage.sh")
         borrowed_res = subprocess.run(
             ["bash", borrowed_ref_script],
             stdout=subprocess.PIPE,

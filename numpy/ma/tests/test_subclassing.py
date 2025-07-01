@@ -1,19 +1,28 @@
-# pylint: disable-msg=W0611, W0612, W0511,R0201
 """Tests suite for MaskedArray & subclassing.
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
-:version: $Id: test_subclassing.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
 import numpy as np
 from numpy.lib.mixins import NDArrayOperatorsMixin
-from numpy.testing import assert_, assert_raises
-from numpy.ma.testutils import assert_equal
 from numpy.ma.core import (
-    array, arange, masked, MaskedArray, masked_array, log, add, hypot,
-    divide, asarray, asanyarray, nomask
-    )
+    MaskedArray,
+    add,
+    arange,
+    array,
+    asanyarray,
+    asarray,
+    divide,
+    hypot,
+    log,
+    masked,
+    masked_array,
+    nomask,
+)
+from numpy.ma.testutils import assert_equal
+from numpy.testing import assert_, assert_raises
+
 # from numpy.ma.core import (
 
 def assert_startswith(a, b):
@@ -31,7 +40,6 @@ class SubArray(np.ndarray):
     def __array_finalize__(self, obj):
         super().__array_finalize__(obj)
         self.info = getattr(obj, 'info', {}).copy()
-        return
 
     def __add__(self, other):
         result = super().__add__(other)

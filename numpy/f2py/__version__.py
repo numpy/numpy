@@ -1,1 +1,1 @@
-from numpy.version import version
+from numpy.version import version  # noqa: F401

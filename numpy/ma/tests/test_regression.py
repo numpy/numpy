@@ -1,7 +1,10 @@
 import numpy as np
 from numpy.testing import (
-    assert_, assert_array_equal, assert_allclose, suppress_warnings
-    )
+    assert_,
+    assert_allclose,
+    assert_array_equal,
+    suppress_warnings,
+)
 
 
 class TestRegression:
@@ -17,7 +20,7 @@ class TestRegression:
 
     def test_mem_masked_where(self):
         # Ticket #62
-        from numpy.ma import masked_where, MaskType
+        from numpy.ma import MaskType, masked_where
         a = np.zeros((1, 1))
         b = np.zeros(a.shape, MaskType)
         c = masked_where(b, a)

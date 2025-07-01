@@ -1,13 +1,14 @@
-from ._backend import Backend
-
-from numpy.distutils.core import setup, Extension
-from numpy.distutils.system_info import get_info
-from numpy.distutils.misc_util import dict_append
-from numpy.exceptions import VisibleDeprecationWarning
 import os
-import sys
 import shutil
+import sys
 import warnings
+
+from numpy.distutils.core import Extension, setup
+from numpy.distutils.misc_util import dict_append
+from numpy.distutils.system_info import get_info
+from numpy.exceptions import VisibleDeprecationWarning
+
+from ._backend import Backend
 
 
 class DistutilsBackend(Backend):

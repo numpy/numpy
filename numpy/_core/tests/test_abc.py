@@ -1,9 +1,9 @@
-from numpy.testing import assert_
-
 import numbers
 
 import numpy as np
 from numpy._core.numerictypes import sctypes
+from numpy.testing import assert_
+
 
 class TestABC:
     def test_abstract(self):

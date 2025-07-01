@@ -1,21 +1,15 @@
 from typing import (
-    Literal as L,
     Any,
-    TypeAlias,
-    overload,
-    TypeVar,
+    Literal as L,
     Protocol,
+    TypeAlias,
+    TypeVar,
+    overload,
     type_check_only,
 )
 
 from numpy import generic
-
-from numpy._typing import (
-    ArrayLike,
-    NDArray,
-    _ArrayLikeInt,
-    _ArrayLike,
-)
+from numpy._typing import ArrayLike, NDArray, _ArrayLike, _ArrayLikeInt
 
 __all__ = ["pad"]
 
@@ -56,7 +50,7 @@ def pad(
     pad_width: _ArrayLikeInt,
     mode: _ModeKind = ...,
     *,
-    stat_length: None | _ArrayLikeInt = ...,
+    stat_length: _ArrayLikeInt | None = ...,
     constant_values: ArrayLike = ...,
     end_values: ArrayLike = ...,
     reflect_type: L["odd", "even"] = ...,
@@ -67,7 +61,7 @@ def pad(
     pad_width: _ArrayLikeInt,
     mode: _ModeKind = ...,
     *,
-    stat_length: None | _ArrayLikeInt = ...,
+    stat_length: _ArrayLikeInt | None = ...,
     constant_values: ArrayLike = ...,
     end_values: ArrayLike = ...,
     reflect_type: L["odd", "even"] = ...,

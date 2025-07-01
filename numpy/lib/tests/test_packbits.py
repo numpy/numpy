@@ -1,7 +1,10 @@
+from itertools import chain
+
+import pytest
+
 import numpy as np
 from numpy.testing import assert_array_equal, assert_equal, assert_raises
-import pytest
-from itertools import chain
+
 
 def test_packbits():
     # Copied from the docstring.

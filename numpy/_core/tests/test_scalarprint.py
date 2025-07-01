@@ -1,15 +1,13 @@
 """ Test printing of scalar types.
 
 """
-import code
 import platform
-import pytest
-import sys
 
-from tempfile import TemporaryFile
+import pytest
+
 import numpy as np
-from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex, IS_MUSL)
+from numpy.testing import IS_MUSL, assert_, assert_equal, assert_raises
+
 
 class TestRealScalars:
     def test_str(self):
@@ -303,7 +301,7 @@ class TestRealScalars:
 
         fpos = np.format_float_positional
 
-        #gh-28068
+        # gh-28068
         with pytest.raises(RuntimeError,
                            match="Float formatting result too large"):
             fpos(tp('1.047'), unique=False, precision=pad_val)

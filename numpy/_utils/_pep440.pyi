@@ -5,15 +5,12 @@ from typing import (
     ClassVar,
     Final,
     Generic,
+    Literal as L,
     NamedTuple,
     TypeVar,
     final,
     type_check_only,
 )
-from typing import (
-    Literal as L,
-)
-
 from typing_extensions import TypeIs
 
 __all__ = ["VERSION_PATTERN", "InvalidVersion", "LegacyVersion", "Version", "parse"]

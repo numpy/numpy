@@ -12,6 +12,7 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 #include "numpy/ufuncobject.h"
+#include "blas_utils.h"
 #include "npy_cblas.h"
 #include "arraytypes.h"
 #include "common.h"
@@ -693,7 +694,7 @@ cblas_matrixproduct(int typenum, PyArrayObject *ap1, PyArrayObject *ap2,
         NPY_END_ALLOW_THREADS;
     }
 
-    int fpes = npy_get_floatstatus_barrier((char *) result);
+    int fpes = npy_get_floatstatus_after_blas();
     if (fpes && PyUFunc_GiveFloatingpointErrors("dot", fpes) < 0) {
         goto fail;
     }

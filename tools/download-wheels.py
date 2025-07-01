@@ -23,18 +23,26 @@ While in the repository root::
     $ python tools/download-wheels.py 1.19.0 -w ~/wheelhouse
 
 """
+import argparse
 import os
 import re
 import shutil
-import argparse
 
 import urllib3
 from bs4 import BeautifulSoup
 
-__version__ = "0.1"
+__version__ = "0.2"
 
 # Edit these for other projects.
-STAGING_URL = "https://anaconda.org/multibuild-wheels-staging/numpy"
+
+# The first URL is used to get the file names as it avoids the need for paging
+# when the number of files exceeds the page length. Note that files/page is not
+# stable and can change when the page layout changes. The second URL is used to
+# retrieve the files themselves. This workaround is copied from SciPy.
+NAMES_URL = "https://pypi.anaconda.org/multibuild-wheels-staging/simple/numpy/"
+FILES_URL = "https://anaconda.org/multibuild-wheels-staging/numpy"
+
+# Name prefix of the files to download.
 PREFIX = "numpy"
 
 # Name endings of the files to download.
@@ -56,17 +64,12 @@ def get_wheel_names(version):
         The release version. For instance, "1.18.3".
 
     """
-    ret = []
     http = urllib3.PoolManager(cert_reqs="CERT_REQUIRED")
     tmpl = re.compile(rf"^.*{PREFIX}-{version}{SUFFIX}")
-    # TODO: generalize this by searching for `showing 1 of N` and
-    # looping over N pages, starting from 1
-    for i in range(1, 3):
-        index_url = f"{STAGING_URL}/files?page={i}"
-        index_html = http.request("GET", index_url)
-        soup = BeautifulSoup(index_html.data, "html.parser")
-        ret += soup.find_all(string=tmpl)
-    return ret
+    index_url = f"{NAMES_URL}"
+    index_html = http.request('GET', index_url)
+    soup = BeautifulSoup(index_html.data, 'html.parser')
+    return sorted(soup.find_all(string=tmpl))
 
 
 def download_wheels(version, wheelhouse, test=False):
@@ -87,7 +90,7 @@ def download_wheels(version, wheelhouse, test=False):
     wheel_names = get_wheel_names(version)
 
     for i, wheel_name in enumerate(wheel_names):
-        wheel_url = f"{STAGING_URL}/{version}/download/{wheel_name}"
+        wheel_url = f"{FILES_URL}/{version}/download/{wheel_name}"
         wheel_path = os.path.join(wheelhouse, wheel_name)
         with open(wheel_path, "wb") as f:
             with http.request("GET", wheel_url, preload_content=False,) as r:
@@ -115,7 +118,7 @@ if __name__ == "__main__":
              "[defaults to <cwd>/release/installers]")
     parser.add_argument(
         "-t", "--test",
-        action = 'store_true',
+        action='store_true',
         help="only list available wheels, do not download")
 
     args = parser.parse_args()

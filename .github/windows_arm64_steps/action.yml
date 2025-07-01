@@ -1,0 +1,22 @@
+name: Build Dependencies(Win-ARM64)
+description: "Setup LLVM for Win-ARM64 builds"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install LLVM with checksum verification
+      shell: pwsh
+      run: |
+        Invoke-WebRequest https://github.com/llvm/llvm-project/releases/download/llvmorg-20.1.6/LLVM-20.1.6-woa64.exe -UseBasicParsing -OutFile LLVM-woa64.exe
+        $expectedHash = "92f69a1134e32e54b07d51c6e24d9594852f6476f32c3d70471ae00fffc2d462"
+        $fileHash = (Get-FileHash -Path "LLVM-woa64.exe" -Algorithm SHA256).Hash
+        if ($fileHash -ne $expectedHash) {
+            Write-Error "Checksum verification failed. The downloaded file may be corrupted or tampered with."
+            exit 1
+        }
+        Start-Process -FilePath ".\LLVM-woa64.exe" -ArgumentList "/S" -Wait
+        echo "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        echo "CC=clang-cl" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        echo "CXX=clang-cl" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        echo "FC=flang-new" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+

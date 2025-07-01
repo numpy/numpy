@@ -10,22 +10,25 @@ terms of the NumPy License.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 """
-import sys
+import argparse
 import os
 import pprint
 import re
-import argparse
+import sys
 
-from . import crackfortran
-from . import rules
-from . import cb_rules
-from . import auxfuncs
-from . import cfuncs
-from . import f90mod_rules
-from . import __version__
-from . import capi_maps
-from .cfuncs import errmess
 from numpy.f2py._backends import f2py_build_generator
+
+from . import (
+    __version__,
+    auxfuncs,
+    capi_maps,
+    cb_rules,
+    cfuncs,
+    crackfortran,
+    f90mod_rules,
+    rules,
+)
+from .cfuncs import errmess
 
 f2py_version = __version__.version
 numpy_version = __version__.version
@@ -539,7 +542,7 @@ class CombineIncludePaths(argparse.Action):
         include_paths_set = set(getattr(namespace, 'include_paths', []) or [])
         if option_string == "--include_paths":
             outmess("Use --include-paths or -I instead of --include_paths which will be removed")
-        if option_string == "--include-paths" or option_string == "--include_paths":
+        if option_string in {"--include-paths", "--include_paths"}:
             include_paths_set.update(values.split(':'))
         else:
             include_paths_set.add(values)
@@ -679,7 +682,7 @@ def run_compile():
                             print(f'Unknown vendor: "{s[len(v):]}"')
                     nv = ov
                 i = flib_flags.index(s)
-                flib_flags[i] = '--fcompiler=' + nv
+                flib_flags[i] = '--fcompiler=' + nv  # noqa: B909
                 continue
     for s in del_list:
         i = flib_flags.index(s)

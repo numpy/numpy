@@ -1,20 +1,18 @@
 import functools
-import sys
 import math
+import sys
 import warnings
 
 import numpy as np
-from .._utils import set_module
 import numpy._core.numeric as _nx
+import numpy.matrixlib as matrixlib
+from numpy._core import linspace, overrides
+from numpy._core.multiarray import ravel_multi_index, unravel_index
 from numpy._core.numeric import ScalarType, array
 from numpy._core.numerictypes import issubdtype
-
-import numpy.matrixlib as matrixlib
-from numpy._core.multiarray import ravel_multi_index, unravel_index
-from numpy._core import overrides, linspace
-from numpy.lib.stride_tricks import as_strided
+from numpy._utils import set_module
 from numpy.lib._function_base_impl import diff
-
+from numpy.lib.stride_tricks import as_strided
 
 array_function_dispatch = functools.partial(
     overrides.array_function_dispatch, module='numpy')

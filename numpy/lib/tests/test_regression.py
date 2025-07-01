@@ -2,9 +2,13 @@ import os
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, _assert_valid_refcount,
-    )
+    _assert_valid_refcount,
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+)
 
 
 class TestRegression:

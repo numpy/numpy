@@ -1,5 +1,6 @@
 def __getattr__(attr_name):
     from numpy._core import defchararray
+
     from ._utils import _raise_warning
     ret = getattr(defchararray, attr_name, None)
     if ret is None:

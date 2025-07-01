@@ -1,18 +1,18 @@
+import platform
 import re
 import shlex
 import subprocess
 import sys
 import textwrap
-from pathlib import Path
 from collections import namedtuple
-
-import platform
+from pathlib import Path
 
 import pytest
 
-from . import util
 from numpy.f2py.f2py2e import main as f2pycli
 from numpy.testing._private.utils import NOGIL_BUILD
+
+from . import util
 
 #######################
 # F2PY Test utilities #

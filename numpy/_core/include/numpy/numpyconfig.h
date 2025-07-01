@@ -123,8 +123,8 @@
     /* user provided a target version, use it */
     #define NPY_FEATURE_VERSION NPY_TARGET_VERSION
 #else
-    /* Use the default (increase when dropping Python 3.10 support) */
-    #define NPY_FEATURE_VERSION NPY_1_21_API_VERSION
+    /* Use the default (increase when dropping Python 3.11 support) */
+    #define NPY_FEATURE_VERSION NPY_1_23_API_VERSION
 #endif
 
 /* Sanity check the (requested) feature version */
@@ -172,7 +172,7 @@
     #define NPY_FEATURE_VERSION_STRING "2.0"
 #elif NPY_FEATURE_VERSION == NPY_2_1_API_VERSION
     #define NPY_FEATURE_VERSION_STRING "2.1"
-#elif NPY_FEATURE_VERSION == NPY_2_3_API_VERSION
+#elif NPY_FEATURE_VERSION == NPY_2_3_API_VERSION  /* also 2.4 */
     #define NPY_FEATURE_VERSION_STRING "2.3"
 #else
     #error "Missing version string define for new NumPy version."

@@ -65,10 +65,10 @@ Some of the scalar types are essentially equivalent to fundamental
 Python types and therefore inherit from them as well as from the
 generic array scalar type:
 
-====================  ===========================  =============
+====================  ===========================  =========
 Array scalar type     Related Python type          Inherits?
-====================  ===========================  =============
-:class:`int_`         :class:`int`                 Python 2 only
+====================  ===========================  =========
+:class:`int_`         :class:`int`                 no
 :class:`double`       :class:`float`               yes
 :class:`cdouble`      :class:`complex`             yes
 :class:`bytes_`       :class:`bytes`               yes
@@ -76,7 +76,7 @@ Array scalar type     Related Python type          Inherits?
 :class:`bool_`        :class:`bool`                no
 :class:`datetime64`   :class:`datetime.datetime`   no
 :class:`timedelta64`  :class:`datetime.timedelta`  no
-====================  ===========================  =============
+====================  ===========================  =========
 
 The :class:`bool_` data type is very similar to the Python
 :class:`bool` but does not inherit from it because Python's
@@ -86,9 +86,9 @@ Python Boolean scalar.
 
 .. warning::
 
-   The :class:`int_` type does **not** inherit from the
-   :class:`int` built-in under Python 3, because type :class:`int` is no
-   longer a fixed-width integer type.
+   The :class:`int_` type does **not** inherit from the built-in
+   :class:`int`, because type :class:`int` is not a fixed-width
+   integer type.
 
 .. tip:: The default data type in NumPy is :class:`double`.
 

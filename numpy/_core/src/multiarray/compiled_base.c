@@ -920,11 +920,11 @@ fail:
     return NULL;
 }
 
-static const char *EMPTY_SEQUENCE_ERR_MSG = "indices must be integral: the provided " \
+static const char EMPTY_SEQUENCE_ERR_MSG[] = "indices must be integral: the provided " \
     "empty sequence was inferred as float. Wrap it with " \
     "'np.array(indices, dtype=np.intp)'";
 
-static const char *NON_INTEGRAL_ERROR_MSG = "only int indices permitted";
+static const char NON_INTEGRAL_ERROR_MSG[] = "only int indices permitted";
 
 /* Convert obj to an ndarray with integer dtype or fail */
 static PyArrayObject *
@@ -1465,7 +1465,7 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *const *args, Py_ssize_t
     PyObject *obj;
     PyObject *str;
     const char *docstr;
-    static char *msg = "already has a different docstring";
+    static const char msg[] = "already has a different docstring";
 
     /* Don't add docstrings */
 #if PY_VERSION_HEX > 0x030b0000
@@ -1620,19 +1620,15 @@ pack_inner(const char *inptr,
             bb[1] = npyv_tobits_b8(npyv_cmpneq_u8(v1, v_zero));
             bb[2] = npyv_tobits_b8(npyv_cmpneq_u8(v2, v_zero));
             bb[3] = npyv_tobits_b8(npyv_cmpneq_u8(v3, v_zero));
-            if(out_stride == 1 && 
-                (!NPY_ALIGNMENT_REQUIRED || isAligned)) {
-                npy_uint64 *ptr64 = (npy_uint64*)outptr;
+            if(out_stride == 1 && isAligned) {
             #if NPY_SIMD_WIDTH == 16
-                npy_uint64 bcomp = bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48);
-                ptr64[0] = bcomp;
+                npy_uint64 arr[1] = {bb[0] | (bb[1] << 16) | (bb[2] << 32) | (bb[3] << 48)};
             #elif NPY_SIMD_WIDTH == 32
-                ptr64[0] = bb[0] | (bb[1] << 32);
-                ptr64[1] = bb[2] | (bb[3] << 32);
+                npy_uint64 arr[2] = {bb[0] | (bb[1] << 32), bb[2] | (bb[3] << 32)};
             #else
-                ptr64[0] = bb[0]; ptr64[1] = bb[1];
-                ptr64[2] = bb[2]; ptr64[3] = bb[3];
+                npy_uint64 arr[4] = {bb[0], bb[1], bb[2], bb[3]};
             #endif
+                memcpy(outptr, arr, sizeof(arr));
                 outptr += vstepx4;
             } else {
                 for(int i = 0; i < 4; i++) {

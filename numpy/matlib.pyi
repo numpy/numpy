@@ -2,9 +2,7 @@ from typing import Any, Literal, TypeAlias, TypeVar, overload
 
 import numpy as np
 import numpy.typing as npt
-
-# ruff: noqa: F401
-from numpy import (
+from numpy import (  # noqa: F401
     False_,
     ScalarType,
     True_,
@@ -514,8 +512,6 @@ _Matrix: TypeAlias = np.matrix[tuple[int, int], np.dtype[_T]]
 _Order: TypeAlias = Literal["C", "F"]
 
 ###
-
-# ruff: noqa: F811
 
 #
 @overload

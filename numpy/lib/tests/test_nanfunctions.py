@@ -1,17 +1,22 @@
-import warnings
-import pytest
 import inspect
+import warnings
 from functools import partial
+
+import pytest
 
 import numpy as np
 from numpy._core.numeric import normalize_axis_tuple
 from numpy.exceptions import AxisError, ComplexWarning
 from numpy.lib._nanfunctions_impl import _nan_mask, _replace_nan
 from numpy.testing import (
-    assert_, assert_equal, assert_almost_equal, assert_raises,
-    assert_raises_regex, assert_array_equal, suppress_warnings
-    )
-
+    assert_,
+    assert_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+    suppress_warnings,
+)
 
 # Test data
 _ndat = np.array([[0.6244, np.nan, 0.2692, 0.0116, np.nan, 0.1170],
@@ -1416,3 +1421,18 @@ def test__replace_nan():
         assert result_nan is not arr_nan
         assert_equal(result_nan, np.array([0, 1, 2]))
         assert np.isnan(arr_nan[-1])
+
+
+def test_memmap_takes_fast_route(tmpdir):
+    # We want memory mapped arrays to take the fast route through nanmax,
+    # which avoids creating a mask by using fmax.reduce (see gh-28721). So we
+    # check that on bad input, the error is from fmax (rather than maximum).
+    a = np.arange(10., dtype=float)
+    with open(tmpdir.join("data.bin"), "w+b") as fh:
+        fh.write(a.tobytes())
+        mm = np.memmap(fh, dtype=a.dtype, shape=a.shape)
+        with pytest.raises(ValueError, match="reduction operation fmax"):
+            np.nanmax(mm, out=np.zeros(2))
+        # For completeness, same for nanmin.
+        with pytest.raises(ValueError, match="reduction operation fmin"):
+            np.nanmin(mm, out=np.zeros(2))

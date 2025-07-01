@@ -39,8 +39,9 @@
 #include <cstdlib>
 #include <utility>
 
-/* enough for 32 * 1.618 ** 128 elements */
-#define TIMSORT_STACK_SIZE 128
+/* enough for 32 * 1.618 ** 128 elements.
+   If powersort was used in all cases, 90 would suffice, as  32 * 2 ** 90  >=  32 * 1.618 ** 128  */
+#define RUN_STACK_SIZE 128
 
 static npy_intp
 compute_min_run(npy_intp num)
@@ -58,6 +59,7 @@ compute_min_run(npy_intp num)
 typedef struct {
     npy_intp s; /* start pointer */
     npy_intp l; /* length */
+    int power;  /* node "level" for powersort merge strategy */
 } run;
 
 /* buffer for argsort. Declared here to avoid multiple declarations. */
@@ -383,60 +385,51 @@ merge_at_(type *arr, const run *stack, const npy_intp at, buffer_<Tag> *buffer)
     return 0;
 }
 
+/* See https://github.com/python/cpython/blob/ea23c897cd25702e72a04e06664f6864f07a7c5d/Objects/listsort.txt
+*  for a detailed explanation.
+*  In CPython, *num* is called *n*, but we changed it for consistency with the NumPy implementation.
+*/
+static int
+powerloop(npy_intp s1, npy_intp n1, npy_intp n2, npy_intp num)
+{
+    int result = 0;
+    npy_intp a = 2 * s1 + n1;  /* 2*a */
+    npy_intp b = a + n1 + n2;  /* 2*b */
+    for (;;) {
+        ++result;
+        if (a >= num) {  /* both quotient bits are 1 */
+            a -= num;
+            b -= num;
+        }
+        else if (b >= num) {  /* a/num bit is 0, b/num bit is 1 */
+            break;
+        }
+        a <<= 1;
+        b <<= 1;
+    }
+    return result;
+}
+
 template <typename Tag, typename type>
 static int
-try_collapse_(type *arr, run *stack, npy_intp *stack_ptr, buffer_<Tag> *buffer)
+found_new_run_(type *arr, run *stack, npy_intp *stack_ptr, npy_intp n2,
+               npy_intp num, buffer_<Tag> *buffer)
 {
     int ret;
-    npy_intp A, B, C, top;
-    top = *stack_ptr;
-
-    while (1 < top) {
-        B = stack[top - 2].l;
-        C = stack[top - 1].l;
-
-        if ((2 < top && stack[top - 3].l <= B + C) ||
-            (3 < top && stack[top - 4].l <= stack[top - 3].l + B)) {
-            A = stack[top - 3].l;
-
-            if (A <= C) {
-                ret = merge_at_<Tag>(arr, stack, top - 3, buffer);
-
-                if (NPY_UNLIKELY(ret < 0)) {
-                    return ret;
-                }
-
-                stack[top - 3].l += B;
-                stack[top - 2] = stack[top - 1];
-                --top;
-            }
-            else {
-                ret = merge_at_<Tag>(arr, stack, top - 2, buffer);
-
-                if (NPY_UNLIKELY(ret < 0)) {
-                    return ret;
-                }
-
-                stack[top - 2].l += C;
-                --top;
-            }
-        }
-        else if (1 < top && B <= C) {
-            ret = merge_at_<Tag>(arr, stack, top - 2, buffer);
-
+    if (*stack_ptr > 0) {
+        npy_intp s1 = stack[*stack_ptr - 1].s;
+        npy_intp n1 = stack[*stack_ptr - 1].l;
+        int power = powerloop(s1, n1, n2, num);
+        while (*stack_ptr > 1 && stack[*stack_ptr - 2].power > power) {
+            ret = merge_at_<Tag>(arr, stack, *stack_ptr - 2, buffer);
             if (NPY_UNLIKELY(ret < 0)) {
                 return ret;
             }
-
-            stack[top - 2].l += C;
-            --top;
+            stack[*stack_ptr - 2].l += stack[*stack_ptr - 1].l;
+            --(*stack_ptr);
         }
-        else {
-            break;
-        }
+        stack[*stack_ptr - 1].power = power;
     }
-
-    *stack_ptr = top;
     return 0;
 }
 
@@ -491,7 +484,7 @@ timsort_(void *start, npy_intp num)
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     buffer_<Tag> buffer;
-    run stack[TIMSORT_STACK_SIZE];
+    run stack[RUN_STACK_SIZE];
     buffer.pw = NULL;
     buffer.size = 0;
     stack_ptr = 0;
@@ -499,15 +492,14 @@ timsort_(void *start, npy_intp num)
 
     for (l = 0; l < num;) {
         n = count_run_<Tag>((type *)start, l, num, minrun);
+        ret = found_new_run_<Tag>((type *)start, stack, &stack_ptr, n, num, &buffer);
+        if (NPY_UNLIKELY(ret < 0))
+            goto cleanup;
+
+        // Push the new run onto the stack.
         stack[stack_ptr].s = l;
         stack[stack_ptr].l = n;
         ++stack_ptr;
-        ret = try_collapse_<Tag>((type *)start, stack, &stack_ptr, &buffer);
-
-        if (NPY_UNLIKELY(ret < 0)) {
-            goto cleanup;
-        }
-
         l += n;
     }
 
@@ -897,7 +889,7 @@ atimsort_(void *v, npy_intp *tosort, npy_intp num)
     int ret;
     npy_intp l, n, stack_ptr, minrun;
     buffer_intp buffer;
-    run stack[TIMSORT_STACK_SIZE];
+    run stack[RUN_STACK_SIZE];
     buffer.pw = NULL;
     buffer.size = 0;
     stack_ptr = 0;
@@ -1371,7 +1363,7 @@ string_timsort_(void *start, npy_intp num, void *varr)
     size_t len = elsize / sizeof(type);
     int ret;
     npy_intp l, n, stack_ptr, minrun;
-    run stack[TIMSORT_STACK_SIZE];
+    run stack[RUN_STACK_SIZE];
     string_buffer_<Tag> buffer;
 
     /* Items that have zero size don't make sense to sort */
@@ -1800,7 +1792,7 @@ string_atimsort_(void *start, npy_intp *tosort, npy_intp num, void *varr)
     size_t len = elsize / sizeof(type);
     int ret;
     npy_intp l, n, stack_ptr, minrun;
-    run stack[TIMSORT_STACK_SIZE];
+    run stack[RUN_STACK_SIZE];
     buffer_intp buffer;
 
     /* Items that have zero size don't make sense to sort */
@@ -2253,7 +2245,7 @@ npy_timsort(void *start, npy_intp num, void *varr)
     PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     int ret;
     npy_intp l, n, stack_ptr, minrun;
-    run stack[TIMSORT_STACK_SIZE];
+    run stack[RUN_STACK_SIZE];
     buffer_char buffer;
 
     /* Items that have zero size don't make sense to sort */
@@ -2689,7 +2681,7 @@ npy_atimsort(void *start, npy_intp *tosort, npy_intp num, void *varr)
     PyArray_CompareFunc *cmp = PyDataType_GetArrFuncs(PyArray_DESCR(arr))->compare;
     int ret;
     npy_intp l, n, stack_ptr, minrun;
-    run stack[TIMSORT_STACK_SIZE];
+    run stack[RUN_STACK_SIZE];
     buffer_intp buffer;
 
     /* Items that have zero size don't make sense to sort */

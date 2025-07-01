@@ -136,27 +136,27 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-import sys
-import string
-import fileinput
-import re
-import os
-import copy
-import platform
 import codecs
+import copy
+import fileinput
+import os
+import platform
+import re
+import string
+import sys
 from pathlib import Path
+
 try:
     import charset_normalizer
 except ImportError:
     charset_normalizer = None
 
-from . import __version__
+from . import __version__, symbolic
 
 # The environment provided by auxfuncs.py is needed for some calls to eval.
 # As the needed functions cannot be determined by static inspection of the
 # code, it is safest to use import * pending a major refactoring of f2py.
 from .auxfuncs import *
-from . import symbolic
 
 f2py_version = __version__.version
 
@@ -1124,13 +1124,12 @@ def analyzeline(m, case, line):
         groupcache[groupcounter]['result'] = result
         if groupcounter == 1:
             groupcache[groupcounter]['from'] = currentfilename
+        elif f77modulename and groupcounter == 3:
+            groupcache[groupcounter]['from'] = '%s:%s' % (
+                groupcache[groupcounter - 1]['from'], currentfilename)
         else:
-            if f77modulename and groupcounter == 3:
-                groupcache[groupcounter]['from'] = '%s:%s' % (
-                    groupcache[groupcounter - 1]['from'], currentfilename)
-            else:
-                groupcache[groupcounter]['from'] = '%s:%s' % (
-                    groupcache[groupcounter - 1]['from'], groupcache[groupcounter - 1]['name'])
+            groupcache[groupcounter]['from'] = '%s:%s' % (
+                groupcache[groupcounter - 1]['from'], groupcache[groupcounter - 1]['name'])
         for k in list(groupcache[groupcounter].keys()):
             if not groupcache[groupcounter][k]:
                 del groupcache[groupcounter][k]
@@ -1250,8 +1249,7 @@ def analyzeline(m, case, line):
                     continue
             else:
                 k = rmbadname1(m1.group('name'))
-            if case in ['public', 'private'] and \
-               (k == 'operator' or k == 'assignment'):
+            if case in ['public', 'private'] and k in {'operator', 'assignment'}:
                 k += m1.group('after')
             if k not in edecl:
                 edecl[k] = {}
@@ -1554,10 +1552,9 @@ def analyzeline(m, case, line):
         appendmultiline(groupcache[gc],
                         previous_context[:2],
                         m.group('this'))
-    else:
-        if verbose > 1:
-            print(m.groupdict())
-            outmess('analyzeline: No code implemented for line.\n')
+    elif verbose > 1:
+        print(m.groupdict())
+        outmess('analyzeline: No code implemented for line.\n')
 
 
 def appendmultiline(group, context_name, ml):
@@ -1567,7 +1564,6 @@ def appendmultiline(group, context_name, ml):
     if context_name not in d:
         d[context_name] = []
     d[context_name].append(ml)
-    return
 
 
 def cracktypespec0(typespec, ll):
@@ -2117,9 +2113,8 @@ def postcrack(block, args=None, tab=''):
                             del interfaced[interfaced.index(e)]
                             break
                 interface['body'].append(edef)
-            else:
-                if e in mvars and not isexternal(mvars[e]):
-                    interface['vars'][e] = mvars[e]
+            elif e in mvars and not isexternal(mvars[e]):
+                interface['vars'][e] = mvars[e]
         if interface['vars'] or interface['body']:
             block['interfaced'] = interfaced
             mblock = {'block': 'python module', 'body': [
@@ -2187,12 +2182,11 @@ def analyzecommon(block):
                     else:
                         block['vars'][n]['attrspec'] = [
                             f"dimension({','.join(dims)})"]
+                elif dims:
+                    block['vars'][n] = {
+                        'attrspec': [f"dimension({','.join(dims)})"]}
                 else:
-                    if dims:
-                        block['vars'][n] = {
-                            'attrspec': [f"dimension({','.join(dims)})"]}
-                    else:
-                        block['vars'][n] = {}
+                    block['vars'][n] = {}
                 if n not in commonvars:
                     commonvars.append(n)
             else:
@@ -2440,11 +2434,10 @@ def _selected_real_kind_func(p, r=0, radix=0):
     if machine.startswith(('aarch64', 'alpha', 'arm64', 'loongarch', 'mips', 'power', 'ppc', 'riscv', 's390x', 'sparc')):
         if p <= 33:
             return 16
-    else:
-        if p < 19:
-            return 10
-        elif p <= 33:
-            return 16
+    elif p < 19:
+        return 10
+    elif p <= 33:
+        return 16
     return -1
 
 
@@ -3432,15 +3425,14 @@ def vars2fortran(block, vars, args, tab='', as_interface=False):
                 vardef = f"{vardef}*({selector['*']})"
             else:
                 vardef = f"{vardef}*{selector['*']}"
-        else:
-            if 'len' in selector:
-                vardef = f"{vardef}(len={selector['len']}"
-                if 'kind' in selector:
-                    vardef = f"{vardef},kind={selector['kind']})"
-                else:
-                    vardef = f'{vardef})'
-            elif 'kind' in selector:
-                vardef = f"{vardef}(kind={selector['kind']})"
+        elif 'len' in selector:
+            vardef = f"{vardef}(len={selector['len']}"
+            if 'kind' in selector:
+                vardef = f"{vardef},kind={selector['kind']})"
+            else:
+                vardef = f'{vardef})'
+        elif 'kind' in selector:
+            vardef = f"{vardef}(kind={selector['kind']})"
         c = ' '
         if 'attrspec' in vars[a]:
             attr = [l for l in vars[a]['attrspec']
@@ -3574,16 +3566,16 @@ def traverse(obj, visit, parents=[], result=None, *args, **kwargs):
         new_result = []
         for index, value in enumerate(obj):
             new_index, new_item = traverse((index, value), visit,
-                                           parents=parents + [parent],
-                                           result=result, *args, **kwargs)
+                                           parents + [parent], result,
+                                           *args, **kwargs)
             if new_index is not None:
                 new_result.append(new_item)
     elif isinstance(obj, dict):
         new_result = {}
         for key, value in obj.items():
             new_key, new_value = traverse((key, value), visit,
-                                          parents=parents + [parent],
-                                          result=result, *args, **kwargs)
+                                          parents + [parent], result,
+                                          *args, **kwargs)
             if new_key is not None:
                 new_result[new_key] = new_value
     else:

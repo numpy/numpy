@@ -1,13 +1,19 @@
-import sys
 import platform
+import sys
+
 import pytest
 
 import numpy as np
+
 # import the c-extension module directly since _arg is not exported via umath
 import numpy._core._multiarray_umath as ncu
 from numpy.testing import (
-    assert_raises, assert_equal, assert_array_equal, assert_almost_equal, assert_array_max_ulp
-    )
+    assert_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+)
 
 # TODO: branch cuts (use Pauli code)
 # TODO: conj 'symmetry'
@@ -16,7 +22,7 @@ from numpy.testing import (
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
-#FIXME: this will probably change when we require full C99 compatibility
+# FIXME: this will probably change when we require full C99 compatibility
 with np.errstate(all='ignore'):
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(ncu.NZERO, 0)).imag != np.pi))
@@ -333,7 +339,7 @@ class TestCsqrt:
         def _check_ninf_nan(dummy):
             msgform = "csqrt(-inf, nan) is (%f, %f), expected (nan, +-inf)"
             z = np.sqrt(np.array(complex(-np.inf, np.nan)))
-            #Fixme: ugly workaround for isinf bug.
+            # FIXME: ugly workaround for isinf bug.
             with np.errstate(invalid='ignore'):
                 if not (np.isnan(z.real) and np.isinf(z.imag)):
                     raise AssertionError(msgform % (z.real, z.imag))
@@ -556,31 +562,35 @@ class TestSpecialComplexAVX:
     @pytest.mark.parametrize("stride", [-4, -2, -1, 1, 2, 4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     def test_array(self, stride, astype):
-        arr = np.array([complex(np.nan, np.nan),
-                        complex(np.nan, np.inf),
-                        complex(np.inf, np.nan),
-                        complex(np.inf, np.inf),
-                        complex(0.,     np.inf),
-                        complex(np.inf, 0.),
-                        complex(0.,     0.),
-                        complex(0.,     np.nan),
-                        complex(np.nan, 0.)], dtype=astype)
-        abs_true = np.array([np.nan, np.inf, np.inf, np.inf, np.inf, np.inf, 0., np.nan, np.nan], dtype=arr.real.dtype)
-        sq_true = np.array([complex(np.nan,  np.nan),
-                            complex(np.nan,  np.nan),
-                            complex(np.nan,  np.nan),
-                            complex(np.nan,  np.inf),
-                            complex(-np.inf, np.nan),
-                            complex(np.inf,  np.nan),
-                            complex(0.,      0.),
-                            complex(np.nan,  np.nan),
-                            complex(np.nan,  np.nan)], dtype=astype)
+        nan = np.nan
+        inf = np.inf
+        arr = np.array([complex(nan, nan),
+                        complex(nan, inf),
+                        complex(inf, nan),
+                        complex(inf, inf),
+                        complex(0.,  inf),
+                        complex(inf,  0.),
+                        complex(0.,   0.),
+                        complex(0.,  nan),
+                        complex(nan,  0.)], dtype=astype)
+        abs_true = np.array([nan, inf, inf, inf, inf, inf, 0., nan, nan],
+                            dtype=arr.real.dtype)
+        sq_true = np.array([complex(nan,  nan),
+                            complex(nan,  nan),
+                            complex(nan,  nan),
+                            complex(nan,  inf),
+                            complex(-inf, nan),
+                            complex(inf,  nan),
+                            complex(0.,    0.),
+                            complex(nan,  nan),
+                            complex(nan,  nan)], dtype=astype)
         with np.errstate(invalid='ignore'):
             assert_equal(np.abs(arr[::stride]), abs_true[::stride])
             assert_equal(np.square(arr[::stride]), sq_true[::stride])
 
 class TestComplexAbsoluteAVX:
-    @pytest.mark.parametrize("arraysize", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 18, 19])
+    @pytest.mark.parametrize("arraysize",
+                             [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 18, 19])
     @pytest.mark.parametrize("stride", [-4, -3, -2, -1, 1, 2, 3, 4])
     @pytest.mark.parametrize("astype", [np.complex64, np.complex128])
     # test to ensure masking and strides work as intended in the AVX implementation

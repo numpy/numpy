@@ -53,12 +53,10 @@ jobs:
         echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
     - name: Build Python with address sanitizer
       run: |
-        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.13t
-        pyenv global 3.13t
+        CONFIGURE_OPTS="--with-address-sanitizer" pyenv install 3.14t
+        pyenv global 3.14t
     - name: Install dependencies
       run: |
-        # TODO: remove when a released cython supports free-threaded python
-        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
         pip install -r requirements/build_requirements.txt
         pip install -r requirements/ci_requirements.txt
         pip install -r requirements/test_requirements.txt
@@ -76,54 +74,27 @@ jobs:
   clang_TSAN:
     # To enable this workflow on a fork, comment out:
     if: github.repository == 'numpy/numpy'
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
+    container:
+        image: ghcr.io/nascheme/numpy-tsan:3.14t
+        options: --shm-size=2g # increase memory for large matrix ops
+      
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      with:
-        submodules: recursive
-        fetch-tags: true
-        persist-credentials: false
-    - name: Set up pyenv
-      run: |
-        git clone https://github.com/pyenv/pyenv.git "$HOME/.pyenv"
-        PYENV_ROOT="$HOME/.pyenv"
-        PYENV_BIN="$PYENV_ROOT/bin"
-        PYENV_SHIMS="$PYENV_ROOT/shims"
-        echo "$PYENV_BIN" >> $GITHUB_PATH
-        echo "$PYENV_SHIMS" >> $GITHUB_PATH
-        echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
-    - name: Check pyenv is working
-      run:
-        pyenv --version
-    - name: Set up LLVM
-      run: |
-        brew install llvm@19
-        LLVM_PREFIX=$(brew --prefix llvm@19)
-        echo CC="$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
-        echo CXX="$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
-        echo LDFLAGS="-L$LLVM_PREFIX/lib" >> $GITHUB_ENV
-        echo CPPFLAGS="-I$LLVM_PREFIX/include" >> $GITHUB_ENV
-    - name: Build Python with thread sanitizer support
-      run: |
-        # free-threaded Python is much more likely to trigger races
-        CONFIGURE_OPTS="--with-thread-sanitizer" pyenv install 3.13t
-        pyenv global 3.13t
-    - name: Install dependencies
-      run: |
-        # TODO: remove when a released cython supports free-threaded python
-        pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple cython
-        pip install -r requirements/build_requirements.txt
-        pip install -r requirements/ci_requirements.txt
-        pip install -r requirements/test_requirements.txt
-        # xdist captures stdout/stderr, but we want the TSAN output
-        pip uninstall -y pytest-xdist
-    - name: Build
-      run:
-        python -m spin build -j2 -- -Db_sanitize=thread
-    - name: Test
-      run: |
-        # These tests are slow, so only run tests in files that do "import threading" to make them count
-        TSAN_OPTIONS="allocator_may_return_null=1:suppressions=$GITHUB_WORKSPACE/tools/ci/tsan_suppressions.txt" \
-        python -m spin test \
-        `find numpy -name "test*.py" | xargs grep -l "import threading" | tr '\n' ' '` \
-        -- -v -s --timeout=600 --durations=10
+      - uses: actions/checkout@v4
+      - name: Trust working directory and initialize submodules
+        run: |
+          git config --global --add safe.directory /__w/numpy/numpy
+          git submodule update --init --recursive
+      - name: Uninstall pytest-xdist (conflicts with TSAN)
+        run: pip uninstall -y pytest-xdist
+
+      - name: Build NumPy with ThreadSanitizer
+        run: python -m spin build -j2 -- -Db_sanitize=thread
+
+      - name: Run tests under prebuilt TSAN container
+        run: |
+          export TSAN_OPTIONS="halt_on_error=0:allocator_may_return_null=1:suppressions=$GITHUB_WORKSPACE/tools/ci/tsan_suppressions.txt"
+          echo "TSAN_OPTIONS=$TSAN_OPTIONS"
+          python -m spin test \
+          `find numpy -name "test*.py" | xargs grep -l "import threading" | tr '\n' ' '` \
+           -- -v -s --timeout=600 --durations=10

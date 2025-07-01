@@ -388,41 +388,57 @@ add_gufuncs(PyObject *dictionary) {
     return 0;
 }
 
-static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,
-    "_multiarray_umath",
-    NULL,
-    -1,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
+static int module_loaded = 0;
 
-/* Initialization function for the module */
-PyMODINIT_FUNC PyInit__pocketfft_umath(void)
+static int
+_pocketfft_umath_exec(PyObject *m)
 {
-    PyObject *m = PyModule_Create(&moduledef);
-    if (m == NULL) {
-        return NULL;
+    // https://docs.python.org/3/howto/isolating-extensions.html#opt-out-limiting-to-one-module-object-per-process
+    if (module_loaded) {
+        PyErr_SetString(PyExc_ImportError,
+                        "cannot load module more than once per process");
+        return -1;
     }
+    module_loaded = 1;
 
     /* Import the array and ufunc objects */
-    import_array();
-    import_ufunc();
+    if (PyArray_ImportNumPyAPI() < 0) {
+        return -1;
+    }
+    if (PyUFunc_ImportUFuncAPI() < 0) {
+        return -1;
+    }
 
     PyObject *d = PyModule_GetDict(m);
     if (add_gufuncs(d) < 0) {
         Py_DECREF(d);
-        Py_DECREF(m);
-        return NULL;
+        return -1;
     }
 
-#if Py_GIL_DISABLED
-    // signal this module supports running with the GIL disabled
-    PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
-#endif
+    return 0;
+}
 
-    return m;
+static struct PyModuleDef_Slot _pocketfft_umath_slots[] = {
+    {Py_mod_exec, (void*)_pocketfft_umath_exec},
+#if PY_VERSION_HEX >= 0x030c00f0  // Python 3.12+
+    {Py_mod_multiple_interpreters, Py_MOD_MULTIPLE_INTERPRETERS_NOT_SUPPORTED},
+#endif
+#if PY_VERSION_HEX >= 0x030d00f0  // Python 3.13+
+    // signal that this module supports running without an active GIL
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL},
+};
+
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,  /* m_base */
+    "_pocketfft_umath",     /* m_name */
+    NULL,                   /* m_doc */
+    0,                      /* m_size */
+    NULL,                   /* m_methods */
+    _pocketfft_umath_slots, /* m_slots */
+};
+
+PyMODINIT_FUNC PyInit__pocketfft_umath(void) {
+    return PyModuleDef_Init(&moduledef);
 }

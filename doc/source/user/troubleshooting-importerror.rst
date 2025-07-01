@@ -83,28 +83,6 @@ on how to properly configure Eclipse/PyDev to use Anaconda Python with specific
 conda environments.
 
 
-Raspberry Pi
-------------
-
-There are sometimes issues reported on Raspberry Pi setups when installing
-using ``pip3 install`` (or ``pip`` install). These will typically mention::
-
-    libf77blas.so.3: cannot open shared object file: No such file or directory
-
-
-The solution will be to either::
-
-    sudo apt-get install libatlas-base-dev
-
-to install the missing libraries expected by the self-compiled NumPy
-(ATLAS is a possible provider of linear algebra).
-
-*Alternatively* use the NumPy provided by Raspbian. In which case run::
-
-    pip3 uninstall numpy  # remove previously installed version
-    apt install python3-numpy
-
-
 Debug build on Windows
 ----------------------
 

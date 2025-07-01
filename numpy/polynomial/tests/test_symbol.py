@@ -3,9 +3,10 @@ Tests related to the ``symbol`` attribute of the ABCPolyBase class.
 """
 
 import pytest
+
 import numpy.polynomial as poly
 from numpy._core import array
-from numpy.testing import assert_equal, assert_raises, assert_
+from numpy.testing import assert_, assert_equal, assert_raises
 
 
 class TestInit:

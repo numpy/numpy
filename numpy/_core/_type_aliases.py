@@ -18,7 +18,7 @@ and sometimes other mappings too.
 """
 
 import numpy._core.multiarray as ma
-from numpy._core.multiarray import typeinfo, dtype
+from numpy._core.multiarray import dtype, typeinfo
 
 ######################################
 # Building `sctypeDict` and `allTypes`

@@ -1,13 +1,16 @@
-import importlib
-import time
-import pytest
-import numpy as np
-from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
-from . import util
-from numpy.f2py import crackfortran
-import textwrap
 import contextlib
+import importlib
 import io
+import textwrap
+import time
+
+import pytest
+
+import numpy as np
+from numpy.f2py import crackfortran
+from numpy.f2py.crackfortran import markinnerspaces, nameargspattern
+
+from . import util
 
 
 class TestNoSpace(util.F2PyTest):

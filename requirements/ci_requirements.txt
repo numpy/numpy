@@ -1,4 +1,6 @@
 spin==0.13
 # Keep this in sync with ci32_requirements.txt
-scipy-openblas32==0.3.29.0.0
-scipy-openblas64==0.3.29.0.0
+scipy-openblas32==0.3.29.0.0 ; sys_platform != 'win32' or platform_machine != 'ARM64'
+scipy-openblas32==0.3.29.265.0 ; sys_platform == 'win32' and platform_machine == 'ARM64'
+# Note there is not yet a win-arm64 wheel, so we currently only exclude win-arm64
+scipy-openblas64==0.3.29.0.0 ; sys_platform != 'win32' or platform_machine != 'ARM64'

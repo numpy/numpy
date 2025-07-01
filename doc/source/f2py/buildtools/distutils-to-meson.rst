@@ -117,7 +117,7 @@ sample is included below.
     +------------------------------------+-------------------------------+
     | LDFLAGS                            | Linker options                |
     +------------------------------------+-------------------------------+
-    | LD\ :sub:`LIBRARY`\ \ :sub:`PATH`\ | Library file locations (Unix) |
+    | LD\_LIBRARY\_PATH                  | Library file locations (Unix) |
     +------------------------------------+-------------------------------+
     | LIBS                               | Libraries to link against     |
     +------------------------------------+-------------------------------+

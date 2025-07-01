@@ -33,7 +33,6 @@ import collections
 import itertools
 import re
 
-
 __all__ = [
     "parse", "Version", "LegacyVersion", "InvalidVersion", "VERSION_PATTERN",
 ]

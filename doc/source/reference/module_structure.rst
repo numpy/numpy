@@ -5,7 +5,7 @@ NumPy's module structure
 ************************
 
 NumPy has a large number of submodules. Most regular usage of NumPy requires
-only the main namespace and a smaller set of submodules. The rest either either
+only the main namespace and a smaller set of submodules. The rest either have
 special-purpose or niche namespaces.
 
 Main namespaces

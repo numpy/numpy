@@ -1,18 +1,18 @@
 import functools
-import sys
-import sysconfig
-import subprocess
-import pkgutil
-import types
 import importlib
 import inspect
+import pkgutil
+import subprocess
+import sys
+import sysconfig
+import types
 import warnings
 
-import numpy as np
-import numpy
-from numpy.testing import IS_WASM
-
 import pytest
+
+import numpy
+import numpy as np
+from numpy.testing import IS_WASM
 
 try:
     import ctypes
@@ -162,8 +162,6 @@ PUBLIC_ALIASED_MODULES = [
 
 
 PRIVATE_BUT_PRESENT_MODULES = ['numpy.' + s for s in [
-    "compat",
-    "compat.py3k",
     "conftest",
     "core",
     "core.multiarray",
@@ -284,8 +282,6 @@ else:
     SKIP_LIST = ["numpy.distutils.msvc9compiler"]
 
 
-# suppressing warnings from deprecated modules
-@pytest.mark.filterwarnings("ignore:.*np.compat.*:DeprecationWarning")
 def test_all_modules_are_expected():
     """
     Test that we don't add anything that looks like a new public module by
@@ -563,10 +559,11 @@ def test_functions_single_location():
     Test performs BFS search traversing NumPy's public API. It flags
     any function-like object that is accessible from more that one place.
     """
-    from typing import Any
     from collections.abc import Callable
+    from typing import Any
+
     from numpy._core._multiarray_umath import (
-        _ArrayFunctionDispatcher as dispatched_function
+        _ArrayFunctionDispatcher as dispatched_function,
     )
 
     visited_modules: set[types.ModuleType] = {np}
@@ -783,8 +780,7 @@ def test___qualname___and___module___attribute():
                 inspect.ismodule(member) and  # it's a module
                 "numpy" in member.__name__ and  # inside NumPy
                 not member_name.startswith("_") and  # not private
-                member_name != "tests" and
-                member_name != "typing" and  # 2024-12: type names don't match
+                member_name not in {"tests", "typing"} and  # type names don't match
                 "numpy._core" not in member.__name__ and  # outside _core
                 member not in visited_modules  # not visited yet
             ):

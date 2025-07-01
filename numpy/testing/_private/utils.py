@@ -2,35 +2,31 @@
 Utility function to facilitate testing.
 
 """
+import concurrent.futures
+import contextlib
+import gc
+import importlib.metadata
+import operator
 import os
-import sys
 import pathlib
 import platform
+import pprint
 import re
-import gc
-import operator
+import shutil
+import sys
+import sysconfig
+import threading
 import warnings
 from functools import partial, wraps
-import shutil
-import contextlib
+from io import StringIO
 from tempfile import mkdtemp, mkstemp
 from unittest.case import SkipTest
 from warnings import WarningMessage
-import pprint
-import sysconfig
-import concurrent.futures
-import threading
-import importlib.metadata
 
 import numpy as np
-from numpy._core import (
-     intp, float32, empty, arange, array_repr, ndarray, isnat, array)
-from numpy import isfinite, isnan, isinf
 import numpy.linalg._umath_linalg
-from numpy._core.tests._natype import pd_NA
-
-from io import StringIO
-
+from numpy import isfinite, isinf, isnan
+from numpy._core import arange, array, array_repr, empty, float32, intp, isnat, ndarray
 
 __all__ = [
         'assert_equal', 'assert_almost_equal', 'assert_approx_equal',
@@ -46,6 +42,7 @@ __all__ = [
         'assert_no_gc_cycles', 'break_cycles', 'HAS_LAPACK64', 'IS_PYSTON',
         'IS_MUSL', 'check_support_sve', 'NOGIL_BUILD',
         'IS_EDITABLE', 'IS_INSTALLED', 'NUMPY_ROOT', 'run_threaded', 'IS_64BIT',
+        'BLAS_SUPPORTS_FPE',
         ]
 
 
@@ -70,7 +67,8 @@ else:
             IS_EDITABLE = np_dist.origin.dir_info.editable
         else:
             # Backport importlib.metadata.Distribution.origin
-            import json, types  # noqa: E401
+            import json  # noqa: E401
+            import types
             origin = json.loads(
                 np_dist.read_text('direct_url.json') or '{}',
                 object_hook=lambda data: types.SimpleNamespace(**data),
@@ -92,6 +90,15 @@ IS_WASM = platform.machine() in ["wasm32", "wasm64"]
 IS_PYPY = sys.implementation.name == 'pypy'
 IS_PYSTON = hasattr(sys, "pyston_version_info")
 HAS_REFCOUNT = getattr(sys, 'getrefcount', None) is not None and not IS_PYSTON
+BLAS_SUPPORTS_FPE = True
+if platform.system() == 'Darwin' or platform.machine() == 'arm64':
+    try:
+        blas = np.__config__.CONFIG['Build Dependencies']['blas']
+        if blas['name'] == 'accelerate':
+            BLAS_SUPPORTS_FPE = False
+    except KeyError:
+        pass
+
 HAS_LAPACK64 = numpy.linalg._umath_linalg._ilp64
 
 IS_MUSL = False
@@ -136,7 +143,7 @@ if os.name == 'nt':
         # you should copy this function, but keep the counter open, and call
         # CollectQueryData() each time you need to know.
         # See http://msdn.microsoft.com/library/en-us/dnperfmo/html/perfmonpt2.asp
-        #(dead link)
+        # (dead link)
         # My older explanation for this was that the "AddCounter" process
         # forced the CPU to 100%, but the above makes more sense :)
         import win32pdh
@@ -164,11 +171,12 @@ if os.name == 'nt':
                                         win32pdh.PDH_FMT_LONG, None)
 elif sys.platform[:5] == 'linux':
 
-    def memusage(_proc_pid_stat=f'/proc/{os.getpid()}/stat'):
+    def memusage(_proc_pid_stat=None):
         """
         Return virtual memory size in bytes of the running python.
 
         """
+        _proc_pid_stat = _proc_pid_stat or f'/proc/{os.getpid()}/stat'
         try:
             with open(_proc_pid_stat) as f:
                 l = f.readline().split(' ')
@@ -185,7 +193,7 @@ else:
 
 
 if sys.platform[:5] == 'linux':
-    def jiffies(_proc_pid_stat=f'/proc/{os.getpid()}/stat', _load_time=[]):
+    def jiffies(_proc_pid_stat=None, _load_time=None):
         """
         Return number of jiffies elapsed.
 
@@ -193,6 +201,8 @@ if sys.platform[:5] == 'linux':
         process has been scheduled in user mode. See man 5 proc.
 
         """
+        _proc_pid_stat = _proc_pid_stat or f'/proc/{os.getpid()}/stat'
+        _load_time = _load_time or []
         import time
         if not _load_time:
             _load_time.append(time.time())
@@ -293,9 +303,10 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
 
     Notes
     -----
-    By default, when one of `actual` and `desired` is a scalar and the other is
-    an array, the function checks that each element of the array is equal to
-    the scalar. This behaviour can be disabled by setting ``strict==True``.
+    When one of `actual` and `desired` is a scalar and the other is array_like, the
+    function checks that each element of the array_like is equal to the scalar.
+    Note that empty arrays are therefore considered equal to scalars.
+    This behaviour can be disabled by setting ``strict==True``.
 
     Examples
     --------
@@ -365,8 +376,8 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
             assert_equal(actual[k], desired[k], f'item={k!r}\n{err_msg}',
                          verbose)
         return
-    from numpy._core import ndarray, isscalar, signbit
-    from numpy import iscomplexobj, real, imag
+    from numpy import imag, iscomplexobj, real
+    from numpy._core import isscalar, ndarray, signbit
     if isinstance(actual, ndarray) or isinstance(desired, ndarray):
         return assert_array_equal(actual, desired, err_msg, verbose,
                                   strict=strict)
@@ -570,8 +581,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
 
     """
     __tracebackhide__ = True  # Hide traceback for py.test
+    from numpy import imag, iscomplexobj, real
     from numpy._core import ndarray
-    from numpy import iscomplexobj, real, imag
 
     # Handle complex numbers: separate into real/imag to handle
     # nan/inf/negative zero correctly
@@ -616,9 +627,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
             if isnan(desired) or isnan(actual):
                 if not (isnan(desired) and isnan(actual)):
                     raise AssertionError(_build_err_msg())
-            else:
-                if not desired == actual:
-                    raise AssertionError(_build_err_msg())
+            elif not desired == actual:
+                raise AssertionError(_build_err_msg())
             return
     except (NotImplementedError, TypeError):
         pass
@@ -716,9 +726,8 @@ def assert_approx_equal(actual, desired, significant=7, err_msg='',
             if isnan(desired) or isnan(actual):
                 if not (isnan(desired) and isnan(actual)):
                     raise AssertionError(msg)
-            else:
-                if not desired == actual:
-                    raise AssertionError(msg)
+            elif not desired == actual:
+                raise AssertionError(msg)
             return
     except (TypeError, NotImplementedError):
         pass
@@ -730,8 +739,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                          precision=6, equal_nan=True, equal_inf=True,
                          *, strict=False, names=('ACTUAL', 'DESIRED')):
     __tracebackhide__ = True  # Hide traceback for py.test
-    from numpy._core import (array2string, isnan, inf, errstate,
-                            all, max, object_)
+    from numpy._core import all, array2string, errstate, inf, isnan, max, object_
 
     x = np.asanyarray(x)
     y = np.asanyarray(y)
@@ -983,9 +991,10 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
 
     Notes
     -----
-    When one of `actual` and `desired` is a scalar and the other is array_like,
-    the function checks that each element of the array_like object is equal to
-    the scalar. This behaviour can be disabled with the `strict` parameter.
+    When one of `actual` and `desired` is a scalar and the other is array_like, the
+    function checks that each element of the array_like is equal to the scalar.
+    Note that empty arrays are therefore considered equal to scalars.
+    This behaviour can be disabled by setting ``strict==True``.
 
     Examples
     --------
@@ -1136,8 +1145,8 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy._core import number, result_type
-    from numpy._core.numerictypes import issubdtype
     from numpy._core.fromnumeric import any as npany
+    from numpy._core.numerictypes import issubdtype
 
     def compare(x, y):
         try:
@@ -1383,8 +1392,9 @@ def rundocs(filename=None, raise_on_error=True):
 
     >>> np.lib.test(doctests=True)  # doctest: +SKIP
     """
-    from numpy.distutils.misc_util import exec_mod_from_location
     import doctest
+
+    from numpy.distutils.misc_util import exec_mod_from_location
     if filename is None:
         f = sys._getframe(1)
         filename = f.f_globals['__file__']
@@ -1529,7 +1539,6 @@ def decorate_methods(cls, decorator, testmatch=None):
             continue
         if testmatch.search(funcname) and not funcname.startswith('_'):
             setattr(cls, funcname, decorator(function))
-    return
 
 
 def measure(code_str, times=1, label=None):
@@ -1587,6 +1596,7 @@ def _assert_valid_refcount(op):
         return True
 
     import gc
+
     import numpy as np
 
     b = np.arange(100 * 100).reshape(100, 100)
@@ -1601,7 +1611,6 @@ def _assert_valid_refcount(op):
         assert_(sys.getrefcount(i) >= rc)
     finally:
         gc.enable()
-    del d  # for pyflakes
 
 
 def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
@@ -1654,10 +1663,10 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
 
     Notes
     -----
-    When one of `actual` and `desired` is a scalar and the other is
-    array_like, the function performs the comparison as if the scalar were
-    broadcasted to the shape of the array.
-    This behaviour can be disabled with the `strict` parameter.
+    When one of `actual` and `desired` is a scalar and the other is array_like, the
+    function performs the comparison as if the scalar were broadcasted to the shape
+    of the array. Note that empty arrays are therefore considered equal to scalars.
+    This behaviour can be disabled by setting ``strict==True``.
 
     Examples
     --------
@@ -1898,9 +1907,8 @@ def _integer_repr(x, vdt, comp):
     rx = x.view(vdt)
     if not (rx.size == 1):
         rx[rx < 0] = comp - rx[rx < 0]
-    else:
-        if rx < 0:
-            rx = comp - rx
+    elif rx < 0:
+        rx = comp - rx
 
     return rx
 
@@ -2081,7 +2089,7 @@ def _gen_alignment_data(dtype=float32, type='binary', max_size=24):
                 inp1 = lambda: arange(s, dtype=dtype)[o:]
                 inp2 = lambda: arange(s, dtype=dtype)[o:]
                 out = empty((s,), dtype=dtype)[o:]
-                yield out, inp1(), inp2(),  bfmt % \
+                yield out, inp1(), inp2(), bfmt % \
                     (o, o, o, s, dtype, 'out of place')
                 d = inp1()
                 yield d, d, inp2(), bfmt % \
@@ -2161,7 +2169,7 @@ class clear_and_catch_warnings(warnings.catch_warnings):
     This makes it possible to trigger any warning afresh inside the context
     manager without disturbing the state of warnings outside.
 
-    For compatibility with Python 3.0, please consider all arguments to be
+    For compatibility with Python, please consider all arguments to be
     keyword-only.
 
     Parameters
@@ -2741,16 +2749,13 @@ def run_threaded(func, max_workers=8, pass_count=False,
                 futures = []
                 for arg in all_args:
                     futures.append(tpe.submit(*arg))
+            except RuntimeError as e:
+                import pytest
+                pytest.skip(f"Spawning {max_workers} threads failed with "
+                            f"error {e!r} (likely due to resource limits on the "
+                            "system running the tests)")
             finally:
                 if len(futures) < max_workers and pass_barrier:
                     barrier.abort()
             for f in futures:
                 f.result()
-
-
-def get_stringdtype_dtype(na_object, coerce=True):
-    # explicit is check for pd_NA because != with pd_NA returns pd_NA
-    if na_object is pd_NA or na_object != "unset":
-        return np.dtypes.StringDType(na_object=na_object, coerce=coerce)
-    else:
-        return np.dtypes.StringDType(coerce=coerce)

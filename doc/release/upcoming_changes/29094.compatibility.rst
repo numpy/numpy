@@ -1,0 +1,7 @@
+The Macro NPY_ALIGNMENT_REQUIRED has been removed
+-------------------------------------------------
+The macro was defined in the `npy_cpu.h` file, so might be regarded as
+semipublic. As it turns out, with modern compilers and hardware it is almost
+always the case that alignment is required, so numpy no longer uses the macro.
+It is unlikely anyone uses it, but you might want to compile with the `-Wundef`
+flag or equivalent to be sure.

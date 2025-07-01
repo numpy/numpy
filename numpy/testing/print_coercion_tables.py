@@ -2,9 +2,11 @@
 """Prints type-coercion tables for the built-in NumPy types
 
 """
+from collections import namedtuple
+
 import numpy as np
 from numpy._core.numerictypes import obj2sctype
-from collections import namedtuple
+
 
 # Generic object that can be added, but doesn't do anything else
 class GenericObject:

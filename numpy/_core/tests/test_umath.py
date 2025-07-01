@@ -1,24 +1,37 @@
-import platform
-import warnings
 import fnmatch
 import itertools
-import pytest
-import sys
 import operator
+import platform
+import sys
+import warnings
+from collections import namedtuple
 from fractions import Fraction
 from functools import reduce
-from collections import namedtuple
 
+import pytest
+
+import numpy as np
 import numpy._core.umath as ncu
 from numpy._core import _umath_tests as ncu_tests, sctypes
-import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_array_max_ulp, assert_allclose, assert_no_warnings, suppress_warnings,
-    _gen_alignment_data, assert_array_almost_equal_nulp, IS_WASM, IS_MUSL,
-    IS_PYPY, HAS_REFCOUNT
-    )
+    HAS_REFCOUNT,
+    IS_MUSL,
+    IS_PYPY,
+    IS_WASM,
+    _gen_alignment_data,
+    assert_,
+    assert_allclose,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_almost_equal_nulp,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_no_warnings,
+    assert_raises,
+    assert_raises_regex,
+    suppress_warnings,
+)
 from numpy.testing._private.utils import _glibc_older_than
 
 UFUNCS = [obj for obj in np._core.umath.__dict__.values()
@@ -269,9 +282,9 @@ class TestOut:
             pass
 
         arr = np.arange(10).view(ArrSubclass)
-
+        orig_refcount = sys.getrefcount(arr)
         arr *= 1
-        assert sys.getrefcount(arr) == 2
+        assert sys.getrefcount(arr) == orig_refcount
 
 
 class TestComparisons:
@@ -1167,14 +1180,14 @@ class TestPower:
             assert_array_equal(x.real, y.real)
             assert_array_equal(x.imag, y.imag)
 
-        #Complex powers with positive real part will not generate a warning
+        # Complex powers with positive real part will not generate a warning
         assert_complex_equal(np.power(zero, 1 + 4j), zero)
         assert_complex_equal(np.power(zero, 2 - 3j), zero)
-        #Testing zero values when real part is greater than zero
+        # Testing zero values when real part is greater than zero
         assert_complex_equal(np.power(zero, 1 + 1j), zero)
         assert_complex_equal(np.power(zero, 1 + 0j), zero)
         assert_complex_equal(np.power(zero, 1 - 1j), zero)
-        #Complex powers will negative real part or 0 (provided imaginary
+        # Complex powers will negative real part or 0 (provided imaginary
         # part is not zero) will generate a NAN and hence a RUNTIME warning
         with pytest.warns(expected_warning=RuntimeWarning) as r:
             assert_complex_equal(np.power(zero, -1 + 1j), cnan)
@@ -1865,8 +1878,15 @@ class TestSpecialFloats:
         # FIXME: NAN raises FP invalid exception:
         #  - ceil/float16 on MSVC:32-bit
         #  - spacing/float16 on almost all platforms
+        #  - spacing/float32,float64 on Windows MSVC with VS2022
         if ufunc in (np.spacing, np.ceil) and dtype == 'e':
             return
+        # Skip spacing tests with NaN on Windows MSVC (all dtypes)
+        import platform
+        if (ufunc == np.spacing and
+            platform.system() == 'Windows' and
+            any(np.isnan(d) if isinstance(d, (int, float)) else False for d in data)):
+            pytest.skip("spacing with NaN generates warnings on Windows/VS2022")
         array = np.array(data, dtype=dtype)
         with assert_no_warnings():
             ufunc(array)

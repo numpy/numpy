@@ -1,8 +1,7 @@
 import re
+from _typeshed import StrOrBytesPath
 from collections.abc import Mapping
 from typing import Final
-
-from _typeshed import StrOrBytesPath
 
 routine_start_re: Final[re.Pattern[str]] = ...
 routine_end_re: Final[re.Pattern[str]] = ...

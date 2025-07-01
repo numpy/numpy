@@ -1,0 +1,4 @@
+Fix bug in ``matmul`` for non-contiguous out kwarg parameter
+------------------------------------------------------------
+In some cases, if ``out`` was non-contiguous, ``np.matmul`` would cause
+memory corruption or a c-level assert. This was new to v2.3.0 and fixed in v2.3.1.

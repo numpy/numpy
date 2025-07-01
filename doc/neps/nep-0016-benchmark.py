@@ -1,6 +1,9 @@
-import perf
 import abc
+
+import perf
+
 import numpy as np
+
 
 class NotArray:
     pass
@@ -8,7 +11,7 @@ class NotArray:
 class AttrArray:
     __array_implementer__ = True
 
-class ArrayBase(abc.ABC):
+class ArrayBase(abc.ABC):  # noqa: B024
     pass
 
 class ABCArray1(ArrayBase):

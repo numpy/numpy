@@ -1,9 +1,10 @@
 import platform
+
 import pytest
 
 import numpy as np
-from numpy import uint16, float16, float32, float64
-from numpy.testing import assert_, assert_equal, IS_WASM
+from numpy import float16, float32, float64, uint16
+from numpy.testing import IS_WASM, assert_, assert_equal
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
@@ -20,7 +21,7 @@ class TestHalf:
     def setup_method(self):
         # An array of all possible float16 values
         self.all_f16 = np.arange(0x10000, dtype=uint16)
-        self.all_f16.dtype = float16
+        self.all_f16 = self.all_f16.view(float16)
 
         # NaN value can cause an invalid FP exception if HW is being used
         with np.errstate(invalid='ignore'):
@@ -31,7 +32,7 @@ class TestHalf:
         self.nonan_f16 = np.concatenate(
                                 (np.arange(0xfc00, 0x7fff, -1, dtype=uint16),
                                  np.arange(0x0000, 0x7c01, 1, dtype=uint16)))
-        self.nonan_f16.dtype = float16
+        self.nonan_f16 = self.nonan_f16.view(float16)
         self.nonan_f32 = np.array(self.nonan_f16, dtype=float32)
         self.nonan_f64 = np.array(self.nonan_f16, dtype=float64)
 
@@ -217,7 +218,7 @@ class TestHalf:
                       0x0001, 0x8001,
                       0x0000, 0x8000,
                       0x7c00, 0xfc00], dtype=uint16)
-        b.dtype = float16
+        b = b.view(dtype=float16)
         assert_equal(a, b)
 
     def test_half_rounding(self):
@@ -530,7 +531,7 @@ class TestHalf:
             assert_raises_fpe('overflow', lambda a, b: a - b,
                                              float16(-65504), float16(17))
             assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
-            assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))
+            assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))  # noqa: E501
             assert_raises_fpe('overflow', np.spacing, float16(65504))
 
             # Invalid value errors

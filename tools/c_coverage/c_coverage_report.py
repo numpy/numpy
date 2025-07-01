@@ -7,15 +7,15 @@ valgrind's callgrind tool.
 import os
 import re
 import sys
-from xml.sax.saxutils import quoteattr, escape
+from xml.sax.saxutils import escape, quoteattr
 
 try:
     import pygments
     if tuple(int(x) for x in pygments.__version__.split('.')) < (0, 11):
         raise ImportError
     from pygments import highlight
-    from pygments.lexers import CLexer
     from pygments.formatters import HtmlFormatter
+    from pygments.lexers import CLexer
     has_pygments = True
 except ImportError:
     print("This script requires pygments 0.11 or greater to generate HTML")

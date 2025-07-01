@@ -1,7 +1,5 @@
 from collections.abc import Callable, Iterable, Mapping
-from typing import Any, Final, TypeAlias
-from typing import Literal as L
-
+from typing import Any, Final, Literal as L, TypeAlias
 from typing_extensions import TypeVar
 
 from .__version__ import version

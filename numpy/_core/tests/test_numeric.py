@@ -1,26 +1,33 @@
+import itertools
+import math
+import platform
 import sys
 import warnings
-import itertools
-import platform
-import pytest
-import math
 from decimal import Decimal
 
+import pytest
+from hypothesis import given, strategies as st
+from hypothesis.extra import numpy as hynp
+
 import numpy as np
-from numpy._core import umath, sctypes
+from numpy import ma
+from numpy._core import sctypes
+from numpy._core._rational_tests import rational
 from numpy._core.numerictypes import obj2sctype
 from numpy.exceptions import AxisError
 from numpy.random import rand, randint, randn
 from numpy.testing import (
-    assert_, assert_equal, assert_raises, assert_raises_regex,
-    assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-    assert_warns, assert_array_max_ulp, HAS_REFCOUNT, IS_WASM
-    )
-from numpy._core._rational_tests import rational
-from numpy import ma
-
-from hypothesis import given, strategies as st
-from hypothesis.extra import numpy as hynp
+    HAS_REFCOUNT,
+    IS_WASM,
+    assert_,
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_array_max_ulp,
+    assert_equal,
+    assert_raises,
+    assert_raises_regex,
+)
 
 
 class TestResize:
@@ -70,6 +77,13 @@ class TestResize:
         new_shape = (-10, -1)
         with pytest.raises(ValueError, match=r"negative"):
             np.resize(A, new_shape=new_shape)
+
+    def test_unsigned_resize(self):
+        # ensure unsigned integer sizes don't lead to underflows
+        for dt_pair in [(np.int32, np.uint32), (np.int64, np.uint64)]:
+            arr = np.array([[23, 95], [66, 37]])
+            assert_array_equal(np.resize(arr, dt_pair[0](1)),
+                               np.resize(arr, dt_pair[1](1)))
 
     def test_subclass(self):
         class MyArray(np.ndarray):
@@ -1956,6 +1970,34 @@ class TestNonzero:
         a = np.array([[ThrowsAfter(15)]] * 10)
         assert_raises(ValueError, np.nonzero, a)
 
+    def test_nonzero_byteorder(self):
+        values = [0., -0., 1, float('nan'), 0, 1,
+                  np.float16(0), np.float16(12.3)]
+        expected_values = [0, 0, 1, 1, 0, 1, 0, 1]
+
+        for value, expected in zip(values, expected_values):
+            A = np.array([value])
+            A_byteswapped = (A.view(A.dtype.newbyteorder()).byteswap()).copy()
+
+            assert np.count_nonzero(A) == expected
+            assert np.count_nonzero(A_byteswapped) == expected
+
+    def test_count_nonzero_non_aligned_array(self):
+        # gh-27523
+        b = np.zeros(64 + 1, dtype=np.int8)[1:]
+        b = b.view(int)
+        b[:] = np.arange(b.size)
+        b[::2] = 0
+        assert b.flags.aligned is False
+        assert np.count_nonzero(b) == b.size / 2
+
+        b = np.zeros(64 + 1, dtype=np.float16)[1:]
+        b = b.view(float)
+        b[:] = np.arange(b.size)
+        b[::2] = 0
+        assert b.flags.aligned is False
+        assert np.count_nonzero(b) == b.size / 2
+
 
 class TestIndex:
     def test_boolean(self):
@@ -3177,6 +3219,24 @@ class TestIsclose:
         assert np.allclose(a, a, atol=0, equal_nan=True)
         assert np.allclose(a, a, atol=np.timedelta64(1, "ns"), equal_nan=True)
 
+    def test_tol_warnings(self):
+        a = np.array([1, 2, 3])
+        b = np.array([np.inf, np.nan, 1])
+
+        for i in b:
+            for j in b:
+                # Making sure that i and j are not both numbers, because that won't create a warning
+                if (i == 1) and (j == 1):
+                    continue
+
+                with warnings.catch_warnings(record=True) as w:
+
+                    warnings.simplefilter("always")
+                    c = np.isclose(a, a, atol=i, rtol=j)
+                    assert len(w) == 1
+                    assert issubclass(w[-1].category, RuntimeWarning)
+                    assert f"One of rtol or atol is not valid, atol: {i}, rtol: {j}" in str(w[-1].message)
+
 
 class TestStdVar:
     def setup_method(self):
@@ -4114,10 +4174,10 @@ class TestBroadcast:
                 assert_equal(mit.numiter, j)
 
     def test_broadcast_error_kwargs(self):
-        #gh-13455
+        # gh-13455
         arrs = [np.empty((5, 6, 7))]
         mit = np.broadcast(*arrs)
-        mit2 = np.broadcast(*arrs, **{})
+        mit2 = np.broadcast(*arrs, **{})  # noqa: PIE804
         assert_equal(mit.shape, mit2.shape)
         assert_equal(mit.ndim, mit2.ndim)
         assert_equal(mit.nd, mit2.nd)

@@ -4,12 +4,6 @@ import sys
 import tempfile
 
 
-def run_command(cmd):
-    print(f'Running {cmd!r}:')
-    os.system(cmd)
-    print('------')
-
-
 def run():
     _path = os.getcwd()
     os.chdir(tempfile.gettempdir())

@@ -135,22 +135,14 @@ For best performance, a development package providing BLAS and CBLAS should be
 installed.  Some of the options available are:
 
 - ``libblas-dev``: reference BLAS (not very optimized)
-- ``libatlas-base-dev``: generic tuned ATLAS, it is recommended to tune it to
-  the available hardware, see /usr/share/doc/libatlas3-base/README.Debian for
-  instructions
-- ``libopenblas-base``: fast and runtime detected so no tuning required but a
-  very recent version is needed (>=0.2.15 is recommended).  Older versions of
-  OpenBLAS suffered from correctness issues on some CPUs.
+- ``libopenblas-base``: (recommended) OpenBLAS is performant, and used
+  in the NumPy wheels on PyPI except where Apple's Accelerate is tuned better for Apple hardware
 
 The package linked to when numpy is loaded can be chosen after installation via
 the alternatives mechanism::
 
     update-alternatives --config libblas.so.3
     update-alternatives --config liblapack.so.3
-
-Or by preloading a specific BLAS library with::
-
-    LD_PRELOAD=/usr/lib/atlas-base/atlas/libblas.so.3 python ...
 
 
 Build issues

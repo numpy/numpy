@@ -190,8 +190,8 @@ Stylistic guidelines
 --------------------
 
 * Set up your editor to follow `PEP 8 <https://www.python.org/dev/peps/
-  pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code with
-  pyflakes / flake8.
+  pep-0008/>`_ (remove trailing white space, no tabs, etc.).  Check code
+  with ruff.
 
 * Use NumPy data types instead of strings (``np.uint8`` instead of
   ``"uint8"``).
@@ -256,6 +256,7 @@ The rest of the story
    howto_build_docs
    development_workflow
    development_advanced_debugging
+   development_ghcodespaces
    reviewer_guidelines
    ../benchmarking
    NumPy C style guide <https://numpy.org/neps/nep-0045-c_style_guide.html>

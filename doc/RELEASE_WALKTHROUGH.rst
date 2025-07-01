@@ -344,6 +344,8 @@ This assumes that you have forked `<https://github.com/numpy/numpy.org>`_::
   to the previous links for example.
 - For the ``*.0`` release in a cycle, add a new section at the top with a short
   description of the new features and point the news link to it.
+- Edit the newsHeader and date fields at the top of news.md
+- Also edit the butttonText on line 14 in content/en/config.yaml
 
 commit and push::
 

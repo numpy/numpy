@@ -1,17 +1,21 @@
 import collections.abc
+import pickle
 import textwrap
 from io import BytesIO
 from os import path
 from pathlib import Path
-import pickle
 
 import pytest
 
 import numpy as np
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, assert_array_almost_equal,
-    assert_raises, temppath,
-    )
+    assert_,
+    assert_array_almost_equal,
+    assert_array_equal,
+    assert_equal,
+    assert_raises,
+    temppath,
+)
 
 
 class TestFromrecords:
@@ -185,31 +189,31 @@ class TestFromrecords:
                      dtype=[('foo', int), ('bar', 'S4')])
         b = np.array([1, 2, 3, 4, 5], dtype=np.int64)
 
-        #check that np.rec.array gives right dtypes
+        # check that np.rec.array gives right dtypes
         assert_equal(np.rec.array(a).dtype.type, np.record)
         assert_equal(type(np.rec.array(a)), np.recarray)
         assert_equal(np.rec.array(b).dtype.type, np.int64)
         assert_equal(type(np.rec.array(b)), np.recarray)
 
-        #check that viewing as recarray does the same
+        # check that viewing as recarray does the same
         assert_equal(a.view(np.recarray).dtype.type, np.record)
         assert_equal(type(a.view(np.recarray)), np.recarray)
         assert_equal(b.view(np.recarray).dtype.type, np.int64)
         assert_equal(type(b.view(np.recarray)), np.recarray)
 
-        #check that view to non-structured dtype preserves type=np.recarray
+        # check that view to non-structured dtype preserves type=np.recarray
         r = np.rec.array(np.ones(4, dtype="f4,i4"))
         rv = r.view('f8').view('f4,i4')
         assert_equal(type(rv), np.recarray)
         assert_equal(rv.dtype.type, np.record)
 
-        #check that getitem also preserves np.recarray and np.record
+        # check that getitem also preserves np.recarray and np.record
         r = np.rec.array(np.ones(4, dtype=[('a', 'i4'), ('b', 'i4'),
                                            ('c', 'i4,i4')]))
         assert_equal(r['c'].dtype.type, np.record)
         assert_equal(type(r['c']), np.recarray)
 
-        #and that it preserves subclasses (gh-6949)
+        # and that it preserves subclasses (gh-6949)
         class C(np.recarray):
             pass
 
@@ -233,7 +237,7 @@ class TestFromrecords:
         assert_equal(r.view('V8').dtype.type, np.void)
         assert_equal(r.view(('i8', 'i4,i4')).dtype.type, np.int64)
 
-        #check that we can undo the view
+        # check that we can undo the view
         arrs = [np.ones(4, dtype='f4,i4'), np.ones(4, dtype='f8')]
         for arr in arrs:
             rec = np.rec.array(arr)

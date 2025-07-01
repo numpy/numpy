@@ -1,18 +1,34 @@
-import sys
-import os
 import mmap
-import pytest
+import os
+import sys
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryFile
 
-from numpy import (
-    memmap, sum, average, prod, ndarray, isscalar, add, subtract, multiply)
+import pytest
 
-from numpy import arange, allclose, asarray
+from numpy import (
+    add,
+    allclose,
+    arange,
+    asarray,
+    average,
+    isscalar,
+    memmap,
+    multiply,
+    ndarray,
+    prod,
+    subtract,
+    sum,
+)
 from numpy.testing import (
-    assert_, assert_equal, assert_array_equal, suppress_warnings, IS_PYPY,
-    break_cycles
-    )
+    IS_PYPY,
+    assert_,
+    assert_array_equal,
+    assert_equal,
+    break_cycles,
+    suppress_warnings,
+)
+
 
 class TestMemmap:
     def setup_method(self):

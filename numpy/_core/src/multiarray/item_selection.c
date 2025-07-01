@@ -4,6 +4,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <structmember.h>
+#include <string.h>
 
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
@@ -398,7 +399,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     }
     ni = PyArray_SIZE(indices);
     if ((ni > 0) && (PyArray_Size((PyObject *)self) == 0)) {
-        PyErr_SetString(PyExc_IndexError, 
+        PyErr_SetString(PyExc_IndexError,
                         "cannot replace elements of an empty array");
         goto fail;
     }
@@ -1484,7 +1485,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
         if (argpart == NULL) {
             ret = argsort(valptr, idxptr, N, op);
-            /* Object comparisons may raise an exception in Python 3 */
+            /* Object comparisons may raise an exception */
             if (needs_api && PyErr_Occurred()) {
                 ret = -1;
             }
@@ -1498,7 +1499,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFunc *argsort,
 
             for (i = 0; i < nkth; ++i) {
                 ret = argpart(valptr, idxptr, N, kth[i], pivots, &npiv, nkth, op);
-                /* Object comparisons may raise an exception in Python 3 */
+                /* Object comparisons may raise an exception */
                 if (needs_api && PyErr_Occurred()) {
                     ret = -1;
                 }
@@ -2525,11 +2526,13 @@ count_nonzero_u8(const char *data, npy_intp bstride, npy_uintp len)
         len  -= len_m;
         count = len_m - zcount;
     #else
-        if (!NPY_ALIGNMENT_REQUIRED || npy_is_aligned(data, sizeof(npy_uint64))) {
+        if (npy_is_aligned(data, sizeof(npy_uint64))) {
             int step = 6 * sizeof(npy_uint64);
             int left_bytes = len % step;
             for (const char *end = data + len; data < end - left_bytes; data += step) {
-                 count += count_nonzero_bytes_384((const npy_uint64 *)data);
+                npy_uint64 arr[6];
+                memcpy(arr, data, step);
+                count += count_nonzero_bytes_384(arr);
             }
             len = left_bytes;
         }
@@ -2629,7 +2632,7 @@ count_nonzero_u64(const char *data, npy_intp bstride, npy_uintp len)
     return count;
 }
 /*
- * Counts the number of True values in a raw boolean array. This
+ * Counts the number of non-zero values in a raw int array. This
  * is a low-overhead function which does no heap allocations.
  *
  * Returns -1 on error.
@@ -2739,6 +2742,15 @@ PyArray_CountNonzero(PyArrayObject *self)
             }
         }
         else {
+            /* Special low-overhead version specific to the float types (and some others) */
+            if (PyArray_ISNOTSWAPPED(self) && PyArray_ISALIGNED(self)) {
+                npy_intp dispatched_nonzero_count = count_nonzero_trivial_dispatcher(count,
+                                                        data, stride, dtype->type_num);
+                if (dispatched_nonzero_count >= 0) {
+                    return dispatched_nonzero_count;
+                }
+            }
+
             NPY_BEGIN_THREADS_THRESHOLDED(count);
             while (count--) {
                 if (nonzero(data, self)) {

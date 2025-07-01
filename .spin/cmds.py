@@ -1,6 +1,6 @@
+import importlib
 import os
 import pathlib
-import importlib
 import shutil
 import subprocess
 import sys
@@ -48,8 +48,8 @@ def changelog(token, revision_range):
     $ spin authors -t $GH_TOKEN --revision-range v1.25.0..v1.26.0
     """
     try:
-        from github.GithubException import GithubException
         from git.exc import GitError
+        from github.GithubException import GithubException
         changelog = _get_numpy_tools(pathlib.Path('changelog.py'))
     except ModuleNotFoundError as e:
         raise click.ClickException(
@@ -193,9 +193,11 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
     """  # noqa: E501
     try:
         # prevent obscure error later
-        import scipy_doctest
+        import scipy_doctest  # noqa: F401
     except ModuleNotFoundError as e:
         raise ModuleNotFoundError("scipy-doctest not installed") from e
+    if scipy_doctest.__version__ < '1.8.0':
+        raise ModuleNotFoundError("please update scipy_doctests to >= 1.8.0")
 
     if (not pytest_args):
         pytest_args = ('--pyargs', 'numpy')
@@ -203,6 +205,7 @@ def check_docs(*, parent_callback, pytest_args, **kwargs):
     # turn doctesting on:
     doctest_args = (
         '--doctest-modules',
+        '--doctest-only-doctests=true',
         '--doctest-collect=api'
     )
 
@@ -263,6 +266,7 @@ def _set_mem_rlimit(max_mem=None):
     Set address space rlimit
     """
     import resource
+
     import psutil
 
     mem = psutil.virtual_memory()
@@ -615,7 +619,8 @@ def notes(version_override):
     )
 
     try:
-        test_notes = _get_numpy_tools(pathlib.Path('ci', 'test_all_newsfragments_used.py'))
+        cmd = pathlib.Path('ci', 'test_all_newsfragments_used.py')
+        test_notes = _get_numpy_tools(cmd)
     except ModuleNotFoundError as e:
         raise click.ClickException(
             f"{e.msg}. Install the missing packages to use this command."

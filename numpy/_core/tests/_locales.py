@@ -1,8 +1,8 @@
 """Provide class for testing in French locale
 
 """
-import sys
 import locale
+import sys
 
 import pytest
 

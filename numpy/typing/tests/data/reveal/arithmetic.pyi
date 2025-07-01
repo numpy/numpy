@@ -48,7 +48,11 @@ AR_c: npt.NDArray[np.complex128]
 AR_m: npt.NDArray[np.timedelta64]
 AR_M: npt.NDArray[np.datetime64]
 AR_O: npt.NDArray[np.object_]
-AR_number: npt.NDArray[np.number[Any]]
+AR_S: npt.NDArray[np.bytes_]
+AR_U: npt.NDArray[np.str_]
+AR_T: np.ndarray[tuple[Any, ...], np.dtypes.StringDType]
+AR_floating: npt.NDArray[np.floating]
+AR_number: npt.NDArray[np.number]
 AR_Any: npt.NDArray[Any]
 
 AR_LIKE_b: list[bool]
@@ -63,53 +67,53 @@ AR_LIKE_O: list[np.object_]
 
 # Array subtraction
 
-assert_type(AR_number - AR_number, npt.NDArray[np.number[Any]])
+assert_type(AR_number - AR_number, npt.NDArray[np.number])
 
 assert_type(AR_b - AR_LIKE_u, npt.NDArray[np.uint32])
-assert_type(AR_b - AR_LIKE_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_b - AR_LIKE_f, npt.NDArray[np.floating[Any]])
-assert_type(AR_b - AR_LIKE_c, npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(AR_b - AR_LIKE_i, npt.NDArray[np.signedinteger])
+assert_type(AR_b - AR_LIKE_f, npt.NDArray[np.floating])
+assert_type(AR_b - AR_LIKE_c, npt.NDArray[np.complexfloating])
 assert_type(AR_b - AR_LIKE_m, npt.NDArray[np.timedelta64])
 assert_type(AR_b - AR_LIKE_O, Any)
 
 assert_type(AR_LIKE_u - AR_b, npt.NDArray[np.uint32])
-assert_type(AR_LIKE_i - AR_b, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_LIKE_f - AR_b, npt.NDArray[np.floating[Any]])
-assert_type(AR_LIKE_c - AR_b, npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(AR_LIKE_i - AR_b, npt.NDArray[np.signedinteger])
+assert_type(AR_LIKE_f - AR_b, npt.NDArray[np.floating])
+assert_type(AR_LIKE_c - AR_b, npt.NDArray[np.complexfloating])
 assert_type(AR_LIKE_m - AR_b, npt.NDArray[np.timedelta64])
 assert_type(AR_LIKE_M - AR_b, npt.NDArray[np.datetime64])
 assert_type(AR_LIKE_O - AR_b, Any)
 
 assert_type(AR_u - AR_LIKE_b, npt.NDArray[np.uint32])
-assert_type(AR_u - AR_LIKE_u, npt.NDArray[np.unsignedinteger[Any]])
-assert_type(AR_u - AR_LIKE_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_u - AR_LIKE_f, npt.NDArray[np.floating[Any]])
-assert_type(AR_u - AR_LIKE_c, npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(AR_u - AR_LIKE_u, npt.NDArray[np.unsignedinteger])
+assert_type(AR_u - AR_LIKE_i, npt.NDArray[np.signedinteger])
+assert_type(AR_u - AR_LIKE_f, npt.NDArray[np.floating])
+assert_type(AR_u - AR_LIKE_c, npt.NDArray[np.complexfloating])
 assert_type(AR_u - AR_LIKE_m, npt.NDArray[np.timedelta64])
 assert_type(AR_u - AR_LIKE_O, Any)
 
 assert_type(AR_LIKE_b - AR_u, npt.NDArray[np.uint32])
-assert_type(AR_LIKE_u - AR_u, npt.NDArray[np.unsignedinteger[Any]])
-assert_type(AR_LIKE_i - AR_u, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_LIKE_f - AR_u, npt.NDArray[np.floating[Any]])
-assert_type(AR_LIKE_c - AR_u, npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(AR_LIKE_u - AR_u, npt.NDArray[np.unsignedinteger])
+assert_type(AR_LIKE_i - AR_u, npt.NDArray[np.signedinteger])
+assert_type(AR_LIKE_f - AR_u, npt.NDArray[np.floating])
+assert_type(AR_LIKE_c - AR_u, npt.NDArray[np.complexfloating])
 assert_type(AR_LIKE_m - AR_u, npt.NDArray[np.timedelta64])
 assert_type(AR_LIKE_M - AR_u, npt.NDArray[np.datetime64])
 assert_type(AR_LIKE_O - AR_u, Any)
 
 assert_type(AR_i - AR_LIKE_b, npt.NDArray[np.int64])
-assert_type(AR_i - AR_LIKE_u, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_i - AR_LIKE_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_i - AR_LIKE_f, npt.NDArray[np.floating[Any]])
-assert_type(AR_i - AR_LIKE_c, npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(AR_i - AR_LIKE_u, npt.NDArray[np.signedinteger])
+assert_type(AR_i - AR_LIKE_i, npt.NDArray[np.signedinteger])
+assert_type(AR_i - AR_LIKE_f, npt.NDArray[np.floating])
+assert_type(AR_i - AR_LIKE_c, npt.NDArray[np.complexfloating])
 assert_type(AR_i - AR_LIKE_m, npt.NDArray[np.timedelta64])
 assert_type(AR_i - AR_LIKE_O, Any)
 
 assert_type(AR_LIKE_b - AR_i, npt.NDArray[np.int64])
-assert_type(AR_LIKE_u - AR_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_LIKE_i - AR_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_LIKE_f - AR_i, npt.NDArray[np.floating[Any]])
-assert_type(AR_LIKE_c - AR_i, npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(AR_LIKE_u - AR_i, npt.NDArray[np.signedinteger])
+assert_type(AR_LIKE_i - AR_i, npt.NDArray[np.signedinteger])
+assert_type(AR_LIKE_f - AR_i, npt.NDArray[np.floating])
+assert_type(AR_LIKE_c - AR_i, npt.NDArray[np.complexfloating])
 assert_type(AR_LIKE_m - AR_i, npt.NDArray[np.timedelta64])
 assert_type(AR_LIKE_M - AR_i, npt.NDArray[np.datetime64])
 assert_type(AR_LIKE_O - AR_i, Any)
@@ -118,14 +122,14 @@ assert_type(AR_f - AR_LIKE_b, npt.NDArray[np.float64])
 assert_type(AR_f - AR_LIKE_u, npt.NDArray[np.float64])
 assert_type(AR_f - AR_LIKE_i, npt.NDArray[np.float64])
 assert_type(AR_f - AR_LIKE_f, npt.NDArray[np.float64])
-assert_type(AR_f - AR_LIKE_c, npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(AR_f - AR_LIKE_c, npt.NDArray[np.complexfloating])
 assert_type(AR_f - AR_LIKE_O, Any)
 
 assert_type(AR_LIKE_b - AR_f, npt.NDArray[np.float64])
 assert_type(AR_LIKE_u - AR_f, npt.NDArray[np.float64])
 assert_type(AR_LIKE_i - AR_f, npt.NDArray[np.float64])
 assert_type(AR_LIKE_f - AR_f, npt.NDArray[np.float64])
-assert_type(AR_LIKE_c - AR_f, npt.NDArray[np.complexfloating[Any, Any]])
+assert_type(AR_LIKE_c - AR_f, npt.NDArray[np.complexfloating])
 assert_type(AR_LIKE_O - AR_f, Any)
 
 assert_type(AR_c - AR_LIKE_b, npt.NDArray[np.complex128])
@@ -273,39 +277,39 @@ assert_type(AR_LIKE_O / AR_O, Any)
 
 assert_type(AR_b // AR_LIKE_b, npt.NDArray[np.int8])
 assert_type(AR_b // AR_LIKE_u, npt.NDArray[np.uint32])
-assert_type(AR_b // AR_LIKE_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_b // AR_LIKE_f, npt.NDArray[np.floating[Any]])
+assert_type(AR_b // AR_LIKE_i, npt.NDArray[np.signedinteger])
+assert_type(AR_b // AR_LIKE_f, npt.NDArray[np.floating])
 assert_type(AR_b // AR_LIKE_O, Any)
 
 assert_type(AR_LIKE_b // AR_b, npt.NDArray[np.int8])
 assert_type(AR_LIKE_u // AR_b, npt.NDArray[np.uint32])
-assert_type(AR_LIKE_i // AR_b, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_LIKE_f // AR_b, npt.NDArray[np.floating[Any]])
+assert_type(AR_LIKE_i // AR_b, npt.NDArray[np.signedinteger])
+assert_type(AR_LIKE_f // AR_b, npt.NDArray[np.floating])
 assert_type(AR_LIKE_O // AR_b, Any)
 
 assert_type(AR_u // AR_LIKE_b, npt.NDArray[np.uint32])
-assert_type(AR_u // AR_LIKE_u, npt.NDArray[np.unsignedinteger[Any]])
-assert_type(AR_u // AR_LIKE_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_u // AR_LIKE_f, npt.NDArray[np.floating[Any]])
+assert_type(AR_u // AR_LIKE_u, npt.NDArray[np.unsignedinteger])
+assert_type(AR_u // AR_LIKE_i, npt.NDArray[np.signedinteger])
+assert_type(AR_u // AR_LIKE_f, npt.NDArray[np.floating])
 assert_type(AR_u // AR_LIKE_O, Any)
 
 assert_type(AR_LIKE_b // AR_u, npt.NDArray[np.uint32])
-assert_type(AR_LIKE_u // AR_u, npt.NDArray[np.unsignedinteger[Any]])
-assert_type(AR_LIKE_i // AR_u, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_LIKE_f // AR_u, npt.NDArray[np.floating[Any]])
+assert_type(AR_LIKE_u // AR_u, npt.NDArray[np.unsignedinteger])
+assert_type(AR_LIKE_i // AR_u, npt.NDArray[np.signedinteger])
+assert_type(AR_LIKE_f // AR_u, npt.NDArray[np.floating])
 assert_type(AR_LIKE_m // AR_u, npt.NDArray[np.timedelta64])
 assert_type(AR_LIKE_O // AR_u, Any)
 
 assert_type(AR_i // AR_LIKE_b, npt.NDArray[np.int64])
-assert_type(AR_i // AR_LIKE_u, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_i // AR_LIKE_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_i // AR_LIKE_f, npt.NDArray[np.floating[Any]])
+assert_type(AR_i // AR_LIKE_u, npt.NDArray[np.signedinteger])
+assert_type(AR_i // AR_LIKE_i, npt.NDArray[np.signedinteger])
+assert_type(AR_i // AR_LIKE_f, npt.NDArray[np.floating])
 assert_type(AR_i // AR_LIKE_O, Any)
 
 assert_type(AR_LIKE_b // AR_i, npt.NDArray[np.int64])
-assert_type(AR_LIKE_u // AR_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_LIKE_i // AR_i, npt.NDArray[np.signedinteger[Any]])
-assert_type(AR_LIKE_f // AR_i, npt.NDArray[np.floating[Any]])
+assert_type(AR_LIKE_u // AR_i, npt.NDArray[np.signedinteger])
+assert_type(AR_LIKE_i // AR_i, npt.NDArray[np.signedinteger])
+assert_type(AR_LIKE_f // AR_i, npt.NDArray[np.floating])
 assert_type(AR_LIKE_m // AR_i, npt.NDArray[np.timedelta64])
 assert_type(AR_LIKE_O // AR_i, Any)
 
@@ -652,3 +656,65 @@ assert_type(AR_f + u4, npt.NDArray[np.float64])
 # Any
 
 assert_type(AR_Any + 2, npt.NDArray[Any])
+
+# regression tests for https://github.com/numpy/numpy/issues/28805
+
+assert_type(AR_floating + f, npt.NDArray[np.floating])
+assert_type(AR_floating - f, npt.NDArray[np.floating])
+assert_type(AR_floating * f, npt.NDArray[np.floating])
+assert_type(AR_floating ** f, npt.NDArray[np.floating])
+assert_type(AR_floating / f, npt.NDArray[np.floating])
+assert_type(AR_floating // f, npt.NDArray[np.floating])
+assert_type(AR_floating % f, npt.NDArray[np.floating])
+assert_type(divmod(AR_floating, f), tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]])
+
+assert_type(f + AR_floating, npt.NDArray[np.floating])
+assert_type(f - AR_floating, npt.NDArray[np.floating])
+assert_type(f * AR_floating, npt.NDArray[np.floating])
+assert_type(f ** AR_floating, npt.NDArray[np.floating])
+assert_type(f / AR_floating, npt.NDArray[np.floating])
+assert_type(f // AR_floating, npt.NDArray[np.floating])
+assert_type(f % AR_floating, npt.NDArray[np.floating])
+assert_type(divmod(f, AR_floating), tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]])
+
+# character-like
+
+assert_type(AR_S + b"", npt.NDArray[np.bytes_])
+assert_type(AR_S + [b""], npt.NDArray[np.bytes_])
+assert_type([b""] + AR_S, npt.NDArray[np.bytes_])
+assert_type(AR_S + AR_S, npt.NDArray[np.bytes_])
+
+assert_type(AR_U + "", npt.NDArray[np.str_])
+assert_type(AR_U + [""], npt.NDArray[np.str_])
+assert_type("" + AR_U, npt.NDArray[np.str_])
+assert_type([""] + AR_U, npt.NDArray[np.str_])
+assert_type(AR_U + AR_U, npt.NDArray[np.str_])
+
+assert_type(AR_T + "", np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type(AR_T + [""], np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type("" + AR_T, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type([""] + AR_T, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type(AR_T + AR_T, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type(AR_T + AR_U, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type(AR_U + AR_T, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+
+assert_type(AR_S * i, np.ndarray[tuple[Any, ...], np.dtype[np.bytes_]])
+assert_type(AR_S * AR_LIKE_i, np.ndarray[tuple[Any, ...], np.dtype[np.bytes_]])
+assert_type(AR_S * AR_i, np.ndarray[tuple[Any, ...], np.dtype[np.bytes_]])
+assert_type(i * AR_S, np.ndarray[tuple[Any, ...], np.dtype[np.bytes_]])
+# mypy incorrectly infers `AR_LIKE_i * AR_S` as `list[int]`
+assert_type(AR_i * AR_S, np.ndarray[tuple[Any, ...], np.dtype[np.bytes_]])
+
+assert_type(AR_U * i, np.ndarray[tuple[Any, ...], np.dtype[np.str_]])
+assert_type(AR_U * AR_LIKE_i, np.ndarray[tuple[Any, ...], np.dtype[np.str_]])
+assert_type(AR_U * AR_i, np.ndarray[tuple[Any, ...], np.dtype[np.str_]])
+assert_type(i * AR_U, np.ndarray[tuple[Any, ...], np.dtype[np.str_]])
+# mypy incorrectly infers `AR_LIKE_i * AR_U` as `list[int]`
+assert_type(AR_i * AR_U, np.ndarray[tuple[Any, ...], np.dtype[np.str_]])
+
+assert_type(AR_T * i, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type(AR_T * AR_LIKE_i, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type(AR_T * AR_i, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+assert_type(i * AR_T, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])
+# mypy incorrectly infers `AR_LIKE_i * AR_T` as `list[int]`
+assert_type(AR_i * AR_T, np.ndarray[tuple[Any, ...], np.dtypes.StringDType])

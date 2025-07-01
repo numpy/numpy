@@ -5,7 +5,8 @@
 extern "C" {
 #endif
 
-PyObject* array__unique_hash(PyObject *NPY_UNUSED(dummy), PyObject *args);
+PyObject* array__unique_hash(PyObject *NPY_UNUSED(dummy),
+                             PyObject *const *args, Py_ssize_t len_args, PyObject *kwnames);
 
 #ifdef __cplusplus
 }

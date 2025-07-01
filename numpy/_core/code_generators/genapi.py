@@ -7,13 +7,12 @@ specified.
 
 """
 import hashlib
+import importlib.util
 import io
 import os
 import re
 import sys
-import importlib.util
 import textwrap
-
 from os.path import join
 
 

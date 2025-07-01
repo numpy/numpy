@@ -264,7 +264,6 @@ Arithmetic:
    MaskedArray.__rsub__
    MaskedArray.__mul__
    MaskedArray.__rmul__
-   MaskedArray.__div__
    MaskedArray.__truediv__
    MaskedArray.__rtruediv__
    MaskedArray.__floordiv__
@@ -296,7 +295,6 @@ Arithmetic, in-place:
    MaskedArray.__iadd__
    MaskedArray.__isub__
    MaskedArray.__imul__
-   MaskedArray.__idiv__
    MaskedArray.__itruediv__
    MaskedArray.__ifloordiv__
    MaskedArray.__imod__

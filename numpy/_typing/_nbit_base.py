@@ -1,6 +1,7 @@
 """A module with the precisions of generic `~numpy.number` types."""
-from .._utils import set_module
 from typing import final
+
+from numpy._utils import set_module
 
 
 @final  # Disallow the creation of arbitrary `NBitBase` subclasses
@@ -9,12 +10,16 @@ class NBitBase:
     """
     A type representing `numpy.number` precision during static type checking.
 
-    Used exclusively for the purpose static type checking, `NBitBase`
+    Used exclusively for the purpose of static type checking, `NBitBase`
     represents the base of a hierarchical set of subclasses.
     Each subsequent subclass is herein used for representing a lower level
     of precision, *e.g.* ``64Bit > 32Bit > 16Bit``.
 
     .. versionadded:: 1.20
+
+    .. deprecated:: 2.3
+        Use ``@typing.overload`` or a ``TypeVar`` with a scalar-type as upper
+        bound, instead.
 
     Examples
     --------
@@ -25,7 +30,6 @@ class NBitBase:
 
     .. code-block:: python
 
-        >>> from __future__ import annotations
         >>> from typing import TypeVar, TYPE_CHECKING
         >>> import numpy as np
         >>> import numpy.typing as npt
@@ -48,11 +52,11 @@ class NBitBase:
         ...     # note:     out: numpy.floating[numpy.typing._64Bit*]
 
     """
+    # Deprecated in NumPy 2.3, 2025-05-01
 
     def __init_subclass__(cls) -> None:
         allowed_names = {
-            "NBitBase", "_256Bit", "_128Bit", "_96Bit", "_80Bit",
-            "_64Bit", "_32Bit", "_16Bit", "_8Bit",
+            "NBitBase", "_128Bit", "_96Bit", "_64Bit", "_32Bit", "_16Bit", "_8Bit"
         }
         if cls.__name__ not in allowed_names:
             raise TypeError('cannot inherit from final class "NBitBase"')
@@ -61,40 +65,30 @@ class NBitBase:
 @final
 @set_module("numpy._typing")
 # Silence errors about subclassing a `@final`-decorated class
-class _256Bit(NBitBase):  # type: ignore[misc]
+class _128Bit(NBitBase):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
     pass
 
 @final
 @set_module("numpy._typing")
-class _128Bit(_256Bit):  # type: ignore[misc]
+class _96Bit(_128Bit):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
     pass
 
 @final
 @set_module("numpy._typing")
-class _96Bit(_128Bit):  # type: ignore[misc]
+class _64Bit(_96Bit):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
     pass
 
 @final
 @set_module("numpy._typing")
-class _80Bit(_96Bit):  # type: ignore[misc]
+class _32Bit(_64Bit):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
     pass
 
 @final
 @set_module("numpy._typing")
-class _64Bit(_80Bit):  # type: ignore[misc]
+class _16Bit(_32Bit):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
     pass
 
 @final
 @set_module("numpy._typing")
-class _32Bit(_64Bit):  # type: ignore[misc]
-    pass
-
-@final
-@set_module("numpy._typing")
-class _16Bit(_32Bit):  # type: ignore[misc]
-    pass
-
-@final
-@set_module("numpy._typing")
-class _8Bit(_16Bit):  # type: ignore[misc]
+class _8Bit(_16Bit):  # type: ignore[misc]  # pyright: ignore[reportGeneralTypeIssues]
     pass

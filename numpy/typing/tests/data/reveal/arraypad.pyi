@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 
 def mode_func(
-    ar: npt.NDArray[np.number[Any]],
+    ar: npt.NDArray[np.number],
     width: tuple[int, int],
     iaxis: SupportsIndex,
     kwargs: Mapping[str, Any],

@@ -1,10 +1,12 @@
 """
 Pytest configuration and fixtures for the Numpy test suite.
 """
-import pytest
-import numpy
-import matplotlib
 import doctest
+
+import matplotlib
+import pytest
+
+import numpy
 
 matplotlib.use('agg', force=True)
 

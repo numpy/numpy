@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-import subprocess
-import tempfile
 import os
-import sys
 import shutil
-
+import subprocess
+import sys
+import tempfile
 
 parser = argparse.ArgumentParser(
     description='Upload files to a remote repo, replacing existing content'
@@ -56,7 +55,7 @@ run(['git', 'init'])
 # ensure the working branch is called "main"
 # (`--initial-branch=main` appeared to have failed on older git versions):
 run(['git', 'checkout', '-b', 'main'])
-run(['git', 'remote', 'add', 'origin',  args.remote])
+run(['git', 'remote', 'add', 'origin', args.remote])
 run(['git', 'config', '--local', 'user.name', args.committer])
 run(['git', 'config', '--local', 'user.email', args.email])
 

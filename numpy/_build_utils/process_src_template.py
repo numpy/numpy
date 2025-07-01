@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import os
 import argparse
 import importlib.util
+import os
 
 
 def get_processor():

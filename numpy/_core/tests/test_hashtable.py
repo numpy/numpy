@@ -1,6 +1,7 @@
+import random
+
 import pytest
 
-import random
 from numpy._core._multiarray_tests import identityhash_tester
 
 

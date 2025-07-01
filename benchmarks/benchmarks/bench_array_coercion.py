@@ -1,6 +1,6 @@
-from .common import Benchmark
-
 import numpy as np
+
+from .common import Benchmark
 
 
 class ArrayCoercionSmall(Benchmark):
@@ -38,7 +38,7 @@ class ArrayCoercionSmall(Benchmark):
     def time_asarray_dtype(self, array_like):
         np.asarray(array_like, dtype=self.int64)
 
-    def time_asarray_dtype(self, array_like):
+    def time_asarray_dtype_order(self, array_like):
         np.asarray(array_like, dtype=self.int64, order="F")
 
     def time_asanyarray(self, array_like):
@@ -47,7 +47,7 @@ class ArrayCoercionSmall(Benchmark):
     def time_asanyarray_dtype(self, array_like):
         np.asanyarray(array_like, dtype=self.int64)
 
-    def time_asanyarray_dtype(self, array_like):
+    def time_asanyarray_dtype_order(self, array_like):
         np.asanyarray(array_like, dtype=self.int64, order="F")
 
     def time_ascontiguousarray(self, array_like):

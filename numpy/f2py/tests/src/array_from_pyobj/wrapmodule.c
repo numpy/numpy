@@ -223,7 +223,7 @@ PyMODINIT_FUNC PyInit_test_array_from_pyobj_ext(void) {
   on_exit(f2py_report_on_exit,(void*)"array_from_pyobj.wrap.call");
 #endif
 
-#if Py_GIL_DISABLED
+#ifdef Py_GIL_DISABLED
     // signal whether this module supports running with the GIL disabled
     PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
 #endif

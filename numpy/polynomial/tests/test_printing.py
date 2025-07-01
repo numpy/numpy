@@ -1,12 +1,14 @@
-from math import nan, inf
-import pytest
-from numpy._core import array, arange, printoptions
-import numpy.polynomial as poly
-from numpy.testing import assert_equal, assert_
+from decimal import Decimal
 
 # For testing polynomial printing with object arrays
 from fractions import Fraction
-from decimal import Decimal
+from math import inf, nan
+
+import pytest
+
+import numpy.polynomial as poly
+from numpy._core import arange, array, printoptions
+from numpy.testing import assert_, assert_equal
 
 
 class TestStrUnicodeSuperSubscripts:

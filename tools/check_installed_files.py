@@ -18,11 +18,10 @@ meant for use in CI so it's not like many files will be missing at once.
 
 """
 
-import os
 import glob
-import sys
 import json
-
+import os
+import sys
 
 CUR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 ROOT_DIR = os.path.dirname(CUR_DIR)

@@ -1,1 +1,0 @@
-Remove use of -Wl,-ld_classic on macOS. This hack is no longer needed by Spack, and results in libraries that cannot link to other libraries built with ld (new).
