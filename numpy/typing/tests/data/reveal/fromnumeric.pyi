@@ -1,10 +1,13 @@
 """Tests for :mod:`_core.fromnumeric`."""
 
 from typing import Any, assert_type
-from typing import Literal as L
+from typing import TypeVar, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
+
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+_Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 class NDArraySubclass(npt.NDArray[np.complex128]): ...
 
@@ -131,10 +134,10 @@ assert_type(np.ravel(f), np.ndarray[tuple[int], np.dtype[np.float64 | np.int_ | 
 assert_type(np.ravel(AR_b), np.ndarray[tuple[int], np.dtype[np.bool]])
 assert_type(np.ravel(AR_f4), np.ndarray[tuple[int], np.dtype[np.float32]])
 
-assert_type(np.nonzero(AR_b), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.nonzero(AR_f4), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.nonzero(AR_1d), tuple[npt.NDArray[np.intp], ...])
-assert_type(np.nonzero(AR_nd), tuple[npt.NDArray[np.intp], ...])
+assert_type(np.nonzero(AR_b), tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]])
+assert_type(np.nonzero(AR_f4), tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]])
+assert_type(np.nonzero(AR_1d), tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]])
+assert_type(np.nonzero(AR_nd), tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]])
 
 assert_type(np.shape(b), tuple[()])
 assert_type(np.shape(f), tuple[()])

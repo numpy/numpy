@@ -10,12 +10,15 @@ from collections.abc import Iterator
 import ctypes as ct
 import operator
 from types import ModuleType
-from typing import Any, Literal, assert_type
+from typing import Any, Literal, assert_type, TypeAlias, TypeVar
 
 from typing_extensions import CapsuleType
 
 import numpy as np
 import numpy.typing as npt
+
+_ScalarT = TypeVar("_ScalarT", bound=np.generic)
+_Array1D: TypeAlias = np.ndarray[tuple[int], np.dtype[_ScalarT]]
 
 class SubClass(npt.NDArray[np.object_]): ...
 
@@ -170,7 +173,7 @@ assert_type(AR_f8.dot(1), npt.NDArray[Any])
 assert_type(AR_f8.dot([1]), Any)
 assert_type(AR_f8.dot(1, out=B), SubClass)
 
-assert_type(AR_f8.nonzero(), tuple[npt.NDArray[np.intp], ...])
+assert_type(AR_f8.nonzero(), tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]])
 
 assert_type(AR_f8.searchsorted(1), np.intp)
 assert_type(AR_f8.searchsorted([1]), npt.NDArray[np.intp])

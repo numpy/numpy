@@ -839,6 +839,7 @@ _1D: TypeAlias = tuple[int]
 _2D: TypeAlias = tuple[int, int]
 _2Tuple: TypeAlias = tuple[_T, _T]
 
+_Array1D: TypeAlias = ndarray[tuple[int], dtype[_ScalarT]]
 _ArrayUInt_co: TypeAlias = NDArray[unsignedinteger | np.bool]
 _ArrayInt_co: TypeAlias = NDArray[integer | np.bool]
 _ArrayFloat64_co: TypeAlias = NDArray[floating[_64Bit] | float32 | float16 | integer | np.bool]
@@ -2355,7 +2356,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def dot(self, b: ArrayLike, out: _ArrayT) -> _ArrayT: ...
 
     # `nonzero()` is deprecated for 0d arrays/generics
-    def nonzero(self) -> tuple[NDArray[intp], ...]: ...
+    def nonzero(self) -> tuple[_Array1D[intp], *tuple[_Array1D[intp], ...]]: ...
 
     # `put` is technically available to `generic`,
     # but is pointless as `generic`s are immutable
