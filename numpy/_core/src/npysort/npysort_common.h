@@ -24,7 +24,7 @@ compare_from_context(const void *a, const void *b, void *context)
     PyArray_SortCompareFunc *cmp = sort_context->compare;
     int nan_position = sort_context->nan_position;
 
-    NPY_COMPARE_RESULT result = cmp(a, b, sort_context);
+    NPY_COMPARE_RESULT result = cmp(a, b, sort_context->descriptor);
 
     if (result == NPY_LESS) {
         return -1;

@@ -71,7 +71,6 @@ typedef struct {
     /* DType sorting methods. */
     PyArrayDTypeMeta_GetSortFunction *get_sort_function;
     PyArrayDTypeMeta_GetArgSortFunction *get_argsort_function;
-    PyArray_CompareFuncWithContext *compare;
     PyArray_SortCompareFunc *sort_compare;
 
     /*
@@ -96,7 +95,7 @@ typedef struct {
 
 // This must be updated if new slots before within_dtype_castingimpl
 // are added
-#define NPY_NUM_DTYPE_SLOTS 15
+#define NPY_NUM_DTYPE_SLOTS 14
 #define NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS 22
 #define NPY_DT_MAX_ARRFUNCS_SLOT \
   NPY_NUM_DTYPE_PYARRAY_ARRFUNCS_SLOTS + _NPY_DT_ARRFUNCS_OFFSET
@@ -324,12 +323,6 @@ PyArray_GetArgSortFunction(PyArray_Descr *descr,
     NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function(
         descr, which, descending, out_argsort, out_auxdata, out_flags);
     return 0;
-}
-
-static inline PyArray_CompareFuncWithContext *
-PyArray_GetCompareFunction(PyArray_Descr *descr)
-{
-    return NPY_DT_SLOTS(NPY_DTYPE(descr))->compare;
 }
 
 static inline PyArray_SortCompareFunc *

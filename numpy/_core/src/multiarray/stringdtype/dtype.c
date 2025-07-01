@@ -518,9 +518,9 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
 }
 
 static NPY_COMPARE_RESULT
-stringdtype_sort_compare(void *a, void *b, PyArrayMethod_SortContext *context) {
-    PyArray_StringDTypeObject *descr = (PyArray_StringDTypeObject *)context->descriptor;
-    int dist = _compare(a, b, descr, descr);
+stringdtype_sort_compare(void *a, void *b, PyArray_Descr *descr) {
+    PyArray_StringDTypeObject *string_descr = (PyArray_StringDTypeObject *)descr;
+    int dist = _compare(a, b, string_descr, string_descr);
 
     if (dist < 0) {
         return NPY_LESS;
@@ -783,6 +783,8 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
         {NPY_DT_setitem, &stringdtype_setitem},
         {NPY_DT_getitem, &stringdtype_getitem},
         {NPY_DT_sort_compare, &stringdtype_sort_compare},
+        {NPY_DT_get_sort_function, &stringdtype_get_sort_function},
+        {NPY_DT_get_argsort_function, &stringdtype_get_argsort_function},
         {NPY_DT_ensure_canonical, &stringdtype_ensure_canonical},
         {NPY_DT_PyArray_ArrFuncs_nonzero, &nonzero},
         {NPY_DT_PyArray_ArrFuncs_compare, &compare},

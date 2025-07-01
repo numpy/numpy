@@ -369,8 +369,7 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 #define NPY_DT_finalize_descr 11
 #define NPY_DT_get_sort_function 12
 #define NPY_DT_get_argsort_function 13
-#define NPY_DT_compare 14
-#define NPY_DT_sort_compare 15
+#define NPY_DT_sort_compare 14
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
@@ -492,10 +491,8 @@ typedef enum {
 
 typedef struct PyArrayMethod_SortContext_tag PyArrayMethod_SortContext;
 
-typedef NPY_COMPARE_RESULT (PyArray_CompareFuncWithContext)(
-        const void *a, const void *b, PyArrayMethod_SortContext *context);
 typedef NPY_COMPARE_RESULT (PyArray_SortCompareFunc)(
-        const void *a, const void *b, PyArrayMethod_SortContext *context);
+        const void *a, const void *b, PyArray_Descr *descr);
 
 typedef enum {
     NPY_SORT_NAN_FIRST = 0,
