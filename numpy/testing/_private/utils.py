@@ -1931,11 +1931,10 @@ def nulp_diff(x, y, dtype=None):
     if np.iscomplexobj(x) or np.iscomplexobj(y):
         raise NotImplementedError("_nulp not implemented for complex array")
 
-    x = np.array([x], dtype=t)
-    y = np.array([y], dtype=t)
-
-    x[np.isnan(x)] = np.nan
-    y[np.isnan(y)] = np.nan
+    x = np.array(x, dtype=t)
+    y = np.array(y, dtype=t)
+    np.putmask(x, np.isnan(x), np.nan)
+    np.putmask(y, np.isnan(y), np.nan)
 
     if not x.shape == y.shape:
         raise ValueError(f"Arrays do not have the same shape: {x.shape} - {y.shape}")
