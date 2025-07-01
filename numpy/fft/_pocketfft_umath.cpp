@@ -11,9 +11,6 @@
  */
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-/* Any file that includes Python.h must include it before any other files */
-/* https://docs.python.org/3/extending/extending.html#a-simple-example */
-/* npy_common.h includes Python.h so it also counts in this list */
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <assert.h>
