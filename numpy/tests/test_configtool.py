@@ -15,8 +15,10 @@ INCLUDE_DIR = NUMPY_ROOT / '_core' / 'include'
 PKG_CONFIG_DIR = NUMPY_ROOT / '_core' / 'lib' / 'pkgconfig'
 
 
-@pytest.mark.skipif(not IS_INSTALLED, reason="`numpy-config` not expected to be installed")
-@pytest.mark.skipif(IS_WASM, reason="wasm interpreter cannot start subprocess")
+@pytest.mark.skipif(not IS_INSTALLED,
+                    reason="`numpy-config` not expected to be installed")
+@pytest.mark.skipif(IS_WASM,
+                    reason="wasm interpreter cannot start subprocess")
 class TestNumpyConfig:
     def check_numpyconfig(self, arg):
         p = subprocess.run(['numpy-config', arg], capture_output=True, text=True)
@@ -36,13 +38,15 @@ class TestNumpyConfig:
         assert pathlib.Path(stdout) == PKG_CONFIG_DIR
 
 
-@pytest.mark.skipif(not IS_INSTALLED, reason="numpy must be installed to check its entrypoints")
+@pytest.mark.skipif(not IS_INSTALLED,
+                    reason="numpy must be installed to check its entrypoints")
 def test_pkg_config_entrypoint():
     (entrypoint,) = importlib.metadata.entry_points(group='pkg_config', name='numpy')
     assert entrypoint.value == numpy._core.lib.pkgconfig.__name__
 
 
-@pytest.mark.skipif(not IS_INSTALLED, reason="numpy.pc is only available when numpy is installed")
+@pytest.mark.skipif(not IS_INSTALLED,
+                    reason="numpy.pc is only available when numpy is installed")
 @pytest.mark.skipif(IS_EDITABLE, reason="editable installs don't have a numpy.pc")
 def test_pkg_config_config_exists():
     assert PKG_CONFIG_DIR.joinpath('numpy.pc').is_file()
