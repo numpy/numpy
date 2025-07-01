@@ -9,6 +9,7 @@ import os.path
 import re
 import subprocess
 import sys
+
 from get_submodule_paths import get_submodule_paths
 
 HEADER_PATTERN = re.compile(
@@ -36,7 +37,7 @@ PARSER = argparse.ArgumentParser(description=__doc__)
 PARSER.add_argument(
     "files",
     nargs="*",
-    help="Lint these files or directories; " "use **/*.py to lint all files",
+    help="Lint these files or directories; use **/*.py to lint all files",
 )
 
 
