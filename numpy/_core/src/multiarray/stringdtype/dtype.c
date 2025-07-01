@@ -517,6 +517,7 @@ _compare(void *a, void *b, PyArray_StringDTypeObject *descr_a,
     return NpyString_cmp(&s_a, &s_b);
 }
 
+#if NPY_API_VERSION >= NPY_2_4_API_VERSION
 static NPY_COMPARE_RESULT
 stringdtype_sort_compare(void *a, void *b, PyArray_Descr *descr) {
     PyArray_StringDTypeObject *string_descr = (PyArray_StringDTypeObject *)descr;
@@ -641,6 +642,7 @@ stringdtype_get_argsort_function(PyArray_Descr *descr,
 
     return 0;
 }
+#endif // NPY_API_VERSION >= NPY_2_4_API_VERSION
 
 // PyArray_ArgFunc
 // The max element is the one with the highest unicode code point.
@@ -782,9 +784,11 @@ static PyType_Slot PyArray_StringDType_Slots[] = {
          &string_discover_descriptor_from_pyobject},
         {NPY_DT_setitem, &stringdtype_setitem},
         {NPY_DT_getitem, &stringdtype_getitem},
+#if NPY_API_VERSION >= NPY_2_4_API_VERSION
         {NPY_DT_sort_compare, &stringdtype_sort_compare},
         {NPY_DT_get_sort_function, &stringdtype_get_sort_function},
         {NPY_DT_get_argsort_function, &stringdtype_get_argsort_function},
+#endif
         {NPY_DT_ensure_canonical, &stringdtype_ensure_canonical},
         {NPY_DT_PyArray_ArrFuncs_nonzero, &nonzero},
         {NPY_DT_PyArray_ArrFuncs_compare, &compare},

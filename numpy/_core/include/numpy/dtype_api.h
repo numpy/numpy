@@ -367,9 +367,12 @@ typedef int (PyArrayMethod_PromoterFunction)(PyObject *ufunc,
 #define NPY_DT_get_clear_loop 9
 #define NPY_DT_get_fill_zero_loop 10
 #define NPY_DT_finalize_descr 11
+
+#if NPY_API_VERSION >= NPY_2_4_API_VERSION
 #define NPY_DT_get_sort_function 12
 #define NPY_DT_get_argsort_function 13
 #define NPY_DT_sort_compare 14
+#endif
 
 // These PyArray_ArrFunc slots will be deprecated and replaced eventually
 // getitem and setitem can be defined as a performance optimization;
