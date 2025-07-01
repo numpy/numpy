@@ -645,7 +645,8 @@ class TestSaveTxt:
             raise MemoryError("Child process raised a MemoryError exception")
         # -9 indicates a SIGKILL, probably an OOM.
         if p.exitcode == -9:
-            pytest.xfail("subprocess got a SIGKILL, apparently free memory was not sufficient")
+            msg = "subprocess got a SIGKILL, apparently free memory was not sufficient"
+            pytest.xfail(msg)
         assert p.exitcode == 0
 
 class LoadTxtBase:
@@ -1673,7 +1674,8 @@ M   33  21.99
         conv = {0: int, 1: int, 2: int, 3: lambda r: dmap[r.decode()]}
         test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
                           names=None, converters=conv, encoding="bytes")
-        control = np.rec.array([(1, 5, -1, 0), (2, 8, -1, 1), (3, 3, -2, 3)], dtype=dtyp)
+        control = np.rec.array([(1, 5, -1, 0), (2, 8, -1, 1), (3, 3, -2, 3)],
+                               dtype=dtyp)
         assert_equal(test, control)
         dtyp = [('e1', 'i4'), ('e2', 'i4'), ('n', 'i1')]
         test = recfromcsv(TextIO(dstr,), dtype=dtyp, delimiter=',',
@@ -1886,7 +1888,8 @@ M   33  21.99
         #
         basekwargs['dtype'] = mdtype
         test = np.genfromtxt(TextIO(data),
-                            missing_values={0: -9, 1: -99, 2: -999j}, usemask=True, **basekwargs)
+                             missing_values={0: -9, 1: -99, 2: -999j},
+                             usemask=True, **basekwargs)
         control = ma.array([(0, 0.0, 0j), (1, -999, 1j),
                             (-9, 2.2, -999j), (3, -99, 3j)],
                            mask=[(0, 0, 0), (0, 1, 0), (1, 0, 1), (0, 1, 0)],

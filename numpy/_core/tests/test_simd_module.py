@@ -48,8 +48,8 @@ class Test_SIMD_MODULE:
             pytest.raises(TypeError, vcb("setall"), [1])
             pytest.raises(TypeError, vcb("load"), 1)
             pytest.raises(ValueError, vcb("load"), [1])
-            reinterpret = getattr(npyv, f"reinterpret_{sfx}_u32")(a)
-            pytest.raises(ValueError, vcb("store"), [1], reinterpret)
+            value = getattr(npyv, f"reinterpret_{sfx}_u32")(a)
+            pytest.raises(ValueError, vcb("store"), [1], value)
 
     @pytest.mark.skipif(not npyv2, reason=(
         "could not find a second SIMD extension with NPYV support"

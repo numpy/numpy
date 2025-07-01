@@ -1,5 +1,12 @@
-from typing import Any, Self, SupportsIndex, SupportsInt, TypeAlias, overload
-from typing import Literal as L
+from typing import (
+    Any,
+    Literal as L,
+    Self,
+    SupportsIndex,
+    SupportsInt,
+    TypeAlias,
+    overload,
+)
 from typing_extensions import TypeVar
 
 import numpy as np
@@ -14,13 +21,19 @@ from numpy import (
     str_,
 )
 from numpy._core.multiarray import compare_chararrays
-from numpy._typing import NDArray, _AnyShape, _Shape, _ShapeLike, _SupportsArray
-from numpy._typing import _ArrayLikeAnyString_co as UST_co
-from numpy._typing import _ArrayLikeBool_co as b_co
-from numpy._typing import _ArrayLikeBytes_co as S_co
-from numpy._typing import _ArrayLikeInt_co as i_co
-from numpy._typing import _ArrayLikeStr_co as U_co
-from numpy._typing import _ArrayLikeString_co as T_co
+from numpy._typing import (
+    NDArray,
+    _AnyShape,
+    _ArrayLikeAnyString_co as UST_co,
+    _ArrayLikeBool_co as b_co,
+    _ArrayLikeBytes_co as S_co,
+    _ArrayLikeInt_co as i_co,
+    _ArrayLikeStr_co as U_co,
+    _ArrayLikeString_co as T_co,
+    _Shape,
+    _ShapeLike,
+    _SupportsArray,
+)
 
 __all__ = [
     "equal",

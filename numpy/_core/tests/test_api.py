@@ -591,11 +591,12 @@ def test_contiguous_flags():
 
 def test_broadcast_arrays():
     # Test user defined dtypes
-    a = np.array([(1, 2, 3)], dtype='u4,u4,u4')
-    b = np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4')
+    dtype = 'u4,u4,u4'
+    a = np.array([(1, 2, 3)], dtype=dtype)
+    b = np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype=dtype)
     result = np.broadcast_arrays(a, b)
-    assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
-    assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
+    assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype=dtype))
+    assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype=dtype))
 
 @pytest.mark.parametrize(["shape", "fill_value", "expected_output"],
         [((2, 2), [5.0,  6.0], np.array([[5.0, 6.0], [5.0, 6.0]])),

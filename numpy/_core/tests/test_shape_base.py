@@ -294,13 +294,17 @@ class TestConcatenate:
         assert_raises(ValueError, concatenate, ())
 
     @pytest.mark.slow
-    @pytest.mark.skipif(sys.maxsize < 2**32, reason="only problematic on 64bit platforms")
+    @pytest.mark.skipif(
+        sys.maxsize < 2**32,
+        reason="only problematic on 64bit platforms"
+    )
     @requires_memory(2 * np.iinfo(np.intc).max)
     def test_huge_list_error(self):
         a = np.array([1])
         max_int = np.iinfo(np.intc).max
         arrs = (a,) * (max_int + 1)
-        msg = fr"concatenate\(\) only supports up to {max_int} arrays but got {max_int + 1}."
+        msg = (fr"concatenate\(\) only supports up to {max_int} arrays"
+               f" but got {max_int + 1}.")
         with pytest.raises(ValueError, match=msg):
             np.concatenate(arrs)
 
@@ -379,7 +383,10 @@ class TestConcatenate:
         assert_(out is rout)
         assert_equal(res, rout)
 
-    @pytest.mark.skipif(IS_PYPY, reason="PYPY handles sq_concat, nb_add differently than cpython")
+    @pytest.mark.skipif(
+        IS_PYPY,
+        reason="PYPY handles sq_concat, nb_add differently than cpython"
+    )
     def test_operator_concat(self):
         import operator
         a = array([1, 2])

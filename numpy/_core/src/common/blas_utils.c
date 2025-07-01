@@ -43,7 +43,7 @@ is_macOS_version_15_4_or_later(void){
         goto cleanup;
     }
 
-    if(major >= 15 && minor >= 4){
+    if (major > 15 || (major == 15 && minor >= 4)) {
         ret = true;
     }
 

@@ -303,9 +303,10 @@ def assert_equal(actual, desired, err_msg='', verbose=True, *, strict=False):
 
     Notes
     -----
-    By default, when one of `actual` and `desired` is a scalar and the other is
-    an array, the function checks that each element of the array is equal to
-    the scalar. This behaviour can be disabled by setting ``strict==True``.
+    When one of `actual` and `desired` is a scalar and the other is array_like, the
+    function checks that each element of the array_like is equal to the scalar.
+    Note that empty arrays are therefore considered equal to scalars.
+    This behaviour can be disabled by setting ``strict==True``.
 
     Examples
     --------
@@ -990,9 +991,10 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
 
     Notes
     -----
-    When one of `actual` and `desired` is a scalar and the other is array_like,
-    the function checks that each element of the array_like object is equal to
-    the scalar. This behaviour can be disabled with the `strict` parameter.
+    When one of `actual` and `desired` is a scalar and the other is array_like, the
+    function checks that each element of the array_like is equal to the scalar.
+    Note that empty arrays are therefore considered equal to scalars.
+    This behaviour can be disabled by setting ``strict==True``.
 
     Examples
     --------
@@ -1661,10 +1663,10 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
 
     Notes
     -----
-    When one of `actual` and `desired` is a scalar and the other is
-    array_like, the function performs the comparison as if the scalar were
-    broadcasted to the shape of the array.
-    This behaviour can be disabled with the `strict` parameter.
+    When one of `actual` and `desired` is a scalar and the other is array_like, the
+    function performs the comparison as if the scalar were broadcasted to the shape
+    of the array. Note that empty arrays are therefore considered equal to scalars.
+    This behaviour can be disabled by setting ``strict==True``.
 
     Examples
     --------

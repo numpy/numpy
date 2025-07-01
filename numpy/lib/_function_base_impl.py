@@ -10,9 +10,14 @@ import numpy._core.numeric as _nx
 from numpy._core import overrides, transpose
 from numpy._core._multiarray_umath import _array_converter
 from numpy._core.fromnumeric import any, mean, nonzero, partition, ravel, sum
-from numpy._core.multiarray import _monotonicity, _place, bincount, normalize_axis_index
-from numpy._core.multiarray import interp as compiled_interp
-from numpy._core.multiarray import interp_complex as compiled_interp_complex
+from numpy._core.multiarray import (
+    _monotonicity,
+    _place,
+    bincount,
+    interp as compiled_interp,
+    interp_complex as compiled_interp_complex,
+    normalize_axis_index,
+)
 from numpy._core.numeric import (
     absolute,
     arange,

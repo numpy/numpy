@@ -39,6 +39,8 @@ assert_type(np.array(B, subok=True), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=0), SubClass[np.float64])
 assert_type(np.array(B, subok=True, ndmin=1), SubClass[np.float64])
 assert_type(np.array(D), npt.NDArray[np.float64 | np.int64])
+# https://github.com/numpy/numpy/issues/29245
+assert_type(np.array([], dtype=np.bool), npt.NDArray[np.bool])
 
 assert_type(np.zeros([1, 5, 6]), npt.NDArray[np.float64])
 assert_type(np.zeros([1, 5, 6], dtype=np.int64), npt.NDArray[np.int64])
@@ -51,7 +53,7 @@ assert_type(np.empty([1, 5, 6], dtype='c16'), npt.NDArray[Any])
 assert_type(np.empty(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.concatenate(A), npt.NDArray[np.float64])
-assert_type(np.concatenate([A, A]), Any)  # pyright correctly infers this as NDArray[float64]
+assert_type(np.concatenate([A, A]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.concatenate([[1], A]), npt.NDArray[Any])
 assert_type(np.concatenate([[1], [1]]), npt.NDArray[Any])
 assert_type(np.concatenate((A, A)), npt.NDArray[np.float64])

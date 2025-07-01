@@ -10,12 +10,7 @@ from numpy.lib._iotools import (
     flatten_dtype,
     has_nested_fields,
 )
-from numpy.testing import (
-    assert_,
-    assert_allclose,
-    assert_equal,
-    assert_raises,
-)
+from numpy.testing import assert_, assert_allclose, assert_equal, assert_raises
 
 
 class TestLineSplitter:

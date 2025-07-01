@@ -8,9 +8,11 @@ import pickle
 
 import numpy as np
 import numpy.ma as ma
-from numpy._core.records import fromarrays as recfromarrays
-from numpy._core.records import fromrecords as recfromrecords
-from numpy._core.records import recarray
+from numpy._core.records import (
+    fromarrays as recfromarrays,
+    fromrecords as recfromrecords,
+    recarray,
+)
 from numpy.ma import masked, nomask
 from numpy.ma.mrecords import (
     MaskedRecords,
@@ -20,11 +22,7 @@ from numpy.ma.mrecords import (
     fromtextfile,
     mrecarray,
 )
-from numpy.ma.testutils import (
-    assert_,
-    assert_equal,
-    assert_equal_records,
-)
+from numpy.ma.testutils import assert_, assert_equal, assert_equal_records
 from numpy.testing import temppath
 
 
