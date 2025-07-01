@@ -490,6 +490,7 @@ typedef enum {
         NPY_UNORDERED_LEFT = 2,
         NPY_UNORDERED_RIGHT = 3,
         NPY_UNORDERED_BOTH = 4,
+        NPY_COMPARE_ERROR = 5,
 } NPY_COMPARE_RESULT;
 
 typedef struct PyArrayMethod_SortContext_tag PyArrayMethod_SortContext;
