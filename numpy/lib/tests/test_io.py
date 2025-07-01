@@ -361,6 +361,47 @@ class TestSavezLoad(RoundtripTest):
 
 
 class TestSavezCompressed(RoundtripTest):
+    import zipfile
+
+    @pytest.mark.parametrize("compression_const", [
+        pytest.param(getattr(zipfile, "ZIP_DEFLATED", 8)),
+        pytest.param(getattr(zipfile, "ZIP_STORED", 0)),
+        pytest.param(getattr(zipfile, "ZIP_BZIP2", 12)),
+        pytest.param(getattr(zipfile, "ZIP_LZMA", 14)),
+    ])
+    def test_integer_compression_constants(self, compression_const):
+        # Only test if the constant is available in this Python version
+        a = np.arange(7)
+        with temppath(suffix=".npz") as tmp:
+            try:
+                np.savez_compressed(tmp, a=a, compression=compression_const)
+                data = np.load(tmp, allow_pickle=True)
+                assert_equal(data["a"], a)
+                data.close()
+            except ValueError as e:
+                # BZIP2/LZMA may not be available on old Python
+                if "requires Python 3.3 or later" not in str(e):
+                    raise
+
+    def test_invalid_integer_compression(self):
+        a = np.arange(5)
+        with temppath(suffix=".npz") as tmp:
+            with pytest.raises(ValueError):
+                np.savez_compressed(tmp, a=a, compression=12345)
+
+    @pytest.mark.parametrize("method, const", [
+        ("stored", getattr(zipfile, "ZIP_STORED", 0)),
+    ])
+    def test_compression_opts_not_allowed_for_stored(self, method, const):
+        a = np.arange(3)
+        with temppath(suffix=".npz") as tmp:
+            # String method
+            with pytest.raises(ValueError):
+                np.savez_compressed(tmp, a=a, compression=method, compression_opts=1)
+            # Integer constant
+            with pytest.raises(ValueError):
+                np.savez_compressed(tmp, a=a, compression=const, compression_opts=1)
+
     def roundtrip(self, *args, **kwargs):
         # Delegate to the RoundtripTest harness using savez_compressed
         RoundtripTest.roundtrip(self, np.savez_compressed, *args, **kwargs)
@@ -375,12 +416,8 @@ class TestSavezCompressed(RoundtripTest):
         a = np.arange(10)
         b = np.eye(3)
         with temppath(suffix=".npz") as tmp:
-            if opts is None:
-                np.savez_compressed(tmp, a=a, b=b, compression=method)
-            else:
-                np.savez_compressed(tmp, a=a, b=b,
-                                    compression=method,
-                                    compression_opts=opts)
+            np.savez_compressed(tmp, a=a, b=b, compression=method,
+                                compression_opts=opts)
             data = np.load(tmp, allow_pickle=True)
             assert_equal(data["a"], a)
             assert_equal(data["b"], b)
@@ -388,15 +425,13 @@ class TestSavezCompressed(RoundtripTest):
 
     @pytest.mark.parametrize("method,level", [
         ("deflated", 0), ("deflated", 5), ("deflated", 9),
-        ("bzip2",    1), ("bzip2",    9),
-        ("lzma",     0), ("lzma",     9),
+        ("bzip2", 1), ("bzip2", 9),
+        ("lzma", 0), ("lzma", 9),
     ])
     def test_compression_levels(self, method, level):
         a = np.arange(100)
         with temppath(suffix=".npz") as tmp:
-            np.savez_compressed(tmp, a=a,
-                                compression=method,
-                                compression_opts=level)
+            np.savez_compressed(tmp, a=a, compression=method, compression_opts=level)
             data = np.load(tmp, allow_pickle=True)
             assert_equal(data["a"], a)
             data.close()

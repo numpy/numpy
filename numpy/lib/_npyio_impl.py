@@ -823,13 +823,63 @@ def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None,
                                  f"Valid options: {list(_compression_map.keys())}")
             compression_val = _compression_map[compression]
         else:
-            compression_val = compression  # Assume integer constant
+            # Validate integer compression constant
+            valid_constants = {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
+            if hasattr(zipfile, "ZIP_BZIP2"):
+                valid_constants.add(zipfile.ZIP_BZIP2)
+            if hasattr(zipfile, "ZIP_LZMA"):
+                valid_constants.add(zipfile.ZIP_LZMA)
+            if compression not in valid_constants:
+                raise ValueError(f"Unknown compression integer: {compression!r}."
+                                 f"Valid options: {sorted(valid_constants)}")
+            compression_val = compression
 
         # Version checks for compression methods
         if compression_val == zipfile.ZIP_BZIP2 and sys.version_info < (3, 3):
             raise ValueError("BZIP2 compression requires Python 3.3 or later")
         if compression_val == zipfile.ZIP_LZMA and sys.version_info < (3, 3):
             raise ValueError("LZMA compression requires Python 3.3 or later")
+
+        def _validate_compresslevel(compression_val, compresslevel):
+            # Map compression constants to (min, max) valid compresslevel
+            level_ranges = {
+                zipfile.ZIP_DEFLATED: (0, 9),
+                zipfile.ZIP_STORED: None,
+            }
+            if hasattr(zipfile, "ZIP_BZIP2"):
+                level_ranges[zipfile.ZIP_BZIP2] = (1, 9)
+            if hasattr(zipfile, "ZIP_LZMA"):
+                level_ranges[zipfile.ZIP_LZMA] = (0, 9)
+
+            if compression_val in level_ranges:
+                rng = level_ranges[compression_val]
+                if rng is None:
+                    if compresslevel is not None:
+                        raise ValueError(
+                            "compresslevel is not applicable for ZIP_STORED."
+                        )
+                else:
+                    minv, maxv = rng
+                    if not (
+                        isinstance(compresslevel, int)
+                        and minv <= compresslevel <= maxv
+                    ):
+                        name = {
+                            zipfile.ZIP_DEFLATED: "DEFLATED",
+                            zipfile.ZIP_BZIP2 if hasattr(zipfile, "ZIP_BZIP2") else -1:
+                                "BZIP2",
+                            zipfile.ZIP_LZMA if hasattr(zipfile, "ZIP_LZMA") else -2:
+                                "LZMA",
+                        }.get(compression_val, str(compression_val))
+                        raise ValueError(
+                            f"For {name}, compresslevel must be int in {minv}-{maxv}."
+                        )
+            else:
+                # Should not happen due to earlier validation
+                pass
+
+        if compression_opts is not None:
+            _validate_compresslevel(compression_val, compression_opts)
     else:
         compression_val = zipfile.ZIP_STORED
 
