@@ -563,6 +563,8 @@ def test_python2_python3_interoperability():
     assert_array_equal(data, np.ones(2))
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*align should be passed:numpy.exceptions.VisibleDeprecationWarning")
 def test_pickle_python2_python3():
     # Test that loading object arrays saved on Python 2 works both on
     # Python 2 and Python 3 and vice versa
@@ -626,17 +628,18 @@ def test_pickle_disallow(tmpdir):
                   allow_pickle=False)
 
 @pytest.mark.parametrize('dt', [
-    np.dtype(np.dtype([('a', np.int8),
-                       ('b', np.int16),
-                       ('c', np.int32),
-                      ], align=True),
-             (3,)),
-    np.dtype([('x', np.dtype({'names': ['a', 'b'],
+    # Not testing a subarray only dtype, because it cannot be attached to an array
+    # (and would fail the test as of writing this.)
+    np.dtype([('a', np.int8),
+              ('b', np.int16),
+              ('c', np.int32),
+             ], align=True),
+    np.dtype([('x', np.dtype(({'names': ['a', 'b'],
                               'formats': ['i1', 'i1'],
                               'offsets': [0, 4],
                               'itemsize': 8,
                              },
-                    (3,)),
+                    (3,))),
                (4,),
              )]),
     np.dtype([('x',
