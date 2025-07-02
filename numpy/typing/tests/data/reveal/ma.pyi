@@ -383,6 +383,18 @@ assert_type(MAR_2d_f4.T, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]
 assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], ...])
 assert_type(MAR_2d_f4.nonzero()[0], _Array1D[np.intp])
 
+assert_type(MAR_f8.trace(), Any)
+assert_type(MAR_f8.trace(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_f8.round(), MaskedArray[np.float64])
+assert_type(MAR_f8.round(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_f8.cumprod(), MaskedArray[Any])
+assert_type(MAR_f8.cumprod(out=MAR_subclass), MaskedArraySubclass)
+
+assert_type(MAR_f8.cumsum(), MaskedArray[Any])
+assert_type(MAR_f8.cumsum(out=MAR_subclass), MaskedArraySubclass)
+
 # Masked Array addition
 
 assert_type(MAR_b + AR_LIKE_u, MaskedArray[np.uint32])
