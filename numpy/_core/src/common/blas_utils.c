@@ -1,5 +1,5 @@
-#include "numpy/numpyconfig.h"  // NPY_VISIBILITY_HIDDEN
 #include "numpy/npy_math.h"     // npy_get_floatstatus_barrier
+#include "numpy/numpyconfig.h"  // NPY_VISIBILITY_HIDDEN
 #include "blas_utils.h"
 
 #include <stdbool.h>

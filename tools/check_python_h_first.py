@@ -37,7 +37,7 @@ PARSER = argparse.ArgumentParser(description=__doc__)
 PARSER.add_argument(
     "files",
     nargs="*",
-    help="Lint these files or directories; use **/*.py to lint all files",
+    help="Lint these files or directories; use **/*.c to lint all files",
 )
 
 
@@ -76,6 +76,7 @@ def check_python_h_included_first(name_to_check: str) -> int:
                 if "*/" in line:
                     in_comment = False
                 continue
+            line = line.split("//", 1)[0].strip()
             match = HEADER_PATTERN.match(line)
             if match:
                 includes_headers = True
@@ -114,7 +115,7 @@ def check_python_h_included_first(name_to_check: str) -> int:
                     file=sys.stderr,
                 )
                 warned_python_construct = True
-    if includes_headers:
+    if not includes_headers:
         LEAF_HEADERS.append(this_header)
     return included_python and len(included_non_python_header)
 
@@ -140,7 +141,7 @@ def find_c_cpp_files(root: str) -> list[str]:
 
     result = []
 
-    for dirpath, dirnames, filenames in os.walk("scipy"):
+    for dirpath, dirnames, filenames in os.walk("numpy"):
         # I'm assuming other people have checked boost
         for name in ("build", ".git", "boost"):
             try:
@@ -192,7 +193,7 @@ def diff_files(sha: str) -> list[str]:
 if __name__ == "__main__":
     args = PARSER.parse_args()
 
-    if not (len(args.files) == 0):
+    if len(args.files) == 0:
         files = find_c_cpp_files("numpy")
     else:
         files = args.files
