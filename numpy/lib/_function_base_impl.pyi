@@ -615,6 +615,7 @@ _MethodKind = L[
     "nearest",
 ]
 
+# NOTE: keep in sync with `quantile`
 @overload
 def percentile(
     a: _ArrayLikeFloat_co,
@@ -772,6 +773,7 @@ def percentile(
     weights: _ArrayLikeFloat_co | None = ...,
 ) -> _ArrayT: ...
 
+# NOTE: keep in sync with `percentile`
 @overload
 def quantile(
     a: _ArrayLikeFloat_co,
