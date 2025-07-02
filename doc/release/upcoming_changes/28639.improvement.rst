@@ -1,0 +1,8 @@
+Improved range and speed of conversion from a ``PyInt`` to a `np.longdouble`
+----------------------------------------------------------------------------
+To convert to a `np.longdouble` from a ``PyInt``, the conversion is now done
+numerically instead of through a string. Which means that:
+
+* For platforms that support 80/128 bit ``longdoubles``, it can handle numbers with more than 10^4300 digits
+* If the number is too large to be converted (platform dependent) it now raises an ``OverflowError``, same behavior as Python's ``float`` function
+* Improved performance
