@@ -380,7 +380,7 @@ assert_type(MAR_2d_f4.transpose((1, 0)), np.ma.MaskedArray[tuple[int, int], np.d
 assert_type(MAR_b.T, MaskedArray[np.bool])
 assert_type(MAR_2d_f4.T, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 
-assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], *tuple[_Array1D[np.intp], ...]])
+assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], ...])
 assert_type(MAR_2d_f4.nonzero()[0], _Array1D[np.intp])
 
 # Masked Array addition

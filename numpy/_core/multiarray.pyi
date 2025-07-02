@@ -528,7 +528,6 @@ def concatenate(  # type: ignore[misc]
     casting: _CastingKind | None = ...
 ) -> NDArray[_ScalarT]: ...
 @overload
-@overload
 def concatenate(  # type: ignore[misc]
     arrays: SupportsLenAndGetItem[ArrayLike],
     /,
@@ -553,7 +552,17 @@ def concatenate(
     arrays: SupportsLenAndGetItem[ArrayLike],
     /,
     axis: SupportsIndex | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+    dtype: DTypeLike = ...,
+    casting: _CastingKind | None = ...
+) -> _ArrayT: ...
+@overload
+def concatenate(
+    arrays: SupportsLenAndGetItem[ArrayLike],
+    /,
+    axis: SupportsIndex | None,
+    out: _ArrayT,
     *,
     dtype: DTypeLike = ...,
     casting: _CastingKind | None = ...
@@ -1094,7 +1103,17 @@ def busday_count(
     weekmask: ArrayLike = ...,
     holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None = ...,
     busdaycal: busdaycalendar | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+) -> _ArrayT: ...
+@overload
+def busday_count(
+    begindates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    enddates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    weekmask: ArrayLike,
+    holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None,
+    busdaycal: busdaycalendar | None,
+    out: _ArrayT,
 ) -> _ArrayT: ...
 
 # `roll="raise"` is (more or less?) equivalent to `casting="safe"`
@@ -1126,7 +1145,18 @@ def busday_offset(  # type: ignore[misc]
     weekmask: ArrayLike = ...,
     holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None = ...,
     busdaycal: busdaycalendar | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+) -> _ArrayT: ...
+@overload
+def busday_offset(  # type: ignore[misc]
+    dates: _ArrayLike[datetime64] | dt.date | _NestedSequence[dt.date],
+    offsets: _ArrayLikeTD64_co | dt.timedelta | _NestedSequence[dt.timedelta],
+    roll: L["raise"],
+    weekmask: ArrayLike,
+    holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None,
+    busdaycal: busdaycalendar | None,
+    out: _ArrayT,
 ) -> _ArrayT: ...
 @overload
 def busday_offset(  # type: ignore[misc]
@@ -1156,7 +1186,18 @@ def busday_offset(
     weekmask: ArrayLike = ...,
     holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None = ...,
     busdaycal: busdaycalendar | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+) -> _ArrayT: ...
+@overload
+def busday_offset(
+    dates: ArrayLike | dt.date | _NestedSequence[dt.date],
+    offsets: ArrayLike | dt.timedelta | _NestedSequence[dt.timedelta],
+    roll: _RollKind,
+    weekmask: ArrayLike,
+    holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None,
+    busdaycal: busdaycalendar | None,
+    out: _ArrayT,
 ) -> _ArrayT: ...
 
 @overload
@@ -1181,7 +1222,16 @@ def is_busday(
     weekmask: ArrayLike = ...,
     holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None = ...,
     busdaycal: busdaycalendar | None = ...,
-    out: _ArrayT = ...,
+    *,
+    out: _ArrayT,
+) -> _ArrayT: ...
+@overload
+def is_busday(
+    dates: ArrayLike | _NestedSequence[dt.date],
+    weekmask: ArrayLike,
+    holidays: ArrayLike | dt.date | _NestedSequence[dt.date] | None,
+    busdaycal: busdaycalendar | None,
+    out: _ArrayT,
 ) -> _ArrayT: ...
 
 @overload

@@ -2355,7 +2355,7 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
     def dot(self, b: ArrayLike, out: _ArrayT) -> _ArrayT: ...
 
     # `nonzero()` is deprecated for 0d arrays/generics
-    def nonzero(self) -> tuple[NDArray[intp], ...]: ...
+    def nonzero(self) -> tuple[ndarray[tuple[int], np.dtype[intp]], ...]: ...
 
     # `put` is technically available to `generic`,
     # but is pointless as `generic`s are immutable
@@ -2401,7 +2401,17 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         axis1: SupportsIndex = ...,
         axis2: SupportsIndex = ...,
         dtype: DTypeLike = ...,
-        out: _ArrayT = ...,
+        *,
+        out: _ArrayT,
+    ) -> _ArrayT: ...
+    @overload
+    def trace(
+        self,  # >= 2D array
+        offset: SupportsIndex,
+        axis1: SupportsIndex,
+        axis2: SupportsIndex,
+        dtype: DTypeLike,
+        out: _ArrayT,
     ) -> _ArrayT: ...
 
     @overload
@@ -2425,7 +2435,16 @@ class ndarray(_ArrayOrScalarCommon, Generic[_ShapeT_co, _DTypeT_co]):
         self,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = ...,
-        out: _ArrayT = ...,
+        *,
+        out: _ArrayT,
+        mode: _ModeKind = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None,
+        out: _ArrayT,
         mode: _ModeKind = ...,
     ) -> _ArrayT: ...
 
@@ -3657,7 +3676,16 @@ class generic(_ArrayOrScalarCommon, Generic[_ItemT_co]):
         self,
         indices: _ArrayLikeInt_co,
         axis: SupportsIndex | None = ...,
-        out: _ArrayT = ...,
+        *,
+        out: _ArrayT,
+        mode: _ModeKind = ...,
+    ) -> _ArrayT: ...
+    @overload
+    def take(
+        self,
+        indices: _ArrayLikeInt_co,
+        axis: SupportsIndex | None,
+        out: _ArrayT,
         mode: _ModeKind = ...,
     ) -> _ArrayT: ...
 

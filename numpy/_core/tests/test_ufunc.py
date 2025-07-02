@@ -1100,17 +1100,15 @@ class TestUfunc:
                 match=r"out=\.\.\. is only allowed as a keyword argument."):
             np.add.reduce(1, (), None, ...)
 
-        with pytest.raises(TypeError,
-                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+        type_error = r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"
+        with pytest.raises(TypeError, match=type_error):
             np.negative(1, out=(...,))
 
-        with pytest.raises(TypeError,
-                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+        with pytest.raises(TypeError, match=type_error):
             # We only allow out=... not individual args for now
             np.divmod(1, 2, out=(np.empty(()), ...))
 
-        with pytest.raises(TypeError,
-                match=r"must use `\.\.\.` as `out=\.\.\.` and not per-operand/in a tuple"):
+        with pytest.raises(TypeError, match=type_error):
             np.add.reduce(1, out=(...,))
 
     def test_axes_argument(self):
@@ -1556,7 +1554,8 @@ class TestUfunc:
 
         arr1d = np.array([HasComparisons()])
         assert_equal(arr1d == arr1d, np.array([True]))
-        assert_equal(np.equal(arr1d, arr1d), np.array([True]))  # normal behavior is a cast
+        # normal behavior is a cast
+        assert_equal(np.equal(arr1d, arr1d), np.array([True]))
         assert_equal(np.equal(arr1d, arr1d, dtype=object), np.array(['==']))
 
     def test_object_array_reduction(self):

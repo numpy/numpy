@@ -517,6 +517,18 @@ def test_fancy_indexing(string_list):
                 assert_array_equal(a, b)
                 assert a[0] == 'd' * 25
 
+    # see gh-29279
+    data = [
+        ["AAAAAAAAAAAAAAAAA"],
+        ["BBBBBBBBBBBBBBBBBBBBBBBBBBBBB"],
+        ["CCCCCCCCCCCCCCCCC"],
+        ["DDDDDDDDDDDDDDDDD"],
+    ]
+    sarr = np.array(data, dtype=np.dtypes.StringDType())
+    uarr = np.array(data, dtype="U30")
+    for ind in [[0], [1], [2], [3], [[0, 0]], [[1, 1, 3]], [[1, 1]]]:
+        assert_array_equal(sarr[ind], uarr[ind])
+
 
 def test_creation_functions():
     assert_array_equal(np.zeros(3, dtype="T"), ["", "", ""])

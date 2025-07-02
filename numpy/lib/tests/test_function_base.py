@@ -65,6 +65,7 @@ from numpy.testing import (
     suppress_warnings,
 )
 
+np_floats = [np.half, np.single, np.double, np.longdouble]
 
 def get_mat(n):
     data = np.arange(n)
@@ -309,7 +310,7 @@ class TestCopy:
     def test_order(self):
         # It turns out that people rely on np.copy() preserving order by
         # default; changing this broke scikit-learn:
-        # github.com/scikit-learn/scikit-learn/commit/7842748cf777412c506a8c0ed28090711d3a3783
+        # github.com/scikit-learn/scikit-learn/commit/7842748
         a = np.array([[1, 2], [3, 4]])
         assert_(a.flags.c_contiguous)
         assert_(not a.flags.f_contiguous)
@@ -2520,7 +2521,7 @@ class TestCorrCoef:
         assert_array_almost_equal(c, np.array([[1., -1.], [-1., 1.]]))
         assert_(np.all(np.abs(c) <= 1.0))
 
-    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    @pytest.mark.parametrize("test_type", np_floats)
     def test_corrcoef_dtype(self, test_type):
         cast_A = self.A.astype(test_type)
         res = corrcoef(cast_A, dtype=test_type)
@@ -2626,7 +2627,7 @@ class TestCov:
                             aweights=self.unit_weights),
                         self.res1)
 
-    @pytest.mark.parametrize("test_type", [np.half, np.single, np.double, np.longdouble])
+    @pytest.mark.parametrize("test_type", np_floats)
     def test_cov_dtype(self, test_type):
         cast_x1 = self.x1.astype(test_type)
         res = cov(cast_x1, dtype=test_type)
@@ -2648,7 +2649,8 @@ class Test_I0:
 
         # need at least one test above 8, as the implementation is piecewise
         A = np.array([0.49842636, 0.6969809, 0.22011976, 0.0155549, 10.0])
-        expected = np.array([1.06307822, 1.12518299, 1.01214991, 1.00006049, 2815.71662847])
+        expected = np.array([1.06307822, 1.12518299, 1.01214991,
+                             1.00006049, 2815.71662847])
         assert_almost_equal(i0(A), expected)
         assert_almost_equal(i0(-A), expected)
 
@@ -3141,23 +3143,27 @@ class TestInterp:
 
     def test_non_finite_inf(self, sc):
         """ Test that interp between opposite infs gives nan """
-        assert_equal(np.interp(0.5, [-np.inf, +np.inf], sc([      0,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0,       1], sc([-np.inf, +np.inf])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0,       1], sc([+np.inf, -np.inf])), sc(np.nan))
+        inf = np.inf
+        nan = np.nan
+        assert_equal(np.interp(0.5, [-inf, +inf], sc([   0,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [   0,    1], sc([-inf, +inf])), sc(nan))
+        assert_equal(np.interp(0.5, [   0,    1], sc([+inf, -inf])), sc(nan))
 
         # unless the y values are equal
         assert_equal(np.interp(0.5, [-np.inf, +np.inf], sc([     10,      10])), sc(10))
 
     def test_non_finite_half_inf_xf(self, sc):
         """ Test that interp where both axes have a bound at inf gives nan """
-        assert_equal(np.interp(0.5, [-np.inf,       1], sc([-np.inf,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [-np.inf,       1], sc([+np.inf,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [-np.inf,       1], sc([      0, -np.inf])), sc(np.nan))
-        assert_equal(np.interp(0.5, [-np.inf,       1], sc([      0, +np.inf])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0, +np.inf], sc([-np.inf,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0, +np.inf], sc([+np.inf,      10])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0, +np.inf], sc([      0, -np.inf])), sc(np.nan))
-        assert_equal(np.interp(0.5, [      0, +np.inf], sc([      0, +np.inf])), sc(np.nan))
+        inf = np.inf
+        nan = np.nan
+        assert_equal(np.interp(0.5, [-inf,    1], sc([-inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([+inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([   0, -inf])), sc(nan))
+        assert_equal(np.interp(0.5, [-inf,    1], sc([   0, +inf])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([-inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([+inf,   10])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([   0, -inf])), sc(nan))
+        assert_equal(np.interp(0.5, [   0, +inf], sc([   0, +inf])), sc(nan))
 
     def test_non_finite_half_inf_x(self, sc):
         """ Test interp where the x axis has a bound at inf """

@@ -53,7 +53,7 @@ assert_type(np.empty([1, 5, 6], dtype='c16'), npt.NDArray[Any])
 assert_type(np.empty(mixed_shape), npt.NDArray[np.float64])
 
 assert_type(np.concatenate(A), npt.NDArray[np.float64])
-assert_type(np.concatenate([A, A]), Any)  # pyright correctly infers this as NDArray[float64]
+assert_type(np.concatenate([A, A]), npt.NDArray[Any])  # pyright correctly infers this as NDArray[float64]
 assert_type(np.concatenate([[1], A]), npt.NDArray[Any])
 assert_type(np.concatenate([[1], [1]]), npt.NDArray[Any])
 assert_type(np.concatenate((A, A)), npt.NDArray[np.float64])
