@@ -46,6 +46,7 @@ from numpy import (
 from numpy._globals import _NoValueType
 from numpy._typing import (
     ArrayLike,
+    DTypeLike,
     NDArray,
     _32Bit,
     _64Bit,
@@ -66,7 +67,6 @@ from numpy._typing import (
     _ArrayLikeString_co,
     _ArrayLikeTD64_co,
     _ArrayLikeUInt_co,
-    _DTypeLike,
     _DTypeLikeBool,
     _IntLike_co,
     _ScalarLike_co,
@@ -1173,7 +1173,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     # This differs from `ndarray.dot`, in that 1D dot 1D returns a 0D array.
     @overload
-    def dot(self, b: ArrayLike, out: None = ..., strict: bool = ...) -> _MaskedArray[Any]: ...  # type: ignore[misc]
+    def dot(self, b: ArrayLike, out: None = ..., strict: bool = ...) -> _MaskedArray[Any]: ...
     @overload
     def dot(self, b: ArrayLike, out: _ArrayT, strict: bool = ...) -> _ArrayT: ...
 
@@ -1187,9 +1187,9 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     @overload
     def anom(self, axis: SupportsIndex | None = None, dtype: None = None) -> Self: ...
     @overload
-    def anom(self, axis: SupportsIndex | None = None, *, dtype: _DTypeLike[_ScalarT]) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
+    def anom(self, axis: SupportsIndex | None = None, *, dtype: DTypeLike) -> MaskedArray[_ShapeT_co, dtype]: ...
     @overload
-    def anom(self, axis: SupportsIndex | None, dtype: _DTypeLike[_ScalarT]) -> MaskedArray[_ShapeT_co, dtype[_ScalarT]]: ...
+    def anom(self, axis: SupportsIndex | None, dtype: DTypeLike) -> MaskedArray[_ShapeT_co, dtype]: ...
 
     def var(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
     def std(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
