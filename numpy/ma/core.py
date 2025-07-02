@@ -5812,11 +5812,6 @@ class MaskedArray(ndarray):
         stable : bool, optional
             Only for compatibility with ``np.sort``. Ignored.
 
-        Returns
-        -------
-        sorted_array : ndarray
-            Array of the same type and shape as `a`.
-
         See Also
         --------
         numpy.ndarray.sort : Method to sort an array in-place.
