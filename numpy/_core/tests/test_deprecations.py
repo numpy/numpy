@@ -458,7 +458,7 @@ class TestAddNewdocUFunc(_DeprecationTestCase):
 class TestDTypeAlignBool(_VisibleDeprecationTestCase):
     # Deprecated in Numpy 2.4, 2025-07
     # NOTE: As you can see, finalizing this deprecation breaks some (very) old
-    # pickle files.  This may be fine, but sneeds to be done with some care since
+    # pickle files.  This may be fine, but needs to be done with some care since
     # it breaks all of them and not just some.
     # (Maybe it should be a 3.0 or only after warning more explicitly around pickles.)
     message = r"dtype\(\): align should be passed as Python or NumPy boolean but got "
