@@ -4917,3 +4917,12 @@ class TestAdd_newdoc_ufunc:
     @pytest.mark.filterwarnings("ignore:_add_newdoc_ufunc:DeprecationWarning")
     def test_string_arg(self):
         assert_raises(TypeError, ncu._add_newdoc_ufunc, np.add, 3)
+
+class TestHypotErrorMessages:
+    def test_hypot_error_message_single_arg(self):
+        with pytest.raises(TypeError, match="hypot\\(\\) takes .* but 1 was given"):
+            np.hypot(5)
+
+    def test_hypot_error_message_multiple_args(self):
+        with pytest.raises(TypeError, match="hypot\\(\\) takes .* but 4 were given"):
+            np.hypot(1, 2, 3, 4)

@@ -1169,7 +1169,36 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     ) -> _ArrayT: ...
 
     def nonzero(self) -> tuple[_Array1D[intp], ...]: ...
-    def trace(self, offset=..., axis1=..., axis2=..., dtype=..., out=...): ...
+
+    # Keep in sync with `ndarray.trace`
+    @overload
+    def trace(
+        self,  # >= 2D MaskedArray
+        offset: SupportsIndex = ...,
+        axis1: SupportsIndex = ...,
+        axis2: SupportsIndex = ...,
+        dtype: DTypeLike = ...,
+        out: None = ...,
+    ) -> Any: ...
+    @overload
+    def trace(
+        self,  # >= 2D MaskedArray
+        offset: SupportsIndex = ...,
+        axis1: SupportsIndex = ...,
+        axis2: SupportsIndex = ...,
+        dtype: DTypeLike = ...,
+        *,
+        out: _ArrayT,
+    ) -> _ArrayT: ...
+    @overload
+    def trace(
+        self,  # >= 2D MaskedArray
+        offset: SupportsIndex,
+        axis1: SupportsIndex,
+        axis2: SupportsIndex,
+        dtype: DTypeLike,
+        out: _ArrayT,
+    ) -> _ArrayT: ...
 
     # This differs from `ndarray.dot`, in that 1D dot 1D returns a 0D array.
     @overload
@@ -1178,10 +1207,26 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def dot(self, b: ArrayLike, out: _ArrayT, strict: bool = ...) -> _ArrayT: ...
 
     def sum(self, axis=..., dtype=..., out=..., keepdims=...): ...
-    def cumsum(self, axis=..., dtype=..., out=...): ...
+
+    # Keep in sync with `ndarray.cumsum`
+    @overload  # out: None (default)
+    def cumsum(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> _MaskedArray[Any]: ...
+    @overload  # out: ndarray
+    def cumsum(self, /, axis: SupportsIndex | None, dtype: DTypeLike | None, out: _ArrayT) -> _ArrayT: ...
+    @overload
+    def cumsum(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...
+
     def prod(self, axis=..., dtype=..., out=..., keepdims=...): ...
     product: Any
-    def cumprod(self, axis=..., dtype=..., out=...): ...
+
+    # Keep in sync with `ndarray.cumprod`
+    @overload  # out: None (default)
+    def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> _MaskedArray[Any]: ...
+    @overload  # out: ndarray
+    def cumprod(self, /, axis: SupportsIndex | None, dtype: DTypeLike | None, out: _ArrayT) -> _ArrayT: ...
+    @overload
+    def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...
+
     def mean(self, axis=..., dtype=..., out=..., keepdims=...): ...
 
     @overload
@@ -1193,7 +1238,15 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     def var(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
     def std(self, axis=..., dtype=..., out=..., ddof=..., keepdims=...): ...
-    def round(self, decimals=..., out=...): ...
+
+    # Keep in sync with `ndarray.round`
+    @overload  # out=None (default)
+    def round(self, /, decimals: SupportsIndex = 0, out: None = None) -> Self: ...
+    @overload  # out=ndarray
+    def round(self, /, decimals: SupportsIndex, out: _ArrayT) -> _ArrayT: ...
+    @overload
+    def round(self, /, decimals: SupportsIndex = 0, *, out: _ArrayT) -> _ArrayT: ...
+
     def argsort(self, axis=..., kind=..., order=..., endwith=..., fill_value=..., *, stable=...): ...
 
     # Keep in-sync with np.ma.argmin
