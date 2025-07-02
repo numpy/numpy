@@ -5454,8 +5454,8 @@ class MaskedArray(ndarray):
             The default is to use the mean of the flattened array as reference.
         dtype : dtype, optional
             Type to use in computing the variance. For arrays of integer type
-             the default is float32; for arrays of float types it is the same as
-             the array type.
+            the default is float32; for arrays of float types it is the same as
+            the array type.
 
         See Also
         --------
