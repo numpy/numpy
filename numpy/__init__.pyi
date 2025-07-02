@@ -1777,6 +1777,7 @@ class _ArrayOrScalarCommon:
     @overload
     def compress(self, /, condition: _ArrayLikeInt_co, axis: SupportsIndex | None = None, *, out: _ArrayT) -> _ArrayT: ...
 
+    # Keep in sync with `MaskedArray.cumprod`
     @overload  # out: None (default)
     def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> NDArray[Any]: ...
     @overload  # out: ndarray
@@ -1784,6 +1785,7 @@ class _ArrayOrScalarCommon:
     @overload
     def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, *, out: _ArrayT) -> _ArrayT: ...
 
+    # Keep in sync with `MaskedArray.cumsum`
     @overload  # out: None (default)
     def cumsum(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> NDArray[Any]: ...
     @overload  # out: ndarray

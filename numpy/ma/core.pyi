@@ -1203,6 +1203,7 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def dot(self, b, out=..., strict=...): ...
     def sum(self, axis=..., dtype=..., out=..., keepdims=...): ...
 
+    # Keep in sync with `ndarray.cumsum`
     @overload  # out: None (default)
     def cumsum(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> _MaskedArray[Any]: ...
     @overload  # out: ndarray
@@ -1213,6 +1214,8 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
     def prod(self, axis=..., dtype=..., out=..., keepdims=...): ...
     product: Any
 
+    # Keep in sync with `ndarray.cumprod`
+    @overload  # out: None (default)
     @overload  # out: None (default)
     def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> _MaskedArray[Any]: ...
     @overload  # out: ndarray
