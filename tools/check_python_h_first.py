@@ -116,7 +116,7 @@ def check_python_h_included_first(name_to_check: str) -> int:
                 )
                 warned_python_construct = True
     if not includes_headers:
-        LEAF_HEADERS.append(this_header)
+        LEAF_HEADERS.append(basename_to_check)
     return included_python and len(included_non_python_header)
 
 
