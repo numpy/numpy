@@ -170,7 +170,7 @@ assert_type(AR_f8.dot(1), npt.NDArray[Any])
 assert_type(AR_f8.dot([1]), Any)
 assert_type(AR_f8.dot(1, out=B), SubClass)
 
-assert_type(AR_f8.nonzero(), tuple[npt.NDArray[np.intp], ...])
+assert_type(AR_f8.nonzero(), tuple[np.ndarray[tuple[int], np.dtype[np.intp]], ...])
 
 assert_type(AR_f8.searchsorted(1), np.intp)
 assert_type(AR_f8.searchsorted([1]), npt.NDArray[np.intp])
