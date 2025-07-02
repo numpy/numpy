@@ -1216,7 +1216,6 @@ class MaskedArray(ndarray[_ShapeT_co, _DTypeT_co]):
 
     # Keep in sync with `ndarray.cumprod`
     @overload  # out: None (default)
-    @overload  # out: None (default)
     def cumprod(self, /, axis: SupportsIndex | None = None, dtype: DTypeLike | None = None, out: None = None) -> _MaskedArray[Any]: ...
     @overload  # out: ndarray
     def cumprod(self, /, axis: SupportsIndex | None, dtype: DTypeLike | None, out: _ArrayT) -> _ArrayT: ...
