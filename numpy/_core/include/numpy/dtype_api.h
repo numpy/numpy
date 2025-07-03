@@ -506,8 +506,7 @@ typedef enum {
 struct PyArrayMethod_SortContext_tag {
     PyArray_Descr *descriptor;
     PyArray_SortCompareFunc *compare;
-    int descending;
-    int reversed;
+    npy_bool descending;
     NPY_SORT_NAN_POSITION nan_position;
 };
 
@@ -519,10 +518,10 @@ typedef int (PyArray_ArgSortFuncWithContext)(PyArrayMethod_SortContext *,
                                   NpyAuxData *);
 
 typedef int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, 
-        npy_intp, int, PyArray_SortFuncWithContext **, NpyAuxData **,
+        npy_intp, PyArray_SortFuncWithContext **, NpyAuxData **,
         NPY_ARRAYMETHOD_FLAGS *);
 typedef int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, 
-        npy_intp, int, PyArray_ArgSortFuncWithContext **, NpyAuxData **,
+        npy_intp, PyArray_ArgSortFuncWithContext **, NpyAuxData **,
         NPY_ARRAYMETHOD_FLAGS *);
 
 #endif  /* NUMPY_CORE_INCLUDE_NUMPY___DTYPE_API_H_ */

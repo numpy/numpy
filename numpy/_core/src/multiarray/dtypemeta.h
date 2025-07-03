@@ -303,7 +303,7 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 
 static inline int
 PyArray_GetSortFunction(PyArray_Descr *descr, 
-    NPY_SORTKIND which, int descending, PyArray_SortFuncWithContext **out_sort,
+    NPY_SORTKIND which, PyArray_SortFuncWithContext **out_sort,
     NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 {
     if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function == NULL) {
@@ -311,13 +311,13 @@ PyArray_GetSortFunction(PyArray_Descr *descr,
     }
 
     NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function(
-        descr, which, descending, out_sort, out_auxdata, out_flags);
+        descr, which, out_sort, out_auxdata, out_flags);
     return 0;
 }
 
 static inline int
 PyArray_GetArgSortFunction(PyArray_Descr *descr, 
-    NPY_SORTKIND which, int descending, PyArray_ArgSortFuncWithContext **out_argsort,
+    NPY_SORTKIND which, PyArray_ArgSortFuncWithContext **out_argsort,
     NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 {
     if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function == NULL) {
@@ -325,7 +325,7 @@ PyArray_GetArgSortFunction(PyArray_Descr *descr,
     }
 
     NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function(
-        descr, which, descending, out_argsort, out_auxdata, out_flags);
+        descr, which, out_argsort, out_auxdata, out_flags);
     return 0;
 }
 

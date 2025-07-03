@@ -3546,23 +3546,23 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
 .. c:macro:: NPY_DT_get_sort_function
 
 .. c:type:: int *(PyArrayDTypeMeta_GetSortFunction)(PyArray_Descr *, \
-        npy_intp sort_kind, int descending, PyArray_SortFuncWithContext **out_sort, \
+        npy_intp sort_kind, PyArray_SortFuncWithContext **out_sort, \
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 
     If defined, sets a custom sorting function for the DType for each of
     the sort kinds numpy implements. Currently, sorts are always descending
-    and always use nulls to the end, but this must be checked in the
+    and always use nulls to the end, and this must be checked in the
     implementation. Returns 0 on success.
 
 .. c:macro:: NPY_DT_get_argsort_function
 
 .. c:type:: int *(PyArrayDTypeMeta_GetArgSortFunction)(PyArray_Descr *, \
-        npy_intp sort_kind, int descending, PyArray_ArgSortFuncWithContext **out_argsort, \
+        npy_intp sort_kind, PyArray_ArgSortFuncWithContext **out_argsort, \
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 
     If defined, sets a custom argsorting function for the DType for each of
     the sort kinds numpy implements. Currently, sorts are always descending
-    and always use nulls to the end, but this must be checked in the
+    and always use nulls to the end, and this must be checked in the
     implementation. Returns 0 on success.
 
 .. c:macro:: NPY_DT_sort_compare

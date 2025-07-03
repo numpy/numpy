@@ -1218,8 +1218,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFuncWithContext *sort,
 
     PyArrayMethod_SortContext context = {
         .descriptor = descr,
-        .reversed = 0,
-        .descending = 0,
+        .descending = NPY_FALSE,
         .nan_position = NPY_SORT_NAN_TO_END,
     };
 
@@ -1406,8 +1405,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFuncWithContext *ar
 
     PyArrayMethod_SortContext context = {
         .descriptor = descr,
-        .reversed = 0,
-        .descending = 0,
+        .descending = NPY_FALSE,
         .nan_position = NPY_SORT_NAN_TO_END,
     };
 
@@ -1605,7 +1603,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return -1;
     }
 
-    if (PyArray_GetSortFunction(PyArray_DESCR(op), which, 0, &sort, &auxdata, &flags) < 0) {
+    if (PyArray_GetSortFunction(PyArray_DESCR(op), which, &sort, &auxdata, &flags) < 0) {
         sort_with_array = PyDataType_GetArrFuncs(PyArray_DESCR(op))->sort[which];
     }
 
@@ -1779,7 +1777,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     NpyAuxData *auxdata = NULL;
     NPY_ARRAYMETHOD_FLAGS flags = 0;
 
-    if (PyArray_GetArgSortFunction(PyArray_DESCR(op), which, 0, &argsort, &auxdata, &flags) < 0) {
+    if (PyArray_GetArgSortFunction(PyArray_DESCR(op), which, &argsort, &auxdata, &flags) < 0) {
         argsort_with_array = PyDataType_GetArrFuncs(PyArray_DESCR(op))->argsort[which];
     }
 

@@ -806,7 +806,7 @@ PyArrayMethod_SortContext
       typedef struct {
           PyArray_Descr *descriptor;
           PyArray_SortCompareFunc *compare;
-          int reversed;
+          npy_bool descending;
           NPY_SORT_NAN_POSITION nan_position;
       } PyArrayMethod_SortContext
 
@@ -818,9 +818,9 @@ PyArrayMethod_SortContext
 
        A pointer to the comparison function used for sorting.
 
-    .. c:member:: int reversed
+    .. c:member:: npy_bool descending
 
-       A flag indicating whether the sort is reversed.
+       A flag indicating whether the sort is descending.
 
     .. c:member:: NPY_SORT_NAN_POSITION nan_position
 
