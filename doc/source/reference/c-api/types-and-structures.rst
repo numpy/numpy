@@ -816,7 +816,8 @@ PyArrayMethod_SortContext
 
     .. c:member:: PyArray_SortCompareFunc *compare
 
-       A pointer to the comparison function used for sorting.
+       A pointer to the comparison function used for sorting. This function
+       can be NULL if the sort is not based on a comparison function.
 
     .. c:member:: npy_bool descending
 
