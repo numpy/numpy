@@ -1,4 +1,5 @@
-import os
+import glob
+import os.path
 
 
 def get_submodule_paths():
@@ -15,7 +16,14 @@ def get_submodule_paths():
         submodule_paths = [os.path.join(root_directory, path) for path in
                            submodule_paths]
     # vendored with a script rather than via gitmodules
-    submodule_paths.append(os.path.join(root_directory, 'scipy/_lib/pyprima'))
+    with open(
+            os.path.join(root_directory, ".gitattributes"), "r"
+    ) as attr_file:
+        for line in attr_file:
+            if "vendored" in line:
+                pattern = line.split(" ", 1)[0]
+                submodule_paths.extend(glob.glob(pattern))
+
     return submodule_paths
 
 
