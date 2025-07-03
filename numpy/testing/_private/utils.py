@@ -804,6 +804,33 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         else:
             return y_id
 
+    def assert_same_inf_values(x, y, infs_mask):
+        """
+        Verify all inf values match in the two arrays
+        """
+        __tracebackhide__ = True  # Hide traceback for py.test
+
+        if not infs_mask.any():
+            return
+        if x.ndim > 0 and y.ndim > 0:
+            x = x[infs_mask]
+            y = y[infs_mask]
+        else:
+            assert infs_mask.all()
+
+        # For details on the work-arounds employed here, see func_assert_same_pos above
+        result = x == y
+        if not hasattr(result, "all") or not callable(result.all):
+            result = np.bool(result)
+        if result.all() != True:
+            msg = build_err_msg(
+                [x, y],
+                err_msg + '\ninf values mismatch:',
+                verbose=verbose, header=header,
+                names=names,
+                precision=precision)
+            raise AssertionError(msg)
+
     try:
         if strict:
             cond = x.shape == y.shape and x.dtype == y.dtype
@@ -828,12 +855,15 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
 
             if equal_inf:
-                flagged |= func_assert_same_pos(x, y,
-                                                func=lambda xy: xy == +inf,
-                                                hasval='+inf')
-                flagged |= func_assert_same_pos(x, y,
-                                                func=lambda xy: xy == -inf,
-                                                hasval='-inf')
+                # If equal_nan=True, skip comparing nans below for equality if they are
+                # also infs (e.g. inf+nanj) since that would always fail.
+                isinf_func = lambda xy: np.logical_and(np.isinf(xy), np.invert(flagged))
+                infs_mask = func_assert_same_pos(
+                    x, y,
+                    func=isinf_func,
+                    hasval='inf')
+                assert_same_inf_values(x, y, infs_mask)
+                flagged |= infs_mask
 
         elif istime(x) and istime(y):
             # If one is datetime64 and the other timedelta64 there is no point
