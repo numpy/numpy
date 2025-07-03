@@ -20,15 +20,23 @@ PYTHON_INCLUDING_HEADERS = [
     "Python.h",
     # This isn't all of Python.h, but it is the visibility macros
     "pyconfig.h",
-    "numpy/arrayobject.h",
-    "numpy/ndarrayobject.h",
     "numpy/npy_common.h",
     "numpy/npy_math.h",
+    "numpy/arrayobject.h",
+    "numpy/ndarrayobject.h",
+    "numpy/ndarraytypes.h",
     "numpy/random/distributions.h",
+    "npy_sort.h",
     # Boost::Python
     "boost/python.hpp",
 ]
-LEAF_HEADERS = []
+LEAF_HEADERS = [
+    "numpyconfig.h",
+    "_numpyconfig.h",
+    "numpy/numpyconfig.h",
+    "numpy/npy_os.h",
+    "numpy/npy_cpu.h",
+]
 
 C_CPP_EXTENSIONS = (".c", ".h", ".cpp", ".hpp", ".cc", ".hh", ".cxx", ".hxx")
 # check against list in diff_files
@@ -37,7 +45,8 @@ PARSER = argparse.ArgumentParser(description=__doc__)
 PARSER.add_argument(
     "files",
     nargs="*",
-    help="Lint these files or directories; use **/*.c to lint all files",
+    help="Lint these files or directories; use **/*.c to lint all files\n"
+    "Expects relative paths",
 )
 
 
@@ -91,10 +100,12 @@ def check_python_h_included_first(name_to_check: str) -> int:
                         )
                     included_python = True
                     PYTHON_INCLUDING_HEADERS.append(basename_to_check)
+                elif this_header in LEAF_HEADERS:
+                    continue
                 elif not included_python and (
-                    "numpy" in this_header
+                    "numpy/" in this_header
                     and this_header != "numpy/utils.h"
-                    or "python" in this_header
+                    or "python" in this_header.lower()
                 ):
                     print(
                         f"Python.h not included before python-including header "
@@ -108,7 +119,7 @@ def check_python_h_included_first(name_to_check: str) -> int:
                 not included_python
                 and not warned_python_construct
                 and ".h" not in basename_to_check
-            ) and ("py::" in line or "PYBIND11_" in line or "npy_" in line):
+            ) and ("py::" in line or "PYBIND11_" in line):
                 print(
                     "Python-including header not used before python constructs "
                     f"in file {name_to_check:s}\nConstruct on line {i:d}",
@@ -130,6 +141,8 @@ def process_files(file_list: list[str]) -> int:
         name_to_check = os.path.join(root_directory, name_to_check)
         if any(submodule_path in name_to_check for submodule_path in submodule_paths):
             continue
+        if ".dispatch." in name_to_check:
+            continue
         try:
             n_out_of_order += check_python_h_included_first(name_to_check)
         except UnicodeDecodeError:
@@ -141,7 +154,7 @@ def find_c_cpp_files(root: str) -> list[str]:
 
     result = []
 
-    for dirpath, dirnames, filenames in os.walk("numpy"):
+    for dirpath, dirnames, filenames in os.walk(root):
         # I'm assuming other people have checked boost
         for name in ("build", ".git", "boost"):
             try:
@@ -197,6 +210,8 @@ if __name__ == "__main__":
         files = find_c_cpp_files("numpy")
     else:
         files = args.files
+        if len(files) == 1 and os.path.isdir(files[0]):
+            files = find_c_cpp_files(files[0])
 
     # See which of the headers include Python.h and add them to the list
     n_out_of_order = process_files(files)
