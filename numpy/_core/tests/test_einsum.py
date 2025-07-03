@@ -231,7 +231,7 @@ class TestEinsum:
     def test_einsum_views(self):
         # pass-through
         for do_opt in [True, False]:
-            a = np.arange(6).reshape( (2, 3))
+            a = np.arange(6).reshape((2, 3))
 
             b = np.einsum("...", a, optimize=do_opt)
             assert_(b.base is a)
