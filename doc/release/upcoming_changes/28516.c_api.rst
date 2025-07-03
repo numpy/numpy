@@ -1,1 +1,0 @@
-* `PyArray_GetSortFunction`, `PyArray_GetArgSortFunction`, and `PyArray_GetSortCompareFunction` have been added to the C-API. These functions return the sorting, argsorting, and sort comparison functions if provided for a given dtype in new slots.
