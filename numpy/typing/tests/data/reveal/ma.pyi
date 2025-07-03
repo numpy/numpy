@@ -373,12 +373,21 @@ assert_type(MAR_b.shrink_mask(), MaskedArray[np.bool_])
 assert_type(MAR_i8.hardmask, bool)
 assert_type(MAR_i8.sharedmask, bool)
 
+assert_type(MAR_2d_f4.anom(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+assert_type(MAR_2d_f4.anom(axis=0, dtype=np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype])
+assert_type(MAR_2d_f4.anom(0, np.float16), np.ma.MaskedArray[tuple[int, int], np.dtype])
+assert_type(MAR_2d_f4.anom(0, 'float16'), np.ma.MaskedArray[tuple[int, int], np.dtype])
+
 assert_type(MAR_b.transpose(), MaskedArray[np.bool])
 assert_type(MAR_2d_f4.transpose(), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(MAR_2d_f4.transpose(1, 0), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(MAR_2d_f4.transpose((1, 0)), np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
 assert_type(MAR_b.T, MaskedArray[np.bool])
 assert_type(MAR_2d_f4.T, np.ma.MaskedArray[tuple[int, int], np.dtype[np.float32]])
+
+assert_type(MAR_2d_f4.dot(1), MaskedArray[Any])
+assert_type(MAR_2d_f4.dot([1]), MaskedArray[Any])
+assert_type(MAR_2d_f4.dot(1, out=MAR_subclass), MaskedArraySubclass)
 
 assert_type(MAR_2d_f4.nonzero(), tuple[_Array1D[np.intp], ...])
 assert_type(MAR_2d_f4.nonzero()[0], _Array1D[np.intp])
