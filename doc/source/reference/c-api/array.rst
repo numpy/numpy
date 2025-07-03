@@ -3550,7 +3550,9 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 
     If defined, sets a custom sorting function for the DType for each of
-    the sort kinds numpy implements. Returns 0 on success.
+    the sort kinds numpy implements. Currently, sorts are always descending
+    and always use nulls to the end, but this must be checked in the
+    implementation. Returns 0 on success.
 
 .. c:macro:: NPY_DT_get_argsort_function
 
@@ -3559,7 +3561,9 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 
     If defined, sets a custom argsorting function for the DType for each of
-    the sort kinds numpy implements. Returns 0 on success.
+    the sort kinds numpy implements. Currently, sorts are always descending
+    and always use nulls to the end, but this must be checked in the
+    implementation. Returns 0 on success.
 
 .. c:macro:: NPY_DT_sort_compare
 
