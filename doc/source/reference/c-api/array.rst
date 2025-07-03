@@ -3549,6 +3549,8 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
         npy_intp sort_kind, PyArray_SortFuncWithContext **out_sort, \
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 
+    .. versionadded:: 2.4
+
     If defined, sets a custom sorting function for the DType for each of
     the sort kinds numpy implements. Currently, sorts are always descending
     and always use nulls to the end, and this must be checked in the
@@ -3560,12 +3562,16 @@ member of ``PyArrayDTypeMeta_Spec`` struct.
         npy_intp sort_kind, PyArray_ArgSortFuncWithContext **out_argsort, \
         NpyAuxData **out_auxdata, NPY_ARRAYMETHOD_FLAGS *out_flags)
 
+    .. versionadded:: 2.4
+
     If defined, sets a custom argsorting function for the DType for each of
     the sort kinds numpy implements. Currently, sorts are always descending
     and always use nulls to the end, and this must be checked in the
     implementation. Returns 0 on success.
 
 .. c:macro:: NPY_DT_sort_compare
+
+    .. versionadded:: 2.4
 
     If defined, sets a custom comparison function for the DType for use in
     sorting, which will replace `NPY_DT_PyArray_ArrFuncs_compare`. Implements
