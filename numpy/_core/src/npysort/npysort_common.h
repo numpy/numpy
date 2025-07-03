@@ -62,7 +62,7 @@ compare_from_context(const void *a, const void *b, void *context)
 
     /* This should never happen, but just in case */
     PyErr_SetString(PyExc_RuntimeError, "Unexpected comparison result in sort function");
-    return -1;  /* Indicate an error */
+    return NPY_MIN_INT;  /* Indicate an error */
 }
 
 static inline void
