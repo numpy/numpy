@@ -310,8 +310,10 @@ PyArray_GetSortFunction(PyArray_Descr *descr,
         return -1;
     }
 
-    NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function(
-        descr, which, out_sort, out_auxdata, out_flags);
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_sort_function(
+        descr, which, out_sort, out_auxdata, out_flags) == NULL) {
+        return -1;
+    }
     return 0;
 }
 
@@ -324,8 +326,10 @@ PyArray_GetArgSortFunction(PyArray_Descr *descr,
         return -1;
     }
 
-    NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function(
-        descr, which, out_argsort, out_auxdata, out_flags);
+    if (NPY_DT_SLOTS(NPY_DTYPE(descr))->get_argsort_function(
+        descr, which, out_argsort, out_auxdata, out_flags) == NULL) {
+        return -1;
+    }
     return 0;
 }
 
