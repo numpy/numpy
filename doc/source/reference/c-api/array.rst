@@ -3636,7 +3636,7 @@ DType API slots but for now we have exposed the legacy
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_sort
 
-   An array of PyArray_SortFuncWithContext of length ``NPY_NSORTS``. If set, allows
+   An array of PyArray_SortFunc of length ``NPY_NSORTS``. If set, allows
    defining custom sorting implementations for each of the sorting
    algorithms numpy implements. If `NPY_DT_get_sort_function` is
    defined, it will be used instead. This slot may be deprecated in the
@@ -3644,7 +3644,7 @@ DType API slots but for now we have exposed the legacy
 
 .. c:macro:: NPY_DT_PyArray_ArrFuncs_argsort
 
-   An array of PyArray_ArgSortFuncWithContext of length ``NPY_NSORTS``. If set,
+   An array of PyArray_ArgSortFunc of length ``NPY_NSORTS``. If set,
    allows defining custom argsorting implementations for each of the
    sorting algorithms numpy implements. If `NPY_DT_get_argsort_function`
    is defined, it will be used instead. This slot may be deprecated in
