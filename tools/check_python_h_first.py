@@ -27,15 +27,17 @@ PYTHON_INCLUDING_HEADERS = [
     "numpy/ndarraytypes.h",
     "numpy/random/distributions.h",
     "npy_sort.h",
+    "npy_config.h",
+    "common.h",
+    "npy_cpu_features.h",
     # Boost::Python
     "boost/python.hpp",
 ]
 LEAF_HEADERS = [
-    "numpyconfig.h",
-    "_numpyconfig.h",
     "numpy/numpyconfig.h",
     "numpy/npy_os.h",
     "numpy/npy_cpu.h",
+    "numpy/utils.h",
 ]
 
 C_CPP_EXTENSIONS = (".c", ".h", ".cpp", ".hpp", ".cc", ".hh", ".cxx", ".hxx")
@@ -92,19 +94,27 @@ def check_python_h_included_first(name_to_check: str) -> int:
                 this_header = match.group(1)
                 if this_header in PYTHON_INCLUDING_HEADERS:
                     if included_non_python_header and not included_python:
+                        # Headers before python-including header
                         print(
                             f"Header before Python.h in file {name_to_check:s}\n"
                             f"Python.h on line {i:d}, other header(s) on line(s)"
                             f" {included_non_python_header}",
                             file=sys.stderr,
                         )
+                    # else:  # no headers before python-including header
                     included_python = True
                     PYTHON_INCLUDING_HEADERS.append(basename_to_check)
+                    if os.path.dirname(name_to_check).endswith("include/numpy"):
+                        PYTHON_INCLUDING_HEADERS.append(f"numpy/{basename_to_check:s}")
+                    # We just found out where Python.h comes in this file
+                    break
                 elif this_header in LEAF_HEADERS:
+                    # This header is just defines, so it won't include
+                    # the system headers that cause problems
                     continue
                 elif not included_python and (
                     "numpy/" in this_header
-                    and this_header != "numpy/utils.h"
+                    and this_header not in LEAF_HEADERS
                     or "python" in this_header.lower()
                 ):
                     print(
@@ -113,6 +123,8 @@ def check_python_h_included_first(name_to_check: str) -> int:
                         f"{this_header:s} on line {i:d}",
                         file=sys.stderr,
                     )
+                    included_python = True
+                    PYTHON_INCLUDING_HEADERS.append(basename_to_check)
                 elif not included_python and this_header not in LEAF_HEADERS:
                     included_non_python_header.append(i)
             elif (
@@ -131,13 +143,37 @@ def check_python_h_included_first(name_to_check: str) -> int:
     return included_python and len(included_non_python_header)
 
 
+def sort_order(path: str) -> tuple[int, str]:
+    if "include/numpy" in path:
+        # Want to process numpy/*.h first, to work out which of those
+        # include Python.h directly
+        priority = 0x00
+    elif "h" in os.path.splitext(path)[1].lower():
+        # Then other headers, which tend to include numpy/*.h
+        priority = 0x10
+    else:
+        # Source files after headers, to give the best chance of
+        # properly checking whether they include Python.h
+        priority = 0x20
+    if "common" in path:
+        priority -= 8
+    path_basename = os.path.basename(path)
+    if path_basename.startswith("npy_"):
+        priority -= 4
+    elif path_basename.startswith("npy"):
+        priority -= 3
+    elif path_basename.startswith("np"):
+        priority -= 2
+    if "config" in path_basename:
+        priority -= 1
+    return priority, path
+
+
 def process_files(file_list: list[str]) -> int:
     n_out_of_order = 0
     submodule_paths = get_submodule_paths()
     root_directory = os.path.dirname(os.path.dirname(__file__))
-    for name_to_check in sorted(
-        file_list, key=lambda name: "h" not in os.path.splitext(name)[1].lower()
-    ):
+    for name_to_check in sorted(file_list, key=sort_order):
         name_to_check = os.path.join(root_directory, name_to_check)
         if any(submodule_path in name_to_check for submodule_path in submodule_paths):
             continue
