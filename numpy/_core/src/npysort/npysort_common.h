@@ -36,7 +36,7 @@ compare_from_context(const void *a, const void *b, void *context)
         return 0;
     }
     else {
-        if (nan_position == NPY_SORT_NAN_FIRST) {
+        if (nan_position == NPY_SORT_NAN_TO_END) {
             if (result == NPY_UNORDERED_LEFT) {
                 return -1;
             }
@@ -47,7 +47,7 @@ compare_from_context(const void *a, const void *b, void *context)
                 return 0;
             }
         }
-        else if (nan_position == NPY_SORT_NAN_LAST) {
+        else if (nan_position == NPY_SORT_NAN_TO_START) {
             if (result == NPY_UNORDERED_LEFT) {
                 return 1;
             }

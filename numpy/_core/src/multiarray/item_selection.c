@@ -1220,7 +1220,7 @@ _new_sortlike(PyArrayObject *op, int axis, PyArray_SortFuncWithContext *sort,
         .descriptor = descr,
         .reversed = 0,
         .descending = 0,
-        .nan_position = NPY_SORT_NAN_FIRST
+        .nan_position = NPY_SORT_NAN_TO_END,
     };
 
     NPY_BEGIN_THREADS_DEF;
@@ -1408,7 +1408,7 @@ _new_argsortlike(PyArrayObject *op, int axis, PyArray_ArgSortFuncWithContext *ar
         .descriptor = descr,
         .reversed = 0,
         .descending = 0,
-        .nan_position = NPY_SORT_NAN_FIRST,
+        .nan_position = NPY_SORT_NAN_TO_END,
     };
 
     NPY_BEGIN_THREADS_DEF;

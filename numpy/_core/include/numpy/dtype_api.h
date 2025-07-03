@@ -499,8 +499,8 @@ typedef NPY_COMPARE_RESULT (PyArray_SortCompareFunc)(
         const void *a, const void *b, PyArray_Descr *descr);
 
 typedef enum {
-    NPY_SORT_NAN_FIRST = 0,
-    NPY_SORT_NAN_LAST = 1,
+    NPY_SORT_NAN_TO_START = 0,
+    NPY_SORT_NAN_TO_END = 1,
 } NPY_SORT_NAN_POSITION;
 
 struct PyArrayMethod_SortContext_tag {

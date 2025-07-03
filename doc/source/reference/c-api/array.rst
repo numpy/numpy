@@ -4396,13 +4396,13 @@ Enumerated Types
 
    An enum used to indicate the position of NaN values in sorting.
 
-   .. c:enumerator:: NPY_SORT_NAN_FIRST
+   .. c:enumerator:: NPY_SORT_NAN_TO_START
 
-      Indicates that NaN values should be sorted first.
+      Indicates that NaN values should be sorted to the start.
 
-   .. c:enumerator:: NPY_SORT_NAN_LAST
+   .. c:enumerator:: NPY_SORT_NAN_TO_END
 
-      Indicates that NaN values should be sorted last.
+      Indicates that NaN values should be sorted to the end.
 
 .. c:enum:: NPY_SCALARKIND
 
