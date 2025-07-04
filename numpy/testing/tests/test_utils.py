@@ -1348,6 +1348,33 @@ class TestAssertAllclose:
         with pytest.raises(AssertionError):
             assert_allclose(x, x.astype(np.float32), strict=True)
 
+    def test_infs(self):
+        a = np.array([np.inf])
+        b = np.array([np.inf])
+        assert_allclose(a, b)
+
+        b = np.array([3.])
+        expected_msg = 'inf location mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
+
+        b = np.array([-np.inf])
+        expected_msg = 'inf values mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
+        b = np.array([complex(np.inf, 1.)])
+        expected_msg = 'inf values mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
+
+        a = np.array([complex(np.inf, 1.)])
+        b = np.array([complex(np.inf, 1.)])
+        assert_allclose(a, b)
+
+        b = np.array([complex(np.inf, 2.)])
+        expected_msg = 'inf values mismatch:'
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(a, b)
 
 class TestArrayAlmostEqualNulp:
 
