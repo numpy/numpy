@@ -774,13 +774,17 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         # (1) all() on `masked` array scalars can return masked arrays, so we
         #     use != True
         # (2) __eq__ on some ndarray subclasses returns Python booleans
-        #     instead of element-wise comparisons, so we cast to np.bool() and
-        #     use isinstance(..., bool) checks
+        #     instead of element-wise comparisons, so we cast to np.bool() in
+        #     that case (or in case __eq__ returns some other value with no
+        #     all() method).
         # (3) subclasses with bare-bones __array_function__ implementations may
         #     not implement np.all(), so favor using the .all() method
         # We are not committed to supporting such subclasses, but it's nice to
         # support them if possible.
-        if np.bool(x_id == y_id).all() != True:
+        result = x_id == y_id
+        if not hasattr(result, "all") or not callable(result.all):
+            result = np.bool(result)
+        if result.all() != True:
             msg = build_err_msg(
                 [x, y],
                 err_msg + '\n%s location mismatch:'
