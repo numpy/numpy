@@ -7,7 +7,7 @@ from importlib import reload
 import pytest
 
 import numpy.exceptions as ex
-from numpy.testing import IS_WASM, assert_, assert_equal, assert_raises, assert_warns
+from numpy.testing import IS_WASM, assert_, assert_equal, assert_raises
 
 
 def test_numpy_reloading():
@@ -19,14 +19,14 @@ def test_numpy_reloading():
     VisibleDeprecationWarning = ex.VisibleDeprecationWarning
     ModuleDeprecationWarning = ex.ModuleDeprecationWarning
 
-    with assert_warns(UserWarning):
+    with pytest.warns(UserWarning):
         reload(np)
     assert_(_NoValue is np._NoValue)
     assert_(ModuleDeprecationWarning is ex.ModuleDeprecationWarning)
     assert_(VisibleDeprecationWarning is ex.VisibleDeprecationWarning)
 
     assert_raises(RuntimeError, reload, numpy._globals)
-    with assert_warns(UserWarning):
+    with pytest.warns(UserWarning):
         reload(np)
     assert_(_NoValue is np._NoValue)
     assert_(ModuleDeprecationWarning is ex.ModuleDeprecationWarning)

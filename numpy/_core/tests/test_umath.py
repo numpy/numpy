@@ -30,7 +30,6 @@ from numpy.testing import (
     assert_no_warnings,
     assert_raises,
     assert_raises_regex,
-    suppress_warnings,
 )
 from numpy.testing._private.utils import _glibc_older_than
 
@@ -703,8 +702,8 @@ class TestDivision:
         fone = np.array(1.0, dtype=dtype)
         fzer = np.array(0.0, dtype=dtype)
         finf = np.array(np.inf, dtype=dtype)
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning, "invalid value encountered in floor_divide")
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', "invalid value encountered in floor_divide", RuntimeWarning)
             div = np.floor_divide(fnan, fone)
             assert np.isnan(div), f"div: {div}"
             div = np.floor_divide(fone, fnan)
@@ -859,9 +858,9 @@ class TestRemainder:
             fone = np.array(1.0, dtype=dt)
             fzer = np.array(0.0, dtype=dt)
             finf = np.array(np.inf, dtype=dt)
-            with suppress_warnings() as sup:
-                sup.filter(RuntimeWarning, "invalid value encountered in divmod")
-                sup.filter(RuntimeWarning, "divide by zero encountered in divmod")
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', "invalid value encountered in divmod", RuntimeWarning)
+                warnings.filterwarnings('ignore', "divide by zero encountered in divmod", RuntimeWarning)
                 div, rem = np.divmod(fone, fzer)
                 assert np.isinf(div), f'dt: {dt}, div: {rem}'
                 assert np.isnan(rem), f'dt: {dt}, rem: {rem}'
@@ -898,9 +897,9 @@ class TestRemainder:
             assert_(rem >= -b, f'dt: {dt}')
 
         # Check nans, inf
-        with suppress_warnings() as sup:
-            sup.filter(RuntimeWarning, "invalid value encountered in remainder")
-            sup.filter(RuntimeWarning, "invalid value encountered in fmod")
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', "invalid value encountered in remainder", RuntimeWarning)
+            warnings.filterwarnings('ignore', "invalid value encountered in fmod", RuntimeWarning)
             for dt in np.typecodes['Float']:
                 fone = np.array(1.0, dtype=dt)
                 fzer = np.array(0.0, dtype=dt)
@@ -2957,9 +2956,11 @@ class TestMinMax:
                     inp[:] = np.arange(inp.size, dtype=dt)
                     inp[i] = np.nan
                     emsg = lambda: f'{inp!r}\n{msg}'
-                    with suppress_warnings() as sup:
-                        sup.filter(RuntimeWarning,
-                                   "invalid value encountered in reduce")
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(
+                            'ignore',
+                            "invalid value encountered in reduce",
+                            RuntimeWarning)
                         assert_(np.isnan(inp.max()), msg=emsg)
                         assert_(np.isnan(inp.min()), msg=emsg)
 
@@ -4603,8 +4604,8 @@ def test_nextafter_0():
     for t, direction in itertools.product(np._core.sctypes['float'], (1, -1)):
         # The value of tiny for double double is NaN, so we need to pass the
         # assert
-        with suppress_warnings() as sup:
-            sup.filter(UserWarning)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
             if not np.isnan(np.finfo(t).tiny):
                 tiny = np.finfo(t).tiny
                 assert_(

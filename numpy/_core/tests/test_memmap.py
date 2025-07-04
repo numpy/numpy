@@ -1,6 +1,7 @@
 import mmap
 import os
 import sys
+import warnings
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryFile
 
@@ -26,7 +27,6 @@ from numpy.testing import (
     assert_array_equal,
     assert_equal,
     break_cycles,
-    suppress_warnings,
 )
 
 
@@ -167,8 +167,9 @@ class TestMemmap:
         fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
         fp[:] = self.data
 
-        with suppress_warnings() as sup:
-            sup.filter(FutureWarning, "np.average currently does not preserve")
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                'ignore', "np.average currently does not preserve", FutureWarning)
             for unary_op in [sum, average, prod]:
                 result = unary_op(fp)
                 assert_(isscalar(result))
