@@ -25,7 +25,7 @@ from warnings import WarningMessage
 
 import numpy as np
 import numpy.linalg._umath_linalg
-from numpy import isfinite, isinf, isnan
+from numpy import isfinite, isnan
 from numpy._core import arange, array, array_repr, empty, float32, intp, isnat, ndarray
 
 __all__ = [
@@ -769,16 +769,19 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
         y_id = func(y)
         # We include work-arounds here to handle three types of slightly
         # pathological ndarray subclasses:
-        # (1) all() on `masked` array scalars can return masked arrays, so we
-        #     use != True
+        # (1) all() on fully masked arrays returns np.ma.masked, so we use != True
+        #     (np.ma.masked != True evaluates as np.ma.masked, which is falsy).
         # (2) __eq__ on some ndarray subclasses returns Python booleans
-        #     instead of element-wise comparisons, so we cast to np.bool() and
-        #     use isinstance(..., bool) checks
+        #     instead of element-wise comparisons, so we cast to np.bool in
+        #     that case.
         # (3) subclasses with bare-bones __array_function__ implementations may
         #     not implement np.all(), so favor using the .all() method
-        # We are not committed to supporting such subclasses, but it's nice to
+        # We are not committed to supporting cases (2) and (3), but it's nice to
         # support them if possible.
-        if np.bool(x_id == y_id).all() != True:
+        result = x_id == y_id
+        if isinstance(result, bool):
+            result = np.bool(result)
+        if result.all() != True:
             msg = build_err_msg(
                 [x, y],
                 err_msg + '\n%s location mismatch:'
@@ -788,12 +791,44 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
             raise AssertionError(msg)
         # If there is a scalar, then here we know the array has the same
         # flag as it everywhere, so we should return the scalar flag.
+        # np.ma.masked is also handled and converted to np.False_ (even if the other
+        # array has nans/infs etc.; that's OK given the handling later of fully-masked
+        # results).
         if isinstance(x_id, bool) or x_id.ndim == 0:
             return np.bool(x_id)
         elif isinstance(y_id, bool) or y_id.ndim == 0:
             return np.bool(y_id)
         else:
             return y_id
+
+    def assert_same_inf_values(x, y, infs_mask):
+        """Handling inf. values
+
+        Verify all inf. values match in the two arrays
+        """
+        __tracebackhide__ = True  # Hide traceback for py.test
+
+        if not infs_mask.any():
+            return
+
+        if x.ndim > 0 and y.ndim > 0:
+            x = x[infs_mask]
+            y = y[infs_mask]
+        else:
+            assert infs_mask.all()
+
+        # For details on the work-arounds employed here, see func_assert_same_pos above
+        result = x == y
+        if isinstance(result, bool):
+            result = np.bool(result)
+        if result.all() != True:
+            msg = build_err_msg(
+                [x, y],
+                err_msg + '\ninf values mismatch:',
+                verbose=verbose, header=header,
+                names=names,
+                precision=precision)
+            raise AssertionError(msg)
 
     try:
         if strict:
@@ -819,12 +854,15 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                 flagged = func_assert_same_pos(x, y, func=isnan, hasval='nan')
 
             if equal_inf:
-                flagged |= func_assert_same_pos(x, y,
-                                                func=lambda xy: xy == +inf,
-                                                hasval='+inf')
-                flagged |= func_assert_same_pos(x, y,
-                                                func=lambda xy: xy == -inf,
-                                                hasval='-inf')
+                # If equal_nan=True, skip comparing nans below for equality if they are
+                # also infs (e.g. inf+nanj) since that would always fail.
+                isinf_func = lambda xy: np.logical_and(np.isinf(xy), np.invert(flagged))
+                infs_mask = func_assert_same_pos(
+                    x, y,
+                    func=isinf_func,
+                    hasval='inf')
+                assert_same_inf_values(x, y, infs_mask)
+                flagged |= infs_mask
 
         elif istime(x) and istime(y):
             # If one is datetime64 and the other timedelta64 there is no point
@@ -1145,24 +1183,9 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
     """
     __tracebackhide__ = True  # Hide traceback for py.test
     from numpy._core import number, result_type
-    from numpy._core.fromnumeric import any as npany
     from numpy._core.numerictypes import issubdtype
 
     def compare(x, y):
-        try:
-            if npany(isinf(x)) or npany(isinf(y)):
-                xinfid = isinf(x)
-                yinfid = isinf(y)
-                if not (xinfid == yinfid).all():
-                    return False
-                # if one item, x and y is +- inf
-                if x.size == y.size == 1:
-                    return x == y
-                x = x[~xinfid]
-                y = y[~yinfid]
-        except (TypeError, NotImplementedError):
-            pass
-
         # make sure y is an inexact type to avoid abs(MIN_INT); will cause
         # casting of x later.
         dtype = result_type(y, 1.)
