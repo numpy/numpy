@@ -1317,7 +1317,10 @@ def gradient(f, *varargs, axis=None, edge_order=1):
             # fix the shape for broadcasting
             shape = np.ones(N, dtype=int)
             shape[axis] = -1
-            a.shape = b.shape = c.shape = shape
+
+            a = a.reshape(shape)
+            b = b.reshape(shape)
+            c = c.reshape(shape)
             # 1D equivalent -- out[1:-1] = a * f[:-2] + b * f[1:-1] + c * f[2:]
             out[tuple(slice1)] = a * f[tuple(slice2)] + b * f[tuple(slice3)] \
                                                 + c * f[tuple(slice4)]
