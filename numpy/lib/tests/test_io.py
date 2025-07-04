@@ -228,11 +228,11 @@ class TestSavezLoad(RoundtripTest):
                     np.save(out_file, np.arange(10))
                 with npz.open("metadata", "w") as out_file:
                     out_file.write(b"Name: Test")
-            npz = np.load(tmp)
-            assert len(npz["test1"]) == 10
-            assert len(npz["test1.npy"]) == 10
-            assert len(npz["test2"]) == 10
-            assert npz["metadata"] == b"Name: Test"
+            with np.load(tmp) as npz:
+                assert len(npz["test1"]) == 10
+                assert len(npz["test1.npy"]) == 10
+                assert len(npz["test2"]) == 10
+                assert npz["metadata"] == b"Name: Test"
 
     @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
