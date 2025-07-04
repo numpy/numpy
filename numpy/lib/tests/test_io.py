@@ -218,7 +218,7 @@ class TestSavezLoad(RoundtripTest):
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
 
-    def load_non_npy(self):
+    def test_load_non_npy(self):
         """Test loading non-.npy files and name mapping in .npz."""
         with temppath(prefix="numpy_test_npz_load_non_npy_", suffix=".npz") as tmp:
             with zipfile.ZipFile(tmp) as npz:
