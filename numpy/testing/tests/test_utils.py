@@ -121,7 +121,7 @@ class TestArrayEqual(_GenericTest):
         y = np.array(0)
         expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
                         'Max absolute difference among violations: '
-                        '4.39506535e+12\n'
+                        '4.395065e+12\n'
                         'Max relative difference among violations: inf\n')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
@@ -275,7 +275,7 @@ class TestArrayEqual(_GenericTest):
                         'Max absolute difference among violations: '
                         '563766.\n'
                         'Max relative difference among violations: '
-                        '4.54902139e-07')
+                        '4.549021e-07')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(a, b)
 
@@ -301,6 +301,19 @@ class TestArrayEqual(_GenericTest):
 
         with pytest.raises(AssertionError):
             self._assert_func(a, b, strict=True)
+
+    def test_error_message_consistent_precision(self):
+        """Test that the same precision is used for formatting the compared array
+           values and the maximum errors"""
+        a = np.array([0.23456789])
+        b = np.array([0.12345678])
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                'Max absolute difference among violations: 0.111111\n'
+                'Max relative difference among violations: 0.9\n'
+                ' ACTUAL: array([0.234568])\n'
+                ' DESIRED: array([0.123457])')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(a, b)
 
 
 class TestBuildErrorMessage:
@@ -457,7 +470,7 @@ class TestArrayAlmostEqual(_GenericTest):
 
         # test scalars
         expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
-                        'Max absolute difference among violations: 1.5\n'
+                        'Max absolute difference among violations: 2.\n'
                         'Max relative difference among violations: inf')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(1.5, 0.0, decimal=0)
@@ -466,7 +479,7 @@ class TestArrayAlmostEqual(_GenericTest):
         self._assert_func([1.499999], [0.0], decimal=0)
 
         expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
-                        'Max absolute difference among violations: 1.5\n'
+                        'Max absolute difference among violations: 2.\n'
                         'Max relative difference among violations: inf')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func([1.5], [0.0], decimal=0)
@@ -496,7 +509,7 @@ class TestArrayAlmostEqual(_GenericTest):
                         'Max absolute difference among violations: '
                         '1.e-04\n'
                         'Max relative difference among violations: '
-                        '8.10226812e-08')
+                        '8.10227e-08')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y, decimal=5)
 
@@ -693,9 +706,9 @@ class TestAlmostEqual(_GenericTest):
 
         # Test with a different amount of decimal digits
         expected_msg = ('Mismatched elements: 3 / 3 (100%)\n'
-                        'Max absolute difference among violations: 1.e-05\n'
+                        'Max absolute difference among violations: 9.999999999621e-06\n'
                         'Max relative difference among violations: '
-                        '3.33328889e-06\n'
+                        '3.333288889355e-06\n'
                         ' ACTUAL: array([1.00000000001, '
                         '2.00000000002, '
                         '3.00003      ])\n'
@@ -705,16 +718,34 @@ class TestAlmostEqual(_GenericTest):
             self._assert_func(x, y, decimal=12)
 
         # With the default value of decimal digits, only the 3rd element
-        # differs. Note that we only check for the formatting of the arrays
-        # themselves.
+        # differs.
         expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
                         'Max absolute difference among violations: 1.e-05\n'
                         'Max relative difference among violations: '
-                        '3.33328889e-06\n'
+                        '3.3332889e-06\n'
                         ' ACTUAL: array([1.     , 2.     , 3.00003])\n'
                         ' DESIRED: array([1.     , 2.     , 3.00004])')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
+
+        # Test that the same precision is used for formatting the compared array
+        # values and the maximum errors
+        x = [2.6]
+        y = [0.0]
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: 2.6\n'
+                        'Max relative difference among violations: inf\n'
+                        ' ACTUAL: array([2.6])\n'
+                        ' DESIRED: array([0.])')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(x, y, decimal=1)
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                        'Max absolute difference among violations: 3.\n'
+                        'Max relative difference among violations: inf\n'
+                        ' ACTUAL: array([3.])\n'
+                        ' DESIRED: array([0.])')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            self._assert_func(x, y, decimal=0)
 
         # Check the error message when input includes inf
         x = np.array([np.inf, 0])
@@ -850,7 +881,7 @@ class TestArrayAssertLess:
         self._assert_func(x, y)
         expected_msg = ('Mismatched elements: 4 / 4 (100%)\n'
                         'Max absolute difference among violations: 0.1\n'
-                        'Max relative difference among violations: 0.09090909')
+                        'Max relative difference among violations: 0.090909')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(y, x)
 
@@ -919,7 +950,7 @@ class TestArrayAssertLess:
                         'Max absolute difference among violations: '
                         '999087.0864\n'
                         'Max relative difference among violations: '
-                        '289288.5934676')
+                        '289288.593468')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(y, x)
 
@@ -929,14 +960,14 @@ class TestArrayAssertLess:
 
         expected_msg = ('Mismatched elements: 1 / 3 (33.3%)\n'
                         'Max absolute difference among violations: 458802.\n'
-                        'Max relative difference among violations: 5.23423917')
+                        'Max relative difference among violations: 5.234239')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(x, y)
 
         expected_msg = ('Mismatched elements: 2 / 3 (66.7%)\n'
                         'Max absolute difference among violations: 87654.\n'
                         'Max relative difference among violations: '
-                        '5670.5626011')
+                        '5670.562601')
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             self._assert_func(y, x)
 
@@ -1207,6 +1238,28 @@ class TestAssertAllclose:
         expected_msg = 'Max absolute difference among violations: 4'
         with pytest.raises(AssertionError, match=re.escape(expected_msg)):
             assert_allclose(x, y, atol=3)
+
+    def test_error_message_consistent_precision(self):
+        """Test that the same precision is used for formatting the compared array
+           values and the maximum errors"""
+        x = 2.00000049
+        y = 0.0
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                'Max absolute difference among violations: 2.\n'
+                'Max relative difference among violations: inf\n'
+                ' ACTUAL: array(2.)\n'
+                ' DESIRED: array(0.)')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(x, y)
+
+        y = 1.00000048
+        expected_msg = ('Mismatched elements: 1 / 1 (100%)\n'
+                'Max absolute difference among violations: 1.\n'
+                'Max relative difference among violations: 1.\n'
+                ' ACTUAL: array(2.)\n'
+                ' DESIRED: array(1.)')
+        with pytest.raises(AssertionError, match=re.escape(expected_msg)):
+            assert_allclose(x, y)
 
     def test_strict(self):
         """Test the behavior of the `strict` option."""

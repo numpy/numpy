@@ -574,8 +574,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
     Arrays are not almost equal to 9 decimals
     <BLANKLINE>
     Mismatched elements: 1 / 2 (50%)
-    Max absolute difference among violations: 6.66669964e-09
-    Max relative difference among violations: 2.85715698e-09
+    Max absolute difference among violations: 6.666699637e-09
+    Max relative difference among violations: 2.857156979e-09
      ACTUAL: array([1.         , 2.333333333])
      DESIRED: array([1.        , 2.33333334])
 
@@ -893,7 +893,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     else:
                         remarks.append(
                             'Max absolute difference among violations: '
-                            + array2string(max_abs_error))
+                            + array2string(max_abs_error, precision=precision))
 
                     # note: this definition of relative error matches that one
                     # used by assert_allclose (found in np.isclose)
@@ -917,7 +917,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
                     else:
                         remarks.append(
                             'Max relative difference among violations: '
-                            + array2string(max_rel_error))
+                            + array2string(max_rel_error, precision=precision))
             err_msg = str(err_msg)
             err_msg += '\n' + '\n'.join(remarks)
             msg = build_err_msg([ox, oy], err_msg,
@@ -1013,8 +1013,8 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
     Arrays are not equal
     <BLANKLINE>
     Mismatched elements: 1 / 3 (33.3%)
-    Max absolute difference among violations: 4.4408921e-16
-    Max relative difference among violations: 1.41357986e-16
+    Max absolute difference among violations: 4.440892e-16
+    Max relative difference among violations: 1.41358e-16
      ACTUAL: array([1.      , 3.141593,      nan])
      DESIRED: array([1.      , 3.141593,      nan])
 
@@ -1127,7 +1127,7 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
     <BLANKLINE>
     Mismatched elements: 1 / 3 (33.3%)
     Max absolute difference among violations: 6.e-05
-    Max relative difference among violations: 2.57136612e-05
+    Max relative difference among violations: 2.57137e-05
      ACTUAL: array([1.     , 2.33333,     nan])
      DESIRED: array([1.     , 2.33339,     nan])
 
