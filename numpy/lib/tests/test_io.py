@@ -7,6 +7,7 @@ import sys
 import threading
 import time
 import warnings
+import zipfile
 from ctypes import c_bool
 from datetime import datetime
 from io import BytesIO, StringIO
@@ -216,6 +217,22 @@ class TestSavezLoad(RoundtripTest):
             if self.arr_reloaded.fid:
                 self.arr_reloaded.fid.close()
                 os.remove(self.arr_reloaded.fid.name)
+
+    def test_load_non_npy(self):
+        """Test loading non-.npy files and name mapping in .npz."""
+        with temppath(prefix="numpy_test_npz_load_non_npy_", suffix=".npz") as tmp:
+            with zipfile.ZipFile(tmp, "w") as npz:
+                with npz.open("test1.npy", "w") as out_file:
+                    np.save(out_file, np.arange(10))
+                with npz.open("test2", "w") as out_file:
+                    np.save(out_file, np.arange(10))
+                with npz.open("metadata", "w") as out_file:
+                    out_file.write(b"Name: Test")
+            with np.load(tmp) as npz:
+                assert len(npz["test1"]) == 10
+                assert len(npz["test1.npy"]) == 10
+                assert len(npz["test2"]) == 10
+                assert npz["metadata"] == b"Name: Test"
 
     @pytest.mark.skipif(IS_PYPY, reason="Hangs on PyPy")
     @pytest.mark.skipif(not IS_64BIT, reason="Needs 64bit platform")
