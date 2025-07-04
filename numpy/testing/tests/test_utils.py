@@ -197,6 +197,14 @@ class TestArrayEqual(_GenericTest):
         self._test_equal(a, b)
         self._test_equal(b, a)
 
+    def test_masked_scalar(self):
+        a = np.ma.MaskedArray(3., mask=True)
+        b = np.array(3.)
+        self._test_equal(a, b)
+        # also a test case for gh-11121
+        b = np.array(np.nan)
+        self._test_equal(a, b)
+
     def test_subclass_that_overrides_eq(self):
         # While we cannot guarantee testing functions will always work for
         # subclasses, the tests should ideally rely only on subclasses having
