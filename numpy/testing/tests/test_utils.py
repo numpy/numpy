@@ -1295,9 +1295,19 @@ class TestAssertAllclose:
         # Should not raise:
         assert_allclose(a, b, equal_nan=True)
 
+        a = np.array([complex(np.nan, np.inf)])
+        b = np.array([complex(np.nan, np.inf)])
+        assert_allclose(a, b, equal_nan=True)
+        b = np.array([complex(np.nan, -np.inf)])
+        assert_allclose(a, b, equal_nan=True)
+
     def test_not_equal_nan(self):
         a = np.array([np.nan])
         b = np.array([np.nan])
+        assert_raises(AssertionError, assert_allclose, a, b, equal_nan=False)
+
+        a = np.array([complex(np.nan, np.inf)])
+        b = np.array([complex(np.nan, np.inf)])
         assert_raises(AssertionError, assert_allclose, a, b, equal_nan=False)
 
     def test_equal_nan_default(self):
