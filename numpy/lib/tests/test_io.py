@@ -221,7 +221,7 @@ class TestSavezLoad(RoundtripTest):
     def test_load_non_npy(self):
         """Test loading non-.npy files and name mapping in .npz."""
         with temppath(prefix="numpy_test_npz_load_non_npy_", suffix=".npz") as tmp:
-            with zipfile.ZipFile(tmp) as npz:
+            with zipfile.ZipFile(tmp, "w") as npz:
                 with npz.open("test1.npy", "w") as out_file:
                     np.save(out_file, np.arange(10))
                 with npz.open("test2", "w") as out_file:
