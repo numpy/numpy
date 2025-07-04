@@ -35,7 +35,22 @@ class DiffLinter:
 
         errors and print(errors)
 
-        sys.exit(retcode)
+        # Running borrowed ref checker
+        print("Running C API borrow-reference linter...")
+        borrowed_ref_script = os.path.join(self.repository_root, "tools", "ci",
+                                           "check_c_api_usage.sh")
+        borrowed_res = subprocess.run(
+            ["bash", borrowed_ref_script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            encoding="utf-8",
+        )
+
+        print(borrowed_res.stdout)
+
+        # Exit with non-zero if either Ruff or C API check fails
+        final_code = retcode or borrowed_res.returncode
+        sys.exit(final_code)
 
 
 if __name__ == "__main__":
