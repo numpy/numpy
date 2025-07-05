@@ -511,7 +511,8 @@ def print_assert_equal(test_string, actual, desired):
         raise AssertionError(msg.getvalue())
 
 
-def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
+def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True,
+                        *, precision=6):
     """
     Raises an AssertionError if two items are not equal up to desired
     precision.
@@ -542,6 +543,10 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
         The error message to be printed in case of failure.
     verbose : bool, optional
         If True, the conflicting values are appended to the error message.
+    precision : int or None, optional
+        Number of digits of precision for floating point output (default 6).
+        May be None if `floatmode` is not `fixed`, to print as many digits as
+        necessary to uniquely specify the value (see `np.set_printoptions()`).
 
     Raises
     ------
@@ -567,7 +572,8 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
      DESIRED: 2.33333334
 
     >>> assert_almost_equal(np.array([1.0,2.3333333333333]),
-    ...                     np.array([1.0,2.33333334]), decimal=9)
+    ...                     np.array([1.0,2.33333334]),
+    ...                     decimal=9, precision=9)
     Traceback (most recent call last):
         ...
     AssertionError:
@@ -611,14 +617,15 @@ def assert_almost_equal(actual, desired, decimal=7, err_msg='', verbose=True):
             desiredr = desired
             desiredi = 0
         try:
-            assert_almost_equal(actualr, desiredr, decimal=decimal)
-            assert_almost_equal(actuali, desiredi, decimal=decimal)
+            assert_almost_equal(actualr, desiredr, decimal=decimal, precision=precision)
+            assert_almost_equal(actuali, desiredi, decimal=decimal, precision=precision)
         except AssertionError:
             raise AssertionError(_build_err_msg())
 
     if isinstance(actual, (ndarray, tuple, list)) \
             or isinstance(desired, (ndarray, tuple, list)):
-        return assert_array_almost_equal(actual, desired, decimal, err_msg)
+        return assert_array_almost_equal(actual, desired, decimal, err_msg,
+                                         precision=precision)
     try:
         # If one of desired/actual is not finite, handle it specially here:
         # check that both are nan if any is a nan, and test for equality
@@ -936,7 +943,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True, header='',
 
 
 def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
-                       strict=False):
+                       precision=6, strict=False):
     """
     Raises an AssertionError if two array_like objects are not equal.
 
@@ -971,6 +978,10 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
         The error message to be printed in case of failure.
     verbose : bool, optional
         If True, the conflicting values are appended to the error message.
+    precision : int or None, optional
+        Number of digits of precision for floating point output (default 6).
+        May be None if `floatmode` is not `fixed`, to print as many digits as
+        necessary to uniquely specify the value (see `np.set_printoptions()`).
     strict : bool, optional
         If True, raise an AssertionError when either the shape or the data
         type of the array_like objects does not match. The special
@@ -1062,11 +1073,11 @@ def assert_array_equal(actual, desired, err_msg='', verbose=True, *,
     __tracebackhide__ = True  # Hide traceback for py.test
     assert_array_compare(operator.__eq__, actual, desired, err_msg=err_msg,
                          verbose=verbose, header='Arrays are not equal',
-                         strict=strict)
+                         precision=precision, strict=strict)
 
 
 def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
-                              verbose=True):
+                              verbose=True, *, precision=6):
     """
     Raises an AssertionError if two objects are not equal up to desired
     precision.
@@ -1099,6 +1110,10 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
       The error message to be printed in case of failure.
     verbose : bool, optional
         If True, the conflicting values are appended to the error message.
+    precision : int or None, optional
+        Number of digits of precision for floating point output (default 6).
+        May be None if `floatmode` is not `fixed`, to print as many digits as
+        necessary to uniquely specify the value (see `np.set_printoptions()`).
 
     Raises
     ------
@@ -1174,13 +1189,15 @@ def assert_array_almost_equal(actual, desired, decimal=6, err_msg='',
 
         return z < 1.5 * 10.0**(-decimal)
 
+    header = ('Arrays are not almost equal to %d decimals' % decimal)
     assert_array_compare(compare, actual, desired, err_msg=err_msg,
                          verbose=verbose,
-             header=('Arrays are not almost equal to %d decimals' % decimal),
-             precision=decimal)
+                         header=header,
+                         precision=precision)
 
 
-def assert_array_less(x, y, err_msg='', verbose=True, *, strict=False):
+def assert_array_less(x, y, err_msg='', verbose=True, *, precision=6,
+                      strict=False):
     """
     Raises an AssertionError if two array_like objects are not ordered by less
     than.
@@ -1202,6 +1219,10 @@ def assert_array_less(x, y, err_msg='', verbose=True, *, strict=False):
       The error message to be printed in case of failure.
     verbose : bool
         If True, the conflicting values are appended to the error message.
+    precision : int or None, optional
+        Number of digits of precision for floating point output (default 6).
+        May be None if `floatmode` is not `fixed`, to print as many digits as
+        necessary to uniquely specify the value (see `np.set_printoptions()`).
     strict : bool, optional
         If True, raise an AssertionError when either the shape or the data
         type of the array_like objects does not match. The special
@@ -1290,6 +1311,7 @@ def assert_array_less(x, y, err_msg='', verbose=True, *, strict=False):
     assert_array_compare(operator.__lt__, x, y, err_msg=err_msg,
                          verbose=verbose,
                          header='Arrays are not strictly ordered `x < y`',
+                         precision=precision,
                          equal_inf=False,
                          strict=strict,
                          names=('x', 'y'))
@@ -1614,7 +1636,7 @@ def _assert_valid_refcount(op):
 
 
 def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
-                    err_msg='', verbose=True, *, strict=False):
+                    err_msg='', verbose=True, *, precision=6, strict=False):
     """
     Raises an AssertionError if two objects are not equal up to desired
     tolerance.
@@ -1645,6 +1667,10 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
         The error message to be printed in case of failure.
     verbose : bool, optional
         If True, the conflicting values are appended to the error message.
+    precision : int or None, optional
+        Number of digits of precision for floating point output (default 6).
+        May be None if `floatmode` is not `fixed`, to print as many digits as
+        necessary to uniquely specify the value (see `np.set_printoptions()`).
     strict : bool, optional
         If True, raise an ``AssertionError`` when either the shape or the data
         type of the arguments does not match. The special handling of scalars
@@ -1718,8 +1744,8 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     header = f'Not equal to tolerance rtol={rtol:g}, atol={atol:g}'
     assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
-                         verbose=verbose, header=header, equal_nan=equal_nan,
-                         strict=strict)
+                         verbose=verbose, header=header, precision=precision,
+                         equal_nan=equal_nan, strict=strict)
 
 
 def assert_array_almost_equal_nulp(x, y, nulp=1):
