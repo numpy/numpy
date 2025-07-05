@@ -52,7 +52,7 @@ jobs:
       - run:
           name: build NumPy
           command: |
-            python3.11 -m venv venv
+            python -m venv venv
             . venv/bin/activate
             pip install --progress-bar=off -r requirements/test_requirements.txt \
                -r requirements/build_requirements.txt \
@@ -69,7 +69,7 @@ jobs:
             # Don't use -q, show warning summary"
             SPHINXOPTS="-W -n" spin docs
             if [[ $(find doc/build/html -type f | wc -l) -lt 1000 ]]; then
-                echo "doc build failed: doc/build/html is empty"
+                echo "doc build failed: doc/build/html is empty" >&2
                 exit -1
             fi
 
@@ -97,8 +97,8 @@ jobs:
             #  - validates ReST blocks (via validate_rst_syntax)
             #  - checks that all of a module's `__all__` is reflected in the
             #    module-level docstring autosummary
-            echo calling python3 tools/refguide_check.py -v
-            python3 tools/refguide_check.py -v
+            echo "calling ./tools/refguide_check.py -v"
+            ./tools/refguide_check.py -v
 
       - persist_to_workspace:
           root: ~/repo
