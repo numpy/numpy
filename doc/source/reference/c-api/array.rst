@@ -1895,6 +1895,14 @@ described below.
     *context* is passed in containing the descriptor for the array.
     Returns 0 on success, -1 on failure.
 
+.. c:type:: NPY_COMPARE_RESULT (PyArray_SortCompareFunc) ( \
+                 const void *a, const void *b, PyArray_Descr *descr)
+    
+    A function to compare two elements of an array for sorting. The *a* and *b*
+    pointers point to the elements to compare, and *descr* is the descriptor for
+    the array. Returns a value of type :c:type:`NPY_COMPARE_RESULT` indicating
+    the result of the comparison, including whether each element is unordered.
+
 API Functions and Typedefs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
