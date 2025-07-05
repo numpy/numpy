@@ -10,7 +10,7 @@ including support for unordered comparisons.
 The sorting context of type `PyArrayMethod_SortContext` is passed
 to the `NPY_DT_get_sort_function` and `NPY_DT_get_argsort_function`
 functions and contains a boolean `descending` flag and a
-`nan_position` of type `NPY_NAN_POSITION`, which can be used to
+`nan_position` of type `NPY_SORT_NAN_POSITION`, which can be used to
 control the behavior of sorting with respect to NaN values.
 Currently, sorts are always ascending and nulls are always sorted last,
 but this must be checked in the context passed to the sort function

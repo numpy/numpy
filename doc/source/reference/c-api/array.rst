@@ -4422,6 +4422,29 @@ Enumerated Types
 
       Indicates that NaN values should be sorted to the end.
 
+.. c:enum:: NPY_COMPARE_RESULT
+
+    An enum used to indicate the result of a comparison operation.
+    The unordered comparisons are used to indicate that the
+    comparison is not well-defined for one or both of the operands,
+    such as when comparing NaN values.
+
+    .. c:enumerator:: NPY_LESS
+    
+    .. c:enumerator:: NPY_EQUAL
+
+    .. c:enumerator:: NPY_GREATER
+
+    .. c:enumerator:: NPY_UNORDERED_LEFT
+
+    .. c:enumerator:: NPY_UNORDERED_RIGHT
+
+    .. c:enumerator:: NPY_UNORDERED_BOTH
+
+    .. c:enumerator:: NPY_COMPARE_ERROR
+
+        Indicates that an error occurred during the comparison operation.
+
 .. c:enum:: NPY_SCALARKIND
 
     A special variable type indicating the number of "kinds" of
