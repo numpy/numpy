@@ -4209,6 +4209,31 @@ class TestQuantile:
         assert_equal(4, np.quantile(arr[0:9], q, method=m))
         assert_equal(5, np.quantile(arr, q, method=m))
 
+    def test_quantile_empty(self):
+        # Empty array
+        assert np.isnan(np.quantile([], 0.5))
+
+        # Multiple quantiles
+        result = np.quantile([], [0, 0.5, 1])
+        assert result.shape == (3,)
+        assert np.all(np.isnan(result))
+
+        # Keepdims=True
+        a = np.array([[], [], []]).T  # Shape (0, 3)
+        result = np.quantile(a, 0.5, axis=0, keepdims=True)
+        assert result.shape == (1, 3)
+        assert np.all(np.isnan(result))
+
+        # Axis=0
+        a = np.array([])
+        result = np.quantile(a, 0.5, axis=0)
+        assert np.isnan(result)
+
+        # Multiple axes reduction
+        a = np.zeros((3, 0, 2))  # Shape (3, 0, 2)
+        result = np.quantile(a, 0.5, axis=(0, 1))
+        assert result.shape == (2,)
+        assert np.all(np.isnan(result))
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,

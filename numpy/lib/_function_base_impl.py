@@ -4812,11 +4812,38 @@ def _quantile(
     """
     # --- Setup
     arr = np.asanyarray(arr)
-    values_count = arr.shape[axis]
     # The dimensions of `q` are prepended to the output shape, so we need the
     # axis being sampled from `arr` to be last.
     if axis != 0:  # But moveaxis is slow, so only call it if necessary.
         arr = np.moveaxis(arr, axis, destination=0)
+    values_count = arr.shape[0]  # Get length along axis
+    # Handle empty array case immediately
+    if values_count == 0:
+        # Determine output shape: quantiles shape + other dimensions
+        shape = quantiles.shape + arr.shape[1:]
+        # Determine dtype for missing values
+        if out is not None:
+            dtype = out.dtype
+        else:
+            if arr.dtype.kind in 'mM':  # datetime/timedelta
+                dtype = arr.dtype
+            elif arr.dtype.kind in 'iub':  # integer, unsigned, boolean
+                dtype = np.float64
+            else:  # float, etc.
+                dtype = arr.dtype
+        # Choose appropriate missing value
+        if dtype.kind in 'mM':
+            missing_value = dtype.type('NaT')
+        else:
+            missing_value = np.nan
+
+        # Create or fill output array
+        if out is None:
+            return np.full(shape, missing_value, dtype=dtype)
+        else:
+            out.fill(missing_value)
+            return out
+
     supports_nans = (
         np.issubdtype(arr.dtype, np.inexact) or arr.dtype.kind in 'Mm'
     )
