@@ -1625,9 +1625,10 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0, equal_nan=True,
     contrast to the standard usage in numpy, NaNs are compared like numbers,
     no assertion is raised if both objects have NaNs in the same positions.
 
-    The test is equivalent to ``allclose(actual, desired, rtol, atol)`` (note
-    that ``allclose`` has different default values). It compares the difference
-    between `actual` and `desired` to ``atol + rtol * abs(desired)``.
+    The test is equivalent to ``allclose(actual, desired, rtol, atol)``,
+    except that it is stricter: it doesn't broadcast its operands, and has
+    tighter default tolerance values. It compares the difference between
+    `actual` and `desired` to ``atol + rtol * abs(desired)``.
 
     Parameters
     ----------
