@@ -4901,6 +4901,10 @@ def _quantile(
             # --- Get values from indexes
             previous = arr[previous_indexes]
             next = arr[next_indexes]
+            # Fix integer overflow by converting to float for interpolation
+            if arr.dtype.kind in 'iub':  # integer, unsigned, boolean
+                previous = previous.astype(np.float64)
+                next = next.astype(np.float64)
             # --- Linear interpolation
             gamma = _get_gamma(virtual_indexes, previous_indexes, method_props)
             result_shape = virtual_indexes.shape + (1,) * (arr.ndim - 1)

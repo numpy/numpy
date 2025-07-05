@@ -4234,6 +4234,20 @@ class TestQuantile:
         result = np.quantile(a, 0.5, axis=(0, 1))
         assert result.shape == (2,)
         assert np.all(np.isnan(result))
+    
+    def test_quantile_int_overflow(self):
+        # Signed integer overflow
+        a = np.array([32767, -1], dtype=np.int16)
+        assert np.quantile(a, 0.5) == 16383.0
+
+        # Unsigned integer
+        b = np.array([0, 65535], dtype=np.uint16)
+        assert np.quantile(b, 0.5) == 32767.5
+
+        # Large integers
+        c = np.array([np.iinfo(np.int32).max, np.iinfo(np.int32).min], dtype=np.int32)
+        expected = (np.iinfo(np.int32).max + np.iinfo(np.int32).min) / 2.0
+        assert np.quantile(c, 0.5) == expected
 
 class TestLerp:
     @hypothesis.given(t0=st.floats(allow_nan=False, allow_infinity=False,
